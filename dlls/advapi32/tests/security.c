@@ -6716,6 +6716,86 @@ static void test_maximum_allowed(void)
     CloseHandle(handle);
 }
 
+static void test_token_label(void)
+{
+    static SID medium_sid = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
+                             {SECURITY_MANDATORY_MEDIUM_RID}};
+    static SID high_sid = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
+                           {SECURITY_MANDATORY_HIGH_RID}};
+    SECURITY_DESCRIPTOR_CONTROL control;
+    SYSTEM_MANDATORY_LABEL_ACE *ace;
+    BOOL ret, present, defaulted;
+    SECURITY_DESCRIPTOR *sd;
+    ACL *sacl = NULL, *dacl;
+    DWORD size, revision;
+    HANDLE token;
+    char *str;
+    SID *sid;
+
+    ret = OpenProcessToken(GetCurrentProcess(), READ_CONTROL | WRITE_OWNER, &token);
+    ok(ret, "OpenProcessToken failed with error %u\n", GetLastError());
+
+    ret = GetKernelObjectSecurity(token, LABEL_SECURITY_INFORMATION, NULL, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Unexpected GetKernelObjectSecurity return value %d, error %u\n", ret, GetLastError());
+
+    sd = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetKernelObjectSecurity(token, LABEL_SECURITY_INFORMATION, sd, size, &size);
+    ok(ret, "GetKernelObjectSecurity failed with error %u\n", GetLastError());
+
+    ret = GetSecurityDescriptorControl(sd, &control, &revision);
+    ok(ret, "GetSecurityDescriptorControl failed with error %u\n", GetLastError());
+    todo_wine ok(control == (SE_SELF_RELATIVE | SE_SACL_AUTO_INHERITED | SE_SACL_PRESENT) ||
+                 broken(control == SE_SELF_RELATIVE) /* WinXP, Win2003 */,
+                 "Unexpected security descriptor control %#x\n", control);
+    ok(revision == 1, "Unexpected security descriptor revision %u\n", revision);
+
+    sid = (void *)0xdeadbeef;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorOwner(sd, (void **)&sid, &defaulted);
+    ok(ret, "GetSecurityDescriptorOwner failed with error %u\n", GetLastError());
+    ok(!sid, "Owner present\n");
+    ok(!defaulted, "Owner defaulted\n");
+
+    sid = (void *)0xdeadbeef;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorGroup(sd, (void **)&sid, &defaulted);
+    ok(ret, "GetSecurityDescriptorGroup failed with error %u\n", GetLastError());
+    ok(!sid, "Group present\n");
+    ok(!defaulted, "Group defaulted\n");
+
+    ret = GetSecurityDescriptorSacl(sd, &present, &sacl, &defaulted);
+    ok(ret, "GetSecurityDescriptorSacl failed with error %u\n", GetLastError());
+    ok(present || broken(!present) /* WinXP, Win2003 */, "No SACL in the security descriptor\n");
+    ok(sacl || broken(!sacl) /* WinXP, Win2003 */, "NULL SACL in the security descriptor\n");
+
+    if (present)
+    {
+        ok(!defaulted, "SACL defaulted\n");
+        ok(sacl->AceCount == 1, "SACL contains an unexpected ACE count %u\n", sacl->AceCount);
+
+        ret = pGetAce(sacl, 0, (void **)&ace);
+        ok(ret, "GetAce failed with error %u\n", GetLastError());
+
+        ok(ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE,
+           "Unexpected ACE type %#x\n", ace->Header.AceType);
+        ok(!ace->Header.AceFlags, "Unexpected ACE flags %#x\n", ace->Header.AceFlags);
+        ok(ace->Header.AceSize, "Unexpected ACE size %u\n", ace->Header.AceSize);
+        ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, "Unexpected ACE mask %#x\n", ace->Mask);
+
+        sid = (SID *)&ace->SidStart;
+        pConvertSidToStringSidA(sid, &str);
+        ok(EqualSid(sid, &medium_sid) || EqualSid(sid, &high_sid), "Got unexpected SID %s\n", str);
+    }
+
+    ret = GetSecurityDescriptorDacl(sd, &present, &dacl, &defaulted);
+    ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
+    todo_wine ok(!present, "DACL present\n");
+
+    HeapFree(GetProcessHeap(), 0, sd);
+    CloseHandle(token);
+}
+
 static void test_token_security_descriptor(void)
 {
     static SID low_level = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
@@ -7048,6 +7128,7 @@ START_TEST(security)
     test_GetSidIdentifierAuthority();
     test_pseudo_tokens();
     test_maximum_allowed();
+    test_token_label();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
