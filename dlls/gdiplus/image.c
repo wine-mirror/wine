@@ -1333,6 +1333,7 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
         result->unit = metafile->unit;
         result->metafile_type = metafile->metafile_type;
         result->hemf = CopyEnhMetaFileW(metafile->hemf, NULL);
+        list_init(&result->containers);
 
         if (!result->hemf)
         {
