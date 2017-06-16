@@ -592,7 +592,7 @@ BOOL WINAPI ClearCommBreak(HANDLE handle)
  *  false if the device is not present cannot execute the command
  *  or the command failed.
  */
-BOOL WINAPI EscapeCommFunction(HANDLE handle, UINT func)
+BOOL WINAPI EscapeCommFunction(HANDLE handle, DWORD func)
 {
     DWORD       ioc;
     DWORD dwBytesReturned;
