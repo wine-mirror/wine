@@ -3053,7 +3053,7 @@ static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD
                                      DWORD flags )
 {
     union generic_unix_sockaddr uaddr;
-    unsigned int uaddrlen = sizeof(uaddr);
+    socklen_t uaddrlen = sizeof(uaddr);
     struct ws2_transmitfile_async *wsa;
     NTSTATUS status;
     int fd;
@@ -7720,8 +7720,8 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     {
         /* It's invalid to receive OOB data from an OOBINLINED socket
          * as OOB data is turned into normal data. */
-        i = sizeof(n);
-        if (!getsockopt(fd, SOL_SOCKET, SO_OOBINLINE, (char*) &n, &i) && n)
+        socklen_t len = sizeof(n);
+        if (!getsockopt(fd, SOL_SOCKET, SO_OOBINLINE, (char*) &n, &len) && n)
         {
             err = WSAEINVAL;
             goto error;
