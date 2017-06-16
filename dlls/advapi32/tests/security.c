@@ -6720,13 +6720,16 @@ static void test_token_security_descriptor(void)
 {
     char buffer_sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
     SECURITY_DESCRIPTOR *sd = (SECURITY_DESCRIPTOR *)&buffer_sd, *sd2;
-    char buffer_acl[256];
-    ACL *acl = (ACL *)&buffer_acl, *acl2;
+    char buffer_acl[256], buffer[MAX_PATH];
+    ACL *acl = (ACL *)&buffer_acl, *acl2, *acl_child;
     BOOL defaulted, present, ret, found;
     HANDLE token, token2, token3;
+    EXPLICIT_ACCESSW exp_access;
+    PROCESS_INFORMATION info;
+    DWORD size, index, retd;
     ACCESS_ALLOWED_ACE *ace;
     SECURITY_ATTRIBUTES sa;
-    DWORD size, index;
+    STARTUPINFOA startup;
     PSID psid;
 
     if (!pDuplicateTokenEx || !pConvertStringSidToSidA || !pAddAccessAllowedAceEx || !pGetAce
@@ -6827,11 +6830,116 @@ static void test_token_security_descriptor(void)
 
     HeapFree(GetProcessHeap(), 0, sd2);
 
+    /* When creating a child process, the process does inherit the token of
+     * the parent but not the DACL of the token */
+    ret = GetKernelObjectSecurity(token, DACL_SECURITY_INFORMATION, NULL, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Unexpected GetKernelObjectSecurity return value %d, error %u\n", ret, GetLastError());
+
+    sd2 = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetKernelObjectSecurity(token, DACL_SECURITY_INFORMATION, sd2, size, &size);
+    ok(ret, "GetKernelObjectSecurity failed with error %u\n", GetLastError());
+
+    acl2 = (void *)0xdeadbeef;
+    present = FALSE;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorDacl(sd2, &present, &acl2, &defaulted);
+    ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
+    todo_wine
+    ok(present, "DACL not present\n");
+    ok(acl2 != (void *)0xdeadbeef, "DACL not set\n");
+    ok(!defaulted, "DACL defaulted\n");
+
+    exp_access.grfAccessPermissions = GENERIC_ALL;
+    exp_access.grfAccessMode = GRANT_ACCESS;
+    exp_access.grfInheritance = NO_PROPAGATE_INHERIT_ACE;
+    exp_access.Trustee.pMultipleTrustee = NULL;
+    exp_access.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+    exp_access.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    exp_access.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+    exp_access.Trustee.ptstrName = (void*)psid;
+
+    retd = pSetEntriesInAclW(1, &exp_access, acl2, &acl_child);
+    ok(retd == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", retd);
+
+    memset(sd, 0, sizeof(buffer_sd));
+    ret = InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
+    ok(ret, "InitializeSecurityDescriptor failed with error %u\n", GetLastError());
+
+    ret = SetSecurityDescriptorDacl(sd, TRUE, acl_child, FALSE);
+    ok(ret, "SetSecurityDescriptorDacl failed with error %u\n", GetLastError());
+
+    ret = SetKernelObjectSecurity(token, DACL_SECURITY_INFORMATION, sd);
+    ok(ret, "SetKernelObjectSecurity failed with error %u\n", GetLastError());
+
+    /* Start child process with our modified token */
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+
+    sprintf(buffer, "%s tests/security.c test_token_sd", myARGV[0]);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
+    ok(ret, "CreateProcess failed with error %u\n", GetLastError());
+    winetest_wait_child_process(info.hProcess);
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+
+    LocalFree(acl_child);
     LocalFree(psid);
 
     CloseHandle(token3);
     CloseHandle(token2);
     CloseHandle(token);
+}
+
+static void test_child_token_sd(void)
+{
+    BOOL ret, present, defaulted;
+    ACCESS_ALLOWED_ACE *acc_ace;
+    SECURITY_DESCRIPTOR *sd;
+    DWORD size, i;
+    HANDLE token;
+    PSID psid;
+    ACL *acl;
+
+    ret = pConvertStringSidToSidA("S-1-5-6", &psid);
+    ok(ret, "ConvertStringSidToSidA failed with error %u\n", GetLastError());
+
+    ret = OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, &token);
+    ok(ret, "OpenProcessToken failed with error %u\n", GetLastError());
+
+    ret = GetKernelObjectSecurity(token, DACL_SECURITY_INFORMATION, NULL, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Unexpected GetKernelObjectSecurity return value %d, error %u\n", ret, GetLastError());
+
+    sd = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetKernelObjectSecurity(token, DACL_SECURITY_INFORMATION, sd, size, &size);
+    ok(ret, "GetKernelObjectSecurity failed with error %u\n", GetLastError());
+
+    acl = NULL;
+    present = FALSE;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorDacl(sd, &present, &acl, &defaulted);
+    ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
+    todo_wine ok(present, "DACL not present\n");
+
+    if (present && acl)
+    {
+        ok(acl != (void *)0xdeadbeef, "DACL not set\n");
+        ok(!defaulted, "DACL defaulted\n");
+
+        ok(acl->AceCount, "Expected at least one ACE\n");
+        for (i = 0; i < acl->AceCount; i++)
+        {
+            ok(pGetAce(acl, i, (void **)&acc_ace), "GetAce failed with error %u\n", GetLastError());
+            ok(acc_ace->Header.AceType != ACCESS_ALLOWED_ACE_TYPE || !EqualSid(&acc_ace->SidStart, psid),
+               "ACE inherited from the parent\n");
+        }
+    }
+
+    LocalFree(psid);
+    HeapFree(GetProcessHeap(), 0, sd);
 }
 
 START_TEST(security)
@@ -6841,7 +6949,10 @@ START_TEST(security)
 
     if (myARGC >= 3)
     {
-        test_process_security_child();
+        if (!strcmp(myARGV[2], "test_token_sd"))
+            test_child_token_sd();
+        else
+            test_process_security_child();
         return;
     }
     test_kernel_objects_security();
@@ -6883,5 +6994,7 @@ START_TEST(security)
     test_GetSidIdentifierAuthority();
     test_pseudo_tokens();
     test_maximum_allowed();
+
+    /* Must be the last test, modifies process token */
     test_token_security_descriptor();
 }
