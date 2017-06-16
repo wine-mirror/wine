@@ -6718,6 +6718,8 @@ static void test_maximum_allowed(void)
 
 static void test_token_security_descriptor(void)
 {
+    static SID low_level = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
+                            {SECURITY_MANDATORY_LOW_RID}};
     char buffer_sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
     SECURITY_DESCRIPTOR *sd = (SECURITY_DESCRIPTOR *)&buffer_sd, *sd2;
     char buffer_acl[256], buffer[MAX_PATH];
@@ -6872,6 +6874,28 @@ static void test_token_security_descriptor(void)
     ret = SetKernelObjectSecurity(token, DACL_SECURITY_INFORMATION, sd);
     ok(ret, "SetKernelObjectSecurity failed with error %u\n", GetLastError());
 
+    /* The security label is also not inherited */
+    if (pAddMandatoryAce)
+    {
+        ret = InitializeAcl(acl, 256, ACL_REVISION);
+        ok(ret, "InitializeAcl failed with error %u\n", GetLastError());
+
+        ret = pAddMandatoryAce(acl, ACL_REVISION, 0, SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, &low_level);
+        ok(ret, "AddMandatoryAce failed with error %u\n", GetLastError());
+
+        memset(sd, 0, sizeof(buffer_sd));
+        ret = InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
+        ok(ret, "InitializeSecurityDescriptor failed with error %u\n", GetLastError());
+
+        ret = SetSecurityDescriptorSacl(sd, TRUE, acl, FALSE);
+        ok(ret, "SetSecurityDescriptorSacl failed with error %u\n", GetLastError());
+
+        ret = SetKernelObjectSecurity(token, LABEL_SECURITY_INFORMATION, sd);
+        ok(ret, "SetKernelObjectSecurity failed with error %u\n", GetLastError());
+    }
+    else
+        win_skip("SYSTEM_MANDATORY_LABEL not supported\n");
+
     /* Start child process with our modified token */
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -6895,6 +6919,9 @@ static void test_token_security_descriptor(void)
 
 static void test_child_token_sd(void)
 {
+    static SID low_level = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
+                            {SECURITY_MANDATORY_LOW_RID}};
+    SYSTEM_MANDATORY_LABEL_ACE *ace_label;
     BOOL ret, present, defaulted;
     ACCESS_ALLOWED_ACE *acc_ace;
     SECURITY_DESCRIPTOR *sd;
@@ -6939,6 +6966,43 @@ static void test_child_token_sd(void)
     }
 
     LocalFree(psid);
+    HeapFree(GetProcessHeap(), 0, sd);
+
+    if (!pAddMandatoryAce)
+    {
+        win_skip("SYSTEM_MANDATORY_LABEL not supported\n");
+        return;
+    }
+
+    ret = GetKernelObjectSecurity(token, LABEL_SECURITY_INFORMATION, NULL, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Unexpected GetKernelObjectSecurity return value %d, error %u\n", ret, GetLastError());
+
+    sd = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetKernelObjectSecurity(token, LABEL_SECURITY_INFORMATION, sd, size, &size);
+    ok(ret, "GetKernelObjectSecurity failed with error %u\n", GetLastError());
+
+    acl = NULL;
+    present = FALSE;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorSacl(sd, &present, &acl, &defaulted);
+    ok(ret, "GetSecurityDescriptorSacl failed with error %u\n", GetLastError());
+    todo_wine ok(present, "SACL not present\n");
+
+    if (present && acl)
+    {
+        ok(acl != (void *)0xdeadbeef, "Got invalid SACL\n");
+        ok(!defaulted, "SACL defaulted\n");
+
+        ok(acl->AceCount == 1, "Expected exactly one ACE\n");
+        ret = pGetAce(acl, 0, (void **)&ace_label);
+        ok(ret, "GetAce failed with error %u\n", GetLastError());
+        ok(ace_label->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE,
+           "Unexpected ACE type %#x\n", ace_label->Header.AceType);
+        ok(!EqualSid(&ace_label->SidStart, &low_level),
+           "Low integrity level should not have been inherited\n");
+    }
+
     HeapFree(GetProcessHeap(), 0, sd);
 }
 
