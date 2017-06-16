@@ -806,7 +806,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             HeapFree(GetProcessHeap(), 0, keyPath);
         } else if (hWndDelete == g_pChildWnd->hListWnd) {
-            unsigned int num_selected, index;
+            unsigned int num_selected, index, focus_idx;
             WCHAR *keyPath;
 
             if (!(num_selected = SendMessageW(g_pChildWnd->hListWnd, LVM_GETSELECTEDCOUNT, 0, 0L)))
@@ -821,7 +821,9 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
 
+            focus_idx = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_FOCUSED, 0));
             index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_SELECTED, 0));
+
             while (index != -1)
             {
                 WCHAR *valueName = GetItemText(g_pChildWnd->hListWnd, index);
@@ -832,6 +834,17 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 HeapFree(GetProcessHeap(), 0, valueName);
                 SendMessageW(g_pChildWnd->hListWnd, LVM_DELETEITEM, index, 0L);
+                /* the default value item is always visible, so add it back in */
+                if (!index)
+                {
+                    AddEntryToList(g_pChildWnd->hListWnd, NULL, REG_SZ, NULL, 0, 0);
+                    if (!focus_idx)
+                    {
+                        LVITEMW item;
+                        item.state = item.stateMask = LVIS_FOCUSED;
+                        SendMessageW(g_pChildWnd->hListWnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+                    }
+                }
                 index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_SELECTED, 0));
             }
             HeapFree(GetProcessHeap(), 0, keyPath);

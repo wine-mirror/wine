@@ -483,7 +483,8 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPW
     }
 
     /* Add the new item to the listview */
-    index = AddEntryToList(g_pChildWnd->hListWnd, valueName, valueType, (BYTE *)&valueDword, sizeof(DWORD));
+    index = AddEntryToList(g_pChildWnd->hListWnd, valueName, valueType,
+                           (BYTE *)&valueDword, sizeof(DWORD), -1);
     item.state = LVIS_FOCUSED | LVIS_SELECTED;
     item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
     SendMessageW(g_pChildWnd->hListWnd, LVM_SETITEMSTATE, index, (LPARAM)&item);

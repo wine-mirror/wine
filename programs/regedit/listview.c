@@ -157,7 +157,7 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
     }
 }
 
-int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount)
+int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount, int pos)
 {
     LINE_INFO* linfo;
     LVITEMW item;
@@ -178,7 +178,7 @@ int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWOR
     }
 
     item.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE | LVIF_IMAGE;
-    item.iItem = SendMessageW(hwndLV, LVM_GETITEMCOUNT, 0, 0);
+    item.iItem = (pos == -1) ? SendMessageW(hwndLV, LVM_GETITEMCOUNT, 0, 0) : pos;
     item.iSubItem = 0;
     item.state = 0;
     item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
@@ -557,7 +557,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
 
     valSize = max_val_size;
     if (RegQueryValueExW(hKey, NULL, NULL, &valType, valBuf, &valSize) == ERROR_FILE_NOT_FOUND) {
-        AddEntryToList(hwndLV, NULL, REG_SZ, NULL, 0);
+        AddEntryToList(hwndLV, NULL, REG_SZ, NULL, 0, -1);
     }
     for(index = 0; index < val_count; index++) {
         valNameLen = max_val_name_len;
@@ -566,7 +566,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
         errCode = RegEnumValueW(hKey, index, valName, &valNameLen, NULL, &valType, valBuf, &valSize);
 	if (errCode != ERROR_SUCCESS) goto done;
         valBuf[valSize] = 0;
-        AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize);
+        AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize, -1);
     }
 
     memset(&item, 0, sizeof(item));
