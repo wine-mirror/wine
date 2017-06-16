@@ -70,6 +70,7 @@ static const SID interactive_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY },
 static const SID anonymous_logon_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_ANONYMOUS_LOGON_RID } };
 static const SID authenticated_user_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_AUTHENTICATED_USER_RID } };
 static const SID local_system_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_LOCAL_SYSTEM_RID } };
+static const SID high_label_sid = { SID_REVISION, 1, { SECURITY_MANDATORY_LABEL_AUTHORITY }, { SECURITY_MANDATORY_HIGH_RID } };
 static const struct /* same fields as struct SID */
 {
     BYTE Revision;
@@ -100,6 +101,7 @@ const PSID security_local_system_sid = (PSID)&local_system_sid;
 const PSID security_local_user_sid = (PSID)&local_user_sid;
 const PSID security_builtin_admins_sid = (PSID)&builtin_admins_sid;
 const PSID security_builtin_users_sid = (PSID)&builtin_users_sid;
+const PSID security_high_label_sid = (PSID)&high_label_sid;
 
 static luid_t prev_luid_value = { 1000, 0 };
 
@@ -725,6 +727,56 @@ struct sid_data
     int count;
     unsigned int subauth[MAX_SUBAUTH_COUNT];
 };
+
+static struct security_descriptor *create_security_label_sd( struct token *token, PSID label_sid )
+{
+    size_t sid_len = security_sid_len( label_sid ), sacl_size, sd_size;
+    SYSTEM_MANDATORY_LABEL_ACE *smla;
+    struct security_descriptor *sd;
+    ACL *sacl;
+
+    sacl_size = sizeof(ACL) + FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart) + sid_len;
+    sd_size = sizeof(struct security_descriptor) + sacl_size;
+    if (!(sd = mem_alloc( sd_size )))
+        return NULL;
+
+    sd->control   = SE_SACL_PRESENT;
+    sd->owner_len = 0;
+    sd->group_len = 0;
+    sd->sacl_len  = sacl_size;
+    sd->dacl_len  = 0;
+
+    sacl = (ACL *)(sd + 1);
+    sacl->AclRevision = ACL_REVISION;
+    sacl->Sbz1 = 0;
+    sacl->AclSize = sacl_size;
+    sacl->AceCount = 1;
+    sacl->Sbz2 = 0;
+
+    smla = (SYSTEM_MANDATORY_LABEL_ACE *)(sacl + 1);
+    smla->Header.AceType = SYSTEM_MANDATORY_LABEL_ACE_TYPE;
+    smla->Header.AceFlags = 0;
+    smla->Header.AceSize = FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart) + sid_len;
+    smla->Mask = SYSTEM_MANDATORY_LABEL_NO_WRITE_UP;
+    memcpy( &smla->SidStart, label_sid, sid_len );
+
+    assert( sd_is_valid( sd, sd_size ) );
+    return sd;
+}
+
+int token_assign_label( struct token *token, PSID label )
+{
+    struct security_descriptor *sd;
+    int ret = 0;
+
+    if ((sd = create_security_label_sd( token, label )))
+    {
+        ret = set_sd_defaults_from_token( &token->obj, sd, LABEL_SECURITY_INFORMATION, token );
+        free( sd );
+    }
+
+    return ret;
+}
 
 struct token *token_create_admin( void )
 {

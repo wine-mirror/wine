@@ -6847,7 +6847,6 @@ static void test_token_security_descriptor(void)
     defaulted = TRUE;
     ret = GetSecurityDescriptorDacl(sd2, &present, &acl2, &defaulted);
     ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
-    todo_wine
     ok(present, "DACL not present\n");
     ok(acl2 != (void *)0xdeadbeef, "DACL not set\n");
     ok(!defaulted, "DACL defaulted\n");
@@ -6949,20 +6948,16 @@ static void test_child_token_sd(void)
     defaulted = TRUE;
     ret = GetSecurityDescriptorDacl(sd, &present, &acl, &defaulted);
     ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
-    todo_wine ok(present, "DACL not present\n");
+    ok(present, "DACL not present\n");
+    ok(acl && acl != (void *)0xdeadbeef, "Got invalid DACL\n");
+    ok(!defaulted, "DACL defaulted\n");
 
-    if (present && acl)
+    ok(acl->AceCount, "Expected at least one ACE\n");
+    for (i = 0; i < acl->AceCount; i++)
     {
-        ok(acl != (void *)0xdeadbeef, "DACL not set\n");
-        ok(!defaulted, "DACL defaulted\n");
-
-        ok(acl->AceCount, "Expected at least one ACE\n");
-        for (i = 0; i < acl->AceCount; i++)
-        {
-            ok(pGetAce(acl, i, (void **)&acc_ace), "GetAce failed with error %u\n", GetLastError());
-            ok(acc_ace->Header.AceType != ACCESS_ALLOWED_ACE_TYPE || !EqualSid(&acc_ace->SidStart, psid),
-               "ACE inherited from the parent\n");
-        }
+        ok(pGetAce(acl, i, (void **)&acc_ace), "GetAce failed with error %u\n", GetLastError());
+        ok(acc_ace->Header.AceType != ACCESS_ALLOWED_ACE_TYPE || !EqualSid(&acc_ace->SidStart, psid),
+           "ACE inherited from the parent\n");
     }
 
     LocalFree(psid);
@@ -6987,21 +6982,16 @@ static void test_child_token_sd(void)
     defaulted = TRUE;
     ret = GetSecurityDescriptorSacl(sd, &present, &acl, &defaulted);
     ok(ret, "GetSecurityDescriptorSacl failed with error %u\n", GetLastError());
-    todo_wine ok(present, "SACL not present\n");
-
-    if (present && acl)
-    {
-        ok(acl != (void *)0xdeadbeef, "Got invalid SACL\n");
-        ok(!defaulted, "SACL defaulted\n");
-
-        ok(acl->AceCount == 1, "Expected exactly one ACE\n");
-        ret = pGetAce(acl, 0, (void **)&ace_label);
-        ok(ret, "GetAce failed with error %u\n", GetLastError());
-        ok(ace_label->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE,
-           "Unexpected ACE type %#x\n", ace_label->Header.AceType);
-        ok(!EqualSid(&ace_label->SidStart, &low_level),
-           "Low integrity level should not have been inherited\n");
-    }
+    ok(present, "SACL not present\n");
+    ok(acl && acl != (void *)0xdeadbeef, "Got invalid SACL\n");
+    ok(!defaulted, "SACL defaulted\n");
+    ok(acl->AceCount == 1, "Expected exactly one ACE\n");
+    ret = pGetAce(acl, 0, (void **)&ace_label);
+    ok(ret, "GetAce failed with error %u\n", GetLastError());
+    ok(ace_label->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE,
+       "Unexpected ACE type %#x\n", ace_label->Header.AceType);
+    ok(!EqualSid(&ace_label->SidStart, &low_level),
+       "Low integrity level should not have been inherited\n");
 
     HeapFree(GetProcessHeap(), 0, sd);
 }
