@@ -1883,6 +1883,27 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
         }
         break;
     }
+    case LineCapTriangle:
+    {
+        REAL segment_dy = nextpoint->Y-endpoint->Y;
+        REAL segment_dx = nextpoint->X-endpoint->X;
+        REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        REAL distance = pen->width/2.0;
+        REAL dx, dy;
+
+        dx = distance * segment_dx / segment_length;
+        dy = distance * segment_dy / segment_length;
+
+        if (add_first_points) {
+            add_bevel_point(endpoint, nextpoint, pen, 1, last_point);
+
+            *last_point = add_path_list_node(*last_point, endpoint->X - dx,
+                endpoint->Y - dy, PathPointTypeLine);
+        }
+        if (add_last_point)
+            add_bevel_point(endpoint, nextpoint, pen, 0, last_point);
+        break;
+    }
     }
 }
 
@@ -2118,10 +2139,10 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     {
         last_point = points;
 
-        if (pen->endcap > LineCapRound)
+        if (pen->endcap > LineCapTriangle)
             FIXME("unimplemented end cap %x\n", pen->endcap);
 
-        if (pen->startcap > LineCapRound)
+        if (pen->startcap > LineCapTriangle)
             FIXME("unimplemented start cap %x\n", pen->startcap);
 
         if (pen->dashcap != DashCapFlat)
