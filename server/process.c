@@ -592,7 +592,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
  error:
     if (process) release_object( process );
     /* if we failed to start our first process, close everything down */
-    if (!running_processes) close_master_socket( 0 );
+    if (!running_processes && master_socket_timeout != TIMEOUT_INFINITE) close_master_socket( 0 );
     return NULL;
 }
 
