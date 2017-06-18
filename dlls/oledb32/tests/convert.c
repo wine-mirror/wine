@@ -2715,6 +2715,13 @@ static void test_getconversionsize(void)
     VARIANT var;
     SAFEARRAY *psa = NULL;
     SAFEARRAYBOUND rgsabound[1];
+    int i4 = 200;
+    WORD i2 = 201;
+    char i1 = 203;
+    FLOAT f4 = 1.0;
+    LONGLONG i8 = 202;
+    DATE dbdate;
+    DECIMAL dec;
 
     /* same way as CanConvert fails here */
     dst_len = 0;
@@ -2846,20 +2853,265 @@ static void test_getconversionsize(void)
     V_VT(&var) = VT_NULL;
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_STR, NULL, &dst_len, &var);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
 
     V_VT(&var) = VT_NULL;
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_WSTR, NULL, &dst_len, &var);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
 
     src_len = 20;
     V_VT(&var) = VT_NULL;
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_VARIANT, DBTYPE_BYTES, &src_len, &dst_len, &var);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
     VariantClear(&var);
 
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_NUMERIC, DBTYPE_NUMERIC, NULL, &dst_len, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(dst_len == sizeof(DB_NUMERIC), "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i4);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I4, DBTYPE_WSTR, &src_len, &dst_len, &i4);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I4, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i4);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI4, DBTYPE_WSTR, &src_len, &dst_len, &i4);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI4, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i2);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I2, DBTYPE_WSTR, &src_len, &dst_len, &i2);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I2, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i2);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI2, DBTYPE_WSTR, &src_len, &dst_len, &i2);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i1);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I1, DBTYPE_WSTR, &src_len, &dst_len, &i1);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I1, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i2);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI2, DBTYPE_WSTR, &src_len, &dst_len, &i2);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI2, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(f4);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_R4, DBTYPE_WSTR, &src_len, &dst_len, &f4);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_R4, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i8);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI8, DBTYPE_WSTR, &src_len, &dst_len, &i8);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI8, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i8);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I8, DBTYPE_WSTR, &src_len, &dst_len, &i8);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I8, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(dbdate);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DATE, DBTYPE_WSTR, &src_len, &dst_len, &dbdate);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DATE, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(dec);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DECIMAL, DBTYPE_WSTR, &src_len, &dst_len, &dec);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DECIMAL, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_EMPTY, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i4);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I4, DBTYPE_STR, &src_len, &dst_len, &i4);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I4, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i4);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI4, DBTYPE_STR, &src_len, &dst_len, &i4);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI4, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i2);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I2, DBTYPE_STR, &src_len, &dst_len, &i2);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I2, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i2);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI2, DBTYPE_STR, &src_len, &dst_len, &i2);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i1);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I1, DBTYPE_STR, &src_len, &dst_len, &i1);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I1, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i2);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI2, DBTYPE_STR, &src_len, &dst_len, &i2);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI2, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(f4);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_R4, DBTYPE_STR, &src_len, &dst_len, &f4);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_R4, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i8);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI8, DBTYPE_STR, &src_len, &dst_len, &i8);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_UI8, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(i8);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I8, DBTYPE_STR, &src_len, &dst_len, &i8);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_I8, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(dbdate);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DATE, DBTYPE_STR, &src_len, &dst_len, &dbdate);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DATE, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(dec);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DECIMAL, DBTYPE_STR, &src_len, &dst_len, &dec);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DECIMAL, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_EMPTY, DBTYPE_STR, NULL, &dst_len, NULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(dst_len == 110, "%ld\n", dst_len);
 }
 
 static void test_converttobytes(void)
