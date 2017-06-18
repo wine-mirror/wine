@@ -1008,7 +1008,7 @@ static HRESULT build_standard_header( struct msg *msg, WS_HEADER_TYPE type, WS_T
 
     if (!(header = alloc_header( type, FALSE, get_header_name(type), NULL ))) return E_OUTOFMEMORY;
 
-    if (!msg->writer && (hr = WsCreateWriter( NULL, 0, &msg->writer, NULL )) != S_OK) return hr;
+    if (!msg->writer && (hr = WsCreateWriter( NULL, 0, &msg->writer, NULL )) != S_OK) goto done;
     if ((hr = WsCreateXmlBuffer( msg->heap, NULL, 0, &buf, NULL )) != S_OK) goto done;
     if ((hr = WsSetOutputToBuffer( msg->writer, buf, NULL, 0, NULL )) != S_OK) goto done;
     if ((hr = write_standard_header( msg, type, value_type, option, value, size )) != S_OK) goto done;
