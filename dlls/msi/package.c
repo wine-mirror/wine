@@ -1818,8 +1818,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
 
     if (gUIHandlerRecord && (gUIFilterRecord & log_type))
     {
-        MSIHANDLE rec = MsiCreateRecord( 1 );
-        MsiRecordSetStringW( rec, 0, message );
+        MSIHANDLE rec = alloc_msihandle(&record->hdr);
         TRACE("Calling UI handler %p(pvContext=%p, iMessageType=%08x, hRecord=%u)\n",
               gUIHandlerRecord, gUIContextRecord, eMessageType, rec);
         rc = gUIHandlerRecord( gUIContextRecord, eMessageType, rec );

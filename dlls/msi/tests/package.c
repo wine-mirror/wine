@@ -9096,7 +9096,6 @@ static INT CALLBACK externalui_record_callback(void *context, UINT message_type,
     r = MsiRecordGetFieldCount(hrecord);
     ok(r == 1, "expected 1, got %u\n", r);
     r = MsiRecordGetInteger(hrecord, 1);
-    todo_wine
     ok(r == 12345, "expected 12345, got %u\n", r);
     return retval;
 }
