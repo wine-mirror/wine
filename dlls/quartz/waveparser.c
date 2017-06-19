@@ -43,9 +43,8 @@ typedef struct WAVEParserImpl
     ParserImpl Parser;
     LONGLONG StartOfFile; /* in media time */
     LONGLONG EndOfFile;
-    DWORD dwSampleSize;
-    DWORD nSamplesPerSec;
-    DWORD dwLength;
+    DWORD nAvgBytesPerSec;
+    DWORD nBlockAlign;
 } WAVEParserImpl;
 
 static inline WAVEParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
@@ -62,7 +61,7 @@ static LONGLONG bytepos_to_duration(WAVEParserImpl *This, LONGLONG bytepos)
 {
     LONGLONG duration = BYTES_FROM_MEDIATIME(bytepos - This->StartOfFile);
     duration *= 10000000;
-    duration /= (This->dwSampleSize * This->nSamplesPerSec);
+    duration /= This->nAvgBytesPerSec;
 
     return duration;
 }
@@ -71,11 +70,11 @@ static LONGLONG duration_to_bytepos(WAVEParserImpl *This, LONGLONG duration)
 {
     LONGLONG bytepos;
 
-    bytepos = (This->dwSampleSize * This->nSamplesPerSec);
+    bytepos = This->nAvgBytesPerSec;
     bytepos *= duration;
     bytepos /= 10000000;
+    bytepos -= bytepos % This->nBlockAlign;
     bytepos += BYTES_FROM_MEDIATIME(This->StartOfFile);
-    bytepos -= bytepos % This->dwSampleSize;
 
     return MEDIATIME_FROM_BYTES(bytepos);
 }
@@ -252,7 +251,6 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
     PIN_INFO piOutput;
     AM_MEDIA_TYPE amt;
     WAVEParserImpl * pWAVEParser = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
-    LONGLONG length, avail;
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = &pWAVEParser->Parser.filter.IBaseFilter_iface;
@@ -321,10 +319,8 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
     props->cbPrefix = 0;
     props->cbBuffer = 4096;
     props->cBuffers = 3;
-    pWAVEParser->dwSampleSize = ((WAVEFORMATEX*)amt.pbFormat)->nBlockAlign;
-    IAsyncReader_Length(This->pReader, &length, &avail);
-    pWAVEParser->dwLength = length / (ULONGLONG)pWAVEParser->dwSampleSize;
-    pWAVEParser->nSamplesPerSec = ((WAVEFORMATEX*)amt.pbFormat)->nSamplesPerSec;
+    pWAVEParser->nBlockAlign = ((WAVEFORMATEX*)amt.pbFormat)->nBlockAlign;
+    pWAVEParser->nAvgBytesPerSec = ((WAVEFORMATEX*)amt.pbFormat)->nAvgBytesPerSec;
     hr = Parser_AddPin(&(pWAVEParser->Parser), &piOutput, props, &amt);
     CoTaskMemFree(amt.pbFormat);
 
