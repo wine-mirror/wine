@@ -3230,7 +3230,7 @@ PS_OUTPUT RenderScenePS( VS_OUTPUT In, uniform bool2x3 mb)
         Output.RGBColor.xy += mul(Output.RGBColor, m3x2column);
         Output.RGBColor.xy += mul(Output.RGBColor, m3x2row);
     }
-    if (mb2x3column[0][1])
+    if (mb2x3column[0][0])
     {
         Output.RGBColor += sin(Output.RGBColor);
         Output.RGBColor += cos(Output.RGBColor);
@@ -3486,7 +3486,7 @@ static const DWORD test_effect_preshader_effect_blob[] =
     0x00000002, 0x00000118, 0x00000128, 0x00000148, 0x00060002, 0x00000002, 0x00000150, 0x00000160,
     0x00000180, 0x00000002, 0x00000003, 0x0000018c, 0x0000019c, 0x000001cc, 0x000a0002, 0x00000002,
     0x000001d4, 0x000001e4, 0x00000204, 0x000c0002, 0x00000002, 0x00000210, 0x00000220, 0x00000240,
-    0x00030002, 0x00000003, 0x00000248, 0x00000258, 0x00000288, 0x00050000, 0x00000002, 0x00000294,
+    0x00030002, 0x00000003, 0x00000248, 0x00000258, 0x00000288, 0x00050000, 0x00000001, 0x00000294,
     0x000002a4, 0x000002bc, 0x00000000, 0x00000005, 0x000002c8, 0x000002a4, 0x000002d8, 0x00000003,
     0x00000001, 0x000002e4, 0x00000000, 0x56695f67, 0x00746365, 0x00020001, 0x00040001, 0x00000001,
     0x00000000, 0x00000004, 0x00000003, 0x00000002, 0x00000001, 0x3278326d, 0x756c6f63, 0xab006e6d,
@@ -3543,7 +3543,7 @@ static const DWORD test_effect_preshader_effect_blob[] =
     0x80e40003, 0xa0e4000d, 0x03000002, 0x80030000, 0x80e40000, 0x80e40003, 0x03000005, 0x800c0000,
     0x80550000, 0xa0440004, 0x04000004, 0x800c0000, 0x80000000, 0xa0440003, 0x80e40000, 0x04000004,
     0x800c0000, 0x80aa0003, 0xa0440005, 0x80e40000, 0x03000002, 0x80030003, 0x80ee0000, 0x80e40000,
-    0x0000002a, 0x02000001, 0x80080003, 0x90ff0001, 0x0000002b, 0x01000028, 0xe0e40806, 0x04000004,
+    0x0000002a, 0x02000001, 0x80080003, 0x90ff0001, 0x0000002b, 0x01000028, 0xe0e40805, 0x04000004,
     0x800f0000, 0x80e40003, 0xa0550010, 0xa0aa0010, 0x02000013, 0x800f0000, 0x80e40000, 0x04000004,
     0x800f0000, 0x80e40000, 0xa000000f, 0xa055000f, 0x03000005, 0x800f0000, 0x80e40000, 0x80e40000,
     0x04000004, 0x800f0002, 0x80e40000, 0xa0aa000f, 0xa0ff000f, 0x04000004, 0x800f0002, 0x80e40000,
@@ -4317,7 +4317,7 @@ got (%g, %g, %g, %g), parameter %s.\n",
 
 static const BOOL test_effect_preshader_bconsts[] =
 {
-    TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE
+    TRUE, FALSE, TRUE, FALSE, TRUE, TRUE
 };
 
 static void test_effect_preshader_clear_pbool_consts(IDirect3DDevice9 *device)
@@ -6057,7 +6057,7 @@ static void test_effect_state_manager(IDirect3DDevice9 *device)
         {14, 0, 0},
         {15, 0, 14},
         {16, 0, 1},
-        {17, 0, 7},
+        {17, 0, 6},
     };
     static D3DLIGHT9 light_filler =
             {D3DLIGHT_DIRECTIONAL, {0.5f, 0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f, 0.5f}};
