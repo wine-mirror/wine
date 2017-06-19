@@ -204,6 +204,9 @@
 /* Define to 1 if you have the `getauxval' function. */
 #undef HAVE_GETAUXVAL
 
+/* Define to 1 if you have the `getifaddrs' function. */
+#undef HAVE_GETIFADDRS
+
 /* Define to 1 if you have the `getnameinfo' function. */
 #undef HAVE_GETNAMEINFO
 

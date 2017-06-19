@@ -15403,6 +15403,7 @@ for ac_func in \
 	futimesat \
 	getattrlist \
 	getauxval \
+	getifaddrs \
 	getopt_long_only \
 	getpwuid \
 	gettimeofday \

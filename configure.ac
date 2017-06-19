@@ -2047,6 +2047,7 @@ AC_CHECK_FUNCS(\
 	futimesat \
 	getattrlist \
 	getauxval \
+	getifaddrs \
 	getopt_long_only \
 	getpwuid \
 	gettimeofday \

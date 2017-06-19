@@ -815,7 +815,7 @@ static DWORD getIPAddrRowByName(PMIB_IPADDRROW ipAddrRow, const char *ifName,
   return ret;
 }
 
-#ifdef HAVE_IFADDRS_H
+#if defined(HAVE_IFADDRS_H) && defined(HAVE_GETIFADDRS)
 
 /* Counts the IPv4 addresses in the system using the return value from
  * getifaddrs, returning the count.
