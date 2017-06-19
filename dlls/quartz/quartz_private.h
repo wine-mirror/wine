@@ -33,6 +33,7 @@
 #include "wine/strmbase.h"
 #include "wine/list.h"
 
+/* see IAsyncReader::Request on MSDN for the explanation of this */
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 #define SEC_FROM_MEDIATIME(time) ((time) / 10000000)
 #define BYTES_FROM_MEDIATIME(time) SEC_FROM_MEDIATIME(time)
