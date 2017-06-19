@@ -1819,20 +1819,20 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     msg = msi_alloc( len );
     WideCharToMultiByte( CP_ACP, 0, message, -1, msg, len, NULL, NULL );
 
-    if (gUIHandlerW && (gUIFilter & log_type))
-    {
-        rc = gUIHandlerW( gUIContext, eMessageType, message );
-    }
-    else if (gUIHandlerA && (gUIFilter & log_type))
-    {
-        rc = gUIHandlerA( gUIContext, eMessageType, msg );
-    }
-    else if (gUIHandlerRecord && (gUIFilter & log_type))
+    if (gUIHandlerRecord && (gUIFilter & log_type))
     {
         MSIHANDLE rec = MsiCreateRecord( 1 );
         MsiRecordSetStringW( rec, 0, message );
         rc = gUIHandlerRecord( gUIContext, eMessageType, rec );
         MsiCloseHandle( rec );
+    }
+    if (!rc && gUIHandlerW && (gUIFilter & log_type))
+    {
+        rc = gUIHandlerW( gUIContext, eMessageType, message );
+    }
+    else if (!rc && gUIHandlerA && (gUIFilter & log_type))
+    {
+        rc = gUIHandlerA( gUIContext, eMessageType, msg );
     }
 
     if (!rc && package->log_file != INVALID_HANDLE_VALUE &&
@@ -1882,7 +1882,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         break;
     }
 
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
