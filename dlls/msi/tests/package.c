@@ -9159,11 +9159,19 @@ static void test_externalui(void)
         retval = 1;
         externalui_ran = externalui_record_ran = 0;
         r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
-        todo_wine
         ok(r == 1, "expected 1, got %u\n", r);
-        todo_wine
         ok(externalui_ran == 0, "external UI callback should not have run\n");
         ok(externalui_record_ran == 1, "external UI record callback did not run\n");
+
+        /* filter and context should be kept separately */
+        r = pMsiSetExternalUIRecord(externalui_record_callback, INSTALLLOGMODE_ERROR, &retval, &prev_record);
+        ok(r == ERROR_SUCCESS, "MsiSetExternalUIRecord failed %u\n", r);
+
+        externalui_ran = externalui_record_ran = 0;
+        r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
+        ok(r == 0, "expected 0, got %u\n", r);
+        ok(externalui_ran == 1, "external UI callback did not run\n");
+        ok(externalui_record_ran == 0, "external UI record callback should not have run\n");
     }
     else
         win_skip("MsiSetExternalUIRecord is not available\n");

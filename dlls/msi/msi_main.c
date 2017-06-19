@@ -44,7 +44,9 @@ INSTALLUI_HANDLERA       gUIHandlerA      = NULL;
 INSTALLUI_HANDLERW       gUIHandlerW      = NULL;
 INSTALLUI_HANDLER_RECORD gUIHandlerRecord = NULL;
 DWORD                    gUIFilter        = 0;
+DWORD                    gUIFilterRecord  = 0;
 LPVOID                   gUIContext       = NULL;
+LPVOID                   gUIContextRecord = NULL;
 WCHAR                   *gszLogFile       = NULL;
 HINSTANCE msi_hInstance;
 

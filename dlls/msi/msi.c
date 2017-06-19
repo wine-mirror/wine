@@ -4222,8 +4222,8 @@ UINT WINAPI MsiSetExternalUIRecord( INSTALLUI_HANDLER_RECORD handler,
         *prev = gUIHandlerRecord;
 
     gUIHandlerRecord = handler;
-    gUIFilter        = filter;
-    gUIContext       = context;
+    gUIFilterRecord  = filter;
+    gUIContextRecord = context;
 
     return ERROR_SUCCESS;
 }

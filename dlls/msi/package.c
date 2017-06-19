@@ -1811,27 +1811,30 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         p[0] = 0;
     }
 
-    TRACE("%p %p %p %x %x %s\n", gUIHandlerA, gUIHandlerW, gUIHandlerRecord,
-          gUIFilter, log_type, debugstr_w(message));
-
     /* convert it to ASCII */
     len = WideCharToMultiByte( CP_ACP, 0, message, -1, NULL, 0, NULL, NULL );
     msg = msi_alloc( len );
     WideCharToMultiByte( CP_ACP, 0, message, -1, msg, len, NULL, NULL );
 
-    if (gUIHandlerRecord && (gUIFilter & log_type))
+    if (gUIHandlerRecord && (gUIFilterRecord & log_type))
     {
         MSIHANDLE rec = MsiCreateRecord( 1 );
         MsiRecordSetStringW( rec, 0, message );
-        rc = gUIHandlerRecord( gUIContext, eMessageType, rec );
+        TRACE("Calling UI handler %p(pvContext=%p, iMessageType=%08x, hRecord=%u)\n",
+              gUIHandlerRecord, gUIContextRecord, eMessageType, rec);
+        rc = gUIHandlerRecord( gUIContextRecord, eMessageType, rec );
         MsiCloseHandle( rec );
     }
     if (!rc && gUIHandlerW && (gUIFilter & log_type))
     {
+        TRACE("Calling UI handler %p(pvContext=%p, iMessageType=%08x, szMessage=%s)\n",
+              gUIHandlerW, gUIContext, eMessageType, debugstr_w(message));
         rc = gUIHandlerW( gUIContext, eMessageType, message );
     }
     else if (!rc && gUIHandlerA && (gUIFilter & log_type))
     {
+        TRACE("Calling UI handler %p(pvContext=%p, iMessageType=%08x, szMessage=%s)\n",
+              gUIHandlerA, gUIContext, eMessageType, debugstr_a(msg));
         rc = gUIHandlerA( gUIContext, eMessageType, msg );
     }
 
