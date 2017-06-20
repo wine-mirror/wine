@@ -264,6 +264,32 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
 
     switch (vt)
     {
+    case VT_I1:
+    {
+        LONGLONG res;
+
+        hr = PROPVAR_ConvertNumber(propvarSrc, 8, TRUE, &res);
+        if (SUCCEEDED(hr))
+        {
+            ppropvarDest->vt = VT_I1;
+            ppropvarDest->u.cVal = (char)res;
+        }
+        return hr;
+    }
+
+    case VT_UI1:
+    {
+        LONGLONG res;
+
+        hr = PROPVAR_ConvertNumber(propvarSrc, 8, FALSE, &res);
+        if (SUCCEEDED(hr))
+        {
+            ppropvarDest->vt = VT_UI1;
+            ppropvarDest->u.bVal = (UCHAR)res;
+        }
+        return hr;
+    }
+
     case VT_I2:
     {
         SHORT res;
