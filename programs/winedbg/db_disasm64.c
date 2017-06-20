@@ -280,8 +280,8 @@ static const struct inst db_inst_0f2x[] = {
 /*26*/	{ "mov",   TRUE,  LONG,  op2(El,TR),  0 },
 /*27*/	{ "",      FALSE, NONE,  0,	      0 },
 
-/*28*/	{ "",      FALSE, NONE,  0,	      0 },
-/*29*/	{ "",      FALSE, NONE,  0,	      0 },
+/*28*/	{ "movaps",TRUE,  NONE,  op2(E, XMM), 0 },
+/*29*/	{ "movaps",TRUE,  NONE,  op2(XMM, E), 0 },
 /*2a*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2b*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2c*/	{ "",      FALSE, NONE,  0,	      0 },
