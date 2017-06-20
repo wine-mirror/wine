@@ -5,4 +5,5 @@ C_SRCS = \
 	address.c \
 	discovery.c \
 	memory.c \
+	msgparams.c \
 	xml.c
