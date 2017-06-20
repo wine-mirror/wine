@@ -224,6 +224,7 @@ HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
             res = CoTaskMemAlloc(1*sizeof(WCHAR));
             res[0] = '\0';
             break;
+
         case VT_LPSTR:
             if(propvarIn->u.pszVal)
             {
@@ -237,6 +238,18 @@ HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
                 MultiByteToWideChar(CP_ACP, 0, propvarIn->u.pszVal, -1, res, len);
             }
             break;
+
+        case VT_LPWSTR:
+        case VT_BSTR:
+            if (propvarIn->u.pwszVal)
+            {
+                DWORD size = (lstrlenW(propvarIn->u.pwszVal) + 1) * sizeof(WCHAR);
+                res = CoTaskMemAlloc(size);
+                if(!res) return E_OUTOFMEMORY;
+                memcpy(res, propvarIn->u.pwszVal, size);
+            }
+            break;
+
         default:
             FIXME("Unsupported conversion (%d)\n", propvarIn->vt);
             hr = E_FAIL;
