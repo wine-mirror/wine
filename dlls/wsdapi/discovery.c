@@ -366,6 +366,7 @@ HRESULT WINAPI WSDCreateDiscoveryPublisher(IWSDXMLContext *pContext, IWSDiscover
         if (FAILED(WSDXMLCreateContext(&obj->xmlContext)))
         {
             WARN("Unable to create XML context\n");
+            HeapFree (GetProcessHeap(), 0, obj);
             return E_OUTOFMEMORY;
         }
     }
