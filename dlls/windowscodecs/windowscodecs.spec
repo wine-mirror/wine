@@ -109,7 +109,7 @@
 @ stdcall WICCreateColorContext_Proxy(ptr ptr)
 @ stdcall WICCreateImagingFactory_Proxy(long ptr)
 @ stub WICGetMetadataContentSize
-@ stub WICMapGuidToShortName
+@ stdcall WICMapGuidToShortName(ptr long ptr ptr)
 @ stub WICMapSchemaToName
 @ stub WICMapShortNameToGuid
 @ stub WICMatchMetadataContent
