@@ -124,12 +124,71 @@ static void LocalAddress_tests(void)
     ok(ret == 0, "WSACleanup failed: %d\n", ret);
 }
 
+static void RemoteAddress_tests(void)
+{
+    IWSDUdpAddress *origUdpAddress = NULL;
+    IWSDAddress *returnedAddress = NULL;
+    IWSDUdpMessageParameters *udpMessageParams = NULL;
+    WCHAR address[] = {'1','.','2','.','3','.','4',0};
+    WSADATA wsaData;
+    HRESULT rc;
+    int ret;
+
+    ret = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    ok(ret == 0, "WSAStartup failed: %d\n", ret);
+
+    rc = WSDCreateUdpMessageParameters(&udpMessageParams);
+    ok(rc == S_OK, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: %08x\n", rc);
+    ok(udpMessageParams != NULL, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: udpMessageParams == NULL\n");
+
+    rc = IWSDUdpMessageParameters_GetRemoteAddress(udpMessageParams, NULL);
+    todo_wine ok(rc == E_POINTER, "GetRemoteAddress failed: %08x\n", rc);
+    ok(returnedAddress == NULL, "GetRemoteAddress returned %p\n", returnedAddress);
+
+    rc = IWSDUdpMessageParameters_GetRemoteAddress(udpMessageParams, &returnedAddress);
+    todo_wine ok(rc == E_ABORT, "GetRemoteAddress failed: %08x\n", rc);
+    ok(returnedAddress == NULL, "GetRemoteAddress returned %p\n", returnedAddress);
+
+    rc = WSDCreateUdpAddress(&origUdpAddress);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &origUdpAddress) failed: %08x\n", rc);
+    ok(origUdpAddress != NULL, "WSDCreateUdpMessageParameters(NULL, &origUdpAddress) failed: origUdpAddress == NULL\n");
+
+    rc = IWSDUdpAddress_SetTransportAddress(origUdpAddress, address);
+    todo_wine ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
+
+    rc = IWSDUdpMessageParameters_SetRemoteAddress(udpMessageParams, (IWSDAddress *)origUdpAddress);
+    todo_wine ok(rc == S_OK, "SetRemoteAddress failed: %08x\n", rc);
+
+    rc = IWSDUdpMessageParameters_GetRemoteAddress(udpMessageParams, &returnedAddress);
+    todo_wine ok(rc == S_OK, "GetRemoteAddress failed: %08x\n", rc);
+    todo_wine ok(returnedAddress != NULL, "GetLocalAddress returned NULL\n");
+
+    /* Check if GetRemoteAddress returns the same object */
+    todo_wine ok(returnedAddress == (IWSDAddress *)origUdpAddress, "returnedAddress != origUdpAddress\n");
+
+    ret = IWSDUdpMessageParameters_Release(udpMessageParams);
+    ok(ret == 0, "IWSDUdpMessageParameters_Release() has %d references, should have 0\n", ret);
+
+    if (returnedAddress != NULL)
+    {
+        ret = IWSDAddress_Release(returnedAddress);
+        ok(ret == 1, "IWSDAddress_Release() has %d references, should have 1\n", ret);
+    }
+
+    ret = IWSDUdpAddress_Release(origUdpAddress);
+    ok(ret == 0, "IWSDUdpMessageParameters_Release() has %d references, should have 0\n", ret);
+
+    ret = WSACleanup();
+    ok(ret == 0, "WSACleanup failed: %d\n", ret);
+}
+
 START_TEST(msgparams)
 {
     CoInitialize(NULL);
 
     CreateUdpMessageParameters_tests();
     LocalAddress_tests();
+    RemoteAddress_tests();
 
     CoUninitialize();
 }
