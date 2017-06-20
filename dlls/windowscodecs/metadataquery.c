@@ -89,12 +89,13 @@ static ULONG WINAPI mqr_Release(IWICMetadataQueryReader *iface)
     return ref;
 }
 
-static HRESULT WINAPI mqr_GetContainerFormat(IWICMetadataQueryReader *iface,
-        GUID *pguidContainerFormat)
+static HRESULT WINAPI mqr_GetContainerFormat(IWICMetadataQueryReader *iface, GUID *format)
 {
     QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
-    FIXME("(%p,%p)\n", This, pguidContainerFormat);
-    return E_NOTIMPL;
+
+    TRACE("(%p,%p)\n", This, format);
+
+    return IWICMetadataBlockReader_GetContainerFormat(This->block, format);
 }
 
 static HRESULT WINAPI mqr_GetLocation(IWICMetadataQueryReader *iface,
