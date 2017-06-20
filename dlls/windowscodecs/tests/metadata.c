@@ -2052,12 +2052,208 @@ static void test_WICMapShortNameToGuid(void)
     ok(IsEqualGUID(&guid, &GUID_MetadataFormatXMP), "got %s\n", wine_dbgstr_guid(&guid));
 }
 
+static const GUID *guid_list[] =
+{
+    &GUID_ContainerFormatBmp,
+    &GUID_ContainerFormatPng,
+    &GUID_ContainerFormatIco,
+    &GUID_ContainerFormatJpeg,
+    &GUID_ContainerFormatTiff,
+    &GUID_ContainerFormatGif,
+    &GUID_ContainerFormatWmp,
+    &GUID_MetadataFormatUnknown,
+    &GUID_MetadataFormatIfd,
+    &GUID_MetadataFormatSubIfd,
+    &GUID_MetadataFormatExif,
+    &GUID_MetadataFormatGps,
+    &GUID_MetadataFormatInterop,
+    &GUID_MetadataFormatApp0,
+    &GUID_MetadataFormatApp1,
+    &GUID_MetadataFormatApp13,
+    &GUID_MetadataFormatIPTC,
+    &GUID_MetadataFormatIRB,
+    &GUID_MetadataFormat8BIMIPTC,
+    &GUID_MetadataFormat8BIMResolutionInfo,
+    &GUID_MetadataFormat8BIMIPTCDigest,
+    &GUID_MetadataFormatXMP,
+    &GUID_MetadataFormatThumbnail,
+    &GUID_MetadataFormatChunktEXt,
+    &GUID_MetadataFormatXMPStruct,
+    &GUID_MetadataFormatXMPBag,
+    &GUID_MetadataFormatXMPSeq,
+    &GUID_MetadataFormatXMPAlt,
+    &GUID_MetadataFormatLSD,
+    &GUID_MetadataFormatIMD,
+    &GUID_MetadataFormatGCE,
+    &GUID_MetadataFormatAPE,
+    &GUID_MetadataFormatJpegChrominance,
+    &GUID_MetadataFormatJpegLuminance,
+    &GUID_MetadataFormatJpegComment,
+    &GUID_MetadataFormatGifComment,
+    &GUID_MetadataFormatChunkgAMA,
+    &GUID_MetadataFormatChunkbKGD,
+    &GUID_MetadataFormatChunkiTXt,
+    &GUID_MetadataFormatChunkcHRM,
+    &GUID_MetadataFormatChunkhIST,
+    &GUID_MetadataFormatChunkiCCP,
+    &GUID_MetadataFormatChunksRGB,
+    &GUID_MetadataFormatChunktIME
+};
+
+static WCHAR rdf_scheme[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g','/','1','9','9','9','/','0','2','/','2','2','-','r','d','f','-','s','y','n','t','a','x','-','n','s','#',0 };
+static WCHAR dc_scheme[] = { 'h','t','t','p',':','/','/','p','u','r','l','.','o','r','g','/','d','c','/','e','l','e','m','e','n','t','s','/','1','.','1','/',0 };
+static WCHAR xmp_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/',0 };
+static WCHAR xmpidq_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','m','p','/','I','d','e','n','t','i','f','i','e','r','/','q','u','a','l','/','1','.','0','/',0 };
+static WCHAR xmpRights_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','r','i','g','h','t','s','/',0 };
+static WCHAR xmpMM_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','m','m','/',0 };
+static WCHAR xmpBJ_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','b','j','/',0 };
+static WCHAR xmpTPg_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','t','/','p','g','/',0 };
+static WCHAR pdf_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','p','d','f','/','1','.','3','/',0 };
+static WCHAR photoshop_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','p','h','o','t','o','s','h','o','p','/','1','.','0','/',0 };
+static WCHAR tiff_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','t','i','f','f','/','1','.','0','/',0 };
+static WCHAR exif_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','e','x','i','f','/','1','.','0','/',0 };
+static WCHAR stDim_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','D','i','m','e','n','s','i','o','n','s','#',0 };
+static WCHAR xapGImg_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','g','/','i','m','g','/',0 };
+static WCHAR stEvt_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','R','e','s','o','u','r','c','e','E','v','e','n','t','#',0 };
+static WCHAR stRef_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','R','e','s','o','u','r','c','e','R','e','f','#',0 };
+static WCHAR stVer_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','V','e','r','s','i','o','n','#',0 };
+static WCHAR stJob_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','J','o','b','#',0 };
+static WCHAR aux_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','e','x','i','f','/','1','.','0','/','a','u','x','/',0 };
+static WCHAR crs_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','c','a','m','e','r','a','-','r','a','w','-','s','e','t','t','i','n','g','s','/','1','.','0','/',0 };
+static WCHAR xmpDM_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','m','p','/','1','.','0','/','D','y','n','a','m','i','c','M','e','d','i','a','/',0 };
+static WCHAR Iptc4xmpCore_scheme[] = { 'h','t','t','p',':','/','/','i','p','t','c','.','o','r','g','/','s','t','d','/','I','p','t','c','4','x','m','p','C','o','r','e','/','1','.','0','/','x','m','l','n','s','/',0 };
+static WCHAR MicrosoftPhoto_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','p','h','o','t','o','/','1','.','0','/',0 };
+static WCHAR MP_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','p','h','o','t','o','/','1','.','2','/',0 };
+static WCHAR MPRI_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','p','h','o','t','o','/','1','.','2','/','t','/','R','e','g','i','o','n','I','n','f','o','#',0 };
+static WCHAR MPReg_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','p','h','o','t','o','/','1','.','2','/','t','/','R','e','g','i','o','n','#',0 };
+
+static WCHAR *schema_list[] =
+{
+    aux_scheme,
+    rdf_scheme,
+    dc_scheme,
+    xmp_scheme,
+    xmpidq_scheme,
+    xmpRights_scheme,
+    xmpMM_scheme,
+    xmpBJ_scheme,
+    xmpTPg_scheme,
+    pdf_scheme,
+    photoshop_scheme,
+    tiff_scheme,
+    exif_scheme,
+    stDim_scheme,
+    xapGImg_scheme,
+    stEvt_scheme,
+    stRef_scheme,
+    stVer_scheme,
+    stJob_scheme,
+    crs_scheme,
+    xmpDM_scheme,
+    Iptc4xmpCore_scheme,
+    MicrosoftPhoto_scheme,
+    MP_scheme,
+    MPRI_scheme,
+    MPReg_scheme
+};
+
+static void test_WICMapSchemaToName(void)
+{
+    static const WCHAR xmW[] = { 'x','m',0 };
+    static const WCHAR xmpW[] = { 'x','m','p',0 };
+    static WCHAR schemaW[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/',0 };
+    static WCHAR SCHEMAW[] = { 'H','T','T','P',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/',0 };
+    HRESULT hr;
+    UINT len, i, j;
+    WCHAR name[16];
+
+    hr = WICMapSchemaToName(&GUID_MetadataFormatUnknown, NULL, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    hr = WICMapSchemaToName(&GUID_MetadataFormatUnknown, schemaW, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    hr = WICMapSchemaToName(&GUID_MetadataFormatUnknown, schemaW, 0, NULL, &len);
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "got %#x\n", hr);
+
+    hr = WICMapSchemaToName(NULL, schemaW, 0, NULL, &len);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    hr = WICMapSchemaToName(&GUID_MetadataFormatXMP, schemaW, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    len = 0xdeadbeef;
+    hr = WICMapSchemaToName(&GUID_MetadataFormatXMP, schemaW, 0, NULL, &len);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(len == 4, "got %u\n", len);
+
+    len = 0xdeadbeef;
+    hr = WICMapSchemaToName(&GUID_MetadataFormatXMP, schemaW, 4, NULL, &len);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(len == 4, "got %u\n", len);
+
+    len = 0xdeadbeef;
+    hr = WICMapSchemaToName(&GUID_MetadataFormatXMP, SCHEMAW, 0, NULL, &len);
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "got %#x\n", hr);
+    ok(len == 0xdeadbeef, "got %u\n", len);
+
+    name[0] = 0;
+    len = 0xdeadbeef;
+    hr = WICMapSchemaToName(&GUID_MetadataFormatXMP, schemaW, 4, name, &len);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(len == 4, "got %u\n", len);
+    ok(!lstrcmpW(name, xmpW), "got %s\n", wine_dbgstr_w(name));
+
+    len = 0xdeadbeef;
+    hr = WICMapSchemaToName(&GUID_MetadataFormatXMP, schemaW, 0, name, &len);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+    ok(len == 0xdeadbeef, "got %u\n", len);
+
+    name[0] = 0;
+    len = 0xdeadbeef;
+    hr = WICMapSchemaToName(&GUID_MetadataFormatXMP, schemaW, 3, name, &len);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "got %#x\n", hr);
+    ok(len == 0xdeadbeef, "got %u\n", len);
+    ok(!lstrcmpW(name, xmW), "got %s\n", wine_dbgstr_w(name));
+
+    hr = WICMapSchemaToName(&GUID_MetadataFormatXMP, schemaW, 4, name, NULL);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    /* Check whether modern schemas are supported */
+    hr = WICMapSchemaToName(&GUID_MetadataFormatXMP, schema_list[0], 0, NULL, &len);
+    if (hr == WINCODEC_ERR_PROPERTYNOTFOUND)
+    {
+        win_skip("Modern schemas are not supported\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(guid_list)/sizeof(guid_list[0]); i++)
+    {
+        for (j = 0; j < sizeof(schema_list)/sizeof(schema_list[0]); j++)
+        {
+            hr = WICMapSchemaToName(guid_list[i], schema_list[j], 0, NULL, &len);
+            if (IsEqualGUID(guid_list[i], &GUID_MetadataFormatXMP) ||
+                IsEqualGUID(guid_list[i], &GUID_MetadataFormatXMPStruct))
+            {
+                ok(hr == S_OK, "%u: %u: format %s does not support schema %s\n",
+                   i, j, wine_dbgstr_guid(guid_list[i]), wine_dbgstr_w(schema_list[j]));
+            }
+            else
+            {
+                ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "%u: %u: format %s supports schema %s\n",
+                   i, j, wine_dbgstr_guid(guid_list[i]), wine_dbgstr_w(schema_list[j]));
+            }
+        }
+    }
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     test_WICMapGuidToShortName();
     test_WICMapShortNameToGuid();
+    test_WICMapSchemaToName();
     test_metadata_unknown();
     test_metadata_tEXt();
     test_metadata_gAMA();

@@ -297,3 +297,130 @@ HRESULT WINAPI WICMapShortNameToGuid(PCWSTR name, GUID *guid)
 
     return WINCODEC_ERR_PROPERTYNOTFOUND;
 }
+
+static const WCHAR rdf[] = { 'r','d','f',0 };
+static const WCHAR rdf_scheme[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g','/','1','9','9','9','/','0','2','/','2','2','-','r','d','f','-','s','y','n','t','a','x','-','n','s','#',0 };
+static const WCHAR dc[] = { 'd','c',0 };
+static const WCHAR dc_scheme[] = { 'h','t','t','p',':','/','/','p','u','r','l','.','o','r','g','/','d','c','/','e','l','e','m','e','n','t','s','/','1','.','1','/',0 };
+static const WCHAR xmp[] = { 'x','m','p',0 };
+static const WCHAR xmp_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/',0 };
+static const WCHAR xmpidq[] = { 'x','m','p','i','d','q',0 };
+static const WCHAR xmpidq_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','m','p','/','I','d','e','n','t','i','f','i','e','r','/','q','u','a','l','/','1','.','0','/',0 };
+static const WCHAR xmpRights[] = { 'x','m','p','R','i','g','h','t','s',0 };
+static const WCHAR xmpRights_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','r','i','g','h','t','s','/',0 };
+static const WCHAR xmpMM[] = { 'x','m','p','M','M',0 };
+static const WCHAR xmpMM_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','m','m','/',0 };
+static const WCHAR xmpBJ[] = { 'x','m','p','B','J',0 };
+static const WCHAR xmpBJ_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','b','j','/',0 };
+static const WCHAR xmpTPg[] = { 'x','m','p','T','P','g',0 };
+static const WCHAR xmpTPg_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','t','/','p','g','/',0 };
+static const WCHAR pdf[] = { 'p','d','f',0 };
+static const WCHAR pdf_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','p','d','f','/','1','.','3','/',0 };
+static const WCHAR photoshop[] = { 'p','h','o','t','o','s','h','o','p',0 };
+static const WCHAR photoshop_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','p','h','o','t','o','s','h','o','p','/','1','.','0','/',0 };
+static const WCHAR tiff[] = { 't','i','f','f',0 };
+static const WCHAR tiff_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','t','i','f','f','/','1','.','0','/',0 };
+static const WCHAR exif[] = { 'e','x','i','f',0 };
+static const WCHAR exif_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','e','x','i','f','/','1','.','0','/',0 };
+static const WCHAR stDim[] = { 's','t','D','i','m',0 };
+static const WCHAR stDim_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','D','i','m','e','n','s','i','o','n','s','#',0 };
+static const WCHAR xapGImg[] = { 'x','a','p','G','I','m','g',0 };
+static const WCHAR xapGImg_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','g','/','i','m','g','/',0 };
+static const WCHAR stEvt[] = { 's','t','E','v','t',0 };
+static const WCHAR stEvt_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','R','e','s','o','u','r','c','e','E','v','e','n','t','#',0 };
+static const WCHAR stRef[] = { 's','t','R','e','f',0 };
+static const WCHAR stRef_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','R','e','s','o','u','r','c','e','R','e','f','#',0 };
+static const WCHAR stVer[] = { 's','t','V','e','r',0 };
+static const WCHAR stVer_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','V','e','r','s','i','o','n','#',0 };
+static const WCHAR stJob[] = { 's','t','J','o','b',0 };
+static const WCHAR stJob_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','a','p','/','1','.','0','/','s','T','y','p','e','/','J','o','b','#',0 };
+static const WCHAR aux[] = { 'a','u','x',0 };
+static const WCHAR aux_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','e','x','i','f','/','1','.','0','/','a','u','x','/',0 };
+static const WCHAR crs[] = { 'c','r','s',0 };
+static const WCHAR crs_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','c','a','m','e','r','a','-','r','a','w','-','s','e','t','t','i','n','g','s','/','1','.','0','/',0 };
+static const WCHAR xmpDM[] = { 'x','m','p','D','M',0 };
+static const WCHAR xmpDM_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','a','d','o','b','e','.','c','o','m','/','x','m','p','/','1','.','0','/','D','y','n','a','m','i','c','M','e','d','i','a','/',0 };
+static const WCHAR Iptc4xmpCore[] = { 'I','p','t','c','4','x','m','p','C','o','r','e',0 };
+static const WCHAR Iptc4xmpCore_scheme[] = { 'h','t','t','p',':','/','/','i','p','t','c','.','o','r','g','/','s','t','d','/','I','p','t','c','4','x','m','p','C','o','r','e','/','1','.','0','/','x','m','l','n','s','/',0 };
+static const WCHAR MicrosoftPhoto[] = { 'M','i','c','r','o','s','o','f','t','P','h','o','t','o',0 };
+static const WCHAR MicrosoftPhoto_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','p','h','o','t','o','/','1','.','0','/',0 };
+static const WCHAR MP[] = { 'M','P',0 };
+static const WCHAR MP_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','p','h','o','t','o','/','1','.','2','/',0 };
+static const WCHAR MPRI[] = { 'M','P','R','I',0 };
+static const WCHAR MPRI_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','p','h','o','t','o','/','1','.','2','/','t','/','R','e','g','i','o','n','I','n','f','o','#',0 };
+static const WCHAR MPReg[] = { 'M','P','R','e','g',0 };
+static const WCHAR MPReg_scheme[] = { 'h','t','t','p',':','/','/','n','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','p','h','o','t','o','/','1','.','2','/','t','/','R','e','g','i','o','n','#',0 };
+
+static const struct
+{
+    const WCHAR *name;
+    const WCHAR *schema;
+} name2schema[] =
+{
+    { rdf, rdf_scheme },
+    { dc, dc_scheme },
+    { xmp, xmp_scheme },
+    { xmpidq, xmpidq_scheme },
+    { xmpRights, xmpRights_scheme },
+    { xmpMM, xmpMM_scheme },
+    { xmpBJ, xmpBJ_scheme },
+    { xmpTPg, xmpTPg_scheme },
+    { pdf, pdf_scheme },
+    { photoshop, photoshop_scheme },
+    { tiff, tiff_scheme },
+    { exif, exif_scheme },
+    { stDim, stDim_scheme },
+    { xapGImg, xapGImg_scheme },
+    { stEvt, stEvt_scheme },
+    { stRef, stRef_scheme },
+    { stVer, stVer_scheme },
+    { stJob, stJob_scheme },
+    { aux, aux_scheme },
+    { crs, crs_scheme },
+    { xmpDM, xmpDM_scheme },
+    { Iptc4xmpCore, Iptc4xmpCore_scheme },
+    { MicrosoftPhoto, MicrosoftPhoto_scheme },
+    { MP, MP_scheme },
+    { MPRI, MPRI_scheme },
+    { MPReg, MPReg_scheme }
+};
+
+HRESULT WINAPI WICMapSchemaToName(REFGUID format, LPWSTR schema, UINT len, WCHAR *name, UINT *ret_len)
+{
+    UINT i;
+
+    TRACE("%s,%s,%u,%p,%p\n", wine_dbgstr_guid(format), debugstr_w(schema), len, name, ret_len);
+
+    if (!format || !schema || !ret_len)
+        return E_INVALIDARG;
+
+    /* It appears that the only metadata formats
+     * that support schemas are xmp and xmpstruct.
+     */
+    if (!IsEqualGUID(format, &GUID_MetadataFormatXMP) &&
+        !IsEqualGUID(format, &GUID_MetadataFormatXMPStruct))
+        return WINCODEC_ERR_PROPERTYNOTFOUND;
+
+    for (i = 0; i < sizeof(name2schema)/sizeof(name2schema[0]); i++)
+    {
+        if (!lstrcmpW(name2schema[i].schema, schema))
+        {
+            if (name)
+            {
+                if (!len) return E_INVALIDARG;
+
+                len = min(len - 1, lstrlenW(name2schema[i].name));
+                memcpy(name, name2schema[i].name, len * sizeof(WCHAR));
+                name[len] = 0;
+
+                if (len < lstrlenW(name2schema[i].name))
+                    return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+            }
+
+            if (ret_len) *ret_len = lstrlenW(name2schema[i].name) + 1;
+            return S_OK;
+        }
+    }
+
+    return WINCODEC_ERR_PROPERTYNOTFOUND;
+}

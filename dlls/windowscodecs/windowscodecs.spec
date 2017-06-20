@@ -110,7 +110,7 @@
 @ stdcall WICCreateImagingFactory_Proxy(long ptr)
 @ stub WICGetMetadataContentSize
 @ stdcall WICMapGuidToShortName(ptr long ptr ptr)
-@ stub WICMapSchemaToName
+@ stdcall WICMapSchemaToName(ptr wstr long ptr ptr)
 @ stdcall WICMapShortNameToGuid(wstr ptr)
 @ stub WICMatchMetadataContent
 @ stub WICSerializeMetadataContent
