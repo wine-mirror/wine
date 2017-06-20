@@ -160,10 +160,10 @@ struct parser
     HKEY               hkey;           /* current registry key */
     WCHAR             *key_name;       /* current key name */
     WCHAR             *value_name;     /* value name */
+    DWORD              parse_type;     /* generic data type for parsing */
     DWORD              data_type;      /* data type */
     void              *data;           /* value data */
     DWORD              data_size;      /* size of the data (in bytes) */
-    BOOL               hex_type;       /* parsing a hex data type */
     enum parser_state  state;          /* current parser state */
 };
 
@@ -309,6 +309,7 @@ static BOOL parse_data_type(struct parser *parser, WCHAR **line)
         if (strncmpW(ptr->tag, *line, ptr->len))
             continue;
 
+        parser->parse_type = ptr->parse_type;
         parser->data_type = ptr->parse_type;
         *line += ptr->len;
 
@@ -323,7 +324,6 @@ static BOOL parse_data_type(struct parser *parser, WCHAR **line)
                 return FALSE;
 
             parser->data_type = val;
-            parser->hex_type = TRUE;
             *line = end + 2;
         }
         return TRUE;
@@ -720,7 +720,7 @@ static WCHAR *data_type_state(struct parser *parser, WCHAR *pos)
         return line;
     }
 
-    switch (parser->data_type)
+    switch (parser->parse_type)
     {
     case REG_SZ:
         set_state(parser, STRING_DATA);
@@ -728,10 +728,7 @@ static WCHAR *data_type_state(struct parser *parser, WCHAR *pos)
     case REG_DWORD:
         set_state(parser, DWORD_DATA);
         break;
-    case REG_NONE:
-    case REG_EXPAND_SZ:
-    case REG_BINARY:
-    case REG_MULTI_SZ:
+    case REG_BINARY: /* all hex data types, including undefined */
         set_state(parser, HEX_DATA);
         break;
     default:
@@ -828,11 +825,10 @@ static WCHAR *set_value_state(struct parser *parser, WCHAR *pos)
     RegSetValueExW(parser->hkey, parser->value_name, 0, parser->data_type,
                    parser->data, parser->data_size);
 
-    if (parser->data_type == REG_DWORD || parser->hex_type)
+    if (parser->parse_type == REG_DWORD || parser->parse_type == REG_BINARY)
     {
         HeapFree(GetProcessHeap(), 0, parser->data);
         parser->data = NULL;
-        parser->hex_type = FALSE;
     }
 
     if (parser->reg_version == REG_VERSION_31)
@@ -1469,10 +1465,10 @@ BOOL import_registry_file(FILE *reg_file)
     parser.hkey          = NULL;
     parser.key_name      = NULL;
     parser.value_name    = NULL;
+    parser.parse_type    = 0;
     parser.data_type     = 0;
     parser.data          = NULL;
     parser.data_size     = 0;
-    parser.hex_type      = FALSE;
     parser.state         = HEADER;
 
     pos = parser.two_wchars;
