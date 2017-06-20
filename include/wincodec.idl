@@ -1052,6 +1052,7 @@ interface IWICEnumMetadataItem : IUnknown
 cpp_quote("HRESULT WINAPI WICConvertBitmapSource(REFWICPixelFormatGUID dstFormat, IWICBitmapSource *pISrc, IWICBitmapSource **ppIDst);")
 
 cpp_quote("HRESULT WINAPI WICMapGuidToShortName(REFGUID,UINT,WCHAR *,UINT *);")
+cpp_quote("HRESULT WINAPI WICMapShortNameToGuid(PCWSTR,GUID *);")
 
 cpp_quote("DEFINE_GUID(CLSID_WICBmpDecoder, 0x6b462062,0x7cbf,0x400d,0x9f,0xdb,0x81,0x3d,0xd1,0x0f,0x27,0x78);")
 cpp_quote("DEFINE_GUID(CLSID_WICPngDecoder, 0x389ea17b,0x5078,0x4cde,0xb6,0xef,0x25,0xc1,0x51,0x75,0xc7,0x51);")

@@ -277,3 +277,23 @@ HRESULT WINAPI WICMapGuidToShortName(REFGUID guid, UINT len, WCHAR *name, UINT *
 
     return WINCODEC_ERR_PROPERTYNOTFOUND;
 }
+
+HRESULT WINAPI WICMapShortNameToGuid(PCWSTR name, GUID *guid)
+{
+    UINT i;
+
+    TRACE("%s,%p\n", debugstr_w(name), guid);
+
+    if (!name || !guid) return E_INVALIDARG;
+
+    for (i = 0; i < sizeof(guid2name)/sizeof(guid2name[0]); i++)
+    {
+        if (!lstrcmpiW(name, guid2name[i].name))
+        {
+            *guid = *guid2name[i].guid;
+            return S_OK;
+        }
+    }
+
+    return WINCODEC_ERR_PROPERTYNOTFOUND;
+}

@@ -2017,11 +2017,47 @@ static void test_WICMapGuidToShortName(void)
     ok(hr == E_INVALIDARG, "got %#x\n", hr);
 }
 
+static void test_WICMapShortNameToGuid(void)
+{
+    static const WCHAR unkW[] = { 'u','n','k',0 };
+    static const WCHAR xmpW[] = { 'x','m','p',0 };
+    static const WCHAR XmPW[] = { 'X','m','P',0 };
+    static const WCHAR unknownW[] = { 'u','n','k','n','o','w','n',0 };
+    HRESULT hr;
+    GUID guid;
+
+    hr = WICMapShortNameToGuid(NULL, NULL);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    hr = WICMapShortNameToGuid(NULL, &guid);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    hr = WICMapShortNameToGuid(unknownW, NULL);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    hr = WICMapShortNameToGuid(unkW, &guid);
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "got %#x\n", hr);
+
+    hr = WICMapShortNameToGuid(unknownW, &guid);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(IsEqualGUID(&guid, &GUID_MetadataFormatUnknown), "got %s\n", wine_dbgstr_guid(&guid));
+
+    hr = WICMapShortNameToGuid(xmpW, &guid);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(IsEqualGUID(&guid, &GUID_MetadataFormatXMP), "got %s\n", wine_dbgstr_guid(&guid));
+
+    guid = GUID_NULL;
+    hr = WICMapShortNameToGuid(XmPW, &guid);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(IsEqualGUID(&guid, &GUID_MetadataFormatXMP), "got %s\n", wine_dbgstr_guid(&guid));
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     test_WICMapGuidToShortName();
+    test_WICMapShortNameToGuid();
     test_metadata_unknown();
     test_metadata_tEXt();
     test_metadata_gAMA();
