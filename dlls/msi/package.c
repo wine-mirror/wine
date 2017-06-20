@@ -1709,8 +1709,8 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     static const WCHAR szSetProgress[] = {'S','e','t','P','r','o','g','r','e','s','s',0};
     static const WCHAR szActionText[] = {'A','c','t','i','o','n','T','e','x','t',0};
     MSIRECORD *uirow;
-    LPWSTR deformated, message;
-    DWORD i, len, total_len, log_type = 0;
+    LPWSTR deformated, message = {0};
+    DWORD len, log_type = 0;
     INT rc = 0;
     char *msg;
 
@@ -1776,39 +1776,13 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     }
     else
     {
-        static const WCHAR format[] = {'%','u',':',' ',0};
-        UINT count = MSI_RecordGetFieldCount( record );
-        WCHAR *p;
-
-        total_len = 1;
-        for (i = 1; i <= count; i++)
-        {
-            len = 0;
-            MSI_RecordGetStringW( record, i, NULL, &len );
-            total_len += len + 13;
-        }
-        p = message = msi_alloc( total_len * sizeof(WCHAR) );
-        if (!p) return ERROR_OUTOFMEMORY;
-
-        for (i = 1; i <= count; i++)
-        {
-            if (count > 1)
-            {
-                len = sprintfW( p, format, i );
-                total_len -= len;
-                p += len;
-            }
-            len = total_len;
-            MSI_RecordGetStringW( record, i, p, &len );
-            total_len -= len;
-            p += len;
-            if (count > 1 && total_len)
-            {
-                *p++ = ' ';
-                total_len--;
-            }
-        }
-        p[0] = 0;
+        UINT res = MSI_FormatRecordW(package, record, message, &len);
+        if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA)
+            return res;
+        len++;
+        message = msi_alloc(len * sizeof(WCHAR));
+        if (!message) return ERROR_OUTOFMEMORY;
+        MSI_FormatRecordW(package, record, message, &len);
     }
 
     /* convert it to ASCII */
