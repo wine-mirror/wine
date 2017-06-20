@@ -4989,6 +4989,7 @@ MSVCRT_FILE* CDECL MSVCRT_tmpfile(void)
 
   if(fd != -1 && !file)
       MSVCRT__close(fd);
+  MSVCRT_free(filename);
   UNLOCK_FILES();
   return file;
 }
