@@ -7,4 +7,5 @@ C_SRCS = \
 	discovery.c \
 	main.c \
 	memory.c \
+	msgparams.c \
 	xml.c
