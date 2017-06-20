@@ -1418,7 +1418,7 @@ static HRESULT build_custom_header( struct msg *msg, const WS_XML_STRING *name, 
 
     if (!(header = alloc_header( 0, FALSE, name, ns ))) return E_OUTOFMEMORY;
 
-    if (!msg->writer && (hr = WsCreateWriter( NULL, 0, &msg->writer, NULL )) != S_OK) return hr;
+    if (!msg->writer && (hr = WsCreateWriter( NULL, 0, &msg->writer, NULL )) != S_OK) goto done;
     if ((hr = WsCreateXmlBuffer( msg->heap, NULL, 0, &buf, NULL )) != S_OK) goto done;
     if ((hr = WsSetOutputToBuffer( msg->writer, buf, NULL, 0, NULL )) != S_OK) goto done;
     if ((hr = write_custom_header( msg->writer, name, ns, type, desc, option, value, size )) != S_OK) goto done;
