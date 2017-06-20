@@ -385,6 +385,31 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
         return hr;
     }
 
+    case VT_LPSTR:
+    {
+        WCHAR *resW;
+        hr = PropVariantToStringAlloc(propvarSrc, &resW);
+        if (SUCCEEDED(hr))
+        {
+            char *res;
+            DWORD len;
+
+            len = WideCharToMultiByte(CP_ACP, 0, resW, -1, NULL, 0, NULL, NULL);
+            res = CoTaskMemAlloc(len);
+            if (res)
+            {
+                WideCharToMultiByte(CP_ACP, 0, resW, -1, res, len, NULL, NULL);
+                ppropvarDest->vt = VT_LPSTR;
+                ppropvarDest->u.pszVal = res;
+            }
+            else
+                hr = E_OUTOFMEMORY;
+
+            CoTaskMemFree(resW);
+        }
+        return hr;
+    }
+
     default:
         FIXME("Unhandled dest type: %d\n", vt);
         return E_FAIL;
