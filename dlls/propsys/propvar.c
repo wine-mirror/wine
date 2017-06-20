@@ -36,12 +36,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(propsys);
 
-static HRESULT PROPVAR_ConvertFILETIME(PROPVARIANT *ppropvarDest,
-                                       REFPROPVARIANT propvarSrc, VARTYPE vt)
+static HRESULT PROPVAR_ConvertFILETIME(const FILETIME *ft, PROPVARIANT *ppropvarDest, VARTYPE vt)
 {
     SYSTEMTIME time;
 
-    FileTimeToSystemTime(&propvarSrc->u.filetime, &time);
+    FileTimeToSystemTime(ft, &time);
 
     switch (vt)
     {
@@ -272,8 +271,11 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
     FIXME("(%p, %p, %d, %d, %d): semi-stub!\n", ppropvarDest, propvarSrc,
           propvarSrc->vt, flags, vt);
 
-    if(vt == propvarSrc->vt)
+    if (vt == propvarSrc->vt)
         return PropVariantCopy(ppropvarDest, propvarSrc);
+
+    if (propvarSrc->vt == VT_FILETIME)
+        return PROPVAR_ConvertFILETIME(&propvarSrc->u.filetime, ppropvarDest, vt);
 
     switch (vt)
     {
@@ -382,17 +384,11 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
         }
         return hr;
     }
-    }
 
-    switch (propvarSrc->vt)
-    {
-        case VT_FILETIME:
-            return PROPVAR_ConvertFILETIME(ppropvarDest, propvarSrc, vt);
-        default:
-            FIXME("Unhandled source type: %d\n", propvarSrc->vt);
+    default:
+        FIXME("Unhandled dest type: %d\n", vt);
+        return E_FAIL;
     }
-
-    return E_FAIL;
 }
 
 static void PROPVAR_GUIDToWSTR(REFGUID guid, WCHAR *str)
