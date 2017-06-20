@@ -369,7 +369,9 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
         }
         return hr;
     }
+
     case VT_LPWSTR:
+    case VT_BSTR:
     {
         WCHAR *res;
         hr = PropVariantToStringAlloc(propvarSrc, &res);
