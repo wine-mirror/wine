@@ -379,7 +379,7 @@ static void WCMD_show_prompt (void) {
 	  while (*q) q++;
 	  break;
 	case 'E':
-	  *q++ = '\E';
+	  *q++ = '\x1b';
 	  break;
 	case 'F':
 	  *q++ = ')';
