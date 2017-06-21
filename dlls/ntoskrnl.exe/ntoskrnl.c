@@ -3251,3 +3251,11 @@ KIRQL WINAPI KeAcquireSpinLockRaiseToDpc(KSPIN_LOCK *spinlock)
     FIXME( "stub: %p\n", spinlock );
     return 0;
 }
+
+/***********************************************************************
+ *           KeReleaseSpinLock (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI KeReleaseSpinLock( KSPIN_LOCK *spinlock, KIRQL irql )
+{
+    FIXME( "stub: %p %u\n", spinlock, irql );
+}
