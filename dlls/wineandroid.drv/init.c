@@ -268,6 +268,45 @@ BOOL CDECL ANDROID_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC pr
 }
 
 
+/***********************************************************************
+ *           ANDROID_EnumDisplaySettingsEx
+ */
+BOOL CDECL ANDROID_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
+{
+    static const WCHAR dev_name[CCHDEVICENAME] =
+        { 'W','i','n','e',' ','A','n','d','r','o','i','d',' ','d','r','i','v','e','r',0 };
+
+    devmode->dmSize = offsetof( DEVMODEW, dmICMMethod );
+    devmode->dmSpecVersion = DM_SPECVERSION;
+    devmode->dmDriverVersion = DM_SPECVERSION;
+    memcpy( devmode->dmDeviceName, dev_name, sizeof(dev_name) );
+    devmode->dmDriverExtra = 0;
+    devmode->u2.dmDisplayFlags = 0;
+    devmode->dmDisplayFrequency = 0;
+    devmode->u1.s2.dmPosition.x = 0;
+    devmode->u1.s2.dmPosition.y = 0;
+    devmode->u1.s2.dmDisplayOrientation = 0;
+    devmode->u1.s2.dmDisplayFixedOutput = 0;
+
+    if (n == ENUM_CURRENT_SETTINGS || n == ENUM_REGISTRY_SETTINGS) n = 0;
+    if (n == 0)
+    {
+        devmode->dmPelsWidth = screen_width;
+        devmode->dmPelsHeight = screen_height;
+        devmode->dmBitsPerPel = screen_bpp;
+        devmode->dmDisplayFrequency = 60;
+        devmode->dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
+        TRACE( "mode %d -- %dx%d %d bpp @%d Hz\n", n,
+               devmode->dmPelsWidth, devmode->dmPelsHeight,
+               devmode->dmBitsPerPel, devmode->dmDisplayFrequency );
+        return TRUE;
+    }
+    TRACE( "mode %d -- not present\n", n );
+    SetLastError( ERROR_NO_MORE_FILES );
+    return FALSE;
+}
+
+
 static const struct gdi_dc_funcs android_drv_funcs =
 {
     NULL,                               /* pAbortDoc */

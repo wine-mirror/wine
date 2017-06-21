@@ -11,6 +11,7 @@
 @ cdecl VkKeyScanEx(long long) ANDROID_VkKeyScanEx
 @ cdecl ChangeDisplaySettingsEx(ptr ptr long long long) ANDROID_ChangeDisplaySettingsEx
 @ cdecl EnumDisplayMonitors(long ptr ptr long) ANDROID_EnumDisplayMonitors
+@ cdecl EnumDisplaySettingsEx(ptr long ptr long) ANDROID_EnumDisplaySettingsEx
 @ cdecl GetMonitorInfo(long ptr) ANDROID_GetMonitorInfo
 @ cdecl CreateWindow(long) ANDROID_CreateWindow
 @ cdecl DestroyWindow(long) ANDROID_DestroyWindow
