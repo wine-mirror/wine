@@ -31,6 +31,7 @@
 #include "uuids.h"
 
 #include "wine/list.h"
+#include "wine/unicode.h"
 
 #define DS_MAX_CHANNELS 6
 
@@ -254,7 +255,7 @@ extern struct list DSOUND_renderers DECLSPEC_HIDDEN;
 extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
 extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
 
-extern WCHAR wine_vxd_drv[] DECLSPEC_HIDDEN;
+extern const WCHAR wine_vxd_drv[] DECLSPEC_HIDDEN;
 
 void setup_dsound_options(void) DECLSPEC_HIDDEN;
 
@@ -264,3 +265,15 @@ BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
         DWORD depth, WORD channels) DECLSPEC_HIDDEN;
 HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
         LPDSENUMCALLBACKW cb, void *user) DECLSPEC_HIDDEN;
+
+static inline WCHAR *strdupW( const WCHAR *str )
+{
+    size_t size;
+    WCHAR *ret;
+
+    if (!str) return NULL;
+    size = (strlenW( str ) + 1) * sizeof(WCHAR);
+    ret = HeapAlloc( GetProcessHeap(), 0, size );
+    if (ret) memcpy( ret, str, size );
+    return ret;
+}
