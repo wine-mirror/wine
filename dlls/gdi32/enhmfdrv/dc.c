@@ -479,13 +479,21 @@ BOOL EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectClipPath );
     EMRSELECTCLIPPATH emr;
+    BOOL ret = FALSE;
+    HRGN hrgn;
 
     emr.emr.iType = EMR_SELECTCLIPPATH;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = iMode;
 
     if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    return next->funcs->pSelectClipPath( next, iMode );
+    hrgn = PathToRegion( dev->hdc );
+    if (hrgn)
+    {
+        ret = next->funcs->pExtSelectClipRgn( next, hrgn, iMode );
+        DeleteObject( hrgn );
+    }
+    return ret;
 }
 
 BOOL EMFDRV_WidenPath( PHYSDEV dev )
