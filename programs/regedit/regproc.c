@@ -21,6 +21,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -319,8 +320,8 @@ static BOOL parse_data_type(struct parser *parser, WCHAR **line)
             DWORD val;
 
             /* "hex(xx):" is special */
-            val = strtoulW(*line, &end, 16);
-            if (!**line || *end != ')' || *(end + 1) != ':')
+            val = wcstoul(*line, &end, 16);
+            if (!**line || *end != ')' || *(end + 1) != ':' || (val == ~0u && errno == ERANGE))
                 return FALSE;
 
             parser->data_type = val;

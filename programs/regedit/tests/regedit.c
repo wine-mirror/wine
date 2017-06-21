@@ -464,7 +464,7 @@ static void test_basic_import(void)
     verify_reg(hkey, "Wine13f", 0xffff, "Value", 6, 0);
     verify_reg(hkey, "Wine13g", 0x7fffffff, "Value", 6, 0);
     verify_reg(hkey, "Wine13h", 0xffffffff, "Value", 6, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine13i");
+    verify_reg_nonexist(hkey, "Wine13i");
 
     RegCloseKey(hkey);
 
