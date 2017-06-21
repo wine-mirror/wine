@@ -1371,6 +1371,8 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
     if ((*dst_len = get_length(dst_type)))
         return S_OK;
 
+    *dst_len = 110;
+
     if(src_type == DBTYPE_VARIANT && V_VT((VARIANT*)src) == VT_NULL)
         return S_OK;
 
