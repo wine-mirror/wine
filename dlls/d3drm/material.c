@@ -121,16 +121,20 @@ static DWORD WINAPI d3drm_material_GetAppData(IDirect3DRMMaterial2 *iface)
 
 static HRESULT WINAPI d3drm_material_SetName(IDirect3DRMMaterial2 *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_object_set_name(&material->obj, name);
 }
 
 static HRESULT WINAPI d3drm_material_GetName(IDirect3DRMMaterial2 *iface, DWORD *size, char *name)
 {
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_name(&material->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_material_GetClassName(IDirect3DRMMaterial2 *iface, DWORD *size, char *name)

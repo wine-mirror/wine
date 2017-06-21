@@ -42,6 +42,7 @@ struct d3drm_object
     DWORD appdata;
     struct list destroy_callbacks;
     const char *classname;
+    char *name;
 };
 
 struct d3drm_texture
@@ -127,7 +128,6 @@ struct d3drm_mesh_builder
     IDirect3DRMMeshBuilder3 IDirect3DRMMeshBuilder3_iface;
     LONG ref;
     IDirect3DRM *d3drm;
-    char* name;
     SIZE_T nb_vertices;
     SIZE_T vertices_size;
     D3DVECTOR *vertices;
@@ -193,6 +193,8 @@ void d3drm_object_init(struct d3drm_object *object, const char *classname) DECLS
 HRESULT d3drm_object_add_destroy_callback(struct d3drm_object *object, D3DRMOBJECTCALLBACK cb, void *ctx) DECLSPEC_HIDDEN;
 HRESULT d3drm_object_delete_destroy_callback(struct d3drm_object *object, D3DRMOBJECTCALLBACK cb, void *ctx) DECLSPEC_HIDDEN;
 HRESULT d3drm_object_get_class_name(struct d3drm_object *object, DWORD *size, char *name) DECLSPEC_HIDDEN;
+HRESULT d3drm_object_get_name(struct d3drm_object *object, DWORD *size, char *name) DECLSPEC_HIDDEN;
+HRESULT d3drm_object_set_name(struct d3drm_object *object, const char *name) DECLSPEC_HIDDEN;
 void d3drm_object_cleanup(IDirect3DRMObject *iface, struct d3drm_object *object) DECLSPEC_HIDDEN;
 
 struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame(IDirect3DRMFrame *iface) DECLSPEC_HIDDEN;

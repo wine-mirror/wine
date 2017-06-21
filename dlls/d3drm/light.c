@@ -120,16 +120,20 @@ static DWORD WINAPI d3drm_light_GetAppData(IDirect3DRMLight *iface)
 
 static HRESULT WINAPI d3drm_light_SetName(IDirect3DRMLight *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_object_set_name(&light->obj, name);
 }
 
 static HRESULT WINAPI d3drm_light_GetName(IDirect3DRMLight *iface, DWORD *size, char *name)
 {
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_name(&light->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_light_GetClassName(IDirect3DRMLight *iface, DWORD *size, char *name)

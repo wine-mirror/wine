@@ -134,6 +134,81 @@ static void test_class_name_(unsigned int line, IDirect3DRMObject *object, const
     ok_(__FILE__, line)(!strcmp(cname, "XXX"), "Expected unchanged buffer, but got \"%s\".\n", cname);
 }
 
+#define test_object_name(a) test_object_name_(__LINE__, a)
+static void test_object_name_(unsigned int line, IDirect3DRMObject *object)
+{
+    char name[64] = {0};
+    HRESULT hr;
+    DWORD size;
+
+    hr = IDirect3DRMObject_GetName(object, NULL, NULL);
+    ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    name[0] = 0x1f;
+    hr = IDirect3DRMObject_GetName(object, NULL, name);
+    ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok_(__FILE__, line)(name[0] == 0x1f, "Unexpected buffer contents, %#x.\n", name[0]);
+
+    /* Name is not set yet. */
+    size = 100;
+    hr = IDirect3DRMObject_GetName(object, &size, NULL);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get name size, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == 0, "Unexpected size %u.\n", size);
+
+    size = sizeof(name);
+    name[0] = 0x1f;
+    hr = IDirect3DRMObject_GetName(object, &size, name);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get name size, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == 0, "Unexpected size %u.\n", size);
+    ok_(__FILE__, line)(name[0] == 0, "Unexpected name \"%s\".\n", name);
+
+    size = 0;
+    name[0] = 0x1f;
+    hr = IDirect3DRMObject_GetName(object, &size, name);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get name size, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == 0, "Unexpected size %u.\n", size);
+    ok_(__FILE__, line)(name[0] == 0x1f, "Unexpected name \"%s\".\n", name);
+
+    hr = IDirect3DRMObject_SetName(object, NULL);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DRMObject_SetName(object, "name");
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to set a name, hr %#x.\n", hr);
+
+    size = 0;
+    hr = IDirect3DRMObject_GetName(object, &size, NULL);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get name size, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == strlen("name") + 1, "Unexpected size %u.\n", size);
+
+    size = strlen("name") + 1;
+    hr = IDirect3DRMObject_GetName(object, &size, name);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get name size, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == strlen("name") + 1, "Unexpected size %u.\n", size);
+    ok_(__FILE__, line)(!strcmp(name, "name"), "Unexpected name \"%s\".\n", name);
+
+    size = 2;
+    name[0] = 0x1f;
+    hr = IDirect3DRMObject_GetName(object, &size, name);
+    ok_(__FILE__, line)(hr == E_INVALIDARG, "Failed to get object name, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == 2, "Unexpected size %u.\n", size);
+    ok_(__FILE__, line)(name[0] == 0x1f, "Got unexpected name \"%s\".\n", name);
+
+    hr = IDirect3DRMObject_SetName(object, NULL);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to set object name, hr %#x.\n", hr);
+
+    size = 1;
+    hr = IDirect3DRMObject_GetName(object, &size, NULL);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get name size, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == 0, "Unexpected size %u.\n", size);
+
+    size = 1;
+    name[0] = 0x1f;
+    hr = IDirect3DRMObject_GetName(object, &size, name);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get name size, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == 0, "Unexpected size %u.\n", size);
+    ok_(__FILE__, line)(name[0] == 0, "Got unexpected name \"%s\".\n", name);
+}
+
 static char data_bad_version[] =
 "xof 0302txt 0064\n"
 "Header Object\n"
@@ -331,6 +406,7 @@ static void test_MeshBuilder(void)
     IDirect3DRMMeshBuilder3_Release(meshbuilder3);
 
     test_class_name((IDirect3DRMObject *)pMeshBuilder, "Builder");
+    test_object_name((IDirect3DRMObject *)pMeshBuilder);
 
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
@@ -588,6 +664,7 @@ static void test_MeshBuilder3(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder3 interface (hr = %x)\n", hr);
 
     test_class_name((IDirect3DRMObject *)pMeshBuilder3, "Builder");
+    test_object_name((IDirect3DRMObject *)pMeshBuilder3);
 
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
@@ -675,6 +752,7 @@ static void test_Mesh(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMesh interface (hr = %x)\n", hr);
 
     test_class_name((IDirect3DRMObject *)mesh, "Mesh");
+    test_object_name((IDirect3DRMObject *)mesh);
 
     hr = IDirect3DRMMesh_QueryInterface(mesh, &IID_IDirect3DRMObject, (void **)&unk);
     ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, %#x.\n", hr);
@@ -724,6 +802,7 @@ static void test_Face(void)
     IDirect3DRMObject_Release(obj);
 
     test_class_name((IDirect3DRMObject *)face1, "Face");
+    test_object_name((IDirect3DRMObject *)face1);
 
     icount = IDirect3DRMFace_GetVertexCount(face1);
     ok(!icount, "wrong VertexCount: %i\n", icount);
@@ -805,6 +884,7 @@ static void test_Face(void)
     IDirect3DRMObject_Release(obj);
 
     test_class_name((IDirect3DRMObject *)face2, "Face");
+    test_object_name((IDirect3DRMObject *)face2);
 
     icount = IDirect3DRMMeshBuilder3_GetFaceCount(MeshBuilder3);
     todo_wine
@@ -922,6 +1002,7 @@ static void test_Frame(void)
     ok(ref2 > ref, "Expected d3drm object to be referenced.\n");
 
     test_class_name((IDirect3DRMObject *)pFrameC, "Frame");
+    test_object_name((IDirect3DRMObject *)pFrameC);
 
     hr = IDirect3DRMFrame_GetParent(pFrameC, NULL);
     ok(hr == D3DRMERR_BADVALUE, "Should fail and return D3DRM_BADVALUE (hr = %x)\n", hr);
@@ -1823,6 +1904,7 @@ static void test_Viewport(void)
     IDirect3DRMObject_Release(obj2);
 
     test_class_name((IDirect3DRMObject *)viewport, "Viewport");
+    test_object_name((IDirect3DRMObject *)viewport);
 
     /* AppData */
     hr = IDirect3DRMViewport_SetAppData(viewport, 0);
@@ -2085,6 +2167,7 @@ static void test_Light(void)
     IDirect3DRMObject_Release(object);
 
     test_class_name((IDirect3DRMObject *)light, "Light");
+    test_object_name((IDirect3DRMObject *)light);
 
     type = IDirect3DRMLight_GetType(light);
     ok(type == D3DRMLIGHT_SPOT, "wrong type (%u)\n", type);
@@ -2134,6 +2217,7 @@ static void test_Material2(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMaterial2 interface (hr = %x)\n", hr);
 
     test_class_name((IDirect3DRMObject *)material2, "Material");
+    test_object_name((IDirect3DRMObject *)material2);
 
     r = IDirect3DRMMaterial2_GetPower(material2);
     ok(r == 18.5f, "wrong power (%f)\n", r);
@@ -2346,6 +2430,9 @@ static void test_Texture(void)
     test_class_name((IDirect3DRMObject *)texture1, "Texture");
     test_class_name((IDirect3DRMObject *)texture2, "Texture");
     test_class_name((IDirect3DRMObject *)texture3, "Texture");
+    test_object_name((IDirect3DRMObject *)texture1);
+    test_object_name((IDirect3DRMObject *)texture2);
+    test_object_name((IDirect3DRMObject *)texture3);
 
     d3drm_img = IDirect3DRMTexture_GetImage(texture1);
     ok(!!d3drm_img, "Failed to get image.\n");
@@ -2552,6 +2639,7 @@ static void test_Device(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMDevice interface (hr = %x)\n", hr);
 
     test_class_name((IDirect3DRMObject *)device, "Device");
+    test_object_name((IDirect3DRMObject *)device);
 
     /* WinDevice */
     if (FAILED(hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMWinDevice, (void **)&win_device)))
@@ -2561,6 +2649,7 @@ static void test_Device(void)
     }
 
     test_class_name((IDirect3DRMObject *)win_device, "Device");
+    test_object_name((IDirect3DRMObject *)win_device);
     IDirect3DRMWinDevice_Release(win_device);
 
 cleanup:

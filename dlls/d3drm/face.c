@@ -130,18 +130,40 @@ static DWORD WINAPI d3drm_face1_GetAppData(IDirect3DRMFace *iface)
     return 0;
 }
 
+static HRESULT WINAPI d3drm_face2_SetName(IDirect3DRMFace2 *iface, const char *name)
+{
+    struct d3drm_face *face = impl_from_IDirect3DRMFace2(iface);
+
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_object_set_name(&face->obj, name);
+}
+
 static HRESULT WINAPI d3drm_face1_SetName(IDirect3DRMFace *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3drm_face *face = impl_from_IDirect3DRMFace(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_face2_SetName(&face->IDirect3DRMFace2_iface, name);
+}
+
+static HRESULT WINAPI d3drm_face2_GetName(IDirect3DRMFace2 *iface, DWORD *size, char *name)
+{
+    struct d3drm_face *face = impl_from_IDirect3DRMFace2(iface);
+
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_name(&face->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_face1_GetName(IDirect3DRMFace *iface, DWORD *size, char *name)
 {
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
+    struct d3drm_face *face = impl_from_IDirect3DRMFace(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_face2_GetName(&face->IDirect3DRMFace2_iface, size, name);
 }
 
 static HRESULT WINAPI d3drm_face1_GetClassName(IDirect3DRMFace *iface, DWORD *size, char *name)
@@ -388,20 +410,6 @@ static DWORD WINAPI d3drm_face2_GetAppData(IDirect3DRMFace2 *iface)
     FIXME("iface %p stub!\n", iface);
 
     return 0;
-}
-
-static HRESULT WINAPI d3drm_face2_SetName(IDirect3DRMFace2 *iface, const char *name)
-{
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI d3drm_face2_GetName(IDirect3DRMFace2 *iface, DWORD *size, char *name)
-{
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
-
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI d3drm_face2_GetClassName(IDirect3DRMFace2 *iface, DWORD *size, char *name)

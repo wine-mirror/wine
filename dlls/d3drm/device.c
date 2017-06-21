@@ -504,9 +504,11 @@ static DWORD WINAPI d3drm_device1_GetAppData(IDirect3DRMDevice *iface)
 
 static HRESULT WINAPI d3drm_device3_SetName(IDirect3DRMDevice3 *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_object_set_name(&device->obj, name);
 }
 
 static HRESULT WINAPI d3drm_device2_SetName(IDirect3DRMDevice2 *iface, const char *name)
@@ -529,9 +531,11 @@ static HRESULT WINAPI d3drm_device1_SetName(IDirect3DRMDevice *iface, const char
 
 static HRESULT WINAPI d3drm_device3_GetName(IDirect3DRMDevice3 *iface, DWORD *size, char *name)
 {
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_name(&device->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_device2_GetName(IDirect3DRMDevice2 *iface, DWORD *size, char *name)

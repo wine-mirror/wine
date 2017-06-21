@@ -806,16 +806,20 @@ static DWORD WINAPI d3drm_texture3_GetAppData(IDirect3DRMTexture3 *iface)
 
 static HRESULT WINAPI d3drm_texture3_SetName(IDirect3DRMTexture3 *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_object_set_name(&texture->obj, name);
 }
 
 static HRESULT WINAPI d3drm_texture3_GetName(IDirect3DRMTexture3 *iface, DWORD *size, char *name)
 {
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_name(&texture->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_texture3_GetClassName(IDirect3DRMTexture3 *iface, DWORD *size, char *name)

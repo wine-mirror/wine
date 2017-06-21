@@ -334,8 +334,7 @@ static void clean_mesh_builder_data(struct d3drm_mesh_builder *mesh_builder)
 {
     DWORD i;
 
-    HeapFree(GetProcessHeap(), 0, mesh_builder->name);
-    mesh_builder->name = NULL;
+    IDirect3DRMMeshBuilder3_SetName(&mesh_builder->IDirect3DRMMeshBuilder3_iface, NULL);
     HeapFree(GetProcessHeap(), 0, mesh_builder->vertices);
     mesh_builder->vertices = NULL;
     mesh_builder->nb_vertices = 0;
@@ -1007,20 +1006,10 @@ static DWORD WINAPI d3drm_mesh_builder3_GetAppData(IDirect3DRMMeshBuilder3 *ifac
 static HRESULT WINAPI d3drm_mesh_builder3_SetName(IDirect3DRMMeshBuilder3 *iface, const char *name)
 {
     struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
-    char *string = NULL;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
 
-    if (name)
-    {
-        string = HeapAlloc(GetProcessHeap(), 0, strlen(name) + 1);
-        if (!string) return E_OUTOFMEMORY;
-        strcpy(string, name);
-    }
-    HeapFree(GetProcessHeap(), 0, mesh_builder->name);
-    mesh_builder->name = string;
-
-    return D3DRM_OK;
+    return d3drm_object_set_name(&mesh_builder->obj, name);
 }
 
 static HRESULT WINAPI d3drm_mesh_builder3_GetName(IDirect3DRMMeshBuilder3 *iface,
@@ -1030,22 +1019,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_GetName(IDirect3DRMMeshBuilder3 *iface
 
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size)
-        return E_POINTER;
-
-    if (!mesh_builder->name)
-    {
-        *size = 0;
-        return D3DRM_OK;
-    }
-
-    if (*size < (strlen(mesh_builder->name) + 1))
-        return E_INVALIDARG;
-
-    strcpy(name, mesh_builder->name);
-    *size = strlen(mesh_builder->name) + 1;
-
-    return D3DRM_OK;
+    return d3drm_object_get_name(&mesh_builder->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_mesh_builder3_GetClassName(IDirect3DRMMeshBuilder3 *iface,
@@ -1084,16 +1058,18 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
         return hr;
     if (size)
     {
-        mesh_builder->name = HeapAlloc(GetProcessHeap(), 0, size);
-        if (!mesh_builder->name)
+        char *name = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!name)
             return E_OUTOFMEMORY;
 
-        hr = IDirectXFileData_GetName(pData, mesh_builder->name, &size);
+        if (SUCCEEDED(hr = IDirectXFileData_GetName(pData, name, &size)))
+            IDirect3DRMMeshBuilder3_SetName(iface, name);
+        HeapFree(GetProcessHeap(), 0, name);
         if (hr != DXFILE_OK)
             return hr;
     }
 
-    TRACE("Mesh name is %s\n", debugstr_a(mesh_builder->name));
+    TRACE("Mesh name is %s\n", debugstr_a(mesh_builder->obj.name));
 
     mesh_builder->nb_normals = 0;
 
@@ -2492,16 +2468,20 @@ static DWORD WINAPI d3drm_mesh_GetAppData(IDirect3DRMMesh *iface)
 
 static HRESULT WINAPI d3drm_mesh_SetName(IDirect3DRMMesh *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_object_set_name(&mesh->obj, name);
 }
 
 static HRESULT WINAPI d3drm_mesh_GetName(IDirect3DRMMesh *iface, DWORD *size, char *name)
 {
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_name(&mesh->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_mesh_GetClassName(IDirect3DRMMesh *iface, DWORD *size, char *name)

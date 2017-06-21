@@ -702,44 +702,56 @@ static DWORD WINAPI d3drm_frame1_GetAppData(IDirect3DRMFrame *iface)
 
 static HRESULT WINAPI d3drm_frame3_SetName(IDirect3DRMFrame3 *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_object_set_name(&frame->obj, name);
 }
 
 static HRESULT WINAPI d3drm_frame2_SetName(IDirect3DRMFrame2 *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_frame3_SetName(&frame->IDirect3DRMFrame3_iface, name);
 }
 
 static HRESULT WINAPI d3drm_frame1_SetName(IDirect3DRMFrame *iface, const char *name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, debugstr_a(name));
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_frame3_SetName(&frame->IDirect3DRMFrame3_iface, name);
 }
 
 static HRESULT WINAPI d3drm_frame3_GetName(IDirect3DRMFrame3 *iface, DWORD *size, char *name)
 {
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_name(&frame->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_frame2_GetName(IDirect3DRMFrame2 *iface, DWORD *size, char *name)
 {
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_frame3_GetName(&frame->IDirect3DRMFrame3_iface, size, name);
 }
 
 static HRESULT WINAPI d3drm_frame1_GetName(IDirect3DRMFrame *iface, DWORD *size, char *name)
 {
-    FIXME("iface %p, size %p, name %p stub!\n", iface, size, name);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_frame3_GetName(&frame->IDirect3DRMFrame3_iface, size, name);
 }
 
 static HRESULT WINAPI d3drm_frame3_GetClassName(IDirect3DRMFrame3 *iface, DWORD *size, char *name)
