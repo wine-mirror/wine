@@ -129,8 +129,13 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
             ListView_SetItemTextW(hwndLV, index, 2, buf);
             break;
         }
+        case REG_MULTI_SZ:
+            MakeMULTISZDisplayable(data);
+            ListView_SetItemTextW(hwndLV, index, 2, data);
+            break;
         case REG_BINARY:
         case REG_NONE:
+        default:
         {
             unsigned int i;
             BYTE *pData = data;
@@ -141,17 +146,6 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
             strBinary[size * 3] = 0;
             ListView_SetItemTextW(hwndLV, index, 2, strBinary);
             HeapFree(GetProcessHeap(), 0, strBinary);
-            break;
-        }
-        case REG_MULTI_SZ:
-            MakeMULTISZDisplayable(data);
-            ListView_SetItemTextW(hwndLV, index, 2, data);
-            break;
-        default:
-        {
-            WCHAR szText[128];
-            LoadStringW(hInst, IDS_REGISTRY_VALUE_CANT_DISPLAY, szText, COUNT_OF(szText));
-            ListView_SetItemTextW(hwndLV, index, 2, szText);
             break;
         }
     }
