@@ -1397,6 +1397,7 @@ static void test_WsReadType(void)
     WS_BYTES val_bytes;
     WS_STRING val_string;
     WS_UNIQUE_ID val_id;
+    WS_XML_QNAME val_qname;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1730,6 +1731,32 @@ static void test_WsReadType(void)
     ok( !val_id.uri.length, "got %u\n", val_string.length );
     ok( val_id.uri.chars == NULL, "chars set %s\n", wine_dbgstr_wn(val_id.uri.chars, val_id.uri.length) );
     ok( IsEqualGUID( &val_id.guid, &guid ), "wrong guid\n" );
+
+    memset( &val_qname, 0, sizeof(val_qname) );
+    hr = set_input( reader, "<t>u</t>", sizeof("<t>u</t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_XML_QNAME_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_qname, sizeof(val_qname), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val_qname.localName.length == 1, "got %u\n", val_qname.localName.length );
+    ok( val_qname.localName.bytes[0] == 'u', "wrong data\n" );
+    ok( !val_qname.ns.length, "got %u\n", val_qname.ns.length );
+    ok( val_qname.ns.bytes != NULL, "bytes not set\n" );
+
+    memset( &val_qname, 0, sizeof(val_qname) );
+    hr = set_input( reader, "<p:t xmlns:p=\"ns\"> p:u </p:t>", sizeof("<p:t xmlns:p=\"ns\"> p:u </p:t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_XML_QNAME_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_qname, sizeof(val_qname), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val_qname.localName.length == 1, "got %u\n", val_qname.localName.length );
+    ok( val_qname.localName.bytes[0] == 'u', "wrong data\n" );
+    ok( val_qname.ns.length == 2, "got %u\n", val_qname.ns.length );
+    ok( !memcmp( val_qname.ns.bytes, "ns", 2 ), "wrong data\n" );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );

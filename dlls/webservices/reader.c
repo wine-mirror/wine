@@ -958,47 +958,53 @@ HRESULT append_attribute( WS_XML_ELEMENT_NODE *elem, WS_XML_ATTRIBUTE *attr )
     return S_OK;
 }
 
-static HRESULT split_name( const unsigned char *str, ULONG len, const unsigned char **prefix,
-                           ULONG *prefix_len, const unsigned char **localname, ULONG *localname_len )
+static inline void init_xml_string( BYTE *bytes, ULONG len, WS_XML_STRING *str )
 {
-    const unsigned char *ptr = str;
+    str->length     = len;
+    str->bytes      = bytes;
+    str->dictionary = NULL;
+    str->id         = 0;
+}
 
-    *prefix = NULL;
-    *prefix_len = 0;
-
-    *localname = str;
-    *localname_len = len;
+static HRESULT split_qname( const BYTE *str, ULONG len, WS_XML_STRING *prefix, WS_XML_STRING *localname )
+{
+    BYTE *prefix_bytes = NULL, *localname_bytes = (BYTE *)str, *ptr = (BYTE *)str;
+    ULONG prefix_len = 0, localname_len = len;
 
     while (len--)
     {
         if (*ptr == ':')
         {
             if (ptr == str) return WS_E_INVALID_FORMAT;
-            *prefix = str;
-            *prefix_len = ptr - str;
-            *localname = ptr + 1;
-            *localname_len = len;
+            prefix_bytes = (BYTE *)str;
+            prefix_len   = ptr - str;
+            localname_bytes = ptr + 1;
+            localname_len   = len;
             break;
         }
         ptr++;
     }
+    if (!localname_len) return WS_E_INVALID_FORMAT;
+
+    init_xml_string( prefix_bytes, prefix_len, prefix );
+    init_xml_string( localname_bytes, localname_len, localname );
     return S_OK;
 }
 
-static HRESULT parse_name( const unsigned char *str, ULONG len, WS_XML_STRING **prefix, WS_XML_STRING **localname )
+static HRESULT parse_qname( const BYTE *str, ULONG len, WS_XML_STRING **prefix_ret, WS_XML_STRING **localname_ret )
 {
-    const unsigned char *localname_ptr, *prefix_ptr;
-    ULONG localname_len, prefix_len;
+    WS_XML_STRING prefix, localname;
     HRESULT hr;
 
-    if ((hr = split_name( str, len, &prefix_ptr, &prefix_len,  &localname_ptr, &localname_len )) != S_OK) return hr;
-    if (!(*prefix = alloc_xml_string( prefix_ptr, prefix_len ))) return E_OUTOFMEMORY;
-    if (!(*localname = alloc_xml_string( localname_ptr, localname_len )))
+    if ((hr = split_qname( str, len, &prefix, &localname )) != S_OK) return hr;
+    if (!(*prefix_ret = alloc_xml_string( NULL, prefix.length ))) return E_OUTOFMEMORY;
+    if (!(*localname_ret = dup_xml_string( &localname )))
     {
-        free_xml_string( *prefix );
-        *prefix = NULL;
+        free_xml_string( *prefix_ret );
         return E_OUTOFMEMORY;
     }
+    memcpy( (*prefix_ret)->bytes, prefix.bytes, prefix.length );
+    if (prefix.length && add_xml_string( *prefix_ret ) != S_OK) WARN( "prefix not added to dictionary\n" );
     return S_OK;
 }
 
@@ -1508,7 +1514,7 @@ static HRESULT read_attribute_text( struct reader *reader, WS_XML_ATTRIBUTE **re
     }
     if (!len) goto error;
 
-    if ((hr = parse_name( start, len, &prefix, &localname )) != S_OK) goto error;
+    if ((hr = parse_qname( start, len, &prefix, &localname )) != S_OK) goto error;
     if (WsXmlStringEquals( prefix, &xmlns, NULL ) == S_OK)
     {
         free_xml_string( prefix );
@@ -1692,7 +1698,7 @@ static HRESULT set_namespaces( struct reader *reader, WS_XML_ELEMENT_NODE *elem 
         WS_XML_ATTRIBUTE *attr = elem->attributes[i];
         if (attr->isXmlNs || WsXmlStringEquals( attr->prefix, &xml, NULL ) == S_OK) continue;
         if (!(ns = get_namespace( reader, attr->prefix ))) return WS_E_INVALID_FORMAT;
-        if (!(attr->ns = alloc_xml_string( NULL, ns->length  ))) return E_OUTOFMEMORY;
+        if (!(attr->ns = alloc_xml_string( NULL, ns->length ))) return E_OUTOFMEMORY;
         if (attr->ns->length) memcpy( attr->ns->bytes, ns->bytes, ns->length );
     }
     return S_OK;
@@ -1771,8 +1777,7 @@ static HRESULT read_element_text( struct reader *reader )
     if (!len) goto error;
 
     if (!(parent = find_parent( reader ))) goto error;
-    if ((hr = parse_name( start, len, &elem->prefix, &elem->localName )) != S_OK) goto error;
-
+    if ((hr = parse_qname( start, len, &elem->prefix, &elem->localName )) != S_OK) goto error;
     if ((hr = read_attributes_text( reader, elem )) != S_OK) goto error;
     if ((hr = set_namespaces( reader, elem )) != S_OK) goto error;
 
@@ -2301,7 +2306,7 @@ static HRESULT read_endelement_text( struct reader *reader )
     struct node *parent;
     unsigned int len = 0, ch, skip;
     const unsigned char *start;
-    WS_XML_STRING *prefix, *localname;
+    WS_XML_STRING prefix, localname;
     HRESULT hr;
 
     if (read_cmp( reader, "</", 2 )) return WS_E_INVALID_FORMAT;
@@ -2321,11 +2326,8 @@ static HRESULT read_endelement_text( struct reader *reader )
         len += skip;
     }
 
-    if ((hr = parse_name( start, len, &prefix, &localname )) != S_OK) return hr;
-    parent = find_startelement( reader, prefix, localname );
-    free_xml_string( prefix );
-    free_xml_string( localname );
-    if (!parent) return WS_E_INVALID_FORMAT;
+    if ((hr = split_qname( start, len, &prefix, &localname )) != S_OK) return hr;
+    if (!(parent = find_startelement( reader, &prefix, &localname ))) return WS_E_INVALID_FORMAT;
 
     reader->current = LIST_ENTRY( list_tail( &parent->children ), struct node, entry );
     reader->last    = reader->current;
@@ -3163,123 +3165,6 @@ HRESULT WINAPI WsReadEndAttribute( WS_XML_READER *handle, WS_ERROR *error )
     return S_OK;
 }
 
-static HRESULT find_namespace( struct reader *reader, const WS_XML_STRING *prefix, const WS_XML_STRING **ns )
-{
-    const struct node *node;
-    for (node = reader->current->parent; node_type( node ) == WS_XML_NODE_TYPE_ELEMENT; node = node->parent)
-    {
-        const WS_XML_ELEMENT_NODE *elem = &node->hdr;
-        ULONG i;
-        for (i = 0; i < elem->attributeCount; i++)
-        {
-            if (!elem->attributes[i]->isXmlNs) continue;
-            if (WsXmlStringEquals( elem->attributes[i]->prefix, prefix, NULL ) != S_OK) continue;
-            *ns = elem->attributes[i]->ns;
-            return S_OK;
-        }
-    }
-    return WS_E_INVALID_FORMAT;
-}
-
-static HRESULT read_qualified_name( struct reader *reader, WS_HEAP *heap, WS_XML_STRING *prefix_ret,
-                                    WS_XML_STRING *localname_ret, WS_XML_STRING *ns_ret )
-{
-    const WS_XML_TEXT_NODE *node = (const WS_XML_TEXT_NODE *)reader->current;
-    const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)node->text;
-    unsigned char *prefix_bytes, *localname_bytes, *ns_bytes;
-    const unsigned char *ptr = utf8->value.bytes;
-    WS_XML_STRING prefix, localname, empty = {0, NULL};
-    const WS_XML_STRING *ns = &empty;
-    ULONG len = utf8->value.length;
-    HRESULT hr;
-
-    while (len && read_isspace( *ptr )) { ptr++; len--; }
-    while (len && read_isspace( ptr[len - 1] )) { len--; }
-    if (!len) return WS_E_INVALID_FORMAT;
-
-    if ((hr = split_name( ptr, len, (const unsigned char **)&prefix.bytes, &prefix.length,
-                          (const unsigned char **)&localname.bytes, &localname.length )) != S_OK) return hr;
-
-    if (!localname.length) return WS_E_INVALID_FORMAT;
-    if (prefix.length && (hr = find_namespace( reader, &prefix, &ns )) != S_OK) return hr;
-
-    if (!(prefix_bytes = ws_alloc( heap, prefix.length ))) return WS_E_QUOTA_EXCEEDED;
-    memcpy( prefix_bytes, prefix.bytes, prefix.length );
-
-    if (!(localname_bytes = ws_alloc( heap, localname.length )))
-    {
-        ws_free( heap, prefix_bytes, prefix.length );
-        return WS_E_QUOTA_EXCEEDED;
-    }
-    memcpy( localname_bytes, localname.bytes, localname.length );
-
-    if (!(ns_bytes = ws_alloc( heap, ns->length )))
-    {
-        ws_free( heap, prefix_bytes, prefix.length );
-        ws_free( heap, localname_bytes, localname.length );
-        return WS_E_QUOTA_EXCEEDED;
-    }
-    memcpy( ns_bytes, ns->bytes, ns->length );
-
-    prefix_ret->bytes  = prefix_bytes;
-    prefix_ret->length = prefix.length;
-
-    localname_ret->bytes  = localname_bytes;
-    localname_ret->length = localname.length;
-
-    ns_ret->bytes  = ns_bytes;
-    ns_ret->length = ns->length;
-
-    return S_OK;
-}
-
-/**************************************************************************
- *          WsReadQualifiedName		[webservices.@]
- */
-HRESULT WINAPI WsReadQualifiedName( WS_XML_READER *handle, WS_HEAP *heap, WS_XML_STRING *prefix,
-                                    WS_XML_STRING *localname, WS_XML_STRING *ns,
-                                    WS_ERROR *error )
-{
-    struct reader *reader = (struct reader *)handle;
-    HRESULT hr;
-
-    TRACE( "%p %p %p %p %p %p\n", handle, heap, prefix, localname, ns, error );
-    if (error) FIXME( "ignoring error parameter\n" );
-
-    if (!reader || !heap) return E_INVALIDARG;
-
-    EnterCriticalSection( &reader->cs );
-
-    if (reader->magic != READER_MAGIC)
-    {
-        LeaveCriticalSection( &reader->cs );
-        return E_INVALIDARG;
-    }
-
-    if (!reader->input_type)
-    {
-        LeaveCriticalSection( &reader->cs );
-        return WS_E_INVALID_OPERATION;
-    }
-
-    if (!localname)
-    {
-        LeaveCriticalSection( &reader->cs );
-        return E_INVALIDARG;
-    }
-
-    if (reader->state != READER_STATE_TEXT)
-    {
-        LeaveCriticalSection( &reader->cs );
-        return WS_E_INVALID_FORMAT;
-    }
-
-    hr = read_qualified_name( reader, heap, prefix, localname, ns );
-
-    LeaveCriticalSection( &reader->cs );
-    return hr;
-}
-
 static WCHAR *xmltext_to_widechar( WS_HEAP *heap, const WS_XML_TEXT *text )
 {
     WCHAR *ret;
@@ -3673,6 +3558,98 @@ static HRESULT str_to_xml_string( const unsigned char *str, ULONG len, WS_HEAP *
     ret->dictionary = NULL;
     ret->id         = 0;
     return S_OK;
+}
+
+static HRESULT copy_xml_string( WS_HEAP *heap, const WS_XML_STRING *src, WS_XML_STRING *dst )
+{
+    if (!(dst->bytes = ws_alloc( heap, src->length ))) return WS_E_QUOTA_EXCEEDED;
+    memcpy( dst->bytes, src->bytes, src->length );
+    dst->length = src->length;
+    return S_OK;
+}
+
+static HRESULT str_to_qname( struct reader *reader, const unsigned char *str, ULONG len, WS_HEAP *heap,
+                             WS_XML_STRING *prefix_ret, WS_XML_STRING *localname_ret, WS_XML_STRING *ns_ret )
+{
+    const unsigned char *p = str;
+    WS_XML_STRING prefix, localname;
+    const WS_XML_STRING *ns;
+    HRESULT hr;
+
+    while (len && read_isspace( *p )) { p++; len--; }
+    while (len && read_isspace( p[len - 1] )) { len--; }
+
+    if ((hr = split_qname( p, len, &prefix, &localname )) != S_OK) return hr;
+    if (!(ns = get_namespace( reader, &prefix ))) return WS_E_INVALID_FORMAT;
+
+    if (prefix_ret && (hr = copy_xml_string( heap, &prefix, prefix_ret )) != S_OK) return hr;
+    if ((hr = copy_xml_string( heap, &localname, localname_ret )) != S_OK)
+    {
+        ws_free( heap, prefix_ret->bytes, prefix_ret->length );
+        return hr;
+    }
+    if ((hr = copy_xml_string( heap, ns, ns_ret )) != S_OK)
+    {
+        ws_free( heap, prefix_ret->bytes, prefix_ret->length );
+        ws_free( heap, localname_ret->bytes, localname_ret->length );
+        return hr;
+    }
+    return S_OK;
+}
+
+static HRESULT read_qualified_name( struct reader *reader, WS_HEAP *heap, WS_XML_STRING *prefix,
+                                    WS_XML_STRING *localname, WS_XML_STRING *ns )
+{
+    const WS_XML_TEXT_NODE *node = (const WS_XML_TEXT_NODE *)reader->current;
+    const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)node->text;
+    return str_to_qname( reader, utf8->value.bytes, utf8->value.length, heap, prefix, localname, ns );
+}
+
+/**************************************************************************
+ *          WsReadQualifiedName		[webservices.@]
+ */
+HRESULT WINAPI WsReadQualifiedName( WS_XML_READER *handle, WS_HEAP *heap, WS_XML_STRING *prefix,
+                                    WS_XML_STRING *localname, WS_XML_STRING *ns,
+                                    WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %p %p %p %p\n", handle, heap, prefix, localname, ns, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader || !heap) return E_INVALIDARG;
+
+    EnterCriticalSection( &reader->cs );
+
+    if (reader->magic != READER_MAGIC)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return E_INVALIDARG;
+    }
+
+    if (!reader->input_type)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if (!localname)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return E_INVALIDARG;
+    }
+
+    if (reader->state != READER_STATE_TEXT)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return WS_E_INVALID_FORMAT;
+    }
+
+    hr = read_qualified_name( reader, heap, prefix, localname, ns );
+
+    LeaveCriticalSection( &reader->cs );
+    return hr;
 }
 
 static const int month_offsets[2][12] =
@@ -4946,6 +4923,62 @@ static HRESULT read_type_xml_string( struct reader *reader, WS_TYPE_MAPPING mapp
     return S_OK;
 }
 
+static HRESULT read_type_qname( struct reader *reader, WS_TYPE_MAPPING mapping,
+                                const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                                const WS_XML_QNAME_DESCRIPTION *desc, WS_READ_OPTION option,
+                                WS_HEAP *heap, void *ret, ULONG size )
+{
+    WS_XML_UTF8_TEXT *utf8;
+    WS_XML_QNAME val = {{0}};
+    HRESULT hr;
+    BOOL found;
+
+    if (desc) FIXME( "ignoring description\n" );
+
+    if (node_type( reader->current ) != WS_XML_NODE_TYPE_ELEMENT) return WS_E_INVALID_FORMAT;
+    if ((hr = read_startelement( reader )) != S_OK) return hr;
+    if (node_type( reader->current ) != WS_XML_NODE_TYPE_TEXT) return WS_E_INVALID_FORMAT;
+
+    if ((hr = read_get_text( reader, mapping, localname, ns, &utf8, &found )) != S_OK) return hr;
+    if (found && (hr = str_to_qname( reader, utf8->value.bytes, utf8->value.length, heap,
+                                     NULL, &val.localName, &val.ns )) != S_OK) return hr;
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_VALUE:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_NILLABLE_VALUE:
+        if (size != sizeof(val)) return E_INVALIDARG;
+        *(WS_XML_QNAME *)ret = val;
+        break;
+
+    case WS_READ_REQUIRED_POINTER:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_OPTIONAL_POINTER:
+    case WS_READ_NILLABLE_POINTER:
+    {
+        WS_XML_QNAME *heap_val = NULL;
+        if (size != sizeof(heap_val)) return E_INVALIDARG;
+        if (found)
+        {
+            if (!(heap_val = ws_alloc( heap, sizeof(*heap_val) ))) return WS_E_QUOTA_EXCEEDED;
+            *heap_val = val;
+        }
+        *(WS_XML_QNAME **)ret = heap_val;
+        break;
+    }
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static BOOL is_empty_text_node( const struct node *node )
 {
     const WS_XML_TEXT_NODE *text = (const WS_XML_TEXT_NODE *)node;
@@ -5069,6 +5102,9 @@ ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
     case WS_XML_STRING_TYPE:
         return sizeof(WS_XML_STRING);
 
+    case WS_XML_QNAME_TYPE:
+        return sizeof(WS_XML_QNAME);
+
     case WS_STRUCT_TYPE:
         return desc->size;
 
@@ -5108,6 +5144,7 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
     case WS_STRING_TYPE:
     case WS_BYTES_TYPE:
     case WS_XML_STRING_TYPE:
+    case WS_XML_QNAME_TYPE:
     case WS_STRUCT_TYPE:
     case WS_ENUM_TYPE:
         if (options & (WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE)) return WS_READ_NILLABLE_VALUE;
@@ -5534,6 +5571,11 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
 
     case WS_XML_STRING_TYPE:
         if ((hr = read_type_xml_string( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
+            return hr;
+        break;
+
+    case WS_XML_QNAME_TYPE:
+        if ((hr = read_type_qname( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
             return hr;
         break;
 
