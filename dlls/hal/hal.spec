@@ -76,7 +76,7 @@
 @ stub KeRaiseIrql
 @ stub KeRaiseIrqlToDpcLevel
 @ stub KeRaiseIrqlToSynchLevel
-@ stub KeReleaseSpinLock
+@ stdcall KeReleaseSpinLock(ptr long) ntoskrnl.exe.KeReleaseSpinLock
 @ stub KeStallExecutionProcessor
 @ stub READ_PORT_BUFFER_UCHAR
 @ stub READ_PORT_BUFFER_ULONG

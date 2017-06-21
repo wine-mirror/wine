@@ -3228,3 +3228,11 @@ void WINAPI KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *handle )
 {
     FIXME( "stub: %p\n", handle);
 }
+
+/***********************************************************************
+ *           KeReleaseSpinLock (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI KeReleaseSpinLock( KSPIN_LOCK *spinlock, KIRQL irql )
+{
+    FIXME( "stub: %p %u\n", spinlock, irql );
+}
