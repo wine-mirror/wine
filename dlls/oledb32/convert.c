@@ -1081,7 +1081,10 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         break;
     }
-    break;
+
+    case DBTYPE_NUMERIC:
+        FIXME("Unimplemented conversion %04x -> DBTYPE_NUMERIC\n", src_type);
+        return E_NOTIMPL;
 
     default:
         FIXME("Unimplemented conversion %04x -> %04x\n", src_type, dst_type);
