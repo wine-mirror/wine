@@ -372,14 +372,17 @@ static void regstore_set_modified(struct d3dx_regstore *rs, unsigned int table,
 static void regstore_set_values(struct d3dx_regstore *rs, unsigned int table, const void *data,
         unsigned int start_offset, unsigned int count)
 {
-    void *out;
+    BYTE *dst = rs->tables[table];
+    const BYTE *src = data;
+    unsigned int size;
 
     if (!count)
         return;
 
-    out = (BYTE *)rs->tables[table] + start_offset * table_info[table].component_size;
-    assert(data != out);
-    memcpy(out, data, count * table_info[table].component_size);
+    dst += start_offset * table_info[table].component_size;
+    size = count * table_info[table].component_size;
+    assert((src < dst && size <= dst - src) || (src > dst && size <= src - dst));
+    memcpy(dst, src, size);
     regstore_set_modified(rs, table, start_offset, count);
 }
 
