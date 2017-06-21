@@ -517,6 +517,8 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 
             if (bestDBuffer != -1 && (format.dwFlags & PFD_DOUBLEBUFFER) != bestDBuffer) continue;
         }
+        else if (!best_format)
+            goto found;
 
         /* Stereo, see the comments above. */
         if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE))
@@ -527,6 +529,8 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 
             if (bestStereo != -1 && (format.dwFlags & PFD_STEREO) != bestStereo) continue;
         }
+        else if (!best_format)
+            goto found;
 
         /* Below we will do a number of checks to select the 'best' pixelformat.
          * We assume the precedence cColorBits > cAlphaBits > cDepthBits > cStencilBits -> cAuxBuffers.

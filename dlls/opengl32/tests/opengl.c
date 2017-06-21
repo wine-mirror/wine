@@ -277,7 +277,7 @@ static void test_choosepixelformat(void)
     pfd.dwFlags |= PFD_DOUBLEBUFFER_DONTCARE;
     ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
     pfd.dwFlags |= PFD_STEREO_DONTCARE;
-    todo_wine ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_DOUBLEBUFFER_DONTCARE;
     ok( test_pfd(&pfd), "PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_STEREO_DONTCARE;
