@@ -281,7 +281,10 @@ static void OnGetDispInfo(NMLVDISPINFOW* plvdi)
         plvdi->item.pszText = g_pszDefaultValueName;
         break;
     case 1:
-        switch (((LINE_INFO*)plvdi->item.lParam)->dwValType) {
+    {
+        DWORD data_type = ((LINE_INFO *)plvdi->item.lParam)->dwValType;
+
+        switch (data_type) {
         case REG_SZ:
             plvdi->item.pszText = reg_szT;
             break;
@@ -311,14 +314,14 @@ static void OnGetDispInfo(NMLVDISPINFOW* plvdi)
             break;
         default:
           {
-            WCHAR szUnknownFmt[64];
-            LoadStringW(hInst, IDS_REGISTRY_UNKNOWN_TYPE, szUnknownFmt, COUNT_OF(szUnknownFmt));
-            wsprintfW(buffer, szUnknownFmt, plvdi->item.lParam);
+            WCHAR fmt[] = {'0','x','%','x',0};
+            wsprintfW(buffer, fmt, data_type);
             plvdi->item.pszText = buffer;
             break;
           }
         }
         break;
+    }
     case 2:
         plvdi->item.pszText = g_szValueNotSet;
         break;
