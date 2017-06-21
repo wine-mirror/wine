@@ -646,6 +646,30 @@ GpStatus WINGDIPAPI GdipAddPathLine2I(GpPath *path, GDIPCONST GpPoint *points, I
     return stat;
 }
 
+/*************************************************************************
+ * GdipAddPathLine   [GDIPLUS.21]
+ *
+ * Add two points to the given path.
+ *
+ * PARAMS
+ *  path [I/O] Path that the line is appended to
+ *  x1   [I]   X coordinate of the first point of the line
+ *  y1   [I]   Y coordinate of the first point of the line
+ *  x2   [I]   X coordinate of the second point of the line
+ *  y2   [I]   Y coordinate of the second point of the line
+ *
+ * RETURNS
+ *  InvalidParameter If the first parameter is not a valid path
+ *  OutOfMemory      If the path cannot be lengthened, i.e. memory allocation fails
+ *  Ok               If everything works out as expected
+ *
+ * NOTES
+ *  This functions takes the newfigure value of the given path into account,
+ *  i.e. the two new points are connected to the end of the given path if it
+ *  was set to FALSE, otherwise the first point is given the PathPointTypeStart
+ *  value. In both cases, the value of newfigure of the given path is FALSE
+ *  afterwards.
+ */
 GpStatus WINGDIPAPI GdipAddPathLine(GpPath *path, REAL x1, REAL y1, REAL x2, REAL y2)
 {
     INT old_count;
@@ -675,6 +699,11 @@ GpStatus WINGDIPAPI GdipAddPathLine(GpPath *path, REAL x1, REAL y1, REAL x2, REA
     return Ok;
 }
 
+/*************************************************************************
+ * GdipAddPathLineI   [GDIPLUS.21]
+ *
+ * See GdipAddPathLine
+ */
 GpStatus WINGDIPAPI GdipAddPathLineI(GpPath *path, INT x1, INT y1, INT x2, INT y2)
 {
     TRACE("(%p, %d, %d, %d, %d)\n", path, x1, y1, x2, y2);
