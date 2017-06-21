@@ -1379,8 +1379,7 @@ static void test_WsReadType(void)
     WS_XML_READER *reader;
     WS_HEAP *heap;
     enum { ONE = 1, TWO = 2 };
-    WS_XML_STRING one = { 3, (BYTE *)"ONE" };
-    WS_XML_STRING two = { 3, (BYTE *)"TWO" };
+    WS_XML_STRING one = { 3, (BYTE *)"ONE" }, two = { 3, (BYTE *)"TWO" }, val_xmlstr;
     WS_ENUM_VALUE enum_values[] = { { ONE, &one }, { TWO, &two } };
     WS_ENUM_DESCRIPTION enum_desc;
     int val_enum;
@@ -1695,6 +1694,14 @@ static void test_WsReadType(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( val_str != NULL, "pointer not set\n" );
     if (val_str) ok( !lstrcmpW( val_str, utf8W ), "wrong data %s\n", wine_dbgstr_w(val_str) );
+
+    memset( &val_xmlstr, 0, sizeof(val_xmlstr) );
+    prepare_type_test( reader, "<t> test </t>", sizeof("<t> test </t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_XML_STRING_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_xmlstr, sizeof(val_xmlstr), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val_xmlstr.length == 6, "got %u\n", val_xmlstr.length );
+    ok( !memcmp( val_xmlstr.bytes, " test ", 6 ), "wrong data\n" );
 
     memset( &val_string, 0, sizeof(val_string) );
     prepare_type_test( reader, "<t> test </t>", sizeof("<t> test </t>") - 1 );
