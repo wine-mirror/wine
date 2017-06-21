@@ -1087,6 +1087,20 @@ GpStatus WINGDIPAPI GdipAddPathStringI(GpPath* path, GDIPCONST WCHAR* string, IN
     return InvalidParameter;
 }
 
+/*************************************************************************
+ * GdipClonePath   [GDIPLUS.53]
+ *
+ * Duplicate the given path in memory.
+ *
+ * PARAMS
+ *  path  [I] The path to be duplicated
+ *  clone [O] Pointer to the new path
+ *
+ * RETURNS
+ *  InvalidParameter If the input path is invalid
+ *  OutOfMemory      If allocation of needed memory fails
+ *  Ok               If everything works out as expected
+ */
 GpStatus WINGDIPAPI GdipClonePath(GpPath* path, GpPath **clone)
 {
     TRACE("(%p, %p)\n", path, clone);
