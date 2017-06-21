@@ -1487,6 +1487,7 @@ static void test_object(void)
         { &CLSID_CDirect3DRMLight,         &IID_IDirect3DRMLight },
         { &CLSID_CDirect3DRMMaterial,      &IID_IDirect3DRMMaterial },
         { &CLSID_CDirect3DRMMaterial,      &IID_IDirect3DRMMaterial2 },
+        { &CLSID_CDirect3DRMMesh,          &IID_IDirect3DRMMesh },
     };
     IDirect3DRM *d3drm1;
     IDirect3DRM2 *d3drm2;
@@ -1513,7 +1514,8 @@ static void test_object(void)
         BOOL takes_ref = IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMeshBuilder) ||
                 IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMFrame) ||
                 IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMLight) ||
-                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMaterial);
+                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMaterial) ||
+                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMesh);
 
         unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, NULL, NULL, tests[i].iid, (void **)&unknown);

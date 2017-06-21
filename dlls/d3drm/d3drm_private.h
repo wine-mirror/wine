@@ -147,6 +147,30 @@ struct d3drm_mesh_builder
     DWORD *material_indices;
 };
 
+struct mesh_group
+{
+    unsigned nb_vertices;
+    D3DRMVERTEX* vertices;
+    unsigned nb_faces;
+    unsigned vertex_per_face;
+    DWORD face_data_size;
+    unsigned* face_data;
+    D3DCOLOR color;
+    IDirect3DRMMaterial2* material;
+    IDirect3DRMTexture3* texture;
+};
+
+struct d3drm_mesh
+{
+    struct d3drm_object obj;
+    IDirect3DRMMesh IDirect3DRMMesh_iface;
+    LONG ref;
+    IDirect3DRM *d3drm;
+    DWORD groups_capacity;
+    DWORD nb_groups;
+    struct mesh_group *groups;
+};
+
 struct d3drm_light
 {
     struct d3drm_object obj;
@@ -207,7 +231,7 @@ HRESULT d3drm_viewport_create(struct d3drm_viewport **viewport, IDirect3DRM *d3d
 HRESULT d3drm_mesh_builder_create(struct d3drm_mesh_builder **mesh_builder, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_light_create(struct d3drm_light **light, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_material_create(struct d3drm_material **material, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
-HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj) DECLSPEC_HIDDEN;
+HRESULT d3drm_mesh_create(struct d3drm_mesh **mesh, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 
 HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *data,
                        D3DRMLOADTEXTURECALLBACK load_texture_proc, void *arg) DECLSPEC_HIDDEN;

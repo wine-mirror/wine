@@ -149,6 +149,19 @@ static HRESULT d3drm_create_material_object(void **object, IDirect3DRM *d3drm)
     return hr;
 }
 
+static HRESULT d3drm_create_mesh_object(void **object, IDirect3DRM *d3drm)
+{
+    struct d3drm_mesh *mesh;
+    HRESULT hr;
+
+    if (FAILED(hr = d3drm_mesh_create(&mesh, d3drm)))
+        return hr;
+
+    *object = &mesh->IDirect3DRMMesh_iface;
+
+    return hr;
+}
+
 struct d3drm
 {
     IDirect3DRM IDirect3DRM_iface;
@@ -1299,6 +1312,7 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
         {&CLSID_CDirect3DRMFrame, d3drm_create_frame_object},
         {&CLSID_CDirect3DRMLight, d3drm_create_light_object},
         {&CLSID_CDirect3DRMMaterial, d3drm_create_material_object},
+        {&CLSID_CDirect3DRMMesh, d3drm_create_mesh_object},
     };
 
     TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",
@@ -1365,9 +1379,18 @@ static HRESULT WINAPI d3drm3_CreateFrame(IDirect3DRM3 *iface,
 
 static HRESULT WINAPI d3drm3_CreateMesh(IDirect3DRM3 *iface, IDirect3DRMMesh **mesh)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
+    struct d3drm_mesh *object;
+    HRESULT hr;
+
     TRACE("iface %p, mesh %p.\n", iface, mesh);
 
-    return Direct3DRMMesh_create(mesh);
+    if (FAILED(hr = d3drm_mesh_create(&object, &d3drm->IDirect3DRM_iface)))
+        return hr;
+
+    *mesh = &object->IDirect3DRMMesh_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3drm3_CreateMeshBuilder(IDirect3DRM3 *iface, IDirect3DRMMeshBuilder3 **mesh_builder)

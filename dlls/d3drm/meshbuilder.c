@@ -26,29 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-struct mesh_group
-{
-    unsigned nb_vertices;
-    D3DRMVERTEX* vertices;
-    unsigned nb_faces;
-    unsigned vertex_per_face;
-    DWORD face_data_size;
-    unsigned* face_data;
-    D3DCOLOR color;
-    IDirect3DRMMaterial2* material;
-    IDirect3DRMTexture3* texture;
-};
-
-struct d3drm_mesh
-{
-    struct d3drm_object obj;
-    IDirect3DRMMesh IDirect3DRMMesh_iface;
-    LONG ref;
-    DWORD groups_capacity;
-    DWORD nb_groups;
-    struct mesh_group *groups;
-};
-
 struct coords_2d
 {
     D3DVALUE u;
@@ -1977,7 +1954,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_CreateMesh(IDirect3DRMMeshBuilder3 *if
     if (!mesh)
         return E_POINTER;
 
-    hr = Direct3DRMMesh_create(mesh);
+    hr = IDirect3DRM_CreateMesh(mesh_builder->d3drm, mesh);
     if (FAILED(hr))
         return hr;
 
@@ -2422,6 +2399,8 @@ static ULONG WINAPI d3drm_mesh_Release(IDirect3DRMMesh *iface)
     {
         DWORD i;
 
+        d3drm_object_cleanup((IDirect3DRMObject *)iface, &mesh->obj);
+        IDirect3DRM_Release(mesh->d3drm);
         for (i = 0; i < mesh->nb_groups; ++i)
         {
             HeapFree(GetProcessHeap(), 0, mesh->groups[i].vertices);
@@ -2449,17 +2428,21 @@ static HRESULT WINAPI d3drm_mesh_Clone(IDirect3DRMMesh *iface,
 static HRESULT WINAPI d3drm_mesh_AddDestroyCallback(IDirect3DRMMesh *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_add_destroy_callback(&mesh->obj, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_mesh_DeleteDestroyCallback(IDirect3DRMMesh *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_delete_destroy_callback(&mesh->obj, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_mesh_SetAppData(IDirect3DRMMesh *iface, DWORD data)
@@ -2874,22 +2857,24 @@ static const struct IDirect3DRMMeshVtbl d3drm_mesh_vtbl =
     d3drm_mesh_GetGroupTexture,
 };
 
-HRESULT Direct3DRMMesh_create(IDirect3DRMMesh **mesh)
+HRESULT d3drm_mesh_create(struct d3drm_mesh **mesh, IDirect3DRM *d3drm)
 {
     static const char classname[] = "Mesh";
     struct d3drm_mesh *object;
 
-    TRACE("mesh %p.\n", mesh);
+    TRACE("mesh %p, d3drm %p.\n", mesh, d3drm);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMMesh_iface.lpVtbl = &d3drm_mesh_vtbl;
     object->ref = 1;
+    object->d3drm = d3drm;
+    IDirect3DRM_AddRef(object->d3drm);
 
     d3drm_object_init(&object->obj, classname);
 
-    *mesh = &object->IDirect3DRMMesh_iface;
+    *mesh = object;
 
     return S_OK;
 }
