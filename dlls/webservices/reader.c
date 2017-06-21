@@ -3578,6 +3578,19 @@ static HRESULT str_to_string( const unsigned char *str, ULONG len, WS_HEAP *heap
     return S_OK;
 }
 
+static HRESULT str_to_unique_id( const unsigned char *str, ULONG len, WS_HEAP *heap, WS_UNIQUE_ID *ret )
+{
+    if (len == 45 && !memcmp( str, "urn:uuid:", 9 ))
+    {
+        ret->uri.length = 0;
+        ret->uri.chars  = NULL;
+        return str_to_guid( str + 9, len - 9, &ret->guid );
+    }
+
+    memset( &ret->guid, 0, sizeof(ret->guid) );
+    return str_to_string( str, len, heap, &ret->uri );
+}
+
 static inline unsigned char decode_char( unsigned char c )
 {
     if (c >= 'A' && c <= 'Z') return c - 'A';
@@ -4714,6 +4727,57 @@ static HRESULT read_type_guid( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT read_type_unique_id( struct reader *reader, WS_TYPE_MAPPING mapping,
+                                    const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                                    const WS_UNIQUE_ID_DESCRIPTION *desc, WS_READ_OPTION option,
+                                    WS_HEAP *heap, void *ret, ULONG size )
+{
+    WS_XML_UTF8_TEXT *utf8;
+    WS_UNIQUE_ID val = {{0}};
+    HRESULT hr;
+    BOOL found;
+
+    if (desc) FIXME( "ignoring description\n" );
+
+    if ((hr = read_get_text( reader, mapping, localname, ns, &utf8, &found )) != S_OK) return hr;
+    if (found && (hr = str_to_unique_id( utf8->value.bytes, utf8->value.length, heap, &val )) != S_OK) return hr;
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_VALUE:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_NILLABLE_VALUE:
+        if (size != sizeof(val)) return E_INVALIDARG;
+        *(WS_UNIQUE_ID *)ret = val;
+        break;
+
+    case WS_READ_REQUIRED_POINTER:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_OPTIONAL_POINTER:
+    case WS_READ_NILLABLE_POINTER:
+    {
+        WS_UNIQUE_ID *heap_val = NULL;
+        if (size != sizeof(heap_val)) return E_INVALIDARG;
+        if (found)
+        {
+            if (!(heap_val = ws_alloc( heap, sizeof(*heap_val) ))) return WS_E_QUOTA_EXCEEDED;
+            *heap_val = val;
+        }
+        *(WS_UNIQUE_ID **)ret = heap_val;
+        break;
+    }
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT read_type_string( struct reader *reader, WS_TYPE_MAPPING mapping,
                                  const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                  const WS_STRING_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4976,6 +5040,7 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
     case WS_DOUBLE_TYPE:
     case WS_DATETIME_TYPE:
     case WS_GUID_TYPE:
+    case WS_UNIQUE_ID_TYPE:
     case WS_STRING_TYPE:
     case WS_BYTES_TYPE:
     case WS_XML_STRING_TYPE:
@@ -5380,6 +5445,11 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
 
     case WS_GUID_TYPE:
         if ((hr = read_type_guid( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
+            return hr;
+        break;
+
+    case WS_UNIQUE_ID_TYPE:
+        if ((hr = read_type_unique_id( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
             return hr;
         break;
 

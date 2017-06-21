@@ -22,6 +22,8 @@
 #include "webservices.h"
 #include "wine/test.h"
 
+static const GUID guid_null;
+
 static const char data1[] =
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
 
@@ -1360,9 +1362,6 @@ static void prepare_type_test( WS_XML_READER *reader, const char *data, ULONG si
     hr = set_input( reader, data, size );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsFillReader( reader, size, NULL, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -1373,8 +1372,7 @@ static void prepare_type_test( WS_XML_READER *reader, const char *data, ULONG si
 static void test_WsReadType(void)
 {
     static const WCHAR testW[] = {'t','e','s','t',0}, test2W[] = {' ','t','e','s','t',' '};
-    static const GUID guid1 = {0,0,0,{0,0,0,0,0,0,0,0}};
-    static const GUID guid2 = {0,0,0,{0,0,0,0,0,0,0,0xa1}};
+    static const GUID guid = {0,0,0,{0,0,0,0,0,0,0,0xa1}};
     static const char utf8[] = {'<','t','>',0xe2,0x80,0x99,'<','/','t','>'};
     static const WCHAR utf8W[] = {0x2019,0};
     HRESULT hr;
@@ -1399,6 +1397,7 @@ static void test_WsReadType(void)
     GUID val_guid;
     WS_BYTES val_bytes;
     WS_STRING val_string;
+    WS_UNIQUE_ID val_id;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1650,7 +1649,7 @@ static void test_WsReadType(void)
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
                      WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( IsEqualGUID( &val_guid, &guid1 ), "wrong guid\n" );
+    ok( IsEqualGUID( &val_guid, &guid_null ), "wrong guid\n" );
 
     memset( &val_guid, 0, sizeof(val_guid) );
     prepare_type_test( reader, "<t>00000000-0000-0000-0000-0000000000a1</t>",
@@ -1658,7 +1657,7 @@ static void test_WsReadType(void)
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
                      WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( IsEqualGUID( &val_guid, &guid2 ), "wrong guid\n" );
+    ok( IsEqualGUID( &val_guid, &guid ), "wrong guid\n" );
 
     memset( &val_guid, 0, sizeof(val_guid) );
     prepare_type_test( reader, "<t>00000000-0000-0000-0000-0000000000A1</t>",
@@ -1666,7 +1665,7 @@ static void test_WsReadType(void)
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
                      WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( IsEqualGUID( &val_guid, &guid2 ), "wrong guid\n" );
+    ok( IsEqualGUID( &val_guid, &guid ), "wrong guid\n" );
 
     memset( &val_bytes, 0, sizeof(val_bytes) );
     prepare_type_test( reader, "<t>dGVzdA==</t>", sizeof("<t>dGVzdA==</t>") - 1 );
@@ -1704,6 +1703,26 @@ static void test_WsReadType(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( val_string.length == 6, "got %u\n", val_string.length );
     ok( !memcmp( val_string.chars, test2W, sizeof(test2W) ), "wrong data\n" );
+
+    memset( &val_id, 0, sizeof(val_id) );
+    val_id.guid.Data1 = 0xdeadbeef;
+    prepare_type_test( reader, "<t> test </t>", sizeof("<t> test </t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_UNIQUE_ID_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_id, sizeof(val_id), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val_id.uri.length == 6, "got %u\n", val_string.length );
+    ok( !memcmp( val_id.uri.chars, test2W, sizeof(test2W) ), "wrong data\n" );
+    ok( IsEqualGUID( &val_id.guid, &guid_null ), "wrong guid\n" );
+
+    memset( &val_id, 0, sizeof(val_id) );
+    prepare_type_test( reader, "<t>urn:uuid:00000000-0000-0000-0000-0000000000a1</t>",
+                       sizeof("<t>urn:uuid:00000000-0000-0000-0000-0000000000a1</t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_UNIQUE_ID_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_id, sizeof(val_id), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !val_id.uri.length, "got %u\n", val_string.length );
+    ok( val_id.uri.chars == NULL, "chars set %s\n", wine_dbgstr_wn(val_id.uri.chars, val_id.uri.length) );
+    ok( IsEqualGUID( &val_id.guid, &guid ), "wrong guid\n" );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );
@@ -3842,7 +3861,6 @@ static void test_field_options(void)
     static const char xml[] =
         "<t xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\"><wsz i:nil=\"true\"/>"
         "<s i:nil=\"true\"/></t>";
-    static const GUID guid_null = {0};
     HRESULT hr;
     WS_HEAP *heap;
     WS_XML_READER *reader;
