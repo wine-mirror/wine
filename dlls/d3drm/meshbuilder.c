@@ -1232,6 +1232,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
                 IDirectXFileData *data;
                 IDirectXFileDataReference *reference;
                 IDirectXFileObject *material_child;
+                struct d3drm_material *object;
 
                 hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileData, (void **)&data);
                 if (FAILED(hr))
@@ -1251,12 +1252,13 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
                     IDirectXFileObject_Release(child);
                 }
 
-                hr = Direct3DRMMaterial_create(&mesh_builder->materials[i].material);
+                hr = d3drm_material_create(&object, mesh_builder->d3drm);
                 if (FAILED(hr))
                 {
                     IDirectXFileData_Release(data);
                     goto end;
                 }
+                mesh_builder->materials[i].material = &object->IDirect3DRMMaterial2_iface;
 
                 hr = IDirectXFileData_GetData(data, NULL, &size, (void**)&ptr);
                 if (hr != DXFILE_OK)

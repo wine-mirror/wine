@@ -136,6 +136,19 @@ static HRESULT d3drm_create_light_object(void **object, IDirect3DRM *d3drm)
     return hr;
 }
 
+static HRESULT d3drm_create_material_object(void **object, IDirect3DRM *d3drm)
+{
+    struct d3drm_material *material;
+    HRESULT hr;
+
+    if (FAILED(hr = d3drm_material_create(&material, d3drm)))
+        return hr;
+
+    *object = &material->IDirect3DRMMaterial2_iface;
+
+    return hr;
+}
+
 struct d3drm
 {
     IDirect3DRM IDirect3DRM_iface;
@@ -1285,6 +1298,7 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
         {&CLSID_CDirect3DRMMeshBuilder, d3drm_create_mesh_builder_object},
         {&CLSID_CDirect3DRMFrame, d3drm_create_frame_object},
         {&CLSID_CDirect3DRMLight, d3drm_create_light_object},
+        {&CLSID_CDirect3DRMMaterial, d3drm_create_material_object},
     };
 
     TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",
@@ -1474,12 +1488,16 @@ static HRESULT WINAPI d3drm3_CreateLightRGB(IDirect3DRM3 *iface, D3DRMLIGHTTYPE 
 static HRESULT WINAPI d3drm3_CreateMaterial(IDirect3DRM3 *iface,
         D3DVALUE power, IDirect3DRMMaterial2 **material)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
+    struct d3drm_material *object;
     HRESULT hr;
 
     TRACE("iface %p, power %.8e, material %p.\n", iface, power, material);
 
-    if (SUCCEEDED(hr = Direct3DRMMaterial_create(material)))
-        IDirect3DRMMaterial2_SetPower(*material, power);
+    if (SUCCEEDED(hr = d3drm_material_create(&object, &d3drm->IDirect3DRM_iface)))
+        IDirect3DRMMaterial2_SetPower(&object->IDirect3DRMMaterial2_iface, power);
+
+    *material = &object->IDirect3DRMMaterial2_iface;
 
     return hr;
 }
