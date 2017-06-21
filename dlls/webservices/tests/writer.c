@@ -2124,10 +2124,12 @@ static void test_WsCopyNode(void)
 static void test_text_types(void)
 {
     static const WCHAR utf16W[] = {'u','t','f','1','6'};
-    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    WS_XML_STRING prefix = {1, (BYTE *)"p"}, localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"u"};
+    WS_XML_STRING ns = {0, NULL}, ns2 = {2, (BYTE *)"ns"};
     WS_XML_WRITER *writer;
     static const WS_XML_UTF8_TEXT val_utf8 = { {WS_XML_TEXT_TYPE_UTF8}, {4, (BYTE *)"utf8"} };
     static WS_XML_UTF16_TEXT val_utf16 = { {WS_XML_TEXT_TYPE_UTF16} };
+    static WS_XML_QNAME_TEXT val_qname = { {WS_XML_TEXT_TYPE_QNAME} };
     static const WS_XML_GUID_TEXT val_guid = { {WS_XML_TEXT_TYPE_GUID} };
     static const WS_XML_UNIQUE_ID_TEXT val_urn = { {WS_XML_TEXT_TYPE_UNIQUE_ID} };
     static const WS_XML_BOOL_TEXT val_bool = { {WS_XML_TEXT_TYPE_BOOL}, TRUE };
@@ -2155,12 +2157,15 @@ static void test_text_types(void)
         { &val_datetime.text, "<t>0001-01-01T00:00:00Z</t>" },
         { &val_double.text, "<t>1.1</t>" },
         { &val_base64.text, "<t>dGVzdA==</t>" },
+        { &val_qname.text,  "<t>u</t>" },
     };
     HRESULT hr;
     ULONG i;
 
     val_utf16.bytes     = (BYTE *)utf16W;
     val_utf16.byteCount = sizeof(utf16W);
+    val_qname.localName = &localname2;
+    val_qname.ns        = &ns;
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2179,6 +2184,21 @@ static void test_text_types(void)
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
         check_output( writer, tests[i].result, __LINE__ );
     }
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, &prefix, &localname, &ns2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    val_qname.prefix    = &prefix;
+    val_qname.localName = &localname2;
+    val_qname.ns        = &ns2;
+    hr = WsWriteText( writer, &val_qname.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<p:t xmlns:p=\"ns\">p:u</p:t>", __LINE__ );
 
     WsFreeWriter( writer );
 }

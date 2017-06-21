@@ -423,6 +423,13 @@ typedef struct _WS_XML_STRING_DESCRIPTION {
     ULONG maxByteCount;
 } WS_XML_STRING_DESCRIPTION;
 
+typedef struct _WS_XML_QNAME_DESCRIPTION {
+    ULONG minLocalNameByteCount;
+    ULONG maxLocalNameByteCount;
+    ULONG minNsByteCount;
+    ULONG maxNsByteCount;
+} WS_XML_QNAME_DESCRIPTION;
+
 struct _WS_ENUM_VALUE {
     int value;
     WS_XML_STRING *name;
@@ -647,6 +654,13 @@ typedef struct _WS_XML_UNIQUE_ID_TEXT {
     GUID value;
 } WS_XML_UNIQUE_ID_TEXT;
 
+typedef struct _WS_XML_QNAME_TEXT {
+    WS_XML_TEXT text;
+    WS_XML_STRING *prefix;
+    WS_XML_STRING *localName;
+    WS_XML_STRING *ns;
+} WS_XML_QNAME_TEXT;
+
 typedef enum {
     WS_BOOL_VALUE_TYPE,
     WS_INT8_VALUE_TYPE,
@@ -699,6 +713,11 @@ typedef struct _WS_XML_NODE_POSITION {
     WS_XML_BUFFER *buffer;
     void *node;
 } WS_XML_NODE_POSITION;
+
+typedef struct _WS_XML_QNAME {
+    WS_XML_STRING localName;
+    WS_XML_STRING ns;
+} WS_XML_QNAME;
 
 typedef enum {
     WS_SERVICE_PROXY_STATE_CREATED,

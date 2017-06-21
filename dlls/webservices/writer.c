@@ -1807,6 +1807,19 @@ ULONG format_urn( const GUID *ptr, unsigned char *buf )
                     ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
 }
 
+static ULONG format_qname( const WS_XML_STRING *prefix, const WS_XML_STRING *localname, unsigned char *buf )
+{
+    ULONG len = 0;
+    if (prefix && prefix->length)
+    {
+        memcpy( buf, prefix->bytes, prefix->length );
+        len += prefix->length;
+        buf[len++] = ':';
+    }
+    memcpy( buf + len, localname->bytes, localname->length );
+    return len + localname->length;
+}
+
 static ULONG encode_base64( const unsigned char *bin, ULONG len, unsigned char *buf )
 {
     static const char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -1961,6 +1974,17 @@ static HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT
         if (!(*ret = alloc_utf8_text( NULL, len_old + 34 ))) return E_OUTOFMEMORY;
         if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
         (*ret)->value.length = format_datetime( &dt->value, (*ret)->value.bytes + len_old ) + len_old;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_QNAME:
+    {
+        const WS_XML_QNAME_TEXT *qn = (const WS_XML_QNAME_TEXT *)text;
+        ULONG len = qn->localName->length;
+
+        if (qn->prefix && qn->prefix->length) len += qn->prefix->length + 1;
+        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        (*ret)->value.length = format_qname( qn->prefix, qn->localName, (*ret)->value.bytes + len_old ) + len_old;
         return S_OK;
     }
     default:
@@ -2752,6 +2776,53 @@ static HRESULT write_type_xml_string( struct writer *writer, WS_TYPE_MAPPING map
     return write_type_text( writer, mapping, &utf8.text );
 }
 
+static HRESULT find_prefix( struct writer *writer, const WS_XML_STRING *ns, const WS_XML_STRING **prefix )
+{
+    const struct node *node;
+    for (node = writer->current; node_type( node ) == WS_XML_NODE_TYPE_ELEMENT; node = node->parent)
+    {
+        const WS_XML_ELEMENT_NODE *elem = &node->hdr;
+        ULONG i;
+        for (i = 0; i < elem->attributeCount; i++)
+        {
+            if (!elem->attributes[i]->isXmlNs) continue;
+            if (WsXmlStringEquals( elem->attributes[i]->ns, ns, NULL ) != S_OK) continue;
+            *prefix = elem->attributes[i]->prefix;
+            return S_OK;
+        }
+    }
+    return WS_E_INVALID_FORMAT;
+}
+
+static HRESULT write_type_qname( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                 const WS_XML_QNAME_DESCRIPTION *desc, WS_WRITE_OPTION option,
+                                 const void *value, ULONG size )
+{
+    WS_XML_QNAME_TEXT qname;
+    const WS_XML_QNAME *ptr;
+    const WS_XML_STRING *prefix;
+    HRESULT hr;
+
+    if (desc)
+    {
+        FIXME( "description not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    if (!option) return E_INVALIDARG;
+    if ((hr = get_value_ptr( option, value, size, sizeof(*ptr), (const void **)&ptr )) != S_OK) return hr;
+    if (option == WS_WRITE_NILLABLE_POINTER && !ptr) return write_add_nil_attribute( writer );
+    if (option == WS_WRITE_NILLABLE_VALUE && is_nil_value( value, size )) return write_add_nil_attribute( writer );
+
+    if (((hr = find_prefix( writer, &ptr->ns, &prefix )) != S_OK)) return hr;
+
+    qname.text.textType = WS_XML_TEXT_TYPE_QNAME;
+    qname.prefix        = (WS_XML_STRING *)prefix;
+    qname.localName     = (WS_XML_STRING *)&ptr->localName;
+    qname.ns            = (WS_XML_STRING *)&ptr->ns;
+    return write_type_text( writer, mapping, &qname.text );
+}
+
 static WS_WRITE_OPTION get_field_write_option( WS_TYPE type, ULONG options )
 {
     if (options & WS_FIELD_POINTER)
@@ -2778,6 +2849,7 @@ static WS_WRITE_OPTION get_field_write_option( WS_TYPE type, ULONG options )
     case WS_STRING_TYPE:
     case WS_BYTES_TYPE:
     case WS_XML_STRING_TYPE:
+    case WS_XML_QNAME_TYPE:
     case WS_STRUCT_TYPE:
     case WS_ENUM_TYPE:
         if (options & (WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE)) return WS_WRITE_NILLABLE_VALUE;
@@ -3005,6 +3077,9 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 
     case WS_XML_STRING_TYPE:
         return write_type_xml_string( writer, mapping, desc, option, value, size );
+
+    case WS_XML_QNAME_TYPE:
+        return write_type_qname( writer, mapping, desc, option, value, size );
 
     case WS_STRUCT_TYPE:
         return write_type_struct( writer, mapping, desc, option, value, size );
@@ -3400,37 +3475,21 @@ HRESULT WINAPI WsWriteXmlnsAttribute( WS_XML_WRITER *handle, const WS_XML_STRING
     return hr;
 }
 
-static HRESULT find_prefix( struct writer *writer, const WS_XML_STRING *ns, const WS_XML_STRING **prefix )
-{
-    const struct node *node;
-    for (node = writer->current; node_type( node ) == WS_XML_NODE_TYPE_ELEMENT; node = node->parent)
-    {
-        const WS_XML_ELEMENT_NODE *elem = &node->hdr;
-        ULONG i;
-        for (i = 0; i < elem->attributeCount; i++)
-        {
-            if (!elem->attributes[i]->isXmlNs) continue;
-            if (WsXmlStringEquals( elem->attributes[i]->ns, ns, NULL ) != S_OK) continue;
-            *prefix = elem->attributes[i]->prefix;
-            return S_OK;
-        }
-    }
-    return WS_E_INVALID_FORMAT;
-}
-
 static HRESULT write_qualified_name( struct writer *writer, const WS_XML_STRING *prefix,
-                                     const WS_XML_STRING *localname )
+                                     const WS_XML_STRING *localname, const WS_XML_STRING *ns )
 {
+    WS_XML_QNAME_TEXT qname = {{WS_XML_TEXT_TYPE_QNAME}};
     HRESULT hr;
-    if (prefix->length)
-    {
-        if ((hr = write_grow_buffer( writer, prefix->length + localname->length + 1 )) != S_OK) return hr;
-        write_bytes( writer, prefix->bytes, prefix->length );
-        write_char( writer, ':' );
-    }
-    else if ((hr = write_grow_buffer( writer, localname->length )) != S_OK) return hr;
-    write_bytes( writer, localname->bytes, localname->length );
-    return S_OK;
+
+    if ((hr = write_flush( writer )) != S_OK) return hr;
+    if (!prefix && ((hr = find_prefix( writer, ns, &prefix )) != S_OK)) return hr;
+
+    qname.prefix    = (WS_XML_STRING *)prefix;
+    qname.localName = (WS_XML_STRING *)localname;
+    qname.ns        = (WS_XML_STRING *)ns;
+
+    if ((hr = write_add_text_node( writer, &qname.text )) != S_OK) return hr;
+    return write_text( writer, ((const WS_XML_TEXT_NODE *)writer->current)->text, 0 );
 }
 
 /**************************************************************************
@@ -3475,11 +3534,8 @@ HRESULT WINAPI WsWriteQualifiedName( WS_XML_WRITER *handle, const WS_XML_STRING 
         return E_INVALIDARG;
     }
 
-    if ((hr = write_flush( writer )) != S_OK) goto done;
-    if (!prefix && ((hr = find_prefix( writer, ns, &prefix )) != S_OK)) goto done;
-    hr = write_qualified_name( writer, prefix, localname );
+    hr = write_qualified_name( writer, prefix, localname, ns );
 
-done:
     LeaveCriticalSection( &writer->cs );
     return hr;
 }
