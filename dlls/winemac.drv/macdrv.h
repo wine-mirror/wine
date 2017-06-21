@@ -136,13 +136,13 @@ struct macdrv_win_data
     RECT                client_rect;            /* client area relative to parent */
     int                 pixel_format;           /* pixel format for GL */
     COLORREF            color_key;              /* color key for layered window; CLR_INVALID is not color keyed */
+    HANDLE              drag_event;             /* event to signal that Cocoa-driven window dragging has ended */
     unsigned int        on_screen : 1;          /* is window ordered in? (minimized or not) */
     unsigned int        shaped : 1;             /* is window using a custom region shape? */
     unsigned int        layered : 1;            /* is window layered and with valid attributes? */
     unsigned int        ulw_layered : 1;        /* has UpdateLayeredWindow() been called for window? */
     unsigned int        per_pixel_alpha : 1;    /* is window using per-pixel alpha? */
     unsigned int        minimized : 1;          /* is window minimized? */
-    unsigned int        being_dragged : 1;      /* is window being dragged under Cocoa's control? */
     unsigned int        swap_interval : 1;      /* GL swap interval for window */
     struct window_surface *surface;
     struct window_surface *unminimized_surface;

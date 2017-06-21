@@ -1653,6 +1653,9 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         BOOL wasVisible = [self isVisible];
         BOOL wasOnActiveSpace = [self isOnActiveSpace];
 
+        [self endWindowDragging];
+        [controller windowWillOrderOut:self];
+
         if (enteringFullScreen || exitingFullScreen)
         {
             pendingOrderOut = TRUE;

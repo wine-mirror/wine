@@ -121,6 +121,7 @@ enum {
     - (void) noteKey:(uint16_t)keyCode pressed:(BOOL)pressed;
 
     - (void) window:(WineWindow*)window isBeingDragged:(BOOL)dragged;
+    - (void) windowWillOrderOut:(WineWindow*)window;
 
     - (void) flipRect:(NSRect*)rect;
 

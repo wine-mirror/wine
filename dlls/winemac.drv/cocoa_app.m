@@ -1553,6 +1553,18 @@ static NSString* WineLocalizedString(unsigned int stringID)
         [self updateCursorClippingState];
     }
 
+    - (void) windowWillOrderOut:(WineWindow*)window
+    {
+        if ([windowsBeingDragged containsObject:window])
+        {
+            [self window:window isBeingDragged:NO];
+
+            macdrv_event* event = macdrv_create_event(WINDOW_DRAG_END, window);
+            [window.queue postEvent:event];
+            macdrv_release_event(event);
+        }
+    }
+
     - (void) handleMouseMove:(NSEvent*)anEvent
     {
         WineWindow* targetWindow;
