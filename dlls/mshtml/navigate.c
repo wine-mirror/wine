@@ -2238,11 +2238,43 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
 
 HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *name, request_data_t *request_data, IHTMLWindow2 **ret)
 {
+    INewWindowManager *new_window_mgr;
+    BSTR display_uri, context_url;
     IWebBrowser2 *web_browser;
     IHTMLWindow2 *new_window;
     IBindCtx *bind_ctx;
     nsChannelBSC *bsc;
     HRESULT hres;
+
+    hres = do_query_service((IUnknown*)window->doc_obj->client, &SID_SNewWindowManager, &IID_INewWindowManager,
+            (void**)&new_window_mgr);
+    if(SUCCEEDED(hres)) {
+        hres = IUri_GetDisplayUri(window->uri_nofrag, &context_url);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IUri_GetDisplayUri(uri, &display_uri);
+        if(FAILED(hres)) {
+            SysFreeString(context_url);
+            return hres;
+        }
+
+        hres = INewWindowManager_EvaluateNewWindow(new_window_mgr, display_uri, name, context_url,
+                NULL, FALSE, window->doc_obj->has_popup ? 0 : NWMF_FIRST, 0);
+        window->doc_obj->has_popup = TRUE;
+        SysFreeString(display_uri);
+        SysFreeString(context_url);
+        INewWindowManager_Release(new_window_mgr);
+        if(FAILED(hres)) {
+            if(ret)
+                *ret = NULL;
+            return S_OK;
+        }
+    }else {
+        FIXME("No INewWindowManager\n");
+        return E_NOTIMPL;
+    }
+
 
     if(request_data)
         hres = create_channelbsc(NULL, request_data->headers,

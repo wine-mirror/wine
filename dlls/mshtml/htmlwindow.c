@@ -971,8 +971,6 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     HTMLOuterWindow *window = This->outer_window;
-    INewWindowManager *new_window_mgr;
-    BSTR uri_str;
     IUri *uri;
     HRESULT hres;
 
@@ -980,6 +978,10 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
 
     TRACE("(%p)->(%s %s %s %x %p)\n", This, debugstr_w(url), debugstr_w(name),
           debugstr_w(features), replace, pomWindowResult);
+    if(features)
+        FIXME("unsupported features argument %s\n", debugstr_w(features));
+    if(replace)
+        FIXME("unsupported relace argument\n");
 
     if(!window->doc_obj || !window->uri_nofrag)
         return E_UNEXPECTED;
@@ -1004,26 +1006,6 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
 
         FIXME("Unsupported name %s\n", debugstr_w(name));
         return E_NOTIMPL;
-    }
-
-    hres = do_query_service((IUnknown*)window->doc_obj->client, &SID_SNewWindowManager, &IID_INewWindowManager,
-            (void**)&new_window_mgr);
-    if(FAILED(hres)) {
-        FIXME("No INewWindowManager\n");
-        return E_NOTIMPL;
-    }
-
-    hres = IUri_GetDisplayUri(window->uri_nofrag, &uri_str);
-    if(SUCCEEDED(hres)) {
-        hres = INewWindowManager_EvaluateNewWindow(new_window_mgr, url, name, uri_str,
-                features, !!replace, window->doc_obj->has_popup ? 0 : NWMF_FIRST, 0);
-        window->doc_obj->has_popup = TRUE;
-        SysFreeString(uri_str);
-    }
-    INewWindowManager_Release(new_window_mgr);
-    if(FAILED(hres)) {
-        *pomWindowResult = NULL;
-        return S_OK;
     }
 
     hres = create_relative_uri(window, url, &uri);
