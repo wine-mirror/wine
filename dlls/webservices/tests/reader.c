@@ -1372,7 +1372,7 @@ static void prepare_type_test( WS_XML_READER *reader, const char *data, ULONG si
 
 static void test_WsReadType(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR testW[] = {'t','e','s','t',0}, test2W[] = {' ','t','e','s','t',' '};
     static const GUID guid1 = {0,0,0,{0,0,0,0,0,0,0,0}};
     static const GUID guid2 = {0,0,0,{0,0,0,0,0,0,0,0xa1}};
     static const char utf8[] = {'<','t','>',0xe2,0x80,0x99,'<','/','t','>'};
@@ -1398,6 +1398,7 @@ static void test_WsReadType(void)
     UINT64 val_uint64;
     GUID val_guid;
     WS_BYTES val_bytes;
+    WS_STRING val_string;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1695,6 +1696,14 @@ static void test_WsReadType(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( val_str != NULL, "pointer not set\n" );
     if (val_str) ok( !lstrcmpW( val_str, utf8W ), "wrong data %s\n", wine_dbgstr_w(val_str) );
+
+    memset( &val_string, 0, sizeof(val_string) );
+    prepare_type_test( reader, "<t> test </t>", sizeof("<t> test </t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRING_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_string, sizeof(val_string), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val_string.length == 6, "got %u\n", val_string.length );
+    ok( !memcmp( val_string.chars, test2W, sizeof(test2W) ), "wrong data\n" );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );
