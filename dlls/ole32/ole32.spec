@@ -207,7 +207,7 @@
 @ stdcall OleGetAutoConvert(ptr ptr)
 @ stdcall OleGetClipboard(ptr)
 @ stdcall OleGetIconOfClass(ptr ptr long)
-@ stub OleGetIconOfFile
+@ stdcall OleGetIconOfFile(wstr long)
 @ stdcall OleInitialize(ptr)
 @ stdcall OleInitializeWOW(long long)
 @ stdcall OleIsCurrentClipboard(ptr)
