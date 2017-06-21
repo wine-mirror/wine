@@ -207,6 +207,17 @@ static INT ANDROID_GetDeviceCaps( PHYSDEV dev, INT cap )
 
 
 /***********************************************************************
+ *           ANDROID_ChangeDisplaySettingsEx
+ */
+LONG CDECL ANDROID_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
+                                            HWND hwnd, DWORD flags, LPVOID lpvoid )
+{
+    FIXME( "(%s,%p,%p,0x%08x,%p)\n", debugstr_w( devname ), devmode, hwnd, flags, lpvoid );
+    return DISP_CHANGE_SUCCESSFUL;
+}
+
+
+/***********************************************************************
  *           ANDROID_GetMonitorInfo
  */
 BOOL CDECL ANDROID_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
