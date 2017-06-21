@@ -660,44 +660,58 @@ static HRESULT WINAPI d3drm_frame1_DeleteDestroyCallback(IDirect3DRMFrame *iface
 
 static HRESULT WINAPI d3drm_frame3_SetAppData(IDirect3DRMFrame3 *iface, DWORD data)
 {
-    FIXME("iface %p, data %#x stub!\n", iface, data);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    frame->obj.appdata = data;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_frame2_SetAppData(IDirect3DRMFrame2 *iface, DWORD data)
 {
-    FIXME("iface %p, data %#x stub!\n", iface, data);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    return d3drm_frame3_SetAppData(&frame->IDirect3DRMFrame3_iface, data);
 }
 
 static HRESULT WINAPI d3drm_frame1_SetAppData(IDirect3DRMFrame *iface, DWORD data)
 {
-    FIXME("iface %p, data %#x stub!\n", iface, data);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    return d3drm_frame3_SetAppData(&frame->IDirect3DRMFrame3_iface, data);
 }
 
 static DWORD WINAPI d3drm_frame3_GetAppData(IDirect3DRMFrame3 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return frame->obj.appdata;
 }
 
 static DWORD WINAPI d3drm_frame2_GetAppData(IDirect3DRMFrame2 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return d3drm_frame3_GetAppData(&frame->IDirect3DRMFrame3_iface);
 }
 
 static DWORD WINAPI d3drm_frame1_GetAppData(IDirect3DRMFrame *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return d3drm_frame3_GetAppData(&frame->IDirect3DRMFrame3_iface);
 }
 
 static HRESULT WINAPI d3drm_frame3_SetName(IDirect3DRMFrame3 *iface, const char *name)

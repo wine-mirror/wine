@@ -453,18 +453,42 @@ static HRESULT WINAPI d3drm_mesh_builder2_DeleteDestroyCallback(IDirect3DRMMeshB
     return IDirect3DRMMeshBuilder3_DeleteDestroyCallback(&mesh_builder->IDirect3DRMMeshBuilder3_iface, cb, ctx);
 }
 
+static HRESULT WINAPI d3drm_mesh_builder3_SetAppData(IDirect3DRMMeshBuilder3 *iface, DWORD data)
+{
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
+
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    mesh_builder->obj.appdata = data;
+
+    return D3DRM_OK;
+}
+
 static HRESULT WINAPI d3drm_mesh_builder2_SetAppData(IDirect3DRMMeshBuilder2 *iface, DWORD data)
 {
-    FIXME("iface %p, data %#x stub!\n", iface, data);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    return d3drm_mesh_builder3_SetAppData(&mesh_builder->IDirect3DRMMeshBuilder3_iface, data);
+}
+
+static DWORD WINAPI d3drm_mesh_builder3_GetAppData(IDirect3DRMMeshBuilder3 *iface)
+{
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return mesh_builder->obj.appdata;
 }
 
 static DWORD WINAPI d3drm_mesh_builder2_GetAppData(IDirect3DRMMeshBuilder2 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return d3drm_mesh_builder3_GetAppData(&mesh_builder->IDirect3DRMMeshBuilder3_iface);
 }
 
 static HRESULT WINAPI d3drm_mesh_builder2_SetName(IDirect3DRMMeshBuilder2 *iface, const char *name)
@@ -987,20 +1011,6 @@ static HRESULT WINAPI d3drm_mesh_builder3_DeleteDestroyCallback(IDirect3DRMMeshB
     TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
 
     return d3drm_object_delete_destroy_callback(&mesh_builder->obj, cb, ctx);
-}
-
-static HRESULT WINAPI d3drm_mesh_builder3_SetAppData(IDirect3DRMMeshBuilder3 *iface, DWORD data)
-{
-    FIXME("iface %p, data %#x stub!\n", iface, data);
-
-    return E_NOTIMPL;
-}
-
-static DWORD WINAPI d3drm_mesh_builder3_GetAppData(IDirect3DRMMeshBuilder3 *iface)
-{
-    FIXME("iface %p stub!\n", iface);
-
-    return 0;
 }
 
 static HRESULT WINAPI d3drm_mesh_builder3_SetName(IDirect3DRMMeshBuilder3 *iface, const char *name)
@@ -2454,16 +2464,22 @@ static HRESULT WINAPI d3drm_mesh_DeleteDestroyCallback(IDirect3DRMMesh *iface,
 
 static HRESULT WINAPI d3drm_mesh_SetAppData(IDirect3DRMMesh *iface, DWORD data)
 {
-    FIXME("iface %p, data %#x stub!\n", iface, data);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    mesh->obj.appdata = data;
+
+    return D3DRM_OK;
 }
 
 static DWORD WINAPI d3drm_mesh_GetAppData(IDirect3DRMMesh *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return mesh->obj.appdata;
 }
 
 static HRESULT WINAPI d3drm_mesh_SetName(IDirect3DRMMesh *iface, const char *name)

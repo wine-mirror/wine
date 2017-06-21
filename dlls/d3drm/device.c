@@ -454,9 +454,13 @@ static HRESULT WINAPI d3drm_device1_DeleteDestroyCallback(IDirect3DRMDevice *ifa
 
 static HRESULT WINAPI d3drm_device3_SetAppData(IDirect3DRMDevice3 *iface, DWORD data)
 {
-    FIXME("iface %p, data %#x stub!\n", iface, data);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    device->obj.appdata = data;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_device2_SetAppData(IDirect3DRMDevice2 *iface, DWORD data)
@@ -479,9 +483,11 @@ static HRESULT WINAPI d3drm_device1_SetAppData(IDirect3DRMDevice *iface, DWORD d
 
 static DWORD WINAPI d3drm_device3_GetAppData(IDirect3DRMDevice3 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return device->obj.appdata;
 }
 
 static DWORD WINAPI d3drm_device2_GetAppData(IDirect3DRMDevice2 *iface)
