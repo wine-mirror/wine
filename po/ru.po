@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-06-08 13:21+0300\n"
+"PO-Revision-Date: 2017-06-21 14:12+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -12064,10 +12064,8 @@ msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: неизвестная управляющая последовательность [\\%1!c!]\n"
 
 #: regedit.rc:420
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "regedit: тип данных [%1] не поддерживается\n"
+msgstr "regedit: тип данных [0x%1!x!] не поддерживается\n"
 
 #: regedit.rc:421
 msgid "regedit: Unexpected end of line in '%1'.\n"
@@ -12257,7 +12255,7 @@ msgstr "Вы точно хотите удалить ключ реестра «%1
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Разворачивает или сворачивает выбранный раздел"
 
 #: regedit.rc:231
 msgid "Collapse"
