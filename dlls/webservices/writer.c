@@ -2615,6 +2615,40 @@ static HRESULT write_type_guid( struct writer *writer, WS_TYPE_MAPPING mapping,
     return write_type_text( writer, mapping, &utf8.text );
 }
 
+static HRESULT write_type_unique_id( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                     const WS_UNIQUE_ID_DESCRIPTION *desc, WS_WRITE_OPTION option,
+                                     const void *value, ULONG size )
+{
+    WS_XML_UTF8_TEXT utf8;
+    WS_XML_UTF16_TEXT utf16;
+    unsigned char buf[46]; /* "urn:uuid:00000000-0000-0000-0000-000000000000" */
+    const WS_UNIQUE_ID *ptr;
+    HRESULT hr;
+
+    if (desc)
+    {
+        FIXME( "description not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    if (!option || option == WS_WRITE_NILLABLE_VALUE) return E_INVALIDARG;
+    if ((hr = get_value_ptr( option, value, size, sizeof(*ptr), (const void **)&ptr )) != S_OK) return hr;
+    if (option == WS_WRITE_NILLABLE_POINTER && !ptr) return write_add_nil_attribute( writer );
+
+    if (ptr->uri.length)
+    {
+        utf16.text.textType = WS_XML_TEXT_TYPE_UTF16;
+        utf16.bytes         = (BYTE *)ptr->uri.chars;
+        utf16.byteCount     = ptr->uri.length * sizeof(WCHAR);
+        return write_type_text( writer, mapping, &utf16.text );
+    }
+
+    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    utf8.value.bytes   = buf;
+    utf8.value.length  = format_urn( &ptr->guid, buf );
+    return write_type_text( writer, mapping, &utf8.text );
+}
+
 static HRESULT write_type_string( struct writer *writer, WS_TYPE_MAPPING mapping,
                                   const WS_STRING_DESCRIPTION *desc, WS_WRITE_OPTION option,
                                   const void *value, ULONG size )
@@ -2740,6 +2774,7 @@ static WS_WRITE_OPTION get_field_write_option( WS_TYPE type, ULONG options )
     case WS_DOUBLE_TYPE:
     case WS_DATETIME_TYPE:
     case WS_GUID_TYPE:
+    case WS_UNIQUE_ID_TYPE:
     case WS_STRING_TYPE:
     case WS_BYTES_TYPE:
     case WS_XML_STRING_TYPE:
@@ -2955,6 +2990,9 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 
     case WS_GUID_TYPE:
         return write_type_guid( writer, mapping, desc, option, value, size );
+
+    case WS_UNIQUE_ID_TYPE:
+        return write_type_unique_id( writer, mapping, desc, option, value, size );
 
     case WS_STRING_TYPE:
         return write_type_string( writer, mapping, desc, option, value, size );

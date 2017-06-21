@@ -679,6 +679,7 @@ static void test_basic_type(void)
     WCHAR *str;
     WS_STRING string;
     WS_BYTES bytes;
+    WS_UNIQUE_ID id;
     ULONG i;
     static const struct
     {
@@ -829,6 +830,25 @@ static void test_basic_type(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t a:nil=\"true\" xmlns:a=\"http://www.w3.org/2001/XMLSchema-instance\"/>",
                   __LINE__ );
+
+    prepare_basic_type_test( writer );
+    memset( &id, 0, sizeof(id) );
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_UNIQUE_ID_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
+                      &id, sizeof(id), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>urn:uuid:00000000-0000-0000-0000-000000000000</t>", __LINE__ );
+
+    prepare_basic_type_test( writer );
+    id.uri.length = 4;
+    id.uri.chars  = testW;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_UNIQUE_ID_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
+                      &id, sizeof(id), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>test</t>", __LINE__ );
 
     WsFreeWriter( writer );
 }
