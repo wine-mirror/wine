@@ -200,7 +200,6 @@ static HRESULT DSPROPERTY_DescriptionW(
     IMMDevice *mmdevice;
     IPropertyStore *ps;
     PROPVARIANT pv;
-    DWORD desclen;
     HRESULT hr;
 
     TRACE("pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
@@ -248,12 +247,9 @@ static HRESULT DSPROPERTY_DescriptionW(
         return hr;
     }
 
-    desclen = lstrlenW(pv.u.pwszVal) + 1;
-    /* FIXME: Still a memory leak.. */
-    ppd->Description = HeapAlloc(GetProcessHeap(), 0, desclen * sizeof(WCHAR));
-    memcpy(ppd->Description, pv.u.pwszVal, desclen * sizeof(WCHAR));
-    ppd->Module = wine_vxd_drv;
-    ppd->Interface = wInterface;
+    ppd->Description = strdupW(pv.u.pwszVal);
+    ppd->Module = strdupW(wine_vxd_drv);
+    ppd->Interface = strdupW(wInterface);
     ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
 
     PropVariantClear(&pv);
@@ -463,6 +459,7 @@ static HRESULT DSPROPERTY_DescriptionA(
         return hr;
     if (!DSPROPERTY_descWtoA(&data, ppd))
         hr = E_OUTOFMEMORY;
+    HeapFree(GetProcessHeap(), 0, data.Description);
     HeapFree(GetProcessHeap(), 0, data.Module);
     HeapFree(GetProcessHeap(), 0, data.Interface);
     return hr;
@@ -488,6 +485,7 @@ static HRESULT DSPROPERTY_Description1(
     if (FAILED(hr))
         return hr;
     DSPROPERTY_descWto1(&data, ppd);
+    HeapFree(GetProcessHeap(), 0, data.Description);
     HeapFree(GetProcessHeap(), 0, data.Module);
     HeapFree(GetProcessHeap(), 0, data.Interface);
     return hr;
