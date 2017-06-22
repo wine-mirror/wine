@@ -52,6 +52,7 @@ DECL_FUNCPTR( ANativeWindow_release );
  * OpenGL driver
  */
 
+extern void update_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 extern struct opengl_funcs *get_wgl_driver( UINT version ) DECLSPEC_HIDDEN;
 

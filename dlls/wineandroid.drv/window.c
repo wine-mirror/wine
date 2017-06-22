@@ -1330,7 +1330,11 @@ LRESULT CDECL ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     switch (msg)
     {
     case WM_ANDROID_REFRESH:
-        if ((data = get_win_data( hwnd )))
+        if (wp)  /* opengl client window */
+        {
+            update_gl_drawable( hwnd );
+        }
+        else if ((data = get_win_data( hwnd )))
         {
             struct window_surface *surface = data->surface;
             if (surface)

@@ -76,7 +76,9 @@ struct wgl_context
     struct list entry;
     EGLConfig  config;
     EGLContext context;
+    EGLSurface surface;
     HWND       hwnd;
+    BOOL       refresh;
 };
 
 struct gl_drawable
@@ -86,6 +88,7 @@ struct gl_drawable
     HDC             hdc;
     int             format;
     ANativeWindow  *window;
+    EGLSurface      surface;
     EGLSurface      pbuffer;
 };
 
@@ -99,6 +102,9 @@ static struct opengl_funcs egl_funcs;
 
 static struct list gl_contexts = LIST_INIT( gl_contexts );
 static struct list gl_drawables = LIST_INIT( gl_drawables );
+
+static void (*pglFinish)(void);
+static void (*pglFlush)(void);
 
 static CRITICAL_SECTION drawable_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -123,6 +129,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format )
     gl->hdc    = hdc;
     gl->format = format;
     gl->window = create_ioctl_window( hwnd, TRUE );
+    gl->surface = 0;
     gl->pbuffer = p_eglCreatePbufferSurface( display, pixel_formats[gl->format - 1].config, attribs );
     EnterCriticalSection( &drawable_section );
     list_add_head( &gl_drawables, &gl->entry );
@@ -157,12 +164,52 @@ void destroy_gl_drawable( HWND hwnd )
     {
         if (gl->hwnd != hwnd) continue;
         list_remove( &gl->entry );
+        if (gl->surface) p_eglDestroySurface( display, gl->surface );
         if (gl->pbuffer) p_eglDestroySurface( display, gl->pbuffer );
         release_ioctl_window( gl->window );
         HeapFree( GetProcessHeap(), 0, gl );
         break;
     }
     LeaveCriticalSection( &drawable_section );
+}
+
+static BOOL refresh_context( struct wgl_context *ctx )
+{
+    BOOL ret = InterlockedExchange( &ctx->refresh, FALSE );
+
+    if (ret)
+    {
+        TRACE( "refreshing hwnd %p context %p surface %p\n", ctx->hwnd, ctx->context, ctx->surface );
+        p_eglMakeCurrent( display, ctx->surface, ctx->surface, ctx->context );
+        RedrawWindow( ctx->hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
+    }
+    return ret;
+}
+
+void update_gl_drawable( HWND hwnd )
+{
+    struct gl_drawable *gl;
+    struct wgl_context *ctx;
+
+    if ((gl = get_gl_drawable( hwnd, 0 )))
+    {
+        if (!gl->surface &&
+            (gl->surface = p_eglCreateWindowSurface( display, pixel_formats[gl->format - 1].config, gl->window, NULL )))
+        {
+            LIST_FOR_EACH_ENTRY( ctx, &gl_contexts, struct wgl_context, entry )
+            {
+                if (ctx->hwnd != hwnd) continue;
+                TRACE( "hwnd %p refreshing %p %scurrent\n", hwnd, ctx, NtCurrentTeb()->glContext == ctx ? "" : "not " );
+                ctx->surface = gl->surface;
+                if (NtCurrentTeb()->glContext == ctx)
+                    p_eglMakeCurrent( display, ctx->surface, ctx->surface, ctx->context );
+                else
+                    InterlockedExchange( &ctx->refresh, TRUE );
+            }
+        }
+        release_gl_drawable( gl );
+        RedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
+    }
 }
 
 static BOOL set_pixel_format( HDC hdc, int format, BOOL allow_change )
@@ -214,6 +261,8 @@ static struct wgl_context *create_context( HDC hdc, struct wgl_context *share, c
     ctx = HeapAlloc( GetProcessHeap(), 0, sizeof(*ctx) );
 
     ctx->config  = pixel_formats[gl->format - 1].config;
+    ctx->surface = 0;
+    ctx->refresh = FALSE;
     ctx->context = p_eglCreateContext( display, ctx->config,
                                        share ? share->context : EGL_NO_CONTEXT, attribs );
     TRACE( "%p fmt %d ctx %p\n", hdc, gl->format, ctx->context );
@@ -376,12 +425,14 @@ static BOOL android_wglMakeCurrent( HDC hdc, struct wgl_context *ctx )
     hwnd = WindowFromDC( hdc );
     if ((gl = get_gl_drawable( hwnd, hdc )))
     {
-        EGLSurface surface = gl->pbuffer;
+        EGLSurface surface = gl->surface ? gl->surface : gl->pbuffer;
         TRACE( "%p hwnd %p context %p surface %p\n", hdc, gl->hwnd, ctx->context, surface );
         ret = p_eglMakeCurrent( display, surface, surface, ctx->context );
         if (ret)
         {
+            ctx->surface = gl->surface;
             ctx->hwnd    = hwnd;
+            ctx->refresh = FALSE;
             NtCurrentTeb()->glContext = ctx;
             goto done;
         }
@@ -419,8 +470,31 @@ static BOOL android_wglSwapBuffers( HDC hdc )
 
     if (!ctx) return FALSE;
 
-    TRACE( "%p hwnd %p context %p\n", hdc, ctx->hwnd, ctx->context );
+    TRACE( "%p hwnd %p context %p surface %p\n", hdc, ctx->hwnd, ctx->context, ctx->surface );
+
+    if (refresh_context( ctx )) return TRUE;
+    if (ctx->surface) p_eglSwapBuffers( display, ctx->surface );
     return TRUE;
+}
+
+static void wglFinish(void)
+{
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+
+    if (!ctx) return;
+    TRACE( "hwnd %p context %p\n", ctx->hwnd, ctx->context );
+    refresh_context( ctx );
+    pglFinish();
+}
+
+static void wglFlush(void)
+{
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+
+    if (!ctx) return;
+    TRACE( "hwnd %p context %p\n", ctx->hwnd, ctx->context );
+    refresh_context( ctx );
+    pglFlush();
 }
 
 static void register_extension( const char *ext )
@@ -729,6 +803,14 @@ static void init_extensions(void)
     LOAD_FUNCPTR( glVertexBindingDivisor );
     LOAD_FUNCPTR( glWaitSync );
 #undef LOAD_FUNCPTR
+
+    /* redirect some standard OpenGL functions */
+
+#define REDIRECT(func) \
+    do { p##func = egl_funcs.gl.p_##func; egl_funcs.gl.p_##func = w##func; } while(0)
+    REDIRECT(glFinish);
+    REDIRECT(glFlush);
+#undef REDIRECT
 }
 
 static BOOL egl_init(void)
