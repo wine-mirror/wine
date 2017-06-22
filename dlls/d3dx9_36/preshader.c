@@ -1141,7 +1141,6 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
         unsigned int table = const_set->table;
         struct d3dx_parameter *param = const_set->param;
         unsigned int element, i, j, start_offset;
-        unsigned int param_offset;
         struct const_upload_info info;
         unsigned int *data = param->data;
         enum pres_value_type param_type;
@@ -1181,24 +1180,20 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
 
             /* Store reshaped but (possibly) not converted yet data temporarily in the same constants buffer.
              * All the supported types of parameters and table values have the same size. */
-            for (i = 0; i < info.major_count; ++i)
-            {
-                for (j = 0; j < info.minor; ++j)
-                {
-                    if (info.transpose)
-                        param_offset = i + j * info.major;
-                    else
-                        param_offset = i * info.minor + j;
-                    out[i * info.major_stride + j] = data[param_offset];
-                }
-            }
             if (info.transpose)
             {
+                for (i = 0; i < info.major_count; ++i)
+                    for (j = 0; j < info.minor; ++j)
+                        out[i * info.major_stride + j] = data[i + j * info.major];
+
                 for (j = 0; j < info.minor_remainder; ++j)
-                {
-                    param_offset = i + j * info.major;
-                    out[i * info.major_stride + j] = data[param_offset];
-                }
+                    out[i * info.major_stride + j] = data[i + j * info.major];
+            }
+            else
+            {
+                for (i = 0; i < info.major_count; ++i)
+                    for (j = 0; j < info.minor; ++j)
+                        out[i * info.major_stride + j] = data[i * info.minor + j];
             }
             start_offset += get_offset_reg(table, const_set->register_count);
             data += param->rows * param->columns;
