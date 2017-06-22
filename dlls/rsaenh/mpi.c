@@ -2365,11 +2365,8 @@ int mp_init_multi(mp_int *mp, ...)
                succeeded in init-ing, then return error.
             */
             va_list clean_args;
-            
-            /* end the current list */
-            va_end(args);
-            
-            /* now start cleaning up */            
+
+            /* now start cleaning up */
             cur_arg = mp;
             va_start(clean_args, mp);
             while (n--) {
