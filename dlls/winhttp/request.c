@@ -2349,9 +2349,9 @@ static BOOL handle_redirect( request_t *request, DWORD status )
 
             netconn_close( &request->netconn );
             if (!(ret = netconn_init( &request->netconn ))) goto end;
+            request->content_length = request->content_read = 0;
             request->read_pos = request->read_size = 0;
-            request->read_chunked = FALSE;
-            request->read_chunked_eof = FALSE;
+            request->read_chunked = request->read_chunked_eof = FALSE;
         }
         else heap_free( hostname );
 
