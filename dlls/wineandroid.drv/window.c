@@ -1001,6 +1001,7 @@ void CDECL ANDROID_DestroyWindow( HWND hwnd )
 
     if (data->surface) window_surface_release( data->surface );
     data->surface = NULL;
+    destroy_gl_drawable( hwnd );
     free_win_data( data );
 }
 

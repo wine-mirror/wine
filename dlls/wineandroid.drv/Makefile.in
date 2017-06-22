@@ -5,6 +5,7 @@ C_SRCS = \
 	device.c \
 	init.c \
 	keyboard.c \
+	opengl.c \
 	window.c
 
 IN_SRCS = \

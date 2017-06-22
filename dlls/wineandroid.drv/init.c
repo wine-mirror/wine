@@ -307,6 +307,22 @@ BOOL CDECL ANDROID_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devm
 }
 
 
+/**********************************************************************
+ *           ANDROID_wine_get_wgl_driver
+ */
+static struct opengl_funcs * ANDROID_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+{
+    struct opengl_funcs *ret;
+
+    if (!(ret = get_wgl_driver( version )))
+    {
+        dev = GET_NEXT_PHYSDEV( dev, wine_get_wgl_driver );
+        ret = dev->funcs->wine_get_wgl_driver( dev, version );
+    }
+    return ret;
+}
+
+
 static const struct gdi_dc_funcs android_drv_funcs =
 {
     NULL,                               /* pAbortDoc */
@@ -435,7 +451,7 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* wine_get_wgl_driver */
+    ANDROID_wine_get_wgl_driver,        /* wine_get_wgl_driver */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */
 };
 
