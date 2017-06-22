@@ -113,7 +113,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
     if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
     {
         data->hwnd = hwnd;
-        data->window = create_ioctl_window( hwnd );
+        data->window = create_ioctl_window( hwnd, FALSE );
         EnterCriticalSection( &win_data_section );
         win_data_context[context_idx(hwnd)] = data;
     }
@@ -454,7 +454,7 @@ static int process_events( DWORD mask )
             TRACE("SURFACE_CHANGED %p %p size %ux%u\n", event->data.surface.hwnd,
                   event->data.surface.window, event->data.surface.width, event->data.surface.height );
 
-            register_native_window( event->data.surface.hwnd, event->data.surface.window );
+            register_native_window( event->data.surface.hwnd, event->data.surface.window, FALSE );
             break;
 
         case MOTION_EVENT:
@@ -945,7 +945,7 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
     switch (msg)
     {
     case WM_PARENTNOTIFY:
-        if (LOWORD(wp) == WM_DESTROY) destroy_ioctl_window( (HWND)lp );
+        if (LOWORD(wp) == WM_DESTROY) destroy_ioctl_window( (HWND)lp, FALSE );
         break;
     }
     return desktop_orig_wndproc( hwnd, msg, wp, lp );

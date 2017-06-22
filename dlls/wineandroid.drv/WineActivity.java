@@ -512,7 +512,7 @@ public class WineActivity extends Activity
         wine_config_changed( getResources().getConfiguration().densityDpi );
     }
 
-    public void create_window( int hwnd, int parent, int pid )
+    public void create_window( int hwnd, boolean opengl, int parent, int pid )
     {
         WineWindow win = get_window( hwnd );
         if (win == null) win = new WineWindow( hwnd, get_window( parent ));
@@ -544,9 +544,9 @@ public class WineActivity extends Activity
         runOnUiThread( new Runnable() { public void run() { create_desktop_window( hwnd ); }} );
     }
 
-    public void createWindow( final int hwnd, final int parent, final int pid )
+    public void createWindow( final int hwnd, final boolean opengl, final int parent, final int pid )
     {
-        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, parent, pid ); }} );
+        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, opengl, parent, pid ); }} );
     }
 
     public void destroyWindow( final int hwnd )

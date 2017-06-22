@@ -91,6 +91,7 @@ struct native_win_data
     struct ANativeWindowBuffer *buffers[NB_CACHED_BUFFERS];
     void                       *mappings[NB_CACHED_BUFFERS];
     HWND                        hwnd;
+    BOOL                        opengl;
     int                         api;
     int                         buffer_format;
     int                         swap_interval;
@@ -104,6 +105,7 @@ struct native_win_wrapper
     struct native_buffer_wrapper *buffers[NB_CACHED_BUFFERS];
     struct ANativeWindowBuffer   *locked_buffer;
     HWND                          hwnd;
+    BOOL                          opengl;
     LONG                          ref;
 };
 
@@ -121,6 +123,7 @@ struct native_buffer_wrapper
 struct ioctl_header
 {
     int  hwnd;
+    BOOL opengl;
 };
 
 struct ioctl_android_create_window
@@ -228,23 +231,24 @@ static inline void unwrap_java_call(void) { }
 
 static struct native_win_data *data_map[65536];
 
-static unsigned int data_map_idx( HWND hwnd )
+static unsigned int data_map_idx( HWND hwnd, BOOL opengl )
 {
-    return LOWORD(hwnd);
+    /* window handles are always even, so use low-order bit for opengl flag */
+    return LOWORD(hwnd) + !!opengl;
 }
 
-static struct native_win_data *get_native_win_data( HWND hwnd )
+static struct native_win_data *get_native_win_data( HWND hwnd, BOOL opengl )
 {
-    struct native_win_data *data = data_map[data_map_idx( hwnd )];
+    struct native_win_data *data = data_map[data_map_idx( hwnd, opengl )];
 
-    if (data && data->hwnd == hwnd) return data;
-    WARN( "unknown win %p\n", hwnd );
+    if (data && data->hwnd == hwnd && !data->opengl == !opengl) return data;
+    WARN( "unknown win %p opengl %u\n", hwnd, opengl );
     return NULL;
 }
 
 static struct native_win_data *get_ioctl_native_win_data( const struct ioctl_header *hdr )
 {
-    return get_native_win_data( LongToHandle(hdr->hwnd) );
+    return get_native_win_data( LongToHandle(hdr->hwnd), hdr->opengl );
 }
 
 static void wait_fence_and_close( int fence )
@@ -412,7 +416,7 @@ static void release_native_window( struct native_win_data *data )
 
 static void free_native_win_data( struct native_win_data *data )
 {
-    unsigned int idx = data_map_idx( data->hwnd );
+    unsigned int idx = data_map_idx( data->hwnd, data->opengl );
 
     InterlockedCompareExchangePointer( (void **)&capture_window, 0, data->hwnd );
     release_native_window( data );
@@ -420,9 +424,9 @@ static void free_native_win_data( struct native_win_data *data )
     data_map[idx] = NULL;
 }
 
-static struct native_win_data *create_native_win_data( HWND hwnd )
+static struct native_win_data *create_native_win_data( HWND hwnd, BOOL opengl )
 {
-    unsigned int i, idx = data_map_idx( hwnd );
+    unsigned int i, idx = data_map_idx( hwnd, opengl );
     struct native_win_data *data = data_map[idx];
 
     if (data)
@@ -432,7 +436,8 @@ static struct native_win_data *create_native_win_data( HWND hwnd )
     }
     if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) ))) return NULL;
     data->hwnd = hwnd;
-    data->api = NATIVE_WINDOW_API_CPU;
+    data->opengl = opengl;
+    if (!opengl) data->api = NATIVE_WINDOW_API_CPU;
     data->buffer_format = PF_BGRA_8888;
     data_map[idx] = data;
     for (i = 0; i < NB_CACHED_BUFFERS; i++) data->buffer_lru[i] = -1;
@@ -443,7 +448,8 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
 {
     HWND hwnd = (HWND)arg1;
     struct ANativeWindow *win = (struct ANativeWindow *)arg2;
-    struct native_win_data *data = get_native_win_data( hwnd );
+    BOOL opengl = arg3;
+    struct native_win_data *data = get_native_win_data( hwnd, opengl );
 
     if (!data || data->parent == win)
     {
@@ -468,9 +474,9 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
 }
 
 /* register a native window received from the Java side for use in ioctls */
-void register_native_window( HWND hwnd, struct ANativeWindow *win )
+void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL opengl )
 {
-    NtQueueApcThread( thread, register_native_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, 0 );
+    NtQueueApcThread( thread, register_native_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, opengl );
 }
 
 /* get the capture window stored in the desktop process */
@@ -569,15 +575,15 @@ static NTSTATUS createWindow_ioctl( void *data, DWORD in_size, DWORD out_size, U
 
     if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
 
-    if (!(win_data = create_native_win_data( LongToHandle(res->hdr.hwnd) )))
+    if (!(win_data = create_native_win_data( LongToHandle(res->hdr.hwnd), res->hdr.opengl )))
         return STATUS_NO_MEMORY;
 
-    TRACE( "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
+    TRACE( "hwnd %08x opengl %u parent %08x\n", res->hdr.hwnd, res->hdr.opengl, res->parent );
 
-    if (!(object = load_java_method( &method, "createWindow", "(III)V" ))) return STATUS_NOT_SUPPORTED;
+    if (!(object = load_java_method( &method, "createWindow", "(IZII)V" ))) return STATUS_NOT_SUPPORTED;
 
     wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->parent, pid );
+    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->hdr.opengl, res->parent, pid );
     unwrap_java_call();
     return STATUS_SUCCESS;
 }
@@ -593,7 +599,7 @@ static NTSTATUS destroyWindow_ioctl( void *data, DWORD in_size, DWORD out_size, 
 
     if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
 
-    TRACE( "hwnd %08x\n", res->hdr.hwnd );
+    TRACE( "hwnd %08x opengl %u\n", res->hdr.hwnd, res->hdr.opengl );
 
     if (!(object = load_java_method( &method, "destroyWindow", "(I)V" ))) return STATUS_NOT_SUPPORTED;
 
@@ -1076,6 +1082,7 @@ static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuff
     int ret, use_win32 = !gralloc_module;
 
     res.hdr.hwnd = HandleToLong( win->hwnd );
+    res.hdr.opengl = win->opengl;
     res.win32 = use_win32;
     ret = android_ioctl( IOCTL_DEQUEUE_BUFFER,
                          &res, offsetof( struct ioctl_android_dequeueBuffer, native_handle ),
@@ -1136,6 +1143,7 @@ static int cancelBuffer( struct ANativeWindow *window, struct ANativeWindowBuffe
            buffer->stride, buffer->format, buffer->usage, fence );
     cancel.buffer_id = buf->buffer_id;
     cancel.hdr.hwnd = HandleToLong( win->hwnd );
+    cancel.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
     return android_ioctl( IOCTL_CANCEL_BUFFER, &cancel, sizeof(cancel), NULL, NULL );
 }
@@ -1151,6 +1159,7 @@ static int queueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer
            buffer->stride, buffer->format, buffer->usage, fence );
     queue.buffer_id = buf->buffer_id;
     queue.hdr.hwnd = HandleToLong( win->hwnd );
+    queue.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
     return android_ioctl( IOCTL_QUEUE_BUFFER, &queue, sizeof(queue), NULL, NULL );
 }
@@ -1185,6 +1194,7 @@ static int setSwapInterval( struct ANativeWindow *window, int interval )
 
     TRACE( "hwnd %p interval %d\n", win->hwnd, interval );
     swap.hdr.hwnd = HandleToLong( win->hwnd );
+    swap.hdr.opengl = win->opengl;
     swap.interval = interval;
     return android_ioctl( IOCTL_SET_SWAP_INT, &swap, sizeof(swap), NULL, NULL );
 }
@@ -1197,6 +1207,7 @@ static int query( const ANativeWindow *window, int what, int *value )
     int ret;
 
     query.hdr.hwnd = HandleToLong( win->hwnd );
+    query.hdr.opengl = win->opengl;
     query.what = what;
     ret = android_ioctl( IOCTL_QUERY, &query, sizeof(query), &query, &size );
     TRACE( "hwnd %p what %d got %d -> %p\n", win->hwnd, what, query.value, value );
@@ -1219,6 +1230,7 @@ static int perform( ANativeWindow *window, int operation, ... )
     va_list args;
 
     perf.hdr.hwnd  = HandleToLong( win->hwnd );
+    perf.hdr.opengl = win->opengl;
     perf.operation = operation;
     memset( perf.args, 0, sizeof(perf.args) );
 
@@ -1337,7 +1349,7 @@ static int perform( ANativeWindow *window, int operation, ... )
     return android_ioctl( IOCTL_PERFORM, &perf, sizeof(perf), NULL, NULL );
 }
 
-struct ANativeWindow *create_ioctl_window( HWND hwnd )
+struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl )
 {
     struct ioctl_android_create_window req;
     struct native_win_wrapper *win = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*win) );
@@ -1361,9 +1373,11 @@ struct ANativeWindow *create_ioctl_window( HWND hwnd )
     win->win.cancelBuffer             = cancelBuffer;
     win->ref  = 1;
     win->hwnd = hwnd;
-    TRACE( "-> %p %p\n", win, win->hwnd );
+    win->opengl = opengl;
+    TRACE( "-> %p %p opengl=%u\n", win, win->hwnd, opengl );
 
-    req.hdr.hwnd = HandleToLong( hwnd );
+    req.hdr.hwnd = HandleToLong( win->hwnd );
+    req.hdr.opengl = win->opengl;
     req.parent = parent == GetDesktopWindow() ? 0 : HandleToLong( parent );
     android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL );
 
@@ -1388,15 +1402,16 @@ void release_ioctl_window( struct ANativeWindow *window )
     for (i = 0; i < sizeof(win->buffers)/sizeof(win->buffers[0]); i++)
         if (win->buffers[i]) win->buffers[i]->buffer.common.decRef( &win->buffers[i]->buffer.common );
 
-    destroy_ioctl_window( win->hwnd );
+    destroy_ioctl_window( win->hwnd, win->opengl );
     HeapFree( GetProcessHeap(), 0, win );
 }
 
-void destroy_ioctl_window( HWND hwnd )
+void destroy_ioctl_window( HWND hwnd, BOOL opengl )
 {
     struct ioctl_android_destroy_window req;
 
     req.hdr.hwnd = HandleToLong( hwnd );
+    req.hdr.opengl = opengl;
     android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL );
 }
 
@@ -1406,6 +1421,7 @@ int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *cl
     struct ioctl_android_window_pos_changed req;
 
     req.hdr.hwnd     = HandleToLong( hwnd );
+    req.hdr.opengl   = FALSE;
     req.window_rect  = *window_rect;
     req.client_rect  = *client_rect;
     req.visible_rect = *visible_rect;
@@ -1421,6 +1437,7 @@ int ioctl_set_window_parent( HWND hwnd, HWND parent )
     struct ioctl_android_set_window_parent req;
 
     req.hdr.hwnd = HandleToLong( hwnd );
+    req.hdr.opengl = FALSE;
     req.parent = parent == GetDesktopWindow() ? 0 : HandleToLong( parent );
     return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
 }
@@ -1430,5 +1447,6 @@ int ioctl_set_capture( HWND hwnd )
     struct ioctl_android_set_capture req;
 
     req.hdr.hwnd  = HandleToLong( hwnd );
+    req.hdr.opengl = FALSE;
     return android_ioctl( IOCTL_SET_CAPTURE, &req, sizeof(req), NULL, NULL );
 }
