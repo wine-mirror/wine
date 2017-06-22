@@ -466,6 +466,20 @@ static void test_basic_import(void)
     verify_reg(hkey, "Wine13h", 0xffffffff, "Value", 6, 0);
     verify_reg_nonexist(hkey, "Wine13i");
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine14a\"=hex(7):4c,69,6e,65,20,  \\\n"
+                    "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine14b\"=hex(7):4c,69,6e,65,20,\t\\\n"
+                    "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
+    verify_reg(hkey, "Wine14a", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine14b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine15\"=hex(2):25,50,41,54,48,25,00,\n\n");
+    verify_reg(hkey, "Wine15", REG_EXPAND_SZ, "%PATH%", 7, 0);
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
@@ -801,6 +815,14 @@ static void test_invalid_import(void)
     todo_wine verify_reg_nonexist(hkey, "Test21e");
     verify_reg_nonexist(hkey, "Test21f");
 
+    /* Test support for characters greater than 0xff */
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine22a\"=hex(0):25,50,100,54,48,25,00\n"
+                    "\"Wine22b\"=hex(0):25,1a4,100,164,124,25,00\n\n");
+    verify_reg_nonexist(hkey, "Wine22a");
+    verify_reg_nonexist(hkey, "Wine22b");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
@@ -1022,6 +1044,17 @@ static void test_comments(void)
                     "  65,6e,\\;comment\n\n"
                     "  61,74,69,6f,6e,00,00\n\n");
     todo_wine verify_reg(hkey, "Multi-Line6", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine27a\"=hex(2):25,50,41,54,48,25,00  ;comment\n"
+                    "\"Wine27b\"=hex(2):25,50,41,54,48,25,00\t;comment\n"
+                    "\"Wine27c\"=hex(2):25,50,41,54,48,25,00  #comment\n"
+                    "\"Wine27d\"=hex(2):25,50,41,54,48,25,00\t#comment\n\n");
+    todo_wine verify_reg(hkey, "Wine27a", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine27b", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg_nonexist(hkey, "Wine27c");
+    verify_reg_nonexist(hkey, "Wine27d");
 
     RegCloseKey(hkey);
 
