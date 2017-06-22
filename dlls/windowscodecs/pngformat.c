@@ -1105,7 +1105,7 @@ static HRESULT WINAPI PngDecoder_Frame_GetMetadataQueryReader(IWICBitmapFrameDec
     if (!ppIMetadataQueryReader)
         return E_INVALIDARG;
 
-    return MetadataQueryReader_CreateInstance(&This->IWICMetadataBlockReader_iface, ppIMetadataQueryReader);
+    return MetadataQueryReader_CreateInstance(&This->IWICMetadataBlockReader_iface, NULL, ppIMetadataQueryReader);
 }
 
 static HRESULT WINAPI PngDecoder_Frame_GetColorContexts(IWICBitmapFrameDecode *iface,

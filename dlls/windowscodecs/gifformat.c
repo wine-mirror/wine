@@ -821,7 +821,7 @@ static HRESULT WINAPI GifFrameDecode_GetMetadataQueryReader(IWICBitmapFrameDecod
     if (!ppIMetadataQueryReader)
         return E_INVALIDARG;
 
-    return MetadataQueryReader_CreateInstance(&This->IWICMetadataBlockReader_iface, ppIMetadataQueryReader);
+    return MetadataQueryReader_CreateInstance(&This->IWICMetadataBlockReader_iface, NULL, ppIMetadataQueryReader);
 }
 
 static HRESULT WINAPI GifFrameDecode_GetColorContexts(IWICBitmapFrameDecode *iface,

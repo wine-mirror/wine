@@ -35,10 +35,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 typedef struct {
     IWICMetadataQueryReader IWICMetadataQueryReader_iface;
-
     LONG ref;
-
     IWICMetadataBlockReader *block;
+    WCHAR *root;
 } QueryReader;
 
 static inline QueryReader *impl_from_IWICMetadataQueryReader(IWICMetadataQueryReader *iface)
@@ -84,6 +83,7 @@ static ULONG WINAPI mqr_Release(IWICMetadataQueryReader *iface)
     if (!ref)
     {
         IWICMetadataBlockReader_Release(This->block);
+        HeapFree(GetProcessHeap(), 0, This->root);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -98,12 +98,31 @@ static HRESULT WINAPI mqr_GetContainerFormat(IWICMetadataQueryReader *iface, GUI
     return IWICMetadataBlockReader_GetContainerFormat(This->block, format);
 }
 
-static HRESULT WINAPI mqr_GetLocation(IWICMetadataQueryReader *iface,
-        UINT cchMaxLength, WCHAR *wzNamespace, UINT *pcchActualLength)
+static HRESULT WINAPI mqr_GetLocation(IWICMetadataQueryReader *iface, UINT len, WCHAR *location, UINT *ret_len)
 {
+    static const WCHAR rootW[] = { '/',0 };
     QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
-    FIXME("(%p,%u,%p,%p)\n", This, cchMaxLength, wzNamespace, pcchActualLength);
-    return E_NOTIMPL;
+    const WCHAR *root;
+    UINT actual_len;
+
+    TRACE("(%p,%u,%p,%p)\n", This, len, location, ret_len);
+
+    if (!ret_len) return E_INVALIDARG;
+
+    root = This->root ? This->root : rootW;
+    actual_len = lstrlenW(root) + 1;
+
+    if (location)
+    {
+        if (len < actual_len)
+            return WINCODEC_ERR_INSUFFICIENTBUFFER;
+
+        memcpy(location, root, actual_len * sizeof(WCHAR));
+    }
+
+    *ret_len = actual_len;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface,
@@ -132,7 +151,7 @@ static IWICMetadataQueryReaderVtbl mqr_vtbl = {
     mqr_GetEnumerator
 };
 
-HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *mbr, IWICMetadataQueryReader **out)
+HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *mbr, const WCHAR *root, IWICMetadataQueryReader **out)
 {
     QueryReader *obj;
 
@@ -145,6 +164,8 @@ HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *mbr, IWICMet
 
     IWICMetadataBlockReader_AddRef(mbr);
     obj->block = mbr;
+
+    obj->root = root ? heap_strdupW(root) : NULL;
 
     *out = &obj->IWICMetadataQueryReader_iface;
 
