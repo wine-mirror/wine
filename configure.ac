@@ -394,6 +394,7 @@ AC_CHECK_HEADERS(\
 	CoreAudio/CoreAudio.h \
 	CoreServices/CoreServices.h \
 	DiskArbitration/DiskArbitration.h \
+	EGL/egl.h \
 	IOKit/IOKitLib.h \
 	IOKit/hid/IOHIDLib.h \
 	OpenAL/al.h \
@@ -868,6 +869,9 @@ case $host_os in
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so")
     AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.so")
     AC_SUBST(LIBWINE_LDFLAGS,["-shared -Wl,-soname,libwine.so"])
+
+    WINE_CHECK_SONAME(EGL,eglGetProcAddress)
+    WINE_CHECK_SONAME(GLESv2,glFlush)
 
     if test "x$exec_prefix" = xNONE
     then

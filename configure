@@ -6830,6 +6830,7 @@ for ac_header in \
 	CoreAudio/CoreAudio.h \
 	CoreServices/CoreServices.h \
 	DiskArbitration/DiskArbitration.h \
+	EGL/egl.h \
 	IOKit/IOKitLib.h \
 	IOKit/hid/IOHIDLib.h \
 	OpenAL/al.h \
@@ -8488,6 +8489,113 @@ fi
 
     LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so"
 
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
+$as_echo_n "checking for -lEGL... " >&6; }
+if ${ac_cv_lib_soname_EGL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lEGL  $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char eglGetProcAddress ();
+int
+main ()
+{
+return eglGetProcAddress ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_EGL=`$ac_cv_path_LDD conftest.exe | grep "EGL" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_EGL=`$OTOOL -L conftest$ac_exeext | grep "libEGL\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libEGL\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_EGL=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libEGL\\.$LIBEXT" | sed -e "s/^.*\\[\\(libEGL\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_EGL:+false} :; then :
+  ac_cv_lib_soname_EGL=`$LDD conftest$ac_exeext | grep "libEGL\\.$LIBEXT" | sed -e "s/^.*\(libEGL\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_EGL:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_EGL" >&5
+$as_echo "$ac_cv_lib_soname_EGL" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBEGL "$ac_cv_lib_soname_EGL"
+_ACEOF
+
+
+fi
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lGLESv2" >&5
+$as_echo_n "checking for -lGLESv2... " >&6; }
+if ${ac_cv_lib_soname_GLESv2+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lGLESv2  $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char glFlush ();
+int
+main ()
+{
+return glFlush ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_GLESv2=`$ac_cv_path_LDD conftest.exe | grep "GLESv2" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_GLESv2=`$OTOOL -L conftest$ac_exeext | grep "libGLESv2\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libGLESv2\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_GLESv2=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libGLESv2\\.$LIBEXT" | sed -e "s/^.*\\[\\(libGLESv2\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_GLESv2:+false} :; then :
+  ac_cv_lib_soname_GLESv2=`$LDD conftest$ac_exeext | grep "libGLESv2\\.$LIBEXT" | sed -e "s/^.*\(libGLESv2\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_GLESv2:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_GLESv2" >&5
+$as_echo "$ac_cv_lib_soname_GLESv2" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBGLESV2 "$ac_cv_lib_soname_GLESv2"
+_ACEOF
+
+
+fi
 
     if test "x$exec_prefix" = xNONE
     then
