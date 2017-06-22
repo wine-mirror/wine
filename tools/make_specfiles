@@ -331,6 +331,7 @@ my @dll_groups =
   "api-ms-win-core-apiquery-l1-1-0",
   "api-ms-win-core-rtlsupport-l1-1-0",
   "api-ms-win-core-rtlsupport-l1-2-0",
+  "api-ms-win-core-crt-l1-1-0",
  ],
  [
   "gdi32",
