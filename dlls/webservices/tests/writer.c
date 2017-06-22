@@ -3649,6 +3649,34 @@ static const WS_XML_STRING *init_xmlstring_dict( WS_XML_DICTIONARY *dict, ULONG 
     return str;
 }
 
+static HRESULT CALLBACK dict_cb( void *state, const WS_XML_STRING *str, BOOL *found, ULONG *id, WS_ERROR *error )
+{
+    ULONG *call_count = state;
+
+    (*call_count)++;
+    switch (str->bytes[0])
+    {
+    case 't':
+        *id = 1;
+        *found = TRUE;
+        break;
+
+    case 'n':
+        *id = 2;
+        *found = TRUE;
+        break;
+
+    case 'v':
+        *found = FALSE;
+        return WS_E_OTHER;
+
+    default:
+        *found = FALSE;
+        break;
+    }
+    return S_OK;
+}
+
 static void test_dictionary(void)
 {
     static const char res[] =
@@ -3659,6 +3687,12 @@ static void test_dictionary(void)
         {0x53,0x06,0x0b,0x01,'p',0x0a,0x01};
     static const char res4[] =
         {0x43,0x02,'p','2',0x06,0x0b,0x02,'p','2',0x0a,0x01};
+    static const char res5[] =
+        {0x42,0x03,0x0a,0x05,0x01};
+    static const char res6[] =
+        {0x40,0x01,0x75,0x0a,0x05,0x01};
+    static const char res7[] =
+        {0x40,0x01,0x76,0x0a,0x05,0x01};
     static const char res100[] =
         {0x42,0x06,0x06,0x06,0x98,0x00,0x01};
     static const char res101[] =
@@ -3672,7 +3706,7 @@ static void test_dictionary(void)
     WS_XML_DICTIONARY dict;
     WS_XML_WRITER *writer;
     HRESULT hr;
-    ULONG i;
+    ULONG i, call_count;
     static const struct
     {
         ULONG       prefix;
@@ -3768,11 +3802,54 @@ static void test_dictionary(void)
         hr = WsWriteStartAttribute( writer, prefix_ptr, localname_ptr, ns_ptr, FALSE, NULL );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
         hr = WsWriteEndAttribute( writer, NULL );
-        ok( hr == S_OK, "got %08x\n", hr );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
         hr = WsWriteEndElement( writer, NULL );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
         if (hr == S_OK) check_output_bin( writer, attr_tests[i].result, attr_tests[i].len_result, __LINE__ );
     }
+
+    /* callback */
+    bin.staticDictionary = NULL;
+    bin.dynamicStringCallback = dict_cb;
+    bin.dynamicStringCallbackState = &call_count;
+
+    hr = WsSetOutput( writer, &bin.encoding, &buf.output, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    init_xmlstring( "t", &localname );
+    init_xmlstring( "ns", &ns );
+    call_count = 0;
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( call_count == 2, "got %u\n", call_count );
+    check_output_bin( writer, res5, sizeof(res5), __LINE__ );
+
+    /* unknown string */
+    hr = WsSetOutput( writer, &bin.encoding, &buf.output, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    init_xmlstring( "u", &localname );
+    init_xmlstring( "ns", &ns );
+    call_count = 0;
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( call_count == 2, "got %u\n", call_count );
+    check_output_bin( writer, res6, sizeof(res6), __LINE__ );
+
+    /* unknown string, error return from callback */
+    hr = WsSetOutput( writer, &bin.encoding, &buf.output, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    init_xmlstring( "v", &localname );
+    init_xmlstring( "ns", &ns );
+    call_count = 0;
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( call_count == 2, "got %u\n", call_count );
+    check_output_bin( writer, res7, sizeof(res7), __LINE__ );
 
     WsFreeWriter( writer );
 }

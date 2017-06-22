@@ -85,6 +85,8 @@ struct writer
     struct xmlbuf               *output_buf;
     WS_HEAP                     *output_heap;
     WS_XML_DICTIONARY           *dict;
+    WS_DYNAMIC_STRING_CALLBACK   dict_cb;
+    void                        *dict_cb_state;
     ULONG                        prop_count;
     struct prop                  prop[sizeof(writer_props)/sizeof(writer_props[0])];
 };
@@ -168,6 +170,8 @@ static HRESULT init_writer( struct writer *writer )
     writer->output_enc     = WS_XML_WRITER_ENCODING_TYPE_TEXT;
     writer->output_charset = WS_CHARSET_UTF8;
     writer->dict           = NULL;
+    writer->dict_cb        = NULL;
+    writer->dict_cb_state  = NULL;
     return S_OK;
 }
 
@@ -388,6 +392,8 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
         writer->output_enc     = WS_XML_WRITER_ENCODING_TYPE_BINARY;
         writer->output_charset = 0;
         writer->dict           = bin->staticDictionary;
+        writer->dict_cb        = bin->dynamicStringCallback;
+        writer->dict_cb_state  = bin->dynamicStringCallbackState;
         break;
     }
     default:
@@ -638,8 +644,8 @@ static HRESULT write_string( struct writer *writer, const BYTE *bytes, ULONG len
 static HRESULT write_dict_string( struct writer *writer, ULONG id )
 {
     HRESULT hr;
-    if (id > 0x3fffffff) return E_INVALIDARG;
-    if ((hr = write_int31( writer, id << 1 )) != S_OK) return hr;
+    if (id > 0x7fffffff) return E_INVALIDARG;
+    if ((hr = write_int31( writer, id )) != S_OK) return hr;
     return S_OK;
 }
 
@@ -678,6 +684,23 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
     }
 }
 
+static BOOL lookup_string_id( struct writer *writer, const WS_XML_STRING *str, ULONG *id )
+{
+    if (writer->dict && str->dictionary == writer->dict)
+    {
+        *id = str->id << 1;
+        return TRUE;
+    }
+    if (writer->dict_cb)
+    {
+        BOOL found = FALSE;
+        writer->dict_cb( writer->dict_cb_state, str, &found, id, NULL );
+        if (found) *id = (*id << 1) | 1;
+        return found;
+    }
+    return FALSE;
+}
+
 static enum record_type get_attr_record_type( const WS_XML_ATTRIBUTE *attr, BOOL use_dict )
 {
     if (!attr->prefix || !attr->prefix->length)
@@ -696,8 +719,8 @@ static enum record_type get_attr_record_type( const WS_XML_ATTRIBUTE *attr, BOOL
 
 static HRESULT write_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUTE *attr )
 {
-    BOOL use_dict = (writer->dict && attr->localName->dictionary == writer->dict);
-    enum record_type type = get_attr_record_type( attr, use_dict );
+    ULONG id;
+    enum record_type type = get_attr_record_type( attr, lookup_string_id(writer, attr->localName, &id) );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
@@ -710,7 +733,7 @@ static HRESULT write_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUT
     }
     if (type >= RECORD_PREFIX_DICTIONARY_ATTRIBUTE_A && type <= RECORD_PREFIX_DICTIONARY_ATTRIBUTE_Z)
     {
-        if ((hr = write_dict_string( writer, attr->localName->id )) != S_OK) return hr;
+        if ((hr = write_dict_string( writer, id )) != S_OK) return hr;
         return write_attribute_value_bin( writer, attr->value );
     }
 
@@ -726,12 +749,12 @@ static HRESULT write_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUT
         break;
 
     case RECORD_SHORT_DICTIONARY_ATTRIBUTE:
-        if ((hr = write_dict_string( writer, attr->localName->id )) != S_OK) return hr;
+        if ((hr = write_dict_string( writer, id )) != S_OK) return hr;
         break;
 
     case RECORD_DICTIONARY_ATTRIBUTE:
         if ((hr = write_string( writer, attr->prefix->bytes, attr->prefix->length )) != S_OK) return hr;
-        if ((hr = write_dict_string( writer, attr->localName->id )) != S_OK) return hr;
+        if ((hr = write_dict_string( writer, id )) != S_OK) return hr;
         break;
 
     default:
@@ -844,8 +867,8 @@ static enum record_type get_xmlns_record_type( const WS_XML_ATTRIBUTE *attr, BOO
 
 static HRESULT write_namespace_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUTE *attr )
 {
-    BOOL use_dict = (writer->dict && attr->ns->dictionary == writer->dict);
-    enum record_type type = get_xmlns_record_type( attr, use_dict );
+    ULONG id;
+    enum record_type type = get_xmlns_record_type( attr, lookup_string_id(writer, attr->ns, &id) );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
@@ -861,11 +884,11 @@ static HRESULT write_namespace_attribute_bin( struct writer *writer, const WS_XM
         break;
 
     case RECORD_SHORT_DICTIONARY_XMLNS_ATTRIBUTE:
-        return write_dict_string( writer, attr->ns->id );
+        return write_dict_string( writer, id );
 
     case RECORD_DICTIONARY_XMLNS_ATTRIBUTE:
         if ((hr = write_string( writer, attr->prefix->bytes, attr->prefix->length )) != S_OK) return hr;
-        return write_dict_string( writer, attr->ns->id );
+        return write_dict_string( writer, id );
 
     default:
         ERR( "unhandled record type %02x\n", type );
@@ -1063,8 +1086,8 @@ static enum record_type get_elem_record_type( const WS_XML_ELEMENT_NODE *elem, B
 static HRESULT write_startelement_bin( struct writer *writer )
 {
     const WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
-    BOOL use_dict = (writer->dict && elem->localName->dictionary == writer->dict);
-    enum record_type type = get_elem_record_type( elem, use_dict );
+    ULONG id;
+    enum record_type type = get_elem_record_type( elem, lookup_string_id(writer, elem->localName, &id) );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
@@ -1077,7 +1100,7 @@ static HRESULT write_startelement_bin( struct writer *writer )
     }
     if (type >= RECORD_PREFIX_DICTIONARY_ELEMENT_A && type <= RECORD_PREFIX_DICTIONARY_ELEMENT_Z)
     {
-        if ((hr = write_dict_string( writer, elem->localName->id )) != S_OK) return hr;
+        if ((hr = write_dict_string( writer, id )) != S_OK) return hr;
         return write_attributes( writer, elem );
     }
 
@@ -1093,12 +1116,12 @@ static HRESULT write_startelement_bin( struct writer *writer )
         break;
 
     case RECORD_SHORT_DICTIONARY_ELEMENT:
-        if ((hr = write_dict_string( writer, elem->localName->id )) != S_OK) return hr;
+        if ((hr = write_dict_string( writer, id )) != S_OK) return hr;
         break;
 
     case RECORD_DICTIONARY_ELEMENT:
         if ((hr = write_string( writer, elem->prefix->bytes, elem->prefix->length )) != S_OK) return hr;
-        if ((hr = write_dict_string( writer, elem->localName->id )) != S_OK) return hr;
+        if ((hr = write_dict_string( writer, id )) != S_OK) return hr;
         break;
 
     default:
