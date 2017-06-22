@@ -35,8 +35,14 @@ void ws_free( WS_HEAP *, void *, SIZE_T ) DECLSPEC_HIDDEN;
 struct xmlbuf *alloc_xmlbuf( WS_HEAP *, WS_XML_WRITER_ENCODING_TYPE, WS_CHARSET ) DECLSPEC_HIDDEN;
 void free_xmlbuf( struct xmlbuf * ) DECLSPEC_HIDDEN;
 
-WS_XML_DICTIONARY dict_builtin DECLSPEC_HIDDEN;
-const WS_XML_DICTIONARY dict_builtin_static DECLSPEC_HIDDEN;
+struct dictionary
+{
+    WS_XML_DICTIONARY  dict;
+    ULONG              size;
+    ULONG             *sorted;
+};
+struct dictionary dict_builtin DECLSPEC_HIDDEN;
+const struct dictionary dict_builtin_static DECLSPEC_HIDDEN;
 
 ULONG format_bool( const BOOL *, unsigned char * ) DECLSPEC_HIDDEN;
 ULONG format_int8( const INT8 *, unsigned char * ) DECLSPEC_HIDDEN;

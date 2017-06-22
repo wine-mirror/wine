@@ -5870,8 +5870,8 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
         WS_XML_READER_BINARY_ENCODING *bin = (WS_XML_READER_BINARY_ENCODING *)encoding;
         reader->input_enc     = WS_XML_READER_ENCODING_TYPE_BINARY;
         reader->input_charset = 0;
-        reader->dict_static   = bin->staticDictionary ? bin->staticDictionary : &dict_builtin_static;
-        reader->dict          = bin->dynamicDictionary ? bin->dynamicDictionary : &dict_builtin;
+        reader->dict_static   = bin->staticDictionary ? bin->staticDictionary : &dict_builtin_static.dict;
+        reader->dict          = bin->dynamicDictionary ? bin->dynamicDictionary : &dict_builtin.dict;
         break;
     }
     default:
