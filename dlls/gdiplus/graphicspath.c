@@ -166,6 +166,32 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
     return TRUE;
 }
 
+/*******************************************************************************
+ * GdipAddPathArc   [GDIPLUS.1]
+ *
+ * Add an elliptical arc to the given path.
+ *
+ * PARAMS
+ *  path       [I/O] Path that the arc is appended to
+ *  x1         [I]   X coordinate of the boundary box
+ *  y1         [I]   Y coordinate of the boundary box
+ *  x2         [I]   Width of the boundary box
+ *  y2         [I]   Height of the boundary box
+ *  startAngle [I]   Starting angle of the arc, clockwise
+ *  sweepAngle [I]   Angle of the arc, clockwise
+ *
+ * RETURNS
+ *  InvalidParameter If the given path is invalid
+ *  OutOfMemory      If memory allocation fails, i.e. the path cannot be lengthened
+ *  Ok               If everything works out as expected
+ *
+ * NOTES
+ *  This functions takes the newfigure value of the given path into account,
+ *  i.e. the arc is connected to the end of the given path if it was set to
+ *  FALSE, otherwise the arc's first point gets the the PathPointTypeStart
+ *  value. In both cases, the value of newfigure of the given path is FALSE
+ *  afterwards.
+ */
 GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
     REAL y2, REAL startAngle, REAL sweepAngle)
 {
@@ -200,6 +226,11 @@ GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipAddPathArcI   [GDUPLUS.2]
+ *
+ * See GdipAddPathArc
+ */
 GpStatus WINGDIPAPI GdipAddPathArcI(GpPath *path, INT x1, INT y1, INT x2,
    INT y2, REAL startAngle, REAL sweepAngle)
 {
