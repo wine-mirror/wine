@@ -3288,9 +3288,6 @@ DWORD WINAPI FormatMessage16(
         *t='\0';
     }
     talloced = strlen(target)+1;
-    if (nSize && talloced<nSize) {
-        target = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
-    }
     TRACE("-- %s\n",debugstr_a(target));
     if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
         /* nSize is the MINIMUM size */
