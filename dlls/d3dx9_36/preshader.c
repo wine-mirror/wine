@@ -1181,11 +1181,6 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
                         param_offset = i + j * info.major;
                     else
                         param_offset = i * info.minor + j;
-                    if (param_offset * sizeof(unsigned int) >= param->bytes)
-                    {
-                        WARN("Parameter data is too short, name %s, component %u.\n", debugstr_a(param->name), i);
-                        break;
-                    }
                     out[offset] = data[param_offset];
                 }
             }
