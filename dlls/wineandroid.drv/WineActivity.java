@@ -54,7 +54,7 @@ public class WineActivity extends Activity
     private native String wine_init( String[] cmdline, String[] env );
     public native void wine_desktop_changed( int width, int height );
     public native void wine_config_changed( int dpi );
-    public native void wine_surface_changed( int hwnd, Surface surface );
+    public native void wine_surface_changed( int hwnd, Surface surface, boolean opengl );
     public native boolean wine_motion_event( int hwnd, int action, int x, int y, int state, int vscroll );
     public native boolean wine_keyboard_event( int hwnd, int action, int keycode, int state );
 
@@ -299,6 +299,7 @@ public class WineActivity extends Activity
         protected WineWindow parent;
         protected WineView window_view;
         protected Surface window_surface;
+        protected Surface client_surface;
 
         public WineWindow( int w, WineWindow parent )
         {
@@ -312,7 +313,7 @@ public class WineActivity extends Activity
             win_map.put( w, this );
             if (parent == null)
             {
-                window_view = new WineView( WineActivity.this, this );
+                window_view = new WineView( WineActivity.this, this, false );
                 window_view.layout( 0, 0, 1, 1 ); // make sure the surface gets created
             }
         }
@@ -353,7 +354,7 @@ public class WineActivity extends Activity
             parent = new_parent;
             if (new_parent == null)
             {
-                window_view = new WineView( WineActivity.this, this );
+                window_view = new WineView( WineActivity.this, this, false );
                 window_view.layout( 0, 0, 1, 1 ); // make sure the surface gets created
             }
             else window_view = null;
@@ -364,12 +365,22 @@ public class WineActivity extends Activity
             return hwnd;
         }
 
-        public void set_surface( SurfaceTexture surftex )
+        public void set_surface( SurfaceTexture surftex, boolean is_client )
         {
-            if (surftex == null) window_surface = null;
-            else if (window_surface == null) window_surface = new Surface( surftex );
-            Log.i( LOGTAG, String.format( "set window surface hwnd %08x %s", hwnd, window_surface ));
-            wine_surface_changed( hwnd, window_surface );
+            if (is_client)
+            {
+                if (surftex == null) client_surface = null;
+                else if (client_surface == null) client_surface = new Surface( surftex );
+                Log.i( LOGTAG, String.format( "set client surface hwnd %08x %s", hwnd, client_surface ));
+                wine_surface_changed( hwnd, client_surface, true );
+            }
+            else
+            {
+                if (surftex == null) window_surface = null;
+                else if (window_surface == null) window_surface = new Surface( surftex );
+                Log.i( LOGTAG, String.format( "set window surface hwnd %08x %s", hwnd, window_surface ));
+                wine_surface_changed( hwnd, window_surface, false );
+            }
         }
 
         public void get_event_pos( MotionEvent event, int[] pos )
@@ -384,11 +395,13 @@ public class WineActivity extends Activity
     protected class WineView extends TextureView implements TextureView.SurfaceTextureListener
     {
         private WineWindow window;
+        private boolean is_client;
 
-        public WineView( Context c, WineWindow win )
+        public WineView( Context c, WineWindow win, boolean client )
         {
             super( c );
             window = win;
+            is_client = client;
             setSurfaceTextureListener( this );
             setVisibility( VISIBLE );
             setOpaque( false );
@@ -403,22 +416,23 @@ public class WineActivity extends Activity
 
         public void onSurfaceTextureAvailable( SurfaceTexture surftex, int width, int height )
         {
-            Log.i( LOGTAG, String.format( "onSurfaceTextureAvailable win %08x %dx%d",
-                                          window.hwnd, width, height ));
-            window.set_surface( surftex );
+            Log.i( LOGTAG, String.format( "onSurfaceTextureAvailable win %08x %dx%d %s",
+                                          window.hwnd, width, height, is_client ? "client" : "whole" ));
+            window.set_surface( surftex, is_client );
         }
 
         public void onSurfaceTextureSizeChanged( SurfaceTexture surftex, int width, int height )
         {
-            Log.i( LOGTAG, String.format( "onSurfaceTextureSizeChanged win %08x %dx%d",
-                                          window.hwnd, width, height ));
-            window.set_surface( surftex );
+            Log.i( LOGTAG, String.format( "onSurfaceTextureSizeChanged win %08x %dx%d %s",
+                                          window.hwnd, width, height, is_client ? "client" : "whole" ));
+            window.set_surface( surftex, is_client);
         }
 
         public boolean onSurfaceTextureDestroyed( SurfaceTexture surftex )
         {
-            Log.i( LOGTAG, String.format( "onSurfaceTextureDestroyed win %08x", window.hwnd ));
-            window.set_surface( null );
+            Log.i( LOGTAG, String.format( "onSurfaceTextureDestroyed win %08x %s",
+                                          window.hwnd, is_client ? "client" : "whole" ));
+            window.set_surface( null, is_client );
             return true;
         }
 
@@ -428,6 +442,7 @@ public class WineActivity extends Activity
 
         public boolean onGenericMotionEvent( MotionEvent event )
         {
+            if (is_client) return false;  // let the whole window handle it
             if (window.parent != null) return false;  // let the parent handle it
 
             if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) != 0)
@@ -445,6 +460,7 @@ public class WineActivity extends Activity
 
         public boolean onTouchEvent( MotionEvent event )
         {
+            if (is_client) return false;  // let the whole window handle it
             if (window.parent != null) return false;  // let the parent handle it
 
             int[] pos = new int[2];

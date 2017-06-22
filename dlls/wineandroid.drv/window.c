@@ -245,12 +245,13 @@ void config_changed( JNIEnv *env, jobject obj, jint dpi )
  *
  * JNI callback, runs in the context of the Java thread.
  */
-void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface )
+void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface, jboolean client )
 {
     union event_data data;
 
     memset( &data, 0, sizeof(data) );
     data.surface.hwnd = LongToHandle( win );
+    data.surface.client = client;
     if (surface)
     {
         int width, height;
@@ -261,8 +262,8 @@ void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface )
         data.surface.window = win;
         data.surface.width = width;
         data.surface.height = height;
-        p__android_log_print( ANDROID_LOG_INFO, "wine", "surface_changed: %p %ux%u",
-                              data.surface.hwnd, width, height );
+        p__android_log_print( ANDROID_LOG_INFO, "wine", "surface_changed: %p %s %ux%u",
+                              data.surface.hwnd, client ? "client" : "whole", width, height );
     }
     data.type = SURFACE_CHANGED;
     send_event( &data );
@@ -451,10 +452,11 @@ static int process_events( DWORD mask )
             break;
 
         case SURFACE_CHANGED:
-            TRACE("SURFACE_CHANGED %p %p size %ux%u\n", event->data.surface.hwnd,
-                  event->data.surface.window, event->data.surface.width, event->data.surface.height );
+            TRACE("SURFACE_CHANGED %p %p %s size %ux%u\n", event->data.surface.hwnd,
+                  event->data.surface.window, event->data.surface.client ? "client" : "whole",
+                  event->data.surface.width, event->data.surface.height );
 
-            register_native_window( event->data.surface.hwnd, event->data.surface.window, FALSE );
+            register_native_window( event->data.surface.hwnd, event->data.surface.window, event->data.surface.client );
             break;
 
         case MOTION_EVENT:

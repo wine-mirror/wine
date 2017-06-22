@@ -458,7 +458,7 @@ static const JNINativeMethod methods[] =
 {
     { "wine_desktop_changed", "(II)V", desktop_changed },
     { "wine_config_changed", "(I)V", config_changed },
-    { "wine_surface_changed", "(ILandroid/view/Surface;)V", surface_changed },
+    { "wine_surface_changed", "(ILandroid/view/Surface;Z)V", surface_changed },
     { "wine_motion_event", "(IIIIII)Z", motion_event },
     { "wine_keyboard_event", "(IIII)Z", keyboard_event },
 };
