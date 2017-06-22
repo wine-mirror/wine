@@ -1378,7 +1378,7 @@ struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl )
 
     req.hdr.hwnd = HandleToLong( win->hwnd );
     req.hdr.opengl = win->opengl;
-    req.parent = parent == GetDesktopWindow() ? 0 : HandleToLong( parent );
+    req.parent = HandleToLong( parent );
     android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL );
 
     return &win->win;
@@ -1438,7 +1438,7 @@ int ioctl_set_window_parent( HWND hwnd, HWND parent )
 
     req.hdr.hwnd = HandleToLong( hwnd );
     req.hdr.opengl = FALSE;
-    req.parent = parent == GetDesktopWindow() ? 0 : HandleToLong( parent );
+    req.parent = HandleToLong( parent );
     return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
 }
 
