@@ -1018,34 +1018,11 @@ static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_r
 
     if (!(parent = GetAncestor( hwnd, GA_PARENT ))) return NULL;  /* desktop or HWND_MESSAGE */
 
-    if (parent != GetDesktopWindow())
-    {
-        if (!(data = get_win_data( parent )) &&
-            !(data = create_win_data( parent, NULL, NULL )))
-            return NULL;
-        release_win_data( data );
-    }
-
     if (!(data = alloc_win_data( hwnd ))) return NULL;
 
     data->parent = (parent == GetDesktopWindow()) ? 0 : parent;
-
-    if (window_rect)
-    {
-        data->whole_rect = data->window_rect = *window_rect;
-        data->client_rect = *client_rect;
-    }
-    else
-    {
-        GetWindowRect( hwnd, &data->window_rect );
-        MapWindowPoints( 0, parent, (POINT *)&data->window_rect, 2 );
-        data->whole_rect = data->window_rect;
-        GetClientRect( hwnd, &data->client_rect );
-        MapWindowPoints( hwnd, parent, (POINT *)&data->client_rect, 2 );
-        ioctl_window_pos_changed( hwnd, &data->window_rect, &data->client_rect, &data->whole_rect,
-                                  GetWindowLongW( hwnd, GWL_STYLE ), SWP_NOACTIVATE,
-                                  GetWindow( hwnd, GW_HWNDPREV ), GetWindow( hwnd, GW_OWNER ));
-    }
+    data->whole_rect = data->window_rect = *window_rect;
+    data->client_rect = *client_rect;
     return data;
 }
 

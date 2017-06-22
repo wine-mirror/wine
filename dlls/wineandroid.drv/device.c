@@ -251,6 +251,13 @@ static struct native_win_data *get_ioctl_native_win_data( const struct ioctl_hea
     return get_native_win_data( LongToHandle(hdr->hwnd), hdr->opengl );
 }
 
+static int get_ioctl_win_parent( HWND parent )
+{
+    if (parent != GetDesktopWindow() && !GetAncestor( parent, GA_PARENT ))
+        return HandleToLong( HWND_MESSAGE );
+    return HandleToLong( parent );
+}
+
 static void wait_fence_and_close( int fence )
 {
     __s32 timeout = 1000;  /* FIXME: should be -1 for infinite timeout */
@@ -1353,7 +1360,6 @@ struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl )
 {
     struct ioctl_android_create_window req;
     struct native_win_wrapper *win = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*win) );
-    HWND parent = GetAncestor( hwnd, GA_PARENT );
 
     if (!win) return NULL;
 
@@ -1378,7 +1384,7 @@ struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl )
 
     req.hdr.hwnd = HandleToLong( win->hwnd );
     req.hdr.opengl = win->opengl;
-    req.parent = HandleToLong( parent );
+    req.parent = get_ioctl_win_parent( GetAncestor( hwnd, GA_PARENT ));
     android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL );
 
     return &win->win;
@@ -1438,7 +1444,7 @@ int ioctl_set_window_parent( HWND hwnd, HWND parent )
 
     req.hdr.hwnd = HandleToLong( hwnd );
     req.hdr.opengl = FALSE;
-    req.parent = HandleToLong( parent );
+    req.parent = get_ioctl_win_parent( parent );
     return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
 }
 

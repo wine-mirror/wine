@@ -62,6 +62,7 @@ public class WineActivity extends Activity
     private ProgressDialog progress_dialog;
 
     protected WineWindow desktop_window;
+    protected WineWindow message_window;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -290,6 +291,7 @@ public class WineActivity extends Activity
 
     protected class WineWindow extends Object
     {
+        static protected final int HWND_MESSAGE = 0xfffffffd;
         static protected final int WS_VISIBLE = 0x10000000;
 
         protected int hwnd;
@@ -617,6 +619,9 @@ public class WineActivity extends Activity
             desktop_window = new WineWindow( hwnd, null );
             addView( desktop_window.create_whole_view() );
             desktop_window.client_group.bringToFront();
+
+            message_window = new WineWindow( WineWindow.HWND_MESSAGE, null );
+            message_window.create_window_groups();
         }
 
         @Override
