@@ -1249,6 +1249,31 @@ static void test_acmFormatTagDetails(void)
         ok(aftd.cbFormatSize == sizeof(MPEGLAYER3WAVEFORMAT), "got %d\n", aftd.cbFormatSize);
 }
 
+static void test_acmFormatChoose(void)
+{
+    ACMFORMATCHOOSEW afc = {0};
+    WAVEFORMATEX *pwfx;
+    DWORD sizeMax;
+    MMRESULT rc;
+
+    acmMetrics(NULL, ACM_METRIC_MAX_SIZE_FORMAT, &sizeMax);
+    pwfx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeMax);
+
+    afc.cbStruct = sizeof(afc);
+    afc.pwfx = pwfx;
+
+    /* test invalid struct size */
+    afc.cbStruct = sizeof(afc)-1;
+    rc = acmFormatChooseW(&afc);
+    ok(rc == MMSYSERR_INVALPARAM, "expected 0xb, got 0x%x\n", rc);
+    afc.cbStruct = sizeof(afc);
+
+    afc.pwfx = NULL;
+    rc = acmFormatChooseW(&afc);
+    ok(rc == MMSYSERR_INVALPARAM, "expected 0xb, got 0x%x\n", rc);
+    afc.pwfx = pwfx;
+}
+
 static struct
 {
     struct
@@ -1418,6 +1443,7 @@ START_TEST(msacm)
     test_convert();
     test_acmFormatSuggest();
     test_acmFormatTagDetails();
+    test_acmFormatChoose();
     /* Test acmDriverAdd in the end as it may conflict
      * with other tests due to codec lookup order */
     test_acmDriverAdd();

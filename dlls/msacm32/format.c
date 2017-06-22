@@ -288,6 +288,9 @@ MMRESULT WINAPI acmFormatChooseA(PACMFORMATCHOOSEA pafmtc)
     LPWSTR              templ = NULL;
     DWORD               sz;
 
+    if (pafmtc->cbStruct < sizeof(ACMFORMATCHOOSEA))
+        return MMSYSERR_INVALPARAM;
+
     afcw.cbStruct  = sizeof(afcw);
     afcw.fdwStyle  = pafmtc->fdwStyle;
     afcw.hwndOwner = pafmtc->hwndOwner;
@@ -359,6 +362,12 @@ done:
  */
 MMRESULT WINAPI acmFormatChooseW(PACMFORMATCHOOSEW pafmtc)
 {
+    if (pafmtc->cbStruct < sizeof(ACMFORMATCHOOSEW))
+        return MMSYSERR_INVALPARAM;
+
+    if (!pafmtc->pwfx)
+        return MMSYSERR_INVALPARAM;
+
     if (pafmtc->fdwStyle & ACMFORMATCHOOSE_STYLEF_ENABLETEMPLATEHANDLE)
         return DialogBoxIndirectParamW(MSACM_hInstance32, (LPCDLGTEMPLATEW)pafmtc->hInstance,
                                        pafmtc->hwndOwner, FormatChooseDlgProc, (LPARAM)pafmtc);
