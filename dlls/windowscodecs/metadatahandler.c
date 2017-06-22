@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "objbase.h"
+#include "propvarutil.h"
 
 #include "wincodecs_private.h"
 
@@ -211,66 +212,6 @@ static HRESULT WINAPI MetadataHandler_GetValueByIndex(IWICMetadataWriter *iface,
     return hr;
 }
 
-static BOOL get_int_value(const PROPVARIANT *pv, LONGLONG *value)
-{
-    switch (pv->vt)
-    {
-    case VT_NULL:
-    case VT_EMPTY:
-        *value = 0;
-        break;
-    case VT_I1:
-        *value = pv->u.cVal;
-        break;
-    case VT_UI1:
-        *value = pv->u.bVal;
-        break;
-    case VT_I2:
-        *value = pv->u.iVal;
-        break;
-    case VT_UI2:
-        *value = pv->u.uiVal;
-        break;
-    case VT_I4:
-        *value = pv->u.lVal;
-        break;
-    case VT_UI4:
-        *value = pv->u.ulVal;
-        break;
-    case VT_I8:
-    case VT_UI8:
-        *value = pv->u.hVal.QuadPart;
-        break;
-    default:
-        FIXME("not supported variant type %d\n", pv->vt);
-        return FALSE;
-    }
-    return TRUE;
-}
-
-/* FiXME: Use propsys.PropVariantCompareEx once it's implemented */
-static int propvar_cmp(const PROPVARIANT *v1, const PROPVARIANT *v2)
-{
-    LONGLONG value1, value2;
-
-    if (v1->vt == VT_LPSTR && v2->vt == VT_LPSTR)
-    {
-        return lstrcmpA(v1->u.pszVal, v2->u.pszVal);
-    }
-
-    if (v1->vt == VT_LPWSTR && v2->vt == VT_LPWSTR)
-    {
-        return lstrcmpiW(v1->u.pwszVal, v2->u.pwszVal);
-    }
-
-    if (!get_int_value(v1, &value1)) return -1;
-    if (!get_int_value(v2, &value2)) return -1;
-
-    value1 -= value2;
-    if (value1) return value1 < 0 ? -1 : 1;
-    return 0;
-}
-
 static HRESULT WINAPI MetadataHandler_GetValue(IWICMetadataWriter *iface,
     const PROPVARIANT *schema, const PROPVARIANT *id, PROPVARIANT *value)
 {
@@ -278,7 +219,7 @@ static HRESULT WINAPI MetadataHandler_GetValue(IWICMetadataWriter *iface,
     HRESULT hr = WINCODEC_ERR_PROPERTYNOTFOUND;
     MetadataHandler *This = impl_from_IWICMetadataWriter(iface);
 
-    TRACE("(%p,%p,%p,%p)\n", iface, schema, id, value);
+    TRACE("(%p,%s,%s,%p)\n", iface, wine_dbgstr_variant((const VARIANT *)schema), wine_dbgstr_variant((const VARIANT *)id), value);
 
     if (!id) return E_INVALIDARG;
 
@@ -288,10 +229,10 @@ static HRESULT WINAPI MetadataHandler_GetValue(IWICMetadataWriter *iface,
     {
         if (schema && This->items[i].schema.vt != VT_EMPTY)
         {
-            if (propvar_cmp(schema, &This->items[i].schema) != 0) continue;
+            if (PropVariantCompareEx(schema, &This->items[i].schema, 0, PVCF_USESTRCMPI) != 0) continue;
         }
 
-        if (propvar_cmp(id, &This->items[i].id) != 0) continue;
+        if (PropVariantCompareEx(id, &This->items[i].id, 0, PVCF_USESTRCMPI) != 0) continue;
 
         hr = value ? PropVariantCopy(value, &This->items[i].value) : S_OK;
         break;

@@ -1,6 +1,6 @@
 MODULE    = windowscodecs.dll
 IMPORTLIB = windowscodecs
-IMPORTS   = uuid ole32 oleaut32 rpcrt4 shlwapi user32 gdi32 advapi32
+IMPORTS   = uuid ole32 oleaut32 propsys rpcrt4 shlwapi user32 gdi32 advapi32
 EXTRAINCL = $(JPEG_CFLAGS) $(PNG_CFLAGS) $(TIFF_CFLAGS)
 EXTRALIBS = $(APPLICATIONSERVICES_LIBS)
 
