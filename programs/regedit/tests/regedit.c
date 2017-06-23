@@ -480,6 +480,12 @@ static void test_basic_import(void)
                     "\"Wine15\"=hex(2):25,50,41,54,48,25,00,\n\n");
     verify_reg(hkey, "Wine15", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine16\"=hex(2):\\\n"
+                    "  25,48,4f,4d,45,25,00\n\n");
+    verify_reg(hkey, "Wine16", REG_EXPAND_SZ, "%HOME%", 7, 0);
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
@@ -822,6 +828,35 @@ static void test_invalid_import(void)
                     "\"Wine22b\"=hex(0):25,1a4,100,164,124,25,00\n\n");
     verify_reg_nonexist(hkey, "Wine22a");
     verify_reg_nonexist(hkey, "Wine22b");
+
+    /* Test the effect of backslashes in hex data */
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine23a\"=hex(2):25,48\\,4f,4d,45,25,00\n"
+                    "\"Wine23b\"=hex(2):25,48,\\4f,4d,45,25,00\n"
+                    "\"Wine23c\"=hex(2):25,48\\ ,4f,4d,45,25,00\n"
+                    "\"Wine23d\"=hex(2):25,48,\\ 4f,4d,45,25,00\n"
+                    "\"Wine23e\"=hex(2):\\25,48,4f,4d,45,25,00\n"
+                    "\"Wine23f\"=hex(2):\\ 25,48,4f,4d,45,25,00\n"
+                    "\"Wine23g\"=hex(2):25,48,4\\f,4d,45,25,00\n"
+                    "\"Wine23h\"=hex(2):25,48,4\\\n"
+                    "  f,4d,45,25,00\n"
+                    "\"Wine23i\"=hex(2):25,50,\\,41,54,48,25,00\n"
+                    "\"Wine23j\"=hex(2):25,48,4f,4d,45,25,5c,\\\\\n"
+                    "  25,50,41,54,48,25,00\n"
+                    "\"Wine23k\"=hex(2):,\\\n"
+                    "  25,48,4f,4d,45,25,00\n\n");
+    verify_reg_nonexist(hkey, "Wine23a");
+    verify_reg_nonexist(hkey, "Wine23b");
+    verify_reg_nonexist(hkey, "Wine23c");
+    verify_reg_nonexist(hkey, "Wine23d");
+    verify_reg_nonexist(hkey, "Wine23e");
+    verify_reg_nonexist(hkey, "Wine23f");
+    verify_reg_nonexist(hkey, "Wine23g");
+    todo_wine verify_reg_nonexist(hkey, "Wine23h");
+    verify_reg_nonexist(hkey, "Wine23i");
+    verify_reg_nonexist(hkey, "Wine23j");
+    verify_reg_nonexist(hkey, "Wine23k");
 
     RegCloseKey(hkey);
 
