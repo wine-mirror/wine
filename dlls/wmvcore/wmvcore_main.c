@@ -66,6 +66,7 @@ HRESULT WINAPI WMCreateEditor(IWMMetadataEditor **editor)
 typedef struct {
     IWMReader IWMReader_iface;
     IWMReaderAdvanced6 IWMReaderAdvanced6_iface;
+    IWMReaderAccelerator IWMReaderAccelerator_iface;
     LONG ref;
 } WMReader;
 
@@ -102,6 +103,9 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IWMReaderAdvanced6)) {
         TRACE("(%p)->(IID_IWMReaderAdvanced6 %p)\n", This, ppv);
         *ppv = &This->IWMReaderAdvanced6_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMReaderAccelerator)) {
+        TRACE("(%p)->(IID_IWMReaderAccelerator %p)\n", This, ppv);
+        *ppv = &This->IWMReaderAccelerator_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -656,6 +660,55 @@ static const IWMReaderAdvanced6Vtbl WMReaderAdvanced6Vtbl = {
     WMReaderAdvanced6_SetProtextStreamSamples
 };
 
+static inline WMReader *impl_from_IWMReaderAccelerator(IWMReaderAccelerator *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IWMReaderAccelerator_iface);
+}
+
+static HRESULT WINAPI reader_accl_QueryInterface(IWMReaderAccelerator *iface, REFIID riid, void **object)
+{
+    WMReader *This = impl_from_IWMReaderAccelerator(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, object);
+}
+
+static ULONG WINAPI reader_accl_AddRef(IWMReaderAccelerator *iface)
+{
+    WMReader *This = impl_from_IWMReaderAccelerator(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI reader_accl_Release(IWMReaderAccelerator *iface)
+{
+    WMReader *This = impl_from_IWMReaderAccelerator(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI reader_accl_GetCodecInterface(IWMReaderAccelerator *iface, DWORD output, REFIID riid, void **codec)
+{
+    WMReader *This = impl_from_IWMReaderAccelerator(iface);
+
+    FIXME("%p, %d, %s, %p\n", This, output, debugstr_guid(riid), codec);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reader_accl_Notify(IWMReaderAccelerator *iface, DWORD output, WM_MEDIA_TYPE *subtype)
+{
+    WMReader *This = impl_from_IWMReaderAccelerator(iface);
+
+    FIXME("%p, %d, %p\n", This, output, subtype);
+
+    return E_NOTIMPL;
+}
+
+static const IWMReaderAcceleratorVtbl WMReaderAcceleratorVtbl = {
+    reader_accl_QueryInterface,
+    reader_accl_AddRef,
+    reader_accl_Release,
+    reader_accl_GetCodecInterface,
+    reader_accl_Notify
+};
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
     WMReader *reader;
@@ -668,6 +721,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
 
     reader->IWMReader_iface.lpVtbl = &WMReaderVtbl;
     reader->IWMReaderAdvanced6_iface.lpVtbl = &WMReaderAdvanced6Vtbl;
+    reader->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;
