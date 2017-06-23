@@ -89,6 +89,16 @@ static inline struct d3drm_light_array *impl_from_IDirect3DRMLightArray(IDirect3
     return CONTAINING_RECORD(iface, struct d3drm_light_array, IDirect3DRMLightArray_iface);
 }
 
+static inline struct d3drm_animation *impl_from_IDirect3DRMAnimation(IDirect3DRMAnimation *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3drm_animation, IDirect3DRMAnimation_iface);
+}
+
+static inline struct d3drm_animation *impl_from_IDirect3DRMAnimation2(IDirect3DRMAnimation2 *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3drm_animation, IDirect3DRMAnimation2_iface);
+}
+
 static HRESULT WINAPI d3drm_frame_array_QueryInterface(IDirect3DRMFrameArray *iface, REFIID riid, void **out)
 {
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
@@ -3002,6 +3012,456 @@ HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, I
     IDirect3DRM_AddRef(object->d3drm);
 
     *frame = object;
+
+    return hr;
+}
+
+static HRESULT WINAPI d3drm_animation2_QueryInterface(IDirect3DRMAnimation2 *iface, REFIID riid, void **out)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualGUID(riid, &IID_IDirect3DRMAnimation)
+            || IsEqualGUID(riid, &IID_IDirect3DRMObject)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *out = &animation->IDirect3DRMAnimation_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMAnimation2))
+    {
+        *out = &animation->IDirect3DRMAnimation2_iface;
+    }
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid(riid));
+        return CLASS_E_CLASSNOTAVAILABLE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT WINAPI d3drm_animation1_QueryInterface(IDirect3DRMAnimation *iface, REFIID riid, void **out)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    return IDirect3DRMAnimation2_QueryInterface(&animation->IDirect3DRMAnimation2_iface, riid, out);
+}
+
+static ULONG WINAPI d3drm_animation2_AddRef(IDirect3DRMAnimation2 *iface)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+    ULONG refcount = InterlockedIncrement(&animation->ref);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI d3drm_animation1_AddRef(IDirect3DRMAnimation *iface)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+    return IDirect3DRMAnimation2_AddRef(&animation->IDirect3DRMAnimation2_iface);
+}
+
+static ULONG WINAPI d3drm_animation2_Release(IDirect3DRMAnimation2 *iface)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+    ULONG refcount = InterlockedDecrement(&animation->ref);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        d3drm_object_cleanup((IDirect3DRMObject *)&animation->IDirect3DRMAnimation_iface, &animation->obj);
+        IDirect3DRM_Release(animation->d3drm);
+        HeapFree(GetProcessHeap(), 0, animation);
+    }
+
+    return refcount;
+}
+
+static ULONG WINAPI d3drm_animation1_Release(IDirect3DRMAnimation *iface)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+
+    return IDirect3DRMAnimation2_Release(&animation->IDirect3DRMAnimation2_iface);
+}
+
+static HRESULT WINAPI d3drm_animation2_Clone(IDirect3DRMAnimation2 *iface, IUnknown *outer, REFIID iid, void **out)
+{
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation1_Clone(IDirect3DRMAnimation *iface, IUnknown *outer, REFIID iid, void **out)
+{
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_AddDestroyCallback(IDirect3DRMAnimation2 *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_add_destroy_callback(&animation->obj, cb, ctx);
+}
+
+static HRESULT WINAPI d3drm_animation1_AddDestroyCallback(IDirect3DRMAnimation *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return IDirect3DRMAnimation2_AddDestroyCallback(&animation->IDirect3DRMAnimation2_iface, cb, ctx);
+}
+
+static HRESULT WINAPI d3drm_animation2_DeleteDestroyCallback(IDirect3DRMAnimation2 *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_delete_destroy_callback(&animation->obj, cb, ctx);
+}
+
+static HRESULT WINAPI d3drm_animation1_DeleteDestroyCallback(IDirect3DRMAnimation *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return IDirect3DRMAnimation2_DeleteDestroyCallback(&animation->IDirect3DRMAnimation2_iface, cb, ctx);
+}
+
+static HRESULT WINAPI d3drm_animation2_SetAppData(IDirect3DRMAnimation2 *iface, DWORD data)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    animation->obj.appdata = data;
+
+    return D3DRM_OK;
+}
+
+static HRESULT WINAPI d3drm_animation1_SetAppData(IDirect3DRMAnimation *iface, DWORD data)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    return d3drm_animation2_SetAppData(&animation->IDirect3DRMAnimation2_iface, data);
+}
+
+static DWORD WINAPI d3drm_animation2_GetAppData(IDirect3DRMAnimation2 *iface)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return animation->obj.appdata;
+}
+
+static DWORD WINAPI d3drm_animation1_GetAppData(IDirect3DRMAnimation *iface)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3drm_animation2_GetAppData(&animation->IDirect3DRMAnimation2_iface);
+}
+
+static HRESULT WINAPI d3drm_animation2_SetName(IDirect3DRMAnimation2 *iface, const char *name)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_object_set_name(&animation->obj, name);
+}
+
+static HRESULT WINAPI d3drm_animation1_SetName(IDirect3DRMAnimation *iface, const char *name)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_animation2_SetName(&animation->IDirect3DRMAnimation2_iface, name);
+}
+
+static HRESULT WINAPI d3drm_animation2_GetName(IDirect3DRMAnimation2 *iface, DWORD *size, char *name)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_name(&animation->obj, size, name);
+}
+
+static HRESULT WINAPI d3drm_animation1_GetName(IDirect3DRMAnimation *iface, DWORD *size, char *name)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_animation2_GetName(&animation->IDirect3DRMAnimation2_iface, size, name);
+}
+
+static HRESULT WINAPI d3drm_animation2_GetClassName(IDirect3DRMAnimation2 *iface, DWORD *size, char *name)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_class_name(&animation->obj, size, name);
+}
+
+static HRESULT WINAPI d3drm_animation1_GetClassName(IDirect3DRMAnimation *iface, DWORD *size, char *name)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_animation2_GetClassName(&animation->IDirect3DRMAnimation2_iface, size, name);
+}
+
+static HRESULT WINAPI d3drm_animation1_SetOptions(IDirect3DRMAnimation *iface, D3DRMANIMATIONOPTIONS options)
+{
+    FIXME("iface %p, %#x.\n", iface, options);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation1_AddRotateKey(IDirect3DRMAnimation *iface, D3DVALUE time, D3DRMQUATERNION *q)
+{
+    FIXME("iface %p, time %.8e, q %p.\n", iface, time, q);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation1_AddPositionKey(IDirect3DRMAnimation *iface, D3DVALUE time,
+        D3DVALUE x, D3DVALUE y, D3DVALUE z)
+{
+    FIXME("iface %p, time %.8e, x %.8e, y %.8e, z %.8e.\n", iface, time, x, y, z);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation1_AddScaleKey(IDirect3DRMAnimation *iface, D3DVALUE time,
+        D3DVALUE x, D3DVALUE y, D3DVALUE z)
+{
+    FIXME("iface %p, time %.8e, x %.8e, y %.8e, z %.8e.\n", iface, time, x, y, z);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation1_DeleteKey(IDirect3DRMAnimation *iface, D3DVALUE time)
+{
+    FIXME("iface %p, time %.8e.\n", iface, time);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation1_SetFrame(IDirect3DRMAnimation *iface, IDirect3DRMFrame *frame)
+{
+    FIXME("iface %p, frame %p.\n", iface, frame);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation1_SetTime(IDirect3DRMAnimation *iface, D3DVALUE time)
+{
+    FIXME("iface %p, time %.8e.\n", iface, time);
+
+    return E_NOTIMPL;
+}
+
+static D3DRMANIMATIONOPTIONS WINAPI d3drm_animation1_GetOptions(IDirect3DRMAnimation *iface)
+{
+    FIXME("iface %p.\n", iface);
+
+    return 0;
+}
+
+static HRESULT WINAPI d3drm_animation2_SetOptions(IDirect3DRMAnimation2 *iface, D3DRMANIMATIONOPTIONS options)
+{
+    FIXME("iface %p, options %#x.\n", iface, options);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_AddRotateKey(IDirect3DRMAnimation2 *iface, D3DVALUE time, D3DRMQUATERNION *q)
+{
+    FIXME("iface %p, time %.8e, q %p.\n", iface, time, q);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_AddPositionKey(IDirect3DRMAnimation2 *iface, D3DVALUE time,
+        D3DVALUE x, D3DVALUE y, D3DVALUE z)
+{
+    FIXME("iface %p, time %.8e, x %.8e, y %.8e, z %.8e.\n", iface, time, x, y, z);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_AddScaleKey(IDirect3DRMAnimation2 *iface, D3DVALUE time,
+        D3DVALUE x, D3DVALUE y, D3DVALUE z)
+{
+    FIXME("iface %p, time %.8e, x %.8e, y %.8e, z %.8e.\n", iface, time, x, y, z);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_DeleteKey(IDirect3DRMAnimation2 *iface, D3DVALUE time)
+{
+    FIXME("iface %p, time %.8e.\n", iface, time);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_SetFrame(IDirect3DRMAnimation2 *iface, IDirect3DRMFrame3 *frame)
+{
+    FIXME("iface %p, frame %p.\n", iface, frame);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_SetTime(IDirect3DRMAnimation2 *iface, D3DVALUE time)
+{
+    FIXME("iface %p, time %.8e.\n", iface, time);
+
+    return E_NOTIMPL;
+}
+
+static D3DRMANIMATIONOPTIONS WINAPI d3drm_animation2_GetOptions(IDirect3DRMAnimation2 *iface)
+{
+    FIXME("iface %p.\n", iface);
+
+    return 0;
+}
+
+static HRESULT WINAPI d3drm_animation2_GetFrame(IDirect3DRMAnimation2 *iface, IDirect3DRMFrame3 **frame)
+{
+    FIXME("iface %p, frame %p.\n", iface, frame);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_DeleteKeyByID(IDirect3DRMAnimation2 *iface, DWORD id)
+{
+    FIXME("iface %p, id %#x.\n", iface, id);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_AddKey(IDirect3DRMAnimation2 *iface, D3DRMANIMATIONKEY *key)
+{
+    FIXME("iface %p, key %p.\n", iface, key);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_ModifyKey(IDirect3DRMAnimation2 *iface, D3DRMANIMATIONKEY *key)
+{
+    FIXME("iface %p, key %p.\n", iface, key);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_animation2_GetKeys(IDirect3DRMAnimation2 *iface, D3DVALUE time_min, D3DVALUE time_max,
+        DWORD *key_count, D3DRMANIMATIONKEY *keys)
+{
+    FIXME("iface %p, time min %.e, time max %.e, count %p, keys %p.\n", iface, time_min, time_max, key_count, keys);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDirect3DRMAnimationVtbl d3drm_animation1_vtbl =
+{
+    d3drm_animation1_QueryInterface,
+    d3drm_animation1_AddRef,
+    d3drm_animation1_Release,
+    d3drm_animation1_Clone,
+    d3drm_animation1_AddDestroyCallback,
+    d3drm_animation1_DeleteDestroyCallback,
+    d3drm_animation1_SetAppData,
+    d3drm_animation1_GetAppData,
+    d3drm_animation1_SetName,
+    d3drm_animation1_GetName,
+    d3drm_animation1_GetClassName,
+    d3drm_animation1_SetOptions,
+    d3drm_animation1_AddRotateKey,
+    d3drm_animation1_AddPositionKey,
+    d3drm_animation1_AddScaleKey,
+    d3drm_animation1_DeleteKey,
+    d3drm_animation1_SetFrame,
+    d3drm_animation1_SetTime,
+    d3drm_animation1_GetOptions,
+};
+
+static const struct IDirect3DRMAnimation2Vtbl d3drm_animation2_vtbl =
+{
+    d3drm_animation2_QueryInterface,
+    d3drm_animation2_AddRef,
+    d3drm_animation2_Release,
+    d3drm_animation2_Clone,
+    d3drm_animation2_AddDestroyCallback,
+    d3drm_animation2_DeleteDestroyCallback,
+    d3drm_animation2_SetAppData,
+    d3drm_animation2_GetAppData,
+    d3drm_animation2_SetName,
+    d3drm_animation2_GetName,
+    d3drm_animation2_GetClassName,
+    d3drm_animation2_SetOptions,
+    d3drm_animation2_AddRotateKey,
+    d3drm_animation2_AddPositionKey,
+    d3drm_animation2_AddScaleKey,
+    d3drm_animation2_DeleteKey,
+    d3drm_animation2_SetFrame,
+    d3drm_animation2_SetTime,
+    d3drm_animation2_GetOptions,
+    d3drm_animation2_GetFrame,
+    d3drm_animation2_DeleteKeyByID,
+    d3drm_animation2_AddKey,
+    d3drm_animation2_ModifyKey,
+    d3drm_animation2_GetKeys,
+};
+
+HRESULT d3drm_animation_create(struct d3drm_animation **animation, IDirect3DRM *d3drm)
+{
+    static const char classname[] = "Animation";
+    struct d3drm_animation *object;
+    HRESULT hr = D3DRM_OK;
+
+    TRACE("animation %p, d3drm %p.\n", animation, d3drm);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IDirect3DRMAnimation_iface.lpVtbl = &d3drm_animation1_vtbl;
+    object->IDirect3DRMAnimation2_iface.lpVtbl = &d3drm_animation2_vtbl;
+    object->d3drm = d3drm;
+    object->ref = 1;
+
+    d3drm_object_init(&object->obj, classname);
+
+    IDirect3DRM_AddRef(object->d3drm);
+
+    *animation = object;
 
     return hr;
 }

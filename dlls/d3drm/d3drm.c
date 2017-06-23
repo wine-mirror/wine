@@ -162,6 +162,19 @@ static HRESULT d3drm_create_mesh_object(void **object, IDirect3DRM *d3drm)
     return hr;
 }
 
+static HRESULT d3drm_create_animation_object(void **object, IDirect3DRM *d3drm)
+{
+    struct d3drm_animation *animation;
+    HRESULT hr;
+
+    if (FAILED(hr = d3drm_animation_create(&animation, d3drm)))
+        return hr;
+
+    *object = &animation->IDirect3DRMAnimation_iface;
+
+    return hr;
+}
+
 struct d3drm
 {
     IDirect3DRM IDirect3DRM_iface;
@@ -309,9 +322,20 @@ static HRESULT WINAPI d3drm1_CreateFace(IDirect3DRM *iface, IDirect3DRMFace **fa
 
 static HRESULT WINAPI d3drm1_CreateAnimation(IDirect3DRM *iface, IDirect3DRMAnimation **animation)
 {
-    FIXME("iface %p, animation %p stub!\n", iface, animation);
+    struct d3drm_animation *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, animation %p.\n", iface, animation);
+
+    if (!animation)
+        return D3DRMERR_BADVALUE;
+
+    if (FAILED(hr = d3drm_animation_create(&object, iface)))
+        return hr;
+
+    *animation = &object->IDirect3DRMAnimation_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3drm1_CreateAnimationSet(IDirect3DRM *iface, IDirect3DRMAnimationSet **set)
@@ -840,9 +864,11 @@ static HRESULT WINAPI d3drm2_CreateFace(IDirect3DRM2 *iface, IDirect3DRMFace **f
 
 static HRESULT WINAPI d3drm2_CreateAnimation(IDirect3DRM2 *iface, IDirect3DRMAnimation **animation)
 {
-    FIXME("iface %p, animation %p stub!\n", iface, animation);
+    struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, animation %p.\n", iface, animation);
+
+    return IDirect3DRM_CreateAnimation(&d3drm->IDirect3DRM_iface, animation);
 }
 
 static HRESULT WINAPI d3drm2_CreateAnimationSet(IDirect3DRM2 *iface, IDirect3DRMAnimationSet **set)
@@ -1313,6 +1339,7 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
         {&CLSID_CDirect3DRMLight, d3drm_create_light_object},
         {&CLSID_CDirect3DRMMaterial, d3drm_create_material_object},
         {&CLSID_CDirect3DRMMesh, d3drm_create_mesh_object},
+        {&CLSID_CDirect3DRMAnimation, d3drm_create_animation_object},
     };
 
     TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",
@@ -1428,9 +1455,18 @@ static HRESULT WINAPI d3drm3_CreateFace(IDirect3DRM3 *iface, IDirect3DRMFace2 **
 
 static HRESULT WINAPI d3drm3_CreateAnimation(IDirect3DRM3 *iface, IDirect3DRMAnimation2 **animation)
 {
-    FIXME("iface %p, animation %p stub!\n", iface, animation);
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
+    struct d3drm_animation *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, animation %p.\n", iface, animation);
+
+    if (FAILED(hr = d3drm_animation_create(&object, &d3drm->IDirect3DRM_iface)))
+        return hr;
+
+    *animation = &object->IDirect3DRMAnimation2_iface;
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm3_CreateAnimationSet(IDirect3DRM3 *iface, IDirect3DRMAnimationSet2 **set)

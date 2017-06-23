@@ -1463,31 +1463,33 @@ static void test_object(void)
     {
         REFCLSID clsid;
         REFIID iid;
-        BOOL todo;
+        BOOL takes_d3drm_ref;
     }
     tests[] =
     {
-        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMDevice,       FALSE },
-        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMDevice2,      FALSE },
-        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMDevice3,      FALSE },
-        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMWinDevice,    FALSE },
-        { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture,      FALSE },
-        { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture2,     FALSE },
-        { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture3,     FALSE },
-        { &CLSID_CDirect3DRMViewport,      &IID_IDirect3DRMViewport,     FALSE },
-        { &CLSID_CDirect3DRMViewport,      &IID_IDirect3DRMViewport2,    FALSE },
-        { &CLSID_CDirect3DRMFace,          &IID_IDirect3DRMFace },
-        { &CLSID_CDirect3DRMFace,          &IID_IDirect3DRMFace2 },
-        { &CLSID_CDirect3DRMMeshBuilder,   &IID_IDirect3DRMMeshBuilder },
-        { &CLSID_CDirect3DRMMeshBuilder,   &IID_IDirect3DRMMeshBuilder2 },
-        { &CLSID_CDirect3DRMMeshBuilder,   &IID_IDirect3DRMMeshBuilder3 },
-        { &CLSID_CDirect3DRMFrame,         &IID_IDirect3DRMFrame },
-        { &CLSID_CDirect3DRMFrame,         &IID_IDirect3DRMFrame2 },
-        { &CLSID_CDirect3DRMFrame,         &IID_IDirect3DRMFrame3 },
-        { &CLSID_CDirect3DRMLight,         &IID_IDirect3DRMLight },
-        { &CLSID_CDirect3DRMMaterial,      &IID_IDirect3DRMMaterial },
-        { &CLSID_CDirect3DRMMaterial,      &IID_IDirect3DRMMaterial2 },
-        { &CLSID_CDirect3DRMMesh,          &IID_IDirect3DRMMesh },
+        { &CLSID_CDirect3DRMDevice,      &IID_IDirect3DRMDevice },
+        { &CLSID_CDirect3DRMDevice,      &IID_IDirect3DRMDevice2 },
+        { &CLSID_CDirect3DRMDevice,      &IID_IDirect3DRMDevice3 },
+        { &CLSID_CDirect3DRMDevice,      &IID_IDirect3DRMWinDevice },
+        { &CLSID_CDirect3DRMTexture,     &IID_IDirect3DRMTexture },
+        { &CLSID_CDirect3DRMTexture,     &IID_IDirect3DRMTexture2 },
+        { &CLSID_CDirect3DRMTexture,     &IID_IDirect3DRMTexture3 },
+        { &CLSID_CDirect3DRMViewport,    &IID_IDirect3DRMViewport },
+        { &CLSID_CDirect3DRMViewport,    &IID_IDirect3DRMViewport2 },
+        { &CLSID_CDirect3DRMFace,        &IID_IDirect3DRMFace },
+        { &CLSID_CDirect3DRMFace,        &IID_IDirect3DRMFace2 },
+        { &CLSID_CDirect3DRMMeshBuilder, &IID_IDirect3DRMMeshBuilder,  TRUE },
+        { &CLSID_CDirect3DRMMeshBuilder, &IID_IDirect3DRMMeshBuilder2, TRUE },
+        { &CLSID_CDirect3DRMMeshBuilder, &IID_IDirect3DRMMeshBuilder3, TRUE },
+        { &CLSID_CDirect3DRMFrame,       &IID_IDirect3DRMFrame,        TRUE },
+        { &CLSID_CDirect3DRMFrame,       &IID_IDirect3DRMFrame2,       TRUE },
+        { &CLSID_CDirect3DRMFrame,       &IID_IDirect3DRMFrame3,       TRUE },
+        { &CLSID_CDirect3DRMLight,       &IID_IDirect3DRMLight,        TRUE },
+        { &CLSID_CDirect3DRMMaterial,    &IID_IDirect3DRMMaterial,     TRUE },
+        { &CLSID_CDirect3DRMMaterial,    &IID_IDirect3DRMMaterial2,    TRUE },
+        { &CLSID_CDirect3DRMMesh,        &IID_IDirect3DRMMesh,         TRUE },
+        { &CLSID_CDirect3DRMAnimation,   &IID_IDirect3DRMAnimation,    TRUE },
+        { &CLSID_CDirect3DRMAnimation,   &IID_IDirect3DRMAnimation2,   TRUE },
     };
     IDirect3DRM *d3drm1;
     IDirect3DRM2 *d3drm2;
@@ -1511,12 +1513,6 @@ static void test_object(void)
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
-        BOOL takes_ref = IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMeshBuilder) ||
-                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMFrame) ||
-                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMLight) ||
-                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMaterial) ||
-                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMesh);
-
         unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, NULL, NULL, tests[i].iid, (void **)&unknown);
         ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#x.\n", i, hr);
@@ -1529,12 +1525,11 @@ static void test_object(void)
         ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#x.\n", i, hr);
 
         hr = IDirect3DRM_CreateObject(d3drm1, tests[i].clsid, NULL, tests[i].iid, (void **)&unknown);
-        todo_wine_if(tests[i].todo)
         ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#x.\n", i, hr);
         if (SUCCEEDED(hr))
         {
             ref2 = get_refcount((IUnknown *)d3drm1);
-            if (takes_ref)
+            if (tests[i].takes_d3drm_ref)
                 ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             else
                 ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
@@ -1557,7 +1552,7 @@ static void test_object(void)
             hr = IDirect3DRM2_CreateObject(d3drm2, tests[i].clsid, NULL, tests[i].iid, (void **)&unknown);
             ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#x.\n", i, hr);
             ref2 = get_refcount((IUnknown *)d3drm1);
-            if (takes_ref)
+            if (tests[i].takes_d3drm_ref)
                 ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             else
                 ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
@@ -1576,7 +1571,7 @@ static void test_object(void)
             hr = IDirect3DRM3_CreateObject(d3drm3, tests[i].clsid, NULL, tests[i].iid, (void **)&unknown);
             ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#x.\n", i, hr);
             ref2 = get_refcount((IUnknown *)d3drm1);
-            if (takes_ref)
+            if (tests[i].takes_d3drm_ref)
                 ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             else
                 ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
@@ -6706,6 +6701,48 @@ static void test_create_texture_from_surface(void)
     IDirectDraw_Release(ddraw);
 }
 
+static void test_animation(void)
+{
+    IDirect3DRMAnimation2 *animation2;
+    IDirect3DRMAnimation *animation;
+    IDirect3DRMObject *obj, *obj2;
+    IDirect3DRM *d3drm1;
+    HRESULT hr;
+
+    hr = Direct3DRMCreate(&d3drm1);
+    ok(SUCCEEDED(hr), "Failed to create IDirect3DRM instance, hr 0x%08x.\n", hr);
+
+    hr = IDirect3DRM_CreateAnimation(d3drm1, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr 0x%08x.\n", hr);
+
+    CHECK_REFCOUNT(d3drm1, 1);
+    hr = IDirect3DRM_CreateAnimation(d3drm1, &animation);
+    ok(SUCCEEDED(hr), "Failed to create animation hr 0x%08x.\n", hr);
+    CHECK_REFCOUNT(d3drm1, 2);
+
+    test_class_name((IDirect3DRMObject *)animation, "Animation");
+
+    hr = IDirect3DRMAnimation_QueryInterface(animation, &IID_IDirect3DRMAnimation2, (void **)&animation2);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMAnimation2, hr 0x%08x.\n", hr);
+    ok(animation != (void *)animation2, "Expected different interface pointer.\n");
+
+    hr = IDirect3DRMAnimation_QueryInterface(animation, &IID_IDirect3DRMObject, (void **)&obj);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, hr 0x%08x.\n", hr);
+
+    hr = IDirect3DRMAnimation2_QueryInterface(animation2, &IID_IDirect3DRMObject, (void **)&obj2);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, hr 0x%08x.\n", hr);
+
+    ok(obj == obj2 && obj == (IDirect3DRMObject *)animation, "Unexpected object pointer.\n");
+
+    IDirect3DRMObject_Release(obj);
+    IDirect3DRMObject_Release(obj2);
+
+    IDirect3DRMAnimation2_Release(animation2);
+    IDirect3DRMAnimation_Release(animation);
+
+    IDirect3DRM_Release(d3drm1);
+}
+
 START_TEST(d3drm)
 {
     test_MeshBuilder();
@@ -6740,4 +6777,5 @@ START_TEST(d3drm)
     test_viewport_clear1();
     test_viewport_clear2();
     test_create_texture_from_surface();
+    test_animation();
 }
