@@ -97,6 +97,7 @@ static void *opengl_handle;
 static struct wgl_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
 static EGLDisplay display;
+static int swap_interval;
 static char wgl_extensions[4096];
 static struct opengl_funcs egl_funcs;
 
@@ -376,6 +377,39 @@ done:
 }
 
 /***********************************************************************
+ *		android_wglSwapIntervalEXT
+ */
+static BOOL android_wglSwapIntervalEXT( int interval )
+{
+    BOOL ret = TRUE;
+
+    TRACE("(%d)\n", interval);
+
+    if (interval < 0)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
+    ret = p_eglSwapInterval( display, interval );
+
+    if (ret)
+        swap_interval = interval;
+    else
+        SetLastError( ERROR_DC_NOT_FOUND );
+
+    return ret;
+}
+
+/***********************************************************************
+ *		android_wglGetSwapIntervalEXT
+ */
+static int android_wglGetSwapIntervalEXT(void)
+{
+    return swap_interval;
+}
+
+/***********************************************************************
  *		android_wglSetPixelFormatWINE
  */
 static BOOL android_wglSetPixelFormatWINE( HDC hdc, int format )
@@ -607,6 +641,10 @@ static void init_extensions(void)
 
     register_extension("WGL_EXT_extensions_string");
     egl_funcs.ext.p_wglGetExtensionsStringEXT = android_wglGetExtensionsStringEXT;
+
+    register_extension("WGL_EXT_swap_control");
+    egl_funcs.ext.p_wglSwapIntervalEXT = android_wglSwapIntervalEXT;
+    egl_funcs.ext.p_wglGetSwapIntervalEXT = android_wglGetSwapIntervalEXT;
 
     register_extension("WGL_EXT_framebuffer_sRGB");
 
