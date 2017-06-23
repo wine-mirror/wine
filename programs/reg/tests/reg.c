@@ -2741,7 +2741,7 @@ static void test_import(void)
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
-                     "\"Wine49\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n\n", &r);
+                     "\"Wine49\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00,\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine49", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
