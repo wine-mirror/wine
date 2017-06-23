@@ -331,6 +331,51 @@ static struct wgl_context *android_wglCreateContextAttribsARB( HDC hdc, struct w
 }
 
 /***********************************************************************
+ *		android_wglMakeContextCurrentARB
+ */
+static BOOL android_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *ctx )
+{
+    BOOL ret = FALSE;
+    struct gl_drawable *draw_gl, *read_gl = NULL;
+    EGLSurface draw_surface, read_surface;
+    HWND draw_hwnd;
+
+    TRACE( "%p %p %p\n", draw_hdc, read_hdc, ctx );
+
+    if (!ctx)
+    {
+        p_eglMakeCurrent( display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
+        NtCurrentTeb()->glContext = NULL;
+        return TRUE;
+    }
+
+    draw_hwnd = WindowFromDC( draw_hdc );
+    if ((draw_gl = get_gl_drawable( draw_hwnd, draw_hdc )))
+    {
+        read_gl = get_gl_drawable( WindowFromDC( read_hdc ), read_hdc );
+        draw_surface = draw_gl->surface ? draw_gl->surface : draw_gl->pbuffer;
+        read_surface = read_gl->surface ? read_gl->surface : read_gl->pbuffer;
+        TRACE( "%p/%p context %p surface %p/%p\n",
+               draw_hdc, read_hdc, ctx->context, draw_surface, read_surface );
+        ret = p_eglMakeCurrent( display, draw_surface, read_surface, ctx->context );
+        if (ret)
+        {
+            ctx->surface = draw_gl->surface;
+            ctx->hwnd    = draw_hwnd;
+            ctx->refresh = FALSE;
+            NtCurrentTeb()->glContext = ctx;
+            goto done;
+        }
+    }
+    SetLastError( ERROR_INVALID_HANDLE );
+
+done:
+    release_gl_drawable( read_gl );
+    release_gl_drawable( draw_gl );
+    return ret;
+}
+
+/***********************************************************************
  *		android_wglSetPixelFormatWINE
  */
 static BOOL android_wglSetPixelFormatWINE( HDC hdc, int format )
@@ -555,6 +600,10 @@ static void init_extensions(void)
 
     register_extension("WGL_ARB_extensions_string");
     egl_funcs.ext.p_wglGetExtensionsStringARB = android_wglGetExtensionsStringARB;
+
+    register_extension("WGL_ARB_make_current_read");
+    egl_funcs.ext.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
+    egl_funcs.ext.p_wglMakeContextCurrentARB = android_wglMakeContextCurrentARB;
 
     register_extension("WGL_EXT_extensions_string");
     egl_funcs.ext.p_wglGetExtensionsStringEXT = android_wglGetExtensionsStringEXT;
