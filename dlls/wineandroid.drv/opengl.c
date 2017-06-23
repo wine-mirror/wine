@@ -290,6 +290,47 @@ static const char *android_wglGetExtensionsStringEXT(void)
 }
 
 /***********************************************************************
+ *		android_wglCreateContextAttribsARB
+ */
+static struct wgl_context *android_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *share,
+                                                               const int *attribs )
+{
+    int count = 0, egl_attribs[3];
+    BOOL opengl_es = FALSE;
+
+    while (attribs && *attribs && count < 2)
+    {
+        switch (*attribs)
+        {
+        case WGL_CONTEXT_PROFILE_MASK_ARB:
+            if (attribs[1] == WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
+                opengl_es = TRUE;
+            break;
+        case WGL_CONTEXT_MAJOR_VERSION_ARB:
+            egl_attribs[count++] = EGL_CONTEXT_CLIENT_VERSION;
+            egl_attribs[count++] = attribs[1];
+            break;
+        default:
+            FIXME("Unhandled attributes: %#x %#x\n", attribs[0], attribs[1]);
+        }
+        attribs += 2;
+    }
+    if (!opengl_es)
+    {
+        WARN("Requested creation of an OpenGL (non ES) context, that's not supported.\n");
+        return NULL;
+    }
+    if (!count)  /* FIXME: force version if not specified */
+    {
+        egl_attribs[count++] = EGL_CONTEXT_CLIENT_VERSION;
+        egl_attribs[count++] = egl_client_version;
+    }
+    egl_attribs[count] = EGL_NONE;
+
+    return create_context( hdc, share, egl_attribs );
+}
+
+/***********************************************************************
  *		android_wglSetPixelFormatWINE
  */
 static BOOL android_wglSetPixelFormatWINE( HDC hdc, int format )
@@ -507,6 +548,10 @@ static void register_extension( const char *ext )
 static void init_extensions(void)
 {
     void *ptr;
+
+    register_extension("WGL_ARB_create_context");
+    register_extension("WGL_ARB_create_context_profile");
+    egl_funcs.ext.p_wglCreateContextAttribsARB = android_wglCreateContextAttribsARB;
 
     register_extension("WGL_ARB_extensions_string");
     egl_funcs.ext.p_wglGetExtensionsStringARB = android_wglGetExtensionsStringARB;
