@@ -1798,6 +1798,39 @@ static void test_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine51a");
     todo_wine verify_reg_nonexist(hkey, "Wine51b");
 
+    /* Test the effect of backslashes in hex data */
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine52a\"=hex(2):25,48\\,4f,4d,45,25,00\n"
+                    "\"Wine52b\"=hex(2):25,48,\\4f,4d,45,25,00\n"
+                    "\"Wine52c\"=hex(2):25,48\\ ,4f,4d,45,25,00\n"
+                    "\"Wine52d\"=hex(2):25,48,\\ 4f,4d,45,25,00\n"
+                    "\"Wine52e\"=hex(2):\\25,48,4f,4d,45,25,00\n"
+                    "\"Wine52f\"=hex(2):\\ 25,48,4f,4d,45,25,00\n"
+                    "\"Wine52g\"=hex(2):25,48,4\\f,4d,45,25,00\n"
+                    "\"Wine52h\"=hex(2):25,48,4\\\n"
+                    "  f,4d,45,25,00\n"
+                    "\"Wine52i\"=hex(2):25,50,\\,41,54,48,25,00\n"
+                    "\"Wine52j\"=hex(2):25,48,4f,4d,45,25,5c,\\\\\n"
+                    "  25,50,41,54,48,25,00\n"
+                    "\"Wine52k\"=hex(2):,\\\n"
+                    "  25,48,4f,4d,45,25,00\n"
+                    "\"Wine52l\"=hex(2):\\\n"
+                    "  25,48,4f,4d,45,25,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine52a");
+    todo_wine verify_reg_nonexist(hkey, "Wine52b");
+    todo_wine verify_reg_nonexist(hkey, "Wine52c");
+    todo_wine verify_reg_nonexist(hkey, "Wine52d");
+    todo_wine verify_reg_nonexist(hkey, "Wine52e");
+    todo_wine verify_reg_nonexist(hkey, "Wine52f");
+    todo_wine verify_reg_nonexist(hkey, "Wine52g");
+    todo_wine verify_reg_nonexist(hkey, "Wine52h");
+    todo_wine verify_reg_nonexist(hkey, "Wine52i");
+    todo_wine verify_reg_nonexist(hkey, "Wine52j");
+    todo_wine verify_reg_nonexist(hkey, "Wine52k");
+    todo_wine verify_reg(hkey, "Wine52l", REG_EXPAND_SZ, "%HOME%", 7, 0);
+
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
@@ -2765,6 +2798,39 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Wine51a");
     todo_wine verify_reg_nonexist(hkey, "Wine51b");
+
+    /* Test the effect of backslashes in hex data */
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine52a\"=hex(2):25,00,48\\,00,4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine52b\"=hex(2):25,00,48,00,\\4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine52c\"=hex(2):25,00,48\\ ,00,4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine52d\"=hex(2):25,00,48,00,\\ 4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine52e\"=hex(2):\\25,00,48,00,4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine52f\"=hex(2):\\ 25,00,48,00,4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine52g\"=hex(2):25,00,48,00,4\\f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine52h\"=hex(2):25,00,48,00,4\\\n"
+                     "  f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine52i\"=hex(2):25,00,50,00,\\,41,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine52j\"=hex(2):25,00,48,00,4f,00,4d,00,45,00,25,00,5c,00,\\\\\n"
+                     "  25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine52k\"=hex(2):,\\\n"
+                     "  25,00,48,00,4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine52l\"=hex(2):\\\n"
+                     "  25,00,48,00,4f,00,4d,00,45,00,25,00,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine52a");
+    todo_wine verify_reg_nonexist(hkey, "Wine52b");
+    todo_wine verify_reg_nonexist(hkey, "Wine52c");
+    todo_wine verify_reg_nonexist(hkey, "Wine52d");
+    todo_wine verify_reg_nonexist(hkey, "Wine52e");
+    todo_wine verify_reg_nonexist(hkey, "Wine52f");
+    todo_wine verify_reg_nonexist(hkey, "Wine52g");
+    todo_wine verify_reg_nonexist(hkey, "Wine52h");
+    todo_wine verify_reg_nonexist(hkey, "Wine52i");
+    todo_wine verify_reg_nonexist(hkey, "Wine52j");
+    todo_wine verify_reg_nonexist(hkey, "Wine52k");
+    todo_wine verify_reg(hkey, "Wine52l", REG_EXPAND_SZ, "%HOME%", 7, 0);
 
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
