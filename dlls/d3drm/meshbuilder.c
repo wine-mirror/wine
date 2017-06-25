@@ -307,6 +307,11 @@ static inline struct d3drm_mesh_builder *impl_from_IDirect3DRMMeshBuilder3(IDire
     return CONTAINING_RECORD(iface, struct d3drm_mesh_builder, IDirect3DRMMeshBuilder3_iface);
 }
 
+static inline struct d3drm_wrap *impl_from_IDirect3DRMWrap(IDirect3DRMWrap *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3drm_wrap, IDirect3DRMWrap_iface);
+}
+
 static void clean_mesh_builder_data(struct d3drm_mesh_builder *mesh_builder)
 {
     DWORD i;
@@ -2875,6 +2880,190 @@ HRESULT d3drm_mesh_create(struct d3drm_mesh **mesh, IDirect3DRM *d3drm)
     d3drm_object_init(&object->obj, classname);
 
     *mesh = object;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI d3drm_wrap_QueryInterface(IDirect3DRMWrap *iface, REFIID riid, void **out)
+{
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualGUID(riid, &IID_IDirect3DRMWrap)
+            || IsEqualGUID(riid, &IID_IDirect3DRMObject)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IDirect3DRMWrap_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
+    *out = NULL;
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+static ULONG WINAPI d3drm_wrap_AddRef(IDirect3DRMWrap *iface)
+{
+    struct d3drm_wrap *wrap = impl_from_IDirect3DRMWrap(iface);
+    ULONG refcount = InterlockedIncrement(&wrap->ref);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI d3drm_wrap_Release(IDirect3DRMWrap *iface)
+{
+    struct d3drm_wrap *wrap = impl_from_IDirect3DRMWrap(iface);
+    ULONG refcount = InterlockedDecrement(&wrap->ref);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        d3drm_object_cleanup((IDirect3DRMObject *)iface, &wrap->obj);
+        HeapFree(GetProcessHeap(), 0, wrap);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI d3drm_wrap_Clone(IDirect3DRMWrap *iface,
+        IUnknown *outer, REFIID iid, void **out)
+{
+    FIXME("iface %p, outer %p, iid %s, out %p stub!\n", iface, outer, debugstr_guid(iid), out);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_wrap_AddDestroyCallback(IDirect3DRMWrap *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
+{
+    struct d3drm_wrap *wrap = impl_from_IDirect3DRMWrap(iface);
+
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_add_destroy_callback(&wrap->obj, cb, ctx);
+}
+
+static HRESULT WINAPI d3drm_wrap_DeleteDestroyCallback(IDirect3DRMWrap *iface,
+        D3DRMOBJECTCALLBACK cb, void *ctx)
+{
+    struct d3drm_wrap *wrap = impl_from_IDirect3DRMWrap(iface);
+
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_delete_destroy_callback(&wrap->obj, cb, ctx);
+}
+
+static HRESULT WINAPI d3drm_wrap_SetAppData(IDirect3DRMWrap *iface, DWORD data)
+{
+    struct d3drm_wrap *wrap = impl_from_IDirect3DRMWrap(iface);
+
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    wrap->obj.appdata = data;
+
+    return D3DRM_OK;
+}
+
+static DWORD WINAPI d3drm_wrap_GetAppData(IDirect3DRMWrap *iface)
+{
+    struct d3drm_wrap *wrap = impl_from_IDirect3DRMWrap(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return wrap->obj.appdata;
+}
+
+static HRESULT WINAPI d3drm_wrap_SetName(IDirect3DRMWrap *iface, const char *name)
+{
+    struct d3drm_wrap *wrap = impl_from_IDirect3DRMWrap(iface);
+
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return d3drm_object_set_name(&wrap->obj, name);
+}
+
+static HRESULT WINAPI d3drm_wrap_GetName(IDirect3DRMWrap *iface, DWORD *size, char *name)
+{
+    struct d3drm_wrap *wrap = impl_from_IDirect3DRMWrap(iface);
+
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_name(&wrap->obj, size, name);
+}
+
+static HRESULT WINAPI d3drm_wrap_GetClassName(IDirect3DRMWrap *iface, DWORD *size, char *name)
+{
+    struct d3drm_wrap *wrap = impl_from_IDirect3DRMWrap(iface);
+
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return d3drm_object_get_class_name(&wrap->obj, size, name);
+}
+
+static HRESULT WINAPI d3drm_wrap_Init(IDirect3DRMWrap *iface, D3DRMWRAPTYPE type, IDirect3DRMFrame *reference,
+       D3DVALUE ox, D3DVALUE oy, D3DVALUE oz, D3DVALUE dx, D3DVALUE dy, D3DVALUE dz, D3DVALUE ux,
+       D3DVALUE uy, D3DVALUE uz, D3DVALUE ou, D3DVALUE ov, D3DVALUE su, D3DVALUE sv)
+{
+    FIXME("iface %p, type %d, reference frame %p, ox %.8e, oy %.8e, oz %.8e, dx %.8e, dy %.8e, dz %.8e, ux %.8e, "
+            "uy %.8e, uz %.8e, ou %.8e, ov %.8e, su %.8e, sv %.8e.\n", iface, type, reference, ox, oy, oz, dx, dy, dz,
+            ux, uy, uz, ou, ov, su, sv);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_wrap_Apply(IDirect3DRMWrap *iface, IDirect3DRMObject *object)
+{
+    FIXME("iface %p, object %p.\n", iface, object);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_wrap_ApplyRelative(IDirect3DRMWrap *iface, IDirect3DRMFrame *frame,
+       IDirect3DRMObject *object)
+{
+    FIXME("iface %p, frame %p, object %p.\n", iface, frame, object);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDirect3DRMWrapVtbl d3drm_wrap_vtbl =
+{
+    d3drm_wrap_QueryInterface,
+    d3drm_wrap_AddRef,
+    d3drm_wrap_Release,
+    d3drm_wrap_Clone,
+    d3drm_wrap_AddDestroyCallback,
+    d3drm_wrap_DeleteDestroyCallback,
+    d3drm_wrap_SetAppData,
+    d3drm_wrap_GetAppData,
+    d3drm_wrap_SetName,
+    d3drm_wrap_GetName,
+    d3drm_wrap_GetClassName,
+    d3drm_wrap_Init,
+    d3drm_wrap_Apply,
+    d3drm_wrap_ApplyRelative,
+};
+
+HRESULT d3drm_wrap_create(struct d3drm_wrap **wrap, IDirect3DRM *d3drm)
+{
+    static const char classname[] = "";
+    struct d3drm_wrap *object;
+
+    TRACE("wrap %p, d3drm %p.\n", wrap, d3drm);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IDirect3DRMWrap_iface.lpVtbl = &d3drm_wrap_vtbl;
+    object->ref = 1;
+
+    d3drm_object_init(&object->obj, classname);
+
+    *wrap = object;
 
     return S_OK;
 }

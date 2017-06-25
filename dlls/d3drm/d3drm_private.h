@@ -215,6 +215,12 @@ struct d3drm_animation
     IDirect3DRM *d3drm;
 };
 
+struct d3drm_wrap
+{
+    struct d3drm_object obj;
+    IDirect3DRMWrap IDirect3DRMWrap_iface;
+    LONG ref;
+};
 
 HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_device_create_surfaces_from_clipper(struct d3drm_device *object, IDirectDraw *ddraw,
@@ -243,6 +249,7 @@ HRESULT d3drm_light_create(struct d3drm_light **light, IDirect3DRM *d3drm) DECLS
 HRESULT d3drm_material_create(struct d3drm_material **material, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_mesh_create(struct d3drm_mesh **mesh, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_animation_create(struct d3drm_animation **animation, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
+HRESULT d3drm_wrap_create(struct d3drm_wrap **wrap, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 
 HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *data,
                        D3DRMLOADTEXTURECALLBACK load_texture_proc, void *arg) DECLSPEC_HIDDEN;
