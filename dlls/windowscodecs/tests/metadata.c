@@ -1547,13 +1547,206 @@ static void test_metadata_gif(void)
         IWICMetadataBlockReader_Release(blockreader);
     }
 
-    hr = IWICBitmapFrameDecode_GetMetadataQueryReader(frame, &queryreader);
-    ok(hr == S_OK ||
-            broken(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION) /* before Vista */,
-            "GetMetadataQueryReader failed: %08x\n", hr);
-
+    hr = IWICBitmapDecoder_GetMetadataQueryReader(decoder, &queryreader);
+    ok(hr == S_OK || broken(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION) /* before Vista */,
+       "GetMetadataQueryReader error %#x\n", hr);
     if (SUCCEEDED(hr))
     {
+        static const struct
+        {
+            const char *query;
+            HRESULT hr;
+            UINT vt;
+        } decoder_data[] =
+        {
+            { "/logscrdesc/Signature", S_OK, VT_UI1 | VT_VECTOR },
+            { "/[0]logscrdesc/Signature", S_OK, VT_UI1 | VT_VECTOR },
+            { "/logscrdesc/\\Signature", S_OK, VT_UI1 | VT_VECTOR },
+            { "/Logscrdesc/\\signature", S_OK, VT_UI1 | VT_VECTOR },
+            { "/logscrdesc/{str=signature}", S_OK, VT_UI1 | VT_VECTOR },
+            { "/[0]logscrdesc/{str=signature}", S_OK, VT_UI1 | VT_VECTOR },
+            { "/logscrdesc/{wstr=signature}", S_OK, VT_UI1 | VT_VECTOR },
+            { "/[0]logscrdesc/{wstr=signature}", S_OK, VT_UI1 | VT_VECTOR },
+            { "/appext/Application", S_OK, VT_UI1 | VT_VECTOR },
+            { "/appext/{STR=APPlication}", S_OK, VT_UI1 | VT_VECTOR },
+            { "/appext/{WSTR=APPlication}", S_OK, VT_UI1 | VT_VECTOR },
+            { "/LogSCRdesC", S_OK, VT_UNKNOWN },
+            { "/[0]LogSCRdesC", S_OK, VT_UNKNOWN },
+            { "/appEXT", S_OK, VT_UNKNOWN },
+            { "/[0]appEXT", S_OK, VT_UNKNOWN },
+            { "grctlext", WINCODEC_ERR_PROPERTYNOTSUPPORTED, 0 },
+            { "/imgdesc", WINCODEC_ERR_PROPERTYNOTFOUND, 0 },
+        };
+        static const WCHAR rootW[] = {'/',0};
+        WCHAR name[256];
+        UINT len, i, j;
+        PROPVARIANT value;
+        IWICMetadataQueryReader *meta_reader;
+
+        hr = IWICMetadataQueryReader_GetContainerFormat(queryreader, &format);
+        ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
+           "wrong container format %s\n", wine_dbgstr_guid(&format));
+
+        name[0] = 0;
+        len = 0xdeadbeef;
+        hr = IWICMetadataQueryReader_GetLocation(queryreader, 256, name, &len);
+        ok(hr == S_OK, "GetLocation error %#x\n", hr);
+        ok(len == 2, "expected 2, got %u\n", len);
+        ok(!lstrcmpW(name, rootW), "expected '/', got %s\n", wine_dbgstr_w(name));
+
+        for (i = 0; i < sizeof(decoder_data)/sizeof(decoder_data[0]); i++)
+        {
+            WCHAR queryW[256];
+
+            if (winetest_debug > 1)
+                trace("query: %s\n", decoder_data[i].query);
+            MultiByteToWideChar(CP_ACP, 0, decoder_data[i].query, -1, queryW, 256);
+            PropVariantInit(&value);
+            hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, queryW, &value);
+            ok(hr == decoder_data[i].hr, "GetMetadataByName(%s) returned %#x, expected %#x\n", wine_dbgstr_w(queryW), hr, decoder_data[i].hr);
+            ok(value.vt == decoder_data[i].vt, "expected %#x, got %#x\n", decoder_data[i].vt, value.vt);
+            if (hr == S_OK && value.vt == VT_UNKNOWN)
+            {
+                hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&meta_reader);
+                ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+                name[0] = 0;
+                len = 0xdeadbeef;
+                hr = IWICMetadataQueryReader_GetLocation(meta_reader, 256, name, &len);
+                ok(hr == S_OK, "GetLocation error %#x\n", hr);
+                ok(len == lstrlenW(queryW) + 1, "expected %u, got %u\n", lstrlenW(queryW) + 1, len);
+                ok(!lstrcmpW(name, queryW), "expected %s, got %s\n", wine_dbgstr_w(queryW), wine_dbgstr_w(name));
+
+                for (j = 0; j < sizeof(decoder_data)/sizeof(decoder_data[0]); j++)
+                {
+                    MultiByteToWideChar(CP_ACP, 0, decoder_data[j].query, -1, queryW, 256);
+
+                    if (CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, queryW, len-1, name, len-1) == CSTR_EQUAL && decoder_data[j].query[len - 1] != 0)
+                    {
+                        if (winetest_debug > 1)
+                            trace("query: %s\n", wine_dbgstr_w(queryW + len - 1));
+                        PropVariantClear(&value);
+                        hr = IWICMetadataQueryReader_GetMetadataByName(meta_reader, queryW + len - 1, &value);
+                        ok(hr == decoder_data[j].hr, "GetMetadataByName(%s) returned %#x, expected %#x\n", wine_dbgstr_w(queryW + len - 1), hr, decoder_data[j].hr);
+                        ok(value.vt == decoder_data[j].vt, "expected %#x, got %#x\n", decoder_data[j].vt, value.vt);
+                    }
+                }
+
+                IWICMetadataQueryReader_Release(meta_reader);
+            }
+
+            PropVariantClear(&value);
+        }
+
+        IWICMetadataQueryReader_Release(queryreader);
+    }
+
+    hr = IWICBitmapFrameDecode_GetMetadataQueryReader(frame, &queryreader);
+    ok(hr == S_OK || broken(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION) /* before Vista */,
+       "GetMetadataQueryReader error %#x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        static const struct
+        {
+            const char *query;
+            HRESULT hr;
+            UINT vt;
+        } frame_data[] =
+        {
+            { "/grctlext/Delay", S_OK, VT_UI2 },
+            { "/[0]grctlext/Delay", S_OK, VT_UI2 },
+            { "/grctlext/{str=delay}", S_OK, VT_UI2 },
+            { "/[0]grctlext/{str=delay}", S_OK, VT_UI2 },
+            { "/grctlext/{wstr=delay}", S_OK, VT_UI2 },
+            { "/[0]grctlext/{wstr=delay}", S_OK, VT_UI2 },
+            { "/imgdesc/InterlaceFlag", S_OK, VT_BOOL },
+            { "/imgdesc/{STR=interlaceFLAG}", S_OK, VT_BOOL },
+            { "/imgdesc/{WSTR=interlaceFLAG}", S_OK, VT_BOOL },
+            { "/grctlext", S_OK, VT_UNKNOWN },
+            { "/[0]grctlext", S_OK, VT_UNKNOWN },
+            { "/imgdesc", S_OK, VT_UNKNOWN },
+            { "/[0]imgdesc", S_OK, VT_UNKNOWN },
+            { "/LogSCRdesC", WINCODEC_ERR_PROPERTYNOTFOUND, 0 },
+            { "/appEXT", WINCODEC_ERR_PROPERTYNOTFOUND, 0 },
+            { "/grctlext/{\\str=delay}", WINCODEC_ERR_WRONGSTATE, 0 },
+            { "/grctlext/{str=\\delay}", S_OK, VT_UI2 },
+            { "grctlext/Delay", WINCODEC_ERR_PROPERTYNOTSUPPORTED, 0 },
+        };
+        static const WCHAR rootW[] = {'/',0};
+        static const WCHAR guidW[] = {'/','{','g','u','i','d','=','\\',0};
+        static const WCHAR imgdescW[] = {'i','m','g','d','e','s','c',0};
+        static const WCHAR ImgDescW[] = {'I','m','g','D','e','s','c',0};
+        WCHAR name[256], queryW[256];
+        UINT len, i;
+        PROPVARIANT value;
+        IWICMetadataQueryReader *meta_reader;
+
+        hr = IWICMetadataQueryReader_GetContainerFormat(queryreader, &format);
+        ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
+           "wrong container format %s\n", wine_dbgstr_guid(&format));
+
+        name[0] = 0;
+        len = 0xdeadbeef;
+        hr = IWICMetadataQueryReader_GetLocation(queryreader, 256, name, &len);
+        ok(hr == S_OK, "GetLocation error %#x\n", hr);
+        ok(len == 2, "expected 2, got %u\n", len);
+        ok(!lstrcmpW(name, rootW), "expected '/', got %s\n", wine_dbgstr_w(name));
+
+        for (i = 0; i < sizeof(frame_data)/sizeof(frame_data[0]); i++)
+        {
+            if (winetest_debug > 1)
+                trace("query: %s\n", frame_data[i].query);
+            MultiByteToWideChar(CP_ACP, 0, frame_data[i].query, -1, queryW, 256);
+            PropVariantInit(&value);
+            hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, queryW, &value);
+            ok(hr == frame_data[i].hr, "GetMetadataByName(%s) returned %#x, expected %#x\n", wine_dbgstr_w(queryW), hr, frame_data[i].hr);
+            ok(value.vt == frame_data[i].vt, "expected %#x, got %#x\n", frame_data[i].vt, value.vt);
+            if (hr == S_OK && value.vt == VT_UNKNOWN)
+            {
+                hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&meta_reader);
+                ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+                name[0] = 0;
+                len = 0xdeadbeef;
+                hr = IWICMetadataQueryReader_GetLocation(meta_reader, 256, name, &len);
+                ok(hr == S_OK, "GetLocation error %#x\n", hr);
+                ok(len == lstrlenW(queryW) + 1, "expected %u, got %u\n", lstrlenW(queryW) + 1, len);
+                ok(!lstrcmpW(name, queryW), "expected %s, got %s\n", wine_dbgstr_w(queryW), wine_dbgstr_w(name));
+
+                IWICMetadataQueryReader_Release(meta_reader);
+            }
+
+            PropVariantClear(&value);
+        }
+
+        name[0] = 0;
+        len = 0xdeadbeef;
+        hr = WICMapGuidToShortName(&GUID_MetadataFormatIMD, 256, name, &len);
+        ok(hr == S_OK, "WICMapGuidToShortName error %#x\n", hr);
+        ok(!lstrcmpW(name, imgdescW), "wrong short name %s\n", wine_dbgstr_w(name));
+
+        format = GUID_NULL;
+        hr = WICMapShortNameToGuid(imgdescW, &format);
+        ok(hr == S_OK, "WICMapGuidToShortName error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatIMD), "wrong guid %s\n", wine_dbgstr_guid(&format));
+
+        format = GUID_NULL;
+        hr = WICMapShortNameToGuid(ImgDescW, &format);
+        ok(hr == S_OK, "WICMapGuidToShortName error %#x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatIMD), "wrong guid %s\n", wine_dbgstr_guid(&format));
+
+        lstrcpyW(queryW, guidW);
+        StringFromGUID2(&GUID_MetadataFormatIMD, queryW + lstrlenW(queryW) - 1, 39);
+        memcpy(queryW, guidW, sizeof(guidW) - 2);
+        if (winetest_debug > 1)
+            trace("query: %s\n", wine_dbgstr_w(queryW));
+        PropVariantInit(&value);
+        hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, queryW, &value);
+        ok(hr == S_OK, "GetMetadataByName(%s) error %#x\n", wine_dbgstr_w(queryW), hr);
+        ok(value.vt == VT_UNKNOWN, "expected VT_UNKNOWN, got %#x\n", value.vt);
+
         IWICMetadataQueryReader_Release(queryreader);
     }
 
