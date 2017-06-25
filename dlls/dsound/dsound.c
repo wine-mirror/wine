@@ -232,7 +232,8 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
             IAudioRenderClient_Release(device->render);
         if(device->volume)
             IAudioStreamVolume_Release(device->volume);
-
+        if(device->mmdevice)
+            IMMDevice_Release(device->mmdevice);
         HeapFree(GetProcessHeap(), 0, device->tmp_buffer);
         HeapFree(GetProcessHeap(), 0, device->cp_buffer);
         HeapFree(GetProcessHeap(), 0, device->buffer);
