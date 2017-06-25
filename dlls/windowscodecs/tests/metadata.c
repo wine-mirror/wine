@@ -28,7 +28,11 @@
 #include "objbase.h"
 #include "wincodec.h"
 #include "wincodecsdk.h"
+#include "propvarutil.h"
 #include "wine/test.h"
+
+#include "initguid.h"
+DEFINE_GUID(IID_MdbrUnknown, 0x00240e6f,0x3f23,0x4432,0xb0,0xcc,0x48,0xd5,0xbb,0xff,0x6c,0x36);
 
 #define expect_blob(propvar, data, length) do { \
     ok((propvar).vt == VT_BLOB, "unexpected vt: %i\n", (propvar).vt); \
@@ -2440,10 +2444,625 @@ static void test_WICMapSchemaToName(void)
     }
 }
 
+struct metadata_item
+{
+    const char *schema, *id_str;
+    UINT id, type, value;
+};
+
+struct metadata_block
+{
+    const GUID *metadata_format;
+    UINT count;
+    const struct metadata_item *item;
+};
+
+struct metadata
+{
+    const GUID *container_format;
+    UINT count;
+    const struct metadata_block *block;
+};
+
+struct metadata_reader
+{
+    IWICMetadataReader IWICMetadataReader_iface;
+    LONG ref;
+    const struct metadata_block *block;
+};
+
+struct metadata_block_reader
+{
+    IWICMetadataBlockReader IWICMetadataBlockReader_iface;
+    LONG ref;
+    UINT count;
+    const struct metadata_block *block;
+};
+
+static const struct metadata *current_metadata;
+static const struct metadata_block *current_metadata_block;
+
+static char the_best[] = "The Best";
+static char the_worst[] = "The Worst";
+
+static HRESULT WINAPI mdr_QueryInterface(IWICMetadataReader *iface, REFIID iid, void **out)
+{
+    trace("%p,%s,%p\n", iface, wine_dbgstr_guid(iid), out);
+
+    if (IsEqualIID(iid, &IID_IUnknown) ||
+        IsEqualIID(iid, &IID_IWICMetadataReader))
+    {
+        *out = iface;
+        return S_OK;
+    }
+
+    ok(0, "unknown iid %s\n", wine_dbgstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI mdr_AddRef(IWICMetadataReader *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI mdr_Release(IWICMetadataReader *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI mdr_GetMetadataFormat(IWICMetadataReader *iface, GUID *format)
+{
+    trace("%p,%p\n", iface, format);
+
+    ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
+    if (!current_metadata_block) return E_POINTER;
+
+    *format = *current_metadata_block->metadata_format;
+    return S_OK;
+}
+
+static HRESULT WINAPI mdr_GetMetadataHandlerInfo(IWICMetadataReader *iface, IWICMetadataHandlerInfo **handler)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mdr_GetCount(IWICMetadataReader *iface, UINT *count)
+{
+    trace("%p,%p\n", iface, count);
+
+    ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
+    if (!current_metadata_block) return E_POINTER;
+
+    *count = current_metadata_block->count;
+    return S_OK;
+}
+
+static HRESULT WINAPI mdr_GetValueByIndex(IWICMetadataReader *iface, UINT index, PROPVARIANT *schema, PROPVARIANT *id, PROPVARIANT *value)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static char *get_temp_buffer(int size)
+{
+    static char buf[16][256];
+    static int idx;
+    char *p;
+
+    assert(size < 256);
+
+    p = buf[idx & 0x0f];
+    idx++;
+    return p;
+}
+
+static const char *wine_dbgstr_propvariant(const PROPVARIANT *var)
+{
+    char *ret;
+
+    if (!var) return "(null)";
+
+    switch (var->vt)
+    {
+    case VT_LPWSTR:
+        ret = get_temp_buffer(lstrlenW(U(*var).pwszVal) + 16);
+        sprintf(ret, "(VT_LPWSTR:%s)", wine_dbgstr_w(U(*var).pwszVal));
+        break;
+
+    case VT_LPSTR:
+        ret = get_temp_buffer(lstrlenA(U(*var).pszVal) + 16);
+        sprintf(ret, "(VT_LPSTR:%s)", U(*var).pszVal);
+        break;
+
+    default:
+        ret = get_temp_buffer(16);
+        sprintf(ret, "(vt:%u)", var->vt);
+        break;
+    }
+
+    return ret;
+}
+
+static int propvar_cmp(const PROPVARIANT *v1, LONGLONG value2)
+{
+    LONGLONG value1;
+
+    if (PropVariantToInt64(v1, &value1) != S_OK) return -1;
+
+    value1 -= value2;
+    if (value1) return value1 < 0 ? -1 : 1;
+    return 0;
+}
+
+static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT *schema, const PROPVARIANT *id, PROPVARIANT *value)
+{
+    UINT i;
+
+    trace("%p,%s,%s,%s\n", iface, wine_dbgstr_propvariant(schema), wine_dbgstr_propvariant(id), wine_dbgstr_propvariant(value));
+
+    ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
+    if (!current_metadata_block) return E_POINTER;
+
+    ok(schema != NULL && id != NULL && value != NULL, "%p, %p, %p shoud not be NULL\n", schema, id, value);
+
+    for (i = 0; i < current_metadata_block->count; i++)
+    {
+        if (schema->vt != VT_EMPTY)
+        {
+            if (!current_metadata_block->item[i].schema)
+                continue;
+
+            switch (schema->vt)
+            {
+            case VT_LPSTR:
+                if (lstrcmpA(U(*schema).pszVal, current_metadata_block->item[i].schema) != 0)
+                    continue;
+                break;
+
+            case VT_LPWSTR:
+            {
+                char schemaA[256];
+                WideCharToMultiByte(CP_ACP, 0, U(*schema).pwszVal, -1, schemaA, sizeof(schemaA), NULL, NULL);
+                if (lstrcmpA(schemaA, current_metadata_block->item[i].schema) != 0)
+                    continue;
+                break;
+            }
+
+            default:
+                ok(0, "unsupported schema vt %u\n", schema->vt);
+                continue;
+            }
+        }
+        else if (current_metadata_block->item[i].schema)
+            continue;
+
+        switch (id->vt)
+        {
+        case VT_LPSTR:
+            if (current_metadata_block->item[i].id_str)
+            {
+                if (!lstrcmpA(U(*id).pszVal, current_metadata_block->item[i].id_str))
+                {
+                    value->vt = VT_LPSTR;
+                    U(*value).pszVal = the_best;
+                    return S_OK;
+                }
+                break;
+            }
+            break;
+
+        case VT_LPWSTR:
+            if (current_metadata_block->item[i].id_str)
+            {
+                char idA[256];
+                WideCharToMultiByte(CP_ACP, 0, U(*id).pwszVal, -1, idA, sizeof(idA), NULL, NULL);
+                if (!lstrcmpA(idA, current_metadata_block->item[i].id_str))
+                {
+                    value->vt = VT_LPSTR;
+                    U(*value).pszVal = the_worst;
+                    return S_OK;
+                }
+                break;
+            }
+            break;
+
+        case VT_CLSID:
+            if (IsEqualGUID(U(*id).puuid, &GUID_MetadataFormatXMP) ||
+                IsEqualGUID(U(*id).puuid, &GUID_ContainerFormatTiff))
+            {
+                value->vt = VT_UNKNOWN;
+                value->punkVal = (IUnknown *)iface;
+                return S_OK;
+            }
+            break;
+
+        default:
+            if (!propvar_cmp(id, current_metadata_block->item[i].id))
+            {
+                value->vt = current_metadata_block->item[i].type;
+                U(*value).uiVal = current_metadata_block->item[i].value;
+                return S_OK;
+            }
+            break;
+        }
+    }
+
+    return 0xdeadbeef;
+}
+
+static HRESULT WINAPI mdr_GetEnumerator(IWICMetadataReader *iface, IWICEnumMetadataItem **enumerator)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static const IWICMetadataReaderVtbl mdr_vtbl =
+{
+    mdr_QueryInterface,
+    mdr_AddRef,
+    mdr_Release,
+    mdr_GetMetadataFormat,
+    mdr_GetMetadataHandlerInfo,
+    mdr_GetCount,
+    mdr_GetValueByIndex,
+    mdr_GetValue,
+    mdr_GetEnumerator
+};
+
+static IWICMetadataReader mdr = { &mdr_vtbl };
+
+static HRESULT WINAPI mdbr_QueryInterface(IWICMetadataBlockReader *iface, REFIID iid, void **out)
+{
+    if (IsEqualIID(iid, &IID_IUnknown) ||
+        IsEqualIID(iid, &IID_IWICMetadataBlockReader))
+    {
+        *out = iface;
+        return S_OK;
+    }
+
+    /* Windows 8/10 query for some undocumented IID */
+    if (!IsEqualIID(iid, &IID_MdbrUnknown))
+        ok(0, "unknown iid %s\n", wine_dbgstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI mdbr_AddRef(IWICMetadataBlockReader *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI mdbr_Release(IWICMetadataBlockReader *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI mdbr_GetContainerFormat(IWICMetadataBlockReader *iface, GUID *format)
+{
+    trace("%p,%p\n", iface, format);
+
+    ok(current_metadata != NULL, "current_metadata can't be NULL\n");
+    if (!current_metadata) return E_POINTER;
+
+    *format = *current_metadata->container_format;
+    return S_OK;
+}
+
+static HRESULT WINAPI mdbr_GetCount(IWICMetadataBlockReader *iface, UINT *count)
+{
+    trace("%p,%p\n", iface, count);
+
+    ok(current_metadata != NULL, "current_metadata can't be NULL\n");
+    if (!current_metadata) return E_POINTER;
+
+    *count = current_metadata->count;
+    return S_OK;
+}
+
+static HRESULT WINAPI mdbr_GetReaderByIndex(IWICMetadataBlockReader *iface, UINT index, IWICMetadataReader **out)
+{
+    trace("%p,%u,%p\n", iface, index, out);
+
+    *out = NULL;
+
+    ok(current_metadata != NULL, "current_metadata can't be NULL\n");
+    if (!current_metadata) return E_POINTER;
+
+    if (index < current_metadata->count)
+    {
+        current_metadata_block = &current_metadata->block[index];
+        *out = &mdr;
+        return S_OK;
+    }
+
+    current_metadata_block = NULL;
+    return E_INVALIDARG;
+}
+
+static HRESULT WINAPI mdbr_GetEnumerator(IWICMetadataBlockReader *iface, IEnumUnknown **enumerator)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static const IWICMetadataBlockReaderVtbl mdbr_vtbl =
+{
+    mdbr_QueryInterface,
+    mdbr_AddRef,
+    mdbr_Release,
+    mdbr_GetContainerFormat,
+    mdbr_GetCount,
+    mdbr_GetReaderByIndex,
+    mdbr_GetEnumerator
+};
+
+static IWICMetadataBlockReader mdbr = { &mdbr_vtbl };
+
+static const char xmp[] = "http://ns.adobe.com/xap/1.0/";
+static const char dc[] = "http://purl.org/dc/elements/1.1/";
+static const char tiff[] = "http://ns.adobe.com/tiff/1.0/";
+
+static const struct metadata_item item1[] =
+{
+    { NULL, NULL, 1, 2, 3 }
+};
+
+static const struct metadata_item item2[] =
+{
+    { NULL, NULL, 1, 2, 3 },
+    { "xmp", "Rating", 4, 5, 6 },
+    { NULL, "Rating", 7, 8, 9 }
+};
+
+static const struct metadata_item item3[] =
+{
+    { NULL, NULL, 1, 2, 3 },
+    { NULL, NULL, 4, 5, 6 },
+    { NULL, NULL, 7, 8, 9 },
+    { NULL, NULL, 10, 11, 12 }
+};
+
+static const struct metadata_item item4[] =
+{
+    { NULL, NULL, 1, 2, 3 },
+    { xmp, "Rating", 4, 5, 6 },
+    { dc, NULL, 7, 8, 9 },
+    { tiff, NULL, 10, 11, 12 },
+    { NULL, "RATING", 13, 14, 15 },
+    { NULL, "R}ATING", 16, 17, 18 },
+    { NULL, "xmp", 19, 20, 21 }
+};
+
+static const struct metadata_block block1[] =
+{
+    { &GUID_MetadataFormatIfd, 1, item1 }
+};
+
+static const struct metadata_block block2[] =
+{
+    { &GUID_MetadataFormatXMP, 1, item1 },
+    { &GUID_MetadataFormatIfd, 3, item2 }
+};
+
+static const struct metadata_block block3[] =
+{
+    { &GUID_MetadataFormatXMP, 1, item1 },
+    { &GUID_MetadataFormatIfd, 3, item2 },
+    { &GUID_MetadataFormatXMP, 4, item3 },
+    { &GUID_MetadataFormatXMP, 7, item4 },
+    { &GUID_MetadataFormatIfd, 7, item4 }
+};
+
+static const struct metadata data1 =
+{
+    &GUID_ContainerFormatGif,
+    1, block1
+};
+
+static const struct metadata data2 =
+{
+    &GUID_ContainerFormatTiff,
+    2, block2
+};
+
+static const struct metadata data3 =
+{
+    &GUID_ContainerFormatPng,
+    5, block3
+};
+
+static void test_queryreader(void)
+{
+    static const char q1[] = "/ifd/{uchar=1}";
+    static const char q2[] = "/ifd/xmp:{long=4}";
+    static const char q3[] = "/ifd/{str=xmp}:{uint=4}";
+    static const char q4[] = "/xmp/{char=7}";
+    static const char q5[] = "/[1]xmp/{short=7}";
+    static const char q6[] = "/[1]ifd/{str=dc}:{uint=7}";
+    static const char q7[] = "/[1]ifd/{str=http://purl.org/dc/elements/1.1/}:{longlong=7}";
+    static const char q8[] = "/[1]ifd/{str=http://ns.adobe.com/tiff/1.0/}:{int=10}";
+    static const char q9[] = "/[2]xmp/xmp:{ulong=4}";
+    static const char q10[] = "/[2]xmp/{str=xmp}:{ulong=4}";
+    static const char q11[] = "/xmp";
+    static const char q12[] = "/ifd/xmp";
+    static const char q13[] = "/ifd/xmp/tiff";
+    static const char q14[] = "/[0]ifd/[0]xmp/[0]tiff";
+    static const char q15[] = "/[*]xmp";
+
+    static const char q20[] = "/ifd/\\Rating";
+    static const char q21[] = "/[0]ifd/Rating";
+    static const char q22[] = "/[2]xmp/xmp:{str=Rating}";
+    static const char q23[] = "/[2]xmp/xmp:Rating";
+
+    static const char q24[] = "/[1]ifd/{str=http://ns.adobe.com/xap/1.0/}:Rating";
+    static const char q25[] = "/[1]ifd/{str=http://ns.adobe.com/xap/1.0/}:{str=Rating}";
+    static const char q26[] = "/[1]ifd/{wstr=\\RATING}";
+    static const char q27[] = "/[1]ifd/{str=R\\ATING}";
+    static const char q28[] = "/[1]ifd/{str=R\\}ATING}";
+
+    static const char q40[] = "[0]/ifd/Rating";
+    static const char q41[] = "/[+1]ifd/Rating";
+    static const char q42[] = "/[-1]ifd/Rating";
+    static const char q43[] = "/ifd/{\\str=Rating}";
+    static const char q44[] = "/ifd/{badtype=0}";
+    static const char q45[] = "/ifd/{uint=0x1234}";
+    static const char q46[] = "/ifd/[0]Rating";
+    static const char q47[] = "/ifd/[*]Rating";
+    static const struct
+    {
+        BOOL todo;
+        const struct metadata *data;
+        const char *query;
+        HRESULT hr;
+        UINT vt, value;
+        const char *str_value;
+    } test_data[] =
+    {
+        { FALSE, &data1, q1, S_OK, 2, 3, NULL },
+        { FALSE, &data2, q2, S_OK, 5, 6, NULL },
+        { FALSE, &data2, q3, S_OK, 5, 6, NULL },
+        { FALSE, &data3, q4, 0xdeadbeef },
+        { FALSE, &data3, q5, S_OK, 8, 9, NULL },
+        { FALSE, &data3, q6, 0xdeadbeef },
+        { FALSE, &data3, q7, S_OK, 8, 9, NULL },
+        { FALSE, &data3, q8, S_OK, 11, 12, NULL },
+        { FALSE, &data3, q9, S_OK, 5, 6, NULL },
+        { FALSE, &data3, q10, 0xdeadbeef },
+
+        { FALSE, &data3, q11, S_OK, VT_UNKNOWN, 0, NULL },
+        { FALSE, &data3, q12, S_OK, VT_UNKNOWN, 0, NULL },
+        { FALSE, &data3, q13, S_OK, VT_UNKNOWN, 0, NULL },
+        { FALSE, &data3, q14, S_OK, VT_UNKNOWN, 0, NULL },
+        { TRUE, &data3, q15, S_OK, VT_LPSTR, 0, the_worst },
+
+        { FALSE, &data3, q20, S_OK, VT_LPSTR, 0, the_worst },
+        { FALSE, &data3, q21, S_OK, VT_LPSTR, 0, the_worst },
+        { FALSE, &data3, q22, S_OK, VT_LPSTR, 0, the_best },
+        { FALSE, &data3, q23, S_OK, VT_LPSTR, 0, the_worst },
+        { FALSE, &data3, q24, S_OK, VT_LPSTR, 0, the_worst },
+        { FALSE, &data3, q25, S_OK, VT_LPSTR, 0, the_best },
+        { FALSE, &data3, q26, S_OK, VT_LPSTR, 0, the_worst },
+        { FALSE, &data3, q27, S_OK, VT_LPSTR, 0, the_best },
+        { FALSE, &data3, q28, S_OK, VT_LPSTR, 0, the_best },
+
+        { FALSE, &data1, q40, WINCODEC_ERR_PROPERTYNOTSUPPORTED },
+        { TRUE, &data1, q41, WINCODEC_ERR_INVALIDQUERYCHARACTER },
+        { TRUE, &data1, q42, WINCODEC_ERR_INVALIDQUERYCHARACTER },
+        { FALSE, &data1, q43, WINCODEC_ERR_WRONGSTATE },
+        { FALSE, &data1, q44, WINCODEC_ERR_WRONGSTATE },
+        { TRUE, &data1, q45, DISP_E_TYPEMISMATCH },
+        { TRUE, &data1, q46, E_INVALIDARG },
+        { TRUE, &data1, q47, WINCODEC_ERR_REQUESTONLYVALIDATMETADATAROOT },
+    };
+    WCHAR queryW[256];
+    HRESULT hr;
+    IWICComponentFactory *factory;
+    IWICMetadataQueryReader *reader;
+    GUID format;
+    PROPVARIANT value;
+    UINT i;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICComponentFactory, (void **)&factory);
+    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+
+    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, &mdbr, &reader);
+    ok(hr == S_OK, "CreateQueryReaderFromBlockReader error %#x\n", hr);
+
+    for (i = 0; i < sizeof(test_data)/sizeof(test_data[0]); i++)
+    {
+        current_metadata = test_data[i].data;
+
+        hr = IWICMetadataQueryReader_GetContainerFormat(reader, &format);
+        ok(hr == S_OK, "%u: GetContainerFormat error %#x\n", i, hr);
+        ok(IsEqualGUID(&format, test_data[i].data->container_format), "%u: expected %s, got %s\n",
+           i, wine_dbgstr_guid(test_data[i].data->container_format), wine_dbgstr_guid(&format));
+
+        MultiByteToWideChar(CP_ACP, 0, test_data[i].query, -1, queryW, 256);
+        PropVariantInit(&value);
+        hr = IWICMetadataQueryReader_GetMetadataByName(reader, queryW, &value);
+        todo_wine_if(test_data[i].todo)
+        ok(hr == test_data[i].hr, "%u: expected %#x, got %#x\n", i, test_data[i].hr, hr);
+        if (hr == S_OK)
+        {
+            ok(value.vt == test_data[i].vt, "%u: expected %u, got %u\n", i, test_data[i].vt, value.vt);
+            if (test_data[i].vt == value.vt)
+            {
+                if (value.vt == VT_UNKNOWN)
+                {
+                    IWICMetadataQueryReader *new_reader;
+                    WCHAR location[256];
+                    UINT len;
+
+                    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&new_reader);
+                    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+                    location[0] = 0;
+                    len = 0xdeadbeef;
+                    hr = IWICMetadataQueryReader_GetLocation(new_reader, 256, location, &len);
+                    ok(hr == S_OK, "GetLocation error %#x\n", hr);
+                    ok(len == lstrlenW(queryW) + 1, "expected %u, got %u\n", lstrlenW(queryW) + 1, len);
+                    ok(!lstrcmpW(location, queryW), "expected %s, got %s\n", wine_dbgstr_w(queryW), wine_dbgstr_w(location));
+
+                    hr = IWICMetadataQueryReader_GetLocation(new_reader, 256, location, NULL);
+                    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+                    location[0] = 0;
+                    len = 0xdeadbeef;
+                    hr = IWICMetadataQueryReader_GetLocation(new_reader, 3, location, &len);
+                    ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "got %#x\n", hr);
+                    ok(len == 0xdeadbeef, "got %u\n", len);
+                    ok(!location[0], "got %s\n", wine_dbgstr_w(location));
+
+                    location[0] = 0;
+                    len = 0xdeadbeef;
+                    hr = IWICMetadataQueryReader_GetLocation(new_reader, 0, location, &len);
+                    ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "got %#x\n", hr);
+                    ok(len == 0xdeadbeef, "got %u\n", len);
+                    ok(!location[0], "got %s\n", wine_dbgstr_w(location));
+
+                    len = 0xdeadbeef;
+                    hr = IWICMetadataQueryReader_GetLocation(new_reader, 0, NULL, &len);
+                    ok(hr == S_OK, "GetLocation error %#x\n", hr);
+                    ok(len == lstrlenW(queryW) + 1, "expected %u, got %u\n", lstrlenW(queryW) + 1, len);
+
+                    len = 0xdeadbeef;
+                    hr = IWICMetadataQueryReader_GetLocation(new_reader, 3, NULL, &len);
+                    ok(hr == S_OK, "GetLocation error %#x\n", hr);
+                    ok(len == lstrlenW(queryW) + 1, "expected %u, got %u\n", lstrlenW(queryW) + 1, len);
+
+                    hr = IWICMetadataQueryReader_GetLocation(new_reader, 0, NULL, NULL);
+                    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+                    IWICMetadataQueryReader_Release(new_reader);
+                }
+                else if (value.vt == VT_LPSTR)
+                    ok(!lstrcmpA(U(value).pszVal, test_data[i].str_value), "%u: expected %s, got %s\n",
+                       i, test_data[i].str_value, U(value).pszVal);
+                else
+                    ok(U(value).uiVal == test_data[i].value, "%u: expected %u, got %u\n",
+                       i, test_data[i].value, U(value).uiVal);
+            }
+
+            /*
+             * Do NOT call PropVariantClear(&value) for fake value types.
+             */
+        }
+    }
+
+    IWICMetadataQueryReader_Release(reader);
+    IWICComponentFactory_Release(factory);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
+    test_queryreader();
     test_WICMapGuidToShortName();
     test_WICMapShortNameToGuid();
     test_WICMapSchemaToName();
