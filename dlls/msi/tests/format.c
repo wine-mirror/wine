@@ -2777,6 +2777,10 @@ static void test_processmessage(void)
     r = MsiProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, hrec);
     ok( r == IDOK, "expected IDOK, got %i\n", r);
 
+    r = MsiProcessMessage(package, INSTALLMESSAGE_PROGRESS, hrec);
+    todo_wine
+    ok( r == IDOK, "expected IDOK, got %i\n", r);
+
     MsiCloseHandle(hrec);
     MsiCloseHandle(package);
 
