@@ -2373,7 +2373,7 @@ DECL_HANDLER(flush)
 
     if (!fd) return;
 
-    async = create_async( current, &req->async, NULL );
+    async = create_async( fd, current, &req->async, NULL );
     if (async)
     {
         reply->event = fd->fd_ops->flush( fd, async );
@@ -2449,7 +2449,7 @@ DECL_HANDLER(read)
 
     if (!fd) return;
 
-    if ((async = create_request_async( current, &req->async )))
+    if ((async = create_request_async( fd, &req->async )))
     {
         reply->wait    = async_handoff( async, fd->fd_ops->read( fd, async, req->pos ), NULL );
         reply->options = fd->options;
@@ -2466,7 +2466,7 @@ DECL_HANDLER(write)
 
     if (!fd) return;
 
-    if ((async = create_request_async( current, &req->async )))
+    if ((async = create_request_async( fd, &req->async )))
     {
         reply->wait    = async_handoff( async, fd->fd_ops->write( fd, async, req->pos ), &reply->size );
         reply->options = fd->options;
@@ -2487,7 +2487,7 @@ DECL_HANDLER(ioctl)
 
     if ((iosb = create_iosb( get_req_data(), get_req_data_size(), get_reply_max_size() )))
     {
-        if ((async = create_async( current, &req->async, iosb )))
+        if ((async = create_async( fd, current, &req->async, iosb )))
         {
             reply->wait    = fd->fd_ops->ioctl( fd, req->code, async );
             reply->options = fd->options;
@@ -2520,7 +2520,7 @@ DECL_HANDLER(register_async)
 
     if ((fd = get_handle_fd_obj( current->process, req->async.handle, access )))
     {
-        if (get_unix_fd( fd ) != -1 && (async = create_async( current, &req->async, NULL )))
+        if (get_unix_fd( fd ) != -1 && (async = create_async( fd, current, &req->async, NULL )))
         {
             fd->fd_ops->queue_async( fd, async, req->type, req->count );
             release_object( async );

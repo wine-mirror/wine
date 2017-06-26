@@ -41,6 +41,7 @@ struct async
     struct list          queue_entry;     /* entry in async queue list */
     struct list          process_entry;   /* entry in process list */
     struct async_queue  *queue;           /* queue containing this async */
+    struct fd           *fd;              /* fd associated with an unqueued async */
     unsigned int         status;          /* current status */
     struct timeout_user *timeout;
     unsigned int         timeout_status;  /* status to report upon timeout */
@@ -167,6 +168,7 @@ static void async_destroy( struct object *obj )
         release_object( async->queue );
     }
 
+    if (async->fd) release_object( async->fd );
     if (async->timeout) remove_timeout_user( async->timeout );
     if (async->event) release_object( async->event );
     if (async->iosb) release_object( async->iosb );
@@ -257,8 +259,10 @@ void free_async_queue( struct async_queue *queue )
 
 void queue_async( struct async_queue *queue, struct async *async )
 {
-    async->queue = (struct async_queue *)grab_object( queue );
+    release_object( async->fd );
+    async->fd = NULL;
 
+    async->queue = (struct async_queue *)grab_object( queue );
     grab_object( async );
     list_add_tail( &queue->queue, &async->queue_entry );
 
@@ -266,7 +270,7 @@ void queue_async( struct async_queue *queue, struct async *async )
 }
 
 /* create an async on a given queue of a fd */
-struct async *create_async( struct thread *thread, const async_data_t *data, struct iosb *iosb )
+struct async *create_async( struct fd *fd, struct thread *thread, const async_data_t *data, struct iosb *iosb )
 {
     struct event *event = NULL;
     struct async *async;
@@ -286,6 +290,7 @@ struct async *create_async( struct thread *thread, const async_data_t *data, str
     async->data          = *data;
     async->timeout       = NULL;
     async->queue         = NULL;
+    async->fd            = (struct fd *)grab_object( fd );
     async->signaled      = 0;
     async->wait_handle   = 0;
     async->direct_result = 0;
@@ -301,7 +306,7 @@ struct async *create_async( struct thread *thread, const async_data_t *data, str
 
 /* create an async associated with iosb for async-based requests
  * returned async must be passed to async_handoff */
-struct async *create_request_async( struct thread *thread, const async_data_t *data )
+struct async *create_request_async( struct fd *fd, const async_data_t *data )
 {
     struct async *async;
     struct iosb *iosb;
@@ -309,7 +314,7 @@ struct async *create_request_async( struct thread *thread, const async_data_t *d
     if (!(iosb = create_iosb( get_req_data(), get_req_data_size(), get_reply_max_size() )))
         return NULL;
 
-    async = create_async( current, data, iosb );
+    async = create_async( fd, current, data, iosb );
     release_object( iosb );
     if (async)
     {
@@ -365,13 +370,15 @@ void async_set_timeout( struct async *async, timeout_t timeout, unsigned int sta
     async->timeout_status = status;
 }
 
-static void add_async_completion( struct async_queue *queue, apc_param_t cvalue, unsigned int status,
+static void add_async_completion( struct async *async, apc_param_t cvalue, unsigned int status,
                                   apc_param_t information )
 {
-    if (queue->fd)
+    struct fd *fd = async->queue ? async->queue->fd : async->fd;
+
+    if (fd)
     {
         apc_param_t ckey;
-        struct completion *completion = fd_get_completion( queue->fd, &ckey );
+        struct completion *completion = fd_get_completion( fd, &ckey );
 
         if (completion)
         {
@@ -379,8 +386,8 @@ static void add_async_completion( struct async_queue *queue, apc_param_t cvalue,
             release_object( completion );
         }
     }
-    else if (queue->completion) add_completion( queue->completion, queue->comp_key,
-                                                cvalue, status, information );
+    else if (async->queue && async->queue->completion)
+        add_completion( async->queue->completion, async->queue->comp_key, cvalue, status, information );
 }
 
 /* store the result of the client-side async callback */
@@ -410,8 +417,6 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         async->status = status;
         if (status == STATUS_MORE_PROCESSING_REQUIRED) return;  /* don't report the completion */
 
-        if (async->queue && !async->data.apc && async->data.apc_context)
-            add_async_completion( async->queue, async->data.apc_context, status, total );
         if (async->data.apc)
         {
             apc_call_t data;
@@ -423,7 +428,11 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
             data.user.args[2] = 0;
             thread_queue_apc( async->thread, NULL, &data );
         }
+        else if (async->data.apc_context)
+            add_async_completion( async, async->data.apc_context, status, total );
+
         if (async->event) set_event( async->event );
+        else if (async->fd) set_fd_signaled( async->fd, 1 );
         else if (async->queue && async->queue->fd) set_fd_signaled( async->queue->fd, 1 );
         if (!async->signaled)
         {
@@ -454,13 +463,15 @@ int async_waiting( struct async_queue *queue )
 static int cancel_async( struct process *process, struct object *obj, struct thread *thread, client_ptr_t iosb )
 {
     struct async *async;
+    struct fd *fd;
     int woken = 0;
 
 restart:
     LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
     {
         if (async->status == STATUS_CANCELLED) continue;
-        if ((!obj || (async->queue && async->queue->fd && get_fd_user( async->queue->fd ) == obj)) &&
+        fd = async->queue ? async->queue->fd : async->fd;
+        if ((!obj || (fd && get_fd_user( fd ) == obj)) &&
             (!thread || async->thread == thread) &&
             (!iosb || async->data.iosb == iosb))
         {
