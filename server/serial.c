@@ -63,7 +63,7 @@ static struct fd *serial_get_fd( struct object *obj );
 static void serial_destroy(struct object *obj);
 
 static enum server_fd_type serial_get_fd_type( struct fd *fd );
-static obj_handle_t serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static int serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void serial_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void serial_reselect_async( struct fd *fd, struct async_queue *queue );
 
@@ -175,42 +175,49 @@ static enum server_fd_type serial_get_fd_type( struct fd *fd )
     return FD_TYPE_SERIAL;
 }
 
-static obj_handle_t serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static int serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct serial *serial = get_fd_user( fd );
 
     switch (code)
     {
     case IOCTL_SERIAL_GET_TIMEOUTS:
-        if (get_reply_max_size() >= sizeof(serial->timeouts))
-            set_reply_data( &serial->timeouts, sizeof(serial->timeouts ));
-        else
+        if (get_reply_max_size() < sizeof(serial->timeouts))
+        {
             set_error( STATUS_BUFFER_TOO_SMALL );
-        return 0;
+            return 0;
+        }
+        set_reply_data( &serial->timeouts, sizeof(serial->timeouts ));
+        return 1;
 
     case IOCTL_SERIAL_SET_TIMEOUTS:
-        if (get_req_data_size() >= sizeof(serial->timeouts))
-            memcpy( &serial->timeouts, get_req_data(), sizeof(serial->timeouts) );
-        else
+        if (get_req_data_size() < sizeof(serial->timeouts))
+        {
             set_error( STATUS_BUFFER_TOO_SMALL );
-        return 0;
+            return 0;
+        }
+        memcpy( &serial->timeouts, get_req_data(), sizeof(serial->timeouts) );
+        return 1;
 
     case IOCTL_SERIAL_GET_WAIT_MASK:
-        if (get_reply_max_size() >= sizeof(serial->eventmask))
-            set_reply_data( &serial->eventmask, sizeof(serial->eventmask) );
-        else
+        if (get_reply_max_size() < sizeof(serial->eventmask))
+        {
             set_error( STATUS_BUFFER_TOO_SMALL );
-        return 0;
+            return 0;
+        }
+        set_reply_data( &serial->eventmask, sizeof(serial->eventmask) );
+        return 1;
 
     case IOCTL_SERIAL_SET_WAIT_MASK:
-        if (get_req_data_size() >= sizeof(serial->eventmask))
+        if (get_req_data_size() < sizeof(serial->eventmask))
         {
-            serial->eventmask = *(unsigned int *)get_req_data();
-            serial->generation++;
-            fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
         }
-        else set_error( STATUS_BUFFER_TOO_SMALL );
-        return 0;
+        serial->eventmask = *(unsigned int *)get_req_data();
+        serial->generation++;
+        fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
+        return 1;
 
     default:
         set_error( STATUS_NOT_SUPPORTED );

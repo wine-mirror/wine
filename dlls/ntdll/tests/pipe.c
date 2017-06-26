@@ -724,7 +724,7 @@ static void WINAPI apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
     ok( !reserved, "reserved is not 0: %x\n", reserved );
 }
 
-static void test_peek(HANDLE pipe)
+static void test_peek(HANDLE pipe, BOOL is_msgmode)
 {
     FILE_PIPE_PEEK_BUFFER buf;
     IO_STATUS_BLOCK iosb;
@@ -743,7 +743,7 @@ static void test_peek(HANDLE pipe)
     ok(!status || status == STATUS_PENDING, "NtFsControlFile failed: %x\n", status);
     ok(buf.ReadDataAvailable == 1, "ReadDataAvailable = %u\n", buf.ReadDataAvailable);
     ok(!iosb.Status, "iosb.Status = %x\n", iosb.Status);
-    todo_wine
+    todo_wine_if(!is_msgmode)
     ok(is_signaled(event), "event is not signaled\n");
 
     CloseHandle(event);
@@ -855,7 +855,7 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     ret = WriteFile( write, buffer, 1, &written, NULL );
     ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
 
-    test_peek(read);
+    test_peek(read, pipe_type & PIPE_TYPE_MESSAGE);
 
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
     ok( status == STATUS_SUCCESS, "wrong status %x\n", status );

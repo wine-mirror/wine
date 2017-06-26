@@ -2179,20 +2179,20 @@ obj_handle_t no_fd_flush( struct fd *fd, struct async *async )
 }
 
 /* default ioctl() routine */
-obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+int no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
 }
 
 /* default ioctl() routine */
-obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+int default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     switch(code)
     {
     case FSCTL_DISMOUNT_VOLUME:
         unmount_device( fd );
-        return 0;
+        return 1;
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
@@ -2481,19 +2481,14 @@ DECL_HANDLER(ioctl)
     unsigned int access = (req->code >> 14) & (FILE_READ_DATA|FILE_WRITE_DATA);
     struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, access );
     struct async *async;
-    struct iosb *iosb;
 
     if (!fd) return;
 
-    if ((iosb = create_iosb( get_req_data(), get_req_data_size(), get_reply_max_size() )))
+    if ((async = create_request_async( fd, &req->async )))
     {
-        if ((async = create_async( fd, current, &req->async, iosb )))
-        {
-            reply->wait    = fd->fd_ops->ioctl( fd, req->code, async );
-            reply->options = fd->options;
-            release_object( async );
-        }
-        release_object( iosb );
+        reply->wait    = async_handoff( async, fd->fd_ops->ioctl( fd, req->code, async ), NULL );
+        reply->options = fd->options;
+        release_object( async );
     }
     release_object( fd );
 }

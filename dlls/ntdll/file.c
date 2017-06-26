@@ -1543,7 +1543,11 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
-        if (status != STATUS_PENDING) io->Information = wine_server_reply_size( reply );
+        if (wait_handle && status != STATUS_PENDING)
+        {
+            io->u.Status    = status;
+            io->Information = wine_server_reply_size( reply );
+        }
     }
     SERVER_END_REQ;
 
@@ -1557,10 +1561,8 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     {
         NtWaitForSingleObject( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), NULL );
         status = io->u.Status;
-        NtClose( wait_handle );
     }
 
-    if (status != STATUS_PENDING && code != FSCTL_PIPE_LISTEN) io->u.Status = status;
     return status;
 }
 

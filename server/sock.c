@@ -129,7 +129,7 @@ static void sock_destroy_ifchange_q( struct sock *sock );
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
 static enum server_fd_type sock_get_fd_type( struct fd *fd );
-static obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void sock_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 
@@ -534,10 +534,9 @@ static enum server_fd_type sock_get_fd_type( struct fd *fd )
     return FD_TYPE_SOCKET;
 }
 
-obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct sock *sock = get_fd_user( fd );
-    obj_handle_t wait_handle = 0;
     struct async_queue *ifchange_q;
 
     assert( sock->obj.ops == &sock_ops );
@@ -552,9 +551,8 @@ obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         if (!(ifchange_q = sock_get_ifchange_q( sock ))) return 0;
         queue_async( ifchange_q, async );
-        if (async_is_blocking( async )) wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
         set_error( STATUS_PENDING );
-        return wait_handle;
+        return 1;
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
