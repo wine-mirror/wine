@@ -589,7 +589,6 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
     {
         NtWaitForSingleObject( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), NULL );
         status = io->u.Status;
-        NtClose( wait_handle );
     }
 
     return status;
