@@ -74,6 +74,7 @@ android
     {
         main.assets.srcDirs = [ "assets" ]
         main.java.srcDirs = [ "@srcdir@" ]
+        main.jniLibs.srcDirs = [ "lib" ]
         main.java.excludes = [ "build" ]
         main.res.srcDirs = [ "res" ]
         main.manifest.srcFile "@srcdir@/AndroidManifest.xml"

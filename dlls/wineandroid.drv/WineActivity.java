@@ -88,7 +88,7 @@ public class WineActivity extends Activity
         HashMap<String,String> env = new HashMap<String,String>();
         env.put( "WINELOADER", loader.toString() );
         env.put( "WINEPREFIX", prefix.toString() );
-        env.put( "LD_LIBRARY_PATH", libdir.toString() );
+        env.put( "LD_LIBRARY_PATH", libdir.toString() + ":" + getApplicationInfo().nativeLibraryDir );
         env.put( "LC_ALL", locale );
         env.put( "LANG", locale );
 
@@ -111,7 +111,14 @@ public class WineActivity extends Activity
 
         createProgressDialog( 0, "Setting up the Windows environment..." );
 
-        System.load( libdir.toString() + "/libwine.so" );
+        try
+        {
+            System.loadLibrary( "wine" );
+        }
+        catch (java.lang.UnsatisfiedLinkError e)
+        {
+            System.load( libdir.toString() + "/libwine.so" );
+        }
         prefix.mkdirs();
 
         runWine( cmdline, env );
