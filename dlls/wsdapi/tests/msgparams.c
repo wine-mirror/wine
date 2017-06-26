@@ -96,7 +96,7 @@ static void LocalAddress_tests(void)
     ok(origUdpAddress != NULL, "WSDCreateUdpMessageParameters(NULL, &origUdpAddress) failed: origUdpAddress == NULL\n");
 
     rc = IWSDUdpAddress_SetTransportAddress(origUdpAddress, address);
-    todo_wine ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
 
     rc = IWSDUdpMessageParameters_SetLocalAddress(udpMessageParams, (IWSDAddress *)origUdpAddress);
     ok(rc == S_OK, "SetLocalAddress failed: %08x\n", rc);
@@ -154,7 +154,7 @@ static void RemoteAddress_tests(void)
     ok(origUdpAddress != NULL, "WSDCreateUdpMessageParameters(NULL, &origUdpAddress) failed: origUdpAddress == NULL\n");
 
     rc = IWSDUdpAddress_SetTransportAddress(origUdpAddress, address);
-    todo_wine ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
 
     rc = IWSDUdpMessageParameters_SetRemoteAddress(udpMessageParams, (IWSDAddress *)origUdpAddress);
     ok(rc == S_OK, "SetRemoteAddress failed: %08x\n", rc);

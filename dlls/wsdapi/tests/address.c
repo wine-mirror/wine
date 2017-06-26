@@ -98,15 +98,15 @@ static void GetSetTransportAddress_udp_tests(void)
 
     /* Try setting a null address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, NULL);
-    todo_wine ok(rc == E_INVALIDARG, "SetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
+    ok(rc == E_INVALIDARG, "SetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
 
     /* Try setting an invalid address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, invalidAddress);
-    todo_wine ok(rc == HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND), "SetTransportAddress(invalidAddress) returned unexpected result: %08x\n", rc);
+    ok(rc == HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND), "SetTransportAddress(invalidAddress) returned unexpected result: %08x\n", rc);
 
     /* Try setting an IPv4 address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv4Address);
-    todo_wine ok(rc == S_OK, "SetTransportAddress(ipv4Address) failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress(ipv4Address) failed: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, NULL);
     todo_wine ok(rc == E_POINTER, "GetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
@@ -118,7 +118,7 @@ static void GetSetTransportAddress_udp_tests(void)
 
     /* Try setting an IPv6 address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv6Address);
-    todo_wine ok(rc == S_OK, "SetTransportAddress(ipv6Address) failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress(ipv6Address) failed: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
     todo_wine ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
@@ -264,7 +264,7 @@ static void GetSetSockaddr_udp_tests(void)
 
     /* Try setting a transport address */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, expectedIpv6TransportAddr);
-    todo_wine ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
 
     /* A socket address should be returned */
     rc = IWSDUdpAddress_GetSockaddr(udpAddress, &returnedStorage);

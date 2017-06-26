@@ -22,6 +22,8 @@
 
 #define COBJMACROS
 
+#include "winsock2.h"
+#include "ws2tcpip.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -32,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
 typedef struct IWSDUdpAddressImpl {
     IWSDUdpAddress IWSDUdpAddress_iface;
     LONG           ref;
+    SOCKADDR_STORAGE sockAddr;
 } IWSDUdpAddressImpl;
 
 static inline IWSDUdpAddressImpl *impl_from_IWSDUdpAddress(IWSDUdpAddress *iface)
@@ -132,8 +135,31 @@ static HRESULT WINAPI IWSDUdpAddressImpl_GetTransportAddressEx(IWSDUdpAddress *T
 
 static HRESULT WINAPI IWSDUdpAddressImpl_SetTransportAddress(IWSDUdpAddress *This, LPCWSTR pszAddress)
 {
-    FIXME("(%p, %s)\n", This, debugstr_w(pszAddress));
-    return E_NOTIMPL;
+    IWSDUdpAddressImpl *impl = impl_from_IWSDUdpAddress(This);
+    ADDRINFOW *addrInfo = NULL;
+    ADDRINFOW hints;
+    int ret;
+
+    TRACE("(%p, %s)\n", impl, debugstr_w(pszAddress));
+
+    if (pszAddress == NULL)
+        return E_INVALIDARG;
+
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+
+    ret = GetAddrInfoW(pszAddress, NULL, &hints, &addrInfo);
+
+    if (ret == 0)
+    {
+        ZeroMemory(&impl->sockAddr, sizeof(SOCKADDR_STORAGE));
+        memcpy(&impl->sockAddr, addrInfo->ai_addr, addrInfo->ai_addrlen);
+    }
+
+    if (addrInfo != NULL)
+        FreeAddrInfoW(addrInfo);
+
+    return HRESULT_FROM_WIN32(ret);
 }
 
 static HRESULT WINAPI IWSDUdpAddressImpl_SetSockaddr(IWSDUdpAddress *This, const SOCKADDR_STORAGE *pSockAddr)
