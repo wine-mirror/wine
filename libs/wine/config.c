@@ -426,14 +426,15 @@ static int set_dlldir( char *libdir )
 /* initialize the argv0 path */
 void wine_init_argv0_path( const char *argv0 )
 {
-    const char *basename;
+    const char *basename, *wineloader;
 
     if (!(basename = strrchr( argv0, '/' ))) basename = argv0;
     else basename++;
 
     if (set_bindir( get_runtime_exedir() )) goto done;
     if (set_dlldir( get_runtime_libdir() )) goto done;
-    set_bindir( get_runtime_argvdir( argv0 ));
+    if (set_bindir( get_runtime_argvdir( argv0 ))) goto done;
+    if ((wineloader = getenv( "WINELOADER" ))) set_bindir( get_runtime_argvdir( wineloader ));
 
 done:
     if (build_dir)
