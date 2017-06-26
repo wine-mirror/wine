@@ -757,7 +757,7 @@ INT CDECL ANDROID_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                                LPWSTR buf, int size, UINT flags, HKL hkl )
 {
     WCHAR buffer[2];
-    BOOL shift = (state[VK_SHIFT] & 0x80) || (state[VK_CAPITAL] & 0x01);
+    BOOL shift = state[VK_SHIFT] & 0x80;
     BOOL ctrl = state[VK_CONTROL] & 0x80;
     BOOL numlock = state[VK_NUMLOCK] & 0x01;
 
@@ -798,7 +798,7 @@ INT CDECL ANDROID_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
             }
             if (virt >= 'A' && virt <= 'Z')
             {
-                buffer[0] = shift ? virt : virt + 'a' - 'A';
+                buffer[0] =  shift || (state[VK_CAPITAL] & 0x01) ? virt : virt + 'a' - 'A';
                 break;
             }
             if (virt >= VK_NUMPAD0 && virt <= VK_NUMPAD9 && numlock && !shift)
