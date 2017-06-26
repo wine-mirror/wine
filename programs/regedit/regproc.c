@@ -758,6 +758,9 @@ static WCHAR *string_data_state(struct parser *parser, WCHAR *pos)
     return line;
 
 invalid:
+    parser->data = NULL;
+    parser->data_size = 0;
+
     set_state(parser, LINE_START);
     return line;
 }
@@ -781,6 +784,7 @@ static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos)
 invalid:
     HeapFree(GetProcessHeap(), 0, parser->data);
     parser->data = NULL;
+    parser->data_size = 0;
 
     set_state(parser, LINE_START);
     return line;
@@ -807,6 +811,10 @@ static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos)
     return line;
 
 invalid:
+    HeapFree(GetProcessHeap(), 0, parser->data);
+    parser->data = NULL;
+    parser->data_size = 0;
+
     set_state(parser, LINE_START);
     return line;
 }
@@ -827,10 +835,10 @@ static WCHAR *set_value_state(struct parser *parser, WCHAR *pos)
                    parser->data, parser->data_size);
 
     if (parser->parse_type == REG_DWORD || parser->parse_type == REG_BINARY)
-    {
         HeapFree(GetProcessHeap(), 0, parser->data);
-        parser->data = NULL;
-    }
+
+    parser->data = NULL;
+    parser->data_size = 0;
 
     if (parser->reg_version == REG_VERSION_31)
         set_state(parser, PARSE_WIN31_LINE);
