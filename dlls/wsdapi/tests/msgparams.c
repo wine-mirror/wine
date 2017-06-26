@@ -84,11 +84,11 @@ static void LocalAddress_tests(void)
     ok(udpMessageParams != NULL, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: udpMessageParams == NULL\n");
 
     rc = IWSDUdpMessageParameters_GetLocalAddress(udpMessageParams, NULL);
-    todo_wine ok(rc == E_POINTER, "GetLocalAddress failed: %08x\n", rc);
+    ok(rc == E_POINTER, "GetLocalAddress failed: %08x\n", rc);
     ok(returnedAddress == NULL, "GetLocalAddress returned %p\n", returnedAddress);
 
     rc = IWSDUdpMessageParameters_GetLocalAddress(udpMessageParams, &returnedAddress);
-    todo_wine ok(rc == E_ABORT, "GetLocalAddress failed: %08x\n", rc);
+    ok(rc == E_ABORT, "GetLocalAddress failed: %08x\n", rc);
     ok(returnedAddress == NULL, "GetLocalAddress returned %p\n", returnedAddress);
 
     rc = WSDCreateUdpAddress(&origUdpAddress);
@@ -99,14 +99,14 @@ static void LocalAddress_tests(void)
     todo_wine ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
 
     rc = IWSDUdpMessageParameters_SetLocalAddress(udpMessageParams, (IWSDAddress *)origUdpAddress);
-    todo_wine ok(rc == S_OK, "SetLocalAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetLocalAddress failed: %08x\n", rc);
 
     rc = IWSDUdpMessageParameters_GetLocalAddress(udpMessageParams, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetLocalAddress failed: %08x\n", rc);
-    todo_wine ok(returnedAddress != NULL, "GetLocalAddress returned NULL\n");
+    ok(rc == S_OK, "GetLocalAddress failed: %08x\n", rc);
+    ok(returnedAddress != NULL, "GetLocalAddress returned NULL\n");
 
     /* Check if GetLocalAddress returns the same object */
-    todo_wine ok(returnedAddress == (IWSDAddress *)origUdpAddress, "returnedAddress != origUdpAddress\n");
+    ok(returnedAddress == (IWSDAddress *)origUdpAddress, "returnedAddress != origUdpAddress\n");
 
     ret = IWSDUdpMessageParameters_Release(udpMessageParams);
     ok(ret == 0, "IWSDUdpMessageParameters_Release() has %d references, should have 0\n", ret);

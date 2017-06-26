@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
 typedef struct IWSDMessageParametersImpl {
     IWSDMessageParameters IWSDMessageParameters_iface;
     LONG                  ref;
+    IWSDAddress           *localAddress;
 } IWSDMessageParametersImpl;
 
 typedef struct IWSDUdpMessageParametersImpl {
@@ -68,6 +69,11 @@ static ULONG WINAPI IWSDMessageParametersImpl_Release(IWSDMessageParameters *ifa
 
     if (ref == 0)
     {
+        if (This->localAddress != NULL)
+        {
+            IWSDAddress_Release(This->localAddress);
+        }
+
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -76,14 +82,46 @@ static ULONG WINAPI IWSDMessageParametersImpl_Release(IWSDMessageParameters *ifa
 
 static HRESULT WINAPI IWSDMessageParametersImpl_GetLocalAddress(IWSDMessageParameters *This, IWSDAddress **ppAddress)
 {
-    FIXME("(%p, %p)\n", This, ppAddress);
-    return E_NOTIMPL;
+    IWSDMessageParametersImpl *impl = impl_from_IWSDMessageParameters(This);
+
+    TRACE("(%p, %p)\n", impl, ppAddress);
+
+    if (ppAddress == NULL)
+    {
+        return E_POINTER;
+    }
+
+    if (impl->localAddress == NULL)
+    {
+        return E_ABORT;
+    }
+
+    *ppAddress = impl->localAddress;
+    IWSDAddress_AddRef(*ppAddress);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDMessageParametersImpl_SetLocalAddress(IWSDMessageParameters *This, IWSDAddress *pAddress)
 {
-    FIXME("(%p, %p)\n", This, pAddress);
-    return E_NOTIMPL;
+    IWSDMessageParametersImpl *impl = impl_from_IWSDMessageParameters(This);
+
+    TRACE("(%p, %p)\n", impl, pAddress);
+
+    if (pAddress == NULL)
+    {
+        return E_POINTER;
+    }
+
+    if (impl->localAddress != NULL)
+    {
+        IWSDAddress_Release(impl->localAddress);
+    }
+
+    impl->localAddress = pAddress;
+    IWSDAddress_AddRef(pAddress);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDMessageParametersImpl_GetRemoteAddress(IWSDMessageParameters *This, IWSDAddress **ppAddress)
@@ -215,7 +253,7 @@ HRESULT WINAPI WSDCreateUdpMessageParameters(IWSDUdpMessageParameters **ppTxPara
 
     *ppTxParams = NULL;
 
-    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
+    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
     if (!obj) return E_OUTOFMEMORY;
 
     obj->base.IWSDMessageParameters_iface.lpVtbl = (IWSDMessageParametersVtbl *)&udpMsgParamsVtbl;
