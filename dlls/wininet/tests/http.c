@@ -5269,6 +5269,31 @@ static void test_redirect(int port)
     close_connection();
     close_async_handle(req.session, 2);
 
+    trace("Test redirect to http URL with no host name...\n");
+
+    open_socket_request(port, &req);
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    server_send_string("HTTP/1.1 302 Found\r\n"
+                       "Server: winetest\r\n"
+                       "Location: http:///nohost\r\n"
+                       "Connection: keep-alive\r\n"
+                       "Content-Length: 0\r\n"
+                       "\r\n");
+
+    WaitForSingleObject(complete_event, INFINITE);
+
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    ok(req_error == ERROR_INTERNET_INVALID_URL, "expected ERROR_INTERNET_INVALID_URL, got %u\n", req_error);
+
+    sprintf(expect_url, "http://localhost:%u/socket", port);
+    test_request_url(req.request, expect_url);
+    test_status_code(req.request, 302);
+
+    close_connection();
+    close_async_handle(req.session, 2);
+
     skip_receive_notification_tests = FALSE;
 }
 

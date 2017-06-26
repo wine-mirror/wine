@@ -4058,6 +4058,9 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, WCHAR *url)
         urlComponents.dwUrlPathLength = 1;
         if(!InternetCrackUrlW(url, url_len, 0, &urlComponents))
             return INTERNET_GetLastError();
+
+        if(!urlComponents.dwHostNameLength)
+            return ERROR_INTERNET_INVALID_URL;
     }
 
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REDIRECT,
