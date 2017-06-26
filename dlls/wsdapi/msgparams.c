@@ -38,6 +38,7 @@ typedef struct IWSDMessageParametersImpl {
 
 typedef struct IWSDUdpMessageParametersImpl {
     IWSDMessageParametersImpl base;
+    WSDUdpRetransmitParams    retransmitParams;
 } IWSDUdpMessageParametersImpl;
 
 static inline IWSDMessageParametersImpl *impl_from_IWSDMessageParameters(IWSDMessageParameters *iface)
@@ -248,14 +249,32 @@ static HRESULT WINAPI IWSDUdpMessageParametersImpl_GetLowerParameters(IWSDUdpMes
 
 static HRESULT WINAPI IWSDUdpMessageParametersImpl_SetRetransmitParams(IWSDUdpMessageParameters *This, const WSDUdpRetransmitParams *pParams)
 {
-    FIXME("(%p, %p)\n", This, pParams);
-    return E_NOTIMPL;
+    IWSDUdpMessageParametersImpl *impl = impl_from_IWSDUdpMessageParameters(This);
+
+    TRACE("(%p, %p)\n", impl, pParams);
+
+    if (pParams == NULL)
+    {
+        return E_INVALIDARG;
+    }
+
+    impl->retransmitParams = *pParams;
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDUdpMessageParametersImpl_GetRetransmitParams(IWSDUdpMessageParameters *This, WSDUdpRetransmitParams *pParams)
 {
-    FIXME("(%p, %p)\n", This, pParams);
-    return E_NOTIMPL;
+    IWSDUdpMessageParametersImpl *impl = impl_from_IWSDUdpMessageParameters(This);
+
+    TRACE("(%p, %p)\n", impl, pParams);
+
+    if (pParams == NULL)
+    {
+        return E_POINTER;
+    }
+
+    * pParams = impl->retransmitParams;
+    return S_OK;
 }
 
 static const IWSDUdpMessageParametersVtbl udpMsgParamsVtbl =
@@ -296,6 +315,13 @@ HRESULT WINAPI WSDCreateUdpMessageParameters(IWSDUdpMessageParameters **ppTxPara
 
     obj->base.IWSDMessageParameters_iface.lpVtbl = (IWSDMessageParametersVtbl *)&udpMsgParamsVtbl;
     obj->base.ref = 1;
+
+    /* Populate default retransmit parameters */
+    obj->retransmitParams.ulSendDelay = 0;
+    obj->retransmitParams.ulRepeat = 1;
+    obj->retransmitParams.ulRepeatMinDelay = 50;
+    obj->retransmitParams.ulRepeatMaxDelay = 250;
+    obj->retransmitParams.ulRepeatUpperDelay = 450;
 
     *ppTxParams = (IWSDUdpMessageParameters *)&obj->base.IWSDMessageParameters_iface;
     TRACE("Returning iface %p\n", *ppTxParams);

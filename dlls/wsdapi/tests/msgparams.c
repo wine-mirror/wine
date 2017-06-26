@@ -197,17 +197,17 @@ static void RetransmitParams_tests(void)
     ok(udpMessageParams != NULL, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: udpMessageParams == NULL\n");
 
     rc = IWSDUdpMessageParameters_GetRetransmitParams(udpMessageParams, NULL);
-    todo_wine ok(rc == E_POINTER, "GetRetransmitParams returned unexpected result: %08x\n", rc);
+    ok(rc == E_POINTER, "GetRetransmitParams returned unexpected result: %08x\n", rc);
 
     /* Check if the default values are returned */
     rc = IWSDUdpMessageParameters_GetRetransmitParams(udpMessageParams, &returnedParams);
-    todo_wine ok(rc == S_OK, "GetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "GetRetransmitParams failed: %08x\n", rc);
 
     ok(returnedParams.ulSendDelay == 0, "ulSendDelay = %d\n", returnedParams.ulSendDelay);
-    todo_wine ok(returnedParams.ulRepeat == 1, "ulRepeat = %d\n", returnedParams.ulRepeat);
-    todo_wine ok(returnedParams.ulRepeatMinDelay == 50, "ulRepeatMinDelay = %d\n", returnedParams.ulRepeatMinDelay);
-    todo_wine ok(returnedParams.ulRepeatMaxDelay == 250, "ulRepeatMaxDelay = %d\n", returnedParams.ulRepeatMaxDelay);
-    todo_wine ok(returnedParams.ulRepeatUpperDelay == 450, "ulRepeatUpperDelay = %d\n", returnedParams.ulRepeatUpperDelay);
+    ok(returnedParams.ulRepeat == 1, "ulRepeat = %d\n", returnedParams.ulRepeat);
+    ok(returnedParams.ulRepeatMinDelay == 50, "ulRepeatMinDelay = %d\n", returnedParams.ulRepeatMinDelay);
+    ok(returnedParams.ulRepeatMaxDelay == 250, "ulRepeatMaxDelay = %d\n", returnedParams.ulRepeatMaxDelay);
+    ok(returnedParams.ulRepeatUpperDelay == 450, "ulRepeatUpperDelay = %d\n", returnedParams.ulRepeatUpperDelay);
 
     /* Now try setting some custom parameters */
     origParams.ulSendDelay = 100;
@@ -217,18 +217,22 @@ static void RetransmitParams_tests(void)
     origParams.ulRepeatUpperDelay = 500;
 
     rc = IWSDUdpMessageParameters_SetRetransmitParams(udpMessageParams, &origParams);
-    todo_wine ok(rc == S_OK, "SetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "SetRetransmitParams failed: %08x\n", rc);
 
     ZeroMemory(&returnedParams, sizeof(WSDUdpRetransmitParams));
 
     rc = IWSDUdpMessageParameters_GetRetransmitParams(udpMessageParams, &returnedParams);
-    todo_wine ok(rc == S_OK, "GetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "GetRetransmitParams failed: %08x\n", rc);
 
-    todo_wine ok(origParams.ulSendDelay == returnedParams.ulSendDelay, "ulSendDelay = %d\n", returnedParams.ulSendDelay);
-    todo_wine ok(origParams.ulRepeat == returnedParams.ulRepeat, "ulRepeat = %d\n", returnedParams.ulRepeat);
-    todo_wine ok(origParams.ulRepeatMinDelay == returnedParams.ulRepeatMinDelay, "ulRepeatMinDelay = %d\n", returnedParams.ulRepeatMinDelay);
-    todo_wine ok(origParams.ulRepeatMaxDelay == returnedParams.ulRepeatMaxDelay, "ulRepeatMaxDelay = %d\n", returnedParams.ulRepeatMaxDelay);
-    todo_wine ok(origParams.ulRepeatUpperDelay == returnedParams.ulRepeatUpperDelay, "ulRepeatUpperDelay = %d\n", returnedParams.ulRepeatUpperDelay);
+    ok(origParams.ulSendDelay == returnedParams.ulSendDelay, "ulSendDelay = %d\n", returnedParams.ulSendDelay);
+    ok(origParams.ulRepeat == returnedParams.ulRepeat, "ulRepeat = %d\n", returnedParams.ulRepeat);
+    ok(origParams.ulRepeatMinDelay == returnedParams.ulRepeatMinDelay, "ulRepeatMinDelay = %d\n", returnedParams.ulRepeatMinDelay);
+    ok(origParams.ulRepeatMaxDelay == returnedParams.ulRepeatMaxDelay, "ulRepeatMaxDelay = %d\n", returnedParams.ulRepeatMaxDelay);
+    ok(origParams.ulRepeatUpperDelay == returnedParams.ulRepeatUpperDelay, "ulRepeatUpperDelay = %d\n", returnedParams.ulRepeatUpperDelay);
+
+    /* Try setting a null parameter */
+    rc = IWSDUdpMessageParameters_SetRetransmitParams(udpMessageParams, NULL);
+    ok(rc == E_INVALIDARG, "SetRetransmitParams returned unexpected result: %08x\n", rc);
 
     /* Now attempt to set some invalid parameters - these appear to be accepted */
     origParams.ulSendDelay = INFINITE;
@@ -238,18 +242,18 @@ static void RetransmitParams_tests(void)
     origParams.ulRepeatUpperDelay = 100;
 
     rc = IWSDUdpMessageParameters_SetRetransmitParams(udpMessageParams, &origParams);
-    todo_wine ok(rc == S_OK, "SetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "SetRetransmitParams failed: %08x\n", rc);
 
     ZeroMemory(&returnedParams, sizeof(WSDUdpRetransmitParams));
 
     rc = IWSDUdpMessageParameters_GetRetransmitParams(udpMessageParams, &returnedParams);
-    todo_wine ok(rc == S_OK, "GetRetransmitParams failed: %08x\n", rc);
+    ok(rc == S_OK, "GetRetransmitParams failed: %08x\n", rc);
 
-    todo_wine ok(origParams.ulSendDelay == returnedParams.ulSendDelay, "ulSendDelay = %d\n", returnedParams.ulSendDelay);
-    todo_wine ok(origParams.ulRepeat == returnedParams.ulRepeat, "ulRepeat = %d\n", returnedParams.ulRepeat);
-    todo_wine ok(origParams.ulRepeatMinDelay == returnedParams.ulRepeatMinDelay, "ulRepeatMinDelay = %d\n", returnedParams.ulRepeatMinDelay);
-    todo_wine ok(origParams.ulRepeatMaxDelay == returnedParams.ulRepeatMaxDelay, "ulRepeatMaxDelay = %d\n", returnedParams.ulRepeatMaxDelay);
-    todo_wine ok(origParams.ulRepeatUpperDelay == returnedParams.ulRepeatUpperDelay, "ulRepeatUpperDelay = %d\n", returnedParams.ulRepeatUpperDelay);
+    ok(origParams.ulSendDelay == returnedParams.ulSendDelay, "ulSendDelay = %d\n", returnedParams.ulSendDelay);
+    ok(origParams.ulRepeat == returnedParams.ulRepeat, "ulRepeat = %d\n", returnedParams.ulRepeat);
+    ok(origParams.ulRepeatMinDelay == returnedParams.ulRepeatMinDelay, "ulRepeatMinDelay = %d\n", returnedParams.ulRepeatMinDelay);
+    ok(origParams.ulRepeatMaxDelay == returnedParams.ulRepeatMaxDelay, "ulRepeatMaxDelay = %d\n", returnedParams.ulRepeatMaxDelay);
+    ok(origParams.ulRepeatUpperDelay == returnedParams.ulRepeatUpperDelay, "ulRepeatUpperDelay = %d\n", returnedParams.ulRepeatUpperDelay);
 
     ret = IWSDUdpMessageParameters_Release(udpMessageParams);
     ok(ret == 0, "IWSDUdpMessageParameters_Release() has %d references, should have 0\n", ret);
