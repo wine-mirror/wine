@@ -338,13 +338,23 @@ obj_handle_t async_handoff( struct async *async, int success, data_size_t *resul
         return 0;
     }
 
-    if (async->iosb->status != STATUS_PENDING)
+    if (get_error() != STATUS_PENDING)
     {
+        /* status and data are already set and returned */
+        async_terminate( async, get_error() );
+    }
+    else if (async->iosb->status != STATUS_PENDING)
+    {
+        /* result is already available in iosb, return it */
         if (async->iosb->out_data)
         {
             set_reply_data_ptr( async->iosb->out_data, async->iosb->out_size );
             async->iosb->out_data = NULL;
         }
+    }
+
+    if (async->iosb->status != STATUS_PENDING)
+    {
         if (result) *result = async->iosb->result;
         async->signaled = 1;
     }
