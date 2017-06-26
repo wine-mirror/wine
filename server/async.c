@@ -49,6 +49,7 @@ struct async
     async_data_t         data;            /* data for async I/O call */
     struct iosb         *iosb;            /* I/O status block */
     obj_handle_t         wait_handle;     /* pre-allocated wait handle */
+    int                  direct_result;   /* a flag if we're passing result directly from request instead of APC  */
 };
 
 static void async_dump( struct object *obj, int verbose );
@@ -138,6 +139,12 @@ static void async_satisfied( struct object *obj, struct wait_queue_entry *entry 
     struct async *async = (struct async *)obj;
     assert( obj->ops == &async_ops );
 
+    if (async->direct_result)
+    {
+        async_set_result( &async->obj, async->iosb->status, async->iosb->result );
+        async->direct_result = 0;
+    }
+
     /* close wait handle here to avoid extra server round trip */
     if (async->wait_handle)
     {
@@ -195,18 +202,21 @@ void async_terminate( struct async *async, unsigned int status )
     async->status = status;
     if (async->iosb && async->iosb->status == STATUS_PENDING) async->iosb->status = status;
 
-    if (async->data.user)
+    if (!async->direct_result)
     {
-        apc_call_t data;
+        if (async->data.user)
+        {
+            apc_call_t data;
 
-        memset( &data, 0, sizeof(data) );
-        data.type            = APC_ASYNC_IO;
-        data.async_io.user   = async->data.user;
-        data.async_io.sb     = async->data.iosb;
-        data.async_io.status = status;
-        thread_queue_apc( async->thread, &async->obj, &data );
+            memset( &data, 0, sizeof(data) );
+            data.type            = APC_ASYNC_IO;
+            data.async_io.user   = async->data.user;
+            data.async_io.sb     = async->data.iosb;
+            data.async_io.status = status;
+            thread_queue_apc( async->thread, &async->obj, &data );
+        }
+        else async_set_result( &async->obj, STATUS_SUCCESS, 0 );
     }
-    else async_set_result( &async->obj, STATUS_SUCCESS, 0 );
 
     async_reselect( async );
     if (async->queue) release_object( async );  /* so that it gets destroyed when the async is done */
@@ -270,14 +280,15 @@ struct async *create_async( struct thread *thread, const async_data_t *data, str
         return NULL;
     }
 
-    async->thread  = (struct thread *)grab_object( thread );
-    async->event   = event;
-    async->status  = STATUS_PENDING;
-    async->data    = *data;
-    async->timeout = NULL;
-    async->queue   = NULL;
-    async->signaled = 0;
-    async->wait_handle = 0;
+    async->thread        = (struct thread *)grab_object( thread );
+    async->event         = event;
+    async->status        = STATUS_PENDING;
+    async->data          = *data;
+    async->timeout       = NULL;
+    async->queue         = NULL;
+    async->signaled      = 0;
+    async->wait_handle   = 0;
+    async->direct_result = 0;
 
     if (iosb) async->iosb = (struct iosb *)grab_object( iosb );
     else async->iosb = NULL;
@@ -307,6 +318,7 @@ struct async *create_request_async( struct thread *thread, const async_data_t *d
             release_object( async );
             return NULL;
         }
+        async->direct_result = 1;
     }
     return async;
 }
@@ -321,12 +333,25 @@ obj_handle_t async_handoff( struct async *async, int success )
         return 0;
     }
 
-    if (async->iosb->status == STATUS_PENDING && !async_is_blocking( async ))
+    if (async->iosb->status != STATUS_PENDING)
     {
-        close_handle( async->thread->process, async->wait_handle);
-        async->wait_handle = 0;
+        if (async->iosb->out_data)
+        {
+            set_reply_data_ptr( async->iosb->out_data, async->iosb->out_size );
+            async->iosb->out_data = NULL;
+        }
+        async->signaled = 1;
     }
-    set_error( STATUS_PENDING );
+    else
+    {
+        async->direct_result = 0;
+        if (!async_is_blocking( async ))
+        {
+            close_handle( async->thread->process, async->wait_handle);
+            async->wait_handle = 0;
+        }
+    }
+    set_error( async->iosb->status );
     return async->wait_handle;
 }
 
@@ -399,8 +424,11 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         }
         if (async->event) set_event( async->event );
         else if (async->queue && async->queue->fd) set_fd_signaled( async->queue->fd, 1 );
-        async->signaled = 1;
-        wake_up( &async->obj, 0 );
+        if (!async->signaled)
+        {
+            async->signaled = 1;
+            wake_up( &async->obj, 0 );
+        }
     }
 }
 

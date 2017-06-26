@@ -580,6 +580,11 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
+        if (wait_handle && status != STATUS_PENDING)
+        {
+            io->u.Status    = status;
+            io->Information = wine_server_reply_size( reply );
+        }
     }
     SERVER_END_REQ;
 
