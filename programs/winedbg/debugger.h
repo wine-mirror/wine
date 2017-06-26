@@ -84,6 +84,7 @@ enum dbg_internal_types
     dbg_itype_astring,
     dbg_itype_ustring,
     dbg_itype_segptr,     /* hack for segmented pointers */
+    dbg_itype_m128a,      /* 128-bit (XMM) registers */
     dbg_itype_none              = 0xffffffff
 };
 

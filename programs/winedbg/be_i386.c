@@ -33,6 +33,30 @@ extern void             be_i386_disasm_one_insn(ADDRESS64* addr, int display);
 
 #define IS_VM86_MODE(ctx) (ctx->EFlags & V86_FLAG)
 
+typedef struct DECLSPEC_ALIGN(16) _M128A {
+    ULONGLONG Low;
+    LONGLONG High;
+} M128A, *PM128A;
+
+typedef struct _XMM_SAVE_AREA32 {
+    WORD ControlWord;        /* 000 */
+    WORD StatusWord;         /* 002 */
+    BYTE TagWord;            /* 004 */
+    BYTE Reserved1;          /* 005 */
+    WORD ErrorOpcode;        /* 006 */
+    DWORD ErrorOffset;       /* 008 */
+    WORD ErrorSelector;      /* 00c */
+    WORD Reserved2;          /* 00e */
+    DWORD DataOffset;        /* 010 */
+    WORD DataSelector;       /* 014 */
+    WORD Reserved3;          /* 016 */
+    DWORD MxCsr;             /* 018 */
+    DWORD MxCsr_Mask;        /* 01c */
+    M128A FloatRegisters[8]; /* 020 */
+    M128A XmmRegisters[16];  /* 0a0 */
+    BYTE Reserved4[96];      /* 1a0 */
+} XMM_SAVE_AREA32, *PXMM_SAVE_AREA32;
+
 static ADDRESS_MODE get_selector_type(HANDLE hThread, const CONTEXT* ctx, WORD sel)
 {
     LDT_ENTRY	le;
@@ -129,6 +153,9 @@ static void be_i386_single_step(CONTEXT* ctx, BOOL enable)
 
 static void be_i386_all_print_context(HANDLE hThread, const CONTEXT* ctx)
 {
+    static const char mxcsr_flags[16][4] = { "IE", "DE", "ZE", "OE", "UE", "PE", "DAZ", "IM",
+                                             "DM", "ZM", "OM", "UM", "PM", "R-", "R+", "FZ" };
+    XMM_SAVE_AREA32 *xmm_area;
     long double ST[8];                         /* These are for floating regs */
     int         cnt;
 
@@ -191,6 +218,29 @@ static void be_i386_all_print_context(HANDLE hThread, const CONTEXT* ctx)
     {
         memcpy(&ST[cnt], &ctx->FloatSave.RegisterArea[cnt * 10], 10);
         dbg_printf(" ST%d:%Lf ", cnt, ST[cnt]);
+    }
+
+    xmm_area = (XMM_SAVE_AREA32 *) &ctx->ExtendedRegisters;
+
+    dbg_printf(" mxcsr: %04x (", xmm_area->MxCsr );
+    for (cnt = 0; cnt < 16; cnt++)
+        if (xmm_area->MxCsr & (1 << cnt)) dbg_printf( " %s", mxcsr_flags[cnt] );
+    dbg_printf(" )\n");
+
+    for (cnt = 0; cnt < 8; cnt++)
+    {
+        dbg_printf( " xmm%u: uint=%08x%08x%08x%08x", cnt,
+                    *((unsigned int *)&xmm_area->XmmRegisters[cnt] + 3),
+                    *((unsigned int *)&xmm_area->XmmRegisters[cnt] + 2),
+                    *((unsigned int *)&xmm_area->XmmRegisters[cnt] + 1),
+                    *((unsigned int *)&xmm_area->XmmRegisters[cnt] + 0));
+        dbg_printf( " double={%g; %g}", *(double *)&xmm_area->XmmRegisters[cnt].Low,
+                    *(double *)&xmm_area->XmmRegisters[cnt].High );
+        dbg_printf( " float={%g; %g; %g; %g}\n",
+                    (double)*((float *)&xmm_area->XmmRegisters[cnt] + 0),
+                    (double)*((float *)&xmm_area->XmmRegisters[cnt] + 1),
+                    (double)*((float *)&xmm_area->XmmRegisters[cnt] + 2),
+                    (double)*((float *)&xmm_area->XmmRegisters[cnt] + 3) );
     }
     dbg_printf("\n");
 }
@@ -295,6 +345,14 @@ static struct dbg_internal_var be_i386_ctx[] =
     {CV_REG_ST0+5,      "ST5",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[50]), dbg_itype_long_real},
     {CV_REG_ST0+6,      "ST6",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[60]), dbg_itype_long_real},
     {CV_REG_ST0+7,      "ST7",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[70]), dbg_itype_long_real},
+    {CV_AMD64_XMM0,     "XMM0",         (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[0])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+1,   "XMM1",         (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[1])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+2,   "XMM2",         (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[2])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+3,   "XMM3",         (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[3])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+4,   "XMM4",         (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[4])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+5,   "XMM5",         (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[5])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+6,   "XMM6",         (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[6])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+7,   "XMM7",         (DWORD_PTR*)(FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[7])), dbg_itype_m128a},
     {0,                 NULL,           0,                                      dbg_itype_none}
 };
 
@@ -747,7 +805,7 @@ static int be_i386_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 static BOOL be_i386_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
                                   BOOL is_signed, LONGLONG* ret)
 {
-    if (size != 1 && size != 2 && size != 4 && size != 8) return FALSE;
+    if (size != 1 && size != 2 && size != 4 && size != 8 && size != 16) return FALSE;
 
     memset(ret, 0, sizeof(*ret)); /* clear unread bytes */
     /* FIXME: this assumes that debuggee and debugger use the same

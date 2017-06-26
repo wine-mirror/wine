@@ -921,6 +921,15 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         default: WINE_FIXME("unsupported %u for long real\n", ti); return FALSE;
         }
         break;
+    case dbg_itype_m128a:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 16; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
+        default: WINE_FIXME("unsupported %u for XMM register\n", ti); return FALSE;
+        }
+        break;
     default: WINE_FIXME("unsupported type id 0x%lx\n", type->id);
     }
 
