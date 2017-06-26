@@ -1560,6 +1560,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         NtClose( wait_handle );
     }
 
+    if (status != STATUS_PENDING && code != FSCTL_PIPE_LISTEN) io->u.Status = status;
     return status;
 }
 
@@ -1644,8 +1645,8 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
     }
 
     if (status == STATUS_NOT_SUPPORTED || status == STATUS_BAD_DEVICE_TYPE)
-        status = server_ioctl_file( handle, event, apc, apc_context, io, code,
-                                    in_buffer, in_size, out_buffer, out_size );
+        return server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                  in_buffer, in_size, out_buffer, out_size );
 
     if (status != STATUS_PENDING) io->u.Status = status;
     return status;
@@ -1694,7 +1695,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         status = server_ioctl_file( handle, event, apc, apc_context, io, code,
                                     in_buffer, in_size, out_buffer, out_size );
         if (!status) status = DIR_unmount_device( handle );
-        break;
+        return status;
 
     case FSCTL_PIPE_PEEK:
         {
@@ -1710,8 +1711,8 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
             if ((status = server_get_unix_fd( handle, FILE_READ_DATA, &fd, &needs_close, NULL, NULL )))
             {
                 if (status == STATUS_BAD_DEVICE_TYPE)
-                    status = server_ioctl_file( handle, event, apc, apc_context, io, code,
-                                                in_buffer, in_size, out_buffer, out_size );
+                    return server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                              in_buffer, in_size, out_buffer, out_size );
                 break;
             }
 
@@ -1767,11 +1768,6 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
             int fd = server_remove_fd_from_cache( handle );
             if (fd != -1) close( fd );
         }
-        break;
-
-    case FSCTL_PIPE_LISTEN:
-        status = server_ioctl_file( handle, event, apc, apc_context, io, code,
-                                    in_buffer, in_size, out_buffer, out_size );
         return status;
 
     case FSCTL_PIPE_IMPERSONATE:
@@ -1814,11 +1810,9 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         io->Information = 0;
         status = STATUS_SUCCESS;
         break;
-    case FSCTL_PIPE_WAIT:
     default:
-        status = server_ioctl_file( handle, event, apc, apc_context, io, code,
-                                    in_buffer, in_size, out_buffer, out_size );
-        break;
+        return server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                  in_buffer, in_size, out_buffer, out_size );
     }
 
     if (status != STATUS_PENDING) io->u.Status = status;
