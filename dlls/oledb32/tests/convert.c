@@ -2722,6 +2722,9 @@ static void test_getconversionsize(void)
     LONGLONG i8 = 202;
     DATE dbdate;
     DECIMAL dec;
+    DBTIMESTAMP ts = {2013, 5, 14, 2, 4, 12, 0};
+    DBTIME dbtime;
+    DBDATE dbdate1;
 
     /* same way as CanConvert fails here */
     dst_len = 0;
@@ -2993,6 +2996,39 @@ static void test_getconversionsize(void)
     ok(dst_len == 110, "%ld\n", dst_len);
 
     dst_len = 0;
+    src_len = sizeof(ts);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBTIMESTAMP, DBTYPE_WSTR, &src_len, &dst_len, &ts);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBTIMESTAMP, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(dbtime);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBTIME, DBTYPE_WSTR, &src_len, &dst_len, &dbtime);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBTIME, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(dbdate1);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBDATE, DBTYPE_WSTR, &src_len, &dst_len, &dbdate1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBDATE, DBTYPE_WSTR, NULL, &dst_len, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
     src_len = sizeof(i4);
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_I4, DBTYPE_STR, &src_len, &dst_len, &i4);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -3110,6 +3146,39 @@ static void test_getconversionsize(void)
 
     dst_len = 0;
     hr = IDataConvert_GetConversionSize(convert, DBTYPE_EMPTY, DBTYPE_STR, NULL, &dst_len, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(ts);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBTIMESTAMP, DBTYPE_STR, &src_len, &dst_len, &ts);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBTIMESTAMP, DBTYPE_STR, NULL, &dst_len, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(dbtime);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBTIME, DBTYPE_STR, &src_len, &dst_len, &dbtime);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBTIME, DBTYPE_STR, NULL, &dst_len, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    src_len = sizeof(dbdate1);
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBDATE, DBTYPE_STR, &src_len, &dst_len, &dbdate1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == 110, "%ld\n", dst_len);
+
+    dst_len = 0;
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_DBDATE, DBTYPE_STR, NULL, &dst_len, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(dst_len == 110, "%ld\n", dst_len);
 }

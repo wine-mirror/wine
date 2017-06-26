@@ -1409,6 +1409,9 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
         case DBTYPE_I8:
         case DBTYPE_UI8:
         case DBTYPE_R4:
+        case DBTYPE_DBDATE:
+        case DBTYPE_DBTIMESTAMP:
+        case DBTYPE_DBTIME:
             break;
         default:
             FIXME("unimplemented for %04x -> DBTYPE_STR\n", src_type);
@@ -1453,6 +1456,9 @@ static HRESULT WINAPI convert_GetConversionSize(IDataConvert* iface,
         case DBTYPE_I8:
         case DBTYPE_UI8:
         case DBTYPE_R4:
+        case DBTYPE_DBDATE:
+        case DBTYPE_DBTIMESTAMP:
+        case DBTYPE_DBTIME:
             break;
         default:
             FIXME("unimplemented for %04x -> DBTYPE_WSTR\n", src_type);
