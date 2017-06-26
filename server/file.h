@@ -52,7 +52,7 @@ struct fd_ops
     /* get file information */
     enum server_fd_type (*get_fd_type)(struct fd *fd);
     /* perform a read on the file */
-    obj_handle_t (*read)(struct fd *, struct async *, file_pos_t );
+    int (*read)(struct fd *, struct async *, file_pos_t );
     /* perform a write on the file */
     obj_handle_t (*write)(struct fd *, struct async *, file_pos_t );
     /* flush the object buffers */
@@ -100,7 +100,7 @@ extern void default_poll_event( struct fd *fd, int event );
 extern int fd_queue_async( struct fd *fd, struct async *async, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
-extern obj_handle_t no_fd_read( struct fd *fd, struct async *async, file_pos_t pos );
+extern int no_fd_read( struct fd *fd, struct async *async, file_pos_t pos );
 extern obj_handle_t no_fd_write( struct fd *fd, struct async *async, file_pos_t pos );
 extern obj_handle_t no_fd_flush( struct fd *fd, struct async *async );
 extern obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
@@ -177,6 +177,7 @@ extern struct async_queue *create_async_queue( struct fd *fd );
 extern void free_async_queue( struct async_queue *queue );
 extern struct async *create_async( struct thread *thread, const async_data_t *data, struct iosb *iosb );
 extern struct async *create_request_async( struct thread *thread, const async_data_t *data );
+extern obj_handle_t async_handoff( struct async *async, int success );
 extern void queue_async( struct async_queue *queue, struct async *async );
 extern void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status );
 extern void async_set_result( struct object *obj, unsigned int status, apc_param_t total );

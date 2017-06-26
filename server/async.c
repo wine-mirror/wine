@@ -48,6 +48,7 @@ struct async
     struct event        *event;
     async_data_t         data;            /* data for async I/O call */
     struct iosb         *iosb;            /* I/O status block */
+    obj_handle_t         wait_handle;     /* pre-allocated wait handle */
 };
 
 static void async_dump( struct object *obj, int verbose );
@@ -262,6 +263,7 @@ struct async *create_async( struct thread *thread, const async_data_t *data, str
     async->timeout = NULL;
     async->queue   = NULL;
     async->signaled = 0;
+    async->wait_handle = 0;
 
     if (iosb) async->iosb = (struct iosb *)grab_object( iosb );
     else async->iosb = NULL;
@@ -272,7 +274,8 @@ struct async *create_async( struct thread *thread, const async_data_t *data, str
     return async;
 }
 
-/* create an async associated with iosb for async-based requests */
+/* create an async associated with iosb for async-based requests
+ * returned async must be passed to async_handoff */
 struct async *create_request_async( struct thread *thread, const async_data_t *data )
 {
     struct async *async;
@@ -283,7 +286,37 @@ struct async *create_request_async( struct thread *thread, const async_data_t *d
 
     async = create_async( current, data, iosb );
     release_object( iosb );
+    if (async)
+    {
+        if (!(async->wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 )))
+        {
+            release_object( async );
+            return NULL;
+        }
+    }
     return async;
+}
+
+/* return async object status and wait handle to client */
+obj_handle_t async_handoff( struct async *async, int success )
+{
+    obj_handle_t handle;
+    if (!success)
+    {
+        close_handle( async->thread->process, async->wait_handle );
+        async->wait_handle = 0;
+        return 0;
+    }
+
+    if (async->iosb->status == STATUS_PENDING && !async_is_blocking( async ))
+    {
+        close_handle( async->thread->process, async->wait_handle);
+        async->wait_handle = 0;
+    }
+    handle = async->wait_handle;
+    async->wait_handle = 0;
+    set_error( STATUS_PENDING );
+    return handle;
 }
 
 /* set the timeout of an async operation */
