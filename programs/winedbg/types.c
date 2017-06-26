@@ -894,6 +894,33 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         default: WINE_FIXME("unsupported %u for seg-ptr\n", ti); return FALSE;
         }
         break;
+    case dbg_itype_short_real:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btFloat; break;
+        default: WINE_FIXME("unsupported %u for short real\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_real:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btFloat; break;
+        default: WINE_FIXME("unsupported %u for real\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_long_real:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 10; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btFloat; break;
+        default: WINE_FIXME("unsupported %u for long real\n", ti); return FALSE;
+        }
+        break;
     default: WINE_FIXME("unsupported type id 0x%lx\n", type->id);
     }
 

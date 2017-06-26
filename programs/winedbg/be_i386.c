@@ -287,6 +287,14 @@ static struct dbg_internal_var be_i386_ctx[] =
     {CV_REG_FLAGS,      "FLAGS",        (DWORD_PTR*)FIELD_OFFSET(CONTEXT, EFlags),  dbg_itype_unsigned_short_int},
     {CV_REG_EIP,        "EIP",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Eip),     dbg_itype_unsigned_int},
     {CV_REG_EFLAGS,     "EFLAGS",       (DWORD_PTR*)FIELD_OFFSET(CONTEXT, EFlags),  dbg_itype_unsigned_int},
+    {CV_REG_ST0,        "ST0",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[ 0]), dbg_itype_long_real},
+    {CV_REG_ST0+1,      "ST1",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[10]), dbg_itype_long_real},
+    {CV_REG_ST0+2,      "ST2",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[20]), dbg_itype_long_real},
+    {CV_REG_ST0+3,      "ST3",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[30]), dbg_itype_long_real},
+    {CV_REG_ST0+4,      "ST4",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[40]), dbg_itype_long_real},
+    {CV_REG_ST0+5,      "ST5",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[50]), dbg_itype_long_real},
+    {CV_REG_ST0+6,      "ST6",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[60]), dbg_itype_long_real},
+    {CV_REG_ST0+7,      "ST7",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, FloatSave.RegisterArea[70]), dbg_itype_long_real},
     {0,                 NULL,           0,                                      dbg_itype_none}
 };
 
@@ -767,9 +775,9 @@ static BOOL be_i386_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
     if (!memory_read_value(lvalue, size, tmp)) return FALSE;
 
     /* float & double types have to be promoted to a long double */
-    if (size == sizeof(float)) *ret = *(float*)tmp;
-    else if (size == sizeof(double)) *ret = *(double*)tmp;
-    else if (size == sizeof(long double)) *ret = *(long double*)tmp;
+    if (size == 4) *ret = *(float*)tmp;
+    else if (size == 8) *ret = *(double*)tmp;
+    else if (size == 10) *ret = *(long double*)tmp;
     else return FALSE;
 
     return TRUE;
