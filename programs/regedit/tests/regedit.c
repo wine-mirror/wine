@@ -160,8 +160,8 @@ static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *value_nam
        (value_name && *value_name) ? value_name : "(Default)", lr);
 }
 
-#define verify_key_exist(k,s) verify_key_exist_(__LINE__,k,s)
-static void verify_key_exist_(unsigned line, HKEY key_base, const char *subkey)
+#define verify_key(k,s) verify_key_(__LINE__,k,s)
+static void verify_key_(unsigned line, HKEY key_base, const char *subkey)
 {
     HKEY hkey;
     LONG lr;
@@ -1256,13 +1256,13 @@ static void test_key_creation_and_deletion(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1c ]\n");
-    verify_key_exist(hkey, "Subkey1c ");
+    verify_key(hkey, "Subkey1c ");
     lr = RegDeleteKeyA(hkey, "Subkey1c ");
     ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1d\t]\n");
-    verify_key_exist(hkey, "Subkey1d\t");
+    verify_key(hkey, "Subkey1d\t");
     lr = RegDeleteKeyA(hkey, "Subkey1d\t");
     ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
 
@@ -1270,24 +1270,24 @@ static void test_key_creation_and_deletion(void)
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n\n");
-    verify_key_exist(hkey, "Subkey2a");
-    verify_key_exist(hkey, "Subkey2b");
+    verify_key(hkey, "Subkey2a");
+    verify_key(hkey, "Subkey2b");
 
     exec_import_str("REGEDIT4\n\n"
                     "[ -HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n");
-    verify_key_exist(hkey, "Subkey2a");
+    verify_key(hkey, "Subkey2a");
 
     exec_import_str("REGEDIT4\n\n"
                     "[\t-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n");
-    verify_key_exist(hkey, "Subkey2b");
+    verify_key(hkey, "Subkey2b");
 
     exec_import_str("REGEDIT4\n\n"
                     "[- HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n");
-    verify_key_exist(hkey, "Subkey2a");
+    verify_key(hkey, "Subkey2a");
 
     exec_import_str("REGEDIT4\n\n"
                     "[-\tHKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n");
-    verify_key_exist(hkey, "Subkey2b");
+    verify_key(hkey, "Subkey2b");
 
     exec_import_str("REGEDIT4\n\n"
                     "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n\n"
@@ -1299,8 +1299,8 @@ static void test_key_creation_and_deletion(void)
     exec_import_str("REGEDIT4\n\n"
                     "[hkey_CURRENT_user\\" KEY_BASE "\\Subkey3a]\n\n"
                     "[HkEy_CuRrEnT_uSeR\\" KEY_BASE "\\SuBkEy3b]\n\n");
-    verify_key_exist(hkey, "Subkey3a");
-    verify_key_exist(hkey, "Subkey3b");
+    verify_key(hkey, "Subkey3a");
+    verify_key(hkey, "Subkey3b");
 
     exec_import_str("REGEDIT4\n\n"
                     "[-HKEY_current_USER\\" KEY_BASE "\\sUBKEY3A]\n\n"
