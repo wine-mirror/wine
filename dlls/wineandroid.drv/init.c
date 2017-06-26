@@ -25,6 +25,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <link.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -492,6 +493,115 @@ DECL_FUNCPTR( hw_get_module );
 
 struct gralloc_module_t *gralloc_module = NULL;
 
+#ifndef DT_GNU_HASH
+#define DT_GNU_HASH 0x6ffffef5
+#endif
+
+static unsigned int gnu_hash( const char *name )
+{
+    unsigned int h = 5381;
+    while (*name) h = h * 33 + (unsigned char)*name++;
+    return h;
+}
+
+static unsigned int hash_symbol( const char *name )
+{
+    unsigned int hi, hash = 0;
+    while (*name)
+    {
+        hash = (hash << 4) + (unsigned char)*name++;
+        hi = hash & 0xf0000000;
+        hash ^= hi;
+        hash ^= hi >> 24;
+    }
+    return hash;
+}
+
+static void *find_symbol( const struct dl_phdr_info* info, const char *var, int type )
+{
+    const ElfW(Dyn) *dyn = NULL;
+    const ElfW(Phdr) *ph;
+    const ElfW(Sym) *symtab = NULL;
+    const Elf32_Word *hashtab = NULL;
+    const Elf32_Word *gnu_hashtab = NULL;
+    const char *strings = NULL;
+    Elf32_Word idx;
+
+    for (ph = info->dlpi_phdr; ph < &info->dlpi_phdr[info->dlpi_phnum]; ++ph)
+    {
+        if (PT_DYNAMIC == ph->p_type)
+        {
+            dyn = (const ElfW(Dyn) *)(info->dlpi_addr + ph->p_vaddr);
+            break;
+        }
+    }
+    if (!dyn) return NULL;
+
+    while (dyn->d_tag)
+    {
+        if (dyn->d_tag == DT_STRTAB)
+            strings = (const char*)(info->dlpi_addr + dyn->d_un.d_ptr);
+        if (dyn->d_tag == DT_SYMTAB)
+            symtab = (const ElfW(Sym) *)(info->dlpi_addr + dyn->d_un.d_ptr);
+        if (dyn->d_tag == DT_HASH)
+            hashtab = (const Elf32_Word *)(info->dlpi_addr + dyn->d_un.d_ptr);
+        if (dyn->d_tag == DT_GNU_HASH)
+            gnu_hashtab = (const Elf32_Word *)(info->dlpi_addr + dyn->d_un.d_ptr);
+        dyn++;
+    }
+
+    if (!symtab || !strings) return NULL;
+
+    if (gnu_hashtab)  /* new style hash table */
+    {
+        const unsigned int hash   = gnu_hash(var);
+        const Elf32_Word nbuckets = gnu_hashtab[0];
+        const Elf32_Word symbias  = gnu_hashtab[1];
+        const Elf32_Word nwords   = gnu_hashtab[2];
+        const ElfW(Addr) *bitmask = (const ElfW(Addr) *)(gnu_hashtab + 4);
+        const Elf32_Word *buckets = (const Elf32_Word *)(bitmask + nwords);
+        const Elf32_Word *chains  = buckets + nbuckets - symbias;
+
+        if (!(idx = buckets[hash % nbuckets])) return NULL;
+        do
+        {
+            if ((chains[idx] & ~1u) == (hash & ~1u) &&
+                ELF32_ST_BIND(symtab[idx].st_info) == STB_GLOBAL &&
+                ELF32_ST_TYPE(symtab[idx].st_info) == type &&
+                !strcmp( strings + symtab[idx].st_name, var ))
+                return (void *)(info->dlpi_addr + symtab[idx].st_value);
+        } while (!(chains[idx++] & 1u));
+    }
+    else if (hashtab)  /* old style hash table */
+    {
+        const unsigned int hash   = hash_symbol( var );
+        const Elf32_Word nbuckets = hashtab[0];
+        const Elf32_Word *buckets = hashtab + 2;
+        const Elf32_Word *chains  = buckets + nbuckets;
+
+        for (idx = buckets[hash % nbuckets]; idx; idx = chains[idx])
+        {
+            if (ELF32_ST_BIND(symtab[idx].st_info) == STB_GLOBAL &&
+                ELF32_ST_TYPE(symtab[idx].st_info) == type &&
+                !strcmp( strings + symtab[idx].st_name, var ))
+                return (void *)(info->dlpi_addr + symtab[idx].st_value);
+        }
+    }
+    return NULL;
+}
+
+static int enum_libs( struct dl_phdr_info* info, size_t size, void* data )
+{
+    const char *p;
+
+    if (!info->dlpi_name) return 0;
+    if (!(p = strrchr( info->dlpi_name, '/' ))) return 0;
+    if (strcmp( p, "/libhardware.so" )) return 0;
+    TRACE( "found libhardware at %p\n", info->dlpi_phdr );
+    phw_get_module = find_symbol( info, "hw_get_module", STT_FUNC );
+    return 1;
+}
+
 static void load_hardware_libs(void)
 {
     const struct hw_module_t *module;
@@ -504,8 +614,20 @@ static void load_hardware_libs(void)
     }
     else
     {
-        ERR( "failed to load libhardware: %s\n", error );
-        return;
+        /* Android >= N disallows loading libhardware, so we load libandroid (which imports
+         * libhardware), and then we can find libhardware in the list of loaded libraries.
+         */
+        if (!wine_dlopen( "libandroid.so", RTLD_GLOBAL, error, sizeof(error) ))
+        {
+            ERR( "failed to load libandroid.so: %s\n", error );
+            return;
+        }
+        dl_iterate_phdr( enum_libs, 0 );
+        if (!phw_get_module)
+        {
+            ERR( "failed to find hw_get_module\n" );
+            return;
+        }
     }
 
     if (phw_get_module( GRALLOC_HARDWARE_MODULE_ID, &module ) == 0)
