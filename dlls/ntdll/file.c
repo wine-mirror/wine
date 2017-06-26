@@ -3424,7 +3424,6 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
         if (hEvent)
         {
             NtWaitForSingleObject( hEvent, FALSE, NULL );
-            NtClose( hEvent );
             ret = STATUS_SUCCESS;
         }
     }

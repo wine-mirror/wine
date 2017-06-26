@@ -56,7 +56,7 @@ struct fd_ops
     /* perform a write on the file */
     int (*write)(struct fd *, struct async *, file_pos_t );
     /* flush the object buffers */
-    obj_handle_t (*flush)(struct fd *, struct async *);
+    int (*flush)(struct fd *, struct async *);
     /* perform an ioctl on the file */
     int (*ioctl)(struct fd *fd, ioctl_code_t code, struct async *async );
     /* queue an async operation */
@@ -102,7 +102,7 @@ extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern int no_fd_read( struct fd *fd, struct async *async, file_pos_t pos );
 extern int no_fd_write( struct fd *fd, struct async *async, file_pos_t pos );
-extern obj_handle_t no_fd_flush( struct fd *fd, struct async *async );
+extern int no_fd_flush( struct fd *fd, struct async *async );
 extern int no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 extern int default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 extern void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count );

@@ -2172,7 +2172,7 @@ int no_fd_write( struct fd *fd, struct async *async, file_pos_t pos )
 }
 
 /* default flush() routine */
-obj_handle_t no_fd_flush( struct fd *fd, struct async *async )
+int no_fd_flush( struct fd *fd, struct async *async )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
@@ -2373,10 +2373,9 @@ DECL_HANDLER(flush)
 
     if (!fd) return;
 
-    async = create_async( fd, current, &req->async, NULL );
-    if (async)
+    if ((async = create_request_async( fd, &req->async )))
     {
-        reply->event = fd->fd_ops->flush( fd, async );
+        reply->event = async_handoff( async, fd->fd_ops->flush( fd, async ), NULL );
         release_object( async );
     }
     release_object( fd );
