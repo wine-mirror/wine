@@ -550,7 +550,7 @@ static void test_basic_import_31(void)
 static void test_invalid_import(void)
 {
     LONG lr;
-    HKEY hkey, subkey;
+    HKEY hkey;
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
@@ -725,14 +725,12 @@ static void test_invalid_import(void)
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\\n"
                     "Subkey1]\n");
-    lr = RegOpenKeyExA(hkey, "Subkey1", 0, KEY_READ, &subkey);
-    ok(lr == ERROR_FILE_NOT_FOUND, "got %d, expected 2\n", lr);
+    verify_key_nonexist(hkey, "Subkey1");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\n"
                     "\\Subkey2]\n");
-    lr = RegOpenKeyExA(hkey, "Subkey2", 0, KEY_READ, &subkey);
-    ok(lr == ERROR_FILE_NOT_FOUND, "got %d, expected 2\n", lr);
+    verify_key_nonexist(hkey, "Subkey2");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
