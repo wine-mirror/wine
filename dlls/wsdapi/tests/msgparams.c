@@ -142,11 +142,11 @@ static void RemoteAddress_tests(void)
     ok(udpMessageParams != NULL, "WSDCreateUdpMessageParameters(NULL, &udpMessageParams) failed: udpMessageParams == NULL\n");
 
     rc = IWSDUdpMessageParameters_GetRemoteAddress(udpMessageParams, NULL);
-    todo_wine ok(rc == E_POINTER, "GetRemoteAddress failed: %08x\n", rc);
+    ok(rc == E_POINTER, "GetRemoteAddress failed: %08x\n", rc);
     ok(returnedAddress == NULL, "GetRemoteAddress returned %p\n", returnedAddress);
 
     rc = IWSDUdpMessageParameters_GetRemoteAddress(udpMessageParams, &returnedAddress);
-    todo_wine ok(rc == E_ABORT, "GetRemoteAddress failed: %08x\n", rc);
+    ok(rc == E_ABORT, "GetRemoteAddress failed: %08x\n", rc);
     ok(returnedAddress == NULL, "GetRemoteAddress returned %p\n", returnedAddress);
 
     rc = WSDCreateUdpAddress(&origUdpAddress);
@@ -157,14 +157,14 @@ static void RemoteAddress_tests(void)
     todo_wine ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
 
     rc = IWSDUdpMessageParameters_SetRemoteAddress(udpMessageParams, (IWSDAddress *)origUdpAddress);
-    todo_wine ok(rc == S_OK, "SetRemoteAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "SetRemoteAddress failed: %08x\n", rc);
 
     rc = IWSDUdpMessageParameters_GetRemoteAddress(udpMessageParams, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetRemoteAddress failed: %08x\n", rc);
-    todo_wine ok(returnedAddress != NULL, "GetLocalAddress returned NULL\n");
+    ok(rc == S_OK, "GetRemoteAddress failed: %08x\n", rc);
+    ok(returnedAddress != NULL, "GetLocalAddress returned NULL\n");
 
     /* Check if GetRemoteAddress returns the same object */
-    todo_wine ok(returnedAddress == (IWSDAddress *)origUdpAddress, "returnedAddress != origUdpAddress\n");
+    ok(returnedAddress == (IWSDAddress *)origUdpAddress, "returnedAddress != origUdpAddress\n");
 
     ret = IWSDUdpMessageParameters_Release(udpMessageParams);
     ok(ret == 0, "IWSDUdpMessageParameters_Release() has %d references, should have 0\n", ret);

@@ -33,6 +33,7 @@ typedef struct IWSDMessageParametersImpl {
     IWSDMessageParameters IWSDMessageParameters_iface;
     LONG                  ref;
     IWSDAddress           *localAddress;
+    IWSDAddress           *remoteAddress;
 } IWSDMessageParametersImpl;
 
 typedef struct IWSDUdpMessageParametersImpl {
@@ -72,6 +73,11 @@ static ULONG WINAPI IWSDMessageParametersImpl_Release(IWSDMessageParameters *ifa
         if (This->localAddress != NULL)
         {
             IWSDAddress_Release(This->localAddress);
+        }
+
+        if (This->remoteAddress != NULL)
+        {
+            IWSDAddress_Release(This->remoteAddress);
         }
 
         HeapFree(GetProcessHeap(), 0, This);
@@ -126,14 +132,46 @@ static HRESULT WINAPI IWSDMessageParametersImpl_SetLocalAddress(IWSDMessageParam
 
 static HRESULT WINAPI IWSDMessageParametersImpl_GetRemoteAddress(IWSDMessageParameters *This, IWSDAddress **ppAddress)
 {
-    FIXME("(%p, %p)\n", This, ppAddress);
-    return E_NOTIMPL;
+    IWSDMessageParametersImpl *impl = impl_from_IWSDMessageParameters(This);
+
+    TRACE("(%p, %p)\n", impl, ppAddress);
+
+    if (ppAddress == NULL)
+    {
+        return E_POINTER;
+    }
+
+    if (impl->remoteAddress == NULL)
+    {
+        return E_ABORT;
+    }
+
+    *ppAddress = impl->remoteAddress;
+    IWSDAddress_AddRef(*ppAddress);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDMessageParametersImpl_SetRemoteAddress(IWSDMessageParameters *This, IWSDAddress *pAddress)
 {
-    FIXME("(%p, %p)\n", This, pAddress);
-    return E_NOTIMPL;
+    IWSDMessageParametersImpl *impl = impl_from_IWSDMessageParameters(This);
+
+    TRACE("(%p, %p)\n", impl, pAddress);
+
+    if (pAddress == NULL)
+    {
+        return E_POINTER;
+    }
+
+    if (impl->remoteAddress != NULL)
+    {
+        IWSDAddress_Release(impl->remoteAddress);
+    }
+
+    impl->remoteAddress = pAddress;
+    IWSDAddress_AddRef(pAddress);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDMessageParametersImpl_GetLowerParameters(IWSDMessageParameters *This, IWSDMessageParameters **ppTxParams)
