@@ -2165,7 +2165,7 @@ int no_fd_read( struct fd *fd, struct async *async, file_pos_t pos )
 }
 
 /* default write() routine */
-obj_handle_t no_fd_write( struct fd *fd, struct async *async, file_pos_t pos )
+int no_fd_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
@@ -2451,7 +2451,7 @@ DECL_HANDLER(read)
 
     if ((async = create_request_async( current, &req->async )))
     {
-        reply->wait    = async_handoff( async, fd->fd_ops->read( fd, async, req->pos ) );
+        reply->wait    = async_handoff( async, fd->fd_ops->read( fd, async, req->pos ), NULL );
         reply->options = fd->options;
         release_object( async );
     }
@@ -2463,20 +2463,14 @@ DECL_HANDLER(write)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, FILE_WRITE_DATA );
     struct async *async;
-    struct iosb *iosb;
 
     if (!fd) return;
 
-    if ((iosb = create_iosb( get_req_data(), get_req_data_size(), 0 )))
+    if ((async = create_request_async( current, &req->async )))
     {
-        async = create_async( current, &req->async, iosb );
-        if (async)
-        {
-            reply->wait    = fd->fd_ops->write( fd, async, req->pos );
-            reply->options = fd->options;
-            release_object( async );
-        }
-        release_object( iosb );
+        reply->wait    = async_handoff( async, fd->fd_ops->write( fd, async, req->pos ), &reply->size );
+        reply->options = fd->options;
+        release_object( async );
     }
     release_object( fd );
 }

@@ -324,7 +324,7 @@ struct async *create_request_async( struct thread *thread, const async_data_t *d
 }
 
 /* return async object status and wait handle to client */
-obj_handle_t async_handoff( struct async *async, int success )
+obj_handle_t async_handoff( struct async *async, int success, data_size_t *result )
 {
     if (!success)
     {
@@ -340,6 +340,7 @@ obj_handle_t async_handoff( struct async *async, int success )
             set_reply_data_ptr( async->iosb->out_data, async->iosb->out_size );
             async->iosb->out_data = NULL;
         }
+        if (result) *result = async->iosb->result;
         async->signaled = 1;
     }
     else

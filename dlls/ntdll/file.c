@@ -624,6 +624,11 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
+        if (wait_handle && status != STATUS_PENDING)
+        {
+            io->u.Status    = status;
+            io->Information = reply->size;
+        }
     }
     SERVER_END_REQ;
 
@@ -633,7 +638,6 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
     {
         NtWaitForSingleObject( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), NULL );
         status = io->u.Status;
-        NtClose( wait_handle );
     }
 
     return status;
