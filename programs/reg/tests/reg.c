@@ -1836,8 +1836,16 @@ static void test_import(void)
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+}
 
-    /* Test file contents - Unicode */
+static void test_unicode_import(void)
+{
+    DWORD r, dword = 0x123, type, size;
+    HKEY hkey, subkey;
+    LONG err;
+    char buffer[8];
+    BYTE hex[8];
+
     test_import_wstr("REGEDIT\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
@@ -2984,6 +2992,13 @@ static void test_import_with_whitespace(void)
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", err);
+}
+
+static void test_unicode_import_with_whitespace(void)
+{
+    HKEY hkey;
+    DWORD r, dword;
+    LONG err;
 
     test_import_wstr("\xef\xbb\xbf  Windows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n", &r);
@@ -3139,5 +3154,7 @@ START_TEST(reg)
     test_query();
     test_v_flags();
     test_import();
+    test_unicode_import();
     test_import_with_whitespace();
+    test_unicode_import_with_whitespace();
 }
