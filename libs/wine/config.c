@@ -374,22 +374,32 @@ static char *running_from_build_dir( const char *basedir )
     return path;
 }
 
+/* try to set the specified directory as bindir, or set build_dir if it's inside the build directory */
+static int set_bindir( char *dir )
+{
+    if (!dir) return 0;
+    if (is_valid_bindir( dir ))
+    {
+        bindir = dir;
+    }
+    else
+    {
+        build_dir = running_from_build_dir( dir );
+        free( dir );
+    }
+    return bindir || build_dir;
+}
+
 /* initialize the argv0 path */
 void wine_init_argv0_path( const char *argv0 )
 {
     const char *basename;
-    char *libdir;
+    char *libdir = NULL;
 
     if (!(basename = strrchr( argv0, '/' ))) basename = argv0;
     else basename++;
 
-    bindir = get_runtime_exedir();
-    if (bindir && !is_valid_bindir( bindir ))
-    {
-        build_dir = running_from_build_dir( bindir );
-        free( bindir );
-        bindir = NULL;
-    }
+    if (set_bindir( get_runtime_exedir() )) goto done;
 
     libdir = get_runtime_libdir();
     if (libdir && !bindir && !build_dir)
@@ -399,16 +409,9 @@ void wine_init_argv0_path( const char *argv0 )
     }
 
     if (!libdir && !bindir && !build_dir)
-    {
-        bindir = get_runtime_argvdir( argv0 );
-        if (bindir && !is_valid_bindir( bindir ))
-        {
-            build_dir = running_from_build_dir( bindir );
-            free( bindir );
-            bindir = NULL;
-        }
-    }
+        set_bindir( get_runtime_argvdir( argv0 ));
 
+done:
     if (build_dir)
     {
         argv0_name = build_path( "loader/", basename );
