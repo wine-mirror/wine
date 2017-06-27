@@ -1405,6 +1405,12 @@ int main( int argc, char *argv[] )
             SetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", "0" );
         }
 
+        if (nb_filters && !exclude_tests)
+        {
+            run_tests( logname, outdir );
+            exit(0);
+        }
+
         while (!tag) {
             if (!interactive)
                 report (R_FATAL, "Please specify a tag (-t option) if "
