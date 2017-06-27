@@ -2785,6 +2785,24 @@ static void test_processmessage(void)
     r = MsiProcessMessage(package, INSTALLMESSAGE_INITIALIZE, hrec);
     ok( r == -1, "expected -1, got %i\n", r);
 
+    r = MsiRecordSetInteger(hrec, 1, 2);
+    ok( r == ERROR_SUCCESS, "set integer failed\n");
+    r = MsiRecordSetInteger(hrec, 2, 1);
+    ok( r == ERROR_SUCCESS, "set integer failed\n");
+    r = MsiProcessMessage(package, INSTALLMESSAGE_COMMONDATA, hrec);
+    todo_wine
+    ok( r == IDOK, "expected IDOK, got %i\n", r);
+
+    r = MsiRecordSetInteger(hrec, 2, 2);
+    ok( r == ERROR_SUCCESS, "set integer failed\n");
+    r = MsiProcessMessage(package, INSTALLMESSAGE_INITIALIZE, hrec);
+    ok( r == -1, "expected -1, got %i\n", r);
+
+    r = MsiRecordSetInteger(hrec, 1, 1);
+    ok( r == ERROR_SUCCESS, "set integer failed\n");
+    r = MsiProcessMessage(package, INSTALLMESSAGE_INITIALIZE, hrec);
+    ok( r == -1, "expected -1, got %i\n", r);
+
     MsiCloseHandle(hrec);
     MsiCloseHandle(package);
 

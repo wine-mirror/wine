@@ -1468,6 +1468,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     MSIDATABASE *db;
     MSIPACKAGE *package;
     MSIHANDLE handle;
+    MSIRECORD *data_row, *info_row;
     LPWSTR ptr, base_url = NULL;
     UINT r;
     WCHAR localfile[MAX_PATH], cachefile[MAX_PATH];
@@ -1475,6 +1476,12 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     DWORD index = 0;
     MSISUMMARYINFO *si;
     BOOL delete_on_close = FALSE;
+    LPWSTR productname;
+    static const WCHAR date_format[] =
+        {'M','/','d','/','y','y','y','y',0};
+    static const WCHAR time_format[] =
+        {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
+    WCHAR timet[100], datet[100], info_template[1024], info_message[1024];
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
@@ -1610,6 +1617,42 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     if (gszLogFile)
         package->log_file = CreateFileW( gszLogFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
                                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+
+    /* FIXME: when should these messages be sent? */
+    data_row = MSI_CreateRecord(3);
+    if (!data_row)
+	return ERROR_OUTOFMEMORY;
+    /* FIXME: field 0 should be NULL */
+    MSI_RecordSetInteger(data_row, 1, 0);
+    MSI_RecordSetInteger(data_row, 2, package->num_langids ? package->langids[0] : 0);
+    MSI_RecordSetInteger(data_row, 3, msi_get_string_table_codepage(package->db->strings));
+    MSI_ProcessMessage(package, INSTALLMESSAGE_COMMONDATA, data_row);
+
+    info_row = MSI_CreateRecord(0);
+    if (!info_row)
+    {
+	msiobj_release(&data_row->hdr);
+	return ERROR_OUTOFMEMORY;
+    }
+    GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, time_format, timet, 100);
+    GetDateFormatW(LOCALE_USER_DEFAULT, 0, NULL, date_format, datet, 100);
+    LoadStringW(msi_hInstance, IDS_INFO_LOGGINGSTART, info_template, 1024);
+    sprintfW(info_message, info_template, datet, timet);
+    MSI_RecordSetStringW(info_row, 0, info_message);
+    MSI_ProcessMessage(package, INSTALLMESSAGE_INFO|MB_ICONHAND, info_row);
+
+    MSI_ProcessMessage(package, INSTALLMESSAGE_COMMONDATA, data_row);
+
+    productname = msi_dup_property(package->db, INSTALLPROPERTY_PRODUCTNAMEW);
+    MSI_RecordSetInteger(data_row, 1, 1);
+    MSI_RecordSetStringW(data_row, 2, productname);
+    MSI_RecordSetStringW(data_row, 3, NULL);
+    MSI_ProcessMessage(package, INSTALLMESSAGE_COMMONDATA, data_row);
+
+    msi_free(productname);
+    msiobj_release(&info_row->hdr);
+    msiobj_release(&data_row->hdr);
+
     *pPackage = package;
     return ERROR_SUCCESS;
 }
@@ -1791,6 +1834,12 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         msi_free(template_rec);
         msi_free(template);
     }
+    else if ((eMessageType & 0xff000000) == INSTALLMESSAGE_COMMONDATA)
+    {
+        WCHAR template[1024];
+        LoadStringW(msi_hInstance, IDS_COMMONDATA, template, 1024);
+        MSI_RecordSetStringW(record, 0, template);
+    }
 
     if (!package || !record)
         message = NULL;
@@ -1894,6 +1943,10 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_INITIALIZE ||
         (eMessageType & 0xff000000) == INSTALLMESSAGE_TERMINATE)
+        return -1;
+
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONDATA &&
+        MsiRecordGetInteger(hRecord, 1) != 2)
         return -1;
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );

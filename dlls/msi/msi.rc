@@ -69,6 +69,7 @@ STRINGTABLE
 {
     IDS_ACTIONSTART "Action %s: [1]. [2]"
     IDS_INFO "Info [1]. "
+    IDS_COMMONDATA "Message type: [1], Argument: [2]{, [3]}"
 }
 
 /* INSTALLMESSAGE_INFO strings */
@@ -76,6 +77,7 @@ STRINGTABLE
 {
     IDS_INFO_ACTIONSTART "Action start %s: [1]."
     IDS_INFO_ACTIONENDED "Action ended %s: [1]. Return value [2]."
+    IDS_INFO_LOGGINGSTART "=== Logging started: %s  %s ==="
 }
 
 /* Standard action description strings */
