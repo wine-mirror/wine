@@ -551,6 +551,7 @@ static void test_invalid_import(void)
 {
     LONG lr;
     HKEY hkey;
+    DWORD dword = 0x8;
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
@@ -872,6 +873,93 @@ static void test_invalid_import(void)
 
     lr = RegDeleteKeyA(hkey, "Subkey2");
     todo_wine ok(lr == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", lr);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine25a\"=hex(2):4c,69,6e,65,20,\\\n"
+                    "\"Wine25b\"=\"Test value\"\n"
+
+                    "\"Wine25c\"=hex(2):4c,69,6e,65,20,\\\n"
+                    ";comment\n"
+                    "\"Wine25d\"=\"Test value\"\n"
+
+                    "\"Wine25e\"=hex(2):4c,69,6e,65,20,\\\n"
+                    "#comment\n"
+                    "\"Wine25f\"=\"Test value\"\n"
+
+                    "\"Wine25g\"=hex(2):4c,69,6e,65,20,\\\n\n"
+                    "\"Wine25h\"=\"Test value\"\n"
+
+                    "\"Wine25i\"=hex(2):4c,69,6e,65,20\\\n"
+                    "\"Wine25j\"=\"Test value\"\n\n");
+    verify_reg_nonexist(hkey, "Wine25a");
+    verify_reg_nonexist(hkey, "Wine25b");
+    verify_reg_nonexist(hkey, "Wine25c");
+    todo_wine verify_reg_nonexist(hkey, "Wine25d");
+    verify_reg_nonexist(hkey, "Wine25e");
+    verify_reg(hkey, "Wine25f", REG_SZ, "Test value", 11, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine25g");
+    todo_wine verify_reg_nonexist(hkey, "Wine25h");
+    verify_reg_nonexist(hkey, "Wine25i");
+    todo_wine verify_reg(hkey, "Wine25j", REG_SZ, "Test value", 11, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine26a\"=hex(2):4c,69,6e,65,20,\\\n"
+                    "\"Wine26b\"=dword:00000008\n"
+
+                    "\"Wine26c\"=hex(2):4c,69,6e,65,20,\\\n"
+                    ";comment\n"
+                    "\"Wine26d\"=dword:00000008\n"
+
+                    "\"Wine26e\"=hex(2):4c,69,6e,65,20,\\\n"
+                    "#comment\n"
+                    "\"Wine26f\"=dword:00000008\n"
+
+                    "\"Wine26g\"=hex(2):4c,69,6e,65,20,\\\n\n"
+                    "\"Wine26h\"=dword:00000008\n"
+
+                    "\"Wine26i\"=hex(2):4c,69,6e,65,20\\\n"
+                    "\"Wine26j\"=dword:00000008\n\n");
+    verify_reg_nonexist(hkey, "Wine26a");
+    verify_reg_nonexist(hkey, "Wine26b");
+    verify_reg_nonexist(hkey, "Wine26c");
+    todo_wine verify_reg_nonexist(hkey, "Wine26d");
+    verify_reg_nonexist(hkey, "Wine26e");
+    verify_reg(hkey, "Wine26f", REG_DWORD, &dword, sizeof(dword), 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine26g");
+    todo_wine verify_reg_nonexist(hkey, "Wine26h");
+    verify_reg_nonexist(hkey, "Wine26i");
+    todo_wine verify_reg(hkey, "Wine26j", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine27a\"=hex(2):25,48,4f,4d,45,25,5c,\\\n"
+                    "\"Wine27b\"=hex(2):25,50,41,54,48,25,00\n"
+
+                    "\"Wine27c\"=hex(2):25,48,4f,4d,45,25,5c,\\\n"
+                    ";comment\n"
+                    "\"Wine27d\"=hex(2):25,50,41,54,48,25,00\n"
+
+                    "\"Wine27e\"=hex(2):25,48,4f,4d,45,25,5c,\\\n"
+                    "#comment\n"
+                    "\"Wine27f\"=hex(2):25,50,41,54,48,25,00\n"
+
+                    "\"Wine27g\"=hex(2):25,48,4f,4d,45,25,5c,\\\n\n"
+                    "\"Wine27h\"=hex(2):25,50,41,54,48,25,00\n"
+
+                    "\"Wine27i\"=hex(2):25,48,4f,4d,45,25,5c\\\n"
+                    "\"Wine27j\"=hex(2):25,50,41,54,48,25,00\n\n");
+    verify_reg_nonexist(hkey, "Wine27a");
+    verify_reg_nonexist(hkey, "Wine27b");
+    verify_reg_nonexist(hkey, "Wine27c");
+    todo_wine verify_reg_nonexist(hkey, "Wine27d");
+    verify_reg_nonexist(hkey, "Wine27e");
+    verify_reg(hkey, "Wine27f", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine27g");
+    todo_wine verify_reg_nonexist(hkey, "Wine27h");
+    verify_reg_nonexist(hkey, "Wine27i");
+    todo_wine verify_reg(hkey, "Wine27j", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
     RegCloseKey(hkey);
 
