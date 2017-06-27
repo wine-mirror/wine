@@ -1012,6 +1012,15 @@ static void test_invalid_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine29a");
     todo_wine verify_reg_nonexist(hkey, "Wine29b");
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine30a\"=hex(0):25,48,4f,4d,45,25,5c,/\n"
+                    "  25,50,41,54,48,25,00\n"
+                    "\"Wine30b\"=hex(0):25,48,4f,4d,45,25,5c/\n"
+                    "  25,50,41,54,48,25,00\n\n");
+    verify_reg_nonexist(hkey, "Wine30a");
+    verify_reg_nonexist(hkey, "Wine30b");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
