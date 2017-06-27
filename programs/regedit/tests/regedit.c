@@ -486,6 +486,15 @@ static void test_basic_import(void)
                     "  25,48,4f,4d,45,25,00\n\n");
     verify_reg(hkey, "Wine16", REG_EXPAND_SZ, "%HOME%", 7, 0);
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine62a\"=hex(7):4c,69,6e,65,20,\\");
+    lr = RegQueryValueExA(hkey, "Wine62a", NULL, NULL, NULL, NULL);
+    todo_wine ok(lr == ERROR_SUCCESS || broken(lr == ERROR_FILE_NOT_FOUND) /* WinXP */,
+                 "got %u, expected 0\n", lr);
+    if (lr == ERROR_SUCCESS)
+        todo_wine verify_reg(hkey, "Wine62a", REG_MULTI_SZ, "Line ", 6, 0);
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
@@ -1020,6 +1029,11 @@ static void test_invalid_import(void)
                     "  25,50,41,54,48,25,00\n\n");
     verify_reg_nonexist(hkey, "Wine30a");
     verify_reg_nonexist(hkey, "Wine30b");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine62b\"=hex(7):4c,69,6e,65,20\\");
+    verify_reg_nonexist(hkey, "Wine62b");
 
     RegCloseKey(hkey);
 
