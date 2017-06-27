@@ -1089,6 +1089,27 @@ static void test_comments(void)
     verify_reg_nonexist(hkey, "Wine27c");
     verify_reg_nonexist(hkey, "Wine27d");
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine28a\"=hex(2):25,48,4f,4d,45,25,5c,\\\n"
+                    "  25,50,41,54,48,25,00\n"
+                    "\"Wine28b\"=hex(2):25,48,4f,4d,45,25,5c\\\n"
+                    "  25,50,41,54,48,25,00\n"
+                    "\"Wine28c\"=hex(2):25,48,4f,4d,45,25,5c,  \\  ;comment\n"
+                    "  25,50,41,54,48,25,00\n"
+                    "\"Wine28d\"=hex(2):25,48,4f,4d,45,25,5c  \\  ;comment\n"
+                    "  25,50,41,54,48,25,00\n"
+                    "\"Wine28e\"=hex(2):25,48,4f,4d,45,25,5c,\\\t  ;comment\n"
+                    "  25,50,41,54,48,25,00\n"
+                    "\"Wine28f\"=hex(2):25,48,4f,4d,45,25,5c\\\t  ;comment\n"
+                    "  25,50,41,54,48,25,00\n\n");
+    verify_reg(hkey, "Wine28a", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
+    verify_reg_nonexist(hkey, "Wine28b");
+    todo_wine verify_reg(hkey, "Wine28c", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
+    verify_reg_nonexist(hkey, "Wine28d");
+    todo_wine verify_reg(hkey, "Wine28e", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
+    verify_reg_nonexist(hkey, "Wine28f");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
