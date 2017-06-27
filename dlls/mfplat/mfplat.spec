@@ -49,7 +49,7 @@
 @ stub MFCreateMFVideoFormatFromMFMediaType
 @ stub MFCreateMediaBufferWrapper
 @ stub MFCreateMediaEvent
-@ stub MFCreateMediaType
+@ stdcall MFCreateMediaType(ptr)
 @ stub MFCreateMediaTypeFromRepresentation
 @ stub MFCreateMemoryBuffer
 @ stub MFCreateMemoryStream
