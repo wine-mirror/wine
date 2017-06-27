@@ -856,6 +856,23 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine23j");
     verify_reg_nonexist(hkey, "Wine23k");
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine24a\"=hex(2):4c,69,6e,65,20,\\\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1]\n");
+    verify_reg_nonexist(hkey, "Wine24a");
+    verify_key_nonexist(hkey, "Subkey1");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine24b\"=hex(2):4c,69,6e,65,20\\\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2]\n");
+    verify_reg_nonexist(hkey, "Wine24b");
+    todo_wine verify_key(hkey, "Subkey2");
+
+    lr = RegDeleteKeyA(hkey, "Subkey2");
+    todo_wine ok(lr == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", lr);
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
