@@ -574,7 +574,7 @@ static void testInitializeSecurityContextFlags(void)
 {
     SECURITY_STATUS         sec_status;
     PSecPkgInfoA            pkg_info = NULL;
-    SspiData                client = {0};
+    SspiData                client = {{0}};
     SEC_WINNT_AUTH_IDENTITY_A id;
     ULONG                   req_attr, ctxt_attr;
     TimeStamp               ttl;
@@ -794,7 +794,7 @@ static void testAuth(ULONG data_rep, BOOL fake)
     SECURITY_STATUS         sec_status;
     PSecPkgInfoA            pkg_info = NULL;
     BOOL                    first = TRUE;
-    SspiData                client = {0}, server = {0};
+    SspiData                client = {{0}}, server = {{0}};
     SEC_WINNT_AUTH_IDENTITY_A id;
     SecPkgContext_Sizes     ctxt_sizes;
 
@@ -923,7 +923,7 @@ static void testSignSeal(void)
     SECURITY_STATUS         sec_status;
     PSecPkgInfoA            pkg_info = NULL;
     BOOL                    first = TRUE;
-    SspiData                client = {0}, server = {0};
+    SspiData                client = {{0}}, server = {{0}};
     SEC_WINNT_AUTH_IDENTITY_A id;
     static char             sec_pkg_name[] = "NTLM";
     SecBufferDesc           crypt;
