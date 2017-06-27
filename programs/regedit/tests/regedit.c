@@ -559,7 +559,7 @@ static void test_invalid_import(void)
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestNoEndQuote\"=\"Asdffdsa\n");
-    lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
+    lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ|KEY_SET_VALUE, &hkey);
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
     verify_reg_nonexist(hkey, "TestNoEndQuote");
 
@@ -960,6 +960,46 @@ static void test_invalid_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine27h");
     verify_reg_nonexist(hkey, "Wine27i");
     todo_wine verify_reg(hkey, "Wine27j", REG_EXPAND_SZ, "%PATH%", 7, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine28a\"=hex(2):4c,69,6e,65,20,\\\n"
+                    "@=\"Default value 1\"\n\n");
+    verify_reg_nonexist(hkey, "Wine28a");
+    verify_reg_nonexist(hkey, NULL);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine28b\"=hex(2):4c,69,6e,65,20,\\\n"
+                    ";comment\n"
+                    "@=\"Default value 2\"\n\n");
+    verify_reg_nonexist(hkey, "Wine28b");
+    todo_wine verify_reg_nonexist(hkey, NULL);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine28c\"=hex(2):4c,69,6e,65,20,\\\n"
+                    "#comment\n"
+                    "@=\"Default value 3\"\n\n");
+    verify_reg_nonexist(hkey, "Wine28c");
+    verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
+
+    lr = RegDeleteValueW(hkey, NULL);
+    ok(lr == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", lr);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine28d\"=hex(2):4c,69,6e,65,20,\\\n\n"
+                    "@=\"Default value 4\"\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Wine28d");
+    todo_wine verify_reg_nonexist(hkey, NULL);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine28e\"=hex(2):4c,69,6e,65,20\\\n"
+                    "@=\"Default value 5\"\n\n");
+    verify_reg_nonexist(hkey, "Wine28e");
+    verify_reg(hkey, NULL, REG_SZ, "Default value 5", 16, TODO_REG_DATA);
 
     RegCloseKey(hkey);
 
