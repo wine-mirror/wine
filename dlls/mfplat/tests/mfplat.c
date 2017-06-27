@@ -191,6 +191,33 @@ static void init_functions(void)
 #undef X
 }
 
+static void test_MFCreateMediaType(void)
+{
+    HRESULT hr;
+    IMFMediaType *mediatype;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if(0)
+{
+    /* Crash on Windows Vista/7 */
+    hr = MFCreateMediaType(NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+}
+
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IMFMediaType_Release(mediatype);
+
+    MFShutdown();
+}
+
+
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
@@ -199,6 +226,7 @@ START_TEST(mfplat)
 
     test_register();
     test_source_resolver();
+    test_MFCreateMediaType();
 
     CoUninitialize();
 }
