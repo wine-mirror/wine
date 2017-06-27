@@ -6706,6 +6706,7 @@ static void test_animation(void)
 {
     IDirect3DRMAnimation2 *animation2;
     IDirect3DRMAnimation *animation;
+    D3DRMANIMATIONOPTIONS options;
     IDirect3DRMObject *obj, *obj2;
     IDirect3DRMFrame3 *frame3;
     IDirect3DRMFrame *frame;
@@ -6775,6 +6776,51 @@ static void test_animation(void)
 
     IDirect3DRMFrame3_Release(frame3);
     IDirect3DRMFrame_Release(frame);
+
+    /* Animation options. */
+    options = IDirect3DRMAnimation_GetOptions(animation);
+    ok(options == (D3DRMANIMATION_CLOSED | D3DRMANIMATION_LINEARPOSITION),
+            "Unexpected default options %#x.\n", options);
+
+    /* Undefined mask value */
+    hr = IDirect3DRMAnimation_SetOptions(animation, 0xf0000000);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    options = IDirect3DRMAnimation_GetOptions(animation);
+    ok(options == (D3DRMANIMATION_CLOSED | D3DRMANIMATION_LINEARPOSITION),
+            "Unexpected default options %#x.\n", options);
+
+    /* Ambiguous mask */
+    hr = IDirect3DRMAnimation_SetOptions(animation, D3DRMANIMATION_OPEN | D3DRMANIMATION_CLOSED);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DRMAnimation_SetOptions(animation, D3DRMANIMATION_LINEARPOSITION | D3DRMANIMATION_SPLINEPOSITION);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DRMAnimation_SetOptions(animation, D3DRMANIMATION_SCALEANDROTATION | D3DRMANIMATION_POSITION);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    options = IDirect3DRMAnimation_GetOptions(animation);
+    ok(options == (D3DRMANIMATION_CLOSED | D3DRMANIMATION_LINEARPOSITION),
+            "Unexpected default options %#x.\n", options);
+
+    hr = IDirect3DRMAnimation_SetOptions(animation, D3DRMANIMATION_SCALEANDROTATION);
+    ok(SUCCEEDED(hr), "Failed to set animation options, hr %#x.\n", hr);
+
+    options = IDirect3DRMAnimation_GetOptions(animation);
+    ok(options == D3DRMANIMATION_SCALEANDROTATION, "Unexpected options %#x.\n", options);
+
+    hr = IDirect3DRMAnimation_SetOptions(animation, D3DRMANIMATION_OPEN);
+    ok(SUCCEEDED(hr), "Failed to set animation options, hr %#x.\n", hr);
+
+    options = IDirect3DRMAnimation_GetOptions(animation);
+    ok(options == D3DRMANIMATION_OPEN, "Unexpected options %#x.\n", options);
+
+    hr = IDirect3DRMAnimation_SetOptions(animation, 0);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    options = IDirect3DRMAnimation_GetOptions(animation);
+    ok(options == D3DRMANIMATION_OPEN, "Unexpected options %#x.\n", options);
 
     IDirect3DRMAnimation2_Release(animation2);
     IDirect3DRMAnimation_Release(animation);

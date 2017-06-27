@@ -214,6 +214,7 @@ struct d3drm_animation
     LONG ref;
     IDirect3DRM *d3drm;
     IDirect3DRMFrame3 *frame;
+    D3DRMANIMATIONOPTIONS options;
 };
 
 struct d3drm_wrap

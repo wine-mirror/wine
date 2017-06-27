@@ -3238,11 +3238,38 @@ static HRESULT WINAPI d3drm_animation1_GetClassName(IDirect3DRMAnimation *iface,
     return d3drm_animation2_GetClassName(&animation->IDirect3DRMAnimation2_iface, size, name);
 }
 
+static HRESULT WINAPI d3drm_animation2_SetOptions(IDirect3DRMAnimation2 *iface, D3DRMANIMATIONOPTIONS options)
+{
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
+    static const DWORD supported_options = D3DRMANIMATION_OPEN | D3DRMANIMATION_CLOSED | D3DRMANIMATION_LINEARPOSITION
+        | D3DRMANIMATION_SPLINEPOSITION | D3DRMANIMATION_SCALEANDROTATION | D3DRMANIMATION_POSITION;
+
+    TRACE("iface %p, options %#x.\n", iface, options);
+
+    if (!(options & supported_options))
+        return D3DRMERR_BADVALUE;
+
+    if ((options & (D3DRMANIMATION_OPEN | D3DRMANIMATION_CLOSED)) == (D3DRMANIMATION_OPEN | D3DRMANIMATION_CLOSED) ||
+            (options & (D3DRMANIMATION_LINEARPOSITION | D3DRMANIMATION_SPLINEPOSITION)) ==
+            (D3DRMANIMATION_LINEARPOSITION | D3DRMANIMATION_SPLINEPOSITION) ||
+            (options & (D3DRMANIMATION_SCALEANDROTATION | D3DRMANIMATION_POSITION)) ==
+            (D3DRMANIMATION_SCALEANDROTATION | D3DRMANIMATION_POSITION))
+    {
+        return D3DRMERR_BADVALUE;
+    }
+
+    animation->options = options;
+
+    return D3DRM_OK;
+}
+
 static HRESULT WINAPI d3drm_animation1_SetOptions(IDirect3DRMAnimation *iface, D3DRMANIMATIONOPTIONS options)
 {
-    FIXME("iface %p, %#x.\n", iface, options);
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, %#x.\n", iface, options);
+
+    return d3drm_animation2_SetOptions(&animation->IDirect3DRMAnimation2_iface, options);
 }
 
 static HRESULT WINAPI d3drm_animation1_AddRotateKey(IDirect3DRMAnimation *iface, D3DVALUE time, D3DRMQUATERNION *q)
@@ -3301,18 +3328,22 @@ static HRESULT WINAPI d3drm_animation1_SetTime(IDirect3DRMAnimation *iface, D3DV
     return E_NOTIMPL;
 }
 
-static D3DRMANIMATIONOPTIONS WINAPI d3drm_animation1_GetOptions(IDirect3DRMAnimation *iface)
+static D3DRMANIMATIONOPTIONS WINAPI d3drm_animation2_GetOptions(IDirect3DRMAnimation2 *iface)
 {
-    FIXME("iface %p.\n", iface);
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return animation->options;
 }
 
-static HRESULT WINAPI d3drm_animation2_SetOptions(IDirect3DRMAnimation2 *iface, D3DRMANIMATIONOPTIONS options)
+static D3DRMANIMATIONOPTIONS WINAPI d3drm_animation1_GetOptions(IDirect3DRMAnimation *iface)
 {
-    FIXME("iface %p, options %#x.\n", iface, options);
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    return d3drm_animation2_GetOptions(&animation->IDirect3DRMAnimation2_iface);
 }
 
 static HRESULT WINAPI d3drm_animation2_AddRotateKey(IDirect3DRMAnimation2 *iface, D3DVALUE time, D3DRMQUATERNION *q)
@@ -3361,13 +3392,6 @@ static HRESULT WINAPI d3drm_animation2_SetTime(IDirect3DRMAnimation2 *iface, D3D
     FIXME("iface %p, time %.8e.\n", iface, time);
 
     return E_NOTIMPL;
-}
-
-static D3DRMANIMATIONOPTIONS WINAPI d3drm_animation2_GetOptions(IDirect3DRMAnimation2 *iface)
-{
-    FIXME("iface %p.\n", iface);
-
-    return 0;
 }
 
 static HRESULT WINAPI d3drm_animation2_GetFrame(IDirect3DRMAnimation2 *iface, IDirect3DRMFrame3 **frame)
@@ -3481,6 +3505,7 @@ HRESULT d3drm_animation_create(struct d3drm_animation **animation, IDirect3DRM *
     object->IDirect3DRMAnimation2_iface.lpVtbl = &d3drm_animation2_vtbl;
     object->d3drm = d3drm;
     object->ref = 1;
+    object->options = D3DRMANIMATION_CLOSED | D3DRMANIMATION_LINEARPOSITION;
 
     d3drm_object_init(&object->obj, classname);
 
