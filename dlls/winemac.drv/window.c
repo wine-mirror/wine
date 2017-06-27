@@ -1837,7 +1837,7 @@ BOOL CDECL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *bmi = (BITMAPINFO *)buffer;
     void *src_bits, *dst_bits;
-    RECT rect;
+    RECT rect, src_rect;
     HDC hdc = 0;
     HBITMAP dib;
     BOOL ret = FALSE;
@@ -1899,11 +1899,13 @@ BOOL CDECL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *
         surface->funcs->unlock(surface);
         PatBlt(hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS);
     }
+    src_rect = rect;
+    if (info->pptSrc) OffsetRect( &src_rect, info->pptSrc->x, info->pptSrc->y );
+    DPtoLP( info->hdcSrc, (POINT *)&src_rect, 2 );
+
     if (!(ret = GdiAlphaBlend(hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                              info->hdcSrc,
-                              rect.left + (info->pptSrc ? info->pptSrc->x : 0),
-                              rect.top + (info->pptSrc ? info->pptSrc->y : 0),
-                              rect.right - rect.left, rect.bottom - rect.top,
+                              info->hdcSrc, src_rect.left, src_rect.top,
+                              src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
                               blend)))
         goto done;
 
