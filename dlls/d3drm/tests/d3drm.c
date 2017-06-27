@@ -6707,6 +6707,8 @@ static void test_animation(void)
     IDirect3DRMAnimation2 *animation2;
     IDirect3DRMAnimation *animation;
     IDirect3DRMObject *obj, *obj2;
+    IDirect3DRMFrame3 *frame3;
+    IDirect3DRMFrame *frame;
     IDirect3DRM *d3drm1;
     HRESULT hr;
 
@@ -6737,6 +6739,42 @@ static void test_animation(void)
 
     IDirect3DRMObject_Release(obj);
     IDirect3DRMObject_Release(obj2);
+
+    /* Set animated frame, get it back. */
+    hr = IDirect3DRM_CreateFrame(d3drm1, NULL, &frame);
+    ok(SUCCEEDED(hr), "Failed to create a frame, hr %#x.\n", hr);
+
+    hr = IDirect3DRMAnimation_SetFrame(animation, NULL);
+    ok(SUCCEEDED(hr), "Failed to reset frame, hr %#x.\n", hr);
+
+    CHECK_REFCOUNT(frame, 1);
+    hr = IDirect3DRMAnimation_SetFrame(animation, frame);
+    ok(SUCCEEDED(hr), "Failed to set a frame, hr %#x.\n", hr);
+    CHECK_REFCOUNT(frame, 1);
+
+    hr = IDirect3DRMAnimation2_GetFrame(animation2, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DRMAnimation2_GetFrame(animation2, &frame3);
+    ok(SUCCEEDED(hr), "Failed to get the frame, %#x.\n", hr);
+    ok(frame3 != (void *)frame, "Unexpected interface pointer.\n");
+    CHECK_REFCOUNT(frame, 2);
+
+    IDirect3DRMFrame3_Release(frame3);
+
+    hr = IDirect3DRMAnimation_SetFrame(animation, NULL);
+    ok(SUCCEEDED(hr), "Failed to reset frame, hr %#x.\n", hr);
+
+    hr = IDirect3DRMFrame_QueryInterface(frame, &IID_IDirect3DRMFrame3, (void **)&frame3);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMFrame3, hr %#x.\n", hr);
+
+    CHECK_REFCOUNT(frame3, 2);
+    hr = IDirect3DRMAnimation2_SetFrame(animation2, frame3);
+    ok(SUCCEEDED(hr), "Failed to set a frame, hr %#x.\n", hr);
+    CHECK_REFCOUNT(frame3, 2);
+
+    IDirect3DRMFrame3_Release(frame3);
+    IDirect3DRMFrame_Release(frame);
 
     IDirect3DRMAnimation2_Release(animation2);
     IDirect3DRMAnimation_Release(animation);

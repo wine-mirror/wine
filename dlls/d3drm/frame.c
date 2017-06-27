@@ -3277,9 +3277,21 @@ static HRESULT WINAPI d3drm_animation1_DeleteKey(IDirect3DRMAnimation *iface, D3
 
 static HRESULT WINAPI d3drm_animation1_SetFrame(IDirect3DRMAnimation *iface, IDirect3DRMFrame *frame)
 {
-    FIXME("iface %p, frame %p.\n", iface, frame);
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation(iface);
+    HRESULT hr = D3DRM_OK;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, frame %p.\n", iface, frame);
+
+    if (frame)
+    {
+        hr = IDirect3DRMFrame_QueryInterface(frame, &IID_IDirect3DRMFrame3, (void **)&animation->frame);
+        if (SUCCEEDED(hr))
+            IDirect3DRMFrame3_Release(animation->frame);
+    }
+    else
+        animation->frame = NULL;
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm_animation1_SetTime(IDirect3DRMAnimation *iface, D3DVALUE time)
@@ -3335,9 +3347,13 @@ static HRESULT WINAPI d3drm_animation2_DeleteKey(IDirect3DRMAnimation2 *iface, D
 
 static HRESULT WINAPI d3drm_animation2_SetFrame(IDirect3DRMAnimation2 *iface, IDirect3DRMFrame3 *frame)
 {
-    FIXME("iface %p, frame %p.\n", iface, frame);
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, frame %p.\n", iface, frame);
+
+    animation->frame = frame;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_animation2_SetTime(IDirect3DRMAnimation2 *iface, D3DVALUE time)
@@ -3356,9 +3372,18 @@ static D3DRMANIMATIONOPTIONS WINAPI d3drm_animation2_GetOptions(IDirect3DRMAnima
 
 static HRESULT WINAPI d3drm_animation2_GetFrame(IDirect3DRMAnimation2 *iface, IDirect3DRMFrame3 **frame)
 {
-    FIXME("iface %p, frame %p.\n", iface, frame);
+    struct d3drm_animation *animation = impl_from_IDirect3DRMAnimation2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, frame %p.\n", iface, frame);
+
+    if (!frame)
+        return D3DRMERR_BADVALUE;
+
+    *frame = animation->frame;
+    if (*frame)
+        IDirect3DRMFrame3_AddRef(*frame);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_animation2_DeleteKeyByID(IDirect3DRMAnimation2 *iface, DWORD id)
