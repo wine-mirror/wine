@@ -92,6 +92,7 @@ IDL_SRCS = \
 	mfidl.idl \
 	mfobjects.idl \
 	mfreadwrite.idl \
+	mftransform.idl \
 	mimeinfo.idl \
 	mimeole.idl \
 	mlang.idl \

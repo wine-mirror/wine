@@ -17,6 +17,7 @@
  */
 
 import "mfobjects.idl";
+import "mftransform.idl";
 
 typedef unsigned __int64 TOPOID;
 typedef LONGLONG  MFTIME;
