@@ -21,6 +21,7 @@
 
 #define COBJMACROS
 
+#include <assert.h>
 #include <stdio.h>
 #include <windows.h>
 #include <msidefs.h>
@@ -841,16 +842,25 @@ static UINT package_from_db(MSIHANDLE hdb, MSIHANDLE *handle)
     return ERROR_SUCCESS;
 }
 
-static void create_test_file(const CHAR *name)
+static void create_file_data(LPCSTR name, LPCSTR data)
 {
     HANDLE file;
     DWORD written;
 
     file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
-    WriteFile(file, name, strlen(name), &written, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return;
+
+    WriteFile(file, data, strlen(data), &written, NULL);
     WriteFile(file, "\n", strlen("\n"), &written, NULL);
+
     CloseHandle(file);
+}
+
+static void create_test_file(const CHAR *name)
+{
+    create_file_data(name, name);
 }
 
 typedef struct _tagVS_VERSIONINFO
@@ -9179,6 +9189,232 @@ static void test_externalui(void)
     DeleteFileA(msifile);
 }
 
+struct externalui_message {
+    UINT message;
+    int field_count;
+    char field[4][100];
+    int match[4]; /* should we test for a match */
+    int optional;
+};
+
+static struct externalui_message *sequence;
+static int sequence_count, sequence_size;
+
+static void add_message(const struct externalui_message *msg)
+{
+    if (!sequence)
+    {
+        sequence_size = 10;
+        sequence = HeapAlloc(GetProcessHeap(), 0, sequence_size * sizeof(*sequence));
+    }
+    if (sequence_count == sequence_size)
+    {
+        sequence_size *= 2;
+        sequence = HeapReAlloc(GetProcessHeap(), 0, sequence, sequence_size * sizeof(*sequence));
+    }
+
+    assert(sequence);
+
+    sequence[sequence_count++] = *msg;
+}
+
+static void flush_sequence(void)
+{
+    HeapFree(GetProcessHeap(), 0, sequence);
+    sequence = NULL;
+    sequence_count = sequence_size = 0;
+}
+
+static void ok_sequence_(const struct externalui_message *expected, const char *context, BOOL todo,
+                         const char *file, int line)
+{
+    static const struct externalui_message end_of_sequence = {0};
+    const struct externalui_message *actual;
+    int failcount = 0;
+    int i;
+
+    add_message(&end_of_sequence);
+
+    actual = sequence;
+
+    while (expected->message && actual->message)
+    {
+        if (expected->message == actual->message)
+        {
+            if (expected->field_count != actual->field_count)
+            {
+                todo_wine_if (todo)
+                    ok_(file, line) (FALSE, "%s: in msg 0x%08x expecting field count %d got %d\n",
+                                     context, expected->message, expected->field_count, actual->field_count);
+                failcount++;
+            }
+
+            for (i = 0; i <= actual->field_count; i++)
+            {
+                if (expected->match[i] && strcmp(expected->field[i], actual->field[i]))
+                {
+                    todo_wine_if (todo)
+                        ok_(file, line) (FALSE, "%s: in msg 0x%08x field %d: expected \"%s\", got \"%s\"\n",
+                                         context, expected->message, i, expected->field[i], actual->field[i]);
+                    failcount++;
+                }
+            }
+
+            expected++;
+            actual++;
+        }
+        else
+        {
+            todo_wine_if (todo)
+                ok_(file, line) (FALSE, "%s: the msg 0x%08x was expected, but got msg 0x%08x instead\n",
+                                 context, expected->message, actual->message);
+            failcount++;
+            if (todo)
+                goto done;
+            expected++;
+            actual++;
+        }
+    }
+
+    if (expected->message || actual->message)
+    {
+        todo_wine_if (todo)
+            ok_(file, line) (FALSE, "%s: the msg sequence is not complete: expected %08x - actual %08x\n",
+                             context, expected->message, actual->message);
+        failcount++;
+    }
+
+    if(todo && !failcount) /* succeeded yet marked todo */
+    {
+        todo_wine
+            ok_(file, line)(TRUE, "%s: marked \"todo_wine\" but succeeds\n", context);
+    }
+
+done:
+    flush_sequence();
+}
+
+#define ok_sequence(exp, contx, todo) \
+        ok_sequence_((exp), (contx), (todo), __FILE__, __LINE__)
+
+static const struct externalui_message empty_sequence[] = {
+    {0}
+};
+
+static const struct externalui_message openpackage_nonexistent_sequence[] = {
+    {INSTALLMESSAGE_INITIALIZE, -1},
+    {INSTALLMESSAGE_TERMINATE, -1},
+    {0}
+};
+
+static const struct externalui_message openpackage_sequence[] = {
+    {INSTALLMESSAGE_INITIALIZE, -1},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO|MB_ICONHAND, 0, {""}, {0}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "1", "", ""}, {0, 1, 0, 0}},
+    {0}
+};
+
+static const struct externalui_message doaction_costinitialize_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostInitialize", "", ""}, {0, 1, 0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", "1"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message doaction_custom_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "custom", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", "1"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", "0"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message closehandle_sequence[] = {
+    {INSTALLMESSAGE_TERMINATE, -1},
+    {0}
+};
+
+static INT CALLBACK externalui_message_callback(void *context, UINT message, MSIHANDLE hrecord)
+{
+    struct externalui_message msg;
+    char buffer[100];
+    DWORD length = 100;
+    int i;
+
+    msg.message = message;
+    msg.field_count = MsiRecordGetFieldCount(hrecord);
+    for (i = 0; i <= msg.field_count; i++)
+    {
+        length = 100;
+        MsiRecordGetStringA(hrecord, i, buffer, &length);
+        memcpy(msg.field[i], buffer, length+1);
+    }
+
+    add_message(&msg);
+
+    return 1;
+}
+
+static void test_externalui_message(void)
+{
+    /* test that events trigger the correct sequence of messages */
+
+    INSTALLUI_HANDLER_RECORD prev;
+    const struct externalui_message *sequence = NULL;
+    MSIHANDLE hdb, hpkg;
+    UINT r;
+
+    r = pMsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS, &sequence, &prev);
+
+    flush_sequence();
+
+    CoInitialize(NULL);
+
+    hdb = create_package_db();
+    ok(hdb, "failed to create database\n");
+
+    create_file_data("forcecodepage.idt", "\r\n\r\n1252\t_ForceCodepage\r\n");
+    r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d", r);
+
+    r = MsiOpenPackageA(NULL, &hpkg);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok_sequence(empty_sequence, "MsiOpenPackage with NULL db", FALSE);
+
+    r = MsiOpenPackageA("nonexistent", &hpkg);
+    ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+    ok_sequence(openpackage_nonexistent_sequence, "MsiOpenPackage with nonexistent db", TRUE);
+
+    r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFileA(msifile);
+        return;
+    }
+    ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
+    ok_sequence(openpackage_sequence, "MsiOpenPackage with valid db", TRUE);
+
+    /* Test a standard action */
+    r = MsiDoActionA(hpkg, "CostInitialize");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok_sequence(doaction_costinitialize_sequence, "MsiDoAction(\"CostInitialize\")", TRUE);
+
+    /* Test a standard action */
+    r = MsiDoActionA(hpkg, "custom");
+    ok(r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %d\n", r);
+    ok_sequence(doaction_custom_sequence, "MsiDoAction(\"custom\")", TRUE);
+
+    /* close the package */
+    MsiCloseHandle(hpkg);
+    ok_sequence(closehandle_sequence, "MsiCloseHandle()", TRUE);
+
+    CoUninitialize();
+    DeleteFileA(msifile);
+    DeleteFileA("forcecodepage.idt");
+}
+
 START_TEST(package)
 {
     STATEMGRSTATUS status;
@@ -9237,6 +9473,8 @@ START_TEST(package)
     test_MsiEnumComponentCosts();
     test_MsiDatabaseCommit();
     test_externalui();
+    if (pMsiSetExternalUIRecord)
+        test_externalui_message();
 
     if (pSRSetRestorePointA && !pMsiGetComponentPathExA && ret)
     {
