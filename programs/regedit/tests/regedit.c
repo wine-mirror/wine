@@ -1266,6 +1266,42 @@ static void test_comments(void)
     todo_wine verify_reg(hkey, "Wine28e", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
     verify_reg_nonexist(hkey, "Wine28f");
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine29a\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,\\\n"
+                    ";comment\n"
+                    "  65,6e,\\;comment\n"
+                    "  61,74,69,6f,6e,00,00\n\n");
+    todo_wine verify_reg(hkey, "Wine29a", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine29b\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,\\\n"
+                    "  ;comment\n"
+                    "  65,6e,\\;comment\n"
+                    "  61,74,69,6f,6e,00,00\n\n");
+    todo_wine verify_reg(hkey, "Wine29b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine29c\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,\\\n"
+                    "#comment\n"
+                    "  65,6e,\\;comment\n"
+                    "  61,74,69,6f,6e,00,00\n\n");
+    verify_reg_nonexist(hkey, "Wine29c");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine29d\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,\\\n"
+                    "  #comment\n"
+                    "  65,6e,\\;comment\n"
+                    "  61,74,69,6f,6e,00,00\n\n");
+    verify_reg_nonexist(hkey, "Wine29d");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
@@ -1393,6 +1429,15 @@ static void test_import_with_whitespace(void)
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\t@\t=\tdword:\t00000008\t\n\n");
     verify_reg(hkey, "", REG_DWORD, &dword, sizeof(DWORD), 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine10\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,\\\n\n"
+                    "  63,61,74,\\\n\n\n"
+                    "  65,6e,\\\n\n\n\n"
+                    "  61,74,69,6f,6e,00,00\n\n");
+    verify_reg(hkey, "Wine10", REG_MULTI_SZ, "Line concatenation\0", 20, TODO_REG_SIZE);
 
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
