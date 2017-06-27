@@ -1065,6 +1065,17 @@ static path_test_t widenline_wide_path[] = {
     {5.0, 20.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0} /*3*/
     };
 
+static path_test_t widenline_dash_path[] = {
+    {5.0, 0.0,   PathPointTypeStart, 0, 0}, /*0*/
+    {35.0, 0.0,  PathPointTypeLine,  0, 0}, /*1*/
+    {35.0, 10.0, PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 10.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0}, /*3*/
+    {45.0, 0.0,   PathPointTypeStart, 0, 0}, /*4*/
+    {50.0, 0.0,  PathPointTypeLine,  0, 0}, /*5*/
+    {50.0, 10.0, PathPointTypeLine,  0, 0}, /*6*/
+    {45.0, 10.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0}, /*7*/
+    };
+
 static void test_widen(void)
 {
     GpStatus status;
@@ -1137,6 +1148,22 @@ static void test_widen(void)
     ok_path(path, widenline_path, sizeof(widenline_path)/sizeof(path_test_t), FALSE);
 
     status = GdipScaleMatrix(m, 1.0, 0.5, MatrixOrderAppend);
+    expect(Ok, status);
+
+    /* dashed line */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 5.0, 50.0, 5.0);
+    expect(Ok, status);
+
+    status = GdipSetPenDashStyle(pen, DashStyleDash);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_dash_path, sizeof(widenline_dash_path)/sizeof(path_test_t), FALSE);
+
+    status = GdipSetPenDashStyle(pen, DashStyleSolid);
     expect(Ok, status);
 
     /* pen width in UnitWorld */

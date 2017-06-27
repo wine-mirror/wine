@@ -2063,6 +2063,7 @@ static void widen_dashed_figure(GpPath *path, GpPen *pen, int start, int end,
     REAL dash_pos=0.0;
     int dash_index=0;
     const REAL *dash_pattern;
+    REAL *dash_pattern_scaled;
     int dash_count;
     GpPointF *tmp_points;
     REAL segment_dy;
@@ -2100,6 +2101,12 @@ static void widen_dashed_figure(GpPath *path, GpPen *pen, int start, int end,
         dash_count = pen->numdashes;
         break;
     }
+
+    dash_pattern_scaled = heap_alloc(dash_count * sizeof(REAL));
+    if (!dash_pattern_scaled) return;
+
+    for (i = 0; i < dash_count; i++)
+        dash_pattern_scaled[i] = pen->width * dash_pattern[i];
 
     tmp_points = heap_alloc_zero((end - start + 2) * sizeof(GpPoint));
     if (!tmp_points) return; /* FIXME */
@@ -2149,7 +2156,7 @@ static void widen_dashed_figure(GpPath *path, GpPen *pen, int start, int end,
                 }
             }
 
-            if (dash_pattern[dash_index] - dash_pos > segment_length - segment_pos)
+            if (dash_pattern_scaled[dash_index] - dash_pos > segment_length - segment_pos)
             {
                 /* advance to next segment */
                 if ((dash_index % 2) == 0)
@@ -2163,7 +2170,7 @@ static void widen_dashed_figure(GpPath *path, GpPen *pen, int start, int end,
             else
             {
                 /* advance to next dash in pattern */
-                segment_pos += dash_pattern[dash_index] - dash_pos;
+                segment_pos += dash_pattern_scaled[dash_index] - dash_pos;
                 dash_pos = 0.0;
                 if (++dash_index == dash_count)
                     dash_index = 0;
@@ -2175,8 +2182,7 @@ static void widen_dashed_figure(GpPath *path, GpPen *pen, int start, int end,
     if (dash_index % 2 == 0 && num_tmp_points != 0)
     {
         /* last dash overflows last segment */
-        tmp_points[num_tmp_points] = path->pathdata.Points[end];
-        widen_open_figure(tmp_points, pen, 0, num_tmp_points,
+        widen_open_figure(tmp_points, pen, 0, num_tmp_points-1,
             draw_start_cap ? pen->startcap : LineCapFlat, pen->customstart,
             closed ? LineCapFlat : pen->endcap, pen->customend, last_point);
     }
