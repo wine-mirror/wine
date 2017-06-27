@@ -2073,6 +2073,22 @@ static void test_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine61a");
     todo_wine verify_reg_nonexist(hkey, "Wine61b");
 
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine62a\"=hex(7):4c,69,6e,65,20,\\", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    err = RegQueryValueExA(hkey, "Wine62a", NULL, NULL, NULL, NULL);
+    todo_wine ok(err == ERROR_SUCCESS || broken(err == ERROR_FILE_NOT_FOUND) /* WinXP */,
+                 "got %u, expected 0\n", err);
+    if (err == ERROR_SUCCESS)
+        todo_wine verify_reg(hkey, "Wine62a", REG_MULTI_SZ, "Line ", 6, 0);
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine62b\"=hex(7):4c,69,6e,65,20\\", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine62b");
+
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
@@ -3330,6 +3346,22 @@ static void test_unicode_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Wine61a");
     todo_wine verify_reg_nonexist(hkey, "Wine61b");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine62a\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    err = RegQueryValueExA(hkey, "Wine62a", NULL, NULL, NULL, NULL);
+    todo_wine ok(err == ERROR_SUCCESS || broken(err == ERROR_FILE_NOT_FOUND) /* WinXP */,
+                 "got %u, expected 0\n", err);
+    if (err == ERROR_SUCCESS)
+        todo_wine verify_reg(hkey, "Wine62a", REG_MULTI_SZ, "Line ", 6, 0);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine62b\"=hex(7):4c,00,69,00,6e,00,65,00,20,00\\", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine62b");
 
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
