@@ -9384,7 +9384,7 @@ static void test_externalui_message(void)
 
     r = MsiOpenPackageA("nonexistent", &hpkg);
     ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
-    ok_sequence(openpackage_nonexistent_sequence, "MsiOpenPackage with nonexistent db", TRUE);
+    ok_sequence(openpackage_nonexistent_sequence, "MsiOpenPackage with nonexistent db", FALSE);
 
     r = package_from_db(hdb, &hpkg);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -9408,7 +9408,7 @@ static void test_externalui_message(void)
 
     /* close the package */
     MsiCloseHandle(hpkg);
-    ok_sequence(closehandle_sequence, "MsiCloseHandle()", TRUE);
+    ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);
 
     CoUninitialize();
     DeleteFileA(msifile);

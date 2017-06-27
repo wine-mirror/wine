@@ -352,6 +352,7 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
 
     if (package->delete_on_close) DeleteFileW( package->localfile );
     msi_free( package->localfile );
+    MSI_ProcessMessage(NULL, INSTALLMESSAGE_TERMINATE, 0);
 }
 
 static UINT create_temp_property_table(MSIPACKAGE *package)
@@ -1477,6 +1478,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
+    MSI_ProcessMessage(NULL, INSTALLMESSAGE_INITIALIZE, 0);
+
     localfile[0] = 0;
     if( szPackage[0] == '#' )
     {
@@ -1638,6 +1641,8 @@ UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phP
             ret = ERROR_NOT_ENOUGH_MEMORY;
         msiobj_release( &package->hdr );
     }
+    else
+        MSI_ProcessMessage(NULL, INSTALLMESSAGE_TERMINATE, 0);
 
     return ret;
 }
@@ -1787,13 +1792,17 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         msi_free(template);
     }
 
-    res = MSI_FormatRecordW(package, record, message, &len);
-    if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA)
-        return res;
-    len++;
-    message = msi_alloc(len * sizeof(WCHAR));
-    if (!message) return ERROR_OUTOFMEMORY;
-    MSI_FormatRecordW(package, record, message, &len);
+    if (!package || !record)
+        message = NULL;
+    else {
+        res = MSI_FormatRecordW(package, record, message, &len);
+        if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA)
+            return res;
+        len++;
+        message = msi_alloc(len * sizeof(WCHAR));
+        if (!message) return ERROR_OUTOFMEMORY;
+        MSI_FormatRecordW(package, record, message, &len);
+    }
 
     /* convert it to ASCII */
     len = WideCharToMultiByte( CP_ACP, 0, message, -1, NULL, 0, NULL, NULL );
@@ -1821,7 +1830,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         rc = gUIHandlerA( gUIContext, eMessageType, msg );
     }
 
-    if (!rc && package->log_file != INVALID_HANDLE_VALUE &&
+    if (!rc && package && package->log_file != INVALID_HANDLE_VALUE &&
         (eMessageType & 0xff000000) != INSTALLMESSAGE_PROGRESS)
     {
         DWORD written;
@@ -1882,6 +1891,10 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
     UINT ret = ERROR_INVALID_HANDLE;
     MSIPACKAGE *package = NULL;
     MSIRECORD *record = NULL;
+
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_INITIALIZE ||
+        (eMessageType & 0xff000000) == INSTALLMESSAGE_TERMINATE)
+        return -1;
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
     if( !package )
