@@ -2063,6 +2063,16 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine60e", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
 
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine61a\"=hex(0):25,48,4f,4d,45,25,5c,/\n"
+                    "  25,50,41,54,48,25,00\n"
+                    "\"Wine61b\"=hex(0):25,48,4f,4d,45,25,5c/\n"
+                    "  25,50,41,54,48,25,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine61a");
+    todo_wine verify_reg_nonexist(hkey, "Wine61b");
+
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
@@ -3310,6 +3320,16 @@ static void test_unicode_import(void)
                      "  61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine60e", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine61a\"=hex(0):25,48,4f,4d,45,25,5c,/\n"
+                     "  25,50,41,54,48,25,00\n"
+                     "\"Wine61b\"=hex(0):25,48,4f,4d,45,25,5c/\n"
+                     "  25,50,41,54,48,25,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine61a");
+    todo_wine verify_reg_nonexist(hkey, "Wine61b");
 
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
