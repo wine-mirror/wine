@@ -1844,6 +1844,25 @@ static void test_import(void)
     todo_wine verify_reg(hkey, "Wine53e", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine53f");
 
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine54a\"=hex(2):4c,69,6e,65,20,\\\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1]\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine54a");
+    todo_wine verify_key_nonexist(hkey, "Subkey1");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine54b\"=hex(2):4c,69,6e,65,20\\\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2]\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine54b");
+    todo_wine verify_key(hkey, "Subkey2");
+
+    err = RegDeleteKeyA(hkey, "Subkey2");
+    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", err);
+
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
@@ -2872,6 +2891,25 @@ static void test_unicode_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine53d");
     todo_wine verify_reg(hkey, "Wine53e", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine53f");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine54a\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1]\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine54a");
+    todo_wine verify_key_nonexist(hkey, "Subkey1");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine54b\"=hex(2):4c,00,69,00,6e,00,65,00,20,00\\\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2]\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine54b");
+    todo_wine verify_key(hkey, "Subkey2");
+
+    err = RegDeleteKeyA(hkey, "Subkey2");
+    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", err);
 
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
