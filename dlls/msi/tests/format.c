@@ -2775,6 +2775,7 @@ static void test_processmessage(void)
     ok( r == ERROR_SUCCESS, "set string failed\n");
 
     r = MsiProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, hrec);
+    todo_wine
     ok( r == IDOK, "expected IDOK, got %i\n", r);
 
     r = MsiProcessMessage(package, INSTALLMESSAGE_PROGRESS, hrec);

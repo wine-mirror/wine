@@ -9404,7 +9404,7 @@ static void test_externalui_message(void)
     /* Test a standard action */
     r = MsiDoActionA(hpkg, "custom");
     ok(r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %d\n", r);
-    ok_sequence(doaction_custom_sequence, "MsiDoAction(\"custom\")", TRUE);
+    ok_sequence(doaction_custom_sequence, "MsiDoAction(\"custom\")", FALSE);
 
     /* close the package */
     MsiCloseHandle(hpkg);

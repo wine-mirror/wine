@@ -30,7 +30,6 @@
 #include "odbcinst.h"
 #include "wine/debug.h"
 #include "msidefs.h"
-#include "msipriv.h"
 #include "winuser.h"
 #include "shlobj.h"
 #include "objbase.h"
@@ -39,6 +38,9 @@
 #include "imagehlp.h"
 #include "wine/unicode.h"
 #include "winver.h"
+
+#include "msipriv.h"
+#include "resource.h"
 
 #define REG_PROGRESS_VALUE 13200
 #define COMPONENT_PROGRESS_VALUE 24000
@@ -156,18 +158,13 @@ static const WCHAR szValidateProductID[] =
 static const WCHAR szWriteEnvironmentStrings[] =
     {'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
 
-static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
+static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action, LPCWSTR description, LPCWSTR template)
 {
-    static const WCHAR Query_t[] = 
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','A','c','t','i','o', 'n','T','e','x','t','`',' ',
-         'W','H','E','R','E', ' ','`','A','c','t','i','o','n','`',' ','=', 
-         ' ','\'','%','s','\'',0};
-    MSIRECORD * row;
-
-    row = MSI_QueryGetRecord( package->db, Query_t, action );
-    if (!row)
-        return;
+    MSIRECORD *row = MSI_CreateRecord(3);
+    if (!row) return;
+    MSI_RecordSetStringW(row, 1, action);
+    MSI_RecordSetStringW(row, 2, description);
+    MSI_RecordSetStringW(row, 3, template);
     MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, row);
     msiobj_release(&row->hdr);
 }
@@ -175,28 +172,22 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
 static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start, 
                           UINT rc)
 {
-    MSIRECORD * row;
-    static const WCHAR template_s[]=
-        {'A','c','t','i','o','n',' ','s','t','a','r','t',' ','%','s',':',' ',
-         '%','s', '.',0};
-    static const WCHAR template_e[]=
-        {'A','c','t','i','o','n',' ','e','n','d','e','d',' ','%','s',':',' ',
-         '%','s', '.',' ','R','e','t','u','r','n',' ','v','a','l','u','e',' ',
-         '%','i','.',0};
+    MSIRECORD *row;
+    WCHAR template[1024];
     static const WCHAR format[] = 
         {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
     WCHAR message[1024];
     WCHAR timet[0x100];
 
     GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
-    if (start)
-        sprintfW(message,template_s,timet,action);
-    else
-        sprintfW(message,template_e,timet,action,rc);
-    
-    row = MSI_CreateRecord(1);
-    MSI_RecordSetStringW(row,1,message);
- 
+    LoadStringW(msi_hInstance, start ? IDS_INFO_ACTIONSTART : IDS_INFO_ACTIONENDED, template, 1024);
+    sprintfW(message, template, timet);
+
+    row = MSI_CreateRecord(2);
+    if (!row) return;
+    MSI_RecordSetStringW(row, 0, message);
+    MSI_RecordSetStringW(row, 1, action);
+    MSI_RecordSetInteger(row, 2, !rc);
     MSI_ProcessMessage(package, INSTALLMESSAGE_INFO, row);
     msiobj_release(&row->hdr);
 }
@@ -622,7 +613,11 @@ static BOOL ACTION_HandleCustomAction( MSIPACKAGE *package, LPCWSTR action, UINT
     BOOL ret=FALSE;
     UINT arc;
 
+    ui_actionstart(package, action, NULL, NULL);
+    ui_actioninfo(package, action, TRUE, 0);
     arc = ACTION_CustomAction( package, action, script );
+    ui_actioninfo(package, action, FALSE, arc);
+
     if (arc != ERROR_CALL_NOT_IMPLEMENTED)
     {
         *rc = arc;
@@ -1567,7 +1562,7 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 static UINT execute_script_action( MSIPACKAGE *package, UINT script, UINT index )
 {
     const WCHAR *action = package->script->Actions[script][index];
-    ui_actionstart( package, action );
+    ui_actionstart( package, action, NULL, NULL );
     TRACE("executing %s\n", debugstr_w(action));
     return ACTION_PerformAction( package, action, script );
 }
@@ -7690,88 +7685,90 @@ static UINT ACTION_InstallSFPCatalogFile( MSIPACKAGE *package )
 static const struct
 {
     const WCHAR *action;
+    const UINT description;
+    const UINT template;
     UINT (*handler)(MSIPACKAGE *);
     const WCHAR *action_rollback;
 }
 StandardActions[] =
 {
-    { szAllocateRegistrySpace, ACTION_AllocateRegistrySpace, NULL },
-    { szAppSearch, ACTION_AppSearch, NULL },
-    { szBindImage, ACTION_BindImage, NULL },
-    { szCCPSearch, ACTION_CCPSearch, NULL },
-    { szCostFinalize, ACTION_CostFinalize, NULL },
-    { szCostInitialize, ACTION_CostInitialize, NULL },
-    { szCreateFolders, ACTION_CreateFolders, szRemoveFolders },
-    { szCreateShortcuts, ACTION_CreateShortcuts, szRemoveShortcuts },
-    { szDeleteServices, ACTION_DeleteServices, szInstallServices },
-    { szDisableRollback, ACTION_DisableRollback, NULL },
-    { szDuplicateFiles, ACTION_DuplicateFiles, szRemoveDuplicateFiles },
-    { szExecuteAction, ACTION_ExecuteAction, NULL },
-    { szFileCost, ACTION_FileCost, NULL },
-    { szFindRelatedProducts, ACTION_FindRelatedProducts, NULL },
-    { szForceReboot, ACTION_ForceReboot, NULL },
-    { szInstallAdminPackage, ACTION_InstallAdminPackage, NULL },
-    { szInstallExecute, ACTION_InstallExecute, NULL },
-    { szInstallExecuteAgain, ACTION_InstallExecute, NULL },
-    { szInstallFiles, ACTION_InstallFiles, szRemoveFiles },
-    { szInstallFinalize, ACTION_InstallFinalize, NULL },
-    { szInstallInitialize, ACTION_InstallInitialize, NULL },
-    { szInstallODBC, ACTION_InstallODBC, szRemoveODBC },
-    { szInstallServices, ACTION_InstallServices, szDeleteServices },
-    { szInstallSFPCatalogFile, ACTION_InstallSFPCatalogFile, NULL },
-    { szInstallValidate, ACTION_InstallValidate, NULL },
-    { szIsolateComponents, ACTION_IsolateComponents, NULL },
-    { szLaunchConditions, ACTION_LaunchConditions, NULL },
-    { szMigrateFeatureStates, ACTION_MigrateFeatureStates, NULL },
-    { szMoveFiles, ACTION_MoveFiles, NULL },
-    { szMsiPublishAssemblies, ACTION_MsiPublishAssemblies, szMsiUnpublishAssemblies },
-    { szMsiUnpublishAssemblies, ACTION_MsiUnpublishAssemblies, szMsiPublishAssemblies },
-    { szPatchFiles, ACTION_PatchFiles, NULL },
-    { szProcessComponents, ACTION_ProcessComponents, szProcessComponents },
-    { szPublishComponents, ACTION_PublishComponents, szUnpublishComponents },
-    { szPublishFeatures, ACTION_PublishFeatures, szUnpublishFeatures },
-    { szPublishProduct, ACTION_PublishProduct, szUnpublishProduct },
-    { szRegisterClassInfo, ACTION_RegisterClassInfo, szUnregisterClassInfo },
-    { szRegisterComPlus, ACTION_RegisterComPlus, szUnregisterComPlus },
-    { szRegisterExtensionInfo, ACTION_RegisterExtensionInfo, szUnregisterExtensionInfo },
-    { szRegisterFonts, ACTION_RegisterFonts, szUnregisterFonts },
-    { szRegisterMIMEInfo, ACTION_RegisterMIMEInfo, szUnregisterMIMEInfo },
-    { szRegisterProduct, ACTION_RegisterProduct, NULL },
-    { szRegisterProgIdInfo, ACTION_RegisterProgIdInfo, szUnregisterProgIdInfo },
-    { szRegisterTypeLibraries, ACTION_RegisterTypeLibraries, szUnregisterTypeLibraries },
-    { szRegisterUser, ACTION_RegisterUser, NULL },
-    { szRemoveDuplicateFiles, ACTION_RemoveDuplicateFiles, szDuplicateFiles },
-    { szRemoveEnvironmentStrings, ACTION_RemoveEnvironmentStrings, szWriteEnvironmentStrings },
-    { szRemoveExistingProducts, ACTION_RemoveExistingProducts, NULL },
-    { szRemoveFiles, ACTION_RemoveFiles, szInstallFiles },
-    { szRemoveFolders, ACTION_RemoveFolders, szCreateFolders },
-    { szRemoveIniValues, ACTION_RemoveIniValues, szWriteIniValues },
-    { szRemoveODBC, ACTION_RemoveODBC, szInstallODBC },
-    { szRemoveRegistryValues, ACTION_RemoveRegistryValues, szWriteRegistryValues },
-    { szRemoveShortcuts, ACTION_RemoveShortcuts, szCreateShortcuts },
-    { szResolveSource, ACTION_ResolveSource, NULL },
-    { szRMCCPSearch, ACTION_RMCCPSearch, NULL },
-    { szScheduleReboot, ACTION_ScheduleReboot, NULL },
-    { szSelfRegModules, ACTION_SelfRegModules, szSelfUnregModules },
-    { szSelfUnregModules, ACTION_SelfUnregModules, szSelfRegModules },
-    { szSetODBCFolders, ACTION_SetODBCFolders, NULL },
-    { szStartServices, ACTION_StartServices, szStopServices },
-    { szStopServices, ACTION_StopServices, szStartServices },
-    { szUnpublishComponents, ACTION_UnpublishComponents, szPublishComponents },
-    { szUnpublishFeatures, ACTION_UnpublishFeatures, szPublishFeatures },
-    { szUnpublishProduct, ACTION_UnpublishProduct, NULL }, /* for rollback only */
-    { szUnregisterClassInfo, ACTION_UnregisterClassInfo, szRegisterClassInfo },
-    { szUnregisterComPlus, ACTION_UnregisterComPlus, szRegisterComPlus },
-    { szUnregisterExtensionInfo, ACTION_UnregisterExtensionInfo, szRegisterExtensionInfo },
-    { szUnregisterFonts, ACTION_UnregisterFonts, szRegisterFonts },
-    { szUnregisterMIMEInfo, ACTION_UnregisterMIMEInfo, szRegisterMIMEInfo },
-    { szUnregisterProgIdInfo, ACTION_UnregisterProgIdInfo, szRegisterProgIdInfo },
-    { szUnregisterTypeLibraries, ACTION_UnregisterTypeLibraries, szRegisterTypeLibraries },
-    { szValidateProductID, ACTION_ValidateProductID, NULL },
-    { szWriteEnvironmentStrings, ACTION_WriteEnvironmentStrings, szRemoveEnvironmentStrings },
-    { szWriteIniValues, ACTION_WriteIniValues, szRemoveIniValues },
-    { szWriteRegistryValues, ACTION_WriteRegistryValues, szRemoveRegistryValues },
-    { NULL, NULL, NULL }
+    { szAllocateRegistrySpace, IDS_DESC_ALLOCATEREGISTRYSPACE, IDS_TEMP_ALLOCATEREGISTRYSPACE, ACTION_AllocateRegistrySpace, NULL },
+    { szAppSearch, IDS_DESC_APPSEARCH, IDS_TEMP_APPSEARCH, ACTION_AppSearch, NULL },
+    { szBindImage, IDS_DESC_BINDIMAGE, IDS_TEMP_BINDIMAGE, ACTION_BindImage, NULL },
+    { szCCPSearch, IDS_DESC_CCPSEARCH, 0, ACTION_CCPSearch, NULL },
+    { szCostFinalize, IDS_DESC_COSTFINALIZE, 0, ACTION_CostFinalize, NULL },
+    { szCostInitialize, IDS_DESC_COSTINITIALIZE, 0, ACTION_CostInitialize, NULL },
+    { szCreateFolders, IDS_DESC_CREATEFOLDERS, IDS_TEMP_CREATEFOLDERS, ACTION_CreateFolders, szRemoveFolders },
+    { szCreateShortcuts, IDS_DESC_CREATESHORTCUTS, IDS_TEMP_CREATESHORTCUTS, ACTION_CreateShortcuts, szRemoveShortcuts },
+    { szDeleteServices, IDS_DESC_DELETESERVICES, IDS_TEMP_DELETESERVICES, ACTION_DeleteServices, szInstallServices },
+    { szDisableRollback, 0, 0, ACTION_DisableRollback, NULL },
+    { szDuplicateFiles, IDS_DESC_DUPLICATEFILES, IDS_TEMP_DUPLICATEFILES, ACTION_DuplicateFiles, szRemoveDuplicateFiles },
+    { szExecuteAction, 0, 0, ACTION_ExecuteAction, NULL },
+    { szFileCost, IDS_DESC_FILECOST, 0, ACTION_FileCost, NULL },
+    { szFindRelatedProducts, IDS_DESC_FINDRELATEDPRODUCTS, IDS_TEMP_FINDRELATEDPRODUCTS, ACTION_FindRelatedProducts, NULL },
+    { szForceReboot, 0, 0, ACTION_ForceReboot, NULL },
+    { szInstallAdminPackage, IDS_DESC_INSTALLADMINPACKAGE, IDS_TEMP_INSTALLADMINPACKAGE, ACTION_InstallAdminPackage, NULL },
+    { szInstallExecute, 0, 0, ACTION_InstallExecute, NULL },
+    { szInstallExecuteAgain, 0, 0, ACTION_InstallExecute, NULL },
+    { szInstallFiles, IDS_DESC_INSTALLFILES, IDS_TEMP_INSTALLFILES, ACTION_InstallFiles, szRemoveFiles },
+    { szInstallFinalize, 0, 0, ACTION_InstallFinalize, NULL },
+    { szInstallInitialize, 0, 0, ACTION_InstallInitialize, NULL },
+    { szInstallODBC, IDS_DESC_INSTALLODBC, 0, ACTION_InstallODBC, szRemoveODBC },
+    { szInstallServices, IDS_DESC_INSTALLSERVICES, IDS_TEMP_INSTALLSERVICES, ACTION_InstallServices, szDeleteServices },
+    { szInstallSFPCatalogFile, IDS_DESC_INSTALLSFPCATALOGFILE, IDS_TEMP_INSTALLSFPCATALOGFILE, ACTION_InstallSFPCatalogFile, NULL },
+    { szInstallValidate, IDS_DESC_INSTALLVALIDATE, 0, ACTION_InstallValidate, NULL },
+    { szIsolateComponents, 0, 0, ACTION_IsolateComponents, NULL },
+    { szLaunchConditions, IDS_DESC_LAUNCHCONDITIONS, 0, ACTION_LaunchConditions, NULL },
+    { szMigrateFeatureStates, IDS_DESC_MIGRATEFEATURESTATES, IDS_TEMP_MIGRATEFEATURESTATES, ACTION_MigrateFeatureStates, NULL },
+    { szMoveFiles, IDS_DESC_MOVEFILES, IDS_TEMP_MOVEFILES, ACTION_MoveFiles, NULL },
+    { szMsiPublishAssemblies, IDS_DESC_MSIPUBLISHASSEMBLIES, IDS_TEMP_MSIPUBLISHASSEMBLIES, ACTION_MsiPublishAssemblies, szMsiUnpublishAssemblies },
+    { szMsiUnpublishAssemblies, IDS_DESC_MSIUNPUBLISHASSEMBLIES, IDS_TEMP_MSIUNPUBLISHASSEMBLIES, ACTION_MsiUnpublishAssemblies, szMsiPublishAssemblies },
+    { szPatchFiles, IDS_DESC_PATCHFILES, IDS_TEMP_PATCHFILES, ACTION_PatchFiles, NULL },
+    { szProcessComponents, IDS_DESC_PROCESSCOMPONENTS, 0, ACTION_ProcessComponents, szProcessComponents },
+    { szPublishComponents, IDS_DESC_PUBLISHCOMPONENTS, IDS_TEMP_PUBLISHCOMPONENTS, ACTION_PublishComponents, szUnpublishComponents },
+    { szPublishFeatures, IDS_DESC_PUBLISHFEATURES, IDS_TEMP_PUBLISHFEATURES, ACTION_PublishFeatures, szUnpublishFeatures },
+    { szPublishProduct, IDS_DESC_PUBLISHPRODUCT, 0, ACTION_PublishProduct, szUnpublishProduct },
+    { szRegisterClassInfo, IDS_DESC_REGISTERCLASSINFO, IDS_TEMP_REGISTERCLASSINFO, ACTION_RegisterClassInfo, szUnregisterClassInfo },
+    { szRegisterComPlus, IDS_DESC_REGISTERCOMPLUS, IDS_TEMP_REGISTERCOMPLUS, ACTION_RegisterComPlus, szUnregisterComPlus },
+    { szRegisterExtensionInfo, IDS_DESC_REGISTEREXTENSIONINFO, 0, ACTION_RegisterExtensionInfo, szUnregisterExtensionInfo },
+    { szRegisterFonts, IDS_DESC_REGISTERFONTS, IDS_TEMP_REGISTERFONTS, ACTION_RegisterFonts, szUnregisterFonts },
+    { szRegisterMIMEInfo, IDS_DESC_REGISTERMIMEINFO, IDS_TEMP_REGISTERMIMEINFO, ACTION_RegisterMIMEInfo, szUnregisterMIMEInfo },
+    { szRegisterProduct, IDS_DESC_REGISTERPRODUCT, 0, ACTION_RegisterProduct, NULL },
+    { szRegisterProgIdInfo, IDS_DESC_REGISTERPROGIDINFO, IDS_TEMP_REGISTERPROGIDINFO, ACTION_RegisterProgIdInfo, szUnregisterProgIdInfo },
+    { szRegisterTypeLibraries, IDS_DESC_REGISTERTYPELIBRARIES, IDS_TEMP_REGISTERTYPELIBRARIES, ACTION_RegisterTypeLibraries, szUnregisterTypeLibraries },
+    { szRegisterUser, IDS_DESC_REGISTERUSER, 0, ACTION_RegisterUser, NULL },
+    { szRemoveDuplicateFiles, IDS_DESC_REMOVEDUPLICATEFILES, IDS_TEMP_REMOVEDUPLICATEFILES, ACTION_RemoveDuplicateFiles, szDuplicateFiles },
+    { szRemoveEnvironmentStrings, IDS_DESC_REMOVEENVIRONMENTSTRINGS, IDS_TEMP_REMOVEENVIRONMENTSTRINGS, ACTION_RemoveEnvironmentStrings, szWriteEnvironmentStrings },
+    { szRemoveExistingProducts, IDS_DESC_REMOVEEXISTINGPRODUCTS, IDS_TEMP_REMOVEEXISTINGPRODUCTS, ACTION_RemoveExistingProducts, NULL },
+    { szRemoveFiles, IDS_DESC_REMOVEFILES, IDS_TEMP_REMOVEFILES, ACTION_RemoveFiles, szInstallFiles },
+    { szRemoveFolders, IDS_DESC_REMOVEFOLDERS, IDS_TEMP_REMOVEFOLDERS, ACTION_RemoveFolders, szCreateFolders },
+    { szRemoveIniValues, IDS_DESC_REMOVEINIVALUES, IDS_TEMP_REMOVEINIVALUES, ACTION_RemoveIniValues, szWriteIniValues },
+    { szRemoveODBC, IDS_DESC_REMOVEODBC, 0, ACTION_RemoveODBC, szInstallODBC },
+    { szRemoveRegistryValues, IDS_DESC_REMOVEREGISTRYVALUES, IDS_TEMP_REMOVEREGISTRYVALUES, ACTION_RemoveRegistryValues, szWriteRegistryValues },
+    { szRemoveShortcuts, IDS_DESC_REMOVESHORTCUTS, IDS_TEMP_REMOVESHORTCUTS, ACTION_RemoveShortcuts, szCreateShortcuts },
+    { szResolveSource, 0, 0, ACTION_ResolveSource, NULL },
+    { szRMCCPSearch, IDS_DESC_RMCCPSEARCH, 0, ACTION_RMCCPSearch, NULL },
+    { szScheduleReboot, 0, 0, ACTION_ScheduleReboot, NULL },
+    { szSelfRegModules, IDS_DESC_SELFREGMODULES, IDS_TEMP_SELFREGMODULES, ACTION_SelfRegModules, szSelfUnregModules },
+    { szSelfUnregModules, IDS_DESC_SELFUNREGMODULES, IDS_TEMP_SELFUNREGMODULES, ACTION_SelfUnregModules, szSelfRegModules },
+    { szSetODBCFolders, IDS_DESC_SETODBCFOLDERS, 0, ACTION_SetODBCFolders, NULL },
+    { szStartServices, IDS_DESC_STARTSERVICES, IDS_TEMP_STARTSERVICES, ACTION_StartServices, szStopServices },
+    { szStopServices, IDS_DESC_STOPSERVICES, IDS_TEMP_STOPSERVICES, ACTION_StopServices, szStartServices },
+    { szUnpublishComponents, IDS_DESC_UNPUBLISHCOMPONENTS, IDS_TEMP_UNPUBLISHCOMPONENTS, ACTION_UnpublishComponents, szPublishComponents },
+    { szUnpublishFeatures, IDS_DESC_UNPUBLISHFEATURES, IDS_TEMP_UNPUBLISHFEATURES, ACTION_UnpublishFeatures, szPublishFeatures },
+    { szUnpublishProduct, IDS_DESC_UNPUBLISHPRODUCT, 0, ACTION_UnpublishProduct, NULL }, /* for rollback only */
+    { szUnregisterClassInfo, IDS_DESC_UNREGISTERCLASSINFO, IDS_TEMP_UNREGISTERCLASSINFO, ACTION_UnregisterClassInfo, szRegisterClassInfo },
+    { szUnregisterComPlus, IDS_DESC_UNREGISTERCOMPLUS, IDS_TEMP_UNREGISTERCOMPLUS, ACTION_UnregisterComPlus, szRegisterComPlus },
+    { szUnregisterExtensionInfo, IDS_DESC_UNREGISTEREXTENSIONINFO, IDS_TEMP_UNREGISTEREXTENSIONINFO, ACTION_UnregisterExtensionInfo, szRegisterExtensionInfo },
+    { szUnregisterFonts, IDS_DESC_UNREGISTERFONTS, IDS_TEMP_UNREGISTERFONTS, ACTION_UnregisterFonts, szRegisterFonts },
+    { szUnregisterMIMEInfo, IDS_DESC_UNREGISTERMIMEINFO, IDS_TEMP_UNREGISTERMIMEINFO, ACTION_UnregisterMIMEInfo, szRegisterMIMEInfo },
+    { szUnregisterProgIdInfo, IDS_DESC_UNREGISTERPROGIDINFO, IDS_TEMP_UNREGISTERPROGIDINFO, ACTION_UnregisterProgIdInfo, szRegisterProgIdInfo },
+    { szUnregisterTypeLibraries, IDS_DESC_UNREGISTERTYPELIBRARIES, IDS_TEMP_UNREGISTERTYPELIBRARIES, ACTION_UnregisterTypeLibraries, szRegisterTypeLibraries },
+    { szValidateProductID, 0, 0, ACTION_ValidateProductID, NULL },
+    { szWriteEnvironmentStrings, IDS_DESC_WRITEENVIRONMENTSTRINGS, IDS_TEMP_WRITEENVIRONMENTSTRINGS, ACTION_WriteEnvironmentStrings, szRemoveEnvironmentStrings },
+    { szWriteIniValues, IDS_DESC_WRITEINIVALUES, IDS_TEMP_WRITEINIVALUES, ACTION_WriteIniValues, szRemoveIniValues },
+    { szWriteRegistryValues, IDS_DESC_WRITEREGISTRYVALUES, IDS_TEMP_WRITEREGISTRYVALUES, ACTION_WriteRegistryValues, szRemoveRegistryValues },
+    { 0 }
 };
 
 static BOOL ACTION_HandleStandardAction( MSIPACKAGE *package, LPCWSTR action, UINT *rc )
@@ -7784,7 +7781,14 @@ static BOOL ACTION_HandleStandardAction( MSIPACKAGE *package, LPCWSTR action, UI
     {
         if (!strcmpW( StandardActions[i].action, action ))
         {
-            ui_actionstart( package, action );
+            WCHAR description[100] = {0}, template[100] = {0};
+
+            if (StandardActions[i].description != 0)
+                LoadStringW(msi_hInstance, StandardActions[i].description, (LPWSTR)&description, 100);
+            if (StandardActions[i].template != 0)
+                LoadStringW(msi_hInstance, StandardActions[i].template, (LPWSTR)&template, 100);
+
+            ui_actionstart(package, action, description, template);
             if (StandardActions[i].handler)
             {
                 ui_actioninfo( package, action, TRUE, 0 );

@@ -46,6 +46,7 @@
 
 #include "msipriv.h"
 #include "msiserver.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -1711,6 +1712,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     MSIRECORD *uirow;
     LPWSTR deformated, message = {0};
     DWORD len, log_type = 0;
+    UINT res;
     INT rc = 0;
     char *msg;
 
@@ -1747,43 +1749,51 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
     {
-        static const WCHAR template_s[]=
-            {'A','c','t','i','o','n',' ','%','s',':',' ','%','s','.',' ',0};
-        static const WCHAR format[] = 
+        WCHAR template_s[1024];
+        static const WCHAR time_format[] =
             {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
-        WCHAR timet[0x100];
-        LPCWSTR action_text, action;
-        LPWSTR deformatted = NULL;
+        WCHAR timet[100], template[1024];
 
-        GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
-
-        action = MSI_RecordGetString(record, 1);
-        action_text = MSI_RecordGetString(record, 2);
-
-        if (!action || !action_text)
-            return IDOK;
-
-        deformat_string(package, action_text, &deformatted);
-
-        len = strlenW(timet) + strlenW(action) + strlenW(template_s);
-        if (deformatted)
-            len += strlenW(deformatted);
-        message = msi_alloc(len*sizeof(WCHAR));
-        sprintfW(message, template_s, timet, action);
-        if (deformatted)
-            strcatW(message, deformatted);
-        msi_free(deformatted);
+        LoadStringW(msi_hInstance, IDS_ACTIONSTART, template_s, 1024);
+        GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, time_format, timet, 100);
+        sprintfW(template, template_s, timet);
+        MSI_RecordSetStringW(record, 0, template);
     }
-    else
+    else if ((eMessageType & 0xff000000) == INSTALLMESSAGE_INFO &&
+             MSI_RecordGetInteger(record, 1) != MSI_NULL_INTEGER)
     {
-        UINT res = MSI_FormatRecordW(package, record, message, &len);
+        WCHAR template_s[1024];
+        WCHAR *template_rec, *template;
+        DWORD length;
+
+        LoadStringW(msi_hInstance, IDS_INFO, template_s, 1024);
+
+        res = MSI_RecordGetStringW(record, 0, NULL, &length);
         if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA)
             return res;
         len++;
-        message = msi_alloc(len * sizeof(WCHAR));
-        if (!message) return ERROR_OUTOFMEMORY;
-        MSI_FormatRecordW(package, record, message, &len);
+        template_rec = msi_alloc(len * sizeof(WCHAR));
+        if (!template_rec) return ERROR_OUTOFMEMORY;
+        MSI_RecordGetStringW(record, 0, template_rec, &length);
+
+        template = msi_alloc((len + strlenW(template_s)) * sizeof(WCHAR));
+        if (!template) return ERROR_OUTOFMEMORY;
+
+        strcpyW(template, template_s);
+        strcatW(template, template_rec);
+        MSI_RecordSetStringW(record, 0, template);
+
+        msi_free(template_rec);
+        msi_free(template);
     }
+
+    res = MSI_FormatRecordW(package, record, message, &len);
+    if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA)
+        return res;
+    len++;
+    message = msi_alloc(len * sizeof(WCHAR));
+    if (!message) return ERROR_OUTOFMEMORY;
+    MSI_FormatRecordW(package, record, message, &len);
 
     /* convert it to ASCII */
     len = WideCharToMultiByte( CP_ACP, 0, message, -1, NULL, 0, NULL, NULL );
@@ -1856,6 +1866,11 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     case INSTALLMESSAGE_PROGRESS:
         msi_event_fire( package, szSetProgress, record );
         break;
+    }
+
+    if (package && (package->ui_level & INSTALLUILEVEL_MASK) != INSTALLUILEVEL_NONE)
+    {
+        FIXME("Internal UI not yet handled (UILevel == %x)\n", package->ui_level);
     }
 
     return rc;
