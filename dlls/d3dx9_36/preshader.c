@@ -654,10 +654,28 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
         if (FAILED(hr = get_ctab_constant_desc(ctab, hc, &cdesc[i])))
             goto err_out;
         inputs_param[i] = get_parameter_by_name(base, NULL, cdesc[i].Name);
-        if (cdesc[i].Class == D3DXPC_OBJECT)
-            TRACE("Object %s, parameter %p.\n", cdesc[i].Name, inputs_param[i]);
-        else if (!inputs_param[i])
+        if (!inputs_param[i])
+        {
             WARN("Could not find parameter %s in effect.\n", cdesc[i].Name);
+            continue;
+        }
+        if (cdesc[i].Class == D3DXPC_OBJECT)
+        {
+            TRACE("Object %s, parameter %p.\n", cdesc[i].Name, inputs_param[i]);
+            if (cdesc[i].RegisterSet != D3DXRS_SAMPLER || inputs_param[i]->class != D3DXPC_OBJECT
+                    || !is_param_type_sampler(inputs_param[i]->type))
+            {
+                WARN("Unexpected object type, constant %s.\n", debugstr_a(cdesc[i].Name));
+                hr = D3DERR_INVALIDCALL;
+                goto err_out;
+            }
+            if (max(inputs_param[i]->element_count, 1) < cdesc[i].RegisterCount)
+            {
+                WARN("Register count exceeds parameter size, constant %s.\n", debugstr_a(cdesc[i].Name));
+                hr = D3DERR_INVALIDCALL;
+                goto err_out;
+            }
+        }
     }
     out->input_count = desc.Constants;
     out->inputs = cdesc;
