@@ -46,6 +46,8 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_QueryInterface(IDirectMusicSegmen
 {
     IDirectMusicSegment8Impl *This = impl_from_IDirectMusicSegment8(iface);
 
+    TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ret_iface);
+
     *ret_iface = NULL;
 
     if (IsEqualIID (riid, &IID_IUnknown) || IsEqualIID (riid, &IID_IDirectMusicSegment) ||
