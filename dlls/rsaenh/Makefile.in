@@ -12,7 +12,6 @@ C_SRCS = \
 	rc2.c \
 	rc4.c \
 	rsa.c \
-	rsaenh.c \
-	sha2.c
+	rsaenh.c
 
 RC_SRCS = rsrc.rc

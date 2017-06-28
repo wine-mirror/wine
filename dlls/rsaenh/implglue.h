@@ -26,7 +26,6 @@
 
 #include "bcrypt.h"
 #include "tomcrypt.h"
-#include "sha2.h"
 
 #define RSAENH_MAX_HASH_SIZE        104
 
@@ -61,7 +60,6 @@ typedef union tagHASH_CONTEXT {
     MD4_CTX md4;
     MD5_CTX md5;
     SHA_CTX sha;
-    SHA256_CTX sha256;
     BCRYPT_HASH_HANDLE bcrypt_hash;
 } HASH_CONTEXT;
 
