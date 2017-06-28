@@ -768,7 +768,7 @@
 @ varargs _cwscanf_s_l(wstr ptr)
 @ extern _daylight MSVCRT___daylight
 @ cdecl _difftime32(long long) MSVCRT__difftime32
-@ cdecl _difftime64(long long) MSVCRT__difftime64
+@ cdecl _difftime64(int64 int64) MSVCRT__difftime64
 @ stub _dosmaperr
 @ extern _dstbias MSVCRT__dstbias
 @ cdecl _dup(long) MSVCRT__dup

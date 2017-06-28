@@ -1108,7 +1108,7 @@
 @ extern _daylight MSVCRT___daylight
 @ cdecl _dclass(double) MSVCR120__dclass
 @ cdecl _difftime32(long long) MSVCRT__difftime32
-@ cdecl _difftime64(long long) MSVCRT__difftime64
+@ cdecl _difftime64(int64 int64) MSVCRT__difftime64
 @ stub _dosmaperr
 @ cdecl _dpcomp(double double) MSVCR120__dpcomp
 @ cdecl _dsign(double) MSVCR120__dsign

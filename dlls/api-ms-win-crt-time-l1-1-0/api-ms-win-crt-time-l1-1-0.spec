@@ -15,7 +15,7 @@
 @ cdecl _ctime64(ptr) ucrtbase._ctime64
 @ cdecl _ctime64_s(str long ptr) ucrtbase._ctime64_s
 @ cdecl _difftime32(long long) ucrtbase._difftime32
-@ cdecl _difftime64(long long) ucrtbase._difftime64
+@ cdecl _difftime64(int64 int64) ucrtbase._difftime64
 @ cdecl _ftime32(ptr) ucrtbase._ftime32
 @ cdecl _ftime32_s(ptr) ucrtbase._ftime32_s
 @ cdecl _ftime64(ptr) ucrtbase._ftime64

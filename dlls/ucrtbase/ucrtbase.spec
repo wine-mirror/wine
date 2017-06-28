@@ -252,7 +252,7 @@
 @ cdecl _dclass(double) MSVCR120__dclass
 @ stub _dexp
 @ cdecl _difftime32(long long) MSVCRT__difftime32
-@ cdecl _difftime64(long long) MSVCRT__difftime64
+@ cdecl _difftime64(int64 int64) MSVCRT__difftime64
 @ stub _dlog
 @ stub _dnorm
 @ cdecl _dpcomp(double double) MSVCR120__dpcomp
