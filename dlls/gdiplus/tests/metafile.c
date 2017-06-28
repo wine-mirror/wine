@@ -2322,6 +2322,73 @@ static void test_gditransform(void)
     expect(Ok, stat);
 }
 
+static const emfplus_record draw_image_records[] = {
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {1, EmfPlusRecordTypeObject},
+    {1, EmfPlusRecordTypeDrawImagePoints},
+    {1, EMR_SAVEDC},
+    {1, EMR_SETICMMODE},
+    {1, EMR_BITBLT},
+    {1, EMR_RESTOREDC},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_drawimage(void)
+{
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    static const GpPointF dst_points[3] = {{10.0,10.0},{25.0,15.0},{10.0,20.0}};
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HENHMETAFILE hemf;
+    GpStatus stat;
+    BITMAPINFO info;
+    BYTE buff[400];
+    GpBitmap *bm;
+    HDC hdc;
+
+    memset(buff, 0x80, sizeof(buff));
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+    DeleteDC(hdc);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    memset(&info, 0, sizeof(info));
+    info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info.bmiHeader.biWidth = 10;
+    info.bmiHeader.biHeight = 10;
+    info.bmiHeader.biPlanes = 1;
+    info.bmiHeader.biBitCount = 32;
+    info.bmiHeader.biCompression = BI_RGB;
+    stat = GdipCreateBitmapFromGdiDib(&info, buff, &bm);
+    expect(Ok, stat);
+
+    stat = GdipDrawImagePointsRect(graphics, (GpImage*)bm, dst_points, 3,
+            0.0, 0.0, 10.0, 10.0, UnitPixel, NULL, NULL, NULL);
+    expect(Ok, stat);
+
+    GdipDisposeImage((GpImage*)bm);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+    sync_metafile(&metafile, "draw_image.emf");
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(Ok, stat);
+
+    check_emfplus(hemf, draw_image_records, "draw image");
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2359,6 +2426,7 @@ START_TEST(metafile)
     test_containers();
     test_clipping();
     test_gditransform();
+    test_drawimage();
 
     GdiplusShutdown(gdiplusToken);
 }
