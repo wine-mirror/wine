@@ -2928,15 +2928,20 @@ static HRESULT d3dx_set_shader_constants(struct ID3DXEffectImpl *effect, struct 
         if (params[i] && params[i]->class == D3DXPC_OBJECT && is_param_type_sampler(params[i]->type))
         {
             struct d3dx_sampler *sampler;
+            unsigned int sampler_idx;
 
-            sampler = (struct d3dx_sampler *)params[i]->data;
-            TRACE("sampler %s, register index %u, state count %u.\n", debugstr_a(params[i]->name),
-                    cdesc[i].RegisterIndex, sampler->state_count);
-            for (j = 0; j < sampler->state_count; ++j)
+            for (sampler_idx = 0; sampler_idx < cdesc[i].RegisterCount; ++sampler_idx)
             {
-                if (FAILED(hr = d3dx9_apply_state(effect, pass, &sampler->states[j],
-                        cdesc[i].RegisterIndex + (vs ? D3DVERTEXTEXTURESAMPLER0 : 0), update_all)))
-                    ret = hr;
+                sampler = params[i]->element_count ? params[i]->members[sampler_idx].data : params[i]->data;
+                TRACE("sampler %s, register index %u, state count %u.\n", debugstr_a(params[i]->name),
+                        cdesc[i].RegisterIndex, sampler->state_count);
+                for (j = 0; j < sampler->state_count; ++j)
+                {
+                    if (FAILED(hr = d3dx9_apply_state(effect, pass, &sampler->states[j],
+                            cdesc[i].RegisterIndex + sampler_idx + (vs ? D3DVERTEXTEXTURESAMPLER0 : 0),
+                            update_all)))
+                        ret = hr;
+                }
             }
         }
     }
@@ -4000,12 +4005,17 @@ static BOOL walk_parameter_dep(struct d3dx_parameter *param, walk_parameter_dep_
     if (param->class == D3DXPC_OBJECT && is_param_type_sampler(param->type))
     {
         struct d3dx_sampler *sampler;
+        unsigned int sampler_idx;
+        unsigned int samplers_count = max(param->element_count, 1);
 
-        sampler = (struct d3dx_sampler *)param->data;
-        for (i = 0; i < sampler->state_count; ++i)
+        for (sampler_idx = 0; sampler_idx < samplers_count; ++sampler_idx)
         {
-            if (walk_state_dep(&sampler->states[i], param_func, data))
-                return TRUE;
+            sampler = param->element_count ? param->members[sampler_idx].data : param->data;
+            for (i = 0; i < sampler->state_count; ++i)
+            {
+                if (walk_state_dep(&sampler->states[i], param_func, data))
+                    return TRUE;
+            }
         }
         return FALSE;
     }
