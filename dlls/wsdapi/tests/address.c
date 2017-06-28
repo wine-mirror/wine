@@ -164,32 +164,32 @@ static void GetSetPort_udp_tests(void)
     /* No test for GetPort(NULL) as this causes an access violation exception on Windows */
 
     rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
-    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
     ok(actualPort == 0, "GetPort returned unexpected port: %d\n", actualPort);
 
     /* Try setting a zero port */
     rc = IWSDUdpAddress_SetPort(udpAddress, 0);
-    todo_wine ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
-    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
     ok(actualPort == 0, "GetPort returned unexpected port: %d\n", actualPort);
 
     /* Set a real port */
     rc = IWSDUdpAddress_SetPort(udpAddress, expectedPort1);
-    todo_wine ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
-    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
-    todo_wine ok(actualPort == expectedPort1, "GetPort returned unexpected port: %d\n", actualPort);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(actualPort == expectedPort1, "GetPort returned unexpected port: %d\n", actualPort);
 
     /* Now set a different port */
     rc = IWSDUdpAddress_SetPort(udpAddress, expectedPort2);
-    todo_wine ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
-    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
-    todo_wine ok(actualPort == expectedPort2, "GetPort returned unexpected port: %d\n", actualPort);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(actualPort == expectedPort2, "GetPort returned unexpected port: %d\n", actualPort);
 
     /* Release the object */
     ret = IWSDUdpAddress_Release(udpAddress);
@@ -330,7 +330,7 @@ static void GetSetSockaddr_udp_tests(void)
 
     /* Check that GetPort doesn't return the port set via the socket */
     rc = IWSDUdpAddress_GetPort(udpAddress, &port);
-    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
     ok(port == 0, "GetPort returned unexpected port: %d\n", port);
 
     /* Try setting an IPv4 address without a port */
@@ -370,7 +370,7 @@ static void GetSetSockaddr_udp_tests(void)
 
     /* Check that GetPort doesn't return the port set via the socket */
     rc = IWSDUdpAddress_GetPort(udpAddress, &port);
-    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
     ok(port == 0, "GetPort returned unexpected port: %d\n", port);
 
     /* Try setting an IPv6 address without a port */

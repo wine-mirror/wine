@@ -37,6 +37,7 @@ typedef struct IWSDUdpAddressImpl {
     SOCKADDR_STORAGE sockAddr;
     WCHAR            ipv4Address[25];
     WCHAR            ipv6Address[64];
+    WORD             port;
 } IWSDUdpAddressImpl;
 
 static inline IWSDUdpAddressImpl *impl_from_IWSDUdpAddress(IWSDUdpAddress *iface)
@@ -113,14 +114,27 @@ static HRESULT WINAPI IWSDUdpAddressImpl_Deserialize(IWSDUdpAddress *This, LPCWS
 
 static HRESULT WINAPI IWSDUdpAddressImpl_GetPort(IWSDUdpAddress *This, WORD *pwPort)
 {
-    FIXME("(%p, %p)\n", This, pwPort);
-    return E_NOTIMPL;
+    IWSDUdpAddressImpl *impl = impl_from_IWSDUdpAddress(This);
+
+    TRACE("(%p, %p)\n", This, pwPort);
+
+    if (pwPort == NULL)
+    {
+        return E_POINTER;
+    }
+
+    *pwPort = impl->port;
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDUdpAddressImpl_SetPort(IWSDUdpAddress *This, WORD wPort)
 {
-    FIXME("(%p, %d)\n", This, wPort);
-    return E_NOTIMPL;
+    IWSDUdpAddressImpl *impl = impl_from_IWSDUdpAddress(This);
+
+    TRACE("(%p, %d)\n", This, wPort);
+
+    impl->port = wPort;
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDUdpAddressImpl_GetTransportAddressEx(IWSDUdpAddress *This, BOOL fSafe, LPCWSTR *ppszAddress)
