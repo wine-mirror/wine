@@ -238,6 +238,46 @@ HRESULT WINAPI WSDXMLCleanupElement(WSDXML_ELEMENT *pAny)
     return S_OK;
 }
 
+HRESULT WINAPI WSDXMLGetValueFromAny(const WCHAR *pszNamespace, const WCHAR *pszName, WSDXML_ELEMENT *pAny, LPCWSTR *ppszValue)
+{
+    WSDXML_ELEMENT *element;
+    WSDXML_TEXT *text;
+
+    if (pAny == NULL)
+        return E_INVALIDARG;
+
+    if (ppszValue == NULL)
+        return E_POINTER;
+
+    if ((pszNamespace == NULL) || (pszName == NULL) || (lstrlenW(pszNamespace) > WSD_MAX_TEXT_LENGTH) || (lstrlenW(pszName) > WSD_MAX_TEXT_LENGTH))
+        return E_INVALIDARG;
+
+    element = pAny;
+
+    while (element != NULL)
+    {
+        if (element->Node.Type == ElementType)
+        {
+            if ((lstrcmpW(element->Name->LocalName, pszName) == 0) && (lstrcmpW(element->Name->Space->Uri, pszNamespace) == 0))
+            {
+                if ((element->FirstChild == NULL) || (element->FirstChild->Type != TextType))
+                {
+                    return E_FAIL;
+                }
+
+                text = (WSDXML_TEXT *) element->FirstChild;
+                *ppszValue = (LPCWSTR) text->Text;
+
+                return S_OK;
+            }
+        }
+
+        element = (WSDXML_ELEMENT *) element->Node.Next;
+    }
+
+    return E_FAIL;
+}
+
 /* IWSDXMLContext implementation */
 
 struct xmlNamespace
