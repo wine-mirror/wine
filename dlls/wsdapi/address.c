@@ -224,14 +224,39 @@ static HRESULT WINAPI IWSDUdpAddressImpl_SetTransportAddress(IWSDUdpAddress *Thi
 
 static HRESULT WINAPI IWSDUdpAddressImpl_SetSockaddr(IWSDUdpAddress *This, const SOCKADDR_STORAGE *pSockAddr)
 {
-    FIXME("(%p, %p)\n", This, pSockAddr);
-    return E_NOTIMPL;
+    IWSDUdpAddressImpl *impl = impl_from_IWSDUdpAddress(This);
+
+    TRACE("(%p, %p)\n", This, pSockAddr);
+
+    if (pSockAddr == NULL)
+    {
+        return E_POINTER;
+    }
+
+    memcpy(&impl->sockAddr, pSockAddr, sizeof(SOCKADDR_STORAGE));
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDUdpAddressImpl_GetSockaddr(IWSDUdpAddress *This, SOCKADDR_STORAGE *pSockAddr)
 {
-    FIXME("(%p, %p)\n", This, pSockAddr);
-    return E_NOTIMPL;
+    IWSDUdpAddressImpl *impl = impl_from_IWSDUdpAddress(This);
+    SOCKADDR_IN *sockAddr = (SOCKADDR_IN *) &impl->sockAddr;
+
+    TRACE("(%p, %p)\n", This, pSockAddr);
+
+    if (pSockAddr == NULL)
+    {
+        return E_POINTER;
+    }
+
+    /* Ensure the sockaddr is initialised correctly */
+    if ((sockAddr->sin_family != AF_INET) && (sockAddr->sin_family != AF_INET6))
+    {
+        return E_FAIL;
+    }
+
+    memcpy(pSockAddr, &impl->sockAddr, sizeof(SOCKADDR_STORAGE));
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDUdpAddressImpl_SetExclusive(IWSDUdpAddress *This, BOOL fExclusive)
