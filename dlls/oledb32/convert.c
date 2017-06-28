@@ -641,6 +641,25 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             }
         }
         break;
+        case DBTYPE_DBTIMESTAMP:
+        {
+            WCHAR szBuff[64];
+            static const WCHAR format1[] = {
+                  '%','0','4','d','-','%','0','2','d','-','%','0','2','d',' ','%','0','2','d',':','%','0','2','d',
+                  ':','%','0','2','d', 0};
+            static const WCHAR format2[] = {
+                  '%','0','4','d','-','%','0','2','d','-','%','0','2','d',' ','%','0','2','d',':','%','0','2','d',
+                  ':','%','0','2','d','.','%','0','9','d', 0};
+            DBTIMESTAMP *ts = (DBTIMESTAMP *)src;
+
+            if(ts->fraction == 0)
+                wsprintfW(szBuff, format1, ts->year, ts->month, ts->day, ts->hour, ts->minute, ts->second);
+            else
+                wsprintfW(szBuff, format2, ts->year, ts->month, ts->day, ts->hour, ts->minute, ts->second, ts->fraction );
+            *d = SysAllocString(szBuff);
+            hr = *d ? S_OK : E_OUTOFMEMORY;
+            break;
+        }
         case DBTYPE_VARIANT:
             VariantInit(&tmp);
             if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_BSTR)) == S_OK)

@@ -955,6 +955,10 @@ static void test_converttobstr(void)
     DBSTATUS dst_status;
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
+    static const WCHAR tsW[] = {'2','0','1','3','-','0','5','-','1','4',' ','0','2',':','0','4',':','1','2',0};
+    static const WCHAR ts1W[] = {'2','0','1','3','-','0','5','-','1','4',' ','0','2',':','0','4',':','1','2','.','0','0','0','0','0','0','0','0','3',0};
+    static const WCHAR ts2W[] = {'2','0','1','3','-','0','5','-','1','4',' ','0','2',':','0','4',':','1','2','.','0','0','0','0','0','0','2','0','0',0};
+    DBTIMESTAMP ts = {2013, 5, 14, 2, 4, 12, 0};
     VARIANT v;
     BSTR b;
 
@@ -1016,6 +1020,32 @@ static void test_converttobstr(void)
     ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
     ok(dst_len == 33, "got %ld\n", dst_len);
     ok(dst == (void*)0x1234, "got %p\n", dst);
+
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_DBTIMESTAMP, DBTYPE_BSTR, 0, &dst_len, &ts, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(BSTR), "got %ld\n", dst_len);
+    ok(!lstrcmpW(tsW, dst), "got %s\n", wine_dbgstr_w(dst));
+    SysFreeString(dst);
+
+    dst_len = 0x1234;
+    ts.fraction = 3;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_DBTIMESTAMP, DBTYPE_BSTR, 0, &dst_len, &ts, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(BSTR), "got %ld\n", dst_len);
+    ok(!lstrcmpW(ts1W, dst), "got %s\n", wine_dbgstr_w(dst));
+    SysFreeString(dst);
+
+    dst_len = 0x1234;
+    ts.fraction = 200;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_DBTIMESTAMP, DBTYPE_BSTR, 0, &dst_len, &ts, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(BSTR), "got %ld\n", dst_len);
+    ok(!lstrcmpW(ts2W, dst), "got %s\n", wine_dbgstr_w(dst));
+    SysFreeString(dst);
 }
 
 static void test_converttowstr(void)
@@ -1032,6 +1062,10 @@ static void test_converttowstr(void)
         'A','D','E','5','-','0','0','A','A','0','0','4','4','7','7','3','D','}',0};
     static const WCHAR hexunpacked_w[] = {'5','7','0','0','6','9','0','0','6','E','0','0','6','5','0','0','0','0','0','0', 0 };
     static const WCHAR hexpacked_w[] = {'W','i','n','e', 0 };
+    static const WCHAR tsW[] = {'2','0','1','3','-','0','5','-','1','4',' ','0','2',':','0','4',':','1','2',0};
+    static const WCHAR ts1W[] = {'2','0','1','3','-','0','5','-','1','4',' ','0','2',':','0','4',':','1','2','.','0','0','0','0','0','0','0','0','3',0};
+    static const WCHAR ts2W[] = {'2','0','1','3','-','0','5','-','1','4',' ','0','2',':','0','4',':','1','2','.','0','0','0','0','0','0','2','0','0',0};
+    DBTIMESTAMP ts = {2013, 5, 14, 2, 4, 12, 0};
     BSTR b;
     VARIANT v;
 
@@ -1413,7 +1447,28 @@ static void test_converttowstr(void)
     ok(dst_len == 4, "got %ld\n", dst_len);
     ok(!lstrcmpW(ten, dst), "got %s\n", wine_dbgstr_w(dst));
 
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_DBTIMESTAMP, DBTYPE_WSTR, 0, &dst_len, &ts, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 38, "got %ld\n", dst_len);
+    ok(!lstrcmpW(tsW, dst), "got %s\n", wine_dbgstr_w(dst));
 
+    dst_len = 0x1234;
+    ts.fraction = 3;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_DBTIMESTAMP, DBTYPE_WSTR, 0, &dst_len, &ts, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 58, "got %ld\n", dst_len);
+    ok(!lstrcmpW(ts1W, dst), "got %s\n", wine_dbgstr_w(dst));
+
+    dst_len = 0x1234;
+    ts.fraction = 200;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_DBTIMESTAMP, DBTYPE_WSTR, 0, &dst_len, &ts, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 58, "got %ld\n", dst_len);
+    ok(!lstrcmpW(ts2W, dst), "got %s\n", wine_dbgstr_w(dst));
 
     /* DBTYPE_BYTES to DBTYPE_*STR unpacks binary data into a hex string */
     memcpy(src, hexpacked_w, sizeof(hexpacked_w));
