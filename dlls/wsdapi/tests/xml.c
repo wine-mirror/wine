@@ -268,6 +268,115 @@ static void AddSibling_tests(void)
     WSDFreeLinkedMemory(parent);
 }
 
+static void GetValueFromAny_tests(void)
+{
+    WSDXML_ELEMENT *parent, *child1, *child2, *child3;
+    WSDXML_NAME parentName, child1Name, child2Name, child3Name;
+    WSDXML_NAMESPACE ns, ns2;
+    WCHAR parentNameText[] = {'D','a','d',0};
+    WCHAR child1NameText[] = {'T','i','m',0};
+    WCHAR child2NameText[] = {'B','o','b',0};
+    WCHAR child3NameText[] = {'J','o','e',0};
+    WCHAR child1Value[] = {'V','1',0};
+    WCHAR child2Value[] = {'V','2',0};
+    static const WCHAR uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t','/',0};
+    static const WCHAR uri2[] = {'h','t','t','p',':','/','/','t','e','s','t','2','.','t','e','s','t','/',0};
+    static const WCHAR prefix[] = {'t',0};
+    static const WCHAR prefix2[] = {'u',0};
+    LPCWSTR returnedValue = NULL, oldReturnedValue;
+    HRESULT hr;
+
+    /* Populate structures */
+    ns.Uri = uri;
+    ns.PreferredPrefix = prefix;
+
+    ns2.Uri = uri2;
+    ns2.PreferredPrefix = prefix2;
+
+    parentName.LocalName = parentNameText;
+    parentName.Space = &ns;
+
+    child1Name.LocalName = child1NameText;
+    child1Name.Space = &ns2;
+
+    child2Name.LocalName = child2NameText;
+    child2Name.Space = &ns;
+
+    child3Name.LocalName = child3NameText;
+    child3Name.Space = &ns;
+
+    /* Create some elements */
+    hr = WSDXMLBuildAnyForSingleElement(&parentName, NULL, &parent);
+    ok(hr == S_OK, "BuildAnyForSingleElement failed with %08x\n", hr);
+
+    hr = WSDXMLBuildAnyForSingleElement(&child1Name, child1Value, &child1);
+    ok(hr == S_OK, "BuildAnyForSingleElement failed with %08x\n", hr);
+
+    hr = WSDXMLBuildAnyForSingleElement(&child2Name, child2Value, &child2);
+    ok(hr == S_OK, "BuildAnyForSingleElement failed with %08x\n", hr);
+
+    hr = WSDXMLBuildAnyForSingleElement(&child3Name, NULL, &child3);
+    ok(hr == S_OK, "BuildAnyForSingleElement failed with %08x\n", hr);
+
+    /* Attach them to the parent element */
+    hr = WSDXMLAddChild(parent, child1);
+    ok(hr == S_OK, "AddChild failed with %08x\n", hr);
+
+    hr = WSDXMLAddChild(parent, child2);
+    ok(hr == S_OK, "AddChild failed with %08x\n", hr);
+
+    hr = WSDXMLAddChild(parent, child3);
+    ok(hr == S_OK, "AddChild failed with %08x\n", hr);
+
+    /* Test invalid arguments */
+    hr = WSDXMLGetValueFromAny(NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetValueFromAny returned unexpected result: %08x\n", hr);
+
+    hr = WSDXMLGetValueFromAny(NULL, NULL, NULL, &returnedValue);
+    ok(hr == E_INVALIDARG, "GetValueFromAny returned unexpected result: %08x\n", hr);
+
+    hr = WSDXMLGetValueFromAny(NULL, NULL, parent, NULL);
+    ok(hr == E_POINTER, "GetValueFromAny returned unexpected result: %08x\n", hr);
+
+    hr = WSDXMLGetValueFromAny(uri, NULL, parent, NULL);
+    ok(hr == E_POINTER, "GetValueFromAny returned unexpected result: %08x\n", hr);
+
+    hr = WSDXMLGetValueFromAny(uri, child2NameText, parent, NULL);
+    ok(hr == E_POINTER, "GetValueFromAny returned unexpected result: %08x\n", hr);
+
+    /* Test calling the function with a text size that exceeds 8192 characters */
+    hr = WSDXMLGetValueFromAny(largeText, child2NameText, parent, &returnedValue);
+    ok(hr == E_INVALIDARG, "GetValueFromAny returned unexpected result: %08x\n", hr);
+
+    hr = WSDXMLGetValueFromAny(uri, largeText, parent, &returnedValue);
+    ok(hr == E_INVALIDARG, "GetValueFromAny returned unexpected result: %08x\n", hr);
+
+    /* Test with valid parameters */
+    hr = WSDXMLGetValueFromAny(uri, child2NameText, child1, &returnedValue);
+    ok(hr == S_OK, "GetValueFromAny failed with %08x\n", hr);
+    ok(returnedValue != NULL, "returnedValue == NULL\n");
+    ok(lstrcmpW(returnedValue, child2Value) == 0, "returnedValue ('%s') != '%s'\n", wine_dbgstr_w(returnedValue), wine_dbgstr_w(child2Value));
+
+    hr = WSDXMLGetValueFromAny(uri2, child1NameText, child1, &returnedValue);
+    ok(hr == S_OK, "GetValueFromAny failed with %08x\n", hr);
+    ok(returnedValue != NULL, "returnedValue == NULL\n");
+    ok(lstrcmpW(returnedValue, child1Value) == 0, "returnedValue ('%s') != '%s'\n", wine_dbgstr_w(returnedValue), wine_dbgstr_w(child1Value));
+
+    oldReturnedValue = returnedValue;
+
+    hr = WSDXMLGetValueFromAny(uri2, child2NameText, child1, &returnedValue);
+    ok(hr == E_FAIL, "GetValueFromAny returned unexpected value: %08x\n", hr);
+    ok(returnedValue == oldReturnedValue, "returnedValue == %p\n", returnedValue);
+
+    oldReturnedValue = returnedValue;
+
+    hr = WSDXMLGetValueFromAny(uri, child3NameText, child1, &returnedValue);
+    ok(hr == E_FAIL, "GetValueFromAny failed with %08x\n", hr);
+    ok(returnedValue == oldReturnedValue, "returnedValue == %p\n", returnedValue);
+
+    WSDFreeLinkedMemory(parent);
+}
+
 static void XMLContext_AddNamespace_tests(void)
 {
     WCHAR ns1Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t',0};
@@ -509,6 +618,7 @@ START_TEST(xml)
     BuildAnyForSingleElement_tests();
     AddChild_tests();
     AddSibling_tests();
+    GetValueFromAny_tests();
 
     XMLContext_AddNamespace_tests();
     XMLContext_AddNameToNamespace_tests();
