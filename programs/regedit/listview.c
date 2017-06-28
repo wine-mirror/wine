@@ -153,8 +153,8 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
 
 int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount, int pos)
 {
+    LVITEMW item = { 0 };
     LINE_INFO* linfo;
-    LVITEMW item;
     int index;
 
     linfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LINE_INFO) + dwCount);
@@ -173,8 +173,6 @@ int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWOR
 
     item.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE | LVIF_IMAGE;
     item.iItem = (pos == -1) ? SendMessageW(hwndLV, LVM_GETITEMCOUNT, 0, 0) : pos;
-    item.iSubItem = 0;
-    item.state = 0;
     item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
     item.pszText = Name ? Name : LPSTR_TEXTCALLBACKW;
     item.cchTextMax = Name ? lstrlenW(item.pszText) : 0;
@@ -191,10 +189,6 @@ int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWOR
         break;
     }
     item.lParam = (LPARAM)linfo;
-
-#if (_WIN32_IE >= 0x0300)
-    item.iIndent = 0;
-#endif
 
     if ((index = ListView_InsertItemW(hwndLV, &item)) != -1)
         format_value_data(hwndLV, index, dwValType, ValBuf, dwCount);
