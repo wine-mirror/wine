@@ -1345,7 +1345,7 @@
 @ stdcall ResetWriteWatch(ptr long) kernel32.ResetWriteWatch
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) kernel32.ResolveDelayLoadedAPI
 # @ stub ResolveDelayLoadsFromDll
-@ stub ResolveLocaleName
+@ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
 @ stdcall RestoreLastError(long) kernel32.RestoreLastError
 @ stdcall ResumeThread(long) kernel32.ResumeThread
 @ stdcall RevertToSelf() advapi32.RevertToSelf

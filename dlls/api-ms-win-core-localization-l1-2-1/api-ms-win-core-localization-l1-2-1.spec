@@ -48,7 +48,7 @@
 @ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long) kernel32.LCMapStringEx
 @ stdcall LCMapStringW(long long wstr long ptr long) kernel32.LCMapStringW
 @ stdcall LocaleNameToLCID(wstr long) kernel32.LocaleNameToLCID
-@ stub ResolveLocaleName
+@ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
 @ stdcall SetCalendarInfoW(long long long wstr) kernel32.SetCalendarInfoW
 @ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
 @ stub SetProcessPreferredUILanguages

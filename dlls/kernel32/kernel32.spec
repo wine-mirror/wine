@@ -1281,7 +1281,7 @@
 @ stdcall ResetEvent(long)
 @ stdcall ResetWriteWatch(ptr long)
 @ stdcall ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) ntdll.LdrResolveDelayLoadedAPI
-# @ stub ResolveLocaleName
+@ stdcall ResolveLocaleName(wstr ptr long)
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
 @ stdcall ResumeThread(long)
 @ cdecl -arch=arm,x86_64 RtlAddFunctionTable(ptr long long) ntdll.RtlAddFunctionTable

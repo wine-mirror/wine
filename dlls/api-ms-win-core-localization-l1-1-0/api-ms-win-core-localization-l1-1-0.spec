@@ -39,7 +39,7 @@
 @ stub NlsUpdateLocale
 @ stub NlsUpdateSystemLocale
 @ stub NlsWriteEtwEvent
-@ stub ResolveLocaleName
+@ stdcall ResolveLocaleName(wstr ptr long) kernel32.ResolveLocaleName
 @ stdcall SetCalendarInfoW(long long long wstr) kernel32.SetCalendarInfoW
 @ stdcall SetLocaleInfoW(long long wstr) kernel32.SetLocaleInfoW
 @ stdcall SetThreadLocale(long) kernel32.SetThreadLocale
