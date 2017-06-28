@@ -38,6 +38,7 @@ typedef struct IWSDUdpAddressImpl {
     WCHAR            ipv4Address[25];
     WCHAR            ipv6Address[64];
     WORD             port;
+    WSDUdpMessageType messageType;
 } IWSDUdpAddressImpl;
 
 static inline IWSDUdpAddressImpl *impl_from_IWSDUdpAddress(IWSDUdpAddress *iface)
@@ -247,14 +248,27 @@ static HRESULT WINAPI IWSDUdpAddressImpl_GetExclusive(IWSDUdpAddress *This)
 
 static HRESULT WINAPI IWSDUdpAddressImpl_SetMessageType(IWSDUdpAddress *This, WSDUdpMessageType messageType)
 {
-    FIXME("(%p, %d)\n", This, messageType);
-    return E_NOTIMPL;
+    IWSDUdpAddressImpl *impl = impl_from_IWSDUdpAddress(This);
+
+    TRACE("(%p, %d)\n", This, messageType);
+
+    impl->messageType = messageType;
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDUdpAddressImpl_GetMessageType(IWSDUdpAddress *This, WSDUdpMessageType *pMessageType)
 {
-    FIXME("(%p, %p)\n", This, pMessageType);
-    return E_NOTIMPL;
+    IWSDUdpAddressImpl *impl = impl_from_IWSDUdpAddress(This);
+
+    TRACE("(%p, %p)\n", This, pMessageType);
+
+    if (pMessageType == NULL)
+    {
+        return E_POINTER;
+    }
+
+    *pMessageType = impl->messageType;
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDUdpAddressImpl_SetTTL(IWSDUdpAddress *This, DWORD dwTTL)

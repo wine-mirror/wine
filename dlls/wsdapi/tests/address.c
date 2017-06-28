@@ -210,26 +210,26 @@ static void GetSetMessageType_udp_tests(void)
     ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
 
     rc = IWSDUdpAddress_GetMessageType(udpAddress, NULL);
-    todo_wine ok(rc == E_POINTER, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == E_POINTER, "GetMessageType returned unexpected result: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetMessageType(udpAddress, &actualMessageType);
-    todo_wine ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
     ok(actualMessageType == 0, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
 
     /* Try setting a message type */
     rc = IWSDUdpAddress_SetMessageType(udpAddress, expectedMessageType1);
-    todo_wine ok(rc == S_OK, "SetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetMessageType returned unexpected result: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetMessageType(udpAddress, &actualMessageType);
-    todo_wine ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
-    todo_wine ok(actualMessageType == expectedMessageType1, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
+    ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(actualMessageType == expectedMessageType1, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
 
     /* Set another one */
     rc = IWSDUdpAddress_SetMessageType(udpAddress, expectedMessageType2);
-    todo_wine ok(rc == S_OK, "SetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "SetMessageType returned unexpected result: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetMessageType(udpAddress, &actualMessageType);
-    todo_wine ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
     ok(actualMessageType == expectedMessageType2, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
 
     /* Release the object */
