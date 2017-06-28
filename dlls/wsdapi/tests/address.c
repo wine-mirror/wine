@@ -95,7 +95,7 @@ static void GetSetTransportAddress_udp_tests(void)
     ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
     ok(returnedAddress == NULL, "GetTransportAddress returned unexpected address: %08x\n", rc);
 
     /* Try setting a null address */
@@ -111,12 +111,12 @@ static void GetSetTransportAddress_udp_tests(void)
     ok(rc == S_OK, "SetTransportAddress(ipv4Address) failed: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, NULL);
-    todo_wine ok(rc == E_POINTER, "GetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
+    ok(rc == E_POINTER, "GetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
-    todo_wine ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
-    todo_wine ok(lstrcmpW(returnedAddress, ipv4Address) == 0, "Returned address != ipv4Address (%s)\n", wine_dbgstr_w(returnedAddress));
+    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
+    ok(lstrcmpW(returnedAddress, ipv4Address) == 0, "Returned address != ipv4Address (%s)\n", wine_dbgstr_w(returnedAddress));
 
     /* Try setting an IPv4 address with a port number */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv4AddressWithPort);
@@ -127,17 +127,17 @@ static void GetSetTransportAddress_udp_tests(void)
     ok(rc == S_OK, "SetTransportAddress(ipv6Address) failed: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
-    todo_wine ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
-    todo_wine ok(lstrcmpW(returnedAddress, ipv6Address) == 0, "Returned address != ipv6Address (%s)\n", wine_dbgstr_w(returnedAddress));
+    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
+    ok(lstrcmpW(returnedAddress, ipv6Address) == 0, "Returned address != ipv6Address (%s)\n", wine_dbgstr_w(returnedAddress));
 
     /* Try setting an IPv6 address with a port number */
     rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv6AddressWithPort);
     ok(rc == S_OK, "SetTransportAddress(ipv6AddressWithPort) failed: %08x\n", rc);
 
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
-    todo_wine ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
+    ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
     todo_wine ok(lstrcmpW(returnedAddress, ipv6AddressWithPort) == 0, "Returned address != ipv6AddressWithPort (%s)\n", wine_dbgstr_w(returnedAddress));
 
     /* Release the object */
@@ -324,7 +324,7 @@ static void GetSetSockaddr_udp_tests(void)
 
     /* Check that GetTransportAddress returns the address set via the socket */
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
     todo_wine ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
     todo_wine ok(lstrcmpW(returnedAddress, expectedIpv4TransportAddr) == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
@@ -341,7 +341,7 @@ static void GetSetSockaddr_udp_tests(void)
 
     /* Check that GetTransportAddress returns the address set via the socket */
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
     todo_wine ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
     todo_wine ok(lstrcmpW(returnedAddress, expectedIpv4TransportAddrNoPort) == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
@@ -364,7 +364,7 @@ static void GetSetSockaddr_udp_tests(void)
 
     /* Check that GetTransportAddress returns the address set via the socket */
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
     todo_wine ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
     todo_wine ok(lstrcmpW(returnedAddress, expectedIpv6TransportAddr) == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
@@ -381,7 +381,7 @@ static void GetSetSockaddr_udp_tests(void)
 
     /* Check that GetTransportAddress returns the address set via the socket */
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
-    todo_wine ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
+    ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
     todo_wine ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
     todo_wine ok(lstrcmpW(returnedAddress, expectedIpv6TransportAddrNoPort) == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 

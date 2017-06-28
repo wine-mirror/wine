@@ -35,6 +35,8 @@ typedef struct IWSDUdpAddressImpl {
     IWSDUdpAddress IWSDUdpAddress_iface;
     LONG           ref;
     SOCKADDR_STORAGE sockAddr;
+    WCHAR            ipv4Address[25];
+    WCHAR            ipv6Address[64];
 } IWSDUdpAddressImpl;
 
 static inline IWSDUdpAddressImpl *impl_from_IWSDUdpAddress(IWSDUdpAddress *iface)
@@ -121,16 +123,59 @@ static HRESULT WINAPI IWSDUdpAddressImpl_SetPort(IWSDUdpAddress *This, WORD wPor
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IWSDUdpAddressImpl_GetTransportAddress(IWSDUdpAddress *This, LPCWSTR *ppszAddress)
-{
-    FIXME("(%p, %p)\n", This, ppszAddress);
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI IWSDUdpAddressImpl_GetTransportAddressEx(IWSDUdpAddress *This, BOOL fSafe, LPCWSTR *ppszAddress)
 {
-    FIXME("(%p, %d, %p)\n", This, fSafe, ppszAddress);
-    return E_NOTIMPL;
+    IWSDUdpAddressImpl *impl = impl_from_IWSDUdpAddress(This);
+    SOCKADDR_STORAGE storage;
+    DWORD size;
+
+    TRACE("(%p, %d, %p)\n", This, fSafe, ppszAddress);
+
+    if (ppszAddress == NULL)
+        return E_POINTER;
+
+    *ppszAddress = NULL;
+
+    switch (((SOCKADDR_IN *) &impl->sockAddr)->sin_family)
+    {
+        case AF_INET:
+            size = sizeof(impl->ipv4Address) / sizeof(WCHAR);
+
+            if (WSAAddressToStringW((LPSOCKADDR) &impl->sockAddr, sizeof(SOCKADDR_IN), NULL, impl->ipv4Address, &size) == 0)
+            {
+                *ppszAddress = impl->ipv4Address;
+                return S_OK;
+            }
+
+            break;
+
+        case AF_INET6:
+            size = sizeof(impl->ipv6Address) / sizeof(WCHAR);
+
+            /* Copy the SOCKADDR structure so we can remove the scope ID if not required */
+            memcpy(&storage, &impl->sockAddr, sizeof(SOCKADDR_IN6));
+
+            if (!fSafe)
+                ((SOCKADDR_IN6 *) &storage)->sin6_scope_id = 0;
+
+            if (WSAAddressToStringW((LPSOCKADDR) &storage, sizeof(SOCKADDR_IN6), NULL, impl->ipv6Address, &size) == 0)
+            {
+                *ppszAddress = impl->ipv6Address;
+                return S_OK;
+            }
+
+            break;
+
+        default:
+            return S_OK;
+    }
+
+    return HRESULT_FROM_WIN32(WSAGetLastError());
+}
+
+static HRESULT WINAPI IWSDUdpAddressImpl_GetTransportAddress(IWSDUdpAddress *This, LPCWSTR *ppszAddress)
+{
+    return IWSDUdpAddressImpl_GetTransportAddressEx(This, FALSE, ppszAddress);
 }
 
 static HRESULT WINAPI IWSDUdpAddressImpl_SetTransportAddress(IWSDUdpAddress *This, LPCWSTR pszAddress)
