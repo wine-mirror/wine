@@ -411,6 +411,14 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 		HeapFree(GetProcessHeap(), 0, oldName);
 		return 0;
 	    }
+        case LVN_DELETEITEM: {
+                NMLISTVIEW *nmlv = (NMLISTVIEW *)lParam;
+                LINE_INFO *info = (LINE_INFO *)nmlv->lParam;
+
+                HeapFree(GetProcessHeap(), 0, info->name);
+                HeapFree(GetProcessHeap(), 0, info);
+            }
+            break;
         case NM_RETURN: {
             int cnt = SendMessageW(hWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
             if (cnt != -1)
@@ -515,7 +523,6 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     BYTE* valBuf = 0;
     HKEY hKey = 0;
     LONG errCode;
-    INT count, i;
     LVITEMW item;
 
     if (!hwndLV) return FALSE;
@@ -525,16 +532,8 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     errCode = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ, &hKey);
     if (errCode != ERROR_SUCCESS) goto done;
 
-    count = SendMessageW(hwndLV, LVM_GETITEMCOUNT, 0, 0);
-    for (i = 0; i < count; i++) {
-        item.mask = LVIF_PARAM;
-        item.iItem = i;
-        SendMessageW( hwndLV, LVM_GETITEMW, 0, (LPARAM)&item );
-        HeapFree(GetProcessHeap(), 0, ((LINE_INFO*)item.lParam)->name);
-        HeapFree(GetProcessHeap(), 0, (void*)item.lParam);
-    }
     g_columnToSort = ~0U;
-    SendMessageW( hwndLV, LVM_DELETEALLITEMS, 0, 0L );
+    SendMessageW(hwndLV, LVM_DELETEALLITEMS, 0, 0);
 
     /* get size information and resize the buffers if necessary */
     errCode = RegQueryInfoKeyW(hKey, NULL, NULL, NULL, NULL, &max_sub_key_len, NULL,
