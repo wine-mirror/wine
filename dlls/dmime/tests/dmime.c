@@ -23,6 +23,7 @@
 #include <wine/test.h>
 #include <dmusici.h>
 #include <audioclient.h>
+#include <guiddef.h>
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
@@ -45,8 +46,14 @@ static void test_COM_audiopath(void)
     IDirectMusicAudioPath *dmap;
     IUnknown *unk;
     IDirectMusicPerformance8 *performance;
+    IDirectSoundBuffer *dsound;
+    IDirectSoundBuffer8 *dsound8;
+    IDirectSoundNotify *notify;
+    IDirectSound3DBuffer *dsound3d;
+    IKsPropertySet *propset;
     ULONG refcount;
     HRESULT hr;
+    DWORD buffer = 0;
 
     hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicPerformance8, (void**)&performance);
@@ -88,6 +95,39 @@ static void test_COM_audiopath(void)
     refcount = IUnknown_AddRef(unk);
     ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
     refcount = IUnknown_Release(unk);
+
+    hr = IDirectMusicAudioPath_GetObjectInPath(dmap, DMUS_PCHANNEL_ALL, DMUS_PATH_BUFFER, buffer, &GUID_NULL,
+                0, &IID_IDirectSoundBuffer, (void**)&dsound);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
+    IDirectSoundBuffer_Release(dsound);
+
+    hr = IDirectMusicAudioPath_GetObjectInPath(dmap, DMUS_PCHANNEL_ALL, DMUS_PATH_BUFFER, buffer, &GUID_NULL,
+                0, &IID_IDirectSoundBuffer8, (void**)&dsound8);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
+    IDirectSoundBuffer8_Release(dsound8);
+
+    hr = IDirectMusicAudioPath_GetObjectInPath(dmap, DMUS_PCHANNEL_ALL, DMUS_PATH_BUFFER, buffer, &GUID_NULL,
+                0, &IID_IDirectSoundNotify, (void**)&notify);
+    ok(hr == E_NOINTERFACE, "Failed: %08x\n", hr);
+
+    hr = IDirectMusicAudioPath_GetObjectInPath(dmap, DMUS_PCHANNEL_ALL, DMUS_PATH_BUFFER, buffer, &GUID_NULL,
+                0, &IID_IDirectSound3DBuffer, (void**)&dsound3d);
+    ok(hr == E_NOINTERFACE, "Failed: %08x\n", hr);
+
+    hr = IDirectMusicAudioPath_GetObjectInPath(dmap, DMUS_PCHANNEL_ALL, DMUS_PATH_BUFFER, buffer, &GUID_NULL,
+                0, &IID_IKsPropertySet, (void**)&propset);
+    todo_wine ok(hr == S_OK, "Failed: %08x\n", hr);
+    if (propset)
+        IKsPropertySet_Release(propset);
+
+    hr = IDirectMusicAudioPath_GetObjectInPath(dmap, DMUS_PCHANNEL_ALL, DMUS_PATH_BUFFER, buffer, &GUID_NULL,
+                0, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "Failed: %08x\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IDirectMusicAudioPath_GetObjectInPath(dmap, DMUS_PCHANNEL_ALL, DMUS_PATH_BUFFER, buffer, &GUID_NULL,
+                0, &GUID_NULL, (void**)&unk);
+    ok(hr == E_NOINTERFACE, "Failed: %08x\n", hr);
 
     while (IDirectMusicAudioPath_Release(dmap) > 1); /* performance has a reference too */
     IDirectMusicPerformance8_CloseDown(performance);
