@@ -39,12 +39,6 @@
 #define SHA256_BLOCK_LENGTH		64
 #define SHA256_DIGEST_LENGTH		32
 #define SHA256_DIGEST_STRING_LENGTH	(SHA256_DIGEST_LENGTH * 2 + 1)
-#define SHA384_BLOCK_LENGTH		128
-#define SHA384_DIGEST_LENGTH		48
-#define SHA384_DIGEST_STRING_LENGTH	(SHA384_DIGEST_LENGTH * 2 + 1)
-#define SHA512_BLOCK_LENGTH		128
-#define SHA512_DIGEST_LENGTH		64
-#define SHA512_DIGEST_STRING_LENGTH	(SHA512_DIGEST_LENGTH * 2 + 1)
 
 
 /*** SHA-256/384/512 Context Structures *******************************/
@@ -57,13 +51,6 @@ typedef struct _SHA256_CTX {
 	sha2_word64	bitcount;
 	sha2_byte	buffer[SHA256_BLOCK_LENGTH];
 } SHA256_CTX;
-typedef struct _SHA512_CTX {
-	sha2_word64	state[8];
-	sha2_word64	bitcount[2];
-	sha2_byte	buffer[SHA512_BLOCK_LENGTH];
-} SHA512_CTX;
-
-typedef SHA512_CTX SHA384_CTX;
 
 
 /*** SHA-256/384/512 Function Prototypes ******************************/
@@ -73,11 +60,5 @@ void SHA256_Update(SHA256_CTX*, const sha2_byte*, size_t);
 void SHA256_Final(sha2_byte[SHA256_DIGEST_LENGTH], SHA256_CTX*);
 char* SHA256_End(SHA256_CTX*, char[SHA256_DIGEST_STRING_LENGTH]);
 char* SHA256_Data(const sha2_byte*, size_t, char[SHA256_DIGEST_STRING_LENGTH]);
-
-void SHA384_Init(SHA384_CTX*);
-void SHA384_Update(SHA384_CTX*, const sha2_byte*, size_t);
-void SHA384_Final(sha2_byte[SHA384_DIGEST_LENGTH], SHA384_CTX*);
-char* SHA384_End(SHA384_CTX*, char[SHA384_DIGEST_STRING_LENGTH]);
-char* SHA384_Data(const sha2_byte*, size_t, char[SHA384_DIGEST_STRING_LENGTH]);
 
 #endif /* __SHA2_H__ */

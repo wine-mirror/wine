@@ -62,7 +62,6 @@ typedef union tagHASH_CONTEXT {
     MD5_CTX md5;
     SHA_CTX sha;
     SHA256_CTX sha256;
-    SHA384_CTX sha384;
     BCRYPT_HASH_HANDLE bcrypt_hash;
 } HASH_CONTEXT;
 

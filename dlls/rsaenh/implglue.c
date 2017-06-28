@@ -75,7 +75,7 @@ BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext)
             break;
 
         case CALG_SHA_384:
-            SHA384_Init(&pHashContext->sha384);
+            algid = BCRYPT_SHA384_ALGORITHM;
             break;
 
         case CALG_SHA_512:
@@ -123,10 +123,6 @@ BOOL update_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, const BYTE *pb
             SHA256_Update(&pHashContext->sha256, pbData, dwDataLen);
             break;
 
-        case CALG_SHA_384:
-            SHA384_Update(&pHashContext->sha384, pbData, dwDataLen);
-            break;
-
         default:
             BCryptHashData(pHashContext->bcrypt_hash, (UCHAR*)pbData, dwDataLen, 0);
     }
@@ -158,10 +154,6 @@ BOOL finalize_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, BYTE *pbHash
         
         case CALG_SHA_256:
             SHA256_Final(pbHashValue, &pHashContext->sha256);
-            break;
-
-        case CALG_SHA_384:
-            SHA384_Final(pbHashValue, &pHashContext->sha384);
             break;
 
         default:
