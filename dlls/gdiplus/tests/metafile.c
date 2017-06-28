@@ -640,6 +640,26 @@ static const emfplus_record emfonly_records[] = {
     {0}
 };
 
+static const emfplus_record emfonly_draw_records[] = {
+    {0, EMR_HEADER},
+    {1, EMR_SAVEDC},
+    {1, EMR_SETICMMODE},
+    {1, EMR_SETMITERLIMIT},
+    {1, EMR_MODIFYWORLDTRANSFORM},
+    {1, EMR_EXTCREATEPEN},
+    {1, EMR_SELECTOBJECT},
+    {1, EMR_SELECTOBJECT},
+    {1, EMR_POLYLINE16},
+    {1, EMR_SELECTOBJECT},
+    {1, EMR_SELECTOBJECT},
+    {1, EMR_MODIFYWORLDTRANSFORM},
+    {1, EMR_DELETEOBJECT},
+    {1, EMR_SETMITERLIMIT},
+    {1, EMR_RESTOREDC},
+    {0, EMR_EOF},
+    {1}
+};
+
 static void test_emfonly(void)
 {
     GpStatus stat;
@@ -658,6 +678,7 @@ static void test_emfonly(void)
     HBRUSH hbrush, holdbrush;
     GpBitmap *bitmap;
     ARGB color;
+    GpPen *pen;
 
     hdc = CreateCompatibleDC(0);
 
@@ -897,6 +918,35 @@ static void test_emfonly(void)
     expect(0, U(header).EmfHeader.rclFrame.top);
     expectf_(100.0, U(header).EmfHeader.rclFrame.right * xres / 2540.0, 2.0);
     expectf_(100.0, U(header).EmfHeader.rclFrame.bottom * yres / 2540.0, 2.0);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+
+    /* test drawing to metafile with gdi+ functions */
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    if (stat != Ok)
+        return;
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
+    expect(Ok, stat);
+    stat = GdipDrawLineI(graphics, pen, 0, 0, 10, 10);
+    expect(Ok, stat);
+    GdipDeletePen(pen);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    check_metafile(metafile, emfonly_draw_records, "emfonly draw metafile", dst_points, &frame, UnitPixel);
+    sync_metafile(&metafile, "emfonly_draw.emf");
 
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);
