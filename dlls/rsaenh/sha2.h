@@ -80,10 +80,4 @@ void SHA384_Final(sha2_byte[SHA384_DIGEST_LENGTH], SHA384_CTX*);
 char* SHA384_End(SHA384_CTX*, char[SHA384_DIGEST_STRING_LENGTH]);
 char* SHA384_Data(const sha2_byte*, size_t, char[SHA384_DIGEST_STRING_LENGTH]);
 
-void SHA512_Init(SHA512_CTX*);
-void SHA512_Update(SHA512_CTX*, const sha2_byte*, size_t);
-void SHA512_Final(sha2_byte[SHA512_DIGEST_LENGTH], SHA512_CTX*);
-char* SHA512_End(SHA512_CTX*, char[SHA512_DIGEST_STRING_LENGTH]);
-char* SHA512_Data(const sha2_byte*, size_t, char[SHA512_DIGEST_STRING_LENGTH]);
-
 #endif /* __SHA2_H__ */

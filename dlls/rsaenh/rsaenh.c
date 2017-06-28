@@ -48,7 +48,6 @@ static HINSTANCE instance;
  * CRYPTHASH - hash objects
  */
 #define RSAENH_MAGIC_HASH           0x85938417u
-#define RSAENH_MAX_HASH_SIZE        104
 #define RSAENH_HASHSTATE_HASHING    1
 #define RSAENH_HASHSTATE_FINISHED   2
 typedef struct _RSAENH_TLS1PRF_PARAMS

@@ -1,6 +1,6 @@
 MODULE    = rsaenh.dll
 IMPORTLIB = rsaenh
-IMPORTS   = crypt32 advapi32
+IMPORTS   = bcrypt crypt32 advapi32
 
 C_SRCS = \
 	aes.c \

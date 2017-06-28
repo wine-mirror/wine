@@ -24,8 +24,11 @@
 #ifndef __WINE_IMPLGLUE_H
 #define __WINE_IMPLGLUE_H
 
+#include "bcrypt.h"
 #include "tomcrypt.h"
 #include "sha2.h"
+
+#define RSAENH_MAX_HASH_SIZE        104
 
 /* Next typedef copied from dlls/advapi32/crypt_md4.c */
 typedef struct tagMD4_CTX {
@@ -60,7 +63,7 @@ typedef union tagHASH_CONTEXT {
     SHA_CTX sha;
     SHA256_CTX sha256;
     SHA384_CTX sha384;
-    SHA512_CTX sha512;
+    BCRYPT_HASH_HANDLE bcrypt_hash;
 } HASH_CONTEXT;
 
 typedef union tagKEY_CONTEXT {

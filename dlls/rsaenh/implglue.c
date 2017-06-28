@@ -50,6 +50,8 @@ BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen);
         
 BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext) 
 {
+    const WCHAR *algid = NULL;
+
     switch (aiAlgid) 
     {
         case CALG_MD2:
@@ -77,10 +79,22 @@ BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext)
             break;
 
         case CALG_SHA_512:
-            SHA512_Init(&pHashContext->sha512);
+            algid = BCRYPT_SHA512_ALGORITHM;
             break;
     }
 
+    if (algid)
+    {
+        BCRYPT_ALG_HANDLE provider;
+        NTSTATUS status;
+
+        status = BCryptOpenAlgorithmProvider(&provider, algid, MS_PRIMITIVE_PROVIDER, 0);
+        if (status) return FALSE;
+
+        status = BCryptCreateHash(provider, &pHashContext->bcrypt_hash, NULL, 0, NULL, 0, 0);
+        BCryptCloseAlgorithmProvider(provider, 0);
+        if (status) return FALSE;
+    }
     return TRUE;
 }
 
@@ -113,13 +127,8 @@ BOOL update_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, const BYTE *pb
             SHA384_Update(&pHashContext->sha384, pbData, dwDataLen);
             break;
 
-        case CALG_SHA_512:
-            SHA512_Update(&pHashContext->sha512, pbData, dwDataLen);
-            break;
-
         default:
-            SetLastError(NTE_BAD_ALGID);
-            return FALSE;
+            BCryptHashData(pHashContext->bcrypt_hash, (UCHAR*)pbData, dwDataLen, 0);
     }
 
     return TRUE;
@@ -155,13 +164,10 @@ BOOL finalize_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, BYTE *pbHash
             SHA384_Final(pbHashValue, &pHashContext->sha384);
             break;
 
-        case CALG_SHA_512:
-            SHA512_Final(pbHashValue, &pHashContext->sha512);
-            break;
-
         default:
-            SetLastError(NTE_BAD_ALGID);
-            return FALSE;
+            BCryptFinishHash(pHashContext->bcrypt_hash, pbHashValue, RSAENH_MAX_HASH_SIZE, 0);
+            BCryptDestroyHash(pHashContext->bcrypt_hash);
+            break;
     }
 
     return TRUE;

@@ -599,16 +599,6 @@ char* SHA256_Data(const sha2_byte* data, size_t len, char digest[SHA256_DIGEST_S
 }
 
 
-/*** SHA-512: *********************************************************/
-void SHA512_Init(SHA512_CTX* context) {
-	if (context == NULL) {
-		return;
-	}
-	MEMCPY_BCOPY(context->state, sha512_initial_hash_value, SHA512_DIGEST_LENGTH);
-	MEMSET_BZERO(context->buffer, SHA512_BLOCK_LENGTH);
-	context->bitcount[0] = context->bitcount[1] =  0;
-}
-
 #ifdef SHA2_UNROLL_TRANSFORM
 
 /* Unrolled SHA-512 round macros: */
@@ -866,67 +856,6 @@ void SHA512_Last(SHA512_CTX* context) {
 	/* Final transform: */
 	SHA512_Transform(context, (sha2_word64*)context->buffer);
 }
-
-void SHA512_Final(sha2_byte digest[], SHA512_CTX* context) {
-	sha2_word64	*d = (sha2_word64*)digest;
-
-	/* Sanity check: */
-	assert(context != NULL);
-
-	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != NULL) {
-		SHA512_Last(context);
-
-		/* Save the hash data for output: */
-#ifndef WORDS_BIGENDIAN
-		{
-			/* Convert TO host byte order */
-			int	j;
-			for (j = 0; j < 8; j++) {
-				REVERSE64(context->state[j],context->state[j]);
-				*d++ = context->state[j];
-			}
-		}
-#else
-		MEMCPY_BCOPY(d, context->state, SHA512_DIGEST_LENGTH);
-#endif
-	}
-
-	/* Zero out state data */
-	MEMSET_BZERO(context, sizeof(*context));
-}
-
-char *SHA512_End(SHA512_CTX* context, char buffer[]) {
-	sha2_byte	digest[SHA512_DIGEST_LENGTH], *d = digest;
-	int		i;
-
-	/* Sanity check: */
-	assert(context != NULL);
-
-	if (buffer != NULL) {
-		SHA512_Final(digest, context);
-
-		for (i = 0; i < SHA512_DIGEST_LENGTH; i++) {
-			*buffer++ = sha2_hex_digits[(*d & 0xf0) >> 4];
-			*buffer++ = sha2_hex_digits[*d & 0x0f];
-			d++;
-		}
-		*buffer = 0;
-	} else {
-		MEMSET_BZERO(context, sizeof(*context));
-	}
-	MEMSET_BZERO(digest, SHA512_DIGEST_LENGTH);
-	return buffer;
-}
-
-char* SHA512_Data(const sha2_byte* data, size_t len, char digest[SHA512_DIGEST_STRING_LENGTH]) {
-	SHA512_CTX	context;
-
-	SHA512_Init(&context);
-	SHA512_Update(&context, data, len);
-	return SHA512_End(&context, digest);
-}
-
 
 /*** SHA-384: *********************************************************/
 void SHA384_Init(SHA384_CTX* context) {
