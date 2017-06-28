@@ -137,17 +137,16 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (IDirectMusicAud
         case DMUS_PATH_BUFFER:
           if (This->pDSBuffer)
           {
-            if (IsEqualIID (iidInterface, &IID_IDirectSoundBuffer8)) {
-              IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, &IID_IDirectSoundBuffer8, ppObject);
-              TRACE("returning %p\n",*ppObject);
-              return S_OK;
-            } else if (IsEqualIID (iidInterface, &IID_IDirectSound3DBuffer)) {
-              IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, &IID_IDirectSound3DBuffer, ppObject);
-              TRACE("returning %p\n",*ppObject);
-              return S_OK;
-            } else {
-              FIXME("Bad iid\n");
-            }
+              if (IsEqualIID (iidInterface, &IID_IUnknown) ||
+                  IsEqualIID (iidInterface, &IID_IDirectSoundBuffer)  ||
+                  IsEqualIID (iidInterface, &IID_IDirectSoundBuffer8) ||
+                  IsEqualIID (iidInterface, &IID_IDirectSound3DBuffer)) {
+                  return IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, iidInterface, ppObject);
+              }
+
+              WARN("Unsupported interface %s\n", debugstr_dmguid(iidInterface));
+              *ppObject = NULL;
+              return E_NOINTERFACE;
           }
           break;
 
