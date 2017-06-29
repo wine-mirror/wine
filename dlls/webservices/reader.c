@@ -1314,11 +1314,20 @@ static HRESULT read_encode_base64( struct reader *reader, ULONG len, unsigned ch
     return S_OK;
 }
 
+static HRESULT lookup_string( struct reader *reader, ULONG id, const WS_XML_STRING **ret )
+{
+    const WS_XML_DICTIONARY *dict = (id & 1) ? reader->dict : reader->dict_static;
+    if (!dict || (id >>= 1) >= dict->stringCount) return WS_E_INVALID_FORMAT;
+    *ret = &dict->strings[id];
+    return S_OK;
+}
+
 static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE *attr )
 {
     static const unsigned char zero[] = {'0'}, one[] = {'1'};
     static const unsigned char false[] = {'f','a','l','s','e'}, true[] = {'t','r','u','e'};
     WS_XML_UTF8_TEXT *utf8 = NULL;
+    const WS_XML_STRING *str;
     unsigned char type, buf[46];
     BOOL val_bool;
     INT8 val_int8;
@@ -1444,9 +1453,8 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
 
     case RECORD_DICTIONARY_TEXT:
         if ((hr = read_int31( reader, &id )) != S_OK) return hr;
-        if (!reader->dict || (id >>= 1) >= reader->dict->stringCount) return WS_E_INVALID_FORMAT;
-        if (!(utf8 = alloc_utf8_text( reader->dict->strings[id].bytes, reader->dict->strings[id].length )))
-            return E_OUTOFMEMORY;
+        if ((hr = lookup_string( reader, id, &str )) != S_OK) return hr;
+        if (!(utf8 = alloc_utf8_text( str->bytes, str->length ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_UNIQUEID_TEXT:
@@ -1973,6 +1981,7 @@ static HRESULT read_text_bin( struct reader *reader )
     unsigned char type, buf[46];
     struct node *node = NULL, *parent;
     WS_XML_UTF8_TEXT *utf8;
+    const WS_XML_STRING *str;
     BOOL val_bool;
     INT8 val_int8;
     INT16 val_int16;
@@ -2115,9 +2124,8 @@ static HRESULT read_text_bin( struct reader *reader )
     case RECORD_DICTIONARY_TEXT:
     case RECORD_DICTIONARY_TEXT_WITH_ENDELEMENT:
         if ((hr = read_int31( reader, &id )) != S_OK) return hr;
-        if (!reader->dict || (id >>= 1) >= reader->dict->stringCount) return WS_E_INVALID_FORMAT;
-        if (!(node = alloc_text_node( reader->dict->strings[id].bytes, reader->dict->strings[id].length, NULL )))
-            return E_OUTOFMEMORY;
+        if ((hr = lookup_string( reader, id, &str )) != S_OK) return hr;
+        if (!(node = alloc_text_node( str->bytes, str->length, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_UNIQUEID_TEXT:
