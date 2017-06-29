@@ -3361,6 +3361,7 @@ WINUSERAPI UINT        WINAPI ArrangeIconicWindows(HWND);
 WINUSERAPI BOOL        WINAPI AttachThreadInput(DWORD,DWORD,BOOL);
 WINUSERAPI HDWP        WINAPI BeginDeferWindowPos(INT);
 WINUSERAPI HDC         WINAPI BeginPaint(HWND,LPPAINTSTRUCT);
+WINUSERAPI BOOL        WINAPI BlockInput(BOOL);
 WINUSERAPI BOOL        WINAPI BringWindowToTop(HWND);
 WINUSERAPI LONG        WINAPI BroadcastSystemMessageA(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
 WINUSERAPI LONG        WINAPI BroadcastSystemMessageW(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
@@ -3482,6 +3483,7 @@ WINUSERAPI LRESULT     WINAPI DefWindowProcA(HWND,UINT,WPARAM,LPARAM);
 WINUSERAPI LRESULT     WINAPI DefWindowProcW(HWND,UINT,WPARAM,LPARAM);
 #define                       DefWindowProc WINELIB_NAME_AW(DefWindowProc)
 WINUSERAPI BOOL        WINAPI DeleteMenu(HMENU,UINT,UINT);
+WINUSERAPI BOOL        WINAPI DeregisterShellHookWindow(HWND);
 WINUSERAPI BOOL        WINAPI DestroyAcceleratorTable(HACCEL);
 WINUSERAPI BOOL        WINAPI DestroyCaret(void);
 WINUSERAPI BOOL        WINAPI DestroyCursor(HCURSOR);
@@ -3500,6 +3502,7 @@ WINUSERAPI INT_PTR     WINAPI DialogBoxIndirectParamW(HINSTANCE,LPCDLGTEMPLATEW,
 WINUSERAPI INT_PTR     WINAPI DialogBoxParamA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);
 WINUSERAPI INT_PTR     WINAPI DialogBoxParamW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);
 #define                       DialogBoxParam WINELIB_NAME_AW(DialogBoxParam)
+WINUSERAPI VOID        WINAPI DisableProcessWindowsGhosting(VOID);
 WINUSERAPI LRESULT     WINAPI DispatchMessageA(const MSG*);
 WINUSERAPI LRESULT     WINAPI DispatchMessageW(const MSG*);
 #define                       DispatchMessage WINELIB_NAME_AW(DispatchMessage)
@@ -3638,6 +3641,7 @@ WINUSERAPI HWND        WINAPI GetFocus(void);
 WINUSERAPI HWND        WINAPI GetForegroundWindow(void);
 WINUSERAPI BOOL        WINAPI GetGestureConfig(HWND,DWORD,DWORD,UINT*,GESTURECONFIG*,UINT);
 WINUSERAPI BOOL        WINAPI GetGUIThreadInfo(DWORD,GUITHREADINFO*);
+WINUSERAPI DWORD       WINAPI GetGuiResources(HANDLE,DWORD);
 WINUSERAPI BOOL        WINAPI GetIconInfo(HICON,PICONINFO);
 WINUSERAPI BOOL        WINAPI GetIconInfoExA(HICON,ICONINFOEXA*);
 WINUSERAPI BOOL        WINAPI GetIconInfoExW(HICON,ICONINFOEXW*);
@@ -3658,6 +3662,7 @@ WINUSERAPI BOOL        WINAPI GetKeyboardLayoutNameW(LPWSTR);
 WINUSERAPI SHORT       WINAPI GetKeyState(INT);
 WINUSERAPI HWND        WINAPI GetLastActivePopup(HWND);
 WINUSERAPI BOOL        WINAPI GetLastInputInfo(PLASTINPUTINFO);
+WINUSERAPI DWORD       WINAPI GetListBoxInfo(HWND);
 WINUSERAPI UINT        WINAPI GetRawInputBuffer(PRAWINPUT,PUINT,UINT);
 WINUSERAPI UINT        WINAPI GetRawInputData(HRAWINPUT,UINT,LPVOID,PUINT,UINT);
 WINUSERAPI UINT        WINAPI GetRawInputDeviceInfoA(HANDLE,UINT,LPVOID,PUINT);
@@ -3696,6 +3701,7 @@ WINUSERAPI HWND        WINAPI GetNextDlgTabItem(HWND,HWND,BOOL);
 #define                       GetNextWindow GetWindow
 WINUSERAPI HWND        WINAPI GetOpenClipboardWindow(void);
 WINUSERAPI HWND        WINAPI GetParent(HWND);
+WINUSERAPI BOOL        WINAPI GetPhysicalCursorPos(POINT*);
 WINUSERAPI INT         WINAPI GetPriorityClipboardFormat(UINT*,INT);
 WINUSERAPI BOOL        WINAPI GetProcessDefaultLayout(DWORD*);
 WINUSERAPI HANDLE      WINAPI GetPropA(HWND,LPCSTR);
@@ -3745,6 +3751,7 @@ WINUSERAPI UINT        WINAPI GetWindowModuleFileNameW(HWND,LPWSTR,UINT);
 #define                       GetWindowModuleFileName WINELIB_NAME_AW(GetWindowModuleFileName)
 WINUSERAPI BOOL        WINAPI GetWindowPlacement(HWND,LPWINDOWPLACEMENT);
 WINUSERAPI BOOL        WINAPI GetWindowRect(HWND,LPRECT);
+WINUSERAPI INT         WINAPI GetWindowRgnBox(HWND,LPRECT);
 WINUSERAPI INT         WINAPI GetWindowRgn(HWND,HRGN);
 WINUSERAPI HWINSTA     WINAPI GetProcessWindowStation(void);
 #define                       GetWindowTask(hwnd) ((HTASK)GetWindowThreadProcessId(hwnd,NULL))
@@ -3836,8 +3843,10 @@ WINUSERAPI HMENU       WINAPI LoadMenuIndirectW(LPCVOID);
 WINUSERAPI INT         WINAPI LoadStringA(HINSTANCE,UINT,LPSTR,INT);
 WINUSERAPI INT         WINAPI LoadStringW(HINSTANCE,UINT,LPWSTR,INT);
 #define                       LoadString WINELIB_NAME_AW(LoadString)
+WINUSERAPI BOOL        WINAPI LogicalToPhysicalPoint(HWND,POINT*);
 WINUSERAPI BOOL        WINAPI LockSetForegroundWindow(UINT);
 WINUSERAPI BOOL        WINAPI LockWindowUpdate(HWND);
+WINUSERAPI BOOL        WINAPI LockWorkStation(void);
 WINUSERAPI INT         WINAPI LookupIconIdFromDirectory(LPBYTE,BOOL);
 WINUSERAPI INT         WINAPI LookupIconIdFromDirectoryEx(LPBYTE,BOOL,INT,INT,UINT);
 WINUSERAPI UINT        WINAPI MapVirtualKeyA(UINT,UINT);
@@ -3889,6 +3898,7 @@ WINUSERAPI BOOL        WINAPI PaintDesktop(HDC);
 WINUSERAPI BOOL        WINAPI PeekMessageA(LPMSG,HWND,UINT,UINT,UINT);
 WINUSERAPI BOOL        WINAPI PeekMessageW(LPMSG,HWND,UINT,UINT,UINT);
 #define                       PeekMessage WINELIB_NAME_AW(PeekMessage)
+WINUSERAPI BOOL        WINAPI PhysicalToLogicalPoint(HWND,POINT*);
 #define                       PostAppMessageA(thread,msg,wparam,lparam) PostThreadMessageA((DWORD)(thread),msg,wparam,lparam)
 #define                       PostAppMessageW(thread,msg,wparam,lparam) PostThreadMessageW((DWORD)(thread),msg,wparam,lparam)
 #define                       PostAppMessage WINELIB_NAME_AW(PostAppMessage)
@@ -3899,6 +3909,7 @@ WINUSERAPI void        WINAPI PostQuitMessage(INT);
 WINUSERAPI BOOL        WINAPI PostThreadMessageA(DWORD,UINT,WPARAM,LPARAM);
 WINUSERAPI BOOL        WINAPI PostThreadMessageW(DWORD,UINT,WPARAM,LPARAM);
 #define                       PostThreadMessage WINELIB_NAME_AW(PostThreadMessage)
+WINUSERAPI BOOL        WINAPI PrintWindow(HWND,HDC,UINT);
 WINUSERAPI UINT        WINAPI PrivateExtractIconExA(LPCSTR,int,HICON*,HICON*,UINT);
 WINUSERAPI UINT        WINAPI PrivateExtractIconExW(LPCWSTR,int,HICON*,HICON*,UINT);
 WINUSERAPI UINT        WINAPI PrivateExtractIconsA(LPCSTR,int,int,int,HICON*,UINT*,UINT,UINT);
@@ -3924,6 +3935,8 @@ WINUSERAPI HDEVNOTIFY  WINAPI RegisterDeviceNotificationW(HANDLE,LPVOID,DWORD);
 WINUSERAPI BOOL        WINAPI RegisterHotKey(HWND,INT,UINT,UINT);
 WINUSERAPI HPOWERNOTIFY WINAPI RegisterPowerSettingNotification(HANDLE,LPCGUID,DWORD);
 WINUSERAPI BOOL        WINAPI RegisterRawInputDevices(PRAWINPUTDEVICE,UINT,UINT);
+WINUSERAPI BOOL        WINAPI RegisterShellHookWindow(HWND);
+WINUSERAPI BOOL        WINAPI RegisterTouchWindow(HWND,ULONG);
 WINUSERAPI UINT        WINAPI RegisterWindowMessageA(LPCSTR);
 WINUSERAPI UINT        WINAPI RegisterWindowMessageW(LPCWSTR);
 #define                       RegisterWindowMessage WINELIB_NAME_AW(RegisterWindowMessage)
@@ -4002,6 +4015,7 @@ WINUSERAPI BOOL        WINAPI SetMenuItemInfoW(HMENU,UINT,BOOL,const MENUITEMINF
 WINUSERAPI LPARAM      WINAPI SetMessageExtraInfo(LPARAM);
 WINUSERAPI BOOL        WINAPI SetMessageQueue(INT);
 WINUSERAPI HWND        WINAPI SetParent(HWND,HWND);
+WINUSERAPI BOOL        WINAPI SetPhysicalCursorPos(INT,INT);
 WINUSERAPI BOOL        WINAPI SetProcessDPIAware(void);
 WINUSERAPI BOOL        WINAPI SetProcessDefaultLayout(DWORD);
 WINUSERAPI BOOL        WINAPI SetProcessWindowStation(HWINSTA);
