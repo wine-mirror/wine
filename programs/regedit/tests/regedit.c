@@ -1032,8 +1032,8 @@ static void test_invalid_import(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
-                    "\"Wine62b\"=hex(7):4c,69,6e,65,20\\");
-    verify_reg_nonexist(hkey, "Wine62b");
+                    "\"Wine31\"=hex(7):4c,69,6e,65,20\\");
+    verify_reg_nonexist(hkey, "Wine31");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
