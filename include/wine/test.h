@@ -68,6 +68,7 @@ extern const char *wine_dbgstr_wn( const WCHAR *str, int n );
 extern const char *wine_dbgstr_guid( const GUID *guid );
 extern const char *wine_dbgstr_rect( const RECT *rect );
 static inline const char *wine_dbgstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, -1 ); }
+extern const char *wine_dbgstr_longlong( ULONGLONG ll );
 
 /* strcmpW is available for tests compiled under Wine, but not in standalone
  * builds under Windows, so we reimplement it under a different name. */
@@ -537,6 +538,19 @@ const char *wine_dbgstr_rect( const RECT *rect )
     if (!rect) return "(null)";
     res = get_temp_buffer( 60 );
     sprintf( res, "(%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
+    release_temp_buffer( res, strlen(res) + 1 );
+    return res;
+}
+
+const char *wine_dbgstr_longlong( ULONGLONG ll )
+{
+    char *res;
+
+    res = get_temp_buffer( 17 );
+    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
+        sprintf( res, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll );
+    else
+        sprintf( res, "%lx", (unsigned long)ll );
     release_temp_buffer( res, strlen(res) + 1 );
     return res;
 }
