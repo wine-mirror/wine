@@ -212,7 +212,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         hr = get_token(&next_elem, id, schema, idx);
         if (hr != S_OK)
         {
-            TRACE("parse_elem error %#x\n", hr);
+            TRACE("get_token error %#x\n", hr);
             return hr;
         }
         elem->len = (end - start) + next_elem.len;
@@ -248,7 +248,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
             if (*end == '\\') end++;
             *bstr++ = *end++;
         }
-        if (!*end || *end != '}')
+        if (*end != '}')
         {
             PropVariantClear(&next_token);
             return WINCODEC_ERR_INVALIDQUERYREQUEST;
@@ -260,7 +260,11 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         {
             id->vt = VT_CLSID;
             id->u.puuid = CoTaskMemAlloc(sizeof(GUID));
-            if (!id->u.puuid) return E_OUTOFMEMORY;
+            if (!id->u.puuid)
+            {
+                PropVariantClear(&next_token);
+                return E_OUTOFMEMORY;
+            }
 
             hr = UuidFromStringW(next_token.u.bstrVal, id->u.puuid);
         }
