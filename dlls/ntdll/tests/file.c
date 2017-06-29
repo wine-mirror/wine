@@ -87,16 +87,6 @@ static inline BOOL is_signaled( HANDLE obj )
     return WaitForSingleObject( obj, 0 ) == WAIT_OBJECT_0;
 }
 
-static const char* debugstr_longlong(ULONGLONG ll)
-{
-    static char str[17];
-    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
-        sprintf(str, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
-    else
-        sprintf(str, "%lx", (unsigned long)ll);
-    return str;
-}
-
 #define TEST_BUF_LEN 3
 
 static HANDLE create_temp_file( ULONG flags )
@@ -1134,10 +1124,10 @@ static void test_file_full_size_information(void)
     /* Test for FileFsSizeInformation */
     ok(fsi.TotalAllocationUnits.QuadPart > 0,
         "[fsi] TotalAllocationUnits expected positive, got 0x%s\n",
-        debugstr_longlong(fsi.TotalAllocationUnits.QuadPart));
+        wine_dbgstr_longlong(fsi.TotalAllocationUnits.QuadPart));
     ok(fsi.AvailableAllocationUnits.QuadPart > 0,
         "[fsi] AvailableAllocationUnits expected positive, got 0x%s\n",
-        debugstr_longlong(fsi.AvailableAllocationUnits.QuadPart));
+        wine_dbgstr_longlong(fsi.AvailableAllocationUnits.QuadPart));
 
     /* Assume file system is NTFS */
     ok(fsi.BytesPerSector == 512, "[fsi] BytesPerSector expected 512, got %d\n",fsi.BytesPerSector);
@@ -1147,21 +1137,21 @@ static void test_file_full_size_information(void)
     {
     ok(ffsi.TotalAllocationUnits.QuadPart > 0,
         "[ffsi] TotalAllocationUnits expected positive, got negative value 0x%s\n",
-        debugstr_longlong(ffsi.TotalAllocationUnits.QuadPart));
+        wine_dbgstr_longlong(ffsi.TotalAllocationUnits.QuadPart));
     ok(ffsi.CallerAvailableAllocationUnits.QuadPart > 0,
         "[ffsi] CallerAvailableAllocationUnits expected positive, got negative value 0x%s\n",
-        debugstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart));
+        wine_dbgstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart));
     ok(ffsi.ActualAvailableAllocationUnits.QuadPart > 0,
         "[ffsi] ActualAvailableAllocationUnits expected positive, got negative value 0x%s\n",
-        debugstr_longlong(ffsi.ActualAvailableAllocationUnits.QuadPart));
+        wine_dbgstr_longlong(ffsi.ActualAvailableAllocationUnits.QuadPart));
     ok(ffsi.TotalAllocationUnits.QuadPart == fsi.TotalAllocationUnits.QuadPart,
         "[ffsi] TotalAllocationUnits error fsi:0x%s, ffsi:0x%s\n",
-        debugstr_longlong(fsi.TotalAllocationUnits.QuadPart),
-        debugstr_longlong(ffsi.TotalAllocationUnits.QuadPart));
+        wine_dbgstr_longlong(fsi.TotalAllocationUnits.QuadPart),
+        wine_dbgstr_longlong(ffsi.TotalAllocationUnits.QuadPart));
     ok(ffsi.CallerAvailableAllocationUnits.QuadPart == fsi.AvailableAllocationUnits.QuadPart,
         "[ffsi] CallerAvailableAllocationUnits error fsi:0x%s, ffsi: 0x%s\n",
-        debugstr_longlong(fsi.AvailableAllocationUnits.QuadPart),
-        debugstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart));
+        wine_dbgstr_longlong(fsi.AvailableAllocationUnits.QuadPart),
+        wine_dbgstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart));
     }
 
     /* Assume file system is NTFS */
