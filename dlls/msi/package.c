@@ -1812,17 +1812,17 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     {
         WCHAR template_s[1024];
         WCHAR *template_rec, *template;
-        DWORD length;
 
         LoadStringW(msi_hInstance, IDS_INFO, template_s, 1024);
 
-        res = MSI_RecordGetStringW(record, 0, NULL, &length);
+        res = MSI_RecordGetStringW(record, 0, NULL, &len);
         if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA)
             return res;
         len++;
         template_rec = msi_alloc(len * sizeof(WCHAR));
         if (!template_rec) return ERROR_OUTOFMEMORY;
-        MSI_RecordGetStringW(record, 0, template_rec, &length);
+        MSI_RecordGetStringW(record, 0, template_rec, &len);
+        len++;
 
         template = msi_alloc((len + strlenW(template_s)) * sizeof(WCHAR));
         if (!template) return ERROR_OUTOFMEMORY;
