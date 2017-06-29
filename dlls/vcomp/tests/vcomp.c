@@ -188,16 +188,6 @@ static const char vcomp_manifest[] =
 
 #undef ARCH
 
-static const char *debugstr_longlong(ULONGLONG ll)
-{
-    static char str[17];
-    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
-        sprintf(str, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
-    else
-        sprintf(str, "%lx", (unsigned long)ll);
-    return str;
-}
-
 static void create_vcomp_manifest(void)
 {
     char temp_path[MAX_PATH];
@@ -1875,27 +1865,27 @@ static void test_atomic_integer64(void)
     {
         LONG64 val = tests1[i].v1;
         tests1[i].func(&val, tests1[i].v2);
-        ok(val == tests1[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+        ok(val == tests1[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
     for (i = 0; i < sizeof(tests2)/sizeof(tests2[0]); i++)
     {
         LONG64 val = tests2[i].v1;
         tests2[i].func(&val, tests2[i].v2);
         todo_wine_if(tests2[i].todo)
-        ok(val == tests2[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+        ok(val == tests2[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
     for (i = 0; i < sizeof(tests3)/sizeof(tests3[0]); i++)
     {
         ULONG64 val = tests3[i].v1;
         tests3[i].func(&val, tests3[i].v2);
-        ok(val == tests3[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+        ok(val == tests3[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
     for (i = 0; i < sizeof(tests4)/sizeof(tests4[0]); i++)
     {
         ULONG64 val = tests4[i].v1;
         tests4[i].func(&val, tests4[i].v2);
         todo_wine_if(tests4[i].todo)
-        ok(val == tests4[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+        ok(val == tests4[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
 }
 
@@ -2152,13 +2142,13 @@ static void test_reduction_integer64(void)
     {
         LONG64 val = tests[i].v1;
         p_vcomp_reduction_i8(tests[i].flags, &val, tests[i].v2);
-        ok(val == tests[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+        ok(val == tests[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
     {
         ULONG64 val = tests[i].v1;
         p_vcomp_reduction_u8(tests[i].flags, &val, tests[i].v2);
-        ok(val == tests[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+        ok(val == tests[i].expected, "test %d: unexpectedly got %s\n", i, wine_dbgstr_longlong(val));
     }
 }
 
