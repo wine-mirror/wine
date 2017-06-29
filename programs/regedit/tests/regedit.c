@@ -1035,6 +1035,15 @@ static void test_invalid_import(void)
                     "\"Wine62b\"=hex(7):4c,69,6e,65,20\\");
     verify_reg_nonexist(hkey, "Wine62b");
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine32a\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine32b\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
+    verify_reg_nonexist(hkey, "Wine32a");
+    verify_reg_nonexist(hkey, "Wine32b");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
