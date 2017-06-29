@@ -38,8 +38,8 @@ void free_xmlbuf( struct xmlbuf * ) DECLSPEC_HIDDEN;
 struct dictionary
 {
     WS_XML_DICTIONARY  dict;
-    ULONG              size;
     ULONG             *sorted;
+    ULONG              size;
 };
 struct dictionary dict_builtin DECLSPEC_HIDDEN;
 const struct dictionary dict_builtin_static DECLSPEC_HIDDEN;
