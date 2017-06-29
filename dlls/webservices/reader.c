@@ -1427,7 +1427,7 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         break;
 
     case RECORD_BYTES16_TEXT:
-        if ((hr = read_byte( reader, (unsigned char *)&val_uint16 )) != S_OK) return hr;
+        if ((hr = read_bytes( reader, (unsigned char *)&val_uint16, sizeof(val_uint16) )) != S_OK) return hr;
         if (!(utf8 = alloc_utf8_text( NULL, ((4 * val_uint16 / 3) + 3) & ~3 ))) return E_OUTOFMEMORY;
         if ((hr = read_encode_base64( reader, val_uint16, utf8->value.bytes, &utf8->value.length )) != S_OK)
         {
@@ -1437,7 +1437,7 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         break;
 
     case RECORD_BYTES32_TEXT:
-        if ((hr = read_byte( reader, (unsigned char *)&val_int32 )) != S_OK) return hr;
+        if ((hr = read_bytes( reader, (unsigned char *)&val_int32, sizeof(val_int32) )) != S_OK) return hr;
         if (val_int32 < 0) return WS_E_INVALID_FORMAT;
         if (!(utf8 = alloc_utf8_text( NULL, ((4 * val_int32 / 3) + 3) & ~3 ))) return E_OUTOFMEMORY;
         if ((hr = read_encode_base64( reader, val_int32, utf8->value.bytes, &utf8->value.length )) != S_OK)
@@ -2095,7 +2095,7 @@ static HRESULT read_text_bin( struct reader *reader )
 
     case RECORD_BYTES16_TEXT:
     case RECORD_BYTES16_TEXT_WITH_ENDELEMENT:
-        if ((hr = read_byte( reader, (unsigned char *)&val_uint16 )) != S_OK) return hr;
+        if ((hr = read_bytes( reader, (unsigned char *)&val_uint16, sizeof(val_uint16) )) != S_OK) return hr;
         if (!(node = alloc_text_node( NULL, ((4 * val_uint16 / 3) + 3) & ~3, &utf8 ))) return E_OUTOFMEMORY;
         if ((hr = read_encode_base64( reader, val_uint16, utf8->value.bytes, &utf8->value.length )) != S_OK)
         {
@@ -2106,7 +2106,7 @@ static HRESULT read_text_bin( struct reader *reader )
 
     case RECORD_BYTES32_TEXT:
     case RECORD_BYTES32_TEXT_WITH_ENDELEMENT:
-        if ((hr = read_byte( reader, (unsigned char *)&val_int32 )) != S_OK) return hr;
+        if ((hr = read_bytes( reader, (unsigned char *)&val_int32, sizeof(val_int32) )) != S_OK) return hr;
         if (val_int32 < 0) return WS_E_INVALID_FORMAT;
         if (!(node = alloc_text_node( NULL, ((4 * val_int32 / 3) + 3) & ~3, &utf8 ))) return E_OUTOFMEMORY;
         if ((hr = read_encode_base64( reader, val_int32, utf8->value.bytes, &utf8->value.length )) != S_OK)
