@@ -81,6 +81,7 @@ HRESULT read_output_params( WS_XML_READER *, WS_HEAP *, const WS_ELEMENT_DESCRIP
 enum node_flag
 {
     NODE_FLAG_IGNORE_TRAILING_ELEMENT_CONTENT   = 0x1,
+    NODE_FLAG_TEXT_WITH_IMPLICIT_END_ELEMENT    = 0x2,
 };
 
 struct node

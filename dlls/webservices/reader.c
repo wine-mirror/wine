@@ -2171,6 +2171,7 @@ static HRESULT read_text_bin( struct reader *reader )
         }
     }
 
+    if (type & 1) node->flags |= NODE_FLAG_TEXT_WITH_IMPLICIT_END_ELEMENT;
     read_insert_node( reader, parent, node );
     reader->state = READER_STATE_TEXT;
     reader->text_conv_offset = 0;
@@ -2349,9 +2350,11 @@ static HRESULT read_endelement_bin( struct reader *reader )
     unsigned char type;
     HRESULT hr;
 
-    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
-    if (type != RECORD_ENDELEMENT) return WS_E_INVALID_FORMAT;
-
+    if (!(reader->current->flags & NODE_FLAG_TEXT_WITH_IMPLICIT_END_ELEMENT))
+    {
+        if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+        if (type != RECORD_ENDELEMENT) return WS_E_INVALID_FORMAT;
+    }
     if (!(parent = find_parent( reader ))) return WS_E_INVALID_FORMAT;
 
     reader->current = LIST_ENTRY( list_tail( &parent->children ), struct node, entry );
@@ -2559,7 +2562,7 @@ static HRESULT read_node_bin( struct reader *reader )
     unsigned char type;
     HRESULT hr;
 
-    if (node_type( reader->current ) == WS_XML_NODE_TYPE_TEXT)
+    if (reader->current->flags & NODE_FLAG_TEXT_WITH_IMPLICIT_END_ELEMENT)
     {
         reader->current = LIST_ENTRY( list_tail( &reader->current->parent->children ), struct node, entry );
         reader->last    = reader->current;
