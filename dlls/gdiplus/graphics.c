@@ -3715,6 +3715,7 @@ static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *
     GpStatus stat;
     GpPath *wide_path;
     GpMatrix *transform=NULL;
+    REAL flatness=1.0;
 
     /* Check if the final pen thickness in pixels is too thin. */
     if (pen->unit == UnitPixel)
@@ -3756,9 +3757,24 @@ static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *
             stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
                 CoordinateSpaceWorld, transform);
     }
+    else
+    {
+        /* Set flatness based on the final coordinate space */
+        GpMatrix t;
+
+        stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
+            CoordinateSpaceWorld, &t);
+
+        if (stat != Ok)
+            return stat;
+
+        flatness = 1.0/sqrt(fmax(
+            t.matrix[0] * t.matrix[0] + t.matrix[1] * t.matrix[1],
+            t.matrix[2] * t.matrix[2] + t.matrix[3] * t.matrix[3]));
+    }
 
     if (stat == Ok)
-        stat = GdipWidenPath(wide_path, pen, transform, 1.0);
+        stat = GdipWidenPath(wide_path, pen, transform, flatness);
 
     if (pen->unit == UnitPixel)
     {
