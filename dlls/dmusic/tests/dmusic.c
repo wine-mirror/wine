@@ -29,16 +29,6 @@
 #include "dmusici.h"
 #include "dmksctrl.h"
 
-static inline const char* debugstr_longlong(ULONGLONG ll)
-{
-    static char string[17];
-    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
-        sprintf(string, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
-    else
-        sprintf(string, "%lx", (unsigned long)ll);
-    return string;
-}
-
 static void test_dmusic(void)
 {
     IDirectMusic *dmusic = NULL;
@@ -334,7 +324,7 @@ static void test_dmbuffer(void)
         data += sizeof(DMUS_EVENTHEADER);
         ok(header->cbEvent == 3, "cbEvent is %u instead of 3\n", header->cbEvent);
         ok(header->dwChannelGroup == 0, "dwChannelGroup is %u instead of 0\n", header->dwChannelGroup);
-        ok(header->rtDelta == 0, "rtDelta is %s instead of 0\n", debugstr_longlong(header->rtDelta));
+        ok(header->rtDelta == 0, "rtDelta is %s instead of 0\n", wine_dbgstr_longlong(header->rtDelta));
         ok(header->dwFlags == DMUS_EVENT_STRUCTURED, "dwFlags is %x instead of %x\n", header->dwFlags, DMUS_EVENT_STRUCTURED);
         message = *(DWORD*)data & 0xffffff; /* Only 3 bytes are relevant */
         data += sizeof(DWORD);
@@ -345,7 +335,7 @@ static void test_dmbuffer(void)
         data += sizeof(DMUS_EVENTHEADER);
         ok(header->cbEvent == 3, "cbEvent is %u instead of 3\n", header->cbEvent);
         ok(header->dwChannelGroup == 0, "dwChannelGroup is %u instead of 0\n", header->dwChannelGroup);
-        ok(header->rtDelta == 10, "rtDelta is %s instead of 0\n", debugstr_longlong(header->rtDelta));
+        ok(header->rtDelta == 10, "rtDelta is %s instead of 0\n", wine_dbgstr_longlong(header->rtDelta));
         ok(header->dwFlags == DMUS_EVENT_STRUCTURED, "dwFlags is %x instead of %x\n", header->dwFlags, DMUS_EVENT_STRUCTURED);
         message = *(DWORD*)data & 0xffffff; /* Only 3 bytes are relevant */
         ok(message == 0x000080, "Message 2 is %0x instead of 0x000080\n", message);
