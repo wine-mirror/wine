@@ -2954,7 +2954,11 @@ static HRESULT write_type_struct_field( struct writer *writer, const WS_FIELD_DE
             if (field_options & WS_FIELD_POINTER) option = WS_WRITE_NILLABLE_POINTER;
             else option = WS_WRITE_NILLABLE_VALUE;
         }
-        else return E_INVALIDARG;
+        else
+        {
+            if (field_options & WS_FIELD_POINTER) option = WS_WRITE_REQUIRED_POINTER;
+            else option = WS_WRITE_REQUIRED_VALUE;
+        }
     }
     else
     {
