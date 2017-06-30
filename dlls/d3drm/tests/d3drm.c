@@ -6804,6 +6804,13 @@ static void test_animation(void)
     ok(options == (D3DRMANIMATION_CLOSED | D3DRMANIMATION_LINEARPOSITION),
             "Unexpected default options %#x.\n", options);
 
+    /* Mask contains undefined bits together with valid one. */
+    hr = IDirect3DRMAnimation_SetOptions(animation, 0xf0000000 | D3DRMANIMATION_OPEN);
+    ok(SUCCEEDED(hr), "Failed to set animation options, hr %#x.\n", hr);
+
+    options = IDirect3DRMAnimation_GetOptions(animation);
+    ok(options == (0xf0000000 | D3DRMANIMATION_OPEN), "Unexpected animation options %#x.\n", options);
+
     hr = IDirect3DRMAnimation_SetOptions(animation, D3DRMANIMATION_SCALEANDROTATION);
     ok(SUCCEEDED(hr), "Failed to set animation options, hr %#x.\n", hr);
 
