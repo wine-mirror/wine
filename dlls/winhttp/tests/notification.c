@@ -604,6 +604,5 @@ START_TEST (notification)
 {
     test_connection_cache();
     test_redirect();
-    Sleep(2000); /* make sure previous connection is evicted from cache */
     test_async();
 }
