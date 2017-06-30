@@ -1231,7 +1231,7 @@ static int named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, struct asy
 
             if (!(server = find_available_server( pipe )))
             {
-                if (!pipe->waiters && !(pipe->waiters = create_async_queue( NULL ))) goto done;
+                if (!pipe->waiters && !(pipe->waiters = create_async_queue( fd ))) goto done;
 
                 queue_async( pipe->waiters, async );
                 when = buffer->TimeoutSpecified ? buffer->Timeout.QuadPart : pipe->timeout;
