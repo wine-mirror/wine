@@ -123,8 +123,8 @@ static void sock_dump( struct object *obj, int verbose );
 static int sock_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *sock_get_fd( struct object *obj );
 static void sock_destroy( struct object *obj );
-static struct async_queue *sock_get_ifchange_q( struct sock *sock );
-static void sock_destroy_ifchange_q( struct sock *sock );
+static struct object *sock_get_ifchange( struct sock *sock );
+static void sock_release_ifchange( struct sock *sock );
 
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
@@ -537,7 +537,6 @@ static enum server_fd_type sock_get_fd_type( struct fd *fd )
 static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct sock *sock = get_fd_user( fd );
-    struct async_queue *ifchange_q;
 
     assert( sock->obj.ops == &sock_ops );
 
@@ -549,8 +548,9 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             set_error( STATUS_CANT_WAIT );
             return 0;
         }
-        if (!(ifchange_q = sock_get_ifchange_q( sock ))) return 0;
-        queue_async( ifchange_q, async );
+        if (!sock_get_ifchange( sock )) return 0;
+        if (!sock->ifchange_q && !(sock->ifchange_q = create_async_queue( sock->fd ))) return 0;
+        queue_async( sock->ifchange_q, async );
         set_error( STATUS_PENDING );
         return 1;
     default:
@@ -618,10 +618,11 @@ static void sock_destroy( struct object *obj )
     if ( sock->deferred )
         release_object( sock->deferred );
 
+    async_wake_up( sock->ifchange_q, STATUS_CANCELLED );
+    sock_release_ifchange( sock );
     free_async_queue( sock->read_q );
     free_async_queue( sock->write_q );
-    async_wake_up( sock->ifchange_q, STATUS_CANCELLED );
-    sock_destroy_ifchange_q( sock );
+    free_async_queue( sock->ifchange_q );
     if (sock->event) release_object( sock->event );
     if (sock->fd)
     {
@@ -1038,9 +1039,9 @@ static void ifchange_wake_up( struct object *obj, unsigned int status )
     {
         struct sock *sock = LIST_ENTRY( ptr, struct sock, ifchange_entry );
 
-        assert( sock->ifchange_q );
+        assert( sock->ifchange_obj );
         async_wake_up( sock->ifchange_q, status ); /* issue ifchange notification for the socket */
-        sock_destroy_ifchange_q( sock ); /* remove socket from list and decrement ifchange refcount */
+        sock_release_ifchange( sock ); /* remove socket from list and decrement ifchange refcount */
     }
 }
 
@@ -1145,40 +1146,30 @@ static void ifchange_add_sock( struct object *obj, struct sock *sock )
 }
 
 /* create a new ifchange queue for a specific socket or, if one already exists, reuse the existing one */
-static struct async_queue *sock_get_ifchange_q( struct sock *sock )
+static struct object *sock_get_ifchange( struct sock *sock )
 {
     struct object *ifchange;
 
-    if (sock->ifchange_q) /* reuse existing ifchange_q for this socket */
-        return sock->ifchange_q;
+    if (sock->ifchange_obj) /* reuse existing ifchange_obj for this socket */
+        return sock->ifchange_obj;
 
     if (!(ifchange = get_ifchange()))
         return NULL;
 
-    /* create the ifchange notification queue */
-    sock->ifchange_q = create_async_queue( sock->fd );
-    if (!sock->ifchange_q)
-    {
-        release_object( ifchange );
-        set_error( STATUS_NO_MEMORY );
-        return NULL;
-    }
-
     /* add the socket to the ifchange notification list */
     ifchange_add_sock( ifchange, sock );
     sock->ifchange_obj = ifchange;
-    return sock->ifchange_q;
+    return ifchange;
 }
 
 /* destroy an existing ifchange queue for a specific socket */
-static void sock_destroy_ifchange_q( struct sock *sock )
+static void sock_release_ifchange( struct sock *sock )
 {
-    if (sock->ifchange_q)
+    if (sock->ifchange_obj)
     {
         list_remove( &sock->ifchange_entry );
-        free_async_queue( sock->ifchange_q );
-        sock->ifchange_q = NULL;
         release_object( sock->ifchange_obj );
+        sock->ifchange_obj = NULL;
     }
 }
 
