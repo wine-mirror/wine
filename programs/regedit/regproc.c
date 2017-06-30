@@ -532,7 +532,7 @@ static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos)
         return NULL;
 
     if (strncmpW(line, hkcr, ARRAY_SIZE(hkcr)))
-        goto invalid;
+        return line;
 
     /* get key name */
     while (line[key_end] && !isspaceW(line[key_end])) key_end++;
@@ -548,7 +548,7 @@ static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos)
     if (open_key(parser, line) != ERROR_SUCCESS)
     {
         output_message(STRING_OPEN_KEY_FAILED, line);
-        goto invalid;
+        return line;
     }
 
     parser->value_name = NULL;
@@ -558,10 +558,6 @@ static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos)
 
     set_state(parser, SET_VALUE);
     return value;
-
-invalid:
-    set_state(parser, PARSE_WIN31_LINE);
-    return line;
 }
 
 /* handler for parser LINE_START state */
@@ -589,7 +585,6 @@ static WCHAR *line_start_state(struct parser *parser, WCHAR *pos)
         case '\t':
             break;
         default:
-            set_state(parser, LINE_START);
             return p;
         }
     }
