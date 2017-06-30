@@ -6708,10 +6708,15 @@ static void test_animation(void)
     IDirect3DRMAnimation *animation;
     D3DRMANIMATIONOPTIONS options;
     IDirect3DRMObject *obj, *obj2;
+    D3DRMANIMATIONKEY keys[10];
     IDirect3DRMFrame3 *frame3;
     IDirect3DRMFrame *frame;
+    D3DRMANIMATIONKEY key;
     IDirect3DRM *d3drm1;
+    D3DRMQUATERNION q;
+    DWORD count, i;
     HRESULT hr;
+    D3DVECTOR v;
 
     hr = Direct3DRMCreate(&d3drm1);
     ok(SUCCEEDED(hr), "Failed to create IDirect3DRM instance, hr 0x%08x.\n", hr);
@@ -6829,6 +6834,141 @@ static void test_animation(void)
     options = IDirect3DRMAnimation_GetOptions(animation);
     ok(options == D3DRMANIMATION_OPEN, "Unexpected options %#x.\n", options);
 
+    /* Key management. */
+    hr = IDirect3DRMAnimation_AddPositionKey(animation, 0.0f, 1.0f, 0.0f, 0.0f);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to add position key, hr %#x.\n", hr);
+
+if (hr == S_OK)
+{
+    hr = IDirect3DRMAnimation_AddScaleKey(animation, 0.0f, 1.0f, 2.0f, 1.0f);
+    ok(SUCCEEDED(hr), "Failed to add scale key, hr %#x.\n", hr);
+
+    hr = IDirect3DRMAnimation_AddPositionKey(animation, 0.0f, 2.0f, 0.0f, 0.0f);
+    ok(SUCCEEDED(hr), "Failed to add position key, hr %#x.\n", hr);
+
+    hr = IDirect3DRMAnimation_AddPositionKey(animation, 99.0f, 3.0f, 1.0f, 0.0f);
+    ok(SUCCEEDED(hr), "Failed to add position key, hr %#x.\n", hr);
+
+    hr = IDirect3DRMAnimation_AddPositionKey(animation, 80.0f, 4.0f, 1.0f, 0.0f);
+    ok(SUCCEEDED(hr), "Failed to add position key, hr %#x.\n", hr);
+
+    v.x = 1.0f;
+    v.y = 0.0f;
+    v.z = 0.0f;
+    D3DRMQuaternionFromRotation(&q, &v, 1.0f);
+
+    hr = IDirect3DRMAnimation_AddRotateKey(animation, 0.0f, &q);
+    ok(SUCCEEDED(hr), "Failed to add rotation key, hr %#.x\n", hr);
+
+    count = 0;
+    memset(keys, 0, sizeof(keys));
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, 0.0f, 99.0f, &count, keys);
+    ok(SUCCEEDED(hr), "Failed to get animation keys, hr %#x.\n", hr);
+    ok(count == 6, "Unexpected key count %u.\n", count);
+
+    ok(keys[0].dwKeyType == D3DRMANIMATION_ROTATEKEY, "Unexpected key type %u.\n", keys[0].dwKeyType);
+    ok(keys[1].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[1].dwKeyType);
+    ok(keys[2].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[2].dwKeyType);
+    ok(keys[3].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[3].dwKeyType);
+    ok(keys[4].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[4].dwKeyType);
+    ok(keys[5].dwKeyType == D3DRMANIMATION_SCALEKEY, "Unexpected key type %u.\n", keys[5].dwKeyType);
+
+    /* Relative order, keys are returned sorted by time. */
+    ok(keys[1].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[1].dvTime);
+    ok(keys[2].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[2].dvTime);
+    ok(keys[3].dvTime == 80.0f, "Unexpected key time %.8e.\n", keys[3].dvTime);
+    ok(keys[4].dvTime == 99.0f, "Unexpected key time %.8e.\n", keys[4].dvTime);
+
+    /* For keys with same time, order they were added in is kept. */
+    ok(keys[1].dvPositionKey.x == 1.0f, "Unexpected key position x %.8e.\n", keys[1].dvPositionKey.x);
+    ok(keys[2].dvPositionKey.x == 2.0f, "Unexpected key position x %.8e.\n", keys[2].dvPositionKey.x);
+    ok(keys[3].dvPositionKey.x == 4.0f, "Unexpected key position x %.8e.\n", keys[3].dvPositionKey.x);
+    ok(keys[4].dvPositionKey.x == 3.0f, "Unexpected key position x %.8e.\n", keys[4].dvPositionKey.x);
+
+    for (i = 0; i < count; i++)
+    {
+        ok(keys[i].dwSize == sizeof(*keys), "%u: unexpected dwSize value %u.\n", i, keys[i].dwSize);
+
+        switch (keys[i].dwKeyType)
+        {
+        case D3DRMANIMATION_ROTATEKEY:
+            ok((keys[i].dwID & 0xf0000000) == 0x40000000, "%u: unexpected id mask %#x.\n", i, keys[i].dwID);
+            break;
+        case D3DRMANIMATION_POSITIONKEY:
+            ok((keys[i].dwID & 0xf0000000) == 0x80000000, "%u: unexpected id mask %#x.\n", i, keys[i].dwID);
+            break;
+        case D3DRMANIMATION_SCALEKEY:
+            ok((keys[i].dwID & 0xf0000000) == 0xc0000000, "%u: unexpected id mask %#x.\n", i, keys[i].dwID);
+            break;
+        default:
+            ok(0, "%u: unknown key type %d.\n", i, keys[i].dwKeyType);
+        }
+    }
+
+    /* No keys in this range. */
+    count = 10;
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, 100.0f, 200.0f, &count, NULL);
+    ok(hr == D3DRMERR_NOSUCHKEY, "Unexpected hr %#x.\n", hr);
+    ok(count == 0, "Unexpected key count %u.\n", count);
+
+    count = 10;
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, 100.0f, 200.0f, &count, keys);
+    ok(hr == D3DRMERR_NOSUCHKEY, "Unexpected hr %#x.\n", hr);
+    ok(count == 0, "Unexpected key count %u.\n", count);
+
+    count = 10;
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, 0.0f, 0.0f, &count, NULL);
+    ok(SUCCEEDED(hr), "Failed to get animation keys, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to get animation keys, hr %#x.\n", hr);
+    ok(count == 4, "Unexpected key count %u.\n", count);
+
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, 0.0f, 100.0f, NULL, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    /* Time is 0-based. */
+    count = 123;
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, -100.0f, -50.0f, NULL, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+    ok(count == 123, "Unexpected key count %u.\n", count);
+
+    count = 10;
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, -100.0f, -50.0f, &count, NULL);
+    ok(hr == D3DRMERR_NOSUCHKEY, "Unexpected hr %#x.\n", hr);
+    ok(count == 0, "Unexpected key count %u.\n", count);
+
+    count = 10;
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, -100.0f, 100.0f, &count, NULL);
+    ok(SUCCEEDED(hr), "Failed to get animation keys, hr %#x.\n", hr);
+    ok(count == 6, "Unexpected key count %u.\n", count);
+
+    /* AddKey() tests. */
+    hr = IDirect3DRMAnimation2_AddKey(animation2, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    memset(&key, 0, sizeof(key));
+    key.dwKeyType = D3DRMANIMATION_POSITIONKEY;
+    hr = IDirect3DRMAnimation2_AddKey(animation2, &key);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    memset(&key, 0, sizeof(key));
+    key.dwSize = sizeof(key) - 1;
+    key.dwKeyType = D3DRMANIMATION_POSITIONKEY;
+    hr = IDirect3DRMAnimation2_AddKey(animation2, &key);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    memset(&key, 0, sizeof(key));
+    key.dwSize = sizeof(key) + 1;
+    key.dwKeyType = D3DRMANIMATION_POSITIONKEY;
+    hr = IDirect3DRMAnimation2_AddKey(animation2, &key);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    memset(&key, 0, sizeof(key));
+    key.dwSize = sizeof(key);
+    key.dwKeyType = D3DRMANIMATION_POSITIONKEY;
+    hr = IDirect3DRMAnimation2_AddKey(animation2, &key);
+    ok(SUCCEEDED(hr), "Failed to add key, hr %#x.\n", hr);
+}
     IDirect3DRMAnimation2_Release(animation2);
     IDirect3DRMAnimation_Release(animation);
 
