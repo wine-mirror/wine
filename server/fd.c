@@ -2101,7 +2101,7 @@ void default_fd_queue_async( struct fd *fd, struct async *async, int type, int c
 /* default reselect_async() fd routine */
 void default_fd_reselect_async( struct fd *fd, struct async_queue *queue )
 {
-    if (queue != fd->wait_q)
+    if (queue == fd->read_q || queue == fd->write_q)
     {
         int poll_events = fd->fd_ops->get_poll_events( fd );
         int events = check_fd_events( fd, poll_events );
