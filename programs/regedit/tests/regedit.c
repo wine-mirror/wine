@@ -1464,12 +1464,21 @@ static void test_import_with_whitespace(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
-                    "\"Wine10\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "\"Wine10a\"=hex(7):4c,69,6e,65,20,\\\n"
                     "  63,6f,6e,\\\n\n"
                     "  63,61,74,\\\n\n\n"
                     "  65,6e,\\\n\n\n\n"
                     "  61,74,69,6f,6e,00,00\n\n");
-    verify_reg(hkey, "Wine10", REG_MULTI_SZ, "Line concatenation\0", 20, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine10a", REG_MULTI_SZ, "Line concatenation\0", 20, TODO_REG_SIZE);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine10b\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,\\\n \n"
+                    "  63,61,74,\\\n\t\n\t\n"
+                    "  65,6e,\\\n\t \t\n\t \t\n\t \t\n"
+                    "  61,74,69,6f,6e,00,00\n\n");
+    verify_reg(hkey, "Wine10b", REG_MULTI_SZ, "Line concatenation\0", 20, TODO_REG_SIZE);
 
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
