@@ -6858,6 +6858,7 @@ if (hr == S_OK)
     v.z = 0.0f;
     D3DRMQuaternionFromRotation(&q, &v, 1.0f);
 
+    /* NULL quaternion pointer leads to a crash on Windows. */
     hr = IDirect3DRMAnimation_AddRotateKey(animation, 0.0f, &q);
     ok(SUCCEEDED(hr), "Failed to add rotation key, hr %#.x\n", hr);
 
