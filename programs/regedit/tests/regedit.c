@@ -488,12 +488,12 @@ static void test_basic_import(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
-                    "\"Wine62a\"=hex(7):4c,69,6e,65,20,\\");
-    lr = RegQueryValueExA(hkey, "Wine62a", NULL, NULL, NULL, NULL);
+                    "\"Wine17\"=hex(7):4c,69,6e,65,20,\\");
+    lr = RegQueryValueExA(hkey, "Wine17", NULL, NULL, NULL, NULL);
     todo_wine ok(lr == ERROR_SUCCESS || broken(lr == ERROR_FILE_NOT_FOUND) /* WinXP */,
                  "got %u, expected 0\n", lr);
     if (lr == ERROR_SUCCESS)
-        todo_wine verify_reg(hkey, "Wine62a", REG_MULTI_SZ, "Line ", 6, 0);
+        todo_wine verify_reg(hkey, "Wine17", REG_MULTI_SZ, "Line ", 6, 0);
 
     RegCloseKey(hkey);
 
