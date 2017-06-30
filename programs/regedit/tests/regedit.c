@@ -332,7 +332,7 @@ static void test_basic_import(void)
     verify_reg(hkey, "Wine9a", REG_EXPAND_SZ, "Line", 5, 0);
     verify_reg(hkey, "Wine9b", REG_SZ, "Value 1", 8, 0);
     verify_reg_nonexist(hkey, "Wine9c");
-    todo_wine verify_reg(hkey, "Wine9d", REG_SZ, "Value 2", 8, 0);
+    verify_reg(hkey, "Wine9d", REG_SZ, "Value 2", 8, 0);
     verify_reg_nonexist(hkey, "Wine9e");
     verify_reg_nonexist(hkey, "Wine9f");
     verify_reg(hkey, "Wine9g", REG_SZ, "Value 4", 8, 0);
@@ -362,8 +362,8 @@ static void test_basic_import(void)
                     "  65,00,00,00\n");
     verify_reg(hkey, "Wine10a", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
     verify_reg(hkey, "Wine10b", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
-    todo_wine verify_reg(hkey, "Wine10c", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
-    todo_wine verify_reg(hkey, "Wine10d", REG_NONE, "V\0a\0l\0u", 8, 0);
+    verify_reg(hkey, "Wine10c", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+    verify_reg(hkey, "Wine10d", REG_NONE, "V\0a\0l\0u", 8, 0);
     todo_wine verify_reg(hkey, "Wine10e", REG_NONE, "V\0a\0l\0u", 8, 0);
 
     exec_import_str("REGEDIT4\n\n"
@@ -382,14 +382,14 @@ static void test_basic_import(void)
                     "  25,00\n");
     verify_reg(hkey, "Wine11a", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine11b", REG_EXPAND_SZ, "%PATH%", 7, 0);
-    todo_wine verify_reg(hkey, "Wine11c", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine11c", REG_EXPAND_SZ, "%PATH%", 7, 0);
     /* Wine11d */
     size = sizeof(buffer);
     lr = RegQueryValueExA(hkey, "Wine11d", NULL, &type, (BYTE *)&buffer, &size);
-    todo_wine ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
-    todo_wine ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
+    ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
+    ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
     todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
-    todo_wine ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
+    ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
     /* Wine11e */
     size = sizeof(buffer);
     memset(buffer, '-', size);
@@ -417,8 +417,8 @@ static void test_basic_import(void)
     hex[4] = 0x55; hex[5] = 0x66; hex[6] = 0x77; hex[7] = 0x88;
     verify_reg(hkey, "Wine12a", REG_BINARY, hex, sizeof(hex), 0);
     verify_reg(hkey, "Wine12b", REG_BINARY, hex, sizeof(hex), 0);
-    todo_wine verify_reg(hkey, "Wine12c", REG_BINARY, hex, sizeof(hex), 0);
-    todo_wine verify_reg(hkey, "Wine12d", REG_BINARY, hex, 6, 0);
+    verify_reg(hkey, "Wine12c", REG_BINARY, hex, sizeof(hex), 0);
+    verify_reg(hkey, "Wine12d", REG_BINARY, hex, 6, 0);
     todo_wine verify_reg(hkey, "Wine12e", REG_BINARY, hex, 6, 0);
 
     /* Test import with subkeys */
@@ -490,10 +490,9 @@ static void test_basic_import(void)
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine17\"=hex(7):4c,69,6e,65,20,\\");
     lr = RegQueryValueExA(hkey, "Wine17", NULL, NULL, NULL, NULL);
-    todo_wine ok(lr == ERROR_SUCCESS || broken(lr == ERROR_FILE_NOT_FOUND) /* WinXP */,
-                 "got %u, expected 0\n", lr);
+    ok(lr == ERROR_SUCCESS || broken(lr == ERROR_FILE_NOT_FOUND) /* WinXP */, "got %u, expected 0\n", lr);
     if (lr == ERROR_SUCCESS)
-        todo_wine verify_reg(hkey, "Wine17", REG_MULTI_SZ, "Line ", 6, 0);
+        verify_reg(hkey, "Wine17", REG_MULTI_SZ, "Line ", 6, TODO_REG_SIZE | TODO_REG_DATA);
 
     RegCloseKey(hkey);
 
@@ -664,25 +663,25 @@ static void test_invalid_import(void)
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Multi-Line1\"=hex(7):4c,69,6e,65,20\\\n"
                     ",63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line1");
+    verify_reg_nonexist(hkey, "Multi-Line1");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Multi-Line2\"=hex(7):4c,69,6e,65,20\\\n"
                     "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line2");
+    verify_reg_nonexist(hkey, "Multi-Line2");
 
     exec_import_str("Windows Registry Editor Version 5.00\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Multi-Line3\"=hex(7):4c,69,6e,65,20\\\n"
                     ",63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line3");
+    verify_reg_nonexist(hkey, "Multi-Line3");
 
     exec_import_str("Windows Registry Editor Version 5.00\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Multi-Line4\"=hex(7):4c,69,6e,65,20\\\n"
                     "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line4");
+    verify_reg_nonexist(hkey, "Multi-Line4");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -749,7 +748,7 @@ static void test_invalid_import(void)
                     "\"Test17b\"=\"Value 2\"\n"
                     "\"Test\n"
                     "\\17c\"=\"Value 3\"\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Test17a");
+    verify_reg_nonexist(hkey, "Test17a");
     verify_reg(hkey, "Test17b", REG_SZ, "Value 2", 8, 0);
     verify_reg_nonexist(hkey, "Test17c");
 
@@ -759,8 +758,8 @@ static void test_invalid_import(void)
                     "5678\n"
                     "\"Test18b\"=\"Test \\\n"
                     "Value\"\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Test18a");
-    todo_wine verify_reg_nonexist(hkey, "Test18b");
+    verify_reg_nonexist(hkey, "Test18a");
+    verify_reg_nonexist(hkey, "Test18b");
 
     /* Test hex data concatenation for REG_NONE, REG_EXPAND_SZ and REG_BINARY */
     exec_import_str("REGEDIT4\n\n"
@@ -778,11 +777,11 @@ static void test_invalid_import(void)
                     "\"Test19f\"=hex(0):56,00,61,00,\\;comment\n"
                     "  6c,00,75,00,\\#comment\n"
                     "  65,00,00,00\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Test19a");
-    todo_wine verify_reg_nonexist(hkey, "Test19b");
-    todo_wine verify_reg_nonexist(hkey, "Test19c");
-    todo_wine verify_reg_nonexist(hkey, "Test19d");
-    todo_wine verify_reg_nonexist(hkey, "Test19e");
+    verify_reg_nonexist(hkey, "Test19a");
+    verify_reg_nonexist(hkey, "Test19b");
+    verify_reg_nonexist(hkey, "Test19c");
+    verify_reg_nonexist(hkey, "Test19d");
+    verify_reg_nonexist(hkey, "Test19e");
     verify_reg_nonexist(hkey, "Test19f");
 
     exec_import_str("REGEDIT4\n\n"
@@ -800,11 +799,11 @@ static void test_invalid_import(void)
                     "\"Test20f\"=hex(2):25,50,41,\\;comment\n"
                     "  54,48,\\#comment\n"
                     "  25,00\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Test20a");
-    todo_wine verify_reg_nonexist(hkey, "Test20b");
+    verify_reg_nonexist(hkey, "Test20a");
+    verify_reg_nonexist(hkey, "Test20b");
     verify_reg_nonexist(hkey, "Test20c");
-    todo_wine verify_reg_nonexist(hkey, "Test20d");
-    todo_wine verify_reg_nonexist(hkey, "Test20e");
+    verify_reg_nonexist(hkey, "Test20d");
+    verify_reg_nonexist(hkey, "Test20e");
     verify_reg_nonexist(hkey, "Test20f");
 
     exec_import_str("REGEDIT4\n\n"
@@ -822,11 +821,11 @@ static void test_invalid_import(void)
                     "\"Test21f\"=hex:11,22,33,\\;comment\n"
                     "  44,55,66,\\#comment\n"
                     "  77,88\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Test21a");
-    todo_wine verify_reg_nonexist(hkey, "Test21b");
+    verify_reg_nonexist(hkey, "Test21a");
+    verify_reg_nonexist(hkey, "Test21b");
     verify_reg_nonexist(hkey, "Test21c");
-    todo_wine verify_reg_nonexist(hkey, "Test21d");
-    todo_wine verify_reg_nonexist(hkey, "Test21e");
+    verify_reg_nonexist(hkey, "Test21d");
+    verify_reg_nonexist(hkey, "Test21e");
     verify_reg_nonexist(hkey, "Test21f");
 
     /* Test support for characters greater than 0xff */
@@ -861,7 +860,7 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine23e");
     verify_reg_nonexist(hkey, "Wine23f");
     verify_reg_nonexist(hkey, "Wine23g");
-    todo_wine verify_reg_nonexist(hkey, "Wine23h");
+    verify_reg_nonexist(hkey, "Wine23h");
     verify_reg_nonexist(hkey, "Wine23i");
     verify_reg_nonexist(hkey, "Wine23j");
     verify_reg_nonexist(hkey, "Wine23k");
@@ -878,10 +877,10 @@ static void test_invalid_import(void)
                     "\"Wine24b\"=hex(2):4c,69,6e,65,20\\\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2]\n");
     verify_reg_nonexist(hkey, "Wine24b");
-    todo_wine verify_key(hkey, "Subkey2");
+    verify_key(hkey, "Subkey2");
 
     lr = RegDeleteKeyA(hkey, "Subkey2");
-    todo_wine ok(lr == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", lr);
+    ok(lr == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", lr);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -904,13 +903,13 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine25a");
     verify_reg_nonexist(hkey, "Wine25b");
     verify_reg_nonexist(hkey, "Wine25c");
-    todo_wine verify_reg_nonexist(hkey, "Wine25d");
+    verify_reg_nonexist(hkey, "Wine25d");
     verify_reg_nonexist(hkey, "Wine25e");
-    verify_reg(hkey, "Wine25f", REG_SZ, "Test value", 11, 0);
+    todo_wine verify_reg(hkey, "Wine25f", REG_SZ, "Test value", 11, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine25g");
     todo_wine verify_reg_nonexist(hkey, "Wine25h");
     verify_reg_nonexist(hkey, "Wine25i");
-    todo_wine verify_reg(hkey, "Wine25j", REG_SZ, "Test value", 11, 0);
+    verify_reg(hkey, "Wine25j", REG_SZ, "Test value", 11, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -933,13 +932,13 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine26a");
     verify_reg_nonexist(hkey, "Wine26b");
     verify_reg_nonexist(hkey, "Wine26c");
-    todo_wine verify_reg_nonexist(hkey, "Wine26d");
+    verify_reg_nonexist(hkey, "Wine26d");
     verify_reg_nonexist(hkey, "Wine26e");
-    verify_reg(hkey, "Wine26f", REG_DWORD, &dword, sizeof(dword), 0);
+    todo_wine verify_reg(hkey, "Wine26f", REG_DWORD, &dword, sizeof(dword), 0);
     todo_wine verify_reg_nonexist(hkey, "Wine26g");
     todo_wine verify_reg_nonexist(hkey, "Wine26h");
     verify_reg_nonexist(hkey, "Wine26i");
-    todo_wine verify_reg(hkey, "Wine26j", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine26j", REG_DWORD, &dword, sizeof(dword), 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -962,13 +961,13 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine27a");
     verify_reg_nonexist(hkey, "Wine27b");
     verify_reg_nonexist(hkey, "Wine27c");
-    todo_wine verify_reg_nonexist(hkey, "Wine27d");
+    verify_reg_nonexist(hkey, "Wine27d");
     verify_reg_nonexist(hkey, "Wine27e");
-    verify_reg(hkey, "Wine27f", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine27f", REG_EXPAND_SZ, "%PATH%", 7, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine27g");
     todo_wine verify_reg_nonexist(hkey, "Wine27h");
     verify_reg_nonexist(hkey, "Wine27i");
-    todo_wine verify_reg(hkey, "Wine27j", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine27j", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -983,7 +982,7 @@ static void test_invalid_import(void)
                     ";comment\n"
                     "@=\"Default value 2\"\n\n");
     verify_reg_nonexist(hkey, "Wine28b");
-    todo_wine verify_reg_nonexist(hkey, NULL);
+    verify_reg_nonexist(hkey, NULL);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -991,10 +990,10 @@ static void test_invalid_import(void)
                     "#comment\n"
                     "@=\"Default value 3\"\n\n");
     verify_reg_nonexist(hkey, "Wine28c");
-    verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
+    todo_wine verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
 
     lr = RegDeleteValueW(hkey, NULL);
-    ok(lr == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", lr);
+    todo_wine ok(lr == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", lr);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1008,7 +1007,7 @@ static void test_invalid_import(void)
                     "\"Wine28e\"=hex(2):4c,69,6e,65,20\\\n"
                     "@=\"Default value 5\"\n\n");
     verify_reg_nonexist(hkey, "Wine28e");
-    verify_reg(hkey, NULL, REG_SZ, "Default value 5", 16, TODO_REG_DATA);
+    verify_reg(hkey, NULL, REG_SZ, "Default value 5", 16, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1116,8 +1115,8 @@ static void test_comments(void)
                     "\"Wine2\"=\"Line 2\"\n\n");
     lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
-    todo_wine verify_reg(hkey, "Wine1", REG_SZ, "Line 1", 7, 0);
-    todo_wine verify_reg(hkey, "Wine2", REG_SZ, "Line 2", 7, 0);
+    verify_reg(hkey, "Wine1", REG_SZ, "Line 1", 7, 0);
+    verify_reg(hkey, "Wine2", REG_SZ, "Line 2", 7, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1143,7 +1142,7 @@ static void test_comments(void)
                     "\"Wine10\"=\"Another valid line\"\n\n");
     verify_reg_nonexist(hkey, "Wine7");
     verify_reg(hkey, "Wine8", REG_SZ, "A valid line", 13, 0);
-    todo_wine verify_reg(hkey, "Wine9", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine9", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
     verify_reg(hkey, "Wine10", REG_SZ, "Another valid line", 19, 0);
 
     exec_import_str("REGEDIT4\n\n"
@@ -1220,7 +1219,7 @@ static void test_comments(void)
                     "  63,6f,6e,\\;comment\n"
                     "  63,61,74,\\;comment\n"
                     "  65,6e,61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg(hkey, "Multi-Line1", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Multi-Line1", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1237,7 +1236,7 @@ static void test_comments(void)
                     "  63,6f,6e,\\;comment\n"
                     "  63,61,74,\\;comment\n"
                     "  65,6e,61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg(hkey, "Multi-Line3", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Multi-Line3", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1246,7 +1245,7 @@ static void test_comments(void)
                     "  63,6f,6e,\\;#comment\n"
                     "  63,61,74,\\;#comment\n"
                     "  65,6e,61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg(hkey, "Multi-Line4", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Multi-Line4", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1264,7 +1263,7 @@ static void test_comments(void)
                     "  63,61,74,\\\n\n"
                     "  65,6e,\\;comment\n\n"
                     "  61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg(hkey, "Multi-Line6", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Multi-Line6", REG_MULTI_SZ, "Line concatenation\0", 20, TODO_REG_SIZE);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1272,8 +1271,8 @@ static void test_comments(void)
                     "\"Wine27b\"=hex(2):25,50,41,54,48,25,00\t;comment\n"
                     "\"Wine27c\"=hex(2):25,50,41,54,48,25,00  #comment\n"
                     "\"Wine27d\"=hex(2):25,50,41,54,48,25,00\t#comment\n\n");
-    todo_wine verify_reg(hkey, "Wine27a", REG_EXPAND_SZ, "%PATH%", 7, 0);
-    todo_wine verify_reg(hkey, "Wine27b", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine27a", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine27b", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg_nonexist(hkey, "Wine27c");
     verify_reg_nonexist(hkey, "Wine27d");
 
@@ -1293,9 +1292,9 @@ static void test_comments(void)
                     "  25,50,41,54,48,25,00\n\n");
     verify_reg(hkey, "Wine28a", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
     verify_reg_nonexist(hkey, "Wine28b");
-    todo_wine verify_reg(hkey, "Wine28c", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
+    verify_reg(hkey, "Wine28c", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
     verify_reg_nonexist(hkey, "Wine28d");
-    todo_wine verify_reg(hkey, "Wine28e", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
+    verify_reg(hkey, "Wine28e", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
     verify_reg_nonexist(hkey, "Wine28f");
 
     exec_import_str("REGEDIT4\n\n"
@@ -1305,7 +1304,7 @@ static void test_comments(void)
                     ";comment\n"
                     "  65,6e,\\;comment\n"
                     "  61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg(hkey, "Wine29a", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine29a", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1314,7 +1313,7 @@ static void test_comments(void)
                     "  ;comment\n"
                     "  65,6e,\\;comment\n"
                     "  61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg(hkey, "Wine29b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine29b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1323,7 +1322,7 @@ static void test_comments(void)
                     "#comment\n"
                     "  65,6e,\\;comment\n"
                     "  61,74,69,6f,6e,00,00\n\n");
-    verify_reg_nonexist(hkey, "Wine29c");
+    todo_wine verify_reg_nonexist(hkey, "Wine29c");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1408,7 +1407,7 @@ static void test_import_with_whitespace(void)
     verify_reg(hkey, "Wine4a", REG_SZ, "Tab and four spaces", 20, 0);
     dword = 0x112233;
     verify_reg(hkey, "Wine4b", REG_DWORD, &dword, sizeof(dword), 0);
-    todo_wine verify_reg(hkey, "Wine4c", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine4c", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
 
     exec_import_str("    REGEDIT4\n\n"
                     "\t[HKEY_CURRENT_USER\\" KEY_BASE "]\n"

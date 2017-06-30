@@ -147,6 +147,8 @@ enum parser_state
     STRING_DATA,         /* parsing REG_SZ data */
     DWORD_DATA,          /* parsing DWORD data */
     HEX_DATA,            /* parsing REG_BINARY, REG_NONE, REG_EXPAND_SZ or REG_MULTI_SZ data */
+    EOL_BACKSLASH,       /* preparing to parse multiple lines of hex data */
+    HEX_MULTILINE,       /* parsing multiple lines of hex data */
     UNKNOWN_DATA,        /* parsing an unhandled or invalid data type */
     SET_VALUE,           /* adding a value to the registry */
     NB_PARSER_STATES
@@ -165,6 +167,7 @@ struct parser
     DWORD              data_type;      /* data type */
     void              *data;           /* value data */
     DWORD              data_size;      /* size of the data (in bytes) */
+    BOOL               backslash;      /* TRUE if the current line contains a backslash */
     enum parser_state  state;          /* current parser state */
 };
 
@@ -184,6 +187,8 @@ static WCHAR *data_type_state(struct parser *parser, WCHAR *pos);
 static WCHAR *string_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos);
+static WCHAR *eol_backslash_state(struct parser *parser, WCHAR *pos);
+static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos);
 static WCHAR *unknown_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos);
 
@@ -202,6 +207,8 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     string_data_state,         /* STRING_DATA */
     dword_data_state,          /* DWORD_DATA */
     hex_data_state,            /* HEX_DATA */
+    eol_backslash_state,       /* EOL_BACKSLASH */
+    hex_multiline_state,       /* HEX_MULTILINE */
     unknown_data_state,        /* UNKNOWN_DATA */
     set_value_state,           /* SET_VALUE */
 };
@@ -212,6 +219,19 @@ static inline enum parser_state set_state(struct parser *parser, enum parser_sta
     enum parser_state ret = parser->state;
     parser->state = state;
     return ret;
+}
+
+static void *resize_buffer(void *buf, size_t count)
+{
+    void *new_buf;
+
+    if (buf)
+        new_buf = HeapReAlloc(GetProcessHeap(), 0, buf, count);
+    else
+        new_buf = HeapAlloc(GetProcessHeap(), 0, count);
+
+    CHECK_ENOUGH_MEMORY(new_buf);
+    return new_buf;
 }
 
 /******************************************************************************
@@ -246,37 +266,61 @@ error:
 }
 
 /******************************************************************************
- * Converts comma-separated hex data into a binary string.
+ * Converts comma-separated hex data into a binary string and modifies
+ * the input parameter to skip the concatenating backslash, if found.
+ *
+ * Returns TRUE or FALSE to indicate whether parsing was successful.
  */
-static BYTE *convert_hex_csv_to_hex(WCHAR *str, DWORD *size)
+static BOOL convert_hex_csv_to_hex(struct parser *parser, WCHAR **str)
 {
+    size_t size;
+    BYTE *d;
     WCHAR *s;
-    BYTE *d, *data;
+
+    parser->backslash = FALSE;
 
     /* The worst case is 1 digit + 1 comma per byte */
-    *size=(lstrlenW(str)+1)/2;
-    data=HeapAlloc(GetProcessHeap(), 0, *size);
-    CHECK_ENOUGH_MEMORY(data);
+    size = ((lstrlenW(*str) + 1) / 2) + parser->data_size;
+    parser->data = resize_buffer(parser->data, size);
 
-    s = str;
-    d = data;
-    *size=0;
-    while (*s != '\0') {
-        UINT wc;
+    s = *str;
+    d = (BYTE *)parser->data + parser->data_size;
+
+    while (*s)
+    {
         WCHAR *end;
+        unsigned long wc;
 
-        wc = strtoulW(s,&end,16);
-        if (end == s || wc > 0xff || (*end && *end != ',')) {
-            HeapFree(GetProcessHeap(), 0, data);
-            return NULL;
+        wc = strtoulW(s, &end, 16);
+        if (wc > 0xff) return FALSE;
+
+        if (s == end && wc == 0)
+        {
+            while (*end == ' ' || *end == '\t') end++;
+            if (*end == '\\')
+            {
+                parser->backslash = TRUE;
+                *str = end + 1;
+                return TRUE;
+            }
+            return FALSE;
         }
-        *d++ =(BYTE)wc;
-        (*size)++;
+
+        *d++ = wc;
+        parser->data_size++;
+
+        if (*end && *end != ',')
+        {
+            while (*end == ' ' || *end == '\t') end++;
+            if (*end && *end != ';') return FALSE;
+            return TRUE;
+        }
+
         if (*end) end++;
         s = end;
     }
 
-    return data;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -790,8 +834,14 @@ static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos)
 {
     WCHAR *line = pos;
 
-    if (!(parser->data = convert_hex_csv_to_hex(line, &parser->data_size)))
+    if (!convert_hex_csv_to_hex(parser, &line))
         goto invalid;
+
+    if (parser->backslash)
+    {
+        set_state(parser, EOL_BACKSLASH);
+        return line;
+    }
 
     if (!parser->is_unicode && (parser->data_type == REG_EXPAND_SZ || parser->data_type == REG_MULTI_SZ))
     {
@@ -811,6 +861,44 @@ invalid:
     parser->data_size = 0;
 
     set_state(parser, LINE_START);
+    return line;
+}
+
+/* handler for parser EOL_BACKSLASH state */
+static WCHAR *eol_backslash_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos;
+
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p && *p != ';') goto invalid;
+
+    set_state(parser, HEX_MULTILINE);
+    return pos;
+
+invalid:
+    HeapFree(GetProcessHeap(), 0, parser->data);
+    parser->data = NULL;
+    parser->data_size = 0;
+
+    set_state(parser, LINE_START);
+    return p;
+}
+
+/* handler for parser HEX_MULTILINE state */
+static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line;
+
+    if (!(line = get_line(parser->file)))
+    {
+        set_state(parser, SET_VALUE);
+        return pos;
+    }
+
+    while (*line == ' ' || *line == '\t') line++;
+    if (*line == ';') return line;
+
+    set_state(parser, HEX_DATA);
     return line;
 }
 
@@ -893,13 +981,6 @@ static WCHAR *get_lineA(FILE *fp)
         next = p + 1;
         if (*p == '\r' && *(p + 1) == '\n') next++;
         *p = 0;
-        if (p > buf && *(p - 1) == '\\')
-        {
-            while (*next == ' ' || *next == '\t') next++;
-            memmove(p - 1, next, strlen(next) + 1);
-            next = line;
-            continue;
-        }
         if (*line == ';' || *line == '#')
         {
             line = next;
@@ -963,13 +1044,6 @@ static WCHAR *get_lineW(FILE *fp)
         next = p + 1;
         if (*p == '\r' && *(p + 1) == '\n') next++;
         *p = 0;
-        if (p > buf && *(p - 1) == '\\')
-        {
-            while (*next == ' ' || *next == '\t') next++;
-            memmove(p - 1, next, (strlenW(next) + 1) * sizeof(WCHAR));
-            next = line;
-            continue;
-        }
         if (*line == ';' || *line == '#')
         {
             line = next;
@@ -1473,6 +1547,7 @@ BOOL import_registry_file(FILE *reg_file)
     parser.data_type     = 0;
     parser.data          = NULL;
     parser.data_size     = 0;
+    parser.backslash     = FALSE;
     parser.state         = HEADER;
 
     pos = parser.two_wchars;
