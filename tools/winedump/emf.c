@@ -35,6 +35,15 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "gdiplusenums.h"
+
+typedef struct
+{
+    WORD Type;
+    WORD Flags;
+    DWORD Size;
+    DWORD DataSize;
+} EmfPlusRecordHeader;
 
 static const char *debugstr_wn(const WCHAR *wstr, unsigned int n)
 {
@@ -67,6 +76,7 @@ static unsigned int read_int(const unsigned char *buffer)
 }
 
 #define EMRCASE(x) case x: printf("%-20s %08x\n", #x, length); break
+#define EMRPLUSCASE(x) case x: printf("    %-20s %04x %08x %08x\n", #x, header->Flags, header->Size, header->DataSize); break
 
 static unsigned offset = 0;
 
@@ -162,7 +172,120 @@ static int dump_emfrecord(void)
     EMRCASE(EMR_WIDENPATH);
     EMRCASE(EMR_SELECTCLIPPATH);
     EMRCASE(EMR_ABORTPATH);
-    EMRCASE(EMR_GDICOMMENT);
+
+    case EMR_GDICOMMENT:
+    {
+        printf("%-20s %08x\n", "EMR_GDICOMMENT", length);
+
+        /* Handle EMF+ records */
+        if (length >= 16 && !memcmp((char*)PRD(offset + 12, sizeof(unsigned int)), "EMF+", 4))
+        {
+            const EmfPlusRecordHeader *header;
+            const unsigned int *data_size;
+
+            offset += 8;
+            length -= 8;
+            data_size = PRD(offset, sizeof(*data_size));
+            printf("data size = %x\n", *data_size);
+            offset += 8;
+            length -= 8;
+
+            while (length >= sizeof(*header))
+            {
+                header = PRD(offset, sizeof(*header));
+                switch(header->Type)
+                {
+                EMRPLUSCASE(EmfPlusRecordTypeInvalid);
+                EMRPLUSCASE(EmfPlusRecordTypeHeader);
+                EMRPLUSCASE(EmfPlusRecordTypeEndOfFile);
+                EMRPLUSCASE(EmfPlusRecordTypeComment);
+                EMRPLUSCASE(EmfPlusRecordTypeGetDC);
+                EMRPLUSCASE(EmfPlusRecordTypeMultiFormatStart);
+                EMRPLUSCASE(EmfPlusRecordTypeMultiFormatSection);
+                EMRPLUSCASE(EmfPlusRecordTypeMultiFormatEnd);
+                EMRPLUSCASE(EmfPlusRecordTypeObject);
+                EMRPLUSCASE(EmfPlusRecordTypeClear);
+                EMRPLUSCASE(EmfPlusRecordTypeFillRects);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawRects);
+                EMRPLUSCASE(EmfPlusRecordTypeFillPolygon);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawLines);
+                EMRPLUSCASE(EmfPlusRecordTypeFillEllipse);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawEllipse);
+                EMRPLUSCASE(EmfPlusRecordTypeFillPie);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawPie);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawArc);
+                EMRPLUSCASE(EmfPlusRecordTypeFillRegion);
+                EMRPLUSCASE(EmfPlusRecordTypeFillPath);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawPath);
+                EMRPLUSCASE(EmfPlusRecordTypeFillClosedCurve);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawClosedCurve);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawCurve);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawBeziers);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawImage);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawImagePoints);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawString);
+                EMRPLUSCASE(EmfPlusRecordTypeSetRenderingOrigin);
+                EMRPLUSCASE(EmfPlusRecordTypeSetAntiAliasMode);
+                EMRPLUSCASE(EmfPlusRecordTypeSetTextRenderingHint);
+                EMRPLUSCASE(EmfPlusRecordTypeSetTextContrast);
+                EMRPLUSCASE(EmfPlusRecordTypeSetInterpolationMode);
+                EMRPLUSCASE(EmfPlusRecordTypeSetPixelOffsetMode);
+                EMRPLUSCASE(EmfPlusRecordTypeSetCompositingMode);
+                EMRPLUSCASE(EmfPlusRecordTypeSetCompositingQuality);
+                EMRPLUSCASE(EmfPlusRecordTypeSave);
+                EMRPLUSCASE(EmfPlusRecordTypeRestore);
+                EMRPLUSCASE(EmfPlusRecordTypeBeginContainer);
+                EMRPLUSCASE(EmfPlusRecordTypeBeginContainerNoParams);
+                EMRPLUSCASE(EmfPlusRecordTypeEndContainer);
+                EMRPLUSCASE(EmfPlusRecordTypeSetWorldTransform);
+                EMRPLUSCASE(EmfPlusRecordTypeResetWorldTransform);
+                EMRPLUSCASE(EmfPlusRecordTypeMultiplyWorldTransform);
+                EMRPLUSCASE(EmfPlusRecordTypeTranslateWorldTransform);
+                EMRPLUSCASE(EmfPlusRecordTypeScaleWorldTransform);
+                EMRPLUSCASE(EmfPlusRecordTypeRotateWorldTransform);
+                EMRPLUSCASE(EmfPlusRecordTypeSetPageTransform);
+                EMRPLUSCASE(EmfPlusRecordTypeResetClip);
+                EMRPLUSCASE(EmfPlusRecordTypeSetClipRect);
+                EMRPLUSCASE(EmfPlusRecordTypeSetClipPath);
+                EMRPLUSCASE(EmfPlusRecordTypeSetClipRegion);
+                EMRPLUSCASE(EmfPlusRecordTypeOffsetClip);
+                EMRPLUSCASE(EmfPlusRecordTypeDrawDriverString);
+                EMRPLUSCASE(EmfPlusRecordTypeStrokeFillPath);
+                EMRPLUSCASE(EmfPlusRecordTypeSerializableObject);
+                EMRPLUSCASE(EmfPlusRecordTypeSetTSGraphics);
+                EMRPLUSCASE(EmfPlusRecordTypeSetTSClip);
+                EMRPLUSCASE(EmfPlusRecordTotal);
+
+                default:
+                    printf("    unknown EMF+ record %x %04x %08x\n", header->Type, header->Flags, header->Size);
+                    break;
+                }
+
+                if (length<sizeof(*header) || header->Size%4)
+                    return -1;
+
+                length -= sizeof(*header);
+                offset += sizeof(*header);
+
+                for (i=0; i<header->Size-sizeof(*header); i+=4)
+                {
+                    if (i%16 == 0)
+                        printf("       ");
+                    if (!(ptr = PRD(offset, 4))) return -1;
+                    length -= 4;
+                    offset += 4;
+                    printf("%08x ", read_int(ptr));
+                    if ((i % 16 == 12) || (i + 4 == header->Size - sizeof(*header)))
+                        printf("\n");
+                }
+            }
+
+            return 0;
+        }
+
+        break;
+    }
+
     EMRCASE(EMR_FILLRGN);
     EMRCASE(EMR_FRAMERGN);
     EMRCASE(EMR_INVERTRGN);
@@ -178,7 +301,7 @@ static int dump_emfrecord(void)
         if (length >= sizeof(*clip) + sizeof(*data))
             rc_count = data->rdh.nCount;
 
-        printf("%-20s %08x\n", "EMREXTSELECTCLIPRGN", length);
+        printf("%-20s %08x\n", "EMR_EXTSELECTCLIPRGN", length);
         printf("mode %d, rects %d\n", clip->iMode, rc_count);
         for (i = 0, rc = (const RECT *)data->Buffer; i < rc_count; i++, rc++)
             printf(" (%d,%d)-(%d,%d)", rc->left, rc->top, rc->right, rc->bottom);
