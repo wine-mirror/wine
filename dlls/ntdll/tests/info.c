@@ -1069,6 +1069,9 @@ static void test_query_process_vm(void)
     VM_COUNTERS pvi;
     ULONG old_size = FIELD_OFFSET(VM_COUNTERS,PrivatePageCount);
     HANDLE process;
+    SIZE_T prev_size;
+    const SIZE_T alloc_size = 16 * 1024 * 1024;
+    void *ptr;
 
     status = pNtQueryInformationProcess(NULL, ProcessVmCounters, NULL, sizeof(pvi), NULL);
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
@@ -1119,6 +1122,47 @@ static void test_query_process_vm(void)
     ok( pvi.PagefileUsage > 0, "Expected a PagefileUsage > 0\n");
 
     CloseHandle(process);
+
+    /* Check if we have real counters */
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    prev_size = pvi.VirtualSize;
+    if (winetest_debug > 1)
+        dump_vm_counters("VM counters before VirtualAlloc", &pvi);
+    ptr = VirtualAlloc(NULL, alloc_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    ok( ptr != NULL, "VirtualAlloc failed, err %u\n", GetLastError());
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    if (winetest_debug > 1)
+        dump_vm_counters("VM counters after VirtualAlloc", &pvi);
+    todo_wine ok( pvi.VirtualSize >= prev_size + alloc_size,
+        "Expected to be greater than %lu, got %lu\n", prev_size + alloc_size, pvi.VirtualSize);
+    VirtualFree( ptr, 0, MEM_RELEASE);
+
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    prev_size = pvi.VirtualSize;
+    if (winetest_debug > 1)
+        dump_vm_counters("VM counters before VirtualAlloc", &pvi);
+    ptr = VirtualAlloc(NULL, alloc_size, MEM_RESERVE, PAGE_READWRITE);
+    ok( ptr != NULL, "VirtualAlloc failed, err %u\n", GetLastError());
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    if (winetest_debug > 1)
+        dump_vm_counters("VM counters after VirtualAlloc(MEM_RESERVE)", &pvi);
+    todo_wine ok( pvi.VirtualSize >= prev_size + alloc_size,
+        "Expected to be greater than %lu, got %lu\n", prev_size + alloc_size, pvi.VirtualSize);
+    prev_size = pvi.VirtualSize;
+
+    ptr = VirtualAlloc(ptr, alloc_size, MEM_COMMIT, PAGE_READWRITE);
+    ok( ptr != NULL, "VirtualAlloc failed, err %u\n", GetLastError());
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    if (winetest_debug > 1)
+        dump_vm_counters("VM counters after VirtualAlloc(MEM_COMMIT)", &pvi);
+    ok( pvi.VirtualSize == prev_size,
+        "Expected to equal to %lu, got %lu\n", prev_size, pvi.VirtualSize);
+    VirtualFree( ptr, 0, MEM_RELEASE);
 }
 
 static void test_query_process_io(void)
