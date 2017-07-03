@@ -91,6 +91,7 @@ public class WineActivity extends Activity
         env.put( "LD_LIBRARY_PATH", libdir.toString() + ":" + getApplicationInfo().nativeLibraryDir );
         env.put( "LC_ALL", locale );
         env.put( "LANG", locale );
+        env.put( "PATH", bindir.toString() + ":" + System.getenv( "PATH" ));
 
         if (cmdline == null)
         {
