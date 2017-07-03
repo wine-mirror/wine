@@ -604,7 +604,7 @@ static NTSTATUS destroyWindow_ioctl( void *data, DWORD in_size, DWORD out_size, 
 
     if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
 
-    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
+    win_data = get_ioctl_native_win_data( &res->hdr );
 
     TRACE( "hwnd %08x opengl %u\n", res->hdr.hwnd, res->hdr.opengl );
 
@@ -613,7 +613,7 @@ static NTSTATUS destroyWindow_ioctl( void *data, DWORD in_size, DWORD out_size, 
     wrap_java_call();
     (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd );
     unwrap_java_call();
-    free_native_win_data( win_data );
+    if (win_data) free_native_win_data( win_data );
     return STATUS_SUCCESS;
 }
 

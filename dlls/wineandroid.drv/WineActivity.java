@@ -358,7 +358,8 @@ public class WineActivity extends Activity
         {
             if (window_group != null)
             {
-                if (parent != null) parent.client_group.removeView( window_group );
+                if (parent != null && parent.client_group != null)
+                    parent.client_group.removeView( window_group );
                 window_group.destroy_view();
             }
             if (client_group != null) client_group.destroy_view();
