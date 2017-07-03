@@ -292,7 +292,7 @@ sub GET_ERROR_NAMES()
         {
             if (/STATUS_(\w+)/)
             {
-                $errors{$1} = "STATUS_$1" unless $1 eq "SUCCESS";
+                $errors{$1} = "STATUS_$1" unless ($1 eq "SUCCESS" || $1 eq "WAIT_0");
             }
             elsif (/set_win32_error\s*\(\s*(\w+)\s*\)/)
             {
