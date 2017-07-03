@@ -1800,8 +1800,8 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
 {
   DWORD ret;
 
-  TRACE("pIfTable %p, pdwSize %p, bOrder %d\n", pdwSize, pdwSize,
-   (DWORD)bOrder);
+  TRACE("pIfTable %p, pdwSize %p, bOrder %d\n", pIfTable, pdwSize, bOrder);
+
   if (!pdwSize)
     ret = ERROR_INVALID_PARAMETER;
   else {
