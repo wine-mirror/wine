@@ -30,16 +30,6 @@ typedef unsigned char MSVCP_bool;
 #define TICKSPERSEC       10000000
 #define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
 
-static inline const char* debugstr_longlong(ULONGLONG ll)
-{
-    static char string[17];
-    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
-        sprintf(string, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
-    else
-        sprintf(string, "%lx", (unsigned long)ll);
-    return string;
-}
-
 static int (__cdecl *p_tr2_sys__Make_dir)(char const*);
 static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir)(char const*);
 static __int64 (__cdecl *p_tr2_sys__Last_write_time)(char const*);
@@ -96,7 +86,7 @@ static void test_tr2_sys__Last_write_time(void)
     p_tr2_sys__Last_write_time_set("tr2_test_dir/f1", newtime);
     ok(last_write_time != p_tr2_sys__Last_write_time("tr2_test_dir/f1"),
             "last_write_time should have changed: %s\n",
-            debugstr_longlong(last_write_time));
+            wine_dbgstr_longlong(last_write_time));
 
     /* test the formula */
     file = CreateFileA("tr2_test_dir/f1", 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -108,7 +98,7 @@ static void test_tr2_sys__Last_write_time(void)
     last_write_time -= TICKS_1601_TO_1970;
     last_write_time /= TICKSPERSEC;
     ok(newtime-margin_of_error<=last_write_time && last_write_time<=newtime+margin_of_error,
-            "don't fit the formula, last_write_time is %s\n", debugstr_longlong(last_write_time));
+            "don't fit the formula, last_write_time is %s\n", wine_dbgstr_longlong(last_write_time));
 
     newtime = 0;
     p_tr2_sys__Last_write_time_set("tr2_test_dir/f1", newtime);
@@ -122,7 +112,7 @@ static void test_tr2_sys__Last_write_time(void)
     last_write_time -= TICKS_1601_TO_1970;
     last_write_time /= TICKSPERSEC;
     ok(newtime-margin_of_error<=last_write_time && last_write_time<=newtime+margin_of_error,
-            "don't fit the formula, last_write_time is %s\n", debugstr_longlong(last_write_time));
+            "don't fit the formula, last_write_time is %s\n", wine_dbgstr_longlong(last_write_time));
 
     newtime = 123456789;
     p_tr2_sys__Last_write_time_set("tr2_test_dir/f1", newtime);
@@ -136,14 +126,14 @@ static void test_tr2_sys__Last_write_time(void)
     last_write_time -= TICKS_1601_TO_1970;
     last_write_time /= TICKSPERSEC;
     ok(newtime-margin_of_error<=last_write_time && last_write_time<=newtime+margin_of_error,
-            "don't fit the formula, last_write_time is %s\n", debugstr_longlong(last_write_time));
+            "don't fit the formula, last_write_time is %s\n", wine_dbgstr_longlong(last_write_time));
 
     errno = 0xdeadbeef;
     last_write_time = p_tr2_sys__Last_write_time("not_exist");
     ok(errno == 0xdeadbeef, "tr2_sys__Last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
-    ok(last_write_time == 0, "expect 0 got %s\n", debugstr_longlong(last_write_time));
+    ok(last_write_time == 0, "expect 0 got %s\n", wine_dbgstr_longlong(last_write_time));
     last_write_time = p_tr2_sys__Last_write_time(NULL);
-    ok(last_write_time == 0, "expect 0 got %s\n", debugstr_longlong(last_write_time));
+    ok(last_write_time == 0, "expect 0 got %s\n", wine_dbgstr_longlong(last_write_time));
 
     p_tr2_sys__Last_write_time_set("not_exist", newtime);
     errno = 0xdeadbeef;
