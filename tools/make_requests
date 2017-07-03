@@ -290,11 +290,11 @@ sub GET_ERROR_NAMES()
         open FILE, $f or die "Can't open $f";
         while (<FILE>)
         {
-            if (/STATUS_(\w+)/)
+            while (/\bSTATUS_(\w+)/g)
             {
                 $errors{$1} = "STATUS_$1" unless ($1 eq "SUCCESS" || $1 eq "WAIT_0");
             }
-            elsif (/set_win32_error\s*\(\s*(\w+)\s*\)/)
+            while (/\bset_win32_error\s*\(\s*(\w+)\s*\)/g)
             {
                 $errors{$1} = "0xc0010000 | $1";
             }
