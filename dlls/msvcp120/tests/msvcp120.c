@@ -130,16 +130,6 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return TRUE;
 }
 
-static inline const char* debugstr_longlong(ULONGLONG ll)
-{
-    static char string[17];
-    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
-        sprintf(string, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
-    else
-        sprintf(string, "%lx", (unsigned long)ll);
-    return string;
-}
-
 static char* (__cdecl *p_setlocale)(int, const char*);
 static int (__cdecl *p__setmbcp)(int);
 static int (__cdecl *p_isleadbyte)(int);
@@ -899,27 +889,27 @@ static void test_tr2_sys__File_size(void)
     ok(SetEndOfFile(file), "SetEndOfFile failed\n");
     CloseHandle(file);
     val = p_tr2_sys__File_size("tr2_test_dir/f1");
-    ok(val == 7, "file_size is %s\n", debugstr_longlong(val));
+    ok(val == 7, "file_size is %s\n", wine_dbgstr_longlong(val));
     val = p_tr2_sys__File_size_wchar(testW);
-    ok(val == 7, "file_size is %s\n", debugstr_longlong(val));
+    ok(val == 7, "file_size is %s\n", wine_dbgstr_longlong(val));
 
     file = CreateFileA("tr2_test_dir/f2", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
     CloseHandle(file);
     val = p_tr2_sys__File_size("tr2_test_dir/f2");
-    ok(val == 0, "file_size is %s\n", debugstr_longlong(val));
+    ok(val == 0, "file_size is %s\n", wine_dbgstr_longlong(val));
 
     val = p_tr2_sys__File_size("tr2_test_dir");
-    ok(val == 0, "file_size is %s\n", debugstr_longlong(val));
+    ok(val == 0, "file_size is %s\n", wine_dbgstr_longlong(val));
 
     errno = 0xdeadbeef;
     val = p_tr2_sys__File_size("tr2_test_dir/not_exists_file");
-    ok(val == 0, "file_size is %s\n", debugstr_longlong(val));
+    ok(val == 0, "file_size is %s\n", wine_dbgstr_longlong(val));
     ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
     errno = 0xdeadbeef;
     val = p_tr2_sys__File_size(NULL);
-    ok(val == 0, "file_size is %s\n", debugstr_longlong(val));
+    ok(val == 0, "file_size is %s\n", wine_dbgstr_longlong(val));
     ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
     ok(DeleteFileA("tr2_test_dir/f1"), "expect tr2_test_dir/f1 to exist\n");
@@ -1238,8 +1228,8 @@ static void test_tr2_sys__Rename(void)
     CloseHandle(file);
     ret = p_tr2_sys__Rename("tr2_test_dir\\f1", "tr2_test_dir\\f1_rename");
     ok(ret == ERROR_ALREADY_EXISTS, "test_tr2_sys__Rename(): expect: ERROR_ALREADY_EXISTS, got %d\n", ret);
-    ok(p_tr2_sys__File_size("tr2_test_dir\\f1") == 7, "test_tr2_sys__Rename(): expect: 7, got %s\n", debugstr_longlong(p_tr2_sys__File_size("tr2_test_dir\\f1")));
-    ok(p_tr2_sys__File_size("tr2_test_dir\\f1_rename") == 0, "test_tr2_sys__Rename(): expect: 0, got %s\n",debugstr_longlong(p_tr2_sys__File_size("tr2_test_dir\\f1_rename")));
+    ok(p_tr2_sys__File_size("tr2_test_dir\\f1") == 7, "test_tr2_sys__Rename(): expect: 7, got %s\n", wine_dbgstr_longlong(p_tr2_sys__File_size("tr2_test_dir\\f1")));
+    ok(p_tr2_sys__File_size("tr2_test_dir\\f1_rename") == 0, "test_tr2_sys__Rename(): expect: 0, got %s\n",wine_dbgstr_longlong(p_tr2_sys__File_size("tr2_test_dir\\f1_rename")));
     ret = p_tr2_sys__Rename_wchar(testW, testW2);
     ok(ret == ERROR_SUCCESS, "tr2_sys__Rename_wchar(): expect: ERROR_SUCCESS, got %d\n",  ret);
 
@@ -1270,19 +1260,19 @@ static void test_tr2_sys__Statvfs(void)
 
     p_tr2_sys__Statvfs(&info, NULL);
     ok(info.available == 0, "test_tr2_sys__Statvfs(): info.available expect: %d, got %s\n",
-            0, debugstr_longlong(info.available));
+            0, wine_dbgstr_longlong(info.available));
     ok(info.capacity == 0, "test_tr2_sys__Statvfs(): info.capacity expect: %d, got %s\n",
-            0, debugstr_longlong(info.capacity));
+            0, wine_dbgstr_longlong(info.capacity));
     ok(info.free == 0, "test_tr2_sys__Statvfs(): info.free expect: %d, got %s\n",
-            0, debugstr_longlong(info.free));
+            0, wine_dbgstr_longlong(info.free));
 
     p_tr2_sys__Statvfs(&info, "not_exist");
     ok(info.available == 0, "test_tr2_sys__Statvfs(): info.available expect: %d, got %s\n",
-            0, debugstr_longlong(info.available));
+            0, wine_dbgstr_longlong(info.available));
     ok(info.capacity == 0, "test_tr2_sys__Statvfs(): info.capacity expect: %d, got %s\n",
-            0, debugstr_longlong(info.capacity));
+            0, wine_dbgstr_longlong(info.capacity));
     ok(info.free == 0, "test_tr2_sys__Statvfs(): info.free expect: %d, got %s\n",
-            0, debugstr_longlong(info.free));
+            0, wine_dbgstr_longlong(info.free));
 }
 
 static void test_tr2_sys__Stat(void)
@@ -1395,14 +1385,14 @@ static void test_tr2_sys__Last_write_time(void)
     p_tr2_sys__Last_write_time_set("tr2_test_dir/f1", newtime);
     todo_wine ok(last_write_time == p_tr2_sys__Last_write_time("tr2_test_dir/f1"),
             "last_write_time should have changed: %s\n",
-            debugstr_longlong(last_write_time));
+            wine_dbgstr_longlong(last_write_time));
 
     errno = 0xdeadbeef;
     last_write_time = p_tr2_sys__Last_write_time("not_exist");
     ok(errno == 0xdeadbeef, "tr2_sys__Last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
-    ok(last_write_time == 0, "expect 0 got %s\n", debugstr_longlong(last_write_time));
+    ok(last_write_time == 0, "expect 0 got %s\n", wine_dbgstr_longlong(last_write_time));
     last_write_time = p_tr2_sys__Last_write_time(NULL);
-    ok(last_write_time == 0, "expect 0 got %s\n", debugstr_longlong(last_write_time));
+    ok(last_write_time == 0, "expect 0 got %s\n", wine_dbgstr_longlong(last_write_time));
 
     p_tr2_sys__Last_write_time_set("not_exist", newtime);
     errno = 0xdeadbeef;
@@ -1559,8 +1549,8 @@ static void test_tr2_sys__Link(void)
     ok(DeleteFileA("f1"), "expect f1 to exist\n");
     ok(p_tr2_sys__File_size("f1_link") == p_tr2_sys__File_size("tr2_test_dir/f1_link") &&
             p_tr2_sys__File_size("tr2_test_dir/f1_link") == p_tr2_sys__File_size("tr2_test_dir/f1_link_link"),
-            "tr2_sys__Link(): expect links' size are equal, got %s\n", debugstr_longlong(p_tr2_sys__File_size("tr2_test_dir/f1_link_link")));
-    ok(p_tr2_sys__File_size("f1_link") == 7, "tr2_sys__Link(): expect f1_link's size equals to 7, got %s\n", debugstr_longlong(p_tr2_sys__File_size("f1_link")));
+            "tr2_sys__Link(): expect links' size are equal, got %s\n", wine_dbgstr_longlong(p_tr2_sys__File_size("tr2_test_dir/f1_link_link")));
+    ok(p_tr2_sys__File_size("f1_link") == 7, "tr2_sys__Link(): expect f1_link's size equals to 7, got %s\n", wine_dbgstr_longlong(p_tr2_sys__File_size("f1_link")));
 
     file = CreateFileA("f1_link", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
@@ -1581,7 +1571,7 @@ static void test_tr2_sys__Link(void)
     ok(info1.nFileIndexHigh == info2.nFileIndexHigh
             && info1.nFileIndexLow == info2.nFileIndexLow,
             "tr2_sys__Link(): test %d expect two files equivalent\n", i+1);
-    ok(p_tr2_sys__File_size("f1_link") == 20, "tr2_sys__Link(): expect f1_link's size equals to 20, got %s\n", debugstr_longlong(p_tr2_sys__File_size("f1_link")));
+    ok(p_tr2_sys__File_size("f1_link") == 20, "tr2_sys__Link(): expect f1_link's size equals to 20, got %s\n", wine_dbgstr_longlong(p_tr2_sys__File_size("f1_link")));
 
     ok(DeleteFileA("f1_link"), "expect f1_link to exist\n");
     ok(DeleteFileA("tr2_test_dir/f1_link"), "expect tr2_test_dir/f1_link to exist\n");
@@ -1637,7 +1627,7 @@ static void test_tr2_sys__Symlink(void)
         todo_wine_if(tests[i].is_todo)
             ok(ret == tests[i].last_error, "tr2_sys__Symlink(): test %d expect: %d, got %d\n", i+1, tests[i].last_error, ret);
         if(ret == ERROR_SUCCESS)
-            ok(p_tr2_sys__File_size(tests[i].new_path) == 0, "tr2_sys__Symlink(): expect 0, got %s\n", debugstr_longlong(p_tr2_sys__File_size(tests[i].new_path)));
+            ok(p_tr2_sys__File_size(tests[i].new_path) == 0, "tr2_sys__Symlink(): expect 0, got %s\n", wine_dbgstr_longlong(p_tr2_sys__File_size(tests[i].new_path)));
     }
 
     ok(DeleteFileA("f1"), "expect f1 to exist\n");
