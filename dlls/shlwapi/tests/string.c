@@ -570,8 +570,8 @@ static void test_StrToInt64ExA(void)
     ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int64_ex, "converted '%s' wrong (%08x%08x)\n",
-         result->string, (DWORD)(return_val >> 32), (DWORD)return_val);
+      ok(return_val == result->str_to_int64_ex, "converted '%s' wrong (%s)\n",
+         result->string, wine_dbgstr_longlong(return_val));
     result++;
   }
 
@@ -583,8 +583,8 @@ static void test_StrToInt64ExA(void)
     ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int64_hex, "converted '%s' wrong (%08x%08x)\n",
-         result->string, (DWORD)(return_val >> 32), (DWORD)return_val);
+      ok(return_val == result->str_to_int64_hex, "converted '%s' wrong (%s)\n",
+         result->string, wine_dbgstr_longlong(return_val));
     result++;
   }
 }
@@ -610,8 +610,8 @@ static void test_StrToInt64ExW(void)
     ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int64_ex, "converted '%s' wrong (%08x%08x)\n",
-         result->string, (DWORD)(return_val >> 32), (DWORD)return_val);
+      ok(return_val == result->str_to_int64_ex, "converted '%s' wrong (%s)\n",
+         result->string, wine_dbgstr_longlong(return_val));
     result++;
   }
 
@@ -624,8 +624,8 @@ static void test_StrToInt64ExW(void)
     ok(!bRet || return_val != -1, "No result returned from '%s'\n",
        result->string);
     if (bRet)
-      ok(return_val == result->str_to_int64_hex, "converted '%s' wrong (%08x%08x)\n",
-         result->string, (DWORD)(return_val >> 32), (DWORD)return_val);
+      ok(return_val == result->str_to_int64_hex, "converted '%s' wrong (%s)\n",
+         result->string, wine_dbgstr_longlong(return_val));
     result++;
   }
 }
@@ -672,8 +672,8 @@ static void test_StrFormatByteSize64A(void)
     pStrFormatByteSize64A(result->value, szBuff, 256);
 
     ok(!strcmp(result->byte_size_64, szBuff),
-        "Formatted %x%08x wrong: got %s, expected %s\n",
-       (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->byte_size_64);
+        "Formatted %s wrong: got %s, expected %s\n",
+       wine_dbgstr_longlong(result->value), szBuff, result->byte_size_64);
 
     result++;
   }
@@ -696,8 +696,8 @@ static void test_StrFormatKBSizeW(void)
     pStrFormatKBSizeW(result->value, szBuffW, 256);
     WideCharToMultiByte(CP_ACP,0,szBuffW,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR),NULL,NULL);
 
-    ok(!strcmp(result->kb_size, szBuff), "Formatted %x%08x wrong: got %s, expected %s\n",
-       (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->kb_size);
+    ok(!strcmp(result->kb_size, szBuff), "Formatted %s wrong: got %s, expected %s\n",
+       wine_dbgstr_longlong(result->value), szBuff, result->kb_size);
     result++;
   }
 }
@@ -721,8 +721,8 @@ static void test_StrFormatKBSizeA(void)
      * and does not correctly handle extremely large values. */
     ok(!strcmp(result->kb_size, szBuff) ||
       (result->kb_size_broken && !strcmp(result->kb_size2, szBuff)),
-        "Formatted %x%08x wrong: got %s, expected %s\n",
-       (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->kb_size);
+        "Formatted %s wrong: got %s, expected %s\n",
+       wine_dbgstr_longlong(result->value), szBuff, result->kb_size);
     result++;
   }
 }
