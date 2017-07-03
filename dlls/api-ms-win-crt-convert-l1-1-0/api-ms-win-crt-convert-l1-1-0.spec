@@ -63,7 +63,7 @@
 @ cdecl -ret64 _wcstoui64(wstr ptr long) ucrtbase._wcstoui64
 @ cdecl -ret64 _wcstoui64_l(wstr ptr long ptr) ucrtbase._wcstoui64_l
 @ cdecl _wcstoul_l(wstr ptr long ptr) ucrtbase._wcstoul_l
-@ stub _wcstoull_l
+@ cdecl -ret64 _wcstoull_l(wstr ptr long ptr) ucrtbase._wcstoull_l
 @ stub _wcstoumax_l
 @ cdecl _wctomb_l(ptr long ptr) ucrtbase._wctomb_l
 @ cdecl _wctomb_s_l(ptr ptr long long ptr) ucrtbase._wctomb_s_l
@@ -114,7 +114,7 @@
 @ cdecl wcstombs(ptr ptr long) ucrtbase.wcstombs
 @ cdecl wcstombs_s(ptr ptr long wstr long) ucrtbase.wcstombs_s
 @ cdecl wcstoul(wstr ptr long) ucrtbase.wcstoul
-@ stub wcstoull
+@ cdecl -ret64 wcstoull(wstr ptr long) ucrtbase.wcstoull
 @ stub wcstoumax
 @ cdecl wctob(long) ucrtbase.wctob
 @ cdecl wctomb(ptr long) ucrtbase.wctomb
