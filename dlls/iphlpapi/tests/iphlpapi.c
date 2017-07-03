@@ -167,16 +167,6 @@ static const char *ntoa( DWORD ip )
     return buffer;
 }
 
-static inline const char* debugstr_longlong(ULONGLONG ll)
-{
-    static char string[17];
-    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
-        sprintf(string, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
-    else
-        sprintf(string, "%lx", (unsigned long)ll);
-    return string;
-}
-
 /*
 still-to-be-tested 98-only functions:
 GetUniDirectionalAdapterInfo
@@ -1513,8 +1503,8 @@ static void test_GetAdaptersAddresses(void)
         }
 
         if (S(U(*aa)).Length < sizeof(IP_ADAPTER_ADDRESSES_LH)) continue;
-        trace("TransmitLinkSpeed:     %s\n", debugstr_longlong(aa->TransmitLinkSpeed));
-        trace("ReceiveLinkSpeed:      %s\n", debugstr_longlong(aa->ReceiveLinkSpeed));
+        trace("TransmitLinkSpeed:     %s\n", wine_dbgstr_longlong(aa->TransmitLinkSpeed));
+        trace("ReceiveLinkSpeed:      %s\n", wine_dbgstr_longlong(aa->ReceiveLinkSpeed));
         trace("FirstWinsServerAddress:%p\n", aa->FirstWinsServerAddress);
         trace("FirstGatewayAddress:   %p\n", aa->FirstGatewayAddress);
         trace("Ipv4Metric:            %u\n", aa->Ipv4Metric);
