@@ -653,8 +653,7 @@ static int pipe_end_flush( struct pipe_end *pipe_end, struct async *async )
     if (use_server_io( pipe_end ) && (!pipe_end->connection || list_empty( &pipe_end->connection->message_queue )))
         return 1;
 
-    if (!fd_queue_async( pipe_end->fd, async, ASYNC_TYPE_WAIT )) return 0;
-
+    fd_queue_async( pipe_end->fd, async, ASYNC_TYPE_WAIT );
     set_error( STATUS_PENDING );
     return 1;
 }
@@ -933,14 +932,11 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         {
         case ps_idle_server:
         case ps_wait_connect:
-            if (fd_queue_async( server->ioctl_fd, async, ASYNC_TYPE_WAIT ))
-            {
-                set_server_state( server, ps_wait_open );
-                async_wake_up( &server->pipe->waiters, STATUS_SUCCESS );
-                set_error( STATUS_PENDING );
-                return 1;
-            }
-            break;
+            fd_queue_async( server->ioctl_fd, async, ASYNC_TYPE_WAIT );
+            set_server_state( server, ps_wait_open );
+            async_wake_up( &server->pipe->waiters, STATUS_SUCCESS );
+            set_error( STATUS_PENDING );
+            return 1;
         case ps_connected_server:
             set_error( STATUS_PIPE_CONNECTED );
             break;

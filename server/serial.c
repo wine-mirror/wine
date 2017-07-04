@@ -244,11 +244,9 @@ static void serial_queue_async( struct fd *fd, struct async *async, int type, in
         break;
     }
 
-    if (fd_queue_async( fd, async, type ))
-    {
-        if (timeout) async_set_timeout( async, timeout * -10000, STATUS_TIMEOUT );
-        set_error( STATUS_PENDING );
-    }
+    fd_queue_async( fd, async, type );
+    if (timeout) async_set_timeout( async, timeout * -10000, STATUS_TIMEOUT );
+    set_error( STATUS_PENDING );
 }
 
 static void serial_read_timeout( void *arg )

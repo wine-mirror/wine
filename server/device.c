@@ -464,7 +464,7 @@ static void set_file_user_ptr( struct device_file *file, client_ptr_t ptr )
 /* queue an irp to the device */
 static int queue_irp( struct device_file *file, struct irp_call *irp, struct async *async )
 {
-    if (!fd_queue_async( file->fd, async, ASYNC_TYPE_WAIT )) return 0;
+    fd_queue_async( file->fd, async, ASYNC_TYPE_WAIT );
 
     irp->async = (struct async *)grab_object( async );
     add_irp_to_queue( file, irp, current );

@@ -2030,7 +2030,7 @@ void default_poll_event( struct fd *fd, int event )
     else if (!fd->inode) set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
 }
 
-int fd_queue_async( struct fd *fd, struct async *async, int type )
+void fd_queue_async( struct fd *fd, struct async *async, int type )
 {
     struct async_queue *queue;
 
@@ -2059,7 +2059,6 @@ int fd_queue_async( struct fd *fd, struct async *async, int type )
         else  /* regular files are always ready for read and write */
             async_wake_up( queue, STATUS_ALERTED );
     }
-    return 1;
 }
 
 void fd_async_wake_up( struct fd *fd, int type, unsigned int status )
@@ -2092,7 +2091,8 @@ void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count 
 
 void default_fd_queue_async( struct fd *fd, struct async *async, int type, int count )
 {
-    if (fd_queue_async( fd, async, type )) set_error( STATUS_PENDING );
+    fd_queue_async( fd, async, type );
+    set_error( STATUS_PENDING );
 }
 
 /* default reselect_async() fd routine */

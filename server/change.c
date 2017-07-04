@@ -1247,7 +1247,7 @@ DECL_HANDLER(read_directory_changes)
 
     /* requests don't timeout */
     if (!(async = create_async( dir->fd, current, &req->async, NULL ))) goto end;
-    if (!fd_queue_async( dir->fd, async, ASYNC_TYPE_WAIT )) goto end;
+    fd_queue_async( dir->fd, async, ASYNC_TYPE_WAIT );
 
     /* assign it once */
     if (!dir->filter)
@@ -1269,8 +1269,8 @@ DECL_HANDLER(read_directory_changes)
 
     set_error(STATUS_PENDING);
 
+    release_object( async );
 end:
-    if (async) release_object( async );
     release_object( dir );
 }
 
