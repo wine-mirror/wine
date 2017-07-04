@@ -896,7 +896,7 @@ static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos)
     }
 
     while (*line == ' ' || *line == '\t') line++;
-    if (*line == ';') return line;
+    if (!*line || *line == ';') return line;
 
     if (!isxdigitW(*line)) goto invalid;
 
