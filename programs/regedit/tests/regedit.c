@@ -1488,7 +1488,7 @@ static void test_import_with_whitespace(void)
 
 static void test_key_creation_and_deletion(void)
 {
-    HKEY hkey;
+    HKEY hkey, subkey;
     LONG lr;
 
     exec_import_str("REGEDIT4\n\n"
@@ -1525,6 +1525,45 @@ static void test_key_creation_and_deletion(void)
     verify_key(hkey, "Subkey1d\t");
     lr = RegDeleteKeyA(hkey, "Subkey1d\t");
     ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1e\\]\n"
+                    "\"Wine\"=\"Test value\"\n\n");
+    verify_key(hkey, "Subkey1e\\");
+    verify_key(hkey, "Subkey1e");
+    lr = RegOpenKeyExA(hkey, "Subkey1e", 0, KEY_READ, &subkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", lr);
+    verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
+    RegCloseKey(subkey);
+    lr = RegDeleteKeyA(hkey, "Subkey1e");
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", lr);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1f\\\\]\n"
+                    "\"Wine\"=\"Test value\"\n\n");
+    verify_key(hkey, "Subkey1f\\\\");
+    verify_key(hkey, "Subkey1f\\");
+    verify_key(hkey, "Subkey1f");
+    lr = RegOpenKeyExA(hkey, "Subkey1f\\\\", 0, KEY_READ, &subkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", lr);
+    verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
+    RegCloseKey(subkey);
+    lr = RegDeleteKeyA(hkey, "Subkey1f\\\\");
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", lr);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1g\\\\\\\\]\n"
+                    "\"Wine\"=\"Test value\"\n\n");
+    verify_key(hkey, "Subkey1g\\\\\\\\");
+    verify_key(hkey, "Subkey1g\\\\");
+    verify_key(hkey, "Subkey1g\\");
+    verify_key(hkey, "Subkey1g");
+    lr = RegOpenKeyExA(hkey, "Subkey1g\\\\", 0, KEY_READ, &subkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", lr);
+    verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
+    RegCloseKey(subkey);
+    lr = RegDeleteKeyA(hkey, "Subkey1g\\\\");
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", lr);
 
     /* Test key deletion. We start by creating some registry keys. */
     exec_import_str("REGEDIT4\n\n"
