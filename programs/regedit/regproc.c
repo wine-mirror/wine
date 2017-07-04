@@ -898,7 +898,17 @@ static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos)
     while (*line == ' ' || *line == '\t') line++;
     if (*line == ';') return line;
 
+    if (!isxdigitW(*line)) goto invalid;
+
     set_state(parser, HEX_DATA);
+    return line;
+
+invalid:
+    HeapFree(GetProcessHeap(), 0, parser->data);
+    parser->data = NULL;
+    parser->data_size = 0;
+
+    set_state(parser, LINE_START);
     return line;
 }
 
