@@ -462,12 +462,15 @@ static void set_file_user_ptr( struct device_file *file, client_ptr_t ptr )
 }
 
 /* queue an irp to the device */
-static int queue_irp( struct device_file *file, struct irp_call *irp, struct async *async )
+static int queue_irp( struct device_file *file, const irp_params_t *params, struct async *async )
 {
-    fd_queue_async( file->fd, async, ASYNC_TYPE_WAIT );
+    struct irp_call *irp = create_irp( file, params, async );
+    if (!irp) return 0;
 
+    fd_queue_async( file->fd, async, ASYNC_TYPE_WAIT );
     irp->async = (struct async *)grab_object( async );
     add_irp_to_queue( file, irp, current );
+    release_object( irp );
     set_error( STATUS_PENDING );
     return 1;
 }
@@ -480,8 +483,6 @@ static enum server_fd_type device_file_get_fd_type( struct fd *fd )
 static int device_file_read( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct device_file *file = get_fd_user( fd );
-    struct irp_call *irp;
-    obj_handle_t handle;
     irp_params_t params;
 
     memset( &params, 0, sizeof(params) );
@@ -489,20 +490,12 @@ static int device_file_read( struct fd *fd, struct async *async, file_pos_t pos 
     params.read.key   = 0;
     params.read.pos   = pos;
     params.read.file  = file->user_ptr;
-
-    irp = create_irp( file, &params, async );
-    if (!irp) return 0;
-
-    handle = queue_irp( file, irp, async );
-    release_object( irp );
-    return handle;
+    return queue_irp( file, &params, async );
 }
 
 static int device_file_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct device_file *file = get_fd_user( fd );
-    struct irp_call *irp;
-    obj_handle_t handle;
     irp_params_t params;
 
     memset( &params, 0, sizeof(params) );
@@ -510,52 +503,30 @@ static int device_file_write( struct fd *fd, struct async *async, file_pos_t pos
     params.write.key   = 0;
     params.write.pos   = pos;
     params.write.file  = file->user_ptr;
-
-    irp = create_irp( file, &params, async );
-    if (!irp) return 0;
-
-    handle = queue_irp( file, irp, async );
-    release_object( irp );
-    return handle;
+    return queue_irp( file, &params, async );
 }
 
 static int device_file_flush( struct fd *fd, struct async *async )
 {
     struct device_file *file = get_fd_user( fd );
-    struct irp_call *irp;
-    obj_handle_t handle;
     irp_params_t params;
 
     memset( &params, 0, sizeof(params) );
     params.flush.major = IRP_MJ_FLUSH_BUFFERS;
     params.flush.file  = file->user_ptr;
-
-    irp = create_irp( file, &params, NULL );
-    if (!irp) return 0;
-
-    handle = queue_irp( file, irp, async );
-    release_object( irp );
-    return handle;
+    return queue_irp( file, &params, NULL );
 }
 
 static int device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct device_file *file = get_fd_user( fd );
-    struct irp_call *irp;
-    obj_handle_t handle;
     irp_params_t params;
 
     memset( &params, 0, sizeof(params) );
     params.ioctl.major = IRP_MJ_DEVICE_CONTROL;
     params.ioctl.code  = code;
     params.ioctl.file = file->user_ptr;
-
-    irp = create_irp( file, &params, async );
-    if (!irp) return 0;
-
-    handle = queue_irp( file, irp, async );
-    release_object( irp );
-    return handle;
+    return queue_irp( file, &params, async );
 }
 
 static struct device *create_device( struct object *root, const struct unicode_str *name,
