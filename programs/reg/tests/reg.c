@@ -1645,6 +1645,48 @@ static void test_import(void)
     err = RegDeleteKeyA(hkey, "Subkey1d\t");
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1e\\]\n"
+                    "\"Wine\"=\"Test value\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key(hkey, "Subkey1e\\");
+    todo_wine verify_key(hkey, "Subkey1e");
+    err = RegOpenKeyExA(hkey, "Subkey1e", 0, KEY_READ, &subkey);
+    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
+    RegCloseKey(subkey);
+    err = RegDeleteKeyA(hkey, "Subkey1e");
+    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1f\\\\]\n"
+                    "\"Wine\"=\"Test value\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key(hkey, "Subkey1f\\\\");
+    todo_wine verify_key(hkey, "Subkey1f\\");
+    todo_wine verify_key(hkey, "Subkey1f");
+    err = RegOpenKeyExA(hkey, "Subkey1f\\\\", 0, KEY_READ, &subkey);
+    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
+    RegCloseKey(subkey);
+    err = RegDeleteKeyA(hkey, "Subkey1f\\\\");
+    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1g\\\\\\\\]\n"
+                    "\"Wine\"=\"Test value\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key(hkey, "Subkey1g\\\\\\\\");
+    todo_wine verify_key(hkey, "Subkey1g\\\\");
+    todo_wine verify_key(hkey, "Subkey1g\\");
+    todo_wine verify_key(hkey, "Subkey1g");
+    err = RegOpenKeyExA(hkey, "Subkey1g\\\\", 0, KEY_READ, &subkey);
+    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
+    RegCloseKey(subkey);
+    err = RegDeleteKeyA(hkey, "Subkey1g\\\\");
+    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+
     /* Test key deletion. We start by creating some registry keys. */
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n\n"
@@ -2935,6 +2977,48 @@ static void test_unicode_import(void)
     todo_wine verify_key(hkey, "Subkey1d\t");
     todo_wine err = RegDeleteKeyA(hkey, "Subkey1d\t");
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1e\\]\n"
+                     "\"Wine\"=\"Test value\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key(hkey, "Subkey1e\\");
+    todo_wine verify_key(hkey, "Subkey1e");
+    err = RegOpenKeyExA(hkey, "Subkey1e", 0, KEY_READ, &subkey);
+    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
+    RegCloseKey(subkey);
+    err = RegDeleteKeyA(hkey, "Subkey1e");
+    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1f\\\\]\n"
+                     "\"Wine\"=\"Test value\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key(hkey, "Subkey1f\\\\");
+    todo_wine verify_key(hkey, "Subkey1f\\");
+    todo_wine verify_key(hkey, "Subkey1f");
+    err = RegOpenKeyExA(hkey, "Subkey1f\\\\", 0, KEY_READ, &subkey);
+    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
+    RegCloseKey(subkey);
+    err = RegDeleteKeyA(hkey, "Subkey1f\\\\");
+    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1g\\\\\\\\]\n"
+                     "\"Wine\"=\"Test value\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key(hkey, "Subkey1g\\\\\\\\");
+    todo_wine verify_key(hkey, "Subkey1g\\\\");
+    todo_wine verify_key(hkey, "Subkey1g\\");
+    todo_wine verify_key(hkey, "Subkey1g");
+    err = RegOpenKeyExA(hkey, "Subkey1g\\\\", 0, KEY_READ, &subkey);
+    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
+    RegCloseKey(subkey);
+    err = RegDeleteKeyA(hkey, "Subkey1g\\\\");
+    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
 
     /* Test key deletion. We start by creating some registry keys. */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
