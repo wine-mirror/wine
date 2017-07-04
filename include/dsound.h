@@ -103,6 +103,12 @@ DEFINE_GUID(IID_IDirectSoundFullDuplex,	0xEDCB4C7A,0xDAAB,0x4216,0xA4,0x2E,0x6C,
 typedef struct IDirectSoundFullDuplex *LPDIRECTSOUNDFULLDUPLEX,**LPLPDIRECTSOUNDFULLDUPLEX;
 #define	IID_IDirectSoundFullDuplex8	IID_IDirectSoundFullDuplex
 
+DEFINE_GUID(IID_IDirectSoundFXI3DL2Reverb, 0x4b166a6a, 0x0d66, 0x43f3, 0x80, 0xe3, 0xee, 0x62, 0x80, 0xde, 0xe1, 0xa4);
+typedef struct IDirectSoundFXI3DL2Reverb  *LPDIRECTSOUNDFXI3DL2REVERB;
+#define IDirectSoundFXI3DL2Reverb8        IDirectSoundFXI3DL2Reverb
+#define IID_IDirectSoundFXI3DL2Reverb8    IID_IDirectSoundFXI3DL2Reverb
+typedef struct IDirectSoundFXI3DL2Reverb8 *LPDIRECTSOUNDFXI3DL2REVERB8;
+
 DEFINE_GUID(DSDEVID_DefaultPlayback,     0xDEF00000,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
 DEFINE_GUID(DSDEVID_DefaultCapture,      0xDEF00001,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
 DEFINE_GUID(DSDEVID_DefaultVoicePlayback,0xDEF00002,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
@@ -397,6 +403,24 @@ typedef struct _DSCBCAPS
   DWORD dwReserved;
 } DSCBCAPS, *LPDSCBCAPS;
 typedef const DSCBCAPS *LPCDSCBCAPS;
+
+typedef struct _DSFXI3DL2Reverb
+{
+  LONG  lRoom;
+  LONG  lRoomHF;
+  FLOAT flRoomRolloffFactor;
+  FLOAT flDecayTime;
+  FLOAT flDecayHFRatio;
+  LONG  lReflections;
+  FLOAT flReflectionsDelay;
+  LONG  lReverb;
+  FLOAT flReverbDelay;
+  FLOAT flDiffusion;
+  FLOAT flDensity;
+  FLOAT flHFReference;
+} DSFXI3DL2Reverb, *LPDSFXI3DL2Reverb;
+
+typedef const DSFXI3DL2Reverb *LPCDSFXI3DL2Reverb;
 
 #define DSCCAPS_EMULDRIVER          DSCAPS_EMULDRIVER
 #define DSCCAPS_CERTIFIED           DSCAPS_CERTIFIED
@@ -1212,6 +1236,46 @@ DECLARE_INTERFACE_(IDirectSoundFullDuplex,IUnknown)
 #define IDirectSoundFullDuplex_Release(p)               (p)->Release()
 /*** IDirectSoundFullDuplex methods ***/
 #define IDirectSoundFullDuplex_Initialize(p,a,b,c,d,e,f,g,h)    (p)->Initialize(a,b,c,d,e,f,g,h)
+#endif
+
+
+/*****************************************************************************
+ * IDirectSoundFXI3DL2Reverb interface
+ */
+#define INTERFACE IDirectSoundFXI3DL2Reverb
+DECLARE_INTERFACE_(IDirectSoundFXI3DL2Reverb,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID, void**) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+    /*** IDirectSoundFXI3DL2Reverb methods ***/
+    STDMETHOD(SetAllParameters)(THIS_ LPCDSFXI3DL2Reverb reverb) PURE;
+    STDMETHOD(GetAllParameters)(THIS_ LPDSFXI3DL2Reverb reverb) PURE;
+    STDMETHOD(SetPreset)(THIS_ DWORD preset) PURE;
+    STDMETHOD(GetPreset)(THIS_ DWORD *preset) PURE;
+    STDMETHOD(SetQuality)(THIS_ LONG quality) PURE;
+    STDMETHOD(GetQuality)(THIS_ LONG *quality) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+#define IDirectSoundFXI3DL2Reverb_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectSoundFXI3DL2Reverb_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectSoundFXI3DL2Reverb_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectSoundFXI3DL2Reverb_SetAllParameters(p,a) (p)->lpVtbl->SetAllParameters(p,a)
+#define IDirectSoundFXI3DL2Reverb_GetAllParameters(p,a) (p)->lpVtbl->GetAllParameters(p,a)
+#define IDirectSoundFXI3DL2Reverb_SetPreset(p,a)        (p)->lpVtbl->SetPreset(p,a)
+#define IDirectSoundFXI3DL2Reverb_GetPreset(p,a)        (p)->lpVtbl->GetPreset(p,a)
+#else
+#define IDirectSoundFXI3DL2Reverb_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectSoundFXI3DL2Reverb_AddRef(p)             (p)->AddRef()
+#define IDirectSoundFXI3DL2Reverb_Release(p)            (p)->Release()
+#define IDirectSoundFXI3DL2Reverb_SetAllParameters(p,a) (p)->SetAllParameters(a)
+#define IDirectSoundFXI3DL2Reverb_GetAllParameters(p,a) (p)->GetAllParameters(a)
+#define IDirectSoundFXI3DL2Reverb_SetPreset(p,a)        (p)->SetPreset(a)
+#define IDirectSoundFXI3DL2Reverb_GetPreset(p,a)        (p)->GetPreset(a)
 #endif
 
 #ifdef __cplusplus
