@@ -381,19 +381,12 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
     }
 }
 
-/* check if there are any queued async operations */
-int async_queued( struct async_queue *queue )
-{
-    return queue && list_head( &queue->queue );
-}
-
 /* check if an async operation is waiting to be alerted */
 int async_waiting( struct async_queue *queue )
 {
     struct list *ptr;
     struct async *async;
 
-    if (!queue) return 0;
     if (!(ptr = list_head( &queue->queue ))) return 0;
     async = LIST_ENTRY( ptr, struct async, queue_entry );
     return async->status == STATUS_PENDING;
@@ -429,8 +422,6 @@ void cancel_process_asyncs( struct process *process )
 void async_wake_up( struct async_queue *queue, unsigned int status )
 {
     struct list *ptr, *next;
-
-    if (!queue) return;
 
     LIST_FOR_EACH_SAFE( ptr, next, &queue->queue )
     {
@@ -516,7 +507,7 @@ int async_is_blocking( struct async *async )
 struct async *find_pending_async( struct async_queue *queue )
 {
     struct async *async;
-    if (queue) LIST_FOR_EACH_ENTRY( async, &queue->queue, struct async, queue_entry )
+    LIST_FOR_EACH_ENTRY( async, &queue->queue, struct async, queue_entry )
         if (async->status == STATUS_PENDING) return (struct async *)grab_object( async );
     return NULL;
 }

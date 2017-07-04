@@ -185,7 +185,6 @@ extern obj_handle_t async_handoff( struct async *async, int success, data_size_t
 extern void queue_async( struct async_queue *queue, struct async *async );
 extern void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status );
 extern void async_set_result( struct object *obj, unsigned int status, apc_param_t total );
-extern int async_queued( struct async_queue *queue );
 extern int async_waiting( struct async_queue *queue );
 extern void async_terminate( struct async *async, unsigned int status );
 extern void async_wake_up( struct async_queue *queue, unsigned int status );
@@ -201,6 +200,12 @@ static inline void init_async_queue( struct async_queue *queue )
 {
     list_init( &queue->queue );
 }
+
+static inline int async_queued( struct async_queue *queue )
+{
+    return !list_empty( &queue->queue );
+}
+
 
 /* access rights that require Unix read permission */
 #define FILE_UNIX_READ_ACCESS (FILE_READ_DATA|FILE_READ_ATTRIBUTES|FILE_READ_EA)
