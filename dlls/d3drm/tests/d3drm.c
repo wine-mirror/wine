@@ -781,6 +781,7 @@ static void test_Face(void)
     IDirect3DRMFaceArray *array1;
     D3DRMLOADMEMORY info;
     D3DVECTOR v1[4], n1[4], v2[4], n2[4];
+    D3DCOLOR color;
     DWORD count;
     int icount;
 
@@ -962,6 +963,17 @@ static void test_Face(void)
         IDirect3DRMFace_Release(face);
         IDirect3DRMFaceArray_Release(array1);
     }
+
+    /* Setting face color. */
+    hr = IDirect3DRMFace2_SetColor(face2, 0x1f180587);
+    ok(SUCCEEDED(hr), "Failed to set face color, hr %#x.\n", hr);
+    color = IDirect3DRMFace2_GetColor(face2);
+    ok(color == 0x1f180587, "Unexpected color %8x.\n", color);
+
+    hr = IDirect3DRMFace2_SetColorRGB(face2, 0.5f, 0.5f, 0.5f);
+    ok(SUCCEEDED(hr), "Failed to set color, hr %#x.\n", hr);
+    color = IDirect3DRMFace2_GetColor(face2);
+    ok(color == 0xff7f7f7f, "Unexpected color %8x.\n", color);
 
     IDirect3DRMFace2_Release(face2);
     IDirect3DRMMeshBuilder3_Release(MeshBuilder3);

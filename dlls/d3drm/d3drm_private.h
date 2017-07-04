@@ -120,6 +120,7 @@ struct d3drm_face
     IDirect3DRMFace IDirect3DRMFace_iface;
     IDirect3DRMFace2 IDirect3DRMFace2_iface;
     LONG ref;
+    D3DCOLOR color;
 };
 
 struct d3drm_mesh_builder

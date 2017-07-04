@@ -214,19 +214,45 @@ static HRESULT WINAPI d3drm_face1_AddVertexAndNormalIndexed(IDirect3DRMFace *ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI d3drm_face1_SetColorRGB(IDirect3DRMFace *iface,
-        D3DVALUE r, D3DVALUE g, D3DVALUE b)
+static HRESULT WINAPI d3drm_face2_SetColorRGB(IDirect3DRMFace2 *iface, D3DVALUE red, D3DVALUE green, D3DVALUE blue)
 {
-    FIXME("iface %p, r %.8e, g %.8e, b %.8e stub!\n", iface, r, g, b);
+    struct d3drm_face *face = impl_from_IDirect3DRMFace2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, red %.8e, green %.8e, blue %.8e.\n", iface, red, green, blue);
+
+    d3drm_set_color(&face->color, red, green, blue, 1.0f);
+
+    return D3DRM_OK;
+}
+
+static HRESULT WINAPI d3drm_face1_SetColorRGB(IDirect3DRMFace *iface,
+        D3DVALUE red, D3DVALUE green, D3DVALUE blue)
+{
+    struct d3drm_face *face = impl_from_IDirect3DRMFace(iface);
+
+    TRACE("iface %p, red %.8e, green %.8e, blue %.8e.\n", iface, red, green, blue);
+
+    return d3drm_face2_SetColorRGB(&face->IDirect3DRMFace2_iface, red, green, blue);
+}
+
+static HRESULT WINAPI d3drm_face2_SetColor(IDirect3DRMFace2 *iface, D3DCOLOR color)
+{
+    struct d3drm_face *face = impl_from_IDirect3DRMFace2(iface);
+
+    TRACE("iface %p, color 0x%08x.\n", iface, color);
+
+    face->color = color;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_face1_SetColor(IDirect3DRMFace *iface, D3DCOLOR color)
 {
-    FIXME("iface %p, color 0x%08x stub!\n", iface, color);
+    struct d3drm_face *face = impl_from_IDirect3DRMFace(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, color 0x%08x.\n", iface, color);
+
+    return d3drm_face2_SetColor(&face->IDirect3DRMFace2_iface, color);
 }
 
 static HRESULT WINAPI d3drm_face1_SetTexture(IDirect3DRMFace *iface, IDirect3DRMTexture *texture)
@@ -332,11 +358,22 @@ static int WINAPI d3drm_face1_GetTextureCoordinateIndex(IDirect3DRMFace *iface, 
     return 0;
 }
 
+static D3DCOLOR WINAPI d3drm_face2_GetColor(IDirect3DRMFace2 *iface)
+{
+    struct d3drm_face *face = impl_from_IDirect3DRMFace2(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return face->color;
+}
+
 static D3DCOLOR WINAPI d3drm_face1_GetColor(IDirect3DRMFace *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_face *face = impl_from_IDirect3DRMFace(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return d3drm_face2_GetColor(&face->IDirect3DRMFace2_iface);
 }
 
 static const struct IDirect3DRMFaceVtbl d3drm_face1_vtbl =
@@ -446,20 +483,6 @@ static HRESULT WINAPI d3drm_face2_AddVertexAndNormalIndexed(IDirect3DRMFace2 *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI d3drm_face2_SetColorRGB(IDirect3DRMFace2 *iface, D3DVALUE r, D3DVALUE g, D3DVALUE b)
-{
-    FIXME("iface %p, r %.8e, g %.8e, b %.8e stub!\n", iface, r, g, b);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI d3drm_face2_SetColor(IDirect3DRMFace2 *iface, D3DCOLOR color)
-{
-    FIXME("iface %p, color 0x%08x stub!\n", iface, color);
-
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI d3drm_face2_SetTexture(IDirect3DRMFace2 *iface, IDirect3DRMTexture3 *texture)
 {
     FIXME("iface %p, texture %p stub!\n", iface, texture);
@@ -559,13 +582,6 @@ static int WINAPI d3drm_face2_GetVertexIndex(IDirect3DRMFace2 *iface, DWORD whic
 static int WINAPI d3drm_face2_GetTextureCoordinateIndex(IDirect3DRMFace2 *iface, DWORD which)
 {
     FIXME("iface %p, which %u stub!\n", iface, which);
-
-    return 0;
-}
-
-static D3DCOLOR WINAPI d3drm_face2_GetColor(IDirect3DRMFace2 *iface)
-{
-    FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
