@@ -76,6 +76,7 @@ struct d3drm_frame
     IDirect3DRMLight **lights;
     D3DRMMATRIX4D transform;
     D3DCOLOR scenebackground;
+    DWORD traversal_options;
 };
 
 struct d3drm_viewport

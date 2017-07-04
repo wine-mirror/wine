@@ -987,9 +987,10 @@ static void test_Frame(void)
     IDirect3DRMLight *light1;
     IDirect3DRMLight *light_tmp;
     IDirect3DRMLightArray *light_array;
+    IDirect3DRMFrame3 *frame3;
+    DWORD count, options;
     ULONG ref, ref2;
     D3DCOLOR color;
-    DWORD count;
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -1314,6 +1315,42 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot set color (hr = %x)\n", hr);
     color = IDirect3DRMFrame_GetSceneBackground(pFrameP1);
     ok(color == 0xff7f7f7f, "wrong color (%x)\n", color);
+
+    /* Traversal options. */
+    hr = IDirect3DRMFrame_QueryInterface(pFrameP2, &IID_IDirect3DRMFrame3, (void **)&frame3);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMFrame3 interface, hr %#x.\n", hr);
+
+    hr = IDirect3DRMFrame3_GetTraversalOptions(frame3, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    options = 0;
+    hr = IDirect3DRMFrame3_GetTraversalOptions(frame3, &options);
+    ok(SUCCEEDED(hr), "Failed to get traversal options, hr %#x.\n", hr);
+    ok(options == (D3DRMFRAME_RENDERENABLE | D3DRMFRAME_PICKENABLE), "Unexpected default options %#x.\n", options);
+
+    hr = IDirect3DRMFrame3_SetTraversalOptions(frame3, 0);
+    ok(SUCCEEDED(hr), "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DRMFrame3_SetTraversalOptions(frame3, 0xf0000000);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DRMFrame3_SetTraversalOptions(frame3, 0xf0000000 | D3DRMFRAME_PICKENABLE);
+    ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
+
+    options = 0xf;
+    hr = IDirect3DRMFrame3_GetTraversalOptions(frame3, &options);
+    ok(SUCCEEDED(hr), "Failed to get traversal options, hr %#x.\n", hr);
+    ok(options == 0, "Unexpected traversal options %#x.\n", options);
+
+    hr = IDirect3DRMFrame3_SetTraversalOptions(frame3, D3DRMFRAME_PICKENABLE);
+    ok(SUCCEEDED(hr), "Failed to set traversal options, hr %#x.\n", hr);
+
+    options = 0;
+    hr = IDirect3DRMFrame3_GetTraversalOptions(frame3, &options);
+    ok(SUCCEEDED(hr), "Failed to get traversal options, hr %#x.\n", hr);
+    ok(options == D3DRMFRAME_PICKENABLE, "Unexpected traversal options %#x.\n", options);
+
+    IDirect3DRMFrame3_Release(frame3);
 
     /* Cleanup */
     IDirect3DRMFrame_Release(pFrameP2);

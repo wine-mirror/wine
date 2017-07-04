@@ -2666,18 +2666,33 @@ static HRESULT WINAPI d3drm_frame3_InverseTransformVectors(IDirect3DRMFrame3 *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI d3drm_frame3_SetTraversalOptions(IDirect3DRMFrame3 *iface, DWORD flags)
+static HRESULT WINAPI d3drm_frame3_SetTraversalOptions(IDirect3DRMFrame3 *iface, DWORD options)
 {
-    FIXME("iface %p, flags %#x stub!\n", iface, flags);
+    static const DWORD supported_options = D3DRMFRAME_RENDERENABLE | D3DRMFRAME_PICKENABLE;
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %#x.\n", iface, options);
+
+    if (options & ~supported_options)
+        return D3DRMERR_BADVALUE;
+
+    frame->traversal_options = options;
+
+    return D3DRM_OK;
 }
 
-static HRESULT WINAPI d3drm_frame3_GetTraversalOptions(IDirect3DRMFrame3 *iface, DWORD *flags)
+static HRESULT WINAPI d3drm_frame3_GetTraversalOptions(IDirect3DRMFrame3 *iface, DWORD *options)
 {
-    FIXME("iface %p, flags %p stub!\n", iface, flags);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %p.\n", iface, options);
+
+    if (!options)
+        return D3DRMERR_BADVALUE;
+
+    *options = frame->traversal_options;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_frame3_SetSceneFogMethod(IDirect3DRMFrame3 *iface, DWORD flags)
@@ -2991,6 +3006,7 @@ HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, I
     object->d3drm = d3drm;
     object->ref = 1;
     d3drm_set_color(&object->scenebackground, 0.0f, 0.0f, 0.0f, 1.0f);
+    object->traversal_options = D3DRMFRAME_RENDERENABLE | D3DRMFRAME_PICKENABLE;
 
     d3drm_object_init(&object->obj, classname);
 
