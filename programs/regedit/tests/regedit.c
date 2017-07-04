@@ -455,7 +455,9 @@ static void test_basic_import(void)
                     "\"Wine13f\"=hex(ffff):56,61,6c,75,65,00\n"
                     "\"Wine13g\"=hex(7fffffff):56,61,6c,75,65,00\n"
                     "\"Wine13h\"=hex(ffffffff):56,61,6c,75,65,00\n"
-                    "\"Wine13i\"=hex(100000000):56,61,6c,75,65,00\n\n");
+                    "\"Wine13i\"=hex(100000000):56,61,6c,75,65,00\n"
+                    "\"Wine13j\"=hex(0x2):56,61,6c,75,65,00\n"
+                    "\"Wine13k\"=hex(x2):56,61,6c,75,65,00\n\n");
     verify_reg(hkey, "Wine13a", REG_NONE, "Value", 6, 0);
     verify_reg(hkey, "Wine13b", 0x10, "Value", 6, 0);
     verify_reg(hkey, "Wine13c", 0x100, "Value", 6, 0);
@@ -465,6 +467,8 @@ static void test_basic_import(void)
     verify_reg(hkey, "Wine13g", 0x7fffffff, "Value", 6, 0);
     verify_reg(hkey, "Wine13h", 0xffffffff, "Value", 6, 0);
     verify_reg_nonexist(hkey, "Wine13i");
+    todo_wine verify_reg_nonexist(hkey, "Wine13j");
+    verify_reg_nonexist(hkey, "Wine13k");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
