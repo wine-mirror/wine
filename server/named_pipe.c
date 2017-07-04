@@ -79,8 +79,8 @@ struct pipe_end
     struct pipe_end     *connection; /* the other end of the pipe */
     data_size_t          buffer_size;/* size of buffered data that doesn't block caller */
     struct list          message_queue;
-    struct async_queue  *read_q;     /* read queue */
-    struct async_queue  *write_q;    /* write queue */
+    struct async_queue   read_q;     /* read queue */
+    struct async_queue   write_q;    /* write queue */
 };
 
 struct pipe_server
@@ -113,7 +113,7 @@ struct named_pipe
     unsigned int        instances;
     timeout_t           timeout;
     struct list         servers;     /* list of servers using this pipe */
-    struct async_queue *waiters;     /* list of clients waiting to connect */
+    struct async_queue  waiters;     /* list of clients waiting to connect */
 };
 
 struct named_pipe_device
@@ -337,7 +337,7 @@ static void named_pipe_destroy( struct object *obj)
 
     assert( list_empty( &pipe->servers ) );
     assert( !pipe->instances );
-    free_async_queue( pipe->waiters );
+    free_async_queue( &pipe->waiters );
 }
 
 static struct fd *pipe_client_get_fd( struct object *obj )
@@ -421,7 +421,7 @@ static void pipe_end_disconnect( struct pipe_end *pipe_end, unsigned int status 
         struct pipe_message *message, *next;
         struct async *async;
         if (pipe_end->fd) fd_async_wake_up( pipe_end->fd, ASYNC_TYPE_WAIT, status );
-        async_wake_up( pipe_end->read_q, status );
+        async_wake_up( &pipe_end->read_q, status );
         LIST_FOR_EACH_ENTRY_SAFE( message, next, &pipe_end->message_queue, struct pipe_message, entry )
         {
             async = message->async;
@@ -470,8 +470,8 @@ static void pipe_end_destroy( struct pipe_end *pipe_end )
         free_message( message );
     }
 
-    free_async_queue( pipe_end->read_q );
-    free_async_queue( pipe_end->write_q );
+    free_async_queue( &pipe_end->read_q );
+    free_async_queue( &pipe_end->write_q );
 }
 
 static void pipe_server_destroy( struct object *obj)
@@ -756,7 +756,7 @@ static void reselect_read_queue( struct pipe_end *pipe_end )
     int read_done = 0;
 
     ignore_reselect = 1;
-    while (!list_empty( &pipe_end->message_queue) && (async = find_pending_async( pipe_end->read_q )))
+    while (!list_empty( &pipe_end->message_queue ) && (async = find_pending_async( &pipe_end->read_q )))
     {
         iosb = async_get_iosb( async );
         message_queue_read( pipe_end, iosb );
@@ -818,9 +818,7 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
         return 0;
     }
 
-    if (!pipe_end->read_q && !(pipe_end->read_q = create_async_queue( fd ))) return 0;
-
-    queue_async( pipe_end->read_q, async );
+    queue_async( &pipe_end->read_q, async );
     reselect_read_queue( pipe_end );
     set_error( STATUS_PENDING );
     return 1;
@@ -840,15 +838,13 @@ static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
         return 0;
     }
 
-    if (!write_end->write_q && !(write_end->write_q = create_async_queue( fd ))) return 0;
-
     if (!(message = mem_alloc( sizeof(*message) ))) return 0;
     message->async = (struct async *)grab_object( async );
     message->iosb = async_get_iosb( async );
     message->read_pos = 0;
     list_add_tail( &read_end->message_queue, &message->entry );
 
-    queue_async( write_end->write_q, async );
+    queue_async( &write_end->write_q, async );
     reselect_write_queue( write_end );
     set_error( STATUS_PENDING );
     return 1;
@@ -869,9 +865,9 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue )
 
     if (!use_server_io( pipe_end ))
         default_fd_reselect_async( fd, queue );
-    else if (pipe_end->write_q && pipe_end->write_q == queue)
+    else if (&pipe_end->write_q == queue)
         reselect_write_queue( pipe_end );
-    else if (pipe_end->read_q && pipe_end->read_q == queue)
+    else if (&pipe_end->read_q == queue)
         reselect_read_queue( pipe_end );
 }
 
@@ -940,7 +936,7 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
             if (fd_queue_async( server->ioctl_fd, async, ASYNC_TYPE_WAIT ))
             {
                 set_server_state( server, ps_wait_open );
-                if (server->pipe->waiters) async_wake_up( server->pipe->waiters, STATUS_SUCCESS );
+                async_wake_up( &server->pipe->waiters, STATUS_SUCCESS );
                 set_error( STATUS_PENDING );
                 return 1;
             }
@@ -1025,8 +1021,8 @@ static void init_pipe_end( struct pipe_end *pipe_end, unsigned int pipe_flags, d
     pipe_end->flags = pipe_flags;
     pipe_end->connection = NULL;
     pipe_end->buffer_size = buffer_size;
-    pipe_end->read_q = NULL;
-    pipe_end->write_q = NULL;
+    init_async_queue( &pipe_end->read_q );
+    init_async_queue( &pipe_end->write_q );
     list_init( &pipe_end->message_queue );
 }
 
@@ -1231,18 +1227,15 @@ static int named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, struct asy
 
             if (!(server = find_available_server( pipe )))
             {
-                if (!pipe->waiters && !(pipe->waiters = create_async_queue( fd ))) goto done;
-
-                queue_async( pipe->waiters, async );
+                queue_async( &pipe->waiters, async );
                 when = buffer->TimeoutSpecified ? buffer->Timeout.QuadPart : pipe->timeout;
                 async_set_timeout( async, when, STATUS_IO_TIMEOUT );
                 release_object( pipe );
                 set_error( STATUS_PENDING );
                 return 1;
             }
-            else release_object( server );
 
-        done:
+            release_object( server );
             release_object( pipe );
             return 0;
         }
@@ -1291,7 +1284,7 @@ DECL_HANDLER(create_named_pipe)
     {
         /* initialize it if it didn't already exist */
         pipe->instances = 0;
-        pipe->waiters = NULL;
+        init_async_queue( &pipe->waiters );
         list_init( &pipe->servers );
         pipe->insize = req->insize;
         pipe->outsize = req->outsize;

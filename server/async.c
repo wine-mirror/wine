@@ -82,40 +82,6 @@ static const struct object_ops async_ops =
     async_destroy              /* destroy */
 };
 
-
-struct async_queue
-{
-    struct object        obj;             /* object header */
-    struct fd           *fd;              /* file descriptor owning this queue */
-    struct list          queue;           /* queue of async objects */
-};
-
-static void async_queue_dump( struct object *obj, int verbose );
-static void async_queue_destroy( struct object *obj );
-
-static const struct object_ops async_queue_ops =
-{
-    sizeof(struct async_queue),      /* size */
-    async_queue_dump,                /* dump */
-    no_get_type,                     /* get_type */
-    no_add_queue,                    /* add_queue */
-    NULL,                            /* remove_queue */
-    NULL,                            /* signaled */
-    NULL,                            /* satisfied */
-    no_signal,                       /* signal */
-    no_get_fd,                       /* get_fd */
-    no_map_access,                   /* map_access */
-    default_get_sd,                  /* get_sd */
-    default_set_sd,                  /* set_sd */
-    no_lookup_name,                  /* lookup_name */
-    no_link_name,                    /* link_name */
-    NULL,                            /* unlink_name */
-    no_open_file,                    /* open_file */
-    no_close_handle,                 /* close_handle */
-    async_queue_destroy              /* destroy */
-};
-
-
 static inline void async_reselect( struct async *async )
 {
     if (async->queue && async->fd) fd_reselect_async( async->fd, async->queue );
@@ -165,7 +131,6 @@ static void async_destroy( struct object *obj )
     {
         list_remove( &async->queue_entry );
         async_reselect( async );
-        release_object( async->queue );
     }
     else if (async->fd) release_object( async->fd );
 
@@ -174,18 +139,6 @@ static void async_destroy( struct object *obj )
     if (async->event) release_object( async->event );
     if (async->iosb) release_object( async->iosb );
     release_object( async->thread );
-}
-
-static void async_queue_dump( struct object *obj, int verbose )
-{
-    struct async_queue *async_queue = (struct async_queue *)obj;
-    assert( obj->ops == &async_queue_ops );
-    fprintf( stderr, "Async queue fd=%p\n", async_queue->fd );
-}
-
-static void async_queue_destroy( struct object *obj )
-{
-    assert( obj->ops == &async_queue_ops );
 }
 
 /* notifies client thread of new status of its async request */
@@ -232,33 +185,18 @@ static void async_timeout( void *private )
     async_terminate( async, async->timeout_status );
 }
 
-/* create a new async queue for a given fd */
-struct async_queue *create_async_queue( struct fd *fd )
-{
-    struct async_queue *queue = alloc_object( &async_queue_ops );
-
-    if (queue)
-    {
-        queue->fd = fd;
-        list_init( &queue->queue );
-    }
-    return queue;
-}
-
 /* free an async queue, cancelling all async operations */
 void free_async_queue( struct async_queue *queue )
 {
-    struct async *async;
+    struct async *async, *next;
 
-    if (!queue) return;
-    LIST_FOR_EACH_ENTRY( async, &queue->queue, struct async, queue_entry )
+    LIST_FOR_EACH_ENTRY_SAFE( async, next, &queue->queue, struct async, queue_entry )
     {
         async->completion = fd_get_completion( async->fd, &async->comp_key );
         async->fd = NULL;
+        async_terminate( async, STATUS_HANDLES_CLOSED );
+        async->queue = NULL;
     }
-    queue->fd = NULL;
-    async_wake_up( queue, STATUS_HANDLES_CLOSED );
-    release_object( queue );
 }
 
 void queue_async( struct async_queue *queue, struct async *async )
@@ -266,7 +204,7 @@ void queue_async( struct async_queue *queue, struct async *async )
     /* fd will be set to NULL in free_async_queue when fd is destroyed */
     release_object( async->fd );
 
-    async->queue = (struct async_queue *)grab_object( queue );
+    async->queue = queue;
     grab_object( async );
     list_add_tail( &queue->queue, &async->queue_entry );
 

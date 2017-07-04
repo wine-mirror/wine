@@ -112,9 +112,9 @@ struct sock
     int                 errors[FD_MAX_EVENTS]; /* event errors */
     timeout_t           connect_time;/* time the socket was connected */
     struct sock        *deferred;    /* socket that waits for a deferred accept */
-    struct async_queue *read_q;      /* queue for asynchronous reads */
-    struct async_queue *write_q;     /* queue for asynchronous writes */
-    struct async_queue *ifchange_q;  /* queue for interface change notifications */
+    struct async_queue  read_q;      /* queue for asynchronous reads */
+    struct async_queue  write_q;     /* queue for asynchronous writes */
+    struct async_queue  ifchange_q;  /* queue for interface change notifications */
     struct object      *ifchange_obj; /* the interface change notification object */
     struct list         ifchange_entry; /* entry in ifchange notification list */
 };
@@ -312,16 +312,16 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
 {
     if ( sock->flags & WSA_FLAG_OVERLAPPED )
     {
-        if ( event & (POLLIN|POLLPRI) && async_waiting( sock->read_q ) )
+        if (event & (POLLIN|POLLPRI) && async_waiting( &sock->read_q ))
         {
             if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
-            async_wake_up( sock->read_q, STATUS_ALERTED );
+            async_wake_up( &sock->read_q, STATUS_ALERTED );
             event &= ~(POLLIN|POLLPRI);
         }
-        if ( event & POLLOUT && async_waiting( sock->write_q ) )
+        if (event & POLLOUT && async_waiting( &sock->write_q ))
         {
             if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
-            async_wake_up( sock->write_q, STATUS_ALERTED );
+            async_wake_up( &sock->write_q, STATUS_ALERTED );
             event &= ~POLLOUT;
         }
         if ( event & (POLLERR|POLLHUP) )
@@ -329,9 +329,9 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
             int status = sock_get_ntstatus( error );
 
             if ( !(sock->state & FD_READ) )
-                async_wake_up( sock->read_q, status );
+                async_wake_up( &sock->read_q, status );
             if ( !(sock->state & FD_WRITE) )
-                async_wake_up( sock->write_q, status );
+                async_wake_up( &sock->write_q, status );
         }
     }
     return event;
@@ -508,9 +508,9 @@ static int sock_get_poll_events( struct fd *fd )
         /* connecting, wait for writable */
         return POLLOUT;
 
-    if ( async_queued( sock->read_q ) )
+    if (async_queued( &sock->read_q ))
     {
-        if ( async_waiting( sock->read_q ) ) ev |= POLLIN | POLLPRI;
+        if (async_waiting( &sock->read_q )) ev |= POLLIN | POLLPRI;
     }
     else if (smask & FD_READ || (sock->state & FD_WINE_LISTENING && mask & FD_ACCEPT))
         ev |= POLLIN | POLLPRI;
@@ -519,9 +519,9 @@ static int sock_get_poll_events( struct fd *fd )
               !(sock->hmask & FD_READ) )
         ev |= POLLIN;
 
-    if ( async_queued( sock->write_q ) )
+    if (async_queued( &sock->write_q ))
     {
-        if ( async_waiting( sock->write_q ) ) ev |= POLLOUT;
+        if (async_waiting( &sock->write_q )) ev |= POLLOUT;
     }
     else if (smask & FD_WRITE)
         ev |= POLLOUT;
@@ -549,8 +549,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
         if (!sock_get_ifchange( sock )) return 0;
-        if (!sock->ifchange_q && !(sock->ifchange_q = create_async_queue( sock->fd ))) return 0;
-        queue_async( sock->ifchange_q, async );
+        queue_async( &sock->ifchange_q, async );
         set_error( STATUS_PENDING );
         return 1;
     default:
@@ -569,12 +568,10 @@ static void sock_queue_async( struct fd *fd, struct async *async, int type, int 
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        if (!sock->read_q && !(sock->read_q = create_async_queue( sock->fd ))) return;
-        queue = sock->read_q;
+        queue = &sock->read_q;
         break;
     case ASYNC_TYPE_WRITE:
-        if (!sock->write_q && !(sock->write_q = create_async_queue( sock->fd ))) return;
-        queue = sock->write_q;
+        queue = &sock->write_q;
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
@@ -598,7 +595,7 @@ static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
 {
     struct sock *sock = get_fd_user( fd );
     /* ignore reselect on ifchange queue */
-    if (sock->ifchange_q != queue)
+    if (&sock->ifchange_q != queue)
         sock_reselect( sock );
 }
 
@@ -618,11 +615,11 @@ static void sock_destroy( struct object *obj )
     if ( sock->deferred )
         release_object( sock->deferred );
 
-    async_wake_up( sock->ifchange_q, STATUS_CANCELLED );
+    async_wake_up( &sock->ifchange_q, STATUS_CANCELLED );
     sock_release_ifchange( sock );
-    free_async_queue( sock->read_q );
-    free_async_queue( sock->write_q );
-    free_async_queue( sock->ifchange_q );
+    free_async_queue( &sock->read_q );
+    free_async_queue( &sock->write_q );
+    free_async_queue( &sock->ifchange_q );
     if (sock->event) release_object( sock->event );
     if (sock->fd)
     {
@@ -648,10 +645,10 @@ static void init_sock(struct sock *sock)
     sock->wparam  = 0;
     sock->connect_time = 0;
     sock->deferred = NULL;
-    sock->read_q  = NULL;
-    sock->write_q = NULL;
-    sock->ifchange_q = NULL;
     sock->ifchange_obj = NULL;
+    init_async_queue( &sock->read_q );
+    init_async_queue( &sock->write_q );
+    init_async_queue( &sock->ifchange_q );
     memset( sock->errors, 0, sizeof(sock->errors) );
 }
 
@@ -1040,7 +1037,7 @@ static void ifchange_wake_up( struct object *obj, unsigned int status )
         struct sock *sock = LIST_ENTRY( ptr, struct sock, ifchange_entry );
 
         assert( sock->ifchange_obj );
-        async_wake_up( sock->ifchange_q, status ); /* issue ifchange notification for the socket */
+        async_wake_up( &sock->ifchange_q, status ); /* issue ifchange notification for the socket */
         sock_release_ifchange( sock ); /* remove socket from list and decrement ifchange refcount */
     }
 }

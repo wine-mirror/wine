@@ -42,6 +42,11 @@ struct iosb
     void         *out_data;     /* output data */
 };
 
+struct async_queue
+{
+    struct list queue;          /* queue of async objects */
+};
+
 /* operations valid on file descriptor objects */
 struct fd_ops
 {
@@ -173,7 +178,6 @@ extern int is_serial_fd( struct fd *fd );
 extern struct object *create_serial( struct fd *fd );
 
 /* async I/O functions */
-extern struct async_queue *create_async_queue( struct fd *fd );
 extern void free_async_queue( struct async_queue *queue );
 extern struct async *create_async( struct fd *fd, struct thread *thread, const async_data_t *data, struct iosb *iosb );
 extern struct async *create_request_async( struct fd *fd, const async_data_t *data );
@@ -192,6 +196,11 @@ extern struct iosb *async_get_iosb( struct async *async );
 extern int async_is_blocking( struct async *async );
 extern struct async *find_pending_async( struct async_queue *queue );
 extern void cancel_process_asyncs( struct process *process );
+
+static inline void init_async_queue( struct async_queue *queue )
+{
+    list_init( &queue->queue );
+}
 
 /* access rights that require Unix read permission */
 #define FILE_UNIX_READ_ACCESS (FILE_READ_DATA|FILE_READ_ATTRIBUTES|FILE_READ_EA)
