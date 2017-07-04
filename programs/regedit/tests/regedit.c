@@ -909,7 +909,7 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine25c");
     verify_reg_nonexist(hkey, "Wine25d");
     verify_reg_nonexist(hkey, "Wine25e");
-    todo_wine verify_reg(hkey, "Wine25f", REG_SZ, "Test value", 11, 0);
+    verify_reg(hkey, "Wine25f", REG_SZ, "Test value", 11, 0);
     verify_reg_nonexist(hkey, "Wine25g");
     verify_reg_nonexist(hkey, "Wine25h");
     verify_reg_nonexist(hkey, "Wine25i");
@@ -938,7 +938,7 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine26c");
     verify_reg_nonexist(hkey, "Wine26d");
     verify_reg_nonexist(hkey, "Wine26e");
-    todo_wine verify_reg(hkey, "Wine26f", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine26f", REG_DWORD, &dword, sizeof(dword), 0);
     verify_reg_nonexist(hkey, "Wine26g");
     verify_reg_nonexist(hkey, "Wine26h");
     verify_reg_nonexist(hkey, "Wine26i");
@@ -967,7 +967,7 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine27c");
     verify_reg_nonexist(hkey, "Wine27d");
     verify_reg_nonexist(hkey, "Wine27e");
-    todo_wine verify_reg(hkey, "Wine27f", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine27f", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg_nonexist(hkey, "Wine27g");
     verify_reg_nonexist(hkey, "Wine27h");
     verify_reg_nonexist(hkey, "Wine27i");
@@ -994,10 +994,10 @@ static void test_invalid_import(void)
                     "#comment\n"
                     "@=\"Default value 3\"\n\n");
     verify_reg_nonexist(hkey, "Wine28c");
-    todo_wine verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
+    verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
 
     lr = RegDeleteValueW(hkey, NULL);
-    todo_wine ok(lr == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", lr);
+    ok(lr == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", lr);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1326,7 +1326,7 @@ static void test_comments(void)
                     "#comment\n"
                     "  65,6e,\\;comment\n"
                     "  61,74,69,6f,6e,00,00\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Wine29c");
+    verify_reg_nonexist(hkey, "Wine29c");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"

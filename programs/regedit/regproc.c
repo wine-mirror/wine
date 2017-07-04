@@ -991,7 +991,7 @@ static WCHAR *get_lineA(FILE *fp)
         next = p + 1;
         if (*p == '\r' && *(p + 1) == '\n') next++;
         *p = 0;
-        if (*line == ';' || *line == '#')
+        if (*line == ';')
         {
             line = next;
             continue;
@@ -1054,7 +1054,7 @@ static WCHAR *get_lineW(FILE *fp)
         next = p + 1;
         if (*p == '\r' && *(p + 1) == '\n') next++;
         *p = 0;
-        if (*line == ';' || *line == '#')
+        if (*line == ';')
         {
             line = next;
             continue;
