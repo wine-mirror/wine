@@ -506,7 +506,7 @@ static enum reg_versions parse_file_header(const WCHAR *s)
                                       'R','e','g','i','s','t','r','y',' ','E','d','i','t','o','r',' ',
                                       'V','e','r','s','i','o','n',' ','5','.','0','0',0};
 
-    while (*s && (*s == ' ' || *s == '\t')) s++;
+    while (*s == ' ' || *s == '\t') s++;
 
     if (!strcmpW(s, header_31))
         return REG_VERSION_31;
