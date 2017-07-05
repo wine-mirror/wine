@@ -3546,7 +3546,7 @@ static void test_datetime(void)
         ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
         if (hr == S_OK)
         {
-            ok( date.ticks == tests[i].ticks, "%u: got %x%08x\n", i, (ULONG)(date.ticks >> 32), (ULONG)date.ticks );
+            ok( date.ticks == tests[i].ticks, "%u: got %s\n", i, wine_dbgstr_longlong(date.ticks) );
             ok( date.format == tests[i].format, "%u: got %u\n", i, date.format );
         }
     }
@@ -3622,14 +3622,14 @@ static void test_WsFileTimeToDateTime(void)
     dt.format = 0xdeadbeef;
     hr = WsFileTimeToDateTime( &ft, &dt, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( dt.ticks == 0x701ce1722770000, "got %x%08x\n", (ULONG)(dt.ticks >> 32), (ULONG)dt.ticks );
+    ok( dt.ticks == 0x701ce1722770000, "got %s\n", wine_dbgstr_longlong(dt.ticks) );
     ok( dt.format == WS_DATETIME_FORMAT_UTC, "got %u\n", dt.format );
 
     ft.dwLowDateTime  = 0xd1c03fff;
     ft.dwHighDateTime = 0x24c85a5e;
     hr = WsFileTimeToDateTime( &ft, &dt, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( dt.ticks == 0x2bca2875f4373fff, "got %x%08x\n", (ULONG)(dt.ticks >> 32), (ULONG)dt.ticks );
+    ok( dt.ticks == 0x2bca2875f4373fff, "got %s\n", wine_dbgstr_longlong(dt.ticks) );
     ok( dt.format == WS_DATETIME_FORMAT_UTC, "got %u\n", dt.format );
 
     ft.dwLowDateTime++;
@@ -3734,7 +3734,7 @@ static void test_double(void)
         hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_DOUBLE_TYPE, NULL,
                          WS_READ_REQUIRED_VALUE, heap, &val, sizeof(val), NULL );
         ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
-        if (hr == tests[i].hr) ok( val == tests[i].val, "%u: got %x%08x\n", i, (ULONG)(val >> 32), (ULONG)val );
+        if (hr == tests[i].hr) ok( val == tests[i].val, "%u: got %s\n", i, wine_dbgstr_longlong(val) );
     }
 
     WsFreeReader( reader );
