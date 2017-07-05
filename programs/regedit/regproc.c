@@ -363,7 +363,7 @@ static BOOL parse_data_type(struct parser *parser, WCHAR **line)
             WCHAR *end;
             DWORD val;
 
-            if (!**line)
+            if (!**line || tolowerW((*line)[1]) == 'x')
                 return FALSE;
 
             /* "hex(xx):" is special */
