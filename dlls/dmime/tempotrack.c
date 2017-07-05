@@ -320,7 +320,7 @@ static inline IDirectMusicTempoTrack *impl_from_IPersistStream(IPersistStream *i
     return CONTAINING_RECORD(iface, IDirectMusicTempoTrack, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+static HRESULT WINAPI tempo_IPersistStream_Load(IPersistStream *iface, IStream *pStm)
 {
   IDirectMusicTempoTrack *This = impl_from_IPersistStream(iface);
   DMUS_PRIVATE_CHUNK Chunk;
@@ -375,7 +375,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_Release,
     dmobj_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
-    IPersistStreamImpl_Load,
+    tempo_IPersistStream_Load,
     unimpl_IPersistStream_Save,
     unimpl_IPersistStream_GetSizeMax
 };

@@ -249,7 +249,7 @@ static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
     IDirectMusicTrack8Impl_Join
 };
 
-static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *stream)
+static HRESULT WINAPI wave_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
 	FIXME(": Loading not implemented yet\n");
 	return S_OK;
@@ -261,7 +261,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_Release,
     dmobj_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
-    IPersistStreamImpl_Load,
+    wave_IPersistStream_Load,
     unimpl_IPersistStream_Save,
     unimpl_IPersistStream_GetSizeMax
 };

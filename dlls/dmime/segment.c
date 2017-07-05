@@ -1171,7 +1171,7 @@ static inline IDirectMusicSegment8Impl *impl_from_IPersistStream(IPersistStream 
     return CONTAINING_RECORD(iface, IDirectMusicSegment8Impl, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+static HRESULT WINAPI seg_IPersistStream_Load(IPersistStream *iface, IStream *pStm)
 {
   IDirectMusicSegment8Impl *This = impl_from_IPersistStream(iface);
   HRESULT hr;
@@ -1248,7 +1248,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_Release,
     dmobj_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
-    IPersistStreamImpl_Load,
+    seg_IPersistStream_Load,
     unimpl_IPersistStream_Save,
     unimpl_IPersistStream_GetSizeMax
 };
