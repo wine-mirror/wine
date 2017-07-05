@@ -363,9 +363,12 @@ static BOOL parse_data_type(struct parser *parser, WCHAR **line)
             WCHAR *end;
             DWORD val;
 
+            if (!**line)
+                return FALSE;
+
             /* "hex(xx):" is special */
             val = wcstoul(*line, &end, 16);
-            if (!**line || *end != ')' || *(end + 1) != ':' || (val == ~0u && errno == ERANGE))
+            if (*end != ')' || *(end + 1) != ':' || (val == ~0u && errno == ERANGE))
                 return FALSE;
 
             parser->data_type = val;
