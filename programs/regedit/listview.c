@@ -429,18 +429,6 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
                 /* if (nmitem->hdr.hwndFrom != hWnd) break; unnecessary because of WM_NOTIFY_REFLECT */
                 /*            if (nmitem->hdr.idFrom != IDW_LISTVIEW) break;  */
                 /*            if (nmitem->hdr.code != ???) break;  */
-#ifdef _MSC_VER
-                switch (nmitem->uKeyFlags) {
-                case LVKF_ALT:     /*  The ALT key is pressed.   */
-                    /* properties dialog box ? */
-                    break;
-                case LVKF_CONTROL: /*  The CTRL key is pressed. */
-                    /* run dialog box for providing parameters... */
-                    break;
-                case LVKF_SHIFT:   /*  The SHIFT key is pressed.    */
-                    break;
-                }
-#endif
                 info.pt.x = nmitem->ptAction.x;
                 info.pt.y = nmitem->ptAction.y;
                 if (SendMessageW(hWnd, LVM_HITTEST, 0, (LPARAM)&info) != -1) {
