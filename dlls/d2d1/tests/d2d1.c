@@ -1111,9 +1111,8 @@ static void test_state_block(void)
     ok(drawing_state.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_DEFAULT,
             "Got unexpected text antialias mode %#x.\n", drawing_state.textAntialiasMode);
     ID2D1RenderTarget_GetTags(rt, &drawing_state.tag1, &drawing_state.tag2);
-    ok(!drawing_state.tag1 && !drawing_state.tag2, "Got unexpected tags %08x%08x:%08x%08x.\n",
-            (unsigned int)(drawing_state.tag1 >> 32), (unsigned int)(drawing_state.tag1),
-            (unsigned int)(drawing_state.tag2 >> 32), (unsigned int)(drawing_state.tag2));
+    ok(!drawing_state.tag1 && !drawing_state.tag2, "Got unexpected tags %s:%s.\n",
+            wine_dbgstr_longlong(drawing_state.tag1), wine_dbgstr_longlong(drawing_state.tag2));
     ID2D1RenderTarget_GetTransform(rt, &drawing_state.transform);
     ok(!memcmp(&drawing_state.transform, &identity, sizeof(drawing_state.transform)),
             "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
@@ -1129,9 +1128,8 @@ static void test_state_block(void)
             "Got unexpected antialias mode %#x.\n", drawing_state.antialiasMode);
     ok(drawing_state.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_DEFAULT,
             "Got unexpected text antialias mode %#x.\n", drawing_state.textAntialiasMode);
-    ok(!drawing_state.tag1 && !drawing_state.tag2, "Got unexpected tags %08x%08x:%08x%08x.\n",
-            (unsigned int)(drawing_state.tag1 >> 32), (unsigned int)(drawing_state.tag1),
-            (unsigned int)(drawing_state.tag2 >> 32), (unsigned int)(drawing_state.tag2));
+    ok(!drawing_state.tag1 && !drawing_state.tag2, "Got unexpected tags %s:%s.\n",
+            wine_dbgstr_longlong(drawing_state.tag1), wine_dbgstr_longlong(drawing_state.tag2));
     ok(!memcmp(&drawing_state.transform, &identity, sizeof(drawing_state.transform)),
             "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
             drawing_state.transform._11, drawing_state.transform._12, drawing_state.transform._21,
@@ -1153,9 +1151,8 @@ static void test_state_block(void)
             "Got unexpected antialias mode %#x.\n", drawing_state.antialiasMode);
     ok(drawing_state.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_ALIASED,
             "Got unexpected text antialias mode %#x.\n", drawing_state.textAntialiasMode);
-    ok(drawing_state.tag1 == 0xdead && drawing_state.tag2 == 0xbeef, "Got unexpected tags %08x%08x:%08x%08x.\n",
-            (unsigned int)(drawing_state.tag1 >> 32), (unsigned int)(drawing_state.tag1),
-            (unsigned int)(drawing_state.tag2 >> 32), (unsigned int)(drawing_state.tag2));
+    ok(drawing_state.tag1 == 0xdead && drawing_state.tag2 == 0xbeef, "Got unexpected tags %s:%s.\n",
+            wine_dbgstr_longlong(drawing_state.tag1), wine_dbgstr_longlong(drawing_state.tag2));
     ok(!memcmp(&drawing_state.transform, &transform1, sizeof(drawing_state.transform)),
             "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
             drawing_state.transform._11, drawing_state.transform._12, drawing_state.transform._21,
@@ -1174,9 +1171,8 @@ static void test_state_block(void)
     ok(drawing_state.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_ALIASED,
             "Got unexpected text antialias mode %#x.\n", drawing_state.textAntialiasMode);
     ID2D1RenderTarget_GetTags(rt, &drawing_state.tag1, &drawing_state.tag2);
-    ok(drawing_state.tag1 == 0xdead && drawing_state.tag2 == 0xbeef, "Got unexpected tags %08x%08x:%08x%08x.\n",
-            (unsigned int)(drawing_state.tag1 >> 32), (unsigned int)(drawing_state.tag1),
-            (unsigned int)(drawing_state.tag2 >> 32), (unsigned int)(drawing_state.tag2));
+    ok(drawing_state.tag1 == 0xdead && drawing_state.tag2 == 0xbeef, "Got unexpected tags %s:%s.\n",
+            wine_dbgstr_longlong(drawing_state.tag1), wine_dbgstr_longlong(drawing_state.tag2));
     ID2D1RenderTarget_GetTransform(rt, &drawing_state.transform);
     ok(!memcmp(&drawing_state.transform, &transform1, sizeof(drawing_state.transform)),
             "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
@@ -1200,9 +1196,8 @@ static void test_state_block(void)
     ok(drawing_state.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE,
             "Got unexpected text antialias mode %#x.\n", drawing_state.textAntialiasMode);
     ID2D1RenderTarget_GetTags(rt, &drawing_state.tag1, &drawing_state.tag2);
-    ok(drawing_state.tag1 == 1 && drawing_state.tag2 == 2, "Got unexpected tags %08x%08x:%08x%08x.\n",
-            (unsigned int)(drawing_state.tag1 >> 32), (unsigned int)(drawing_state.tag1),
-            (unsigned int)(drawing_state.tag2 >> 32), (unsigned int)(drawing_state.tag2));
+    ok(drawing_state.tag1 == 1 && drawing_state.tag2 == 2, "Got unexpected tags %s:%s.\n",
+            wine_dbgstr_longlong(drawing_state.tag1), wine_dbgstr_longlong(drawing_state.tag2));
     ID2D1RenderTarget_GetTransform(rt, &drawing_state.transform);
     ok(!memcmp(&drawing_state.transform, &transform2, sizeof(drawing_state.transform)),
             "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
@@ -1218,9 +1213,8 @@ static void test_state_block(void)
             "Got unexpected antialias mode %#x.\n", drawing_state.antialiasMode);
     ok(drawing_state.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE,
             "Got unexpected text antialias mode %#x.\n", drawing_state.textAntialiasMode);
-    ok(drawing_state.tag1 == 1 && drawing_state.tag2 == 2, "Got unexpected tags %08x%08x:%08x%08x.\n",
-            (unsigned int)(drawing_state.tag1 >> 32), (unsigned int)(drawing_state.tag1),
-            (unsigned int)(drawing_state.tag2 >> 32), (unsigned int)(drawing_state.tag2));
+    ok(drawing_state.tag1 == 1 && drawing_state.tag2 == 2, "Got unexpected tags %s:%s.\n",
+            wine_dbgstr_longlong(drawing_state.tag1), wine_dbgstr_longlong(drawing_state.tag2));
     ok(!memcmp(&drawing_state.transform, &transform2, sizeof(drawing_state.transform)),
             "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
             drawing_state.transform._11, drawing_state.transform._12, drawing_state.transform._21,
@@ -1241,9 +1235,8 @@ static void test_state_block(void)
             "Got unexpected antialias mode %#x.\n", drawing_state.antialiasMode);
     ok(drawing_state.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE,
             "Got unexpected text antialias mode %#x.\n", drawing_state.textAntialiasMode);
-    ok(drawing_state.tag1 == 3 && drawing_state.tag2 == 4, "Got unexpected tags %08x%08x:%08x%08x.\n",
-            (unsigned int)(drawing_state.tag1 >> 32), (unsigned int)(drawing_state.tag1),
-            (unsigned int)(drawing_state.tag2 >> 32), (unsigned int)(drawing_state.tag2));
+    ok(drawing_state.tag1 == 3 && drawing_state.tag2 == 4, "Got unexpected tags %s:%s.\n",
+            wine_dbgstr_longlong(drawing_state.tag1), wine_dbgstr_longlong(drawing_state.tag2));
     ok(!memcmp(&drawing_state.transform, &transform1, sizeof(drawing_state.transform)),
             "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
             drawing_state.transform._11, drawing_state.transform._12, drawing_state.transform._21,
