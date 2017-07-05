@@ -991,11 +991,6 @@ static WCHAR *get_lineA(FILE *fp)
         next = p + 1;
         if (*p == '\r' && *(p + 1) == '\n') next++;
         *p = 0;
-        if (*line == ';')
-        {
-            line = next;
-            continue;
-        }
         lineW = GetWideString(line);
         return lineW;
     }
@@ -1054,11 +1049,6 @@ static WCHAR *get_lineW(FILE *fp)
         next = p + 1;
         if (*p == '\r' && *(p + 1) == '\n') next++;
         *p = 0;
-        if (*line == ';')
-        {
-            line = next;
-            continue;
-        }
         return line;
     }
 
