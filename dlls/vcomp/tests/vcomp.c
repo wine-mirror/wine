@@ -539,13 +539,21 @@ static void CDECL fork_ptr_cb(LONG *a, LONG *b, LONG *c, LONG *d, LONG *e)
     InterlockedIncrement(e);
 }
 
-static void CDECL fork_uintptr_cb(UINT_PTR a, UINT_PTR b, UINT_PTR c, UINT_PTR d, UINT_PTR e)
+static void CDECL fork_uintptr_cb(UINT_PTR a, UINT_PTR b, UINT_PTR c, UINT_PTR d,
+                                  UINT_PTR e, UINT_PTR f, UINT_PTR g, UINT_PTR h,
+                                  UINT_PTR i, UINT_PTR j, UINT_PTR k)
 {
     ok(a == 1, "expected a == 1, got %p\n", (void *)a);
     ok(b == MAXUINT_PTR - 2, "expected b == MAXUINT_PTR - 2, got %p\n", (void *)b);
     ok(c == 3, "expected c == 3, got %p\n", (void *)c);
     ok(d == MAXUINT_PTR - 4, "expected d == MAXUINT_PTR - 4, got %p\n", (void *)d);
     ok(e == 5, "expected e == 5, got %p\n", (void *)e);
+    ok(f == 6, "expected f == 6, got %p\n", (void *)f);
+    ok(g == 7, "expected g == 7, got %p\n", (void *)g);
+    ok(h == 8, "expected h == 8, got %p\n", (void *)h);
+    ok(i == 9, "expected i == 9, got %p\n", (void *)i);
+    ok(j == 10, "expected j == 10, got %p\n", (void *)j);
+    ok(k == 11, "expected k == 11, got %p\n", (void *)k);
 }
 
 #ifdef __i386__
@@ -581,8 +589,10 @@ static void test_vcomp_fork(void)
     ok(d == 7, "expected d == 7, got %d\n", d);
     ok(e == 8, "expected e == 8, got %d\n", e);
 
-    p_vcomp_fork(TRUE, 5, fork_uintptr_cb, (UINT_PTR)1, (UINT_PTR)(MAXUINT_PTR - 2),
-        (UINT_PTR)3, (UINT_PTR)(MAXUINT_PTR - 4), (UINT_PTR)5);
+    p_vcomp_fork(TRUE, 11, fork_uintptr_cb, (UINT_PTR)1, (UINT_PTR)(MAXUINT_PTR - 2),
+        (UINT_PTR)3, (UINT_PTR)(MAXUINT_PTR - 4), (UINT_PTR)5,
+        (UINT_PTR)6, (UINT_PTR)7, (UINT_PTR)8, (UINT_PTR)9,
+        (UINT_PTR)10, (UINT_PTR)11);
 
 #ifdef __i386__
     {
