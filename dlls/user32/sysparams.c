@@ -2413,6 +2413,12 @@ INT WINAPI GetSystemMetrics( INT index )
         return ret;
     case SM_CXCURSOR:
     case SM_CYCURSOR:
+        if (IsProcessDPIAware())
+        {
+            ret = MulDiv( 32, get_display_dpi(), USER_DEFAULT_SCREEN_DPI );
+            if (ret >= 64) return 64;
+            if (ret >= 48) return 48;
+        }
         return 32;
     case SM_CYMENU:
         return GetSystemMetrics(SM_CYMENUSIZE) + 1;

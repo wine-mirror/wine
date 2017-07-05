@@ -2696,6 +2696,14 @@ static BOOL is_font_enumerated(const char *name)
     return ret;
 }
 
+static int get_cursor_size( int size )
+{
+    /* only certain sizes are allowed for cursors */
+    if (size >= 64) return 64;
+    if (size >= 48) return 48;
+    return 32;
+}
+
 static void test_GetSystemMetrics( void)
 {
     TEXTMETRICA tmMenuFont;
@@ -2774,8 +2782,8 @@ static void test_GetSystemMetrics( void)
     /* These don't depend on the Shell Icon Size registry value */
     ok_gsm( SM_CXICON, MulDiv( 32, dpi, USER_DEFAULT_SCREEN_DPI ) );
     ok_gsm( SM_CYICON, MulDiv( 32, dpi, USER_DEFAULT_SCREEN_DPI ) );
-    /* SM_CXCURSOR */
-    /* SM_CYCURSOR */
+    ok_gsm( SM_CXCURSOR, get_cursor_size( MulDiv( 32, dpi, USER_DEFAULT_SCREEN_DPI )));
+    ok_gsm( SM_CYCURSOR, get_cursor_size( MulDiv( 32, dpi, USER_DEFAULT_SCREEN_DPI )));
     ok_gsm( SM_CYMENU, ncm.iMenuHeight + 1);
     ok_gsm( SM_CXFULLSCREEN,
             GetSystemMetrics( SM_CXMAXIMIZED) - 2 * GetSystemMetrics( SM_CXFRAME));
