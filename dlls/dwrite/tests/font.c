@@ -3946,7 +3946,7 @@ static void test_CreateStreamFromKey(void)
     writetime = 0;
     hr = IDWriteFontFileStream_GetLastWriteTime(stream, &writetime);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(writetime != 0, "got %08x%08x\n", (UINT)(writetime >> 32), (UINT)writetime);
+    ok(writetime != 0, "got %s\n", wine_dbgstr_longlong(writetime));
 
     IDWriteFontFileStream_Release(stream);
     IDWriteFontFile_Release(file);
