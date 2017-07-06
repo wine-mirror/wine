@@ -305,7 +305,8 @@ static unsigned int get_reg_components(unsigned int table)
 
 #define PRES_BITMASK_BLOCK_SIZE (sizeof(unsigned int) * 8)
 
-static HRESULT init_set_constants(struct d3dx_const_tab *const_tab, ID3DXConstantTable *ctab);
+static HRESULT init_set_constants_param(struct d3dx_const_tab *const_tab, ID3DXConstantTable *ctab,
+        D3DXHANDLE hc, struct d3dx_parameter *param);
 
 static HRESULT regstore_alloc_table(struct d3dx_regstore *rs, unsigned int table)
 {
@@ -671,10 +672,24 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
                 hr = D3DERR_INVALIDCALL;
                 goto err_out;
             }
+            continue;
         }
+        if (FAILED(hr = init_set_constants_param(out, ctab, hc, inputs_param[i])))
+            goto err_out;
     }
     out->input_count = desc.Constants;
-    hr = init_set_constants(out, ctab);
+    if (out->const_set_count)
+    {
+        out->const_set = HeapReAlloc(GetProcessHeap(), 0, out->const_set,
+                sizeof(*out->const_set) * out->const_set_count);
+        if (!out->const_set)
+        {
+            ERR("Out of memory.\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+        out->const_set_size = out->const_set_count;
+    }
 err_out:
     ID3DXConstantTable_Release(ctab);
     return hr;
@@ -1450,45 +1465,6 @@ static HRESULT init_set_constants_param(struct d3dx_const_tab *const_tab, ID3DXC
         return hr;
 
     return D3D_OK;
-}
-
-static HRESULT init_set_constants(struct d3dx_const_tab *const_tab, ID3DXConstantTable *ctab)
-{
-    unsigned int i;
-    HRESULT hr, ret;
-    D3DXHANDLE hc;
-
-    ret = D3D_OK;
-    for (i = 0; i < const_tab->input_count; ++i)
-    {
-        if (!const_tab->inputs_param[i] || const_tab->inputs_param[i]->class == D3DXPC_OBJECT)
-            continue;
-        hc = ID3DXConstantTable_GetConstant(ctab, NULL, i);
-        if (hc)
-        {
-            hr = init_set_constants_param(const_tab, ctab, hc, const_tab->inputs_param[i]);
-        }
-        else
-        {
-            FIXME("Could not get constant, index %u.\n", i);
-            hr = D3DERR_INVALIDCALL;
-        }
-        if (FAILED(hr))
-            ret = hr;
-    }
-
-    if (const_tab->const_set_count)
-    {
-        const_tab->const_set = HeapReAlloc(GetProcessHeap(), 0, const_tab->const_set,
-                sizeof(*const_tab->const_set) * const_tab->const_set_count);
-        if (!const_tab->const_set)
-        {
-            ERR("Out of memory.\n");
-            return E_OUTOFMEMORY;
-        }
-        const_tab->const_set_size = const_tab->const_set_count;
-    }
-    return ret;
 }
 
 static double exec_get_reg_value(struct d3dx_regstore *rs, enum pres_reg_tables table, unsigned int offset)
