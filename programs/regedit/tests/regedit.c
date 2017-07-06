@@ -513,11 +513,19 @@ static void test_basic_import_31(void)
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND,
             "RegDeleteKeyA failed: %d\n", lr);
 
+    /* Check if regedit.exe is running with elevated privileges */
+    lr = RegCreateKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, NULL, REG_OPTION_NON_VOLATILE,
+                         KEY_READ, NULL, &hkey, NULL);
+    if (lr == ERROR_ACCESS_DENIED)
+    {
+        win_skip("regedit.exe is not running with elevated privileges; "
+                 "skipping Windows 3.1 import tests\n");
+        return;
+    }
+
     /* Test simple value */
     exec_import_str("REGEDIT\r\n"
 		    "HKEY_CLASSES_ROOT\\" KEY_BASE " = Value0\r\n");
-    lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, KEY_READ, &hkey);
-    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
     verify_reg(hkey, "", REG_SZ, "Value0", 7, 0);
 
     /* Test proper handling of spaces and equals signs */
@@ -1058,9 +1066,15 @@ static void test_invalid_import_31(void)
     HKEY hkey;
     LONG lr;
 
+    /* Check if regedit.exe is running with elevated privileges */
     lr = RegCreateKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, NULL, REG_OPTION_NON_VOLATILE,
                          KEY_READ, NULL, &hkey, NULL);
-    ok(lr == ERROR_SUCCESS, "RegCreateKeyExA failed: %d\n", lr);
+    if (lr == ERROR_ACCESS_DENIED)
+    {
+        win_skip("regedit.exe is not running with elevated privileges; "
+            "skipping Windows 3.1 invalid import tests\n");
+        return;
+    }
 
     /* Test character validity at the start of the line */
     exec_import_str("REGEDIT\r\n"
