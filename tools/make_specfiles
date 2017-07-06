@@ -148,6 +148,10 @@ my @dll_groups =
   "ext-ms-win-security-credui-l1-1-0",
  ],
  [
+  "cryptui",
+  "ext-ms-win-security-cryptui-l1-1-0",
+ ],
+ [
   "netapi32",
   "ext-ms-win-domainjoin-netjoin-l1-1-0",
  ],
