@@ -67,6 +67,7 @@ typedef struct {
     IWMReader IWMReader_iface;
     IWMReaderAdvanced6 IWMReaderAdvanced6_iface;
     IWMReaderAccelerator IWMReaderAccelerator_iface;
+    IWMReaderNetworkConfig2 IWMReaderNetworkConfig2_iface;
     LONG ref;
 } WMReader;
 
@@ -106,6 +107,12 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IWMReaderAccelerator)) {
         TRACE("(%p)->(IID_IWMReaderAccelerator %p)\n", This, ppv);
         *ppv = &This->IWMReaderAccelerator_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMReaderNetworkConfig)) {
+        TRACE("(%p)->(IWMReaderNetworkConfig %p)\n", This, ppv);
+        *ppv = &This->IWMReaderNetworkConfig2_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMReaderNetworkConfig2)) {
+        TRACE("(%p)->(IWMReaderNetworkConfig2 %p)\n", This, ppv);
+        *ppv = &This->IWMReaderNetworkConfig2_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -709,6 +716,423 @@ static const IWMReaderAcceleratorVtbl WMReaderAcceleratorVtbl = {
     reader_accl_Notify
 };
 
+static inline WMReader *impl_from_IWMReaderNetworkConfig2(IWMReaderNetworkConfig2 *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IWMReaderNetworkConfig2_iface);
+}
+
+static HRESULT WINAPI networkconfig_QueryInterface(IWMReaderNetworkConfig2 *iface, REFIID riid, void **ppv)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
+}
+
+static ULONG WINAPI networkconfig_AddRef(IWMReaderNetworkConfig2 *iface)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI networkconfig_Release(IWMReaderNetworkConfig2 *iface)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI networkconfig_GetBufferingTime(IWMReaderNetworkConfig2 *iface, QWORD *buffering_time)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, buffering_time);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetBufferingTime(IWMReaderNetworkConfig2 *iface, QWORD buffering_time)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s\n", This, wine_dbgstr_longlong(buffering_time));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetUDPPortRanges(IWMReaderNetworkConfig2 *iface, WM_PORT_NUMBER_RANGE *array,
+        DWORD *ranges)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p, %p\n", This, array, ranges);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetUDPPortRanges(IWMReaderNetworkConfig2 *iface, WM_PORT_NUMBER_RANGE *array,
+        DWORD ranges)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p, %u\n", This, array, ranges);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetProxySettings(IWMReaderNetworkConfig2 *iface, const WCHAR *protocol,
+        WMT_PROXY_SETTINGS *proxy)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %p\n", This, debugstr_w(protocol), proxy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetProxySettings(IWMReaderNetworkConfig2 *iface, LPCWSTR protocol,
+        WMT_PROXY_SETTINGS proxy)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %d\n", This, debugstr_w(protocol), proxy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetProxyHostName(IWMReaderNetworkConfig2 *iface, const WCHAR *protocol,
+        WCHAR *hostname, DWORD *size)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %p, %p\n", This, debugstr_w(protocol), hostname, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetProxyHostName(IWMReaderNetworkConfig2 *iface, const WCHAR *protocol,
+        const WCHAR *hostname)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %s\n", This, debugstr_w(protocol), debugstr_w(hostname));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetProxyPort(IWMReaderNetworkConfig2 *iface, const WCHAR *protocol,
+        DWORD *port)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %p\n", This, debugstr_w(protocol), port);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetProxyPort(IWMReaderNetworkConfig2 *iface, const WCHAR *protocol,
+        DWORD port)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %u\n", This, debugstr_w(protocol), port);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetProxyExceptionList(IWMReaderNetworkConfig2 *iface, const WCHAR *protocol,
+        WCHAR *exceptions, DWORD *count)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %p, %p\n", This, debugstr_w(protocol), exceptions, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetProxyExceptionList(IWMReaderNetworkConfig2 *iface, const WCHAR *protocol,
+        const WCHAR *exceptions)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %s\n", This, debugstr_w(protocol), debugstr_w(exceptions));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetProxyBypassForLocal(IWMReaderNetworkConfig2 *iface, const WCHAR *protocol,
+        BOOL *bypass)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %p\n", This, debugstr_w(protocol), bypass);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetProxyBypassForLocal(IWMReaderNetworkConfig2 *iface, const WCHAR *protocol,
+        BOOL bypass)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s, %d\n", This, debugstr_w(protocol), bypass);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetForceRerunAutoProxyDetection(IWMReaderNetworkConfig2 *iface,
+        BOOL *detection)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, detection);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetForceRerunAutoProxyDetection(IWMReaderNetworkConfig2 *iface,
+        BOOL detection)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %d\n", This, detection);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetEnableMulticast(IWMReaderNetworkConfig2 *iface, BOOL *multicast)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, multicast);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetEnableMulticast(IWMReaderNetworkConfig2 *iface, BOOL multicast)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %d\n", This, multicast);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetEnableHTTP(IWMReaderNetworkConfig2 *iface, BOOL *enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetEnableHTTP(IWMReaderNetworkConfig2 *iface, BOOL enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %d\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetEnableUDP(IWMReaderNetworkConfig2 *iface, BOOL *enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetEnableUDP(IWMReaderNetworkConfig2 *iface, BOOL enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %d\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetEnableTCP(IWMReaderNetworkConfig2 *iface, BOOL *enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetEnableTCP(IWMReaderNetworkConfig2 *iface, BOOL enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %d\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_ResetProtocolRollover(IWMReaderNetworkConfig2 *iface)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetConnectionBandwidth(IWMReaderNetworkConfig2 *iface, DWORD *bandwidth)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, bandwidth);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetConnectionBandwidth(IWMReaderNetworkConfig2 *iface, DWORD bandwidth)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %u\n", This, bandwidth);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetNumProtocolsSupported(IWMReaderNetworkConfig2 *iface, DWORD *protocols)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, protocols);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetSupportedProtocolName(IWMReaderNetworkConfig2 *iface, DWORD protocol_num,
+        WCHAR *protocol, DWORD *size)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %u, %p %p\n", This, protocol_num, protocol, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_AddLoggingUrl(IWMReaderNetworkConfig2 *iface, const WCHAR *url)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s\n", This, debugstr_w(url));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetLoggingUrl(IWMReaderNetworkConfig2 *iface, DWORD index, WCHAR *url,
+        DWORD *size)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %u, %p, %p\n", This, index, url, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetLoggingUrlCount(IWMReaderNetworkConfig2 *iface, DWORD *count)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_ResetLoggingUrlList(IWMReaderNetworkConfig2 *iface)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetEnableContentCaching(IWMReaderNetworkConfig2 *iface, BOOL *enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetEnableContentCaching(IWMReaderNetworkConfig2 *iface, BOOL enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %d\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetEnableFastCache(IWMReaderNetworkConfig2 *iface, BOOL *enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetEnableFastCache(IWMReaderNetworkConfig2 *iface, BOOL enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %d\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetAcceleratedStreamingDuration(IWMReaderNetworkConfig2 *iface,
+        QWORD *duration)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, duration);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetAcceleratedStreamingDuration(IWMReaderNetworkConfig2 *iface,
+        QWORD duration)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %s\n", This, wine_dbgstr_longlong(duration));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetAutoReconnectLimit(IWMReaderNetworkConfig2 *iface, DWORD *limit)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, limit);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetAutoReconnectLimit(IWMReaderNetworkConfig2 *iface, DWORD limit)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %u\n", This, limit);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetEnableResends(IWMReaderNetworkConfig2 *iface, BOOL *enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetEnableResends(IWMReaderNetworkConfig2 *iface, BOOL enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %u\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetEnableThinning(IWMReaderNetworkConfig2 *iface, BOOL *enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_SetEnableThinning(IWMReaderNetworkConfig2 *iface, BOOL enable)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %u\n", This, enable);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networkconfig_GetMaxNetPacketSize(IWMReaderNetworkConfig2 *iface, DWORD *packet_size)
+{
+    WMReader *This = impl_from_IWMReaderNetworkConfig2(iface);
+    FIXME("%p, %p\n", This, packet_size);
+    return E_NOTIMPL;
+}
+
+static const IWMReaderNetworkConfig2Vtbl WMReaderNetworkConfig2Vtbl =
+{
+    networkconfig_QueryInterface,
+    networkconfig_AddRef,
+    networkconfig_Release,
+    networkconfig_GetBufferingTime,
+    networkconfig_SetBufferingTime,
+    networkconfig_GetUDPPortRanges,
+    networkconfig_SetUDPPortRanges,
+    networkconfig_GetProxySettings,
+    networkconfig_SetProxySettings,
+    networkconfig_GetProxyHostName,
+    networkconfig_SetProxyHostName,
+    networkconfig_GetProxyPort,
+    networkconfig_SetProxyPort,
+    networkconfig_GetProxyExceptionList,
+    networkconfig_SetProxyExceptionList,
+    networkconfig_GetProxyBypassForLocal,
+    networkconfig_SetProxyBypassForLocal,
+    networkconfig_GetForceRerunAutoProxyDetection,
+    networkconfig_SetForceRerunAutoProxyDetection,
+    networkconfig_GetEnableMulticast,
+    networkconfig_SetEnableMulticast,
+    networkconfig_GetEnableHTTP,
+    networkconfig_SetEnableHTTP,
+    networkconfig_GetEnableUDP,
+    networkconfig_SetEnableUDP,
+    networkconfig_GetEnableTCP,
+    networkconfig_SetEnableTCP,
+    networkconfig_ResetProtocolRollover,
+    networkconfig_GetConnectionBandwidth,
+    networkconfig_SetConnectionBandwidth,
+    networkconfig_GetNumProtocolsSupported,
+    networkconfig_GetSupportedProtocolName,
+    networkconfig_AddLoggingUrl,
+    networkconfig_GetLoggingUrl,
+    networkconfig_GetLoggingUrlCount,
+    networkconfig_ResetLoggingUrlList,
+    networkconfig_GetEnableContentCaching,
+    networkconfig_SetEnableContentCaching,
+    networkconfig_GetEnableFastCache,
+    networkconfig_SetEnableFastCache,
+    networkconfig_GetAcceleratedStreamingDuration,
+    networkconfig_SetAcceleratedStreamingDuration,
+    networkconfig_GetAutoReconnectLimit,
+    networkconfig_SetAutoReconnectLimit,
+    networkconfig_GetEnableResends,
+    networkconfig_SetEnableResends,
+    networkconfig_GetEnableThinning,
+    networkconfig_SetEnableThinning,
+    networkconfig_GetMaxNetPacketSize
+};
+
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
     WMReader *reader;
@@ -722,6 +1146,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMReader_iface.lpVtbl = &WMReaderVtbl;
     reader->IWMReaderAdvanced6_iface.lpVtbl = &WMReaderAdvanced6Vtbl;
     reader->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
+    reader->IWMReaderNetworkConfig2_iface.lpVtbl = &WMReaderNetworkConfig2Vtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;

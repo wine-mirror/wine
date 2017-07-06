@@ -127,10 +127,10 @@ static void test_wmreader_interfaces(void)
     todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
 
     hr = IWMReader_QueryInterface(reader, &IID_IWMReaderNetworkConfig, (void **)&netconfig);
-    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed 0x%08x\n", hr);
 
     hr = IWMReader_QueryInterface(reader, &IID_IWMReaderNetworkConfig2, (void **)&netconfig2);
-    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed 0x%08x\n", hr);
 
     hr = IWMReader_QueryInterface(reader, &IID_IWMReaderStreamClock, (void **)&clock);
     todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
