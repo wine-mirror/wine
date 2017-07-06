@@ -2,6 +2,6 @@
 @ stub DllGetClassObject
 @ stub MFCreateSinkWriterFromMediaSink
 @ stub MFCreateSinkWriterFromURL
-@ stub MFCreateSourceReaderFromByteStream
+@ stdcall MFCreateSourceReaderFromByteStream(ptr ptr ptr)
 @ stdcall MFCreateSourceReaderFromMediaSource(ptr ptr ptr)
 @ stub MFCreateSourceReaderFromURL

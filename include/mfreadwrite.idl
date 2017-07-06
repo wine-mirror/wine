@@ -93,5 +93,7 @@ interface IMFSinkWriter : IUnknown
     HRESULT GetStatistics([in] DWORD index, [out] MF_SINK_WRITER_STATISTICS *stats);
 };
 
+cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromByteStream(IMFByteStream *stream, IMFAttributes *attributes," )
+cpp_quote( "                                                  IMFSourceReader **reader);" )
 cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes," )
 cpp_quote( "                                                   IMFSourceReader **reader);" )
