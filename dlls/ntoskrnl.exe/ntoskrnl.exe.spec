@@ -343,7 +343,7 @@
 @ stdcall IoCreateDriver(ptr ptr)
 @ stdcall IoCreateFile(ptr long ptr ptr long long long ptr long long ptr long ptr long)
 @ stub IoCreateFileSpecifyDeviceObjectHint
-@ stub IoCreateNotificationEvent
+@ stdcall IoCreateNotificationEvent(ptr ptr)
 @ stub IoCreateStreamFileObject
 @ stub IoCreateStreamFileObjectEx
 @ stub IoCreateStreamFileObjectLite
