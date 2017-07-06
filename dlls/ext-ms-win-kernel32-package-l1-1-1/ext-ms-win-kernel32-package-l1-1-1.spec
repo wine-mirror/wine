@@ -1,0 +1,21 @@
+@ stub AppContainerDeriveSidFromMoniker
+@ stub AppContainerFreeMemory
+@ stub AppContainerLookupMoniker
+@ stub AppXFreeMemory
+@ stub AppXGetPackageCapabilities
+@ stub AppXGetPackageSid
+@ stub AppXLookupMoniker
+@ stub ClosePackageInfo
+@ stub FormatApplicationUserModelId
+@ stub GetPackageFamilyName
+@ stdcall GetPackageFullName(long ptr ptr) kernel32.GetPackageFullName
+@ stub GetPackageId
+@ stub GetPackageInfo
+@ stub GetPackagePath
+@ stub GetPackagesByPackageFamily
+@ stub GetStagedPackageOrigin
+@ stub OpenPackageInfoByFullName
+@ stub PackageFamilyNameFromFullName
+@ stub PackageFamilyNameFromId
+@ stub PackageFullNameFromId
+@ stub PackageIdFromFullName

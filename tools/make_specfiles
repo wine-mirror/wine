@@ -240,6 +240,7 @@ my @dll_groups =
   "api-ms-win-core-errorhandling-l1-1-2",
   "api-ms-win-core-util-l1-1-0",
   "ext-ms-win-kernel32-package-current-l1-1-0",
+  "ext-ms-win-kernel32-package-l1-1-1",
  ],
  [
   "kernel32",
