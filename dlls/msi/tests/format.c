@@ -2775,12 +2775,13 @@ static void test_processmessage(void)
     ok( r == ERROR_SUCCESS, "set string failed\n");
 
     r = MsiProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, hrec);
-    todo_wine
     ok( r == IDOK, "expected IDOK, got %i\n", r);
 
     r = MsiProcessMessage(package, INSTALLMESSAGE_PROGRESS, hrec);
-    todo_wine
     ok( r == IDOK, "expected IDOK, got %i\n", r);
+
+    r = MsiProcessMessage(package, INSTALLMESSAGE_INFO, hrec);
+    ok( r == 0, "expected 0, got %i\n", r);
 
     r = MsiProcessMessage(package, INSTALLMESSAGE_INITIALIZE, hrec);
     ok( r == -1, "expected -1, got %i\n", r);
@@ -2795,13 +2796,22 @@ static void test_processmessage(void)
 
     r = MsiRecordSetInteger(hrec, 2, 2);
     ok( r == ERROR_SUCCESS, "set integer failed\n");
-    r = MsiProcessMessage(package, INSTALLMESSAGE_INITIALIZE, hrec);
-    ok( r == -1, "expected -1, got %i\n", r);
+    r = MsiProcessMessage(package, INSTALLMESSAGE_COMMONDATA, hrec);
+    todo_wine
+    ok( r == IDOK, "expected IDOK, got %i\n", r);
 
     r = MsiRecordSetInteger(hrec, 1, 1);
     ok( r == ERROR_SUCCESS, "set integer failed\n");
-    r = MsiProcessMessage(package, INSTALLMESSAGE_INITIALIZE, hrec);
+    r = MsiProcessMessage(package, INSTALLMESSAGE_COMMONDATA, hrec);
     ok( r == -1, "expected -1, got %i\n", r);
+
+    MsiCloseHandle(package);
+
+    MsiSetInternalUI(INSTALLUILEVEL_BASIC|INSTALLUILEVEL_PROGRESSONLY, NULL);
+    helper_createpackage(msifile, &package);
+
+    r = MsiProcessMessage(package, INSTALLMESSAGE_ERROR, hrec);
+    ok( r == 0, "expected 0, got %i\n", r);
 
     MsiCloseHandle(hrec);
     MsiCloseHandle(package);

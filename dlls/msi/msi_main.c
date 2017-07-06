@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 static LONG dll_count;
 
 /* the UI level */
-INSTALLUILEVEL           gUILevel         = INSTALLUILEVEL_BASIC;
+INSTALLUILEVEL           gUILevel         = INSTALLUILEVEL_DEFAULT;
 HWND                     gUIhwnd          = 0;
 INSTALLUI_HANDLERA       gUIHandlerA      = NULL;
 INSTALLUI_HANDLERW       gUIHandlerW      = NULL;

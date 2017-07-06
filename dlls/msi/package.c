@@ -1752,13 +1752,97 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
     return handle;
 }
 
-INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIRECORD *record )
+static INT internal_ui_handler(MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIRECORD *record, LPCWSTR message)
 {
     static const WCHAR szActionData[] = {'A','c','t','i','o','n','D','a','t','a',0};
-    static const WCHAR szSetProgress[] = {'S','e','t','P','r','o','g','r','e','s','s',0};
     static const WCHAR szActionText[] = {'A','c','t','i','o','n','T','e','x','t',0};
-    MSIRECORD *uirow;
-    LPWSTR deformated, message = {0};
+    static const WCHAR szSetProgress[] = {'S','e','t','P','r','o','g','r','e','s','s',0};
+    static const WCHAR szWindows_Installer[] =
+        {'W','i','n','d','o','w','s',' ','I','n','s','t','a','l','l','e','r',0};
+
+    if (!package || (package->ui_level & INSTALLUILEVEL_MASK) == INSTALLUILEVEL_NONE)
+        return 0;
+
+    /* todo: check if message needs additional styles (topmost/foreground/modality?) */
+
+    switch (eMessageType & 0xff000000)
+    {
+    case INSTALLMESSAGE_FATALEXIT:
+    case INSTALLMESSAGE_ERROR:
+    case INSTALLMESSAGE_OUTOFDISKSPACE:
+        if (package->ui_level & INSTALLUILEVEL_PROGRESSONLY) return 0;
+        if (!(eMessageType & MB_ICONMASK))
+            eMessageType |= MB_ICONEXCLAMATION;
+        return MessageBoxW(gUIhwnd, message, szWindows_Installer, eMessageType & 0x00ffffff);
+    case INSTALLMESSAGE_WARNING:
+        if (package->ui_level & INSTALLUILEVEL_PROGRESSONLY) return 0;
+        if (!(eMessageType & MB_ICONMASK))
+            eMessageType |= MB_ICONASTERISK;
+        return MessageBoxW(gUIhwnd, message, szWindows_Installer, eMessageType & 0x00ffffff);
+    case INSTALLMESSAGE_USER:
+        if (package->ui_level & INSTALLUILEVEL_PROGRESSONLY) return 0;
+        if (!(eMessageType & MB_ICONMASK))
+            eMessageType |= MB_USERICON;
+        return MessageBoxW(gUIhwnd, message, szWindows_Installer, eMessageType & 0x00ffffff);
+    case INSTALLMESSAGE_INFO:
+    case INSTALLMESSAGE_INITIALIZE:
+    case INSTALLMESSAGE_TERMINATE:
+        return 0;
+    case INSTALLMESSAGE_ACTIONSTART:
+    {
+        LPWSTR deformatted;
+        MSIRECORD *uirow = MSI_CreateRecord(1);
+        if (!uirow) return -1;
+        deformat_string(package, MSI_RecordGetString(record, 2), &deformatted);
+        MSI_RecordSetStringW(uirow, 1, deformatted);
+        msi_event_fire(package, szActionText, uirow);
+
+        msi_free(deformatted);
+        msiobj_release(&uirow->hdr);
+        return 1;
+    }
+    case INSTALLMESSAGE_ACTIONDATA:
+    {
+        MSIRECORD *uirow = MSI_CreateRecord(1);
+        if (!uirow) return -1;
+        MSI_RecordSetStringW(uirow, 1, message);
+        msi_event_fire(package, szActionData, uirow);
+        msiobj_release(&uirow->hdr);
+
+        if (package->action_progress_increment)
+        {
+            uirow = MSI_CreateRecord(2);
+            if (!uirow) return -1;
+            MSI_RecordSetInteger(uirow, 1, 2);
+            MSI_RecordSetInteger(uirow, 2, package->action_progress_increment);
+            msi_event_fire(package, szSetProgress, uirow);
+            msiobj_release(&uirow->hdr);
+        }
+        return 1;
+    }
+    case INSTALLMESSAGE_PROGRESS:
+        msi_event_fire(package, szSetProgress, record);
+        return 1;
+    case INSTALLMESSAGE_COMMONDATA:
+        switch (MSI_RecordGetInteger(record, 1))
+        {
+        case 0:
+        case 1:
+            /* do nothing */
+            return 0;
+        default:
+            /* fall through */
+            ;
+        }
+    default:
+        FIXME("internal UI not implemented for message 0x%08x (UI level = %x)", eMessageType, package->ui_level);
+        return 0;
+    }
+}
+
+INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIRECORD *record )
+{
+    LPWSTR message = {0};
     DWORD len, log_type = 0;
     UINT res;
     INT rc = 0;
@@ -1879,6 +1963,9 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         rc = gUIHandlerA( gUIContext, eMessageType, msg );
     }
 
+    if (!rc)
+        rc = internal_ui_handler(package, eMessageType, record, message);
+
     if (!rc && package && package->log_file != INVALID_HANDLE_VALUE &&
         (eMessageType & 0xff000000) != INSTALLMESSAGE_PROGRESS)
     {
@@ -1888,48 +1975,6 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     }
     msi_free( msg );
     msi_free( message );
-
-    switch (eMessageType & 0xff000000)
-    {
-    case INSTALLMESSAGE_ACTIONDATA:
-        deformat_string(package, MSI_RecordGetString(record, 2), &deformated);
-        uirow = MSI_CreateRecord(1);
-        MSI_RecordSetStringW(uirow, 1, deformated);
-        msi_free(deformated);
-
-        msi_event_fire( package, szActionData, uirow );
-        msiobj_release(&uirow->hdr);
-
-        if (package->action_progress_increment)
-        {
-            uirow = MSI_CreateRecord(2);
-            MSI_RecordSetInteger(uirow, 1, 2);
-            MSI_RecordSetInteger(uirow, 2, package->action_progress_increment);
-            msi_event_fire( package, szSetProgress, uirow );
-            msiobj_release(&uirow->hdr);
-        }
-        break;
-
-    case INSTALLMESSAGE_ACTIONSTART:
-        deformat_string(package, MSI_RecordGetString(record, 2), &deformated);
-        uirow = MSI_CreateRecord(1);
-        MSI_RecordSetStringW(uirow, 1, deformated);
-        msi_free(deformated);
-
-        msi_event_fire( package, szActionText, uirow );
-
-        msiobj_release(&uirow->hdr);
-        break;
-
-    case INSTALLMESSAGE_PROGRESS:
-        msi_event_fire( package, szSetProgress, record );
-        break;
-    }
-
-    if (package && (package->ui_level & INSTALLUILEVEL_MASK) != INSTALLUILEVEL_NONE)
-    {
-        FIXME("Internal UI not yet handled (UILevel == %x)\n", package->ui_level);
-    }
 
     return rc;
 }
@@ -1945,7 +1990,7 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
         (eMessageType & 0xff000000) == INSTALLMESSAGE_TERMINATE)
         return -1;
 
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONDATA &&
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_COMMONDATA &&
         MsiRecordGetInteger(hRecord, 1) != 2)
         return -1;
 
