@@ -160,9 +160,17 @@ BOOL finalize_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, BYTE *pbHash
 BOOL duplicate_hash_impl(ALG_ID aiAlgid, const HASH_CONTEXT *pSrcHashContext,
                          HASH_CONTEXT *pDestHashContext) 
 {
-    *pDestHashContext = *pSrcHashContext;
-
-    return TRUE;
+    switch (aiAlgid)
+    {
+        case CALG_MD2:
+        case CALG_MD4:
+        case CALG_MD5:
+        case CALG_SHA:
+            *pDestHashContext = *pSrcHashContext;
+            return TRUE;
+        default:
+            return !BCryptDuplicateHash(pSrcHashContext->bcrypt_hash, &pDestHashContext->bcrypt_hash, NULL, 0, 0);
+    }
 }
 
 BOOL new_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen) 
