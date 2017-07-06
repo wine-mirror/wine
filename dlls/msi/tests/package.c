@@ -9335,6 +9335,18 @@ static const struct externalui_message closehandle_sequence[] = {
     {0}
 };
 
+static INT CALLBACK externalui_message_string_callback(void *context, UINT message, LPCSTR string)
+{
+    struct externalui_message msg;
+
+    msg.message = message;
+    msg.field_count = 0;
+    strcpy(msg.field[0], string);
+    add_message(&msg);
+
+    return 1;
+}
+
 static INT CALLBACK externalui_message_callback(void *context, UINT message, MSIHANDLE hrecord)
 {
     struct externalui_message msg;
@@ -9343,12 +9355,19 @@ static INT CALLBACK externalui_message_callback(void *context, UINT message, MSI
     int i;
 
     msg.message = message;
+    if (message == INSTALLMESSAGE_TERMINATE)
+    {
+        /* trying to access the record seems to hang on some versions of Windows */
+        msg.field_count = -1;
+        add_message(&msg);
+        return 1;
+    }
     msg.field_count = MsiRecordGetFieldCount(hrecord);
     for (i = 0; i <= msg.field_count; i++)
     {
         length = 100;
         MsiRecordGetStringA(hrecord, i, buffer, &length);
-        memcpy(msg.field[i], buffer, length+1);
+        memcpy(msg.field[i], buffer, min(100, length+1));
     }
 
     add_message(&msg);
@@ -9361,11 +9380,12 @@ static void test_externalui_message(void)
     /* test that events trigger the correct sequence of messages */
 
     INSTALLUI_HANDLER_RECORD prev;
-    const struct externalui_message *sequence = NULL;
     MSIHANDLE hdb, hpkg;
     UINT r;
 
-    r = pMsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS, &sequence, &prev);
+    /* processing SHOWDIALOG with a record handler causes a crash on XP */
+    MsiSetExternalUIA(externalui_message_string_callback, INSTALLLOGMODE_SHOWDIALOG, NULL);
+    r = pMsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS ^ INSTALLLOGMODE_SHOWDIALOG, NULL, &prev);
 
     flush_sequence();
 
@@ -9401,7 +9421,7 @@ static void test_externalui_message(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok_sequence(doaction_costinitialize_sequence, "MsiDoAction(\"CostInitialize\")", TRUE);
 
-    /* Test a standard action */
+    /* Test a custom action */
     r = MsiDoActionA(hpkg, "custom");
     ok(r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %d\n", r);
     ok_sequence(doaction_custom_sequence, "MsiDoAction(\"custom\")", FALSE);
