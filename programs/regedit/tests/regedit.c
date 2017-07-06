@@ -388,7 +388,7 @@ static void test_basic_import(void)
     lr = RegQueryValueExA(hkey, "Wine11d", NULL, &type, (BYTE *)&buffer, &size);
     ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
     ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
-    todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
+    ok(size == 6 || broken(size == 5) /* Win2k */, "got wrong size %u, expected 6\n", size);
     ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
     /* Wine11e */
     size = sizeof(buffer);
@@ -396,7 +396,7 @@ static void test_basic_import(void)
     lr = RegQueryValueExA(hkey, "Wine11e", NULL, &type, (BYTE *)&buffer, &size);
     ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
     ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
-    todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
+    ok(size == 6 || broken(size == 5) /* Win2k */, "got wrong size %u, expected 6\n", size);
     ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
 
     exec_import_str("REGEDIT4\n\n"
@@ -517,8 +517,8 @@ static void test_basic_import(void)
     verify_reg(hkey, "Wine18a", REG_MULTI_SZ, "Line\0", 6, 0);
     verify_reg(hkey, "Wine18b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
     verify_reg(hkey, "Wine18c", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
-    verify_reg(hkey, "Wine18d", REG_MULTI_SZ, "Line concat", 12, TODO_REG_SIZE);
-    verify_reg(hkey, "Wine18e", REG_MULTI_SZ, "Line concat", 12, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine18d", REG_MULTI_SZ, "Line concat", 12, 0);
+    verify_reg(hkey, "Wine18e", REG_MULTI_SZ, "Line concat", 12, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -549,8 +549,8 @@ static void test_basic_import(void)
                     "\"Wine20d\"=hex(7):4c,69,6e,65,00,\n"
                     "\"Wine20e\"=hex(7):4c,69,6e,65,00,00\n"
                     "\"Wine20f\"=hex(7):4c,69,6e,65,00,00,\n\n");
-    verify_reg(hkey, "Wine20a", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
-    verify_reg(hkey, "Wine20b", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine20a", REG_MULTI_SZ, "Line", 5, 0);
+    verify_reg(hkey, "Wine20b", REG_MULTI_SZ, "Line", 5, 0);
     verify_reg(hkey, "Wine20c", REG_MULTI_SZ, "Line", 5, 0);
     verify_reg(hkey, "Wine20d", REG_MULTI_SZ, "Line", 5, 0);
     verify_reg(hkey, "Wine20e", REG_MULTI_SZ, "Line\0", 6, 0);
@@ -562,8 +562,8 @@ static void test_basic_import(void)
                     "\"Wine21b\"=hex(2):25,50,41,54,48,25,\n"
                     "\"Wine21c\"=hex(2):25,50,41,54,48,25,00\n"
                     "\"Wine21d\"=hex(2):25,50,41,54,48,25,00,\n\n");
-    verify_reg(hkey, "Wine21a", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
-    verify_reg(hkey, "Wine21b", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine21a", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine21b", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine21c", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine21d", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
@@ -1314,7 +1314,7 @@ static void test_comments(void)
                     "  63,6f,6e,\\;comment\n"
                     "  63,61,74,;comment\n"
                     "  65,6e,61,74,69,6f,6e,00,00\n\n");
-    verify_reg(hkey, "Multi-Line2", REG_MULTI_SZ, "Line concat", 12, TODO_REG_SIZE);
+    verify_reg(hkey, "Multi-Line2", REG_MULTI_SZ, "Line concat", 12, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"

@@ -848,13 +848,22 @@ static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos)
         return line;
     }
 
-    if (!parser->is_unicode && (parser->data_type == REG_EXPAND_SZ || parser->data_type == REG_MULTI_SZ))
+    if (parser->data_type == REG_EXPAND_SZ || parser->data_type == REG_MULTI_SZ)
     {
-        void *tmp = parser->data;
+        BYTE *data = parser->data;
 
-        parser->data = GetWideStringN(parser->data, parser->data_size, &parser->data_size);
-        parser->data_size *= sizeof(WCHAR);
-        HeapFree(GetProcessHeap(), 0, tmp);
+        if (data[parser->data_size - 1] != 0x00)
+        {
+            data[parser->data_size] = 0x00;
+            parser->data_size++;
+        }
+
+        if (!parser->is_unicode)
+        {
+            parser->data = GetWideStringN(parser->data, parser->data_size, &parser->data_size);
+            parser->data_size *= sizeof(WCHAR);
+            HeapFree(GetProcessHeap(), 0, data);
+        }
     }
 
     set_state(parser, SET_VALUE);
