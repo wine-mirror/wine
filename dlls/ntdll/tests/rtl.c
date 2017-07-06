@@ -2121,7 +2121,7 @@ static void test_RtlLeaveCriticalSection(void)
     ok(!cs.OwningThread, "unexpected OwningThread %p\n", cs.OwningThread);
 
     /*
-     * Trying to leave a section that wasn't acquired modifies RecusionCount to an invalid value,
+     * Trying to leave a section that wasn't acquired modifies RecursionCount to an invalid value,
      * but doesn't modify LockCount so that an attempt to enter the section later will work.
      */
     status = RtlLeaveCriticalSection(&cs);
