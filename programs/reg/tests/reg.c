@@ -1784,7 +1784,8 @@ static void test_import(void)
                     "\"Wine47h\"=hex(ffffffff):56,61,6c,75,65,00\n"
                     "\"Wine47i\"=hex(100000000):56,61,6c,75,65,00\n"
                     "\"Wine47j\"=hex(0x2):56,61,6c,75,65,00\n"
-                    "\"Wine47k\"=hex(x2)::56,61,6c,75,65,00\n\n", &r);
+                    "\"Wine47k\"=hex(0X2):56,61,6c,75,65,00\n"
+                    "\"Wine47l\"=hex(x2):56,61,6c,75,65,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine47a", REG_NONE, "Value", 6, 0);
     todo_wine verify_reg(hkey, "Wine47b", 0x10, "Value", 6, 0);
@@ -1797,6 +1798,7 @@ static void test_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine47i");
     todo_wine verify_reg_nonexist(hkey, "Wine47j");
     todo_wine verify_reg_nonexist(hkey, "Wine47k");
+    todo_wine verify_reg_nonexist(hkey, "Wine47l");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3122,7 +3124,8 @@ static void test_unicode_import(void)
                      "\"Wine47h\"=hex(ffffffff):56,61,6c,75,65,00\n"
                      "\"Wine47i\"=hex(100000000):56,61,6c,75,65,00\n"
                      "\"Wine47j\"=hex(0x2):56,00,61,00,6c,00,75,00,65,00,00,00\n"
-                     "\"Wine47k\"=hex(x2):56,00,61,00,6c,00,75,00,65,00,00,00\n\n", &r);
+                     "\"Wine47k\"=hex(0X2):56,00,61,00,6c,00,75,00,65,00,00,00\n"
+                     "\"Wine47l\"=hex(x2):56,00,61,00,6c,00,75,00,65,00,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine47a", REG_NONE, "Value", 6, 0);
     todo_wine verify_reg(hkey, "Wine47b", 0x10, "Value", 6, 0);
@@ -3135,6 +3138,7 @@ static void test_unicode_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine47i");
     todo_wine verify_reg_nonexist(hkey, "Wine47j");
     todo_wine verify_reg_nonexist(hkey, "Wine47k");
+    todo_wine verify_reg_nonexist(hkey, "Wine47l");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
