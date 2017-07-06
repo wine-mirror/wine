@@ -4030,16 +4030,11 @@ static BOOL walk_parameter_dep(struct d3dx_parameter *param, walk_parameter_dep_
     return FALSE;
 }
 
-static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDLE parameter, D3DXHANDLE technique)
+static BOOL is_parameter_used(struct d3dx_parameter *param, struct d3dx_technique *tech)
 {
-    struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
     unsigned int i, j;
-    struct d3dx_parameter *param = get_valid_parameter(&effect->base_effect, parameter);
-    struct d3dx_technique *tech = get_valid_technique(&effect->base_effect, technique);
     struct d3dx_pass *pass;
 
-    TRACE("iface %p, parameter %p, technique %p.\n", iface, parameter, technique);
-    TRACE("param %p, name %s, tech %p.\n", param, param ? debugstr_a(param->name) : "", tech);
     if (!tech || !param)
         return FALSE;
 
@@ -4049,14 +4044,25 @@ static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDL
         for (j = 0; j < pass->state_count; ++j)
         {
             if (walk_state_dep(&pass->states[j], is_same_parameter, param))
-            {
-                TRACE("Returning TRUE.\n");
                 return TRUE;
-            }
         }
     }
-    TRACE("Returning FALSE.\n");
     return FALSE;
+}
+
+static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDLE parameter, D3DXHANDLE technique)
+{
+    struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(&effect->base_effect, parameter);
+    struct d3dx_technique *tech = get_valid_technique(&effect->base_effect, technique);
+    BOOL ret;
+
+    TRACE("iface %p, parameter %p, technique %p.\n", iface, parameter, technique);
+    TRACE("param %p, name %s, tech %p.\n", param, param ? debugstr_a(param->name) : "", tech);
+
+    ret = is_parameter_used(param, tech);
+    TRACE("Returning %#x.\n", ret);
+    return ret;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DWORD flags)
