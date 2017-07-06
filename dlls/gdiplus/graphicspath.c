@@ -188,8 +188,8 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
  * NOTES
  *  This functions takes the newfigure value of the given path into account,
  *  i.e. the arc is connected to the end of the given path if it was set to
- *  FALSE, otherwise the arc's first point gets the the PathPointTypeStart
- *  value. In both cases, the value of newfigure of the given path is FALSE
+ *  FALSE, otherwise the arc's first point gets the PathPointTypeStart value.
+ *  In both cases, the value of newfigure of the given path is FALSE
  *  afterwards.
  */
 GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
