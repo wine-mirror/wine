@@ -792,7 +792,7 @@ static void test_import(void)
 {
     DWORD r, dword = 0x123, type, size;
     char test1_reg[MAX_PATH], test2_reg[MAX_PATH], cmdline[MAX_PATH];
-    char test_string[] = "Test string", buffer[8];
+    char test_string[] = "Test string", buffer[24];
     HKEY hkey, subkey;
     LONG err;
     BYTE hex[8];
@@ -2157,6 +2157,89 @@ static void test_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine63a");
     todo_wine verify_reg_nonexist(hkey, "Wine63b");
 
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine64a\"=hex(7):4c,69,6e,65,00,00\n"
+                    "\"Wine64b\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine64c\"=hex(7):4c,69,6e,65,20,\\;comment\n"
+                    "  63,6f,6e,63,61,74,\\\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine64d\"=hex(7):4c,69,6e,65,20,\\;comment\n"
+                    "  63,6f,6e,63,61,74,\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine64e\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,;comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine64a", REG_MULTI_SZ, "Line\0", 6, 0);
+    todo_wine verify_reg(hkey, "Wine64b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    todo_wine verify_reg(hkey, "Wine64c", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    /* Wine64d */
+    size = sizeof(buffer);
+    err = RegQueryValueExA(hkey, "Wine64d", NULL, &type, (BYTE *)&buffer, &size);
+    todo_wine ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
+    todo_wine ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
+    todo_wine ok(size == 12 || broken(size == 11) /* WinXP */, "got wrong size %u, expected 12\n", size);
+    todo_wine ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
+    /* Wine64e */
+    size = sizeof(buffer);
+    err = RegQueryValueExA(hkey, "Wine64e", NULL, &type, (BYTE *)&buffer, &size);
+    todo_wine ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
+    todo_wine ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
+    todo_wine ok(size == 12 || broken(size == 11) /* WinXP */, "got wrong size %u, expected 12\n", size);
+    todo_wine ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine65a\"=hex(100):25,50,41,54,48,25,00\n"
+                    "\"Wine65b\"=hex(100):25,50,41,\\\n"
+                    "  54,48,25,00\n"
+                    "\"Wine65c\"=hex(100):25,50,41,\\;comment\n"
+                    "  54,48,\\\n"
+                    "  25,00\n"
+                    "\"Wine65d\"=hex(100):25,50,41,\\;comment\n"
+                    "  54,48,\n"
+                    "  25,00\n"
+                    "\"Wine65e\"=hex(100):25,50,41,\\;comment\n"
+                    "  54,48,;comment\n"
+                    "  25,00\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine65a", 0x100, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine65b", 0x100, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine65c", 0x100, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine65d", 0x100, "%PATH", 5, 0);
+    todo_wine verify_reg(hkey, "Wine65e", 0x100, "%PATH", 5, 0);
+
+    /* Test null-termination of REG_EXPAND_SZ and REG_MULTI_SZ data*/
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine66a\"=hex(7):4c,69,6e,65\n"
+                    "\"Wine66b\"=hex(7):4c,69,6e,65,\n"
+                    "\"Wine66c\"=hex(7):4c,69,6e,65,00\n"
+                    "\"Wine66d\"=hex(7):4c,69,6e,65,00,\n"
+                    "\"Wine66e\"=hex(7):4c,69,6e,65,00,00\n"
+                    "\"Wine66f\"=hex(7):4c,69,6e,65,00,00,\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine66a", REG_MULTI_SZ, "Line", 5, 0);
+    todo_wine verify_reg(hkey, "Wine66b", REG_MULTI_SZ, "Line", 5, 0);
+    todo_wine verify_reg(hkey, "Wine66c", REG_MULTI_SZ, "Line", 5, 0);
+    todo_wine verify_reg(hkey, "Wine66d", REG_MULTI_SZ, "Line", 5, 0);
+    todo_wine verify_reg(hkey, "Wine66e", REG_MULTI_SZ, "Line\0", 6, 0);
+    todo_wine verify_reg(hkey, "Wine66f", REG_MULTI_SZ, "Line\0", 6, 0);
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine67a\"=hex(2):25,50,41,54,48,25\n"
+                    "\"Wine67b\"=hex(2):25,50,41,54,48,25,\n"
+                    "\"Wine67c\"=hex(2):25,50,41,54,48,25,00\n"
+                    "\"Wine67d\"=hex(2):25,50,41,54,48,25,00,\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine67a", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine67b", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine67c", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine67d", REG_EXPAND_SZ, "%PATH%", 7, 0);
+
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
@@ -2169,7 +2252,7 @@ static void test_unicode_import(void)
     DWORD r, dword = 0x123, type, size;
     HKEY hkey, subkey;
     LONG err;
-    char buffer[8];
+    char buffer[24];
     BYTE hex[8];
 
     test_import_wstr("REGEDIT\n", &r);
@@ -3504,6 +3587,90 @@ static void test_unicode_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Wine63a");
     todo_wine verify_reg_nonexist(hkey, "Wine63b");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine64a\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,00,00\n"
+                     "\"Wine64b\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine64c\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\;comment\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine64d\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\;comment\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine64e\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,;comment\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine64a", REG_MULTI_SZ, "Line\0", 6, 0);
+    todo_wine verify_reg(hkey, "Wine64b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    todo_wine verify_reg(hkey, "Wine64c", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    /* Wine64d */
+    size = sizeof(buffer);
+    err = RegQueryValueExA(hkey, "Wine64d", NULL, &type, (BYTE *)&buffer, &size);
+    todo_wine ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
+    todo_wine ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
+    todo_wine ok(size == 12 || broken(size == 11) /* WinXP */, "got wrong size %u, expected 12\n", size);
+    todo_wine ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
+    /* Wine64e */
+    size = sizeof(buffer);
+    err = RegQueryValueExA(hkey, "Wine64e", NULL, &type, (BYTE *)&buffer, &size);
+    todo_wine ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
+    todo_wine ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
+    todo_wine ok(size == 12 || broken(size == 11) /* WinXP */, "got wrong size %u, expected 12\n", size);
+    todo_wine ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine65a\"=hex(100):25,50,41,54,48,25,00\n"
+                     "\"Wine65b\"=hex(100):25,50,41,\\\n"
+                     "  54,48,25,00\n"
+                     "\"Wine65c\"=hex(100):25,50,41,\\;comment\n"
+                     "  54,48,\\\n"
+                     "  25,00\n"
+                     "\"Wine65d\"=hex(100):25,50,41,\\;comment\n"
+                     "  54,48,\n"
+                     "  25,00\n"
+                     "\"Wine65e\"=hex(100):25,50,41,\\;comment\n"
+                     "  54,48,;comment\n"
+                     "  25,00\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine65a", 0x100, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine65b", 0x100, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine65c", 0x100, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine65d", 0x100, "%PATH", 5, 0);
+    todo_wine verify_reg(hkey, "Wine65e", 0x100, "%PATH", 5, 0);
+
+    /* Test null-termination of REG_EXPAND_SZ and REG_MULTI_SZ data*/
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine66a\"=hex(7):4c,00,69,00,6e,00,65,00\n"
+                     "\"Wine66b\"=hex(7):4c,00,69,00,6e,00,65,00,\n"
+                     "\"Wine66c\"=hex(7):4c,00,69,00,6e,00,65,00,00,00\n"
+                     "\"Wine66d\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,\n"
+                     "\"Wine66e\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,00,00\n"
+                     "\"Wine66f\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,00,00,\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine66a", REG_MULTI_SZ, "Line", 5, 0);
+    todo_wine verify_reg(hkey, "Wine66b", REG_MULTI_SZ, "Line", 5, 0);
+    todo_wine verify_reg(hkey, "Wine66c", REG_MULTI_SZ, "Line", 5, 0);
+    todo_wine verify_reg(hkey, "Wine66d", REG_MULTI_SZ, "Line", 5, 0);
+    todo_wine verify_reg(hkey, "Wine66e", REG_MULTI_SZ, "Line\0", 6, 0);
+    todo_wine verify_reg(hkey, "Wine66f", REG_MULTI_SZ, "Line\0", 6, 0);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine67a\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00\n"
+                     "\"Wine67b\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,\n"
+                     "\"Wine67c\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine67d\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00,\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine67a", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine67b", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine67c", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine67d", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
