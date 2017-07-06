@@ -2947,7 +2947,7 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       {
         /* for some reason interface pointers aren't generated as
          * RPC_FC_POINTER, but instead as RPC_FC_EMBEDDED_COMPLEX, yet
-         * they still need the derefencing treatment that pointers are
+         * they still need the dereferencing treatment that pointers are
          * given */
         if (*desc == RPC_FC_IP)
           m(pStubMsg, *(unsigned char **)pMemory, desc);
@@ -3123,7 +3123,7 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       {
         /* for some reason interface pointers aren't generated as
          * RPC_FC_POINTER, but instead as RPC_FC_EMBEDDED_COMPLEX, yet
-         * they still need the derefencing treatment that pointers are
+         * they still need the dereferencing treatment that pointers are
          * given */
         if (*desc == RPC_FC_IP)
           m(pStubMsg, (unsigned char **)pMemory, desc, FALSE);
@@ -3247,7 +3247,7 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       {
         /* for some reason interface pointers aren't generated as
          * RPC_FC_POINTER, but instead as RPC_FC_EMBEDDED_COMPLEX, yet
-         * they still need the derefencing treatment that pointers are
+         * they still need the dereferencing treatment that pointers are
          * given */
         if (*desc == RPC_FC_IP)
           m(pStubMsg, *(unsigned char **)pMemory, desc);
@@ -3348,7 +3348,7 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
       {
         /* for some reason interface pointers aren't generated as
          * RPC_FC_POINTER, but instead as RPC_FC_EMBEDDED_COMPLEX, yet
-         * they still need the derefencing treatment that pointers are
+         * they still need the dereferencing treatment that pointers are
          * given */
         if (*desc == RPC_FC_IP)
           m(pStubMsg, *(unsigned char **)pMemory, desc);
