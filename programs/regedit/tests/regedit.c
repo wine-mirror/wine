@@ -500,6 +500,73 @@ static void test_basic_import(void)
     if (lr == ERROR_SUCCESS)
         verify_reg(hkey, "Wine17", REG_MULTI_SZ, "Line ", 6, TODO_REG_SIZE | TODO_REG_DATA);
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine18a\"=hex(7):4c,69,6e,65,00,00\n"
+                    "\"Wine18b\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine18c\"=hex(7):4c,69,6e,65,20,\\;comment\n"
+                    "  63,6f,6e,63,61,74,\\\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine18d\"=hex(7):4c,69,6e,65,20,\\;comment\n"
+                    "  63,6f,6e,63,61,74,\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine18e\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,;comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n");
+    verify_reg(hkey, "Wine18a", REG_MULTI_SZ, "Line\0", 6, 0);
+    verify_reg(hkey, "Wine18b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine18c", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine18d", REG_MULTI_SZ, "Line concat", 12, TODO_REG_SIZE);
+    todo_wine verify_reg(hkey, "Wine18e", REG_MULTI_SZ, "Line concat", 12, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine19a\"=hex(100):25,50,41,54,48,25,00\n"
+                    "\"Wine19b\"=hex(100):25,50,41,\\\n"
+                    "  54,48,25,00\n"
+                    "\"Wine19c\"=hex(100):25,50,41,\\;comment\n"
+                    "  54,48,\\\n"
+                    "  25,00\n"
+                    "\"Wine19d\"=hex(100):25,50,41,\\;comment\n"
+                    "  54,48,\n"
+                    "  25,00\n"
+                    "\"Wine19e\"=hex(100):25,50,41,\\;comment\n"
+                    "  54,48,;comment\n"
+                    "  25,00\n");
+    verify_reg(hkey, "Wine19a", 0x100, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine19b", 0x100, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine19c", 0x100, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine19d", 0x100, "%PATH", 5, 0);
+    todo_wine verify_reg(hkey, "Wine19e", 0x100, "%PATH", 5, 0);
+
+    /* Test null-termination of REG_EXPAND_SZ and REG_MULTI_SZ data*/
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine20a\"=hex(7):4c,69,6e,65\n"
+                    "\"Wine20b\"=hex(7):4c,69,6e,65,\n"
+                    "\"Wine20c\"=hex(7):4c,69,6e,65,00\n"
+                    "\"Wine20d\"=hex(7):4c,69,6e,65,00,\n"
+                    "\"Wine20e\"=hex(7):4c,69,6e,65,00,00\n"
+                    "\"Wine20f\"=hex(7):4c,69,6e,65,00,00,\n\n");
+    verify_reg(hkey, "Wine20a", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine20b", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine20c", REG_MULTI_SZ, "Line", 5, 0);
+    verify_reg(hkey, "Wine20d", REG_MULTI_SZ, "Line", 5, 0);
+    verify_reg(hkey, "Wine20e", REG_MULTI_SZ, "Line\0", 6, 0);
+    verify_reg(hkey, "Wine20f", REG_MULTI_SZ, "Line\0", 6, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine21a\"=hex(2):25,50,41,54,48,25\n"
+                    "\"Wine21b\"=hex(2):25,50,41,54,48,25,\n"
+                    "\"Wine21c\"=hex(2):25,50,41,54,48,25,00\n"
+                    "\"Wine21d\"=hex(2):25,50,41,54,48,25,00,\n\n");
+    verify_reg(hkey, "Wine21a", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine21b", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine21c", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine21d", REG_EXPAND_SZ, "%PATH%", 7, 0);
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
