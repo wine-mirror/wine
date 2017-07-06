@@ -144,6 +144,10 @@ my @dll_groups =
   "ext-ms-win-authz-context-l1-1-0",
  ],
  [
+  "credui",
+  "ext-ms-win-security-credui-l1-1-0",
+ ],
+ [
   "netapi32",
   "ext-ms-win-domainjoin-netjoin-l1-1-0",
  ],
