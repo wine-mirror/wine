@@ -4338,8 +4338,8 @@ static void test_effect_preshader_compare_vconsts_(unsigned int line, IDirect3DD
                     & (1u << (i % TEST_EFFECT_BITMASK_BLOCK_SIZE)))
             {
                 ok_(__FILE__, line)(!memcmp(&fdata[i], &test_effect_preshader_fvect_v[i], sizeof(fdata[i])),
-                        "Vertex shader float constants do not match, expected (%g, %g, %g, %g), \
-got (%g, %g, %g, %g), parameter %s.\n",
+                        "Vertex shader float constants do not match, expected (%g, %g, %g, %g), "
+                        "got (%g, %g, %g, %g), parameter %s.\n",
                         test_effect_preshader_fvect_v[i].x, test_effect_preshader_fvect_v[i].y,
                         test_effect_preshader_fvect_v[i].z, test_effect_preshader_fvect_v[i].w,
                         fdata[i].x, fdata[i].y, fdata[i].z, fdata[i].w, updated_param);
