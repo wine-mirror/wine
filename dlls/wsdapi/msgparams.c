@@ -53,7 +53,7 @@ static inline IWSDUdpMessageParametersImpl *impl_from_IWSDUdpMessageParameters(I
 
 /* IWSDMessageParameters implementation */
 
-static ULONG WINAPI IWSDMessageParametersImpl_AddRef(IWSDMessageParameters *iface)
+static ULONG IWSDMessageParametersImpl_AddRef(IWSDMessageParameters *iface)
 {
     IWSDMessageParametersImpl *This = impl_from_IWSDMessageParameters(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
@@ -62,7 +62,7 @@ static ULONG WINAPI IWSDMessageParametersImpl_AddRef(IWSDMessageParameters *ifac
     return ref;
 }
 
-static ULONG WINAPI IWSDMessageParametersImpl_Release(IWSDMessageParameters *iface)
+static ULONG IWSDMessageParametersImpl_Release(IWSDMessageParameters *iface)
 {
     IWSDMessageParametersImpl *This = impl_from_IWSDMessageParameters(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -87,7 +87,7 @@ static ULONG WINAPI IWSDMessageParametersImpl_Release(IWSDMessageParameters *ifa
     return ref;
 }
 
-static HRESULT WINAPI IWSDMessageParametersImpl_GetLocalAddress(IWSDMessageParameters *This, IWSDAddress **ppAddress)
+static HRESULT IWSDMessageParametersImpl_GetLocalAddress(IWSDMessageParameters *This, IWSDAddress **ppAddress)
 {
     IWSDMessageParametersImpl *impl = impl_from_IWSDMessageParameters(This);
 
@@ -109,7 +109,7 @@ static HRESULT WINAPI IWSDMessageParametersImpl_GetLocalAddress(IWSDMessageParam
     return S_OK;
 }
 
-static HRESULT WINAPI IWSDMessageParametersImpl_SetLocalAddress(IWSDMessageParameters *This, IWSDAddress *pAddress)
+static HRESULT IWSDMessageParametersImpl_SetLocalAddress(IWSDMessageParameters *This, IWSDAddress *pAddress)
 {
     IWSDMessageParametersImpl *impl = impl_from_IWSDMessageParameters(This);
 
@@ -131,7 +131,7 @@ static HRESULT WINAPI IWSDMessageParametersImpl_SetLocalAddress(IWSDMessageParam
     return S_OK;
 }
 
-static HRESULT WINAPI IWSDMessageParametersImpl_GetRemoteAddress(IWSDMessageParameters *This, IWSDAddress **ppAddress)
+static HRESULT IWSDMessageParametersImpl_GetRemoteAddress(IWSDMessageParameters *This, IWSDAddress **ppAddress)
 {
     IWSDMessageParametersImpl *impl = impl_from_IWSDMessageParameters(This);
 
@@ -153,7 +153,7 @@ static HRESULT WINAPI IWSDMessageParametersImpl_GetRemoteAddress(IWSDMessagePara
     return S_OK;
 }
 
-static HRESULT WINAPI IWSDMessageParametersImpl_SetRemoteAddress(IWSDMessageParameters *This, IWSDAddress *pAddress)
+static HRESULT IWSDMessageParametersImpl_SetRemoteAddress(IWSDMessageParameters *This, IWSDAddress *pAddress)
 {
     IWSDMessageParametersImpl *impl = impl_from_IWSDMessageParameters(This);
 
@@ -175,7 +175,7 @@ static HRESULT WINAPI IWSDMessageParametersImpl_SetRemoteAddress(IWSDMessagePara
     return S_OK;
 }
 
-static HRESULT WINAPI IWSDMessageParametersImpl_GetLowerParameters(IWSDMessageParameters *This, IWSDMessageParameters **ppTxParams)
+static HRESULT IWSDMessageParametersImpl_GetLowerParameters(IWSDMessageParameters *This, IWSDMessageParameters **ppTxParams)
 {
     FIXME("(%p, %p)\n", This, ppTxParams);
     return E_NOTIMPL;
