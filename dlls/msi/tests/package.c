@@ -9376,7 +9376,7 @@ static void test_externalui_message(void)
 
     create_file_data("forcecodepage.idt", "\r\n\r\n1252\t_ForceCodepage\r\n");
     r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiOpenPackageA(NULL, &hpkg);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
