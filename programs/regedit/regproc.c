@@ -303,6 +303,8 @@ static BOOL convert_hex_csv_to_hex(struct parser *parser, WCHAR **str)
                 *str = end + 1;
                 return TRUE;
             }
+            else if (*end == ';')
+                return TRUE;
             return FALSE;
         }
 
