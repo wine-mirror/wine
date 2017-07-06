@@ -1643,7 +1643,7 @@ todo_wine
             ok(k == 99, "Expected 99, got %d\n", k);
             }
         }
-        else /* <= 2003 the tests differ between TCP and UDP, UDP silenty accepts */
+        else /* <= 2003 the tests differ between TCP and UDP, UDP silently accepts */
         {
             SetLastError(0xdeadbeef);
             k = 99;
