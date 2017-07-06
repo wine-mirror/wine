@@ -2606,7 +2606,7 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
     ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
     if (!current_metadata_block) return E_POINTER;
 
-    ok(schema != NULL && id != NULL && value != NULL, "%p, %p, %p shoud not be NULL\n", schema, id, value);
+    ok(schema != NULL && id != NULL && value != NULL, "%p, %p, %p should not be NULL\n", schema, id, value);
 
     for (i = 0; i < current_metadata_block->count; i++)
     {
