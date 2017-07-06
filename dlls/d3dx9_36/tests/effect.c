@@ -6837,6 +6837,153 @@ static void test_effect_get_pass_desc(IDirect3DDevice9 *device)
     effect->lpVtbl->Release(effect);
 }
 
+#if 0
+float v1 : register(c2);
+float v2 : register(c3);
+float v3;
+float v4 : register(c4);
+float v5;
+float v6[2] : register(c5) = {11, 22};
+
+struct VS_OUTPUT
+{
+    float4 Position   : POSITION;
+};
+
+VS_OUTPUT RenderSceneVS(float4 vPos : POSITION)
+{
+    VS_OUTPUT Output;
+
+    Output.Position = v1 * v2 * vPos + v2 + v3 + v4;
+    Output.Position += v6[0] + v6[1];
+    return Output;
+}
+
+technique tech0
+{
+    pass p0
+    {
+        PointScale_A = v4;
+        VertexShader = compile vs_3_0 RenderSceneVS();
+    }
+}
+#endif
+static const DWORD test_effect_skip_constants_blob[] =
+{
+    0xfeff0901, 0x00000144, 0x00000000, 0x00000003, 0x00000000, 0x00000024, 0x00000000, 0x00000000,
+    0x00000001, 0x00000001, 0x00000000, 0x00000003, 0x00003176, 0x00000003, 0x00000000, 0x0000004c,
+    0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000003, 0x00003276, 0x00000003,
+    0x00000000, 0x00000074, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000003,
+    0x00003376, 0x00000003, 0x00000000, 0x0000009c, 0x00000000, 0x00000000, 0x00000001, 0x00000001,
+    0x00000000, 0x00000003, 0x00003476, 0x00000003, 0x00000000, 0x000000c4, 0x00000000, 0x00000000,
+    0x00000001, 0x00000001, 0x00000000, 0x00000003, 0x00003576, 0x00000003, 0x00000000, 0x000000f0,
+    0x00000000, 0x00000002, 0x00000001, 0x00000001, 0x41300000, 0x41b00000, 0x00000003, 0x00003676,
+    0x00000000, 0x00000003, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001,
+    0x00000001, 0x00000010, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000003, 0x00003070,
+    0x00000006, 0x68636574, 0x00000030, 0x00000006, 0x00000001, 0x00000002, 0x00000002, 0x00000004,
+    0x00000020, 0x00000000, 0x00000000, 0x0000002c, 0x00000048, 0x00000000, 0x00000000, 0x00000054,
+    0x00000070, 0x00000000, 0x00000000, 0x0000007c, 0x00000098, 0x00000000, 0x00000000, 0x000000a4,
+    0x000000c0, 0x00000000, 0x00000000, 0x000000cc, 0x000000e8, 0x00000000, 0x00000000, 0x00000138,
+    0x00000000, 0x00000001, 0x00000130, 0x00000000, 0x00000002, 0x00000041, 0x00000000, 0x000000fc,
+    0x000000f8, 0x00000092, 0x00000000, 0x0000011c, 0x00000118, 0x00000000, 0x00000002, 0x00000000,
+    0x00000000, 0xffffffff, 0x00000001, 0x00000000, 0x000001bc, 0xfffe0300, 0x0047fffe, 0x42415443,
+    0x0000001c, 0x000000e7, 0xfffe0300, 0x00000005, 0x0000001c, 0x20000000, 0x000000e0, 0x00000080,
+    0x00020002, 0x000a0001, 0x00000084, 0x00000094, 0x000000a4, 0x00030002, 0x000e0001, 0x00000084,
+    0x00000094, 0x000000a7, 0x00000002, 0x00000001, 0x00000084, 0x00000094, 0x000000aa, 0x00040002,
+    0x00120001, 0x00000084, 0x00000094, 0x000000ad, 0x00050002, 0x00160002, 0x000000b0, 0x000000c0,
+    0xab003176, 0x00030000, 0x00010001, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x76003276, 0x34760033, 0x00367600, 0x00030000, 0x00010001, 0x00000002, 0x00000000,
+    0x41300000, 0x00000000, 0x00000000, 0x00000000, 0x41b00000, 0x00000000, 0x00000000, 0x00000000,
+    0x335f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461,
+    0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0200001f, 0x80000000,
+    0x900f0000, 0x0200001f, 0x80000000, 0xe00f0000, 0x02000001, 0x80010000, 0xa0000003, 0x03000005,
+    0x80010000, 0x80000000, 0xa0000002, 0x04000004, 0x800f0000, 0x80000000, 0x90e40000, 0xa0000003,
+    0x03000002, 0x800f0000, 0x80e40000, 0xa0000000, 0x03000002, 0x800f0000, 0x80e40000, 0xa0000004,
+    0x02000001, 0x80010001, 0xa0000005, 0x03000002, 0x80010001, 0x80000001, 0xa0000006, 0x03000002,
+    0xe00f0000, 0x80e40000, 0x80000001, 0x0000ffff, 0x00000000, 0x00000000, 0xffffffff, 0x00000000,
+    0x00000000, 0x000000d8, 0x46580200, 0x0023fffe, 0x42415443, 0x0000001c, 0x00000057, 0x46580200,
+    0x00000001, 0x0000001c, 0x20000100, 0x00000054, 0x00000030, 0x00040002, 0x00120001, 0x00000034,
+    0x00000044, 0xab003476, 0x00030000, 0x00010001, 0x00000001, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c,
+    0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe,
+    0x54494c43, 0x00000000, 0x000cfffe, 0x434c5846, 0x00000001, 0x10000001, 0x00000001, 0x00000000,
+    0x00000002, 0x00000010, 0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+};
+
+static void test_effect_skip_constants(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    ID3DXEffect *effect;
+    unsigned int passes_count;
+    D3DXVECTOR4 fvect;
+    unsigned int i;
+
+    hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
+            NULL, NULL, "v3", 0, NULL, &effect, NULL);
+    todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        effect->lpVtbl->Release(effect);
+    hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
+            NULL, NULL, "v4", 0, NULL, &effect, NULL);
+    todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        effect->lpVtbl->Release(effect);
+
+    hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
+            NULL, NULL, " v1#,.+-= &\t\nv2*/!\"'v5 v6[1]", 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    todo_wine
+    ok(!effect->lpVtbl->IsParameterUsed(effect, "v1", "tech0"),
+            "Unexpected IsParameterUsed result.\n");
+    todo_wine
+    ok(!effect->lpVtbl->IsParameterUsed(effect, "v2", "tech0"),
+            "Unexpected IsParameterUsed result.\n");
+    ok(effect->lpVtbl->IsParameterUsed(effect, "v3", "tech0"),
+            "Unexpected IsParameterUsed result.\n");
+    ok(effect->lpVtbl->IsParameterUsed(effect, "v4", "tech0"),
+            "Unexpected IsParameterUsed result.\n");
+    ok(!effect->lpVtbl->IsParameterUsed(effect, "v5", "tech0"),
+            "Unexpected IsParameterUsed result.\n");
+
+    hr = effect->lpVtbl->SetFloat(effect, "v1", 28.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->SetFloat(effect, "v2", 29.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->SetFloat(effect, "v3", 30.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->SetFloat(effect, "v4", 31.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->SetFloat(effect, "v5", 32.0f);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    test_effect_preshader_clear_vconsts(device);
+
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect.y = fvect.z = fvect.w = 0.0f;
+    fvect.x = 30.0f;
+    test_effect_shared_parameters_compare_vconst(device, 0, &fvect, FALSE);
+    for (i = 1; i < 4; ++i)
+        test_effect_shared_parameters_compare_vconst(device, i, &fvect_filler, i > 1);
+    fvect.x = 31.0f;
+    test_effect_shared_parameters_compare_vconst(device, 4, &fvect, FALSE);
+    for (i = 5; i < 256; ++i)
+        test_effect_shared_parameters_compare_vconst(device, i, &fvect_filler, i < 7);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -6888,6 +7035,7 @@ START_TEST(effect)
     test_effect_shared_parameters(device);
     test_effect_large_address_aware_flag(device);
     test_effect_get_pass_desc(device);
+    test_effect_skip_constants(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
