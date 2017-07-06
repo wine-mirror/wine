@@ -4034,7 +4034,7 @@ static void test_GetNamedSecurityInfoA(void)
         if (bret) admins_ace_id = i;
     }
     ok(users_ace_id != -1 || broken(users_ace_id == -1) /* win2k */,
-       "Bultin Users ACE not found.\n");
+       "Builtin Users ACE not found.\n");
     if (users_ace_id != -1)
     {
         bret = pGetAce(pDacl, users_ace_id, (VOID **)&ace);
@@ -4051,7 +4051,7 @@ static void test_GetNamedSecurityInfoA(void)
            "Builtin Users ACE has unexpected mask (0x%x != 0x%x)\n",
                                       ace->Mask, GENERIC_READ);
     }
-    ok(admins_ace_id != -1, "Bultin Admins ACE not found.\n");
+    ok(admins_ace_id != -1, "Builtin Admins ACE not found.\n");
     if (admins_ace_id != -1)
     {
         bret = pGetAce(pDacl, admins_ace_id, (VOID **)&ace);
