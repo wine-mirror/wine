@@ -2176,9 +2176,17 @@ static void test_TreatAsClass(void)
         win_skip("CoGetTreatAsClass not present\n");
         return;
     }
+
     hr = pCoGetTreatAsClass(&deadbeef,&out);
     ok (hr == S_FALSE, "expected S_FALSE got %x\n",hr);
     ok (IsEqualGUID(&out,&deadbeef), "expected to get same clsid back\n");
+
+    hr = pCoGetTreatAsClass(NULL, &out);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got %08x\n", hr);
+    ok(IsEqualGUID(&out, &deadbeef), "expected no change to the clsid\n");
+
+    hr = pCoGetTreatAsClass(&deadbeef, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got %08x\n", hr);
 
     lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "CLSID", 0, KEY_READ, &clsidkey);
     ok(!lr, "Couldn't open CLSID key, error %d\n", lr);

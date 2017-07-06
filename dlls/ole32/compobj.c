@@ -3825,6 +3825,10 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID clsidNew)
     LONG len = sizeof(szClsidNew);
 
     TRACE("(%s,%p)\n", debugstr_guid(clsidOld), clsidNew);
+
+    if (!clsidOld || !clsidNew)
+        return E_INVALIDARG;
+
     *clsidNew = *clsidOld; /* copy over old value */
 
     res = COM_OpenKeyForCLSID(clsidOld, wszTreatAs, KEY_READ, &hkey);
