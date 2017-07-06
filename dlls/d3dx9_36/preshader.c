@@ -618,10 +618,6 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
     D3DXHANDLE hc;
     unsigned int i;
 
-    out->inputs = cdesc = NULL;
-    out->inputs_param = NULL;
-    out->input_count = 0;
-    inputs_param = NULL;
     hr = D3DXGetShaderConstantTable(byte_code, &ctab);
     if (FAILED(hr) || !ctab)
     {
@@ -635,8 +631,8 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
         goto err_out;
     }
 
-    cdesc = HeapAlloc(GetProcessHeap(), 0, sizeof(*cdesc) * desc.Constants);
-    inputs_param = HeapAlloc(GetProcessHeap(), 0, sizeof(*inputs_param) * desc.Constants);
+    out->inputs = cdesc = HeapAlloc(GetProcessHeap(), 0, sizeof(*cdesc) * desc.Constants);
+    out->inputs_param = inputs_param = HeapAlloc(GetProcessHeap(), 0, sizeof(*inputs_param) * desc.Constants);
     if (!cdesc || !inputs_param)
     {
         hr = E_OUTOFMEMORY;
@@ -678,16 +674,9 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
         }
     }
     out->input_count = desc.Constants;
-    out->inputs = cdesc;
-    out->inputs_param = inputs_param;
     hr = init_set_constants(out, ctab);
-    ID3DXConstantTable_Release(ctab);
-    return hr;
 err_out:
-    HeapFree(GetProcessHeap(), 0, cdesc);
-    HeapFree(GetProcessHeap(), 0, inputs_param);
-    if (ctab)
-        ID3DXConstantTable_Release(ctab);
+    ID3DXConstantTable_Release(ctab);
     return hr;
 }
 
