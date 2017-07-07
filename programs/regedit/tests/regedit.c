@@ -494,11 +494,28 @@ static void test_basic_import(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
-                    "\"Wine17\"=hex(7):4c,69,6e,65,20,\\");
-    lr = RegQueryValueExA(hkey, "Wine17", NULL, NULL, NULL, NULL);
-    ok(lr == ERROR_SUCCESS || broken(lr == ERROR_FILE_NOT_FOUND) /* WinXP */, "got %u, expected 0\n", lr);
-    if (lr == ERROR_SUCCESS)
-        verify_reg(hkey, "Wine17", REG_MULTI_SZ, "Line ", 6, TODO_REG_SIZE | TODO_REG_DATA);
+                    "\"Wine17a\"=hex(0):56,61,6c,75,65,\\");
+    verify_reg(hkey, "Wine17a", REG_NONE, "Value", 5, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine17b\"=hex(2):25,50,41,54,48,25,\\");
+    verify_reg(hkey, "Wine17b", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE | TODO_REG_DATA);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine17c\"=hex:11,22,33,44,55,\\");
+    verify_reg(hkey, "Wine17c", REG_BINARY, hex, 5, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine17d\"=hex(7):4c,69,6e,65,\\");
+    verify_reg(hkey, "Wine17d", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE | TODO_REG_DATA);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine17e\"=hex(100):56,61,6c,75,65,\\");
+    verify_reg(hkey, "Wine17e", 0x100, "Value", 5, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
