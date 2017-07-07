@@ -1564,9 +1564,7 @@ BOOL import_registry_file(FILE *reg_file)
     if (parser.reg_version == REG_VERSION_FUZZY || parser.reg_version == REG_VERSION_INVALID)
         return parser.reg_version == REG_VERSION_FUZZY;
 
-    if (parser.value_name)
-        HeapFree(GetProcessHeap(), 0, parser.value_name);
-
+    HeapFree(GetProcessHeap(), 0, parser.value_name);
     close_key(&parser);
 
     return TRUE;
