@@ -333,8 +333,17 @@ UINT MSI_RecordSetInteger( MSIRECORD *rec, UINT iField, int iVal )
         return ERROR_INVALID_PARAMETER;
 
     MSI_FreeField( &rec->fields[iField] );
-    rec->fields[iField].type = MSIFIELD_INT;
-    rec->fields[iField].u.iVal = iVal;
+
+    if (iVal == MSI_NULL_INTEGER)
+    {
+        rec->fields[iField].type = MSIFIELD_NULL;
+        rec->fields[iField].u.szwVal = NULL;
+    }
+    else
+    {
+        rec->fields[iField].type = MSIFIELD_INT;
+        rec->fields[iField].u.iVal = iVal;
+    }
 
     return ERROR_SUCCESS;
 }
