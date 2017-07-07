@@ -1264,7 +1264,7 @@ BOOL CDECL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO
         surface = NULL;
     }
 
-    if (!surface || memcmp( &surface->rect, &rect, sizeof(RECT) ))
+    if (!surface || !EqualRect( &surface->rect, &rect ))
     {
         data->surface = create_surface( data->hwnd, &rect, 255, color_key, TRUE );
         if (surface) window_surface_release( surface );
