@@ -800,6 +800,7 @@ extern void msi_free_patchinfo( MSIPATCHINFO *patch ) DECLSPEC_HIDDEN;
 
 /* action internals */
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR ) DECLSPEC_HIDDEN;
+extern UINT ACTION_ShowDialog( MSIPACKAGE*, LPCWSTR) DECLSPEC_HIDDEN;
 extern UINT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR) DECLSPEC_HIDDEN;
 extern UINT ACTION_ForceReboot(MSIPACKAGE *package) DECLSPEC_HIDDEN;
 extern UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable ) DECLSPEC_HIDDEN;

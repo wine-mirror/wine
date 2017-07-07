@@ -6917,371 +6917,378 @@ msgstr "Действие завершилось %s: [1]. Код возврата
 msgid "=== Logging started: %s  %s ==="
 msgstr "=== Протоколирование запущено: %s  %s ==="
 
-#: msi.rc:87
+#: msi.rc:82
+msgid ""
+"The installer has encountered an unexpected error installing this package. "
+"This may indicate a problem with this package. The error code is [1]. {{The "
+"arguments are: [2], [3], [4]}}"
+msgstr ""
+
+#: msi.rc:88
 msgid "Allocating registry space"
 msgstr "Выделение места под данные реестра"
 
-#: msi.rc:88
+#: msi.rc:89
 msgid "Searching for installed applications"
 msgstr "Поиск установленных приложений"
 
-#: msi.rc:89
+#: msi.rc:90
 msgid "Binding executables"
 msgstr "Связывание исполняемых файлов"
 
-#: msi.rc:90 msi.rc:133
+#: msi.rc:91 msi.rc:134
 msgid "Searching for qualifying products"
 msgstr "Поиск подходящих продуктов"
 
-#: msi.rc:91 msi.rc:92 msi.rc:97
+#: msi.rc:92 msi.rc:93 msi.rc:98
 msgid "Computing space requirements"
 msgstr "Оценка требуемого места на диске"
 
-#: msi.rc:93
+#: msi.rc:94
 msgid "Creating folders"
 msgstr "Создание папок"
 
-#: msi.rc:94
+#: msi.rc:95
 msgid "Creating shortcuts"
 msgstr "Создание ярлыков"
 
-#: msi.rc:95
+#: msi.rc:96
 msgid "Deleting services"
 msgstr "Удаление сервисов"
 
-#: msi.rc:96
+#: msi.rc:97
 msgid "Creating duplicate files"
 msgstr "Создание дупликатов"
 
-#: msi.rc:98
+#: msi.rc:99
 msgid "Searching for related applications"
 msgstr "Поиск связанных приложений"
 
-#: msi.rc:99
+#: msi.rc:100
 msgid "Copying network install files"
 msgstr "Копирование файлов сетевой установки"
 
-#: msi.rc:100
+#: msi.rc:101
 msgid "Copying new files"
 msgstr "Копирование новых файлов"
 
-#: msi.rc:101
+#: msi.rc:102
 msgid "Installing ODBC components"
 msgstr "Установка компонентов ODBC"
 
-#: msi.rc:102
+#: msi.rc:103
 msgid "Installing new services"
 msgstr "Установка новых сервисов"
 
-#: msi.rc:103
+#: msi.rc:104
 msgid "Installing system catalog"
 msgstr "Установка системного каталога"
 
-#: msi.rc:104
+#: msi.rc:105
 msgid "Validating install"
 msgstr "Проверка установки"
 
-#: msi.rc:105
+#: msi.rc:106
 msgid "Evaluating launch conditions"
 msgstr "вычисление условий запуска"
 
-#: msi.rc:106
+#: msi.rc:107
 msgid "Migrating feature states from related applications"
 msgstr "Миграция состояний компонентов "
 
-#: msi.rc:107
+#: msi.rc:108
 msgid "Moving files"
 msgstr "Перемещение файлов"
 
-#: msi.rc:108
+#: msi.rc:109
 msgid "Publishing assembly information"
 msgstr "Публикация информации о сборках"
 
-#: msi.rc:109
+#: msi.rc:110
 msgid "Unpublishing assembly information"
 msgstr "Удаление информации о сборке"
 
-#: msi.rc:110
+#: msi.rc:111
 msgid "Patching files"
 msgstr "Применение патчей"
 
-#: msi.rc:111
+#: msi.rc:112
 msgid "Updating component registration"
 msgstr "Обновление данных регистрации компонентов"
 
-#: msi.rc:112
+#: msi.rc:113
 msgid "Publishing Qualified Components"
 msgstr "Публикация компонентов"
 
-#: msi.rc:113
+#: msi.rc:114
 msgid "Publishing Product Features"
 msgstr "Публикация компонентов продукта"
 
-#: msi.rc:114
+#: msi.rc:115
 msgid "Publishing product information"
 msgstr "Публикация информации о продукте"
 
-#: msi.rc:115
+#: msi.rc:116
 msgid "Registering Class servers"
 msgstr "Регистрация серверов"
 
-#: msi.rc:116
+#: msi.rc:117
 msgid "Registering COM+ Applications and Components"
 msgstr "Регистрация приложений и компонентов COM+"
 
-#: msi.rc:117
+#: msi.rc:118
 msgid "Registering extension servers"
 msgstr "Регистрация серверов расширений"
 
-#: msi.rc:118
+#: msi.rc:119
 msgid "Registering fonts"
 msgstr "Установка шрифтов"
 
-#: msi.rc:119
+#: msi.rc:120
 msgid "Registering MIME info"
 msgstr "Регистрация MIME"
 
-#: msi.rc:120
+#: msi.rc:121
 msgid "Registering product"
 msgstr "Регистрация продукта"
 
-#: msi.rc:121
+#: msi.rc:122
 msgid "Registering program identifiers"
 msgstr "Регистрация идентификаторов программ"
 
-#: msi.rc:122
+#: msi.rc:123
 msgid "Registering type libraries"
 msgstr "Регистрация библиотек типов"
 
-#: msi.rc:123
+#: msi.rc:124
 msgid "Registering user"
 msgstr "Регистрация пользователя"
 
-#: msi.rc:124
+#: msi.rc:125
 msgid "Removing duplicated files"
 msgstr "Удаление дубликатов файлов"
 
-#: msi.rc:125 msi.rc:149
+#: msi.rc:126 msi.rc:150
 msgid "Updating environment strings"
 msgstr "Обновление переменных окружения"
 
-#: msi.rc:126
+#: msi.rc:127
 msgid "Removing applications"
 msgstr "Удаление приложений"
 
-#: msi.rc:127
+#: msi.rc:128
 msgid "Removing files"
 msgstr "Удаление файлов"
 
-#: msi.rc:128
+#: msi.rc:129
 msgid "Removing folders"
 msgstr "Удаление папок"
 
-#: msi.rc:129
+#: msi.rc:130
 msgid "Removing INI files entries"
 msgstr "Удаление записей в INI файлах"
 
-#: msi.rc:130
+#: msi.rc:131
 msgid "Removing ODBC components"
 msgstr "Удаление компонентов ODBC"
 
-#: msi.rc:131
+#: msi.rc:132
 msgid "Removing system registry values"
 msgstr "Удаление параметров реестра"
 
-#: msi.rc:132
+#: msi.rc:133
 msgid "Removing shortcuts"
 msgstr "Удаление ярлыков"
 
-#: msi.rc:134
+#: msi.rc:135
 msgid "Registering modules"
 msgstr "Регистрация модулей"
 
-#: msi.rc:135
+#: msi.rc:136
 msgid "Unregistering modules"
 msgstr "Удаление регистрационных данных модулей"
 
-#: msi.rc:136
+#: msi.rc:137
 msgid "Initializing ODBC directories"
 msgstr "Инициализация директорий ODBC"
 
-#: msi.rc:137
+#: msi.rc:138
 msgid "Starting services"
 msgstr "Запуск сервисов"
 
-#: msi.rc:138
+#: msi.rc:139
 msgid "Stopping services"
 msgstr "Остановка сервисов"
 
-#: msi.rc:139
+#: msi.rc:140
 msgid "Unpublishing Qualified Components"
 msgstr "Удаление информации об опубликованных компонентах"
 
-#: msi.rc:140
+#: msi.rc:141
 msgid "Unpublishing Product Features"
 msgstr "Удаление информации об опубликованных компонентах продукта"
 
-#: msi.rc:141
+#: msi.rc:142
 msgid "Unpublishing product information"
 msgstr "Удаление информации об опубликованном продукте"
 
-#: msi.rc:142
+#: msi.rc:143
 msgid "Unregister Class servers"
 msgstr "Удаление регистрационных данных серверов"
 
-#: msi.rc:143
+#: msi.rc:144
 msgid "Unregistering COM+ Applications and Components"
 msgstr "Удаление регистрационных данных приложений и компонентов COM+"
 
-#: msi.rc:144
+#: msi.rc:145
 msgid "Unregistering extension servers"
 msgstr "Удаление регистрационных данных серверов расширений"
 
-#: msi.rc:145
+#: msi.rc:146
 msgid "Unregistering fonts"
 msgstr "Удаление шрифтов"
 
-#: msi.rc:146
+#: msi.rc:147
 msgid "Unregistering MIME info"
 msgstr "Удаление данных MIME"
 
-#: msi.rc:147
+#: msi.rc:148
 msgid "Unregistering program identifiers"
 msgstr "Удаление идентификаторов программ"
 
-#: msi.rc:148
+#: msi.rc:149
 msgid "Unregistering type libraries"
 msgstr "Удаление регистрационных данных библиотек типов"
 
-#: msi.rc:150
+#: msi.rc:151
 msgid "Writing INI files values"
 msgstr "Запись данных в INI файлы"
 
-#: msi.rc:151
+#: msi.rc:152
 msgid "Writing system registry values"
 msgstr "Запись параметров реестра"
 
-#: msi.rc:157
+#: msi.rc:158
 msgid "Free space: [1]"
 msgstr "Свободное место: [1]"
 
-#: msi.rc:158
+#: msi.rc:159
 msgid "Property: [1], Signature: [2]"
 msgstr "Свойство: [1], Подпись: [2]"
 
-#: msi.rc:159
+#: msi.rc:160
 msgid "File: [1]"
 msgstr "Файл: [1]"
 
-#: msi.rc:160 msi.rc:187
+#: msi.rc:161 msi.rc:188
 msgid "Folder: [1]"
 msgstr "Папка: [1]"
 
-#: msi.rc:161 msi.rc:190
+#: msi.rc:162 msi.rc:191
 msgid "Shortcut: [1]"
 msgstr "Ярлык: [1]"
 
-#: msi.rc:162 msi.rc:193 msi.rc:194
+#: msi.rc:163 msi.rc:194 msi.rc:195
 msgid "Service: [1]"
 msgstr "Сервис: [1]"
 
-#: msi.rc:163 msi.rc:166 msi.rc:170
+#: msi.rc:164 msi.rc:167 msi.rc:171
 msgid "File: [1],  Directory: [9],  Size: [6]"
 msgstr "Файл: [1], Директория: [9], Размер: [6]"
 
-#: msi.rc:164
+#: msi.rc:165
 msgid "Found application: [1]"
 msgstr "Найдено приложение: [1]"
 
-#: msi.rc:165
+#: msi.rc:166
 msgid "File: [1], Directory: [9], Size: [6]"
 msgstr "Файл: [1], Директория: [9], Размер: [6]"
 
-#: msi.rc:167
+#: msi.rc:168
 msgid "Service: [2]"
 msgstr "Сервис: [2]"
 
-#: msi.rc:168
+#: msi.rc:169
 msgid "File: [1],  Dependencies: [2]"
 msgstr "Файл: [1],  Зависимости: [2]"
 
-#: msi.rc:169
+#: msi.rc:170
 msgid "Application: [1]"
 msgstr "Приложение: [1]"
 
-#: msi.rc:171 msi.rc:172
+#: msi.rc:172 msi.rc:173
 msgid "Application Context:[1], Assembly Name:[2]"
 msgstr "Контекст:[1], Имя сборки:[2]"
 
-#: msi.rc:173
+#: msi.rc:174
 msgid "File: [1],  Directory: [2],  Size: [3]"
 msgstr "Файл: [1],  Директория: [2],  Размер: [3]"
 
-#: msi.rc:174 msi.rc:195
+#: msi.rc:175 msi.rc:196
 msgid "Component ID: [1], Qualifier: [2]"
 msgstr "Код компонента: [1], Квалификатор: [2]"
 
-#: msi.rc:175 msi.rc:196
+#: msi.rc:176 msi.rc:197
 msgid "Feature: [1]"
 msgstr "Компонент: [1]"
 
-#: msi.rc:176 msi.rc:197
+#: msi.rc:177 msi.rc:198
 msgid "Class Id: [1]"
 msgstr "Class Id: [1]"
 
-#: msi.rc:177
+#: msi.rc:178
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
 msgstr "AppId: [1]{{, AppType: [2], Пользователи: [3], RSN: [4]}}"
 
-#: msi.rc:178 msi.rc:199
+#: msi.rc:179 msi.rc:200
 msgid "Extension: [1]"
 msgstr "Расширение: [1]"
 
-#: msi.rc:179 msi.rc:200
+#: msi.rc:180 msi.rc:201
 msgid "Font: [1]"
 msgstr "Шрифт: [1]"
 
-#: msi.rc:180 msi.rc:201
+#: msi.rc:181 msi.rc:202
 msgid "MIME Content Type: [1], Extension: [2]"
 msgstr "Тип MIME: [1], Расширение: [2]"
 
-#: msi.rc:181 msi.rc:202
+#: msi.rc:182 msi.rc:203
 msgid "ProgId: [1]"
 msgstr "ProgId: [1]"
 
-#: msi.rc:182 msi.rc:203
+#: msi.rc:183 msi.rc:204
 msgid "LibID: [1]"
 msgstr "LibID: [1]"
 
-#: msi.rc:183 msi.rc:186
+#: msi.rc:184 msi.rc:187
 msgid "File: [1], Directory: [9]"
 msgstr "Файл: [1], Директория: [9]"
 
-#: msi.rc:184 msi.rc:204
+#: msi.rc:185 msi.rc:205
 msgid "Name: [1], Value: [2], Action [3]"
 msgstr "Имя: [1], Значение: [2], Действие [3]"
 
-#: msi.rc:185
+#: msi.rc:186
 msgid "Application: [1], Command line: [2]"
 msgstr "Приложение: [1], Командная строка: [2]"
 
-#: msi.rc:188 msi.rc:205
+#: msi.rc:189 msi.rc:206
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
 msgstr "Файл: [1],  Секция: [2],  Ключ: [3], Значение: [4]"
 
-#: msi.rc:189
+#: msi.rc:190
 msgid "Key: [1], Name: [2]"
 msgstr "Ключ: [1], Имя: [2]"
 
-#: msi.rc:191 msi.rc:192
+#: msi.rc:192 msi.rc:193
 msgid "File: [1], Folder: [2]"
 msgstr "Файл: [1], Папка: [2]"
 
-#: msi.rc:198
+#: msi.rc:199
 msgid "AppId: [1]{{, AppType: [2]}}"
 msgstr "AppId: [1]{{, AppType: [2]}}"
 
-#: msi.rc:206
+#: msi.rc:207
 msgid "Key: [1], Name: [2], Value: [3]"
 msgstr "Ключ: [1], Имя: [2], Значение: [3]"
 

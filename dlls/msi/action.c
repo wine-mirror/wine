@@ -158,15 +158,17 @@ static const WCHAR szValidateProductID[] =
 static const WCHAR szWriteEnvironmentStrings[] =
     {'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
 
-static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action, LPCWSTR description, LPCWSTR template)
+static INT ui_actionstart(MSIPACKAGE *package, LPCWSTR action, LPCWSTR description, LPCWSTR template)
 {
     MSIRECORD *row = MSI_CreateRecord(3);
-    if (!row) return;
+    INT rc;
+    if (!row) return -1;
     MSI_RecordSetStringW(row, 1, action);
     MSI_RecordSetStringW(row, 2, description);
     MSI_RecordSetStringW(row, 3, template);
-    MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, row);
+    rc = MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, row);
     msiobj_release(&row->hdr);
+    return rc;
 }
 
 static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start, 
@@ -608,22 +610,26 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
 /********************************************************
  * ACTION helper functions and functions that perform the actions
  *******************************************************/
-static BOOL ACTION_HandleCustomAction( MSIPACKAGE *package, LPCWSTR action, UINT *rc, UINT script )
+static UINT ACTION_HandleCustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script)
 {
-    BOOL ret=FALSE;
     UINT arc;
+    INT uirc;
 
-    ui_actionstart(package, action, NULL, NULL);
+    uirc = ui_actionstart(package, action, NULL, NULL);
+    if (uirc == IDCANCEL)
+        return ERROR_INSTALL_USEREXIT;
     ui_actioninfo(package, action, TRUE, 0);
     arc = ACTION_CustomAction( package, action, script );
+
+    if (arc == ERROR_FUNCTION_NOT_CALLED && needs_ui_sequence(package))
+        arc = ACTION_ShowDialog(package, action);
+
+    if (arc == ERROR_INSTALL_USEREXIT) /* dialog UI returned -1 */
+        return ERROR_SUCCESS;
+
     ui_actioninfo(package, action, FALSE, arc);
 
-    if (arc != ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        *rc = arc;
-        ret = TRUE;
-    }
-    return ret;
+    return arc;
 }
 
 MSICOMPONENT *msi_get_loaded_component( MSIPACKAGE *package, const WCHAR *Component )
@@ -7771,9 +7777,9 @@ StandardActions[] =
     { 0 }
 };
 
-static BOOL ACTION_HandleStandardAction( MSIPACKAGE *package, LPCWSTR action, UINT *rc )
+static UINT ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action)
 {
-    BOOL ret = FALSE;
+    UINT rc = ERROR_FUNCTION_NOT_CALLED;
     UINT i;
 
     i = 0;
@@ -7792,8 +7798,8 @@ static BOOL ACTION_HandleStandardAction( MSIPACKAGE *package, LPCWSTR action, UI
             if (StandardActions[i].handler)
             {
                 ui_actioninfo( package, action, TRUE, 0 );
-                *rc = StandardActions[i].handler( package );
-                ui_actioninfo( package, action, FALSE, *rc );
+                rc = StandardActions[i].handler( package );
+                ui_actioninfo( package, action, FALSE, rc );
 
                 if (StandardActions[i].action_rollback && !package->need_rollback)
                 {
@@ -7804,58 +7810,46 @@ static BOOL ACTION_HandleStandardAction( MSIPACKAGE *package, LPCWSTR action, UI
             else
             {
                 FIXME("unhandled standard action %s\n", debugstr_w(action));
-                *rc = ERROR_SUCCESS;
+                rc = ERROR_SUCCESS;
             }
-            ret = TRUE;
             break;
         }
         i++;
     }
-    return ret;
+    return rc;
 }
 
 UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script)
 {
-    UINT rc = ERROR_SUCCESS;
-    BOOL handled;
+    UINT rc;
 
     TRACE("Performing action (%s)\n", debugstr_w(action));
 
-    handled = ACTION_HandleStandardAction(package, action, &rc);
+    rc = ACTION_HandleStandardAction(package, action);
 
-    if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc, script);
+    if (rc == ERROR_FUNCTION_NOT_CALLED)
+        rc = ACTION_HandleCustomAction(package, action, script);
 
-    if (!handled)
-    {
+    if (rc == ERROR_FUNCTION_NOT_CALLED)
         WARN("unhandled msi action %s\n", debugstr_w(action));
-        rc = ERROR_FUNCTION_NOT_CALLED;
-    }
 
     return rc;
 }
 
 UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT script)
 {
-    UINT rc = ERROR_SUCCESS;
-    BOOL handled = FALSE;
+    UINT rc;
 
     TRACE("Performing action (%s)\n", debugstr_w(action));
 
     package->action_progress_increment = 0;
-    handled = ACTION_HandleStandardAction(package, action, &rc);
+    rc = ACTION_HandleStandardAction(package, action);
 
-    if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc, script);
+    if (rc == ERROR_FUNCTION_NOT_CALLED)
+        rc = ACTION_HandleCustomAction(package, action, script);
 
-    if( !handled && ACTION_DialogBox(package, action) == ERROR_SUCCESS )
-        handled = TRUE;
-
-    if (!handled)
-    {
+    if (rc == ERROR_FUNCTION_NOT_CALLED)
         WARN("unhandled msi action %s\n", debugstr_w(action));
-        rc = ERROR_FUNCTION_NOT_CALLED;
-    }
 
     return rc;
 }

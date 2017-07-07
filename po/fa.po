@@ -6894,384 +6894,391 @@ msgstr ""
 msgid "=== Logging started: %s  %s ==="
 msgstr ""
 
-#: msi.rc:87
-msgid "Allocating registry space"
+#: msi.rc:82
+msgid ""
+"The installer has encountered an unexpected error installing this package. "
+"This may indicate a problem with this package. The error code is [1]. {{The "
+"arguments are: [2], [3], [4]}}"
 msgstr ""
 
 #: msi.rc:88
-msgid "Searching for installed applications"
+msgid "Allocating registry space"
 msgstr ""
 
 #: msi.rc:89
+msgid "Searching for installed applications"
+msgstr ""
+
+#: msi.rc:90
 msgid "Binding executables"
 msgstr ""
 
-#: msi.rc:90 msi.rc:133
+#: msi.rc:91 msi.rc:134
 #, fuzzy
 msgid "Searching for qualifying products"
 msgstr "انتخاب &همه\tCtrl+A"
 
-#: msi.rc:91 msi.rc:92 msi.rc:97
+#: msi.rc:92 msi.rc:93 msi.rc:98
 msgid "Computing space requirements"
 msgstr ""
 
-#: msi.rc:93
+#: msi.rc:94
 #, fuzzy
 msgid "Creating folders"
 msgstr "&پرونده.\n"
 
-#: msi.rc:94
+#: msi.rc:95
 msgid "Creating shortcuts"
 msgstr ""
 
-#: msi.rc:95
+#: msi.rc:96
 msgid "Deleting services"
 msgstr ""
 
-#: msi.rc:96
+#: msi.rc:97
 msgid "Creating duplicate files"
 msgstr ""
 
-#: msi.rc:98
+#: msi.rc:99
 #, fuzzy
 msgid "Searching for related applications"
 msgstr "انتخاب &همه\tCtrl+A"
 
-#: msi.rc:99
+#: msi.rc:100
 msgid "Copying network install files"
 msgstr ""
 
-#: msi.rc:100
+#: msi.rc:101
 msgid "Copying new files"
 msgstr ""
 
-#: msi.rc:101
+#: msi.rc:102
 msgid "Installing ODBC components"
 msgstr ""
 
-#: msi.rc:102
+#: msi.rc:103
 msgid "Installing new services"
 msgstr ""
 
-#: msi.rc:103
+#: msi.rc:104
 msgid "Installing system catalog"
 msgstr ""
 
-#: msi.rc:104
+#: msi.rc:105
 msgid "Validating install"
 msgstr ""
 
-#: msi.rc:105
+#: msi.rc:106
 msgid "Evaluating launch conditions"
 msgstr ""
 
-#: msi.rc:106
+#: msi.rc:107
 msgid "Migrating feature states from related applications"
 msgstr ""
 
-#: msi.rc:107
+#: msi.rc:108
 #, fuzzy
 msgid "Moving files"
 msgstr "&پرونده"
 
-#: msi.rc:108
+#: msi.rc:109
 #, fuzzy
 msgid "Publishing assembly information"
 msgstr "اطلاعات"
 
-#: msi.rc:109
+#: msi.rc:110
 msgid "Unpublishing assembly information"
 msgstr ""
 
-#: msi.rc:110
+#: msi.rc:111
 #, fuzzy
 msgid "Patching files"
 msgstr "&پرونده"
 
-#: msi.rc:111
+#: msi.rc:112
 msgid "Updating component registration"
 msgstr ""
 
-#: msi.rc:112
+#: msi.rc:113
 msgid "Publishing Qualified Components"
 msgstr ""
 
-#: msi.rc:113
+#: msi.rc:114
 msgid "Publishing Product Features"
 msgstr ""
 
-#: msi.rc:114
+#: msi.rc:115
 #, fuzzy
 msgid "Publishing product information"
 msgstr "اطلاعات"
 
-#: msi.rc:115
+#: msi.rc:116
 msgid "Registering Class servers"
 msgstr ""
 
-#: msi.rc:116
+#: msi.rc:117
 msgid "Registering COM+ Applications and Components"
 msgstr ""
 
-#: msi.rc:117
+#: msi.rc:118
 msgid "Registering extension servers"
 msgstr ""
 
-#: msi.rc:118
+#: msi.rc:119
 msgid "Registering fonts"
 msgstr ""
 
-#: msi.rc:119
+#: msi.rc:120
 msgid "Registering MIME info"
 msgstr ""
 
-#: msi.rc:120
+#: msi.rc:121
 #, fuzzy
 msgid "Registering product"
 msgstr "پرونده‌های متنی (*.txt).\n"
 
-#: msi.rc:121
+#: msi.rc:122
 msgid "Registering program identifiers"
 msgstr ""
 
-#: msi.rc:122
+#: msi.rc:123
 msgid "Registering type libraries"
 msgstr ""
 
-#: msi.rc:123
+#: msi.rc:124
 msgid "Registering user"
 msgstr ""
 
-#: msi.rc:124
+#: msi.rc:125
 msgid "Removing duplicated files"
 msgstr ""
 
-#: msi.rc:125 msi.rc:149
+#: msi.rc:126 msi.rc:150
 msgid "Updating environment strings"
 msgstr ""
 
-#: msi.rc:126
+#: msi.rc:127
 msgid "Removing applications"
 msgstr ""
 
-#: msi.rc:127
+#: msi.rc:128
 #, fuzzy
 msgid "Removing files"
 msgstr "&پرونده"
 
-#: msi.rc:128
+#: msi.rc:129
 msgid "Removing folders"
 msgstr ""
 
-#: msi.rc:129
+#: msi.rc:130
 msgid "Removing INI files entries"
 msgstr ""
 
-#: msi.rc:130
+#: msi.rc:131
 msgid "Removing ODBC components"
 msgstr ""
 
-#: msi.rc:131
+#: msi.rc:132
 #, fuzzy
 msgid "Removing system registry values"
 msgstr "پرونده‌های متنی (*.txt).\n"
 
-#: msi.rc:132
+#: msi.rc:133
 msgid "Removing shortcuts"
 msgstr ""
 
-#: msi.rc:134
+#: msi.rc:135
 msgid "Registering modules"
 msgstr ""
 
-#: msi.rc:135
+#: msi.rc:136
 msgid "Unregistering modules"
 msgstr ""
 
-#: msi.rc:136
+#: msi.rc:137
 msgid "Initializing ODBC directories"
 msgstr ""
 
-#: msi.rc:137
+#: msi.rc:138
 msgid "Starting services"
 msgstr ""
 
-#: msi.rc:138
+#: msi.rc:139
 msgid "Stopping services"
 msgstr ""
 
-#: msi.rc:139
+#: msi.rc:140
 msgid "Unpublishing Qualified Components"
 msgstr ""
 
-#: msi.rc:140
+#: msi.rc:141
 msgid "Unpublishing Product Features"
 msgstr ""
 
-#: msi.rc:141
+#: msi.rc:142
 #, fuzzy
 msgid "Unpublishing product information"
 msgstr "اطلاعات"
 
-#: msi.rc:142
+#: msi.rc:143
 msgid "Unregister Class servers"
 msgstr ""
 
-#: msi.rc:143
+#: msi.rc:144
 msgid "Unregistering COM+ Applications and Components"
 msgstr ""
 
-#: msi.rc:144
+#: msi.rc:145
 msgid "Unregistering extension servers"
 msgstr ""
 
-#: msi.rc:145
+#: msi.rc:146
 msgid "Unregistering fonts"
 msgstr ""
 
-#: msi.rc:146
+#: msi.rc:147
 msgid "Unregistering MIME info"
 msgstr ""
 
-#: msi.rc:147
+#: msi.rc:148
 msgid "Unregistering program identifiers"
 msgstr ""
 
-#: msi.rc:148
+#: msi.rc:149
 msgid "Unregistering type libraries"
 msgstr ""
 
-#: msi.rc:150
+#: msi.rc:151
 msgid "Writing INI files values"
 msgstr ""
 
-#: msi.rc:151
+#: msi.rc:152
 msgid "Writing system registry values"
 msgstr ""
 
-#: msi.rc:157
+#: msi.rc:158
 msgid "Free space: [1]"
 msgstr ""
 
-#: msi.rc:158
+#: msi.rc:159
 msgid "Property: [1], Signature: [2]"
 msgstr ""
 
-#: msi.rc:159
+#: msi.rc:160
 #, fuzzy
 msgid "File: [1]"
 msgstr "&پرونده"
 
-#: msi.rc:160 msi.rc:187
+#: msi.rc:161 msi.rc:188
 msgid "Folder: [1]"
 msgstr ""
 
-#: msi.rc:161 msi.rc:190
+#: msi.rc:162 msi.rc:191
 msgid "Shortcut: [1]"
 msgstr ""
 
-#: msi.rc:162 msi.rc:193 msi.rc:194
+#: msi.rc:163 msi.rc:194 msi.rc:195
 msgid "Service: [1]"
 msgstr ""
 
-#: msi.rc:163 msi.rc:166 msi.rc:170
+#: msi.rc:164 msi.rc:167 msi.rc:171
 msgid "File: [1],  Directory: [9],  Size: [6]"
 msgstr ""
 
-#: msi.rc:164
+#: msi.rc:165
 msgid "Found application: [1]"
 msgstr ""
 
-#: msi.rc:165
+#: msi.rc:166
 msgid "File: [1], Directory: [9], Size: [6]"
 msgstr ""
 
-#: msi.rc:167
+#: msi.rc:168
 msgid "Service: [2]"
 msgstr ""
 
-#: msi.rc:168
+#: msi.rc:169
 msgid "File: [1],  Dependencies: [2]"
 msgstr ""
 
-#: msi.rc:169
+#: msi.rc:170
 msgid "Application: [1]"
 msgstr ""
 
-#: msi.rc:171 msi.rc:172
+#: msi.rc:172 msi.rc:173
 msgid "Application Context:[1], Assembly Name:[2]"
 msgstr ""
 
-#: msi.rc:173
+#: msi.rc:174
 msgid "File: [1],  Directory: [2],  Size: [3]"
 msgstr ""
 
-#: msi.rc:174 msi.rc:195
+#: msi.rc:175 msi.rc:196
 msgid "Component ID: [1], Qualifier: [2]"
 msgstr ""
 
-#: msi.rc:175 msi.rc:196
+#: msi.rc:176 msi.rc:197
 msgid "Feature: [1]"
 msgstr ""
 
-#: msi.rc:176 msi.rc:197
+#: msi.rc:177 msi.rc:198
 msgid "Class Id: [1]"
 msgstr ""
 
-#: msi.rc:177
+#: msi.rc:178
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
 msgstr ""
 
-#: msi.rc:178 msi.rc:199
+#: msi.rc:179 msi.rc:200
 msgid "Extension: [1]"
 msgstr ""
 
-#: msi.rc:179 msi.rc:200
+#: msi.rc:180 msi.rc:201
 #, fuzzy
 msgid "Font: [1]"
 msgstr "&قلم‌ها..."
 
-#: msi.rc:180 msi.rc:201
+#: msi.rc:181 msi.rc:202
 msgid "MIME Content Type: [1], Extension: [2]"
 msgstr ""
 
-#: msi.rc:181 msi.rc:202
+#: msi.rc:182 msi.rc:203
 msgid "ProgId: [1]"
 msgstr ""
 
-#: msi.rc:182 msi.rc:203
+#: msi.rc:183 msi.rc:204
 msgid "LibID: [1]"
 msgstr ""
 
-#: msi.rc:183 msi.rc:186
+#: msi.rc:184 msi.rc:187
 msgid "File: [1], Directory: [9]"
 msgstr ""
 
-#: msi.rc:184 msi.rc:204
+#: msi.rc:185 msi.rc:205
 msgid "Name: [1], Value: [2], Action [3]"
 msgstr ""
 
-#: msi.rc:185
+#: msi.rc:186
 msgid "Application: [1], Command line: [2]"
 msgstr ""
 
-#: msi.rc:188 msi.rc:205
+#: msi.rc:189 msi.rc:206
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
 msgstr ""
 
-#: msi.rc:189
+#: msi.rc:190
 msgid "Key: [1], Name: [2]"
 msgstr ""
 
-#: msi.rc:191 msi.rc:192
+#: msi.rc:192 msi.rc:193
 msgid "File: [1], Folder: [2]"
 msgstr ""
 
-#: msi.rc:198
+#: msi.rc:199
 msgid "AppId: [1]{{, AppType: [2]}}"
 msgstr ""
 
-#: msi.rc:206
+#: msi.rc:207
 msgid "Key: [1], Name: [2], Value: [3]"
 msgstr ""
 

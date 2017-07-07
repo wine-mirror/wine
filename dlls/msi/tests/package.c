@@ -642,6 +642,42 @@ static UINT create_custom_action_table( MSIHANDLE hdb )
             "PRIMARY KEY `Action`)" );
 }
 
+static UINT create_dialog_table( MSIHANDLE hdb )
+{
+    return run_query(hdb,
+            "CREATE TABLE `Dialog` ("
+            "`Dialog` CHAR(72) NOT NULL, "
+            "`HCentering` SHORT NOT NULL, "
+            "`VCentering` SHORT NOT NULL, "
+            "`Width` SHORT NOT NULL, "
+            "`Height` SHORT NOT NULL, "
+            "`Attributes` LONG, "
+            "`Title` CHAR(128) LOCALIZABLE, "
+            "`Control_First` CHAR(50) NOT NULL, "
+            "`Control_Default` CHAR(50), "
+            "`Control_Cancel` CHAR(50) "
+            "PRIMARY KEY `Dialog`)");
+}
+
+static UINT create_control_table( MSIHANDLE hdb )
+{
+    return run_query(hdb,
+            "CREATE TABLE `Control` ("
+            "`Dialog_` CHAR(72) NOT NULL, "
+            "`Control` CHAR(50) NOT NULL, "
+            "`Type` CHAR(20) NOT NULL, "
+            "`X` SHORT NOT NULL, "
+            "`Y` SHORT NOT NULL, "
+            "`Width` SHORT NOT NULL, "
+            "`Height` SHORT NOT NULL, "
+            "`Attributes` LONG, "
+            "`Property` CHAR(50), "
+            "`Text` CHAR(0) LOCALIZABLE, "
+            "`Control_Next` CHAR(50), "
+            "`Help` CHAR(255) LOCALIZABLE "
+            "PRIMARY KEY `Dialog_`, `Control`)");
+}
+
 #define make_add_entry(type, qtext) \
     static UINT add##_##type##_##entry( MSIHANDLE hdb, const char *values ) \
     { \
@@ -9330,6 +9366,40 @@ static const struct externalui_message doaction_custom_sequence[] = {
     {0}
 };
 
+static const struct externalui_message doaction_custom_fullui_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "custom", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_SHOWDIALOG, 0, {"custom"}, {1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", "1"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message doaction_dialog_nonexistent_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "custom", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", "1"}, {0, 1, 1}},
+    {INSTALLMESSAGE_SHOWDIALOG, 0, {"custom"}, {1}},
+    {INSTALLMESSAGE_INFO, 2, {"DEBUG: Error [1]:  Action not found: [2]", "2726", "custom"}, {1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "2726", "custom"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", "0"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message doaction_dialog_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "dialog", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "dialog", "0"}, {0, 1, 1}},
+    {INSTALLMESSAGE_SHOWDIALOG, 0, {"dialog"}, {1}},
+    {INSTALLMESSAGE_ACTIONSTART, 2, {"", "dialog", "Dialog created"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "dialog", "1"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message doaction_dialog_error_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "error", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "error", "1"}, {0, 1, 1}},
+    {INSTALLMESSAGE_SHOWDIALOG, 0, {"error"}, {1}},
+    {0}
+};
+
 static const struct externalui_message closehandle_sequence[] = {
     {INSTALLMESSAGE_TERMINATE, -1},
     {0}
@@ -9337,6 +9407,7 @@ static const struct externalui_message closehandle_sequence[] = {
 
 static INT CALLBACK externalui_message_string_callback(void *context, UINT message, LPCSTR string)
 {
+    INT retval = context ? *((INT *)context) : 0;
     struct externalui_message msg;
 
     msg.message = message;
@@ -9344,11 +9415,12 @@ static INT CALLBACK externalui_message_string_callback(void *context, UINT messa
     strcpy(msg.field[0], string);
     add_message(&msg);
 
-    return 1;
+    return retval;
 }
 
 static INT CALLBACK externalui_message_callback(void *context, UINT message, MSIHANDLE hrecord)
 {
+    INT retval = context ? *((INT *)context) : 0;
     struct externalui_message msg;
     char buffer[100];
     DWORD length = 100;
@@ -9372,7 +9444,7 @@ static INT CALLBACK externalui_message_callback(void *context, UINT message, MSI
 
     add_message(&msg);
 
-    return 1;
+    return retval;
 }
 
 static void test_externalui_message(void)
@@ -9381,11 +9453,14 @@ static void test_externalui_message(void)
 
     INSTALLUI_HANDLER_RECORD prev;
     MSIHANDLE hdb, hpkg;
+    INT retval = 1;
     UINT r;
 
+    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+
     /* processing SHOWDIALOG with a record handler causes a crash on XP */
-    MsiSetExternalUIA(externalui_message_string_callback, INSTALLLOGMODE_SHOWDIALOG, NULL);
-    r = pMsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS ^ INSTALLLOGMODE_SHOWDIALOG, NULL, &prev);
+    MsiSetExternalUIA(externalui_message_string_callback, INSTALLLOGMODE_SHOWDIALOG, &retval);
+    r = pMsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS ^ INSTALLLOGMODE_SHOWDIALOG, &retval, &prev);
 
     flush_sequence();
 
@@ -9427,6 +9502,53 @@ static void test_externalui_message(void)
     ok_sequence(doaction_custom_sequence, "MsiDoAction(\"custom\")", FALSE);
 
     /* close the package */
+    MsiCloseHandle(hpkg);
+    ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);
+
+    /* Test dialogs */
+    hdb = create_package_db();
+    ok(hdb, "failed to create database\n");
+
+    r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d", r);
+
+    r = create_dialog_table(hdb);
+    ok(r == ERROR_SUCCESS, "failed to create dialog table %u\n", r);
+    r = run_query(hdb, "INSERT INTO `Dialog` (`Dialog`, `HCentering`, "
+                  "`VCentering`, `Width`, `Height`, `Control_First`) "
+                  "VALUES ('dialog', 5, 5, 100, 100, 'dummy')");
+    ok(r == ERROR_SUCCESS, "failed to insert into dialog table %u\n", r);
+
+    r = create_control_table(hdb);
+    ok(r == ERROR_SUCCESS, "failed to create control table %u\n", r);
+    r = run_query(hdb, "INSERT INTO `Control` (`Dialog_`, `Control`, "
+                  "`Type`, `X`, `Y`, `Width`, `Height`) "
+                  "VALUES('dialog', 'dummy', 'Text', 5, 5, 5, 5)");
+    ok(r == ERROR_SUCCESS, "failed to insert into control table %u", r);
+
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
+    ok_sequence(openpackage_sequence, "MsiOpenPackage with valid db", TRUE);
+
+    /* Test a custom action */
+    r = MsiDoActionA(hpkg, "custom");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok_sequence(doaction_custom_fullui_sequence, "MsiDoAction(\"custom\")", TRUE);
+
+    retval = 0;
+    r = MsiDoActionA(hpkg, "custom");
+    ok(r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %d\n", r);
+    ok_sequence(doaction_dialog_nonexistent_sequence, "MsiDoAction(\"custom\")", TRUE);
+
+    r = MsiDoActionA(hpkg, "dialog");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok_sequence(doaction_dialog_sequence, "MsiDoAction(\"dialog\")", TRUE);
+
+    retval = -1;
+    r = MsiDoActionA(hpkg, "error");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok_sequence(doaction_dialog_error_sequence, "MsiDoAction(\"error\")", FALSE);
+
     MsiCloseHandle(hpkg);
     ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);
 
