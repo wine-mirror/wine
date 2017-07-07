@@ -208,6 +208,24 @@ struct d3drm_material
     struct color_rgb ambient;
 };
 
+struct d3drm_animation_key
+{
+    D3DVALUE time;
+    union
+    {
+        D3DVECTOR position;
+        D3DVECTOR scale;
+        D3DRMQUATERNION rotate;
+    } u;
+};
+
+struct d3drm_animation_keys
+{
+    struct d3drm_animation_key *keys;
+    SIZE_T count;
+    SIZE_T size;
+};
+
 struct d3drm_animation
 {
     struct d3drm_object obj;
@@ -217,6 +235,9 @@ struct d3drm_animation
     IDirect3DRM *d3drm;
     IDirect3DRMFrame3 *frame;
     D3DRMANIMATIONOPTIONS options;
+    struct d3drm_animation_keys position;
+    struct d3drm_animation_keys scale;
+    struct d3drm_animation_keys rotate;
 };
 
 struct d3drm_wrap
@@ -281,5 +302,7 @@ static inline void d3drm_set_color(D3DCOLOR *color, float r, float g, float b, f
     *color = RGBA_MAKE(d3drm_color_component(r), d3drm_color_component(g),
             d3drm_color_component(b), d3drm_color_component(a));
 }
+
+BOOL d3drm_array_reserve(void **elements, SIZE_T *capacity, SIZE_T element_count, SIZE_T element_size) DECLSPEC_HIDDEN;
 
 #endif /* __D3DRM_PRIVATE_INCLUDED__ */

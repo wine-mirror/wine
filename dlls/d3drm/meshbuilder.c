@@ -260,7 +260,7 @@ char templates[] = {
 "}"
 };
 
-static BOOL d3drm_array_reserve(void **elements, SIZE_T *capacity, SIZE_T element_count, SIZE_T element_size)
+BOOL d3drm_array_reserve(void **elements, SIZE_T *capacity, SIZE_T element_count, SIZE_T element_size)
 {
     SIZE_T new_capacity, max_capacity;
     void *new_elements;

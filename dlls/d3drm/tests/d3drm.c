@@ -6885,11 +6885,8 @@ static void test_animation(void)
 
     /* Key management. */
     hr = IDirect3DRMAnimation_AddPositionKey(animation, 0.0f, 1.0f, 0.0f, 0.0f);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to add position key, hr %#x.\n", hr);
 
-if (hr == S_OK)
-{
     hr = IDirect3DRMAnimation_AddScaleKey(animation, 0.0f, 1.0f, 2.0f, 1.0f);
     ok(SUCCEEDED(hr), "Failed to add scale key, hr %#x.\n", hr);
 
@@ -6940,6 +6937,8 @@ if (hr == S_OK)
     {
         ok(keys[i].dwSize == sizeof(*keys), "%u: unexpected dwSize value %u.\n", i, keys[i].dwSize);
 
+    todo_wine
+    {
         switch (keys[i].dwKeyType)
         {
         case D3DRMANIMATION_ROTATEKEY:
@@ -6954,6 +6953,7 @@ if (hr == S_OK)
         default:
             ok(0, "%u: unknown key type %d.\n", i, keys[i].dwKeyType);
         }
+    }
     }
 
     /* No keys in this range. */
@@ -6970,17 +6970,14 @@ if (hr == S_OK)
     count = 10;
     hr = IDirect3DRMAnimation2_GetKeys(animation2, 0.0f, 0.0f, &count, NULL);
     ok(SUCCEEDED(hr), "Failed to get animation keys, hr %#x.\n", hr);
-    ok(hr == S_OK, "Failed to get animation keys, hr %#x.\n", hr);
     ok(count == 4, "Unexpected key count %u.\n", count);
 
     hr = IDirect3DRMAnimation2_GetKeys(animation2, 0.0f, 100.0f, NULL, NULL);
     ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
 
     /* Time is 0-based. */
-    count = 123;
     hr = IDirect3DRMAnimation2_GetKeys(animation2, -100.0f, -50.0f, NULL, NULL);
     ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#x.\n", hr);
-    ok(count == 123, "Unexpected key count %u.\n", count);
 
     count = 10;
     hr = IDirect3DRMAnimation2_GetKeys(animation2, -100.0f, -50.0f, &count, NULL);
@@ -7018,7 +7015,7 @@ if (hr == S_OK)
     key.dwKeyType = D3DRMANIMATION_POSITIONKEY;
     hr = IDirect3DRMAnimation2_AddKey(animation2, &key);
     ok(SUCCEEDED(hr), "Failed to add key, hr %#x.\n", hr);
-}
+
     IDirect3DRMAnimation2_Release(animation2);
     IDirect3DRMAnimation_Release(animation);
 
