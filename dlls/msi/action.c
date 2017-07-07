@@ -189,7 +189,7 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     if (!row) return;
     MSI_RecordSetStringW(row, 0, message);
     MSI_RecordSetStringW(row, 1, action);
-    MSI_RecordSetInteger(row, 2, !rc);
+    MSI_RecordSetInteger(row, 2, start ? package->LastActionResult : !rc);
     MSI_ProcessMessage(package, INSTALLMESSAGE_INFO, row);
     msiobj_release(&row->hdr);
 }
@@ -628,6 +628,7 @@ static UINT ACTION_HandleCustomAction(MSIPACKAGE *package, LPCWSTR action, UINT 
         return ERROR_SUCCESS;
 
     ui_actioninfo(package, action, FALSE, arc);
+    package->LastActionResult = !arc;
 
     return arc;
 }
@@ -7800,6 +7801,7 @@ static UINT ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action)
                 ui_actioninfo( package, action, TRUE, 0 );
                 rc = StandardActions[i].handler( package );
                 ui_actioninfo( package, action, FALSE, rc );
+                package->LastActionResult = !rc;
 
                 if (StandardActions[i].action_rollback && !package->need_rollback)
                 {

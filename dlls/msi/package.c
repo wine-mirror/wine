@@ -1099,6 +1099,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 
         package->LastAction = NULL;
         package->LastActionTemplate = NULL;
+        package->LastActionResult = MSI_NULL_INTEGER;
         package->WordCount = 0;
         package->PackagePath = strdupW( db->path );
         package->BaseURL = strdupW( base_url );

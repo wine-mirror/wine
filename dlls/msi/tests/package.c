@@ -9536,7 +9536,7 @@ static void test_externalui_message(void)
     /* Test a standard action */
     r = MsiDoActionA(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok_sequence(doaction_costinitialize_sequence, "MsiDoAction(\"CostInitialize\")", TRUE);
+    ok_sequence(doaction_costinitialize_sequence, "MsiDoAction(\"CostInitialize\")", FALSE);
 
     /* Test a custom action */
     r = MsiDoActionA(hpkg, "custom");
@@ -9575,7 +9575,7 @@ static void test_externalui_message(void)
     /* Test a custom action */
     r = MsiDoActionA(hpkg, "custom");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok_sequence(doaction_custom_fullui_sequence, "MsiDoAction(\"custom\")", TRUE);
+    ok_sequence(doaction_custom_fullui_sequence, "MsiDoAction(\"custom\")", FALSE);
 
     retval = 0;
     r = MsiDoActionA(hpkg, "custom");
@@ -9584,9 +9584,13 @@ static void test_externalui_message(void)
 
     r = MsiDoActionA(hpkg, "dialog");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok_sequence(doaction_dialog_sequence, "MsiDoAction(\"dialog\")", TRUE);
+    ok_sequence(doaction_dialog_sequence, "MsiDoAction(\"dialog\")", FALSE);
 
     retval = -1;
+    r = MsiDoActionA(hpkg, "error");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok_sequence(doaction_dialog_error_sequence, "MsiDoAction(\"error\")", FALSE);
+
     r = MsiDoActionA(hpkg, "error");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok_sequence(doaction_dialog_error_sequence, "MsiDoAction(\"error\")", FALSE);

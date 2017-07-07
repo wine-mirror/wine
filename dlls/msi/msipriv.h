@@ -391,6 +391,7 @@ typedef struct tagMSIPACKAGE
     LPWSTR ActionFormat;
     LPWSTR LastAction;
     LPWSTR LastActionTemplate;
+    UINT   LastActionResult;
     UINT   action_progress_increment;
     HANDLE log_file;
     IAssemblyCache *cache_net[CLR_VERSION_MAX];
