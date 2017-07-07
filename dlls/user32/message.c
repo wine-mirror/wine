@@ -1871,7 +1871,6 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         if (is_desktop_window( hwnd )) return 0;
         return WIN_SetStyle(hwnd, wparam, lparam);
     case WM_WINE_SETACTIVEWINDOW:
-        if (is_desktop_window( hwnd )) return 0;
         if (!wparam && GetForegroundWindow() == hwnd) return 0;
         return (LRESULT)SetActiveWindow( (HWND)wparam );
     case WM_WINE_KEYBOARD_LL_HOOK:
@@ -2645,7 +2644,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
                 hwndTop = GetParent( hwndTop );
             }
 
-            if (hwndTop && hwndTop != GetDesktopWindow())
+            if (hwndTop)
             {
                 LONG ret = SendMessageW( msg->hwnd, WM_MOUSEACTIVATE, (WPARAM)hwndTop,
                                          MAKELONG( hittest, msg->message ) );
