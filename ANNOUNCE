@@ -1,17 +1,16 @@
-The Wine development release 2.11 is now available.
+The Wine development release 2.12 is now available.
 
 What's new in this release (see below for details):
-  - OpenGL support in the Android driver.
-  - Support for security labels.
-  - Relay debugging on ARM64.
-  - More dictionary support in WebServices.
-  - New registry file parser in RegEdit.
+  - Audio driver for Android.
+  - Some performance improvements with async I/O.
+  - More RegEdit file parser improvements.
+  - Beginnings for MSI user interface support.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/2.x/wine-2.11.tar.xz
-  http://mirrors.ibiblio.org/wine/source/2.x/wine-2.11.tar.xz
+  http://dl.winehq.org/wine/source/2.x/wine-2.12.tar.xz
+  http://mirrors.ibiblio.org/wine/source/2.x/wine-2.12.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -27,294 +26,311 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 2.11 (total 16):
+Bugs fixed in 2.12 (total 9):
 
-  11433  unimplemented function ole32.dll.OleGetIconOfFile
-  22776  Call of Duty: Modern Warfare 2 flickery textures in midrange background
-  27106  IMSSA EuroDEEM (VB6 app) fails on startup, reporting "Type MisMatch" error (VARIANT_Coerce: treat VT_NULL like VT_EMPTY when converting to VT_BSTR)
-  32233  Battlefield Bad Company 2 weapons/items hold by player distorted/invisible
-  33740  Sound Recorder displays error when seeking MP3 stream to the end
-  39909  4K display bug (3840x2160)
-  42140  "Unrecognized stencil op 0" messages flooding system log in Söldner Secret Wars
-  42910  Scrabble (Infogrames) multiplayer requires IDirectPlay4::EnumConnections
-  43084  PresentMon requires tdh.dll
-  43098  WarBR: game (WarS v5.5 p4) crashes on unimplemented function wmvcore.dll.WMCheckURLScheme when using native wmp.dll (WMP9)
-  43122  Retro Achievements Snes9x emulator crashes on start
-  43152  VistA GuiMail won't start, needs adsldpc.dll
-  43157  Adobe Premiere needs ntoskrnl.exe.KeAcquireSpinLockRaiseToDpc
-  43175  redefinition of typedef ‘ID2D1Image’ (gcc-4.2)
-  43216  winhttp fails to redirect from http to https on 301 error.
-  43220  Adobe Premiere needs ntoskrnl.exe.KeReleaseSpinLock
+  24723  Lost Horizon crash/page fault during Chapter 2
+  27656  Deus Ex: Human Revolution - Severe graphical glitches
+  35142  Lara Croft and the Guardian of Light: screen filled with artefacts when StrictDrawOrdering disabled
+  42014  Multiple apps crash on start due to missing support for LABEL_SECURITY_INFORMATION(affects BOSE SoundTouch, Spotify, Paltalk)
+  42597  Mouse wheel doesn't scroll in MyLifeOrganized
+  43123  compilation fails in dlls/d3dx9_36/tests with gcc 4.2.2
+  43231  Dai-Senryaku Perfect 3.0:Not draw background with GDI.
+  43257  winetricks -q art2kmin fails
+  43295  unimplemented function IPHLPAPI.DLL.if_nametoindex
 
 ----------------------------------------------------------------
 
-Changes since 2.10:
+Changes since 2.11:
 
-Alexandre Julliard (17):
-      wineandroid: Start in landscape mode and don't restart on config changes.
-      wineandroid: Store the actual screen DPI on startup.
-      include: Make socklen_t a define to avoid conflicting typedefs.
-      ws2_32: Use socklen_t where appropriate.
-      iphlpapi: Check if getifaddrs really exists.
-      wineandroid: Add a stub implementation of ChangeDisplaySettingsEx.
-      wineandroid: Add a stub implementation of EnumDisplaySettingsEx.
-      wineandroid: Support creating a separate native window for OpenGL rendering in the client area.
-      wineandroid: Add infrastructure to support a separate TextureView for the window client area.
-      wineandroid: Create window groups inside every window to support a client area.
-      wineandroid: Also create HWND_MESSAGE windows on the Java side.
-      configure: Add check for OpenGL ES libraries.
-      wineandroid: Initial version of the OpenGL driver.
-      wineandroid: Create a proper EGL window surface once we receive a surface from Java.
-      wineandroid: Implement wglCreateContextAttribsARB.
-      wineandroid: Implement wglMakeContextCurrentARB.
-      wineandroid: Implement wglSwapIntervalEXT.
+Akihiro Sagawa (3):
+      tools: Also ignore STATUS_WAIT_0.
+      tools: Support multiple error name tokens in a line.
+      ntdll/tests: Add more tests if we have real VM counters.
 
-Alistair Leslie-Hughes (9):
-      include/windocdec.idl: Add interface IWICImagingFactory2.
-      windowscodecs: Register WICImagingFactory2 interface.
-      oleaut32: Improve support for IDispatch in VarCat.
-      include/wmsdkidl.idl: Add IWMLanguageList, IWMReaderPlaylistBurn interfaces.
-      oledb32/tests: Add to DBTYPE_WSTR tests for GetConversionSize.
-      oledb32: Supply a default dst len in GetConversionSize.
-      oledb32: Add support for converting to W/STR types in GetConversionSize.
-      oledb32: Add FIXME for DBTYPE_NUMERIC type.
-      wmvcore: Support IWMReaderAccelerator in IWMReader.
+Alex Henrie (1):
+      ole32: Avoid null pointer dereferences in CoGetTreatAsClass.
 
-Andrey Gusev (4):
-      d3d11/tests: Fix a typo in ok() message.
-      api-ms-win-security-credentials-l1-1-0: Add dll.
-      api-ms-win-core-crt-l1-1-0: Add dll.
-      api-ms-win-core-crt-l2-1-0: Add dll.
+Alexandre Julliard (15):
+      libwine: Add a helper function to set the bin directory.
+      libwine: Add a helper function to set the dll directory.
+      libwine: Fall back to the WINELOADER path for the bin directory.
+      wineandroid: Fix handling of Caps Lock with non-alphabetic keys.
+      wineandroid: Work around the Android N restriction on loading libhardware.
+      wineandroid: Allow putting libraries in the native library directory.
+      secur32/tests: Add some braces to silence a clang warning.
+      ws2_32/tests: Print IP addresses as unsigned.
+      winetest: Don't require a tag or email address when only running a few tests.
+      server: Call the satisfied methods after removing the thread wait.
+      wineandroid: Forward the destroy window ioctl to Java even if the window was freed already.
+      wineandroid: Add networking permissions.
+      wineandroid: Support running binaries from the application directory.
+      user32: Scale cursor sizes with the screen DPI.
+      user32: Get rid of the Wine-specific OCR_DRAGOBJECT.
 
-André Hentschel (4):
-      winebuild: Emit relay debugging thunks for ARM64.
-      ntdll: Add support for relay debugging on ARM64.
-      include: Remove duplicate declaration of PFXVerifyPassword.
-      kernel32: Fix EscapeCommFunction prototype.
+Alistair Leslie-Hughes (33):
+      oledb32: Support DB/DATE/TIME/TIMESTAMP in GetConversionSize for W/STR.
+      dsound: Free MMDevice on Release.
+      oledb32: Support DBTYPE_DBTIMESTAMP to DBTYPE_WSTR in DataConvert.
+      dmime: Add TRACE to IDirectMusicSegment8 QueryInterface.
+      dmime: Support more interfaces in IDirectMusicAudioPath.GetObjectInPath.
+      mfplat: Implement MFCreateMediaType.
+      mfplat/tests: Added MFCreateMediaType test.
+      include: Add mftransform.idl.
+      include: Support wine_dbgstr_longlong in tests.
+      propsys/tests: Use standard wine_dbgstr_longlong.
+      ntdll/tests: Use standard wine_dbgstr_longlong.
+      vcomp/tests: Use standard wine_dbgstr_longlong.
+      dmusic/tests: Use standard wine_dbgstr_longlong.
+      iphlpapi/tests: Use standard wine_dbgstr_longlong.
+      quartz/tests: Use standard wine_dbgstr_longlong.
+      apphelp/tests: Use standard wine_dbgstr_longlong.
+      shlwapi/tests: Use standard wine_dbgstr_longlong.
+      wmiutils/tests: Use standard wine_dbgstr_longlong.
+      msvcp110/tests: Use standard wine_dbgstr_longlong.
+      msvcp90/tests: Use standard wine_dbgstr_longlong.
+      msvcp60/tests: Use standard wine_dbgstr_longlong.
+      msvcp120/tests: Use standard wine_dbgstr_longlong.
+      webservices/tests: Use standard wine_dbgstr_longlong.
+      pdh/tests: Use standard wine_dbgstr_longlong.
+      shell32/tests: Use standard wine_dbgstr_longlong.
+      dmime: Rename IPersistStreamImpl_Load functions.
+      d2d1/tests: Use standard wine_dbgstr_longlong.
+      dwrite/tests: Use standard wine_dbgstr_longlong.
+      qmgr/tests: Use standard wine_dbgstr_longlong.
+      include: Define IDirectSoundFXI3DL2Reverb interface.
+      wmvcore: Support IWMReaderNetworkConfig1/2 interfaces in IWMReader.
+      mfreadwrite: Implement MFCreateSourceReaderFromByteStream.
+      mmdevapi/tests: Use standard wine_dbgstr_longlong.
 
-Aurimas Fišeras (2):
+Andrew Eikum (1):
+      wineandroid: Add an audio driver.
+
+Andrey Gusev (6):
+      po: Update Ukrainian translation.
+      ext-ms-win-kernel32-package-l1-1-1: Add dll.
+      ext-ms-win-ntuser-windowclass-l1-1-1: Add dll.
+      ext-ms-win-ras-rasapi32-l1-1-0: Add dll.
+      ext-ms-win-security-credui-l1-1-0: Add dll.
+      ext-ms-win-security-cryptui-l1-1-0: Add dll.
+
+André Hentschel (2):
+      include: Add some more prototypes to winuser.h.
+      vcomp/tests: Test more arguments with a callback.
+
+Aurimas Fišeras (1):
       po: Update Lithuanian translation.
-      po: Update Lithuanian translation.
 
-Austin English (4):
-      ntoskrnl: Add KeAcquireSpinLockRaiseToDpc stub.
-      wmvcore: Add WMCheckURLScheme stub.
-      dbgeng: Sync to windows 10.
-      ntoskrnl.exe: Add KeReleaseSpinLock stub.
+Clemens Tamme (3):
+      gdiplus: Write API for GdipAddPathLine and GdipAddPathLineI.
+      gdiplus: Write API for GdipClonePath.
+      gdiplus: Write API documentation for GdipAddPathArc and GdipAddPathArcI.
 
-Bruno Jesus (1):
-      dinput: Limit axes while remaping broken devices.
+Dmitry Timoshkov (7):
+      windowscodecs: Use PropVariantCompareEx to compare metadata items.
+      windowscodecs: Implement IWICMetadataQueryReader::GetLocation.
+      windowscodecs: Implement IWICBitmapDecoder::GetMetadataQueryReader in the GIF decoder.
+      windowscodecs: Add initial implementation of IWICMetadataQueryReader::GetMetadataByName.
+      windowscodecs: Add some tests for IWICMetadataQueryReader.
+      windowscodecs/tests: Add more tests for IWICMetadataQueryReader::GetMetadataByName.
+      windowscodecs: Fix a memory leak.
 
-Clemens Tamme (1):
-      gdiplus: Implement triangular line caps in widened paths.
+François Gouget (9):
+      wsdapi: Remove WINAPI on static functions where not needed.
+      advapi32/tests: A couple of spelling fixes in ok() messages.
+      mapi32: A spelling fix in a comment.
+      ntdll/tests: A spelling fix in a comment.
+      rpcrt4: Spelling fixes in comments.
+      msvcrt/tests: A couple of spelling fixes in ok() messages.
+      msvcp90: Spelling fixes in comments.
+      ws2_32/tests: A spelling fix in a comment.
+      msi/tests: Add a trailing linefeed to an ok() call.
 
-Daniel Lehman (8):
-      msvcrt: Move exception rethrow handling to call_catch_block.
-      msvcrt: Clean up registered C++ objects in handler.
-      msvcrt: Only unwind current catch block when handling nested exception.
-      msvcrt: Support rethrowing SEH exceptions.
-      winedbg: Display movaps in disassembly.
-      winedbg: Display movups in disassembly.
-      opengl32/tests: Add tests for ChoosePixelFormat.
-      opengl32: Don't fail with both PFD_DOUBLEBUFFER_DONTCARE and PFD_STEREO_DONTCARE.
+Hans Leidekker (7):
+      webservices: Fix write option mapping in write_type_struct_field.
+      webservices: Add an index to the static dictionary.
+      webservices: Make sure to use the right dictionary to look up text values.
+      webservices: Fix reading byte records with 2 and 4 byte length.
+      webservices/tests: Add more dictionary tests.
+      webservices: Fix the empty text case for a couple of data types.
+      webservices: Handle text records with implicit end element.
 
-Dmitry Timoshkov (16):
-      propsys: Add support for VT_I1 and VT_UI1 to PropVariantChangeType.
-      propsys: Add support for VT_LPWSTR and VT_BSTR to PropVariantToStringAlloc.
-      propsys: Add support for VT_BSTR to PropVariantChangeType.
-      propsys: Make VT_FILETIME handling by PropVariantChangeType more implicit.
-      propsys: Add support for VT_LPSTR to PropVariantChangeType.
-      include: Print contents of VT_LPSTR and VT_LPWSTR variants in wine_dbgstr_variant.
-      cmd: '$E' in the prompt should be interpreted as an escape code (0x1b).
-      windowscodecs: Implement WICMapGuidToShortName.
-      windowscodecs: Implement WICMapShortNameToGuid.
-      windowscodecs: Implement WICMapSchemaToName.
-      windowscodecs: Implement IWICMetadataQueryReader::GetContainerFormat.
-      propsys: Add support for VT_LPSTR and VT_LPWSTR to PropVariantCompareEx.
-      rsaenh: Avoid double 'va_end(args)' in case of a premature loop termination.
-      user.exe16: Fix memory leak in case when HeapReAlloc fails.
-      user.exe16: Remove redundant HeapReAlloc.
-      dsound: Fix a memory leak.
+Hugh McMaster (52):
+      regedit: Free the buffer and reset data information on error and after setting the value.
+      reg/tests: Separate Unicode import tests from the combined import tests.
+      reg/tests: Use verify_key() for consistency with the verify_reg*() functions.
+      reg/tests: Use the verify_key*() functions where possible.
+      regedit/tests: Use verify_key() for consistency with the verify_reg*() functions.
+      regedit/tests: Use the verify_key*() functions where possible.
+      reg/tests: Test backslashes with whitespace variations and comma placement.
+      reg/tests: Test line concatenation with a new registry key on the next line.
+      reg/tests: Test line concatenation with comments, new lines and comma variations before a new registry value.
+      reg/tests: Test line concatenation with comments, new lines and comma variations before a new default registry value.
+      reg/tests: Test whether a line beginning with a backslash can follow a line ending in a backslash.
+      reg/tests: Test the effects of comments and new lines that appear between valid hex data lines.
+      reg/tests: Test whether a forward slash can be used as a concatenation marker.
+      reg/tests: Test whether EOF invalidates a hex data line ending in a backslash.
+      regedit/tests: Test backslashes with whitespace variations and comma placement.
+      regedit/tests: Test line concatenation with a new registry key on the next line.
+      regedit/tests: Test line concatenation with comments, new lines and comma variations before a new registry value.
+      regedit/tests: Test line concatenation with comments, new lines and comma variations before a new default registry value.
+      regedit/tests: Test whether a line beginning with a backslash can follow a line ending in a backslash.
+      regedit/tests: Test the effects of comments and new lines that appear between valid hex data lines.
+      regedit/tests: Test whether a forward slash can be used as a concatenation marker.
+      regedit/tests: Test whether EOF invalidates a hex data line ending in a backslash.
+      regedit: Free the binary data buffer after saving the new value (Coverity).
+      reg/tests: Test comma placement when parsing hex data.
+      regedit/tests: Test comma placement when parsing hex data.
+      regedit/tests: Correct out of sequence test numbering.
+      reg/tests: Test the effect of whitespace-only lines during hex data concatenation.
+      regedit/tests: Fix another incorrectly named registry key.
+      regedit/tests: Test the effect of whitespace-only lines during hex data concatenation.
+      regedit: Remove un-necessary parser state assignment if we are returning to the same state.
+      regedit: Improve the parsing of multiline hex data during the registry import operation.
+      reg/tests: Test whether registry keys ending with trailing backslashes are imported and created.
+      reg/tests: Test whether the "0x" prefix is valid when importing hex data.
+      regedit/tests: Test whether registry keys ending with trailing backslashes are imported and created.
+      regedit/tests: Test whether the "0x" prefix is valid when importing hex data.
+      regedit: Simplify a while loop for skipping whitespace.
+      regedit: Skip lines that do not begin with a hexadecimal character during hex data concatenation.
+      regedit: Skip blank and whitespace-only lines during hex data concatenation.
+      regedit: Do not remove lines beginning with '#' from the read buffer.
+      regedit: Do not remove lines beginning with a semicolon from the read buffer.
+      regedit: Check if any hex data exists before attempting to parse it.
+      regedit: Do not import the line if a hex data type has a "0x" prefix.
+      regedit/tests: Check if regedit.exe has elevated privileges before starting some tests.
+      regedit/tests: Add another test for "0x" prefixes in the hex data type.
+      regedit/tests: Add some more tests for importing hex data.
+      regedit: Hex data lines may be terminated by a semicolon.
+      regedit: Null-terminate REG_EXPAND_SZ and REG_MULTI_SZ data if the parsed hex data does not end in a null-terminating character.
+      reg/tests: Add another test for "0x" prefixes in the hex data type.
+      reg/tests: Add some more tests for importing hex data.
+      reg/tests: Test the effects of EOF on hex data during concatenation.
+      regedit/tests: Test the effects of EOF on hex data during concatenation.
+      regedit: Use a function to free the parser data.
 
-Fabian Maurer (1):
-      comctl32/taskdialog: Added support for custom buttons.
+Huw D. M. Davies (4):
+      winex11: Use logical co-ords to call GdiAlphaBlend().
+      wineandroid: Use logical co-ords to call GdiAlphaBlend().
+      msvcrt: _difftime64() takes 64-bit args.
+      winemac: Use logical co-ords to call GdiAlphaBlend().
 
-Hans Leidekker (16):
-      webservices: Add a static builtin dictionary.
-      webservices: Support more text record types in the reader.
-      webservices/tests: Add a test for WsCopyNode.
-      webservices: Restore the current pointer after reading ahead in read_move_to.
-      webservices: Implement WsReadXmlBuffer.
-      webservices: Store buffer encoding and character set.
-      webservices: Add support for writing WS_UNIQUE_ID values.
-      webservices: Add support for writing WS_XML_QNAME values.
-      webservices: Add support for reading WS_STRING values.
-      webservices: Add support for reading WS_UNIQUE_ID values.
-      webservices: Add support for reading WS_XML_STRING values.
-      webservices: Add support for reading WS_XML_QNAME values.
-      winhttp: Only read as much data as advertized when draining content.
-      webservices: Allow the dictionary functions to be used with any dictionary.
-      webservices: Add support for dynamic string callbacks.
-      winhttp: Reset content length when a redirect creates a new connection.
+Jacek Caban (28):
+      wininet: Moved INTERNET_STATUS_REDIRECT notification to HTTP_HandleRedirect.
+      wininet: Return an error on redirect with no host name specified.
+      server: Preallocate wait handle in create_request_async and return it in read request.
+      server: Close async wait handle when wait is satisfied.
+      server: Return async result directly instead of via APCs if it's available.
+      server: Use create_request_async for write requests.
+      server: Store fd reference in async object for unqueued asyncs.
+      server: Allow async_handoff users to set result themselves.
+      ntdll: Set iosb status in server_ioctl_file.
+      server: Use create_request_async in ioctl request handler.
+      server: Use create_request_async in flush request handler.
+      server: Remove no longer needed need_handle from queue_irp.
+      rsaenh: Use bcrypt for SHA512 hashes.
+      rsaenh: Use bcrypt for SHA384 hashes.
+      rsaenh: Use bcrypt for SHA265 hashes.
+      winhttp/tests: Get rid of unneeded Sleep() call.
+      server: Use default poll only for default read and write queue asyncs.
+      server: Associate named pipe device waiters queue with its fd.
+      server: Keep ifchange queue through sock object life time.
+      server: Keep weak fd reference in async object when async is queued.
+      server: Store completion in async object instead of async_queue.
+      server: Make async_queue object a simple list instead of a server object.
+      server: Remove no longer needed NULL checks.
+      server: Make fd_queue_async infallible.
+      server: Call create_irp from queue_irp.
+      rsaenh: Implement duplicate_hash_impl for bcrypt-based hashes.
+      d3d11.idl: Added CD3D11_DEPTH_STENCIL_DESC declaration.
+      wininet: Fixed connection_pool_cs declaration.
 
-Henri Verbeet (2):
-      wined3d: Also check for "Mesa" in GL_VERSION in wined3d_guess_gl_vendor().
-      include: Simply forward declare the required D2D interfaces in wincodec.idl.
+Jactry Zeng (1):
+      ucrtbase: Implement wcstoull and _wcstoull_l.
 
-Hermès Bélusca-Maïto (1):
-      advapi32/tests: Fix build with MSVC.
-
-Hugh McMaster (30):
-      reg/tests: Test case sensitivity when creating and deleting registry keys.
-      reg/tests: Test the accepted range of the hex-based data types.
-      regedit/tests: Test case sensitivity when creating and deleting registry keys.
-      regedit/tests: Test the accepted range of the hex-based data types.
-      regedit: Add status bar text for the 'Expand'/'Collapse' menu item.
-      reg/tests: Output "(Default)" when referring to the default registry value.
-      reg/tests: Test whether "" is interpreted as the default registry value.
-      regedit/tests: Output "(Default)" when referring to the default registry value.
-      regedit/tests: Test whether "" is interpreted as the default registry value.
-      regedit: Free the stringValueData buffer before using it again (Coverity).
-      regedit: Introduce a partial state machine for importing registry data.
-      regedit: Perform key operations in the state machine.
-      regedit: Perform value name operations in the state machine.
-      regedit: Add data parsing operations to the state machine.
-      regedit: Remove an unused #define.
-      regedit: Export hex data types without warning about unsupported data types.
-      regedit: Free the memory used by the REG_DWORD and hex data types after saving the registry value.
-      regedit: Use a case insensitive comparison when parsing registry classes from registry file versions 4 and 5.
-      regedit: Allow the deletion of registry keys beginning with a lowercase 'H'.
-      regedit: Use the correct mask flags with LVM_GETNEXTITEM.
-      regedit: Re-insert the default value item after deleting its data.
-      regedit: Use a generic data type to correctly process all data types.
-      regedit: Fail when parsing any hex data type that is greater than ULONG_MAX on Windows.
-      regedit: Display all registry data types in the GUI.
-      regedit: Display data for all values in the GUI.
-      regedit/tests: Add tests for parsing hex data.
-      reg/tests: Add tests for parsing hex data.
-      reg/tests: Add the final comma to the comma-placement test.
-      reg/tests: Add tests to determine the effects of backslashes in hex data.
-      regedit/tests: Add tests to determine the effects of backslashes in hex data.
-
-Jacek Caban (13):
-      wininet/tests: Silence noisy traces.
-      wininet/tests: Fixed potential buffer overflow (coverity).
-      oleaut32: Simplify VarCat implementation.
-      mshtml.idl: Added IHTMLInputTextElement2 declaration.
-      mshtml: Added IHTMLInputTextElement2 stub implementation.
-      mshtml: Added IHTMLInputTextElement2::selectionStart property implementation.
-      mshtml: Added IHTMLInputTextElement2::selectionEnd property implementation.
-      mshtml: Added IHTMLInputTextElement2::setSelectionRange implementation.
-      mshtml: Expose IHTMLInputTextElement2 to scripts.
-      mshtml/tests: Added IHTMLInputTextElement2 tests.
-      widl: Try to find imported typelib using .tlb extension if it wasn't specified.
-      server: Introduce create_server_async and use it in read request handler.
-      mshtml: Moved EvaluateNewWindow call to navigate_new_window.
-
-Julian Rüger (1):
-      po: Update German translation.
-
-Józef Kucia (1):
-      wined3d: Do not declare pixel shader inputs when they are not used.
-
-Ken Thomases (1):
-      winemac: Break out of the window-dragging message loop if the window is hidden or destroyed.
+Lauri Kenttä (1):
+      po: Update Finnish translation.
 
 Marcin Mikołajczak (1):
       po: Updated Polish translation.
 
-Marcus Meissner (4):
-      webservices: Free header on error exit (Coverity).
-      webservices: Fixed memory leak in build_custom_header (Coverity).
-      msvcrt: Free the temporary filename (Coverity).
-      wsdapi: Fixed memory leak in error path (Coverity).
+Martin Storsjo (1):
+      ntdll: Handle IMAGE_REL_BASED_DIR64 for arm64 in the same way as for x86_64.
 
-Matteo Bruni (7):
-      d3dx9: Move set_number() into d3dx9_private.h.
-      d3dx9/tests: Fix compilation when the NAN macro is not available.
-      d3dx9/tests: Add a comment about the negation in boolean constant checks.
-      d3dx9/tests: Avoid SIZE_T in traces.
-      advapi32/tests: Allow an additional result on newer Win10.
-      advapi32/tests: Add a token mandatory label test.
-      d3dx9: Make the assert() in regstore_set_values() a bit more strict.
+Michael Stefaniuc (3):
+      wineandroid: Use EqualRect() instead of memcmp().
+      regedit: Remove a redundant NULL check before HeapFree().
+      urlmon: Remove a redundant NULL check before SysFreeString().
 
-Michael Müller (9):
-      server: Implement querying the security label of a security descriptor.
-      server: Implement changing the label of a security descriptor.
-      server: Do not set SE_{D, S}ACL_PRESENT if no {D, S}ACL was set.
-      server: Implement setting a security descriptor when duplicating tokens.
-      advapi32/tests: Add basic tests for token security descriptors.
-      advapi32/tests: Show that tokens do not inherit security descriptors during duplication.
-      advapi32/tests: Show that tokens do not inherit the DACL while creating child processes.
-      advapi32/tests: Show that child processes do not inherit mandatory labels.
-      server: Assign a default label to all tokens.
-
-Miklós Máté (1):
-      quartz: Small readability fix.
-
-Nikolay Sivov (10):
-      d3drm/tests: Add helpers to test vectors.
-      include: Fix IDirect3DRMFace*::GetColor() macros.
-      d3drm: Make it possible to create frames with CreateObject().
-      d3drm: Make it possible to create light objects using CreateObject().
+Nikolay Sivov (16):
+      d3drm: Added IDirect3DRMWrap stub.
+      d3drm/tests: Some tests for animation object QI behavior.
+      d3drm: Store animated frame pointer in animation object.
+      d3drm: Store animation options.
+      regedit: Use notification message to clean up item data.
+      regedit: Remove explicit iIndent field initialization.
       po: Update Russian translation.
-      d3drm: Make it possible to create material objects with CreateObject().
-      d3drm: Implement object name property.
-      d3drm: Implement appdata property for the rest of objects.
-      d3drm: Make it possible to create meshes with CreateObject().
-      d3drm: Added IDirect3DRMAnimation stub.
+      d3drm/tests: Additional test for SetOptions().
+      d3drm/tests: Some tests for animation keys handling.
+      d3drm: Use AddKey() method internally to add all types of keys.
+      iphlpapi: Fix GetIfTable() trace message.
+      d3drm: Store frame traversal options.
+      d3drm: Store face color.
+      regedit: Remove commented out block.
+      d3drm: Initial support for storing animation keys.
+      d3drm: Implement DeleteKey().
 
-Nils Kuhnhenn (1):
-      oleaut32: Use variable with the correct type in LIST_FOR_EACH_ENTRY_SAFE macro.
+Owen Rudge (16):
+      wsdapi: Add stub implementation of IWSDUdpMessageParameters and WSDCreateUdpMessageParameters.
+      wsdapi/tests: Add tests for CreateUdpMessageParameters.
+      wsdapi/tests: Add tests for Get/SetLocalAddress.
+      wsdapi/tests: Add tests for Get/SetRemoteAddress.
+      wsdapi/tests: Add tests for Get/SetRetransmitParams.
+      wsdapi: Implement Get/SetLocalAddress.
+      wsdapi: Implement Get/SetRemoteAddress.
+      wsdapi: Implement Get/SetRetransmitParams.
+      wsdapi: Implement IWSDUdpAddress_SetTransportAddress.
+      wsdapi/tests: Add additional SetTransportAddress tests with port numbers.
+      wsdapi: Implement IWSDUdpAddress_GetTransportAddress[Ex].
+      wsdapi: Implement IWSDUdpAddress_Get/SetPort.
+      wsdapi: Implement IWSDUdpAddress_Get/SetMessageType.
+      wsdapi: Implement IWSDUdpAddress_Get/SetSockAddr.
+      wsdapi: Implement WSDXMLGetValueFromAny.
+      wsdapi/tests: Add tests for WSDXMLGetValueFromAny.
 
-Owen Rudge (2):
-      ws2_32: Extract IPv6 address from brackets in getaddrinfo.
-      ws2_32/tests: Test IP address conversion in getaddrinfo.
+Paul Gofman (6):
+      d3dx9: Remove redundant parameter size check in set_constants().
+      d3dx9: Get rid of constant's length checking for matrix in set_constants().
+      d3dx9: Move transpose 'if' outside of the inner loop in set_constants().
+      d3dx9: Check type and register count for sampler constants.
+      d3dx9: Support arrays of samplers.
+      d3dx9/tests: Add tests for array of samplers.
 
-Paul Gofman (5):
-      d3dx9: Introduce get_reg_components() helper function and use it instead of get_offset_reg() when appropriate.
-      d3dx9: Add const qualifier to regstore_set_values() input data.
-      d3dx9: Avoid casting each value separately in set_constants().
-      d3dx9: Add scalar and vector setting path to set_constants().
-      d3dx9/tests: Modify transpose boolean matrix test to reproduce the case of incomplete last row.
+Pierre Schweitzer (1):
+      mpr: Implement WNetConnectionDialog().
 
-Pierre Schweitzer (2):
-      mpr: Properly handle the count set to -1 when enumerating connections.
-      mpr: Don't stop enumeration on the first failing network provider.
+Piotr Caban (3):
+      gdiplus: Add GdipDrawLine test on EmfTypeEmfOnly metafile.
+      gdiplus: Add GdipDrawImagePointsRect test on EmfTypeEmfPlusOnly file.
+      winedump: Add initial support for handling EMF+ records.
 
-Piotr Caban (1):
-      gdi32: Don't write EMR_EXTSELECTCLIPRGN to emf file on SelectClipPath call.
-
-Sebastian Lackner (6):
-      gdiplus: Initialize containers list in GdipCloneImage.
-      server: Do not shutdown server in persistent mode when creation of first process fails.
-      wined3d: Avoid NULL pointer dereference when using GDI renderer.
-      wined3d: Create CPU blitter also for GDI render.
-      wined3d: Fix memory leaks in blitter_destroy callbacks.
-      wined3d: Trigger frontbuffer update in surface_cpu_blt.
-
-Thomas Faber (2):
-      devenum/tests: Fix return value check for IEnumMoniker_Next.
-      advapi32/tests: Properly restore privileges in test_AdjustTokenPrivileges.
+Vincent Povirk (1):
+      gdiplus: Set flatness more appropriately in GdipDrawPath.
 
 Zebediah Figura (14):
-      include: Pack WAVEFORMAT structs.
-      winemp3.acm: Fix error in acmStreamSize().
-      include: Add missing MSI message values.
-      msi: Use an external UI record handler before a string handler.
-      msi: Store string and record callback data separately.
-      msi: Pass the given record to the callback.
-      msacm32: Rewrite PCM conversion functions.
-      msi: Don't reimplement record formatting.
-      quartz: Restore a comment explaining mediatime.
-      quartz: Use nAvgBytesPerSec to calculate length.
-      winemp3.acm: Disallow operations encoding to MPEG.
-      msacm32: Don't add a format entry if it is decode-only.
-      msacm32: Add invalid parameter checks for acmFormatChoose().
-      msacm32: Implement ACMFORMATCHOOSE_STYLEF_INITTOWFXSTRUCT.
-
-Zhenbo Li (1):
-      ole32: Add stub for OleGetIconOfFile.
+      msi/tests: Add another test for MsiProcessMessage.
+      comctl32: Don't FIXME on handled cases.
+      winedbg: Add support for printing floating point registers.
+      winedbg: Add support for printing SSE (XMM) registers.
+      msi/tests: Add tests for external UI callback.
+      msi: Send the correct UI messages upon calling MsiDoAction().
+      msi: Implement INSTALLMESSAGE_INITIALIZE and INSTALLMESSAGE_TERMINATE.
+      msi: Implement UI messages in MsiOpenPackage().
+      gdiplus: Scale widened dashes to the pen width.
+      msi: Fix a buffer overrun.
+      msi/tests: Work around test failures on Windows.
+      msi: Add a basic internal UI implementation.
+      msi: Don't increment the refcount when creating dialogs.
+      msi: Implement UI messages for dialogs.
 
 --
 Alexandre Julliard
