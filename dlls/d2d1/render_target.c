@@ -2738,7 +2738,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
     }
 
     if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_outline,
-            sizeof(il_desc_outline) / sizeof(*il_desc_outline), vs_code_outline, sizeof(vs_code_outline),
+            ARRAY_SIZE(il_desc_outline), vs_code_outline, sizeof(vs_code_outline),
             &render_target->shape_resources[D2D_SHAPE_TYPE_OUTLINE].il)))
     {
         WARN("Failed to create outline input layout, hr %#x.\n", hr);
@@ -2746,7 +2746,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
     }
 
     if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_triangle,
-            sizeof(il_desc_triangle) / sizeof(*il_desc_triangle), vs_code_triangle, sizeof(vs_code_triangle),
+            ARRAY_SIZE(il_desc_triangle), vs_code_triangle, sizeof(vs_code_triangle),
             &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].il)))
     {
         WARN("Failed to create triangle input layout, hr %#x.\n", hr);
@@ -2754,8 +2754,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
     }
 
     if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_bezier_outline,
-            sizeof(il_desc_bezier_outline) / sizeof(*il_desc_bezier_outline),
-            vs_code_bezier_outline, sizeof(vs_code_bezier_outline),
+            ARRAY_SIZE(il_desc_bezier_outline), vs_code_bezier_outline, sizeof(vs_code_bezier_outline),
             &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER_OUTLINE].il)))
     {
         WARN("Failed to create bezier outline input layout, hr %#x.\n", hr);
@@ -2763,7 +2762,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
     }
 
     if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_bezier,
-            sizeof(il_desc_bezier) / sizeof(*il_desc_bezier), vs_code_bezier, sizeof(vs_code_bezier),
+            ARRAY_SIZE(il_desc_bezier), vs_code_bezier, sizeof(vs_code_bezier),
             &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER].il)))
     {
         WARN("Failed to create bezier input layout, hr %#x.\n", hr);
@@ -2798,7 +2797,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         goto err;
     }
 
-    for (i = 0; i < sizeof(brush_shaders) / sizeof(*brush_shaders); ++i)
+    for (i = 0; i < ARRAY_SIZE(brush_shaders); ++i)
     {
         const struct brush_shader *bs = &brush_shaders[i];
         if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device, bs->byte_code, bs->byte_code_size,

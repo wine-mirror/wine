@@ -210,7 +210,7 @@ static BOOL format_supported(const D2D1_PIXEL_FORMAT *format)
         {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,   D2D1_ALPHA_MODE_IGNORE       },
     };
 
-    for (i = 0; i < sizeof(supported_formats) / sizeof(*supported_formats); ++i)
+    for (i = 0; i < ARRAY_SIZE(supported_formats); ++i)
     {
         if (supported_formats[i].format == format->format
                 && supported_formats[i].alphaMode == format->alphaMode)
@@ -476,7 +476,7 @@ HRESULT d2d_bitmap_create_from_wic_bitmap(ID2D1Factory *factory, ID3D10Device *d
         return hr;
     }
 
-    for (i = 0, d2d_format = NULL; i < sizeof(format_lookup) / sizeof(*format_lookup); ++i)
+    for (i = 0, d2d_format = NULL; i < ARRAY_SIZE(format_lookup); ++i)
     {
         if (IsEqualGUID(&wic_format, format_lookup[i].wic))
         {

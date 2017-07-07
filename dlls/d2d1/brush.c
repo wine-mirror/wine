@@ -868,7 +868,7 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
     buffer_data.SysMemPitch = 0;
     buffer_data.SysMemSlicePitch = 0;
 
-    if (brush->type >= sizeof(brush_sizes) / sizeof(*brush_sizes))
+    if (brush->type >= ARRAY_SIZE(brush_sizes))
     {
         ERR("Unhandled brush type %#x.\n", brush->type);
         return E_NOTIMPL;
@@ -877,7 +877,7 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
     buffer_desc.ByteWidth = brush_sizes[brush->type];
     if (opacity_brush)
     {
-        if (opacity_brush->type >= sizeof(brush_sizes) / sizeof(*brush_sizes))
+        if (opacity_brush->type >= ARRAY_SIZE(brush_sizes))
         {
             ERR("Unhandled opacity brush type %#x.\n", opacity_brush->type);
             return E_NOTIMPL;
