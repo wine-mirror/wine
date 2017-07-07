@@ -260,9 +260,6 @@ OCR_APPSTARTING CURSOR resources/ocr_appstarting.cur
 /* @makedep: resources/ocr_help.cur */
 OCR_HELP CURSOR resources/ocr_help.cur
 
-/* @makedep: resources/ocr_dragobject.cur */
-OCR_DRAGOBJECT CURSOR resources/ocr_dragobject.cur
-
 /* @makedep: resources/ocr_pen.cur */
 OCR_PEN CURSOR resources/ocr_pen.cur
 
@@ -270,9 +267,7 @@ OCR_PEN CURSOR resources/ocr_pen.cur
 OCR_RDRVERT CURSOR resources/ocr_rdrvert.cur
 
 /* @makedep: resources/ocr_rdrhorz.cur */
-/* FIXME: OCR_DRAGOBJECT already uses same resource number even though cursor image
- * is entirely different */
-/*OCR_RDRHORZ CURSOR resources/ocr_rdrhorz.cur*/
+OCR_RDRHORZ CURSOR resources/ocr_rdrhorz.cur
 
 /* @makedep: resources/ocr_rdr2dim.cur */
 OCR_RDR2DIM CURSOR resources/ocr_rdr2dim.cur

@@ -1014,7 +1014,6 @@
 #define OCR_HELP               32651 /* DDK / Win16 */
 #define OCR_RDRVERT            32652 /* DDK / Win16 */
 #define OCR_RDRHORZ            32653 /* DDK / Win16 */
-#define OCR_DRAGOBJECT         OCR_RDRHORZ /* FIXME: Wine-only */
 #define OCR_RDR2DIM            32654 /* DDK / Win16 */
 #define OCR_RDRNORTH           32655 /* DDK / Win16 */
 #define OCR_RDRSOUTH           32656 /* DDK / Win16 */
