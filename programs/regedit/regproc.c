@@ -495,6 +495,15 @@ static LONG open_key(struct parser *parser, WCHAR *path)
     return res;
 }
 
+static void free_parser_data(struct parser *parser)
+{
+    if (parser->parse_type == REG_DWORD || parser->parse_type == REG_BINARY)
+        HeapFree(GetProcessHeap(), 0, parser->data);
+
+    parser->data = NULL;
+    parser->data_size = 0;
+}
+
 enum reg_versions {
     REG_VERSION_31,
     REG_VERSION_40,
@@ -802,9 +811,7 @@ static WCHAR *string_data_state(struct parser *parser, WCHAR *pos)
     return line;
 
 invalid:
-    parser->data = NULL;
-    parser->data_size = 0;
-
+    free_parser_data(parser);
     set_state(parser, LINE_START);
     return line;
 }
@@ -826,10 +833,7 @@ static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos)
     return line;
 
 invalid:
-    HeapFree(GetProcessHeap(), 0, parser->data);
-    parser->data = NULL;
-    parser->data_size = 0;
-
+    free_parser_data(parser);
     set_state(parser, LINE_START);
     return line;
 }
@@ -870,10 +874,7 @@ static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos)
     return line;
 
 invalid:
-    HeapFree(GetProcessHeap(), 0, parser->data);
-    parser->data = NULL;
-    parser->data_size = 0;
-
+    free_parser_data(parser);
     set_state(parser, LINE_START);
     return line;
 }
@@ -890,10 +891,7 @@ static WCHAR *eol_backslash_state(struct parser *parser, WCHAR *pos)
     return pos;
 
 invalid:
-    HeapFree(GetProcessHeap(), 0, parser->data);
-    parser->data = NULL;
-    parser->data_size = 0;
-
+    free_parser_data(parser);
     set_state(parser, LINE_START);
     return p;
 }
@@ -918,10 +916,7 @@ static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos)
     return line;
 
 invalid:
-    HeapFree(GetProcessHeap(), 0, parser->data);
-    parser->data = NULL;
-    parser->data_size = 0;
-
+    free_parser_data(parser);
     set_state(parser, LINE_START);
     return line;
 }
@@ -941,11 +936,7 @@ static WCHAR *set_value_state(struct parser *parser, WCHAR *pos)
     RegSetValueExW(parser->hkey, parser->value_name, 0, parser->data_type,
                    parser->data, parser->data_size);
 
-    if (parser->parse_type == REG_DWORD || parser->parse_type == REG_BINARY)
-        HeapFree(GetProcessHeap(), 0, parser->data);
-
-    parser->data = NULL;
-    parser->data_size = 0;
+    free_parser_data(parser);
 
     if (parser->reg_version == REG_VERSION_31)
         set_state(parser, PARSE_WIN31_LINE);
