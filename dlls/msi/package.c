@@ -2010,6 +2010,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         msi_free(package->LastAction);
         msi_free(package->LastActionTemplate);
         package->LastAction = msi_dup_record_field(record, 1);
+        if (!package->LastAction) package->LastAction = strdupW(szEmpty);
         package->LastActionTemplate = msi_dup_record_field(record, 3);
         break;
     }
