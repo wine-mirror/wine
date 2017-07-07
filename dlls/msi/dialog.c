@@ -3916,7 +3916,6 @@ static msi_dialog *dialog_create( MSIPACKAGE *package, const WCHAR *name, msi_di
         return NULL;
     strcpyW( dialog->name, name );
     dialog->parent = parent;
-    msiobj_addref( &package->hdr );
     dialog->package = package;
     dialog->event_handler = event_handler;
     dialog->finished = 0;
@@ -3927,7 +3926,6 @@ static msi_dialog *dialog_create( MSIPACKAGE *package, const WCHAR *name, msi_di
     rec = msi_get_dialog_record( dialog );
     if( !rec )
     {
-        msiobj_release( &package->hdr );
         msi_free( dialog );
         return NULL;
     }
@@ -4054,7 +4052,6 @@ void msi_dialog_destroy( msi_dialog *dialog )
 
     msi_free( dialog->control_default );
     msi_free( dialog->control_cancel );
-    msiobj_release( &dialog->package->hdr );
     dialog->package = NULL;
     msi_free( dialog );
 }
