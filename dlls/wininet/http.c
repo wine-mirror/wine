@@ -212,7 +212,7 @@ static CRITICAL_SECTION connection_pool_cs;
 static CRITICAL_SECTION_DEBUG connection_pool_debug =
 {
     0, 0, &connection_pool_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+    { &connection_pool_debug.ProcessLocksList, &connection_pool_debug.ProcessLocksList },
       0, 0, { (DWORD_PTR)(__FILE__ ": connection_pool_cs") }
 };
 static CRITICAL_SECTION connection_pool_cs = { &connection_pool_debug, -1, 0, 0, 0, 0 };
