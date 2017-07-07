@@ -7013,8 +7013,80 @@ static void test_animation(void)
     memset(&key, 0, sizeof(key));
     key.dwSize = sizeof(key);
     key.dwKeyType = D3DRMANIMATION_POSITIONKEY;
+    key.dvPositionKey.x = 8.0f;
     hr = IDirect3DRMAnimation2_AddKey(animation2, &key);
     ok(SUCCEEDED(hr), "Failed to add key, hr %#x.\n", hr);
+
+    /* Delete tests. */
+    hr = IDirect3DRMAnimation_AddRotateKey(animation, 0.0f, &q);
+    ok(SUCCEEDED(hr), "Failed to add rotation key, hr %#.x\n", hr);
+
+    hr = IDirect3DRMAnimation_AddScaleKey(animation, 0.0f, 1.0f, 2.0f, 1.0f);
+    ok(SUCCEEDED(hr), "Failed to add scale key, hr %#x.\n", hr);
+
+    count = 0;
+    memset(keys, 0, sizeof(keys));
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, -1000.0f, 1000.0f, &count, keys);
+    ok(SUCCEEDED(hr), "Failed to get key count, hr %#x.\n", hr);
+    ok(count == 9, "Unexpected key count %u.\n", count);
+
+    ok(keys[0].dwKeyType == D3DRMANIMATION_ROTATEKEY, "Unexpected key type %u.\n", keys[0].dwKeyType);
+    ok(keys[1].dwKeyType == D3DRMANIMATION_ROTATEKEY, "Unexpected key type %u.\n", keys[1].dwKeyType);
+    ok(keys[2].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[2].dwKeyType);
+    ok(keys[3].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[3].dwKeyType);
+    ok(keys[4].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[4].dwKeyType);
+    ok(keys[5].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[5].dwKeyType);
+    ok(keys[6].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[6].dwKeyType);
+    ok(keys[7].dwKeyType == D3DRMANIMATION_SCALEKEY, "Unexpected key type %u.\n", keys[7].dwKeyType);
+    ok(keys[8].dwKeyType == D3DRMANIMATION_SCALEKEY, "Unexpected key type %u.\n", keys[8].dwKeyType);
+
+    ok(keys[0].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[0].dvTime);
+    ok(keys[1].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[1].dvTime);
+    ok(keys[2].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[2].dvTime);
+    ok(keys[3].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[3].dvTime);
+    ok(keys[4].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[4].dvTime);
+    ok(keys[5].dvTime == 80.0f, "Unexpected key time %.8e.\n", keys[5].dvTime);
+    ok(keys[6].dvTime == 99.0f, "Unexpected key time %.8e.\n", keys[6].dvTime);
+    ok(keys[7].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[7].dvTime);
+    ok(keys[8].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[8].dvTime);
+
+    hr = IDirect3DRMAnimation_DeleteKey(animation, -100.0f);
+    ok(SUCCEEDED(hr), "Failed to delete keys, hr %#x.\n", hr);
+
+    hr = IDirect3DRMAnimation_DeleteKey(animation, 100.0f);
+    ok(SUCCEEDED(hr), "Failed to delete keys, hr %#x.\n", hr);
+
+    /* Only first Position keys are not removed. */
+    hr = IDirect3DRMAnimation_DeleteKey(animation, 0.0f);
+    ok(SUCCEEDED(hr), "Failed to delete keys, hr %#x.\n", hr);
+
+    count = 0;
+    memset(keys, 0, sizeof(keys));
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, 0.0f, 100.0f, &count, keys);
+    ok(SUCCEEDED(hr), "Failed to get key count, hr %#x.\n", hr);
+    ok(count == 6, "Unexpected key count %u.\n", count);
+
+    ok(keys[0].dwKeyType == D3DRMANIMATION_ROTATEKEY, "Unexpected key type %u.\n", keys[0].dwKeyType);
+    ok(keys[1].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[1].dwKeyType);
+    ok(keys[2].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[2].dwKeyType);
+    ok(keys[3].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[3].dwKeyType);
+    ok(keys[4].dwKeyType == D3DRMANIMATION_POSITIONKEY, "Unexpected key type %u.\n", keys[4].dwKeyType);
+    ok(keys[5].dwKeyType == D3DRMANIMATION_SCALEKEY, "Unexpected key type %u.\n", keys[5].dwKeyType);
+
+    ok(keys[0].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[0].dvTime);
+    ok(keys[1].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[1].dvTime);
+    ok(keys[2].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[2].dvTime);
+    ok(keys[3].dvTime == 80.0f, "Unexpected key time %.8e.\n", keys[3].dvTime);
+    ok(keys[4].dvTime == 99.0f, "Unexpected key time %.8e.\n", keys[4].dvTime);
+    ok(keys[5].dvTime == 0.0f, "Unexpected key time %.8e.\n", keys[5].dvTime);
+
+    hr = IDirect3DRMAnimation_DeleteKey(animation, 0.0f);
+    ok(SUCCEEDED(hr), "Failed to delete keys, hr %#x.\n", hr);
+
+    count = 0;
+    hr = IDirect3DRMAnimation2_GetKeys(animation2, 0.0f, 100.0f, &count, NULL);
+    ok(SUCCEEDED(hr), "Failed to get key count, hr %#x.\n", hr);
+    ok(count == 3, "Unexpected key count %u.\n", count);
 
     IDirect3DRMAnimation2_Release(animation2);
     IDirect3DRMAnimation_Release(animation);
