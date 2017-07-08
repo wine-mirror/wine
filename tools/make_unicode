@@ -23,7 +23,7 @@ use strict;
 
 # base URLs for www.unicode.org files
 my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/9.0.0/ucd";
+my $UNIDATA = "http://www.unicode.org/Public/10.0.0/ucd";
 my $REPORTS = "http://www.unicode.org/reports";
 my $RFCS = "http://www.rfc-editor.org/rfc";
 my $VERTICALDATA = "http://www.unicode.org/Public/vertical/revision-15";
@@ -191,7 +191,8 @@ my %matra_types =
     "Bottom_And_Right"  => 0x0b,
     "Top_And_Bottom_And_Right"  => 0x0c,
     "Overstruck"  => 0x0d,
-    "Invisible"  => 0x0e
+    "Invisible"  => 0x0e,
+    "Bottom_And_Left"  => 0x0f
 );
 
 my %nameprep_flags =
