@@ -983,6 +983,7 @@ then
                            done],
                           [AC_MSG_RESULT([no])])
         CC="$ac_save_CC"
+        AC_SUBST(CROSSCFLAGS,${CROSSCFLAGS:-$CFLAGS})
     fi
 fi
 

@@ -690,6 +690,7 @@ X_PRE_LIBS
 X_CFLAGS
 XMKMF
 PTHREAD_LIBS
+CROSSCFLAGS
 CROSSCC
 CROSSTARGET
 PRELINK
@@ -9105,6 +9106,8 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         CC="$ac_save_CC"
+        CROSSCFLAGS=${CROSSCFLAGS:-$CFLAGS}
+
     fi
 fi
 
