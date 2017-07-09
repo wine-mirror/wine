@@ -68,6 +68,7 @@ typedef struct {
     IWMReaderAdvanced6 IWMReaderAdvanced6_iface;
     IWMReaderAccelerator IWMReaderAccelerator_iface;
     IWMReaderNetworkConfig2 IWMReaderNetworkConfig2_iface;
+    IWMReaderStreamClock IWMReaderStreamClock_iface;
     LONG ref;
 } WMReader;
 
@@ -113,6 +114,9 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IWMReaderNetworkConfig2)) {
         TRACE("(%p)->(IWMReaderNetworkConfig2 %p)\n", This, ppv);
         *ppv = &This->IWMReaderNetworkConfig2_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMReaderStreamClock)) {
+        TRACE("(%p)->(IWMReaderStreamClock %p)\n", This, ppv);
+        *ppv = &This->IWMReaderStreamClock_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -1132,6 +1136,59 @@ static const IWMReaderNetworkConfig2Vtbl WMReaderNetworkConfig2Vtbl =
     networkconfig_GetMaxNetPacketSize
 };
 
+static inline WMReader *impl_from_IWMReaderStreamClock(IWMReaderStreamClock *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IWMReaderStreamClock_iface);
+}
+
+static HRESULT WINAPI readclock_QueryInterface(IWMReaderStreamClock *iface, REFIID riid, void **ppv)
+{
+    WMReader *This = impl_from_IWMReaderStreamClock(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
+}
+
+static ULONG WINAPI readclock_AddRef(IWMReaderStreamClock *iface)
+{
+    WMReader *This = impl_from_IWMReaderStreamClock(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI readclock_Release(IWMReaderStreamClock *iface)
+{
+    WMReader *This = impl_from_IWMReaderStreamClock(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI readclock_GetTime(IWMReaderStreamClock *iface, QWORD *now)
+{
+    WMReader *This = impl_from_IWMReaderStreamClock(iface);
+    FIXME("%p, %p\n", This, now);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI readclock_SetTimer(IWMReaderStreamClock *iface, QWORD when, void *param, DWORD *id)
+{
+    WMReader *This = impl_from_IWMReaderStreamClock(iface);
+    FIXME("%p, %s, %p, %p\n", This, wine_dbgstr_longlong(when), param, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI readclock_KillTimer(IWMReaderStreamClock *iface, DWORD id)
+{
+    WMReader *This = impl_from_IWMReaderStreamClock(iface);
+    FIXME("%p, %d\n", This, id);
+    return E_NOTIMPL;
+}
+
+static const IWMReaderStreamClockVtbl WMReaderStreamClockVtbl =
+{
+    readclock_QueryInterface,
+    readclock_AddRef,
+    readclock_Release,
+    readclock_GetTime,
+    readclock_SetTimer,
+    readclock_KillTimer
+};
 
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
@@ -1147,6 +1204,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMReaderAdvanced6_iface.lpVtbl = &WMReaderAdvanced6Vtbl;
     reader->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
     reader->IWMReaderNetworkConfig2_iface.lpVtbl = &WMReaderNetworkConfig2Vtbl;
+    reader->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;
