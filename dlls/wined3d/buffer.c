@@ -812,7 +812,7 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
 }
 
 /* The caller provides a context and binds the buffer */
-static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const struct wined3d_gl_info *gl_info)
+static void buffer_sync_apple(struct wined3d_buffer *buffer, DWORD flags, const struct wined3d_gl_info *gl_info)
 {
     enum wined3d_event_query_result ret;
     struct wined3d_query *query;
@@ -825,16 +825,16 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
 
     if (flags & WINED3D_MAP_DISCARD)
     {
-        GL_EXTCALL(glBufferData(This->buffer_type_hint, This->resource.size, NULL, This->buffer_object_usage));
+        GL_EXTCALL(glBufferData(buffer->buffer_type_hint, buffer->resource.size, NULL, buffer->buffer_object_usage));
         checkGLcall("glBufferData");
         return;
     }
 
-    if (!This->query)
+    if (!buffer->query)
     {
-        TRACE("Creating event query for buffer %p.\n", This);
+        TRACE("Creating event query for buffer %p.\n", buffer);
 
-        hr = wined3d_query_create(This->resource.device, WINED3D_QUERY_TYPE_EVENT,
+        hr = wined3d_query_create(buffer->resource.device, WINED3D_QUERY_TYPE_EVENT,
                 NULL, &wined3d_null_parent_ops, &query);
         if (hr == WINED3DERR_NOTAVAILABLE)
         {
@@ -846,14 +846,15 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
             ERR("Failed to create event query, hr %#x.\n", hr);
             goto drop_query;
         }
-        This->query = CONTAINING_RECORD(query, struct wined3d_event_query, query);
+        buffer->query = CONTAINING_RECORD(query, struct wined3d_event_query, query);
 
         /* Since we don't know about old draws a glFinish is needed once */
         gl_info->gl_ops.gl.p_glFinish();
         return;
     }
-    TRACE("Synchronizing buffer %p\n", This);
-    ret = wined3d_event_query_finish(This->query, This->resource.device);
+
+    TRACE("Synchronizing buffer %p.\n", buffer);
+    ret = wined3d_event_query_finish(buffer->query, buffer->resource.device);
     switch (ret)
     {
         case WINED3D_EVENT_QUERY_NOT_STARTED:
@@ -862,26 +863,26 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
             return;
 
         case WINED3D_EVENT_QUERY_WRONG_THREAD:
-            WARN("Cannot synchronize buffer lock due to a thread conflict\n");
+            WARN("Cannot synchronize buffer lock due to a thread conflict.\n");
             goto drop_query;
 
         default:
-            ERR("wined3d_event_query_finish returned %u, dropping async buffer locks\n", ret);
+            ERR("wined3d_event_query_finish returned %u, dropping async buffer locks.\n", ret);
             goto drop_query;
     }
 
 drop_query:
-    if (This->query)
+    if (buffer->query)
     {
-        struct wined3d_query *query = &This->query->query;
+        struct wined3d_query *query = &buffer->query->query;
         query->query_ops->query_destroy(query);
-        This->query = NULL;
+        buffer->query = NULL;
     }
 
     gl_info->gl_ops.gl.p_glFinish();
-    GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE));
-    checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE)");
-    This->flags &= ~WINED3D_BUFFER_APPLESYNC;
+    GL_EXTCALL(glBufferParameteriAPPLE(buffer->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE));
+    checkGLcall("glBufferParameteriAPPLE(buffer->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE)");
+    buffer->flags &= ~WINED3D_BUFFER_APPLESYNC;
 }
 
 static void buffer_mark_used(struct wined3d_buffer *buffer)
