@@ -7967,37 +7967,18 @@ static void test_scissor(void)
     D3D11_RASTERIZER_DESC rs_desc;
     ID3D11RasterizerState *rs;
     D3D11_RECT scissor_rect;
-    ID3D11PixelShader *ps;
     ID3D11Device *device;
     DWORD color;
     HRESULT hr;
 
     static const float red[] = {1.0f, 0.0f, 0.0f, 1.0f};
-    static const DWORD ps_code[] =
-    {
-#if 0
-        float4 main(float4 position : SV_POSITION) : SV_Target
-        {
-            return float4(0.0, 1.0, 0.0, 1.0);
-        }
-#endif
-        0x43425844, 0x30240e72, 0x012f250c, 0x8673c6ea, 0x392e4cec, 0x00000001, 0x000000d4, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49,
-        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000038, 0x00000040,
-        0x0000000e, 0x03000065, 0x001020f2, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002,
-        0x00000000, 0x3f800000, 0x00000000, 0x3f800000, 0x0100003e,
-    };
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
 
     if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
     immediate_context = test_context.immediate_context;
-
-    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
 
     rs_desc.FillMode = D3D11_FILL_SOLID;
     rs_desc.CullMode = D3D11_CULL_BACK;
@@ -8012,8 +7993,6 @@ static void test_scissor(void)
     hr = ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
     ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
 
-    ID3D11DeviceContext_PSSetShader(immediate_context, ps, NULL, 0);
-
     scissor_rect.left = 160;
     scissor_rect.top = 120;
     scissor_rect.right = 480;
@@ -8023,7 +8002,7 @@ static void test_scissor(void)
     ID3D11DeviceContext_ClearRenderTargetView(immediate_context, test_context.backbuffer_rtv, red);
     check_texture_color(test_context.backbuffer, 0xff0000ff, 1);
 
-    draw_quad(&test_context);
+    draw_color_quad(&test_context, &green);
     color = get_texture_color(test_context.backbuffer, 320, 60);
     ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_texture_color(test_context.backbuffer, 80, 240);
@@ -8037,7 +8016,7 @@ static void test_scissor(void)
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate_context, test_context.backbuffer_rtv, red);
     ID3D11DeviceContext_RSSetState(immediate_context, rs);
-    draw_quad(&test_context);
+    draw_color_quad(&test_context, &green);
     color = get_texture_color(test_context.backbuffer, 320, 60);
     ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_texture_color(test_context.backbuffer, 80, 240);
@@ -8050,7 +8029,6 @@ static void test_scissor(void)
     ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
 
     ID3D11RasterizerState_Release(rs);
-    ID3D11PixelShader_Release(ps);
     release_test_context(&test_context);
 }
 
