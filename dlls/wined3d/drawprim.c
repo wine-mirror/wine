@@ -469,9 +469,9 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     BOOL emulation = FALSE, rasterizer_discard = FALSE;
     const struct wined3d_fb_state *fb = state->fb;
     const struct wined3d_stream_info *stream_info;
-    struct wined3d_event_query *ib_query = NULL;
     struct wined3d_rendertarget_view *dsv, *rtv;
     struct wined3d_stream_info si_emulated;
+    struct wined3d_fence *ib_fence = NULL;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     unsigned int i, idx_size = 0;
@@ -556,7 +556,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         }
         else
         {
-            ib_query = index_buffer->query;
+            ib_fence = index_buffer->fence;
             idx_data = NULL;
         }
         idx_data = (const BYTE *)idx_data + state->index_offset;
@@ -655,10 +655,10 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         checkGLcall("disable rasterizer discard");
     }
 
-    if (ib_query)
-        wined3d_event_query_issue(ib_query, device);
-    for (i = 0; i < context->num_buffer_queries; ++i)
-        wined3d_event_query_issue(context->buffer_queries[i], device);
+    if (ib_fence)
+        wined3d_fence_issue(ib_fence, device);
+    for (i = 0; i < context->buffer_fence_count; ++i)
+        wined3d_fence_issue(context->buffer_fences[i], device);
 
     if (wined3d_settings.strict_draw_ordering)
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
