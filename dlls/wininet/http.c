@@ -4133,12 +4133,12 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, WCHAR *url)
         request->path = heap_alloc(needed*sizeof(WCHAR));
         rc = UrlEscapeW(path, request->path, &needed,
                         URL_ESCAPE_SPACES_ONLY);
-        heap_free(path);
         if (rc != S_OK)
         {
             ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(path),rc);
             strcpyW(request->path, path);
         }
+        heap_free(path);
     }
 
     /* Remove custom content-type/length headers on redirects.  */
