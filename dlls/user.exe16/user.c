@@ -3179,12 +3179,14 @@ DWORD WINAPI FormatMessage16(
     talloced= 100;
 
 #define ADD_TO_T(c) \
-        *t++=c;\
-        if (t-target == talloced) {\
+        do { \
+            *t++=c;\
+            if (t-target == talloced) {\
                 target  = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2);\
                 t       = target+talloced;\
                 talloced*=2;\
-        }
+            } \
+        } while(0)
 
     if (from) {
         f=from;
