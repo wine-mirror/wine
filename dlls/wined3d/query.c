@@ -83,7 +83,7 @@ static struct wined3d_pipeline_statistics_query *wined3d_pipeline_statistics_que
     return CONTAINING_RECORD(query, struct wined3d_pipeline_statistics_query, query);
 }
 
-BOOL wined3d_event_query_supported(const struct wined3d_gl_info *gl_info)
+static BOOL wined3d_event_query_supported(const struct wined3d_gl_info *gl_info)
 {
     return gl_info->supported[ARB_SYNC] || gl_info->supported[NV_FENCE] || gl_info->supported[APPLE_FENCE];
 }

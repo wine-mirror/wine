@@ -815,6 +815,8 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
 static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const struct wined3d_gl_info *gl_info)
 {
     enum wined3d_event_query_result ret;
+    struct wined3d_query *query;
+    HRESULT hr;
 
     /* No fencing needs to be done if the app promises not to overwrite
      * existing data. */
@@ -830,20 +832,21 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
 
     if (!This->query)
     {
-        TRACE("Creating event query for buffer %p\n", This);
+        TRACE("Creating event query for buffer %p.\n", This);
 
-        if (!wined3d_event_query_supported(gl_info))
+        hr = wined3d_query_create(This->resource.device, WINED3D_QUERY_TYPE_EVENT,
+                NULL, &wined3d_null_parent_ops, &query);
+        if (hr == WINED3DERR_NOTAVAILABLE)
         {
             FIXME("Event queries not supported, dropping async buffer locks.\n");
             goto drop_query;
         }
-
-        This->query = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->query));
-        if (!This->query)
+        if (FAILED(hr))
         {
-            ERR("Failed to allocate event query memory, dropping async buffer locks.\n");
+            ERR("Failed to create event query, hr %#x.\n", hr);
             goto drop_query;
         }
+        This->query = CONTAINING_RECORD(query, struct wined3d_event_query, query);
 
         /* Since we don't know about old draws a glFinish is needed once */
         gl_info->gl_ops.gl.p_glFinish();
