@@ -370,6 +370,7 @@ struct GpMetafile{
     IStream *record_stream;
     BOOL auto_frame; /* If true, determine the frame automatically */
     GpPointF auto_frame_min, auto_frame_max;
+    DWORD next_object_id;
 
     /* playback */
     GpGraphics *playback_graphics;

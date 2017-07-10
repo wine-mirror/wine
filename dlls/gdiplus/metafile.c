@@ -250,6 +250,11 @@ typedef struct EmfPlusDrawImagePoints
     } PointData[3];
 } EmfPlusDrawImagePoints;
 
+static DWORD METAFILE_AddObjectId(GpMetafile *metafile)
+{
+    return (metafile->next_object_id++) % 64;
+}
+
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
 {
     DWORD size_needed;
@@ -2363,8 +2368,10 @@ static GpStatus METAFILE_FillEmfPlusBitmap(EmfPlusBitmap *record, IStream *strea
     return Ok;
 }
 
-static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image)
+static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DWORD *id)
 {
+    *id = -1;
+
     if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
         return Ok;
 
@@ -2389,8 +2396,9 @@ static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image)
         }
         memset(object_record->ObjectData.image.ImageData.bitmap.BitmapData + size, 0, aligned_size - size);
 
+        *id = METAFILE_AddObjectId(metafile);
         object_record->Header.Type = EmfPlusRecordTypeObject;
-        object_record->Header.Flags = ObjectTypeImage << 8;
+        object_record->Header.Flags = *id | ObjectTypeImage << 8;
         object_record->ObjectData.image.Version = 0xDBC01002;
         object_record->ObjectData.image.Type = ImageDataTypeBitmap;
 
@@ -2412,6 +2420,7 @@ GpStatus METAFILE_DrawImagePointsRect(GpMetafile *metafile, GpImage *image,
      DrawImageAbort callback, VOID *callbackData)
 {
     EmfPlusDrawImagePoints *draw_image_record;
+    DWORD image_id;
     GpStatus stat;
 
     if (count != 3) return InvalidParameter;
@@ -2430,13 +2439,13 @@ GpStatus METAFILE_DrawImagePointsRect(GpMetafile *metafile, GpImage *image,
         return NotImplemented;
     }
 
-    stat = METAFILE_AddImageObject(metafile, image);
+    stat = METAFILE_AddImageObject(metafile, image, &image_id);
     if (stat != Ok) return stat;
 
     stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusDrawImagePoints), (void**)&draw_image_record);
     if (stat != Ok) return stat;
     draw_image_record->Header.Type = EmfPlusRecordTypeDrawImagePoints;
-    draw_image_record->Header.Flags = 0;
+    draw_image_record->Header.Flags = image_id;
     draw_image_record->ImageAttributesID = -1;
     draw_image_record->SrcUnit = UnitPixel;
     draw_image_record->SrcRect.X = units_to_pixels(srcx, srcUnit, metafile->image.xres);
