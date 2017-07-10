@@ -772,7 +772,7 @@ HRESULT WINAPI WsGetXmlAttribute( WS_XML_READER *handle, const WS_XML_STRING *at
     return E_NOTIMPL;
 }
 
-WS_XML_UTF8_TEXT *alloc_utf8_text( const unsigned char *data, ULONG len )
+WS_XML_UTF8_TEXT *alloc_utf8_text( const BYTE *data, ULONG len )
 {
     WS_XML_UTF8_TEXT *ret;
 
@@ -783,6 +783,18 @@ WS_XML_UTF8_TEXT *alloc_utf8_text( const unsigned char *data, ULONG len )
     ret->value.dictionary = NULL;
     ret->value.id         = 0;
     if (data) memcpy( ret->value.bytes, data, len );
+    return ret;
+}
+
+static WS_XML_BASE64_TEXT *alloc_base64_text( const BYTE *data, ULONG len )
+{
+    WS_XML_BASE64_TEXT *ret;
+
+    if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
+    ret->text.textType = WS_XML_TEXT_TYPE_BASE64;
+    ret->length        = len;
+    ret->bytes         = len ? (BYTE *)(ret + 1) : NULL;
+    if (data) memcpy( ret->bytes, data, len );
     return ret;
 }
 
@@ -1277,43 +1289,6 @@ static HRESULT read_datetime( struct reader *reader, WS_DATETIME *ret )
     return S_OK;
 }
 
-static HRESULT read_encode_base64( struct reader *reader, ULONG len, unsigned char *buf, ULONG *ret_len )
-{
-    static const char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    unsigned char byte;
-    ULONG i = 0, x;
-    HRESULT hr;
-
-    while (len > 0)
-    {
-        if ((hr = read_byte( reader, &byte )) != S_OK) return hr;
-        buf[i++] = base64[(byte & 0xfc) >> 2];
-        x = (byte & 3) << 4;
-        if (len == 1)
-        {
-            buf[i++] = base64[x];
-            buf[i++] = '=';
-            buf[i++] = '=';
-            break;
-        }
-        if ((hr = read_byte( reader, &byte )) != S_OK) return hr;
-        buf[i++] = base64[x | ((byte & 0xf0) >> 4)];
-        x = (byte & 0x0f) << 2;
-        if (len == 2)
-        {
-            buf[i++] = base64[x];
-            buf[i++] = '=';
-            break;
-        }
-        if ((hr = read_byte( reader, &byte )) != S_OK) return hr;
-        buf[i++] = base64[x | ((byte & 0xc0) >> 6)];
-        buf[i++] = base64[byte & 0x3f];
-        len -= 3;
-    }
-    *ret_len = i;
-    return S_OK;
-}
-
 static HRESULT lookup_string( struct reader *reader, ULONG id, const WS_XML_STRING **ret )
 {
     const WS_XML_DICTIONARY *dict = (id & 1) ? reader->dict : reader->dict_static;
@@ -1327,6 +1302,7 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
     static const unsigned char zero[] = {'0'}, one[] = {'1'};
     static const unsigned char false[] = {'f','a','l','s','e'}, true[] = {'t','r','u','e'};
     WS_XML_UTF8_TEXT *utf8 = NULL;
+    WS_XML_BASE64_TEXT *base64;
     const WS_XML_STRING *str;
     unsigned char type, buf[46];
     BOOL val_bool;
@@ -1418,20 +1394,20 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
 
     case RECORD_BYTES8_TEXT:
         if ((hr = read_byte( reader, (unsigned char *)&val_uint8 )) != S_OK) return hr;
-        if (!(utf8 = alloc_utf8_text( NULL, ((4 * val_uint8 / 3) + 3) & ~3 ))) return E_OUTOFMEMORY;
-        if ((hr = read_encode_base64( reader, val_uint8, utf8->value.bytes, &utf8->value.length )) != S_OK)
+        if (!(base64 = alloc_base64_text( NULL, val_uint8 ))) return E_OUTOFMEMORY;
+        if ((hr = read_bytes( reader, base64->bytes, val_uint8 )) != S_OK)
         {
-            heap_free( utf8 );
+            heap_free( base64 );
             return hr;
         }
         break;
 
     case RECORD_BYTES16_TEXT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_uint16, sizeof(val_uint16) )) != S_OK) return hr;
-        if (!(utf8 = alloc_utf8_text( NULL, ((4 * val_uint16 / 3) + 3) & ~3 ))) return E_OUTOFMEMORY;
-        if ((hr = read_encode_base64( reader, val_uint16, utf8->value.bytes, &utf8->value.length )) != S_OK)
+        if (!(base64 = alloc_base64_text( NULL, val_uint16 ))) return E_OUTOFMEMORY;
+        if ((hr = read_bytes( reader, base64->bytes, val_uint16 )) != S_OK)
         {
-            heap_free( utf8 );
+            heap_free( base64 );
             return hr;
         }
         break;
@@ -1439,10 +1415,10 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
     case RECORD_BYTES32_TEXT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_int32, sizeof(val_int32) )) != S_OK) return hr;
         if (val_int32 < 0) return WS_E_INVALID_FORMAT;
-        if (!(utf8 = alloc_utf8_text( NULL, ((4 * val_int32 / 3) + 3) & ~3 ))) return E_OUTOFMEMORY;
-        if ((hr = read_encode_base64( reader, val_int32, utf8->value.bytes, &utf8->value.length )) != S_OK)
+        if (!(base64 = alloc_base64_text( NULL, val_int32 ))) return E_OUTOFMEMORY;
+        if ((hr = read_bytes( reader, base64->bytes, val_int32 )) != S_OK)
         {
-            heap_free( utf8 );
+            heap_free( base64 );
             return hr;
         }
         break;
@@ -1484,6 +1460,12 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
     default:
         ERR( "unhandled record type %02x\n", type );
         return WS_E_NOT_SUPPORTED;
+    }
+
+    if (type >= RECORD_BYTES8_TEXT && type <= RECORD_BYTES32_TEXT)
+    {
+        attr->value = &base64->text;
+        return S_OK;
     }
 
     if (!utf8)
@@ -1956,7 +1938,7 @@ static HRESULT read_text_text( struct reader *reader )
     return S_OK;
 }
 
-static struct node *alloc_text_node( const unsigned char *data, ULONG len, WS_XML_UTF8_TEXT **ret )
+static struct node *alloc_utf8_text_node( const BYTE *data, ULONG len, WS_XML_UTF8_TEXT **ret )
 {
     struct node *node;
     WS_XML_UTF8_TEXT *utf8;
@@ -1974,6 +1956,24 @@ static struct node *alloc_text_node( const unsigned char *data, ULONG len, WS_XM
     return node;
 }
 
+static struct node *alloc_base64_text_node( const BYTE *data, ULONG len, WS_XML_BASE64_TEXT **ret )
+{
+    struct node *node;
+    WS_XML_BASE64_TEXT *base64;
+    WS_XML_TEXT_NODE *text;
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
+    if (!(base64 = alloc_base64_text( data, len )))
+    {
+        heap_free( node );
+        return NULL;
+    }
+    text = (WS_XML_TEXT_NODE *)node;
+    text->text = &base64->text;
+    if (ret) *ret = base64;
+    return node;
+}
+
 static HRESULT read_text_bin( struct reader *reader )
 {
     static const unsigned char zero[] = {'0'}, one[] = {'1'};
@@ -1981,6 +1981,7 @@ static HRESULT read_text_bin( struct reader *reader )
     unsigned char type, buf[46];
     struct node *node = NULL, *parent;
     WS_XML_UTF8_TEXT *utf8;
+    WS_XML_BASE64_TEXT *base64;
     const WS_XML_STRING *str;
     BOOL val_bool;
     INT8 val_int8;
@@ -2003,64 +2004,64 @@ static HRESULT read_text_bin( struct reader *reader )
     {
     case RECORD_ZERO_TEXT:
     case RECORD_ZERO_TEXT_WITH_ENDELEMENT:
-        if (!(node = alloc_text_node( zero, sizeof(zero), NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( zero, sizeof(zero), NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_ONE_TEXT:
     case RECORD_ONE_TEXT_WITH_ENDELEMENT:
-        if (!(node = alloc_text_node( one, sizeof(one), NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( one, sizeof(one), NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_FALSE_TEXT:
     case RECORD_FALSE_TEXT_WITH_ENDELEMENT:
-        if (!(node = alloc_text_node( false, sizeof(false), NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( false, sizeof(false), NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_TRUE_TEXT:
     case RECORD_TRUE_TEXT_WITH_ENDELEMENT:
-        if (!(node = alloc_text_node( true, sizeof(true), NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( true, sizeof(true), NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_INT8_TEXT:
     case RECORD_INT8_TEXT_WITH_ENDELEMENT:
         if ((hr = read_byte( reader, (unsigned char *)&val_int8 )) != S_OK) return hr;
         len = format_int8( &val_int8, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_INT16_TEXT:
     case RECORD_INT16_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_int16, sizeof(val_int16) )) != S_OK) return hr;
         len = format_int16( &val_int16, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_INT32_TEXT:
     case RECORD_INT32_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_int32, sizeof(val_int32) )) != S_OK) return hr;
         len = format_int32( &val_int32, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_INT64_TEXT:
     case RECORD_INT64_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_int64, sizeof(val_int64) )) != S_OK) return hr;
         len = format_int64( &val_int64, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_DOUBLE_TEXT:
     case RECORD_DOUBLE_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_double, sizeof(val_double) )) != S_OK) return hr;
         len = format_double( &val_double, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_DATETIME_TEXT:
     case RECORD_DATETIME_TEXT_WITH_ENDELEMENT:
         if ((hr = read_datetime( reader, &datetime )) != S_OK) return hr;
         len = format_datetime( &datetime, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_CHARS8_TEXT:
@@ -2085,8 +2086,8 @@ static HRESULT read_text_bin( struct reader *reader )
     case RECORD_BYTES8_TEXT:
     case RECORD_BYTES8_TEXT_WITH_ENDELEMENT:
         if ((hr = read_byte( reader, (unsigned char *)&val_uint8 )) != S_OK) return hr;
-        if (!(node = alloc_text_node( NULL, ((4 * val_uint8 / 3) + 3) & ~3, &utf8 ))) return E_OUTOFMEMORY;
-        if ((hr = read_encode_base64( reader, val_uint8, utf8->value.bytes, &utf8->value.length )) != S_OK)
+        if (!(node = alloc_base64_text_node( NULL, val_uint8, &base64 ))) return E_OUTOFMEMORY;
+        if ((hr = read_bytes( reader, base64->bytes, val_uint8 )) != S_OK)
         {
             free_node( node );
             return hr;
@@ -2096,8 +2097,8 @@ static HRESULT read_text_bin( struct reader *reader )
     case RECORD_BYTES16_TEXT:
     case RECORD_BYTES16_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_uint16, sizeof(val_uint16) )) != S_OK) return hr;
-        if (!(node = alloc_text_node( NULL, ((4 * val_uint16 / 3) + 3) & ~3, &utf8 ))) return E_OUTOFMEMORY;
-        if ((hr = read_encode_base64( reader, val_uint16, utf8->value.bytes, &utf8->value.length )) != S_OK)
+        if (!(node = alloc_base64_text_node( NULL, val_uint16, &base64 ))) return E_OUTOFMEMORY;
+        if ((hr = read_bytes( reader, base64->bytes, val_uint16 )) != S_OK)
         {
             free_node( node );
             return hr;
@@ -2108,8 +2109,8 @@ static HRESULT read_text_bin( struct reader *reader )
     case RECORD_BYTES32_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_int32, sizeof(val_int32) )) != S_OK) return hr;
         if (val_int32 < 0) return WS_E_INVALID_FORMAT;
-        if (!(node = alloc_text_node( NULL, ((4 * val_int32 / 3) + 3) & ~3, &utf8 ))) return E_OUTOFMEMORY;
-        if ((hr = read_encode_base64( reader, val_int32, utf8->value.bytes, &utf8->value.length )) != S_OK)
+        if (!(node = alloc_base64_text_node( NULL, val_int32, &base64 ))) return E_OUTOFMEMORY;
+        if ((hr = read_bytes( reader, base64->bytes, val_int32 )) != S_OK)
         {
             free_node( node );
             return hr;
@@ -2125,35 +2126,35 @@ static HRESULT read_text_bin( struct reader *reader )
     case RECORD_DICTIONARY_TEXT_WITH_ENDELEMENT:
         if ((hr = read_int31( reader, &id )) != S_OK) return hr;
         if ((hr = lookup_string( reader, id, &str )) != S_OK) return hr;
-        if (!(node = alloc_text_node( str->bytes, str->length, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( str->bytes, str->length, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_UNIQUEID_TEXT:
     case RECORD_UNIQUEID_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&uuid, sizeof(uuid) )) != S_OK) return hr;
         len = format_urn( &uuid, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_UUID_TEXT:
     case RECORD_UUID_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&uuid, sizeof(uuid) )) != S_OK) return hr;
         len = format_guid( &uuid, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_UINT64_TEXT:
     case RECORD_UINT64_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_uint64, sizeof(val_uint64) )) != S_OK) return hr;
         len = format_uint64( &val_uint64, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     case RECORD_BOOL_TEXT:
     case RECORD_BOOL_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&val_bool, sizeof(val_bool) )) != S_OK) return hr;
         len = format_bool( &val_bool, buf );
-        if (!(node = alloc_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( buf, len, NULL ))) return E_OUTOFMEMORY;
         break;
 
     default:
@@ -2163,7 +2164,7 @@ static HRESULT read_text_bin( struct reader *reader )
 
     if (!node)
     {
-        if (!(node = alloc_text_node( NULL, len, &utf8 ))) return E_OUTOFMEMORY;
+        if (!(node = alloc_utf8_text_node( NULL, len, &utf8 ))) return E_OUTOFMEMORY;
         if ((hr = read_bytes( reader, utf8->value.bytes, len )) != S_OK)
         {
             free_node( node );
