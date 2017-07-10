@@ -6824,7 +6824,6 @@ static void test_WSARecv(void)
     memset(&ov, 0, sizeof(ov));
     completion_called = 0;
     iret = WSARecv(dest, bufs, 1, NULL, &flags, &ov, io_completion);
-    todo_wine
     ok(iret == SOCKET_ERROR && GetLastError() == WSAEINVAL, "WSARecv failed - %d error %d\n", iret, GetLastError());
     ok(!completion_called, "completion called\n");
 

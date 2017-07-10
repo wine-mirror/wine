@@ -192,7 +192,7 @@ void free_async_queue( struct async_queue *queue )
 
     LIST_FOR_EACH_ENTRY_SAFE( async, next, &queue->queue, struct async, queue_entry )
     {
-        async->completion = fd_get_completion( async->fd, &async->comp_key );
+        if (!async->completion) async->completion = fd_get_completion( async->fd, &async->comp_key );
         async->fd = NULL;
         async_terminate( async, STATUS_HANDLES_CLOSED );
         async->queue = NULL;
@@ -236,13 +236,20 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->signaled      = 0;
     async->wait_handle   = 0;
     async->direct_result = 0;
-    async->completion    = NULL;
+    async->completion    = fd_get_completion( fd, &async->comp_key );
 
     if (iosb) async->iosb = (struct iosb *)grab_object( iosb );
     else async->iosb = NULL;
 
     list_add_head( &thread->process->asyncs, &async->process_entry );
     if (event) reset_event( event );
+
+    if (async->completion && data->apc)
+    {
+        release_object( async );
+        set_error( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
 
     return async;
 }

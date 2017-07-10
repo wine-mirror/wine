@@ -1045,7 +1045,6 @@ static void test_iocp_fileio(HANDLE h)
 
         /* using APCs on handle with associated completion port is not allowed */
         res = NtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
-        todo_wine
         ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
     }
 
@@ -1094,7 +1093,6 @@ static void test_iocp_fileio(HANDLE h)
 
         /* using APCs on handle with associated completion port is not allowed */
         res = NtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
-        todo_wine
         ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
     }
 
