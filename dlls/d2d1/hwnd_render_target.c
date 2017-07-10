@@ -241,8 +241,8 @@ static void STDMETHODCALLTYPE d2d_hwnd_render_target_DrawRectangle(ID2D1HwndRend
 {
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
 
-    TRACE("iface %p, rect %p, brush %p, stroke_width %.8e, stroke_style %p.\n",
-            iface, rect, brush, stroke_width, stroke_style);
+    TRACE("iface %p, rect %s, brush %p, stroke_width %.8e, stroke_style %p.\n",
+            iface, debug_d2d_rect_f(rect), brush, stroke_width, stroke_style);
 
     ID2D1RenderTarget_DrawRectangle(render_target->dxgi_target, rect, brush, stroke_width, stroke_style);
 }
@@ -252,7 +252,7 @@ static void STDMETHODCALLTYPE d2d_hwnd_render_target_FillRectangle(ID2D1HwndRend
 {
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
 
-    TRACE("iface %p, rect %p, brush %p.\n", iface, rect, brush);
+    TRACE("iface %p, rect %s, brush %p.\n", iface, debug_d2d_rect_f(rect), brush);
 
     ID2D1RenderTarget_FillRectangle(render_target->dxgi_target, rect, brush);
 }
@@ -336,8 +336,8 @@ static void STDMETHODCALLTYPE d2d_hwnd_render_target_FillOpacityMask(ID2D1HwndRe
 {
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
 
-    TRACE("iface %p, mask %p, brush %p, content %#x, dst_rect %p, src_rect %p.\n",
-            iface, mask, brush, content, dst_rect, src_rect);
+    TRACE("iface %p, mask %p, brush %p, content %#x, dst_rect %s, src_rect %s.\n",
+            iface, mask, brush, content, debug_d2d_rect_f(dst_rect), debug_d2d_rect_f(src_rect));
 
     ID2D1RenderTarget_FillOpacityMask(render_target->dxgi_target,
             mask, brush, content, dst_rect, src_rect);
@@ -349,8 +349,8 @@ static void STDMETHODCALLTYPE d2d_hwnd_render_target_DrawBitmap(ID2D1HwndRenderT
 {
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
 
-    TRACE("iface %p, bitmap %p, dst_rect %p, opacity %.8e, interpolation_mode %#x, src_rect %p.\n",
-            iface, bitmap, dst_rect, opacity, interpolation_mode, src_rect);
+    TRACE("iface %p, bitmap %p, dst_rect %s, opacity %.8e, interpolation_mode %#x, src_rect %s.\n",
+            iface, bitmap, debug_d2d_rect_f(dst_rect), opacity, interpolation_mode, debug_d2d_rect_f(src_rect));
 
     ID2D1RenderTarget_DrawBitmap(render_target->dxgi_target,
             bitmap, dst_rect, opacity, interpolation_mode, src_rect);
@@ -362,9 +362,9 @@ static void STDMETHODCALLTYPE d2d_hwnd_render_target_DrawText(ID2D1HwndRenderTar
 {
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
 
-    TRACE("iface %p, string %s, string_len %u, text_format %p, layout_rect %p, "
+    TRACE("iface %p, string %s, string_len %u, text_format %p, layout_rect %s, "
             "brush %p, options %#x, measuring_mode %#x.\n",
-            iface, debugstr_wn(string, string_len), string_len, text_format, layout_rect,
+            iface, debugstr_wn(string, string_len), string_len, text_format, debug_d2d_rect_f(layout_rect),
             brush, options, measuring_mode);
 
     ID2D1RenderTarget_DrawText(render_target->dxgi_target, string, string_len,
@@ -551,7 +551,7 @@ static void STDMETHODCALLTYPE d2d_hwnd_render_target_PushAxisAlignedClip(ID2D1Hw
 {
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
 
-    TRACE("iface %p, clip_rect %p, antialias_mode %#x.\n", iface, clip_rect, antialias_mode);
+    TRACE("iface %p, clip_rect %s, antialias_mode %#x.\n", iface, debug_d2d_rect_f(clip_rect), antialias_mode);
 
     ID2D1RenderTarget_PushAxisAlignedClip(render_target->dxgi_target, clip_rect, antialias_mode);
 }

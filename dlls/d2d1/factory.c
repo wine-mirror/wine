@@ -128,7 +128,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRectangleGeometry(ID2D1Factor
     struct d2d_geometry *object;
     HRESULT hr;
 
-    TRACE("iface %p, rect %p, geometry %p.\n", iface, rect, geometry);
+    TRACE("iface %p, rect %s, geometry %p.\n", iface, debug_d2d_rect_f(rect), geometry);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;

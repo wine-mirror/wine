@@ -465,4 +465,10 @@ static inline void d2d_rect_expand(D2D1_RECT_F *dst, const D2D1_POINT_2F *point)
         dst->bottom = point->y;
 }
 
+static inline const char *debug_d2d_rect_f(const D2D1_RECT_F *rect)
+{
+    if (!rect) return "(null)";
+    return wine_dbg_sprintf("(%.8e,%.8e)-(%.8e,%.8e)", rect->left, rect->top, rect->right, rect->bottom );
+}
+
 #endif /* __WINE_D2D1_PRIVATE_H */
