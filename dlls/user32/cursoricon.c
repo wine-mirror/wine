@@ -559,7 +559,7 @@ static BOOL CURSORICON_GetResIconEntry( LPCVOID dir, DWORD size, int n,
 static int CURSORICON_FindBestCursor( LPCVOID dir, DWORD size, fnGetCIEntry get_entry,
                                       int width, int height, int depth, UINT loadflags )
 {
-    int i, maxwidth, maxheight, cx, cy, bits, bestEntry = -1;
+    int i, maxwidth, maxheight, maxbits, cx, cy, bits, bestEntry = -1;
 
     if (loadflags & LR_DEFAULTSIZE)
     {
@@ -573,22 +573,22 @@ static int CURSORICON_FindBestCursor( LPCVOID dir, DWORD size, fnGetCIEntry get_
         return 0;
     }
 
-    /* Double height to account for AND and XOR masks */
-
-    height *= 2;
-
     /* First find the largest one smaller than or equal to the requested size*/
 
-    maxwidth = maxheight = 0;
+    maxwidth = maxheight = maxbits = 0;
     for ( i = 0; get_entry( dir, size, i, &cx, &cy, &bits ); i++ )
     {
-        if ((cx <= width) && (cy <= height) &&
-            (cx > maxwidth) && (cy > maxheight))
+        if (cx > width || cy > height) continue;
+        if (cx < maxwidth || cy < maxheight) continue;
+        if (loadflags & LR_MONOCHROME)
         {
-            bestEntry = i;
-            maxwidth  = cx;
-            maxheight = cy;
+            if (maxbits && bits >= maxbits) continue;
         }
+        else if (bits <= maxbits) continue;
+        bestEntry = i;
+        maxwidth  = cx;
+        maxheight = cy;
+        maxbits = bits;
     }
     if (bestEntry != -1) return bestEntry;
 
@@ -597,13 +597,18 @@ static int CURSORICON_FindBestCursor( LPCVOID dir, DWORD size, fnGetCIEntry get_
     maxwidth = maxheight = 255;
     for ( i = 0; get_entry( dir, size, i, &cx, &cy, &bits ); i++ )
     {
-        if (((cx < maxwidth) && (cy < maxheight)) || (bestEntry == -1))
+        if (cx > maxwidth || cy > maxheight) continue;
+        if (loadflags & LR_MONOCHROME)
         {
-            bestEntry = i;
-            maxwidth  = cx;
-            maxheight = cy;
+            if (maxbits && bits >= maxbits) continue;
         }
+        else if (bits <= maxbits) continue;
+        bestEntry = i;
+        maxwidth  = cx;
+        maxheight = cy;
+        maxbits = bits;
     }
+    if (bestEntry == -1) bestEntry = 0;
 
     return bestEntry;
 }
