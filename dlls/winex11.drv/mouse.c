@@ -1160,6 +1160,43 @@ done:
 }
 
 /***********************************************************************
+ *		create_xlib_load_mono_cursor
+ *
+ * Create a monochrome X cursor from a color Windows one by trying to load the monochrome resource.
+ */
+static Cursor create_xlib_load_mono_cursor( HDC hdc, HANDLE handle, int width, int height )
+{
+    Cursor cursor = None;
+    HANDLE mono;
+    ICONINFOEXW info;
+    BITMAP bm;
+
+    if (!(mono = CopyImage( handle, IMAGE_CURSOR, width, height, LR_MONOCHROME | LR_COPYFROMRESOURCE )))
+        return None;
+
+    info.cbSize = sizeof(info);
+    if (GetIconInfoExW( mono, &info ))
+    {
+        if (!info.hbmColor)
+        {
+            GetObjectW( info.hbmMask, sizeof(bm), &bm );
+            bm.bmHeight = max( 1, bm.bmHeight / 2 );
+            /* make sure hotspot is valid */
+            if (info.xHotspot >= bm.bmWidth || info.yHotspot >= bm.bmHeight)
+            {
+                info.xHotspot = bm.bmWidth / 2;
+                info.yHotspot = bm.bmHeight / 2;
+            }
+            cursor = create_xlib_monochrome_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
+        }
+        else DeleteObject( info.hbmColor );
+        DeleteObject( info.hbmMask );
+    }
+    DestroyCursor( mono );
+    return cursor;
+}
+
+/***********************************************************************
  *		create_xlib_color_cursor
  *
  * Create a color X cursor from a Windows one.
@@ -1334,6 +1371,7 @@ static Cursor create_cursor( HANDLE handle )
         if (pXcursorImagesLoadCursor)
             cursor = create_xcursor_cursor( hdc, &info, handle, bm.bmWidth, bm.bmHeight );
 #endif
+        if (!cursor) cursor = create_xlib_load_mono_cursor( hdc, handle, bm.bmWidth, bm.bmHeight );
         if (!cursor) cursor = create_xlib_color_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
         DeleteObject( info.hbmColor );
     }
