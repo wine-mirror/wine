@@ -504,6 +504,27 @@ static void free_parser_data(struct parser *parser)
     parser->data_size = 0;
 }
 
+static void prepare_hex_string_data(struct parser *parser)
+{
+    if (parser->data_type == REG_EXPAND_SZ || parser->data_type == REG_MULTI_SZ)
+    {
+        BYTE *data = parser->data;
+
+        if (data[parser->data_size - 1] != 0)
+        {
+            data[parser->data_size] = 0;
+            parser->data_size++;
+        }
+
+        if (!parser->is_unicode)
+        {
+            parser->data = GetWideStringN(parser->data, parser->data_size, &parser->data_size);
+            parser->data_size *= sizeof(WCHAR);
+            HeapFree(GetProcessHeap(), 0, data);
+        }
+    }
+}
+
 enum reg_versions {
     REG_VERSION_31,
     REG_VERSION_40,
@@ -852,23 +873,7 @@ static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos)
         return line;
     }
 
-    if (parser->data_type == REG_EXPAND_SZ || parser->data_type == REG_MULTI_SZ)
-    {
-        BYTE *data = parser->data;
-
-        if (data[parser->data_size - 1] != 0x00)
-        {
-            data[parser->data_size] = 0x00;
-            parser->data_size++;
-        }
-
-        if (!parser->is_unicode)
-        {
-            parser->data = GetWideStringN(parser->data, parser->data_size, &parser->data_size);
-            parser->data_size *= sizeof(WCHAR);
-            HeapFree(GetProcessHeap(), 0, data);
-        }
-    }
+    prepare_hex_string_data(parser);
 
     set_state(parser, SET_VALUE);
     return line;
@@ -903,6 +908,7 @@ static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos)
 
     if (!(line = get_line(parser->file)))
     {
+        prepare_hex_string_data(parser);
         set_state(parser, SET_VALUE);
         return pos;
     }

@@ -500,7 +500,7 @@ static void test_basic_import(void)
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine17b\"=hex(2):25,50,41,54,48,25,\\");
-    verify_reg(hkey, "Wine17b", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE | TODO_REG_DATA);
+    verify_reg(hkey, "Wine17b", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -510,7 +510,7 @@ static void test_basic_import(void)
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine17d\"=hex(7):4c,69,6e,65,\\");
-    verify_reg(hkey, "Wine17d", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE | TODO_REG_DATA);
+    verify_reg(hkey, "Wine17d", REG_MULTI_SZ, "Line", 5, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
