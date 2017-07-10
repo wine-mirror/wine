@@ -2326,6 +2326,7 @@ static const emfplus_record draw_image_records[] = {
     {0, EMR_HEADER},
     {0, EmfPlusRecordTypeHeader},
     {0, EmfPlusRecordTypeObject},
+    {0, EmfPlusRecordTypeObject},
     {0, EmfPlusRecordTypeDrawImagePoints},
     {1, EMR_SAVEDC},
     {1, EMR_SETICMMODE},
@@ -2341,7 +2342,14 @@ static void test_drawimage(void)
     static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     static const GpPointF dst_points[3] = {{10.0,10.0},{25.0,15.0},{10.0,20.0}};
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    const ColorMatrix double_red = {{
+        {2.0,0.0,0.0,0.0,0.0},
+        {0.0,1.0,0.0,0.0,0.0},
+        {0.0,0.0,1.0,0.0,0.0},
+        {0.0,0.0,0.0,1.0,0.0},
+        {0.0,0.0,0.0,0.0,1.0}}};
 
+    GpImageAttributes *imageattr;
     GpMetafile *metafile;
     GpGraphics *graphics;
     HENHMETAFILE hemf;
@@ -2370,8 +2378,16 @@ static void test_drawimage(void)
     stat = GdipCreateBitmapFromGdiDib(&info, buff, &bm);
     expect(Ok, stat);
 
+    stat = GdipCreateImageAttributes(&imageattr);
+    expect(Ok, stat);
+
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+            TRUE, &double_red, NULL, ColorMatrixFlagsDefault);
+    expect(Ok, stat);
+
     stat = GdipDrawImagePointsRect(graphics, (GpImage*)bm, dst_points, 3,
-            0.0, 0.0, 10.0, 10.0, UnitPixel, NULL, NULL, NULL);
+            0.0, 0.0, 10.0, 10.0, UnitPixel, imageattr, NULL, NULL);
+    GdipDisposeImageAttributes(imageattr);
     expect(Ok, stat);
 
     GdipDisposeImage((GpImage*)bm);

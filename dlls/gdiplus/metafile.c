@@ -198,6 +198,24 @@ typedef struct EmfPlusImage
     } ImageData;
 } EmfPlusImage;
 
+typedef struct EmfPlusARGB
+{
+    BYTE Blue;
+    BYTE Green;
+    BYTE Red;
+    BYTE Alpha;
+} EmfPlusARGB;
+
+typedef struct EmfPlusImageAttributes
+{
+    DWORD Version;
+    DWORD Reserved1;
+    DWORD WrapMode;
+    EmfPlusARGB ClampColor;
+    DWORD ObjectClamp;
+    DWORD Reserved2;
+} EmfPlusImageAttributes;
+
 typedef enum ObjectType
 {
     ObjectTypeInvalid,
@@ -218,6 +236,7 @@ typedef struct EmfPlusObject
     union
     {
         EmfPlusImage image;
+        EmfPlusImageAttributes image_attributes;
     } ObjectData;
 } EmfPlusObject;
 
@@ -2414,13 +2433,48 @@ static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DW
     }
 }
 
+static GpStatus METAFILE_AddImageAttributesObject(GpMetafile *metafile, const GpImageAttributes *attrs, DWORD *id)
+{
+    EmfPlusObject *object_record;
+    EmfPlusImageAttributes *attrs_record;
+    GpStatus stat;
+
+    *id = -1;
+
+    if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
+        return Ok;
+
+    if (!attrs)
+        return Ok;
+
+    stat = METAFILE_AllocateRecord(metafile,
+            FIELD_OFFSET(EmfPlusObject, ObjectData.image_attributes) + sizeof(EmfPlusImageAttributes),
+            (void**)&object_record);
+    if (stat != Ok) return stat;
+
+    *id = METAFILE_AddObjectId(metafile);
+    object_record->Header.Type = EmfPlusRecordTypeObject;
+    object_record->Header.Flags = *id | (ObjectTypeImageAttributes << 8);
+    attrs_record = &object_record->ObjectData.image_attributes;
+    attrs_record->Version = 0xDBC01002;
+    attrs_record->Reserved1 = 0;
+    attrs_record->WrapMode = attrs->wrap;
+    attrs_record->ClampColor.Blue = attrs->outside_color & 0xff;
+    attrs_record->ClampColor.Green = (attrs->outside_color >> 8) & 0xff;
+    attrs_record->ClampColor.Red = (attrs->outside_color >> 16) & 0xff;
+    attrs_record->ClampColor.Alpha = attrs->outside_color >> 24;
+    attrs_record->ObjectClamp = attrs->clamp;
+    attrs_record->Reserved2 = 0;
+    return Ok;
+}
+
 GpStatus METAFILE_DrawImagePointsRect(GpMetafile *metafile, GpImage *image,
      GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,
      REAL srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
      DrawImageAbort callback, VOID *callbackData)
 {
     EmfPlusDrawImagePoints *draw_image_record;
-    DWORD image_id;
+    DWORD image_id, attributes_id;
     GpStatus stat;
 
     if (count != 3) return InvalidParameter;
@@ -2433,20 +2487,55 @@ GpStatus METAFILE_DrawImagePointsRect(GpMetafile *metafile, GpImage *image,
     else
         FIXME("semi-stub\n");
 
-    if (imageAttributes)
+    if (!imageAttributes)
     {
-        FIXME("ImageAttributes != NULL not supported\n");
+        stat = METAFILE_AddImageObject(metafile, image, &image_id);
+    }
+    else if (image->type == ImageTypeBitmap)
+    {
+        INT width = ((GpBitmap*)image)->width;
+        INT height = ((GpBitmap*)image)->height;
+        GpGraphics *graphics;
+        GpBitmap *bitmap;
+
+        stat = GdipCreateBitmapFromScan0(width, height,
+                0, PixelFormat32bppARGB, NULL, &bitmap);
+        if (stat != Ok) return stat;
+
+        stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+        if (stat != Ok)
+        {
+            GdipDisposeImage((GpImage*)bitmap);
+            return stat;
+        }
+
+        stat = GdipDrawImageRectRectI(graphics, image, 0, 0, width, height,
+                0, 0, width, height, UnitPixel, imageAttributes, NULL, NULL);
+        GdipDeleteGraphics(graphics);
+        if (stat != Ok)
+        {
+            GdipDisposeImage((GpImage*)bitmap);
+            return stat;
+        }
+
+        stat = METAFILE_AddImageObject(metafile, (GpImage*)bitmap, &image_id);
+        GdipDisposeImage((GpImage*)bitmap);
+    }
+    else
+    {
+        FIXME("imageAttributes not supported (image type %d)\n", image->type);
         return NotImplemented;
     }
+    if (stat != Ok) return stat;
 
-    stat = METAFILE_AddImageObject(metafile, image, &image_id);
+    stat = METAFILE_AddImageAttributesObject(metafile, imageAttributes, &attributes_id);
     if (stat != Ok) return stat;
 
     stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusDrawImagePoints), (void**)&draw_image_record);
     if (stat != Ok) return stat;
     draw_image_record->Header.Type = EmfPlusRecordTypeDrawImagePoints;
     draw_image_record->Header.Flags = image_id;
-    draw_image_record->ImageAttributesID = -1;
+    draw_image_record->ImageAttributesID = attributes_id;
     draw_image_record->SrcUnit = UnitPixel;
     draw_image_record->SrcRect.X = units_to_pixels(srcx, srcUnit, metafile->image.xres);
     draw_image_record->SrcRect.Y = units_to_pixels(srcy, srcUnit, metafile->image.yres);
