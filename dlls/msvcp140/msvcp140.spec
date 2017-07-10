@@ -3731,7 +3731,7 @@
 @ cdecl _Thrd_sleep(ptr) _Thrd_sleep
 @ cdecl _Thrd_start(ptr ptr ptr) msvcp110._Thrd_start
 @ cdecl _Thrd_yield() _Thrd_yield
-@ stub _To_byte
+@ cdecl _To_byte(wstr ptr) _To_byte
 @ cdecl _To_wide(str ptr)
 @ cdecl _Tolower(long ptr) _Tolower
 @ cdecl _Toupper(long ptr) _Toupper
