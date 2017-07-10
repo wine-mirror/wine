@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <math.h>
+#include <assert.h>
 
 #define NONAMELESSUNION
 
@@ -156,6 +157,99 @@ typedef struct container
     GpRegion *clip;
 } container;
 
+typedef enum
+{
+    BitmapDataTypePixel,
+    BitmapDataTypeCompressed,
+} BitmapDataType;
+
+typedef struct EmfPlusBitmap
+{
+    DWORD Width;
+    DWORD Height;
+    DWORD Stride;
+    DWORD PixelFormat;
+    DWORD Type;
+    BYTE BitmapData[1];
+} EmfPlusBitmap;
+
+typedef struct EmfPlusMetafile
+{
+    DWORD Type;
+    DWORD MetafileDataSize;
+    BYTE MetafileData[1];
+} EmfPlusMetafile;
+
+typedef enum ImageDataType
+{
+    ImageDataTypeUnknown,
+    ImageDataTypeBitmap,
+    ImageDataTypeMetafile,
+} ImageDataType;
+
+typedef struct EmfPlusImage
+{
+    DWORD Version;
+    ImageDataType Type;
+    union
+    {
+        EmfPlusBitmap bitmap;
+        EmfPlusMetafile metafile;
+    } ImageData;
+} EmfPlusImage;
+
+typedef enum ObjectType
+{
+    ObjectTypeInvalid,
+    ObjectTypeBrush,
+    ObjectTypePen,
+    ObjectTypePath,
+    ObjectTypeRegion,
+    ObjectTypeImage,
+    ObjectTypeFont,
+    ObjectTypeStringFormat,
+    ObjectTypeImageAttributes,
+    ObjectTypeCustomLineCap,
+} ObjectType;
+
+typedef struct EmfPlusObject
+{
+    EmfPlusRecordHeader Header;
+    union
+    {
+        EmfPlusImage image;
+    } ObjectData;
+} EmfPlusObject;
+
+typedef struct EmfPlusRectF
+{
+    float X;
+    float Y;
+    float Width;
+    float Height;
+} EmfPlusRectF;
+
+typedef struct EmfPlusPointF
+{
+    float X;
+    float Y;
+} EmfPlusPointF;
+
+typedef struct EmfPlusDrawImagePoints
+{
+    EmfPlusRecordHeader Header;
+    DWORD ImageAttributesID;
+    DWORD SrcUnit;
+    EmfPlusRectF SrcRect;
+    DWORD count;
+    union
+    {
+        /*EmfPlusPointR pointR;
+        EmfPlusPoint point;*/
+        EmfPlusPointF pointF;
+    } PointData[3];
+} EmfPlusDrawImagePoints;
+
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
 {
     DWORD size_needed;
@@ -200,6 +294,12 @@ static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void *
     record->DataSize = size - sizeof(EmfPlusRecordHeader);
 
     return Ok;
+}
+
+static void METAFILE_RemoveLastRecord(GpMetafile *metafile, EmfPlusRecordHeader *record)
+{
+    assert(metafile->comment_data + metafile->comment_data_length == (BYTE*)record + record->Size);
+    metafile->comment_data_length -=  record->Size;
 }
 
 static void METAFILE_WriteRecords(GpMetafile *metafile)
@@ -2208,4 +2308,148 @@ GpStatus WINGDIPAPI GdipConvertToEmfPlusToFile(const GpGraphics* refGraphics,
 {
     FIXME("stub: %p, %p, %p, %p, %u, %p, %p\n", refGraphics, metafile, conversionSuccess, filename, emfType, description, out_metafile);
     return NotImplemented;
+}
+
+static GpStatus METAFILE_CreateCompressedImageStream(GpImage *image, IStream **stream, DWORD *size)
+{
+    LARGE_INTEGER zero;
+    STATSTG statstg;
+    GpStatus stat;
+    HRESULT hr;
+
+    *size = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, stream);
+    if (FAILED(hr)) return hresult_to_status(hr);
+
+    stat = encode_image_png(image, *stream, NULL);
+    if (stat != Ok)
+    {
+        IStream_Release(*stream);
+        return stat;
+    }
+
+    hr = IStream_Stat(*stream, &statstg, 1);
+    if (FAILED(hr))
+    {
+        IStream_Release(*stream);
+        return hresult_to_status(hr);
+    }
+    *size = statstg.cbSize.u.LowPart;
+
+    zero.QuadPart = 0;
+    hr = IStream_Seek(*stream, zero, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr))
+    {
+        IStream_Release(*stream);
+        return hresult_to_status(hr);
+    }
+
+    return Ok;
+}
+
+static GpStatus METAFILE_FillEmfPlusBitmap(EmfPlusBitmap *record, IStream *stream, DWORD size)
+{
+    HRESULT hr;
+
+    record->Width = 0;
+    record->Height = 0;
+    record->Stride = 0;
+    record->PixelFormat = 0;
+    record->Type = BitmapDataTypeCompressed;
+
+    hr = IStream_Read(stream, record->BitmapData, size, NULL);
+    if (FAILED(hr)) return hresult_to_status(hr);
+    return Ok;
+}
+
+static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image)
+{
+    if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
+        return Ok;
+
+    if (image->type == ImageTypeBitmap)
+    {
+        EmfPlusObject *object_record;
+        IStream *stream;
+        DWORD size, aligned_size;
+        GpStatus stat;
+
+        stat = METAFILE_CreateCompressedImageStream(image, &stream, &size);
+        if (stat != Ok) return stat;
+        aligned_size = (size + 3) & ~3;
+
+        stat = METAFILE_AllocateRecord(metafile,
+                FIELD_OFFSET(EmfPlusObject, ObjectData.image.ImageData.bitmap.BitmapData[aligned_size]),
+                (void**)&object_record);
+        if (stat != Ok)
+        {
+            IStream_Release(stream);
+            return stat;
+        }
+        memset(object_record->ObjectData.image.ImageData.bitmap.BitmapData + size, 0, aligned_size - size);
+
+        object_record->Header.Type = EmfPlusRecordTypeObject;
+        object_record->Header.Flags = ObjectTypeImage << 8;
+        object_record->ObjectData.image.Version = 0xDBC01002;
+        object_record->ObjectData.image.Type = ImageDataTypeBitmap;
+
+        stat = METAFILE_FillEmfPlusBitmap(&object_record->ObjectData.image.ImageData.bitmap, stream, size);
+        IStream_Release(stream);
+        if (stat != Ok) METAFILE_RemoveLastRecord(metafile, &object_record->Header);
+        return stat;
+    }
+    else
+    {
+        FIXME("not supported image type (%d)\n", image->type);
+        return NotImplemented;
+    }
+}
+
+GpStatus METAFILE_DrawImagePointsRect(GpMetafile *metafile, GpImage *image,
+     GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,
+     REAL srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
+     DrawImageAbort callback, VOID *callbackData)
+{
+    EmfPlusDrawImagePoints *draw_image_record;
+    GpStatus stat;
+
+    if (count != 3) return InvalidParameter;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("MetafileTypeEmf metafiles not supported\n");
+        return NotImplemented;
+    }
+    else
+        FIXME("semi-stub\n");
+
+    if (imageAttributes)
+    {
+        FIXME("ImageAttributes != NULL not supported\n");
+        return NotImplemented;
+    }
+
+    stat = METAFILE_AddImageObject(metafile, image);
+    if (stat != Ok) return stat;
+
+    stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusDrawImagePoints), (void**)&draw_image_record);
+    if (stat != Ok) return stat;
+    draw_image_record->Header.Type = EmfPlusRecordTypeDrawImagePoints;
+    draw_image_record->Header.Flags = 0;
+    draw_image_record->ImageAttributesID = -1;
+    draw_image_record->SrcUnit = UnitPixel;
+    draw_image_record->SrcRect.X = units_to_pixels(srcx, srcUnit, metafile->image.xres);
+    draw_image_record->SrcRect.Y = units_to_pixels(srcy, srcUnit, metafile->image.yres);
+    draw_image_record->SrcRect.Width = units_to_pixels(srcwidth, srcUnit, metafile->image.xres);
+    draw_image_record->SrcRect.Height = units_to_pixels(srcheight, srcUnit, metafile->image.yres);
+    draw_image_record->count = 3;
+    draw_image_record->PointData[0].pointF.X = points[0].X;
+    draw_image_record->PointData[0].pointF.Y = points[0].Y;
+    draw_image_record->PointData[1].pointF.X = points[1].X;
+    draw_image_record->PointData[1].pointF.Y = points[1].Y;
+    draw_image_record->PointData[2].pointF.X = points[2].X;
+    draw_image_record->PointData[2].pointF.Y = points[2].Y;
+    METAFILE_WriteRecords(metafile);
+    return Ok;
 }

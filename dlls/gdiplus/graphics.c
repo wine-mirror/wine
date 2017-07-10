@@ -2872,6 +2872,13 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     TRACE("%s %s %s\n", debugstr_pointf(&points[0]), debugstr_pointf(&points[1]),
         debugstr_pointf(&points[2]));
 
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        return METAFILE_DrawImagePointsRect((GpMetafile*)graphics->image,
+                image, points, count, srcx, srcy, srcwidth, srcheight,
+                srcUnit, imageAttributes, callback, callbackData);
+    }
+
     memcpy(ptf, points, 3 * sizeof(GpPointF));
 
     /* Ensure source width/height is positive */

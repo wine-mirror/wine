@@ -2325,8 +2325,8 @@ static void test_gditransform(void)
 static const emfplus_record draw_image_records[] = {
     {0, EMR_HEADER},
     {0, EmfPlusRecordTypeHeader},
-    {1, EmfPlusRecordTypeObject},
-    {1, EmfPlusRecordTypeDrawImagePoints},
+    {0, EmfPlusRecordTypeObject},
+    {0, EmfPlusRecordTypeDrawImagePoints},
     {1, EMR_SAVEDC},
     {1, EMR_SETICMMODE},
     {1, EMR_BITBLT},
@@ -2384,6 +2384,7 @@ static void test_drawimage(void)
     expect(Ok, stat);
 
     check_emfplus(hemf, draw_image_records, "draw image");
+    DeleteEnhMetaFile(hemf);
 
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);

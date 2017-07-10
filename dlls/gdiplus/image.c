@@ -4527,7 +4527,7 @@ static GpStatus encode_image_tiff(GpImage *image, IStream* stream,
     return encode_image_wic(image, stream, &GUID_ContainerFormatTiff, params);
 }
 
-static GpStatus encode_image_png(GpImage *image, IStream* stream,
+GpStatus encode_image_png(GpImage *image, IStream* stream,
     GDIPCONST EncoderParameters* params)
 {
     return encode_image_wic(image, stream, &GUID_ContainerFormatPng, params);
