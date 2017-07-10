@@ -233,6 +233,7 @@ my @dll_groups =
   "api-ms-win-core-processenvironment-l1-1-0",
   "api-ms-win-core-processenvironment-l1-2-0",
   "api-ms-win-core-psapi-l1-1-0",
+  "api-ms-win-core-psapi-ansi-l1-1-0",
   "api-ms-win-core-psapi-obsolete-l1-1-0",
   "api-ms-win-core-threadpool-l1-1-0",
   "api-ms-win-core-threadpool-l1-2-0",
