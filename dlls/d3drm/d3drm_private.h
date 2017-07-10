@@ -65,8 +65,8 @@ struct d3drm_frame
     IDirect3DRM *d3drm;
     LONG ref;
     struct d3drm_frame *parent;
-    ULONG nb_children;
-    ULONG children_capacity;
+    SIZE_T nb_children;
+    SIZE_T children_size;
     IDirect3DRMFrame3 **children;
     ULONG nb_visuals;
     ULONG visuals_capacity;

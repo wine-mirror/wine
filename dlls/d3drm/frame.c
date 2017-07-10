@@ -807,7 +807,7 @@ static HRESULT WINAPI d3drm_frame1_GetClassName(IDirect3DRMFrame *iface, DWORD *
 
 static HRESULT WINAPI d3drm_frame3_AddChild(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 *child)
 {
-    struct d3drm_frame *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
     struct d3drm_frame *child_obj = unsafe_impl_from_IDirect3DRMFrame3(child);
 
     TRACE("iface %p, child %p.\n", iface, child);
@@ -831,32 +831,13 @@ static HRESULT WINAPI d3drm_frame3_AddChild(IDirect3DRMFrame3 *iface, IDirect3DR
         }
     }
 
-    if ((This->nb_children + 1) > This->children_capacity)
-    {
-        ULONG new_capacity;
-        IDirect3DRMFrame3** children;
+    if (!d3drm_array_reserve((void **)&frame->children, &frame->children_size,
+            frame->nb_children + 1, sizeof(*frame->children)))
+        return E_OUTOFMEMORY;
 
-        if (!This->children_capacity)
-        {
-            new_capacity = 16;
-            children = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(IDirect3DRMFrame3*));
-        }
-        else
-        {
-            new_capacity = This->children_capacity * 2;
-            children = HeapReAlloc(GetProcessHeap(), 0, This->children, new_capacity * sizeof(IDirect3DRMFrame3*));
-        }
-
-        if (!children)
-            return E_OUTOFMEMORY;
-
-        This->children_capacity = new_capacity;
-        This->children = children;
-    }
-
-    This->children[This->nb_children++] = child;
+    frame->children[frame->nb_children++] = child;
     IDirect3DRMFrame3_AddRef(child);
-    child_obj->parent = This;
+    child_obj->parent = frame;
 
     return D3DRM_OK;
 }
