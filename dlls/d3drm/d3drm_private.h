@@ -71,8 +71,8 @@ struct d3drm_frame
     ULONG nb_visuals;
     ULONG visuals_capacity;
     IDirect3DRMVisual **visuals;
-    ULONG nb_lights;
-    ULONG lights_capacity;
+    SIZE_T nb_lights;
+    SIZE_T lights_size;
     IDirect3DRMLight **lights;
     D3DRMMATRIX4D transform;
     D3DCOLOR scenebackground;

@@ -875,9 +875,8 @@ static HRESULT WINAPI d3drm_frame1_AddChild(IDirect3DRMFrame *iface, IDirect3DRM
 
 static HRESULT WINAPI d3drm_frame3_AddLight(IDirect3DRMFrame3 *iface, IDirect3DRMLight *light)
 {
-    struct d3drm_frame *This = impl_from_IDirect3DRMFrame3(iface);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
     ULONG i;
-    IDirect3DRMLight** lights;
 
     TRACE("iface %p, light %p.\n", iface, light);
 
@@ -885,33 +884,15 @@ static HRESULT WINAPI d3drm_frame3_AddLight(IDirect3DRMFrame3 *iface, IDirect3DR
         return D3DRMERR_BADOBJECT;
 
     /* Check if already existing and return gracefully without increasing ref count */
-    for (i = 0; i < This->nb_lights; i++)
-        if (This->lights[i] == light)
+    for (i = 0; i < frame->nb_lights; i++)
+        if (frame->lights[i] == light)
             return D3DRM_OK;
 
-    if ((This->nb_lights + 1) > This->lights_capacity)
-    {
-        ULONG new_capacity;
+    if (!d3drm_array_reserve((void **)&frame->lights, &frame->lights_size,
+            frame->nb_lights + 1, sizeof(*frame->lights)))
+        return E_OUTOFMEMORY;
 
-        if (!This->lights_capacity)
-        {
-            new_capacity = 16;
-            lights = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(IDirect3DRMLight*));
-        }
-        else
-        {
-            new_capacity = This->lights_capacity * 2;
-            lights = HeapReAlloc(GetProcessHeap(), 0, This->lights, new_capacity * sizeof(IDirect3DRMLight*));
-        }
-
-        if (!lights)
-            return E_OUTOFMEMORY;
-
-        This->lights_capacity = new_capacity;
-        This->lights = lights;
-    }
-
-    This->lights[This->nb_lights++] = light;
+    frame->lights[frame->nb_lights++] = light;
     IDirect3DRMLight_AddRef(light);
 
     return D3DRM_OK;
