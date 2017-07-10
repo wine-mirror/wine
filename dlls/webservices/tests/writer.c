@@ -3909,6 +3909,122 @@ static void test_dictionary(void)
     WsFreeWriter( writer );
 }
 
+static void test_union_type(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    static WS_XML_STRING str_ns = {0, NULL}, str_a = {1, (BYTE *)"a"}, str_b = {1, (BYTE *)"b"};
+    static WS_XML_STRING str_s = {1, (BYTE *)"s"}, str_t = {1, (BYTE *)"t"};
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_UNION_DESCRIPTION u;
+    WS_UNION_FIELD_DESCRIPTION f, f2, *fields[2];
+    WS_FIELD_DESCRIPTION f_struct, *fields_struct[1];
+    WS_STRUCT_DESCRIPTION s;
+    enum choice {CHOICE_A, CHOICE_B, CHOICE_NONE};
+    struct test
+    {
+        enum choice choice;
+        union
+        {
+            const WCHAR *a;
+            UINT32       b;
+        } value;
+    } test;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.value           = CHOICE_A;
+    f.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f.field.localName = &str_a;
+    f.field.ns        = &str_ns;
+    f.field.type      = WS_WSZ_TYPE;
+    f.field.offset    = FIELD_OFFSET(struct test, value.a);
+    fields[0] = &f;
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.value           = CHOICE_B;
+    f2.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f2.field.localName = &str_b;
+    f2.field.ns        = &str_ns;
+    f2.field.type      = WS_UINT32_TYPE;
+    f2.field.offset    = FIELD_OFFSET(struct test, value.b);
+    fields[1] = &f2;
+
+    memset( &u, 0, sizeof(u) );
+    u.size          = sizeof(struct test);
+    u.alignment     = TYPE_ALIGNMENT(struct test);
+    u.fields        = fields;
+    u.fieldCount    = 2;
+    u.enumOffset    = FIELD_OFFSET(struct test, choice);
+    u.noneEnumValue = CHOICE_NONE;
+
+    memset( &f_struct, 0, sizeof(f_struct) );
+    f_struct.mapping         = WS_ELEMENT_CHOICE_FIELD_MAPPING;
+    f_struct.type            = WS_UNION_TYPE;
+    f_struct.typeDescription = &u;
+    fields_struct[0] = &f_struct;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields_struct;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_s;
+    s.typeNs        = &str_ns;
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    test.choice  = CHOICE_A;
+    test.value.a = testW;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t><a>test</a></t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    test.choice  = CHOICE_B;
+    test.value.b = 123;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t><b>123</b></t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    test.choice  = CHOICE_NONE;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &str_t, &str_ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    test.choice = CHOICE_NONE;
+    f_struct.options = WS_FIELD_OPTIONAL;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t/>", __LINE__ );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -3949,4 +4065,5 @@ START_TEST(writer)
     test_binary_encoding();
     test_namespaces();
     test_dictionary();
+    test_union_type();
 }

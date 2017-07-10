@@ -5073,7 +5073,7 @@ static HRESULT read_type_next_element_node( struct reader *reader, const WS_XML_
     return WS_E_INVALID_FORMAT;
 }
 
-ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
+ULONG get_type_size( WS_TYPE type, const void *desc )
 {
     switch (type)
     {
@@ -5119,12 +5119,19 @@ ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
     case WS_XML_QNAME_TYPE:
         return sizeof(WS_XML_QNAME);
 
-    case WS_STRUCT_TYPE:
-        return desc->size;
-
     case WS_DESCRIPTION_TYPE:
         return sizeof(WS_STRUCT_DESCRIPTION *);
 
+    case WS_STRUCT_TYPE:
+    {
+        const WS_STRUCT_DESCRIPTION *desc_struct = desc;
+        return desc_struct->size;
+    }
+    case WS_UNION_TYPE:
+    {
+        const WS_UNION_DESCRIPTION *desc_union = desc;
+        return desc_union->size;
+    }
     default:
         ERR( "unhandled type %u\n", type );
         return 0;

@@ -2923,8 +2923,49 @@ static HRESULT write_type_repeating_element( struct writer *writer, const WS_FIE
     return hr;
 }
 
-static HRESULT write_type_struct_field( struct writer *writer, const WS_FIELD_DESCRIPTION *desc,
-                                        const char *buf, ULONG offset )
+static HRESULT write_type_field( struct writer *, const WS_FIELD_DESCRIPTION *, const char *, ULONG );
+
+static HRESULT write_type_union( struct writer *writer, const WS_UNION_DESCRIPTION *desc, WS_WRITE_OPTION option,
+                                 const void *value, ULONG size )
+{
+    ULONG i, offset;
+    const void *ptr;
+    int enum_value;
+    HRESULT hr;
+
+    if ((hr = get_value_ptr( option, value, size, desc->size, &ptr )) != S_OK) return hr;
+
+    if (size < sizeof(enum_value)) return E_INVALIDARG;
+    if ((enum_value = *(int *)(char *)ptr + desc->enumOffset) == desc->noneEnumValue)
+    {
+        switch (option)
+        {
+        case WS_WRITE_REQUIRED_VALUE:
+            return WS_E_INVALID_FORMAT;
+
+        case WS_WRITE_NILLABLE_VALUE:
+            return S_OK;
+
+        default:
+            ERR( "unhandled write option %u\n", option );
+            return E_INVALIDARG;
+        }
+    }
+
+    for (i = 0; i < desc->fieldCount; i++)
+    {
+        if (desc->fields[i]->value == enum_value)
+        {
+            offset = desc->fields[i]->field.offset;
+            return write_type_field( writer, &desc->fields[i]->field, ptr, offset );
+        }
+    }
+
+    return E_INVALIDARG;
+}
+
+static HRESULT write_type_field( struct writer *writer, const WS_FIELD_DESCRIPTION *desc, const char *buf,
+                                 ULONG offset )
 {
     HRESULT hr;
     WS_TYPE_MAPPING mapping;
@@ -2981,6 +3022,11 @@ static HRESULT write_type_struct_field( struct writer *writer, const WS_FIELD_DE
         if ((hr = write_element_node( writer, NULL, desc->localName, desc->ns )) != S_OK) return hr;
         mapping = WS_ELEMENT_TYPE_MAPPING;
         break;
+
+    case WS_ELEMENT_CHOICE_FIELD_MAPPING:
+        if (desc->type != WS_UNION_TYPE || !desc->typeDescription) return E_INVALIDARG;
+        option = (field_options & WS_FIELD_OPTIONAL) ? WS_WRITE_NILLABLE_VALUE : WS_WRITE_REQUIRED_VALUE;
+        return write_type_union( writer, desc->typeDescription, option, ptr, size );
 
     case WS_REPEATING_ELEMENT_FIELD_MAPPING:
         count = *(const ULONG *)(buf + desc->countOffset);
@@ -3043,13 +3089,11 @@ static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping
     for (i = 0; i < desc->fieldCount; i++)
     {
         offset = desc->fields[i]->offset;
-        if ((hr = write_type_struct_field( writer, desc->fields[i], ptr, offset )) != S_OK)
-            return hr;
+        if ((hr = write_type_field( writer, desc->fields[i], ptr, offset )) != S_OK) return hr;
     }
 
     return S_OK;
 }
-
 
 static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TYPE type,
                            const void *desc, WS_WRITE_OPTION option, const void *value,
@@ -4023,7 +4067,7 @@ done:
 
 static HRESULT write_param( struct writer *writer, const WS_FIELD_DESCRIPTION *desc, const void *value )
 {
-    return write_type_struct_field( writer, desc, value, 0 );
+    return write_type_field( writer, desc, value, 0 );
 }
 
 static ULONG get_array_len( const WS_PARAMETER_DESCRIPTION *params, ULONG count, ULONG index, const void **args )

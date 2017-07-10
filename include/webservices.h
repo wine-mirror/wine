@@ -531,6 +531,21 @@ typedef struct _WS_STRUCT_DESCRIPTION {
     ULONG structOptions;
 } WS_STRUCT_DESCRIPTION;
 
+typedef struct _WS_UNION_FIELD_DESCRIPTION {
+    int value;
+    WS_FIELD_DESCRIPTION field;
+} WS_UNION_FIELD_DESCRIPTION;
+
+typedef struct _WS_UNION_DESCRIPTION {
+    ULONG size;
+    ULONG alignment;
+    WS_UNION_FIELD_DESCRIPTION **fields;
+    ULONG fieldCount;
+    ULONG enumOffset;
+    int noneEnumValue;
+    ULONG *valueIndices;
+} WS_UNION_DESCRIPTION;
+
 typedef struct _WS_ATTRIBUTE_DESCRIPTION {
     WS_XML_STRING *attributeLocalName;
     WS_XML_STRING *attributeNs;
