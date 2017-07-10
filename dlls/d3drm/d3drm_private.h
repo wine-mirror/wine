@@ -168,8 +168,8 @@ struct d3drm_mesh
     IDirect3DRMMesh IDirect3DRMMesh_iface;
     LONG ref;
     IDirect3DRM *d3drm;
-    DWORD groups_capacity;
-    DWORD nb_groups;
+    SIZE_T nb_groups;
+    SIZE_T groups_size;
     struct mesh_group *groups;
 };
 

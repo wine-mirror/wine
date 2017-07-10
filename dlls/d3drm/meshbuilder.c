@@ -2532,28 +2532,8 @@ static HRESULT WINAPI d3drm_mesh_AddGroup(IDirect3DRMMesh *iface, unsigned verte
     if (!face_data || !id)
         return E_POINTER;
 
-    if ((mesh->nb_groups + 1) > mesh->groups_capacity)
-    {
-        struct mesh_group *groups;
-        ULONG new_capacity;
-
-        if (!mesh->groups_capacity)
-        {
-            new_capacity = 16;
-            groups = HeapAlloc(GetProcessHeap(), 0, new_capacity * sizeof(*groups));
-        }
-        else
-        {
-            new_capacity = mesh->groups_capacity * 2;
-            groups = HeapReAlloc(GetProcessHeap(), 0, mesh->groups, new_capacity * sizeof(*groups));
-        }
-
-        if (!groups)
-            return E_OUTOFMEMORY;
-
-        mesh->groups_capacity = new_capacity;
-        mesh->groups = groups;
-    }
+    if (!d3drm_array_reserve((void **)&mesh->groups, &mesh->groups_size, mesh->nb_groups + 1, sizeof(*mesh->groups)))
+        return E_OUTOFMEMORY;
 
     group = mesh->groups + mesh->nb_groups;
 
