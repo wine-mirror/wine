@@ -1609,7 +1609,7 @@ HRESULT WINAPI WsWriteStartElement( WS_XML_WRITER *handle, const WS_XML_STRING *
     return hr;
 }
 
-ULONG format_bool( const BOOL *ptr, unsigned char *buf )
+static ULONG format_bool( const BOOL *ptr, unsigned char *buf )
 {
     static const unsigned char bool_true[] = {'t','r','u','e'}, bool_false[] = {'f','a','l','s','e'};
     if (*ptr)
@@ -1621,22 +1621,22 @@ ULONG format_bool( const BOOL *ptr, unsigned char *buf )
     return sizeof(bool_false);
 }
 
-ULONG format_int8( const INT8 *ptr, unsigned char *buf )
+static ULONG format_int8( const INT8 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%d", *ptr );
 }
 
-ULONG format_int16( const INT16 *ptr, unsigned char *buf )
+static ULONG format_int16( const INT16 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%d", *ptr );
 }
 
-ULONG format_int32( const INT32 *ptr, unsigned char *buf )
+static ULONG format_int32( const INT32 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%d", *ptr );
 }
 
-ULONG format_int64( const INT64 *ptr, unsigned char *buf )
+static ULONG format_int64( const INT64 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%I64d", *ptr );
 }
@@ -1656,12 +1656,12 @@ static ULONG format_uint32( const UINT32 *ptr, unsigned char *buf )
     return wsprintfA( (char *)buf, "%u", *ptr );
 }
 
-ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
+static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%I64u", *ptr );
 }
 
-ULONG format_double( const double *ptr, unsigned char *buf )
+static ULONG format_double( const double *ptr, unsigned char *buf )
 {
 #ifdef HAVE_POWL
     static const long double precision = 0.0000000000000001;
@@ -1758,7 +1758,7 @@ static inline int year_size( int year )
 }
 
 #define TZ_OFFSET 8
-ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
+static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
 {
     static const char fmt[] = "%04u-%02u-%02uT%02u:%02u:%02u";
     int day, hour, min, sec, sec_frac, month = 0, year = 1, tz_hour;
@@ -1814,7 +1814,7 @@ ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
     return len;
 }
 
-ULONG format_guid( const GUID *ptr, unsigned char *buf )
+static ULONG format_guid( const GUID *ptr, unsigned char *buf )
 {
     static const char fmt[] = "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
     return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
@@ -1822,7 +1822,7 @@ ULONG format_guid( const GUID *ptr, unsigned char *buf )
                     ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
 }
 
-ULONG format_urn( const GUID *ptr, unsigned char *buf )
+static ULONG format_urn( const GUID *ptr, unsigned char *buf )
 {
     static const char fmt[] = "urn:uuid:%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
     return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
@@ -1875,9 +1875,11 @@ static ULONG encode_base64( const unsigned char *bin, ULONG len, unsigned char *
     return i;
 }
 
-static HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT *old, WS_XML_UTF8_TEXT **ret )
+static HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT *old, ULONG *offset,
+                                 WS_XML_UTF8_TEXT **ret )
 {
     ULONG len_old = old ? old->value.length : 0;
+    if (offset) *offset = len_old;
 
     switch (text->textType)
     {
@@ -2016,10 +2018,136 @@ static HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT
     }
 }
 
+static HRESULT text_to_text( const WS_XML_TEXT *text, const WS_XML_TEXT *old, ULONG *offset, WS_XML_TEXT **ret )
+{
+    if (offset) *offset = 0;
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
+        const WS_XML_UTF8_TEXT *utf8_old = (const WS_XML_UTF8_TEXT *)old;
+        WS_XML_UTF8_TEXT *new;
+        ULONG len = utf8->value.length, len_old = utf8_old ? utf8_old->value.length : 0;
+
+        if (!(new = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (utf8_old) memcpy( new->value.bytes, utf8_old->value.bytes, len_old );
+        memcpy( new->value.bytes + len_old, utf8->value.bytes, len );
+        if (offset) *offset = len_old;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_UTF16:
+    {
+        const WS_XML_UTF16_TEXT *utf16 = (const WS_XML_UTF16_TEXT *)text;
+        const WS_XML_UTF16_TEXT *utf16_old = (const WS_XML_UTF16_TEXT *)old;
+        WS_XML_UTF16_TEXT *new;
+        ULONG len = utf16->byteCount / sizeof(WCHAR);
+        ULONG len_old = utf16_old ? utf16_old->byteCount / sizeof(WCHAR) : 0;
+
+        if (len % sizeof(WCHAR)) return E_INVALIDARG;
+        if (!(new = alloc_utf16_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (old) memcpy( new->bytes, utf16_old->bytes, len_old );
+        memcpy( new->bytes + len_old, utf16->bytes, len );
+        if (offset) *offset = len_old;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_BASE64:
+    {
+        const WS_XML_BASE64_TEXT *base64 = (const WS_XML_BASE64_TEXT *)text;
+        const WS_XML_BASE64_TEXT *base64_old = (const WS_XML_BASE64_TEXT *)old;
+        WS_XML_BASE64_TEXT *new;
+        ULONG len = base64->length, len_old = base64_old ? base64_old->length : 0;
+
+        if (!(new = alloc_base64_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (base64_old) memcpy( new->bytes, base64_old->bytes, len_old );
+        memcpy( new->bytes + len_old, base64->bytes, len );
+        if (offset) *offset = len_old;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_BOOL:
+    {
+        const WS_XML_BOOL_TEXT *bool_text = (const WS_XML_BOOL_TEXT *)text;
+        WS_XML_BOOL_TEXT *new;
+
+        if (!(new = alloc_bool_text( bool_text->value ))) return E_OUTOFMEMORY;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_INT32:
+    {
+        const WS_XML_INT32_TEXT *int32_text = (const WS_XML_INT32_TEXT *)text;
+        WS_XML_INT32_TEXT *new;
+
+        if (!(new = alloc_int32_text( int32_text->value ))) return E_OUTOFMEMORY;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_INT64:
+    {
+        const WS_XML_INT64_TEXT *int64_text = (const WS_XML_INT64_TEXT *)text;
+        WS_XML_INT64_TEXT *new;
+
+        if (!(new = alloc_int64_text( int64_text->value ))) return E_OUTOFMEMORY;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_UINT64:
+    {
+        const WS_XML_UINT64_TEXT *uint64_text = (const WS_XML_UINT64_TEXT *)text;
+        WS_XML_UINT64_TEXT *new;
+
+        if (!(new = alloc_uint64_text( uint64_text->value ))) return E_OUTOFMEMORY;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_DOUBLE:
+    {
+        const WS_XML_DOUBLE_TEXT *double_text = (const WS_XML_DOUBLE_TEXT *)text;
+        WS_XML_DOUBLE_TEXT *new;
+
+        if (!(new = alloc_double_text( double_text->value ))) return E_OUTOFMEMORY;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_GUID:
+    {
+        const WS_XML_GUID_TEXT *id = (const WS_XML_GUID_TEXT *)text;
+        WS_XML_GUID_TEXT *new;
+
+        if (!(new = alloc_guid_text( &id->value ))) return E_OUTOFMEMORY;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_UNIQUE_ID:
+    {
+        const WS_XML_UNIQUE_ID_TEXT *id = (const WS_XML_UNIQUE_ID_TEXT *)text;
+        WS_XML_UNIQUE_ID_TEXT *new;
+
+        if (!(new = alloc_unique_id_text( &id->value ))) return E_OUTOFMEMORY;
+        *ret = &new->text;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_DATETIME:
+    {
+        const WS_XML_DATETIME_TEXT *dt = (const WS_XML_DATETIME_TEXT *)text;
+        WS_XML_DATETIME_TEXT *new;
+
+        if (!(new = alloc_datetime_text( &dt->value ))) return E_OUTOFMEMORY;
+        *ret = &new->text;
+        return S_OK;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+}
+
 static HRESULT write_set_attribute_value( struct writer *writer, const WS_XML_TEXT *value )
 {
     WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
-    WS_XML_UTF8_TEXT *new, *old = (WS_XML_UTF8_TEXT *)elem->attributes[elem->attributeCount - 1]->value;
     HRESULT hr;
 
     switch (value->textType)
@@ -2037,7 +2165,7 @@ static HRESULT write_set_attribute_value( struct writer *writer, const WS_XML_TE
     case WS_XML_TEXT_TYPE_GUID:
     case WS_XML_TEXT_TYPE_UNIQUE_ID:
     case WS_XML_TEXT_TYPE_DATETIME:
-        if (old) return WS_E_INVALID_OPERATION;
+        if (elem->attributes[elem->attributeCount - 1]->value) return WS_E_INVALID_OPERATION;
         break;
 
     default:
@@ -2045,10 +2173,28 @@ static HRESULT write_set_attribute_value( struct writer *writer, const WS_XML_TE
         return E_NOTIMPL;
     }
 
-    if ((hr = text_to_utf8text( value, old, &new )) != S_OK) return hr;
-
-    heap_free( old );
-    elem->attributes[elem->attributeCount - 1]->value = &new->text;
+    switch (writer->output_enc)
+    {
+    case WS_XML_WRITER_ENCODING_TYPE_TEXT:
+    {
+        WS_XML_UTF8_TEXT *new, *old = (WS_XML_UTF8_TEXT *)elem->attributes[elem->attributeCount - 1]->value;
+        if ((hr = text_to_utf8text( value, old, NULL, &new )) != S_OK) return hr;
+        heap_free( old );
+        elem->attributes[elem->attributeCount - 1]->value = &new->text;
+        break;
+    }
+    case WS_XML_WRITER_ENCODING_TYPE_BINARY:
+    {
+        WS_XML_TEXT *new, *old = elem->attributes[elem->attributeCount - 1]->value;
+        if ((hr = text_to_text( value, old, NULL, &new )) != S_OK) return hr;
+        heap_free( old );
+        elem->attributes[elem->attributeCount - 1]->value = new;
+        break;
+    }
+    default:
+        FIXME( "unhandled output encoding %u\n", writer->output_enc );
+        return E_NOTIMPL;
+    }
 
     return S_OK;
 }
@@ -2057,7 +2203,6 @@ static HRESULT write_add_text_node( struct writer *writer, const WS_XML_TEXT *va
 {
     struct node *node;
     WS_XML_TEXT_NODE *text;
-    WS_XML_UTF8_TEXT *utf8;
     HRESULT hr;
 
     if (node_type( writer->current ) != WS_XML_NODE_TYPE_ELEMENT &&
@@ -2065,13 +2210,37 @@ static HRESULT write_add_text_node( struct writer *writer, const WS_XML_TEXT *va
         node_type( writer->current ) != WS_XML_NODE_TYPE_CDATA) return WS_E_INVALID_FORMAT;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return E_OUTOFMEMORY;
-    if ((hr = text_to_utf8text( value, NULL, &utf8 )) != S_OK)
-    {
-        heap_free( node );
-        return hr;
-    }
     text = (WS_XML_TEXT_NODE *)node;
-    text->text = &utf8->text;
+
+    switch (writer->output_enc)
+    {
+    case WS_XML_WRITER_ENCODING_TYPE_TEXT:
+    {
+        WS_XML_UTF8_TEXT *new;
+        if ((hr = text_to_utf8text( value, NULL, NULL, &new )) != S_OK)
+        {
+            heap_free( node );
+            return hr;
+        }
+        text->text = &new->text;
+        break;
+    }
+    case WS_XML_WRITER_ENCODING_TYPE_BINARY:
+    {
+        WS_XML_TEXT *new;
+        if ((hr = text_to_text( value, NULL, NULL, &new )) != S_OK)
+        {
+            heap_free( node );
+            return hr;
+        }
+        text->text = new;
+        break;
+    }
+    default:
+        FIXME( "unhandled output encoding %u\n", writer->output_enc );
+        heap_free( node );
+        return E_NOTIMPL;
+    }
 
     write_insert_node( writer, writer->current, node );
     return S_OK;
@@ -2146,24 +2315,40 @@ static HRESULT write_text( struct writer *writer, const WS_XML_TEXT *text, ULONG
 static HRESULT write_text_node( struct writer *writer, const WS_XML_TEXT *text )
 {
     WS_XML_TEXT_NODE *node = (WS_XML_TEXT_NODE *)writer->current;
-    ULONG offset;
+    ULONG offset = 0;
     HRESULT hr;
 
     if ((hr = write_flush( writer )) != S_OK) return hr;
     if (node_type( writer->current ) != WS_XML_NODE_TYPE_TEXT)
     {
-        offset = 0;
         if ((hr = write_add_text_node( writer, text )) != S_OK) return hr;
         node = (WS_XML_TEXT_NODE *)writer->current;
     }
     else
     {
-        WS_XML_UTF8_TEXT *new, *old = (WS_XML_UTF8_TEXT *)node->text;
-
-        offset = old->value.length;
-        if ((hr = text_to_utf8text( text, old, &new )) != S_OK) return hr;
-        heap_free( old );
-        node->text = &new->text;
+        switch (writer->output_enc)
+        {
+        case WS_XML_WRITER_ENCODING_TYPE_TEXT:
+        {
+            WS_XML_UTF8_TEXT *new, *old = (WS_XML_UTF8_TEXT *)node->text;
+            offset = old->value.length;
+            if ((hr = text_to_utf8text( text, old, &offset, &new )) != S_OK) return hr;
+            heap_free( old );
+            node->text = &new->text;
+            break;
+        }
+        case WS_XML_WRITER_ENCODING_TYPE_BINARY:
+        {
+            WS_XML_TEXT *new, *old = node->text;
+            if ((hr = text_to_text( text, old, &offset, &new )) != S_OK) return hr;
+            heap_free( old );
+            node->text = new;
+            break;
+        }
+        default:
+            FIXME( "unhandled output encoding %u\n", writer->output_enc );
+            return E_NOTIMPL;
+        }
     }
 
     if ((hr = write_text( writer, node->text, offset )) != S_OK) return hr;

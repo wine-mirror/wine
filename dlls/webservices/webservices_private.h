@@ -44,23 +44,11 @@ struct dictionary
 struct dictionary dict_builtin DECLSPEC_HIDDEN;
 const struct dictionary dict_builtin_static DECLSPEC_HIDDEN;
 
-ULONG format_bool( const BOOL *, unsigned char * ) DECLSPEC_HIDDEN;
-ULONG format_int8( const INT8 *, unsigned char * ) DECLSPEC_HIDDEN;
-ULONG format_int16( const INT16 *, unsigned char * ) DECLSPEC_HIDDEN;
-ULONG format_int32( const INT32 *, unsigned char * ) DECLSPEC_HIDDEN;
-ULONG format_int64( const INT64 *, unsigned char * ) DECLSPEC_HIDDEN;
-ULONG format_uint64( const UINT64 *, unsigned char * ) DECLSPEC_HIDDEN;
-ULONG format_double( const double *, unsigned char * ) DECLSPEC_HIDDEN;
-ULONG format_datetime( const WS_DATETIME *, unsigned char * ) DECLSPEC_HIDDEN;
-ULONG format_guid( const GUID *, unsigned char * ) DECLSPEC_HIDDEN;
-ULONG format_urn( const GUID *, unsigned char * ) DECLSPEC_HIDDEN;
-
 const char *debugstr_xmlstr( const WS_XML_STRING * ) DECLSPEC_HIDDEN;
 WS_XML_STRING *alloc_xml_string( const unsigned char *, ULONG ) DECLSPEC_HIDDEN;
 WS_XML_STRING *dup_xml_string( const WS_XML_STRING * ) DECLSPEC_HIDDEN;
 HRESULT add_xml_string( WS_XML_STRING * ) DECLSPEC_HIDDEN;
 void free_xml_string( WS_XML_STRING * ) DECLSPEC_HIDDEN;
-WS_XML_UTF8_TEXT *alloc_utf8_text( const unsigned char *, ULONG ) DECLSPEC_HIDDEN;
 HRESULT append_attribute( WS_XML_ELEMENT_NODE *, WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 void free_attribute( WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
@@ -70,6 +58,18 @@ HRESULT set_output( WS_XML_WRITER * ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const void * ) DECLSPEC_HIDDEN;
 HRESULT read_header( WS_XML_READER *, const WS_XML_STRING *, const WS_XML_STRING *, WS_TYPE,
                      const void *, WS_READ_OPTION, WS_HEAP *, void *, ULONG ) DECLSPEC_HIDDEN;
+
+WS_XML_UTF8_TEXT *alloc_utf8_text( const BYTE *, ULONG ) DECLSPEC_HIDDEN;
+WS_XML_UTF16_TEXT *alloc_utf16_text( const BYTE *, ULONG ) DECLSPEC_HIDDEN;
+WS_XML_BASE64_TEXT *alloc_base64_text( const BYTE *, ULONG ) DECLSPEC_HIDDEN;
+WS_XML_BOOL_TEXT *alloc_bool_text( BOOL ) DECLSPEC_HIDDEN;
+WS_XML_INT32_TEXT *alloc_int32_text( INT32 ) DECLSPEC_HIDDEN;
+WS_XML_INT64_TEXT *alloc_int64_text( INT64 ) DECLSPEC_HIDDEN;
+WS_XML_UINT64_TEXT *alloc_uint64_text( UINT64 ) DECLSPEC_HIDDEN;
+WS_XML_DOUBLE_TEXT *alloc_double_text( double ) DECLSPEC_HIDDEN;
+WS_XML_GUID_TEXT *alloc_guid_text( const GUID * ) DECLSPEC_HIDDEN;
+WS_XML_UNIQUE_ID_TEXT *alloc_unique_id_text( const GUID * ) DECLSPEC_HIDDEN;
+WS_XML_DATETIME_TEXT *alloc_datetime_text( const WS_DATETIME * ) DECLSPEC_HIDDEN;
 
 #define INVALID_PARAMETER_INDEX 0xffff
 HRESULT get_param_desc( const WS_STRUCT_DESCRIPTION *, USHORT, const WS_FIELD_DESCRIPTION ** ) DECLSPEC_HIDDEN;
