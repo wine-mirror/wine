@@ -11224,6 +11224,12 @@ size_t __cdecl wcsrtombs(char *dst, const wchar_t **pstr, size_t n, mbstate_t *s
 }
 #endif
 
+int __cdecl _To_byte(const wchar_t *src, char *dst)
+{
+    TRACE("(%s %p)\n", debugstr_w(src), dst);
+    return WideCharToMultiByte(CP_ACP, 0, src, -1, dst, MAX_PATH, NULL, NULL);
+}
+
 int __cdecl _To_wide(const char *src, wchar_t *dst)
 {
     TRACE("(%s %p)\n", debugstr_a(src), dst);

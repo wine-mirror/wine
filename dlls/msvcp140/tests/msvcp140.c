@@ -152,6 +152,7 @@ static int (__cdecl *p__Schedule_chore)(_Threadpool_chore*);
 static int (__cdecl *p__Reschedule_chore)(const _Threadpool_chore*);
 static void (__cdecl *p__Release_chore)(_Threadpool_chore*);
 
+static int (__cdecl *p_To_byte)(const WCHAR *src, char *dst);
 static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
 
 static HMODULE msvcp;
@@ -215,6 +216,7 @@ static BOOL init(void)
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z");
     }
 
+    SET(p_To_byte, "_To_byte");
     SET(p_To_wide, "_To_wide");
 
     init_thiscall_thunk();
@@ -469,6 +471,52 @@ static void test_chore(void)
     p__Release_chore(&chore);
 }
 
+static void test_to_byte(void)
+{
+    static const WCHAR test_1[] = {'T', 'E', 'S', 'T', 0};
+    static const WCHAR test_2[] = {0x9580, 0x9581, 0x9582, 0x9583, 0}; /* some CJK characters */
+    static const WCHAR *tests[] = {test_1, test_2};
+
+    char dst[MAX_PATH + 4] = "ABC\0XXXXXXX";
+    char compare[MAX_PATH + 4] = "ABC\0XXXXXXX";
+    int ret,expected;
+    unsigned int i, j;
+    WCHAR longstr[MAX_PATH + 3];
+
+    ret = p_To_byte(NULL, NULL);
+    ok(!ret, "Got unexpected result %d\n", ret);
+    ret = p_To_byte(tests[0], NULL);
+    ok(!ret, "Got unexpected result %d\n", ret);
+    ret = p_To_byte(NULL, dst);
+    ok(!ret, "Got unexpected result %d\n", ret);
+
+    ok(!memcmp(dst, compare, sizeof(compare)), "Destination was modified: %s\n", dst);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        ret = p_To_byte(tests[i], dst);
+        expected = WideCharToMultiByte(CP_ACP, 0, tests[i], -1, compare, sizeof(compare) / sizeof(*compare),
+                NULL, NULL);
+        ok(ret == expected,  "Got unexpected result %d, expected %d, test case %u\n", ret, expected, i);
+        ok(!memcmp(dst, compare, sizeof(compare)), "Got unexpected output %s, test case %u\n", dst, i);
+    }
+
+    /* Output length is limited to MAX_PATH.*/
+    for (i = MAX_PATH - 2; i < MAX_PATH + 2; ++i)
+    {
+        for (j = 0; j < i; j++)
+            longstr[j] = 'A';
+        longstr[i] = 0;
+        memset(dst, 0xff, sizeof(dst));
+        memset(compare, 0xff, sizeof(compare));
+
+        ret = p_To_byte(longstr, dst);
+        expected = WideCharToMultiByte(CP_ACP, 0, longstr, -1, compare, MAX_PATH, NULL, NULL);
+        ok(ret == expected,  "Got unexpected result %d, expected %d, length %u\n", ret, expected, i);
+        ok(!memcmp(dst, compare, sizeof(compare)), "Got unexpected output %s, length %u\n", dst, i);
+    }
+}
+
 static void test_to_wide(void)
 {
      /* öäüß€Ÿ.A.B in cp1252, the two . are an undefined value and delete.
@@ -524,6 +572,7 @@ START_TEST(msvcp140)
     test__ContextCallback();
     test__TaskEventLogger();
     test_chore();
+    test_to_byte();
     test_to_wide();
     FreeLibrary(msvcp);
 }
