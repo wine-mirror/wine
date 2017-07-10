@@ -4802,6 +4802,16 @@ static HRESULT set_input_bin( WS_XML_READER *reader, const char *data, ULONG siz
     return WsSetInput( reader, &bin.encoding, &buf.input, NULL, 0, NULL );
 }
 
+static const WS_XML_TEXT_NODE *read_text_node( WS_XML_READER *reader )
+{
+    const WS_XML_NODE *node;
+    if (WsReadNode( reader, NULL ) != S_OK) return NULL;
+    if (WsReadNode( reader, NULL ) != S_OK) return NULL;
+    if (WsGetReaderNode( reader, &node, NULL ) != S_OK) return NULL;
+    if (node->nodeType != WS_XML_NODE_TYPE_TEXT) return NULL;
+    return (const WS_XML_TEXT_NODE *)node;
+}
+
 static void test_binary_encoding(void)
 {
     static WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
@@ -4817,6 +4827,52 @@ static void test_binary_encoding(void)
         {0x40,0x01,'t',0x9f,0x01,'a'};
     static const char test6[] =
         {0x40,0x01,'t',0xa0,0x01,0x00,'a',0x9f,0x01,'b'};
+    static const char test7[] =
+        {0x40,0x01,'t',0xb5,0xff,0xff,0xff,0xff};
+    static const char test8[] =
+        {0x40,0x01,'t',0xb5,0x00,0x00,0x00,0x00};
+    static const char test9[] =
+        {0x40,0x01,'t',0x81};
+    static const char test10[] =
+        {0x40,0x01,'t',0x83};
+    static const char test11[] =
+        {0x40,0x01,'t',0x85};
+    static const char test12[] =
+        {0x40,0x01,'t',0x87};
+    static const char test13[] =
+        {0x40,0x01,'t',0x89,0xff};
+    static const char test14[] =
+        {0x40,0x01,'t',0x8b,0xff,0xff};
+    static const char test15[] =
+        {0x40,0x01,'t',0x8d,0xff,0xff,0xff,0xff};
+    static const char test16[] =
+        {0x40,0x01,'t',0x8f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+    static const char test17[] =
+        {0x40,0x01,'t',0x93,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+    static const char test18[] =
+        {0x40,0x01,'t',0x97,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+    static const char test19[] =
+        {0x40,0x01,'t',0x99,0x01,0x61};
+    static const char test20[] =
+        {0x40,0x01,'t',0x9b,0x01,0x00,0x61};
+    static const char test21[] =
+        {0x40,0x01,'t',0x9d,0x01,0x00,0x00,0x00,0x61};
+    static const char test22[] =
+        {0x40,0x01,'t',0x9f,0x01,0x61};
+    static const char test23[] =
+        {0x40,0x01,'t',0xa1,0x01,0x00,0x61};
+    static const char test24[] =
+        {0x40,0x01,'t',0xa3,0x01,0x00,0x00,0x00,0x61};
+    static const char test25[] =
+        {0x40,0x01,'t',0xa9};
+    static const char test26[] =
+        {0x40,0x01,'t',0xab,0x0c};
+    static const char test27[] =
+        {0x40,0x01,'t',0xad,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+    static const char test28[] =
+        {0x40,0x01,'t',0xb1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+    static const char test29[] =
+        {0x40,0x01,'t',0xb3,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
     static const char test100[] =
         {0x40,0x01,'t',0x04,0x01,'t',0x98,0x00,0x01};
     static const char test101[] =
@@ -4828,12 +4884,21 @@ static void test_binary_encoding(void)
     static const char test200[] =
         {0x02,0x07,'c','o','m','m','e','n','t'};
     const WS_XML_NODE *node;
+    const WS_XML_TEXT_NODE *text_node;
     const WS_XML_ELEMENT_NODE *elem;
     const WS_XML_ATTRIBUTE *attr;
-    const WS_XML_TEXT_NODE *text;
-    const WS_XML_UTF8_TEXT *utf8;
-    const WS_XML_BASE64_TEXT *base64;
+    const WS_XML_UTF8_TEXT *utf8_text;
+    const WS_XML_BASE64_TEXT *base64_text;
+    const WS_XML_INT32_TEXT *int32_text;
+    const WS_XML_INT64_TEXT *int64_text;
+    const WS_XML_DOUBLE_TEXT *double_text;
+    const WS_XML_DATETIME_TEXT *datetime_text;
+    const WS_XML_BOOL_TEXT *bool_text;
+    const WS_XML_UNIQUE_ID_TEXT *unique_id_text;
+    const WS_XML_GUID_TEXT *guid_text;
+    const WS_XML_UINT64_TEXT *uint64_text;
     const WS_XML_COMMENT_NODE *comment;
+    WS_XML_DICTIONARY *dict;
     WS_XML_READER *reader;
     WS_HEAP *heap;
     BOOL found;
@@ -4844,6 +4909,9 @@ static void test_binary_encoding(void)
     {
         WS_BYTES data;
     } *typetest;
+
+    hr = WsGetDictionary( WS_ENCODING_XML_BINARY_1, &dict, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCreateReader( NULL, 0, &reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -4969,17 +5037,253 @@ static void test_binary_encoding(void)
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_TEXT, "got %u\n", node->nodeType );
-    text = (const WS_XML_TEXT_NODE *)node;
-    ok( text->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text->text->textType );
-    utf8 = (const WS_XML_UTF8_TEXT *)text->text;
-    ok( utf8->value.length == 4, "got %u\n", utf8->value.length );
-    ok( !memcmp( utf8->value.bytes, "test", 4 ), "wrong text\n" );
+    text_node = (const WS_XML_TEXT_NODE *)node;
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text_node->text->textType );
+    utf8_text = (const WS_XML_UTF8_TEXT *)text_node->text;
+    ok( utf8_text->value.length == 4, "got %u\n", utf8_text->value.length );
+    ok( !memcmp( utf8_text->value.bytes, "test", 4 ), "wrong text\n" );
 
     hr = WsReadNode( reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    /* bool text, TRUE */
+    hr = set_input_bin( reader, test7, sizeof(test7), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_BOOL, "got %u\n", text_node->text->textType );
+    bool_text = (WS_XML_BOOL_TEXT *)text_node->text;
+    ok( bool_text->value == TRUE, "got %d\n", bool_text->value );
+
+    /* bool text, FALSE */
+    hr = set_input_bin( reader, test8, sizeof(test8), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_BOOL, "got %u\n", text_node->text->textType );
+    bool_text = (WS_XML_BOOL_TEXT *)text_node->text;
+    ok( !bool_text->value, "got %d\n", bool_text->value );
+
+    /* zero text */
+    hr = set_input_bin( reader, test9, sizeof(test9), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_INT32, "got %u\n", text_node->text->textType );
+    int32_text = (WS_XML_INT32_TEXT *)text_node->text;
+    ok( !int32_text->value, "got %d\n", int32_text->value );
+
+    /* one text */
+    hr = set_input_bin( reader, test10, sizeof(test10), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_INT32, "got %u\n", text_node->text->textType );
+    int32_text = (WS_XML_INT32_TEXT *)text_node->text;
+    ok( int32_text->value == 1, "got %d\n", int32_text->value );
+
+    /* false text */
+    hr = set_input_bin( reader, test11, sizeof(test11), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_BOOL, "got %u\n", text_node->text->textType );
+    bool_text = (WS_XML_BOOL_TEXT *)text_node->text;
+    ok( !bool_text->value, "got %d\n", bool_text->value );
+
+    /* true text */
+    hr = set_input_bin( reader, test12, sizeof(test12), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_BOOL, "got %u\n", text_node->text->textType );
+    bool_text = (WS_XML_BOOL_TEXT *)text_node->text;
+    ok( bool_text->value == TRUE, "got %d\n", bool_text->value );
+
+    /* int32 text, int8 record */
+    hr = set_input_bin( reader, test13, sizeof(test13), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_INT32, "got %u\n", text_node->text->textType );
+    int32_text = (WS_XML_INT32_TEXT *)text_node->text;
+    ok( int32_text->value == -1, "got %d\n", int32_text->value );
+
+    /* int32 text, int16 record */
+    hr = set_input_bin( reader, test14, sizeof(test14), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_INT32, "got %u\n", text_node->text->textType );
+    int32_text = (WS_XML_INT32_TEXT *)text_node->text;
+    ok( int32_text->value == -1, "got %d\n", int32_text->value );
+
+    /* int32 text, int32 record */
+    hr = set_input_bin( reader, test15, sizeof(test15), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_INT32, "got %u\n", text_node->text->textType );
+    int32_text = (WS_XML_INT32_TEXT *)text_node->text;
+    ok( int32_text->value == -1, "got %d\n", int32_text->value );
+
+    /* int64 text, int64 record */
+    hr = set_input_bin( reader, test16, sizeof(test16), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_INT64, "got %u\n", text_node->text->textType );
+    int64_text = (WS_XML_INT64_TEXT *)text_node->text;
+    ok( int64_text->value == -1, "got %s\n", wine_dbgstr_longlong(int64_text->value) );
+
+    /* double text */
+    hr = set_input_bin( reader, test17, sizeof(test17), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_DOUBLE, "got %u\n", text_node->text->textType );
+    double_text = (WS_XML_DOUBLE_TEXT *)text_node->text;
+    ok( !double_text->value, "got %s\n", wine_dbgstr_longlong(double_text->value) );
+
+    /* datetime text */
+    hr = set_input_bin( reader, test18, sizeof(test18), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_DATETIME, "got %u\n", text_node->text->textType );
+    datetime_text = (WS_XML_DATETIME_TEXT *)text_node->text;
+    ok( !datetime_text->value.ticks, "got %s\n", wine_dbgstr_longlong(datetime_text->value.ticks) );
+    ok( datetime_text->value.format == WS_DATETIME_FORMAT_NONE, "got %u\n", datetime_text->value.format );
+
+    /* utf8 text, chars8 record */
+    hr = set_input_bin( reader, test19, sizeof(test19), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text_node->text->textType );
+    utf8_text = (WS_XML_UTF8_TEXT *)text_node->text;
+    ok( utf8_text->value.length == 1, "got %u\n", utf8_text->value.length );
+    ok( utf8_text->value.bytes[0] == 'a', "got %02x\n", utf8_text->value.bytes[0] );
+
+    /* utf8 text, chars16 record */
+    hr = set_input_bin( reader, test20, sizeof(test20), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text_node->text->textType );
+    utf8_text = (WS_XML_UTF8_TEXT *)text_node->text;
+    ok( utf8_text->value.length == 1, "got %u\n", utf8_text->value.length );
+    ok( utf8_text->value.bytes[0] == 'a', "got %02x\n", utf8_text->value.bytes[0] );
+
+    /* utf8 text, chars32 record */
+    hr = set_input_bin( reader, test21, sizeof(test21), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text_node->text->textType );
+    utf8_text = (WS_XML_UTF8_TEXT *)text_node->text;
+    ok( utf8_text->value.length == 1, "got %u\n", utf8_text->value.length );
+    ok( utf8_text->value.bytes[0] == 'a', "got %02x\n", utf8_text->value.bytes[0] );
+
+    /* base64 text, bytes8 record */
+    hr = set_input_bin( reader, test22, sizeof(test22), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_BASE64, "got %u\n", text_node->text->textType );
+    base64_text = (WS_XML_BASE64_TEXT *)text_node->text;
+    ok( base64_text->length == 1, "got %u\n", base64_text->length );
+    ok( base64_text->bytes[0] == 'a', "got %02x\n", base64_text->bytes[0] );
+
+    /* base64 text, bytes16 record */
+    hr = set_input_bin( reader, test23, sizeof(test23), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_BASE64, "got %u\n", text_node->text->textType );
+    base64_text = (WS_XML_BASE64_TEXT *)text_node->text;
+    ok( base64_text->length == 1, "got %u\n", base64_text->length );
+    ok( base64_text->bytes[0] == 'a', "got %02x\n", base64_text->bytes[0] );
+
+    /* base64 text, bytes32 record */
+    hr = set_input_bin( reader, test24, sizeof(test24), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_BASE64, "got %u\n", text_node->text->textType );
+    base64_text = (WS_XML_BASE64_TEXT *)text_node->text;
+    ok( base64_text->length == 1, "got %u\n", base64_text->length );
+    ok( base64_text->bytes[0] == 'a', "got %02x\n", base64_text->bytes[0] );
+
+    /* empty text */
+    hr = set_input_bin( reader, test25, sizeof(test25), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text_node->text->textType );
+    utf8_text = (WS_XML_UTF8_TEXT *)text_node->text;
+    ok( !utf8_text->value.length, "got %u\n", utf8_text->value.length );
+    ok( utf8_text->value.bytes != NULL, "bytes not set\n" );
+
+    /* dictionary text */
+    hr = set_input_bin( reader, test26, sizeof(test26), dict );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text_node->text->textType );
+    utf8_text = (WS_XML_UTF8_TEXT *)text_node->text;
+    ok( utf8_text->value.length == 2, "got %u\n", utf8_text->value.length );
+    ok( utf8_text->value.bytes[0] == 'T', "got %02x\n", utf8_text->value.bytes[0] );
+    ok( utf8_text->value.bytes[1] == 'o', "got %02x\n", utf8_text->value.bytes[0] );
+
+    /* unique id text */
+    hr = set_input_bin( reader, test27, sizeof(test27), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_UNIQUE_ID, "got %u\n", text_node->text->textType );
+    unique_id_text = (WS_XML_UNIQUE_ID_TEXT *)text_node->text;
+    ok( IsEqualGUID( &unique_id_text->value, &guid_null ), "wrong data\n" );
+
+    /* guid text */
+    hr = set_input_bin( reader, test28, sizeof(test28), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_GUID, "got %u\n", text_node->text->textType );
+    guid_text = (WS_XML_GUID_TEXT *)text_node->text;
+    ok( IsEqualGUID( &guid_text->value, &guid_null ), "wrong data\n" );
+
+    /* uint64 text */
+    hr = set_input_bin( reader, test29, sizeof(test29), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text_node = read_text_node( reader );
+    ok( text_node != NULL, "no text\n" );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_UINT64, "got %u\n", text_node->text->textType );
+    uint64_text = (WS_XML_UINT64_TEXT *)text_node->text;
+    ok( uint64_text->value == 1, "got %s\n", wine_dbgstr_longlong(uint64_text->value) );
 
     /* short attribute */
     hr = set_input_bin( reader, test100, sizeof(test100), NULL );
@@ -5007,10 +5311,10 @@ static void test_binary_encoding(void)
     ok( !attr->ns->length, "got %u\n", attr->ns->length );
     ok( elem->ns->bytes != NULL, "bytes not set\n" );
     ok( attr->value != NULL, "value not set\n" );
-    utf8 = (const WS_XML_UTF8_TEXT *)attr->value;
-    ok( utf8->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8->text.textType );
-    ok( !utf8->value.length, "got %u\n", utf8->value.length );
-    ok( utf8->value.bytes != NULL, "bytes not set\n" );
+    utf8_text = (const WS_XML_UTF8_TEXT *)attr->value;
+    ok( utf8_text->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8_text->text.textType );
+    ok( !utf8_text->value.length, "got %u\n", utf8_text->value.length );
+    ok( utf8_text->value.bytes != NULL, "bytes not set\n" );
 
     hr = WsReadNode( reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -5045,10 +5349,10 @@ static void test_binary_encoding(void)
     ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
     ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong namespace\n" );
     ok( attr->value != NULL, "value not set\n" );
-    utf8 = (const WS_XML_UTF8_TEXT *)attr->value;
-    ok( utf8->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8->text.textType );
-    ok( !utf8->value.length, "got %u\n", utf8->value.length );
-    ok( utf8->value.bytes != NULL, "bytes not set\n" );
+    utf8_text = (const WS_XML_UTF8_TEXT *)attr->value;
+    ok( utf8_text->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8_text->text.textType );
+    ok( !utf8_text->value.length, "got %u\n", utf8_text->value.length );
+    ok( utf8_text->value.bytes != NULL, "bytes not set\n" );
     attr = elem->attributes[1];
     ok( !attr->singleQuote, "single quote\n" );
     ok( attr->isXmlNs, "not xmlns\n" );
@@ -5090,10 +5394,10 @@ static void test_binary_encoding(void)
     ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
     ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong namespace\n" );
     ok( attr->value != NULL, "value not set\n" );
-    utf8 = (const WS_XML_UTF8_TEXT *)attr->value;
-    ok( utf8->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8->text.textType );
-    ok( !utf8->value.length, "got %u\n", utf8->value.length );
-    ok( utf8->value.bytes != NULL, "bytes not set\n" );
+    utf8_text = (const WS_XML_UTF8_TEXT *)attr->value;
+    ok( utf8_text->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8_text->text.textType );
+    ok( !utf8_text->value.length, "got %u\n", utf8_text->value.length );
+    ok( utf8_text->value.bytes != NULL, "bytes not set\n" );
     attr = elem->attributes[1];
     ok( !attr->singleQuote, "single quote\n" );
     ok( attr->isXmlNs, "not xmlns\n" );
@@ -5135,10 +5439,10 @@ static void test_binary_encoding(void)
     ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
     ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong namespace\n" );
     ok( attr->value != NULL, "value not set\n" );
-    utf8 = (const WS_XML_UTF8_TEXT *)attr->value;
-    ok( utf8->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8->text.textType );
-    ok( utf8->value.length == 4, "got %u\n", utf8->value.length );
-    ok( !memcmp( utf8->value.bytes, "test", 4 ), "wrong value\n" );
+    utf8_text = (const WS_XML_UTF8_TEXT *)attr->value;
+    ok( utf8_text->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8_text->text.textType );
+    ok( utf8_text->value.length == 4, "got %u\n", utf8_text->value.length );
+    ok( !memcmp( utf8_text->value.bytes, "test", 4 ), "wrong value\n" );
     attr = elem->attributes[1];
     ok( !attr->singleQuote, "single quote\n" );
     ok( attr->isXmlNs, "not xmlns\n" );
@@ -5195,11 +5499,11 @@ static void test_binary_encoding(void)
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_TEXT, "got %u\n", node->nodeType );
-    text = (const WS_XML_TEXT_NODE *)node;
-    ok( text->text->textType == WS_XML_TEXT_TYPE_BASE64, "got %u\n", text->text->textType );
-    base64 = (const WS_XML_BASE64_TEXT *)text->text;
-    ok( base64->length == 1, "got %u\n", base64->length );
-    ok( base64->bytes[0] == 'a', "wrong data %02x\n", base64->bytes[0] );
+    text_node = (const WS_XML_TEXT_NODE *)node;
+    ok( text_node->text->textType == WS_XML_TEXT_TYPE_BASE64, "got %u\n", text_node->text->textType );
+    base64_text = (const WS_XML_BASE64_TEXT *)text_node->text;
+    ok( base64_text->length == 1, "got %u\n", base64_text->length );
+    ok( base64_text->bytes[0] == 'a', "wrong data %02x\n", base64_text->bytes[0] );
 
     /* element with mixed byte record text */
     hr = set_input_bin( reader, test6, sizeof(test6), NULL );
