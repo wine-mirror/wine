@@ -404,6 +404,42 @@ static void remove_reserved_area( void *addr, size_t size )
 }
 
 
+struct area_boundary
+{
+    void  *base;
+    size_t size;
+    void  *boundary;
+};
+
+/***********************************************************************
+ *           get_area_boundary_callback
+ *
+ * Get lowest boundary address between reserved area and non-reserved area
+ * in the specified region. If no boundaries are found, result is NULL.
+ * The csVirtual section must be held by caller.
+ */
+static int get_area_boundary_callback( void *start, size_t size, void *arg )
+{
+    struct area_boundary *area = arg;
+    void *end = (char *)start + size;
+
+    area->boundary = NULL;
+    if (area->base >= end) return 0;
+    if ((char *)start >= (char *)area->base + area->size) return 1;
+    if (area->base >= start)
+    {
+        if ((char *)area->base + area->size > (char *)end)
+        {
+            area->boundary = end;
+            return 1;
+        }
+        return 0;
+    }
+    area->boundary = start;
+    return 1;
+}
+
+
 /***********************************************************************
  *           is_beyond_limit
  *
@@ -423,12 +459,32 @@ static inline BOOL is_beyond_limit( const void *addr, size_t size, const void *l
  */
 static inline void unmap_area( void *addr, size_t size )
 {
-    if (wine_mmap_is_in_reserved_area( addr, size ))
+    switch (wine_mmap_is_in_reserved_area( addr, size ))
+    {
+    case -1: /* partially in a reserved area */
+    {
+        struct area_boundary area;
+        size_t lower_size;
+        area.base = addr;
+        area.size = size;
+        wine_mmap_enum_reserved_areas( get_area_boundary_callback, &area, 0 );
+        assert( area.boundary );
+        lower_size = (char *)area.boundary - (char *)addr;
+        unmap_area( addr, lower_size );
+        unmap_area( area.boundary, size - lower_size );
+        break;
+    }
+    case 1:  /* in a reserved area */
         wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
-    else if (is_beyond_limit( addr, size, user_space_limit ))
-        add_reserved_area( addr, size );
-    else
-        munmap( addr, size );
+        break;
+    default:
+    case 0:  /* not in a reserved area */
+        if (is_beyond_limit( addr, size, user_space_limit ))
+            add_reserved_area( addr, size );
+        else
+            munmap( addr, size );
+        break;
+    }
 }
 
 
@@ -773,6 +829,62 @@ static int alloc_reserved_area_callback( void *start, size_t size, void *arg )
     return 0;
 }
 
+/***********************************************************************
+ *           map_fixed_area
+ *
+ * mmap the fixed memory area.
+ * The csVirtual section must be held by caller.
+ */
+static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
+{
+    void *ptr;
+
+    switch (wine_mmap_is_in_reserved_area( base, size ))
+    {
+    case -1: /* partially in a reserved area */
+    {
+        NTSTATUS status;
+        struct area_boundary area;
+        size_t lower_size;
+        area.base = base;
+        area.size = size;
+        wine_mmap_enum_reserved_areas( get_area_boundary_callback, &area, 0 );
+        assert( area.boundary );
+        lower_size = (char *)area.boundary - (char *)base;
+        status = map_fixed_area( base, lower_size, vprot );
+        if (status == STATUS_SUCCESS)
+        {
+            status = map_fixed_area( area.boundary, size - lower_size, vprot);
+            if (status != STATUS_SUCCESS) unmap_area( base, lower_size );
+        }
+        return status;
+    }
+    case 0:  /* not in a reserved area, do a normal allocation */
+        if ((ptr = wine_anon_mmap( base, size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+        {
+            if (errno == ENOMEM) return STATUS_NO_MEMORY;
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (ptr != base)
+        {
+            /* We couldn't get the address we wanted */
+            if (is_beyond_limit( ptr, size, user_space_limit )) add_reserved_area( ptr, size );
+            else munmap( ptr, size );
+            return STATUS_CONFLICTING_ADDRESSES;
+        }
+        break;
+
+    default:
+    case 1:  /* in a reserved area, make sure the address is available */
+        if (find_view_range( base, size )) return STATUS_CONFLICTING_ADDRESSES;
+        /* replace the reserved area by our mapping */
+        if ((ptr = wine_anon_mmap( base, size, VIRTUAL_GetUnixProt(vprot), MAP_FIXED )) != base)
+            return STATUS_INVALID_PARAMETER;
+        break;
+    }
+    if (is_beyond_limit( ptr, size, working_set_limit )) working_set_limit = address_space_limit;
+    return STATUS_SUCCESS;
+}
 
 /***********************************************************************
  *           map_view
@@ -790,36 +902,9 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
     {
         if (is_beyond_limit( base, size, address_space_limit ))
             return STATUS_WORKING_SET_LIMIT_RANGE;
-
-        switch (wine_mmap_is_in_reserved_area( base, size ))
-        {
-        case -1: /* partially in a reserved area */
-            return STATUS_CONFLICTING_ADDRESSES;
-
-        case 0:  /* not in a reserved area, do a normal allocation */
-            if ((ptr = wine_anon_mmap( base, size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
-            {
-                if (errno == ENOMEM) return STATUS_NO_MEMORY;
-                return STATUS_INVALID_PARAMETER;
-            }
-            if (ptr != base)
-            {
-                /* We couldn't get the address we wanted */
-                if (is_beyond_limit( ptr, size, user_space_limit )) add_reserved_area( ptr, size );
-                else munmap( ptr, size );
-                return STATUS_CONFLICTING_ADDRESSES;
-            }
-            break;
-
-        default:
-        case 1:  /* in a reserved area, make sure the address is available */
-            if (find_view_range( base, size )) return STATUS_CONFLICTING_ADDRESSES;
-            /* replace the reserved area by our mapping */
-            if ((ptr = wine_anon_mmap( base, size, VIRTUAL_GetUnixProt(vprot), MAP_FIXED )) != base)
-                return STATUS_INVALID_PARAMETER;
-            break;
-        }
-        if (is_beyond_limit( ptr, size, working_set_limit )) working_set_limit = address_space_limit;
+        status = map_fixed_area( base, size, vprot );
+        if (status != STATUS_SUCCESS) return status;
+        ptr = base;
     }
     else
     {
