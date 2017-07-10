@@ -2126,7 +2126,7 @@
 @ stub erfc
 @ stub erfcf
 @ stub erfcl
-@ cdecl erff(double) MSVCR120_erff
+@ cdecl erff(float) MSVCR120_erff
 @ cdecl erfl(double) MSVCR120_erfl
 @ cdecl exit(long) MSVCRT_exit
 @ cdecl exp(double) MSVCRT_exp

@@ -224,7 +224,7 @@
 @ stub erfc
 @ stub erfcf
 @ stub erfcl
-@ cdecl erff(double) ucrtbase.erff
+@ cdecl erff(float) ucrtbase.erff
 @ cdecl erfl(double) ucrtbase.erfl
 @ cdecl exp(double) ucrtbase.exp
 @ cdecl exp2(double) ucrtbase.exp2
