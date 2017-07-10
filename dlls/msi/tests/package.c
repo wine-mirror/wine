@@ -9352,6 +9352,21 @@ static const struct externalui_message openpackage_sequence[] = {
     {0}
 };
 
+static const struct externalui_message processmessage_info_sequence[] = {
+    {INSTALLMESSAGE_INFO, 3, {"zero", "one", "two", "three"}, {1, 1, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message processmessage_actionstart_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "name", "description", "template"}, {0, 1, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message processmessage_actiondata_sequence[] = {
+    {INSTALLMESSAGE_ACTIONDATA, 3, {"{{name: }}template", "cherry", "banana", "guava"}, {1, 1, 1, 1}},
+    {0}
+};
+
 static const struct externalui_message doaction_costinitialize_sequence[] = {
     {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostInitialize", "", ""}, {0, 1, 0, 1}},
     {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", ""}, {0, 1, 1}},
@@ -9452,7 +9467,7 @@ static void test_externalui_message(void)
     /* test that events trigger the correct sequence of messages */
 
     INSTALLUI_HANDLER_RECORD prev;
-    MSIHANDLE hdb, hpkg;
+    MSIHANDLE hdb, hpkg, hrecord;
     INT retval = 1;
     UINT r;
 
@@ -9489,7 +9504,34 @@ static void test_externalui_message(void)
         return;
     }
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
-    ok_sequence(openpackage_sequence, "MsiOpenPackage with valid db", TRUE);
+    ok_sequence(openpackage_sequence, "MsiOpenPackage with valid db", FALSE);
+
+    /* Test MsiProcessMessage */
+    hrecord = MsiCreateRecord(3);
+    ok(hrecord, "failed to create record\n");
+
+    MsiRecordSetStringA(hrecord, 0, "zero");
+    MsiRecordSetStringA(hrecord, 1, "one");
+    MsiRecordSetStringA(hrecord, 2, "two");
+    MsiRecordSetStringA(hrecord, 3, "three");
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_INFO, hrecord);
+    ok(r == 1, "Expected 1, got %d\n", r);
+    ok_sequence(processmessage_info_sequence, "MsiProcessMessage(INSTALLMESSAGE_INFO)", FALSE);
+
+    MsiRecordSetStringA(hrecord, 1, "name");
+    MsiRecordSetStringA(hrecord, 2, "description");
+    MsiRecordSetStringA(hrecord, 3, "template");
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_ACTIONSTART, hrecord);
+    ok(r == 1, "Expected 1, got %d\n", r);
+    ok_sequence(processmessage_actionstart_sequence, "MsiProcessMessage(INSTALLMESSAGE_ACTIONSTART)", FALSE);
+
+    MsiRecordSetStringA(hrecord, 0, "apple");
+    MsiRecordSetStringA(hrecord, 1, "cherry");
+    MsiRecordSetStringA(hrecord, 2, "banana");
+    MsiRecordSetStringA(hrecord, 3, "guava");
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_ACTIONDATA, hrecord);
+    ok(r == 1, "Expected 1, got %d\n", r);
+    ok_sequence(processmessage_actiondata_sequence, "MsiProcessMessage(INSTALLMESSAGE_ACTIONDATA)", FALSE);
 
     /* Test a standard action */
     r = MsiDoActionA(hpkg, "CostInitialize");
@@ -9528,7 +9570,7 @@ static void test_externalui_message(void)
 
     r = package_from_db(hdb, &hpkg);
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
-    ok_sequence(openpackage_sequence, "MsiOpenPackage with valid db", TRUE);
+    ok_sequence(openpackage_sequence, "MsiOpenPackage with valid db", FALSE);
 
     /* Test a custom action */
     r = MsiDoActionA(hpkg, "custom");
@@ -9538,7 +9580,7 @@ static void test_externalui_message(void)
     retval = 0;
     r = MsiDoActionA(hpkg, "custom");
     ok(r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %d\n", r);
-    ok_sequence(doaction_dialog_nonexistent_sequence, "MsiDoAction(\"custom\")", TRUE);
+    ok_sequence(doaction_dialog_nonexistent_sequence, "MsiDoAction(\"custom\")", FALSE);
 
     r = MsiDoActionA(hpkg, "dialog");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -9552,6 +9594,7 @@ static void test_externalui_message(void)
     MsiCloseHandle(hpkg);
     ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);
 
+    MsiCloseHandle(hrecord);
     CoUninitialize();
     DeleteFileA(msifile);
     DeleteFileA("forcecodepage.idt");

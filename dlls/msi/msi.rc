@@ -67,8 +67,12 @@ STRINGTABLE
 /* Install message format strings */
 STRINGTABLE
 {
+    IDS_FATALEXIT "{{Fatal error: }}"
+    IDS_ERROR "{{Error [1]. }}"
+    IDS_WARNING "Warning [1]."
+    IDS_INFO "Info [1]."
+    IDS_OUTOFDISKSPACE "{{Disk full: }}"
     IDS_ACTIONSTART "Action %s: [1]. [2]"
-    IDS_INFO "Info [1]. "
     IDS_COMMONDATA "Message type: [1], Argument: [2]{, [3]}"
 }
 

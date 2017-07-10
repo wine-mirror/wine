@@ -6892,30 +6892,50 @@ msgid "choose which folder contains %s"
 msgstr "parinkite aplanką, kuris turi %s"
 
 #: msi.rc:71
+msgid "{{Fatal error: }}"
+msgstr ""
+
+#: msi.rc:72
+msgid "{{Error [1]. }}"
+msgstr ""
+
+#: msi.rc:73
+msgid "Warning [1]."
+msgstr ""
+
+#: msi.rc:74
+#, fuzzy
+#| msgid "Info [1]. "
+msgid "Info [1]."
+msgstr "Informacija [1]. "
+
+#: msi.rc:75
+#, fuzzy
+#| msgid "Disk full.\n"
+msgid "{{Disk full: }}"
+msgstr "Diskas pilnas.\n"
+
+#: msi.rc:76
 msgid "Action %s: [1]. [2]"
 msgstr "Veiksmas %s: [1]. [2]"
 
-#: msi.rc:72
-msgid "Info [1]. "
-msgstr "Informacija [1]. "
-
-#: msi.rc:73
+#: msi.rc:77
 msgid "Message type: [1], Argument: [2]{, [3]}"
 msgstr "Pranešimo tipas: [1], Argumentai: [2]{, [3]}"
 
-#: msi.rc:79
+#: msi.rc:83
 msgid "Action start %s: [1]."
 msgstr "Veiksmo pradžia %s: [1]."
 
-#: msi.rc:80
+#: msi.rc:84
 msgid "Action ended %s: [1]. Return value [2]."
 msgstr "Veiksmas baigtas %s: [1]. Grąžinta reikšmė [2]."
 
-#: msi.rc:81
+#: msi.rc:85
 msgid "=== Logging started: %s  %s ==="
 msgstr "=== Registravimas pradėtas: %s  %s ==="
 
-#: msi.rc:82
+#: msi.rc:86
 msgid ""
 "The installer has encountered an unexpected error installing this package. "
 "This may indicate a problem with this package. The error code is [1]. {{The "
@@ -6924,371 +6944,371 @@ msgstr ""
 "Diegimo programa susidūrė su netikėta problema diegiant šį paketą. Tai gali "
 "būti problema su paketu. Klaidos kodas [1]. {{Argumentai: [2], [3], [4]}}"
 
-#: msi.rc:88
+#: msi.rc:92
 msgid "Allocating registry space"
 msgstr "Išskiriama vieta registrui"
 
-#: msi.rc:89
+#: msi.rc:93
 msgid "Searching for installed applications"
 msgstr "Ieškoma įdiegtų programų"
 
-#: msi.rc:90
+#: msi.rc:94
 msgid "Binding executables"
 msgstr "Saistomi vykdomieji failai"
 
-#: msi.rc:91 msi.rc:134
+#: msi.rc:95 msi.rc:138
 msgid "Searching for qualifying products"
 msgstr "Ieškoma tinkamų produktų"
 
-#: msi.rc:92 msi.rc:93 msi.rc:98
+#: msi.rc:96 msi.rc:97 msi.rc:102
 msgid "Computing space requirements"
 msgstr "Skaičiuojamas vietos poreikis"
 
-#: msi.rc:94
+#: msi.rc:98
 msgid "Creating folders"
 msgstr "Kuriami aplankai"
 
-#: msi.rc:95
+#: msi.rc:99
 msgid "Creating shortcuts"
 msgstr "Kuriami šaukiniai"
 
-#: msi.rc:96
+#: msi.rc:100
 msgid "Deleting services"
 msgstr "Šalinamos tarnybos"
 
-#: msi.rc:97
+#: msi.rc:101
 msgid "Creating duplicate files"
 msgstr "Kuriami failų dubliai"
 
-#: msi.rc:99
+#: msi.rc:103
 msgid "Searching for related applications"
 msgstr "Ieškoma susijusių programų"
 
-#: msi.rc:100
+#: msi.rc:104
 msgid "Copying network install files"
 msgstr "Kopijuojami įdiegimo iš tinklo failai"
 
-#: msi.rc:101
+#: msi.rc:105
 msgid "Copying new files"
 msgstr "Kopijuojami nauji failai"
 
-#: msi.rc:102
+#: msi.rc:106
 msgid "Installing ODBC components"
 msgstr "Įdiegiami ODBC komponentai"
 
-#: msi.rc:103
+#: msi.rc:107
 msgid "Installing new services"
 msgstr "Įdiegiamos naujos tarnybos"
 
-#: msi.rc:104
+#: msi.rc:108
 msgid "Installing system catalog"
 msgstr "Įdiegiamas sistemos katalogas"
 
-#: msi.rc:105
+#: msi.rc:109
 msgid "Validating install"
 msgstr "Tikrinamas įdiegimas"
 
-#: msi.rc:106
+#: msi.rc:110
 msgid "Evaluating launch conditions"
 msgstr "Vertinamos paleidimo sąlygos"
 
-#: msi.rc:107
+#: msi.rc:111
 msgid "Migrating feature states from related applications"
 msgstr "Migruojamos funkcijų būsenos iš susijusių programų"
 
-#: msi.rc:108
+#: msi.rc:112
 msgid "Moving files"
 msgstr "Perkeliami failai"
 
-#: msi.rc:109
+#: msi.rc:113
 msgid "Publishing assembly information"
 msgstr "Skelbiama „assembly“ informacija"
 
-#: msi.rc:110
+#: msi.rc:114
 msgid "Unpublishing assembly information"
 msgstr "Nebeskelbiama „assembly“ informacija"
 
-#: msi.rc:111
+#: msi.rc:115
 msgid "Patching files"
 msgstr "Pataisomi failai"
 
-#: msi.rc:112
+#: msi.rc:116
 msgid "Updating component registration"
 msgstr "Atnaujinama komponentų registracija"
 
-#: msi.rc:113
+#: msi.rc:117
 msgid "Publishing Qualified Components"
 msgstr "Skelbiami kvalifikuoti komponentai"
 
-#: msi.rc:114
+#: msi.rc:118
 msgid "Publishing Product Features"
 msgstr "Skelbiamos produktų funkcijos"
 
-#: msi.rc:115
+#: msi.rc:119
 msgid "Publishing product information"
 msgstr "Skelbiama produkto informacija"
 
-#: msi.rc:116
+#: msi.rc:120
 msgid "Registering Class servers"
 msgstr "Registruojami klasių serveriai"
 
-#: msi.rc:117
+#: msi.rc:121
 msgid "Registering COM+ Applications and Components"
 msgstr "Registruojamos COM+ programos ir komponentai"
 
-#: msi.rc:118
+#: msi.rc:122
 msgid "Registering extension servers"
 msgstr "Registruojami plėtinių serveriai"
 
-#: msi.rc:119
+#: msi.rc:123
 msgid "Registering fonts"
 msgstr "Registruojami šriftai"
 
-#: msi.rc:120
+#: msi.rc:124
 msgid "Registering MIME info"
 msgstr "Registruojama MIME informacija"
 
-#: msi.rc:121
+#: msi.rc:125
 msgid "Registering product"
 msgstr "Registruojamas produktas"
 
-#: msi.rc:122
+#: msi.rc:126
 msgid "Registering program identifiers"
 msgstr "Registruojami programos identifikatoriai"
 
-#: msi.rc:123
+#: msi.rc:127
 msgid "Registering type libraries"
 msgstr "Registruojamos tipų bibliotekos"
 
-#: msi.rc:124
+#: msi.rc:128
 msgid "Registering user"
 msgstr "Registruojamas naudotojas"
 
-#: msi.rc:125
+#: msi.rc:129
 msgid "Removing duplicated files"
 msgstr "Šalinami failų dubliai"
 
-#: msi.rc:126 msi.rc:150
+#: msi.rc:130 msi.rc:154
 msgid "Updating environment strings"
 msgstr "Atnaujinamos aplinkos eilutės"
 
-#: msi.rc:127
+#: msi.rc:131
 msgid "Removing applications"
 msgstr "Šalinamos programos"
 
-#: msi.rc:128
+#: msi.rc:132
 msgid "Removing files"
 msgstr "Šalinami failai"
 
-#: msi.rc:129
+#: msi.rc:133
 msgid "Removing folders"
 msgstr "Šalinami aplankai"
 
-#: msi.rc:130
+#: msi.rc:134
 msgid "Removing INI files entries"
 msgstr "Šalinami INI failų įrašai"
 
-#: msi.rc:131
+#: msi.rc:135
 msgid "Removing ODBC components"
 msgstr "Šalinami ODBC komponentai"
 
-#: msi.rc:132
+#: msi.rc:136
 msgid "Removing system registry values"
 msgstr "Šalinamos sistemos registro reikšmės"
 
-#: msi.rc:133
+#: msi.rc:137
 msgid "Removing shortcuts"
 msgstr "Šalinami šaukiniai"
 
-#: msi.rc:135
+#: msi.rc:139
 msgid "Registering modules"
 msgstr "Registruojami moduliai"
 
-#: msi.rc:136
+#: msi.rc:140
 msgid "Unregistering modules"
 msgstr "Išregistruojami moduliai"
 
-#: msi.rc:137
+#: msi.rc:141
 msgid "Initializing ODBC directories"
 msgstr "Inicijuojami ODBC katalogai"
 
-#: msi.rc:138
+#: msi.rc:142
 msgid "Starting services"
 msgstr "Paleidžiamos tarnybos"
 
-#: msi.rc:139
+#: msi.rc:143
 msgid "Stopping services"
 msgstr "Stabdomos tarnybos"
 
-#: msi.rc:140
+#: msi.rc:144
 msgid "Unpublishing Qualified Components"
 msgstr "Nebeskelbiami kvalifikuoti komponentai"
 
-#: msi.rc:141
+#: msi.rc:145
 msgid "Unpublishing Product Features"
 msgstr "Nebeskelbiamos produktų funkcijos"
 
-#: msi.rc:142
+#: msi.rc:146
 msgid "Unpublishing product information"
 msgstr "Nebeskelbiama produkto informacija"
 
-#: msi.rc:143
+#: msi.rc:147
 msgid "Unregister Class servers"
 msgstr "Išregistruojami klasių serveriai"
 
-#: msi.rc:144
+#: msi.rc:148
 msgid "Unregistering COM+ Applications and Components"
 msgstr "Išregistruojamos COM+ programos ir komponentai"
 
-#: msi.rc:145
+#: msi.rc:149
 msgid "Unregistering extension servers"
 msgstr "Išregistruojami plėtinių serveriai"
 
-#: msi.rc:146
+#: msi.rc:150
 msgid "Unregistering fonts"
 msgstr "Išregistruojami šriftai"
 
-#: msi.rc:147
+#: msi.rc:151
 msgid "Unregistering MIME info"
 msgstr "Išregistruojama MIME informacija"
 
-#: msi.rc:148
+#: msi.rc:152
 msgid "Unregistering program identifiers"
 msgstr "Išregistruojami programos identifikatoriai"
 
-#: msi.rc:149
+#: msi.rc:153
 msgid "Unregistering type libraries"
 msgstr "Išregistruojamos tipų bibliotekos"
 
-#: msi.rc:151
+#: msi.rc:155
 msgid "Writing INI files values"
 msgstr "Įrašomos INI failų reikšmės"
 
-#: msi.rc:152
+#: msi.rc:156
 msgid "Writing system registry values"
 msgstr "Įrašomos sistemos registro reikšmės"
 
-#: msi.rc:158
+#: msi.rc:162
 msgid "Free space: [1]"
 msgstr "Laisva vieta: [1]"
 
-#: msi.rc:159
+#: msi.rc:163
 msgid "Property: [1], Signature: [2]"
 msgstr "Savybė [1], Parašas: [2]"
 
-#: msi.rc:160
+#: msi.rc:164
 msgid "File: [1]"
 msgstr "Failas: [1]"
 
-#: msi.rc:161 msi.rc:188
+#: msi.rc:165 msi.rc:192
 msgid "Folder: [1]"
 msgstr "Aplankas: [1]"
 
-#: msi.rc:162 msi.rc:191
+#: msi.rc:166 msi.rc:195
 msgid "Shortcut: [1]"
 msgstr "Šaukinys [1]"
 
-#: msi.rc:163 msi.rc:194 msi.rc:195
+#: msi.rc:167 msi.rc:198 msi.rc:199
 msgid "Service: [1]"
 msgstr "Tarnyba: [1]"
 
-#: msi.rc:164 msi.rc:167 msi.rc:171
+#: msi.rc:168 msi.rc:171 msi.rc:175
 msgid "File: [1],  Directory: [9],  Size: [6]"
 msgstr "Failas: [1],  Aplankas: [9],  Dydis: [6]"
 
-#: msi.rc:165
+#: msi.rc:169
 msgid "Found application: [1]"
 msgstr "Rasta programa: [1]"
 
-#: msi.rc:166
+#: msi.rc:170
 msgid "File: [1], Directory: [9], Size: [6]"
 msgstr "Failas: [1], Aplankas: [9], Dydis: [6]"
 
-#: msi.rc:168
+#: msi.rc:172
 msgid "Service: [2]"
 msgstr "Tarnyba: [2]"
 
-#: msi.rc:169
+#: msi.rc:173
 msgid "File: [1],  Dependencies: [2]"
 msgstr "Failas: [1],  Priklausomybės: [2]"
 
-#: msi.rc:170
+#: msi.rc:174
 msgid "Application: [1]"
 msgstr "Programa: [1]"
 
-#: msi.rc:172 msi.rc:173
+#: msi.rc:176 msi.rc:177
 msgid "Application Context:[1], Assembly Name:[2]"
 msgstr "Programos kontekstas:[1], „Assembly“ pavadinimas:[2]"
 
-#: msi.rc:174
+#: msi.rc:178
 msgid "File: [1],  Directory: [2],  Size: [3]"
 msgstr "Failas: [1],  Aplankas: [2],  Dydis: [3]"
 
-#: msi.rc:175 msi.rc:196
+#: msi.rc:179 msi.rc:200
 msgid "Component ID: [1], Qualifier: [2]"
 msgstr "Komponento ID: [1], Kvalifikatorius: [2]"
 
-#: msi.rc:176 msi.rc:197
+#: msi.rc:180 msi.rc:201
 msgid "Feature: [1]"
 msgstr "Funkcija: [1]"
 
-#: msi.rc:177 msi.rc:198
+#: msi.rc:181 msi.rc:202
 msgid "Class Id: [1]"
 msgstr "Klasės Id: [1]"
 
-#: msi.rc:178
+#: msi.rc:182
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
 msgstr "AppId: [1]{{, AppType: [2], Naudotojai: [3], RSN: [4]}}"
 
-#: msi.rc:179 msi.rc:200
+#: msi.rc:183 msi.rc:204
 msgid "Extension: [1]"
 msgstr "Plėtinys: [1]"
 
-#: msi.rc:180 msi.rc:201
+#: msi.rc:184 msi.rc:205
 msgid "Font: [1]"
 msgstr "Šriftas: [1]"
 
-#: msi.rc:181 msi.rc:202
+#: msi.rc:185 msi.rc:206
 msgid "MIME Content Type: [1], Extension: [2]"
 msgstr "MIME turinio tipas: [1], Plėtinys: [2]"
 
-#: msi.rc:182 msi.rc:203
+#: msi.rc:186 msi.rc:207
 msgid "ProgId: [1]"
 msgstr "ProgId: [1]"
 
-#: msi.rc:183 msi.rc:204
+#: msi.rc:187 msi.rc:208
 msgid "LibID: [1]"
 msgstr "LibID: [1]"
 
-#: msi.rc:184 msi.rc:187
+#: msi.rc:188 msi.rc:191
 msgid "File: [1], Directory: [9]"
 msgstr "Failas: [1], Aplankas: [9]"
 
-#: msi.rc:185 msi.rc:205
+#: msi.rc:189 msi.rc:209
 msgid "Name: [1], Value: [2], Action [3]"
 msgstr "Pavadinimas: [1], Reikšmė [2], Veiksmas [3]"
 
-#: msi.rc:186
+#: msi.rc:190
 msgid "Application: [1], Command line: [2]"
 msgstr "Programa: [1], Komandos eilutė: [2]"
 
-#: msi.rc:189 msi.rc:206
+#: msi.rc:193 msi.rc:210
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
 msgstr "Failas: [1],  Sekcija: [2],  Raktas: [3], Reikšmė: [4]"
 
-#: msi.rc:190
+#: msi.rc:194
 msgid "Key: [1], Name: [2]"
 msgstr "Raktas: [1], Pavadinimas: [2]"
 
-#: msi.rc:192 msi.rc:193
+#: msi.rc:196 msi.rc:197
 msgid "File: [1], Folder: [2]"
 msgstr "Failas: [1], Aplankas: [2]"
 
-#: msi.rc:199
+#: msi.rc:203
 msgid "AppId: [1]{{, AppType: [2]}}"
 msgstr "AppId: [1]{{, AppType: [2]}}"
 
-#: msi.rc:207
+#: msi.rc:211
 msgid "Key: [1], Name: [2], Value: [3]"
 msgstr "Raktas: [1], Pavadinimas: [2], Reikšmė: [3]"
 

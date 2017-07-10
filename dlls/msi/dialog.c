@@ -4530,10 +4530,10 @@ UINT ACTION_ShowDialog( MSIPACKAGE *package, const WCHAR *dialog )
         WCHAR template[1024];
         MSIRECORD *row = MSI_CreateRecord(2);
         if (!row) return -1;
-        MSI_RecordSetStringW(row, 0, szActionNotFound); /* FIXME: this shouldn't attach "Info [1]." */
+        MSI_RecordSetStringW(row, 0, szActionNotFound);
         MSI_RecordSetInteger(row, 1, 2726);
         MSI_RecordSetStringW(row, 2, dialog);
-        MSI_ProcessMessage(package, INSTALLMESSAGE_INFO, row);
+        MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_INFO, row);
 
         LoadStringW(msi_hInstance, IDS_INSTALLERROR, template, 1024);
         MSI_RecordSetStringW(row, 0, template);

@@ -390,6 +390,7 @@ typedef struct tagMSIPACKAGE
     struct list cabinet_streams;
     LPWSTR ActionFormat;
     LPWSTR LastAction;
+    LPWSTR LastActionTemplate;
     UINT   action_progress_increment;
     HANDLE log_file;
     IAssemblyCache *cache_net[CLR_VERSION_MAX];
@@ -870,6 +871,7 @@ extern UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel ) DECLSP
 extern MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *, LPCWSTR ) DECLSPEC_HIDDEN;
 extern UINT MSI_OpenPackageW( LPCWSTR szPackage, MSIPACKAGE **pPackage ) DECLSPEC_HIDDEN;
 extern UINT MSI_SetTargetPathW( MSIPACKAGE *, LPCWSTR, LPCWSTR ) DECLSPEC_HIDDEN;
+extern INT MSI_ProcessMessageVerbatim( MSIPACKAGE *, INSTALLMESSAGE, MSIRECORD * ) DECLSPEC_HIDDEN;
 extern INT MSI_ProcessMessage( MSIPACKAGE *, INSTALLMESSAGE, MSIRECORD * ) DECLSPEC_HIDDEN;
 extern MSICONDITION MSI_EvaluateConditionW( MSIPACKAGE *, LPCWSTR ) DECLSPEC_HIDDEN;
 extern UINT MSI_GetComponentStateW( MSIPACKAGE *, LPCWSTR, INSTALLSTATE *, INSTALLSTATE * ) DECLSPEC_HIDDEN;

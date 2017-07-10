@@ -331,6 +331,7 @@ static void free_package_structures( MSIPACKAGE *package )
     msi_free( package->ProductCode );
     msi_free( package->ActionFormat );
     msi_free( package->LastAction );
+    msi_free( package->LastActionTemplate );
     msi_free( package->langids );
 
     /* cleanup control event subscriptions */
@@ -1096,6 +1097,8 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         msiobj_addref( &db->hdr );
         package->db = db;
 
+        package->LastAction = NULL;
+        package->LastActionTemplate = NULL;
         package->WordCount = 0;
         package->PackagePath = strdupW( db->path );
         package->BaseURL = strdupW( base_url );
@@ -1622,11 +1625,11 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     data_row = MSI_CreateRecord(3);
     if (!data_row)
 	return ERROR_OUTOFMEMORY;
-    /* FIXME: field 0 should be NULL */
+    MSI_RecordSetStringW(data_row, 0, NULL);
     MSI_RecordSetInteger(data_row, 1, 0);
     MSI_RecordSetInteger(data_row, 2, package->num_langids ? package->langids[0] : 0);
     MSI_RecordSetInteger(data_row, 3, msi_get_string_table_codepage(package->db->strings));
-    MSI_ProcessMessage(package, INSTALLMESSAGE_COMMONDATA, data_row);
+    MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_COMMONDATA, data_row);
 
     info_row = MSI_CreateRecord(0);
     if (!info_row)
@@ -1847,7 +1850,7 @@ static INT internal_ui_handler(MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     }
 }
 
-INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIRECORD *record )
+INT MSI_ProcessMessageVerbatim(MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIRECORD *record)
 {
     LPWSTR message = {0};
     DWORD len, log_type = 0;
@@ -1885,52 +1888,6 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         log_type |= INSTALLLOGMODE_TERMINATE;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_SHOWDIALOG)
         log_type |= INSTALLLOGMODE_SHOWDIALOG;
-
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
-    {
-        WCHAR template_s[1024];
-        static const WCHAR time_format[] =
-            {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
-        WCHAR timet[100], template[1024];
-
-        LoadStringW(msi_hInstance, IDS_ACTIONSTART, template_s, 1024);
-        GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, time_format, timet, 100);
-        sprintfW(template, template_s, timet);
-        MSI_RecordSetStringW(record, 0, template);
-    }
-    else if ((eMessageType & 0xff000000) == INSTALLMESSAGE_INFO &&
-             MSI_RecordGetInteger(record, 1) != MSI_NULL_INTEGER)
-    {
-        WCHAR template_s[1024];
-        WCHAR *template_rec, *template;
-
-        LoadStringW(msi_hInstance, IDS_INFO, template_s, 1024);
-
-        res = MSI_RecordGetStringW(record, 0, NULL, &len);
-        if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA)
-            return res;
-        len++;
-        template_rec = msi_alloc(len * sizeof(WCHAR));
-        if (!template_rec) return ERROR_OUTOFMEMORY;
-        MSI_RecordGetStringW(record, 0, template_rec, &len);
-        len++;
-
-        template = msi_alloc((len + strlenW(template_s)) * sizeof(WCHAR));
-        if (!template) return ERROR_OUTOFMEMORY;
-
-        strcpyW(template, template_s);
-        strcatW(template, template_rec);
-        MSI_RecordSetStringW(record, 0, template);
-
-        msi_free(template_rec);
-        msi_free(template);
-    }
-    else if ((eMessageType & 0xff000000) == INSTALLMESSAGE_COMMONDATA)
-    {
-        WCHAR template[1024];
-        LoadStringW(msi_hInstance, IDS_COMMONDATA, template, 1024);
-        MSI_RecordSetStringW(record, 0, template);
-    }
 
     if (!package || !record)
         message = NULL;
@@ -1984,6 +1941,101 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     msi_free( message );
 
     return rc;
+}
+
+INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIRECORD *record )
+{
+    switch (eMessageType & 0xff000000)
+    {
+    case INSTALLMESSAGE_FATALEXIT:
+    case INSTALLMESSAGE_ERROR:
+    case INSTALLMESSAGE_WARNING:
+    case INSTALLMESSAGE_USER:
+    case INSTALLMESSAGE_INFO:
+    case INSTALLMESSAGE_OUTOFDISKSPACE:
+        if (MSI_RecordGetInteger(record, 1) != MSI_NULL_INTEGER)
+        {
+            WCHAR template_prefix[1024];
+            WCHAR *template_rec, *template;
+            UINT prefix_id = 0;
+
+            if (MSI_RecordIsNull(record, 0))
+            {
+                LoadStringW(msi_hInstance, IDS_INSTALLERROR, template_prefix, 1024);
+                MSI_RecordSetStringW(record, 0, template_prefix);
+                break;
+            }
+
+            if ((eMessageType & 0xff000000) == INSTALLMESSAGE_USER)
+                break;
+
+            switch(eMessageType & 0xff000000)
+            {
+            case INSTALLMESSAGE_FATALEXIT: prefix_id = IDS_FATALEXIT; break;
+            case INSTALLMESSAGE_ERROR: prefix_id = IDS_ERROR; break;
+            case INSTALLMESSAGE_WARNING: prefix_id = IDS_WARNING; break;
+            case INSTALLMESSAGE_INFO: prefix_id = IDS_INFO; break;
+            case INSTALLMESSAGE_OUTOFDISKSPACE: prefix_id = IDS_OUTOFDISKSPACE; break;
+            }
+
+            LoadStringW(msi_hInstance, prefix_id, template_prefix, 1024);
+
+            template_rec = msi_dup_record_field(record, 0);
+            if (!template_rec) return ERROR_OUTOFMEMORY;
+
+            template = msi_alloc((strlenW(template_rec) + strlenW(template_prefix) + 1) * sizeof(WCHAR));
+            if (!template) return ERROR_OUTOFMEMORY;
+
+            strcpyW(template, template_prefix);
+            strcatW(template, template_rec);
+            MSI_RecordSetStringW(record, 0, template);
+
+            msi_free(template_rec);
+            msi_free(template);
+        }
+        break;
+    case INSTALLMESSAGE_ACTIONSTART:
+    {
+        WCHAR template_s[1024];
+        static const WCHAR time_format[] =
+            {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
+        WCHAR timet[100], template[1024];
+
+        LoadStringW(msi_hInstance, IDS_ACTIONSTART, template_s, 1024);
+        GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, time_format, timet, 100);
+        sprintfW(template, template_s, timet);
+        MSI_RecordSetStringW(record, 0, template);
+
+        msi_free(package->LastAction);
+        msi_free(package->LastActionTemplate);
+        package->LastAction = msi_dup_record_field(record, 1);
+        package->LastActionTemplate = msi_dup_record_field(record, 3);
+        break;
+    }
+    case INSTALLMESSAGE_ACTIONDATA:
+        if (package->LastAction && package->LastActionTemplate)
+        {
+            static const WCHAR template_s[] =
+                {'{','{','%','s',':',' ','}','}','%','s',0};
+            WCHAR *template;
+
+            template = msi_alloc((strlenW(package->LastAction) + strlenW(package->LastActionTemplate) + 7) * sizeof(WCHAR));
+            if (!template) return ERROR_OUTOFMEMORY;
+            sprintfW(template, template_s, package->LastAction, package->LastActionTemplate);
+            MSI_RecordSetStringW(record, 0, template);
+            msi_free(template);
+        }
+        break;
+    case INSTALLMESSAGE_COMMONDATA:
+    {
+        WCHAR template[1024];
+        LoadStringW(msi_hInstance, IDS_COMMONDATA, template, 1024);
+        MSI_RecordSetStringW(record, 0, template);
+    }
+    break;
+    }
+
+    return MSI_ProcessMessageVerbatim(package, eMessageType, record);
 }
 
 INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
