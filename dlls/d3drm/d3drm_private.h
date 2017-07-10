@@ -68,8 +68,8 @@ struct d3drm_frame
     SIZE_T nb_children;
     SIZE_T children_size;
     IDirect3DRMFrame3 **children;
-    ULONG nb_visuals;
-    ULONG visuals_capacity;
+    SIZE_T nb_visuals;
+    SIZE_T visuals_size;
     IDirect3DRMVisual **visuals;
     SIZE_T nb_lights;
     SIZE_T lights_size;
