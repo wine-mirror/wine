@@ -1684,9 +1684,9 @@
 @ cdecl asctime_s(ptr long ptr) msvcr120.asctime_s
 @ cdecl asin(double) msvcr120.asin
 @ cdecl -arch=arm,x86_64 asinf(float) msvcr120.asinf
-@ cdecl asinh(double double) msvcr120.asinh
-@ cdecl asinhf(float float) msvcr120.asinhf
-@ cdecl asinhl(double double) msvcr120.asinhl
+@ cdecl asinh(double) msvcr120.asinh
+@ cdecl asinhf(float) msvcr120.asinhf
+@ cdecl asinhl(double) msvcr120.asinhl
 @ cdecl atan(double) msvcr120.atan
 @ cdecl -arch=arm,x86_64 atanf(float) msvcr120.atanf
 @ cdecl atan2(double double) msvcr120.atan2
