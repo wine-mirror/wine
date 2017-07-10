@@ -26,7 +26,9 @@ static void test_WsCreateChannel(void)
     HRESULT hr;
     WS_CHANNEL *channel;
     WS_CHANNEL_STATE state;
-    ULONG size, value;
+    WS_CHANNEL_PROPERTY prop;
+    WS_ENCODING encoding;
+    ULONG size;
 
     hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
@@ -36,24 +38,49 @@ static void test_WsCreateChannel(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( channel != NULL, "channel not set\n" );
 
-    value = 0xdeadbeef;
-    size = sizeof(value);
-    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE, &value, size, NULL );
+    size = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE, &size, sizeof(size), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( value == 65536, "got %u\n", value );
+    ok( size == 65536, "got %u\n", size );
+
+    encoding = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_ENCODING, &encoding, sizeof(encoding), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( encoding == WS_ENCODING_XML_UTF8, "got %u\n", encoding );
 
     /* read-only property */
     state = 0xdeadbeef;
-    size = sizeof(state);
-    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, size, NULL );
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, sizeof(state), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == WS_CHANNEL_STATE_CREATED, "got %u\n", state );
 
     state = WS_CHANNEL_STATE_CREATED;
-    size = sizeof(state);
-    hr = WsSetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, size, NULL );
+    hr = WsSetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, sizeof(state), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
+    encoding = WS_ENCODING_XML_UTF8;
+    hr = WsSetChannelProperty( channel, WS_CHANNEL_PROPERTY_ENCODING, &encoding, sizeof(encoding), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    WsFreeChannel( channel );
+
+    encoding = WS_ENCODING_XML_UTF16LE;
+    prop.id        = WS_CHANNEL_PROPERTY_ENCODING;
+    prop.value     = &encoding;
+    prop.valueSize = sizeof(encoding);
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, &prop, 1, NULL, &channel, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    encoding = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_ENCODING, &encoding, sizeof(encoding), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( encoding == WS_ENCODING_XML_UTF16LE, "got %u\n", encoding );
+    WsFreeChannel( channel );
+
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    encoding = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_ENCODING, &encoding, sizeof(encoding), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( encoding == WS_ENCODING_XML_BINARY_SESSION_1, "got %u\n", encoding );
     WsFreeChannel( channel );
 }
 

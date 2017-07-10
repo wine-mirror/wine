@@ -37,7 +37,7 @@ static const struct prop_desc channel_props[] =
     { sizeof(UINT64), FALSE },                              /* WS_CHANNEL_PROPERTY_MAX_STREAMED_MESSAGE_SIZE */
     { sizeof(ULONG), FALSE },                               /* WS_CHANNEL_PROPERTY_MAX_STREAMED_START_SIZE */
     { sizeof(ULONG), FALSE },                               /* WS_CHANNEL_PROPERTY_MAX_STREAMED_FLUSH_SIZE */
-    { sizeof(WS_ENCODING), FALSE },                         /* WS_CHANNEL_PROPERTY_ENCODING */
+    { sizeof(WS_ENCODING), TRUE },                          /* WS_CHANNEL_PROPERTY_ENCODING */
     { sizeof(WS_ENVELOPE_VERSION), FALSE },                 /* WS_CHANNEL_PROPERTY_ENVELOPE_VERSION */
     { sizeof(WS_ADDRESSING_VERSION), FALSE },               /* WS_CHANNEL_PROPERTY_ADDRESSING_VERSION */
     { sizeof(ULONG), FALSE },                               /* WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE */
@@ -96,6 +96,7 @@ struct channel
     WS_XML_WRITER          *writer;
     WS_XML_READER          *reader;
     WS_MESSAGE             *msg;
+    WS_ENCODING             encoding;
     union
     {
         struct
@@ -199,31 +200,50 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
     prop_set( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE,
               &msg_size, sizeof(msg_size) );
 
-    for (i = 0; i < count; i++)
-    {
-        hr = prop_set( channel->prop, channel->prop_count, properties[i].id, properties[i].value,
-                       properties[i].valueSize );
-        if (hr != S_OK)
-        {
-            free_channel( channel );
-            return hr;
-        }
-    }
-
     channel->type    = type;
     channel->binding = binding;
 
     switch (channel->binding)
     {
+    case WS_HTTP_CHANNEL_BINDING:
+        channel->encoding = WS_ENCODING_XML_UTF8;
+        break;
+
     case WS_TCP_CHANNEL_BINDING:
         channel->u.tcp.socket = -1;
+        channel->encoding     = WS_ENCODING_XML_BINARY_SESSION_1;
         break;
 
     case WS_UDP_CHANNEL_BINDING:
         channel->u.udp.socket = -1;
+        channel->encoding     = WS_ENCODING_XML_UTF8;
         break;
 
     default: break;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        switch (properties[i].id)
+        {
+        case WS_CHANNEL_PROPERTY_ENCODING:
+            if (!properties[i].value || properties[i].valueSize != sizeof(channel->encoding))
+            {
+                free_channel( channel );
+                return E_INVALIDARG;
+            }
+            channel->encoding = *(WS_ENCODING *)properties[i].value;
+            break;
+
+        default:
+            if ((hr = prop_set( channel->prop, channel->prop_count, properties[i].id, properties[i].value,
+                                properties[i].valueSize )) != S_OK)
+            {
+                free_channel( channel );
+                return hr;
+            }
+            break;
+        }
     }
 
     *ret = channel;
@@ -378,6 +398,11 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     case WS_CHANNEL_PROPERTY_CHANNEL_TYPE:
         if (!buf || size != sizeof(channel->type)) hr = E_INVALIDARG;
         else *(WS_CHANNEL_TYPE *)buf = channel->type;
+        break;
+
+    case WS_CHANNEL_PROPERTY_ENCODING:
+        if (!buf || size != sizeof(channel->encoding)) hr = E_INVALIDARG;
+        else *(WS_ENCODING *)buf = channel->encoding;
         break;
 
     default:
