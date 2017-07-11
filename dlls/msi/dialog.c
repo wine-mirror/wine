@@ -4507,20 +4507,21 @@ static UINT event_reset( msi_dialog *dialog, const WCHAR *argument )
     return ERROR_SUCCESS;
 }
 
-UINT ACTION_ShowDialog( MSIPACKAGE *package, const WCHAR *dialog )
+INT ACTION_ShowDialog( MSIPACKAGE *package, const WCHAR *dialog )
 {
     static const WCHAR szDialog[] = {'D','i','a','l','o','g',0};
     MSIRECORD *row;
     INT rc;
 
-    if (!TABLE_Exists(package->db, szDialog)) return ERROR_FUNCTION_NOT_CALLED;
+    if (!TABLE_Exists(package->db, szDialog)) return 0;
 
     row = MSI_CreateRecord(0);
-    if (!row) return ERROR_OUTOFMEMORY;
+    if (!row) return -1;
     MSI_RecordSetStringW(row, 0, dialog);
     rc = MSI_ProcessMessage(package, INSTALLMESSAGE_SHOWDIALOG, row);
     msiobj_release(&row->hdr);
-    if (rc == -1) return ERROR_INSTALL_USEREXIT;
+
+    if (rc == -2) rc = 0;
 
     if (!rc)
     {
@@ -4540,9 +4541,8 @@ UINT ACTION_ShowDialog( MSIPACKAGE *package, const WCHAR *dialog )
         MSI_ProcessMessage(package, INSTALLMESSAGE_INFO, row);
 
         msiobj_release(&row->hdr);
-        return ERROR_FUNCTION_NOT_CALLED;
     }
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 /* Return ERROR_SUCCESS if dialog is process and ERROR_FUNCTION_FAILED

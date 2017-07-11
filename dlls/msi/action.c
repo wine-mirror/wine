@@ -172,7 +172,7 @@ static INT ui_actionstart(MSIPACKAGE *package, LPCWSTR action, LPCWSTR descripti
 }
 
 static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start, 
-                          UINT rc)
+                          INT rc)
 {
     MSIRECORD *row;
     WCHAR template[1024];
@@ -189,9 +189,10 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     if (!row) return;
     MSI_RecordSetStringW(row, 0, message);
     MSI_RecordSetStringW(row, 1, action);
-    MSI_RecordSetInteger(row, 2, start ? package->LastActionResult : !rc);
+    MSI_RecordSetInteger(row, 2, start ? package->LastActionResult : rc);
     MSI_ProcessMessage(package, INSTALLMESSAGE_INFO, row);
     msiobj_release(&row->hdr);
+    if (!start) package->LastActionResult = rc;
 }
 
 enum parse_state
@@ -620,15 +621,30 @@ static UINT ACTION_HandleCustomAction(MSIPACKAGE *package, LPCWSTR action, UINT 
         return ERROR_INSTALL_USEREXIT;
     ui_actioninfo(package, action, TRUE, 0);
     arc = ACTION_CustomAction( package, action, script );
+    uirc = !arc;
 
     if (arc == ERROR_FUNCTION_NOT_CALLED && needs_ui_sequence(package))
-        arc = ACTION_ShowDialog(package, action);
+    {
+        uirc = ACTION_ShowDialog(package, action);
+        switch (uirc)
+        {
+        case -1:
+            return ERROR_SUCCESS; /* stop immediately */
+        case 0: arc = ERROR_FUNCTION_NOT_CALLED; break;
+        case 1: arc = ERROR_SUCCESS; break;
+        case 2: arc = ERROR_INSTALL_USEREXIT; break;
+        case 3: arc = ERROR_INSTALL_FAILURE; break;
+        case 4: arc = ERROR_INSTALL_SUSPEND; break;
+        case 5: arc = ERROR_MORE_DATA; break;
+        case 6: arc = ERROR_INVALID_HANDLE_STATE; break;
+        case 7: arc = ERROR_INVALID_DATA; break;
+        case 8: arc = ERROR_INSTALL_ALREADY_RUNNING; break;
+        case 9: arc = ERROR_INSTALL_PACKAGE_REJECTED; break;
+        default: arc = ERROR_FUNCTION_FAILED; break;
+        }
+    }
 
-    if (arc == ERROR_INSTALL_USEREXIT) /* dialog UI returned -1 */
-        return ERROR_SUCCESS;
-
-    ui_actioninfo(package, action, FALSE, arc);
-    package->LastActionResult = !arc;
+    ui_actioninfo(package, action, FALSE, uirc);
 
     return arc;
 }
@@ -7765,8 +7781,7 @@ static UINT ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action)
             {
                 ui_actioninfo( package, action, TRUE, 0 );
                 rc = StandardActions[i].handler( package );
-                ui_actioninfo( package, action, FALSE, rc );
-                package->LastActionResult = !rc;
+                ui_actioninfo( package, action, FALSE, !rc );
 
                 if (StandardActions[i].action_rollback && !package->need_rollback)
                 {

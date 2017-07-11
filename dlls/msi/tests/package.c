@@ -9389,6 +9389,11 @@ static const struct externalui_message doaction_custom_fullui_sequence[] = {
     {0}
 };
 
+static const struct externalui_message doaction_custom_cancel_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "custom", "", ""}, {0, 1, 1, 1}},
+    {0}
+};
+
 static const struct externalui_message doaction_dialog_nonexistent_sequence[] = {
     {INSTALLMESSAGE_ACTIONSTART, 3, {"", "custom", "", ""}, {0, 1, 1, 1}},
     {INSTALLMESSAGE_INFO, 2, {"", "custom", "1"}, {0, 1, 1}},
@@ -9412,6 +9417,22 @@ static const struct externalui_message doaction_dialog_error_sequence[] = {
     {INSTALLMESSAGE_ACTIONSTART, 3, {"", "error", "", ""}, {0, 1, 1, 1}},
     {INSTALLMESSAGE_INFO, 2, {"", "error", "1"}, {0, 1, 1}},
     {INSTALLMESSAGE_SHOWDIALOG, 0, {"error"}, {1}},
+    {0}
+};
+
+static const struct externalui_message doaction_dialog_3_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "dialog", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "dialog", "0"}, {0, 1, 1}},
+    {INSTALLMESSAGE_SHOWDIALOG, 0, {"dialog"}, {1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "dialog", "3"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message doaction_dialog_12345_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "dialog", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "dialog", "3"}, {0, 1, 1}},
+    {INSTALLMESSAGE_SHOWDIALOG, 0, {"dialog"}, {1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "dialog", "12345"}, {0, 1, 1}},
     {0}
 };
 
@@ -9577,6 +9598,11 @@ static void test_externalui_message(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok_sequence(doaction_custom_fullui_sequence, "MsiDoAction(\"custom\")", FALSE);
 
+    retval = 2;
+    r = MsiDoActionA(hpkg, "custom");
+    ok(r == ERROR_INSTALL_USEREXIT, "Expected ERROR_INSTALL_USEREXIT, got %d\n", r);
+    ok_sequence(doaction_custom_cancel_sequence, "MsiDoAction(\"custom\")", FALSE);
+
     retval = 0;
     r = MsiDoActionA(hpkg, "custom");
     ok(r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %d\n", r);
@@ -9594,6 +9620,21 @@ static void test_externalui_message(void)
     r = MsiDoActionA(hpkg, "error");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok_sequence(doaction_dialog_error_sequence, "MsiDoAction(\"error\")", FALSE);
+
+    retval = -2;
+    r = MsiDoActionA(hpkg, "custom");
+    ok(r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %d\n", r);
+    ok_sequence(doaction_dialog_nonexistent_sequence, "MsiDoAction(\"custom\")", FALSE);
+
+    retval = 3;
+    r = MsiDoActionA(hpkg, "dialog");
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %d\n", r);
+    ok_sequence(doaction_dialog_3_sequence, "MsiDoAction(\"dialog\")", FALSE);
+
+    retval = 12345;
+    r = MsiDoActionA(hpkg, "dialog");
+    ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_INSTALL_FAILURE, got %d\n", r);
+    ok_sequence(doaction_dialog_12345_sequence, "MsiDoAction(\"dialog\")", FALSE);
 
     MsiCloseHandle(hpkg);
     ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);
