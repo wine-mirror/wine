@@ -4440,6 +4440,8 @@ static void test_stroke_style(void)
     desc.dashStyle = D2D1_DASH_STYLE_CUSTOM;
     desc.dashOffset = 0.0f;
 
+    ID2D1StrokeStyle_Release(style);
+
     hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 0, &style);
     ok(hr == E_INVALIDARG, "Unexpected return value, %#x.\n", hr);
 
