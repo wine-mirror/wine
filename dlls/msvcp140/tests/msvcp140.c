@@ -152,6 +152,7 @@ static int (__cdecl *p__Schedule_chore)(_Threadpool_chore*);
 static int (__cdecl *p__Reschedule_chore)(const _Threadpool_chore*);
 static void (__cdecl *p__Release_chore)(_Threadpool_chore*);
 
+static MSVCP_bool (__cdecl *p_Current_get)(WCHAR *);
 static ULONGLONG (__cdecl *p_File_size)(WCHAR const *);
 static int (__cdecl *p_To_byte)(const WCHAR *src, char *dst);
 static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
@@ -217,6 +218,7 @@ static BOOL init(void)
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z");
     }
 
+    SET(p_Current_get, "_Current_get");
     SET(p_File_size, "_File_size");
     SET(p_To_byte, "_To_byte");
     SET(p_To_wide, "_To_wide");
@@ -618,6 +620,31 @@ static void test_File_size(void)
     ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
 }
 
+static void test_Current_get(void)
+{
+    WCHAR temp_path[MAX_PATH], current_path[MAX_PATH], origin_path[MAX_PATH];
+    BOOL ret;
+    memset(origin_path, 0, sizeof(origin_path));
+    GetCurrentDirectoryW(MAX_PATH, origin_path);
+    memset(temp_path, 0, sizeof(temp_path));
+    GetTempPathW(MAX_PATH, temp_path);
+
+    ok(SetCurrentDirectoryW(temp_path), "SetCurrentDirectoryW to temp_path failed\n");
+    memset(current_path, 0, sizeof(current_path));
+    ret = p_Current_get(current_path);
+    ok(ret == TRUE, "p_Current_get returned %u\n", ret);
+    current_path[wcslen(current_path)] = '\\';
+    ok(!wcscmp(temp_path, current_path), "p_Current_get(): expect: %s, got %s\n",
+            wine_dbgstr_w(temp_path), wine_dbgstr_w(current_path));
+
+    ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
+    memset(current_path, 0, sizeof(current_path));
+    ret = p_Current_get(current_path);
+    ok(ret == TRUE, "p_Current_get returned %u\n", ret);
+    ok(!wcscmp(origin_path, current_path), "p_Current_get(): expect: %s, got %s\n",
+            wine_dbgstr_w(origin_path), wine_dbgstr_w(current_path));
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -630,5 +657,6 @@ START_TEST(msvcp140)
     test_to_byte();
     test_to_wide();
     test_File_size();
+    test_Current_get();
     FreeLibrary(msvcp);
 }

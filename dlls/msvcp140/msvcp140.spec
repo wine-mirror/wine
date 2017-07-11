@@ -3634,7 +3634,7 @@
 @ cdecl _Cnd_wait(ptr ptr)
 @ stub _Copy_file
 @ stub _Cosh
-@ stub _Current_get
+@ cdecl _Current_get(ptr)
 @ stub _Current_set
 @ extern _Denorm _Denorm
 @ cdecl _Dtest(ptr) _Dtest

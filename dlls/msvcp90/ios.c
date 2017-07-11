@@ -15530,6 +15530,16 @@ WCHAR* __cdecl tr2_sys__Current_get_wchar(WCHAR *current_path)
     return current_path;
 }
 
+/* _Current_get, msvcp140 version */
+BOOL __cdecl _Current_get(WCHAR *current_path)
+{
+    TRACE("(%s)\n", debugstr_w(current_path));
+
+    if(!GetCurrentDirectoryW(MAX_PATH, current_path))
+        return FALSE;
+    return TRUE;
+}
+
 /* ?_Current_set@sys@tr2@std@@YA_NPB_W@Z */
 /* ?_Current_set@sys@tr2@std@@YA_NPEB_W@Z */
 MSVCP_bool __cdecl tr2_sys__Current_set_wchar(WCHAR const* path)
