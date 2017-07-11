@@ -3648,7 +3648,7 @@
 @ extern _FNan _FNan
 @ stub _FSinh
 @ extern _FSnan _FSnan
-@ stub _File_size
+@ cdecl _File_size(wstr)
 @ cdecl -ret64 _Getcoll() _Getcoll
 @ cdecl _Getctype(ptr) _Getctype
 @ cdecl _Getcvt(ptr) _Getcvt

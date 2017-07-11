@@ -15471,6 +15471,18 @@ ULONGLONG __cdecl tr2_sys__File_size_wchar(WCHAR const* path)
     return ((ULONGLONG)(fad.nFileSizeHigh) << 32) + fad.nFileSizeLow;
 }
 
+/* _File_size, msvcp140 version. Different error handling. */
+ULONGLONG __cdecl _File_size(WCHAR const* path)
+{
+    WIN32_FILE_ATTRIBUTE_DATA fad;
+
+    TRACE("(%s)\n", debugstr_w(path));
+    if(!GetFileAttributesExW(path, GetFileExInfoStandard, &fad))
+        return ~(ULONGLONG)0;
+
+    return ((ULONGLONG)(fad.nFileSizeHigh) << 32) + fad.nFileSizeLow;
+}
+
 /* ?_Equivalent@sys@tr2@std@@YAHPB_W0@Z */
 /* ?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z */
 int __cdecl tr2_sys__Equivalent_wchar(WCHAR const* path1, WCHAR const* path2)

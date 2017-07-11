@@ -152,6 +152,7 @@ static int (__cdecl *p__Schedule_chore)(_Threadpool_chore*);
 static int (__cdecl *p__Reschedule_chore)(const _Threadpool_chore*);
 static void (__cdecl *p__Release_chore)(_Threadpool_chore*);
 
+static ULONGLONG (__cdecl *p_File_size)(WCHAR const *);
 static int (__cdecl *p_To_byte)(const WCHAR *src, char *dst);
 static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
 
@@ -216,6 +217,7 @@ static BOOL init(void)
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z");
     }
 
+    SET(p_File_size, "_File_size");
     SET(p_To_byte, "_To_byte");
     SET(p_To_wide, "_To_wide");
 
@@ -563,6 +565,59 @@ static void test_to_wide(void)
     }
 }
 
+static void test_File_size(void)
+{
+    ULONGLONG val;
+    HANDLE file;
+    LARGE_INTEGER file_size;
+    WCHAR test_f1_W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','f','1',0};
+    WCHAR test_f2_W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','f','2',0};
+    WCHAR test_dir_W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r',0};
+    WCHAR test_ne_W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','n','e',0};
+    WCHAR temp_path[MAX_PATH], origin_path[MAX_PATH];
+
+    memset(origin_path, 0, sizeof(origin_path));
+    memset(origin_path, 0, sizeof(temp_path));
+    GetCurrentDirectoryW(MAX_PATH, origin_path);
+    GetTempPathW(MAX_PATH, temp_path);
+    ok(SetCurrentDirectoryW(temp_path), "SetCurrentDirectoryW to temp_path failed\n");
+
+    CreateDirectoryW(test_dir_W, NULL);
+
+    file = CreateFileW(test_f1_W, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    file_size.QuadPart = 7;
+    ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
+    ok(SetEndOfFile(file), "SetEndOfFile failed\n");
+    CloseHandle(file);
+    val = p_File_size(test_f1_W);
+    ok(val == 7, "file_size is %s\n", wine_dbgstr_longlong(val));
+
+    file = CreateFileW(test_f2_W, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+    val = p_File_size(test_f2_W);
+    ok(val == 0, "file_size is %s\n", wine_dbgstr_longlong(val));
+
+    val = p_File_size(test_dir_W);
+    ok(val == 0, "file_size is %s\n", wine_dbgstr_longlong(val));
+
+    errno = 0xdeadbeef;
+    val = p_File_size(test_ne_W);
+    ok(val == ~(ULONGLONG)0, "file_size is %s\n", wine_dbgstr_longlong(val));
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    val = p_File_size(NULL);
+    ok(val == ~(ULONGLONG)0, "file_size is %s\n", wine_dbgstr_longlong(val));
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    ok(DeleteFileW(test_f1_W), "expect wine_test_dir/f1 to exist\n");
+    ok(DeleteFileW(test_f2_W), "expect wine_test_dir/f2 to exist\n");
+    ok(RemoveDirectoryW(test_dir_W), "expect wine_test_dir to exist\n");
+    ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -574,5 +629,6 @@ START_TEST(msvcp140)
     test_chore();
     test_to_byte();
     test_to_wide();
+    test_File_size();
     FreeLibrary(msvcp);
 }
