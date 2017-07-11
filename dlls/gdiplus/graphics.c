@@ -5972,6 +5972,20 @@ GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics *graphics, SmoothingMode mod
     if(graphics->busy)
         return ObjectBusy;
 
+    if(graphics->smoothing == mode)
+        return Ok;
+
+    if(graphics->image && graphics->image->type == ImageTypeMetafile) {
+         GpStatus stat;
+         BOOL antialias = (mode != SmoothingModeDefault &&
+                 mode != SmoothingModeNone && mode != SmoothingModeHighSpeed);
+
+         stat = METAFILE_AddSimpleProperty((GpMetafile*)graphics->image,
+                 EmfPlusRecordTypeSetAntiAliasMode, (mode << 1) + antialias);
+         if(stat != Ok)
+             return stat;
+     }
+
     graphics->smoothing = mode;
 
     return Ok;
