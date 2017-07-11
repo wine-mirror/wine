@@ -5913,6 +5913,19 @@ GpStatus WINGDIPAPI GdipSetPixelOffsetMode(GpGraphics *graphics, PixelOffsetMode
     if(graphics->busy)
         return ObjectBusy;
 
+    if(graphics->pixeloffset == mode)
+        return Ok;
+
+    if(graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        GpStatus stat;
+
+        stat = METAFILE_AddSimpleProperty((GpMetafile*)graphics->image,
+                EmfPlusRecordTypeSetPixelOffsetMode, mode);
+        if(stat != Ok)
+            return stat;
+    }
+
     graphics->pixeloffset = mode;
 
     return Ok;
