@@ -1077,3 +1077,28 @@ WCHAR *msi_dup_record_field( MSIRECORD *rec, INT field )
     }
     return str;
 }
+
+void dump_record(MSIRECORD *rec)
+{
+    int i;
+    if (!rec)
+    {
+        TRACE("(null)\n");
+        return;
+    }
+
+    TRACE("[");
+    for (i = 0; i <= rec->count; i++)
+    {
+        switch(rec->fields[i].type)
+        {
+        case MSIFIELD_NULL: TRACE("(null)"); break;
+        case MSIFIELD_INT: TRACE("%d", rec->fields[i].u.iVal); break;
+        case MSIFIELD_WSTR: TRACE("%s", debugstr_w(rec->fields[i].u.szwVal)); break;
+        case MSIFIELD_INTPTR: TRACE("%ld", rec->fields[i].u.pVal); break;
+        case MSIFIELD_STREAM: TRACE("%p", rec->fields[i].u.stream); break;
+        }
+        if (i < rec->count) TRACE(", ");
+    }
+    TRACE("]\n");
+}

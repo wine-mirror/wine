@@ -1860,6 +1860,7 @@ INT MSI_ProcessMessageVerbatim(MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     char *msg;
 
     TRACE("%x\n", eMessageType);
+    if (TRACE_ON(msi)) dump_record(record);
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_FATALEXIT)
         log_type |= INSTALLLOGMODE_FATALEXIT;

@@ -840,6 +840,7 @@ extern BOOL MSI_RecordsAreEqual( MSIRECORD *, MSIRECORD * ) DECLSPEC_HIDDEN;
 extern BOOL MSI_RecordsAreFieldsEqual(MSIRECORD *a, MSIRECORD *b, UINT field) DECLSPEC_HIDDEN;
 extern UINT msi_record_set_string(MSIRECORD *, UINT, const WCHAR *, int) DECLSPEC_HIDDEN;
 extern const WCHAR *msi_record_get_string(const MSIRECORD *, UINT, int *) DECLSPEC_HIDDEN;
+extern void dump_record(MSIRECORD *) DECLSPEC_HIDDEN;
 
 /* stream internals */
 extern void enum_stream_names( IStorage *stg ) DECLSPEC_HIDDEN;
