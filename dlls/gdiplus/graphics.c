@@ -5872,6 +5872,19 @@ GpStatus WINGDIPAPI GdipSetInterpolationMode(GpGraphics *graphics,
     if (mode == InterpolationModeHighQuality)
         mode = InterpolationModeHighQualityBicubic;
 
+    if (mode == graphics->interpolation)
+        return Ok;
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        GpStatus stat;
+
+        stat = METAFILE_AddSimpleProperty((GpMetafile*)graphics->image,
+                EmfPlusRecordTypeSetInterpolationMode, mode);
+        if (stat != Ok)
+            return stat;
+    }
+
     graphics->interpolation = mode;
 
     return Ok;
