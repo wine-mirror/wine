@@ -110,6 +110,7 @@ extern GpStatus METAFILE_DrawImagePointsRect(GpMetafile* metafile, GpImage *imag
      GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,
      REAL srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
      DrawImageAbort callback, VOID *callbackData) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_AddSimpleProperty(GpMetafile *metafile, SHORT prop, SHORT val) DECLSPEC_HIDDEN;
 
 extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2) DECLSPEC_HIDDEN;

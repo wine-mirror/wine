@@ -2551,3 +2551,21 @@ GpStatus METAFILE_DrawImagePointsRect(GpMetafile *metafile, GpImage *image,
     METAFILE_WriteRecords(metafile);
     return Ok;
 }
+
+GpStatus METAFILE_AddSimpleProperty(GpMetafile *metafile, SHORT prop, SHORT val)
+{
+    EmfPlusRecordHeader *record;
+    GpStatus stat;
+
+    if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
+        return Ok;
+
+    stat = METAFILE_AllocateRecord(metafile, sizeof(*record), (void**)&record);
+    if (stat != Ok) return stat;
+
+    record->Type = prop;
+    record->Flags = val;
+
+    METAFILE_WriteRecords(metafile);
+    return Ok;
+}

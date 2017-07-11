@@ -5987,6 +5987,18 @@ GpStatus WINGDIPAPI GdipSetTextRenderingHint(GpGraphics *graphics,
     if(graphics->busy)
         return ObjectBusy;
 
+    if(graphics->texthint == hint)
+        return Ok;
+
+    if(graphics->image && graphics->image->type == ImageTypeMetafile) {
+        GpStatus stat;
+
+        stat = METAFILE_AddSimpleProperty((GpMetafile*)graphics->image,
+                EmfPlusRecordTypeSetTextRenderingHint, hint);
+        if(stat != Ok)
+            return stat;
+    }
+
     graphics->texthint = hint;
 
     return Ok;
