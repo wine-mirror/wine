@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-07-07 23:08+0300\n"
+"PO-Revision-Date: 2017-07-11 12:11+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -6893,27 +6893,23 @@ msgstr "parinkite aplanką, kuris turi %s"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Lemtingoji klaida: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Klaida [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Įspėjimas [1]."
 
 #: msi.rc:74
-#, fuzzy
-#| msgid "Info [1]. "
 msgid "Info [1]."
-msgstr "Informacija [1]. "
+msgstr "Informacija [1]."
 
 #: msi.rc:75
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "{{Disk full: }}"
-msgstr "Diskas pilnas.\n"
+msgstr "{{Diskas pilnas: }}"
 
 #: msi.rc:76
 msgid "Action %s: [1]. [2]"
