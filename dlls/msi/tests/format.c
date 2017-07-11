@@ -494,6 +494,15 @@ static void test_formatrecord(void)
     ok( sz == 7, "size wrong\n");
     ok( 0 == strcmp(buffer,"boo hoo"), "wrong output\n");
 
+    /* self-referential format field */
+    r = MsiRecordSetStringA(hrec, 0, "[1] test [0]");
+    ok( r == ERROR_SUCCESS, "set string failed\n");
+    sz = sizeof buffer;
+    r = MsiFormatRecordA(0, hrec, buffer, &sz);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+    ok( sz == 21, "size wrong\n");
+    ok( 0 == strcmp(buffer,"boo test [1] test [0]"), "wrong output\n");
+
     /* empty string */
     r = MsiRecordSetStringA(hrec, 0, "");
     ok( r == ERROR_SUCCESS, "set string failed\n");
@@ -502,6 +511,18 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
     ok( sz == 30, "size wrong %i\n",sz);
     ok( 0 == strcmp(buffer,"1: boo 2: hoo 3:  4:  5:  6:  "), 
+                    "wrong output(%s)\n",buffer);
+
+    /* empty string with numbers */
+    r = MsiRecordSetStringA(hrec, 1, "123");
+    ok( r == ERROR_SUCCESS, "set string failed\n");
+    r = MsiRecordSetInteger(hrec, 2, 4567);
+    ok( r == ERROR_SUCCESS, "set string failed\n");
+    sz = sizeof buffer;
+    r = MsiFormatRecordA(0, hrec, buffer, &sz);
+    ok( r == ERROR_SUCCESS, "format failed\n");
+    ok( sz == 31, "size wrong %i\n",sz);
+    ok( 0 == strcmp(buffer,"1: 123 2: 4567 3:  4:  5:  6:  "),
                     "wrong output(%s)\n",buffer);
 
     /* play games with recursive lookups */
@@ -2571,6 +2592,12 @@ static void test_formatrecord_tables(void)
     /* property exists */
     size = MAX_PATH;
     MsiRecordSetStringA( hrec, 1, "[imaprop]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, "1: ringer " ), "Expected '1: ringer ', got %s\n", buf );
+
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 0, "1: [1] " );
     r = MsiFormatRecordA( hpkg, hrec, buf, &size );
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
     ok( !lstrcmpA( buf, "1: ringer " ), "Expected '1: ringer ', got %s\n", buf );
