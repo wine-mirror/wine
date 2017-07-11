@@ -698,15 +698,19 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
     }
     if (out->const_set_count)
     {
-        out->const_set = HeapReAlloc(GetProcessHeap(), 0, out->const_set,
+        struct d3dx_const_param_eval_output *new_alloc;
+
+        new_alloc = HeapReAlloc(GetProcessHeap(), 0, out->const_set,
                 sizeof(*out->const_set) * out->const_set_count);
-        if (!out->const_set)
+        if (new_alloc)
         {
-            ERR("Out of memory.\n");
-            hr = E_OUTOFMEMORY;
-            goto cleanup;
+            out->const_set = new_alloc;
+            out->const_set_size = out->const_set_count;
         }
-        out->const_set_size = out->const_set_count;
+        else
+        {
+            WARN("Out of memory.\n");
+        }
     }
 cleanup:
     ID3DXConstantTable_Release(ctab);
