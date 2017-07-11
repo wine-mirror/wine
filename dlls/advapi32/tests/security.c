@@ -6777,6 +6777,7 @@ static void test_token_label(void)
         sid = (SID *)&ace->SidStart;
         ConvertSidToStringSidA(sid, &str);
         ok(EqualSid(sid, &medium_sid) || EqualSid(sid, &high_sid), "Got unexpected SID %s\n", str);
+        LocalFree(str);
     }
 
     ret = GetSecurityDescriptorDacl(sd, &present, &dacl, &defaulted);
