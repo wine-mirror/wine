@@ -681,11 +681,6 @@ HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module, const WCHAR *re
 
 }
 
-struct ctab_constant {
-    D3DXCONSTANT_DESC desc;
-    struct ctab_constant *constants;
-};
-
 struct ID3DXConstantTableImpl {
     ID3DXConstantTable ID3DXConstantTable_iface;
     LONG ref;
@@ -946,13 +941,20 @@ static HRESULT WINAPI ID3DXConstantTableImpl_GetDesc(ID3DXConstantTable *iface, 
     return D3D_OK;
 }
 
+const struct ctab_constant *d3dx_shader_get_ctab_constant(ID3DXConstantTable *iface, D3DXHANDLE constant)
+{
+    struct ID3DXConstantTableImpl *ctab = impl_from_ID3DXConstantTable(iface);
+
+    return get_valid_constant(ctab, constant);
+}
+
 static HRESULT WINAPI ID3DXConstantTableImpl_GetConstantDesc(ID3DXConstantTable *iface, D3DXHANDLE constant,
                                                              D3DXCONSTANT_DESC *desc, UINT *count)
 {
-    struct ID3DXConstantTableImpl *This = impl_from_ID3DXConstantTable(iface);
-    struct ctab_constant *c = get_valid_constant(This, constant);
+    struct ID3DXConstantTableImpl *ctab = impl_from_ID3DXConstantTable(iface);
+    struct ctab_constant *c = get_valid_constant(ctab, constant);
 
-    TRACE("(%p)->(%p, %p, %p)\n", This, constant, desc, count);
+    TRACE("(%p)->(%p, %p, %p)\n", ctab, constant, desc, count);
 
     if (!c)
     {

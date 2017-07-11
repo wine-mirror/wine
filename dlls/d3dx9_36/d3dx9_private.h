@@ -355,4 +355,12 @@ HRESULT d3dx_param_eval_set_shader_constants(ID3DXEffectStateManager *manager, s
         struct d3dx_param_eval *peval, BOOL update_all) DECLSPEC_HIDDEN;
 BOOL is_param_eval_input_dirty(struct d3dx_param_eval *peval, ULONG64 update_version) DECLSPEC_HIDDEN;
 
+struct ctab_constant {
+    D3DXCONSTANT_DESC desc;
+    struct ctab_constant *constants;
+};
+
+const struct ctab_constant *d3dx_shader_get_ctab_constant(ID3DXConstantTable *iface,
+        D3DXHANDLE constant) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_D3DX9_PRIVATE_H */

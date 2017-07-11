@@ -590,22 +590,14 @@ static unsigned int *parse_pres_ins(unsigned int *ptr, unsigned int count, struc
 
 static HRESULT get_ctab_constant_desc(ID3DXConstantTable *ctab, D3DXHANDLE hc, D3DXCONSTANT_DESC *desc)
 {
-    D3DXCONSTANT_DESC buffer[2];
-    HRESULT hr;
-    unsigned int count;
+    const struct ctab_constant *constant = d3dx_shader_get_ctab_constant(ctab, hc);
 
-    count = ARRAY_SIZE(buffer);
-    if (FAILED(hr = ID3DXConstantTable_GetConstantDesc(ctab, hc, buffer, &count)))
+    if (!constant)
     {
-        FIXME("Could not get constant desc, hr %#x.\n", hr);
-        return hr;
-    }
-    else if (count != 1)
-    {
-        FIXME("Unexpected constant descriptors count %u.\n", count);
+        FIXME("Could not get constant desc.\n");
         return D3DERR_INVALIDCALL;
     }
-    *desc = buffer[0];
+    *desc = constant->desc;
     return D3D_OK;
 }
 
