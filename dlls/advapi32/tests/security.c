@@ -81,7 +81,6 @@ static VOID (WINAPI *pBuildTrusteeWithObjectsAndSidA)( PTRUSTEEA pTrustee,
                                                          PSID pSid );
 static LPSTR (WINAPI *pGetTrusteeNameA)( PTRUSTEEA pTrustee );
 static BOOL (WINAPI *pMakeSelfRelativeSD)( PSECURITY_DESCRIPTOR, PSECURITY_DESCRIPTOR, LPDWORD );
-static BOOL (WINAPI *pConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 static BOOL (WINAPI *pConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 static BOOL (WINAPI *pCheckTokenMembership)(HANDLE, PSID, PBOOL);
 static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorA)(LPCSTR, DWORD,
@@ -156,9 +155,8 @@ static const char* debugstr_sid(PSID sid)
     DWORD le = GetLastError();
     char* res = debugsid_str[debugsid_index];
     debugsid_index = (debugsid_index + 1) % SID_SLOTS;
-    if (!pConvertSidToStringSidA)
-        strcpy(res, "missing ConvertSidToStringSidA");
-    else if (!pConvertSidToStringSidA(sid, &sidstr))
+
+    if (!ConvertSidToStringSidA(sid, &sidstr))
         sprintf(res, "ConvertSidToStringSidA failed le=%u", GetLastError());
     else if (strlen(sidstr) > sizeof(*debugsid_str) - 1)
     {
@@ -223,7 +221,6 @@ static void init(void)
     pGetSecurityInfo = (void *)GetProcAddress(hmod, "GetSecurityInfo");
     pSetSecurityInfo = (void *)GetProcAddress(hmod, "SetSecurityInfo");
     pCreateRestrictedToken = (void *)GetProcAddress(hmod, "CreateRestrictedToken");
-    pConvertSidToStringSidA = (void *)GetProcAddress(hmod, "ConvertSidToStringSidA");
     pConvertStringSidToSidA = (void *)GetProcAddress(hmod, "ConvertStringSidToSidA");
     pGetAclInformation = (void *)GetProcAddress(hmod, "GetAclInformation");
     pGetAce = (void *)GetProcAddress(hmod, "GetAce");
@@ -327,7 +324,7 @@ static void test_sid(void)
     BOOL r;
     LPSTR str = NULL;
 
-    if( !pConvertSidToStringSidA || !pConvertStringSidToSidA )
+    if( !pConvertStringSidToSidA )
     {
         win_skip("ConvertSidToStringSidA or ConvertStringSidToSidA not available\n");
         return;
@@ -371,7 +368,7 @@ static void test_sid(void)
         r = AllocateAndInitializeSid( &refs[i].auth, 1,1,0,0,0,0,0,0,0,
          &psid );
         ok( r, "failed to allocate sid\n" );
-        r = pConvertSidToStringSidA( psid, &str );
+        r = ConvertSidToStringSidA( psid, &str );
         ok( r, "failed to convert sid\n" );
         if (r)
         {
@@ -427,7 +424,7 @@ static void test_sid(void)
 
         if (r)
         {
-            if ((winetest_debug > 1) && (pConvertSidToStringSidA(psid, &temp)))
+            if ((winetest_debug > 1) && (ConvertSidToStringSidA(psid, &temp)))
             {
                 trace(" %s: %s\n", strsid_table[i].str, temp);
                 LocalFree(temp);
@@ -1766,12 +1763,6 @@ static void test_token_attr(void)
         CloseHandle(Token);
     }
 
-    if(!pConvertSidToStringSidA)
-    {
-        win_skip("ConvertSidToStringSidA is not available\n");
-        return;
-    }
-
     SetLastError(0xdeadbeef);
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &Token);
     ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
@@ -1822,7 +1813,7 @@ static void test_token_attr(void)
         ret = LookupAccountSidA(NULL, Groups->Groups[i].Sid, Name, &NameLength, Domain, &DomainLength, &SidNameUse);
         if (ret)
         {
-            pConvertSidToStringSidA(Groups->Groups[i].Sid, &SidString);
+            ConvertSidToStringSidA(Groups->Groups[i].Sid, &SidString);
             trace("%s, %s\\%s use: %d attr: 0x%08x\n", SidString, Domain, Name, SidNameUse, Groups->Groups[i].Attributes);
             LocalFree(SidString);
         }
@@ -1839,7 +1830,7 @@ static void test_token_attr(void)
     ok(ret,
         "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
 
-    pConvertSidToStringSidA(User->User.Sid, &SidString);
+    ConvertSidToStringSidA(User->User.Sid, &SidString);
     trace("TokenUser: %s attr: 0x%08x\n", SidString, User->User.Attributes);
     LocalFree(SidString);
     HeapFree(GetProcessHeap(), 0, User);
@@ -1954,7 +1945,7 @@ typedef union _MAX_SID
 static void test_sid_str(PSID * sid)
 {
     char *str_sid;
-    BOOL ret = pConvertSidToStringSidA(sid, &str_sid);
+    BOOL ret = ConvertSidToStringSidA(sid, &str_sid);
     ok(ret, "ConvertSidToStringSidA() failed: %d\n", GetLastError());
     if (ret)
     {
@@ -2071,7 +2062,7 @@ static void test_CreateWellKnownSid(void)
         ok(pCreateWellKnownSid(i, value->without_domain ? NULL : domainsid, sid_buffer, &cb), "Couldn't create well known sid %u\n", i);
         expect_eq(GetSidLengthRequired(*GetSidSubAuthorityCount(sid_buffer)), cb, DWORD, "%d");
         ok(IsValidSid(sid_buffer), "The sid is not valid\n");
-        ok(pConvertSidToStringSidA(sid_buffer, &str), "Couldn't convert SID to string\n");
+        ok(ConvertSidToStringSidA(sid_buffer, &str), "Couldn't convert SID to string\n");
         ok(strcmp(str, value->sid_string) == 0, "%d: SID mismatch - expected %s, got %s\n", i,
             value->sid_string, str);
         LocalFree(str);
@@ -2294,7 +2285,7 @@ static void test_LookupAccountSid(void)
     }
     HeapFree(GetProcessHeap(), 0, ptiUser);
 
-    if (pCreateWellKnownSid && pConvertSidToStringSidA)
+    if (pCreateWellKnownSid)
     {
         trace("Well Known SIDs:\n");
         for (i = 0; i <= 60; i++)
@@ -2302,7 +2293,7 @@ static void test_LookupAccountSid(void)
             size = SECURITY_MAX_SID_SIZE;
             if (pCreateWellKnownSid(i, NULL, &max_sid.sid, &size))
             {
-                if (pConvertSidToStringSidA(&max_sid.sid, &str_sidA))
+                if (ConvertSidToStringSidA(&max_sid.sid, &str_sidA))
                 {
                     acc_sizeA = MAX_PATH;
                     dom_sizeA = MAX_PATH;
@@ -6784,7 +6775,7 @@ static void test_token_label(void)
         ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, "Unexpected ACE mask %#x\n", ace->Mask);
 
         sid = (SID *)&ace->SidStart;
-        pConvertSidToStringSidA(sid, &str);
+        ConvertSidToStringSidA(sid, &str);
         ok(EqualSid(sid, &medium_sid) || EqualSid(sid, &high_sid), "Got unexpected SID %s\n", str);
     }
 
