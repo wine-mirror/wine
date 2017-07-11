@@ -636,7 +636,6 @@ static BOOL is_face_scalable(IDWriteFontFace4 *fontface)
 
 static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *ret)
 {
-    USHORT simulations = IDWriteFontFace4_GetSimulations(bitmap->fontface);
     FT_Matrix m;
 
     ret->xx = 1 << 16;
@@ -646,10 +645,10 @@ static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *re
 
     /* Some fonts provide mostly bitmaps and very few outlines, for example for .notdef.
        Disable transform if that's the case. */
-    if (!is_face_scalable(bitmap->fontface) || (!bitmap->m && simulations == 0))
+    if (!is_face_scalable(bitmap->fontface) || (!bitmap->m && bitmap->simulations == 0))
         return FALSE;
 
-    if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
+    if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
         m.xx =  1 << 16;
         m.xy = (1 << 16) / 3;
         m.yx =  0;
@@ -667,7 +666,6 @@ static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *re
 
 void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 {
-    USHORT simulations = IDWriteFontFace4_GetSimulations(bitmap->fontface);
     FTC_ImageTypeRec imagetype;
     FT_BBox bbox = { 0 };
     BOOL needs_transform;
@@ -688,7 +686,7 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
             FT_Glyph glyph_copy;
 
             if (pFT_Glyph_Copy(glyph, &glyph_copy) == 0) {
-                if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
+                if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
                     embolden_glyph(glyph_copy, bitmap->emsize);
 
                 /* Includes oblique and user transform. */
@@ -826,7 +824,6 @@ static BOOL freetype_get_aa_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_G
 
 BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 {
-    USHORT simulations = IDWriteFontFace4_GetSimulations(bitmap->fontface);
     FTC_ImageTypeRec imagetype;
     BOOL needs_transform;
     BOOL ret = FALSE;
@@ -847,7 +844,7 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 
         if (needs_transform) {
             if (pFT_Glyph_Copy(glyph, &glyph_copy) == 0) {
-                if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
+                if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_BOLD)
                     embolden_glyph(glyph_copy, bitmap->emsize);
 
                 /* Includes oblique and user transform. */

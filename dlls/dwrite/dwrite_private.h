@@ -260,6 +260,7 @@ extern WCHAR bidi_get_mirrored_char(WCHAR) DECLSPEC_HIDDEN;
 /* FreeType integration */
 struct dwrite_glyphbitmap {
     IDWriteFontFace4 *fontface;
+    DWORD simulations;
     FLOAT emsize;
     BOOL nohint;
     UINT16 index;

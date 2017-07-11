@@ -4862,6 +4862,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
     glyph_bitmap.fontface = fontface;
+    glyph_bitmap.simulations = IDWriteFontFace4_GetSimulations(fontface);
     glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
     if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
@@ -4954,6 +4955,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
     glyph_bitmap.fontface = fontface;
+    glyph_bitmap.simulations = IDWriteFontFace4_GetSimulations(fontface);
     glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
     glyph_bitmap.type = analysis->texture_type;
