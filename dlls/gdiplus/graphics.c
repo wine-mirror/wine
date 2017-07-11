@@ -5808,6 +5808,19 @@ GpStatus WINGDIPAPI GdipSetCompositingMode(GpGraphics *graphics,
     if(graphics->busy)
         return ObjectBusy;
 
+    if(graphics->compmode == mode)
+        return Ok;
+
+    if(graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        GpStatus stat;
+
+        stat = METAFILE_AddSimpleProperty((GpMetafile*)graphics->image,
+                EmfPlusRecordTypeSetCompositingMode, mode);
+        if(stat != Ok)
+            return stat;
+    }
+
     graphics->compmode = mode;
 
     return Ok;
