@@ -3635,7 +3635,7 @@
 @ stub _Copy_file
 @ stub _Cosh
 @ cdecl _Current_get(ptr)
-@ stub _Current_set
+@ cdecl _Current_set(wstr) tr2_sys__Current_set_wchar
 @ extern _Denorm _Denorm
 @ cdecl _Dtest(ptr) _Dtest
 @ stub _Equivalent

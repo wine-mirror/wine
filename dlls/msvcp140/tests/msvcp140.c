@@ -153,6 +153,7 @@ static int (__cdecl *p__Reschedule_chore)(const _Threadpool_chore*);
 static void (__cdecl *p__Release_chore)(_Threadpool_chore*);
 
 static MSVCP_bool (__cdecl *p_Current_get)(WCHAR *);
+static MSVCP_bool (__cdecl *p_Current_set)(WCHAR const *);
 static ULONGLONG (__cdecl *p_File_size)(WCHAR const *);
 static int (__cdecl *p_To_byte)(const WCHAR *src, char *dst);
 static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
@@ -219,6 +220,7 @@ static BOOL init(void)
     }
 
     SET(p_Current_get, "_Current_get");
+    SET(p_Current_set, "_Current_set");
     SET(p_File_size, "_File_size");
     SET(p_To_byte, "_To_byte");
     SET(p_To_wide, "_To_wide");
@@ -645,6 +647,50 @@ static void test_Current_get(void)
             wine_dbgstr_w(origin_path), wine_dbgstr_w(current_path));
 }
 
+static void test_Current_set(void)
+{
+    WCHAR temp_path[MAX_PATH], current_path[MAX_PATH], origin_path[MAX_PATH];
+    MSVCP_bool ret;
+    WCHAR testW[] = {'.','/',0};
+    WCHAR not_exit_dirW[] = {'n', 'o', 't', '_', 'e', 'x', 'i', 's', 't', '_', 'd', 'i', 'r', 0};
+    WCHAR invalid_nameW[] = {'?', '?', 'i', 'n', 'v', 'a', 'l', 'i', 'd', '_', 'n', 'a', 'm', 'e', '>', '>', 0};
+    memset(temp_path, 0, sizeof(temp_path));
+    GetTempPathW(MAX_PATH, temp_path);
+    memset(origin_path, 0, sizeof(origin_path));
+    GetCurrentDirectoryW(MAX_PATH, origin_path);
+
+    ok(p_Current_set(temp_path), "p_Current_set to temp_path failed\n");
+    memset(current_path, 0, sizeof(current_path));
+    ret = p_Current_get(current_path);
+    ok(ret == TRUE, "p_Current_get returned %u\n", ret);
+    current_path[wcslen(current_path)] = '\\';
+    ok(!wcscmp(temp_path, current_path), "p_Current_get(): expect: %s, got %s\n",
+            wine_dbgstr_w(temp_path), wine_dbgstr_w(current_path));
+
+    ok(p_Current_set(testW), "p_Current_set to temp_path failed\n");
+    memset(current_path, 0, sizeof(current_path));
+    ret = p_Current_get(current_path);
+    ok(ret == TRUE, "p_Current_get returned %u\n", ret);
+    current_path[wcslen(current_path)] = '\\';
+    ok(!wcscmp(temp_path, current_path), "p_Current_get(): expect: %s, got %s\n",
+            wine_dbgstr_w(temp_path), wine_dbgstr_w(current_path));
+
+    errno = 0xdeadbeef;
+    ok(!p_Current_set(not_exit_dirW), "p_Current_set to not_exist_dir succeed\n");
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ok(!p_Current_set(invalid_nameW), "p_Current_set to ??invalid_name>> succeed\n");
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    ok(p_Current_set(origin_path), "p_Current_set to origin_path failed\n");
+    memset(current_path, 0, sizeof(current_path));
+    ret = p_Current_get(current_path);
+    ok(ret == TRUE, "p_Current_get returned %u\n", ret);
+    ok(!wcscmp(origin_path, current_path), "p_Current_get(): expect: %s, got %s\n",
+            wine_dbgstr_w(origin_path), wine_dbgstr_w(current_path));
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -658,5 +704,6 @@ START_TEST(msvcp140)
     test_to_wide();
     test_File_size();
     test_Current_get();
+    test_Current_set();
     FreeLibrary(msvcp);
 }
