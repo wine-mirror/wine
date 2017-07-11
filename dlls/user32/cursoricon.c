@@ -580,11 +580,14 @@ static int CURSORICON_FindBestCursor( LPCVOID dir, DWORD size, fnGetCIEntry get_
     {
         if (cx > width || cy > height) continue;
         if (cx < maxwidth || cy < maxheight) continue;
-        if (loadflags & LR_MONOCHROME)
+        if (cx == maxwidth && cy == maxheight)
         {
-            if (maxbits && bits >= maxbits) continue;
+            if (loadflags & LR_MONOCHROME)
+            {
+                if (maxbits && bits >= maxbits) continue;
+            }
+            else if (bits <= maxbits) continue;
         }
-        else if (bits <= maxbits) continue;
         bestEntry = i;
         maxwidth  = cx;
         maxheight = cy;
@@ -598,11 +601,14 @@ static int CURSORICON_FindBestCursor( LPCVOID dir, DWORD size, fnGetCIEntry get_
     for ( i = 0; get_entry( dir, size, i, &cx, &cy, &bits ); i++ )
     {
         if (cx > maxwidth || cy > maxheight) continue;
-        if (loadflags & LR_MONOCHROME)
+        if (cx == maxwidth && cy == maxheight)
         {
-            if (maxbits && bits >= maxbits) continue;
+            if (loadflags & LR_MONOCHROME)
+            {
+                if (maxbits && bits >= maxbits) continue;
+            }
+            else if (bits <= maxbits) continue;
         }
-        else if (bits <= maxbits) continue;
         bestEntry = i;
         maxwidth  = cx;
         maxheight = cy;
