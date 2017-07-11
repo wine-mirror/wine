@@ -5837,6 +5837,19 @@ GpStatus WINGDIPAPI GdipSetCompositingQuality(GpGraphics *graphics,
     if(graphics->busy)
         return ObjectBusy;
 
+    if(graphics->compqual == quality)
+        return Ok;
+
+    if(graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        GpStatus stat;
+
+        stat = METAFILE_AddSimpleProperty((GpMetafile*)graphics->image,
+                EmfPlusRecordTypeSetCompositingQuality, quality);
+        if(stat != Ok)
+            return stat;
+    }
+
     graphics->compqual = quality;
 
     return Ok;
