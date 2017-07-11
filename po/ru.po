@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-06-30 10:35+0300\n"
+"PO-Revision-Date: 2017-07-11 13:16+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -1171,7 +1171,7 @@ msgstr "Документов в очереди: %d"
 
 #: comdlg32.rc:79
 msgid "Margins [inches]"
-msgstr "Границы [дюймы)"
+msgstr "Границы [дюймы]"
 
 #: comdlg32.rc:80
 msgid "Margins [mm]"
@@ -6895,27 +6895,23 @@ msgstr "выберите каталог, содержащий %s"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Критическая ошибка: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Ошибка [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Предупреждение [1]."
 
 #: msi.rc:74
-#, fuzzy
-#| msgid "Info [1]. "
 msgid "Info [1]."
-msgstr "Инфо [1]. "
+msgstr "Инфо [1]."
 
 #: msi.rc:75
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "{{Disk full: }}"
-msgstr "Диск полностью заполнен.\n"
+msgstr "{{Диск полон: }}"
 
 #: msi.rc:76
 msgid "Action %s: [1]. [2]"
@@ -6943,6 +6939,8 @@ msgid ""
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
+"Произошла непредвиденная ошибка при установке пакета. Возможно проблема в "
+"самом пакете. Код ошибки [1]. {{Аргументы: [2], [3], [4]}}"
 
 #: msi.rc:92
 msgid "Allocating registry space"
@@ -7010,11 +7008,11 @@ msgstr "Проверка установки"
 
 #: msi.rc:110
 msgid "Evaluating launch conditions"
-msgstr "вычисление условий запуска"
+msgstr "Вычисление условий запуска"
 
 #: msi.rc:111
 msgid "Migrating feature states from related applications"
-msgstr "Миграция состояний компонентов "
+msgstr "Миграция состояний компонентов"
 
 #: msi.rc:112
 msgid "Moving files"
@@ -12991,7 +12989,7 @@ msgstr "Загрузка ЦП"
 
 #: taskmgr.rc:373
 msgid "Mem usage"
-msgstr "использование памяти"
+msgstr "Использование памяти"
 
 #: taskmgr.rc:374
 msgid "Totals"
@@ -13550,7 +13548,7 @@ msgstr "Выгр. пул"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr "Невыгр. пул."
+msgstr "Невыгр. пул"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
