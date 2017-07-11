@@ -1172,7 +1172,7 @@ static void write_method_proto(FILE *header, const type_t *iface)
   {
     const var_t *func = stmt->u.var;
 
-    if (!is_local(func->attrs)) {
+    if (is_callas(func->attrs)) {
       const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
       if (!callconv) callconv = "STDMETHODCALLTYPE";
       /* proxy prototype */

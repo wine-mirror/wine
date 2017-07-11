@@ -45,6 +45,9 @@ typedef struct BitmapTestSrc {
     const bitmap_data *data;
 } BitmapTestSrc;
 
+extern HRESULT STDMETHODCALLTYPE IWICBitmapFrameEncode_WriteSource_Proxy(IWICBitmapFrameEncode* This,
+    IWICBitmapSource *pIBitmapSource, WICRect *prc);
+
 static BOOL near_equal(float a, float b)
 {
     return fabsf(a - b) < 0.001;
