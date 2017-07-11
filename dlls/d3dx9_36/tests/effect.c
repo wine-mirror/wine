@@ -6924,6 +6924,9 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, "v4", 0, NULL, &effect, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
+            NULL, NULL, "v1;v5;v4", 0, NULL, &effect, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
 
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, " v1#,.+-= &\t\nv2*/!\"'v5 v6[1]", 0, NULL, &effect, NULL);
@@ -6938,6 +6941,8 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
     ok(effect->lpVtbl->IsParameterUsed(effect, "v4", "tech0"),
             "Unexpected IsParameterUsed result.\n");
     ok(!effect->lpVtbl->IsParameterUsed(effect, "v5", "tech0"),
+            "Unexpected IsParameterUsed result.\n");
+    ok(!effect->lpVtbl->IsParameterUsed(effect, "v6", "tech0"),
             "Unexpected IsParameterUsed result.\n");
 
     hr = effect->lpVtbl->SetFloat(effect, "v1", 28.0f);
