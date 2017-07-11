@@ -345,7 +345,7 @@ struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,
         : device->lpVtbl->method(device, args))
 #define SET_D3D_STATE(base_effect, args...) SET_D3D_STATE_(base_effect->manager, base_effect->device, args)
 
-void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_code,
+HRESULT d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_code,
         unsigned int byte_code_size, D3DXPARAMETER_TYPE type,
         struct d3dx_param_eval **peval, ULONG64 *version_counter) DECLSPEC_HIDDEN;
 void d3dx_free_param_eval(struct d3dx_param_eval *peval) DECLSPEC_HIDDEN;

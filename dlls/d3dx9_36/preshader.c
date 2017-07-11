@@ -919,15 +919,15 @@ static HRESULT parse_preshader(struct d3dx_preshader *pres, unsigned int *ptr, u
     return D3D_OK;
 }
 
-void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_code, unsigned int byte_code_size,
+HRESULT d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_code, unsigned int byte_code_size,
         D3DXPARAMETER_TYPE type, struct d3dx_param_eval **peval_out, ULONG64 *version_counter)
 {
     struct d3dx_param_eval *peval;
     unsigned int *ptr;
-    HRESULT hr;
     unsigned int i;
     BOOL shader;
     unsigned int count, pres_size;
+    HRESULT ret;
 
     TRACE("base_effect %p, byte_code %p, byte_code_size %u, type %u, peval_out %p.\n",
             base_effect, byte_code, byte_code_size, type, peval_out);
@@ -936,13 +936,15 @@ void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_co
     if (!byte_code || !count)
     {
         *peval_out = NULL;
-        return;
+        return D3D_OK;
     }
 
     peval = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*peval));
     if (!peval)
+    {
+        ret = E_OUTOFMEMORY;
         goto err_out;
-
+    }
     peval->version_counter = version_counter;
 
     peval->param_type = type;
@@ -964,13 +966,14 @@ void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_co
         if ((*ptr & 0xfffe0000) != 0xfffe0000)
         {
             FIXME("Invalid shader signature %#x.\n", *ptr);
+            ret = D3DXERR_INVALIDDATA;
             goto err_out;
         }
         TRACE("Shader version %#x.\n", *ptr & 0xffff);
 
-        if (FAILED(hr = get_constants_desc(ptr, &peval->shader_inputs, base_effect)))
+        if (FAILED(ret = get_constants_desc(ptr, &peval->shader_inputs, base_effect)))
         {
-            FIXME("Could not get shader constant table, hr %#x.\n", hr);
+            FIXME("Could not get shader constant table, ret %#x.\n", ret);
             goto err_out;
         }
         update_table_sizes_consts(peval->pres.regs.table_sizes, &peval->shader_inputs);
@@ -983,7 +986,7 @@ void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_co
         pres_size = count;
     }
 
-    if (ptr && FAILED(parse_preshader(&peval->pres, ptr, pres_size, base_effect)))
+    if (ptr && FAILED(ret = parse_preshader(&peval->pres, ptr, pres_size, base_effect)))
     {
         FIXME("Failed parsing preshader, byte code for analysis follows.\n");
         dump_bytecode(byte_code, byte_code_size);
@@ -992,7 +995,7 @@ void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_co
 
     for (i = PRES_REGTAB_FIRST_SHADER; i < PRES_REGTAB_COUNT; ++i)
     {
-        if (FAILED(regstore_alloc_table(&peval->pres.regs, i)))
+        if (FAILED(ret = regstore_alloc_table(&peval->pres.regs, i)))
             goto err_out;
     }
 
@@ -1008,12 +1011,13 @@ void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_co
     }
     *peval_out = peval;
     TRACE("Created parameter evaluator %p.\n", *peval_out);
-    return;
+    return D3D_OK;
 
 err_out:
     FIXME("Error creating parameter evaluator.\n");
     d3dx_free_param_eval(peval);
     *peval_out = NULL;
+    return ret;
 }
 
 static void d3dx_free_const_tab(struct d3dx_const_tab *ctab)

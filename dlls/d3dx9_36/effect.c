@@ -5966,8 +5966,10 @@ static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct
 
     if (string_size % sizeof(DWORD))
         FIXME("Unaligned string_size %u.\n", string_size);
-    d3dx_create_param_eval(base, (DWORD *)(ptr + string_size) + 1, object->size - (string_size + sizeof(DWORD)),
-            D3DXPT_INT, &param->param_eval, get_version_counter_ptr(base));
+    if (FAILED(ret = d3dx_create_param_eval(base, (DWORD *)(ptr + string_size) + 1,
+            object->size - (string_size + sizeof(DWORD)), D3DXPT_INT, &param->param_eval,
+            get_version_counter_ptr(base))))
+        return ret;
     ret = D3D_OK;
     param = param->u.referenced_param;
     if (param->type == D3DXPT_VERTEXSHADER || param->type == D3DXPT_PIXELSHADER)
@@ -5985,8 +5987,9 @@ static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct
             {
                 TRACE("Creating preshader for object %u.\n", param->members[i].object_id);
                 object = &base->objects[param->members[i].object_id];
-                d3dx_create_param_eval(base, object->data, object->size, param->type,
-                        &param->members[i].param_eval, get_version_counter_ptr(base));
+                if (FAILED(ret = d3dx_create_param_eval(base, object->data, object->size, param->type,
+                        &param->members[i].param_eval, get_version_counter_ptr(base))))
+                    break;
             }
         }
     }
@@ -6099,8 +6102,9 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                     {
                         if (FAILED(hr = d3dx9_create_object(base, object)))
                             return hr;
-                        d3dx_create_param_eval(base, object->data, object->size, param->type,
-                                &param->param_eval, get_version_counter_ptr(base));
+                        if (FAILED(hr = d3dx_create_param_eval(base, object->data, object->size, param->type,
+                                &param->param_eval, get_version_counter_ptr(base))))
+                            return hr;
                     }
                     break;
 
@@ -6111,8 +6115,9 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                     state->type = ST_FXLC;
                     if (FAILED(hr = d3dx9_copy_data(base, param->object_id, ptr)))
                         return hr;
-                    d3dx_create_param_eval(base, object->data, object->size, param->type,
-                            &param->param_eval, get_version_counter_ptr(base));
+                    if (FAILED(hr = d3dx_create_param_eval(base, object->data, object->size, param->type,
+                            &param->param_eval, get_version_counter_ptr(base))))
+                        return hr;
                     break;
 
                 default:
@@ -6138,8 +6143,11 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                     struct d3dx_object *refobj = &base->objects[refpar->object_id];
 
                     if (!refpar->param_eval)
-                        d3dx_create_param_eval(base, refobj->data, refobj->size,
-                                refpar->type, &refpar->param_eval, get_version_counter_ptr(base));
+                    {
+                        if (FAILED(hr = d3dx_create_param_eval(base, refobj->data, refobj->size,
+                                refpar->type, &refpar->param_eval, get_version_counter_ptr(base))))
+                            return hr;
+                    }
                 }
             }
             else
