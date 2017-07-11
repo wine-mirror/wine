@@ -5942,7 +5942,8 @@ static HRESULT d3dx9_create_object(struct d3dx9_base_effect *base, struct d3dx_o
     return D3D_OK;
 }
 
-static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct d3dx_parameter *param)
+static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct d3dx_parameter *param,
+        const char **skip_constants, unsigned int skip_constants_count)
 {
     DWORD string_size;
     struct d3dx_object *object = &base->objects[param->object_id];
@@ -5968,7 +5969,7 @@ static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct
         FIXME("Unaligned string_size %u.\n", string_size);
     if (FAILED(ret = d3dx_create_param_eval(base, (DWORD *)(ptr + string_size) + 1,
             object->size - (string_size + sizeof(DWORD)), D3DXPT_INT, &param->param_eval,
-            get_version_counter_ptr(base))))
+            get_version_counter_ptr(base), NULL, 0)))
         return ret;
     ret = D3D_OK;
     param = param->u.referenced_param;
@@ -5988,7 +5989,8 @@ static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct
                 TRACE("Creating preshader for object %u.\n", param->members[i].object_id);
                 object = &base->objects[param->members[i].object_id];
                 if (FAILED(ret = d3dx_create_param_eval(base, object->data, object->size, param->type,
-                        &param->members[i].param_eval, get_version_counter_ptr(base))))
+                        &param->members[i].param_eval, get_version_counter_ptr(base),
+                        skip_constants, skip_constants_count)))
                     break;
             }
         }
@@ -5996,7 +5998,8 @@ static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct
     return ret;
 }
 
-static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *data, const char **ptr)
+static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *data, const char **ptr,
+        const char **skip_constants, unsigned int skip_constants_count)
 {
     DWORD technique_index;
     DWORD index, state_index, usage, element_index;
@@ -6103,7 +6106,8 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                         if (FAILED(hr = d3dx9_create_object(base, object)))
                             return hr;
                         if (FAILED(hr = d3dx_create_param_eval(base, object->data, object->size, param->type,
-                                &param->param_eval, get_version_counter_ptr(base))))
+                                &param->param_eval, get_version_counter_ptr(base),
+                                skip_constants, skip_constants_count)))
                             return hr;
                     }
                     break;
@@ -6116,7 +6120,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                     if (FAILED(hr = d3dx9_copy_data(base, param->object_id, ptr)))
                         return hr;
                     if (FAILED(hr = d3dx_create_param_eval(base, object->data, object->size, param->type,
-                            &param->param_eval, get_version_counter_ptr(base))))
+                            &param->param_eval, get_version_counter_ptr(base), NULL, 0)))
                         return hr;
                     break;
 
@@ -6145,7 +6149,8 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                     if (!refpar->param_eval)
                     {
                         if (FAILED(hr = d3dx_create_param_eval(base, refobj->data, refobj->size,
-                                refpar->type, &refpar->param_eval, get_version_counter_ptr(base))))
+                                refpar->type, &refpar->param_eval, get_version_counter_ptr(base),
+                                skip_constants, skip_constants_count)))
                             return hr;
                     }
                 }
@@ -6161,7 +6166,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
             state->type = ST_ARRAY_SELECTOR;
             if (FAILED(hr = d3dx9_copy_data(base, param->object_id, ptr)))
                 return hr;
-            hr = d3dx9_parse_array_selector(base, param);
+            hr = d3dx9_parse_array_selector(base, param, skip_constants, skip_constants_count);
             break;
 
         default:
@@ -6178,7 +6183,8 @@ static BOOL param_set_top_level_param(void *top_level_param, struct d3dx_paramet
     return FALSE;
 }
 
-static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *data, UINT data_size, DWORD start)
+static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *data, UINT data_size,
+        DWORD start, const char **skip_constants, unsigned int skip_constants_count)
 {
     const char *ptr = data + start;
     UINT stringcount, resourcecount;
@@ -6277,7 +6283,7 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
     {
         TRACE("parse resource %u\n", i);
 
-        hr = d3dx9_parse_resource(base, data, &ptr);
+        hr = d3dx9_parse_resource(base, data, &ptr, skip_constants, skip_constants_count);
         if (hr != D3D_OK)
         {
             WARN("Failed to parse resource %u\n", i);
@@ -6331,16 +6337,77 @@ err_out:
     return hr;
 }
 
+#define INITIAL_CONST_NAMES_SIZE 4
+
+static char *next_valid_constant_name(char **string)
+{
+    char *ret = *string;
+    char *next;
+
+    while (*ret && !isalpha(*ret) && *ret != '_')
+        ++ret;
+    if (!*ret)
+        return NULL;
+
+    next = ret + 1;
+    while (isalpha(*next) || isdigit(*next) || *next == '_')
+        ++next;
+    if (*next)
+        *next++ = 0;
+    *string = next;
+    return ret;
+}
+
+static const char **parse_skip_constants_string(char *skip_constants_string, unsigned int *names_count)
+{
+    const char **names, **new_alloc;
+    const char *name;
+    char *s;
+    unsigned int size = INITIAL_CONST_NAMES_SIZE;
+
+    names = HeapAlloc(GetProcessHeap(), 0, sizeof(*names) * size);
+    if (!names)
+        return NULL;
+
+    *names_count = 0;
+    s = skip_constants_string;
+    while ((name = next_valid_constant_name(&s)))
+    {
+        if (*names_count == size)
+        {
+            size *= 2;
+            new_alloc = HeapReAlloc(GetProcessHeap(), 0, names, sizeof(*names) * size);
+            if (!new_alloc)
+            {
+                HeapFree(GetProcessHeap(), 0, names);
+                return NULL;
+            }
+            names = new_alloc;
+        }
+        names[(*names_count)++] = name;
+    }
+    new_alloc = HeapReAlloc(GetProcessHeap(), 0, names, *names_count * sizeof(*names));
+    if (!new_alloc)
+        return names;
+    return new_alloc;
+}
+
 static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
         const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
-        UINT eflags, ID3DBlob **errors, struct ID3DXEffectImpl *effect, struct d3dx_effect_pool *pool)
+        UINT eflags, ID3DBlob **errors, struct ID3DXEffectImpl *effect, struct d3dx_effect_pool *pool,
+        const char *skip_constants_string)
 {
     DWORD tag, offset;
     const char *ptr = data;
     HRESULT hr;
     ID3DBlob *bytecode = NULL, *temp_errors = NULL;
+    char *skip_constants_buffer = NULL;
+    const char **skip_constants = NULL;
+    unsigned int skip_constants_count = 0;
+    unsigned int i, j;
 
-    TRACE("base %p, data %p, data_size %lu, effect %p, pool %p.\n", base, data, data_size, effect, pool);
+    TRACE("base %p, data %p, data_size %lu, effect %p, pool %p, skip_constants %s.\n",
+            base, data, data_size, effect, pool, debugstr_a(skip_constants_string));
 
     base->effect = effect;
     base->pool = pool;
@@ -6397,24 +6464,75 @@ static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
         TRACE("Tag: %x\n", tag);
     }
 
+    if (skip_constants_string)
+    {
+        skip_constants_buffer = HeapAlloc(GetProcessHeap(), 0,
+                sizeof(*skip_constants_buffer) * (strlen(skip_constants_string) + 1));
+        if (!skip_constants_buffer)
+        {
+            if (bytecode)
+                ID3D10Blob_Release(bytecode);
+            return E_OUTOFMEMORY;
+        }
+        strcpy(skip_constants_buffer, skip_constants_string);
+
+        if (!(skip_constants = parse_skip_constants_string(skip_constants_buffer, &skip_constants_count)))
+        {
+            HeapFree(GetProcessHeap(), 0, skip_constants_buffer);
+            if (bytecode)
+                ID3D10Blob_Release(bytecode);
+            return E_OUTOFMEMORY;
+        }
+    }
     read_dword(&ptr, &offset);
     TRACE("Offset: %x\n", offset);
 
-    hr = d3dx9_parse_effect(base, ptr, data_size, offset);
+    hr = d3dx9_parse_effect(base, ptr, data_size, offset, skip_constants, skip_constants_count);
     if (bytecode)
         ID3D10Blob_Release(bytecode);
     if (hr != D3D_OK)
     {
         FIXME("Failed to parse effect.\n");
+        HeapFree(GetProcessHeap(), 0, skip_constants_buffer);
+        HeapFree(GetProcessHeap(), 0, skip_constants);
         return hr;
     }
+
+    for (i = 0; i < skip_constants_count; ++i)
+    {
+        struct d3dx_parameter *param;
+        param = get_parameter_by_name(base, NULL, skip_constants[i]);
+        if (param)
+        {
+            for (j = 0; j < base->technique_count; ++j)
+            {
+                if (is_parameter_used(param, &base->techniques[j]))
+                {
+                    WARN("skip_constants parameter %s is used in technique %u.\n",
+                            debugstr_a(skip_constants[i]), j);
+                    HeapFree(GetProcessHeap(), 0, skip_constants_buffer);
+                    HeapFree(GetProcessHeap(), 0, skip_constants);
+                    d3dx9_base_effect_cleanup(base);
+                    return D3DERR_INVALIDCALL;
+                }
+            }
+        }
+        else
+        {
+            TRACE("skip_constants parameter %s not found.\n",
+                    debugstr_a(skip_constants[i]));
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, skip_constants_buffer);
+    HeapFree(GetProcessHeap(), 0, skip_constants);
 
     return D3D_OK;
 }
 
 static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, struct IDirect3DDevice9 *device,
         const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
-        UINT eflags, ID3DBlob **error_messages, struct ID3DXEffectPool *pool)
+        UINT eflags, ID3DBlob **error_messages, struct ID3DXEffectPool *pool, const char *skip_constants)
 {
     HRESULT hr;
     struct d3dx_effect_pool *pool_impl = NULL;
@@ -6435,7 +6553,7 @@ static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, struct IDirect3
     effect->device = device;
 
     if (FAILED(hr = d3dx9_base_effect_init(&effect->base_effect, data, data_size, defines, include,
-            eflags, error_messages, effect, pool_impl)))
+            eflags, error_messages, effect, pool_impl, skip_constants)))
     {
         FIXME("Failed to parse effect, hr %#x.\n", hr);
         free_effect(effect);
@@ -6477,15 +6595,12 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
     if (!effect)
         return D3D_OK;
 
-    if (skip_constants)
-        FIXME("skip_constants is not NULL, not supported yet.\n");
-
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
     hr = d3dx9_effect_init(object, device, srcdata, srcdatalen, (const D3D_SHADER_MACRO *)defines,
-            (ID3DInclude *)include, flags, (ID3DBlob **)compilation_errors, pool);
+            (ID3DInclude *)include, flags, (ID3DBlob **)compilation_errors, pool, skip_constants);
     if (FAILED(hr))
     {
         WARN("Failed to create effect object.\n");
@@ -6522,7 +6637,7 @@ static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compil
     compiler->ref = 1;
 
     if (FAILED(hr = d3dx9_base_effect_init(&compiler->base_effect, data, data_size, defines,
-            include, eflags, error_messages, NULL, NULL)))
+            include, eflags, error_messages, NULL, NULL, NULL)))
     {
         FIXME("Failed to parse effect, hr %#x.\n", hr);
         free_effect_compiler(compiler);

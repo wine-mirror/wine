@@ -2054,6 +2054,7 @@ HRESULT WINAPI D3DXGetShaderConstantTableEx(const DWORD *byte_code, DWORD flags,
         {
             object->constants[i].desc.RegisterCount = constant_info[i].RegisterCount;
         }
+        object->constants[i].constantinfo_reserved = constant_info[i].Reserved;
     }
 
     *constant_table = &object->ID3DXConstantTable_iface;

@@ -6920,25 +6920,17 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, "v3", 0, NULL, &effect, NULL);
-    todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        effect->lpVtbl->Release(effect);
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, "v4", 0, NULL, &effect, NULL);
-    todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        effect->lpVtbl->Release(effect);
 
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, " v1#,.+-= &\t\nv2*/!\"'v5 v6[1]", 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    todo_wine
     ok(!effect->lpVtbl->IsParameterUsed(effect, "v1", "tech0"),
             "Unexpected IsParameterUsed result.\n");
-    todo_wine
     ok(!effect->lpVtbl->IsParameterUsed(effect, "v2", "tech0"),
             "Unexpected IsParameterUsed result.\n");
     ok(effect->lpVtbl->IsParameterUsed(effect, "v3", "tech0"),
@@ -6970,11 +6962,11 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
     fvect.x = 30.0f;
     test_effect_shared_parameters_compare_vconst(device, 0, &fvect, FALSE);
     for (i = 1; i < 4; ++i)
-        test_effect_shared_parameters_compare_vconst(device, i, &fvect_filler, i > 1);
+        test_effect_shared_parameters_compare_vconst(device, i, &fvect_filler, FALSE);
     fvect.x = 31.0f;
     test_effect_shared_parameters_compare_vconst(device, 4, &fvect, FALSE);
     for (i = 5; i < 256; ++i)
-        test_effect_shared_parameters_compare_vconst(device, i, &fvect_filler, i < 7);
+        test_effect_shared_parameters_compare_vconst(device, i, &fvect_filler, FALSE);
 
     hr = effect->lpVtbl->EndPass(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
