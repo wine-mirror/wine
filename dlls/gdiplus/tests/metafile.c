@@ -2406,6 +2406,83 @@ static void test_drawimage(void)
     expect(Ok, stat);
 }
 
+static const emfplus_record properties_records[] = {
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeSetTextRenderingHint},
+    {0, EmfPlusRecordTypeSetPixelOffsetMode},
+    {0, EmfPlusRecordTypeSetAntiAliasMode},
+    {0, EmfPlusRecordTypeSetCompositingMode},
+    {0, EmfPlusRecordTypeSetCompositingQuality},
+    {0, EmfPlusRecordTypeSetInterpolationMode},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_properties(void)
+{
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HENHMETAFILE hemf;
+    GpStatus stat;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+    DeleteDC(hdc);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipSetTextRenderingHint(graphics, TextRenderingHintSystemDefault);
+    expect(Ok, stat);
+    stat = GdipSetTextRenderingHint(graphics, TextRenderingHintAntiAlias);
+    expect(Ok, stat);
+
+    stat = GdipSetPixelOffsetMode(graphics, PixelOffsetModeHighQuality);
+    expect(Ok, stat);
+    stat = GdipSetPixelOffsetMode(graphics, PixelOffsetModeHighQuality);
+    expect(Ok, stat);
+
+    stat = GdipSetSmoothingMode(graphics, SmoothingModeAntiAlias);
+    expect(Ok, stat);
+    stat = GdipSetSmoothingMode(graphics, SmoothingModeAntiAlias);
+    expect(Ok, stat);
+
+    stat = GdipSetCompositingMode(graphics, CompositingModeSourceOver);
+    expect(Ok, stat);
+    stat = GdipSetCompositingMode(graphics, CompositingModeSourceCopy);
+    expect(Ok, stat);
+
+    stat = GdipSetCompositingQuality(graphics, CompositingQualityHighQuality);
+    expect(Ok, stat);
+    stat = GdipSetCompositingQuality(graphics, CompositingQualityHighQuality);
+    expect(Ok, stat);
+
+    stat = GdipSetInterpolationMode(graphics, InterpolationModeDefault);
+    expect(Ok, stat);
+    stat = GdipSetInterpolationMode(graphics, InterpolationModeHighQuality);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+    sync_metafile(&metafile, "properties.emf");
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(Ok, stat);
+
+    check_emfplus(hemf, properties_records, "properties");
+    DeleteEnhMetaFile(hemf);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2444,6 +2521,7 @@ START_TEST(metafile)
     test_clipping();
     test_gditransform();
     test_drawimage();
+    test_properties();
 
     GdiplusShutdown(gdiplusToken);
 }
