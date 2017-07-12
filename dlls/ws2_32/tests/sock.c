@@ -7677,12 +7677,15 @@ static void test_ConnectEx(void)
         goto end;
     }
 
+    bytesReturned = 0xdeadbeef;
     iret = WSAIoctl(connector, SIO_GET_EXTENSION_FUNCTION_POINTER, &connectExGuid, sizeof(connectExGuid),
         &pConnectEx, sizeof(pConnectEx), &bytesReturned, NULL, NULL);
     if (iret) {
         win_skip("WSAIoctl failed to get ConnectEx with ret %d + errno %d\n", iret, WSAGetLastError());
         goto end;
     }
+
+    ok(bytesReturned == sizeof(pConnectEx), "expected sizeof(pConnectEx), got %u\n", bytesReturned);
 
     bret = pConnectEx(INVALID_SOCKET, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "ConnectEx on invalid socket "

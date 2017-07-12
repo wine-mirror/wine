@@ -4907,6 +4907,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         {
             TRACE("-> got %s\n", guid_funcs[i].name);
             *(void **)out_buff = guid_funcs[i].func_ptr;
+            total = sizeof(void *);
             break;
         }
 
