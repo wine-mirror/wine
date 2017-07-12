@@ -722,6 +722,9 @@ static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text )
     case WS_XML_TEXT_TYPE_UNIQUE_ID:
         return RECORD_UNIQUE_ID_TEXT;
 
+    case WS_XML_TEXT_TYPE_DATETIME:
+        return RECORD_DATETIME_TEXT;
+
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -869,6 +872,19 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
         WS_XML_UNIQUE_ID_TEXT *text_unique_id = (WS_XML_UNIQUE_ID_TEXT *)text;
         if ((hr = write_grow_buffer( writer, sizeof(text_unique_id->value) )) != S_OK) return hr;
         write_bytes( writer, (const BYTE *)&text_unique_id->value, sizeof(text_unique_id->value) );
+        return S_OK;
+    }
+    case RECORD_DATETIME_TEXT:
+    {
+        WS_XML_DATETIME_TEXT *text_datetime = (WS_XML_DATETIME_TEXT *)text;
+        UINT64 val = text_datetime->value.ticks;
+
+        assert( val <= TICKS_MAX );
+        if (text_datetime->value.format == WS_DATETIME_FORMAT_UTC) val |= (UINT64)1 << 62;
+        else if (text_datetime->value.format == WS_DATETIME_FORMAT_LOCAL) val |= (UINT64)1 << 63;
+
+        if ((hr = write_grow_buffer( writer, sizeof(val) )) != S_OK) return hr;
+        write_bytes( writer, (const BYTE *)&val, sizeof(val) );
         return S_OK;
     }
     default:
@@ -2507,6 +2523,9 @@ static enum record_type get_text_record_type( const WS_XML_TEXT *text )
     case WS_XML_TEXT_TYPE_UNIQUE_ID:
         return RECORD_UNIQUE_ID_TEXT_WITH_ENDELEMENT;
 
+    case WS_XML_TEXT_TYPE_DATETIME:
+        return RECORD_DATETIME_TEXT_WITH_ENDELEMENT;
+
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -2661,6 +2680,20 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         if ((hr = write_grow_buffer( writer, 1 + sizeof(text_unique_id->value) )) != S_OK) return hr;
         write_char( writer, type );
         write_bytes( writer, (const BYTE *)&text_unique_id->value, sizeof(text_unique_id->value) );
+        return S_OK;
+    }
+    case RECORD_DATETIME_TEXT_WITH_ENDELEMENT:
+    {
+        WS_XML_DATETIME_TEXT *text_datetime = (WS_XML_DATETIME_TEXT *)text;
+        UINT64 val = text_datetime->value.ticks;
+
+        assert( val <= TICKS_MAX );
+        if (text_datetime->value.format == WS_DATETIME_FORMAT_UTC) val |= (UINT64)1 << 62;
+        else if (text_datetime->value.format == WS_DATETIME_FORMAT_LOCAL) val |= (UINT64)1 << 63;
+
+        if ((hr = write_grow_buffer( writer, 1 + sizeof(val) )) != S_OK) return hr;
+        write_char( writer, type );
+        write_bytes( writer, (const BYTE *)&val, sizeof(val) );
         return S_OK;
     }
     default:
@@ -3176,8 +3209,7 @@ static HRESULT write_type_datetime( struct writer *writer, WS_TYPE_MAPPING mappi
                                     const WS_DATETIME_DESCRIPTION *desc, WS_WRITE_OPTION option,
                                     const void *value, ULONG size )
 {
-    WS_XML_UTF8_TEXT utf8;
-    unsigned char buf[34]; /* "0000-00-00T00:00:00.0000000-00:00" */
+    WS_XML_DATETIME_TEXT text_datetime;
     const WS_DATETIME *ptr;
     HRESULT hr;
 
@@ -3192,10 +3224,9 @@ static HRESULT write_type_datetime( struct writer *writer, WS_TYPE_MAPPING mappi
     if (option == WS_WRITE_NILLABLE_POINTER && !ptr) return write_add_nil_attribute( writer );
     if (ptr->ticks > TICKS_MAX || ptr->format > WS_DATETIME_FORMAT_NONE) return WS_E_INVALID_FORMAT;
 
-    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
-    utf8.value.bytes   = buf;
-    utf8.value.length  = format_datetime( ptr, buf );
-    return write_type_text( writer, mapping, &utf8.text );
+    text_datetime.text.textType = WS_XML_TEXT_TYPE_DATETIME;
+    text_datetime.value         = *ptr;
+    return write_type_text( writer, mapping, &text_datetime.text );
 }
 
 static HRESULT write_type_guid( struct writer *writer, WS_TYPE_MAPPING mapping,
