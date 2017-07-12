@@ -2733,19 +2733,6 @@ short CDECL MSVCR120__ldtest(LDOUBLE *x)
 }
 
 /*********************************************************************
- *      erff (MSVCR120.@)
- */
-float CDECL MSVCR120_erff(float x)
-{
-#ifdef HAVE_ERFF
-    return erff(x);
-#else
-    FIXME( "not implemented\n" );
-    return 0.0f;
-#endif
-}
-
-/*********************************************************************
  *      erf (MSVCR120.@)
  */
 double CDECL MSVCR120_erf(double x)
@@ -2755,6 +2742,18 @@ double CDECL MSVCR120_erf(double x)
 #else
     FIXME( "not implemented\n" );
     return 0.0;
+#endif
+}
+
+/*********************************************************************
+ *      erff (MSVCR120.@)
+ */
+float CDECL MSVCR120_erff(float x)
+{
+#ifdef HAVE_ERFF
+    return erff(x);
+#else
+    return MSVCR120_erf(x);
 #endif
 }
 
