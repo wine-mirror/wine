@@ -3356,7 +3356,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
         escape.gl_drawable = gl->window;
         /* fall through */
     default:
-        if (pglXSwapBuffersMscOML)
+        if (escape.gl_drawable && pglXSwapBuffersMscOML)
         {
             pglFlush();
             target_sbc = pglXSwapBuffersMscOML( gdi_display, gl->drawable, 0, 0, 0 );
