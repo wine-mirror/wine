@@ -857,7 +857,19 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     if(oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
         SetStretchBltMode(hdcSrc, COLORONCOLOR);
     hdcWork = CreateCompatibleDC(hdcDest);
-    bmpWork = CreateCompatibleBitmap(hdcDest, widthDest, heightDest);
+    if (GetObjectType( hdcDest ) != OBJ_MEMDC && GetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
+    {
+        /* screen DCs are not supposed to have an alpha channel, so use a 24-bpp bitmap as copy */
+        BITMAPINFO info;
+        info.bmiHeader.biSize = sizeof(info.bmiHeader);
+        info.bmiHeader.biWidth = widthDest;
+        info.bmiHeader.biHeight = heightDest;
+        info.bmiHeader.biPlanes = 1;
+        info.bmiHeader.biBitCount = 24;
+        info.bmiHeader.biCompression = BI_RGB;
+        bmpWork = CreateDIBSection( 0, &info, DIB_RGB_COLORS, NULL, NULL, 0 );
+    }
+    else bmpWork = CreateCompatibleBitmap(hdcDest, widthDest, heightDest);
     oldWork = SelectObject(hdcWork, bmpWork);
     if(!StretchBlt(hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc, widthSrc, heightSrc, SRCCOPY)) {
         TRACE("Failed to stretch\n");
