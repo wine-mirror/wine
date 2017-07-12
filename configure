@@ -17114,6 +17114,8 @@ for ac_func in \
 	acoshf \
 	asinh \
 	asinhf \
+	atanh \
+	atanhf \
 	cbrt \
 	cbrtf \
 	erf \

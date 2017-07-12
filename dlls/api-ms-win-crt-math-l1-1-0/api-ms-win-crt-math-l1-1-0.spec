@@ -136,9 +136,9 @@
 @ cdecl atan2(double double) ucrtbase.atan2
 @ cdecl -arch=arm,x86_64 atan2f(float float) ucrtbase.atan2f
 @ cdecl -arch=arm,x86_64 atanf(float) ucrtbase.atanf
-@ stub atanh
-@ stub atanhf
-@ stub atanhl
+@ cdecl atanh(double) ucrtbase.atanh
+@ cdecl atanhf(float) ucrtbase.atanhf
+@ cdecl atanhl(double) ucrtbase.atanhl
 @ stub cabs
 @ stub cabsf
 @ stub cabsl
