@@ -362,25 +362,9 @@ HWND StartValueRename(HWND hwndLV)
     return (HWND)SendMessageW(hwndLV, LVM_EDITLABELW, item, 0);
 }
 
-static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (LOWORD(wParam)) {
-        /*    case ID_FILE_OPEN: */
-        /*        break; */
-    default:
-        return FALSE;
-    }
-    return TRUE;
-}
-
 static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message) {
-    case WM_COMMAND:
-        if (!_CmdWndProc(hWnd, message, wParam, lParam)) {
-            return CallWindowProcW(g_orgListWndProc, hWnd, message, wParam, lParam);
-        }
-        break;
     case WM_NOTIFY_REFLECT:
         switch (((LPNMHDR)lParam)->code) {
 	
