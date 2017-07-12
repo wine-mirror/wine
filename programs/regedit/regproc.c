@@ -1421,8 +1421,7 @@ static FILE *REGPROC_open_export_file(WCHAR *file_name, BOOL unicode)
         file = _wfopen(file_name, wb_mode);
         if (!file) {
             _wperror(regedit);
-            output_message(STRING_CANNOT_OPEN_FILE, file_name);
-            exit(1);
+            error_exit(STRING_CANNOT_OPEN_FILE, file_name);
         }
     }
     if(unicode)
@@ -1478,10 +1477,9 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
         lstrcpyW(reg_key_name_buf, reg_key_name);
 
         /* open the specified key */
-        if (!(reg_key_class = parse_key_name(reg_key_name, &branch_name))) {
-            output_message(STRING_INCORRECT_REG_CLASS, reg_key_name);
-            exit(1);
-        }
+        if (!(reg_key_class = parse_key_name(reg_key_name, &branch_name)))
+            error_exit(STRING_INCORRECT_REG_CLASS, reg_key_name);
+
         if (!branch_name || !*branch_name) {
             /* no branch - registry class is specified */
             file = REGPROC_open_export_file(file_name, unicode);
@@ -1591,14 +1589,11 @@ void delete_registry_key(WCHAR *reg_key_name)
     if (!reg_key_name || !reg_key_name[0])
         return;
 
-    if (!(key_class = parse_key_name(reg_key_name, &key_name))) {
-        output_message(STRING_INCORRECT_REG_CLASS, reg_key_name);
-        exit(1);
-    }
-    if (!*key_name) {
-        output_message(STRING_DELETE_REG_CLASS_FAILED, reg_key_name);
-        exit(1);
-    }
+    if (!(key_class = parse_key_name(reg_key_name, &key_name)))
+        error_exit(STRING_INCORRECT_REG_CLASS, reg_key_name);
+
+    if (!*key_name)
+        error_exit(STRING_DELETE_REG_CLASS_FAILED, reg_key_name);
 
     RegDeleteTreeW(key_class, key_name);
 }

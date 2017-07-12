@@ -34,6 +34,7 @@ if (!(p)) \
 }
 
 void __cdecl output_message(unsigned int id, ...);
+void __cdecl error_exit(unsigned int id, ...);
 
 BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format);
 BOOL import_registry_file(FILE *in);

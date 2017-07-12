@@ -83,6 +83,23 @@ void __cdecl output_message(unsigned int id, ...)
     __ms_va_end(va_args);
 }
 
+void __cdecl error_exit(unsigned int id, ...)
+{
+    WCHAR fmt[1536];
+    __ms_va_list va_args;
+
+    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, sizeof(fmt)/sizeof(*fmt)))
+    {
+        WINE_FIXME("LoadString failed with %u\n", GetLastError());
+        return;
+    }
+    __ms_va_start(va_args, id);
+    output_formatstring(fmt, va_args);
+    __ms_va_end(va_args);
+
+    exit(0); /* regedit.exe always terminates with error code zero */
+}
+
 typedef enum {
     ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
 } REGEDIT_ACTION;
@@ -147,8 +164,7 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
             break;
         }
     default:
-        output_message(STRING_UNHANDLED_ACTION);
-        exit(1);
+        error_exit(STRING_UNHANDLED_ACTION);
         break;
     }
 }
@@ -184,8 +200,7 @@ BOOL ProcessCmdLine(WCHAR *cmdline)
         switch (toupperW(argv[i][1]))
         {
         case '?':
-            output_message(STRING_USAGE);
-            exit(0);
+            error_exit(STRING_USAGE);
             break;
         case 'D':
             action = ACTION_DELETE;
@@ -204,8 +219,7 @@ BOOL ProcessCmdLine(WCHAR *cmdline)
             break;
         default:
             output_message(STRING_INVALID_SWITCH, argv[i]);
-            output_message(STRING_HELP);
-            exit(1);
+            error_exit(STRING_HELP);
         }
     }
 
@@ -221,8 +235,7 @@ BOOL ProcessCmdLine(WCHAR *cmdline)
             output_message(STRING_NO_REG_KEY);
             break;
         }
-        output_message(STRING_HELP);
-        exit(1);
+        error_exit(STRING_HELP);
     }
 
     for (; i < argc; i++)
