@@ -668,6 +668,11 @@ static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text )
         if (text_base64->length <= MAX_UINT16) return RECORD_BYTES16_TEXT;
         return RECORD_BYTES32_TEXT;
     }
+    case WS_XML_TEXT_TYPE_BOOL:
+    {
+        const WS_XML_BOOL_TEXT *text_bool = (const WS_XML_BOOL_TEXT *)text;
+        return text_bool->value ? RECORD_TRUE_TEXT : RECORD_FALSE_TEXT;
+    }
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -724,6 +729,10 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
         write_bytes( writer, text_base64->bytes, len );
         return S_OK;
     }
+    case RECORD_FALSE_TEXT:
+    case RECORD_TRUE_TEXT:
+        return S_OK;
+
     default:
         ERR( "unhandled record type %02x\n", type );
         return E_NOTIMPL;
@@ -2332,6 +2341,11 @@ static enum record_type get_text_record_type( const WS_XML_TEXT *text )
         if (len <= MAX_UINT16) return RECORD_BYTES16_TEXT;
         return RECORD_BYTES32_TEXT;
     }
+    case WS_XML_TEXT_TYPE_BOOL:
+    {
+        const WS_XML_BOOL_TEXT *text_bool = (const WS_XML_BOOL_TEXT *)text;
+        return text_bool->value ? RECORD_TRUE_TEXT_WITH_ENDELEMENT : RECORD_FALSE_TEXT_WITH_ENDELEMENT;
+    }
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -2413,6 +2427,13 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
             write_char( writer, rem );
             write_bytes( writer, (const BYTE *)text_base64->bytes + len, rem );
         }
+        return S_OK;
+    }
+    case RECORD_FALSE_TEXT_WITH_ENDELEMENT:
+    case RECORD_TRUE_TEXT_WITH_ENDELEMENT:
+    {
+        if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+        write_char( writer, type );
         return S_OK;
     }
     default:
@@ -2698,8 +2719,7 @@ static HRESULT write_type_bool( struct writer *writer, WS_TYPE_MAPPING mapping,
                                 const WS_BOOL_DESCRIPTION *desc, WS_WRITE_OPTION option,
                                 const BOOL *value, ULONG size )
 {
-    WS_XML_UTF8_TEXT utf8;
-    unsigned char buf[6]; /* "false" */
+    WS_XML_BOOL_TEXT text_bool;
     const BOOL *ptr;
     HRESULT hr;
 
@@ -2713,10 +2733,9 @@ static HRESULT write_type_bool( struct writer *writer, WS_TYPE_MAPPING mapping,
     if ((hr = get_value_ptr( option, value, size, sizeof(BOOL), (const void **)&ptr )) != S_OK) return hr;
     if (option == WS_WRITE_NILLABLE_POINTER && !ptr) return write_add_nil_attribute( writer );
 
-    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
-    utf8.value.bytes   = buf;
-    utf8.value.length  = format_bool( ptr, buf );
-    return write_type_text( writer, mapping, &utf8.text );
+    text_bool.text.textType = WS_XML_TEXT_TYPE_BOOL;
+    text_bool.value         = *ptr;
+    return write_type_text( writer, mapping, &text_bool.text );
 }
 
 static HRESULT write_type_int8( struct writer *writer, WS_TYPE_MAPPING mapping,
