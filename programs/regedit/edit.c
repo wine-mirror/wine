@@ -403,7 +403,8 @@ BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath)
 	return FALSE;
     }
     
-    if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_KEY_TITLE, IDS_DELETE_KEY_TEXT, keyPath) != IDYES)
+    if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_KEY_TITLE,
+                   IDS_DELETE_KEY_TEXT) != IDYES)
 	goto done;
 	
     lRet = SHDeleteKeyW(hKeyRoot, keyPath);

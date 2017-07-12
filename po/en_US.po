@@ -12404,7 +12404,7 @@ msgid ""
 "Usage examples:\n"
 "  regedit \"import.reg\"\n"
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 msgstr ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12432,7 +12432,7 @@ msgstr ""
 "Usage examples:\n"
 "  regedit \"import.reg\"\n"
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
@@ -12672,9 +12672,9 @@ msgstr "Confirm Key Delete"
 
 #: regedit.rc:213
 msgid ""
-"Are you sure you want to delete the registry key '%1' and all of its subkeys?"
+"Are you sure you want to delete this registry key and all of its subkeys?"
 msgstr ""
-"Are you sure you want to delete the registry key '%1' and all of its subkeys?"
+"Are you sure you want to delete this registry key and all of its subkeys?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"

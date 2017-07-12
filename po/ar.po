@@ -12748,7 +12748,7 @@ msgid ""
 "Usage examples:\n"
 "  regedit \"import.reg\"\n"
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 msgstr ""
 
 #: regedit.rc:409
@@ -13042,7 +13042,7 @@ msgstr "تاكيد حذف القيمة"
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid ""
-"Are you sure you want to delete the registry key '%1' and all of its subkeys?"
+"Are you sure you want to delete this registry key and all of its subkeys?"
 msgstr "هل أنت متأكد من رغبتك في حذف '%1' ؟"
 
 #: regedit.rc:199
