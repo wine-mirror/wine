@@ -26,30 +26,21 @@
 #include <stdio.h>
 
 #include "main.h"
-
 #include "wine/unicode.h"
+
 static INT Image_String;
 static INT Image_Binary;
-
-typedef struct tagLINE_INFO
-{
-    DWORD dwValType;
-    LPWSTR name;
-    void* val;
-    size_t val_len;
-} LINE_INFO;
 
 /*******************************************************************************
  * Global and Local Variables:
  */
 
-static WNDPROC g_orgListWndProc;
-static DWORD g_columnToSort = ~0U;
-static BOOL  g_invertSort = FALSE;
-static LPWSTR g_valueName;
-static LPWSTR g_currentPath;
-static HKEY g_currentRootKey;
-static WCHAR g_szValueNotSet[64];
+DWORD   g_columnToSort = ~0U;
+BOOL    g_invertSort = FALSE;
+WCHAR  *g_currentPath;
+HKEY    g_currentRootKey;
+static  WCHAR *g_valueName;
+static  WCHAR g_szValueNotSet[64];
 
 #define MAX_LIST_COLUMNS (IDS_LIST_COLUMN_LAST - IDS_LIST_COLUMN_FIRST + 1)
 static int default_column_widths[MAX_LIST_COLUMNS] = { 200, 175, 400 };
@@ -256,8 +247,7 @@ static BOOL CreateListColumns(HWND hWndListView)
 }
 
 /* OnGetDispInfo - processes the LVN_GETDISPINFO notification message.  */
-
-static void OnGetDispInfo(NMLVDISPINFOW* plvdi)
+void OnGetDispInfo(NMLVDISPINFOW *plvdi)
 {
     static WCHAR buffer[200];
     static WCHAR reg_szT[]               = {'R','E','G','_','S','Z',0},
@@ -330,7 +320,7 @@ static void OnGetDispInfo(NMLVDISPINFOW* plvdi)
     }
 }
 
-static int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
     LINE_INFO*l, *r;
     l = (LINE_INFO*)lParam1;
@@ -362,104 +352,6 @@ HWND StartValueRename(HWND hwndLV)
     return (HWND)SendMessageW(hwndLV, LVM_EDITLABELW, item, 0);
 }
 
-static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message) {
-    case WM_NOTIFY_REFLECT:
-        switch (((LPNMHDR)lParam)->code) {
-	
-        case LVN_BEGINLABELEDITW:
-            if (!((NMLVDISPINFOW *)lParam)->item.iItem)
-                return 1;
-            return 0;
-        case LVN_GETDISPINFOW:
-            OnGetDispInfo((NMLVDISPINFOW*)lParam);
-            break;
-        case LVN_COLUMNCLICK:
-            if (g_columnToSort == ((LPNMLISTVIEW)lParam)->iSubItem)
-                g_invertSort = !g_invertSort;
-            else {
-                g_columnToSort = ((LPNMLISTVIEW)lParam)->iSubItem;
-                g_invertSort = FALSE;
-            }
-                    
-            SendMessageW(hWnd, LVM_SORTITEMS, (WPARAM)hWnd, (LPARAM)CompareFunc);
-            break;
-	case LVN_ENDLABELEDITW: {
-	        LPNMLVDISPINFOW dispInfo = (LPNMLVDISPINFOW)lParam;
-		LPWSTR oldName = GetItemText(hWnd, dispInfo->item.iItem);
-                LONG ret;
-
-                if (!oldName) return -1; /* cannot rename a default value */
-	        ret = RenameValue(hWnd, g_currentRootKey, g_currentPath, oldName, dispInfo->item.pszText);
-		if (ret)
-                {
-                    dispInfo->item.iSubItem = 0;
-                    SendMessageW(hWnd, LVM_SETITEMTEXTW, dispInfo->item.iItem, (LPARAM)&dispInfo->item);
-                }
-		HeapFree(GetProcessHeap(), 0, oldName);
-		return 0;
-	    }
-        case LVN_DELETEITEM: {
-                NMLISTVIEW *nmlv = (NMLISTVIEW *)lParam;
-                LINE_INFO *info = (LINE_INFO *)nmlv->lParam;
-
-                HeapFree(GetProcessHeap(), 0, info->name);
-                HeapFree(GetProcessHeap(), 0, info);
-            }
-            break;
-        case NM_RETURN: {
-            int cnt = SendMessageW(hWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
-            if (cnt != -1)
-                SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
-            }
-            break;
-        case NM_SETFOCUS:
-            g_pChildWnd->nFocusPanel = 1;
-            break;
-        case NM_DBLCLK: {
-                NMITEMACTIVATE* nmitem = (LPNMITEMACTIVATE)lParam;
-                LVHITTESTINFO info;
-
-                /* if (nmitem->hdr.hwndFrom != hWnd) break; unnecessary because of WM_NOTIFY_REFLECT */
-                /*            if (nmitem->hdr.idFrom != IDW_LISTVIEW) break;  */
-                /*            if (nmitem->hdr.code != ???) break;  */
-                info.pt.x = nmitem->ptAction.x;
-                info.pt.y = nmitem->ptAction.y;
-                if (SendMessageW(hWnd, LVM_HITTEST, 0, (LPARAM)&info) != -1) {
-                    LVITEMW item;
-
-                    item.state = 0;
-                    item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
-                    SendMessageW(hWnd, LVM_SETITEMSTATE, (UINT)-1, (LPARAM)&item);
-
-                    item.state = LVIS_FOCUSED | LVIS_SELECTED;
-                    item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
-                    SendMessageW(hWnd, LVM_SETITEMSTATE, info.iItem, (LPARAM)&item);
-
-                    SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
-                }
-            }
-            break;
-
-        default:
-            return 0; /* shouldn't call default ! */
-        }
-        break;
-    case WM_CONTEXTMENU: {
-        int cnt = SendMessageW(hWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_SELECTED, 0));
-        TrackPopupMenu(GetSubMenu(hPopupMenus, cnt == -1 ? PM_NEW_VALUE : PM_MODIFY_VALUE),
-                       TPM_RIGHTBUTTON, (short)LOWORD(lParam), (short)HIWORD(lParam),
-                       0, hFrameWnd, NULL);
-        break;
-    }
-    default:
-        return CallWindowProcW(g_orgListWndProc, hWnd, message, wParam, lParam);
-    }
-    return 0;
-}
-
-
 HWND CreateListView(HWND hwndParent, UINT id)
 {
     RECT rcClient;
@@ -482,7 +374,6 @@ HWND CreateListView(HWND hwndParent, UINT id)
     /* Initialize the image list */
     if (!InitListViewImageList(hwndLV)) goto fail;
     if (!CreateListColumns(hwndLV)) goto fail;
-    g_orgListWndProc = (WNDPROC) SetWindowLongPtrW(hwndLV, GWLP_WNDPROC, (LPARAM)ListWndProc);
     return hwndLV;
 fail:
     DestroyWindow(hwndLV);

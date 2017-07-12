@@ -354,6 +354,96 @@ static int treeview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
     return 0;
 }
 
+static int listview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (((NMHDR *)lParam)->code)
+    {
+        case NM_DBLCLK:
+        {
+            NMITEMACTIVATE *nmitem = (NMITEMACTIVATE *)lParam;
+            LVHITTESTINFO info;
+
+            info.pt.x = nmitem->ptAction.x;
+            info.pt.y = nmitem->ptAction.y;
+
+            if (SendMessageW(g_pChildWnd->hListWnd, LVM_HITTEST, 0, (LPARAM)&info) != -1)
+            {
+                LVITEMW item;
+
+                item.state = 0;
+                item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+                SendMessageW(g_pChildWnd->hListWnd, LVM_SETITEMSTATE, (UINT)-1, (LPARAM)&item);
+
+                item.state = LVIS_FOCUSED | LVIS_SELECTED;
+                item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+                SendMessageW(g_pChildWnd->hListWnd, LVM_SETITEMSTATE, info.iItem, (LPARAM)&item);
+
+                SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
+            }
+            break;
+        }
+        case NM_RETURN:
+        {
+            int cnt = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
+                                   MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
+            if (cnt != -1)
+                SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
+            break;
+        }
+        case NM_SETFOCUS:
+            g_pChildWnd->nFocusPanel = 1;
+            break;
+        case LVN_BEGINLABELEDITW:
+            if (!((NMLVDISPINFOW *)lParam)->item.iItem)
+                return 1;
+            return 0;
+        case LVN_COLUMNCLICK:
+            if (g_columnToSort == ((NMLISTVIEW *)lParam)->iSubItem)
+                g_invertSort = !g_invertSort;
+            else
+            {
+                g_columnToSort = ((NMLISTVIEW *)lParam)->iSubItem;
+                g_invertSort = FALSE;
+            }
+
+            SendMessageW(g_pChildWnd->hListWnd, LVM_SORTITEMS,
+                        (WPARAM)g_pChildWnd->hListWnd, (LPARAM)CompareFunc);
+            break;
+        case LVN_DELETEITEM:
+        {
+            NMLISTVIEW *nmlv = (NMLISTVIEW *)lParam;
+            LINE_INFO *info = (LINE_INFO *)nmlv->lParam;
+
+            HeapFree(GetProcessHeap(), 0, info->name);
+            HeapFree(GetProcessHeap(), 0, info);
+            break;
+        }
+        case LVN_ENDLABELEDITW:
+        {
+            NMLVDISPINFOW *dispInfo = (NMLVDISPINFOW *)lParam;
+            WCHAR *oldName = GetItemText(g_pChildWnd->hListWnd, dispInfo->item.iItem);
+            LONG ret;
+
+            if (!oldName) return -1; /* cannot rename a default value */
+            ret = RenameValue(g_pChildWnd->hListWnd, g_currentRootKey, g_currentPath,
+                              oldName, dispInfo->item.pszText);
+            if (ret)
+            {
+                dispInfo->item.iSubItem = 0;
+                SendMessageW(g_pChildWnd->hListWnd, LVM_SETITEMTEXTW,
+                             dispInfo->item.iItem, (LPARAM)&dispInfo->item);
+            }
+
+            HeapFree(GetProcessHeap(), 0, oldName);
+            return 0;
+        }
+        case LVN_GETDISPINFOW:
+            OnGetDispInfo((NMLVDISPINFOW *)lParam);
+            break;
+    }
+    return 0;
+}
+
 #define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
 #define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
 
@@ -433,18 +523,36 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             draw_splitbar(hWnd, last_split);
         break;
 
-    case WM_CONTEXTMENU: {
+    case WM_CONTEXTMENU:
+    {
         POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-        TVHITTESTINFO ht;
-        ht.pt = pt;
-        ScreenToClient(g_pChildWnd->hTreeWnd, &ht.pt);
-        if (SendMessageW(g_pChildWnd->hTreeWnd, TVM_HITTEST, 0, (LPARAM)&ht)) {
-            HTREEITEM root;
-            SendMessageW(g_pChildWnd->hTreeWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM)ht.hItem);
-            root = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
-            TrackPopupMenu(GetSubMenu(hPopupMenus, ht.hItem == root ? PM_COMPUTER : PM_TREEVIEW),
-                           TPM_RIGHTBUTTON, pt.x, pt.y, 0, hFrameWnd, NULL);
+        short int menu_id = -1;
+
+        if ((HWND)wParam == g_pChildWnd->hTreeWnd)
+        {
+            TVHITTESTINFO ht;
+
+            ht.pt = pt;
+            ScreenToClient(g_pChildWnd->hTreeWnd, &ht.pt);
+
+            if (SendMessageW(g_pChildWnd->hTreeWnd, TVM_HITTEST, 0, (LPARAM)&ht))
+            {
+                HTREEITEM root;
+
+                SendMessageW(g_pChildWnd->hTreeWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM)ht.hItem);
+                root = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+                menu_id = (ht.hItem == root) ? PM_COMPUTER : PM_TREEVIEW;
+            }
         }
+        else
+        {
+            int sel = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
+                                   MAKELPARAM(LVNI_SELECTED, 0));
+            menu_id = (sel == -1) ? PM_NEW_VALUE : PM_MODIFY_VALUE;
+        }
+
+        TrackPopupMenu(GetSubMenu(hPopupMenus, menu_id), TPM_RIGHTBUTTON,
+                       pt.x, pt.y, 0, hFrameWnd, NULL);
         break;
     }
 
@@ -491,7 +599,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         if (wParam == TREE_WINDOW && g_pChildWnd)
             return treeview_notify(hWnd, message, wParam, lParam);
         else if (wParam == LIST_WINDOW && g_pChildWnd)
-            return SendMessageW(g_pChildWnd->hListWnd, WM_NOTIFY_REFLECT, wParam, lParam);
+            return listview_notify(hWnd, message, wParam, lParam);
         break;
 
     case WM_SIZE:

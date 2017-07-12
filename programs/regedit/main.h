@@ -34,8 +34,6 @@
 
 #define MAX_NEW_KEY_LEN 128
 
-#define WM_NOTIFY_REFLECT (WM_USER+1024)
-
 /* Pop-Up Menus */
 #define PM_COMPUTER      0
 #define PM_TREEVIEW      1
@@ -76,6 +74,14 @@ typedef struct {
 } ChildWnd;
 extern ChildWnd* g_pChildWnd;
 
+typedef struct tagLINE_INFO
+{
+    WCHAR  *name;
+    DWORD   dwValType;
+    void   *val;
+    size_t  val_len;
+} LINE_INFO;
+
 /*******************************************************************************
  * Global Variables:
  */
@@ -92,6 +98,11 @@ extern const WCHAR szFrameClass[];
 extern const WCHAR szChildClass[];
 extern const WCHAR szHexEditClass[];
 extern WCHAR g_pszDefaultValueName[];
+
+extern DWORD g_columnToSort;
+extern BOOL g_invertSort;
+extern WCHAR *g_currentPath;
+extern HKEY g_currentRootKey;
 
 /* Registry class names and their indexes */
 extern const WCHAR* reg_class_namesW[];
@@ -120,7 +131,9 @@ extern void UpdateStatusBar(void);
 extern BOOL update_listview_path(const WCHAR *path);
 extern void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD size);
 extern int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount, int pos);
+extern void OnGetDispInfo(NMLVDISPINFOW *plvdi);
 extern HWND CreateListView(HWND hwndParent, UINT id);
+extern int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highlightValue);
 extern HWND StartValueRename(HWND hwndLV);
 extern LPWSTR GetItemText(HWND hwndLV, UINT item);
