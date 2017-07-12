@@ -945,7 +945,7 @@ static HRESULT wined3d_event_query_create(struct wined3d_device *device,
     {
         WARN("Event queries not supported.\n");
         HeapFree(GetProcessHeap(), 0, object);
-        return WINED3DERR_NOTAVAILABLE;
+        return hr;
     }
 
     wined3d_query_init(&object->query, device, type, &object->signalled,
