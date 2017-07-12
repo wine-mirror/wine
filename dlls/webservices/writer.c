@@ -719,6 +719,9 @@ static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text )
     case WS_XML_TEXT_TYPE_GUID:
         return RECORD_GUID_TEXT;
 
+    case WS_XML_TEXT_TYPE_UNIQUE_ID:
+        return RECORD_UNIQUE_ID_TEXT;
+
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -859,6 +862,13 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
         WS_XML_GUID_TEXT *text_guid = (WS_XML_GUID_TEXT *)text;
         if ((hr = write_grow_buffer( writer, sizeof(text_guid->value) )) != S_OK) return hr;
         write_bytes( writer, (const BYTE *)&text_guid->value, sizeof(text_guid->value) );
+        return S_OK;
+    }
+    case RECORD_UNIQUE_ID_TEXT:
+    {
+        WS_XML_UNIQUE_ID_TEXT *text_unique_id = (WS_XML_UNIQUE_ID_TEXT *)text;
+        if ((hr = write_grow_buffer( writer, sizeof(text_unique_id->value) )) != S_OK) return hr;
+        write_bytes( writer, (const BYTE *)&text_unique_id->value, sizeof(text_unique_id->value) );
         return S_OK;
     }
     default:
@@ -2494,6 +2504,9 @@ static enum record_type get_text_record_type( const WS_XML_TEXT *text )
     case WS_XML_TEXT_TYPE_GUID:
         return RECORD_GUID_TEXT_WITH_ENDELEMENT;
 
+    case WS_XML_TEXT_TYPE_UNIQUE_ID:
+        return RECORD_UNIQUE_ID_TEXT_WITH_ENDELEMENT;
+
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -2640,6 +2653,14 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         if ((hr = write_grow_buffer( writer, 1 + sizeof(text_guid->value) )) != S_OK) return hr;
         write_char( writer, type );
         write_bytes( writer, (const BYTE *)&text_guid->value, sizeof(text_guid->value) );
+        return S_OK;
+    }
+    case RECORD_UNIQUE_ID_TEXT_WITH_ENDELEMENT:
+    {
+        WS_XML_UNIQUE_ID_TEXT *text_unique_id = (WS_XML_UNIQUE_ID_TEXT *)text;
+        if ((hr = write_grow_buffer( writer, 1 + sizeof(text_unique_id->value) )) != S_OK) return hr;
+        write_char( writer, type );
+        write_bytes( writer, (const BYTE *)&text_unique_id->value, sizeof(text_unique_id->value) );
         return S_OK;
     }
     default:
@@ -3204,9 +3225,8 @@ static HRESULT write_type_unique_id( struct writer *writer, WS_TYPE_MAPPING mapp
                                      const WS_UNIQUE_ID_DESCRIPTION *desc, WS_WRITE_OPTION option,
                                      const void *value, ULONG size )
 {
-    WS_XML_UTF8_TEXT utf8;
-    WS_XML_UTF16_TEXT utf16;
-    unsigned char buf[46]; /* "urn:uuid:00000000-0000-0000-0000-000000000000" */
+    WS_XML_UNIQUE_ID_TEXT text_unique_id;
+    WS_XML_UTF16_TEXT text_utf16;
     const WS_UNIQUE_ID *ptr;
     HRESULT hr;
 
@@ -3222,16 +3242,15 @@ static HRESULT write_type_unique_id( struct writer *writer, WS_TYPE_MAPPING mapp
 
     if (ptr->uri.length)
     {
-        utf16.text.textType = WS_XML_TEXT_TYPE_UTF16;
-        utf16.bytes         = (BYTE *)ptr->uri.chars;
-        utf16.byteCount     = ptr->uri.length * sizeof(WCHAR);
-        return write_type_text( writer, mapping, &utf16.text );
+        text_utf16.text.textType = WS_XML_TEXT_TYPE_UTF16;
+        text_utf16.bytes         = (BYTE *)ptr->uri.chars;
+        text_utf16.byteCount     = ptr->uri.length * sizeof(WCHAR);
+        return write_type_text( writer, mapping, &text_utf16.text );
     }
 
-    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
-    utf8.value.bytes   = buf;
-    utf8.value.length  = format_urn( &ptr->guid, buf );
-    return write_type_text( writer, mapping, &utf8.text );
+    text_unique_id.text.textType = WS_XML_TEXT_TYPE_UNIQUE_ID;
+    text_unique_id.value         = ptr->guid;
+    return write_type_text( writer, mapping, &text_unique_id.text );
 }
 
 static HRESULT write_type_string( struct writer *writer, WS_TYPE_MAPPING mapping,
