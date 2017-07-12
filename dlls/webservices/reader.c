@@ -3495,27 +3495,14 @@ HRESULT WINAPI WsReadEndAttribute( WS_XML_READER *handle, WS_ERROR *error )
     return S_OK;
 }
 
-static WCHAR *xmltext_to_widechar( WS_HEAP *heap, const WS_XML_TEXT *text )
+static HRESULT str_to_bool( const unsigned char *str, ULONG len, BOOL *ret )
 {
-    WCHAR *ret;
-
-    switch (text->textType)
-    {
-    case WS_XML_TEXT_TYPE_UTF8:
-    {
-        const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
-        int len = MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, NULL, 0 );
-        if (!(ret = ws_alloc( heap, (len + 1) * sizeof(WCHAR) ))) return NULL;
-        MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, ret, len );
-        ret[len] = 0;
-        break;
-    }
-    default:
-        FIXME( "unhandled type %u\n", text->textType );
-        return NULL;
-    }
-
-    return ret;
+    if (len == 4 && !memcmp( str, "true", 4 )) *ret = TRUE;
+    else if (len == 1 && !memcmp( str, "1", 1 )) *ret = TRUE;
+    else if (len == 5 && !memcmp( str, "false", 5 )) *ret = FALSE;
+    else if (len == 1 && !memcmp( str, "0", 1 )) *ret = FALSE;
+    else return WS_E_INVALID_FORMAT;
+    return S_OK;
 }
 
 #define MAX_INT8    0x7f
@@ -4287,16 +4274,31 @@ static HRESULT get_text( struct reader *reader, WS_TYPE_MAPPING mapping, const W
     }
 }
 
-static const WS_XML_UTF8_TEXT *text_to_utf8( const WS_XML_TEXT *text )
+static HRESULT text_to_bool( const WS_XML_TEXT *text, BOOL *val )
 {
-    assert( text->textType == WS_XML_TEXT_TYPE_UTF8 );
-    return (const WS_XML_UTF8_TEXT *)text;
-}
+    HRESULT hr;
 
-static const WS_XML_BASE64_TEXT *text_to_base64( const WS_XML_TEXT *text )
-{
-    assert( text->textType == WS_XML_TEXT_TYPE_BASE64 );
-    return (const WS_XML_BASE64_TEXT *)text;
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_bool( text_utf8->value.bytes, text_utf8->value.length, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_BOOL:
+    {
+        const WS_XML_BOOL_TEXT *text_bool = (const WS_XML_BOOL_TEXT *)text;
+        *val = text_bool->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
 }
 
 static HRESULT read_type_bool( struct reader *reader, WS_TYPE_MAPPING mapping,
@@ -4314,16 +4316,7 @@ static HRESULT read_type_bool( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        ULONG len = utf8->value.length;
-        if (len == 4 && !memcmp( utf8->value.bytes, "true", 4 )) val = TRUE;
-        else if (len == 1 && !memcmp( utf8->value.bytes, "1", 1 )) val = TRUE;
-        else if (len == 5 && !memcmp( utf8->value.bytes, "false", 5 )) val = FALSE;
-        else if (len == 1 && !memcmp( utf8->value.bytes, "0", 1 )) val = FALSE;
-        else return WS_E_INVALID_FORMAT;
-    }
+    if (found && (hr = text_to_bool( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4361,6 +4354,35 @@ static HRESULT read_type_bool( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_int8( const WS_XML_TEXT *text, INT64 *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_int64( text_utf8->value.bytes, text_utf8->value.length, MIN_INT8, MAX_INT8, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_INT32:
+    {
+        const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
+        assert( text_int32->value >= MIN_INT8 );
+        assert( text_int32->value <= MAX_INT8 );
+        *val = text_int32->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_int8( struct reader *reader, WS_TYPE_MAPPING mapping,
                                const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                const WS_INT8_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4377,12 +4399,7 @@ static HRESULT read_type_int8( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_int64( utf8->value.bytes, utf8->value.length, MIN_INT8, MAX_INT8, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_int8( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4420,6 +4437,35 @@ static HRESULT read_type_int8( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_int16( const WS_XML_TEXT *text, INT64 *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_int64( text_utf8->value.bytes, text_utf8->value.length, MIN_INT16, MAX_INT16, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_INT32:
+    {
+        const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
+        assert( text_int32->value >= MIN_INT16 );
+        assert( text_int32->value <= MAX_INT16 );
+        *val = text_int32->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_int16( struct reader *reader, WS_TYPE_MAPPING mapping,
                                 const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                 const WS_INT16_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4436,12 +4482,7 @@ static HRESULT read_type_int16( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_int64( utf8->value.bytes, utf8->value.length, MIN_INT16, MAX_INT16, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_int16( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4479,6 +4520,33 @@ static HRESULT read_type_int16( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_int32( const WS_XML_TEXT *text, INT64 *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_int64( text_utf8->value.bytes, text_utf8->value.length, MIN_INT32, MAX_INT32, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_INT32:
+    {
+        const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
+        *val = text_int32->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_int32( struct reader *reader, WS_TYPE_MAPPING mapping,
                                 const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                 const WS_INT32_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4495,12 +4563,7 @@ static HRESULT read_type_int32( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_int64( utf8->value.bytes, utf8->value.length, MIN_INT32, MAX_INT32, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_int32( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4538,6 +4601,33 @@ static HRESULT read_type_int32( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_int64( const WS_XML_TEXT *text, INT64 *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_int64( text_utf8->value.bytes, text_utf8->value.length, MIN_INT64, MAX_INT64, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_INT64:
+    {
+        const WS_XML_INT64_TEXT *text_int64 = (const WS_XML_INT64_TEXT *)text;
+        *val = text_int64->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_int64( struct reader *reader, WS_TYPE_MAPPING mapping,
                                 const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                 const WS_INT64_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4554,12 +4644,7 @@ static HRESULT read_type_int64( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_int64( utf8->value.bytes, utf8->value.length, MIN_INT64, MAX_INT64, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_int64( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4597,6 +4682,34 @@ static HRESULT read_type_int64( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_uint8( const WS_XML_TEXT *text, UINT64 *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_uint64( text_utf8->value.bytes, text_utf8->value.length, MAX_UINT8, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_UINT64:
+    {
+        const WS_XML_UINT64_TEXT *text_uint64 = (const WS_XML_UINT64_TEXT *)text;
+        assert( text_uint64->value <= MAX_UINT8 );
+        *val = text_uint64->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_uint8( struct reader *reader, WS_TYPE_MAPPING mapping,
                                 const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                 const WS_UINT8_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4613,12 +4726,7 @@ static HRESULT read_type_uint8( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_uint64( utf8->value.bytes, utf8->value.length, MAX_UINT8, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_uint8( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4656,6 +4764,43 @@ static HRESULT read_type_uint8( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_uint16( const WS_XML_TEXT *text, UINT64 *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_uint64( text_utf8->value.bytes, text_utf8->value.length, MAX_UINT16, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_INT32:
+    {
+        const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
+        assert( text_int32->value >= 0 );
+        assert( text_int32->value <= MAX_UINT16 );
+        *val = text_int32->value;
+        hr = S_OK;
+        break;
+    }
+    case WS_XML_TEXT_TYPE_UINT64:
+    {
+        const WS_XML_UINT64_TEXT *text_uint64 = (const WS_XML_UINT64_TEXT *)text;
+        assert( text_uint64->value <= MAX_UINT16 );
+        *val = text_uint64->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_uint16( struct reader *reader, WS_TYPE_MAPPING mapping,
                                  const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                  const WS_UINT16_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4672,12 +4817,7 @@ static HRESULT read_type_uint16( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_uint64( utf8->value.bytes, utf8->value.length, MAX_UINT16, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_uint16( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4715,6 +4855,42 @@ static HRESULT read_type_uint16( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_uint32( const WS_XML_TEXT *text, UINT64 *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_uint64( text_utf8->value.bytes, text_utf8->value.length, MAX_UINT32, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_INT32:
+    {
+        const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
+        assert( text_int32->value >= 0 );
+        *val = text_int32->value;
+        hr = S_OK;
+        break;
+    }
+    case WS_XML_TEXT_TYPE_UINT64:
+    {
+        const WS_XML_UINT64_TEXT *text_uint64 = (const WS_XML_UINT64_TEXT *)text;
+        assert( text_uint64->value <= MAX_UINT32 );
+        *val = text_uint64->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_uint32( struct reader *reader, WS_TYPE_MAPPING mapping,
                                  const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                  const WS_UINT32_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4731,12 +4907,7 @@ static HRESULT read_type_uint32( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_uint64( utf8->value.bytes, utf8->value.length, MAX_UINT32, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_uint32( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4774,6 +4945,33 @@ static HRESULT read_type_uint32( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_uint64( const WS_XML_TEXT *text, UINT64 *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_uint64( text_utf8->value.bytes, text_utf8->value.length, MAX_UINT64, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_UINT64:
+    {
+        const WS_XML_UINT64_TEXT *text_uint64 = (const WS_XML_UINT64_TEXT *)text;
+        *val = text_uint64->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_uint64( struct reader *reader, WS_TYPE_MAPPING mapping,
                                  const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                  const WS_UINT64_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4790,12 +4988,7 @@ static HRESULT read_type_uint64( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_uint64( utf8->value.bytes, utf8->value.length, MAX_UINT64, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_uint64( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4833,6 +5026,33 @@ static HRESULT read_type_uint64( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_double( const WS_XML_TEXT *text, double *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_double( text_utf8->value.bytes, text_utf8->value.length, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_DOUBLE:
+    {
+        const WS_XML_DOUBLE_TEXT *text_double = (const WS_XML_DOUBLE_TEXT *)text;
+        *val = text_double->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_double( struct reader *reader, WS_TYPE_MAPPING mapping,
                                  const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                  const WS_DOUBLE_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4846,11 +5066,7 @@ static HRESULT read_type_double( struct reader *reader, WS_TYPE_MAPPING mapping,
     if (desc) FIXME( "ignoring description\n" );
 
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_double( utf8->value.bytes, utf8->value.length, &val )) != S_OK) return hr;
-    }
+    if (found && (hr = text_to_double( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4888,6 +5104,19 @@ static HRESULT read_type_double( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_wsz( const WS_XML_TEXT *text, WS_HEAP *heap, WCHAR **ret )
+{
+    const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
+    int len;
+
+    assert( text->textType == WS_XML_TEXT_TYPE_UTF8 );
+    len = MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, NULL, 0 );
+    if (!(*ret = ws_alloc( heap, (len + 1) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, *ret, len );
+    (*ret)[len] = 0;
+    return S_OK;
+}
+
 static HRESULT read_type_wsz( struct reader *reader, WS_TYPE_MAPPING mapping,
                               const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                               const WS_WSZ_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -4904,7 +5133,7 @@ static HRESULT read_type_wsz( struct reader *reader, WS_TYPE_MAPPING mapping,
         return E_NOTIMPL;
     }
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found && !(str = xmltext_to_widechar( heap, text ))) return WS_E_QUOTA_EXCEEDED;
+    if (found && (hr = text_to_wsz( text, heap, &str )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4926,12 +5155,15 @@ static HRESULT read_type_wsz( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
-static HRESULT get_enum_value( const WS_XML_UTF8_TEXT *text, const WS_ENUM_DESCRIPTION *desc, int *ret )
+static HRESULT get_enum_value( const WS_XML_TEXT *text, const WS_ENUM_DESCRIPTION *desc, int *ret )
 {
+    const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
     ULONG i;
+
+    assert( text->textType == WS_XML_TEXT_TYPE_UTF8 );
     for (i = 0; i < desc->valueCount; i++)
     {
-        if (WsXmlStringEquals( &text->value, desc->values[i].name, NULL ) == S_OK)
+        if (WsXmlStringEquals( &utf8->value, desc->values[i].name, NULL ) == S_OK)
         {
             *ret = desc->values[i].value;
             return S_OK;
@@ -4953,11 +5185,7 @@ static HRESULT read_type_enum( struct reader *reader, WS_TYPE_MAPPING mapping,
     if (!desc) return E_INVALIDARG;
 
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = get_enum_value( utf8, desc, &val )) != S_OK) return hr;
-    }
+    if (found && (hr = get_enum_value( text, desc, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -4995,6 +5223,33 @@ static HRESULT read_type_enum( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_datetime( const WS_XML_TEXT *text, WS_DATETIME *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_datetime( text_utf8->value.bytes, text_utf8->value.length, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_DATETIME:
+    {
+        const WS_XML_DATETIME_TEXT *text_datetime = (const WS_XML_DATETIME_TEXT *)text;
+        *val = text_datetime->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_datetime( struct reader *reader, WS_TYPE_MAPPING mapping,
                                    const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                    const WS_DATETIME_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -5008,11 +5263,7 @@ static HRESULT read_type_datetime( struct reader *reader, WS_TYPE_MAPPING mappin
     if (desc) FIXME( "ignoring description\n" );
 
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_datetime( utf8->value.bytes, utf8->value.length, &val )) != S_OK) return hr;
-    }
+    if (found && (hr = text_to_datetime( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -5050,6 +5301,33 @@ static HRESULT read_type_datetime( struct reader *reader, WS_TYPE_MAPPING mappin
     return S_OK;
 }
 
+static HRESULT text_to_guid( const WS_XML_TEXT *text, GUID *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_guid( text_utf8->value.bytes, text_utf8->value.length, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_GUID:
+    {
+        const WS_XML_GUID_TEXT *text_guid = (const WS_XML_GUID_TEXT *)text;
+        *val = text_guid->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_guid( struct reader *reader, WS_TYPE_MAPPING mapping,
                                const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                const WS_GUID_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -5063,11 +5341,7 @@ static HRESULT read_type_guid( struct reader *reader, WS_TYPE_MAPPING mapping,
     if (desc) FIXME( "ignoring description\n" );
 
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_guid( utf8->value.bytes, utf8->value.length, &val )) != S_OK) return hr;
-    }
+    if (found && (hr = text_to_guid( text, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -5105,6 +5379,35 @@ static HRESULT read_type_guid( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_unique_id( const WS_XML_TEXT *text, WS_HEAP *heap, WS_UNIQUE_ID *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_unique_id( text_utf8->value.bytes, text_utf8->value.length, heap, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_UNIQUE_ID:
+    {
+        const WS_XML_UNIQUE_ID_TEXT *text_unique_id = (const WS_XML_UNIQUE_ID_TEXT *)text;
+        val->guid       = text_unique_id->value;
+        val->uri.length = 0;
+        val->uri.chars  = NULL;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_unique_id( struct reader *reader, WS_TYPE_MAPPING mapping,
                                     const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                     const WS_UNIQUE_ID_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -5118,11 +5421,7 @@ static HRESULT read_type_unique_id( struct reader *reader, WS_TYPE_MAPPING mappi
     if (desc) FIXME( "ignoring description\n" );
 
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_unique_id( utf8->value.bytes, utf8->value.length, heap, &val )) != S_OK) return hr;
-    }
+    if (found && (hr = text_to_unique_id( text, heap, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -5160,6 +5459,35 @@ static HRESULT read_type_unique_id( struct reader *reader, WS_TYPE_MAPPING mappi
     return S_OK;
 }
 
+static HRESULT text_to_string( const WS_XML_TEXT *text, WS_HEAP *heap, WS_STRING *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_string( text_utf8->value.bytes, text_utf8->value.length, heap, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_UTF16:
+    {
+        const WS_XML_UTF16_TEXT *text_utf16 = (const WS_XML_UTF16_TEXT *)text;
+        if (!(val->chars = ws_alloc( heap, text_utf16->byteCount ))) return WS_E_QUOTA_EXCEEDED;
+        memcpy( val->chars, text_utf16->bytes, text_utf16->byteCount );
+        val->length = text_utf16->byteCount / sizeof(WCHAR);
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_string( struct reader *reader, WS_TYPE_MAPPING mapping,
                                  const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                  const WS_STRING_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -5173,12 +5501,7 @@ static HRESULT read_type_string( struct reader *reader, WS_TYPE_MAPPING mapping,
     if (desc) FIXME( "ignoring description\n" );
 
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_string( utf8->value.bytes, utf8->value.length, heap, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_string( text, heap, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -5218,6 +5541,35 @@ static HRESULT read_type_string( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_bytes( const WS_XML_TEXT *text, WS_HEAP *heap, WS_BYTES *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_bytes( text_utf8->value.bytes, text_utf8->value.length, heap, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_BASE64:
+    {
+        const WS_XML_BASE64_TEXT *text_base64 = (const WS_XML_BASE64_TEXT *)text;
+        if (!(val->bytes = ws_alloc( heap, text_base64->length ))) return WS_E_QUOTA_EXCEEDED;
+        memcpy( val->bytes, text_base64->bytes, text_base64->length );
+        val->length = text_base64->length;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_bytes( struct reader *reader, WS_TYPE_MAPPING mapping,
                                 const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                 const WS_BYTES_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -5231,30 +5583,7 @@ static HRESULT read_type_bytes( struct reader *reader, WS_TYPE_MAPPING mapping,
     if (desc) FIXME( "ignoring description\n" );
 
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        switch (reader->input_enc)
-        {
-        case WS_XML_READER_ENCODING_TYPE_TEXT:
-        {
-            const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-            if ((hr = str_to_bytes( utf8->value.bytes, utf8->value.length, heap, &val )) != S_OK)
-                return hr;
-            break;
-        }
-        case WS_XML_READER_ENCODING_TYPE_BINARY:
-        {
-            const WS_XML_BASE64_TEXT *base64 = text_to_base64( text );
-            if (!(val.bytes = ws_alloc( heap, base64->length ))) return WS_E_QUOTA_EXCEEDED;
-            memcpy( val.bytes, base64->bytes, base64->length );
-            val.length = base64->length;
-            break;
-        }
-        default:
-            FIXME( "unhandled input encoding %u\n", reader->input_enc );
-            return WS_E_NOT_SUPPORTED;
-        }
-    }
+    if (found && (hr = text_to_bytes( text, heap, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -5294,6 +5623,13 @@ static HRESULT read_type_bytes( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_xml_string( const WS_XML_TEXT *text, WS_HEAP *heap, WS_XML_STRING *val )
+{
+    const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
+    assert( text->textType == WS_XML_TEXT_TYPE_UTF8 );
+    return str_to_xml_string( utf8->value.bytes, utf8->value.length, heap, val );
+}
+
 static HRESULT read_type_xml_string( struct reader *reader, WS_TYPE_MAPPING mapping,
                                      const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                      const WS_XML_STRING_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -5307,12 +5643,7 @@ static HRESULT read_type_xml_string( struct reader *reader, WS_TYPE_MAPPING mapp
     if (desc) FIXME( "ignoring description\n" );
 
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_xml_string( utf8->value.bytes, utf8->value.length, heap, &val )) != S_OK)
-            return hr;
-    }
+    if (found && (hr = text_to_xml_string( text, heap, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -5352,6 +5683,38 @@ static HRESULT read_type_xml_string( struct reader *reader, WS_TYPE_MAPPING mapp
     return S_OK;
 }
 
+static HRESULT text_to_qname( struct reader *reader, const WS_XML_TEXT *text, WS_HEAP *heap, WS_XML_QNAME *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_qname( reader, text_utf8->value.bytes, text_utf8->value.length, heap, NULL,
+                           &val->localName, &val->ns );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_QNAME:
+    {
+        const WS_XML_QNAME_TEXT *text_qname = (const WS_XML_QNAME_TEXT *)text;
+        if ((hr = copy_xml_string( heap, text_qname->localName, &val->localName )) != S_OK) return hr;
+        if ((hr = copy_xml_string( heap, text_qname->ns, &val->ns )) != S_OK)
+        {
+            ws_free( heap, val->localName.bytes, val->localName.length );
+            return hr;
+        }
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type_qname( struct reader *reader, WS_TYPE_MAPPING mapping,
                                 const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                                 const WS_XML_QNAME_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -5369,12 +5732,7 @@ static HRESULT read_type_qname( struct reader *reader, WS_TYPE_MAPPING mapping,
     if (node_type( reader->current ) != WS_XML_NODE_TYPE_TEXT) return WS_E_INVALID_FORMAT;
 
     if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
-    if (found)
-    {
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text );
-        if ((hr = str_to_qname( reader, utf8->value.bytes, utf8->value.length, heap, NULL,
-                                &val.localName, &val.ns )) != S_OK) return hr;
-    }
+    if (found && (hr = text_to_qname( reader, text, heap, &val )) != S_OK) return hr;
 
     switch (option)
     {
@@ -5422,13 +5780,13 @@ static BOOL is_empty_text_node( const struct node *node )
     case WS_XML_TEXT_TYPE_UTF8:
     {
         ULONG i;
-        const WS_XML_UTF8_TEXT *utf8 = text_to_utf8( text->text );
+        const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text->text;
         for (i = 0; i < utf8->value.length; i++) if (!read_isspace( utf8->value.bytes[i] )) return FALSE;
         return TRUE;
     }
     case WS_XML_TEXT_TYPE_BASE64:
     {
-        const WS_XML_BASE64_TEXT *base64 = text_to_base64( text->text );
+        const WS_XML_BASE64_TEXT *base64 = (const WS_XML_BASE64_TEXT *)text->text;
         return !base64->length;
     }
     default:
