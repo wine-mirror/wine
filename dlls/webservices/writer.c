@@ -661,6 +661,13 @@ static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text )
         if (text_utf8->value.length <= MAX_UINT16) return RECORD_CHARS16_TEXT;
         return RECORD_CHARS32_TEXT;
     }
+    case WS_XML_TEXT_TYPE_BASE64:
+    {
+        const WS_XML_BASE64_TEXT *text_base64 = (const WS_XML_BASE64_TEXT *)text;
+        if (text_base64->length <= MAX_UINT8) return RECORD_BYTES8_TEXT;
+        if (text_base64->length <= MAX_UINT16) return RECORD_BYTES16_TEXT;
+        return RECORD_BYTES32_TEXT;
+    }
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -698,6 +705,23 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
         if ((hr = write_grow_buffer( writer, sizeof(len) + len )) != S_OK) return hr;
         write_bytes( writer, (const BYTE *)&len, sizeof(len) );
         write_bytes( writer, text_utf8->value.bytes, len );
+        return S_OK;
+    }
+    case RECORD_BYTES8_TEXT:
+    {
+        WS_XML_BASE64_TEXT *text_base64 = (WS_XML_BASE64_TEXT *)text;
+        if ((hr = write_grow_buffer( writer, 1 + text_base64->length )) != S_OK) return hr;
+        write_char( writer, text_base64->length );
+        write_bytes( writer, text_base64->bytes, text_base64->length );
+        return S_OK;
+    }
+    case RECORD_BYTES16_TEXT:
+    {
+        WS_XML_BASE64_TEXT *text_base64 = (WS_XML_BASE64_TEXT *)text;
+        UINT16 len = text_base64->length;
+        if ((hr = write_grow_buffer( writer, sizeof(len) + len )) != S_OK) return hr;
+        write_bytes( writer, (const BYTE *)&len, sizeof(len) );
+        write_bytes( writer, text_base64->bytes, len );
         return S_OK;
     }
     default:
@@ -2300,6 +2324,14 @@ static enum record_type get_text_record_type( const WS_XML_TEXT *text )
         if (text_utf8->value.length <= MAX_UINT16) return RECORD_CHARS16_TEXT_WITH_ENDELEMENT;
         return RECORD_CHARS32_TEXT_WITH_ENDELEMENT;
     }
+    case WS_XML_TEXT_TYPE_BASE64:
+    {
+        const WS_XML_BASE64_TEXT *text_base64 = (const WS_XML_BASE64_TEXT *)text;
+        ULONG rem = text_base64->length % 3, len = text_base64->length - rem;
+        if (len <= MAX_UINT8) return RECORD_BYTES8_TEXT;
+        if (len <= MAX_UINT16) return RECORD_BYTES16_TEXT;
+        return RECORD_BYTES32_TEXT;
+    }
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -2339,6 +2371,48 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         write_char( writer, type );
         write_bytes( writer, (const BYTE *)&len, sizeof(len) );
         write_bytes( writer, text_utf8->value.bytes, len );
+        return S_OK;
+    }
+    case RECORD_BYTES8_TEXT:
+    {
+        const WS_XML_BASE64_TEXT *text_base64 = (const WS_XML_BASE64_TEXT *)text;
+        UINT8 rem = text_base64->length % 3, len = text_base64->length - rem;
+
+        if (len)
+        {
+            if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK) return hr;
+            write_char( writer, rem ? RECORD_BYTES8_TEXT : RECORD_BYTES8_TEXT_WITH_ENDELEMENT );
+            write_char( writer, len );
+            write_bytes( writer, text_base64->bytes, len );
+        }
+        if (rem)
+        {
+            if ((hr = write_grow_buffer( writer, 3 )) != S_OK) return hr;
+            write_char( writer, RECORD_BYTES8_TEXT_WITH_ENDELEMENT );
+            write_char( writer, rem );
+            write_bytes( writer, (const BYTE *)text_base64->bytes + len, rem );
+        }
+        return S_OK;
+    }
+    case RECORD_BYTES16_TEXT:
+    {
+        const WS_XML_BASE64_TEXT *text_base64 = (const WS_XML_BASE64_TEXT *)text;
+        UINT16 rem = text_base64->length % 3, len = text_base64->length - rem;
+
+        if (len)
+        {
+            if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK) return hr;
+            write_char( writer, rem ? RECORD_BYTES16_TEXT : RECORD_BYTES16_TEXT_WITH_ENDELEMENT );
+            write_bytes( writer, (const BYTE *)&len, sizeof(len) );
+            write_bytes( writer, text_base64->bytes, len );
+        }
+        if (rem)
+        {
+            if ((hr = write_grow_buffer( writer, 3 )) != S_OK) return hr;
+            write_char( writer, RECORD_BYTES8_TEXT_WITH_ENDELEMENT );
+            write_char( writer, rem );
+            write_bytes( writer, (const BYTE *)text_base64->bytes + len, rem );
+        }
         return S_OK;
     }
     default:
