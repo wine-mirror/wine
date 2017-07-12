@@ -69,6 +69,7 @@ typedef struct {
     IWMReaderAccelerator IWMReaderAccelerator_iface;
     IWMReaderNetworkConfig2 IWMReaderNetworkConfig2_iface;
     IWMReaderStreamClock IWMReaderStreamClock_iface;
+    IWMReaderTypeNegotiation IWMReaderTypeNegotiation_iface;
     LONG ref;
 } WMReader;
 
@@ -117,6 +118,9 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IWMReaderStreamClock)) {
         TRACE("(%p)->(IWMReaderStreamClock %p)\n", This, ppv);
         *ppv = &This->IWMReaderStreamClock_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMReaderTypeNegotiation)) {
+        TRACE("(%p)->(IWMReaderTypeNegotiation %p)\n", This, ppv);
+        *ppv = &This->IWMReaderTypeNegotiation_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -1190,6 +1194,44 @@ static const IWMReaderStreamClockVtbl WMReaderStreamClockVtbl =
     readclock_KillTimer
 };
 
+static inline WMReader *impl_from_IWMReaderTypeNegotiation(IWMReaderTypeNegotiation *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IWMReaderTypeNegotiation_iface);
+}
+
+static HRESULT WINAPI negotiation_QueryInterface(IWMReaderTypeNegotiation *iface, REFIID riid, void **ppv)
+{
+    WMReader *This = impl_from_IWMReaderTypeNegotiation(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
+}
+
+static ULONG WINAPI negotiation_AddRef(IWMReaderTypeNegotiation *iface)
+{
+    WMReader *This = impl_from_IWMReaderTypeNegotiation(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI negotiation_Release(IWMReaderTypeNegotiation *iface)
+{
+    WMReader *This = impl_from_IWMReaderTypeNegotiation(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI negotiation_TryOutputProps(IWMReaderTypeNegotiation *iface, DWORD output, IWMOutputMediaProps *props)
+{
+    WMReader *This = impl_from_IWMReaderTypeNegotiation(iface);
+    FIXME("%p, %d, %p\n", This, output, props);
+    return E_NOTIMPL;
+}
+
+static const IWMReaderTypeNegotiationVtbl WMReaderTypeNegotiationVtbl =
+{
+    negotiation_QueryInterface,
+    negotiation_AddRef,
+    negotiation_Release,
+    negotiation_TryOutputProps
+};
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
     WMReader *reader;
@@ -1205,6 +1247,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMReaderAccelerator_iface.lpVtbl = &WMReaderAcceleratorVtbl;
     reader->IWMReaderNetworkConfig2_iface.lpVtbl = &WMReaderNetworkConfig2Vtbl;
     reader->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
+    reader->IWMReaderTypeNegotiation_iface.lpVtbl = &WMReaderTypeNegotiationVtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;
