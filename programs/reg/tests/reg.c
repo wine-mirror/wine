@@ -793,7 +793,7 @@ static void test_import(void)
     DWORD r, dword = 0x123, type, size;
     char test1_reg[MAX_PATH], test2_reg[MAX_PATH], cmdline[MAX_PATH];
     char test_string[] = "Test string", buffer[24];
-    HKEY hkey, subkey;
+    HKEY hkey, subkey = NULL;
     LONG err;
     BYTE hex[8];
 
