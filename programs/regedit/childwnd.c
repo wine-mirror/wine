@@ -466,6 +466,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                     fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd, path);
                     SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
                     HeapFree(GetProcessHeap(), 0, fullPath);
+                    update_listview_path(path);
                     HeapFree(GetProcessHeap(), 0, path);
 		}
                 SetWindowLongPtrW(g_pChildWnd->hTreeWnd, GWLP_USERDATA, 0);

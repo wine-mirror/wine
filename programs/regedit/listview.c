@@ -91,6 +91,17 @@ LPCWSTR GetValueName(HWND hwndLV)
     return g_valueName;
 }
 
+BOOL update_listview_path(const WCHAR *path)
+{
+    HeapFree(GetProcessHeap(), 0, g_currentPath);
+
+    g_currentPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(path) + 1) * sizeof(WCHAR));
+    if (!g_currentPath) return FALSE;
+    lstrcpyW(g_currentPath, path);
+
+    return TRUE;
+}
+
 /* convert '\0' separated string list into ',' separated string list */
 static void MakeMULTISZDisplayable(LPWSTR multi)
 {
@@ -557,12 +568,8 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     SendMessageW(hwndLV, LVM_SORTITEMS, (WPARAM)hwndLV, (LPARAM)CompareFunc);
 
     g_currentRootKey = hKeyRoot;
-    if (keyPath != g_currentPath) {
-	HeapFree(GetProcessHeap(), 0, g_currentPath);
-	g_currentPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(keyPath) + 1) * sizeof(WCHAR));
-	if (!g_currentPath) goto done;
-	lstrcpyW(g_currentPath, keyPath);
-    }
+    if (keyPath != g_currentPath && !update_listview_path(keyPath))
+        goto done;
 
     result = TRUE;
 
