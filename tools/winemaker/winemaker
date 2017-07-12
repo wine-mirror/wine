@@ -967,6 +967,7 @@ sub source_scan_project_file($$$)
                     }
                     if ($vc_compiler_tool->getName eq "PreprocessorDefinitions") {
                         $configt=$vc_compiler_tool->getValue;
+                        $configt=~s/;+$//;
                         $configt=~s/;\s*/ -D/g;
                         $prj_target_defines.="-D".$configt." ";
                     }
