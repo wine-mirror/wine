@@ -2025,9 +2025,9 @@
 @ cdecl -arch=arm,x86_64 atanf(float) MSVCRT_atanf
 @ cdecl atan2(double double) MSVCRT_atan2
 @ cdecl -arch=arm,x86_64 atan2f(float float) MSVCRT_atan2f
-@ stub atanh
-@ stub atanhf
-@ stub atanhl
+@ cdecl atanh(double) MSVCR120_atanh
+@ cdecl atanhf(float) MSVCR120_atanhf
+@ cdecl atanhl(double) MSVCR120_atanhl
 @ cdecl -private atexit(ptr) MSVCRT_atexit  # not imported to avoid conflicts with Mingw
 @ cdecl atof(str) MSVCRT_atof
 @ cdecl atoi(str) MSVCRT_atoi

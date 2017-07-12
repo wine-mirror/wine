@@ -2598,6 +2598,8 @@ AC_CHECK_FUNCS(\
 	acoshf \
 	asinh \
 	asinhf \
+	atanh \
+	atanhf \
 	cbrt \
 	cbrtf \
 	erf \

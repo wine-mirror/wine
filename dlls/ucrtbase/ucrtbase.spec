@@ -2167,9 +2167,9 @@
 @ cdecl atan2(double double) MSVCRT_atan2
 @ cdecl -arch=arm,x86_64 atan2f(float float) MSVCRT_atan2f
 @ cdecl -arch=arm,x86_64 atanf(float) MSVCRT_atanf
-@ stub atanh
-@ stub atanhf
-@ stub atanhl
+@ cdecl atanh(double) MSVCR120_atanh
+@ cdecl atanhf(float) MSVCR120_atanhf
+@ cdecl atanhl(double) MSVCR120_atanhl
 @ cdecl atof(str) MSVCRT_atof
 @ cdecl atoi(str) MSVCRT_atoi
 @ cdecl atol(str) ntdll.atol

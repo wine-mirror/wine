@@ -1691,9 +1691,9 @@
 @ cdecl -arch=arm,x86_64 atanf(float) msvcr120.atanf
 @ cdecl atan2(double double) msvcr120.atan2
 @ cdecl -arch=arm,x86_64 atan2f(float float) msvcr120.atan2f
-@ stub atanh
-@ stub atanhf
-@ stub atanhl
+@ cdecl atanh(double) msvcr120.atanh
+@ cdecl atanhf(float) msvcr120.atanhf
+@ cdecl atanhl(double) msvcr120.atanhl
 @ cdecl -private atexit(ptr) msvcr120.atexit
 @ cdecl atof(str) msvcr120.atof
 @ cdecl atoi(str) msvcr120.atoi
