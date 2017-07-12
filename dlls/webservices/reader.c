@@ -1582,11 +1582,6 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         return WS_E_NOT_SUPPORTED;
     }
 
-    if (type >= RECORD_INT8_TEXT && type <= RECORD_INT64_TEXT)
-    {
-        attr->value = &text_int64->text;
-        return S_OK;
-    }
     if (type >= RECORD_BYTES8_TEXT && type <= RECORD_BYTES32_TEXT)
     {
         attr->value = &text_base64->text;
