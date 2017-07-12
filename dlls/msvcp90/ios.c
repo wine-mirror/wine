@@ -14673,8 +14673,6 @@ ULONGLONG __cdecl tr2_sys__File_size(char const* path)
     TRACE("(%s)\n", debugstr_a(path));
     if(!GetFileAttributesExA(path, GetFileExInfoStandard, &fad))
         return 0;
-    if(fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        return 0;
 
     return ((ULONGLONG)(fad.nFileSizeHigh) << 32) + fad.nFileSizeLow;
 }
@@ -15464,8 +15462,6 @@ ULONGLONG __cdecl tr2_sys__File_size_wchar(WCHAR const* path)
 
     TRACE("(%s)\n", debugstr_w(path));
     if(!GetFileAttributesExW(path, GetFileExInfoStandard, &fad))
-        return 0;
-    if(fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         return 0;
 
     return ((ULONGLONG)(fad.nFileSizeHigh) << 32) + fad.nFileSizeLow;
