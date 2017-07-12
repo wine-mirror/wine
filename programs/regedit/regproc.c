@@ -1478,7 +1478,10 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
 
         /* open the specified key */
         if (!(reg_key_class = parse_key_name(reg_key_name, &branch_name)))
-            error_exit(STRING_INCORRECT_REG_CLASS, reg_key_name);
+        {
+            if (branch_name) *(branch_name - 1) = 0;
+            error_exit(STRING_INVALID_SYSTEM_KEY, reg_key_name);
+        }
 
         if (!branch_name || !*branch_name) {
             /* no branch - registry class is specified */
@@ -1590,10 +1593,13 @@ void delete_registry_key(WCHAR *reg_key_name)
         return;
 
     if (!(key_class = parse_key_name(reg_key_name, &key_name)))
-        error_exit(STRING_INCORRECT_REG_CLASS, reg_key_name);
+    {
+        if (key_name) *(key_name - 1) = 0;
+        error_exit(STRING_INVALID_SYSTEM_KEY, reg_key_name);
+    }
 
     if (!*key_name)
-        error_exit(STRING_DELETE_REG_CLASS_FAILED, reg_key_name);
+        error_exit(STRING_DELETE_FAILED, reg_key_name);
 
     RegDeleteTreeW(key_class, key_name);
 }

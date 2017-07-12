@@ -12747,7 +12747,8 @@ msgstr "錯誤：無法加入索引鍵到遠端機器\n"
 #: regedit.rc:425
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgid ""
+"regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr "不受支援的型態。\n"
 
 #: regedit.rc:426
@@ -12755,8 +12756,10 @@ msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
 #: regedit.rc:427
-msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr ""
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "regedit: Invalid system key [%1]\n"
+msgstr "錯誤：無效的索引鍵名稱\n"
 
 #: regedit.rc:428
 #, fuzzy
@@ -12769,7 +12772,7 @@ msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
 #: regedit.rc:429
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
-msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgstr "錯誤：無法加入索引鍵到遠端機器\n"
 
 #: regedit.rc:431

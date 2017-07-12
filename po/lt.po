@@ -12505,7 +12505,10 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
 
 #: regedit.rc:425
-msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+#, fuzzy
+#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgid ""
+"regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr "regedit: Nepalaikomas registro duomenų tipas [%1] sutiktas „%2“.\n"
 
 #: regedit.rc:426
@@ -12514,8 +12517,10 @@ msgstr ""
 "regedit: Registro reikšmė „%1“ bus eksportuota kaip dvejetainiai duomenys.\n"
 
 #: regedit.rc:427
-msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr "regedit: Neteisinga registro klasės specifikacija „%1“.\n"
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "regedit: Invalid system key [%1]\n"
+msgstr "reg: Netinkamas rakto vardas\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12524,7 +12529,9 @@ msgstr ""
 "regedit: Nepavyko eksportuoti „%1“. Nurodytas registro raktas nerastas.\n"
 
 #: regedit.rc:429
-msgid "regedit: Unable to delete the registry class '%1'.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgstr "regedit: Nepavyko pašalinti registro klasės „%1“.\n"
 
 #: regedit.rc:431

@@ -12022,7 +12022,8 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "Tuot las datotecas (*.*).\n"
 
 #: regedit.rc:425
-msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgid ""
+"regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
 
 #: regedit.rc:426
@@ -12030,7 +12031,7 @@ msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
 #: regedit.rc:427
-msgid "regedit: Incorrect registry class specification in '%1'.\n"
+msgid "regedit: Invalid system key [%1]\n"
 msgstr ""
 
 #: regedit.rc:428
@@ -12039,8 +12040,9 @@ msgid ""
 msgstr ""
 
 #: regedit.rc:429
-msgid "regedit: Unable to delete the registry class '%1'.\n"
-msgstr ""
+#, fuzzy
+msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgstr "Tuot las datotecas (*.*).\n"
 
 #: regedit.rc:431
 msgid "regedit: The line contains invalid syntax.\n"

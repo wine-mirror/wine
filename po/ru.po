@@ -12501,7 +12501,10 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: не удалось открыть ключ «%1».\n"
 
 #: regedit.rc:425
-msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+#, fuzzy
+#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgid ""
+"regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr "regedit: «%2» содержит неподдерживаемый тип данных [%1].\n"
 
 #: regedit.rc:426
@@ -12509,8 +12512,10 @@ msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: значение «%1» будет экспортировано в бинарном виде.\n"
 
 #: regedit.rc:427
-msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr "regedit: неверный формат имени ключа «%1».\n"
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "regedit: Invalid system key [%1]\n"
+msgstr "reg: неверное имя раздела\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12518,7 +12523,9 @@ msgid ""
 msgstr "regedit: не удалось экспортировать «%1». Указанный ключ не найден.\n"
 
 #: regedit.rc:429
-msgid "regedit: Unable to delete the registry class '%1'.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgstr "regedit: не удалось удалить класс «%1».\n"
 
 #: regedit.rc:431

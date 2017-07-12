@@ -12548,7 +12548,10 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Nie udało się otworzyć klucza rejestru '%1'.\n"
 
 #: regedit.rc:425
-msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+#, fuzzy
+#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgid ""
+"regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
 "regedit: Nieobsługiwany rodzaj wartości rejestru [%1] wystąpił w '%2'.\n"
 
@@ -12559,8 +12562,10 @@ msgstr ""
 "binarna.\n"
 
 #: regedit.rc:427
-msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr "regedit: Nieprawidłowe określenie klasy rejestru w '%1'.\n"
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "regedit: Invalid system key [%1]\n"
+msgstr "reg: Niewłaściwa nazwa klucza\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12570,7 +12575,9 @@ msgstr ""
 "został odnaleziony.\n"
 
 #: regedit.rc:429
-msgid "regedit: Unable to delete the registry class '%1'.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgstr "regedit: Nie udało się usunąć klasy rejestru '%1'.\n"
 
 #: regedit.rc:431

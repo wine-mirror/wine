@@ -12489,7 +12489,10 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: レジストリ キー '%1' を開けません。\n"
 
 #: regedit.rc:425
-msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+#, fuzzy
+#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgid ""
+"regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
 "regedit: サポートされていないレジストリ データ型 [%1] が '%2' にあります。\n"
 
@@ -12499,8 +12502,10 @@ msgstr ""
 "regedit: レジストリ値 '%1' はバイナリデータとしてエクスポートされます。\n"
 
 #: regedit.rc:427
-msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr "regedit: レジストリ クラス指定の誤りが '%1' にあります。\n"
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "regedit: Invalid system key [%1]\n"
+msgstr "reg: キー名が無効です\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12509,7 +12514,9 @@ msgstr ""
 "regedit: '%1' をエクスポートできません。指定されたキーが見つかりません。\n"
 
 #: regedit.rc:429
-msgid "regedit: Unable to delete the registry class '%1'.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgstr "regedit: レジストリ クラス '%1' を削除できません。\n"
 
 #: regedit.rc:431

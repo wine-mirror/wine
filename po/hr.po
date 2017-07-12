@@ -12335,7 +12335,8 @@ msgstr "Datoteka se ne može otvoriti."
 #: regedit.rc:425
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgid ""
+"regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr "Nepodržan tip.\n"
 
 #: regedit.rc:426
@@ -12343,8 +12344,10 @@ msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
 #: regedit.rc:427
-msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr ""
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "regedit: Invalid system key [%1]\n"
+msgstr "Greška: Neispravan naziv ključa\n"
 
 #: regedit.rc:428
 #, fuzzy
@@ -12358,7 +12361,7 @@ msgstr ""
 #: regedit.rc:429
 #, fuzzy
 #| msgid "Could not open the file."
-msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgstr "Datoteka se ne može otvoriti."
 
 #: regedit.rc:431

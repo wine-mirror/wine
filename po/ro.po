@@ -12590,7 +12590,8 @@ msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 #: regedit.rc:425
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
-msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgid ""
+"regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr "Eroare: Linie de comandă nesuportată\n"
 
 #: regedit.rc:426
@@ -12598,8 +12599,10 @@ msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
 #: regedit.rc:427
-msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr ""
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "regedit: Invalid system key [%1]\n"
+msgstr "reg: Nume de cheie nevalid\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12609,7 +12612,9 @@ msgstr ""
 "găsită.\n"
 
 #: regedit.rc:429
-msgid "regedit: Unable to delete the registry class '%1'.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgstr "regedit: Nu s-a putut șterge clasa de registru „%1”.\n"
 
 #: regedit.rc:431

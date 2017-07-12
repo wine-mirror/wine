@@ -12664,7 +12664,8 @@ msgstr "Желите ли да избришете „%1“?"
 #: regedit.rc:425
 #, fuzzy
 #| msgid "Error: Invalid command line parameters\n"
-msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgid ""
+"regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
 "Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
 
@@ -12673,8 +12674,9 @@ msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
 #: regedit.rc:427
-msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr ""
+#, fuzzy
+msgid "regedit: Invalid system key [%1]\n"
+msgstr "Неисправна синтакса.\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12683,7 +12685,7 @@ msgstr ""
 
 #: regedit.rc:429
 #, fuzzy
-msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgstr "Желите ли да избришете ових %1 ставки?"
 
 #: regedit.rc:431
