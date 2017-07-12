@@ -454,18 +454,20 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	        LPNMTVDISPINFOW dispInfo = (LPNMTVDISPINFOW)lParam;
 		LPWSTR path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
 	        BOOL res = RenameKey(hWnd, hRootKey, path, dispInfo->item.pszText);
+                HeapFree(GetProcessHeap(), 0, path);
 		if (res) {
-		    TVITEMEXW item;
-                    LPWSTR fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd,
-                     dispInfo->item.pszText);
+		    TVITEMW item;
+                    WCHAR *fullPath;
 		    item.mask = TVIF_HANDLE | TVIF_TEXT;
-		    item.hItem = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_CARET, 0);
+		    item.hItem = dispInfo->item.hItem;
 		    item.pszText = dispInfo->item.pszText;
                     SendMessageW( g_pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
+                    path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
+                    fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd, path);
                     SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
                     HeapFree(GetProcessHeap(), 0, fullPath);
+                    HeapFree(GetProcessHeap(), 0, path);
 		}
-                HeapFree(GetProcessHeap(), 0, path);
                 SetWindowLongPtrW(g_pChildWnd->hTreeWnd, GWLP_USERDATA, 0);
 		return res;
 	    }
