@@ -2534,6 +2534,8 @@ then
 fi
 
 AC_CHECK_FUNCS(\
+	acosh \
+	acoshf \
 	asinh \
 	asinhf \
 	cbrt \

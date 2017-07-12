@@ -124,9 +124,9 @@
 @ cdecl _yn(long double) ucrtbase._yn
 @ cdecl acos(double) ucrtbase.acos
 @ cdecl -arch=arm,x86_64 acosf(float) ucrtbase.acosf
-@ stub acosh
-@ stub acoshf
-@ stub acoshl
+@ cdecl acosh(double) ucrtbase.acosh
+@ cdecl acoshf(float) ucrtbase.acoshf
+@ cdecl acoshl(double) ucrtbase.acoshl
 @ cdecl asin(double) ucrtbase.asin
 @ cdecl -arch=arm,x86_64 asinf(float) ucrtbase.asinf
 @ cdecl asinh(double double) ucrtbase.asinh

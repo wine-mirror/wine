@@ -1677,9 +1677,9 @@
 @ cdecl abs(long) msvcr120.abs
 @ cdecl acos(double) msvcr120.acos
 @ cdecl -arch=arm,x86_64 acosf(float) msvcr120.acosf
-@ stub acosh
-@ stub acoshf
-@ stub acoshl
+@ cdecl acosh(double) msvcr120.acosh
+@ cdecl acoshf(float) msvcr120.acoshf
+@ cdecl acoshl(double) msvcr120.acoshl
 @ cdecl asctime(ptr) msvcr120.asctime
 @ cdecl asctime_s(ptr long ptr) msvcr120.asctime_s
 @ cdecl asin(double) msvcr120.asin
