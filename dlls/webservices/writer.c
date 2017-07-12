@@ -704,6 +704,18 @@ static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text )
         if (text_uint64->value <= MAX_INT64) return RECORD_INT64_TEXT;
         return RECORD_UINT64_TEXT;
     }
+    case WS_XML_TEXT_TYPE_DOUBLE:
+    {
+        const WS_XML_DOUBLE_TEXT *text_double = (const WS_XML_DOUBLE_TEXT *)text;
+        if (!text_double->value) return RECORD_ZERO_TEXT;
+        if (text_double->value == 1) return RECORD_ONE_TEXT;
+        if (isinf( text_double->value ) || (INT64)text_double->value != text_double->value)
+            return RECORD_DOUBLE_TEXT;
+        if (text_double->value <= MAX_INT8) return RECORD_INT8_TEXT;
+        if (text_double->value <= MAX_INT16) return RECORD_INT16_TEXT;
+        if (text_double->value <= MAX_INT32) return RECORD_INT32_TEXT;
+        return RECORD_INT64_TEXT;
+    }
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -728,6 +740,11 @@ static INT64 get_text_value_int( const WS_XML_TEXT *text )
     {
         const WS_XML_UINT64_TEXT *text_uint64 = (const WS_XML_UINT64_TEXT *)text;
         return text_uint64->value;
+    }
+    case WS_XML_TEXT_TYPE_DOUBLE:
+    {
+        const WS_XML_DOUBLE_TEXT *text_double = (const WS_XML_DOUBLE_TEXT *)text;
+        return text_double->value;
     }
     default:
         ERR( "unhandled text type %u\n", text->textType );
@@ -825,6 +842,13 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
         WS_XML_UINT64_TEXT *text_uint64 = (WS_XML_UINT64_TEXT *)text;
         if ((hr = write_grow_buffer( writer, sizeof(text_uint64->value) )) != S_OK) return hr;
         write_bytes( writer, (const BYTE *)&text_uint64->value, sizeof(text_uint64->value) );
+        return S_OK;
+    }
+    case RECORD_DOUBLE_TEXT:
+    {
+        WS_XML_DOUBLE_TEXT *text_double = (WS_XML_DOUBLE_TEXT *)text;
+        if ((hr = write_grow_buffer( writer, sizeof(text_double->value) )) != S_OK) return hr;
+        write_bytes( writer, (const BYTE *)&text_double->value, sizeof(text_double->value) );
         return S_OK;
     }
     default:
@@ -2445,6 +2469,18 @@ static enum record_type get_text_record_type( const WS_XML_TEXT *text )
         if (text_uint64->value <= MAX_INT64) return RECORD_INT64_TEXT_WITH_ENDELEMENT;
         return RECORD_UINT64_TEXT_WITH_ENDELEMENT;
     }
+    case WS_XML_TEXT_TYPE_DOUBLE:
+    {
+        const WS_XML_DOUBLE_TEXT *text_double = (const WS_XML_DOUBLE_TEXT *)text;
+        if (!text_double->value) return RECORD_ZERO_TEXT_WITH_ENDELEMENT;
+        if (text_double->value == 1) return RECORD_ONE_TEXT_WITH_ENDELEMENT;
+        if (isinf( text_double->value ) || (INT64)text_double->value != text_double->value)
+            return RECORD_DOUBLE_TEXT_WITH_ENDELEMENT;
+        if (text_double->value <= MAX_INT8) return RECORD_INT8_TEXT_WITH_ENDELEMENT;
+        if (text_double->value <= MAX_INT16) return RECORD_INT16_TEXT_WITH_ENDELEMENT;
+        if (text_double->value <= MAX_INT32) return RECORD_INT32_TEXT_WITH_ENDELEMENT;
+        return RECORD_INT64_TEXT_WITH_ENDELEMENT;
+    }
     default:
         FIXME( "unhandled text type %u\n", text->textType );
         return 0;
@@ -2575,6 +2611,14 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         if ((hr = write_grow_buffer( writer, 1 + sizeof(text_uint64->value) )) != S_OK) return hr;
         write_char( writer, type );
         write_bytes( writer, (const BYTE *)&text_uint64->value, sizeof(text_uint64->value) );
+        return S_OK;
+    }
+    case RECORD_DOUBLE_TEXT_WITH_ENDELEMENT:
+    {
+        WS_XML_DOUBLE_TEXT *text_double = (WS_XML_DOUBLE_TEXT *)text;
+        if ((hr = write_grow_buffer( writer, 1 + sizeof(text_double->value) )) != S_OK) return hr;
+        write_char( writer, type );
+        write_bytes( writer, (const BYTE *)&text_double->value, sizeof(text_double->value) );
         return S_OK;
     }
     default:
@@ -3061,6 +3105,29 @@ static HRESULT write_type_uint64( struct writer *writer, WS_TYPE_MAPPING mapping
     text_uint64.text.textType = WS_XML_TEXT_TYPE_UINT64;
     text_uint64.value         = *ptr;
     return write_type_text( writer, mapping, &text_uint64.text );
+}
+
+static HRESULT write_type_double( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                  const WS_DOUBLE_DESCRIPTION *desc, WS_WRITE_OPTION option,
+                                  const void *value, ULONG size )
+{
+    WS_XML_DOUBLE_TEXT text_double;
+    const double *ptr;
+    HRESULT hr;
+
+    if (desc)
+    {
+        FIXME( "description not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    if (!option || option == WS_WRITE_NILLABLE_VALUE) return E_INVALIDARG;
+    if ((hr = get_value_ptr( option, value, size, sizeof(double), (const void **)&ptr )) != S_OK) return hr;
+    if (option == WS_WRITE_NILLABLE_POINTER && !ptr) return write_add_nil_attribute( writer );
+
+    text_double.text.textType = WS_XML_TEXT_TYPE_DOUBLE;
+    text_double.value         = *ptr;
+    return write_type_text( writer, mapping, &text_double.text );
 }
 
 static HRESULT write_type_datetime( struct writer *writer, WS_TYPE_MAPPING mapping,
@@ -3579,6 +3646,9 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 
     case WS_UINT64_TYPE:
         return write_type_uint64( writer, mapping, desc, option, value, size );
+
+    case WS_DOUBLE_TYPE:
+        return write_type_double( writer, mapping, desc, option, value, size );
 
     case WS_DATETIME_TYPE:
         return write_type_datetime( writer, mapping, desc, option, value, size );
