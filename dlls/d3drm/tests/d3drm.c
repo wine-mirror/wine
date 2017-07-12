@@ -109,7 +109,7 @@ static void test_class_name_(unsigned int line, IDirect3DRMObject *object, const
     ok_(__FILE__, line)(hr == D3DRM_OK, "Failed to get classname size, hr %#x.\n", hr);
     ok_(__FILE__, line)(size == strlen(name) + 1, "wrong size: %u\n", size);
 
-    size = size2 = !!*name ? 1 : 0;
+    size = size2 = !!*name;
     hr = IDirect3DRMObject_GetClassName(object, &size, cname);
     ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     ok_(__FILE__, line)(size == size2, "Got size %u.\n", size);
