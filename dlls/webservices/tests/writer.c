@@ -4025,6 +4025,525 @@ static void test_union_type(void)
     WsFreeWriter( writer );
 }
 
+static void prepare_binary_type_test( WS_XML_WRITER *writer, const WS_XML_STRING *prefix,
+                                      const WS_XML_STRING *localname, const WS_XML_STRING *ns )
+{
+    WS_XML_WRITER_BINARY_ENCODING bin = {{WS_XML_WRITER_ENCODING_TYPE_BINARY}};
+    WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
+    HRESULT hr;
+
+    hr = WsSetOutput( writer, &bin.encoding, &buf.output, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, prefix, localname, ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+}
+
+static void test_text_types_binary(void)
+{
+    static WCHAR testW[] = {'t','e','s','t'};
+    static WS_XML_STRING str_s = {1, (BYTE *)"s"}, str_t = {1, (BYTE *)"t"}, str_u = {1, (BYTE *)"u"};
+    static WS_XML_STRING str_ns = {0, NULL};
+    static const char res[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x99,0x04,'t','e','s','t',0x01};
+    static const char res2[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x9e,0x03,'t','e','s',0x9f,0x01,'t',0x01};
+    static const char res2a[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x9f,0x03,'t','e','s',0x01};
+    static const char res2b[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x9f,0x01,'t',0x01};
+    static const char res2c[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x01,0x01};
+    static const char res2d[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x9f,0xff,'a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a',0x01};
+    static const char res2e[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x9e,0xff,'a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+         'a','a','a','a','a',0x9f,0x01,'a',0x01};
+    static const char res2f[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x9f,0x06,'t','e','s','t','t','e',0x01};
+    static const char res3[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x87,0x01};
+    static const char res4[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x89,0xff,0x01};
+    static const char res5[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x83,0x01};
+    static const char res5b[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x89,0x02,0x01};
+    static const char res6[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x81,0x01};
+    static const char res7[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x89,0x02,0x01};
+    static const char res8[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x93,0xcd,0xcc,0xcc,0xcc,0xcc,0xcc,0x00,0x40,0x01};
+    static const char res8a[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x93,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x7f,0x01};
+    static const char res8b[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x93,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0xff,0x01};
+    static const char res8c[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x93,0x00,0x00,0x00,0x00,0x00,0x00,0xf8,0x7f,0x01};
+    static const char res9[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0xb1,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+         0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01};
+    static const char res10[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0xad,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+         0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01};
+    static const char res11[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x97,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0x01};
+    static const char res11b[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x97,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x80,0x01};
+    static const char res11c[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x97,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01};
+    static const char res11d[] =
+        {0x40,0x01,'t',0x40,0x01,'u',0x97,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0x01};
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_UNION_DESCRIPTION u;
+    WS_UNION_FIELD_DESCRIPTION f, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, *fields[11];
+    WS_FIELD_DESCRIPTION f_struct, *fields_struct[1];
+    WS_STRUCT_DESCRIPTION s;
+    struct test
+    {
+        WS_XML_TEXT_TYPE type;
+        union
+        {
+            WS_XML_STRING val_utf8;
+            WS_STRING     val_utf16;
+            WS_BYTES      val_bytes;
+            BOOL          val_bool;
+            INT32         val_int32;
+            INT64         val_int64;
+            UINT64        val_uint64;
+            double        val_double;
+            GUID          val_guid;
+            WS_UNIQUE_ID  val_unique_id;
+            WS_DATETIME   val_datetime;
+        } u;
+    } test;
+    BYTE buf[256];
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.value           = WS_XML_TEXT_TYPE_UTF8;
+    f.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f.field.localName = &str_u;
+    f.field.ns        = &str_ns;
+    f.field.type      = WS_XML_STRING_TYPE;
+    f.field.offset    = FIELD_OFFSET(struct test, u.val_utf8);
+    fields[0] = &f;
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.value           = WS_XML_TEXT_TYPE_UTF16;
+    f2.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f2.field.localName = &str_u;
+    f2.field.ns        = &str_ns;
+    f2.field.type      = WS_STRING_TYPE;
+    f2.field.offset    = FIELD_OFFSET(struct test, u.val_utf16);
+    fields[1] = &f2;
+
+    memset( &f3, 0, sizeof(f3) );
+    f3.value           = WS_XML_TEXT_TYPE_BASE64;
+    f3.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f3.field.localName = &str_u;
+    f3.field.ns        = &str_ns;
+    f3.field.type      = WS_BYTES_TYPE;
+    f3.field.offset    = FIELD_OFFSET(struct test, u.val_bytes);
+    fields[2] = &f3;
+
+    memset( &f4, 0, sizeof(f4) );
+    f4.value           = WS_XML_TEXT_TYPE_BOOL;
+    f4.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f4.field.localName = &str_u;
+    f4.field.ns        = &str_ns;
+    f4.field.type      = WS_BOOL_TYPE;
+    f4.field.offset    = FIELD_OFFSET(struct test, u.val_bool);
+    fields[3] = &f4;
+
+    memset( &f5, 0, sizeof(f5) );
+    f5.value           = WS_XML_TEXT_TYPE_INT32;
+    f5.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f5.field.localName = &str_u;
+    f5.field.ns        = &str_ns;
+    f5.field.type      = WS_INT32_TYPE;
+    f5.field.offset    = FIELD_OFFSET(struct test, u.val_int32);
+    fields[4] = &f5;
+
+    memset( &f6, 0, sizeof(f6) );
+    f6.value           = WS_XML_TEXT_TYPE_INT64;
+    f6.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f6.field.localName = &str_u;
+    f6.field.ns        = &str_ns;
+    f6.field.type      = WS_INT64_TYPE;
+    f6.field.offset    = FIELD_OFFSET(struct test, u.val_int64);
+    fields[5] = &f6;
+
+    memset( &f7, 0, sizeof(f7) );
+    f7.value           = WS_XML_TEXT_TYPE_UINT64;
+    f7.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f7.field.localName = &str_u;
+    f7.field.ns        = &str_ns;
+    f7.field.type      = WS_UINT64_TYPE;
+    f7.field.offset    = FIELD_OFFSET(struct test, u.val_uint64);
+    fields[6] = &f7;
+
+    memset( &f8, 0, sizeof(f8) );
+    f8.value           = WS_XML_TEXT_TYPE_DOUBLE;
+    f8.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f8.field.localName = &str_u;
+    f8.field.ns        = &str_ns;
+    f8.field.type      = WS_DOUBLE_TYPE;
+    f8.field.offset    = FIELD_OFFSET(struct test, u.val_double);
+    fields[7] = &f8;
+
+    memset( &f9, 0, sizeof(f9) );
+    f9.value           = WS_XML_TEXT_TYPE_GUID;
+    f9.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f9.field.localName = &str_u;
+    f9.field.ns        = &str_ns;
+    f9.field.type      = WS_GUID_TYPE;
+    f9.field.offset    = FIELD_OFFSET(struct test, u.val_guid);
+    fields[8] = &f9;
+
+    memset( &f10, 0, sizeof(f10) );
+    f10.value           = WS_XML_TEXT_TYPE_UNIQUE_ID;
+    f10.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f10.field.localName = &str_u;
+    f10.field.ns        = &str_ns;
+    f10.field.type      = WS_UNIQUE_ID_TYPE;
+    f10.field.offset    = FIELD_OFFSET(struct test, u.val_unique_id);
+    fields[9] = &f10;
+
+    memset( &f11, 0, sizeof(f11) );
+    f11.value           = WS_XML_TEXT_TYPE_DATETIME;
+    f11.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f11.field.localName = &str_u;
+    f11.field.ns        = &str_ns;
+    f11.field.type      = WS_DATETIME_TYPE;
+    f11.field.offset    = FIELD_OFFSET(struct test, u.val_datetime);
+    fields[10] = &f11;
+
+    memset( &u, 0, sizeof(u) );
+    u.size          = sizeof(struct test);
+    u.alignment     = TYPE_ALIGNMENT(struct test);
+    u.fields        = fields;
+    u.fieldCount    = 11;
+    u.enumOffset    = FIELD_OFFSET(struct test, type);
+
+    memset( &f_struct, 0, sizeof(f_struct) );
+    f_struct.mapping         = WS_ELEMENT_CHOICE_FIELD_MAPPING;
+    f_struct.type            = WS_UNION_TYPE;
+    f_struct.typeDescription = &u;
+    fields_struct[0] = &f_struct;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields_struct;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_s;
+    s.typeNs        = &str_ns;
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_UTF8;
+    test.u.val_utf8.bytes  = (BYTE *)"test";
+    test.u.val_utf8.length = 4;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res, sizeof(res), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_UTF16;
+    test.u.val_utf16.chars  = testW;
+    test.u.val_utf16.length = 4;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res, sizeof(res), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_BASE64;
+    test.u.val_bytes.bytes  = (BYTE *)"test";
+    test.u.val_bytes.length = 4;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res2, sizeof(res2), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_BASE64;
+    test.u.val_bytes.bytes  = (BYTE *)"tes";
+    test.u.val_bytes.length = 3;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res2a, sizeof(res2a), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_BASE64;
+    test.u.val_bytes.bytes  = (BYTE *)"t";
+    test.u.val_bytes.length = 1;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res2b, sizeof(res2b), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_BASE64;
+    test.u.val_bytes.bytes  = (BYTE *)"";
+    test.u.val_bytes.length = 0;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res2c, sizeof(res2c), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    memset( buf, 'a', sizeof(buf) );
+    test.type = WS_XML_TEXT_TYPE_BASE64;
+    test.u.val_bytes.bytes  = buf;
+    test.u.val_bytes.length = 255;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res2d, sizeof(res2d), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_BASE64;
+    test.u.val_bytes.bytes  = buf;
+    test.u.val_bytes.length = 256;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res2e, sizeof(res2e), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_BASE64;
+    test.u.val_bytes.bytes  = (BYTE *)"testte";
+    test.u.val_bytes.length = 6;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res2f, sizeof(res2f), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_BOOL;
+    test.u.val_bool = TRUE;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res3, sizeof(res3), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_INT32;
+    test.u.val_int32 = -1;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res4, sizeof(res4), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_INT64;
+    test.u.val_int64 = -1;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res4, sizeof(res4), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_UINT64;
+    test.u.val_uint64 = 1;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res5, sizeof(res5), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_UINT64;
+    test.u.val_uint64 = 2;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res5b, sizeof(res5b), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DOUBLE;
+    test.u.val_double = 0.0;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res6, sizeof(res6), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DOUBLE;
+    test.u.val_double = 2.0;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res7, sizeof(res7), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DOUBLE;
+    test.u.val_double = 2.1;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res8, sizeof(res8), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DOUBLE;
+    test.u.val_double = INFINITY;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res8a, sizeof(res8a), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DOUBLE;
+    test.u.val_double = -INFINITY;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res8b, sizeof(res8b), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DOUBLE;
+    test.u.val_double = NAN;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res8c, sizeof(res8c), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_GUID;
+    memset( &test.u.val_guid, 0, sizeof(test.u.val_guid) );
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res9, sizeof(res9), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_UNIQUE_ID;
+    memset( &test.u.val_unique_id, 0, sizeof(test.u.val_unique_id) );
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res10, sizeof(res10), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DATETIME;
+    memset( &test.u.val_datetime, 0, sizeof(test.u.val_datetime) );
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res11, sizeof(res11), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DATETIME;
+    memset( &test.u.val_datetime, 0, sizeof(test.u.val_datetime) );
+    test.u.val_datetime.format = WS_DATETIME_FORMAT_LOCAL;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res11b, sizeof(res11b), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DATETIME;
+    memset( &test.u.val_datetime, 0, sizeof(test.u.val_datetime) );
+    test.u.val_datetime.format = WS_DATETIME_FORMAT_NONE;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res11c, sizeof(res11c), __LINE__ );
+
+    prepare_binary_type_test( writer, NULL, &str_t, &str_ns );
+    test.type = WS_XML_TEXT_TYPE_DATETIME;
+    memset( &test.u.val_datetime, 0, sizeof(test.u.val_datetime) );
+    test.u.val_datetime.ticks = 1;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_bin( writer, res11d, sizeof(res11d), __LINE__ );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -4066,4 +4585,5 @@ START_TEST(writer)
     test_namespaces();
     test_dictionary();
     test_union_type();
+    test_text_types_binary();
 }
