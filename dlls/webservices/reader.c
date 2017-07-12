@@ -1541,7 +1541,7 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         if (!(text_utf8 = alloc_utf8_text( str->bytes, str->length ))) return E_OUTOFMEMORY;
         break;
 
-    case RECORD_UNIQUEID_TEXT:
+    case RECORD_UNIQUE_ID_TEXT:
     {
         WS_XML_UNIQUE_ID_TEXT *text_unique_id;
         if ((hr = read_bytes( reader, (unsigned char *)&guid, sizeof(guid) )) != S_OK) return hr;
@@ -1549,7 +1549,7 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         attr->value = &text_unique_id->text;
         return S_OK;
     }
-    case RECORD_UUID_TEXT:
+    case RECORD_GUID_TEXT:
     {
         WS_XML_GUID_TEXT *guid_text;
         if ((hr = read_bytes( reader, (unsigned char *)&guid, sizeof(guid) )) != S_OK) return hr;
@@ -2446,14 +2446,14 @@ static HRESULT read_text_bin( struct reader *reader )
         if (!(node = alloc_utf8_text_node( str->bytes, str->length, NULL ))) return E_OUTOFMEMORY;
         break;
     }
-    case RECORD_UNIQUEID_TEXT:
-    case RECORD_UNIQUEID_TEXT_WITH_ENDELEMENT:
+    case RECORD_UNIQUE_ID_TEXT:
+    case RECORD_UNIQUE_ID_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&uuid, sizeof(uuid) )) != S_OK) return hr;
         if (!(node = alloc_unique_id_text_node( &uuid ))) return E_OUTOFMEMORY;
         break;
 
-    case RECORD_UUID_TEXT:
-    case RECORD_UUID_TEXT_WITH_ENDELEMENT:
+    case RECORD_GUID_TEXT:
+    case RECORD_GUID_TEXT_WITH_ENDELEMENT:
         if ((hr = read_bytes( reader, (unsigned char *)&uuid, sizeof(uuid) )) != S_OK) return hr;
         if (!(node = alloc_guid_text_node( &uuid ))) return E_OUTOFMEMORY;
         break;
@@ -5856,6 +5856,9 @@ ULONG get_type_size( WS_TYPE type, const void *desc )
 
     case WS_GUID_TYPE:
         return sizeof(GUID);
+
+    case WS_UNIQUE_ID_TYPE:
+        return sizeof(WS_UNIQUE_ID);
 
     case WS_STRING_TYPE:
         return sizeof(WS_STRING);
