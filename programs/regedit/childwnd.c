@@ -293,6 +293,67 @@ static void set_last_key(HWND hwndTV)
     }
 }
 
+static int treeview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (((NMHDR *)lParam)->code)
+    {
+        case NM_SETFOCUS:
+            g_pChildWnd->nFocusPanel = 0;
+            break;
+        case TVN_BEGINLABELEDITW:
+        {
+            HKEY hRootKey;
+            WCHAR *path;
+
+            if (!GetWindowLongPtrW(g_pChildWnd->hTreeWnd, GWLP_USERDATA))
+                return 1;
+
+            path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
+            if (!path || !*path)
+                return 1;
+            return 0;
+        }
+        case TVN_ENDLABELEDITW:
+        {
+            HKEY hRootKey;
+            NMTVDISPINFOW *dispInfo = (NMTVDISPINFOW *)lParam;
+            WCHAR *path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
+            BOOL res = RenameKey(hWnd, hRootKey, path, dispInfo->item.pszText);
+
+            HeapFree(GetProcessHeap(), 0, path);
+
+            if (res)
+            {
+                TVITEMW item;
+                WCHAR *fullPath;
+
+                item.mask = TVIF_HANDLE | TVIF_TEXT;
+                item.hItem = dispInfo->item.hItem;
+                item.pszText = dispInfo->item.pszText;
+                SendMessageW(g_pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item);
+
+                path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
+                update_listview_path(path);
+
+                fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd, path);
+                SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
+                HeapFree(GetProcessHeap(), 0, fullPath);
+                HeapFree(GetProcessHeap(), 0, path);
+            }
+
+            SetWindowLongPtrW(g_pChildWnd->hTreeWnd, GWLP_USERDATA, 0);
+            return res;
+        }
+        case TVN_ITEMEXPANDINGW:
+            return !OnTreeExpanding(g_pChildWnd->hTreeWnd, (NMTREEVIEWW *)lParam);
+        case TVN_SELCHANGEDW:
+            OnTreeSelectionChanged(g_pChildWnd->hTreeWnd, g_pChildWnd->hListWnd,
+                                   ((NMTREEVIEWW *)lParam)->itemNew.hItem, TRUE);
+            break;
+    }
+    return 0;
+}
+
 #define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
 #define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
 
@@ -427,57 +488,10 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_NOTIFY:
-        if (((int)wParam == TREE_WINDOW) && (g_pChildWnd != NULL)) {
-            switch (((LPNMHDR)lParam)->code) {
-            case TVN_ITEMEXPANDINGW:
-                return !OnTreeExpanding(g_pChildWnd->hTreeWnd, (NMTREEVIEWW*)lParam);
-            case TVN_SELCHANGEDW:
-                OnTreeSelectionChanged(g_pChildWnd->hTreeWnd, g_pChildWnd->hListWnd,
-                    ((NMTREEVIEWW *)lParam)->itemNew.hItem, TRUE);
-                break;
-	    case NM_SETFOCUS:
-		g_pChildWnd->nFocusPanel = 0;
-		break;
-            case TVN_BEGINLABELEDITW: {
-                HKEY hRootKey;
-                LPWSTR path;
-
-                if (!GetWindowLongPtrW(g_pChildWnd->hTreeWnd, GWLP_USERDATA))
-                    return 1;
-
-                path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
-                if (!path || !*path) return 1;
-                return 0;
-            }
-	    case TVN_ENDLABELEDITW: {
-		HKEY hRootKey;
-	        LPNMTVDISPINFOW dispInfo = (LPNMTVDISPINFOW)lParam;
-		LPWSTR path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
-	        BOOL res = RenameKey(hWnd, hRootKey, path, dispInfo->item.pszText);
-                HeapFree(GetProcessHeap(), 0, path);
-		if (res) {
-		    TVITEMW item;
-                    WCHAR *fullPath;
-		    item.mask = TVIF_HANDLE | TVIF_TEXT;
-		    item.hItem = dispInfo->item.hItem;
-		    item.pszText = dispInfo->item.pszText;
-                    SendMessageW( g_pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
-                    path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
-                    fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd, path);
-                    SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
-                    HeapFree(GetProcessHeap(), 0, fullPath);
-                    update_listview_path(path);
-                    HeapFree(GetProcessHeap(), 0, path);
-		}
-                SetWindowLongPtrW(g_pChildWnd->hTreeWnd, GWLP_USERDATA, 0);
-		return res;
-	    }
-            default:
-                return 0; /* goto def; */
-            }
-        } else if ((int)wParam == LIST_WINDOW && g_pChildWnd != NULL) {
+        if (wParam == TREE_WINDOW && g_pChildWnd)
+            return treeview_notify(hWnd, message, wParam, lParam);
+        else if (wParam == LIST_WINDOW && g_pChildWnd)
             return SendMessageW(g_pChildWnd->hListWnd, WM_NOTIFY_REFLECT, wParam, lParam);
-        }
         break;
 
     case WM_SIZE:
