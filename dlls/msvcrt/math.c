@@ -2873,8 +2873,8 @@ double CDECL MSVCR120_asinh(double x)
 #ifdef HAVE_ASINH
     return asinh(x);
 #else
-    FIXME( "not implemented\n" );
-    return 0.0;
+    if (!isfinite(x*x+1)) return log(2) + log(x);
+    return log(x + sqrt(x*x+1));
 #endif
 }
 
@@ -2886,8 +2886,7 @@ float CDECL MSVCR120_asinhf(float x)
 #ifdef HAVE_ASINHF
     return asinhf(x);
 #else
-    FIXME( "not implemented\n" );
-    return 0.0f;
+    return MSVCR120_asinh(x);
 #endif
 }
 
