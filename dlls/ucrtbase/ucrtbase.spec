@@ -2153,9 +2153,9 @@
 @ cdecl abs(long) MSVCRT_abs
 @ cdecl acos(double) MSVCRT_acos
 @ cdecl -arch=arm,x86_64 acosf(float) MSVCRT_acosf
-@ stub acosh
-@ stub acoshf
-@ stub acoshl
+@ cdecl acosh(double) MSVCR120_acosh
+@ cdecl acoshf(float) MSVCR120_acoshf
+@ cdecl acoshl(double) MSVCR120_acoshl
 @ cdecl asctime(ptr) MSVCRT_asctime
 @ cdecl asctime_s(ptr long ptr) MSVCRT_asctime_s
 @ cdecl asin(double) MSVCRT_asin

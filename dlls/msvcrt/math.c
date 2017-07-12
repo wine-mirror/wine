@@ -2899,6 +2899,51 @@ LDOUBLE CDECL MSVCR120_asinhl(LDOUBLE x)
 }
 
 /*********************************************************************
+ *      acosh (MSVCR120.@)
+ */
+double CDECL MSVCR120_acosh(double x)
+{
+    if (x < 1) *MSVCRT__errno() = MSVCRT_EDOM;
+
+#ifdef HAVE_ACOSH
+    return acosh(x);
+#else
+    if (x < 1) {
+        MSVCRT_fenv_t env;
+
+        MSVCRT_fegetenv(&env);
+        env.status |= MSVCRT__SW_INVALID;
+        MSVCRT_fesetenv(&env);
+        return NAN;
+    }
+    if (!isfinite(x*x)) return log(2) + log(x);
+    return log(x + sqrt(x*x-1));
+#endif
+}
+
+/*********************************************************************
+ *      acoshf (MSVCR120.@)
+ */
+float CDECL MSVCR120_acoshf(float x)
+{
+#ifdef HAVE_ACOSHF
+    if (x < 1) *MSVCRT__errno() = MSVCRT_EDOM;
+
+    return acoshf(x);
+#else
+    return MSVCR120_acosh(x);
+#endif
+}
+
+/*********************************************************************
+ *      acoshl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_acoshl(LDOUBLE x)
+{
+    return MSVCR120_acosh(x);
+}
+
+/*********************************************************************
  *      _scalb  (MSVCRT.@)
  *      scalbn  (MSVCR120.@)
  *      scalbln (MSVCR120.@)
