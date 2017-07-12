@@ -338,6 +338,19 @@ enum record_type
     /* 0xbe ... 0xff reserved */
 };
 
+#define MAX_INT8    0x7f
+#define MIN_INT8    (-MAX_INT8 - 1)
+#define MAX_INT16   0x7fff
+#define MIN_INT16   (-MAX_INT16 - 1)
+#define MAX_INT32   0x7fffffff
+#define MIN_INT32   (-MAX_INT32 - 1)
+#define MAX_INT64   (((INT64)0x7fffffff << 32) | 0xffffffff)
+#define MIN_INT64   (-MAX_INT64 - 1)
+#define MAX_UINT8   0xff
+#define MAX_UINT16  0xffff
+#define MAX_UINT32  0xffffffff
+#define MAX_UINT64  (((UINT64)0xffffffff << 32) | 0xffffffff)
+
 #define TICKS_PER_SEC       10000000
 #define TICKS_PER_MIN       (60 * (ULONGLONG)TICKS_PER_SEC)
 #define TICKS_PER_HOUR      (3600 * (ULONGLONG)TICKS_PER_SEC)

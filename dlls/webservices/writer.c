@@ -649,17 +649,27 @@ static HRESULT write_dict_string( struct writer *writer, ULONG id )
     return S_OK;
 }
 
-static enum record_type get_text_record_type( const WS_XML_TEXT *text, BOOL attr )
+static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text )
 {
-    const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
-    if (!utf8 || utf8->value.length <= 0xff) return attr ? RECORD_CHARS8_TEXT : RECORD_CHARS8_TEXT_WITH_ENDELEMENT;
-    return 0;
-};
+    if (!text) return RECORD_CHARS8_TEXT;
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        if (text_utf8->value.length <= MAX_UINT8) return RECORD_CHARS8_TEXT;
+        if (text_utf8->value.length <= MAX_UINT16) return RECORD_CHARS16_TEXT;
+        return RECORD_CHARS32_TEXT;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return 0;
+    }
+}
 
 static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TEXT *text )
 {
-    WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text;
-    enum record_type type = get_text_record_type( text, TRUE );
+    enum record_type type = get_attr_text_record_type( text );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
@@ -668,19 +678,31 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
     switch (type)
     {
     case RECORD_CHARS8_TEXT:
-        if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
-        if (!utf8 || !utf8->value.length) write_char( writer, 0 );
-        else
+    {
+        WS_XML_UTF8_TEXT *text_utf8 = (WS_XML_UTF8_TEXT *)text;
+        if (!text_utf8)
         {
-            write_char( writer, utf8->value.length );
-            if ((hr = write_grow_buffer( writer, utf8->value.length )) != S_OK) return hr;
-            write_bytes( writer, utf8->value.bytes, utf8->value.length );
+            if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+            write_char( writer, 0 );
+            return S_OK;
         }
+        if ((hr = write_grow_buffer( writer, 1 + text_utf8->value.length )) != S_OK) return hr;
+        write_char( writer, text_utf8->value.length );
+        write_bytes( writer, text_utf8->value.bytes, text_utf8->value.length );
         return S_OK;
-
+    }
+    case RECORD_CHARS16_TEXT:
+    {
+        WS_XML_UTF8_TEXT *text_utf8 = (WS_XML_UTF8_TEXT *)text;
+        UINT16 len = text_utf8->value.length;
+        if ((hr = write_grow_buffer( writer, sizeof(len) + len )) != S_OK) return hr;
+        write_bytes( writer, (const BYTE *)&len, sizeof(len) );
+        write_bytes( writer, text_utf8->value.bytes, len );
+        return S_OK;
+    }
     default:
         ERR( "unhandled record type %02x\n", type );
-        return WS_E_NOT_SUPPORTED;
+        return E_NOTIMPL;
     }
 }
 
@@ -2040,15 +2062,16 @@ static HRESULT text_to_text( const WS_XML_TEXT *text, const WS_XML_TEXT *old, UL
     case WS_XML_TEXT_TYPE_UTF16:
     {
         const WS_XML_UTF16_TEXT *utf16 = (const WS_XML_UTF16_TEXT *)text;
-        const WS_XML_UTF16_TEXT *utf16_old = (const WS_XML_UTF16_TEXT *)old;
-        WS_XML_UTF16_TEXT *new;
-        ULONG len = utf16->byteCount / sizeof(WCHAR);
-        ULONG len_old = utf16_old ? utf16_old->byteCount / sizeof(WCHAR) : 0;
+        const WS_XML_UTF8_TEXT *utf8_old = (const WS_XML_UTF8_TEXT *)old;
+        WS_XML_UTF8_TEXT *new;
+        const WCHAR *str = (const WCHAR *)utf16->bytes;
+        ULONG len = utf16->byteCount / sizeof(WCHAR), len_utf8, len_old = utf8_old ? utf8_old->value.length : 0;
 
-        if (len % sizeof(WCHAR)) return E_INVALIDARG;
-        if (!(new = alloc_utf16_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
-        if (old) memcpy( new->bytes, utf16_old->bytes, len_old );
-        memcpy( new->bytes + len_old, utf16->bytes, len );
+        if (utf16->byteCount % sizeof(WCHAR)) return E_INVALIDARG;
+        len_utf8 = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
+        if (!(new = alloc_utf8_text( NULL, len_old + len_utf8 ))) return E_OUTOFMEMORY;
+        if (old) memcpy( new->value.bytes, utf8_old->value.bytes, len_old );
+        WideCharToMultiByte( CP_UTF8, 0, str, len, (char *)new->value.bytes + len_old, len_utf8, NULL, NULL );
         if (offset) *offset = len_old;
         *ret = &new->text;
         return S_OK;
@@ -2266,35 +2289,61 @@ static HRESULT write_text_text( struct writer *writer, const WS_XML_TEXT *text, 
     return WS_E_INVALID_FORMAT;
 }
 
+static enum record_type get_text_record_type( const WS_XML_TEXT *text )
+{
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        if (text_utf8->value.length <= MAX_UINT8) return RECORD_CHARS8_TEXT_WITH_ENDELEMENT;
+        if (text_utf8->value.length <= MAX_UINT16) return RECORD_CHARS16_TEXT_WITH_ENDELEMENT;
+        return RECORD_CHARS32_TEXT_WITH_ENDELEMENT;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return 0;
+    }
+}
+
 static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, ULONG offset )
 {
-    const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
-    enum record_type type = get_text_record_type( text, FALSE );
+    enum record_type type = get_text_record_type( text );
     HRESULT hr;
 
     if (offset)
     {
         FIXME( "no support for appending text in binary mode\n" );
-        return WS_E_NOT_SUPPORTED;
+        return E_NOTIMPL;
     }
 
     switch (type)
     {
     case RECORD_CHARS8_TEXT_WITH_ENDELEMENT:
-        if ((hr = write_grow_buffer( writer, 2 )) != S_OK) return hr;
-        write_char( writer, type );
-        if (!utf8 || !utf8->value.length) write_char( writer, 0 );
-        else
-        {
-            write_char( writer, utf8->value.length );
-            if ((hr = write_grow_buffer( writer, utf8->value.length )) != S_OK) return hr;
-            write_bytes( writer, utf8->value.bytes, utf8->value.length );
-        }
-        return S_OK;
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        UINT8 len = text_utf8->value.length;
 
+        if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK) return hr;
+        write_char( writer, type );
+        write_char( writer, len );
+        write_bytes( writer, text_utf8->value.bytes, len );
+        return S_OK;
+    }
+    case RECORD_CHARS16_TEXT_WITH_ENDELEMENT:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        UINT16 len = text_utf8->value.length;
+
+        if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK) return hr;
+        write_char( writer, type );
+        write_bytes( writer, (const BYTE *)&len, sizeof(len) );
+        write_bytes( writer, text_utf8->value.bytes, len );
+        return S_OK;
+    }
     default:
         FIXME( "unhandled record type %02x\n", type );
-        return WS_E_NOT_SUPPORTED;
+        return E_NOTIMPL;
     }
 }
 
