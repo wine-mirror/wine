@@ -32,10 +32,13 @@
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mferror.h"
+#include "mfreadwrite.h"
 
 #include "wine/test.h"
 
 static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
+
+DEFINE_GUID(MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 0xa634a91c, 0x822b, 0x41b9, 0xa4, 0x94, 0x4d, 0xe4, 0x64, 0x36, 0x12, 0xb0);
 
 DEFINE_GUID(MFT_CATEGORY_OTHER, 0x90175d57,0xb7ea,0x4901,0xae,0xb3,0x93,0x3a,0x87,0x47,0x75,0x6f);
 
@@ -217,6 +220,30 @@ if(0)
     MFShutdown();
 }
 
+static void test_MFCreateAttributes(void)
+{
+    IMFAttributes *attributes;
+    HRESULT hr;
+    UINT32 count;
+
+    hr = MFCreateAttributes( &attributes, 3 );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 88;
+    hr = IMFAttributes_GetCount(attributes, &count);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 0, "got %d\n", count);
+
+    hr = IMFAttributes_SetUINT32(attributes, &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 0);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IMFAttributes_GetCount(attributes, &count);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(count == 1, "got %d\n", count);
+
+    IMFAttributes_Release(attributes);
+}
+
 
 START_TEST(mfplat)
 {
@@ -227,6 +254,7 @@ START_TEST(mfplat)
     test_register();
     test_source_resolver();
     test_MFCreateMediaType();
+    test_MFCreateAttributes();
 
     CoUninitialize();
 }
