@@ -43,6 +43,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+typedef struct EmfPlusARGB
+{
+    BYTE Blue;
+    BYTE Green;
+    BYTE Red;
+    BYTE Alpha;
+} EmfPlusARGB;
+
 typedef struct EmfPlusRecordHeader
 {
     WORD Type;
@@ -157,6 +165,69 @@ typedef struct container
     GpRegion *clip;
 } container;
 
+enum PenDataFlags
+{
+    PenDataTransform        = 0x0001,
+    PenDataStartCap         = 0x0002,
+    PenDataEndCap           = 0x0004,
+    PenDataJoin             = 0x0008,
+    PenDataMiterLimit       = 0x0010,
+    PenDataLineStyle        = 0x0020,
+    PenDataDashedLineCap    = 0x0040,
+    PenDataDashedLineOffset = 0x0080,
+    PenDataDashedLine       = 0x0100,
+    PenDataNonCenter        = 0x0200,
+    PenDataCompoundLine     = 0x0400,
+    PenDataCustomStartCap   = 0x0800,
+    PenDataCustomEndCap     = 0x1000
+};
+
+typedef struct EmfPlusTransformMatrix
+{
+    REAL TransformMatrix[6];
+} EmfPlusTransformMatrix;
+
+enum LineStyle
+{
+    LineStyleSolid,
+    LineStyleDash,
+    LineStyleDot,
+    LineStyleDashDot,
+    LineStyleDashDotDot,
+    LineStyleCustom
+};
+
+typedef struct EmfPlusPenData
+{
+    DWORD PenDataFlags;
+    DWORD PenUnit;
+    REAL PenWidth;
+    BYTE OptionalData[1];
+} EmfPlusPenData;
+
+typedef struct EmfPlusSolidBrushData
+{
+    EmfPlusARGB SolidColor;
+} EmfPlusSolidBrushData;
+
+typedef struct EmfPlusBrush
+{
+    DWORD Version;
+    DWORD Type;
+    union {
+        EmfPlusSolidBrushData solid;
+    } BrushData;
+} EmfPlusBrush;
+
+typedef struct EmfPlusPen
+{
+    DWORD Version;
+    DWORD Type;
+    /* EmfPlusPenData */
+    /* EmfPlusBrush */
+    BYTE data[1];
+} EmfPlusPen;
+
 typedef struct EmfPlusPath
 {
     DWORD Version;
@@ -209,14 +280,6 @@ typedef struct EmfPlusImage
     } ImageData;
 } EmfPlusImage;
 
-typedef struct EmfPlusARGB
-{
-    BYTE Blue;
-    BYTE Green;
-    BYTE Red;
-    BYTE Alpha;
-} EmfPlusARGB;
-
 typedef struct EmfPlusImageAttributes
 {
     DWORD Version;
@@ -246,6 +309,7 @@ typedef struct EmfPlusObject
     EmfPlusRecordHeader Header;
     union
     {
+        EmfPlusPen pen;
         EmfPlusPath path;
         EmfPlusImage image;
         EmfPlusImageAttributes image_attributes;
@@ -2623,12 +2687,208 @@ static GpStatus METAFILE_AddPathObject(GpMetafile *metafile, GpPath *path, DWORD
     return Ok;
 }
 
+static GpStatus METAFILE_PrepareBrushData(GpBrush *brush, DWORD *size)
+{
+    if (brush->bt == BrushTypeSolidColor)
+    {
+        *size = FIELD_OFFSET(EmfPlusBrush, BrushData.solid) + sizeof(EmfPlusSolidBrushData);
+        return Ok;
+    }
+
+    FIXME("unsupported brush type: %d\n", brush->bt);
+    return NotImplemented;
+}
+
+static void METAFILE_FillBrushData(GpBrush *brush, EmfPlusBrush *data)
+{
+    if (brush->bt == BrushTypeSolidColor)
+    {
+        GpSolidFill *solid = (GpSolidFill*)brush;
+
+        data->Version = 0xDBC01002;
+        data->Type = solid->brush.bt;
+        data->BrushData.solid.SolidColor.Blue = solid->color & 0xff;
+        data->BrushData.solid.SolidColor.Green = (solid->color >> 8) & 0xff;
+        data->BrushData.solid.SolidColor.Red = (solid->color >> 16) & 0xff;
+        data->BrushData.solid.SolidColor.Alpha = solid->color >> 24;
+    }
+}
+
+static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *id)
+{
+    DWORD i, data_flags, pen_data_size, brush_size;
+    EmfPlusObject *object_record;
+    EmfPlusPenData *pen_data;
+    GpStatus stat;
+    BOOL result;
+
+    if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
+        return Ok;
+
+    data_flags = 0;
+    pen_data_size = FIELD_OFFSET(EmfPlusPenData, OptionalData);
+
+    GdipIsMatrixIdentity(&pen->transform, &result);
+    if (!result)
+    {
+        data_flags |= PenDataTransform;
+        pen_data_size += sizeof(EmfPlusTransformMatrix);
+    }
+    if (pen->startcap != LineCapFlat)
+    {
+        data_flags |= PenDataStartCap;
+        pen_data_size += sizeof(DWORD);
+    }
+    if (pen->endcap != LineCapFlat)
+    {
+        data_flags |= PenDataEndCap;
+        pen_data_size += sizeof(DWORD);
+    }
+    if (pen->join != LineJoinMiter)
+    {
+        data_flags |= PenDataJoin;
+        pen_data_size += sizeof(DWORD);
+    }
+    if (pen->miterlimit != 10.0)
+    {
+        data_flags |= PenDataMiterLimit;
+        pen_data_size += sizeof(REAL);
+    }
+    if (pen->style != GP_DEFAULT_PENSTYLE)
+    {
+        data_flags |= PenDataLineStyle;
+        pen_data_size += sizeof(DWORD);
+    }
+    if (pen->dash != (GpDashStyle)DashCapFlat)
+    {
+        data_flags |= PenDataDashedLineCap;
+        pen_data_size += sizeof(DWORD);
+    }
+    data_flags |= PenDataDashedLineOffset;
+    pen_data_size += sizeof(REAL);
+    if (pen->numdashes)
+    {
+        data_flags |= PenDataDashedLine;
+        pen_data_size += sizeof(DWORD) + pen->numdashes*sizeof(REAL);
+    }
+    if (pen->align != PenAlignmentCenter)
+    {
+        data_flags |= PenDataNonCenter;
+        pen_data_size += sizeof(DWORD);
+    }
+    /* TODO: Add support for PenDataCompoundLine */
+    if (pen->customstart)
+    {
+        FIXME("ignoring custom start cup\n");
+    }
+    if (pen->customend)
+    {
+        FIXME("ignoring custom end cup\n");
+    }
+
+    stat = METAFILE_PrepareBrushData(pen->brush, &brush_size);
+    if (stat != Ok) return stat;
+
+    stat = METAFILE_AllocateRecord(metafile,
+            FIELD_OFFSET(EmfPlusObject, ObjectData.pen.data) + pen_data_size + brush_size,
+            (void**)&object_record);
+    if (stat != Ok) return stat;
+
+    *id = METAFILE_AddObjectId(metafile);
+    object_record->Header.Type = EmfPlusRecordTypeObject;
+    object_record->Header.Flags = *id | ObjectTypePen << 8;
+    object_record->ObjectData.pen.Version = 0xDBC01002;
+    object_record->ObjectData.pen.Type = 0;
+
+    pen_data = (EmfPlusPenData*)object_record->ObjectData.pen.data;
+    pen_data->PenDataFlags = data_flags;
+    pen_data->PenUnit = pen->unit;
+    pen_data->PenWidth = pen->width;
+
+    i = 0;
+    if (data_flags & PenDataTransform)
+    {
+        EmfPlusTransformMatrix *m = (EmfPlusTransformMatrix*)(pen_data->OptionalData + i);
+        memcpy(m, &pen->transform, sizeof(*m));
+        i += sizeof(EmfPlusTransformMatrix);
+    }
+    if (data_flags & PenDataStartCap)
+    {
+        *(DWORD*)(pen_data->OptionalData + i) = pen->startcap;
+        i += sizeof(DWORD);
+    }
+    if (data_flags & PenDataEndCap)
+    {
+        *(DWORD*)(pen_data->OptionalData + i) = pen->endcap;
+        i += sizeof(DWORD);
+    }
+    if (data_flags & PenDataJoin)
+    {
+        *(DWORD*)(pen_data->OptionalData + i) = pen->join;
+        i += sizeof(DWORD);
+    }
+    if (data_flags & PenDataMiterLimit)
+    {
+        *(REAL*)(pen_data->OptionalData + i) = pen->miterlimit;
+        i += sizeof(REAL);
+    }
+    if (data_flags & PenDataLineStyle)
+    {
+        switch (pen->style & PS_STYLE_MASK)
+        {
+        case PS_SOLID: *(DWORD*)(pen_data->OptionalData + i) = LineStyleSolid; break;
+        case PS_DASH: *(DWORD*)(pen_data->OptionalData + i) = LineStyleDash; break;
+        case PS_DOT: *(DWORD*)(pen_data->OptionalData + i) = LineStyleDot; break;
+        case PS_DASHDOT: *(DWORD*)(pen_data->OptionalData + i) = LineStyleDashDot; break;
+        case PS_DASHDOTDOT: *(DWORD*)(pen_data->OptionalData + i) = LineStyleDashDotDot; break;
+        default: *(DWORD*)(pen_data->OptionalData + i) = LineStyleCustom; break;
+        }
+        i += sizeof(DWORD);
+    }
+    if (data_flags & PenDataDashedLineCap)
+    {
+        *(DWORD*)(pen_data->OptionalData + i) = pen->dash;
+        i += sizeof(DWORD);
+    }
+    if (data_flags & PenDataDashedLineOffset)
+    {
+        *(REAL*)(pen_data->OptionalData + i) = pen->offset;
+        i += sizeof(REAL);
+    }
+    if (data_flags & PenDataDashedLine)
+    {
+        int j;
+
+        *(DWORD*)(pen_data->OptionalData + i) = pen->numdashes;
+        i += sizeof(DWORD);
+
+        for (j=0; j<pen->numdashes; j++)
+        {
+            *(REAL*)(pen_data->OptionalData + i) = pen->dashes[j];
+            i += sizeof(REAL);
+        }
+    }
+    if (data_flags & PenDataNonCenter)
+    {
+        *(REAL*)(pen_data->OptionalData + i) = pen->align;
+        i += sizeof(DWORD);
+    }
+
+    METAFILE_FillBrushData(pen->brush,
+            (EmfPlusBrush*)(object_record->ObjectData.pen.data + pen_data_size));
+    return Ok;
+}
+
 GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path)
 {
     DWORD path_id;
+    DWORD pen_id;
     GpStatus stat;
 
     FIXME("stub!\n");
+
+    stat = METAFILE_AddPenObject(metafile, pen, &pen_id);
+    if (stat != Ok) return stat;
 
     stat = METAFILE_AddPathObject(metafile, path, &path_id);
     if (stat != Ok) return stat;
