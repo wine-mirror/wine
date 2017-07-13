@@ -2117,6 +2117,7 @@ static void test_clipping(void)
     GpGraphics *graphics;
     GpBitmap *bitmap;
     GpBrush *brush;
+    GpRectF rect;
     ARGB color;
     HDC hdc;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
@@ -2140,8 +2141,22 @@ static void test_clipping(void)
     stat = GdipSaveGraphics(graphics, &state);
     expect(Ok, stat);
 
+    stat = GdipGetVisibleClipBounds(graphics, &rect);
+    expect(Ok, stat);
+    ok(rect.X == -0x400000, "rect.X = %f\n", rect.X);
+    ok(rect.Y == -0x400000, "rect.Y = %f\n", rect.Y);
+    ok(rect.Width == 0x800000, "rect.Width = %f\n", rect.Width);
+    ok(rect.Height == 0x800000, "rect.Height = %f\n", rect.Height);
+
     stat = GdipSetClipRect(graphics, 30, 30, 10, 10, CombineModeReplace);
     expect(Ok, stat);
+
+    stat = GdipGetVisibleClipBounds(graphics, &rect);
+    expect(Ok, stat);
+    ok(rect.X == 30, "rect.X = %f\n", rect.X);
+    ok(rect.Y == 30, "rect.Y = %f\n", rect.Y);
+    ok(rect.Width == 10, "rect.Width = %f\n", rect.Width);
+    ok(rect.Height == 10, "rect.Height = %f\n", rect.Height);
 
     stat = GdipCreateSolidFill((ARGB)0xff000000, (GpSolidFill**)&brush);
     expect(Ok, stat);

@@ -2098,6 +2098,10 @@ static GpStatus get_visible_clip_region(GpGraphics *graphics, GpRegion *rgn)
     GpRectF rectf;
     GpRegion* tmp;
 
+    /* Ignore graphics image bounds for metafiles */
+    if (graphics->image && graphics->image_type == ImageTypeMetafile)
+        return GdipCombineRegionRegion(rgn, graphics->clip, CombineModeReplace);
+
     if((stat = get_graphics_bounds(graphics, &rectf)) != Ok)
         return stat;
 
