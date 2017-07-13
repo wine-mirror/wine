@@ -158,17 +158,6 @@ LPWSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     return ret;
 }
 
-static LPWSTR GetPathFullPath(HWND hwndTV, LPWSTR path) {
-    LPWSTR parts[2];
-    LPWSTR ret;
-
-    parts[0] = GetPathRoot(hwndTV, 0, TRUE);
-    parts[1] = path;
-    ret = CombinePaths((LPCWSTR*)parts, 2);
-    HeapFree(GetProcessHeap(), 0, parts[0]);
-    return ret;
-}
-
 static void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BOOL bRefreshLV)
 {
     if (bRefreshLV) {
@@ -325,7 +314,6 @@ static int treeview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
             if (res)
             {
                 TVITEMW item;
-                WCHAR *fullPath;
 
                 item.mask = TVIF_HANDLE | TVIF_TEXT;
                 item.hItem = dispInfo->item.hItem;
@@ -334,11 +322,9 @@ static int treeview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 
                 path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
                 update_listview_path(path);
-
-                fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd, path);
-                SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
-                HeapFree(GetProcessHeap(), 0, fullPath);
                 HeapFree(GetProcessHeap(), 0, path);
+
+                UpdateStatusBar();
             }
 
             SetWindowLongPtrW(g_pChildWnd->hTreeWnd, GWLP_USERDATA, 0);
