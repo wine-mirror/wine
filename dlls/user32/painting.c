@@ -760,6 +760,32 @@ void erase_now( HWND hwnd, UINT rdw_flags )
 
 
 /***********************************************************************
+ *           copy_bits_from_surface
+ *
+ * Copy bits from a window surface; helper for move_window_bits and move_window_bits_parent.
+ */
+static void copy_bits_from_surface( HWND hwnd, struct window_surface *surface,
+                                    const RECT *dst, const RECT *src )
+{
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    void *bits;
+    UINT flags = UPDATE_NOCHILDREN;
+    HRGN rgn = get_update_region( hwnd, &flags, NULL );
+    HDC hdc = GetDCEx( hwnd, rgn, DCX_CACHE | DCX_WINDOW | DCX_EXCLUDERGN );
+
+    bits = surface->funcs->get_info( surface, info );
+    surface->funcs->lock( surface );
+    SetDIBitsToDevice( hdc, dst->left, dst->top, dst->right - dst->left, dst->bottom - dst->top,
+                       src->left - surface->rect.left, surface->rect.bottom - src->bottom,
+                       0, surface->rect.bottom - surface->rect.top,
+                       bits, info, DIB_RGB_COLORS );
+    surface->funcs->unlock( surface );
+    ReleaseDC( hwnd, hdc );
+}
+
+
+/***********************************************************************
  *           move_window_bits
  *
  * Move the window bits when a window is resized or its surface recreated.
@@ -767,7 +793,7 @@ void erase_now( HWND hwnd, UINT rdw_flags )
 void move_window_bits( HWND hwnd, struct window_surface *old_surface,
                        struct window_surface *new_surface,
                        const RECT *visible_rect, const RECT *old_visible_rect,
-                       const RECT *client_rect, const RECT *valid_rects )
+                       const RECT *window_rect, const RECT *valid_rects )
 {
     RECT dst = valid_rects[0];
     RECT src = valid_rects[1];
@@ -776,24 +802,10 @@ void move_window_bits( HWND hwnd, struct window_surface *old_surface,
         src.left - old_visible_rect->left != dst.left - visible_rect->left ||
         src.top - old_visible_rect->top != dst.top - visible_rect->top)
     {
-        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-        BITMAPINFO *info = (BITMAPINFO *)buffer;
-        void *bits;
-        UINT flags = UPDATE_NOCHILDREN;
-        HRGN rgn = get_update_region( hwnd, &flags, NULL );
-        HDC hdc = GetDCEx( hwnd, rgn, DCX_CACHE | DCX_EXCLUDERGN );
-
-        OffsetRect( &dst, -client_rect->left, -client_rect->top );
-        TRACE( "copying  %s -> %s\n", wine_dbgstr_rect(&src), wine_dbgstr_rect(&dst) );
-        bits = old_surface->funcs->get_info( old_surface, info );
-        old_surface->funcs->lock( old_surface );
-        SetDIBitsToDevice( hdc, dst.left, dst.top, dst.right - dst.left, dst.bottom - dst.top,
-                           src.left - old_visible_rect->left - old_surface->rect.left,
-                           old_surface->rect.bottom - (src.bottom - old_visible_rect->top),
-                           0, old_surface->rect.bottom - old_surface->rect.top,
-                           bits, info, DIB_RGB_COLORS );
-        old_surface->funcs->unlock( old_surface );
-        ReleaseDC( hwnd, hdc );
+        TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
+        OffsetRect( &src, -old_visible_rect->left, -old_visible_rect->top );
+        OffsetRect( &dst, -window_rect->left, -window_rect->top );
+        copy_bits_from_surface( hwnd, old_surface, &dst, &src );
     }
 }
 

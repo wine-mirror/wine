@@ -2151,7 +2151,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             if (!IsRectEmpty( valid_rects ))
             {
                 move_window_bits( hwnd, old_surface, new_surface, &visible_rect,
-                                  &old_visible_rect, client_rect, valid_rects );
+                                  &old_visible_rect, window_rect, valid_rects );
                 valid_rects = NULL;  /* prevent the driver from trying to also move the bits */
             }
             window_surface_release( old_surface );
