@@ -2569,3 +2569,9 @@ GpStatus METAFILE_AddSimpleProperty(GpMetafile *metafile, SHORT prop, SHORT val)
     METAFILE_WriteRecords(metafile);
     return Ok;
 }
+
+GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path)
+{
+    FIXME("stub\n");
+    return NotImplemented;
+}

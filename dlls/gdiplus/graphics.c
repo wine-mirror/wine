@@ -3819,7 +3819,9 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
     if (path->pathdata.Count == 0)
         return Ok;
 
-    if (!graphics->hdc || !brush_can_fill_path(pen->brush, FALSE))
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+        retval = METAFILE_DrawPath((GpMetafile*)graphics->image, pen, path);
+    else if (!graphics->hdc || !brush_can_fill_path(pen->brush, FALSE))
         retval = SOFTWARE_GdipDrawPath(graphics, pen, path);
     else
         retval = GDI32_GdipDrawPath(graphics, pen, path);
