@@ -2187,6 +2187,7 @@ static void widen_dashed_figure(GpPath *path, GpPen *pen, int start, int end,
             closed ? LineCapFlat : pen->endcap, pen->customend, last_point);
     }
 
+    heap_free(dash_pattern_scaled);
     heap_free(tmp_points);
 }
 
