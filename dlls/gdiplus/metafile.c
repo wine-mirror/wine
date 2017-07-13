@@ -157,6 +157,17 @@ typedef struct container
     GpRegion *clip;
 } container;
 
+typedef struct EmfPlusPath
+{
+    DWORD Version;
+    DWORD PathPointCount;
+    DWORD PathPointFlags;
+    /* PathPoints[] */
+    /* PathPointTypes[] */
+    /* AlignmentPadding */
+    BYTE data[1];
+} EmfPlusPath;
+
 typedef enum
 {
     BitmapDataTypePixel,
@@ -235,6 +246,7 @@ typedef struct EmfPlusObject
     EmfPlusRecordHeader Header;
     union
     {
+        EmfPlusPath path;
         EmfPlusImage image;
         EmfPlusImageAttributes image_attributes;
     } ObjectData;
@@ -2570,8 +2582,57 @@ GpStatus METAFILE_AddSimpleProperty(GpMetafile *metafile, SHORT prop, SHORT val)
     return Ok;
 }
 
+static GpStatus METAFILE_AddPathObject(GpMetafile *metafile, GpPath *path, DWORD *id)
+{
+    EmfPlusObject *object_record;
+    EmfPlusPointF *points;
+    BYTE *types;
+    GpStatus stat;
+    DWORD i, size;
+
+    if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
+        return Ok;
+
+    /* TODO: Add support for more point formats */
+    size = sizeof(EmfPlusPointF)*path->pathdata.Count + path->pathdata.Count;
+    size = (size + 3) & ~3;
+
+    stat = METAFILE_AllocateRecord(metafile,
+            FIELD_OFFSET(EmfPlusObject, ObjectData.path.data[size]),
+            (void**)&object_record);
+    if (stat != Ok) return stat;
+
+    *id = METAFILE_AddObjectId(metafile);
+    object_record->Header.Type = EmfPlusRecordTypeObject;
+    object_record->Header.Flags = *id | ObjectTypePath << 8;
+
+    object_record->ObjectData.path.Version = 0xDBC01002;
+    object_record->ObjectData.path.PathPointCount = path->pathdata.Count;
+    object_record->ObjectData.path.PathPointFlags = 0;
+
+    points = (EmfPlusPointF*)object_record->ObjectData.path.data;
+    for (i=0; i<path->pathdata.Count; i++)
+    {
+        points[i].X = path->pathdata.Points[i].X;
+        points[i].Y = path->pathdata.Points[i].Y;
+    }
+
+    types = (BYTE*)(points + path->pathdata.Count);
+    for (i=0; i<path->pathdata.Count; i++)
+        types[i] = path->pathdata.Types[i];
+    return Ok;
+}
+
 GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path)
 {
-    FIXME("stub\n");
+    DWORD path_id;
+    GpStatus stat;
+
+    FIXME("stub!\n");
+
+    stat = METAFILE_AddPathObject(metafile, path, &path_id);
+    if (stat != Ok) return stat;
+
+    METAFILE_WriteRecords(metafile);
     return NotImplemented;
 }
