@@ -139,7 +139,6 @@ typedef struct
     char *peek_msg;
     char *peek_msg_mem;
     size_t peek_len;
-    DWORD security_flags;
 } netconn_t;
 
 typedef struct
@@ -192,6 +191,7 @@ typedef struct
     void *optional;
     DWORD optional_len;
     netconn_t netconn;
+    DWORD security_flags;
     int resolve_timeout;
     int connect_timeout;
     int send_timeout;
@@ -290,7 +290,7 @@ void netconn_unload( void ) DECLSPEC_HIDDEN;
 ULONG netconn_query_data_available( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
 BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr *, socklen_t *, int ) DECLSPEC_HIDDEN;
-BOOL netconn_secure_connect( netconn_t *, WCHAR * ) DECLSPEC_HIDDEN;
+BOOL netconn_secure_connect( netconn_t *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;
 BOOL netconn_send( netconn_t *, const void *, size_t, int * ) DECLSPEC_HIDDEN;
 DWORD netconn_set_timeout( netconn_t *, BOOL, int ) DECLSPEC_HIDDEN;
 const void *netconn_get_certificate( netconn_t * ) DECLSPEC_HIDDEN;

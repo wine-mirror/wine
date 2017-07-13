@@ -410,7 +410,7 @@ BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned
     return ret;
 }
 
-BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
+BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_flags )
 {
     SecBuffer out_buf = {0, SECBUFFER_TOKEN, NULL}, in_bufs[2] = {{0, SECBUFFER_TOKEN}, {0, SECBUFFER_EMPTY}};
     SecBufferDesc out_desc = {SECBUFFER_VERSION, 1, &out_buf}, in_desc = {SECBUFFER_VERSION, 2, in_bufs};
@@ -510,7 +510,7 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
 
             status = QueryContextAttributesW(&ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
             if(status == SEC_E_OK) {
-                res = netconn_verify_cert(cert, hostname, conn->security_flags);
+                res = netconn_verify_cert(cert, hostname, security_flags);
                 CertFreeCertificateContext(cert);
                 if(res != ERROR_SUCCESS) {
                     WARN("cert verify failed: %u\n", res);

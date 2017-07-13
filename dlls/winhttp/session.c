@@ -721,7 +721,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
 
         flags = 0;
         if (hdr->flags & WINHTTP_FLAG_SECURE) flags |= SECURITY_FLAG_SECURE;
-        flags |= request->netconn.security_flags;
+        flags |= request->security_flags;
         bits = netconn_get_cipher_strength( &request->netconn );
         if (bits >= 128)
             flags |= SECURITY_FLAG_STRENGTH_STRONG;
@@ -951,7 +951,7 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
             set_last_error( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
-        request->netconn.security_flags = flags;
+        request->security_flags = flags;
         return TRUE;
     }
     case WINHTTP_OPTION_RESOLVE_TIMEOUT:
