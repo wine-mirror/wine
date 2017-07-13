@@ -347,12 +347,8 @@ static int listview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
         case NM_DBLCLK:
         {
             NMITEMACTIVATE *nmitem = (NMITEMACTIVATE *)lParam;
-            LVHITTESTINFO info;
 
-            info.pt.x = nmitem->ptAction.x;
-            info.pt.y = nmitem->ptAction.y;
-
-            if (SendMessageW(g_pChildWnd->hListWnd, LVM_HITTEST, 0, (LPARAM)&info) != -1)
+            if (nmitem->iItem != -1)
             {
                 LVITEMW item;
 
@@ -362,7 +358,7 @@ static int listview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 
                 item.state = LVIS_FOCUSED | LVIS_SELECTED;
                 item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
-                SendMessageW(g_pChildWnd->hListWnd, LVM_SETITEMSTATE, info.iItem, (LPARAM)&item);
+                SendMessageW(g_pChildWnd->hListWnd, LVM_SETITEMSTATE, nmitem->iItem, (LPARAM)&item);
 
                 SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
             }
