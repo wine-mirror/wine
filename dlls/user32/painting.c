@@ -811,6 +811,41 @@ void move_window_bits( HWND hwnd, struct window_surface *old_surface,
 
 
 /***********************************************************************
+ *		move_window_bits_parent
+ *
+ * Move the window bits in the parent surface when a child is moved.
+ */
+void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect, const RECT *valid_rects )
+{
+    struct window_surface *surface;
+    RECT dst = valid_rects[0];
+    RECT src = valid_rects[1];
+    WND *win;
+
+    if (src.left == dst.left && src.top == dst.top) return;
+
+    if (!(win = WIN_GetPtr( parent ))) return;
+    if (win == WND_DESKTOP || win == WND_OTHER_PROCESS) return;
+    if (!(surface = win->surface))
+    {
+        WIN_ReleasePtr( win );
+        return;
+    }
+
+    TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
+    MapWindowPoints( GetAncestor( hwnd, GA_PARENT ), parent, (POINT *)&src, 2 );
+    OffsetRect( &src, win->rectClient.left - win->visible_rect.left,
+                win->rectClient.top - win->visible_rect.top );
+    OffsetRect( &dst, -window_rect->left, -window_rect->top );
+    window_surface_add_ref( surface );
+    WIN_ReleasePtr( win );
+
+    copy_bits_from_surface( hwnd, surface, &dst, &src );
+    window_surface_release( surface );
+}
+
+
+/***********************************************************************
  *           update_now
  *
  * Implementation of RDW_UPDATENOW behavior.

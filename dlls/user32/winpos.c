@@ -2060,8 +2060,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     WND *win;
     HWND surface_win = 0, parent = GetAncestor( hwnd, GA_PARENT );
     BOOL ret, needs_update = FALSE;
-    int old_width;
-    RECT visible_rect, old_visible_rect, old_window_rect;
+    RECT visible_rect, old_visible_rect, old_window_rect, old_client_rect;
     struct window_surface *old_surface, *new_surface = NULL;
 
     if (!parent || parent == GetDesktopWindow())
@@ -2080,8 +2079,8 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         if (new_surface) window_surface_release( new_surface );
         return FALSE;
     }
-    old_width = win->rectClient.right - win->rectClient.left;
     old_visible_rect = win->visible_rect;
+    old_client_rect = win->rectClient;
     old_surface = win->surface;
     if (old_surface != new_surface) swp_flags |= SWP_FRAMECHANGED;  /* force refreshing non-client area */
 
@@ -2126,7 +2125,8 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                 mirror_rect( &client, &win->visible_rect );
             }
             /* if an RTL window is resized the children have moved */
-            if (win->dwExStyle & WS_EX_LAYOUTRTL && client_rect->right - client_rect->left != old_width)
+            if (win->dwExStyle & WS_EX_LAYOUTRTL &&
+                client_rect->right - client_rect->left != old_client_rect.right - old_client_rect.left)
                 win->flags |= WIN_CHILDREN_MOVED;
         }
     }
@@ -2156,6 +2156,33 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             }
             window_surface_release( old_surface );
         }
+        else if (surface_win && surface_win != hwnd)
+        {
+            if (!IsRectEmpty( valid_rects ))
+            {
+                RECT rects[2];
+                int x_offset = old_visible_rect.left - visible_rect.left;
+                int y_offset = old_visible_rect.top - visible_rect.top;
+
+                /* if all that happened is that the whole window moved, copy everything */
+                if (!(swp_flags & SWP_FRAMECHANGED) &&
+                    old_visible_rect.right  - visible_rect.right  == x_offset &&
+                    old_visible_rect.bottom - visible_rect.bottom == y_offset &&
+                    old_client_rect.left    - client_rect->left   == x_offset &&
+                    old_client_rect.right   - client_rect->right  == x_offset &&
+                    old_client_rect.top     - client_rect->top    == y_offset &&
+                    old_client_rect.bottom  - client_rect->bottom == y_offset &&
+                    EqualRect( &valid_rects[0], client_rect ))
+                {
+                    rects[0] = visible_rect;
+                    rects[1] = old_visible_rect;
+                    valid_rects = rects;
+                }
+                move_window_bits_parent( hwnd, surface_win, window_rect, valid_rects );
+                valid_rects = NULL;  /* prevent the driver from trying to also move the bits */
+            }
+        }
+
         USER_Driver->pWindowPosChanged( hwnd, insert_after, swp_flags, window_rect,
                                         client_rect, &visible_rect, valid_rects, new_surface );
     }
