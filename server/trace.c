@@ -3146,6 +3146,7 @@ static void dump_set_window_pos_reply( const struct set_window_pos_reply *req )
     fprintf( stderr, " new_style=%08x", req->new_style );
     fprintf( stderr, ", new_ex_style=%08x", req->new_ex_style );
     fprintf( stderr, ", surface_win=%08x", req->surface_win );
+    fprintf( stderr, ", needs_update=%d", req->needs_update );
 }
 
 static void dump_get_window_rectangles_request( const struct get_window_rectangles_request *req )

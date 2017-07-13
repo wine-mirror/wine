@@ -2059,7 +2059,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 {
     WND *win;
     HWND surface_win = 0, parent = GetAncestor( hwnd, GA_PARENT );
-    BOOL ret;
+    BOOL ret, needs_update = FALSE;
     int old_width;
     RECT visible_rect, old_visible_rect, old_window_rect;
     struct window_surface *old_surface, *new_surface = NULL;
@@ -2116,6 +2116,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             win->visible_rect = visible_rect;
             win->surface      = new_surface;
             surface_win       = wine_server_ptr_handle( reply->surface_win );
+            needs_update      = reply->needs_update;
             if (GetWindowLongW( win->parent, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
             {
                 RECT client;
@@ -2133,7 +2134,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     if (ret)
     {
-        if (surface_win) update_surface_region( surface_win );
+        if (needs_update) update_surface_region( surface_win );
         if (((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) ||
             (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW | SWP_STATECHANGED | SWP_FRAMECHANGED)))
             invalidate_dce( win, &old_window_rect );

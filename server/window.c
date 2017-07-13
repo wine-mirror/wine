@@ -2298,10 +2298,11 @@ DECL_HANDLER(set_window_pos)
     reply->new_ex_style = win->ex_style;
 
     top = get_top_clipping_window( win );
-    if (is_visible( top ) &&
-        (top->paint_flags & PAINT_HAS_SURFACE) &&
-        (top->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD)))
+    if (is_visible( top ) && (top->paint_flags & PAINT_HAS_SURFACE))
+    {
         reply->surface_win = top->handle;
+        reply->needs_update = !!(top->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD));
+    }
 }
 
 
