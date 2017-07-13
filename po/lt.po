@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-07-11 12:11+0300\n"
+"PO-Revision-Date: 2017-07-13 09:10+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -12380,38 +12380,6 @@ msgstr ""
 "Nepavyko importuoti %1. Nurodytas failas nėra teisingas registro failas."
 
 #: regedit.rc:408
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  regedit [options] [filename] [reg_key]\n"
-#| "\n"
-#| "Options:\n"
-#| "  [no option]    Launch the graphical version of this program.\n"
-#| "  /L:system.dat  The location of the system.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /R:user.dat    The location of the user.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /C             Import the contents of a registry file.\n"
-#| "  /D             Delete a specified registry key.\n"
-#| "  /E             Export the contents of a specified registry key to a "
-#| "file.\n"
-#| "                 If no key is specified, the entire registry is "
-#| "exported.\n"
-#| "  /S             Silent mode. No messages will be displayed.\n"
-#| "  /V             Launch the GUI in advanced mode. Ignored.\n"
-#| "  /?             Display this information and exit.\n"
-#| "  [filename]     The location of the file containing registry information "
-#| "to\n"
-#| "                 be imported. When used with [/E], this option specifies "
-#| "the\n"
-#| "                 file location where registry information will be "
-#| "exported.\n"
-#| "  [reg_key]      The registry key to be modified.\n"
-#| "\n"
-#| "Usage examples:\n"
-#| "  regedit \"import.reg\"\n"
-#| "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-#| "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12466,7 +12434,7 @@ msgstr ""
 "Naudojimo pavyzdžiai:\n"
 "  regedit \"importui.reg\"\n"
 "  regedit /E \"eksportuota.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Raktas\\Kelias\"\n"
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
@@ -12537,11 +12505,10 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
-msgstr "regedit: Nepalaikomas registro duomenų tipas [%1] sutiktas „%2“.\n"
+msgstr ""
+"regedit: Nepalaikomas registro duomenų tipas [0x%1!x!] sutiktas „%2“.\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
@@ -12549,10 +12516,8 @@ msgstr ""
 "regedit: Registro reikšmė „%1“ bus eksportuota kaip dvejetainiai duomenys.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Netinkamas rakto vardas\n"
+msgstr "regedit: Netinkamas sisteminis raktas [%1]\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12561,10 +12526,8 @@ msgstr ""
 "regedit: Nepavyko eksportuoti „%1“. Nurodytas registro raktas nerastas.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit: Nepavyko pašalinti registro klasės „%1“.\n"
+msgstr "regedit: Nepavyko pašalinti registro rakto „%1“.\n"
 
 #: regedit.rc:431
 msgid "regedit: The line contains invalid syntax.\n"
@@ -12711,13 +12674,9 @@ msgid "Confirm Key Delete"
 msgstr "Rakto šalinimo patvirtinimas"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete the registry key '%1' and all of its "
-#| "subkeys?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "Ar tikrai norite pašalinti registro raktą „%1“ ir visus jo porakčius?"
+msgstr "Ar tikrai norite pašalinti šį registro raktą ir visus jo porakčius?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
