@@ -190,7 +190,7 @@ typedef struct
     LPWSTR raw_headers;
     void *optional;
     DWORD optional_len;
-    netconn_t netconn;
+    netconn_t *netconn;
     DWORD security_flags;
     int resolve_timeout;
     int connect_timeout;
@@ -283,8 +283,7 @@ void close_connection( request_t * ) DECLSPEC_HIDDEN;
 
 BOOL netconn_close( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL netconn_connect( netconn_t *, const struct sockaddr *, unsigned int, int ) DECLSPEC_HIDDEN;
-BOOL netconn_connected( netconn_t * ) DECLSPEC_HIDDEN;
-BOOL netconn_create( netconn_t *, int, int, int ) DECLSPEC_HIDDEN;
+netconn_t *netconn_create( int, int, int ) DECLSPEC_HIDDEN;
 BOOL netconn_init( netconn_t * ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;
 ULONG netconn_query_data_available( netconn_t * ) DECLSPEC_HIDDEN;

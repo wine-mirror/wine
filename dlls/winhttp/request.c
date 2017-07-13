@@ -551,7 +551,7 @@ static WCHAR *build_request_path( request_t *request )
         static const WCHAR http[] = { 'h','t','t','p',0 };
         static const WCHAR https[] = { 'h','t','t','p','s',0 };
         static const WCHAR fmt[] = { '%','s',':','/','/','%','s',0 };
-        LPCWSTR scheme = request->netconn.secure ? https : http;
+        LPCWSTR scheme = (request->netconn ? request->netconn->secure : (request->hdr.flags & WINHTTP_FLAG_SECURE)) ? https : http;
         int len;
 
         len = strlenW( scheme ) + strlenW( request->connect->hostname );
@@ -956,7 +956,7 @@ static BOOL secure_proxy_connect( request_t *request )
             {
                 int len = strlen( req_ascii ), bytes_sent;
 
-                ret = netconn_send( &request->netconn, req_ascii, len, &bytes_sent );
+                ret = netconn_send( request->netconn, req_ascii, len, &bytes_sent );
                 heap_free( req_ascii );
                 if (ret)
                     ret = read_reply( request );
@@ -993,6 +993,7 @@ static WCHAR *addr_to_str( struct sockaddr *addr )
 
 static BOOL open_connection( request_t *request )
 {
+    netconn_t *netconn;
     connect_t *connect;
     WCHAR *addressW = NULL;
     INTERNET_PORT port;
@@ -1000,7 +1001,7 @@ static BOOL open_connection( request_t *request )
     struct sockaddr *saddr;
     DWORD len;
 
-    if (netconn_connected( &request->netconn )) goto done;
+    if (request->netconn) goto done;
 
     connect = request->connect;
     port = connect->serverport ? connect->serverport : (request->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
@@ -1024,16 +1025,16 @@ static BOOL open_connection( request_t *request )
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
 
-    if (!netconn_create( &request->netconn, saddr->sa_family, SOCK_STREAM, 0 ))
+    if (!(netconn = netconn_create( saddr->sa_family, SOCK_STREAM, 0 )))
     {
         heap_free( addressW );
         return FALSE;
     }
-    netconn_set_timeout( &request->netconn, TRUE, request->send_timeout );
-    netconn_set_timeout( &request->netconn, FALSE, request->recv_timeout );
-    if (!netconn_connect( &request->netconn, saddr, slen, request->connect_timeout ))
+    netconn_set_timeout( netconn, TRUE, request->send_timeout );
+    netconn_set_timeout( netconn, FALSE, request->recv_timeout );
+    if (!netconn_connect( netconn, saddr, slen, request->connect_timeout ))
     {
-        netconn_close( &request->netconn );
+        netconn_close( netconn );
         heap_free( addressW );
         return FALSE;
     }
@@ -1048,13 +1049,14 @@ static BOOL open_connection( request_t *request )
                 return FALSE;
             }
         }
-        if (!netconn_secure_connect( &request->netconn, connect->hostname, request->security_flags ))
+        if (!netconn_secure_connect( netconn, connect->hostname, request->security_flags ))
         {
-            netconn_close( &request->netconn );
+            netconn_close( netconn );
             heap_free( addressW );
             return FALSE;
         }
     }
+    request->netconn = netconn;
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, strlenW(addressW) + 1 );
 
@@ -1069,10 +1071,11 @@ done:
 
 void close_connection( request_t *request )
 {
-    if (!netconn_connected( &request->netconn )) return;
+    if (!request->netconn) return;
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0, 0 );
-    netconn_close( &request->netconn );
+    netconn_close( request->netconn );
+    request->netconn = NULL;
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0, 0 );
 }
 
@@ -1138,7 +1141,7 @@ static BOOL read_more_data( request_t *request, int maxlen, BOOL notify )
 
     if (notify) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
 
-    ret = netconn_recv( &request->netconn, request->read_buf + request->read_size,
+    ret = netconn_recv( request->netconn, request->read_buf + request->read_size,
                         maxlen - request->read_size, 0, &len );
 
     if (notify) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, &len, sizeof(len) );
@@ -1385,13 +1388,13 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST, NULL, 0 );
 
-    ret = netconn_send( &request->netconn, req_ascii, len, &bytes_sent );
+    ret = netconn_send( request->netconn, req_ascii, len, &bytes_sent );
     heap_free( req_ascii );
     if (!ret) goto end;
 
     if (optional_len)
     {
-        if (!netconn_send( &request->netconn, optional, optional_len, &bytes_sent )) goto end;
+        if (!netconn_send( request->netconn, optional, optional_len, &bytes_sent )) goto end;
         request->optional = optional;
         request->optional_len = optional_len;
         len += optional_len;
@@ -2167,7 +2170,7 @@ static BOOL read_reply( request_t *request )
     WCHAR *versionW, *status_textW, *raw_headers;
     WCHAR status_codeW[4]; /* sizeof("nnn") */
 
-    if (!netconn_connected( &request->netconn )) return FALSE;
+    if (!request->netconn) return FALSE;
 
     do
     {
@@ -2353,8 +2356,8 @@ static BOOL handle_redirect( request_t *request, DWORD status )
             connect->hostport = port;
             if (!(ret = set_server_for_hostname( connect, hostname, port ))) goto end;
 
-            netconn_close( &request->netconn );
-            if (!(ret = netconn_init( &request->netconn ))) goto end;
+            netconn_close( request->netconn );
+            request->netconn = NULL;
             request->content_length = request->content_read = 0;
             request->read_pos = request->read_size = 0;
             request->read_chunked = request->read_chunked_eof = FALSE;
@@ -2505,14 +2508,14 @@ static BOOL query_data_available( request_t *request, DWORD *available, BOOL asy
     if (end_of_read_data( request )) goto done;
 
     count = get_available_data( request );
-    if (!request->read_chunked)
-        count += netconn_query_data_available( &request->netconn );
+    if (!request->read_chunked && request->netconn)
+        count += netconn_query_data_available( request->netconn );
     if (!count)
     {
         refill_buffer( request, async );
         count = get_available_data( request );
-        if (!request->read_chunked)
-            count += netconn_query_data_available( &request->netconn );
+        if (!request->read_chunked && request->netconn)
+            count += netconn_query_data_available( request->netconn );
     }
 
 done:
@@ -2625,7 +2628,7 @@ static BOOL write_data( request_t *request, LPCVOID buffer, DWORD to_write, LPDW
     BOOL ret;
     int num_bytes;
 
-    ret = netconn_send( &request->netconn, buffer, to_write, &num_bytes );
+    ret = netconn_send( request->netconn, buffer, to_write, &num_bytes );
 
     if (async)
     {

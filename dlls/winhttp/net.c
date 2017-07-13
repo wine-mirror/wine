@@ -306,20 +306,19 @@ void netconn_unload( void )
 #endif
 }
 
-BOOL netconn_connected( netconn_t *conn )
+netconn_t *netconn_create( int domain, int type, int protocol )
 {
-    return (conn->socket != -1);
-}
-
-BOOL netconn_create( netconn_t *conn, int domain, int type, int protocol )
-{
+    netconn_t *conn;
+    conn = heap_alloc_zero(sizeof(*conn));
+    if (!conn) return NULL;
     if ((conn->socket = socket( domain, type, protocol )) == -1)
     {
         WARN("unable to create socket (%s)\n", strerror(errno));
         set_last_error( sock_get_error( errno ) );
-        return FALSE;
+        heap_free(conn);
+        return NULL;
     }
-    return TRUE;
+    return conn;
 }
 
 BOOL netconn_close( netconn_t *conn )
@@ -329,19 +328,12 @@ BOOL netconn_close( netconn_t *conn )
     if (conn->secure)
     {
         heap_free( conn->peek_msg_mem );
-        conn->peek_msg_mem = NULL;
-        conn->peek_msg = NULL;
-        conn->peek_len = 0;
         heap_free(conn->ssl_buf);
-        conn->ssl_buf = NULL;
         heap_free(conn->extra_buf);
-        conn->extra_buf = NULL;
-        conn->extra_len = 0;
         DeleteSecurityContext(&conn->ssl_ctx);
-        conn->secure = FALSE;
     }
     res = closesocket( conn->socket );
-    conn->socket = -1;
+    heap_free(conn);
     if (res == -1)
     {
         set_last_error( sock_get_error( errno ) );
@@ -575,7 +567,6 @@ static BOOL send_ssl_chunk(netconn_t *conn, const void *msg, size_t size)
 
 BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int *sent )
 {
-    if (!netconn_connected( conn )) return FALSE;
     if (conn->secure)
     {
         const BYTE *ptr = msg;
@@ -699,7 +690,6 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, SIZE_T *
 BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd )
 {
     *recvd = 0;
-    if (!netconn_connected( conn )) return FALSE;
     if (!len) return TRUE;
 
     if (conn->secure)
@@ -756,13 +746,7 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
 
 ULONG netconn_query_data_available( netconn_t *conn )
 {
-    if(!netconn_connected(conn))
-        return 0;
-
-    if(conn->secure)
-        return conn->peek_len;
-
-    return 0;
+    return conn->secure ? conn->peek_len : 0;
 }
 
 DWORD netconn_set_timeout( netconn_t *netconn, BOOL send, int value )

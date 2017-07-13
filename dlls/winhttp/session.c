@@ -709,7 +709,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
     {
     case WINHTTP_OPTION_SECURITY_FLAGS:
     {
-        DWORD flags;
+        DWORD flags = 0;
         int bits;
 
         if (!buffer || *buflen < sizeof(flags))
@@ -722,13 +722,16 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         flags = 0;
         if (hdr->flags & WINHTTP_FLAG_SECURE) flags |= SECURITY_FLAG_SECURE;
         flags |= request->security_flags;
-        bits = netconn_get_cipher_strength( &request->netconn );
-        if (bits >= 128)
-            flags |= SECURITY_FLAG_STRENGTH_STRONG;
-        else if (bits >= 56)
-            flags |= SECURITY_FLAG_STRENGTH_MEDIUM;
-        else
-            flags |= SECURITY_FLAG_STRENGTH_WEAK;
+        if (request->netconn)
+        {
+            bits = netconn_get_cipher_strength( request->netconn );
+            if (bits >= 128)
+                flags |= SECURITY_FLAG_STRENGTH_STRONG;
+            else if (bits >= 56)
+                flags |= SECURITY_FLAG_STRENGTH_MEDIUM;
+            else
+                flags |= SECURITY_FLAG_STRENGTH_WEAK;
+        }
         *(DWORD *)buffer = flags;
         *buflen = sizeof(flags);
         return TRUE;
@@ -744,7 +747,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
             return FALSE;
         }
 
-        if (!(cert = netconn_get_certificate( &request->netconn ))) return FALSE;
+        if (!request->netconn || !(cert = netconn_get_certificate( request->netconn ))) return FALSE;
         *(CERT_CONTEXT **)buffer = (CERT_CONTEXT *)cert;
         *buflen = sizeof(cert);
         return TRUE;
@@ -763,7 +766,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
             return FALSE;
         }
-        if (!(cert = netconn_get_certificate( &request->netconn ))) return FALSE;
+        if (!request->netconn || !(cert = netconn_get_certificate( request->netconn ))) return FALSE;
 
         ci->ftExpiry = cert->pCertInfo->NotAfter;
         ci->ftStart  = cert->pCertInfo->NotBefore;
@@ -778,7 +781,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         else
             ci->lpszSignatureAlgName  = NULL;
         ci->lpszEncryptionAlgName = NULL;
-        ci->dwKeySize = netconn_get_cipher_strength( &request->netconn );
+        ci->dwKeySize = request->netconn ? netconn_get_cipher_strength( request->netconn ) : 0;
 
         CertFreeCertificateContext( cert );
         *buflen = sizeof(*ci);
@@ -793,7 +796,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
             return FALSE;
         }
 
-        *(DWORD *)buffer = netconn_get_cipher_strength( &request->netconn );
+        *(DWORD *)buffer = request->netconn ? netconn_get_cipher_strength( request->netconn ) : 0;
         *buflen = sizeof(DWORD);
         return TRUE;
     }
@@ -810,12 +813,12 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
             return FALSE;
         }
-        if (!netconn_connected( &request->netconn ))
+        if (!request->netconn)
         {
             set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_STATE );
             return FALSE;
         }
-        if (getsockname( request->netconn.socket, &local, &len )) return FALSE;
+        if (getsockname( request->netconn->socket, &local, &len )) return FALSE;
         if (!convert_sockaddr( &local, &info->LocalAddress )) return FALSE;
         if (!convert_sockaddr( remote, &info->RemoteAddress )) return FALSE;
         info->cbSize = sizeof(*info);
@@ -1106,7 +1109,6 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->connect = connect;
     list_add_head( &connect->hdr.children, &request->hdr.entry );
 
-    if (!netconn_init( &request->netconn )) goto end;
     request->resolve_timeout = connect->session->resolve_timeout;
     request->connect_timeout = connect->session->connect_timeout;
     request->send_timeout = connect->session->send_timeout;
@@ -2089,10 +2091,10 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
             if (receive < 0) receive = 0;
             request->recv_timeout = receive;
 
-            if (netconn_connected( &request->netconn ))
+            if (request->netconn)
             {
-                if (netconn_set_timeout( &request->netconn, TRUE, send )) ret = FALSE;
-                if (netconn_set_timeout( &request->netconn, FALSE, receive )) ret = FALSE;
+                if (netconn_set_timeout( request->netconn, TRUE, send )) ret = FALSE;
+                if (netconn_set_timeout( request->netconn, FALSE, receive )) ret = FALSE;
             }
             break;
 
