@@ -309,6 +309,7 @@ typedef struct EmfPlusObject
     EmfPlusRecordHeader Header;
     union
     {
+        EmfPlusBrush brush;
         EmfPlusPen pen;
         EmfPlusPath path;
         EmfPlusImage image;
@@ -350,6 +351,16 @@ typedef struct EmfPlusDrawPath
     EmfPlusRecordHeader Header;
     DWORD PenId;
 } EmfPlusDrawPath;
+
+typedef struct EmfPlusFillPath
+{
+    EmfPlusRecordHeader Header;
+    union
+    {
+        DWORD BrushId;
+        EmfPlusARGB Color;
+    } data;
+} EmfPlusFillPath;
 
 static DWORD METAFILE_AddObjectId(GpMetafile *metafile)
 {
@@ -2914,4 +2925,73 @@ GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path)
 
     METAFILE_WriteRecords(metafile);
     return NotImplemented;
+}
+
+static GpStatus METAFILE_AddBrushObject(GpMetafile *metafile, GpBrush *brush, DWORD *id)
+{
+    EmfPlusObject *object_record;
+    GpStatus stat;
+    DWORD size;
+
+    *id = -1;
+    if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
+        return Ok;
+
+    stat = METAFILE_PrepareBrushData(brush, &size);
+    if (stat != Ok) return stat;
+
+    stat = METAFILE_AllocateRecord(metafile,
+        FIELD_OFFSET(EmfPlusObject, ObjectData) + size, (void**)&object_record);
+    if (stat != Ok) return stat;
+
+    *id = METAFILE_AddObjectId(metafile);
+    object_record->Header.Type = EmfPlusRecordTypeObject;
+    object_record->Header.Flags = *id | ObjectTypeBrush << 8;
+    METAFILE_FillBrushData(brush, &object_record->ObjectData.brush);
+    return Ok;
+}
+
+GpStatus METAFILE_FillPath(GpMetafile *metafile, GpBrush *brush, GpPath *path)
+{
+    EmfPlusFillPath *fill_path_record;
+    DWORD brush_id = -1, path_id;
+    BOOL inline_color;
+    GpStatus stat;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
+
+    inline_color = brush->bt == BrushTypeSolidColor;
+    if (!inline_color)
+    {
+        stat = METAFILE_AddBrushObject(metafile, brush, &brush_id);
+        if (stat != Ok) return stat;
+    }
+
+    stat = METAFILE_AddPathObject(metafile, path, &path_id);
+    if (stat != Ok) return stat;
+
+    stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusFillPath), (void**)&fill_path_record);
+    if (stat != Ok) return stat;
+    fill_path_record->Header.Type = EmfPlusRecordTypeFillPath;
+    if (inline_color)
+    {
+        fill_path_record->Header.Flags = 0x8000 | path_id;
+        fill_path_record->data.Color.Blue = ((GpSolidFill*)brush)->color & 0xff;
+        fill_path_record->data.Color.Green = (((GpSolidFill*)brush)->color >> 8) & 0xff;
+        fill_path_record->data.Color.Red = (((GpSolidFill*)brush)->color >> 16) & 0xff;
+        fill_path_record->data.Color.Alpha = ((GpSolidFill*)brush)->color >> 24;
+    }
+    else
+    {
+        fill_path_record->Header.Flags = path_id;
+        fill_path_record->data.BrushId = brush_id;
+    }
+
+    METAFILE_WriteRecords(metafile);
+    return Ok;
 }

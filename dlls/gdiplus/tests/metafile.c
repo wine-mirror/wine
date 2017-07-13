@@ -2549,6 +2549,73 @@ static void test_drawpath(void)
     expect(Ok, stat);
 }
 
+static const emfplus_record fill_path_records[] = {
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeObject},
+    {0, EmfPlusRecordTypeFillPath},
+    {1, EMR_SAVEDC},
+    {1, EMR_SETICMMODE},
+    {1, EMR_BITBLT},
+    {1, EMR_RESTOREDC},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_fillpath(void)
+{
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    GpSolidFill *brush;
+    HENHMETAFILE hemf;
+    GpStatus stat;
+    GpPath *path;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+    DeleteDC(hdc);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, stat);
+    stat = GdipAddPathLine(path, 5, 5, 30, 30);
+    expect(Ok, stat);
+    stat = GdipAddPathLine(path, 30, 30, 5, 30);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill(0xffaabbcc, &brush);
+    expect(Ok, stat);
+
+    stat = GdipFillPath(graphics, (GpBrush*)brush, path);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok, stat);
+    stat = GdipDeletePath(path);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+    sync_metafile(&metafile, "fill_path.emf");
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(Ok, stat);
+
+    check_emfplus(hemf, fill_path_records, "fill path");
+    DeleteEnhMetaFile(hemf);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2589,6 +2656,7 @@ START_TEST(metafile)
     test_drawimage();
     test_properties();
     test_drawpath();
+    test_fillpath();
 
     GdiplusShutdown(gdiplusToken);
 }
