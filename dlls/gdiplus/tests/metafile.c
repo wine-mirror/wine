@@ -2488,7 +2488,7 @@ static const emfplus_record draw_path_records[] = {
     {0, EmfPlusRecordTypeHeader},
     {0, EmfPlusRecordTypeObject},
     {0, EmfPlusRecordTypeObject},
-    {1, EmfPlusRecordTypeDrawPath},
+    {0, EmfPlusRecordTypeDrawPath},
     {1, EMR_SAVEDC},
     {1, EMR_SETICMMODE},
     {1, EMR_BITBLT},

@@ -345,6 +345,12 @@ typedef struct EmfPlusDrawImagePoints
     } PointData[3];
 } EmfPlusDrawImagePoints;
 
+typedef struct EmfPlusDrawPath
+{
+    EmfPlusRecordHeader Header;
+    DWORD PenId;
+} EmfPlusDrawPath;
+
 static DWORD METAFILE_AddObjectId(GpMetafile *metafile)
 {
     return (metafile->next_object_id++) % 64;
@@ -2654,6 +2660,7 @@ static GpStatus METAFILE_AddPathObject(GpMetafile *metafile, GpPath *path, DWORD
     GpStatus stat;
     DWORD i, size;
 
+    *id = -1;
     if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
         return Ok;
 
@@ -2722,6 +2729,7 @@ static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *i
     GpStatus stat;
     BOOL result;
 
+    *id = -1;
     if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
         return Ok;
 
@@ -2881,17 +2889,28 @@ static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *i
 
 GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path)
 {
+    EmfPlusDrawPath *draw_path_record;
     DWORD path_id;
     DWORD pen_id;
     GpStatus stat;
 
-    FIXME("stub!\n");
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
 
     stat = METAFILE_AddPenObject(metafile, pen, &pen_id);
     if (stat != Ok) return stat;
 
     stat = METAFILE_AddPathObject(metafile, path, &path_id);
     if (stat != Ok) return stat;
+
+    stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusDrawPath), (void**)&draw_path_record);
+    if (stat != Ok) return stat;
+    draw_path_record->Header.Type = EmfPlusRecordTypeDrawPath;
+    draw_path_record->Header.Flags = path_id;
+    draw_path_record->PenId = pen_id;
 
     METAFILE_WriteRecords(metafile);
     return NotImplemented;
