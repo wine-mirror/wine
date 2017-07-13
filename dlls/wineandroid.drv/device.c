@@ -92,6 +92,7 @@ struct native_win_data
     void                       *mappings[NB_CACHED_BUFFERS];
     HWND                        hwnd;
     BOOL                        opengl;
+    int                         generation;
     int                         api;
     int                         buffer_format;
     int                         swap_interval;
@@ -117,6 +118,7 @@ struct native_buffer_wrapper
     HWND                       hwnd;
     void                      *bits;
     int                        buffer_id;
+    int                        generation;
     union native_handle_buffer native_handle;
 };
 
@@ -159,6 +161,7 @@ struct ioctl_android_dequeueBuffer
     int                 format;
     int                 usage;
     int                 buffer_id;
+    int                 generation;
     union native_handle_buffer native_handle;
 };
 
@@ -166,12 +169,14 @@ struct ioctl_android_queueBuffer
 {
     struct ioctl_header hdr;
     int                 buffer_id;
+    int                 generation;
 };
 
 struct ioctl_android_cancelBuffer
 {
     struct ioctl_header hdr;
     int                 buffer_id;
+    int                 generation;
 };
 
 struct ioctl_android_query
@@ -468,6 +473,7 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
 
     release_native_window( data );
     data->parent = win;
+    data->generation++;
     if (win)
     {
         wrap_java_call();
@@ -672,6 +678,7 @@ static NTSTATUS dequeueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, 
         res->format = buffer->format;
         res->usage  = buffer->usage;
         res->buffer_id = register_buffer( win_data, buffer, res->win32 ? &mapping : NULL, &is_new );
+        res->generation = win_data->generation;
         if (is_new)
         {
             HANDLE process = OpenProcess( PROCESS_DUP_HANDLE, FALSE, current_client_id() );
@@ -698,6 +705,7 @@ static NTSTATUS cancelBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, U
 
     if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
     if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
+    if (res->generation != win_data->generation) return STATUS_SUCCESS;  /* obsolete buffer, ignore */
 
     if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
 
@@ -720,6 +728,7 @@ static NTSTATUS queueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, UL
 
     if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
     if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
+    if (res->generation != win_data->generation) return STATUS_SUCCESS;  /* obsolete buffer, ignore */
 
     if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
 
@@ -1114,6 +1123,7 @@ static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuff
         buf->ref                   = 1;
         buf->hwnd                  = win->hwnd;
         buf->buffer_id             = res.buffer_id;
+        buf->generation            = res.generation;
         if (win->buffers[res.buffer_id])
             win->buffers[res.buffer_id]->buffer.common.decRef(&win->buffers[res.buffer_id]->buffer.common);
         win->buffers[res.buffer_id] = buf;
@@ -1149,6 +1159,7 @@ static int cancelBuffer( struct ANativeWindow *window, struct ANativeWindowBuffe
            win->hwnd, buffer, buffer->width, buffer->height,
            buffer->stride, buffer->format, buffer->usage, fence );
     cancel.buffer_id = buf->buffer_id;
+    cancel.generation = buf->generation;
     cancel.hdr.hwnd = HandleToLong( win->hwnd );
     cancel.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
@@ -1165,6 +1176,7 @@ static int queueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer
            win->hwnd, buffer, buffer->width, buffer->height,
            buffer->stride, buffer->format, buffer->usage, fence );
     queue.buffer_id = buf->buffer_id;
+    queue.generation = buf->generation;
     queue.hdr.hwnd = HandleToLong( win->hwnd );
     queue.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
