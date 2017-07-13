@@ -463,6 +463,8 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
     BOOL opengl = arg3;
     struct native_win_data *data = get_native_win_data( hwnd, opengl );
 
+    if (!win) return;  /* do nothing and hold on to the window until we get a new surface */
+
     if (!data || data->parent == win)
     {
         if (win) pANativeWindow_release( win );

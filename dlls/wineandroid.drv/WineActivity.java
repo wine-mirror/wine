@@ -311,6 +311,8 @@ public class WineActivity extends Activity
         protected WineWindow parent;
         protected Surface window_surface;
         protected Surface client_surface;
+        protected SurfaceTexture window_surftex;
+        protected SurfaceTexture client_surftex;
         protected WineWindowGroup window_group;
         protected WineWindowGroup client_group;
 
@@ -442,14 +444,22 @@ public class WineActivity extends Activity
             if (is_client)
             {
                 if (surftex == null) client_surface = null;
-                else if (client_surface == null) client_surface = new Surface( surftex );
+                else if (surftex != client_surftex)
+                {
+                    client_surftex = surftex;
+                    client_surface = new Surface( surftex );
+                }
                 Log.i( LOGTAG, String.format( "set client surface hwnd %08x %s", hwnd, client_surface ));
                 wine_surface_changed( hwnd, client_surface, true );
             }
             else
             {
                 if (surftex == null) window_surface = null;
-                else if (window_surface == null) window_surface = new Surface( surftex );
+                else if (surftex != window_surftex)
+                {
+                    window_surftex = surftex;
+                    window_surface = new Surface( surftex );
+                }
                 Log.i( LOGTAG, String.format( "set window surface hwnd %08x %s", hwnd, window_surface ));
                 wine_surface_changed( hwnd, window_surface, false );
             }
@@ -567,7 +577,7 @@ public class WineActivity extends Activity
             Log.i( LOGTAG, String.format( "onSurfaceTextureDestroyed win %08x %s",
                                           window.hwnd, is_client ? "client" : "whole" ));
             window.set_surface( null, is_client );
-            return true;
+            return false;  // hold on to the texture since the app may still be using it
         }
 
         public void onSurfaceTextureUpdated(SurfaceTexture surftex)
