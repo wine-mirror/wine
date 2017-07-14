@@ -52,4 +52,8 @@ SVG_SRCS = \
 	idb_std_large.svg \
 	idb_std_small.svg \
 	idb_view_large.svg \
-	idb_view_small.svg
+	idb_view_small.svg \
+	idc_copy.svg \
+	idc_divider.svg \
+	idc_divideropen.svg \
+	idc_movebutton.svg
