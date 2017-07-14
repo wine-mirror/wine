@@ -27,4 +27,5 @@
 
 #include "res.h"
 
+/* @makedep: ocr_reverse.cur */
 OCR_REVERSE CURSOR ocr_reverse.cur

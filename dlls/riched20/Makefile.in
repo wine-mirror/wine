@@ -28,3 +28,6 @@ RC_SRCS = version.rc
 
 IDL_SRCS = \
 	riched_tom.idl
+
+SVG_SRCS = \
+	ocr_reverse.svg
