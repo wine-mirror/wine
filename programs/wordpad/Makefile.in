@@ -13,4 +13,5 @@ RC_SRCS = wordpad.rc
 SVG_SRCS = \
 	formatbar.svg \
 	toolbar.svg \
-	wordpad.svg
+	wordpad.svg \
+	zoom.svg
