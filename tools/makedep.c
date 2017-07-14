@@ -2600,10 +2600,17 @@ static struct strarray output_sources( const struct makefile *make )
         {
             if (convert && rsvg && icotool && !make->src_dir)
             {
-                output( "%s.ico %s.bmp: %s\n",
-                        src_dir_path( make, obj ), src_dir_path( make, obj ), source->filename );
-                output( "\tCONVERT=\"%s\" ICOTOOL=\"%s\" RSVG=\"%s\" %s %s $@\n", convert, icotool, rsvg,
-                        top_src_dir_path( make, "tools/buildimage" ), source->filename );
+                static const char * const images[] = { "bmp", "cur", "ico", NULL };
+
+                for (i = 0; images[i]; i++)
+                    if (find_include_file( make, strmake( "%s.%s", obj, images[i] ))) break;
+
+                if (images[i])
+                {
+                    output( "%s.%s: %s\n", src_dir_path( make, obj ), images[i], source->filename );
+                    output( "\tCONVERT=\"%s\" ICOTOOL=\"%s\" RSVG=\"%s\" %s %s $@\n", convert, icotool, rsvg,
+                            top_src_dir_path( make, "tools/buildimage" ), source->filename );
+                }
             }
         }
         else if (!strcmp( ext, "po" ))  /* po file */

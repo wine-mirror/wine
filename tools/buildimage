@@ -34,23 +34,22 @@ die "Cannot open output file" unless defined($outFileName);
 $outFileName =~ m/(.*)\.(.*)/;
 my $outName = $1;
 my $ext = lc($2);
-die "Only BMP and ICO outputs are supported" unless $ext eq "bmp" or $ext eq "ico";
+die "Only BMP, ICO and CUR outputs are supported" unless $ext eq "bmp" or $ext eq "ico" or $ext eq "cur";
 
 my $renderedSVGFileName = "$svgFileName.png";
 my @pngFiles;
-my @pngFilesRaw;
 
 # Get the programs from the environment variables
 my $convert = $ENV{"CONVERT"} || "convert";
 my $rsvg = $ENV{"RSVG"} || "rsvg";
-my $icotool = $ENV{"ICOTOOL"} || "icotool";
+my @icotool_args = ($ENV{"ICOTOOL"} || "icotool", "--create",
+                    $ext eq "cur" ? "--cursor" : "--icon", "-o", $outFileName);
 
 # Be ready to abort
 sub cleanup()
 {
     unlink $renderedSVGFileName;
     unlink $_ foreach(@pngFiles);
-    unlink $_ foreach(@pngFilesRaw);
 }
 
 $SIG{"INT"} = "cleanup";
@@ -78,8 +77,18 @@ sub svg_element_start
     my $width = 0;
     my $height = 0;
 
+    if ($id eq "hotspot")
+    {
+        push @icotool_args, "--hotspot-x=$attr{x}", "--hotspot-y=$attr{y}";
+        return;
+    }
+
     if($ext eq "ico") {
         return unless $id =~ /icon:(\d*)-(\d*)/;
+        $size = $1;
+        $depth = $2;
+    } elsif($ext eq "cur") {
+        return unless $id =~ /cursor:(\d*)-(\d*)/;
         $size = $1;
         $depth = $2;
     } elsif($ext eq "bmp") {
@@ -90,14 +99,24 @@ sub svg_element_start
 
     return unless defined($size) and defined($depth);
 
-    warn "Unexpected icon depth" unless
-        $depth == 4 or $depth == 8 or $depth == 24 or $depth == 32;
+    warn "Unexpected depth" unless
+        $depth == 1 or $depth == 4 or $depth == 8 or $depth == 24 or $depth == 32;
     my $pngFileName = "$outName-$size-$depth.png";
 
     if($element eq "svg") {
 
+        if ($ext eq "bmp") {
+            if ($depth == 24) {
+                shell $convert, $renderedSVGFileName, "+matte", $outFileName;
+            } else {
+                shell $convert, $renderedSVGFileName, $outFileName;
+            }
+            cleanup();
+            exit(0);
+        }
+
         # The whole file is tagged
-        copy($renderedSVGFileName, $pngFileName) or die "File could not be copied";
+        $pngFileName = $renderedSVGFileName;
 
     } elsif($element eq "rect") {
 
@@ -109,10 +128,9 @@ sub svg_element_start
 
         if(defined($x) and defined($y)) {
             if($x =~ /\d*/ and $y =~ /\d*/) {
-                shell $convert, $renderedSVGFileName, "-crop", "${width}x${height}+$x+$y", $pngFileName;
+                shell $convert, $renderedSVGFileName, "-crop", "${width}x${height}+$x+$y", "-depth", $depth, $pngFileName;
             }
         }
-
     } elsif($element eq "image" ) {
 
         # Extract Base64 encoded PNG data to files
@@ -132,12 +150,13 @@ sub svg_element_start
 
     if ($width >= 128 && $height >= 128)
     {
-        push(@pngFilesRaw, $pngFileName);
+        push @icotool_args, "--raw=$pngFileName";
     }
     else
     {
-        push(@pngFiles, $pngFileName);
+        push @icotool_args, $pngFileName;
     }
+    push @pngFiles, $pngFileName;
 }
 
 # Render the SVG image
@@ -153,34 +172,9 @@ my $parser = new XML::Parser(
     Handlers => {Start => \&svg_element_start});
 $parser->parsefile("$svgFileName");
 
-# If no render directives were found, take the full image as-is
-unless (@pngFiles || @pngFilesRaw) {
-    my $pngFileName = "bmp$renderedSVGFileName";
-    copy($renderedSVGFileName, $pngFileName) or die "File could not be copied";
-    push(@pngFiles, $pngFileName);
-}
+die "no render directive found in $svgFileName" unless @pngFiles;
 
-# Combine the renderings into the output file
-if($ext eq "ico") {
-
-    # Place images into the ICO
-    shell $icotool, "-c", "-o", $outFileName, @pngFiles, map { "--raw=$_"; } @pngFilesRaw;
-
-} elsif($ext eq "bmp") {
-
-    # Only the first image becomes the final BMP
-    my $pngFile = $pngFiles[0];
-    $pngFile =~ /.*-\d*-(\d*)\.png/;
-    my $depth = $1;
-
-    # Convert it into a bmp
-    if($depth == 24) {
-        shell $convert, "png:$pngFile", "+matte", $outFileName;
-    } else {
-        shell $convert, "png:$pngFile", $outFileName;
-    }
-
-}
+shell @icotool_args;
 
 # Delete the intermediate images
 cleanup();
