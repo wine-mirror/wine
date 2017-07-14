@@ -284,7 +284,6 @@ void close_connection( request_t * ) DECLSPEC_HIDDEN;
 BOOL netconn_close( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL netconn_connect( netconn_t *, const struct sockaddr *, unsigned int, int ) DECLSPEC_HIDDEN;
 netconn_t *netconn_create( int, int, int ) DECLSPEC_HIDDEN;
-BOOL netconn_init( netconn_t * ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;
 ULONG netconn_query_data_available( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;

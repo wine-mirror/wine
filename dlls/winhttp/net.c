@@ -289,13 +289,6 @@ static BOOL ensure_cred_handle(void)
     return ret;
 }
 
-BOOL netconn_init( netconn_t *conn )
-{
-    memset(conn, 0, sizeof(*conn));
-    conn->socket = -1;
-    return TRUE;
-}
-
 void netconn_unload( void )
 {
     if(cred_handle_initialized)
