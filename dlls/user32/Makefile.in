@@ -53,6 +53,22 @@ C_SRCS = \
 RC_SRCS = user32.rc
 
 SVG_SRCS = \
+	resources/ocr_appstarting.svg \
+	resources/ocr_cross.svg \
+	resources/ocr_hand.svg \
+	resources/ocr_help.svg \
+	resources/ocr_ibeam.svg \
+	resources/ocr_no.svg \
+	resources/ocr_normal.svg \
+	resources/ocr_pen.svg \
+	resources/ocr_size.svg \
+	resources/ocr_sizeall.svg \
+	resources/ocr_sizenesw.svg \
+	resources/ocr_sizens.svg \
+	resources/ocr_sizenwse.svg \
+	resources/ocr_sizewe.svg \
+	resources/ocr_up.svg \
+	resources/ocr_wait.svg \
 	resources/oic_bang.svg \
 	resources/oic_hand.svg \
 	resources/oic_note.svg \
