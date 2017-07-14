@@ -51,3 +51,9 @@ IDL_SRCS = \
 	ole32_unknwn.idl
 
 dlldata_EXTRADEFS = -DENTRY_PREFIX=OLE32_ -DPROXY_CLSID=CLSID_PSFactoryBuffer -DWINE_REGISTER_DLL
+
+SVG_SRCS = \
+	drag_copy.svg \
+	drag_link.svg \
+	drag_move.svg \
+	nodrop.svg
