@@ -6622,6 +6622,37 @@ static void test_ShowWindow(void)
     ret = DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
     ok(!ret, "not expected ret: %lu\n", ret);
     ok(!IsWindow(hwnd), "window should not exist\n");
+
+    hwnd = CreateWindowExA(0, "MainWindowClass", NULL,
+                          WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                          WS_MAXIMIZEBOX | WS_POPUP | WS_MINIMIZE,
+                          rcMain.left, rcMain.top,
+                          rcMain.right - rcMain.left, rcMain.bottom - rcMain.top,
+                          0, 0, 0, NULL);
+    ok(hwnd != NULL, "failed to create window with error %u\n", GetLastError());
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok(style & WS_MINIMIZE, "window should be minimized\n");
+    GetWindowRect(hwnd, &rc);
+    todo_wine
+    ok((rc.left == -32000 || rc.left == 3000) &&
+       (rc.top == -32000 || rc.top == 3000),
+       "expected (-32000,-32000), got (%d,%d)\n", rc.left, rc.top);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, "MainWindowClass", NULL,
+                          WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                          WS_MAXIMIZEBOX | WS_POPUP | WS_MINIMIZE | WS_VISIBLE,
+                          rcMain.left, rcMain.top,
+                          rcMain.right - rcMain.left, rcMain.bottom - rcMain.top,
+                          0, 0, 0, NULL);
+    ok(hwnd != NULL, "failed to create window with error %u\n", GetLastError());
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok(style & WS_MINIMIZE, "window should be minimized\n");
+    GetWindowRect(hwnd, &rc);
+    ok((rc.left == -32000 || rc.left == 3000) &&
+       (rc.top == -32000 || rc.top == 3000),
+       "expected (-32000,-32000), got (%d,%d)\n", rc.left, rc.top);
+    DestroyWindow(hwnd);
 }
 
 static DWORD CALLBACK enablewindow_thread(LPVOID arg)

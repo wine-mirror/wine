@@ -963,6 +963,11 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         case SW_SHOWMINIMIZED:
         case SW_FORCEMINIMIZE:
         case SW_MINIMIZE:
+            wpl.ptMinPosition = WINPOS_FindIconPos( hwnd, wpl.ptMinPosition );
+
+            SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
+                     wpl.ptMinPosition.x + GetSystemMetrics(SM_CXICON),
+                     wpl.ptMinPosition.y + GetSystemMetrics(SM_CYICON) );
             return SWP_NOSIZE | SWP_NOMOVE;
         }
         if (!SendMessageW( hwnd, WM_QUERYOPEN, 0, 0 )) return SWP_NOSIZE | SWP_NOMOVE;
