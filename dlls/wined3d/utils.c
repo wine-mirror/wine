@@ -5057,7 +5057,7 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, con
     }
     double_conv[] =
     {
-        {WINED3DFMT_D24_UNORM_S8_UINT, {  16777215.0, 0.0, 0.0, 0.0}, {0, 0, 0, 0}},
+        {WINED3DFMT_D24_UNORM_S8_UINT, {  16777215.0, 1.0, 0.0, 0.0}, {8, 0, 0, 0}},
         {WINED3DFMT_X8D24_UNORM,       {  16777215.0, 0.0, 0.0, 0.0}, {0, 0, 0, 0}},
         {WINED3DFMT_D32_UNORM,         {4294967295.0, 0.0, 0.0, 0.0}, {0, 0, 0, 0}},
     };
