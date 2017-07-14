@@ -1272,6 +1272,8 @@ static void test_acmFormatChoose(void)
     rc = acmFormatChooseW(&afc);
     ok(rc == MMSYSERR_INVALPARAM, "expected 0xb, got 0x%x\n", rc);
     afc.pwfx = pwfx;
+
+    HeapFree(GetProcessHeap(), 0, pwfx);
 }
 
 static struct
