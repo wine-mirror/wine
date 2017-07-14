@@ -1800,9 +1800,9 @@
 @ cdecl exp2f(float) msvcr120.exp2f
 @ cdecl exp2l(double) msvcr120.exp2l
 @ cdecl -arch=arm,x86_64 expf(float) msvcr120.expf
-@ stub expm1
-@ stub expm1f
-@ stub expm1l
+@ cdecl expm1(double) msvcr120.expm1
+@ cdecl expm1f(float) msvcr120.expm1f
+@ cdecl expm1l(double) msvcr120.expm1l
 @ cdecl fabs(double) msvcr120.fabs
 @ cdecl -arch=arm,x86_64 fabsf(float) msvcr120.fabsf
 @ cdecl fclose(ptr) msvcr120.fclose

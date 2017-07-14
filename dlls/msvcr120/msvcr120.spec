@@ -2134,9 +2134,9 @@
 @ cdecl exp2f(float) MSVCR120_exp2f
 @ cdecl exp2l(double) MSVCR120_exp2l
 @ cdecl -arch=arm,x86_64 expf(float) MSVCRT_expf
-@ stub expm1
-@ stub expm1f
-@ stub expm1l
+@ cdecl expm1(double) MSVCR120_expm1
+@ cdecl expm1f(float) MSVCR120_expm1f
+@ cdecl expm1l(double) MSVCR120_expm1l
 @ cdecl fabs(double) MSVCRT_fabs
 @ cdecl -arch=arm,x86_64 fabsf(float) MSVCRT_fabsf
 @ cdecl fclose(ptr) MSVCRT_fclose
