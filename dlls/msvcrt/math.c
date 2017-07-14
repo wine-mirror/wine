@@ -2773,6 +2773,38 @@ LDOUBLE CDECL MSVCR120_erfl(LDOUBLE x)
 }
 
 /*********************************************************************
+ *      erfc (MSVCR120.@)
+ */
+double CDECL MSVCR120_erfc(double x)
+{
+#ifdef HAVE_ERFC
+    return erfc(x);
+#else
+    return 1 - MSVCR120_erf(x);
+#endif
+}
+
+/*********************************************************************
+ *      erfcf (MSVCR120.@)
+ */
+float CDECL MSVCR120_erfcf(float x)
+{
+#ifdef HAVE_ERFCF
+    return erfcf(x);
+#else
+    return MSVCR120_erfc(x);
+#endif
+}
+
+/*********************************************************************
+ *      erfcl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_erfcl(LDOUBLE x)
+{
+    return MSVCR120_erfc(x);
+}
+
+/*********************************************************************
  *      fmaxf (MSVCR120.@)
  */
 float CDECL MSVCR120_fmaxf(float x, float y)

@@ -221,9 +221,9 @@
 @ stub ctanhl
 @ stub ctanl
 @ cdecl erf(double) ucrtbase.erf
-@ stub erfc
-@ stub erfcf
-@ stub erfcl
+@ cdecl erfc(double) ucrtbase.erfc
+@ cdecl erfcf(float) ucrtbase.erfcf
+@ cdecl erfcl(double) ucrtbase.erfcl
 @ cdecl erff(float) ucrtbase.erff
 @ cdecl erfl(double) ucrtbase.erfl
 @ cdecl exp(double) ucrtbase.exp

@@ -2266,9 +2266,9 @@
 @ stub ctanl
 @ cdecl -ret64 div(long long) MSVCRT_div
 @ cdecl erf(double) MSVCR120_erf
-@ stub erfc
-@ stub erfcf
-@ stub erfcl
+@ cdecl erfc(double) MSVCR120_erfc
+@ cdecl erfcf(float) MSVCR120_erfcf
+@ cdecl erfcl(double) MSVCR120_erfcl
 @ cdecl erff(float) MSVCR120_erff
 @ cdecl erfl(double) MSVCR120_erfl
 @ cdecl exit(long) MSVCRT_exit

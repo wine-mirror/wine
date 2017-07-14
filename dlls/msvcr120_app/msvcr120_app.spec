@@ -1789,9 +1789,9 @@
 @ stub ctanl
 @ cdecl -ret64 div(long long) msvcr120.div
 @ cdecl erf(double) msvcr120.erf
-@ stub erfc
-@ stub erfcf
-@ stub erfcl
+@ cdecl erfc(double) msvcr120.erfc
+@ cdecl erfcf(float) msvcr120.erfcf
+@ cdecl erfcl(double) msvcr120.erfcl
 @ cdecl erff(float) msvcr120.erff
 @ cdecl erfl(double) msvcr120.erfl
 @ cdecl exit(long) msvcr120.exit

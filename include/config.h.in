@@ -141,6 +141,12 @@
 /* Define to 1 if you have the `erf' function. */
 #undef HAVE_ERF
 
+/* Define to 1 if you have the `erfc' function. */
+#undef HAVE_ERFC
+
+/* Define to 1 if you have the `erfcf' function. */
+#undef HAVE_ERFCF
+
 /* Define to 1 if you have the `erff' function. */
 #undef HAVE_ERFF
 
