@@ -231,9 +231,9 @@
 @ cdecl exp2f(float) ucrtbase.exp2f
 @ cdecl exp2l(double) ucrtbase.exp2l
 @ cdecl -arch=arm,x86_64 expf(float) ucrtbase.expf
-@ stub expm1
-@ stub expm1f
-@ stub expm1l
+@ cdecl expm1(double) ucrtbase.expm1
+@ cdecl expm1f(float) ucrtbase.expm1f
+@ cdecl expm1l(double) ucrtbase.expm1l
 @ cdecl fabs(double) ucrtbase.fabs
 @ cdecl -arch=arm fabsf(float) ucrtbase.fabsf
 @ stub fdim

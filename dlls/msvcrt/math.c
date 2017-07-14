@@ -2416,6 +2416,42 @@ LDOUBLE CDECL MSVCR120_exp2l(LDOUBLE x)
 }
 
 /*********************************************************************
+ *      expm1 (MSVCR120.@)
+ */
+double CDECL MSVCR120_expm1(double x)
+{
+#ifdef HAVE_EXPM1
+    double ret = expm1(x);
+#else
+    double ret = exp(x) - 1;
+#endif
+    if (!isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    return ret;
+}
+
+/*********************************************************************
+ *      expm1f (MSVCR120.@)
+ */
+float CDECL MSVCR120_expm1f(float x)
+{
+#ifdef HAVE_EXPM1F
+    double ret = expm1f(x);
+#else
+    double ret = exp(x) - 1;
+#endif
+    if (!isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    return ret;
+}
+
+/*********************************************************************
+ *      expm1l (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_expm1l(LDOUBLE x)
+{
+    return MSVCR120_expm1(x);
+}
+
+/*********************************************************************
  *      log2 (MSVCR120.@)
  */
 double CDECL MSVCR120_log2(double x)

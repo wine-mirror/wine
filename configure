@@ -17122,6 +17122,8 @@ for ac_func in \
 	erff \
 	exp2 \
 	exp2f \
+	expm1 \
+	expm1f \
 	lgamma \
 	lgammaf \
 	llrint \
