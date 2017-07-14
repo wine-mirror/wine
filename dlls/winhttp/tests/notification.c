@@ -163,6 +163,12 @@ static void setup_test( struct info *info, enum api function, unsigned int line 
                        info->test[info->index].function, function);
 }
 
+static void end_test( struct info *info, unsigned int line )
+{
+    ok_(__FILE__,line)(info->index == info->count, "some notifications were missing: %x\n",
+                       info->test[info->index].status);
+}
+
 static void test_connection_cache( void )
 {
     HANDLE ses, con, req, event;
@@ -364,6 +370,7 @@ done:
     WinHttpCloseHandle( ses );
     WaitForSingleObject( info.wait, INFINITE );
     CloseHandle( info.wait );
+    end_test( &info, __LINE__ );
 
     if (unload)
     {
@@ -456,6 +463,7 @@ done:
     WinHttpCloseHandle( ses );
     WaitForSingleObject( info.wait, INFINITE );
     CloseHandle( info.wait );
+    end_test( &info, __LINE__ );
 }
 
 static const struct notification async_test[] =
@@ -593,6 +601,7 @@ static void test_async( void )
     }
     WinHttpCloseHandle( ses );
     WaitForSingleObject( info.wait, INFINITE );
+    end_test( &info, __LINE__ );
 
     if (unload)
     {
