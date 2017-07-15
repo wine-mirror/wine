@@ -64,6 +64,39 @@ typedef struct EmfPlusRecordHeader
     DWORD DataSize;
 } EmfPlusRecordHeader;
 
+typedef enum
+{
+    ObjectTypeInvalid,
+    ObjectTypeBrush,
+    ObjectTypePen,
+    ObjectTypePath,
+    ObjectTypeRegion,
+    ObjectTypeImage,
+    ObjectTypeFont,
+    ObjectTypeStringFormat,
+    ObjectTypeImageAttributes,
+    ObjectTypeCustomLineCap,
+} ObjectType;
+
+typedef enum
+{
+    ImageDataTypeUnknown,
+    ImageDataTypeBitmap,
+    ImageDataTypeMetafile,
+} ImageDataType;
+
+typedef struct
+{
+    EmfPlusRecordHeader Header;
+    /* EmfPlusImage */
+    DWORD Version;
+    ImageDataType Type;
+    /* EmfPlusMetafile */
+    DWORD MetafileType;
+    DWORD MetafileDataSize;
+    BYTE MetafileData[1];
+} MetafileImageObject;
+
 static int CALLBACK enum_emf_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR,
     int nObj, LPARAM lpData)
 {
@@ -97,12 +130,28 @@ static int CALLBACK enum_emf_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETAR
                     actual.record_type = record->Type;
 
                     check_record(state->count, state->desc, &state->expected[state->count], &actual);
-
                     state->count++;
+
+                    if (state->expected[state->count-1].todo && state->expected[state->count-1].record_type != actual.record_type)
+                        continue;
                 }
                 else
                 {
                     ok(0, "%s: Unexpected EMF+ 0x%x record\n", state->desc, record->Type);
+                }
+
+                if ((record->Flags >> 8) == ObjectTypeImage && record->Type == EmfPlusRecordTypeObject)
+                {
+                    const MetafileImageObject *image = (const MetafileImageObject*)record;
+
+                    if (image->Type == ImageDataTypeMetafile)
+                    {
+                        HENHMETAFILE hemf = SetEnhMetaFileBits(image->MetafileDataSize, image->MetafileData);
+                        ok(hemf != NULL, "%s: SetEnhMetaFileBits failed\n", state->desc);
+
+                        EnumEnhMetaFile(0, hemf, enum_emf_proc, state, NULL);
+                        DeleteEnhMetaFile(hemf);
+                    }
                 }
 
                 offset += record->Size;
@@ -2337,7 +2386,7 @@ static void test_gditransform(void)
     expect(Ok, stat);
 }
 
-static const emfplus_record draw_image_records[] = {
+static const emfplus_record draw_image_bitmap_records[] = {
     {0, EMR_HEADER},
     {0, EmfPlusRecordTypeHeader},
     {0, EmfPlusRecordTypeObject},
@@ -2352,10 +2401,37 @@ static const emfplus_record draw_image_records[] = {
     {0}
 };
 
+static const emfplus_record draw_image_metafile_records[] = {
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeObject},
+    /* metafile object */
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeObject},
+    {0, EmfPlusRecordTypeObject},
+    {0, EmfPlusRecordTypeDrawImagePoints},
+    {1, EMR_SAVEDC},
+    {1, EMR_SETICMMODE},
+    {1, EMR_BITBLT},
+    {1, EMR_RESTOREDC},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    /* end of metafile object */
+    {0, EmfPlusRecordTypeDrawImagePoints},
+    {1, EMR_SAVEDC},
+    {1, EMR_SETICMMODE},
+    {1, EMR_BITBLT},
+    {1, EMR_RESTOREDC},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    {0}
+};
+
 static void test_drawimage(void)
 {
     static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
-    static const GpPointF dst_points[3] = {{10.0,10.0},{25.0,15.0},{10.0,20.0}};
+    static const GpPointF dst_points[3] = {{10.0,10.0},{85.0,15.0},{10.0,80.0}};
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     const ColorMatrix double_red = {{
         {2.0,0.0,0.0,0.0,0.0},
@@ -2371,14 +2447,12 @@ static void test_drawimage(void)
     GpStatus stat;
     BITMAPINFO info;
     BYTE buff[400];
-    GpBitmap *bm;
+    GpImage *image;
     HDC hdc;
 
-    memset(buff, 0x80, sizeof(buff));
     hdc = CreateCompatibleDC(0);
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
     expect(Ok, stat);
-    DeleteDC(hdc);
 
     stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
     expect(Ok, stat);
@@ -2390,7 +2464,8 @@ static void test_drawimage(void)
     info.bmiHeader.biPlanes = 1;
     info.bmiHeader.biBitCount = 32;
     info.bmiHeader.biCompression = BI_RGB;
-    stat = GdipCreateBitmapFromGdiDib(&info, buff, &bm);
+    memset(buff, 0x80, sizeof(buff));
+    stat = GdipCreateBitmapFromGdiDib(&info, buff, (GpBitmap**)&image);
     expect(Ok, stat);
 
     stat = GdipCreateImageAttributes(&imageattr);
@@ -2400,23 +2475,56 @@ static void test_drawimage(void)
             TRUE, &double_red, NULL, ColorMatrixFlagsDefault);
     expect(Ok, stat);
 
-    stat = GdipDrawImagePointsRect(graphics, (GpImage*)bm, dst_points, 3,
+    stat = GdipDrawImagePointsRect(graphics, image, dst_points, 3,
             0.0, 0.0, 10.0, 10.0, UnitPixel, imageattr, NULL, NULL);
     GdipDisposeImageAttributes(imageattr);
     expect(Ok, stat);
 
-    GdipDisposeImage((GpImage*)bm);
+    GdipDisposeImage(image);
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
-    sync_metafile(&metafile, "draw_image.emf");
+    sync_metafile(&metafile, "draw_image_bitmap.emf");
 
     stat = GdipGetHemfFromMetafile(metafile, &hemf);
     expect(Ok, stat);
 
-    check_emfplus(hemf, draw_image_records, "draw image");
+    check_emfplus(hemf, draw_image_bitmap_records, "draw image bitmap");
+
+    /* test drawing metafile */
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateMetafileFromEmf(hemf, TRUE, (GpMetafile**)&image);
+    expect(Ok, stat);
+
+    stat = GdipDrawImagePointsRect(graphics, image, dst_points, 3,
+            0.0, 0.0, 100.0, 100.0, UnitPixel, NULL, NULL, NULL);
+    expect(Ok, stat);
+
+    GdipDisposeImage(image);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+    sync_metafile(&metafile, "draw_image_metafile.emf");
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(Ok, stat);
+
+    if (GetProcAddress(GetModuleHandleA("gdiplus.dll"), "GdipConvertToEmfPlus"))
+    {
+        check_emfplus(hemf, draw_image_metafile_records, "draw image metafile");
+    }
+    else
+    {
+        win_skip("draw image metafile records tests skipped\n");
+    }
     DeleteEnhMetaFile(hemf);
 
+    DeleteDC(hdc);
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);
 }
