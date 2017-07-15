@@ -111,9 +111,9 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
     static const WCHAR sValue[] = {'V','a','l','u','e',0};
 
     HRESULT hr = S_OK;
-    IXMLDOMDocument *document;
-    IXMLDOMElement *root, *statisticsElement;
-    IXMLDOMNode *categoryNode, *statisticsNode;
+    IXMLDOMDocument *document = NULL;
+    IXMLDOMElement *root = NULL, *statisticsElement = NULL;
+    IXMLDOMNode *categoryNode = NULL, *statisticsNode = NULL;
     VARIANT vStatsFilePath, vValue;
     BSTR bstrStatistics = NULL, bstrCategory = NULL, bstrIndex = NULL,
         bstrStatistic = NULL, bstrName = NULL, bstrValue = NULL;
@@ -209,8 +209,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
                 hr = IXMLDOMElement_setAttribute(categoryElement, bstrName, vValue);
             }
 
-            if (categoryElement)
-                IXMLDOMElement_Release(categoryElement);
+            if (categoryElement) IXMLDOMElement_Release(categoryElement);
 
             SysFreeString(V_BSTR(&vValue));
 
@@ -266,15 +265,16 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
                     if(SUCCEEDED(hr))
                         hr = IXMLDOMNode_appendChild(categoryNode, statisticsNode, NULL);
 
-                    IXMLDOMElement_Release(statisticsElement);
-                    IXMLDOMNode_Release(statisticsNode);
+                    if (statisticsElement) IXMLDOMElement_Release(statisticsElement);
+                    if (statisticsNode) IXMLDOMNode_Release(statisticsNode);
                 }
             }
 
             if(SUCCEEDED(hr))
                 hr = IXMLDOMElement_appendChild(root, categoryNode, &categoryNode);
 
-            IXMLDOMNode_Release(categoryNode);
+            if (categoryNode)
+                IXMLDOMNode_Release(categoryNode);
 
             if(FAILED(hr))
                 break;
@@ -283,7 +283,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
     if(SUCCEEDED(hr))
         hr = IXMLDOMDocument_putref_documentElement(document, root);
 
-    IXMLDOMElement_Release(root);
+    if (root) IXMLDOMElement_Release(root);
 
     TRACE("saving game statistics in %s file\n", debugstr_w(stats->sStatsFile));
     if(SUCCEEDED(hr))
@@ -292,7 +292,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
     if(SUCCEEDED(hr))
         hr = IXMLDOMDocument_save(document, vStatsFilePath);
 
-    IXMLDOMDocument_Release(document);
+    if (document) IXMLDOMDocument_Release(document);
 
     SysFreeString(bstrValue);
     SysFreeString(bstrName);
@@ -426,9 +426,9 @@ static HRESULT GAMEUX_loadStatisticsFromFile(struct GAMEUX_STATS *data)
 
     HRESULT hr = S_OK;
     IXMLDOMDocument *document = NULL;
-    IXMLDOMElement *root = NULL, *categoryElement, *statisticElement;
-    IXMLDOMNode *categoryNode, *statisticNode;
-    IXMLDOMNodeList *rootChildren = NULL, *categoryChildren;
+    IXMLDOMElement *root = NULL, *categoryElement = NULL, *statisticElement = NULL;
+    IXMLDOMNode *categoryNode = NULL, *statisticNode = NULL;
+    IXMLDOMNodeList *rootChildren = NULL, *categoryChildren = NULL;
     VARIANT vStatsFilePath, vValue;
     BSTR bstrStatistics = NULL, bstrCategory = NULL, bstrIndex = NULL,
         bstrStatistic = NULL, bstrName = NULL, bstrValue = NULL;
@@ -571,22 +571,22 @@ static HRESULT GAMEUX_loadStatisticsFromFile(struct GAMEUX_STATS *data)
                                               debugstr_w(data->categories[i].stats[j].sName),
                                               debugstr_w(data->categories[i].stats[j].sValue));
                                     }
-                                    IXMLDOMElement_Release(statisticElement);
+                                    if (statisticElement) IXMLDOMElement_Release(statisticElement);
                                 }
 
-                                IXMLDOMNode_Release(statisticNode);
+                                if (statisticNode) IXMLDOMNode_Release(statisticNode);
                             }
                         }
 
-                        IXMLDOMNodeList_Release(categoryChildren);
+                        if (categoryChildren) IXMLDOMNodeList_Release(categoryChildren);
 
                         if(SUCCEEDED(hr))
                             hr = S_OK;
                     }
-                    IXMLDOMElement_Release(categoryElement);
+                    if (categoryElement) IXMLDOMElement_Release(categoryElement);
                 }
 
-                IXMLDOMNode_Release(categoryNode);
+                if (categoryNode) IXMLDOMNode_Release(categoryNode);
             }
         }
         if(SUCCEEDED(hr))
