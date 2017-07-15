@@ -447,7 +447,7 @@ static GpStatus METAFILE_WriteHeader(GpMetafile *metafile, HDC hdc)
         else
             header->Header.Flags = 0;
 
-        header->Version = 0xDBC01002;
+        header->Version = VERSION_MAGIC2;
 
         if (GetDeviceCaps(hdc, TECHNOLOGY) == DT_RASDISPLAY)
             header->EmfPlusFlags = 1;
@@ -2057,7 +2057,7 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
     else
     {
         memset(header, 0, sizeof(*header));
-        header->Version = 0xdbc01002;
+        header->Version = VERSION_MAGIC2;
     }
 
     header->Type = metafile->metafile_type;
@@ -2513,7 +2513,7 @@ static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DW
         *id = METAFILE_AddObjectId(metafile);
         object_record->Header.Type = EmfPlusRecordTypeObject;
         object_record->Header.Flags = *id | ObjectTypeImage << 8;
-        object_record->ObjectData.image.Version = 0xDBC01002;
+        object_record->ObjectData.image.Version = VERSION_MAGIC2;
         object_record->ObjectData.image.Type = ImageDataTypeBitmap;
 
         stat = METAFILE_FillEmfPlusBitmap(&object_record->ObjectData.image.ImageData.bitmap, stream, size);
@@ -2539,7 +2539,7 @@ static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DW
         *id = METAFILE_AddObjectId(metafile);
         object_record->Header.Type = EmfPlusRecordTypeObject;
         object_record->Header.Flags = *id | ObjectTypeImage << 8;
-        object_record->ObjectData.image.Version = 0xDBC01002;
+        object_record->ObjectData.image.Version = VERSION_MAGIC2;
         object_record->ObjectData.image.Type = ImageDataTypeMetafile;
         metafile_record = &object_record->ObjectData.image.ImageData.metafile;
         metafile_record->Type = ((GpMetafile*)image)->metafile_type;
@@ -2581,7 +2581,7 @@ static GpStatus METAFILE_AddImageAttributesObject(GpMetafile *metafile, const Gp
     object_record->Header.Type = EmfPlusRecordTypeObject;
     object_record->Header.Flags = *id | (ObjectTypeImageAttributes << 8);
     attrs_record = &object_record->ObjectData.image_attributes;
-    attrs_record->Version = 0xDBC01002;
+    attrs_record->Version = VERSION_MAGIC2;
     attrs_record->Reserved1 = 0;
     attrs_record->WrapMode = attrs->wrap;
     attrs_record->ClampColor.Blue = attrs->outside_color & 0xff;
@@ -2755,7 +2755,7 @@ static void METAFILE_FillBrushData(GpBrush *brush, EmfPlusBrush *data)
     {
         GpSolidFill *solid = (GpSolidFill*)brush;
 
-        data->Version = 0xDBC01002;
+        data->Version = VERSION_MAGIC2;
         data->Type = solid->brush.bt;
         data->BrushData.solid.SolidColor.Blue = solid->color & 0xff;
         data->BrushData.solid.SolidColor.Green = (solid->color >> 8) & 0xff;
@@ -2848,7 +2848,7 @@ static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *i
     *id = METAFILE_AddObjectId(metafile);
     object_record->Header.Type = EmfPlusRecordTypeObject;
     object_record->Header.Flags = *id | ObjectTypePen << 8;
-    object_record->ObjectData.pen.Version = 0xDBC01002;
+    object_record->ObjectData.pen.Version = VERSION_MAGIC2;
     object_record->ObjectData.pen.Type = 0;
 
     pen_data = (EmfPlusPenData*)object_record->ObjectData.pen.data;
