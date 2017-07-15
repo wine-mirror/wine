@@ -2482,6 +2482,10 @@ static GpStatus METAFILE_FillEmfPlusBitmap(EmfPlusBitmap *record, IStream *strea
 
 static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DWORD *id)
 {
+    EmfPlusObject *object_record;
+    GpStatus stat;
+    DWORD size;
+
     *id = -1;
 
     if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
@@ -2489,10 +2493,8 @@ static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DW
 
     if (image->type == ImageTypeBitmap)
     {
-        EmfPlusObject *object_record;
         IStream *stream;
-        DWORD size, aligned_size;
-        GpStatus stat;
+        DWORD aligned_size;
 
         stat = METAFILE_CreateCompressedImageStream(image, &stream, &size);
         if (stat != Ok) return stat;
@@ -2518,6 +2520,36 @@ static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DW
         IStream_Release(stream);
         if (stat != Ok) METAFILE_RemoveLastRecord(metafile, &object_record->Header);
         return stat;
+    }
+    else if (image->type == ImageTypeMetafile)
+    {
+        HENHMETAFILE hemf = ((GpMetafile*)image)->hemf;
+        EmfPlusMetafile *metafile_record;
+
+        if (!hemf) return InvalidParameter;
+
+        size = GetEnhMetaFileBits(hemf, 0, NULL);
+        if (!size) return GenericError;
+
+        stat  = METAFILE_AllocateRecord(metafile,
+                FIELD_OFFSET(EmfPlusObject, ObjectData.image.ImageData.metafile.MetafileData[size]),
+                (void**)&object_record);
+        if (stat != Ok) return stat;
+
+        *id = METAFILE_AddObjectId(metafile);
+        object_record->Header.Type = EmfPlusRecordTypeObject;
+        object_record->Header.Flags = *id | ObjectTypeImage << 8;
+        object_record->ObjectData.image.Version = 0xDBC01002;
+        object_record->ObjectData.image.Type = ImageDataTypeMetafile;
+        metafile_record = &object_record->ObjectData.image.ImageData.metafile;
+        metafile_record->Type = ((GpMetafile*)image)->metafile_type;
+        metafile_record->MetafileDataSize = size;
+        if (GetEnhMetaFileBits(hemf, size, metafile_record->MetafileData) != size)
+        {
+            METAFILE_RemoveLastRecord(metafile, &object_record->Header);
+            return GenericError;
+        }
+        return Ok;
     }
     else
     {
