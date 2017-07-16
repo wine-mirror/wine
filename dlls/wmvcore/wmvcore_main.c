@@ -70,6 +70,7 @@ typedef struct {
     IWMReaderNetworkConfig2 IWMReaderNetworkConfig2_iface;
     IWMReaderStreamClock IWMReaderStreamClock_iface;
     IWMReaderTypeNegotiation IWMReaderTypeNegotiation_iface;
+    IWMReaderTimecode IWMReaderTimecode_iface;
     LONG ref;
 } WMReader;
 
@@ -121,6 +122,9 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IWMReaderTypeNegotiation)) {
         TRACE("(%p)->(IWMReaderTypeNegotiation %p)\n", This, ppv);
         *ppv = &This->IWMReaderTypeNegotiation_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMReaderTimecode)) {
+        TRACE("(%p)->(IWMReaderTimecode %p)\n", This, ppv);
+        *ppv = &This->IWMReaderTimecode_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -1232,6 +1236,53 @@ static const IWMReaderTypeNegotiationVtbl WMReaderTypeNegotiationVtbl =
     negotiation_TryOutputProps
 };
 
+static inline WMReader *impl_from_IWMReaderTimecode(IWMReaderTimecode *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IWMReaderTimecode_iface);
+}
+
+static HRESULT WINAPI timecode_QueryInterface(IWMReaderTimecode *iface, REFIID riid, void **ppv)
+{
+    WMReader *This = impl_from_IWMReaderTimecode(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
+}
+
+static ULONG WINAPI timecode_AddRef(IWMReaderTimecode *iface)
+{
+    WMReader *This = impl_from_IWMReaderTimecode(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI timecode_Release(IWMReaderTimecode *iface)
+{
+    WMReader *This = impl_from_IWMReaderTimecode(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI timecode_GetTimecodeRangeCount(IWMReaderTimecode *iface, WORD num, WORD *count)
+{
+    WMReader *This = impl_from_IWMReaderTimecode(iface);
+    FIXME("%p, %d, %p\n", This, num, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI timecode_GetTimecodeRangeBounds(IWMReaderTimecode *iface, WORD stream, WORD range,
+        DWORD *start_timecode, DWORD *end_timecode)
+{
+    WMReader *This = impl_from_IWMReaderTimecode(iface);
+    FIXME("%p, %d, %d, %p, %p\n", This, stream, range, start_timecode, end_timecode);
+    return E_NOTIMPL;
+}
+
+static const IWMReaderTimecodeVtbl WMReaderTimecodeVtbl =
+{
+    timecode_QueryInterface,
+    timecode_AddRef,
+    timecode_Release,
+    timecode_GetTimecodeRangeCount,
+    timecode_GetTimecodeRangeBounds
+};
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
     WMReader *reader;
@@ -1248,6 +1299,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMReaderNetworkConfig2_iface.lpVtbl = &WMReaderNetworkConfig2Vtbl;
     reader->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
     reader->IWMReaderTypeNegotiation_iface.lpVtbl = &WMReaderTypeNegotiationVtbl;
+    reader->IWMReaderTimecode_iface.lpVtbl = &WMReaderTimecodeVtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;
