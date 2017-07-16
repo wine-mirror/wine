@@ -71,6 +71,7 @@ typedef struct {
     IWMReaderStreamClock IWMReaderStreamClock_iface;
     IWMReaderTypeNegotiation IWMReaderTypeNegotiation_iface;
     IWMReaderTimecode IWMReaderTimecode_iface;
+    IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
     LONG ref;
 } WMReader;
 
@@ -125,6 +126,9 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IWMReaderTimecode)) {
         TRACE("(%p)->(IWMReaderTimecode %p)\n", This, ppv);
         *ppv = &This->IWMReaderTimecode_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMReaderPlaylistBurn)) {
+        TRACE("(%p)->(IWMReaderPlaylistBurn %p)\n", This, ppv);
+        *ppv = &This->IWMReaderPlaylistBurn_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -1283,6 +1287,70 @@ static const IWMReaderTimecodeVtbl WMReaderTimecodeVtbl =
     timecode_GetTimecodeRangeBounds
 };
 
+
+static inline WMReader *impl_from_IWMReaderPlaylistBurn(IWMReaderPlaylistBurn *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IWMReaderPlaylistBurn_iface);
+}
+
+static HRESULT WINAPI playlist_QueryInterface(IWMReaderPlaylistBurn *iface, REFIID riid, void **ppv)
+{
+    WMReader *This = impl_from_IWMReaderPlaylistBurn(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
+}
+
+static ULONG WINAPI playlist_AddRef(IWMReaderPlaylistBurn *iface)
+{
+    WMReader *This = impl_from_IWMReaderPlaylistBurn(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI playlist_Release(IWMReaderPlaylistBurn *iface)
+{
+    WMReader *This = impl_from_IWMReaderPlaylistBurn(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI playlist_InitPlaylistBurn(IWMReaderPlaylistBurn *iface, DWORD count,
+        LPCWSTR_WMSDK_TYPE_SAFE *filenames, IWMStatusCallback *callback, void *context)
+{
+    WMReader *This = impl_from_IWMReaderPlaylistBurn(iface);
+    FIXME("%p, %d, %p, %p, %p\n", This, count, filenames, callback, context);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI playlist_GetInitResults(IWMReaderPlaylistBurn *iface, DWORD count, HRESULT *stat)
+{
+    WMReader *This = impl_from_IWMReaderPlaylistBurn(iface);
+    FIXME("%p, %d, %p\n", This, count, stat);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI playlist_Cancel(IWMReaderPlaylistBurn *iface)
+{
+    WMReader *This = impl_from_IWMReaderPlaylistBurn(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI playlist_EndPlaylistBurn(IWMReaderPlaylistBurn *iface, HRESULT result)
+{
+    WMReader *This = impl_from_IWMReaderPlaylistBurn(iface);
+    FIXME("%p, 0x%08x\n", This, result);
+    return E_NOTIMPL;
+}
+
+static const IWMReaderPlaylistBurnVtbl WMReaderPlaylistBurnVtbl =
+{
+    playlist_QueryInterface,
+    playlist_AddRef,
+    playlist_Release,
+    playlist_InitPlaylistBurn,
+    playlist_GetInitResults,
+    playlist_Cancel,
+    playlist_EndPlaylistBurn
+};
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
     WMReader *reader;
@@ -1300,6 +1368,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMReaderStreamClock_iface.lpVtbl = &WMReaderStreamClockVtbl;
     reader->IWMReaderTypeNegotiation_iface.lpVtbl = &WMReaderTypeNegotiationVtbl;
     reader->IWMReaderTimecode_iface.lpVtbl = &WMReaderTimecodeVtbl;
+    reader->IWMReaderPlaylistBurn_iface.lpVtbl = &WMReaderPlaylistBurnVtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;

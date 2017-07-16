@@ -81,6 +81,7 @@ static void test_wmreader_interfaces(void)
     IWMDRMReader       *drmreader;
     IWMDRMReader2      *drmreader2;
     IWMDRMReader3      *drmreader3;
+    IWMReaderPlaylistBurn *playlist;
 
     hr = WMCreateReader( NULL, 0, &reader );
     ok(hr == S_OK, "WMCreateReader failed 0x%08x\n", hr);
@@ -147,6 +148,9 @@ static void test_wmreader_interfaces(void)
     hr = IWMReader_QueryInterface(reader, &IID_IWMDRMReader3, (void **)&drmreader3);
     ok(hr == E_NOINTERFACE, "Failed 0x%08x\n", hr);
 
+    hr = IWMReader_QueryInterface(reader, &IID_IWMReaderPlaylistBurn, (void **)&playlist);
+    ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
     if(packet)
         IWMPacketSize_Release(packet);
     if(packet2)
@@ -179,6 +183,8 @@ static void test_wmreader_interfaces(void)
         IWMReaderStreamClock_Release(clock);
     if(negotiation)
         IWMReaderTypeNegotiation_Release(negotiation);
+    if(playlist)
+        IWMReaderPlaylistBurn_Release(playlist);
 
     IWMReader_Release(reader);
 }
