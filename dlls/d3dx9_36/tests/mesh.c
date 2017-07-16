@@ -10749,6 +10749,37 @@ static void test_optimize_faces(void)
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 }
 
+static void test_optimize_vertices(void)
+{
+    static const WORD indices_16bit[] = {0, 1, 2};
+    static const DWORD indices[] = {0, 1, 2};
+    DWORD vertex_remap[3];
+    unsigned int i;
+    HRESULT hr;
+
+    hr = D3DXOptimizeVertices(indices, 1, 3, TRUE, vertex_remap);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < 3; ++i)
+        ok(vertex_remap[i] == i, "Unexpected vertex remap %u -> %lu.\n", i, vertex_remap[i]);
+
+    hr = D3DXOptimizeVertices(indices_16bit, 1, 3, FALSE, vertex_remap);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < 3; ++i)
+        ok(vertex_remap[i] == i, "Unexpected vertex remap %u -> %lu.\n", i, vertex_remap[i]);
+
+    hr = D3DXOptimizeVertices(indices, 0, 3, TRUE, vertex_remap);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXOptimizeVertices(indices, 1, 0, TRUE, vertex_remap);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXOptimizeVertices(NULL, 1, 3, TRUE, vertex_remap);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXOptimizeVertices(indices, 1, 3, TRUE, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+}
+
 static HRESULT clear_normals(ID3DXMesh *mesh)
 {
     HRESULT hr;
@@ -11828,6 +11859,7 @@ START_TEST(mesh)
     test_clone_mesh();
     test_valid_mesh();
     test_optimize_faces();
+    test_optimize_vertices();
     test_compute_normals();
     test_D3DXFrameFind();
     test_load_skin_mesh_from_xof();

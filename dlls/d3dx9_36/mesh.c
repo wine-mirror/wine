@@ -7353,6 +7353,23 @@ error:
     return hr;
 }
 
+HRESULT WINAPI D3DXOptimizeVertices(const void *indices, UINT face_count, UINT vertex_count,
+        BOOL indices_are_32bit, DWORD *vertex_remap)
+{
+    unsigned int i;
+
+    FIXME("indices %p, face_count %u, vertex_count %u, indices_are_32bit %#x, vertex_remap %p semi-stub.\n",
+            indices, face_count, vertex_count, indices_are_32bit, vertex_remap);
+
+    if (!indices || !face_count || !vertex_count || !vertex_remap)
+        return D3DERR_INVALIDCALL;
+
+    for (i = 0; i < vertex_count; ++i)
+        vertex_remap[i] = i;
+
+    return D3D_OK;
+}
+
 static D3DXVECTOR3 *vertex_element_vec3(BYTE *vertices, const D3DVERTEXELEMENT9 *declaration,
         DWORD vertex_stride, DWORD index)
 {
