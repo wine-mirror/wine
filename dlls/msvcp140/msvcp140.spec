@@ -3669,7 +3669,7 @@
 @ stub _Last_write_time
 @ stub _Link
 @ cdecl _Lock_shared_ptr_spin_lock()
-@ stub _Lstat
+@ cdecl _Lstat(wstr ptr)
 @ cdecl _Make_dir(wstr) tr2_sys__Make_dir_wchar
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr) _Mbrtowc
 @ stub _Mtx_clear_owner
@@ -3699,7 +3699,7 @@
 @ stub _Set_last_write_time
 @ stub _Sinh
 @ extern _Snan _Snan
-@ stub _Stat
+@ cdecl _Stat(wstr ptr)
 @ stub _Statvfs
 @ cdecl _Stod(ptr ptr long) _Stod
 @ cdecl _Stodx(ptr ptr long ptr) _Stodx

@@ -135,6 +135,19 @@ typedef struct {
     void *arg;
 } _Threadpool_chore;
 
+enum file_type {
+    file_not_found = -1,
+    none_file,
+    regular_file,
+    directory_file,
+    symlink_file,
+    block_file,
+    character_file,
+    fifo_file,
+    socket_file,
+    status_unknown
+};
+
 static unsigned int (__cdecl *p__Thrd_id)(void);
 static task_continuation_context* (__thiscall *p_task_continuation_context_ctor)(task_continuation_context*);
 static void (__thiscall *p__ContextCallback__Assign)(_ContextCallback*, void*);
@@ -155,14 +168,20 @@ static void (__cdecl *p__Release_chore)(_Threadpool_chore*);
 static MSVCP_bool (__cdecl *p_Current_get)(WCHAR *);
 static MSVCP_bool (__cdecl *p_Current_set)(WCHAR const *);
 static ULONGLONG (__cdecl *p_File_size)(WCHAR const *);
+static enum file_type (__cdecl *p_Lstat)(WCHAR const *, int *);
+static enum file_type (__cdecl *p_Stat)(WCHAR const *, int *);
 static int (__cdecl *p_To_byte)(const WCHAR *src, char *dst);
 static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
+
+static BOOLEAN (WINAPI *pCreateSymbolicLinkW)(const WCHAR *, const WCHAR *, DWORD);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static BOOL init(void)
 {
+    HANDLE hdll;
+
     msvcp = LoadLibraryA("msvcp140.dll");
     if(!msvcp)
     {
@@ -222,8 +241,13 @@ static BOOL init(void)
     SET(p_Current_get, "_Current_get");
     SET(p_Current_set, "_Current_set");
     SET(p_File_size, "_File_size");
+    SET(p_Lstat, "_Lstat");
+    SET(p_Stat, "_Stat");
     SET(p_To_byte, "_To_byte");
     SET(p_To_wide, "_To_wide");
+
+    hdll = GetModuleHandleA("kernel32.dll");
+    pCreateSymbolicLinkW = (void*)GetProcAddress(hdll, "CreateSymbolicLinkW");
 
     init_thiscall_thunk();
     return TRUE;
@@ -691,6 +715,130 @@ static void test_Current_set(void)
             wine_dbgstr_w(origin_path), wine_dbgstr_w(current_path));
 }
 
+static void test_Stat(void)
+{
+    int i, perms, ret;
+    HANDLE file;
+    enum file_type val;
+    WCHAR test_dirW[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r',0};
+    WCHAR test_f1W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','f','1',0};
+    WCHAR test_f2W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','f','2',0};
+    WCHAR pipeW[] = {'\\','\\','.','\\','P','i','P','e','\\','t','e','s','t','s','_','p','i','p','e','.','c', 0};
+    WCHAR test_neW[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','n','e',0};
+    WCHAR test_invW[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','?','?','i','n','v','a','l','i','d','_','n','a','m','e','>','>',0};
+    WCHAR test_f1_linkW[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','f','1','_','l','i','n','k',0};
+    WCHAR test_dir_linkW[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','d','i','r','_','l','i','n','k',0};
+    WCHAR sys_path[MAX_PATH], origin_path[MAX_PATH], temp_path[MAX_PATH];
+    struct {
+        WCHAR const *path;
+        enum file_type ret;
+        int perms;
+        int is_todo;
+    } tests[] = {
+        { NULL, file_not_found, 0xdeadbeef, FALSE },
+        { test_dirW, directory_file, 0777, FALSE },
+        { test_f1W, regular_file, 0777, FALSE },
+        { test_f2W, regular_file, 0555, FALSE },
+        { test_neW, file_not_found, 0xdeadbeef, FALSE },
+        { test_invW, file_not_found, 0xdeadbeef, FALSE },
+        { test_f1_linkW, regular_file, 0777, TRUE },
+        { test_dir_linkW, directory_file, 0777, TRUE },
+    };
+
+    memset(origin_path, 0, sizeof(origin_path));
+    memset(origin_path, 0, sizeof(temp_path));
+    GetCurrentDirectoryW(MAX_PATH, origin_path);
+    GetTempPathW(MAX_PATH, temp_path);
+    ok(SetCurrentDirectoryW(temp_path), "SetCurrentDirectoryW to temp_path failed\n");
+
+    CreateDirectoryW(test_dirW, NULL);
+
+    file = CreateFileW(test_f1W, 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    ok(CloseHandle(file), "CloseHandle\n");
+
+    file = CreateFileW(test_f2W, 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    ok(CloseHandle(file), "CloseHandle\n");
+    SetFileAttributesW(test_f2W, FILE_ATTRIBUTE_READONLY);
+
+    SetLastError(0xdeadbeef);
+    ret = pCreateSymbolicLinkW && pCreateSymbolicLinkW(test_f1_linkW, test_f1W, 0);
+    if(!ret && (!pCreateSymbolicLinkW || GetLastError()==ERROR_PRIVILEGE_NOT_HELD||GetLastError()==ERROR_INVALID_FUNCTION)) {
+        tests[6].ret = tests[7].ret = file_not_found;
+        tests[6].perms = tests[7].perms = 0xdeadbeef;
+        win_skip("Privilege not held or symbolic link not supported, skipping symbolic link tests.\n");
+    }else {
+        ok(ret, "CreateSymbolicLinkW failed\n");
+        ok(pCreateSymbolicLinkW(test_dir_linkW, test_dirW, 1), "CreateSymbolicLinkW failed\n");
+    }
+
+    file = CreateNamedPipeW(pipeW,
+            PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT, 2, 1024, 1024,
+            NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+    perms = 0xdeadbeef;
+    val = p_Stat(pipeW, &perms);
+    todo_wine ok(regular_file == val, "_Stat(): expect: regular, got %d\n", val);
+    todo_wine ok(0777 == perms, "_Stat(): perms expect: 0777, got 0%o\n", perms);
+    perms = 0xdeadbeef;
+    val = p_Lstat(pipeW, &perms);
+    ok(status_unknown == val, "_Lstat(): expect: unknown, got %d\n", val);
+    ok(0xdeadbeef == perms, "_Lstat(): perms expect: 0xdeadbeef, got %x\n", perms);
+    ok(CloseHandle(file), "CloseHandle\n");
+    file = CreateNamedPipeW(pipeW,
+            PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT, 2, 1024, 1024,
+            NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+    perms = 0xdeadbeef;
+    val = p_Lstat(pipeW, &perms);
+    todo_wine ok(regular_file == val, "_Lstat(): expect: regular, got %d\n", val);
+    todo_wine ok(0777 == perms, "_Lstat(): perms expect: 0777, got 0%o\n", perms);
+    ok(CloseHandle(file), "CloseHandle\n");
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        perms = 0xdeadbeef;
+        val = p_Stat(tests[i].path, &perms);
+        todo_wine_if(tests[i].is_todo) {
+            ok(tests[i].ret == val, "_Stat(): test %d expect: %d, got %d\n", i+1, tests[i].ret, val);
+            ok(tests[i].perms == perms, "_Stat(): test %d perms expect: 0%o, got 0%o\n",
+                    i+1, tests[i].perms, perms);
+        }
+        val = p_Stat(tests[i].path, NULL);
+        todo_wine_if(tests[i].is_todo)
+            ok(tests[i].ret == val, "_Stat(): test %d expect: %d, got %d\n", i+1, tests[i].ret, val);
+
+        /* test _Lstat */
+        perms = 0xdeadbeef;
+        val = p_Lstat(tests[i].path, &perms);
+        todo_wine_if(tests[i].is_todo) {
+            ok(tests[i].ret == val, "_Lstat(): test %d expect: %d, got %d\n", i+1, tests[i].ret, val);
+            ok(tests[i].perms == perms, "_Lstat(): test %d perms expect: 0%o, got 0%o\n",
+                    i+1, tests[i].perms, perms);
+        }
+        val = p_Lstat(tests[i].path, NULL);
+        todo_wine_if(tests[i].is_todo)
+            ok(tests[i].ret == val, "_Lstat(): test %d expect: %d, got %d\n", i+1, tests[i].ret, val);
+    }
+
+    GetSystemDirectoryW(sys_path, MAX_PATH);
+    perms = 0xdeadbeef;
+    val = p_Stat(sys_path, &perms);
+    ok(directory_file == val, "_Stat(): expect: regular, got %d\n", val);
+    ok(0777 == perms, "_Stat(): perms expect: 0777, got 0%o\n", perms);
+
+    if(ret) {
+        todo_wine ok(DeleteFileW(test_f1_linkW), "expect tr2_test_dir/f1_link to exist\n");
+        todo_wine ok(RemoveDirectoryW(test_dir_linkW), "expect tr2_test_dir/dir_link to exist\n");
+    }
+    ok(DeleteFileW(test_f1W), "expect tr2_test_dir/f1 to exist\n");
+    SetFileAttributesW(test_f2W, FILE_ATTRIBUTE_NORMAL);
+    ok(DeleteFileW(test_f2W), "expect tr2_test_dir/f2 to exist\n");
+    ok(RemoveDirectoryW(test_dirW), "expect tr2_test_dir to exist\n");
+
+    ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -705,5 +853,6 @@ START_TEST(msvcp140)
     test_File_size();
     test_Current_get();
     test_Current_set();
+    test_Stat();
     FreeLibrary(msvcp);
 }

@@ -344,9 +344,25 @@ struct space_info {
 };
 
 enum file_type {
-    status_unknown, file_not_found, regular_file, directory_file,
-    symlink_file, block_file, character_file, fifo_file, socket_file,
-    type_unknown
+#if _MSVCP_VER < 140
+    status_unknown,
+    file_not_found,
+#else
+    file_not_found = -1,
+    none_file,
+#endif
+    regular_file,
+    directory_file,
+    symlink_file,
+    block_file,
+    character_file,
+    fifo_file,
+    socket_file,
+#if _MSVCP_VER < 140
+    type_unknown,
+#else
+    status_unknown
+#endif
 };
 
 #if _MSVCP_VER >= 110
@@ -15645,11 +15661,48 @@ enum file_type __cdecl tr2_sys__Stat_wchar(WCHAR const* path, int* err_code)
     return (attr & FILE_ATTRIBUTE_DIRECTORY)?directory_file:regular_file;
 }
 
+/* _Stat, msvcp140 version */
+enum file_type __cdecl _Stat(WCHAR const* path, int* permissions)
+{
+    DWORD attr;
+    TRACE("(%s %p)\n", debugstr_w(path), permissions);
+    if(!path) {
+        return file_not_found;
+    }
+
+    attr=GetFileAttributesW(path);
+    if(attr == INVALID_FILE_ATTRIBUTES) {
+        enum file_type ret;
+        switch(GetLastError()) {
+            case ERROR_FILE_NOT_FOUND:
+            case ERROR_BAD_NETPATH:
+            case ERROR_INVALID_NAME:
+            case ERROR_BAD_PATHNAME:
+            case ERROR_PATH_NOT_FOUND:
+                ret = file_not_found;
+                break;
+            default:
+                ret = status_unknown;
+        }
+        return ret;
+    }
+
+    if (permissions)
+        *permissions = (attr & FILE_ATTRIBUTE_READONLY) ? 0555 : 0777;
+    return (attr & FILE_ATTRIBUTE_DIRECTORY) ? directory_file : regular_file;
+}
+
 /* ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z */
 /* ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z */
 enum file_type __cdecl tr2_sys__Lstat_wchar(WCHAR const* path, int* err_code)
 {
     return tr2_sys__Stat_wchar(path, err_code);
+}
+
+/* _Lstat, msvcp140 version */
+enum file_type __cdecl _Lstat(WCHAR const* path, int* permissions)
+{
+    return _Stat(path, permissions);
 }
 
 /* ??1_Winit@std@@QAE@XZ */
