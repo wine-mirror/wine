@@ -143,6 +143,7 @@ typedef struct
     struct sockaddr_storage sockaddr;
     BOOL secure; /* SSL active on connection? */
     host_t *host;
+    ULONGLONG keep_until;
     CtxtHandle ssl_ctx;
     SecPkgContext_StreamSizes ssl_sizes;
     char *ssl_buf;
@@ -391,5 +392,7 @@ static inline char *strdupWA_sized( const WCHAR *src, DWORD size )
     }
     return dst;
 }
+
+extern HINSTANCE winhttp_instance DECLSPEC_HIDDEN;
 
 #endif /* _WINE_WINHTTP_PRIVATE_H_ */

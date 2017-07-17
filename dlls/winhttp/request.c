@@ -43,6 +43,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
+#define DEFAULT_KEEP_ALIVE_TIMEOUT 30000
+
 static const WCHAR attr_accept[] = {'A','c','c','e','p','t',0};
 static const WCHAR attr_accept_charset[] = {'A','c','c','e','p','t','-','C','h','a','r','s','e','t', 0};
 static const WCHAR attr_accept_encoding[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',0};
@@ -1016,12 +1018,77 @@ void release_host( host_t *host )
     heap_free( host );
 }
 
+static BOOL connection_collector_running;
+
+static DWORD WINAPI connection_collector(void *arg)
+{
+    unsigned int remaining_connections;
+    netconn_t *netconn, *next_netconn;
+    host_t *host, *next_host;
+    ULONGLONG now;
+
+    do
+    {
+        /* FIXME: Use more sophisticated method */
+        Sleep(5000);
+        remaining_connections = 0;
+        now = GetTickCount64();
+
+        EnterCriticalSection(&connection_pool_cs);
+
+        LIST_FOR_EACH_ENTRY_SAFE(host, next_host, &connection_pool, host_t, entry)
+        {
+            LIST_FOR_EACH_ENTRY_SAFE(netconn, next_netconn, &host->connections, netconn_t, entry)
+            {
+                if (netconn->keep_until < now)
+                {
+                    TRACE("freeing %p\n", netconn);
+                    list_remove(&netconn->entry);
+                    netconn_close(netconn);
+                }
+                else
+                {
+                    remaining_connections++;
+                }
+            }
+        }
+
+        if (!remaining_connections) connection_collector_running = FALSE;
+
+        LeaveCriticalSection(&connection_pool_cs);
+    } while(remaining_connections);
+
+    FreeLibraryAndExitThread( winhttp_instance, 0 );
+}
+
 static void cache_connection( netconn_t *netconn )
 {
     TRACE( "caching connection %p\n", netconn );
 
     EnterCriticalSection( &connection_pool_cs );
+
+    netconn->keep_until = GetTickCount64() + DEFAULT_KEEP_ALIVE_TIMEOUT;
     list_add_head( &netconn->host->connections, &netconn->entry );
+
+    if (!connection_collector_running)
+    {
+        HMODULE module;
+        HANDLE thread;
+
+        GetModuleHandleExW( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const WCHAR*)winhttp_instance, &module );
+
+        thread = CreateThread(NULL, 0, connection_collector, NULL, 0, NULL);
+        if (thread)
+        {
+            CloseHandle( thread );
+            connection_collector_running = TRUE;
+        }
+        else
+        {
+            FreeLibrary( winhttp_instance );
+        }
+    }
+
     LeaveCriticalSection( &connection_pool_cs );
 }
 
