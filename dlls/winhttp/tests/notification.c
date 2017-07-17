@@ -484,8 +484,6 @@ static const struct notification async_test[] =
     { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NF_ALLOW },
     { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, NF_ALLOW },
     { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SIGNAL },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, NF_WINE_ALLOW },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, NF_WINE_ALLOW },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, NF_SIGNAL }

@@ -102,6 +102,7 @@ typedef struct {
     WCHAR *hostname;
     INTERNET_PORT port;
     BOOL secure;
+    struct list connections;
 } host_t;
 
 typedef struct
@@ -137,6 +138,7 @@ typedef struct
 
 typedef struct
 {
+    struct list entry;
     int socket;
     struct sockaddr_storage sockaddr;
     BOOL secure; /* SSL active on connection? */
@@ -300,6 +302,7 @@ BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_storage *, int ) D
 BOOL netconn_secure_connect( netconn_t *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;
 BOOL netconn_send( netconn_t *, const void *, size_t, int * ) DECLSPEC_HIDDEN;
 DWORD netconn_set_timeout( netconn_t *, BOOL, int ) DECLSPEC_HIDDEN;
+BOOL netconn_is_alive( netconn_t * ) DECLSPEC_HIDDEN;
 const void *netconn_get_certificate( netconn_t * ) DECLSPEC_HIDDEN;
 int netconn_get_cipher_strength( netconn_t * ) DECLSPEC_HIDDEN;
 

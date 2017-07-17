@@ -1011,15 +1011,25 @@ void release_host( host_t *host )
     LeaveCriticalSection( &connection_pool_cs );
     if (ref) return;
 
+    assert( list_empty( &host->connections ) );
     heap_free( host->hostname );
     heap_free( host );
+}
+
+static void cache_connection( netconn_t *netconn )
+{
+    TRACE( "caching connection %p\n", netconn );
+
+    EnterCriticalSection( &connection_pool_cs );
+    list_add_head( &netconn->host->connections, &netconn->entry );
+    LeaveCriticalSection( &connection_pool_cs );
 }
 
 static BOOL open_connection( request_t *request )
 {
     BOOL is_secure = request->hdr.flags & WINHTTP_FLAG_SECURE;
     host_t *host = NULL, *iter;
-    netconn_t *netconn;
+    netconn_t *netconn = NULL;
     connect_t *connect;
     WCHAR *addressW = NULL;
     INTERNET_PORT port;
@@ -1048,6 +1058,7 @@ static BOOL open_connection( request_t *request )
         host->ref = 1;
         host->secure = is_secure;
         host->port = port;
+        list_init( &host->connections );
         if ((host->hostname = strdupW( connect->servername )))
         {
             list_add_head( &connection_pool, &host->entry );
@@ -1062,6 +1073,29 @@ static BOOL open_connection( request_t *request )
     LeaveCriticalSection( &connection_pool_cs );
 
     if (!host) return FALSE;
+
+    for (;;)
+    {
+        EnterCriticalSection( &connection_pool_cs );
+        if (!list_empty( &host->connections ))
+        {
+            netconn = LIST_ENTRY( list_head( &host->connections ), netconn_t, entry );
+            list_remove( &netconn->entry );
+        }
+        LeaveCriticalSection( &connection_pool_cs );
+        if (!netconn) break;
+
+        if (netconn_is_alive( netconn )) break;
+        TRACE("connection %p no longer alive, closing\n", netconn);
+        netconn_close( netconn );
+        netconn = NULL;
+    }
+
+    if (!connect->resolved && netconn)
+    {
+        connect->sockaddr = netconn->sockaddr;
+        connect->resolved = TRUE;
+    }
 
     if (!connect->resolved)
     {
@@ -1084,47 +1118,57 @@ static BOOL open_connection( request_t *request )
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, addressW, len );
     }
 
-    if (!addressW && !(addressW = addr_to_str( &connect->sockaddr )))
-    {
-        release_host( host );
-        return FALSE;
-    }
-
-    TRACE("connecting to %s:%u\n", debugstr_w(addressW), port);
-
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
-
-    netconn = netconn_create( host, &connect->sockaddr, request->connect_timeout );
     if (!netconn)
     {
-        release_host( host );
-        heap_free( addressW );
-        return FALSE;
-    }
-    netconn_set_timeout( netconn, TRUE, request->send_timeout );
-    netconn_set_timeout( netconn, FALSE, request->recv_timeout );
-    if (request->hdr.flags & WINHTTP_FLAG_SECURE)
-    {
-        if (connect->session->proxy_server &&
-            strcmpiW( connect->hostname, connect->servername ))
+        if (!addressW && !(addressW = addr_to_str( &connect->sockaddr )))
         {
-            if (!secure_proxy_connect( request ))
+            release_host( host );
+            return FALSE;
+        }
+
+        TRACE("connecting to %s:%u\n", debugstr_w(addressW), port);
+
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
+
+        if (!(netconn = netconn_create( host, &connect->sockaddr, request->connect_timeout )))
+        {
+            heap_free( addressW );
+            release_host( host );
+            return FALSE;
+        }
+        netconn_set_timeout( netconn, TRUE, request->send_timeout );
+        netconn_set_timeout( netconn, FALSE, request->recv_timeout );
+        if (is_secure)
+        {
+            if (connect->session->proxy_server &&
+                strcmpiW( connect->hostname, connect->servername ))
+            {
+                if (!secure_proxy_connect( request ))
+                {
+                    heap_free( addressW );
+                    netconn_close( netconn );
+                    return FALSE;
+                }
+            }
+            if (!netconn_secure_connect( netconn, connect->hostname, request->security_flags ))
             {
                 heap_free( addressW );
                 netconn_close( netconn );
                 return FALSE;
             }
         }
-        if (!netconn_secure_connect( netconn, connect->hostname, request->security_flags ))
-        {
-            netconn_close( netconn );
-            heap_free( addressW );
-            return FALSE;
-        }
-    }
-    request->netconn = netconn;
 
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, strlenW(addressW) + 1 );
+        request->netconn = netconn;
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, strlenW(addressW) + 1 );
+    }
+    else
+    {
+        TRACE("using connection %p\n", netconn);
+
+        netconn_set_timeout( netconn, TRUE, request->send_timeout );
+        netconn_set_timeout( netconn, FALSE, request->recv_timeout );
+        request->netconn = netconn;
+    }
 
 done:
     request->read_pos = request->read_size = 0;
@@ -1309,6 +1353,8 @@ static void finished_reading( request_t *request )
     WCHAR connection[20];
     DWORD size = sizeof(connection);
 
+    if (!request->netconn) return;
+
     if (request->hdr.disable_flags & WINHTTP_DISABLE_KEEP_ALIVE) close = TRUE;
     else if (query_headers( request, WINHTTP_QUERY_CONNECTION, NULL, connection, &size, NULL ) ||
              query_headers( request, WINHTTP_QUERY_PROXY_CONNECTION, NULL, connection, &size, NULL ))
@@ -1316,7 +1362,14 @@ static void finished_reading( request_t *request )
         if (!strcmpiW( connection, closeW )) close = TRUE;
     }
     else if (!strcmpW( request->version, http1_0 )) close = TRUE;
-    if (close) close_connection( request );
+    if (close)
+    {
+        close_connection( request );
+        return;
+    }
+
+    cache_connection( request->netconn );
+    request->netconn = NULL;
 }
 
 /* return the size of data available to be read immediately */

@@ -772,6 +772,36 @@ DWORD netconn_set_timeout( netconn_t *netconn, BOOL send, int value )
     return ERROR_SUCCESS;
 }
 
+BOOL netconn_is_alive( netconn_t *netconn )
+{
+#ifdef MSG_DONTWAIT
+    ssize_t len;
+    BYTE b;
+
+    len = recv( netconn->socket, &b, 1, MSG_PEEK | MSG_DONTWAIT );
+    return len == 1 || (len == -1 && errno == EWOULDBLOCK);
+#elif defined(__MINGW32__) || defined(_MSC_VER)
+    ULONG mode;
+    int len;
+    char b;
+
+    mode = 1;
+    if(!ioctlsocket(netconn->socket, FIONBIO, &mode))
+        return FALSE;
+
+    len = recv(netconn->socket, &b, 1, MSG_PEEK);
+
+    mode = 0;
+    if(!ioctlsocket(netconn->socket, FIONBIO, &mode))
+        return FALSE;
+
+    return len == 1 || (len == -1 && WSAGetLastError() == WSAEWOULDBLOCK);
+#else
+    FIXME("not supported on this platform\n");
+    return TRUE;
+#endif
+}
+
 static DWORD resolve_hostname( const WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr_storage *sa )
 {
     char *hostname;
