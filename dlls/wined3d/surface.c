@@ -2551,6 +2551,9 @@ static BOOL ffp_blitter_use_cpu_clear(struct wined3d_rendertarget_view *view)
     struct wined3d_texture *texture;
 
     resource = view->resource;
+    if (resource->pool == WINED3D_POOL_SYSTEM_MEM)
+        return TRUE;
+
     if (resource->type == WINED3D_RTYPE_BUFFER)
         return FALSE;
 
@@ -2578,9 +2581,6 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
                 continue;
 
             resource = view->resource;
-            if (resource->pool == WINED3D_POOL_SYSTEM_MEM)
-                goto next;
-
             if (!(flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
                     && ffp_blitter_use_cpu_clear(view))
                 goto next;
@@ -2601,13 +2601,9 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
         }
     }
 
-    if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
-    {
-        view = fb->depth_stencil;
-        if (view && (view->resource->pool == WINED3D_POOL_SYSTEM_MEM
-                || ffp_blitter_use_cpu_clear(view)))
-            goto next;
-    }
+    if ((flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
+            && (view = fb->depth_stencil) && ffp_blitter_use_cpu_clear(view))
+        goto next;
 
     device_clear_render_targets(device, rt_count, fb, rect_count,
             clear_rects, draw_rect, flags, colour, depth, stencil);
