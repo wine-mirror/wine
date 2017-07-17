@@ -647,6 +647,7 @@ DWORD wined3d_map_flags_from_d3d11_map_type(D3D11_MAP map_type)
 {
     switch (map_type)
     {
+        case D3D11_MAP_WRITE:
         case D3D11_MAP_READ_WRITE:
             return 0;
 
