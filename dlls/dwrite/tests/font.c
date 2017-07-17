@@ -1337,7 +1337,6 @@ static void test_CreateBitmapRenderTarget(void)
 
     hr = IDWriteBitmapRenderTarget_DrawGlyphRun(target, 0.0f, 0.0f, DWRITE_MEASURING_MODE_NATURAL,
         &run, NULL, RGB(255, 0, 0), NULL);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IDWriteBitmapRenderTarget_DrawGlyphRun(target, 0.0f, 0.0f, DWRITE_MEASURING_MODE_GDI_NATURAL + 1,
