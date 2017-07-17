@@ -2595,8 +2595,10 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
         }
     }
 
-    if ((flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
-            && (view = fb->depth_stencil) && ffp_blitter_use_cpu_clear(view))
+    if ((flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)) && (view = fb->depth_stencil)
+            && (!view->format->depth_size || (flags & WINED3DCLEAR_ZBUFFER))
+            && (!view->format->stencil_size || (flags & WINED3DCLEAR_STENCIL))
+            && ffp_blitter_use_cpu_clear(view))
     {
         next_flags |= flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
         flags &= ~(WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
