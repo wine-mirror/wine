@@ -299,12 +299,13 @@ void netconn_unload( void )
 #endif
 }
 
-netconn_t *netconn_create( int domain, int type, int protocol )
+netconn_t *netconn_create( const struct sockaddr_storage *sockaddr )
 {
     netconn_t *conn;
     conn = heap_alloc_zero(sizeof(*conn));
     if (!conn) return NULL;
-    if ((conn->socket = socket( domain, type, protocol )) == -1)
+    conn->sockaddr = *sockaddr;
+    if ((conn->socket = socket( sockaddr->ss_family, SOCK_STREAM, 0 )) == -1)
     {
         WARN("unable to create socket (%s)\n", strerror(errno));
         set_last_error( sock_get_error( errno ) );
@@ -335,14 +336,14 @@ BOOL netconn_close( netconn_t *conn )
     return TRUE;
 }
 
-BOOL netconn_connect( netconn_t *conn, const struct sockaddr_storage *sockaddr, int timeout )
+BOOL netconn_connect( netconn_t *conn, int timeout )
 {
     unsigned int addr_len;
     BOOL ret = FALSE;
     int res;
     ULONG state;
 
-    switch (sockaddr->ss_family)
+    switch (conn->sockaddr.ss_family)
     {
     case AF_INET:
         addr_len = sizeof(struct sockaddr_in);
@@ -363,7 +364,7 @@ BOOL netconn_connect( netconn_t *conn, const struct sockaddr_storage *sockaddr, 
     for (;;)
     {
         res = 0;
-        if (connect( conn->socket, (const struct sockaddr *)sockaddr, addr_len ) < 0)
+        if (connect( conn->socket, (const struct sockaddr *)&conn->sockaddr, addr_len ) < 0)
         {
             res = sock_get_error( errno );
             if (res == WSAEWOULDBLOCK || res == WSAEINPROGRESS)

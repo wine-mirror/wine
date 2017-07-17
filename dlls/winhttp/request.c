@@ -1021,14 +1021,14 @@ static BOOL open_connection( request_t *request )
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
 
-    if (!(netconn = netconn_create( connect->sockaddr.ss_family, SOCK_STREAM, 0 )))
+    if (!(netconn = netconn_create( &connect->sockaddr )))
     {
         heap_free( addressW );
         return FALSE;
     }
     netconn_set_timeout( netconn, TRUE, request->send_timeout );
     netconn_set_timeout( netconn, FALSE, request->recv_timeout );
-    if (!netconn_connect( netconn, &connect->sockaddr, request->connect_timeout ))
+    if (!netconn_connect( netconn, request->connect_timeout ))
     {
         netconn_close( netconn );
         heap_free( addressW );
