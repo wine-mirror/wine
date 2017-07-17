@@ -165,10 +165,13 @@ static int (__cdecl *p__Schedule_chore)(_Threadpool_chore*);
 static int (__cdecl *p__Reschedule_chore)(const _Threadpool_chore*);
 static void (__cdecl *p__Release_chore)(_Threadpool_chore*);
 
+static void (__cdecl *p_Close_dir)(void*);
 static MSVCP_bool (__cdecl *p_Current_get)(WCHAR *);
 static MSVCP_bool (__cdecl *p_Current_set)(WCHAR const *);
 static ULONGLONG (__cdecl *p_File_size)(WCHAR const *);
 static enum file_type (__cdecl *p_Lstat)(WCHAR const *, int *);
+static void* (__cdecl *p_Open_dir)(WCHAR*, WCHAR const*, int *, enum file_type*);
+static WCHAR* (__cdecl *p_Read_dir)(WCHAR*, void*, enum file_type*);
 static enum file_type (__cdecl *p_Stat)(WCHAR const *, int *);
 static int (__cdecl *p_To_byte)(const WCHAR *src, char *dst);
 static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
@@ -238,10 +241,13 @@ static BOOL init(void)
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z");
     }
 
+    SET(p_Close_dir, "_Close_dir");
     SET(p_Current_get, "_Current_get");
     SET(p_Current_set, "_Current_set");
     SET(p_File_size, "_File_size");
     SET(p_Lstat, "_Lstat");
+    SET(p_Open_dir, "_Open_dir");
+    SET(p_Read_dir, "_Read_dir");
     SET(p_Stat, "_Stat");
     SET(p_To_byte, "_To_byte");
     SET(p_To_wide, "_To_wide");
@@ -839,6 +845,122 @@ static void test_Stat(void)
     ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
 }
 
+static void test_dir_operation(void)
+{
+    WCHAR *file_name, first_file_name[MAX_PATH], dest[MAX_PATH], longer_path[MAX_PATH];
+    WCHAR origin_path[MAX_PATH], temp_path[MAX_PATH];
+    HANDLE file, result_handle;
+    enum file_type type;
+    int err, num_of_f1 = 0, num_of_f2 = 0, num_of_sub_dir = 0, num_of_other_files = 0;
+    WCHAR test_dirW[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r',0};
+    WCHAR test_f1W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','f','1',0};
+    WCHAR test_f2W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','f','2',0};
+    WCHAR test_sub_dirW[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r','/','s','u','b','_','d','i','r',0};
+    WCHAR test_sub_dir_f1W[] = {'w','i','n','e','_','t','e','s','t','_','d','i','r',
+            '/','s','u','b','_','d','i','r','/','f','1',0};
+    WCHAR backslashW[] = {'\\',0};
+    WCHAR sW[] = {'s',0};
+    WCHAR f1W[] = {'f','1',0};
+    WCHAR f2W[] = {'f','2',0};
+    WCHAR sub_dirW[] = {'s','u','b','_','d','i','r',0};
+    WCHAR not_existW[] = {'n','o','t','_','e','x','i','s','t',0};
+    WCHAR emtpy_dirW[] = {'e','m','p','t','y','_','d','i','r',0};
+
+    memset(origin_path, 0, sizeof(origin_path));
+    memset(origin_path, 0, sizeof(temp_path));
+    GetCurrentDirectoryW(MAX_PATH, origin_path);
+    GetTempPathW(MAX_PATH, temp_path);
+    ok(SetCurrentDirectoryW(temp_path), "SetCurrentDirectoryW to temp_path failed\n");
+
+    CreateDirectoryW(test_dirW, NULL);
+    file = CreateFileW(test_f1W, 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+    file = CreateFileW(test_f2W, 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+    CreateDirectoryW(test_sub_dirW, NULL);
+    file = CreateFileW(test_sub_dir_f1W, 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+
+    memcpy(longer_path, temp_path, sizeof(longer_path));
+    wcscat(longer_path, backslashW);
+    wcscat(longer_path, test_dirW);
+    wcscat(longer_path, backslashW);
+    while(lstrlenW(longer_path) < MAX_PATH-1)
+        wcscat(longer_path, sW);
+    memset(first_file_name, 0, sizeof(first_file_name));
+    type = err =  0xdeadbeef;
+    result_handle = NULL;
+    result_handle = p_Open_dir(first_file_name, longer_path, &err, &type);
+    ok(result_handle == NULL, "_Open_dir(): expect NULL, got %p\n", result_handle);
+    ok(!*first_file_name, "_Open_dir(): expect: 0, got %s\n", wine_dbgstr_w(first_file_name));
+    ok(err == ERROR_BAD_PATHNAME, "_Open_dir(): expect: ERROR_BAD_PATHNAME, got %d\n", err);
+    ok((int)type == 0xdeadbeef, "_Open_dir(): expect 0xdeadbeef, got %d\n", type);
+
+    memset(first_file_name, 0, sizeof(first_file_name));
+    memset(dest, 0, sizeof(dest));
+    err = type = 0xdeadbeef;
+    result_handle = NULL;
+    result_handle = p_Open_dir(first_file_name, test_dirW, &err, &type);
+    ok(result_handle != NULL, "_Open_dir(): expect: not NULL, got %p\n", result_handle);
+    ok(err == ERROR_SUCCESS, "_Open_dir(): expect: ERROR_SUCCESS, got %d\n", err);
+    file_name = first_file_name;
+    while(*file_name) {
+        if (!wcscmp(file_name, f1W)) {
+            ++num_of_f1;
+            ok(type == regular_file, "expect regular_file, got %d\n", type);
+        }else if(!wcscmp(file_name, f2W)) {
+            ++num_of_f2;
+            ok(type == regular_file, "expect regular_file, got %d\n", type);
+        }else if(!wcscmp(file_name, sub_dirW)) {
+            ++num_of_sub_dir;
+            ok(type == directory_file, "expect directory_file, got %d\n", type);
+        }else {
+            ++num_of_other_files;
+        }
+        file_name = p_Read_dir(dest, result_handle, &type);
+    }
+    ok(type == status_unknown, "_Read_dir(): expect: status_unknown, got %d\n", type);
+    p_Close_dir(result_handle);
+    ok(result_handle != NULL, "_Open_dir(): expect: not NULL, got %p\n", result_handle);
+    ok(num_of_f1 == 1, "found f1 %d times\n", num_of_f1);
+    ok(num_of_f2 == 1, "found f2 %d times\n", num_of_f2);
+    ok(num_of_sub_dir == 1, "found sub_dir %d times\n", num_of_sub_dir);
+    ok(num_of_other_files == 0, "found %d other files\n", num_of_other_files);
+
+    memset(first_file_name, 0, sizeof(first_file_name));
+    err = type = 0xdeadbeef;
+    result_handle = file;
+    result_handle = p_Open_dir(first_file_name, not_existW, &err, &type);
+    ok(result_handle == NULL, "_Open_dir(): expect: NULL, got %p\n", result_handle);
+    todo_wine ok(err == ERROR_BAD_PATHNAME, "_Open_dir(): expect: ERROR_BAD_PATHNAME, got %d\n", err);
+    ok((int)type == 0xdeadbeef, "_Open_dir(): expect: 0xdeadbeef, got %d\n", type);
+    ok(!*first_file_name, "_Open_dir(): expect: 0, got %s\n", wine_dbgstr_w(first_file_name));
+
+    CreateDirectoryW(emtpy_dirW, NULL);
+    memset(first_file_name, 0, sizeof(first_file_name));
+    err = type = 0xdeadbeef;
+    result_handle = file;
+    result_handle = p_Open_dir(first_file_name, emtpy_dirW, &err, &type);
+    ok(result_handle == NULL, "_Open_dir(): expect: NULL, got %p\n", result_handle);
+    ok(err == ERROR_SUCCESS, "_Open_dir(): expect: ERROR_SUCCESS, got %d\n", err);
+    ok(type == status_unknown, "_Open_dir(): expect: status_unknown, got %d\n", type);
+    ok(!*first_file_name, "_Open_dir(): expect: 0, got %s\n", wine_dbgstr_w(first_file_name));
+    p_Close_dir(result_handle);
+    ok(result_handle == NULL, "_Open_dir(): expect: NULL, got %p\n", result_handle);
+
+    ok(RemoveDirectoryW(emtpy_dirW), "expect empty_dir to exist\n");
+    ok(DeleteFileW(test_sub_dir_f1W), "expect wine_test_dir/sub_dir/sub_f1 to exist\n");
+    ok(RemoveDirectoryW(test_sub_dirW), "expect wine_test_dir/sub_dir to exist\n");
+    ok(DeleteFileW(test_f1W), "expect wine_test_dir/f1 to exist\n");
+    ok(DeleteFileW(test_f2W), "expect wine_test_dir/f2 to exist\n");
+    ok(RemoveDirectoryW(test_dirW), "expect wine_test_dir to exist\n");
+
+    ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -854,5 +976,6 @@ START_TEST(msvcp140)
     test_Current_get();
     test_Current_set();
     test_Stat();
+    test_dir_operation();
     FreeLibrary(msvcp);
 }

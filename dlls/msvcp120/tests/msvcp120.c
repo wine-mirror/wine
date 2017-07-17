@@ -1461,6 +1461,7 @@ static void test_tr2_sys__dir_operation(void)
         }
         file_name = p_tr2_sys__Read_dir(dest, result_handle, &type);
     }
+    ok(type == status_unknown, "p_tr2_sys__Read_dir(): expect: status_unknown, got %d\n", type);
     p_tr2_sys__Close_dir(result_handle);
     ok(result_handle != NULL, "tr2_sys__Open_dir(): expect: not NULL, got %p\n", result_handle);
     ok(num_of_f1 == 1, "found f1 %d times\n", num_of_f1);
