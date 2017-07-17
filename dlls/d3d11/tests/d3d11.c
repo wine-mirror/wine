@@ -13586,6 +13586,29 @@ static void test_uint_shader_instructions(void)
         0x0f00008c, 0x001020f2, 0x00000000, 0x00208006, 0x00000000, 0x00000000, 0x00208556, 0x00000000,
         0x00000000, 0x00208aa6, 0x00000000, 0x00000000, 0x00208ff6, 0x00000000, 0x00000000, 0x0100003e,
     };
+    static const DWORD ps_bfi2_code[] =
+    {
+#if 0
+        ps_5_0
+        dcl_globalFlags refactoringAllowed
+        dcl_constantbuffer cb0[1], immediateIndexed
+        dcl_output o0.xyzw
+        dcl_temps 1
+        mov r0.xyzw, cb0[0].xyzw
+        bfi r0.xyzw, r0.xxxx, r0.yyyy, r0.zzzz, r0.wwww
+        mov o0.xyzw, r0.xyzw
+        ret
+#endif
+        0x43425844, 0x900f86b6, 0x73f4dabf, 0xea1b1106, 0x591ac790, 0x00000001, 0x00000104, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x0000008c, 0x00000050, 0x00000023,
+        0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000001, 0x06000036, 0x001000f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000000,
+        0x0b00008c, 0x001000f2, 0x00000000, 0x00100006, 0x00000000, 0x00100556, 0x00000000, 0x00100aa6,
+        0x00000000, 0x00100ff6, 0x00000000, 0x05000036, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000,
+        0x0100003e,
+    };
     static const DWORD ps_ibfe_code[] =
     {
 #if 0
@@ -13603,6 +13626,28 @@ static void test_uint_shader_instructions(void)
         0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
         0x0c00008b, 0x001020f2, 0x00000000, 0x00208006, 0x00000000, 0x00000000, 0x00208556, 0x00000000,
         0x00000000, 0x00208aa6, 0x00000000, 0x00000000, 0x0100003e,
+    };
+    static const DWORD ps_ibfe2_code[] =
+    {
+#if 0
+        ps_5_0
+        dcl_globalFlags refactoringAllowed
+        dcl_constantbuffer cb0[1], immediateIndexed
+        dcl_output o0.xyzw
+        dcl_temps 1
+        mov r0.xyzw, cb0[0].xyzw
+        ibfe r0.xyzw, r0.xxxx, r0.yyyy, r0.zzzz
+        mov o0.xyzw, r0.xyzw
+        ret
+#endif
+        0x43425844, 0x347a9c0e, 0x3eff39a4, 0x3dd41cc5, 0xff87ec8d, 0x00000001, 0x000000fc, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000084, 0x00000050, 0x00000021,
+        0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000001, 0x06000036, 0x001000f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000000,
+        0x0900008b, 0x001000f2, 0x00000000, 0x00100006, 0x00000000, 0x00100556, 0x00000000, 0x00100aa6,
+        0x00000000, 0x05000036, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x0100003e,
     };
     static const DWORD ps_ubfe_code[] =
     {
@@ -13622,6 +13667,28 @@ static void test_uint_shader_instructions(void)
         0x1000008a, 0x001020f2, 0x00000000, 0x00004002, 0x00000004, 0x00000017, 0x00000007, 0x0000001e,
         0x00004002, 0x00000004, 0x00000008, 0x00000001, 0x00000001, 0x00208006, 0x00000000, 0x00000000,
         0x0100003e,
+    };
+    static const DWORD ps_ubfe2_code[] =
+    {
+#if 0
+       ps_5_0
+       dcl_globalFlags refactoringAllowed
+       dcl_constantbuffer cb0[1], immediateIndexed
+       dcl_output o0.xyzw
+       dcl_temps 1
+       mov r0.xyzw, cb0[0].xyzw
+       ubfe r0.xyzw, r0.xxxx, r0.yyyy, r0.zzzz
+       mov o0.xyzw, r0.xyzw
+       ret
+#endif
+        0x43425844, 0xf377b7fc, 0x1e4cb9e7, 0xb9b1020d, 0xde484388, 0x00000001, 0x000000fc, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000084, 0x00000050, 0x00000021,
+        0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000001, 0x06000036, 0x001000f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000000,
+        0x0900008a, 0x001000f2, 0x00000000, 0x00100006, 0x00000000, 0x00100556, 0x00000000, 0x00100aa6,
+        0x00000000, 0x05000036, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x0100003e,
     };
     static const DWORD ps_bfrev_code[] =
     {
@@ -13746,8 +13813,11 @@ static void test_uint_shader_instructions(void)
         0x00000000, 0x0600003b, 0x00102052, 0x00000000, 0x00208106, 0x00000000, 0x00000000, 0x0100003e,
     };
     static const struct shader ps_bfi = {ps_bfi_code, sizeof(ps_bfi_code), D3D_FEATURE_LEVEL_11_0};
+    static const struct shader ps_bfi2 = {ps_bfi2_code, sizeof(ps_bfi2_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_ibfe = {ps_ibfe_code, sizeof(ps_ibfe_code), D3D_FEATURE_LEVEL_11_0};
+    static const struct shader ps_ibfe2 = {ps_ibfe2_code, sizeof(ps_ibfe2_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_ubfe = {ps_ubfe_code, sizeof(ps_ubfe_code), D3D_FEATURE_LEVEL_11_0};
+    static const struct shader ps_ubfe2 = {ps_ubfe2_code, sizeof(ps_ubfe2_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_bfrev = {ps_bfrev_code, sizeof(ps_bfrev_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_bits = {ps_bits_code, sizeof(ps_bits_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_ftou = {ps_ftou_code, sizeof(ps_ftou_code), D3D_FEATURE_LEVEL_10_0};
@@ -13782,6 +13852,11 @@ static void test_uint_shader_instructions(void)
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}},
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}},
 
+        {&ps_bfi2, {   ~0u,      0,  ~0u,    0}, {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}},
+        {&ps_bfi2, {   ~0u,    ~0u,  ~0u,    0}, {0x80000000, 0x80000000, 0x80000000, 0x80000000}},
+        {&ps_bfi2, {   ~0u,  0x1fu,  ~0u,    0}, {0x80000000, 0x80000000, 0x80000000, 0x80000000}},
+        {&ps_bfi2, {   ~0u, ~0x1fu,  ~0u,    0}, {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}},
+
         {&ps_ibfe, { 0,  4, 0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
         {&ps_ibfe, { 0,  4, 0xffffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
         {&ps_ibfe, { 0,  4, 0x7fffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
@@ -13809,6 +13884,8 @@ static void test_uint_shader_instructions(void)
         {&ps_ibfe, {31, 31, 0x80000000}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
         {&ps_ibfe, {31, 31, 0x7fffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
 
+        {&ps_ibfe2, {16, 15, 0x3fffffff}, {0x00007fff, 0x00007fff, 0x00007fff, 0x00007fff}},
+
         {&ps_ubfe, {0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
         {&ps_ubfe, {0xffffffff}, {0x0000000f, 0x007fffff, 0x0000007f, 0x3fffffff}},
         {&ps_ubfe, {0xff000000}, {0x00000000, 0x007f0000, 0x00000000, 0x3f800000}},
@@ -13816,6 +13893,18 @@ static void test_uint_shader_instructions(void)
         {&ps_ubfe, {0x000000ff}, {0x0000000f, 0x00000000, 0x0000007f, 0x0000007f}},
         {&ps_ubfe, {0x80000001}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
         {&ps_ubfe, {0xc0000003}, {0x00000000, 0x00400000, 0x00000001, 0x20000001}},
+
+        {&ps_ubfe2, { 4,  4, 0x7fffffff}, {0x0000000f, 0x0000000f, 0x0000000f, 0x0000000f}},
+        {&ps_ubfe2, {23,  8, 0xffffffff}, {0x007fffff, 0x007fffff, 0x007fffff, 0x007fffff}},
+        {&ps_ubfe2, {30,  1, 0xffffffff}, {0x3fffffff, 0x3fffffff, 0x3fffffff, 0x3fffffff}},
+        {&ps_ubfe2, {15, 15, 0x7fffffff}, {0x00007fff, 0x00007fff, 0x00007fff, 0x00007fff}},
+        {&ps_ubfe2, {15, 15, 0xffff00ff}, {0x00007ffe, 0x00007ffe, 0x00007ffe, 0x00007ffe}},
+        {&ps_ubfe2, {16, 15, 0xffffffff}, {0x0000ffff, 0x0000ffff, 0x0000ffff, 0x0000ffff}},
+        {&ps_ubfe2, {16, 15, 0x3fffffff}, {0x00007fff, 0x00007fff, 0x00007fff, 0x00007fff}},
+        {&ps_ubfe2, {20, 15, 0xffffffff}, {0x0001ffff, 0x0001ffff, 0x0001ffff, 0x0001ffff}},
+        {&ps_ubfe2, {31, 31, 0xffffffff}, {0x00000001, 0x00000001, 0x00000001, 0x00000001}},
+        {&ps_ubfe2, {31, 31, 0x80000000}, {0x00000001, 0x00000001, 0x00000001, 0x00000001}},
+        {&ps_ubfe2, {31, 31, 0x7fffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
 
         {&ps_bfrev, {0x12345678}, {0x1e6a2c48, 0x12345678, 0x1e6a0000, 0x2c480000}},
         {&ps_bfrev, {0xffff0000}, {0x0000ffff, 0xffff0000, 0x00000000, 0xffff0000}},
