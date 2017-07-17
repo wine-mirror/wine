@@ -1053,9 +1053,13 @@ static void test_CreateBitmapRenderTarget(void)
 {
     IDWriteBitmapRenderTarget *target, *target2;
     IDWriteBitmapRenderTarget1 *target1;
+    IDWriteRenderingParams *params;
     IDWriteGdiInterop *interop;
+    IDWriteFontFace *fontface;
     IDWriteFactory *factory;
+    DWRITE_GLYPH_RUN run;
     HBITMAP hbm, hbm2;
+    UINT16 glyphs[2];
     DWRITE_MATRIX m;
     DIBSECTION ds;
     XFORM xform;
@@ -1064,6 +1068,7 @@ static void test_CreateBitmapRenderTarget(void)
     FLOAT pdip;
     SIZE size;
     ULONG ref;
+    UINT32 ch;
     HDC hdc;
     int ret;
 
@@ -1306,6 +1311,62 @@ static void test_CreateBitmapRenderTarget(void)
     }
     else
         win_skip("IDWriteBitmapRenderTarget1 is not supported.\n");
+
+    /* DrawGlyphRun() argument validation. */
+    hr = IDWriteBitmapRenderTarget_Resize(target, 16, 16);
+    ok(hr == S_OK, "Failed to resize target, hr %#x.\n", hr);
+
+    fontface = create_fontface(factory);
+
+    ch = 'A';
+    glyphs[0] = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, &ch, 1, glyphs);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(glyphs[0] > 0, "got %u\n", glyphs[0]);
+    glyphs[1] = glyphs[0];
+
+    memset(&run, 0, sizeof(run));
+    run.fontFace = fontface;
+    run.fontEmSize = 12.0f;
+    run.glyphCount = 2;
+    run.glyphIndices = glyphs;
+
+    hr = IDWriteFactory_CreateCustomRenderingParams(factory, 1.0f, 0.0f, 0.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
+            DWRITE_RENDERING_MODE_DEFAULT, &params);
+    ok(hr == S_OK, "Failed to create rendering params, hr %#x.\n", hr);
+
+    hr = IDWriteBitmapRenderTarget_DrawGlyphRun(target, 0.0f, 0.0f, DWRITE_MEASURING_MODE_NATURAL,
+        &run, NULL, RGB(255, 0, 0), NULL);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteBitmapRenderTarget_DrawGlyphRun(target, 0.0f, 0.0f, DWRITE_MEASURING_MODE_GDI_NATURAL + 1,
+        &run, NULL, RGB(255, 0, 0), NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteBitmapRenderTarget_DrawGlyphRun(target, 0.0f, 0.0f, DWRITE_MEASURING_MODE_GDI_NATURAL + 1,
+        &run, params, RGB(255, 0, 0), NULL);
+    ok(hr == E_INVALIDARG || broken(hr == S_OK) /* Vista */, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteBitmapRenderTarget_DrawGlyphRun(target, 0.0f, 0.0f, DWRITE_MEASURING_MODE_GDI_NATURAL,
+        &run, params, RGB(255, 0, 0), NULL);
+    ok(hr == S_OK, "Failed to draw a run, hr %#x.\n", hr);
+
+    IDWriteRenderingParams_Release(params);
+
+    /* Zero sized target returns earlier. */
+    hr = IDWriteBitmapRenderTarget_Resize(target, 0, 16);
+    ok(hr == S_OK, "Failed to resize target, hr %#x.\n", hr);
+
+    hr = IDWriteBitmapRenderTarget_DrawGlyphRun(target, 0.0f, 0.0f, DWRITE_MEASURING_MODE_NATURAL,
+        &run, NULL, RGB(255, 0, 0), NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteBitmapRenderTarget_DrawGlyphRun(target, 0.0f, 0.0f, DWRITE_MEASURING_MODE_GDI_NATURAL + 1,
+        &run, params, RGB(255, 0, 0), NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDWriteFontFace_Release(fontface);
 
     ref = IDWriteBitmapRenderTarget_Release(target);
     ok(ref == 0, "render target not released, %u\n", ref);
