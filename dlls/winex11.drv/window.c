@@ -803,38 +803,6 @@ static void set_style_hints( struct x11drv_win_data *data, DWORD style, DWORD ex
 
 
 /***********************************************************************
- *              get_process_name
- *
- * get the name of the current process for setting class hints
- */
-static char *get_process_name(void)
-{
-    static char *name;
-
-    if (!name)
-    {
-        WCHAR module[MAX_PATH];
-        DWORD len = GetModuleFileNameW( 0, module, MAX_PATH );
-        if (len && len < MAX_PATH)
-        {
-            char *ptr;
-            WCHAR *p, *appname = module;
-
-            if ((p = strrchrW( appname, '/' ))) appname = p + 1;
-            if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
-            len = WideCharToMultiByte( CP_UNIXCP, 0, appname, -1, NULL, 0, NULL, NULL );
-            if ((ptr = HeapAlloc( GetProcessHeap(), 0, len )))
-            {
-                WideCharToMultiByte( CP_UNIXCP, 0, appname, -1, ptr, len, NULL, NULL );
-                name = ptr;
-            }
-        }
-    }
-    return name;
-}
-
-
-/***********************************************************************
  *              set_initial_wm_hints
  *
  * Set the window manager hints that don't change over the lifetime of a window.
@@ -845,7 +813,6 @@ static void set_initial_wm_hints( Display *display, Window window )
     Atom protocols[3];
     Atom dndVersion = WINE_XDND_VERSION;
     XClassHint *class_hints;
-    char *process_name = get_process_name();
 
     /* wm protocols */
     i = 0;
