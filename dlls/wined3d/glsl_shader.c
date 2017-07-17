@@ -5569,6 +5569,14 @@ static void shader_glsl_ld_raw_structured(const struct wined3d_shader_instructio
     shader_addline(address, "%s / 4", offset.param_str);
 
     dst = ins->dst[0];
+    if (shader_glsl_get_write_mask_size(dst.write_mask) > 1)
+    {
+        /* The instruction is split into multiple lines. The first lines may
+         * overwrite source parameters of the following lines. */
+        shader_addline(buffer, "tmp0.x = intBitsToFloat(%s);\n", address->buffer);
+        string_buffer_sprintf(address, "floatBitsToInt(tmp0.x)");
+    }
+
     for (i = 0; i < 4; ++i)
     {
         dst.write_mask = ins->dst[0].write_mask & (WINED3DSP_WRITEMASK_0 << i);
