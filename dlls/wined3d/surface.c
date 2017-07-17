@@ -3499,12 +3499,15 @@ static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
             }
         }
 
-        if ((flags & WINED3DCLEAR_ZBUFFER) && (view = fb->depth_stencil))
-            surface_cpu_blt_colour_fill(view, &box, &c);
-    }
+        if ((flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)) && (view = fb->depth_stencil))
+        {
+            if ((view->format->depth_size && !(flags & WINED3DCLEAR_ZBUFFER))
+                    || (view->format->stencil_size && !(flags & WINED3DCLEAR_STENCIL)))
+                FIXME("Clearing %#x on %s.\n", flags, debug_d3dformat(view->format->id));
 
-    if (flags & ~(WINED3DCLEAR_TARGET | WINED3DCLEAR_ZBUFFER))
-        FIXME("flags %#x not implemented.\n", flags);
+            surface_cpu_blt_colour_fill(view, &box, &c);
+        }
+    }
 }
 
 static void cpu_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
