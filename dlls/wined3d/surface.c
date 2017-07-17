@@ -2569,7 +2569,6 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
         const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_rendertarget_view *view;
-    struct wined3d_resource *resource;
     struct wined3d_blitter *next;
     unsigned int i;
 
@@ -2580,21 +2579,12 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
             if (!(view = fb->render_targets[i]))
                 continue;
 
-            resource = view->resource;
-            if (!(flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
+            if ((!(flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
                     && ffp_blitter_use_cpu_clear(view))
+                    || (!(view->resource->usage & WINED3DUSAGE_RENDERTARGET)
+                    && (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+                    || !(view->format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE))))
                 goto next;
-
-            if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-            {
-                if (!((view->format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE)
-                        || (resource->usage & WINED3DUSAGE_RENDERTARGET)))
-                    goto next;
-            }
-            else if (!(resource->usage & WINED3DUSAGE_RENDERTARGET))
-            {
-                goto next;
-            }
 
             /* FIXME: We should reject colour fills on formats with fixups,
              * but this would break P8 colour fills for example. */
