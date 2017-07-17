@@ -299,9 +299,14 @@ void netconn_unload( void )
 #endif
 }
 
-netconn_t *netconn_create( const struct sockaddr_storage *sockaddr )
+netconn_t *netconn_create( const struct sockaddr_storage *sockaddr, int timeout )
 {
     netconn_t *conn;
+    unsigned int addr_len;
+    BOOL ret = FALSE;
+    int res;
+    ULONG state;
+
     conn = heap_alloc_zero(sizeof(*conn));
     if (!conn) return NULL;
     conn->sockaddr = *sockaddr;
@@ -312,36 +317,6 @@ netconn_t *netconn_create( const struct sockaddr_storage *sockaddr )
         heap_free(conn);
         return NULL;
     }
-    return conn;
-}
-
-BOOL netconn_close( netconn_t *conn )
-{
-    int res;
-
-    if (conn->secure)
-    {
-        heap_free( conn->peek_msg_mem );
-        heap_free(conn->ssl_buf);
-        heap_free(conn->extra_buf);
-        DeleteSecurityContext(&conn->ssl_ctx);
-    }
-    res = closesocket( conn->socket );
-    heap_free(conn);
-    if (res == -1)
-    {
-        set_last_error( sock_get_error( errno ) );
-        return FALSE;
-    }
-    return TRUE;
-}
-
-BOOL netconn_connect( netconn_t *conn, int timeout )
-{
-    unsigned int addr_len;
-    BOOL ret = FALSE;
-    int res;
-    ULONG state;
 
     switch (conn->sockaddr.ss_family)
     {
@@ -405,8 +380,31 @@ BOOL netconn_connect( netconn_t *conn, int timeout )
     {
         WARN("unable to connect to host (%d)\n", res);
         set_last_error( res );
+        netconn_close( conn );
+        return NULL;
     }
-    return ret;
+    return conn;
+}
+
+BOOL netconn_close( netconn_t *conn )
+{
+    int res;
+
+    if (conn->secure)
+    {
+        heap_free( conn->peek_msg_mem );
+        heap_free(conn->ssl_buf);
+        heap_free(conn->extra_buf);
+        DeleteSecurityContext(&conn->ssl_ctx);
+    }
+    res = closesocket( conn->socket );
+    heap_free(conn);
+    if (res == -1)
+    {
+        set_last_error( sock_get_error( errno ) );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_flags )

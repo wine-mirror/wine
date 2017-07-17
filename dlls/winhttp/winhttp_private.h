@@ -283,8 +283,7 @@ void send_callback( object_header_t *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDDEN;
 void close_connection( request_t * ) DECLSPEC_HIDDEN;
 
 BOOL netconn_close( netconn_t * ) DECLSPEC_HIDDEN;
-BOOL netconn_connect( netconn_t *, int ) DECLSPEC_HIDDEN;
-netconn_t *netconn_create( const struct sockaddr_storage * ) DECLSPEC_HIDDEN;
+netconn_t *netconn_create( const struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;
 ULONG netconn_query_data_available( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
