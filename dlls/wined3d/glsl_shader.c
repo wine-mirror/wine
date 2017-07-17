@@ -4122,6 +4122,8 @@ static void shader_glsl_bitwise_op(const struct wined3d_shader_instruction *ins)
     struct wined3d_shader_dst_param dst;
     struct glsl_src_param src[4];
     const char *instruction;
+    BOOL tmp_dst = FALSE;
+    char mask_char[6];
     unsigned int i, j;
     DWORD write_mask;
 
@@ -4135,12 +4137,21 @@ static void shader_glsl_bitwise_op(const struct wined3d_shader_instruction *ins)
             return;
     }
 
+    for (i = 0; i < ins->src_count; ++i)
+    {
+        if (ins->dst[0].reg.idx[0].offset == ins->src[i].reg.idx[0].offset
+                && ins->dst[0].reg.type == ins->src[i].reg.type)
+            tmp_dst = TRUE;
+    }
+
     dst = ins->dst[0];
     for (i = 0; i < 4; ++i)
     {
         dst.write_mask = ins->dst[0].write_mask & (WINED3DSP_WRITEMASK_0 << i);
-        if (!(write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins,
-                &dst, dst.reg.data_type)))
+        if (tmp_dst && (write_mask = shader_glsl_get_write_mask(&dst, mask_char)))
+            shader_addline(buffer, "tmp0%s = %sBitsToFloat(", mask_char,
+                    dst.reg.data_type == WINED3D_DATA_INT ? "int" : "uint");
+        else if (!(write_mask = shader_glsl_append_dst_ext(buffer, ins, &dst, dst.reg.data_type)))
             continue;
 
         for (j = 0; j < ins->src_count; ++j)
@@ -4149,6 +4160,13 @@ static void shader_glsl_bitwise_op(const struct wined3d_shader_instruction *ins)
         for (j = 0; j < ins->src_count - 2; ++j)
             shader_addline(buffer, "%s, ", src[ins->src_count - j - 1].param_str);
         shader_addline(buffer, "%s & 0x1f, %s & 0x1f));\n", src[1].param_str, src[0].param_str);
+    }
+
+    if (tmp_dst)
+    {
+        shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0], WINED3D_DATA_FLOAT);
+        shader_glsl_get_write_mask(&ins->dst[0], mask_char);
+        shader_addline(buffer, "tmp0%s);\n", mask_char);
     }
 }
 
@@ -4400,7 +4418,7 @@ static void shader_glsl_swapc(const struct wined3d_shader_instruction *ins)
         {
             shader_glsl_get_write_mask(&ins->dst[i], mask_char);
             shader_glsl_append_dst_ext(buffer, ins, &ins->dst[i], ins->dst[i].reg.data_type);
-            shader_addline(ins->ctx->buffer, "tmp%u%s);\n", i, mask_char);
+            shader_addline(buffer, "tmp%u%s);\n", i, mask_char);
         }
     }
 }
