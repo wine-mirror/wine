@@ -3621,16 +3621,6 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         goto cpu;
     }
 
-    /* We want to avoid invalidating the sysmem location for converted
-     * surfaces, since otherwise we'd have to convert the data back when
-     * locking them. */
-    if (dst_texture->flags & WINED3D_TEXTURE_CONVERTED || dst_texture->resource.format->convert
-            || wined3d_format_get_color_key_conversion(dst_texture, TRUE))
-    {
-        WARN_(d3d_perf)("Converted surface, using CPU blit.\n");
-        goto cpu;
-    }
-
     if (flags & ~simple_blit)
     {
         WARN_(d3d_perf)("Using fallback for complex blit (%#x).\n", flags);
