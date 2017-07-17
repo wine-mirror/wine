@@ -991,8 +991,34 @@ static WCHAR *addr_to_str( struct sockaddr_storage *addr )
     return strdupAW( buf );
 }
 
+static CRITICAL_SECTION connection_pool_cs;
+static CRITICAL_SECTION_DEBUG connection_pool_debug =
+{
+    0, 0, &connection_pool_cs,
+    { &connection_pool_debug.ProcessLocksList, &connection_pool_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": connection_pool_cs") }
+};
+static CRITICAL_SECTION connection_pool_cs = { &connection_pool_debug, -1, 0, 0, 0, 0 };
+
+static struct list connection_pool = LIST_INIT( connection_pool );
+
+void release_host( host_t *host )
+{
+    LONG ref;
+
+    EnterCriticalSection( &connection_pool_cs );
+    if (!(ref = --host->ref)) list_remove( &host->entry );
+    LeaveCriticalSection( &connection_pool_cs );
+    if (ref) return;
+
+    heap_free( host->hostname );
+    heap_free( host );
+}
+
 static BOOL open_connection( request_t *request )
 {
+    BOOL is_secure = request->hdr.flags & WINHTTP_FLAG_SECURE;
+    host_t *host = NULL, *iter;
     netconn_t *netconn;
     connect_t *connect;
     WCHAR *addressW = NULL;
@@ -1004,25 +1030,74 @@ static BOOL open_connection( request_t *request )
     connect = request->connect;
     port = connect->serverport ? connect->serverport : (request->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
 
+    EnterCriticalSection( &connection_pool_cs );
+
+    LIST_FOR_EACH_ENTRY( iter, &connection_pool, host_t, entry )
+    {
+        if (iter->port == port && !strcmpW( connect->servername, iter->hostname ) && !is_secure == !iter->secure)
+        {
+            host = iter;
+            host->ref++;
+            break;
+        }
+    }
+
+    if (!host)
+    {
+        if (!(host = heap_alloc( sizeof(*host) ))) return FALSE;
+        host->ref = 1;
+        host->secure = is_secure;
+        host->port = port;
+        if ((host->hostname = strdupW( connect->servername )))
+        {
+            list_add_head( &connection_pool, &host->entry );
+        }
+        else
+        {
+            heap_free( host );
+            host = NULL;
+        }
+    }
+
+    LeaveCriticalSection( &connection_pool_cs );
+
+    if (!host) return FALSE;
+
     if (!connect->resolved)
     {
-        len = strlenW( connect->servername ) + 1;
-        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, connect->servername, len );
+        len = strlenW( host->hostname ) + 1;
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, host->hostname, len );
 
-        if (!netconn_resolve( connect->servername, port, &connect->sockaddr, request->resolve_timeout )) return FALSE;
+        if (!netconn_resolve( host->hostname, port, &connect->sockaddr, request->resolve_timeout ))
+        {
+            release_host( host );
+            return FALSE;
+        }
         connect->resolved = TRUE;
 
-        if (!(addressW = addr_to_str( &connect->sockaddr ))) return FALSE;
+        if (!(addressW = addr_to_str( &connect->sockaddr )))
+        {
+            release_host( host );
+            return FALSE;
+        }
         len = strlenW( addressW ) + 1;
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, addressW, len );
     }
-    if (!addressW && !(addressW = addr_to_str( &connect->sockaddr ))) return FALSE;
+
+    if (!addressW && !(addressW = addr_to_str( &connect->sockaddr )))
+    {
+        release_host( host );
+        return FALSE;
+    }
+
     TRACE("connecting to %s:%u\n", debugstr_w(addressW), port);
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
 
-    if (!(netconn = netconn_create( &connect->sockaddr, request->connect_timeout )))
+    netconn = netconn_create( host, &connect->sockaddr, request->connect_timeout );
+    if (!netconn)
     {
+        release_host( host );
         heap_free( addressW );
         return FALSE;
     }
@@ -1036,6 +1111,7 @@ static BOOL open_connection( request_t *request )
             if (!secure_proxy_connect( request ))
             {
                 heap_free( addressW );
+                netconn_close( netconn );
                 return FALSE;
             }
         }

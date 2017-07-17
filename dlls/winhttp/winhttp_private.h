@@ -96,6 +96,14 @@ typedef struct
     WCHAR *path;
 } cookie_t;
 
+typedef struct {
+    struct list entry;
+    LONG ref;
+    WCHAR *hostname;
+    INTERNET_PORT port;
+    BOOL secure;
+} host_t;
+
 typedef struct
 {
     object_header_t hdr;
@@ -132,6 +140,7 @@ typedef struct
     int socket;
     struct sockaddr_storage sockaddr;
     BOOL secure; /* SSL active on connection? */
+    host_t *host;
     CtxtHandle ssl_ctx;
     SecPkgContext_StreamSizes ssl_sizes;
     char *ssl_buf;
@@ -283,7 +292,7 @@ void send_callback( object_header_t *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDDEN;
 void close_connection( request_t * ) DECLSPEC_HIDDEN;
 
 BOOL netconn_close( netconn_t * ) DECLSPEC_HIDDEN;
-netconn_t *netconn_create( const struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
+netconn_t *netconn_create( host_t *, const struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;
 ULONG netconn_query_data_available( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
@@ -300,6 +309,8 @@ BOOL add_request_headers( request_t *, LPCWSTR, DWORD, DWORD ) DECLSPEC_HIDDEN;
 void delete_domain( domain_t * ) DECLSPEC_HIDDEN;
 BOOL set_server_for_hostname( connect_t *, LPCWSTR, INTERNET_PORT ) DECLSPEC_HIDDEN;
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
+
+void release_host( host_t *host ) DECLSPEC_HIDDEN;
 
 extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
 void release_typelib( void ) DECLSPEC_HIDDEN;

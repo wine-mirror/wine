@@ -299,7 +299,7 @@ void netconn_unload( void )
 #endif
 }
 
-netconn_t *netconn_create( const struct sockaddr_storage *sockaddr, int timeout )
+netconn_t *netconn_create( host_t *host, const struct sockaddr_storage *sockaddr, int timeout )
 {
     netconn_t *conn;
     unsigned int addr_len;
@@ -309,6 +309,7 @@ netconn_t *netconn_create( const struct sockaddr_storage *sockaddr, int timeout 
 
     conn = heap_alloc_zero(sizeof(*conn));
     if (!conn) return NULL;
+    conn->host = host;
     conn->sockaddr = *sockaddr;
     if ((conn->socket = socket( sockaddr->ss_family, SOCK_STREAM, 0 )) == -1)
     {
@@ -398,6 +399,7 @@ BOOL netconn_close( netconn_t *conn )
         DeleteSecurityContext(&conn->ssl_ctx);
     }
     res = closesocket( conn->socket );
+    release_host( conn->host );
     heap_free(conn);
     if (res == -1)
     {
