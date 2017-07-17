@@ -5163,10 +5163,19 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
 
     *ret = NULL;
 
-    /* check for valid rendering mode */
+    /* Check rendering, antialising, measuring, and grid fitting modes. */
     if ((UINT32)desc->rendering_mode >= DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED ||
             desc->rendering_mode == DWRITE_RENDERING_MODE1_OUTLINE ||
             desc->rendering_mode == DWRITE_RENDERING_MODE1_DEFAULT)
+        return E_INVALIDARG;
+
+    if ((UINT32)desc->aa_mode > DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE)
+        return E_INVALIDARG;
+
+    if ((UINT32)desc->gridfit_mode > DWRITE_GRID_FIT_MODE_ENABLED)
+        return E_INVALIDARG;
+
+    if ((UINT32)desc->measuring_mode > DWRITE_MEASURING_MODE_GDI_NATURAL)
         return E_INVALIDARG;
 
     analysis = heap_alloc(sizeof(*analysis));

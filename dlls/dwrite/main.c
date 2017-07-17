@@ -210,6 +210,12 @@ static HRESULT create_renderingparams(FLOAT gamma, FLOAT contrast, FLOAT graysca
 
     *params = NULL;
 
+    if (gamma <= 0.0f || contrast < 0.0f || grayscalecontrast < 0.0f || cleartype_level < 0.0f)
+        return E_INVALIDARG;
+
+    if ((UINT32)gridfit > DWRITE_GRID_FIT_MODE_ENABLED || (UINT32)geometry > DWRITE_PIXEL_GEOMETRY_BGR)
+        return E_INVALIDARG;
+
     This = heap_alloc(sizeof(struct renderingparams));
     if (!This) return E_OUTOFMEMORY;
 
@@ -984,7 +990,8 @@ static HRESULT WINAPI dwritefactory_CreateMonitorRenderingParams(IDWriteFactory5
     if (!fixme_once++)
         FIXME("(%p): monitor setting ignored\n", monitor);
 
-    hr = IDWriteFactory5_CreateCustomRenderingParams(iface, 0.0f, 0.0f, 1.0f, 0.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
+    /* FIXME: use actual per-monitor gamma factor */
+    hr = IDWriteFactory5_CreateCustomRenderingParams(iface, 2.0f, 0.0f, 1.0f, 0.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
         DWRITE_RENDERING_MODE1_DEFAULT, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
     *params = (IDWriteRenderingParams*)params3;
     return hr;
@@ -1000,8 +1007,13 @@ static HRESULT WINAPI dwritefactory_CreateCustomRenderingParams(IDWriteFactory5 
 
     TRACE("(%p)->(%f %f %f %d %d %p)\n", This, gamma, enhancedContrast, cleartype_level, geometry, mode, params);
 
+    if ((UINT32)mode > DWRITE_RENDERING_MODE_OUTLINE) {
+        *params = NULL;
+        return E_INVALIDARG;
+    }
+
     hr = IDWriteFactory5_CreateCustomRenderingParams(iface, gamma, enhancedContrast, 1.0f, cleartype_level, geometry,
-        (DWRITE_RENDERING_MODE1)mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
+            (DWRITE_RENDERING_MODE1)mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
     *params = (IDWriteRenderingParams*)params3;
     return hr;
 }
@@ -1228,6 +1240,12 @@ static HRESULT WINAPI dwritefactory1_CreateCustomRenderingParams(IDWriteFactory5
 
     TRACE("(%p)->(%.2f %.2f %.2f %.2f %d %d %p)\n", This, gamma, enhcontrast, enhcontrast_grayscale,
         cleartype_level, geometry, mode, params);
+
+    if ((UINT32)mode > DWRITE_RENDERING_MODE_OUTLINE) {
+        *params = NULL;
+        return E_INVALIDARG;
+    }
+
     hr = IDWriteFactory5_CreateCustomRenderingParams(iface, gamma, enhcontrast, enhcontrast_grayscale,
         cleartype_level, geometry, (DWRITE_RENDERING_MODE1)mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
     *params = (IDWriteRenderingParams1*)params3;
@@ -1281,6 +1299,11 @@ static HRESULT WINAPI dwritefactory2_CreateCustomRenderingParams(IDWriteFactory5
 
     TRACE("(%p)->(%.2f %.2f %.2f %.2f %d %d %d %p)\n", This, gamma, contrast, grayscalecontrast, cleartype_level,
         geometry, mode, gridfit, params);
+
+    if ((UINT32)mode > DWRITE_RENDERING_MODE_OUTLINE) {
+        *params = NULL;
+        return E_INVALIDARG;
+    }
 
     hr = IDWriteFactory5_CreateCustomRenderingParams(iface, gamma, contrast, grayscalecontrast,
         cleartype_level, geometry, (DWRITE_RENDERING_MODE1)mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
