@@ -1858,7 +1858,7 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
  *
  * Set the new CPU context. Used by NtSetContextThread.
  */
-void set_cpu_context( const CONTEXT *context )
+static void set_cpu_context( const CONTEXT *context )
 {
     DWORD flags = context->ContextFlags & ~CONTEXT_AMD64;
     if (flags & CONTEXT_FULL)
@@ -2060,6 +2060,21 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->Dr7 = from->debug.x86_64_regs.dr7;
     }
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              NtSetContextThread  (NTDLL.@)
+ *              ZwSetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    NTSTATUS ret;
+    BOOL self;
+
+    ret = set_thread_context( handle, context, &self );
+    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    return ret;
 }
 
 
@@ -3929,7 +3944,7 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                    "movq %rcx,0x80(%rdx)\n\t"   /* context->Rcx */
                    "call " __ASM_NAME("__regs_RtlRaiseException") "\n\t"
                    "leaq 0x20(%rsp),%rdi\n\t"   /* context pointer */
-                   "call " __ASM_NAME("set_cpu_context") /* does not return */ );
+                   "call " __ASM_NAME("set_full_cpu_context") /* does not return */ );
 
 
 /*************************************************************************

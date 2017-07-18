@@ -1230,7 +1230,7 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
  *
  * Set the new CPU context. Used by NtSetContextThread.
  */
-void set_cpu_context( const CONTEXT *context )
+static void set_cpu_context( const CONTEXT *context )
 {
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
 
@@ -1457,6 +1457,31 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
     }
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              NtSetContextThread  (NTDLL.@)
+ *              ZwSetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    NTSTATUS ret = STATUS_SUCCESS;
+    BOOL self = (handle == GetCurrentThread());
+
+    /* debug registers require a server call */
+    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)))
+        self = (ntdll_get_thread_data()->dr0 == context->Dr0 &&
+                ntdll_get_thread_data()->dr1 == context->Dr1 &&
+                ntdll_get_thread_data()->dr2 == context->Dr2 &&
+                ntdll_get_thread_data()->dr3 == context->Dr3 &&
+                ntdll_get_thread_data()->dr6 == context->Dr6 &&
+                ntdll_get_thread_data()->dr7 == context->Dr7);
+
+    if (!self) ret = set_thread_context( handle, context, &self );
+
+    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    return ret;
 }
 
 

@@ -231,7 +231,7 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 8,
  *
  * Set the new CPU context.
  */
-void set_cpu_context( const CONTEXT *context )
+static void set_cpu_context( const CONTEXT *context )
 {
     FIXME( "Not implemented on ARM64\n" );
 }
@@ -329,6 +329,21 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
      }
     return STATUS_SUCCESS;
 }
+
+/***********************************************************************
+ *              NtSetContextThread  (NTDLL.@)
+ *              ZwSetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    NTSTATUS ret;
+    BOOL self;
+
+    ret = set_thread_context( handle, context, &self );
+    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    return ret;
+}
+
 
 /***********************************************************************
  *           setup_exception_record

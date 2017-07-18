@@ -771,7 +771,7 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
 /***********************************************************************
  *              set_thread_context
  */
-static NTSTATUS set_thread_context( HANDLE handle, const CONTEXT *context, BOOL *self )
+NTSTATUS set_thread_context( HANDLE handle, const CONTEXT *context, BOOL *self )
 {
     NTSTATUS ret;
     DWORD dummy, i;
@@ -814,42 +814,6 @@ static NTSTATUS set_thread_context( HANDLE handle, const CONTEXT *context, BOOL 
     }
 
     return ret;
-}
-
-
-/***********************************************************************
- *              NtSetContextThread  (NTDLL.@)
- *              ZwSetContextThread  (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
-{
-    NTSTATUS ret;
-    BOOL self;
-
-#ifdef __i386__
-    /* on i386 debug registers always require a server call */
-    self = (handle == GetCurrentThread());
-    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)))
-    {
-        self = (ntdll_get_thread_data()->dr0 == context->Dr0 &&
-                ntdll_get_thread_data()->dr1 == context->Dr1 &&
-                ntdll_get_thread_data()->dr2 == context->Dr2 &&
-                ntdll_get_thread_data()->dr3 == context->Dr3 &&
-                ntdll_get_thread_data()->dr6 == context->Dr6 &&
-                ntdll_get_thread_data()->dr7 == context->Dr7);
-    }
-#else
-    self = FALSE;
-#endif
-
-    if (!self)
-    {
-        ret = set_thread_context( handle, context, &self );
-        if (ret) return ret;
-    }
-
-    if (self) set_cpu_context( context );
-    return STATUS_SUCCESS;
 }
 
 

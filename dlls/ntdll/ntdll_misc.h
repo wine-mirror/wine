@@ -53,10 +53,10 @@ extern void wait_suspend( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context ) DECLSPEC_HIDDEN;
 extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context ) DECLSPEC_HIDDEN;
 extern void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec ) DECLSPEC_NORETURN DECLSPEC_HIDDEN;
-extern void set_cpu_context( const CONTEXT *context ) DECLSPEC_HIDDEN;
 extern void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags ) DECLSPEC_HIDDEN;
 extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC_HIDDEN;
 extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
+extern NTSTATUS set_thread_context( HANDLE handle, const CONTEXT *context, BOOL *self ) DECLSPEC_HIDDEN;
 extern void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg ) DECLSPEC_NORETURN DECLSPEC_HIDDEN;
 
 /* debug helpers */

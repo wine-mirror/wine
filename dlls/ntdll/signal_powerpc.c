@@ -267,7 +267,7 @@ void WINAPI RtlCaptureContext( CONTEXT *context )
  *
  * Set the new CPU context.
  */
-void set_cpu_context( const CONTEXT *context )
+static void set_cpu_context( const CONTEXT *context )
 {
     FIXME("not implemented\n");
 }
@@ -565,6 +565,21 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->Fpscr = from->fp.powerpc_regs.fpscr;
     }
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              NtSetContextThread  (NTDLL.@)
+ *              ZwSetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    NTSTATUS ret;
+    BOOL self;
+
+    ret = set_thread_context( handle, context, &self );
+    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    return ret;
 }
 
 
