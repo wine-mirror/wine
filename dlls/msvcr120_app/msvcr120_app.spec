@@ -1922,9 +1922,9 @@
 @ cdecl -arch=arm,x86_64 logf(float) msvcr120.logf
 @ cdecl log10(double) msvcr120.log10
 @ cdecl -arch=arm,x86_64 log10f(float) msvcr120.log10f
-@ stub log1p
-@ stub log1pf
-@ stub log1pl
+@ cdecl log1p(double) msvcr120.log1p
+@ cdecl log1pf(float) msvcr120.log1pf
+@ cdecl log1pl(double) msvcr120.log1pl
 @ cdecl log2(double) msvcr120.log2
 @ cdecl log2f(float) msvcr120.log2f
 @ cdecl log2l(double) msvcr120.log2l

@@ -2392,9 +2392,9 @@
 @ cdecl log(double) MSVCRT_log
 @ cdecl log10(double) MSVCRT_log10
 @ cdecl -arch=arm,x86_64 log10f(float) MSVCRT_log10f
-@ stub log1p
-@ stub log1pf
-@ stub log1pl
+@ cdecl log1p(double) MSVCR120_log1p
+@ cdecl log1pf(float) MSVCR120_log1pf
+@ cdecl log1pl(double) MSVCR120_log1pl
 @ cdecl log2(double) MSVCR120_log2
 @ cdecl log2f(float) MSVCR120_log2f
 @ cdecl log2l(double) MSVCR120_log2l
