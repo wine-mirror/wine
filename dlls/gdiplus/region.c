@@ -74,7 +74,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
  *
  */
 
-#define FLAGS_NOFLAGS   0x0
 #define FLAGS_INTPATH   0x4000
 
 struct memory_buffer
@@ -110,35 +109,6 @@ typedef struct packed_point
     short Y;
 } packed_point;
 
-/* Test to see if the path could be stored as an array of shorts */
-static BOOL is_integer_path(const GpPath *path)
-{
-    int i;
-
-    if (!path->pathdata.Count) return FALSE;
-
-    for (i = 0; i < path->pathdata.Count; i++)
-    {
-        short x, y;
-        x = gdip_round(path->pathdata.Points[i].X);
-        y = gdip_round(path->pathdata.Points[i].Y);
-        if (path->pathdata.Points[i].X != (REAL)x || path->pathdata.Points[i].Y != (REAL)y)
-            return FALSE;
-    }
-    return TRUE;
-}
-
-/* Everything is measured in DWORDS; round up if there's a remainder */
-static inline INT get_pathtypes_size(const GpPath* path)
-{
-    INT needed = path->pathdata.Count / sizeof(DWORD);
-
-    if (path->pathdata.Count % sizeof(DWORD) > 0)
-        needed++;
-
-    return needed * sizeof(DWORD);
-}
-
 static inline INT get_element_size(const region_element* element)
 {
     INT needed = sizeof(DWORD); /* DWORD for the type */
@@ -148,17 +118,8 @@ static inline INT get_element_size(const region_element* element)
             return needed + sizeof(GpRect);
         case RegionDataPath:
         {
-            const GpPath *path = element->elementdata.path;
-            DWORD flags = is_integer_path(path) ? FLAGS_INTPATH : FLAGS_NOFLAGS;
-            /* 3 for headers, once again size doesn't count itself */
-            needed += sizeof(DWORD) * 3;
-            if (flags & FLAGS_INTPATH)
-                needed += 2 * sizeof(SHORT) * path->pathdata.Count;
-            else
-                needed += 2 * sizeof(FLOAT) * path->pathdata.Count;
-
-            needed += get_pathtypes_size(path);
-            needed += sizeof(DWORD); /* Extra DWORD for pathheader.size */
+            needed += write_path_data(element->elementdata.path, NULL);
+            needed += sizeof(DWORD); /* Extra DWORD for path size */
             return needed;
         }
         case RegionDataEmptyRect:
@@ -704,29 +665,6 @@ static inline void write_float(DWORD* location, INT* offset, const FLOAT write)
     (*offset)++;
 }
 
-static inline void write_packed_point(DWORD* location, INT* offset,
-        const GpPointF* write)
-{
-    packed_point *point = (packed_point *)(location + *offset);
-    point->X = gdip_round(write->X);
-    point->Y = gdip_round(write->Y);
-    (*offset)++;
-}
-
-static inline void write_path_types(DWORD* location, INT* offset,
-        const GpPath* path)
-{
-    INT rounded_size = get_pathtypes_size(path);
-
-    memcpy(location + *offset, path->pathdata.Types, path->pathdata.Count);
-
-    /* The unwritten parts of the DWORD (if any) must be cleared */
-    if (rounded_size - path->pathdata.Count)
-        ZeroMemory(((BYTE*)location) + (*offset * sizeof(DWORD)) +
-                path->pathdata.Count, rounded_size - path->pathdata.Count);
-    *offset += rounded_size / sizeof(DWORD);
-}
-
 static void write_element(const region_element* element, DWORD *buffer,
         INT* filled)
 {
@@ -750,43 +688,9 @@ static void write_element(const region_element* element, DWORD *buffer,
             break;
         case RegionDataPath:
         {
-            INT i;
-            const GpPath* path = element->elementdata.path;
-            struct path_header *pathheader;
-
-            pathheader = (struct path_header *)(buffer + *filled);
-
-            pathheader->flags = is_integer_path(path) ? FLAGS_INTPATH : FLAGS_NOFLAGS;
-            /* 3 for headers, once again size doesn't count itself */
-            pathheader->size = sizeof(DWORD) * 3;
-            if (pathheader->flags & FLAGS_INTPATH)
-                pathheader->size += 2 * sizeof(SHORT) * path->pathdata.Count;
-            else
-                pathheader->size += 2 * sizeof(FLOAT) * path->pathdata.Count;
-            pathheader->size += get_pathtypes_size(path);
-            pathheader->magic = VERSION_MAGIC2;
-            pathheader->count = path->pathdata.Count;
-
-            *filled += 4;
-
-            switch (pathheader->flags & FLAGS_INTPATH)
-            {
-                case FLAGS_NOFLAGS:
-                    for (i = 0; i < path->pathdata.Count; i++)
-                    {
-                        write_float(buffer, filled, path->pathdata.Points[i].X);
-                        write_float(buffer, filled, path->pathdata.Points[i].Y);
-                    }
-                    break;
-                case FLAGS_INTPATH:
-                    for (i = 0; i < path->pathdata.Count; i++)
-                    {
-                        write_packed_point(buffer, filled,
-                                &path->pathdata.Points[i]);
-                    }
-                    break;
-            }
-            write_path_types(buffer, filled, path);
+            DWORD size = write_path_data(element->elementdata.path, buffer + *filled + 1);
+            write_dword(buffer, filled, size);
+            *filled += size / sizeof(DWORD);
             break;
         }
         case RegionDataEmptyRect:
