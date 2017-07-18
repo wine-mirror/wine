@@ -1266,35 +1266,6 @@ void set_cpu_context( const CONTEXT *context )
 
 
 /***********************************************************************
- *           set_debug_registers
- */
-static void set_debug_registers( const CONTEXT *context )
-{
-    DWORD flags = context->ContextFlags & ~CONTEXT_i386;
-    context_t server_context;
-
-    if (!(flags & CONTEXT_DEBUG_REGISTERS)) return;
-    if (ntdll_get_thread_data()->dr0 == context->Dr0 &&
-        ntdll_get_thread_data()->dr1 == context->Dr1 &&
-        ntdll_get_thread_data()->dr2 == context->Dr2 &&
-        ntdll_get_thread_data()->dr3 == context->Dr3 &&
-        ntdll_get_thread_data()->dr6 == context->Dr6 &&
-        ntdll_get_thread_data()->dr7 == context->Dr7) return;
-
-    context_to_server( &server_context, context );
-
-    SERVER_START_REQ( set_thread_context )
-    {
-        req->handle  = wine_server_obj_handle( GetCurrentThread() );
-        req->suspend = 0;
-        wine_server_add_data( req, &server_context, sizeof(server_context) );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-}
-
-
-/***********************************************************************
  *           copy_context
  *
  * Copy a register context according to the flags.
@@ -2647,11 +2618,7 @@ DEFINE_REGS_ENTRYPOINT( RtlUnwind, 4 )
 NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
     NTSTATUS status = raise_exception( rec, context, first_chance );
-    if (status == STATUS_SUCCESS)
-    {
-        set_debug_registers( context );
-        set_cpu_context( context );
-    }
+    if (status == STATUS_SUCCESS) NtSetContextThread( GetCurrentThread(), context );
     return status;
 }
 
