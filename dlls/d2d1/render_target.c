@@ -1090,7 +1090,8 @@ static void d2d_rt_draw_glyph_run_outline(struct d2d_d3d_render_target *render_t
 
 static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_target,
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush,
-        float ppd, DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode)
+        float ppd, DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode,
+        DWRITE_TEXT_ANTIALIAS_MODE antialias_mode)
 {
     D2D1_MATRIX_3X2_F prev_transform, *transform;
     ID2D1RectangleGeometry *geometry = NULL;
@@ -1100,7 +1101,8 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
     IDWriteGlyphRunAnalysis *analysis;
     DWRITE_TEXTURE_TYPE texture_type;
     D2D1_BRUSH_PROPERTIES brush_desc;
-    IDWriteFactory *dwrite_factory;
+    IDWriteFactory2 *dwrite_factory;
+    DWRITE_GLYPH_RUN scaled_run;
     void *opacity_values = NULL;
     size_t opacity_values_size;
     D2D1_SIZE_U bitmap_size;
@@ -1109,16 +1111,19 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
     HRESULT hr;
 
     if (FAILED(hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
-            &IID_IDWriteFactory, (IUnknown **)&dwrite_factory)))
+            &IID_IDWriteFactory2, (IUnknown **)&dwrite_factory)))
     {
         ERR("Failed to create dwrite factory, hr %#x.\n", hr);
         return;
     }
 
-    hr = IDWriteFactory_CreateGlyphRunAnalysis(dwrite_factory, glyph_run, ppd,
+    scaled_run = *glyph_run;
+    scaled_run.fontEmSize *= ppd;
+    hr = IDWriteFactory2_CreateGlyphRunAnalysis(dwrite_factory, &scaled_run,
             (DWRITE_MATRIX *)&render_target->drawing_state.transform, rendering_mode, measuring_mode,
-            baseline_origin.x, baseline_origin.y, &analysis);
-    IDWriteFactory_Release(dwrite_factory);
+            DWRITE_GRID_FIT_MODE_DEFAULT, antialias_mode, baseline_origin.x,
+            baseline_origin.y, &analysis);
+    IDWriteFactory2_Release(dwrite_factory);
     if (FAILED(hr))
     {
         ERR("Failed to create glyph run analysis, hr %#x.\n", hr);
@@ -1216,6 +1221,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
         DWRITE_MEASURING_MODE measuring_mode)
 {
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    DWRITE_TEXT_ANTIALIAS_MODE antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE;
     IDWriteRenderingParams *rendering_params;
     DWRITE_RENDERING_MODE rendering_mode;
     HRESULT hr;
@@ -1227,24 +1233,42 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
     if (FAILED(render_target->error.code))
         return;
 
-    if (render_target->drawing_state.textAntialiasMode != D2D1_TEXT_ANTIALIAS_MODE_DEFAULT)
-        FIXME("Ignoring text antialiasing mode %#x.\n", render_target->drawing_state.textAntialiasMode);
-
-    ppd = max(render_target->desc.dpiX, render_target->desc.dpiY) / 96.0f;
     rendering_params = render_target->text_rendering_params ? render_target->text_rendering_params
             : render_target->default_text_rendering_params;
-    if (FAILED(hr = IDWriteFontFace_GetRecommendedRenderingMode(glyph_run->fontFace, glyph_run->fontEmSize,
-            ppd, measuring_mode, rendering_params, &rendering_mode)))
+
+    rendering_mode = DWRITE_RENDERING_MODE_DEFAULT;
+    switch (render_target->drawing_state.textAntialiasMode)
     {
-        ERR("Failed to get recommended rendering mode, hr %#x.\n", hr);
-        rendering_mode = DWRITE_RENDERING_MODE_OUTLINE;
+    case D2D1_TEXT_ANTIALIAS_MODE_DEFAULT:
+        if (IDWriteRenderingParams_GetClearTypeLevel(rendering_params) > 0.0f)
+            antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
+        break;
+    case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
+        antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
+        break;
+    case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
+        rendering_mode = DWRITE_RENDERING_MODE_ALIASED;
+        break;
+    default:
+        ;
+    }
+
+    ppd = max(render_target->desc.dpiX, render_target->desc.dpiY) / 96.0f;
+    if (rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
+    {
+        if (FAILED(hr = IDWriteFontFace_GetRecommendedRenderingMode(glyph_run->fontFace, glyph_run->fontEmSize,
+                ppd, measuring_mode, rendering_params, &rendering_mode)))
+        {
+            ERR("Failed to get recommended rendering mode, hr %#x.\n", hr);
+            rendering_mode = DWRITE_RENDERING_MODE_OUTLINE;
+        }
     }
 
     if (rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
         d2d_rt_draw_glyph_run_outline(render_target, baseline_origin, glyph_run, brush);
     else
         d2d_rt_draw_glyph_run_bitmap(render_target, baseline_origin, glyph_run, brush,
-                ppd, rendering_mode, measuring_mode);
+                ppd, rendering_mode, measuring_mode, antialias_mode);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTransform(ID2D1RenderTarget *iface,
