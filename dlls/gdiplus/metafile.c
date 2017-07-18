@@ -2698,42 +2698,23 @@ GpStatus METAFILE_AddSimpleProperty(GpMetafile *metafile, SHORT prop, SHORT val)
 static GpStatus METAFILE_AddPathObject(GpMetafile *metafile, GpPath *path, DWORD *id)
 {
     EmfPlusObject *object_record;
-    EmfPlusPointF *points;
-    BYTE *types;
     GpStatus stat;
-    DWORD i, size;
+    DWORD size;
 
     *id = -1;
     if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
         return Ok;
 
-    /* TODO: Add support for more point formats */
-    size = sizeof(EmfPlusPointF)*path->pathdata.Count + path->pathdata.Count;
-    size = (size + 3) & ~3;
-
+    size = write_path_data(path, NULL);
     stat = METAFILE_AllocateRecord(metafile,
-            FIELD_OFFSET(EmfPlusObject, ObjectData.path.data[size]),
+            FIELD_OFFSET(EmfPlusObject, ObjectData.path) + size,
             (void**)&object_record);
     if (stat != Ok) return stat;
 
     *id = METAFILE_AddObjectId(metafile);
     object_record->Header.Type = EmfPlusRecordTypeObject;
     object_record->Header.Flags = *id | ObjectTypePath << 8;
-
-    object_record->ObjectData.path.Version = 0xDBC01002;
-    object_record->ObjectData.path.PathPointCount = path->pathdata.Count;
-    object_record->ObjectData.path.PathPointFlags = 0;
-
-    points = (EmfPlusPointF*)object_record->ObjectData.path.data;
-    for (i=0; i<path->pathdata.Count; i++)
-    {
-        points[i].X = path->pathdata.Points[i].X;
-        points[i].Y = path->pathdata.Points[i].Y;
-    }
-
-    types = (BYTE*)(points + path->pathdata.Count);
-    for (i=0; i<path->pathdata.Count; i++)
-        types[i] = path->pathdata.Types[i];
+    write_path_data(path, &object_record->ObjectData.path);
     return Ok;
 }
 

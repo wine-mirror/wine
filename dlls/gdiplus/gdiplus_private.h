@@ -124,6 +124,8 @@ extern void free_installed_fonts(void) DECLSPEC_HIDDEN;
 
 extern BOOL lengthen_path(GpPath *path, INT len) DECLSPEC_HIDDEN;
 
+extern DWORD write_path_data(GpPath *path, void *data) DECLSPEC_HIDDEN;
+
 extern GpStatus trace_path(GpGraphics *graphics, GpPath *path) DECLSPEC_HIDDEN;
 
 typedef struct region_element region_element;
