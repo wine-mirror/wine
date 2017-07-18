@@ -2195,9 +2195,9 @@ static void child_process(const char *dll_name, DWORD target_offset)
     }
     else
     {
-        ret = WaitForSingleObject(attached_thread[0], 1000);
+        ret = WaitForSingleObject(attached_thread[0], 2000);
         ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
-        ret = WaitForSingleObject(attached_thread[1], 1000);
+        ret = WaitForSingleObject(attached_thread[1], 2000);
         ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
     }
 
