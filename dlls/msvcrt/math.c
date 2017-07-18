@@ -225,10 +225,10 @@ float CDECL MSVCRT_fmodf( float x, float y )
 /*********************************************************************
  *      MSVCRT_logf (MSVCRT.@)
  */
-float CDECL MSVCRT_logf( float x)
+float CDECL MSVCRT_logf( float x )
 {
-  if (x < 0.0 || !finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
+  if (x < 0.0) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
   return logf(x);
 }
 
@@ -237,8 +237,8 @@ float CDECL MSVCRT_logf( float x)
  */
 float CDECL MSVCRT_log10f( float x )
 {
-  if (x < 0.0 || !finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
+  if (x < 0.0) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
   return log10f(x);
 }
 
@@ -420,10 +420,10 @@ double CDECL MSVCRT_fmod( double x, double y )
 /*********************************************************************
  *		MSVCRT_log (MSVCRT.@)
  */
-double CDECL MSVCRT_log( double x)
+double CDECL MSVCRT_log( double x )
 {
-  if (x < 0.0 || !isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
+  if (x < 0.0) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
   return log(x);
 }
 
@@ -432,8 +432,8 @@ double CDECL MSVCRT_log( double x)
  */
 double CDECL MSVCRT_log10( double x )
 {
-  if (x < 0.0 || !isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
+  if (x < 0.0) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
   return log10(x);
 }
 
