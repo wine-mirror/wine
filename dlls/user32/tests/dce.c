@@ -623,7 +623,7 @@ static void test_destroyed_window(void)
 
     DestroyWindow( hwnd_cache );
     rop = GetROP2( dc );
-    todo_wine ok( rop == 0, "wrong ROP2 %d\n", rop );
+    ok( rop == 0, "wrong ROP2 %d\n", rop );
     ok( WindowFromDC( dc ) == 0, "wrong window\n" );
     ok( !ReleaseDC( hwnd_cache, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_cache );
@@ -654,21 +654,21 @@ static void test_destroyed_window(void)
     rop = GetROP2( dc );
     ok( rop == R2_WHITE, "wrong ROP2 %d\n", rop );
     ok( WindowFromDC( dc ) == 0, "wrong window\n" );
-    todo_wine ok( !ReleaseDC( hwnd_classdc2, dc ), "ReleaseDC succeeded\n" );
+    ok( !ReleaseDC( hwnd_classdc2, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_classdc2 );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
 
     dc = GetDC( hwnd_classdc );
     ok( dc != 0, "Got NULL DC\n" );
     rop = GetROP2( dc );
-    todo_wine ok( rop == R2_WHITE, "wrong ROP2 %d\n", rop );
+    ok( rop == R2_WHITE, "wrong ROP2 %d\n", rop );
     ok( WindowFromDC( dc ) == hwnd_classdc, "wrong window\n" );
     DestroyWindow( hwnd_classdc );
 
     rop = GetROP2( dc );
-    todo_wine ok( rop == R2_WHITE, "wrong ROP2 %d\n", rop );
+    ok( rop == R2_WHITE, "wrong ROP2 %d\n", rop );
     ok( WindowFromDC( dc ) == 0, "wrong window\n" );
-    todo_wine ok( !ReleaseDC( hwnd_classdc, dc ), "ReleaseDC succeeded\n" );
+    ok( !ReleaseDC( hwnd_classdc, dc ), "ReleaseDC succeeded\n" );
     dc = GetDC( hwnd_classdc );
     ok( !dc, "Got a non-NULL DC (%p) for a destroyed window\n", dc );
 

@@ -367,9 +367,13 @@ void free_dce( struct dce *dce, HWND hwnd )
             if (dce->hwnd != hwnd) continue;
             if (!(dce->flags & DCX_CACHE)) break;
 
-            if (dce->count) WARN( "GetDC() without ReleaseDC() for window %p\n", hwnd );
-            dce->count = 0;
             release_dce( dce );
+            if (dce->count)
+            {
+                WARN( "GetDC() without ReleaseDC() for window %p\n", hwnd );
+                dce->count = 0;
+                SetHookFlags( dce->hdc, DCHF_DISABLEDC );
+            }
         }
     }
 
@@ -472,7 +476,7 @@ static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
 
     USER_Lock();
     dce = (struct dce *)GetDCHook( hdc, NULL );
-    if (dce && dce->count)
+    if (dce && dce->count && dce->hwnd)
     {
         if (!(dce->flags & DCX_NORESETATTRS)) SetHookFlags( dce->hdc, DCHF_RESETDC );
         if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
