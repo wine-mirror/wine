@@ -2379,7 +2379,6 @@ NTSTATUS signal_alloc_thread( TEB **teb )
 {
     static size_t sigstack_zero_bits;
     struct ntdll_thread_data *thread_data;
-    struct ntdll_thread_data *parent_data = NULL;
     SIZE_T size;
     void *addr = NULL;
     NTSTATUS status;
@@ -2393,7 +2392,6 @@ NTSTATUS signal_alloc_thread( TEB **teb )
         signal_stack_mask = (1 << sigstack_zero_bits) - 1;
         signal_stack_size = (1 << sigstack_zero_bits) - teb_size;
     }
-    else parent_data = ntdll_get_thread_data();
 
     size = signal_stack_mask + 1;
     if (!(status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, sigstack_zero_bits,
@@ -2409,17 +2407,6 @@ NTSTATUS signal_alloc_thread( TEB **teb )
             NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
             status = STATUS_TOO_MANY_THREADS;
         }
-        if (parent_data)
-        {
-            /* inherit debug registers from parent thread */
-            thread_data->dr0 = parent_data->dr0;
-            thread_data->dr1 = parent_data->dr1;
-            thread_data->dr2 = parent_data->dr2;
-            thread_data->dr3 = parent_data->dr3;
-            thread_data->dr6 = parent_data->dr6;
-            thread_data->dr7 = parent_data->dr7;
-        }
-
     }
     return status;
 }
