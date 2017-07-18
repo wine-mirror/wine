@@ -37,7 +37,7 @@
 #define expectf_(expected, got, precision) ok(fabs((expected) - (got)) < (precision), "Expected %f, got %f\n", (expected), (got))
 #define expectf(expected, got) expectf_((expected), (got), 0.001)
 
-#define expect_magic(value) ok(*(value) == RGNDATA_MAGIC || *(value) == RGNDATA_MAGIC2, "Expected a known magic value, got %8x\n", *(value))
+#define expect_magic(value) ok(broken(*(value) == RGNDATA_MAGIC) || *(value) == RGNDATA_MAGIC2, "Expected a known magic value, got %8x\n", *(value))
 #define expect_dword(value, expected) expect((expected), *(value))
 #define expect_float(value, expected) expectf((expected), *(FLOAT *)(value))
 

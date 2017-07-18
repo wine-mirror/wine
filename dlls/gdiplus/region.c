@@ -764,7 +764,7 @@ static void write_element(const region_element* element, DWORD *buffer,
             else
                 pathheader->size += 2 * sizeof(FLOAT) * path->pathdata.Count;
             pathheader->size += get_pathtypes_size(path);
-            pathheader->magic = VERSION_MAGIC;
+            pathheader->magic = VERSION_MAGIC2;
             pathheader->count = path->pathdata.Count;
 
             *filled += 4;
@@ -852,7 +852,7 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
     region_header = (struct region_header *)buffer;
     region_header->size = sizeheader_size + get_element_size(&region->node);
     region_header->checksum = 0;
-    region_header->magic = VERSION_MAGIC;
+    region_header->magic = VERSION_MAGIC2;
     region_header->num_children = region->num_children;
     filled += 4;
     /* With few exceptions, everything written is DWORD aligned,
