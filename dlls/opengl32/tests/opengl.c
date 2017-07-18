@@ -397,6 +397,30 @@ static void test_setpixelformat(HDC winhdc)
         ok( i == pf, "GetPixelFormat returned wrong format %d/%d\n", i, pf );
         ReleaseDC( hwnd, hdc );
         DestroyWindow( hwnd );
+        /* check various calls with invalid hdc */
+        SetLastError( 0xdeadbeef );
+        i = GetPixelFormat( hdc );
+        ok( i == 0, "GetPixelFormat succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PIXEL_FORMAT, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        res = SetPixelFormat( hdc, pf, &pfd );
+        ok( i == 0, "SetPixelFormat succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        res = DescribePixelFormat( hdc, 0, 0, NULL );
+        ok( !res, "DescribePixelFormat succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        pf = ChoosePixelFormat( hdc, &pfd );
+        ok( !pf, "ChoosePixelFormat succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        res = SwapBuffers( hdc );
+        ok( !res, "SwapBuffers succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ok( !wglCreateContext( hdc ), "CreateContext succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
     }
 
     hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW, 10, 10, 200, 200, NULL, NULL,
@@ -986,7 +1010,8 @@ static void test_opengl3(HDC hdc)
         gl3Ctx = pwglCreateContextAttribsARB((HDC)0xdeadbeef, 0, 0);
         ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid HDC passed\n");
         error = GetLastError();
-        ok(error == ERROR_DC_NOT_FOUND ||
+        ok(error == ERROR_DC_NOT_FOUND || error == ERROR_INVALID_HANDLE ||
+           broken(error == ERROR_DS_GENERIC_ERROR) ||
            broken(error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_DATA)), /* Nvidia Vista + Win7 */
            "Expected ERROR_DC_NOT_FOUND, got error=%x\n", error);
         wglDeleteContext(gl3Ctx);
@@ -1001,7 +1026,7 @@ static void test_opengl3(HDC hdc)
         ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid shareList passed\n");
         error = GetLastError();
         /* The Nvidia implementation seems to return hresults instead of win32 error codes */
-        ok(error == ERROR_INVALID_OPERATION ||
+        ok(error == ERROR_INVALID_OPERATION || error == ERROR_INVALID_DATA ||
            error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "Expected ERROR_INVALID_OPERATION, got error=%x\n", error);
         wglDeleteContext(gl3Ctx);
     }

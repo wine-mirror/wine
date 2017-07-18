@@ -98,7 +98,8 @@ static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 static inline struct opengl_funcs *get_dc_funcs( HDC hdc )
 {
     struct opengl_funcs *funcs = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
-    if (funcs == (void *)-1) funcs = &null_opengl_funcs;
+    if (!funcs) SetLastError( ERROR_INVALID_HANDLE );
+    else if (funcs == (void *)-1) funcs = &null_opengl_funcs;
     return funcs;
 }
 
@@ -619,7 +620,11 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
 INT WINAPI wglGetPixelFormat(HDC hdc)
 {
     struct opengl_funcs *funcs = get_dc_funcs( hdc );
-    if (!funcs) return 0;
+    if (!funcs)
+    {
+        SetLastError( ERROR_INVALID_PIXEL_FORMAT );
+        return 0;
+    }
     return funcs->wgl.p_wglGetPixelFormat( hdc );
 }
 
