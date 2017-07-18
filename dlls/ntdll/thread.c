@@ -843,7 +843,7 @@ static inline unsigned int get_server_context_flags( DWORD flags )
 /***********************************************************************
  *              get_thread_context
  */
-static NTSTATUS get_thread_context( HANDLE handle, CONTEXT *context, BOOL *self )
+NTSTATUS get_thread_context( HANDLE handle, CONTEXT *context, BOOL *self )
 {
     NTSTATUS ret;
     DWORD dummy, i;
@@ -887,56 +887,6 @@ static NTSTATUS get_thread_context( HANDLE handle, CONTEXT *context, BOOL *self 
     }
     if (!ret) ret = context_from_server( context, &server_context );
     return ret;
-}
-
-
-/***********************************************************************
- *              NtGetContextThread  (NTDLL.@)
- *              ZwGetContextThread  (NTDLL.@)
- */
-NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
-{
-    NTSTATUS ret;
-    DWORD needed_flags = context->ContextFlags;
-    BOOL self = (handle == GetCurrentThread());
-
-    /* on i386/amd64 debug registers always require a server call */
-#ifdef __i386__
-    if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)) self = FALSE;
-#elif defined(__x86_64__)
-    if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64)) self = FALSE;
-#endif
-
-    if (!self)
-    {
-        ret = get_thread_context( handle, context, &self );
-        if (ret) return ret;
-        needed_flags &= ~context->ContextFlags;
-    }
-
-    if (self)
-    {
-        if (needed_flags)
-        {
-            CONTEXT ctx;
-            RtlCaptureContext( &ctx );
-            copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
-            context->ContextFlags |= ctx.ContextFlags & needed_flags;
-        }
-#ifdef __i386__
-        /* update the cached version of the debug registers */
-        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
-        {
-            ntdll_get_thread_data()->dr0 = context->Dr0;
-            ntdll_get_thread_data()->dr1 = context->Dr1;
-            ntdll_get_thread_data()->dr2 = context->Dr2;
-            ntdll_get_thread_data()->dr3 = context->Dr3;
-            ntdll_get_thread_data()->dr6 = context->Dr6;
-            ntdll_get_thread_data()->dr7 = context->Dr7;
-        }
-#endif
-    }
-    return STATUS_SUCCESS;
 }
 
 

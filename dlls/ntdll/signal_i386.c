@@ -1270,7 +1270,7 @@ static void set_cpu_context( const CONTEXT *context )
  *
  * Copy a register context according to the flags.
  */
-void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
+static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
 {
     flags &= ~CONTEXT_i386;  /* get rid of CPU id */
     if (flags & CONTEXT_INTEGER)
@@ -1482,6 +1482,49 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
     return ret;
+}
+
+
+/***********************************************************************
+ *              NtGetContextThread  (NTDLL.@)
+ *              ZwGetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
+{
+    NTSTATUS ret;
+    DWORD needed_flags = context->ContextFlags;
+    BOOL self = (handle == GetCurrentThread());
+
+    /* debug registers require a server call */
+    if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)) self = FALSE;
+
+    if (!self)
+    {
+        if ((ret = get_thread_context( handle, context, &self ))) return ret;
+        needed_flags &= ~context->ContextFlags;
+    }
+
+    if (self)
+    {
+        if (needed_flags)
+        {
+            CONTEXT ctx;
+            RtlCaptureContext( &ctx );
+            copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
+            context->ContextFlags |= ctx.ContextFlags & needed_flags;
+        }
+        /* update the cached version of the debug registers */
+        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
+        {
+            ntdll_get_thread_data()->dr0 = context->Dr0;
+            ntdll_get_thread_data()->dr1 = context->Dr1;
+            ntdll_get_thread_data()->dr2 = context->Dr2;
+            ntdll_get_thread_data()->dr3 = context->Dr3;
+            ntdll_get_thread_data()->dr6 = context->Dr6;
+            ntdll_get_thread_data()->dr7 = context->Dr7;
+        }
+    }
+    return STATUS_SUCCESS;
 }
 
 
