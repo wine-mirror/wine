@@ -3765,6 +3765,37 @@ static void test_create_target(void)
 
 static void test_draw_text_layout(void)
 {
+    static const struct
+    {
+        D2D1_TEXT_ANTIALIAS_MODE aa_mode;
+        DWRITE_RENDERING_MODE rendering_mode;
+        HRESULT hr;
+    }
+    antialias_mode_tests[] =
+    {
+        { D2D1_TEXT_ANTIALIAS_MODE_DEFAULT, DWRITE_RENDERING_MODE_ALIASED },
+        { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_ALIASED },
+        { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_DEFAULT },
+        { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_OUTLINE },
+        { D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE, DWRITE_RENDERING_MODE_DEFAULT },
+        { D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE, DWRITE_RENDERING_MODE_OUTLINE },
+        { D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE, DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL },
+        { D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE, DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC },
+        { D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL },
+        { D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC },
+        { D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE, DWRITE_RENDERING_MODE_DEFAULT },
+        { D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE, DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL },
+        { D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE, DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC },
+        { D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL },
+        { D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC },
+        { D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE, DWRITE_RENDERING_MODE_OUTLINE, E_INVALIDARG },
+        { D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE, DWRITE_RENDERING_MODE_ALIASED, E_INVALIDARG },
+        { D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE, DWRITE_RENDERING_MODE_ALIASED, E_INVALIDARG },
+        { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL, E_INVALIDARG },
+        { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC, E_INVALIDARG },
+        { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL, E_INVALIDARG },
+        { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC, E_INVALIDARG },
+    };
     static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
     static const WCHAR textW[] = {'t','e','x','t',0};
     static const WCHAR emptyW[] = {0};
@@ -3785,6 +3816,7 @@ static void test_draw_text_layout(void)
     ID2D1SolidColorBrush *brush, *brush2;
     ID2D1RectangleGeometry *geometry;
     D2D1_RECT_F rect;
+    unsigned int i;
 
     if (!(device = create_device()))
     {
@@ -3867,6 +3899,28 @@ todo_wine
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "EndDraw failure expected, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(antialias_mode_tests)/sizeof(*antialias_mode_tests); i++)
+    {
+        IDWriteRenderingParams *rendering_params;
+
+        ID2D1RenderTarget_SetTextAntialiasMode(rt, antialias_mode_tests[i].aa_mode);
+
+        hr = IDWriteFactory_CreateCustomRenderingParams(dwrite_factory, 2.0f, 1.0f, 0.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
+                antialias_mode_tests[i].rendering_mode, &rendering_params);
+        ok(SUCCEEDED(hr), "Failed to create custom rendering params, hr %#x.\n", hr);
+
+        ID2D1RenderTarget_SetTextRenderingParams(rt, rendering_params);
+
+        ID2D1RenderTarget_BeginDraw(rt);
+
+        ID2D1RenderTarget_DrawTextLayout(rt, origin, text_layout, (ID2D1Brush *)brush, D2D1_DRAW_TEXT_OPTIONS_NONE);
+
+        hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+        ok(hr == antialias_mode_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
+
+        IDWriteRenderingParams_Release(rendering_params);
+    }
 
     IDWriteTextFormat_Release(text_format);
     IDWriteTextLayout_Release(text_layout);

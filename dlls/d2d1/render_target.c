@@ -1230,11 +1230,39 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
     TRACE("iface %p, baseline_origin {%.8e, %.8e}, glyph_run %p, brush %p, measuring_mode %#x.\n",
             iface, baseline_origin.x, baseline_origin.y, glyph_run, brush, measuring_mode);
 
-    if (FAILED(render_target->error.code))
-        return;
-
     rendering_params = render_target->text_rendering_params ? render_target->text_rendering_params
             : render_target->default_text_rendering_params;
+
+    rendering_mode = IDWriteRenderingParams_GetRenderingMode(rendering_params);
+
+    switch (render_target->drawing_state.textAntialiasMode)
+    {
+    case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
+        if (rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL
+                || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC
+                || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL
+                || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC)
+        {
+            render_target->error.code = E_INVALIDARG;
+        }
+        break;
+    case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
+        if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED
+                || rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
+        {
+            render_target->error.code = E_INVALIDARG;
+        }
+        break;
+    case D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE:
+        if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED)
+            render_target->error.code = E_INVALIDARG;
+        break;
+    default:
+        ;
+    }
+
+    if (FAILED(render_target->error.code))
+        return;
 
     rendering_mode = DWRITE_RENDERING_MODE_DEFAULT;
     switch (render_target->drawing_state.textAntialiasMode)
