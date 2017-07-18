@@ -961,7 +961,7 @@ static GpStatus read_element(struct memory_buffer *mbuf, GpRegion *region, regio
             ERR("failed to read path header\n");
             return InvalidParameter;
         }
-        if (path_header->magic != VERSION_MAGIC)
+        if (!VALID_MAGIC(path_header->magic))
         {
             ERR("invalid path header magic %#x\n", path_header->magic);
             return InvalidParameter;
@@ -1069,8 +1069,7 @@ GpStatus WINGDIPAPI GdipCreateRegionRgnData(GDIPCONST BYTE *data, INT size, GpRe
     init_memory_buffer(&mbuf, data, size);
 
     region_header = buffer_read(&mbuf, sizeof(*region_header));
-    if (!region_header || (region_header->magic != VERSION_MAGIC &&
-                           region_header->magic != VERSION_MAGIC2))
+    if (!region_header || !VALID_MAGIC(region_header->magic))
         return InvalidParameter;
 
     status = GdipCreateRegion(region);
