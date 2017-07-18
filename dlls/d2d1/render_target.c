@@ -1042,10 +1042,19 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawTextLayout(ID2D1RenderTa
         FIXME("Failed to draw text layout, hr %#x.\n", hr);
 }
 
+static D2D1_ANTIALIAS_MODE d2d_d3d_render_target_set_aa_mode_from_text_aa_mode(struct d2d_d3d_render_target *rt)
+{
+    D2D1_ANTIALIAS_MODE prev_antialias_mode = rt->drawing_state.antialiasMode;
+    rt->drawing_state.antialiasMode = rt->drawing_state.textAntialiasMode == D2D1_TEXT_ANTIALIAS_MODE_ALIASED ?
+            D2D1_ANTIALIAS_MODE_ALIASED : D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
+    return prev_antialias_mode;
+}
+
 static void d2d_rt_draw_glyph_run_outline(struct d2d_d3d_render_target *render_target,
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush)
 {
     D2D1_MATRIX_3X2_F *transform, prev_transform;
+    D2D1_ANTIALIAS_MODE prev_antialias_mode;
     ID2D1PathGeometry *geometry;
     ID2D1GeometrySink *sink;
     HRESULT hr;
@@ -1081,8 +1090,10 @@ static void d2d_rt_draw_glyph_run_outline(struct d2d_d3d_render_target *render_t
     prev_transform = *transform;
     transform->_31 += baseline_origin.x * transform->_11 + baseline_origin.y * transform->_21;
     transform->_32 += baseline_origin.x * transform->_12 + baseline_origin.y * transform->_22;
+    prev_antialias_mode = d2d_d3d_render_target_set_aa_mode_from_text_aa_mode(render_target);
     d2d_rt_fill_geometry(render_target, unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)geometry),
             unsafe_impl_from_ID2D1Brush(brush), NULL);
+    render_target->drawing_state.antialiasMode = prev_antialias_mode;
     *transform = prev_transform;
 
     ID2D1PathGeometry_Release(geometry);
@@ -1908,6 +1919,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRend
     struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
     const D2D1_MATRIX_3X2_F *m = &render_target->drawing_state.transform;
     struct d2d_draw_text_layout_ctx *context = ctx;
+    D2D1_ANTIALIAS_MODE prev_antialias_mode;
     D2D1_POINT_2F start, end;
     ID2D1Brush *brush;
     float thickness;
@@ -1925,7 +1937,9 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRend
     start.y = baseline_origin_y + underline->offset + thickness / 2.0f;
     end.x = start.x + underline->width;
     end.y = start.y;
+    prev_antialias_mode = d2d_d3d_render_target_set_aa_mode_from_text_aa_mode(render_target);
     d2d_d3d_render_target_DrawLine(&render_target->ID2D1RenderTarget_iface, start, end, brush, thickness, NULL);
+    render_target->drawing_state.antialiasMode = prev_antialias_mode;
 
     ID2D1Brush_Release(brush);
 
@@ -1938,6 +1952,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteText
     struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
     const D2D1_MATRIX_3X2_F *m = &render_target->drawing_state.transform;
     struct d2d_draw_text_layout_ctx *context = ctx;
+    D2D1_ANTIALIAS_MODE prev_antialias_mode;
     D2D1_POINT_2F start, end;
     ID2D1Brush *brush;
     float thickness;
@@ -1955,7 +1970,9 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteText
     start.y = baseline_origin_y + strikethrough->offset + thickness / 2.0f;
     end.x = start.x + strikethrough->width;
     end.y = start.y;
+    prev_antialias_mode = d2d_d3d_render_target_set_aa_mode_from_text_aa_mode(render_target);
     d2d_d3d_render_target_DrawLine(&render_target->ID2D1RenderTarget_iface, start, end, brush, thickness, NULL);
+    render_target->drawing_state.antialiasMode = prev_antialias_mode;
 
     ID2D1Brush_Release(brush);
 
