@@ -305,9 +305,6 @@ static unsigned int get_reg_components(unsigned int table)
 
 #define PRES_BITMASK_BLOCK_SIZE (sizeof(unsigned int) * 8)
 
-static HRESULT init_set_constants_param(struct d3dx_const_tab *const_tab, ID3DXConstantTable *ctab,
-        D3DXHANDLE hc, struct d3dx_parameter *param);
-
 static HRESULT regstore_alloc_table(struct d3dx_regstore *rs, unsigned int table)
 {
     unsigned int size;
@@ -601,6 +598,278 @@ static HRESULT get_ctab_constant_desc(ID3DXConstantTable *ctab, D3DXHANDLE hc, D
     *desc = constant->desc;
     if (constantinfo_reserved)
         *constantinfo_reserved = constant->constantinfo_reserved;
+    return D3D_OK;
+}
+
+static void get_const_upload_info(struct d3dx_const_param_eval_output *const_set,
+        struct const_upload_info *info)
+{
+    struct d3dx_parameter *param = const_set->param;
+    unsigned int table = const_set->table;
+
+    info->transpose = (const_set->constant_class == D3DXPC_MATRIX_COLUMNS && param->class == D3DXPC_MATRIX_ROWS)
+            || (param->class == D3DXPC_MATRIX_COLUMNS && const_set->constant_class == D3DXPC_MATRIX_ROWS);
+    if (const_set->constant_class == D3DXPC_MATRIX_COLUMNS)
+    {
+        info->major = param->columns;
+        info->minor = param->rows;
+    }
+    else
+    {
+        info->major = param->rows;
+        info->minor = param->columns;
+    }
+
+    if (get_reg_components(table) == 1)
+    {
+        unsigned int const_length = get_offset_reg(table, const_set->register_count);
+
+        info->major_stride = info->minor;
+        info->major_count = const_length / info->major_stride;
+        info->minor_remainder = const_length % info->major_stride;
+    }
+    else
+    {
+        info->major_stride = get_reg_components(table);
+        info->major_count = const_set->register_count;
+        info->minor_remainder = 0;
+    }
+    info->count = info->major_count * info->minor + info->minor_remainder;
+}
+
+#define INITIAL_CONST_SET_SIZE 16
+
+static HRESULT append_const_set(struct d3dx_const_tab *const_tab, struct d3dx_const_param_eval_output *set)
+{
+    if (const_tab->const_set_count >= const_tab->const_set_size)
+    {
+        unsigned int new_size;
+        struct d3dx_const_param_eval_output *new_alloc;
+
+        if (!const_tab->const_set_size)
+        {
+            new_size = INITIAL_CONST_SET_SIZE;
+            new_alloc = HeapAlloc(GetProcessHeap(), 0, sizeof(*const_tab->const_set) * new_size);
+            if (!new_alloc)
+            {
+                ERR("Out of memory.\n");
+                return E_OUTOFMEMORY;
+            }
+        }
+        else
+        {
+            new_size = const_tab->const_set_size * 2;
+            new_alloc = HeapReAlloc(GetProcessHeap(), 0, const_tab->const_set,
+                    sizeof(*const_tab->const_set) * new_size);
+            if (!new_alloc)
+            {
+                ERR("Out of memory.\n");
+                return E_OUTOFMEMORY;
+            }
+        }
+        const_tab->const_set = new_alloc;
+        const_tab->const_set_size = new_size;
+    }
+    const_tab->const_set[const_tab->const_set_count++] = *set;
+    return D3D_OK;
+}
+
+static HRESULT merge_const_set_entries(struct d3dx_const_tab *const_tab,
+        struct d3dx_parameter *param, unsigned int index)
+{
+    unsigned int i, start_index = index;
+    DWORD *current_data;
+    enum pres_reg_tables current_table;
+    unsigned int current_start_offset, element_count;
+    struct d3dx_const_param_eval_output *first_const;
+
+    if (!const_tab->const_set_count)
+        return D3D_OK;
+
+    while (index < const_tab->const_set_count - 1)
+    {
+        first_const = &const_tab->const_set[index];
+        current_data = first_const->param->data;
+        current_table = first_const->table;
+        current_start_offset = get_offset_reg(current_table, first_const->register_index);
+        element_count = 0;
+        for (i = index; i < const_tab->const_set_count; ++i)
+        {
+            struct d3dx_const_param_eval_output *const_set = &const_tab->const_set[i];
+            unsigned int count = get_offset_reg(const_set->table,
+                    const_set->register_count * const_set->element_count);
+            unsigned int start_offset = get_offset_reg(const_set->table, const_set->register_index);
+
+            if (!(const_set->table == current_table && current_start_offset == start_offset
+                    && const_set->direct_copy == first_const->direct_copy
+                    && current_data == const_set->param->data
+                    && (const_set->direct_copy || (first_const->param->type == const_set->param->type
+                    && first_const->param->class == const_set->param->class
+                    && first_const->param->columns == const_set->param->columns
+                    && first_const->param->rows == const_set->param->rows
+                    && first_const->register_count == const_set->register_count
+                    && (i == const_tab->const_set_count - 1
+                    || first_const->param->element_count == const_set->param->element_count)))))
+                break;
+
+            current_start_offset += count;
+            current_data += const_set->direct_copy ? count : const_set->param->rows
+                    * const_set->param->columns * const_set->element_count;
+            element_count += const_set->element_count;
+        }
+
+        if (i > index + 1)
+        {
+            TRACE("Merging %u child parameters for %s, not merging %u, direct_copy %#x.\n", i - index,
+                    debugstr_a(param->name), const_tab->const_set_count - i, first_const->direct_copy);
+
+            first_const->element_count = element_count;
+            if (first_const->direct_copy)
+            {
+                first_const->element_count = 1;
+                if (index == start_index
+                        && !(param->type == D3DXPT_VOID && param->class == D3DXPC_STRUCT))
+                {
+                    if (table_type_from_param_type(param->type) == PRES_VT_COUNT)
+                        return D3DERR_INVALIDCALL;
+                    first_const->param = param;
+                }
+                first_const->register_count = get_reg_offset(current_table, current_start_offset)
+                        - first_const->register_index;
+            }
+            memmove(&const_tab->const_set[index + 1], &const_tab->const_set[i],
+                    sizeof(*const_tab->const_set) * (const_tab->const_set_count - i));
+            const_tab->const_set_count -= i - index - 1;
+        }
+        else
+        {
+            TRACE("Not merging %u child parameters for %s, direct_copy %#x.\n",
+                    const_tab->const_set_count - i, debugstr_a(param->name), first_const->direct_copy);
+        }
+        index = i;
+    }
+    return D3D_OK;
+}
+
+static HRESULT init_set_constants_param(struct d3dx_const_tab *const_tab, ID3DXConstantTable *ctab,
+        D3DXHANDLE hc, struct d3dx_parameter *param)
+{
+    D3DXCONSTANT_DESC desc;
+    unsigned int const_count, param_count, i;
+    BOOL get_element;
+    struct d3dx_const_param_eval_output const_set;
+    struct const_upload_info info;
+    enum pres_value_type table_type;
+    HRESULT hr;
+
+    if (FAILED(get_ctab_constant_desc(ctab, hc, &desc, NULL)))
+        return D3DERR_INVALIDCALL;
+
+    if (param->element_count)
+    {
+        param_count = param->element_count;
+        const_count = desc.Elements;
+        get_element = TRUE;
+    }
+    else
+    {
+        if (desc.Elements > 1)
+        {
+            FIXME("Unexpected number of constant elements %u.\n", desc.Elements);
+            return D3DERR_INVALIDCALL;
+        }
+        param_count = param->member_count;
+        const_count = desc.StructMembers;
+        get_element = FALSE;
+    }
+    if (const_count != param_count)
+    {
+        FIXME("Number of elements or struct members differs between parameter (%u) and constant (%u).\n",
+                param_count, const_count);
+        return D3DERR_INVALIDCALL;
+    }
+    if (const_count)
+    {
+        HRESULT ret = D3D_OK;
+        D3DXHANDLE hc_element;
+        unsigned int index = const_tab->const_set_count;
+
+        for (i = 0; i < const_count; ++i)
+        {
+            if (get_element)
+                hc_element = ID3DXConstantTable_GetConstantElement(ctab, hc, i);
+            else
+                hc_element = ID3DXConstantTable_GetConstant(ctab, hc, i);
+            if (!hc_element)
+            {
+                FIXME("Could not get constant.\n");
+                hr = D3DERR_INVALIDCALL;
+            }
+            else
+            {
+                hr = init_set_constants_param(const_tab, ctab, hc_element, &param->members[i]);
+            }
+            if (FAILED(hr))
+                ret = hr;
+        }
+        if (FAILED(ret))
+            return ret;
+        return merge_const_set_entries(const_tab, param, index);
+    }
+
+    TRACE("Constant %s, rows %u, columns %u, class %u, bytes %u.\n",
+            debugstr_a(desc.Name), desc.Rows, desc.Columns, desc.Class, desc.Bytes);
+    TRACE("Parameter %s, rows %u, columns %u, class %u, flags %#x, bytes %u.\n",
+            debugstr_a(param->name), param->rows, param->columns, param->class,
+            param->flags, param->bytes);
+
+    const_set.element_count = 1;
+    const_set.param = param;
+    const_set.constant_class = desc.Class;
+    if (desc.RegisterSet >= ARRAY_SIZE(shad_regset2table))
+    {
+        FIXME("Unknown register set %u.\n", desc.RegisterSet);
+        return D3DERR_INVALIDCALL;
+    }
+    const_set.register_index = desc.RegisterIndex;
+    const_set.table = const_tab->regset2table[desc.RegisterSet];
+    if (const_set.table >= PRES_REGTAB_COUNT)
+    {
+        ERR("Unexpected register set %u.\n", desc.RegisterSet);
+        return D3DERR_INVALIDCALL;
+    }
+    assert(table_info[const_set.table].component_size == sizeof(unsigned int));
+    assert(param->bytes / (param->rows * param->columns) == sizeof(unsigned int));
+    const_set.register_count = desc.RegisterCount;
+    table_type = table_info[const_set.table].type;
+    get_const_upload_info(&const_set, &info);
+    if (!info.count)
+    {
+        TRACE("%s has zero count, skipping.\n", debugstr_a(param->name));
+        return D3D_OK;
+    }
+
+    if (table_type_from_param_type(param->type) == PRES_VT_COUNT)
+        return D3DERR_INVALIDCALL;
+
+    const_set.direct_copy = table_type_from_param_type(param->type) == table_type
+            && !info.transpose && info.minor == info.major_stride
+            && info.count == get_offset_reg(const_set.table, const_set.register_count)
+            && info.count * sizeof(unsigned int) <= param->bytes;
+    if (info.minor_remainder && !const_set.direct_copy && !info.transpose)
+        FIXME("Incomplete last row for not transposed matrix which cannot be directly copied, parameter %s.\n",
+                debugstr_a(param->name));
+
+    if (info.major_count > info.major
+            || (info.major_count == info.major && info.minor_remainder))
+    {
+        WARN("Constant dimensions exceed parameter size.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (FAILED(hr = append_const_set(const_tab, &const_set)))
+        return hr;
+
     return D3D_OK;
 }
 
@@ -1071,42 +1340,6 @@ void d3dx_free_param_eval(struct d3dx_param_eval *peval)
     HeapFree(GetProcessHeap(), 0, peval);
 }
 
-static void get_const_upload_info(struct d3dx_const_param_eval_output *const_set,
-        struct const_upload_info *info)
-{
-    struct d3dx_parameter *param = const_set->param;
-    unsigned int table = const_set->table;
-
-    info->transpose = (const_set->constant_class == D3DXPC_MATRIX_COLUMNS && param->class == D3DXPC_MATRIX_ROWS)
-            || (param->class == D3DXPC_MATRIX_COLUMNS && const_set->constant_class == D3DXPC_MATRIX_ROWS);
-    if (const_set->constant_class == D3DXPC_MATRIX_COLUMNS)
-    {
-        info->major = param->columns;
-        info->minor = param->rows;
-    }
-    else
-    {
-        info->major = param->rows;
-        info->minor = param->columns;
-    }
-
-    if (get_reg_components(table) == 1)
-    {
-        unsigned int const_length = get_offset_reg(table, const_set->register_count);
-
-        info->major_stride = info->minor;
-        info->major_count = const_length / info->major_stride;
-        info->minor_remainder = const_length % info->major_stride;
-    }
-    else
-    {
-        info->major_stride = get_reg_components(table);
-        info->major_count = const_set->register_count;
-        info->minor_remainder = 0;
-    }
-    info->count = info->major_count * info->minor + info->minor_remainder;
-}
-
 static void pres_int_from_float(void *out, const void *in, unsigned int count)
 {
     unsigned int i;
@@ -1259,241 +1492,6 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
     const_tab->update_version = new_update_version;
 }
 
-#define INITIAL_CONST_SET_SIZE 16
-
-static HRESULT append_const_set(struct d3dx_const_tab *const_tab, struct d3dx_const_param_eval_output *set)
-{
-    if (const_tab->const_set_count >= const_tab->const_set_size)
-    {
-        unsigned int new_size;
-        struct d3dx_const_param_eval_output *new_alloc;
-
-        if (!const_tab->const_set_size)
-        {
-            new_size = INITIAL_CONST_SET_SIZE;
-            new_alloc = HeapAlloc(GetProcessHeap(), 0, sizeof(*const_tab->const_set) * new_size);
-            if (!new_alloc)
-            {
-                ERR("Out of memory.\n");
-                return E_OUTOFMEMORY;
-            }
-        }
-        else
-        {
-            new_size = const_tab->const_set_size * 2;
-            new_alloc = HeapReAlloc(GetProcessHeap(), 0, const_tab->const_set,
-                    sizeof(*const_tab->const_set) * new_size);
-            if (!new_alloc)
-            {
-                ERR("Out of memory.\n");
-                return E_OUTOFMEMORY;
-            }
-        }
-        const_tab->const_set = new_alloc;
-        const_tab->const_set_size = new_size;
-    }
-    const_tab->const_set[const_tab->const_set_count++] = *set;
-    return D3D_OK;
-}
-
-static HRESULT merge_const_set_entries(struct d3dx_const_tab *const_tab,
-        struct d3dx_parameter *param, unsigned int index)
-{
-    unsigned int i, start_index = index;
-    DWORD *current_data;
-    enum pres_reg_tables current_table;
-    unsigned int current_start_offset, element_count;
-    struct d3dx_const_param_eval_output *first_const;
-
-    if (!const_tab->const_set_count)
-        return D3D_OK;
-
-    while (index < const_tab->const_set_count - 1)
-    {
-        first_const = &const_tab->const_set[index];
-        current_data = first_const->param->data;
-        current_table = first_const->table;
-        current_start_offset = get_offset_reg(current_table, first_const->register_index);
-        element_count = 0;
-        for (i = index; i < const_tab->const_set_count; ++i)
-        {
-            struct d3dx_const_param_eval_output *const_set = &const_tab->const_set[i];
-            unsigned int count = get_offset_reg(const_set->table,
-                    const_set->register_count * const_set->element_count);
-            unsigned int start_offset = get_offset_reg(const_set->table, const_set->register_index);
-
-            if (!(const_set->table == current_table && current_start_offset == start_offset
-                    && const_set->direct_copy == first_const->direct_copy
-                    && current_data == const_set->param->data
-                    && (const_set->direct_copy || (first_const->param->type == const_set->param->type
-                    && first_const->param->class == const_set->param->class
-                    && first_const->param->columns == const_set->param->columns
-                    && first_const->param->rows == const_set->param->rows
-                    && first_const->register_count == const_set->register_count
-                    && (i == const_tab->const_set_count - 1
-                    || first_const->param->element_count == const_set->param->element_count)))))
-                break;
-
-            current_start_offset += count;
-            current_data += const_set->direct_copy ? count : const_set->param->rows
-                    * const_set->param->columns * const_set->element_count;
-            element_count += const_set->element_count;
-        }
-
-        if (i > index + 1)
-        {
-            TRACE("Merging %u child parameters for %s, not merging %u, direct_copy %#x.\n", i - index,
-                    debugstr_a(param->name), const_tab->const_set_count - i, first_const->direct_copy);
-
-            first_const->element_count = element_count;
-            if (first_const->direct_copy)
-            {
-                first_const->element_count = 1;
-                if (index == start_index
-                        && !(param->type == D3DXPT_VOID && param->class == D3DXPC_STRUCT))
-                {
-                    if (table_type_from_param_type(param->type) == PRES_VT_COUNT)
-                        return D3DERR_INVALIDCALL;
-                    first_const->param = param;
-                }
-                first_const->register_count = get_reg_offset(current_table, current_start_offset)
-                        - first_const->register_index;
-            }
-            memmove(&const_tab->const_set[index + 1], &const_tab->const_set[i],
-                    sizeof(*const_tab->const_set) * (const_tab->const_set_count - i));
-            const_tab->const_set_count -= i - index - 1;
-        }
-        else
-        {
-            TRACE("Not merging %u child parameters for %s, direct_copy %#x.\n",
-                    const_tab->const_set_count - i, debugstr_a(param->name), first_const->direct_copy);
-        }
-        index = i;
-    }
-    return D3D_OK;
-}
-
-static HRESULT init_set_constants_param(struct d3dx_const_tab *const_tab, ID3DXConstantTable *ctab,
-        D3DXHANDLE hc, struct d3dx_parameter *param)
-{
-    D3DXCONSTANT_DESC desc;
-    unsigned int const_count, param_count, i;
-    BOOL get_element;
-    struct d3dx_const_param_eval_output const_set;
-    struct const_upload_info info;
-    enum pres_value_type table_type;
-    HRESULT hr;
-
-    if (FAILED(get_ctab_constant_desc(ctab, hc, &desc, NULL)))
-        return D3DERR_INVALIDCALL;
-
-    if (param->element_count)
-    {
-        param_count = param->element_count;
-        const_count = desc.Elements;
-        get_element = TRUE;
-    }
-    else
-    {
-        if (desc.Elements > 1)
-        {
-            FIXME("Unexpected number of constant elements %u.\n", desc.Elements);
-            return D3DERR_INVALIDCALL;
-        }
-        param_count = param->member_count;
-        const_count = desc.StructMembers;
-        get_element = FALSE;
-    }
-    if (const_count != param_count)
-    {
-        FIXME("Number of elements or struct members differs between parameter (%u) and constant (%u).\n",
-                param_count, const_count);
-        return D3DERR_INVALIDCALL;
-    }
-    if (const_count)
-    {
-        HRESULT ret = D3D_OK;
-        D3DXHANDLE hc_element;
-        unsigned int index = const_tab->const_set_count;
-
-        for (i = 0; i < const_count; ++i)
-        {
-            if (get_element)
-                hc_element = ID3DXConstantTable_GetConstantElement(ctab, hc, i);
-            else
-                hc_element = ID3DXConstantTable_GetConstant(ctab, hc, i);
-            if (!hc_element)
-            {
-                FIXME("Could not get constant.\n");
-                hr = D3DERR_INVALIDCALL;
-            }
-            else
-            {
-                hr = init_set_constants_param(const_tab, ctab, hc_element, &param->members[i]);
-            }
-            if (FAILED(hr))
-                ret = hr;
-        }
-        if (FAILED(ret))
-            return ret;
-        return merge_const_set_entries(const_tab, param, index);
-    }
-
-    TRACE("Constant %s, rows %u, columns %u, class %u, bytes %u.\n",
-            debugstr_a(desc.Name), desc.Rows, desc.Columns, desc.Class, desc.Bytes);
-    TRACE("Parameter %s, rows %u, columns %u, class %u, flags %#x, bytes %u.\n",
-            debugstr_a(param->name), param->rows, param->columns, param->class,
-            param->flags, param->bytes);
-
-    const_set.element_count = 1;
-    const_set.param = param;
-    const_set.constant_class = desc.Class;
-    if (desc.RegisterSet >= ARRAY_SIZE(shad_regset2table))
-    {
-        FIXME("Unknown register set %u.\n", desc.RegisterSet);
-        return D3DERR_INVALIDCALL;
-    }
-    const_set.register_index = desc.RegisterIndex;
-    const_set.table = const_tab->regset2table[desc.RegisterSet];
-    if (const_set.table >= PRES_REGTAB_COUNT)
-    {
-        ERR("Unexpected register set %u.\n", desc.RegisterSet);
-        return D3DERR_INVALIDCALL;
-    }
-    assert(table_info[const_set.table].component_size == sizeof(unsigned int));
-    assert(param->bytes / (param->rows * param->columns) == sizeof(unsigned int));
-    const_set.register_count = desc.RegisterCount;
-    table_type = table_info[const_set.table].type;
-    get_const_upload_info(&const_set, &info);
-    if (!info.count)
-    {
-        TRACE("%s has zero count, skipping.\n", debugstr_a(param->name));
-        return D3D_OK;
-    }
-
-    if (table_type_from_param_type(param->type) == PRES_VT_COUNT)
-        return D3DERR_INVALIDCALL;
-
-    const_set.direct_copy = table_type_from_param_type(param->type) == table_type
-            && !info.transpose && info.minor == info.major_stride
-            && info.count == get_offset_reg(const_set.table, const_set.register_count)
-            && info.count * sizeof(unsigned int) <= param->bytes;
-    if (info.minor_remainder && !const_set.direct_copy && !info.transpose)
-        FIXME("Incomplete last row for not transposed matrix which cannot be directly copied, parameter %s.\n",
-                debugstr_a(param->name));
-
-    if (info.major_count > info.major
-            || (info.major_count == info.major && info.minor_remainder))
-    {
-        WARN("Constant dimensions exceed parameter size.\n");
-        return D3DERR_INVALIDCALL;
-    }
-
-    if (FAILED(hr = append_const_set(const_tab, &const_set)))
-        return hr;
-
-    return D3D_OK;
-}
 
 static double exec_get_reg_value(struct d3dx_regstore *rs, enum pres_reg_tables table, unsigned int offset)
 {
