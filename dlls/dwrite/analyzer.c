@@ -1096,11 +1096,27 @@ static DWRITE_NUMBER_SUBSTITUTION_METHOD get_number_substitutes(IDWriteNumberSub
     return method;
 }
 
+static void analyzer_dump_user_features(DWRITE_TYPOGRAPHIC_FEATURES const **features,
+        UINT32 const *feature_range_lengths, UINT32 feature_ranges)
+{
+    UINT32 i, j, start;
+
+    if (!TRACE_ON(dwrite) || !features)
+        return;
+
+    for (i = 0, start = 0; i < feature_ranges; i++, start += feature_range_lengths[i]) {
+        TRACE("feature range [%u,%u)\n", start, start + feature_range_lengths[i]);
+        for (j = 0; j < features[i]->featureCount; j++)
+            TRACE("feature %s, parameter %u\n", debugstr_an((char *)&features[i]->features[j].nameTag, 4),
+                    features[i]->features[j].parameter);
+    }
+}
+
 static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     WCHAR const* text, UINT32 length, IDWriteFontFace* fontface, BOOL is_sideways,
     BOOL is_rtl, DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale,
     IDWriteNumberSubstitution* substitution, DWRITE_TYPOGRAPHIC_FEATURES const** features,
-    UINT32 const* feature_range_len, UINT32 feature_ranges, UINT32 max_glyph_count,
+    UINT32 const* feature_range_lengths, UINT32 feature_ranges, UINT32 max_glyph_count,
     UINT16* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* text_props, UINT16* glyph_indices,
     DWRITE_SHAPING_GLYPH_PROPERTIES* glyph_props, UINT32* actual_glyph_count)
 {
@@ -1118,8 +1134,10 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
 
     TRACE("(%s:%u %p %d %d %s %s %p %p %p %u %u %p %p %p %p %p)\n", debugstr_wn(text, length),
         length, fontface, is_sideways, is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale), substitution,
-        features, feature_range_len, feature_ranges, max_glyph_count, clustermap, text_props, glyph_indices,
+        features, feature_range_lengths, feature_ranges, max_glyph_count, clustermap, text_props, glyph_indices,
         glyph_props, actual_glyph_count);
+
+    analyzer_dump_user_features(features, feature_range_lengths, feature_ranges);
 
     script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
 
@@ -1252,7 +1270,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     UINT32 text_len, UINT16 const* glyphs, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
     UINT32 glyph_count, IDWriteFontFace *fontface, FLOAT emSize, BOOL is_sideways, BOOL is_rtl,
     DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale, DWRITE_TYPOGRAPHIC_FEATURES const** features,
-    UINT32 const* feature_range_len, UINT32 feature_ranges, FLOAT *advances, DWRITE_GLYPH_OFFSET *offsets)
+    UINT32 const* feature_range_lengths, UINT32 feature_ranges, FLOAT *advances, DWRITE_GLYPH_OFFSET *offsets)
 {
     DWRITE_FONT_METRICS metrics;
     IDWriteFontFace1 *fontface1;
@@ -1261,8 +1279,10 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
 
     TRACE("(%s %p %p %u %p %p %u %p %.2f %d %d %s %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
         clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, is_sideways,
-        is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale), features, feature_range_len,
+        is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale), features, feature_range_lengths,
         feature_ranges, advances, offsets);
+
+    analyzer_dump_user_features(features, feature_range_lengths, feature_ranges);
 
     if (glyph_count == 0)
         return S_OK;
@@ -1312,6 +1332,8 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
         clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, ppdip,
         transform, use_gdi_natural, is_sideways, is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale),
         features, feature_range_lengths, feature_ranges, advances, offsets);
+
+    analyzer_dump_user_features(features, feature_range_lengths, feature_ranges);
 
     if (glyph_count == 0)
         return S_OK;
