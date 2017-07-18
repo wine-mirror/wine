@@ -270,9 +270,9 @@
 @ cdecl log(double) ucrtbase.log
 @ cdecl log10(double) ucrtbase.log10
 @ cdecl -arch=arm,x86_64 log10f(float) ucrtbase.log10f
-@ stub log1p
-@ stub log1pf
-@ stub log1pl
+@ cdecl log1p(double) ucrtbase.log1p
+@ cdecl log1pf(float) ucrtbase.log1pf
+@ cdecl log1pl(double) ucrtbase.log1pl
 @ cdecl log2(double) ucrtbase.log2
 @ cdecl log2f(float) ucrtbase.log2f
 @ cdecl log2l(double) ucrtbase.log2l

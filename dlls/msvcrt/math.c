@@ -2452,6 +2452,42 @@ LDOUBLE CDECL MSVCR120_expm1l(LDOUBLE x)
 }
 
 /*********************************************************************
+ *      log1p (MSVCR120.@)
+ */
+double CDECL MSVCR120_log1p(double x)
+{
+    if (x < -1) *MSVCRT__errno() = MSVCRT_EDOM;
+    else if (x == -1) *MSVCRT__errno() = MSVCRT_ERANGE;
+#ifdef HAVE_LOG1P
+    return log1p(x);
+#else
+    return log(1 + x);
+#endif
+}
+
+/*********************************************************************
+ *      log1pf (MSVCR120.@)
+ */
+float CDECL MSVCR120_log1pf(float x)
+{
+    if (x < -1) *MSVCRT__errno() = MSVCRT_EDOM;
+    else if (x == -1) *MSVCRT__errno() = MSVCRT_ERANGE;
+#ifdef HAVE_LOG1PF
+    return log1pf(x);
+#else
+    return log(1 + x);
+#endif
+}
+
+/*********************************************************************
+ *      log1pl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_log1pl(LDOUBLE x)
+{
+    return MSVCR120_log1p(x);
+}
+
+/*********************************************************************
  *      log2 (MSVCR120.@)
  */
 double CDECL MSVCR120_log2(double x)

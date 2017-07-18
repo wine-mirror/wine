@@ -2554,6 +2554,8 @@ AC_CHECK_FUNCS(\
 	llrintf \
 	llround \
 	llroundf \
+	log1p \
+	log1pf \
 	log2 \
 	log2f \
 	lrint \
