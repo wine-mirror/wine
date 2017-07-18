@@ -359,7 +359,7 @@ static WCHAR *construct_device_id(EDataFlow flow, const WCHAR *chunk1, const cha
 {
     WCHAR *ret;
     const WCHAR *prefix;
-    DWORD len_wchars = 0, chunk1_len, copied = 0, prefix_len;
+    DWORD len_wchars = 0, chunk1_len = 0, copied = 0, prefix_len;
 
     static const WCHAR dashW[] = {' ','-',' ',0};
     static const size_t dashW_len = (sizeof(dashW) / sizeof(*dashW)) - 1;
