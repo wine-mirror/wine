@@ -1241,23 +1241,11 @@ static void REGPROC_write_line(FILE *file, const WCHAR* str, BOOL unicode)
  *      Is resized if necessary.
  * val_size - size of the buffer for storing values in bytes.
  */
-static void export_hkey(FILE *file, WCHAR **val_name_buf, DWORD *val_name_size,
-                        DWORD value_type, BYTE **val_buf, DWORD *val_size,
+static void export_hkey(FILE *file, DWORD value_type, BYTE **val_buf, DWORD *val_size,
                         WCHAR **line_buf, DWORD *line_buf_size, BOOL unicode)
 {
     DWORD line_len = 0;
     DWORD val_size1 = *val_size;
-
-            if (*val_name_buf && (*val_name_buf)[0]) {
-                const WCHAR val_start[] = {'"','%','s','"','=',0};
-
-                REGPROC_export_string(line_buf, line_buf_size, &line_len, *val_name_buf, lstrlenW(*val_name_buf));
-                line_len = sprintfW(*line_buf, val_start, *val_name_buf);
-            } else {
-                const WCHAR std_val[] = {'@','=',0};
-                line_len = 2;
-                lstrcpyW(*line_buf, std_val);
-            }
 
             switch (value_type) {
             case REG_SZ:
@@ -1375,6 +1363,80 @@ void delete_registry_key(WCHAR *reg_key_name)
     RegDeleteTreeW(key_class, key_name);
 }
 
+static WCHAR *REGPROC_escape_string(WCHAR *str, size_t str_len, size_t *line_len)
+{
+    size_t i, escape_count, pos;
+    WCHAR *buf;
+
+    for (i = 0, escape_count = 0; i < str_len; i++)
+    {
+        WCHAR c = str[i];
+        if (c == '\r' || c == '\n' || c == '\\' || c == '"' || c == '\0')
+            escape_count++;
+    }
+
+    buf = resize_buffer(NULL, (str_len + escape_count + 1) * sizeof(WCHAR));
+
+    for (i = 0, pos = 0; i < str_len; i++, pos++)
+    {
+        WCHAR c = str[i];
+
+        switch (c)
+        {
+        case '\r':
+            buf[pos++] = '\\';
+            buf[pos] = 'r';
+            break;
+        case '\n':
+            buf[pos++] = '\\';
+            buf[pos] = 'n';
+            break;
+        case '\\':
+            buf[pos++] = '\\';
+            buf[pos] = '\\';
+            break;
+        case '"':
+            buf[pos++] = '\\';
+            buf[pos] = '"';
+            break;
+        case '\0':
+            buf[pos++] = '\\';
+            buf[pos] = '0';
+            break;
+        default:
+            buf[pos] = c;
+        }
+    }
+
+    buf[pos] = 0;
+    *line_len = pos;
+    return buf;
+}
+
+static size_t export_value_name(FILE *fp, WCHAR *name, size_t len, BOOL unicode)
+{
+    static const WCHAR quoted_fmt[] = {'"','%','s','"','=',0};
+    static const WCHAR default_name[] = {'@','=',0};
+    size_t line_len;
+
+    if (name && *name)
+    {
+        WCHAR *str = REGPROC_escape_string(name, len, &line_len);
+        WCHAR *buf = resize_buffer(NULL, (line_len + 4) * sizeof(WCHAR));
+        line_len = sprintfW(buf, quoted_fmt, str);
+        REGPROC_write_line(fp, buf, unicode);
+        HeapFree(GetProcessHeap(), 0, buf);
+        HeapFree(GetProcessHeap(), 0, str);
+    }
+    else
+    {
+        line_len = lstrlenW(default_name);
+        REGPROC_write_line(fp, default_name, unicode);
+    }
+
+    return line_len;
+}
+
 static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD subkey_len)
 {
     WCHAR *subkey_path;
@@ -1428,8 +1490,8 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
         rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, data, &data_size);
         if (rc == ERROR_SUCCESS)
         {
-            export_hkey(fp, &value_name, &value_len, type, &data, &data_size,
-                        &line_buf, &line_buf_size, unicode);
+            export_value_name(fp, value_name, value_len, unicode);
+            export_hkey(fp, type, &data, &data_size, &line_buf, &line_buf_size, unicode);
             i++;
         }
         else if (rc == ERROR_MORE_DATA)
