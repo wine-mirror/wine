@@ -511,6 +511,7 @@ struct renderer_context {
     FLOAT originX;
     FLOAT originY;
     IDWriteTextFormat *format;
+    const WCHAR *familyW;
 };
 
 static HRESULT WINAPI testrenderer_IsPixelSnappingDisabled(IDWriteTextRenderer *iface,
@@ -634,8 +635,8 @@ static HRESULT WINAPI testrenderer_DrawUnderline(IDWriteTextRenderer *iface,
 
         ok(emsize == metrics.designUnitsPerEm, "Unexpected font size %f\n", emsize);
         /* Expected height is in design units, allow some absolute difference from it. Seems to only happen on Vista */
-        ok(abs(metrics.capHeight - underline->runHeight) < 2.0f, "Expected runHeight %u, got %f\n",
-            metrics.capHeight, underline->runHeight);
+        ok(abs(metrics.capHeight - underline->runHeight) < 2.0f, "Expected runHeight %u, got %f, family %s\n",
+                metrics.capHeight, underline->runHeight, wine_dbgstr_w(ctxt->familyW));
 
         IDWriteFontFace_Release(fontface);
     }
@@ -3406,6 +3407,7 @@ static void test_GetLineMetrics(void)
     static const WCHAR strW[] = {'a','b','c','d',' ',0};
     static const WCHAR str2W[] = {'a','b','\r','c','d',0};
     static const WCHAR str4W[] = {'a','\r',0};
+    static const WCHAR emptyW[] = {0};
     IDWriteFontCollection *syscollection;
     DWRITE_FONT_METRICS fontmetrics;
     DWRITE_LINE_METRICS metrics[6];
@@ -3450,7 +3452,6 @@ static void test_GetLineMetrics(void)
     familycount = IDWriteFontCollection_GetFontFamilyCount(syscollection);
 
     for (i = 0; i < familycount; i++) {
-        static const WCHAR mvboliW[] = {'M','V',' ','B','o','l','i',0};
         IDWriteLocalizedStrings *names;
         IDWriteFontFamily *family;
         IDWriteFont *font;
@@ -3509,23 +3510,17 @@ static void test_GetLineMetrics(void)
         if (!exists)
             goto cleanup;
 
-        /* This will effectively skip on Vista/2008 only, newer systems work just fine with this font. */
-        if (!lstrcmpW(nameW, mvboliW)) {
-            skip("Skipping line metrics test for %s, gives inconsistent results\n", wine_dbgstr_w(nameW));
-            goto cleanup;
-        }
-
         IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
         hr = IDWriteFactory_CreateTextFormat(factory, nameW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
             DWRITE_FONT_STRETCH_NORMAL, fontmetrics.designUnitsPerEm, enusW, &format);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        hr = IDWriteFactory_CreateTextLayout(factory, strW, 5, format, 30000.0f, 100.0f, &layout);
+        hr = IDWriteFactory_CreateTextLayout(factory, emptyW, 1, format, 30000.0f, 100.0f, &layout);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         memset(metrics, 0, sizeof(metrics));
         count = 0;
-        hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 2, &count);
+        hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(count == 1, "got %u\n", count);
 
@@ -5101,6 +5096,7 @@ todo_wine
 
         memset(&ctxt, 0, sizeof(ctxt));
         ctxt.format = format;
+        ctxt.familyW = nameW;
         hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0f, 0.0f);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
