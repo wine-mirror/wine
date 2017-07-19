@@ -212,37 +212,28 @@ struct debug_info
     char  output[1024];  /* current output line */
 };
 
-/* thread private data, stored in NtCurrentTeb()->SpareBytes1 */
+/* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
 struct ntdll_thread_data
 {
 #ifdef __i386__
-    DWORD              dr0;           /* 1bc Debug registers */
-    DWORD              dr1;           /* 1c0 */
-    DWORD              dr2;           /* 1c4 */
-    DWORD              dr3;           /* 1c8 */
-    DWORD              dr6;           /* 1cc */
-    DWORD              dr7;           /* 1d0 */
-    DWORD              fs;            /* 1d4 TEB selector */
-    DWORD              gs;            /* 1d8 libc selector; update winebuild if you move this! */
-    void              *vm86_ptr;      /* 1dc data for vm86 mode */
-#else
-    void              *exit_frame;    /*    /2e8 exit frame pointer */
+    WINE_VM86_TEB_INFO __vm86;        /* FIXME: placeholder for vm86 data from struct x86_thread_data */
 #endif
-    struct debug_info *debug_info;    /* 1e0/2f0 info for debugstr functions */
-    int                request_fd;    /* 1e4/2f8 fd for sending server requests */
-    int                reply_fd;      /* 1e8/2fc fd for receiving server replies */
-    int                wait_fd[2];    /* 1ec/300 fd for sleeping server requests */
-    BOOL               wow64_redir;   /* 1f4/308 Wow64 filesystem redirection flag */
-    pthread_t          pthread_id;    /* 1f8/310 pthread thread id */
-#ifdef __i386__
-    WINE_VM86_TEB_INFO vm86;          /* 1fc vm86 private data */
-    void              *exit_frame;    /* 204 exit frame pointer */
-#endif
+    struct debug_info *debug_info;    /* info for debugstr functions */
+    int                request_fd;    /* fd for sending server requests */
+    int                reply_fd;      /* fd for receiving server replies */
+    int                wait_fd[2];    /* fd for sleeping server requests */
+    BOOL               wow64_redir;   /* Wow64 filesystem redirection flag */
+    pthread_t          pthread_id;    /* pthread thread id */
 };
+
+C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
+#ifdef __i386__
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, __vm86 ) == 0x1fc );
+#endif
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
 {
-    return (struct ntdll_thread_data *)NtCurrentTeb()->SpareBytes1;
+    return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
 extern mode_t FILE_umask DECLSPEC_HIDDEN;

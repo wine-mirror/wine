@@ -332,7 +332,7 @@ HANDLE thread_init(void)
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
 
-    thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
+    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd = -1;
     thread_data->reply_fd   = -1;
     thread_data->wait_fd[0] = -1;
@@ -440,7 +440,7 @@ void exit_thread( int status )
 
     if ((teb = interlocked_xchg_ptr( &prev_teb, NtCurrentTeb() )))
     {
-        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
+        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
 
         if (thread_data->pthread_id)
         {
@@ -465,7 +465,7 @@ void exit_thread( int status )
 static void start_thread( struct startup_info *info )
 {
     TEB *teb = info->teb;
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     PRTL_THREAD_START_ROUTINE func = info->entry_point;
     void *arg = info->entry_arg;
     struct debug_info debug_info;
@@ -585,7 +585,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     info->entry_point = start;
     info->entry_arg   = param;
 
-    thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
+    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd  = request_pipe[1];
     thread_data->reply_fd    = -1;
     thread_data->wait_fd[0]  = -1;
@@ -1027,7 +1027,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                     {
                         if (sel == (wine_get_cs() & ~3))
                             tdi->Entry.HighWord.Bits.Type |= 8;  /* code segment */
-                        else if (sel == (ntdll_get_thread_data()->fs & ~3))
+                        else if (sel == (wine_get_fs() & ~3))
                         {
                             ULONG_PTR fs_base = (ULONG_PTR)NtCurrentTeb();
                             tdi->Entry.BaseLow                   = fs_base & 0xffff;

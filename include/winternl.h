@@ -330,7 +330,7 @@ typedef struct _TEB
     ACTIVATION_CONTEXT_STACK     ActivationContextStack;            /* 1a8/02c8 */
     BYTE                         SpareBytes1[24];                   /* 1bc/02e8 used for ntdll private data in Wine */
     PVOID                        SystemReserved2[10];               /* 1d4/0300 used for ntdll private data in Wine */
-    GDI_TEB_BATCH                GdiTebBatch;                       /* 1fc/0350 used for vm86 private data in Wine */
+    GDI_TEB_BATCH                GdiTebBatch;                       /* 1fc/0350 used for ntdll private data in Wine */
     HANDLE                       gdiRgn;                            /* 6dc/0838 */
     HANDLE                       gdiPen;                            /* 6e0/0840 */
     HANDLE                       gdiBrush;                          /* 6e4/0848 */
