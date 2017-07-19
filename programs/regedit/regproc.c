@@ -1093,26 +1093,6 @@ static void REGPROC_resize_char_buffer(WCHAR **buffer, DWORD *len, DWORD require
 }
 
 /******************************************************************************
- * Same as REGPROC_resize_char_buffer() but on a regular buffer.
- *
- * Parameters:
- * buffer - pointer to a buffer
- * len - current size of the buffer in bytes
- * required_size - size of the data to place in the buffer in bytes
- */
-static void REGPROC_resize_binary_buffer(BYTE **buffer, DWORD *size, DWORD required_size)
-{
-    if (required_size > *size) {
-        *size = required_size;
-        if (!*buffer)
-            *buffer = HeapAlloc(GetProcessHeap(), 0, *size);
-        else
-            *buffer = HeapReAlloc(GetProcessHeap(), 0, *buffer, *size);
-        CHECK_ENOUGH_MEMORY(*buffer);
-    }
-}
-
-/******************************************************************************
  * Prints string str to file
  */
 static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD *line_len, WCHAR *str, DWORD str_len)
@@ -1261,69 +1241,21 @@ static void REGPROC_write_line(FILE *file, const WCHAR* str, BOOL unicode)
  *      Is resized if necessary.
  * val_size - size of the buffer for storing values in bytes.
  */
-static void export_hkey(FILE *file, HKEY key,
-                 WCHAR **reg_key_name_buf, DWORD *reg_key_name_size,
-                 WCHAR **val_name_buf, DWORD *val_name_size,
-                 BYTE **val_buf, DWORD *val_size,
-                 WCHAR **line_buf, DWORD *line_buf_size,
-                 BOOL unicode)
+static void export_hkey(FILE *file, WCHAR **val_name_buf, DWORD *val_name_size,
+                        DWORD value_type, BYTE **val_buf, DWORD *val_size,
+                        WCHAR **line_buf, DWORD *line_buf_size, BOOL unicode)
 {
-    DWORD max_sub_key_len;
-    DWORD max_val_name_len;
-    DWORD max_val_size;
-    DWORD curr_len;
-    DWORD i;
-    LONG ret;
-    WCHAR key_format[] = {'\r','\n','[','%','s',']','\r','\n',0};
+    DWORD line_len = 0;
+    DWORD val_size1 = *val_size;
 
-    /* get size information and resize the buffers if necessary */
-    if (RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL,
-                        &max_sub_key_len, NULL,
-                        NULL, &max_val_name_len, &max_val_size, NULL, NULL
-                       ) != ERROR_SUCCESS)
-        return;
-    curr_len = strlenW(*reg_key_name_buf);
-    REGPROC_resize_char_buffer(reg_key_name_buf, reg_key_name_size,
-                               max_sub_key_len + curr_len + 1);
-    REGPROC_resize_char_buffer(val_name_buf, val_name_size,
-                               max_val_name_len);
-    REGPROC_resize_binary_buffer(val_buf, val_size, max_val_size);
-    REGPROC_resize_char_buffer(line_buf, line_buf_size, lstrlenW(*reg_key_name_buf) + 4);
-    /* output data for the current key */
-    sprintfW(*line_buf, key_format, *reg_key_name_buf);
-    REGPROC_write_line(file, *line_buf, unicode);
-
-    /* print all the values */
-    i = 0;
-    for (;;) {
-        DWORD value_type;
-        DWORD val_name_size1 = *val_name_size;
-        DWORD val_size1 = *val_size;
-        ret = RegEnumValueW(key, i, *val_name_buf, &val_name_size1, NULL,
-                           &value_type, *val_buf, &val_size1);
-        if (ret == ERROR_MORE_DATA) {
-            /* Increase the size of the buffers and retry */
-            REGPROC_resize_char_buffer(val_name_buf, val_name_size, val_name_size1);
-            REGPROC_resize_binary_buffer(val_buf, val_size, val_size1);
-        } else if (ret == ERROR_SUCCESS) {
-            DWORD line_len;
-            i++;
-
-            if ((*val_name_buf)[0]) {
+            if (*val_name_buf && (*val_name_buf)[0]) {
                 const WCHAR val_start[] = {'"','%','s','"','=',0};
 
-                line_len = 0;
                 REGPROC_export_string(line_buf, line_buf_size, &line_len, *val_name_buf, lstrlenW(*val_name_buf));
-                REGPROC_resize_char_buffer(val_name_buf, val_name_size, lstrlenW(*line_buf) + 1);
-                lstrcpyW(*val_name_buf, *line_buf);
-
-                line_len = 3 + lstrlenW(*val_name_buf);
-                REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len);
-                sprintfW(*line_buf, val_start, *val_name_buf);
+                line_len = sprintfW(*line_buf, val_start, *val_name_buf);
             } else {
                 const WCHAR std_val[] = {'@','=',0};
                 line_len = 2;
-                REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len);
                 lstrcpyW(*line_buf, std_val);
             }
 
@@ -1370,36 +1302,6 @@ static void export_hkey(FILE *file, HKEY key,
                 REGPROC_export_binary(line_buf, line_buf_size, &line_len, value_type, *val_buf, val_size1, unicode);
             }
             REGPROC_write_line(file, *line_buf, unicode);
-        }
-        else break;
-    }
-
-    i = 0;
-    (*reg_key_name_buf)[curr_len] = '\\';
-    for (;;) {
-        DWORD buf_size = *reg_key_name_size - curr_len - 1;
-
-        ret = RegEnumKeyExW(key, i, *reg_key_name_buf + curr_len + 1, &buf_size,
-                           NULL, NULL, NULL, NULL);
-        if (ret == ERROR_MORE_DATA) {
-            /* Increase the size of the buffer and retry */
-            REGPROC_resize_char_buffer(reg_key_name_buf, reg_key_name_size, curr_len + 1 + buf_size);
-        } else if (ret == ERROR_SUCCESS) {
-            HKEY subkey;
-
-            i++;
-            if (RegOpenKeyW(key, *reg_key_name_buf + curr_len + 1,
-                           &subkey) == ERROR_SUCCESS) {
-                export_hkey(file, subkey, reg_key_name_buf, reg_key_name_size,
-                            val_name_buf, val_name_size, val_buf, val_size,
-                            line_buf, line_buf_size, unicode);
-                RegCloseKey(subkey);
-            }
-            else break;
-        }
-        else break;
-    }
-    (*reg_key_name_buf)[curr_len] = '\0';
 }
 
 /******************************************************************************
@@ -1473,31 +1375,107 @@ void delete_registry_key(WCHAR *reg_key_name)
     RegDeleteTreeW(key_class, key_name);
 }
 
+static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD subkey_len)
+{
+    WCHAR *subkey_path;
+    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
+
+    subkey_path = resize_buffer(NULL, (path_len + subkey_len + 2) * sizeof(WCHAR));
+    sprintfW(subkey_path, fmt, path, subkey_name);
+
+    return subkey_path;
+}
+
+static void export_key_name(FILE *fp, WCHAR *name, BOOL unicode)
+{
+    static const WCHAR fmt[] = {'\r','\n','[','%','s',']','\r','\n',0};
+    WCHAR *buf;
+
+    buf = resize_buffer(NULL, (lstrlenW(name) + 7) * sizeof(WCHAR));
+    sprintfW(buf, fmt, name);
+    REGPROC_write_line(fp, buf, unicode);
+    HeapFree(GetProcessHeap(), 0, buf);
+}
+
+#define MAX_SUBKEY_LEN   257
+
 static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
 {
-    WCHAR *reg_key_name_buf, *val_name_buf, *line_buf;
-    BYTE *val_buf;
-    DWORD reg_key_name_size = KEY_MAX_LEN;
-    DWORD val_name_size = KEY_MAX_LEN;
-    DWORD val_size = REG_VAL_BUF_SIZE;
+    WCHAR *line_buf;
     DWORD line_buf_size = KEY_MAX_LEN + REG_VAL_BUF_SIZE;
+    LONG rc;
+    DWORD max_value_len = 256, value_len;
+    DWORD max_data_bytes = 2048, data_size;
+    DWORD subkey_len;
+    DWORD i, type, path_len;
+    WCHAR *value_name, *subkey_name, *subkey_path;
+    BYTE *data;
+    HKEY subkey;
 
-    reg_key_name_buf = HeapAlloc(GetProcessHeap(), 0, reg_key_name_size * sizeof(WCHAR));
-    val_name_buf = HeapAlloc(GetProcessHeap(), 0, val_name_size * sizeof(WCHAR));
-    val_buf = HeapAlloc(GetProcessHeap(), 0, val_size);
     line_buf = HeapAlloc(GetProcessHeap(), 0, line_buf_size * sizeof(WCHAR));
-    CHECK_ENOUGH_MEMORY(reg_key_name_buf && val_name_buf && val_buf && line_buf);
+    CHECK_ENOUGH_MEMORY(line_buf);
 
-    lstrcpyW(reg_key_name_buf, path);
+    export_key_name(fp, path, unicode);
 
-    export_hkey(fp, key, &reg_key_name_buf, &reg_key_name_size, &val_name_buf, &val_name_size,
-                &val_buf, &val_size, &line_buf, &line_buf_size, unicode);
+    value_name = resize_buffer(NULL, max_value_len * sizeof(WCHAR));
+    data = resize_buffer(NULL, max_data_bytes);
 
-    HeapFree(GetProcessHeap(), 0, reg_key_name_buf);
-    HeapFree(GetProcessHeap(), 0, val_name_buf);
-    HeapFree(GetProcessHeap(), 0, val_buf);
+    i = 0;
+    for (;;)
+    {
+        value_len = max_value_len;
+        data_size = max_data_bytes;
+        rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, data, &data_size);
+        if (rc == ERROR_SUCCESS)
+        {
+            export_hkey(fp, &value_name, &value_len, type, &data, &data_size,
+                        &line_buf, &line_buf_size, unicode);
+            i++;
+        }
+        else if (rc == ERROR_MORE_DATA)
+        {
+            if (data_size > max_data_bytes)
+            {
+                max_data_bytes *= 2;
+                data = resize_buffer(data, max_data_bytes);
+            }
+            else
+            {
+                max_value_len *= 2;
+                value_name = resize_buffer(value_name, max_value_len * sizeof(WCHAR));
+            }
+        }
+        else break;
+    }
+
+    HeapFree(GetProcessHeap(), 0, data);
+    HeapFree(GetProcessHeap(), 0, value_name);
     HeapFree(GetProcessHeap(), 0, line_buf);
 
+    subkey_name = resize_buffer(NULL, MAX_SUBKEY_LEN * sizeof(WCHAR));
+
+    path_len = lstrlenW(path);
+
+    i = 0;
+    for (;;)
+    {
+        subkey_len = MAX_SUBKEY_LEN;
+        rc = RegEnumKeyExW(key, i, subkey_name, &subkey_len, NULL, NULL, NULL, NULL);
+        if (rc == ERROR_SUCCESS)
+        {
+            subkey_path = build_subkey_path(path, path_len, subkey_name, subkey_len);
+            if (!RegOpenKeyExW(key, subkey_name, 0, KEY_READ, &subkey))
+            {
+                export_registry_data(fp, subkey, subkey_path, unicode);
+                RegCloseKey(subkey);
+            }
+            HeapFree(GetProcessHeap(), 0, subkey_path);
+            i++;
+        }
+        else break;
+    }
+
+    HeapFree(GetProcessHeap(), 0, subkey_name);
     return 0;
 }
 
