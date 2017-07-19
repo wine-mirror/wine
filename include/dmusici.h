@@ -855,7 +855,7 @@ DECLARE_INTERFACE_(IDirectMusicLoader,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectMusicLoader methods ***/
-    STDMETHOD(_GetObject)(THIS_ LPDMUS_OBJECTDESC pDesc, REFIID riid, LPVOID *ppv) PURE;
+    STDMETHOD(GetObject)(THIS_ LPDMUS_OBJECTDESC pDesc, REFIID riid, LPVOID *ppv) PURE;
     STDMETHOD(SetObject)(THIS_ LPDMUS_OBJECTDESC pDesc) PURE;
     STDMETHOD(SetSearchDirectory)(THIS_ REFGUID rguidClass, WCHAR *pwzPath, BOOL fClear) PURE;
     STDMETHOD(ScanDirectory)(THIS_ REFGUID rguidClass, WCHAR *pwzFileExtension, WCHAR *pwzScanFileName) PURE;
@@ -873,7 +873,7 @@ DECLARE_INTERFACE_(IDirectMusicLoader,IUnknown)
 #define IDirectMusicLoader_AddRef(p)                   (p)->lpVtbl->AddRef(p)
 #define IDirectMusicLoader_Release(p)                  (p)->lpVtbl->Release(p)
 /*** IDirectMusicLoader methods ***/
-#define IDirectMusicLoader_GetObject(p,a,b,c)          (p)->lpVtbl->_GetObject(p,a,b,c)
+#define IDirectMusicLoader_GetObject(p,a,b,c)          (p)->lpVtbl->GetObject(p,a,b,c)
 #define IDirectMusicLoader_SetObject(p,a)              (p)->lpVtbl->SetObject(p,a)
 #define IDirectMusicLoader_SetSearchDirectory(p,a,b,c) (p)->lpVtbl->SetSearchDirectory(p,a,b,c)
 #define IDirectMusicLoader_ScanDirectory(p,a,b,c)      (p)->lpVtbl->ScanDirectory(p,a,b,c)
@@ -896,7 +896,7 @@ DECLARE_INTERFACE_(IDirectMusicLoader8,IDirectMusicLoader)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IDirectMusicLoader methods ***/
-    STDMETHOD(_GetObject)(THIS_ LPDMUS_OBJECTDESC pDesc, REFIID riid, LPVOID *ppv) PURE;
+    STDMETHOD(GetObject)(THIS_ LPDMUS_OBJECTDESC pDesc, REFIID riid, LPVOID *ppv) PURE;
     STDMETHOD(SetObject)(THIS_ LPDMUS_OBJECTDESC pDesc) PURE;
     STDMETHOD(SetSearchDirectory)(THIS_ REFGUID rguidClass, WCHAR *pwzPath, BOOL fClear) PURE;
     STDMETHOD(ScanDirectory)(THIS_ REFGUID rguidClass, WCHAR *pwzFileExtension, WCHAR *pwzScanFileName) PURE;
@@ -918,7 +918,7 @@ DECLARE_INTERFACE_(IDirectMusicLoader8,IDirectMusicLoader)
 #define IDirectMusicLoader8_AddRef(p)                     (p)->lpVtbl->AddRef(p)
 #define IDirectMusicLoader8_Release(p)                    (p)->lpVtbl->Release(p)
 /*** IDirectMusicLoader methods ***/
-#define IDirectMusicLoader8_GetObject(p,a,b,c)            (p)->lpVtbl->_GetObject(p,a,b,c)
+#define IDirectMusicLoader8_GetObject(p,a,b,c)            (p)->lpVtbl->GetObject(p,a,b,c)
 #define IDirectMusicLoader8_SetObject(p,a)                (p)->lpVtbl->SetObject(p,a)
 #define IDirectMusicLoader8_SetSearchDirectory(p,a,b,c)   (p)->lpVtbl->SetSearchDirectory(p,a,b,c)
 #define IDirectMusicLoader8_ScanDirectory(p,a,b,c)        (p)->lpVtbl->ScanDirectory(p,a,b,c)
