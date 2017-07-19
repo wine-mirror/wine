@@ -830,9 +830,6 @@ static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_paramete
             case '.':
                 return get_parameter_by_name(NULL, temp_parameter, part);
 
-            case '@':
-                return get_annotation_by_name(temp_parameter->annotation_count, temp_parameter->annotations, part);
-
             case '\0':
                 TRACE("Returning parameter %p\n", temp_parameter);
                 return temp_parameter;
