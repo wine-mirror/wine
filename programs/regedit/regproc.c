@@ -1246,11 +1246,7 @@ static void export_hkey(FILE *file, DWORD value_type, BYTE **val_buf, DWORD *val
 {
     DWORD line_len = 0;
     DWORD val_size1 = *val_size;
-
-            switch (value_type) {
-            case REG_SZ:
-            {
-                WCHAR* wstr = (WCHAR*)*val_buf;
+    WCHAR *wstr = (WCHAR *)*val_buf;
 
                 if (val_size1 < sizeof(WCHAR) || val_size1 % sizeof(WCHAR) ||
                     wstr[val_size1 / sizeof(WCHAR) - 1]) {
@@ -1270,15 +1266,6 @@ static void export_hkey(FILE *file, DWORD value_type, BYTE **val_buf, DWORD *val
                     REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len + lstrlenW(end));
                     lstrcpyW(*line_buf + line_len, end);
                 }
-                break;
-            }
-            case REG_NONE:
-            case REG_EXPAND_SZ:
-            case REG_MULTI_SZ:
-            case REG_BINARY:
-            default:
-                REGPROC_export_binary(line_buf, line_buf_size, &line_len, value_type, *val_buf, val_size1, unicode);
-            }
             REGPROC_write_line(file, *line_buf, unicode);
 }
 
@@ -1427,15 +1414,93 @@ static size_t export_value_name(FILE *fp, WCHAR *name, size_t len, BOOL unicode)
     return line_len;
 }
 
-static void export_dword_data(FILE *fp, void *data, BOOL unicode)
+static void export_dword_data(WCHAR **buf, DWORD *data)
 {
-    static const WCHAR fmt[] = {'d','w','o','r','d',':','%','0','8','x','\r','\n',0};
-    WCHAR *buf;
+    static const WCHAR fmt[] = {'d','w','o','r','d',':','%','0','8','x',0};
 
-    buf = resize_buffer(NULL, 17 * sizeof(WCHAR));
-    sprintfW(buf, fmt, *(DWORD *)data);
+    *buf = resize_buffer(NULL, 15 * sizeof(WCHAR));
+    sprintfW(*buf, fmt, *data);
+}
+
+static size_t export_hex_data_type(FILE *fp, DWORD type, BOOL unicode)
+{
+    static const WCHAR hex[] = {'h','e','x',':',0};
+    static const WCHAR hexp_fmt[] = {'h','e','x','(','%','x',')',':',0};
+    size_t line_len;
+
+    if (type == REG_BINARY)
+    {
+        line_len = lstrlenW(hex);
+        REGPROC_write_line(fp, hex, unicode);
+    }
+    else
+    {
+        WCHAR *buf = resize_buffer(NULL, 15 * sizeof(WCHAR));
+        line_len = sprintfW(buf, hexp_fmt, type);
+        REGPROC_write_line(fp, buf, unicode);
+        HeapFree(GetProcessHeap(), 0, buf);
+    }
+
+    return line_len;
+}
+
+#define MAX_HEX_CHARS 77
+
+static void export_hex_data(FILE *fp, WCHAR **buf, DWORD type, DWORD line_len,
+                            void *data, DWORD size, BOOL unicode)
+{
+    static const WCHAR fmt[] = {'%','0','2','x',0};
+    static const WCHAR hex_concat[] = {'\\','\r','\n',' ',' ',0};
+    size_t num_commas, i, pos;
+
+    line_len += export_hex_data_type(fp, type, unicode);
+
+    if (!unicode && (type == REG_EXPAND_SZ || type == REG_MULTI_SZ))
+        data = GetMultiByteStringN(data, size / sizeof(WCHAR), &size);
+
+    num_commas = size - 1;
+    *buf = resize_buffer(NULL, (size * 3) * sizeof(WCHAR));
+
+    for (i = 0, pos = 0; i < size; i++)
+    {
+        pos += sprintfW(*buf + pos, fmt, ((BYTE *)data)[i]);
+        if (i == num_commas) break;
+        (*buf)[pos++] = ',';
+        (*buf)[pos] = 0;
+        line_len += 3;
+
+        if (line_len >= MAX_HEX_CHARS)
+        {
+            REGPROC_write_line(fp, *buf, unicode);
+            REGPROC_write_line(fp, hex_concat, unicode);
+            line_len = 2;
+            pos = 0;
+        }
+    }
+}
+
+static void export_data(FILE *fp, DWORD type, size_t line_len, void *data, size_t size, BOOL unicode)
+{
+    WCHAR *buf = NULL;
+    static const WCHAR newline[] = {'\r','\n',0};
+
+    switch (type)
+    {
+    case REG_DWORD:
+        export_dword_data(&buf, data);
+        break;
+    case REG_NONE:
+    case REG_EXPAND_SZ:
+    case REG_BINARY:
+    case REG_MULTI_SZ:
+    default:
+        export_hex_data(fp, &buf, type, line_len, data, size, unicode);
+        break;
+    }
+
     REGPROC_write_line(fp, buf, unicode);
     HeapFree(GetProcessHeap(), 0, buf);
+    REGPROC_write_line(fp, newline, unicode);
 }
 
 static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD subkey_len)
@@ -1491,9 +1556,9 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
         rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, data, &data_size);
         if (rc == ERROR_SUCCESS)
         {
-            export_value_name(fp, value_name, value_len, unicode);
-            if (type == REG_DWORD)
-                export_dword_data(fp, data, unicode);
+            size_t line_len = export_value_name(fp, value_name, value_len, unicode);
+            if (type != REG_SZ)
+                export_data(fp, type, line_len, data, data_size, unicode);
             else
                 export_hkey(fp, type, &data, &data_size, &line_buf, &line_buf_size, unicode);
             i++;
