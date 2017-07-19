@@ -299,7 +299,7 @@ void netconn_unload( void )
 #endif
 }
 
-netconn_t *netconn_create( host_t *host, const struct sockaddr_storage *sockaddr, int timeout )
+netconn_t *netconn_create( hostdata_t *host, const struct sockaddr_storage *sockaddr, int timeout )
 {
     netconn_t *conn;
     unsigned int addr_len;
