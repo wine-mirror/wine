@@ -2248,6 +2248,9 @@ AC_CACHE_CHECK([for if_nameindex],wine_cv_have_if_nameindex,
                AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif]],
