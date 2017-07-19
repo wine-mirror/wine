@@ -189,7 +189,8 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
 
 const char *debugstr_sa_script(UINT16 script)
 {
-    return script < Script_LastId ? debugstr_an((char*)&dwritescripts_properties[script].props.isoScriptCode, 4): "not defined";
+    return script < Script_LastId ? debugstr_an((char*)&dwritescripts_properties[script].props.isoScriptCode, 4):
+            "undefined";
 }
 
 /* system font falback configuration */
@@ -197,13 +198,13 @@ static const WCHAR meiryoW[] = {'M','e','i','r','y','o',0};
 
 struct fallback_mapping {
     DWRITE_UNICODE_RANGE range;
-    const WCHAR *family;
+    const WCHAR *families[5];
 };
 
 static const struct fallback_mapping fontfallback_neutral_data[] = {
-    { { 0x3000, 0x30ff }, meiryoW }, /* CJK Symbols and Punctuation, Hiragana, Katakana */
-    { { 0x31f0, 0x31ff }, meiryoW }, /* Katakana Phonetic Extensions */
-    { { 0x4e00, 0x9fff }, meiryoW }, /* CJK Unified Ideographs */
+    { { 0x3000, 0x30ff }, { meiryoW } }, /* CJK Symbols and Punctuation, Hiragana, Katakana */
+    { { 0x31f0, 0x31ff }, { meiryoW } }, /* Katakana Phonetic Extensions */
+    { { 0x4e00, 0x9fff }, { meiryoW } }, /* CJK Unified Ideographs */
 };
 
 struct dwrite_fontfallback {
@@ -2026,28 +2027,41 @@ static HRESULT fallback_map_characters(IDWriteFont *font, const WCHAR *text, UIN
 }
 
 static HRESULT fallback_get_fallback_font(struct dwrite_fontfallback *fallback, const WCHAR *text, UINT32 length,
-    DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, UINT32 *mapped_length, IDWriteFont **mapped_font)
+        DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, UINT32 *mapped_length,
+        IDWriteFont **mapped_font)
 {
     const struct fallback_mapping *mapping;
+    UINT32 i = 0;
     HRESULT hr;
+
+    *mapped_font = NULL;
 
     mapping = find_fallback_mapping(fallback, text[0]);
     if (!mapping) {
-        WARN("no mapping for 0x%x\n", text[0]);
+        WARN("No mapping range for %#x.\n", text[0]);
         return E_FAIL;
     }
 
-    /* now let's see what fallback can handle */
-    hr = create_matching_font((IDWriteFontCollection*)fallback->systemcollection, mapping->family, weight, style, stretch, mapped_font);
-    if (FAILED(hr)) {
-        WARN("failed to create fallback font %s for range [0x%x,0x%x], 0x%08x\n", debugstr_w(mapping->family),
-            mapping->range.first, mapping->range.last, hr);
-        return hr;
+    /* Now let's see what fallback can handle. Pick first font that could be created. */
+    while (mapping->families[i]) {
+        hr = create_matching_font((IDWriteFontCollection *)fallback->systemcollection, mapping->families[i],
+                weight, style, stretch, mapped_font);
+        if (hr == S_OK) {
+            TRACE("Created fallback font for range [%#x, %#x], using family %s.\n", mapping->range.first,
+                    mapping->range.last, debugstr_w(mapping->families[i]));
+            break;
+        }
+        i++;
+    }
+
+    if (!*mapped_font) {
+        WARN("Failed to create fallback font for range [%#x, %#x].\n", mapping->range.first, mapping->range.last);
+        return E_FAIL;
     }
 
     hr = fallback_map_characters(*mapped_font, text, length, mapped_length);
     if (FAILED(hr))
-        WARN("mapping with fallback font %s failed, 0x%08x\n", debugstr_w(mapping->family), hr);
+        WARN("Mapping with fallback family %s failed, hr %#x.\n", debugstr_w(mapping->families[i]), hr);
 
     if (!*mapped_length) {
         IDWriteFont_Release(*mapped_font);
