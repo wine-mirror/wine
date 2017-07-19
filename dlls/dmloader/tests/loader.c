@@ -47,7 +47,7 @@ static void test_directory(void)
 {
     IDirectMusicLoader8 *loader = NULL;
     HRESULT hr;
-    WCHAR con[] = {'c', 'o', 'n'};
+    WCHAR con[] = {'c', 'o', 'n', 0};
     WCHAR path[MAX_PATH];
     WCHAR invalid_path[] = {'/', 'i', 'n', 'v', 'a', 'l', 'i', 'd', ' ', 'p', 'a', 't', 'h', 0};
 
