@@ -529,6 +529,29 @@ enum i386_trap_code
 #endif
 };
 
+struct x86_thread_data
+{
+    DWORD              dr0;           /* 1bc Debug registers */
+    DWORD              dr1;           /* 1c0 */
+    DWORD              dr2;           /* 1c4 */
+    DWORD              dr3;           /* 1c8 */
+    DWORD              dr6;           /* 1cc */
+    DWORD              dr7;           /* 1d0 */
+    DWORD              fs;            /* 1d4 TEB selector */
+    DWORD              gs;            /* 1d8 libc selector; update winebuild if you move this! */
+    void              *vm86_ptr;      /* 1dc data for vm86 mode */
+    int                __pad[7];      /* 1e0 space for ntdll_thread_data (FIXME) */
+    WINE_VM86_TEB_INFO vm86;          /* 1fc vm86 private data */
+    void              *exit_frame;    /* 204 exit frame pointer */
+};
+
+C_ASSERT( offsetof( TEB, SpareBytes1 ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
+
+static inline struct x86_thread_data *x86_thread_data(void)
+{
+    return (struct x86_thread_data *)NtCurrentTeb()->SpareBytes1;
+}
+
 /* Exception record for handling exceptions happening inside exception handlers */
 typedef struct
 {
@@ -839,7 +862,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
 {
     BOOL check_pending = TRUE;
     struct vm86plus_struct *vm86 =
-        (struct vm86plus_struct*)(ntdll_get_thread_data()->vm86_ptr);
+        (struct vm86plus_struct*)x86_thread_data()->vm86_ptr;
 
     /*
      * In order to prevent a race when SIGUSR2 occurs while
@@ -849,8 +872,8 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
     while (check_pending && get_vm86_teb_info()->vm86_pending)
     {
         check_pending = FALSE;
-        ntdll_get_thread_data()->vm86_ptr = NULL;
-            
+        x86_thread_data()->vm86_ptr = NULL;
+
         /*
          * If VIF is set, throw exception.
          * Note that SIGUSR2 may turn VIF flag off so
@@ -875,7 +898,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
             check_pending = TRUE;
         }
 
-        ntdll_get_thread_data()->vm86_ptr = vm86;
+        x86_thread_data()->vm86_ptr = vm86;
     }
 
     /*
@@ -908,11 +931,11 @@ static void (*libc_sigacthandler)( int signal, siginfo_t *siginfo, void *context
 
 static void wine_sigacthandler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    struct ntdll_thread_data *thread_data;
+    struct x86_thread_data *thread_data;
 
     __asm__ __volatile__("mov %ss,%ax; mov %ax,%ds; mov %ax,%es");
 
-    thread_data = (struct ntdll_thread_data *)get_current_teb()->SpareBytes1;
+    thread_data = (struct x86_thread_data *)get_current_teb()->SystemReserved2;
     wine_set_fs( thread_data->fs );
     wine_set_gs( thread_data->gs );
 
@@ -974,7 +997,7 @@ static inline void *init_handler( const ucontext_t *sigcontext, WORD *fs, WORD *
 
 #ifndef __sun  /* see above for Solaris handling */
     {
-        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
+        struct x86_thread_data *thread_data = (struct x86_thread_data *)teb->SystemReserved2;
         wine_set_fs( thread_data->fs );
         wine_set_gs( thread_data->gs );
     }
@@ -1099,7 +1122,6 @@ static void fpux_to_fpu( FLOATING_SAVE_AREA *fpu, const XMM_SAVE_AREA32 *fpux )
  */
 static inline void save_context( CONTEXT *context, const ucontext_t *sigcontext, WORD fs, WORD gs )
 {
-    struct ntdll_thread_data * const regs = ntdll_get_thread_data();
     FLOATING_SAVE_AREA *fpu = FPU_sig(sigcontext);
     XMM_SAVE_AREA32 *fpux = FPUX_sig(sigcontext);
 
@@ -1121,12 +1143,12 @@ static inline void save_context( CONTEXT *context, const ucontext_t *sigcontext,
     context->SegFs        = fs;
     context->SegGs        = gs;
     context->SegSs        = LOWORD(SS_sig(sigcontext));
-    context->Dr0          = regs->dr0;
-    context->Dr1          = regs->dr1;
-    context->Dr2          = regs->dr2;
-    context->Dr3          = regs->dr3;
-    context->Dr6          = regs->dr6;
-    context->Dr7          = regs->dr7;
+    context->Dr0          = x86_thread_data()->dr0;
+    context->Dr1          = x86_thread_data()->dr1;
+    context->Dr2          = x86_thread_data()->dr2;
+    context->Dr3          = x86_thread_data()->dr3;
+    context->Dr6          = x86_thread_data()->dr6;
+    context->Dr7          = x86_thread_data()->dr7;
 
     if (fpu)
     {
@@ -1151,16 +1173,15 @@ static inline void save_context( CONTEXT *context, const ucontext_t *sigcontext,
  */
 static inline void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 {
-    struct ntdll_thread_data * const regs = ntdll_get_thread_data();
     FLOATING_SAVE_AREA *fpu = FPU_sig(sigcontext);
     XMM_SAVE_AREA32 *fpux = FPUX_sig(sigcontext);
 
-    regs->dr0 = context->Dr0;
-    regs->dr1 = context->Dr1;
-    regs->dr2 = context->Dr2;
-    regs->dr3 = context->Dr3;
-    regs->dr6 = context->Dr6;
-    regs->dr7 = context->Dr7;
+    x86_thread_data()->dr0 = context->Dr0;
+    x86_thread_data()->dr1 = context->Dr1;
+    x86_thread_data()->dr2 = context->Dr2;
+    x86_thread_data()->dr3 = context->Dr3;
+    x86_thread_data()->dr6 = context->Dr6;
+    x86_thread_data()->dr7 = context->Dr7;
     EAX_sig(sigcontext) = context->Eax;
     EBX_sig(sigcontext) = context->Ebx;
     ECX_sig(sigcontext) = context->Ecx;
@@ -1239,12 +1260,12 @@ static void set_cpu_context( const CONTEXT *context )
 
     if (flags & CONTEXT_DEBUG_REGISTERS)
     {
-        ntdll_get_thread_data()->dr0 = context->Dr0;
-        ntdll_get_thread_data()->dr1 = context->Dr1;
-        ntdll_get_thread_data()->dr2 = context->Dr2;
-        ntdll_get_thread_data()->dr3 = context->Dr3;
-        ntdll_get_thread_data()->dr6 = context->Dr6;
-        ntdll_get_thread_data()->dr7 = context->Dr7;
+        x86_thread_data()->dr0 = context->Dr0;
+        x86_thread_data()->dr1 = context->Dr1;
+        x86_thread_data()->dr2 = context->Dr2;
+        x86_thread_data()->dr3 = context->Dr3;
+        x86_thread_data()->dr6 = context->Dr6;
+        x86_thread_data()->dr7 = context->Dr7;
     }
     if (flags & CONTEXT_FULL)
     {
@@ -1471,12 +1492,12 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     /* debug registers require a server call */
     if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)))
-        self = (ntdll_get_thread_data()->dr0 == context->Dr0 &&
-                ntdll_get_thread_data()->dr1 == context->Dr1 &&
-                ntdll_get_thread_data()->dr2 == context->Dr2 &&
-                ntdll_get_thread_data()->dr3 == context->Dr3 &&
-                ntdll_get_thread_data()->dr6 == context->Dr6 &&
-                ntdll_get_thread_data()->dr7 == context->Dr7);
+        self = (x86_thread_data()->dr0 == context->Dr0 &&
+                x86_thread_data()->dr1 == context->Dr1 &&
+                x86_thread_data()->dr2 == context->Dr2 &&
+                x86_thread_data()->dr3 == context->Dr3 &&
+                x86_thread_data()->dr6 == context->Dr6 &&
+                x86_thread_data()->dr7 == context->Dr7);
 
     if (!self) ret = set_thread_context( handle, context, &self );
 
@@ -1516,12 +1537,12 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         /* update the cached version of the debug registers */
         if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
         {
-            ntdll_get_thread_data()->dr0 = context->Dr0;
-            ntdll_get_thread_data()->dr1 = context->Dr1;
-            ntdll_get_thread_data()->dr2 = context->Dr2;
-            ntdll_get_thread_data()->dr3 = context->Dr3;
-            ntdll_get_thread_data()->dr6 = context->Dr6;
-            ntdll_get_thread_data()->dr7 = context->Dr7;
+            x86_thread_data()->dr0 = context->Dr0;
+            x86_thread_data()->dr1 = context->Dr1;
+            x86_thread_data()->dr2 = context->Dr2;
+            x86_thread_data()->dr3 = context->Dr3;
+            x86_thread_data()->dr6 = context->Dr6;
+            x86_thread_data()->dr7 = context->Dr7;
         }
     }
     return STATUS_SUCCESS;
@@ -1626,7 +1647,7 @@ static inline BOOL check_invalid_gs( CONTEXT *context )
 {
     unsigned int prefix_count = 0;
     const BYTE *instr = (BYTE *)context->Eip;
-    WORD system_gs = ntdll_get_thread_data()->gs;
+    WORD system_gs = x86_thread_data()->gs;
 
     if (context->SegGs == system_gs) return FALSE;
     if (!wine_ldt_is_system( context->SegCs )) return FALSE;
@@ -2015,7 +2036,7 @@ static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context
          * single step interrupt. try to avoid as much overhead as possible
          * and only do a server call if there is any hw bp enabled. */
 
-        if( !(context->EFlags & 0x100) || (ntdll_get_thread_data()->dr7 & 0xff) )
+        if( !(context->EFlags & 0x100) || (x86_thread_data()->dr7 & 0xff) )
         {
             /* (possible) hardware breakpoint, fetch the debug registers */
             DWORD saved_flags = context->ContextFlags;
@@ -2055,7 +2076,7 @@ static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *con
     /* merge_vm86_pending_flags merges the vm86_pending flag in safely */
     get_vm86_teb_info()->vm86_pending |= VIP_FLAG;
 
-    if (ntdll_get_thread_data()->vm86_ptr)
+    if (x86_thread_data()->vm86_ptr)
     {
         if (((char*)context->Eip >= (char*)vm86_return) &&
             ((char*)context->Eip <= (char*)vm86_return_end) &&
@@ -2378,7 +2399,7 @@ static void ldt_unlock(void)
 NTSTATUS signal_alloc_thread( TEB **teb )
 {
     static size_t sigstack_zero_bits;
-    struct ntdll_thread_data *thread_data;
+    struct x86_thread_data *thread_data;
     SIZE_T size;
     void *addr = NULL;
     NTSTATUS status;
@@ -2400,7 +2421,7 @@ NTSTATUS signal_alloc_thread( TEB **teb )
         *teb = addr;
         (*teb)->Tib.Self = &(*teb)->Tib;
         (*teb)->Tib.ExceptionList = (void *)~0UL;
-        thread_data = (struct ntdll_thread_data *)(*teb)->SpareBytes1;
+        thread_data = (struct x86_thread_data *)(*teb)->SystemReserved2;
         if (!(thread_data->fs = wine_ldt_alloc_fs()))
         {
             size = 0;
@@ -2418,7 +2439,7 @@ NTSTATUS signal_alloc_thread( TEB **teb )
 void signal_free_thread( TEB *teb )
 {
     SIZE_T size;
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
+    struct x86_thread_data *thread_data = (struct x86_thread_data *)teb->SystemReserved2;
 
     if (thread_data) wine_ldt_free_fs( thread_data->fs );
     if (teb->DeallocationStack)
@@ -2437,7 +2458,7 @@ void signal_free_thread( TEB *teb )
 void signal_init_thread( TEB *teb )
 {
     const WORD fpu_cw = 0x27f;
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
+    struct x86_thread_data *thread_data = (struct x86_thread_data *)teb->SystemReserved2;
     LDT_ENTRY fs_entry;
     stack_t ss;
 
@@ -2537,10 +2558,10 @@ void __wine_enter_vm86( CONTEXT *context )
     {
         restore_vm86_context( context, &vm86 );
 
-        ntdll_get_thread_data()->vm86_ptr = &vm86;
+        x86_thread_data()->vm86_ptr = &vm86;
         merge_vm86_pending_flags( &rec );
 
-        res = vm86_enter( &ntdll_get_thread_data()->vm86_ptr ); /* uses and clears teb->vm86_ptr */
+        res = vm86_enter( &x86_thread_data()->vm86_ptr ); /* uses and clears teb->vm86_ptr */
         if (res < 0)
         {
             errno = -res;
@@ -2775,7 +2796,7 @@ __ASM_GLOBAL_FUNC(call_thread_func_wrapper,
  */
 void call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
 {
-    ntdll_get_thread_data()->exit_frame = frame;
+    x86_thread_data()->exit_frame = frame;
     __TRY
     {
         call_thread_func_wrapper( entry, arg );
@@ -2793,8 +2814,8 @@ void call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
  */
 void WINAPI RtlExitUserThread( ULONG status )
 {
-    if (!ntdll_get_thread_data()->exit_frame) exit_thread( status );
-    call_thread_exit_func( status, exit_thread, ntdll_get_thread_data()->exit_frame );
+    if (!x86_thread_data()->exit_frame) exit_thread( status );
+    call_thread_exit_func( status, exit_thread, x86_thread_data()->exit_frame );
 }
 
 /***********************************************************************
@@ -2802,8 +2823,8 @@ void WINAPI RtlExitUserThread( ULONG status )
  */
 void abort_thread( int status )
 {
-    if (!ntdll_get_thread_data()->exit_frame) terminate_thread( status );
-    call_thread_exit_func( status, terminate_thread, ntdll_get_thread_data()->exit_frame );
+    if (!x86_thread_data()->exit_frame) terminate_thread( status );
+    call_thread_exit_func( status, terminate_thread, x86_thread_data()->exit_frame );
 }
 
 /**********************************************************************

@@ -308,6 +308,18 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
+struct amd64_thread_data
+{
+    void     *exit_frame;    /* exit frame pointer */
+};
+
+C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((TEB *)0)->SpareBytes1) );
+
+static inline struct amd64_thread_data *amd64_thread_data(void)
+{
+    return (struct amd64_thread_data *)NtCurrentTeb()->SpareBytes1;
+}
+
 /***********************************************************************
  * Dynamic unwind table
  */
@@ -3992,7 +4004,7 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
  */
 void call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
 {
-    ntdll_get_thread_data()->exit_frame = frame;
+    amd64_thread_data()->exit_frame = frame;
     __TRY
     {
         RtlExitUserThread( entry( arg ));
@@ -4041,8 +4053,8 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
  */
 void WINAPI RtlExitUserThread( ULONG status )
 {
-    if (!ntdll_get_thread_data()->exit_frame) exit_thread( status );
-    call_thread_exit_func( status, exit_thread, ntdll_get_thread_data()->exit_frame );
+    if (!amd64_thread_data()->exit_frame) exit_thread( status );
+    call_thread_exit_func( status, exit_thread, amd64_thread_data()->exit_frame );
 }
 
 /***********************************************************************
@@ -4050,8 +4062,8 @@ void WINAPI RtlExitUserThread( ULONG status )
  */
 void abort_thread( int status )
 {
-    if (!ntdll_get_thread_data()->exit_frame) terminate_thread( status );
-    call_thread_exit_func( status, terminate_thread, ntdll_get_thread_data()->exit_frame );
+    if (!amd64_thread_data()->exit_frame) terminate_thread( status );
+    call_thread_exit_func( status, terminate_thread, amd64_thread_data()->exit_frame );
 }
 
 /**********************************************************************
