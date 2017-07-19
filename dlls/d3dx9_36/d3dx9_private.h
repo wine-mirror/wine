@@ -339,14 +339,19 @@ static inline ULONG64 next_update_version(ULONG64 *version_counter)
     return ++*version_counter;
 }
 
-static inline BOOL is_param_dirty(struct d3dx_parameter *param, ULONG64 update_version)
+static inline BOOL is_top_level_param_dirty(struct d3dx_top_level_parameter *param, ULONG64 update_version)
 {
     struct d3dx_shared_data *shared_data;
 
-    if ((shared_data = param->top_level_param->shared_data))
+    if ((shared_data = param->shared_data))
         return update_version < shared_data->update_version;
     else
-        return update_version < param->top_level_param->update_version;
+        return update_version < param->update_version;
+}
+
+static inline BOOL is_param_dirty(struct d3dx_parameter *param, ULONG64 update_version)
+{
+    return is_top_level_param_dirty(param->top_level_param, update_version);
 }
 
 struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,

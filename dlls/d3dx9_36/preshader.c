@@ -941,6 +941,12 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
                 goto cleanup;
             }
         }
+        if (!is_top_level_parameter(inputs_param[index]))
+        {
+            WARN("Expected top level parameter '%s'.\n", debugstr_a(cdesc[index].Name));
+            hr = E_FAIL;
+            goto cleanup;
+        }
 
         for (j = 0; j < skip_constants_count; ++j)
         {
@@ -1618,7 +1624,8 @@ static BOOL is_const_tab_input_dirty(struct d3dx_const_tab *ctab, ULONG64 update
         update_version = ctab->update_version;
     for (i = 0; i < ctab->input_count; ++i)
     {
-        if (is_param_dirty(ctab->inputs_param[i], update_version))
+        if (is_top_level_param_dirty(top_level_parameter_from_parameter(ctab->inputs_param[i]),
+                update_version))
             return TRUE;
     }
     return FALSE;
