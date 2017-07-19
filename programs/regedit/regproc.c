@@ -1272,16 +1272,6 @@ static void export_hkey(FILE *file, DWORD value_type, BYTE **val_buf, DWORD *val
                 }
                 break;
             }
-
-            case REG_DWORD:
-            {
-                WCHAR format[] = {'d','w','o','r','d',':','%','0','8','x','\r','\n',0};
-
-                REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len + 15);
-                sprintfW(*line_buf + line_len, format, *((DWORD *)*val_buf));
-                break;
-            }
-
             case REG_NONE:
             case REG_EXPAND_SZ:
             case REG_MULTI_SZ:
@@ -1437,6 +1427,17 @@ static size_t export_value_name(FILE *fp, WCHAR *name, size_t len, BOOL unicode)
     return line_len;
 }
 
+static void export_dword_data(FILE *fp, void *data, BOOL unicode)
+{
+    static const WCHAR fmt[] = {'d','w','o','r','d',':','%','0','8','x','\r','\n',0};
+    WCHAR *buf;
+
+    buf = resize_buffer(NULL, 17 * sizeof(WCHAR));
+    sprintfW(buf, fmt, *(DWORD *)data);
+    REGPROC_write_line(fp, buf, unicode);
+    HeapFree(GetProcessHeap(), 0, buf);
+}
+
 static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD subkey_len)
 {
     WCHAR *subkey_path;
@@ -1491,7 +1492,10 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
         if (rc == ERROR_SUCCESS)
         {
             export_value_name(fp, value_name, value_len, unicode);
-            export_hkey(fp, type, &data, &data_size, &line_buf, &line_buf_size, unicode);
+            if (type == REG_DWORD)
+                export_dword_data(fp, data, unicode);
+            else
+                export_hkey(fp, type, &data, &data_size, &line_buf, &line_buf_size, unicode);
             i++;
         }
         else if (rc == ERROR_MORE_DATA)
