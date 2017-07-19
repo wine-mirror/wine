@@ -1304,10 +1304,16 @@ static void export_hex_data(FILE *fp, WCHAR **buf, DWORD type, DWORD line_len,
     }
 }
 
+static void export_newline(FILE *fp, BOOL unicode)
+{
+    static const WCHAR newline[] = {'\r','\n',0};
+
+    REGPROC_write_line(fp, newline, unicode);
+}
+
 static void export_data(FILE *fp, DWORD type, size_t line_len, void *data, size_t size, BOOL unicode)
 {
     WCHAR *buf = NULL;
-    static const WCHAR newline[] = {'\r','\n',0};
 
     switch (type)
     {
@@ -1328,7 +1334,7 @@ static void export_data(FILE *fp, DWORD type, size_t line_len, void *data, size_
 
     REGPROC_write_line(fp, buf, unicode);
     HeapFree(GetProcessHeap(), 0, buf);
-    REGPROC_write_line(fp, newline, unicode);
+    export_newline(fp, unicode);
 }
 
 static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD subkey_len)
@@ -1498,6 +1504,7 @@ static BOOL export_key(WCHAR *file_name, WCHAR *path, BOOL unicode)
 
     fp = REGPROC_open_export_file(file_name, unicode);
     ret = export_registry_data(fp, key, path, unicode);
+    export_newline(fp, unicode);
     fclose(fp);
 
     RegCloseKey(key);
@@ -1530,7 +1537,9 @@ static BOOL export_all(WCHAR *file_name, WCHAR *path, BOOL unicode)
         RegCloseKey(key);
     }
 
+    export_newline(fp, unicode);
     fclose(fp);
+
     return TRUE;
 }
 
