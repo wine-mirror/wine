@@ -1504,6 +1504,8 @@ static void test_destroy_callback(unsigned int test_idx, REFCLSID clsid, REFIID 
                 "Expected callback = %p, context = %p. Got callback = %p, context = %p.\n", d3drm_corder[i].callback,
                 d3drm_corder[i].context, corder[i].callback, corder[i].context);
     }
+
+    IDirect3DRM_Release(d3drm);
 }
 
 static void test_object(void)
