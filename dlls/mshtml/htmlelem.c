@@ -5176,6 +5176,8 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const DISPID elem2_ie11_blacklist[] = {DISPID_IHTMLELEMENT2_DOSCROLL, DISPID_UNKNOWN};
 
+    HTMLDOMNode_init_dispex_info(info, mode);
+
     dispex_info_add_interface(info, IHTMLElement2_tid, mode >= COMPAT_MODE_IE11 ? elem2_ie11_blacklist : NULL);
 
     if(mode >= COMPAT_MODE_IE8)

@@ -361,7 +361,8 @@ static const tid_t HTMLDOMTextNode_iface_tids[] = {
 static dispex_static_data_t HTMLDOMTextNode_dispex = {
     NULL,
     DispHTMLDOMTextNode_tid,
-    HTMLDOMTextNode_iface_tids
+    HTMLDOMTextNode_iface_tids,
+    HTMLDOMNode_init_dispex_info
 };
 
 HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **node)
@@ -377,8 +378,8 @@ HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDO
     ret->IHTMLDOMTextNode_iface.lpVtbl = &HTMLDOMTextNodeVtbl;
     ret->IHTMLDOMTextNode2_iface.lpVtbl = &HTMLDOMTextNode2Vtbl;
 
-    init_dispex(&ret->node.event_target.dispex, (IUnknown*)&ret->IHTMLDOMTextNode_iface,
-            &HTMLDOMTextNode_dispex);
+    init_dispex_with_compat_mode(&ret->node.event_target.dispex, (IUnknown*)&ret->IHTMLDOMTextNode_iface,
+                                 &HTMLDOMTextNode_dispex, doc->document_mode);
 
     HTMLDOMNode_Init(doc, &ret->node, nsnode);
 

@@ -436,7 +436,8 @@ static const tid_t HTMLDOMChildrenCollection_iface_tids[] = {
 static dispex_static_data_t HTMLDOMChildrenCollection_dispex = {
     &HTMLDOMChildrenCollection_dispex_vtbl,
     DispDOMChildrenCollection_tid,
-    HTMLDOMChildrenCollection_iface_tids
+    HTMLDOMChildrenCollection_iface_tids,
+    HTMLDOMNode_init_dispex_info
 };
 
 IHTMLDOMChildrenCollection *create_child_collection(HTMLDocumentNode *doc, nsIDOMNodeList *nslist)
@@ -1399,6 +1400,12 @@ void HTMLDOMNode_destructor(HTMLDOMNode *This)
 static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
     return create_node(This->doc, nsnode, ret);
+}
+
+void HTMLDOMNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    if(mode >= COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLDOMNode3_tid, NULL);
 }
 
 static const cpc_entry_t HTMLDOMNode_cpc[] = {{NULL}};
