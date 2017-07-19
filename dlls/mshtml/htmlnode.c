@@ -1282,29 +1282,29 @@ static HRESULT WINAPI HTMLDOMNode3_isDefaultNamespace(IHTMLDOMNode3 *iface, VARI
 static HRESULT WINAPI HTMLDOMNode3_appendChild(IHTMLDOMNode3 *iface, IHTMLDOMNode *newChild, IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode3(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)->()\n", This);
+    return IHTMLDOMNode_appendChild(&This->IHTMLDOMNode_iface, newChild, node);
 }
 
 static HRESULT WINAPI HTMLDOMNode3_insertBefore(IHTMLDOMNode3 *iface, IHTMLDOMNode *newChild, VARIANT refChild, IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode3(iface);
-    FIXME("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), node);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), node);
+    return IHTMLDOMNode_insertBefore(&This->IHTMLDOMNode_iface, newChild, refChild, node);
 }
 
 static HRESULT WINAPI HTMLDOMNode3_removeChild(IHTMLDOMNode3 *iface, IHTMLDOMNode *oldChild, IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode3(iface);
-    FIXME("(%p)->(%p %p)\n", This, oldChild, node);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p)\n", This, oldChild, node);
+    return IHTMLDOMNode_removeChild(&This->IHTMLDOMNode_iface, oldChild, node);
 }
 
 static HRESULT WINAPI HTMLDOMNode3_replaceChild(IHTMLDOMNode3 *iface, IHTMLDOMNode *newChild, IHTMLDOMNode *oldChild, IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode3(iface);
-    FIXME("(%p)->(%p %p %p)\n", This, newChild, oldChild, node);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p %p)\n", This, newChild, oldChild, node);
+    return IHTMLDOMNode_replaceChild(&This->IHTMLDOMNode_iface, newChild, oldChild, node);
 }
 
 static HRESULT WINAPI HTMLDOMNode3_isSameNode(IHTMLDOMNode3 *iface, IHTMLDOMNode3 *otherNode, VARIANT_BOOL *isSame)
