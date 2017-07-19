@@ -931,7 +931,9 @@ struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,
                     return get_parameter_by_name(NULL, temp_parameter, part);
 
                 case '@':
-                    return get_annotation_by_name(temp_parameter->annotation_count, temp_parameter->annotations, part);
+                    return parameter ? NULL
+                            : get_annotation_by_name(temp_parameter->annotation_count,
+                            temp_parameter->annotations, part);
 
                 case '[':
                     return get_parameter_element_by_name(temp_parameter, part);
