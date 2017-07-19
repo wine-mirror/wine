@@ -1311,9 +1311,11 @@ static void export_newline(FILE *fp, BOOL unicode)
     REGPROC_write_line(fp, newline, unicode);
 }
 
-static void export_data(FILE *fp, DWORD type, size_t line_len, void *data, size_t size, BOOL unicode)
+static void export_data(FILE *fp, WCHAR *value_name, DWORD value_len, DWORD type,
+                        void *data, size_t size, BOOL unicode)
 {
     WCHAR *buf = NULL;
+    size_t line_len = export_value_name(fp, value_name, value_len, unicode);
 
     switch (type)
     {
@@ -1385,8 +1387,7 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
         rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, data, &data_size);
         if (rc == ERROR_SUCCESS)
         {
-            size_t line_len = export_value_name(fp, value_name, value_len, unicode);
-            export_data(fp, type, line_len, data, data_size, unicode);
+            export_data(fp, value_name, value_len, type, data, data_size, unicode);
             i++;
         }
         else if (rc == ERROR_MORE_DATA)
