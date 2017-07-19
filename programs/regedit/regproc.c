@@ -1403,137 +1403,6 @@ static void export_hkey(FILE *file, HKEY key,
 }
 
 /******************************************************************************
- * Open file in binary mode for export.
- */
-static FILE *REGPROC_open_export_file(WCHAR *file_name, BOOL unicode)
-{
-    FILE *file;
-    WCHAR dash = '-';
-
-    if (strncmpW(file_name,&dash,1)==0) {
-        file=stdout;
-        _setmode(_fileno(file), _O_BINARY);
-    } else
-    {
-        WCHAR wb_mode[] = {'w','b',0};
-        WCHAR regedit[] = {'r','e','g','e','d','i','t',0};
-
-        file = _wfopen(file_name, wb_mode);
-        if (!file) {
-            _wperror(regedit);
-            error_exit(STRING_CANNOT_OPEN_FILE, file_name);
-        }
-    }
-    if(unicode)
-    {
-        const BYTE unicode_seq[] = {0xff,0xfe};
-        const WCHAR header[] = {'W','i','n','d','o','w','s',' ','R','e','g','i','s','t','r','y',' ','E','d','i','t','o','r',' ','V','e','r','s','i','o','n',' ','5','.','0','0','\r','\n'};
-        fwrite(unicode_seq, sizeof(BYTE), sizeof(unicode_seq)/sizeof(unicode_seq[0]), file);
-        fwrite(header, sizeof(WCHAR), sizeof(header)/sizeof(header[0]), file);
-    } else
-    {
-        fputs("REGEDIT4\r\n", file);
-    }
-
-    return file;
-}
-
-/******************************************************************************
- * Writes contents of the registry key to the specified file stream.
- *
- * Parameters:
- * file_name - name of a file to export registry branch to.
- * reg_key_name - registry branch to export. The whole registry is exported if
- *      reg_key_name is NULL or contains an empty string.
- */
-BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
-{
-    WCHAR *reg_key_name_buf;
-    WCHAR *val_name_buf;
-    BYTE *val_buf;
-    WCHAR *line_buf;
-    DWORD reg_key_name_size = KEY_MAX_LEN;
-    DWORD val_name_size = KEY_MAX_LEN;
-    DWORD val_size = REG_VAL_BUF_SIZE;
-    DWORD line_buf_size = KEY_MAX_LEN + REG_VAL_BUF_SIZE;
-    FILE *file = NULL;
-    BOOL unicode = (format == REG_FORMAT_5);
-
-    reg_key_name_buf = HeapAlloc(GetProcessHeap(), 0,
-                                 reg_key_name_size  * sizeof(*reg_key_name_buf));
-    val_name_buf = HeapAlloc(GetProcessHeap(), 0,
-                             val_name_size * sizeof(*val_name_buf));
-    val_buf = HeapAlloc(GetProcessHeap(), 0, val_size);
-    line_buf = HeapAlloc(GetProcessHeap(), 0, line_buf_size * sizeof(*line_buf));
-    CHECK_ENOUGH_MEMORY(reg_key_name_buf && val_name_buf && val_buf && line_buf);
-
-    if (reg_key_name && reg_key_name[0]) {
-        HKEY reg_key_class;
-        WCHAR *branch_name = NULL;
-        HKEY key;
-
-        REGPROC_resize_char_buffer(&reg_key_name_buf, &reg_key_name_size,
-                                   lstrlenW(reg_key_name));
-        lstrcpyW(reg_key_name_buf, reg_key_name);
-
-        /* open the specified key */
-        if (!(reg_key_class = parse_key_name(reg_key_name, &branch_name)))
-        {
-            if (branch_name) *(branch_name - 1) = 0;
-            error_exit(STRING_INVALID_SYSTEM_KEY, reg_key_name);
-        }
-
-        if (!branch_name || !*branch_name) {
-            /* no branch - registry class is specified */
-            file = REGPROC_open_export_file(file_name, unicode);
-            export_hkey(file, reg_key_class,
-                        &reg_key_name_buf, &reg_key_name_size,
-                        &val_name_buf, &val_name_size,
-                        &val_buf, &val_size, &line_buf,
-                        &line_buf_size, unicode);
-        } else if (RegOpenKeyW(reg_key_class, branch_name, &key) == ERROR_SUCCESS) {
-            file = REGPROC_open_export_file(file_name, unicode);
-            export_hkey(file, key,
-                        &reg_key_name_buf, &reg_key_name_size,
-                        &val_name_buf, &val_name_size,
-                        &val_buf, &val_size, &line_buf,
-                        &line_buf_size, unicode);
-            RegCloseKey(key);
-        } else {
-            output_message(STRING_REG_KEY_NOT_FOUND, reg_key_name);
-        }
-    } else {
-        unsigned int i;
-
-        /* export all registry classes */
-        file = REGPROC_open_export_file(file_name, unicode);
-        for (i = 0; i < ARRAY_SIZE(reg_class_keys); i++) {
-            /* do not export HKEY_CLASSES_ROOT */
-            if (reg_class_keys[i] != HKEY_CLASSES_ROOT &&
-                    reg_class_keys[i] != HKEY_CURRENT_USER &&
-                    reg_class_keys[i] != HKEY_CURRENT_CONFIG &&
-                    reg_class_keys[i] != HKEY_DYN_DATA) {
-                lstrcpyW(reg_key_name_buf, reg_class_namesW[i]);
-                export_hkey(file, reg_class_keys[i],
-                            &reg_key_name_buf, &reg_key_name_size,
-                            &val_name_buf, &val_name_size,
-                            &val_buf, &val_size, &line_buf,
-                            &line_buf_size, unicode);
-            }
-        }
-    }
-
-    if (file) {
-        fclose(file);
-    }
-    HeapFree(GetProcessHeap(), 0, reg_key_name);
-    HeapFree(GetProcessHeap(), 0, val_name_buf);
-    HeapFree(GetProcessHeap(), 0, val_buf);
-    HeapFree(GetProcessHeap(), 0, line_buf);
-    return TRUE;
-}
-
-/******************************************************************************
  * Reads contents of the specified file into the registry.
  */
 BOOL import_registry_file(FILE *reg_file)
@@ -1602,4 +1471,147 @@ void delete_registry_key(WCHAR *reg_key_name)
         error_exit(STRING_DELETE_FAILED, reg_key_name);
 
     RegDeleteTreeW(key_class, key_name);
+}
+
+static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
+{
+    WCHAR *reg_key_name_buf, *val_name_buf, *line_buf;
+    BYTE *val_buf;
+    DWORD reg_key_name_size = KEY_MAX_LEN;
+    DWORD val_name_size = KEY_MAX_LEN;
+    DWORD val_size = REG_VAL_BUF_SIZE;
+    DWORD line_buf_size = KEY_MAX_LEN + REG_VAL_BUF_SIZE;
+
+    reg_key_name_buf = HeapAlloc(GetProcessHeap(), 0, reg_key_name_size * sizeof(WCHAR));
+    val_name_buf = HeapAlloc(GetProcessHeap(), 0, val_name_size * sizeof(WCHAR));
+    val_buf = HeapAlloc(GetProcessHeap(), 0, val_size);
+    line_buf = HeapAlloc(GetProcessHeap(), 0, line_buf_size * sizeof(WCHAR));
+    CHECK_ENOUGH_MEMORY(reg_key_name_buf && val_name_buf && val_buf && line_buf);
+
+    lstrcpyW(reg_key_name_buf, path);
+
+    export_hkey(fp, key, &reg_key_name_buf, &reg_key_name_size, &val_name_buf, &val_name_size,
+                &val_buf, &val_size, &line_buf, &line_buf_size, unicode);
+
+    HeapFree(GetProcessHeap(), 0, reg_key_name_buf);
+    HeapFree(GetProcessHeap(), 0, val_name_buf);
+    HeapFree(GetProcessHeap(), 0, val_buf);
+    HeapFree(GetProcessHeap(), 0, line_buf);
+
+    return 0;
+}
+
+static FILE *REGPROC_open_export_file(WCHAR *file_name, BOOL unicode)
+{
+    FILE *file;
+    static const WCHAR hyphen[] = {'-',0};
+
+    if (!strcmpW(file_name, hyphen))
+    {
+        file = stdout;
+        _setmode(_fileno(file), _O_BINARY);
+    }
+    else
+    {
+        static const WCHAR wb_mode[] = {'w','b',0};
+
+        file = _wfopen(file_name, wb_mode);
+        if (!file)
+        {
+            static const WCHAR regedit[] = {'r','e','g','e','d','i','t',0};
+            _wperror(regedit);
+            error_exit(STRING_CANNOT_OPEN_FILE, file_name);
+        }
+    }
+
+    if (unicode)
+    {
+        static const BYTE bom[] = {0xff,0xfe};
+        static const WCHAR header[] = {'W','i','n','d','o','w','s',' ',
+                                       'R','e','g','i','s','t','r','y',' ','E','d','i','t','o','r',' ',
+                                       'V','e','r','s','i','o','n',' ','5','.','0','0','\r','\n'};
+
+        fwrite(bom, sizeof(BYTE), ARRAY_SIZE(bom), file);
+        fwrite(header, sizeof(WCHAR), ARRAY_SIZE(header), file);
+    }
+    else
+        fputs("REGEDIT4\r\n", file);
+
+    return file;
+}
+
+static HKEY open_export_key(HKEY key_class, WCHAR *subkey, WCHAR *path)
+{
+    HKEY key;
+
+    if (!RegOpenKeyExW(key_class, subkey, 0, KEY_READ, &key))
+        return key;
+
+    output_message(STRING_OPEN_KEY_FAILED, path);
+    return NULL;
+}
+
+static BOOL export_key(WCHAR *file_name, WCHAR *path, BOOL unicode)
+{
+    HKEY key_class, key;
+    WCHAR *subkey;
+    FILE *fp;
+    BOOL ret;
+
+    if (!(key_class = parse_key_name(path, &subkey)))
+    {
+        if (subkey) *(subkey - 1) = 0;
+        output_message(STRING_INVALID_SYSTEM_KEY, path);
+        return FALSE;
+    }
+
+    if (!(key = open_export_key(key_class, subkey, path)))
+        return FALSE;
+
+    fp = REGPROC_open_export_file(file_name, unicode);
+    ret = export_registry_data(fp, key, path, unicode);
+    fclose(fp);
+
+    RegCloseKey(key);
+    return ret;
+}
+
+static BOOL export_all(WCHAR *file_name, WCHAR *path, BOOL unicode)
+{
+    FILE *fp;
+    int i;
+    HKEY classes[] = {HKEY_LOCAL_MACHINE, HKEY_USERS}, key;
+    WCHAR *class_name;
+
+    fp = REGPROC_open_export_file(file_name, unicode);
+
+    for (i = 0; i < ARRAY_SIZE(classes); i++)
+    {
+        if (!(key = open_export_key(classes[i], NULL, path)))
+        {
+            fclose(fp);
+            return FALSE;
+        }
+
+        class_name = resize_buffer(NULL, (lstrlenW(reg_class_namesW[i]) + 1) * sizeof(WCHAR));
+        lstrcpyW(class_name, reg_class_namesW[i]);
+
+        export_registry_data(fp, classes[i], class_name, unicode);
+
+        HeapFree(GetProcessHeap(), 0, class_name);
+        RegCloseKey(key);
+    }
+
+    fclose(fp);
+    return TRUE;
+}
+
+BOOL export_registry_key(WCHAR *file_name, WCHAR *path, DWORD format)
+{
+    BOOL unicode = (format == REG_FORMAT_5);
+
+    if (path && *path)
+        return export_key(file_name, path, unicode);
+    else
+        return export_all(file_name, path, unicode);
 }
