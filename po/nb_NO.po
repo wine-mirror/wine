@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-02-27 16:00+0100\n"
+"PO-Revision-Date: 2017-07-19 16:00+0100\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -6892,25 +6892,23 @@ msgstr "Velg katalogen som inneholder %s"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Fatal feil: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Feil [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Advarsel [1]."
 
 #: msi.rc:74
 msgid "Info [1]."
-msgstr ""
+msgstr "Info [1]."
 
 #: msi.rc:75
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "{{Disk full: }}"
-msgstr "Disken er full.\n"
+msgstr "{{Disken er full: }}"
 
 #: msi.rc:76
 msgid "Action %s: [1]. [2]"
@@ -6940,114 +6938,84 @@ msgid ""
 msgstr ""
 
 #: msi.rc:92
-#, fuzzy
-#| msgid "No registry log space.\n"
 msgid "Allocating registry space"
-msgstr "Ikke loggingsplass for registeret.\n"
+msgstr "Tildeler registerplass"
 
 #: msi.rc:93
-#, fuzzy
-#| msgid "Single-instance application.\n"
 msgid "Searching for installed applications"
-msgstr "Programmet tillater bare én instans.\n"
+msgstr "Leter etter installerte programmer"
 
 #: msi.rc:94
 msgid "Binding executables"
-msgstr ""
+msgstr "Binder kjørbare"
 
 #: msi.rc:95 msi.rc:138
-#, fuzzy
-#| msgid "Searching for %s"
 msgid "Searching for qualifying products"
-msgstr "Søker etter %s"
+msgstr "Søker etter kvalifiserte produkter"
 
 #: msi.rc:96 msi.rc:97 msi.rc:102
 msgid "Computing space requirements"
-msgstr ""
+msgstr "Utregner plasskrav"
 
 #: msi.rc:98
-#, fuzzy
-#| msgid "Target folder"
 msgid "Creating folders"
-msgstr "Målmappe"
+msgstr "Oppretter mapper"
 
 #: msi.rc:99
-#, fuzzy
-#| msgid "Create Shor&tcut"
 msgid "Creating shortcuts"
-msgstr "Lag s&narvei"
+msgstr "Oppretter snarveier"
 
 #: msi.rc:100
-#, fuzzy
-#| msgid "Exception in service.\n"
 msgid "Deleting services"
-msgstr "Unntak i tjenesten.\n"
+msgstr "Sletter tjenester"
 
 #: msi.rc:101
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creating duplicate files"
-msgstr "Dato opprettet"
+msgstr "Oppretter duplikate filer"
 
 #: msi.rc:103
-#, fuzzy
-#| msgid "No associated application.\n"
 msgid "Searching for related applications"
-msgstr "Intet tilordnet program.\n"
+msgstr "Søker etter relaterte programmer"
 
 #: msi.rc:104
 msgid "Copying network install files"
-msgstr ""
+msgstr "Kopierer nettverks-installasjonsfiler"
 
 #: msi.rc:105
-#, fuzzy
-#| msgid "Copying Files..."
 msgid "Copying new files"
-msgstr "Kopierer filer..."
+msgstr "Kopierer nye filer"
 
 #: msi.rc:106
-#, fuzzy
-#| msgid "Installation of component failed: %08x"
 msgid "Installing ODBC components"
-msgstr "Klarte ikke installere komponenten: %08x"
+msgstr "Installerer ODBC komponenter"
 
 #: msi.rc:107
-#, fuzzy
-#| msgid "Installer service failed.\n"
 msgid "Installing new services"
-msgstr "Installasjonstjenesten støtte på en feil.\n"
+msgstr "Installerer nye tjenester"
 
 #: msi.rc:108
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Installing system catalog"
-msgstr "Installer/Avinstaller"
+msgstr "Installerer systemkatalog"
 
 #: msi.rc:109
-#, fuzzy
-#| msgid "Wine Application Uninstaller"
 msgid "Validating install"
-msgstr "Avinstaller programmer"
+msgstr "Godkjenner installasjon"
 
 #: msi.rc:110
 msgid "Evaluating launch conditions"
-msgstr ""
+msgstr "Evaluerer startbetingelser"
 
 #: msi.rc:111
 msgid "Migrating feature states from related applications"
 msgstr ""
 
 #: msi.rc:112
-#, fuzzy
-#| msgid "Icon files"
 msgid "Moving files"
-msgstr "Ikonfiler"
+msgstr "Flytter filer"
 
 #: msi.rc:113
-#, fuzzy
-#| msgid "Version information"
 msgid "Publishing assembly information"
-msgstr "Versjoninformasjon"
+msgstr "Publiserer assembly informasjon"
 
 #: msi.rc:114
 msgid "Unpublishing assembly information"
