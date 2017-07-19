@@ -313,11 +313,11 @@ struct amd64_thread_data
     void     *exit_frame;    /* exit frame pointer */
 };
 
-C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((TEB *)0)->SpareBytes1) );
+C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((TEB *)0)->SystemReserved2) );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
-    return (struct amd64_thread_data *)NtCurrentTeb()->SpareBytes1;
+    return (struct amd64_thread_data *)NtCurrentTeb()->SystemReserved2;
 }
 
 /***********************************************************************

@@ -531,25 +531,31 @@ enum i386_trap_code
 
 struct x86_thread_data
 {
-    DWORD              dr0;           /* 1bc Debug registers */
-    DWORD              dr1;           /* 1c0 */
-    DWORD              dr2;           /* 1c4 */
-    DWORD              dr3;           /* 1c8 */
-    DWORD              dr6;           /* 1cc */
-    DWORD              dr7;           /* 1d0 */
     DWORD              fs;            /* 1d4 TEB selector */
     DWORD              gs;            /* 1d8 libc selector; update winebuild if you move this! */
-    void              *vm86_ptr;      /* 1dc data for vm86 mode */
-    int                __pad[7];      /* 1e0 space for ntdll_thread_data (FIXME) */
+    DWORD              dr0;           /* 1dc debug registers */
+    DWORD              dr1;           /* 1e0 */
+    DWORD              dr2;           /* 1e4 */
+    DWORD              dr3;           /* 1e8 */
+    DWORD              dr6;           /* 1ec */
+    DWORD              dr7;           /* 1f0 */
+    void              *exit_frame;    /* 1f4 exit frame pointer */
+#ifdef __HAVE_VM86
+    void              *vm86_ptr;      /* 1f8 data for vm86 mode */
     WINE_VM86_TEB_INFO vm86;          /* 1fc vm86 private data */
-    void              *exit_frame;    /* 204 exit frame pointer */
+#endif
+    /* the ntdll_thread_data structure follows here */
 };
 
-C_ASSERT( offsetof( TEB, SpareBytes1 ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
+C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
+#ifdef __HAVE_VM86
+C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, vm86 ) ==
+          offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, __vm86 ));
+#endif
 
 static inline struct x86_thread_data *x86_thread_data(void)
 {
-    return (struct x86_thread_data *)NtCurrentTeb()->SpareBytes1;
+    return (struct x86_thread_data *)NtCurrentTeb()->SystemReserved2;
 }
 
 /* Exception record for handling exceptions happening inside exception handlers */

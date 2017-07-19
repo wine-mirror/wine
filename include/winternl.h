@@ -328,8 +328,8 @@ typedef struct _TEB
     PVOID                        SystemReserved1[54];               /* 0cc/0110 used for kernel32 private data in Wine */
     LONG                         ExceptionCode;                     /* 1a4/02c0 */
     ACTIVATION_CONTEXT_STACK     ActivationContextStack;            /* 1a8/02c8 */
-    BYTE                         SpareBytes1[24];                   /* 1bc/02e8 used for ntdll private data in Wine */
-    PVOID                        SystemReserved2[10];               /* 1d4/0300 used for ntdll private data in Wine */
+    BYTE                         SpareBytes1[24];                   /* 1bc/02e8 */
+    PVOID                        SystemReserved2[10];               /* 1d4/0300 used for ntdll platform-specific private data in Wine */
     GDI_TEB_BATCH                GdiTebBatch;                       /* 1fc/0350 used for ntdll private data in Wine */
     HANDLE                       gdiRgn;                            /* 6dc/0838 */
     HANDLE                       gdiPen;                            /* 6e0/0840 */
