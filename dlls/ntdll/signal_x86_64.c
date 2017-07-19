@@ -310,6 +310,12 @@ static wine_signal_handler handlers[256];
 
 struct amd64_thread_data
 {
+    DWORD_PTR dr0;           /* debug registers */
+    DWORD_PTR dr1;
+    DWORD_PTR dr2;
+    DWORD_PTR dr3;
+    DWORD_PTR dr6;
+    DWORD_PTR dr7;
     void     *exit_frame;    /* exit frame pointer */
 };
 
@@ -1661,7 +1667,7 @@ static inline BOOL is_inside_signal_stack( void *ptr )
  */
 static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
 {
-    context->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS;
+    context->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_DEBUG_REGISTERS;
     context->Rax    = RAX_sig(sigcontext);
     context->Rcx    = RCX_sig(sigcontext);
     context->Rdx    = RDX_sig(sigcontext);
@@ -1698,6 +1704,12 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
 #else
     __asm__("movw %%ss,%0" : "=m" (context->SegSs));
 #endif
+    context->Dr0    = amd64_thread_data()->dr0;
+    context->Dr1    = amd64_thread_data()->dr1;
+    context->Dr2    = amd64_thread_data()->dr2;
+    context->Dr3    = amd64_thread_data()->dr3;
+    context->Dr6    = amd64_thread_data()->dr6;
+    context->Dr7    = amd64_thread_data()->dr7;
     if (FPU_sig(sigcontext))
     {
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
@@ -1714,6 +1726,12 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
  */
 static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 {
+    amd64_thread_data()->dr0 = context->Dr0;
+    amd64_thread_data()->dr1 = context->Dr1;
+    amd64_thread_data()->dr2 = context->Dr2;
+    amd64_thread_data()->dr3 = context->Dr3;
+    amd64_thread_data()->dr6 = context->Dr6;
+    amd64_thread_data()->dr7 = context->Dr7;
     RAX_sig(sigcontext) = context->Rax;
     RCX_sig(sigcontext) = context->Rcx;
     RDX_sig(sigcontext) = context->Rdx;
@@ -1873,6 +1891,16 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
 static void set_cpu_context( const CONTEXT *context )
 {
     DWORD flags = context->ContextFlags & ~CONTEXT_AMD64;
+
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        amd64_thread_data()->dr0 = context->Dr0;
+        amd64_thread_data()->dr1 = context->Dr1;
+        amd64_thread_data()->dr2 = context->Dr2;
+        amd64_thread_data()->dr3 = context->Dr3;
+        amd64_thread_data()->dr6 = context->Dr6;
+        amd64_thread_data()->dr7 = context->Dr7;
+    }
     if (flags & CONTEXT_FULL)
     {
         if (!(flags & CONTEXT_CONTROL))
@@ -2081,10 +2109,20 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
  */
 NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 {
-    NTSTATUS ret;
-    BOOL self;
+    NTSTATUS ret = STATUS_SUCCESS;
+    BOOL self = (handle == GetCurrentThread());
 
-    ret = set_thread_context( handle, context, &self );
+    /* debug registers require a server call */
+    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64)))
+        self = (amd64_thread_data()->dr0 == context->Dr0 &&
+                amd64_thread_data()->dr1 == context->Dr1 &&
+                amd64_thread_data()->dr2 == context->Dr2 &&
+                amd64_thread_data()->dr3 == context->Dr3 &&
+                amd64_thread_data()->dr6 == context->Dr6 &&
+                amd64_thread_data()->dr7 == context->Dr7);
+
+    if (!self) ret = set_thread_context( handle, context, &self );
+
     if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
     return ret;
 }
@@ -2109,12 +2147,25 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         needed_flags &= ~context->ContextFlags;
     }
 
-    if (self && needed_flags)
+    if (self)
     {
-        CONTEXT ctx;
-        RtlCaptureContext( &ctx );
-        copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
-        context->ContextFlags |= ctx.ContextFlags & needed_flags;
+        if (needed_flags)
+        {
+            CONTEXT ctx;
+            RtlCaptureContext( &ctx );
+            copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
+            context->ContextFlags |= ctx.ContextFlags & needed_flags;
+        }
+        /* update the cached version of the debug registers */
+        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64))
+        {
+            amd64_thread_data()->dr0 = context->Dr0;
+            amd64_thread_data()->dr1 = context->Dr1;
+            amd64_thread_data()->dr2 = context->Dr2;
+            amd64_thread_data()->dr3 = context->Dr3;
+            amd64_thread_data()->dr6 = context->Dr6;
+            amd64_thread_data()->dr7 = context->Dr7;
+        }
     }
     return STATUS_SUCCESS;
 }
@@ -2618,14 +2669,42 @@ static void raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
             case 3: /* BREAKPOINT_LOAD_SYMBOLS */
             case 4: /* BREAKPOINT_UNLOAD_SYMBOLS */
             case 5: /* BREAKPOINT_COMMAND_STRING (>= Win2003) */
-                goto done;
+                set_cpu_context( context );
         }
         break;
     }
-    status = raise_exception( rec, context, TRUE );
-    if (status) raise_status( status, rec );
-done:
-    set_cpu_context( context );
+    status = NtRaiseException( rec, context, TRUE );
+    raise_status( status, rec );
+}
+
+
+/**********************************************************************
+ *		raise_trap_exception
+ */
+static void raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status;
+
+    if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
+    {
+        /* when single stepping can't tell whether this is a hw bp or a
+         * single step interrupt. try to avoid as much overhead as possible
+         * and only do a server call if there is any hw bp enabled. */
+
+        if( !(context->EFlags & 0x100) || (amd64_thread_data()->dr7 & 0xff) )
+        {
+            /* (possible) hardware breakpoint, fetch the debug registers */
+            DWORD saved_flags = context->ContextFlags;
+            context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
+            NtGetContextThread(GetCurrentThread(), context);
+            context->ContextFlags |= saved_flags;  /* restore flags */
+        }
+
+        context->EFlags &= ~0x100;  /* clear single-step flag */
+    }
+
+    status = NtRaiseException( rec, context, TRUE );
+    raise_status( status, rec );
 }
 
 
@@ -2636,9 +2715,8 @@ done:
  */
 static void raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    NTSTATUS status = raise_exception( rec, context, TRUE );
-    if (status) raise_status( status, rec );
-    set_cpu_context( context );
+    NTSTATUS status = NtRaiseException( rec, context, TRUE );
+    raise_status( status, rec );
 }
 
 
@@ -2747,7 +2825,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_trap_exception );
 
     switch (siginfo->si_code)
     {
