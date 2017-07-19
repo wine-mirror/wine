@@ -306,11 +306,7 @@ struct d3dx_parameter
     struct d3dx_param_eval *param_eval;
 
     struct d3dx_parameter *top_level_param;
-    union
-    {
-        struct d3dx_parameter *referenced_param;
-        struct d3dx_shared_data *shared_data;
-    } u;
+    struct d3dx_shared_data *shared_data;
 };
 
 struct d3dx_shared_data
@@ -332,7 +328,7 @@ static inline BOOL is_param_dirty(struct d3dx_parameter *param, ULONG64 update_v
 {
     struct d3dx_shared_data *shared_data;
 
-    if ((shared_data = param->top_level_param->u.shared_data))
+    if ((shared_data = param->top_level_param->shared_data))
         return update_version < shared_data->update_version;
     else
         return update_version < param->top_level_param->update_version;
