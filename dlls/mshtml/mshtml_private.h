@@ -725,6 +725,7 @@ struct HTMLDOMNode {
     EventTarget   event_target;
     IHTMLDOMNode  IHTMLDOMNode_iface;
     IHTMLDOMNode2 IHTMLDOMNode2_iface;
+    IHTMLDOMNode3 IHTMLDOMNode3_iface;
     const NodeImplVtbl *vtbl;
 
     nsCycleCollectingAutoRefCnt ccref;
