@@ -66,11 +66,11 @@ static void test_directory(void)
     /* Two consecutive SetSearchDirectory with the same path */
     GetTempPathW(ARRAY_SIZE(path), path);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
-    todo_wine ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
-    hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
-    ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
-    hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
     ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
+    todo_wine ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
+    hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
+    todo_wine ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
     ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
 

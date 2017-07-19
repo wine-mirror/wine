@@ -529,6 +529,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoad
     if (clear)
         FIXME("clear flag ignored\n");
 
+    current_path[0] = 0;
     DMUSIC_GetLoaderSettings(iface, class, current_path, NULL);
     if (!strncmpW(current_path, path, MAX_PATH))
         return S_FALSE;
