@@ -1248,8 +1248,14 @@ static HRESULT WINAPI HTMLDOMNode3_put_textContent(IHTMLDOMNode3 *iface, VARIANT
 static HRESULT WINAPI HTMLDOMNode3_get_textContent(IHTMLDOMNode3 *iface, VARIANT *p)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode3(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMNode_GetTextContent(This->nsnode, &nsstr);
+    return return_nsstr_variant(nsres, &nsstr, p);
 }
 
 static HRESULT WINAPI HTMLDOMNode3_isEqualNode(IHTMLDOMNode3 *iface, IHTMLDOMNode3 *otherNode, VARIANT_BOOL *isEqual)

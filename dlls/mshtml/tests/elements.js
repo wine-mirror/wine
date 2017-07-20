@@ -59,6 +59,19 @@ function test_input_selection() {
     next_test();
 }
 
+function test_textContent() {
+    var text = document.createTextNode("test");
+    ok(text.textContent === "test", "text.textContent = " + text.textContent);
+
+    var div = document.createElement("div");
+    document.body.appendChild(div);
+    div.innerHTML = "abc<script>/* */</script><div>text</div>";
+    ok(div.textContent === "abc/* */text", "div.textContent = " + div.textContent);
+
+    next_test();
+}
+
 var tests = [
-    test_input_selection
+    test_input_selection,
+    test_textContent
 ];
