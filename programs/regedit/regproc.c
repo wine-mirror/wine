@@ -1384,7 +1384,7 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
         {
             if (data_size > max_data_bytes)
             {
-                max_data_bytes *= 2;
+                max_data_bytes = data_size;
                 data = resize_buffer(data, max_data_bytes);
             }
             else
