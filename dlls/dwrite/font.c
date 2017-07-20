@@ -443,6 +443,12 @@ static void release_fontfamily_data(struct dwrite_fontfamily_data *data)
     heap_free(data);
 }
 
+void fontface_detach_from_cache(IDWriteFontFace4 *iface)
+{
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace4(iface);
+    fontface->cached = NULL;
+}
+
 static HRESULT WINAPI dwritefontface_QueryInterface(IDWriteFontFace4 *iface, REFIID riid, void **obj)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);

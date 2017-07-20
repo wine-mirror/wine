@@ -566,6 +566,7 @@ static void release_fontface_cache(struct list *fontfaces)
 
     LIST_FOR_EACH_ENTRY_SAFE(fontface, fontface2, fontfaces, struct fontfacecached, entry) {
         list_remove(&fontface->entry);
+        fontface_detach_from_cache(fontface->fontface);
         heap_free(fontface);
     }
 }
