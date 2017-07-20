@@ -283,7 +283,7 @@ static const struct ID3D10BlendState1Vtbl d3d10_blend_state_vtbl =
     d3d10_blend_state_GetDesc1,
 };
 
-HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *device,
+static HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *device,
         const D3D11_BLEND_DESC *desc)
 {
     state->ID3D11BlendState_iface.lpVtbl = &d3d11_blend_state_vtbl;
@@ -304,6 +304,77 @@ HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *d
 
     state->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(state->device);
+
+    return S_OK;
+}
+
+HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC *desc,
+        struct d3d_blend_state **state)
+{
+    struct d3d_blend_state *object;
+    struct wine_rb_entry *entry;
+    D3D11_BLEND_DESC tmp_desc;
+    unsigned int i, j;
+    HRESULT hr;
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    /* D3D11_RENDER_TARGET_BLEND_DESC has a hole, which is a problem because we use
+     * D3D11_BLEND_DESC as a key in the rbtree. */
+    memset(&tmp_desc, 0, sizeof(tmp_desc));
+    tmp_desc.AlphaToCoverageEnable = desc->AlphaToCoverageEnable;
+    tmp_desc.IndependentBlendEnable = desc->IndependentBlendEnable;
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        j = desc->IndependentBlendEnable ? i : 0;
+        tmp_desc.RenderTarget[i].BlendEnable = desc->RenderTarget[j].BlendEnable;
+        tmp_desc.RenderTarget[i].SrcBlend = desc->RenderTarget[j].SrcBlend;
+        tmp_desc.RenderTarget[i].DestBlend = desc->RenderTarget[j].DestBlend;
+        tmp_desc.RenderTarget[i].BlendOp = desc->RenderTarget[j].BlendOp;
+        tmp_desc.RenderTarget[i].SrcBlendAlpha = desc->RenderTarget[j].SrcBlendAlpha;
+        tmp_desc.RenderTarget[i].DestBlendAlpha = desc->RenderTarget[j].DestBlendAlpha;
+        tmp_desc.RenderTarget[i].BlendOpAlpha = desc->RenderTarget[j].BlendOpAlpha;
+        tmp_desc.RenderTarget[i].RenderTargetWriteMask = desc->RenderTarget[j].RenderTargetWriteMask;
+
+        if (i > 3 && tmp_desc.RenderTarget[i].RenderTargetWriteMask != D3D11_COLOR_WRITE_ENABLE_ALL)
+            FIXME("Color mask %#x not supported for render target %u.\n",
+                    tmp_desc.RenderTarget[i].RenderTargetWriteMask, i);
+    }
+
+    /* glSampleCoverage() */
+    if (tmp_desc.AlphaToCoverageEnable)
+        FIXME("Ignoring AlphaToCoverageEnable %#x.\n", tmp_desc.AlphaToCoverageEnable);
+    /* glEnableIndexedEXT(GL_BLEND, ...) */
+    if (tmp_desc.IndependentBlendEnable)
+        FIXME("Per-rendertarget blend not implemented.\n");
+
+    wined3d_mutex_lock();
+    if ((entry = wine_rb_get(&device->blend_states, &tmp_desc)))
+    {
+        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_blend_state, entry);
+
+        TRACE("Returning existing blend state %p.\n", object);
+        ID3D11BlendState_AddRef(&object->ID3D11BlendState_iface);
+        *state = object;
+        wined3d_mutex_unlock();
+
+        return S_OK;
+    }
+    wined3d_mutex_unlock();
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_blend_state_init(object, device, &tmp_desc)))
+    {
+        WARN("Failed to initialize blend state, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created blend state %p.\n", object);
+    *state = object;
 
     return S_OK;
 }

@@ -3001,70 +3001,13 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBlendState(ID3D11Device *ifa
 {
     struct d3d_device *device = impl_from_ID3D11Device(iface);
     struct d3d_blend_state *object;
-    struct wine_rb_entry *entry;
-    D3D11_BLEND_DESC tmp_desc;
-    unsigned int i, j;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, blend_state %p.\n", iface, desc, blend_state);
 
-    if (!desc)
-        return E_INVALIDARG;
-
-    /* D3D11_RENDER_TARGET_BLEND_DESC has a hole, which is a problem because we use
-     * D3D11_BLEND_DESC as a key in the rbtree. */
-    memset(&tmp_desc, 0, sizeof(tmp_desc));
-    tmp_desc.AlphaToCoverageEnable = desc->AlphaToCoverageEnable;
-    tmp_desc.IndependentBlendEnable = desc->IndependentBlendEnable;
-    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
-    {
-        j = desc->IndependentBlendEnable ? i : 0;
-        tmp_desc.RenderTarget[i].BlendEnable = desc->RenderTarget[j].BlendEnable;
-        tmp_desc.RenderTarget[i].SrcBlend = desc->RenderTarget[j].SrcBlend;
-        tmp_desc.RenderTarget[i].DestBlend = desc->RenderTarget[j].DestBlend;
-        tmp_desc.RenderTarget[i].BlendOp = desc->RenderTarget[j].BlendOp;
-        tmp_desc.RenderTarget[i].SrcBlendAlpha = desc->RenderTarget[j].SrcBlendAlpha;
-        tmp_desc.RenderTarget[i].DestBlendAlpha = desc->RenderTarget[j].DestBlendAlpha;
-        tmp_desc.RenderTarget[i].BlendOpAlpha = desc->RenderTarget[j].BlendOpAlpha;
-        tmp_desc.RenderTarget[i].RenderTargetWriteMask = desc->RenderTarget[j].RenderTargetWriteMask;
-
-        if (i > 3 && tmp_desc.RenderTarget[i].RenderTargetWriteMask != D3D11_COLOR_WRITE_ENABLE_ALL)
-            FIXME("Color mask %#x not supported for render target %u.\n",
-                    tmp_desc.RenderTarget[i].RenderTargetWriteMask, i);
-    }
-
-    /* glSampleCoverage() */
-    if (tmp_desc.AlphaToCoverageEnable)
-        FIXME("Ignoring AlphaToCoverageEnable %#x.\n", tmp_desc.AlphaToCoverageEnable);
-    /* glEnableIndexedEXT(GL_BLEND, ...) */
-    if (tmp_desc.IndependentBlendEnable)
-        FIXME("Per-rendertarget blend not implemented.\n");
-
-    wined3d_mutex_lock();
-    if ((entry = wine_rb_get(&device->blend_states, &tmp_desc)))
-    {
-        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_blend_state, entry);
-
-        TRACE("Returning existing blend state %p.\n", object);
-        *blend_state = &object->ID3D11BlendState_iface;
-        ID3D11BlendState_AddRef(*blend_state);
-        wined3d_mutex_unlock();
-
-        return S_OK;
-    }
-    wined3d_mutex_unlock();
-
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = d3d_blend_state_init(object, device, &tmp_desc)))
-    {
-        WARN("Failed to initialize blend state, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+    if (FAILED(hr = d3d_blend_state_create(device, desc, &object)))
         return hr;
-    }
 
-    TRACE("Created blend state %p.\n", object);
     *blend_state = &object->ID3D11BlendState_iface;
 
     return S_OK;
@@ -5390,18 +5333,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState1(ID3D10Device1 *i
         const D3D10_BLEND_DESC1 *desc, ID3D10BlendState1 **blend_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    ID3D11BlendState *d3d11_blend_state;
+    struct d3d_blend_state *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, blend_state %p.\n", iface, desc, blend_state);
 
-    if (FAILED(hr = d3d11_device_CreateBlendState(&device->ID3D11Device_iface, (D3D11_BLEND_DESC *)desc,
-            &d3d11_blend_state)))
+    if (FAILED(hr = d3d_blend_state_create(device, (const D3D11_BLEND_DESC *)desc, &object)))
         return hr;
 
-    hr = ID3D11BlendState_QueryInterface(d3d11_blend_state, &IID_ID3D10BlendState1, (void **)blend_state);
-    ID3D11BlendState_Release(d3d11_blend_state);
-    return hr;
+    *blend_state = &object->ID3D10BlendState1_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device1 *iface,
