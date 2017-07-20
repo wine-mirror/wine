@@ -2708,15 +2708,31 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */
-void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-
-    rec->ExceptionAddress = (void *)context->Eip;
-    status = raise_exception( rec, context, TRUE );
-    if (status != STATUS_SUCCESS) raise_status( status, rec );
-}
-DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
+__ASM_STDCALL_FUNC( RtlRaiseException, 4,
+                    "leal -0x2cc(%esp),%esp\n\t"  /* sizeof(CONTEXT) */
+                    __ASM_CFI(".cfi_adjust_cfa_offset 0x2cc\n\t")
+                    "pushl %esp\n\t"              /* context */
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    "call " __ASM_NAME("RtlCaptureContext") __ASM_STDCALL(4) "\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                    "movl 0x2cc(%esp),%eax\n\t"   /* return address */
+                    "movl 0x2d0(%esp),%ecx\n\t"   /* rec */
+                    "movl %eax,0xb8(%esp)\n\t"    /* context->Eip */
+                    "movl %eax,12(%ecx)\n\t"      /* rec->ExceptionAddress */
+                    "leal 0x2d4(%esp),%eax\n\t"
+                    "movl %eax,0xc4(%esp)\n\t"    /* context->Esp */
+                    "movl %esp,%eax\n\t"
+                    "pushl $1\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    "pushl %eax\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    "pushl %ecx\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    "call " __ASM_NAME("NtRaiseException") __ASM_STDCALL(12) "\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset -12\n\t")
+                    "pushl %eax\n\t"
+                    "call " __ASM_NAME("RtlRaiseStatus") __ASM_STDCALL(4) "\n\t"
+                    "ret $4" )  /* actually never returns */
 
 
 /*************************************************************************

@@ -1134,7 +1134,7 @@
 @ stdcall RtlQueryAtomInAtomTable(ptr long ptr ptr ptr ptr) ntdll.RtlQueryAtomInAtomTable
 @ stdcall RtlQueryRegistryValues(long ptr ptr ptr ptr) ntdll.RtlQueryRegistryValues
 @ stdcall RtlQueryTimeZoneInformation(ptr) ntdll.RtlQueryTimeZoneInformation
-@ stdcall -register RtlRaiseException(ptr) ntdll.RtlRaiseException
+@ stdcall -norelay RtlRaiseException(ptr) ntdll.RtlRaiseException
 @ stdcall RtlRandom(ptr) ntdll.RtlRandom
 @ stub RtlRandomEx
 @ stub RtlRealPredecessor

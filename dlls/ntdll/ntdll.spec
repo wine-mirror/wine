@@ -824,7 +824,7 @@
 @ stdcall RtlQueryUnbiasedInterruptTime(ptr)
 @ stub RtlQueueApcWow64Thread
 @ stdcall RtlQueueWorkItem(ptr ptr long)
-@ stdcall -register RtlRaiseException(ptr)
+@ stdcall -norelay RtlRaiseException(ptr)
 @ stdcall RtlRaiseStatus(long)
 @ stdcall RtlRandom(ptr)
 @ stub RtlRandomEx

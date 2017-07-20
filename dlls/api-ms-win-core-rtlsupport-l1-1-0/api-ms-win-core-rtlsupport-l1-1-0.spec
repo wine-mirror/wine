@@ -8,7 +8,7 @@
 @ cdecl -arch=x86_64 RtlInstallFunctionTableCallback(long long long ptr ptr wstr) ntdll.RtlInstallFunctionTableCallback
 @ stdcall -arch=arm,x86_64 RtlLookupFunctionEntry(long ptr ptr) ntdll.RtlLookupFunctionEntry
 @ stdcall RtlPcToFileHeader(ptr ptr) ntdll.RtlPcToFileHeader
-@ stdcall -register RtlRaiseException(ptr) ntdll.RtlRaiseException
+@ stdcall -norelay RtlRaiseException(ptr) ntdll.RtlRaiseException
 @ stdcall -arch=x86_64 RtlRestoreContext(ptr ptr) ntdll.RtlRestoreContext
 @ stdcall -register RtlUnwind(ptr ptr ptr ptr) ntdll.RtlUnwind
 @ stdcall -arch=x86_64 RtlUnwindEx(ptr ptr ptr ptr ptr ptr) ntdll.RtlUnwindEx
