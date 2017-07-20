@@ -3018,76 +3018,13 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDepthStencilState(ID3D11Devi
 {
     struct d3d_device *device = impl_from_ID3D11Device(iface);
     struct d3d_depthstencil_state *object;
-    D3D11_DEPTH_STENCIL_DESC tmp_desc;
-    struct wine_rb_entry *entry;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, depth_stencil_state %p.\n", iface, desc, depth_stencil_state);
 
-    if (!desc)
-        return E_INVALIDARG;
-
-    /* D3D11_DEPTH_STENCIL_DESC has a hole, which is a problem because we use
-     * it as a key in the rbtree. */
-    memset(&tmp_desc, 0, sizeof(tmp_desc));
-    tmp_desc.DepthEnable = desc->DepthEnable;
-    if (desc->DepthEnable)
-    {
-        tmp_desc.DepthWriteMask = desc->DepthWriteMask;
-        tmp_desc.DepthFunc = desc->DepthFunc;
-    }
-    else
-    {
-        tmp_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-        tmp_desc.DepthFunc = D3D11_COMPARISON_LESS;
-    }
-    tmp_desc.StencilEnable = desc->StencilEnable;
-    if (desc->StencilEnable)
-    {
-        tmp_desc.StencilReadMask = desc->StencilReadMask;
-        tmp_desc.StencilWriteMask = desc->StencilWriteMask;
-        tmp_desc.FrontFace = desc->FrontFace;
-        tmp_desc.BackFace = desc->BackFace;
-    }
-    else
-    {
-        tmp_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
-        tmp_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
-        tmp_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-        tmp_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-        tmp_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-        tmp_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-        tmp_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-        tmp_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-        tmp_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-        tmp_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-    }
-
-    wined3d_mutex_lock();
-    if ((entry = wine_rb_get(&device->depthstencil_states, &tmp_desc)))
-    {
-        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_depthstencil_state, entry);
-
-        TRACE("Returning existing depthstencil state %p.\n", object);
-        *depth_stencil_state = &object->ID3D11DepthStencilState_iface;
-        ID3D11DepthStencilState_AddRef(*depth_stencil_state);
-        wined3d_mutex_unlock();
-
-        return S_OK;
-    }
-    wined3d_mutex_unlock();
-
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = d3d_depthstencil_state_init(object, device, &tmp_desc)))
-    {
-        WARN("Failed to initialize depthstencil state, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+    if (FAILED(hr = d3d_depthstencil_state_create(device, desc, &object)))
         return hr;
-    }
 
-    TRACE("Created depthstencil state %p.\n", object);
     *depth_stencil_state = &object->ID3D11DepthStencilState_iface;
 
     return S_OK;
@@ -5385,19 +5322,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
         const D3D10_DEPTH_STENCIL_DESC *desc, ID3D10DepthStencilState **depth_stencil_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    ID3D11DepthStencilState *d3d11_depth_stencil_state;
+    struct d3d_depthstencil_state *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, depth_stencil_state %p.\n", iface, desc, depth_stencil_state);
 
-    if (FAILED(hr = d3d11_device_CreateDepthStencilState(&device->ID3D11Device_iface,
-            (const D3D11_DEPTH_STENCIL_DESC *)desc, &d3d11_depth_stencil_state)))
+    if (FAILED(hr = d3d_depthstencil_state_create(device, (const D3D11_DEPTH_STENCIL_DESC *)desc, &object)))
         return hr;
 
-    hr = ID3D11DepthStencilState_QueryInterface(d3d11_depth_stencil_state, &IID_ID3D10DepthStencilState,
-            (void **)depth_stencil_state);
-    ID3D11DepthStencilState_Release(d3d11_depth_stencil_state);
-    return hr;
+    *depth_stencil_state = &object->ID3D10DepthStencilState_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device1 *iface,

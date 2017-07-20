@@ -641,7 +641,7 @@ static const struct ID3D10DepthStencilStateVtbl d3d10_depthstencil_state_vtbl =
     d3d10_depthstencil_state_GetDesc,
 };
 
-HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
+static HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
         const D3D11_DEPTH_STENCIL_DESC *desc)
 {
     state->ID3D11DepthStencilState_iface.lpVtbl = &d3d11_depthstencil_state_vtbl;
@@ -662,6 +662,83 @@ HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct
 
     state->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(state->device);
+
+    return S_OK;
+}
+
+HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEPTH_STENCIL_DESC *desc,
+        struct d3d_depthstencil_state **state)
+{
+    struct d3d_depthstencil_state *object;
+    D3D11_DEPTH_STENCIL_DESC tmp_desc;
+    struct wine_rb_entry *entry;
+    HRESULT hr;
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    /* D3D11_DEPTH_STENCIL_DESC has a hole, which is a problem because we use
+     * it as a key in the rbtree. */
+    memset(&tmp_desc, 0, sizeof(tmp_desc));
+    tmp_desc.DepthEnable = desc->DepthEnable;
+    if (desc->DepthEnable)
+    {
+        tmp_desc.DepthWriteMask = desc->DepthWriteMask;
+        tmp_desc.DepthFunc = desc->DepthFunc;
+    }
+    else
+    {
+        tmp_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+        tmp_desc.DepthFunc = D3D11_COMPARISON_LESS;
+    }
+    tmp_desc.StencilEnable = desc->StencilEnable;
+    if (desc->StencilEnable)
+    {
+        tmp_desc.StencilReadMask = desc->StencilReadMask;
+        tmp_desc.StencilWriteMask = desc->StencilWriteMask;
+        tmp_desc.FrontFace = desc->FrontFace;
+        tmp_desc.BackFace = desc->BackFace;
+    }
+    else
+    {
+        tmp_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+        tmp_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+        tmp_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+        tmp_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+    }
+
+    wined3d_mutex_lock();
+    if ((entry = wine_rb_get(&device->depthstencil_states, &tmp_desc)))
+    {
+        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_depthstencil_state, entry);
+
+        TRACE("Returning existing depthstencil state %p.\n", object);
+        ID3D11DepthStencilState_AddRef(&object->ID3D11DepthStencilState_iface);
+        *state = object;
+        wined3d_mutex_unlock();
+
+        return S_OK;
+    }
+    wined3d_mutex_unlock();
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_depthstencil_state_init(object, device, &tmp_desc)))
+    {
+        WARN("Failed to initialize depthstencil state, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created depthstencil state %p.\n", object);
+    *state = object;
 
     return S_OK;
 }
