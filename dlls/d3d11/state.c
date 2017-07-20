@@ -67,6 +67,12 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_AddRef(ID3D11BlendState *iface)
     return refcount;
 }
 
+static void d3d_blend_state_cleanup(struct d3d_blend_state *state)
+{
+    wined3d_private_store_cleanup(&state->private_store);
+    ID3D11Device_Release(state->device);
+}
+
 static ULONG STDMETHODCALLTYPE d3d11_blend_state_Release(ID3D11BlendState *iface)
 {
     struct d3d_blend_state *state = impl_from_ID3D11BlendState(iface);
@@ -79,8 +85,7 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_Release(ID3D11BlendState *iface
         struct d3d_device *device = impl_from_ID3D11Device(state->device);
         wined3d_mutex_lock();
         wine_rb_remove(&device->blend_states, &state->entry);
-        ID3D11Device_Release(state->device);
-        wined3d_private_store_cleanup(&state->private_store);
+        d3d_blend_state_cleanup(state);
         wined3d_mutex_unlock();
         HeapFree(GetProcessHeap(), 0, state);
     }
@@ -289,18 +294,8 @@ static HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_de
     state->ID3D11BlendState_iface.lpVtbl = &d3d11_blend_state_vtbl;
     state->ID3D10BlendState1_iface.lpVtbl = &d3d10_blend_state_vtbl;
     state->refcount = 1;
-    wined3d_mutex_lock();
     wined3d_private_store_init(&state->private_store);
     state->desc = *desc;
-
-    if (wine_rb_put(&device->blend_states, desc, &state->entry) == -1)
-    {
-        ERR("Failed to insert blend state entry.\n");
-        wined3d_private_store_cleanup(&state->private_store);
-        wined3d_mutex_unlock();
-        return E_FAIL;
-    }
-    wined3d_mutex_unlock();
 
     state->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(state->device);
@@ -361,17 +356,30 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
 
         return S_OK;
     }
-    wined3d_mutex_unlock();
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    {
+        wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
+    }
 
     if (FAILED(hr = d3d_blend_state_init(object, device, &tmp_desc)))
     {
         WARN("Failed to initialize blend state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
+        wined3d_mutex_unlock();
         return hr;
     }
+
+    if (wine_rb_put(&device->blend_states, desc, &object->entry) == -1)
+    {
+        ERR("Failed to insert blend state entry.\n");
+        d3d_blend_state_cleanup(object);
+        HeapFree(GetProcessHeap(), 0, object);
+        wined3d_mutex_unlock();
+        return E_FAIL;
+    }
+    wined3d_mutex_unlock();
 
     TRACE("Created blend state %p.\n", object);
     *state = object;
