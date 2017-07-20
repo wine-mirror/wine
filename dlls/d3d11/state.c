@@ -1441,7 +1441,6 @@ static HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3
     state->ID3D11SamplerState_iface.lpVtbl = &d3d11_sampler_state_vtbl;
     state->ID3D10SamplerState_iface.lpVtbl = &d3d10_sampler_state_vtbl;
     state->refcount = 1;
-    wined3d_mutex_lock();
     wined3d_private_store_init(&state->private_store);
     state->desc = *desc;
 
@@ -1465,7 +1464,6 @@ static HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3
     {
         ERR("Failed to insert sampler state entry.\n");
         wined3d_private_store_cleanup(&state->private_store);
-        wined3d_mutex_unlock();
         return E_FAIL;
     }
 
@@ -1477,10 +1475,8 @@ static HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3
         WARN("Failed to create wined3d sampler, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&state->private_store);
         wine_rb_remove(&device->sampler_states, &state->entry);
-        wined3d_mutex_unlock();
         return hr;
     }
-    wined3d_mutex_unlock();
 
     state->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(state->device);
@@ -1521,12 +1517,16 @@ HRESULT d3d_sampler_state_create(struct d3d_device *device, const D3D11_SAMPLER_
 
         return S_OK;
     }
-    wined3d_mutex_unlock();
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    {
+        wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
+    }
 
-    if (FAILED(hr = d3d_sampler_state_init(object, device, &normalized_desc)))
+    hr = d3d_sampler_state_init(object, device, &normalized_desc);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
     {
         WARN("Failed to initialize sampler state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
