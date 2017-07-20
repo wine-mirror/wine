@@ -400,6 +400,13 @@ static HRESULT write_message( WS_MESSAGE *msg, WS_XML_WRITER *writer, const WS_E
     return WsWriteEnvelopeEnd( msg, NULL );
 }
 
+static HRESULT set_output( WS_XML_WRITER *writer )
+{
+    WS_XML_WRITER_TEXT_ENCODING text = { {WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8 };
+    WS_XML_WRITER_BUFFER_OUTPUT buf = { {WS_XML_WRITER_OUTPUT_TYPE_BUFFER} };
+    return WsSetOutput( writer, &text.encoding, &buf.output, NULL, 0, NULL );
+}
+
 static HRESULT send_message( WS_CHANNEL *channel, WS_MESSAGE *msg, WS_MESSAGE_DESCRIPTION *desc,
                              WS_PARAMETER_DESCRIPTION *params, ULONG count, const void **args )
 {

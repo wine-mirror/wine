@@ -44,6 +44,11 @@ struct dictionary
 struct dictionary dict_builtin DECLSPEC_HIDDEN;
 const struct dictionary dict_builtin_static DECLSPEC_HIDDEN;
 
+int find_string( const struct dictionary *, const unsigned char *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
+BOOL insert_string( struct dictionary *, unsigned char *, ULONG, int, ULONG * ) DECLSPEC_HIDDEN;
+HRESULT CALLBACK insert_string_cb( void *, const WS_XML_STRING *, BOOL *, ULONG *, WS_ERROR * ) DECLSPEC_HIDDEN;
+void clear_dict( struct dictionary * ) DECLSPEC_HIDDEN;
+
 const char *debugstr_xmlstr( const WS_XML_STRING * ) DECLSPEC_HIDDEN;
 WS_XML_STRING *alloc_xml_string( const unsigned char *, ULONG ) DECLSPEC_HIDDEN;
 WS_XML_STRING *dup_xml_string( const WS_XML_STRING * ) DECLSPEC_HIDDEN;
@@ -54,7 +59,6 @@ void free_attribute( WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
 BOOL set_fpword( unsigned short, unsigned short * ) DECLSPEC_HIDDEN;
 void restore_fpword( unsigned short ) DECLSPEC_HIDDEN;
-HRESULT set_output( WS_XML_WRITER * ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const void * ) DECLSPEC_HIDDEN;
 HRESULT read_header( WS_XML_READER *, const WS_XML_STRING *, const WS_XML_STRING *, WS_TYPE,
                      const void *, WS_READ_OPTION, WS_HEAP *, void *, ULONG ) DECLSPEC_HIDDEN;

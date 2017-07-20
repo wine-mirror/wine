@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -62,21 +63,21 @@ static inline int cmp_string( const unsigned char *str, ULONG len, const unsigne
 }
 
 /* return -1 and string id if found, sort index if not found */
-static int find_string( const WS_XML_DICTIONARY *dict, const ULONG *sorted, const unsigned char *data,
-                        ULONG len, ULONG *ret_id )
+int find_string( const struct dictionary *dict, const unsigned char *data, ULONG len, ULONG *id )
 {
-    int i, c, min = 0, max = dict->stringCount - 1;
+    int i, c, min = 0, max = dict->dict.stringCount - 1;
+    const WS_XML_STRING *strings = dict->dict.strings;
     while (min <= max)
     {
         i = (min + max) / 2;
-        c = cmp_string( data, len, dict->strings[sorted[i]].bytes, dict->strings[sorted[i]].length );
+        c = cmp_string( data, len, strings[dict->sorted[i]].bytes, strings[dict->sorted[i]].length );
         if (c < 0)
             max = i - 1;
         else if (c > 0)
             min = i + 1;
         else
         {
-            *ret_id = dict->strings[sorted[i]].id;
+            if (id) *id = strings[dict->sorted[i]].id;
             return -1;
         }
     }
@@ -91,6 +92,7 @@ static BOOL grow_dict( struct dictionary *dict, ULONG size )
     WS_XML_STRING *tmp;
     ULONG new_size, *tmp_sorted;
 
+    assert( !dict->dict.isConst );
     if (dict->size >= dict->dict.stringCount + size) return TRUE;
     if (dict->size + size > MAX_DICTIONARY_SIZE) return FALSE;
 
@@ -118,9 +120,23 @@ static BOOL grow_dict( struct dictionary *dict, ULONG size )
     return TRUE;
 }
 
-static BOOL insert_string( struct dictionary *dict, unsigned char *data, ULONG len, int i, ULONG *ret_id )
+void clear_dict( struct dictionary *dict )
+{
+    ULONG i;
+    assert( !dict->dict.isConst );
+    for (i = 0; i < dict->dict.stringCount; i++) heap_free( dict->dict.strings[i].bytes );
+    heap_free( dict->dict.strings );
+    dict->dict.strings = NULL;
+    dict->dict.stringCount = 0;
+    heap_free( dict->sorted );
+    dict->sorted = NULL;
+    dict->size = 0;
+}
+
+BOOL insert_string( struct dictionary *dict, unsigned char *data, ULONG len, int i, ULONG *ret_id )
 {
     ULONG id = dict->dict.stringCount;
+    assert( !dict->dict.isConst );
     if (!grow_dict( dict, 1 )) return FALSE;
     memmove( &dict->sorted[i] + 1, &dict->sorted[i], (dict->dict.stringCount - i) * sizeof(*dict->sorted) );
     dict->sorted[i] = id;
@@ -130,8 +146,19 @@ static BOOL insert_string( struct dictionary *dict, unsigned char *data, ULONG l
     dict->dict.strings[id].dictionary = &dict->dict;
     dict->dict.strings[id].id         = id;
     dict->dict.stringCount++;
-    *ret_id = id;
+    if (ret_id) *ret_id = id;
     return TRUE;
+}
+
+HRESULT CALLBACK insert_string_cb( void *state, const WS_XML_STRING *str, BOOL *found, ULONG *id, WS_ERROR *error )
+{
+    struct dictionary *dict = state;
+    int index = find_string( dict, str->bytes, str->length, id );
+
+    assert( !dict->dict.isConst );
+    if (index == -1 || insert_string( dict, str->bytes, str->length, index, id )) *found = TRUE;
+    else *found = FALSE;
+    return S_OK;
 }
 
 HRESULT add_xml_string( WS_XML_STRING *str )
@@ -140,9 +167,8 @@ HRESULT add_xml_string( WS_XML_STRING *str )
     ULONG id;
 
     if (str->dictionary) return S_OK;
-
     EnterCriticalSection( &dict_cs );
-    if ((index = find_string( &dict_builtin.dict, dict_builtin.sorted, str->bytes, str->length, &id )) == -1)
+    if ((index = find_string( &dict_builtin, str->bytes, str->length, &id )) == -1)
     {
         heap_free( str->bytes );
         *str = dict_builtin.dict.strings[id];
@@ -197,9 +223,8 @@ WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src )
         *ret = *src;
         return ret;
     }
-
     EnterCriticalSection( &dict_cs );
-    if ((index = find_string( &dict_builtin.dict, dict_builtin.sorted, src->bytes, src->length, &id )) == -1)
+    if ((index = find_string( &dict_builtin, src->bytes, src->length, &id )) == -1)
     {
         *ret = dict_builtin.dict.strings[id];
         LeaveCriticalSection( &dict_cs );
