@@ -1478,6 +1478,7 @@ typedef struct tagCOMMPROP {
 #define STOPBITS_15 ((DWORD)2)
 #define STOPBITS_20 ((DWORD)4)
 
+#undef PARITY_NONE  /* defined on Android */
 #define PARITY_NONE  ((DWORD)0x100)
 #define PARITY_ODD   ((DWORD)0x200)
 #define PARITY_EVEN  ((DWORD)0x400)
