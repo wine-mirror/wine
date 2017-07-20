@@ -627,25 +627,19 @@ static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name,
 
 static unsigned int num_values_found = 0;
 
+#define MAX_SUBKEY_LEN   257
+
 static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
 {
     LONG rc;
-    DWORD num_subkeys, max_subkey_len, subkey_len;
-    DWORD max_data_bytes, data_size;
+    DWORD max_data_bytes = 2048, data_size;
+    DWORD subkey_len;
     DWORD type, path_len, i;
     BYTE *data;
     WCHAR fmt[] = {'%','1','\n',0};
     WCHAR newlineW[] = {'\n',0};
     WCHAR *subkey_name, *subkey_path;
     HKEY subkey;
-
-    rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, &num_subkeys, &max_subkey_len,
-                          NULL, NULL, NULL, &max_data_bytes, NULL, NULL);
-    if (rc)
-    {
-        ERR("RegQueryInfoKey failed: %d\n", rc);
-        return 1;
-    }
 
     data = HeapAlloc(GetProcessHeap(), 0, max_data_bytes);
     if (!data)
@@ -654,8 +648,18 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
         return 1;
     }
 
-    data_size = max_data_bytes;
-    rc = RegQueryValueExW(key, value_name, NULL, &type, data, &data_size);
+    for (;;)
+    {
+        data_size = max_data_bytes;
+        rc = RegQueryValueExW(key, value_name, NULL, &type, data, &data_size);
+        if (rc == ERROR_MORE_DATA)
+        {
+            max_data_bytes = data_size;
+            data = HeapReAlloc(GetProcessHeap(), 0, data, max_data_bytes);
+        }
+        else break;
+    }
+
     if (rc == ERROR_SUCCESS)
     {
         output_string(fmt, path);
@@ -681,8 +685,7 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
         return 0;
     }
 
-    max_subkey_len++;
-    subkey_name = HeapAlloc(GetProcessHeap(), 0, max_subkey_len * sizeof(WCHAR));
+    subkey_name = HeapAlloc(GetProcessHeap(), 0, MAX_SUBKEY_LEN * sizeof(WCHAR));
     if (!subkey_name)
     {
         ERR("Failed to allocate memory for subkey_name\n");
@@ -691,9 +694,10 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
 
     path_len = strlenW(path);
 
-    for (i = 0; i < num_subkeys; i++)
+    i = 0;
+    for (;;)
     {
-        subkey_len = max_subkey_len;
+        subkey_len = MAX_SUBKEY_LEN;
         rc = RegEnumKeyExW(key, i, subkey_name, &subkey_len, NULL, NULL, NULL, NULL);
         if (rc == ERROR_SUCCESS)
         {
@@ -704,7 +708,9 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
                 RegCloseKey(subkey);
             }
             HeapFree(GetProcessHeap(), 0, subkey_path);
+            i++;
         }
+        else break;
     }
 
     HeapFree(GetProcessHeap(), 0, subkey_name);
@@ -714,9 +720,9 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
 static int query_all(HKEY key, WCHAR *path, BOOL recurse)
 {
     LONG rc;
-    DWORD num_subkeys, max_subkey_len, subkey_len;
-    DWORD num_values, max_value_len, value_len;
-    DWORD max_data_bytes, data_size;
+    DWORD max_value_len = 256, value_len;
+    DWORD max_data_bytes = 2048, data_size;
+    DWORD subkey_len;
     DWORD i, type, path_len;
     WCHAR fmt[] = {'%','1','\n',0};
     WCHAR fmt_path[] = {'%','1','\\','%','2','\n',0};
@@ -725,17 +731,8 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
     BYTE *data;
     HKEY subkey;
 
-    rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, &num_subkeys, &max_subkey_len, NULL,
-                          &num_values, &max_value_len, &max_data_bytes, NULL, NULL);
-    if (rc)
-    {
-        ERR("RegQueryInfoKey failed: %d\n", rc);
-        return 1;
-    }
-
     output_string(fmt, path);
 
-    max_value_len++;
     value_name = HeapAlloc(GetProcessHeap(), 0, max_value_len * sizeof(WCHAR));
     if (!value_name)
     {
@@ -751,23 +748,40 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
         return 1;
     }
 
-    for (i = 0; i < num_values; i++)
+    i = 0;
+    for (;;)
     {
         value_len = max_value_len;
         data_size = max_data_bytes;
         rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, data, &data_size);
         if (rc == ERROR_SUCCESS)
+        {
             output_value(value_name, type, data, data_size);
+            i++;
+        }
+        else if (rc == ERROR_MORE_DATA)
+        {
+            if (data_size > max_data_bytes)
+            {
+                max_data_bytes = data_size;
+                data = HeapReAlloc(GetProcessHeap(), 0, data, max_data_bytes);
+            }
+            else
+            {
+                max_value_len *= 2;
+                value_name = HeapReAlloc(GetProcessHeap(), 0, value_name, max_value_len);
+            }
+        }
+        else break;
     }
 
     HeapFree(GetProcessHeap(), 0, data);
     HeapFree(GetProcessHeap(), 0, value_name);
 
-    if (num_values || recurse)
+    if (i || recurse)
         output_string(newlineW);
 
-    max_subkey_len++;
-    subkey_name = HeapAlloc(GetProcessHeap(), 0, max_subkey_len * sizeof(WCHAR));
+    subkey_name = HeapAlloc(GetProcessHeap(), 0, MAX_SUBKEY_LEN * sizeof(WCHAR));
     if (!subkey_name)
     {
         ERR("Failed to allocate memory for subkey_name\n");
@@ -776,9 +790,10 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
 
     path_len = strlenW(path);
 
-    for (i = 0; i < num_subkeys; i++)
+    i = 0;
+    for (;;)
     {
-        subkey_len = max_subkey_len;
+        subkey_len = MAX_SUBKEY_LEN;
         rc = RegEnumKeyExW(key, i, subkey_name, &subkey_len, NULL, NULL, NULL, NULL);
         if (rc == ERROR_SUCCESS)
         {
@@ -793,12 +808,14 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
                 HeapFree(GetProcessHeap(), 0, subkey_path);
             }
             else output_string(fmt_path, path, subkey_name);
+            i++;
         }
+        else break;
     }
 
     HeapFree(GetProcessHeap(), 0, subkey_name);
 
-    if (num_subkeys && !recurse)
+    if (i && !recurse)
         output_string(newlineW);
 
     return 0;
