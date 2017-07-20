@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-02-03 17:32+0200\n"
+"PO-Revision-Date: 2017-07-20 17:38+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: Finnish\n"
 "Language: fi\n"
@@ -6882,27 +6882,23 @@ msgstr "valitse kansio, jossa on %s"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Peruuttamaton virhe: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Virhe [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Varoitus [1]."
 
 #: msi.rc:74
-#, fuzzy
-#| msgid "Info [1]. "
 msgid "Info [1]."
-msgstr "Tiedote [1]. "
+msgstr "Tiedote [1]."
 
 #: msi.rc:75
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "{{Disk full: }}"
-msgstr "Levy täynnä.\n"
+msgstr "{{Levy täynnä: }}"
 
 #: msi.rc:76
 msgid "Action %s: [1]. [2]"
@@ -6930,6 +6926,9 @@ msgid ""
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
+"Asennusohjelma kohtasi odottamattoman virheen tämän paketin asennuksessa. "
+"Paketissa voi olla ongelma. Virhekoodi on [1]. {{Argumentit ovat: [2], [3], "
+"[4]}}"
 
 #: msi.rc:92
 msgid "Allocating registry space"
@@ -12357,38 +12356,6 @@ msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr "Tiedostoa %1 ei voi tuoda, koska se ei ole kelpo rekisteritiedosto."
 
 #: regedit.rc:408
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  regedit [options] [filename] [reg_key]\n"
-#| "\n"
-#| "Options:\n"
-#| "  [no option]    Launch the graphical version of this program.\n"
-#| "  /L:system.dat  The location of the system.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /R:user.dat    The location of the user.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /C             Import the contents of a registry file.\n"
-#| "  /D             Delete a specified registry key.\n"
-#| "  /E             Export the contents of a specified registry key to a "
-#| "file.\n"
-#| "                 If no key is specified, the entire registry is "
-#| "exported.\n"
-#| "  /S             Silent mode. No messages will be displayed.\n"
-#| "  /V             Launch the GUI in advanced mode. Ignored.\n"
-#| "  /?             Display this information and exit.\n"
-#| "  [filename]     The location of the file containing registry information "
-#| "to\n"
-#| "                 be imported. When used with [/E], this option specifies "
-#| "the\n"
-#| "                 file location where registry information will be "
-#| "exported.\n"
-#| "  [reg_key]      The registry key to be modified.\n"
-#| "\n"
-#| "Usage examples:\n"
-#| "  regedit \"import.reg\"\n"
-#| "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-#| "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12442,7 +12409,7 @@ msgstr ""
 "Käyttöesimerkkejä:\n"
 "  regedit \"tuotava.reg\"\n"
 "  regedit /E \"vietävä.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
@@ -12513,21 +12480,18 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
-msgstr "regedit: Rekisterin tietotyypille [%1] kohteessa '%2' ei ole tukea.\n"
+msgstr ""
+"regedit: Rekisterin tietotyypille [0x%1!x!] kohteessa '%2' ei ole tukea.\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: Rekisteriarvo '%1' viedään binääridatana.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Avaimen nimi ei kelpaa\n"
+msgstr "regedit: Järjestelmäavain [%1] ei kelpaa\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12535,10 +12499,8 @@ msgid ""
 msgstr "regedit: Ei voida viedä kohdetta '%1'. Rekisteriavainta ei löydy.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit: Rekisteriluokkaa '%1' ei voida poistaa.\n"
+msgstr "regedit: Rekisteriavainta '%1' ei voida poistaa.\n"
 
 #: regedit.rc:431
 msgid "regedit: The line contains invalid syntax.\n"
@@ -12685,13 +12647,9 @@ msgid "Confirm Key Delete"
 msgstr "Vahvista avaimen tuhoaminen"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete the registry key '%1' and all of its "
-#| "subkeys?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "Haluatko varmasti tuhota rekisteriavaimen '%1' ja sen aliavaimet?"
+msgstr "Haluatko varmasti tuhota tämän rekisteriavaimen ja sen aliavaimet?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
