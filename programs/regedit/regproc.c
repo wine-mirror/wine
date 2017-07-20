@@ -37,11 +37,6 @@
 
 #define REG_VAL_BUF_SIZE        4096
 
-/* maximal number of characters in hexadecimal data line,
- * including the indentation, but not including the '\' character
- */
-#define REG_FILE_HEX_LINE_LEN   (2 + 25 * 3)
-
 extern const WCHAR* reg_class_namesW[];
 
 static HKEY reg_class_keys[] = {
