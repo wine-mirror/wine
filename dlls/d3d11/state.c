@@ -1042,7 +1042,6 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
     state->ID3D11RasterizerState_iface.lpVtbl = &d3d11_rasterizer_state_vtbl;
     state->ID3D10RasterizerState_iface.lpVtbl = &d3d10_rasterizer_state_vtbl;
     state->refcount = 1;
-    wined3d_mutex_lock();
     wined3d_private_store_init(&state->private_store);
     state->desc = *desc;
 
@@ -1050,7 +1049,6 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
     {
         ERR("Failed to insert rasterizer state entry.\n");
         wined3d_private_store_cleanup(&state->private_store);
-        wined3d_mutex_unlock();
         return E_FAIL;
     }
 
@@ -1064,10 +1062,8 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
         WARN("Failed to create wined3d rasterizer state, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&state->private_store);
         wine_rb_remove(&device->rasterizer_states, &state->entry);
-        wined3d_mutex_unlock();
         return hr;
     }
-    wined3d_mutex_unlock();
 
     ID3D11Device_AddRef(state->device = &device->ID3D11Device_iface);
 
@@ -1096,12 +1092,16 @@ HRESULT d3d_rasterizer_state_create(struct d3d_device *device, const D3D11_RASTE
 
         return S_OK;
     }
-    wined3d_mutex_unlock();
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    {
+        wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
+    }
 
-    if (FAILED(hr = d3d_rasterizer_state_init(object, device, desc)))
+    hr = d3d_rasterizer_state_init(object, device, desc);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
     {
         WARN("Failed to initialize rasterizer state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
