@@ -519,6 +519,17 @@ static const WS_XML_STRING *get_header_name( WS_HEADER_TYPE type )
     return &headers[type - 1];
 }
 
+static HRESULT write_must_understand( WS_XML_WRITER *writer, const WS_XML_STRING *prefix, const WS_XML_STRING *ns )
+{
+    static const WS_XML_STRING understand = {14, (BYTE *)"mustUnderstand"};
+    WS_XML_INT32_TEXT one = {{WS_XML_TEXT_TYPE_INT32}, 1};
+    HRESULT hr;
+
+    if ((hr = WsWriteStartAttribute( writer, prefix, &understand, ns, FALSE, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteText( writer, &one.text, NULL )) != S_OK) return hr;
+    return WsWriteEndAttribute( writer, NULL );
+}
+
 static HRESULT write_headers( struct msg *msg, WS_XML_WRITER *writer, const WS_XML_STRING *prefix_env,
                               const WS_XML_STRING *ns_env, const WS_XML_STRING *prefix_addr,
                               const WS_XML_STRING *ns_addr )
@@ -527,30 +538,50 @@ static HRESULT write_headers( struct msg *msg, WS_XML_WRITER *writer, const WS_X
     static const WS_XML_STRING header = {6, (BYTE *)"Header"}, address = {7, (BYTE *)"Address"};
     const WS_XML_STRING *msgid = get_header_name( WS_MESSAGE_ID_HEADER );
     const WS_XML_STRING *replyto = get_header_name( WS_REPLY_TO_HEADER );
-    WS_XML_UTF8_TEXT urn, addr;
+    const WS_XML_STRING *to = get_header_name( WS_TO_HEADER );
+    const WS_XML_STRING *action = get_header_name( WS_ACTION_HEADER );
     HRESULT hr;
     ULONG i;
 
     if ((hr = WsWriteXmlnsAttribute( writer, prefix_addr, ns_addr, FALSE, NULL )) != S_OK) return hr;
     if ((hr = WsWriteStartElement( writer, prefix_env, &header, ns_env, NULL )) != S_OK) return hr;
 
-    if ((hr = WsWriteStartElement( writer, prefix_addr, msgid, ns_addr, NULL )) != S_OK) return hr;
-    urn.text.textType = WS_XML_TEXT_TYPE_UNIQUE_ID;
-    memcpy( &urn.value, &msg->id, sizeof(msg->id) );
-    if ((hr = WsWriteText( writer, &urn.text, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:MessageID> */
-
-    if (msg->version_addr == WS_ADDRESSING_VERSION_0_9)
+    if (msg->action.length)
     {
-        if ((hr = WsWriteStartElement( writer, prefix_addr, replyto, ns_addr, NULL )) != S_OK) return hr;
-        if ((hr = WsWriteStartElement( writer, prefix_addr, &address, ns_addr, NULL )) != S_OK) return hr;
+        WS_XML_UTF16_TEXT utf16 = {{WS_XML_TEXT_TYPE_UTF16}, (BYTE *)msg->action.chars,
+                                   msg->action.length * sizeof(WCHAR)};
+        if ((hr = WsWriteStartElement( writer, prefix_addr, action, ns_addr, NULL )) != S_OK) return hr;
+        if ((hr = write_must_understand( writer, prefix_env, ns_env )) != S_OK) return hr;
+        if ((hr = WsWriteText( writer, &utf16.text, NULL )) != S_OK) return hr;
+        if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:Action> */
+    }
+    if (msg->addr.length)
+    {
+        WS_XML_UTF16_TEXT utf16 = {{WS_XML_TEXT_TYPE_UTF16}, (BYTE *)msg->addr.chars,
+                                   msg->addr.length * sizeof(WCHAR)};
+        if ((hr = WsWriteStartElement( writer, prefix_addr, to, ns_addr, NULL )) != S_OK) return hr;
+        if ((hr = write_must_understand( writer, prefix_env, ns_env )) != S_OK) return hr;
+        if ((hr = WsWriteText( writer, &utf16.text, NULL )) != S_OK) return hr;
+        if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:To> */
+    }
+    else
+    {
+        WS_XML_UNIQUE_ID_TEXT id;
+        if ((hr = WsWriteStartElement( writer, prefix_addr, msgid, ns_addr, NULL )) != S_OK) return hr;
+        id.text.textType = WS_XML_TEXT_TYPE_UNIQUE_ID;
+        id.value         = msg->id;
+        if ((hr = WsWriteText( writer, &id.text, NULL )) != S_OK) return hr;
+        if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:MessageID> */
 
-        addr.text.textType = WS_XML_TEXT_TYPE_UTF8;
-        addr.value.bytes   = (BYTE *)anonymous;
-        addr.value.length  = sizeof(anonymous) - 1;
-        if ((hr = WsWriteText( writer, &addr.text, NULL )) != S_OK) return hr;
-        if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:Address> */
-        if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:ReplyTo> */
+        if (msg->version_addr == WS_ADDRESSING_VERSION_0_9)
+        {
+            WS_XML_UTF8_TEXT utf8 = {{WS_XML_TEXT_TYPE_UTF8}, {sizeof(anonymous) - 1, (BYTE *)anonymous}};
+            if ((hr = WsWriteStartElement( writer, prefix_addr, replyto, ns_addr, NULL )) != S_OK) return hr;
+            if ((hr = WsWriteStartElement( writer, prefix_addr, &address, ns_addr, NULL )) != S_OK) return hr;
+            if ((hr = WsWriteText( writer, &utf8.text, NULL )) != S_OK) return hr;
+            if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:Address> */
+            if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:ReplyTo> */
+        }
     }
 
     for (i = 0; i < msg->header_count; i++)
@@ -976,18 +1007,15 @@ static struct header *alloc_header( WS_HEADER_TYPE type, BOOL mapped, const WS_X
 static HRESULT write_standard_header( struct msg *msg, WS_HEADER_TYPE type, WS_TYPE value_type,
                                       WS_WRITE_OPTION option, const void *value, ULONG size )
 {
-    static const WS_XML_STRING ns = {0, NULL}, understand = {14, (BYTE *)"mustUnderstand"};
+    static const WS_XML_STRING ns = {0, NULL};
     static const WS_XML_STRING prefix_s = {1, (BYTE *)"s"}, prefix_a = {1, (BYTE *)"a"};
     const WS_XML_STRING *prefix_env = (msg->version_env == WS_ENVELOPE_VERSION_NONE) ? NULL : &prefix_s;
     const WS_XML_STRING *prefix_addr = (msg->version_addr == WS_ADDRESSING_VERSION_TRANSPORT) ? NULL : &prefix_a;
     const WS_XML_STRING *localname = get_header_name( type );
-    WS_XML_INT32_TEXT one = {{WS_XML_TEXT_TYPE_INT32}, 1};
     HRESULT hr;
 
     if ((hr = WsWriteStartElement( msg->writer, prefix_addr, localname, &ns, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteStartAttribute( msg->writer, prefix_env, &understand, &ns, FALSE, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteText( msg->writer, &one.text, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteEndAttribute( msg->writer, NULL )) != S_OK) return hr;
+    if ((hr = write_must_understand( msg->writer, prefix_env, &ns )) != S_OK) return hr;
     if (msg->version_addr == WS_ADDRESSING_VERSION_TRANSPORT)
     {
         const WS_XML_STRING *ns_addr = get_addr_namespace( WS_ADDRESSING_VERSION_TRANSPORT );

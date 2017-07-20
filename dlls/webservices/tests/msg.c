@@ -342,6 +342,11 @@ static void test_WsWriteEnvelopeStart(void)
         "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Header/><s:Body/></s:Envelope>";
     static const char expected4[] =
         "<Envelope><Header/><Body/></Envelope>";
+    static const char expected5[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "</s:Header><s:Body/></s:Envelope>";
     HRESULT hr;
     WS_MESSAGE *msg;
     WS_XML_WRITER *writer;
@@ -365,10 +370,8 @@ static void test_WsWriteEnvelopeStart(void)
 
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
@@ -383,13 +386,10 @@ static void test_WsWriteEnvelopeStart(void)
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg,
                           NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_header( msg, expected3, -1, 0, 0, __LINE__ );
@@ -398,16 +398,32 @@ static void test_WsWriteEnvelopeStart(void)
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_NONE, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg,
                           NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_header( msg, expected4, -1, 0, 0, __LINE__ );
+    WsFreeMessage( msg );
+
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
+                          NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_header( msg, expected5, -1, strstr(expected5, "urn:uuid:") - expected5, 46, __LINE__ );
+    WsFreeMessage( msg );
+
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
+                          NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_NONE, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg,
