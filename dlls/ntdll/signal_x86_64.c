@@ -4041,14 +4041,6 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */
-void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-
-    rec->ExceptionAddress = (void *)context->Rip;
-    status = raise_exception( rec, context, TRUE );
-    if (status != STATUS_SUCCESS) raise_status( status, rec );
-}
 __ASM_GLOBAL_FUNC( RtlRaiseException,
                    "movq %rcx,8(%rsp)\n\t"
                    "sub $0x4f8,%rsp\n\t"
@@ -4056,15 +4048,17 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                    "leaq 0x20(%rsp),%rcx\n\t"
                    "call " __ASM_NAME("RtlCaptureContext") "\n\t"
                    "leaq 0x20(%rsp),%rdx\n\t"   /* context pointer */
-                   "movq 0x4f8(%rsp),%rax\n\t"  /* return address */
-                   "movq %rax,0xf8(%rdx)\n\t"   /* context->Rip */
                    "leaq 0x500(%rsp),%rax\n\t"  /* orig stack pointer */
                    "movq %rax,0x98(%rdx)\n\t"   /* context->Rsp */
                    "movq (%rax),%rcx\n\t"       /* original first parameter */
                    "movq %rcx,0x80(%rdx)\n\t"   /* context->Rcx */
-                   "call " __ASM_NAME("__regs_RtlRaiseException") "\n\t"
-                   "leaq 0x20(%rsp),%rdi\n\t"   /* context pointer */
-                   "call " __ASM_NAME("set_full_cpu_context") /* does not return */ );
+                   "movq 0x4f8(%rsp),%rax\n\t"  /* return address */
+                   "movq %rax,0xf8(%rdx)\n\t"   /* context->Rip */
+                   "movq %rax,0x10(%rcx)\n\t"   /* rec->ExceptionAddress */
+                   "movl $1,%r8d\n\t"
+                   "call " __ASM_NAME("NtRaiseException") "\n\t"
+                   "movq %rax,%rcx\n\t"
+                   "call " __ASM_NAME("RtlRaiseStatus") /* does not return */ );
 
 
 /*************************************************************************
