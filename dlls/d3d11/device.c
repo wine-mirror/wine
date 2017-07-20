@@ -3035,39 +3035,13 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState(ID3D11Device
 {
     struct d3d_device *device = impl_from_ID3D11Device(iface);
     struct d3d_rasterizer_state *object;
-    struct wine_rb_entry *entry;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, rasterizer_state %p.\n", iface, desc, rasterizer_state);
 
-    if (!desc)
-        return E_INVALIDARG;
-
-    wined3d_mutex_lock();
-    if ((entry = wine_rb_get(&device->rasterizer_states, desc)))
-    {
-        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_rasterizer_state, entry);
-
-        TRACE("Returning existing rasterizer state %p.\n", object);
-        *rasterizer_state = &object->ID3D11RasterizerState_iface;
-        ID3D11RasterizerState_AddRef(*rasterizer_state);
-        wined3d_mutex_unlock();
-
-        return S_OK;
-    }
-    wined3d_mutex_unlock();
-
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = d3d_rasterizer_state_init(object, device, desc)))
-    {
-        WARN("Failed to initialize rasterizer state, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+    if (FAILED(hr = d3d_rasterizer_state_create(device, desc, &object)))
         return hr;
-    }
 
-    TRACE("Created rasterizer state %p.\n", object);
     *rasterizer_state = &object->ID3D11RasterizerState_iface;
 
     return S_OK;
@@ -5339,19 +5313,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
         const D3D10_RASTERIZER_DESC *desc, ID3D10RasterizerState **rasterizer_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    ID3D11RasterizerState *d3d11_rasterizer_state;
+    struct d3d_rasterizer_state *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, rasterizer_state %p.\n", iface, desc, rasterizer_state);
 
-    if (FAILED(hr = d3d11_device_CreateRasterizerState(&device->ID3D11Device_iface,
-            (const D3D11_RASTERIZER_DESC *)desc, &d3d11_rasterizer_state)))
+    if (FAILED(hr = d3d_rasterizer_state_create(device, (const D3D11_RASTERIZER_DESC *)desc, &object)))
         return hr;
 
-    hr = ID3D11RasterizerState_QueryInterface(d3d11_rasterizer_state,
-            &IID_ID3D10RasterizerState, (void **)rasterizer_state);
-    ID3D11RasterizerState_Release(d3d11_rasterizer_state);
-    return hr;
+    *rasterizer_state = &object->ID3D10RasterizerState_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device1 *iface,
