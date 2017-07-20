@@ -3051,51 +3051,14 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateSamplerState(ID3D11Device *i
         const D3D11_SAMPLER_DESC *desc, ID3D11SamplerState **sampler_state)
 {
     struct d3d_device *device = impl_from_ID3D11Device(iface);
-    D3D11_SAMPLER_DESC normalized_desc;
     struct d3d_sampler_state *object;
-    struct wine_rb_entry *entry;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, sampler_state %p.\n", iface, desc, sampler_state);
 
-    if (!desc)
-        return E_INVALIDARG;
-
-    normalized_desc = *desc;
-    if (!D3D11_DECODE_IS_ANISOTROPIC_FILTER(normalized_desc.Filter))
-        normalized_desc.MaxAnisotropy = 0;
-    if (!D3D11_DECODE_IS_COMPARISON_FILTER(normalized_desc.Filter))
-        normalized_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    if (normalized_desc.AddressU != D3D11_TEXTURE_ADDRESS_BORDER
-            && normalized_desc.AddressV != D3D11_TEXTURE_ADDRESS_BORDER
-            && normalized_desc.AddressW != D3D11_TEXTURE_ADDRESS_BORDER)
-        memset(&normalized_desc.BorderColor, 0, sizeof(normalized_desc.BorderColor));
-
-    wined3d_mutex_lock();
-    if ((entry = wine_rb_get(&device->sampler_states, &normalized_desc)))
-    {
-        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_sampler_state, entry);
-
-        TRACE("Returning existing sampler state %p.\n", object);
-        *sampler_state = &object->ID3D11SamplerState_iface;
-        ID3D11SamplerState_AddRef(*sampler_state);
-        wined3d_mutex_unlock();
-
-        return S_OK;
-    }
-    wined3d_mutex_unlock();
-
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = d3d_sampler_state_init(object, device, &normalized_desc)))
-    {
-        WARN("Failed to initialize sampler state, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+    if (FAILED(hr = d3d_sampler_state_create(device, desc, &object)))
         return hr;
-    }
 
-    TRACE("Created sampler state %p.\n", object);
     *sampler_state = &object->ID3D11SamplerState_iface;
 
     return S_OK;
@@ -5330,18 +5293,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device1 *
         const D3D10_SAMPLER_DESC *desc, ID3D10SamplerState **sampler_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    ID3D11SamplerState *d3d11_sampler_state;
+    struct d3d_sampler_state *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, sampler_state %p.\n", iface, desc, sampler_state);
 
-    if (FAILED(hr = d3d11_device_CreateSamplerState(&device->ID3D11Device_iface,
-            (const D3D11_SAMPLER_DESC *)desc, &d3d11_sampler_state)))
+    if (FAILED(hr = d3d_sampler_state_create(device, (const D3D11_SAMPLER_DESC *)desc, &object)))
         return hr;
 
-    hr = ID3D11SamplerState_QueryInterface(d3d11_sampler_state, &IID_ID3D10SamplerState, (void **)sampler_state);
-    ID3D11SamplerState_Release(d3d11_sampler_state);
-    return hr;
+    *sampler_state = &object->ID3D10SamplerState_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device1 *iface,

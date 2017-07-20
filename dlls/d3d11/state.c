@@ -1432,7 +1432,7 @@ static enum wined3d_cmp_func wined3d_cmp_func_from_d3d11(D3D11_COMPARISON_FUNC f
     return (enum wined3d_cmp_func)f;
 }
 
-HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_device *device,
+static HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_device *device,
         const D3D11_SAMPLER_DESC *desc)
 {
     struct wined3d_sampler_desc wined3d_desc;
@@ -1484,6 +1484,57 @@ HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_devic
 
     state->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(state->device);
+
+    return S_OK;
+}
+
+HRESULT d3d_sampler_state_create(struct d3d_device *device, const D3D11_SAMPLER_DESC *desc,
+        struct d3d_sampler_state **state)
+{
+    D3D11_SAMPLER_DESC normalized_desc;
+    struct d3d_sampler_state *object;
+    struct wine_rb_entry *entry;
+    HRESULT hr;
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    normalized_desc = *desc;
+    if (!D3D11_DECODE_IS_ANISOTROPIC_FILTER(normalized_desc.Filter))
+        normalized_desc.MaxAnisotropy = 0;
+    if (!D3D11_DECODE_IS_COMPARISON_FILTER(normalized_desc.Filter))
+        normalized_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    if (normalized_desc.AddressU != D3D11_TEXTURE_ADDRESS_BORDER
+            && normalized_desc.AddressV != D3D11_TEXTURE_ADDRESS_BORDER
+            && normalized_desc.AddressW != D3D11_TEXTURE_ADDRESS_BORDER)
+        memset(&normalized_desc.BorderColor, 0, sizeof(normalized_desc.BorderColor));
+
+    wined3d_mutex_lock();
+    if ((entry = wine_rb_get(&device->sampler_states, &normalized_desc)))
+    {
+        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_sampler_state, entry);
+
+        TRACE("Returning existing sampler state %p.\n", object);
+        ID3D11SamplerState_AddRef(&object->ID3D11SamplerState_iface);
+        *state = object;
+        wined3d_mutex_unlock();
+
+        return S_OK;
+    }
+    wined3d_mutex_unlock();
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_sampler_state_init(object, device, &normalized_desc)))
+    {
+        WARN("Failed to initialize sampler state, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created sampler state %p.\n", object);
+    *state = object;
 
     return S_OK;
 }
