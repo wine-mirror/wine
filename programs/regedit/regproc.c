@@ -22,17 +22,12 @@
  */
 
 #include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <io.h>
 #include <windows.h>
-#include <winnt.h>
-#include <winreg.h>
-#include <assert.h>
 #include <wine/unicode.h>
-#include <wine/debug.h>
 #include "regproc.h"
 
 #define REG_VAL_BUF_SIZE        4096
