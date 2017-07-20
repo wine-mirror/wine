@@ -28,6 +28,8 @@ static void test_WsCreateChannel(void)
     WS_CHANNEL_STATE state;
     WS_CHANNEL_PROPERTY prop;
     WS_ENCODING encoding;
+    WS_ENVELOPE_VERSION env_version;
+    WS_ADDRESSING_VERSION addr_version;
     ULONG size;
 
     hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, NULL, NULL );
@@ -47,6 +49,18 @@ static void test_WsCreateChannel(void)
     hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_ENCODING, &encoding, sizeof(encoding), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( encoding == WS_ENCODING_XML_UTF8, "got %u\n", encoding );
+
+    env_version = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_ENVELOPE_VERSION, &env_version, sizeof(env_version),
+                               NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_2, "got %u\n", env_version );
+
+    addr_version = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_ADDRESSING_VERSION, &addr_version, sizeof(addr_version),
+                               NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
 
     /* read-only property */
     state = 0xdeadbeef;
@@ -81,6 +95,18 @@ static void test_WsCreateChannel(void)
     hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_ENCODING, &encoding, sizeof(encoding), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( encoding == WS_ENCODING_XML_BINARY_SESSION_1, "got %u\n", encoding );
+
+    env_version = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_ENVELOPE_VERSION, &env_version, sizeof(env_version),
+                               NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_2, "got %u\n", env_version );
+
+    addr_version = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_ADDRESSING_VERSION, &addr_version, sizeof(addr_version),
+                               NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
     WsFreeChannel( channel );
 }
 

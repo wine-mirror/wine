@@ -193,12 +193,18 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
 {
     struct channel *channel;
     ULONG i, msg_size = 65536;
+    WS_ENVELOPE_VERSION env_version = WS_ENVELOPE_VERSION_SOAP_1_2;
+    WS_ADDRESSING_VERSION addr_version = WS_ADDRESSING_VERSION_1_0;
     HRESULT hr;
 
     if (!(channel = alloc_channel())) return E_OUTOFMEMORY;
 
     prop_set( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE,
               &msg_size, sizeof(msg_size) );
+    prop_set( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_ENVELOPE_VERSION,
+              &env_version, sizeof(env_version) );
+    prop_set( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_ADDRESSING_VERSION,
+              &addr_version, sizeof(addr_version) );
 
     channel->type    = type;
     channel->binding = binding;
