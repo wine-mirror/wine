@@ -2587,6 +2587,9 @@ DECL_HANDLER(get_update_region)
             free_region( region );
             return;
         }
+        if ((flags & UPDATE_CLIPCHILDREN) && (win->style & WS_CLIPCHILDREN))
+            clip_children( win, NULL, region, win->client_rect.left - win->window_rect.left,
+                           win->client_rect.top - win->window_rect.top );
         map_win_region_to_screen( win, region );
         if (!(data = get_region_data_and_free( region, get_reply_max_size(),
                                                &reply->total_size ))) return;

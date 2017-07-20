@@ -774,7 +774,7 @@ static void copy_bits_from_surface( HWND hwnd, struct window_surface *surface,
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     void *bits;
-    UINT flags = UPDATE_NOCHILDREN;
+    UINT flags = UPDATE_NOCHILDREN | UPDATE_CLIPCHILDREN;
     HRGN rgn = get_update_region( hwnd, &flags, NULL );
     HDC hdc = GetDCEx( hwnd, rgn, DCX_CACHE | DCX_WINDOW | DCX_EXCLUDERGN );
 

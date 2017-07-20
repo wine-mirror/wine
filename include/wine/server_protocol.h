@@ -3748,14 +3748,15 @@ struct get_update_region_reply
     /* VARARG(region,rectangles); */
     char __pad_20[4];
 };
-#define UPDATE_NONCLIENT       0x01
-#define UPDATE_ERASE           0x02
-#define UPDATE_PAINT           0x04
-#define UPDATE_INTERNALPAINT   0x08
-#define UPDATE_ALLCHILDREN     0x10
-#define UPDATE_NOCHILDREN      0x20
-#define UPDATE_NOREGION        0x40
-#define UPDATE_DELAYED_ERASE   0x80
+#define UPDATE_NONCLIENT       0x001
+#define UPDATE_ERASE           0x002
+#define UPDATE_PAINT           0x004
+#define UPDATE_INTERNALPAINT   0x008
+#define UPDATE_ALLCHILDREN     0x010
+#define UPDATE_NOCHILDREN      0x020
+#define UPDATE_NOREGION        0x040
+#define UPDATE_DELAYED_ERASE   0x080
+#define UPDATE_CLIPCHILDREN    0x100
 
 
 
@@ -6419,6 +6420,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 534
+#define SERVER_PROTOCOL_VERSION 535
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
