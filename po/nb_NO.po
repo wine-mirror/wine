@@ -7029,21 +7029,19 @@ msgstr "Ikonfiler"
 
 #: msi.rc:116
 msgid "Updating component registration"
-msgstr ""
+msgstr "Oppdaterer komponentregistrering"
 
 #: msi.rc:117
 msgid "Publishing Qualified Components"
-msgstr ""
+msgstr "Publiserer kvalifiserte komponenter"
 
 #: msi.rc:118
 msgid "Publishing Product Features"
 msgstr ""
 
 #: msi.rc:119
-#, fuzzy
-#| msgid "Client Information"
 msgid "Publishing product information"
-msgstr "Klientinformasjon"
+msgstr "Publiserer produktinformasjon"
 
 #: msi.rc:120
 msgid "Registering Class servers"
@@ -7051,7 +7049,7 @@ msgstr ""
 
 #: msi.rc:121
 msgid "Registering COM+ Applications and Components"
-msgstr ""
+msgstr "Registrerer COM+ programmer og komponenter"
 
 #: msi.rc:122
 msgid "Registering extension servers"
@@ -7059,41 +7057,31 @@ msgstr ""
 
 #: msi.rc:123
 msgid "Registering fonts"
-msgstr ""
+msgstr "Registrerer skrifter"
 
 #: msi.rc:124
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Registering MIME info"
-msgstr "Registerredigering"
+msgstr "Registrerer MIME informasjon"
 
 #: msi.rc:125
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
 msgid "Registering product"
-msgstr "Registeret er skadet.\n"
+msgstr "Registrerer produkt"
 
 #: msi.rc:126
 msgid "Registering program identifiers"
 msgstr ""
 
 #: msi.rc:127
-#, fuzzy
-#| msgid "Type Libraries"
 msgid "Registering type libraries"
-msgstr "Typebibliotek"
+msgstr "Registrerer typebibliotek"
 
 #: msi.rc:128
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Registering user"
-msgstr "Ressursen er i bruk.\n"
+msgstr "Registrerer bruker"
 
 #: msi.rc:129
-#, fuzzy
-#| msgid "&Remove duplicates"
 msgid "Removing duplicated files"
-msgstr "Fje&rn duplikater"
+msgstr "Fjerner duplikate filer"
 
 #: msi.rc:130 msi.rc:154
 #, fuzzy
@@ -7102,80 +7090,64 @@ msgid "Updating environment strings"
 msgstr "Aktiverer skriftinnstillinger"
 
 #: msi.rc:131
-#, fuzzy
-#| msgid "&Remove application"
 msgid "Removing applications"
-msgstr "Fje&rn program"
+msgstr "Fjerner programmer"
 
 #: msi.rc:132
-#, fuzzy
-#| msgid "Icon files"
 msgid "Removing files"
-msgstr "Ikonfiler"
+msgstr "Fjerner filer"
 
 #: msi.rc:133
 msgid "Removing folders"
-msgstr ""
+msgstr "Fjerner mapper"
 
 #: msi.rc:134
 msgid "Removing INI files entries"
 msgstr ""
 
 #: msi.rc:135
-#, fuzzy
-#| msgid "Domain Component"
 msgid "Removing ODBC components"
-msgstr "Domenekomponent"
+msgstr "Fjerner ODBC komponenter"
 
 #: msi.rc:136
-#, fuzzy
-#| msgid "Unable to modify the selected registry value."
 msgid "Removing system registry values"
-msgstr "Kan ikke modifisere den valgte registerverdien."
+msgstr "Fjerner systemregister verdier"
 
 #: msi.rc:137
 msgid "Removing shortcuts"
-msgstr ""
+msgstr "Fjerner snarveier"
 
 #: msi.rc:139
 msgid "Registering modules"
-msgstr ""
+msgstr "Registrerer moduler"
 
 #: msi.rc:140
 msgid "Unregistering modules"
-msgstr ""
+msgstr "Avregistrerer moduler"
 
 #: msi.rc:141
-#, fuzzy
-#| msgid "Initializing; "
 msgid "Initializing ODBC directories"
-msgstr "Initaliserer; "
+msgstr "Initaliserer ODBC mapper"
 
 #: msi.rc:142
-#, fuzzy
-#| msgid "Starting Wordpad failed"
 msgid "Starting services"
-msgstr "Klarte ikke starte Wordpad"
+msgstr "Starter tjenester"
 
 #: msi.rc:143
-#, fuzzy
-#| msgid "Stopping dependent service: %1\n"
 msgid "Stopping services"
-msgstr "Stopper avhengig tjeneste: %1\n"
+msgstr "Stopper tjenester"
 
 #: msi.rc:144
 msgid "Unpublishing Qualified Components"
-msgstr ""
+msgstr "Avpubliserer kvalifiserte komponenter"
 
 #: msi.rc:145
 msgid "Unpublishing Product Features"
 msgstr ""
 
 #: msi.rc:146
-#, fuzzy
-#| msgid "Client Information"
 msgid "Unpublishing product information"
-msgstr "Klientinformasjon"
+msgstr "Avpubliserer produktinformasjon"
 
 #: msi.rc:147
 msgid "Unregister Class servers"
@@ -7183,7 +7155,7 @@ msgstr ""
 
 #: msi.rc:148
 msgid "Unregistering COM+ Applications and Components"
-msgstr ""
+msgstr "Avregistrerer COM+ programmer og komponenter"
 
 #: msi.rc:149
 msgid "Unregistering extension servers"
@@ -7191,11 +7163,11 @@ msgstr ""
 
 #: msi.rc:150
 msgid "Unregistering fonts"
-msgstr ""
+msgstr "Avregistrerer skrifter"
 
 #: msi.rc:151
 msgid "Unregistering MIME info"
-msgstr ""
+msgstr "Avregistrerer MIME informasjon"
 
 #: msi.rc:152
 msgid "Unregistering program identifiers"
@@ -7203,77 +7175,63 @@ msgstr ""
 
 #: msi.rc:153
 msgid "Unregistering type libraries"
-msgstr ""
+msgstr "Avregistrerer typebibliotek"
 
 #: msi.rc:155
 msgid "Writing INI files values"
 msgstr ""
 
 #: msi.rc:156
-#, fuzzy
-#| msgid "Warning: system library"
 msgid "Writing system registry values"
-msgstr "Advarsel: systembibliotek"
+msgstr "Skriver systemregister verdier"
 
 #: msi.rc:162
 msgid "Free space: [1]"
-msgstr ""
+msgstr "Plass ledig: [1]"
 
 #: msi.rc:163
 msgid "Property: [1], Signature: [2]"
 msgstr ""
 
 #: msi.rc:164
-#, fuzzy
-#| msgid "File:"
 msgid "File: [1]"
-msgstr "Fil:"
+msgstr "Fil: [1]"
 
 #: msi.rc:165 msi.rc:192
-#, fuzzy
-#| msgid "Folder:"
 msgid "Folder: [1]"
-msgstr "Mappe:"
+msgstr "Mappe: [1]"
 
 #: msi.rc:166 msi.rc:195
 msgid "Shortcut: [1]"
-msgstr ""
+msgstr "Snarvei: [1]"
 
 #: msi.rc:167 msi.rc:198 msi.rc:199
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [1]"
-msgstr "En&het:"
+msgstr "Tjeneste: [1]"
 
 #: msi.rc:168 msi.rc:171 msi.rc:175
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr ""
+msgstr "Fil: [1],  Mappe: [9], Størrelse: [6]"
 
 #: msi.rc:169
-#, fuzzy
-#| msgid "application"
 msgid "Found application: [1]"
-msgstr "program"
+msgstr "Funnet program: [1]"
 
 #: msi.rc:170
 msgid "File: [1], Directory: [9], Size: [6]"
-msgstr ""
+msgstr "Fil: [1], Mappe: [9], Størrelse: [6]"
 
 #: msi.rc:172
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [2]"
-msgstr "En&het:"
+msgstr "Tjeneste: [2]"
 
 #: msi.rc:173
 msgid "File: [1],  Dependencies: [2]"
-msgstr ""
+msgstr "Fil: [1], Avhengigheter: [2]"
 
 #: msi.rc:174
-#, fuzzy
-#| msgid "Applications"
 msgid "Application: [1]"
-msgstr "Programmer"
+msgstr "Program: [1]"
 
 #: msi.rc:176 msi.rc:177
 msgid "Application Context:[1], Assembly Name:[2]"
@@ -7281,7 +7239,7 @@ msgstr ""
 
 #: msi.rc:178
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr ""
+msgstr "Fil: [1],  Mappe: [2], Størrelse: [6]"
 
 #: msi.rc:179 msi.rc:200
 msgid "Component ID: [1], Qualifier: [2]"
@@ -7300,16 +7258,12 @@ msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
 msgstr ""
 
 #: msi.rc:183 msi.rc:204
-#, fuzzy
-#| msgid "Extensions Only"
 msgid "Extension: [1]"
-msgstr "Kun utvidelser"
+msgstr "Utvidelse: [1]"
 
 #: msi.rc:184 msi.rc:205
-#, fuzzy
-#| msgid "&Font:"
 msgid "Font: [1]"
-msgstr "&Skrift:"
+msgstr "Skrift: [1]"
 
 #: msi.rc:185 msi.rc:206
 msgid "MIME Content Type: [1], Extension: [2]"
@@ -12419,38 +12373,6 @@ msgstr ""
 "Kan ikke importere %1. Den spesifiserte filen er ikke en gyldig registerfil."
 
 #: regedit.rc:408
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  regedit [options] [filename] [reg_key]\n"
-#| "\n"
-#| "Options:\n"
-#| "  [no option]    Launch the graphical version of this program.\n"
-#| "  /L:system.dat  The location of the system.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /R:user.dat    The location of the user.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /C             Import the contents of a registry file.\n"
-#| "  /D             Delete a specified registry key.\n"
-#| "  /E             Export the contents of a specified registry key to a "
-#| "file.\n"
-#| "                 If no key is specified, the entire registry is "
-#| "exported.\n"
-#| "  /S             Silent mode. No messages will be displayed.\n"
-#| "  /V             Launch the GUI in advanced mode. Ignored.\n"
-#| "  /?             Display this information and exit.\n"
-#| "  [filename]     The location of the file containing registry information "
-#| "to\n"
-#| "                 be imported. When used with [/E], this option specifies "
-#| "the\n"
-#| "                 file location where registry information will be "
-#| "exported.\n"
-#| "  [reg_key]      The registry key to be modified.\n"
-#| "\n"
-#| "Usage examples:\n"
-#| "  regedit \"import.reg\"\n"
-#| "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-#| "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12559,10 +12481,8 @@ msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: Ukjent escape-sekvens [\\%1!c!]\n"
 
 #: regedit.rc:420
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "regedit: Registerdatatypen [%1] støttes ikke\n"
+msgstr "regedit: Register-datatypen [0x%1!x!] støttes ikke\n"
 
 #: regedit.rc:421
 msgid "regedit: Unexpected end of line in '%1'.\n"
@@ -12581,21 +12501,18 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
-msgstr "regedit: Registerdatatypen [%1], funnet i \"%2\", støttes ikke.\n"
+msgstr ""
+"regedit: Register-datatypen [0x%1!x!], funnet i \"%2\", støttes ikke.\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: Registerverdien \"%1\" vil bli eksportert som binære data.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Ugyldig nøkkelnavn\n"
+msgstr "reg: Ugyldig systemnøkkel [%1]\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12605,10 +12522,8 @@ msgstr ""
 "ikke funnet.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit: Kan ikke slette registerklassen \"%1\".\n"
+msgstr "regedit: Kan ikke slette registernøkkel \"%1\".\n"
 
 #: regedit.rc:431
 msgid "regedit: The line contains invalid syntax.\n"
@@ -12755,17 +12670,14 @@ msgid "Confirm Key Delete"
 msgstr "Bekreft sletting av nøkkel"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete the registry key '%1' and all of its "
-#| "subkeys?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "Vil du virkelig slette registernøkkel \"%1\" og alle dens undernøkler?"
+msgstr ""
+"Vil du virkelig slette denne registernøkkelen og alle dens undernøkler?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Utvid eller kollaps den valgte noden"
 
 #: regedit.rc:231
 msgid "Collapse"
