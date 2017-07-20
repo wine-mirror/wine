@@ -796,7 +796,6 @@ static void test_reader_state(void)
 {
     XmlNodeType nodetype;
     IXmlReader *reader;
-    IStream *stream;
     HRESULT hr;
 
     hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
@@ -815,12 +814,7 @@ if (0)
     hr = IXmlReader_Read(reader, &nodetype);
     ok(hr == S_FALSE, "got %08x\n", hr);
 }
-
-    stream = create_stream_on_data("xml", sizeof("xml"));
-
-    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-
+    set_input_string(reader, "xml");
     TEST_READER_STATE(reader, XmlReadState_Initial);
 
     nodetype = XmlNodeType_Element;
@@ -838,7 +832,6 @@ todo_wine
     ok(FAILED(hr), "got %08x\n", hr);
     ok(nodetype == XmlNodeType_None, "Unexpected node type %d\n", nodetype);
 
-    IStream_Release(stream);
     IXmlReader_Release(reader);
 }
 
@@ -1282,7 +1275,6 @@ static void test_read_public_dtd(void)
     IXmlReader *reader;
     const WCHAR *str;
     XmlNodeType type;
-    IStream *stream;
     UINT len, count;
     HRESULT hr;
 
@@ -1292,9 +1284,7 @@ static void test_read_public_dtd(void)
     hr = IXmlReader_SetProperty(reader, XmlReaderProperty_DtdProcessing, DtdProcessing_Parse);
     ok(hr == S_OK, "got 0x%8x\n", hr);
 
-    stream = create_stream_on_data(test_public_dtd, sizeof(test_public_dtd));
-    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-    ok(hr == S_OK, "got %08x\n", hr);
+    set_input_string(reader, test_public_dtd);
 
     read_node(reader, XmlNodeType_DocumentType);
 
@@ -1335,7 +1325,6 @@ todo_wine {
     ok(len == lstrlenW(dtdnameW), "got %u\n", len);
     ok(!lstrcmpW(str, dtdnameW), "got %s\n", wine_dbgstr_w(str));
 }
-    IStream_Release(stream);
     IXmlReader_Release(reader);
 }
 
@@ -1349,7 +1338,6 @@ static void test_read_system_dtd(void)
     IXmlReader *reader;
     const WCHAR *str;
     XmlNodeType type;
-    IStream *stream;
     UINT len, count;
     HRESULT hr;
 
@@ -1359,9 +1347,7 @@ static void test_read_system_dtd(void)
     hr = IXmlReader_SetProperty(reader, XmlReaderProperty_DtdProcessing, DtdProcessing_Parse);
     ok(hr == S_OK, "got 0x%8x\n", hr);
 
-    stream = create_stream_on_data(test_system_dtd, sizeof(test_system_dtd));
-    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-    ok(hr == S_OK, "got %08x\n", hr);
+    set_input_string(reader, test_system_dtd);
 
     read_node(reader, XmlNodeType_DocumentType);
 
@@ -1395,7 +1381,6 @@ todo_wine {
 
     read_node(reader, XmlNodeType_Comment);
 
-    IStream_Release(stream);
     IXmlReader_Release(reader);
 }
 
@@ -1709,11 +1694,8 @@ static void test_read_cdata(void)
     while (test->xml)
     {
         XmlNodeType type;
-        IStream *stream;
 
-        stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
-        hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-        ok(hr == S_OK, "got %08x\n", hr);
+        set_input_string(reader, test->xml);
 
         type = XmlNodeType_None;
         hr = IXmlReader_Read(reader, &type);
@@ -1759,7 +1741,6 @@ static void test_read_cdata(void)
             reader_value(reader, test->value);
         }
 
-        IStream_Release(stream);
         test++;
     }
 
@@ -1786,11 +1767,8 @@ static void test_read_text(void)
     while (test->xml)
     {
         XmlNodeType type;
-        IStream *stream;
 
-        stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
-        hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-        ok(hr == S_OK, "got %08x\n", hr);
+        set_input_string(reader, test->xml);
 
         type = XmlNodeType_None;
         hr = IXmlReader_Read(reader, &type);
@@ -1832,7 +1810,6 @@ static void test_read_text(void)
             reader_value(reader, test->value);
         }
 
-        IStream_Release(stream);
         test++;
     }
 
@@ -1862,12 +1839,9 @@ static void test_isemptyelement(void)
     while (test->xml)
     {
         XmlNodeType type;
-        IStream *stream;
         BOOL ret;
 
-        stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
-        hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-        ok(hr == S_OK, "got %08x\n", hr);
+        set_input_string(reader, test->xml);
 
         type = XmlNodeType_None;
         hr = IXmlReader_Read(reader, &type);
@@ -1877,7 +1851,6 @@ static void test_isemptyelement(void)
         ret = IXmlReader_IsEmptyElement(reader);
         ok(ret == test->empty, "got %d, expected %d. xml=%s\n", ret, test->empty, test->xml);
 
-        IStream_Release(stream);
         test++;
     }
 
@@ -1920,11 +1893,8 @@ static void test_read_attribute(void)
     while (test->xml)
     {
         XmlNodeType type;
-        IStream *stream;
 
-        stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
-        hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-        ok(hr == S_OK, "got %08x\n", hr);
+        set_input_string(reader, test->xml);
 
         hr = IXmlReader_Read(reader, NULL);
 
@@ -1962,7 +1932,6 @@ static void test_read_attribute(void)
             reader_value(reader, test->value);
         }
 
-        IStream_Release(stream);
         test++;
     }
 
@@ -2019,11 +1988,8 @@ static void test_prefix(void)
 
     for (i = 0; i < sizeof(prefix_tests)/sizeof(prefix_tests[0]); i++) {
         XmlNodeType type;
-        IStream *stream;
 
-        stream = create_stream_on_data(prefix_tests[i].xml, strlen(prefix_tests[i].xml) + 1);
-        hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
-        ok(hr == S_OK, "got %08x\n", hr);
+        set_input_string(reader, prefix_tests[i].xml);
 
         hr = IXmlReader_Read(reader, &type);
         ok(hr == S_OK, "Read() failed, %#x\n", hr);
@@ -2051,8 +2017,6 @@ static void test_prefix(void)
         /* back to the element, check prefix */
         move_to_element(reader);
         reader_prefix(reader, prefix_tests[i].prefix1);
-
-        IStream_Release(stream);
     }
 
     IXmlReader_Release(reader);
@@ -2098,11 +2062,9 @@ static void test_namespaceuri(void)
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
 
     for (i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); i++) {
-        IStream *stream = create_stream_on_data(uri_tests[i].xml, strlen(uri_tests[i].xml) + 1);
         unsigned int j = 0;
 
-        hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
-        ok(hr == S_OK, "got %08x\n", hr);
+        set_input_string(reader, uri_tests[i].xml);
 
         type = ~0u;
         while (IXmlReader_Read(reader, &type) == S_OK) {
@@ -2147,8 +2109,6 @@ static void test_namespaceuri(void)
             j++;
         }
         ok(type == XmlNodeType_None, "Unexpected node type %d\n", type);
-
-        IStream_Release(stream);
     }
 
     IXmlReader_Release(reader);
@@ -2224,17 +2184,12 @@ static void test_encoding_detection(void)
 
     for (i = 0; i < sizeof(encoding_testsA)/sizeof(encoding_testsA[0]); i++)
     {
-        stream = create_stream_on_data(encoding_testsA[i], strlen(encoding_testsA[i]));
-
-        hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
-        ok(hr == S_OK, "got %08x\n", hr);
+        set_input_string(reader, encoding_testsA[i]);
 
         type = XmlNodeType_None;
         hr = IXmlReader_Read(reader, &type);
         ok(hr == S_OK, "got %08x\n", hr);
         ok(type != XmlNodeType_None, "Unexpected node type %d\n", type);
-
-        IStream_Release(stream);
     }
 
     for (i = 0; i < sizeof(encoding_testsW)/sizeof(encoding_testsW[0]); i++)
