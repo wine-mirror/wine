@@ -69,6 +69,7 @@ static nsresult (CDECL *NS_CStringSetData)(nsACString*,const char*,PRUint32);
 static nsresult (CDECL *NS_NewLocalFile)(const nsAString*,cpp_bool,nsIFile**);
 static PRUint32 (CDECL *NS_StringGetData)(const nsAString*,const PRUnichar **,cpp_bool*);
 static PRUint32 (CDECL *NS_CStringGetData)(const nsACString*,const char**,cpp_bool*);
+static cpp_bool (CDECL *NS_StringGetIsVoid)(const nsAString*);
 static void* (CDECL *NS_Alloc)(SIZE_T);
 static void (CDECL *NS_Free)(void*);
 
@@ -518,6 +519,7 @@ static BOOL load_xul(const PRUnichar *gre_path)
     NS_DLSYM(NS_NewLocalFile);
     NS_DLSYM(NS_StringGetData);
     NS_DLSYM(NS_CStringGetData);
+    NS_DLSYM(NS_StringGetIsVoid);
     NS_DLSYM(NS_Alloc);
     NS_DLSYM(NS_Free);
     NS_DLSYM(ccref_incr);
@@ -864,6 +866,38 @@ HRESULT return_nsstr(nsresult nsres, nsAString *nsstr, BSTR *p)
             return E_OUTOFMEMORY;
     }else {
         *p = NULL;
+    }
+
+    nsAString_Finish(nsstr);
+    return S_OK;
+}
+
+HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, VARIANT *p)
+{
+    const PRUnichar *str;
+
+    if(NS_FAILED(nsres)) {
+        ERR("failed: %08x\n", nsres);
+        nsAString_Finish(nsstr);
+        return E_FAIL;
+    }
+
+    if(NS_StringGetIsVoid(nsstr)) {
+        TRACE("ret null\n");
+        V_VT(p) = VT_NULL;
+    }else {
+        nsAString_GetData(nsstr, &str);
+        TRACE("ret %s\n", debugstr_w(str));
+        if(*str) {
+            V_BSTR(p) = SysAllocString(str);
+            if(!V_BSTR(p)) {
+                nsAString_Finish(nsstr);
+                return E_OUTOFMEMORY;
+            }
+        }else {
+            V_BSTR(p) = NULL;
+        }
+        V_VT(p) = VT_BSTR;
     }
 
     nsAString_Finish(nsstr);
