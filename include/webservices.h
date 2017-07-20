@@ -56,6 +56,7 @@ typedef struct _WS_OPERATION_DESCRIPTION WS_OPERATION_DESCRIPTION;
 typedef struct _WS_PARAMETER_DESCRIPTION WS_PARAMETER_DESCRIPTION;
 typedef struct _WS_OPERATION_CONTEXT WS_OPERATION_CONTEXT;
 typedef struct _WS_CALL_PROPERTY WS_CALL_PROPERTY;
+typedef struct _WS_FLOAT_DESCRIPTION WS_FLOAT_DESCRIPTION;
 typedef struct _WS_DOUBLE_DESCRIPTION WS_DOUBLE_DESCRIPTION;
 typedef struct _WS_DATETIME WS_DATETIME;
 typedef struct _WS_XML_DATETIME_TEXT WS_XML_DATETIME_TEXT;
@@ -442,6 +443,11 @@ struct _WS_ENUM_DESCRIPTION {
     ULONG *nameIndices;
 };
 
+struct _WS_FLOAT_DESCRIPTION {
+    float minValue;
+    float maxValue;
+};
+
 struct _WS_DOUBLE_DESCRIPTION {
     double DECLSPEC_ALIGN(8) minValue;
     double DECLSPEC_ALIGN(8) maxValue;
@@ -653,6 +659,11 @@ typedef struct _WS_XML_UINT64_TEXT {
     WS_XML_TEXT text;
     unsigned __int64 DECLSPEC_ALIGN(8) value;
 } WS_XML_UINT64_TEXT;
+
+typedef struct _WS_XML_FLOAT_TEXT {
+    WS_XML_TEXT text;
+    float value;
+} WS_XML_FLOAT_TEXT;
 
 typedef struct _WS_XML_DOUBLE_TEXT {
     WS_XML_TEXT text;

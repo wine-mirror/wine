@@ -851,6 +851,16 @@ WS_XML_UINT64_TEXT *alloc_uint64_text( UINT64 value )
     return ret;
 }
 
+WS_XML_FLOAT_TEXT *alloc_float_text( float value )
+{
+    WS_XML_FLOAT_TEXT *ret;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    ret->text.textType = WS_XML_TEXT_TYPE_FLOAT;
+    ret->value         = value;
+    return ret;
+}
+
 WS_XML_DOUBLE_TEXT *alloc_double_text( double value )
 {
     WS_XML_DOUBLE_TEXT *ret;
@@ -1463,6 +1473,16 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         if ((hr = read_bytes( reader, (unsigned char *)&val_int64, sizeof(val_int64) )) != S_OK) return hr;
         if (!(text_int64 = alloc_int64_text( val_int64 ))) return E_OUTOFMEMORY;
         attr->value = &text_int64->text;
+        return S_OK;
+    }
+    case RECORD_FLOAT_TEXT:
+    {
+        WS_XML_FLOAT_TEXT *text_float;
+        float val_float;
+
+        if ((hr = read_bytes( reader, (unsigned char *)&val_float, sizeof(val_float) )) != S_OK) return hr;
+        if (!(text_float = alloc_float_text( val_float ))) return E_OUTOFMEMORY;
+        attr->value = &text_float->text;
         return S_OK;
     }
     case RECORD_DOUBLE_TEXT:
@@ -2145,6 +2165,23 @@ static struct node *alloc_int64_text_node( INT64 value )
     return node;
 }
 
+static struct node *alloc_float_text_node( float value )
+{
+    struct node *node;
+    WS_XML_FLOAT_TEXT *text_float;
+    WS_XML_TEXT_NODE *text;
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
+    if (!(text_float = alloc_float_text( value )))
+    {
+        heap_free( node );
+        return NULL;
+    }
+    text = (WS_XML_TEXT_NODE *)node;
+    text->text = &text_float->text;
+    return node;
+}
+
 static struct node *alloc_double_text_node( double value )
 {
     struct node *node;
@@ -2382,6 +2419,14 @@ static HRESULT read_text_bin( struct reader *reader )
         INT64 val_int64;
         if ((hr = read_bytes( reader, (unsigned char *)&val_int64, sizeof(val_int64) )) != S_OK) return hr;
         if (!(node = alloc_int64_text_node( val_int64 ))) return E_OUTOFMEMORY;
+        break;
+    }
+    case RECORD_FLOAT_TEXT:
+    case RECORD_FLOAT_TEXT_WITH_ENDELEMENT:
+    {
+        float val_float;
+        if ((hr = read_bytes( reader, (unsigned char *)&val_float, sizeof(val_float) )) != S_OK) return hr;
+        if (!(node = alloc_float_text_node( val_float ))) return E_OUTOFMEMORY;
         break;
     }
     case RECORD_DOUBLE_TEXT:
@@ -3608,12 +3653,12 @@ static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
         *(unsigned __int64 *)ret = nan;
         return S_OK;
     }
-    else if (len == 3 && !memcmp( p, "INF", 3 ))
+    if (len == 3 && !memcmp( p, "INF", 3 ))
     {
         *(unsigned __int64 *)ret = inf;
         return S_OK;
     }
-    else if (len == 4 && !memcmp( p, "-INF", 4 ))
+    if (len == 4 && !memcmp( p, "-INF", 4 ))
     {
         *(unsigned __int64 *)ret = inf_min;
         return S_OK;
@@ -3701,6 +3746,34 @@ static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
 done:
     restore_fpword( fpword );
     return hr;
+}
+
+static HRESULT str_to_float( const unsigned char *str, ULONG len, float *ret )
+{
+    static const unsigned int inf = 0x7f800000;
+    static const unsigned int inf_min = 0xff800000;
+    const unsigned char *p = str;
+    double val;
+    HRESULT hr;
+
+    while (len && read_isspace( *p )) { p++; len--; }
+    while (len && read_isspace( p[len - 1] )) { len--; }
+    if (!len) return WS_E_INVALID_FORMAT;
+
+    if (len == 3 && !memcmp( p, "INF", 3 ))
+    {
+        *(unsigned int *)ret = inf;
+        return S_OK;
+    }
+    if (len == 4 && !memcmp( p, "-INF", 4 ))
+    {
+        *(unsigned int *)ret = inf_min;
+        return S_OK;
+    }
+
+    if ((hr = str_to_double( p, len, &val )) != S_OK) return hr;
+    *ret = val;
+    return S_OK;
 }
 
 static HRESULT str_to_guid( const unsigned char *str, ULONG len, GUID *ret )
@@ -5008,6 +5081,84 @@ static HRESULT read_type_uint64( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT text_to_float( const WS_XML_TEXT *text, float *val )
+{
+    HRESULT hr;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        hr = str_to_float( text_utf8->value.bytes, text_utf8->value.length, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_FLOAT:
+    {
+        const WS_XML_FLOAT_TEXT *text_float = (const WS_XML_FLOAT_TEXT *)text;
+        *val = text_float->value;
+        hr = S_OK;
+        break;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+
+    return hr;
+}
+
+static HRESULT read_type_float( struct reader *reader, WS_TYPE_MAPPING mapping,
+                                const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                                const WS_FLOAT_DESCRIPTION *desc, WS_READ_OPTION option,
+                                WS_HEAP *heap, void *ret, ULONG size )
+{
+    const WS_XML_TEXT *text;
+    HRESULT hr;
+    float val = 0.0;
+    BOOL found;
+
+    if (desc) FIXME( "ignoring description\n" );
+
+    if ((hr = get_text( reader, mapping, localname, ns, &text, &found )) != S_OK) return hr;
+    if (found && (hr = text_to_float( text, &val )) != S_OK) return hr;
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_VALUE:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_NILLABLE_VALUE:
+        if (size != sizeof(val)) return E_INVALIDARG;
+        *(float *)ret = val;
+        break;
+
+    case WS_READ_REQUIRED_POINTER:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_OPTIONAL_POINTER:
+    case WS_READ_NILLABLE_POINTER:
+    {
+        float *heap_val = NULL;
+        if (size != sizeof(heap_val)) return E_INVALIDARG;
+        if (found)
+        {
+            if (!(heap_val = ws_alloc( heap, sizeof(*heap_val) ))) return WS_E_QUOTA_EXCEEDED;
+            *heap_val = val;
+        }
+        *(float **)ret = heap_val;
+        break;
+    }
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT text_to_double( const WS_XML_TEXT *text, double *val )
 {
     HRESULT hr;
@@ -5843,6 +5994,9 @@ ULONG get_type_size( WS_TYPE type, const void *desc )
     case WS_UINT64_TYPE:
         return sizeof(INT64);
 
+    case WS_FLOAT_TYPE:
+        return sizeof(float);
+
     case WS_DOUBLE_TYPE:
         return sizeof(double);
 
@@ -5909,6 +6063,7 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
     case WS_UINT16_TYPE:
     case WS_UINT32_TYPE:
     case WS_UINT64_TYPE:
+    case WS_FLOAT_TYPE:
     case WS_DOUBLE_TYPE:
     case WS_DATETIME_TYPE:
     case WS_GUID_TYPE:
@@ -6362,6 +6517,11 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
 
     case WS_UINT64_TYPE:
         if ((hr = read_type_uint64( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
+            return hr;
+        break;
+
+    case WS_FLOAT_TYPE:
+        if ((hr = read_type_float( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
             return hr;
         break;
 

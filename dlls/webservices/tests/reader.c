@@ -6174,6 +6174,94 @@ static void test_union_type(void)
     WsFreeHeap( heap );
 }
 
+static void test_float(void)
+{
+    static const struct
+    {
+        const char *str;
+        HRESULT     hr;
+        ULONG       val;
+    }
+    tests[] =
+    {
+        {"<t>0.0</t>", S_OK, 0},
+        {"<t>-0.0</t>", S_OK, 0x80000000},
+        {"<t>+0.0</t>", S_OK, 0},
+        {"<t>-</t>", S_OK, 0},
+        {"<t>+</t>", S_OK, 0},
+        {"<t>.0</t>", S_OK, 0},
+        {"<t>0.</t>", S_OK, 0},
+        {"<t>0</t>", S_OK, 0},
+        {"<t> 0 </t>", S_OK, 0},
+        {"<t></t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>0,1</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>1.1.</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>1</t>", S_OK, 0x3f800000},
+        {"<t>1.0000001</t>", S_OK, 0x3f800001},
+        {"<t>1.0000002</t>", S_OK, 0x3f800002},
+        {"<t>10000000000000000000</t>", S_OK, 0x5f0ac723},
+        {"<t>100000000000000000000</t>", S_OK, 0x60ad78ec},
+        {"<t>2</t>", S_OK, 0x40000000},
+        {"<t>-2</t>", S_OK, 0xc0000000},
+        {"<t>nofloat</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>INF</t>", S_OK, 0x7f800000},
+        {"<t>-INF</t>", S_OK, 0xff800000},
+        {"<t>+INF</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>Infinity</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>-Infinity</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>inf</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>NaN</t>", S_OK, 0xffc00000},
+        {"<t>-NaN</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>NAN</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>0.3</t>", S_OK, 0x3e99999a},
+        {"<t>0.33</t>", S_OK, 0x3ea8f5c3},
+        {"<t>0.333</t>", S_OK, 0x3eaa7efa},
+        {"<t>0.3333</t>", S_OK, 0x3eaaa64c},
+        {"<t>0.33333</t>", S_OK, 0x3eaaaa3b},
+        {"<t>0.333333</t>", S_OK, 0x3eaaaa9f},
+        {"<t>0.3333333</t>", S_OK, 0x3eaaaaaa},
+        {"<t>0.33333333</t>", S_OK, 0x3eaaaaab},
+        {"<t>0.333333333</t>", S_OK, 0x3eaaaaab},
+        {"<t>0.1e10</t>", S_OK, 0x4e6e6b28},
+        {"<t>1e</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>1e0</t>", S_OK, 0x3f800000},
+        {"<t>1e+1</t>", S_OK, 0x41200000},
+        {"<t>1e-1</t>", S_OK, 0x3dcccccd},
+        {"<t>e10</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>1e10.</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>1E10</t>", S_OK, 0x501502f9},
+        {"<t>1e10</t>", S_OK, 0x501502f9},
+        {"<t>1e-10</t>", S_OK, 0x2edbe6ff},
+        {"<t>3.4028235e38</t>", S_OK, 0x7f7fffff},
+        {"<t>3.4028236e38</t>", S_OK, 0x7f800000},
+        {"<t>1.1754942e-38</t>", S_OK, 0x007fffff},
+        {"<t>1.1754943e-38</t>", S_OK, 0x00800000},
+    };
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    ULONG val, i;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        val = 0;
+        prepare_type_test( reader, tests[i].str, strlen(tests[i].str) );
+        hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_FLOAT_TYPE, NULL,
+                         WS_READ_REQUIRED_VALUE, heap, &val, sizeof(val), NULL );
+        ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
+        if (hr == tests[i].hr) ok( val == tests[i].val, "%u: got %08x\n", i, val );
+    }
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -6220,4 +6308,5 @@ START_TEST(reader)
     test_dictionary();
     test_WsReadXmlBuffer();
     test_union_type();
+    test_float();
 }
