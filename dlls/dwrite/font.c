@@ -353,7 +353,7 @@ static void* get_fontface_table(IDWriteFontFace4 *fontface, UINT32 tag, struct d
     hr = IDWriteFontFace4_TryGetFontTable(fontface, tag, (const void**)&table->data, &table->size, &table->context,
         &table->exists);
     if (FAILED(hr) || !table->exists) {
-        WARN("Font does not have a %s table\n", debugstr_tag(tag));
+        TRACE("Font does not have %s table\n", debugstr_tag(tag));
         return NULL;
     }
 
@@ -5118,7 +5118,7 @@ static HRESULT WINAPI glyphrunanalysis_GetAlphaBlendParams(IDWriteGlyphRunAnalys
         break;
     }
     case DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED:
-        WARN("Downsampled mode is ignored.\n");
+        WARN("NATURAL_SYMMETRIC_DOWNSAMPLED mode is ignored.\n");
         /* fallthrough */
     case DWRITE_RENDERING_MODE1_ALIASED:
     case DWRITE_RENDERING_MODE1_NATURAL:
