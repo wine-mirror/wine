@@ -778,6 +778,11 @@ static UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
     lstrcatW( path, file );
 
     data = msi_read_text_archive( path, &len );
+    if (!data)
+    {
+        msi_free(path);
+        return ERROR_FUNCTION_FAILED;
+    }
 
     ptr = data;
     msi_parse_line( &ptr, &columns, &num_columns, &len );
