@@ -521,6 +521,19 @@ static void reader_clear_elements(xmlreader *reader)
     reader->is_empty_element = FALSE;
 }
 
+static struct ns *reader_lookup_ns(xmlreader *reader, const strval *prefix)
+{
+    struct list *nslist = prefix ? &reader->ns : &reader->nsdef;
+    struct ns *ns;
+
+    LIST_FOR_EACH_ENTRY_REV(ns, nslist, struct ns, entry) {
+        if (strval_eq(reader, prefix, &ns->prefix))
+            return ns;
+    }
+
+    return NULL;
+}
+
 static HRESULT reader_inc_depth(xmlreader *reader)
 {
     return (++reader->depth >= reader->max_depth && reader->max_depth) ? SC_E_MAXELEMENTDEPTH : S_OK;
@@ -2989,12 +3002,110 @@ static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
     return next ? S_OK : S_FALSE;
 }
 
-static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
-                                                      LPCWSTR local_name,
-                                                      LPCWSTR namespaceUri)
+static void reader_get_attribute_ns_uri(xmlreader *reader, struct attribute *attr, const WCHAR **uri, UINT *len)
 {
-    FIXME("(%p %p %p): stub\n", iface, local_name, namespaceUri);
-    return E_NOTIMPL;
+    static const WCHAR xmlns_uriW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g','/',
+            '2','0','0','0','/','x','m','l','n','s','/',0};
+    static const WCHAR xml_uriW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g','/',
+            'X','M','L','/','1','9','9','8','/','n','a','m','e','s','p','a','c','e',0};
+
+    /* Check for reserved prefixes first */
+    if ((strval_eq(reader, &attr->prefix, &strval_empty) && strval_eq(reader, &attr->localname, &strval_xmlns)) ||
+            strval_eq(reader, &attr->prefix, &strval_xmlns))
+    {
+        *uri = xmlns_uriW;
+        *len = sizeof(xmlns_uriW)/sizeof(xmlns_uriW[0]) - 1;
+    }
+    else if (strval_eq(reader, &attr->prefix, &strval_xml))
+    {
+        *uri = xml_uriW;
+        *len = sizeof(xml_uriW)/sizeof(xml_uriW[0]) - 1;
+    }
+    else
+    {
+        *uri = NULL;
+        *len = 0;
+    }
+
+    if (!*uri)
+    {
+        struct ns *ns;
+
+        if ((ns = reader_lookup_ns(reader, &attr->prefix)))
+        {
+            *uri = ns->uri.str;
+            *len = ns->uri.len;
+        }
+        else
+        {
+            *uri = emptyW;
+            *len = 0;
+        }
+    }
+}
+
+static void reader_get_attribute_local_name(xmlreader *reader, struct attribute *attr, const WCHAR **name, UINT *len)
+{
+    if (attr->flags & ATTRIBUTE_DEFAULT_NS_DEFINITION)
+    {
+        *name = xmlnsW;
+        *len = 5;
+    }
+    else if (attr->flags & ATTRIBUTE_NS_DEFINITION)
+    {
+        const struct ns *ns = reader_lookup_ns(reader, &attr->localname);
+        *name = ns->prefix.str;
+        *len = ns->prefix.len;
+    }
+    else
+    {
+        *name = attr->localname.str;
+        *len = attr->localname.len;
+    }
+}
+
+static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
+    const WCHAR *local_name, const WCHAR *namespace_uri)
+{
+    xmlreader *This = impl_from_IXmlReader(iface);
+    UINT target_name_len, target_uri_len;
+    struct attribute *attr;
+
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(local_name), debugstr_w(namespace_uri));
+
+    if (!local_name)
+        return E_INVALIDARG;
+
+    if (!This->attr_count)
+        return S_FALSE;
+
+    if (!namespace_uri)
+        namespace_uri = emptyW;
+
+    target_name_len = strlenW(local_name);
+    target_uri_len = strlenW(namespace_uri);
+
+    LIST_FOR_EACH_ENTRY(attr, &This->attrs, struct attribute, entry)
+    {
+        UINT name_len, uri_len;
+        const WCHAR *name, *uri;
+
+        reader_get_attribute_local_name(This, attr, &name, &name_len);
+        reader_get_attribute_ns_uri(This, attr, &uri, &uri_len);
+
+        if (name_len == target_name_len && uri_len == target_uri_len &&
+                !strcmpW(name, local_name) && !strcmpW(uri, namespace_uri))
+        {
+            This->attr = attr;
+            This->chunk_read_off = 0;
+            reader_set_strvalue(This, StringValue_Prefix, &This->attr->prefix);
+            reader_set_strvalue(This, StringValue_QualifiedName, &This->attr->qname);
+            reader_set_strvalue(This, StringValue_Value, &This->attr->value);
+            return S_OK;
+        }
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
@@ -3088,19 +3199,6 @@ static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *nam
     return S_OK;
 }
 
-static struct ns *reader_lookup_ns(xmlreader *reader, const strval *prefix)
-{
-    struct list *nslist = prefix ? &reader->ns : &reader->nsdef;
-    struct ns *ns;
-
-    LIST_FOR_EACH_ENTRY_REV(ns, nslist, struct ns, entry) {
-        if (strval_eq(reader, prefix, &ns->prefix))
-            return ns;
-    }
-
-    return NULL;
-}
-
 static struct ns *reader_lookup_nsdef(xmlreader *reader)
 {
     if (list_empty(&reader->nsdef))
@@ -3122,42 +3220,10 @@ static HRESULT WINAPI xmlreader_GetNamespaceUri(IXmlReader* iface, const WCHAR *
     if (!len)
         len = &length;
 
-    *uri = NULL;
-    *len = 0;
-
     switch ((nodetype = reader_get_nodetype(This)))
     {
     case XmlNodeType_Attribute:
-        {
-            static const WCHAR xmlns_uriW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g','/',
-                '2','0','0','0','/','x','m','l','n','s','/',0};
-            static const WCHAR xml_uriW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g','/',
-                'X','M','L','/','1','9','9','8','/','n','a','m','e','s','p','a','c','e',0};
-
-            /* check for reserved prefixes first */
-            if ((strval_eq(This, prefix, &strval_empty) && strval_eq(This, &This->attr->localname, &strval_xmlns)) ||
-                    strval_eq(This, prefix, &strval_xmlns))
-            {
-                *uri = xmlns_uriW;
-                *len = sizeof(xmlns_uriW)/sizeof(xmlns_uriW[0]) - 1;
-            }
-            else if (strval_eq(This, prefix, &strval_xml)) {
-                *uri = xml_uriW;
-                *len = sizeof(xml_uriW)/sizeof(xml_uriW[0]) - 1;
-            }
-
-            if (!*uri) {
-                ns = reader_lookup_ns(This, prefix);
-                if (ns) {
-                   *uri = ns->uri.str;
-                   *len = ns->uri.len;
-                }
-                else {
-                    *uri = emptyW;
-                    *len = 0;
-                }
-            }
-        }
+        reader_get_attribute_ns_uri(This, This->attr, uri, len);
         break;
     case XmlNodeType_Element:
     case XmlNodeType_EndElement:
@@ -3189,6 +3255,8 @@ static HRESULT WINAPI xmlreader_GetNamespaceUri(IXmlReader* iface, const WCHAR *
         break;
     default:
         FIXME("Unhandled node type %d\n", nodetype);
+        *uri = NULL;
+        *len = 0;
         return E_NOTIMPL;
     }
 
@@ -3222,22 +3290,7 @@ static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, U
         *len = element->localname.len;
         break;
     case XmlNodeType_Attribute:
-        if (This->attr->flags & ATTRIBUTE_DEFAULT_NS_DEFINITION)
-        {
-            *name = xmlnsW;
-            *len = 5;
-        }
-        else if (This->attr->flags & ATTRIBUTE_NS_DEFINITION)
-        {
-            const struct ns *ns = reader_lookup_ns(This, &This->attr->localname);
-            *name = ns->prefix.str;
-            *len = ns->prefix.len;
-        }
-        else
-        {
-            *name = This->attr->localname.str;
-            *len = This->attr->localname.len;
-        }
+        reader_get_attribute_local_name(This, This->attr, name, len);
         break;
     default:
         *name = This->strvalues[StringValue_LocalName].str;
