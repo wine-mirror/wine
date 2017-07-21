@@ -50,52 +50,48 @@ BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen);
         
 BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext) 
 {
-    const WCHAR *algid = NULL;
+    BCRYPT_ALG_HANDLE provider;
+    NTSTATUS status;
 
     switch (aiAlgid) 
     {
         case CALG_MD2:
             md2_init(&pHashContext->md2);
-            break;
+            return TRUE;
         
         case CALG_MD4:
             MD4Init(&pHashContext->md4);
-            break;
+            return TRUE;
         
         case CALG_MD5:
             MD5Init(&pHashContext->md5);
-            break;
+            return TRUE;
         
         case CALG_SHA:
             A_SHAInit(&pHashContext->sha);
-            break;
+            return TRUE;
 
         case CALG_SHA_256:
-            algid = BCRYPT_SHA256_ALGORITHM;
+            status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
             break;
 
         case CALG_SHA_384:
-            algid = BCRYPT_SHA384_ALGORITHM;
+            status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA384_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
             break;
 
         case CALG_SHA_512:
-            algid = BCRYPT_SHA512_ALGORITHM;
+            status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
             break;
+
+        default:
+            return TRUE;
     }
 
-    if (algid)
-    {
-        BCRYPT_ALG_HANDLE provider;
-        NTSTATUS status;
+    if (status) return FALSE;
 
-        status = BCryptOpenAlgorithmProvider(&provider, algid, MS_PRIMITIVE_PROVIDER, 0);
-        if (status) return FALSE;
-
-        status = BCryptCreateHash(provider, &pHashContext->bcrypt_hash, NULL, 0, NULL, 0, 0);
-        BCryptCloseAlgorithmProvider(provider, 0);
-        if (status) return FALSE;
-    }
-    return TRUE;
+    status = BCryptCreateHash(provider, &pHashContext->bcrypt_hash, NULL, 0, NULL, 0, 0);
+    BCryptCloseAlgorithmProvider(provider, 0);
+    return !status;
 }
 
 BOOL update_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, const BYTE *pbData,
