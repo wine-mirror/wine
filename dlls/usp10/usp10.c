@@ -1828,7 +1828,12 @@ static inline int getGivenTabWidth(ScriptCache *psc, SCRIPT_TABDEF *pTabdef, int
         cTabStops = 0;
     }
     else
-        defWidth = 8 * psc->tm.tmAveCharWidth;
+    {
+        if (pTabdef->iScale)
+            defWidth = (32 * pTabdef->iScale) / 4;
+        else
+            defWidth = 8 * psc->tm.tmAveCharWidth;
+    }
 
     for (; cTabStops>0 ; lpTabPos++, cTabStops--)
     {
@@ -1842,10 +1847,10 @@ static inline int getGivenTabWidth(ScriptCache *psc, SCRIPT_TABDEF *pTabdef, int
 
         if( nTabOrg + position > current_x)
         {
-            if( *lpTabPos >= 0)
+            if( position >= 0)
             {
                 /* a left aligned tab */
-                x = (nTabOrg + *lpTabPos) - current_x;
+                x = (nTabOrg + position) - current_x;
                 break;
             }
             else
