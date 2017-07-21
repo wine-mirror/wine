@@ -68,6 +68,15 @@ function test_textContent() {
     div.innerHTML = "abc<script>/* */</script><div>text</div>";
     ok(div.textContent === "abc/* */text", "div.textContent = " + div.textContent);
 
+    div.textContent = "test";
+    ok(div.textContent === "test", "div.textContent = " + div.textContent);
+    ok(div.childNodes.length === 1, "div.childNodes.length = " + div.childNodes.length);
+    ok(div.firstChild.textContent === "test", "div.firstChild.textContent = " + div.firstChild.textContent);
+
+    div.textContent = "";
+    ok(div.textContent === "", "div.textContent = " + div.textContent);
+    ok(div.childNodes.length === 0, "div.childNodes.length = " + div.childNodes.length);
+
     next_test();
 }
 

@@ -1241,8 +1241,25 @@ static HRESULT WINAPI HTMLDOMNode3_get_namespaceURI(IHTMLDOMNode3 *iface, VARIAN
 static HRESULT WINAPI HTMLDOMNode3_put_textContent(IHTMLDOMNode3 *iface, VARIANT v)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode3(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    if(V_VT(&v) != VT_BSTR) {
+        FIXME("unsupported argument %s\n", debugstr_variant(&v));
+        return E_NOTIMPL;
+    }
+
+    nsAString_Init(&nsstr, V_BSTR(&v));
+    nsres = nsIDOMNode_SetTextContent(This->nsnode, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        ERR("SetTextContent failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode3_get_textContent(IHTMLDOMNode3 *iface, VARIANT *p)
