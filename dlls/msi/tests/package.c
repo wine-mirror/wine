@@ -38,9 +38,7 @@ static const WCHAR msifileW[] =
     {'w','i','n','e','t','e','s','t','-','p','a','c','k','a','g','e','.','m','s','i',0};
 static char CURR_DIR[MAX_PATH];
 
-static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
 static INSTALLSTATE (WINAPI *pMsiGetComponentPathExA)(LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCONTEXT, LPSTR, LPDWORD);
-static UINT (WINAPI *pMsiSetExternalUIRecord)(INSTALLUI_HANDLER_RECORD, DWORD, LPVOID, PINSTALLUI_HANDLER_RECORD);
 static HRESULT (WINAPI *pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
 
 static BOOL (WINAPI *pCheckTokenMembership)(HANDLE,PSID,PBOOL);
@@ -67,9 +65,7 @@ static void init_functionpointers(void)
 #define GET_PROC(mod, func) \
     p ## func = (void*)GetProcAddress(mod, #func);
 
-    GET_PROC(hmsi, MsiApplyMultiplePatchesA);
     GET_PROC(hmsi, MsiGetComponentPathExA);
-    GET_PROC(hmsi, MsiSetExternalUIRecord);
     GET_PROC(hshell32, SHGetFolderPathA);
 
     GET_PROC(hadvapi32, CheckTokenMembership);
@@ -8795,48 +8791,43 @@ static void test_MsiApplyMultiplePatches(void)
 {
     UINT r, type = GetDriveTypeW(NULL);
 
-    if (!pMsiApplyMultiplePatchesA) {
-        win_skip("MsiApplyMultiplePatchesA not found\n");
-        return;
-    }
-
-    r = pMsiApplyMultiplePatchesA(NULL, NULL, NULL);
+    r = MsiApplyMultiplePatchesA(NULL, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
 
-    r = pMsiApplyMultiplePatchesA("", NULL, NULL);
+    r = MsiApplyMultiplePatchesA("", NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
 
-    r = pMsiApplyMultiplePatchesA(";", NULL, NULL);
+    r = MsiApplyMultiplePatchesA(";", NULL, NULL);
     if (type == DRIVE_FIXED)
         todo_wine ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
     else
         ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
 
-    r = pMsiApplyMultiplePatchesA("  ;", NULL, NULL);
+    r = MsiApplyMultiplePatchesA("  ;", NULL, NULL);
     if (type == DRIVE_FIXED)
         todo_wine ok(r == ERROR_PATCH_PACKAGE_OPEN_FAILED, "Expected ERROR_PATCH_PACKAGE_OPEN_FAILED, got %u\n", r);
     else
         ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
 
-    r = pMsiApplyMultiplePatchesA(";;", NULL, NULL);
+    r = MsiApplyMultiplePatchesA(";;", NULL, NULL);
     if (type == DRIVE_FIXED)
         todo_wine ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
     else
         ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
 
-    r = pMsiApplyMultiplePatchesA("nosuchpatchpackage;", NULL, NULL);
+    r = MsiApplyMultiplePatchesA("nosuchpatchpackage;", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
 
-    r = pMsiApplyMultiplePatchesA(";nosuchpatchpackage", NULL, NULL);
+    r = MsiApplyMultiplePatchesA(";nosuchpatchpackage", NULL, NULL);
     if (type == DRIVE_FIXED)
         todo_wine ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
     else
         ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
 
-    r = pMsiApplyMultiplePatchesA("nosuchpatchpackage;nosuchpatchpackage", NULL, NULL);
+    r = MsiApplyMultiplePatchesA("nosuchpatchpackage;nosuchpatchpackage", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
 
-    r = pMsiApplyMultiplePatchesA("  nosuchpatchpackage  ;  nosuchpatchpackage  ", NULL, NULL);
+    r = MsiApplyMultiplePatchesA("  nosuchpatchpackage  ;  nosuchpatchpackage  ", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
 }
 
@@ -9154,6 +9145,7 @@ static void test_externalui(void)
     INSTALLUI_HANDLER_RECORD prev_record;
     MSIHANDLE hpkg, hrecord;
     UINT r;
+    INT retval = 0;
 
     prev = MsiSetExternalUIA(externalui_callback, INSTALLLOGMODE_USER, NULL);
 
@@ -9178,48 +9170,41 @@ static void test_externalui(void)
     ok(r == 0, "expected 0, got %u\n", r);
     ok(externalui_ran == 1, "external UI callback did not run\n");
 
-    if (pMsiSetExternalUIRecord)
-    {
-        INT retval = 0;
+    prev = MsiSetExternalUIA(prev, 0, NULL);
+    ok(prev == externalui_callback, "wrong callback function %p\n", prev);
+    r = MsiSetExternalUIRecord(externalui_record_callback, INSTALLLOGMODE_USER, &retval, &prev_record);
+    ok(r == ERROR_SUCCESS, "MsiSetExternalUIRecord failed %u\n", r);
 
-        prev = MsiSetExternalUIA(prev, 0, NULL);
-        ok(prev == externalui_callback, "wrong callback function %p\n", prev);
-        r = pMsiSetExternalUIRecord(externalui_record_callback, INSTALLLOGMODE_USER, &retval, &prev_record);
-        ok(r == ERROR_SUCCESS, "MsiSetExternalUIRecord failed %u\n", r);
+    externalui_ran = externalui_record_ran = 0;
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
+    ok(r == 0, "expected 0, got %u\n", r);
+    ok(externalui_ran == 0, "external UI callback should not have run\n");
+    ok(externalui_record_ran == 1, "external UI record callback did not run\n");
 
-        externalui_ran = externalui_record_ran = 0;
-        r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
-        ok(r == 0, "expected 0, got %u\n", r);
-        ok(externalui_ran == 0, "external UI callback should not have run\n");
-        ok(externalui_record_ran == 1, "external UI record callback did not run\n");
+    MsiSetExternalUIA(externalui_callback, INSTALLLOGMODE_USER, NULL);
 
-        MsiSetExternalUIA(externalui_callback, INSTALLLOGMODE_USER, NULL);
+    externalui_ran = externalui_record_ran = 0;
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
+    ok(r == 0, "expected 0, got %u\n", r);
+    ok(externalui_ran == 1, "external UI callback did not run\n");
+    ok(externalui_record_ran == 1, "external UI record callback did not run\n");
 
-        externalui_ran = externalui_record_ran = 0;
-        r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
-        ok(r == 0, "expected 0, got %u\n", r);
-        ok(externalui_ran == 1, "external UI callback did not run\n");
-        ok(externalui_record_ran == 1, "external UI record callback did not run\n");
+    retval = 1;
+    externalui_ran = externalui_record_ran = 0;
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
+    ok(r == 1, "expected 1, got %u\n", r);
+    ok(externalui_ran == 0, "external UI callback should not have run\n");
+    ok(externalui_record_ran == 1, "external UI record callback did not run\n");
 
-        retval = 1;
-        externalui_ran = externalui_record_ran = 0;
-        r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
-        ok(r == 1, "expected 1, got %u\n", r);
-        ok(externalui_ran == 0, "external UI callback should not have run\n");
-        ok(externalui_record_ran == 1, "external UI record callback did not run\n");
+    /* filter and context should be kept separately */
+    r = MsiSetExternalUIRecord(externalui_record_callback, INSTALLLOGMODE_ERROR, &retval, &prev_record);
+    ok(r == ERROR_SUCCESS, "MsiSetExternalUIRecord failed %u\n", r);
 
-        /* filter and context should be kept separately */
-        r = pMsiSetExternalUIRecord(externalui_record_callback, INSTALLLOGMODE_ERROR, &retval, &prev_record);
-        ok(r == ERROR_SUCCESS, "MsiSetExternalUIRecord failed %u\n", r);
-
-        externalui_ran = externalui_record_ran = 0;
-        r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
-        ok(r == 0, "expected 0, got %u\n", r);
-        ok(externalui_ran == 1, "external UI callback did not run\n");
-        ok(externalui_record_ran == 0, "external UI record callback should not have run\n");
-    }
-    else
-        win_skip("MsiSetExternalUIRecord is not available\n");
+    externalui_ran = externalui_record_ran = 0;
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
+    ok(r == 0, "expected 0, got %u\n", r);
+    ok(externalui_ran == 1, "external UI callback did not run\n");
+    ok(externalui_record_ran == 0, "external UI record callback should not have run\n");
 
     MsiCloseHandle(hpkg);
     DeleteFileA(msifile);
@@ -9496,7 +9481,7 @@ static void test_externalui_message(void)
 
     /* processing SHOWDIALOG with a record handler causes a crash on XP */
     MsiSetExternalUIA(externalui_message_string_callback, INSTALLLOGMODE_SHOWDIALOG, &retval);
-    r = pMsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS ^ INSTALLLOGMODE_SHOWDIALOG, &retval, &prev);
+    r = MsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS ^ INSTALLLOGMODE_SHOWDIALOG, &retval, &prev);
 
     flush_sequence();
 
@@ -9703,8 +9688,7 @@ START_TEST(package)
     test_MsiEnumComponentCosts();
     test_MsiDatabaseCommit();
     test_externalui();
-    if (pMsiSetExternalUIRecord)
-        test_externalui_message();
+    test_externalui_message();
 
     if (pSRSetRestorePointA && !pMsiGetComponentPathExA && ret)
     {
