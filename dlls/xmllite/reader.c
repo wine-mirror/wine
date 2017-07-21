@@ -2951,6 +2951,15 @@ static HRESULT WINAPI xmlreader_GetNodeType(IXmlReader* iface, XmlNodeType *node
     return This->state == XmlReadState_Closed ? S_FALSE : S_OK;
 }
 
+static void reader_set_current_attribute(xmlreader *reader, struct attribute *attr)
+{
+    reader->attr = attr;
+    reader->chunk_read_off = 0;
+    reader_set_strvalue(reader, StringValue_Prefix, &attr->prefix);
+    reader_set_strvalue(reader, StringValue_QualifiedName, &attr->qname);
+    reader_set_strvalue(reader, StringValue_Value, &attr->value);
+}
+
 static HRESULT reader_move_to_first_attribute(xmlreader *reader)
 {
     if (!reader->attr_count)
@@ -2959,11 +2968,7 @@ static HRESULT reader_move_to_first_attribute(xmlreader *reader)
     if (!reader->attr)
         reader_inc_depth(reader);
 
-    reader->attr = LIST_ENTRY(list_head(&reader->attrs), struct attribute, entry);
-    reader->chunk_read_off = 0;
-    reader_set_strvalue(reader, StringValue_Prefix, &reader->attr->prefix);
-    reader_set_strvalue(reader, StringValue_QualifiedName, &reader->attr->qname);
-    reader_set_strvalue(reader, StringValue_Value, &reader->attr->value);
+    reader_set_current_attribute(reader, LIST_ENTRY(list_head(&reader->attrs), struct attribute, entry));
 
     return S_OK;
 }
@@ -2991,13 +2996,7 @@ static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
 
     next = list_next(&This->attrs, &This->attr->entry);
     if (next)
-    {
-        This->attr = LIST_ENTRY(next, struct attribute, entry);
-        This->chunk_read_off = 0;
-        reader_set_strvalue(This, StringValue_Prefix, &This->attr->prefix);
-        reader_set_strvalue(This, StringValue_QualifiedName, &This->attr->qname);
-        reader_set_strvalue(This, StringValue_Value, &This->attr->value);
-    }
+        reader_set_current_attribute(This, LIST_ENTRY(next, struct attribute, entry));
 
     return next ? S_OK : S_FALSE;
 }
@@ -3096,11 +3095,7 @@ static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
         if (name_len == target_name_len && uri_len == target_uri_len &&
                 !strcmpW(name, local_name) && !strcmpW(uri, namespace_uri))
         {
-            This->attr = attr;
-            This->chunk_read_off = 0;
-            reader_set_strvalue(This, StringValue_Prefix, &This->attr->prefix);
-            reader_set_strvalue(This, StringValue_QualifiedName, &This->attr->qname);
-            reader_set_strvalue(This, StringValue_Value, &This->attr->value);
+            reader_set_current_attribute(This, attr);
             return S_OK;
         }
     }
