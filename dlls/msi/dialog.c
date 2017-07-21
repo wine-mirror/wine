@@ -4381,12 +4381,7 @@ static UINT event_end_dialog( msi_dialog *dialog, const WCHAR *argument )
     else if (!strcmpW( argument, ignoreW ))
         dialog->package->CurrentInstallState = ERROR_SUCCESS;
     else if (!strcmpW( argument, returnW ))
-    {
-        msi_dialog *parent = dialog->parent;
-        msi_free( dialog->package->next_dialog );
-        dialog->package->next_dialog = (parent) ? strdupW( parent->name ) : NULL;
         dialog->package->CurrentInstallState = ERROR_SUCCESS;
-    }
     else
     {
         ERR("Unknown argument string %s\n", debugstr_w(argument));
