@@ -3918,6 +3918,8 @@ static BOOL dialog_register_class( void )
 static msi_dialog *dialog_create( MSIPACKAGE *package, const WCHAR *name, msi_dialog *parent,
                                   control_event_handler event_handler )
 {
+    static const WCHAR szDialogCreated[] =
+        {'D','i','a','l','o','g',' ','c','r','e','a','t','e','d',0};
     MSIRECORD *rec = NULL;
     msi_dialog *dialog;
 
@@ -3948,6 +3950,13 @@ static msi_dialog *dialog_create( MSIPACKAGE *package, const WCHAR *name, msi_di
     dialog->control_default = strdupW( MSI_RecordGetString( rec, 9 ) );
     dialog->control_cancel = strdupW( MSI_RecordGetString( rec, 10 ) );
     msiobj_release( &rec->hdr );
+
+    rec = MSI_CreateRecord(2);
+    if (!rec) return NULL;
+    MSI_RecordSetStringW(rec, 1, name);
+    MSI_RecordSetStringW(rec, 2, szDialogCreated);
+    MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, rec);
+    msiobj_release(&rec->hdr);
 
     return dialog;
 }
@@ -4603,17 +4612,6 @@ UINT ACTION_DialogBox( MSIPACKAGE *package, const WCHAR *dialog )
         msi_free( name );
     }
     if (r == ERROR_IO_PENDING) r = ERROR_SUCCESS;
-    if (r == ERROR_SUCCESS)
-    {
-        static const WCHAR szDialogCreated[] =
-            {'D','i','a','l','o','g',' ','c','r','e','a','t','e','d',0};
-        MSIRECORD *row = MSI_CreateRecord(2);
-        if (!row) return ERROR_OUTOFMEMORY;
-        MSI_RecordSetStringW(row, 1, dialog);
-        MSI_RecordSetStringW(row, 2, szDialogCreated);
-        MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, row);
-        msiobj_release(&row->hdr);
-    }
     return r;
 }
 
