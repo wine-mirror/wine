@@ -344,7 +344,7 @@ static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case PHYSICALOFFSETY: return 0;
     case SCALINGFACTORX:  return 0;
     case SCALINGFACTORY:  return 0;
-    case VREFRESH:        return 0;
+    case VREFRESH:        return GetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY ? 1 : 0;
     case DESKTOPVERTRES:  return GetDeviceCaps( dev->hdc, VERTRES );
     case DESKTOPHORZRES:  return GetDeviceCaps( dev->hdc, HORZRES );
     case BLTALIGNMENT:    return 0;

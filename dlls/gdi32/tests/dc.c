@@ -400,6 +400,12 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
             case LOGPIXELSY:
                 hdc_caps *= scale;
                 break;
+            case VREFRESH:
+                if (GetDeviceCaps( hdc, TECHNOLOGY ) == DT_RASDISPLAY)
+                    ok( hdc_caps > 0, "expected a positive value on %s, got %d\n", descr, hdc_caps );
+                else
+                    ok( hdc_caps == 0, "expected 0 on %s, got %d\n", descr, hdc_caps );
+                break;
             }
 
             ok( abs(hdc_caps - GetDeviceCaps( ref_dc, caps[i] )) <= precision,
