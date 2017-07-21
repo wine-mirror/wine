@@ -55,6 +55,7 @@ typedef struct msi_control_tag msi_control;
 typedef UINT (*msi_handler)( msi_dialog *, msi_control *, WPARAM );
 typedef void (*msi_update)( msi_dialog *, msi_control * );
 typedef UINT (*control_event_handler)( msi_dialog *, const WCHAR *, const WCHAR * );
+typedef UINT (*event_handler)( msi_dialog *, const WCHAR * );
 
 struct msi_control_tag
 {
@@ -100,6 +101,8 @@ struct msi_dialog_tag
     HWND hWndFocus;
     LPWSTR control_default;
     LPWSTR control_cancel;
+    event_handler pending_event;
+    LPWSTR pending_argument;
     WCHAR name[1];
 };
 
@@ -993,6 +996,16 @@ static UINT msi_dialog_button_handler( msi_dialog *dialog, msi_control *control,
     }
     r = MSI_IterateRecords( view, 0, msi_dialog_control_event, dialog );
     msiobj_release( &view->hdr );
+
+    /* dialog control events must be processed last regardless of ordering */
+    if (dialog->pending_event)
+    {
+        r = dialog->pending_event( dialog, dialog->pending_argument );
+
+        msi_free( dialog->pending_argument );
+        dialog->pending_event = NULL;
+        dialog->pending_argument = NULL;
+    }
     return r;
 }
 
@@ -4317,8 +4330,6 @@ UINT WINAPI MsiPreviewBillboardA( MSIHANDLE hPreview, LPCSTR szControlName, LPCS
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-typedef UINT (*event_handler)( msi_dialog *, const WCHAR * );
-
 struct control_event
 {
     const WCHAR  *event;
@@ -4386,6 +4397,14 @@ static UINT event_end_dialog( msi_dialog *dialog, const WCHAR *argument )
     return ERROR_SUCCESS;
 }
 
+static UINT pending_event_end_dialog( msi_dialog *dialog, const WCHAR *argument )
+{
+    dialog->pending_event = event_end_dialog;
+    if (dialog->pending_argument) msi_free( dialog->pending_argument );
+    dialog->pending_argument = strdupW( argument );
+    return ERROR_SUCCESS;
+}
+
 /* transition from one modal dialog to another modal dialog */
 static UINT event_new_dialog( msi_dialog *dialog, const WCHAR *argument )
 {
@@ -4393,6 +4412,14 @@ static UINT event_new_dialog( msi_dialog *dialog, const WCHAR *argument )
     dialog->package->next_dialog = strdupW( argument );
     msi_event_cleanup_all_subscriptions( dialog->package );
     msi_dialog_end_dialog( dialog );
+    return ERROR_SUCCESS;
+}
+
+static UINT pending_event_new_dialog( msi_dialog *dialog, const WCHAR *argument )
+{
+    dialog->pending_event = event_new_dialog;
+    if (dialog->pending_argument) msi_free( dialog->pending_argument );
+    dialog->pending_argument = strdupW( argument );
     return ERROR_SUCCESS;
 }
 
@@ -4406,6 +4433,14 @@ static UINT event_spawn_dialog( msi_dialog *dialog, const WCHAR *argument )
     else
         msi_dialog_update_all_controls(dialog);
 
+    return ERROR_SUCCESS;
+}
+
+static UINT pending_event_spawn_dialog( msi_dialog *dialog, const WCHAR *argument )
+{
+    dialog->pending_event = event_spawn_dialog;
+    if (dialog->pending_argument) msi_free( dialog->pending_argument );
+    dialog->pending_argument = strdupW( argument );
     return ERROR_SUCCESS;
 }
 
@@ -4634,9 +4669,9 @@ static const WCHAR validate_product_idW[] = {'V','a','l','i','d','a','t','e','P'
 
 static const struct control_event control_events[] =
 {
-    { end_dialogW, event_end_dialog },
-    { new_dialogW, event_new_dialog },
-    { spawn_dialogW, event_spawn_dialog },
+    { end_dialogW, pending_event_end_dialog },
+    { new_dialogW, pending_event_new_dialog },
+    { spawn_dialogW, pending_event_spawn_dialog },
     { spawn_wait_dialogW, event_spawn_wait_dialog },
     { do_actionW, event_do_action },
     { add_localW, event_add_local },

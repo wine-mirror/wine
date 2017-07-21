@@ -674,6 +674,19 @@ static UINT create_control_table( MSIHANDLE hdb )
             "PRIMARY KEY `Dialog_`, `Control`)");
 }
 
+static UINT create_controlevent_table( MSIHANDLE hdb )
+{
+    return run_query(hdb,
+            "CREATE TABLE `ControlEvent` ("
+            "`Dialog_` CHAR(72) NOT NULL, "
+            "`Control_` CHAR(50) NOT NULL, "
+            "`Event` CHAR(50) NOT NULL, "
+            "`Argument` CHAR(255) NOT NULL, "
+            "`Condition` CHAR(255), "
+            "`Ordering` SHORT "
+            "PRIMARY KEY `Dialog_`, `Control_`, `Event`, `Argument`, `Condition`)");
+}
+
 #define make_add_entry(type, qtext) \
     static UINT add##_##type##_##entry( MSIHANDLE hdb, const char *values ) \
     { \
@@ -756,6 +769,18 @@ make_add_entry(inilocator,
 make_add_entry(custom_action,
                "INSERT INTO `CustomAction`  "
                "(`Action`, `Type`, `Source`, `Target`) VALUES( %s )")
+
+make_add_entry(dialog,
+               "INSERT INTO `Dialog` "
+               "(`Dialog`, `HCentering`, `VCentering`, `Width`, `Height`, `Attributes`, `Control_First`) VALUES ( %s )")
+
+make_add_entry(control,
+               "INSERT INTO `Control` "
+               "(`Dialog_`, `Control`, `Type`, `X`, `Y`, `Width`, `Height`, `Attributes`, `Text`) VALUES( %s )");
+
+make_add_entry(controlevent,
+               "INSERT INTO `ControlEvent` "
+               "(`Dialog_`, `Control_`, `Event`, `Argument`, `Condition`, `Ordering`) VALUES( %s )");
 
 static UINT add_reglocator_entry( MSIHANDLE hdb, const char *sig, UINT root, const char *path,
                                   const char *name, UINT type )
@@ -9562,16 +9587,12 @@ static void test_externalui_message(void)
 
     r = create_dialog_table(hdb);
     ok(r == ERROR_SUCCESS, "failed to create dialog table %u\n", r);
-    r = run_query(hdb, "INSERT INTO `Dialog` (`Dialog`, `HCentering`, "
-                  "`VCentering`, `Width`, `Height`, `Control_First`) "
-                  "VALUES ('dialog', 5, 5, 100, 100, 'dummy')");
+    r = add_dialog_entry(hdb, "'dialog', 50, 50, 100, 100, 0, 'dummy'");
     ok(r == ERROR_SUCCESS, "failed to insert into dialog table %u\n", r);
 
     r = create_control_table(hdb);
     ok(r == ERROR_SUCCESS, "failed to create control table %u\n", r);
-    r = run_query(hdb, "INSERT INTO `Control` (`Dialog_`, `Control`, "
-                  "`Type`, `X`, `Y`, `Width`, `Height`) "
-                  "VALUES('dialog', 'dummy', 'Text', 5, 5, 5, 5)");
+    r = add_control_entry(hdb, "'dialog', 'dummy', 'Text', 5, 5, 5, 5, 3, 'dummy'");
     ok(r == ERROR_SUCCESS, "failed to insert into control table %u", r);
 
     r = package_from_db(hdb, &hpkg);
@@ -9625,6 +9646,137 @@ static void test_externalui_message(void)
     ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);
 
     MsiCloseHandle(hrecord);
+    CoUninitialize();
+    DeleteFileA(msifile);
+    DeleteFileA("forcecodepage.idt");
+}
+
+static const struct externalui_message controlevent_spawn_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "spawn", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "spawn", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_SHOWDIALOG, 0, {"spawn"}, {1}},
+    {INSTALLMESSAGE_ACTIONSTART, 2, {"", "spawn", "Dialog created"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "custom", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 2, {"", "child1", "Dialog created"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_INFO, 2, {"", "spawn", "2"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message controlevent_spawn2_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "spawn2", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "spawn2", "2"}, {0, 1, 1}},
+    {INSTALLMESSAGE_SHOWDIALOG, 0, {"spawn2"}, {1}},
+    {INSTALLMESSAGE_ACTIONSTART, 2, {"", "spawn2", "Dialog created"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "custom", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", "2"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "custom", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 2, {"", "child2", "Dialog created"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_INFO, 2, {"", "spawn2", "2"}, {0, 1, 1}},
+    {0}
+};
+
+static void test_controlevent(void)
+{
+    INSTALLUI_HANDLER_RECORD prev;
+    MSIHANDLE hdb, hpkg;
+    UINT r;
+
+    if (!winetest_interactive)
+    {
+        skip("interactive ControlEvent tests\n");
+        return;
+    }
+
+    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+
+    /* processing SHOWDIALOG with a record handler causes a crash on XP */
+    MsiSetExternalUIA(externalui_message_string_callback, INSTALLLOGMODE_SHOWDIALOG, NULL);
+    r = MsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS ^ INSTALLLOGMODE_SHOWDIALOG, NULL, &prev);
+
+    flush_sequence();
+
+    CoInitialize(NULL);
+
+    hdb = create_package_db();
+    ok(hdb, "failed to create database\n");
+
+    create_file_data("forcecodepage.idt", "\r\n\r\n1252\t_ForceCodepage\r\n");
+    r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_dialog_table(hdb);
+    ok(r == ERROR_SUCCESS, "failed to create Dialog table: %u\n", r);
+    r = add_dialog_entry(hdb, "'spawn', 50, 50, 100, 100, 3, 'button'");
+    ok(r == ERROR_SUCCESS, "failed to insert into Dialog table: %u\n", r);
+    r = add_dialog_entry(hdb, "'spawn2', 50, 50, 100, 100, 3, 'button'");
+    ok(r == ERROR_SUCCESS, "failed to insert into Dialog table: %u\n", r);
+    r = add_dialog_entry(hdb, "'child1', 50, 50, 80, 40, 3, 'exit'");
+    ok(r == ERROR_SUCCESS, "failed to insert into Dialog table: %u\n", r);
+    r = add_dialog_entry(hdb, "'child2', 50, 50, 80, 40, 3, 'exit'");
+    ok(r == ERROR_SUCCESS, "failed to insert into Dialog table: %u\n", r);
+
+    r = create_control_table(hdb);
+    ok(r == ERROR_SUCCESS, "failed to create Control table: %u\n", r);
+    r = add_control_entry(hdb, "'spawn', 'button', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
+    ok(r == ERROR_SUCCESS, "failed to insert into Control table: %u\n", r);
+    r = add_control_entry(hdb, "'spawn2', 'button', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
+    ok(r == ERROR_SUCCESS, "failed to insert into Control table: %u\n", r);
+    r = add_control_entry(hdb, "'child1', 'exit', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
+    ok(r == ERROR_SUCCESS, "failed to insert into Control table: %u\n", r);
+    r = add_control_entry(hdb, "'child2', 'exit', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
+    ok(r == ERROR_SUCCESS, "failed to insert into Control table: %u\n", r);
+
+    r = create_controlevent_table(hdb);
+    ok(r == ERROR_SUCCESS, "failed to create ControlEvent table: %u\n", r);
+    r = add_controlevent_entry(hdb, "'child1', 'exit', 'EndDialog', 'Exit', 1, 1");
+    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+    r = add_controlevent_entry(hdb, "'child2', 'exit', 'EndDialog', 'Exit', 1, 1");
+    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+
+    r = create_custom_action_table(hdb);
+    ok(r == ERROR_SUCCESS, "failed to create CustomAction table: %u\n", r);
+    r = add_custom_action_entry(hdb, "'custom', 51, 'dummy', 'dummy value'");
+    ok(r == ERROR_SUCCESS, "failed to insert into CustomAction table: %u\n", r);
+
+    /* SpawnDialog and EndDialog should trigger after all other events */
+    r = add_controlevent_entry(hdb, "'spawn', 'button', 'SpawnDialog', 'child1', 1, 1");
+    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+    r = add_controlevent_entry(hdb, "'spawn', 'button', 'DoAction', 'custom', 1, 2");
+    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+
+    /* Multiple dialog events cause only the last one to be triggered */
+    r = add_controlevent_entry(hdb, "'spawn2', 'button', 'SpawnDialog', 'child1', 1, 1");
+    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+    r = add_controlevent_entry(hdb, "'spawn2', 'button', 'SpawnDialog', 'child2', 1, 2");
+    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+    r = add_controlevent_entry(hdb, "'spawn2', 'button', 'DoAction', 'custom', 1, 3");
+    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package: %u\n", r);
+    ok_sequence(openpackage_sequence, "MsiOpenPackage()", FALSE);
+
+    r = MsiDoActionA(hpkg, "spawn");
+    todo_wine
+    ok(r == ERROR_INSTALL_USEREXIT, "expected ERROR_INSTALL_USEREXIT, got %u\n", r);
+    ok_sequence(controlevent_spawn_sequence, "control event: spawn", TRUE);
+
+    r = MsiDoActionA(hpkg, "spawn2");
+    todo_wine
+    ok(r == ERROR_INSTALL_USEREXIT, "expected ERROR_INSTALL_USEREXIT, got %u\n", r);
+    ok_sequence(controlevent_spawn2_sequence, "control event: spawn2", TRUE);
+
+    MsiCloseHandle(hpkg);
+    ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);
+
     CoUninitialize();
     DeleteFileA(msifile);
     DeleteFileA("forcecodepage.idt");
@@ -9689,6 +9841,7 @@ START_TEST(package)
     test_MsiDatabaseCommit();
     test_externalui();
     test_externalui_message();
+    test_controlevent();
 
     if (pSRSetRestorePointA && !pMsiGetComponentPathExA && ret)
     {
