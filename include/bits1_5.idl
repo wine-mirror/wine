@@ -86,3 +86,5 @@ interface IBackgroundCopyJob2 : IBackgroundCopyJob
     HRESULT SetCredentials(BG_AUTH_CREDENTIALS *cred);
     HRESULT RemoveCredentials(BG_AUTH_TARGET target, BG_AUTH_SCHEME scheme);
 }
+
+cpp_quote("#include \"bits2_0.h\"")
