@@ -208,7 +208,7 @@ void queue_async( struct async_queue *queue, struct async *async )
     grab_object( async );
     list_add_tail( &queue->queue, &async->queue_entry );
 
-    if (async->fd) set_fd_signaled( async->fd, 0 );
+    set_fd_signaled( async->fd, 0 );
 }
 
 /* create an async on a given queue of a fd */
