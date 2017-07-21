@@ -19,6 +19,11 @@
  */
 
 #include <pcap/pcap.h>
+
+/* pcap.h might define those: */
+#undef SOCKET
+#undef INVALID_SOCKET
+
 #include "winsock2.h"
 #include "windef.h"
 #include "winbase.h"
