@@ -769,7 +769,7 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
             else
             {
                 max_value_len *= 2;
-                value_name = HeapReAlloc(GetProcessHeap(), 0, value_name, max_value_len);
+                value_name = HeapReAlloc(GetProcessHeap(), 0, value_name, max_value_len * sizeof(WCHAR));
             }
         }
         else break;
