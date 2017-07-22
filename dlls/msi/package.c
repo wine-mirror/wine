@@ -1843,7 +1843,7 @@ static INT internal_ui_handler(MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
             ;
         }
     default:
-        FIXME("internal UI not implemented for message 0x%08x (UI level = %x)", eMessageType, package->ui_level);
+        FIXME("internal UI not implemented for message 0x%08x (UI level = %x)\n", eMessageType, package->ui_level);
         return 0;
     }
 }
