@@ -9583,7 +9583,7 @@ static void test_externalui_message(void)
     ok(hdb, "failed to create database\n");
 
     r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = create_dialog_table(hdb);
     ok(r == ERROR_SUCCESS, "failed to create dialog table %u\n", r);
@@ -9593,7 +9593,7 @@ static void test_externalui_message(void)
     r = create_control_table(hdb);
     ok(r == ERROR_SUCCESS, "failed to create control table %u\n", r);
     r = add_control_entry(hdb, "'dialog', 'dummy', 'Text', 5, 5, 5, 5, 3, 'dummy'");
-    ok(r == ERROR_SUCCESS, "failed to insert into control table %u", r);
+    ok(r == ERROR_SUCCESS, "failed to insert into control table %u\n", r);
 
     r = package_from_db(hdb, &hpkg);
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
