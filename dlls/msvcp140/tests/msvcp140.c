@@ -864,7 +864,7 @@ static void test_dir_operation(void)
     WCHAR f2W[] = {'f','2',0};
     WCHAR sub_dirW[] = {'s','u','b','_','d','i','r',0};
     WCHAR not_existW[] = {'n','o','t','_','e','x','i','s','t',0};
-    WCHAR emtpy_dirW[] = {'e','m','p','t','y','_','d','i','r',0};
+    WCHAR empty_dirW[] = {'e','m','p','t','y','_','d','i','r',0};
 
     memset(origin_path, 0, sizeof(origin_path));
     memset(origin_path, 0, sizeof(temp_path));
@@ -939,11 +939,11 @@ static void test_dir_operation(void)
     ok((int)type == 0xdeadbeef, "_Open_dir(): expect: 0xdeadbeef, got %d\n", type);
     ok(!*first_file_name, "_Open_dir(): expect: 0, got %s\n", wine_dbgstr_w(first_file_name));
 
-    CreateDirectoryW(emtpy_dirW, NULL);
+    CreateDirectoryW(empty_dirW, NULL);
     memset(first_file_name, 0, sizeof(first_file_name));
     err = type = 0xdeadbeef;
     result_handle = file;
-    result_handle = p_Open_dir(first_file_name, emtpy_dirW, &err, &type);
+    result_handle = p_Open_dir(first_file_name, empty_dirW, &err, &type);
     ok(result_handle == NULL, "_Open_dir(): expect: NULL, got %p\n", result_handle);
     ok(err == ERROR_SUCCESS, "_Open_dir(): expect: ERROR_SUCCESS, got %d\n", err);
     ok(type == status_unknown, "_Open_dir(): expect: status_unknown, got %d\n", type);
@@ -951,7 +951,7 @@ static void test_dir_operation(void)
     p_Close_dir(result_handle);
     ok(result_handle == NULL, "_Open_dir(): expect: NULL, got %p\n", result_handle);
 
-    ok(RemoveDirectoryW(emtpy_dirW), "expect empty_dir to exist\n");
+    ok(RemoveDirectoryW(empty_dirW), "expect empty_dir to exist\n");
     ok(DeleteFileW(test_sub_dir_f1W), "expect wine_test_dir/sub_dir/sub_f1 to exist\n");
     ok(RemoveDirectoryW(test_sub_dirW), "expect wine_test_dir/sub_dir to exist\n");
     ok(DeleteFileW(test_f1W), "expect wine_test_dir/f1 to exist\n");
