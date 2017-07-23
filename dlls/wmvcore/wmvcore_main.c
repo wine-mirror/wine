@@ -73,6 +73,7 @@ typedef struct {
     IWMReaderTimecode IWMReaderTimecode_iface;
     IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
     IWMHeaderInfo3 IWMHeaderInfo3_iface;
+    IWMLanguageList IWMLanguageList_iface;
     LONG ref;
 } WMReader;
 
@@ -139,6 +140,9 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IWMHeaderInfo3)) {
         TRACE("(%p)->(IWMHeaderInfo3 %p)\n", This, ppv);
         *ppv = &This->IWMHeaderInfo3_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMLanguageList)) {
+        TRACE("(%p)->(IWMLanguageList %p)\n", This, ppv);
+        *ppv = &This->IWMLanguageList_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -1580,6 +1584,63 @@ static const IWMHeaderInfo3Vtbl WMHeaderInfo3Vtbl =
     headerinfo_AddCodecInfo
 };
 
+
+static inline WMReader *impl_from_IWMLanguageList(IWMLanguageList *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IWMLanguageList_iface);
+}
+
+static HRESULT WINAPI langlist_QueryInterface(IWMLanguageList *iface, REFIID riid, void **ppv)
+{
+    WMReader *This = impl_from_IWMLanguageList(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
+}
+
+static ULONG WINAPI langlist_AddRef(IWMLanguageList *iface)
+{
+    WMReader *This = impl_from_IWMLanguageList(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI langlist_Release(IWMLanguageList *iface)
+{
+    WMReader *This = impl_from_IWMLanguageList(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI langlist_GetLanguageCount(IWMLanguageList *iface, WORD *count)
+{
+    WMReader *This = impl_from_IWMLanguageList(iface);
+    FIXME("%p, %p\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI langlist_GetLanguageDetails(IWMLanguageList *iface, WORD index,
+        WCHAR *language, WORD *length)
+{
+    WMReader *This = impl_from_IWMLanguageList(iface);
+    FIXME("%p, %d, %p, %p\n", This, index, language, length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI langlist_AddLanguageByRFC1766String(IWMLanguageList *iface, LPCWSTR_WMSDK_TYPE_SAFE language,
+        WORD *index)
+{
+    WMReader *This = impl_from_IWMLanguageList(iface);
+    FIXME("%p, %p, %p\n", This, language, index);
+    return E_NOTIMPL;
+}
+
+static const IWMLanguageListVtbl WMLanguageListVtbl =
+{
+    langlist_QueryInterface,
+    langlist_AddRef,
+    langlist_Release,
+    langlist_GetLanguageCount,
+    langlist_GetLanguageDetails,
+    langlist_AddLanguageByRFC1766String
+};
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
     WMReader *reader;
@@ -1599,6 +1660,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMReaderTimecode_iface.lpVtbl = &WMReaderTimecodeVtbl;
     reader->IWMReaderPlaylistBurn_iface.lpVtbl = &WMReaderPlaylistBurnVtbl;
     reader->IWMHeaderInfo3_iface.lpVtbl = &WMHeaderInfo3Vtbl;
+    reader->IWMLanguageList_iface.lpVtbl = &WMLanguageListVtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;
