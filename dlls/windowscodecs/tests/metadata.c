@@ -1750,6 +1750,7 @@ static void test_metadata_gif(void)
         hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, queryW, &value);
         ok(hr == S_OK, "GetMetadataByName(%s) error %#x\n", wine_dbgstr_w(queryW), hr);
         ok(value.vt == VT_UNKNOWN, "expected VT_UNKNOWN, got %#x\n", value.vt);
+        PropVariantClear(&value);
 
         IWICMetadataQueryReader_Release(queryreader);
     }
