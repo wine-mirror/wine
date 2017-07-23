@@ -2465,21 +2465,6 @@ struct metadata
     const struct metadata_block *block;
 };
 
-struct metadata_reader
-{
-    IWICMetadataReader IWICMetadataReader_iface;
-    LONG ref;
-    const struct metadata_block *block;
-};
-
-struct metadata_block_reader
-{
-    IWICMetadataBlockReader IWICMetadataBlockReader_iface;
-    LONG ref;
-    UINT count;
-    const struct metadata_block *block;
-};
-
 static const struct metadata *current_metadata;
 static const struct metadata_block *current_metadata_block;
 
