@@ -40,6 +40,7 @@ DEFINE_GUID(IID_IXmlWriterOutput, 0xc1131708, 0x0f59, 0x477f, 0x93, 0x59, 0x7d, 
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof((array)[0]))
 
 static const WCHAR closeelementW[] = {'<','/'};
+static const WCHAR closetagW[] = {' ','/','>'};
 static const WCHAR closepiW[] = {'?','>'};
 static const WCHAR ltW[] = {'<'};
 static const WCHAR gtW[] = {'>'};
@@ -835,26 +836,27 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     case XmlWriterState_ElemStarted:
         writer_close_starttag(This);
         break;
-    case XmlWriterState_Ready:
-    case XmlWriterState_DocStarted:
-    case XmlWriterState_PIDocStarted:
-        break;
-    default:
-        This->state = XmlWriterState_DocClosed;
+    case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
+    default:
+        ;
     }
 
     write_encoding_bom(This);
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));
     write_output_qname(This->output, prefix, local_name);
-    write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
 
     if (value)
+    {
+        write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
         write_output_buffer(This->output, value, -1);
+        write_output_buffer(This->output, closeelementW, ARRAY_SIZE(closeelementW));
+        write_output_qname(This->output, prefix, local_name);
+        write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
+    }
+    else
+        write_output_buffer(This->output, closetagW, ARRAY_SIZE(closetagW));
 
-    write_output_buffer(This->output, closeelementW, ARRAY_SIZE(closeelementW));
-    write_output_qname(This->output, prefix, local_name);
-    write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
     This->state = XmlWriterState_Content;
 
     return S_OK;
@@ -911,8 +913,8 @@ static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
 
     writer_dec_indent(This);
 
-    if (This->starttagopen) {
-        static WCHAR closetagW[] = {' ','/','>'};
+    if (This->starttagopen)
+    {
         write_output_buffer(This->output, closetagW, ARRAY_SIZE(closetagW));
         This->starttagopen = FALSE;
     }
