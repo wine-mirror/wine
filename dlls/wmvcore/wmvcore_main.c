@@ -76,6 +76,7 @@ typedef struct {
     IWMLanguageList IWMLanguageList_iface;
     IReferenceClock IReferenceClock_iface;
     IWMProfile3 IWMProfile3_iface;
+    IWMPacketSize2 IWMPacketSize2_iface;
     LONG ref;
 } WMReader;
 
@@ -157,6 +158,12 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IWMProfile3)) {
         TRACE("(%p)->(IWMProfile3 %p)\n", This, ppv);
         *ppv = &This->IWMProfile3_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMPacketSize)) {
+        TRACE("(%p)->(IWMPacketSize %p)\n", This, ppv);
+        *ppv = &This->IWMPacketSize2_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMPacketSize2)) {
+        TRACE("(%p)->(IWMPacketSize2 %p)\n", This, ppv);
+        *ppv = &This->IWMPacketSize2_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -1999,6 +2006,68 @@ static const IWMProfile3Vtbl WMProfile3Vtbl =
     profile3_GetExpectedPacketCount
 };
 
+static inline WMReader *impl_from_IWMPacketSize2(IWMPacketSize2 *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IWMPacketSize2_iface);
+}
+
+static HRESULT WINAPI packetsize_QueryInterface(IWMPacketSize2 *iface, REFIID riid, void **ppv)
+{
+    WMReader *This = impl_from_IWMPacketSize2(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
+}
+
+static ULONG WINAPI packetsize_AddRef(IWMPacketSize2 *iface)
+{
+    WMReader *This = impl_from_IWMPacketSize2(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI packetsize_Release(IWMPacketSize2 *iface)
+{
+    WMReader *This = impl_from_IWMPacketSize2(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI packetsize_GetMaxPacketSize(IWMPacketSize2 *iface, DWORD *size)
+{
+    WMReader *This = impl_from_IWMPacketSize2(iface);
+    FIXME("%p, %p\n", This, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI packetsize_SetMaxPacketSize(IWMPacketSize2 *iface, DWORD size)
+{
+    WMReader *This = impl_from_IWMPacketSize2(iface);
+    FIXME("%p, %d\n", This, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI packetsize_GetMinPacketSize(IWMPacketSize2 *iface, DWORD *size)
+{
+    WMReader *This = impl_from_IWMPacketSize2(iface);
+    FIXME("%p, %p\n", This, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI packetsize_SetMinPacketSize(IWMPacketSize2 *iface, DWORD size)
+{
+    WMReader *This = impl_from_IWMPacketSize2(iface);
+    FIXME("%p, %d\n", This, size);
+    return E_NOTIMPL;
+}
+
+static const IWMPacketSize2Vtbl WMPacketSize2Vtbl =
+{
+    packetsize_QueryInterface,
+    packetsize_AddRef,
+    packetsize_Release,
+    packetsize_GetMaxPacketSize,
+    packetsize_SetMaxPacketSize,
+    packetsize_GetMinPacketSize,
+    packetsize_SetMinPacketSize
+};
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
     WMReader *reader;
@@ -2021,6 +2090,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMLanguageList_iface.lpVtbl = &WMLanguageListVtbl;
     reader->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
     reader->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
+    reader->IWMPacketSize2_iface.lpVtbl = &WMPacketSize2Vtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;
