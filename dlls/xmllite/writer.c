@@ -447,7 +447,9 @@ static void write_node_indent(xmlwriter *writer)
     if (!writer->indent)
         return;
 
-    if (writer->output->buffer.written)
+    /* Do state check to prevent newline inserted after BOM. It is assumed that
+       state does not change between writing BOM and inserting indentation. */
+    if (writer->output->buffer.written && writer->state != XmlWriterState_Ready)
         write_output_buffer(writer->output, crlfW, ARRAY_SIZE(crlfW));
     while (indent_level--)
         write_output_buffer(writer->output, dblspaceW, ARRAY_SIZE(dblspaceW));
@@ -1208,12 +1210,13 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
         return E_OUTOFMEMORY;
 
     write_encoding_bom(This);
+    write_node_indent(This);
+
     This->state = XmlWriterState_ElemStarted;
     This->starttagopen = TRUE;
 
     push_element(This, element);
 
-    write_node_indent(This);
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));
     write_output_qname(This->output, prefix, local_name);
     writer_inc_indent(This);

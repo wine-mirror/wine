@@ -648,6 +648,8 @@ static void test_bom(void)
     hr = IXmlWriter_SetOutput(writer, output);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    writer_set_property(writer, XmlWriterProperty_Indent);
+
     hr = IXmlWriter_WriteElementString(writer, NULL, aW, NULL, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -658,7 +660,8 @@ static void test_bom(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     ptr = GlobalLock(hglobal);
-    ok(ptr[0] == 0xff && ptr[1] == 0xfe, "got %x,%x\n", ptr[0], ptr[1]);
+    ok(ptr[0] == 0xff && ptr[1] == 0xfe && ptr[2] == '<', "Unexpected output: %#x,%#x,%#x\n",
+            ptr[0], ptr[1], ptr[2]);
     GlobalUnlock(hglobal);
 
     IUnknown_Release(output);
