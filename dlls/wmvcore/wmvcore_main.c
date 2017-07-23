@@ -75,6 +75,7 @@ typedef struct {
     IWMHeaderInfo3 IWMHeaderInfo3_iface;
     IWMLanguageList IWMLanguageList_iface;
     IReferenceClock IReferenceClock_iface;
+    IWMProfile3 IWMProfile3_iface;
     LONG ref;
 } WMReader;
 
@@ -147,6 +148,15 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IReferenceClock)) {
         TRACE("(%p)->(IWMLanguageList %p)\n", This, ppv);
         *ppv = &This->IReferenceClock_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMProfile)) {
+        TRACE("(%p)->(IWMProfile %p)\n", This, ppv);
+        *ppv = &This->IWMProfile3_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMProfile2)) {
+        TRACE("(%p)->(IWMProfile2 %p)\n", This, ppv);
+        *ppv = &This->IWMProfile3_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMProfile3)) {
+        TRACE("(%p)->(IWMProfile3 %p)\n", This, ppv);
+        *ppv = &This->IWMProfile3_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -1711,6 +1721,284 @@ static const IReferenceClockVtbl ReferenceClockVtbl =
     refclock_Unadvise
 };
 
+static inline WMReader *impl_from_IWMProfile3(IWMProfile3 *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IWMProfile3_iface);
+}
+
+static HRESULT WINAPI profile3_QueryInterface(IWMProfile3 *iface, REFIID riid, void **ppv)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
+}
+
+static ULONG WINAPI profile3_AddRef(IWMProfile3 *iface)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI profile3_Release(IWMProfile3 *iface)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI profile3_GetVersion(IWMProfile3 *iface, WMT_VERSION *version)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, version);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetName(IWMProfile3 *iface, WCHAR *name, DWORD *length)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p, %p\n", This, name, length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_SetName(IWMProfile3 *iface, const WCHAR *name)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %s\n", This, debugstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetDescription(IWMProfile3 *iface, WCHAR *description, DWORD *length)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p, %p\n", This, description, length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_SetDescription(IWMProfile3 *iface, const WCHAR *description)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %s\n", This, debugstr_w(description));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetStreamCount(IWMProfile3 *iface, DWORD *count)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetStream(IWMProfile3 *iface, DWORD index, IWMStreamConfig **config)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %d, %p\n", This, index, config);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetStreamByNumber(IWMProfile3 *iface, WORD stream, IWMStreamConfig **config)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %d, %p\n", This, stream, config);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_RemoveStream(IWMProfile3 *iface, IWMStreamConfig *config)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, config);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_RemoveStreamByNumber(IWMProfile3 *iface, WORD stream)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %d\n", This, stream);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_AddStream(IWMProfile3 *iface, IWMStreamConfig *config)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, config);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_ReconfigStream(IWMProfile3 *iface, IWMStreamConfig *config)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, config);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_CreateNewStream(IWMProfile3 *iface, REFGUID type, IWMStreamConfig **config)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %s, %p\n", This, debugstr_guid(type), config);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetMutualExclusionCount(IWMProfile3 *iface, DWORD *count)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetMutualExclusion(IWMProfile3 *iface, DWORD index, IWMMutualExclusion **mutual)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %d, %p\n", This, index, mutual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_RemoveMutualExclusion(IWMProfile3 *iface, IWMMutualExclusion *mutual)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, mutual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_AddMutualExclusion(IWMProfile3 *iface, IWMMutualExclusion *mutual)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, mutual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_CreateNewMutualExclusion(IWMProfile3 *iface, IWMMutualExclusion **mutual)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, mutual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetProfileID(IWMProfile3 *iface, GUID *guid)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, guid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetStorageFormat(IWMProfile3 *iface, WMT_STORAGE_FORMAT *storage)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, storage);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_SetStorageFormat(IWMProfile3 *iface, WMT_STORAGE_FORMAT storage)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %d\n", This, storage);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetBandwidthSharingCount(IWMProfile3 *iface, DWORD *count)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetBandwidthSharing(IWMProfile3 *iface, DWORD index, IWMBandwidthSharing **bandwidth)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %d, %p\n", This, index, bandwidth);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_RemoveBandwidthSharing( IWMProfile3 *iface, IWMBandwidthSharing *bandwidth)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, bandwidth);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_AddBandwidthSharing(IWMProfile3 *iface, IWMBandwidthSharing *bandwidth)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, bandwidth);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_CreateNewBandwidthSharing( IWMProfile3 *iface, IWMBandwidthSharing **bandwidth)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, bandwidth);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetStreamPrioritization(IWMProfile3 *iface, IWMStreamPrioritization **stream)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, stream);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_SetStreamPrioritization(IWMProfile3 *iface, IWMStreamPrioritization *stream)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, stream);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_RemoveStreamPrioritization(IWMProfile3 *iface)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_CreateNewStreamPrioritization(IWMProfile3 *iface, IWMStreamPrioritization **stream)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %p\n", This, stream);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI profile3_GetExpectedPacketCount(IWMProfile3 *iface, QWORD duration, QWORD *packets)
+{
+    WMReader *This = impl_from_IWMProfile3(iface);
+    FIXME("%p, %s, %p\n", This, wine_dbgstr_longlong(duration), packets);
+    return E_NOTIMPL;
+}
+
+static const IWMProfile3Vtbl WMProfile3Vtbl =
+{
+    profile3_QueryInterface,
+    profile3_AddRef,
+    profile3_Release,
+    profile3_GetVersion,
+    profile3_GetName,
+    profile3_SetName,
+    profile3_GetDescription,
+    profile3_SetDescription,
+    profile3_GetStreamCount,
+    profile3_GetStream,
+    profile3_GetStreamByNumber,
+    profile3_RemoveStream,
+    profile3_RemoveStreamByNumber,
+    profile3_AddStream,
+    profile3_ReconfigStream,
+    profile3_CreateNewStream,
+    profile3_GetMutualExclusionCount,
+    profile3_GetMutualExclusion,
+    profile3_RemoveMutualExclusion,
+    profile3_AddMutualExclusion,
+    profile3_CreateNewMutualExclusion,
+    profile3_GetProfileID,
+    profile3_GetStorageFormat,
+    profile3_SetStorageFormat,
+    profile3_GetBandwidthSharingCount,
+    profile3_GetBandwidthSharing,
+    profile3_RemoveBandwidthSharing,
+    profile3_AddBandwidthSharing,
+    profile3_CreateNewBandwidthSharing,
+    profile3_GetStreamPrioritization,
+    profile3_SetStreamPrioritization,
+    profile3_RemoveStreamPrioritization,
+    profile3_CreateNewStreamPrioritization,
+    profile3_GetExpectedPacketCount
+};
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
     WMReader *reader;
@@ -1732,6 +2020,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMHeaderInfo3_iface.lpVtbl = &WMHeaderInfo3Vtbl;
     reader->IWMLanguageList_iface.lpVtbl = &WMLanguageListVtbl;
     reader->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
+    reader->IWMProfile3_iface.lpVtbl = &WMProfile3Vtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;

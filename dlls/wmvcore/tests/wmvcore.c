@@ -109,13 +109,13 @@ static void test_wmreader_interfaces(void)
     ok(hr == S_OK, "Failed 0x%08x\n", hr);
 
     hr = IWMReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
-    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed 0x%08x\n", hr);
 
     hr = IWMReader_QueryInterface(reader, &IID_IWMProfile2, (void **)&profile2);
-    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed 0x%08x\n", hr);
 
     hr = IWMReader_QueryInterface(reader, &IID_IWMProfile3, (void **)&profile3);
-    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed 0x%08x\n", hr);
 
     hr = IWMReader_QueryInterface(reader, &IID_IWMPacketSize, (void **)&packet);
     todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
