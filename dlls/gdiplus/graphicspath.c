@@ -2109,7 +2109,10 @@ static void widen_dashed_figure(GpPath *path, GpPen *pen, int start, int end,
         dash_pattern_scaled[i] = pen->width * dash_pattern[i];
 
     tmp_points = heap_alloc_zero((end - start + 2) * sizeof(GpPoint));
-    if (!tmp_points) return; /* FIXME */
+    if (!tmp_points) {
+        heap_free(dash_pattern_scaled);
+        return; /* FIXME */
+    }
 
     if (!closed)
         draw_start_cap = 1;
