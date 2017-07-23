@@ -1767,9 +1767,9 @@ static INT internal_ui_handler(MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     case INSTALLMESSAGE_SHOWDIALOG:
     {
         LPWSTR dialog = msi_dup_record_field(record, 0);
-        UINT rc = ACTION_DialogBox(package, dialog);
+        INT rc = ACTION_DialogBox(package, dialog);
         msi_free(dialog);
-        return (rc == ERROR_SUCCESS);
+        return rc;
     }
     case INSTALLMESSAGE_ACTIONSTART:
     {

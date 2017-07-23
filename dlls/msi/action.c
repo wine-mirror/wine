@@ -498,9 +498,6 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
 
     msi_dialog_check_messages( NULL );
 
-    if (package->CurrentInstallState != ERROR_SUCCESS)
-        rc = package->CurrentInstallState;
-
     if (rc == ERROR_FUNCTION_NOT_CALLED)
         rc = ERROR_SUCCESS;
 

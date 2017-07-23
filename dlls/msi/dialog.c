@@ -103,6 +103,7 @@ struct msi_dialog_tag
     LPWSTR control_cancel;
     event_handler pending_event;
     LPWSTR pending_argument;
+    INT retval;
     WCHAR name[1];
 };
 
@@ -4245,10 +4246,11 @@ struct control_event
 static UINT dialog_event_handler( msi_dialog *, const WCHAR *, const WCHAR * );
 
 /* create a dialog box and run it if it's modal */
-static UINT event_do_dialog( MSIPACKAGE *package, const WCHAR *name, msi_dialog *parent, BOOL destroy_modeless )
+static INT event_do_dialog( MSIPACKAGE *package, const WCHAR *name, msi_dialog *parent, BOOL destroy_modeless )
 {
     msi_dialog *dialog;
     UINT r;
+    INT retval;
 
     /* create a new dialog */
     dialog = dialog_create( package, name, parent, dialog_event_handler );
@@ -4264,12 +4266,18 @@ static UINT event_do_dialog( MSIPACKAGE *package, const WCHAR *name, msi_dialog 
         /* modeless dialogs return an error message */
         r = dialog_run_message_loop( dialog );
         if (r == ERROR_SUCCESS)
+        {
+            retval = dialog->retval;
             msi_dialog_destroy( dialog );
+            return retval;
+        }
         else
+        {
             package->dialog = dialog;
+            return IDOK;
+        }
     }
-    else r = ERROR_FUNCTION_FAILED;
-    return r;
+    else return 0;
 }
 
 /* end a modal dialog box */
@@ -4281,17 +4289,17 @@ static UINT event_end_dialog( msi_dialog *dialog, const WCHAR *argument )
     static const WCHAR returnW[] = {'R','e','t','u','r','n',0};
 
     if (!strcmpW( argument, exitW ))
-        dialog->package->CurrentInstallState = ERROR_INSTALL_USEREXIT;
+        dialog->retval = IDCANCEL;
     else if (!strcmpW( argument, retryW ))
-        dialog->package->CurrentInstallState = ERROR_INSTALL_SUSPEND;
+        dialog->retval = IDRETRY;
     else if (!strcmpW( argument, ignoreW ))
-        dialog->package->CurrentInstallState = ERROR_SUCCESS;
+        dialog->retval = IDOK;
     else if (!strcmpW( argument, returnW ))
-        dialog->package->CurrentInstallState = ERROR_SUCCESS;
+        dialog->retval = 0;
     else
     {
         ERR("Unknown argument string %s\n", debugstr_w(argument));
-        dialog->package->CurrentInstallState = ERROR_FUNCTION_FAILED;
+        dialog->retval = IDABORT;
     }
     event_cleanup_subscriptions( dialog->package, dialog->name );
     msi_dialog_end_dialog( dialog );
@@ -4327,10 +4335,14 @@ static UINT pending_event_new_dialog( msi_dialog *dialog, const WCHAR *argument 
 /* create a new child dialog of an existing modal dialog */
 static UINT event_spawn_dialog( msi_dialog *dialog, const WCHAR *argument )
 {
+    INT r;
     /* don't destroy a modeless dialogs that might be our parent */
-    event_do_dialog( dialog->package, argument, dialog, FALSE );
-    if (dialog->package->CurrentInstallState != ERROR_SUCCESS)
+    r = event_do_dialog( dialog->package, argument, dialog, FALSE );
+    if (r != 0)
+    {
+        dialog->retval = r;
         msi_dialog_end_dialog( dialog );
+    }
     else
         msi_dialog_update_all_controls(dialog);
 
@@ -4472,26 +4484,20 @@ INT ACTION_ShowDialog( MSIPACKAGE *package, const WCHAR *dialog )
     return rc;
 }
 
-/* Return ERROR_SUCCESS if dialog is process and ERROR_FUNCTION_FAILED
- * if the given parameter is not a dialog box
- */
-UINT ACTION_DialogBox( MSIPACKAGE *package, const WCHAR *dialog )
+INT ACTION_DialogBox( MSIPACKAGE *package, const WCHAR *dialog )
 {
-    UINT r;
+    INT r;
 
     if (package->next_dialog) ERR("Already got next dialog... ignoring it\n");
     package->next_dialog = NULL;
 
-    /* Dialogs are chained by filling in the next_dialog member
-     * of the package structure, then terminating the current dialog.
-     * The code below sees the next_dialog member set, and runs the
-     * next dialog.
-     * We fall out of the loop below if we come across a modeless
-     * dialog, as it returns ERROR_IO_PENDING when we try to run
-     * its message loop.
+    /* Dialogs are chained through NewDialog, which sets the next_dialog member.
+     * We fall out of the loop if we reach a modeless dialog, which immediately
+     * returns IDOK, or an EndDialog event, which returns the value corresponding
+     * to its argument.
      */
     r = event_do_dialog( package, dialog, NULL, TRUE );
-    while (r == ERROR_SUCCESS && package->next_dialog)
+    while (package->next_dialog)
     {
         WCHAR *name = package->next_dialog;
 
@@ -4499,7 +4505,6 @@ UINT ACTION_DialogBox( MSIPACKAGE *package, const WCHAR *dialog )
         r = event_do_dialog( package, name, NULL, TRUE );
         msi_free( name );
     }
-    if (r == ERROR_IO_PENDING) r = ERROR_SUCCESS;
     return r;
 }
 

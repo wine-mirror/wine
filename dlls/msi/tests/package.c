@@ -9806,14 +9806,12 @@ static void test_controlevent(void)
     ok_sequence(openpackage_sequence, "MsiOpenPackage()", FALSE);
 
     r = MsiDoActionA(hpkg, "spawn");
-    todo_wine
     ok(r == ERROR_INSTALL_USEREXIT, "expected ERROR_INSTALL_USEREXIT, got %u\n", r);
-    ok_sequence(controlevent_spawn_sequence, "control event: spawn", TRUE);
+    ok_sequence(controlevent_spawn_sequence, "control event: spawn", FALSE);
 
     r = MsiDoActionA(hpkg, "spawn2");
-    todo_wine
     ok(r == ERROR_INSTALL_USEREXIT, "expected ERROR_INSTALL_USEREXIT, got %u\n", r);
-    ok_sequence(controlevent_spawn2_sequence, "control event: spawn2", TRUE);
+    ok_sequence(controlevent_spawn2_sequence, "control event: spawn2", FALSE);
 
     MsiCloseHandle(hpkg);
     ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);

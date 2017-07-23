@@ -414,7 +414,6 @@ typedef struct tagMSIPACKAGE
     BOOL delete_on_close;
 
     INSTALLUILEVEL ui_level;
-    UINT CurrentInstallState;
     msi_dialog *dialog;
     LPWSTR next_dialog;
     float center_x;
@@ -803,7 +802,7 @@ extern void msi_free_patchinfo( MSIPATCHINFO *patch ) DECLSPEC_HIDDEN;
 /* action internals */
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR ) DECLSPEC_HIDDEN;
 extern INT ACTION_ShowDialog( MSIPACKAGE*, LPCWSTR) DECLSPEC_HIDDEN;
-extern UINT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR) DECLSPEC_HIDDEN;
+extern INT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR) DECLSPEC_HIDDEN;
 extern UINT ACTION_ForceReboot(MSIPACKAGE *package) DECLSPEC_HIDDEN;
 extern UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable ) DECLSPEC_HIDDEN;
 extern UINT MSI_SetFeatureStates( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
