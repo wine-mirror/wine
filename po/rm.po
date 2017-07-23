@@ -6814,26 +6814,6 @@ msgstr ""
 msgid "choose which folder contains %s"
 msgstr ""
 
-#: msi.rc:77
-msgid "Action %s: [1]. [2]"
-msgstr ""
-
-#: msi.rc:78
-msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr ""
-
-#: msi.rc:79
-msgid "Action start %s: [1]."
-msgstr ""
-
-#: msi.rc:80
-msgid "Action ended %s: [1]. Return value [2]."
-msgstr ""
-
-#: msi.rc:81
-msgid "=== Logging started: %s  %s ==="
-msgstr ""
-
 #: msi.rc:90
 msgid "Allocating registry space"
 msgstr ""
@@ -7241,6 +7221,26 @@ msgstr ""
 
 #: msi.rc:76
 msgid "{{Disk full: }}"
+msgstr ""
+
+#: msi.rc:77
+msgid "Action %s: [1]. [2]"
+msgstr ""
+
+#: msi.rc:78
+msgid "Message type: [1], Argument: [2]{, [3]}"
+msgstr ""
+
+#: msi.rc:81
+msgid "=== Logging started: %s  %s ==="
+msgstr ""
+
+#: msi.rc:79
+msgid "Action start %s: [1]."
+msgstr ""
+
+#: msi.rc:80
+msgid "Action ended %s: [1]. Return value [2]."
 msgstr ""
 
 #: msi.rc:83

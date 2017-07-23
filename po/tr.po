@@ -6887,26 +6887,6 @@ msgstr "özellik buradan:"
 msgid "choose which folder contains %s"
 msgstr "%s öğesini içeren dizini seçin"
 
-#: msi.rc:77
-msgid "Action %s: [1]. [2]"
-msgstr "%s eylemi: [1]. [2]"
-
-#: msi.rc:78
-msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr "İleti türü: [1], Değişken: [2]{, [3]}"
-
-#: msi.rc:79
-msgid "Action start %s: [1]."
-msgstr "%s eylem başlangıcı: [1]."
-
-#: msi.rc:80
-msgid "Action ended %s: [1]. Return value [2]."
-msgstr "%s eylem bitişi: [1]. Dönüş değeri [2]."
-
-#: msi.rc:81
-msgid "=== Logging started: %s  %s ==="
-msgstr "=== Günlük başlangıcı: %s  %s ==="
-
 #: msi.rc:90
 msgid "Allocating registry space"
 msgstr "Kayıt günlük boşluğu ayarlanıyor"
@@ -7305,6 +7285,26 @@ msgstr ""
 #: msi.rc:76
 msgid "{{Disk full: }}"
 msgstr "{{Disk dolu: }}"
+
+#: msi.rc:77
+msgid "Action %s: [1]. [2]"
+msgstr "%s eylemi: [1]. [2]"
+
+#: msi.rc:78
+msgid "Message type: [1], Argument: [2]{, [3]}"
+msgstr "İleti türü: [1], Değişken: [2]{, [3]}"
+
+#: msi.rc:81
+msgid "=== Logging started: %s  %s ==="
+msgstr "=== Günlük başlangıcı: %s  %s ==="
+
+#: msi.rc:79
+msgid "Action start %s: [1]."
+msgstr "%s eylem başlangıcı: [1]."
+
+#: msi.rc:80
+msgid "Action ended %s: [1]. Return value [2]."
+msgstr "%s eylem bitişi: [1]. Dönüş değeri [2]."
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"

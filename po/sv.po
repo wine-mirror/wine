@@ -6883,26 +6883,6 @@ msgstr "funktion från:"
 msgid "choose which folder contains %s"
 msgstr "välj den mapp som innehåller %s"
 
-#: msi.rc:77
-msgid "Action %s: [1]. [2]"
-msgstr ""
-
-#: msi.rc:78
-msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr ""
-
-#: msi.rc:79
-msgid "Action start %s: [1]."
-msgstr ""
-
-#: msi.rc:80
-msgid "Action ended %s: [1]. Return value [2]."
-msgstr ""
-
-#: msi.rc:81
-msgid "=== Logging started: %s  %s ==="
-msgstr ""
-
 #: msi.rc:90
 #, fuzzy
 #| msgid "No registry log space.\n"
@@ -7379,6 +7359,26 @@ msgstr ""
 #| msgid "Disk full.\n"
 msgid "{{Disk full: }}"
 msgstr "Disken är full.\n"
+
+#: msi.rc:77
+msgid "Action %s: [1]. [2]"
+msgstr ""
+
+#: msi.rc:78
+msgid "Message type: [1], Argument: [2]{, [3]}"
+msgstr ""
+
+#: msi.rc:81
+msgid "=== Logging started: %s  %s ==="
+msgstr ""
+
+#: msi.rc:79
+msgid "Action start %s: [1]."
+msgstr ""
+
+#: msi.rc:80
+msgid "Action ended %s: [1]. Return value [2]."
+msgstr ""
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"

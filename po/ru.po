@@ -6893,26 +6893,6 @@ msgstr "функции из:"
 msgid "choose which folder contains %s"
 msgstr "выберите каталог, содержащий %s"
 
-#: msi.rc:77
-msgid "Action %s: [1]. [2]"
-msgstr "Действие %s: [1]. [2]"
-
-#: msi.rc:78
-msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr "Тип сообщения: [1], Аргумент: [2]{, [3]}"
-
-#: msi.rc:79
-msgid "Action start %s: [1]."
-msgstr "Запуск действия %s: [1]."
-
-#: msi.rc:80
-msgid "Action ended %s: [1]. Return value [2]."
-msgstr "Действие завершилось %s: [1]. Код возврата [2]."
-
-#: msi.rc:81
-msgid "=== Logging started: %s  %s ==="
-msgstr "=== Протоколирование запущено: %s  %s ==="
-
 #: msi.rc:90
 msgid "Allocating registry space"
 msgstr "Выделение места под данные реестра"
@@ -7309,6 +7289,26 @@ msgstr ""
 #: msi.rc:76
 msgid "{{Disk full: }}"
 msgstr "{{Диск полон: }}"
+
+#: msi.rc:77
+msgid "Action %s: [1]. [2]"
+msgstr "Действие %s: [1]. [2]"
+
+#: msi.rc:78
+msgid "Message type: [1], Argument: [2]{, [3]}"
+msgstr "Тип сообщения: [1], Аргумент: [2]{, [3]}"
+
+#: msi.rc:81
+msgid "=== Logging started: %s  %s ==="
+msgstr "=== Протоколирование запущено: %s  %s ==="
+
+#: msi.rc:79
+msgid "Action start %s: [1]."
+msgstr "Запуск действия %s: [1]."
+
+#: msi.rc:80
+msgid "Action ended %s: [1]. Return value [2]."
+msgstr "Действие завершилось %s: [1]. Код возврата [2]."
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"

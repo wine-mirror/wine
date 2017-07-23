@@ -6880,26 +6880,6 @@ msgstr "機能の導入元:"
 msgid "choose which folder contains %s"
 msgstr "%s を含むフォルダを選択"
 
-#: msi.rc:77
-msgid "Action %s: [1]. [2]"
-msgstr "アクション %s: [1]. [2]"
-
-#: msi.rc:78
-msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr "メッセージ種別: [1], 引数: [2]{, [3]}"
-
-#: msi.rc:79
-msgid "Action start %s: [1]."
-msgstr "アクション開始 %s: [1]."
-
-#: msi.rc:80
-msgid "Action ended %s: [1]. Return value [2]."
-msgstr "アクション終了 %s: [1]. 戻り値 [2]."
-
-#: msi.rc:81
-msgid "=== Logging started: %s  %s ==="
-msgstr "=== ログの開始: %s  %s ==="
-
 #: msi.rc:90
 msgid "Allocating registry space"
 msgstr "レジストリ領域を割り当てています"
@@ -7299,6 +7279,26 @@ msgstr ""
 #| msgid "Disk full.\n"
 msgid "{{Disk full: }}"
 msgstr "ディスクがいっぱいです。\n"
+
+#: msi.rc:77
+msgid "Action %s: [1]. [2]"
+msgstr "アクション %s: [1]. [2]"
+
+#: msi.rc:78
+msgid "Message type: [1], Argument: [2]{, [3]}"
+msgstr "メッセージ種別: [1], 引数: [2]{, [3]}"
+
+#: msi.rc:81
+msgid "=== Logging started: %s  %s ==="
+msgstr "=== ログの開始: %s  %s ==="
+
+#: msi.rc:79
+msgid "Action start %s: [1]."
+msgstr "アクション開始 %s: [1]."
+
+#: msi.rc:80
+msgid "Action ended %s: [1]. Return value [2]."
+msgstr "アクション終了 %s: [1]. 戻り値 [2]."
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"

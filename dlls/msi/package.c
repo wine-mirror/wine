@@ -1482,7 +1482,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         {'M','/','d','/','y','y','y','y',0};
     static const WCHAR time_format[] =
         {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
-    WCHAR timet[100], datet[100], info_template[1024], info_message[1024];
+    WCHAR timet[100], datet[100], info_message[1024];
+    WCHAR *info_template;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
@@ -1637,9 +1638,10 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     }
     GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, time_format, timet, 100);
     GetDateFormatW(LOCALE_USER_DEFAULT, 0, NULL, date_format, datet, 100);
-    LoadStringW(msi_hInstance, IDS_INFO_LOGGINGSTART, info_template, 1024);
+    info_template = msi_get_error_message(package->db, MSIERR_INFO_LOGGINGSTART);
     sprintfW(info_message, info_template, datet, timet);
     MSI_RecordSetStringW(info_row, 0, info_message);
+    msi_free(info_template);
     MSI_ProcessMessage(package, INSTALLMESSAGE_INFO|MB_ICONHAND, info_row);
 
     MSI_ProcessMessage(package, INSTALLMESSAGE_COMMONDATA, data_row);
@@ -1877,7 +1879,7 @@ static LPCWSTR get_internal_error_message(int error)
 }
 
 /* Returned string must be freed */
-static LPWSTR msi_get_error_message(MSIDATABASE *db, int error)
+LPWSTR msi_get_error_message(MSIDATABASE *db, int error)
 {
     static const WCHAR query[] =
         {'S','E','L','E','C','T',' ','`','M','e','s','s','a','g','e','`',' ',
@@ -2069,15 +2071,16 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         break;
     case INSTALLMESSAGE_ACTIONSTART:
     {
-        WCHAR template_s[1024];
+        WCHAR *template_s;
         static const WCHAR time_format[] =
             {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
         WCHAR timet[100], template[1024];
 
-        LoadStringW(msi_hInstance, IDS_ACTIONSTART, template_s, 1024);
+        template_s = msi_get_error_message(package->db, MSIERR_ACTIONSTART);
         GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, time_format, timet, 100);
         sprintfW(template, template_s, timet);
         MSI_RecordSetStringW(record, 0, template);
+        msi_free(template);
 
         msi_free(package->LastAction);
         msi_free(package->LastActionTemplate);
@@ -2102,9 +2105,9 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         break;
     case INSTALLMESSAGE_COMMONDATA:
     {
-        WCHAR template[1024];
-        LoadStringW(msi_hInstance, IDS_COMMONDATA, template, 1024);
+        WCHAR *template = msi_get_error_message(package->db, MSIERR_COMMONDATA);
         MSI_RecordSetStringW(record, 0, template);
+        msi_free(template);
     }
     break;
     }

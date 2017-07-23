@@ -175,14 +175,14 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
                           INT rc)
 {
     MSIRECORD *row;
-    WCHAR template[1024];
+    WCHAR *template;
     static const WCHAR format[] = 
         {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
     WCHAR message[1024];
     WCHAR timet[0x100];
 
     GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
-    LoadStringW(msi_hInstance, start ? IDS_INFO_ACTIONSTART : IDS_INFO_ACTIONENDED, template, 1024);
+    template = msi_get_error_message(package->db, start ? MSIERR_INFO_ACTIONSTART : MSIERR_INFO_ACTIONENDED);
     sprintfW(message, template, timet);
 
     row = MSI_CreateRecord(2);
@@ -192,6 +192,7 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     MSI_RecordSetInteger(row, 2, start ? package->LastActionResult : rc);
     MSI_ProcessMessage(package, INSTALLMESSAGE_INFO, row);
     msiobj_release(&row->hdr);
+    msi_free(template);
     if (!start) package->LastActionResult = rc;
 }
 
