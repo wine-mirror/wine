@@ -9377,6 +9377,22 @@ static const struct externalui_message processmessage_actiondata_sequence[] = {
     {0}
 };
 
+static const struct externalui_message processmessage_error_sequence[] = {
+    {INSTALLMESSAGE_USER, 3, {"", "1311", "banana", "guava"}, {0, 1, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message processmessage_internal_error_sequence[] = {
+    {INSTALLMESSAGE_INFO, 3, {"DEBUG: Error [1]:  Action not found: [2]", "2726", "banana", "guava"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_USER, 3, {"internal error", "2726", "banana", "guava"}, {1, 1, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message processmessage_error_format_sequence[] = {
+    {INSTALLMESSAGE_USER, 3, {"", "2726", "banana", "guava"}, {0, 1, 1, 1}},
+    {0}
+};
+
 static const struct externalui_message doaction_costinitialize_sequence[] = {
     {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostInitialize", "", ""}, {0, 1, 0, 1}},
     {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", ""}, {0, 1, 1}},
@@ -9519,6 +9535,11 @@ static void test_externalui_message(void)
     r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    r = run_query(hdb, "CREATE TABLE `Error` (`Error` SHORT NOT NULL, `Message` CHAR(0) PRIMARY KEY `Error`)");
+    ok(r == ERROR_SUCCESS, "Failed to create Error table: %u\n", r);
+    r = run_query(hdb, "INSERT INTO `Error` (`Error`, `Message`) VALUES (5, 'internal error')");
+    ok(r == ERROR_SUCCESS, "Failed to insert into Error table: %u\n", r);
+
     r = MsiOpenPackageA(NULL, &hpkg);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok_sequence(empty_sequence, "MsiOpenPackage with NULL db", FALSE);
@@ -9563,6 +9584,26 @@ static void test_externalui_message(void)
     r = MsiProcessMessage(hpkg, INSTALLMESSAGE_ACTIONDATA, hrecord);
     ok(r == 1, "Expected 1, got %d\n", r);
     ok_sequence(processmessage_actiondata_sequence, "MsiProcessMessage(INSTALLMESSAGE_ACTIONDATA)", FALSE);
+
+    /* non-internal error */
+    MsiRecordSetStringA(hrecord, 0, NULL);
+    MsiRecordSetInteger(hrecord, 1, 1311);
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
+    ok(r == 1, "Expected 1, got %d\n", r);
+    ok_sequence(processmessage_error_sequence, "MsiProcessMessage non-internal error", FALSE);
+
+    /* internal error */
+    MsiRecordSetStringA(hrecord, 0, NULL);
+    MsiRecordSetInteger(hrecord, 1, 2726);
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
+    ok(r == 0, "Expected 0, got %d\n", r);
+    ok_sequence(processmessage_internal_error_sequence, "MsiProcessMessage internal error", FALSE);
+
+    /* with format field */
+    MsiRecordSetStringA(hrecord, 0, "starfruit");
+    r = MsiProcessMessage(hpkg, INSTALLMESSAGE_USER, hrecord);
+    ok(r == 1, "Expected 1, got %d\n", r);
+    ok_sequence(processmessage_error_format_sequence, "MsiProcessMessage error", FALSE);
 
     /* Test a standard action */
     r = MsiDoActionA(hpkg, "CostInitialize");

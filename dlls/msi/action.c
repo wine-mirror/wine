@@ -5448,43 +5448,6 @@ UINT ACTION_ForceReboot(MSIPACKAGE *package)
     return ERROR_INSTALL_SUSPEND;
 }
 
-WCHAR *msi_build_error_string( MSIPACKAGE *package, UINT error, DWORD count, ... )
-{
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','`','M','e','s','s','a','g','e','`',' ',
-         'F','R','O','M',' ','`','E','r','r','o','r','`',' ','W','H','E','R','E',' ',
-         '`','E','r','r','o','r','`',' ','=',' ','%','i',0};
-    MSIRECORD *rec, *row;
-    DWORD i, size = 0;
-    va_list va;
-    const WCHAR *str;
-    WCHAR *data;
-
-    if (!(row = MSI_QueryGetRecord( package->db, query, error ))) return 0;
-
-    rec = MSI_CreateRecord( count + 2 );
-    str = MSI_RecordGetString( row, 1 );
-    MSI_RecordSetStringW( rec, 0, str );
-    msiobj_release( &row->hdr );
-    MSI_RecordSetInteger( rec, 1, error );
-
-    va_start( va, count );
-    for (i = 0; i < count; i++)
-    {
-        str = va_arg( va, const WCHAR *);
-        MSI_RecordSetStringW( rec, i + 2, str );
-    }
-    va_end( va );
-
-    MSI_FormatRecordW( package, rec, NULL, &size );
-    size++;
-    data = msi_alloc( size * sizeof(WCHAR) );
-    if (size > 1) MSI_FormatRecordW( package, rec, data, &size );
-    else data[0] = 0;
-    msiobj_release( &rec->hdr );
-    return data;
-}
-
 static UINT ACTION_ResolveSource(MSIPACKAGE* package)
 {
     DWORD attrib;
@@ -5502,7 +5465,8 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
     attrib = GetFileAttributesW(package->db->path);
     if (attrib == INVALID_FILE_ATTRIBUTES)
     {
-        LPWSTR prompt, msg;
+        MSIRECORD *record;
+        LPWSTR prompt;
         DWORD size = 0;
 
         rc = MsiSourceListGetInfoW(package->ProductCode, NULL, 
@@ -5518,19 +5482,18 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
         else
             prompt = strdupW(package->db->path);
 
-        msg = msi_build_error_string(package, 1302, 1, prompt);
+        record = MSI_CreateRecord(2);
+        MSI_RecordSetInteger(record, 1, MSIERR_INSERTDISK);
+        MSI_RecordSetStringW(record, 2, prompt);
         msi_free(prompt);
         while(attrib == INVALID_FILE_ATTRIBUTES)
         {
-            rc = MessageBoxW(NULL, msg, NULL, MB_OKCANCEL);
+            MSI_RecordSetStringW(record, 0, NULL);
+            rc = MSI_ProcessMessage(package, INSTALLMESSAGE_ERROR, record);
             if (rc == IDCANCEL)
-            {
-                msi_free(msg);
                 return ERROR_INSTALL_USEREXIT;
-            }
             attrib = GetFileAttributesW(package->db->path);
         }
-        msi_free(msg);
         rc = ERROR_SUCCESS;
     }
     else

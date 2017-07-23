@@ -4101,109 +4101,6 @@ void msi_event_cleanup_all_subscriptions( MSIPACKAGE *package )
     }
 }
 
-static UINT error_dialog_handler( msi_dialog *dialog, const WCHAR *event, const WCHAR *argument )
-{
-    static const WCHAR end_dialog[] = {'E','n','d','D','i','a','l','o','g',0};
-    static const WCHAR error_abort[] = {'E','r','r','o','r','A','b','o','r','t',0};
-    static const WCHAR error_cancel[] = {'E','r','r','o','r','C','a','n','c','e','l',0};
-    static const WCHAR error_no[] = {'E','r','r','o','r','N','o',0};
-    static const WCHAR result_prop[] = {
-        'M','S','I','E','r','r','o','r','D','i','a','l','o','g','R','e','s','u','l','t',0
-    };
-
-    if ( strcmpW( event, end_dialog ) )
-        return ERROR_SUCCESS;
-
-    if ( !strcmpW( argument, error_abort ) || !strcmpW( argument, error_cancel ) ||
-         !strcmpW( argument, error_no ) )
-    {
-         msi_set_property( dialog->package->db, result_prop, error_abort, -1 );
-    }
-
-    msi_event_cleanup_all_subscriptions( dialog->package );
-    msi_dialog_end_dialog( dialog );
-
-    return ERROR_SUCCESS;
-}
-
-static UINT msi_error_dialog_set_error( MSIPACKAGE *package, LPWSTR error_dialog, LPWSTR error )
-{
-    MSIRECORD * row;
-
-    static const WCHAR update[] = 
-        {'U','P','D','A','T','E',' ','`','C','o','n','t','r','o','l','`',' ',
-         'S','E','T',' ','`','T','e','x','t','`',' ','=',' ','\'','%','s','\'',' ',
-         'W','H','E','R','E', ' ','`','D','i','a','l','o','g','_','`',' ','=',' ','\'','%','s','\'',' ',
-         'A','N','D',' ','`','C','o','n','t','r','o','l','`',' ','=',' ',
-         '\'','E','r','r','o','r','T','e','x','t','\'',0};
-
-    row = MSI_QueryGetRecord( package->db, update, error, error_dialog );
-    if (!row)
-        return ERROR_FUNCTION_FAILED;
-
-    msiobj_release(&row->hdr);
-    return ERROR_SUCCESS;
-}
-
-UINT msi_spawn_error_dialog( MSIPACKAGE *package, LPWSTR error_dialog, LPWSTR error )
-{
-    msi_dialog *dialog;
-    WCHAR result[MAX_PATH];
-    UINT r = ERROR_SUCCESS;
-    DWORD size = MAX_PATH;
-    int res;
-
-    static const WCHAR pn_prop[] = {'P','r','o','d','u','c','t','N','a','m','e',0};
-    static const WCHAR title_fmt[] = {'%','s',' ','W','a','r','n','i','n','g',0};
-    static const WCHAR error_abort[] = {'E','r','r','o','r','A','b','o','r','t',0};
-    static const WCHAR result_prop[] = {
-        'M','S','I','E','r','r','o','r','D','i','a','l','o','g','R','e','s','u','l','t',0
-    };
-
-    if ((package->ui_level & INSTALLUILEVEL_MASK) == INSTALLUILEVEL_NONE) return ERROR_SUCCESS;
-
-    if ( !error_dialog )
-    {
-        LPWSTR product_name = msi_dup_property( package->db, pn_prop );
-        WCHAR title[MAX_PATH];
-
-        sprintfW( title, title_fmt, product_name );
-        res = MessageBoxW( NULL, error, title, MB_OKCANCEL | MB_ICONWARNING );
-
-        msi_free( product_name );
-
-        if ( res == IDOK )
-            return ERROR_SUCCESS;
-        else
-            return ERROR_FUNCTION_FAILED;
-    }
-
-    r = msi_error_dialog_set_error( package, error_dialog, error );
-    if ( r != ERROR_SUCCESS )
-        return r;
-
-    dialog = dialog_create( package, error_dialog, package->dialog, error_dialog_handler );
-    if ( !dialog )
-        return ERROR_FUNCTION_FAILED;
-
-    dialog->finished = FALSE;
-    r = dialog_run_message_loop( dialog );
-    if ( r != ERROR_SUCCESS )
-        goto done;
-
-    r = msi_get_property( package->db, result_prop, result, &size );
-    if ( r != ERROR_SUCCESS)
-        r = ERROR_SUCCESS;
-
-    if ( !strcmpW( result, error_abort ) )
-        r = ERROR_FUNCTION_FAILED;
-
-done:
-    msi_dialog_destroy( dialog );
-
-    return r;
-}
-
 static void MSI_ClosePreview( MSIOBJECTHDR *arg )
 {
     MSIPREVIEW *preview = (MSIPREVIEW *)arg;
@@ -4564,19 +4461,10 @@ INT ACTION_ShowDialog( MSIPACKAGE *package, const WCHAR *dialog )
 
     if (!rc)
     {
-        static const WCHAR szActionNotFound[] =
-            {'D','E','B','U','G',':',' ','E','r','r','o','r',' ','[','1',']',':',' ',' ',
-             'A','c','t','i','o','n',' ','n','o','t',' ','f','o','u','n','d',':',' ','[','2',']',0};
-        WCHAR template[1024];
         MSIRECORD *row = MSI_CreateRecord(2);
         if (!row) return -1;
-        MSI_RecordSetStringW(row, 0, szActionNotFound);
         MSI_RecordSetInteger(row, 1, 2726);
         MSI_RecordSetStringW(row, 2, dialog);
-        MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_INFO, row);
-
-        LoadStringW(msi_hInstance, IDS_INSTALLERROR, template, 1024);
-        MSI_RecordSetStringW(row, 0, template);
         MSI_ProcessMessage(package, INSTALLMESSAGE_INFO, row);
 
         msiobj_release(&row->hdr);

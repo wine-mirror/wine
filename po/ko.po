@@ -6896,6 +6896,474 @@ msgstr "부분(feature)에서:"
 msgid "choose which folder contains %s"
 msgstr "%s를 포함하는 폴더 선택"
 
+#: msi.rc:77
+msgid "Action %s: [1]. [2]"
+msgstr ""
+
+#: msi.rc:78
+msgid "Message type: [1], Argument: [2]{, [3]}"
+msgstr ""
+
+#: msi.rc:79
+msgid "Action start %s: [1]."
+msgstr ""
+
+#: msi.rc:80
+msgid "Action ended %s: [1]. Return value [2]."
+msgstr ""
+
+#: msi.rc:81
+msgid "=== Logging started: %s  %s ==="
+msgstr ""
+
+#: msi.rc:90
+#, fuzzy
+#| msgid "No registry log space.\n"
+msgid "Allocating registry space"
+msgstr "레지스트리 로그 공간이 없습니다.\n"
+
+#: msi.rc:91
+#, fuzzy
+#| msgid "Single-instance application.\n"
+msgid "Searching for installed applications"
+msgstr "단일 인스턴트 프로그램 .\n"
+
+#: msi.rc:92
+msgid "Binding executables"
+msgstr ""
+
+#: msi.rc:93 msi.rc:136
+#, fuzzy
+#| msgid "Searching for %s"
+msgid "Searching for qualifying products"
+msgstr "%s 찾는 중"
+
+#: msi.rc:94 msi.rc:95 msi.rc:100
+msgid "Computing space requirements"
+msgstr ""
+
+#: msi.rc:96
+#, fuzzy
+#| msgid "New Folder"
+msgid "Creating folders"
+msgstr "새 폴더"
+
+#: msi.rc:97
+#, fuzzy
+#| msgid "Create Shor&tcut"
+msgid "Creating shortcuts"
+msgstr "바로가기 만들기(&T)"
+
+#: msi.rc:98
+#, fuzzy
+#| msgid "Exception in service.\n"
+msgid "Deleting services"
+msgstr "서비스의 예외.\n"
+
+#: msi.rc:99
+#, fuzzy
+#| msgid "Creation date"
+msgid "Creating duplicate files"
+msgstr "만든 날짜"
+
+#: msi.rc:101
+#, fuzzy
+#| msgid "No associated application.\n"
+msgid "Searching for related applications"
+msgstr "연결된 프로그램이 없습니다.\n"
+
+#: msi.rc:102
+msgid "Copying network install files"
+msgstr ""
+
+#: msi.rc:103
+#, fuzzy
+#| msgid "Copying Files..."
+msgid "Copying new files"
+msgstr "파일 복사중..."
+
+#: msi.rc:104
+#, fuzzy
+#| msgid "Installation of component failed: %08x"
+msgid "Installing ODBC components"
+msgstr "구성요소 설치가 실패함: %08x"
+
+#: msi.rc:105
+#, fuzzy
+#| msgid "Installer service failed.\n"
+msgid "Installing new services"
+msgstr "설치 서비스가 실패함.\n"
+
+#: msi.rc:106
+#, fuzzy
+#| msgid "Install/Uninstall"
+msgid "Installing system catalog"
+msgstr "설치/삭제"
+
+#: msi.rc:107
+#, fuzzy
+#| msgid "Wine Application Uninstaller"
+msgid "Validating install"
+msgstr "Wine 응용프로그램 제거하기"
+
+#: msi.rc:108
+msgid "Evaluating launch conditions"
+msgstr ""
+
+#: msi.rc:109
+msgid "Migrating feature states from related applications"
+msgstr ""
+
+#: msi.rc:110
+#, fuzzy
+#| msgid "Icon files"
+msgid "Moving files"
+msgstr "아이콘 파일"
+
+#: msi.rc:111
+#, fuzzy
+#| msgid "Version information"
+msgid "Publishing assembly information"
+msgstr "버젼 정보"
+
+#: msi.rc:112
+msgid "Unpublishing assembly information"
+msgstr ""
+
+#: msi.rc:113
+#, fuzzy
+#| msgid "Icon files"
+msgid "Patching files"
+msgstr "아이콘 파일"
+
+#: msi.rc:114
+msgid "Updating component registration"
+msgstr ""
+
+#: msi.rc:115
+msgid "Publishing Qualified Components"
+msgstr ""
+
+#: msi.rc:116
+msgid "Publishing Product Features"
+msgstr ""
+
+#: msi.rc:117
+#, fuzzy
+#| msgid "Client Information"
+msgid "Publishing product information"
+msgstr "클라이언트 정보"
+
+#: msi.rc:118
+msgid "Registering Class servers"
+msgstr ""
+
+#: msi.rc:119
+msgid "Registering COM+ Applications and Components"
+msgstr ""
+
+#: msi.rc:120
+msgid "Registering extension servers"
+msgstr ""
+
+#: msi.rc:121
+msgid "Registering fonts"
+msgstr ""
+
+#: msi.rc:122
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Registering MIME info"
+msgstr "레지스트리 편집기"
+
+#: msi.rc:123
+#, fuzzy
+#| msgid "Registry is corrupt.\n"
+msgid "Registering product"
+msgstr "레지스트리는 손상되었습니다.\n"
+
+#: msi.rc:124
+msgid "Registering program identifiers"
+msgstr ""
+
+#: msi.rc:125
+#, fuzzy
+#| msgid "Type Libraries"
+msgid "Registering type libraries"
+msgstr "타입 라이브러리"
+
+#: msi.rc:126
+#, fuzzy
+#| msgid "Resource in use.\n"
+msgid "Registering user"
+msgstr "리소스가 사용중입니다.\n"
+
+#: msi.rc:127
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "Removing duplicated files"
+msgstr "두번 제거(&R)"
+
+#: msi.rc:128 msi.rc:152
+#, fuzzy
+#| msgid "Applying font settings"
+msgid "Updating environment strings"
+msgstr "글꼴 설정 적용"
+
+#: msi.rc:129
+#, fuzzy
+#| msgid "&Remove application"
+msgid "Removing applications"
+msgstr "응용프로그램 제거(&R)"
+
+#: msi.rc:130
+#, fuzzy
+#| msgid "Icon files"
+msgid "Removing files"
+msgstr "아이콘 파일"
+
+#: msi.rc:131
+msgid "Removing folders"
+msgstr ""
+
+#: msi.rc:132
+msgid "Removing INI files entries"
+msgstr ""
+
+#: msi.rc:133
+#, fuzzy
+#| msgid "Domain Component"
+msgid "Removing ODBC components"
+msgstr "주소 구성요소"
+
+#: msi.rc:134
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Removing system registry values"
+msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+
+#: msi.rc:135
+msgid "Removing shortcuts"
+msgstr ""
+
+#: msi.rc:137
+msgid "Registering modules"
+msgstr ""
+
+#: msi.rc:138
+msgid "Unregistering modules"
+msgstr ""
+
+#: msi.rc:139
+#, fuzzy
+#| msgid "Initializing; "
+msgid "Initializing ODBC directories"
+msgstr "초기화중; "
+
+#: msi.rc:140
+#, fuzzy
+#| msgid "Starting Wordpad failed"
+msgid "Starting services"
+msgstr "워드패드 시작 실패함"
+
+#: msi.rc:141
+#, fuzzy
+#| msgid "Stopping dependent service: %1\n"
+msgid "Stopping services"
+msgstr "종속된 서비스 정지중: %1\n"
+
+#: msi.rc:142
+msgid "Unpublishing Qualified Components"
+msgstr ""
+
+#: msi.rc:143
+msgid "Unpublishing Product Features"
+msgstr ""
+
+#: msi.rc:144
+#, fuzzy
+#| msgid "Client Information"
+msgid "Unpublishing product information"
+msgstr "클라이언트 정보"
+
+#: msi.rc:145
+msgid "Unregister Class servers"
+msgstr ""
+
+#: msi.rc:146
+msgid "Unregistering COM+ Applications and Components"
+msgstr ""
+
+#: msi.rc:147
+msgid "Unregistering extension servers"
+msgstr ""
+
+#: msi.rc:148
+msgid "Unregistering fonts"
+msgstr ""
+
+#: msi.rc:149
+msgid "Unregistering MIME info"
+msgstr ""
+
+#: msi.rc:150
+msgid "Unregistering program identifiers"
+msgstr ""
+
+#: msi.rc:151
+msgid "Unregistering type libraries"
+msgstr ""
+
+#: msi.rc:153
+msgid "Writing INI files values"
+msgstr ""
+
+#: msi.rc:154
+#, fuzzy
+#| msgid "Warning: system library"
+msgid "Writing system registry values"
+msgstr "경고: 시스템 라이브러리"
+
+#: msi.rc:160
+msgid "Free space: [1]"
+msgstr ""
+
+#: msi.rc:161
+msgid "Property: [1], Signature: [2]"
+msgstr ""
+
+#: msi.rc:162
+#, fuzzy
+#| msgid "File:"
+msgid "File: [1]"
+msgstr "파일:"
+
+#: msi.rc:163 msi.rc:190
+#, fuzzy
+#| msgid "Folder:"
+msgid "Folder: [1]"
+msgstr "폴더:"
+
+#: msi.rc:164 msi.rc:193
+msgid "Shortcut: [1]"
+msgstr ""
+
+#: msi.rc:165 msi.rc:196 msi.rc:197
+#, fuzzy
+#| msgid "De&vice:"
+msgid "Service: [1]"
+msgstr "장치(&V):"
+
+#: msi.rc:166 msi.rc:169 msi.rc:173
+msgid "File: [1],  Directory: [9],  Size: [6]"
+msgstr ""
+
+#: msi.rc:167
+#, fuzzy
+#| msgid "application"
+msgid "Found application: [1]"
+msgstr "프로그램"
+
+#: msi.rc:168
+msgid "File: [1], Directory: [9], Size: [6]"
+msgstr ""
+
+#: msi.rc:170
+#, fuzzy
+#| msgid "De&vice:"
+msgid "Service: [2]"
+msgstr "장치(&V):"
+
+#: msi.rc:171
+msgid "File: [1],  Dependencies: [2]"
+msgstr ""
+
+#: msi.rc:172
+#, fuzzy
+#| msgid "Applications"
+msgid "Application: [1]"
+msgstr "응용프로그램"
+
+#: msi.rc:174 msi.rc:175
+msgid "Application Context:[1], Assembly Name:[2]"
+msgstr ""
+
+#: msi.rc:176
+msgid "File: [1],  Directory: [2],  Size: [3]"
+msgstr ""
+
+#: msi.rc:177 msi.rc:198
+msgid "Component ID: [1], Qualifier: [2]"
+msgstr ""
+
+#: msi.rc:178 msi.rc:199
+msgid "Feature: [1]"
+msgstr ""
+
+#: msi.rc:179 msi.rc:200
+msgid "Class Id: [1]"
+msgstr ""
+
+#: msi.rc:180
+msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
+msgstr ""
+
+#: msi.rc:181 msi.rc:202
+#, fuzzy
+#| msgid "Extensions Only"
+msgid "Extension: [1]"
+msgstr "오직 확장만"
+
+#: msi.rc:182 msi.rc:203
+#, fuzzy
+#| msgid "&Font:"
+msgid "Font: [1]"
+msgstr "글꼴(&F):"
+
+#: msi.rc:183 msi.rc:204
+msgid "MIME Content Type: [1], Extension: [2]"
+msgstr ""
+
+#: msi.rc:184 msi.rc:205
+msgid "ProgId: [1]"
+msgstr ""
+
+#: msi.rc:185 msi.rc:206
+msgid "LibID: [1]"
+msgstr ""
+
+#: msi.rc:186 msi.rc:189
+msgid "File: [1], Directory: [9]"
+msgstr ""
+
+#: msi.rc:187 msi.rc:207
+msgid "Name: [1], Value: [2], Action [3]"
+msgstr ""
+
+#: msi.rc:188
+msgid "Application: [1], Command line: [2]"
+msgstr ""
+
+#: msi.rc:191 msi.rc:208
+msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
+msgstr ""
+
+#: msi.rc:192
+msgid "Key: [1], Name: [2]"
+msgstr ""
+
+#: msi.rc:194 msi.rc:195
+msgid "File: [1], Folder: [2]"
+msgstr ""
+
+#: msi.rc:201
+msgid "AppId: [1]{{, AppType: [2]}}"
+msgstr ""
+
+#: msi.rc:209
+msgid "Key: [1], Name: [2], Value: [3]"
+msgstr ""
+
 #: msi.rc:71
 msgid "{{Fatal error: }}"
 msgstr ""
@@ -6913,484 +7381,26 @@ msgid "Info [1]."
 msgstr ""
 
 #: msi.rc:75
-#, fuzzy
-#| msgid "Disk full.\n"
-msgid "{{Disk full: }}"
-msgstr "디스크가 꽉 찼습니다.\n"
-
-#: msi.rc:76
-msgid "Action %s: [1]. [2]"
-msgstr ""
-
-#: msi.rc:77
-msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr ""
-
-#: msi.rc:83
-msgid "Action start %s: [1]."
-msgstr ""
-
-#: msi.rc:84
-msgid "Action ended %s: [1]. Return value [2]."
-msgstr ""
-
-#: msi.rc:85
-msgid "=== Logging started: %s  %s ==="
-msgstr ""
-
-#: msi.rc:86
 msgid ""
 "The installer has encountered an unexpected error installing this package. "
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
 
-#: msi.rc:92
+#: msi.rc:76
 #, fuzzy
-#| msgid "No registry log space.\n"
-msgid "Allocating registry space"
-msgstr "레지스트리 로그 공간이 없습니다.\n"
+#| msgid "Disk full.\n"
+msgid "{{Disk full: }}"
+msgstr "디스크가 꽉 찼습니다.\n"
 
-#: msi.rc:93
-#, fuzzy
-#| msgid "Single-instance application.\n"
-msgid "Searching for installed applications"
-msgstr "단일 인스턴트 프로그램 .\n"
-
-#: msi.rc:94
-msgid "Binding executables"
+#: msi.rc:83
+msgid "Please insert the disk: [2]"
 msgstr ""
 
-#: msi.rc:95 msi.rc:138
-#, fuzzy
-#| msgid "Searching for %s"
-msgid "Searching for qualifying products"
-msgstr "%s 찾는 중"
-
-#: msi.rc:96 msi.rc:97 msi.rc:102
-msgid "Computing space requirements"
-msgstr ""
-
-#: msi.rc:98
-#, fuzzy
-#| msgid "New Folder"
-msgid "Creating folders"
-msgstr "새 폴더"
-
-#: msi.rc:99
-#, fuzzy
-#| msgid "Create Shor&tcut"
-msgid "Creating shortcuts"
-msgstr "바로가기 만들기(&T)"
-
-#: msi.rc:100
-#, fuzzy
-#| msgid "Exception in service.\n"
-msgid "Deleting services"
-msgstr "서비스의 예외.\n"
-
-#: msi.rc:101
-#, fuzzy
-#| msgid "Creation date"
-msgid "Creating duplicate files"
-msgstr "만든 날짜"
-
-#: msi.rc:103
-#, fuzzy
-#| msgid "No associated application.\n"
-msgid "Searching for related applications"
-msgstr "연결된 프로그램이 없습니다.\n"
-
-#: msi.rc:104
-msgid "Copying network install files"
-msgstr ""
-
-#: msi.rc:105
-#, fuzzy
-#| msgid "Copying Files..."
-msgid "Copying new files"
-msgstr "파일 복사중..."
-
-#: msi.rc:106
-#, fuzzy
-#| msgid "Installation of component failed: %08x"
-msgid "Installing ODBC components"
-msgstr "구성요소 설치가 실패함: %08x"
-
-#: msi.rc:107
-#, fuzzy
-#| msgid "Installer service failed.\n"
-msgid "Installing new services"
-msgstr "설치 서비스가 실패함.\n"
-
-#: msi.rc:108
-#, fuzzy
-#| msgid "Install/Uninstall"
-msgid "Installing system catalog"
-msgstr "설치/삭제"
-
-#: msi.rc:109
-#, fuzzy
-#| msgid "Wine Application Uninstaller"
-msgid "Validating install"
-msgstr "Wine 응용프로그램 제거하기"
-
-#: msi.rc:110
-msgid "Evaluating launch conditions"
-msgstr ""
-
-#: msi.rc:111
-msgid "Migrating feature states from related applications"
-msgstr ""
-
-#: msi.rc:112
-#, fuzzy
-#| msgid "Icon files"
-msgid "Moving files"
-msgstr "아이콘 파일"
-
-#: msi.rc:113
-#, fuzzy
-#| msgid "Version information"
-msgid "Publishing assembly information"
-msgstr "버젼 정보"
-
-#: msi.rc:114
-msgid "Unpublishing assembly information"
-msgstr ""
-
-#: msi.rc:115
-#, fuzzy
-#| msgid "Icon files"
-msgid "Patching files"
-msgstr "아이콘 파일"
-
-#: msi.rc:116
-msgid "Updating component registration"
-msgstr ""
-
-#: msi.rc:117
-msgid "Publishing Qualified Components"
-msgstr ""
-
-#: msi.rc:118
-msgid "Publishing Product Features"
-msgstr ""
-
-#: msi.rc:119
-#, fuzzy
-#| msgid "Client Information"
-msgid "Publishing product information"
-msgstr "클라이언트 정보"
-
-#: msi.rc:120
-msgid "Registering Class servers"
-msgstr ""
-
-#: msi.rc:121
-msgid "Registering COM+ Applications and Components"
-msgstr ""
-
-#: msi.rc:122
-msgid "Registering extension servers"
-msgstr ""
-
-#: msi.rc:123
-msgid "Registering fonts"
-msgstr ""
-
-#: msi.rc:124
-#, fuzzy
-#| msgid "Registry Editor"
-msgid "Registering MIME info"
-msgstr "레지스트리 편집기"
-
-#: msi.rc:125
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
-msgid "Registering product"
-msgstr "레지스트리는 손상되었습니다.\n"
-
-#: msi.rc:126
-msgid "Registering program identifiers"
-msgstr ""
-
-#: msi.rc:127
-#, fuzzy
-#| msgid "Type Libraries"
-msgid "Registering type libraries"
-msgstr "타입 라이브러리"
-
-#: msi.rc:128
-#, fuzzy
-#| msgid "Resource in use.\n"
-msgid "Registering user"
-msgstr "리소스가 사용중입니다.\n"
-
-#: msi.rc:129
-#, fuzzy
-#| msgid "&Remove doubles"
-msgid "Removing duplicated files"
-msgstr "두번 제거(&R)"
-
-#: msi.rc:130 msi.rc:154
-#, fuzzy
-#| msgid "Applying font settings"
-msgid "Updating environment strings"
-msgstr "글꼴 설정 적용"
-
-#: msi.rc:131
-#, fuzzy
-#| msgid "&Remove application"
-msgid "Removing applications"
-msgstr "응용프로그램 제거(&R)"
-
-#: msi.rc:132
-#, fuzzy
-#| msgid "Icon files"
-msgid "Removing files"
-msgstr "아이콘 파일"
-
-#: msi.rc:133
-msgid "Removing folders"
-msgstr ""
-
-#: msi.rc:134
-msgid "Removing INI files entries"
-msgstr ""
-
-#: msi.rc:135
-#, fuzzy
-#| msgid "Domain Component"
-msgid "Removing ODBC components"
-msgstr "주소 구성요소"
-
-#: msi.rc:136
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
-msgid "Removing system registry values"
-msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
-
-#: msi.rc:137
-msgid "Removing shortcuts"
-msgstr ""
-
-#: msi.rc:139
-msgid "Registering modules"
-msgstr ""
-
-#: msi.rc:140
-msgid "Unregistering modules"
-msgstr ""
-
-#: msi.rc:141
-#, fuzzy
-#| msgid "Initializing; "
-msgid "Initializing ODBC directories"
-msgstr "초기화중; "
-
-#: msi.rc:142
-#, fuzzy
-#| msgid "Starting Wordpad failed"
-msgid "Starting services"
-msgstr "워드패드 시작 실패함"
-
-#: msi.rc:143
-#, fuzzy
-#| msgid "Stopping dependent service: %1\n"
-msgid "Stopping services"
-msgstr "종속된 서비스 정지중: %1\n"
-
-#: msi.rc:144
-msgid "Unpublishing Qualified Components"
-msgstr ""
-
-#: msi.rc:145
-msgid "Unpublishing Product Features"
-msgstr ""
-
-#: msi.rc:146
-#, fuzzy
-#| msgid "Client Information"
-msgid "Unpublishing product information"
-msgstr "클라이언트 정보"
-
-#: msi.rc:147
-msgid "Unregister Class servers"
-msgstr ""
-
-#: msi.rc:148
-msgid "Unregistering COM+ Applications and Components"
-msgstr ""
-
-#: msi.rc:149
-msgid "Unregistering extension servers"
-msgstr ""
-
-#: msi.rc:150
-msgid "Unregistering fonts"
-msgstr ""
-
-#: msi.rc:151
-msgid "Unregistering MIME info"
-msgstr ""
-
-#: msi.rc:152
-msgid "Unregistering program identifiers"
-msgstr ""
-
-#: msi.rc:153
-msgid "Unregistering type libraries"
-msgstr ""
-
-#: msi.rc:155
-msgid "Writing INI files values"
-msgstr ""
-
-#: msi.rc:156
-#, fuzzy
-#| msgid "Warning: system library"
-msgid "Writing system registry values"
-msgstr "경고: 시스템 라이브러리"
-
-#: msi.rc:162
-msgid "Free space: [1]"
-msgstr ""
-
-#: msi.rc:163
-msgid "Property: [1], Signature: [2]"
-msgstr ""
-
-#: msi.rc:164
-#, fuzzy
-#| msgid "File:"
-msgid "File: [1]"
-msgstr "파일:"
-
-#: msi.rc:165 msi.rc:192
-#, fuzzy
-#| msgid "Folder:"
-msgid "Folder: [1]"
-msgstr "폴더:"
-
-#: msi.rc:166 msi.rc:195
-msgid "Shortcut: [1]"
-msgstr ""
-
-#: msi.rc:167 msi.rc:198 msi.rc:199
-#, fuzzy
-#| msgid "De&vice:"
-msgid "Service: [1]"
-msgstr "장치(&V):"
-
-#: msi.rc:168 msi.rc:171 msi.rc:175
-msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr ""
-
-#: msi.rc:169
-#, fuzzy
-#| msgid "application"
-msgid "Found application: [1]"
-msgstr "프로그램"
-
-#: msi.rc:170
-msgid "File: [1], Directory: [9], Size: [6]"
-msgstr ""
-
-#: msi.rc:172
-#, fuzzy
-#| msgid "De&vice:"
-msgid "Service: [2]"
-msgstr "장치(&V):"
-
-#: msi.rc:173
-msgid "File: [1],  Dependencies: [2]"
-msgstr ""
-
-#: msi.rc:174
-#, fuzzy
-#| msgid "Applications"
-msgid "Application: [1]"
-msgstr "응용프로그램"
-
-#: msi.rc:176 msi.rc:177
-msgid "Application Context:[1], Assembly Name:[2]"
-msgstr ""
-
-#: msi.rc:178
-msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr ""
-
-#: msi.rc:179 msi.rc:200
-msgid "Component ID: [1], Qualifier: [2]"
-msgstr ""
-
-#: msi.rc:180 msi.rc:201
-msgid "Feature: [1]"
-msgstr ""
-
-#: msi.rc:181 msi.rc:202
-msgid "Class Id: [1]"
-msgstr ""
-
-#: msi.rc:182
-msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
-msgstr ""
-
-#: msi.rc:183 msi.rc:204
-#, fuzzy
-#| msgid "Extensions Only"
-msgid "Extension: [1]"
-msgstr "오직 확장만"
-
-#: msi.rc:184 msi.rc:205
-#, fuzzy
-#| msgid "&Font:"
-msgid "Font: [1]"
-msgstr "글꼴(&F):"
-
-#: msi.rc:185 msi.rc:206
-msgid "MIME Content Type: [1], Extension: [2]"
-msgstr ""
-
-#: msi.rc:186 msi.rc:207
-msgid "ProgId: [1]"
-msgstr ""
-
-#: msi.rc:187 msi.rc:208
-msgid "LibID: [1]"
-msgstr ""
-
-#: msi.rc:188 msi.rc:191
-msgid "File: [1], Directory: [9]"
-msgstr ""
-
-#: msi.rc:189 msi.rc:209
-msgid "Name: [1], Value: [2], Action [3]"
-msgstr ""
-
-#: msi.rc:190
-msgid "Application: [1], Command line: [2]"
-msgstr ""
-
-#: msi.rc:193 msi.rc:210
-msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr ""
-
-#: msi.rc:194
-msgid "Key: [1], Name: [2]"
-msgstr ""
-
-#: msi.rc:196 msi.rc:197
-msgid "File: [1], Folder: [2]"
-msgstr ""
-
-#: msi.rc:203
-msgid "AppId: [1]{{, AppType: [2]}}"
-msgstr ""
-
-#: msi.rc:211
-msgid "Key: [1], Name: [2], Value: [3]"
+#: msi.rc:84
+msgid ""
+"Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
+"that you can access it."
 msgstr ""
 
 #: msrle32.rc:31

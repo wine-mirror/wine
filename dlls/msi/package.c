@@ -1848,6 +1848,64 @@ static INT internal_ui_handler(MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     }
 }
 
+static const WCHAR szActionNotFound[] = {'D','E','B','U','G',':',' ','E','r','r','o','r',' ','[','1',']',':',' ',' ','A','c','t','i','o','n',' ','n','o','t',' ','f','o','u','n','d',':',' ','[','2',']',0};
+
+static const struct
+{
+    int id;
+    const WCHAR *text;
+}
+internal_errors[] =
+{
+    {2726, szActionNotFound},
+    {0}
+};
+
+static LPCWSTR get_internal_error_message(int error)
+{
+    int i = 0;
+
+    while (internal_errors[i].id != 0)
+    {
+        if (internal_errors[i].id == error)
+            return internal_errors[i].text;
+        i++;
+    }
+
+    FIXME("missing error message %d\n", error);
+    return NULL;
+}
+
+/* Returned string must be freed */
+static LPWSTR msi_get_error_message(MSIDATABASE *db, int error)
+{
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','`','M','e','s','s','a','g','e','`',' ',
+         'F','R','O','M',' ','`','E','r','r','o','r','`',' ','W','H','E','R','E',' ',
+         '`','E','r','r','o','r','`',' ','=',' ','%','i',0};
+    MSIRECORD *record;
+    LPWSTR ret = NULL;
+
+    if ((record = MSI_QueryGetRecord(db, query, error)))
+    {
+        ret = msi_dup_record_field(record, 1);
+        msiobj_release(&record->hdr);
+    }
+    else if (error < 2000)
+    {
+        int len = LoadStringW(msi_hInstance, IDS_ERROR_BASE + error, (LPWSTR) &ret, 0);
+        if (len)
+        {
+            ret = msi_alloc((len + 1) * sizeof(WCHAR));
+            LoadStringW(msi_hInstance, IDS_ERROR_BASE + error, ret, len + 1);
+        }
+        else
+            ret = NULL;
+    }
+
+    return ret;
+}
+
 INT MSI_ProcessMessageVerbatim(MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIRECORD *record)
 {
     LPWSTR message = {0};
@@ -1954,33 +2012,48 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
     case INSTALLMESSAGE_OUTOFDISKSPACE:
         if (MSI_RecordGetInteger(record, 1) != MSI_NULL_INTEGER)
         {
-            WCHAR template_prefix[1024];
-            WCHAR *template_rec, *template;
-            UINT prefix_id = 0;
+            /* error message */
+
+            LPWSTR template;
+            LPWSTR template_rec = NULL, template_prefix = NULL;
+            int error = MSI_RecordGetInteger(record, 1);
 
             if (MSI_RecordIsNull(record, 0))
             {
-                LoadStringW(msi_hInstance, IDS_INSTALLERROR, template_prefix, 1024);
-                MSI_RecordSetStringW(record, 0, template_prefix);
-                break;
+                if (error >= 32)
+                {
+                    template_rec = msi_get_error_message(package->db, error);
+
+                    if (!template_rec && error >= 2000)
+                    {
+                        /* internal error, not localized */
+                        if ((template_rec = (LPWSTR) get_internal_error_message(error)))
+                        {
+                            MSI_RecordSetStringW(record, 0, template_rec);
+                            MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_INFO, record);
+                        }
+                        template_rec = msi_get_error_message(package->db, MSIERR_INSTALLERROR);
+                        MSI_RecordSetStringW(record, 0, template_rec);
+                        MSI_ProcessMessageVerbatim(package, eMessageType, record);
+                        msi_free(template_rec);
+                        return 0;
+                    }
+                }
             }
+            else
+                template_rec = msi_dup_record_field(record, 0);
 
-            if ((eMessageType & 0xff000000) == INSTALLMESSAGE_USER)
-                break;
+            template_prefix = msi_get_error_message(package->db, eMessageType >> 24);
+            if (!template_prefix) template_prefix = strdupW(szEmpty);
 
-            switch(eMessageType & 0xff000000)
+            if (!template_rec)
             {
-            case INSTALLMESSAGE_FATALEXIT: prefix_id = IDS_FATALEXIT; break;
-            case INSTALLMESSAGE_ERROR: prefix_id = IDS_ERROR; break;
-            case INSTALLMESSAGE_WARNING: prefix_id = IDS_WARNING; break;
-            case INSTALLMESSAGE_INFO: prefix_id = IDS_INFO; break;
-            case INSTALLMESSAGE_OUTOFDISKSPACE: prefix_id = IDS_OUTOFDISKSPACE; break;
+                /* always returns 0 */
+                MSI_RecordSetStringW(record, 0, template_prefix);
+                MSI_ProcessMessageVerbatim(package, eMessageType, record);
+                msi_free(template_prefix);
+                return 0;
             }
-
-            LoadStringW(msi_hInstance, prefix_id, template_prefix, 1024);
-
-            template_rec = msi_dup_record_field(record, 0);
-            if (!template_rec) return ERROR_OUTOFMEMORY;
 
             template = msi_alloc((strlenW(template_rec) + strlenW(template_prefix) + 1) * sizeof(WCHAR));
             if (!template) return ERROR_OUTOFMEMORY;
@@ -1989,6 +2062,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
             strcatW(template, template_rec);
             MSI_RecordSetStringW(record, 0, template);
 
+            msi_free(template_prefix);
             msi_free(template_rec);
             msi_free(template);
         }
