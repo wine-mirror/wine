@@ -674,7 +674,6 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     HKEY hkey;
     LPWSTR username, companyname;
     SYSTEM_INFO sys_info;
-    SYSTEMTIME systemtime;
     LANGID langid;
 
     static const WCHAR szCommonFilesFolder[] = {'C','o','m','m','o','n','F','i','l','e','s','F','o','l','d','e','r',0};
@@ -736,8 +735,6 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     };
     static const WCHAR szUSERNAME[] = {'U','S','E','R','N','A','M','E',0};
     static const WCHAR szCOMPANYNAME[] = {'C','O','M','P','A','N','Y','N','A','M','E',0};
-    static const WCHAR szDate[] = {'D','a','t','e',0};
-    static const WCHAR szTime[] = {'T','i','m','e',0};
     static const WCHAR szUserLanguageID[] = {'U','s','e','r','L','a','n','g','u','a','g','e','I','D',0};
     static const WCHAR szSystemLangID[] = {'S','y','s','t','e','m','L','a','n','g','u','a','g','e','I','D',0};
     static const WCHAR szProductState[] = {'P','r','o','d','u','c','t','S','t','a','t','e',0};
@@ -965,22 +962,6 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 
     if ( set_user_sid_prop( package ) != ERROR_SUCCESS)
         ERR("Failed to set the UserSID property\n");
-
-    /* Date and time properties */
-    GetSystemTime( &systemtime );
-    if (GetDateFormatW( LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systemtime,
-                        NULL, bufstr, sizeof(bufstr)/sizeof(bufstr[0]) ))
-        msi_set_property( package->db, szDate, bufstr, -1 );
-    else
-        ERR("Couldn't set Date property: GetDateFormat failed with error %d\n", GetLastError());
-
-    if (GetTimeFormatW( LOCALE_USER_DEFAULT,
-                        TIME_FORCE24HOURFORMAT | TIME_NOTIMEMARKER,
-                        &systemtime, NULL, bufstr,
-                        sizeof(bufstr)/sizeof(bufstr[0]) ))
-        msi_set_property( package->db, szTime, bufstr, -1 );
-    else
-        ERR("Couldn't set Time property: GetTimeFormat failed with error %d\n", GetLastError());
 
     set_msi_assembly_prop( package );
 
@@ -1478,11 +1459,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     MSISUMMARYINFO *si;
     BOOL delete_on_close = FALSE;
     LPWSTR productname;
-    static const WCHAR date_format[] =
-        {'M','/','d','/','y','y','y','y',0};
-    static const WCHAR time_format[] =
-        {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
-    WCHAR timet[100], datet[100], info_message[1024];
     WCHAR *info_template;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
@@ -1636,11 +1612,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 	msiobj_release(&data_row->hdr);
 	return ERROR_OUTOFMEMORY;
     }
-    GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, time_format, timet, 100);
-    GetDateFormatW(LOCALE_USER_DEFAULT, 0, NULL, date_format, datet, 100);
     info_template = msi_get_error_message(package->db, MSIERR_INFO_LOGGINGSTART);
-    sprintfW(info_message, info_template, datet, timet);
-    MSI_RecordSetStringW(info_row, 0, info_message);
+    MSI_RecordSetStringW(info_row, 0, info_template);
     msi_free(info_template);
     MSI_ProcessMessage(package, INSTALLMESSAGE_INFO|MB_ICONHAND, info_row);
 
@@ -2071,14 +2044,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         break;
     case INSTALLMESSAGE_ACTIONSTART:
     {
-        WCHAR *template_s;
-        static const WCHAR time_format[] =
-            {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
-        WCHAR timet[100], template[1024];
-
-        template_s = msi_get_error_message(package->db, MSIERR_ACTIONSTART);
-        GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, time_format, timet, 100);
-        sprintfW(template, template_s, timet);
+        WCHAR *template = msi_get_error_message(package->db, MSIERR_ACTIONSTART);
         MSI_RecordSetStringW(record, 0, template);
         msi_free(template);
 
@@ -2335,8 +2301,44 @@ static MSIRECORD *msi_get_property_row( MSIDATABASE *db, LPCWSTR name )
     MSIQUERY *view;
     UINT r;
 
+    static const WCHAR szDate[] = {'D','a','t','e',0};
+    static const WCHAR szTime[] = {'T','i','m','e',0};
+    WCHAR *buffer;
+    int length;
+
     if (!name || !*name)
         return NULL;
+
+    if (!strcmpW(name, szDate))
+    {
+        length = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL, NULL, NULL, 0);
+        if (!length)
+            return NULL;
+        buffer = msi_alloc(length * sizeof(WCHAR));
+        GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL, NULL, buffer, sizeof(WCHAR));
+
+        row = MSI_CreateRecord(1);
+        if (!row)
+            return NULL;
+        MSI_RecordSetStringW(row, 1, buffer);
+        msi_free(buffer);
+        return row;
+    }
+    else if (!strcmpW(name, szTime))
+    {
+        length = GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOTIMEMARKER, NULL, NULL, NULL, 0);
+        if (!length)
+            return NULL;
+        buffer = msi_alloc(length * sizeof(WCHAR));
+        GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOTIMEMARKER, NULL, NULL, buffer, sizeof(WCHAR));
+
+        row = MSI_CreateRecord(1);
+        if (!row)
+            return NULL;
+        MSI_RecordSetStringW(row, 1, buffer);
+        msi_free(buffer);
+        return row;
+    }
 
     rec = MSI_CreateRecord(1);
     if (!rec)

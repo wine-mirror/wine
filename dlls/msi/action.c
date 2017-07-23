@@ -176,18 +176,12 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
 {
     MSIRECORD *row;
     WCHAR *template;
-    static const WCHAR format[] = 
-        {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
-    WCHAR message[1024];
-    WCHAR timet[0x100];
 
-    GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
     template = msi_get_error_message(package->db, start ? MSIERR_INFO_ACTIONSTART : MSIERR_INFO_ACTIONENDED);
-    sprintfW(message, template, timet);
 
     row = MSI_CreateRecord(2);
     if (!row) return;
-    MSI_RecordSetStringW(row, 0, message);
+    MSI_RecordSetStringW(row, 0, template);
     MSI_RecordSetStringW(row, 1, action);
     MSI_RecordSetInteger(row, 2, start ? package->LastActionResult : rc);
     MSI_ProcessMessage(package, INSTALLMESSAGE_INFO, row);
