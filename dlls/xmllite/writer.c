@@ -843,6 +843,7 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     }
 
     write_encoding_bom(This);
+    write_node_indent(This);
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));
     write_output_qname(This->output, prefix, local_name);
 

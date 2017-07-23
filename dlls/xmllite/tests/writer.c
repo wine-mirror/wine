@@ -1132,14 +1132,18 @@ static void test_indentation(void)
     hr = IXmlWriter_WriteElementString(writer, NULL, bW, NULL, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IXmlWriter_WriteElementString(writer, NULL, bW, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     hr = IXmlWriter_WriteEndElement(writer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    CHECK_OUTPUT_TODO(stream,
+    CHECK_OUTPUT(stream,
         "<a>\r\n"
+        "  <b />\r\n"
         "  <b />\r\n"
         "</a>");
 
