@@ -559,6 +559,7 @@ enum wined3d_shader_interpolation_mode
 enum wined3d_shader_global_flags
 {
     WINED3DSGF_REFACTORING_ALLOWED               = 0x1,
+    WINED3DSGF_FORCE_EARLY_DEPTH_STENCIL         = 0x4,
     WINED3DSGF_ENABLE_RAW_AND_STRUCTURED_BUFFERS = 0x8,
 };
 
@@ -3866,6 +3867,8 @@ struct wined3d_pixel_shader
     /* Some information about the shader behavior */
     BOOL color0_mov;
     DWORD color0_reg;
+
+    BOOL force_early_depth_stencil;
 };
 
 struct wined3d_compute_shader

@@ -1085,6 +1085,21 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             else
                 reg_maps->cb_sizes[reg->idx[0].offset] = reg->idx[1].offset;
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_GLOBAL_FLAGS)
+        {
+            if (ins.flags & WINED3DSGF_FORCE_EARLY_DEPTH_STENCIL)
+            {
+                if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
+                    shader->u.ps.force_early_depth_stencil = TRUE;
+                else
+                    FIXME("Invalid instruction %#x for shader type %#x.\n",
+                            ins.handler_idx, shader_version.type);
+            }
+            else
+            {
+                WARN("Ignoring global flags %#x.\n", ins.flags);
+            }
+        }
         else if (ins.handler_idx == WINED3DSIH_DCL_GS_INSTANCES)
         {
             if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
@@ -1756,6 +1771,14 @@ static void shader_dump_global_flags(struct wined3d_string_buffer *buffer, DWORD
     {
         shader_addline(buffer, "refactoringAllowed");
         global_flags &= ~WINED3DSGF_REFACTORING_ALLOWED;
+        if (global_flags)
+            shader_addline(buffer, " | ");
+    }
+
+    if (global_flags & WINED3DSGF_FORCE_EARLY_DEPTH_STENCIL)
+    {
+        shader_addline(buffer, "forceEarlyDepthStencil");
+        global_flags &= ~WINED3DSGF_FORCE_EARLY_DEPTH_STENCIL;
         if (global_flags)
             shader_addline(buffer, " | ");
     }

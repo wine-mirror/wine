@@ -7393,6 +7393,9 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     if (shader->limits->constant_float + extra_constants_needed >= gl_info->limits.glsl_ps_float_constants)
         FIXME("Insufficient uniforms to run this shader.\n");
 
+    if (shader->u.ps.force_early_depth_stencil)
+        shader_addline(buffer, "layout(early_fragment_tests) in;\n");
+
     shader_addline(buffer, "void main()\n{\n");
 
     /* Direct3D applications expect integer vPos values, while OpenGL drivers
