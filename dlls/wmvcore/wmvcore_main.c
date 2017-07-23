@@ -74,6 +74,7 @@ typedef struct {
     IWMReaderPlaylistBurn IWMReaderPlaylistBurn_iface;
     IWMHeaderInfo3 IWMHeaderInfo3_iface;
     IWMLanguageList IWMLanguageList_iface;
+    IReferenceClock IReferenceClock_iface;
     LONG ref;
 } WMReader;
 
@@ -143,6 +144,9 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID riid, voi
     }else if(IsEqualGUID(riid, &IID_IWMLanguageList)) {
         TRACE("(%p)->(IWMLanguageList %p)\n", This, ppv);
         *ppv = &This->IWMLanguageList_iface;
+    }else if(IsEqualGUID(riid, &IID_IReferenceClock)) {
+        TRACE("(%p)->(IWMLanguageList %p)\n", This, ppv);
+        *ppv = &This->IReferenceClock_iface;
     }else {
         *ppv = NULL;
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
@@ -1641,6 +1645,72 @@ static const IWMLanguageListVtbl WMLanguageListVtbl =
     langlist_AddLanguageByRFC1766String
 };
 
+static inline WMReader *impl_from_IReferenceClock(IReferenceClock *iface)
+{
+    return CONTAINING_RECORD(iface, WMReader, IReferenceClock_iface);
+}
+
+static HRESULT WINAPI refclock_QueryInterface(IReferenceClock *iface, REFIID riid, void **ppv)
+{
+    WMReader *This = impl_from_IReferenceClock(iface);
+    return IWMReader_QueryInterface(&This->IWMReader_iface, riid, ppv);
+}
+
+static ULONG WINAPI refclock_AddRef(IReferenceClock *iface)
+{
+    WMReader *This = impl_from_IReferenceClock(iface);
+    return IWMReader_AddRef(&This->IWMReader_iface);
+}
+
+static ULONG WINAPI refclock_Release(IReferenceClock *iface)
+{
+    WMReader *This = impl_from_IReferenceClock(iface);
+    return IWMReader_Release(&This->IWMReader_iface);
+}
+
+static HRESULT WINAPI refclock_GetTime(IReferenceClock *iface, REFERENCE_TIME *time)
+{
+    WMReader *This = impl_from_IReferenceClock(iface);
+    FIXME("%p, %p\n", This, time);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI refclock_AdviseTime(IReferenceClock *iface, REFERENCE_TIME basetime,
+        REFERENCE_TIME streamtime, HEVENT event, DWORD_PTR *cookie)
+{
+    WMReader *This = impl_from_IReferenceClock(iface);
+    FIXME("%p, %s, %s, %lu, %p\n", This, wine_dbgstr_longlong(basetime),
+            wine_dbgstr_longlong(streamtime), event, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI refclock_AdvisePeriodic(IReferenceClock *iface, REFERENCE_TIME starttime,
+        REFERENCE_TIME period, HSEMAPHORE semaphore, DWORD_PTR *cookie)
+{
+    WMReader *This = impl_from_IReferenceClock(iface);
+    FIXME("%p, %s, %s, %lu, %p\n", This, wine_dbgstr_longlong(starttime),
+            wine_dbgstr_longlong(period), semaphore, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI refclock_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
+{
+    WMReader *This = impl_from_IReferenceClock(iface);
+    FIXME("%p, %lu\n", This, cookie);
+    return E_NOTIMPL;
+}
+
+static const IReferenceClockVtbl ReferenceClockVtbl =
+{
+    refclock_QueryInterface,
+    refclock_AddRef,
+    refclock_Release,
+    refclock_GetTime,
+    refclock_AdviseTime,
+    refclock_AdvisePeriodic,
+    refclock_Unadvise
+};
+
 HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_reader)
 {
     WMReader *reader;
@@ -1661,6 +1731,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->IWMReaderPlaylistBurn_iface.lpVtbl = &WMReaderPlaylistBurnVtbl;
     reader->IWMHeaderInfo3_iface.lpVtbl = &WMHeaderInfo3Vtbl;
     reader->IWMLanguageList_iface.lpVtbl = &WMLanguageListVtbl;
+    reader->IReferenceClock_iface.lpVtbl = &ReferenceClockVtbl;
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;
