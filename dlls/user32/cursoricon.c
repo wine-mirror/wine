@@ -633,6 +633,7 @@ static BOOL CURSORICON_GetResCursorEntry( LPCVOID dir, DWORD size, int n,
     *width = cursor->wWidth;
     *height = cursor->wHeight;
     *bits = resdir->idEntries[n].wBitCount;
+    if (*height == *width * 2) *height /= 2;
     return TRUE;
 }
 
