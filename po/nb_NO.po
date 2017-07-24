@@ -12512,7 +12512,7 @@ msgstr "regedit: Registerverdien \"%1\" vil bli eksportert som binære data.\n"
 
 #: regedit.rc:427
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Ugyldig systemnøkkel [%1]\n"
+msgstr "regedit: Ugyldig systemnøkkel [%1]\n"
 
 #: regedit.rc:428
 msgid ""
