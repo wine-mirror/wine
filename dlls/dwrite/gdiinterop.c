@@ -312,11 +312,11 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
 {
     struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
     IDWriteGlyphRunAnalysis *analysis;
-    DWRITE_RENDERING_MODE rendermode;
+    DWRITE_RENDERING_MODE1 rendermode;
     DWRITE_GRID_FIT_MODE gridfitmode;
     DWRITE_TEXTURE_TYPE texturetype;
-    IDWriteFontFace2 *fontface2;
     DWRITE_GLYPH_RUN scaled_run;
+    IDWriteFontFace3 *fontface;
     RECT target, bounds;
     HRESULT hr;
 
@@ -331,21 +331,21 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     if (!params)
         return E_INVALIDARG;
 
-    if (FAILED(hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace2, (void **)&fontface2))) {
+    if (FAILED(hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace3, (void **)&fontface))) {
         WARN("Failed to get IDWriteFontFace2 interface, hr %#x.\n", hr);
         return hr;
     }
 
-    hr = IDWriteFontFace2_GetRecommendedRenderingMode(fontface2, run->fontEmSize, This->ppdip * 96.0f,
+    hr = IDWriteFontFace3_GetRecommendedRenderingMode(fontface, run->fontEmSize, This->ppdip * 96.0f,
             This->ppdip * 96.0f, NULL /* FIXME */, run->isSideways, DWRITE_OUTLINE_THRESHOLD_ALIASED, measuring_mode,
             params, &rendermode, &gridfitmode);
-    IDWriteFontFace2_Release(fontface2);
+    IDWriteFontFace3_Release(fontface);
     if (FAILED(hr))
         return hr;
 
     SetRect(&target, 0, 0, This->size.cx, This->size.cy);
 
-    if (rendermode == DWRITE_RENDERING_MODE_OUTLINE) {
+    if (rendermode == DWRITE_RENDERING_MODE1_OUTLINE) {
         static const XFORM identity = { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
         const DWRITE_MATRIX *m = &This->m;
         XFORM xform;
