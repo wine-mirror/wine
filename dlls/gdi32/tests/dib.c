@@ -131,7 +131,7 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "af99228aa4cfbd1f61bd824db046144a3c6c2ed7",
     "568f87f0194ca19b69a5b2bcdef795d89c5721ce",
     "a37810f46dee8741fe5adbb3f1f2e87012ffc929",
-    "50a09678c49c208f71d40452daca5411279aa674",
+    "d08f2c4e2b30131450328ed6be0efb9966a890de",
     "e462052a03dbe4ec3814db7700e166d00d4d686f",
     "a27917d4db49ce77989fae246015aeb2a28520ee",
     "657514a4ca1f2b6ca7a125ad58dfed82099a37d1",
@@ -202,7 +202,7 @@ static const char *sha1_graphics_a8r8g8b8_bitfields[] =
     "af99228aa4cfbd1f61bd824db046144a3c6c2ed7",
     "568f87f0194ca19b69a5b2bcdef795d89c5721ce",
     "a37810f46dee8741fe5adbb3f1f2e87012ffc929",
-    "50a09678c49c208f71d40452daca5411279aa674",
+    "d08f2c4e2b30131450328ed6be0efb9966a890de",
     "0cda6b3297003b3ccd6d5baa17e1ca9bb7c56f08",
     "b2c8e1ebb9435031fe068442f479d1304096e79f",
     "657514a4ca1f2b6ca7a125ad58dfed82099a37d1",
@@ -273,7 +273,7 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "af99228aa4cfbd1f61bd824db046144a3c6c2ed7",
     "25675c30adfe24d6cae60793b156dfdaa36ac3ba",
     "849d4abf4b690128a5f70e9b8ac78f20c437de06",
-    "e768fc9f3167ef3144a4cfb1e20126a577f7dd5b",
+    "88a51deb333457af423e1a1a4e3dd4ef8ca4e8c5",
     "87f57a31253a38dbf3dc3070473328fa04b68a48",
     "db64cc4d830fc35ed170b53943e722b2342954d4",
     "9988ceca44dafbee247aece1f027c06c27c01652",
@@ -344,7 +344,7 @@ static const char *sha1_graphics_r10g10b10[] =
     "36f6db4fbe2a1630a7597d3a446f2902755c96ef",
     "d3f08946300e1700865042aed121870e292d1095",
     "4782df8e24127e66a434b4e839adebf2dbb223fb",
-    "739707cc85ca63e0580c79618dc0bb8a4a338d95",
+    "c31bed2e92265aab0b690fb5092e2f6e533a0554",
     "8ea5d7e4bebc40a1d91b04b12e1c11a42c188095",
     "317521e576801acaea62c76fe16813cdfe20f4ad",
     "ce0fc29bb0281d6c955d64e239254ef9e6dbc06d",
@@ -415,7 +415,7 @@ static const char *sha1_graphics_r6g6b6[] =
     "325279e76367200d3fd7194d81c09fd139988ece",
     "c3def160a1e847605ff0fc7edd30397fa90635a0",
     "2b3e87e0b705b03c7c08f403409ab82cce095ba1",
-    "45c08e11fffc78b2a3574263419e0cb7f8cd9b45",
+    "3ded1c18712c1d102e327d0699be43675f881e89",
     "aecb242c31f31a90f071b6455ea7d808d4ea22e3",
     "77ea86e51a94b11a8081b29696cb4115687843e3",
     "d67b897cad72d31e75359094007b1346fd8806ea",
@@ -486,7 +486,7 @@ static const char *sha1_graphics_24[] =
     "d347ca5c6c4b6a61389247c3b6f61564033e8c25",
     "ee315634ed92da3a32c2675ecd1b369471c60936",
     "099c688a920f606655b485e8f0a433dc811bc976",
-    "9c044a733335bca43766bda2b317249309155079",
+    "8a6c0e9f060653365ae76294e1ec53741c89c27d",
     "354b92008a8409c62d0fa1dff1532c5943aa37a2",
     "8dc9cb7deae5c24d1eae004d53893fa6caf4723c",
     "cf311a96d41bd98fdbdfb5dfaac4ba1ba9b7d6da",
@@ -556,7 +556,7 @@ static const char *sha1_graphics_r5g5b5[] =
     "dab47c9dc149e570045d699598b14a613bf319b3",
     "2daca4d26a086ed34894693be0b0374402232809",
     "904f1d82159bcf5485f323bd12b859dc5e83f8eb",
-    "5bd29f94844351e9a5bd01f25d85608b9b0701b2",
+    "bf63c5db6b057e67a4444c1a0b3a6e5b99a45363",
     "295ec16530126046790fb734e99f86f5b3b74ed8",
     "d98b0561010606b55a1b9b85fbc93640f681d256",
     "1c1499051860b7caa25173b328ca9c862f01dd1a",
@@ -626,7 +626,7 @@ static const char *sha1_graphics_r4g4b4[] =
     "07b10c3f191d0a93e5e5694aae37dcad407e10f5",
     "f7900e60347029876ba55e8f0c4c02e89deb36b6",
     "f373a5f37b82e7523c64c08eb509b6191e49b173",
-    "9f0760a05190c9edf9ce2e8be6aaa5557601fe91",
+    "a966cb01ea9b1d962094717e483092d3baab6626",
     "7587a9c87cab1eca827807f351bb67ca184d1ac5",
     "b53ef0b5c674822e784903a9dbdd3b386d9f2350",
     "5505d2ed20dc61ffe48832ecf5329162a5ceb734",
@@ -696,7 +696,7 @@ static const char *sha1_graphics_8_color[] =
     "678979a45126a76eb629992cd64734862f53a555",
     "2f7ba8803604c032cb1a1228bc021f0f1c03e245",
     "52e7c2f8b01592898c13f1e7633881e350244209",
-    "d9d5556b77301952b4caf113337720966bc8e1f5",
+    "4907fd0fdbf375a2dcca573208a49efa2e15c9d6",
     "e58d9c0acf0219d0839e1dbd162e08a765ed7f0f",
     "34ca0f9660e1889f9f2c0deb80535d3c4f349fa4",
     "2c07272462c68cf5944b03e2aa049475b99143c5",
@@ -767,7 +767,7 @@ static const char *sha1_graphics_8_grayscale[] =
     "09640bad951c33e7d70a1fced83b1869f65b3fc5",
     "5eb00252664ec39e61359adb1dade4906a87a248",
     "ee7b9b292ea9fb559ef5ebf6a2a5586d38c7f854",
-    "dcad1a146c1d0ec2c4cc7f64bd4f45c57a604bfe",
+    "5b4a11854e508a579b1cda121841442367716930",
     "0ca8775d9a61ccc251d1e6f2e3cfd26a24ae24a2",
     "17ae603c199a5d6695d198a7f36e6d7263990951",
     "1918a33f59d3500204ffc573318a39e9ff754221",
@@ -837,7 +837,7 @@ static const char *sha1_graphics_8[] =
     "465d9cd0a77ab4fcf035aa67544b2a26269e0b09",
     "600d6b2713d5e4c0d90c02660245ed26c7ae3033",
     "0025a440866a404523a8a20e79a8891e45a2ff56",
-    "c04d335933895f836f0a28c1e3f7f444352c3b8e",
+    "7833e6cb62b4e4459d3e7ceba2cc6eb18c4b5d59",
     "bd28d77cd85b20a2384d6b25082cfd884bba683e",
     "7e591ec8ae9bb61c3a443c93f071cab2b8978394",
     "f81c70b6ee2d4690f9f7c797c66582b176f8dcef",
@@ -907,7 +907,7 @@ static const char *sha1_graphics_4[] =
     "d8af3868c66c7d6dac35ec8ee0317b38a6910bb1",
     "ec8e2aebfb4a1c28ebcd0e053b9e4d8638b50951",
     "ccf8d11b1e81895e9781f17c227c821228d8714b",
-    "f751e26578193afe6a727ee2a52318c404c56555",
+    "33a86f99eb8472088a1d63a1c63539bd5cea1c7f",
     "28a6b9f7927e99e53cf46f0333d29168cb10e920",
     "029552113292cc110fd6b7888e766628950aaeef",
     "297f6ad15200bffbf15198324ee8f27a61a6f2d4",
@@ -977,7 +977,7 @@ static const char *sha1_graphics_4_grayscale[] =
     "b5ee51cfc73acb59a2f6124509ea236f8fc7f9f7",
     "d374d4d92c940ae42a9b42c14d744341b68a8c14",
     "06a6a224be0f5cdc51ac4704f9f57fc1f3813d6f",
-    "c47c2dc806b6b8ff28f300949695d013a46c0083",
+    "d5335e66fdbd61a350f010986fa9b47655f1517f",
     "ada3b7c34946e584dcdf4203e07cfa3dad02bc63",
     "c2f61571b067a44b30f56b4658c9606f0edfc0f3",
     "58f400c9bb78e49a879276fb049edfc9c981740a",
@@ -1049,7 +1049,7 @@ static const char *sha1_graphics_1[] =
     "88763f8e8fcf4f78fa864325791a9dd35a0bd279",
     "013cee26bac8f815eadad4bfc012d9b5d01c3b7f",
     "44a28536466dc895feb824b23dfd4a47c6948af8",
-    "17468a3789f0a6d65c302bda735a01dc2c1a74d9",
+    "6bea3a3b5bde2e8038bfee86bb332205167571f4",
     "781d8c5cbc28591fd48fce06f984c502fdc6b363",
     "df510792a7790cc699532b1420d43c6d4da2ae2f",
     "55c26d22f11d80b73383fa57d0fac552d705b092",
@@ -1119,7 +1119,7 @@ static const RECT graphics_bounds[] =
     { 10, 10, 416, 26 },
     { 10, 8, 60, 104 },
     { 0, 10, 511, 306 },
-    { 0, 10, 512, 306 },
+    { 0, 0, 512, 336 },
     { 1, 1, 300, 512 },
     { 0, 0, 500, 512 },
     { 5, 5, 206, 206 },
@@ -2440,30 +2440,38 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     for (i = 0; i < 256; i++)
     {
         COLORREF s, g;
-        s = SetPixel( hdc, i * 2, 10, DIBINDEX(i) );
-        g = GetPixel( hdc, i * 2, 10 );
-        ok( s == g, "got %08x and %08x\n", s, g );
 
-        s = SetPixel( hdc, i * 2, 20, PALETTEINDEX(i) );
-        g = GetPixel( hdc, i * 2, 20 );
-        ok( s == g, "got %08x and %08x\n", s, g );
+        for (j = 0; j < 16; j++)
+        {
+            SetROP2( hdc, (j + R2_COPYPEN - 1) % 16 + 1 ); /* Start with R2_COPYPEN */
 
-        s = SetPixel( hdc, i * 2, 30, RGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ) );
-        g = GetPixel( hdc, i * 2, 30 );
-        ok( s == g, "got %08x and %08x\n", s, g );
+            s = SetPixel( hdc, i * 2, j, DIBINDEX(i) );
+            g = GetPixel( hdc, i * 2, 0 ); /* retrieve value set with R2_COPYPEN */
+            ok( s == g, "got %08x and %08x\n", s, g );
 
-        s = SetPixel( hdc, i * 2, 40, PALETTERGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ) );
-        g = GetPixel( hdc, i * 2, 40 );
-        ok( s == g, "got %08x and %08x\n", s, g );
+            s = SetPixel( hdc, i * 2, 20 + j, PALETTEINDEX(i) );
+            g = GetPixel( hdc, i * 2, 20 + 0 ); /* retrieve value set with R2_COPYPEN */
+            ok( s == g, "got %08x and %08x\n", s, g );
+
+            s = SetPixel( hdc, i * 2, 40 + j, RGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ) );
+            g = GetPixel( hdc, i * 2, 40 + 0 ); /* retrieve value set with R2_COPYPEN */
+            ok( s == g, "got %08x and %08x\n", s, g );
+
+            s = SetPixel( hdc, i * 2, 60 + j, PALETTERGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ) );
+            g = GetPixel( hdc, i * 2, 60 + 0 ); /* retrieve value set with R2_COPYPEN */
+            ok( s == g, "got %08x and %08x\n", s, g );
+        }
+
+        SetROP2( hdc, R2_COPYPEN );
 
         for (j = 0; j < 256; j++)
         {
-            s = SetPixel( hdc, i * 2, 50+j, (j << 24) | RGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ));
-            g = GetPixel( hdc, i * 2, 50+j );
+            s = SetPixel( hdc, i * 2, 80 + j, (j << 24) | RGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ));
+            g = GetPixel( hdc, i * 2, 80 + j );
             ok( s == g, "got %08x and %08x\n", s, g );
 
-            s = SetPixel( hdc, i * 2 + 1, 50+j, (j << 24) | i );
-            g = GetPixel( hdc, i * 2 + 1, 50+j );
+            s = SetPixel( hdc, i * 2 + 1, 80 + j, (j << 24) | i );
+            g = GetPixel( hdc, i * 2 + 1, 80 + j );
             ok( s == g, "got %08x and %08x\n", s, g );
         }
     }
