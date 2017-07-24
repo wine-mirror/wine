@@ -49,12 +49,12 @@
  39 stdcall -noname -i386 -private -register FreeMappedBuffer() krnl386.exe16.FreeMappedBuffer
  40 stdcall -noname -i386 -private -register OT_32ThkLSF() krnl386.exe16.OT_32ThkLSF
  41 stdcall -noname -i386 -private ThunkInitLSF(long str long str str) krnl386.exe16.ThunkInitLSF
- 42 stdcall -noname -i386 -private -register LogApiThkLSF(str) krnl386.exe16.LogApiThkLSF
+ 42 stdcall -noname -i386 -private -norelay LogApiThkLSF(str) krnl386.exe16.LogApiThkLSF
  43 stdcall -noname -i386 -private ThunkInitLS(long str long str str) krnl386.exe16.ThunkInitLS
- 44 stdcall -noname -i386 -private -register LogApiThkSL(str) krnl386.exe16.LogApiThkSL
+ 44 stdcall -noname -i386 -private -norelay LogApiThkSL(str) krnl386.exe16.LogApiThkSL
  45 stdcall -noname -i386 -private -register Common32ThkLS() krnl386.exe16.Common32ThkLS
  46 stdcall -noname -i386 -private ThunkInitSL(long str long str str) krnl386.exe16.ThunkInitSL
- 47 stdcall -noname -i386 -private -register LogCBThkSL(str) krnl386.exe16.LogCBThkSL
+ 47 stdcall -noname -i386 -private -norelay LogCBThkSL(str) krnl386.exe16.LogCBThkSL
  48 stdcall -noname -i386 -private ReleaseThunkLock(ptr) krnl386.exe16.ReleaseThunkLock
  49 stdcall -noname -i386 -private RestoreThunkLock(long) krnl386.exe16.RestoreThunkLock
 

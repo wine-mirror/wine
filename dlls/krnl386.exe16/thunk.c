@@ -187,33 +187,21 @@ void WINAPI LogApiThk( LPSTR func )
  *
  * NOTE: needs to preserve all registers!
  */
-void WINAPI __regs_LogApiThkLSF( LPSTR func, CONTEXT *context )
-{
-    TRACE( "%s\n", debugstr_a(func) );
-}
-DEFINE_REGS_ENTRYPOINT( LogApiThkLSF, 1 )
+__ASM_STDCALL_FUNC( LogApiThkLSF, 4, "ret $4" )
 
 /***********************************************************************
  *           LogApiThkSL    (KERNEL32.44)
  *
  * NOTE: needs to preserve all registers!
  */
-void WINAPI __regs_LogApiThkSL( LPSTR func, CONTEXT *context )
-{
-    TRACE( "%s\n", debugstr_a(func) );
-}
-DEFINE_REGS_ENTRYPOINT( LogApiThkSL, 1 )
+__ASM_STDCALL_FUNC( LogApiThkSL, 4, "ret $4" )
 
 /***********************************************************************
  *           LogCBThkSL    (KERNEL32.47)
  *
  * NOTE: needs to preserve all registers!
  */
-void WINAPI __regs_LogCBThkSL( LPSTR func, CONTEXT *context )
-{
-    TRACE( "%s\n", debugstr_a(func) );
-}
-DEFINE_REGS_ENTRYPOINT( LogCBThkSL, 1 )
+__ASM_STDCALL_FUNC( LogCBThkSL, 4, "ret $4" )
 
 /***********************************************************************
  * Generates a FT_Prolog call.
