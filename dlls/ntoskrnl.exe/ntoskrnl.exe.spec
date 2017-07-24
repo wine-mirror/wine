@@ -1185,7 +1185,7 @@
 @ stdcall RtlUnicodeToMultiByteSize(ptr ptr long) ntdll.RtlUnicodeToMultiByteSize
 @ stdcall RtlUnicodeToOemN(ptr long ptr ptr long) ntdll.RtlUnicodeToOemN
 @ stub RtlUnlockBootStatusData
-@ stdcall -register RtlUnwind(ptr ptr ptr ptr) ntdll.RtlUnwind
+@ stdcall -norelay RtlUnwind(ptr ptr ptr ptr) ntdll.RtlUnwind
 @ stdcall -arch=x86_64 RtlUnwindEx(ptr ptr ptr ptr ptr ptr) ntdll.RtlUnwindEx
 @ stdcall RtlUpcaseUnicodeChar(long) ntdll.RtlUpcaseUnicodeChar
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long) ntdll.RtlUpcaseUnicodeString

@@ -940,7 +940,7 @@
 # @ stub RtlUnlockBootStatusData
 @ stdcall RtlUnlockHeap(long)
 # @ stub RtlUnlockMemoryStreamRegion
-@ stdcall -register RtlUnwind(ptr ptr ptr ptr)
+@ stdcall -norelay RtlUnwind(ptr ptr ptr ptr)
 @ stdcall -arch=x86_64 RtlUnwindEx(ptr ptr ptr ptr ptr ptr)
 @ stdcall RtlUpcaseUnicodeChar(long)
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long)

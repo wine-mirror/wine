@@ -3,4 +3,4 @@
 @ stdcall RtlCompareMemory(ptr ptr long) ntdll.RtlCompareMemory
 @ stdcall RtlPcToFileHeader(ptr ptr) ntdll.RtlPcToFileHeader
 @ stdcall -norelay RtlRaiseException(ptr) ntdll.RtlRaiseException
-@ stdcall -register RtlUnwind(ptr ptr ptr ptr) ntdll.RtlUnwind
+@ stdcall -norelay RtlUnwind(ptr ptr ptr ptr) ntdll.RtlUnwind

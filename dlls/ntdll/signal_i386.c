@@ -2667,6 +2667,11 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID ta
     pRecord->ExceptionFlags |= EH_UNWINDING | (pEndFrame ? 0 : EH_EXIT_UNWIND);
 
     TRACE( "code=%x flags=%x\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
+    TRACE( "eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n",
+           context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi );
+    TRACE( "ebp=%08x esp=%08x eip=%08x cs=%04x ds=%04x fs=%04x gs=%04x flags=%08x\n",
+           context->Ebp, context->Esp, context->Eip, LOWORD(context->SegCs), LOWORD(context->SegDs),
+           LOWORD(context->SegFs), LOWORD(context->SegGs), context->EFlags );
 
     /* get chain of exception frames */
     frame = NtCurrentTeb()->Tib.ExceptionList;
@@ -2697,8 +2702,30 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID ta
         }
         frame = __wine_pop_frame( frame );
     }
+
+    NtSetContextThread( GetCurrentThread(), context );
 }
-DEFINE_REGS_ENTRYPOINT( RtlUnwind, 4 )
+__ASM_STDCALL_FUNC( RtlUnwind, 16,
+                    "pushl %ebp\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                    "movl %esp,%ebp\n\t"
+                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                    "leal -(0x2cc+8)(%esp),%esp\n\t" /* sizeof(CONTEXT) + alignment */
+                    "pushl %esp\n\t"                 /* context */
+                    "call " __ASM_NAME("RtlCaptureContext") __ASM_STDCALL(4) "\n\t"
+                    "leal 24(%ebp),%eax\n\t"
+                    "movl %eax,0xc4(%esp)\n\t"       /* context->Esp */
+                    "pushl %esp\n\t"
+                    "pushl 20(%ebp)\n\t"
+                    "pushl 16(%ebp)\n\t"
+                    "pushl 12(%ebp)\n\t"
+                    "pushl 8(%ebp)\n\t"
+                    "call " __ASM_NAME("__regs_RtlUnwind") __ASM_STDCALL(20) "\n\t"
+                    "leave\n\t"
+                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                    __ASM_CFI(".cfi_same_value %ebp\n\t")
+                    "ret $16" )  /* actually never returns */
 
 
 /*******************************************************************
