@@ -386,8 +386,8 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
     } *stack;
     DWORD exception_code = 0;
 
-    stack = (struct stack_layout *)(SP_sig(sigcontext) & ~15);
-    stack--;  /* push the stack_layout structure */
+    /* push the stack_layout structure */
+    stack = (struct stack_layout *)((SP_sig(sigcontext) - sizeof(*stack)) & ~15);
 
     stack->rec.ExceptionRecord  = NULL;
     stack->rec.ExceptionCode    = exception_code;
