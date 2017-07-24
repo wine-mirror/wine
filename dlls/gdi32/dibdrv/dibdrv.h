@@ -257,6 +257,7 @@ extern void add_clipped_bounds( dibdrv_physdev *dev, const RECT *rect, HRGN clip
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;
 extern void release_cached_font( struct cached_font *font ) DECLSPEC_HIDDEN;
+extern BOOL fill_with_pixel( DC *dc, dib_info *dib, DWORD pixel, int num, const RECT *rects, INT rop ) DECLSPEC_HIDDEN;
 
 static inline void init_clipped_rects( struct clipped_rects *clip_rects )
 {

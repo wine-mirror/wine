@@ -1754,6 +1754,20 @@ COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
 }
 
 /**********************************************************************
+ *             fill_with_pixel
+ *
+ * Fill a number of rectangles with a given pixel color and rop mode
+ */
+BOOL fill_with_pixel( DC *dc, dib_info *dib, DWORD pixel, int num, const RECT *rects, INT rop )
+{
+    rop_mask mask;
+
+    calc_rop_masks( rop, pixel, &mask );
+    dib->funcs->solid_rects( dib, num, rects, mask.and, mask.xor );
+    return TRUE;
+}
+
+/**********************************************************************
  *             solid_brush
  *
  * Fill a number of rectangles with the solid brush
@@ -1762,12 +1776,9 @@ static BOOL solid_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
                         int num, const RECT *rects, INT rop)
 {
     DC *dc = get_physdev_dc( &pdev->dev );
-    rop_mask brush_color;
     DWORD color = get_pixel_color( dc, &pdev->dib, brush->colorref, TRUE );
 
-    calc_rop_masks( rop, color, &brush_color );
-    dib->funcs->solid_rects( dib, num, rects, brush_color.and, brush_color.xor );
-    return TRUE;
+    return fill_with_pixel( dc, dib, color, num, rects, rop );
 }
 
 static BOOL alloc_brush_mask_bits( dib_brush *brush )
