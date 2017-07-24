@@ -1125,7 +1125,7 @@ void delete_registry_key(WCHAR *reg_key_name)
         error_exit(STRING_INVALID_SYSTEM_KEY, reg_key_name);
     }
 
-    if (!*key_name)
+    if (!key_name || !*key_name)
         error_exit(STRING_DELETE_FAILED, reg_key_name);
 
     RegDeleteTreeW(key_class, key_name);
