@@ -2431,11 +2431,11 @@ double CDECL MSVCR120_expm1(double x)
 float CDECL MSVCR120_expm1f(float x)
 {
 #ifdef HAVE_EXPM1F
-    double ret = expm1f(x);
+    float ret = expm1f(x);
 #else
-    double ret = exp(x) - 1;
+    float ret = exp(x) - 1;
 #endif
-    if (!isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    if (!finitef(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
     return ret;
 }
 
@@ -3087,7 +3087,7 @@ double CDECL MSVCR120_atanh(double x)
 float CDECL MSVCR120_atanhf(float x)
 {
 #ifdef HAVE_ATANHF
-    double ret;
+    float ret;
 
     if (x > 1 || x < -1) {
         MSVCRT_fenv_t env;
@@ -3102,7 +3102,7 @@ float CDECL MSVCR120_atanhf(float x)
 
     ret = atanhf(x);
 
-    if (!isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    if (!finitef(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
     return ret;
 #else
     return MSVCR120_atanh(x);
