@@ -1053,6 +1053,9 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     dce->hwnd = hwnd;
     dce->flags = (dce->flags & ~user_flags) | (flags & user_flags);
 
+    /* cross-process invalidation is not supported yet, so always update the vis rgn */
+    if (!WIN_IsCurrentProcess( hwnd )) bUpdateVisRgn = TRUE;
+
     if (SetHookFlags( dce->hdc, DCHF_VALIDATEVISRGN )) bUpdateVisRgn = TRUE;  /* DC was dirty */
 
     if (bUpdateVisRgn) update_visible_region( dce );
