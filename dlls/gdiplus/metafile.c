@@ -2791,7 +2791,7 @@ static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *i
         data_flags |= PenDataLineStyle;
         pen_data_size += sizeof(DWORD);
     }
-    if (pen->dash != (GpDashStyle)DashCapFlat)
+    if (pen->dashcap != DashCapFlat)
     {
         data_flags |= PenDataDashedLineCap;
         pen_data_size += sizeof(DWORD);
@@ -2879,7 +2879,7 @@ static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *i
     }
     if (data_flags & PenDataDashedLineCap)
     {
-        *(DWORD*)(pen_data->OptionalData + i) = pen->dash;
+        *(DWORD*)(pen_data->OptionalData + i) = pen->dashcap;
         i += sizeof(DWORD);
     }
     if (data_flags & PenDataDashedLineOffset)
