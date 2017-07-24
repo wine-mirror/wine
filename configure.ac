@@ -423,8 +423,6 @@ AC_CHECK_HEADERS(\
 	inet/mib2.h \
 	io.h \
 	kstat.h \
-	lber.h \
-	ldap.h \
 	libproc.h \
 	link.h \
 	linux/cdrom.h \
@@ -2147,27 +2145,34 @@ AC_SEARCH_LIBS(clock_gettime, rt,
 LIBS=$ac_save_LIBS
 
 dnl **** Check for OpenLDAP ***
-AC_SUBST(LDAP_LIBS,"")
-if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
+if test "x$with_ldap" != "xno"
 then
-    AC_CHECK_TYPE(LDAPSortKey,
-        [AC_CHECK_LIB(ldap_r, ldap_initialize,
-            [AC_CHECK_LIB(lber, ber_init,
-                [AC_DEFINE(HAVE_LDAP, 1, [Define if you have the OpenLDAP development environment])
-                 LDAP_LIBS="-lldap_r -llber"],,
-                 [$PTHREAD_LIBS])],,
-                 [$PTHREAD_LIBS])],,
-        [#include <ldap.h>])
-    WINE_CHECK_LIB_FUNCS(\
-	ldap_count_references \
-	ldap_first_reference \
-	ldap_next_reference \
-	ldap_parse_reference \
-	ldap_parse_sort_control \
-	ldap_parse_sortresponse_control \
-	ldap_parse_vlv_control \
-	ldap_parse_vlvresponse_control,
-        [$LDAP_LIBS $PTHREAD_LIBS])
+    dnl Actually there's no pkg-config support for ldap, but this way we can still override the flags
+    WINE_PACKAGE_FLAGS(LDAP,[openldap],[-lldap_r -llber],,,
+        [AC_CHECK_HEADERS([ldap.h lber.h])
+        if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
+        then
+            AC_CHECK_TYPE(LDAPSortKey,
+                [AC_CHECK_LIB(ldap_r, ldap_initialize,
+                    [AC_CHECK_LIB(lber, ber_init,
+                        [AC_DEFINE(HAVE_LDAP, 1, [Define if you have the OpenLDAP development environment])],
+                        [LDAP_LIBS=""],
+                        [$PTHREAD_LIBS $LDAP_LIBS])],
+                    [LDAP_LIBS=""],
+                    [$PTHREAD_LIBS $LDAP_LIBS])],
+                [LDAP_LIBS=""],
+                [#include <ldap.h>])
+            WINE_CHECK_LIB_FUNCS(\
+                ldap_count_references \
+                ldap_first_reference \
+                ldap_next_reference \
+                ldap_parse_reference \
+                ldap_parse_sort_control \
+                ldap_parse_sortresponse_control \
+                ldap_parse_vlv_control \
+                ldap_parse_vlvresponse_control,
+                [$LDAP_LIBS $PTHREAD_LIBS])
+        fi])
 fi
 WINE_NOTICE_WITH(ldap,[test "x$LDAP_LIBS" = "x"],
                  [libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported.])

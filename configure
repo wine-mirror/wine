@@ -627,6 +627,7 @@ LIBOBJS
 WINELOADER_INSTALL
 ALL_VARS_RULES
 LDAP_LIBS
+LDAP_CFLAGS
 RT_LIBS
 POLL_LIBS
 DL_LIBS
@@ -1705,7 +1706,9 @@ TIFF_LIBS
 MPG123_CFLAGS
 MPG123_LIBS
 NETAPI_CFLAGS
-NETAPI_LIBS'
+NETAPI_LIBS
+LDAP_CFLAGS
+LDAP_LIBS'
 
 
 # Initialize some variables set by options.
@@ -2467,6 +2470,8 @@ Some influential environment variables:
   NETAPI_CFLAGS
               C compiler flags for netapi, overriding pkg-config
   NETAPI_LIBS Linker flags for netapi, overriding pkg-config
+  LDAP_CFLAGS C compiler flags for openldap, overriding pkg-config
+  LDAP_LIBS   Linker flags for openldap, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -6871,8 +6876,6 @@ for ac_header in \
 	inet/mib2.h \
 	io.h \
 	kstat.h \
-	lber.h \
-	ldap.h \
 	libproc.h \
 	link.h \
 	linux/cdrom.h \
@@ -15952,11 +15955,41 @@ fi
 
 LIBS=$ac_save_LIBS
 
-LDAP_LIBS=""
-
-if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
+if test "x$with_ldap" != "xno"
 then
-    ac_fn_c_check_type "$LINENO" "LDAPSortKey" "ac_cv_type_LDAPSortKey" "#include <ldap.h>
+        if ${LDAP_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  LDAP_CFLAGS=`$PKG_CONFIG --cflags openldap 2>/dev/null`
+fi
+fi
+
+if ${LDAP_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  LDAP_LIBS=`$PKG_CONFIG --libs openldap 2>/dev/null`
+fi
+fi
+
+LDAP_LIBS=${LDAP_LIBS:-"-lldap_r -llber"}
+$as_echo "$as_me:${as_lineno-$LINENO}: openldap cflags: $LDAP_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: openldap libs: $LDAP_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $LDAP_CFLAGS"
+for ac_header in ldap.h lber.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
+        then
+            ac_fn_c_check_type "$LINENO" "LDAPSortKey" "ac_cv_type_LDAPSortKey" "#include <ldap.h>
 "
 if test "x$ac_cv_type_LDAPSortKey" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ldap_initialize in -lldap_r" >&5
@@ -15965,7 +15998,7 @@ if ${ac_cv_lib_ldap_r_ldap_initialize+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lldap_r $PTHREAD_LIBS $LIBS"
+LIBS="-lldap_r $PTHREAD_LIBS $LDAP_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -16002,7 +16035,7 @@ if ${ac_cv_lib_lber_ber_init+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-llber $PTHREAD_LIBS $LIBS"
+LIBS="-llber $PTHREAD_LIBS $LDAP_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -16036,24 +16069,29 @@ if test "x$ac_cv_lib_lber_ber_init" = xyes; then :
 
 $as_echo "#define HAVE_LDAP 1" >>confdefs.h
 
-                 LDAP_LIBS="-lldap_r -llber"
+else
+  LDAP_LIBS=""
 fi
 
+else
+  LDAP_LIBS=""
 fi
 
+else
+  LDAP_LIBS=""
 fi
 
-    ac_wine_check_funcs_save_LIBS="$LIBS"
+            ac_wine_check_funcs_save_LIBS="$LIBS"
 LIBS="$LIBS $LDAP_LIBS $PTHREAD_LIBS"
 for ac_func in \
-	ldap_count_references \
-	ldap_first_reference \
-	ldap_next_reference \
-	ldap_parse_reference \
-	ldap_parse_sort_control \
-	ldap_parse_sortresponse_control \
-	ldap_parse_vlv_control \
-	ldap_parse_vlvresponse_control
+                ldap_count_references \
+                ldap_first_reference \
+                ldap_next_reference \
+                ldap_parse_reference \
+                ldap_parse_sort_control \
+                ldap_parse_sortresponse_control \
+                ldap_parse_vlv_control \
+                ldap_parse_vlvresponse_control
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -16066,6 +16104,11 @@ fi
 done
 
 LIBS="$ac_wine_check_funcs_save_LIBS"
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$LDAP_CFLAGS" || LDAP_CFLAGS=`echo " $LDAP_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$LDAP_LIBS" || LDAP_LIBS=`echo " $LDAP_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
 fi
 if test "x$LDAP_LIBS" = "x"; then :
   case "x$with_ldap" in
@@ -17853,6 +17896,7 @@ EXCESS_PRECISION_CFLAGS = $EXCESS_PRECISION_CFLAGS
 DL_LIBS = $DL_LIBS
 POLL_LIBS = $POLL_LIBS
 RT_LIBS = $RT_LIBS
+LDAP_CFLAGS = $LDAP_CFLAGS
 LDAP_LIBS = $LDAP_LIBS
 "
 
