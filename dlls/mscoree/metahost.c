@@ -71,6 +71,10 @@ static HMODULE mono_handle;
 BOOL is_mono_started;
 static BOOL is_mono_shutdown;
 
+typedef struct _MonoProfilerDesc *MonoProfilerHandle;
+
+typedef void (CDECL *MonoProfilerRuntimeShutdownBeginCallback) (MonoProfiler *prof);
+
 MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
 MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status);
 MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
@@ -95,7 +99,9 @@ MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj);
 MonoMethod* (CDECL *mono_object_get_virtual_method)(MonoObject *obj, MonoMethod *method);
 MonoObject* (CDECL *mono_object_new)(MonoDomain *domain, MonoClass *klass);
 void* (CDECL *mono_object_unbox)(MonoObject *obj);
+static MonoProfilerHandle (CDECL *mono_profiler_create)(MonoProfiler *prof);
 static void (CDECL *mono_profiler_install)(MonoProfiler *prof, MonoProfileFunc shutdown_callback);
+static void (CDECL *mono_profiler_set_runtime_shutdown_begin_callback)(MonoProfilerHandle handle, MonoProfilerRuntimeShutdownBeginCallback cb);
 MonoType* (CDECL *mono_reflection_type_from_name)(char *name, MonoImage *image);
 MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc);
 void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
@@ -199,7 +205,6 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_object_get_virtual_method);
         LOAD_MONO_FUNCTION(mono_object_new);
         LOAD_MONO_FUNCTION(mono_object_unbox);
-        LOAD_MONO_FUNCTION(mono_profiler_install);
         LOAD_MONO_FUNCTION(mono_reflection_type_from_name);
         LOAD_MONO_FUNCTION(mono_runtime_invoke);
         LOAD_MONO_FUNCTION(mono_runtime_object_init);
@@ -222,13 +227,26 @@ static HRESULT load_mono(LPCWSTR mono_path)
 } while (0);
 
         LOAD_OPT_MONO_FUNCTION(mono_image_open_from_module_handle, image_open_module_handle_dummy);
+        LOAD_OPT_MONO_FUNCTION(mono_profiler_create, NULL);
+        LOAD_OPT_MONO_FUNCTION(mono_profiler_install, NULL);
+        LOAD_OPT_MONO_FUNCTION(mono_profiler_set_runtime_shutdown_begin_callback, NULL);
         LOAD_OPT_MONO_FUNCTION(mono_set_crash_chaining, set_crash_chaining_dummy);
         LOAD_OPT_MONO_FUNCTION(mono_trace_set_print_handler, set_print_handler_dummy);
         LOAD_OPT_MONO_FUNCTION(mono_trace_set_printerr_handler, set_print_handler_dummy);
 
 #undef LOAD_OPT_MONO_FUNCTION
 
-        mono_profiler_install(NULL, mono_shutdown_callback_fn);
+        if (mono_profiler_create != NULL)
+        {
+            /* Profiler API v2 */
+            MonoProfilerHandle handle = mono_profiler_create(NULL);
+            mono_profiler_set_runtime_shutdown_begin_callback(handle, mono_shutdown_callback_fn);
+        }
+        else if (mono_profiler_install != NULL)
+        {
+            /* Profiler API v1 */
+            mono_profiler_install(NULL, mono_shutdown_callback_fn);
+        }
 
         mono_set_crash_chaining(TRUE);
 
