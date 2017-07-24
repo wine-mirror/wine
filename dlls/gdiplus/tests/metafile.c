@@ -2651,7 +2651,7 @@ static void test_drawpath(void)
     expect(Ok, stat);
 
     stat = GdipDrawPath(graphics, pen, path);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipDeletePen(pen);
     expect(Ok, stat);

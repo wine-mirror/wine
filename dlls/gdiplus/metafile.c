@@ -2937,7 +2937,7 @@ GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path)
     draw_path_record->PenId = pen_id;
 
     METAFILE_WriteRecords(metafile);
-    return NotImplemented;
+    return Ok;
 }
 
 static GpStatus METAFILE_AddBrushObject(GpMetafile *metafile, GpBrush *brush, DWORD *id)
