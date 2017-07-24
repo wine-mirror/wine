@@ -1121,19 +1121,21 @@ static BOOL open_connection( request_t *request )
 
     if (!host)
     {
-        if (!(host = heap_alloc( sizeof(*host) ))) return FALSE;
-        host->ref = 1;
-        host->secure = is_secure;
-        host->port = port;
-        list_init( &host->connections );
-        if ((host->hostname = strdupW( connect->servername )))
+        if ((host = heap_alloc( sizeof(*host) )))
         {
-            list_add_head( &connection_pool, &host->entry );
-        }
-        else
-        {
-            heap_free( host );
-            host = NULL;
+            host->ref = 1;
+            host->secure = is_secure;
+            host->port = port;
+            list_init( &host->connections );
+            if ((host->hostname = strdupW( connect->servername )))
+            {
+                list_add_head( &connection_pool, &host->entry );
+            }
+            else
+            {
+                heap_free( host );
+                host = NULL;
+            }
         }
     }
 
