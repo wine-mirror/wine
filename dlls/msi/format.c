@@ -840,7 +840,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
 UINT MSI_FormatRecordW( MSIPACKAGE* package, MSIRECORD* record, LPWSTR buffer,
                         LPDWORD size )
 {
-    WCHAR *format, *deformated;
+    WCHAR *format, *deformated = NULL;
     UINT rc = ERROR_INVALID_PARAMETER;
     DWORD len;
     MSIRECORD *record_deformated;
