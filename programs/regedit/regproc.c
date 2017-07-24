@@ -699,6 +699,7 @@ static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos)
 /* handler for parser DEFAULT_VALUE_NAME state */
 static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos)
 {
+    HeapFree(GetProcessHeap(), 0, parser->value_name);
     parser->value_name = NULL;
 
     set_state(parser, DATA_START);
