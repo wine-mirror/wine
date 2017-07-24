@@ -3593,6 +3593,9 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
                 end_pointi.X = floorf(end_point.X);
                 end_pointi.Y = floorf(end_point.Y);
 
+                if(start_pointi.X == end_pointi.X && start_pointi.Y == end_pointi.Y)
+                    continue;
+
                 /* draw line segment */
                 if (abs(start_pointi.Y - end_pointi.Y) > abs(start_pointi.X - end_pointi.X))
                 {
