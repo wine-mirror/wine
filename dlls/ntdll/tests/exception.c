@@ -1416,6 +1416,96 @@ static void test_dpe_exceptions(void)
     ok(stat == STATUS_ACCESS_DENIED, "enabling DEP while permanent: status %08x\n", stat);
 }
 
+static void test_thread_context(void)
+{
+    CONTEXT context;
+    NTSTATUS status;
+    struct expected
+    {
+        DWORD Eax, Ebx, Ecx, Edx, Esi, Edi, Ebp, Esp, Eip,
+            SegCs, SegDs, SegEs, SegFs, SegGs, SegSs, EFlags, prev_frame;
+    } expect;
+    NTSTATUS (*func_ptr)( struct expected *res, void *func, void *arg1, void *arg2 ) = (void *)code_mem;
+
+    static const BYTE call_func[] =
+    {
+        0x55,             /* pushl  %ebp */
+        0x89, 0xe5,       /* mov    %esp,%ebp */
+        0x50,             /* pushl  %eax ; add a bit of offset to the stack */
+        0x50,             /* pushl  %eax */
+        0x50,             /* pushl  %eax */
+        0x50,             /* pushl  %eax */
+        0x8b, 0x45, 0x08, /* mov    0x8(%ebp),%eax */
+        0x8f, 0x00,       /* popl   (%eax) */
+        0x89, 0x58, 0x04, /* mov    %ebx,0x4(%eax) */
+        0x89, 0x48, 0x08, /* mov    %ecx,0x8(%eax) */
+        0x89, 0x50, 0x0c, /* mov    %edx,0xc(%eax) */
+        0x89, 0x70, 0x10, /* mov    %esi,0x10(%eax) */
+        0x89, 0x78, 0x14, /* mov    %edi,0x14(%eax) */
+        0x89, 0x68, 0x18, /* mov    %ebp,0x18(%eax) */
+        0x89, 0x60, 0x1c, /* mov    %esp,0x1c(%eax) */
+        0xff, 0x75, 0x04, /* pushl  0x4(%ebp) */
+        0x8f, 0x40, 0x20, /* popl   0x20(%eax) */
+        0x8c, 0x48, 0x24, /* mov    %cs,0x24(%eax) */
+        0x8c, 0x58, 0x28, /* mov    %ds,0x28(%eax) */
+        0x8c, 0x40, 0x2c, /* mov    %es,0x2c(%eax) */
+        0x8c, 0x60, 0x30, /* mov    %fs,0x30(%eax) */
+        0x8c, 0x68, 0x34, /* mov    %gs,0x34(%eax) */
+        0x8c, 0x50, 0x38, /* mov    %ss,0x38(%eax) */
+        0x9c,             /* pushf */
+        0x8f, 0x40, 0x3c, /* popl   0x3c(%eax) */
+        0xff, 0x75, 0x00, /* pushl  0x0(%ebp) ; previous stack frame */
+        0x8f, 0x40, 0x40, /* popl   0x40(%eax) */
+        0x8b, 0x00,       /* mov    (%eax),%eax */
+        0xff, 0x75, 0x14, /* pushl  0x14(%ebp) */
+        0xff, 0x75, 0x10, /* pushl  0x10(%ebp) */
+        0xff, 0x55, 0x0c, /* call   *0xc(%ebp) */
+        0xc9,             /* leave */
+        0xc3,             /* ret */
+    };
+
+    memcpy( func_ptr, call_func, sizeof(call_func) );
+
+#define COMPARE(reg) \
+    ok( context.reg == expect.reg, "wrong " #reg " %08x/%08x\n", context.reg, expect.reg )
+
+    memset( &context, 0xcc, sizeof(context) );
+    memset( &expect, 0xcc, sizeof(expect) );
+    context.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS;
+    status = func_ptr( &expect, pNtGetContextThread, (void *)GetCurrentThread(), &context );
+    ok( status == STATUS_SUCCESS, "NtGetContextThread failed %08x\n", status );
+    trace( "expect: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x ebp=%08x esp=%08x "
+           "eip=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
+           expect.Eax, expect.Ebx, expect.Ecx, expect.Edx, expect.Esi, expect.Edi,
+           expect.Ebp, expect.Esp, expect.Eip, expect.SegCs, expect.SegDs, expect.SegEs,
+           expect.SegFs, expect.SegGs, expect.SegSs, expect.EFlags, expect.prev_frame );
+    trace( "actual: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x ebp=%08x esp=%08x "
+           "eip=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
+           context.Eax, context.Ebx, context.Ecx, context.Edx, context.Esi, context.Edi,
+           context.Ebp, context.Esp, context.Eip, context.SegCs, context.SegDs, context.SegEs,
+           context.SegFs, context.SegGs, context.SegSs, context.EFlags );
+    /* Eax, Ecx, Edx, EFlags are not preserved */
+    COMPARE( Ebx );
+    COMPARE( Esi );
+    COMPARE( Edi );
+    COMPARE( Ebp );
+    /* Esp is the stack upon entry to NtGetContextThread */
+    ok( context.Esp == expect.Esp - 12 || context.Esp == expect.Esp - 16,
+        "wrong Esp %08x/%08x\n", context.Esp, expect.Esp );
+    /* Eip is somewhere close to the NtGetContextThread implementation */
+    ok( (char *)context.Eip >= (char *)pNtGetContextThread - 0x10000 &&
+        (char *)context.Eip <= (char *)pNtGetContextThread + 0x10000,
+        "wrong Eip %08x/%08x\n", context.Eip, (DWORD)pNtGetContextThread );
+    /* segment registers clear the high word */
+    ok( context.SegCs == LOWORD(expect.SegCs), "wrong SegCs %08x/%08x\n", context.SegCs, expect.SegCs );
+    ok( context.SegDs == LOWORD(expect.SegDs), "wrong SegDs %08x/%08x\n", context.SegDs, expect.SegDs );
+    ok( context.SegEs == LOWORD(expect.SegEs), "wrong SegEs %08x/%08x\n", context.SegEs, expect.SegEs );
+    ok( context.SegFs == LOWORD(expect.SegFs), "wrong SegFs %08x/%08x\n", context.SegFs, expect.SegFs );
+    ok( context.SegGs == LOWORD(expect.SegGs), "wrong SegGs %08x/%08x\n", context.SegGs, expect.SegGs );
+    ok( context.SegSs == LOWORD(expect.SegSs), "wrong SegSs %08x/%08x\n", context.SegSs, expect.SegGs );
+#undef COMPARE
+}
+
 #elif defined(__x86_64__)
 
 #define is_wow64 0
@@ -2530,6 +2620,7 @@ START_TEST(exception)
     test_fpu_exceptions();
     test_dpe_exceptions();
     test_prot_fault();
+    test_thread_context();
 
 #elif defined(__x86_64__)
     pRtlAddFunctionTable               = (void *)GetProcAddress( hntdll,

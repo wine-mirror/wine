@@ -185,7 +185,7 @@
 # @ stub NtFreeUserPhysicalPages
 @ stdcall NtFreeVirtualMemory(long ptr ptr long)
 @ stdcall NtFsControlFile(long long ptr ptr ptr long ptr long ptr long)
-@ stdcall NtGetContextThread(long ptr)
+@ stdcall -norelay NtGetContextThread(long ptr)
 @ stdcall NtGetCurrentProcessorNumber()
 # @ stub NtGetDevicePowerState
 @ stub NtGetPlugPlayEvent
@@ -1111,7 +1111,7 @@
 # @ stub ZwFreeUserPhysicalPages
 @ stdcall -private ZwFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
 @ stdcall -private ZwFsControlFile(long long ptr ptr ptr long ptr long ptr long) NtFsControlFile
-@ stdcall -private ZwGetContextThread(long ptr) NtGetContextThread
+@ stdcall -private -norelay ZwGetContextThread(long ptr) NtGetContextThread
 @ stdcall -private ZwGetCurrentProcessorNumber() NtGetCurrentProcessorNumber
 # @ stub ZwGetDevicePowerState
 @ stub ZwGetPlugPlayEvent

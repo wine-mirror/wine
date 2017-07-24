@@ -1293,59 +1293,6 @@ static void set_cpu_context( const CONTEXT *context )
 
 
 /***********************************************************************
- *           copy_context
- *
- * Copy a register context according to the flags.
- */
-static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
-{
-    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
-    if (flags & CONTEXT_INTEGER)
-    {
-        to->Eax = from->Eax;
-        to->Ebx = from->Ebx;
-        to->Ecx = from->Ecx;
-        to->Edx = from->Edx;
-        to->Esi = from->Esi;
-        to->Edi = from->Edi;
-    }
-    if (flags & CONTEXT_CONTROL)
-    {
-        to->Ebp    = from->Ebp;
-        to->Esp    = from->Esp;
-        to->Eip    = from->Eip;
-        to->SegCs  = from->SegCs;
-        to->SegSs  = from->SegSs;
-        to->EFlags = from->EFlags;
-    }
-    if (flags & CONTEXT_SEGMENTS)
-    {
-        to->SegDs = from->SegDs;
-        to->SegEs = from->SegEs;
-        to->SegFs = from->SegFs;
-        to->SegGs = from->SegGs;
-    }
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        to->Dr0 = from->Dr0;
-        to->Dr1 = from->Dr1;
-        to->Dr2 = from->Dr2;
-        to->Dr3 = from->Dr3;
-        to->Dr6 = from->Dr6;
-        to->Dr7 = from->Dr7;
-    }
-    if (flags & CONTEXT_FLOATING_POINT)
-    {
-        to->FloatSave = from->FloatSave;
-    }
-    if (flags & CONTEXT_EXTENDED_REGISTERS)
-    {
-        memcpy( to->ExtendedRegisters, from->ExtendedRegisters, sizeof(to->ExtendedRegisters) );
-    }
-}
-
-
-/***********************************************************************
  *           context_to_server
  *
  * Convert a register context to the server format.
@@ -1515,15 +1462,19 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 /***********************************************************************
  *              NtGetContextThread  (NTDLL.@)
  *              ZwGetContextThread  (NTDLL.@)
+ *
+ * Note: we use a small assembly wrapper to save the necessary registers
+ *       in case we are fetching the context of the current thread.
  */
-NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
+NTSTATUS CDECL __regs_NtGetContextThread( DWORD edi, DWORD esi, DWORD ebx, DWORD eflags,
+                                          DWORD ebp, DWORD retaddr, HANDLE handle, CONTEXT *context )
 {
     NTSTATUS ret;
-    DWORD needed_flags = context->ContextFlags;
+    DWORD needed_flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
 
     /* debug registers require a server call */
-    if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)) self = FALSE;
+    if (needed_flags & CONTEXT_DEBUG_REGISTERS) self = FALSE;
 
     if (!self)
     {
@@ -1533,13 +1484,36 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if (self)
     {
-        if (needed_flags)
+        if (needed_flags & CONTEXT_INTEGER)
         {
-            CONTEXT ctx;
-            RtlCaptureContext( &ctx );
-            copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
-            context->ContextFlags |= ctx.ContextFlags & needed_flags;
+            context->Eax = 0;
+            context->Ebx = ebx;
+            context->Ecx = 0;
+            context->Edx = 0;
+            context->Esi = esi;
+            context->Edi = edi;
+            context->ContextFlags |= CONTEXT_INTEGER;
         }
+        if (needed_flags & CONTEXT_CONTROL)
+        {
+            context->Ebp    = ebp;
+            context->Esp    = (DWORD)&retaddr;
+            context->Eip    = *(&edi - 1);
+            context->SegCs  = wine_get_cs();
+            context->SegSs  = wine_get_ss();
+            context->EFlags = eflags;
+            context->ContextFlags |= CONTEXT_CONTROL;
+        }
+        if (needed_flags & CONTEXT_SEGMENTS)
+        {
+            context->SegDs = wine_get_ds();
+            context->SegEs = wine_get_es();
+            context->SegFs = wine_get_fs();
+            context->SegGs = wine_get_gs();
+            context->ContextFlags |= CONTEXT_SEGMENTS;
+        }
+        if (needed_flags & CONTEXT_FLOATING_POINT) save_fpu( context );
+        /* FIXME: extended floating point */
         /* update the cached version of the debug registers */
         if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
         {
@@ -1551,8 +1525,40 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             x86_thread_data()->dr7 = context->Dr7;
         }
     }
+
+    if (context->ContextFlags & (CONTEXT_INTEGER & ~CONTEXT_i386))
+        TRACE( "%p: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n", handle,
+               context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi );
+    if (context->ContextFlags & (CONTEXT_CONTROL & ~CONTEXT_i386))
+        TRACE( "%p: ebp=%08x esp=%08x eip=%08x cs=%04x ss=%04x flags=%08x\n", handle,
+               context->Ebp, context->Esp, context->Eip, context->SegCs, context->SegSs, context->EFlags );
+    if (context->ContextFlags & (CONTEXT_SEGMENTS & ~CONTEXT_i386))
+        TRACE( "%p: ds=%04x es=%04x fs=%04x gs=%04x\n", handle,
+               context->SegCs, context->SegDs, context->SegEs, context->SegFs );
+    if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
+        TRACE( "%p: dr0=%08x dr1=%08x dr2=%08x dr3=%08x dr6=%08x dr7=%08x\n", handle,
+               context->Dr0, context->Dr1, context->Dr2, context->Dr3, context->Dr6, context->Dr7 );
+
     return STATUS_SUCCESS;
 }
+__ASM_STDCALL_FUNC( NtGetContextThread, 8,
+                    "pushl %ebp\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                    "movl %esp,%ebp\n\t"
+                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                    "pushfl\n\t"
+                    "pushl %ebx\n\t"
+                    __ASM_CFI(".cfi_rel_offset %ebx,-8\n\t")
+                    "pushl %esi\n\t"
+                    __ASM_CFI(".cfi_rel_offset %esi,-12\n\t")
+                    "pushl %edi\n\t"
+                    __ASM_CFI(".cfi_rel_offset %edi,-16\n\t")
+                    "call " __ASM_NAME("__regs_NtGetContextThread") "\n\t"
+                    "leave\n\t"
+                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                    __ASM_CFI(".cfi_same_value %ebp\n\t")
+                    "ret $8" )
 
 
 /***********************************************************************
