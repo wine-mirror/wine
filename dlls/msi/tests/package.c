@@ -687,6 +687,16 @@ static UINT create_controlevent_table( MSIHANDLE hdb )
             "PRIMARY KEY `Dialog_`, `Control_`, `Event`, `Argument`, `Condition`)");
 }
 
+static UINT create_actiontext_table( MSIHANDLE hdb )
+{
+    return run_query(hdb,
+            "CREATE TABLE `ActionText` ("
+            "`Action` CHAR(72) NOT NULL, "
+            "`Description` CHAR(64) LOCALIZABLE, "
+            "`Template` CHAR(128) LOCALIZABLE "
+            "PRIMARY KEY `Action`)");
+}
+
 #define make_add_entry(type, qtext) \
     static UINT add##_##type##_##entry( MSIHANDLE hdb, const char *values ) \
     { \
@@ -781,6 +791,10 @@ make_add_entry(control,
 make_add_entry(controlevent,
                "INSERT INTO `ControlEvent` "
                "(`Dialog_`, `Control_`, `Event`, `Argument`, `Condition`, `Ordering`) VALUES( %s )");
+
+make_add_entry(actiontext,
+               "INSERT INTO `ActionText` "
+               "(`Action`, `Description`, `Template`) VALUES( %s )");
 
 static UINT add_reglocator_entry( MSIHANDLE hdb, const char *sig, UINT root, const char *path,
                                   const char *name, UINT type )
@@ -9394,14 +9408,14 @@ static const struct externalui_message processmessage_error_format_sequence[] = 
 };
 
 static const struct externalui_message doaction_costinitialize_sequence[] = {
-    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostInitialize", "", ""}, {0, 1, 0, 1}},
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostInitialize", "cost description", "cost template"}, {0, 1, 1, 1}},
     {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", ""}, {0, 1, 1}},
     {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", "1"}, {0, 1, 1}},
     {0}
 };
 
 static const struct externalui_message doaction_custom_sequence[] = {
-    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "custom", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "custom", "description", "template"}, {0, 1, 1, 1}},
     {INSTALLMESSAGE_INFO, 2, {"", "custom", "1"}, {0, 1, 1}},
     {INSTALLMESSAGE_INFO, 2, {"", "custom", "0"}, {0, 1, 1}},
     {0}
@@ -9539,6 +9553,13 @@ static void test_externalui_message(void)
     ok(r == ERROR_SUCCESS, "Failed to create Error table: %u\n", r);
     r = run_query(hdb, "INSERT INTO `Error` (`Error`, `Message`) VALUES (5, 'internal error')");
     ok(r == ERROR_SUCCESS, "Failed to insert into Error table: %u\n", r);
+
+    r = create_actiontext_table(hdb);
+    ok(r == ERROR_SUCCESS, "Failed to create ActionText table: %u\n", r);
+    r = add_actiontext_entry(hdb, "'custom', 'description', 'template'");
+    ok(r == ERROR_SUCCESS, "Failed to insert into ActionText table: %u\n", r);
+    r = add_actiontext_entry(hdb, "'CostInitialize', 'cost description', 'cost template'");
+    ok(r == ERROR_SUCCESS, "Failed to insert into ActionText table: %u\n", r);
 
     r = MsiOpenPackageA(NULL, &hpkg);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);

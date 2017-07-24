@@ -160,13 +160,26 @@ static const WCHAR szWriteEnvironmentStrings[] =
 
 static INT ui_actionstart(MSIPACKAGE *package, LPCWSTR action, LPCWSTR description, LPCWSTR template)
 {
-    MSIRECORD *row = MSI_CreateRecord(3);
+    WCHAR query[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','A','c','t','i','o','n','T','e','x','t','`',' ','W','H','E','R','E',' ',
+        '`','A','c','t','i','o','n','`',' ','=',' ','\'','%','s','\'',0};
+    MSIRECORD *row, *textrow;
     INT rc;
+
+    textrow = MSI_QueryGetRecord(package->db, query, action);
+    if (textrow)
+    {
+        description = MSI_RecordGetString(textrow, 2);
+        template = MSI_RecordGetString(textrow, 3);
+    }
+
+    row = MSI_CreateRecord(3);
     if (!row) return -1;
     MSI_RecordSetStringW(row, 1, action);
     MSI_RecordSetStringW(row, 2, description);
     MSI_RecordSetStringW(row, 3, template);
     rc = MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, row);
+    if (textrow) msiobj_release(&textrow->hdr);
     msiobj_release(&row->hdr);
     return rc;
 }
