@@ -565,7 +565,7 @@
 @ stdcall -arch=win32 k32LoadStringA(long long ptr long)
 @ varargs -arch=win32 k32wsprintfA(str str)
 @ stdcall -arch=win32 k32wvsprintfA(ptr str ptr)
-@ stdcall -arch=win32 -register CommonUnimpStub()
+@ stdcall -arch=win32 -norelay CommonUnimpStub()
 @ stdcall -arch=win32 GetProcessDword(long long)
 @ stdcall -arch=win32 DosFileHandleToWin32Handle(long)
 @ stdcall -arch=win32 Win32HandleToDosFileHandle(long)

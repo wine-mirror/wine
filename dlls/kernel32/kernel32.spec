@@ -24,7 +24,7 @@
  14 stdcall -noname -i386 -private k32LoadStringA(long long ptr long) krnl386.exe16.k32LoadStringA
  15 varargs -noname -i386 -private k32wsprintfA(str str) krnl386.exe16.k32wsprintfA
  16 stdcall -noname -i386 -private k32wvsprintfA(ptr str ptr) krnl386.exe16.k32wvsprintfA
- 17 stdcall -noname -i386 -private -register CommonUnimpStub() krnl386.exe16.CommonUnimpStub
+ 17 stdcall -noname -i386 -private -norelay CommonUnimpStub() krnl386.exe16.CommonUnimpStub
  18 stdcall -noname -i386 -private GetProcessDword(long long) krnl386.exe16.GetProcessDword
  19 stub -noname -i386 ThunkTheTemplateHandle
  20 stdcall -noname -i386 -private DosFileHandleToWin32Handle(long) krnl386.exe16.DosFileHandleToWin32Handle

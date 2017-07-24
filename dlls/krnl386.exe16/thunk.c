@@ -2123,22 +2123,37 @@ LPVOID WINAPI GetPK16SysVar(void)
 /**********************************************************************
  *           CommonUnimpStub    (KERNEL32.17)
  */
-void WINAPI __regs_CommonUnimpStub( CONTEXT *context )
+int WINAPI __regs_CommonUnimpStub( const char *name, int type )
 {
-    FIXME("generic stub: %s\n", ((LPSTR)context->Eax ? (LPSTR)context->Eax : "?"));
+    FIXME("generic stub %s\n", debugstr_a(name));
 
-    switch ((context->Ecx >> 4) & 0x0f)
+    switch (type)
     {
-    case 15:  context->Eax = -1;   break;
-    case 14:  context->Eax = 0x78; break;
-    case 13:  context->Eax = 0x32; break;
-    case 1:   context->Eax = 1;    break;
-    default:  context->Eax = 0;    break;
+    case 15:  return -1;
+    case 14:  return ERROR_CALL_NOT_IMPLEMENTED;
+    case 13:  return ERROR_NOT_SUPPORTED;
+    case 1:   return 1;
+    default:  return 0;
     }
-
-    context->Esp += (context->Ecx & 0x0f) * 4;
 }
-DEFINE_REGS_ENTRYPOINT( CommonUnimpStub, 0 )
+__ASM_STDCALL_FUNC( CommonUnimpStub, 0,
+                    "pushl %ecx\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    "shrl $4,%ecx\n\t"
+                    "andl $0xf,%ecx\n\t"
+                    "pushl %ecx\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    "pushl %eax\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    "call " __ASM_NAME("__regs_CommonUnimpStub") __ASM_STDCALL(8) "\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                    "popl %ecx\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                    "andl $0xf,%ecx\n\t"
+                    "movl (%esp),%edx\n\t"
+                    "leal (%esp,%ecx,4),%esp\n\t"
+                    "movl %edx,(%esp)\n\t"
+                    "ret" )
 
 /**********************************************************************
  *           HouseCleanLogicallyDeadHandles    (KERNEL32.33)
