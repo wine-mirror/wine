@@ -42,6 +42,7 @@ static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pRtlRaiseException)(EXCEPTION_RECORD *rec);
 static PVOID     (WINAPI *pRtlUnwind)(PVOID, PVOID, PEXCEPTION_RECORD, PVOID);
+static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
 static PVOID     (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG first, PVECTORED_EXCEPTION_HANDLER func);
 static ULONG     (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID handler);
 static PVOID     (WINAPI *pRtlAddVectoredContinueHandler)(ULONG first, PVECTORED_EXCEPTION_HANDLER func);
@@ -1471,6 +1472,42 @@ static void test_thread_context(void)
 
     memset( &context, 0xcc, sizeof(context) );
     memset( &expect, 0xcc, sizeof(expect) );
+    func_ptr( &expect, pRtlCaptureContext, &context, 0 );
+    trace( "expect: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x ebp=%08x esp=%08x "
+           "eip=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
+           expect.Eax, expect.Ebx, expect.Ecx, expect.Edx, expect.Esi, expect.Edi,
+           expect.Ebp, expect.Esp, expect.Eip, expect.SegCs, expect.SegDs, expect.SegEs,
+           expect.SegFs, expect.SegGs, expect.SegSs, expect.EFlags, expect.prev_frame );
+    trace( "actual: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x ebp=%08x esp=%08x "
+           "eip=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
+           context.Eax, context.Ebx, context.Ecx, context.Edx, context.Esi, context.Edi,
+           context.Ebp, context.Esp, context.Eip, context.SegCs, context.SegDs, context.SegEs,
+           context.SegFs, context.SegGs, context.SegSs, context.EFlags );
+
+    ok( context.ContextFlags == (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS) ||
+        broken( context.ContextFlags == 0xcccccccc ),  /* <= vista */
+        "wrong flags %08x\n", context.ContextFlags );
+    COMPARE( Eax );
+    COMPARE( Ebx );
+    COMPARE( Ecx );
+    COMPARE( Edx );
+    COMPARE( Esi );
+    COMPARE( Edi );
+    COMPARE( Eip );
+    COMPARE( SegCs );
+    COMPARE( SegDs );
+    COMPARE( SegEs );
+    COMPARE( SegFs );
+    COMPARE( SegGs );
+    COMPARE( SegSs );
+    COMPARE( EFlags );
+    /* Ebp is from the previous stackframe */
+    ok( context.Ebp == expect.prev_frame, "wrong Ebp %08x/%08x\n", context.Ebp, expect.prev_frame );
+    /* Esp is the value on entry to the previous stackframe */
+    ok( context.Esp == expect.Ebp + 8, "wrong Esp %08x/%08x\n", context.Esp, expect.Ebp + 8 );
+
+    memset( &context, 0xcc, sizeof(context) );
+    memset( &expect, 0xcc, sizeof(expect) );
     context.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS;
     status = func_ptr( &expect, pNtGetContextThread, (void *)GetCurrentThread(), &context );
     ok( status == STATUS_SUCCESS, "NtGetContextThread failed %08x\n", status );
@@ -2530,6 +2567,7 @@ START_TEST(exception)
     pNtReadVirtualMemory = (void *)GetProcAddress( hntdll, "NtReadVirtualMemory" );
     pRtlUnwind           = (void *)GetProcAddress( hntdll, "RtlUnwind" );
     pRtlRaiseException   = (void *)GetProcAddress( hntdll, "RtlRaiseException" );
+    pRtlCaptureContext   = (void *)GetProcAddress( hntdll, "RtlCaptureContext" );
     pNtTerminateProcess  = (void *)GetProcAddress( hntdll, "NtTerminateProcess" );
     pRtlAddVectoredExceptionHandler    = (void *)GetProcAddress( hntdll,
                                                                  "RtlAddVectoredExceptionHandler" );

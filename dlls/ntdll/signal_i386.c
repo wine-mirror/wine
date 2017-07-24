@@ -1236,15 +1236,16 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     "movl %ebx,0xa4(%eax)\n\t" /* context->Ebx */
                     "movl %edx,0xa8(%eax)\n\t" /* context->Edx */
                     "movl %ecx,0xac(%eax)\n\t" /* context->Ecx */
-                    "movl %ebp,0xb4(%eax)\n\t" /* context->Ebp */
-                    "movl 4(%esp),%edx\n\t"
+                    "movl 0(%ebp),%edx\n\t"
+                    "movl %edx,0xb4(%eax)\n\t" /* context->Ebp */
+                    "movl 4(%ebp),%edx\n\t"
                     "movl %edx,0xb8(%eax)\n\t" /* context->Eip */
                     "movw %cs,0xbc(%eax)\n\t"  /* context->SegCs */
                     "pushfl\n\t"
                     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                     "popl 0xc0(%eax)\n\t"      /* context->EFlags */
                     __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                    "leal 8(%esp),%edx\n\t"
+                    "leal 8(%ebp),%edx\n\t"
                     "movl %edx,0xc4(%eax)\n\t" /* context->Esp */
                     "movw %ss,0xc8(%eax)\n\t"  /* context->SegSs */
                     "popl 0xb0(%eax)\n\t"      /* context->Eax */
@@ -2715,29 +2716,29 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
  *		RtlRaiseException (NTDLL.@)
  */
 __ASM_STDCALL_FUNC( RtlRaiseException, 4,
-                    "leal -0x2cc(%esp),%esp\n\t"  /* sizeof(CONTEXT) */
-                    __ASM_CFI(".cfi_adjust_cfa_offset 0x2cc\n\t")
-                    "pushl %esp\n\t"              /* context */
+                    "pushl %ebp\n\t"
                     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                    "movl %esp,%ebp\n\t"
+                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                    "leal -0x2cc(%esp),%esp\n\t"  /* sizeof(CONTEXT) */
+                    "pushl %esp\n\t"              /* context */
                     "call " __ASM_NAME("RtlCaptureContext") __ASM_STDCALL(4) "\n\t"
-                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                    "movl 0x2cc(%esp),%eax\n\t"   /* return address */
-                    "movl 0x2d0(%esp),%ecx\n\t"   /* rec */
-                    "movl %eax,0xb8(%esp)\n\t"    /* context->Eip */
+                    "movl 4(%ebp),%eax\n\t"       /* return address */
+                    "movl 8(%ebp),%ecx\n\t"       /* rec */
                     "movl %eax,12(%ecx)\n\t"      /* rec->ExceptionAddress */
-                    "leal 0x2d4(%esp),%eax\n\t"
+                    "leal 12(%ebp),%eax\n\t"
                     "movl %eax,0xc4(%esp)\n\t"    /* context->Esp */
                     "movl %esp,%eax\n\t"
                     "pushl $1\n\t"
-                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                     "pushl %eax\n\t"
-                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                     "pushl %ecx\n\t"
-                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                     "call " __ASM_NAME("NtRaiseException") __ASM_STDCALL(12) "\n\t"
-                    __ASM_CFI(".cfi_adjust_cfa_offset -12\n\t")
                     "pushl %eax\n\t"
                     "call " __ASM_NAME("RtlRaiseStatus") __ASM_STDCALL(4) "\n\t"
+                    "leave\n\t"
+                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                     "ret $4" )  /* actually never returns */
 
 
