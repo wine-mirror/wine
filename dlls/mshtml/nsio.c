@@ -303,6 +303,16 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post
         assert(nsres == NS_OK);
     }
 
+    if(window->uri_nofrag) {
+        nsWineURI *referrer_uri;
+        nsres = create_nsuri(window->uri_nofrag, window, window->doc_obj ? window->doc_obj->nscontainer : NULL,  NULL, &referrer_uri);
+        if(NS_SUCCEEDED(nsres)) {
+            nsres = nsIDocShellLoadInfo_SetReferrer(load_info, (nsIURI*)&referrer_uri->nsIFileURL_iface);
+            assert(nsres == NS_OK);
+            nsIFileURL_Release(&referrer_uri->nsIFileURL_iface);
+        }
+    }
+
     uri->channel_bsc = channelbsc;
     doc = window->base.inner_window->doc;
     doc->skip_mutation_notif = TRUE;
