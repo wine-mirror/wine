@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-06-16 13:49+0200\n"
+"PO-Revision-Date: 2017-07-25 15:17+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -6898,45 +6898,43 @@ msgstr "Wählen Sie das Verzeichnis aus, das %s enthält"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Schwerer Fehler: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Fehler [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Warnung [1]."
 
 #: msi.rc:74
 msgid "Info [1]."
-msgstr ""
+msgstr "Info [1]."
 
 #: msi.rc:75
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "{{Disk full: }}"
-msgstr "Datenträger voll.\n"
+msgstr "{{Datenträger voll: }}"
 
 #: msi.rc:76
 msgid "Action %s: [1]. [2]"
-msgstr ""
+msgstr "Aktion %s: [1]. [2]"
 
 #: msi.rc:77
 msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr ""
+msgstr "Nachrichtentyp: [1], Argument: [2]{, [3]}"
 
 #: msi.rc:83
 msgid "Action start %s: [1]."
-msgstr ""
+msgstr "Beginn der Aktion %s: [1]."
 
 #: msi.rc:84
 msgid "Action ended %s: [1]. Return value [2]."
-msgstr ""
+msgstr "Ende der Aktion %s: [1]. Rückgabewert [2]."
 
 #: msi.rc:85
 msgid "=== Logging started: %s  %s ==="
-msgstr ""
+msgstr "=== Logging gestartet: %s  %s ==="
 
 #: msi.rc:86
 msgid ""
@@ -6944,454 +6942,377 @@ msgid ""
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
+"Während der Installation dieses Paketes ist ein unerwarteter Fehler "
+"aufgetreten. Das könnte auf ein Problem mit dem Paket hinweisen. Der "
+"Fehlercode ist [1]. {{Argumente: [2], [3], [4]}}"
 
 #: msi.rc:92
-#, fuzzy
-#| msgid "No registry log space.\n"
 msgid "Allocating registry space"
-msgstr "Kein Speicher für Registrierungs-Log.\n"
+msgstr "Reservierung von Registrierungsspeicher"
 
 #: msi.rc:93
-#, fuzzy
-#| msgid "Single-instance application.\n"
 msgid "Searching for installed applications"
-msgstr "Einzelinstanz-Anwendung.\n"
+msgstr "Suche nach installierten Anwendungen"
 
 #: msi.rc:94
 msgid "Binding executables"
-msgstr ""
+msgstr "Anbindung von ausführbaren Dateien"
 
 #: msi.rc:95 msi.rc:138
-#, fuzzy
-#| msgid "Searching for %s"
 msgid "Searching for qualifying products"
-msgstr "Suche nach %s"
+msgstr "Suche nach qualifizierenden Produkten"
 
 #: msi.rc:96 msi.rc:97 msi.rc:102
 msgid "Computing space requirements"
-msgstr ""
+msgstr "Berechnung des Speicherbedarfs"
 
 #: msi.rc:98
-#, fuzzy
-#| msgid "Target folder"
 msgid "Creating folders"
-msgstr "Zielverzeichnis"
+msgstr "Anlegen von Verzeichnissen"
 
 #: msi.rc:99
-#, fuzzy
-#| msgid "Create Shor&tcut"
 msgid "Creating shortcuts"
-msgstr "&Verknüpfung anlegen"
+msgstr "Anlegen von Verknüpfungen"
 
 #: msi.rc:100
-#, fuzzy
-#| msgid "Exception in service.\n"
 msgid "Deleting services"
-msgstr "Ausnahme in Dienst.\n"
+msgstr "Löschen von Diensten"
 
 #: msi.rc:101
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creating duplicate files"
-msgstr "Erstellungsdatum"
+msgstr "Anlegen von Dateiduplikaten"
 
 #: msi.rc:103
-#, fuzzy
-#| msgid "No associated application.\n"
 msgid "Searching for related applications"
-msgstr "Keine verknüpfte Anwendung.\n"
+msgstr "Suche nach zugehörigen Anwendungen"
 
 #: msi.rc:104
 msgid "Copying network install files"
-msgstr ""
+msgstr "Kopieren von Netzwerkinstallationsdateien"
 
 #: msi.rc:105
-#, fuzzy
-#| msgid "Copying Files..."
 msgid "Copying new files"
-msgstr "Dateien werden kopiert..."
+msgstr "Kopieren neuer Dateien"
 
 #: msi.rc:106
-#, fuzzy
-#| msgid "Installation of component failed: %08x"
 msgid "Installing ODBC components"
-msgstr "Installation der Komponente fehlgeschlagen: %08x"
+msgstr "Installation von ODBC-Komponenten"
 
 #: msi.rc:107
-#, fuzzy
-#| msgid "Installer service failed.\n"
 msgid "Installing new services"
-msgstr "Installer-Dienst gescheitert.\n"
+msgstr "Installation neuer Dienste"
 
 #: msi.rc:108
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Installing system catalog"
-msgstr "Software"
+msgstr "Installation des Systemkatalogs"
 
 #: msi.rc:109
-#, fuzzy
-#| msgid "Wine Application Uninstaller"
 msgid "Validating install"
-msgstr "Wine-Anwendungsentferner"
+msgstr "Validierung der Installation"
 
 #: msi.rc:110
 msgid "Evaluating launch conditions"
-msgstr ""
+msgstr "Auswertung der Startbedingungen"
 
 #: msi.rc:111
 msgid "Migrating feature states from related applications"
-msgstr ""
+msgstr "Migration der Featurezustände zugehöriger Anwendungen"
 
 #: msi.rc:112
-#, fuzzy
-#| msgid "Icon files"
 msgid "Moving files"
-msgstr "Symboldateien"
+msgstr "Verschieben von Dateien"
 
 #: msi.rc:113
-#, fuzzy
-#| msgid "Version information"
 msgid "Publishing assembly information"
-msgstr "Versionsinformationen"
+msgstr "Veröffentlichung von Assembly-Informationen"
 
 #: msi.rc:114
 msgid "Unpublishing assembly information"
-msgstr ""
+msgstr "Zurückziehen veröffentlichter Assembly-Informationen"
 
 #: msi.rc:115
-#, fuzzy
-#| msgid "Icon files"
 msgid "Patching files"
-msgstr "Symboldateien"
+msgstr "Patchen von Dateien"
 
 #: msi.rc:116
 msgid "Updating component registration"
-msgstr ""
+msgstr "Aktualisierung der Komponentenregistrierung"
 
 #: msi.rc:117
 msgid "Publishing Qualified Components"
-msgstr ""
+msgstr "Veröffentlichung qualifizierter Komponenten"
 
 #: msi.rc:118
 msgid "Publishing Product Features"
-msgstr ""
+msgstr "Veröffentlichung von Produktfeatures"
 
 #: msi.rc:119
-#, fuzzy
-#| msgid "Client Information"
 msgid "Publishing product information"
-msgstr "Client-Informationen"
+msgstr "Veröffentlichung von Produktinformationen"
 
 #: msi.rc:120
 msgid "Registering Class servers"
-msgstr ""
+msgstr "Registrierung von Klassenservern"
 
 #: msi.rc:121
 msgid "Registering COM+ Applications and Components"
-msgstr ""
+msgstr "Registrierung von COM+ Anwendungen und Komponenten"
 
 #: msi.rc:122
 msgid "Registering extension servers"
-msgstr ""
+msgstr "Registrierung von Erweiterungsservern"
 
 #: msi.rc:123
 msgid "Registering fonts"
-msgstr ""
+msgstr "Registrierung von Schriftarten"
 
 #: msi.rc:124
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Registering MIME info"
-msgstr "Registrierungs-Editor"
+msgstr "Registrierung von MIME-Informationen"
 
 #: msi.rc:125
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
 msgid "Registering product"
-msgstr "Registrierung ist beschädigt.\n"
+msgstr "Registrierung des Produktes"
 
 #: msi.rc:126
 msgid "Registering program identifiers"
-msgstr ""
+msgstr "Registrierung von Programmidentifikatoren"
 
 #: msi.rc:127
-#, fuzzy
-#| msgid "Type Libraries"
 msgid "Registering type libraries"
-msgstr "Typbibliotheken"
+msgstr "Registrierung von Typbibliotheken"
 
 #: msi.rc:128
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Registering user"
-msgstr "Ressource in Benutzung.\n"
+msgstr "Registrierung des Benutzers"
 
 #: msi.rc:129
-#, fuzzy
-#| msgid "&Remove duplicates"
 msgid "Removing duplicated files"
-msgstr "&Duplikate entfernen"
+msgstr "Entfernen von Dateiduplikaten"
 
 #: msi.rc:130 msi.rc:154
-#, fuzzy
-#| msgid "Applying font settings"
 msgid "Updating environment strings"
-msgstr "Anwenden der Schriftarteinstellung"
+msgstr "Aktualisierung von Umgebungsvariablen"
 
 #: msi.rc:131
-#, fuzzy
-#| msgid "&Remove application"
 msgid "Removing applications"
-msgstr "Anw. &entfernen"
+msgstr "Entfernen der Anwendungen"
 
 #: msi.rc:132
-#, fuzzy
-#| msgid "Icon files"
 msgid "Removing files"
-msgstr "Symboldateien"
+msgstr "Entfernen von Dateien"
 
 #: msi.rc:133
 msgid "Removing folders"
-msgstr ""
+msgstr "Entfernen von Verzeichnissen"
 
 #: msi.rc:134
 msgid "Removing INI files entries"
-msgstr ""
+msgstr "Entfernen von INI-Dateieinträgen"
 
 #: msi.rc:135
-#, fuzzy
-#| msgid "Domain Component"
 msgid "Removing ODBC components"
-msgstr "Domänenkomponente"
+msgstr "Entfernen von ODBC-Komponenten"
 
 #: msi.rc:136
-#, fuzzy
-#| msgid "Unable to modify the selected registry value."
 msgid "Removing system registry values"
-msgstr "Der ausgewählte Wert konnte nicht geändert werden."
+msgstr "Entfernen von Systemregistrierungswerten"
 
 #: msi.rc:137
 msgid "Removing shortcuts"
-msgstr ""
+msgstr "Entfernen von Verknüpfungen"
 
 #: msi.rc:139
 msgid "Registering modules"
-msgstr ""
+msgstr "Registrierung von Modulen"
 
 #: msi.rc:140
 msgid "Unregistering modules"
-msgstr ""
+msgstr "Deregistrierung von Modulen"
 
 #: msi.rc:141
-#, fuzzy
-#| msgid "Initializing; "
 msgid "Initializing ODBC directories"
-msgstr "Initialisierend; "
+msgstr "Initialisierung von ODBC-Verzeichnissen"
 
 #: msi.rc:142
-#, fuzzy
-#| msgid "Starting Wordpad failed"
 msgid "Starting services"
-msgstr "Der Start von Wordpad ist fehlgeschlagen"
+msgstr "Starten von Diensten"
 
 #: msi.rc:143
-#, fuzzy
-#| msgid "Stopping dependent service: %1\n"
 msgid "Stopping services"
-msgstr "Stoppe den abhängigen Dienst: %1\n"
+msgstr "Stoppen von Diensten"
 
 #: msi.rc:144
 msgid "Unpublishing Qualified Components"
-msgstr ""
+msgstr "Zurückziehen von veröffentlichten qualifizierten Komponenten"
 
 #: msi.rc:145
 msgid "Unpublishing Product Features"
-msgstr ""
+msgstr "Zurückziehen von veröffentlichten Produktfeatures"
 
 #: msi.rc:146
-#, fuzzy
-#| msgid "Client Information"
 msgid "Unpublishing product information"
-msgstr "Client-Informationen"
+msgstr "Zurückziehen von veröffentlichten Produktinformationen"
 
 #: msi.rc:147
 msgid "Unregister Class servers"
-msgstr ""
+msgstr "Deregistrierung von Klassenservern"
 
 #: msi.rc:148
 msgid "Unregistering COM+ Applications and Components"
-msgstr ""
+msgstr "Deregistrieung von COM+ Anwendungen und Komponenten"
 
 #: msi.rc:149
 msgid "Unregistering extension servers"
-msgstr ""
+msgstr "Deregistrierung von Erweiterungsservern"
 
 #: msi.rc:150
 msgid "Unregistering fonts"
-msgstr ""
+msgstr "Deregistrierung von Schriftarten"
 
 #: msi.rc:151
 msgid "Unregistering MIME info"
-msgstr ""
+msgstr "Deregistrierung von MIME-Informationen"
 
 #: msi.rc:152
 msgid "Unregistering program identifiers"
-msgstr ""
+msgstr "Deregistrierung von Programmidentifikatoren"
 
 #: msi.rc:153
 msgid "Unregistering type libraries"
-msgstr ""
+msgstr "Deregistrierung von Typbibliotheken"
 
 #: msi.rc:155
 msgid "Writing INI files values"
-msgstr ""
+msgstr "Schreiben von INI-Dateiwerten"
 
 #: msi.rc:156
-#, fuzzy
-#| msgid "Warning: system library"
 msgid "Writing system registry values"
-msgstr "Warnung: Systembibliothek"
+msgstr "Schreiben von Systemregistrierungswerten"
 
 #: msi.rc:162
 msgid "Free space: [1]"
-msgstr ""
+msgstr "Freier Speicher: [1]"
 
 #: msi.rc:163
 msgid "Property: [1], Signature: [2]"
-msgstr ""
+msgstr "Eigenschaft: [1], Signatur: [2]"
 
 #: msi.rc:164
-#, fuzzy
-#| msgid "File:"
 msgid "File: [1]"
-msgstr "Datei:"
+msgstr "Datei: [1]"
 
 #: msi.rc:165 msi.rc:192
-#, fuzzy
-#| msgid "Folder:"
 msgid "Folder: [1]"
-msgstr "Verzeichnis:"
+msgstr "Verzeichnis: [1]"
 
 #: msi.rc:166 msi.rc:195
 msgid "Shortcut: [1]"
-msgstr ""
+msgstr "Verknüpfung: [1]"
 
 #: msi.rc:167 msi.rc:198 msi.rc:199
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [1]"
-msgstr "Ge&rät:"
+msgstr "Dienst: [1]"
 
 #: msi.rc:168 msi.rc:171 msi.rc:175
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr ""
+msgstr "Datei: [1], Verzeichnis: [9], Größe: [6]"
 
 #: msi.rc:169
-#, fuzzy
-#| msgid "application"
 msgid "Found application: [1]"
-msgstr "Anwendung"
+msgstr "Gefundene Anwendung: [1]"
 
 #: msi.rc:170
 msgid "File: [1], Directory: [9], Size: [6]"
-msgstr ""
+msgstr "Datei: [1], Verzeichnis: [9], Größe: [6]"
 
 #: msi.rc:172
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [2]"
-msgstr "Ge&rät:"
+msgstr "Dienst: [2]"
 
 #: msi.rc:173
 msgid "File: [1],  Dependencies: [2]"
-msgstr ""
+msgstr "Datei: [1], Abhängigkeiten: [2]"
 
 #: msi.rc:174
-#, fuzzy
-#| msgid "Applications"
 msgid "Application: [1]"
-msgstr "Anwendungen"
+msgstr "Anwendung: [1]"
 
 #: msi.rc:176 msi.rc:177
 msgid "Application Context:[1], Assembly Name:[2]"
-msgstr ""
+msgstr "Anwendungskontext: [1], Assembly-Name: [2]"
 
 #: msi.rc:178
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr ""
+msgstr "Datei: [1], Verzeichnis: [2], Größe: [3]"
 
 #: msi.rc:179 msi.rc:200
 msgid "Component ID: [1], Qualifier: [2]"
-msgstr ""
+msgstr "Komponenten-ID: [1], Bezeichner: [2]"
 
 #: msi.rc:180 msi.rc:201
 msgid "Feature: [1]"
-msgstr ""
+msgstr "Feature: [1]"
 
 #: msi.rc:181 msi.rc:202
 msgid "Class Id: [1]"
-msgstr ""
+msgstr "Klassen-ID: [1]"
 
 #: msi.rc:182
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
-msgstr ""
+msgstr "AppID: [1]{{, AppTyp: [2], Benutzer: [3], RSN: [4]}}"
 
 #: msi.rc:183 msi.rc:204
-#, fuzzy
-#| msgid "Extensions Only"
 msgid "Extension: [1]"
-msgstr "Nur Erweiterungen"
+msgstr "Erweiterung: [1]"
 
 #: msi.rc:184 msi.rc:205
-#, fuzzy
-#| msgid "&Font:"
 msgid "Font: [1]"
-msgstr "Schrift&art:"
+msgstr "Schriftart: [1]"
 
 #: msi.rc:185 msi.rc:206
 msgid "MIME Content Type: [1], Extension: [2]"
-msgstr ""
+msgstr "MIME-Inhaltstyp: [1], Erweiterung: [2]"
 
 #: msi.rc:186 msi.rc:207
 msgid "ProgId: [1]"
-msgstr ""
+msgstr "ProgID: [1]"
 
 #: msi.rc:187 msi.rc:208
 msgid "LibID: [1]"
-msgstr ""
+msgstr "LibID: [1]"
 
 #: msi.rc:188 msi.rc:191
 msgid "File: [1], Directory: [9]"
-msgstr ""
+msgstr "Datei: [1], Verzeichnis: [9]"
 
 #: msi.rc:189 msi.rc:209
 msgid "Name: [1], Value: [2], Action [3]"
-msgstr ""
+msgstr "Name: [1], Wert: [2], Aktion: [3]"
 
 #: msi.rc:190
 msgid "Application: [1], Command line: [2]"
-msgstr ""
+msgstr "Anwendung: [1], Befehlszeile: [2]"
 
 #: msi.rc:193 msi.rc:210
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr ""
+msgstr "Datei: [1], Sektion: [2], Schlüssel: [3], Wert: [4]"
 
 #: msi.rc:194
 msgid "Key: [1], Name: [2]"
-msgstr ""
+msgstr "Schlüssel: [1], Name: [2]"
 
 #: msi.rc:196 msi.rc:197
 msgid "File: [1], Folder: [2]"
-msgstr ""
+msgstr "Datei: [1], Verzeichnis: [2]"
 
 #: msi.rc:203
 msgid "AppId: [1]{{, AppType: [2]}}"
-msgstr ""
+msgstr "AppID: [1]{{, AppTyp: [2]}}"
 
 #: msi.rc:211
 msgid "Key: [1], Name: [2], Value: [3]"
-msgstr ""
+msgstr "Schlüssel: [1], Name: [2], Wert: [3]"
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -12694,12 +12615,10 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
-"regedit: Nicht unterstützter Registrierungsdatentyp [%1] wurde in '%2' "
+"regedit: Nicht unterstützter Registrierungsdatentyp [0x%1!x!] wurde in '%2' "
 "gefunden.\n"
 
 #: regedit.rc:426
@@ -12707,10 +12626,8 @@ msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: Der Wert '%1' wird in Form von Binärdaten exportiert.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Ungültiger Schlüsselname\n"
+msgstr "regedit: Ungültiger Systemschlüssel [%1]\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12720,10 +12637,8 @@ msgstr ""
 "nicht gefunden.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit: Die Registrierungsklasse '%1' konnte nicht gelöscht werden.\n"
+msgstr "regedit: Der Schlüssel '%1' konnte nicht gelöscht werden.\n"
 
 #: regedit.rc:431
 msgid "regedit: The line contains invalid syntax.\n"
@@ -12870,14 +12785,10 @@ msgid "Confirm Key Delete"
 msgstr "Löschen des Schlüssels bestätigen"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete the registry key '%1' and all of its "
-#| "subkeys?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
 msgstr ""
-"Sind Sie sicher, dass Sie den Schlüssel '%1' und alle Unterschlüssel löschen "
+"Sind Sie sicher, dass Sie diesen Schlüssel und alle Unterschlüssel löschen "
 "möchten?"
 
 #: regedit.rc:199
