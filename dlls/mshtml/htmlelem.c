@@ -4896,6 +4896,110 @@ static const IProvideMultipleClassInfoVtbl ProvideMultipleClassInfoVtbl = {
     ProvideMultipleClassInfo_GetInfoOfIndex
 };
 
+static inline HTMLElement *impl_from_IElementTraversal(IElementTraversal *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLElement, IElementTraversal_iface);
+}
+
+static HRESULT WINAPI ElementTraversal_QueryInterface(IElementTraversal *iface, REFIID riid, void **ppv)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    return IHTMLElement_QueryInterface(&This->IHTMLElement_iface, riid, ppv);
+}
+
+static ULONG WINAPI ElementTraversal_AddRef(IElementTraversal *iface)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+
+    return IHTMLElement_AddRef(&This->IHTMLElement_iface);
+}
+
+static ULONG WINAPI ElementTraversal_Release(IElementTraversal *iface)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+
+    return IHTMLElement_Release(&This->IHTMLElement_iface);
+}
+
+static HRESULT WINAPI ElementTraversal_GetTypeInfoCount(IElementTraversal *iface, UINT *pctinfo)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->node.event_target.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI ElementTraversal_GetTypeInfo(IElementTraversal *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    return IDispatchEx_GetTypeInfo(&This->node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI ElementTraversal_GetIDsOfNames(IElementTraversal *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    return IDispatchEx_GetIDsOfNames(&This->node.event_target.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI ElementTraversal_Invoke(IElementTraversal *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    return IDispatchEx_Invoke(&This->node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI ElementTraversal_get_firstElementChild(IElementTraversal *iface, IHTMLElement **p)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ElementTraversal_get_lastElementChild(IElementTraversal *iface, IHTMLElement **p)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ElementTraversal_get_previousElementSibling(IElementTraversal *iface, IHTMLElement **p)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ElementTraversal_get_nextElementSibling(IElementTraversal *iface, IHTMLElement **p)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ElementTraversal_get_childElementCount(IElementTraversal *iface, LONG *p)
+{
+    HTMLElement *This = impl_from_IElementTraversal(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IElementTraversalVtbl ElementTraversalVtbl = {
+    ElementTraversal_QueryInterface,
+    ElementTraversal_AddRef,
+    ElementTraversal_Release,
+    ElementTraversal_GetTypeInfoCount,
+    ElementTraversal_GetTypeInfo,
+    ElementTraversal_GetIDsOfNames,
+    ElementTraversal_Invoke,
+    ElementTraversal_get_firstElementChild,
+    ElementTraversal_get_lastElementChild,
+    ElementTraversal_get_previousElementSibling,
+    ElementTraversal_get_nextElementSibling,
+    ElementTraversal_get_childElementCount
+};
+
 static inline HTMLElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
 {
     return CONTAINING_RECORD(iface, HTMLElement, node);
@@ -4923,6 +5027,8 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IHTMLUniqueName_iface;
     }else if(IsEqualGUID(&IID_IElementSelector, riid)) {
         *ppv = &This->IElementSelector_iface;
+    }else if(IsEqualGUID(&IID_IElementTraversal, riid)) {
+        *ppv = &This->IElementTraversal_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         *ppv = &This->cp_container.IConnectionPointContainer_iface;
     }else if(IsEqualGUID(&IID_IProvideClassInfo, riid)) {
@@ -5214,6 +5320,7 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
     This->IHTMLElement6_iface.lpVtbl = &HTMLElement6Vtbl;
     This->IHTMLUniqueName_iface.lpVtbl = &HTMLUniqueNameVtbl;
     This->IElementSelector_iface.lpVtbl = &ElementSelectorVtbl;
+    This->IElementTraversal_iface.lpVtbl = &ElementTraversalVtbl;
     This->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
 
     if(dispex_data && !dispex_data->vtbl)
