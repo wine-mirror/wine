@@ -522,9 +522,14 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoad
 
     TRACE("(%p, %s, %s, %d)\n", This, debugstr_dmguid(class), debugstr_w(path), clear);
 
-    attr = GetFileAttributesW(path);
-    if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY))
-        return DMUS_E_LOADER_BADPATH;
+    if (!path)
+        return E_POINTER;
+
+    if (path[0]) {
+        attr = GetFileAttributesW(path);
+        if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY))
+            return DMUS_E_LOADER_BADPATH;
+    }
 
     if (clear)
         FIXME("clear flag ignored\n");
