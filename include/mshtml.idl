@@ -6617,6 +6617,29 @@ interface IHTMLElement6 : IDispatch
     VARIANT_BOOL ie9_hasAttributes()
 
 /*****************************************************************************
+ *    IElementTraversal interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510736-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IElementTraversal : IDispatch
+{
+    [propget, id(DISPID_IELEMENTTRAVERSAL_FIRSTELEMENTCHILD)]
+    HRESULT firstElementChild([retval, out] IHTMLElement **p);
+    [propget, id(DISPID_IELEMENTTRAVERSAL_LASTELEMENTCHILD)]
+    HRESULT lastElementChild([retval, out] IHTMLElement **p);
+    [propget, id(DISPID_IELEMENTTRAVERSAL_PREVIOUSELEMENTSIBLING)]
+    HRESULT previousElementSibling([retval, out] IHTMLElement **p);
+    [propget, id(DISPID_IELEMENTTRAVERSAL_NEXTELEMENTSIBLING)]
+    HRESULT nextElementSibling([retval, out] IHTMLElement **p);
+    [propget, id(DISPID_IELEMENTTRAVERSAL_CHILDELEMENTCOUNT)]
+    HRESULT childElementCount([retval, out] long *p);
+}
+
+/*****************************************************************************
  *    IElementSelector interface
  */
 [
