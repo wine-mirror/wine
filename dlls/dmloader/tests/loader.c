@@ -107,6 +107,40 @@ static void test_directory(void)
     IDirectMusicLoader_Release(loader);
 }
 
+static void test_caching(void)
+{
+    IDirectMusicLoader8 *loader = NULL;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC, &IID_IDirectMusicLoader8,
+            (void**)&loader);
+    ok(hr == S_OK, "Couldn't create Loader %#x\n", hr);
+
+    /* Invalid GUID */
+    if (0) /* Crashes on Windows */
+        IDirectMusicLoader_EnableCache(loader, NULL, TRUE);
+    hr = IDirectMusicLoader_EnableCache(loader, &IID_IDirectMusicLoader8, TRUE);
+    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+
+    /* Caching is enabled by default */
+    hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, TRUE);
+    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+    hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, TRUE);
+    todo_wine ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+
+    /* Disabling/enabling the cache for all types */
+    hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, FALSE);
+    ok(hr == S_OK, "EnableCache failed with %#x\n", hr);
+    hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, FALSE);
+    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+    hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, TRUE);
+    ok(hr == S_OK, "EnableCache failed with %#x\n", hr);
+    hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, TRUE);
+    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+
+    IDirectMusicLoader_Release(loader);
+}
+
 static void test_release_object(void)
 {
     HRESULT hr;
@@ -362,6 +396,7 @@ START_TEST(loader)
         return;
     }
     test_directory();
+    test_caching();
     test_release_object();
     test_simple_playing();
     test_COM();
