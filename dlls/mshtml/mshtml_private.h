@@ -127,6 +127,7 @@ typedef struct EventTarget EventTarget;
     XDIID(HTMLElementEvents2) \
     XIID(IDocumentSelector) \
     XIID(IElementSelector) \
+    XIID(IElementTraversal) \
     XIID(IHTMLAnchorElement) \
     XIID(IHTMLAreaElement) \
     XIID(IHTMLAttributeCollection) \
