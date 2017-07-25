@@ -549,15 +549,15 @@
 ################################################################
 # 32-bit version of the various 16-bit functions exported by kernel32
 #
-@ stdcall -arch=win32 -register VxDCall0(long) VxDCall
-@ stdcall -arch=win32 -register VxDCall1(long) VxDCall
-@ stdcall -arch=win32 -register VxDCall2(long) VxDCall
-@ stdcall -arch=win32 -register VxDCall3(long) VxDCall
-@ stdcall -arch=win32 -register VxDCall4(long) VxDCall
-@ stdcall -arch=win32 -register VxDCall5(long) VxDCall
-@ stdcall -arch=win32 -register VxDCall6(long) VxDCall
-@ stdcall -arch=win32 -register VxDCall7(long) VxDCall
-@ stdcall -arch=win32 -register VxDCall8(long) VxDCall
+@ stdcall -arch=win32 -register VxDCall0() VxDCall
+@ stdcall -arch=win32 -register VxDCall1() VxDCall
+@ stdcall -arch=win32 -register VxDCall2() VxDCall
+@ stdcall -arch=win32 -register VxDCall3() VxDCall
+@ stdcall -arch=win32 -register VxDCall4() VxDCall
+@ stdcall -arch=win32 -register VxDCall5() VxDCall
+@ stdcall -arch=win32 -register VxDCall6() VxDCall
+@ stdcall -arch=win32 -register VxDCall7() VxDCall
+@ stdcall -arch=win32 -register VxDCall8() VxDCall
 @ stdcall -arch=win32 k32CharToOemA(str ptr)
 @ stdcall -arch=win32 k32CharToOemBuffA(str ptr long)
 @ stdcall -arch=win32 k32OemToCharA(ptr ptr)

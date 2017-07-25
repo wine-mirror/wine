@@ -153,21 +153,6 @@ extern void FT_PrologPrime(void);
 extern void QT_Thunk(void);
 extern void QT_ThunkPrime(void);
 
-/* Push a DWORD on the 32-bit stack */
-static inline void stack32_push( CONTEXT *context, DWORD val )
-{
-    context->Esp -= sizeof(DWORD);
-    *(DWORD *)context->Esp = val;
-}
-
-/* Pop a DWORD from the 32-bit stack */
-static inline DWORD stack32_pop( CONTEXT *context )
-{
-    DWORD ret = *(DWORD *)context->Esp;
-    context->Esp += sizeof(DWORD);
-    return ret;
-}
-
 /***********************************************************************
  *                                                                     *
  *                 Win95 internal thunks                               *

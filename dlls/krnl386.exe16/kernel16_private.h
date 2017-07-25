@@ -283,6 +283,21 @@ static inline struct kernel_thread_data *kernel_get_thread_data(void)
     return (struct kernel_thread_data *)NtCurrentTeb()->SystemReserved1;
 }
 
+/* Push a DWORD on the 32-bit stack */
+static inline void stack32_push( CONTEXT *context, DWORD val )
+{
+    context->Esp -= sizeof(DWORD);
+    *(DWORD *)context->Esp = val;
+}
+
+/* Pop a DWORD from the 32-bit stack */
+static inline DWORD stack32_pop( CONTEXT *context )
+{
+    DWORD ret = *(DWORD *)context->Esp;
+    context->Esp += sizeof(DWORD);
+    return ret;
+}
+
 #define DEFINE_REGS_ENTRYPOINT( name, args ) \
     __ASM_GLOBAL_FUNC( name, \
                        ".byte 0x68\n\t"  /* pushl $__regs_func */       \
