@@ -549,15 +549,15 @@
 ################################################################
 # 32-bit version of the various 16-bit functions exported by kernel32
 #
-@ stdcall -arch=win32 -register VxDCall0() VxDCall
-@ stdcall -arch=win32 -register VxDCall1() VxDCall
-@ stdcall -arch=win32 -register VxDCall2() VxDCall
-@ stdcall -arch=win32 -register VxDCall3() VxDCall
-@ stdcall -arch=win32 -register VxDCall4() VxDCall
-@ stdcall -arch=win32 -register VxDCall5() VxDCall
-@ stdcall -arch=win32 -register VxDCall6() VxDCall
-@ stdcall -arch=win32 -register VxDCall7() VxDCall
-@ stdcall -arch=win32 -register VxDCall8() VxDCall
+@ stdcall -arch=win32 -norelay VxDCall0() VxDCall
+@ stdcall -arch=win32 -norelay VxDCall1() VxDCall
+@ stdcall -arch=win32 -norelay VxDCall2() VxDCall
+@ stdcall -arch=win32 -norelay VxDCall3() VxDCall
+@ stdcall -arch=win32 -norelay VxDCall4() VxDCall
+@ stdcall -arch=win32 -norelay VxDCall5() VxDCall
+@ stdcall -arch=win32 -norelay VxDCall6() VxDCall
+@ stdcall -arch=win32 -norelay VxDCall7() VxDCall
+@ stdcall -arch=win32 -norelay VxDCall8() VxDCall
 @ stdcall -arch=win32 k32CharToOemA(str ptr)
 @ stdcall -arch=win32 k32CharToOemBuffA(str ptr long)
 @ stdcall -arch=win32 k32OemToCharA(ptr ptr)
@@ -584,19 +584,19 @@
 @ stdcall -arch=win32 LoadLibrary16(str)
 @ stdcall -arch=win32 FreeLibrary16(long)
 @ stdcall -arch=win32 GetProcAddress16(long str) WIN32_GetProcAddress16
-@ stdcall -arch=win32 -register AllocMappedBuffer()
-@ stdcall -arch=win32 -register FreeMappedBuffer()
-@ stdcall -arch=win32 -register OT_32ThkLSF()
+@ stdcall -arch=win32 -norelay AllocMappedBuffer()
+@ stdcall -arch=win32 -norelay FreeMappedBuffer()
+@ stdcall -arch=win32 -norelay OT_32ThkLSF()
 @ stdcall -arch=win32 ThunkInitLSF(ptr str long str str)
 @ stdcall -arch=win32 -norelay LogApiThkLSF(str)
 @ stdcall -arch=win32 ThunkInitLS(ptr str long str str)
 @ stdcall -arch=win32 -norelay LogApiThkSL(str)
-@ stdcall -arch=win32 -register Common32ThkLS()
+@ stdcall -arch=win32 -norelay Common32ThkLS()
 @ stdcall -arch=win32 ThunkInitSL(ptr str long str str)
 @ stdcall -arch=win32 -norelay LogCBThkSL(str)
 @ stdcall -arch=win32 ReleaseThunkLock(ptr)
 @ stdcall -arch=win32 RestoreThunkLock(long)
-@ stdcall -arch=win32 -register W32S_BackTo32()
+@ stdcall -arch=win32 -norelay W32S_BackTo32()
 @ stdcall -arch=win32 GetThunkBuff()
 @ stdcall -arch=win32 GetThunkStuff(str str)
 @ stdcall -arch=win32 K32WOWCallback16(long long)
@@ -619,8 +619,8 @@
 @ stdcall -arch=win32 _KERNEL32_86(ptr)
 @ stdcall -arch=win32 SSOnBigStack()
 @ varargs -arch=win32 SSCall(long long ptr)
-@ stdcall -arch=win32 -register FT_PrologPrime()
-@ stdcall -arch=win32 -register QT_ThunkPrime()
+@ stdcall -arch=win32 -norelay FT_PrologPrime()
+@ stdcall -arch=win32 -norelay QT_ThunkPrime()
 @ stdcall -arch=win32 PK16FNF(ptr)
 @ stdcall -arch=win32 GetPK16SysVar()
 @ stdcall -arch=win32 GetpWin16Lock(ptr)
@@ -648,12 +648,12 @@
 @ stdcall -arch=win32 -norelay FT_Exit52()
 @ stdcall -arch=win32 -norelay FT_Exit56()
 @ stdcall -arch=win32 -norelay FT_Exit8()
-@ stdcall -arch=win32 -register FT_Prolog()
-@ stdcall -arch=win32 -register FT_Thunk()
+@ stdcall -arch=win32 -norelay FT_Prolog()
+@ stdcall -arch=win32 -norelay FT_Thunk()
 @ stdcall -arch=win32 FreeSLCallback(long)
 @ stdcall -arch=win32 Get16DLLAddress(long str)
-@ stdcall -arch=win32 -register K32Thk1632Epilog()
-@ stdcall -arch=win32 -register K32Thk1632Prolog()
+@ stdcall -arch=win32 -norelay K32Thk1632Epilog()
+@ stdcall -arch=win32 -norelay K32Thk1632Prolog()
 @ stdcall -arch=win32 -norelay MapHInstLS()
 @ stdcall -arch=win32 -norelay MapHInstLS_PN()
 @ stdcall -arch=win32 -norelay MapHInstSL()
@@ -665,7 +665,7 @@
 @ stdcall -arch=win32 MapSLFix(long)
 @ stdcall -arch=win32 PrivateFreeLibrary(long)
 @ stdcall -arch=win32 PrivateLoadLibrary(str)
-@ stdcall -arch=win32 -register QT_Thunk()
+@ stdcall -arch=win32 -norelay QT_Thunk()
 @ stdcall -arch=win32 -norelay SMapLS()
 @ stdcall -arch=win32 -norelay SMapLS_IP_EBP_12()
 @ stdcall -arch=win32 -norelay SMapLS_IP_EBP_16()

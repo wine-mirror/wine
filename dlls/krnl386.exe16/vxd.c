@@ -313,7 +313,7 @@ void WINAPI DECLSPEC_HIDDEN __regs_VxDCall( CONTEXT *context )
         context->Eax = 0xffffffff; /* FIXME */
     }
 }
-DEFINE_REGS_ENTRYPOINT( VxDCall, 0 )
+DEFINE_REGS_ENTRYPOINT( VxDCall )
 
 
 /***********************************************************************
