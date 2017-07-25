@@ -2172,6 +2172,8 @@ then
                 ldap_parse_vlv_control \
                 ldap_parse_vlvresponse_control,
                 [$LDAP_LIBS $PTHREAD_LIBS])
+        else
+            LDAP_LIBS=""
         fi])
 fi
 WINE_NOTICE_WITH(ldap,[test "x$LDAP_LIBS" = "x"],

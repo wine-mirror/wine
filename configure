@@ -16104,6 +16104,8 @@ fi
 done
 
 LIBS="$ac_wine_check_funcs_save_LIBS"
+        else
+            LDAP_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
 test -z "$LDAP_CFLAGS" || LDAP_CFLAGS=`echo " $LDAP_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
