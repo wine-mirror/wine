@@ -1467,8 +1467,9 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
  * Note: we use a small assembly wrapper to save the necessary registers
  *       in case we are fetching the context of the current thread.
  */
-NTSTATUS CDECL __regs_NtGetContextThread( DWORD edi, DWORD esi, DWORD ebx, DWORD eflags,
-                                          DWORD ebp, DWORD retaddr, HANDLE handle, CONTEXT *context )
+NTSTATUS CDECL DECLSPEC_HIDDEN __regs_NtGetContextThread( DWORD edi, DWORD esi, DWORD ebx, DWORD eflags,
+                                                          DWORD ebp, DWORD retaddr, HANDLE handle,
+                                                          CONTEXT *context )
 {
     NTSTATUS ret;
     DWORD needed_flags = context->ContextFlags & ~CONTEXT_i386;
@@ -2644,8 +2645,8 @@ void __wine_enter_vm86( CONTEXT *context )
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
  */
-void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID targetIp,
-                              PEXCEPTION_RECORD pRecord, PVOID retval, CONTEXT *context )
+void WINAPI DECLSPEC_HIDDEN __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID targetIp,
+                                              PEXCEPTION_RECORD pRecord, PVOID retval, CONTEXT *context )
 {
     EXCEPTION_RECORD record;
     EXCEPTION_REGISTRATION_RECORD *frame, *dispatch;
@@ -2850,7 +2851,7 @@ __ASM_GLOBAL_FUNC(call_thread_func_wrapper,
 /***********************************************************************
  *           call_thread_func
  */
-void call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
+void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
 {
     x86_thread_data()->exit_frame = frame;
     __TRY

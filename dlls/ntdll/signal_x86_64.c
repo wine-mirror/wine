@@ -4061,7 +4061,7 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 /***********************************************************************
  *           call_thread_func
  */
-void call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
+void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
 {
     amd64_thread_data()->exit_frame = frame;
     __TRY

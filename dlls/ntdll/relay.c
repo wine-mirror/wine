@@ -330,7 +330,8 @@ static void print_timestamp(void)
  *
  * stack points to the return address, i.e. the first argument is stack[1].
  */
-void * WINAPI relay_trace_entry( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
+DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr,
+                                                 unsigned int idx, const INT_PTR *stack )
 {
     WORD ordinal = LOWORD(idx);
     BYTE nb_args = LOBYTE(HIWORD(idx));
@@ -357,8 +358,8 @@ void * WINAPI relay_trace_entry( struct relay_descr *descr, unsigned int idx, co
 /***********************************************************************
  *           relay_trace_exit
  */
-void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
-                              const INT_PTR *stack, LONGLONG retval )
+DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
+                                              const INT_PTR *stack, LONGLONG retval )
 {
     WORD ordinal = LOWORD(idx);
     BYTE flags   = HIBYTE(HIWORD(idx));
@@ -480,9 +481,9 @@ __ASM_GLOBAL_FUNC( relay_call,
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret $12" )
 
-void WINAPI __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
-                                    unsigned int orig_eax, unsigned int ret_addr,
-                                    CONTEXT *context )
+void WINAPI DECLSPEC_HIDDEN __regs_relay_call_regs( struct relay_descr *descr, unsigned int idx,
+                                                    unsigned int orig_eax, unsigned int ret_addr,
+                                                    CONTEXT *context )
 {
     WORD ordinal = LOWORD(idx);
     BYTE nb_args = LOBYTE(HIWORD(idx));
@@ -1063,7 +1064,7 @@ static void SNOOP_PrintArg(DWORD x)
     __ENDTRY
 }
 
-void WINAPI __regs_SNOOP_Entry( void **stack )
+void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Entry( void **stack )
 {
 	SNOOP_DLL *dll;
 	SNOOP_FUN *fun = (SNOOP_FUN *)((char *)stack[0] - 5);
@@ -1149,7 +1150,7 @@ void WINAPI __regs_SNOOP_Entry( void **stack )
 	DPRINTF(") ret=%08x\n",(DWORD)ret->origreturn);
 }
 
-void WINAPI __regs_SNOOP_Return( void **stack )
+void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Return( void **stack )
 {
 	SNOOP_RETURNENTRY *ret = (SNOOP_RETURNENTRY*)((char *)stack[0] - 5);
         SNOOP_FUN *fun = &ret->dll->funs[ret->ordinal];

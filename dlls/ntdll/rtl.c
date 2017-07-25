@@ -1238,8 +1238,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENT
  */
 #ifdef DEFINE_FASTCALL4_ENTRYPOINT
 DEFINE_FASTCALL4_ENTRYPOINT(RtlInterlockedPushListSList)
-PSLIST_ENTRY WINAPI __regs_RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
-                                                       PSLIST_ENTRY last, ULONG count)
+PSLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
+                                                                       PSLIST_ENTRY last, ULONG count)
 #else
 PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
                                                 PSLIST_ENTRY last, ULONG count)
