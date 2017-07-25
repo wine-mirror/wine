@@ -270,8 +270,8 @@ static nsresult before_async_open(nsChannel *channel, NSContainer *container, BO
 HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post_stream,
         nsChannelBSC *channelbsc, DWORD flags)
 {
-    nsIDocShellLoadInfo *load_info = NULL;
     nsIWebNavigation *web_navigation;
+    nsIDocShellLoadInfo *load_info;
     nsIDocShell *doc_shell;
     HTMLDocumentNode *doc;
     nsresult nsres;
@@ -289,16 +289,16 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post
         return E_FAIL;
     }
 
+    nsres = nsIDocShell_CreateLoadInfo(doc_shell, &load_info);
+    if(NS_FAILED(nsres)) {
+        nsIDocShell_Release(doc_shell);
+        return E_FAIL;
+    }
+
+    nsres = nsIDocShellLoadInfo_SetLoadType(load_info, (flags & LOAD_FLAGS_BYPASS_CACHE) ? loadNormalBypassCache : loadNormal);
+    assert(nsres == NS_OK);
+
     if(post_stream) {
-        nsres = nsIDocShell_CreateLoadInfo(doc_shell, &load_info);
-        if(NS_FAILED(nsres)) {
-            nsIDocShell_Release(doc_shell);
-            return E_FAIL;
-        }
-
-        nsres = nsIDocShellLoadInfo_SetLoadType(load_info, (flags & LOAD_FLAGS_BYPASS_CACHE) ? loadNormalBypassCache : loadNormal);
-        assert(nsres == NS_OK);
-
         nsres = nsIDocShellLoadInfo_SetPostDataStream(load_info, post_stream);
         assert(nsres == NS_OK);
     }
@@ -311,8 +311,7 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post
         doc->skip_mutation_notif = FALSE;
     uri->channel_bsc = NULL;
     nsIDocShell_Release(doc_shell);
-    if(load_info)
-        nsIDocShellLoadInfo_Release(load_info);
+    nsIDocShellLoadInfo_Release(load_info);
     if(NS_FAILED(nsres)) {
         WARN("LoadURI failed: %08x\n", nsres);
         return E_FAIL;
