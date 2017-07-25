@@ -421,17 +421,6 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 		TRACE(": filled in cache entry\n");
 	} else TRACE(": caching disabled\n");
 
-#if 0
-	/* for debug purposes (e.g. to check if all files are cached) */
-	TRACE("*** Loader's cache ***\n");
-	int i = 0;
-	LIST_FOR_EACH (pEntry, This->pObjects) {
-		i++;
-		pObjectEntry = LIST_ENTRY(pEntry, WINE_LOADER_ENTRY, entry);
-		TRACE(": entry nr. %i:\n%s\n  - bInvalidDefaultDLS = %i\n  - pObject = %p\n", i, debugstr_DMUS_OBJECTDESC(&pObjectEntry->Desc), pObjectEntry->bInvalidDefaultDLS, pObjectEntry->pObject);
-	}
-#endif
-	
 	result = IDirectMusicObject_QueryInterface (pObject, riid, ppv);
 	if (!bCache) IDirectMusicObject_Release (pObject); /* since loader's reference is not needed */
 	/* if there was trouble with loading, and if no other error occurred,
