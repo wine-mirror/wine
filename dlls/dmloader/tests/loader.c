@@ -69,14 +69,14 @@ static void test_directory(void)
     /* SetSearchDirectory with the current directory */
     GetCurrentDirectoryW(ARRAY_SIZE(path), path);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
-    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    todo_wine ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
 
     /* Two consecutive SetSearchDirectory with the same path */
     GetTempPathW(ARRAY_SIZE(path), path);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
     ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
-    todo_wine ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
     todo_wine ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
@@ -99,7 +99,7 @@ static void test_directory(void)
             (void**)&loader);
     ok(hr == S_OK, "Couldn't create Loader %#x\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, empty, 0);
-    todo_wine ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, empty, 0);
     ok(hr == S_FALSE, "SetSearchDirectory failed with %#x\n", hr);
     hr = IDirectMusicLoader_ScanDirectory(loader, &CLSID_DirectMusicContainer, con, NULL);
@@ -126,7 +126,7 @@ static void test_caching(void)
     hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, TRUE);
     ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
     hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, TRUE);
-    todo_wine ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
+    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
 
     /* Disabling/enabling the cache for all types */
     hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, FALSE);
@@ -135,6 +135,10 @@ static void test_caching(void)
     ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
     hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, TRUE);
     ok(hr == S_OK, "EnableCache failed with %#x\n", hr);
+    hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, FALSE);
+    ok(hr == S_OK, "EnableCache failed with %#x\n", hr);
+    hr = IDirectMusicLoader_EnableCache(loader, &GUID_DirectMusicAllTypes, TRUE);
+    ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
     hr = IDirectMusicLoader_EnableCache(loader, &CLSID_DirectMusicContainer, TRUE);
     ok(hr == S_FALSE, "EnableCache failed with %#x\n", hr);
 

@@ -42,6 +42,7 @@
 #include "dmusicf.h"
 #include "dmusics.h"
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 /* dmloader.dll global (for DllCanUnloadNow) */
@@ -83,7 +84,6 @@ typedef struct _WINE_LOADER_OPTION {
 	struct list entry; /* for listing elements */
 	GUID guidClass; /* ID of object type */
 	WCHAR wszSearchPath[MAX_PATH]; /* look for objects of certain type in here */
-	BOOL bCache; /* cache objects of certain type */
 } WINE_LOADER_OPTION, *LPWINE_LOADER_OPTION;
 
 /*****************************************************************************
@@ -92,6 +92,7 @@ typedef struct _WINE_LOADER_OPTION {
 struct IDirectMusicLoaderImpl {
     IDirectMusicLoader8 IDirectMusicLoader8_iface;
     LONG ref;
+    unsigned int cache_class;
     /* simple cache (linked list) */
     struct list *pObjects;
     /* settings for certain object classes */
