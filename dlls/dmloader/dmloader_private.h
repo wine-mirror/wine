@@ -69,13 +69,6 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderFileStream (LPVOID *ppobj) D
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderResourceStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderGenericStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
 
-/* cache options, search paths for specific types of objects */
-typedef struct _WINE_LOADER_OPTION {
-	struct list entry; /* for listing elements */
-	GUID guidClass; /* ID of object type */
-	WCHAR wszSearchPath[MAX_PATH]; /* look for objects of certain type in here */
-} WINE_LOADER_OPTION, *LPWINE_LOADER_OPTION;
-
 /*****************************************************************************
  * IDirectMusicLoaderFileStream implementation structure
  */

@@ -69,7 +69,7 @@ static void test_directory(void)
     /* SetSearchDirectory with the current directory */
     GetCurrentDirectoryW(ARRAY_SIZE(path), path);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
-    todo_wine ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
 
     /* Two consecutive SetSearchDirectory with the same path */
     GetTempPathW(ARRAY_SIZE(path), path);
@@ -78,7 +78,7 @@ static void test_directory(void)
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
     ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
-    todo_wine ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
     ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
 
@@ -86,7 +86,7 @@ static void test_directory(void)
     if (0)
         IDirectMusicLoader_SetSearchDirectory(loader, NULL, path, 0); /* Crashes on Windows */
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &IID_IDirectMusicLoader8, path, 0);
-    todo_wine ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
 
     /* NULL extension is not an error */
     hr = IDirectMusicLoader_ScanDirectory(loader, &CLSID_DirectSoundWave, NULL, NULL);

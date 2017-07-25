@@ -48,11 +48,10 @@ typedef struct cache_entry {
 typedef struct IDirectMusicLoaderImpl {
     IDirectMusicLoader8 IDirectMusicLoader8_iface;
     LONG ref;
+    WCHAR *search_paths[ARRAY_SIZE(classes)];
     unsigned int cache_class;
     /* simple cache */
     struct list *pObjects;
-    /* settings for certain object classes */
-    struct list *pClassSettings;
 } IDirectMusicLoaderImpl;
 
 
@@ -77,9 +76,18 @@ static inline BOOL is_cache_enabled(IDirectMusicLoaderImpl *This, REFCLSID class
     return !!(This->cache_class & 1 << index_from_class(class));
 }
 
-static HRESULT DMUSIC_InitLoaderSettings(IDirectMusicLoader8 *iface);
-static HRESULT DMUSIC_GetLoaderSettings(IDirectMusicLoader8 *iface, REFGUID class_id, WCHAR *search_path);
-static HRESULT DMUSIC_SetLoaderSettings(IDirectMusicLoader8 *iface, REFGUID class_id, WCHAR *search_path);
+static void get_search_path(IDirectMusicLoaderImpl *This, REFGUID class, WCHAR *path)
+{
+    int index = index_from_class(class);
+
+    if (index < 0 || !This->search_paths[index])
+        index = 0; /* Default to GUID_DirectMusicAllTypes */
+
+    if (This->search_paths[index])
+        lstrcpynW(path, This->search_paths[index], MAX_PATH);
+    else
+        path[0] = 0;
+}
 
 static HRESULT DMUSIC_CopyDescriptor(DMUS_OBJECTDESC *pDst, DMUS_OBJECTDESC *pSrc)
 {
@@ -163,9 +171,13 @@ static ULONG WINAPI IDirectMusicLoaderImpl_Release(IDirectMusicLoader8 *iface)
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
     if (!ref) {
+        unsigned int i;
+
         /* Firstly, release the cache */
         IDirectMusicLoader8_ClearCache(iface, &GUID_DirectMusicAllTypes);
         /* FIXME: Release all allocated entries */
+        for (i = 0; i < ARRAY_SIZE(classes); i++)
+            HeapFree(GetProcessHeap(), 0, This->search_paths[i]);
         HeapFree(GetProcessHeap(), 0, This);
         unlock_module();
     }
@@ -300,9 +312,8 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
 		if (pDesc->dwValidData & DMUS_OBJ_FULLPATH) {
 			lstrcpyW(wszFileName, pDesc->wszFileName);
 		} else {
-			WCHAR *p, wszSearchPath[MAX_PATH];
-                        DMUSIC_GetLoaderSettings(iface, &pDesc->guidClass, wszSearchPath);
-			lstrcpyW(wszFileName, wszSearchPath);
+                        WCHAR *p;
+                        get_search_path(This, &pDesc->guidClass, wszFileName);
 			p = wszFileName + lstrlenW(wszFileName);
 			if (p > wszFileName && p[-1] != '\\') *p++ = '\\';
 			strcpyW(p, pDesc->wszFileName);
@@ -456,9 +467,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 			lstrcpyW(wszFileName, pDesc->wszFileName);
 		} else {
 			WCHAR *p;
-			WCHAR wszSearchPath[MAX_PATH];
-                        DMUSIC_GetLoaderSettings(iface, &pDesc->guidClass, wszSearchPath);
-			lstrcpyW(wszFileName, wszSearchPath);
+                        get_search_path(This, &pDesc->guidClass, wszFileName);
 			p = wszFileName + lstrlenW(wszFileName);
 			if (p > wszFileName && p[-1] != '\\') *p++ = '\\';
 			strcpyW(p, pDesc->wszFileName);
@@ -567,7 +576,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoad
         REFGUID class, WCHAR *path, BOOL clear)
 {
     IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-    WCHAR current_path[MAX_PATH];
+    int index = index_from_class(class);
     DWORD attr;
 
     TRACE("(%p, %s, %s, %d)\n", This, debugstr_dmguid(class), debugstr_w(path), clear);
@@ -584,12 +593,18 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoad
     if (clear)
         FIXME("clear flag ignored\n");
 
-    current_path[0] = 0;
-    DMUSIC_GetLoaderSettings(iface, class, current_path);
-    if (!strncmpW(current_path, path, MAX_PATH))
+    /* Ignore invalid GUIDs */
+    if (index < 0)
+        return S_OK;
+
+    if (!This->search_paths[index])
+        This->search_paths[index] = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
+    else if (!strncmpW(This->search_paths[index], path, MAX_PATH))
         return S_FALSE;
 
-    return DMUSIC_SetLoaderSettings(iface, class, path);
+    lstrcpynW(This->search_paths[index], path, MAX_PATH);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *iface, REFGUID rguidClass, WCHAR *pwzFileExtension, WCHAR *pwzScanFileName)
@@ -612,7 +627,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
                 return S_FALSE;
 
 	/* get search path for given class */
-        DMUSIC_GetLoaderSettings(iface, rguidClass, wszSearchString);
+        get_search_path(This, rguidClass, wszSearchString);
 
 	p = wszSearchString + lstrlenW(wszSearchString);
 	if (p > wszSearchString && p[-1] != '\\') *p++ = '\\';
@@ -922,7 +937,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_LoadObjectFromFile(IDirectMusicLoad
 	    - windows search path (FIXME: how do I get that?)
 	    - loader's search path (DONE)
 	*/
-        DMUSIC_GetLoaderSettings(iface, rguidClassID, wszLoaderSearchPath);
+        get_search_path(This, rguidClassID, wszLoaderSearchPath);
     /* search in current directory */
 	if (!SearchPathW (NULL, pwzFilePath, NULL, sizeof(ObjDesc.wszFileName)/sizeof(WCHAR), ObjDesc.wszFileName, NULL) &&
 	/* search in loader's search path */
@@ -991,10 +1006,6 @@ HRESULT WINAPI create_dmloader(REFIID lpcGUID, void **ppobj)
 	/* init cache/alias list */
 	obj->pObjects = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(struct list));
 	list_init (obj->pObjects);
-	/* init settings */
-	obj->pClassSettings = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(struct list));
-	list_init (obj->pClassSettings);
-	DMUSIC_InitLoaderSettings(&obj->IDirectMusicLoader8_iface);
         /* Caching is enabled by default for all classes */
         obj->cache_class = ~0;
 
@@ -1019,62 +1030,4 @@ HRESULT WINAPI create_dmloader(REFIID lpcGUID, void **ppobj)
         lock_module();
 
 	return IDirectMusicLoader_QueryInterface(&obj->IDirectMusicLoader8_iface, lpcGUID, ppobj);
-}
-
-/* help function for retrieval of search path and caching option for certain class */
-static HRESULT DMUSIC_GetLoaderSettings(IDirectMusicLoader8 *iface, REFGUID pClassID, WCHAR *wszSearchPath)
-{
-	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-	struct list *pEntry;
-	TRACE(": (%p, %s, %p)\n", This, debugstr_dmguid(pClassID), wszSearchPath);
-	
-	LIST_FOR_EACH(pEntry, This->pClassSettings) {
-		LPWINE_LOADER_OPTION pOptionEntry = LIST_ENTRY(pEntry, WINE_LOADER_OPTION, entry);
-		if (IsEqualCLSID (pClassID, &pOptionEntry->guidClass)) {
-                        strcpyW(wszSearchPath, pOptionEntry->wszSearchPath);
-			return S_OK;
-		}
-	}
-	return S_FALSE;
-}
-
-/* help function for setting search path and caching option for certain class */
-static HRESULT DMUSIC_SetLoaderSettings(IDirectMusicLoader8 *iface, REFGUID pClassID, WCHAR *wszSearchPath)
-{
-	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-	struct list *pEntry;
-	HRESULT result = S_FALSE; /* in case pClassID != GUID_DirectMusicAllTypes and not a valid CLSID */
-	TRACE(": (%p, %s, %p)\n", This, debugstr_dmguid(pClassID), wszSearchPath);
-	
-	LIST_FOR_EACH(pEntry, This->pClassSettings) {
-		LPWINE_LOADER_OPTION pOptionEntry = LIST_ENTRY(pEntry, WINE_LOADER_OPTION, entry);
-		/* well, either we have GUID_DirectMusicAllTypes and need to set it to all,
-		   or specific CLSID is given and we set it only to it */
-		if (IsEqualGUID (pClassID, &GUID_DirectMusicAllTypes) ||
-			IsEqualCLSID (pClassID, &pOptionEntry->guidClass)) {
-                        strcpyW(pOptionEntry->wszSearchPath, wszSearchPath);
-			result = S_OK;
-		}
-	}
-
-	return result;
-}
-
-static HRESULT DMUSIC_InitLoaderSettings(IDirectMusicLoader8 *iface)
-{
-	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-	unsigned int i;
-	WCHAR wszCurrent[MAX_PATH];
-
-	TRACE(": (%p)\n", This);
-	GetCurrentDirectoryW (MAX_PATH, wszCurrent);
-
-	for (i = 0; i < sizeof(classes)/sizeof(REFCLSID); i++) {
-		LPWINE_LOADER_OPTION pNewSetting = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(WINE_LOADER_OPTION));
-		pNewSetting->guidClass = *classes[i];
-		strcpyW (pNewSetting->wszSearchPath, wszCurrent);
-		list_add_tail (This->pClassSettings, &pNewSetting->entry);
-	}
-
-	return S_OK;
 }
