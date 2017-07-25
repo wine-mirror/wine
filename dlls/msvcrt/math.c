@@ -209,8 +209,10 @@ float CDECL MSVCRT_coshf( float x )
  */
 float CDECL MSVCRT_expf( float x )
 {
-  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return expf(x);
+  float ret = expf(x);
+  if (isnanf(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  else if (finitef(x) && !finitef(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+  return ret;
 }
 
 /*********************************************************************
@@ -404,8 +406,10 @@ double CDECL MSVCRT_cosh( double x )
  */
 double CDECL MSVCRT_exp( double x )
 {
+  double ret = exp(x);
   if (isnan(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return exp(x);
+  else if (isfinite(x) && !isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+  return ret;
 }
 
 /*********************************************************************
@@ -984,7 +988,7 @@ double CDECL MSVCRT_ldexp(double num, MSVCRT_long exp)
 {
   double z = ldexp(num,exp);
 
-  if (!isfinite(z))
+  if (isfinite(num) && !isfinite(z))
     *MSVCRT__errno() = MSVCRT_ERANGE;
   else if (z == 0 && signbit(z))
     z = 0.0; /* Convert -0 -> +0 */
@@ -2385,10 +2389,12 @@ LDOUBLE CDECL MSVCR120_cbrtl(LDOUBLE x)
 double CDECL MSVCR120_exp2(double x)
 {
 #ifdef HAVE_EXP2
-    return exp2(x);
+    double ret = exp2(x);
 #else
-    return pow(2, x);
+    double ret = pow(2, x);
 #endif
+    if (isfinite(x) && !isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    return ret;
 }
 
 /*********************************************************************
@@ -2397,7 +2403,9 @@ double CDECL MSVCR120_exp2(double x)
 float CDECL MSVCR120_exp2f(float x)
 {
 #ifdef HAVE_EXP2F
-    return exp2f(x);
+    float ret = exp2f(x);
+    if (finitef(x) && !finitef(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    return ret;
 #else
     return MSVCR120_exp2(x);
 #endif
@@ -2421,7 +2429,7 @@ double CDECL MSVCR120_expm1(double x)
 #else
     double ret = exp(x) - 1;
 #endif
-    if (!isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    if (isfinite(x) && !isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
     return ret;
 }
 
@@ -2435,7 +2443,7 @@ float CDECL MSVCR120_expm1f(float x)
 #else
     float ret = exp(x) - 1;
 #endif
-    if (!finitef(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    if (finitef(x) && !finitef(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
     return ret;
 }
 
@@ -3124,8 +3132,7 @@ LDOUBLE CDECL MSVCR120_atanhl(LDOUBLE x)
  */
 double CDECL MSVCRT__scalb(double num, MSVCRT_long power)
 {
-  if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return ldexp(num, power);
+  return MSVCRT_ldexp(num, power);
 }
 
 /*********************************************************************
@@ -3135,8 +3142,7 @@ double CDECL MSVCRT__scalb(double num, MSVCRT_long power)
  */
 float CDECL MSVCRT__scalbf(float num, MSVCRT_long power)
 {
-  if (!finitef(num)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return ldexpf(num, power);
+  return MSVCRT_ldexp(num, power);
 }
 
 /*********************************************************************
