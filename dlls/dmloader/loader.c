@@ -38,12 +38,12 @@ static const GUID *classes[] = {
 };
 
 /* cache/alias entry */
-typedef struct cache_entry {
+struct cache_entry {
     struct list entry;
     DMUS_OBJECTDESC Desc;
     IDirectMusicObject *pObject;
     BOOL bInvalidDefaultDLS; /* workaround for enabling caching of "faulty" default dls collection */
-} WINE_LOADER_ENTRY, *LPWINE_LOADER_ENTRY;
+};
 
 typedef struct IDirectMusicLoaderImpl {
     IDirectMusicLoader8 IDirectMusicLoader8_iface;
@@ -401,7 +401,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
         bCache = is_cache_enabled(This, &pDesc->guidClass);
 	if (bCache) {
 		if (!pObjectEntry) {
-			pObjectEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(WINE_LOADER_ENTRY));
+                        pObjectEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(*pObjectEntry));
 			DM_STRUCT_INIT(&pObjectEntry->Desc);
 			DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
 			pObjectEntry->pObject = pObject;
@@ -431,7 +431,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	LPSTREAM pStream;
 	LPDIRECTMUSICOBJECT pObject;
 	DMUS_OBJECTDESC Desc;
-	LPWINE_LOADER_ENTRY pObjectEntry, pNewEntry;
+        struct cache_entry *pObjectEntry, *pNewEntry;
 	HRESULT hr;
 
 	TRACE("(%p)->(%p)\n", This, pDesc);
@@ -544,7 +544,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	TRACE(": adding alias entry with following info:\n");
 	if (TRACE_ON(dmloader))
 		dump_DMUS_OBJECTDESC(pDesc);
-	pNewEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(WINE_LOADER_ENTRY));
+        pNewEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(*pNewEntry));
 	/* use this function instead of pure memcpy due to streams (memcpy just copies pointer), 
 	   which is basically used further by app that called SetDescriptor... better safety than exception */
 	DMUSIC_CopyDescriptor (&pNewEntry->Desc, pDesc);
@@ -652,7 +652,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_CacheObject(IDirectMusicLoader8 *if
 	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	DMUS_OBJECTDESC Desc;
 	HRESULT result = DMUS_E_LOADER_OBJECTNOTFOUND;
-	LPWINE_LOADER_ENTRY  pObjectEntry = NULL;
+        struct cache_entry *pObjectEntry;
 
 	TRACE("(%p, %p)\n", This, pObject);
 	
@@ -730,7 +730,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ReleaseObject(IDirectMusicLoader8 *
 {
 	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	DMUS_OBJECTDESC Desc;
-	LPWINE_LOADER_ENTRY pObjectEntry = NULL;
+        struct cache_entry *pObjectEntry;
 	HRESULT result = S_FALSE;
 
 	TRACE("(%p, %p)\n", This, pObject);
@@ -844,7 +844,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_EnumObject(IDirectMusicLoader8 *ifa
 {
 	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
 	DWORD dwCount = 0;
-	LPWINE_LOADER_ENTRY pObjectEntry;
+        struct cache_entry *pObjectEntry;
 	TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc);
 
 	DM_STRUCT_INIT(pDesc);
@@ -966,7 +966,7 @@ HRESULT WINAPI create_dmloader(REFIID lpcGUID, void **ppobj)
 {
 	IDirectMusicLoaderImpl *obj;
 	DMUS_OBJECTDESC Desc;
-	LPWINE_LOADER_ENTRY pDefaultDLSEntry;
+        struct cache_entry *dls;
 	struct list *pEntry;
 
         TRACE("(%s, %p)\n", debugstr_dmguid(lpcGUID), ppobj);
@@ -994,9 +994,9 @@ HRESULT WINAPI create_dmloader(REFIID lpcGUID, void **ppobj)
 	   DMUS_E_LOADER_NOFILENAME for all requests for it; basically, we check 
 	   if out input guidObject was overwritten */
         pEntry = list_head(&obj->cache);
-	pDefaultDLSEntry = LIST_ENTRY (pEntry, WINE_LOADER_ENTRY, entry);
+        dls = LIST_ENTRY(pEntry, struct cache_entry, entry);
 	if (!IsEqualGUID(&Desc.guidObject, &GUID_DefaultGMCollection)) {
-		pDefaultDLSEntry->bInvalidDefaultDLS = TRUE;
+                dls->bInvalidDefaultDLS = TRUE;
 	}
 
         lock_module();
