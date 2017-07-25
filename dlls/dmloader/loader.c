@@ -172,9 +172,7 @@ static ULONG WINAPI IDirectMusicLoaderImpl_Release(IDirectMusicLoader8 *iface)
     if (!ref) {
         unsigned int i;
 
-        /* Firstly, release the cache */
         IDirectMusicLoader8_ClearCache(iface, &GUID_DirectMusicAllTypes);
-        /* FIXME: Release all allocated entries */
         for (i = 0; i < ARRAY_SIZE(classes); i++)
             HeapFree(GetProcessHeap(), 0, This->search_paths[i]);
         HeapFree(GetProcessHeap(), 0, This);
@@ -806,6 +804,8 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ClearCache(IDirectMusicLoader8 *ifa
             (obj->Desc.dwValidData & DMUS_OBJ_LOADED)) {
             /* basically, wrap to ReleaseObject for each object found */
             IDirectMusicLoader8_ReleaseObject(iface, obj->pObject);
+            list_remove(&obj->entry);
+            HeapFree(GetProcessHeap(), 0, obj);
         }
     }
 
