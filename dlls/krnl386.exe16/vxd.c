@@ -286,7 +286,7 @@ done:
  *		VxDCall7 (KERNEL32.8)
  *		VxDCall8 (KERNEL32.9)
  */
-void WINAPI __regs_VxDCall( DWORD service, CONTEXT *context )
+void WINAPI DECLSPEC_HIDDEN __regs_VxDCall( DWORD service, CONTEXT *context )
 {
     unsigned int i;
     VxDCallProc proc = NULL;

@@ -2123,7 +2123,7 @@ LPVOID WINAPI GetPK16SysVar(void)
 /**********************************************************************
  *           CommonUnimpStub    (KERNEL32.17)
  */
-int WINAPI __regs_CommonUnimpStub( const char *name, int type )
+int WINAPI DECLSPEC_HIDDEN __regs_CommonUnimpStub( const char *name, int type )
 {
     FIXME("generic stub %s\n", debugstr_a(name));
 
