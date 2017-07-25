@@ -52,7 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( ExAcquireFastMutex )
-VOID WINAPI __regs_ExAcquireFastMutex(PFAST_MUTEX FastMutex)
+VOID WINAPI DECLSPEC_HIDDEN __regs_ExAcquireFastMutex(PFAST_MUTEX FastMutex)
 #else
 VOID WINAPI ExAcquireFastMutex(PFAST_MUTEX FastMutex)
 #endif
@@ -62,7 +62,7 @@ VOID WINAPI ExAcquireFastMutex(PFAST_MUTEX FastMutex)
 
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( ExReleaseFastMutex )
-VOID WINAPI __regs_ExReleaseFastMutex(PFAST_MUTEX FastMutex)
+VOID WINAPI DECLSPEC_HIDDEN __regs_ExReleaseFastMutex(PFAST_MUTEX FastMutex)
 #else
 VOID WINAPI ExReleaseFastMutex(PFAST_MUTEX FastMutex)
 #endif
@@ -72,7 +72,7 @@ VOID WINAPI ExReleaseFastMutex(PFAST_MUTEX FastMutex)
 
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( ExTryToAcquireFastMutex )
-BOOLEAN WINAPI __regs_ExTryToAcquireFastMutex(PFAST_MUTEX FastMutex)
+BOOLEAN WINAPI DECLSPEC_HIDDEN __regs_ExTryToAcquireFastMutex(PFAST_MUTEX FastMutex)
 #else
 BOOLEAN WINAPI ExTryToAcquireFastMutex(PFAST_MUTEX FastMutex)
 #endif
@@ -83,7 +83,7 @@ BOOLEAN WINAPI ExTryToAcquireFastMutex(PFAST_MUTEX FastMutex)
 
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( KfAcquireSpinLock )
-KIRQL WINAPI __regs_KfAcquireSpinLock(PKSPIN_LOCK SpinLock)
+KIRQL WINAPI DECLSPEC_HIDDEN __regs_KfAcquireSpinLock(PKSPIN_LOCK SpinLock)
 #else
 KIRQL WINAPI KfAcquireSpinLock(PKSPIN_LOCK SpinLock)
 #endif
@@ -96,7 +96,7 @@ KIRQL WINAPI KfAcquireSpinLock(PKSPIN_LOCK SpinLock)
 
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( KfLowerIrql )
-VOID WINAPI __regs_KfLowerIrql(KIRQL NewIrql)
+VOID WINAPI DECLSPEC_HIDDEN __regs_KfLowerIrql(KIRQL NewIrql)
 #else
 VOID WINAPI KfLowerIrql(KIRQL NewIrql)
 #endif
@@ -107,7 +107,7 @@ VOID WINAPI KfLowerIrql(KIRQL NewIrql)
 
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( KfRaiseIrql )
-KIRQL WINAPI __regs_KfRaiseIrql(KIRQL NewIrql)
+KIRQL WINAPI DECLSPEC_HIDDEN __regs_KfRaiseIrql(KIRQL NewIrql)
 #else
 KIRQL WINAPI KfRaiseIrql(KIRQL NewIrql)
 #endif
@@ -120,7 +120,7 @@ KIRQL WINAPI KfRaiseIrql(KIRQL NewIrql)
 
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
 DEFINE_FASTCALL2_ENTRYPOINT( KfReleaseSpinLock )
-VOID WINAPI __regs_KfReleaseSpinLock(PKSPIN_LOCK SpinLock, KIRQL NewIrql)
+VOID WINAPI DECLSPEC_HIDDEN __regs_KfReleaseSpinLock(PKSPIN_LOCK SpinLock, KIRQL NewIrql)
 #else
 VOID WINAPI KfReleaseSpinLock(PKSPIN_LOCK SpinLock, KIRQL NewIrql)
 #endif
