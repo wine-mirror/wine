@@ -135,7 +135,7 @@ typedef struct
 DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
                                PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
                                const cxx_function_descr *descr,
-                               EXCEPTION_REGISTRATION_RECORD* nested_frame, int nested_trylevel );
+                               EXCEPTION_REGISTRATION_RECORD* nested_frame, int nested_trylevel ) DECLSPEC_HIDDEN;
 
 /* call a function with a given ebp */
 static inline void *call_ebp_func( void *func, void *ebp )
@@ -1054,7 +1054,7 @@ __ASM_GLOBAL_FUNC( longjmp_set_regs,
  *		_setjmp (MSVCRT.@)
  */
 DEFINE_SETJMP_ENTRYPOINT(MSVCRT__setjmp)
-int CDECL __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
+int CDECL DECLSPEC_HIDDEN __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
 {
     jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
     if (jmp->Registration == ~0UL)
@@ -1071,7 +1071,7 @@ int CDECL __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
  *		_setjmp3 (MSVCRT.@)
  */
 DEFINE_SETJMP_ENTRYPOINT( MSVCRT__setjmp3 )
-int CDECL __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, ...)
+int CDECL DECLSPEC_HIDDEN __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, ...)
 {
     jmp->Cookie = MSVCRT_JMP_MAGIC;
     jmp->UnwindFunc = 0;
