@@ -1684,14 +1684,22 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     {
         for (i = 0; i < input_signature->element_count; ++i)
         {
-            reg_maps->input_registers |= 1u << input_signature->elements[i].register_idx;
-            if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
+            if (shader_version.type == WINED3D_SHADER_TYPE_VERTEX)
+            {
+                if (input_signature->elements[i].register_idx >= ARRAY_SIZE(shader->u.vs.attributes))
+                {
+                    WARN("Invalid input signature register index %u.\n", input_signature->elements[i].register_idx);
+                    return WINED3DERR_INVALIDCALL;
+                }
+            }
+            else if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
             {
                 if (input_signature->elements[i].sysval_semantic == WINED3D_SV_POSITION)
                     reg_maps->vpos = 1;
                 else if (input_signature->elements[i].sysval_semantic == WINED3D_SV_IS_FRONT_FACE)
                     reg_maps->usesfacing = 1;
             }
+            reg_maps->input_registers |= 1u << input_signature->elements[i].register_idx;
         }
     }
     else if (!input_signature->elements && reg_maps->input_registers)
