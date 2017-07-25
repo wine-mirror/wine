@@ -1314,7 +1314,7 @@ NTSTATUS WINAPI IoCallDriver( DEVICE_OBJECT *device, IRP *irp )
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
 DEFINE_FASTCALL2_ENTRYPOINT( IofCallDriver )
-NTSTATUS WINAPI __regs_IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
+NTSTATUS WINAPI DECLSPEC_HIDDEN __regs_IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
 #else
 NTSTATUS WINAPI IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
 #endif
@@ -1531,7 +1531,7 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
 DEFINE_FASTCALL2_ENTRYPOINT( IofCompleteRequest )
-void WINAPI __regs_IofCompleteRequest( IRP *irp, UCHAR priority_boost )
+void WINAPI DECLSPEC_HIDDEN __regs_IofCompleteRequest( IRP *irp, UCHAR priority_boost )
 #else
 void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
 #endif
@@ -1546,7 +1546,7 @@ void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
  */
 #ifdef DEFINE_FASTCALL3_ENTRYPOINT
 DEFINE_FASTCALL3_ENTRYPOINT( NTOSKRNL_InterlockedCompareExchange )
-LONG WINAPI __regs_NTOSKRNL_InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
+LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 #else
 LONG WINAPI NTOSKRNL_InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 #endif
@@ -1560,7 +1560,7 @@ LONG WINAPI NTOSKRNL_InterlockedCompareExchange( LONG volatile *dest, LONG xchg,
  */
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( NTOSKRNL_InterlockedDecrement )
-LONG WINAPI __regs_NTOSKRNL_InterlockedDecrement( LONG volatile *dest )
+LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedDecrement( LONG volatile *dest )
 #else
 LONG WINAPI NTOSKRNL_InterlockedDecrement( LONG volatile *dest )
 #endif
@@ -1574,7 +1574,7 @@ LONG WINAPI NTOSKRNL_InterlockedDecrement( LONG volatile *dest )
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
 DEFINE_FASTCALL2_ENTRYPOINT( NTOSKRNL_InterlockedExchange )
-LONG WINAPI __regs_NTOSKRNL_InterlockedExchange( LONG volatile *dest, LONG val )
+LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedExchange( LONG volatile *dest, LONG val )
 #else
 LONG WINAPI NTOSKRNL_InterlockedExchange( LONG volatile *dest, LONG val )
 #endif
@@ -1588,7 +1588,7 @@ LONG WINAPI NTOSKRNL_InterlockedExchange( LONG volatile *dest, LONG val )
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
 DEFINE_FASTCALL2_ENTRYPOINT( NTOSKRNL_InterlockedExchangeAdd )
-LONG WINAPI __regs_NTOSKRNL_InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
+LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
 #else
 LONG WINAPI NTOSKRNL_InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
 #endif
@@ -1602,7 +1602,7 @@ LONG WINAPI NTOSKRNL_InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
  */
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( NTOSKRNL_InterlockedIncrement )
-LONG WINAPI __regs_NTOSKRNL_InterlockedIncrement( LONG volatile *dest )
+LONG WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedIncrement( LONG volatile *dest )
 #else
 LONG WINAPI NTOSKRNL_InterlockedIncrement( LONG volatile *dest )
 #endif
@@ -1616,7 +1616,7 @@ LONG WINAPI NTOSKRNL_InterlockedIncrement( LONG volatile *dest )
  */
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( NTOSKRNL_InterlockedPopEntrySList )
-PSLIST_ENTRY WINAPI __regs_NTOSKRNL_InterlockedPopEntrySList( PSLIST_HEADER list )
+PSLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedPopEntrySList( PSLIST_HEADER list )
 #else
 PSLIST_ENTRY WINAPI NTOSKRNL_InterlockedPopEntrySList( PSLIST_HEADER list )
 #endif
@@ -1630,7 +1630,8 @@ PSLIST_ENTRY WINAPI NTOSKRNL_InterlockedPopEntrySList( PSLIST_HEADER list )
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
 DEFINE_FASTCALL2_ENTRYPOINT( NTOSKRNL_InterlockedPushEntrySList )
-PSLIST_ENTRY WINAPI __regs_NTOSKRNL_InterlockedPushEntrySList( PSLIST_HEADER list, PSLIST_ENTRY entry )
+PSLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_NTOSKRNL_InterlockedPushEntrySList( PSLIST_HEADER list,
+                                                                               PSLIST_ENTRY entry )
 #else
 PSLIST_ENTRY WINAPI NTOSKRNL_InterlockedPushEntrySList( PSLIST_HEADER list, PSLIST_ENTRY entry )
 #endif
@@ -2272,7 +2273,7 @@ void WINAPI ObDereferenceObject( void *obj )
  */
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( ObfReferenceObject )
-void WINAPI __regs_ObfReferenceObject( void *obj )
+void WINAPI DECLSPEC_HIDDEN __regs_ObfReferenceObject( void *obj )
 #else
 void WINAPI ObfReferenceObject( void *obj )
 #endif
@@ -2286,7 +2287,7 @@ void WINAPI ObfReferenceObject( void *obj )
  */
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( ObfDereferenceObject )
-void WINAPI __regs_ObfDereferenceObject( void *obj )
+void WINAPI DECLSPEC_HIDDEN __regs_ObfDereferenceObject( void *obj )
 #else
 void WINAPI ObfDereferenceObject( void *obj )
 #endif
@@ -2685,7 +2686,7 @@ PLIST_ENTRY WINAPI ExInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK loc
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
 DEFINE_FASTCALL2_ENTRYPOINT( ExfInterlockedRemoveHeadList )
-PLIST_ENTRY WINAPI __regs_ExfInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lock)
+PLIST_ENTRY WINAPI DECLSPEC_HIDDEN __regs_ExfInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lock)
 #else
 PLIST_ENTRY WINAPI ExfInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lock)
 #endif
@@ -3222,7 +3223,8 @@ VOID WINAPI KeClearEvent(PRKEVENT event)
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
 DEFINE_FASTCALL2_ENTRYPOINT( KeAcquireInStackQueuedSpinLock )
-void WINAPI __regs_KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *spinlock, KLOCK_QUEUE_HANDLE *handle )
+void WINAPI DECLSPEC_HIDDEN __regs_KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *spinlock,
+                                                                   KLOCK_QUEUE_HANDLE *handle )
 #else
 void WINAPI KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *spinlock, KLOCK_QUEUE_HANDLE *handle )
 #endif
@@ -3235,7 +3237,7 @@ void WINAPI KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *spinlock, KLOCK_QUEUE_HA
  */
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( KeReleaseInStackQueuedSpinLock )
-void WINAPI __regs_KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *handle )
+void WINAPI DECLSPEC_HIDDEN __regs_KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *handle )
 #else
 void WINAPI KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *handle )
 #endif
