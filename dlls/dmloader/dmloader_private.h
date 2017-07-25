@@ -56,8 +56,6 @@ static inline void unlock_module(void) { InterlockedDecrement( &module_ref ); }
 typedef struct IDirectMusicLoaderCF             IDirectMusicLoaderCF;
 typedef struct IDirectMusicContainerCF          IDirectMusicContainerCF;
 
-typedef struct IDirectMusicLoaderImpl           IDirectMusicLoaderImpl;
-
 typedef struct IDirectMusicLoaderFileStream     IDirectMusicLoaderFileStream;
 typedef struct IDirectMusicLoaderResourceStream IDirectMusicLoaderResourceStream;
 typedef struct IDirectMusicLoaderGenericStream  IDirectMusicLoaderGenericStream;
@@ -71,43 +69,12 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderFileStream (LPVOID *ppobj) D
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderResourceStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderGenericStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
 
-/* cache/alias entry */
-typedef struct _WINE_LOADER_ENTRY {
-	struct list entry; /* for listing elements */
-	DMUS_OBJECTDESC Desc;
-    LPDIRECTMUSICOBJECT pObject; /* pointer to object */
-	BOOL bInvalidDefaultDLS; /* my workaround for enabling caching of "faulty" default dls collection */
-} WINE_LOADER_ENTRY, *LPWINE_LOADER_ENTRY;
-
 /* cache options, search paths for specific types of objects */
 typedef struct _WINE_LOADER_OPTION {
 	struct list entry; /* for listing elements */
 	GUID guidClass; /* ID of object type */
 	WCHAR wszSearchPath[MAX_PATH]; /* look for objects of certain type in here */
 } WINE_LOADER_OPTION, *LPWINE_LOADER_OPTION;
-
-/*****************************************************************************
- * IDirectMusicLoaderImpl implementation structure
- */
-struct IDirectMusicLoaderImpl {
-    IDirectMusicLoader8 IDirectMusicLoader8_iface;
-    LONG ref;
-    unsigned int cache_class;
-    /* simple cache (linked list) */
-    struct list *pObjects;
-    /* settings for certain object classes */
-    struct list *pClassSettings;
-};
-
-/* contained object entry */
-typedef struct _WINE_CONTAINER_ENTRY {
-	struct list entry; /* for listing elements */
-	DMUS_OBJECTDESC Desc;
-	BOOL bIsRIFF;
-	DWORD dwFlags; /* DMUS_CONTAINED_OBJF_KEEP: keep object in loader's cache, even when container is released */
-	WCHAR* wszAlias;
-	LPDIRECTMUSICOBJECT pObject; /* needed when releasing from loader's cache on container release */
-} WINE_CONTAINER_ENTRY, *LPWINE_CONTAINER_ENTRY;
 
 /*****************************************************************************
  * IDirectMusicLoaderFileStream implementation structure
@@ -166,15 +133,6 @@ struct IDirectMusicLoaderGenericStream {
 
 /* Custom: */
 extern HRESULT WINAPI IDirectMusicLoaderGenericStream_Attach (LPSTREAM iface, LPSTREAM pStream, LPDIRECTMUSICLOADER8 pLoader) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * Misc.
- */
-/* for simpler reading */
-typedef struct _WINE_CHUNK {
-	FOURCC fccID; /* FOURCC ID of the chunk */
-	DWORD dwSize; /* size of the chunk */
-} WINE_CHUNK, *LPWINE_CHUNK;
 
 #include "debug.h"
 

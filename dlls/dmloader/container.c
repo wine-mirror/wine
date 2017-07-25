@@ -28,6 +28,21 @@ WINE_DECLARE_DEBUG_CHANNEL(dmdump);
 #define DMUS_MAX_NAME_SIZE     DMUS_MAX_NAME*sizeof(WCHAR)
 #define DMUS_MAX_FILENAME_SIZE DMUS_MAX_FILENAME*sizeof(WCHAR)
 
+typedef struct riff_chunk {
+    FOURCC fccID;
+    DWORD dwSize;
+} WINE_CHUNK;
+
+/* contained object entry */
+typedef struct container_entry {
+    struct list entry;
+    DMUS_OBJECTDESC Desc;
+    BOOL bIsRIFF;
+    DWORD dwFlags; /* DMUS_CONTAINED_OBJF_KEEP: keep object in loader's cache, even when container is released */
+    WCHAR *wszAlias;
+    IDirectMusicObject *pObject; /* needed when releasing from loader's cache on container release */
+} WINE_CONTAINER_ENTRY, *LPWINE_CONTAINER_ENTRY;
+
 /*****************************************************************************
  * IDirectMusicContainerImpl implementation
  */

@@ -37,6 +37,25 @@ static const GUID *classes[] = {
     &CLSID_DirectSoundWave
 };
 
+/* cache/alias entry */
+typedef struct cache_entry {
+    struct list entry;
+    DMUS_OBJECTDESC Desc;
+    IDirectMusicObject *pObject;
+    BOOL bInvalidDefaultDLS; /* workaround for enabling caching of "faulty" default dls collection */
+} WINE_LOADER_ENTRY, *LPWINE_LOADER_ENTRY;
+
+typedef struct IDirectMusicLoaderImpl {
+    IDirectMusicLoader8 IDirectMusicLoader8_iface;
+    LONG ref;
+    unsigned int cache_class;
+    /* simple cache */
+    struct list *pObjects;
+    /* settings for certain object classes */
+    struct list *pClassSettings;
+} IDirectMusicLoaderImpl;
+
+
 static inline IDirectMusicLoaderImpl* impl_from_IDirectMusicLoader8(IDirectMusicLoader8 *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicLoaderImpl, IDirectMusicLoader8_iface);
