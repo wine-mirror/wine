@@ -3757,8 +3757,31 @@ interface nsIContentViewer : nsISupports
 ]
 interface nsIDocShellLoadInfo : nsISupports
 {
-    typedef int32_t nsDocShellInfoLoadType;
     typedef uint32_t nsDocShellInfoReferrerPolicy;
+
+    typedef enum {
+        loadNormal = 0,
+        loadNormalReplace = 1,
+        loadHistory = 2,
+        loadReloadNormal = 3,
+        loadReloadBypassCache = 4,
+        loadReloadBypassProxy = 5,
+        loadReloadBypassProxyAndCache = 6,
+        loadLink = 7,
+        loadRefresh = 8,
+        loadReloadCharsetChange = 9,
+        loadBypassHistory = 10,
+        loadStopContent = 11,
+        loadStopContentAndReplace = 12,
+        loadNormalExternal = 13,
+        loadNormalBypassCache = 14,
+        loadNormalBypassProxy = 15,
+        loadNormalBypassProxyAndCache = 16,
+        loadPushState = 17,
+        loadReplaceBypassCache = 18,
+        loadReloadMixedContent = 19,
+        loadNormalAllowMixedContent = 20
+    } nsDocShellInfoLoadType;
 
     nsresult GetReferrer(nsIURI **aReferrer);
     nsresult SetReferrer(nsIURI *aReferrer);

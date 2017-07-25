@@ -296,6 +296,9 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post
             return E_FAIL;
         }
 
+        nsres = nsIDocShellLoadInfo_SetLoadType(load_info, (flags & LOAD_FLAGS_BYPASS_CACHE) ? loadNormalBypassCache : loadNormal);
+        assert(nsres == NS_OK);
+
         nsres = nsIDocShellLoadInfo_SetPostDataStream(load_info, post_stream);
         assert(nsres == NS_OK);
     }
