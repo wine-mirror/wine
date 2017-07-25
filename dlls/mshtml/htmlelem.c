@@ -4953,8 +4953,25 @@ static HRESULT WINAPI ElementTraversal_Invoke(IElementTraversal *iface, DISPID d
 static HRESULT WINAPI ElementTraversal_get_firstElementChild(IElementTraversal *iface, IHTMLElement **p)
 {
     HTMLElement *This = impl_from_IElementTraversal(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMElement *nselem = NULL;
+    HTMLElement *elem;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsIDOMHTMLElement_GetFirstElementChild(This->nselem, &nselem);
+    if(!nselem) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = get_elem(This->node.doc, nselem, &elem);
+    nsIDOMElement_Release(nselem);
+    if(FAILED(hres))
+        return hres;
+
+    *p = &elem->IHTMLElement_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI ElementTraversal_get_lastElementChild(IElementTraversal *iface, IHTMLElement **p)

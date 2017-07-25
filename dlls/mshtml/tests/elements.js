@@ -80,7 +80,22 @@ function test_textContent() {
     next_test();
 }
 
+function test_ElementTraversal() {
+    var div = document.createElement("div");
+    div.innerHTML = "abc<b>bold</b><script>/* */<script><div>text</div>def";
+    ok(div.firstElementChild.outerHTML === "<b>bold</b>",
+            "div.firstElementChild.outerHTML = " + div.firstElementChild.outerHTML);
+
+    div.innerHTML = "abc";
+    ok(div.firstElementChild === null, "div.firstElementChild = " + div.firstElementChild);
+
+    ok(!("firstElementChild" in document), "firstElementChild found in document");
+
+    next_test();
+}
+
 var tests = [
     test_input_selection,
-    test_textContent
+    test_textContent,
+    test_ElementTraversal
 ];
