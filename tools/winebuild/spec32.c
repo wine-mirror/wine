@@ -68,8 +68,6 @@ static inline int needs_relay( const ORDDEF *odp )
     }
     /* skip norelay and forward entry points */
     if (odp->flags & (FLAG_NORELAY|FLAG_FORWARD)) return 0;
-    /* skip register entry points on x86_64 */
-    if (target_cpu == CPU_x86_64 && (odp->flags & FLAG_REGISTER)) return 0;
     return 1;
 }
 
@@ -179,10 +177,7 @@ static void output_relay_debug( DLLSPEC *spec )
                 output( "\tpushl %%eax\n" );
                 flags |= 2;
             }
-            if (odp->flags & FLAG_REGISTER)
-                output( "\tpushl %%eax\n" );
-            else
-                output( "\tpushl %%esp\n" );
+            output( "\tpushl %%esp\n" );
             output_cfi( ".cfi_adjust_cfa_offset 4" );
 
             if (odp->flags & FLAG_RET64) flags |= 1;
@@ -199,19 +194,12 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tpushl %%eax\n" );
             output_cfi( ".cfi_adjust_cfa_offset 4" );
 
-            if (odp->flags & FLAG_REGISTER)
-            {
-                output( "\tcall *8(%%eax)\n" );
-            }
+            output( "\tcall *4(%%eax)\n" );
+            output_cfi( ".cfi_adjust_cfa_offset -12" );
+            if (odp->type == TYPE_STDCALL || odp->type == TYPE_THISCALL)
+                output( "\tret $%u\n", args * get_ptr_size() );
             else
-            {
-                output( "\tcall *4(%%eax)\n" );
-                output_cfi( ".cfi_adjust_cfa_offset -12" );
-                if (odp->type == TYPE_STDCALL || odp->type == TYPE_THISCALL)
-                    output( "\tret $%u\n", args * get_ptr_size() );
-                else
-                    output( "\tret\n" );
-            }
+                output( "\tret\n" );
             break;
 
         case CPU_ARM:

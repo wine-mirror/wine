@@ -498,6 +498,18 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp )
                 error( "Unknown flag '%s'\n", token );
                 return NULL;
             }
+            switch (1 << i)
+            {
+            case FLAG_RET16:
+            case FLAG_REGISTER:
+                if (spec->type == SPEC_WIN32)
+                    error( "Flag '%s' is not supported in Win32\n", FlagNames[i] );
+                break;
+            case FLAG_RET64:
+                if (spec->type == SPEC_WIN16)
+                    error( "Flag '%s' is not supported in Win16\n", FlagNames[i] );
+                break;
+            }
             odp->flags |= 1 << i;
         }
         token = GetToken(0);
