@@ -2118,8 +2118,23 @@ static void test___C_specific_handler(void)
 
 #if defined(__i386__) || defined(__x86_64__)
 
-static DWORD WINAPI dummy_thread(void *arg)
+static DWORD WINAPI register_check_thread(void *arg)
 {
+    NTSTATUS status;
+    CONTEXT ctx;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+
+    status = pNtGetContextThread(GetCurrentThread(), &ctx);
+    ok(status == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", status);
+    ok(!ctx.Dr0, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr0);
+    ok(!ctx.Dr1, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr1);
+    ok(!ctx.Dr2, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr2);
+    ok(!ctx.Dr3, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr3);
+    todo_wine ok(!ctx.Dr6, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr6);
+    todo_wine ok(!ctx.Dr7, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr7);
+
     return 0;
 }
 
@@ -2176,8 +2191,10 @@ static void test_debug_registers(void)
     ctx.Dr7 = 0x00000400;
     status = pNtSetContextThread(GetCurrentThread(), &ctx);
     ok(status == STATUS_SUCCESS, "NtSetContextThread failed with %x\n", status);
-    thread = CreateThread(NULL, 0, dummy_thread, NULL, CREATE_SUSPENDED, NULL);
+
+    thread = CreateThread(NULL, 0, register_check_thread, NULL, CREATE_SUSPENDED, NULL);
     ok(thread != INVALID_HANDLE_VALUE, "CreateThread failed with %d\n", GetLastError());
+
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     status = pNtGetContextThread(thread, &ctx);
     ok(status == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", status);
@@ -2187,7 +2204,9 @@ static void test_debug_registers(void)
     ok(!ctx.Dr3, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr3);
     todo_wine ok(!ctx.Dr6, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr6);
     todo_wine ok(!ctx.Dr7, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr7);
-    TerminateThread(thread, 0);
+
+    ResumeThread(thread);
+    WaitForSingleObject(thread, 10000);
     CloseHandle(thread);
 }
 
