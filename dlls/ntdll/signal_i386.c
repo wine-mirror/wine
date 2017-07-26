@@ -480,8 +480,6 @@ static wine_signal_handler handlers[256];
 
 static BOOL fpux_support;  /* whether the CPU supports extended fpu context */
 
-extern void DECLSPEC_NORETURN __wine_restore_regs( const CONTEXT *context );
-
 enum i386_trap_code
 {
     TRAP_x86_UNKNOWN    = -1,  /* Unknown fault (TRAP_sig not defined) */
@@ -1252,6 +1250,61 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                     "ret $4" )
 
+/***********************************************************************
+ *           set_full_cpu_context
+ *
+ * Set the new CPU context.
+ */
+extern void set_full_cpu_context( const CONTEXT *context );
+__ASM_GLOBAL_FUNC( set_full_cpu_context,
+                   "movl 4(%esp),%ecx\n\t"
+                   "movw 0x8c(%ecx),%gs\n\t"  /* SegGs */
+                   "movw 0x90(%ecx),%fs\n\t"  /* SegFs */
+                   "movw 0x94(%ecx),%es\n\t"  /* SegEs */
+                   "movl 0x9c(%ecx),%edi\n\t" /* Edi */
+                   "movl 0xa0(%ecx),%esi\n\t" /* Esi */
+                   "movl 0xa4(%ecx),%ebx\n\t" /* Ebx */
+                   "movl 0xb4(%ecx),%ebp\n\t" /* Ebp */
+                   "movw %ss,%ax\n\t"
+                   "cmpw 0xc8(%ecx),%ax\n\t"  /* SegSs */
+                   "jne 1f\n\t"
+                   /* As soon as we have switched stacks the context structure could
+                    * be invalid (when signal handlers are executed for example). Copy
+                    * values on the target stack before changing ESP. */
+                   "movl 0xc4(%ecx),%eax\n\t" /* Esp */
+                   "leal -4*4(%eax),%eax\n\t"
+                   "movl 0xc0(%ecx),%edx\n\t" /* EFlags */
+                   "movl %edx,3*4(%eax)\n\t"
+                   "movl 0xbc(%ecx),%edx\n\t" /* SegCs */
+                   "movl %edx,2*4(%eax)\n\t"
+                   "movl 0xb8(%ecx),%edx\n\t" /* Eip */
+                   "movl %edx,1*4(%eax)\n\t"
+                   "movl 0xb0(%ecx),%edx\n\t" /* Eax */
+                   "movl %edx,0*4(%eax)\n\t"
+                   "pushl 0x98(%ecx)\n\t"     /* SegDs */
+                   "movl 0xa8(%ecx),%edx\n\t" /* Edx */
+                   "movl 0xac(%ecx),%ecx\n\t" /* Ecx */
+                   "popl %ds\n\t"
+                   "movl %eax,%esp\n\t"
+                   "popl %eax\n\t"
+                   "iret\n"
+                   /* Restore the context when the stack segment changes. We can't use
+                    * the same code as above because we do not know if the stack segment
+                    * is 16 or 32 bit, and 'movl' will throw an exception when we try to
+                    * access memory above the limit. */
+                   "1:\n\t"
+                   "movl 0xa8(%ecx),%edx\n\t" /* Edx */
+                   "movl 0xb0(%ecx),%eax\n\t" /* Eax */
+                   "movw 0xc8(%ecx),%ss\n\t"  /* SegSs */
+                   "movl 0xc4(%ecx),%esp\n\t" /* Esp */
+                   "pushl 0xc0(%ecx)\n\t"     /* EFlags */
+                   "pushl 0xbc(%ecx)\n\t"     /* SegCs */
+                   "pushl 0xb8(%ecx)\n\t"     /* Eip */
+                   "pushl 0x98(%ecx)\n\t"     /* SegDs */
+                   "movl 0xac(%ecx),%ecx\n\t" /* Ecx */
+                   "popl %ds\n\t"
+                   "iret" )
+
 
 /***********************************************************************
  *           set_cpu_context
@@ -1279,7 +1332,7 @@ static void set_cpu_context( const CONTEXT *context )
         if (!(flags & CONTEXT_CONTROL))
             FIXME( "setting partial context (%x) not supported\n", flags );
         else if (flags & CONTEXT_SEGMENTS)
-            __wine_restore_regs( context );
+            set_full_cpu_context( context );
         else
         {
             CONTEXT newcontext = *context;
@@ -1287,7 +1340,7 @@ static void set_cpu_context( const CONTEXT *context )
             newcontext.SegEs = wine_get_es();
             newcontext.SegFs = wine_get_fs();
             newcontext.SegGs = wine_get_gs();
-            __wine_restore_regs( &newcontext );
+            set_full_cpu_context( &newcontext );
         }
     }
 }
