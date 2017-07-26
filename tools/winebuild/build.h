@@ -304,7 +304,6 @@ extern void output_bin_res16_directory( DLLSPEC *spec, unsigned int data_offset 
 extern void output_spec16_file( DLLSPEC *spec );
 extern void output_fake_module16( DLLSPEC *spec16 );
 extern void output_res_o_file( DLLSPEC *spec );
-extern void output_asm_relays(void);
 extern void output_asm_relays16(void);
 
 extern void BuildSpec32File( DLLSPEC *spec );
