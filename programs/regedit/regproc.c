@@ -275,6 +275,7 @@ static int REGPROC_unescape_string(WCHAR* str)
                 str[val_idx] = str[str_idx];
                 break;
             default:
+                if (!str[str_idx]) return FALSE;
                 output_message(STRING_ESCAPE_SEQUENCE, str[str_idx]);
                 str[val_idx] = str[str_idx];
                 break;
