@@ -239,18 +239,6 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
 extern mode_t FILE_umask DECLSPEC_HIDDEN;
 extern HANDLE keyed_event DECLSPEC_HIDDEN;
 
-/* Register functions */
-
-#ifdef __i386__
-#define DEFINE_REGS_ENTRYPOINT( name, args ) \
-    __ASM_GLOBAL_FUNC( name, \
-                       ".byte 0x68\n\t"  /* pushl $__regs_func */       \
-                       ".long " __ASM_NAME("__regs_") #name "-.-11\n\t" \
-                       ".byte 0x6a," #args "\n\t" /* pushl $args */     \
-                       "call " __ASM_NAME("__wine_call_from_regs") "\n\t" \
-                       "ret $(4*" #args ")" ) /* fake ret to make copy protections happy */
-#endif
-
 #define HASH_STRING_ALGORITHM_DEFAULT  0
 #define HASH_STRING_ALGORITHM_X65599   1
 #define HASH_STRING_ALGORITHM_INVALID  0xffffffff
