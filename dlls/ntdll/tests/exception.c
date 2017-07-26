@@ -822,12 +822,21 @@ static DWORD int3_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD 
 
 static const BYTE int3_code[] = { 0xCC, 0xc3 };  /* int 3, ret */
 
+static DWORD WINAPI hw_reg_exception_thread( void *arg )
+{
+    int expect = (ULONG_PTR)arg;
+    got_exception = 0;
+    run_exception_test( bpx_handler, NULL, dummy_code, sizeof(dummy_code), 0 );
+    ok( got_exception == expect, "expected %u exceptions, got %d\n", expect, got_exception );
+    return 0;
+}
 
 static void test_exceptions(void)
 {
     CONTEXT ctx;
     NTSTATUS res;
     struct dbgreg_test dreg_test;
+    HANDLE h;
 
     if (!pNtGetContextThread || !pNtSetContextThread)
     {
@@ -881,6 +890,33 @@ static void test_exceptions(void)
 
     /* test int3 handling */
     run_exception_test(int3_handler, NULL, int3_code, sizeof(int3_code), 0);
+
+    /* test that hardware breakpoints are not inherited by created threads */
+    res = pNtSetContextThread( GetCurrentThread(), &ctx );
+    ok( res == STATUS_SUCCESS, "NtSetContextThread failed with %x\n", res );
+
+    h = CreateThread( NULL, 0, hw_reg_exception_thread, 0, 0, NULL );
+    WaitForSingleObject( h, 10000 );
+    CloseHandle( h );
+
+    h = CreateThread( NULL, 0, hw_reg_exception_thread, (void *)4, CREATE_SUSPENDED, NULL );
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    res = pNtGetContextThread( h, &ctx );
+    ok( res == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", res );
+    ok( ctx.Dr0 == 0, "dr0 %x\n", ctx.Dr0 );
+    todo_wine ok( ctx.Dr7 == 0, "dr7 %x\n", ctx.Dr7 );
+    ctx.Dr0 = (DWORD)code_mem;
+    ctx.Dr7 = 3;
+    res = pNtSetContextThread( h, &ctx );
+    ok( res == STATUS_SUCCESS, "NtSetContextThread failed with %x\n", res );
+    ResumeThread( h );
+    WaitForSingleObject( h, 10000 );
+    CloseHandle( h );
+
+    ctx.Dr0 = 0;
+    ctx.Dr7 = 0;
+    res = pNtSetContextThread( GetCurrentThread(), &ctx );
+    ok( res == STATUS_SUCCESS, "NtSetContextThread failed with %x\n", res );
 }
 
 static void test_debugger(void)
