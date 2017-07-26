@@ -87,6 +87,8 @@ static void test_directory(void)
         IDirectMusicLoader_SetSearchDirectory(loader, NULL, path, 0); /* Crashes on Windows */
     hr = IDirectMusicLoader_SetSearchDirectory(loader, &IID_IDirectMusicLoader8, path, 0);
     ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    hr = IDirectMusicLoader_ScanDirectory(loader, &GUID_DirectMusicAllTypes, con, NULL);
+    ok(hr == REGDB_E_CLASSNOTREG, "ScanDirectory failed, received %#x\n", hr);
 
     /* NULL extension is not an error */
     hr = IDirectMusicLoader_ScanDirectory(loader, &CLSID_DirectSoundWave, NULL, NULL);

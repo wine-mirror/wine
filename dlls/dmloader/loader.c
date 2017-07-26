@@ -111,25 +111,6 @@ static HRESULT DMUSIC_CopyDescriptor(DMUS_OBJECTDESC *pDst, DMUS_OBJECTDESC *pSr
 	return S_OK;
 }
 
-
-static BOOL DMUSIC_IsValidLoadableClass (REFCLSID pClassID) {
-	if (IsEqualCLSID(pClassID, &CLSID_DirectMusicAudioPathConfig) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectMusicBand) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectMusicContainer) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectMusicCollection) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectMusicChordMap) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectMusicSegment) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectMusicScript) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectMusicSong) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectMusicStyle) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectMusicGraph) ||
-		IsEqualCLSID(pClassID, &CLSID_DirectSoundWave) ||
-		IsEqualCLSID(pClassID, &GUID_DirectMusicAllTypes))
-		return TRUE;
-	else
-		return FALSE;
-}
-
 /*****************************************************************************
  * IDirectMusicLoaderImpl implementation
  */
@@ -599,7 +580,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
 	HRESULT result;
         TRACE("(%p, %s, %s, %s)\n", This, debugstr_dmguid(rguidClass), debugstr_w(pwzFileExtension),
                         debugstr_w(pwzScanFileName));
-	if (IsEqualGUID (rguidClass, &GUID_DirectMusicAllTypes) || !DMUSIC_IsValidLoadableClass(rguidClass)) {
+        if (index_from_class(rguidClass) <= 0) {
 		ERR(": rguidClass invalid CLSID\n");
 		return REGDB_E_CLASSNOTREG;
 	}
