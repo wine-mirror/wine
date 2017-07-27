@@ -42,12 +42,11 @@ static void output_writeconsole(const WCHAR *str, DWORD wlen)
          * we should call WriteFile() and assume the console encoding is still correct.
          */
         len = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, NULL, 0, NULL, NULL);
-        msgA = HeapAlloc(GetProcessHeap(), 0, len);
-        if (!msgA) return;
+        msgA = heap_xalloc(len);
 
         WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, msgA, len, NULL, NULL);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE);
-        HeapFree(GetProcessHeap(), 0, msgA);
+        heap_free(msgA);
     }
 }
 
@@ -123,13 +122,13 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
                 size = SearchPathW(NULL, filename, NULL, 0, NULL, NULL);
                 if (size > 0)
                 {
-                    realname = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+                    realname = heap_xalloc(size * sizeof(WCHAR));
                     size = SearchPathW(NULL, filename, NULL, size, realname, NULL);
                 }
                 if (size == 0)
                 {
                     output_message(STRING_FILE_NOT_FOUND, filename);
-                    HeapFree(GetProcessHeap(), 0, realname);
+                    heap_free(realname);
                     return;
                 }
                 reg_file = _wfopen(realname, rb_mode);
@@ -138,14 +137,14 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
                     WCHAR regedit[] = {'r','e','g','e','d','i','t',0};
                     _wperror(regedit);
                     output_message(STRING_CANNOT_OPEN_FILE, filename);
-                    HeapFree(GetProcessHeap(), 0, realname);
+                    heap_free(realname);
                     return;
                 }
             }
             import_registry_file(reg_file);
             if (realname)
             {
-                HeapFree(GetProcessHeap(), 0, realname);
+                heap_free(realname);
                 fclose(reg_file);
             }
             break;
