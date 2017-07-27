@@ -468,8 +468,8 @@ static void test_lldiv(void)
     MSVCRT_lldiv_t r;
 
     r = p_lldiv((LONGLONG)0x111 << 32 | 0x222, (LONGLONG)1 << 32);
-    ok(r.quot == 0x111, "quot = %x%08x\n", (INT32)(r.quot >> 32), (UINT32)r.quot);
-    ok(r.rem == 0x222, "rem = %x%08x\n", (INT32)(r.rem >> 32), (UINT32)r.rem);
+    ok(r.quot == 0x111, "quot = %s\n", wine_dbgstr_longlong(r.quot));
+    ok(r.rem == 0x222, "rem = %s\n", wine_dbgstr_longlong(r.rem));
 }
 
 static void test_isblank(void)
