@@ -55,6 +55,11 @@ static void *heap_xalloc(size_t size)
     return buf;
 }
 
+static BOOL heap_free(void *buf)
+{
+    return HeapFree(GetProcessHeap(), 0, buf);
+}
+
 /******************************************************************************
  * Allocates memory and converts input from multibyte to wide chars
  * Returned string must be freed by the caller
@@ -457,7 +462,7 @@ static void close_key(struct parser *parser)
 {
     if (parser->hkey)
     {
-        HeapFree(GetProcessHeap(), 0, parser->key_name);
+        heap_free(parser->key_name);
         parser->key_name = NULL;
 
         RegCloseKey(parser->hkey);
@@ -498,7 +503,7 @@ static LONG open_key(struct parser *parser, WCHAR *path)
 static void free_parser_data(struct parser *parser)
 {
     if (parser->parse_type == REG_DWORD || parser->parse_type == REG_BINARY)
-        HeapFree(GetProcessHeap(), 0, parser->data);
+        heap_free(parser->data);
 
     parser->data = NULL;
     parser->data_size = 0;
@@ -520,7 +525,7 @@ static void prepare_hex_string_data(struct parser *parser)
         {
             parser->data = GetWideStringN(parser->data, parser->data_size, &parser->data_size);
             parser->data_size *= sizeof(WCHAR);
-            HeapFree(GetProcessHeap(), 0, data);
+            heap_free(data);
         }
     }
 }
@@ -578,7 +583,7 @@ static WCHAR *header_state(struct parser *parser, WCHAR *pos)
         header[1] = parser->two_wchars[1];
         lstrcpyW(header + 2, line);
         parser->reg_version = parse_file_header(header);
-        HeapFree(GetProcessHeap(), 0, header);
+        heap_free(header);
     }
     else parser->reg_version = parse_file_header(line);
 
@@ -708,7 +713,7 @@ static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos)
 /* handler for parser DEFAULT_VALUE_NAME state */
 static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos)
 {
-    HeapFree(GetProcessHeap(), 0, parser->value_name);
+    heap_free(parser->value_name);
     parser->value_name = NULL;
 
     set_state(parser, DATA_START);
@@ -722,7 +727,7 @@ static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos)
 
     if (parser->value_name)
     {
-        HeapFree(GetProcessHeap(), 0, parser->value_name);
+        heap_free(parser->value_name);
         parser->value_name = NULL;
     }
 
@@ -957,7 +962,7 @@ static WCHAR *get_lineA(FILE *fp)
     static char *buf, *next;
     char *line;
 
-    HeapFree(GetProcessHeap(), 0, lineW);
+    heap_free(lineW);
 
     if (!fp) goto cleanup;
 
@@ -1005,7 +1010,7 @@ static WCHAR *get_lineA(FILE *fp)
 
 cleanup:
     lineW = NULL;
-    if (size) HeapFree(GetProcessHeap(), 0, buf);
+    if (size) heap_free(buf);
     size = 0;
     return NULL;
 }
@@ -1060,7 +1065,7 @@ static WCHAR *get_lineW(FILE *fp)
     }
 
 cleanup:
-    if (size) HeapFree(GetProcessHeap(), 0, buf);
+    if (size) heap_free(buf);
     size = 0;
     return NULL;
 }
@@ -1103,7 +1108,7 @@ BOOL import_registry_file(FILE *reg_file)
     if (parser.reg_version == REG_VERSION_FUZZY || parser.reg_version == REG_VERSION_INVALID)
         return parser.reg_version == REG_VERSION_FUZZY;
 
-    HeapFree(GetProcessHeap(), 0, parser.value_name);
+    heap_free(parser.value_name);
     close_key(&parser);
 
     return TRUE;
@@ -1144,7 +1149,7 @@ static void REGPROC_write_line(FILE *fp, const WCHAR *str, BOOL unicode)
     {
         char *strA = GetMultiByteString(str);
         fputs(strA, fp);
-        HeapFree(GetProcessHeap(), 0, strA);
+        heap_free(strA);
     }
 }
 
@@ -1210,8 +1215,8 @@ static size_t export_value_name(FILE *fp, WCHAR *name, size_t len, BOOL unicode)
         WCHAR *buf = heap_xalloc((line_len + 4) * sizeof(WCHAR));
         line_len = sprintfW(buf, quoted_fmt, str);
         REGPROC_write_line(fp, buf, unicode);
-        HeapFree(GetProcessHeap(), 0, buf);
-        HeapFree(GetProcessHeap(), 0, str);
+        heap_free(buf);
+        heap_free(str);
     }
     else
     {
@@ -1232,7 +1237,7 @@ static void export_string_data(WCHAR **buf, WCHAR *data, size_t size)
     str = REGPROC_escape_string(data, len, &line_len);
     *buf = heap_xalloc((line_len + 3) * sizeof(WCHAR));
     sprintfW(*buf, fmt, str);
-    HeapFree(GetProcessHeap(), 0, str);
+    heap_free(str);
 }
 
 static void export_dword_data(WCHAR **buf, DWORD *data)
@@ -1259,7 +1264,7 @@ static size_t export_hex_data_type(FILE *fp, DWORD type, BOOL unicode)
         WCHAR *buf = heap_xalloc(15 * sizeof(WCHAR));
         line_len = sprintfW(buf, hexp_fmt, type);
         REGPROC_write_line(fp, buf, unicode);
-        HeapFree(GetProcessHeap(), 0, buf);
+        heap_free(buf);
     }
 
     return line_len;
@@ -1331,7 +1336,7 @@ static void export_data(FILE *fp, WCHAR *value_name, DWORD value_len, DWORD type
     }
 
     REGPROC_write_line(fp, buf, unicode);
-    HeapFree(GetProcessHeap(), 0, buf);
+    heap_free(buf);
     export_newline(fp, unicode);
 }
 
@@ -1354,7 +1359,7 @@ static void export_key_name(FILE *fp, WCHAR *name, BOOL unicode)
     buf = heap_xalloc((lstrlenW(name) + 7) * sizeof(WCHAR));
     sprintfW(buf, fmt, name);
     REGPROC_write_line(fp, buf, unicode);
-    HeapFree(GetProcessHeap(), 0, buf);
+    heap_free(buf);
 }
 
 #define MAX_SUBKEY_LEN   257
@@ -1402,8 +1407,8 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
         else break;
     }
 
-    HeapFree(GetProcessHeap(), 0, data);
-    HeapFree(GetProcessHeap(), 0, value_name);
+    heap_free(data);
+    heap_free(value_name);
 
     subkey_name = heap_xalloc(MAX_SUBKEY_LEN * sizeof(WCHAR));
 
@@ -1422,13 +1427,13 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
                 export_registry_data(fp, subkey, subkey_path, unicode);
                 RegCloseKey(subkey);
             }
-            HeapFree(GetProcessHeap(), 0, subkey_path);
+            heap_free(subkey_path);
             i++;
         }
         else break;
     }
 
-    HeapFree(GetProcessHeap(), 0, subkey_name);
+    heap_free(subkey_name);
     return 0;
 }
 
@@ -1530,7 +1535,7 @@ static BOOL export_all(WCHAR *file_name, WCHAR *path, BOOL unicode)
 
         export_registry_data(fp, classes[i], class_name, unicode);
 
-        HeapFree(GetProcessHeap(), 0, class_name);
+        heap_free(class_name);
         RegCloseKey(key);
     }
 
