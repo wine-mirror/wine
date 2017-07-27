@@ -44,7 +44,7 @@ static HKEY reg_class_keys[] = {
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 
-static void *heap_xalloc(size_t size)
+void *heap_xalloc(size_t size)
 {
     void *buf = HeapAlloc(GetProcessHeap(), 0, size);
     if (!buf)
@@ -73,7 +73,7 @@ static void *heap_xrealloc(void *buf, size_t size)
     return new_buf;
 }
 
-static BOOL heap_free(void *buf)
+BOOL heap_free(void *buf)
 {
     return HeapFree(GetProcessHeap(), 0, buf);
 }

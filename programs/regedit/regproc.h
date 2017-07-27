@@ -36,7 +36,9 @@ if (!(p)) \
 void __cdecl output_message(unsigned int id, ...);
 void __cdecl error_exit(unsigned int id, ...);
 
-BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format);
-BOOL import_registry_file(FILE *in);
+char *GetMultiByteString(const WCHAR *strW);
+void *heap_xalloc(size_t size);
+BOOL heap_free(void *buf);
+BOOL import_registry_file(FILE *reg_file);
 void delete_registry_key(WCHAR *reg_key_name);
-CHAR* GetMultiByteString(const WCHAR* strW);
+BOOL export_registry_key(WCHAR *file_name, WCHAR *path, DWORD format);

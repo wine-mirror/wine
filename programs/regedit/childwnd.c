@@ -109,7 +109,7 @@ static LPWSTR CombinePaths(LPCWSTR pPaths[], int nPaths) {
             len += lstrlenW(pPaths[i])+1;
         }
     }
-    combined = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    combined = heap_xalloc(len * sizeof(WCHAR));
     *combined = '\0';
     for (i=0, pos=0; i<nPaths; i++) {
         if (pPaths[i] && *pPaths[i]) {
@@ -132,7 +132,7 @@ static LPWSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     HKEY hRootKey = NULL;
     if (!hItem)
         hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0);
-    HeapFree(GetProcessHeap(), 0, GetItemPath(hwndTV, hItem, &hRootKey));
+    heap_free(GetItemPath(hwndTV, hItem, &hRootKey));
     if (!bFull && !hRootKey)
         return NULL;
     if (hRootKey)
@@ -153,8 +153,8 @@ LPWSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     parts[0] = GetPathRoot(hwndTV, hItem, bFull);
     parts[1] = GetItemPath(hwndTV, hItem, &hRootKey);
     ret = CombinePaths((LPCWSTR *)parts, 2);
-    HeapFree(GetProcessHeap(), 0, parts[0]);
-    HeapFree(GetProcessHeap(), 0, parts[1]);
+    heap_free(parts[0]);
+    heap_free(parts[1]);
     return ret;
 }
 
@@ -175,7 +175,7 @@ static void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BO
 
         keyPath = GetItemPath(hwndTV, hItem, &hRootKey);
         RefreshListView(hwndLV, hRootKey, keyPath, NULL);
-        HeapFree(GetProcessHeap(), 0, keyPath);
+        heap_free(keyPath);
     }
     UpdateStatusBar();
 }
@@ -277,7 +277,7 @@ static void set_last_key(HWND hwndTV)
             value = GetItemFullPath(g_pChildWnd->hTreeWnd, selection, FALSE);
         RegSetValueExW(hkey, wszLastKey, 0, REG_SZ, (LPBYTE)value, (lstrlenW(value) + 1) * sizeof(WCHAR));
         if (selection != root)
-            HeapFree(GetProcessHeap(), 0, value);
+            heap_free(value);
         RegCloseKey(hkey);
     }
 }
@@ -309,7 +309,7 @@ static int treeview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
             WCHAR *path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
             BOOL res = RenameKey(hWnd, hRootKey, path, dispInfo->item.pszText);
 
-            HeapFree(GetProcessHeap(), 0, path);
+            heap_free(path);
 
             if (res)
             {
@@ -322,7 +322,7 @@ static int treeview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 
                 path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
                 update_listview_path(path);
-                HeapFree(GetProcessHeap(), 0, path);
+                heap_free(path);
 
                 UpdateStatusBar();
             }
@@ -396,8 +396,8 @@ static int listview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
             NMLISTVIEW *nmlv = (NMLISTVIEW *)lParam;
             LINE_INFO *info = (LINE_INFO *)nmlv->lParam;
 
-            HeapFree(GetProcessHeap(), 0, info->name);
-            HeapFree(GetProcessHeap(), 0, info);
+            heap_free(info->name);
+            heap_free(info);
             break;
         }
         case LVN_ENDLABELEDITW:
@@ -416,7 +416,7 @@ static int listview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
                              dispInfo->item.iItem, (LPARAM)&dispInfo->item);
             }
 
-            HeapFree(GetProcessHeap(), 0, oldName);
+            heap_free(oldName);
             return 0;
         }
         case LVN_GETDISPINFOW:
@@ -444,7 +444,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 {
     switch (message) {
     case WM_CREATE:
-        g_pChildWnd = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
+        g_pChildWnd = heap_xalloc(sizeof(ChildWnd));
         if (!g_pChildWnd) return 0;
         LoadStringW(hInst, IDS_REGISTRY_ROOT_NAME, g_pChildWnd->szPath, MAX_PATH);
         g_pChildWnd->nSplitPos = 250;
@@ -476,7 +476,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         goto def;
     case WM_DESTROY:
         set_last_key(g_pChildWnd->hTreeWnd);
-        HeapFree(GetProcessHeap(), 0, g_pChildWnd);
+        heap_free(g_pChildWnd);
         g_pChildWnd = NULL;
         PostQuitMessage(0);
         break;
