@@ -912,7 +912,7 @@ basic_tests(void)
   x = sum_double_int(-78, 148.46);
   ok(x == 70, "RPC sum_double_int got %d\n", x);
   y = sum_hyper((hyper)0x12345678 << 16, (hyper)0x33557799 << 16);
-  ok(y == (hyper)0x4589ce11 << 16, "RPC hyper got %x%08x\n", (DWORD)(y >> 32), (DWORD)y);
+  ok(y == (hyper)0x4589ce11 << 16, "RPC hyper got %s\n", wine_dbgstr_longlong(y));
   x = sum_hyper_int((hyper)0x24242424 << 16, -((hyper)0x24241212 << 16));
   ok(x == 0x12120000, "RPC hyper_int got 0x%x\n", x);
   x = sum_char_hyper( 12, ((hyper)0x42424242 << 32) | 0x33334444 );
