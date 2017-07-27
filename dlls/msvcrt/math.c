@@ -183,7 +183,7 @@ float CDECL MSVCRT_atanf( float x )
  */
 float CDECL MSVCRT_atan2f( float x, float y )
 {
-  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnanf(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan2f(x,y);
 }
 
@@ -201,7 +201,7 @@ float CDECL MSVCRT_cosf( float x )
  */
 float CDECL MSVCRT_coshf( float x )
 {
-  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnanf(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return coshf(x);
 }
 
@@ -270,7 +270,7 @@ float CDECL MSVCRT_sinf( float x )
  */
 float CDECL MSVCRT_sinhf( float x )
 {
-  if (!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnanf(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sinhf(x);
 }
 
@@ -380,7 +380,7 @@ double CDECL MSVCRT_atan( double x )
  */
 double CDECL MSVCRT_atan2( double x, double y )
 {
-  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnan(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan2(x,y);
 }
 
@@ -398,7 +398,7 @@ double CDECL MSVCRT_cos( double x )
  */
 double CDECL MSVCRT_cosh( double x )
 {
-  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnan(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return cosh(x);
 }
 
@@ -467,7 +467,7 @@ double CDECL MSVCRT_sin( double x )
  */
 double CDECL MSVCRT_sinh( double x )
 {
-  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnan(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sinh(x);
 }
 
