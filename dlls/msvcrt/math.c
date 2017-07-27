@@ -141,7 +141,7 @@ INT CDECL MSVCRT__isnanf( float num )
  */
 float CDECL MSVCRT__logbf( float num )
 {
-    if (!finitef(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if (isnanf(num)) *MSVCRT__errno() = MSVCRT_EDOM;
     else if (!num) *MSVCRT__errno() = MSVCRT_ERANGE;
     return logbf(num);
 }
@@ -789,7 +789,7 @@ __int64 CDECL _abs64( __int64 n )
  */
 double CDECL MSVCRT__logb(double num)
 {
-  if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnan(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   else if (!num) *MSVCRT__errno() = MSVCRT_ERANGE;
   return logb(num);
 }
