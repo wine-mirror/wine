@@ -182,6 +182,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->debug_ctx       = NULL;
     thread->debug_event     = NULL;
     thread->debug_break     = 0;
+    thread->system_regs     = 0;
     thread->queue           = NULL;
     thread->wait            = NULL;
     thread->error           = 0;
@@ -1245,6 +1246,7 @@ DECL_HANDLER(new_thread)
 
     if ((thread = create_thread( request_fd, current->process )))
     {
+        thread->system_regs = current->system_regs;
         if (req->suspend) thread->suspend++;
         reply->tid = get_thread_id( thread );
         if ((reply->handle = alloc_handle( current->process, thread, req->access, req->attributes )))

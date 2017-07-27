@@ -57,6 +57,7 @@ struct thread
     struct debug_ctx      *debug_ctx;     /* debugger context if this thread is a debugger */
     struct debug_event    *debug_event;   /* debug event being sent to debugger */
     int                    debug_break;   /* debug breakpoint pending? */
+    unsigned int           system_regs;   /* which system regs have been set */
     struct msg_queue      *queue;         /* message queue */
     struct thread_wait    *wait;          /* current wait condition if sleeping */
     struct list            system_apc;    /* queue of system async procedure calls */

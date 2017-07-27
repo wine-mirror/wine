@@ -545,6 +545,8 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 /* initialize registers in new thread if necessary */
 void init_thread_context( struct thread *thread )
 {
+    /* Linux doesn't clear all registers, but hopefully enough to avoid spurious breakpoints */
+    thread->system_regs = 0;
 }
 
 /* retrieve the thread x86 registers */
@@ -557,6 +559,13 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
     assert( flags == SERVER_CTX_DEBUG_REGISTERS );
 
     if (!suspend_for_ptrace( thread )) return;
+
+    if (!(thread->system_regs & SERVER_CTX_DEBUG_REGISTERS))
+    {
+        /* caller has initialized everything to 0 already, just return */
+        context->flags |= SERVER_CTX_DEBUG_REGISTERS;
+        goto done;
+    }
 
     for (i = 0; i < 8; i++)
     {
@@ -625,6 +634,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 | 0x55 );
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 ) == -1) goto error;
         if (thread->context) thread->context->debug.i386_regs.dr7 = context->debug.i386_regs.dr7;
+        thread->system_regs |= SERVER_CTX_DEBUG_REGISTERS;
         break;
     case CPU_x86_64:
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 & 0xffff0000 ) == -1) goto error;
@@ -641,6 +651,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 | 0x55 );
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 ) == -1) goto error;
         if (thread->context) thread->context->debug.x86_64_regs.dr7 = context->debug.x86_64_regs.dr7;
+        thread->system_regs |= SERVER_CTX_DEBUG_REGISTERS;
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
@@ -660,6 +671,18 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
 /* initialize registers in new thread if necessary */
 void init_thread_context( struct thread *thread )
 {
+    if (!(thread->system_regs & SERVER_CTX_DEBUG_REGISTERS)) return;
+
+    /* FreeBSD doesn't clear the debug registers in new threads */
+    if (suspend_for_ptrace( thread ))
+    {
+        struct dbreg dbregs;
+
+        memset( &dbregs, 0, sizeof(dbregs) );
+        ptrace( PTRACE_SETDBREGS, get_ptrace_tid( thread ), (caddr_t)&dbregs, 0 );
+        resume_after_ptrace( thread );
+    }
+    thread->system_regs = 0;
 }
 
 /* retrieve the thread x86 registers */
@@ -728,9 +751,14 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
     dbregs.dr6 = context->debug.i386_regs.dr6;
     dbregs.dr7 = context->debug.i386_regs.dr7;
 #endif
-    if (ptrace( PTRACE_SETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1) file_set_error();
-    else if (thread->context)
-        thread->context->debug.i386_regs = context->debug.i386_regs;  /* update the cached values */
+    if (ptrace( PTRACE_SETDBREGS, pid, (caddr_t)&dbregs, 0 ) != -1)
+    {
+        if (thread->context)
+            thread->context->debug.i386_regs = context->debug.i386_regs;  /* update the cached values */
+        thread->system_regs |= SERVER_CTX_DEBUG_REGISTERS;
+    }
+    else file_set_error();
+
     resume_after_ptrace( thread );
 }
 

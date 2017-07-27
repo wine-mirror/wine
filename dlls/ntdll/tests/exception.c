@@ -904,7 +904,7 @@ static void test_exceptions(void)
     res = pNtGetContextThread( h, &ctx );
     ok( res == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", res );
     ok( ctx.Dr0 == 0, "dr0 %x\n", ctx.Dr0 );
-    todo_wine ok( ctx.Dr7 == 0, "dr7 %x\n", ctx.Dr7 );
+    ok( ctx.Dr7 == 0, "dr7 %x\n", ctx.Dr7 );
     ctx.Dr0 = (DWORD)code_mem;
     ctx.Dr7 = 3;
     res = pNtSetContextThread( h, &ctx );
@@ -2168,8 +2168,8 @@ static DWORD WINAPI register_check_thread(void *arg)
     ok(!ctx.Dr1, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr1);
     ok(!ctx.Dr2, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr2);
     ok(!ctx.Dr3, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr3);
-    todo_wine ok(!ctx.Dr6, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr6);
-    todo_wine ok(!ctx.Dr7, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr7);
+    ok(!ctx.Dr6, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr6);
+    ok(!ctx.Dr7, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr7);
 
     return 0;
 }
@@ -2238,8 +2238,8 @@ static void test_debug_registers(void)
     ok(!ctx.Dr1, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr1);
     ok(!ctx.Dr2, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr2);
     ok(!ctx.Dr3, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr3);
-    todo_wine ok(!ctx.Dr6, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr6);
-    todo_wine ok(!ctx.Dr7, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr7);
+    ok(!ctx.Dr6, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr6);
+    ok(!ctx.Dr7, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr7);
 
     ResumeThread(thread);
     WaitForSingleObject(thread, 10000);
