@@ -2510,9 +2510,9 @@ double CDECL MSVCR120_log2(double x)
  */
 float CDECL MSVCR120_log2f(float x)
 {
+#ifdef HAVE_LOG2F
     if (x < 0) *MSVCRT__errno() = MSVCRT_EDOM;
     else if (x == 0) *MSVCRT__errno() = MSVCRT_ERANGE;
-#ifdef HAVE_LOG2F
     return log2f(x);
 #else
     return MSVCR120_log2(x);
