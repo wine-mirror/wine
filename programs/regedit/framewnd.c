@@ -57,16 +57,9 @@ static WCHAR modifyW[32], modify_binaryW[64];
 
 static void resize_frame_rect(HWND hWnd, PRECT prect)
 {
-    RECT rt;
-    /*
-    	if (IsWindowVisible(hToolBar)) {
-		SendMessageW(hToolBar, WM_SIZE, 0, 0);
-    		GetClientRect(hToolBar, &rt);
-    		prect->top = rt.bottom+3;
-    		prect->bottom -= rt.bottom+3;
-    	}
-     */
     if (IsWindowVisible(hStatusBar)) {
+        RECT rt;
+
         SetupStatusBar(hWnd, TRUE);
         GetClientRect(hStatusBar, &rt);
         prect->bottom -= rt.bottom;
