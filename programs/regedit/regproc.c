@@ -55,6 +55,24 @@ static void *heap_xalloc(size_t size)
     return buf;
 }
 
+static void *heap_xrealloc(void *buf, size_t size)
+{
+    void *new_buf;
+
+    if (buf)
+        new_buf = HeapReAlloc(GetProcessHeap(), 0, buf, size);
+    else
+        new_buf = HeapAlloc(GetProcessHeap(), 0, size);
+
+    if (!new_buf)
+    {
+        ERR("Out of memory!\n");
+        exit(1);
+    }
+
+    return new_buf;
+}
+
 static BOOL heap_free(void *buf)
 {
     return HeapFree(GetProcessHeap(), 0, buf);
@@ -226,19 +244,6 @@ static inline enum parser_state set_state(struct parser *parser, enum parser_sta
     return ret;
 }
 
-static void *resize_buffer(void *buf, size_t count)
-{
-    void *new_buf;
-
-    if (buf)
-        new_buf = HeapReAlloc(GetProcessHeap(), 0, buf, count);
-    else
-        new_buf = HeapAlloc(GetProcessHeap(), 0, count);
-
-    CHECK_ENOUGH_MEMORY(new_buf);
-    return new_buf;
-}
-
 /******************************************************************************
  * Converts a hex representation of a DWORD into a DWORD.
  */
@@ -286,7 +291,7 @@ static BOOL convert_hex_csv_to_hex(struct parser *parser, WCHAR **str)
 
     /* The worst case is 1 digit + 1 comma per byte */
     size = ((lstrlenW(*str) + 1) / 2) + parser->data_size;
-    parser->data = resize_buffer(parser->data, size);
+    parser->data = heap_xrealloc(parser->data, size);
 
     s = *str;
     d = (BYTE *)parser->data + parser->data_size;
@@ -985,10 +990,8 @@ static WCHAR *get_lineA(FILE *fp)
             memmove(buf, next, len + 1);
             if (size - len < 3)
             {
-                char *new_buf = HeapReAlloc(GetProcessHeap(), 0, buf, size * 2);
-                CHECK_ENOUGH_MEMORY(new_buf);
-                buf = new_buf;
                 size *= 2;
+                buf = heap_xrealloc(buf, size);
             }
             if (!(count = fread(buf + len, 1, size - len - 1, fp)))
             {
@@ -1043,10 +1046,8 @@ static WCHAR *get_lineW(FILE *fp)
             memmove(buf, next, (len + 1) * sizeof(WCHAR));
             if (size - len < 3)
             {
-                WCHAR *new_buf = HeapReAlloc(GetProcessHeap(), 0, buf, (size * 2) * sizeof(WCHAR));
-                CHECK_ENOUGH_MEMORY(new_buf);
-                buf = new_buf;
                 size *= 2;
+                buf = heap_xrealloc(buf, size * sizeof(WCHAR));
             }
             if (!(count = fread(buf + len, sizeof(WCHAR), size - len - 1, fp)))
             {
@@ -1396,12 +1397,12 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
             if (data_size > max_data_bytes)
             {
                 max_data_bytes = data_size;
-                data = resize_buffer(data, max_data_bytes);
+                data = heap_xrealloc(data, max_data_bytes);
             }
             else
             {
                 max_value_len *= 2;
-                value_name = resize_buffer(value_name, max_value_len * sizeof(WCHAR));
+                value_name = heap_xrealloc(value_name, max_value_len * sizeof(WCHAR));
             }
         }
         else break;
