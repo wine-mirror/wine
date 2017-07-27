@@ -1317,6 +1317,7 @@ DECL_HANDLER(init_thread)
         }
         if (process->unix_pid != current->unix_pid)
             process->unix_pid = -1;  /* can happen with linuxthreads */
+        init_thread_context( current );
         stop_thread_if_suspended( current );
         generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, &req->entry );
         set_thread_affinity( current, current->affinity );

@@ -131,6 +131,7 @@ extern int is_cpu_supported( enum cpu_type cpu );
 /* ptrace functions */
 
 extern void sigchld_callback(void);
+extern void init_thread_context( struct thread *thread );
 extern void get_thread_context( struct thread *thread, context_t *context, unsigned int flags );
 extern void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags );
 extern int send_thread_signal( struct thread *thread, int sig );

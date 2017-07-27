@@ -148,6 +148,11 @@ void finish_process_tracing( struct process *process )
     }
 }
 
+/* initialize registers in new thread if necessary */
+void init_thread_context( struct thread *thread )
+{
+}
+
 /* retrieve the thread x86 registers */
 void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
 {

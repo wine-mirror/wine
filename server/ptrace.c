@@ -542,6 +542,11 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 /* debug register offset in struct user */
 #define DR_OFFSET(dr) ((((struct user *)0)->u_debugreg) + (dr))
 
+/* initialize registers in new thread if necessary */
+void init_thread_context( struct thread *thread )
+{
+}
+
 /* retrieve the thread x86 registers */
 void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
 {
@@ -652,6 +657,11 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
 
 #include <machine/reg.h>
 
+/* initialize registers in new thread if necessary */
+void init_thread_context( struct thread *thread )
+{
+}
+
 /* retrieve the thread x86 registers */
 void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
 {
@@ -725,6 +735,11 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
 }
 
 #else  /* linux || __FreeBSD__ */
+
+/* initialize registers in new thread if necessary */
+void init_thread_context( struct thread *thread )
+{
+}
 
 /* retrieve the thread x86 registers */
 void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
