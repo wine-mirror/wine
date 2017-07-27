@@ -55,7 +55,7 @@ void *heap_xalloc(size_t size)
     return buf;
 }
 
-static void *heap_xrealloc(void *buf, size_t size)
+void *heap_xrealloc(void *buf, size_t size)
 {
     void *new_buf;
 
