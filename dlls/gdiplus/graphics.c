@@ -7147,3 +7147,16 @@ GpStatus WINGDIPAPI GdipResetPageTransform(GpGraphics *graphics)
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipGraphicsSetAbort(GpGraphics *graphics, GdiplusAbort *pabort)
+{
+    TRACE("(%p, %p)\n", graphics, pabort);
+
+    if (!graphics)
+        return InvalidParameter;
+
+    if (pabort)
+        FIXME("Abort callback is not supported.\n");
+
+    return Ok;
+}

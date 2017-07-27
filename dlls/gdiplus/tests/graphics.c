@@ -29,6 +29,8 @@
 #define expectf_(expected, got, precision) ok(fabs((expected) - (got)) <= (precision), "Expected %f, got %f\n", (expected), (got))
 #define expectf(expected, got) expectf_((expected), (got), 0.001)
 
+static GpStatus (WINAPI *pGdipGraphicsSetAbort)(GpGraphics*,GdiplusAbort*);
+
 static const REAL mm_per_inch = 25.4;
 static const REAL point_per_inch = 72.0;
 static HWND hwnd;
@@ -6149,11 +6151,40 @@ static void test_container_rects(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_GdipGraphicsSetAbort(void)
+{
+    HDC hdc;
+    GpStatus status;
+    GpGraphics *graphics;
+
+    if (!pGdipGraphicsSetAbort)
+    {
+        win_skip("GdipGraphicsSetAbort() is not supported.\n");
+        return;
+    }
+
+    hdc = GetDC(hwnd);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    status = pGdipGraphicsSetAbort(NULL, NULL);
+    expect(InvalidParameter, status);
+
+    status = pGdipGraphicsSetAbort(graphics, NULL);
+    expect(Ok, status);
+
+    GdipDeleteGraphics(graphics);
+
+    ReleaseDC(hwnd, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     WNDCLASSA class;
+    HMODULE gdiplus_mod = GetModuleHandleA("gdiplus.dll");
     HMODULE hmsvcrt;
     int (CDECL * _controlfp_s)(unsigned int *cur, unsigned int newval, unsigned int mask);
 
@@ -6161,6 +6192,8 @@ START_TEST(graphics)
     hmsvcrt = LoadLibraryA("msvcrt");
     _controlfp_s = (void*)GetProcAddress(hmsvcrt, "_controlfp_s");
     if (_controlfp_s) _controlfp_s(0, 0, 0x0008001e);
+
+    pGdipGraphicsSetAbort = (void*)GetProcAddress(gdiplus_mod, "GdipGraphicsSetAbort");
 
     memset( &class, 0, sizeof(class) );
     class.lpszClassName = "gdiplus_test";
@@ -6230,6 +6263,7 @@ START_TEST(graphics)
     test_GdipFillRectangles();
     test_GdipGetVisibleClipBounds_memoryDC();
     test_container_rects();
+    test_GdipGraphicsSetAbort();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
