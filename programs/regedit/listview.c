@@ -26,6 +26,7 @@
 #include <stdio.h>
 
 #include "main.h"
+#include "regproc.h"
 #include "wine/unicode.h"
 
 static INT Image_String;
@@ -48,21 +49,18 @@ static int column_alignment[MAX_LIST_COLUMNS] = { LVCFMT_LEFT, LVCFMT_LEFT, LVCF
 
 LPWSTR GetItemText(HWND hwndLV, UINT item)
 {
-    LPWSTR newStr, curStr;
+    WCHAR *curStr;
     unsigned int maxLen = 128;
     if (item == 0) return NULL; /* first item is ALWAYS a default */
 
-    curStr = HeapAlloc(GetProcessHeap(), 0, maxLen * sizeof(WCHAR));
-    if (!curStr) return NULL;
+    curStr = heap_xalloc(maxLen * sizeof(WCHAR));
     do {
         ListView_GetItemTextW(hwndLV, item, 0, curStr, maxLen);
         if (lstrlenW(curStr) < maxLen - 1) return curStr;
         maxLen *= 2;
-        newStr = HeapReAlloc(GetProcessHeap(), 0, curStr, maxLen * sizeof(WCHAR));
-        if (!newStr) break;
-        curStr = newStr;
+        curStr = heap_xrealloc(curStr, maxLen * sizeof(WCHAR));
     } while (TRUE);
-    HeapFree(GetProcessHeap(), 0, curStr);
+    heap_free(curStr);
     return NULL;
 }
 
@@ -71,7 +69,7 @@ LPCWSTR GetValueName(HWND hwndLV)
     INT item;
 
     if (g_valueName != LPSTR_TEXTCALLBACKW)
-        HeapFree(GetProcessHeap(), 0,  g_valueName);
+        heap_free(g_valueName);
     g_valueName = NULL;
 
     item = SendMessageW(hwndLV, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_FOCUSED, 0));
@@ -84,10 +82,9 @@ LPCWSTR GetValueName(HWND hwndLV)
 
 BOOL update_listview_path(const WCHAR *path)
 {
-    HeapFree(GetProcessHeap(), 0, g_currentPath);
+    heap_free(g_currentPath);
 
-    g_currentPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(path) + 1) * sizeof(WCHAR));
-    if (!g_currentPath) return FALSE;
+    g_currentPath = heap_xalloc((lstrlenW(path) + 1) * sizeof(WCHAR));
     lstrcpyW(g_currentPath, path);
 
     return TRUE;
@@ -141,13 +138,13 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
         {
             unsigned int i;
             BYTE *pData = data;
-            WCHAR *strBinary = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR) * 3 + sizeof(WCHAR));
+            WCHAR *strBinary = heap_xalloc(size * sizeof(WCHAR) * 3 + sizeof(WCHAR));
             WCHAR format[] = {'%','0','2','X',' ',0};
             for (i = 0; i < size; i++)
                 wsprintfW( strBinary + i*3, format, pData[i] );
             strBinary[size * 3] = 0;
             ListView_SetItemTextW(hwndLV, index, 2, strBinary);
-            HeapFree(GetProcessHeap(), 0, strBinary);
+            heap_free(strBinary);
             break;
         }
     }
@@ -166,7 +163,7 @@ int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWOR
     
     if (Name)
     {
-        linfo->name = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(Name) + 1) * sizeof(WCHAR));
+        linfo->name = heap_xalloc((lstrlenW(Name) + 1) * sizeof(WCHAR));
         lstrcpyW(linfo->name, Name);
     } else
     {
@@ -412,12 +409,8 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     max_val_name_len++;
     max_val_size++;
 
-    valName = HeapAlloc(GetProcessHeap(), 0, max_val_name_len * sizeof(WCHAR));
-    if (!valName)
-        goto done;
-    valBuf = HeapAlloc(GetProcessHeap(), 0, max_val_size);
-    if (!valBuf)
-        goto done;
+    valName = heap_xalloc(max_val_name_len * sizeof(WCHAR));
+    valBuf = heap_xalloc(max_val_size);
 
     valSize = max_val_size;
     if (RegQueryValueExW(hKey, NULL, NULL, &valType, valBuf, &valSize) == ERROR_FILE_NOT_FOUND) {
@@ -449,8 +442,8 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     result = TRUE;
 
 done:
-    HeapFree(GetProcessHeap(), 0, valBuf);
-    HeapFree(GetProcessHeap(), 0, valName);
+    heap_free(valBuf);
+    heap_free(valName);
     SendMessageW(hwndLV, WM_SETREDRAW, TRUE, 0);
     if (hKey) RegCloseKey(hKey);
 
