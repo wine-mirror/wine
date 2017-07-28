@@ -397,6 +397,7 @@ static int listview_notify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
             LINE_INFO *info = (LINE_INFO *)nmlv->lParam;
 
             heap_free(info->name);
+            heap_free(info->val);
             heap_free(info);
             break;
         }

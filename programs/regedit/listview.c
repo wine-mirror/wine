@@ -152,23 +152,27 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
 
 int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount, int pos)
 {
+    LINE_INFO *linfo;
     LVITEMW item = { 0 };
-    LINE_INFO* linfo;
     int index;
 
-    linfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LINE_INFO) + dwCount);
+    linfo = heap_xalloc(sizeof(LINE_INFO));
     linfo->dwValType = dwValType;
     linfo->val_len = dwCount;
-    CopyMemory(&linfo[1], ValBuf, dwCount);
-    
+
     if (Name)
     {
         linfo->name = heap_xalloc((lstrlenW(Name) + 1) * sizeof(WCHAR));
         lstrcpyW(linfo->name, Name);
-    } else
-    {
-        linfo->name = NULL;
     }
+    else linfo->name = NULL;
+
+    if (ValBuf && dwCount)
+    {
+        linfo->val = heap_xalloc(dwCount);
+        memcpy(&linfo->val, ValBuf, dwCount);
+    }
+    else linfo->val = NULL;
 
     item.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE | LVIF_IMAGE;
     item.iItem = (pos == -1) ? SendMessageW(hwndLV, LVM_GETITEMCOUNT, 0, 0) : pos;
