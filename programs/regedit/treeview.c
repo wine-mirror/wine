@@ -51,7 +51,6 @@ static BOOL get_item_path(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pKe
 {
     TVITEMW item;
     int maxChars, chars;
-    LPWSTR newStr;
     HTREEITEM hParent;
 
     item.mask = TVIF_PARAM;
@@ -82,10 +81,9 @@ static BOOL get_item_path(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pKe
             *pPathLen += chars;
             break;
     }
-    newStr = HeapReAlloc(GetProcessHeap(), 0, *pKeyPath, *pMaxChars * 2);
-    if (!newStr) return FALSE;
-    *pKeyPath = newStr;
+
     *pMaxChars *= 2;
+    *pKeyPath = heap_xrealloc(*pKeyPath, *pMaxChars);
     } while(TRUE);
 
     return TRUE;
@@ -101,7 +99,7 @@ LPWSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
          if (!hItem) return NULL;
     }
 
-    pathBuffer = HeapAlloc(GetProcessHeap(), 0, maxLen*sizeof(WCHAR));
+    pathBuffer = heap_xalloc(maxLen * sizeof(WCHAR));
     if (!pathBuffer) return NULL;
     *pathBuffer = 0;
     if (!get_item_path(hwndTV, hItem, phRootKey, &pathBuffer, &pathLen, &maxLen)) return NULL;
@@ -118,10 +116,10 @@ static LPWSTR get_path_component(LPCWSTR *lplpKeyName) {
          lpPos++;
      if (*lpPos && lpPos == *lplpKeyName)
          return NULL;
+
      len = lpPos+1-(*lplpKeyName);
-     lpResult = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-     if (!lpResult) /* that would be very odd */
-         return NULL;
+     lpResult = heap_xalloc(len * sizeof(WCHAR));
+
      lstrcpynW(lpResult, *lplpKeyName, len);
      *lplpKeyName = *lpPos ? lpPos+1 : NULL;
      return lpResult;
@@ -155,7 +153,7 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
                      SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
                      if (!lpKeyName)
                      {
-                         HeapFree(GetProcessHeap(), 0, lpItemName);
+                         heap_free(lpItemName);
                          return hItem;
                      }
                      hOldItem = hItem;
@@ -164,7 +162,7 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
                 }
                 hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)hItem);
             }
-            HeapFree(GetProcessHeap(), 0, lpItemName);
+            heap_free(lpItemName);
             if (!hItem)
                 return valid_path ? hOldItem : hRoot;
         }
@@ -239,20 +237,20 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, 
              return FALSE;
 
         if (RegOpenKeyExW(hRoot, KeyPath, 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
-            HeapFree(GetProcessHeap(), 0, KeyPath);
+            heap_free(KeyPath);
             return FALSE;
         }
 
-        HeapFree(GetProcessHeap(), 0, KeyPath);
+        heap_free(KeyPath);
 
         if (ERROR_SUCCESS != RegQueryInfoKeyW(hKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &lenNameMax, &lenValueMax, NULL, NULL))
             return FALSE;
 
         lenName = ++lenNameMax;
-        if (!(valName = HeapAlloc(GetProcessHeap(), 0, lenName * sizeof(valName[0]) )))
-            return FALSE;
+        valName = heap_xalloc(lenName * sizeof(WCHAR));
 
         adjust = 0;
+
         /* RegEnumValue won't return empty default value, so fake it when dealing with *row,
            which corresponds to list view rows, not value ids */
         if (ERROR_SUCCESS == RegEnumValueW(hKey, 0, valName, &lenName, NULL, NULL, NULL, NULL) && *valName)
@@ -270,8 +268,8 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, 
             
             if (mode & SEARCH_VALUES) {
                 if (match_string(valName, sstring, mode)) {
-                    HeapFree(GetProcessHeap(), 0, valName);
-                    HeapFree(GetProcessHeap(), 0, buffer);
+                    heap_free(valName);
+                    heap_free(buffer);
                     RegCloseKey(hKey);
                     *row = i+adjust;
                     return TRUE;
@@ -280,16 +278,15 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, 
             
             if ((mode & SEARCH_CONTENT) && (type == REG_EXPAND_SZ || type == REG_SZ)) {
                 if (!buffer)
-                    buffer = HeapAlloc(GetProcessHeap(), 0, lenValueMax);
-                if (!buffer)
-                    break;
+                    buffer = heap_xalloc(lenValueMax);
+
                 lenName = lenNameMax;
                 lenValue = lenValueMax;
                 if (ERROR_SUCCESS != RegEnumValueW(hKey, i, valName, &lenName, NULL, &type, (LPBYTE)buffer, &lenValue))
                     break;
                 if (match_string(buffer, sstring, mode)) {
-                    HeapFree(GetProcessHeap(), 0, valName);
-                    HeapFree(GetProcessHeap(), 0, buffer);
+                    heap_free(valName);
+                    heap_free(buffer);
                     RegCloseKey(hKey);
                     *row = i+adjust;
                     return TRUE;
@@ -298,8 +295,8 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, 
                             
             i++;
         }
-        HeapFree(GetProcessHeap(), 0, valName);
-        HeapFree(GetProcessHeap(), 0, buffer);
+        heap_free(valName);
+        heap_free(buffer);
         RegCloseKey(hKey);
     }        
     return FALSE;
@@ -375,7 +372,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     } else {
         hKey = hRoot;
     }
-    HeapFree(GetProcessHeap(), 0, KeyPath);
+    heap_free(KeyPath);
 
     if (RegQueryInfoKeyW(hKey, 0, 0, 0, &dwCount, &dwMaxSubKeyLen, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
         return FALSE;
@@ -396,14 +393,10 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     }
 
     dwMaxSubKeyLen++; /* account for the \0 terminator */
-    if (!(Name = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(WCHAR)))) {
-        return FALSE;
-    }
+    Name = heap_xalloc(dwMaxSubKeyLen * sizeof(WCHAR));
+
     tvItem.cchTextMax = dwMaxSubKeyLen;
-    if (!(tvItem.pszText = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(WCHAR)))) {
-        HeapFree(GetProcessHeap(), 0, Name);
-        return FALSE;
-    }
+    tvItem.pszText = heap_xalloc(dwMaxSubKeyLen * sizeof(WCHAR));
 
     /* Now go through all the children in the registry, and check if any have to be added. */
     for (dwIndex = 0; dwIndex < dwCount; dwIndex++) {
@@ -430,8 +423,8 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
             tvItem.mask = TVIF_TEXT;
             tvItem.hItem = childItem;
             if (!TreeView_GetItemW(hwndTV, &tvItem)) {
-                HeapFree(GetProcessHeap(), 0, Name);
-                HeapFree(GetProcessHeap(), 0, tvItem.pszText);
+                heap_free(Name);
+                heap_free(tvItem.pszText);
                 return FALSE;
             }
 
@@ -446,8 +439,8 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
             AddEntryToTree(hwndTV, hItem, Name, NULL, dwSubCount);
         }
     }
-    HeapFree(GetProcessHeap(), 0, Name);
-    HeapFree(GetProcessHeap(), 0, tvItem.pszText);
+    heap_free(Name);
+    heap_free(tvItem.pszText);
     RegCloseKey(hKey);
 
     /* Now go through all the children in the tree, and check if any have to be removed. */
@@ -658,8 +651,7 @@ BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state)
     errCode = RegQueryInfoKeyW(hNewKey, 0, 0, 0, &dwCount, &dwMaxSubKeyLen, 0, 0, 0, 0, 0, 0);
     if (errCode != ERROR_SUCCESS) goto done;
     dwMaxSubKeyLen++; /* account for the \0 terminator */
-    Name = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(WCHAR));
-    if (!Name) goto done;
+    Name = heap_xalloc(dwMaxSubKeyLen * sizeof(WCHAR));
 
     for (dwIndex = 0; dwIndex < dwCount; dwIndex++) {
         DWORD cName = dwMaxSubKeyLen, dwSubCount;
@@ -675,7 +667,7 @@ BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state)
         AddEntryToTree(hwndTV, hItem, Name, NULL, dwSubCount);
     }
     RegCloseKey(hNewKey);
-    HeapFree(GetProcessHeap(), 0, Name);
+    heap_free(Name);
 
 done:
     item.mask = TVIF_STATE;
@@ -686,7 +678,7 @@ done:
     SendMessageW(hwndTV, WM_SETREDRAW, TRUE, 0);
     SetCursor(hcursorOld);
     expanding = FALSE;
-    HeapFree(GetProcessHeap(), 0, keyPath);
+    heap_free(keyPath);
 
     return TRUE;
 }
