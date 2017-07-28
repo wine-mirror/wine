@@ -148,6 +148,14 @@ typedef enum WICComponentEnumerateOptions {
     WICComponentEnumerateDisabled = 0x80000000
 } WICComponentEnumerateOptions;
 
+typedef enum WICJpegYCrCbSubsamplingOption {
+    WICJpegYCrCbSubsamplingDefault  = 0x00000000,
+    WICJpegYCrCbSubsampling420 = 0x00000001,
+    WICJpegYCrCbSubsampling422 = 0x00000002,
+    WICJpegYCrCbSubsampling444 = 0x00000003,
+    WICJpegYCrCbSubsampling440 = 0x00000004
+} WICJpegYCrCbSubsamplingOption;
+
 typedef enum WICPixelFormatNumericRepresentation {
     WICPixelFormatNumericRepresentationUnspecified = 0x00000000,
     WICPixelFormatNumericRepresentationIndexed = 0x00000001,

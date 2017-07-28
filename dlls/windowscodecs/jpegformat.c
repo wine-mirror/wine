@@ -60,6 +60,13 @@ WINE_DECLARE_DEBUG_CHANNEL(jpeg);
 
 static void *libjpeg_handle;
 
+static const WCHAR wszImageQuality[] = {'I','m','a','g','e','Q','u','a','l','i','t','y',0};
+static const WCHAR wszBitmapTransform[] = {'B','i','t','m','a','p','T','r','a','n','s','f','o','r','m',0};
+static const WCHAR wszLuminance[] = {'L','u','m','i','n','a','n','c','e',0};
+static const WCHAR wszChrominance[] = {'C','h','r','o','m','i','n','a','n','c','e',0};
+static const WCHAR wszJpegYCrCbSubsampling[] = {'J','p','e','g','Y','C','r','C','b','S','u','b','s','a','m','p','l','i','n','g',0};
+static const WCHAR wszSuppressApp0[] = {'S','u','p','p','r','e','s','s','A','p','p','0',0};
+
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(jpeg_CreateCompress);
 MAKE_FUNCPTR(jpeg_CreateDecompress);
@@ -1407,6 +1414,7 @@ static HRESULT WINAPI JpegEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 {
     JpegEncoder *This = impl_from_IWICBitmapEncoder(iface);
     HRESULT hr;
+    PROPBAG2 opts[6] = {{0}};
 
     TRACE("(%p,%p,%p)\n", iface, ppIFrameEncode, ppIEncoderOptions);
 
@@ -1424,7 +1432,26 @@ static HRESULT WINAPI JpegEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
         return WINCODEC_ERR_NOTINITIALIZED;
     }
 
-    hr = CreatePropertyBag2(NULL, 0, ppIEncoderOptions);
+    opts[0].pstrName = (LPOLESTR)wszImageQuality;
+    opts[0].vt = VT_R4;
+    opts[0].dwType = PROPBAG2_TYPE_DATA;
+    opts[1].pstrName = (LPOLESTR)wszBitmapTransform;
+    opts[1].vt = VT_UI1;
+    opts[1].dwType = PROPBAG2_TYPE_DATA;
+    opts[2].pstrName = (LPOLESTR)wszLuminance;
+    opts[2].vt = VT_I4|VT_ARRAY;
+    opts[2].dwType = PROPBAG2_TYPE_DATA;
+    opts[3].pstrName = (LPOLESTR)wszChrominance;
+    opts[3].vt = VT_I4|VT_ARRAY;
+    opts[3].dwType = PROPBAG2_TYPE_DATA;
+    opts[4].pstrName = (LPOLESTR)wszJpegYCrCbSubsampling;
+    opts[4].vt = VT_UI1;
+    opts[4].dwType = PROPBAG2_TYPE_DATA;
+    opts[5].pstrName = (LPOLESTR)wszSuppressApp0;
+    opts[5].vt = VT_BOOL;
+    opts[5].dwType = PROPBAG2_TYPE_DATA;
+
+    hr = CreatePropertyBag2(opts, 6, ppIEncoderOptions);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&This->lock);
