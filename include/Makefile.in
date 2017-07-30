@@ -161,6 +161,7 @@ IDL_SRCS = \
 	txdtc.idl \
 	uiautomationclient.idl \
 	uiautomationcore.idl \
+	uiribbon.idl \
 	unknwn.idl \
 	urlhist.idl \
 	urlmon.idl \
