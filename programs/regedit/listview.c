@@ -170,7 +170,7 @@ int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWOR
     if (ValBuf && dwCount)
     {
         linfo->val = heap_xalloc(dwCount);
-        memcpy(&linfo->val, ValBuf, dwCount);
+        memcpy(linfo->val, ValBuf, dwCount);
     }
     else linfo->val = NULL;
 
