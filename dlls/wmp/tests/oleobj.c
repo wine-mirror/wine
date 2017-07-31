@@ -848,6 +848,9 @@ static void test_QI(IUnknown *unk)
     hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&tmp);
     ok(hres == E_NOINTERFACE, "Got IQuickActivate iface when no expected\n");
 
+    hres = IUnknown_QueryInterface(unk, &IID_IMarshal, (void**)&tmp);
+    ok(hres == E_NOINTERFACE, "Could not get IMarshal iface: %08x\n", hres);
+
     hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceObjectWindowless, (void**)&tmp);
     ok(hres == S_OK, "Could not get IOleInPlaceObjectWindowless iface: %08x\n", hres);
     IUnknown_Release(tmp);

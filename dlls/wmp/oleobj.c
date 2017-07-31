@@ -219,6 +219,8 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
 {
     WindowsMediaPlayer *This = impl_from_IOleObject(iface);
 
+    *ppv = NULL;
+
     if(IsEqualGUID(riid, &IID_IUnknown)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IOleObject_iface;
@@ -267,9 +269,14 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
     }else if(IsEqualGUID(riid, &IID_IOleControl)) {
         TRACE("(%p)->(IID_IOleControl %p)\n", This, ppv);
         *ppv = &This->IOleControl_iface;
+    }else if(IsEqualGUID(riid, &IID_IMarshal)) {
+        TRACE("(%p)->(IID_IMarshal %p)\n", This, ppv);
+        return E_NOINTERFACE;
+    }else if(IsEqualGUID(riid, &IID_IQuickActivate)) {
+        TRACE("(%p)->(IID_IQuickActivate %p)\n", This, ppv);
+        return E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-        *ppv = NULL;
         return E_NOINTERFACE;
     }
 
