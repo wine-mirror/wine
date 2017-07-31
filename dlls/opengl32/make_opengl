@@ -8,8 +8,8 @@ use XML::Simple;
 #
 #     - It needs files from the OpenGL extension registry:
 #
-#       https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/gl.xml
-#       https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/wgl.xml
+#       https://raw.github.com/KhronosGroup/OpenGL-Registry/master/xml/gl.xml
+#       https://raw.github.com/KhronosGroup/OpenGL-Registry/master/xml/wgl.xml
 #
 #       If they are not found in the current directory the script will
 #       attempt to download them from there.
@@ -404,8 +404,8 @@ if ($version eq "1.0") {
 #
 # Fetch the registry files
 #
--f "gl.xml" || system "wget --no-check-certificate https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/gl.xml" || die "cannot download gl.xml";
--f "wgl.xml" || system "wget --no-check-certificate https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/wgl.xml" || die "cannot download wgl.xml";
+-f "gl.xml" || system "wget https://raw.github.com/KhronosGroup/OpenGL-Registry/master/xml/gl.xml" || die "cannot download gl.xml";
+-f "wgl.xml" || system "wget https://raw.github.com/KhronosGroup/OpenGL-Registry/master/xml/wgl.xml" || die "cannot download wgl.xml";
 
 
 #
