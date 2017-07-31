@@ -19,7 +19,7 @@
 #pragma makedep register
 
 [
-    helpstring("Package"),
+    progid("Package"),
     threading(apartment),
     uuid(F20DA720-C02F-11CE-927B-0800095AE340)
 ]
