@@ -1,0 +1,4 @@
+MODULE = dsquery.dll
+
+C_SRCS = \
+	main.c
