@@ -3898,6 +3898,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
 
         {ARB_CLIP_CONTROL,                 MAKEDWORD_VERSION(4, 5)},
         {ARB_DERIVATIVE_CONTROL,           MAKEDWORD_VERSION(4, 5)},
+
+        {ARB_PIPELINE_STATISTICS_QUERY,    MAKEDWORD_VERSION(4, 6)},
     };
     struct wined3d_driver_info *driver_info = &adapter->driver_info;
     const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
