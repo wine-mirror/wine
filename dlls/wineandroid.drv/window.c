@@ -1123,8 +1123,11 @@ void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
     if (!data->parent) owner = GetWindow( hwnd, GW_OWNER );
     release_win_data( data );
 
-    TRACE( "win %p window %s client %s style %08x owner %p flags %08x\n", hwnd,
-           wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect), new_style, owner, swp_flags );
+    if (!(swp_flags & SWP_NOZORDER)) insert_after = GetWindow( hwnd, GW_HWNDPREV );
+
+    TRACE( "win %p window %s client %s style %08x owner %p after %p flags %08x\n", hwnd,
+           wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
+           new_style, owner, insert_after, swp_flags );
 
     ioctl_window_pos_changed( hwnd, window_rect, client_rect, visible_rect,
                               new_style, swp_flags, insert_after, owner );
