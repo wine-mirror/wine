@@ -78,6 +78,7 @@ public class WineActivity extends Activity
     {
         File bindir = new File( getFilesDir(), Build.CPU_ABI + "/bin" );
         File libdir = new File( getFilesDir(), Build.CPU_ABI + "/lib" );
+        File dlldir = new File( libdir, "wine" );
         File prefix = new File( getFilesDir(), "prefix" );
         File loader = new File( bindir, "wine" );
         String locale = Locale.getDefault().getLanguage() + "_" +
@@ -88,6 +89,7 @@ public class WineActivity extends Activity
         HashMap<String,String> env = new HashMap<String,String>();
         env.put( "WINELOADER", loader.toString() );
         env.put( "WINEPREFIX", prefix.toString() );
+        env.put( "WINEDLLPATH", dlldir.toString() );
         env.put( "LD_LIBRARY_PATH", libdir.toString() + ":" + getApplicationInfo().nativeLibraryDir );
         env.put( "LC_ALL", locale );
         env.put( "LANG", locale );
