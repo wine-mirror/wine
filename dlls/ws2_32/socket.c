@@ -6836,6 +6836,15 @@ int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namesp
 }
 
 /***********************************************************************
+ *		GetAddrInfoExOverlappedResult  (WS2_32.@)
+ */
+int WINAPI GetAddrInfoExOverlappedResult(OVERLAPPED *overlapped)
+{
+    FIXME("(%p)\n", overlapped);
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
  *		GetAddrInfoExCancel     (WS2_32.@)
  */
 int WINAPI GetAddrInfoExCancel(HANDLE *handle)
