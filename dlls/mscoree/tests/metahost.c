@@ -35,6 +35,10 @@ static HRESULT (WINAPI *pCLRCreateInstance)(REFCLSID clsid, REFIID riid, LPVOID 
 
 static ICLRMetaHost *metahost;
 
+static const WCHAR v4_0[] = {'v','4','.','0','.','3','0','3','1','9',0};
+
+static DWORD expect_runtime_tid;
+
 static BOOL init_pointers(void)
 {
     HRESULT hr = E_FAIL;
@@ -148,10 +152,37 @@ static void test_enumruntimes(void)
     IEnumUnknown_Release(runtime_enum);
 }
 
+static void WINAPI notification_dummy_callback(ICLRRuntimeInfo *pRuntimeInfo, CallbackThreadSetFnPtr pfnCallbackThreadSet,
+    CallbackThreadUnsetFnPtr pfnCallbackThreadUnset)
+{
+    ok(0, "unexpected call\n");
+}
+
 static void WINAPI notification_callback(ICLRRuntimeInfo *pRuntimeInfo, CallbackThreadSetFnPtr pfnCallbackThreadSet,
     CallbackThreadUnsetFnPtr pfnCallbackThreadUnset)
 {
-    ok(0, "Unexpected call\n");
+    HRESULT hr;
+    WCHAR buf[20];
+    DWORD buf_size = 20;
+
+    ok(expect_runtime_tid != 0, "unexpected call\n");
+
+    if (expect_runtime_tid != 0)
+    {
+        ok(GetCurrentThreadId() == expect_runtime_tid,
+            "expected call on thread %04x, got thread %04x\n", expect_runtime_tid, GetCurrentThreadId());
+        expect_runtime_tid = 0;
+    }
+
+    hr = ICLRRuntimeInfo_GetVersionString(pRuntimeInfo, buf, &buf_size);
+    ok(hr == S_OK, "GetVersion returned %x\n", hr);
+    ok(lstrcmpW(buf, v4_0) == 0, "GetVersion returned %s\n", wine_dbgstr_w(buf));
+
+    hr = pfnCallbackThreadSet();
+    ok(hr == S_OK, "pfnCallbackThreadSet returned %x\n", hr);
+
+    hr = pfnCallbackThreadUnset();
+    ok(hr == S_OK, "pfnCallbackThreadUnset returned %x\n", hr);
 }
 
 static void test_notification(void)
@@ -159,10 +190,32 @@ static void test_notification(void)
     HRESULT hr;
 
     hr = ICLRMetaHost_RequestRuntimeLoadedNotification(metahost, NULL);
-    ok(hr == E_POINTER, "GetVersion failed, hr=%x\n", hr);
+    ok(hr == E_POINTER, "RequestRuntimeLoadedNotification returned %x\n", hr);
 
     hr = ICLRMetaHost_RequestRuntimeLoadedNotification(metahost,notification_callback);
-    ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+    ok(hr == S_OK, "RequestRuntimeLoadedNotification failed, hr=%x\n", hr);
+
+    hr = ICLRMetaHost_RequestRuntimeLoadedNotification(metahost,notification_dummy_callback);
+    ok(hr == HOST_E_INVALIDOPERATION, "RequestRuntimeLoadedNotification returned %x\n", hr);
+}
+
+static void test_notification_cb(void)
+{
+    HRESULT hr;
+    ICLRRuntimeInfo *info;
+    ICLRRuntimeHost *host;
+
+    hr = ICLRMetaHost_GetRuntime(metahost, v4_0, &IID_ICLRRuntimeInfo, (void**)&info);
+    ok(hr == S_OK, "GetRuntime returned %x\n", hr);
+
+    expect_runtime_tid = GetCurrentThreadId();
+    hr = ICLRRuntimeInfo_GetInterface(info, &CLSID_CLRRuntimeHost, &IID_ICLRRuntimeHost, (void**)&host);
+    ok(hr == S_OK, "GetInterface returned %x\n", hr);
+    ok(expect_runtime_tid == 0, "notification_callback was not called\n");
+
+    ICLRRuntimeHost_Release(host);
+
+    ICLRRuntimeInfo_Release(info);
 }
 
 START_TEST(metahost)
@@ -170,8 +223,9 @@ START_TEST(metahost)
     if (!init_pointers())
         return;
 
-    test_enumruntimes();
     test_notification();
+    test_enumruntimes();
+    test_notification_cb();
 
     cleanup();
 }

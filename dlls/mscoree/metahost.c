@@ -66,6 +66,15 @@ static CRITICAL_SECTION_DEBUG runtime_list_cs_debug =
 };
 static CRITICAL_SECTION runtime_list_cs = { &runtime_list_cs_debug, -1, 0, 0, 0, 0 };
 
+struct CLRMetaHost
+{
+    ICLRMetaHost ICLRMetaHost_iface;
+
+    RuntimeLoadedCallbackFnPtr callback;
+};
+
+static struct CLRMetaHost GlobalCLRMetaHost;
+
 static HMODULE mono_handle;
 
 BOOL is_mono_started;
@@ -299,6 +308,18 @@ static void CDECL mono_print_handler_fn(const char *string, INT is_stdout)
     }
 }
 
+static HRESULT WINAPI thread_set_fn(void)
+{
+    WARN("stub\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI thread_unset_fn(void)
+{
+    WARN("stub\n");
+    return S_OK;
+}
+
 static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost **result)
 {
     HRESULT hr = S_OK;
@@ -317,6 +338,17 @@ static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost *
     }
 
     EnterCriticalSection(&runtime_list_cs);
+
+    if (This->loaded_runtime)
+    {
+        *result = This->loaded_runtime;
+        return hr;
+    }
+
+    if (GlobalCLRMetaHost.callback)
+    {
+        GlobalCLRMetaHost.callback(&This->ICLRRuntimeInfo_iface, thread_set_fn, thread_unset_fn);
+    }
 
     hr = load_mono(mono_path);
 
@@ -795,15 +827,6 @@ static const struct IEnumUnknownVtbl InstalledRuntimeEnum_Vtbl = {
     InstalledRuntimeEnum_Clone
 };
 
-struct CLRMetaHost
-{
-    ICLRMetaHost ICLRMetaHost_iface;
-
-    RuntimeLoadedCallbackFnPtr callback;
-};
-
-static struct CLRMetaHost GlobalCLRMetaHost;
-
 static HRESULT WINAPI CLRMetaHost_QueryInterface(ICLRMetaHost* iface,
         REFIID riid,
         void **ppvObject)
@@ -988,7 +1011,8 @@ static HRESULT WINAPI CLRMetaHost_RequestRuntimeLoadedNotification(ICLRMetaHost*
     if(!pCallbackFunction)
         return E_POINTER;
 
-    WARN("Callback currently will not be called.\n");
+    if (GlobalCLRMetaHost.callback)
+        return HOST_E_INVALIDOPERATION;
 
     GlobalCLRMetaHost.callback = pCallbackFunction;
 
