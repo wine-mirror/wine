@@ -90,6 +90,11 @@ static void *heap_xalloc(size_t size)
     return buf;
 }
 
+static BOOL heap_free(void *buf)
+{
+    return HeapFree(GetProcessHeap(), 0, buf);
+}
+
 static void output_writeconsole(const WCHAR *str, DWORD wlen)
 {
     DWORD count, ret;
@@ -109,7 +114,7 @@ static void output_writeconsole(const WCHAR *str, DWORD wlen)
 
         WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, msgA, len, NULL, NULL);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE);
-        HeapFree(GetProcessHeap(), 0, msgA);
+        heap_free(msgA);
     }
 }
 
@@ -295,7 +300,7 @@ static LPBYTE get_regdata(const WCHAR *data, DWORD reg_type, WCHAR separator, DW
             break;
             no_hex_data:
             /* cleanup, print error */
-            HeapFree(GetProcessHeap(), 0, out_data);
+            heap_free(out_data);
             output_message(STRING_MISSING_HEXDATA);
             out_data = NULL;
             break;
@@ -319,7 +324,7 @@ static LPBYTE get_regdata(const WCHAR *data, DWORD reg_type, WCHAR separator, DW
 
                 if (destindex && !buffer[destindex - 1] && (!buffer[destindex] || destindex == 1))
                 {
-                    HeapFree(GetProcessHeap(), 0, buffer);
+                    heap_free(buffer);
                     output_message(STRING_INVALID_STRING);
                     return NULL;
                 }
@@ -407,7 +412,7 @@ static int reg_add(HKEY root, WCHAR *path, WCHAR *value_name, BOOL value_empty,
         }
 
         RegSetValueExW(key, value_name, 0, reg_type, reg_data, reg_count);
-        HeapFree(GetProcessHeap(),0,reg_data);
+        heap_free(reg_data);
     }
 
     RegCloseKey(key);
@@ -484,7 +489,7 @@ static int reg_delete(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name
                 rc = RegDeleteValueW(key, szValue);
                 if (rc != ERROR_SUCCESS)
                 {
-                    HeapFree(GetProcessHeap(), 0, szValue);
+                    heap_free(szValue);
                     RegCloseKey(key);
                     output_message(STRING_VALUEALL_FAILED, key_name);
                     return 1;
@@ -492,7 +497,7 @@ static int reg_delete(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name
             }
             else break;
         }
-        HeapFree(GetProcessHeap(), 0, szValue);
+        heap_free(szValue);
     }
     else if (value_name || value_empty)
     {
@@ -611,7 +616,7 @@ static void output_value(const WCHAR *value_name, DWORD type, BYTE *data, DWORD 
     {
         reg_data = reg_data_to_wchar(type, data, data_size);
         output_string(fmt, reg_data);
-        HeapFree(GetProcessHeap(), 0, reg_data);
+        heap_free(reg_data);
     }
     else
     {
@@ -670,7 +675,7 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
         num_values_found++;
     }
 
-    HeapFree(GetProcessHeap(), 0, data);
+    heap_free(data);
 
     if (!recurse)
     {
@@ -704,13 +709,13 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
                 query_value(subkey, value_name, subkey_path, recurse);
                 RegCloseKey(subkey);
             }
-            HeapFree(GetProcessHeap(), 0, subkey_path);
+            heap_free(subkey_path);
             i++;
         }
         else break;
     }
 
-    HeapFree(GetProcessHeap(), 0, subkey_name);
+    heap_free(subkey_name);
     return 0;
 }
 
@@ -760,8 +765,8 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
         else break;
     }
 
-    HeapFree(GetProcessHeap(), 0, data);
-    HeapFree(GetProcessHeap(), 0, value_name);
+    heap_free(data);
+    heap_free(value_name);
 
     if (i || recurse)
         output_string(newlineW);
@@ -785,7 +790,7 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
                     query_all(subkey, subkey_path, recurse);
                     RegCloseKey(subkey);
                 }
-                HeapFree(GetProcessHeap(), 0, subkey_path);
+                heap_free(subkey_path);
             }
             else output_string(fmt_path, path, subkey_name);
             i++;
@@ -793,7 +798,7 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
         else break;
     }
 
-    HeapFree(GetProcessHeap(), 0, subkey_name);
+    heap_free(subkey_name);
 
     if (i && !recurse)
         output_string(newlineW);
