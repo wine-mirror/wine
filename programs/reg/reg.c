@@ -90,6 +90,24 @@ static void *heap_xalloc(size_t size)
     return buf;
 }
 
+static void *heap_xrealloc(void *buf, size_t size)
+{
+    void *new_buf;
+
+    if (buf)
+        new_buf = HeapReAlloc(GetProcessHeap(), 0, buf, size);
+    else
+        new_buf = HeapAlloc(GetProcessHeap(), 0, size);
+
+    if (!new_buf)
+    {
+        ERR("Out of memory!\n");
+        exit(1);
+    }
+
+    return new_buf;
+}
+
 static BOOL heap_free(void *buf)
 {
     return HeapFree(GetProcessHeap(), 0, buf);
@@ -662,7 +680,7 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
         if (rc == ERROR_MORE_DATA)
         {
             max_data_bytes = data_size;
-            data = HeapReAlloc(GetProcessHeap(), 0, data, max_data_bytes);
+            data = heap_xrealloc(data, max_data_bytes);
         }
         else break;
     }
@@ -754,12 +772,12 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
             if (data_size > max_data_bytes)
             {
                 max_data_bytes = data_size;
-                data = HeapReAlloc(GetProcessHeap(), 0, data, max_data_bytes);
+                data = heap_xrealloc(data, max_data_bytes);
             }
             else
             {
                 max_value_len *= 2;
-                value_name = HeapReAlloc(GetProcessHeap(), 0, value_name, max_value_len * sizeof(WCHAR));
+                value_name = heap_xrealloc(value_name, max_value_len * sizeof(WCHAR));
             }
         }
         else break;
