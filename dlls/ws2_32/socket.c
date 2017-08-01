@@ -6959,7 +6959,17 @@ void WINAPI FreeAddrInfoW(PADDRINFOW ai)
  */
 void WINAPI FreeAddrInfoExW(ADDRINFOEXW *ai)
 {
-    FIXME("%p\n", ai);
+    TRACE("(%p)\n", ai);
+
+    while (ai)
+    {
+        ADDRINFOEXW *next;
+        HeapFree(GetProcessHeap(), 0, ai->ai_canonname);
+        HeapFree(GetProcessHeap(), 0, ai->ai_addr);
+        next = ai->ai_next;
+        HeapFree(GetProcessHeap(), 0, ai);
+        ai = next;
+    }
 }
 
 int WINAPI WS_getnameinfo(const SOCKADDR *sa, WS_socklen_t salen, PCHAR host,
