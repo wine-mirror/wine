@@ -279,7 +279,7 @@ float CDECL MSVCRT_sinhf( float x )
  */
 float CDECL MSVCRT_sqrtf( float x )
 {
-  if (x < 0.0 || !finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x < 0.0) *MSVCRT__errno() = MSVCRT_EDOM;
   return sqrtf(x);
 }
 
@@ -476,7 +476,7 @@ double CDECL MSVCRT_sinh( double x )
  */
 double CDECL MSVCRT_sqrt( double x )
 {
-  if (x < 0.0 || !isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x < 0.0) *MSVCRT__errno() = MSVCRT_EDOM;
   return sqrt(x);
 }
 
