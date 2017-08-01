@@ -1132,8 +1132,8 @@ static void test_num_get_get_uint64(void)
         }
 
         ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
-        ok(tests[i].val   == val,   "wrong val, expected = %lx%08lx found %lx%08lx\n", (unsigned long)(tests[i].val >> 32),
-                (unsigned long)tests[i].val, (unsigned long)(val >> 32), (unsigned long)val);
+        ok(tests[i].val   == val,   "wrong val, expected = %s found %s\n", wine_dbgstr_longlong(tests[i].val),
+                wine_dbgstr_longlong(val));
         ok(tests[i].next  == next,  "wrong next, expected = %c (%i) found = %c (%i)\n", tests[i].next, tests[i].next, next, next);
 
         if(tests[i].lcl)
@@ -1159,8 +1159,8 @@ static void test_num_get_get_uint64(void)
         nextus = (unsigned short)(int)call_func1(p_basic_istream_wchar_get, &wss.base.base1);
 
         ok(tests[i].state == state, "wrong state, expected = %x found = %x\n", tests[i].state, state);
-        ok(tests[i].val == val, "wrong val, expected = %lx%08lx found %lx%08lx\n", (unsigned long)(tests[i].val >> 32),
-                (unsigned long)tests[i].val, (unsigned long)(val >> 32), (unsigned long)val);
+        ok(tests[i].val == val, "wrong val, expected = %s found %s\n", wine_dbgstr_longlong(tests[i].val),
+                wine_dbgstr_longlong(val));
         testus = tests[i].next == EOF ? WEOF : (unsigned short)tests[i].next;
         ok(testus == nextus, "wrong next, expected = %c (%i) found = %c (%i)\n", testus, testus, nextus, nextus);
 
