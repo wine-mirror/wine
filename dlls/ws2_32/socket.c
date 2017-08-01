@@ -6733,11 +6733,11 @@ outofmem:
 #endif
 }
 
-static struct WS_addrinfoW *addrinfo_AtoW(const struct WS_addrinfo *ai)
+static ADDRINFOEXW *addrinfo_AtoW(const struct WS_addrinfo *ai)
 {
-    struct WS_addrinfoW *ret;
+    ADDRINFOEXW *ret;
 
-    if (!(ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct WS_addrinfoW)))) return NULL;
+    if (!(ret = HeapAlloc(GetProcessHeap(), 0, sizeof(ADDRINFOEXW)))) return NULL;
     ret->ai_flags     = ai->ai_flags;
     ret->ai_family    = ai->ai_family;
     ret->ai_socktype  = ai->ai_socktype;
@@ -6745,6 +6745,9 @@ static struct WS_addrinfoW *addrinfo_AtoW(const struct WS_addrinfo *ai)
     ret->ai_addrlen   = ai->ai_addrlen;
     ret->ai_canonname = NULL;
     ret->ai_addr      = NULL;
+    ret->ai_blob      = NULL;
+    ret->ai_bloblen   = 0;
+    ret->ai_provider  = NULL;
     ret->ai_next      = NULL;
     if (ai->ai_canonname)
     {
@@ -6769,16 +6772,16 @@ static struct WS_addrinfoW *addrinfo_AtoW(const struct WS_addrinfo *ai)
     return ret;
 }
 
-static struct WS_addrinfoW *addrinfo_list_AtoW(const struct WS_addrinfo *info)
+static ADDRINFOEXW *addrinfo_list_AtoW(const struct WS_addrinfo *info)
 {
-    struct WS_addrinfoW *ret, *infoW;
+    ADDRINFOEXW *ret, *infoW;
 
     if (!(ret = infoW = addrinfo_AtoW(info))) return NULL;
     while (info->ai_next)
     {
         if (!(infoW->ai_next = addrinfo_AtoW(info->ai_next)))
         {
-            FreeAddrInfoW(ret);
+            FreeAddrInfoExW(ret);
             return NULL;
         }
         infoW = infoW->ai_next;
@@ -6823,7 +6826,7 @@ static struct WS_addrinfo *addrinfo_WtoA(const struct WS_addrinfoW *ai)
     return ret;
 }
 
-static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const struct WS_addrinfo *hints, PADDRINFOW *res)
+static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const struct WS_addrinfo *hints, ADDRINFOEXW **res)
 {
     int ret = EAI_MEMORY, len, i;
     char *nodenameA = NULL, *servnameA = NULL;
@@ -6927,15 +6930,29 @@ int WINAPI GetAddrInfoExCancel(HANDLE *handle)
 int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, PADDRINFOW *res)
 {
     struct WS_addrinfo *hintsA = NULL;
+    ADDRINFOEXW *resex;
     int ret = EAI_MEMORY;
 
     TRACE("nodename %s, servname %s, hints %p, result %p\n",
           debugstr_w(nodename), debugstr_w(servname), hints, res);
 
+    *res = NULL;
     if (hints) hintsA = addrinfo_WtoA(hints);
-    ret = WS_getaddrinfoW(nodename, servname, hintsA, res);
+    ret = WS_getaddrinfoW(nodename, servname, hintsA, &resex);
     WS_freeaddrinfo(hintsA);
-    return ret;
+    if (ret) return ret;
+
+    if (resex)
+    {
+        /* ADDRINFOEXW has layout compatible with ADDRINFOW except for ai_next field,
+         * so we may convert it in place */
+        *res = (ADDRINFOW*)resex;
+        do {
+            ((ADDRINFOW*)resex)->ai_next = (ADDRINFOW*)resex->ai_next;
+            resex = resex->ai_next;
+        } while (resex);
+    }
+    return 0;
 }
 
 /***********************************************************************
