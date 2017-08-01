@@ -6901,9 +6901,30 @@ int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namesp
         const ADDRINFOEXW *hints, ADDRINFOEXW **result, struct timeval *timeout, OVERLAPPED *overlapped,
         LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine, HANDLE *handle)
 {
-    FIXME("(%s %s %x %s %p %p %p %p %p %p)\n", debugstr_w(name), debugstr_w(servname), namespace,
+    int ret;
+
+    TRACE("(%s %s %x %s %p %p %p %p %p %p)\n", debugstr_w(name), debugstr_w(servname), namespace,
           debugstr_guid(namespace_id), hints, result, timeout, overlapped, completion_routine, handle);
-    return WSAHOST_NOT_FOUND;
+
+    if (namespace != NS_DNS)
+        FIXME("Unsupported namespace %u\n", namespace);
+    if (namespace_id)
+        FIXME("Unsupported naemspace_id %s\n", debugstr_guid(namespace_id));
+    if (hints)
+        FIXME("Unsupported hints\n");
+    if (timeout)
+        FIXME("Unsupported timeout\n");
+    if (overlapped)
+        FIXME("Unsupported overlapped\n");
+    if (completion_routine)
+        FIXME("Unsupported completion_routine\n");
+    if (handle)
+        FIXME("Unsupported cancel handle\n");
+
+    ret = WS_getaddrinfoW(name, servname, NULL, result);
+    if (ret) return ret;
+    if (handle) *handle = (HANDLE)0xdeadbeef;
+    return 0;
 }
 
 /***********************************************************************
