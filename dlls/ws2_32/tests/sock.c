@@ -66,7 +66,13 @@
 static void  (WINAPI *pfreeaddrinfo)(struct addrinfo *);
 static int   (WINAPI *pgetaddrinfo)(LPCSTR,LPCSTR,const struct addrinfo *,struct addrinfo **);
 static void  (WINAPI *pFreeAddrInfoW)(PADDRINFOW);
+static void  (WINAPI *pFreeAddrInfoExW)(ADDRINFOEXW *ai);
 static int   (WINAPI *pGetAddrInfoW)(LPCWSTR,LPCWSTR,const ADDRINFOW *,PADDRINFOW *);
+static int   (WINAPI *pGetAddrInfoExW)(const WCHAR *name, const WCHAR *servname, DWORD namespace,
+        GUID *namespace_id, const ADDRINFOEXW *hints, ADDRINFOEXW **result,
+        struct timeval *timeout, OVERLAPPED *overlapped,
+        LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine, HANDLE *handle);
+static int   (WINAPI *pGetAddrInfoExOverlappedResult)(OVERLAPPED *overlapped);
 static PCSTR (WINAPI *pInetNtop)(INT,LPVOID,LPSTR,ULONG);
 static PCWSTR(WINAPI *pInetNtopW)(INT,LPVOID,LPWSTR,ULONG);
 static int   (WINAPI *pInetPtonA)(INT,LPCSTR,LPVOID);
@@ -1226,7 +1232,10 @@ static void Init (void)
     pfreeaddrinfo = (void *)GetProcAddress(hws2_32, "freeaddrinfo");
     pgetaddrinfo = (void *)GetProcAddress(hws2_32, "getaddrinfo");
     pFreeAddrInfoW = (void *)GetProcAddress(hws2_32, "FreeAddrInfoW");
+    pFreeAddrInfoExW = (void *)GetProcAddress(hws2_32, "FreeAddrInfoExW");
     pGetAddrInfoW = (void *)GetProcAddress(hws2_32, "GetAddrInfoW");
+    pGetAddrInfoExW = (void *)GetProcAddress(hws2_32, "GetAddrInfoExW");
+    pGetAddrInfoExOverlappedResult = (void *)GetProcAddress(hws2_32, "GetAddrInfoExOverlappedResult");
     pInetNtop = (void *)GetProcAddress(hws2_32, "inet_ntop");
     pInetNtopW = (void *)GetProcAddress(hws2_32, "InetNtopW");
     pInetPtonA = (void *)GetProcAddress(hws2_32, "inet_pton");
@@ -7334,6 +7343,95 @@ static void test_GetAddrInfoW(void)
     ok(result2 == NULL, "got %p\n", result2);
 }
 
+static void test_GetAddrInfoExW(void)
+{
+    static const WCHAR empty[] = {0};
+    static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
+    static const WCHAR winehq[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
+    ADDRINFOEXW *result;
+    OVERLAPPED overlapped;
+    HANDLE event;
+    int ret;
+
+    if (!pGetAddrInfoExW || !pGetAddrInfoExOverlappedResult)
+    {
+        win_skip("GetAddrInfoExW and/or GetAddrInfoExOverlappedResult not present\n");
+        return;
+    }
+
+    event = WSACreateEvent();
+
+    result = (ADDRINFOEXW *)0xdeadbeef;
+    WSASetLastError(0xdeadbeef);
+    ret = pGetAddrInfoExW(NULL, NULL, NS_DNS, NULL, NULL, &result, NULL, NULL, NULL, NULL);
+    ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+    ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected 11001, got %d\n", WSAGetLastError());
+    ok(result == NULL, "got %p\n", result);
+
+    result = NULL;
+    WSASetLastError(0xdeadbeef);
+    ret = pGetAddrInfoExW(empty, NULL, NS_DNS, NULL, NULL, &result, NULL, NULL, NULL, NULL);
+    ok(!ret, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
+    ok(result != NULL, "GetAddrInfoW failed\n");
+    ok(WSAGetLastError() == 0, "expected 0, got %d\n", WSAGetLastError());
+    pFreeAddrInfoExW(result);
+
+    result = NULL;
+    ret = pGetAddrInfoExW(localhost, NULL, NS_DNS, NULL, NULL, &result, NULL, NULL, NULL, NULL);
+    ok(!ret, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
+    pFreeAddrInfoExW(result);
+
+    result = (void*)0xdeadbeef;
+    memset(&overlapped, 0xcc, sizeof(overlapped));
+    overlapped.hEvent = event;
+    ResetEvent(event);
+    ret = pGetAddrInfoExW(localhost, NULL, NS_DNS, NULL, NULL, &result, NULL, &overlapped, NULL, NULL);
+    ok(ret == ERROR_IO_PENDING, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
+    ok(!result, "result != NULL\n");
+    ok(WaitForSingleObject(event, 1000) == WAIT_OBJECT_0, "wait failed\n");
+    ret = pGetAddrInfoExOverlappedResult(&overlapped);
+    ok(!ret, "overlapped result is %d\n", ret);
+    pFreeAddrInfoExW(result);
+
+    result = (void*)0xdeadbeef;
+    memset(&overlapped, 0xcc, sizeof(overlapped));
+    ResetEvent(event);
+    overlapped.hEvent = event;
+    WSASetLastError(0xdeadbeef);
+    ret = pGetAddrInfoExW(winehq, NULL, NS_DNS, NULL, NULL, &result, NULL, &overlapped, NULL, NULL);
+    ok(ret == ERROR_IO_PENDING, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "expected 11001, got %d\n", WSAGetLastError());
+    ret = overlapped.Internal;
+    ok(ret == WSAEINPROGRESS || ret == ERROR_SUCCESS, "overlapped.Internal = %u\n", ret);
+    ok(WaitForSingleObject(event, 1000) == WAIT_OBJECT_0, "wait failed\n");
+    ret = pGetAddrInfoExOverlappedResult(&overlapped);
+    ok(!ret, "overlapped result is %d\n", ret);
+    ok(overlapped.hEvent == event, "hEvent changed %p\n", overlapped.hEvent);
+    ok(overlapped.Internal == ERROR_SUCCESS, "overlapped.Internal = %lx\n", overlapped.Internal);
+    ok(overlapped.Pointer == &result, "overlapped.Pointer != &result\n");
+    ok(result != NULL, "result == NULL\n");
+    ok(!result->ai_blob, "ai_blob != NULL\n");
+    ok(!result->ai_bloblen, "ai_bloblen != 0\n");
+    ok(!result->ai_provider, "ai_provider = %s\n", wine_dbgstr_guid(result->ai_provider));
+    pFreeAddrInfoExW(result);
+
+    result = (void*)0xdeadbeef;
+    memset(&overlapped, 0xcc, sizeof(overlapped));
+    ResetEvent(event);
+    overlapped.hEvent = event;
+    ret = pGetAddrInfoExW(NULL, NULL, NS_DNS, NULL, NULL, &result, NULL, &overlapped, NULL, NULL);
+    todo_wine
+    ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+    todo_wine
+    ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected 11001, got %d\n", WSAGetLastError());
+    ok(result == NULL, "got %p\n", result);
+    ret = WaitForSingleObject(event, 0);
+    todo_wine_if(ret != WAIT_TIMEOUT) /* Remove when abowe todo_wines are fixed */
+    ok(ret == WAIT_TIMEOUT, "wait failed\n");
+
+    WSACloseEvent(event);
+}
+
 static void verify_ipv6_addrinfo(ADDRINFOA *result, const char *expectedIp)
 {
     SOCKADDR_IN6 *sockaddr6;
@@ -10579,6 +10677,7 @@ START_TEST( sock )
     test_ipv6only();
     test_TransmitFile();
     test_GetAddrInfoW();
+    test_GetAddrInfoExW();
     test_getaddrinfo();
     test_AcceptEx();
     test_ConnectEx();
