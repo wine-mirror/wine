@@ -24,6 +24,7 @@ IDL_SRCS = \
 	chprst.idl \
 	cmdbas.idl \
 	cmdtxt.idl \
+	cmnquery.idl \
 	colinf.idl \
 	comcat.idl \
 	commoncontrols.idl \
