@@ -201,7 +201,7 @@ static inline BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module,
 #endif /* __i386__ */
 
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 /*************************************************************************
  *		stub_entry_point
  *
@@ -245,6 +245,18 @@ struct stub
     BYTE mov_r2_lr[4];     /* mov r2, lr */
     BYTE ldr_pc_pc[4];     /* ldr pc, [pc, #-4] */
     const void* entry;
+};
+#elif defined(__aarch64__)
+struct stub
+{
+    BYTE ldr_x0[4];        /* ldr x0, $dll */
+    BYTE ldr_x1[4];        /* ldr x1, $name */
+    BYTE mov_x2_lr[4];     /* mov x2, lr */
+    BYTE ldr_x16[4];       /* ldr x16, $entry */
+    BYTE br_x16[4];        /* br x16 */
+    const char *dll;
+    const char *name;
+    const void *entry;
 };
 #else
 struct stub
@@ -317,6 +329,30 @@ static ULONG_PTR allocate_stub( const char *dll, const char *name )
     stub->ldr_pc_pc[1]  = 0xf0;
     stub->ldr_pc_pc[2]  = 0x1f;
     stub->ldr_pc_pc[3]  = 0xe5;
+    stub->entry         = stub_entry_point;
+#elif defined(__aarch64__)
+    stub->ldr_x0[0]     = 0xa0; /* ldr x0, #20 ($dll) */
+    stub->ldr_x0[1]     = 0x00;
+    stub->ldr_x0[2]     = 0x00;
+    stub->ldr_x0[3]     = 0x58;
+    stub->ldr_x1[0]     = 0xc1; /* ldr x1, #24 ($name) */
+    stub->ldr_x1[1]     = 0x00;
+    stub->ldr_x1[2]     = 0x00;
+    stub->ldr_x1[3]     = 0x58;
+    stub->mov_x2_lr[0]  = 0xe2; /* mov x2, lr */
+    stub->mov_x2_lr[1]  = 0x03;
+    stub->mov_x2_lr[2]  = 0x1e;
+    stub->mov_x2_lr[3]  = 0xaa;
+    stub->ldr_x16[0]    = 0xd0; /* ldr x16, #24 ($entry) */
+    stub->ldr_x16[1]    = 0x00;
+    stub->ldr_x16[2]    = 0x00;
+    stub->ldr_x16[3]    = 0x58;
+    stub->br_x16[0]     = 0x00; /* br x16 */
+    stub->br_x16[1]     = 0x02;
+    stub->br_x16[2]     = 0x1f;
+    stub->br_x16[3]     = 0xd6;
+    stub->dll           = dll;
+    stub->name          = name;
     stub->entry         = stub_entry_point;
 #else
     stub->movq_rdi[0]     = 0x48;  /* movq $dll,%rdi */
