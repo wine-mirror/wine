@@ -6823,48 +6823,12 @@ static struct WS_addrinfo *addrinfo_WtoA(const struct WS_addrinfoW *ai)
     return ret;
 }
 
-/***********************************************************************
- *		GetAddrInfoExW		(WS2_32.@)
- */
-int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namespace, GUID *namespace_id,
-        const ADDRINFOEXW *hints, ADDRINFOEXW **result, struct timeval *timeout, OVERLAPPED *overlapped,
-        LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine, HANDLE *handle)
-{
-    FIXME("(%s %s %x %s %p %p %p %p %p %p)\n", debugstr_w(name), debugstr_w(servname), namespace,
-          debugstr_guid(namespace_id), hints, result, timeout, overlapped, completion_routine, handle);
-    return WSAHOST_NOT_FOUND;
-}
-
-/***********************************************************************
- *		GetAddrInfoExOverlappedResult  (WS2_32.@)
- */
-int WINAPI GetAddrInfoExOverlappedResult(OVERLAPPED *overlapped)
-{
-    FIXME("(%p)\n", overlapped);
-    return SOCKET_ERROR;
-}
-
-/***********************************************************************
- *		GetAddrInfoExCancel     (WS2_32.@)
- */
-int WINAPI GetAddrInfoExCancel(HANDLE *handle)
-{
-    FIXME("(%p)\n", handle);
-    return WSA_INVALID_HANDLE;
-}
-
-/***********************************************************************
- *		GetAddrInfoW		(WS2_32.@)
- */
-int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, PADDRINFOW *res)
+static int WS_getaddrinfoW(const WCHAR *nodename, const WCHAR *servname, const struct WS_addrinfo *hints, PADDRINFOW *res)
 {
     int ret = EAI_MEMORY, len, i;
     char *nodenameA = NULL, *servnameA = NULL;
-    struct WS_addrinfo *resA, *hintsA = NULL;
+    struct WS_addrinfo *resA;
     WCHAR *local_nodenameW = (WCHAR *)nodename;
-
-    TRACE("nodename %s, servname %s, hints %p, result %p\n",
-          debugstr_w(nodename), debugstr_w(servname), hints, res);
 
     *res = NULL;
     if (nodename)
@@ -6911,9 +6875,7 @@ int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hin
         WideCharToMultiByte(CP_ACP, 0, servname, -1, servnameA, len, NULL, NULL);
     }
 
-    if (hints) hintsA = addrinfo_WtoA(hints);
-    ret = WS_getaddrinfo(nodenameA, servnameA, hintsA, &resA);
-    WS_freeaddrinfo(hintsA);
+    ret = WS_getaddrinfo(nodenameA, servnameA, hints, &resA);
 
     if (!ret)
     {
@@ -6926,6 +6888,53 @@ end:
         HeapFree(GetProcessHeap(), 0, local_nodenameW);
     HeapFree(GetProcessHeap(), 0, nodenameA);
     HeapFree(GetProcessHeap(), 0, servnameA);
+    return ret;
+}
+
+/***********************************************************************
+ *		GetAddrInfoExW		(WS2_32.@)
+ */
+int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namespace, GUID *namespace_id,
+        const ADDRINFOEXW *hints, ADDRINFOEXW **result, struct timeval *timeout, OVERLAPPED *overlapped,
+        LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine, HANDLE *handle)
+{
+    FIXME("(%s %s %x %s %p %p %p %p %p %p)\n", debugstr_w(name), debugstr_w(servname), namespace,
+          debugstr_guid(namespace_id), hints, result, timeout, overlapped, completion_routine, handle);
+    return WSAHOST_NOT_FOUND;
+}
+
+/***********************************************************************
+ *		GetAddrInfoExOverlappedResult  (WS2_32.@)
+ */
+int WINAPI GetAddrInfoExOverlappedResult(OVERLAPPED *overlapped)
+{
+    FIXME("(%p)\n", overlapped);
+    return SOCKET_ERROR;
+}
+
+/***********************************************************************
+ *		GetAddrInfoExCancel     (WS2_32.@)
+ */
+int WINAPI GetAddrInfoExCancel(HANDLE *handle)
+{
+    FIXME("(%p)\n", handle);
+    return WSA_INVALID_HANDLE;
+}
+
+/***********************************************************************
+ *		GetAddrInfoW		(WS2_32.@)
+ */
+int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, PADDRINFOW *res)
+{
+    struct WS_addrinfo *hintsA = NULL;
+    int ret = EAI_MEMORY;
+
+    TRACE("nodename %s, servname %s, hints %p, result %p\n",
+          debugstr_w(nodename), debugstr_w(servname), hints, res);
+
+    if (hints) hintsA = addrinfo_WtoA(hints);
+    ret = WS_getaddrinfoW(nodename, servname, hintsA, res);
+    WS_freeaddrinfo(hintsA);
     return ret;
 }
 
