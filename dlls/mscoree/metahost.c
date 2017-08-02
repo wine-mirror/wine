@@ -342,6 +342,7 @@ static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost *
     if (This->loaded_runtime)
     {
         *result = This->loaded_runtime;
+        LeaveCriticalSection(&runtime_list_cs);
         return hr;
     }
 
