@@ -3382,19 +3382,23 @@ RpcConnection *RPCRT4_GrabConnection(RpcConnection *connection)
 
 void RPCRT4_ReleaseConnection(RpcConnection *connection)
 {
-    LONG ref = InterlockedDecrement(&connection->ref);
+    LONG ref;
 
-    if (!ref && connection->protseq)
+    /* protseq stores a list of active connections, but does not own references to them.
+     * It may need to grab a connection from the list, which could lead to a race if
+     * connection is being released, but not yet removed from the list. We handle that
+     * by synchronizing on CS here. */
+    if (connection->protseq)
     {
-        /* protseq stores a list of active connections, but does not own references to them.
-         * It may need to grab a connection from the list, which could lead to a race if
-         * connection is being released, but not yet removed from the list. We handle that
-         * by synchronizing on CS here. */
         EnterCriticalSection(&connection->protseq->cs);
-        ref = connection->ref;
+        ref = InterlockedDecrement(&connection->ref);
         if (!ref)
             list_remove(&connection->protseq_entry);
         LeaveCriticalSection(&connection->protseq->cs);
+    }
+    else
+    {
+        ref = InterlockedDecrement(&connection->ref);
     }
 
     TRACE("%p ref=%u\n", connection, ref);
