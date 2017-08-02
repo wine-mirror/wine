@@ -24,6 +24,7 @@
  */
  
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
@@ -35,6 +36,7 @@
 #include "commctrl.h"
 
 #include "main.h"
+#include "regproc.h"
 
 /* spaces dividing hex and ASCII */
 #define DIV_SPACES 4
@@ -74,12 +76,8 @@ static LPWSTR HexEdit_GetLineText(BYTE *pData, LONG cbData, LONG pad)
 {
     static const WCHAR percent_02xW[] = {'%','0','2','X',' ',0};
 
-    LPWSTR lpszLine = HeapAlloc(GetProcessHeap(), 0,
-        (cbData * 3 + pad * 3 + DIV_SPACES + cbData + 1) * sizeof(WCHAR));
+    WCHAR *lpszLine = heap_xalloc((cbData * 3 + pad * 3 + DIV_SPACES + cbData + 1) * sizeof(WCHAR));
     LONG i;
-
-    if (!lpszLine)
-        return NULL;
 
     for (i = 0; i < cbData; i++)
         wsprintfW(lpszLine + i*3, percent_02xW, pData[i]);
@@ -139,7 +137,7 @@ HexEdit_Paint(HEXEDIT_INFO *infoPtr)
         TextOutW(hdc, nXStart, nYStart, lpszLine, infoPtr->nBytesPerLine * 3 + DIV_SPACES + nLineLen);
 
         nYStart += infoPtr->nHeight;
-        HeapFree(GetProcessHeap(), 0, lpszLine);
+        heap_free(lpszLine);
     }
 
     SelectObject(hdc, hOldFont);
@@ -178,7 +176,7 @@ HexEdit_UpdateCaret(HEXEDIT_INFO *infoPtr)
 
     if (!nLineLen) size.cx = 0;
 
-    HeapFree(GetProcessHeap(), 0, lpszLine);
+    heap_free(lpszLine);
 
     SetCaretPos(
         GetSystemMetrics(SM_CXBORDER) + size.cx,
@@ -230,22 +228,18 @@ HexEdit_EnsureVisible(HEXEDIT_INFO *infoPtr, INT nCaretPos)
 static LRESULT
 HexEdit_SetData(HEXEDIT_INFO *infoPtr, INT cbData, const BYTE *pData)
 {
-    HeapFree(GetProcessHeap(), 0, infoPtr->pData);
+    heap_free(infoPtr->pData);
     infoPtr->cbData = 0;
 
-    infoPtr->pData = HeapAlloc(GetProcessHeap(), 0, cbData);
-    if (infoPtr->pData)
-    {
-        memcpy(infoPtr->pData, pData, cbData);
-        infoPtr->cbData = cbData;
+    infoPtr->pData = heap_xalloc(cbData);
+    memcpy(infoPtr->pData, pData, cbData);
+    infoPtr->cbData = cbData;
 
-        infoPtr->nCaretPos = 0;
-        HexEdit_UpdateScrollbars(infoPtr);
-        HexEdit_UpdateCaret(infoPtr);
-        InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
-        return TRUE;
-    }
-    return FALSE;
+    infoPtr->nCaretPos = 0;
+    HexEdit_UpdateScrollbars(infoPtr);
+    HexEdit_UpdateCaret(infoPtr);
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+    return TRUE;
 }
 
 static LRESULT
@@ -296,8 +290,8 @@ HexEdit_Char (HEXEDIT_INFO *infoPtr, WCHAR ch)
         {
             /* make room for another byte */
             infoPtr->cbData++;
-            infoPtr->pData = HeapReAlloc(GetProcessHeap(), 0, infoPtr->pData, infoPtr->cbData + 1);
-            if (!infoPtr->pData) return 0;
+            infoPtr->pData = heap_xrealloc(infoPtr->pData, infoPtr->cbData + 1);
+
             /* move everything after caret up one byte */
             memmove(infoPtr->pData + nCaretBytePos + 1,
                     infoPtr->pData + nCaretBytePos,
@@ -348,9 +342,9 @@ static inline LRESULT
 HexEdit_Destroy (HEXEDIT_INFO *infoPtr)
 {
     HWND hwnd = infoPtr->hwndSelf;
-    HeapFree(GetProcessHeap(), 0, infoPtr->pData);
+    heap_free(infoPtr->pData);
     /* free info data */
-    HeapFree(GetProcessHeap(), 0, infoPtr);
+    heap_free(infoPtr);
     SetWindowLongPtrW(hwnd, 0, 0);
     return 0;
 }
@@ -478,7 +472,8 @@ static inline LRESULT HexEdit_NCCreate (HWND hwnd, LPCREATESTRUCTW lpcs)
                    lpcs->dwExStyle | WS_EX_CLIENTEDGE);
 
     /* allocate memory for info structure */
-    infoPtr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HEXEDIT_INFO));
+    infoPtr = heap_xalloc(sizeof(HEXEDIT_INFO));
+    memset(infoPtr, 0, sizeof(HEXEDIT_INFO));
     SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
 
     /* initialize info structure */
@@ -526,12 +521,15 @@ HexEdit_SetFont (HEXEDIT_INFO *infoPtr, HFONT hFont, BOOL redraw)
 
     for (i = 0; ; i++)
     {
-        BYTE *pData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, i);
-        LPWSTR lpszLine = HexEdit_GetLineText(pData, i, 0);
+        BYTE *pData = heap_xalloc(i);
+        WCHAR *lpszLine;
         SIZE size;
+
+        memset(pData, 0, i);
+        lpszLine = HexEdit_GetLineText(pData, i, 0);
         GetTextExtentPoint32W(hdc, lpszLine, lstrlenW(lpszLine), &size);
-        HeapFree(GetProcessHeap(), 0, lpszLine);
-        HeapFree(GetProcessHeap(), 0, pData);
+        heap_free(lpszLine);
+        heap_free(pData);
         if (size.cx > (rcClient.right - rcClient.left))
         {
             infoPtr->nBytesPerLine = i - 1;
