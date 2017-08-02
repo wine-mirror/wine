@@ -1178,8 +1178,6 @@ static BOOL context_set_gl_context(struct wined3d_context *ctx)
 
     if (backup || !wglMakeCurrent(ctx->hdc, ctx->glCtx))
     {
-        HDC dc;
-
         WARN("Failed to make GL context %p current on device context %p, last error %#x.\n",
                 ctx->glCtx, ctx->hdc, GetLastError());
         ctx->valid = 0;
@@ -1196,24 +1194,27 @@ static BOOL context_set_gl_context(struct wined3d_context *ctx)
             return FALSE;
         }
 
-        if (!(dc = swapchain_get_backup_dc(swapchain)))
+        if (!(ctx->hdc = swapchain_get_backup_dc(swapchain)))
         {
             context_set_current(NULL);
             return FALSE;
         }
 
-        if (!context_set_pixel_format(ctx, dc, TRUE, ctx->pixel_format))
+        ctx->hdc_is_private = TRUE;
+        ctx->hdc_has_format = FALSE;
+
+        if (!context_set_pixel_format(ctx, ctx->hdc, TRUE, ctx->pixel_format))
         {
             ERR("Failed to set pixel format %d on device context %p.\n",
-                    ctx->pixel_format, dc);
+                    ctx->pixel_format, ctx->hdc);
             context_set_current(NULL);
             return FALSE;
         }
 
-        if (!wglMakeCurrent(dc, ctx->glCtx))
+        if (!wglMakeCurrent(ctx->hdc, ctx->glCtx))
         {
             ERR("Fallback to backup window (dc %p) failed too, last error %#x.\n",
-                    dc, GetLastError());
+                    ctx->hdc, GetLastError());
             context_set_current(NULL);
             return FALSE;
         }
