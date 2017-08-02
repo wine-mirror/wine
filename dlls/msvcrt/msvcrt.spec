@@ -629,7 +629,7 @@
 @ cdecl _ismbstrail(ptr ptr)
 # stub _ismbstrail_l(long ptr)
 @ cdecl _isnan(double) MSVCRT__isnan
-@ cdecl -arch=arm,x86_64 _isnanf(float) MSVCRT__isnanf
+@ cdecl -arch=x86_64 _isnanf(float) MSVCRT__isnanf
 @ cdecl _isprint_l(long ptr) MSVCRT__isprint_l
 @ cdecl _isspace_l(long ptr) MSVCRT__isspace_l
 @ cdecl _isupper_l(long ptr) MSVCRT__isupper_l
@@ -838,7 +838,7 @@
 # stub -arch=win32 _msize_debug(ptr long)
 # stub -arch=win64 _msize_dbg(ptr long)
 @ cdecl _nextafter(double double) MSVCRT__nextafter
-@ cdecl -arch=arm,x86_64 _nextafterf(float float) MSVCRT__nextafterf
+@ cdecl -arch=x86_64 _nextafterf(float float) MSVCRT__nextafterf
 @ cdecl _onexit(ptr) MSVCRT__onexit
 @ varargs _open(str long) MSVCRT__open
 @ cdecl _open_osfhandle(long long) MSVCRT__open_osfhandle
@@ -878,7 +878,7 @@
 @ cdecl -arch=i386 _safe_fprem()
 @ cdecl -arch=i386 _safe_fprem1()
 @ cdecl _scalb(double long) MSVCRT__scalb
-@ cdecl -arch=arm,x86_64 _scalbf(float long) MSVCRT__scalbf
+@ cdecl -arch=x86_64 _scalbf(float long) MSVCRT__scalbf
 @ varargs _scanf_l(str ptr) MSVCRT__scanf_l
 @ varargs _scanf_s_l(str ptr) MSVCRT__scanf_s_l
 @ varargs _scprintf(str) MSVCRT__scprintf
@@ -1304,7 +1304,7 @@
 @ cdecl freopen(str str ptr) MSVCRT_freopen
 @ cdecl freopen_s(ptr str str ptr) MSVCRT_freopen_s
 @ cdecl frexp(double ptr) MSVCRT_frexp
-@ cdecl -arch=arm,x86_64 frexpf(float ptr) MSVCRT_frexpf
+@ cdecl -arch=x86_64 frexpf(float ptr) MSVCRT_frexpf
 @ varargs fscanf(ptr str) MSVCRT_fscanf
 @ varargs fscanf_s(ptr str) MSVCRT_fscanf_s
 @ cdecl fseek(ptr long long) MSVCRT_fseek

@@ -1227,7 +1227,7 @@
 @ cdecl _ismbbtrail(long) msvcr120._ismbbtrail
 @ stub _ismbbtrail_l
 @ cdecl _isnan(double) msvcr120._isnan
-@ cdecl -arch=arm,x86_64 _isnanf(float) msvcr120._isnanf
+@ cdecl -arch=x86_64 _isnanf(float) msvcr120._isnanf
 @ cdecl _isprint_l(long ptr) msvcr120._isprint_l
 @ stub _ispunct_l
 @ cdecl _isspace_l(long ptr) msvcr120._isspace_l
@@ -1320,7 +1320,7 @@
 @ cdecl _mktime64(ptr) msvcr120._mktime64
 @ cdecl _msize(ptr) msvcr120._msize
 @ cdecl _nextafter(double double) msvcr120._nextafter
-@ cdecl -arch=arm,x86_64 _nextafterf(float float) msvcr120._nextafterf
+@ cdecl -arch=x86_64 _nextafterf(float float) msvcr120._nextafterf
 @ cdecl _onexit(ptr) msvcr120._onexit
 @ varargs _open(str long) msvcr120._open
 @ cdecl _open_osfhandle(long long) msvcr120._open_osfhandle
@@ -1348,7 +1348,7 @@
 @ cdecl _rotr(long long) msvcr120._rotr
 @ cdecl -ret64 _rotr64(int64 long) msvcr120._rotr64
 @ cdecl _scalb(double long) msvcr120._scalb
-@ cdecl -arch=arm,x86_64 _scalbf(float long) msvcr120._scalbf
+@ cdecl -arch=x86_64 _scalbf(float long) msvcr120._scalbf
 @ varargs _scanf_l(str ptr) msvcr120._scanf_l
 @ varargs _scanf_s_l(str ptr) msvcr120._scanf_s_l
 @ varargs _scprintf(str) msvcr120._scprintf

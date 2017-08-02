@@ -85,7 +85,7 @@
 @ cdecl _hypot(double double) ucrtbase._hypot
 @ cdecl _hypotf(float float) ucrtbase._hypotf
 @ cdecl _isnan(double) ucrtbase._isnan
-@ cdecl -arch=arm,x86_64 _isnanf(float) ucrtbase._isnanf
+@ cdecl -arch=x86_64 _isnanf(float) ucrtbase._isnanf
 @ cdecl _j0(double) ucrtbase._j0
 @ cdecl _j1(double) ucrtbase._j1
 @ cdecl _jn(long double) ucrtbase._jn
@@ -114,9 +114,9 @@
 @ cdecl _logb(double) ucrtbase._logb
 @ cdecl -arch=arm,x86_64 _logbf(float) ucrtbase._logbf
 @ cdecl _nextafter(double double) ucrtbase._nextafter
-@ cdecl -arch=arm,x86_64 _nextafterf(float float) ucrtbase._nextafterf
+@ cdecl -arch=x86_64 _nextafterf(float float) ucrtbase._nextafterf
 @ cdecl _scalb(double long) ucrtbase._scalb
-@ cdecl -arch=arm,x86_64 _scalbf(float long) ucrtbase._scalbf
+@ cdecl -arch=x86_64 _scalbf(float long) ucrtbase._scalbf
 @ cdecl -arch=win64 _set_FMA3_enable(long) ucrtbase._set_FMA3_enable
 @ cdecl -arch=i386 _set_SSE2_enable(long) ucrtbase._set_SSE2_enable
 @ cdecl _y0(double) ucrtbase._y0
