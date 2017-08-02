@@ -11538,6 +11538,43 @@ static void test_format_unknown(void)
     DestroyWindow(window);
 }
 
+static void test_destroyed_window(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    /* No WS_VISIBLE. */
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    ok(!!window, "Failed to create a window.\n");
+
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d9, "Failed to create a D3D object.\n");
+    device = create_device(d3d9, window, NULL);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+    if (!device)
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00000000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -11656,6 +11693,7 @@ START_TEST(device)
     test_get_render_target_data();
     test_render_target_device_mismatch();
     test_format_unknown();
+    test_destroyed_window();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
