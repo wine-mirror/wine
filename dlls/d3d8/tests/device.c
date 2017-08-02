@@ -8277,6 +8277,43 @@ static void test_format_unknown(void)
     DestroyWindow(window);
 }
 
+static void test_destroyed_window(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d8;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    /* No WS_VISIBLE. */
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    ok(!!window, "Failed to create a window.\n");
+
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d8, "Failed to create a D3D object.\n");
+    device = create_device(d3d8, window, NULL);
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+    if (!device)
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        return;
+    }
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00000000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -8383,6 +8420,7 @@ START_TEST(device)
     test_miptree_layout();
     test_render_target_device_mismatch();
     test_format_unknown();
+    test_destroyed_window();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
