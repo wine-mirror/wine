@@ -367,7 +367,10 @@ static void ExportRegistryFile_StoreSelection(HWND hdlg, OPENFILENAMEW *pOpenFil
         SendDlgItemMessageW(hdlg, IDC_EXPORT_PATH, WM_GETTEXT, len+1, pOpenFileName->lCustData);
     }
     else
-        pOpenFileName->lCustData = (LPARAM)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR));
+    {
+        pOpenFileName->lCustData = (LPARAM)heap_xalloc(sizeof(WCHAR));
+        *(WCHAR *)pOpenFileName->lCustData = 0;
+    }
 }
 
 static UINT_PTR CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
