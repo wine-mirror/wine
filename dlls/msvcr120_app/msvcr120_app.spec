@@ -1094,7 +1094,7 @@
 @ cdecl _findnext64(long ptr) msvcr120._findnext64
 @ cdecl _findnext64i32(long ptr) msvcr120._findnext64i32
 @ cdecl _finite(double) msvcr120._finite
-@ cdecl -arch=arm,x86_64 _finitef(float) msvcr120._finitef
+@ cdecl -arch=arm,x86_64,arm64 _finitef(float) msvcr120._finitef
 @ cdecl _flsbuf(long ptr) msvcr120._flsbuf
 @ cdecl _flushall() msvcr120._flushall
 @ extern _fmode msvcr120._fmode
@@ -1283,7 +1283,7 @@
 @ cdecl _lock_file(ptr) msvcr120._lock_file
 @ cdecl _locking(long long long) msvcr120._locking
 @ cdecl _logb(double) msvcr120._logb
-@ cdecl -arch=arm,x86_64 _logbf(float) msvcr120._logbf
+@ cdecl -arch=arm,x86_64,arm64 _logbf(float) msvcr120._logbf
 @ cdecl -arch=i386 _longjmpex(ptr long) msvcr120._longjmpex
 @ cdecl _lrotl(long long) msvcr120._lrotl
 @ cdecl _lrotr(long long) msvcr120._lrotr
@@ -1676,21 +1676,21 @@
 @ cdecl abort() msvcr120.abort
 @ cdecl abs(long) msvcr120.abs
 @ cdecl acos(double) msvcr120.acos
-@ cdecl -arch=arm,x86_64 acosf(float) msvcr120.acosf
+@ cdecl -arch=arm,x86_64,arm64 acosf(float) msvcr120.acosf
 @ cdecl acosh(double) msvcr120.acosh
 @ cdecl acoshf(float) msvcr120.acoshf
 @ cdecl acoshl(double) msvcr120.acoshl
 @ cdecl asctime(ptr) msvcr120.asctime
 @ cdecl asctime_s(ptr long ptr) msvcr120.asctime_s
 @ cdecl asin(double) msvcr120.asin
-@ cdecl -arch=arm,x86_64 asinf(float) msvcr120.asinf
+@ cdecl -arch=arm,x86_64,arm64 asinf(float) msvcr120.asinf
 @ cdecl asinh(double) msvcr120.asinh
 @ cdecl asinhf(float) msvcr120.asinhf
 @ cdecl asinhl(double) msvcr120.asinhl
 @ cdecl atan(double) msvcr120.atan
-@ cdecl -arch=arm,x86_64 atanf(float) msvcr120.atanf
+@ cdecl -arch=arm,x86_64,arm64 atanf(float) msvcr120.atanf
 @ cdecl atan2(double double) msvcr120.atan2
-@ cdecl -arch=arm,x86_64 atan2f(float float) msvcr120.atan2f
+@ cdecl -arch=arm,x86_64,arm64 atan2f(float float) msvcr120.atan2f
 @ cdecl atanh(double) msvcr120.atanh
 @ cdecl atanhf(float) msvcr120.atanhf
 @ cdecl atanhl(double) msvcr120.atanhl
@@ -1737,7 +1737,7 @@
 @ stub ccoshl
 @ stub ccosl
 @ cdecl ceil(double) msvcr120.ceil
-@ cdecl -arch=arm,x86_64 ceilf(float) msvcr120.ceilf
+@ cdecl -arch=arm,x86_64,arm64 ceilf(float) msvcr120.ceilf
 @ stub cexp
 @ stub cexpf
 @ stub cexpl
@@ -1760,9 +1760,9 @@
 @ cdecl copysignf(float float) msvcr120.copysignf
 @ cdecl copysignl(double double) msvcr120.copysignl
 @ cdecl cos(double) msvcr120.cos
-@ cdecl -arch=arm,x86_64 cosf(float) msvcr120.cosf
+@ cdecl -arch=arm,x86_64,arm64 cosf(float) msvcr120.cosf
 @ cdecl cosh(double) msvcr120.cosh
-@ cdecl -arch=arm,x86_64 coshf(float) msvcr120.coshf
+@ cdecl -arch=arm,x86_64,arm64 coshf(float) msvcr120.coshf
 @ stub cpow
 @ stub cpowf
 @ stub cpowl
@@ -1799,12 +1799,12 @@
 @ cdecl exp2(double) msvcr120.exp2
 @ cdecl exp2f(float) msvcr120.exp2f
 @ cdecl exp2l(double) msvcr120.exp2l
-@ cdecl -arch=arm,x86_64 expf(float) msvcr120.expf
+@ cdecl -arch=arm,x86_64,arm64 expf(float) msvcr120.expf
 @ cdecl expm1(double) msvcr120.expm1
 @ cdecl expm1f(float) msvcr120.expm1f
 @ cdecl expm1l(double) msvcr120.expm1l
 @ cdecl fabs(double) msvcr120.fabs
-@ cdecl -arch=arm,x86_64 fabsf(float) msvcr120.fabsf
+@ cdecl -arch=arm,x86_64,arm64 fabsf(float) msvcr120.fabsf
 @ cdecl fclose(ptr) msvcr120.fclose
 @ stub fdim
 @ stub fdimf
@@ -1829,7 +1829,7 @@
 @ cdecl fgetwc(ptr) msvcr120.fgetwc
 @ cdecl fgetws(ptr long ptr) msvcr120.fgetws
 @ cdecl floor(double) msvcr120.floor
-@ cdecl -arch=arm,x86_64 floorf(float) msvcr120.floorf
+@ cdecl -arch=arm,x86_64,arm64 floorf(float) msvcr120.floorf
 @ stub fma
 @ stub fmaf
 @ stub fmal
@@ -1840,7 +1840,7 @@
 @ cdecl fminf(float float) msvcr120.fminf
 @ cdecl fminl(double double) msvcr120.fminl
 @ cdecl fmod(double double) msvcr120.fmod
-@ cdecl -arch=arm,x86_64 fmodf(float float) msvcr120.fmodf
+@ cdecl -arch=arm,x86_64,arm64 fmodf(float float) msvcr120.fmodf
 @ cdecl fopen(str str) msvcr120.fopen
 @ cdecl fopen_s(ptr str str) msvcr120.fopen_s
 @ varargs fprintf(ptr str) msvcr120.fprintf
@@ -1919,9 +1919,9 @@
 @ cdecl -ret64 llroundl(double) msvcr120.llroundl
 @ cdecl localeconv() msvcr120.localeconv
 @ cdecl log(double) msvcr120.log
-@ cdecl -arch=arm,x86_64 logf(float) msvcr120.logf
+@ cdecl -arch=arm,x86_64,arm64 logf(float) msvcr120.logf
 @ cdecl log10(double) msvcr120.log10
-@ cdecl -arch=arm,x86_64 log10f(float) msvcr120.log10f
+@ cdecl -arch=arm,x86_64,arm64 log10f(float) msvcr120.log10f
 @ cdecl log1p(double) msvcr120.log1p
 @ cdecl log1pf(float) msvcr120.log1pf
 @ cdecl log1pl(double) msvcr120.log1pl
@@ -1955,7 +1955,7 @@
 @ cdecl memmove_s(ptr long ptr long) msvcr120.memmove_s
 @ cdecl memset(ptr long long) msvcr120.memset
 @ cdecl modf(double ptr) msvcr120.modf
-@ cdecl -arch=arm,x86_64 modff(float ptr) msvcr120.modff
+@ cdecl -arch=arm,x86_64,arm64 modff(float ptr) msvcr120.modff
 @ cdecl nan(str) msvcr120.nan
 @ cdecl nanf(str) msvcr120.nanf
 @ cdecl nanl(str) msvcr120.nanl
@@ -1973,7 +1973,7 @@
 @ stub norml
 @ cdecl perror(str) msvcr120.perror
 @ cdecl pow(double double) msvcr120.pow
-@ cdecl -arch=arm,x86_64 powf(float float) msvcr120.powf
+@ cdecl -arch=arm,x86_64,arm64 powf(float float) msvcr120.powf
 @ varargs printf(str) msvcr120.printf
 @ varargs printf_s(str) msvcr120.printf_s
 @ cdecl putc(long ptr) msvcr120.putc
@@ -2016,13 +2016,13 @@
 @ cdecl setvbuf(ptr str long long) msvcr120.setvbuf
 @ cdecl signal(long long) msvcr120.signal
 @ cdecl sin(double) msvcr120.sin
-@ cdecl -arch=arm,x86_64 sinf(float) msvcr120.sinf
+@ cdecl -arch=arm,x86_64,arm64 sinf(float) msvcr120.sinf
 @ cdecl sinh(double) msvcr120.sinh
-@ cdecl -arch=arm,x86_64 sinhf(float) msvcr120.sinhf
+@ cdecl -arch=arm,x86_64,arm64 sinhf(float) msvcr120.sinhf
 @ varargs sprintf(ptr str) msvcr120.sprintf
 @ varargs sprintf_s(ptr long str) msvcr120.sprintf_s
 @ cdecl sqrt(double) msvcr120.sqrt
-@ cdecl -arch=arm,x86_64 sqrtf(float) msvcr120.sqrtf
+@ cdecl -arch=arm,x86_64,arm64 sqrtf(float) msvcr120.sqrtf
 @ cdecl srand(long) msvcr120.srand
 @ varargs sscanf(str str) msvcr120.sscanf
 @ varargs sscanf_s(str str) msvcr120.sscanf_s
@@ -2064,9 +2064,9 @@
 @ varargs swscanf(wstr wstr) msvcr120.swscanf
 @ varargs swscanf_s(wstr wstr) msvcr120.swscanf_s
 @ cdecl tan(double) msvcr120.tan
-@ cdecl -arch=arm,x86_64 tanf(float) msvcr120.tanf
+@ cdecl -arch=arm,x86_64,arm64 tanf(float) msvcr120.tanf
 @ cdecl tanh(double) msvcr120.tanh
-@ cdecl -arch=arm,x86_64 tanhf(float) msvcr120.tanhf
+@ cdecl -arch=arm,x86_64,arm64 tanhf(float) msvcr120.tanhf
 @ stub tgamma
 @ stub tgammaf
 @ stub tgammal

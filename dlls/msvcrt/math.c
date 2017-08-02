@@ -141,7 +141,7 @@ int CDECL MSVCRT__set_FMA3_enable(int flag)
 }
 #endif
 
-#if defined(__x86_64__) || defined(__arm__) || _MSVCR_VER>=120
+#if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__) || _MSVCR_VER>=120
 
 /*********************************************************************
  *      _chgsignf (MSVCRT.@)
@@ -172,7 +172,7 @@ float CDECL MSVCRT__nextafterf( float num, float next )
 }
 
 #endif
-#if defined(__x86_64__) || defined(__arm__)
+#if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 
 /*********************************************************************
  *      _finitef (MSVCRT.@)
