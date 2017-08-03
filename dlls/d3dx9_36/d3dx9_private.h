@@ -280,44 +280,59 @@ struct d3dx_param_eval
 };
 
 struct d3dx_shared_data;
+struct d3dx_top_level_parameter;
 
 struct d3dx_parameter
 {
     char magic_string[4];
+    struct d3dx_top_level_parameter *top_level_param;
+    struct d3dx_param_eval *param_eval;
     char *name;
-    char *semantic;
     void *data;
     D3DXPARAMETER_CLASS class;
     D3DXPARAMETER_TYPE  type;
     UINT rows;
     UINT columns;
     UINT element_count;
-    UINT annotation_count;
     UINT member_count;
     DWORD flags;
     UINT bytes;
     DWORD object_id;
+
+    struct d3dx_parameter *members;
+    char *semantic;
+};
+
+struct d3dx_top_level_parameter
+{
+    struct d3dx_parameter param;
+    UINT annotation_count;
+    struct d3dx_parameter *annotations;
     ULONG64 update_version;
     ULONG64 *version_counter;
-
-    struct d3dx_parameter *annotations;
-    struct d3dx_parameter *members;
-
-    struct d3dx_param_eval *param_eval;
-
-    struct d3dx_parameter *top_level_param;
     struct d3dx_shared_data *shared_data;
 };
 
 struct d3dx_shared_data
 {
     void *data;
-    struct d3dx_parameter **parameters;
+    struct d3dx_top_level_parameter **parameters;
     unsigned int size, count;
     ULONG64 update_version;
 };
 
 struct d3dx9_base_effect;
+
+static inline BOOL is_top_level_parameter(struct d3dx_parameter *param)
+{
+    return &param->top_level_param->param == param;
+}
+
+static inline struct d3dx_top_level_parameter
+        *top_level_parameter_from_parameter(struct d3dx_parameter *param)
+{
+    return CONTAINING_RECORD(param, struct d3dx_top_level_parameter, param);
+}
 
 static inline ULONG64 next_update_version(ULONG64 *version_counter)
 {
