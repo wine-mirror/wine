@@ -156,7 +156,7 @@ struct xml_encoding_data
 
 static const struct xml_encoding_data xml_encoding_map[] = {
     { usasciiW, XmlEncoding_USASCII, 20127 },
-    { utf16W, XmlEncoding_UTF16, ~0 },
+    { utf16W, XmlEncoding_UTF16, 1200 },
     { utf8W,  XmlEncoding_UTF8,  CP_UTF8 },
 };
 
@@ -1084,7 +1084,7 @@ static HRESULT reader_more(xmlreader *reader)
     prev_len = dest->written / sizeof(WCHAR);
 
     /* just copy for UTF-16 case */
-    if (cp == ~0)
+    if (cp == 1200)
     {
         readerinput_grow(readerinput, len);
         memcpy(dest->data + dest->written, src->data + src->cur, len);

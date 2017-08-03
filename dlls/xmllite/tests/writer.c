@@ -31,6 +31,8 @@
 #include "initguid.h"
 DEFINE_GUID(IID_IXmlWriterOutput, 0xc1131708, 0x0f59, 0x477f, 0x93, 0x59, 0x7d, 0x33, 0x24, 0x51, 0xbc, 0x1a);
 
+static const WCHAR aW[] = {'a',0};
+
 #define EXPECT_REF(obj, ref) _expect_ref((IUnknown *)obj, ref, __LINE__)
 static void _expect_ref(IUnknown *obj, ULONG ref, int line)
 {
@@ -292,11 +294,92 @@ static void test_writer_create(void)
     IXmlWriter_Release(writer);
 }
 
+static void test_invalid_output_encoding(IXmlWriter *writer, IUnknown *output)
+{
+    HRESULT hr;
+
+    hr = IXmlWriter_SetOutput(writer, output);
+    ok(hr == S_OK, "Failed to set output, hr %#x.\n", hr);
+
+    /* TODO: WriteAttributes */
+
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, aW, NULL, aW);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteCData(writer, aW);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteCharEntity(writer, 0x100);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteChars(writer, aW, 1);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteComment(writer, aW);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    /* TODO: WriteDocType */
+
+    hr = IXmlWriter_WriteElementString(writer, NULL, aW, NULL, NULL);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteEndDocument(writer);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteEntityRef(writer, aW);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteName(writer, aW);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteNmToken(writer, aW);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    /* TODO: WriteNode */
+    /* TODO: WriteNodeShallow */
+
+    hr = IXmlWriter_WriteProcessingInstruction(writer, aW, aW);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteQualifiedName(writer, aW, NULL);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteRaw(writer, aW);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteRawChars(writer, aW, 1);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteString(writer, aW);
+    ok(hr == MX_E_ENCODING, "Unexpected hr %#x.\n", hr);
+
+    /* TODO: WriteSurrogateCharEntity */
+    /* ًُُTODO: WriteWhitespace */
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+}
+
 static void test_writeroutput(void)
 {
     static const WCHAR utf16W[] = {'u','t','f','-','1','6',0};
     static const WCHAR usasciiW[] = {'u','s','-','a','s','c','i','i',0};
+    static const WCHAR dummyW[] = {'d','u','m','m','y',0};
     IXmlWriterOutput *output;
+    IXmlWriter *writer;
+    IStream *stream;
     IUnknown *unk;
     HRESULT hr;
 
@@ -339,6 +422,39 @@ todo_wine
     hr = CreateXmlWriterOutputWithEncodingName(&testoutput, NULL, usasciiW, &output);
     ok(hr == S_OK, "got %08x\n", hr);
     IUnknown_Release(output);
+
+    /* Create output with meaningless code page value. */
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
+    ok(hr == S_OK, "Failed to create writer, hr %#x.\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    output = NULL;
+    hr = CreateXmlWriterOutputWithEncodingCodePage((IUnknown *)stream, NULL, ~0u, &output);
+    ok(hr == S_OK, "Failed to create writer output, hr %#x.\n", hr);
+
+    test_invalid_output_encoding(writer, output);
+    CHECK_OUTPUT(stream, "");
+
+    IStream_Release(stream);
+    IUnknown_Release(output);
+
+    /* Same, with invalid encoding name. */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    output = NULL;
+    hr = CreateXmlWriterOutputWithEncodingName((IUnknown *)stream, NULL, dummyW, &output);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    test_invalid_output_encoding(writer, output);
+    CHECK_OUTPUT(stream, "");
+
+    IStream_Release(stream);
+    IUnknown_Release(output);
+
+    IXmlWriter_Release(writer);
 }
 
 static void test_writestartdocument(void)
@@ -547,7 +663,6 @@ static void test_bom(void)
     static const WCHAR versionW[] = {'v','e','r','s','i','o','n','=','"','1','.','0','"',0};
     static const WCHAR utf16W[] = {'u','t','f','-','1','6',0};
     static const WCHAR xmlW[] = {'x','m','l',0};
-    static const WCHAR aW[] = {'a',0};
     IXmlWriterOutput *output;
     unsigned char *ptr;
     IXmlWriter *writer;
