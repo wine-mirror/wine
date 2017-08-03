@@ -41,6 +41,8 @@ typedef const char *exception_name;
 #define EXCEPTION_NAME(str) (str)
 #endif
 
+void (CDECL *_Raise_handler)(const exception*) = NULL;
+
 /* vtables */
 extern const vtable_ptr MSVCP_exception_vtable;
 /* ??_7bad_alloc@std@@6B@ */

@@ -1669,8 +1669,8 @@
 @ cdecl -arch=win64 ?_Put@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@PEBG_K@Z(ptr ptr ptr ptr long) num_put_wchar__Put
 @ cdecl -arch=win32 ?_Put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PB_WI@Z(ptr ptr long ptr wstr long) num_put_wchar__Put
 @ cdecl -arch=win64 ?_Put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PEB_W_K@Z(ptr ptr ptr wstr long) num_put_wchar__Put
-@ stub -arch=win32 ?_Raise_handler@std@@3P6AXABVexception@stdext@@@ZA
-@ stub -arch=win64 ?_Raise_handler@std@@3P6AXAEBVexception@stdext@@@ZEA
+@ extern -arch=win32 ?_Raise_handler@std@@3P6AXABVexception@stdext@@@ZA _Raise_handler
+@ extern -arch=win64 ?_Raise_handler@std@@3P6AXAEBVexception@stdext@@@ZEA _Raise_handler
 @ cdecl ?_Random_device@std@@YAIXZ() _Random_device
 @ cdecl -arch=win32 ?_Read_dir@sys@tr2@std@@YAPADAAY0BAE@DPAXAAW4file_type@123@@Z(ptr ptr ptr) tr2_sys__Read_dir
 @ cdecl -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z(ptr ptr ptr) tr2_sys__Read_dir

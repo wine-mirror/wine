@@ -167,6 +167,8 @@ static complex_float* (__cdecl *p_complex_float_pow_ci)(complex_float*, const co
 static complex_float* (__cdecl *p_complex_float_pow_fc)(complex_float*, const float*, const complex_float*);
 static complex_float* (__cdecl *p_complex_float_pow_cf)(complex_float*, const complex_float*, const float*);
 
+static void (CDECL **p_Raise_handler)(const void*);
+
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
@@ -328,6 +330,8 @@ static BOOL init(void)
                 "??$pow@M@std@@YA?AV?$complex@M@0@AEBMAEBV10@@Z");
         SET(p_complex_float_pow_cf,
                 "??$pow@M@std@@YA?AV?$complex@M@0@AEBV10@AEBM@Z");
+        SET(p_Raise_handler,
+                "?_Raise_handler@std@@3P6AXAEBVexception@stdext@@@ZEA");
     } else {
         SET(p_locale__Locimp__Locimp_Addfac,
                 "?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z");
@@ -451,6 +455,8 @@ static BOOL init(void)
                 "??$pow@M@std@@YA?AV?$complex@M@0@ABMABV10@@Z");
         SET(p_complex_float_pow_cf,
                 "??$pow@M@std@@YA?AV?$complex@M@0@ABV10@ABM@Z");
+        SET(p_Raise_handler,
+                "?_Raise_handler@std@@3P6AXABVexception@stdext@@@ZA");
 #endif
     }
 
@@ -1084,6 +1090,18 @@ static void test_locale__Locimp__Locimp_Addfac(void)
     ok(locimp.facet_cnt == 40, "locimp.facet_cnt = %d\n", (int)locimp.facet_cnt);
 }
 
+static void CDECL raise_handler(const void *except)
+{
+    ok(0, "unexpected call\n");
+}
+
+static void test_raise_handler(void)
+{
+    ok(!*p_Raise_handler, "_Raise_handler = %p\n", *p_Raise_handler);
+    *p_Raise_handler = raise_handler;
+    *p_Raise_handler = NULL;
+}
+
 START_TEST(misc)
 {
     if(!init())
@@ -1103,6 +1121,7 @@ START_TEST(misc)
     test_complex();
     test_vbtable_size_exports();
     test_locale__Locimp__Locimp_Addfac();
+    test_raise_handler();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 
