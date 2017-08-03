@@ -42,6 +42,25 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     ok_(__FILE__, line)(refcount == ref, "expected refcount %d, got %d\n", ref, refcount);
 }
 
+static void check_output_raw(IStream *stream, const void *expected, SIZE_T size, int line)
+{
+    SIZE_T content_size;
+    HGLOBAL hglobal;
+    HRESULT hr;
+    char *ptr;
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get the stream handle, hr %#x.\n", hr);
+
+    content_size = GlobalSize(hglobal);
+    ok_(__FILE__, line)(size <= content_size, "Unexpected test output size.\n");
+    ptr = GlobalLock(hglobal);
+    if (size <= content_size)
+        ok_(__FILE__, line)(!memcmp(expected, ptr, size), "Unexpected output content.\n");
+
+    GlobalUnlock(hglobal);
+}
+
 static void check_output(IStream *stream, const char *expected, BOOL todo, int line)
 {
     int len = strlen(expected), size;
@@ -68,6 +87,7 @@ static void check_output(IStream *stream, const char *expected, BOOL todo, int l
 }
 #define CHECK_OUTPUT(stream, expected) check_output(stream, expected, FALSE, __LINE__)
 #define CHECK_OUTPUT_TODO(stream, expected) check_output(stream, expected, TRUE, __LINE__)
+#define CHECK_OUTPUT_RAW(stream, expected, size) check_output_raw(stream, expected, size, __LINE__)
 
 static void writer_set_property(IXmlWriter *writer, XmlWriterProperty property)
 {
@@ -377,6 +397,7 @@ static void test_writeroutput(void)
     static const WCHAR utf16W[] = {'u','t','f','-','1','6',0};
     static const WCHAR usasciiW[] = {'u','s','-','a','s','c','i','i',0};
     static const WCHAR dummyW[] = {'d','u','m','m','y',0};
+    static const WCHAR utf16_outputW[] = {0xfeff,'<','a'};
     IXmlWriterOutput *output;
     IXmlWriter *writer;
     IStream *stream;
@@ -423,12 +444,32 @@ todo_wine
     ok(hr == S_OK, "got %08x\n", hr);
     IUnknown_Release(output);
 
-    /* Create output with meaningless code page value. */
+    /* Output with codepage 1200. */
     hr = CreateXmlWriter(&IID_IXmlWriter, (void **)&writer, NULL);
     ok(hr == S_OK, "Failed to create writer, hr %#x.\n", hr);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create stream, hr %#x.\n", hr);
+
+    hr = CreateXmlWriterOutputWithEncodingCodePage((IUnknown *)stream, NULL, 1200, &output);
+    ok(hr == S_OK, "Failed to create writer output, hr %#x.\n", hr);
+
+    hr = IXmlWriter_SetOutput(writer, output);
+    ok(hr == S_OK, "Failed to set writer output, hr %#x.\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "Write failed, hr %#x.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Failed to flush, hr %#x.\n", hr);
+
+    CHECK_OUTPUT_RAW(stream, utf16_outputW, sizeof(utf16_outputW));
+
+    IStream_Release(stream);
+
+    /* Create output with meaningless code page value. */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create stream, hr %#x.\n", hr);
 
     output = NULL;
     hr = CreateXmlWriterOutputWithEncodingCodePage((IUnknown *)stream, NULL, ~0u, &output);
