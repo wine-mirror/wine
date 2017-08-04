@@ -1191,7 +1191,7 @@ static void wined3d_buffer_unmap(struct wined3d_buffer *buffer)
     }
 }
 
-HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_offset,
+void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_offset,
         struct wined3d_buffer *src_buffer, unsigned int src_offset, unsigned int size)
 {
     struct wined3d_bo_address dst, src;
@@ -1213,8 +1213,6 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     context_release(context);
 
     wined3d_buffer_invalidate_range(dst_buffer, ~dst_location, dst_offset, size);
-
-    return WINED3D_OK;
 }
 
 void wined3d_buffer_upload_data(struct wined3d_buffer *buffer, struct wined3d_context *context,

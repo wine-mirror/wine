@@ -1952,10 +1952,9 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
 
     if (op->dst_resource->type == WINED3D_RTYPE_BUFFER)
     {
-        if (FAILED(wined3d_buffer_copy(buffer_from_resource(op->dst_resource), op->dst_box.left,
+        wined3d_buffer_copy(buffer_from_resource(op->dst_resource), op->dst_box.left,
                 buffer_from_resource(op->src_resource), op->src_box.left,
-                op->src_box.right - op->src_box.left)))
-            ERR("Failed to copy buffer.\n");
+                op->src_box.right - op->src_box.left);
     }
     else if (op->dst_resource->type == WINED3D_RTYPE_TEXTURE_2D)
     {
