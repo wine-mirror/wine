@@ -1833,8 +1833,10 @@ static void test_mbstowcs(void)
 {
     static const wchar_t wSimple[] = { 't','e','x','t',0 };
     static const wchar_t wHiragana[] = { 0x3042,0x3043,0 };
+    static const wchar_t wEmpty[] = { 0 };
     static const char mSimple[] = "text";
     static const char mHiragana[] = { 0x82,0xa0,0x82,0xa1,0 };
+    static const char mEmpty[] = { 0 };
 
     const wchar_t *pwstr;
     wchar_t wOut[6];
@@ -1863,6 +1865,13 @@ static void test_mbstowcs(void)
     ok(!memcmp(wOut, wSimple, 4*sizeof(wchar_t)), "wOut = %s\n", wine_dbgstr_w(wOut));
     ok(wOut[4] == '!', "wOut[4] != \'!\'\n");
 
+    ret = mbstowcs(NULL, mEmpty, 1);
+    ok(ret == 0, "mbstowcs did not return 0, got %d\n", (int)ret);
+
+    ret = mbstowcs(wOut, mEmpty, 1);
+    ok(ret == 0, "mbstowcs did not return 0, got %d\n", (int)ret);
+    ok(!memcmp(wOut, wEmpty, sizeof(wEmpty)), "wOut = %s\n", wine_dbgstr_w(wOut));
+
     ret = wcstombs(NULL, wSimple, 0);
     ok(ret == 4, "wcstombs did not return 4\n");
 
@@ -1874,6 +1883,13 @@ static void test_mbstowcs(void)
     ok(ret == 2, "wcstombs did not return 2\n");
     ok(!memcmp(mOut, mSimple, 5*sizeof(char)), "mOut = %s\n", mOut);
 
+    ret = wcstombs(NULL, wEmpty, 1);
+    ok(ret == 0, "wcstombs did not return 0, got %d\n", (int)ret);
+
+    ret = wcstombs(mOut, wEmpty, 1);
+    ok(ret == 0, "wcstombs did not return 0, got %d\n", (int)ret);
+    ok(!memcmp(mOut, mEmpty, sizeof(mEmpty)), "mOut = %s\n", mOut);
+
     if(!setlocale(LC_ALL, "Japanese_Japan.932")) {
         win_skip("Japanese_Japan.932 locale not available\n");
         return;
@@ -1883,9 +1899,17 @@ static void test_mbstowcs(void)
     ok(ret == 2, "mbstowcs did not return 2\n");
     ok(!memcmp(wOut, wHiragana, sizeof(wHiragana)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
+    ret = mbstowcs(wOut, mEmpty, 6);
+    todo_wine ok(ret == 0, "mbstowcs did not return 0, got %d\n", (int)ret);
+    ok(!memcmp(wOut, wEmpty, sizeof(wEmpty)), "wOut = %s\n", wine_dbgstr_w(wOut));
+
     ret = wcstombs(mOut, wHiragana, 6);
     ok(ret == 4, "wcstombs did not return 4\n");
     ok(!memcmp(mOut, mHiragana, sizeof(mHiragana)), "mOut = %s\n", mOut);
+
+    ret = wcstombs(mOut, wEmpty, 6);
+    ok(ret == 0, "wcstombs did not return 0, got %d\n", (int)ret);
+    ok(!memcmp(mOut, mEmpty, sizeof(mEmpty)), "mOut = %s\n", mOut);
 
     if(!pmbstowcs_s || !pwcstombs_s) {
         setlocale(LC_ALL, "C");
@@ -1903,6 +1927,11 @@ static void test_mbstowcs(void)
     ok(ret == 3, "mbstowcs_s did not return 3\n");
     ok(!memcmp(wOut, wHiragana, sizeof(wHiragana)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
+    err = pmbstowcs_s(&ret, wOut, 6, mEmpty, _TRUNCATE);
+    todo_wine ok(err == 0, "err = %d\n", err);
+    todo_wine ok(ret == 1, "mbstowcs_s did not return 1, got %d\n", (int)ret);
+    ok(!memcmp(wOut, wEmpty, sizeof(wEmpty)), "wOut = %s\n", wine_dbgstr_w(wOut));
+
     err = pmbstowcs_s(&ret, NULL, 0, mHiragana, 1);
     ok(err == 0, "err = %d\n", err);
     ok(ret == 3, "mbstowcs_s did not return 3\n");
@@ -1916,6 +1945,11 @@ static void test_mbstowcs(void)
     ok(err == 0, "err = %d\n", err);
     ok(ret == 5, "wcstombs_s did not return 5\n");
     ok(!memcmp(mOut, mHiragana, sizeof(mHiragana)), "mOut = %s\n", mOut);
+
+    err = pwcstombs_s(&ret, mOut, 6, wEmpty, _TRUNCATE);
+    ok(err == 0, "err = %d\n", err);
+    ok(ret == 1, "wcstombs_s did not return 1, got %d\n", (int)ret);
+    ok(!memcmp(mOut, mEmpty, sizeof(mEmpty)), "mOut = %s\n", mOut);
 
     err = pwcstombs_s(&ret, NULL, 0, wHiragana, 1);
     ok(err == 0, "err = %d\n", err);
