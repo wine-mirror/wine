@@ -244,6 +244,7 @@ struct wined3d_cs_set_unordered_access_view
     enum wined3d_pipeline pipeline;
     unsigned int view_idx;
     struct wined3d_unordered_access_view *view;
+    unsigned int initial_count;
 };
 
 struct wined3d_cs_set_sampler
@@ -1293,10 +1294,13 @@ static void wined3d_cs_exec_set_unordered_access_view(struct wined3d_cs *cs, con
         InterlockedDecrement(&prev->resource->bind_count);
 
     device_invalidate_state(cs->device, STATE_UNORDERED_ACCESS_VIEW_BINDING(op->pipeline));
+
+    if (op->initial_count != ~0u)
+        wined3d_unordered_access_view_set_counter(op->view, op->initial_count);
 }
 
 void wined3d_cs_emit_set_unordered_access_view(struct wined3d_cs *cs, enum wined3d_pipeline pipeline,
-        unsigned int view_idx, struct wined3d_unordered_access_view *view)
+        unsigned int view_idx, struct wined3d_unordered_access_view *view, unsigned int initial_count)
 {
     struct wined3d_cs_set_unordered_access_view *op;
 
@@ -1305,6 +1309,7 @@ void wined3d_cs_emit_set_unordered_access_view(struct wined3d_cs *cs, enum wined
     op->pipeline = pipeline;
     op->view_idx = view_idx;
     op->view = view;
+    op->initial_count = initial_count;
 
     cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
 }
