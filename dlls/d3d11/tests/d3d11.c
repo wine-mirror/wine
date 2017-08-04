@@ -17983,7 +17983,7 @@ static void test_uav_counters(void)
     /* produce */
     ID3D11DeviceContext_Dispatch(context, 16, 1, 1);
     data = read_uav_counter(context, staging_buffer, uav);
-    todo_wine ok(data == 64, "Got unexpected value %u.\n", data);
+    ok(data == 64, "Got unexpected value %u.\n", data);
     get_buffer_readback(buffer, &rb);
     memcpy(id, rb.map_desc.pData, 64 * sizeof(*id));
     release_resource_readback(&rb);
@@ -18027,7 +18027,7 @@ static void test_uav_counters(void)
     todo_wine ok(data == 4, "Got unexpected value %u.\n", data);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
     data = read_uav_counter(context, staging_buffer, uav);
-    ok(!data, "Got unexpected value %u.\n", data);
+    todo_wine ok(!data, "Got unexpected value %u.\n", data);
     get_buffer_readback(buffer2, &rb);
     for (i = 0; i < 8; ++i)
     {
