@@ -898,6 +898,27 @@ void wined3d_unordered_access_view_clear_uint(struct wined3d_unordered_access_vi
     checkGLcall("clear unordered access view");
 }
 
+void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_view *view,
+        struct wined3d_buffer *buffer, unsigned int offset, struct wined3d_context *context)
+{
+    struct wined3d_bo_address dst, src;
+    DWORD dst_location;
+
+    if (!view->counter_bo)
+        return;
+
+    dst_location = wined3d_buffer_get_memory(buffer, &dst, buffer->locations);
+    dst.addr += offset;
+
+    src.buffer_object = view->counter_bo;
+    src.addr = NULL;
+
+    context_copy_bo_address(context, &dst, buffer->buffer_type_hint,
+            &src, GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint));
+
+    wined3d_buffer_invalidate_location(buffer, ~dst_location);
+}
+
 static void wined3d_unordered_access_view_cs_init(void *object)
 {
     struct wined3d_unordered_access_view *view = object;
