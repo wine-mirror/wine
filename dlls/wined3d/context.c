@@ -2752,6 +2752,54 @@ void context_unmap_bo_address(struct wined3d_context *context,
     checkGLcall("Unmap buffer object");
 }
 
+void context_copy_bo_address(struct wined3d_context *context,
+        const struct wined3d_bo_address *dst, GLenum dst_binding,
+        const struct wined3d_bo_address *src, GLenum src_binding, size_t size)
+{
+    const struct wined3d_gl_info *gl_info;
+    BYTE *dst_ptr, *src_ptr;
+
+    gl_info = context->gl_info;
+
+    if (dst->buffer_object && src->buffer_object)
+    {
+        if (gl_info->supported[ARB_COPY_BUFFER])
+        {
+            GL_EXTCALL(glBindBuffer(GL_COPY_READ_BUFFER, src->buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_COPY_WRITE_BUFFER, dst->buffer_object));
+            GL_EXTCALL(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
+                    (GLintptr)src->addr, (GLintptr)dst->addr, size));
+            checkGLcall("direct buffer copy");
+        }
+        else
+        {
+            src_ptr = context_map_bo_address(context, src, size, src_binding, WINED3D_MAP_READONLY);
+            dst_ptr = context_map_bo_address(context, dst, size, dst_binding, 0);
+
+            memcpy(dst_ptr, src_ptr, size);
+
+            context_unmap_bo_address(context, dst, dst_binding);
+            context_unmap_bo_address(context, src, src_binding);
+        }
+    }
+    else if (!dst->buffer_object && src->buffer_object)
+    {
+        context_bind_bo(context, src_binding, src->buffer_object);
+        GL_EXTCALL(glGetBufferSubData(src_binding, (GLintptr)src->addr, size, dst->addr));
+        checkGLcall("buffer download");
+    }
+    else if (dst->buffer_object && !src->buffer_object)
+    {
+        context_bind_bo(context, dst_binding, dst->buffer_object);
+        GL_EXTCALL(glBufferSubData(dst_binding, (GLintptr)dst->addr, size, src->addr));
+        checkGLcall("buffer upload");
+    }
+    else
+    {
+        memcpy(dst->addr, src->addr, size);
+    }
+}
+
 static void context_set_render_offscreen(struct wined3d_context *context, BOOL offscreen)
 {
     if (context->render_offscreen == offscreen)

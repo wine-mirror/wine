@@ -1194,20 +1194,12 @@ static void wined3d_buffer_unmap(struct wined3d_buffer *buffer)
 HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_offset,
         struct wined3d_buffer *src_buffer, unsigned int src_offset, unsigned int size)
 {
-    const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_address dst, src;
     struct wined3d_context *context;
-    struct wined3d_device *device;
-    BYTE *dst_ptr, *src_ptr;
     DWORD dst_location;
 
     buffer_mark_used(dst_buffer);
     buffer_mark_used(src_buffer);
-
-    device = dst_buffer->resource.device;
-
-    context = context_acquire(device, NULL, 0);
-    gl_info = context->gl_info;
 
     dst_location = wined3d_buffer_get_memory(dst_buffer, &dst, dst_buffer->locations);
     dst.addr += dst_offset;
@@ -1215,47 +1207,13 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     wined3d_buffer_get_memory(src_buffer, &src, src_buffer->locations);
     src.addr += src_offset;
 
-    if (dst.buffer_object && src.buffer_object)
-    {
-        if (gl_info->supported[ARB_COPY_BUFFER])
-        {
-            GL_EXTCALL(glBindBuffer(GL_COPY_READ_BUFFER, src.buffer_object));
-            GL_EXTCALL(glBindBuffer(GL_COPY_WRITE_BUFFER, dst.buffer_object));
-            GL_EXTCALL(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
-                    src_offset, dst_offset, size));
-            checkGLcall("direct buffer copy");
-        }
-        else
-        {
-            src_ptr = context_map_bo_address(context, &src, size, src_buffer->buffer_type_hint, WINED3D_MAP_READONLY);
-            dst_ptr = context_map_bo_address(context, &dst, size, dst_buffer->buffer_type_hint, 0);
-
-            memcpy(dst_ptr, src_ptr, size);
-
-            context_unmap_bo_address(context, &dst, dst_buffer->buffer_type_hint);
-            context_unmap_bo_address(context, &src, src_buffer->buffer_type_hint);
-        }
-    }
-    else if (!dst.buffer_object && src.buffer_object)
-    {
-        buffer_bind(src_buffer, context);
-        GL_EXTCALL(glGetBufferSubData(src_buffer->buffer_type_hint, src_offset, size, dst.addr));
-        checkGLcall("buffer download");
-    }
-    else if (dst.buffer_object && !src.buffer_object)
-    {
-        buffer_bind(dst_buffer, context);
-        GL_EXTCALL(glBufferSubData(dst_buffer->buffer_type_hint, dst_offset, size, src.addr));
-        checkGLcall("buffer upload");
-    }
-    else
-    {
-        memcpy(dst.addr, src.addr, size);
-    }
+    context = context_acquire(dst_buffer->resource.device, NULL, 0);
+    context_copy_bo_address(context, &dst, dst_buffer->buffer_type_hint,
+            &src, src_buffer->buffer_type_hint, size);
+    context_release(context);
 
     wined3d_buffer_invalidate_range(dst_buffer, ~dst_location, dst_offset, size);
 
-    context_release(context);
     return WINED3D_OK;
 }
 
