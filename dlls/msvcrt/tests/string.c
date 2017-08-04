@@ -1900,7 +1900,7 @@ static void test_mbstowcs(void)
     ok(!memcmp(wOut, wHiragana, sizeof(wHiragana)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
     ret = mbstowcs(wOut, mEmpty, 6);
-    todo_wine ok(ret == 0, "mbstowcs did not return 0, got %d\n", (int)ret);
+    ok(ret == 0, "mbstowcs did not return 0, got %d\n", (int)ret);
     ok(!memcmp(wOut, wEmpty, sizeof(wEmpty)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
     ret = wcstombs(mOut, wHiragana, 6);
@@ -1928,8 +1928,8 @@ static void test_mbstowcs(void)
     ok(!memcmp(wOut, wHiragana, sizeof(wHiragana)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
     err = pmbstowcs_s(&ret, wOut, 6, mEmpty, _TRUNCATE);
-    todo_wine ok(err == 0, "err = %d\n", err);
-    todo_wine ok(ret == 1, "mbstowcs_s did not return 1, got %d\n", (int)ret);
+    ok(err == 0, "err = %d\n", err);
+    ok(ret == 1, "mbstowcs_s did not return 1, got %d\n", (int)ret);
     ok(!memcmp(wOut, wEmpty, sizeof(wEmpty)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
     err = pmbstowcs_s(&ret, NULL, 0, mHiragana, 1);
