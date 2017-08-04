@@ -2278,12 +2278,14 @@ MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
         size += (MSVCRT__isleadbyte_l((unsigned char)mbstr[size], locale) ? 2 : 1);
     }
 
-    size = MultiByteToWideChar(locinfo->lc_codepage, 0,
-            mbstr, size, wcstr, count);
-    if(!size) {
-        if(count) wcstr[0] = '\0';
-        *MSVCRT__errno() = MSVCRT_EILSEQ;
-        return -1;
+    if(size) {
+        size = MultiByteToWideChar(locinfo->lc_codepage, 0,
+                                   mbstr, size, wcstr, count);
+        if(!size) {
+            if(count) wcstr[0] = '\0';
+            *MSVCRT__errno() = MSVCRT_EILSEQ;
+            return -1;
+        }
     }
 
     if(size<count && wcstr)
