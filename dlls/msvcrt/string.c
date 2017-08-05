@@ -697,6 +697,16 @@ char* __cdecl MSVCRT_strncpy(char *dst, const char *src, MSVCRT_size_t len)
 }
 
 /*********************************************************************
+ *      strcpy (MSVCRT.@)
+ */
+char* CDECL MSVCRT_strcpy(char *dst, const char *src)
+{
+    char *ret = dst;
+    while ((*dst++ = *src++));
+    return ret;
+}
+
+/*********************************************************************
  *      strcpy_s (MSVCRT.@)
  */
 int CDECL MSVCRT_strcpy_s( char* dst, MSVCRT_size_t elem, const char* src )

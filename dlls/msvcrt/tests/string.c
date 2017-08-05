@@ -56,6 +56,7 @@ static void* (__cdecl *pmemcpy)(void *, const void *, size_t n);
 static int (__cdecl *p_memcpy_s)(void *, size_t, const void *, size_t);
 static int (__cdecl *p_memmove_s)(void *, size_t, const void *, size_t);
 static int* (__cdecl *pmemcmp)(void *, const void *, size_t n);
+static int (__cdecl *p_strcpy)(char *dst, const char *src);
 static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *p_mbscat_s)(unsigned char *dst, size_t size, const unsigned char *src);
@@ -493,8 +494,8 @@ static void test_strdup(void)
 static void test_strcpy_s(void)
 {
     char dest[8];
-    const char *small = "small";
-    const char *big = "atoolongstringforthislittledestination";
+    const char small[] = "small";
+    const char big[] = "atoolongstringforthislittledestination";
     int ret;
 
     if(!pstrcpy_s)
@@ -543,6 +544,15 @@ static void test_strcpy_s(void)
 
     ret = pstrcpy_s(NULL, sizeof(dest), small);
     ok(ret == EINVAL, "Copying a big string a NULL dest returned %d, expected EINVAL\n", ret);
+
+    /* strcpy overlapping buffers test */
+    memset(dest, 'X', sizeof(dest));
+    memcpy(dest+1, small, sizeof(small));
+    p_strcpy(dest, dest+1);
+    ok(dest[0] == 's' && dest[1] == 'm' && dest[2] == 'a' && dest[3] == 'l' &&
+            dest[4] == 'l' && dest[5] == '\0' && dest[6] == '\0' && dest[7] == 'X',
+            "Unexpected return data from strcpy: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+            dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
 }
 
 #define NUMELMS(array) (sizeof(array)/sizeof((array)[0]))
@@ -3186,6 +3196,7 @@ START_TEST(string)
     SET(pmemcmp,"memcmp");
     SET(p_mbctype,"_mbctype");
     SET(p__mb_cur_max,"__mb_cur_max");
+    SET(p_strcpy, "strcpy");
     pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
     p_mbscat_s = (void*)GetProcAddress( hMsvcrt, "_mbscat_s" );
