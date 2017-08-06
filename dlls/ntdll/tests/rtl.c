@@ -360,8 +360,8 @@ static void test_RtlUlonglongByteSwap(void)
 
     result = pRtlUlonglongByteSwap( ((ULONGLONG)0x76543210 << 32) | 0x87654321 );
     ok( (((ULONGLONG)0x21436587 << 32) | 0x10325476) == result,
-       "RtlUlonglongByteSwap(0x7654321087654321) returns 0x%x%08x, expected 0x2143658710325476\n",
-       (DWORD)(result >> 32), (DWORD)result);
+       "RtlUlonglongByteSwap(0x7654321087654321) returns 0x%s, expected 0x2143658710325476\n",
+       wine_dbgstr_longlong(result));
 }
 
 
@@ -602,11 +602,11 @@ static void test_RtlUniform(void)
         seed_bak = seed;
         result = pRtlUniform(&seed);
         ok(result == expected,
-                "test: 0x%x%08x RtlUniform(&seed (seed == %x)) returns %x, expected %x\n",
-                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, expected);
+                "test: 0x%s RtlUniform(&seed (seed == %x)) returns %x, expected %x\n",
+                wine_dbgstr_longlong(num), seed_bak, result, expected);
         ok(seed == expected,
-                "test: 0x%x%08x RtlUniform(&seed (seed == %x)) sets seed to %x, expected %x\n",
-                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, expected);
+                "test: 0x%s RtlUniform(&seed (seed == %x)) sets seed to %x, expected %x\n",
+                wine_dbgstr_longlong(num), seed_bak, result, expected);
     } /* for */
 /*
  * Further investigation shows: In the different regions the highest bit
@@ -649,11 +649,11 @@ static void test_RtlUniform(void)
         seed_bak = seed;
         result = pRtlUniform(&seed);
         ok(result == expected,
-                "test: 0x%x%08x RtlUniform(&seed (seed == %x)) returns %x, expected %x\n",
-                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, expected);
+                "test: 0x%s RtlUniform(&seed (seed == %x)) returns %x, expected %x\n",
+                wine_dbgstr_longlong(num), seed_bak, result, expected);
         ok(seed == expected,
-                "test: 0x%x%08x RtlUniform(&seed (seed == %x)) sets seed to %x, expected %x\n",
-                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, expected);
+                "test: 0x%s RtlUniform(&seed (seed == %x)) sets seed to %x, expected %x\n",
+                wine_dbgstr_longlong(num), seed_bak, result, expected);
     } /* for */
 /*
  * More tests show that RtlUniform does not return 0x7ffffffd for seed values

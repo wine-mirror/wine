@@ -1198,7 +1198,7 @@ static void test_query_process_io(void)
     ok( sizeof(pii) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
-    trace("OtherOperationCount : 0x%x%08x\n", (DWORD)(pii.OtherOperationCount >> 32), (DWORD)pii.OtherOperationCount);
+    trace("OtherOperationCount : 0x%s\n", wine_dbgstr_longlong(pii.OtherOperationCount));
     todo_wine
     {
         ok( pii.OtherOperationCount > 0, "Expected an OtherOperationCount > 0\n");

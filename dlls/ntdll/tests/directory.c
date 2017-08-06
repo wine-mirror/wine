@@ -504,8 +504,8 @@ static void test_NtQueryDirectoryFile(void)
     }
     status = pNtQueryInformationFile( dirh, &io, &pos_info, sizeof(pos_info), FilePositionInformation );
     ok( status == STATUS_SUCCESS, "NtQueryInformationFile failed %x\n", status );
-    ok( pos_info.CurrentByteOffset.QuadPart == 0, "wrong pos %x%08x\n",
-        (DWORD)(pos_info.CurrentByteOffset.QuadPart >> 32), (DWORD)pos_info.CurrentByteOffset.QuadPart );
+    ok( pos_info.CurrentByteOffset.QuadPart == 0, "wrong pos %s\n",
+        wine_dbgstr_longlong(pos_info.CurrentByteOffset.QuadPart));
 
     pos_info.CurrentByteOffset.QuadPart = 0xbeef;
     status = pNtSetInformationFile( dirh, &io, &pos_info, sizeof(pos_info), FilePositionInformation );
@@ -513,8 +513,8 @@ static void test_NtQueryDirectoryFile(void)
 
     status = pNtQueryInformationFile( dirh, &io, &pos_info, sizeof(pos_info), FilePositionInformation );
     ok( status == STATUS_SUCCESS, "NtQueryInformationFile failed %x\n", status );
-    ok( pos_info.CurrentByteOffset.QuadPart == 0xbeef, "wrong pos %x%08x\n",
-        (DWORD)(pos_info.CurrentByteOffset.QuadPart >> 32), (DWORD)pos_info.CurrentByteOffset.QuadPart );
+    ok( pos_info.CurrentByteOffset.QuadPart == 0xbeef, "wrong pos %s\n",
+        wine_dbgstr_longlong(pos_info.CurrentByteOffset.QuadPart));
 
     mask.Buffer = testfiles[0].name;
     mask.Length = mask.MaximumLength = lstrlenW(testfiles[0].name) * sizeof(WCHAR);
@@ -528,8 +528,8 @@ static void test_NtQueryDirectoryFile(void)
 
     status = pNtQueryInformationFile( dirh, &io, &pos_info, sizeof(pos_info), FilePositionInformation );
     ok( status == STATUS_SUCCESS, "NtQueryInformationFile failed %x\n", status );
-    ok( pos_info.CurrentByteOffset.QuadPart == 0xbeef, "wrong pos %x%08x\n",
-        (DWORD)(pos_info.CurrentByteOffset.QuadPart >> 32), (DWORD)pos_info.CurrentByteOffset.QuadPart );
+    ok( pos_info.CurrentByteOffset.QuadPart == 0xbeef, "wrong pos %s\n",
+        wine_dbgstr_longlong(pos_info.CurrentByteOffset.QuadPart) );
 
     mask.Length = mask.MaximumLength = fbdi->ShortNameLength;
     memcpy(short_name, fbdi->ShortName, mask.Length);
@@ -549,8 +549,8 @@ static void test_NtQueryDirectoryFile(void)
 
     status = pNtQueryInformationFile( dirh, &io, &pos_info, sizeof(pos_info), FilePositionInformation );
     ok( status == STATUS_SUCCESS, "NtQueryInformationFile failed %x\n", status );
-    ok( pos_info.CurrentByteOffset.QuadPart == 0xbeef, "wrong pos %x%08x\n",
-        (DWORD)(pos_info.CurrentByteOffset.QuadPart >> 32), (DWORD)pos_info.CurrentByteOffset.QuadPart );
+    ok( pos_info.CurrentByteOffset.QuadPart == 0xbeef, "wrong pos %s\n",
+        wine_dbgstr_longlong(pos_info.CurrentByteOffset.QuadPart) );
 
     /* tests with short buffer */
     memset( data, 0x55, data_size );
