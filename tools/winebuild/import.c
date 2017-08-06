@@ -668,15 +668,14 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "1:\t.long %s+%u-(1b+4)\n", table, pos );
         break;
     case CPU_ARM64:
-        output( "\tadr x9, 1f\n" );
-        output( "\tldur x9, [x9, #0]\n" );
+        output( "\tadrp x9, %s\n", table );
+        output( "\tadd x9, x9, #:lo12:%s\n", table );
         if (pos & 0xf000) output( "\tadd x9, x9, #%u\n", pos & 0xf000 );
         if (pos & 0x0f00) output( "\tadd x9, x9, #%u\n", pos & 0x0f00 );
         if (pos & 0x00f0) output( "\tadd x9, x9, #%u\n", pos & 0x00f0 );
         if (pos & 0x000f) output( "\tadd x9, x9, #%u\n", pos & 0x000f );
         output( "\tldur x9, [x9, #0]\n" );
         output( "\tbr x9\n" );
-        output( "1:\t.quad %s\n", table );
         break;
     case CPU_POWERPC:
         output( "\tmr %s, %s\n", ppc_reg(0), ppc_reg(31) );
@@ -980,8 +979,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     case CPU_ARM64:
         output( "\tstp x29, x30, [sp,#-16]!\n" );
         output( "\tmov x29, sp\n" );
-        output( "\tadr x9, 1f\n" );
-        output( "\tldur x9, [x9, #0]\n" );
+        output( "\tadrp x9, %s\n", asm_name("__wine_spec_delay_load") );
+        output( "\tadd x9, x9, #:lo12:%s\n", asm_name("__wine_spec_delay_load") );
         output( "\tblr x9\n" );
         output( "\tmov x9, x0\n" );
         output( "\tldp x29, x30, [sp],#16\n" );
@@ -990,7 +989,6 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tldp x4, x5, [sp,#48]\n" );
         output( "\tldp x6, x7, [sp],#80\n" );
         output( "\tbr x9\n" ); /* or "ret x9" */
-        output( "1:\t.quad %s\n", asm_name("__wine_spec_delay_load") );
         break;
     case CPU_POWERPC:
         if (target_platform == PLATFORM_APPLE) extra_stack_storage = 56;
@@ -1089,10 +1087,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tmul x1, x0, x1\n" );
                 output( "\tmov x0, x1\n" );
                 output( "\tadd x0, x0, #%d\n", j );
-                output( "\tadr x9, 1f\n" );
-                output( "\tldur x9, [x9, #0]\n" );
+                output( "\tadr x9, %s\n", asm_name("__wine_delay_load_asm") );
                 output( "\tbr x9\n" );
-                output( "1:\t.quad %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_POWERPC:
                 switch(target_platform)
@@ -1281,21 +1277,19 @@ void output_stubs( DLLSPEC *spec )
             else output( "\t.long %u\n", odp->ordinal );
             break;
         case CPU_ARM64:
-            output( "\tadr x0, 2f\n" );
-            output( "\tldur x0, [x0, #0]\n" );
-            output( "\tadr x1, 2f+8\n" );
-            output( "\tldur x1, [x1, #0]\n" );
-            output( "\tadr x2, 1f\n" );
-            output( "\tldur x2, [x2, #0]\n" );
-            output( "\tblr x2\n" );
-            output( "1:\t.quad %s\n", asm_name("__wine_spec_unimplemented_stub") );
-            output( "2:\t.quad %s\n", asm_name("__wine_spec_file_name") );
+            output( "\tadrp x0, %s\n", asm_name("__wine_spec_file_name") );
+            output( "\tadd x0, x0, #:lo12:%s\n", asm_name("__wine_spec_file_name") );
             if (exp_name)
             {
-                output( "\t.quad .L%s_string\n", name );
+                output( "\tadrp x1, .L%s_string\n", name );
+                output( "\tadd x1, x1, #:lo12:.L%s_string\n", name );
                 count++;
             }
-            else output( "\t.quad %u\n", odp->ordinal );
+            else
+                output( "\tmov x1, %u\n", odp->ordinal );
+            output( "\tadrp x2, %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output( "\tadd x2, x2, #:lo12:%s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output( "\tblr x2\n" );
             break;
         default:
             assert(0);

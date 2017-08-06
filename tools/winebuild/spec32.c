@@ -257,14 +257,14 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tmov w1, #%u\n", (flags << 24) );
             if (args) output( "\tadd w1, w1, #%u\n", (args << 16) );
             if (i - spec->base) output( "\tadd w1, w1, #%u\n", i - spec->base );
-            output( "\tldr x0, 1f\n");
+            output( "\tadrp x0, .L__wine_spec_relay_descr\n");
+            output( "\tadd x0, x0, #:lo12:.L__wine_spec_relay_descr\n");
             output( "\tldr x3, [x0, #8]\n");
             output( "\tblr x3\n");
             output( "\tadd SP, SP, #16\n" );
             output( "\tldp x29, x30, [SP], #16\n" );
             if (args) output( "\tadd SP, SP, #%u\n", 8 * ((min(args, 8) + 1) & 0xe) );
             output( "\tret\n");
-            output( "\t1: .quad .L__wine_spec_relay_descr\n");
             break;
 
         case CPU_x86_64:
