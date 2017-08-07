@@ -3996,3 +3996,23 @@ BOOL WINAPI UnregisterTouchWindow(HWND hwnd)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/*****************************************************************************
+ *              CloseTouchInputHandle (USER32.@)
+ */
+BOOL WINAPI CloseTouchInputHandle(HTOUCHINPUT handle)
+{
+    FIXME("(%p): stub\n", handle);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *              GetTouchInputInfo (USER32.@)
+ */
+BOOL WINAPI GetTouchInputInfo(HTOUCHINPUT handle, UINT count, TOUCHINPUT *ptr, int size)
+{
+    FIXME("(%p %u %p %u): stub\n", handle, count, ptr, size);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

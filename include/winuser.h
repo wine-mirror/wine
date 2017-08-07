@@ -3304,6 +3304,23 @@ typedef enum ORIENTATION_PREFERENCE {
     ORIENTATION_PREFERENCE_PORTRAIT_FLIPPED  = 0x8
 } ORIENTATION_PREFERENCE;
 
+/* Touch input definitions */
+DECLARE_HANDLE(HTOUCHINPUT);
+
+typedef struct tagTOUCHINPUT {
+    LONG      x;
+    LONG      y;
+    HANDLE    hSource;
+    DWORD     dwID;
+    DWORD     dwFlags;
+    DWORD     dwMask;
+    DWORD     dwTime;
+    ULONG_PTR dwExtraInfo;
+    DWORD     cxContact;
+    DWORD     cyContact;
+} TOUCHINPUT, *PTOUCHINPUT;
+typedef TOUCHINPUT const * PCTOUCHINPUT;
+
 #if defined(_WINGDI_) && !defined(NOGDI)
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsA(LPDEVMODEA,DWORD);
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsW(LPDEVMODEW,DWORD);
@@ -3422,6 +3439,7 @@ WINUSERAPI BOOL        WINAPI ClientToScreen(HWND,LPPOINT);
 WINUSERAPI BOOL        WINAPI ClipCursor(const RECT*);
 WINUSERAPI BOOL        WINAPI CloseClipboard(void);
 WINUSERAPI BOOL        WINAPI CloseDesktop(HDESK);
+WINUSERAPI BOOL        WINAPI CloseTouchInputHandle(HTOUCHINPUT);
 WINUSERAPI BOOL        WINAPI CloseWindow(HWND);
 WINUSERAPI BOOL        WINAPI CloseWindowStation(HWINSTA);
 WINUSERAPI INT         WINAPI CopyAcceleratorTableA(HACCEL,LPACCEL,INT);
@@ -3724,6 +3742,7 @@ WINUSERAPI DWORD       WINAPI GetTabbedTextExtentW(HDC,LPCWSTR,INT,INT,const INT
 WINUSERAPI BOOL        WINAPI GetTitleBarInfo(HWND,PTITLEBARINFO);
 WINUSERAPI HDESK       WINAPI GetThreadDesktop(DWORD);
 WINUSERAPI HWND        WINAPI GetTopWindow(HWND);
+WINUSERAPI BOOL        WINAPI GetTouchInputInfo(HTOUCHINPUT,UINT,TOUCHINPUT*,int);
 WINUSERAPI BOOL        WINAPI GetUpdateRect(HWND,LPRECT,BOOL);
 WINUSERAPI INT         WINAPI GetUpdateRgn(HWND,HRGN,BOOL);
 WINUSERAPI BOOL        WINAPI GetUpdatedClipboardFormats(UINT*,UINT,UINT*);
