@@ -482,40 +482,35 @@ static int reg_delete(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name
 
     if (value_all)
     {
-        LPWSTR szValue;
-        DWORD maxValue;
-        DWORD count;
+        DWORD max_value_len = 256, value_len;
+        WCHAR *value_name;
         LONG rc;
 
-        rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL, NULL, NULL,
-                              NULL, &maxValue, NULL, NULL, NULL);
-        if (rc != ERROR_SUCCESS)
-        {
-            RegCloseKey(key);
-            output_message(STRING_GENERAL_FAILURE);
-            return 1;
-        }
-        maxValue++;
-        szValue = heap_xalloc(maxValue * sizeof(WCHAR));
+        value_name = heap_xalloc(max_value_len * sizeof(WCHAR));
 
         while (1)
         {
-            count = maxValue;
-            rc = RegEnumValueW(key, 0, szValue, &count, NULL, NULL, NULL, NULL);
+            value_len = max_value_len;
+            rc = RegEnumValueW(key, 0, value_name, &value_len, NULL, NULL, NULL, NULL);
             if (rc == ERROR_SUCCESS)
             {
-                rc = RegDeleteValueW(key, szValue);
+                rc = RegDeleteValueW(key, value_name);
                 if (rc != ERROR_SUCCESS)
                 {
-                    heap_free(szValue);
+                    heap_free(value_name);
                     RegCloseKey(key);
                     output_message(STRING_VALUEALL_FAILED, key_name);
                     return 1;
                 }
             }
+            else if (rc == ERROR_MORE_DATA)
+            {
+                max_value_len *= 2;
+                value_name = heap_xrealloc(value_name, max_value_len * sizeof(WCHAR));
+            }
             else break;
         }
-        heap_free(szValue);
+        heap_free(value_name);
     }
     else if (value_name || value_empty)
     {
