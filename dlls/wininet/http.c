@@ -3994,7 +3994,7 @@ static WCHAR *get_redirect_url(http_request_t *request)
     }
 
     urlComponents.dwSchemeLength = 1;
-    b = InternetCrackUrlW(redirect_url, url_length, 0, &urlComponents);
+    b = InternetCrackUrlW(redirect_url, url_length / sizeof(WCHAR), 0, &urlComponents);
     if(b && urlComponents.dwSchemeLength &&
        urlComponents.nScheme != INTERNET_SCHEME_HTTP && urlComponents.nScheme != INTERNET_SCHEME_HTTPS) {
         TRACE("redirect to non-http URL\n");
