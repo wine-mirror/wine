@@ -766,7 +766,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGeometry(ID2D1RenderTarg
             iface, geometry, brush, stroke_width, stroke_style);
 
     if (stroke_style)
-        FIXME("Ignoring stoke style %p.\n", stroke_style);
+        FIXME("Ignoring stroke style %p.\n", stroke_style);
 
     d2d_rt_draw_geometry(render_target, geometry_impl, brush_impl, stroke_width);
 }
