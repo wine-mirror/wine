@@ -3986,3 +3986,13 @@ BOOL WINAPI RegisterTouchWindow(HWND hwnd, ULONG flags)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/*****************************************************************************
+ *              UnregisterTouchWindow (USER32.@)
+ */
+BOOL WINAPI UnregisterTouchWindow(HWND hwnd)
+{
+    FIXME("(%p): stub\n", hwnd);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
