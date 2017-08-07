@@ -303,14 +303,6 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 	    }
 	    heap_free(valueA);
 	}
-    } else if ( type == REG_BINARY ) {
-        struct edit_params params;
-        params.hKey = hKey;
-        params.lpszValueName = valueName;
-        params.pData = stringValueData;
-        params.cbData = len;
-        result = DialogBoxParamW(NULL, MAKEINTRESOURCEW(IDD_EDIT_BINARY), hwnd,
-            bin_modify_dlgproc, (LPARAM)&params);
     } else if ( type == REG_MULTI_SZ ) {
         WCHAR char1 = '\r', char2 = '\n';
         WCHAR *tmpValueData = NULL;
@@ -362,8 +354,17 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
             if (lRet == ERROR_SUCCESS) result = TRUE;
             else error_code_messagebox(hwnd, IDS_SET_VALUE_FAILED);
         }
-    } else {
-        error_code_messagebox(hwnd, IDS_UNSUPPORTED_TYPE, type);
+    }
+    else /* hex data types */
+    {
+        struct edit_params params;
+
+        params.hKey = hKey;
+        params.lpszValueName = valueName;
+        params.pData = stringValueData;
+        params.cbData = len;
+        result = DialogBoxParamW(NULL, MAKEINTRESOURCEW(IDD_EDIT_BINARY), hwnd,
+                                 bin_modify_dlgproc, (LPARAM)&params);
     }
 
     /* Update the listview item with the new data string */
