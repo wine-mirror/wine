@@ -776,11 +776,11 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ReleaseObject(IDirectMusicLoader8 *
 static HRESULT WINAPI IDirectMusicLoaderImpl_ClearCache(IDirectMusicLoader8 *iface, REFGUID class)
 {
     IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-    struct cache_entry *obj;
+    struct cache_entry *obj, *obj2;
 
     TRACE("(%p, %s)\n", This, debugstr_dmguid(class));
 
-    LIST_FOR_EACH_ENTRY(obj, &This->cache, struct cache_entry, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(obj, obj2, &This->cache, struct cache_entry, entry) {
         if ((IsEqualGUID(class, &GUID_DirectMusicAllTypes) || IsEqualGUID(class, &obj->Desc.guidClass)) &&
             (obj->Desc.dwValidData & DMUS_OBJ_LOADED)) {
             /* basically, wrap to ReleaseObject for each object found */
