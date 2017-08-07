@@ -3321,6 +3321,22 @@ typedef struct tagTOUCHINPUT {
 } TOUCHINPUT, *PTOUCHINPUT;
 typedef TOUCHINPUT const * PCTOUCHINPUT;
 
+/* Gesture definitions */
+DECLARE_HANDLE(HGESTUREINFO);
+
+typedef struct tagGESTUREINFO {
+    UINT      cbSize;
+    DWORD     dwFlags;
+    DWORD     dwID;
+    HWND      hwndTarget;
+    POINTS    ptsLocation;
+    DWORD     dwInstanceID;
+    DWORD     dwSequenceID;
+    ULONGLONG ullArguments;
+    UINT      cbExtraArgs;
+} GESTUREINFO, *PGESTUREINFO;
+typedef GESTUREINFO const * PCGESTUREINFO;
+
 #if defined(_WINGDI_) && !defined(NOGDI)
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsA(LPDEVMODEA,DWORD);
 WINUSERAPI LONG        WINAPI ChangeDisplaySettingsW(LPDEVMODEW,DWORD);
@@ -3658,6 +3674,7 @@ WINUSERAPI UINT        WINAPI GetDoubleClickTime(void);
 WINUSERAPI HWND        WINAPI GetFocus(void);
 WINUSERAPI HWND        WINAPI GetForegroundWindow(void);
 WINUSERAPI BOOL        WINAPI GetGestureConfig(HWND,DWORD,DWORD,UINT*,GESTURECONFIG*,UINT);
+WINUSERAPI BOOL        WINAPI GetGestureInfo(HGESTUREINFO,PGESTUREINFO);
 WINUSERAPI BOOL        WINAPI GetGUIThreadInfo(DWORD,GUITHREADINFO*);
 WINUSERAPI DWORD       WINAPI GetGuiResources(HANDLE,DWORD);
 WINUSERAPI BOOL        WINAPI GetIconInfo(HICON,PICONINFO);

@@ -4016,3 +4016,13 @@ BOOL WINAPI GetTouchInputInfo(HTOUCHINPUT handle, UINT count, TOUCHINPUT *ptr, i
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/*****************************************************************************
+ *              GetGestureInfo (USER32.@)
+ */
+BOOL WINAPI GetGestureInfo(HGESTUREINFO handle, PGESTUREINFO ptr)
+{
+    FIXME("(%p %p): stub\n", handle, ptr);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

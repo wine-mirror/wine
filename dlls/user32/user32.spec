@@ -295,6 +295,7 @@
 @ stdcall GetFocus()
 @ stdcall GetForegroundWindow()
 @ stdcall GetGestureConfig(long long long ptr ptr long)
+@ stdcall GetGestureInfo(long ptr)
 @ stdcall GetGUIThreadInfo(long ptr)
 @ stdcall GetGuiResources(long long)
 @ stdcall GetIconInfo(long ptr)
