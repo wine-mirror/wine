@@ -3113,6 +3113,29 @@ static void test__mbscmp(void)
     ok(ret == 1, "got %d\n", ret);
 }
 
+static void test__ismbclx(void)
+{
+    int cp, ret;
+
+    ret = _ismbcl0(0);
+    ok(!ret, "got %d\n", ret);
+
+    cp = _setmbcp(1252);
+
+    ret = _ismbcl0(0x8140);
+    ok(!ret, "got %d\n", ret);
+
+    _setmbcp(932);
+
+    ret = _ismbcl0(0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = _ismbcl0(0x8140);
+    ok(ret, "got %d\n", ret);
+
+    _setmbcp(cp);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -3227,4 +3250,5 @@ START_TEST(string)
     test__strnset_s();
     test__wcsset_s();
     test__mbscmp();
+    test__ismbclx();
 }

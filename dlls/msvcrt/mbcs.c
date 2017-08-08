@@ -2441,3 +2441,17 @@ unsigned int CDECL _mbctokata(unsigned int c)
         return (c - 0x829f) + 0x8340 + (c >= 0x82de ? 1 : 0);
     return c;
 }
+
+
+/*********************************************************************
+ *		_ismbcl0 (MSVCRT.@)
+ */
+int CDECL _ismbcl0(unsigned int c)
+{
+  if(get_mbcinfo()->mbcodepage == 932)
+  {
+    /* JIS non-Kanji */
+    return (c >= 0x8140 && c <= 0x889e);
+  }
+  return 0;
+}
