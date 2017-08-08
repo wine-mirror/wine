@@ -7915,22 +7915,14 @@ static void test_ConnectEx(void)
     address.sin_port = htons(1);
 
     bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
-    ok(bret == FALSE && GetLastError(), "ConnectEx to bad destination failed: "
+    ok(bret == FALSE && GetLastError() == ERROR_IO_PENDING, "ConnectEx to bad destination failed: "
         "returned %d + errno %d\n", bret, GetLastError());
+    dwret = WaitForSingleObject(overlapped.hEvent, 15000);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
 
-    if (GetLastError() == ERROR_IO_PENDING)
-    {
-        dwret = WaitForSingleObject(overlapped.hEvent, 15000);
-        ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
-
-        bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
-        ok(bret == FALSE && GetLastError() == ERROR_CONNECTION_REFUSED,
-           "Connecting to a disconnected host returned error %d - %d\n", bret, WSAGetLastError());
-    }
-    else {
-        ok(GetLastError() == WSAECONNREFUSED,
-           "Connecting to a disconnected host returned error %d - %d\n", bret, WSAGetLastError());
-    }
+    bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
+    ok(bret == FALSE && GetLastError() == ERROR_CONNECTION_REFUSED,
+       "Connecting to a disconnected host returned error %d - %d\n", bret, WSAGetLastError());
 
 end:
     if (overlapped.hEvent)
