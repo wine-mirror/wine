@@ -381,7 +381,7 @@
 @ cdecl _ismbcgraph(long)
 @ cdecl _ismbchira(long)
 @ cdecl _ismbckata(long)
-@ stub _ismbcl0(long)
+@ cdecl _ismbcl0(long)
 @ stub _ismbcl1(long)
 @ stub _ismbcl2(long)
 @ cdecl _ismbclegal(long)

@@ -604,7 +604,7 @@
 # stub _ismbchira_l(long ptr)
 @ cdecl _ismbckata(long)
 # stub _ismbckata_l(long ptr)
-@ stub _ismbcl0(long)
+@ cdecl _ismbcl0(long)
 # stub _ismbcl0_l(long ptr)
 @ stub _ismbcl1(long)
 # stub _ismbcl1_l(long ptr)
