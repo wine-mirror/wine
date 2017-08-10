@@ -1,1 +1,7 @@
 MODULE = ieproxy.dll
+IMPORTS = uuid rpcrt4
+
+IDL_SRCS = \
+	ieproxy_ieautomation.idl
+
+dlldata_EXTRADEFS = -DWINE_REGISTER_DLL -DPROXY_CLSID=CLSID_PSFactoryBuffer
