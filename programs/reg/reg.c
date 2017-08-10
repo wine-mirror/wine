@@ -543,7 +543,7 @@ static WCHAR *reg_data_to_wchar(DWORD type, const BYTE *src, DWORD size_bytes)
         case REG_BINARY:
         {
             WCHAR *ptr;
-            WCHAR fmt[] = {'%','0','2','X',0};
+            static const WCHAR fmt[] = {'%','0','2','X',0};
 
             buffer = heap_xalloc((size_bytes * 2 + 1) * sizeof(WCHAR));
             ptr = buffer;
@@ -556,7 +556,7 @@ static WCHAR *reg_data_to_wchar(DWORD type, const BYTE *src, DWORD size_bytes)
         case REG_DWORD_BIG_ENDIAN:
         {
             const int zero_x_dword = 10;
-            WCHAR fmt[] = {'0','x','%','x',0};
+            static const WCHAR fmt[] = {'0','x','%','x',0};
 
             buffer = heap_xalloc((zero_x_dword + 1) * sizeof(WCHAR));
             sprintfW(buffer, fmt, *(DWORD *)src);
@@ -611,10 +611,10 @@ static const WCHAR *reg_type_to_wchar(DWORD type)
 
 static void output_value(const WCHAR *value_name, DWORD type, BYTE *data, DWORD data_size)
 {
-    WCHAR fmt[] = {' ',' ',' ',' ','%','1',0};
+    static const WCHAR fmt[] = {' ',' ',' ',' ','%','1',0};
+    static const WCHAR newlineW[] = {'\n',0};
     WCHAR defval[32];
     WCHAR *reg_data;
-    WCHAR newlineW[] = {'\n',0};
 
     if (value_name && value_name[0])
         output_string(fmt, value_name);
@@ -642,7 +642,7 @@ static void output_value(const WCHAR *value_name, DWORD type, BYTE *data, DWORD 
 static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD subkey_len)
 {
     WCHAR *subkey_path;
-    WCHAR fmt[] = {'%','s','\\','%','s',0};
+    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
 
     subkey_path = heap_xalloc((path_len + subkey_len + 2) * sizeof(WCHAR));
     sprintfW(subkey_path, fmt, path, subkey_name);
