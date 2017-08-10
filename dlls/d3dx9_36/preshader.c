@@ -1419,6 +1419,47 @@ static void regstore_set_data(struct d3dx_regstore *rs, unsigned int table,
     regstore_set_modified(rs, table, offset, count);
 }
 
+static HRESULT set_constants_device(ID3DXEffectStateManager *manager, struct IDirect3DDevice9 *device,
+        D3DXPARAMETER_TYPE type, enum pres_reg_tables table, void *ptr,
+        unsigned int start, unsigned int count)
+{
+    if (type == D3DXPT_VERTEXSHADER)
+    {
+        switch(table)
+        {
+            case PRES_REGTAB_OCONST:
+                return SET_D3D_STATE_(manager, device, SetVertexShaderConstantF, start, ptr, count);
+            case PRES_REGTAB_OICONST:
+                return SET_D3D_STATE_(manager, device, SetVertexShaderConstantI, start, ptr, count);
+            case PRES_REGTAB_OBCONST:
+                return SET_D3D_STATE_(manager, device, SetVertexShaderConstantB, start, ptr, count);
+            default:
+                FIXME("Unexpected register table %u.\n", table);
+                return D3DERR_INVALIDCALL;
+        }
+    }
+    else if (type == D3DXPT_PIXELSHADER)
+    {
+        switch(table)
+        {
+            case PRES_REGTAB_OCONST:
+                return SET_D3D_STATE_(manager, device, SetPixelShaderConstantF, start, ptr, count);
+            case PRES_REGTAB_OICONST:
+                return SET_D3D_STATE_(manager, device, SetPixelShaderConstantI, start, ptr, count);
+            case PRES_REGTAB_OBCONST:
+                return SET_D3D_STATE_(manager, device, SetPixelShaderConstantB, start, ptr, count);
+            default:
+                FIXME("Unexpected register table %u.\n", table);
+                return D3DERR_INVALIDCALL;
+        }
+    }
+    else
+    {
+        FIXME("Unexpected parameter type %u.\n", type);
+        return D3DERR_INVALIDCALL;
+    }
+}
+
 static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const_tab,
         ULONG64 new_update_version)
 {
@@ -1686,49 +1727,8 @@ static HRESULT set_shader_constants_device(ID3DXEffectStateManager *manager, str
         TRACE("Setting %u constants at %u.\n", count, start);
         ptr = (BYTE *)rs->tables[table] + get_offset_reg(table, start)
                 * table_info[table].component_size;
-        if (type == D3DXPT_VERTEXSHADER)
-        {
-            switch(table)
-            {
-                case PRES_REGTAB_OCONST:
-                    hr = SET_D3D_STATE_(manager, device, SetVertexShaderConstantF, start, (const float *)ptr, count);
-                    break;
-                case PRES_REGTAB_OICONST:
-                    hr = SET_D3D_STATE_(manager, device, SetVertexShaderConstantI, start, (const int *)ptr, count);
-                    break;
-                case PRES_REGTAB_OBCONST:
-                    hr = SET_D3D_STATE_(manager, device, SetVertexShaderConstantB, start, (const BOOL *)ptr, count);
-                    break;
-                default:
-                    FIXME("Unexpected register table %u.\n", table);
-                    return D3DERR_INVALIDCALL;
-            }
-        }
-        else if (type == D3DXPT_PIXELSHADER)
-        {
-            switch(table)
-            {
-                case PRES_REGTAB_OCONST:
-                    hr = SET_D3D_STATE_(manager, device, SetPixelShaderConstantF, start, (const float *)ptr, count);
-                    break;
-                case PRES_REGTAB_OICONST:
-                    hr = SET_D3D_STATE_(manager, device, SetPixelShaderConstantI, start, (const int *)ptr, count);
-                    break;
-                case PRES_REGTAB_OBCONST:
-                    hr = SET_D3D_STATE_(manager, device, SetPixelShaderConstantB, start, (const BOOL *)ptr, count);
-                    break;
-                default:
-                    FIXME("Unexpected register table %u.\n", table);
-                    return D3DERR_INVALIDCALL;
-            }
-        }
-        else
-        {
-            FIXME("Unexpected parameter type %u.\n", type);
-            return D3DERR_INVALIDCALL;
-        }
 
-        if (FAILED(hr))
+        if (FAILED(hr = set_constants_device(manager, device, type, table, ptr, start, count)))
         {
             ERR("Setting constants failed, type %u, table %u, hr %#x.\n", type, table, hr);
             result = hr;
