@@ -1070,7 +1070,7 @@ int wmain(int argc, WCHAR *argvW[])
         ret = reg_add(root, path, value_name, value_empty, type, separator, data, force);
     else if (op == REG_DELETE)
         ret = reg_delete(root, path, key_name, value_name, value_empty, value_all, force);
-    else if (op == REG_QUERY)
+    else
         ret = reg_query(root, path, key_name, value_name, value_empty, recurse);
     return ret;
 }
