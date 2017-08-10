@@ -6269,6 +6269,13 @@ GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
     if(graphics->busy)
         return ObjectBusy;
 
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        status = METAFILE_SetClipRegion((GpMetafile*)graphics->image, region, mode);
+        if (status != Ok)
+            return status;
+    }
+
     status = GdipCloneRegion(region, &clip);
     if (status == Ok)
     {

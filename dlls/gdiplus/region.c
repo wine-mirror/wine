@@ -699,7 +699,7 @@ static void write_element(const region_element* element, DWORD *buffer,
     }
 }
 
-static DWORD write_region_data(const GpRegion *region, void *data)
+DWORD write_region_data(const GpRegion *region, void *data)
 {
     struct region_header *header = data;
     INT filled = 0;

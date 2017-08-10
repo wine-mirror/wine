@@ -93,6 +93,7 @@ extern GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
     GDIPCONST GpRectF* rects, INT count) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_SetClipRect(GpMetafile* metafile,
     REAL x, REAL y, REAL width, REAL height, CombineMode mode) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_SetClipRegion(GpMetafile* metafile, GpRegion* region, CombineMode mode) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_SetPageTransform(GpMetafile* metafile, GpUnit unit, REAL scale) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_SetWorldTransform(GpMetafile* metafile, GDIPCONST GpMatrix* transform) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_ScaleWorldTransform(GpMetafile* metafile, REAL sx, REAL sy, MatrixOrder order) DECLSPEC_HIDDEN;
@@ -124,6 +125,7 @@ extern void free_installed_fonts(void) DECLSPEC_HIDDEN;
 
 extern BOOL lengthen_path(GpPath *path, INT len) DECLSPEC_HIDDEN;
 
+extern DWORD write_region_data(const GpRegion *region, void *data) DECLSPEC_HIDDEN;
 extern DWORD write_path_data(GpPath *path, void *data) DECLSPEC_HIDDEN;
 
 extern GpStatus trace_path(GpGraphics *graphics, GpPath *path) DECLSPEC_HIDDEN;

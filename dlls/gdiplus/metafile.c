@@ -239,6 +239,13 @@ typedef struct EmfPlusPath
     BYTE data[1];
 } EmfPlusPath;
 
+typedef struct EmfPlusRegion
+{
+    DWORD Version;
+    DWORD RegionNodeCount;
+    BYTE RegionNode[1];
+} EmfPlusRegion;
+
 typedef enum
 {
     BitmapDataTypePixel,
@@ -312,6 +319,7 @@ typedef struct EmfPlusObject
         EmfPlusBrush brush;
         EmfPlusPen pen;
         EmfPlusPath path;
+        EmfPlusRegion region;
         EmfPlusImage image;
         EmfPlusImageAttributes image_attributes;
     } ObjectData;
@@ -844,6 +852,53 @@ GpStatus METAFILE_SetClipRect(GpMetafile* metafile, REAL x, REAL y, REAL width, 
         METAFILE_WriteRecords(metafile);
     }
 
+    return Ok;
+}
+
+static GpStatus METAFILE_AddRegionObject(GpMetafile *metafile, GpRegion *region, DWORD *id)
+{
+    EmfPlusObject *object_record;
+    DWORD size;
+    GpStatus stat;
+
+    *id = -1;
+    if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
+        return Ok;
+
+    size = write_region_data(region, NULL);
+    stat = METAFILE_AllocateRecord(metafile,
+            FIELD_OFFSET(EmfPlusObject, ObjectData.region) + size, (void**)&object_record);
+    if (stat != Ok) return stat;
+
+    *id = METAFILE_AddObjectId(metafile);
+    object_record->Header.Type = EmfPlusRecordTypeObject;
+    object_record->Header.Flags = *id | ObjectTypeRegion << 8;
+    write_region_data(region, &object_record->ObjectData.region);
+    return Ok;
+}
+
+GpStatus METAFILE_SetClipRegion(GpMetafile* metafile, GpRegion* region, CombineMode mode)
+{
+    EmfPlusRecordHeader *record;
+    DWORD region_id;
+    GpStatus stat;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
+
+    stat = METAFILE_AddRegionObject(metafile, region, &region_id);
+    if (stat != Ok) return stat;
+
+    stat = METAFILE_AllocateRecord(metafile, sizeof(*record), (void**)&record);
+    if (stat != Ok) return stat;
+
+    record->Type = EmfPlusRecordTypeSetClipRegion;
+    record->Flags = region_id | mode << 8;
+
+    METAFILE_WriteRecords(metafile);
     return Ok;
 }
 
