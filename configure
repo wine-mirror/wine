@@ -1239,6 +1239,7 @@ enable_httpapi
 enable_iccvid
 enable_icmp
 enable_ieframe
+enable_ieproxy
 enable_imaadp32_acm
 enable_imagehlp
 enable_imm32
@@ -18387,6 +18388,7 @@ wine_fn_config_dll iccvid enable_iccvid clean
 wine_fn_config_dll icmp enable_icmp
 wine_fn_config_dll ieframe enable_ieframe clean,implib
 wine_fn_config_test dlls/ieframe/tests ieframe_test
+wine_fn_config_dll ieproxy enable_ieproxy
 wine_fn_config_dll ifsmgr.vxd enable_win16
 wine_fn_config_dll imaadp32.acm enable_imaadp32_acm
 wine_fn_config_dll imagehlp enable_imagehlp implib
