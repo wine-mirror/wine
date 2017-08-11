@@ -80,6 +80,7 @@ IDL_SRCS = \
 	httprequest.idl \
 	iads.idl \
 	icftypes.idl \
+	ieautomation.idl \
 	iextag.idl \
 	iimgctx.idl \
 	imnact.idl \
