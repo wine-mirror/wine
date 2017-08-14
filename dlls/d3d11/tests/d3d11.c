@@ -18053,6 +18053,198 @@ static void test_uav_counters(void)
     release_test_context(&test_context);
 }
 
+static void test_dispatch_indirect(void)
+{
+    struct stats
+    {
+        unsigned int dispatch_count;
+        unsigned int thread_count;
+        unsigned int max_x;
+        unsigned int max_y;
+        unsigned int max_z;
+    };
+
+    ID3D11Buffer *append_buffer, *stats_buffer, *args_buffer, *staging_buffer;
+    ID3D11UnorderedAccessView *uav, *stats_uav;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    ID3D11ComputeShader *cs_append, *cs_stats;
+    struct d3d11_test_context test_context;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11Device *device;
+    unsigned int data, i;
+    struct stats *stats;
+    HRESULT hr;
+
+    static const DWORD cs_append_code[] =
+    {
+#if 0
+        struct dispatch_args
+        {
+            uint x, y, z;
+        };
+
+        AppendStructuredBuffer<dispatch_args> u;
+
+        [numthreads(1, 1, 1)]
+        void main()
+        {
+            dispatch_args args = {4, 2, 1};
+            u.Append(args);
+            args.y = 1;
+            u.Append(args);
+            args.x = 3;
+            u.Append(args);
+        }
+#endif
+        0x43425844, 0x954de75a, 0x8bb1b78b, 0x84ded464, 0x9d9532b7, 0x00000001, 0x00000158, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000104, 0x00050050, 0x00000041, 0x0100086a,
+        0x0400009e, 0x0011e000, 0x00000000, 0x0000000c, 0x02000068, 0x00000001, 0x0400009b, 0x00000001,
+        0x00000001, 0x00000001, 0x050000b2, 0x00100012, 0x00000000, 0x0011e000, 0x00000000, 0x0c0000a8,
+        0x0011e072, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000000, 0x00004002, 0x00000004,
+        0x00000002, 0x00000001, 0x00000000, 0x050000b2, 0x00100012, 0x00000000, 0x0011e000, 0x00000000,
+        0x0c0000a8, 0x0011e072, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000000, 0x00004002,
+        0x00000004, 0x00000001, 0x00000001, 0x00000000, 0x050000b2, 0x00100012, 0x00000000, 0x0011e000,
+        0x00000000, 0x0c0000a8, 0x0011e072, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000000,
+        0x00004002, 0x00000003, 0x00000001, 0x00000001, 0x00000000, 0x0100003e,
+    };
+    static const DWORD cs_stats_code[] =
+    {
+#if 0
+        struct stats
+        {
+            uint dispatch_count;
+            uint thread_count;
+            uint max_x;
+            uint max_y;
+            uint max_z;
+        };
+
+        RWStructuredBuffer<stats> u;
+
+        [numthreads(1, 1, 1)]
+        void main(uint3 id : SV_DispatchThreadID)
+        {
+            if (all(!id))
+                InterlockedAdd(u[0].dispatch_count, 1);
+            InterlockedAdd(u[0].thread_count, 1);
+            InterlockedMax(u[0].max_x, id.x);
+            InterlockedMax(u[0].max_y, id.y);
+            InterlockedMax(u[0].max_z, id.z);
+        }
+#endif
+        0x43425844, 0xbd3f2e4e, 0xb0f61ff7, 0xa8e10584, 0x2f61aec9, 0x00000001, 0x000001bc, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000168, 0x00050050, 0x0000005a, 0x0100086a,
+        0x0400009e, 0x0011e000, 0x00000000, 0x00000014, 0x0200005f, 0x00020072, 0x02000068, 0x00000001,
+        0x0400009b, 0x00000001, 0x00000001, 0x00000001, 0x09000020, 0x00100072, 0x00000000, 0x00020246,
+        0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x07000001, 0x00100012, 0x00000000,
+        0x0010001a, 0x00000000, 0x0010000a, 0x00000000, 0x07000001, 0x00100012, 0x00000000, 0x0010002a,
+        0x00000000, 0x0010000a, 0x00000000, 0x0304001f, 0x0010000a, 0x00000000, 0x0a0000ad, 0x0011e000,
+        0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00004001, 0x00000001,
+        0x01000015, 0x0a0000ad, 0x0011e000, 0x00000000, 0x00004002, 0x00000000, 0x00000004, 0x00000000,
+        0x00000000, 0x00004001, 0x00000001, 0x090000b0, 0x0011e000, 0x00000000, 0x00004002, 0x00000000,
+        0x00000008, 0x00000000, 0x00000000, 0x0002000a, 0x090000b0, 0x0011e000, 0x00000000, 0x00004002,
+        0x00000000, 0x0000000c, 0x00000000, 0x00000000, 0x0002001a, 0x090000b0, 0x0011e000, 0x00000000,
+        0x00004002, 0x00000000, 0x00000010, 0x00000000, 0x00000000, 0x0002002a, 0x0100003e,
+    };
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const unsigned int zero[4] = {0, 0, 0, 0};
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_append_code, sizeof(cs_append_code), NULL, &cs_append);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateComputeShader(device, cs_stats_code, sizeof(cs_stats_code), NULL, &cs_stats);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    memset(&buffer_desc, 0, sizeof(buffer_desc));
+    buffer_desc.ByteWidth = sizeof(unsigned int);
+    buffer_desc.Usage = D3D11_USAGE_STAGING;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &staging_buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = 60;
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    buffer_desc.StructureByteStride = 3 * sizeof(unsigned int);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &append_buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    uav_desc.Format = DXGI_FORMAT_UNKNOWN;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    U(uav_desc).Buffer.FirstElement = 0;
+    U(uav_desc).Buffer.NumElements = 5;
+    U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_APPEND;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)append_buffer, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    /* We use a separate buffer because D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS
+     * and D3D11_RESOURCE_MISC_BUFFER_STRUCTURED are mutually exclusive flags.
+     */
+    buffer_desc.BindFlags = 0;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &args_buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = sizeof(*stats);
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    buffer_desc.StructureByteStride = sizeof(*stats);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &stats_buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)stats_buffer, NULL, &stats_uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    data = read_uav_counter(context, staging_buffer, uav);
+    ok(!data, "Got unexpected initial value %u.\n", data);
+    data = 8;
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, &data);
+    data = read_uav_counter(context, staging_buffer, uav);
+    ok(data == 8, "Got unexpected value %u.\n", data);
+
+    ID3D11DeviceContext_CSSetShader(context, cs_append, NULL, 0);
+    data = 0;
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, &data);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    data = read_uav_counter(context, staging_buffer, uav);
+    ok(data == 3, "Got unexpected value %u.\n", data);
+    ID3D11DeviceContext_CopyResource(context, (ID3D11Resource *)args_buffer, (ID3D11Resource *)append_buffer);
+
+    ID3D11DeviceContext_CSSetShader(context, cs_stats, NULL, 0);
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, stats_uav, zero);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &stats_uav, NULL);
+    data = read_uav_counter(context, staging_buffer, uav);
+    for (i = 0; i < data; ++i)
+        ID3D11DeviceContext_DispatchIndirect(context, args_buffer, i * 3 * sizeof(unsigned int));
+    get_buffer_readback(stats_buffer, &rb);
+    stats = rb.map_desc.pData;
+    ok(stats->dispatch_count == 3, "Got unexpected dispatch count %u.\n", stats->dispatch_count);
+    ok(stats->thread_count == 15, "Got unexpected thread count %u.\n", stats->thread_count);
+    ok(stats->max_x == 3, "Got unexpected max x %u.\n", stats->max_x);
+    ok(stats->max_y == 1, "Got unexpected max y %u.\n", stats->max_y);
+    ok(stats->max_z == 0, "Got unexpected max z %u.\n", stats->max_z);
+    release_resource_readback(&rb);
+
+    ID3D11Buffer_Release(append_buffer);
+    ID3D11Buffer_Release(args_buffer);
+    ID3D11Buffer_Release(staging_buffer);
+    ID3D11Buffer_Release(stats_buffer);
+    ID3D11ComputeShader_Release(cs_append);
+    ID3D11ComputeShader_Release(cs_stats);
+    ID3D11UnorderedAccessView_Release(uav);
+    ID3D11UnorderedAccessView_Release(stats_uav);
+    release_test_context(&test_context);
+}
+
 static void test_compute_shader_registers(void)
 {
     struct data
@@ -20881,6 +21073,7 @@ START_TEST(d3d11)
     run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_11_0,
             test_unaligned_raw_buffer_access);
     test_uav_counters();
+    test_dispatch_indirect();
     test_compute_shader_registers();
     test_tgsm();
     test_geometry_shader();
