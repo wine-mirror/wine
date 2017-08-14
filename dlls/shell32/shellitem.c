@@ -711,6 +711,41 @@ HRESULT WINAPI SHCreateItemFromIDList(PCIDLIST_ABSOLUTE pidl, REFIID riid, void 
     return ret;
 }
 
+HRESULT WINAPI SHCreateItemInKnownFolder(REFKNOWNFOLDERID rfid, DWORD flags,
+                                         PCWSTR filename, REFIID riid, void **ppv)
+{
+    HRESULT hr;
+    IShellItem *parent = NULL;
+    LPITEMIDLIST pidl = NULL;
+
+    TRACE("(%p, %x, %s, %s, %p)\n", rfid, flags, wine_dbgstr_w(filename),
+          debugstr_guid(riid), ppv);
+
+    if(!rfid || !ppv)
+        return E_INVALIDARG;
+
+    *ppv = NULL;
+    hr = SHGetKnownFolderIDList(rfid, flags, NULL, &pidl);
+    if(hr != S_OK)
+        return hr;
+
+    hr = SHCreateItemFromIDList(pidl, &IID_IShellItem, (void**)&parent);
+    if(hr != S_OK)
+    {
+        ILFree(pidl);
+        return hr;
+    }
+
+    if(filename)
+        hr = SHCreateItemFromRelativeName(parent, filename, NULL, riid, ppv);
+    else
+        hr = IShellItem_QueryInterface(parent, riid, ppv);
+
+    ILFree(pidl);
+    IShellItem_Release(parent);
+    return hr;
+}
+
 HRESULT WINAPI SHGetItemFromDataObject(IDataObject *pdtobj,
     DATAOBJ_GET_ITEM_FLAGS dwFlags, REFIID riid, void **ppv)
 {

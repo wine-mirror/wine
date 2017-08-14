@@ -344,6 +344,7 @@
 @ stdcall SHCreateDirectoryExW(long wstr ptr)
 @ stdcall SHCreateItemFromIDList(ptr ptr ptr)
 @ stdcall SHCreateItemFromParsingName(wstr ptr ptr ptr)
+@ stdcall SHCreateItemInKnownFolder(ptr long wstr ptr ptr)
 @ stdcall SHCreateItemFromRelativeName(ptr wstr ptr ptr ptr)
 @ stub SHCreateProcessAsUserW
 @ stdcall SHCreateShellItem(ptr ptr ptr ptr)

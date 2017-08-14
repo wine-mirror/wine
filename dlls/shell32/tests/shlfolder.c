@@ -59,6 +59,7 @@ static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHCreateItemFromIDList)(PCIDLIST_ABSOLUTE pidl, REFIID riid, void **ppv);
 static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
 static HRESULT (WINAPI *pSHCreateItemFromRelativeName)(IShellItem*,PCWSTR,IBindCtx*,REFIID,void**);
+static HRESULT (WINAPI *pSHCreateItemInKnownFolder)(REFKNOWNFOLDERID,DWORD,PCWSTR,REFIID,void **);
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static HRESULT (WINAPI *pSHCreateShellItemArray)(LPCITEMIDLIST,IShellFolder*,UINT,LPCITEMIDLIST*,IShellItemArray**);
 static HRESULT (WINAPI *pSHCreateShellItemArrayFromIDLists)(UINT, PCIDLIST_ABSOLUTE*, IShellItemArray**);
@@ -118,6 +119,7 @@ static void init_function_pointers(void)
     MAKEFUNC(SHCreateItemFromIDList);
     MAKEFUNC(SHCreateItemFromParsingName);
     MAKEFUNC(SHCreateItemFromRelativeName);
+    MAKEFUNC(SHCreateItemInKnownFolder);
     MAKEFUNC(SHCreateShellItem);
     MAKEFUNC(SHCreateShellItemArray);
     MAKEFUNC(SHCreateShellItemArrayFromIDLists);
@@ -2602,6 +2604,115 @@ static void test_SHCreateShellItem(void)
     }
     else
         win_skip("No SHCreateItemFromRelativeName or SHGetKnownFolderPath\n");
+
+    /* SHCreateItemInKnownFolder */
+    if(pSHCreateItemInKnownFolder && pSHGetKnownFolderPath)
+    {
+        WCHAR *desktop_path;
+        WCHAR testfile_path[MAX_PATH] = {0};
+        HANDLE file;
+        WCHAR *displayname = NULL;
+        int order;
+        LPITEMIDLIST pidl_desktop_testfile = NULL;
+
+        shellitem = (void*)0xdeadbeef;
+        ret = pSHCreateItemInKnownFolder(&FOLDERID_Desktop, 0, NULL, &IID_IShellItem,
+                                         (void**)&shellitem);
+        ok(ret == S_OK, "SHCreateItemInKnownFolder failed: 0x%08x.\n", ret);
+        ok(shellitem != NULL, "shellitem was %p.\n", shellitem);
+        if(SUCCEEDED(ret))
+        {
+            shellitem2 = (void*)0xdeadbeef;
+            ret = pSHCreateShellItem(NULL, NULL, pidl_desktop, &shellitem2);
+            ok(SUCCEEDED(ret), "SHCreateShellItem returned %x\n", ret);
+            if(SUCCEEDED(ret))
+            {
+                ret = IShellItem_Compare(shellitem, shellitem2, 0, &order);
+                ok(ret == S_OK, "IShellItem_Compare failed: 0x%08x.\n", ret);
+                ok(!order, "order got wrong value: %d.\n", order);
+                IShellItem_Release(shellitem2);
+            }
+            IShellItem_Release(shellitem);
+        }
+
+        /* Test with a non-existent file */
+        shellitem = (void*)0xdeadbeef;
+        ret = pSHCreateItemInKnownFolder(&FOLDERID_Desktop, 0, testfileW, &IID_IShellItem,
+                                         (void**)&shellitem);
+        ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+           "Expected 0x%08x but SHCreateItemInKnownFolder return: 0x%08x.\n",
+           HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), ret);
+        ok(shellitem == NULL, "shellitem was %p.\n", shellitem);
+
+        pSHGetKnownFolderPath(&FOLDERID_Desktop, 0, NULL, &desktop_path);
+        lstrcatW(testfile_path, desktop_path);
+        myPathAddBackslashW(testfile_path);
+        lstrcatW(testfile_path, testfileW);
+        file = CreateFileW(testfile_path, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+        ok(file != INVALID_HANDLE_VALUE, "CreateFileW failed! Last error: 0x%08x.\n", GetLastError());
+        CloseHandle(file);
+
+        shellitem = (void*)0xdeadbeef;
+        ret = pSHCreateItemInKnownFolder(&FOLDERID_Desktop, 0, testfileW, &IID_IShellItem,
+                                         (void**)&shellitem);
+        ok(ret == S_OK, "SHCreateItemInKnownFolder failed: 0x%08x.\n", ret);
+        ok(shellitem != NULL, "shellitem was %p.\n", shellitem);
+        if(SUCCEEDED(ret))
+        {
+            ret = IShellItem_GetDisplayName(shellitem, 0, &displayname);
+            ok(ret == S_OK, "IShellItem_GetDisplayName failed: 0x%08x.\n", ret);
+            ok(!lstrcmpW(displayname, testfileW), "got wrong display name: %s.\n",
+               wine_dbgstr_w(displayname));
+            CoTaskMemFree(displayname);
+
+            shellitem2 = (void*)0xdeadbeef;
+            ret = pSHCreateItemInKnownFolder(&FOLDERID_Desktop, 0, testfileW, &IID_IShellItem,
+                                             (void**)&shellitem2);
+            ok(ret == S_OK, "SHCreateItemInKnownFolder failed: 0x%08x.\n", ret);
+            ok(shellitem2 != NULL, "shellitem was %p.\n", shellitem);
+            ret = IShellItem_Compare(shellitem, shellitem2, 0, &order);
+            ok(ret == S_OK, "IShellItem_Compare failed: 0x%08x.\n", ret);
+            ok(!order, "order got wrong value: %d.\n", order);
+            IShellItem_Release(shellitem2);
+
+            shellitem2 = (void*)0xdeadbeef;
+            ret = IShellFolder_ParseDisplayName(desktopfolder, NULL, NULL, testfileW, NULL,
+                                                &pidl_desktop_testfile, NULL);
+            ok(SUCCEEDED(ret), "ParseDisplayName returned %x.\n", ret);
+            ret = pSHCreateItemFromIDList(pidl_desktop_testfile, &IID_IShellItem, (void**)&shellitem2);
+            ret = IShellItem_Compare(shellitem, shellitem2, 0, &order);
+            ok(ret == S_OK, "IShellItem_Compare failed: 0x%08x.\n", ret);
+            ok(!order, "order got wrong value: %d.\n", order);
+            pILFree(pidl_desktop_testfile);
+            IShellItem_Release(shellitem2);
+
+            IShellItem_Release(shellitem);
+        }
+
+        shellitem = (void*)0xdeadbeef;
+        ret = pSHCreateItemInKnownFolder(&FOLDERID_Documents, 0, NULL, &IID_IShellItem,
+                                         (void**)&shellitem);
+        ok(ret == S_OK, "SHCreateItemInKnownFolder failed: 0x%08x.\n", ret);
+        ok(shellitem != NULL, "shellitem was %p.\n", shellitem);
+        if(SUCCEEDED(ret))
+        {
+            shellitem2 = (void*)0xdeadbeef;
+            ret = pSHCreateItemInKnownFolder(&FOLDERID_Documents, 0, NULL, &IID_IShellItem,
+                                             (void**)&shellitem2);
+            ok(ret == S_OK, "SHCreateItemInKnownFolder failed: 0x%08x.\n", ret);
+            ok(shellitem2 != NULL, "shellitem was %p.\n", shellitem);
+            ret = IShellItem_Compare(shellitem, shellitem2, 0, &order);
+            ok(ret == S_OK, "IShellItem_Compare failed: 0x%08x.\n", ret);
+            ok(!order, "order got wrong value: %d.\n", order);
+            IShellItem_Release(shellitem2);
+
+            IShellItem_Release(shellitem);
+        }
+        DeleteFileW(testfile_path);
+        CoTaskMemFree(desktop_path);
+    }
+    else
+        win_skip("No SHCreateItemInKnownFolder or SHGetKnownFolderPath\n");
 
     DeleteFileA(".\\testfile");
     pILFree(pidl_abstestfile);
