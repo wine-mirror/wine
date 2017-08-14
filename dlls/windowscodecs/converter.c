@@ -1149,6 +1149,43 @@ static HRESULT copypixels_to_8bppGray(struct FormatConverter *This, const WICRec
         return S_OK;
     }
 
+    if (source_format == format_32bppGrayFloat)
+    {
+        hr = S_OK;
+
+        if (prc)
+        {
+            srcstride = 4 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            hr = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+            if (SUCCEEDED(hr))
+            {
+                INT x, y;
+                BYTE *src = srcdata, *dst = pbBuffer;
+
+                for (y=0; y < prc->Height; y++)
+                {
+                    float *srcpixel = (float*)src;
+                    BYTE *dstpixel = dst;
+
+                    for (x=0; x < prc->Width; x++)
+                        *dstpixel++ = (BYTE)floorf(to_sRGB_component(*srcpixel++) * 255.0f + 0.51f);
+
+                    src += srcstride;
+                    dst += cbStride;
+                }
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+        }
+
+        return hr;
+    }
+
     srcstride = 3 * prc->Width;
     srcdatasize = srcstride * prc->Height;
 
