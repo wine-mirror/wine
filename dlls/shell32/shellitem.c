@@ -637,6 +637,55 @@ HRESULT WINAPI SHCreateItemFromParsingName(PCWSTR pszPath,
     return ret;
 }
 
+HRESULT WINAPI SHCreateItemFromRelativeName(IShellItem *parent, PCWSTR name, IBindCtx *pbc,
+                                            REFIID riid, void **ppv)
+{
+    LPITEMIDLIST pidl_folder = NULL, pidl = NULL;
+    IShellFolder *desktop = NULL, *folder = NULL;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p, %s, %p)\n", parent, wine_dbgstr_w(name), pbc, debugstr_guid(riid), ppv);
+
+    if(!ppv)
+        return E_INVALIDARG;
+    *ppv = NULL;
+    if(!name)
+        return E_INVALIDARG;
+
+    hr = SHGetIDListFromObject((IUnknown*)parent, &pidl_folder);
+    if(hr != S_OK)
+        return hr;
+
+    hr = SHGetDesktopFolder(&desktop);
+    if(hr != S_OK)
+        goto cleanup;
+
+    if(!_ILIsDesktop(pidl_folder))
+    {
+        hr = IShellFolder_BindToObject(desktop, pidl_folder, NULL, &IID_IShellFolder,
+                                       (void**)&folder);
+        if(hr != S_OK)
+            goto cleanup;
+    }
+
+    hr = IShellFolder_ParseDisplayName(folder ? folder : desktop, NULL, pbc, (LPWSTR)name,
+                                       NULL, &pidl, NULL);
+    if(hr != S_OK)
+        goto cleanup;
+    hr = SHCreateItemFromIDList(pidl, riid, ppv);
+
+cleanup:
+    if(pidl_folder)
+        ILFree(pidl_folder);
+    if(pidl)
+        ILFree(pidl);
+    if(desktop)
+        IShellFolder_Release(desktop);
+    if(folder)
+        IShellFolder_Release(folder);
+    return hr;
+}
+
 HRESULT WINAPI SHCreateItemFromIDList(PCIDLIST_ABSOLUTE pidl, REFIID riid, void **ppv)
 {
     IPersistIDList *persist;
