@@ -669,7 +669,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 }
 
 void dispatch_compute(struct wined3d_device *device, const struct wined3d_state *state,
-        unsigned int group_count_x, unsigned int group_count_y, unsigned int group_count_z)
+        const struct wined3d_dispatch_parameters *parameters)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
@@ -699,8 +699,22 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
         return;
     }
 
-    GL_EXTCALL(glDispatchCompute(group_count_x, group_count_y, group_count_z));
-    checkGLcall("glDispatchCompute");
+    if (parameters->indirect)
+    {
+        const struct wined3d_indirect_dispatch_parameters *indirect = &parameters->u.indirect;
+        struct wined3d_buffer *buffer = indirect->buffer;
+
+        wined3d_buffer_load(buffer, context, state);
+        GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer->buffer_object));
+        GL_EXTCALL(glDispatchComputeIndirect((GLintptr)indirect->offset));
+        GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0));
+    }
+    else
+    {
+        const struct wined3d_direct_dispatch_parameters *direct = &parameters->u.direct;
+        GL_EXTCALL(glDispatchCompute(direct->group_count_x, direct->group_count_y, direct->group_count_z));
+    }
+    checkGLcall("dispatch compute");
 
     GL_EXTCALL(glMemoryBarrier(GL_ALL_BARRIER_BITS));
     checkGLcall("glMemoryBarrier");
