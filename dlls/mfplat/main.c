@@ -348,6 +348,20 @@ HRESULT WINAPI MFTEnum(GUID category, UINT32 flags, MFT_REGISTER_TYPE_INFO *inpu
 }
 
 /***********************************************************************
+ *      MFTEnumEx (mfplat.@)
+ */
+HRESULT WINAPI MFTEnumEx(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_INFO *input_type,
+                         const MFT_REGISTER_TYPE_INFO *output_type, IMFActivate ***activate,
+                         UINT32 *pcount)
+{
+    FIXME("(%s, %x, %p, %p, %p, %p): stub\n", debugstr_guid(&category), flags, input_type,
+                                              output_type, activate, pcount);
+
+    *pcount = 0;
+    return S_OK;
+}
+
+/***********************************************************************
  *      MFTUnregister (mfplat.@)
  */
 HRESULT WINAPI MFTUnregister(CLSID clsid)
