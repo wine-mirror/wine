@@ -17972,6 +17972,13 @@ static void test_uav_counters(void)
     ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, &data);
     data = read_uav_counter(context, staging_buffer, uav);
     ok(data == 8, "Got unexpected value %u.\n", data);
+    data = ~0u;
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, &data);
+    data = read_uav_counter(context, staging_buffer, uav);
+    ok(data == 8, "Got unexpected value %u.\n", data);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+    data = read_uav_counter(context, staging_buffer, uav);
+    ok(data == 8, "Got unexpected value %u.\n", data);
 
     ID3D11DeviceContext_CSSetShader(context, cs_producer, NULL, 0);
     data = 0;
