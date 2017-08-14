@@ -953,7 +953,7 @@ static void wined3d_unordered_access_view_cs_init(void *object)
         context = context_acquire(resource->device, NULL, 0);
         gl_info = context->gl_info;
         create_buffer_view(&view->gl_view, context, desc, buffer, view->format);
-        if (desc->flags & WINED3D_VIEW_BUFFER_COUNTER)
+        if (desc->flags & (WINED3D_VIEW_BUFFER_COUNTER | WINED3D_VIEW_BUFFER_APPEND))
         {
             static const GLuint initial_value = 0;
             GL_EXTCALL(glGenBuffers(1, &view->counter_bo));
@@ -993,9 +993,6 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
     if (!(view->format = validate_resource_view(desc, resource, TRUE)))
         return E_INVALIDARG;
     view->desc = *desc;
-
-    if (desc->flags & WINED3D_VIEW_BUFFER_APPEND)
-        FIXME("Unhandled view flags %#x.\n", desc->flags);
 
     wined3d_resource_incref(view->resource = resource);
 
