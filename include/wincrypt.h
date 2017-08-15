@@ -4428,6 +4428,9 @@ BOOL WINAPI CryptUnprotectData( DATA_BLOB* pDataIn, LPWSTR* ppszDataDescr,
  DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
  CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut );
 
+BOOL WINAPI CryptProtectMemory(void *pData, DWORD cbData, DWORD dwFlags);
+BOOL WINAPI CryptUnprotectMemory(void *pData, DWORD cbData, DWORD dwFlags);
+
 DWORD WINAPI CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
  DWORD dwFlags, void *pvTypePara, LPSTR pszNameString, DWORD cchNameString);
 DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
