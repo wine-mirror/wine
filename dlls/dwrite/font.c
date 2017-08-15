@@ -463,7 +463,11 @@ static HRESULT WINAPI dwritefontface_QueryInterface(IDWriteFontFace4 *iface, REF
         IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IDWriteFontFace4_AddRef(iface);
+        if (InterlockedIncrement(&This->ref) == 1) {
+            InterlockedDecrement(&This->ref);
+            *obj = NULL;
+            return E_FAIL;
+        }
         return S_OK;
     }
 
@@ -489,6 +493,13 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace4 *iface)
     if (!ref) {
         UINT32 i;
 
+        factory_lock(This->factory);
+
+        if (This->cached) {
+            list_remove(&This->cached->entry);
+            heap_free(This->cached);
+        }
+
         if (This->cmap.context)
             IDWriteFontFace4_ReleaseFontTable(iface, This->cmap.context);
         if (This->vdmx.context)
@@ -512,10 +523,9 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace4 *iface)
             heap_free(This->glyphs[i]);
 
         freetype_notify_cacheremove(iface);
-        if (This->cached)
-            factory_release_cached_fontface(This->cached);
-        if (This->factory)
-            IDWriteFactory5_Release(This->factory);
+
+        factory_unlock(This->factory);
+        IDWriteFactory5_Release(This->factory);
         heap_free(This);
     }
 
@@ -1378,11 +1388,9 @@ static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace4
     *fontface = NULL;
 
     hr = factory_get_cached_fontface(font->family->collection->factory, &data->file, data->face_index,
-        font->data->simulations, (IDWriteFontFace **)fontface, &cached_list);
-    if (hr == S_OK) {
-        IDWriteFontFace4_AddRef(*fontface);
+            font->data->simulations, &cached_list, &IID_IDWriteFontFace4, (void **)fontface);
+    if (hr == S_OK)
         return hr;
-    }
 
     desc.factory = font->family->collection->factory;
     desc.face_type = data->face_type;
@@ -4325,6 +4333,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->colr.exists = TRUE;
     fontface->index = desc->index;
     fontface->simulations = desc->simulations;
+    IDWriteFactory5_AddRef(fontface->factory = desc->factory);
 
     for (i = 0; i < fontface->file_count; i++) {
         hr = get_stream_from_file(desc->files[i], &fontface->streams[i]);
@@ -4392,8 +4401,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         release_font_data(data);
     }
 
-    fontface->cached = factory_cache_fontface(cached_list, &fontface->IDWriteFontFace4_iface);
-    IDWriteFactory5_AddRef(fontface->factory = desc->factory);
+    fontface->cached = factory_cache_fontface(fontface->factory, cached_list, &fontface->IDWriteFontFace4_iface);
 
     *ret = &fontface->IDWriteFontFace4_iface;
     return S_OK;

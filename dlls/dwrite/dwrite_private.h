@@ -157,6 +157,12 @@ struct fontface_desc
     struct dwrite_font_data *font_data; /* could be NULL when face is created directly with IDWriteFactory::CreateFontFace() */
 };
 
+struct fontfacecached
+{
+    struct list entry;
+    IDWriteFontFace4 *fontface;
+};
+
 extern HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD,const WCHAR *locale,BOOL,IDWriteNumberSubstitution**) DECLSPEC_HIDDEN;
 extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
@@ -189,16 +195,17 @@ extern HRESULT create_matching_font(IDWriteFontCollection*,const WCHAR*,DWRITE_F
     IDWriteFont**) DECLSPEC_HIDDEN;
 extern HRESULT create_fontfacereference(IDWriteFactory5*,IDWriteFontFile*,UINT32,DWRITE_FONT_SIMULATIONS,
     IDWriteFontFaceReference**) DECLSPEC_HIDDEN;
-extern HRESULT factory_get_cached_fontface(IDWriteFactory5*,IDWriteFontFile*const*,UINT32,DWRITE_FONT_SIMULATIONS,IDWriteFontFace**,
-    struct list**) DECLSPEC_HIDDEN;
+extern HRESULT factory_get_cached_fontface(IDWriteFactory5*,IDWriteFontFile*const*,UINT32,DWRITE_FONT_SIMULATIONS,
+        struct list**,REFIID,void**) DECLSPEC_HIDDEN;
 extern void factory_detach_fontcollection(IDWriteFactory5*,IDWriteFontCollection1*) DECLSPEC_HIDDEN;
 extern void factory_detach_gdiinterop(IDWriteFactory5*,IDWriteGdiInterop1*) DECLSPEC_HIDDEN;
-extern struct fontfacecached *factory_cache_fontface(struct list*,IDWriteFontFace4*) DECLSPEC_HIDDEN;
-extern void factory_release_cached_fontface(struct fontfacecached*) DECLSPEC_HIDDEN;
+extern struct fontfacecached *factory_cache_fontface(IDWriteFactory5*,struct list*,IDWriteFontFace4*) DECLSPEC_HIDDEN;
 extern void    get_logfont_from_font(IDWriteFont*,LOGFONTW*) DECLSPEC_HIDDEN;
 extern void    get_logfont_from_fontface(IDWriteFontFace*,LOGFONTW*) DECLSPEC_HIDDEN;
 extern HRESULT create_gdiinterop(IDWriteFactory5*,IDWriteGdiInterop1**) DECLSPEC_HIDDEN;
 extern void fontface_detach_from_cache(IDWriteFontFace4*) DECLSPEC_HIDDEN;
+extern void factory_lock(IDWriteFactory5*) DECLSPEC_HIDDEN;
+extern void factory_unlock(IDWriteFactory5*) DECLSPEC_HIDDEN;
 
 /* Opentype font table functions */
 struct dwrite_font_props {
