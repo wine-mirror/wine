@@ -1192,7 +1192,7 @@ static BOOL WINAPI dwritefontface3_HasCharacter(IDWriteFontFace4 *iface, UINT32 
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
     UINT16 index;
 
-    TRACE("(%p)->(0x%08x)\n", This, ch);
+    TRACE("(%p)->(%#x)\n", This, ch);
 
     index = 0;
     if (FAILED(fontface_get_glyphs(This, &ch, 1, &index)))
@@ -1566,29 +1566,35 @@ static void WINAPI dwritefont_GetMetrics(IDWriteFont3 *iface, DWRITE_FONT_METRIC
     memcpy(metrics, &This->data->metrics, sizeof(*metrics));
 }
 
-static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont3 *iface, UINT32 value, BOOL *exists)
+static HRESULT font_has_character(struct dwrite_font *font, UINT32 ch, BOOL *exists)
 {
-    struct dwrite_font *This = impl_from_IDWriteFont3(iface);
     IDWriteFontFace4 *fontface;
     UINT16 index;
     HRESULT hr;
 
-    TRACE("(%p)->(0x%08x %p)\n", This, value, exists);
-
     *exists = FALSE;
 
-    hr = get_fontface_from_font(This, &fontface);
+    hr = get_fontface_from_font(font, &fontface);
     if (FAILED(hr))
         return hr;
 
     index = 0;
-    hr = IDWriteFontFace4_GetGlyphIndices(fontface, &value, 1, &index);
+    hr = IDWriteFontFace4_GetGlyphIndices(fontface, &ch, 1, &index);
+    IDWriteFontFace4_Release(fontface);
     if (FAILED(hr))
         return hr;
-    IDWriteFontFace4_Release(fontface);
 
     *exists = index != 0;
     return S_OK;
+}
+
+static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont3 *iface, UINT32 ch, BOOL *exists)
+{
+    struct dwrite_font *This = impl_from_IDWriteFont3(iface);
+
+    TRACE("(%p)->(%#x %p)\n", This, ch, exists);
+
+    return font_has_character(This, ch, exists);
 }
 
 static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont3 *iface, IDWriteFontFace **fontface)
@@ -1694,13 +1700,11 @@ static HRESULT WINAPI dwritefont3_GetFontFaceReference(IDWriteFont3 *iface, IDWr
 static BOOL WINAPI dwritefont3_HasCharacter(IDWriteFont3 *iface, UINT32 ch)
 {
     struct dwrite_font *This = impl_from_IDWriteFont3(iface);
-    HRESULT hr;
     BOOL ret;
 
-    TRACE("(%p)->(0x%x)\n", This, ch);
+    TRACE("(%p)->(%#x)\n", This, ch);
 
-    hr = IDWriteFont_HasCharacter((IDWriteFont*)iface, ch, &ret);
-    return hr == S_OK && ret;
+    return font_has_character(This, ch, &ret) == S_OK && ret;
 }
 
 static DWRITE_LOCALITY WINAPI dwritefont3_GetLocality(IDWriteFont3 *iface)
