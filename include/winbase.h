@@ -2511,6 +2511,7 @@ WINBASEAPI BOOL        WINAPI SetCurrentDirectoryW(LPCWSTR);
 WINBASEAPI BOOL        WINAPI SetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,DWORD);
 WINBASEAPI BOOL        WINAPI SetDefaultCommConfigW(LPCWSTR,LPCOMMCONFIG,DWORD);
 #define                       SetDefaultCommConfig WINELIB_NAME_AW(SetDefaultCommConfig)
+WINBASEAPI BOOL        WINAPI SetDefaultDllDirectories(DWORD);
 WINBASEAPI BOOL        WINAPI SetDllDirectoryA(LPCSTR);
 WINBASEAPI BOOL        WINAPI SetDllDirectoryW(LPCWSTR);
 #define                       SetDllDirectory WINELIB_NAME_AW(SetDllDirectory)
