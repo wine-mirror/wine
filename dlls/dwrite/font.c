@@ -76,6 +76,7 @@ struct dwrite_font_data {
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_PANOSE panose;
+    FONTSIGNATURE fontsig;
     struct dwrite_font_propvec propvec;
 
     DWRITE_FONT_METRICS1 metrics;
@@ -242,6 +243,7 @@ struct dwrite_fontface {
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_PANOSE panose;
+    FONTSIGNATURE fontsig;
     UINT32 glyph_image_formats;
 
     LOGFONTW lf;
@@ -1767,6 +1769,20 @@ void get_logfont_from_fontface(IDWriteFontFace *iface, LOGFONTW *lf)
 {
     struct dwrite_fontface *fontface = unsafe_impl_from_IDWriteFontFace(iface);
     *lf = fontface->lf;
+}
+
+HRESULT get_fontsig_from_font(IDWriteFont *iface, FONTSIGNATURE *fontsig)
+{
+    struct dwrite_font *font = unsafe_impl_from_IDWriteFont(iface);
+    *fontsig = font->data->fontsig;
+    return S_OK;
+}
+
+HRESULT get_fontsig_from_fontface(IDWriteFontFace *iface, FONTSIGNATURE *fontsig)
+{
+    struct dwrite_fontface *fontface = unsafe_impl_from_IDWriteFontFace(iface);
+    *fontsig = fontface->fontsig;
+    return S_OK;
 }
 
 static HRESULT create_font(struct dwrite_fontfamily *family, UINT32 index, IDWriteFont3 **font)
@@ -3344,6 +3360,7 @@ static HRESULT init_font_data(const struct fontface_desc *desc, IDWriteLocalized
     data->stretch = props.stretch;
     data->weight = props.weight;
     data->panose = props.panose;
+    data->fontsig = props.fontsig;
     data->lf = props.lf;
 
     fontstrings_get_en_string(*family_name, familyW, sizeof(familyW)/sizeof(WCHAR));
@@ -4383,6 +4400,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         fontface->style = desc->font_data->style;
         fontface->stretch = desc->font_data->stretch;
         fontface->panose = desc->font_data->panose;
+        fontface->fontsig = desc->font_data->fontsig;
         fontface->lf = desc->font_data->lf;
     }
     else {
@@ -4399,6 +4417,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         fontface->style = data->style;
         fontface->stretch = data->stretch;
         fontface->panose = data->panose;
+        fontface->fontsig = data->fontsig;
         fontface->lf = data->lf;
 
         IDWriteLocalizedStrings_Release(names);

@@ -202,6 +202,8 @@ extern void factory_detach_gdiinterop(IDWriteFactory5*,IDWriteGdiInterop1*) DECL
 extern struct fontfacecached *factory_cache_fontface(IDWriteFactory5*,struct list*,IDWriteFontFace4*) DECLSPEC_HIDDEN;
 extern void    get_logfont_from_font(IDWriteFont*,LOGFONTW*) DECLSPEC_HIDDEN;
 extern void    get_logfont_from_fontface(IDWriteFontFace*,LOGFONTW*) DECLSPEC_HIDDEN;
+extern HRESULT get_fontsig_from_font(IDWriteFont*,FONTSIGNATURE*) DECLSPEC_HIDDEN;
+extern HRESULT get_fontsig_from_fontface(IDWriteFontFace*,FONTSIGNATURE*) DECLSPEC_HIDDEN;
 extern HRESULT create_gdiinterop(IDWriteFactory5*,IDWriteGdiInterop1**) DECLSPEC_HIDDEN;
 extern void fontface_detach_from_cache(IDWriteFontFace4*) DECLSPEC_HIDDEN;
 extern void factory_lock(IDWriteFactory5*) DECLSPEC_HIDDEN;
@@ -213,6 +215,7 @@ struct dwrite_font_props {
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_PANOSE panose;
+    FONTSIGNATURE fontsig;
     LOGFONTW lf;
 };
 
@@ -235,7 +238,6 @@ extern BOOL opentype_get_vdmx_size(const void*,INT,UINT16*,UINT16*) DECLSPEC_HID
 extern UINT32 opentype_get_cpal_palettecount(const void*) DECLSPEC_HIDDEN;
 extern UINT32 opentype_get_cpal_paletteentrycount(const void*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_cpal_entries(const void*,UINT32,UINT32,UINT32,DWRITE_COLOR_F*) DECLSPEC_HIDDEN;
-extern HRESULT opentype_get_font_signature(struct file_stream_desc*,FONTSIGNATURE*) DECLSPEC_HIDDEN;
 extern BOOL opentype_has_vertical_variants(IDWriteFontFace4*) DECLSPEC_HIDDEN;
 extern UINT32 opentype_get_glyph_image_formats(IDWriteFontFace4*) DECLSPEC_HIDDEN;
 

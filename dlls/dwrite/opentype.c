@@ -1317,6 +1317,7 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     props->weight = DWRITE_FONT_WEIGHT_NORMAL;
     props->style = DWRITE_FONT_STYLE_NORMAL;
     memset(&props->panose, 0, sizeof(props->panose));
+    memset(&props->fontsig, 0, sizeof(props->fontsig));
     memset(&props->lf, 0, sizeof(props->lf));
 
     /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
@@ -1343,6 +1344,21 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
             props->style = DWRITE_FONT_STYLE_ITALIC;
 
         memcpy(&props->panose, &tt_os2->panose, sizeof(props->panose));
+
+        /* FONTSIGNATURE */
+        props->fontsig.fsUsb[0] = GET_BE_DWORD(tt_os2->ulUnicodeRange1);
+        props->fontsig.fsUsb[1] = GET_BE_DWORD(tt_os2->ulUnicodeRange2);
+        props->fontsig.fsUsb[2] = GET_BE_DWORD(tt_os2->ulUnicodeRange3);
+        props->fontsig.fsUsb[3] = GET_BE_DWORD(tt_os2->ulUnicodeRange4);
+
+        if (GET_BE_WORD(tt_os2->version) == 0) {
+            props->fontsig.fsCsb[0] = 0;
+            props->fontsig.fsCsb[1] = 0;
+        }
+        else {
+            props->fontsig.fsCsb[0] = GET_BE_DWORD(tt_os2->ulCodePageRange1);
+            props->fontsig.fsCsb[1] = GET_BE_DWORD(tt_os2->ulCodePageRange2);
+        }
     }
     else if (tt_head) {
         USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
@@ -1969,34 +1985,6 @@ void opentype_colr_next_glyph(const void *colr, struct dwrite_colorglyph *glyph)
     layer = (struct COLR_LayerRecord*)((BYTE*)colr + layerrecordoffset) + glyph->first_layer + glyph->layer;
     glyph->glyph = GET_BE_WORD(layer->GID);
     glyph->palette_index = GET_BE_WORD(layer->paletteIndex);
-}
-
-HRESULT opentype_get_font_signature(struct file_stream_desc *stream_desc, FONTSIGNATURE *fontsig)
-{
-    const TT_OS2_V2 *tt_os2;
-    void *os2_context;
-    HRESULT hr;
-
-    hr = opentype_get_font_table(stream_desc, MS_OS2_TAG,  (const void**)&tt_os2, &os2_context, NULL, NULL);
-    if (tt_os2) {
-        fontsig->fsUsb[0] = GET_BE_DWORD(tt_os2->ulUnicodeRange1);
-        fontsig->fsUsb[1] = GET_BE_DWORD(tt_os2->ulUnicodeRange2);
-        fontsig->fsUsb[2] = GET_BE_DWORD(tt_os2->ulUnicodeRange3);
-        fontsig->fsUsb[3] = GET_BE_DWORD(tt_os2->ulUnicodeRange4);
-
-        if (GET_BE_WORD(tt_os2->version) == 0) {
-            fontsig->fsCsb[0] = 0;
-            fontsig->fsCsb[1] = 0;
-        }
-        else {
-            fontsig->fsCsb[0] = GET_BE_DWORD(tt_os2->ulCodePageRange1);
-            fontsig->fsCsb[1] = GET_BE_DWORD(tt_os2->ulCodePageRange2);
-        }
-
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2_context);
-    }
-
-    return hr;
 }
 
 BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
