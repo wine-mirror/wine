@@ -56,6 +56,12 @@ enum d2d_vertex_type
     D2D_VERTEX_TYPE_BEZIER,
 };
 
+struct d2d_segment_idx
+{
+    size_t figure_idx;
+    size_t vertex_idx;
+};
+
 struct d2d_figure
 {
     D2D1_POINT_2F *vertices;
@@ -98,7 +104,7 @@ struct d2d_cdt
 struct d2d_geometry_intersection
 {
     size_t figure_idx;
-    size_t segment_idx;
+    size_t vertex_idx;
     float t;
     D2D1_POINT_2F p;
 };
@@ -1542,7 +1548,7 @@ static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *ge
 }
 
 static BOOL d2d_geometry_intersections_add(struct d2d_geometry_intersections *i,
-        size_t figure_idx, size_t segment_idx, float t, D2D1_POINT_2F p)
+        const struct d2d_segment_idx *segment_idx, float t, D2D1_POINT_2F p)
 {
     struct d2d_geometry_intersection *intersection;
 
@@ -1554,8 +1560,8 @@ static BOOL d2d_geometry_intersections_add(struct d2d_geometry_intersections *i,
     }
 
     intersection = &i->intersections[i->intersection_count++];
-    intersection->figure_idx = figure_idx;
-    intersection->segment_idx = segment_idx;
+    intersection->figure_idx = segment_idx->figure_idx;
+    intersection->vertex_idx = segment_idx->vertex_idx;
     intersection->t = t;
     intersection->p = p;
 
@@ -1569,11 +1575,61 @@ static int d2d_geometry_intersections_compare(const void *a, const void *b)
 
     if (i0->figure_idx != i1->figure_idx)
         return i0->figure_idx - i1->figure_idx;
-    if (i0->segment_idx != i1->segment_idx)
-        return i0->segment_idx - i1->segment_idx;
+    if (i0->vertex_idx != i1->vertex_idx)
+        return i0->vertex_idx - i1->vertex_idx;
     if (i0->t != i1->t)
         return i0->t > i1->t ? 1 : -1;
     return 0;
+}
+
+static BOOL d2d_geometry_intersect_line_line(struct d2d_geometry *geometry,
+        struct d2d_geometry_intersections *intersections, const struct d2d_segment_idx *idx_p,
+        const struct d2d_segment_idx *idx_q)
+{
+    D2D1_POINT_2F v_p, v_q, v_qp, intersection;
+    const D2D1_POINT_2F *p[2], *q[2];
+    const struct d2d_figure *figure;
+    float s, t, det;
+    size_t next;
+
+    figure = &geometry->u.path.figures[idx_p->figure_idx];
+    p[0] = &figure->vertices[idx_p->vertex_idx];
+    next = idx_p->vertex_idx + 1;
+    if (next == figure->vertex_count)
+        next = 0;
+    p[1] = &figure->vertices[next];
+
+    figure = &geometry->u.path.figures[idx_q->figure_idx];
+    q[0] = &figure->vertices[idx_q->vertex_idx];
+    next = idx_q->vertex_idx + 1;
+    if (next == figure->vertex_count)
+        next = 0;
+    q[1] = &figure->vertices[next];
+
+    d2d_point_subtract(&v_p, p[1], p[0]);
+    d2d_point_subtract(&v_q, q[1], q[0]);
+    d2d_point_subtract(&v_qp, p[0], q[0]);
+
+    det = v_p.x * v_q.y - v_p.y * v_q.x;
+    if (det == 0.0f)
+        return TRUE;
+
+    s = (v_q.x * v_qp.y - v_q.y * v_qp.x) / det;
+    t = (v_p.x * v_qp.y - v_p.y * v_qp.x) / det;
+
+    if (s < 0.0f || s > 1.0f || t < 0.0f || t > 1.0f)
+        return TRUE;
+
+    intersection.x = p[0]->x + v_p.x * s;
+    intersection.y = p[0]->y + v_p.y * s;
+
+    if (s > 0.0f && s < 1.0f && !d2d_geometry_intersections_add(intersections, idx_p, s, intersection))
+        return FALSE;
+
+    if (t > 0.0f && t < 1.0f && !d2d_geometry_intersections_add(intersections, idx_q, t, intersection))
+        return FALSE;
+
+    return TRUE;
 }
 
 /* Intersect the geometry's segments with themselves. This uses the
@@ -1582,58 +1638,44 @@ static int d2d_geometry_intersections_compare(const void *a, const void *b)
 /* FIXME: Beziers can't currently self-intersect. */
 static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
 {
-    D2D1_POINT_2F p0, p1, q0, q1, v_p, v_q, v_qp, intersection;
     struct d2d_geometry_intersections intersections = {0};
-    struct d2d_figure *figure_p, *figure_q;
-    size_t i, j, k, l, max_l;
+    const struct d2d_figure *figure_p, *figure_q;
+    struct d2d_segment_idx idx_p, idx_q;
+    enum d2d_vertex_type type_p, type_q;
+    size_t i, j, max_q;
     BOOL ret = FALSE;
-    float s, t, det;
 
-    for (i = 0; i < geometry->u.path.figure_count; ++i)
+    if (!geometry->u.path.figure_count)
+        return TRUE;
+
+    for (idx_p.figure_idx = 0; idx_p.figure_idx < geometry->u.path.figure_count; ++idx_p.figure_idx)
     {
-        figure_p = &geometry->u.path.figures[i];
-        p0 = figure_p->vertices[figure_p->vertex_count - 1];
-        for (k = 0; k < figure_p->vertex_count; p0 = p1, ++k)
+        figure_p = &geometry->u.path.figures[idx_p.figure_idx];
+        for (idx_p.vertex_idx = 0; idx_p.vertex_idx < figure_p->vertex_count; ++idx_p.vertex_idx)
         {
-            p1 = figure_p->vertices[k];
-            d2d_point_subtract(&v_p, &p1, &p0);
-            for (j = 0; j < i || (j == i && k); ++j)
+            type_p = figure_p->vertex_types[idx_p.vertex_idx];
+            for (idx_q.figure_idx = 0; idx_q.figure_idx <= idx_p.figure_idx; ++idx_q.figure_idx)
             {
-                figure_q = &geometry->u.path.figures[j];
-
-                if (figure_p->bounds.left > figure_q->bounds.right
-                        || figure_q->bounds.left > figure_p->bounds.right
-                        || figure_p->bounds.top > figure_q->bounds.bottom
-                        || figure_q->bounds.top > figure_p->bounds.bottom)
-                    continue;
-
-                max_l = j == i ? k - 1 : figure_q->vertex_count;
-                q0 = figure_q->vertices[figure_q->vertex_count - 1];
-                for (l = 0; l < max_l; q0 = q1, ++l)
+                figure_q = &geometry->u.path.figures[idx_q.figure_idx];
+                if (idx_q.figure_idx != idx_p.figure_idx)
                 {
-                    q1 = figure_q->vertices[l];
-                    d2d_point_subtract(&v_q, &q1, &q0);
-                    d2d_point_subtract(&v_qp, &p0, &q0);
-
-                    det = v_p.x * v_q.y - v_p.y * v_q.x;
-                    if (det == 0.0f)
+                    if (figure_p->bounds.left > figure_q->bounds.right
+                            || figure_q->bounds.left > figure_p->bounds.right
+                            || figure_p->bounds.top > figure_q->bounds.bottom
+                            || figure_q->bounds.top > figure_p->bounds.bottom)
                         continue;
+                    max_q = figure_q->vertex_count;
+                }
+                else
+                {
+                    max_q = idx_p.vertex_idx;
+                }
 
-                    s = (v_q.x * v_qp.y - v_q.y * v_qp.x) / det;
-                    t = (v_p.x * v_qp.y - v_p.y * v_qp.x) / det;
-
-                    if (s < 0.0f || s > 1.0f || t < 0.0f || t > 1.0f)
-                        continue;
-
-                    intersection.x = p0.x + v_p.x * s;
-                    intersection.y = p0.y + v_p.y * s;
-
-                    if (t > 0.0f && t < 1.0f
-                            && !d2d_geometry_intersections_add(&intersections, j, l, t, intersection))
-                        goto done;
-
-                    if (s > 0.0f && s < 1.0f
-                            && !d2d_geometry_intersections_add(&intersections, i, k, s, intersection))
+                for (idx_q.vertex_idx = 0; idx_q.vertex_idx < max_q; ++idx_q.vertex_idx)
+                {
+                    type_q = figure_q->vertex_types[idx_q.vertex_idx];
+                    if (type_p != D2D_VERTEX_TYPE_BEZIER && type_q != D2D_VERTEX_TYPE_BEZIER
+                            && !d2d_geometry_intersect_line_line(geometry, &intersections, &idx_p, &idx_q))
                         goto done;
                 }
             }
@@ -1650,7 +1692,7 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
             j = 0;
 
         if (!d2d_figure_insert_vertex(&geometry->u.path.figures[inter->figure_idx],
-                inter->segment_idx + j, inter->p))
+                inter->vertex_idx + j + 1, inter->p))
             goto done;
         ++j;
     }
