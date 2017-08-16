@@ -2285,7 +2285,7 @@ static HRESULT d2d_geometry_resolve_beziers(struct d2d_geometry *geometry)
         }
     }
 
-    return TRUE;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *iface)
