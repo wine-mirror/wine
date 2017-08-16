@@ -24,16 +24,20 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "rpcproxy.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
+
+static HINSTANCE WMPHOTO_hInstance;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason)
     {
     case DLL_PROCESS_ATTACH:
+        WMPHOTO_hInstance = hinstDLL;
         DisableThreadLibraryCalls(hinstDLL);
         break;
     case DLL_WINE_PREATTACH:
@@ -56,12 +60,10 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv)
 
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("wmphoto: stub\n");
-    return E_NOTIMPL;
+    return __wine_register_resources( WMPHOTO_hInstance );
 }
 
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    FIXME("wmphoto: stub\n");
-    return E_NOTIMPL;
+    return __wine_unregister_resources( WMPHOTO_hInstance );
 }
