@@ -5653,7 +5653,7 @@ static void test_bezier_intersect(void)
             "cHAwMm5vMTNtbjI0bG0zNWtrNTdpajY4aGk3OmZnOTtlZjo8ZGQ8PmJjPT9hYj5BX2BAQl5eQkRc"
             "XUNGWltFR1lZR0lXWEhLVVZKTVNUTE9RUk5RT1BQUk5OUlRMTFRWSkpWWUdIWFtFRVteQkNdYEBA"
             "YGI+PmJlOztlaDg4aGs1NWtuMjJuci4vcXUrK3V6JiZ6fiIifoMBHR2DAYsBFRWLAZUBCwuVAQAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
