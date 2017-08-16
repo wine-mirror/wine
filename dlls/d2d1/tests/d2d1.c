@@ -5696,7 +5696,7 @@ static void test_bezier_intersect(void)
             "sQGRAbEBkAGyAZABsgGPAbMBjwG0AY4BtAGNAbUBjQG2AYwBtgGLAbgBigG4AYoBuQGJAboBhwG7"
             "AYcBvAGGAb0BhQG+AYQBvwGDAcABggHBAYIBwgGAAcMBf8QBfsYBfMgBe8gBesoBeMwBd80BddAB"
             "c9EBcdQBb9YBbNkBatsBaN0BZeEBYuQBX+gBW+0BVvEBUvUBTvwBR4QCQIoCOZgCK6oCGQIA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
     ID2D1RenderTarget_Release(rt);
