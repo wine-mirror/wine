@@ -547,6 +547,7 @@ static ARGB blend_line_gradient(GpLineGradient* brush, REAL position)
     REAL blendfac;
 
     /* clamp to between 0.0 and 1.0, using the wrap mode */
+    position = (position - brush->rect.X) / brush->rect.Width;
     if (brush->wrap == WrapModeTile)
     {
         position = fmodf(position, 1.0f);
@@ -1138,10 +1139,8 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
     case BrushTypeLinearGradient:
     {
         GpLineGradient *fill = (GpLineGradient*)brush;
-        GpPointF draw_points[3], line_points[3];
+        GpPointF draw_points[3];
         GpStatus stat;
-        static const GpRectF box_1 = { 0.0, 0.0, 1.0, 1.0 };
-        GpMatrix *world_to_gradient; /* FIXME: Store this in the brush? */
         int x, y;
 
         draw_points[0].X = fill_area->X;
@@ -1159,22 +1158,11 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
 
         if (stat == Ok)
         {
-            line_points[0] = fill->startpoint;
-            line_points[1] = fill->endpoint;
-            line_points[2].X = fill->startpoint.X + (fill->startpoint.Y - fill->endpoint.Y);
-            line_points[2].Y = fill->startpoint.Y + (fill->endpoint.X - fill->startpoint.X);
+            GpMatrix world_to_gradient = fill->transform;
 
-            stat = GdipCreateMatrix3(&box_1, line_points, &world_to_gradient);
-        }
-
-        if (stat == Ok)
-        {
-            stat = GdipInvertMatrix(world_to_gradient);
-
+            stat = GdipInvertMatrix(&world_to_gradient);
             if (stat == Ok)
-                stat = GdipTransformMatrixPoints(world_to_gradient, draw_points, 3);
-
-            GdipDeleteMatrix(world_to_gradient);
+                stat = GdipTransformMatrixPoints(&world_to_gradient, draw_points, 3);
         }
 
         if (stat == Ok)
