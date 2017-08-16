@@ -503,6 +503,62 @@ static float d2d_point_ccw(const D2D1_POINT_2F *a, const D2D1_POINT_2F *b, const
     return det_d[det_d_len - 1];
 }
 
+static BOOL d2d_rect_check_overlap(const D2D_RECT_F *p, const D2D_RECT_F *q)
+{
+    return p->left < q->right && p->top < q->bottom && p->right > q->left && p->bottom > q->top;
+}
+
+static void d2d_rect_get_bezier_bounds(D2D_RECT_F *bounds, const D2D1_POINT_2F *p0,
+        const D2D1_POINT_2F *p1, const D2D1_POINT_2F *p2)
+{
+    D2D1_POINT_2F p;
+    float root;
+
+    bounds->left = p0->x;
+    bounds->top = p0->y;
+    bounds->right = p0->x;
+    bounds->bottom = p0->y;
+
+    d2d_rect_expand(bounds, p2);
+
+    /* f(t) = (1 - t)²P₀ + 2(1 - t)tP₁ + t²P₂
+     * f'(t) = 2(1 - t)(P₁ - P₀) + 2t(P₂ - P₁)
+     *       = 2(P₂ - 2P₁ + P₀)t + 2(P₁ - P₀)
+     *
+     * f'(t) = 0
+     * t = (P₀ - P₁) / (P₂ - 2P₁ + P₀) */
+    root = (p0->x - p1->x) / (p2->x - 2.0f * p1->x + p0->x);
+    if (root > 0.0f && root < 1.0f)
+    {
+        d2d_point_calculate_bezier(&p, p0, p1, p2, root);
+        d2d_rect_expand(bounds, &p);
+    }
+
+    root = (p0->y - p1->y) / (p2->y - 2.0f * p1->y + p0->y);
+    if (root > 0.0f && root < 1.0f)
+    {
+        d2d_point_calculate_bezier(&p, p0, p1, p2, root);
+        d2d_rect_expand(bounds, &p);
+    }
+}
+
+static void d2d_rect_get_bezier_segment_bounds(D2D_RECT_F *bounds, const D2D1_POINT_2F *p0,
+        const D2D1_POINT_2F *p1, const D2D1_POINT_2F *p2, float start, float end)
+{
+    D2D1_POINT_2F q[3], r[2];
+
+    d2d_point_lerp(&r[0], p0, p1, start);
+    d2d_point_lerp(&r[1], p1, p2, start);
+    d2d_point_lerp(&q[0], &r[0], &r[1], start);
+
+    end = (end - start) / (1.0f - start);
+    d2d_point_lerp(&q[1], &q[0], &r[1], end);
+    d2d_point_lerp(&r[0], &r[1], p2, end);
+    d2d_point_lerp(&q[2], &q[1], &r[0], end);
+
+    d2d_rect_get_bezier_bounds(bounds, &q[0], &q[1], &q[2]);
+}
+
 static BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t element_count, size_t element_size)
 {
     size_t new_capacity, max_capacity;
@@ -1766,6 +1822,71 @@ static BOOL d2d_geometry_intersect_bezier_line(struct d2d_geometry *geometry,
     return TRUE;
 }
 
+static BOOL d2d_geometry_intersect_bezier_bezier(struct d2d_geometry *geometry,
+        struct d2d_geometry_intersections *intersections,
+        const struct d2d_segment_idx *idx_p, float start_p, float end_p,
+        const struct d2d_segment_idx *idx_q, float start_q, float end_q)
+{
+    const D2D1_POINT_2F *p[3], *q[3];
+    const struct d2d_figure *figure;
+    D2D_RECT_F p_bounds, q_bounds;
+    D2D1_POINT_2F intersection;
+    float centre_p, centre_q;
+    size_t next;
+
+    figure = &geometry->u.path.figures[idx_p->figure_idx];
+    p[0] = &figure->vertices[idx_p->vertex_idx];
+    p[1] = &figure->bezier_controls[idx_p->control_idx];
+    next = idx_p->vertex_idx + 1;
+    if (next == figure->vertex_count)
+        next = 0;
+    p[2] = &figure->vertices[next];
+
+    figure = &geometry->u.path.figures[idx_q->figure_idx];
+    q[0] = &figure->vertices[idx_q->vertex_idx];
+    q[1] = &figure->bezier_controls[idx_q->control_idx];
+    next = idx_q->vertex_idx + 1;
+    if (next == figure->vertex_count)
+        next = 0;
+    q[2] = &figure->vertices[next];
+
+    d2d_rect_get_bezier_segment_bounds(&p_bounds, p[0], p[1], p[2], start_p, end_p);
+    d2d_rect_get_bezier_segment_bounds(&q_bounds, q[0], q[1], q[2], start_q, end_q);
+
+    if (!d2d_rect_check_overlap(&p_bounds, &q_bounds))
+        return TRUE;
+
+    centre_p = (start_p + end_p) / 2.0f;
+    centre_q = (start_q + end_q) / 2.0f;
+
+    if (end_p - start_p < 1e-3f)
+    {
+        d2d_point_calculate_bezier(&intersection, p[0], p[1], p[2], centre_p);
+        if (start_p > 0.0f && end_p < 1.0f && !d2d_geometry_intersections_add(intersections,
+                idx_p, centre_p, intersection))
+            return FALSE;
+        if (start_q > 0.0f && end_q < 1.0f && !d2d_geometry_intersections_add(intersections,
+                idx_q, centre_q, intersection))
+            return FALSE;
+        return TRUE;
+    }
+
+    if (!d2d_geometry_intersect_bezier_bezier(geometry, intersections,
+            idx_p, start_p, centre_p, idx_q, start_q, centre_q))
+        return FALSE;
+    if (!d2d_geometry_intersect_bezier_bezier(geometry, intersections,
+            idx_p, start_p, centre_p, idx_q, centre_q, end_q))
+        return FALSE;
+    if (!d2d_geometry_intersect_bezier_bezier(geometry, intersections,
+            idx_p, centre_p, end_p, idx_q, start_q, centre_q))
+        return FALSE;
+    if (!d2d_geometry_intersect_bezier_bezier(geometry, intersections,
+            idx_p, centre_p, end_p, idx_q, centre_q, end_q))
+        return FALSE;
+
+    return TRUE;
+}
+
 static BOOL d2d_geometry_apply_intersections(struct d2d_geometry *geometry,
         struct d2d_geometry_intersections *intersections)
 {
@@ -1834,7 +1955,6 @@ static BOOL d2d_geometry_apply_intersections(struct d2d_geometry *geometry,
 /* Intersect the geometry's segments with themselves. This uses the
  * straightforward approach of testing everything against everything, but
  * there certainly exist more scalable algorithms for this. */
-/* FIXME: Beziers can't currently self-intersect. */
 static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
 {
     struct d2d_geometry_intersections intersections = {0};
@@ -1859,10 +1979,7 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
                 figure_q = &geometry->u.path.figures[idx_q.figure_idx];
                 if (idx_q.figure_idx != idx_p.figure_idx)
                 {
-                    if (figure_p->bounds.left > figure_q->bounds.right
-                            || figure_q->bounds.left > figure_p->bounds.right
-                            || figure_p->bounds.top > figure_q->bounds.bottom
-                            || figure_q->bounds.top > figure_p->bounds.bottom)
+                    if (!d2d_rect_check_overlap(&figure_p->bounds, &figure_q->bounds))
                         continue;
                     max_q = figure_q->vertex_count;
                 }
@@ -1877,9 +1994,17 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
                     type_q = figure_q->vertex_types[idx_q.vertex_idx];
                     if (type_q == D2D_VERTEX_TYPE_BEZIER)
                     {
-                        if (type_p != D2D_VERTEX_TYPE_BEZIER
-                                && !d2d_geometry_intersect_bezier_line(geometry, &intersections, &idx_q, &idx_p))
-                            goto done;
+                        if (type_p == D2D_VERTEX_TYPE_BEZIER)
+                        {
+                            if (!d2d_geometry_intersect_bezier_bezier(geometry, &intersections,
+                                    &idx_p, 0.0f, 1.0f, &idx_q, 0.0f, 1.0f))
+                                goto done;
+                        }
+                        else
+                        {
+                            if (!d2d_geometry_intersect_bezier_line(geometry, &intersections, &idx_q, &idx_p))
+                                goto done;
+                        }
                         ++idx_q.control_idx;
                     }
                     else

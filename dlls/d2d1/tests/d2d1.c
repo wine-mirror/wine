@@ -2364,7 +2364,7 @@ static void test_path_geometry(void)
             "EyYTVBQjFFYUIhRWFSAVVxUeFVgWHBZZFhoWWhcYF1sWGBZcFxYWXhcUF18WFBZhFhIWYxUSFWUV"
             "EBVnFBAUaRQOFGsTDhJvEgwSchAMEHYPCg96DQoMggEICgiLAQQIBJQBCJgBCJkBBpoBBpoBBpoB"
             "BpsBBJwBBJwBBJwBBJwBBJ0BAp4BAp4BAp4BAp4BAp4BAp4BAp4BAgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     match = compare_figure(surface, 0, 226, 160, 160, 0xff652e89, 64,
             "7xoCngECngECngECngECngECngECngECnQEEnAEEnAEEnAEEnAEEmwEGmgEGmgEGmgEGmQEImAEI"
             "lAEECASLAQgKCIEBDQoMew8KD3YQDBByEgwSbhMOEmwUDhRpFBAUZxUQFWUVEhVjFhIWYRYUFl8X"
@@ -2374,7 +2374,7 @@ static void test_path_geometry(void)
             "EyYTVBQjFFYUIhRWFSAVVxUeFVgWHBZZFhoWWhcYF1sWGBZcFxYWXhcUF18WFBZhFhIWYxUSFWUV"
             "EBVnFBAUaRQOFGsTDhJvEgwSchAMEHYPCg96DQoMggEICgiLAQQIBJQBCJgBCJkBBpoBBpoBBpoB"
             "BpsBBJwBBJwBBJwBBJwBBJ0BAp4BAp4BAp4BAp4BAp4BAp4BAp4BAgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     match = compare_figure(surface, 160, 0, 320, 160, 0xff652e89, 64,
             "gVQBwAIBWgHlAQFYAecBAVYB6QEBVAHrAQEjDCMB7AECHhQeAu0BAxoYGgPvAQMWHhYD8QEDFCAU"
             "A/MBBBAkEAT0AQUOJw0F9QEGCioKBvcBBggsCAb4AQgFLgUI+QEJATIBCfsBCAIwAgj8AQcFLAUH"
@@ -2386,7 +2386,7 @@ static void test_path_geometry(void)
             "AgMNIA0D/wEFCSYJBf4BBgYqBgf8AQgDLgMI+wFG+gEIAzADCPkBBwYuBgf3AQYKKgoG9gEFDCgM"
             "BfUBBBAlDwTzAQQSIhIE8QEDFh4WA/ABAhkaGQLvAQIcFhwC7QECIBAgAusBASgEKAHpAQFWAecB"
             "AVgB5QEBWgHAAgHhUgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     match = compare_figure(surface, 160, 160, 320, 160, 0xff652e89, 64,
             "/VUB5QEBWAHnAQFWAekBAVQB6wECIQ8hAe0BAh0VHQLuAQIZGhkD7wEDFh4WA/EBBBMhEwPzAQQQ"
             "JQ8F9AEFDCgNBfUBBgoqCgb3AQcHLQcG+QEIBC8ECPkBPAEJ+wEIAy8CCP0BBgYrBQf9AQUJJgkF"
@@ -2398,7 +2398,7 @@ static void test_path_geometry(void)
             "IA0E/gEFCSYJBf4BBgYrBQf8AQgDLwII+wE8AQn6AQgELwQI+AEHBy0HBvcBBgoqCgb2AQUNJw0F"
             "9AEEECQQBfIBBBMhEwPxAQMWHhYD8AECGRoZA+4BAh0VHQLsAQIhDiIB6wEBVAHpAQFWAecBAVgB"
             "wAIBwlYA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     ID2D1TransformedGeometry_Release(transformed_geometry);
     ID2D1PathGeometry_Release(geometry);
 
