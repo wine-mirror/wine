@@ -11983,16 +11983,16 @@ _ACEOF
 fi
                  ac_wine_check_funcs_save_LIBS="$LIBS"
 LIBS="$LIBS $GNUTLS_LIBS"
-for ac_func in gnutls_hash
+for ac_func in gnutls_cipher_init
 do :
-  ac_fn_c_check_func "$LINENO" "gnutls_hash" "ac_cv_func_gnutls_hash"
-if test "x$ac_cv_func_gnutls_hash" = xyes; then :
+  ac_fn_c_check_func "$LINENO" "gnutls_cipher_init" "ac_cv_func_gnutls_cipher_init"
+if test "x$ac_cv_func_gnutls_cipher_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_GNUTLS_HASH 1
+#define HAVE_GNUTLS_CIPHER_INIT 1
 _ACEOF
 
 else
-  as_fn_append wine_notices "|libgnutls ${notice_platform}development files too old, bcrypt hashes won't be supported."
+  as_fn_append wine_notices "|libgnutls ${notice_platform}development files too old, bcrypt encryption won't be supported."
 fi
 done
 

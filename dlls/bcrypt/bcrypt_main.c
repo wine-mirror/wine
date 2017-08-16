@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 
 static HINSTANCE instance;
 
-#if defined(HAVE_GNUTLS_HASH) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+#if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static void *libgnutls_handle;
@@ -73,7 +73,7 @@ static BOOL gnutls_initialize(void)
 
     if (!(libgnutls_handle = wine_dlopen( SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0 )))
     {
-        ERR_(winediag)( "failed to load libgnutls, no support for crypto hashes\n" );
+        ERR_(winediag)( "failed to load libgnutls, no support for encryption\n" );
         return FALSE;
     }
 
@@ -121,7 +121,7 @@ static void gnutls_uninitialize(void)
     wine_dlclose( libgnutls_handle, NULL, 0 );
     libgnutls_handle = NULL;
 }
-#endif /* HAVE_GNUTLS_HASH && !HAVE_COMMONCRYPTO_COMMONDIGEST_H */
+#endif /* HAVE_GNUTLS_CIPHER_INIT && !HAVE_COMMONCRYPTO_COMMONDIGEST_H */
 
 NTSTATUS WINAPI BCryptEnumAlgorithms(ULONG dwAlgOperations, ULONG *pAlgCount,
                                      BCRYPT_ALGORITHM_IDENTIFIER **ppAlgList, ULONG dwFlags)
@@ -685,7 +685,7 @@ NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE algorithm, UCHAR *secret, ULONG se
     return BCryptDestroyHash( handle );
 }
 
-#if defined(HAVE_GNUTLS_HASH) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+#if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
 struct key
 {
     struct object      hdr;
@@ -1020,14 +1020,14 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     case DLL_PROCESS_ATTACH:
         instance = hinst;
         DisableThreadLibraryCalls( hinst );
-#if defined(HAVE_GNUTLS_HASH) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+#if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
         gnutls_initialize();
 #endif
         break;
 
     case DLL_PROCESS_DETACH:
         if (reserved) break;
-#if defined(HAVE_GNUTLS_HASH) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+#if defined(HAVE_GNUTLS_CIPHER_INIT) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
         gnutls_uninitialize();
 #endif
         break;
