@@ -51,9 +51,10 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
-MAKE_FUNCPTR(gnutls_cipher_init);
+MAKE_FUNCPTR(gnutls_cipher_decrypt2);
 MAKE_FUNCPTR(gnutls_cipher_deinit);
 MAKE_FUNCPTR(gnutls_cipher_encrypt2);
+MAKE_FUNCPTR(gnutls_cipher_init);
 MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
 MAKE_FUNCPTR(gnutls_global_set_log_function);
@@ -83,9 +84,10 @@ static BOOL gnutls_initialize(void)
         goto fail; \
     }
 
-    LOAD_FUNCPTR(gnutls_cipher_init)
+    LOAD_FUNCPTR(gnutls_cipher_decrypt2)
     LOAD_FUNCPTR(gnutls_cipher_deinit)
     LOAD_FUNCPTR(gnutls_cipher_encrypt2)
+    LOAD_FUNCPTR(gnutls_cipher_init)
     LOAD_FUNCPTR(gnutls_global_deinit)
     LOAD_FUNCPTR(gnutls_global_init)
     LOAD_FUNCPTR(gnutls_global_set_log_function)
@@ -789,6 +791,20 @@ static NTSTATUS key_encrypt( struct key *key, const UCHAR *input, ULONG input_le
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS key_decrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
+                             ULONG output_len  )
+{
+    int ret;
+
+    if ((ret = pgnutls_cipher_decrypt2( key->handle, input, input_len, output, output_len )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_destroy( struct key *key )
 {
     if (key->handle) pgnutls_cipher_deinit( key->handle );
@@ -817,6 +833,13 @@ static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
 
 static NTSTATUS key_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
                              ULONG output_len  )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_decrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
+                             ULONG output_len )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -927,9 +950,67 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
                                void *padding, UCHAR *iv, ULONG iv_len, UCHAR *output,
                                ULONG output_len, ULONG *ret_len, ULONG flags )
 {
-    FIXME( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len,
+    struct key *key = handle;
+    ULONG bytes_left = input_len;
+    UCHAR *buf, *src, *dst;
+    NTSTATUS status;
+
+    TRACE( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len,
            padding, iv, iv_len, output, output_len, ret_len, flags );
-    return STATUS_NOT_IMPLEMENTED;
+
+    if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
+    if (padding)
+    {
+        FIXME( "padding info not implemented\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    if (flags & ~BCRYPT_BLOCK_PADDING)
+    {
+        FIXME( "flags %08x not supported\n", flags );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if ((status = key_set_params( key, iv, iv_len ))) return status;
+
+    *ret_len = input_len;
+
+    if (input_len & (key->block_size - 1)) return STATUS_INVALID_BUFFER_SIZE;
+    if (!output) return STATUS_SUCCESS;
+    if (flags & BCRYPT_BLOCK_PADDING)
+    {
+        if (output_len + key->block_size < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+        if (input_len < key->block_size) return STATUS_BUFFER_TOO_SMALL;
+        bytes_left -= key->block_size;
+    }
+    else if (output_len < *ret_len)
+        return STATUS_BUFFER_TOO_SMALL;
+
+    src = input;
+    dst = output;
+    while (bytes_left >= key->block_size)
+    {
+        if ((status = key_decrypt( key, src, key->block_size, dst, key->block_size ))) return status;
+        bytes_left -= key->block_size;
+        src += key->block_size;
+        dst += key->block_size;
+    }
+
+    if (flags & BCRYPT_BLOCK_PADDING)
+    {
+        if (!(buf = HeapAlloc( GetProcessHeap(), 0, key->block_size ))) return STATUS_NO_MEMORY;
+        status = key_decrypt( key, src, key->block_size, buf, key->block_size );
+        if (!status && buf[ key->block_size - 1 ] <= key->block_size)
+        {
+            *ret_len -= buf[ key->block_size - 1 ];
+            if (output_len < *ret_len) status = STATUS_BUFFER_TOO_SMALL;
+            else memcpy( dst, buf, key->block_size - buf[ key->block_size - 1 ] );
+        }
+        else
+            status = STATUS_UNSUCCESSFUL; /* FIXME: invalid padding */
+        HeapFree( GetProcessHeap(), 0, buf );
+    }
+
+    return status;
 }
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
