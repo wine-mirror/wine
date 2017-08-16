@@ -852,6 +852,9 @@ static const WCHAR Microsoft_Windows_RingtonesW[] = {'M','i','c','r','o','s','o'
 static const WCHAR Microsoft_Windows_SendToW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','e','n','d','T','o',0};
 static const WCHAR Microsoft_Windows_Sidebar_GadgetsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','S','i','d','e','b','a','r','\\','G','a','d','g','e','t','s',0};
 static const WCHAR Microsoft_Windows_Start_MenuW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u',0};
+static const WCHAR Microsoft_Windows_Start_Menu_ProgramsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\0'};
+static const WCHAR Microsoft_Windows_Start_Menu_Admin_ToolsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
+static const WCHAR Microsoft_Windows_Start_Menu_StartupW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','S','t','a','r','t','U','p','\0'};
 static const WCHAR Microsoft_Windows_TemplatesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','T','e','m','p','l','a','t','e','s',0};
 static const WCHAR Microsoft_Windows_Temporary_Internet_FilesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','T','e','m','p','o','r','a','r','y',' ','I','n','t','e','r','n','e','t',' ','F','i','l','e','s',0};
 static const WCHAR MoviesW[] = {'M','o','v','i','e','s','\0'};
@@ -881,6 +884,7 @@ static const WCHAR PlaylistsW[] = {'P','l','a','y','l','i','s','t','s',0};
 static const WCHAR PrintersFolderW[] = {'P','r','i','n','t','e','r','s','F','o','l','d','e','r',0};
 static const WCHAR PrintHoodW[] = {'P','r','i','n','t','H','o','o','d','\0'};
 static const WCHAR ProfileW[] = {'P','r','o','f','i','l','e',0};
+static const WCHAR ProgramDataW[] = {'P','r','o','g','r','a','m','D','a','t','a','\0'};
 static const WCHAR Program_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s','\0'};
 static const WCHAR ProgramFilesW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','\0'};
 static const WCHAR ProgramFilesX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','X','8','6','\0'};
@@ -948,6 +952,7 @@ static const WCHAR Windows_Sidebar_GadgetsW[] = {'W','i','n','d','o','w','s',' '
 static const WCHAR DefaultW[] = {'.','D','e','f','a','u','l','t','\0'};
 static const WCHAR AllUsersProfileW[] = {'%','A','L','L','U','S','E','R','S','P','R','O','F','I','L','E','%','\0'};
 static const WCHAR UserProfileW[] = {'%','U','S','E','R','P','R','O','F','I','L','E','%','\0'};
+static const WCHAR ProgramDataVarW[] = {'%','P','r','o','g','r','a','m','D','a','t','a','%','\0'};
 static const WCHAR SystemDriveW[] = {'%','S','y','s','t','e','m','D','r','i','v','e','%','\0'};
 static const WCHAR ProfileListW[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','P','r','o','f','i','l','e','L','i','s','t',0};
 static const WCHAR ProfilesDirectoryW[] = {'P','r','o','f','i','l','e','s','D','i','r','e','c','t','o','r','y',0};
@@ -1010,6 +1015,7 @@ typedef enum _CSIDL_Type {
     CSIDL_Type_WindowsPath,
     CSIDL_Type_SystemPath,
     CSIDL_Type_SystemX86Path,
+    CSIDL_Type_ProgramData,
 } CSIDL_Type;
 
 #define CSIDL_CONTACTS         0x0043
@@ -1577,9 +1583,9 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x16 - CSIDL_COMMON_STARTMENU */
         &FOLDERID_CommonStartMenu,
-        CSIDL_Type_AllUsers,
+        CSIDL_Type_ProgramData,
         Common_Start_MenuW,
-        Start_MenuW,
+        Microsoft_Windows_Start_MenuW,
 
         KF_CATEGORY_COMMON, /* category */
         Common_Start_MenuW, /* name */
@@ -1597,9 +1603,9 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x17 - CSIDL_COMMON_PROGRAMS */
         &FOLDERID_CommonPrograms,
-        CSIDL_Type_AllUsers,
+        CSIDL_Type_ProgramData,
         Common_ProgramsW,
-        Start_Menu_ProgramsW,
+        Microsoft_Windows_Start_Menu_ProgramsW,
 
         KF_CATEGORY_COMMON, /* category */
         Common_ProgramsW, /* name */
@@ -1617,9 +1623,9 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x18 - CSIDL_COMMON_STARTUP */
         &FOLDERID_CommonStartup,
-        CSIDL_Type_AllUsers,
+        CSIDL_Type_ProgramData,
         Common_StartUpW,
-        Start_Menu_StartupW,
+        Microsoft_Windows_Start_Menu_StartupW,
 
         KF_CATEGORY_COMMON, /* category */
         Common_StartupW, /* name */
@@ -1809,9 +1815,9 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x23 - CSIDL_COMMON_APPDATA */
         &FOLDERID_ProgramData,
-        CSIDL_Type_AllUsers,
+        CSIDL_Type_ProgramData,
         Common_AppDataW,
-        Application_DataW,
+        NULL,
 
         KF_CATEGORY_FIXED, /* category */
         Common_AppDataW, /* name */
@@ -2009,9 +2015,9 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x2d - CSIDL_COMMON_TEMPLATES */
         &FOLDERID_CommonTemplates,
-        CSIDL_Type_AllUsers,
+        CSIDL_Type_ProgramData,
         Common_TemplatesW,
-        TemplatesW,
+        Microsoft_Windows_TemplatesW,
 
         KF_CATEGORY_COMMON, /* category */
         Common_TemplatesW, /* name */
@@ -2049,9 +2055,9 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x2f - CSIDL_COMMON_ADMINTOOLS */
         &FOLDERID_CommonAdminTools,
-        CSIDL_Type_AllUsers,
+        CSIDL_Type_ProgramData,
         Common_Administrative_ToolsW,
-        Start_Menu_Admin_ToolsW,
+        Microsoft_Windows_Start_Menu_Admin_ToolsW,
 
         KF_CATEGORY_COMMON, /* category */
         Common_Administrative_ToolsW, /* name */
@@ -2227,7 +2233,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x3a - CSIDL_COMMON_OEM_LINKS */
         &FOLDERID_CommonOEMLinks,
-        CSIDL_Type_AllUsers,
+        CSIDL_Type_ProgramData,
         NULL,
         OEM_LinksW,
 
@@ -2771,7 +2777,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x58 */
         &FOLDERID_PublicGameTasks,
-        CSIDL_Type_AllUsers,
+        CSIDL_Type_ProgramData,
         NULL,
         Microsoft_Windows_GameExplorerW,
 
@@ -2811,7 +2817,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x5a */
         &FOLDERID_PublicRingtones,
-        CSIDL_Type_AllUsers,
+        CSIDL_Type_ProgramData,
         NULL,
         Microsoft_Windows_RingtonesW,
 
@@ -3470,6 +3476,9 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
             case CSIDL_Type_AllUsers:
                 strcpyW(pszPath, AllUsersProfileW);
                 break;
+            case CSIDL_Type_ProgramData:
+                strcpyW(pszPath, ProgramDataVarW);
+                break;
             case CSIDL_Type_CurrVer:
                 strcpyW(pszPath, SystemDriveW);
                 break;
@@ -3677,7 +3686,7 @@ static HRESULT _SHGetAllUsersProfilePath(DWORD dwFlags, BYTE folder,
 
     if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
         return E_INVALIDARG;
-    if (CSIDL_Data[folder].type != CSIDL_Type_AllUsers)
+    if (CSIDL_Data[folder].type != CSIDL_Type_AllUsers && CSIDL_Data[folder].type != CSIDL_Type_ProgramData)
         return E_INVALIDARG;
     if (!pszPath)
         return E_INVALIDARG;
@@ -3802,6 +3811,33 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
              szAllUsers, AllUsersW);
             PathAppendW(szDest, szAllUsers);
             PathAppendW(szDest, szTemp + strlenW(AllUsersProfileW));
+        }
+        else if (!strncmpiW(szTemp, ProgramDataVarW, strlenW(ProgramDataVarW)))
+        {
+            WCHAR szProgramData[MAX_PATH], def_val[MAX_PATH];
+            HKEY shellFolderKey;
+            DWORD dwType, dwPathLen = sizeof(def_val);
+            BOOL in_registry = FALSE;
+
+            if (!RegCreateKeyW(HKEY_LOCAL_MACHINE, szSHFolders, &shellFolderKey))
+            {
+                if (!RegQueryValueExW(shellFolderKey, Common_AppDataW, NULL, &dwType,
+                    (LPBYTE)def_val, &dwPathLen) && (dwType == REG_EXPAND_SZ || dwType == REG_SZ))
+                    in_registry = TRUE;
+
+                RegCloseKey(shellFolderKey);
+            }
+
+            if (!in_registry)
+            {
+                GetSystemDirectoryW(def_val, MAX_PATH);
+                if (def_val[1] == ':') strcpyW( def_val + 3, ProgramDataW );
+                else FIXME("non-drive system paths unsupported\n");
+            }
+
+            hr = _SHGetProfilesValue(key, ProgramDataW, szProgramData, def_val);
+            PathAppendW(szDest, szProgramData);
+            PathAppendW(szDest, szTemp + strlenW(ProgramDataVarW));
         }
         else if (!strncmpiW(szTemp, UserProfileW, strlenW(UserProfileW)))
         {
@@ -4014,6 +4050,7 @@ HRESULT WINAPI SHGetFolderPathAndSubDirW(
             hr = _SHGetUserProfilePath(hToken, dwFlags, folder, szTemp);
             break;
         case CSIDL_Type_AllUsers:
+        case CSIDL_Type_ProgramData:
             hr = _SHGetAllUsersProfilePath(dwFlags, folder, szTemp);
             break;
         default:
@@ -4153,7 +4190,8 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
             if (CSIDL_Data[folders[i]].type == CSIDL_Type_User)
                 _SHGetUserProfilePath(hToken, SHGFP_TYPE_DEFAULT, folders[i],
                  path);
-            else if (CSIDL_Data[folders[i]].type == CSIDL_Type_AllUsers)
+            else if (CSIDL_Data[folders[i]].type == CSIDL_Type_AllUsers ||
+                     CSIDL_Data[folders[i]].type == CSIDL_Type_ProgramData)
                 _SHGetAllUsersProfilePath(SHGFP_TYPE_DEFAULT, folders[i], path);
             else if (CSIDL_Data[folders[i]].type == CSIDL_Type_WindowsPath)
             {
@@ -4898,6 +4936,7 @@ HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE t
             hr = _SHGetUserProfilePath(token, shgfp_flags, folder, tempW);
             break;
         case CSIDL_Type_AllUsers:
+        case CSIDL_Type_ProgramData:
             hr = _SHGetAllUsersProfilePath(shgfp_flags, folder, tempW);
             break;
         default:
