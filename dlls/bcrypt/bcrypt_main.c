@@ -135,6 +135,7 @@ struct object
 
 enum alg_id
 {
+    ALG_ID_AES,
     ALG_ID_MD5,
     ALG_ID_RNG,
     ALG_ID_SHA1,
@@ -152,6 +153,7 @@ static const struct {
     ULONG block_bits;
     const WCHAR *alg_name;
 } alg_props[] = {
+    /* ALG_ID_AES    */ {  654,    0,    0, BCRYPT_AES_ALGORITHM },
     /* ALG_ID_MD5    */ {  274,   16,  512, BCRYPT_MD5_ALGORITHM },
     /* ALG_ID_RNG    */ {    0,    0,    0, BCRYPT_RNG_ALGORITHM },
     /* ALG_ID_SHA1   */ {  278,   20,  512, BCRYPT_SHA1_ALGORITHM },
@@ -210,10 +212,9 @@ NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE handle, UCHAR *buffer, ULONG c
 
 NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR id, LPCWSTR implementation, DWORD flags )
 {
+    const DWORD supported_flags = BCRYPT_ALG_HANDLE_HMAC_FLAG;
     struct algorithm *alg;
     enum alg_id alg_id;
-
-    const DWORD supported_flags = BCRYPT_ALG_HANDLE_HMAC_FLAG;
 
     TRACE( "%p, %s, %s, %08x\n", handle, wine_dbgstr_w(id), wine_dbgstr_w(implementation), flags );
 
@@ -224,9 +225,10 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!strcmpW( id, BCRYPT_SHA1_ALGORITHM )) alg_id = ALG_ID_SHA1;
+    if (!strcmpW( id, BCRYPT_AES_ALGORITHM )) alg_id = ALG_ID_AES;
     else if (!strcmpW( id, BCRYPT_MD5_ALGORITHM )) alg_id = ALG_ID_MD5;
     else if (!strcmpW( id, BCRYPT_RNG_ALGORITHM )) alg_id = ALG_ID_RNG;
+    else if (!strcmpW( id, BCRYPT_SHA1_ALGORITHM )) alg_id = ALG_ID_SHA1;
     else if (!strcmpW( id, BCRYPT_SHA256_ALGORITHM )) alg_id = ALG_ID_SHA256;
     else if (!strcmpW( id, BCRYPT_SHA384_ALGORITHM )) alg_id = ALG_ID_SHA384;
     else if (!strcmpW( id, BCRYPT_SHA512_ALGORITHM )) alg_id = ALG_ID_SHA512;
@@ -388,6 +390,8 @@ struct hash
     struct hash_impl inner;
 };
 
+#define BLOCK_LENGTH_AES        16
+
 static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
@@ -432,9 +436,43 @@ static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf,
     NTSTATUS status;
 
     status = generic_alg_property( id, prop, buf, size, ret_size );
-    if (status == STATUS_NOT_IMPLEMENTED)
-        FIXME( "unsupported property %s\n", debugstr_w(prop) );
-    return status;
+    if (status != STATUS_NOT_IMPLEMENTED)
+        return status;
+
+    switch (id)
+    {
+    case ALG_ID_AES:
+        if (!strcmpW( prop, BCRYPT_BLOCK_LENGTH ))
+        {
+            *ret_size = sizeof(ULONG);
+            if (size < sizeof(ULONG))
+                return STATUS_BUFFER_TOO_SMALL;
+            if (buf)
+                *(ULONG *)buf = BLOCK_LENGTH_AES;
+            return STATUS_SUCCESS;
+        }
+        if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
+        {
+            if (size >= sizeof(BCRYPT_CHAIN_MODE_CBC))
+            {
+                memcpy(buf, BCRYPT_CHAIN_MODE_CBC, sizeof(BCRYPT_CHAIN_MODE_CBC));
+                *ret_size = sizeof(BCRYPT_CHAIN_MODE_CBC) * sizeof(WCHAR);
+                return STATUS_SUCCESS;
+            }
+            else
+            {
+                *ret_size = sizeof(BCRYPT_CHAIN_MODE_CBC) * sizeof(WCHAR);
+                return STATUS_BUFFER_TOO_SMALL;
+            }
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    FIXME( "unsupported property %s\n", debugstr_w(prop) );
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS get_hash_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
@@ -630,6 +668,14 @@ NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE algorithm, UCHAR *secret, ULONG se
     }
 
     return BCryptDestroyHash( handle );
+}
+
+NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HANDLE *handle,
+                                            UCHAR *object, ULONG object_len, UCHAR *secret, ULONG secret_len,
+                                            ULONG flags )
+{
+    FIXME( "%p, %p, %p, %u, %p, %u, %08x\n", algorithm, handle, object, object_len, secret, secret_len, flags );
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
