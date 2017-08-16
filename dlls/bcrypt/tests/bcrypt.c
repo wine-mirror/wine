@@ -765,11 +765,6 @@ static void test_BCryptGenerateSymmetricKey(void)
     key = NULL;
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
-    if (ret == STATUS_NOT_IMPLEMENTED) /* remove whole IF when Wine is fixed */
-    {
-        todo_wine ok(0, "BCryptGenerateSymmetricKey not implemented\n");
-        return;
-    }
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(key != NULL, "key not set\n");
 
@@ -779,6 +774,11 @@ static void test_BCryptGenerateSymmetricKey(void)
 
     size = 0xdeadbeef;
     ret = pBCryptEncrypt(key, NULL, 0, NULL, NULL, 0, NULL, 0, &size, 0);
+    if (ret == STATUS_NOT_IMPLEMENTED) /* remove whole IF when Wine is fixed */
+    {
+        todo_wine ok(0, "BCryptEncrypt not implemented\n");
+        return;
+    }
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(!size, "got %u\n", size);
 
@@ -854,17 +854,17 @@ static void test_BCryptEncrypt(void)
 
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
-    if (ret == STATUS_NOT_IMPLEMENTED) /* remove whole IF when Wine is fixed */
-    {
-        todo_wine ok(0, "BCryptGenerateSymmetricKey not implemented\n");
-        return;
-    }
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     /* input size is a multiple of block size */
     size = 0;
     memcpy(ivbuf, iv, sizeof(iv));
     ret = pBCryptEncrypt(key, data, 16, NULL, ivbuf, 16, NULL, 0, &size, 0);
+    if (ret == STATUS_NOT_IMPLEMENTED) /* remove whole IF when Wine is fixed */
+    {
+        todo_wine ok(0, "BCryptEncrypt not implemented\n");
+        return;
+    }
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(size == 16, "got %u\n", size);
 
@@ -945,17 +945,17 @@ static void test_BCryptDecrypt(void)
 
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
-    if (ret == STATUS_NOT_IMPLEMENTED) /* remove whole IF when Wine is fixed */
-    {
-        todo_wine ok(0, "BCryptGenerateSymmetricKey not implemented\n");
-        return;
-    }
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     /* input size is a multiple of block size */
     size = 0;
     memcpy(ivbuf, iv, sizeof(iv));
     ret = pBCryptDecrypt(key, ciphertext, 32, NULL, ivbuf, 16, NULL, 0, &size, 0);
+    if (ret == STATUS_NOT_IMPLEMENTED) /* remove whole IF when Wine is fixed */
+    {
+        todo_wine ok(0, "BCryptDecrypt not implemented\n");
+        return;
+    }
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(size == 32, "got %u\n", size);
 

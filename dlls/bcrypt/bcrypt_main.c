@@ -128,6 +128,7 @@ NTSTATUS WINAPI BCryptEnumAlgorithms(ULONG dwAlgOperations, ULONG *pAlgCount,
 
 #define MAGIC_ALG  (('A' << 24) | ('L' << 16) | ('G' << 8) | '0')
 #define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
+#define MAGIC_KEY  (('K' << 24) | ('E' << 16) | ('Y' << 8) | '0')
 struct object
 {
     ULONG magic;
@@ -676,12 +677,112 @@ NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE algorithm, UCHAR *secret, ULONG se
     return BCryptDestroyHash( handle );
 }
 
+#if defined(HAVE_GNUTLS_HASH) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+struct key
+{
+    struct object      hdr;
+    enum alg_id        alg_id;
+    ULONG              block_size;
+    gnutls_cipher_hd_t handle;
+    UCHAR             *secret;
+    ULONG              secret_len;
+};
+
+static ULONG get_block_size( enum alg_id alg )
+{
+    ULONG ret = 0, size = sizeof(ret);
+    get_alg_property( alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&ret, sizeof(ret), &size );
+    return ret;
+}
+
+static NTSTATUS key_init( struct key *key, enum alg_id id, const UCHAR *secret, ULONG secret_len )
+{
+    UCHAR *buffer;
+
+    if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
+
+    switch (id)
+    {
+    case ALG_ID_AES:
+        break;
+
+    default:
+        FIXME( "algorithm %u not supported\n", id );
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    if (!(key->block_size = get_block_size( id ))) return STATUS_INVALID_PARAMETER;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, secret_len ))) return STATUS_NO_MEMORY;
+    memcpy( buffer, secret, secret_len );
+
+    key->alg_id     = id;
+    key->handle     = 0;        /* initialized on first use */
+    key->secret     = buffer;
+    key->secret_len = secret_len;
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_destroy( struct key *key )
+{
+    HeapFree( GetProcessHeap(), 0, key->secret );
+    HeapFree( GetProcessHeap(), 0, key );
+    return STATUS_SUCCESS;
+}
+#else
+struct key
+{
+    struct object hdr;
+    ULONG         block_size;
+};
+
+static NTSTATUS key_init( struct key *key, enum alg_id id, const UCHAR *secret, ULONG secret_len )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_destroy( struct key *key )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+#endif
+
 NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HANDLE *handle,
                                             UCHAR *object, ULONG object_len, UCHAR *secret, ULONG secret_len,
                                             ULONG flags )
 {
-    FIXME( "%p, %p, %p, %u, %p, %u, %08x\n", algorithm, handle, object, object_len, secret, secret_len, flags );
-    return STATUS_NOT_IMPLEMENTED;
+    struct algorithm *alg = algorithm;
+    struct key *key;
+    NTSTATUS status;
+
+    TRACE( "%p, %p, %p, %u, %p, %u, %08x\n", algorithm, handle, object, object_len, secret, secret_len, flags );
+
+    if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
+    if (object) FIXME( "ignoring object buffer\n" );
+
+    if (!(key = HeapAlloc( GetProcessHeap(), 0, sizeof(*key) ))) return STATUS_NO_MEMORY;
+    key->hdr.magic = MAGIC_KEY;
+
+    if ((status = key_init( key, alg->id, secret, secret_len )))
+    {
+        HeapFree( GetProcessHeap(), 0, key );
+        return status;
+    }
+
+    *handle = key;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI BCryptDestroyKey( BCRYPT_KEY_HANDLE handle )
+{
+    struct key *key = handle;
+
+    TRACE( "%p\n", handle );
+
+    if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
+    return key_destroy( key );
 }
 
 NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len,

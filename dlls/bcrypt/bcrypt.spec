@@ -9,7 +9,7 @@
 @ stub BCryptDeleteContext
 @ stub BCryptDeriveKey
 @ stdcall BCryptDestroyHash(ptr)
-@ stub BCryptDestroyKey
+@ stdcall BCryptDestroyKey(ptr)
 @ stub BCryptDestroySecret
 @ stdcall BCryptDuplicateHash(ptr ptr ptr long long)
 @ stub BCryptDuplicateKey
