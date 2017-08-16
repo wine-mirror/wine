@@ -693,6 +693,15 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
     return STATUS_NOT_IMPLEMENTED;
 }
 
+NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len,
+                               void *padding, UCHAR *iv, ULONG iv_len, UCHAR *output,
+                               ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    FIXME( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len,
+           padding, iv, iv_len, output, output_len, ret_len, flags );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     switch (reason)

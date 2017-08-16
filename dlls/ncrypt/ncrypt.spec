@@ -5,7 +5,7 @@
 @ stub BCryptConfigureContextFunction
 @ stub BCryptCreateContext
 @ stdcall BCryptCreateHash(ptr ptr ptr long ptr long long) bcrypt.BCryptCreateHash
-@ stub BCryptDecrypt
+@ stdcall BCryptDecrypt(ptr ptr long ptr ptr long ptr long ptr long) bcrypt.BCryptDecrypt
 @ stub BCryptDeleteContext
 @ stub BCryptDeriveKey
 @ stub BCryptDeriveKeyCapi
