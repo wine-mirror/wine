@@ -963,7 +963,7 @@ static enum usp10_script get_char_script(const WCHAR *str, unsigned int index,
 
     if (!(range = bsearch(&ch, script_ranges, ARRAY_SIZE(script_ranges),
             sizeof(*script_ranges), usp10_compare_script_range)))
-        return Script_Undefined;
+        return (*consumed == 2) ? Script_Surrogates : Script_Undefined;
 
     if (range->numericScript && (type & C1_DIGIT || type2 == C2_ARABICNUMBER))
         return range->numericScript;
