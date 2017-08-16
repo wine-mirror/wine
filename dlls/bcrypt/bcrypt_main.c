@@ -51,6 +51,9 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(gnutls_cipher_init);
+MAKE_FUNCPTR(gnutls_cipher_deinit);
+MAKE_FUNCPTR(gnutls_cipher_encrypt2);
 MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
 MAKE_FUNCPTR(gnutls_global_set_log_function);
@@ -80,6 +83,9 @@ static BOOL gnutls_initialize(void)
         goto fail; \
     }
 
+    LOAD_FUNCPTR(gnutls_cipher_init)
+    LOAD_FUNCPTR(gnutls_cipher_deinit)
+    LOAD_FUNCPTR(gnutls_cipher_encrypt2)
     LOAD_FUNCPTR(gnutls_global_deinit)
     LOAD_FUNCPTR(gnutls_global_init)
     LOAD_FUNCPTR(gnutls_global_set_log_function)
@@ -723,8 +729,69 @@ static NTSTATUS key_init( struct key *key, enum alg_id id, const UCHAR *secret, 
     return STATUS_SUCCESS;
 }
 
+static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
+{
+    switch (key->alg_id)
+    {
+    case ALG_ID_AES:
+        FIXME( "handle block size and chaining mode\n" );
+        return GNUTLS_CIPHER_AES_128_CBC;
+
+    default:
+        FIXME( "algorithm %u not supported\n", key->alg_id );
+        return GNUTLS_CIPHER_UNKNOWN;
+    }
+}
+
+static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
+{
+    gnutls_cipher_algorithm_t cipher;
+    gnutls_datum_t secret, vector;
+    int ret;
+
+    if (key->handle)
+    {
+        pgnutls_cipher_deinit( key->handle );
+        key->handle = NULL;
+    }
+
+    if ((cipher = get_gnutls_cipher( key )) == GNUTLS_CIPHER_UNKNOWN)
+        return STATUS_NOT_SUPPORTED;
+
+    secret.data = key->secret;
+    secret.size = key->secret_len;
+    if (iv)
+    {
+        vector.data = iv;
+        vector.size = iv_len;
+    }
+
+    if ((ret = pgnutls_cipher_init( &key->handle, cipher, &secret, iv ? &vector : NULL )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
+                             ULONG output_len )
+{
+    int ret;
+
+    if ((ret = pgnutls_cipher_encrypt2( key->handle, input, input_len, output, output_len )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_destroy( struct key *key )
 {
+    if (key->handle) pgnutls_cipher_deinit( key->handle );
     HeapFree( GetProcessHeap(), 0, key->secret );
     HeapFree( GetProcessHeap(), 0, key );
     return STATUS_SUCCESS;
@@ -737,6 +804,19 @@ struct key
 };
 
 static NTSTATUS key_init( struct key *key, enum alg_id id, const UCHAR *secret, ULONG secret_len )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_set_params( struct key *key, UCHAR *iv, ULONG iv_len )
+{
+    ERR( "support for keys not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS key_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output,
+                             ULONG output_len  )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -789,9 +869,58 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
                                void *padding, UCHAR *iv, ULONG iv_len, UCHAR *output,
                                ULONG output_len, ULONG *ret_len, ULONG flags )
 {
-    FIXME( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len,
+    struct key *key = handle;
+    ULONG bytes_left = input_len;
+    UCHAR *buf, *src, *dst;
+    NTSTATUS status;
+
+    TRACE( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len,
            padding, iv, iv_len, output, output_len, ret_len, flags );
-    return STATUS_NOT_IMPLEMENTED;
+
+    if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
+    if (padding)
+    {
+        FIXME( "padding info not implemented\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    if (flags & ~BCRYPT_BLOCK_PADDING)
+    {
+        FIXME( "flags %08x not implemented\n", flags );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if ((status = key_set_params( key, iv, iv_len ))) return status;
+
+    *ret_len = input_len;
+
+    if (flags & BCRYPT_BLOCK_PADDING)
+        *ret_len = (input_len + key->block_size) & ~(key->block_size - 1);
+    else if (input_len & (key->block_size - 1))
+        return STATUS_INVALID_BUFFER_SIZE;
+
+    if (!output) return STATUS_SUCCESS;
+    if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+
+    src = input;
+    dst = output;
+    while (bytes_left >= key->block_size)
+    {
+        if ((status = key_encrypt( key, src, key->block_size, dst, key->block_size ))) return status;
+        bytes_left -= key->block_size;
+        src += key->block_size;
+        dst += key->block_size;
+    }
+
+    if (flags & BCRYPT_BLOCK_PADDING)
+    {
+        if (!(buf = HeapAlloc( GetProcessHeap(), 0, key->block_size ))) return STATUS_NO_MEMORY;
+        memcpy( buf, src, bytes_left );
+        memset( buf + bytes_left, key->block_size - bytes_left, key->block_size - bytes_left );
+        status = key_encrypt( key, buf, key->block_size, dst, key->block_size );
+        HeapFree( GetProcessHeap(), 0, buf );
+    }
+
+    return status;
 }
 
 NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len,

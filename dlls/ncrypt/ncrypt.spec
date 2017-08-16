@@ -11,7 +11,7 @@
 @ stub BCryptDeriveKeyCapi
 @ stub BCryptDeriveKeyPBKDF2
 @ stdcall BCryptDestroyHash(ptr) bcrypt.BCryptDestroyHash
-@ stub BCryptDestroyKey
+@ stdcall BCryptDestroyKey(ptr) bcrypt.BCryptDestroyKey
 @ stub BCryptDestroySecret
 @ stdcall BCryptDuplicateHash(ptr ptr ptr long long) bcrypt.BCryptDuplicateHash
 @ stub BCryptDuplicateKey

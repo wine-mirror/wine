@@ -774,11 +774,6 @@ static void test_BCryptGenerateSymmetricKey(void)
 
     size = 0xdeadbeef;
     ret = pBCryptEncrypt(key, NULL, 0, NULL, NULL, 0, NULL, 0, &size, 0);
-    if (ret == STATUS_NOT_IMPLEMENTED) /* remove whole IF when Wine is fixed */
-    {
-        todo_wine ok(0, "BCryptEncrypt not implemented\n");
-        return;
-    }
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(!size, "got %u\n", size);
 
@@ -800,6 +795,11 @@ static void test_BCryptGenerateSymmetricKey(void)
 
     size = 0xdeadbeef;
     ret = pBCryptDecrypt(key, NULL, 0, NULL, NULL, 0, NULL, 0, &size, 0);
+    if (ret == STATUS_NOT_IMPLEMENTED) /* remove whole IF when Wine is fixed */
+    {
+        todo_wine ok(0, "BCryptDecrypt not implemented\n");
+        return;
+    }
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(!size, "got %u\n", size);
 
@@ -833,14 +833,21 @@ static void test_BCryptEncrypt(void)
         {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
     static UCHAR data[] =
         {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10};
+    static UCHAR data2[] =
+        {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
+         0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10};
     static UCHAR expected[] =
         {0xc6,0xa1,0x3b,0x37,0x87,0x8f,0x5b,0x82,0x6f,0x4f,0x81,0x62,0xa1,0xc8,0xd8,0x79};
     static UCHAR expected2[] =
         {0xc6,0xa1,0x3b,0x37,0x87,0x8f,0x5b,0x82,0x6f,0x4f,0x81,0x62,0xa1,0xc8,0xd8,0x79,
          0x28,0x73,0x3d,0xef,0x84,0x8f,0xb0,0xa6,0x5d,0x1a,0x51,0xb7,0xec,0x8f,0xea,0xe9};
+    static UCHAR expected3[] =
+        {0xc6,0xa1,0x3b,0x37,0x87,0x8f,0x5b,0x82,0x6f,0x4f,0x81,0x62,0xa1,0xc8,0xd8,0x79,
+         0xb1,0xa2,0x92,0x73,0xbe,0x2c,0x42,0x07,0xa5,0xac,0xe3,0x93,0x39,0x8c,0xb6,0xfb,
+         0x87,0x5d,0xea,0xa3,0x7e,0x0f,0xde,0xfa,0xd9,0xec,0x6c,0x4e,0x3c,0x76,0x86,0xe4};
     BCRYPT_ALG_HANDLE aes;
     BCRYPT_KEY_HANDLE key;
-    UCHAR *buf, ciphertext[32], ivbuf[16];
+    UCHAR *buf, ciphertext[48], ivbuf[16];
     ULONG size, len, i;
     NTSTATUS ret;
 
@@ -860,11 +867,6 @@ static void test_BCryptEncrypt(void)
     size = 0;
     memcpy(ivbuf, iv, sizeof(iv));
     ret = pBCryptEncrypt(key, data, 16, NULL, ivbuf, 16, NULL, 0, &size, 0);
-    if (ret == STATUS_NOT_IMPLEMENTED) /* remove whole IF when Wine is fixed */
-    {
-        todo_wine ok(0, "BCryptEncrypt not implemented\n");
-        return;
-    }
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(size == 16, "got %u\n", size);
 
@@ -902,6 +904,23 @@ static void test_BCryptEncrypt(void)
     for (i = 0; i < 32; i++)
         ok(ciphertext[i] == expected2[i], "%u: %02x != %02x\n", i, ciphertext[i], expected2[i]);
 
+    /* input size is a multiple of block size, block padding set */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    ret = pBCryptEncrypt(key, data2, 32, NULL, ivbuf, 16, NULL, 0, &size, BCRYPT_BLOCK_PADDING);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 48, "got %u\n", size);
+
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    memset(ciphertext, 0, sizeof(ciphertext));
+    ret = pBCryptEncrypt(key, data2, 32, NULL, ivbuf, 16, ciphertext, 48, &size, BCRYPT_BLOCK_PADDING);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 48, "got %u\n", size);
+    ok(!memcmp(ciphertext, expected3, sizeof(expected3)), "wrong data\n");
+    for (i = 0; i < 48; i++)
+        ok(ciphertext[i] == expected3[i], "%u: %02x != %02x\n", i, ciphertext[i], expected3[i]);
+
     /* output size too small */
     size = 0;
     memcpy(ivbuf, iv, sizeof(iv));
@@ -909,6 +928,13 @@ static void test_BCryptEncrypt(void)
     ret = pBCryptEncrypt(key, data, 17, NULL, ivbuf, 16, ciphertext, 31, &size, BCRYPT_BLOCK_PADDING);
     ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
     ok(size == 32, "got %u\n", size);
+
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    memset(ciphertext, 0, sizeof(ciphertext));
+    ret = pBCryptEncrypt(key, data2, 32, NULL, ivbuf, 16, ciphertext, 32, &size, BCRYPT_BLOCK_PADDING);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+    ok(size == 48, "got %u\n", size);
 
     ret = pBCryptDestroyKey(key);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
