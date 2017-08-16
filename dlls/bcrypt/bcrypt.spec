@@ -13,7 +13,7 @@
 @ stub BCryptDestroySecret
 @ stdcall BCryptDuplicateHash(ptr ptr ptr long long)
 @ stub BCryptDuplicateKey
-@ stub BCryptEncrypt
+@ stdcall BCryptEncrypt(ptr ptr long ptr ptr long ptr long ptr long)
 @ stdcall BCryptEnumAlgorithms(long ptr ptr long)
 @ stub BCryptEnumContextFunctionProviders
 @ stub BCryptEnumContextFunctions
