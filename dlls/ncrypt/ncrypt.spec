@@ -49,7 +49,7 @@
 @ stub BCryptSecretAgreement
 @ stub BCryptSetAuditingInterface
 @ stub BCryptSetContextFunctionProperty
-@ stub BCryptSetProperty
+@ stdcall BCryptSetProperty(ptr wstr ptr long long) bcrypt.BCryptSetProperty
 @ stub BCryptSignHash
 @ stub BCryptUnregisterConfigChangeNotify
 @ stub BCryptUnregisterProvider

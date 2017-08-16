@@ -512,6 +512,12 @@ NTSTATUS WINAPI BCryptGetProperty( BCRYPT_HANDLE handle, LPCWSTR prop, UCHAR *bu
     }
 }
 
+NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
+{
+    FIXME( "%p, %s, %p, %u, %08x\n", handle, debugstr_w(prop), value, size, flags );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDLE *handle, UCHAR *object, ULONG objectlen,
                                   UCHAR *secret, ULONG secretlen, ULONG flags )
 {
