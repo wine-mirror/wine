@@ -2361,13 +2361,20 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 GpStatus WINGDIPAPI GdipCreateMetafileFromWmfFile(GDIPCONST WCHAR *file,
     GDIPCONST WmfPlaceableFileHeader * placeable, GpMetafile **metafile)
 {
-    HMETAFILE hmf = GetMetaFileW(file);
+    HMETAFILE hmf;
+    HENHMETAFILE emf;
 
     TRACE("(%s, %p, %p)\n", debugstr_w(file), placeable, metafile);
 
-    if(!hmf) return InvalidParameter;
+    hmf = GetMetaFileW(file);
+    if(hmf)
+        return GdipCreateMetafileFromWmf(hmf, TRUE, placeable, metafile);
 
-    return GdipCreateMetafileFromWmf(hmf, TRUE, placeable, metafile);
+    emf = GetEnhMetaFileW(file);
+    if(emf)
+        return GdipCreateMetafileFromEmf(emf, TRUE, metafile);
+
+    return GenericError;
 }
 
 GpStatus WINGDIPAPI GdipCreateMetafileFromFile(GDIPCONST WCHAR *file,
