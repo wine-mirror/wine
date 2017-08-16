@@ -1515,6 +1515,7 @@ enable_wmasf
 enable_wmi
 enable_wmiutils
 enable_wmp
+enable_wmphoto
 enable_wmvcore
 enable_wnaspi32
 enable_wpc
@@ -18830,6 +18831,7 @@ wine_fn_config_dll wmiutils enable_wmiutils clean
 wine_fn_config_test dlls/wmiutils/tests wmiutils_test
 wine_fn_config_dll wmp enable_wmp clean
 wine_fn_config_test dlls/wmp/tests wmp_test
+wine_fn_config_dll wmphoto enable_wmphoto
 wine_fn_config_dll wmvcore enable_wmvcore implib
 wine_fn_config_test dlls/wmvcore/tests wmvcore_test
 wine_fn_config_dll wnaspi32 enable_wnaspi32 implib
