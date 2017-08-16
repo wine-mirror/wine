@@ -1813,6 +1813,8 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
             || strstr(gl_vendor_string, "Advanced Micro Devices, Inc.")
             || strstr(gl_vendor_string, "X.Org R300 Project")
             || strstr(gl_renderer, "AMD")
+            || strstr(gl_renderer, "FirePro")
+            || strstr(gl_renderer, "Radeon")
             || strstr(gl_renderer, "R100")
             || strstr(gl_renderer, "R200")
             || strstr(gl_renderer, "R300")
