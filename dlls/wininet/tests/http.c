@@ -4589,6 +4589,19 @@ static size_t server_read_data(char *buf, size_t buf_size)
     return recv(server_socket, buf, buf_size, 0);
 }
 
+#define server_read_request(a) _server_read_request(__LINE__,a)
+static void _server_read_request(unsigned line, const char *expected_request)
+{
+    char buf[4000], *p;
+    size_t size;
+
+    size = server_read_data(buf, sizeof(buf) - 1);
+    buf[size] = 0;
+    p = strstr(buf, "\r\n");
+    if(p) *p = 0;
+    ok_(__FILE__,line)(p && !strcmp(buf, expected_request), "unexpected request %s\n", buf);
+}
+
 static BOOL skip_receive_notification_tests;
 static DWORD received_response_size;
 
@@ -4613,11 +4626,45 @@ static void WINAPI readex_callback(HINTERNET handle, DWORD_PTR context, DWORD st
     }
 }
 
-static void open_socket_request(int port, test_request_t *req)
+static void send_socket_request(test_request_t *req, BOOL new_connection)
 {
     BOOL ret;
 
-    reset_events();
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+    SET_OPTIONAL(INTERNET_STATUS_DETECTING_PROXY);
+    if(new_connection) {
+        SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+        SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    }
+    SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
+    if(!skip_receive_notification_tests)
+        SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestA(req->request, NULL, 0, NULL, 0);
+    ok(!ret, "HttpSendRequestA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError());
+
+    if(new_connection)
+        WaitForSingleObject(server_req_rec_event, INFINITE);
+    WaitForSingleObject(request_sent_event, INFINITE);
+
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+    CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
+    if(new_connection) {
+        CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+        CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    }
+    CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+}
+
+static void open_socket_request(int port, test_request_t *req, const char *verb)
+{
+    /* We're connecting to new socket */
+    if(!verb)
+        reset_events();
 
     req->session = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(req->session != NULL, "InternetOpenA failed\n");
@@ -4629,33 +4676,12 @@ static void open_socket_request(int port, test_request_t *req)
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED );
 
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
-    req->request = HttpOpenRequestA(req->connection, "GET", "/socket", NULL, NULL, NULL, INTERNET_FLAG_RELOAD, 0xdeadbeef);
+    req->request = HttpOpenRequestA(req->connection, "GET", verb ? verb : "/socket",
+                                    NULL, NULL, NULL, INTERNET_FLAG_RELOAD, 0xdeadbeef);
     ok(req->request != NULL, "HttpOpenRequestA failed %u\n", GetLastError());
     CHECK_NOTIFIED( INTERNET_STATUS_HANDLE_CREATED );
 
-    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
-    SET_OPTIONAL(INTERNET_STATUS_DETECTING_PROXY);
-    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
-    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
-    SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
-    SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
-    if(!skip_receive_notification_tests)
-        SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
-
-    SetLastError(0xdeadbeef);
-    ret = HttpSendRequestA(req->request, NULL, 0, NULL, 0);
-    ok(!ret, "HttpSendRequestA unexpectedly succeeded\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError());
-
-    WaitForSingleObject(server_req_rec_event, INFINITE);
-    WaitForSingleObject(request_sent_event, INFINITE);
-
-    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
-    CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
-    CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
-    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+    send_socket_request(req, !verb);
 }
 
 static void open_read_test_request(int port, test_request_t *req, const char *response)
@@ -4663,7 +4689,7 @@ static void open_read_test_request(int port, test_request_t *req, const char *re
     if(!skip_receive_notification_tests)
         SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
 
-    open_socket_request(port, req);
+    open_socket_request(port, req, NULL);
 
     if(!skip_receive_notification_tests) {
         SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
@@ -4686,7 +4712,7 @@ static void open_read_test_request(int port, test_request_t *req, const char *re
 
 #define readex_expect_sync_data_len(a,b,c,d,e,f,g) _readex_expect_sync_data_len(__LINE__,a,b,c,d,e,f,g)
 static void _readex_expect_sync_data_len(unsigned line, HINTERNET req, DWORD flags, INTERNET_BUFFERSW *buf,
-                                         DWORD buf_size, const char *exdata, DWORD len, BOOL expect_receive)
+                                         DWORD buf_size, const char *exdata, DWORD len, DWORD expect_receive)
 {
     BOOL ret;
 
@@ -4823,7 +4849,7 @@ static void _readex_expect_async(unsigned line, HINTERNET req, DWORD flags, INTE
     if(!skip_receive_notification_tests)
         SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
 
-    memset(buf->lpvBuffer, 0, buf_size);
+    memset(buf->lpvBuffer, 0, max(buf_size, sizeof(DWORD)));
     buf->dwBufferLength = buf_size;
     ret = InternetReadFileExW(req, buf, flags, 0xdeadbeef);
     ok_(__FILE__,line)(!ret && GetLastError() == ERROR_IO_PENDING, "InternetReadFileExW returned %x (%u)\n", ret, GetLastError());
@@ -5180,12 +5206,123 @@ static void test_long_url(int port)
     close_request(&req);
 }
 
-static void test_redirect(int port)
+static void test_persistent_connection(int port)
 {
-    char buf[4000], *p, expect_url[INTERNET_MAX_URL_LENGTH];
     INTERNET_BUFFERSW ib;
     test_request_t req;
-    size_t size;
+    char buf[24000];
+
+    if(!is_ie7plus)
+        return;
+
+    memset(&ib, 0, sizeof(ib));
+    ib.dwStructSize = sizeof(ib);
+    ib.lpvBuffer = buf;
+
+    skip_receive_notification_tests = TRUE;
+
+    trace("Testing persistent connection...\n");
+
+    open_read_test_request(port, &req,
+                           "HTTP/1.1 200 OK\r\n"
+                           "Server: winetest\r\n"
+                           "Content-Length: 2\r\n"
+                           "\r\n"
+                           "xx");
+    readex_expect_sync_data(req.request, IRF_ASYNC, &ib, 4, "xx", 0);
+    close_async_handle(req.session, 2);
+
+    open_socket_request(port, &req, "/test_simple_chunked");
+    server_read_request("GET /test_simple_chunked HTTP/1.1");
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    server_send_string("HTTP/1.1 200 OK\r\n"
+                       "Server: winetest\r\n"
+                       "Transfer-Encoding: chunked\r\n"
+                       "\r\n"
+                       "2\r\nab\r\n");
+    WaitForSingleObject(complete_event, INFINITE);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    ok(req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error);
+
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "ab", 0);
+    readex_expect_async(req.request, IRF_ASYNC, &ib, sizeof(buf), NULL);
+    send_response_ex_and_wait("3\r\nabc\r\n0\r\n\r\n", FALSE, &ib, "abc", 0, 13);
+    close_async_handle(req.session, 2);
+
+    open_socket_request(port, &req, "/chunked");
+    server_read_request("GET /chunked HTTP/1.1");
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    server_send_string("HTTP/1.1 200 OK\r\n"
+                       "Server: winetest\r\n"
+                       "Transfer-Encoding: chunked\r\n"
+                       "\r\n"
+                       "2\r\nab\r\n");
+    WaitForSingleObject(complete_event, INFINITE);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    ok(req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error);
+
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, 3, "ab", 0);
+    readex_expect_async(req.request, IRF_ASYNC, &ib, 3, NULL);
+    send_response_ex_and_wait("3\r\nabc\r\n", FALSE, &ib, "abc", 0, 13);
+
+    /* send another request on the same request handle, it must drain remaining last chunk marker */
+    server_send_string("0\r\n\r\n");
+
+    send_socket_request(&req, FALSE);
+    server_read_request("GET /chunked HTTP/1.1");
+
+    ResetEvent(complete_event);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    server_send_string("HTTP/1.1 201 OK\r\n"
+                       "Server: winetest\r\n"
+                       "Content-Length: 0\r\n"
+                       "Connection: keep-alive\r\n"
+                       "\r\n");
+    WaitForSingleObject(complete_event, INFINITE);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    ok(req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error);
+
+    test_status_code(req.request, 201);
+    close_async_handle(req.session, 2);
+
+    /* the connection is still valid */
+    open_socket_request(port, &req, "/another_chunked");
+    server_read_request("GET /another_chunked HTTP/1.1");
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+    server_send_string("HTTP/1.1 200 OK\r\n"
+                       "Server: winetest\r\n"
+                       "Transfer-Encoding: chunked\r\n"
+                       "\r\n"
+                       "2\r\nab\r\n");
+    WaitForSingleObject(complete_event, INFINITE);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    ok(req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error);
+
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "ab", 0);
+    readex_expect_async(req.request, IRF_ASYNC, &ib, sizeof(buf), NULL);
+
+    /* we're missing trailing '\n'; the connection can't be drained without blocking,
+     * so it will be closed */
+    send_response_ex_and_wait("3\r\nabc\r\n0\r\n\r", FALSE, &ib, "abc", 0, 13);
+
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
+    close_async_handle(req.session, 2);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+
+    close_connection();
+    skip_receive_notification_tests = FALSE;
+}
+
+static void test_redirect(int port)
+{
+    char buf[4000], expect_url[INTERNET_MAX_URL_LENGTH];
+    INTERNET_BUFFERSW ib;
+    test_request_t req;
 
     if(!is_ie7plus)
         return;
@@ -5198,7 +5335,7 @@ static void test_redirect(int port)
 
     trace("Testing redirection...\n");
 
-    open_socket_request(port, &req);
+    open_socket_request(port, &req, NULL);
 
     SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
     SET_EXPECT(INTERNET_STATUS_REDIRECT);
@@ -5212,11 +5349,7 @@ static void test_redirect(int port)
                        "Content-Length: 0\r\n"
                        "\r\n");
 
-    size = server_read_data(buf, sizeof(buf) - 1);
-    buf[size] = 0;
-    p = strstr(buf, "\r\n");
-    if(p) *p = 0;
-    ok(p && !strcmp(buf, "GET /test_redirection HTTP/1.1"), "unexpected request %s\n", buf);
+    server_read_request("GET /test_redirection HTTP/1.1");
 
     CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
 
@@ -5246,7 +5379,7 @@ static void test_redirect(int port)
 
     trace("Test redirect to non-http URL...\n");
 
-    open_socket_request(port, &req);
+    open_socket_request(port, &req, NULL);
 
     SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
 
@@ -5271,7 +5404,7 @@ static void test_redirect(int port)
 
     trace("Test redirect to http URL with no host name...\n");
 
-    open_socket_request(port, &req);
+    open_socket_request(port, &req, NULL);
 
     SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
 
@@ -5364,6 +5497,7 @@ static void test_http_connection(void)
     test_connection_break(si.port);
     test_long_url(si.port);
     test_redirect(si.port);
+    test_persistent_connection(si.port);
     test_remove_dot_segments(si.port);
 
     /* send the basic request again to shutdown the server thread */
