@@ -157,6 +157,64 @@ static void test_INetworkConnection( INetworkConnection *conn )
     }
 }
 
+static HRESULT WINAPI Unknown_QueryInterface(INetworkListManagerEvents *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI NetworkListManagerEvents_QueryInterface(INetworkListManagerEvents *iface,
+                                                              REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_INetworkListManagerEvents)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI NetworkListManagerEvents_AddRef(INetworkListManagerEvents *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI NetworkListManagerEvents_Release(INetworkListManagerEvents *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI NetworkListManagerEvents_ConnectivityChanged(INetworkListManagerEvents *iface,
+        NLM_CONNECTIVITY newConnectivity)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const INetworkListManagerEventsVtbl mgr_sink_vtbl = {
+    NetworkListManagerEvents_QueryInterface,
+    NetworkListManagerEvents_AddRef,
+    NetworkListManagerEvents_Release,
+    NetworkListManagerEvents_ConnectivityChanged
+};
+
+static INetworkListManagerEvents mgr_sink = { &mgr_sink_vtbl };
+
+static const INetworkListManagerEventsVtbl mgr_sink_unk_vtbl = {
+    Unknown_QueryInterface,
+    NetworkListManagerEvents_AddRef,
+    NetworkListManagerEvents_Release,
+    NetworkListManagerEvents_ConnectivityChanged
+};
+
+static INetworkListManagerEvents mgr_sink_unk = { &mgr_sink_unk_vtbl };
+
 static void test_INetworkListManager( void )
 {
     IConnectionPointContainer *cpc, *cpc2;
@@ -169,6 +227,7 @@ static void test_INetworkListManager( void )
     INetwork *network;
     IEnumNetworkConnections *conn_iter;
     INetworkConnection *conn;
+    DWORD cookie;
     HRESULT hr;
     ULONG ref1, ref2;
     IID iid;
@@ -247,6 +306,19 @@ static void test_INetworkListManager( void )
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !memcmp( &iid, &IID_INetworkListManagerEvents, sizeof(iid) ),
         "Expected iid to be IID_INetworkListManagerEvents\n" );
+
+    hr = IConnectionPoint_Advise( pt, (IUnknown*)&mgr_sink_unk, &cookie);
+    ok( hr == CO_E_FAILEDTOOPENTHREADTOKEN, "Advise failed: %08x\n", hr );
+
+    hr = IConnectionPoint_Advise( pt, (IUnknown*)&mgr_sink, &cookie);
+    ok( hr == S_OK, "Advise failed: %08x\n", hr );
+
+    hr = IConnectionPoint_Unadvise( pt, 0xdeadbeef );
+    ok( hr == OLE_E_NOCONNECTION || hr == CO_E_FAILEDTOIMPERSONATE, "Unadvise failed: %08x\n", hr );
+
+    hr = IConnectionPoint_Unadvise( pt, cookie );
+    ok( hr == S_OK, "Unadvise failed: %08x\n", hr );
+
     IConnectionPoint_Release( pt );
 
     hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkCostManagerEvents, &pt );

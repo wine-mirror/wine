@@ -91,6 +91,15 @@ struct connection_point
     IConnectionPointContainer *container;
     LONG refs;
     IID iid;
+    struct list sinks;
+    DWORD cookie;
+};
+
+struct sink_entry
+{
+    struct list entry;
+    DWORD cookie;
+    IUnknown *unk;
 };
 
 static inline struct list_manager *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
@@ -189,12 +198,33 @@ static HRESULT WINAPI connection_point_Advise(
     DWORD *cookie )
 {
     struct connection_point *cp = impl_from_IConnectionPoint( iface );
-    FIXME( "%p, %p, %p - stub\n", cp, sink, cookie );
+    struct sink_entry *sink_entry;
+    IUnknown *unk;
+    HRESULT hr;
+
+    FIXME( "%p, %p, %p - semi-stub\n", cp, sink, cookie );
 
     if (!sink || !cookie)
         return E_POINTER;
 
-    return CONNECT_E_CANNOTCONNECT;
+    hr = IUnknown_QueryInterface( sink, &cp->iid, (void**)&unk );
+    if (FAILED(hr))
+    {
+        WARN( "iface %s not implemented by sink\n", debugstr_guid(&cp->iid) );
+        return CO_E_FAILEDTOOPENTHREADTOKEN;
+    }
+
+    sink_entry = heap_alloc( sizeof(*sink_entry) );
+    if (!sink_entry)
+    {
+        IUnknown_Release( unk );
+        return E_OUTOFMEMORY;
+    }
+
+    sink_entry->unk = unk;
+    *cookie = sink_entry->cookie = ++cp->cookie;
+    list_add_tail( &cp->sinks, &sink_entry->entry );
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_point_Unadvise(
@@ -202,9 +232,21 @@ static HRESULT WINAPI connection_point_Unadvise(
     DWORD cookie )
 {
     struct connection_point *cp = impl_from_IConnectionPoint( iface );
-    FIXME( "%p, %d - stub\n", cp, cookie );
+    struct sink_entry *iter;
 
-    return E_POINTER;
+    TRACE( "%p, %d\n", cp, cookie );
+
+    LIST_FOR_EACH_ENTRY( iter, &cp->sinks, struct sink_entry, entry )
+    {
+        if (iter->cookie != cookie) continue;
+        list_remove( &iter->entry );
+        IUnknown_Release( iter->unk );
+        heap_free( iter );
+        return S_OK;
+    }
+
+    WARN( "invalid cookie\n" );
+    return OLE_E_NOCONNECTION;
 }
 
 static HRESULT WINAPI connection_point_EnumConnections(
@@ -241,8 +283,10 @@ static HRESULT connection_point_create(
     cp->IConnectionPoint_iface.lpVtbl = &connection_point_vtbl;
     cp->container = container;
     cp->refs = 1;
+    cp->cookie = 0;
+    cp->iid = *riid;
+    list_init( &cp->sinks );
 
-    memcpy( &cp->iid, riid, sizeof(*riid) );
     IConnectionPointContainer_AddRef( container );
 
     *obj = &cp->IConnectionPoint_iface;
