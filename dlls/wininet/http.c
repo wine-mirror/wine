@@ -401,7 +401,8 @@ typedef struct {
         CHUNKED_STREAM_STATE_READING_CHUNK,
         CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_DATA,
         CHUNKED_STREAM_STATE_DISCARD_EOL_AT_END,
-        CHUNKED_STREAM_STATE_END_OF_STREAM
+        CHUNKED_STREAM_STATE_END_OF_STREAM,
+        CHUNKED_STREAM_STATE_ERROR
     } state;
 } chunked_stream_t;
 
@@ -2681,7 +2682,14 @@ static char next_chunked_data_char(chunked_stream_t *stream)
 static BOOL chunked_end_of_data(data_stream_t *stream, http_request_t *req)
 {
     chunked_stream_t *chunked_stream = (chunked_stream_t*)stream;
-    return chunked_stream->state == CHUNKED_STREAM_STATE_END_OF_STREAM;
+    switch(chunked_stream->state) {
+    case CHUNKED_STREAM_STATE_DISCARD_EOL_AT_END:
+    case CHUNKED_STREAM_STATE_END_OF_STREAM:
+    case CHUNKED_STREAM_STATE_ERROR:
+        return TRUE;
+    default:
+        return FALSE;
+    }
 }
 
 static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DWORD size,
@@ -2713,7 +2721,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
                     continue_read = FALSE;
                     continue;
                 }else {
-                    chunked_stream->state = CHUNKED_STREAM_STATE_END_OF_STREAM;
+                    chunked_stream->state = CHUNKED_STREAM_STATE_ERROR;
                 }
                 break;
             default:
@@ -2775,7 +2783,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
                 }
 
                 if(!read_bytes) {
-                    chunked_stream->state = CHUNKED_STREAM_STATE_END_OF_STREAM;
+                    chunked_stream->state = CHUNKED_STREAM_STATE_ERROR;
                     continue;
                 }
             }
@@ -2805,6 +2813,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
             break;
 
         case CHUNKED_STREAM_STATE_END_OF_STREAM:
+        case CHUNKED_STREAM_STATE_ERROR:
             continue_read = FALSE;
             break;
         }
@@ -2826,7 +2835,8 @@ static DWORD chunked_drain_content(data_stream_t *stream, http_request_t *req, B
     BYTE buf[1024];
     DWORD size, res;
 
-    while(chunked_stream->state != CHUNKED_STREAM_STATE_END_OF_STREAM) {
+    while(chunked_stream->state != CHUNKED_STREAM_STATE_END_OF_STREAM
+          && chunked_stream->state != CHUNKED_STREAM_STATE_ERROR) {
         res = chunked_read(stream, req, buf, sizeof(buf), &size, allow_blocking);
         if(res != ERROR_SUCCESS)
             return res;
