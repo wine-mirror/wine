@@ -2706,17 +2706,23 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
 
         /* Ensure that we have data in the buffer for states that need it. */
         if(!chunked_stream->buf_size) {
+            BOOL blocking_read = allow_blocking;
+
             switch(chunked_stream->state) {
-            case CHUNKED_STREAM_STATE_READING_CHUNK_SIZE:
-            case CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_SIZE:
-            case CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_DATA:
             case CHUNKED_STREAM_STATE_DISCARD_EOL_AT_END:
+            case CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_SIZE:
+                /* never allow blocking after 0 chunk size */
+                if(!chunked_stream->chunk_size)
+                    blocking_read = FALSE;
+                /* fall through */
+            case CHUNKED_STREAM_STATE_READING_CHUNK_SIZE:
+            case CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_DATA:
                 chunked_stream->buf_pos = 0;
-                res = NETCON_recv(req->netconn, chunked_stream->buf, sizeof(chunked_stream->buf), allow_blocking, &read_bytes);
+                res = NETCON_recv(req->netconn, chunked_stream->buf, sizeof(chunked_stream->buf), blocking_read, &read_bytes);
                 if(res == ERROR_SUCCESS && read_bytes) {
                     chunked_stream->buf_size += read_bytes;
                 }else if(res == WSAEWOULDBLOCK) {
-                    if(ret_read)
+                    if(ret_read || allow_blocking)
                         res = ERROR_SUCCESS;
                     continue_read = FALSE;
                     continue;
