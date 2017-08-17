@@ -206,7 +206,7 @@ static BOOL HTTP_DeleteCustomHeader(http_request_t *req, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
 static DWORD HTTP_HttpQueryInfoW(http_request_t*, DWORD, LPVOID, LPDWORD, LPDWORD);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
-static BOOL drain_content(http_request_t*,BOOL);
+static DWORD drain_content(http_request_t*,BOOL);
 
 static CRITICAL_SECTION connection_pool_cs;
 static CRITICAL_SECTION_DEBUG connection_pool_debug =
@@ -2008,7 +2008,7 @@ static void HTTPREQ_CloseConnection(object_header_t *hdr)
 {
     http_request_t *req = (http_request_t*)hdr;
 
-    http_release_netconn(req, drain_content(req, FALSE));
+    http_release_netconn(req, drain_content(req, FALSE) == ERROR_SUCCESS);
 }
 
 static DWORD str_to_buffer(const WCHAR *str, void *buffer, DWORD *size, BOOL unicode)
@@ -2998,28 +2998,34 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
     LeaveCriticalSection( &req->read_section );
 
     *read = ret_read;
-    TRACE( "retrieved %u bytes (%u)\n", ret_read, req->contentLength );
+    TRACE( "retrieved %u bytes (res %u)\n", ret_read, res );
 
-    if(res != WSAEWOULDBLOCK && (!ret_read || res != ERROR_SUCCESS))
-        http_release_netconn(req, res == ERROR_SUCCESS);
+    if(res != WSAEWOULDBLOCK) {
+        if(res != ERROR_SUCCESS)
+            http_release_netconn(req, FALSE);
+        else if(!ret_read && drain_content(req, FALSE) == ERROR_SUCCESS)
+            http_release_netconn(req, TRUE);
+    }
 
     return res;
 }
 
-static BOOL drain_content(http_request_t *req, BOOL blocking)
+static DWORD drain_content(http_request_t *req, BOOL blocking)
 {
     DWORD res;
 
-    if(!is_valid_netconn(req->netconn) || req->contentLength == -1)
-        return FALSE;
+    TRACE("%p\n", req->netconn);
+
+    if(!is_valid_netconn(req->netconn))
+        return ERROR_NO_DATA;
 
     if(!strcmpW(req->verb, szHEAD))
-        return TRUE;
+        return ERROR_SUCCESS;
 
     EnterCriticalSection( &req->read_section );
     res = req->data_stream->vtbl->drain_content(req->data_stream, req, blocking);
     LeaveCriticalSection( &req->read_section );
-    return res == ERROR_SUCCESS;
+    return res;
 }
 
 typedef struct {
@@ -3054,7 +3060,7 @@ static void async_read_file_proc(task_header_t *hdr)
         if(task->ret_read)
             complete_arg = read; /* QueryDataAvailable reports read bytes in request complete notification */
         if(res != ERROR_SUCCESS || !read)
-            http_release_netconn(req, drain_content(req, FALSE));
+            http_release_netconn(req, drain_content(req, FALSE) == ERROR_SUCCESS);
     }
 
     TRACE("res %u read %u\n", res, read);
@@ -5053,7 +5059,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                         heap_free(request->verb);
                         request->verb = heap_strdupW(szGET);
                     }
-                    http_release_netconn(request, drain_content(request, FALSE));
+                    http_release_netconn(request, drain_content(request, FALSE) == ERROR_SUCCESS);
                     res = HTTP_HandleRedirect(request, new_url);
                     heap_free(new_url);
                     if (res == ERROR_SUCCESS) {
@@ -5079,7 +5085,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                                                  request->session->password, host))
                         {
                             heap_free(requestString);
-                            if(!drain_content(request, TRUE)) {
+                            if(!drain_content(request, TRUE) == ERROR_SUCCESS) {
                                 FIXME("Could not drain content\n");
                                 http_release_netconn(request, FALSE);
                             }
@@ -5107,7 +5113,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                                                  NULL))
                         {
                             heap_free(requestString);
-                            if(!drain_content(request, TRUE)) {
+                            if(!drain_content(request, TRUE) == ERROR_SUCCESS) {
                                 FIXME("Could not drain content\n");
                                 http_release_netconn(request, FALSE);
                             }
@@ -5249,7 +5255,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
                 heap_free(request->verb);
                 request->verb = heap_strdupW(szGET);
             }
-            http_release_netconn(request, drain_content(request, FALSE));
+            http_release_netconn(request, drain_content(request, FALSE) == ERROR_SUCCESS);
             res = HTTP_HandleRedirect(request, new_url);
             heap_free(new_url);
             if (res == ERROR_SUCCESS)
