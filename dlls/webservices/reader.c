@@ -914,7 +914,7 @@ WS_XML_UINT64_TEXT *alloc_uint64_text( UINT64 value )
     return ret;
 }
 
-WS_XML_FLOAT_TEXT *alloc_float_text( float value )
+static WS_XML_FLOAT_TEXT *alloc_float_text( float value )
 {
     WS_XML_FLOAT_TEXT *ret;
 

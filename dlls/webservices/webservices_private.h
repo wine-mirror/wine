@@ -83,7 +83,6 @@ WS_XML_BOOL_TEXT *alloc_bool_text( BOOL );
 WS_XML_INT32_TEXT *alloc_int32_text( INT32 );
 WS_XML_INT64_TEXT *alloc_int64_text( INT64 );
 WS_XML_UINT64_TEXT *alloc_uint64_text( UINT64 );
-WS_XML_FLOAT_TEXT *alloc_float_text( float );
 WS_XML_DOUBLE_TEXT *alloc_double_text( double );
 WS_XML_GUID_TEXT *alloc_guid_text( const GUID * );
 WS_XML_UNIQUE_ID_TEXT *alloc_unique_id_text( const GUID * );
