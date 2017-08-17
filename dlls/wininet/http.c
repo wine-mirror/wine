@@ -4745,21 +4745,21 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
     netconn_t *netconn = NULL;
     DWORD res;
 
-    reset_data_stream(request);
-
     if (request->netconn)
     {
-        if (is_valid_netconn(request->netconn) && NETCON_is_alive(request->netconn))
+        if (NETCON_is_alive(request->netconn) && drain_content(request, TRUE) == ERROR_SUCCESS)
         {
+            reset_data_stream(request);
             *reusing = TRUE;
             return ERROR_SUCCESS;
         }
-        else
-        {
-            free_netconn(request->netconn);
-            request->netconn = NULL;
-        }
+
+        TRACE("freeing netconn\n");
+        free_netconn(request->netconn);
+        request->netconn = NULL;
     }
+
+    reset_data_stream(request);
 
     res = HTTP_ResolveName(request);
     if(res != ERROR_SUCCESS)
