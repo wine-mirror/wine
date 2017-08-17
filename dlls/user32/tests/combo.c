@@ -29,6 +29,8 @@
 
 #define COMBO_ID 1995
 
+#define COMBO_YBORDERSIZE() 2
+
 static HWND hMainWnd;
 
 #define expect_eq(expr, value, type, fmt); { type val = expr; ok(val == (value), #expr " expected " #fmt " got " #fmt "\n", (value), val); }
@@ -700,6 +702,110 @@ static void test_listbox_styles(DWORD cb_style)
     DestroyWindow(combo);
 }
 
+static void test_listbox_size(DWORD style)
+{
+    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
+    HWND hCombo, hList;
+    COMBOBOXINFO cbInfo;
+    UINT x, y;
+    BOOL ret;
+    int i, test;
+    const char wine_test[] = "Wine Test";
+
+    static const struct list_size_info
+    {
+        int num_items;
+        int height_combo;
+        BOOL todo;
+    } info_height[] = {
+        {2, 24},
+        {2, 41, TRUE},
+        {2, 42},
+        {2, 50},
+        {2, 60},
+        {2, 80},
+        {2, 89},
+        {2, 90},
+        {2, 100},
+
+        {10, 24},
+        {10, 41, TRUE},
+        {10, 42},
+        {10, 50},
+        {10, 60},
+        {10, 80},
+        {10, 89, TRUE},
+        {10, 90},
+        {10, 100},
+    };
+
+    pGetComboBoxInfo = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
+    if (!pGetComboBoxInfo)
+    {
+        win_skip("GetComboBoxInfo is not available\n");
+        return;
+    }
+
+    for(test = 0; test < sizeof(info_height) / sizeof(info_height[0]); test++)
+    {
+        const struct list_size_info *info_test = &info_height[test];
+        int height_item; /* Height of a list item */
+        int height_list; /* Height of the list we got */
+        int expected_count_list;
+        int expected_height_list;
+        int list_height_nonclient;
+        int list_height_calculated;
+        RECT rect_list_client, rect_list_complete;
+
+        hCombo = CreateWindowA("ComboBox", "Combo", WS_VISIBLE|WS_CHILD|style, 5, 5, 100,
+                               info_test->height_combo, hMainWnd, (HMENU)COMBO_ID, NULL, 0);
+
+        cbInfo.cbSize = sizeof(COMBOBOXINFO);
+        SetLastError(0xdeadbeef);
+        ret = pGetComboBoxInfo(hCombo, &cbInfo);
+        ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
+
+        hList = cbInfo.hwndList;
+        for (i = 0; i < info_test->num_items; i++)
+            SendMessageA(hCombo, CB_ADDSTRING, 0, (LPARAM) wine_test);
+
+        /* Click on the button to drop down the list */
+        x = cbInfo.rcButton.left + (cbInfo.rcButton.right-cbInfo.rcButton.left)/2;
+        y = cbInfo.rcButton.top + (cbInfo.rcButton.bottom-cbInfo.rcButton.top)/2;
+        ret = SendMessageA(hCombo, WM_LBUTTONDOWN, 0, MAKELPARAM(x, y));
+        ok(ret, "WM_LBUTTONDOWN was not processed. LastError=%d\n",
+           GetLastError());
+        ok(SendMessageA(hCombo, CB_GETDROPPEDSTATE, 0, 0),
+           "The dropdown list should have appeared after clicking the button.\n");
+
+        GetClientRect(hList, &rect_list_client);
+        GetWindowRect(hList, &rect_list_complete);
+        height_list = rect_list_client.bottom - rect_list_client.top;
+        height_item = (int)SendMessageA(hList, LB_GETITEMHEIGHT, 0, 0);
+
+        list_height_nonclient = (rect_list_complete.bottom - rect_list_complete.top)
+                                - (rect_list_client.bottom - rect_list_client.top);
+
+        /* Calculate the expected client size of the listbox popup from the size of the combobox. */
+        list_height_calculated = info_test->height_combo
+                - (cbInfo.rcItem.bottom + COMBO_YBORDERSIZE())
+                - list_height_nonclient
+                - 1;
+
+        expected_count_list = list_height_calculated / height_item;
+        if(expected_count_list < 0)
+            expected_count_list = 0;
+        expected_count_list = min(expected_count_list, info_test->num_items);
+        expected_height_list = expected_count_list * height_item;
+
+        todo_wine_if(info_test->todo)
+        ok(expected_height_list == height_list,
+           "Test %d, expected list height to be %d, got %d\n", test, expected_height_list, height_list);
+
+        DestroyWindow(hCombo);
+    }
+}
+
 START_TEST(combo)
 {
     hMainWnd = CreateWindowA("static", "Test", WS_OVERLAPPEDWINDOW, 10, 10, 300, 300, NULL, NULL, NULL, 0);
@@ -719,6 +825,7 @@ START_TEST(combo)
     test_listbox_styles(CBS_SIMPLE);
     test_listbox_styles(CBS_DROPDOWN);
     test_listbox_styles(CBS_DROPDOWNLIST);
+    test_listbox_size(CBS_DROPDOWN);
 
     DestroyWindow(hMainWnd);
 }
