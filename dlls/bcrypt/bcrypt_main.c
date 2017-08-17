@@ -474,6 +474,19 @@ static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf,
                 return STATUS_BUFFER_TOO_SMALL;
             }
         }
+        if (!strcmpW( prop, BCRYPT_KEY_LENGTHS ))
+        {
+            BCRYPT_KEY_LENGTHS_STRUCT *key_lengths = (void *)buf;
+            *ret_size = sizeof(*key_lengths);
+            if (key_lengths && size < *ret_size) return STATUS_BUFFER_TOO_SMALL;
+            if (key_lengths)
+            {
+                key_lengths->dwMinLength = 128;
+                key_lengths->dwMaxLength = 256;
+                key_lengths->dwIncrement = 64;
+            }
+            return STATUS_SUCCESS;
+        }
         break;
 
     default:
