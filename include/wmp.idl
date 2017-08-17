@@ -74,6 +74,89 @@ library WMPLib {
         wmppsLast
     } WMPPlayState;
 
+    typedef enum {
+        wmplcUnknown,
+        wmplcClear,
+        wmplcInfoChange,
+        wmplcMove,
+        wmplcDelete,
+        wmplcInsert,
+        wmplcAppend,
+        wmplcPrivate,
+        wmplcNameChange,
+        wmplcMorph,
+        wmplcSort,
+        wmplcLast
+    } WMPPlaylistChangeEventType;
+
+    typedef enum {
+        wmpdsUnknown,
+        wmpdsPartnershipExists,
+        wmpdsPartnershipDeclined,
+        wmpdsPartnershipAnother,
+        wmpdsManualDevice,
+        wmpdsNewDevice,
+        wmpdsLast
+    } WMPDeviceStatus;
+
+    typedef enum {
+        wmpssUnknown,
+        wmpssSynchronizing,
+        wmpssStopped,
+        wmpssEstimating,
+        wmpssLast
+    } WMPSyncState;
+
+    typedef enum {
+        wmprsUnknown,
+        wmprsRipping,
+        wmprsStopped
+    } WMPRipState;
+
+    typedef enum {
+        wmpbfAudioCD,
+        wmpbfDataCD
+    } WMPBurnFormat;
+
+    typedef enum {
+        wmpbsUnknown,
+        wmpbsBusy,
+        wmpbsReady,
+        wmpbsWaitingForDisc,
+        wmpbsRefreshStatusPending,
+        wmpbsPreparingToBurn,
+        wmpbsBurning,
+        wmpbsStopped,
+        wmpbsErasing,
+        wmpbsDownloading
+    } WMPBurnState;
+
+    typedef enum {
+        wmpltUnknown,
+        wmpltAll,
+        wmpltLocal,
+        wmpltRemote,
+        wmpltDisc,
+        wmpltPortableDevice
+    } WMPLibraryType;
+
+    typedef enum {
+        wmpfssUnknown,
+        wmpfssScanning,
+        wmpfssUpdating,
+        wmpfssStopped
+    } WMPFolderScanState;
+
+    typedef enum {
+        wmpsccetUnknown,
+        wmpsccetInsert,
+        wmpsccetChange,
+        wmpsccetDelete,
+        wmpsccetClear,
+        wmpsccetBeginUpdates,
+        wmpsccetEndUpdates
+    } WMPStringCollectionChangeEventType;
+
     interface IWMPMedia;
 
     [
@@ -922,6 +1005,386 @@ library WMPLib {
 
         [id(0x001c)]
         HRESULT openPlayer([in] BSTR bstrURL);
+    }
+
+    [
+        odl,
+        uuid(82a2986c-0293-4fd0-b279-b21b86c058be),
+        oleautomation
+    ]
+    interface IWMPSyncDevice : IUnknown
+    {
+        [propget]
+        HRESULT friendlyName([out, retval] BSTR *name);
+
+        [propput]
+        HRESULT friendlyName([in] BSTR name);
+
+        [propget]
+        HRESULT deviceName([out, retval] BSTR *name);
+
+        [propget]
+        HRESULT deviceId([out, retval] BSTR *device);
+
+        [propget]
+        HRESULT partnershipIndex([out, retval] long *index);
+
+        [propget]
+        HRESULT connected([out, retval] VARIANT_BOOL *connected);
+
+        [propget]
+        HRESULT status([out, retval] WMPDeviceStatus *status);
+
+        [propget]
+        HRESULT syncState([out, retval] WMPSyncState *state);
+
+        [propget]
+        HRESULT progress([out, retval] long *progress);
+
+        HRESULT getItemInfo(
+            [in] BSTR name,
+            [out, retval] BSTR *val);
+
+        HRESULT createPartnership([in] VARIANT_BOOL showui);
+
+        HRESULT deletePartnership();
+
+        HRESULT start();
+
+        HRESULT stop();
+
+        HRESULT showSettings();
+
+        HRESULT isIdentical(
+            [in] IWMPSyncDevice *device,
+            [out, retval] VARIANT_BOOL *ret);
+    }
+
+    [
+        odl,
+        uuid(88afb4b2-140a-44d2-91e6-4543da467cd1),
+        oleautomation
+    ]
+    interface IWMPSyncDevice2 : IWMPSyncDevice
+    {
+        HRESULT setItemInfo(
+            [in] BSTR name,
+            [in] BSTR val);
+    }
+
+    [
+      odl,
+      uuid(56e2294f-69ed-4629-a869-aea72c0dcc2c),
+      oleautomation
+    ]
+    interface IWMPCdromRip : IUnknown
+    {
+        [propget]
+        HRESULT ripState([out, retval] WMPRipState *state);
+
+        [propget]
+        HRESULT ripProgress([out, retval] long *progress);
+
+        HRESULT startRip();
+
+        HRESULT stopRip();
+    }
+
+    [
+        odl,
+        uuid(bd94dbeb-417f-4928-aa06-087d56ed9b59),
+        oleautomation
+    ]
+    interface IWMPCdromBurn : IUnknown
+    {
+        HRESULT isAvailable(
+            [in] BSTR item,
+            [out, retval] VARIANT_BOOL *available);
+
+        HRESULT getItemInfo(
+            [in] BSTR item,
+            [out, retval] BSTR *val);
+
+        [propget]
+        HRESULT label([out, retval] BSTR *label);
+
+        [propput]
+        HRESULT label([in] BSTR label);
+
+        [propget]
+        HRESULT burnFormat([out, retval] WMPBurnFormat *format);
+
+        [propput]
+        HRESULT burnFormat([in] WMPBurnFormat format);
+
+        [propget]
+        HRESULT burnPlaylist([out, retval] IWMPPlaylist **playlist);
+
+        [propput]
+        HRESULT burnPlaylist([in] IWMPPlaylist *playlist);
+
+        HRESULT refreshStatus();
+
+        [propget]
+        HRESULT burnState([out, retval] WMPBurnState *state);
+
+        [propget]
+        HRESULT burnProgress([out, retval] long *progress);
+
+        HRESULT startBurn();
+
+        HRESULT stopBurn();
+
+        HRESULT erase();
+    }
+
+    [
+        odl,
+        uuid(3df47861-7df1-4c1f-a81b-4c26f0f7a7c6),
+        oleautomation
+    ]
+    interface IWMPLibrary : IUnknown
+    {
+        [propget]
+        HRESULT name([out, retval] BSTR *name);
+
+        [propget]
+        HRESULT type([out, retval] WMPLibraryType *type);
+
+        [propget]
+        HRESULT mediaCollection([out, retval] IWMPMediaCollection **collection);
+
+        HRESULT isIdentical(
+            [in] IWMPLibrary *wmplibrary,
+            [out, retval] VARIANT_BOOL *ret);
+    }
+
+    [
+        uuid(19a6627b-da9e-47c1-bb23-00b5e668236a),
+        odl
+    ]
+    interface IWMPEvents : IUnknown
+    {
+        void OpenStateChange([in] long state);
+
+        void PlayStateChange([in] long state);
+
+        void AudioLanguageChange([in] long lang);
+
+        void StatusChange();
+
+        void ScriptCommand(
+            [in] BSTR type,
+            [in] BSTR param);
+
+        void NewStream();
+
+        void Disconnect([in] long result);
+
+        void Buffering([in] VARIANT_BOOL start);
+
+        void Error();
+
+        void Warning(
+            [in] long warning,
+            [in] long param,
+            [in] BSTR description);
+
+        void EndOfStream([in] long result);
+
+        void PositionChange(
+            [in] double old_position,
+            [in] double new_position);
+
+        void MarkerHit([in] long marker);
+
+        void DurationUnitChange([in] long duration);
+
+        void CdromMediaChange([in] long num);
+
+        void PlaylistChange(
+            [in] IDispatch *playlist,
+            [in] WMPPlaylistChangeEventType change);
+
+        void CurrentPlaylistChange([in] WMPPlaylistChangeEventType change);
+
+        void CurrentPlaylistItemAvailable([in] BSTR item);
+
+        void MediaChange([in] IDispatch *item);
+
+        void CurrentMediaItemAvailable([in] BSTR name);
+
+        void CurrentItemChange([in] IDispatch *media);
+
+        void MediaCollectionChange();
+
+        void MediaCollectionAttributeStringAdded(
+            [in] BSTR name,
+            [in] BSTR val);
+
+        void MediaCollectionAttributeStringRemoved(
+            [in] BSTR name,
+            [in] BSTR val);
+
+        void MediaCollectionAttributeStringChanged(
+            [in] BSTR name,
+            [in] BSTR old_val,
+            [in] BSTR new_val);
+
+        void PlaylistCollectionChange();
+
+        void PlaylistCollectionPlaylistAdded([in] BSTR name);
+
+        void PlaylistCollectionPlaylistRemoved([in] BSTR name);
+
+        void PlaylistCollectionPlaylistSetAsDeleted(
+            [in] BSTR name,
+            [in] VARIANT_BOOL deleted);
+
+        void ModeChange(
+            [in] BSTR ModeName,
+            [in] VARIANT_BOOL value);
+
+        void MediaError([in] IDispatch *media);
+
+        void OpenPlaylistSwitch([in] IDispatch *item);
+
+        void DomainChange([in] BSTR domain);
+
+        void SwitchedToPlayerApplication();
+
+        void SwitchedToControl();
+
+        void PlayerDockedStateChange();
+
+        void PlayerReconnect();
+
+        void Click(
+            [in] short button,
+            [in] short shift_state,
+            [in] long x,
+            [in] long y);
+
+        void DoubleClick(
+            [in] short button,
+            [in] short shift_state,
+            [in] long fX,
+            [in] long fY);
+
+        void KeyDown(
+            [in] short keycode,
+            [in] short shift_state);
+
+        void KeyPress([in] short ascii);
+
+        void KeyUp(
+            [in] short keycode,
+            [in] short shift_state);
+
+        void MouseDown(
+            [in] short button,
+            [in] short nShiftState,
+            [in] long x,
+            [in] long y);
+
+        void MouseMove(
+            [in] short button,
+            [in] short shift_state,
+            [in] long x,
+            [in] long y);
+
+        void MouseUp(
+            [in] short button,
+            [in] short shift_state,
+            [in] long x,
+            [in] long y);
+    }
+
+    [
+        uuid(1e7601fa-47ea-4107-9ea9-9004ed9684ff),
+        odl
+    ]
+    interface IWMPEvents2 : IWMPEvents
+    {
+        void DeviceConnect([in] IWMPSyncDevice *device);
+
+        void DeviceDisconnect([in] IWMPSyncDevice *device);
+
+        void DeviceStatusChange(
+            [in] IWMPSyncDevice *device,
+            [in] WMPDeviceStatus status);
+
+        void DeviceSyncStateChange(
+            [in] IWMPSyncDevice *device,
+            [in] WMPSyncState state);
+
+        void DeviceSyncError(
+            [in] IWMPSyncDevice *device,
+            [in] IDispatch *media);
+
+        void CreatePartnershipComplete(
+            [in] IWMPSyncDevice *device,
+            [in] HRESULT result);
+    }
+
+    [
+        uuid(1f504270-a66b-4223-8e96-26a06c63d69f),
+        odl
+    ]
+    interface IWMPEvents3 : IWMPEvents2
+    {
+        void CdromRipStateChange(
+            [in] IWMPCdromRip *rip,
+            [in] WMPRipState state);
+
+        void CdromRipMediaError(
+            [in] IWMPCdromRip *rip,
+            [in] IDispatch *media);
+
+        void CdromBurnStateChange(
+            [in] IWMPCdromBurn *burn,
+            [in] WMPBurnState state);
+
+        void CdromBurnMediaError(
+            [in] IWMPCdromBurn *burn,
+            [in] IDispatch *media);
+
+        void CdromBurnError(
+            [in] IWMPCdromBurn *burn,
+            [in] HRESULT error);
+
+        void LibraryConnect(
+            [in] IWMPLibrary *wmplibrary);
+
+        void LibraryDisconnect(
+            [in] IWMPLibrary *wmplibrary);
+
+        void FolderScanStateChange(
+            [in] WMPFolderScanState state);
+
+        void StringCollectionChange(
+            [in] IDispatch *collection,
+            [in] WMPStringCollectionChangeEventType change,
+            [in] long index);
+
+        void MediaCollectionMediaAdded(
+            [in] IDispatch *media);
+
+        void MediaCollectionMediaRemoved(
+            [in] IDispatch *media);
+    }
+
+    [
+        uuid(26dabcfa-306b-404d-9a6f-630a8405048d),
+        odl
+    ]
+    interface IWMPEvents4 : IWMPEvents3
+    {
+        void DeviceEstimation(
+            [in] IWMPSyncDevice *device,
+            [in] HRESULT result,
+            [in] LONGLONG used_space,
+            [in] LONGLONG estimated_space);
     }
 
     [
