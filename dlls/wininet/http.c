@@ -2823,6 +2823,15 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
 static DWORD chunked_drain_content(data_stream_t *stream, http_request_t *req)
 {
     chunked_stream_t *chunked_stream = (chunked_stream_t*)stream;
+    BYTE buf[1024];
+    DWORD size, res;
+
+    while(chunked_stream->state != CHUNKED_STREAM_STATE_END_OF_STREAM) {
+        res = chunked_read(stream, req, buf, sizeof(buf), &size, FALSE);
+        if(res != ERROR_SUCCESS)
+            return res;
+    }
+
     if(chunked_stream->state != CHUNKED_STREAM_STATE_END_OF_STREAM)
         return ERROR_NO_DATA;
     return ERROR_SUCCESS;
