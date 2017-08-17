@@ -519,10 +519,18 @@ int WINAPI __WSAFDIsSet(SOCKET,WS(fd_set)*);
 
 #ifdef WORDS_BIGENDIAN
 
-#define htonl(l) ((ULONG)(l))
-#define htons(s) ((u_short)(s))
-#define ntohl(l) ((ULONG)(l))
-#define ntohs(s) ((u_short)(s))
+static inline u_short __wine_ushort_noop(u_short s)
+{
+    return s;
+}
+static inline ULONG __wine_ulong_noop(ULONG l)
+{
+    return l;
+}
+#define htonl __wine_ulong_noop
+#define htons __wine_ushort_noop
+#define ntohl __wine_ulong_noop
+#define ntohs __wine_ushort_noop
 
 #else  /* WORDS_BIGENDIAN */
 
@@ -534,10 +542,10 @@ static inline ULONG __wine_ulong_swap(ULONG l)
 {
     return ((ULONG)__wine_ushort_swap((u_short)l) << 16) | __wine_ushort_swap((u_short)(l >> 16));
 }
-#define htonl(l) __wine_ulong_swap(l)
-#define htons(s) __wine_ushort_swap(s)
-#define ntohl(l) __wine_ulong_swap(l)
-#define ntohs(s) __wine_ushort_swap(s)
+#define htonl __wine_ulong_swap
+#define htons __wine_ushort_swap
+#define ntohl __wine_ulong_swap
+#define ntohs __wine_ushort_swap
 
 #endif  /* WORDS_BIGENDIAN */
 
