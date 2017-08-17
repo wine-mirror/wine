@@ -383,7 +383,7 @@ static WCHAR *get_host_header( http_request_t *req )
 struct data_stream_vtbl_t {
     BOOL (*end_of_data)(data_stream_t*,http_request_t*);
     DWORD (*read)(data_stream_t*,http_request_t*,BYTE*,DWORD,DWORD*,BOOL);
-    DWORD (*drain_content)(data_stream_t*,http_request_t*);
+    DWORD (*drain_content)(data_stream_t*,http_request_t*,BOOL);
     void (*destroy)(data_stream_t*);
 };
 
@@ -509,10 +509,10 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
     return res;
 }
 
-static DWORD gzip_drain_content(data_stream_t *stream, http_request_t *req)
+static DWORD gzip_drain_content(data_stream_t *stream, http_request_t *req, BOOL allow_blocking)
 {
     gzip_stream_t *gzip_stream = (gzip_stream_t*)stream;
-    return gzip_stream->parent_stream->vtbl->drain_content(gzip_stream->parent_stream, req);
+    return gzip_stream->parent_stream->vtbl->drain_content(gzip_stream->parent_stream, req, allow_blocking);
 }
 
 static void gzip_destroy(data_stream_t *stream)
@@ -2635,7 +2635,7 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
     return res;
 }
 
-static DWORD netconn_drain_content(data_stream_t *stream, http_request_t *req)
+static DWORD netconn_drain_content(data_stream_t *stream, http_request_t *req, BOOL allow_blocking)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
     BYTE buf[1024];
@@ -2647,7 +2647,7 @@ static DWORD netconn_drain_content(data_stream_t *stream, http_request_t *req)
 
     while(netconn_stream->content_read < netconn_stream->content_length) {
         size = min(sizeof(buf), netconn_stream->content_length-netconn_stream->content_read);
-        res = NETCON_recv(req->netconn, buf, size, FALSE, &len);
+        res = NETCON_recv(req->netconn, buf, size, allow_blocking, &len);
         if(res)
             return res;
         if(!len)
@@ -2820,14 +2820,14 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
     return ERROR_SUCCESS;
 }
 
-static DWORD chunked_drain_content(data_stream_t *stream, http_request_t *req)
+static DWORD chunked_drain_content(data_stream_t *stream, http_request_t *req, BOOL allow_blocking)
 {
     chunked_stream_t *chunked_stream = (chunked_stream_t*)stream;
     BYTE buf[1024];
     DWORD size, res;
 
     while(chunked_stream->state != CHUNKED_STREAM_STATE_END_OF_STREAM) {
-        res = chunked_read(stream, req, buf, sizeof(buf), &size, FALSE);
+        res = chunked_read(stream, req, buf, sizeof(buf), &size, allow_blocking);
         if(res != ERROR_SUCCESS)
             return res;
     }
@@ -3006,22 +3006,10 @@ static BOOL drain_content(http_request_t *req, BOOL blocking)
     if(!strcmpW(req->verb, szHEAD))
         return TRUE;
 
-    if(!blocking)
-        return req->data_stream->vtbl->drain_content(req->data_stream, req) == ERROR_SUCCESS;
-
     EnterCriticalSection( &req->read_section );
-
-    while(1) {
-        DWORD bytes_read;
-        BYTE buf[4096];
-
-        res = HTTPREQ_Read(req, buf, sizeof(buf), &bytes_read, TRUE);
-        if(res != ERROR_SUCCESS || !bytes_read)
-            break;
-    }
-
+    res = req->data_stream->vtbl->drain_content(req->data_stream, req, blocking);
     LeaveCriticalSection( &req->read_section );
-    return res;
+    return res == ERROR_SUCCESS;
 }
 
 typedef struct {
