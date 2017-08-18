@@ -12214,7 +12214,7 @@ msgid ""
 "  REG [operation] [parameters]\n"
 "\n"
 "Supported operations:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | QUERY\n"
 "\n"
 "For help on a specific operation, type:\n"
 "  REG [operation] /?\n"
@@ -12359,6 +12359,10 @@ msgstr ""
 #: reg.rc:65 regedit.rc:240
 msgid "(value not set)"
 msgstr "(沒有設值)"
+
+#: reg.rc:66
+msgid "REG IMPORT file.reg\n"
+msgstr ""
 
 #: regedit.rc:34
 msgid "&Registry"

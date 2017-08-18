@@ -52,3 +52,4 @@
 #define STRING_REG_HELP         129
 #define STRING_FUNC_HELP        130
 #define STRING_VALUE_NOT_SET    131
+#define STRING_IMPORT_USAGE     132

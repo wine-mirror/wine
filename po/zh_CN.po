@@ -11774,12 +11774,23 @@ msgid "Icons (*.ico)"
 msgstr "图标 (*.ico)"
 
 #: reg.rc:35
+#, fuzzy
+#| msgid ""
+#| "Usage:\n"
+#| "  REG [operation] [parameters]\n"
+#| "\n"
+#| "Supported operations:\n"
+#| "  ADD | DELETE | QUERY\n"
+#| "\n"
+#| "For help on a specific operation, type:\n"
+#| "  REG [operation] /?\n"
+#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
 "\n"
 "Supported operations:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | QUERY\n"
 "\n"
 "For help on a specific operation, type:\n"
 "  REG [operation] /?\n"
@@ -11909,6 +11920,10 @@ msgstr "输入“REG %1 /?”以获取帮助。\n"
 #: reg.rc:65 regedit.rc:240
 msgid "(value not set)"
 msgstr "(没有设值)"
+
+#: reg.rc:66
+msgid "REG IMPORT file.reg\n"
+msgstr ""
 
 #: regedit.rc:34
 msgid "&Registry"

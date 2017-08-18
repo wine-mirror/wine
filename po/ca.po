@@ -12158,12 +12158,23 @@ msgid "Icons (*.ico)"
 msgstr "Icones (*.ico)"
 
 #: reg.rc:35
+#, fuzzy
+#| msgid ""
+#| "Usage:\n"
+#| "  REG [operation] [parameters]\n"
+#| "\n"
+#| "Supported operations:\n"
+#| "  ADD | DELETE | QUERY\n"
+#| "\n"
+#| "For help on a specific operation, type:\n"
+#| "  REG [operation] /?\n"
+#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
 "\n"
 "Supported operations:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | QUERY\n"
 "\n"
 "For help on a specific operation, type:\n"
 "  REG [operation] /?\n"
@@ -12301,6 +12312,10 @@ msgstr "Teclegeu \"REG %1 /?\" per ajuda.\n"
 #: reg.rc:65 regedit.rc:240
 msgid "(value not set)"
 msgstr "(valor no definit)"
+
+#: reg.rc:66
+msgid "REG IMPORT file.reg\n"
+msgstr ""
 
 #: regedit.rc:34
 msgid "&Registry"

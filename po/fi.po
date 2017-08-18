@@ -11962,12 +11962,23 @@ msgid "Icons (*.ico)"
 msgstr "Kuvakkeet (*.ico)"
 
 #: reg.rc:35
+#, fuzzy
+#| msgid ""
+#| "Usage:\n"
+#| "  REG [operation] [parameters]\n"
+#| "\n"
+#| "Supported operations:\n"
+#| "  ADD | DELETE | QUERY\n"
+#| "\n"
+#| "For help on a specific operation, type:\n"
+#| "  REG [operation] /?\n"
+#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
 "\n"
 "Supported operations:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | QUERY\n"
 "\n"
 "For help on a specific operation, type:\n"
 "  REG [operation] /?\n"
@@ -12103,6 +12114,10 @@ msgstr "Komento \"REG %1 /?\" näyttää ohjeen.\n"
 #: reg.rc:65 regedit.rc:240
 msgid "(value not set)"
 msgstr "(arvoa ei asetettu)"
+
+#: reg.rc:66
+msgid "REG IMPORT file.reg\n"
+msgstr ""
 
 #: regedit.rc:34
 msgid "&Registry"

@@ -29,7 +29,7 @@ STRINGTABLE
     STRING_USAGE, "Usage:\n\
 \  REG [operation] [parameters]\n\n\
 \Supported operations:\n\
-\  ADD | DELETE | QUERY\n\n\
+\  ADD | DELETE | IMPORT | QUERY\n\n\
 \For help on a specific operation, type:\n\
 \  REG [operation] /?\n\n"
     STRING_ADD_USAGE, "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
@@ -62,4 +62,5 @@ STRINGTABLE
     STRING_REG_HELP, "Type \"REG /?\" for help.\n"
     STRING_FUNC_HELP, "Type \"REG %1 /?\" for help.\n"
     STRING_VALUE_NOT_SET, "(value not set)"
+    STRING_IMPORT_USAGE, "REG IMPORT file.reg\n"
 }

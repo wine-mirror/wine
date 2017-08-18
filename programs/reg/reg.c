@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <wine/unicode.h>
 #include <wine/debug.h>
-#include "resource.h"
+#include "reg.h"
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 
@@ -909,32 +909,38 @@ static BOOL is_help_switch(const WCHAR *s)
 enum operations {
     REG_ADD,
     REG_DELETE,
+    REG_IMPORT,
     REG_QUERY,
     REG_INVALID
 };
 
-static const WCHAR addW[] = {'a','d','d',0};
-static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
-static const WCHAR queryW[] = {'q','u','e','r','y',0};
-
 static enum operations get_operation(const WCHAR *str, int *op_help)
 {
-    if (!lstrcmpiW(str, addW))
-    {
-        *op_help = STRING_ADD_USAGE;
-        return REG_ADD;
-    }
+    struct op_info { const WCHAR *op; int id; int help_id; };
 
-    if (!lstrcmpiW(str, deleteW))
-    {
-        *op_help = STRING_DELETE_USAGE;
-        return REG_DELETE;
-    }
+    static const WCHAR add[] = {'a','d','d',0};
+    static const WCHAR delete[] = {'d','e','l','e','t','e',0};
+    static const WCHAR import[] = {'i','m','p','o','r','t',0};
+    static const WCHAR query[] = {'q','u','e','r','y',0};
 
-    if (!lstrcmpiW(str, queryW))
+    static const struct op_info op_array[] =
     {
-        *op_help = STRING_QUERY_USAGE;
-        return REG_QUERY;
+        { add,     REG_ADD,     STRING_ADD_USAGE },
+        { delete,  REG_DELETE,  STRING_DELETE_USAGE },
+        { import,  REG_IMPORT,  STRING_IMPORT_USAGE },
+        { query,   REG_QUERY,   STRING_QUERY_USAGE },
+        { NULL,    -1,          0 }
+    };
+
+    const struct op_info *ptr;
+
+    for (ptr = op_array; ptr->op; ptr++)
+    {
+        if (!lstrcmpiW(str, ptr->op))
+        {
+            *op_help = ptr->help_id;
+            return ptr->id;
+        }
     }
 
     return REG_INVALID;
@@ -975,7 +981,7 @@ int wmain(int argc, WCHAR *argvW[])
     if (argc > 2)
         show_op_help = is_help_switch(argvW[2]);
 
-    if (argc == 2 || (show_op_help && argc > 3))
+    if (argc == 2 || ((show_op_help || op == REG_IMPORT) && argc > 3))
     {
         output_message(STRING_INVALID_SYNTAX);
         output_message(STRING_FUNC_HELP, struprW(argvW[1]));
@@ -986,6 +992,9 @@ int wmain(int argc, WCHAR *argvW[])
         output_message(op_help);
         return 0;
     }
+
+    if (op == REG_IMPORT)
+        return reg_import(argvW[2]);
 
     if (!parse_registry_key(argvW[2], &root, &path, &key_name))
         return 1;
