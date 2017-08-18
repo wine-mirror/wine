@@ -1016,12 +1016,6 @@ int reg_import(const WCHAR *filename)
 
     if (parser.reg_version == REG_VERSION_INVALID)
         goto error;
-    else if (parser.reg_version == REG_VERSION_40 || parser.reg_version == REG_VERSION_50)
-    {
-        FIXME(": operation not yet implemented\n");
-        heap_free(parser.value_name);
-        goto error;
-    }
 
     heap_free(parser.value_name);
     close_key(&parser);
