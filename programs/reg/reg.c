@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <wine/unicode.h>
 #include <wine/debug.h>
-#include "reg.h"
+#include "resource.h"
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 
