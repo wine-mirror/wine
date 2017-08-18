@@ -748,7 +748,7 @@ static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos)
 
 invalid:
     set_state(parser, LINE_START);
-    return p;
+    return val_name;
 }
 
 /* handler for parser DATA_START state */
