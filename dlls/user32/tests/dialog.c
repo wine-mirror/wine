@@ -1273,7 +1273,6 @@ static void test_DialogBoxParamA(void)
 
     SetLastError(0xdeadbeef);
     ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_DIALOG_INVALID_CLASS", 0, DestroyDlgWinProc, 0);
-todo_wine
     ok(ret == -1, "DialogBoxParamA returned %ld, expected -1\n", ret);
     ok(GetLastError() == 0, "got %d\n", GetLastError());
 
