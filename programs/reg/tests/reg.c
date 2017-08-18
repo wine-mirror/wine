@@ -3085,14 +3085,14 @@ static void test_unicode_import(void)
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1c ]\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_key(hkey, "Subkey1c ");
-    todo_wine err = RegDeleteKeyA(hkey, "Subkey1c ");
+    err = RegDeleteKeyA(hkey, "Subkey1c ");
     ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1d\t]\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_key(hkey, "Subkey1d\t");
-    todo_wine err = RegDeleteKeyA(hkey, "Subkey1d\t");
+    err = RegDeleteKeyA(hkey, "Subkey1d\t");
     ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
