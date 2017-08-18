@@ -1272,6 +1272,12 @@ static void test_DialogBoxParamA(void)
        "got %d, expected ERROR_RESOURCE_NAME_NOT_FOUND\n",GetLastError());
 
     SetLastError(0xdeadbeef);
+    ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_DIALOG_INVALID_CLASS", 0, DestroyDlgWinProc, 0);
+todo_wine
+    ok(ret == -1, "DialogBoxParamA returned %ld, expected -1\n", ret);
+    ok(GetLastError() == 0, "got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ret = DefDlgProcA(0, WM_ERASEBKGND, 0, 0);
     ok(ret == 0, "DefDlgProcA returned %ld, expected 0\n", ret);
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
