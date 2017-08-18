@@ -294,7 +294,7 @@ static HRESULT WINAPI VfwCapture_Pause(IBaseFilter * iface)
 static HRESULT WINAPI VfwCapture_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     VfwCapture *This = impl_from_IBaseFilter(iface);
-    TRACE("(%x%08x)\n", (ULONG)(tStart >> 32), (ULONG)tStart);
+    TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
     return qcap_driver_run(This->driver_info, &This->filter.state);
 }
 

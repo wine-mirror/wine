@@ -148,7 +148,7 @@ static HRESULT WINAPI AudioRecord_Pause(IBaseFilter *iface)
 static HRESULT WINAPI AudioRecord_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 {
     AudioRecord *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p, %x%08x): stub\n", This, (ULONG)(tStart >> 32), (ULONG)tStart);
+    FIXME("(%p, %s): stub\n", This, wine_dbgstr_longlong(tStart));
     return E_NOTIMPL;
 }
 

@@ -167,7 +167,7 @@ static HRESULT WINAPI SmartTeeFilter_Run(IBaseFilter *iface, REFERENCE_TIME tSta
 {
     SmartTeeFilter *This = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
-    TRACE("(%p, %x%08x)\n", This, (ULONG)(tStart >> 32), (ULONG)tStart);
+    TRACE("(%p, %s)\n", This, wine_dbgstr_longlong(tStart));
     EnterCriticalSection(&This->filter.csFilter);
     if(This->filter.state != State_Running) {
         /* We share an allocator among all pins, an allocator can only get committed
