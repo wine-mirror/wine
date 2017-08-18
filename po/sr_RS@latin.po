@@ -12449,6 +12449,10 @@ msgstr "%s putanja nije pronađena"
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "Želite li da izbrišete „%1“?"
 
+#: reg.rc:69
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

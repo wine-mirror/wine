@@ -12131,6 +12131,12 @@ msgstr "regedit: Tiedostoa '%1' ei löydy.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
 
+#: reg.rc:69
+#, fuzzy
+#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr "regedit: Tuntematon merkintä [\\%1!c!]\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rekisteri"

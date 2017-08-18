@@ -12445,6 +12445,10 @@ msgstr "Ukaz ni bil naveden."
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "Napaka: ni mogoče dodati ključa na oddaljen računalnik\n"
 
+#: reg.rc:69
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

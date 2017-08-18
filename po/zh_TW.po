@@ -12376,6 +12376,10 @@ msgstr "沒有任何命令被指定。"
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "錯誤：無法加入索引鍵到遠端機器\n"
 
+#: reg.rc:69
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

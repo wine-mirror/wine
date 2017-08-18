@@ -12467,6 +12467,10 @@ msgstr "لم يتم تحديد أي أمر."
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "خطأ : تعذر إضافة المفاتيح للجهاز البعيد\n"
 
+#: reg.rc:69
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "ال&سجل"

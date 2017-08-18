@@ -12156,6 +12156,10 @@ msgstr "Nebyl zadán žádný příkaz."
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "Chyba: Nepodařilo se přidat klíče na vzdálený stroj\n"
 
+#: reg.rc:69
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registr"

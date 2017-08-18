@@ -819,16 +819,16 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     todo_wine verify_reg(hkey, "Wine", REG_DWORD, &dword, sizeof(dword), 0);
     todo_wine verify_reg(hkey, "", REG_SZ, test_string, sizeof(test_string), 0);
 
     err = RegCloseKey(hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     sprintf(cmdline, "reg import %s %s", test1_reg, test2_reg);
     run_reg_exe(cmdline, &r);
@@ -893,85 +893,85 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ|KEY_SET_VALUE, &hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_str("REGEDIT3\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test1\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test1");
+    verify_reg_nonexist(hkey, "Test1");
 
     test_import_str("regedit4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test2\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test2");
+    verify_reg_nonexist(hkey, "Test2");
 
     test_import_str("Regedit4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test3\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test3");
+    verify_reg_nonexist(hkey, "Test3");
 
     test_import_str("REGEDIT 4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test4\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test4");
+    verify_reg_nonexist(hkey, "Test4");
 
     test_import_str("REGEDIT4FOO\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test5\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test5");
+    verify_reg_nonexist(hkey, "Test5");
 
     test_import_str("REGEDIT4 FOO\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test6\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test6");
+    verify_reg_nonexist(hkey, "Test6");
 
     test_import_str("REGEDIT5\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test7\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test7");
+    verify_reg_nonexist(hkey, "Test7");
 
     test_import_str("REGEDIT9\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test8\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test8");
+    verify_reg_nonexist(hkey, "Test8");
 
     test_import_str("Windows Registry Editor Version 4.00\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test9\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test9");
+    verify_reg_nonexist(hkey, "Test9");
 
     test_import_str("Windows Registry Editor Version 5\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test10\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test10");
+    verify_reg_nonexist(hkey, "Test10");
 
     test_import_str("WINDOWS REGISTRY EDITOR VERSION 5.00\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test11\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test11");
+    verify_reg_nonexist(hkey, "Test11");
 
     test_import_str("Windows Registry Editor version 5.00\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test12\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test12");
+    verify_reg_nonexist(hkey, "Test12");
 
     test_import_str("REGEDIT4\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1093,9 +1093,9 @@ static void test_import(void)
                     "\"Wine12\"=dword:01020304 #comment\n"
                     "\"Wine13\"=dword:02040608 ;comment\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine10");
+    verify_reg_nonexist(hkey, "Wine10");
     todo_wine verify_reg(hkey, "Wine11", REG_SZ, "Value 2", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine12");
+    verify_reg_nonexist(hkey, "Wine12");
     dword = 0x2040608;
     todo_wine verify_reg(hkey, "Wine13", REG_DWORD, &dword, sizeof(dword), 0);
 
@@ -1110,7 +1110,7 @@ static void test_import(void)
                     "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
                     "\"Wine17\"=\"Another valid line\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine14");
+    verify_reg_nonexist(hkey, "Wine14");
     todo_wine verify_reg(hkey, "Wine15", REG_SZ, "A valid line", 13, 0);
     todo_wine verify_reg(hkey, "Wine16", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
     todo_wine verify_reg(hkey, "Wine17", REG_SZ, "Another valid line", 19, 0);
@@ -1124,14 +1124,14 @@ static void test_import(void)
                     "\"Wine18\"=\"Value 6\"#\"Comment5\"=\"Value 5\"\n"
                     "\"Wine19\"=\"Value 7\";\"Comment6\"=\"Value 6\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Comment1");
-    todo_wine verify_reg_nonexist(hkey, "Comment2");
-    todo_wine verify_reg_nonexist(hkey, "Comment3");
-    todo_wine verify_reg_nonexist(hkey, "Comment4");
-    todo_wine verify_reg_nonexist(hkey, "Wine18");
-    todo_wine verify_reg_nonexist(hkey, "Comment5");
+    verify_reg_nonexist(hkey, "Comment1");
+    verify_reg_nonexist(hkey, "Comment2");
+    verify_reg_nonexist(hkey, "Comment3");
+    verify_reg_nonexist(hkey, "Comment4");
+    verify_reg_nonexist(hkey, "Wine18");
+    verify_reg_nonexist(hkey, "Comment5");
     todo_wine verify_reg(hkey, "Wine19", REG_SZ, "Value 7", 8, TODO_REG_SIZE|TODO_REG_DATA);
-    todo_wine verify_reg_nonexist(hkey, "Comment6");
+    verify_reg_nonexist(hkey, "Comment6");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1148,17 +1148,17 @@ static void test_import(void)
                     "\"Wine30\"=dword:00000003#comment\n"
                     "\"Wine31\"=dword:00000004;comment\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine20");
-    todo_wine verify_reg_nonexist(hkey, "Wine21");
+    verify_reg_nonexist(hkey, "Wine20");
+    verify_reg_nonexist(hkey, "Wine21");
     todo_wine verify_reg(hkey, "Wine22", REG_SZ, "#comment1", 10, 0);
     todo_wine verify_reg(hkey, "Wine23", REG_SZ, ";comment2", 10, 0);
     todo_wine verify_reg(hkey, "Wine24", REG_SZ, "Value#comment3", 15, 0);
     todo_wine verify_reg(hkey, "Wine25", REG_SZ, "Value;comment4", 15, 0);
     todo_wine verify_reg(hkey, "Wine26", REG_SZ, "Value #comment5", 16, 0);
     todo_wine verify_reg(hkey, "Wine27", REG_SZ, "Value ;comment6", 16, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine28");
-    todo_wine verify_reg_nonexist(hkey, "Wine29");
-    todo_wine verify_reg_nonexist(hkey, "Wine30");
+    verify_reg_nonexist(hkey, "Wine28");
+    verify_reg_nonexist(hkey, "Wine29");
+    verify_reg_nonexist(hkey, "Wine30");
     dword = 0x00000004;
     todo_wine verify_reg(hkey, "Wine31", REG_DWORD, &dword, sizeof(dword), 0);
 
@@ -1185,28 +1185,28 @@ static void test_import(void)
                     "\"Multi-Line3\"=hex(7):4c,69,6e,65,20\\\n"
                     ",63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line3");
+    verify_reg_nonexist(hkey, "Multi-Line3");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Multi-Line4\"=hex(7):4c,69,6e,65,20\\\n"
                     "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line4");
+    verify_reg_nonexist(hkey, "Multi-Line4");
 
     test_import_str("Windows Registry Editor Version 5.00\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Multi-Line5\"=hex(7):4c,69,6e,65,20\\\n"
                     ",63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line5");
+    verify_reg_nonexist(hkey, "Multi-Line5");
 
     test_import_str("Windows Registry Editor Version 5.00\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Multi-Line6\"=hex(7):4c,69,6e,65,20\\\n"
                     "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line6");
+    verify_reg_nonexist(hkey, "Multi-Line6");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1236,7 +1236,7 @@ static void test_import(void)
                     "  63,61,74,\\#comment\n"
                     "  65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line9");
+    verify_reg_nonexist(hkey, "Multi-Line9");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1266,19 +1266,19 @@ static void test_import(void)
                     "\"Wine33d\"=dword:012345678\n"
                     "\"Wine33e\"=dword:000000001\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine33a");
-    todo_wine verify_reg_nonexist(hkey, "Wine33b");
-    todo_wine verify_reg_nonexist(hkey, "Wine33c");
-    todo_wine verify_reg_nonexist(hkey, "Wine33d");
-    todo_wine verify_reg_nonexist(hkey, "Wine33e");
+    verify_reg_nonexist(hkey, "Wine33a");
+    verify_reg_nonexist(hkey, "Wine33b");
+    verify_reg_nonexist(hkey, "Wine33c");
+    verify_reg_nonexist(hkey, "Wine33d");
+    verify_reg_nonexist(hkey, "Wine33e");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine34a\"=dword:12345678abc\n"
                     "\"Wine34b\"=dword:12345678 abc\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine34a");
-    todo_wine verify_reg_nonexist(hkey, "Wine34b");
+    verify_reg_nonexist(hkey, "Wine34a");
+    verify_reg_nonexist(hkey, "Wine34b");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1286,9 +1286,9 @@ static void test_import(void)
                     "\"Wine35b\"=dword:123 456\n"
                     "\"Wine35c\"=dword:1234 5678\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine35a");
-    todo_wine verify_reg_nonexist(hkey, "Wine35b");
-    todo_wine verify_reg_nonexist(hkey, "Wine35c");
+    verify_reg_nonexist(hkey, "Wine35a");
+    verify_reg_nonexist(hkey, "Wine35b");
+    verify_reg_nonexist(hkey, "Wine35c");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1300,16 +1300,16 @@ static void test_import(void)
     dword = 0x1234;
     todo_wine verify_reg(hkey, "Wine36a", REG_DWORD, &dword, sizeof(dword), 0);
     todo_wine verify_reg(hkey, "Wine36b", REG_DWORD, &dword, sizeof(dword), 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine36c");
-    todo_wine verify_reg_nonexist(hkey, "Wine36d");
+    verify_reg_nonexist(hkey, "Wine36c");
+    verify_reg_nonexist(hkey, "Wine36d");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine37a\"=\"foo\"bar\"\n"
                     "\"Wine37b\"=\"foo\"\"bar\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine37a");
-    todo_wine verify_reg_nonexist(hkey, "Wine37b");
+    verify_reg_nonexist(hkey, "Wine37a");
+    verify_reg_nonexist(hkey, "Wine37b");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1326,10 +1326,10 @@ static void test_import(void)
                     "\"Test38c\"=\\\"Value\\\"\n"
                     "\"Test38d\"=\\\"Value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test38a");
-    todo_wine verify_reg_nonexist(hkey, "Test38b");
-    todo_wine verify_reg_nonexist(hkey, "Test38c");
-    todo_wine verify_reg_nonexist(hkey, "Test38d");
+    verify_reg_nonexist(hkey, "Test38a");
+    verify_reg_nonexist(hkey, "Test38b");
+    verify_reg_nonexist(hkey, "Test38c");
+    verify_reg_nonexist(hkey, "Test38d");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1340,51 +1340,51 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine39a", REG_SZ, "Value1", 7, 0);
     todo_wine verify_reg(hkey, "Wine39b", REG_SZ, "Value2", 7, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine39c");
-    todo_wine verify_reg_nonexist(hkey, "Wine39d");
+    verify_reg_nonexist(hkey, "Wine39c");
+    verify_reg_nonexist(hkey, "Wine39d");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"TestNoBeginQuote\"=Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "TestNoBeginQuote");
+    verify_reg_nonexist(hkey, "TestNoBeginQuote");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"TestNoEndQuote\"=\"Asdffdsa\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "TestNoEndQuote");
+    verify_reg_nonexist(hkey, "TestNoEndQuote");
 
     test_import_str("REGEDIT4\n\n"
                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                    "\"TestNoQuotes\"=Asdffdsa\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "TestNoQuotes");
+    verify_reg_nonexist(hkey, "TestNoQuotes");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "NameNoBeginQuote\"=\"Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "NameNoBeginQuote");
+    verify_reg_nonexist(hkey, "NameNoBeginQuote");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"NameNoEndQuote=\"Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "NameNoEndQuote");
+    verify_reg_nonexist(hkey, "NameNoEndQuote");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "NameNoQuotes=\"Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "NameNoQuotes");
+    verify_reg_nonexist(hkey, "NameNoQuotes");
 
     test_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"MixedQuotes=Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "MixedQuotes");
-    todo_wine verify_reg_nonexist(hkey, "MixedQuotes=Asdffdsa");
+    verify_reg_nonexist(hkey, "MixedQuotes");
+    verify_reg_nonexist(hkey, "MixedQuotes=Asdffdsa");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1398,10 +1398,10 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine40a", REG_EXPAND_SZ, "Line", 5, 0);
     todo_wine verify_reg(hkey, "Wine40b", REG_SZ, "Value 1", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine40c");
+    verify_reg_nonexist(hkey, "Wine40c");
     todo_wine verify_reg(hkey, "Wine40d", REG_SZ, "Value 2", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine40e");
-    todo_wine verify_reg_nonexist(hkey, "Wine40f");
+    verify_reg_nonexist(hkey, "Wine40e");
+    verify_reg_nonexist(hkey, "Wine40f");
     todo_wine verify_reg(hkey, "Wine40g", REG_SZ, "Value 4", 8, 0);
 
     test_import_str("REGEDIT4\n\n"
@@ -1411,8 +1411,8 @@ static void test_import(void)
                     "\"Wine41b\"=\"Test \\\n"
                     "Value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine41a");
-    todo_wine verify_reg_nonexist(hkey, "Wine41b");
+    verify_reg_nonexist(hkey, "Wine41a");
+    verify_reg_nonexist(hkey, "Wine41b");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1428,13 +1428,13 @@ static void test_import(void)
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\\n"
                     "Subkey1]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey1");
+    verify_key_nonexist(hkey, "Subkey1");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\n"
                     "\\Subkey2]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey2");
+    verify_key_nonexist(hkey, "Subkey2");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1444,9 +1444,9 @@ static void test_import(void)
                     "\"Wine\n"
                     "\\42c\"=\"Value 3\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine42a");
+    verify_reg_nonexist(hkey, "Wine42a");
     todo_wine verify_reg(hkey, "Wine42b", REG_SZ, "Value 2", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine42c");
+    verify_reg_nonexist(hkey, "Wine42c");
 
     /* Test hex data concatenation for REG_NONE, REG_EXPAND_SZ and REG_BINARY */
     test_import_str("REGEDIT4\n\n"
@@ -1479,15 +1479,15 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine43a", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
     todo_wine verify_reg(hkey, "Wine43b", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine43c");
-    todo_wine verify_reg_nonexist(hkey, "Wine43d");
-    todo_wine verify_reg_nonexist(hkey, "Wine43e");
-    todo_wine verify_reg_nonexist(hkey, "Wine43f");
-    todo_wine verify_reg_nonexist(hkey, "Wine43g");
+    verify_reg_nonexist(hkey, "Wine43c");
+    verify_reg_nonexist(hkey, "Wine43d");
+    verify_reg_nonexist(hkey, "Wine43e");
+    verify_reg_nonexist(hkey, "Wine43f");
+    verify_reg_nonexist(hkey, "Wine43g");
     todo_wine verify_reg(hkey, "Wine43h", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
     todo_wine verify_reg(hkey, "Wine43i", REG_NONE, "V\0a\0l\0u", 8, 0);
     todo_wine verify_reg(hkey, "Wine43j", REG_NONE, "V\0a\0l\0u", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine43k");
+    verify_reg_nonexist(hkey, "Wine43k");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1519,11 +1519,11 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine44a", REG_EXPAND_SZ, "%PATH%", 7, 0);
     todo_wine verify_reg(hkey, "Wine44b", REG_EXPAND_SZ, "%PATH%", 7, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine44c");
-    todo_wine verify_reg_nonexist(hkey, "Wine44d");
-    todo_wine verify_reg_nonexist(hkey, "Wine44e");
-    todo_wine verify_reg_nonexist(hkey, "Wine44f");
-    todo_wine verify_reg_nonexist(hkey, "Wine44g");
+    verify_reg_nonexist(hkey, "Wine44c");
+    verify_reg_nonexist(hkey, "Wine44d");
+    verify_reg_nonexist(hkey, "Wine44e");
+    verify_reg_nonexist(hkey, "Wine44f");
+    verify_reg_nonexist(hkey, "Wine44g");
     todo_wine verify_reg(hkey, "Wine44h", REG_EXPAND_SZ, "%PATH%", 7, 0);
     /* Wine44i */
     size = sizeof(buffer);
@@ -1541,7 +1541,7 @@ static void test_import(void)
     todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
     todo_wine ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
     /* Wine44k */
-    todo_wine verify_reg_nonexist(hkey, "Wine44k");
+    verify_reg_nonexist(hkey, "Wine44k");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1575,15 +1575,15 @@ static void test_import(void)
     hex[4] = 0x55; hex[5] = 0x66; hex[6] = 0x77; hex[7] = 0x88;
     todo_wine verify_reg(hkey, "Wine45a", REG_BINARY, hex, sizeof(hex), 0);
     todo_wine verify_reg(hkey, "Wine45b", REG_BINARY, hex, sizeof(hex), 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine45c");
-    todo_wine verify_reg_nonexist(hkey, "Wine45d");
-    todo_wine verify_reg_nonexist(hkey, "Wine45e");
-    todo_wine verify_reg_nonexist(hkey, "Wine45f");
-    todo_wine verify_reg_nonexist(hkey, "Wine45g");
+    verify_reg_nonexist(hkey, "Wine45c");
+    verify_reg_nonexist(hkey, "Wine45d");
+    verify_reg_nonexist(hkey, "Wine45e");
+    verify_reg_nonexist(hkey, "Wine45f");
+    verify_reg_nonexist(hkey, "Wine45g");
     todo_wine verify_reg(hkey, "Wine45h", REG_BINARY, hex, sizeof(hex), 0);
     todo_wine verify_reg(hkey, "Wine45i", REG_BINARY, hex, 6, 0);
     todo_wine verify_reg(hkey, "Wine45j", REG_BINARY, hex, 6, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine45k");
+    verify_reg_nonexist(hkey, "Wine45k");
 
     /* Test import with subkeys */
     test_import_str("REGEDIT4\n\n"
@@ -1591,129 +1591,129 @@ static void test_import(void)
                     "\"Wine\\\\31\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     err = RegOpenKeyExA(hkey, "Subkey\"1", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
     todo_wine verify_reg(subkey, "Wine\\31", REG_SZ, "Test value", 11, 0);
     err = RegCloseKey(subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey/2]\n"
                     "\"123/\\\"4;'5\"=\"Random value name\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     err = RegOpenKeyExA(hkey, "Subkey/2", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
     todo_wine verify_reg(subkey, "123/\"4;'5", REG_SZ, "Random value name", 18, 0);
     err = RegCloseKey(subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     /* Test key creation */
     test_import_str("REGEDIT4\n\n"
                     "HKEY_CURRENT_USER\\" KEY_BASE "\\No_Opening_Bracket]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "No_Opening_Bracket");
+    verify_key_nonexist(hkey, "No_Opening_Bracket");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\No_Closing_Bracket\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "No_Closing_Bracket");
+    verify_key_nonexist(hkey, "No_Closing_Bracket");
 
     test_import_str("REGEDIT4\n\n"
                     "[ HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1a]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey1a");
+    verify_key_nonexist(hkey, "Subkey1a");
 
     test_import_str("REGEDIT4\n\n"
                     "[\tHKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1b]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey1b");
+    verify_key_nonexist(hkey, "Subkey1b");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1c ]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1c ");
+    verify_key(hkey, "Subkey1c ");
     err = RegDeleteKeyA(hkey, "Subkey1c ");
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1d\t]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1d\t");
+    verify_key(hkey, "Subkey1d\t");
     err = RegDeleteKeyA(hkey, "Subkey1d\t");
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1e\\]\n"
                     "\"Wine\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1e\\");
-    todo_wine verify_key(hkey, "Subkey1e");
+    verify_key(hkey, "Subkey1e\\");
+    verify_key(hkey, "Subkey1e");
     err = RegOpenKeyExA(hkey, "Subkey1e", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
     todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
     err = RegDeleteKeyA(hkey, "Subkey1e");
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1f\\\\]\n"
                     "\"Wine\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1f\\\\");
-    todo_wine verify_key(hkey, "Subkey1f\\");
-    todo_wine verify_key(hkey, "Subkey1f");
+    verify_key(hkey, "Subkey1f\\\\");
+    verify_key(hkey, "Subkey1f\\");
+    verify_key(hkey, "Subkey1f");
     err = RegOpenKeyExA(hkey, "Subkey1f\\\\", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
     todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
     err = RegDeleteKeyA(hkey, "Subkey1f\\\\");
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1g\\\\\\\\]\n"
                     "\"Wine\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1g\\\\\\\\");
-    todo_wine verify_key(hkey, "Subkey1g\\\\");
-    todo_wine verify_key(hkey, "Subkey1g\\");
-    todo_wine verify_key(hkey, "Subkey1g");
+    verify_key(hkey, "Subkey1g\\\\\\\\");
+    verify_key(hkey, "Subkey1g\\\\");
+    verify_key(hkey, "Subkey1g\\");
+    verify_key(hkey, "Subkey1g");
     err = RegOpenKeyExA(hkey, "Subkey1g\\\\", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
     todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
     err = RegDeleteKeyA(hkey, "Subkey1g\\\\");
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
 
     /* Test key deletion. We start by creating some registry keys. */
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2a");
-    todo_wine verify_key(hkey, "Subkey2b");
+    verify_key(hkey, "Subkey2a");
+    verify_key(hkey, "Subkey2b");
 
     test_import_str("REGEDIT4\n\n"
                     "[ -HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2a");
+    verify_key(hkey, "Subkey2a");
 
     test_import_str("REGEDIT4\n\n"
                     "[\t-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2b");
+    verify_key(hkey, "Subkey2b");
 
     test_import_str("REGEDIT4\n\n"
                     "[- HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2a");
+    verify_key(hkey, "Subkey2a");
 
     test_import_str("REGEDIT4\n\n"
                     "[-\tHKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2b");
+    verify_key(hkey, "Subkey2b");
 
     test_import_str("REGEDIT4\n\n"
                     "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n\n"
@@ -1727,8 +1727,8 @@ static void test_import(void)
                     "[hkey_CURRENT_user\\" KEY_BASE "\\Subkey3a]\n\n"
                     "[HkEy_CuRrEnT_uSeR\\" KEY_BASE "\\SuBkEy3b]\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey3a");
-    todo_wine verify_key(hkey, "Subkey3b");
+    verify_key(hkey, "Subkey3a");
+    verify_key(hkey, "Subkey3b");
 
     test_import_str("REGEDIT4\n\n"
                     "[-HKEY_current_USER\\" KEY_BASE "\\sUBKEY3A]\n\n"
@@ -1764,11 +1764,11 @@ static void test_import(void)
                     "\"Wine46e\"=- ;comment\n"
                     "\"Wine46f\"=- #comment\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine46a");
-    todo_wine verify_reg_nonexist(hkey, "Wine46b");
-    todo_wine verify_reg_nonexist(hkey, "Wine46c");
+    verify_reg_nonexist(hkey, "Wine46a");
+    verify_reg_nonexist(hkey, "Wine46b");
+    verify_reg_nonexist(hkey, "Wine46c");
     todo_wine verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine46e");
+    verify_reg_nonexist(hkey, "Wine46e");
     todo_wine verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
 
     /* Test the accepted range of the hex-based data types */
@@ -1795,10 +1795,10 @@ static void test_import(void)
     todo_wine verify_reg(hkey, "Wine47f", 0xffff, "Value", 6, 0);
     todo_wine verify_reg(hkey, "Wine47g", 0x7fffffff, "Value", 6, 0);
     todo_wine verify_reg(hkey, "Wine47h", 0xffffffff, "Value", 6, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine47i");
-    todo_wine verify_reg_nonexist(hkey, "Wine47j");
-    todo_wine verify_reg_nonexist(hkey, "Wine47k");
-    todo_wine verify_reg_nonexist(hkey, "Wine47l");
+    verify_reg_nonexist(hkey, "Wine47i");
+    verify_reg_nonexist(hkey, "Wine47j");
+    verify_reg_nonexist(hkey, "Wine47k");
+    verify_reg_nonexist(hkey, "Wine47l");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1825,8 +1825,8 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine50a", REG_EXPAND_SZ, "%PATH%", 7, 0);
     todo_wine verify_reg(hkey, "Wine50b", REG_EXPAND_SZ, "%PATH%", 7, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine50c");
-    todo_wine verify_reg_nonexist(hkey, "Wine50d");
+    verify_reg_nonexist(hkey, "Wine50c");
+    verify_reg_nonexist(hkey, "Wine50d");
 
     /* Test support for characters greater than 0xff */
     test_import_str("REGEDIT4\n\n"
@@ -1834,8 +1834,8 @@ static void test_import(void)
                     "\"Wine51a\"=hex(0):25,50,100,54,48,25,00\n"
                     "\"Wine51b\"=hex(0):25,1a4,100,164,124,25,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine51a");
-    todo_wine verify_reg_nonexist(hkey, "Wine51b");
+    verify_reg_nonexist(hkey, "Wine51a");
+    verify_reg_nonexist(hkey, "Wine51b");
 
     /* Test the effect of backslashes in hex data */
     test_import_str("REGEDIT4\n\n"
@@ -1857,17 +1857,17 @@ static void test_import(void)
                     "\"Wine52l\"=hex(2):\\\n"
                     "  25,48,4f,4d,45,25,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine52a");
-    todo_wine verify_reg_nonexist(hkey, "Wine52b");
-    todo_wine verify_reg_nonexist(hkey, "Wine52c");
-    todo_wine verify_reg_nonexist(hkey, "Wine52d");
-    todo_wine verify_reg_nonexist(hkey, "Wine52e");
-    todo_wine verify_reg_nonexist(hkey, "Wine52f");
-    todo_wine verify_reg_nonexist(hkey, "Wine52g");
-    todo_wine verify_reg_nonexist(hkey, "Wine52h");
-    todo_wine verify_reg_nonexist(hkey, "Wine52i");
-    todo_wine verify_reg_nonexist(hkey, "Wine52j");
-    todo_wine verify_reg_nonexist(hkey, "Wine52k");
+    verify_reg_nonexist(hkey, "Wine52a");
+    verify_reg_nonexist(hkey, "Wine52b");
+    verify_reg_nonexist(hkey, "Wine52c");
+    verify_reg_nonexist(hkey, "Wine52d");
+    verify_reg_nonexist(hkey, "Wine52e");
+    verify_reg_nonexist(hkey, "Wine52f");
+    verify_reg_nonexist(hkey, "Wine52g");
+    verify_reg_nonexist(hkey, "Wine52h");
+    verify_reg_nonexist(hkey, "Wine52i");
+    verify_reg_nonexist(hkey, "Wine52j");
+    verify_reg_nonexist(hkey, "Wine52k");
     todo_wine verify_reg(hkey, "Wine52l", REG_EXPAND_SZ, "%HOME%", 7, 0);
 
     test_import_str("REGEDIT4\n\n"
@@ -1886,18 +1886,18 @@ static void test_import(void)
                     "  25,50,41,54,48,25,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine53a", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine53b");
+    verify_reg_nonexist(hkey, "Wine53b");
     todo_wine verify_reg(hkey, "Wine53c", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine53d");
+    verify_reg_nonexist(hkey, "Wine53d");
     todo_wine verify_reg(hkey, "Wine53e", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine53f");
+    verify_reg_nonexist(hkey, "Wine53f");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine54a\"=hex(2):4c,69,6e,65,20,\\\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine54a");
+    verify_reg_nonexist(hkey, "Wine54a");
     todo_wine verify_key_nonexist(hkey, "Subkey1");
 
     test_import_str("REGEDIT4\n\n"
@@ -1905,11 +1905,11 @@ static void test_import(void)
                     "\"Wine54b\"=hex(2):4c,69,6e,65,20\\\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine54b");
-    todo_wine verify_key(hkey, "Subkey2");
+    verify_reg_nonexist(hkey, "Wine54b");
+    verify_key(hkey, "Subkey2");
 
     err = RegDeleteKeyA(hkey, "Subkey2");
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", err);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1930,15 +1930,15 @@ static void test_import(void)
                     "\"Wine55i\"=hex(2):4c,69,6e,65,20\\\n"
                     "\"Wine55j\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine55a");
-    todo_wine verify_reg_nonexist(hkey, "Wine55b");
-    todo_wine verify_reg_nonexist(hkey, "Wine55c");
-    todo_wine verify_reg_nonexist(hkey, "Wine55d");
-    todo_wine verify_reg_nonexist(hkey, "Wine55e");
+    verify_reg_nonexist(hkey, "Wine55a");
+    verify_reg_nonexist(hkey, "Wine55b");
+    verify_reg_nonexist(hkey, "Wine55c");
+    verify_reg_nonexist(hkey, "Wine55d");
+    verify_reg_nonexist(hkey, "Wine55e");
     todo_wine verify_reg(hkey, "Wine55f", REG_SZ, "Test value", 11, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine55g");
-    todo_wine verify_reg_nonexist(hkey, "Wine55h");
-    todo_wine verify_reg_nonexist(hkey, "Wine55i");
+    verify_reg_nonexist(hkey, "Wine55g");
+    verify_reg_nonexist(hkey, "Wine55h");
+    verify_reg_nonexist(hkey, "Wine55i");
     todo_wine verify_reg(hkey, "Wine55j", REG_SZ, "Test value", 11, 0);
 
     test_import_str("REGEDIT4\n\n"
@@ -1960,15 +1960,15 @@ static void test_import(void)
                     "\"Wine56i\"=hex(2):4c,69,6e,65,20\\\n"
                     "\"Wine56j\"=dword:00000008\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine56a");
-    todo_wine verify_reg_nonexist(hkey, "Wine56b");
-    todo_wine verify_reg_nonexist(hkey, "Wine56c");
-    todo_wine verify_reg_nonexist(hkey, "Wine56d");
-    todo_wine verify_reg_nonexist(hkey, "Wine56e");
+    verify_reg_nonexist(hkey, "Wine56a");
+    verify_reg_nonexist(hkey, "Wine56b");
+    verify_reg_nonexist(hkey, "Wine56c");
+    verify_reg_nonexist(hkey, "Wine56d");
+    verify_reg_nonexist(hkey, "Wine56e");
     todo_wine verify_reg(hkey, "Wine56f", REG_DWORD, &dword, sizeof(dword), 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine56g");
-    todo_wine verify_reg_nonexist(hkey, "Wine56h");
-    todo_wine verify_reg_nonexist(hkey, "Wine56i");
+    verify_reg_nonexist(hkey, "Wine56g");
+    verify_reg_nonexist(hkey, "Wine56h");
+    verify_reg_nonexist(hkey, "Wine56i");
     todo_wine verify_reg(hkey, "Wine56j", REG_DWORD, &dword, sizeof(dword), 0);
 
     test_import_str("REGEDIT4\n\n"
@@ -1990,15 +1990,15 @@ static void test_import(void)
                     "\"Wine57i\"=hex(2):25,48,4f,4d,45,25,5c\\\n"
                     "\"Wine57j\"=hex(2):25,50,41,54,48,25,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine57a");
-    todo_wine verify_reg_nonexist(hkey, "Wine57b");
-    todo_wine verify_reg_nonexist(hkey, "Wine57c");
-    todo_wine verify_reg_nonexist(hkey, "Wine57d");
-    todo_wine verify_reg_nonexist(hkey, "Wine57e");
+    verify_reg_nonexist(hkey, "Wine57a");
+    verify_reg_nonexist(hkey, "Wine57b");
+    verify_reg_nonexist(hkey, "Wine57c");
+    verify_reg_nonexist(hkey, "Wine57d");
+    verify_reg_nonexist(hkey, "Wine57e");
     todo_wine verify_reg(hkey, "Wine57f", REG_EXPAND_SZ, "%PATH%", 7, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine57g");
-    todo_wine verify_reg_nonexist(hkey, "Wine57h");
-    todo_wine verify_reg_nonexist(hkey, "Wine57i");
+    verify_reg_nonexist(hkey, "Wine57g");
+    verify_reg_nonexist(hkey, "Wine57h");
+    verify_reg_nonexist(hkey, "Wine57i");
     todo_wine verify_reg(hkey, "Wine57j", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
     err = RegDeleteValueW(hkey, NULL);
@@ -2009,8 +2009,8 @@ static void test_import(void)
                     "\"Wine58a\"=hex(2):4c,69,6e,65,20,\\\n"
                     "@=\"Default value 1\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58a");
-    todo_wine verify_reg_nonexist(hkey, NULL);
+    verify_reg_nonexist(hkey, "Wine58a");
+    verify_reg_nonexist(hkey, NULL);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2018,8 +2018,8 @@ static void test_import(void)
                     ";comment\n"
                     "@=\"Default value 2\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58b");
-    todo_wine verify_reg_nonexist(hkey, NULL);
+    verify_reg_nonexist(hkey, "Wine58b");
+    verify_reg_nonexist(hkey, NULL);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2027,7 +2027,7 @@ static void test_import(void)
                     "#comment\n"
                     "@=\"Default value 3\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58c");
+    verify_reg_nonexist(hkey, "Wine58c");
     todo_wine verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
 
     err = RegDeleteValueW(hkey, NULL);
@@ -2038,15 +2038,15 @@ static void test_import(void)
                     "\"Wine58d\"=hex(2):4c,69,6e,65,20,\\\n\n"
                     "@=\"Default value 4\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58d");
-    todo_wine verify_reg_nonexist(hkey, NULL);
+    verify_reg_nonexist(hkey, "Wine58d");
+    verify_reg_nonexist(hkey, NULL);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine58e\"=hex(2):4c,69,6e,65,20\\\n"
                     "@=\"Default value 5\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58e");
+    verify_reg_nonexist(hkey, "Wine58e");
     todo_wine verify_reg(hkey, NULL, REG_SZ, "Default value 5", 16, 0);
 
     test_import_str("REGEDIT4\n\n"
@@ -2058,8 +2058,8 @@ static void test_import(void)
                     "  \\\n"
                     "  44,55,66\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine59a");
-    todo_wine verify_reg_nonexist(hkey, "Wine59b");
+    verify_reg_nonexist(hkey, "Wine59a");
+    verify_reg_nonexist(hkey, "Wine59b");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2089,7 +2089,7 @@ static void test_import(void)
                     "  65,6e,\\;comment\n"
                     "  61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine60c");
+    verify_reg_nonexist(hkey, "Wine60c");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2099,7 +2099,7 @@ static void test_import(void)
                     "  65,6e,\\;comment\n"
                     "  61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine60d");
+    verify_reg_nonexist(hkey, "Wine60d");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2128,8 +2128,8 @@ static void test_import(void)
                     "\"Wine61b\"=hex(0):25,48,4f,4d,45,25,5c/\n"
                     "  25,50,41,54,48,25,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine61a");
-    todo_wine verify_reg_nonexist(hkey, "Wine61b");
+    verify_reg_nonexist(hkey, "Wine61a");
+    verify_reg_nonexist(hkey, "Wine61b");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2185,7 +2185,7 @@ static void test_import(void)
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine62f\"=hex(7):4c,69,6e,65,20\\", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine62f");
+    verify_reg_nonexist(hkey, "Wine62f");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2194,8 +2194,8 @@ static void test_import(void)
                     "\"Wine63b\"=hex(7):4c,69,6e,65,20,\\\n"
                     "  63,,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine63a");
-    todo_wine verify_reg_nonexist(hkey, "Wine63b");
+    verify_reg_nonexist(hkey, "Wine63a");
+    verify_reg_nonexist(hkey, "Wine63b");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2281,7 +2281,7 @@ static void test_import(void)
     todo_wine verify_reg(hkey, "Wine67d", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
     err = RegCloseKey(hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
@@ -2330,57 +2330,57 @@ static void test_unicode_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ|KEY_SET_VALUE, &hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_wstr("\xef\xbb\xbfREGEDIT3\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test1\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test1");
+    verify_reg_nonexist(hkey, "Test1");
 
     test_import_wstr("\xef\xbb\xbfregedit4\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test2\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test2");
+    verify_reg_nonexist(hkey, "Test2");
 
     test_import_wstr("\xef\xbb\xbfRegedit4\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test3\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test3");
+    verify_reg_nonexist(hkey, "Test3");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT 4\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test4\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test4");
+    verify_reg_nonexist(hkey, "Test4");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4FOO\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test5\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test5");
+    verify_reg_nonexist(hkey, "Test5");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4 FOO\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test6\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test6");
+    verify_reg_nonexist(hkey, "Test6");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT5\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test7\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test7");
+    verify_reg_nonexist(hkey, "Test7");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT9\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test8\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test8");
+    verify_reg_nonexist(hkey, "Test8");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2437,28 +2437,28 @@ static void test_unicode_import(void)
                      "\"Test9\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test9");
+    verify_reg_nonexist(hkey, "Test9");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test10\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test10");
+    verify_reg_nonexist(hkey, "Test10");
 
     test_import_wstr("\xef\xbb\xbfWINDOWS REGISTRY EDITOR VERSION 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test11\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test11");
+    verify_reg_nonexist(hkey, "Test11");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test12\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test12");
+    verify_reg_nonexist(hkey, "Test12");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2555,9 +2555,9 @@ static void test_unicode_import(void)
                      "\"Wine12\"=dword:01020304 #comment\n"
                      "\"Wine13\"=dword:02040608 ;comment\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine10");
+    verify_reg_nonexist(hkey, "Wine10");
     todo_wine verify_reg(hkey, "Wine11", REG_SZ, "Value 2", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine12");
+    verify_reg_nonexist(hkey, "Wine12");
     dword = 0x2040608;
     todo_wine verify_reg(hkey, "Wine13", REG_DWORD, &dword, sizeof(dword), 0);
 
@@ -2572,7 +2572,7 @@ static void test_unicode_import(void)
                      "  61,00,74,00,65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
                      "\"Wine17\"=\"Another valid line\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine14");
+    verify_reg_nonexist(hkey, "Wine14");
     todo_wine verify_reg(hkey, "Wine15", REG_SZ, "A valid line", 13, 0);
     todo_wine verify_reg(hkey, "Wine16", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
     todo_wine verify_reg(hkey, "Wine17", REG_SZ, "Another valid line", 19, 0);
@@ -2586,14 +2586,14 @@ static void test_unicode_import(void)
                      "\"Wine18\"=\"Value 6\"#\"Comment5\"=\"Value 5\"\n"
                      "\"Wine19\"=\"Value 7\";\"Comment6\"=\"Value 6\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Comment1");
-    todo_wine verify_reg_nonexist(hkey, "Comment2");
-    todo_wine verify_reg_nonexist(hkey, "Comment3");
-    todo_wine verify_reg_nonexist(hkey, "Comment4");
-    todo_wine verify_reg_nonexist(hkey, "Wine18");
-    todo_wine verify_reg_nonexist(hkey, "Comment5");
+    verify_reg_nonexist(hkey, "Comment1");
+    verify_reg_nonexist(hkey, "Comment2");
+    verify_reg_nonexist(hkey, "Comment3");
+    verify_reg_nonexist(hkey, "Comment4");
+    verify_reg_nonexist(hkey, "Wine18");
+    verify_reg_nonexist(hkey, "Comment5");
     todo_wine verify_reg(hkey, "Wine19", REG_SZ, "Value 7", 8, TODO_REG_SIZE|TODO_REG_DATA);
-    todo_wine verify_reg_nonexist(hkey, "Comment6");
+    verify_reg_nonexist(hkey, "Comment6");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2610,17 +2610,17 @@ static void test_unicode_import(void)
                      "\"Wine30\"=dword:00000003#comment\n"
                      "\"Wine31\"=dword:00000004;comment\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine20");
-    todo_wine verify_reg_nonexist(hkey, "Wine21");
+    verify_reg_nonexist(hkey, "Wine20");
+    verify_reg_nonexist(hkey, "Wine21");
     todo_wine verify_reg(hkey, "Wine22", REG_SZ, "#comment1", 10, 0);
     todo_wine verify_reg(hkey, "Wine23", REG_SZ, ";comment2", 10, 0);
     todo_wine verify_reg(hkey, "Wine24", REG_SZ, "Value#comment3", 15, 0);
     todo_wine verify_reg(hkey, "Wine25", REG_SZ, "Value;comment4", 15, 0);
     todo_wine verify_reg(hkey, "Wine26", REG_SZ, "Value #comment5", 16, 0);
     todo_wine verify_reg(hkey, "Wine27", REG_SZ, "Value ;comment6", 16, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine28");
-    todo_wine verify_reg_nonexist(hkey, "Wine29");
-    todo_wine verify_reg_nonexist(hkey, "Wine30");
+    verify_reg_nonexist(hkey, "Wine28");
+    verify_reg_nonexist(hkey, "Wine29");
+    verify_reg_nonexist(hkey, "Wine30");
     dword = 0x00000004;
     todo_wine verify_reg(hkey, "Wine31", REG_DWORD, &dword, sizeof(dword), 0);
 
@@ -2642,19 +2642,19 @@ static void test_unicode_import(void)
                      "\"Wine33d\"=dword:012345678\n"
                      "\"Wine33e\"=dword:000000001\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine33a");
-    todo_wine verify_reg_nonexist(hkey, "Wine33b");
-    todo_wine verify_reg_nonexist(hkey, "Wine33c");
-    todo_wine verify_reg_nonexist(hkey, "Wine33d");
-    todo_wine verify_reg_nonexist(hkey, "Wine33e");
+    verify_reg_nonexist(hkey, "Wine33a");
+    verify_reg_nonexist(hkey, "Wine33b");
+    verify_reg_nonexist(hkey, "Wine33c");
+    verify_reg_nonexist(hkey, "Wine33d");
+    verify_reg_nonexist(hkey, "Wine33e");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine34a\"=dword:12345678abc\n"
                      "\"Wine34b\"=dword:12345678 abc\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine34a");
-    todo_wine verify_reg_nonexist(hkey, "Wine34b");
+    verify_reg_nonexist(hkey, "Wine34a");
+    verify_reg_nonexist(hkey, "Wine34b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2662,9 +2662,9 @@ static void test_unicode_import(void)
                      "\"Wine35b\"=dword:123 456\n"
                      "\"Wine35c\"=dword:1234 5678\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine35a");
-    todo_wine verify_reg_nonexist(hkey, "Wine35b");
-    todo_wine verify_reg_nonexist(hkey, "Wine35c");
+    verify_reg_nonexist(hkey, "Wine35a");
+    verify_reg_nonexist(hkey, "Wine35b");
+    verify_reg_nonexist(hkey, "Wine35c");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2676,16 +2676,16 @@ static void test_unicode_import(void)
     dword = 0x1234;
     todo_wine verify_reg(hkey, "Wine36a", REG_DWORD, &dword, sizeof(dword), 0);
     todo_wine verify_reg(hkey, "Wine36b", REG_DWORD, &dword, sizeof(dword), 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine36c");
-    todo_wine verify_reg_nonexist(hkey, "Wine36d");
+    verify_reg_nonexist(hkey, "Wine36c");
+    verify_reg_nonexist(hkey, "Wine36d");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine37a\"=\"foo\"bar\"\n"
                      "\"Wine37b\"=\"foo\"\"bar\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine37a");
-    todo_wine verify_reg_nonexist(hkey, "Wine37b");
+    verify_reg_nonexist(hkey, "Wine37a");
+    verify_reg_nonexist(hkey, "Wine37b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2702,10 +2702,10 @@ static void test_unicode_import(void)
                      "\"Test38c\"=\\\"Value\\\"\n"
                      "\"Test38d\"=\\\"Value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test38a");
-    todo_wine verify_reg_nonexist(hkey, "Test38b");
-    todo_wine verify_reg_nonexist(hkey, "Test38c");
-    todo_wine verify_reg_nonexist(hkey, "Test38d");
+    verify_reg_nonexist(hkey, "Test38a");
+    verify_reg_nonexist(hkey, "Test38b");
+    verify_reg_nonexist(hkey, "Test38c");
+    verify_reg_nonexist(hkey, "Test38d");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2716,51 +2716,51 @@ static void test_unicode_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine39a", REG_SZ, "Value1", 7, 0);
     todo_wine verify_reg(hkey, "Wine39b", REG_SZ, "Value2", 7, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine39c");
-    todo_wine verify_reg_nonexist(hkey, "Wine39d");
+    verify_reg_nonexist(hkey, "Wine39c");
+    verify_reg_nonexist(hkey, "Wine39d");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"TestNoBeginQuote\"=Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "TestNoBeginQuote");
+    verify_reg_nonexist(hkey, "TestNoBeginQuote");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"TestNoEndQuote\"=\"Asdffdsa\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "TestNoEndQuote");
+    verify_reg_nonexist(hkey, "TestNoEndQuote");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"TestNoQuotes\"=Asdffdsa\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "TestNoQuotes");
+    verify_reg_nonexist(hkey, "TestNoQuotes");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "NameNoBeginQuote\"=\"Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "NameNoBeginQuote");
+    verify_reg_nonexist(hkey, "NameNoBeginQuote");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"NameNoEndQuote=\"Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "NameNoEndQuote");
+    verify_reg_nonexist(hkey, "NameNoEndQuote");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "NameNoQuotes=\"Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "NameNoQuotes");
+    verify_reg_nonexist(hkey, "NameNoQuotes");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                  "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                  "\"MixedQuotes=Asdffdsa\"\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "MixedQuotes");
-    todo_wine verify_reg_nonexist(hkey, "MixedQuotes=Asdffdsa");
+    verify_reg_nonexist(hkey, "MixedQuotes");
+    verify_reg_nonexist(hkey, "MixedQuotes=Asdffdsa");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2774,10 +2774,10 @@ static void test_unicode_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine40a", REG_EXPAND_SZ, "Line", 5, 0);
     todo_wine verify_reg(hkey, "Wine40b", REG_SZ, "Value 1", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine40c");
+    verify_reg_nonexist(hkey, "Wine40c");
     todo_wine verify_reg(hkey, "Wine40d", REG_SZ, "Value 2", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine40e");
-    todo_wine verify_reg_nonexist(hkey, "Wine40f");
+    verify_reg_nonexist(hkey, "Wine40e");
+    verify_reg_nonexist(hkey, "Wine40f");
     todo_wine verify_reg(hkey, "Wine40g", REG_SZ, "Value 4", 8, 0);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -2803,28 +2803,28 @@ static void test_unicode_import(void)
                      "\"Multi-Line3\"=hex(7):4c,69,6e,65,20\\\n"
                      ",63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line3");
+    verify_reg_nonexist(hkey, "Multi-Line3");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Multi-Line4\"=hex(7):4c,69,6e,65,20\\\n"
                      "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line4");
+    verify_reg_nonexist(hkey, "Multi-Line4");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Multi-Line5\"=hex(7):4c,69,6e,65,20\\\n"
                      ",63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line5");
+    verify_reg_nonexist(hkey, "Multi-Line5");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Multi-Line6\"=hex(7):4c,69,6e,65,20\\\n"
                      "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line6");
+    verify_reg_nonexist(hkey, "Multi-Line6");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2854,7 +2854,7 @@ static void test_unicode_import(void)
                      "  63,00,61,00,74,00,\\#comment\n"
                      "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Multi-Line9");
+    verify_reg_nonexist(hkey, "Multi-Line9");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2873,8 +2873,8 @@ static void test_unicode_import(void)
                      "\"Wine41b\"=\"Test \\\n"
                      "Value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine41a");
-    todo_wine verify_reg_nonexist(hkey, "Wine41b");
+    verify_reg_nonexist(hkey, "Wine41a");
+    verify_reg_nonexist(hkey, "Wine41b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2896,7 +2896,7 @@ static void test_unicode_import(void)
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\n"
                      "\\Subkey2]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey2");
+    verify_key_nonexist(hkey, "Subkey2");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2906,9 +2906,9 @@ static void test_unicode_import(void)
                      "\"Wine\n"
                      "\\42c\"=\"Value 3\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine42a");
+    verify_reg_nonexist(hkey, "Wine42a");
     todo_wine verify_reg(hkey, "Wine42b", REG_SZ, "Value 2", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine42c");
+    verify_reg_nonexist(hkey, "Wine42c");
 
     /* Test hex data concatenation for REG_NONE, REG_EXPAND_SZ and REG_BINARY */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -2941,15 +2941,15 @@ static void test_unicode_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine43a", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
     todo_wine verify_reg(hkey, "Wine43b", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine43c");
-    todo_wine verify_reg_nonexist(hkey, "Wine43d");
-    todo_wine verify_reg_nonexist(hkey, "Wine43e");
-    todo_wine verify_reg_nonexist(hkey, "Wine43f");
-    todo_wine verify_reg_nonexist(hkey, "Wine43g");
+    verify_reg_nonexist(hkey, "Wine43c");
+    verify_reg_nonexist(hkey, "Wine43d");
+    verify_reg_nonexist(hkey, "Wine43e");
+    verify_reg_nonexist(hkey, "Wine43f");
+    verify_reg_nonexist(hkey, "Wine43g");
     todo_wine verify_reg(hkey, "Wine43h", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
     todo_wine verify_reg(hkey, "Wine43i", REG_NONE, "V\0a\0l\0u", 8, 0);
     todo_wine verify_reg(hkey, "Wine43j", REG_NONE, "V\0a\0l\0u", 8, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine43k");
+    verify_reg_nonexist(hkey, "Wine43k");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2981,11 +2981,11 @@ static void test_unicode_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine44a", REG_EXPAND_SZ, "%PATH%", 7, 0);
     todo_wine verify_reg(hkey, "Wine44b", REG_EXPAND_SZ, "%PATH%", 7, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine44c");
-    todo_wine verify_reg_nonexist(hkey, "Wine44d");
-    todo_wine verify_reg_nonexist(hkey, "Wine44e");
-    todo_wine verify_reg_nonexist(hkey, "Wine44f");
-    todo_wine verify_reg_nonexist(hkey, "Wine44g");
+    verify_reg_nonexist(hkey, "Wine44c");
+    verify_reg_nonexist(hkey, "Wine44d");
+    verify_reg_nonexist(hkey, "Wine44e");
+    verify_reg_nonexist(hkey, "Wine44f");
+    verify_reg_nonexist(hkey, "Wine44g");
     todo_wine verify_reg(hkey, "Wine44h", REG_EXPAND_SZ, "%PATH%", 7, 0);
     /* Wine44i */
     size = sizeof(buffer);
@@ -3003,7 +3003,7 @@ static void test_unicode_import(void)
     todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
     todo_wine ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
     /* Wine44k */
-    todo_wine verify_reg_nonexist(hkey, "Wine44k");
+    verify_reg_nonexist(hkey, "Wine44k");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3037,15 +3037,15 @@ static void test_unicode_import(void)
     hex[4] = 0x55; hex[5] = 0x66; hex[6] = 0x77; hex[7] = 0x88;
     todo_wine verify_reg(hkey, "Wine45a", REG_BINARY, hex, sizeof(hex), 0);
     todo_wine verify_reg(hkey, "Wine45b", REG_BINARY, hex, sizeof(hex), 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine45c");
-    todo_wine verify_reg_nonexist(hkey, "Wine45d");
-    todo_wine verify_reg_nonexist(hkey, "Wine45e");
-    todo_wine verify_reg_nonexist(hkey, "Wine45f");
-    todo_wine verify_reg_nonexist(hkey, "Wine45g");
+    verify_reg_nonexist(hkey, "Wine45c");
+    verify_reg_nonexist(hkey, "Wine45d");
+    verify_reg_nonexist(hkey, "Wine45e");
+    verify_reg_nonexist(hkey, "Wine45f");
+    verify_reg_nonexist(hkey, "Wine45g");
     todo_wine verify_reg(hkey, "Wine45h", REG_BINARY, hex, sizeof(hex), 0);
     todo_wine verify_reg(hkey, "Wine45i", REG_BINARY, hex, 6, 0);
     todo_wine verify_reg(hkey, "Wine45j", REG_BINARY, hex, 6, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine45k");
+    verify_reg_nonexist(hkey, "Wine45k");
 
     /* Test import with subkeys */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3053,129 +3053,129 @@ static void test_unicode_import(void)
                      "\"Wine\\\\31\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     err = RegOpenKeyExA(hkey, "Subkey\"1", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
     todo_wine verify_reg(subkey, "Wine\\31", REG_SZ, "Test value", 11, 0);
     err = RegCloseKey(subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey/2]\n"
                      "\"123/\\\"4;'5\"=\"Random value name\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     err = RegOpenKeyExA(hkey, "Subkey/2", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
     todo_wine verify_reg(subkey, "123/\"4;'5", REG_SZ, "Random value name", 18, 0);
     err = RegCloseKey(subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     /* Test key creation */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "HKEY_CURRENT_USER\\" KEY_BASE "\\No_Opening_Bracket]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "No_Opening_Bracket");
+    verify_key_nonexist(hkey, "No_Opening_Bracket");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\No_Closing_Bracket\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "No_Closing_Bracket");
+    verify_key_nonexist(hkey, "No_Closing_Bracket");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[ HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1a]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey1a");
+    verify_key_nonexist(hkey, "Subkey1a");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[\tHKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1b]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey1b");
+    verify_key_nonexist(hkey, "Subkey1b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1c ]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1c ");
+    verify_key(hkey, "Subkey1c ");
     todo_wine err = RegDeleteKeyA(hkey, "Subkey1c ");
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1d\t]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1d\t");
+    verify_key(hkey, "Subkey1d\t");
     todo_wine err = RegDeleteKeyA(hkey, "Subkey1d\t");
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1e\\]\n"
                      "\"Wine\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1e\\");
-    todo_wine verify_key(hkey, "Subkey1e");
+    verify_key(hkey, "Subkey1e\\");
+    verify_key(hkey, "Subkey1e");
     err = RegOpenKeyExA(hkey, "Subkey1e", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
     todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
     err = RegDeleteKeyA(hkey, "Subkey1e");
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1f\\\\]\n"
                      "\"Wine\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1f\\\\");
-    todo_wine verify_key(hkey, "Subkey1f\\");
-    todo_wine verify_key(hkey, "Subkey1f");
+    verify_key(hkey, "Subkey1f\\\\");
+    verify_key(hkey, "Subkey1f\\");
+    verify_key(hkey, "Subkey1f");
     err = RegOpenKeyExA(hkey, "Subkey1f\\\\", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
     todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
     err = RegDeleteKeyA(hkey, "Subkey1f\\\\");
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1g\\\\\\\\]\n"
                      "\"Wine\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey1g\\\\\\\\");
-    todo_wine verify_key(hkey, "Subkey1g\\\\");
-    todo_wine verify_key(hkey, "Subkey1g\\");
-    todo_wine verify_key(hkey, "Subkey1g");
+    verify_key(hkey, "Subkey1g\\\\\\\\");
+    verify_key(hkey, "Subkey1g\\\\");
+    verify_key(hkey, "Subkey1g\\");
+    verify_key(hkey, "Subkey1g");
     err = RegOpenKeyExA(hkey, "Subkey1g\\\\", 0, KEY_READ, &subkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", err);
     todo_wine verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
     err = RegDeleteKeyA(hkey, "Subkey1g\\\\");
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", err);
 
     /* Test key deletion. We start by creating some registry keys. */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2a");
-    todo_wine verify_key(hkey, "Subkey2b");
+    verify_key(hkey, "Subkey2a");
+    verify_key(hkey, "Subkey2b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[ -HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2a");
+    verify_key(hkey, "Subkey2a");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[\t-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2b");
+    verify_key(hkey, "Subkey2b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[- HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2a");
+    verify_key(hkey, "Subkey2a");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[-\tHKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey2b");
+    verify_key(hkey, "Subkey2b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n\n"
@@ -3189,8 +3189,8 @@ static void test_unicode_import(void)
                      "[hkey_CURRENT_user\\" KEY_BASE "\\Subkey3a]\n\n"
                      "[HkEy_CuRrEnT_uSeR\\" KEY_BASE "\\SuBkEy3b]\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key(hkey, "Subkey3a");
-    todo_wine verify_key(hkey, "Subkey3b");
+    verify_key(hkey, "Subkey3a");
+    verify_key(hkey, "Subkey3b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[-HKEY_current_USER\\" KEY_BASE "\\sUBKEY3A]\n\n"
@@ -3227,11 +3227,11 @@ static void test_unicode_import(void)
                      "\"Wine46e\"=- ;comment\n"
                      "\"Wine46f\"=- #comment\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine46a");
-    todo_wine verify_reg_nonexist(hkey, "Wine46b");
-    todo_wine verify_reg_nonexist(hkey, "Wine46c");
+    verify_reg_nonexist(hkey, "Wine46a");
+    verify_reg_nonexist(hkey, "Wine46b");
+    verify_reg_nonexist(hkey, "Wine46c");
     todo_wine verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine46e");
+    verify_reg_nonexist(hkey, "Wine46e");
     todo_wine verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
 
     /* Test the accepted range of the hex-based data types */
@@ -3258,10 +3258,10 @@ static void test_unicode_import(void)
     todo_wine verify_reg(hkey, "Wine47f", 0xffff, "Value", 6, 0);
     todo_wine verify_reg(hkey, "Wine47g", 0x7fffffff, "Value", 6, 0);
     todo_wine verify_reg(hkey, "Wine47h", 0xffffffff, "Value", 6, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine47i");
-    todo_wine verify_reg_nonexist(hkey, "Wine47j");
-    todo_wine verify_reg_nonexist(hkey, "Wine47k");
-    todo_wine verify_reg_nonexist(hkey, "Wine47l");
+    verify_reg_nonexist(hkey, "Wine47i");
+    verify_reg_nonexist(hkey, "Wine47j");
+    verify_reg_nonexist(hkey, "Wine47k");
+    verify_reg_nonexist(hkey, "Wine47l");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3290,8 +3290,8 @@ static void test_unicode_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine50a", REG_EXPAND_SZ, "%PATH%", 7, 0);
     todo_wine verify_reg(hkey, "Wine50b", REG_EXPAND_SZ, "%PATH%", 7, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine50c");
-    todo_wine verify_reg_nonexist(hkey, "Wine50d");
+    verify_reg_nonexist(hkey, "Wine50c");
+    verify_reg_nonexist(hkey, "Wine50d");
 
     /* Test support for characters greater than 0xff */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3299,8 +3299,8 @@ static void test_unicode_import(void)
                      "\"Wine51a\"=hex(0):25,50,100,54,48,25,00\n"
                      "\"Wine51b\"=hex(0):25,1a4,100,164,124,25,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine51a");
-    todo_wine verify_reg_nonexist(hkey, "Wine51b");
+    verify_reg_nonexist(hkey, "Wine51a");
+    verify_reg_nonexist(hkey, "Wine51b");
 
     /* Test the effect of backslashes in hex data */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3322,17 +3322,17 @@ static void test_unicode_import(void)
                      "\"Wine52l\"=hex(2):\\\n"
                      "  25,00,48,00,4f,00,4d,00,45,00,25,00,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine52a");
-    todo_wine verify_reg_nonexist(hkey, "Wine52b");
-    todo_wine verify_reg_nonexist(hkey, "Wine52c");
-    todo_wine verify_reg_nonexist(hkey, "Wine52d");
-    todo_wine verify_reg_nonexist(hkey, "Wine52e");
-    todo_wine verify_reg_nonexist(hkey, "Wine52f");
-    todo_wine verify_reg_nonexist(hkey, "Wine52g");
-    todo_wine verify_reg_nonexist(hkey, "Wine52h");
-    todo_wine verify_reg_nonexist(hkey, "Wine52i");
-    todo_wine verify_reg_nonexist(hkey, "Wine52j");
-    todo_wine verify_reg_nonexist(hkey, "Wine52k");
+    verify_reg_nonexist(hkey, "Wine52a");
+    verify_reg_nonexist(hkey, "Wine52b");
+    verify_reg_nonexist(hkey, "Wine52c");
+    verify_reg_nonexist(hkey, "Wine52d");
+    verify_reg_nonexist(hkey, "Wine52e");
+    verify_reg_nonexist(hkey, "Wine52f");
+    verify_reg_nonexist(hkey, "Wine52g");
+    verify_reg_nonexist(hkey, "Wine52h");
+    verify_reg_nonexist(hkey, "Wine52i");
+    verify_reg_nonexist(hkey, "Wine52j");
+    verify_reg_nonexist(hkey, "Wine52k");
     todo_wine verify_reg(hkey, "Wine52l", REG_EXPAND_SZ, "%HOME%", 7, 0);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3351,18 +3351,18 @@ static void test_unicode_import(void)
                      "  25,00,50,00,41,00,54,00,48,00,25,00,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Wine53a", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine53b");
+    verify_reg_nonexist(hkey, "Wine53b");
     todo_wine verify_reg(hkey, "Wine53c", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine53d");
+    verify_reg_nonexist(hkey, "Wine53d");
     todo_wine verify_reg(hkey, "Wine53e", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine53f");
+    verify_reg_nonexist(hkey, "Wine53f");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine54a\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine54a");
+    verify_reg_nonexist(hkey, "Wine54a");
     todo_wine verify_key_nonexist(hkey, "Subkey1");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3370,11 +3370,11 @@ static void test_unicode_import(void)
                      "\"Wine54b\"=hex(2):4c,00,69,00,6e,00,65,00,20,00\\\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2]\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine54b");
-    todo_wine verify_key(hkey, "Subkey2");
+    verify_reg_nonexist(hkey, "Wine54b");
+    verify_key(hkey, "Subkey2");
 
     err = RegDeleteKeyA(hkey, "Subkey2");
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", err);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3395,15 +3395,15 @@ static void test_unicode_import(void)
                      "\"Wine55i\"=hex(2):4c,00,69,00,6e,00,65,00,20,00\\\n"
                      "\"Wine55j\"=\"Test value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine55a");
-    todo_wine verify_reg_nonexist(hkey, "Wine55b");
-    todo_wine verify_reg_nonexist(hkey, "Wine55c");
-    todo_wine verify_reg_nonexist(hkey, "Wine55d");
-    todo_wine verify_reg_nonexist(hkey, "Wine55e");
+    verify_reg_nonexist(hkey, "Wine55a");
+    verify_reg_nonexist(hkey, "Wine55b");
+    verify_reg_nonexist(hkey, "Wine55c");
+    verify_reg_nonexist(hkey, "Wine55d");
+    verify_reg_nonexist(hkey, "Wine55e");
     todo_wine verify_reg(hkey, "Wine55f", REG_SZ, "Test value", 11, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine55g");
-    todo_wine verify_reg_nonexist(hkey, "Wine55h");
-    todo_wine verify_reg_nonexist(hkey, "Wine55i");
+    verify_reg_nonexist(hkey, "Wine55g");
+    verify_reg_nonexist(hkey, "Wine55h");
+    verify_reg_nonexist(hkey, "Wine55i");
     todo_wine verify_reg(hkey, "Wine55j", REG_SZ, "Test value", 11, 0);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3425,15 +3425,15 @@ static void test_unicode_import(void)
                      "\"Wine56i\"=hex(2):4c,00,69,00,6e,00,65,00,20,00\\\n"
                      "\"Wine56j\"=dword:00000008\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine56a");
-    todo_wine verify_reg_nonexist(hkey, "Wine56b");
-    todo_wine verify_reg_nonexist(hkey, "Wine56c");
-    todo_wine verify_reg_nonexist(hkey, "Wine56d");
-    todo_wine verify_reg_nonexist(hkey, "Wine56e");
+    verify_reg_nonexist(hkey, "Wine56a");
+    verify_reg_nonexist(hkey, "Wine56b");
+    verify_reg_nonexist(hkey, "Wine56c");
+    verify_reg_nonexist(hkey, "Wine56d");
+    verify_reg_nonexist(hkey, "Wine56e");
     todo_wine verify_reg(hkey, "Wine56f", REG_DWORD, &dword, sizeof(dword), 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine56g");
-    todo_wine verify_reg_nonexist(hkey, "Wine56h");
-    todo_wine verify_reg_nonexist(hkey, "Wine56i");
+    verify_reg_nonexist(hkey, "Wine56g");
+    verify_reg_nonexist(hkey, "Wine56h");
+    verify_reg_nonexist(hkey, "Wine56i");
     todo_wine verify_reg(hkey, "Wine56j", REG_DWORD, &dword, sizeof(dword), 0);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3455,15 +3455,15 @@ static void test_unicode_import(void)
                      "\"Wine57i\"=hex(2):25,00,48,00,4f,00,4d,00,45,00,25,00,5c,00\\\n"
                      "\"Wine57j\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine57a");
-    todo_wine verify_reg_nonexist(hkey, "Wine57b");
-    todo_wine verify_reg_nonexist(hkey, "Wine57c");
-    todo_wine verify_reg_nonexist(hkey, "Wine57d");
-    todo_wine verify_reg_nonexist(hkey, "Wine57e");
+    verify_reg_nonexist(hkey, "Wine57a");
+    verify_reg_nonexist(hkey, "Wine57b");
+    verify_reg_nonexist(hkey, "Wine57c");
+    verify_reg_nonexist(hkey, "Wine57d");
+    verify_reg_nonexist(hkey, "Wine57e");
     todo_wine verify_reg(hkey, "Wine57f", REG_EXPAND_SZ, "%PATH%", 7, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine57g");
-    todo_wine verify_reg_nonexist(hkey, "Wine57h");
-    todo_wine verify_reg_nonexist(hkey, "Wine57i");
+    verify_reg_nonexist(hkey, "Wine57g");
+    verify_reg_nonexist(hkey, "Wine57h");
+    verify_reg_nonexist(hkey, "Wine57i");
     todo_wine verify_reg(hkey, "Wine57j", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
     err = RegDeleteValueW(hkey, NULL);
@@ -3474,8 +3474,8 @@ static void test_unicode_import(void)
                      "\"Wine58a\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
                      "@=\"Default value 1\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58a");
-    todo_wine verify_reg_nonexist(hkey, NULL);
+    verify_reg_nonexist(hkey, "Wine58a");
+    verify_reg_nonexist(hkey, NULL);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3483,8 +3483,8 @@ static void test_unicode_import(void)
                      ";comment\n"
                      "@=\"Default value 2\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58b");
-    todo_wine verify_reg_nonexist(hkey, NULL);
+    verify_reg_nonexist(hkey, "Wine58b");
+    verify_reg_nonexist(hkey, NULL);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3492,7 +3492,7 @@ static void test_unicode_import(void)
                      "#comment\n"
                      "@=\"Default value 3\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58c");
+    verify_reg_nonexist(hkey, "Wine58c");
     todo_wine verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
 
     err = RegDeleteValueW(hkey, NULL);
@@ -3503,15 +3503,15 @@ static void test_unicode_import(void)
                      "\"Wine58d\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n\n"
                      "@=\"Default value 4\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58d");
-    todo_wine verify_reg_nonexist(hkey, NULL);
+    verify_reg_nonexist(hkey, "Wine58d");
+    verify_reg_nonexist(hkey, NULL);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine58e\"=hex(2):4c,00,69,00,6e,00,65,00,20,00\\\n"
                      "@=\"Default value 5\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine58e");
+    verify_reg_nonexist(hkey, "Wine58e");
     todo_wine verify_reg(hkey, NULL, REG_SZ, "Default value 5", 16, 0);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3523,8 +3523,8 @@ static void test_unicode_import(void)
                      "  \\\n"
                      "  44,55,66\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine59a");
-    todo_wine verify_reg_nonexist(hkey, "Wine59b");
+    verify_reg_nonexist(hkey, "Wine59a");
+    verify_reg_nonexist(hkey, "Wine59b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3554,7 +3554,7 @@ static void test_unicode_import(void)
                      "  65,00,6e,00,\\;comment\n"
                      "  61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine60c");
+    verify_reg_nonexist(hkey, "Wine60c");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3564,7 +3564,7 @@ static void test_unicode_import(void)
                      "  65,00,6e,00,\\;comment\n"
                      "  61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine60d");
+    verify_reg_nonexist(hkey, "Wine60d");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3593,8 +3593,8 @@ static void test_unicode_import(void)
                      "\"Wine61b\"=hex(0):25,48,4f,4d,45,25,5c/\n"
                      "  25,50,41,54,48,25,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine61a");
-    todo_wine verify_reg_nonexist(hkey, "Wine61b");
+    verify_reg_nonexist(hkey, "Wine61a");
+    verify_reg_nonexist(hkey, "Wine61b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3650,7 +3650,7 @@ static void test_unicode_import(void)
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine62f\"=hex(7):4c,00,69,00,6e,00,65,00,20,00\\", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine62f");
+    verify_reg_nonexist(hkey, "Wine62f");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3665,8 +3665,8 @@ static void test_unicode_import(void)
                      "  65,00,6e,00,\\\n"
                      "  61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine63a");
-    todo_wine verify_reg_nonexist(hkey, "Wine63b");
+    verify_reg_nonexist(hkey, "Wine63a");
+    verify_reg_nonexist(hkey, "Wine63b");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3753,7 +3753,7 @@ static void test_unicode_import(void)
     todo_wine verify_reg(hkey, "Wine67d", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
     err = RegCloseKey(hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
@@ -3770,7 +3770,7 @@ static void test_import_with_whitespace(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %u, expected 0\n", r);
 
     err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %d, expected 0\n", err);
 
     test_import_str("  REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3900,7 +3900,7 @@ static void test_import_with_whitespace(void)
     todo_wine verify_reg(hkey, "", REG_DWORD, &dword, sizeof(DWORD), 0);
 
     err = RegCloseKey(hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", err);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", err);
@@ -3917,7 +3917,7 @@ static void test_unicode_import_with_whitespace(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %u, expected 0\n", r);
 
     err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegOpenKeyExA failed: got %d, expected 0\n", err);
 
     test_import_wstr("\xef\xbb\xbf  Windows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -4047,7 +4047,7 @@ static void test_unicode_import_with_whitespace(void)
     todo_wine verify_reg(hkey, "", REG_DWORD, &dword, sizeof(DWORD), 0);
 
     err = RegCloseKey(hkey);
-    todo_wine ok(err == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", err);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", err);

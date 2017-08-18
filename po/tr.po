@@ -12169,6 +12169,14 @@ msgstr "regedit: '%1' dosyası bulunamadı.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
 
+#: reg.rc:69
+#, fuzzy
+#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+"regedit: Bilinmeyen kaçış sırası [\\%1!c!]\n"
+"\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Kayıt Defteri"

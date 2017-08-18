@@ -12422,6 +12422,10 @@ msgstr "Der blev ikke specificeret nogen kommando."
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "Fejl: Kunne ikke tilføje nøgler til fjern maskinen\n"
 
+#: reg.rc:69
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

@@ -47,6 +47,11 @@ enum parser_state
 {
     HEADER,              /* parsing the registry file version header */
     PARSE_WIN31_LINE,    /* parsing a Windows 3.1 registry line */
+    LINE_START,          /* at the beginning of a registry line */
+    KEY_NAME,            /* parsing a key name */
+    DEFAULT_VALUE_NAME,  /* parsing a default value name */
+    QUOTED_VALUE_NAME,   /* parsing a double-quoted value name */
+    DATA_START,          /* preparing for data parsing operations */
     SET_VALUE,           /* adding a value to the registry */
     NB_PARSER_STATES
 };
@@ -71,12 +76,22 @@ typedef WCHAR *(*parser_state_func)(struct parser *parser, WCHAR *pos);
 /* parser state machine functions */
 static WCHAR *header_state(struct parser *parser, WCHAR *pos);
 static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos);
+static WCHAR *line_start_state(struct parser *parser, WCHAR *pos);
+static WCHAR *key_name_state(struct parser *parser, WCHAR *pos);
+static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos);
+static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos);
+static WCHAR *data_start_state(struct parser *parser, WCHAR *pos);
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos);
 
 static const parser_state_func parser_funcs[NB_PARSER_STATES] =
 {
     header_state,              /* HEADER */
     parse_win31_line_state,    /* PARSE_WIN31_LINE */
+    line_start_state,          /* LINE_START */
+    key_name_state,            /* KEY_NAME */
+    default_value_name_state,  /* DEFAULT_VALUE_NAME */
+    quoted_value_name_state,   /* QUOTED_VALUE_NAME */
+    data_start_state,          /* DATA_START */
     set_value_state,           /* SET_VALUE */
 };
 
@@ -85,6 +100,59 @@ static inline enum parser_state set_state(struct parser *parser, enum parser_sta
 {
     enum parser_state ret = parser->state;
     parser->state = state;
+    return ret;
+}
+
+/******************************************************************************
+ * Replaces escape sequences with their character equivalents and
+ * null-terminates the string on the first non-escaped double quote.
+ *
+ * Assigns a pointer to the remaining unparsed data in the line.
+ * Returns TRUE or FALSE to indicate whether a closing double quote was found.
+ */
+static BOOL unescape_string(WCHAR *str, WCHAR **unparsed)
+{
+    int str_idx = 0;            /* current character under analysis */
+    int val_idx = 0;            /* the last character of the unescaped string */
+    int len = lstrlenW(str);
+    BOOL ret;
+
+    for (str_idx = 0; str_idx < len; str_idx++, val_idx++)
+    {
+        if (str[str_idx] == '\\')
+        {
+            str_idx++;
+            switch (str[str_idx])
+            {
+            case 'n':
+                str[val_idx] = '\n';
+                break;
+            case 'r':
+                str[val_idx] = '\r';
+                break;
+            case '0':
+                str[val_idx] = '\0';
+                break;
+            case '\\':
+            case '"':
+                str[val_idx] = str[str_idx];
+                break;
+            default:
+                if (!str[str_idx]) return FALSE;
+                output_message(STRING_ESCAPE_SEQUENCE, str[str_idx]);
+                str[val_idx] = str[str_idx];
+                break;
+            }
+        }
+        else if (str[str_idx] == '"')
+            break;
+        else
+            str[val_idx] = str[str_idx];
+    }
+
+    ret = (str[str_idx] == '"');
+    *unparsed = str + str_idx + 1;
+    str[val_idx] = '\0';
     return ret;
 }
 
@@ -206,6 +274,8 @@ static WCHAR *header_state(struct parser *parser, WCHAR *pos)
         break;
     case REG_VERSION_40:
     case REG_VERSION_50:
+        set_state(parser, LINE_START);
+        break;
     default:
         get_line(NULL); /* Reset static variables */
         return NULL;
@@ -251,6 +321,120 @@ static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos)
 
     set_state(parser, SET_VALUE);
     return value;
+}
+
+/* handler for parser LINE_START state */
+static WCHAR *line_start_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line, *p;
+
+    if (!(line = get_line(parser->file)))
+        return NULL;
+
+    for (p = line; *p; p++)
+    {
+        switch (*p)
+        {
+        case '[':
+            set_state(parser, KEY_NAME);
+            return p + 1;
+        case '@':
+            set_state(parser, DEFAULT_VALUE_NAME);
+            return p;
+        case '"':
+            set_state(parser, QUOTED_VALUE_NAME);
+            return p + 1;
+        case ' ':
+        case '\t':
+            break;
+        default:
+            return p;
+        }
+    }
+
+    return p;
+}
+
+/* handler for parser KEY_NAME state */
+static WCHAR *key_name_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos, *key_end;
+
+    if (*p == ' ' || *p == '\t' || !(key_end = strrchrW(p, ']')))
+        goto done;
+
+    *key_end = 0;
+
+    if (*p == '-')
+    {
+        FIXME("key deletion not yet implemented\n");
+        goto done;
+    }
+    else if (open_key(parser, p) != ERROR_SUCCESS)
+        output_message(STRING_OPEN_KEY_FAILED, p);
+
+done:
+    set_state(parser, LINE_START);
+    return p;
+}
+
+/* handler for parser DEFAULT_VALUE_NAME state */
+static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos)
+{
+    heap_free(parser->value_name);
+    parser->value_name = NULL;
+
+    set_state(parser, DATA_START);
+    return pos + 1;
+}
+
+/* handler for parser QUOTED_VALUE_NAME state */
+static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *val_name = pos, *p;
+
+    if (parser->value_name)
+    {
+        heap_free(parser->value_name);
+        parser->value_name = NULL;
+    }
+
+    if (!unescape_string(val_name, &p))
+        goto invalid;
+
+    /* copy the value name in case we need to parse multiple lines and the buffer is overwritten */
+    parser->value_name = heap_xalloc((lstrlenW(val_name) + 1) * sizeof(WCHAR));
+    lstrcpyW(parser->value_name, val_name);
+
+    set_state(parser, DATA_START);
+    return p;
+
+invalid:
+    set_state(parser, LINE_START);
+    return val_name;
+}
+
+/* handler for parser DATA_START state */
+static WCHAR *data_start_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos;
+    unsigned int len;
+
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p != '=') goto invalid;
+    p++;
+    while (*p == ' ' || *p == '\t') p++;
+
+    /* trim trailing whitespace */
+    len = strlenW(p);
+    while (len > 0 && (p[len - 1] == ' ' || p[len - 1] == '\t')) len--;
+    p[len] = 0;
+
+    /* FIXME: data parsing not yet implemented */
+
+invalid:
+    set_state(parser, LINE_START);
+    return p;
 }
 
 /* handler for parser SET_VALUE state */
@@ -406,6 +590,7 @@ int reg_import(const WCHAR *filename)
     parser.reg_version   = -1;
     parser.hkey          = NULL;
     parser.key_name      = NULL;
+    parser.value_name    = NULL;
     parser.data_type     = 0;
     parser.data          = NULL;
     parser.data_size     = 0;
@@ -422,9 +607,11 @@ int reg_import(const WCHAR *filename)
     else if (parser.reg_version == REG_VERSION_40 || parser.reg_version == REG_VERSION_50)
     {
         FIXME(": operation not yet implemented\n");
+        heap_free(parser.value_name);
         goto error;
     }
 
+    heap_free(parser.value_name);
     close_key(&parser);
 
     fclose(fp);

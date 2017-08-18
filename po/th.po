@@ -11833,6 +11833,10 @@ msgstr "ไม่พบแฟ้ม.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "แฟ้มตํารา (*.txt).\n"
 
+#: reg.rc:69
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

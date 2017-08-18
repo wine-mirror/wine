@@ -12117,6 +12117,10 @@ msgstr "Inget kommando angavs."
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
 
+#: reg.rc:69
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

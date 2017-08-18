@@ -12143,6 +12143,12 @@ msgstr "regedit: ファイル '%1' が見つかりません。\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
 msgstr "regedit: レジストリ キー '%1' を開けません。\n"
 
+#: reg.rc:69
+#, fuzzy
+#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr "regedit: 認識できないエスケープ シーケンスです [%1!c!]\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "レジストリ(&R)"
