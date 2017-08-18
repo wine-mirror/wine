@@ -42,6 +42,21 @@ static WCHAR *GetWideString(const char *strA)
     return NULL;
 }
 
+static WCHAR *GetWideStringN(const char *strA, int size, DWORD *len)
+{
+    if (strA)
+    {
+        WCHAR *strW;
+        *len = MultiByteToWideChar(CP_ACP, 0, strA, size, NULL, 0);
+
+        strW = heap_xalloc(*len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, strA, size, strW, *len);
+        return strW;
+    }
+    *len = 0;
+    return NULL;
+}
+
 static WCHAR *(*get_line)(FILE *);
 
 /* parser definitions */
@@ -57,6 +72,9 @@ enum parser_state
     DATA_TYPE,           /* parsing the registry data type */
     STRING_DATA,         /* parsing REG_SZ data */
     DWORD_DATA,          /* parsing DWORD data */
+    HEX_DATA,            /* parsing REG_BINARY, REG_NONE, REG_EXPAND_SZ or REG_MULTI_SZ data */
+    EOL_BACKSLASH,       /* preparing to parse multiple lines of hex data */
+    HEX_MULTILINE,       /* parsing multiple lines of hex data */
     SET_VALUE,           /* adding a value to the registry */
     NB_PARSER_STATES
 };
@@ -74,6 +92,7 @@ struct parser
     DWORD              data_type;      /* data type */
     void              *data;           /* value data */
     DWORD              data_size;      /* size of the data (in bytes) */
+    BOOL               backslash;      /* TRUE if the current line contains a backslash */
     enum parser_state  state;          /* current parser state */
 };
 
@@ -90,6 +109,9 @@ static WCHAR *data_start_state(struct parser *parser, WCHAR *pos);
 static WCHAR *data_type_state(struct parser *parser, WCHAR *pos);
 static WCHAR *string_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos);
+static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos);
+static WCHAR *eol_backslash_state(struct parser *parser, WCHAR *pos);
+static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos);
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos);
 
 static const parser_state_func parser_funcs[NB_PARSER_STATES] =
@@ -104,6 +126,9 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     data_type_state,           /* DATA_TYPE */
     string_data_state,         /* STRING_DATA */
     dword_data_state,          /* DWORD_DATA */
+    hex_data_state,            /* HEX_DATA */
+    eol_backslash_state,       /* EOL_BACKSLASH */
+    hex_multiline_state,       /* HEX_MULTILINE */
     set_value_state,           /* SET_VALUE */
 };
 
@@ -144,6 +169,66 @@ static BOOL convert_hex_to_dword(WCHAR *str, DWORD *dw)
 
 error:
     return FALSE;
+}
+
+/******************************************************************************
+ * Converts comma-separated hex data into a binary string and modifies
+ * the input parameter to skip the concatenating backslash, if found.
+ *
+ * Returns TRUE or FALSE to indicate whether parsing was successful.
+ */
+static BOOL convert_hex_csv_to_hex(struct parser *parser, WCHAR **str)
+{
+    size_t size;
+    BYTE *d;
+    WCHAR *s;
+
+    parser->backslash = FALSE;
+
+    /* The worst case is 1 digit + 1 comma per byte */
+    size = ((lstrlenW(*str) + 1) / 2) + parser->data_size;
+    parser->data = heap_xrealloc(parser->data, size);
+
+    s = *str;
+    d = (BYTE *)parser->data + parser->data_size;
+
+    while (*s)
+    {
+        WCHAR *end;
+        unsigned long wc;
+
+        wc = strtoulW(s, &end, 16);
+        if (wc > 0xff) return FALSE;
+
+        if (s == end && wc == 0)
+        {
+            while (*end == ' ' || *end == '\t') end++;
+            if (*end == '\\')
+            {
+                parser->backslash = TRUE;
+                *str = end + 1;
+                return TRUE;
+            }
+            else if (*end == ';')
+                return TRUE;
+            return FALSE;
+        }
+
+        *d++ = wc;
+        parser->data_size++;
+
+        if (*end && *end != ',')
+        {
+            while (*end == ' ' || *end == '\t') end++;
+            if (*end && *end != ';') return FALSE;
+            return TRUE;
+        }
+
+        if (*end) end++;
+        s = end;
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
@@ -305,11 +390,32 @@ static LONG open_key(struct parser *parser, WCHAR *path)
 
 static void free_parser_data(struct parser *parser)
 {
-    if (parser->parse_type == REG_DWORD)
+    if (parser->parse_type == REG_DWORD || parser->parse_type == REG_BINARY)
         heap_free(parser->data);
 
     parser->data = NULL;
     parser->data_size = 0;
+}
+
+static void prepare_hex_string_data(struct parser *parser)
+{
+    if (parser->data_type == REG_EXPAND_SZ || parser->data_type == REG_MULTI_SZ)
+    {
+        BYTE *data = parser->data;
+
+        if (data[parser->data_size - 1] != 0)
+        {
+            data[parser->data_size] = 0;
+            parser->data_size++;
+        }
+
+        if (!parser->is_unicode)
+        {
+            parser->data = GetWideStringN(parser->data, parser->data_size, &parser->data_size);
+            parser->data_size *= sizeof(WCHAR);
+            heap_free(data);
+        }
+    }
 }
 
 enum reg_versions {
@@ -566,6 +672,8 @@ static WCHAR *data_type_state(struct parser *parser, WCHAR *pos)
         set_state(parser, DWORD_DATA);
         break;
     case REG_BINARY: /* all hex data types, including undefined */
+        set_state(parser, HEX_DATA);
+        break;
     default:
         set_state(parser, LINE_START);
     }
@@ -610,6 +718,74 @@ static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos)
     parser->data_size = sizeof(DWORD);
 
     set_state(parser, SET_VALUE);
+    return line;
+
+invalid:
+    free_parser_data(parser);
+    set_state(parser, LINE_START);
+    return line;
+}
+
+/* handler for parser HEX_DATA state */
+static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line = pos;
+
+    if (!convert_hex_csv_to_hex(parser, &line))
+        goto invalid;
+
+    if (parser->backslash)
+    {
+        set_state(parser, EOL_BACKSLASH);
+        return line;
+    }
+
+    prepare_hex_string_data(parser);
+
+    set_state(parser, SET_VALUE);
+    return line;
+
+invalid:
+    free_parser_data(parser);
+    set_state(parser, LINE_START);
+    return line;
+}
+
+/* handler for parser EOL_BACKSLASH state */
+static WCHAR *eol_backslash_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos;
+
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p && *p != ';') goto invalid;
+
+    set_state(parser, HEX_MULTILINE);
+    return pos;
+
+invalid:
+    free_parser_data(parser);
+    set_state(parser, LINE_START);
+    return p;
+}
+
+/* handler for parser HEX_MULTILINE state */
+static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line;
+
+    if (!(line = get_line(parser->file)))
+    {
+        prepare_hex_string_data(parser);
+        set_state(parser, SET_VALUE);
+        return pos;
+    }
+
+    while (*line == ' ' || *line == '\t') line++;
+    if (!*line || *line == ';') return line;
+
+    if (!isxdigitW(*line)) goto invalid;
+
+    set_state(parser, HEX_DATA);
     return line;
 
 invalid:
@@ -779,6 +955,7 @@ int reg_import(const WCHAR *filename)
     parser.data_type     = 0;
     parser.data          = NULL;
     parser.data_size     = 0;
+    parser.backslash     = FALSE;
     parser.state         = HEADER;
 
     pos = parser.two_wchars;
