@@ -12490,6 +12490,18 @@ msgstr "(valore non immesso)"
 msgid "REG IMPORT file.reg\n"
 msgstr ""
 
+#: reg.rc:67
+#, fuzzy
+#| msgid "No command was specified."
+msgid "reg: The file '%1' was not found.\n"
+msgstr "Non è stato specificato nessun comando."
+
+#: reg.rc:68
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "reg: Unable to open the registry key '%1'.\n"
+msgstr "Errore: impossibile aggiungere chiavi alla macchina remota\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

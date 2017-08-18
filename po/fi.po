@@ -12119,6 +12119,18 @@ msgstr "(arvoa ei asetettu)"
 msgid "REG IMPORT file.reg\n"
 msgstr ""
 
+#: reg.rc:67
+#, fuzzy
+#| msgid "regedit: The file '%1' was not found.\n"
+msgid "reg: The file '%1' was not found.\n"
+msgstr "regedit: Tiedostoa '%1' ei löydy.\n"
+
+#: reg.rc:68
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to open the registry key '%1'.\n"
+msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rekisteri"

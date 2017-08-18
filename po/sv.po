@@ -12105,6 +12105,18 @@ msgstr "(värde ej angivet)"
 msgid "REG IMPORT file.reg\n"
 msgstr ""
 
+#: reg.rc:67
+#, fuzzy
+#| msgid "No command was specified."
+msgid "reg: The file '%1' was not found.\n"
+msgstr "Inget kommando angavs."
+
+#: reg.rc:68
+#, fuzzy
+#| msgid "reg: Unable to access remote machine\n"
+msgid "reg: Unable to open the registry key '%1'.\n"
+msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

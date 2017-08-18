@@ -847,10 +847,10 @@ static void test_import(void)
        "got exit code %d, expected 1\n", r);
 
     test_import_str("REGEDIT", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     test_import_str("REGEDIT\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     test_import_str("REGEDIT4\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
@@ -874,19 +874,19 @@ static void test_import(void)
        "got exit code %d, expected 1\n", r);
 
     test_import_str("REGEDIT3\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     test_import_str("REGEDIT5\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     test_import_str("REGEDIT9\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     test_import_str("REGEDIT 4\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     test_import_str("REGEDIT4 FOO\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     test_import_str("REGEDIT4\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n", &r);
@@ -898,7 +898,7 @@ static void test_import(void)
     test_import_str("REGEDIT3\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test1\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test1");
 
     test_import_str("regedit4\n\n"
@@ -918,31 +918,31 @@ static void test_import(void)
     test_import_str("REGEDIT 4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test4\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test4");
 
     test_import_str("REGEDIT4FOO\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test5\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test5");
 
     test_import_str("REGEDIT4 FOO\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test6\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test6");
 
     test_import_str("REGEDIT5\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test7\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test7");
 
     test_import_str("REGEDIT9\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test8\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test8");
 
     test_import_str("Windows Registry Editor Version 4.00\n\n"
@@ -2304,10 +2304,10 @@ static void test_unicode_import(void)
        "got exit code %d, expected 1\n", r);
 
     test_import_wstr("\xef\xbb\xbfREGEDIT", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     test_import_wstr("\xef\xbb\xbfREGEDIT\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
@@ -2335,7 +2335,7 @@ static void test_unicode_import(void)
     test_import_wstr("\xef\xbb\xbfREGEDIT3\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test1\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test1");
 
     test_import_wstr("\xef\xbb\xbfregedit4\n\n"
@@ -2355,31 +2355,31 @@ static void test_unicode_import(void)
     test_import_wstr("\xef\xbb\xbfREGEDIT 4\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test4\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test4");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4FOO\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test5\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test5");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4 FOO\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test6\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test6");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT5\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test7\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test7");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT9\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test8\"=\"Value\"\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Test8");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4\n"
@@ -4074,94 +4074,94 @@ static void test_import_31(void)
 
     /* Test simple value */
     test_import_str("REGEDIT\r\n"
-		    "HKEY_CLASSES_ROOT\\" KEY_BASE " = Value0\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg(hkey, "", REG_SZ, "Value0", 7, 0);
+                    "HKEY_CLASSES_ROOT\\" KEY_BASE " = Value0\r\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "", REG_SZ, "Value0", 7, 0);
 
     /* Test proper handling of spaces and equals signs */
     test_import_str("REGEDIT\r\n"
                     "HKEY_CLASSES_ROOT\\" KEY_BASE " =Value1\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg(hkey, "", REG_SZ, "Value1", 7, 0);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "", REG_SZ, "Value1", 7, 0);
 
     test_import_str("REGEDIT\r\n"
                     "HKEY_CLASSES_ROOT\\" KEY_BASE " =  Value2\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg(hkey, "", REG_SZ, " Value2", 8, 0);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "", REG_SZ, " Value2", 8, 0);
 
     test_import_str("REGEDIT\r\n"
                     "HKEY_CLASSES_ROOT\\" KEY_BASE " = Value3 \r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg(hkey, "", REG_SZ, "Value3 ", 8, 0);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "", REG_SZ, "Value3 ", 8, 0);
 
     test_import_str("REGEDIT\r\n"
                     "HKEY_CLASSES_ROOT\\" KEY_BASE " Value4\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg(hkey, "", REG_SZ, "Value4", 7, 0);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "", REG_SZ, "Value4", 7, 0);
 
     test_import_str("REGEDIT\r\n"
                     "HKEY_CLASSES_ROOT\\" KEY_BASE "  Value5\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg(hkey, "", REG_SZ, "Value5", 7, 0);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "", REG_SZ, "Value5", 7, 0);
 
     test_import_str("REGEDIT\r\n"
                     "HKEY_CLASSES_ROOT\\" KEY_BASE "\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg(hkey, "", REG_SZ, "", 1, 0);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "", REG_SZ, "", 1, 0);
 
     test_import_str("REGEDIT\r\n"
                     "HKEY_CLASSES_ROOT\\" KEY_BASE "  \r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg(hkey, "", REG_SZ, "", 1, 0);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "", REG_SZ, "", 1, 0);
 
     test_import_str("REGEDIT\r\n"
                     "HKEY_CLASSES_ROOT\\" KEY_BASE " = No newline", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg(hkey, "", REG_SZ, "No newline", 11, 0);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "", REG_SZ, "No newline", 11, 0);
 
     err = RegDeleteValueW(hkey, NULL);
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteValue failed: %d\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteValue failed: %d\n", err);
 
     /* Test character validity at the start of the line */
     test_import_str("REGEDIT\r\n"
                     " HKEY_CLASSES_ROOT\\" KEY_BASE " = Value1a\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg_nonexist(hkey, "");
 
     test_import_str("REGEDIT\r\n"
                     "  HKEY_CLASSES_ROOT\\" KEY_BASE " = Value1b\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg_nonexist(hkey, "");
 
     test_import_str("REGEDIT\r\n"
                     "\tHKEY_CLASSES_ROOT\\" KEY_BASE " = Value1c\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg_nonexist(hkey, "");
 
     test_import_str("REGEDIT\r\n"
                     ";HKEY_CLASSES_ROOT\\" KEY_BASE " = Value2a\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg_nonexist(hkey, "");
 
     test_import_str("REGEDIT\r\n"
                     "#HKEY_CLASSES_ROOT\\" KEY_BASE " = Value2b\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg_nonexist(hkey, "");
 
     /* Test case sensitivity */
     test_import_str("REGEDIT\r\n"
                     "hkey_classes_root\\" KEY_BASE " = Value3a\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg_nonexist(hkey, "");
 
     test_import_str("REGEDIT\r\n"
                     "hKEY_CLASSES_ROOT\\" KEY_BASE " = Value3b\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg_nonexist(hkey, "");
 
     test_import_str("REGEDIT\r\n"
                     "Hkey_Classes_Root\\" KEY_BASE " = Value3c\r\n", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg_nonexist(hkey, "");
 
     RegCloseKey(hkey);

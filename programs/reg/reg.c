@@ -23,8 +23,6 @@
 #include <wine/debug.h>
 #include "reg.h"
 
-#define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
-
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 static const WCHAR short_hklm[] = {'H','K','L','M',0};
@@ -79,7 +77,7 @@ type_rels[] =
     {REG_MULTI_SZ, type_multi_sz},
 };
 
-static void *heap_xalloc(size_t size)
+void *heap_xalloc(size_t size)
 {
     void *buf = HeapAlloc(GetProcessHeap(), 0, size);
     if (!buf)
@@ -90,7 +88,7 @@ static void *heap_xalloc(size_t size)
     return buf;
 }
 
-static void *heap_xrealloc(void *buf, size_t size)
+void *heap_xrealloc(void *buf, size_t size)
 {
     void *new_buf;
 
@@ -108,7 +106,7 @@ static void *heap_xrealloc(void *buf, size_t size)
     return new_buf;
 }
 
-static BOOL heap_free(void *buf)
+BOOL heap_free(void *buf)
 {
     return HeapFree(GetProcessHeap(), 0, buf);
 }
@@ -153,7 +151,7 @@ static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
     LocalFree(str);
 }
 
-static void __cdecl output_message(unsigned int id, ...)
+void __cdecl output_message(unsigned int id, ...)
 {
     WCHAR fmt[1024];
     __ms_va_list va_args;
@@ -216,7 +214,7 @@ static inline BOOL path_rootname_cmp(const WCHAR *input_path, const WCHAR *rootk
             (input_path[length] == 0 || input_path[length] == '\\'));
 }
 
-static HKEY path_get_rootkey(const WCHAR *path)
+HKEY path_get_rootkey(const WCHAR *path)
 {
     DWORD i;
 

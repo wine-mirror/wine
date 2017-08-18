@@ -11727,6 +11727,15 @@ msgstr ""
 msgid "REG IMPORT file.reg\n"
 msgstr ""
 
+#: reg.rc:67
+msgid "reg: The file '%1' was not found.\n"
+msgstr ""
+
+#: reg.rc:68
+#, fuzzy
+msgid "reg: Unable to open the registry key '%1'.\n"
+msgstr "Fitchîs tekse (*.txt).\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

@@ -12479,6 +12479,18 @@ msgstr "(값이 정해지지 않음)"
 msgid "REG IMPORT file.reg\n"
 msgstr ""
 
+#: reg.rc:67
+#, fuzzy
+#| msgid "No command was specified."
+msgid "reg: The file '%1' was not found.\n"
+msgstr "어떤 명령도 정의되지 않았습니다."
+
+#: reg.rc:68
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "reg: Unable to open the registry key '%1'.\n"
+msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "레지스트리(&R)"

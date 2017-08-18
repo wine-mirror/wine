@@ -11961,6 +11961,18 @@ msgstr "(vrijednost nije postavljena)"
 msgid "REG IMPORT file.reg\n"
 msgstr ""
 
+#: reg.rc:67
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "reg: The file '%1' was not found.\n"
+msgstr "Datoteka nije pronađena.\n"
+
+#: reg.rc:68
+#, fuzzy
+#| msgid "Could not open the file."
+msgid "reg: Unable to open the registry key '%1'.\n"
+msgstr "Datoteka se ne može otvoriti."
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registar"

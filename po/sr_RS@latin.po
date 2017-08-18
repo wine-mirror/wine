@@ -12438,6 +12438,17 @@ msgstr ""
 msgid "REG IMPORT file.reg\n"
 msgstr ""
 
+#: reg.rc:67
+#, fuzzy
+msgid "reg: The file '%1' was not found.\n"
+msgstr "%s putanja nije pronađena"
+
+#: reg.rc:68
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "reg: Unable to open the registry key '%1'.\n"
+msgstr "Želite li da izbrišete „%1“?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

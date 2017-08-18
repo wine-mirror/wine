@@ -11925,6 +11925,18 @@ msgstr "(没有设值)"
 msgid "REG IMPORT file.reg\n"
 msgstr ""
 
+#: reg.rc:67
+#, fuzzy
+#| msgid "regedit: The file '%1' was not found.\n"
+msgid "reg: The file '%1' was not found.\n"
+msgstr "regedit: 找不到文件 '%1'。\n"
+
+#: reg.rc:68
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to open the registry key '%1'.\n"
+msgstr "regedit: 无法打开注册表键 '%1'。\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "注册表(&R)"

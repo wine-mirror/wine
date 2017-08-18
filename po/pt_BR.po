@@ -12278,6 +12278,18 @@ msgstr "(valor não dado)"
 msgid "REG IMPORT file.reg\n"
 msgstr ""
 
+#: reg.rc:67
+#, fuzzy
+#| msgid "regedit: The file '%1' was not found.\n"
+msgid "reg: The file '%1' was not found.\n"
+msgstr "regedit: O arquivo '%1' não foi encontrado.\n"
+
+#: reg.rc:68
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to open the registry key '%1'.\n"
+msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"
