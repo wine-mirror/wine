@@ -1758,11 +1758,11 @@ static void test_import(void)
                     "\"Wine46e\"=- ;comment\n"
                     "\"Wine46f\"=- #comment\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine46a");
-    todo_wine verify_reg_nonexist(hkey, "Wine46b");
-    todo_wine verify_reg_nonexist(hkey, "Wine46c");
+    verify_reg_nonexist(hkey, "Wine46a");
+    verify_reg_nonexist(hkey, "Wine46b");
+    verify_reg_nonexist(hkey, "Wine46c");
     verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine46e");
+    verify_reg_nonexist(hkey, "Wine46e");
     verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
 
     /* Test the accepted range of the hex-based data types */
@@ -3215,11 +3215,11 @@ static void test_unicode_import(void)
                      "\"Wine46e\"=- ;comment\n"
                      "\"Wine46f\"=- #comment\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Wine46a");
-    todo_wine verify_reg_nonexist(hkey, "Wine46b");
-    todo_wine verify_reg_nonexist(hkey, "Wine46c");
+    verify_reg_nonexist(hkey, "Wine46a");
+    verify_reg_nonexist(hkey, "Wine46b");
+    verify_reg_nonexist(hkey, "Wine46c");
     verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine46e");
+    verify_reg_nonexist(hkey, "Wine46e");
     verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
 
     /* Test the accepted range of the hex-based data types */

@@ -69,6 +69,7 @@ enum parser_state
     DEFAULT_VALUE_NAME,  /* parsing a default value name */
     QUOTED_VALUE_NAME,   /* parsing a double-quoted value name */
     DATA_START,          /* preparing for data parsing operations */
+    DELETE_VALUE,        /* deleting a registry value */
     DATA_TYPE,           /* parsing the registry data type */
     STRING_DATA,         /* parsing REG_SZ data */
     DWORD_DATA,          /* parsing DWORD data */
@@ -107,6 +108,7 @@ static WCHAR *key_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *data_start_state(struct parser *parser, WCHAR *pos);
+static WCHAR *delete_value_state(struct parser *parser, WCHAR *pos);
 static WCHAR *data_type_state(struct parser *parser, WCHAR *pos);
 static WCHAR *string_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos);
@@ -125,6 +127,7 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     default_value_name_state,  /* DEFAULT_VALUE_NAME */
     quoted_value_name_state,   /* QUOTED_VALUE_NAME */
     data_start_state,          /* DATA_START */
+    delete_value_state,        /* DELETE_VALUE */
     data_type_state,           /* DATA_TYPE */
     string_data_state,         /* STRING_DATA */
     dword_data_state,          /* DWORD_DATA */
@@ -642,15 +645,27 @@ static WCHAR *data_start_state(struct parser *parser, WCHAR *pos)
     p[len] = 0;
 
     if (*p == '-')
-    {
-        FIXME("value deletion not yet implemented\n");
-        goto invalid;
-    }
+        set_state(parser, DELETE_VALUE);
     else
         set_state(parser, DATA_TYPE);
     return p;
 
 invalid:
+    set_state(parser, LINE_START);
+    return p;
+}
+
+/* handler for parser DELETE_VALUE state */
+static WCHAR *delete_value_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos + 1;
+
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p && *p != ';') goto done;
+
+    RegDeleteValueW(parser->hkey, parser->value_name);
+
+done:
     set_state(parser, LINE_START);
     return p;
 }
