@@ -56,6 +56,7 @@ enum parser_state
     DATA_START,          /* preparing for data parsing operations */
     DATA_TYPE,           /* parsing the registry data type */
     STRING_DATA,         /* parsing REG_SZ data */
+    DWORD_DATA,          /* parsing DWORD data */
     SET_VALUE,           /* adding a value to the registry */
     NB_PARSER_STATES
 };
@@ -88,6 +89,7 @@ static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *data_start_state(struct parser *parser, WCHAR *pos);
 static WCHAR *data_type_state(struct parser *parser, WCHAR *pos);
 static WCHAR *string_data_state(struct parser *parser, WCHAR *pos);
+static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos);
 
 static const parser_state_func parser_funcs[NB_PARSER_STATES] =
@@ -101,6 +103,7 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     data_start_state,          /* DATA_START */
     data_type_state,           /* DATA_TYPE */
     string_data_state,         /* STRING_DATA */
+    dword_data_state,          /* DWORD_DATA */
     set_value_state,           /* SET_VALUE */
 };
 
@@ -110,6 +113,37 @@ static inline enum parser_state set_state(struct parser *parser, enum parser_sta
     enum parser_state ret = parser->state;
     parser->state = state;
     return ret;
+}
+
+/******************************************************************************
+ * Converts a hex representation of a DWORD into a DWORD.
+ */
+static BOOL convert_hex_to_dword(WCHAR *str, DWORD *dw)
+{
+    WCHAR *p, *end;
+    int count = 0;
+
+    while (*str == ' ' || *str == '\t') str++;
+    if (!*str) goto error;
+
+    p = str;
+    while (isxdigitW(*p))
+    {
+        count++;
+        p++;
+    }
+    if (count > 8) goto error;
+
+    end = p;
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p && *p != ';') goto error;
+
+    *end = 0;
+    *dw = strtoulW(str, &end, 16);
+    return TRUE;
+
+error:
+    return FALSE;
 }
 
 /******************************************************************************
@@ -271,6 +305,9 @@ static LONG open_key(struct parser *parser, WCHAR *path)
 
 static void free_parser_data(struct parser *parser)
 {
+    if (parser->parse_type == REG_DWORD)
+        heap_free(parser->data);
+
     parser->data = NULL;
     parser->data_size = 0;
 }
@@ -526,6 +563,8 @@ static WCHAR *data_type_state(struct parser *parser, WCHAR *pos)
         set_state(parser, STRING_DATA);
         break;
     case REG_DWORD:
+        set_state(parser, DWORD_DATA);
+        break;
     case REG_BINARY: /* all hex data types, including undefined */
     default:
         set_state(parser, LINE_START);
@@ -548,6 +587,27 @@ static WCHAR *string_data_state(struct parser *parser, WCHAR *pos)
     if (*line && *line != ';') goto invalid;
 
     parser->data_size = (lstrlenW(parser->data) + 1) * sizeof(WCHAR);
+
+    set_state(parser, SET_VALUE);
+    return line;
+
+invalid:
+    free_parser_data(parser);
+    set_state(parser, LINE_START);
+    return line;
+}
+
+/* handler for parser DWORD_DATA state */
+static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line = pos;
+
+    parser->data = heap_xalloc(sizeof(DWORD));
+
+    if (!convert_hex_to_dword(line, parser->data))
+        goto invalid;
+
+    parser->data_size = sizeof(DWORD);
 
     set_state(parser, SET_VALUE);
     return line;
