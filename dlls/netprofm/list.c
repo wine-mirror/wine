@@ -222,6 +222,13 @@ static HRESULT WINAPI connection_point_Advise(
     return S_OK;
 }
 
+static void sink_entry_release( struct sink_entry *entry )
+{
+    list_remove( &entry->entry );
+    IUnknown_Release( entry->unk );
+    heap_free( entry );
+}
+
 static HRESULT WINAPI connection_point_Unadvise(
     IConnectionPoint *iface,
     DWORD cookie )
@@ -234,9 +241,7 @@ static HRESULT WINAPI connection_point_Unadvise(
     LIST_FOR_EACH_ENTRY( iter, &cp->sinks, struct sink_entry, entry )
     {
         if (iter->cookie != cookie) continue;
-        list_remove( &iter->entry );
-        IUnknown_Release( iter->unk );
-        heap_free( iter );
+        sink_entry_release( iter );
         return S_OK;
     }
 
@@ -276,6 +281,12 @@ static void connection_point_init(
     cp->cookie = 0;
     cp->iid = *riid;
     list_init( &cp->sinks );
+}
+
+static void connection_point_release( struct connection_point *cp )
+{
+    while (!list_empty( &cp->sinks ))
+        sink_entry_release( LIST_ENTRY( list_head( &cp->sinks ), struct sink_entry, entry ) );
 }
 
 static inline struct network *impl_from_INetwork(
@@ -1110,6 +1121,9 @@ static ULONG WINAPI list_manager_Release(
 
         TRACE( "destroying %p\n", mgr );
 
+        connection_point_release( &mgr->conn_mgr_cp );
+        connection_point_release( &mgr->cost_mgr_cp );
+        connection_point_release( &mgr->list_mgr_cp );
         while ((ptr = list_head( &mgr->networks )))
         {
             struct network *network = LIST_ENTRY( ptr, struct network, entry );
