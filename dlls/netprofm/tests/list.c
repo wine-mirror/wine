@@ -222,7 +222,7 @@ static void test_INetworkListManager( void )
     INetworkCostManager *cost_mgr;
     NLM_CONNECTIVITY connectivity;
     VARIANT_BOOL connected;
-    IConnectionPoint *pt;
+    IConnectionPoint *pt, *pt2;
     IEnumNetworks *network_iter;
     INetwork *network;
     IEnumNetworkConnections *conn_iter;
@@ -319,7 +319,10 @@ static void test_INetworkListManager( void )
     hr = IConnectionPoint_Unadvise( pt, cookie );
     ok( hr == S_OK, "Unadvise failed: %08x\n", hr );
 
-    IConnectionPoint_Release( pt );
+    hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkListManagerEvents, &pt2 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( pt == pt2, "pt != pt2\n");
+    IConnectionPoint_Release( pt2 );
 
     hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkCostManagerEvents, &pt );
     ok( hr == S_OK || hr == CO_E_FAILEDTOIMPERSONATE, "got %08x\n", hr );
@@ -355,7 +358,18 @@ static void test_INetworkListManager( void )
         }
         IEnumNetworkConnections_Release( conn_iter );
     }
-    INetworkListManager_Release( mgr );
+
+    /* cps and their container share the same ref count */
+    IConnectionPoint_AddRef( pt );
+    IConnectionPoint_AddRef( pt );
+
+    ref1 = IConnectionPoint_Release( pt );
+    ref2 = INetworkListManager_Release( mgr );
+    ok( ref2 == ref1 - 1, "ref = %u\n", ref1 );
+
+    IConnectionPoint_Release( pt );
+    ref1 = IConnectionPoint_Release( pt );
+    ok( !ref1, "ref = %u\n", ref1 );
 }
 
 START_TEST( list )
