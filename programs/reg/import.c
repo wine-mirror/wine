@@ -17,7 +17,9 @@
  */
 
 #include <windows.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <wine/unicode.h>
 #include <wine/debug.h>
@@ -52,6 +54,8 @@ enum parser_state
     DEFAULT_VALUE_NAME,  /* parsing a default value name */
     QUOTED_VALUE_NAME,   /* parsing a double-quoted value name */
     DATA_START,          /* preparing for data parsing operations */
+    DATA_TYPE,           /* parsing the registry data type */
+    STRING_DATA,         /* parsing REG_SZ data */
     SET_VALUE,           /* adding a value to the registry */
     NB_PARSER_STATES
 };
@@ -65,6 +69,7 @@ struct parser
     HKEY               hkey;           /* current registry key */
     WCHAR             *key_name;       /* current key name */
     WCHAR             *value_name;     /* value name */
+    DWORD              parse_type;     /* generic data type for parsing */
     DWORD              data_type;      /* data type */
     void              *data;           /* value data */
     DWORD              data_size;      /* size of the data (in bytes) */
@@ -81,6 +86,8 @@ static WCHAR *key_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *data_start_state(struct parser *parser, WCHAR *pos);
+static WCHAR *data_type_state(struct parser *parser, WCHAR *pos);
+static WCHAR *string_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos);
 
 static const parser_state_func parser_funcs[NB_PARSER_STATES] =
@@ -92,6 +99,8 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     default_value_name_state,  /* DEFAULT_VALUE_NAME */
     quoted_value_name_state,   /* QUOTED_VALUE_NAME */
     data_start_state,          /* DATA_START */
+    data_type_state,           /* DATA_TYPE */
+    string_data_state,         /* STRING_DATA */
     set_value_state,           /* SET_VALUE */
 };
 
@@ -101,6 +110,62 @@ static inline enum parser_state set_state(struct parser *parser, enum parser_sta
     enum parser_state ret = parser->state;
     parser->state = state;
     return ret;
+}
+
+/******************************************************************************
+ * Parses the data type of the registry value being imported and modifies
+ * the input parameter to skip the string representation of the data type.
+ *
+ * Returns TRUE or FALSE to indicate whether a data type was found.
+ */
+static BOOL parse_data_type(struct parser *parser, WCHAR **line)
+{
+    struct data_type { const WCHAR *tag; int len; int type; int parse_type; };
+
+    static const WCHAR quote[] = {'"'};
+    static const WCHAR hex[] = {'h','e','x',':'};
+    static const WCHAR dword[] = {'d','w','o','r','d',':'};
+    static const WCHAR hexp[] = {'h','e','x','('};
+
+    static const struct data_type data_types[] = {
+    /*    tag    len  type         parse type    */
+        { quote,  1,  REG_SZ,      REG_SZ },
+        { hex,    4,  REG_BINARY,  REG_BINARY },
+        { dword,  6,  REG_DWORD,   REG_DWORD },
+        { hexp,   4,  -1,          REG_BINARY }, /* REG_NONE, REG_EXPAND_SZ, REG_MULTI_SZ */
+        { NULL,   0,  0,           0 }
+    };
+
+    const struct data_type *ptr;
+
+    for (ptr = data_types; ptr->tag; ptr++)
+    {
+        if (strncmpW(ptr->tag, *line, ptr->len))
+            continue;
+
+        parser->parse_type = ptr->parse_type;
+        parser->data_type = ptr->parse_type;
+        *line += ptr->len;
+
+        if (ptr->type == -1)
+        {
+            WCHAR *end;
+            DWORD val;
+
+            if (!**line || tolowerW((*line)[1]) == 'x')
+                return FALSE;
+
+            /* "hex(xx):" is special */
+            val = wcstoul(*line, &end, 16);
+            if (*end != ')' || *(end + 1) != ':' || (val == ~0u && errno == ERANGE))
+                return FALSE;
+
+            parser->data_type = val;
+            *line = end + 2;
+        }
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /******************************************************************************
@@ -430,11 +495,67 @@ static WCHAR *data_start_state(struct parser *parser, WCHAR *pos)
     while (len > 0 && (p[len - 1] == ' ' || p[len - 1] == '\t')) len--;
     p[len] = 0;
 
-    /* FIXME: data parsing not yet implemented */
+    if (*p == '-')
+    {
+        FIXME("value deletion not yet implemented\n");
+        goto invalid;
+    }
+    else
+        set_state(parser, DATA_TYPE);
+    return p;
 
 invalid:
     set_state(parser, LINE_START);
     return p;
+}
+
+/* handler for parser DATA_TYPE state */
+static WCHAR *data_type_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line = pos;
+
+    if (!parse_data_type(parser, &line))
+    {
+        set_state(parser, LINE_START);
+        return line;
+    }
+
+    switch (parser->parse_type)
+    {
+    case REG_SZ:
+        set_state(parser, STRING_DATA);
+        break;
+    case REG_DWORD:
+    case REG_BINARY: /* all hex data types, including undefined */
+    default:
+        set_state(parser, LINE_START);
+    }
+
+    return line;
+}
+
+/* handler for parser STRING_DATA state */
+static WCHAR *string_data_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line;
+
+    parser->data = pos;
+
+    if (!unescape_string(parser->data, &line))
+        goto invalid;
+
+    while (*line == ' ' || *line == '\t') line++;
+    if (*line && *line != ';') goto invalid;
+
+    parser->data_size = (lstrlenW(parser->data) + 1) * sizeof(WCHAR);
+
+    set_state(parser, SET_VALUE);
+    return line;
+
+invalid:
+    free_parser_data(parser);
+    set_state(parser, LINE_START);
+    return line;
 }
 
 /* handler for parser SET_VALUE state */
@@ -445,7 +566,10 @@ static WCHAR *set_value_state(struct parser *parser, WCHAR *pos)
 
     free_parser_data(parser);
 
-    set_state(parser, PARSE_WIN31_LINE);
+    if (parser->reg_version == REG_VERSION_31)
+        set_state(parser, PARSE_WIN31_LINE);
+    else
+        set_state(parser, LINE_START);
 
     return pos;
 }
@@ -591,6 +715,7 @@ int reg_import(const WCHAR *filename)
     parser.hkey          = NULL;
     parser.key_name      = NULL;
     parser.value_name    = NULL;
+    parser.parse_type    = 0;
     parser.data_type     = 0;
     parser.data          = NULL;
     parser.data_size     = 0;
