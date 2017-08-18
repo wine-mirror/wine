@@ -66,6 +66,7 @@ enum parser_state
     PARSE_WIN31_LINE,    /* parsing a Windows 3.1 registry line */
     LINE_START,          /* at the beginning of a registry line */
     KEY_NAME,            /* parsing a key name */
+    DELETE_KEY,          /* deleting a registry key */
     DEFAULT_VALUE_NAME,  /* parsing a default value name */
     QUOTED_VALUE_NAME,   /* parsing a double-quoted value name */
     DATA_START,          /* preparing for data parsing operations */
@@ -105,6 +106,7 @@ static WCHAR *header_state(struct parser *parser, WCHAR *pos);
 static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos);
 static WCHAR *line_start_state(struct parser *parser, WCHAR *pos);
 static WCHAR *key_name_state(struct parser *parser, WCHAR *pos);
+static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos);
 static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *data_start_state(struct parser *parser, WCHAR *pos);
@@ -124,6 +126,7 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     parse_win31_line_state,    /* PARSE_WIN31_LINE */
     line_start_state,          /* LINE_START */
     key_name_state,            /* KEY_NAME */
+    delete_key_state,          /* DELETE_KEY */
     default_value_name_state,  /* DEFAULT_VALUE_NAME */
     quoted_value_name_state,   /* QUOTED_VALUE_NAME */
     data_start_state,          /* DATA_START */
@@ -581,13 +584,33 @@ static WCHAR *key_name_state(struct parser *parser, WCHAR *pos)
 
     if (*p == '-')
     {
-        FIXME("key deletion not yet implemented\n");
-        goto done;
+        set_state(parser, DELETE_KEY);
+        return p + 1;
     }
     else if (open_key(parser, p) != ERROR_SUCCESS)
         output_message(STRING_OPEN_KEY_FAILED, p);
 
 done:
+    set_state(parser, LINE_START);
+    return p;
+}
+
+/* handler for parser DELETE_KEY state */
+static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos;
+
+    if (*p == 'H' || *p == 'h')
+    {
+        HKEY root;
+        WCHAR *path;
+
+        root = parse_key_name(p, &path);
+
+        if (root && path && *path)
+            RegDeleteTreeW(root, path);
+    }
+
     set_state(parser, LINE_START);
     return p;
 }

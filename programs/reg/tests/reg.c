@@ -1713,8 +1713,8 @@ static void test_import(void)
                     "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n\n"
                     "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey2a");
-    todo_wine verify_key_nonexist(hkey, "Subkey2b");
+    verify_key_nonexist(hkey, "Subkey2a");
+    verify_key_nonexist(hkey, "Subkey2b");
 
     /* Test case sensitivity when creating and deleting registry keys. */
     test_import_str("REGEDIT4\n\n"
@@ -1728,8 +1728,8 @@ static void test_import(void)
                     "[-HKEY_current_USER\\" KEY_BASE "\\sUBKEY3A]\n\n"
                     "[-hKeY_cUrReNt_UsEr\\" KEY_BASE "\\sUbKeY3B]\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey3a");
-    todo_wine verify_key_nonexist(hkey, "Subkey3b");
+    verify_key_nonexist(hkey, "Subkey3a");
+    verify_key_nonexist(hkey, "Subkey3b");
 
     /* Test value deletion. We start by creating some registry values. */
     test_import_str("REGEDIT4\n\n"
@@ -2278,7 +2278,7 @@ static void test_import(void)
     ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 }
 
 static void test_unicode_import(void)
@@ -2330,39 +2330,39 @@ static void test_unicode_import(void)
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test1\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test1");
+    verify_reg_nonexist(hkey, "Test1");
 
     test_import_wstr("\xef\xbb\xbfregedit4\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test2\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test2");
+    verify_reg_nonexist(hkey, "Test2");
 
     test_import_wstr("\xef\xbb\xbfRegedit4\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test3\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test3");
+    verify_reg_nonexist(hkey, "Test3");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT 4\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test4\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test4");
+    verify_reg_nonexist(hkey, "Test4");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4FOO\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test5\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test5");
+    verify_reg_nonexist(hkey, "Test5");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT4 FOO\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Test6\"=\"Value\"\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_reg_nonexist(hkey, "Test6");
+    verify_reg_nonexist(hkey, "Test6");
 
     test_import_wstr("\xef\xbb\xbfREGEDIT5\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3169,8 +3169,8 @@ static void test_unicode_import(void)
                      "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\n\n"
                      "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey2a");
-    todo_wine verify_key_nonexist(hkey, "Subkey2b");
+    verify_key_nonexist(hkey, "Subkey2a");
+    verify_key_nonexist(hkey, "Subkey2b");
 
     /* Test case sensitivity when creating and deleting registry keys. */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3184,8 +3184,8 @@ static void test_unicode_import(void)
                      "[-HKEY_current_USER\\" KEY_BASE "\\sUBKEY3A]\n\n"
                      "[-hKeY_cUrReNt_UsEr\\" KEY_BASE "\\sUbKeY3B]\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine verify_key_nonexist(hkey, "Subkey3a");
-    todo_wine verify_key_nonexist(hkey, "Subkey3b");
+    verify_key_nonexist(hkey, "Subkey3a");
+    verify_key_nonexist(hkey, "Subkey3b");
 
     /* Test value deletion. We start by creating some registry values. */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3744,7 +3744,7 @@ static void test_unicode_import(void)
     ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 }
 
 static void test_import_with_whitespace(void)
@@ -3891,7 +3891,7 @@ static void test_import_with_whitespace(void)
     ok(err == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", err);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", err);
 }
 
 static void test_unicode_import_with_whitespace(void)
@@ -4038,7 +4038,7 @@ static void test_unicode_import_with_whitespace(void)
     ok(err == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", err);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    todo_wine ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", err);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", err);
 }
 
 static void test_import_31(void)
