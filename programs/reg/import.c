@@ -75,6 +75,7 @@ enum parser_state
     HEX_DATA,            /* parsing REG_BINARY, REG_NONE, REG_EXPAND_SZ or REG_MULTI_SZ data */
     EOL_BACKSLASH,       /* preparing to parse multiple lines of hex data */
     HEX_MULTILINE,       /* parsing multiple lines of hex data */
+    UNKNOWN_DATA,        /* parsing an unhandled or invalid data type */
     SET_VALUE,           /* adding a value to the registry */
     NB_PARSER_STATES
 };
@@ -112,6 +113,7 @@ static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *eol_backslash_state(struct parser *parser, WCHAR *pos);
 static WCHAR *hex_multiline_state(struct parser *parser, WCHAR *pos);
+static WCHAR *unknown_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos);
 
 static const parser_state_func parser_funcs[NB_PARSER_STATES] =
@@ -129,6 +131,7 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     hex_data_state,            /* HEX_DATA */
     eol_backslash_state,       /* EOL_BACKSLASH */
     hex_multiline_state,       /* HEX_MULTILINE */
+    unknown_data_state,        /* UNKNOWN_DATA */
     set_value_state,           /* SET_VALUE */
 };
 
@@ -675,7 +678,7 @@ static WCHAR *data_type_state(struct parser *parser, WCHAR *pos)
         set_state(parser, HEX_DATA);
         break;
     default:
-        set_state(parser, LINE_START);
+        set_state(parser, UNKNOWN_DATA);
     }
 
     return line;
@@ -792,6 +795,15 @@ invalid:
     free_parser_data(parser);
     set_state(parser, LINE_START);
     return line;
+}
+
+/* handler for parser UNKNOWN_DATA state */
+static WCHAR *unknown_data_state(struct parser *parser, WCHAR *pos)
+{
+    FIXME("Unknown registry data type [0x%x]\n", parser->data_type);
+
+    set_state(parser, LINE_START);
+    return pos;
 }
 
 /* handler for parser SET_VALUE state */
