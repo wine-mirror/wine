@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-08-08 20:34+0300\n"
+"PO-Revision-Date: 2017-08-20 08:43+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11988,17 +11988,6 @@ msgid "Icons (*.ico)"
 msgstr "Piktogramos (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -12014,7 +12003,7 @@ msgstr ""
 "  REG [operacija] [parametrai]\n"
 "\n"
 "Palaikomos operacijos:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | QUERY\n"
 "\n"
 "Pagalbai apie specifinę operaciją, įrašykite:\n"
 "  REG [operacija] /?\n"
@@ -12140,25 +12129,19 @@ msgstr "(reikšmė nenustatyta)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT failas.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "reg: The file '%1' was not found.\n"
-msgstr "regedit: Failas „%1“ nerastas.\n"
+msgstr "reg: Failas „%1“ nerastas.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
+msgstr "reg: Nepavyko atverti registro rakto „%1“.\n"
 
 #: reg.rc:69
-#, fuzzy
-#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: Neatpažinta kaitos seka [\\%1!c!]\n"
+msgstr "reg: Neatpažinta kaitos seka [\\%1!c!]\n"
 
 #: regedit.rc:34
 msgid "&Registry"
