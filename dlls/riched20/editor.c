@@ -4792,6 +4792,30 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   return 0L;
 }
 
+static BOOL create_windowed_editor(HWND hwnd, CREATESTRUCTW *create, BOOL emulate_10)
+{
+    ITextHost *host = ME_CreateTextHost( hwnd, create, emulate_10 );
+    ME_TextEditor *editor;
+
+    if (!host) return FALSE;
+
+    editor = ME_MakeEditor( host, emulate_10, create->style );
+    if (!editor)
+    {
+        ITextHost_Release( host );
+        return FALSE;
+    }
+
+    editor->exStyleFlags = GetWindowLongW( hwnd, GWL_EXSTYLE );
+    editor->styleFlags |= GetWindowLongW( hwnd, GWL_STYLE ) & ES_WANTRETURN;
+    editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
+    editor->hwndParent = create->hwndParent;
+
+    SetWindowLongPtrW( hwnd, 0, (LONG_PTR)editor );
+
+    return TRUE;
+}
+
 static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
                                       LPARAM lParam, BOOL unicode)
 {
@@ -4808,11 +4832,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (msg == WM_NCCREATE)
     {
       CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
-      ITextHost *texthost;
 
       TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
-      texthost = ME_CreateTextHost(hWnd, pcs, FALSE);
-      return texthost != NULL;
+      return create_windowed_editor( hWnd, pcs, FALSE );
     }
     else
     {
@@ -4938,12 +4960,10 @@ LRESULT WINAPI RichEdit10ANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 {
   if (msg == WM_NCCREATE && !GetWindowLongPtrW(hWnd, 0))
   {
-    ITextHost *texthost;
     CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
 
     TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
-    texthost = ME_CreateTextHost(hWnd, pcs, TRUE);
-    return texthost != NULL;
+    return create_windowed_editor( hWnd, pcs, TRUE );
   }
   return RichEditANSIWndProc(hWnd, msg, wParam, lParam);
 }

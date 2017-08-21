@@ -45,23 +45,14 @@ static const ITextHostVtbl textHostVtbl;
 ITextHost *ME_CreateTextHost(HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion10)
 {
     ITextHostImpl *texthost;
+
     texthost = CoTaskMemAlloc(sizeof(*texthost));
-    if (texthost)
-    {
-        ME_TextEditor *editor;
+    if (!texthost) return NULL;
 
-        texthost->ITextHost_iface.lpVtbl = &textHostVtbl;
-        texthost->ref = 1;
-        texthost->hWnd = hwnd;
-        texthost->bEmulateVersion10 = bEmulateVersion10;
-
-        editor = ME_MakeEditor(&texthost->ITextHost_iface, bEmulateVersion10, cs->style);
-        editor->exStyleFlags = GetWindowLongW(hwnd, GWL_EXSTYLE);
-        editor->styleFlags |= GetWindowLongW(hwnd, GWL_STYLE) & ES_WANTRETURN;
-        editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
-        editor->hwndParent = cs->hwndParent;
-        SetWindowLongPtrW(hwnd, 0, (LONG_PTR)editor);
-    }
+    texthost->ITextHost_iface.lpVtbl = &textHostVtbl;
+    texthost->ref = 1;
+    texthost->hWnd = hwnd;
+    texthost->bEmulateVersion10 = bEmulateVersion10;
 
     return &texthost->ITextHost_iface;
 }
