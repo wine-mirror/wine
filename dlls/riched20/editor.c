@@ -2209,6 +2209,106 @@ static DWORD CALLBACK ME_ReadFromHGLOBALRTF(DWORD_PTR dwCookie, LPBYTE lpBuff, L
   return 0;
 }
 
+static const WCHAR rtfW[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
+
+static HRESULT paste_rtf(ME_TextEditor *editor, FORMATETC *fmt, STGMEDIUM *med)
+{
+    EDITSTREAM es;
+    ME_GlobalDestStruct gds;
+    HRESULT hr;
+
+    gds.hData = med->u.hGlobal;
+    gds.nLength = 0;
+    es.dwCookie = (DWORD_PTR)&gds;
+    es.pfnCallback = ME_ReadFromHGLOBALRTF;
+    hr = ME_StreamIn( editor, SF_RTF | SFF_SELECTION, &es, FALSE ) == 0 ? E_FAIL : S_OK;
+    ReleaseStgMedium( med );
+    return hr;
+}
+
+static HRESULT paste_text(ME_TextEditor *editor, FORMATETC *fmt, STGMEDIUM *med)
+{
+    EDITSTREAM es;
+    ME_GlobalDestStruct gds;
+    HRESULT hr;
+
+    gds.hData = med->u.hGlobal;
+    gds.nLength = 0;
+    es.dwCookie = (DWORD_PTR)&gds;
+    es.pfnCallback = ME_ReadFromHGLOBALUnicode;
+    hr = ME_StreamIn( editor, SF_TEXT | SF_UNICODE | SFF_SELECTION, &es, FALSE ) == 0 ? E_FAIL : S_OK;
+    ReleaseStgMedium( med );
+    return hr;
+}
+
+static struct paste_format
+{
+    FORMATETC fmt;
+    HRESULT (*paste)(ME_TextEditor *, FORMATETC *, STGMEDIUM *);
+    const WCHAR *name;
+} paste_formats[] =
+{
+    {{ -1,             NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }, paste_rtf, rtfW },
+    {{ CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }, paste_text },
+    {{ 0 }}
+};
+
+static void init_paste_formats(void)
+{
+    struct paste_format *format;
+    static int done;
+
+    if (!done)
+    {
+        for (format = paste_formats; format->fmt.cfFormat; format++)
+        {
+            if (format->name)
+                format->fmt.cfFormat = RegisterClipboardFormatW( format->name );
+        }
+        done = 1;
+    }
+}
+
+static BOOL paste_special(ME_TextEditor *editor, UINT cf, REPASTESPECIAL *ps, BOOL check_only)
+{
+    HRESULT hr;
+    STGMEDIUM med;
+    struct paste_format *format;
+    IDataObject *data;
+
+    init_paste_formats();
+
+    if (ps && ps->dwAspect != DVASPECT_CONTENT)
+        FIXME("Ignoring aspect %x\n", ps->dwAspect);
+
+    hr = OleGetClipboard( &data );
+    if (hr != S_OK) return FALSE;
+
+    if (cf == CF_TEXT) cf = CF_UNICODETEXT;
+
+    hr = S_FALSE;
+    for (format = paste_formats; format->fmt.cfFormat; format++)
+    {
+        if (cf && cf != format->fmt.cfFormat) continue;
+        hr = IDataObject_QueryGetData( data, &format->fmt );
+        if (hr == S_OK)
+        {
+            if (!check_only)
+            {
+                hr = IDataObject_GetData( data, &format->fmt, &med );
+                if (hr != S_OK) goto done;
+                hr = format->paste( editor, &format->fmt, &med );
+            }
+            break;
+        }
+    }
+
+done:
+    IDataObject_Release( data );
+
+    return hr == S_OK;
+}
+
 static BOOL ME_Paste(ME_TextEditor *editor)
 {
   DWORD dwFormat = 0;
@@ -3410,7 +3510,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   UNSUPPORTED_MSG(EM_GETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_GETUNDONAME)
   UNSUPPORTED_MSG(EM_GETWORDBREAKPROCEX)
-  UNSUPPORTED_MSG(EM_PASTESPECIAL)
   UNSUPPORTED_MSG(EM_SELECTIONTYPE)
   UNSUPPORTED_MSG(EM_SETBIDIOPTIONS)
   UNSUPPORTED_MSG(EM_SETEDITSTYLE)
@@ -3978,6 +4077,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_PASTE:
   case WM_MBUTTONDOWN:
     ME_Paste(editor);
+    return 0;
+  case EM_PASTESPECIAL:
+    paste_special( editor, wParam, (REPASTESPECIAL *)lParam, FALSE );
     return 0;
   case WM_CUT:
   case WM_COPY:
