@@ -2,7 +2,7 @@
  * Unit test suite for images
  *
  * Copyright (C) 2007 Google (Evan Stade)
- * Copyright (C) 2012 Dmitry Timoshkov
+ * Copyright (C) 2012, 2016 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -4966,6 +4966,63 @@ static void test_imageabort(void)
     GdipDisposeImage((GpImage*)bm);
 }
 
+/* RGB 24 bpp 1x1 pixel PNG image */
+static const char png_1x1_data[] = {
+  0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,
+  0x00,0x00,0x00,0x0d,'I','H','D','R',0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xde,
+  0x00,0x00,0x00,0x0c,'I','D','A','T',0x08,0xd7,0x63,0xf8,0xff,0xff,0x3f,0x00,0x05,0xfe,0x02,0xfe,0xdc,0xcc,0x59,0xe7,
+  0x00,0x00,0x00,0x00,'I','E','N','D',0xae,0x42,0x60,0x82
+};
+
+static void test_png_color_formats(void)
+{
+    static const struct
+    {
+        char bit_depth, color_type;
+        PixelFormat format;
+    } td[] =
+    {
+        /* 2 - PNG_COLOR_TYPE_RGB */
+        { 8, 2, PixelFormat24bppRGB },
+        /* 0 - PNG_COLOR_TYPE_GRAY */
+        { 1, 0, PixelFormat1bppIndexed },
+        { 2, 0, PixelFormat32bppARGB },
+        { 4, 0, PixelFormat32bppARGB },
+        { 8, 0, PixelFormat32bppARGB },
+        { 16, 0, PixelFormat32bppARGB },
+    };
+    BYTE buf[sizeof(png_1x1_data)];
+    GpStatus status;
+    GpImage *image;
+    ImageType type;
+    PixelFormat format;
+    int i;
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        memcpy(buf, png_1x1_data, sizeof(png_1x1_data));
+        buf[24] = td[i].bit_depth;
+        buf[25] = td[i].color_type;
+
+        image = load_image(buf, sizeof(buf));
+        ok(image != NULL, "%d: failed to load image data\n", i);
+        if (!image) continue;
+
+        status = GdipGetImageType(image, &type);
+        ok(status == Ok, "%u: GdipGetImageType error %d\n", i, status);
+        ok(type == ImageTypeBitmap, "%d: wrong image type %d\n", i, type);
+
+        status = GdipGetImagePixelFormat(image, &format);
+        expect(Ok, status);
+todo_wine_if(td[i].bit_depth == 8 && td[i].color_type == 0)
+        ok(format == td[i].format ||
+           broken(td[i].bit_depth == 1 && td[i].color_type == 0 && format == PixelFormat32bppARGB), /* XP */
+           "%d: expected %#x, got %#x\n", i, td[i].format, format);
+
+        GdipDisposeImage(image);
+    }
+}
+
 START_TEST(image)
 {
     HMODULE mod = GetModuleHandleA("gdiplus.dll");
@@ -4990,6 +5047,7 @@ START_TEST(image)
     pGdipBitmapGetHistogram = (void*)GetProcAddress(mod, "GdipBitmapGetHistogram");
     pGdipImageSetAbort = (void*)GetProcAddress(mod, "GdipImageSetAbort");
 
+    test_png_color_formats();
     test_supported_encoders();
     test_CloneBitmapArea();
     test_ARGB_conversion();
