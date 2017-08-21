@@ -1122,8 +1122,8 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
   }
 }
 
-static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbmp,
-                                  const SIZEL* sz)
+static HRESULT insert_static_object(ME_TextEditor *editor, HENHMETAFILE hemf, HBITMAP hbmp,
+                                    const SIZEL* sz)
 {
   LPOLEOBJECT         lpObject = NULL;
   LPSTORAGE           lpStorage = NULL;
@@ -1133,7 +1133,7 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbm
   STGMEDIUM           stgm;
   FORMATETC           fm;
   CLSID               clsid;
-  BOOL                ret = FALSE;
+  HRESULT             hr = E_FAIL;
   DWORD               conn;
 
   if (hemf)
@@ -1155,13 +1155,14 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbm
   fm.lindex = -1;
   fm.tymed = stgm.tymed;
 
-  if (!info->lpRichEditOle)
+  if (!editor->reOle)
   {
-    CreateIRichEditOle(NULL, info->editor, (VOID**)&info->lpRichEditOle);
+    if (!CreateIRichEditOle(NULL, editor, (LPVOID *)&editor->reOle))
+      return hr;
   }
 
   if (OleCreateDefaultHandler(&CLSID_NULL, NULL, &IID_IOleObject, (void**)&lpObject) == S_OK &&
-      IRichEditOle_GetClientSite(info->lpRichEditOle, &lpClientSite) == S_OK &&
+      IRichEditOle_GetClientSite(editor->reOle, &lpClientSite) == S_OK &&
       IOleObject_SetClientSite(lpObject, lpClientSite) == S_OK &&
       IOleObject_GetUserClassID(lpObject, &clsid) == S_OK &&
       IOleObject_QueryInterface(lpObject, &IID_IOleCache, (void**)&lpOleCache) == S_OK &&
@@ -1184,8 +1185,8 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbm
     reobject.dwFlags = 0; /* FIXME */
     reobject.dwUser = 0;
 
-    ME_InsertOLEFromCursor(info->editor, &reobject, 0);
-    ret = TRUE;
+    ME_InsertOLEFromCursor(editor, &reobject, 0);
+    hr = S_OK;
   }
 
   if (lpObject)       IOleObject_Release(lpObject);
@@ -1194,7 +1195,7 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbm
   if (lpDataObject)   IDataObject_Release(lpDataObject);
   if (lpOleCache)     IOleCache_Release(lpOleCache);
 
-  return ret;
+  return hr;
 }
 
 static void ME_RTFReadShpPictGroup( RTF_Info *info )
@@ -1353,11 +1354,11 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
         {
         case gfx_enhmetafile:
             if ((hemf = SetEnhMetaFileBits( size, buffer )))
-                ME_RTFInsertOleObject( info, hemf, NULL, &sz );
+                insert_static_object( info->editor, hemf, NULL, &sz );
             break;
         case gfx_metafile:
             if ((hemf = SetWinMetaFileBits( size, buffer, NULL, &mfp )))
-                ME_RTFInsertOleObject( info, hemf, NULL, &sz );
+                insert_static_object( info->editor, hemf, NULL, &sz );
             break;
         case gfx_dib:
         {
@@ -1371,7 +1372,7 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
             if ((hbmp = CreateDIBitmap( hdc, &bi->bmiHeader,
                                         CBM_INIT, (char*)(bi + 1) + nc * sizeof(RGBQUAD),
                                         bi, DIB_RGB_COLORS)) )
-                ME_RTFInsertOleObject( info, NULL, hbmp, &sz );
+                insert_static_object( info->editor, NULL, hbmp, &sz );
             ReleaseDC( 0, hdc );
             break;
         }
@@ -1727,8 +1728,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       }
       ME_CheckTablesForCorruption(editor);
       RTFDestroy(&parser);
-      if (parser.lpRichEditOle)
-        IRichEditOle_Release(parser.lpRichEditOle);
 
       if (parser.stackTop > 0)
       {
