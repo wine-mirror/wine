@@ -2309,33 +2309,6 @@ done:
     return hr == S_OK;
 }
 
-static BOOL ME_Paste(ME_TextEditor *editor)
-{
-  DWORD dwFormat = 0;
-  EDITSTREAM es;
-  ME_GlobalDestStruct gds;
-  UINT nRTFFormat = RegisterClipboardFormatA("Rich Text Format");
-  UINT cf = 0;
-
-  if (IsClipboardFormatAvailable(nRTFFormat))
-    cf = nRTFFormat, dwFormat = SF_RTF;
-  else if (IsClipboardFormatAvailable(CF_UNICODETEXT))
-    cf = CF_UNICODETEXT, dwFormat = SF_TEXT|SF_UNICODE;
-  else
-    return FALSE;
-
-  if (!OpenClipboard(editor->hWnd))
-    return FALSE;
-  gds.hData = GetClipboardData(cf);
-  gds.nLength = 0;
-  es.dwCookie = (DWORD_PTR)&gds;
-  es.pfnCallback = dwFormat == SF_RTF ? ME_ReadFromHGLOBALRTF : ME_ReadFromHGLOBALUnicode;
-  ME_StreamIn(editor, dwFormat|SFF_SELECTION, &es, FALSE);
-
-  CloseClipboard();
-  return TRUE;
-}
-
 static BOOL ME_Copy(ME_TextEditor *editor, const ME_Cursor *start, int nChars)
 {
   LPDATAOBJECT dataObj = NULL;
@@ -2649,7 +2622,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       break;
     case 'V':
       if (ctrl_is_down)
-        return ME_Paste(editor);
+        return paste_special( editor, 0, NULL, FALSE );
       break;
     case 'C':
     case 'X':
@@ -4076,8 +4049,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_PASTE:
   case WM_MBUTTONDOWN:
-    ME_Paste(editor);
-    return 0;
+    wParam = 0;
+    lParam = 0;
+    /* fall through */
   case EM_PASTESPECIAL:
     paste_special( editor, wParam, (REPASTESPECIAL *)lParam, FALSE );
     return 0;
