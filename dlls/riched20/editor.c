@@ -2898,6 +2898,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->reOle = NULL;
   ed->bEmulateVersion10 = bEmulateVersion10;
   ed->styleFlags = 0;
+  ed->exStyleFlags = 0;
   ITextHost_TxGetPropertyBits(texthost,
                               (TXTBIT_RICHTEXT|TXTBIT_MULTILINE|
                                TXTBIT_READONLY|TXTBIT_USEPASSWORD|
@@ -2958,6 +2959,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   }
 
   ME_CheckCharOffsets(ed);
+  SetRectEmpty(&ed->rcFormat);
   ed->bDefaultFormatRect = TRUE;
   ITextHost_TxGetSelectionBarWidth(ed->texthost, &selbarwidth);
   if (selbarwidth) {

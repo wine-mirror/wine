@@ -414,8 +414,6 @@ HRESULT WINAPI CreateTextServices(IUnknown  *pUnkOuter, ITextHost *pITextHost, I
    ITextImpl->IUnknown_inner.lpVtbl = &textservices_inner_vtbl;
    ITextImpl->ITextServices_iface.lpVtbl = &textservices_vtbl;
    ITextImpl->editor = ME_MakeEditor(pITextHost, FALSE);
-   ITextImpl->editor->exStyleFlags = 0;
-   SetRectEmpty(&ITextImpl->editor->rcFormat);
 
    if (pUnkOuter)
       ITextImpl->outer_unk = pUnkOuter;
