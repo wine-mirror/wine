@@ -3103,8 +3103,8 @@ static HRESULT WINAPI HTMLDocument6_get_documentMode(IHTMLDocument6 *iface, VARI
         return E_UNEXPECTED;
     }
 
-    V_VT(p) = VT_I4;
-    V_I4(p) = compat_mode_info[This->doc_node->document_mode].document_mode;
+    V_VT(p) = VT_R4;
+    V_R4(p) = compat_mode_info[This->doc_node->document_mode].document_mode;
     return S_OK;
 }
 
