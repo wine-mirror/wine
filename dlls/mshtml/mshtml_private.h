@@ -267,6 +267,7 @@ typedef struct {
     HRESULT (*value)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*get_dispid)(DispatchEx*,BSTR,DWORD,DISPID*);
     HRESULT (*invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
+    compat_mode_t (*get_compat_mode)(DispatchEx*);
     HRESULT (*populate_props)(DispatchEx*);
     /* We abuse this vtbl for EventTarget functions to avoid separated vtbl. */
     EventTarget *(*get_event_target)(DispatchEx*);
@@ -279,6 +280,7 @@ typedef struct {
     const tid_t* const iface_tids;
     void (*init_info)(dispex_data_t*,compat_mode_t);
     dispex_data_t *info_cache[COMPAT_MODE_CNT];
+    dispex_data_t *delayed_init_info;
 } dispex_static_data_t;
 
 struct DispatchEx {

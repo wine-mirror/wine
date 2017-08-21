@@ -3019,6 +3019,7 @@ static const dispex_static_data_vtbl_t HTMLWindow_dispex_vtbl = {
     NULL,
     HTMLWindow_invoke,
     NULL,
+    NULL,
     HTMLWindow_get_event_target,
     HTMLWindow_bind_event
 };

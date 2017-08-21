@@ -778,6 +778,7 @@ static dispex_static_data_vtbl_t HTMLXMLHttpRequest_dispex_vtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     HTMLXMLHttpRequest_bind_event
 };
 

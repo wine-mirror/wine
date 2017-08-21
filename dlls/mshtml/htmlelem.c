@@ -5319,6 +5319,7 @@ static dispex_static_data_vtbl_t HTMLElement_dispex_vtbl = {
     NULL,
     HTMLElement_get_dispid,
     HTMLElement_invoke,
+    NULL,
     HTMLElement_populate_props,
     HTMLElement_get_event_target,
     HTMLElement_bind_event

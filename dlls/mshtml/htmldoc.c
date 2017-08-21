@@ -4813,6 +4813,16 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     return S_OK;
 }
 
+static compat_mode_t HTMLDocumentNode_get_compat_mode(DispatchEx *dispex)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+
+    TRACE("(%p) returning %u\n", This, This->document_mode);
+
+    This->document_mode_locked = TRUE;
+    return This->document_mode;
+}
+
 static void HTMLDocumentNode_bind_event(DispatchEx *dispex, int eid)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
@@ -4823,6 +4833,7 @@ static const dispex_static_data_vtbl_t HTMLDocumentNode_dispex_vtbl = {
     NULL,
     NULL,
     HTMLDocumentNode_invoke,
+    HTMLDocumentNode_get_compat_mode,
     NULL,
     NULL,
     HTMLDocumentNode_bind_event
@@ -4851,7 +4862,8 @@ static const tid_t HTMLDocumentNode_iface_tids[] = {
 static dispex_static_data_t HTMLDocumentNode_dispex = {
     &HTMLDocumentNode_dispex_vtbl,
     DispHTMLDocument_tid,
-    HTMLDocumentNode_iface_tids
+    HTMLDocumentNode_iface_tids,
+    HTMLDOMNode_init_dispex_info
 };
 
 static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindow *window)

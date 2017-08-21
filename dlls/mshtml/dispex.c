@@ -62,7 +62,7 @@ typedef struct {
 } func_info_t;
 
 struct dispex_data_t {
-    const dispex_static_data_t *desc;
+    dispex_static_data_t *desc;
 
     DWORD func_cnt;
     DWORD func_size;
@@ -379,7 +379,7 @@ static int func_name_cmp(const void *p1, const void *p2)
     return strcmpiW((*(func_info_t* const*)p1)->name, (*(func_info_t* const*)p2)->name);
 }
 
-static dispex_data_t *preprocess_dispex_data(const dispex_static_data_t *desc, compat_mode_t compat_mode)
+static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_mode_t compat_mode)
 {
     const tid_t *tid;
     dispex_data_t *data;
@@ -1346,6 +1346,27 @@ HRESULT remove_attribute(DispatchEx *This, DISPID id, VARIANT_BOOL *success)
     }
 }
 
+static dispex_data_t *ensure_dispex_info(dispex_static_data_t *desc, compat_mode_t compat_mode)
+{
+    if(!desc->info_cache[compat_mode]) {
+        EnterCriticalSection(&cs_dispex_static_data);
+        if(!desc->info_cache[compat_mode])
+            desc->info_cache[compat_mode] = preprocess_dispex_data(desc, compat_mode);
+        LeaveCriticalSection(&cs_dispex_static_data);
+    }
+    return desc->info_cache[compat_mode];
+}
+
+static BOOL ensure_real_info(DispatchEx *dispex)
+{
+    if(dispex->info != dispex->info->desc->delayed_init_info)
+        return TRUE;
+
+    dispex->info = ensure_dispex_info(dispex->info->desc,
+                                      dispex->info->desc->vtbl->get_compat_mode(dispex));
+    return dispex->info != NULL;
+}
+
 static inline DispatchEx *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, DispatchEx, IDispatchEx_iface);
@@ -1442,6 +1463,9 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     if(grfdex & ~(fdexNameCaseSensitive|fdexNameCaseInsensitive|fdexNameEnsure|fdexNameImplicit|FDEX_VERSION_MASK))
         FIXME("Unsupported grfdex %x\n", grfdex);
 
+    if(!ensure_real_info(This))
+        return E_OUTOFMEMORY;
+
     hres = get_builtin_id(This, bstrName, grfdex, pid);
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
@@ -1461,6 +1485,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    if(!ensure_real_info(This))
+        return E_OUTOFMEMORY;
 
     if(wFlags == (DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF))
         wFlags = DISPATCH_PROPERTYPUT;
@@ -1572,6 +1599,9 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
 
     TRACE("(%p)->(%x %p)\n", This, id, pbstrName);
 
+    if(!ensure_real_info(This))
+        return E_OUTOFMEMORY;
+
     if(is_dynamic_dispid(id)) {
         DWORD idx = id - DISPID_DYNPROP_0;
 
@@ -1616,6 +1646,9 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
+
+    if(!ensure_real_info(This))
+        return E_OUTOFMEMORY;
 
     if(is_dynamic_dispid(id)) {
         DWORD idx = id - DISPID_DYNPROP_0;
@@ -1770,15 +1803,25 @@ void init_dispex_with_compat_mode(DispatchEx *dispex, IUnknown *outer, dispex_st
 {
     assert(compat_mode < COMPAT_MODE_CNT);
 
-    if(!data->info_cache[compat_mode]) {
-        EnterCriticalSection(&cs_dispex_static_data);
-        if(!data->info_cache[compat_mode])
-            data->info_cache[compat_mode] = preprocess_dispex_data(data, compat_mode);
-        LeaveCriticalSection(&cs_dispex_static_data);
-    }
-
     dispex->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     dispex->outer = outer;
-    dispex->info = data->info_cache[compat_mode];
     dispex->dynamic_data = NULL;
+
+    if(data->vtbl && data->vtbl->get_compat_mode) {
+        /* delayed init */
+        if(!data->delayed_init_info) {
+            EnterCriticalSection(&cs_dispex_static_data);
+            if(!data->delayed_init_info) {
+                dispex_data_t *info = heap_alloc_zero(sizeof(*data->delayed_init_info));
+                if(info) {
+                    info->desc = data;
+                    data->delayed_init_info = info;
+                }
+            }
+            LeaveCriticalSection(&cs_dispex_static_data);
+        }
+        dispex->info = data->delayed_init_info;
+    }else {
+        dispex->info = ensure_dispex_info(data, compat_mode);
+    }
 }
