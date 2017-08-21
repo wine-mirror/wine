@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-08-08 21:25+0300\n"
+"PO-Revision-Date: 2017-08-21 15:10+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -11983,17 +11983,6 @@ msgid "Icons (*.ico)"
 msgstr "Значки (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -12009,7 +11998,7 @@ msgstr ""
 "  REG [операция] [параметры]\n"
 "\n"
 "Поддерживаемые операции:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | QUERY\n"
 "\n"
 "Для получения справки по конкретной операции используйте:\n"
 "  REG [операция] /?\n"
@@ -12137,25 +12126,19 @@ msgstr "(значение не задано)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT file.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "reg: The file '%1' was not found.\n"
-msgstr "regedit: файл «%1» не найден.\n"
+msgstr "reg: файл «%1» не найден.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "regedit: не удалось открыть ключ «%1».\n"
+msgstr "reg: не удалось открыть ключ «%1».\n"
 
 #: reg.rc:69
-#, fuzzy
-#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: неизвестная управляющая последовательность [\\%1!c!]\n"
+msgstr "reg: неизвестная управляющая последовательность [\\%1!c!]\n"
 
 #: regedit.rc:34
 msgid "&Registry"
