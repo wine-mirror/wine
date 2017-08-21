@@ -38,6 +38,7 @@ typedef struct ITextHostImpl {
     LONG ref;
     HWND hWnd;
     BOOL bEmulateVersion10;
+    PARAFORMAT2 para_fmt;
 } ITextHostImpl;
 
 static const ITextHostVtbl textHostVtbl;
@@ -53,6 +54,14 @@ ITextHost *ME_CreateTextHost(HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion1
     texthost->ref = 1;
     texthost->hWnd = hwnd;
     texthost->bEmulateVersion10 = bEmulateVersion10;
+    memset( &texthost->para_fmt, 0, sizeof(texthost->para_fmt) );
+    texthost->para_fmt.cbSize = sizeof(texthost->para_fmt);
+    texthost->para_fmt.dwMask = PFM_ALIGNMENT;
+    texthost->para_fmt.wAlignment = PFA_LEFT;
+    if (cs->style & ES_RIGHT)
+        texthost->para_fmt.wAlignment = PFA_RIGHT;
+    if (cs->style & ES_CENTER)
+        texthost->para_fmt.wAlignment = PFA_CENTER;
 
     return &texthost->ITextHost_iface;
 }
@@ -260,9 +269,11 @@ DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetCharFormat(ITextHost *iface,
 }
 
 DECLSPEC_HIDDEN HRESULT WINAPI ITextHostImpl_TxGetParaFormat(ITextHost *iface,
-                                             const PARAFORMAT **ppPF)
+                                                             const PARAFORMAT **fmt)
 {
-    return E_NOTIMPL;
+    ITextHostImpl *This = impl_from_ITextHost(iface);
+    *fmt = (const PARAFORMAT *)&This->para_fmt;
+    return S_OK;
 }
 
 DECLSPEC_HIDDEN COLORREF WINAPI ITextHostImpl_TxGetSysColor(ITextHost *iface,

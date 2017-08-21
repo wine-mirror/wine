@@ -2884,7 +2884,7 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
   return TRUE;
 }
 
-ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10, DWORD csStyle)
+ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
   int i;
@@ -2898,11 +2898,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10, DWORD 
   ed->reOle = NULL;
   ed->bEmulateVersion10 = bEmulateVersion10;
   ed->styleFlags = 0;
-  ed->alignStyle = PFA_LEFT;
-  if (csStyle & ES_RIGHT)
-      ed->alignStyle = PFA_RIGHT;
-  if (csStyle & ES_CENTER)
-      ed->alignStyle = PFA_CENTER;
   ITextHost_TxGetPropertyBits(texthost,
                               (TXTBIT_RICHTEXT|TXTBIT_MULTILINE|
                                TXTBIT_READONLY|TXTBIT_USEPASSWORD|
@@ -4799,7 +4794,7 @@ static BOOL create_windowed_editor(HWND hwnd, CREATESTRUCTW *create, BOOL emulat
 
     if (!host) return FALSE;
 
-    editor = ME_MakeEditor( host, emulate_10, create->style );
+    editor = ME_MakeEditor( host, emulate_10 );
     if (!editor)
     {
         ITextHost_Release( host );
