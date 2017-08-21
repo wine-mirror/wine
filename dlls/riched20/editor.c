@@ -4039,14 +4039,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return 1;
   }
   case EM_CANPASTE:
-  {
-    UINT nRTFFormat = RegisterClipboardFormatA("Rich Text Format");
-    if (IsClipboardFormatAvailable(nRTFFormat))
-      return TRUE;
-    if (IsClipboardFormatAvailable(CF_UNICODETEXT))
-      return TRUE;
-    return FALSE;
-  }
+    return paste_special( editor, 0, NULL, TRUE );
   case WM_PASTE:
   case WM_MBUTTONDOWN:
     wParam = 0;
