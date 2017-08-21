@@ -2241,6 +2241,23 @@ static HRESULT paste_text(ME_TextEditor *editor, FORMATETC *fmt, STGMEDIUM *med)
     return hr;
 }
 
+static HRESULT paste_emf(ME_TextEditor *editor, FORMATETC *fmt, STGMEDIUM *med)
+{
+    HRESULT hr;
+    SIZEL sz = {0, 0};
+
+    hr = insert_static_object( editor, med->u.hEnhMetaFile, NULL, &sz );
+    if (SUCCEEDED(hr))
+    {
+        ME_CommitUndo( editor );
+        ME_UpdateRepaint( editor, FALSE );
+    }
+    else
+        ReleaseStgMedium( med );
+
+    return hr;
+}
+
 static struct paste_format
 {
     FORMATETC fmt;
@@ -2250,6 +2267,7 @@ static struct paste_format
 {
     {{ -1,             NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }, paste_rtf, rtfW },
     {{ CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }, paste_text },
+    {{ CF_ENHMETAFILE, NULL, DVASPECT_CONTENT, -1, TYMED_ENHMF },   paste_emf },
     {{ 0 }}
 };
 
