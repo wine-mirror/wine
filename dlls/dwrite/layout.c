@@ -20,6 +20,7 @@
 
 #define COBJMACROS
 
+#include <assert.h>
 #include <stdarg.h>
 #include <math.h>
 
@@ -164,8 +165,7 @@ struct regular_layout_run {
     UINT16 *clustermap;
     FLOAT  *advances;
     DWRITE_GLYPH_OFFSET *offsets;
-    /* this is actual glyph count after shaping, it's not necessary the same as reported to Draw() */
-    UINT32 glyphcount;
+    UINT32 glyphcount; /* actual glyph count after shaping, not necessarily the same as reported to Draw() */
 };
 
 struct layout_run {
@@ -177,6 +177,7 @@ struct layout_run {
     } u;
     FLOAT baseline;
     FLOAT height;
+    UINT32 start_position; /* run text position in range [0, layout-text-length) */
 };
 
 struct layout_effective_run {
@@ -487,7 +488,7 @@ static BOOL is_run_rtl(const struct layout_effective_run *run)
     return run->run->u.regular.run.bidiLevel & 1;
 }
 
-static struct layout_run *alloc_layout_run(enum layout_run_kind kind)
+static struct layout_run *alloc_layout_run(enum layout_run_kind kind, UINT32 start_position)
 {
     struct layout_run *ret;
 
@@ -500,6 +501,7 @@ static struct layout_run *alloc_layout_run(enum layout_run_kind kind)
         ret->u.regular.sa.script = Script_Unknown;
         ret->u.regular.sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
     }
+    ret->start_position = start_position;
 
     return ret;
 }
@@ -695,6 +697,8 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
     const struct regular_layout_run *run = &r->u.regular;
     UINT32 i, start = 0;
 
+    assert(r->kind == LAYOUT_RUN_REGULAR);
+
     for (i = 0; i < run->descr.stringLength; i++) {
         BOOL end = i == run->descr.stringLength - 1;
 
@@ -781,7 +785,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             if (FAILED(hr))
                 return hr;
 
-            r = alloc_layout_run(LAYOUT_RUN_INLINE);
+            r = alloc_layout_run(LAYOUT_RUN_INLINE, range->h.range.startPosition);
             if (!r)
                 return E_OUTOFMEMORY;
 
@@ -891,13 +895,14 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
                 struct layout_run *nextr;
 
                 /* keep mapped part for current run, add another run for the rest */
-                nextr = alloc_layout_run(LAYOUT_RUN_REGULAR);
+                nextr = alloc_layout_run(LAYOUT_RUN_REGULAR, 0);
                 if (!nextr)
                     return E_OUTOFMEMORY;
 
                 *nextr = *r;
+                nextr->start_position = run->descr.textPosition + mapped_length;
                 nextrun = &nextr->u.regular;
-                nextrun->descr.textPosition = run->descr.textPosition + mapped_length;
+                nextrun->descr.textPosition = nextr->start_position;
                 nextrun->descr.stringLength = run->descr.stringLength - mapped_length;
                 nextrun->descr.string = &layout->str[nextrun->descr.textPosition];
                 run->descr.stringLength = mapped_length;
@@ -1228,7 +1233,8 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         inlineobject->line = line;
 
         /* effect assigned from start position and on is used for inline objects */
-        inlineobject->effect = layout_get_effect_from_pos(layout, layout->clusters[first_cluster].position);
+        inlineobject->effect = layout_get_effect_from_pos(layout, layout->clusters[first_cluster].position +
+                layout->clusters[first_cluster].run->start_position);
 
         list_add_tail(&layout->inlineobjects, &inlineobject->entry);
         return S_OK;
@@ -1886,7 +1892,8 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
         trimming_sign->is_rtl = FALSE;
         trimming_sign->line = line;
 
-        trimming_sign->effect = NULL; /* FIXME */
+        trimming_sign->effect = layout_get_effect_from_pos(layout, layout->clusters[i].position +
+                layout->clusters[i].run->start_position);
 
         list_add_tail(&layout->inlineobjects, &trimming_sign->entry);
     }
@@ -4504,7 +4511,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysi
 
     TRACE("[%u,%u) script=%u:%s\n", position, position + length, sa->script, debugstr_sa_script(sa->script));
 
-    run = alloc_layout_run(LAYOUT_RUN_REGULAR);
+    run = alloc_layout_run(LAYOUT_RUN_REGULAR, position);
     if (!run)
         return E_OUTOFMEMORY;
 
@@ -4564,7 +4571,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
         /* all fully covered runs are processed at this point, reuse existing run for remaining
            reported bidi range and add another run for the rest of original one */
 
-        run = alloc_layout_run(LAYOUT_RUN_REGULAR);
+        run = alloc_layout_run(LAYOUT_RUN_REGULAR, position + length);
         if (!run)
             return E_OUTOFMEMORY;
 
