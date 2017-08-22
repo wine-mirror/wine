@@ -510,7 +510,9 @@ INT EMFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
 
-    return GetDeviceCaps( physDev->ref_dc, cap );
+    if (cap >= 0 && cap < sizeof(physDev->dev_caps) / sizeof(physDev->dev_caps[0]))
+        return physDev->dev_caps[cap];
+    return 0;
 }
 
 
