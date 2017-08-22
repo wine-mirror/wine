@@ -811,8 +811,10 @@ struct HTMLDocumentNode {
 
     LONG ref;
 
-    compat_mode_t document_mode;
     HTMLInnerWindow *window;
+
+    compat_mode_t document_mode;
+    BOOL document_mode_locked;
 
     nsIDOMHTMLDocument *nsdoc;
     BOOL content_ready;

@@ -370,9 +370,17 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
     return NS_OK;
 }
 
-static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode)
+static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode, BOOL lock)
 {
+    if(doc->document_mode_locked) {
+        WARN("attemting to set document mode %d on locked document %p\n", document_mode, doc);
+        return;
+    }
+
     TRACE("%p: %d\n", doc, document_mode);
+
+    if(lock)
+        doc->document_mode_locked = TRUE;
     doc->document_mode = document_mode;
 }
 
@@ -444,7 +452,7 @@ static void process_meta_element(HTMLDocumentNode *doc, nsIDOMHTMLMetaElement *m
         if(!strcmpiW(http_equiv, x_ua_compatibleW)) {
             compat_mode_t document_mode;
             if(parse_ua_compatible(content, &document_mode))
-                set_document_mode(doc, document_mode);
+                set_document_mode(doc, document_mode, TRUE);
             else
                 FIXME("Unsupported document mode %s\n", debugstr_w(content));
         }
@@ -755,7 +763,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
         if(NS_SUCCEEDED(nsres)) {
             TRACE("doctype node\n");
             /* FIXME: We should set it to something higher for internet zone. */
-            set_document_mode(This, COMPAT_MODE_IE7);
+            set_document_mode(This, COMPAT_MODE_IE7, FALSE);
             nsIDOMDocumentType_Release(nsdoctype);
         }
     }
@@ -813,6 +821,8 @@ static void NSAPI nsDocumentObserver_AttemptToExecuteScript(nsIDocumentObserver 
     nsres = nsIContent_QueryInterface(aContent, &IID_nsIDOMHTMLScriptElement, (void**)&nsscript);
     if(NS_SUCCEEDED(nsres)) {
         TRACE("script node\n");
+
+        This->document_mode_locked = TRUE;
 
         add_script_runner(This, run_insert_script, (nsISupports*)nsscript, (nsISupports*)aParser);
         nsIDOMHTMLScriptElement_Release(nsscript);

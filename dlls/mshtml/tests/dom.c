@@ -10530,12 +10530,65 @@ static void run_domtest(const char *str, domtest_t test)
        "ref = %d\n", ref);
 }
 
+static float expected_document_mode;
+
+static void test_document_mode(IHTMLDocument2 *doc2)
+{
+    IHTMLDocument6 *doc;
+    VARIANT v;
+    HRESULT hres;
+
+    if(expected_document_mode >= 9) {
+        IHTMLDocument7 *doc7;
+        hres = IHTMLDocument2_QueryInterface(doc2, &IID_IHTMLDocument7, (void**)&doc7);
+        if(FAILED(hres)) {
+            win_skip("IHTMLDocument7 interface not supported: %08x\n", hres);
+            return;
+        }
+        IHTMLDocument7_Release(doc7);
+    }
+
+    hres = IHTMLDocument2_QueryInterface(doc2, &IID_IHTMLDocument6, (void**)&doc);
+    ok(hres == S_OK, "Could not get IHTMLDocument6 interface: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLDocument6_get_documentMode(doc, &v);
+    ok(hres == S_OK, "get_documentMode failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&v));
+    ok(V_R4(&v) == expected_document_mode, "documentMode = %f\n", V_R4(&v));
+    IHTMLDocument6_Release(doc);
+}
+
 static void test_quirks_mode(void)
 {
     run_domtest("<html></html>", check_quirks_mode);
     run_domtest("<!DOCTYPE html>\n<html></html>", check_strict_mode);
     run_domtest("<!-- comment --><!DOCTYPE html>\n<html></html>", check_quirks_mode);
     run_domtest("<html><body></body></html>", test_quirks_mode_offsetHeight);
+
+    expected_document_mode = 5;
+    run_domtest("<html><body></body></html>", test_document_mode);
+
+    expected_document_mode = 9;
+    run_domtest("<!DOCTYPE html>\n"
+                "<html>"
+                " <head>"
+                "  <meta http-equiv=\"x-ua-compatible\" content=\"IE=9\" />"
+                " </head>"
+                " <body>"
+                " </body>"
+                "</html>", test_document_mode);
+
+    expected_document_mode = 8;
+    run_domtest("<!DOCTYPE html>\n"
+                "<html>"
+                " <head>"
+                "  <meta http-equiv=\"x-ua-compatible\" content=\"IE=8\" />"
+                "  <meta http-equiv=\"x-ua-compatible\" content=\"IE=9\" />"
+                " </head>"
+                " <body>"
+                " </body>"
+                "</html>", test_document_mode);
 }
 
 START_TEST(dom)
