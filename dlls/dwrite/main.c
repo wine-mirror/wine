@@ -1272,10 +1272,20 @@ static HRESULT WINAPI dwritefactory1_GetEudcFontCollection(IDWriteFactory5 *ifac
 
     if (This->eudc_collection)
         IDWriteFontCollection1_AddRef(This->eudc_collection);
-    else
-        hr = get_eudc_fontcollection(iface, &This->eudc_collection);
+    else {
+        IDWriteFontCollection1 *eudc_collection;
 
-    *collection = (IDWriteFontCollection*)This->eudc_collection;
+        if (FAILED(hr = get_eudc_fontcollection(iface, &eudc_collection))) {
+            *collection = NULL;
+            WARN("Failed to get EUDC collection, hr %#x.\n", hr);
+            return hr;
+        }
+
+        if (InterlockedCompareExchangePointer((void **)&This->eudc_collection, eudc_collection, NULL))
+            IDWriteFontCollection1_Release(eudc_collection);
+    }
+
+    *collection = (IDWriteFontCollection *)This->eudc_collection;
 
     return hr;
 }
@@ -1801,8 +1811,7 @@ void factory_detach_fontcollection(IDWriteFactory5 *iface, IDWriteFontCollection
 {
     struct dwritefactory *factory = impl_from_IDWriteFactory5(iface);
     InterlockedCompareExchangePointer((void **)&factory->system_collection, NULL, collection);
-    if (factory->eudc_collection == collection)
-        factory->eudc_collection = NULL;
+    InterlockedCompareExchangePointer((void **)&factory->eudc_collection, NULL, collection);
     IDWriteFactory5_Release(iface);
 }
 
