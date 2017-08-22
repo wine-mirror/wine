@@ -15891,6 +15891,134 @@ interface IHTMLDocument7 : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLDocument8 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305107d0-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDocument8 : IDispatch
+{
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSCONTENTZOOM), displaybind, bindable]
+    HRESULT onmscontentzoom([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSCONTENTZOOM), displaybind, bindable]
+    HRESULT onmscontentzoom([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERDOWN), displaybind, bindable]
+    HRESULT onmspointerdown([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERDOWN), displaybind, bindable]
+    HRESULT onmspointerdown([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERMOVE), displaybind, bindable]
+    HRESULT onmspointermove([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERMOVE), displaybind, bindable]
+    HRESULT onmspointermove([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERUP), displaybind, bindable]
+    HRESULT onmspointerup([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERUP), displaybind, bindable]
+    HRESULT onmspointerup([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTEROVER), displaybind, bindable]
+    HRESULT onmspointerover([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTEROVER), displaybind, bindable]
+    HRESULT onmspointerover([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTEROUT), displaybind, bindable]
+    HRESULT onmspointerout([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTEROUT), displaybind, bindable]
+    HRESULT onmspointerout([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERCANCEL), displaybind, bindable]
+    HRESULT onmspointercancel([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERCANCEL), displaybind, bindable]
+    HRESULT onmspointercancel([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERHOVER), displaybind, bindable]
+    HRESULT onmspointerhover([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSPOINTERHOVER), displaybind, bindable]
+    HRESULT onmspointerhover([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSGESTURESTART), displaybind, bindable]
+    HRESULT onmsgesturestart([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSGESTURESTART), displaybind, bindable]
+    HRESULT onmsgesturestart([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSGESTURECHANGE), displaybind, bindable]
+    HRESULT onmsgesturechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSGESTURECHANGE), displaybind, bindable]
+    HRESULT onmsgesturechange([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSGESTUREEND), displaybind, bindable]
+    HRESULT onmsgestureend([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSGESTUREEND), displaybind, bindable]
+    HRESULT onmsgestureend([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSGESTUREHOLD), displaybind, bindable]
+    HRESULT onmsgesturehold([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSGESTUREHOLD), displaybind, bindable]
+    HRESULT onmsgesturehold([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSGESTURETAP), displaybind, bindable]
+    HRESULT onmsgesturetap([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSGESTURETAP), displaybind, bindable]
+    HRESULT onmsgesturetap([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSGESTUREDOUBLETAP), displaybind, bindable]
+    HRESULT onmsgesturedoubletap([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSGESTUREDOUBLETAP), displaybind, bindable]
+    HRESULT onmsgesturedoubletap([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSINERTIASTART), displaybind, bindable]
+    HRESULT onmsinertiastart([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSINERTIASTART), displaybind, bindable]
+    HRESULT onmsinertiastart([out, retval] VARIANT *p);
+
+    [id(DISPID_IHTMLDOCUMENT8_ELEMENTSFROMPOINT)]
+    HRESULT elementsFromPoint(
+            [in] float x,
+            [in] float y,
+            [out, retval] IHTMLDOMChildrenCollection **elementsHit);
+
+    [id(DISPID_IHTMLDOCUMENT8_ELEMENTSFROMRECT)]
+    HRESULT elementsFromRect(
+            [in] float left,
+            [in] float top,
+            [in] float width,
+            [in] float height,
+            [out, retval] IHTMLDOMChildrenCollection **elementsHit);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_ONMSMANIPULATIONSTATECHANGED), displaybind, bindable]
+    HRESULT onmsmanipulationstatechanged([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_ONMSMANIPULATIONSTATECHANGED), displaybind, bindable]
+    HRESULT onmsmanipulationstatechanged([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOCUMENT8_MSCAPSLOCKWARNINGOFF)]
+    HRESULT msCapsLockWarningOff([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLDOCUMENT8_MSCAPSLOCKWARNINGOFF)]
+    HRESULT msCapsLockWarningOff([out, retval] VARIANT_BOOL *p);
+}
+
+/*****************************************************************************
  *    IDocumentSelector interface
  */
 [
