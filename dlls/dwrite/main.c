@@ -1192,8 +1192,12 @@ static HRESULT WINAPI dwritefactory_CreateEllipsisTrimmingSign(IDWriteFactory5 *
 static HRESULT WINAPI dwritefactory_CreateTextAnalyzer(IDWriteFactory5 *iface, IDWriteTextAnalyzer **analyzer)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory5(iface);
+
     TRACE("(%p)->(%p)\n", This, analyzer);
-    return get_textanalyzer(analyzer);
+
+    *analyzer = get_text_analyzer();
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefactory_CreateNumberSubstitution(IDWriteFactory5 *iface,
