@@ -92,7 +92,11 @@ struct layout_range_attr_value {
         IDWriteFontCollection *collection;
         const WCHAR *locale;
         const WCHAR *fontfamily;
-        FLOAT spacing[3]; /* in arguments order - leading, trailing, advance */
+        struct {
+            FLOAT leading;
+            FLOAT trailing;
+            FLOAT min_advance;
+        } spacing;
         IDWriteTypography *typography;
     } u;
 };
@@ -2095,9 +2099,9 @@ static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum l
     case LAYOUT_RANGE_ATTR_FONTFAMILY:
         return strcmpW(range->fontfamily, value->u.fontfamily) == 0;
     case LAYOUT_RANGE_ATTR_SPACING:
-        return range_spacing->leading == value->u.spacing[0] &&
-               range_spacing->trailing == value->u.spacing[1] &&
-               range_spacing->min_advance == value->u.spacing[2];
+        return range_spacing->leading == value->u.spacing.leading &&
+               range_spacing->trailing == value->u.spacing.trailing &&
+               range_spacing->min_advance == value->u.spacing.min_advance;
     case LAYOUT_RANGE_ATTR_TYPOGRAPHY:
         return range_iface->iface == (IUnknown*)value->u.typography;
     default:
@@ -2484,12 +2488,12 @@ static BOOL set_layout_range_attrval(struct layout_range_header *h, enum layout_
         }
         break;
     case LAYOUT_RANGE_ATTR_SPACING:
-        changed = dest_spacing->leading != value->u.spacing[0] ||
-            dest_spacing->trailing != value->u.spacing[1] ||
-            dest_spacing->min_advance != value->u.spacing[2];
-        dest_spacing->leading = value->u.spacing[0];
-        dest_spacing->trailing = value->u.spacing[1];
-        dest_spacing->min_advance = value->u.spacing[2];
+        changed = dest_spacing->leading != value->u.spacing.leading ||
+            dest_spacing->trailing != value->u.spacing.trailing ||
+            dest_spacing->min_advance != value->u.spacing.min_advance;
+        dest_spacing->leading = value->u.spacing.leading;
+        dest_spacing->trailing = value->u.spacing.trailing;
+        dest_spacing->min_advance = value->u.spacing.min_advance;
         break;
     case LAYOUT_RANGE_ATTR_TYPOGRAPHY:
         changed = set_layout_range_iface_attr((IUnknown**)&dest_iface->iface, (IUnknown*)value->u.typography);
@@ -3791,9 +3795,9 @@ static HRESULT WINAPI dwritetextlayout1_SetCharacterSpacing(IDWriteTextLayout3 *
         return E_INVALIDARG;
 
     value.range = range;
-    value.u.spacing[0] = leading;
-    value.u.spacing[1] = trailing;
-    value.u.spacing[2] = min_advance;
+    value.u.spacing.leading = leading;
+    value.u.spacing.trailing = trailing;
+    value.u.spacing.min_advance = min_advance;
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_SPACING, &value);
 }
 
