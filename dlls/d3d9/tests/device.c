@@ -6547,6 +6547,7 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     IDirect3DVertexShader9 *vs = NULL;
     IDirect3DPixelShader9 *ps = NULL;
     IDirect3DDevice9 *device;
+    struct device_desc desc;
     IDirect3D9 * d3d;
     ULONG refcount;
     D3DCAPS9 caps;
@@ -6623,6 +6624,64 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
     if (ps)
         IDirect3DPixelShader9_Release(ps);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    desc.device_window = window;
+    desc.width = 640;
+    desc.height = 480;
+    desc.flags = CREATE_DEVICE_SWVP_ONLY;
+
+    if (!(device = create_device(d3d, window, &desc)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    vs = NULL;
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_1_256, &vs);
+    todo_wine
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    if (vs)
+        IDirect3DVertexShader9_Release(vs);
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_3_256, &vs);
+    todo_wine
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    if (vs)
+        IDirect3DVertexShader9_Release(vs);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    desc.flags = CREATE_DEVICE_MIXED_ONLY;
+    if (!(device = create_device(d3d, window, &desc)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice9_SetSoftwareVertexProcessing(device, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_1_256, &vs);
+    todo_wine
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, vs);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    if (vs)
+        IDirect3DVertexShader9_Release(vs);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_3_256, &vs);
+    todo_wine
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, vs);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    if (vs)
+        IDirect3DVertexShader9_Release(vs);
 
 cleanup:
     refcount = IDirect3DDevice9_Release(device);
