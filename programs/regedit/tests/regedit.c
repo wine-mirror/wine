@@ -20,19 +20,40 @@
 
 #include "wine/test.h"
 
-static BOOL supports_wchar;
-
 #define lok ok_(__FILE__,line)
+
+#define run_regedit_exe(c) run_regedit_exe_(__LINE__,c)
+static BOOL run_regedit_exe_(unsigned line, const char *cmd)
+{
+    STARTUPINFOA si = {sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION pi;
+    DWORD ret;
+    char cmdline[256];
+
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdInput  = INVALID_HANDLE_VALUE;
+    si.hStdOutput = INVALID_HANDLE_VALUE;
+    si.hStdError  = INVALID_HANDLE_VALUE;
+
+    strcpy(cmdline, cmd);
+    if (!CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+        return FALSE;
+
+    ret = WaitForSingleObject(pi.hProcess, 10000);
+    if (ret == WAIT_TIMEOUT)
+        TerminateProcess(pi.hProcess, 1);
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    return (ret != WAIT_TIMEOUT);
+}
 
 #define exec_import_str(c) r_exec_import_str(__LINE__, c)
 static BOOL r_exec_import_str(unsigned line, const char *file_contents)
 {
-    STARTUPINFOA si = {sizeof(STARTUPINFOA)};
-    PROCESS_INFORMATION pi;
     HANDLE regfile;
-    DWORD written, dr;
+    DWORD written;
     BOOL br;
-    char cmd[] = "regedit /s test.reg";
 
     regfile = CreateFileA("test.reg", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
@@ -40,62 +61,56 @@ static BOOL r_exec_import_str(unsigned line, const char *file_contents)
     if(regfile == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    br = WriteFile(regfile, file_contents, strlen(file_contents), &written,
-            NULL);
-    lok(br == TRUE, "WriteFile failed: %d\n", GetLastError());
-
+    br = WriteFile(regfile, file_contents, strlen(file_contents), &written, NULL);
+    lok(br, "WriteFile failed: %u\n", GetLastError());
     CloseHandle(regfile);
 
-    if(!CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-        return FALSE;
-
-    dr = WaitForSingleObject(pi.hProcess, 10000);
-    if(dr == WAIT_TIMEOUT)
-        TerminateProcess(pi.hProcess, 1);
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    run_regedit_exe("regedit.exe /s test.reg");
 
     br = DeleteFileA("test.reg");
-    lok(br == TRUE, "DeleteFileA failed: %d\n", GetLastError());
+    lok(br, "DeleteFile failed: %u\n", GetLastError());
 
-    return (dr != WAIT_TIMEOUT);
+    return br;
 }
 
 #define exec_import_wstr(c) r_exec_import_wstr(__LINE__, c)
-static BOOL r_exec_import_wstr(unsigned line, const WCHAR *file_contents)
+static BOOL r_exec_import_wstr(unsigned line, const char *file_contents)
 {
-    STARTUPINFOA si = {sizeof(STARTUPINFOA)};
-    PROCESS_INFORMATION pi;
+    int lenA, len, memsize;
+    WCHAR *wstr;
     HANDLE regfile;
-    DWORD written, dr;
+    DWORD written;
     BOOL br;
-    char cmd[] = "regedit /s test.reg";
+
+    lenA = strlen(file_contents);
+
+    len = MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, NULL, 0);
+    memsize = len * sizeof(WCHAR);
+    wstr = HeapAlloc(GetProcessHeap(), 0, memsize);
+    if (!wstr) return FALSE;
+    MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, wstr, len);
 
     regfile = CreateFileA("test.reg", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
     lok(regfile != INVALID_HANDLE_VALUE, "Failed to create test.reg file\n");
-    if(regfile == INVALID_HANDLE_VALUE)
+    if (regfile == INVALID_HANDLE_VALUE)
+    {
+        HeapFree(GetProcessHeap(), 0, wstr);
         return FALSE;
+    }
 
-    br = WriteFile(regfile, file_contents,
-            lstrlenW(file_contents) * sizeof(WCHAR), &written, NULL);
-    lok(br == TRUE, "WriteFile failed: %d\n", GetLastError());
-
+    br = WriteFile(regfile, wstr, memsize, &written, NULL);
+    lok(br, "WriteFile failed: %u\n", GetLastError());
     CloseHandle(regfile);
 
-    if(!CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-        return FALSE;
+    HeapFree(GetProcessHeap(), 0, wstr);
 
-    dr = WaitForSingleObject(pi.hProcess, 10000);
-    if(dr == WAIT_TIMEOUT)
-        TerminateProcess(pi.hProcess, 1);
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    run_regedit_exe("regedit.exe /s test.reg");
 
     br = DeleteFileA("test.reg");
-    lok(br == TRUE, "DeleteFileA failed: %d\n", GetLastError());
+    lok(br, "DeleteFile failed: %u\n", GetLastError());
 
-    return (dr != WAIT_TIMEOUT);
+    return br;
 }
 
 #define TODO_REG_TYPE    (0x0001u)
@@ -124,30 +139,6 @@ static void verify_reg_(unsigned line, HKEY hkey, const char *value,
         lok(size == exp_size, "got wrong size %d, expected %d\n", size, exp_size);
     todo_wine_if (todo & TODO_REG_DATA)
         lok(memcmp(data, exp_data, size) == 0, "got wrong data\n");
-}
-
-#define verify_reg_wsz(k,n,e) r_verify_reg_wsz(__LINE__,k,n,e)
-static void r_verify_reg_wsz(unsigned line, HKEY key, const char *value_name, const WCHAR *exp_value)
-{
-    LONG lr;
-    DWORD fnd_type, fnd_len;
-    WCHAR fnd_value[1024], value_nameW[1024];
-
-    MultiByteToWideChar(CP_ACP, 0, value_name, -1, value_nameW,
-            sizeof(value_nameW)/sizeof(value_nameW[0]));
-
-    fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExW(key, value_nameW, NULL, &fnd_type, (BYTE*)fnd_value, &fnd_len);
-    lok(lr == ERROR_SUCCESS, "RegQueryValueExW failed: %d\n", lr);
-    if(lr != ERROR_SUCCESS)
-        return;
-
-    lok(fnd_type == REG_SZ, "Got wrong type: %d\n", fnd_type);
-    if(fnd_type != REG_SZ)
-        return;
-    lok(!lstrcmpW(exp_value, fnd_value),
-            "Strings differ: expected %s, got %s\n",
-            wine_dbgstr_w(exp_value), wine_dbgstr_w(fnd_value));
 }
 
 #define verify_reg_nonexist(k,n) r_verify_reg_nonexist(__LINE__,k,n)
@@ -194,25 +185,8 @@ static void test_basic_import(void)
     HKEY hkey, subkey;
     DWORD dword = 0x17, type, size;
     char exp_binary[] = {0xAA,0xBB,0xCC,0x11};
-    WCHAR wide_test[] = {0xFEFF,'W','i','n','d','o','w','s',' ','R','e','g',
-        'i','s','t','r','y',' ','E','d','i','t','o','r',' ','V','e','r','s',
-        'i','o','n',' ','5','.','0','0','\n','\n',
-        '[','H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E',
-        'R','\\','S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-        'r','e','g','e','d','i','t','_','t','e','s','t',']','\n',
-        '"','T','e','s','t','V','a','l','u','e','3','"','=','"',0x3041,'V','a',
-        'l','u','e','"','\n',0};
-    WCHAR wide_test_r[] = {0xFEFF,'W','i','n','d','o','w','s',' ','R','e','g',
-        'i','s','t','r','y',' ','E','d','i','t','o','r',' ','V','e','r','s',
-        'i','o','n',' ','5','.','0','0','\r','\r',
-        '[','H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E',
-        'R','\\','S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-        'r','e','g','e','d','i','t','_','t','e','s','t',']','\r',
-        '"','T','e','s','t','V','a','l','u','e','5','"','=','"',0x3041,'V','a',
-        'l','u','e','"','\r',0};
-    WCHAR wide_exp[] = {0x3041,'V','a','l','u','e',0};
     LONG lr;
-    char buffer[8];
+    char buffer[256];
     BYTE hex[8];
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
@@ -231,21 +205,20 @@ static void test_basic_import(void)
                 "\"TestValue2\"=\"BValue\"\r\n");
     verify_reg(hkey, "TestValue2", REG_SZ, "BValue", 7, 0);
 
-    if (supports_wchar)
-    {
-        exec_import_wstr(wide_test);
-        verify_reg_wsz(hkey, "TestValue3", wide_exp);
-
-        exec_import_wstr(wide_test_r);
-        verify_reg_wsz(hkey, "TestValue5", wide_exp);
-    }
-    else
-        win_skip("Some WCHAR tests skipped\n");
+    exec_import_str("Windows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"TestValue3\"=\"Value\"\n");
+    verify_reg(hkey, "TestValue3", REG_SZ, "Value", 6, 0);
 
     exec_import_str("REGEDIT4\r\r"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\r"
                 "\"TestValue4\"=\"DValue\"\r");
     verify_reg(hkey, "TestValue4", REG_SZ, "DValue", 7, 0);
+
+    exec_import_str("Windows Registry Editor Version 5.00\r\r"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\r"
+                    "\"TestValue5\"=\"Value\"\r");
+    verify_reg(hkey, "TestValue5", REG_SZ, "Value", 6, 0);
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -534,8 +507,22 @@ static void test_basic_import(void)
     verify_reg(hkey, "Wine18a", REG_MULTI_SZ, "Line\0", 6, 0);
     verify_reg(hkey, "Wine18b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
     verify_reg(hkey, "Wine18c", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
-    verify_reg(hkey, "Wine18d", REG_MULTI_SZ, "Line concat", 12, 0);
-    verify_reg(hkey, "Wine18e", REG_MULTI_SZ, "Line concat", 12, 0);
+    /* Wine18d */
+    size = sizeof(buffer);
+    memset(buffer, '-', size);
+    lr = RegQueryValueExA(hkey, "Wine18d", NULL, &type, (BYTE *)&buffer, &size);
+    ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
+    ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
+    ok(size == 12 || broken(size == 11) /* Win2k */, "got wrong size %u, expected 12\n", size);
+    ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
+    /* Wine18e */
+    size = sizeof(buffer);
+    memset(buffer, '-', size);
+    lr = RegQueryValueExA(hkey, "Wine18e", NULL, &type, (BYTE *)&buffer, &size);
+    ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
+    ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
+    ok(size == 12 || broken(size == 11) /* Win2k */, "got wrong size %u, expected 12\n", size);
+    ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -581,6 +568,406 @@ static void test_basic_import(void)
                     "\"Wine21d\"=hex(2):25,50,41,54,48,25,00,\n\n");
     verify_reg(hkey, "Wine21a", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine21b", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine21c", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine21d", REG_EXPAND_SZ, "%PATH%", 7, 0);
+
+    RegCloseKey(hkey);
+
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+}
+
+static void test_basic_import_unicode(void)
+{
+    HKEY hkey, subkey;
+    DWORD dword = 0x17, type, size;
+    char exp_binary[] = {0xAA,0xBB,0xCC,0x11};
+    LONG lr;
+    char buffer[256];
+    BYTE hex[8];
+
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"TestValue\"=\"AValue\"\n");
+    lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
+    verify_reg(hkey, "TestValue", REG_SZ, "AValue", 7, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+                     "\"TestValue2\"=\"BValue\"\r\n");
+    verify_reg(hkey, "TestValue2", REG_SZ, "BValue", 7, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"TestValue3\"=\"Value\"\n");
+    verify_reg(hkey, "TestValue3", REG_SZ, "Value", 6, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\r\r"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\r"
+                     "\"TestValue4\"=\"DValue\"\r");
+    verify_reg(hkey, "TestValue4", REG_SZ, "DValue", 7, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\r\r"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\r"
+                     "\"TestValue5\"=\"Value\"\r");
+    verify_reg(hkey, "TestValue5", REG_SZ, "Value", 6, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"TestDword\"=dword:00000017\n");
+    verify_reg(hkey, "TestDword", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"TestBinary\"=hex:aa,bb,cc,11\n");
+    verify_reg(hkey, "TestBinary", REG_BINARY, exp_binary, sizeof(exp_binary), 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"With=Equals\"=\"asdf\"\n");
+    verify_reg(hkey, "With=Equals", REG_SZ, "asdf", 5, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Empty string\"=\"\"\n"
+                     "\"\"=\"Default registry value\"\n\n");
+    verify_reg(hkey, "Empty string", REG_SZ, "", 1, 0);
+    verify_reg(hkey, NULL, REG_SZ, "Default registry value", 23, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Line1\"=\"Value1\"\n\n"
+                     "\"Line2\"=\"Value2\"\n\n\n"
+                     "\"Line3\"=\"Value3\"\n\n\n\n"
+                     "\"Line4\"=\"Value4\"\n\n");
+    verify_reg(hkey, "Line1", REG_SZ, "Value1", 7, 0);
+    verify_reg(hkey, "Line2", REG_SZ, "Value2", 7, 0);
+    verify_reg(hkey, "Line3", REG_SZ, "Value3", 7, 0);
+    verify_reg(hkey, "Line4", REG_SZ, "Value4", 7, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine1\"=dword:00000782\n\n"
+                     "\"Wine2\"=\"Test Value\"\n"
+                     "\"Wine3\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "#comment\n"
+                     "@=\"Test\"\n"
+                     ";comment\n\n"
+                     "\"Wine4\"=dword:12345678\n\n");
+    dword = 0x782;
+    verify_reg(hkey, "Wine1", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine2", REG_SZ, "Test Value", 11, 0);
+    verify_reg(hkey, "Wine3", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "", REG_SZ, "Test", 5, 0);
+    dword = 0x12345678;
+    verify_reg(hkey, "Wine4", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine5\"=\"No newline\"");
+    verify_reg(hkey, "Wine5", REG_SZ, "No newline", 11, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine6\"=dword:00000050\n\n"
+                     "\"Wine7\"=\"No newline\"");
+    dword = 0x50;
+    verify_reg(hkey, "Wine6", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine7", REG_SZ, "No newline", 11, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine8a\"=dword:1\n"
+                     "\"Wine8b\"=dword:4444\n\n");
+    dword = 0x1;
+    verify_reg(hkey, "Wine8a", REG_DWORD, &dword, sizeof(dword), 0);
+    dword = 0x4444;
+    verify_reg(hkey, "Wine8b", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine9a\"=hex(2):4c,00,69,00,6e,00,65,00,00,00\n"
+                     "\"Wine9b\"=\"Value 1\"\n"
+                     "\"Wine9c\"=hex(2):4c,00,69,00,6e,00,65,00\\\n"
+                     "\"Wine9d\"=\"Value 2\"\n"
+                     "\"Wine9e\"=hex(2):4c,00,69,00,6e,00,65,00,\\\n"
+                     "\"Wine9f\"=\"Value 3\"\n"
+                     "\"Wine9g\"=\"Value 4\"\n\n");
+    verify_reg(hkey, "Wine9a", REG_EXPAND_SZ, "Line", 5, 0);
+    verify_reg(hkey, "Wine9b", REG_SZ, "Value 1", 8, 0);
+    verify_reg_nonexist(hkey, "Wine9c");
+    verify_reg(hkey, "Wine9d", REG_SZ, "Value 2", 8, 0);
+    verify_reg_nonexist(hkey, "Wine9e");
+    verify_reg_nonexist(hkey, "Wine9f");
+    verify_reg(hkey, "Wine9g", REG_SZ, "Value 4", 8, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"double\\\"quote\"=\"valid \\\"or\\\" not\"\n"
+                     "\"single'quote\"=dword:00000008\n\n");
+    verify_reg(hkey, "double\"quote", REG_SZ, "valid \"or\" not", 15, 0);
+    dword = 0x00000008;
+    verify_reg(hkey, "single'quote", REG_DWORD, &dword, sizeof(dword), 0);
+
+    /* Test hex data concatenation for REG_NONE, REG_EXPAND_SZ and REG_BINARY */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine10a\"=hex(0):56,00,61,00,6c,00,75,00,65,00,00,00\n"
+                     "\"Wine10b\"=hex(0):56,00,61,00,6c,00,\\\n"
+                     "  75,00,65,00,00,00\n"
+                     "\"Wine10c\"=hex(0):56,00,61,00,\\;comment\n"
+                     "  6c,00,75,00,\\\n"
+                     "  65,00,00,00\n"
+                     "\"Wine10d\"=hex(0):56,00,61,00,\\;comment\n"
+                     "  6c,00,75,00,\n"
+                     "  65,00,00,00\n"
+                     "\"Wine10e\"=hex(0):56,00,61,00,\\;comment\n"
+                     "  6c,00,75,00,;comment\n"
+                     "  65,00,00,00\n");
+    verify_reg(hkey, "Wine10a", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+    verify_reg(hkey, "Wine10b", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+    verify_reg(hkey, "Wine10c", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+    verify_reg(hkey, "Wine10d", REG_NONE, "V\0a\0l\0u", 8, 0);
+    verify_reg(hkey, "Wine10e", REG_NONE, "V\0a\0l\0u", 8, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine11a\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine11b\"=hex(2):25,00,50,00,41,00,\\\n"
+                     "  54,00,48,00,25,00,00,00\n"
+                     "\"Wine11c\"=hex(2):25,00,50,00,41,00,\\;comment\n"
+                     "  54,00,48,00,\\\n"
+                     "  25,00,00,00\n"
+                     "\"Wine11d\"=hex(2):25,00,50,00,41,00,\\;comment\n"
+                     "  54,00,48,00,\n"
+                     "  25,00,00,00\n"
+                     "\"Wine11e\"=hex(2):25,00,50,00,41,00,\\;comment\n"
+                     "  54,00,48,00,;comment\n"
+                     "  25,00,00,00\n");
+    verify_reg(hkey, "Wine11a", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine11b", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine11c", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    /* Wine11d */
+    size = sizeof(buffer);
+    lr = RegQueryValueExA(hkey, "Wine11d", NULL, &type, (BYTE *)&buffer, &size);
+    ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
+    ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
+    todo_wine ok(size == 6 || broken(size == 5) /* Win2k */, "got wrong size %u, expected 6\n", size);
+    ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
+    /* Wine11e */
+    size = sizeof(buffer);
+    memset(buffer, '-', size);
+    lr = RegQueryValueExA(hkey, "Wine11e", NULL, &type, (BYTE *)&buffer, &size);
+    ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
+    ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
+    todo_wine ok(size == 6 || broken(size == 5) /* Win2k */, "got wrong size %u, expected 6\n", size);
+    ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine12a\"=hex:11,22,33,44,55,66,77,88\n"
+                     "\"Wine12b\"=hex:11,22,33,44,\\\n"
+                     "  55,66,77,88\n"
+                     "\"Wine12c\"=hex:11,22,33,44,\\;comment\n"
+                     "  55,66,\\\n"
+                     "  77,88\n"
+                     "\"Wine12d\"=hex:11,22,33,44,\\;comment\n"
+                     "  55,66,\n"
+                     "  77,88\n"
+                     "\"Wine12e\"=hex:11,22,33,44,\\;comment\n"
+                     "  55,66,;comment\n"
+                     "  77,88\n");
+    hex[0] = 0x11; hex[1] = 0x22; hex[2] = 0x33; hex[3] = 0x44;
+    hex[4] = 0x55; hex[5] = 0x66; hex[6] = 0x77; hex[7] = 0x88;
+    verify_reg(hkey, "Wine12a", REG_BINARY, hex, sizeof(hex), 0);
+    verify_reg(hkey, "Wine12b", REG_BINARY, hex, sizeof(hex), 0);
+    verify_reg(hkey, "Wine12c", REG_BINARY, hex, sizeof(hex), 0);
+    verify_reg(hkey, "Wine12d", REG_BINARY, hex, 6, 0);
+    verify_reg(hkey, "Wine12e", REG_BINARY, hex, 6, 0);
+
+    /* Test import with subkeys */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey\"1]\n"
+                     "\"Wine\\\\31\"=\"Test value\"\n\n");
+    lr = RegOpenKeyExA(hkey, "Subkey\"1", 0, KEY_READ, &subkey);
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    verify_reg(subkey, "Wine\\31", REG_SZ, "Test value", 11, 0);
+    lr = RegCloseKey(subkey);
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey/2]\n"
+                     "\"123/\\\"4;'5\"=\"Random value name\"\n\n");
+    lr = RegOpenKeyExA(hkey, "Subkey/2", 0, KEY_READ, &subkey);
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    verify_reg(subkey, "123/\"4;'5", REG_SZ, "Random value name", 18, 0);
+    lr = RegCloseKey(subkey);
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+
+    /* Test the accepted range of the hex-based data types */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine13a\"=hex(0):56,61,6c,75,65,00\n"
+                     "\"Wine13b\"=hex(10):56,61,6c,75,65,00\n"
+                     "\"Wine13c\"=hex(100):56,61,6c,75,65,00\n"
+                     "\"Wine13d\"=hex(1000):56,61,6c,75,65,00\n"
+                     "\"Wine13e\"=hex(7fff):56,61,6c,75,65,00\n"
+                     "\"Wine13f\"=hex(ffff):56,61,6c,75,65,00\n"
+                     "\"Wine13g\"=hex(7fffffff):56,61,6c,75,65,00\n"
+                     "\"Wine13h\"=hex(ffffffff):56,61,6c,75,65,00\n"
+                     "\"Wine13i\"=hex(100000000):56,61,6c,75,65,00\n"
+                     "\"Wine13j\"=hex(0x2):56,61,6c,75,65,00\n"
+                     "\"Wine13k\"=hex(0X2):56,61,6c,75,65,00\n"
+                     "\"Wine13l\"=hex(x2):56,61,6c,75,65,00\n\n");
+    verify_reg(hkey, "Wine13a", REG_NONE, "Value", 6, 0);
+    verify_reg(hkey, "Wine13b", 0x10, "Value", 6, 0);
+    verify_reg(hkey, "Wine13c", 0x100, "Value", 6, 0);
+    verify_reg(hkey, "Wine13d", 0x1000, "Value", 6, 0);
+    verify_reg(hkey, "Wine13e", 0x7fff, "Value", 6, 0);
+    verify_reg(hkey, "Wine13f", 0xffff, "Value", 6, 0);
+    verify_reg(hkey, "Wine13g", 0x7fffffff, "Value", 6, 0);
+    verify_reg(hkey, "Wine13h", 0xffffffff, "Value", 6, 0);
+    verify_reg_nonexist(hkey, "Wine13i");
+    verify_reg_nonexist(hkey, "Wine13j");
+    verify_reg_nonexist(hkey, "Wine13k");
+    verify_reg_nonexist(hkey, "Wine13l");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine14a\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,  \\\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine14b\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\t\\\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n");
+    verify_reg(hkey, "Wine14a", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine14b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine15\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00,\n\n");
+    verify_reg(hkey, "Wine15", REG_EXPAND_SZ, "%PATH%", 7, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine16\"=hex(2):\\\n"
+                     "  25,00,48,00,4f,00,4d,00,45,00,25,00,00,00\n\n");
+    verify_reg(hkey, "Wine16", REG_EXPAND_SZ, "%HOME%", 7, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine17a\"=hex(0):56,61,6c,75,65,\\");
+    verify_reg(hkey, "Wine17a", REG_NONE, "Value", 5, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine17b\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,\\");
+    verify_reg(hkey, "Wine17b", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine17c\"=hex:11,22,33,44,55,\\");
+    verify_reg(hkey, "Wine17c", REG_BINARY, hex, 5, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine17d\"=hex(7):4c,00,69,00,6e,00,65,00,\\");
+    verify_reg(hkey, "Wine17d", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine17e\"=hex(100):56,61,6c,75,65,\\");
+    verify_reg(hkey, "Wine17e", 0x100, "Value", 5, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine18a\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,00,00\n"
+                     "\"Wine18b\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine18c\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\;comment\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine18d\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\;comment\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine18e\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,;comment\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n");
+    verify_reg(hkey, "Wine18a", REG_MULTI_SZ, "Line\0", 6, 0);
+    verify_reg(hkey, "Wine18b", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine18c", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    /* Wine18d */
+    size = sizeof(buffer);
+    memset(buffer, '-', size);
+    lr = RegQueryValueExA(hkey, "Wine18d", NULL, &type, (BYTE *)&buffer, &size);
+    ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
+    ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
+    todo_wine ok(size == 12 || broken(size == 11) /* Win2k */, "got wrong size %u, expected 12\n", size);
+    ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
+    /* Wine18e */
+    size = sizeof(buffer);
+    memset(buffer, '-', size);
+    lr = RegQueryValueExA(hkey, "Wine18e", NULL, &type, (BYTE *)&buffer, &size);
+    ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
+    ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
+    todo_wine ok(size == 12 || broken(size == 11) /* Win2k */, "got wrong size %u, expected 12\n", size);
+    ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine19a\"=hex(100):25,50,41,54,48,25,00\n"
+                     "\"Wine19b\"=hex(100):25,50,41,\\\n"
+                     "  54,48,25,00\n"
+                     "\"Wine19c\"=hex(100):25,50,41,\\;comment\n"
+                     "  54,48,\\\n"
+                     "  25,00\n"
+                     "\"Wine19d\"=hex(100):25,50,41,\\;comment\n"
+                     "  54,48,\n"
+                     "  25,00\n"
+                     "\"Wine19e\"=hex(100):25,50,41,\\;comment\n"
+                     "  54,48,;comment\n"
+                     "  25,00\n");
+    verify_reg(hkey, "Wine19a", 0x100, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine19b", 0x100, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine19c", 0x100, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine19d", 0x100, "%PATH", 5, 0);
+    verify_reg(hkey, "Wine19e", 0x100, "%PATH", 5, 0);
+
+    /* Test null-termination of REG_EXPAND_SZ and REG_MULTI_SZ data*/
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine20a\"=hex(7):4c,00,69,00,6e,00,65,00\n"
+                     "\"Wine20b\"=hex(7):4c,00,69,00,6e,00,65,00,\n"
+                     "\"Wine20c\"=hex(7):4c,00,69,00,6e,00,65,00,00,00\n"
+                     "\"Wine20d\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,\n"
+                     "\"Wine20e\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,00,00\n"
+                     "\"Wine20f\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,00,00,\n\n");
+    verify_reg(hkey, "Wine20a", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine20b", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine20c", REG_MULTI_SZ, "Line", 5, 0);
+    verify_reg(hkey, "Wine20d", REG_MULTI_SZ, "Line", 5, 0);
+    verify_reg(hkey, "Wine20e", REG_MULTI_SZ, "Line\0", 6, 0);
+    verify_reg(hkey, "Wine20f", REG_MULTI_SZ, "Line\0", 6, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine21a\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00\n"
+                     "\"Wine21b\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,\n"
+                     "\"Wine21c\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine21d\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00,\n\n");
+    verify_reg(hkey, "Wine21a", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine21b", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
     verify_reg(hkey, "Wine21c", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine21d", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
@@ -1772,18 +2159,13 @@ static void test_value_deletion(void)
 
 START_TEST(regedit)
 {
-    WCHAR wchar_test[] = {0xFEFF,'W','i','n','d','o','w','s',' ','R','e','g',
-        'i','s','t','r','y',' ','E','d','i','t','o','r',' ','V','e','r','s',
-        'i','o','n',' ','5','.','0','0','\n','\n',0};
-
     if(!exec_import_str("REGEDIT4\r\n\r\n")){
         win_skip("regedit not available, skipping regedit tests\n");
         return;
     }
 
-    supports_wchar = exec_import_wstr(wchar_test);
-
     test_basic_import();
+    test_basic_import_unicode();
     test_basic_import_31();
     test_invalid_import();
     test_invalid_import_31();
