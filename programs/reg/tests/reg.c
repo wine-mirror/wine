@@ -771,8 +771,11 @@ static BOOL test_import_wstr_(unsigned line, const char *file_contents, DWORD *r
     regfile = CreateFileA("test.reg", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                           FILE_ATTRIBUTE_NORMAL, NULL);
     lok(regfile != INVALID_HANDLE_VALUE, "Failed to create test.reg file\n");
-    if(regfile == INVALID_HANDLE_VALUE)
+    if (regfile == INVALID_HANDLE_VALUE)
+    {
+        HeapFree(GetProcessHeap(), 0, wstr);
         return FALSE;
+    }
 
     ret = WriteFile(regfile, wstr, memsize, &written, NULL);
     lok(ret, "WriteFile failed: %u\n", GetLastError());
