@@ -38,6 +38,7 @@ struct vec3
 #define CREATE_DEVICE_NOWINDOWCHANGES   0x02
 #define CREATE_DEVICE_FPU_PRESERVE      0x04
 #define CREATE_DEVICE_SWVP_ONLY         0x08
+#define CREATE_DEVICE_MIXED_ONLY        0x10
 
 struct device_desc
 {
@@ -155,6 +156,8 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window, cons
         present_parameters.Windowed = !(desc->flags & CREATE_DEVICE_FULLSCREEN);
         if (desc->flags & CREATE_DEVICE_SWVP_ONLY)
             behavior_flags = D3DCREATE_SOFTWARE_VERTEXPROCESSING;
+        else if (desc->flags & CREATE_DEVICE_MIXED_ONLY)
+            behavior_flags = D3DCREATE_MIXED_VERTEXPROCESSING;
         if (desc->flags & CREATE_DEVICE_NOWINDOWCHANGES)
             behavior_flags |= D3DCREATE_NOWINDOWCHANGES;
         if (desc->flags & CREATE_DEVICE_FPU_PRESERVE)
@@ -170,9 +173,11 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window, cons
             behavior_flags, &present_parameters, &device)))
         return device;
 
-    if (desc && desc->flags & CREATE_DEVICE_SWVP_ONLY)
+    if (desc && (desc->flags & (CREATE_DEVICE_SWVP_ONLY | CREATE_DEVICE_MIXED_ONLY)))
         return NULL;
-    behavior_flags ^= (D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_SOFTWARE_VERTEXPROCESSING);
+    behavior_flags = (behavior_flags
+            & ~(D3DCREATE_MIXED_VERTEXPROCESSING | D3DCREATE_SOFTWARE_VERTEXPROCESSING))
+            | D3DCREATE_HARDWARE_VERTEXPROCESSING;
 
     if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
             behavior_flags, &present_parameters, &device)))
@@ -6068,6 +6073,8 @@ static void test_vertex_shader_constant(void)
     static const float d[16] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     static const float c[4] = {0.0, 0.0, 0.0, 0.0};
     IDirect3DDevice9 *device;
+    struct device_desc desc;
+    DWORD consts_swvp;
     IDirect3D9 *d3d;
     ULONG refcount;
     D3DCAPS9 caps;
@@ -6120,6 +6127,73 @@ static void test_vertex_shader_constant(void)
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
+
+    desc.device_window = window;
+    desc.width = 640;
+    desc.height = 480;
+    desc.flags = CREATE_DEVICE_SWVP_ONLY;
+
+    if (!(device = create_device(d3d, window, &desc)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    consts_swvp = caps.MaxVertexShaderConst;
+    todo_wine
+    ok(consts_swvp == 8192, "Unexpected consts_swvp %u.\n", consts_swvp);
+
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts + 0, c, 1);
+    todo_wine
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts + 1, c, 1);
+    todo_wine
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts - 1, d, 4);
+    todo_wine
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts_swvp - 1, c, 1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts_swvp, c, 1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    desc.flags = CREATE_DEVICE_MIXED_ONLY;
+    if (!(device = create_device(d3d, window, &desc)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    ok(consts == caps.MaxVertexShaderConst, "Unexpected caps.MaxVertexShaderConst %u, consts %u.\n",
+            caps.MaxVertexShaderConst, consts);
+
+    IDirect3DDevice9_SetSoftwareVertexProcessing(device, 0);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts + 0, c, 1);
+    todo_wine
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts_swvp - 1, c, 1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DDevice9_SetSoftwareVertexProcessing(device, 1);
+
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts + 0, c, 1);
+    todo_wine
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, consts_swvp - 1, c, 1);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
 }
