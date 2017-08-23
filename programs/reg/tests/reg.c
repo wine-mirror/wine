@@ -766,7 +766,7 @@ static BOOL test_import_wstr_(unsigned line, const char *file_contents, DWORD *r
     memsize = len * sizeof(WCHAR);
     wstr = HeapAlloc(GetProcessHeap(), 0, memsize);
     if (!wstr) return FALSE;
-    MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, wstr, memsize);
+    MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, wstr, len);
 
     regfile = CreateFileA("test.reg", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                           FILE_ATTRIBUTE_NORMAL, NULL);
