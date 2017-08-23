@@ -4353,7 +4353,7 @@ GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GD
     for(i = 0; i < count; i++){
         rectsF[i].X      = (REAL)rects[i].X;
         rectsF[i].Y      = (REAL)rects[i].Y;
-        rectsF[i].X      = (REAL)rects[i].Width;
+        rectsF[i].Width  = (REAL)rects[i].Width;
         rectsF[i].Height = (REAL)rects[i].Height;
     }
 
