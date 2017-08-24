@@ -4887,19 +4887,32 @@ static const tid_t HTMLDocumentNode_iface_tids[] = {
     IHTMLDOMNode_tid,
     IHTMLDOMNode2_tid,
     IHTMLDocument2_tid,
-    IHTMLDocument3_tid,
     IHTMLDocument4_tid,
     IHTMLDocument5_tid,
-    IHTMLDocument6_tid,
     IDocumentSelector_tid,
     0
 };
+
+void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    HTMLDOMNode_init_dispex_info(info, mode);
+
+    /* Depending on compatibility version, we add interfaces in different order
+     * so that the right getElementById implementation is used. */
+    if(mode < COMPAT_MODE_IE8) {
+        dispex_info_add_interface(info, IHTMLDocument3_tid, NULL);
+        dispex_info_add_interface(info, IHTMLDocument6_tid, NULL);
+    }else {
+        dispex_info_add_interface(info, IHTMLDocument6_tid, NULL);
+        dispex_info_add_interface(info, IHTMLDocument3_tid, NULL);
+    }
+}
 
 static dispex_static_data_t HTMLDocumentNode_dispex = {
     &HTMLDocumentNode_dispex_vtbl,
     DispHTMLDocument_tid,
     HTMLDocumentNode_iface_tids,
-    HTMLDOMNode_init_dispex_info
+    HTMLDocumentNode_init_dispex_info
 };
 
 static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindow *window)
