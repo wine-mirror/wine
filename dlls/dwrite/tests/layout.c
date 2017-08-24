@@ -1228,12 +1228,13 @@ static void test_GetLocaleName(void)
 }
 
 static const struct drawcall_entry drawellipsis_seq[] = {
-    { DRAW_GLYPHRUN, {0x2026, 0}, {'e','n','-','u','s',0}, 1 },
+    { DRAW_GLYPHRUN, {0x2026, 0}, {'e','n','-','g','b',0}, 1 },
     { DRAW_LAST_KIND }
 };
 
 static void test_CreateEllipsisTrimmingSign(void)
 {
+    static const WCHAR engbW[] = {'e','n','-','G','B',0};
     DWRITE_INLINE_OBJECT_METRICS metrics;
     DWRITE_BREAK_CONDITION before, after;
     IDWriteTextFormat *format;
@@ -1245,7 +1246,7 @@ static void test_CreateEllipsisTrimmingSign(void)
     factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, engbW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     EXPECT_REF(format, 1);
@@ -1286,11 +1287,18 @@ if (0) {/* crashes on native */
     effect = create_test_effect();
 
     EXPECT_REF(effect, 1);
+    flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteInlineObject_Draw(sign, NULL, &testrenderer, 0.0f, 0.0f, FALSE, FALSE, effect);
     ok(hr == S_OK, "Failed to draw trimming sign, hr %#x.\n", hr);
+    ok_sequence(sequences, RENDERER_ID, drawellipsis_seq, "ellipsis sign draw with effect test", FALSE);
     EXPECT_REF(effect, 1);
 
     IUnknown_Release(effect);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteInlineObject_Draw(sign, NULL, &testrenderer, 0.0f, 0.0f, FALSE, FALSE, (void *)0xdeadbeef);
+    ok(hr == S_OK, "Failed to draw trimming sign, hr %#x.\n", hr);
+    ok_sequence(sequences, RENDERER_ID, drawellipsis_seq, "ellipsis sign draw with effect test", FALSE);
 
     IDWriteInlineObject_Release(sign);
 
