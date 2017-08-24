@@ -3142,8 +3142,44 @@ static HRESULT WINAPI HTMLDocument6_getElementById(IHTMLDocument6 *iface,
         BSTR bstrId, IHTMLElement2 **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument6(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrId), p);
-    return E_NOTIMPL;
+    nsIDOMElement *nselem;
+    HTMLElement *elem;
+    nsAString nsstr;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrId), p);
+
+    /*
+     * Unlike IHTMLDocument3 implementation, this is standard compliant and does
+     * not search for name attributes, so we may simply let Gecko do the right thing.
+     */
+
+    if(!This->doc_node->nsdoc) {
+        FIXME("Not a document\n");
+        return E_FAIL;
+    }
+
+    nsAString_InitDepend(&nsstr, bstrId);
+    nsres = nsIDOMHTMLDocument_GetElementById(This->doc_node->nsdoc, &nsstr, &nselem);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        ERR("GetElementById failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(!nselem) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = get_elem(This->doc_node, nselem, &elem);
+    nsIDOMElement_Release(nselem);
+    if(FAILED(hres))
+        return hres;
+
+    *p = &elem->IHTMLElement2_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument6_updateSettings(IHTMLDocument6 *iface)

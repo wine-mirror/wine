@@ -9857,6 +9857,7 @@ static void test_frameset(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window;
     IHTMLFramesCollection2 *frames;
+    IHTMLDocument6 *doc6;
     IHTMLElement *elem;
     HRESULT hres;
 
@@ -9886,6 +9887,29 @@ static void test_frameset(IHTMLDocument2 *doc)
     /* getElementById with node name attributes */
     elem = get_doc_elem_by_id(doc, "nm1");
     test_elem_id((IUnknown*)elem, "fr1");
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument6, (void**)&doc6);
+    if(SUCCEEDED(hres)) {
+        IHTMLElement2 *elem2;
+        BSTR str;
+
+        str = a2bstr("nm1");
+        hres = IHTMLDocument6_getElementById(doc6, str, &elem2);
+        ok(hres == S_OK, "getElementById failed: %08x\n", hres);
+        ok(!elem2, "elem = %p\n", elem2);
+        SysFreeString(str);
+
+        str = a2bstr("fr1");
+        hres = IHTMLDocument6_getElementById(doc6, str, &elem2);
+        ok(hres == S_OK, "getElementById failed: %08x\n", hres);
+        ok(elem2 != NULL, "elem2 is NULL\n");
+        test_elem_id((IUnknown*)elem2, "fr1");
+        SysFreeString(str);
+
+        IHTMLDocument6_Release(doc6);
+    }else {
+        win_skip("IHTMLDocument6 not supported\n");
+    }
 
     test_framebase((IUnknown*)elem);
     test_framebase_name(elem, "nm1");
