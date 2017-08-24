@@ -1534,6 +1534,515 @@ static void test_invalid_import(void)
     ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
 }
 
+static void test_invalid_import_unicode(void)
+{
+    LONG lr;
+    HKEY hkey;
+    DWORD dword = 0x8, os_version, major_version, minor_version;
+
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"TestNoEndQuote\"=\"Asdffdsa\n");
+    lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ|KEY_SET_VALUE, &hkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
+    verify_reg_nonexist(hkey, "TestNoEndQuote");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"TestNoBeginQuote\"=Asdffdsa\"\n");
+    verify_reg_nonexist(hkey, "TestNoBeginQuote");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"TestNoQuotes\"=Asdffdsa\n");
+    verify_reg_nonexist(hkey, "TestNoQuotes");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"NameNoEndQuote=\"Asdffdsa\"\n");
+    verify_reg_nonexist(hkey, "NameNoEndQuote");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "NameNoBeginQuote\"=\"Asdffdsa\"\n");
+    verify_reg_nonexist(hkey, "NameNoBeginQuote");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "NameNoQuotes=\"Asdffdsa\"\n");
+    verify_reg_nonexist(hkey, "NameNoQuotes");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"MixedQuotes=Asdffdsa\"\n");
+    verify_reg_nonexist(hkey, "MixedQuotes");
+    verify_reg_nonexist(hkey, "MixedQuotes=Asdffdsa");
+
+    /* Test import with non-standard registry file headers */
+    exec_import_wstr("\xef\xbb\xbfREGEDIT3\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test1\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test1");
+
+    exec_import_wstr("\xef\xbb\xbfregedit4\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test2\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test2");
+
+    exec_import_wstr("\xef\xbb\xbfRegedit4\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test3\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test3");
+
+    exec_import_wstr("\xef\xbb\xbfREGEDIT 4\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test4\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test4");
+
+    exec_import_wstr("\xef\xbb\xbfREGEDIT4FOO\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test5\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test5");
+
+    exec_import_wstr("\xef\xbb\xbfREGEDIT4 FOO\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test6\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test6");
+
+    exec_import_wstr("\xef\xbb\xbfREGEDIT5\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test7\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test7");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 4.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test8\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test8");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test9\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test9");
+
+    exec_import_wstr("\xef\xbb\xbfWINDOWS REGISTRY EDITOR VERSION 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test10\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test10");
+
+    os_version = GetVersion();
+    major_version = LOBYTE(LOWORD(os_version));
+    minor_version = HIBYTE(LOWORD(os_version));
+
+    if (major_version > 5 || (major_version == 5 && minor_version > 0))
+    {
+        exec_import_wstr("\xef\xbb\xbfWindows Registry Editor version 5.00\n\n"
+                         "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                         "\"Test11\"=\"Value\"\n");
+        verify_reg_nonexist(hkey, "Test11");
+    }
+    else /* Windows 2000 */
+        win_skip("Skipping a non-standard header test\n");
+
+    /* Test multi-line import with incorrect comma placement */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Multi-Line1\"=hex(7):4c,00,69,00,6e,00,65,00,20,00\\\n"
+                     ",63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n");
+    verify_reg_nonexist(hkey, "Multi-Line1");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Multi-Line2\"=hex(7):4c,00,69,00,6e,00,65,00,20,00\\\n"
+                     "  ,63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n");
+    verify_reg_nonexist(hkey, "Multi-Line2");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Multi-Line3\"=hex(7):4c,00,69,00,6e,00,65,00,20,00\\\n"
+                     ",63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n");
+    verify_reg_nonexist(hkey, "Multi-Line3");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Multi-Line4\"=hex(7):4c,00,69,00,6e,00,65,00,20,00\\\n"
+                     ",  63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n");
+    verify_reg_nonexist(hkey, "Multi-Line4");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test12a\"=dword:\n"
+                     "\"Test12b\"=dword:hello\n"
+                     "\"Test12c\"=dword:123456789\n"
+                     "\"Test12d\"=dword:012345678\n"
+                     "\"Test12e\"=dword:000000001\n\n");
+    verify_reg_nonexist(hkey, "Test12a");
+    verify_reg_nonexist(hkey, "Test12b");
+    verify_reg_nonexist(hkey, "Test12c");
+    verify_reg_nonexist(hkey, "Test12d");
+    verify_reg_nonexist(hkey, "Test12e");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test13a\"=dword:12345678abc\n"
+                     "\"Test13b\"=dword:12345678 abc\n\n");
+    verify_reg_nonexist(hkey, "Test13a");
+    verify_reg_nonexist(hkey, "Test13b");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test14a\"=dword:0x123\n"
+                     "\"Test14b\"=dword:123 456\n"
+                     "\"Test14c\"=dword:1234 5678\n\n");
+    verify_reg_nonexist(hkey, "Test14a");
+    verify_reg_nonexist(hkey, "Test14b");
+    verify_reg_nonexist(hkey, "Test14c");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test15a\"=\"foo\"bar\"\n"
+                     "\"Test15b\"=\"foo\"\"bar\"\n\n");
+    verify_reg_nonexist(hkey, "Test15a");
+    verify_reg_nonexist(hkey, "Test15b");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test16a\"=\n"
+                     "\"Test16b\"=\\\"\n"
+                     "\"Test16c\"=\\\"Value\\\"\n"
+                     "\"Test16d\"=\\\"Value\"\n\n");
+    verify_reg_nonexist(hkey, "Test16a");
+    verify_reg_nonexist(hkey, "Test16b");
+    verify_reg_nonexist(hkey, "Test16c");
+    verify_reg_nonexist(hkey, "Test16d");
+
+    /* Test key name and value name concatenation */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\\n"
+                     "Subkey1]\n");
+    verify_key_nonexist(hkey, "Subkey1");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\n"
+                     "\\Subkey2]\n");
+    verify_key_nonexist(hkey, "Subkey2");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test\\\n"
+                     "17a\"=\"Value 1\"\n"
+                     "\"Test17b\"=\"Value 2\"\n"
+                     "\"Test\n"
+                     "\\17c\"=\"Value 3\"\n\n");
+    verify_reg_nonexist(hkey, "Test17a");
+    verify_reg(hkey, "Test17b", REG_SZ, "Value 2", 8, 0);
+    verify_reg_nonexist(hkey, "Test17c");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test18a\"=dword:1234\\\n"
+                     "5678\n"
+                     "\"Test18b\"=\"Test \\\n"
+                     "Value\"\n\n");
+    verify_reg_nonexist(hkey, "Test18a");
+    verify_reg_nonexist(hkey, "Test18b");
+
+    /* Test hex data concatenation for REG_NONE, REG_EXPAND_SZ and REG_BINARY */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test19a\"=hex(0):56,00,61,00,6c,00\\\n"
+                     ",75,00,65,00,00,00\n"
+                     "\"Test19b\"=hex(0):56,00,61,00,6c,00\\\n"
+                     "  ,75,00,65,00,00,00\n"
+                     "\"Test19c\"=hex(0):56,00,61,00,6c,00\\\n"
+                     "  75,00,65,00,00,00\n"
+                     "\"Test19d\"=hex(0):56,00,61,00,6c,00,7\\\n"
+                     "5,00,65,00,00,00\n"
+                     "\"Test19e\"=hex(0):56,00,61,00,6c,00,7\\\n"
+                     "  5,00,65,00,00,00\n"
+                     "\"Test19f\"=hex(0):56,00,61,00,\\;comment\n"
+                     "  6c,00,75,00,\\#comment\n"
+                     "  65,00,00,00\n\n");
+    verify_reg_nonexist(hkey, "Test19a");
+    verify_reg_nonexist(hkey, "Test19b");
+    verify_reg_nonexist(hkey, "Test19c");
+    verify_reg_nonexist(hkey, "Test19d");
+    verify_reg_nonexist(hkey, "Test19e");
+    verify_reg_nonexist(hkey, "Test19f");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test20a\"=hex(2):25,00,50,00,41,00\\\n"
+                     ",54,00,48,00,25,00,00,00\n"
+                     "\"Test20b\"=hex(2):25,00,50,00,41,00\\\n"
+                     "  ,54,00,48,00,25,00,00,00\n"
+                     "\"Test20c\"=hex(2):25,00,50,00,41,00\\\n"
+                     "  54,00,48,00,25,00,00,00\n"
+                     "\"Test20d\"=hex(2):25,00,50,00,4\\\n"
+                     "1,00,54,00,48,00,25,00,00,00\n"
+                     "\"Test20e\"=hex(2):25,00,50,00,4\\\n"
+                     "  1,00,54,00,48,00,25,00,00\n"
+                     "\"Test20f\"=hex(2):25,00,50,00,41,00,\\;comment\n"
+                     "  54,00,48,00,\\#comment\n"
+                     "  25,00,00,00\n\n");
+    verify_reg_nonexist(hkey, "Test20a");
+    verify_reg_nonexist(hkey, "Test20b");
+    verify_reg_nonexist(hkey, "Test20c");
+    verify_reg_nonexist(hkey, "Test20d");
+    verify_reg_nonexist(hkey, "Test20e");
+    verify_reg_nonexist(hkey, "Test20f");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test21a\"=hex:11,22,33,44\\\n"
+                     ",55,66,77,88\n"
+                     "\"Test21b\"=hex:11,22,33,44\\\n"
+                     "  ,55,66,77,88\n"
+                     "\"Test21c\"=hex:11,22,33,44\\\n"
+                     "  55,66,77,88\n"
+                     "\"Test21d\"=hex:11,22,33,4\\\n"
+                     "4,55,66,77,88\n"
+                     "\"Test21e\"=hex:11,22,33,4\\\n"
+                     "  4,55,66,77,88\n"
+                     "\"Test21f\"=hex:11,22,33,\\;comment\n"
+                     "  44,55,66,\\#comment\n"
+                     "  77,88\n\n");
+    verify_reg_nonexist(hkey, "Test21a");
+    verify_reg_nonexist(hkey, "Test21b");
+    verify_reg_nonexist(hkey, "Test21c");
+    verify_reg_nonexist(hkey, "Test21d");
+    verify_reg_nonexist(hkey, "Test21e");
+    verify_reg_nonexist(hkey, "Test21f");
+
+    /* Test support for characters greater than 0xff */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine22a\"=hex(0):25,50,100,54,48,25,00\n"
+                     "\"Wine22b\"=hex(0):25,1a4,100,164,124,25,00\n\n");
+    verify_reg_nonexist(hkey, "Wine22a");
+    verify_reg_nonexist(hkey, "Wine22b");
+
+    /* Test the effect of backslashes in hex data */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine23a\"=hex(2):25,00,48\\,00,4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine23b\"=hex(2):25,00,48,00,\\4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine23c\"=hex(2):25,00,48\\ ,00,4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine23d\"=hex(2):25,00,48,00,\\ 4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine23e\"=hex(2):\\25,00,48,00,4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine23f\"=hex(2):\\ 25,00,48,00,4f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine23g\"=hex(2):25,00,48,00,4\\f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine23h\"=hex(2):25,00,48,00,4\\\n"
+                     "  f,00,4d,00,45,00,25,00,00,00\n"
+                     "\"Wine23i\"=hex(2):25,00,50,00,\\,41,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine23j\"=hex(2):25,00,48,00,4f,00,4d,00,45,00,25,00,5c,00,\\\\\n"
+                     "  25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine23k\"=hex(2):,\\\n"
+                     "  25,00,48,00,4f,00,4d,00,45,00,25,00,00,00\n\n");
+    verify_reg_nonexist(hkey, "Wine23a");
+    verify_reg_nonexist(hkey, "Wine23b");
+    verify_reg_nonexist(hkey, "Wine23c");
+    verify_reg_nonexist(hkey, "Wine23d");
+    verify_reg_nonexist(hkey, "Wine23e");
+    verify_reg_nonexist(hkey, "Wine23f");
+    verify_reg_nonexist(hkey, "Wine23g");
+    verify_reg_nonexist(hkey, "Wine23h");
+    verify_reg_nonexist(hkey, "Wine23i");
+    verify_reg_nonexist(hkey, "Wine23j");
+    verify_reg_nonexist(hkey, "Wine23k");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine24a\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1]\n");
+    verify_reg_nonexist(hkey, "Wine24a");
+    verify_key_nonexist(hkey, "Subkey1");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine24b\"=hex(2):4c,00,69,00,6e,00,65,00,20,00\\\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2]\n");
+    verify_reg_nonexist(hkey, "Wine24b");
+    verify_key(hkey, "Subkey2");
+
+    lr = RegDeleteKeyA(hkey, "Subkey2");
+    ok(lr == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", lr);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine25a\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "\"Wine25b\"=\"Test value\"\n"
+
+                     "\"Wine25c\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     ";comment\n"
+                     "\"Wine25d\"=\"Test value\"\n"
+
+                     "\"Wine25e\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "#comment\n"
+                     "\"Wine25f\"=\"Test value\"\n"
+
+                     "\"Wine25g\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n\n"
+                     "\"Wine25h\"=\"Test value\"\n"
+
+                     "\"Wine25i\"=hex(2):4c,00,69,00,6e,00,65,00,20,00\\\n"
+                     "\"Wine25j\"=\"Test value\"\n\n");
+    verify_reg_nonexist(hkey, "Wine25a");
+    verify_reg_nonexist(hkey, "Wine25b");
+    verify_reg_nonexist(hkey, "Wine25c");
+    verify_reg_nonexist(hkey, "Wine25d");
+    verify_reg_nonexist(hkey, "Wine25e");
+    verify_reg(hkey, "Wine25f", REG_SZ, "Test value", 11, 0);
+    verify_reg_nonexist(hkey, "Wine25g");
+    verify_reg_nonexist(hkey, "Wine25h");
+    verify_reg_nonexist(hkey, "Wine25i");
+    verify_reg(hkey, "Wine25j", REG_SZ, "Test value", 11, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine26a\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "\"Wine26b\"=dword:00000008\n"
+
+                     "\"Wine26c\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     ";comment\n"
+                     "\"Wine26d\"=dword:00000008\n"
+
+                     "\"Wine26e\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "#comment\n"
+                     "\"Wine26f\"=dword:00000008\n"
+
+                     "\"Wine26g\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n\n"
+                     "\"Wine26h\"=dword:00000008\n"
+
+                     "\"Wine26i\"=hex(2):4c,00,69,00,6e,00,65,00,20,00\\\n"
+                     "\"Wine26j\"=dword:00000008\n\n");
+    verify_reg_nonexist(hkey, "Wine26a");
+    verify_reg_nonexist(hkey, "Wine26b");
+    verify_reg_nonexist(hkey, "Wine26c");
+    verify_reg_nonexist(hkey, "Wine26d");
+    verify_reg_nonexist(hkey, "Wine26e");
+    verify_reg(hkey, "Wine26f", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg_nonexist(hkey, "Wine26g");
+    verify_reg_nonexist(hkey, "Wine26h");
+    verify_reg_nonexist(hkey, "Wine26i");
+    verify_reg(hkey, "Wine26j", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine27a\"=hex(2):25,00,48,00,4f,00,4d,00,45,00,25,00,5c,00,\\\n"
+                     "\"Wine27b\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+
+                     "\"Wine27c\"=hex(2):25,00,48,00,4f,00,4d,00,45,00,25,00,5c,00,\\\n"
+                     ";comment\n"
+                     "\"Wine27d\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+
+                     "\"Wine27e\"=hex(2):25,00,48,00,4f,00,4d,00,45,00,25,00,5c,00,\\\n"
+                     "#comment\n"
+                     "\"Wine27f\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+
+                     "\"Wine27g\"=hex(2):25,00,48,00,4f,00,4d,00,45,00,25,00,5c,00,\\\n\n"
+                     "\"Wine27h\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+
+                     "\"Wine27i\"=hex(2):25,00,48,00,4f,00,4d,00,45,00,25,00,5c,00\\\n"
+                     "\"Wine27j\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n\n");
+    verify_reg_nonexist(hkey, "Wine27a");
+    verify_reg_nonexist(hkey, "Wine27b");
+    verify_reg_nonexist(hkey, "Wine27c");
+    verify_reg_nonexist(hkey, "Wine27d");
+    verify_reg_nonexist(hkey, "Wine27e");
+    verify_reg(hkey, "Wine27f", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg_nonexist(hkey, "Wine27g");
+    verify_reg_nonexist(hkey, "Wine27h");
+    verify_reg_nonexist(hkey, "Wine27i");
+    verify_reg(hkey, "Wine27j", REG_EXPAND_SZ, "%PATH%", 7, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine28a\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "@=\"Default value 1\"\n\n");
+    verify_reg_nonexist(hkey, "Wine28a");
+    verify_reg_nonexist(hkey, NULL);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine28b\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     ";comment\n"
+                     "@=\"Default value 2\"\n\n");
+    verify_reg_nonexist(hkey, "Wine28b");
+    verify_reg_nonexist(hkey, NULL);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine28c\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "#comment\n"
+                     "@=\"Default value 3\"\n\n");
+    verify_reg_nonexist(hkey, "Wine28c");
+    verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
+
+    lr = RegDeleteValueW(hkey, NULL);
+    ok(lr == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", lr);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine28d\"=hex(2):4c,00,69,00,6e,00,65,00,20,00,\\\n\n"
+                     "@=\"Default value 4\"\n\n");
+    verify_reg_nonexist(hkey, "Wine28d");
+    verify_reg_nonexist(hkey, NULL);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine28e\"=hex(2):4c,00,69,00,6e,00,65,00,20,00\\\n"
+                     "@=\"Default value 5\"\n\n");
+    verify_reg_nonexist(hkey, "Wine28e");
+    verify_reg(hkey, NULL, REG_SZ, "Default value 5", 16, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine29a\"=hex:11,22,33,\\\n"
+                     "\\\n"
+                     "  44,55,66\n"
+                     "\"Wine29b\"=hex:11,22,33,\\\n"
+                     "  \\\n"
+                     "  44,55,66\n\n");
+    verify_reg_nonexist(hkey, "Wine29a");
+    verify_reg_nonexist(hkey, "Wine29b");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine30a\"=hex(0):25,48,4f,4d,45,25,5c,/\n"
+                     "  25,50,41,54,48,25,00\n"
+                     "\"Wine30b\"=hex(0):25,48,4f,4d,45,25,5c/\n"
+                     "  25,50,41,54,48,25,00\n\n");
+    verify_reg_nonexist(hkey, "Wine30a");
+    verify_reg_nonexist(hkey, "Wine30b");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine31\"=hex(7):4c,00,69,00,6e,00,65,00,20,00\\");
+    verify_reg_nonexist(hkey, "Wine31");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine32a\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "  ,63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine32b\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "  63,00,,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n");
+    verify_reg_nonexist(hkey, "Wine32a");
+    verify_reg_nonexist(hkey, "Wine32b");
+
+    RegCloseKey(hkey);
+
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+}
+
 static void test_invalid_import_31(void)
 {
     HKEY hkey;
@@ -2758,6 +3267,7 @@ START_TEST(regedit)
     test_basic_import_unicode();
     test_basic_import_31();
     test_invalid_import();
+    test_invalid_import_unicode();
     test_invalid_import_31();
     test_comments();
     test_comments_unicode();
