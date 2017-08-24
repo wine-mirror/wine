@@ -1836,6 +1836,9 @@ static void test_import_with_whitespace(void)
     LONG lr;
     DWORD dword;
 
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+
     exec_import_str("  REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
 
@@ -1982,6 +1985,9 @@ static void test_key_creation_and_deletion(void)
     HKEY hkey, subkey;
     LONG lr;
 
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
 
@@ -2111,6 +2117,9 @@ static void test_value_deletion(void)
     LONG lr;
     DWORD dword = 0x8;
     BYTE hex[4] = {0x11, 0x22, 0x33, 0x44};
+
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
