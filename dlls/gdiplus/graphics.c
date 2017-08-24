@@ -898,9 +898,8 @@ static ARGB sample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT wi
         if (y < 0)
             y = height*2 + y % (height * 2);
 
-        if ((attributes->wrap & 1) == 1)
+        if (attributes->wrap & WrapModeTileFlipX)
         {
-            /* Flip X */
             if ((x / width) % 2 == 0)
                 x = x % width;
             else
@@ -909,9 +908,8 @@ static ARGB sample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT wi
         else
             x = x % width;
 
-        if ((attributes->wrap & 2) == 2)
+        if (attributes->wrap & WrapModeTileFlipY)
         {
-            /* Flip Y */
             if ((y / height) % 2 == 0)
                 y = y % height;
             else
