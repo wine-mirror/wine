@@ -5014,7 +5014,6 @@ static void test_png_color_formats(void)
 
         status = GdipGetImagePixelFormat(image, &format);
         expect(Ok, status);
-todo_wine_if(td[i].bit_depth == 8 && td[i].color_type == 0)
         ok(format == td[i].format ||
            broken(td[i].bit_depth == 1 && td[i].color_type == 0 && format == PixelFormat32bppARGB), /* XP */
            "%d: expected %#x, got %#x\n", i, td[i].format, format);
