@@ -5148,6 +5148,8 @@ HRESULT create_trimmingsign(IDWriteFactory5 *factory, IDWriteTextFormat *format,
 
     IDWriteTextLayout_SetWordWrapping(This->layout, DWRITE_WORD_WRAPPING_NO_WRAP);
     IDWriteTextLayout_SetParagraphAlignment(This->layout, DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+    IDWriteTextLayout_SetTextAlignment(This->layout, DWRITE_TEXT_ALIGNMENT_LEADING);
+
     *sign = &This->IDWriteInlineObject_iface;
 
     return S_OK;

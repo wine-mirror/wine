@@ -1237,6 +1237,7 @@ static void test_CreateEllipsisTrimmingSign(void)
     static const WCHAR engbW[] = {'e','n','-','G','B',0};
     DWRITE_INLINE_OBJECT_METRICS metrics;
     DWRITE_BREAK_CONDITION before, after;
+    struct renderer_context ctxt;
     IDWriteTextFormat *format;
     IDWriteInlineObject *sign;
     IDWriteFactory *factory;
@@ -1299,6 +1300,25 @@ if (0) {/* crashes on native */
     hr = IDWriteInlineObject_Draw(sign, NULL, &testrenderer, 0.0f, 0.0f, FALSE, FALSE, (void *)0xdeadbeef);
     ok(hr == S_OK, "Failed to draw trimming sign, hr %#x.\n", hr);
     ok_sequence(sequences, RENDERER_ID, drawellipsis_seq, "ellipsis sign draw with effect test", FALSE);
+
+    memset(&ctxt, 0, sizeof(ctxt));
+    hr = IDWriteInlineObject_Draw(sign, &ctxt, &testrenderer, 123.0f, 456.0f, FALSE, FALSE, NULL);
+    ok(hr == S_OK, "Failed to draw trimming sign, hr %#x.\n", hr);
+    ok(ctxt.originX == 123.0f && ctxt.originY == 456.0f, "Unexpected drawing origin\n");
+
+    IDWriteInlineObject_Release(sign);
+
+    /* Centered format */
+    hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_CENTER);
+    ok(hr == S_OK, "Failed to set text alignment, hr %#x.\n", hr);
+
+    hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &sign);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&ctxt, 0, sizeof(ctxt));
+    hr = IDWriteInlineObject_Draw(sign, &ctxt, &testrenderer, 123.0f, 456.0f, FALSE, FALSE, NULL);
+    ok(hr == S_OK, "Failed to draw trimming sign, hr %#x.\n", hr);
+    ok(ctxt.originX == 123.0f && ctxt.originY == 456.0f, "Unexpected drawing origin\n");
 
     IDWriteInlineObject_Release(sign);
 
