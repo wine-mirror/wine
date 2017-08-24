@@ -1982,10 +1982,26 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteText
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawInlineObject(IDWriteTextRenderer *iface, void *ctx,
         float origin_x, float origin_y, IDWriteInlineObject *object, BOOL is_sideways, BOOL is_rtl, IUnknown *effect)
 {
+    struct d2d_draw_text_layout_ctx *context = ctx;
+    ID2D1Brush *brush;
+    HRESULT hr;
+
     TRACE("iface %p, ctx %p, origin_x %.8e, origin_y %.8e, object %p, is_sideways %#x, is_rtl %#x, effect %p.\n",
             iface, ctx, origin_x, origin_y, object, is_sideways, is_rtl, effect);
 
-    return IDWriteInlineObject_Draw(object, ctx, iface, origin_x, origin_y, is_sideways, is_rtl, effect);
+    /* Inline objects may not pass effects all the way down, when using layout object internally for example.
+       This is how default trimming sign object in DirectWrite works - it does not use effect passed to Draw(),
+       and resulting DrawGlyphRun() is always called with NULL effect, however original effect is used and correct
+       brush is selected at Direct2D level. */
+    brush = context->brush;
+    context->brush = d2d_draw_get_text_brush(context, effect);
+
+    hr = IDWriteInlineObject_Draw(object, ctx, iface, origin_x, origin_y, is_sideways, is_rtl, effect);
+
+    ID2D1Brush_Release(context->brush);
+    context->brush = brush;
+
+    return hr;
 }
 
 static const struct IDWriteTextRendererVtbl d2d_text_renderer_vtbl =
