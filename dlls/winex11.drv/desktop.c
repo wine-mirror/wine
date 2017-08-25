@@ -37,9 +37,43 @@ static unsigned int dd_mode_count;
 static unsigned int max_width;
 static unsigned int max_height;
 
-static const unsigned int widths[]  = {320, 320, 400, 512, 640, 640, 800, 1024, 1152, 1280, 1280, 1400, 1600};
-static const unsigned int heights[] = {200, 240, 300, 384, 400, 480, 600,  768,  864,  960, 1024, 1050, 1200};
-#define NUM_DESKTOP_MODES (sizeof(widths) / sizeof(widths[0]))
+static struct screen_size {
+    unsigned int width;
+    unsigned int height;
+} screen_sizes[] = {
+    /* 4:3 */
+    { 320,  240},
+    { 400,  300},
+    { 512,  384},
+    { 640,  480},
+    { 768,  576},
+    { 800,  600},
+    {1024,  768},
+    {1152,  864},
+    {1280,  960},
+    {1400, 1050},
+    {1600, 1200},
+    {2048, 1536},
+    /* 5:4 */
+    {1280, 1024},
+    {2560, 2048},
+    /* 16:9 */
+    {1280,  720},
+    {1366,  768},
+    {1600,  900},
+    {1920, 1080},
+    {2560, 1440},
+    {3840, 2160},
+    /* 16:10 */
+    { 320,  200},
+    { 640,  400},
+    {1280,  800},
+    {1440,  900},
+    {1680, 1050},
+    {1920, 1200},
+    {2560, 1600}
+};
+#define NUM_DESKTOP_MODES (sizeof(screen_sizes) / sizeof(struct screen_size))
 
 #define _NET_WM_STATE_REMOVE 0
 #define _NET_WM_STATE_ADD 1
@@ -56,13 +90,13 @@ static void make_modes(void)
     X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 60);
     for (i=0; i<NUM_DESKTOP_MODES; i++)
     {
-        if ( (widths[i] <= max_width) && (heights[i] <= max_height) )
+        if ( (screen_sizes[i].width <= max_width) && (screen_sizes[i].height <= max_height) )
         {
-            if ( ( (widths[i] != max_width) || (heights[i] != max_height) ) &&
-                 ( (widths[i] != screen_width) || (heights[i] != screen_height) ) )
+            if ( ( (screen_sizes[i].width != max_width) || (screen_sizes[i].height != max_height) ) &&
+                 ( (screen_sizes[i].width != screen_width) || (screen_sizes[i].height != screen_height) ) )
             {
                 /* only add them if they are smaller than the root window and unique */
-                X11DRV_Settings_AddOneMode(widths[i], heights[i], 0, 60);
+                X11DRV_Settings_AddOneMode(screen_sizes[i].width, screen_sizes[i].height, 0, 60);
             }
         }
     }
