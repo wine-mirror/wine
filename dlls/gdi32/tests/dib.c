@@ -1753,7 +1753,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
             y += 25;
         }
     }
-    compare_hash_broken_todo(hdc, bmi, bits, "top-down 8888 dib brush patblt", 0, dib_is_1bpp);
+    compare_hash(hdc, bmi, bits, "top-down 8888 dib brush patblt");
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);

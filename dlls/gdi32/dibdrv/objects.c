@@ -1933,7 +1933,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     RGBQUAD color_table[2];
     dib_info pattern;
-    BOOL dither = (brush->dib.bit_count == 1);
+    BOOL dither = (brush->dib.bit_count == 1) || (pdev->dib.bit_count == 1);
 
     if (brush->pattern.info->bmiHeader.biClrUsed && brush->pattern.usage == DIB_PAL_COLORS)
     {
