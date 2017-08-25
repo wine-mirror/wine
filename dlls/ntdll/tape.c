@@ -405,9 +405,9 @@ static NTSTATUS TAPE_SetPosition( int fd, const TAPE_SET_POSITION *data )
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
 
-    TRACE( "fd: %d method: 0x%08x partition: 0x%08x offset: 0x%x%08x immediate: 0x%02x\n",
-           fd, data->Method, data->Partition, (DWORD)(data->Offset.QuadPart >> 32),
-           (DWORD)data->Offset.QuadPart, data->Immediate );
+    TRACE( "fd: %d method: 0x%08x partition: 0x%08x offset: 0x%s immediate: 0x%02x\n",
+           fd, data->Method, data->Partition, wine_dbgstr_longlong(data->Offset.QuadPart),
+           data->Immediate );
 
     if (sizeof(cmd.mt_count) < sizeof(data->Offset.QuadPart) &&
         (int)data->Offset.QuadPart != data->Offset.QuadPart)
