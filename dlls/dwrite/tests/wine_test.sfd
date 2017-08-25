@@ -83,10 +83,10 @@ NameList: Adobe Glyph List
 DisplaySize: -24
 AntiAlias: 1
 FitToEm: 1
-WinInfo: 48 16 4
+WinInfo: 47 47 13
 BeginPrivate: 0
 EndPrivate
-BeginChars: 65539 7
+BeginChars: 65539 8
 
 StartChar: .notdef
 Encoding: 65536 -1 0
@@ -207,7 +207,7 @@ StartChar: A
 Encoding: 65 65 5
 Width: 1000
 VWidth: 0
-Flags: WO
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -226,7 +226,7 @@ StartChar: D
 Encoding: 68 68 6
 Width: 1000
 VWidth: 0
-Flags: WO
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -238,6 +238,18 @@ SplineSet
  533 -410.3 l 1,5,-1
  525 -30.7998 l 1,6,-1
  461 -30.7998 l 25,0,-1
+EndSplineSet
+EndChar
+
+StartChar: B
+Encoding: 66 66 7
+Width: 2048
+VWidth: 0
+Flags: W
+LayerCount: 2
+Fore
+SplineSet
+500 500 m 24,0,-1
 EndSplineSet
 EndChar
 EndChars

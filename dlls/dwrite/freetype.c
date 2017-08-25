@@ -320,7 +320,6 @@ struct decompose_context {
     FLOAT xoffset;
     FLOAT yoffset;
     BOOL figure_started;
-    BOOL figure_closed;
     BOOL move_to;     /* last call was 'move_to' */
     FT_Vector origin; /* 'pen' position from last call */
 };
@@ -331,21 +330,29 @@ static inline void ft_vector_to_d2d_point(const FT_Vector *v, FLOAT xoffset, FLO
     p->y = (v->y / 64.0f) + yoffset;
 }
 
+static void decompose_beginfigure(struct decompose_context *ctxt)
+{
+    D2D1_POINT_2F point;
+
+    if (!ctxt->move_to)
+        return;
+
+    ft_vector_to_d2d_point(&ctxt->origin, ctxt->xoffset, ctxt->yoffset, &point);
+    ID2D1SimplifiedGeometrySink_BeginFigure(ctxt->sink, point, D2D1_FIGURE_BEGIN_FILLED);
+
+    ctxt->figure_started = TRUE;
+    ctxt->move_to = FALSE;
+}
+
 static int decompose_move_to(const FT_Vector *to, void *user)
 {
     struct decompose_context *ctxt = (struct decompose_context*)user;
-    D2D1_POINT_2F point;
 
     if (ctxt->figure_started) {
         ID2D1SimplifiedGeometrySink_EndFigure(ctxt->sink, D2D1_FIGURE_END_CLOSED);
-        ctxt->figure_closed = TRUE;
+        ctxt->figure_started = FALSE;
     }
-    else
-        ctxt->figure_closed = FALSE;
-    ctxt->figure_started = TRUE;
 
-    ft_vector_to_d2d_point(to, ctxt->xoffset, ctxt->yoffset, &point);
-    ID2D1SimplifiedGeometrySink_BeginFigure(ctxt->sink, point, D2D1_FIGURE_BEGIN_FILLED);
     ctxt->move_to = TRUE;
     ctxt->origin = *to;
     return 0;
@@ -354,18 +361,17 @@ static int decompose_move_to(const FT_Vector *to, void *user)
 static int decompose_line_to(const FT_Vector *to, void *user)
 {
     struct decompose_context *ctxt = (struct decompose_context*)user;
-    /* special case for empty contours, in a way freetype returns them */
-    if (ctxt->move_to && !memcmp(to, &ctxt->origin, sizeof(*to))) {
-        ID2D1SimplifiedGeometrySink_EndFigure(ctxt->sink, D2D1_FIGURE_END_CLOSED);
-        ctxt->figure_closed = TRUE;
-    }
-    else {
-        D2D1_POINT_2F point;
-        ft_vector_to_d2d_point(to, ctxt->xoffset, ctxt->yoffset, &point);
-        ID2D1SimplifiedGeometrySink_AddLines(ctxt->sink, &point, 1);
-        ctxt->figure_closed = FALSE;
-    }
-    ctxt->move_to = FALSE;
+    D2D1_POINT_2F point;
+
+    /* Special case for empty contours, in a way freetype returns them. */
+    if (ctxt->move_to && !memcmp(to, &ctxt->origin, sizeof(*to)))
+        return 0;
+
+    decompose_beginfigure(ctxt);
+
+    ft_vector_to_d2d_point(to, ctxt->xoffset, ctxt->yoffset, &point);
+    ID2D1SimplifiedGeometrySink_AddLines(ctxt->sink, &point, 1);
+
     ctxt->origin = *to;
     return 0;
 }
@@ -375,6 +381,8 @@ static int decompose_conic_to(const FT_Vector *control, const FT_Vector *to, voi
     struct decompose_context *ctxt = (struct decompose_context*)user;
     D2D1_POINT_2F points[3];
     FT_Vector cubic[3];
+
+    decompose_beginfigure(ctxt);
 
     /* convert from quadratic to cubic */
 
@@ -410,8 +418,6 @@ static int decompose_conic_to(const FT_Vector *control, const FT_Vector *to, voi
     ft_vector_to_d2d_point(cubic + 1, ctxt->xoffset, ctxt->yoffset, points + 1);
     ft_vector_to_d2d_point(cubic + 2, ctxt->xoffset, ctxt->yoffset, points + 2);
     ID2D1SimplifiedGeometrySink_AddBeziers(ctxt->sink, (D2D1_BEZIER_SEGMENT*)points, 1);
-    ctxt->figure_closed = FALSE;
-    ctxt->move_to = FALSE;
     ctxt->origin = *to;
     return 0;
 }
@@ -422,12 +428,12 @@ static int decompose_cubic_to(const FT_Vector *control1, const FT_Vector *contro
     struct decompose_context *ctxt = (struct decompose_context*)user;
     D2D1_POINT_2F points[3];
 
+    decompose_beginfigure(ctxt);
+
     ft_vector_to_d2d_point(control1, ctxt->xoffset, ctxt->yoffset, points);
     ft_vector_to_d2d_point(control2, ctxt->xoffset, ctxt->yoffset, points + 1);
     ft_vector_to_d2d_point(to, ctxt->xoffset, ctxt->yoffset, points + 2);
     ID2D1SimplifiedGeometrySink_AddBeziers(ctxt->sink, (D2D1_BEZIER_SEGMENT*)points, 1);
-    ctxt->figure_closed = FALSE;
-    ctxt->move_to = FALSE;
     ctxt->origin = *to;
     return 0;
 }
@@ -448,14 +454,13 @@ static void decompose_outline(FT_Outline *outline, FLOAT xoffset, FLOAT yoffset,
     context.xoffset = xoffset;
     context.yoffset = yoffset;
     context.figure_started = FALSE;
-    context.figure_closed = FALSE;
     context.move_to = FALSE;
     context.origin.x = 0;
     context.origin.y = 0;
 
     pFT_Outline_Decompose(outline, &decompose_funcs, &context);
 
-    if (!context.figure_closed && outline->n_points)
+    if (context.figure_started)
         ID2D1SimplifiedGeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 }
 

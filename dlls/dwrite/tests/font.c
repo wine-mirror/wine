@@ -3061,7 +3061,7 @@ if (face2) {
 
     hr = IDWriteFontFace_GetGlyphIndices(face, codePoints, 1, indices);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(indices[0] == 6, "got index %i\n", indices[0]);
+    ok(indices[0] == 7, "Unexpected glyph index, %u.\n", indices[0]);
     IDWriteFontFace_Release(face);
     IDWriteFontFile_Release(file);
 
@@ -4420,6 +4420,18 @@ static void test_GetGlyphRunOutline(void)
     hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, NULL, 0, FALSE, FALSE, &test_geomsink2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* Glyph with open figure, single contour point. */
+    codepoint = 'B';
+    glyphs[0] = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(face, &codepoint, 1, glyphs);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(glyphs[0] > 0, "got %u\n", glyphs[0]);
+
+    SET_EXPECT(setfillmode);
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, NULL, 1, FALSE, FALSE, &test_geomsink2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    CHECK_CALLED(setfillmode);
+
     IDWriteFactory_Release(factory);
     IDWriteFontFace_Release(face);
     DELETE_FONTFILE(path);
@@ -4578,7 +4590,7 @@ static void test_GetGlyphCount(void)
     IDWriteFontFile_Release(file);
 
     count = IDWriteFontFace_GetGlyphCount(fontface);
-    ok(count == 7, "got %u\n", count);
+    ok(count == 8, "got %u\n", count);
 
     IDWriteFontFace_Release(fontface);
     ref = IDWriteFactory_Release(factory);
