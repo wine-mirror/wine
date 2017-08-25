@@ -3016,7 +3016,7 @@ static void test_key_creation_and_deletion(void)
                     "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey4a]\n"
                     "\"Wine1a\"=dword:12345678\n\n");
     verify_key_nonexist(hkey, "Subkey4a");
-    todo_wine verify_reg_nonexist(hkey, "Wine1a");
+    verify_reg_nonexist(hkey, "Wine1a");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n"
@@ -3166,7 +3166,7 @@ static void test_key_creation_and_deletion_unicode(void)
                      "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey4a]\n"
                      "\"Wine1a\"=dword:12345678\n\n");
     verify_key_nonexist(hkey, "Subkey4a");
-    todo_wine verify_reg_nonexist(hkey, "Wine1a");
+    verify_reg_nonexist(hkey, "Wine1a");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n"

@@ -708,6 +708,8 @@ static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos)
 {
     WCHAR *p = pos;
 
+    close_key(parser);
+
     if (*p == 'H' || *p == 'h')
         delete_registry_key(p);
 
