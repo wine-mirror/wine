@@ -5030,14 +5030,13 @@ static HRESULT WINAPI dwritetrimmingsign_Draw(IDWriteInlineObject *iface, void *
     FLOAT originX, FLOAT originY, BOOL is_sideways, BOOL is_rtl, IUnknown *effect)
 {
     struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
-    DWRITE_TEXT_METRICS metrics;
     DWRITE_LINE_METRICS line;
     UINT32 line_count;
 
-    TRACE("(%p)->(%p %p %.2f %.2f %d %d %p)\n", This, context, renderer, originX, originY, is_sideways, is_rtl, effect);
+    TRACE("(%p)->(%p %p %.2f %.2f %d %d %p)\n", This, context, renderer, originX, originY,
+            is_sideways, is_rtl, effect);
 
     IDWriteTextLayout_GetLineMetrics(This->layout, &line, 1, &line_count);
-    IDWriteTextLayout_GetMetrics(This->layout, &metrics);
     return IDWriteTextLayout_Draw(This->layout, context, renderer, originX, originY - line.baseline);
 }
 
