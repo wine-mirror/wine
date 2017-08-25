@@ -113,6 +113,8 @@ struct channel
             HINTERNET session;
             HINTERNET connect;
             HINTERNET request;
+            WCHAR    *path;
+            DWORD     flags;
         } http;
         struct
         {
@@ -169,6 +171,9 @@ static void reset_channel( struct channel *channel )
         channel->u.http.connect = NULL;
         WinHttpCloseHandle( channel->u.http.session );
         channel->u.http.session = NULL;
+        heap_free( channel->u.http.path );
+        channel->u.http.path    = NULL;
+        channel->u.http.flags   = 0;
         break;
 
     case WS_TCP_CHANNEL_BINDING:
@@ -587,34 +592,29 @@ static HRESULT connect_channel_http( struct channel *channel )
 {
     static const WCHAR agentW[] =
         {'M','S','-','W','e','b','S','e','r','v','i','c','e','s','/','1','.','0',0};
-    static const WCHAR postW[] =
-        {'P','O','S','T',0};
-    HINTERNET ses = NULL, con = NULL, req = NULL;
-    WCHAR *path;
+    HINTERNET ses = NULL, con = NULL;
     URL_COMPONENTS uc;
-    DWORD flags = 0;
     HRESULT hr;
 
-    if (channel->u.http.request) return S_OK;
+    if (channel->u.http.connect) return S_OK;
 
     if ((hr = parse_http_url( channel->addr.url.chars, channel->addr.url.length, &uc )) != S_OK) return hr;
-    if (!uc.dwExtraInfoLength) path = uc.lpszUrlPath;
-    else if (!(path = heap_alloc( (uc.dwUrlPathLength + uc.dwExtraInfoLength + 1) * sizeof(WCHAR) )))
+    if (!(channel->u.http.path = heap_alloc( (uc.dwUrlPathLength + uc.dwExtraInfoLength + 1) * sizeof(WCHAR) )))
     {
         hr = E_OUTOFMEMORY;
         goto done;
     }
     else
     {
-        strcpyW( path, uc.lpszUrlPath );
-        strcatW( path, uc.lpszExtraInfo );
+        strcpyW( channel->u.http.path, uc.lpszUrlPath );
+        if (uc.dwExtraInfoLength) strcatW( channel->u.http.path, uc.lpszExtraInfo );
     }
 
     switch (uc.nScheme)
     {
     case INTERNET_SCHEME_HTTP: break;
     case INTERNET_SCHEME_HTTPS:
-        flags |= WINHTTP_FLAG_SECURE;
+        channel->u.http.flags |= WINHTTP_FLAG_SECURE;
         break;
 
     default:
@@ -632,29 +632,19 @@ static HRESULT connect_channel_http( struct channel *channel )
         hr = HRESULT_FROM_WIN32( GetLastError() );
         goto done;
     }
-    if (!(req = WinHttpOpenRequest( con, postW, path, NULL, NULL, NULL, flags )))
-    {
-        hr = HRESULT_FROM_WIN32( GetLastError() );
-        goto done;
-    }
-
-    if ((hr = message_insert_http_headers( channel->msg, req )) != S_OK) goto done;
 
     channel->u.http.session = ses;
     channel->u.http.connect = con;
-    channel->u.http.request = req;
 
 done:
     if (hr != S_OK)
     {
-        WinHttpCloseHandle( req );
         WinHttpCloseHandle( con );
         WinHttpCloseHandle( ses );
     }
     heap_free( uc.lpszHostName );
     heap_free( uc.lpszUrlPath );
     heap_free( uc.lpszExtraInfo );
-    if (path != uc.lpszUrlPath) heap_free( path );
     return hr;
 }
 
@@ -762,7 +752,7 @@ static HRESULT write_message( WS_MESSAGE *handle, WS_XML_WRITER *writer, const W
     return WsWriteEnvelopeEnd( handle, NULL );
 }
 
-static HRESULT send_message_http( HANDLE request, BYTE *data, ULONG len )
+static HRESULT send_message_http( HINTERNET request, BYTE *data, ULONG len )
 {
     if (!WinHttpSendRequest( request, NULL, 0, data, len, len, 0 ))
         return HRESULT_FROM_WIN32( GetLastError() );
@@ -984,6 +974,14 @@ static HRESULT send_sized_envelope( struct channel *channel, BYTE *data, ULONG l
     return send_bytes( channel->u.tcp.socket, data, len );
 }
 
+static HRESULT open_http_request( struct channel *channel, HINTERNET *req )
+{
+    static const WCHAR postW[] = {'P','O','S','T',0};
+    if ((*req = WinHttpOpenRequest( channel->u.http.connect, postW, channel->u.http.path,
+                                    NULL, NULL, NULL, channel->u.http.flags ))) return S_OK;
+    return HRESULT_FROM_WIN32( GetLastError() );
+}
+
 static HRESULT send_message( struct channel *channel, WS_MESSAGE *msg )
 {
     WS_XML_WRITER *writer;
@@ -999,6 +997,13 @@ static HRESULT send_message( struct channel *channel, WS_MESSAGE *msg )
     switch (channel->binding)
     {
     case WS_HTTP_CHANNEL_BINDING:
+        if (channel->u.http.request)
+        {
+            WinHttpCloseHandle( channel->u.http.request );
+            channel->u.http.request = NULL;
+        }
+        if ((hr = open_http_request( channel, &channel->u.http.request )) != S_OK) return hr;
+        if ((hr = message_insert_http_headers( msg, channel->u.http.request )) != S_OK) return hr;
         return send_message_http( channel->u.http.request, buf.bytes, buf.length );
 
     case WS_TCP_CHANNEL_BINDING:

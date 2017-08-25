@@ -1610,9 +1610,13 @@ HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
 
 static WCHAR *build_http_header( const WCHAR *name, const WCHAR *value, ULONG *ret_len )
 {
-    static const WCHAR fmtW[] = {'%','s',':',' ','%','s',0};
-    WCHAR *ret = heap_alloc( (strlenW(name) + strlenW(value) + 3) * sizeof(WCHAR) );
-    if (ret) *ret_len = sprintfW( ret, fmtW, name, value );
+    int len_name = strlenW( name ), len_value = strlenW( value );
+    WCHAR *ret = heap_alloc( (len_name + len_value) * sizeof(WCHAR) );
+
+    if (!ret) return NULL;
+    memcpy( ret, name, len_name * sizeof(WCHAR) );
+    memcpy( ret + len_name, value, len_value * sizeof(WCHAR) );
+    *ret_len = len_name + len_value;
     return ret;
 }
 
@@ -1625,7 +1629,7 @@ static inline HRESULT insert_http_header( HINTERNET req, const WCHAR *header, UL
 HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
 {
     static const WCHAR contenttypeW[] =
-        {'C','o','n','t','e','n','t','-','T','y','p','e',0};
+        {'C','o','n','t','e','n','t','-','T','y','p','e',':',' ',0};
     static const WCHAR soapxmlW[] =
         {'a','p','p','l','i','c','a','t','i','o','n','/','s','o','a','p','+','x','m','l',0};
     static const WCHAR textxmlW[] =
@@ -1675,7 +1679,7 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     {
     case WS_ENVELOPE_VERSION_SOAP_1_1:
     {
-        static const WCHAR soapactionW[] = {'S','O','A','P','A','c','t','i','o','n',0};
+        static const WCHAR soapactionW[] = {'S','O','A','P','A','c','t','i','o','n',':',' ',0};
 
         if (!(len = msg->action.length)) break;
 
