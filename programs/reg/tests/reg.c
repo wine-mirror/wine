@@ -1734,6 +1734,28 @@ static void test_import(void)
     verify_key_nonexist(hkey, "Subkey3a");
     verify_key_nonexist(hkey, "Subkey3b");
 
+    /* Test mixed key creation and deletion. We start by creating a subkey. */
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey4a]\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_key(hkey, "Subkey4a");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n"
+                    "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey4a]\n"
+                    "\"Wine46a\"=dword:12345678\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_key_nonexist(hkey, "Subkey4a");
+    todo_wine verify_reg_nonexist(hkey, "Wine46a");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n"
+                    "[HKEY_CURRENT_USERS\\" KEY_BASE "\\Subkey4b]\n"
+                    "\"Wine46b\"=dword:12345678\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_key_nonexist(hkey, "Subkey4b");
+    verify_reg_nonexist(hkey, "Wine46b");
+
     /* Test value deletion. We start by creating some registry values. */
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3189,6 +3211,28 @@ static void test_unicode_import(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_key_nonexist(hkey, "Subkey3a");
     verify_key_nonexist(hkey, "Subkey3b");
+
+    /* Test mixed key creation and deletion. We start by creating a subkey. */
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey4a]\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_key(hkey, "Subkey4a");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n"
+                     "[-HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey4a]\n"
+                     "\"Wine46a\"=dword:12345678\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_key_nonexist(hkey, "Subkey4a");
+    todo_wine verify_reg_nonexist(hkey, "Wine46a");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n"
+                     "[HKEY_CURRENT_USERS\\" KEY_BASE "\\Subkey4b]\n"
+                     "\"Wine46b\"=dword:12345678\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_key_nonexist(hkey, "Subkey4b");
+    verify_reg_nonexist(hkey, "Wine46b");
 
     /* Test value deletion. We start by creating some registry values. */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
