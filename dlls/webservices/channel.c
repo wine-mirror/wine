@@ -610,6 +610,7 @@ static HRESULT connect_channel_http( struct channel *channel )
         if (uc.dwExtraInfoLength) strcatW( channel->u.http.path, uc.lpszExtraInfo );
     }
 
+    channel->u.http.flags = WINHTTP_FLAG_REFRESH;
     switch (uc.nScheme)
     {
     case INTERNET_SCHEME_HTTP: break;
