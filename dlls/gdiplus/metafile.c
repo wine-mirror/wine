@@ -1423,8 +1423,6 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         /* regular EMF record */
         if (metafile->playback_dc)
         {
-            ENHMETARECORD *record;
-
             switch (recordType)
             {
             case EMR_SETMAPMODE:
@@ -1469,24 +1467,27 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 return Ok;
             }
             default:
+            {
+                ENHMETARECORD *record = heap_alloc_zero(dataSize + 8);
+
+                if (record)
+                {
+                    record->iType = recordType;
+                    record->nSize = dataSize + 8;
+                    memcpy(record->dParm, data, dataSize);
+
+                    if(PlayEnhMetaFileRecord(metafile->playback_dc, metafile->handle_table,
+                            record, metafile->handle_count) == 0)
+                        ERR("PlayEnhMetaFileRecord failed\n");
+
+                    heap_free(record);
+                }
+                else
+                    return OutOfMemory;
+
                 break;
             }
-
-            record = heap_alloc_zero(dataSize + 8);
-
-            if (record)
-            {
-                record->iType = recordType;
-                record->nSize = dataSize + 8;
-                memcpy(record->dParm, data, dataSize);
-
-                PlayEnhMetaFileRecord(metafile->playback_dc, metafile->handle_table,
-                    record, metafile->handle_count);
-
-                heap_free(record);
             }
-            else
-                return OutOfMemory;
         }
     }
     else
