@@ -22634,6 +22634,225 @@ done:
     DestroyWindow(window);
 }
 
+static void test_mvp_software_vertex_shaders(void)
+{
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DVertexShader9 *pure_sw_shader = NULL;
+    IDirect3DVertexShader9 *reladdr_shader = NULL;
+    IDirect3DDevice9 *device;
+    DWORD expected_color;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
+    static const float c_index[4] = {256.0f, 0.0f, 0.0f, 0.0f};
+    static const float c_color[4] = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const DWORD reladdr_shader_code[] =
+    {
+        0xfffe0200,                                                             /* vs_2_0                       */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
+        0x05000051, 0xa00f0001, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000, /* def c1, 1.0, 1.0, 1.0, 1.0   */
+        0x0200002e, 0xb0010000, 0xa0000000,                                     /* mova a0.x, c0.x              */
+        0x03000001, 0xd00f0000, 0xa0e42000, 0xb0000000,                         /* mov oD0, c[a0.x]             */
+        0x02000001, 0xd0040000, 0xa0e40001,                                     /* mov oD0.z, c1                */
+        0x02000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
+        0x0000ffff                                                              /* END                          */
+    };
+    static const DWORD pure_sw_shader_code[] =
+    {
+        0xfffe0200,                                                             /* vs_2_0 */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
+        0x05000051, 0xa00f0100, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000, /* def c256, 1.0, 1.0, 1.0, 1.0 */
+        0x02000001, 0xd00f0000, 0xa0e40100,                                     /* mov oD0, c256                */
+        0x02000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
+        0x0000ffff                                                              /* END                          */
+    };
+
+    static const struct
+    {
+        float position[3];
+        DWORD color;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
+        {{-1.0f,  1.0f, 0.0f}, 0xffff0000},
+        {{ 1.0f,  1.0f, 0.0f}, 0xffff0000},
+        {{ 1.0f, -1.0f, 0.0f}, 0xffff0000},
+    };
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
+        {0, 0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT,    D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END()
+    };
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = window;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    if (FAILED(IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_MIXED_VERTEXPROCESSING, &present_parameters, &device)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(2, 0))
+    {
+        skip("No vs_2_0 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetSoftwareVertexProcessing(device, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, reladdr_shader_code, &reladdr_shader);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateVertexShader(device, pure_sw_shader_code, &pure_sw_shader);
+    todo_wine
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexShader(device, pure_sw_shader);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    todo_wine
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    expected_color = 0; /* Nothing rendered. */
+    color = getPixelColor(device, 5, 5);
+    todo_wine
+    ok(color == expected_color, "Expected color 0x%08x, got 0x%08x (sw shader in hw mode).\n",
+            expected_color, color);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    expected_color = 0x00ff0000; /* Color from vertex data and not from the shader. */
+    color = getPixelColor(device, 5, 5);
+    ok(color == expected_color, "Expected color 0x%08x, got 0x%08x (sw shader in hw mode, second attempt).\n",
+            expected_color, color);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSoftwareVertexProcessing(device, 1);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    expected_color = 0x00ffffff;
+    color = getPixelColor(device, 5, 5);
+    todo_wine
+    ok(color == expected_color, "Expected color 0x%08x, got 0x%08x (sw shader in sw mode).\n",
+            expected_color, color);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetSoftwareVertexProcessing(device, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, reladdr_shader);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, c_index, 1);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, (unsigned int)c_index[0], c_color, 1);
+    todo_wine
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    /* Index 256 is out of bounds for selected shader in HW mode. c[256] is 0 most of the time. It
+       is not guaranteed across all the adapters though, so disabling test. */
+#if 0
+    expected_color = 0x000000ff;
+    color = getPixelColor(device, 5, 5);
+    ok(color == expected_color, "Expected color 0x%08x, got 0x%08x (shader in hw mode).\n",
+            expected_color, color);
+#endif
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSoftwareVertexProcessing(device, 1);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    expected_color = 0x0000ffff; /* c[256] is c_color for SW shader. */
+    color = getPixelColor(device, 5, 5);
+    todo_wine
+    ok(color == expected_color, "Expected color 0x%08x, got 0x%08x (shader in sw mode).\n",
+            expected_color, color);
+
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    IDirect3DVertexShader9_Release(reladdr_shader);
+    if (pure_sw_shader)
+        IDirect3DVertexShader9_Release(pure_sw_shader);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -22764,4 +22983,5 @@ START_TEST(visual)
     test_backbuffer_resize();
     test_drawindexedprimitiveup();
     test_vertex_texture();
+    test_mvp_software_vertex_shaders();
 }
