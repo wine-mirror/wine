@@ -1087,8 +1087,9 @@ static HANDLE render_format( UINT id )
     for (i = 0; i < nb_current_x11_formats; i++)
     {
         if (current_x11_formats[i]->id != id) continue;
-        handle = import_selection( display, import_window, current_selection, current_x11_formats[i] );
-        if (handle) SetClipboardData( id, handle );
+        if (!(handle = import_selection( display, import_window,
+                                         current_selection, current_x11_formats[i] ))) continue;
+        SetClipboardData( id, handle );
         break;
     }
     return handle;
