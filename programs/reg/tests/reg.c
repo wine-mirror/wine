@@ -1746,7 +1746,7 @@ static void test_import(void)
                     "\"Wine46a\"=dword:12345678\n\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_key_nonexist(hkey, "Subkey4a");
-    todo_wine verify_reg_nonexist(hkey, "Wine46a");
+    verify_reg_nonexist(hkey, "Wine46a");
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n"
@@ -3224,7 +3224,7 @@ static void test_unicode_import(void)
                      "\"Wine46a\"=dword:12345678\n\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_key_nonexist(hkey, "Subkey4a");
-    todo_wine verify_reg_nonexist(hkey, "Wine46a");
+    verify_reg_nonexist(hkey, "Wine46a");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n"
