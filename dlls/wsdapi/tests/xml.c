@@ -35,7 +35,7 @@ static void BuildAnyForSingleElement_tests(void)
     WSDXML_NAME name;
     WSDXML_NAMESPACE ns;
     WCHAR nameText[] = {'E','l','1',0};
-    WCHAR text[] = {'H','e','l','l','o',0};
+    static const WCHAR text[] = {'H','e','l','l','o',0};
     static const WCHAR uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t','/',0};
     static const WCHAR prefix[] = {'t',0};
     HRESULT hr;
@@ -277,8 +277,8 @@ static void GetValueFromAny_tests(void)
     WCHAR child1NameText[] = {'T','i','m',0};
     WCHAR child2NameText[] = {'B','o','b',0};
     WCHAR child3NameText[] = {'J','o','e',0};
-    WCHAR child1Value[] = {'V','1',0};
-    WCHAR child2Value[] = {'V','2',0};
+    static const WCHAR child1Value[] = {'V','1',0};
+    static const WCHAR child2Value[] = {'V','2',0};
     static const WCHAR uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t','/',0};
     static const WCHAR uri2[] = {'h','t','t','p',':','/','/','t','e','s','t','2','.','t','e','s','t','/',0};
     static const WCHAR prefix[] = {'t',0};
@@ -379,15 +379,15 @@ static void GetValueFromAny_tests(void)
 
 static void XMLContext_AddNamespace_tests(void)
 {
-    WCHAR ns1Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t',0};
-    WCHAR ns2Uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','r','o','c','k','s',0};
-    WCHAR ns3Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','a','g','a','i','n',0};
-    WCHAR ns4Uri[] = {'h','t','t','p',':','/','/','o','n','e','.','m','o','r','e',0};
-    WCHAR prefix1[] = {'t','s','t',0};
-    WCHAR prefix2[] = {'w','i','n','e',0};
-    WCHAR unPrefix0[] = {'u','n','0',0};
-    WCHAR unPrefix1[] = {'u','n','1',0};
-    WCHAR unPrefix2[] = {'u','n','2',0};
+    static const WCHAR ns1Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t',0};
+    static const WCHAR ns2Uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','r','o','c','k','s',0};
+    static const WCHAR ns3Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','a','g','a','i','n',0};
+    static const WCHAR ns4Uri[] = {'h','t','t','p',':','/','/','o','n','e','.','m','o','r','e',0};
+    static const WCHAR prefix1[] = {'t','s','t',0};
+    static const WCHAR prefix2[] = {'w','i','n','e',0};
+    static const WCHAR unPrefix0[] = {'u','n','0',0};
+    static const WCHAR unPrefix1[] = {'u','n','1',0};
+    static const WCHAR unPrefix2[] = {'u','n','2',0};
 
     IWSDXMLContext *context;
     WSDXML_NAMESPACE *ns1 = NULL, *ns2 = NULL;
@@ -506,12 +506,12 @@ static void XMLContext_AddNamespace_tests(void)
 
 static void XMLContext_AddNameToNamespace_tests(void)
 {
-    WCHAR ns1Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t',0};
-    WCHAR ns2Uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','r','o','c','k','s',0};
-    WCHAR prefix2[] = {'w','i','n','e',0};
-    WCHAR unPrefix0[] = {'u','n','0',0};
-    WCHAR name1Text[] = {'B','o','b',0};
-    WCHAR name2Text[] = {'T','i','m',0};
+    static const WCHAR ns1Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t',0};
+    static const WCHAR ns2Uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','r','o','c','k','s',0};
+    static const WCHAR prefix2[] = {'w','i','n','e',0};
+    static const WCHAR unPrefix0[] = {'u','n','0',0};
+    static const WCHAR name1Text[] = {'B','o','b',0};
+    static const WCHAR name2Text[] = {'T','i','m',0};
     IWSDXMLContext *context;
     WSDXML_NAMESPACE *ns2 = NULL;
     WSDXML_NAME *name1 = NULL, *name2 = NULL;
