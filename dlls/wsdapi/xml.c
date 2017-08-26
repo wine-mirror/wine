@@ -529,6 +529,7 @@ static HRESULT WINAPI IWSDXMLContextImpl_AddNamespace(IWSDXMLContext *iface, LPC
     if (setNewPrefix)
     {
         WSDFreeLinkedMemory((void *)ns->PreferredPrefix);
+        ns->PreferredPrefix = NULL;
 
         if ((newPrefix != NULL) && (is_prefix_unique(This->namespaces, newPrefix)))
         {
