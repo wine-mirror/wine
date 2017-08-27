@@ -257,10 +257,12 @@ static inline BOOL MONTHCAL_IsDateEqual(const SYSTEMTIME *first, const SYSTEMTIM
 /* make sure that date fields are valid */
 static BOOL MONTHCAL_ValidateDate(const SYSTEMTIME *time)
 {
-  if(time->wMonth < 1 || time->wMonth > 12 ) return FALSE;
-  if(time->wDay > MONTHCAL_MonthLength(time->wMonth, time->wYear)) return FALSE;
+    if (time->wMonth < 1 || time->wMonth > 12 )
+        return FALSE;
+    if (time->wDay == 0 || time->wDay > MONTHCAL_MonthLength(time->wMonth, time->wYear))
+        return FALSE;
 
-  return TRUE;
+    return TRUE;
 }
 
 /* Copies timestamp part only.
@@ -1738,21 +1740,28 @@ MONTHCAL_GetToday(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *today)
 static BOOL
 MONTHCAL_UpdateToday(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *today)
 {
-  RECT new_r, old_r;
+    RECT rect;
 
-  if(MONTHCAL_IsDateEqual(today, &infoPtr->todaysDate)) return FALSE;
+    if (MONTHCAL_IsDateEqual(today, &infoPtr->todaysDate))
+        return FALSE;
 
-  MONTHCAL_GetDayRect(infoPtr, &infoPtr->todaysDate, &old_r, -1);
-  MONTHCAL_GetDayRect(infoPtr, today, &new_r, -1);
+    /* Invalidate old and new today day rectangle, and today label. */
+    if (MONTHCAL_ValidateDate(&infoPtr->todaysDate))
+    {
+        MONTHCAL_GetDayRect(infoPtr, &infoPtr->todaysDate, &rect, -1);
+        InvalidateRect(infoPtr->hwndSelf, &rect, FALSE);
+    }
 
-  infoPtr->todaysDate = *today;
+    if (MONTHCAL_ValidateDate(today))
+    {
+        MONTHCAL_GetDayRect(infoPtr, today, &rect, -1);
+        InvalidateRect(infoPtr->hwndSelf, &rect, FALSE);
+    }
 
-  /* only two days need redrawing */
-  InvalidateRect(infoPtr->hwndSelf, &old_r, FALSE);
-  InvalidateRect(infoPtr->hwndSelf, &new_r, FALSE);
-  /* and today label */
-  InvalidateRect(infoPtr->hwndSelf, &infoPtr->todayrect, FALSE);
-  return TRUE;
+    infoPtr->todaysDate = *today;
+
+    InvalidateRect(infoPtr->hwndSelf, &infoPtr->todayrect, FALSE);
+    return TRUE;
 }
 
 /* MCM_SETTODAT handler */
