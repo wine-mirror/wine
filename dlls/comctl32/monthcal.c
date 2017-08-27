@@ -1907,6 +1907,7 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
   else if(PtInRect(&infoPtr->calendars[calIdx].days, lpht->pt))
   {
       htinfo.iOffset = calIdx;
+      htinfo.st.wDay = ht_month->wDay;
       htinfo.st.wYear  = ht_month->wYear;
       htinfo.st.wMonth = ht_month->wMonth;
       /* previous month only valid for first calendar */
