@@ -641,10 +641,15 @@ static inline void MONTHCAL_GetDayRectI(const MONTHCAL_INFO *infoPtr, RECT *r,
  *
  * NOTE: when calendar index is unknown pass -1
  */
-static inline void MONTHCAL_GetDayRect(const MONTHCAL_INFO *infoPtr, const SYSTEMTIME *date,
-    RECT *r, INT calIdx)
+static BOOL MONTHCAL_GetDayRect(const MONTHCAL_INFO *infoPtr, const SYSTEMTIME *date, RECT *r, INT calIdx)
 {
   INT col, row;
+
+  if (!MONTHCAL_ValidateDate(date))
+  {
+      SetRectEmpty(r);
+      return FALSE;
+  }
 
   if (calIdx == -1)
   {
@@ -668,6 +673,8 @@ static inline void MONTHCAL_GetDayRect(const MONTHCAL_INFO *infoPtr, const SYSTE
 
   MONTHCAL_GetDayPos(infoPtr, date, &col, &row, calIdx);
   MONTHCAL_GetDayRectI(infoPtr, r, col, row, calIdx);
+
+  return TRUE;
 }
 
 static LRESULT
@@ -739,19 +746,18 @@ static BOOL MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
     if(MONTHCAL_IsDateEqual(&infoPtr->focusedSel, st)) return FALSE;
 
     /* invalidate old focused day */
-    MONTHCAL_GetDayRect(infoPtr, &infoPtr->focusedSel, &r, -1);
-    InvalidateRect(infoPtr->hwndSelf, &r, FALSE);
+    if (MONTHCAL_GetDayRect(infoPtr, &infoPtr->focusedSel, &r, -1))
+      InvalidateRect(infoPtr->hwndSelf, &r, FALSE);
 
     infoPtr->focusedSel = *st;
   }
 
-  MONTHCAL_GetDayRect(infoPtr, &infoPtr->focusedSel, &r, -1);
+  /* On set invalidates new day, on reset clears previous focused day. */
+  if (MONTHCAL_GetDayRect(infoPtr, &infoPtr->focusedSel, &r, -1))
+    InvalidateRect(infoPtr->hwndSelf, &r, FALSE);
 
   if(!st && MONTHCAL_ValidateDate(&infoPtr->focusedSel))
     infoPtr->focusedSel = st_null;
-
-  /* on set invalidates new day, on reset clears previous focused day */
-  InvalidateRect(infoPtr->hwndSelf, &r, FALSE);
 
   return TRUE;
 }
@@ -1746,17 +1752,11 @@ MONTHCAL_UpdateToday(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *today)
         return FALSE;
 
     /* Invalidate old and new today day rectangle, and today label. */
-    if (MONTHCAL_ValidateDate(&infoPtr->todaysDate))
-    {
-        MONTHCAL_GetDayRect(infoPtr, &infoPtr->todaysDate, &rect, -1);
+    if (MONTHCAL_GetDayRect(infoPtr, &infoPtr->todaysDate, &rect, -1))
         InvalidateRect(infoPtr->hwndSelf, &rect, FALSE);
-    }
 
-    if (MONTHCAL_ValidateDate(today))
-    {
-        MONTHCAL_GetDayRect(infoPtr, today, &rect, -1);
+    if (MONTHCAL_GetDayRect(infoPtr, today, &rect, -1))
         InvalidateRect(infoPtr->hwndSelf, &rect, FALSE);
-    }
 
     infoPtr->todaysDate = *today;
 
