@@ -742,6 +742,7 @@ static DWORD execute_rop( dibdrv_physdev *pdev, const RECT *dst_rect, dib_info *
 {
     dib_info *dibs[3], *result = src, tmp;
     RECT rects[3];
+    POINT origin;
     int width  = dst_rect->right - dst_rect->left;
     int height = dst_rect->bottom - dst_rect->top;
     const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
@@ -788,7 +789,10 @@ static DWORD execute_rop( dibdrv_physdev *pdev, const RECT *dst_rect, dib_info *
                                brush_org, OP_ROP(*opcode) );
             break;
         case OP_ARGS(PAT,SRC):
-            pdev->brush.rects( pdev, &pdev->brush, dibs[SRC], 1, &rects[SRC], brush_org, OP_ROP(*opcode) );
+            /* offset the brush origin to match the final dest rectangle */
+            origin.x = brush_org->x + rects[DST].left - rects[SRC].left;
+            origin.y = brush_org->y + rects[DST].top - rects[SRC].top;
+            pdev->brush.rects( pdev, &pdev->brush, dibs[SRC], 1, &rects[SRC], &origin, OP_ROP(*opcode) );
             break;
         }
     }
