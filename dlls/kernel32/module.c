@@ -728,13 +728,11 @@ static const WCHAR *get_dll_system_path(void)
     if (!cached_path)
     {
         WCHAR *p, *path;
-        int len = 3;
+        int len = 1;
 
         len += 2 * GetSystemDirectoryW( NULL, 0 );
         len += GetWindowsDirectoryW( NULL, 0 );
         p = path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        *p++ = '.';
-        *p++ = ';';
         GetSystemDirectoryW( p, path + len - p);
         p += strlenW(p);
         /* if system directory ends in "32" add 16-bit version too */
@@ -749,6 +747,52 @@ static const WCHAR *get_dll_system_path(void)
         cached_path = path;
     }
     return cached_path;
+}
+
+/***********************************************************************
+ *           get_dll_safe_mode
+ */
+static BOOL get_dll_safe_mode(void)
+{
+    static const WCHAR keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                 'M','a','c','h','i','n','e','\\',
+                                 'S','y','s','t','e','m','\\',
+                                 'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                 'C','o','n','t','r','o','l','\\',
+                                 'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR valueW[] = {'S','a','f','e','D','l','l','S','e','a','r','c','h','M','o','d','e',0};
+
+    static int safe_mode = -1;
+
+    if (safe_mode == -1)
+    {
+        char buffer[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
+        KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING nameW;
+        HANDLE hkey;
+        DWORD size = sizeof(buffer);
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.ObjectName = &nameW;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+
+        safe_mode = 1;
+        RtlInitUnicodeString( &nameW, keyW );
+        if (!NtOpenKey( &hkey, KEY_READ, &attr ))
+        {
+            RtlInitUnicodeString( &nameW, valueW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, buffer, size, &size ) &&
+                info->Type == REG_DWORD && info->DataLength == sizeof(DWORD))
+                safe_mode = !!*(DWORD *)info->Data;
+            NtClose( hkey );
+        }
+        if (!safe_mode) TRACE( "SafeDllSearchMode disabled through the registry\n" );
+    }
+    return safe_mode;
 }
 
 /******************************************************************
@@ -783,6 +827,7 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
     const WCHAR *system_path = get_dll_system_path();
     const WCHAR *mod_end = NULL;
     UNICODE_STRING name, value;
+    BOOL safe_mode;
     WCHAR *p, *ret;
     int len = 0, path_len = 0;
 
@@ -811,7 +856,9 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
         path_len = value.Length;
 
     RtlEnterCriticalSection( &dlldir_section );
+    safe_mode = get_dll_safe_mode();
     if (dll_directory) len += strlenW(dll_directory) + 1;
+    else len += 2;  /* current directory */
     if ((p = ret = HeapAlloc( GetProcessHeap(), 0, path_len + len * sizeof(WCHAR) )))
     {
         if (module)
@@ -826,13 +873,23 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
             p += strlenW(p);
             *p++ = ';';
         }
+        else if (!safe_mode)
+        {
+            *p++ = '.';
+            *p++ = ';';
+        }
+        strcpyW( p, system_path );
+        p += strlenW(p);
+        *p++ = ';';
+        if (!dll_directory && safe_mode)
+        {
+            *p++ = '.';
+            *p++ = ';';
+        }
     }
     RtlLeaveCriticalSection( &dlldir_section );
     if (!ret) return NULL;
 
-    strcpyW( p, system_path );
-    p += strlenW(p);
-    *p++ = ';';
     value.Buffer = p;
     value.MaximumLength = path_len;
 
