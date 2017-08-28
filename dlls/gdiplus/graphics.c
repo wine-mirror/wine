@@ -2067,19 +2067,30 @@ static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
 
     if (graphics->hdc)
     {
-        POINT points[2];
+        GpPointF points[4], min_point, max_point;
+        int i;
 
-        points[0].x = rect->X;
-        points[0].y = rect->Y;
-        points[1].x = rect->X + rect->Width;
-        points[1].y = rect->Y + rect->Height;
+        points[0].X = points[2].X = rect->X;
+        points[0].Y = points[1].Y = rect->Y;
+        points[1].X = points[3].X = rect->X + rect->Width;
+        points[2].Y = points[3].Y = rect->Y + rect->Height;
 
-        DPtoLP(graphics->hdc, points, sizeof(points)/sizeof(points[0]));
+        gdip_transform_points(graphics, CoordinateSpaceDevice, WineCoordinateSpaceGdiDevice, points, 4);
 
-        rect->X = min(points[0].x, points[1].x);
-        rect->Y = min(points[0].y, points[1].y);
-        rect->Width = abs(points[1].x - points[0].x);
-        rect->Height = abs(points[1].y - points[0].y);
+        min_point = max_point = points[0];
+
+        for (i=1; i<4; i++)
+        {
+            if (points[i].X < min_point.X) min_point.X = points[i].X;
+            if (points[i].Y < min_point.Y) min_point.Y = points[i].Y;
+            if (points[i].X > max_point.X) max_point.X = points[i].X;
+            if (points[i].Y > max_point.Y) max_point.Y = points[i].Y;
+        }
+
+        rect->X = min_point.X;
+        rect->Y = min_point.Y;
+        rect->Width = max_point.X - min_point.X;
+        rect->Height = max_point.Y - min_point.Y;
     }
 
     return stat;
@@ -6547,6 +6558,20 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
     return Ok;
 }
 
+static void get_gdi_transform(GpGraphics *graphics, GpMatrix *matrix)
+{
+    XFORM xform;
+
+    if (graphics->hdc == NULL)
+    {
+        GdipSetMatrixElements(matrix, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        return;
+    }
+
+    GetTransform(graphics->hdc, 0x204, &xform);
+    GdipSetMatrixElements(matrix, xform.eM11, xform.eM12, xform.eM21, xform.eM22, xform.eDx, xform.eDy);
+}
+
 GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
         GpCoordinateSpace src_space, GpMatrix *matrix)
 {
@@ -6566,23 +6591,29 @@ GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_spac
             scale_y *= graphics->scale;
         }
 
-        /* transform from src_space to CoordinateSpacePage */
-        switch (src_space)
+        if (dst_space < src_space)
         {
-        case CoordinateSpaceWorld:
-            GdipMultiplyMatrix(matrix, &graphics->worldtrans, MatrixOrderAppend);
-            break;
-        case CoordinateSpacePage:
-            break;
-        case CoordinateSpaceDevice:
-            GdipScaleMatrix(matrix, 1.0/scale_x, 1.0/scale_y, MatrixOrderAppend);
-            break;
-        }
-
-        /* transform from CoordinateSpacePage to dst_space */
-        switch (dst_space)
-        {
-        case CoordinateSpaceWorld:
+            /* transform towards world space */
+            switch ((int)src_space)
+            {
+            case WineCoordinateSpaceGdiDevice:
+            {
+                GpMatrix gdixform;
+                get_gdi_transform(graphics, &gdixform);
+                stat = GdipInvertMatrix(&gdixform);
+                if (stat != Ok)
+                    break;
+                GdipMultiplyMatrix(matrix, &gdixform, MatrixOrderAppend);
+                if (dst_space == CoordinateSpaceDevice)
+                    break;
+                /* else fall-through */
+            }
+            case CoordinateSpaceDevice:
+                GdipScaleMatrix(matrix, 1.0/scale_x, 1.0/scale_y, MatrixOrderAppend);
+                if (dst_space == CoordinateSpacePage)
+                    break;
+                /* else fall-through */
+            case CoordinateSpacePage:
             {
                 GpMatrix inverted_transform = graphics->worldtrans;
                 stat = GdipInvertMatrix(&inverted_transform);
@@ -6590,22 +6621,51 @@ GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_spac
                     GdipMultiplyMatrix(matrix, &inverted_transform, MatrixOrderAppend);
                 break;
             }
-        case CoordinateSpacePage:
-            break;
-        case CoordinateSpaceDevice:
-            GdipScaleMatrix(matrix, scale_x, scale_y, MatrixOrderAppend);
-            break;
+            }
+        }
+        else
+        {
+            /* transform towards device space */
+            switch ((int)src_space)
+            {
+            case CoordinateSpaceWorld:
+                GdipMultiplyMatrix(matrix, &graphics->worldtrans, MatrixOrderAppend);
+                if (dst_space == CoordinateSpacePage)
+                    break;
+                /* else fall-through */
+            case CoordinateSpacePage:
+                GdipScaleMatrix(matrix, scale_x, scale_y, MatrixOrderAppend);
+                if (dst_space == CoordinateSpaceDevice)
+                    break;
+                /* else fall-through */
+            case CoordinateSpaceDevice:
+            {
+                GpMatrix gdixform;
+                get_gdi_transform(graphics, &gdixform);
+                GdipMultiplyMatrix(matrix, &gdixform, MatrixOrderAppend);
+                break;
+            }
+            }
         }
     }
     return stat;
 }
 
-GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
-                                        GpCoordinateSpace src_space, GpPointF *points, INT count)
+GpStatus gdip_transform_points(GpGraphics *graphics, GpCoordinateSpace dst_space,
+                               GpCoordinateSpace src_space, GpPointF *points, INT count)
 {
     GpMatrix matrix;
     GpStatus stat;
 
+    stat = get_graphics_transform(graphics, dst_space, src_space, &matrix);
+    if (stat != Ok) return stat;
+
+    return GdipTransformMatrixPoints(&matrix, points, count);
+}
+
+GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
+                                        GpCoordinateSpace src_space, GpPointF *points, INT count)
+{
     if(!graphics || !points || count <= 0 ||
        dst_space < 0 || dst_space > CoordinateSpaceDevice ||
        src_space < 0 || src_space > CoordinateSpaceDevice)
@@ -6618,10 +6678,7 @@ GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace 
 
     if (src_space == dst_space) return Ok;
 
-    stat = get_graphics_transform(graphics, dst_space, src_space, &matrix);
-    if (stat != Ok) return stat;
-
-    return GdipTransformMatrixPoints(&matrix, points, count);
+    return gdip_transform_points(graphics, dst_space, src_space, points, count);
 }
 
 GpStatus WINGDIPAPI GdipTransformPointsI(GpGraphics *graphics, GpCoordinateSpace dst_space,

@@ -79,8 +79,12 @@ extern REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi) DECLSPEC_HIDDEN;
 extern REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi) DECLSPEC_HIDDEN;
 extern REAL units_scale(GpUnit from, GpUnit to, REAL dpi) DECLSPEC_HIDDEN;
 
+#define WineCoordinateSpaceGdiDevice ((GpCoordinateSpace)4)
+
 extern GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
         GpCoordinateSpace src_space, GpMatrix *matrix) DECLSPEC_HIDDEN;
+extern GpStatus gdip_transform_points(GpGraphics *graphics, GpCoordinateSpace dst_space,
+        GpCoordinateSpace src_space, GpPointF *points, INT count) DECLSPEC_HIDDEN;
 
 extern GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics) DECLSPEC_HIDDEN;
 extern GpStatus encode_image_png(GpImage *image, IStream* stream, GDIPCONST EncoderParameters* params) DECLSPEC_HIDDEN;
