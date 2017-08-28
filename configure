@@ -1024,6 +1024,7 @@ enable_api_ms_win_dx_d3dkmt_l1_1_0
 enable_api_ms_win_eventing_classicprovider_l1_1_0
 enable_api_ms_win_eventing_consumer_l1_1_0
 enable_api_ms_win_eventing_controller_l1_1_0
+enable_api_ms_win_eventing_legacy_l1_1_0
 enable_api_ms_win_eventing_provider_l1_1_0
 enable_api_ms_win_eventlog_legacy_l1_1_0
 enable_api_ms_win_mm_misc_l1_1_1
@@ -18098,6 +18099,7 @@ wine_fn_config_dll api-ms-win-dx-d3dkmt-l1-1-0 enable_api_ms_win_dx_d3dkmt_l1_1_
 wine_fn_config_dll api-ms-win-eventing-classicprovider-l1-1-0 enable_api_ms_win_eventing_classicprovider_l1_1_0
 wine_fn_config_dll api-ms-win-eventing-consumer-l1-1-0 enable_api_ms_win_eventing_consumer_l1_1_0
 wine_fn_config_dll api-ms-win-eventing-controller-l1-1-0 enable_api_ms_win_eventing_controller_l1_1_0
+wine_fn_config_dll api-ms-win-eventing-legacy-l1-1-0 enable_api_ms_win_eventing_legacy_l1_1_0
 wine_fn_config_dll api-ms-win-eventing-provider-l1-1-0 enable_api_ms_win_eventing_provider_l1_1_0
 wine_fn_config_dll api-ms-win-eventlog-legacy-l1-1-0 enable_api_ms_win_eventlog_legacy_l1_1_0
 wine_fn_config_dll api-ms-win-mm-misc-l1-1-1 enable_api_ms_win_mm_misc_l1_1_1
