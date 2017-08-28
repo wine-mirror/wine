@@ -1079,7 +1079,7 @@ deserialize_param(
 		DWORD x;
 		hres = xbuf_get(buf,(LPBYTE)&x,sizeof(DWORD));
 		if (hres) ERR("Failed to read integer 4 byte\n");
-		memcpy(arg,&x,2);
+		else memcpy(arg,&x,2);
 	    }
 	    if (debugout) TRACE_(olerelay)("%04x",*arg & 0xffff);
 	    return hres;
@@ -1089,7 +1089,7 @@ deserialize_param(
 		DWORD x;
 		hres = xbuf_get(buf,(LPBYTE)&x,sizeof(DWORD));
 		if (hres) ERR("Failed to read integer 4 byte\n");
-		memcpy(arg,&x,1);
+		else memcpy(arg,&x,1);
 	    }
 	    if (debugout) TRACE_(olerelay)("%02x",*arg & 0xff);
 	    return hres;
