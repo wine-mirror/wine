@@ -936,7 +936,7 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
 /******************************************************************
  *		load_library_as_datafile
  */
-static BOOL load_library_as_datafile( LPCWSTR name, HMODULE* hmod)
+static BOOL load_library_as_datafile( LPCWSTR name, HMODULE *hmod, DWORD flags )
 {
     static const WCHAR dotDLL[] = {'.','d','l','l',0};
 
@@ -944,14 +944,16 @@ static BOOL load_library_as_datafile( LPCWSTR name, HMODULE* hmod)
     HANDLE hFile = INVALID_HANDLE_VALUE;
     HANDLE mapping;
     HMODULE module;
+    DWORD sharing = FILE_SHARE_READ;
 
     *hmod = 0;
+
+    if (!(flags & LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE)) sharing |= FILE_SHARE_WRITE;
 
     if (SearchPathW( NULL, name, dotDLL, sizeof(filenameW) / sizeof(filenameW[0]),
                      filenameW, NULL ))
     {
-        hFile = CreateFileW( filenameW, GENERIC_READ, FILE_SHARE_READ,
-                             NULL, OPEN_EXISTING, 0, 0 );
+        hFile = CreateFileW( filenameW, GENERIC_READ, sharing, NULL, OPEN_EXISTING, 0, 0 );
     }
     if (hFile == INVALID_HANDLE_VALUE) return FALSE;
 
@@ -987,7 +989,6 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     static const DWORD unsupported_flags = load_library_search_flags |
         LOAD_IGNORE_CODE_AUTHZ_LEVEL |
         LOAD_LIBRARY_AS_IMAGE_RESOURCE |
-        LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE |
         LOAD_LIBRARY_REQUIRE_SIGNED_TARGET |
         LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR;
 
@@ -998,7 +999,7 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
 
     load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
 
-    if (flags & LOAD_LIBRARY_AS_DATAFILE)
+    if (flags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE))
     {
         ULONG_PTR magic;
 
@@ -1014,7 +1015,7 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
         /* The method in load_library_as_datafile allows searching for the
          * 'native' libraries only
          */
-        if (load_library_as_datafile( libname->Buffer, &hModule )) goto done;
+        if (load_library_as_datafile( libname->Buffer, &hModule, flags )) goto done;
         flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
         /* Fallback to normal behaviour */
     }
