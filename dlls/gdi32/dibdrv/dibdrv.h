@@ -75,7 +75,7 @@ typedef struct dib_brush
     rop_mask_bits masks;
     struct brush_pattern pattern;
     BOOL (*rects)(struct dibdrv_physdev *pdev, struct dib_brush *brush, dib_info *dib,
-                  int num, const RECT *rects, INT rop);
+                  int num, const RECT *rects, const POINT *brush_org, INT rop);
 } dib_brush;
 
 struct intensity_range

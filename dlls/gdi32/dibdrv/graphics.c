@@ -74,7 +74,7 @@ static BOOL brush_rect( dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect
 
     if (!get_clipped_rects( &pdev->dib, rect, clip, &clipped_rects )) return TRUE;
     ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects,
-                        dc->ROPmode );
+                        &dc->brush_org, dc->ROPmode );
     free_clipped_rects( &clipped_rects );
     return ret;
 }
@@ -1174,6 +1174,7 @@ BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     dib_brush *brush = &pdev->brush;
+    DC *dc = get_physdev_dc( dev );
     int rop2 = get_rop2_from_rop( rop );
     struct clipped_rects clipped_rects;
     DWORD and = 0, xor = 0;
@@ -1196,7 +1197,8 @@ BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
     case R2_NOP:
         break;
     default:
-        ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects, rop2 );
+        ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects,
+                            &dc->brush_org, rop2 );
         break;
     }
     free_clipped_rects( &clipped_rects );

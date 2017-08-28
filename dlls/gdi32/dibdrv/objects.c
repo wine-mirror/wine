@@ -1773,7 +1773,7 @@ BOOL fill_with_pixel( DC *dc, dib_info *dib, DWORD pixel, int num, const RECT *r
  * Fill a number of rectangles with the solid brush
  */
 static BOOL solid_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
-                        int num, const RECT *rects, INT rop)
+                        int num, const RECT *rects, const POINT *brush_org, INT rop)
 {
     DC *dc = get_physdev_dc( &pdev->dev );
     DWORD color = get_pixel_color( dc, &pdev->dib, brush->colorref, TRUE );
@@ -2005,9 +2005,8 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
  * FIXME: Should we insist l < r && t < b?  Currently we assume this.
  */
 static BOOL pattern_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
-                          int num, const RECT *rects, INT rop)
+                          int num, const RECT *rects, const POINT *brush_org, INT rop)
 {
-    DC *dc = get_physdev_dc( &pdev->dev );
     BOOL needs_reselect = FALSE;
 
     if (rop != brush->rop)
@@ -2043,14 +2042,14 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
         }
     }
 
-    dib->funcs->pattern_rects( dib, num, rects, &dc->brush_org, &brush->dib, &brush->masks );
+    dib->funcs->pattern_rects( dib, num, rects, brush_org, &brush->dib, &brush->masks );
 
     if (needs_reselect) free_pattern_brush( brush );
     return TRUE;
 }
 
 static BOOL null_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
-                       int num, const RECT *rects, INT rop)
+                       int num, const RECT *rects, const POINT *brush_org, INT rop)
 {
     return TRUE;
 }
