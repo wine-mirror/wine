@@ -423,6 +423,7 @@ HEADER_SRCS = \
 	ksguid.h \
 	ksmedia.h \
 	ksuuids.h \
+	libloaderapi.h \
 	lm.h \
 	lmaccess.h \
 	lmapibuf.h \

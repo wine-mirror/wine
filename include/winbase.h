@@ -37,6 +37,8 @@ extern "C" {
 #define WINADVAPI DECLSPEC_IMPORT
 #endif
 
+#include <libloaderapi.h>
+
   /* Windows Exit Procedure flag values */
 #define	WEP_FREE_DLL        0
 #define	WEP_SYSTEM_EXIT     1
@@ -2512,7 +2514,6 @@ WINBASEAPI BOOL        WINAPI SetCurrentDirectoryW(LPCWSTR);
 WINBASEAPI BOOL        WINAPI SetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,DWORD);
 WINBASEAPI BOOL        WINAPI SetDefaultCommConfigW(LPCWSTR,LPCOMMCONFIG,DWORD);
 #define                       SetDefaultCommConfig WINELIB_NAME_AW(SetDefaultCommConfig)
-WINBASEAPI BOOL        WINAPI SetDefaultDllDirectories(DWORD);
 WINBASEAPI BOOL        WINAPI SetDllDirectoryA(LPCSTR);
 WINBASEAPI BOOL        WINAPI SetDllDirectoryW(LPCWSTR);
 #define                       SetDllDirectory WINELIB_NAME_AW(SetDllDirectory)
