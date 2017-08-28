@@ -758,7 +758,7 @@ static void test_basic_import_unicode(void)
     lr = RegQueryValueExA(hkey, "Wine11d", NULL, &type, (BYTE *)&buffer, &size);
     ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
     ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
-    todo_wine ok(size == 6 || broken(size == 5) /* Win2k */, "got wrong size %u, expected 6\n", size);
+    ok(size == 6 || broken(size == 5) /* Win2k */, "got wrong size %u, expected 6\n", size);
     ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
     /* Wine11e */
     size = sizeof(buffer);
@@ -766,7 +766,7 @@ static void test_basic_import_unicode(void)
     lr = RegQueryValueExA(hkey, "Wine11e", NULL, &type, (BYTE *)&buffer, &size);
     ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
     ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
-    todo_wine ok(size == 6 || broken(size == 5) /* Win2k */, "got wrong size %u, expected 6\n", size);
+    ok(size == 6 || broken(size == 5) /* Win2k */, "got wrong size %u, expected 6\n", size);
     ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -872,7 +872,7 @@ static void test_basic_import_unicode(void)
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine17b\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,\\");
-    verify_reg(hkey, "Wine17b", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine17b", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -882,7 +882,7 @@ static void test_basic_import_unicode(void)
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine17d\"=hex(7):4c,00,69,00,6e,00,65,00,\\");
-    verify_reg(hkey, "Wine17d", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine17d", REG_MULTI_SZ, "Line", 5, 0);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -913,7 +913,7 @@ static void test_basic_import_unicode(void)
     lr = RegQueryValueExA(hkey, "Wine18d", NULL, &type, (BYTE *)&buffer, &size);
     ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
     ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
-    todo_wine ok(size == 12 || broken(size == 11) /* Win2k */, "got wrong size %u, expected 12\n", size);
+    ok(size == 12 || broken(size == 11) /* Win2k */, "got wrong size %u, expected 12\n", size);
     ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
     /* Wine18e */
     size = sizeof(buffer);
@@ -921,7 +921,7 @@ static void test_basic_import_unicode(void)
     lr = RegQueryValueExA(hkey, "Wine18e", NULL, &type, (BYTE *)&buffer, &size);
     ok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
     ok(type == REG_MULTI_SZ, "got wrong type %u, expected %u\n", type, REG_MULTI_SZ);
-    todo_wine ok(size == 12 || broken(size == 11) /* Win2k */, "got wrong size %u, expected 12\n", size);
+    ok(size == 12 || broken(size == 11) /* Win2k */, "got wrong size %u, expected 12\n", size);
     ok(memcmp(buffer, "Line concat", size) == 0, "got wrong data\n");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -953,8 +953,8 @@ static void test_basic_import_unicode(void)
                      "\"Wine20d\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,\n"
                      "\"Wine20e\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,00,00\n"
                      "\"Wine20f\"=hex(7):4c,00,69,00,6e,00,65,00,00,00,00,00,\n\n");
-    verify_reg(hkey, "Wine20a", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
-    verify_reg(hkey, "Wine20b", REG_MULTI_SZ, "Line", 5, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine20a", REG_MULTI_SZ, "Line", 5, 0);
+    verify_reg(hkey, "Wine20b", REG_MULTI_SZ, "Line", 5, 0);
     verify_reg(hkey, "Wine20c", REG_MULTI_SZ, "Line", 5, 0);
     verify_reg(hkey, "Wine20d", REG_MULTI_SZ, "Line", 5, 0);
     verify_reg(hkey, "Wine20e", REG_MULTI_SZ, "Line\0", 6, 0);
@@ -966,8 +966,8 @@ static void test_basic_import_unicode(void)
                      "\"Wine21b\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,\n"
                      "\"Wine21c\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
                      "\"Wine21d\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00,\n\n");
-    verify_reg(hkey, "Wine21a", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
-    verify_reg(hkey, "Wine21b", REG_EXPAND_SZ, "%PATH%", 7, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine21a", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine21b", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine21c", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine21d", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
@@ -2470,7 +2470,7 @@ static void test_comments_unicode(void)
                      "  63,00,6f,00,6e,00,\\;comment\n"
                      "  63,00,61,00,74,00,;comment\n"
                      "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n");
-    verify_reg(hkey, "Multi-Line2", REG_MULTI_SZ, "Line concat", 12, TODO_REG_SIZE);
+    verify_reg(hkey, "Multi-Line2", REG_MULTI_SZ, "Line concat", 12, 0);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"

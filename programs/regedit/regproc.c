@@ -518,16 +518,27 @@ static void prepare_hex_string_data(struct parser *parser)
 {
     if (parser->data_type == REG_EXPAND_SZ || parser->data_type == REG_MULTI_SZ)
     {
-        BYTE *data = parser->data;
-
-        if (data[parser->data_size - 1] != 0)
+        if (parser->is_unicode)
         {
-            data[parser->data_size] = 0;
-            parser->data_size++;
+            WCHAR *data = parser->data;
+            DWORD len = parser->data_size / sizeof(WCHAR);
+
+            if (data[len - 1] != 0)
+            {
+                data[len] = 0;
+                parser->data_size += sizeof(WCHAR);
+            }
         }
-
-        if (!parser->is_unicode)
+        else
         {
+            BYTE *data = parser->data;
+
+            if (data[parser->data_size - 1] != 0)
+            {
+                data[parser->data_size] = 0;
+                parser->data_size++;
+            }
+
             parser->data = GetWideStringN(parser->data, parser->data_size, &parser->data_size);
             parser->data_size *= sizeof(WCHAR);
             heap_free(data);
