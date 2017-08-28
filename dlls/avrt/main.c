@@ -83,6 +83,12 @@ HANDLE WINAPI AvSetMmThreadCharacteristicsW(LPCWSTR TaskName, LPDWORD TaskIndex)
     return (HANDLE)0x12345678;
 }
 
+BOOL WINAPI AvQuerySystemResponsiveness(HANDLE AvrtHandle, ULONG *value)
+{
+    FIXME("(%p, %p): stub\n", AvrtHandle, value);
+    return FALSE;
+}
+
 BOOL WINAPI AvRevertMmThreadCharacteristics(HANDLE AvrtHandle)
 {
     FIXME("(%p): stub\n", AvrtHandle);

@@ -1,4 +1,4 @@
-@ stub AvQuerySystemResponsiveness
+@ stdcall AvQuerySystemResponsiveness(long ptr)
 @ stdcall AvRevertMmThreadCharacteristics(long)
 @ stub AvRtCreateThreadOrderingGroup
 @ stub AvRtCreateThreadOrderingGroupExA
