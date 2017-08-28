@@ -4980,22 +4980,24 @@ static void test_png_color_formats(void)
     {
         char bit_depth, color_type;
         PixelFormat format;
+        UINT flags;
     } td[] =
     {
         /* 2 - PNG_COLOR_TYPE_RGB */
-        { 8, 2, PixelFormat24bppRGB },
+        { 8, 2, PixelFormat24bppRGB, ImageFlagsColorSpaceRGB },
         /* 0 - PNG_COLOR_TYPE_GRAY */
-        { 1, 0, PixelFormat1bppIndexed },
-        { 2, 0, PixelFormat32bppARGB },
-        { 4, 0, PixelFormat32bppARGB },
-        { 8, 0, PixelFormat32bppARGB },
-        { 16, 0, PixelFormat32bppARGB },
+        { 1, 0, PixelFormat1bppIndexed, ImageFlagsColorSpaceRGB },
+        { 2, 0, PixelFormat32bppARGB, ImageFlagsColorSpaceGRAY },
+        { 4, 0, PixelFormat32bppARGB, ImageFlagsColorSpaceGRAY },
+        { 8, 0, PixelFormat32bppARGB, ImageFlagsColorSpaceGRAY },
+        { 16, 0, PixelFormat32bppARGB, ImageFlagsColorSpaceGRAY },
     };
     BYTE buf[sizeof(png_1x1_data)];
     GpStatus status;
     GpImage *image;
     ImageType type;
     PixelFormat format;
+    UINT flags;
     int i;
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
@@ -5017,6 +5019,13 @@ static void test_png_color_formats(void)
         ok(format == td[i].format ||
            broken(td[i].bit_depth == 1 && td[i].color_type == 0 && format == PixelFormat32bppARGB), /* XP */
            "%d: expected %#x, got %#x\n", i, td[i].format, format);
+
+        status = GdipGetImageFlags(image, &flags);
+        expect(Ok, status);
+todo_wine_if(td[i].bit_depth > 1 && td[i].color_type == 0)
+        ok((flags & td[i].flags) == td[i].flags ||
+           broken(td[i].bit_depth == 1 && td[i].color_type == 0 && (flags & ImageFlagsColorSpaceGRAY)), /* XP */
+           "%d: expected %#x, got %#x\n", i, td[i].flags, flags);
 
         GdipDisposeImage(image);
     }
