@@ -5022,7 +5022,6 @@ static void test_png_color_formats(void)
 
         status = GdipGetImageFlags(image, &flags);
         expect(Ok, status);
-todo_wine_if(td[i].bit_depth > 1 && td[i].color_type == 0)
         ok((flags & td[i].flags) == td[i].flags ||
            broken(td[i].bit_depth == 1 && td[i].color_type == 0 && (flags & ImageFlagsColorSpaceGRAY)), /* XP */
            "%d: expected %#x, got %#x\n", i, td[i].flags, flags);

@@ -3718,7 +3718,14 @@ static GpStatus decode_frame_wic(IWICBitmapDecoder *decoder, BOOL force_conversi
     if (status == Ok)
     {
         /* Native GDI+ used to be smarter, but since Win7 it just sets these flags. */
-        bitmap->image.flags |= ImageFlagsReadOnly|ImageFlagsHasRealPixelSize|ImageFlagsHasRealDPI|ImageFlagsColorSpaceRGB;
+        bitmap->image.flags |= ImageFlagsReadOnly|ImageFlagsHasRealPixelSize|ImageFlagsHasRealDPI;
+        if (IsEqualGUID(&wic_format, &GUID_WICPixelFormat2bppGray) ||
+            IsEqualGUID(&wic_format, &GUID_WICPixelFormat4bppGray) ||
+            IsEqualGUID(&wic_format, &GUID_WICPixelFormat8bppGray) ||
+            IsEqualGUID(&wic_format, &GUID_WICPixelFormat16bppGray))
+            bitmap->image.flags |= ImageFlagsColorSpaceGRAY;
+        else
+            bitmap->image.flags |= ImageFlagsColorSpaceRGB;
         bitmap->image.frame_count = frame_count;
         bitmap->image.current_frame = active_frame;
         bitmap->image.decoder = decoder;
