@@ -1868,6 +1868,15 @@ static void test_transformpoints(void)
     status = GdipTransformPoints(graphics, CoordinateSpacePage, CoordinateSpaceWorld, ptf, -1);
     expect(InvalidParameter, status);
 
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice+1, CoordinateSpaceWorld, ptf, 2);
+    expect(InvalidParameter, status);
+    status = GdipTransformPoints(graphics, -1, CoordinateSpaceWorld, ptf, 2);
+    expect(InvalidParameter, status);
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceDevice+1, ptf, 2);
+    expect(InvalidParameter, status);
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice, -1, ptf, 2);
+    expect(InvalidParameter, status);
+
     ptf[0].X = 1.0;
     ptf[0].Y = 0.0;
     ptf[1].X = 0.0;

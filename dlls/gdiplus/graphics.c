@@ -6606,7 +6606,9 @@ GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace 
     GpMatrix matrix;
     GpStatus stat;
 
-    if(!graphics || !points || count <= 0)
+    if(!graphics || !points || count <= 0 ||
+       dst_space < 0 || dst_space > CoordinateSpaceDevice ||
+       src_space < 0 || src_space > CoordinateSpaceDevice)
         return InvalidParameter;
 
     if(graphics->busy)
