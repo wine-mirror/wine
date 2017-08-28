@@ -2081,13 +2081,3 @@ BOOL WINAPI SetSearchPathMode(DWORD flags)
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
-
-/*************************************************************************
- *           SetDefaultDllDirectories   (KERNEL32.@)
- */
-BOOL WINAPI SetDefaultDllDirectories(DWORD flags)
-{
-    FIXME("(%x): stub\n", flags);
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
-}

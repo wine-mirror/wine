@@ -48,6 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 #define NE_FFLAGS_LIBMODULE 0x8000
 
 static WCHAR *dll_directory;  /* extra path for SetDllDirectoryW */
+static DWORD default_search_flags;  /* default flags set by SetDefaultDllDirectories */
 
 static CRITICAL_SECTION dlldir_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -58,6 +59,10 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION dlldir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static const DWORD load_library_search_flags = (LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
+                                                LOAD_LIBRARY_SEARCH_USER_DIRS |
+                                                LOAD_LIBRARY_SEARCH_SYSTEM32 |
+                                                LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
 /****************************************************************************
  *              GetDllDirectoryA   (KERNEL32.@)
@@ -144,6 +149,21 @@ BOOL WINAPI SetDllDirectoryW( LPCWSTR dir )
     HeapFree( GetProcessHeap(), 0, dll_directory );
     dll_directory = newdir;
     RtlLeaveCriticalSection( &dlldir_section );
+    return TRUE;
+}
+
+
+/*************************************************************************
+ *           SetDefaultDllDirectories   (KERNEL32.@)
+ */
+BOOL WINAPI SetDefaultDllDirectories( DWORD flags )
+{
+    if (!flags || (flags & ~load_library_search_flags))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    default_search_flags = flags;
     return TRUE;
 }
 
@@ -964,16 +984,14 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     NTSTATUS nts;
     HMODULE hModule;
     WCHAR *load_path;
-    static const DWORD unsupported_flags = 
+    static const DWORD unsupported_flags = load_library_search_flags |
         LOAD_IGNORE_CODE_AUTHZ_LEVEL |
         LOAD_LIBRARY_AS_IMAGE_RESOURCE |
         LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE |
         LOAD_LIBRARY_REQUIRE_SIGNED_TARGET |
-        LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR |
-        LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
-        LOAD_LIBRARY_SEARCH_USER_DIRS |
-        LOAD_LIBRARY_SEARCH_SYSTEM32 |
-        LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
+        LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR;
+
+    if (!(flags & load_library_search_flags)) flags |= default_search_flags;
 
     if( flags & unsupported_flags)
         FIXME("unsupported flag(s) used (flags: 0x%08x)\n", flags);

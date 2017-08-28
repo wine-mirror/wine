@@ -25,6 +25,7 @@
 static DWORD (WINAPI *pGetDllDirectoryA)(DWORD,LPSTR);
 static DWORD (WINAPI *pGetDllDirectoryW)(DWORD,LPWSTR);
 static BOOL (WINAPI *pSetDllDirectoryA)(LPCSTR);
+static BOOL (WINAPI *pSetDefaultDllDirectories)(DWORD);
 static BOOL (WINAPI *pGetModuleHandleExA)(DWORD,LPCSTR,HMODULE*);
 static BOOL (WINAPI *pGetModuleHandleExW)(DWORD,LPCWSTR,HMODULE*);
 static BOOL (WINAPI *pK32GetModuleInformation)(HANDLE process, HMODULE module,
@@ -515,6 +516,7 @@ static void init_pointers(void)
     MAKEFUNC(GetDllDirectoryA);
     MAKEFUNC(GetDllDirectoryW);
     MAKEFUNC(SetDllDirectoryA);
+    MAKEFUNC(SetDefaultDllDirectories);
     MAKEFUNC(GetModuleHandleExA);
     MAKEFUNC(GetModuleHandleExW);
     MAKEFUNC(K32GetModuleInformation);
@@ -739,6 +741,70 @@ static void testK32GetModuleInformation(void)
     ok(info.EntryPoint != NULL, "Expected nonzero entrypoint\n");
 }
 
+static void test_SetDefaultDllDirectories(void)
+{
+    HMODULE mod;
+    BOOL ret;
+
+    if (!pSetDefaultDllDirectories)
+    {
+        win_skip( "SetDefaultDllDirectories not available\n" );
+        return;
+    }
+
+    mod = LoadLibraryA( "authz.dll" );
+    ok( mod != NULL, "loading authz failed\n" );
+    FreeLibrary( mod );
+    ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_USER_DIRS );
+    ok( ret, "SetDefaultDllDirectories failed err %u\n", GetLastError() );
+    mod = LoadLibraryA( "authz.dll" );
+    todo_wine ok( !mod, "loading authz succeeded\n" );
+    FreeLibrary( mod );
+    ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_SYSTEM32 );
+    ok( ret, "SetDefaultDllDirectories failed err %u\n", GetLastError() );
+    mod = LoadLibraryA( "authz.dll" );
+    ok( mod != NULL, "loading authz failed\n" );
+    FreeLibrary( mod );
+    ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+    ok( ret, "SetDefaultDllDirectories failed err %u\n", GetLastError() );
+    mod = LoadLibraryA( "authz.dll" );
+    todo_wine ok( !mod, "loading authz succeeded\n" );
+    FreeLibrary( mod );
+    ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_DEFAULT_DIRS );
+    ok( ret, "SetDefaultDllDirectories failed err %u\n", GetLastError() );
+    mod = LoadLibraryA( "authz.dll" );
+    ok( mod != NULL, "loading authz failed\n" );
+    FreeLibrary( mod );
+
+    SetLastError( 0xdeadbeef );
+    ret = pSetDefaultDllDirectories( 0 );
+    ok( !ret, "SetDefaultDllDirectories succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = pSetDefaultDllDirectories( 3 );
+    ok( !ret, "SetDefaultDllDirectories succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_APPLICATION_DIR | 0x8000 );
+    ok( !ret, "SetDefaultDllDirectories succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR );
+    ok( !ret || broken(ret) /* win7 */, "SetDefaultDllDirectories succeeded\n" );
+    if (!ret) ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS );
+    ok( !ret || broken(ret) /* win7 */, "SetDefaultDllDirectories succeeded\n" );
+    if (!ret) ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    /* restore some sane defaults */
+    pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_DEFAULT_DIRS );
+}
+
 START_TEST(module)
 {
     WCHAR filenameW[MAX_PATH];
@@ -768,4 +834,5 @@ START_TEST(module)
     testLoadLibraryEx();
     testGetModuleHandleEx();
     testK32GetModuleInformation();
+    test_SetDefaultDllDirectories();
 }
