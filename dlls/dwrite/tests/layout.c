@@ -3774,6 +3774,33 @@ static void test_GetLineMetrics(void)
 
     IDWriteTextLayout_Release(layout);
 
+    /* Switch to proportional */
+    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_PROPORTIONAL, 2.0f, 4.0f);
+    if (hr == S_OK) {
+        hr = IDWriteFactory_CreateTextLayout(factory, str4W, 1, format, 100.0f, 300.0f, &layout);
+        ok(hr == S_OK, "Failed to create layout, hr %#x.\n", hr);
+
+        hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
+        ok(hr == S_OK, "Failed to get line metrics, hr %#x.\n", hr);
+        ok(count == 1, "Unexpected line count %u\n", count);
+
+        /* Back to default mode. */
+        hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0f, 0.0f);
+        ok(hr == S_OK, "Failed to set spacing method, hr %#x.\n", hr);
+
+        hr = IDWriteTextLayout_GetLineMetrics(layout, metrics + 1, 1, &count);
+        ok(hr == S_OK, "Failed to get line metrics, hr %#x.\n", hr);
+        ok(count == 1, "Unexpected line count %u\n", count);
+
+        /* Proportional spacing applies multipliers to default, content based spacing. */
+        ok(metrics[0].height == 2.0f * metrics[1].height, "Unexpected line height %f.\n", metrics[0].height);
+        ok(metrics[0].baseline == 4.0f * metrics[1].baseline, "Unexpected line baseline %f.\n", metrics[0].baseline);
+
+        IDWriteTextLayout_Release(layout);
+    }
+    else
+        win_skip("Proportional spacing is not supported.\n");
+
     IDWriteTextFormat_Release(format);
     IDWriteFontFace_Release(fontface);
     IDWriteFactory_Release(factory);

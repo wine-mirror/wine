@@ -1358,6 +1358,27 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     return S_OK;
 }
 
+static void layout_apply_line_spacing(struct dwrite_textlayout *layout, UINT32 line)
+{
+    switch (layout->format.spacing.method)
+    {
+    case DWRITE_LINE_SPACING_METHOD_DEFAULT:
+        layout->linemetrics[line].height = layout->lines[line].height;
+        layout->linemetrics[line].baseline = layout->lines[line].baseline;
+        break;
+    case DWRITE_LINE_SPACING_METHOD_UNIFORM:
+        layout->linemetrics[line].height = layout->format.spacing.height;
+        layout->linemetrics[line].baseline = layout->format.spacing.baseline;
+        break;
+    case DWRITE_LINE_SPACING_METHOD_PROPORTIONAL:
+        layout->linemetrics[line].height = layout->lines[line].height * layout->format.spacing.height;
+        layout->linemetrics[line].baseline = layout->lines[line].baseline * layout->format.spacing.baseline;
+        break;
+    default:
+        ERR("Unknown spacing method %u\n", layout->format.spacing.method);
+    }
+}
+
 static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_LINE_METRICS1 *metrics)
 {
     UINT32 i = layout->metrics.lineCount;
@@ -1391,27 +1412,11 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
     }
 
     layout->linemetrics[i] = *metrics;
-
-    switch (layout->format.spacing.method)
-    {
-    case DWRITE_LINE_SPACING_METHOD_UNIFORM:
-        if (layout->format.spacing.method == DWRITE_LINE_SPACING_METHOD_UNIFORM) {
-            layout->linemetrics[i].height = layout->format.spacing.height;
-            layout->linemetrics[i].baseline = layout->format.spacing.baseline;
-        }
-        break;
-    case DWRITE_LINE_SPACING_METHOD_PROPORTIONAL:
-        if (layout->format.spacing.method == DWRITE_LINE_SPACING_METHOD_UNIFORM) {
-            layout->linemetrics[i].height = layout->format.spacing.height * metrics->height;
-            layout->linemetrics[i].baseline = layout->format.spacing.baseline * metrics->baseline;
-        }
-        break;
-    default:
-        /* using content values */;
-    }
-
     layout->lines[i].height = metrics->height;
     layout->lines[i].baseline = metrics->baseline;
+
+    if (layout->format.spacing.method != DWRITE_LINE_SPACING_METHOD_DEFAULT)
+        layout_apply_line_spacing(layout, i);
 
     layout->metrics.lineCount++;
     return S_OK;
@@ -3967,29 +3972,8 @@ static HRESULT WINAPI dwritetextlayout3_SetLineSpacing(IDWriteTextLayout3 *iface
         if (!(This->recompute & RECOMPUTE_LINES)) {
             UINT32 line;
 
-            switch (This->format.spacing.method)
-            {
-            case DWRITE_LINE_SPACING_METHOD_DEFAULT:
-                for (line = 0; line < This->metrics.lineCount; line++) {
-                    This->linemetrics[line].height = This->lines[line].height;
-                    This->linemetrics[line].baseline = This->lines[line].baseline;
-                }
-                break;
-            case DWRITE_LINE_SPACING_METHOD_UNIFORM:
-                for (line = 0; line < This->metrics.lineCount; line++) {
-                    This->linemetrics[line].height = This->format.spacing.height;
-                    This->linemetrics[line].baseline = This->format.spacing.baseline;
-                }
-                break;
-            case DWRITE_LINE_SPACING_METHOD_PROPORTIONAL:
-                for (line = 0; line < This->metrics.lineCount; line++) {
-                    This->linemetrics[line].height = This->format.spacing.height * This->lines[line].height;
-                    This->linemetrics[line].baseline = This->format.spacing.baseline * This->lines[line].baseline;
-                }
-                break;
-            default:
-                ;
-            }
+            for (line = 0; line < This->metrics.lineCount; line++)
+                layout_apply_line_spacing(This, line);
 
             layout_set_line_positions(This);
         }
