@@ -49,22 +49,16 @@ static HRESULT PROPVAR_ConvertFILETIME(const FILETIME *ft, PROPVARIANT *ppropvar
     switch (vt)
     {
         case VT_LPSTR:
-        {
-            static const char format[] = "%04d/%02d/%02d:%02d:%02d:%02d.%03d";
-
-            ppropvarDest->u.pszVal = HeapAlloc(GetProcessHeap(), 0,
-                                             sizeof(format));
+            ppropvarDest->u.pszVal = HeapAlloc(GetProcessHeap(), 0, 64);
             if (!ppropvarDest->u.pszVal)
                 return E_OUTOFMEMORY;
 
-            snprintf( ppropvarDest->u.pszVal, sizeof(format),
-                      format,
+            sprintf( ppropvarDest->u.pszVal, "%04d/%02d/%02d:%02d:%02d:%02d.%03d",
                       time.wYear, time.wMonth, time.wDay,
                       time.wHour, time.wMinute, time.wSecond,
                       time.wMilliseconds );
 
             return S_OK;
-        }
 
         default:
             FIXME("Unhandled target type: %d\n", vt);
