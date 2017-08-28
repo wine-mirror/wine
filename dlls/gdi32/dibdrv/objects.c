@@ -2073,7 +2073,7 @@ static BOOL brush_needs_dithering( dibdrv_physdev *pdev, COLORREF color )
 }
 
 static void select_brush( dibdrv_physdev *pdev, dib_brush *brush,
-                          const LOGBRUSH *logbrush, const struct brush_pattern *pattern )
+                          const LOGBRUSH *logbrush, const struct brush_pattern *pattern, BOOL dither )
 {
     free_pattern_brush( brush );
 
@@ -2094,7 +2094,7 @@ static void select_brush( dibdrv_physdev *pdev, dib_brush *brush,
         case BS_NULL:    brush->rects = null_brush; break;
         case BS_HATCHED: brush->rects = pattern_brush; break;
         case BS_SOLID:
-            brush->rects = brush_needs_dithering( pdev, brush->colorref ) ? pattern_brush : solid_brush;
+            brush->rects = dither && brush_needs_dithering( pdev, brush->colorref ) ? pattern_brush : solid_brush;
             break;
         }
     }
@@ -2116,7 +2116,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_patter
     if (hbrush == GetStockObject( DC_BRUSH ))
         logbrush.lbColor = dc->dcBrushColor;
 
-    select_brush( pdev, &pdev->brush, &logbrush, pattern );
+    select_brush( pdev, &pdev->brush, &logbrush, pattern, TRUE );
     return hbrush;
 }
 
@@ -2130,6 +2130,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
     LOGPEN logpen;
     LOGBRUSH logbrush;
     EXTLOGPEN *elp = NULL;
+    BOOL dither = TRUE;
 
     TRACE("(%p, %p)\n", dev, hpen);
 
@@ -2157,6 +2158,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
         logbrush.lbStyle = BS_SOLID;
         logbrush.lbColor = logpen.lopnColor;
         logbrush.lbHatch = 0;
+        dither = FALSE;
     }
 
     pdev->pen_join   = logpen.lopnStyle & PS_JOIN_MASK;
@@ -2167,7 +2169,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
         logbrush.lbColor = dc->dcPenColor;
 
     set_dash_pattern( &pdev->pen_pattern, 0, NULL );
-    select_brush( pdev, &pdev->pen_brush, &logbrush, pattern );
+    select_brush( pdev, &pdev->pen_brush, &logbrush, pattern, dither );
 
     pdev->pen_style = logpen.lopnStyle & PS_STYLE_MASK;
 
@@ -2234,7 +2236,7 @@ COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
     if (dc->hBrush == GetStockObject( DC_BRUSH ))
     {
         LOGBRUSH logbrush = { BS_SOLID, color, 0 };
-        select_brush( pdev, &pdev->brush, &logbrush, NULL );
+        select_brush( pdev, &pdev->brush, &logbrush, NULL, TRUE );
     }
     return color;
 }

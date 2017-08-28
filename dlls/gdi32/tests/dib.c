@@ -2781,7 +2781,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
         LineTo( hdc, wide_lines[i].right, wide_lines[i].bottom );
     }
 
-    compare_hash_broken_todo( hdc, bmi, bits, "wide pen", 0, is_ddb );
+    compare_hash( hdc, bmi, bits, "wide pen" );
 
     SelectObject( hdc, orig_pen );
     DeleteObject( wide_pen );
