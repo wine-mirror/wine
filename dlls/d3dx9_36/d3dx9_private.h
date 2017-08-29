@@ -230,7 +230,7 @@ enum pres_reg_tables
 struct d3dx_const_param_eval_output
 {
     struct d3dx_parameter *param;
-    unsigned int table;
+    enum pres_reg_tables table;
     enum D3DXPARAMETER_CLASS constant_class;
     unsigned int register_index;
     unsigned int register_count;
@@ -254,7 +254,6 @@ struct d3dx_regstore
 {
     void *tables[PRES_REGTAB_COUNT];
     unsigned int table_sizes[PRES_REGTAB_COUNT]; /* registers count */
-    unsigned int *table_value_set[PRES_REGTAB_COUNT];
 };
 
 struct d3dx_pres_ins;
