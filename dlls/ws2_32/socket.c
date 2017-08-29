@@ -6539,15 +6539,15 @@ static int convert_eai_u2w(int unixret) {
     return unixret;
 }
 
-static char *get_hostname(void)
+static char *get_fqdn(void)
 {
     char *ret;
     DWORD size = 0;
 
-    GetComputerNameExA( ComputerNamePhysicalDnsHostname, NULL, &size );
+    GetComputerNameExA( ComputerNamePhysicalDnsFullyQualified, NULL, &size );
     if (GetLastError() != ERROR_MORE_DATA) return NULL;
     if (!(ret = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
-    if (!GetComputerNameExA( ComputerNamePhysicalDnsHostname, ret, &size ))
+    if (!GetComputerNameExA( ComputerNamePhysicalDnsFullyQualified, ret, &size ))
     {
         HeapFree( GetProcessHeap(), 0, ret );
         return NULL;
@@ -6564,8 +6564,9 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     struct addrinfo *unixaires = NULL;
     int   result;
     struct addrinfo unixhints, *punixhints = NULL;
-    char *hostname, *nodeV6 = NULL;
+    char *dot, *nodeV6 = NULL, *fqdn;
     const char *node;
+    size_t hostname_len = 0;
 
     *res = NULL;
     if (!nodename && !servname)
@@ -6574,13 +6575,16 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         return WSAHOST_NOT_FOUND;
     }
 
-    hostname = get_hostname();
-    if (!hostname) return WSA_NOT_ENOUGH_MEMORY;
+    fqdn = get_fqdn();
+    if (!fqdn) return WSA_NOT_ENOUGH_MEMORY;
+    dot = strchr(fqdn, '.');
+    if (dot)
+        hostname_len = dot - fqdn;
 
     if (!nodename)
         node = NULL;
     else if (!nodename[0])
-        node = hostname;
+        node = fqdn;
     else
     {
         node = nodename;
@@ -6595,7 +6599,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
                 nodeV6 = HeapAlloc(GetProcessHeap(), 0, close_bracket - node);
                 if (!nodeV6)
                 {
-                    HeapFree(GetProcessHeap(), 0, hostname);
+                    HeapFree(GetProcessHeap(), 0, fqdn);
                     return WSA_NOT_ENOUGH_MEMORY;
                 }
                 lstrcpynA(nodeV6, node + 1, close_bracket - node);
@@ -6624,7 +6628,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         if (punixhints->ai_socktype < 0)
         {
             SetLastError(WSAESOCKTNOSUPPORT);
-            HeapFree(GetProcessHeap(), 0, hostname);
+            HeapFree(GetProcessHeap(), 0, fqdn);
             HeapFree(GetProcessHeap(), 0, nodeV6);
             return SOCKET_ERROR;
         }
@@ -6648,7 +6652,8 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     /* getaddrinfo(3) is thread safe, no need to wrap in CS */
     result = getaddrinfo(node, servname, punixhints, &unixaires);
 
-    if (result && (!hints || !(hints->ai_flags & WS_AI_NUMERICHOST)) && !strcmp(hostname, node))
+    if (result && (!hints || !(hints->ai_flags & WS_AI_NUMERICHOST))
+            && (!strcmp(fqdn, node) || (!strncmp(fqdn, node, hostname_len) && !node[hostname_len])))
     {
         /* If it didn't work it means the host name IP is not in /etc/hosts, try again
         * by sending a NULL host and avoid sending a NULL servname too because that
@@ -6657,7 +6662,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         result = getaddrinfo(NULL, servname ? servname : "0", punixhints, &unixaires);
     }
     TRACE("%s, %s %p -> %p %d\n", debugstr_a(nodename), debugstr_a(servname), hints, res, result);
-    HeapFree(GetProcessHeap(), 0, hostname);
+    HeapFree(GetProcessHeap(), 0, fqdn);
     HeapFree(GetProcessHeap(), 0, nodeV6);
 
     if (!result) {
