@@ -1096,7 +1096,7 @@ static void store_key_permissions(HCRYPTKEY hCryptKey, HKEY hKey, DWORD dwKeySpe
  */
 static BOOL create_container_key(KEYCONTAINER *pKeyContainer, REGSAM sam, HKEY *phKey)
 {
-    CHAR szRSABase[MAX_PATH];
+    CHAR szRSABase[sizeof(RSAENH_REGKEY) + MAX_PATH];
     HKEY hRootKey;
 
     sprintf(szRSABase, RSAENH_REGKEY, pKeyContainer->szName);
@@ -1127,7 +1127,7 @@ static BOOL create_container_key(KEYCONTAINER *pKeyContainer, REGSAM sam, HKEY *
  */
 static BOOL open_container_key(LPCSTR pszContainerName, DWORD dwFlags, REGSAM access, HKEY *phKey)
 {
-    CHAR szRSABase[MAX_PATH];
+    CHAR szRSABase[sizeof(RSAENH_REGKEY) + MAX_PATH];
     HKEY hRootKey;
 
     sprintf(szRSABase, RSAENH_REGKEY, pszContainerName);
@@ -1154,24 +1154,21 @@ static BOOL open_container_key(LPCSTR pszContainerName, DWORD dwFlags, REGSAM ac
  */
 static BOOL delete_container_key(LPCSTR pszContainerName, DWORD dwFlags)
 {
-    CHAR szRegKey[MAX_PATH];
+    CHAR szRegKey[sizeof(RSAENH_REGKEY) + MAX_PATH];
+    HKEY hRootKey;
 
-    if (snprintf(szRegKey, MAX_PATH, RSAENH_REGKEY, pszContainerName) >= MAX_PATH) {
-        SetLastError(NTE_BAD_KEYSET_PARAM);
-        return FALSE;
+    sprintf(szRegKey, RSAENH_REGKEY, pszContainerName);
+
+    if (dwFlags & CRYPT_MACHINE_KEYSET)
+        hRootKey = HKEY_LOCAL_MACHINE;
+    else
+        hRootKey = HKEY_CURRENT_USER;
+    if (!RegDeleteKeyA(hRootKey, szRegKey)) {
+        SetLastError(ERROR_SUCCESS);
+        return TRUE;
     } else {
-        HKEY hRootKey;
-        if (dwFlags & CRYPT_MACHINE_KEYSET)
-            hRootKey = HKEY_LOCAL_MACHINE;
-        else
-            hRootKey = HKEY_CURRENT_USER;
-        if (!RegDeleteKeyA(hRootKey, szRegKey)) {
-            SetLastError(ERROR_SUCCESS);
-            return TRUE;
-        } else {
-            SetLastError(NTE_BAD_KEYSET);
-            return FALSE;
-        }
+        SetLastError(NTE_BAD_KEYSET);
+        return FALSE;
     }
 }
 
