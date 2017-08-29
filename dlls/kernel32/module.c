@@ -888,6 +888,32 @@ static inline const WCHAR *get_module_path_end(const WCHAR *module)
     return mod_end;
 }
 
+
+/******************************************************************
+ *		append_path_len
+ *
+ * Append a counted string to the load path. Helper for MODULE_get_dll_load_path.
+ */
+static inline WCHAR *append_path_len( WCHAR *p, const WCHAR *str, DWORD len )
+{
+    if (!len) return p;
+    memcpy( p, str, len * sizeof(WCHAR) );
+    p[len] = ';';
+    return p + len + 1;
+}
+
+
+/******************************************************************
+ *		append_path
+ *
+ * Append a string to the load path. Helper for MODULE_get_dll_load_path.
+ */
+static inline WCHAR *append_path( WCHAR *p, const WCHAR *str )
+{
+    return append_path_len( p, str, strlenW(str) );
+}
+
+
 /******************************************************************
  *		MODULE_get_dll_load_path
  *
@@ -897,6 +923,7 @@ static inline const WCHAR *get_module_path_end(const WCHAR *module)
 WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
 {
     static const WCHAR pathW[] = {'P','A','T','H',0};
+    static const WCHAR dotW[] = {'.',0};
 
     const WCHAR *system_path = get_dll_system_path();
     const WCHAR *mod_end = NULL;
@@ -935,31 +962,14 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
     else len += 2;  /* current directory */
     if ((p = ret = HeapAlloc( GetProcessHeap(), 0, path_len + len * sizeof(WCHAR) )))
     {
-        if (module)
-        {
-            memcpy( ret, module, (mod_end - module) * sizeof(WCHAR) );
-            p += (mod_end - module);
-            *p++ = ';';
-        }
-        if (dll_directory)
-        {
-            strcpyW( p, dll_directory );
-            p += strlenW(p);
-            *p++ = ';';
-        }
-        else if (!safe_mode)
-        {
-            *p++ = '.';
-            *p++ = ';';
-        }
-        strcpyW( p, system_path );
-        p += strlenW(p);
-        *p++ = ';';
-        if (!dll_directory && safe_mode)
-        {
-            *p++ = '.';
-            *p++ = ';';
-        }
+        if (module) p = append_path_len( p, module, mod_end - module );
+
+        if (dll_directory) p = append_path( p, dll_directory );
+        else if (!safe_mode) p = append_path( p, dotW );
+
+        p = append_path( p, system_path );
+
+        if (!dll_directory && safe_mode) p = append_path( p, dotW );
     }
     RtlLeaveCriticalSection( &dlldir_section );
     if (!ret) return NULL;
