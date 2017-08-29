@@ -1486,6 +1486,7 @@ static void test_import_resolution(void)
             ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
             ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
+            FreeLibrary( mod2 );
             FreeLibrary( mod );
             break;
         case 2:  /* load without IMAGE_FILE_DLL doesn't resolve imports */
