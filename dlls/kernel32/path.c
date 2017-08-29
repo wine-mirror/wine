@@ -43,6 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 #define MAX_PATHNAME_LEN        1024
 
+static int path_safe_mode = -1;  /* path mode set by SetSearchPathMode */
 
 /* check if a file name is for an executable file (.exe or .com) */
 static inline BOOL is_executable( const WCHAR *name )
@@ -753,6 +754,51 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR 
 
 
 /***********************************************************************
+ *           get_path_safe_mode
+ */
+static BOOL get_path_safe_mode(void)
+{
+    static const WCHAR keyW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                 'M','a','c','h','i','n','e','\\',
+                                 'S','y','s','t','e','m','\\',
+                                 'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                 'C','o','n','t','r','o','l','\\',
+                                 'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
+    static const WCHAR valueW[] = {'S','a','f','e','P','r','o','c','e','s','s','S','e','a','r','c','h','M','o','d','e',0};
+
+    if (path_safe_mode == -1)
+    {
+        char buffer[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
+        KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING nameW;
+        HANDLE hkey;
+        DWORD size = sizeof(buffer);
+        BOOL mode = FALSE;
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.ObjectName = &nameW;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+
+        RtlInitUnicodeString( &nameW, keyW );
+        if (!NtOpenKey( &hkey, KEY_READ, &attr ))
+        {
+            RtlInitUnicodeString( &nameW, valueW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, buffer, size, &size ) &&
+                info->Type == REG_DWORD && info->DataLength == sizeof(DWORD))
+                mode = !!*(DWORD *)info->Data;
+            NtClose( hkey );
+        }
+        InterlockedCompareExchange( &path_safe_mode, mode, -1 );
+    }
+    return path_safe_mode != 0;
+}
+
+
+/***********************************************************************
  *           contains_pathW
  *
  * Check if the file name contains a path; helper for SearchPathW.
@@ -991,7 +1037,7 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
         }
         else
         {
-            if ((dll_path = MODULE_get_dll_load_path( NULL )))
+            if ((dll_path = MODULE_get_dll_load_path( NULL, get_path_safe_mode() )))
             {
                 ret = RtlDosSearchPath_U( dll_path, name, NULL, buflen * sizeof(WCHAR),
                                           buffer, lastpart ) / sizeof(WCHAR);
@@ -2075,9 +2121,32 @@ BOOL WINAPI CheckNameLegalDOS8Dot3W(const WCHAR *name, char *oemname, DWORD oemn
 /*************************************************************************
  *           SetSearchPathMode   (KERNEL32.@)
  */
-BOOL WINAPI SetSearchPathMode(DWORD flags)
+BOOL WINAPI SetSearchPathMode( DWORD flags )
 {
-    FIXME("(%x): stub\n", flags);
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    int val;
+
+    switch (flags)
+    {
+    case BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE:
+        val = 1;
+        break;
+    case BASE_SEARCH_PATH_DISABLE_SAFE_SEARCHMODE:
+        val = 0;
+        break;
+    case BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT:
+        InterlockedExchange( &path_safe_mode, 2 );
+        return TRUE;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    for (;;)
+    {
+        int prev = path_safe_mode;
+        if (prev == 2) break;  /* permanently set */
+        if (InterlockedCompareExchange( &path_safe_mode, val, prev ) == prev) return TRUE;
+    }
+    SetLastError( ERROR_ACCESS_DENIED );
     return FALSE;
 }

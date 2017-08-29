@@ -921,7 +921,7 @@ static inline WCHAR *append_path( WCHAR *p, const WCHAR *str )
  * Compute the load path to use for a given dll.
  * Returned pointer must be freed by caller.
  */
-WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
+WCHAR *MODULE_get_dll_load_path( LPCWSTR module, int safe_mode )
 {
     static const WCHAR pathW[] = {'P','A','T','H',0};
     static const WCHAR dotW[] = {'.',0};
@@ -929,7 +929,6 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
     const WCHAR *system_path = get_dll_system_path();
     const WCHAR *mod_end = NULL;
     UNICODE_STRING name, value;
-    BOOL safe_mode;
     WCHAR *p, *ret;
     int len = 0, path_len = 0;
 
@@ -958,7 +957,7 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
         path_len = value.Length;
 
     RtlEnterCriticalSection( &dlldir_section );
-    safe_mode = get_dll_safe_mode();
+    if (safe_mode == -1) safe_mode = get_dll_safe_mode();
     if (dll_directory) len += strlenW(dll_directory) + 1;
     else len += 2;  /* current directory */
     if ((p = ret = HeapAlloc( GetProcessHeap(), 0, path_len + len * sizeof(WCHAR) )))
@@ -1137,7 +1136,7 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     if (flags & load_library_search_flags)
         load_path = get_dll_load_path_search_flags( libname->Buffer, flags );
     else
-        load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
+        load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL, -1 );
     if (!load_path) return 0;
 
     if (flags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE))

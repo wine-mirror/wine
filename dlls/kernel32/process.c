@@ -1258,7 +1258,7 @@ void CDECL __wine_kernel_init(void)
            debugstr_w(main_exe_name), debugstr_w(__wine_main_wargv[0]) );
 
     RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath,
-                          MODULE_get_dll_load_path(main_exe_name) );
+                          MODULE_get_dll_load_path( main_exe_name, -1 ));
 
     if (boot_events[0])
     {
