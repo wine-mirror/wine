@@ -25,6 +25,8 @@
 static DWORD (WINAPI *pGetDllDirectoryA)(DWORD,LPSTR);
 static DWORD (WINAPI *pGetDllDirectoryW)(DWORD,LPWSTR);
 static BOOL (WINAPI *pSetDllDirectoryA)(LPCSTR);
+static DLL_DIRECTORY_COOKIE (WINAPI *pAddDllDirectory)(const WCHAR*);
+static BOOL (WINAPI *pRemoveDllDirectory)(DLL_DIRECTORY_COOKIE);
 static BOOL (WINAPI *pSetDefaultDllDirectories)(DWORD);
 static BOOL (WINAPI *pGetModuleHandleExA)(DWORD,LPCSTR,HMODULE*);
 static BOOL (WINAPI *pGetModuleHandleExW)(DWORD,LPCWSTR,HMODULE*);
@@ -516,6 +518,8 @@ static void init_pointers(void)
     MAKEFUNC(GetDllDirectoryA);
     MAKEFUNC(GetDllDirectoryW);
     MAKEFUNC(SetDllDirectoryA);
+    MAKEFUNC(AddDllDirectory);
+    MAKEFUNC(RemoveDllDirectory);
     MAKEFUNC(SetDefaultDllDirectories);
     MAKEFUNC(GetModuleHandleExA);
     MAKEFUNC(GetModuleHandleExW);
@@ -741,6 +745,51 @@ static void testK32GetModuleInformation(void)
     ok(info.EntryPoint != NULL, "Expected nonzero entrypoint\n");
 }
 
+static void test_AddDllDirectory(void)
+{
+    static const WCHAR tmpW[] = {'t','m','p',0};
+    static const WCHAR dotW[] = {'.','\\','.',0};
+    static const WCHAR rootW[] = {'\\',0};
+    WCHAR path[MAX_PATH], buf[MAX_PATH];
+    DLL_DIRECTORY_COOKIE cookie;
+    BOOL ret;
+
+    if (!pAddDllDirectory || !pRemoveDllDirectory)
+    {
+        win_skip( "AddDllDirectory not available\n" );
+        return;
+    }
+
+    buf[0] = '\0';
+    GetTempPathW( sizeof(path), path );
+    GetTempFileNameW( path, tmpW, 0, buf );
+    SetLastError( 0xdeadbeef );
+    cookie = pAddDllDirectory( buf );
+    ok( cookie != NULL, "AddDllDirectory failed err %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pRemoveDllDirectory( cookie );
+    ok( ret, "RemoveDllDirectory failed err %u\n", GetLastError() );
+
+    DeleteFileW( buf );
+    SetLastError( 0xdeadbeef );
+    cookie = pAddDllDirectory( buf );
+    ok( !cookie, "AddDllDirectory succeeded\n" );
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError() );
+    cookie = pAddDllDirectory( dotW );
+    ok( !cookie, "AddDllDirectory succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    cookie = pAddDllDirectory( rootW );
+    ok( cookie != NULL, "AddDllDirectory failed err %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pRemoveDllDirectory( cookie );
+    ok( ret, "RemoveDllDirectory failed err %u\n", GetLastError() );
+    GetWindowsDirectoryW( buf, MAX_PATH );
+    lstrcpyW( buf + 2, tmpW );
+    cookie = pAddDllDirectory( buf );
+    ok( !cookie, "AddDllDirectory succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+}
+
 static void test_SetDefaultDllDirectories(void)
 {
     HMODULE mod;
@@ -834,5 +883,6 @@ START_TEST(module)
     testLoadLibraryEx();
     testGetModuleHandleEx();
     testK32GetModuleInformation();
+    test_AddDllDirectory();
     test_SetDefaultDllDirectories();
 }

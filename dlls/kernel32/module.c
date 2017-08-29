@@ -40,6 +40,7 @@
 #include "psapi.h"
 
 #include "wine/exception.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -47,6 +48,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 
 #define NE_FFLAGS_LIBMODULE 0x8000
 
+struct dll_dir_entry
+{
+    struct list entry;
+    WCHAR       dir[1];
+};
+
+static struct list dll_dir_list = LIST_INIT( dll_dir_list );  /* extra dirs from AddDllDirectory */
 static WCHAR *dll_directory;  /* extra path for SetDllDirectoryW */
 static DWORD default_search_flags;  /* default flags set by SetDefaultDllDirectories */
 
@@ -148,6 +156,52 @@ BOOL WINAPI SetDllDirectoryW( LPCWSTR dir )
     RtlEnterCriticalSection( &dlldir_section );
     HeapFree( GetProcessHeap(), 0, dll_directory );
     dll_directory = newdir;
+    RtlLeaveCriticalSection( &dlldir_section );
+    return TRUE;
+}
+
+
+/****************************************************************************
+ *              AddDllDirectory   (KERNEL32.@)
+ */
+DLL_DIRECTORY_COOKIE WINAPI AddDllDirectory( const WCHAR *dir )
+{
+    WCHAR path[MAX_PATH];
+    DWORD len;
+    struct dll_dir_entry *ptr;
+    DOS_PATHNAME_TYPE type = RtlDetermineDosPathNameType_U( dir );
+
+    if (type != ABSOLUTE_PATH && type != ABSOLUTE_DRIVE_PATH)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    if (!(len = GetFullPathNameW( dir, MAX_PATH, path, NULL ))) return NULL;
+    if (GetFileAttributesW( path ) == INVALID_FILE_ATTRIBUTES) return NULL;
+
+    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, offsetof(struct dll_dir_entry, dir[++len] )))) return NULL;
+    memcpy( ptr->dir, path, len * sizeof(WCHAR) );
+    TRACE( "%s\n", debugstr_w( ptr->dir ));
+
+    RtlEnterCriticalSection( &dlldir_section );
+    list_add_head( &dll_dir_list, &ptr->entry );
+    RtlLeaveCriticalSection( &dlldir_section );
+    return ptr;
+}
+
+
+/****************************************************************************
+ *              RemoveDllDirectory   (KERNEL32.@)
+ */
+BOOL WINAPI RemoveDllDirectory( DLL_DIRECTORY_COOKIE cookie )
+{
+    struct dll_dir_entry *ptr = cookie;
+
+    TRACE( "%s\n", debugstr_w( ptr->dir ));
+
+    RtlEnterCriticalSection( &dlldir_section );
+    list_remove( &ptr->entry );
+    HeapFree( GetProcessHeap(), 0, ptr );
     RtlLeaveCriticalSection( &dlldir_section );
     return TRUE;
 }

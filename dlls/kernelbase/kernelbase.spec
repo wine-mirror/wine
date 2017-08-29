@@ -19,7 +19,7 @@
 @ stdcall AddAuditAccessAce(ptr long long ptr long long) advapi32.AddAuditAccessAce
 @ stdcall AddAuditAccessAceEx(ptr long long long ptr long long) advapi32.AddAuditAccessAceEx
 @ stdcall AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long) advapi32.AddAuditAccessObjectAce
-@ stub AddDllDirectory
+@ stdcall AddDllDirectory(wstr) kernel32.AddDllDirectory
 @ stdcall AddMandatoryAce(ptr long long long ptr) advapi32.AddMandatoryAce
 @ stdcall AddRefActCtx(ptr) kernel32.AddRefActCtx
 # @ stub AddResourceAttributeAce
@@ -1333,7 +1333,7 @@
 # @ stub RemapPredefinedHandleInternal
 @ stdcall RemoveDirectoryA(str) kernel32.RemoveDirectoryA
 @ stdcall RemoveDirectoryW(wstr) kernel32.RemoveDirectoryW
-@ stub RemoveDllDirectory
+@ stdcall RemoveDllDirectory(ptr) kernel32.RemoveDllDirectory
 # @ stub RemovePackageStatus
 # @ stub RemovePackageStatusForUser
 @ stdcall RemoveVectoredContinueHandler(ptr) kernel32.RemoveVectoredContinueHandler

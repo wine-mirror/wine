@@ -140,7 +140,7 @@
 @ stdcall AddAtomW(wstr)
 @ stdcall AddConsoleAliasA(str str str)
 @ stdcall AddConsoleAliasW(wstr wstr wstr)
-# @ stub AddDllDirectory
+@ stdcall AddDllDirectory(wstr)
 # @ stub AddIntegrityLabelToBoundaryDescriptor
 # @ stub AddLocalAlternateComputerNameA
 # @ stub AddLocalAlternateComputerNameW
@@ -1274,7 +1274,7 @@
 @ stub RequestDeviceWakeup
 # @ stub RemoveDirectoryTransactedA
 # @ stub RemoveDirectoryTransactedW
-# @ stub RemoveDllDirectory
+@ stdcall RemoveDllDirectory(ptr)
 # @ stub RemoveSecureMemoryCacheCallback
 # @ stub ReplacePartitionUnit
 @ stdcall RequestWakeupLatency(long)
