@@ -20,6 +20,7 @@
 
 #include "wine/test.h"
 #include <windows.h>
+#include <stdio.h>
 #include <psapi.h>
 
 static DWORD (WINAPI *pGetDllDirectoryA)(DWORD,LPSTR);
@@ -43,6 +44,89 @@ static BOOL cmpStrAW(const char* a, const WCHAR* b, DWORD lenA, DWORD lenB)
                                      a, lenA, aw, sizeof(aw) / sizeof(aw[0]) );
     if (len != lenB) return FALSE;
     return memcmp(aw, b, len * sizeof(WCHAR)) == 0;
+}
+
+static const struct
+{
+    IMAGE_DOS_HEADER dos;
+    IMAGE_NT_HEADERS nt;
+    IMAGE_SECTION_HEADER section;
+} dll_image =
+{
+    { IMAGE_DOS_SIGNATURE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, { 0 }, 0, 0, { 0 },
+      sizeof(IMAGE_DOS_HEADER) },
+    {
+        IMAGE_NT_SIGNATURE, /* Signature */
+        {
+#if defined __i386__
+            IMAGE_FILE_MACHINE_I386, /* Machine */
+#elif defined __x86_64__
+            IMAGE_FILE_MACHINE_AMD64, /* Machine */
+#elif defined __powerpc__
+            IMAGE_FILE_MACHINE_POWERPC, /* Machine */
+#elif defined __arm__
+            IMAGE_FILE_MACHINE_ARMNT, /* Machine */
+#elif defined __aarch64__
+            IMAGE_FILE_MACHINE_ARM64, /* Machine */
+#else
+# error You must specify the machine type
+#endif
+            1, /* NumberOfSections */
+            0, /* TimeDateStamp */
+            0, /* PointerToSymbolTable */
+            0, /* NumberOfSymbols */
+            sizeof(IMAGE_OPTIONAL_HEADER), /* SizeOfOptionalHeader */
+            IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_DLL /* Characteristics */
+        },
+        { IMAGE_NT_OPTIONAL_HDR_MAGIC, /* Magic */
+          1, /* MajorLinkerVersion */
+          0, /* MinorLinkerVersion */
+          0, /* SizeOfCode */
+          0, /* SizeOfInitializedData */
+          0, /* SizeOfUninitializedData */
+          0, /* AddressOfEntryPoint */
+          0x1000, /* BaseOfCode */
+#ifndef _WIN64
+          0, /* BaseOfData */
+#endif
+          0x10000000, /* ImageBase */
+          0x1000, /* SectionAlignment */
+          0x1000, /* FileAlignment */
+          4, /* MajorOperatingSystemVersion */
+          0, /* MinorOperatingSystemVersion */
+          1, /* MajorImageVersion */
+          0, /* MinorImageVersion */
+          4, /* MajorSubsystemVersion */
+          0, /* MinorSubsystemVersion */
+          0, /* Win32VersionValue */
+          0x2000, /* SizeOfImage */
+          sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS), /* SizeOfHeaders */
+          0, /* CheckSum */
+          IMAGE_SUBSYSTEM_WINDOWS_CUI, /* Subsystem */
+          0, /* DllCharacteristics */
+          0, /* SizeOfStackReserve */
+          0, /* SizeOfStackCommit */
+          0, /* SizeOfHeapReserve */
+          0, /* SizeOfHeapCommit */
+          0, /* LoaderFlags */
+          0, /* NumberOfRvaAndSizes */
+          { { 0 } } /* DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES] */
+        }
+    },
+    { ".rodata", { 0 }, 0x1000, 0x1000, 0, 0, 0, 0, 0,
+      IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ }
+};
+
+static void create_test_dll( const char *name )
+{
+    DWORD dummy;
+    HANDLE handle = CreateFileA( name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0 );
+
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create file err %u\n", GetLastError() );
+    WriteFile( handle, &dll_image, sizeof(dll_image), &dummy, NULL );
+    SetFilePointer( handle, dll_image.nt.OptionalHeader.SizeOfImage, NULL, FILE_BEGIN );
+    SetEndOfFile( handle );
+    CloseHandle( handle );
 }
 
 static void testGetModuleFileName(const char* name)
@@ -408,6 +492,132 @@ static void testLoadLibraryEx(void)
     hmodule = LoadLibraryExA(path, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
     ok(hmodule != NULL, "got %p\n", hmodule);
     FreeLibrary(hmodule);
+}
+
+static void test_LoadLibraryEx_search_flags(void)
+{
+    static const struct
+    {
+        int add_dirs[4];
+        int dll_dir;
+        int expect;
+    } tests[] =
+    {
+        { { 1, 2, 3 }, 4, 3 }, /* 0 */
+        { { 1, 3, 2 }, 4, 2 },
+        { { 3, 1 },    4, 1 },
+        { { 5, 6 },    4, 4 },
+        { { 5, 2 },    4, 2 },
+        { { 0 },       4, 4 }, /* 5 */
+        { { 0 },       0, 0 },
+        { { 6, 5 },    5, 0 },
+        { { 1, 1, 2 }, 0, 2 },
+    };
+    char *p, path[MAX_PATH], buf[MAX_PATH];
+    WCHAR bufW[MAX_PATH];
+    DLL_DIRECTORY_COOKIE cookies[4];
+    unsigned int i, j, k;
+    BOOL ret;
+    HMODULE mod;
+
+    if (!pAddDllDirectory || !pSetDllDirectoryA) return;
+
+    GetTempPathA( sizeof(path), path );
+    GetTempFileNameA( path, "tmp", 0, buf );
+    DeleteFileA( buf );
+    ret = CreateDirectoryA( buf, NULL );
+    ok( ret, "CreateDirectory failed err %u\n", GetLastError() );
+    p = buf + strlen( buf );
+    for (i = 1; i <= 6; i++)
+    {
+        sprintf( p, "\\%u", i );
+        ret = CreateDirectoryA( buf, NULL );
+        ok( ret, "CreateDirectory failed err %u\n", GetLastError() );
+        if (i >= 5) continue;  /* dirs 5 and 6 are left empty */
+        sprintf( p, "\\%u\\winetestdll.dll", i );
+        create_test_dll( buf );
+    }
+    SetLastError( 0xdeadbeef );
+    mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+    ok( !mod, "LoadLibrary succeeded\n" );
+    ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_USER_DIRS );
+    ok( !mod, "LoadLibrary succeeded\n" );
+    ok( GetLastError() == ERROR_MOD_NOT_FOUND || broken(GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
+        "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_SYSTEM32 );
+    ok( !mod, "LoadLibrary succeeded\n" );
+    ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR );
+    ok( !mod, "LoadLibrary succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32 );
+    ok( !mod, "LoadLibrary succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    mod = LoadLibraryExA( "foo\\winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR );
+    ok( !mod, "LoadLibrary succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    mod = LoadLibraryExA( "\\windows\\winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR );
+    ok( !mod, "LoadLibrary succeeded\n" );
+    ok( GetLastError() == ERROR_MOD_NOT_FOUND, "wrong error %u\n", GetLastError() );
+
+    for (j = 0; j < sizeof(tests) / sizeof(tests[0]); j++)
+    {
+        for (k = 0; tests[j].add_dirs[k]; k++)
+        {
+            sprintf( p, "\\%u", tests[j].add_dirs[k] );
+            MultiByteToWideChar( CP_ACP, 0, buf, -1, bufW, MAX_PATH );
+            cookies[k] = pAddDllDirectory( bufW );
+            ok( cookies[k] != NULL, "failed to add %s\n", buf );
+        }
+        if (tests[j].dll_dir)
+        {
+            sprintf( p, "\\%u", tests[j].dll_dir );
+            pSetDllDirectoryA( buf );
+        }
+        else pSetDllDirectoryA( NULL );
+
+        SetLastError( 0xdeadbeef );
+        mod = LoadLibraryExA( "winetestdll.dll", 0, LOAD_LIBRARY_SEARCH_USER_DIRS );
+        if (tests[j].expect)
+        {
+            ok( mod != NULL, "%u: LoadLibrary failed err %u\n", j, GetLastError() );
+            GetModuleFileNameA( mod, path, MAX_PATH );
+            sprintf( p, "\\%u\\winetestdll.dll", tests[j].expect );
+            ok( !lstrcmpiA( path, buf ), "%u: wrong module %s expected %s\n", j, path, buf );
+        }
+        else
+        {
+            ok( !mod, "%u: LoadLibrary succeeded\n", j );
+            ok( GetLastError() == ERROR_MOD_NOT_FOUND || broken(GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
+                "%u: wrong error %u\n", j, GetLastError() );
+        }
+        FreeLibrary( mod );
+
+        for (k = 0; tests[j].add_dirs[k]; k++) pRemoveDllDirectory( cookies[k] );
+    }
+
+    for (i = 1; i <= 6; i++)
+    {
+        sprintf( p, "\\%u\\winetestdll.dll", i );
+        DeleteFileA( buf );
+        sprintf( p, "\\%u", i );
+        RemoveDirectoryA( buf );
+    }
+    *p = 0;
+    RemoveDirectoryA( buf );
 }
 
 static void testGetDllDirectory(void)
@@ -814,6 +1024,9 @@ static void test_SetDefaultDllDirectories(void)
     mod = LoadLibraryA( "authz.dll" );
     ok( mod != NULL, "loading authz failed\n" );
     FreeLibrary( mod );
+    mod = LoadLibraryExA( "authz.dll", 0, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+    todo_wine ok( !mod, "loading authz succeeded\n" );
+    FreeLibrary( mod );
     ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
     ok( ret, "SetDefaultDllDirectories failed err %u\n", GetLastError() );
     mod = LoadLibraryA( "authz.dll" );
@@ -881,6 +1094,7 @@ START_TEST(module)
     testLoadLibraryA_Wrong();
     testGetProcAddress_Wrong();
     testLoadLibraryEx();
+    test_LoadLibraryEx_search_flags();
     testGetModuleHandleEx();
     testK32GetModuleInformation();
     test_AddDllDirectory();
