@@ -67,11 +67,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION dlldir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static const DWORD load_library_search_flags = (LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
-                                                LOAD_LIBRARY_SEARCH_USER_DIRS |
-                                                LOAD_LIBRARY_SEARCH_SYSTEM32 |
-                                                LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-
 /****************************************************************************
  *              GetDllDirectoryA   (KERNEL32.@)
  */
@@ -212,6 +207,12 @@ BOOL WINAPI RemoveDllDirectory( DLL_DIRECTORY_COOKIE cookie )
  */
 BOOL WINAPI SetDefaultDllDirectories( DWORD flags )
 {
+    /* LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR doesn't make sense in default dirs */
+    const DWORD load_library_search_flags = (LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
+                                             LOAD_LIBRARY_SEARCH_USER_DIRS |
+                                             LOAD_LIBRARY_SEARCH_SYSTEM32 |
+                                             LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+
     if (!flags || (flags & ~load_library_search_flags))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -998,6 +999,75 @@ WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
 
 
 /******************************************************************
+ *		get_dll_load_path_search_flags
+ */
+static WCHAR *get_dll_load_path_search_flags( LPCWSTR module, DWORD flags )
+{
+    const WCHAR *image = NULL, *mod_end, *image_end;
+    struct dll_dir_entry *dir;
+    WCHAR *p, *ret;
+    int len = 1;
+
+    if (flags & LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)
+        flags |= (LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
+                  LOAD_LIBRARY_SEARCH_USER_DIRS |
+                  LOAD_LIBRARY_SEARCH_SYSTEM32);
+
+    if (flags & LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR)
+    {
+        DWORD type = RtlDetermineDosPathNameType_U( module );
+        if (type != ABSOLUTE_DRIVE_PATH && type != ABSOLUTE_PATH)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return NULL;
+        }
+        mod_end = get_module_path_end( module );
+        len += (mod_end - module) + 1;
+    }
+    else module = NULL;
+
+    RtlEnterCriticalSection( &dlldir_section );
+
+    if (flags & LOAD_LIBRARY_SEARCH_APPLICATION_DIR)
+    {
+        image = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+        image_end = get_module_path_end( image );
+        len += (image_end - image) + 1;
+    }
+
+    if (flags & LOAD_LIBRARY_SEARCH_USER_DIRS)
+    {
+        LIST_FOR_EACH_ENTRY( dir, &dll_dir_list, struct dll_dir_entry, entry )
+            len += strlenW( dir->dir ) + 1;
+        if (dll_directory) len += strlenW(dll_directory) + 1;
+    }
+
+    if (flags & LOAD_LIBRARY_SEARCH_SYSTEM32) len += GetSystemDirectoryW( NULL, 0 );
+
+    if ((p = ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    {
+        if (module) p = append_path_len( p, module, mod_end - module );
+        if (image) p = append_path_len( p, image, image_end - image );
+        if (flags & LOAD_LIBRARY_SEARCH_USER_DIRS)
+        {
+            LIST_FOR_EACH_ENTRY( dir, &dll_dir_list, struct dll_dir_entry, entry )
+                p = append_path( p, dir->dir );
+            if (dll_directory) p = append_path( p, dll_directory );
+        }
+        if (flags & LOAD_LIBRARY_SEARCH_SYSTEM32) GetSystemDirectoryW( p, ret + len - p );
+        else
+        {
+            if (p > ret) p--;
+            *p = 0;
+        }
+    }
+
+    RtlLeaveCriticalSection( &dlldir_section );
+    return ret;
+}
+
+
+/******************************************************************
  *		load_library_as_datafile
  */
 static BOOL load_library_as_datafile( LPCWSTR name, HMODULE *hmod, DWORD flags )
@@ -1050,18 +1120,25 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     NTSTATUS nts;
     HMODULE hModule;
     WCHAR *load_path;
-    static const DWORD unsupported_flags = load_library_search_flags |
-        LOAD_IGNORE_CODE_AUTHZ_LEVEL |
-        LOAD_LIBRARY_AS_IMAGE_RESOURCE |
-        LOAD_LIBRARY_REQUIRE_SIGNED_TARGET |
-        LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR;
+    const DWORD load_library_search_flags = (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR |
+                                             LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
+                                             LOAD_LIBRARY_SEARCH_USER_DIRS |
+                                             LOAD_LIBRARY_SEARCH_SYSTEM32 |
+                                             LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    const DWORD unsupported_flags = (LOAD_IGNORE_CODE_AUTHZ_LEVEL |
+                                     LOAD_LIBRARY_AS_IMAGE_RESOURCE |
+                                     LOAD_LIBRARY_REQUIRE_SIGNED_TARGET);
 
     if (!(flags & load_library_search_flags)) flags |= default_search_flags;
 
     if( flags & unsupported_flags)
         FIXME("unsupported flag(s) used (flags: 0x%08x)\n", flags);
 
-    load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
+    if (flags & load_library_search_flags)
+        load_path = get_dll_load_path_search_flags( libname->Buffer, flags );
+    else
+        load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
+    if (!load_path) return 0;
 
     if (flags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE))
     {
