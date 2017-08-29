@@ -166,10 +166,10 @@ static void d2d_rt_draw(struct d2d_d3d_render_target *render_target, enum d2d_sh
         const D2D1_RECT_F *clip_rect;
 
         clip_rect = &render_target->clip_stack.stack[render_target->clip_stack.count - 1];
-        scissor_rect.left = clip_rect->left + 0.5f;
-        scissor_rect.top = clip_rect->top + 0.5f;
-        scissor_rect.right = clip_rect->right + 0.5f;
-        scissor_rect.bottom = clip_rect->bottom + 0.5f;
+        scissor_rect.left = ceilf(clip_rect->left - 0.5f);
+        scissor_rect.top = ceilf(clip_rect->top - 0.5f);
+        scissor_rect.right = ceilf(clip_rect->right - 0.5f);
+        scissor_rect.bottom = ceilf(clip_rect->bottom - 0.5f);
     }
     else
     {

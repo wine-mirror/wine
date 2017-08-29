@@ -1059,6 +1059,72 @@ static void test_clip(void)
     match = compare_surface(surface, "035a44d4198d6e422e9de6185b5b2c2bac5e33c9");
     ok(match, "Surface does not match.\n");
 
+    /* Fractional clip rectangle coordinates, aliased mode. */
+    set_matrix_identity(&matrix);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    ID2D1RenderTarget_SetDpi(rt, 96.0f, 96.0f);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    set_color(&color, 0.0f, 0.0f, 0.0f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+
+    scale_matrix(&matrix, 2.0f, 2.0f);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    set_rect(&rect, 0.0f, 0.5f, 200.0f, 100.5f);
+    set_color(&color, 1.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_PushAxisAlignedClip(rt, &rect, D2D1_ANTIALIAS_MODE_ALIASED);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_PopAxisAlignedClip(rt);
+
+    set_matrix_identity(&matrix);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    set_rect(&rect, 0.0f, 0.5f, 100.0f, 200.5f);
+    set_color(&color, 1.0f, 0.0f, 0.0f, 1.0f);
+    ID2D1RenderTarget_PushAxisAlignedClip(rt, &rect, D2D1_ANTIALIAS_MODE_ALIASED);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_PopAxisAlignedClip(rt);
+
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    set_rect(&rect, 0.5f, 250.0f, 100.5f, 300.0f);
+    set_color(&color, 1.0f, 1.0f, 0.0f, 1.0f);
+    ID2D1RenderTarget_PushAxisAlignedClip(rt, &rect, D2D1_ANTIALIAS_MODE_ALIASED);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_PopAxisAlignedClip(rt);
+
+    translate_matrix(&matrix, 0.1f, 0.0f);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    set_rect(&rect, 110.0f, 250.25f, 150.0f, 300.25f);
+    set_color(&color, 0.0f, 0.5f, 1.0f, 1.0f);
+    ID2D1RenderTarget_PushAxisAlignedClip(rt, &rect, D2D1_ANTIALIAS_MODE_ALIASED);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_PopAxisAlignedClip(rt);
+
+    set_rect(&rect, 160.0f, 250.75f, 200.0f, 300.75f);
+    set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_PushAxisAlignedClip(rt, &rect, D2D1_ANTIALIAS_MODE_ALIASED);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_PopAxisAlignedClip(rt);
+
+    ID2D1RenderTarget_SetDpi(rt, 48.0f, 192.0f);
+    set_rect(&rect, 160.25f, 0.0f, 200.25f, 100.0f);
+    set_color(&color, 1.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_PushAxisAlignedClip(rt, &rect, D2D1_ANTIALIAS_MODE_ALIASED);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_PopAxisAlignedClip(rt);
+
+    ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
+    set_rect(&rect, 160.75f, 100.0f, 200.75f, 120.0f);
+    set_color(&color, 0.0f, 1.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_PushAxisAlignedClip(rt, &rect, D2D1_ANTIALIAS_MODE_ALIASED);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_PopAxisAlignedClip(rt);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+    match = compare_surface(surface, "a958d1fe69ee880200d47b206948e4c1ef382748");
+    ok(match, "Surface does not match.\n");
+
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
