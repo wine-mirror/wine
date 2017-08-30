@@ -971,7 +971,7 @@ static void test_AddDllDirectory(void)
     }
 
     buf[0] = '\0';
-    GetTempPathW( sizeof(path), path );
+    GetTempPathW( sizeof(path)/sizeof(path[0]), path );
     GetTempFileNameW( path, tmpW, 0, buf );
     SetLastError( 0xdeadbeef );
     cookie = pAddDllDirectory( buf );
