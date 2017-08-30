@@ -1118,6 +1118,8 @@ static void test_gethrgn(void)
     GpGraphics *graphics;
     HRGN hrgn;
     HDC hdc=GetDC(0);
+    INT rgntype;
+    RECT rgnbox;
     static const RECT empty_rect = {0,0,0,0};
     static const RECT test_rect = {10, 11, 20, 21};
     static const GpRectF test_rectF = {10.0, 11.0, 10.0, 10.0};
@@ -1238,6 +1240,35 @@ static void test_gethrgn(void)
     ok(status == Ok, "status %08x\n", status);
     status = GdipDeleteGraphics(graphics);
     ok(status == Ok, "status %08x\n", status);
+
+    /* test with gdi32 transform */
+    SetViewportOrgEx(hdc, 10, 10, NULL);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreateRegionRect(&test_rectF, &region);
+    expect(Ok, status);
+
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    expect(Ok, status);
+
+    rgntype = GetRgnBox(hrgn, &rgnbox);
+    DeleteObject(hrgn);
+
+    expect(SIMPLEREGION, rgntype);
+    expect(20, rgnbox.left);
+    expect(21, rgnbox.top);
+    expect(30, rgnbox.right);
+    expect(31, rgnbox.bottom);
+
+    status = GdipDeleteRegion(region);
+    expect(Ok, status);
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+
+    SetViewportOrgEx(hdc, 0, 0, NULL);
+
     ReleaseDC(0, hdc);
 }
 
