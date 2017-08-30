@@ -81,6 +81,8 @@ extern REAL units_scale(GpUnit from, GpUnit to, REAL dpi) DECLSPEC_HIDDEN;
 
 #define WineCoordinateSpaceGdiDevice ((GpCoordinateSpace)4)
 
+extern GpStatus gdi_transform_acquire(GpGraphics *graphics);
+extern GpStatus gdi_transform_release(GpGraphics *graphics);
 extern GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
         GpCoordinateSpace src_space, GpMatrix *matrix) DECLSPEC_HIDDEN;
 extern GpStatus gdip_transform_points(GpGraphics *graphics, GpCoordinateSpace dst_space,
@@ -258,6 +260,8 @@ struct GpGraphics{
     struct list containers;
     GraphicsContainer contid; /* last-issued container ID */
     INT origin_x, origin_y;
+    INT gdi_transform_acquire_count, gdi_transform_save;
+    GpMatrix gdi_transform;
     /* For giving the caller an HDC when we technically can't: */
     HBITMAP temp_hbitmap;
     int temp_hbitmap_width;

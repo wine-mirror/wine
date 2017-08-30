@@ -2039,7 +2039,7 @@ static GpStatus restore_container(GpGraphics* graphics,
     return Ok;
 }
 
-static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
+static GpStatus get_graphics_device_bounds(GpGraphics* graphics, GpRectF* rect)
 {
     RECT wnd_rect;
     GpStatus stat=Ok;
@@ -2083,7 +2083,14 @@ static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
         rect->Height = GetDeviceCaps(graphics->hdc, VERTRES);
     }
 
-    if (graphics->hdc)
+    return stat;
+}
+
+static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
+{
+    GpStatus stat = get_graphics_device_bounds(graphics, rect);
+
+    if (stat == Ok && graphics->hdc)
     {
         GpPointF points[4], min_point, max_point;
         int i;
@@ -4457,14 +4464,17 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
     if (!brush_can_fill_pixels(brush))
         return NotImplemented;
 
-    stat = get_graphics_bounds(graphics, &graphics_bounds);
+    stat = gdi_transform_acquire(graphics);
+
+    if (stat == Ok)
+        stat = get_graphics_device_bounds(graphics, &graphics_bounds);
 
     if (stat == Ok)
         stat = GdipCloneRegion(region, &temp_region);
 
     if (stat == Ok)
     {
-        stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
+        stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice,
             CoordinateSpaceWorld, &world_to_device);
 
         if (stat == Ok)
@@ -4482,6 +4492,7 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
     if (stat == Ok && GetRgnBox(hregion, &bound_rect) == NULLREGION)
     {
         DeleteObject(hregion);
+        gdi_transform_release(graphics);
         return Ok;
     }
 
@@ -4512,6 +4523,8 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
 
         DeleteObject(hregion);
     }
+
+    gdi_transform_release(graphics);
 
     return stat;
 }
@@ -6586,8 +6599,44 @@ static void get_gdi_transform(GpGraphics *graphics, GpMatrix *matrix)
         return;
     }
 
+    if (graphics->gdi_transform_acquire_count)
+    {
+        *matrix = graphics->gdi_transform;
+        return;
+    }
+
     GetTransform(graphics->hdc, 0x204, &xform);
     GdipSetMatrixElements(matrix, xform.eM11, xform.eM12, xform.eM21, xform.eM22, xform.eDx, xform.eDy);
+}
+
+GpStatus gdi_transform_acquire(GpGraphics *graphics)
+{
+    if (graphics->gdi_transform_acquire_count == 0 && graphics->hdc)
+    {
+        get_gdi_transform(graphics, &graphics->gdi_transform);
+        graphics->gdi_transform_save = SaveDC(graphics->hdc);
+        SetGraphicsMode(graphics->hdc, GM_COMPATIBLE);
+        SetMapMode(graphics->hdc, MM_TEXT);
+        SetWindowOrgEx(graphics->hdc, 0, 0, NULL);
+        SetViewportOrgEx(graphics->hdc, 0, 0, NULL);
+    }
+    graphics->gdi_transform_acquire_count++;
+    return Ok;
+}
+
+GpStatus gdi_transform_release(GpGraphics *graphics)
+{
+    if (graphics->gdi_transform_acquire_count <= 0)
+    {
+        ERR("called without matching gdi_transform_acquire");
+        return GenericError;
+    }
+    if (graphics->gdi_transform_acquire_count == 1 && graphics->hdc)
+    {
+        RestoreDC(graphics->hdc, graphics->gdi_transform_save);
+    }
+    graphics->gdi_transform_acquire_count--;
+    return Ok;
 }
 
 GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
