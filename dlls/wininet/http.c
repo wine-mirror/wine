@@ -1732,7 +1732,7 @@ static BOOL HTTP_DomainMatches(LPCWSTR server, substr_t domain)
         return FALSE;
 
     len = strlenW(dot + 1);
-    if(len <= domain.len - 2)
+    if(len < domain.len - 2)
         return FALSE;
 
     /* The server's domain is longer than the wildcard, so it
