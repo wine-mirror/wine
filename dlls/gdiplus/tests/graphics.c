@@ -4959,6 +4959,16 @@ static void test_clipping(void)
     ok(rect.X == 100.0 && rect.Y == 100.0 && rect.Width == 100.0 && rect.Height == 100.0,
        "expected 100.0,100.0-100.0,100.0, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
 
+    /* Clip region does not account for changes to gdi32 transform */
+    SetViewportOrgEx(hdc, 10, 10, NULL);
+
+    status = GdipGetClipBounds(graphics, &rect);
+    expect(Ok, status);
+    ok(rect.X == 100.0 && rect.Y == 100.0 && rect.Width == 100.0 && rect.Height == 100.0,
+       "expected 100.0,100.0-100.0,100.0, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
+
+    SetViewportOrgEx(hdc, 0, 0, NULL);
+
     status = GdipSetEmpty(region);
     expect(Ok, status);
     status = GdipGetClip(graphics, region);
