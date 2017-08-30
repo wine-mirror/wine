@@ -348,8 +348,26 @@ static void gdi_alpha_blend(GpGraphics *graphics, INT dst_x, INT dst_y, INT dst_
 
 static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
 {
-    /* clipping region is in device coords */
-    return GdipGetRegionHRgn(graphics->clip, NULL, hrgn);
+    GpRegion *rgn;
+    GpMatrix transform;
+    GpStatus stat;
+
+    stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceDevice, &transform);
+
+    if (stat == Ok)
+        stat = GdipCloneRegion(graphics->clip, &rgn);
+
+    if (stat == Ok)
+    {
+        stat = GdipTransformRegion(rgn, &transform);
+
+        if (stat == Ok)
+            stat = GdipGetRegionHRgn(rgn, NULL, hrgn);
+
+        GdipDeleteRegion(rgn);
+    }
+
+    return stat;
 }
 
 /* Draw ARGB data to the given graphics object */

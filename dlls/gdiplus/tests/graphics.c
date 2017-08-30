@@ -6276,7 +6276,7 @@ static void test_GdipFillRectanglesOnMemoryDCSolidBrush(void)
        color[5] = get_bitmap_pixel(width-1, height/2-1);
     }
 
-    todo_wine ok(is_blue_color(color[0]) && is_blue_color(color[1]) && is_blue_color(color[2]) &&
+    ok(is_blue_color(color[0]) && is_blue_color(color[1]) && is_blue_color(color[2]) &&
        color[3] == 0 && color[4] == 0 && color[5] == 0,
        "Expected GdipFillRectangleI take effect!\n" );
     ReleaseBitmapPixelBuffer(pixel);
