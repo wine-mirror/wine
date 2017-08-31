@@ -398,13 +398,13 @@ static void make_dc_dirty( struct dce *dce )
     if (!dce->count)
     {
         /* Don't bother with visible regions of unused DCEs */
-        TRACE("\tpurged %p dce [%p]\n", dce, dce->hwnd);
+        TRACE("purged %p hwnd %p\n", dce->hdc, dce->hwnd);
         release_dce( dce );
     }
     else
     {
         /* Set dirty bits in the hDC and DCE structs */
-        TRACE("\tfixed up %p dce [%p]\n", dce, dce->hwnd);
+        TRACE("fixed up %p hwnd %p\n", dce->hdc, dce->hwnd);
         SetHookFlags( dce->hdc, DCHF_INVALIDATEVISRGN );
     }
 }
@@ -437,7 +437,7 @@ void invalidate_dce( WND *win, const RECT *extra_rect )
     {
         if (!dce->hwnd) continue;
 
-        TRACE( "%p: hwnd %p dcx %08x %s %s\n", dce, dce->hwnd, dce->flags,
+        TRACE( "%p: hwnd %p dcx %08x %s %s\n", dce->hdc, dce->hwnd, dce->flags,
                (dce->flags & DCX_CACHE) ? "Cache" : "Owned", dce->count ? "InUse" : "" );
 
         if ((dce->hwnd == win->parent) && !(dce->flags & DCX_CLIPCHILDREN))
@@ -1052,7 +1052,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
             if (!dce->hwnd) dceEmpty = dce;
             else if ((dce->hwnd == hwnd) && !((dce->flags ^ flags) & clip_flags))
             {
-                TRACE( "found valid %p dce [%p], flags %08x\n", dce, hwnd, dce->flags );
+                TRACE( "found valid %p hwnd %p, flags %08x\n", dce->hdc, hwnd, dce->flags );
                 found = dce;
                 bUpdateVisRgn = FALSE;
                 break;
@@ -1082,17 +1082,13 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     else
     {
         flags |= DCX_NORESETATTRS;
-        if (dce->hwnd == hwnd)
-        {
-            TRACE("\tskipping hVisRgn update\n");
-            bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */
-        }
-        else
+        if (dce->hwnd != hwnd)
         {
             /* we should free dce->clip_rgn here, but Windows apparently doesn't */
             dce->flags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN);
             dce->clip_rgn = 0;
         }
+        else bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */
     }
 
     if (flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN))
@@ -1118,7 +1114,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (bUpdateVisRgn) update_visible_region( dce );
 
-    TRACE("(%p,%p,0x%x): returning %p\n", hwnd, hrgnClip, flags, dce->hdc);
+    TRACE("(%p,%p,0x%x): returning %p%s\n", hwnd, hrgnClip, flags, dce->hdc,
+          bUpdateVisRgn ? " (updated)" : "");
     return dce->hdc;
 }
 
