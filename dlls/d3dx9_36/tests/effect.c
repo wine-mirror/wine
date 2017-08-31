@@ -6981,6 +6981,190 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
     effect->lpVtbl->Release(effect);
 }
 
+#if 0
+vertexshader vs_arr[2] =
+{
+    asm
+    {
+        vs_3_0
+        def c0, 1, 1, 1, 1
+        dcl_position o0
+        mov o0, c0
+    },
+
+    asm
+    {
+        vs_3_sw
+        def c256, 1, 1, 1, 1
+        dcl_position o0
+        mov o0, c256
+    },
+};
+
+int i;
+
+technique tech0
+{
+    pass p0
+    {
+        VertexShader = vs_arr[1];
+    }
+}
+technique tech1
+{
+    pass p0
+    {
+        VertexShader = vs_arr[i];
+    }
+}
+#endif
+static const DWORD test_effect_unsupported_shader_blob[] =
+{
+    0xfeff0901, 0x000000ac, 0x00000000, 0x00000010, 0x00000004, 0x00000020, 0x00000000, 0x00000002,
+    0x00000001, 0x00000002, 0x00000007, 0x615f7376, 0x00007272, 0x00000002, 0x00000000, 0x0000004c,
+    0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000002, 0x00000069, 0x00000003,
+    0x00000010, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000003, 0x00003070, 0x00000006,
+    0x68636574, 0x00000030, 0x00000004, 0x00000010, 0x00000004, 0x00000000, 0x00000000, 0x00000000,
+    0x00000003, 0x00003070, 0x00000006, 0x68636574, 0x00000031, 0x00000002, 0x00000002, 0x00000006,
+    0x00000005, 0x00000004, 0x00000018, 0x00000000, 0x00000000, 0x0000002c, 0x00000048, 0x00000000,
+    0x00000000, 0x00000074, 0x00000000, 0x00000001, 0x0000006c, 0x00000000, 0x00000001, 0x00000092,
+    0x00000000, 0x00000058, 0x00000054, 0x000000a0, 0x00000000, 0x00000001, 0x00000098, 0x00000000,
+    0x00000001, 0x00000092, 0x00000000, 0x00000084, 0x00000080, 0x00000002, 0x00000002, 0x00000001,
+    0x00000038, 0xfffe0300, 0x05000051, 0xa00f0000, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000,
+    0x0200001f, 0x80000000, 0xe00f0000, 0x02000001, 0xe00f0000, 0xa0e40000, 0x0000ffff, 0x00000002,
+    0x00000038, 0xfffe03ff, 0x05000051, 0xa00f0100, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000,
+    0x0200001f, 0x80000000, 0xe00f0000, 0x02000001, 0xe00f0000, 0xa0e40100, 0x0000ffff, 0x00000001,
+    0x00000000, 0xffffffff, 0x00000000, 0x00000002, 0x000000e4, 0x00000008, 0x615f7376, 0x00007272,
+    0x46580200, 0x0023fffe, 0x42415443, 0x0000001c, 0x00000057, 0x46580200, 0x00000001, 0x0000001c,
+    0x00000100, 0x00000054, 0x00000030, 0x00000002, 0x00000001, 0x00000034, 0x00000044, 0xabab0069,
+    0x00020000, 0x00010001, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320,
+    0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe, 0x54494c43, 0x00000000,
+    0x000cfffe, 0x434c5846, 0x00000001, 0x10000001, 0x00000001, 0x00000000, 0x00000002, 0x00000000,
+    0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x00000000, 0x00000000,
+    0xffffffff, 0x00000000, 0x00000001, 0x0000000a, 0x615f7376, 0x315b7272, 0x0000005d,
+};
+
+#define TEST_EFFECT_UNSUPPORTED_SHADER_BYTECODE_VS_3_0_POS 81
+#define TEST_EFFECT_UNSUPPORTED_SHADER_BYTECODE_VS_3_0_LEN 14
+
+static void test_effect_unsupported_shader(void)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DVertexShader9 *vshader;
+    unsigned int passes_count;
+    IDirect3DDevice9 *device;
+    UINT byte_code_size;
+    ID3DXEffect *effect;
+    IDirect3D9 *d3d;
+    void *byte_code;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    if (!(window = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(window);
+        return;
+    }
+    present_parameters.Windowed = TRUE;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    if (FAILED(hr)) {
+        skip("Failed to create IDirect3DDevice9 object, hr %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = D3DXCreateEffectEx(device, test_effect_unsupported_shader_blob, sizeof(test_effect_unsupported_shader_blob),
+            NULL, NULL, NULL, 0, NULL, &effect, NULL);
+    todo_wine
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Failed to create effect, skipping test.\n");
+        goto cleanup;
+    }
+
+    hr = effect->lpVtbl->ValidateTechnique(effect, "missing_technique");
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->ValidateTechnique(effect, "tech0");
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    effect->lpVtbl->SetInt(effect, "i", 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    effect->lpVtbl->SetInt(effect, "i", 0);
+    hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetTechnique(effect, "tech0");
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(!vshader, "Got non NULL vshader.\n");
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetTechnique(effect, "tech1");
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(!!vshader, "Got NULL vshader.\n");
+    hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
+    ok(hr == D3D_OK, "Got result %x.\n", hr);
+    byte_code = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, byte_code_size);
+    hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
+    ok(hr == D3D_OK, "Got result %x.\n", hr);
+    ok(byte_code_size == TEST_EFFECT_UNSUPPORTED_SHADER_BYTECODE_VS_3_0_LEN * sizeof(DWORD),
+            "Got unexpected byte code size %u.\n", byte_code_size);
+    ok(!memcmp(byte_code,
+            &test_effect_unsupported_shader_blob[TEST_EFFECT_UNSUPPORTED_SHADER_BYTECODE_VS_3_0_POS],
+            byte_code_size), "Incorrect shader selected.\n");
+    HeapFree(GetProcessHeap(), 0, byte_code);
+    IDirect3DVertexShader9_Release(vshader);
+
+    effect->lpVtbl->SetInt(effect, "i", 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->CommitChanges(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
+    ok(hr == D3D_OK, "Got result %x.\n", hr);
+    ok(!vshader, "Got non NULL vshader.\n");
+
+    effect->lpVtbl->Release(effect);
+cleanup:
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -7033,6 +7217,7 @@ START_TEST(effect)
     test_effect_large_address_aware_flag(device);
     test_effect_get_pass_desc(device);
     test_effect_skip_constants(device);
+    test_effect_unsupported_shader();
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
