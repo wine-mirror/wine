@@ -1317,10 +1317,10 @@ static void wined3d_cs_exec_set_unordered_access_view(struct wined3d_cs *cs, con
     if (prev)
         InterlockedDecrement(&prev->resource->bind_count);
 
-    device_invalidate_state(cs->device, STATE_UNORDERED_ACCESS_VIEW_BINDING(op->pipeline));
-
-    if (op->initial_count != ~0u)
+    if (op->view && op->initial_count != ~0u)
         wined3d_unordered_access_view_set_counter(op->view, op->initial_count);
+
+    device_invalidate_state(cs->device, STATE_UNORDERED_ACCESS_VIEW_BINDING(op->pipeline));
 }
 
 void wined3d_cs_emit_set_unordered_access_view(struct wined3d_cs *cs, enum wined3d_pipeline pipeline,
