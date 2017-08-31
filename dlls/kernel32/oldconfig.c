@@ -290,7 +290,8 @@ static void create_hardware_branch(void)
         {
             if (strncmp(dent->d_name, "hd", 2) == 0)
             {
-                sprintf(cStr, procname_ide_media, dent->d_name);
+                if (snprintf(cStr, sizeof(cStr), procname_ide_media, dent->d_name) >= sizeof(cStr))
+                    continue;
                 procfile = fopen(cStr, "r");
                 if (!procfile)
                 {
@@ -306,7 +307,8 @@ static void create_hardware_branch(void)
                     if (nType == DRIVE_UNKNOWN) continue;
                 }
 
-                sprintf(cStr, procname_ide_model, dent->d_name);
+                if (snprintf(cStr, sizeof(cStr), procname_ide_model, dent->d_name) >= sizeof(cStr))
+                    continue;
                 procfile = fopen(cStr, "r");
                 if (!procfile)
                 {
@@ -322,7 +324,8 @@ static void create_hardware_branch(void)
                     cDevModel[strlen(cDevModel) - 1] = 0;
                 }
 
-                sprintf(cUnixDeviceName, "/dev/%s", dent->d_name);
+                if (snprintf(cUnixDeviceName, sizeof(cUnixDeviceName), "/dev/%s", dent->d_name) >= sizeof(cUnixDeviceName))
+                    continue;
                 scsi_addr.PortNumber = (dent->d_name[2] - 'a') / 2;
                 scsi_addr.PathId = 0;
                 scsi_addr.TargetId = (dent->d_name[2] - 'a') % 2;
