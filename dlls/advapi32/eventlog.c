@@ -859,7 +859,9 @@ ULONG WINAPI QueryTraceW( TRACEHANDLE handle, LPCWSTR sessionname, PEVENT_TRACE_
  */
 TRACEHANDLE WINAPI OpenTraceA( PEVENT_TRACE_LOGFILEA logfile )
 {
-    FIXME("%p: stub\n", logfile);
+    static int once;
+
+    if (!once++) FIXME("%p: stub\n", logfile);
     SetLastError(ERROR_ACCESS_DENIED);
     return INVALID_PROCESSTRACE_HANDLE;
 }
@@ -869,7 +871,9 @@ TRACEHANDLE WINAPI OpenTraceA( PEVENT_TRACE_LOGFILEA logfile )
  */
 TRACEHANDLE WINAPI OpenTraceW( PEVENT_TRACE_LOGFILEW logfile )
 {
-    FIXME("%p: stub\n", logfile);
+    static int once;
+
+    if (!once++) FIXME("%p: stub\n", logfile);
     SetLastError(ERROR_ACCESS_DENIED);
     return INVALID_PROCESSTRACE_HANDLE;
 }
