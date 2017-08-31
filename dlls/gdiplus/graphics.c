@@ -284,41 +284,21 @@ static void restore_dc(GpGraphics *graphics, INT state)
     RestoreDC(graphics->hdc, state);
 }
 
-/* This helper applies all the changes that the points listed in ptf need in
- * order to be drawn on the device context.  In the end, this should include at
- * least:
- *  -scaling by page unit
- *  -applying world transformation
- *  -converting from float to int
- * Native gdiplus uses gdi32 to do all this (via SetMapMode, SetViewportExtEx,
- * SetWindowExtEx, SetWorldTransform, etc.) but we cannot because we are using
- * gdi to draw, and these functions would irreparably mess with line widths.
- */
-static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
-    GpPointF *ptf, INT count)
+static void round_points(POINT *pti, GpPointF *ptf, INT count)
 {
-    REAL scale_x, scale_y;
-    GpMatrix matrix;
     int i;
-
-    scale_x = units_to_pixels(1.0, graphics->unit, graphics->xres);
-    scale_y = units_to_pixels(1.0, graphics->unit, graphics->yres);
-
-    /* apply page scale */
-    if(graphics->unit != UnitDisplay)
-    {
-        scale_x *= graphics->scale;
-        scale_y *= graphics->scale;
-    }
-
-    matrix = graphics->worldtrans;
-    GdipScaleMatrix(&matrix, scale_x, scale_y, MatrixOrderAppend);
-    GdipTransformMatrixPoints(&matrix, ptf, count);
 
     for(i = 0; i < count; i++){
         pti[i].x = gdip_round(ptf[i].X);
         pti[i].y = gdip_round(ptf[i].Y);
     }
+}
+
+static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
+    GpPointF *ptf, INT count)
+{
+    gdip_transform_points(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, ptf, count);
+    round_points(pti, ptf, count);
 }
 
 static void gdi_alpha_blend(GpGraphics *graphics, INT dst_x, INT dst_y, INT dst_width, INT dst_height,
@@ -2943,7 +2923,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     ptf[3].Y = ptf[2].Y + ptf[1].Y - ptf[0].Y;
     if (!srcwidth || !srcheight || (ptf[3].X == ptf[0].X && ptf[3].Y == ptf[0].Y))
         return Ok;
-    transform_and_round_points(graphics, pti, ptf, 4);
+    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptf, 4);
+    round_points(pti, ptf, 4);
 
     TRACE("%s %s %s %s\n", wine_dbgstr_point(&pti[0]), wine_dbgstr_point(&pti[1]),
         wine_dbgstr_point(&pti[2]), wine_dbgstr_point(&pti[3]));
@@ -3005,7 +2986,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 if (dst_area.bottom < pti[i].y) dst_area.bottom = pti[i].y;
             }
 
-            stat = get_graphics_bounds(graphics, &graphics_bounds);
+            stat = get_graphics_device_bounds(graphics, &graphics_bounds);
             if (stat != Ok) return stat;
 
             if (graphics_bounds.X > dst_area.left) dst_area.left = floorf(graphics_bounds.X);
@@ -3121,9 +3102,13 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 dst_stride = src_stride;
             }
 
+            gdi_transform_acquire(graphics);
+
             stat = alpha_blend_pixels(graphics, dst_area.left, dst_area.top,
                 dst_data, dst_area.right - dst_area.left, dst_area.bottom - dst_area.top, dst_stride,
                 lockeddata.PixelFormat);
+
+            gdi_transform_release(graphics);
 
             heap_free(src_data);
 
@@ -3208,6 +3193,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 DeleteObject(hrgn);
             }
 
+            gdi_transform_acquire(graphics);
+
             if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
             {
                 gdi_alpha_blend(graphics, pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
@@ -3218,6 +3205,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 StretchBlt(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
                     hdc, srcx, srcy, srcwidth, srcheight, SRCCOPY);
             }
+
+            gdi_transform_release(graphics);
 
             RestoreDC(graphics->hdc, save_state);
 
