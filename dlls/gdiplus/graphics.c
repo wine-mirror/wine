@@ -3499,7 +3499,7 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
 
     if (stat == Ok)
     {
-        stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
+        stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice,
                 CoordinateSpaceWorld, transform);
 
         if (stat == Ok)
@@ -3528,7 +3528,7 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
             if (ceilf(y) > output_area.bottom) output_area.bottom = ceilf(y);
         }
 
-        stat = get_graphics_bounds(graphics, &gp_bound_rect);
+        stat = get_graphics_device_bounds(graphics, &gp_bound_rect);
     }
 
     if (stat == Ok)
@@ -3760,9 +3760,13 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
         /* draw output image */
         if (stat == Ok)
         {
+            gdi_transform_acquire(graphics);
+
             stat = alpha_blend_pixels(graphics, output_area.left, output_area.top,
                 (BYTE*)output_bits, output_width, output_height, output_width * 4,
                 PixelFormat32bppARGB);
+
+            gdi_transform_release(graphics);
         }
 
         heap_free(brush_bits);
