@@ -1059,12 +1059,16 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
     SetPolyFillMode(graphics->hdc, (path->fill == FillModeAlternate ? ALTERNATE
                                                                     : WINDING));
 
+    gdi_transform_acquire(graphics);
+
     stat = trace_path(graphics, path);
     if (stat == Ok)
     {
         *hrgn = PathToRegion(graphics->hdc);
         stat = *hrgn ? Ok : OutOfMemory;
     }
+
+    gdi_transform_release(graphics);
 
     RestoreDC(graphics->hdc, save_state);
     if (new_hdc)

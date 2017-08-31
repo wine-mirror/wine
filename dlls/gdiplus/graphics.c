@@ -249,6 +249,14 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
 
         width *= units_to_pixels(pen->width, pen->unit == UnitWorld ? graphics->unit : pen->unit, graphics->xres);
         width *= graphics->scale;
+
+        pt[0].X = 0.0;
+        pt[0].Y = 0.0;
+        pt[1].X = 1.0;
+        pt[1].Y = 1.0;
+        gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceDevice, pt, 2);
+        width *= sqrt((pt[1].X - pt[0].X) * (pt[1].X - pt[0].X) +
+                      (pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y)) / sqrt(2.0);
     }
 
     if(pen->dash == DashStyleCustom){
@@ -1573,7 +1581,10 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
             ptf[3].X = x2 - dbig;
             ptf[2].X = x2 + dsmall;
 
-            transform_and_round_points(graphics, pt, ptf, 4);
+            gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptf, 3);
+
+            round_points(pt, ptf, 3);
+
             Polygon(graphics->hdc, pt, 4);
 
             break;
@@ -1595,7 +1606,10 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
             ptf[2].X = x2;
             ptf[2].Y = y2;
 
-            transform_and_round_points(graphics, pt, ptf, 3);
+            gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptf, 3);
+
+            round_points(pt, ptf, 3);
+
             Polygon(graphics->hdc, pt, 3);
 
             break;
@@ -1607,7 +1621,10 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
             ptf[1].X = x2 + dx;
             ptf[1].Y = y2 + dy;
 
-            transform_and_round_points(graphics, pt, ptf, 2);
+            gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptf, 3);
+
+            round_points(pt, ptf, 3);
+
             Ellipse(graphics->hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
 
             break;
@@ -1627,7 +1644,10 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
             ptf[2].X = x2 + dx;
             ptf[2].Y = y2 + dy;
 
-            transform_and_round_points(graphics, pt, ptf, 3);
+            gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptf, 3);
+
+            round_points(pt, ptf, 3);
+
             Polygon(graphics->hdc, pt, 3);
 
             break;
@@ -1647,7 +1667,10 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
             ptf[3].X = x2 + dx;
             ptf[3].Y = y2 + dy;
 
-            transform_and_round_points(graphics, pt, ptf, 4);
+            gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptf, 3);
+
+            round_points(pt, ptf, 3);
+
             Pie(graphics->hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y, pt[2].x,
                 pt[2].y, pt[3].x, pt[3].y);
 
@@ -1673,7 +1696,9 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
             GdipTranslateMatrix(&matrix, x2, y2, MatrixOrderAppend);
             GdipTransformMatrixPoints(&matrix, custptf, count);
 
-            transform_and_round_points(graphics, custpt, custptf, count);
+            gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptf, 3);
+
+            round_points(pt, ptf, 3);
 
             for(i = 0; i < count; i++)
                 tp[i] = convert_path_point_type(custom->pathdata.Types[i]);
@@ -1896,7 +1921,9 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
         }
     }
 
-    transform_and_round_points(graphics, pti, ptcopy, count);
+    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, ptcopy, count);
+
+    round_points(pti, ptcopy, count);
 
     for(i = 0; i < count; i++){
         tp[i] = convert_path_point_type(types[i]);
@@ -3433,8 +3460,12 @@ static GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *pat
     if (hrgn)
         ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
 
+    gdi_transform_acquire(graphics);
+
     retval = draw_poly(graphics, pen, path->pathdata.Points,
                        path->pathdata.Types, path->pathdata.Count, TRUE);
+
+    gdi_transform_release(graphics);
 
 end:
     restore_dc(graphics, save_state);
@@ -4114,17 +4145,19 @@ static GpStatus GDI32_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath 
     if (hrgn)
         ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
 
+    gdi_transform_acquire(graphics);
+
     BeginPath(graphics->hdc);
     retval = draw_poly(graphics, NULL, path->pathdata.Points,
                        path->pathdata.Types, path->pathdata.Count, FALSE);
 
-    if(retval != Ok)
-        goto end;
+    if(retval == Ok)
+    {
+        EndPath(graphics->hdc);
+        brush_fill_path(graphics, brush);
+    }
 
-    EndPath(graphics->hdc);
-    brush_fill_path(graphics, brush);
-
-    retval = Ok;
+    gdi_transform_release(graphics);
 
 end:
     RestoreDC(graphics->hdc, save_state);
