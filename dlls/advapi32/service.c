@@ -2427,8 +2427,9 @@ DWORD WINAPI NotifyServiceStatusChangeW(SC_HANDLE hService, DWORD dwNotifyMask,
     DWORD dummy;
     BOOL ret;
     SERVICE_STATUS_PROCESS st;
+    static int once;
 
-    FIXME("%p 0x%x %p - semi-stub\n", hService, dwNotifyMask, pNotifyBuffer);
+    if (!once++) FIXME("%p 0x%x %p - semi-stub\n", hService, dwNotifyMask, pNotifyBuffer);
 
     ret = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (void*)&st, sizeof(st), &dummy);
     if (ret)
