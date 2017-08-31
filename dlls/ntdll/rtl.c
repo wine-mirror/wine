@@ -49,15 +49,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-static RTL_CRITICAL_SECTION peb_lock;
-static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &peb_lock,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": peb_lock") }
-};
-static RTL_CRITICAL_SECTION peb_lock = { &critsect_debug, -1, 0, 0, 0, 0 };
-
 #ifdef __i386__
 #define DEFINE_FASTCALL4_ENTRYPOINT( name ) \
     __ASM_STDCALL_FUNC( name, 16, \
@@ -380,7 +371,7 @@ NTSTATUS WINAPI vDbgPrintExWithPrefix( LPCSTR prefix, ULONG id, ULONG level, LPC
  */
 VOID WINAPI RtlAcquirePebLock(void)
 {
-    RtlEnterCriticalSection( &peb_lock );
+    RtlEnterCriticalSection( NtCurrentTeb()->Peb->FastPebLock );
 }
 
 /******************************************************************************
@@ -388,7 +379,7 @@ VOID WINAPI RtlAcquirePebLock(void)
  */
 VOID WINAPI RtlReleasePebLock(void)
 {
-    RtlLeaveCriticalSection( &peb_lock );
+    RtlLeaveCriticalSection( NtCurrentTeb()->Peb->FastPebLock );
 }
 
 /******************************************************************************
