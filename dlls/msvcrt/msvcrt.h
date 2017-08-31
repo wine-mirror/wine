@@ -1094,6 +1094,8 @@ char*** __cdecl  MSVCRT___p__environ(void);
 int*    __cdecl  __p___mb_cur_max(void);
 unsigned int*  __cdecl __p__fmode(void);
 MSVCRT_wchar_t* __cdecl MSVCRT__wcsdup(const MSVCRT_wchar_t*);
+MSVCRT_size_t __cdecl MSVCRT_strnlen(const char *,MSVCRT_size_t);
+MSVCRT_size_t __cdecl MSVCRT_wcsnlen(const MSVCRT_wchar_t*,MSVCRT_size_t);
 MSVCRT_wchar_t*** __cdecl MSVCRT___p__wenviron(void);
 INT     __cdecl MSVCRT_wctomb(char*,MSVCRT_wchar_t);
 char*   __cdecl MSVCRT__strdate(char* date);

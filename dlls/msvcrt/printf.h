@@ -165,8 +165,13 @@ static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts,
 {
     int r, ret;
 
-    if(len < 0)
-        len = strlenW(str);
+    if(len < 0) {
+        /* Do not search past the length specified by the precision. */
+        if(flags->Precision>=0)
+            len = MSVCRT_wcsnlen(str, flags->Precision);
+        else
+            len = strlenW(str);
+    }
 
     if(flags->Precision>=0 && flags->Precision<len)
         len = flags->Precision;
@@ -190,8 +195,13 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
 {
     int r, ret;
 
-    if(len < 0)
-        len = strlen(str);
+    if(len < 0) {
+        /* Do not search past the length specified by the precision. */
+        if(flags->Precision>=0)
+            len = MSVCRT_strnlen(str, flags->Precision);
+        else
+            len = strlen(str);
+    }
 
     if(flags->Precision>=0 && flags->Precision<len)
         len = flags->Precision;
