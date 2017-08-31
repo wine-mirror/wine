@@ -11302,7 +11302,6 @@ static void test_draw_depth_only(void)
     check_texture_float(texture, 0.5f, 1);
 
     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
-    depth.x = 0.1f;
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
