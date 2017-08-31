@@ -1169,8 +1169,8 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         /* Transform the points to a co-ordinate space where X is the point's
          * position in the gradient, 0.0 being the start point and 1.0 the
          * end point. */
-        stat = GdipTransformPoints(graphics, CoordinateSpaceWorld,
-            CoordinateSpaceDevice, draw_points, 3);
+        stat = gdip_transform_points(graphics, CoordinateSpaceWorld,
+            WineCoordinateSpaceGdiDevice, draw_points, 3);
 
         if (stat == Ok)
         {
@@ -1230,8 +1230,8 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         draw_points[2].Y = fill_area->Y+1;
 
         /* Transform the points to the co-ordinate space of the bitmap. */
-        stat = GdipTransformPoints(graphics, CoordinateSpaceWorld,
-            CoordinateSpaceDevice, draw_points, 3);
+        stat = gdip_transform_points(graphics, CoordinateSpaceWorld,
+            WineCoordinateSpaceGdiDevice, draw_points, 3);
 
         if (stat == Ok)
         {
@@ -1361,7 +1361,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         if (stat != Ok)
             return stat;
 
-        stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
+        stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice,
             CoordinateSpaceWorld, &world_to_device);
         if (stat == Ok)
         {
