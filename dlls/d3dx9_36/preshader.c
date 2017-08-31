@@ -521,7 +521,13 @@ static unsigned int *parse_pres_ins(unsigned int *ptr, unsigned int count, struc
         FIXME("Relative addressing in output register not supported.\n");
         return NULL;
     }
-
+    if (get_reg_offset(ins->output.reg.table, ins->output.reg.offset
+            + (pres_op_info[ins->op].func_all_comps ? 0 : ins->component_count - 1))
+            != get_reg_offset(ins->output.reg.table, ins->output.reg.offset))
+    {
+        FIXME("Instructions outputting multiple registers are not supported.\n");
+        return NULL;
+    }
     return ptr;
 }
 
@@ -629,8 +635,7 @@ static void append_pres_const_sets_for_shader_input(struct d3dx_const_tab *const
             continue;
 
         const_set.register_index = get_reg_offset(reg->table, reg->offset);
-        const_set.register_count = max(get_reg_offset(reg->table,
-                pres_op_info[ins->op].func_all_comps ? 1 : ins->component_count), 1);
+        const_set.register_count = 1;
         const_set.table = reg->table;
         const_set.constant_class = D3DXPC_FORCE_DWORD;
         const_set.element_count = 1;
@@ -963,18 +968,10 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
                     && out->const_set[i].register_index + out->const_set[i].register_count
                     >= out->const_set[i + 1].register_index)
             {
-                if (out->const_set[i].register_index + out->const_set[i].register_count
-                        > out->const_set[i + 1].register_index + out->const_set[i + 1].register_count)
-                {
-                    WARN("Unexpected preshader register count %u, register index %u, "
-                            "next register count %u, register index %u, i %u.\n",
-                            out->const_set[i].register_count, out->const_set[i].register_index,
-                            out->const_set[i + 1].register_count, out->const_set[i + 1].register_index, i);
-                    hr = D3DERR_INVALIDCALL;
-                    goto cleanup;
-                }
-                out->const_set[i].register_count = out->const_set[i + 1].register_index
-                        + out->const_set[i + 1].register_count - out->const_set[i].register_index;
+                assert(out->const_set[i].register_index + out->const_set[i].register_count
+                        <= out->const_set[i + 1].register_index + 1);
+                out->const_set[i].register_count = out->const_set[i + 1].register_index + 1
+                        - out->const_set[i].register_index;
                 memmove(&out->const_set[i + 1], &out->const_set[i + 2], sizeof(out->const_set[i])
                         * (out->const_set_count - i - 2));
                 --out->const_set_count;
@@ -1216,8 +1213,7 @@ static HRESULT parse_preshader(struct d3dx_preshader *pres, unsigned int *ptr, u
             }
         }
         update_table_size(pres->regs.table_sizes, pres->ins[i].output.reg.table,
-                get_reg_offset(pres->ins[i].output.reg.table,
-                pres->ins[i].output.reg.offset + pres->ins[i].component_count - 1));
+                get_reg_offset(pres->ins[i].output.reg.table, pres->ins[i].output.reg.offset));
     }
     if (FAILED(regstore_alloc_table(&pres->regs, PRES_REGTAB_IMMED)))
         return E_OUTOFMEMORY;
