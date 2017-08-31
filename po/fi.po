@@ -11962,17 +11962,6 @@ msgid "Icons (*.ico)"
 msgstr "Kuvakkeet (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -11988,7 +11977,7 @@ msgstr ""
 "  REG [toiminto] [parametrit]\n"
 "\n"
 "Tuetut toiminnot:\n"
-"  ADD, DELETE, QUERY\n"
+"  ADD, DELETE, IMPORT, QUERY\n"
 "\n"
 "Ohjeen kustakin toiminnosta saa komennolla\n"
 "  REG [toiminto] /?\n"
@@ -12117,25 +12106,19 @@ msgstr "(arvoa ei asetettu)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT tiedosto.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "reg: The file '%1' was not found.\n"
-msgstr "regedit: Tiedostoa '%1' ei löydy.\n"
+msgstr "reg: Tiedostoa '%1' ei löydy.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "reg: Rekisteriavainta '%1' ei voida avata.\n"
 
 #: reg.rc:69
-#, fuzzy
-#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: Tuntematon merkintä [\\%1!c!]\n"
+msgstr "reg: Tuntematon merkintä [\\%1!c!]\n"
 
 #: regedit.rc:34
 msgid "&Registry"
