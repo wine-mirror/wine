@@ -1324,6 +1324,9 @@ HRESULT d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte
 
 err_out:
     WARN("Error creating parameter evaluator.\n");
+    if (TRACE_ON(d3dx))
+        dump_bytecode(byte_code, byte_code_size);
+
     d3dx_free_param_eval(peval);
     *peval_out = NULL;
     return ret;
