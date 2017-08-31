@@ -334,11 +334,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_query_GetData(ID3D10Query *iface, void *d
             && data_size == sizeof(D3D10_QUERY_DATA_PIPELINE_STATISTICS))
     {
         data_size = sizeof(D3D11_QUERY_DATA_PIPELINE_STATISTICS);
-        if (data)
-        {
-            d3d10_data_pointer = data;
-            data = &d3d11_data;
-        }
+        d3d10_data_pointer = data;
+        data = &d3d11_data;
     }
 
     wined3d_flags = wined3d_getdata_flags_from_d3d11_async_getdata_flags(flags);
