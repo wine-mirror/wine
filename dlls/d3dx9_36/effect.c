@@ -5938,7 +5938,7 @@ static HRESULT d3dx9_create_object(struct d3dx9_base_effect *base, struct d3dx_o
                     (IDirect3DVertexShader9 **)param->data)))
             {
                 WARN("Failed to create vertex shader.\n");
-                return hr;
+                return D3D_OK;
             }
             break;
         case D3DXPT_PIXELSHADER:
@@ -5946,7 +5946,7 @@ static HRESULT d3dx9_create_object(struct d3dx9_base_effect *base, struct d3dx_o
                     (IDirect3DPixelShader9 **)param->data)))
             {
                 WARN("Failed to create pixel shader.\n");
-                return hr;
+                return D3D_OK;
             }
             break;
         default:

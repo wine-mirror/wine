@@ -7087,17 +7087,13 @@ static void test_effect_unsupported_shader(void)
 
     hr = D3DXCreateEffectEx(device, test_effect_unsupported_shader_blob, sizeof(test_effect_unsupported_shader_blob),
             NULL, NULL, NULL, 0, NULL, &effect, NULL);
-    todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    if (FAILED(hr))
-    {
-        skip("Failed to create effect, skipping test.\n");
-        goto cleanup;
-    }
 
     hr = effect->lpVtbl->ValidateTechnique(effect, "missing_technique");
+    todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech0");
+    todo_wine
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
@@ -7105,6 +7101,7 @@ static void test_effect_unsupported_shader(void)
     effect->lpVtbl->SetInt(effect, "i", 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
+    todo_wine
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
     effect->lpVtbl->SetInt(effect, "i", 0);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
@@ -7158,7 +7155,7 @@ static void test_effect_unsupported_shader(void)
     ok(!vshader, "Got non NULL vshader.\n");
 
     effect->lpVtbl->Release(effect);
-cleanup:
+
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D9_Release(d3d);
