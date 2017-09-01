@@ -1144,21 +1144,17 @@ static HRESULT d3dx9_base_effect_get_pass_desc(struct d3dx9_base_effect *base,
             void *param_value;
             BOOL param_dirty;
             HRESULT hr;
+            void *data;
 
             if (FAILED(hr = d3dx9_get_param_value_ptr(pass, &pass->states[i], &param_value, &param,
                     FALSE, &param_dirty)))
                 return hr;
 
-            if (!param->object_id)
-            {
-                FIXME("Zero object ID in shader parameter.\n");
-                return E_FAIL;
-            }
-
+            data = param->object_id ? base->objects[param->object_id].data : NULL;
             if (state_table[state->operation].class == SC_VERTEXSHADER)
-                desc->pVertexShaderFunction = base->objects[param->object_id].data;
+                desc->pVertexShaderFunction = data;
             else
-                desc->pPixelShaderFunction = base->objects[param->object_id].data;
+                desc->pPixelShaderFunction = data;
         }
     }
 

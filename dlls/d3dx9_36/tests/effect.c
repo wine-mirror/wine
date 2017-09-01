@@ -7248,7 +7248,6 @@ static void test_effect_null_shader(void)
     pass = effect->lpVtbl->GetPass(effect, "tech0", 0);
     ok(!!pass, "GetPass() failed.\n");
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(!desc.pVertexShaderFunction, "Got non NULL vertex function.\n");
 
