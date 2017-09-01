@@ -2637,14 +2637,9 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 
         if (msg->hwnd != info.hwndActive)
         {
-            HWND hwndTop = msg->hwnd;
-            while (hwndTop)
-            {
-                if ((GetWindowLongW( hwndTop, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) != WS_CHILD) break;
-                hwndTop = GetParent( hwndTop );
-            }
+            HWND hwndTop = GetAncestor( msg->hwnd, GA_ROOT );
 
-            if (hwndTop)
+            if ((GetWindowLongW( hwndTop, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) != WS_CHILD)
             {
                 LONG ret = SendMessageW( msg->hwnd, WM_MOUSEACTIVATE, (WPARAM)hwndTop,
                                          MAKELONG( hittest, msg->message ) );
