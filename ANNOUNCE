@@ -1,15 +1,17 @@
-The Wine development release 2.15 is now available.
+The Wine development release 2.16 is now available.
 
 What's new in this release (see below for details):
-  - Support for AES encryption.
-  - Improved Bezier support in Direct2D.
-  - Chunked transfer improvements in WinInet.
+  - Support for pasting metafiles in RichEdit.
+  - Better support for grayscale PNG images.
+  - Support for safety features in library loading.
+  - Better handling of transforms in GdiPlus.
+  - Rendering improvements in DirectWrite.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/2.x/wine-2.15.tar.xz
-  http://mirrors.ibiblio.org/wine/source/2.x/wine-2.15.tar.xz
+  http://dl.winehq.org/wine/source/2.x/wine-2.16.tar.xz
+  http://mirrors.ibiblio.org/wine/source/2.x/wine-2.16.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -25,198 +27,238 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 2.15 (total 9):
+Bugs fixed in 2.16 (total 19):
 
-  37981  Illustrator CS6: ruler area gets corrupted when moving mouse
-  40399  emClient (.NET app) exits silently because GdipGetLineTransform is just a stub
-  41422  Bricscad:  dots and small objects left "traces" while moving
-  43120  Joystick enabled applications crash when a device that advertises more than 8 axes is attached
-  43466  Microsoft Outlook 2010 cannot connect to MS Exchange Server
-  43475  XM6 TypeG crashes on startup.
-  43480  Peavey Revalver IV (Amp modeling software) crashes due to missing Win7+ Touch Input API (stubs)
-  43503  FUJITSU Software ATLAS: unimplemented function msvcr80.dll._ismbcl0 called in 32-bit code
-  43527  Magic Online  (Magic The Gathering: Online) Crashes due to LOCALE_SNAN returning empty string
+  26046  comctl32/monthcal tests show some invalid reads under valgrind
+  28741  Odd coordinate in hit test causes uninitialized value references in MONTHCAL_CalculateDayOfWeek()?
+  35282  Multiple applications/installers need 'reg.exe' 'import' operation implementation (Muvee Reveal 8.0.x)
+  35935  Enterprise Architect fails to draw basic shapes when using gdiplus
+  37982  Illustrator CS6: alternate color selection does not display colours
+  40025  Winrar installer fails to start
+  42256  PhotoFiltre 6 and 7 don't erase the mouse selection when dragging it
+  42891  Unigine Superposition needs unimplemented function KERNEL32.dll.AddDllDirectory
+  43293  strange behavior- Eudora scrambles email addresses
+  43328  dotnet 4.5 applications crash in factory_get_cached_fontface
+  43389  valgrind shows a few invalid reads in dlls/wsdapi/tests/xml.c
+  43391  valgrind shows several definite leaks in programs/regedit/tests/regedit.c
+  43392  valgrind shows a couple invalid reads in programs/regedit/tests/regedit.c
+  43423  Multiple applications and games need 'ProgramData' environment variable set (SteelSeries Engine SDK based games, World of Warships 0.6.9+)
+  43510  Monster Girl Quest: crashes while playing
+  43536  WIC can't encode to GUID_WICPixelFormat32bppPBGRA PNG
+  43603  clipboard PIXMAP regression after upgrading from 1.8.x to 2.x
+  43617  [Crash] Application crash when running C:\GOG Games\Baldur's Gate\BGMain2.exe
+  43632  Drop down menu for DLL override doesn't work
 
 ----------------------------------------------------------------
 
-Changes since 2.14:
+Changes since 2.15:
 
-Akihiro Sagawa (2):
-      msvcrt/tests: Add tests for mbstowcs and wcstombs with empty strings.
-      msvcrt: Fix mbstowcs with empty strings.
+Alex Henrie (1):
+      include: Allow programs to take the address of byte-swapping functions.
 
-Alex Henrie (3):
-      include: Add SetDefaultDllDirectories.
-      include: Add CryptProtectMemory and CryptUnprotectMemory.
-      include: Add GetNamedPipeClientProcessId.
+Alexandre Julliard (32):
+      winex11: If importing an X11 clipboard format fails, try other candidate formats for the target.
+      gdi32/tests: Add a test case for DIB color painting.
+      gdi32: Always dither brush when painting to a 1-bpp device.
+      gdi32/tests: Run DIB tests also against a monochrome DDB.
+      gdi32: Pass the brush origin explicitly to the brush backend functions.
+      gdi32: Use the correct brush origin when the blit operation requires an intermediate bitmap.
+      gdi32: Do not dither non-extended wide pens.
+      kernel32: Implement safe dll search mode.
+      kernel32: Implement SetDefaultDllDirectories.
+      kernel32: Add support for LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE flag.
+      include: Add libloaderapi.h.
+      oleaut32: Don't copy uninitialized data.
+      shell32: Avoid zeroing a buffer that will get overwritten.
+      propsys: Don't use the format string size as buffer size.
+      crypt32/tests: Increase buffer size to avoid gcc warnings.
+      kernel32: Implement AddDllDirectory and RemoveDllDirectory.
+      kernel32: Add helper functions for building the load path.
+      kernel32: Implement LOAD_LIBRARY_SEARCH_* flags.
+      kernel32/tests: Add tests for the LOAD_LIBRARY_SEARCH_* flags.
+      kernel32/tests: Fix a dll reference leak.
+      kernel32: Implement safe search mode for SearchPath.
+      kernel32/tests: Add tests for SetSearchPathMode.
+      rsaenh: Avoid potential buffer overflows in registry key name.
+      wintrust: Increase buffer size to silence a gcc warning.
+      crypt32: Increase buffer size to silence a gcc warning.
+      kernel32/tests: Use function pointers to avoid gcc warnings for invalid parameter tests.
+      ntdll: Store the PEB lock pointer in the PEB.
+      fusion/tests: Correctly test non-string properties.
+      fusion/tests: Simplify directory recursion and avoid redundant buffers.
+      kernel32: Silence buffer overflow gcc warnings.
+      user32: Consistently print the HDC value in DCE traces.
+      user32: Use the correct top-level window when activating through a mouse click.
 
-Alistair Leslie-Hughes (1):
-      ntdll/tests: Use standard wine_dbgstr_longlong.
+Alistair Leslie-Hughes (7):
+      sxs: Use standard wine_dbgstr_longlong.
+      fusion: Use standard wine_dbgstr_longlong.
+      quartz: Use standard wine_dbgstr_longlong.
+      include: Add IWMPEvents/2/3/4 and supporting interfaces.
+      wmp/tests: Add tests for IConnectionPointContainer.
+      ntdll: Use standard wine_dbgstr_longlong.
+      wininet: Use standard wine_dbgstr_longlong.
 
-Andrew Eikum (2):
-      gdiplus: Implement transform matrix for line gradient brushes.
-      gdiplus: GdipCreateMetafileFromWmfFile will also load EMFs.
+Andrew Eikum (3):
+      gdiplus: Fix copy-paste typo.
+      gdiplus: Don't call PlayEnhMetaFileRecord for records handled by gdiplus.
+      gdi32: Update metafile world transform immediately in winnt mode.
 
-Andrey Gusev (1):
-      mfplat: Add MFTEnumEx stub.
+Andrey Gusev (3):
+      api-ms-win-eventing-legacy-l1-1-0: Add dll.
+      avrt: Add AvQuerySystemResponsiveness stub.
+      api-ms-win-core-kernel32-legacy-l1-1-1: Update spec file.
 
-André Hentschel (1):
-      winebuild: Improved position independent code generation.
-
-Aric Stewart (1):
-      usp10: Fall back to 'dflt' language if shaping language tag isn't found.
+Anton Romanov (1):
+      windowscodecs: PNGEncoder: Return 32bppRGBA pixel format by default.
 
 Aurimas Fišeras (1):
       po: Update Lithuanian translation.
 
-Austin English (3):
-      user32: Add UnregisterTouchWindow stub.
-      user32: Add CloseTouchInputHandle/GetTouchInputInfo stubs.
-      user32: Add GetGestureInfo stub.
+Austin English (2):
+      advapi32: Only show OpenTraceA/W FIXME once.
+      advapi32: Only show NotifyServiceStatusChangeW FIXME once.
 
-Dmitry Timoshkov (1):
-      windowscodecs/tests: Add a test for loading PNG grayscale images.
+Changhui Liu (2):
+      gdiplus/tests: Add test for hdc with window origin point changed.
+      gdiplus/tests: Add drawing tests for GdipFillRegion with gdi transform.
 
-François Gouget (2):
-      msi/tests: Add a trailing linefeed to a couple of ok() calls.
-      msi: Add a trailing linefeed to a FIXME() trace.
+Dmitry Timoshkov (6):
+      gdiplus/tests: Add a test for loading PNG grayscale images.
+      user32/tests: Test DialogBoxParam using a dialog template with invalid control class.
+      user32: DialogBoxParam should return -1 when dialog control creation fails.
+      gdiplus: Force conversion of 8 bpp grayscale PNG images to 32 bpp BGRA.
+      gdiplus/tests: Add a test for image flags to PNG grayscale image tests.
+      gdiplus: Set correct color space flags for grayscale images.
 
-Hans Leidekker (9):
-      bcrypt: Add a stub AES implementation.
-      bcrypt: Add a stub implementation of BCryptSetProperty.
-      bcrypt: Add a stub implementation of BCryptEncrypt.
-      bcrypt: Add a stub implementation of BCryptDecrypt.
-      bcrypt: Implement BCryptGenerateSymmetricKey and BCryptDestroyKey.
-      bcrypt: Implement BCryptEncrypt.
-      bcrypt: Implement BCryptDecrypt.
-      configure: Check for gnutls_cipher_init instead of gnutls_hash.
-      include: Add BCRYPT_KEY_LENGTHS_STRUCT declaration.
+Fabian Maurer (10):
+      user32/combo: Set listbox popup height correctly and add tests.
+      winecfg: Use proper size for combobox controls.
+      comctl32/tests: Use proper size for combobox controls.
+      comdlg32: Use proper size for combobox controls.
+      cryptui: Use proper size for combobox controls.
+      dinput: Use proper size for combobox controls.
+      joy.cpl: Use proper size for combobox controls.
+      serialui: Use proper size for combobox controls.
+      wineps.drv: Use proper size for combobox controls.
+      wineconsole: Use proper size for combobox controls.
 
-Henri Verbeet (8):
-      d2d1: Return S_OK on success in d2d_geometry_resolve_beziers().
-      d2d1/tests: Add a test for bezier intersections.
-      d2d1: Introduce a separate function for calculating line/line intersections.
-      d2d1: Implement bezier/line intersections.
-      d2d1: Implement bezier/bezier intersections.
-      d2d1: Use segment indices in d2d_geometry_resolve_beziers().
-      d2d1: Split overlapping bezier control triangles.
-      wined3d: Explicitly check for "Radeon" and "FirePro" in wined3d_guess_card_vendor().
+Hans Leidekker (2):
+      webservices: Create a new HTTP request for each message.
+      webservices: Set cache control headers.
 
-Hugh McMaster (20):
-      reg/tests: Add tests for importing Windows 3.1 registry data.
-      reg: Dynamically allocate memory for the value name buffer when deleting all registry values in a specified key.
-      regedit: Allow editing of all hex data types.
-      comctl32/listview: Invalidate the focus rectangle when the control gets or loses focus.
-      reg: Avoid an uninitialized variable warning.
-      reg: Make some variables 'static const'.
-      regedit: Return a valid pointer in the QUOTED_VALUE_NAME state if REGPROC_unescape_string() returns FALSE.
-      reg: Compile with msvcrt.
-      reg: Rename reg.h to resource.h.
-      reg: Add initial support for the import operation.
-      reg: Introduce a partial state machine for importing Windows 3.1 registry data.
-      reg: Parse key names and value names in the state machine.
-      reg: Parse data types and import REG_SZ data via the state machine.
-      reg: Import REG_DWORD data via the state machine.
-      reg: Import hex data via the state machine.
-      reg: Handle unknown registry data types in the state machine.
-      reg: Delete registry values via the state machine.
-      reg: Delete registry keys via the state machine.
-      reg: Use the correct return codes during the import operation.
-      reg/tests: Fix two copy/paste errors.
+Hugh McMaster (15):
+      reg/tests: Pass MultiByteToWideChar() the buffer size in characters.
+      reg/tests: Free the WCHAR memory buffer if CreateFile() fails.
+      regedit/tests: Add Unicode import tests and remove the WCHAR support check.
+      regedit/tests: Delete the test registry key before starting each test.
+      regedit/tests: Add Unicode tests for importing registry data with inter-mixed comments.
+      regedit/tests: Add Unicode tests for importing registry data with whitespace.
+      regedit/tests: Add Unicode tests for registry key creation and deletion.
+      regedit/tests: Add Unicode tests for value deletion.
+      regedit/tests: Add Unicode tests for importing invalid registry data.
+      regedit/tests: Add some mixed key creation and deletion tests.
+      regedit: Close any open registry keys before starting the key deletion process.
+      reg/tests: Add some mixed key creation and deletion tests.
+      reg: Close any open registry keys before starting the key deletion process.
+      regedit: Null-terminate incomplete REG_EXPAND_SZ and REG_MULTI_SZ Unicode data.
+      reg: Null-terminate incomplete REG_EXPAND_SZ and REG_MULTI_SZ Unicode data.
 
-Huw D. M. Davies (2):
-      ws2_32: Don't return synchronously if the connection is refused.
-      usp10: Undefined characters above the BMP should be assigned to Script_Surrogates.
+Huw D. M. Davies (11):
+      riched20: Move the editor initialization out of CreateTextHost().
+      riched20: Retrieve the default paragraph alignment from the text host.
+      riched20: Initialize ME_TextEditor members in ME_MakeEditor().
+      riched20: Don't create a special richedit ole instance for the RTF parser.
+      riched20: Add support for EM_PASTESPECIAL.
+      riched20: Use the implementation of EM_PASTESPECIAL for WM_PASTE.
+      riched20: Use the implementation of EM_PASTESPECIAL for EM_CANPASTE.
+      riched20: Add support for pasting EMFs.
+      gdi32: Cache the device caps from the reference dc, since the dc may become invalid.
+      wineps: Fall back to the null driver for common device caps.
+      riched20: Remove the separate implementation of IOleWindow as IOleInPlaceSite inherits from IOleWindow.
 
-Jacek Caban (12):
-      wininet: Correctly pass URL length to InternetCrackUrlW in get_redirect_url.
-      wininet: Return error codes from HTTP streams.
-      wininet: Try to read reamaining data in chunked_drain_content.
-      wininet: Always use drain_content specific to stream type.
-      wininet: Store error state separately from end of stream in chunked stream.
-      wininet: Release connection in HTTPREQ_Read only if remaining control data may be drainad without blocking.
-      wininet: Never do blocking reads in chunked_read if zero chunk size is aready read.
-      wininet: Drain content before reusing connection in open_http_connection.
-      wininet/tests: Added more persistent connection tests.
-      netprofm: Added semi-stub Advise and Unadvise implementation.
-      netprofm: Implement connection points as the same object as their container.
-      netprofm: Release connection point sink entries in object destructor.
+Jacek Caban (7):
+      jscript: Added support for VT_R4 VARIANT types.
+      mshtml: Return documentMode as VT_R4.
+      mshtml: Don't allow changing document mode after script insertion or when it's already set.
+      mshtml: Added delayed DispatchEx init support and use it to expose IHTMLDOMNode3 from document node.
+      mshtml.idl: Added IHTMLDocument8 declaration.
+      mshtml: Added IHTMLDocument6::getElementById implementation.
+      mshtml: Properly expose IHTMLDocument6 interface to scripts.
 
-Jactry Zeng (3):
-      shell32: Implement SHCreateItemFromRelativeName.
-      shell32: Implement SHCreateItemInKnownFolder.
-      shell32/tests: Add more tests for SHGetKnownFolderIDList.
-
-Julian Rüger (1):
-      po: Update German translation.
-
-Józef Kucia (10):
-      wined3d: Factor out context_copy_bo_address() function.
-      wined3d: Implement copying UAV counters.
-      d3d11: Implement d3d11_immediate_context_CopyStructureCount().
-      wined3d: Add support for initial UAV counters values.
-      wined3d: Change wined3d_buffer_copy() return type to void.
-      wined3d: Implement indirect compute dispatch.
-      d3d11: Implement d3d11_immediate_context_DispatchIndirect().
-      d3d11/tests: Extend test for UAV counters.
-      wined3d: Add support for append/consume structured buffer views.
-      d3d11/tests: Add test for indirect dispatch.
+Józef Kucia (6):
+      wined3d: Avoid potential NULL pointer dereference (Coverity).
+      d3d10core/tests: Remove needless assignment.
+      d3d11/tests: Remove needless assignment.
+      d3d11/tests: Add 10_1 to default feature levels list.
+      d3d11: Simplify d3d10_query_GetData().
+      msvcrt: Fix precision handling for string arguments.
 
 Lauri Kenttä (1):
       po: Update Finnish translation.
 
-Michael Müller (1):
-      wined3d: Recognize SM4 nop opcode.
+Marcus Meissner (1):
+      kernel32/tests: Fixed size to GetTempPathW.
 
-Mingcong Bai (1):
-      po: Update Simplified Chinese translation.
+Miklós Máté (1):
+      winex11: Improve the desktop resolution list.
 
-Nikolay Sivov (12):
-      d2d1: Fix trace message typo.
-      dmloader: Use safe list iterator when clearing the cache (Coverity).
-      msi: Avoid uninitialized pointer access on error path (Coverity).
-      winhttp: Avoid returning while holding a lock (Coverity).
+Nikolay Sivov (21):
       po: Update Russian translation.
-      msvcrt: Added _ismbcl0().
-      bcrypt: Support BCRYPT_KEY_LENGTHS property for AES.
-      kernel32/nls: Added LOCALE_SNAN entries.
-      dwrite: Protect cached fontface list when accessed from multiple threads.
-      dwrite: Added a helper to check for supported characters.
-      dwrite: Simplify GetFontSignature().
-      qcap: Use wine_dbgstr_longlong() to trace REFERENCE_TIME arguments.
+      dwrite: Use more readable names for spacing attributes.
+      dwrite: Set drawing effect for trimming sign.
+      dwrite: Split initial cluster computation by stage.
+      dwrite: Use safer method to set per-factory system collection reference.
+      dwrite: Use safer method to set per-factory EUDC collection reference.
+      dwrite/tests: Some tests for system font set.
+      gdiplus: Use defined constants for wrap modes.
+      dwrite/tests: A test to draw trimming sign with drawing effect.
+      d2d1: Pass inline object effect through rendering context.
+      dwrite: Don't use drawing effect for trimming signs.
+      dwrite: Set leading text alignment for default trimming sign.
+      dwrite: Remove unused call.
+      dwrite: Improve empty contours handling in GetGlyphRunOutline().
+      wsdapi: Fix use-after-free when checking for unique prefix (Valgrind).
+      wsdapi/tests: Use constants for test strings when possible.
+      comctl32/monthcal: Initialize day field before setting final hit test result (Valgrind).
+      comctl32/monthcal: Make sure set today date is valid before using it (Valgrind).
+      comctl32/monthcal: Make sure set focus date is valid before using it (Valgrind).
+      dwrite: Fix proportional spacing method.
+      d2d1: Fix rounding when setting scissor rectangle.
 
-Paul Gofman (5):
-      d3dx9: Remove case for annotation in get_parameter_element_by_name().
-      d3dx9: Return NULL for child parameter's annotation in get_parameter_by_name().
-      d3dx9: Move referenced_param definition from d3dx_parameter to d3dx_state.
-      d3dx9: Use distinct structure for top level parameters.
-      d3dx9: Avoid an extra indirection in is_const_tab_input_dirty().
+Paul Gofman (10):
+      d3d9/tests: Add tests for setting vertex shader constants in SWVP and MVP modes.
+      d3d9/tests: Add tests for SW shaders creation in SWVP and MVP modes.
+      d3d9/tests: Add test for SW shader in MVP mode.
+      d3dx9: Factor out set_constants_device() function.
+      d3dx9: Get rid of constants modification bitmasks.
+      d3dx9: Do not support preshader instructions which output multiple registers.
+      d3dx9: Dump bytecode if parameter evaluator creation failed.
+      d3dx9: Use bitmask instead of BOOL array for light_updated.
+      d3dx9/tests: Add test for effect with unsupported shader.
+      d3dx9: Do not fail effect creation if a shader cannot be created.
 
-Piotr Caban (4):
-      msvcrt: Fix strcpy implementation so it works on overlapping buffers.
-      gdiplus: Add more accurate algorithm for inverting scaling and translation matrices in GdipInvertMatrix.
-      gdiplus: Add write_region_data helper and use it in GdipGetRegionData.
-      gdiplus: Support GdipSetClipRegion in metafiles.
+Stefan Dösinger (3):
+      wined3d: Avoid writing queue->head in the CS thread.
+      wined3d: Do not call queue_is_empty in wined3d_cs_mt_finish.
+      ws2_32: Also check the FQDN when injecting the local IP.
 
-Robert Xiao (1):
-      wined3d: Reduce timeout to avoid GL_TIMEOUT_EXPIRED on macOS.
-
-Sebastian Lackner (1):
-      ntdll: Fix a TRACE in NtGetContextThread.
-
-Vincent Povirk (1):
-      windowscodecs: Fix 32bppGrayFloat to 8bppGray conversion.
-
-Zebediah Figura (9):
-      ole32: Store proxy/stub CLSIDs per process, not per apartment.
-      msi: Use MsiProcessMessage() to send error messages.
-      msi: Use the Error table for more messages.
-      msi: Return the current date and time.
-      msi: Return the correct values from dialogs.
-      msi: Add support for ActionText table.
-      include: Add initial ieautomation.idl.
-      ieproxy: Add stub DLL.
-      ieproxy: Add proxy/stub for IInternetExplorerManager.
+Vincent Povirk (15):
+      wmphoto: Add stub dll.
+      wmphoto: Register WMP encoder and decoder classes.
+      shell32: Change default ProgramData folder and set ProfileList key.
+      kernel32: Set the ProgramData environment variable.
+      gdiplus: Check for invalid coordinate space in GdipTransformPoints.
+      gdiplus: Replace DPtoLP with an internal coordinate space constant.
+      gdiplus: Test that clip region doesn't account for gdi32 transform changes.
+      gdiplus: Transform clipping region to gdi device coordinates.
+      gdiplus: Test that GdipGetRegionHRgn includes gdi32 transform.
+      gdiplus: Account for gdi transform in SOFTWARE_GdipFillRegion.
+      gdiplus: Account for gdi transform in brush_fill_pixels.
+      gdiplus: Use SOFTWARE_GdipDrawPath with alpha hdc's.
+      gdiplus: Account for gdi32 transform in GdipDrawImage.
+      gdiplus: Send paths to gdi32 in device coordinates.
+      gdiplus: Account for gdi32 transform in SOFTWARE_GdipDrawThinPath.
 
 --
 Alexandre Julliard
