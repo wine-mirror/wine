@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-07-01 14:36+0200\n"
+"PO-Revision-Date: 2017-09-02 13:29+0200\n"
 "Last-Translator: Marcin Mikołajczak <me@m4sk.in>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.2\n"
+"X-Generator: Poedit 2.0.3\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
 
@@ -6903,7 +6903,7 @@ msgstr "funkcja z:"
 
 #: msi.rc:65
 msgid "choose which folder contains %s"
-msgstr "wybierz folder zawierający '%s'"
+msgstr "wybierz folder zawierający %s"
 
 #: msi.rc:90
 msgid "Allocating registry space"
@@ -7275,21 +7275,19 @@ msgstr "Klucz: [1], Nazwa: [2], Wartość: [3]"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Krytyczny błąd: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Błąd [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Ostrzeżenie [1]."
 
 #: msi.rc:74
-#, fuzzy
-#| msgid "Info [1]. "
 msgid "Info [1]."
-msgstr "Informacje [1]. "
+msgstr "Informacje [1]."
 
 #: msi.rc:75
 msgid ""
@@ -7299,26 +7297,20 @@ msgid ""
 msgstr ""
 
 #: msi.rc:76
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "{{Disk full: }}"
-msgstr "Dysk pełen.\n"
+msgstr "{{Pełny dysk: }}"
 
 #: msi.rc:77
-#, fuzzy
-#| msgid "Action %s: [1]. [2]"
 msgid "Action [Time]: [1]. [2]"
-msgstr "Działanie %s: [1]. [2]"
+msgstr "Działanie [Czas]: [1]. [2]"
 
 #: msi.rc:78
 msgid "Message type: [1], Argument: [2]{, [3]}"
 msgstr "Rodzaj wiadomości: [1], Argument: [2]{, [3]}"
 
 #: msi.rc:81
-#, fuzzy
-#| msgid "=== Logging started: %s  %s ==="
 msgid "=== Logging started: [Date]  [Time] ==="
-msgstr "=== Rozpoczęcie zbierania logów: %s  %s ==="
+msgstr "=== Rozpoczęcie zbierania logów: [Data]  [Czas] ==="
 
 #: msi.rc:79
 #, fuzzy
@@ -7334,7 +7326,7 @@ msgstr "Zakończono działanie %s: [1]. Zwrócona wartość [2]."
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"
-msgstr ""
+msgstr "Włóż dysk: [2]"
 
 #: msi.rc:84
 msgid ""
@@ -12631,12 +12623,11 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Nie udało się otworzyć klucza rejestru '%1'.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
-"regedit: Nieobsługiwany rodzaj wartości rejestru [%1] wystąpił w '%2'.\n"
+"regedit: Nieobsługiwany rodzaj wartości rejestru [0x%1!x!] napotkany w "
+"'%2'.\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
@@ -12645,10 +12636,8 @@ msgstr ""
 "binarna.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Niewłaściwa nazwa klucza\n"
+msgstr "regedit: Nieprawidłowy klucz systemowy [%1]\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12658,10 +12647,8 @@ msgstr ""
 "został odnaleziony.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit: Nie udało się usunąć klasy rejestru '%1'.\n"
+msgstr "regedit: Nie udało się usunąć klucza rejestru '%1'.\n"
 
 #: regedit.rc:431
 msgid "regedit: The line contains invalid syntax.\n"
@@ -12809,14 +12796,10 @@ msgid "Confirm Key Delete"
 msgstr "Potwierdź usunięcie klucza"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete the registry key '%1' and all of its "
-#| "subkeys?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
 msgstr ""
-"Czy na pewno chcesz usunąć klucz rejestru '%1' i wszystkie jego pochodne?"
+"Czy na pewno chcesz usunąć ten klucz rejestru i wszystkie jego pochodne?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
