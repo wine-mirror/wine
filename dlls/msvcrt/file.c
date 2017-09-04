@@ -5108,7 +5108,7 @@ int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __
 }
 
 /*********************************************************************
- *              __stdio_common_vfprintf (MSVCRT.@)
+ *              __stdio_common_vfprintf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vfprintf(unsigned __int64 options, MSVCRT_FILE *file, const char *format,
                                         MSVCRT__locale_t locale, __ms_va_list valist)
@@ -5132,7 +5132,7 @@ int CDECL MSVCRT__stdio_common_vfprintf(unsigned __int64 options, MSVCRT_FILE *f
 }
 
 /*********************************************************************
- *		__stdio_common_vfwprintf (MSVCRT.@)
+ *              __stdio_common_vfwprintf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vfwprintf(unsigned __int64 options, MSVCRT_FILE *file, const MSVCRT_wchar_t *format,
                                          MSVCRT__locale_t locale, __ms_va_list valist)

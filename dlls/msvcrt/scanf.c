@@ -663,7 +663,7 @@ int CDECL MSVCRT__snscanf_s_l(char *input, MSVCRT_size_t length,
 
 
 /*********************************************************************
- *		__stdio_common_vsscanf (MSVCRT.@)
+ *              __stdio_common_vsscanf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vsscanf(unsigned __int64 options,
                                        const char *input, MSVCRT_size_t length,
@@ -683,7 +683,7 @@ int CDECL MSVCRT__stdio_common_vsscanf(unsigned __int64 options,
 }
 
 /*********************************************************************
- *		__stdio_common_vswscanf (MSVCRT.@)
+ *              __stdio_common_vswscanf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vswscanf(unsigned __int64 options,
                                         const MSVCRT_wchar_t *input, MSVCRT_size_t length,
@@ -703,7 +703,7 @@ int CDECL MSVCRT__stdio_common_vswscanf(unsigned __int64 options,
 }
 
 /*********************************************************************
- *		__stdio_common_vfscanf (MSVCRT.@)
+ *              __stdio_common_vfscanf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vfscanf(unsigned __int64 options,
                                        MSVCRT_FILE *file,
@@ -720,7 +720,7 @@ int CDECL MSVCRT__stdio_common_vfscanf(unsigned __int64 options,
 }
 
 /*********************************************************************
- *		__stdio_common_vfwscanf (MSVCRT.@)
+ *              __stdio_common_vfwscanf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vfwscanf(unsigned __int64 options,
                                         MSVCRT_FILE *file,
