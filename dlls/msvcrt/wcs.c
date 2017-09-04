@@ -749,7 +749,7 @@ static int puts_clbk_str_c99_a(void *ctx, int len, const char *str)
 }
 
 /*********************************************************************
- *		__stdio_common_vsprintf (MSVCRT.@)
+ *              __stdio_common_vsprintf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MSVCRT_size_t len, const char *format,
                                          MSVCRT__locale_t locale, __ms_va_list valist )
@@ -918,7 +918,7 @@ int CDECL MSVCRT_vsnprintf_s( char *str, MSVCRT_size_t sizeOfBuffer,
 }
 
 /*********************************************************************
- *		__stdio_common_vsnprintf_s (MSVCRT.@)
+ *              __stdio_common_vsnprintf_s (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vsnprintf_s( unsigned __int64 options,
         char *str, MSVCRT_size_t sizeOfBuffer, MSVCRT_size_t count,
@@ -930,7 +930,7 @@ int CDECL MSVCRT__stdio_common_vsnprintf_s( unsigned __int64 options,
 }
 
 /*********************************************************************
- *		__stdio_common_vsnwprintf_s (MSVCRT.@)
+ *              __stdio_common_vsnwprintf_s (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vsnwprintf_s( unsigned __int64 options,
         MSVCRT_wchar_t *str, MSVCRT_size_t sizeOfBuffer, MSVCRT_size_t count,
@@ -942,7 +942,7 @@ int CDECL MSVCRT__stdio_common_vsnwprintf_s( unsigned __int64 options,
 }
 
 /*********************************************************************
- *		__stdio_common_vswprintf_s (MSVCRT.@)
+ *              __stdio_common_vswprintf_s (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vswprintf_s( unsigned __int64 options,
         MSVCRT_wchar_t *str, MSVCRT_size_t count, const MSVCRT_wchar_t *format,
@@ -952,7 +952,7 @@ int CDECL MSVCRT__stdio_common_vswprintf_s( unsigned __int64 options,
 }
 
 /*********************************************************************
- *		__stdio_common_vsprintf_s (MSVCRT.@)
+ *              __stdio_common_vsprintf_s (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vsprintf_s( unsigned __int64 options,
         char *str, MSVCRT_size_t count, const char *format,
@@ -1159,7 +1159,7 @@ int CDECL MSVCRT__vswprintf_p(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
 
 
 /*********************************************************************
- *		__stdio_common_vswprintf_p (MSVCRT.@)
+ *              __stdio_common_vswprintf_p (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vswprintf_p( unsigned __int64 options,
         MSVCRT_wchar_t *str, MSVCRT_size_t count, const MSVCRT_wchar_t *format,
@@ -1266,7 +1266,7 @@ static int puts_clbk_str_c99_w(void *ctx, int len, const MSVCRT_wchar_t *str)
 }
 
 /*********************************************************************
- *		__stdio_common_vswprintf (MSVCRT.@)
+ *              __stdio_common_vswprintf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options,
         MSVCRT_wchar_t *str, MSVCRT_size_t len, const MSVCRT_wchar_t *format,
