@@ -3,7 +3,7 @@
 @ cdecl __p__fmode() ucrtbase.__p__fmode
 @ cdecl __stdio_common_vfprintf(int64 ptr str ptr ptr) ucrtbase.__stdio_common_vfprintf
 @ stub __stdio_common_vfprintf_p
-@ stub __stdio_common_vfprintf_s
+@ cdecl __stdio_common_vfprintf_s(int64 ptr str ptr ptr) ucrtbase.__stdio_common_vfprintf_s
 @ cdecl __stdio_common_vfscanf(int64 ptr str ptr ptr) ucrtbase.__stdio_common_vfscanf
 @ cdecl __stdio_common_vfwprintf(int64 ptr wstr ptr ptr) ucrtbase.__stdio_common_vfwprintf
 @ stub __stdio_common_vfwprintf_p

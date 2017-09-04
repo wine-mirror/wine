@@ -148,7 +148,7 @@
 @ cdecl __std_type_info_name(ptr ptr) MSVCRT_type_info_name_list
 @ cdecl __stdio_common_vfprintf(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfprintf
 @ stub __stdio_common_vfprintf_p
-@ stub __stdio_common_vfprintf_s
+@ cdecl __stdio_common_vfprintf_s(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfprintf_s
 @ cdecl __stdio_common_vfscanf(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfscanf
 @ cdecl __stdio_common_vfwprintf(int64 ptr wstr ptr ptr) MSVCRT__stdio_common_vfwprintf
 @ stub __stdio_common_vfwprintf_p

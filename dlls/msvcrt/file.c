@@ -5132,6 +5132,33 @@ int CDECL MSVCRT__stdio_common_vfprintf(unsigned __int64 options, MSVCRT_FILE *f
 }
 
 /*********************************************************************
+ *              __stdio_common_vfprintf_s (UCRTBASE.@)
+ */
+int CDECL MSVCRT__stdio_common_vfprintf_s(unsigned __int64 options, MSVCRT_FILE *file, const char *format,
+                                          MSVCRT__locale_t locale, __ms_va_list valist)
+{
+    BOOL tmp_buf;
+    int ret;
+
+    if (!MSVCRT_CHECK_PMT(file != NULL)) return -1;
+
+    MSVCRT__lock_file(file);
+    tmp_buf = add_std_buffer(file);
+
+    if (options & ~UCRTBASE_PRINTF_MASK)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+
+    ret = pf_printf_a(puts_clbk_file_a, file, format, locale,
+            (options & UCRTBASE_PRINTF_MASK) | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
+            arg_clbk_valist, NULL, &valist);
+
+    if (tmp_buf) remove_std_buffer(file);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
  *              __stdio_common_vfwprintf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vfwprintf(unsigned __int64 options, MSVCRT_FILE *file, const MSVCRT_wchar_t *format,
