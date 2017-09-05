@@ -436,8 +436,8 @@
 @ stub -arch=win64 ?_Schedule@_TaskCollection@details@Concurrency@@QEAAXPEAV_UnrealizedChore@23@PEAVlocation@3@@Z
 @ cdecl -arch=win32 ?_ScheduleTask@_CurrentScheduler@details@Concurrency@@SAXP6AXPAX@Z0@Z(ptr ptr) msvcr120.?_ScheduleTask@_CurrentScheduler@details@Concurrency@@SAXP6AXPAX@Z0@Z
 @ cdecl -arch=win64 ?_ScheduleTask@_CurrentScheduler@details@Concurrency@@SAXP6AXPEAX@Z0@Z(ptr ptr) msvcr120.?_ScheduleTask@_CurrentScheduler@details@Concurrency@@SAXP6AXPEAX@Z0@Z
-@ stub -arch=win32 ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z
-@ stub -arch=win64 ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KA_K_K@Z
+@ cdecl -arch=win32 ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z(long) msvcp120.?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z
+@ cdecl -arch=win64 ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KA_K_K@Z(long) msvcp120.?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KA_K_K@Z
 @ thiscall -arch=i386 ?_SetSpinCount@?$_SpinWait@$00@details@Concurrency@@QAEXI@Z(ptr long) msvcr120.?_SetSpinCount@?$_SpinWait@$00@details@Concurrency@@QAEXI@Z
 @ cdecl -arch=win64 ?_SetSpinCount@?$_SpinWait@$00@details@Concurrency@@QEAAXI@Z(ptr long) msvcr120.?_SetSpinCount@?$_SpinWait@$00@details@Concurrency@@QEAAXI@Z
 @ thiscall -arch=i386 ?_SetSpinCount@?$_SpinWait@$0A@@details@Concurrency@@QAEXI@Z(ptr long) msvcr120.?_SetSpinCount@?$_SpinWait@$0A@@details@Concurrency@@QAEXI@Z
