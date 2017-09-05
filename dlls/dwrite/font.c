@@ -4872,10 +4872,9 @@ static BOOL is_natural_rendering_mode(DWRITE_RENDERING_MODE1 mode)
     }
 }
 
-static UINT32 get_glyph_bitmap_pitch(DWRITE_TEXTURE_TYPE type, INT width)
+static UINT32 get_glyph_bitmap_pitch(DWRITE_RENDERING_MODE1 rendering_mode, INT width)
 {
-    return type == DWRITE_TEXTURE_CLEARTYPE_3x1 ? (width + 3) / 4 * 4 :
-        ((width + 31) >> 5) << 2;
+    return rendering_mode == DWRITE_RENDERING_MODE1_ALIASED ? ((width + 31) >> 5) << 2 : (width + 3) / 4 * 4;
 }
 
 static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *analysis, RECT *bounds)
@@ -4912,7 +4911,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
         glyph_bitmap.index = analysis->run.glyphIndices[i];
         freetype_get_glyph_bbox(&glyph_bitmap);
 
-        bitmap_size = get_glyph_bitmap_pitch(analysis->texture_type, bbox->right - bbox->left) *
+        bitmap_size = get_glyph_bitmap_pitch(analysis->rendering_mode, bbox->right - bbox->left) *
             (bbox->bottom - bbox->top);
         if (bitmap_size > analysis->max_glyph_bitmap_size)
             analysis->max_glyph_bitmap_size = bitmap_size;
@@ -4995,7 +4994,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
     glyph_bitmap.simulations = IDWriteFontFace4_GetSimulations(fontface);
     glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
-    glyph_bitmap.type = analysis->texture_type;
+    glyph_bitmap.aliased = analysis->rendering_mode == DWRITE_RENDERING_MODE1_ALIASED;
     if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
         glyph_bitmap.m = &analysis->m;
     if (!(glyph_bitmap.buf = heap_alloc(analysis->max_glyph_bitmap_size))) {
@@ -5019,7 +5018,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
         width = bbox->right - bbox->left;
         height = bbox->bottom - bbox->top;
 
-        glyph_bitmap.pitch = get_glyph_bitmap_pitch(analysis->texture_type, width);
+        glyph_bitmap.pitch = get_glyph_bitmap_pitch(analysis->rendering_mode, width);
         memset(src, 0, height * glyph_bitmap.pitch);
         is_1bpp = freetype_get_glyph_bitmap(&glyph_bitmap);
 
@@ -5044,18 +5043,27 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
                     for (x = 0; x < width; x++)
                         if (src[x / 8] & masks[x % 8])
                             dst[x] = DWRITE_ALPHA_MAX;
-                    src += get_dib_stride(width, 1);
+                    src += glyph_bitmap.pitch;
                     dst += analysis->bounds.right - analysis->bounds.left;
                 }
             }
         }
         else {
-            /* at this point it's DWRITE_TEXTURE_CLEARTYPE_3x1 with 8bpp src bitmap */
-            for (y = 0; y < height; y++) {
-                for (x = 0; x < width; x++)
-                    dst[3*x] = dst[3*x+1] = dst[3*x+2] = src[x] | dst[3*x];
-                src += glyph_bitmap.pitch;
-                dst += (analysis->bounds.right - analysis->bounds.left) * 3;
+            if (analysis->texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1) {
+                for (y = 0; y < height; y++) {
+                    for (x = 0; x < width; x++)
+                        dst[3*x] = dst[3*x+1] = dst[3*x+2] = src[x] | dst[3*x];
+                    src += glyph_bitmap.pitch;
+                    dst += (analysis->bounds.right - analysis->bounds.left) * 3;
+                }
+            }
+            else {
+                for (y = 0; y < height; y++) {
+                    for (x = 0; x < width; x++)
+                        dst[x] |= src[x];
+                    src += glyph_bitmap.pitch;
+                    dst += analysis->bounds.right - analysis->bounds.left;
+                }
             }
         }
     }
@@ -5223,7 +5231,8 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     analysis->ref = 1;
     analysis->rendering_mode = desc->rendering_mode;
 
-    if (desc->rendering_mode == DWRITE_RENDERING_MODE1_ALIASED)
+    if (desc->rendering_mode == DWRITE_RENDERING_MODE1_ALIASED
+            || desc->aa_mode == DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE)
         analysis->texture_type = DWRITE_TEXTURE_ALIASED_1x1;
     else
         analysis->texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;

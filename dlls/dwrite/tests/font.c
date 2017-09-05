@@ -4732,6 +4732,7 @@ static void test_CreateGlyphRunAnalysis(void)
 
     IDWriteGlyphRunAnalysis *analysis, *analysis2;
     IDWriteRenderingParams *params;
+    IDWriteFactory3 *factory3;
     IDWriteFactory2 *factory2;
     IDWriteFactory *factory;
     DWRITE_GLYPH_RUN run;
@@ -4745,6 +4746,8 @@ static void test_CreateGlyphRunAnalysis(void)
     DWRITE_GLYPH_METRICS metrics;
     DWRITE_FONT_METRICS fm;
     DWRITE_MATRIX m;
+    ULONG size;
+    BYTE *bits;
     ULONG ref;
     int i;
 
@@ -5057,27 +5060,132 @@ static void test_CreateGlyphRunAnalysis(void)
                 0.0f, 0.0f, &analysis);
         ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-        /* Natural mode, grayscale antialiased. */
+        /* Win8 does not accept default grid fitting mode. */
         hr = IDWriteFactory2_CreateGlyphRunAnalysis(factory2, &run, NULL, DWRITE_RENDERING_MODE_NATURAL,
                 DWRITE_MEASURING_MODE_NATURAL, DWRITE_GRID_FIT_MODE_DEFAULT, DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE,
                 0.0f,  0.0f, &analysis);
-        ok(hr == S_OK || broken(hr == E_INVALIDARG) /* Win8 */, "Failed to create glyph run analysis, hr %#x.\n", hr);
-
-        if (hr == S_OK) {
-            hr = IDWriteFactory_CreateCustomRenderingParams(factory, 0.1f, 0.0f, 1.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
-                    DWRITE_RENDERING_MODE_NATURAL, &params);
-            ok(hr == S_OK, "Failed to create custom parameters, hr %#x.\n", hr);
-
-            hr = IDWriteGlyphRunAnalysis_GetAlphaBlendParams(analysis, params, &gamma, &contrast, &cleartype_level);
-            ok(hr == S_OK, "Failed to get alpha blend params, hr %#x.\n", hr);
-        todo_wine
-            ok(cleartype_level == 0.0f, "Unexpected cleartype level %f.\n", cleartype_level);
-
-            IDWriteRenderingParams_Release(params);
+        ok(hr == S_OK || broken(hr == E_INVALIDARG) /* Win8 */, "Failed to create analysis, hr %#x.\n", hr);
+        if (hr == S_OK)
             IDWriteGlyphRunAnalysis_Release(analysis);
-        }
+
+        /* Natural mode, grayscale antialiased. */
+        hr = IDWriteFactory2_CreateGlyphRunAnalysis(factory2, &run, NULL, DWRITE_RENDERING_MODE_NATURAL,
+                DWRITE_MEASURING_MODE_NATURAL, DWRITE_GRID_FIT_MODE_DISABLED, DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE,
+                0.0f,  0.0f, &analysis);
+        ok(hr == S_OK, "Failed to create analysis, hr %#x.\n", hr);
+
+        SetRect(&rect, 0, 1, 0, 1);
+        hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
+        ok(hr == S_OK, "Failed to get texture bounds, hr %#x.\n", hr);
+        ok(IsRectEmpty(&rect), "Expected empty bbox.\n");
+
+        SetRectEmpty(&rect);
+        hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
+        ok(hr == S_OK, "Failed to get texture bounds, hr %#x.\n", hr);
+        ok(!IsRectEmpty(&rect), "Unexpected empty bbox.\n");
+
+        size = (rect.right - rect.left) * (rect.bottom - rect.top);
+        bits = HeapAlloc(GetProcessHeap(), 0, size);
+
+        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect, bits, size);
+        ok(hr == S_OK, "Failed to get alpha texture, hr %#x.\n", hr);
+
+        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect, bits, size - 1);
+        ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+
+        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect, bits, size);
+        ok(hr == DWRITE_E_UNSUPPORTEDOPERATION, "Unexpected hr %#x.\n", hr);
+
+        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect, bits, size - 1);
+    todo_wine
+        ok(hr == DWRITE_E_UNSUPPORTEDOPERATION, "Unexpected hr %#x.\n", hr);
+
+        HeapFree(GetProcessHeap(), 0, bits);
+
+        hr = IDWriteFactory_CreateCustomRenderingParams(factory, 0.1f, 0.0f, 1.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
+                DWRITE_RENDERING_MODE_NATURAL, &params);
+        ok(hr == S_OK, "Failed to create custom parameters, hr %#x.\n", hr);
+
+        hr = IDWriteGlyphRunAnalysis_GetAlphaBlendParams(analysis, params, &gamma, &contrast, &cleartype_level);
+        ok(hr == S_OK, "Failed to get alpha blend params, hr %#x.\n", hr);
+    todo_wine
+        ok(cleartype_level == 0.0f, "Unexpected cleartype level %f.\n", cleartype_level);
+
+        IDWriteRenderingParams_Release(params);
+        IDWriteGlyphRunAnalysis_Release(analysis);
 
         IDWriteFactory2_Release(factory2);
+    }
+
+    if (IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory3, (void **)&factory3) == S_OK) {
+
+        /* Invalid antialias mode. */
+        hr = IDWriteFactory3_CreateGlyphRunAnalysis(factory3, &run, NULL, DWRITE_RENDERING_MODE1_ALIASED,
+                DWRITE_MEASURING_MODE_NATURAL, DWRITE_GRID_FIT_MODE_DEFAULT, DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE + 1,
+                0.0f, 0.0f, &analysis);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+        /* Invalid grid fit mode. */
+        hr = IDWriteFactory3_CreateGlyphRunAnalysis(factory3, &run, NULL, DWRITE_RENDERING_MODE1_ALIASED,
+                DWRITE_MEASURING_MODE_NATURAL, DWRITE_GRID_FIT_MODE_ENABLED + 1, DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE,
+                0.0f, 0.0f, &analysis);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+        /* Invalid rendering mode. */
+        hr = IDWriteFactory3_CreateGlyphRunAnalysis(factory3, &run, NULL, DWRITE_RENDERING_MODE1_OUTLINE,
+                DWRITE_MEASURING_MODE_NATURAL, DWRITE_GRID_FIT_MODE_ENABLED, DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE,
+                0.0f, 0.0f, &analysis);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+        /* Invalid measuring mode. */
+        hr = IDWriteFactory3_CreateGlyphRunAnalysis(factory3, &run, NULL, DWRITE_RENDERING_MODE1_ALIASED,
+                DWRITE_MEASURING_MODE_GDI_NATURAL + 1, DWRITE_GRID_FIT_MODE_ENABLED,
+                DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE, 0.0f, 0.0f, &analysis);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+        hr = IDWriteFactory3_CreateGlyphRunAnalysis(factory3, &run, NULL, DWRITE_RENDERING_MODE1_NATURAL,
+                DWRITE_MEASURING_MODE_NATURAL, DWRITE_GRID_FIT_MODE_DEFAULT, DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE,
+                0.0f,  0.0f, &analysis);
+        ok(hr == S_OK, "Failed to create analysis, hr %#x.\n", hr);
+        IDWriteGlyphRunAnalysis_Release(analysis);
+
+        /* Natural mode, grayscale antialiased. */
+        hr = IDWriteFactory3_CreateGlyphRunAnalysis(factory3, &run, NULL, DWRITE_RENDERING_MODE1_NATURAL,
+                DWRITE_MEASURING_MODE_NATURAL, DWRITE_GRID_FIT_MODE_DISABLED, DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE,
+                0.0f,  0.0f, &analysis);
+        ok(hr == S_OK, "Failed to create analysis, hr %#x.\n", hr);
+
+        SetRect(&rect, 0, 1, 0, 1);
+        hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
+        ok(hr == S_OK, "Failed to get texture bounds, hr %#x.\n", hr);
+        ok(IsRectEmpty(&rect), "Expected empty bbox.\n");
+
+        SetRectEmpty(&rect);
+        hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
+        ok(hr == S_OK, "Failed to get texture bounds, hr %#x.\n", hr);
+        ok(!IsRectEmpty(&rect), "Unexpected empty bbox.\n");
+
+        size = (rect.right - rect.left) * (rect.bottom - rect.top);
+        bits = HeapAlloc(GetProcessHeap(), 0, size);
+
+        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect, bits, size);
+        ok(hr == S_OK, "Failed to get alpha texture, hr %#x.\n", hr);
+
+        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect, bits, size - 1);
+        ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+
+        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect, bits, size);
+        ok(hr == DWRITE_E_UNSUPPORTEDOPERATION, "Unexpected hr %#x.\n", hr);
+
+        hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect, bits, size - 1);
+    todo_wine
+        ok(hr == DWRITE_E_UNSUPPORTEDOPERATION, "Unexpected hr %#x.\n", hr);
+
+        HeapFree(GetProcessHeap(), 0, bits);
+
+        IDWriteGlyphRunAnalysis_Release(analysis);
+
+        IDWriteFactory3_Release(factory3);
     }
 
     IDWriteFontFace_Release(face);

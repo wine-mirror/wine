@@ -273,11 +273,11 @@ struct dwrite_glyphbitmap {
     DWORD simulations;
     FLOAT emsize;
     BOOL nohint;
+    BOOL aliased;
     UINT16 index;
     INT pitch;
     RECT bbox;
     BYTE *buf;
-    DWRITE_TEXTURE_TYPE type;
     DWRITE_MATRIX *m;
 };
 

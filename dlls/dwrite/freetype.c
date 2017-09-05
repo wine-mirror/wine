@@ -860,10 +860,10 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
         else
             glyph_copy = NULL;
 
-        if (bitmap->type == DWRITE_TEXTURE_CLEARTYPE_3x1)
-            ret = freetype_get_aa_glyph_bitmap(bitmap, glyph);
-        else
+        if (bitmap->aliased)
             ret = freetype_get_aliased_glyph_bitmap(bitmap, glyph);
+        else
+            ret = freetype_get_aa_glyph_bitmap(bitmap, glyph);
 
         if (glyph_copy)
             pFT_Done_Glyph(glyph_copy);
