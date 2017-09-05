@@ -1952,10 +1952,20 @@ static HRESULT WINAPI PngEncoder_SetColorContexts(IWICBitmapEncoder *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI PngEncoder_SetPalette(IWICBitmapEncoder *iface, IWICPalette *pIPalette)
+static HRESULT WINAPI PngEncoder_SetPalette(IWICBitmapEncoder *iface, IWICPalette *palette)
 {
-    TRACE("(%p,%p)\n", iface, pIPalette);
-    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    PngEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    HRESULT hr;
+
+    TRACE("(%p,%p)\n", iface, palette);
+
+    EnterCriticalSection(&This->lock);
+
+    hr = This->stream ? WINCODEC_ERR_UNSUPPORTEDOPERATION : WINCODEC_ERR_NOTINITIALIZED;
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI PngEncoder_SetThumbnail(IWICBitmapEncoder *iface, IWICBitmapSource *pIThumbnail)
