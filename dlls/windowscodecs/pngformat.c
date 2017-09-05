@@ -857,10 +857,10 @@ static HRESULT WINAPI PngDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
 }
 
 static HRESULT WINAPI PngDecoder_CopyPalette(IWICBitmapDecoder *iface,
-    IWICPalette *pIPalette)
+    IWICPalette *palette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, palette);
+    return WINCODEC_ERR_PALETTEUNAVAILABLE;
 }
 
 static HRESULT WINAPI PngDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface,
