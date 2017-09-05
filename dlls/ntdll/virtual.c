@@ -177,6 +177,21 @@ static void set_page_vprot( struct file_view *view, const void *addr, size_t siz
 
 
 /***********************************************************************
+ *           set_page_vprot_bits
+ *
+ * Set or clear bits in a range of page protection bytes.
+ */
+static void set_page_vprot_bits( struct file_view *view, const void *addr, size_t size,
+                                 BYTE set, BYTE clear )
+{
+    BYTE *ptr = view->prot + (((const char *)addr - (const char *)view->base) >> page_shift);
+    size_t i;
+
+    for (i = 0; i < ROUND_SIZE( addr, size ) >> page_shift; i++) ptr[i] = (ptr[i] & ~clear) | set;
+}
+
+
+/***********************************************************************
  *           VIRTUAL_GetProtStr
  */
 static const char *VIRTUAL_GetProtStr( BYTE prot )
@@ -717,14 +732,12 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
         UINT i, count;
         char *addr = base;
         int prot;
-        BYTE *p = view->prot + ((addr - (char *)view->base) >> page_shift);
 
-        p[0] = vprot | (p[0] & VPROT_WRITEWATCH);
-        unix_prot = VIRTUAL_GetUnixProt( p[0] );
+        set_page_vprot_bits( view, base, size, vprot & ~VPROT_WRITEWATCH, ~vprot & ~VPROT_WRITEWATCH );
+        unix_prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr ));
         for (count = i = 1; i < size >> page_shift; i++, count++)
         {
-            p[i] = vprot | (p[i] & VPROT_WRITEWATCH);
-            prot = VIRTUAL_GetUnixProt( p[i] );
+            prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr + (count << page_shift) ));
             if (prot == unix_prot) continue;
             mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
             addr += count << page_shift;
@@ -767,14 +780,12 @@ static void reset_write_watches( struct file_view *view, void *base, SIZE_T size
     SIZE_T i, count;
     int prot, unix_prot;
     char *addr = base;
-    BYTE *p = view->prot + ((addr - (char *)view->base) >> page_shift);
 
-    p[0] |= VPROT_WRITEWATCH;
-    unix_prot = VIRTUAL_GetUnixProt( p[0] );
+    set_page_vprot_bits( view, base, size, VPROT_WRITEWATCH, 0 );
+    unix_prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr ));
     for (count = i = 1; i < size >> page_shift; i++, count++)
     {
-        p[i] |= VPROT_WRITEWATCH;
-        prot = VIRTUAL_GetUnixProt( p[i] );
+        prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr + (count << page_shift) ));
         if (prot == unix_prot) continue;
         mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
         addr += count << page_shift;
@@ -1051,7 +1062,7 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, BYTE *vpro
                 if (reply->committed)
                 {
                     *vprot |= VPROT_COMMITTED;
-                    for (i = 0; i < ret >> page_shift; i++) view->prot[start+i] |= VPROT_COMMITTED;
+                    set_page_vprot_bits( view, base, ret, VPROT_COMMITTED, 0 );
                 }
             }
         }
@@ -1074,9 +1085,7 @@ static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t siz
 {
     if (wine_anon_mmap( (char *)view->base + start, size, PROT_NONE, MAP_FIXED ) != (void *)-1)
     {
-        BYTE *p = view->prot + (start >> page_shift);
-        size >>= page_shift;
-        while (size--) *p++ &= ~VPROT_COMMITTED;
+        set_page_vprot_bits( view, (char *)view->base + start, size, 0, VPROT_COMMITTED );
         return STATUS_SUCCESS;
     }
     return FILE_GetNtStatus();
@@ -1610,20 +1619,20 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
     if ((view = VIRTUAL_FindView( addr, 0 )))
     {
         void *page = ROUND_ADDR( addr, page_mask );
-        BYTE *vprot = &view->prot[((const char *)page - (const char *)view->base) >> page_shift];
+        BYTE vprot = get_page_vprot( view, page );
         if ((err & EXCEPTION_WRITE_FAULT) && (view->protect & VPROT_WRITEWATCH))
         {
-            if (*vprot & VPROT_WRITEWATCH)
+            if (vprot & VPROT_WRITEWATCH)
             {
-                *vprot &= ~VPROT_WRITEWATCH;
-                VIRTUAL_SetProt( view, page, page_size, *vprot );
+                set_page_vprot_bits( view, page, page_size, 0, VPROT_WRITEWATCH );
+                VIRTUAL_SetProt( view, page, page_size, get_page_vprot( view, page ));
             }
             /* ignore fault if page is writable now */
-            if (VIRTUAL_GetUnixProt( *vprot ) & PROT_WRITE) ret = STATUS_SUCCESS;
+            if (VIRTUAL_GetUnixProt( get_page_vprot( view, page )) & PROT_WRITE) ret = STATUS_SUCCESS;
         }
-        if (!on_signal_stack && (*vprot & VPROT_GUARD))
+        if (!on_signal_stack && (vprot & VPROT_GUARD))
         {
-            VIRTUAL_SetProt( view, page, page_size, *vprot & ~VPROT_GUARD );
+            VIRTUAL_SetProt( view, page, page_size, vprot & ~VPROT_GUARD );
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
     }
@@ -1812,24 +1821,24 @@ SIZE_T virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_
             while (bytes_written < size)
             {
                 void *page = ROUND_ADDR( addr, page_mask );
-                BYTE *p = view->prot + (((const char *)page - (const char *)view->base) >> page_shift);
+                BYTE vprot = get_page_vprot( view, page );
                 SIZE_T block_size;
 
                 /* If the page is not writable then check for write watches
                  * before giving up. This can be done without raising a real
                  * exception. Similar to virtual_handle_fault. */
-                if (!(VIRTUAL_GetUnixProt( *p ) & PROT_WRITE))
+                if (!(VIRTUAL_GetUnixProt( vprot ) & PROT_WRITE))
                 {
                     if (!(view->protect & VPROT_WRITEWATCH))
                         break;
 
-                    if (*p & VPROT_WRITEWATCH)
+                    if (vprot & VPROT_WRITEWATCH)
                     {
-                        *p &= ~VPROT_WRITEWATCH;
-                        VIRTUAL_SetProt( view, page, page_size, *p );
+                        set_page_vprot_bits( view, page, page_size, 0, VPROT_WRITEWATCH );
+                        VIRTUAL_SetProt( view, page, page_size, get_page_vprot( view, page ));
                     }
                     /* ignore fault if page is writable now */
-                    if (!(VIRTUAL_GetUnixProt( *p ) & PROT_WRITE))
+                    if (!(VIRTUAL_GetUnixProt( get_page_vprot( view, page )) & PROT_WRITE))
                         break;
                 }
 
