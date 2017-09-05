@@ -6529,6 +6529,51 @@ static void test_GdipDrawImagePointsRectOnMemoryDC(void)
     ReleaseDC(hwnd, dc);
 }
 
+static void test_cliphrgn_transform(void)
+{
+    HDC hdc;
+    GpStatus status;
+    GpGraphics *graphics;
+    HRGN rgn;
+    RectF rectf;
+    BOOL res;
+
+    hdc = GetDC(hwnd);
+
+    SetViewportOrgEx(hdc, 10, 10, NULL);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    rgn = CreateRectRgn(0, 0, 100, 100);
+
+    status = GdipSetClipHrgn(graphics, rgn, CombineModeReplace);
+    expect(Ok, status);
+
+    status = GdipGetVisibleClipBounds(graphics, &rectf);
+    expect(Ok, status);
+    expectf(-10.0, rectf.X);
+    expectf(-10.0, rectf.Y);
+    expectf(100.0, rectf.Width);
+    expectf(100.0, rectf.Height);
+
+    status = GdipIsVisiblePoint(graphics, 95, 95, &res);
+    expect(Ok, status);
+    expect(FALSE, res);
+
+    status = GdipIsVisiblePoint(graphics, -5, -5, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+
+    DeleteObject(rgn);
+
+    GdipDeleteGraphics(graphics);
+
+    SetViewportOrgEx(hdc, 0, 0, NULL);
+
+    ReleaseDC(hwnd, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -6618,6 +6663,7 @@ START_TEST(graphics)
     test_GdipDrawImagePointsRectOnMemoryDC();
     test_container_rects();
     test_GdipGraphicsSetAbort();
+    test_cliphrgn_transform();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );

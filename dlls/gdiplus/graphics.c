@@ -6209,6 +6209,7 @@ GpStatus WINGDIPAPI GdipSetClipHrgn(GpGraphics *graphics, HRGN hrgn, CombineMode
 {
     GpRegion *region;
     GpStatus status;
+    GpMatrix transform;
 
     TRACE("(%p, %p, %d)\n", graphics, hrgn, mode);
 
@@ -6218,14 +6219,21 @@ GpStatus WINGDIPAPI GdipSetClipHrgn(GpGraphics *graphics, HRGN hrgn, CombineMode
     if(graphics->busy)
         return ObjectBusy;
 
-    /* hrgn is already in device units */
+    /* hrgn is in gdi32 device units */
     status = GdipCreateRegionHrgn(hrgn, &region);
-    if(status != Ok)
-        return status;
 
-    status = GdipCombineRegionRegion(graphics->clip, region, mode);
+    if (status == Ok)
+    {
+        status = get_graphics_transform(graphics, CoordinateSpaceDevice, WineCoordinateSpaceGdiDevice, &transform);
 
-    GdipDeleteRegion(region);
+        if (status == Ok)
+            status = GdipTransformRegion(region, &transform);
+
+        if (status == Ok)
+            status = GdipCombineRegionRegion(graphics->clip, region, mode);
+
+        GdipDeleteRegion(region);
+    }
     return status;
 }
 
