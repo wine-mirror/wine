@@ -3799,7 +3799,7 @@ static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *
         points[1].X = pen->width;
         points[2].Y = pen->width;
 
-        stat = GdipTransformPoints(graphics, CoordinateSpaceDevice,
+        stat = gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice,
             CoordinateSpaceWorld, points, 3);
 
         if (stat != Ok)
@@ -3823,7 +3823,7 @@ static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *
         stat = GdipCreateMatrix(&transform);
 
         if (stat == Ok)
-            stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
+            stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice,
                 CoordinateSpaceWorld, transform);
     }
     else
@@ -3831,7 +3831,7 @@ static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *
         /* Set flatness based on the final coordinate space */
         GpMatrix t;
 
-        stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
+        stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice,
             CoordinateSpaceWorld, &t);
 
         if (stat != Ok)
