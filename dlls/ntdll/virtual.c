@@ -73,7 +73,6 @@ struct file_view
     HANDLE        mapping;     /* Handle to the file mapping */
     unsigned int  map_protect; /* Mapping protection */
     unsigned int  protect;     /* Protection for all pages at allocation time */
-    BYTE          prot[1];     /* Protection byte for each page */
 };
 
 
@@ -146,6 +145,15 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 #define VIRTUAL_HEAP_SIZE (sizeof(void*)*1024*1024)
 
+#ifdef _WIN64  /* on 64-bit the page protection bytes use a 2-level table */
+static const size_t pages_vprot_shift = 20;
+static const size_t pages_vprot_mask = (1 << 20) - 1;
+static size_t pages_vprot_size;
+static BYTE **pages_vprot;
+#else  /* on 32-bit we use a simple array with one byte per page */
+static BYTE *pages_vprot;
+#endif
+
 static HANDLE virtual_heap;
 static void *preload_reserve_start;
 static void *preload_reserve_end;
@@ -160,7 +168,13 @@ static BOOL force_exec_prot;  /* whether to force PROT_EXEC on all PROT_READ mma
  */
 static BYTE get_page_vprot( struct file_view *view, const void *addr )
 {
-    return view->prot[((const char *)addr - (const char *)view->base) >> page_shift];
+    size_t idx = (size_t)addr >> page_shift;
+
+#ifdef _WIN64
+    return pages_vprot[idx >> pages_vprot_shift][idx & pages_vprot_mask];
+#else
+    return pages_vprot[idx];
+#endif
 }
 
 
@@ -171,8 +185,20 @@ static BYTE get_page_vprot( struct file_view *view, const void *addr )
  */
 static void set_page_vprot( struct file_view *view, const void *addr, size_t size, BYTE vprot )
 {
-    BYTE *ptr = view->prot + (((const char *)addr - (const char *)view->base) >> page_shift);
-    memset( ptr, vprot, ROUND_SIZE( addr, size ) >> page_shift );
+    size_t idx = (size_t)addr >> page_shift;
+    size_t end = ((size_t)addr + size + page_mask) >> page_shift;
+
+#ifdef _WIN64
+    while (idx >> pages_vprot_shift != end >> pages_vprot_shift)
+    {
+        size_t dir_size = pages_vprot_mask + 1 - (idx & pages_vprot_mask);
+        memset( pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask), vprot, dir_size );
+        idx += dir_size;
+    }
+    memset( pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask), vprot, end - idx );
+#else
+    memset( pages_vprot + idx, vprot, end - idx );
+#endif
 }
 
 
@@ -184,10 +210,44 @@ static void set_page_vprot( struct file_view *view, const void *addr, size_t siz
 static void set_page_vprot_bits( struct file_view *view, const void *addr, size_t size,
                                  BYTE set, BYTE clear )
 {
-    BYTE *ptr = view->prot + (((const char *)addr - (const char *)view->base) >> page_shift);
-    size_t i;
+    size_t idx = (size_t)addr >> page_shift;
+    size_t end = ((size_t)addr + size + page_mask) >> page_shift;
 
-    for (i = 0; i < ROUND_SIZE( addr, size ) >> page_shift; i++) ptr[i] = (ptr[i] & ~clear) | set;
+#ifdef _WIN64
+    for ( ; idx < end; idx++)
+    {
+        BYTE *ptr = pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask);
+        *ptr = (*ptr & ~clear) | set;
+    }
+#else
+    for ( ; idx < end; idx++) pages_vprot[idx] = (pages_vprot[idx] & ~clear) | set;
+#endif
+}
+
+
+/***********************************************************************
+ *           alloc_pages_vprot
+ *
+ * Allocate the page protection bytes for a given range.
+ */
+static BOOL alloc_pages_vprot( const void *addr, size_t size )
+{
+#ifdef _WIN64
+    size_t idx = (size_t)addr >> page_shift;
+    size_t end = ((size_t)addr + size + page_mask) >> page_shift;
+    size_t i;
+    void *ptr;
+
+    assert( end <= pages_vprot_size << pages_vprot_shift );
+    for (i = idx >> pages_vprot_shift; i < (end + pages_vprot_mask) >> pages_vprot_shift; i++)
+    {
+        if (pages_vprot[i]) continue;
+        if ((ptr = wine_anon_mmap( NULL, pages_vprot_mask + 1, PROT_READ | PROT_WRITE, 0 )) == (void *)-1)
+            return FALSE;
+        pages_vprot[i] = ptr;
+    }
+#endif
+    return TRUE;
 }
 
 
@@ -555,9 +615,11 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     assert( !((UINT_PTR)base & page_mask) );
     assert( !(size & page_mask) );
 
+    if (!alloc_pages_vprot( base, size )) return STATUS_NO_MEMORY;
+
     /* Create the view structure */
 
-    if (!(view = RtlAllocateHeap( virtual_heap, 0, sizeof(*view) + (size >> page_shift) - 1 )))
+    if (!(view = RtlAllocateHeap( virtual_heap, 0, sizeof(*view) )))
     {
         FIXME( "out of memory in virtual heap for %p-%p\n", base, (char *)base + size );
         return STATUS_NO_MEMORY;
@@ -1440,8 +1502,13 @@ void virtual_init(void)
     assert( !(page_size & page_mask) );
     page_shift = 0;
     while ((1 << page_shift) != page_size) page_shift++;
-    user_space_limit = working_set_limit = address_space_limit = (void *)~page_mask;
-#endif  /* page_mask */
+#ifdef _WIN64
+    address_space_limit = (void *)(((1UL << 47) - 1) & ~page_mask);
+#else
+    address_space_limit = (void *)~page_mask;
+#endif
+    user_space_limit = working_set_limit = address_space_limit;
+#endif
     if ((preload = getenv("WINEPRELOADRESERVE")))
     {
         unsigned long start, end;
@@ -1452,12 +1519,18 @@ void virtual_init(void)
         }
     }
 
-    /* try to find space in a reserved area for the virtual heap */
-    alloc_heap.size = VIRTUAL_HEAP_SIZE;
+    /* try to find space in a reserved area for the virtual heap and pages protection table */
+#ifdef _WIN64
+    pages_vprot_size = ((size_t)address_space_limit >> page_shift >> pages_vprot_shift) + 1;
+    alloc_heap.size = VIRTUAL_HEAP_SIZE + pages_vprot_size * sizeof(*pages_vprot);
+#else
+    alloc_heap.size = VIRTUAL_HEAP_SIZE + (1U << (32 - page_shift));
+#endif
     if (!wine_mmap_enum_reserved_areas( alloc_virtual_heap, &alloc_heap, 1 ))
         alloc_heap.base = wine_anon_mmap( NULL, alloc_heap.size, PROT_READ|PROT_WRITE, 0 );
 
     assert( alloc_heap.base != (void *)-1 );
+    pages_vprot = (void *)((char *)alloc_heap.base + VIRTUAL_HEAP_SIZE);
     virtual_heap = RtlCreateHeap( HEAP_NO_SERIALIZE, alloc_heap.base, VIRTUAL_HEAP_SIZE,
                                   VIRTUAL_HEAP_SIZE, NULL, NULL );
     create_view( &heap_view, alloc_heap.base, alloc_heap.size, VPROT_COMMITTED|VPROT_READ|VPROT_WRITE );
