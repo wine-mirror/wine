@@ -707,6 +707,32 @@ static inline int mprotect_exec( void *base, size_t size, int unix_prot, unsigne
     return mprotect( base, size, unix_prot );
 }
 
+
+/***********************************************************************
+ *           mprotect_range
+ *
+ * Call mprotect on a page range, applying the protections from the per-page byte.
+ */
+static void mprotect_range( struct file_view *view, void *base, size_t size, BYTE set, BYTE clear )
+{
+    size_t i, count;
+    char *addr = base;
+    int prot, next;
+
+    prot = VIRTUAL_GetUnixProt( (get_page_vprot( view, addr ) & ~clear ) | set );
+    for (count = i = 1; i < size >> page_shift; i++, count++)
+    {
+        next = VIRTUAL_GetUnixProt( (get_page_vprot( view, addr + (count << page_shift) ) & ~clear) | set );
+        if (next == prot) continue;
+        mprotect_exec( addr, count << page_shift, prot, view->protect );
+        addr += count << page_shift;
+        prot = next;
+        count = 0;
+    }
+    if (count) mprotect_exec( addr, count << page_shift, prot, view->protect );
+}
+
+
 /***********************************************************************
  *           VIRTUAL_SetProt
  *
@@ -729,22 +755,8 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
     if (view->protect & VPROT_WRITEWATCH)
     {
         /* each page may need different protections depending on write watch flag */
-        UINT i, count;
-        char *addr = base;
-        int prot;
-
         set_page_vprot_bits( view, base, size, vprot & ~VPROT_WRITEWATCH, ~vprot & ~VPROT_WRITEWATCH );
-        unix_prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr ));
-        for (count = i = 1; i < size >> page_shift; i++, count++)
-        {
-            prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr + (count << page_shift) ));
-            if (prot == unix_prot) continue;
-            mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
-            addr += count << page_shift;
-            unix_prot = prot;
-            count = 0;
-        }
-        if (count) mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
+        mprotect_range( view, base, size, 0, 0 );
         VIRTUAL_DEBUG_DUMP_VIEW( view );
         return TRUE;
     }
@@ -777,22 +789,8 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
  */
 static void reset_write_watches( struct file_view *view, void *base, SIZE_T size )
 {
-    SIZE_T i, count;
-    int prot, unix_prot;
-    char *addr = base;
-
     set_page_vprot_bits( view, base, size, VPROT_WRITEWATCH, 0 );
-    unix_prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr ));
-    for (count = i = 1; i < size >> page_shift; i++, count++)
-    {
-        prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr + (count << page_shift) ));
-        if (prot == unix_prot) continue;
-        mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
-        addr += count << page_shift;
-        unix_prot = prot;
-        count = 0;
-    }
-    if (count) mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
+    mprotect_range( view, base, size, 0, 0 );
 }
 
 
@@ -1625,14 +1623,15 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
             if (vprot & VPROT_WRITEWATCH)
             {
                 set_page_vprot_bits( view, page, page_size, 0, VPROT_WRITEWATCH );
-                VIRTUAL_SetProt( view, page, page_size, get_page_vprot( view, page ));
+                mprotect_range( view, page, page_size, 0, 0 );
             }
             /* ignore fault if page is writable now */
             if (VIRTUAL_GetUnixProt( get_page_vprot( view, page )) & PROT_WRITE) ret = STATUS_SUCCESS;
         }
         if (!on_signal_stack && (vprot & VPROT_GUARD))
         {
-            VIRTUAL_SetProt( view, page, page_size, vprot & ~VPROT_GUARD );
+            set_page_vprot_bits( view, page, page_size, 0, VPROT_GUARD );
+            mprotect_range( view, page, page_size, 0, 0 );
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
     }
@@ -1835,7 +1834,7 @@ SIZE_T virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_
                     if (vprot & VPROT_WRITEWATCH)
                     {
                         set_page_vprot_bits( view, page, page_size, 0, VPROT_WRITEWATCH );
-                        VIRTUAL_SetProt( view, page, page_size, get_page_vprot( view, page ));
+                        mprotect_range( view, page, page_size, 0, 0 );
                     }
                     /* ignore fault if page is writable now */
                     if (!(VIRTUAL_GetUnixProt( get_page_vprot( view, page )) & PROT_WRITE))
@@ -1873,39 +1872,10 @@ void VIRTUAL_SetForceExec( BOOL enable )
 
         LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
         {
-            UINT i, count;
-            char *addr = view->base;
             BYTE commit = view->mapping ? VPROT_COMMITTED : 0;  /* file mappings are always accessible */
-            int unix_prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr ) | commit );
 
             if (view->protect & VPROT_NOEXEC) continue;
-            for (count = i = 1; i < view->size >> page_shift; i++, count++)
-            {
-                int prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr + (count << page_shift) ) | commit );
-                if (prot == unix_prot) continue;
-                if ((unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
-                {
-                    TRACE( "%s exec prot for %p-%p\n",
-                           force_exec_prot ? "enabling" : "disabling",
-                           addr, addr + (count << page_shift) - 1 );
-                    mprotect( addr, count << page_shift,
-                              unix_prot | (force_exec_prot ? PROT_EXEC : 0) );
-                }
-                addr += (count << page_shift);
-                unix_prot = prot;
-                count = 0;
-            }
-            if (count)
-            {
-                if ((unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
-                {
-                    TRACE( "%s exec prot for %p-%p\n",
-                           force_exec_prot ? "enabling" : "disabling",
-                           addr, addr + (count << page_shift) - 1 );
-                    mprotect( addr, count << page_shift,
-                              unix_prot | (force_exec_prot ? PROT_EXEC : 0) );
-                }
-            }
+            mprotect_range( view, view->base, view->size, commit, 0 );
         }
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
