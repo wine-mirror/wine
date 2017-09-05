@@ -507,6 +507,9 @@ static void test_delete(void)
     DWORD r;
     const DWORD deadbeef = 0xdeadbeef;
 
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
+
     run_reg_exe("reg delete", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 
@@ -563,6 +566,9 @@ static void test_query(void)
     const char empty2[] = "Empty2";
     const DWORD dword1 = 0x123;
     const DWORD dword2 = 0xabc;
+
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
 
     run_reg_exe("reg query", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
@@ -799,6 +805,9 @@ static void test_import(void)
     HKEY hkey, subkey = NULL;
     LONG err;
     BYTE hex[8];
+
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
 
     run_reg_exe("reg import", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
@@ -2314,6 +2323,9 @@ static void test_unicode_import(void)
     char buffer[24];
     BYTE hex[8];
 
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
+
     test_import_wstr("REGEDIT\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
@@ -3800,6 +3812,9 @@ static void test_import_with_whitespace(void)
     DWORD r, dword;
     LONG err;
 
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
+
     test_import_str("  REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u, expected 0\n", r);
@@ -3946,6 +3961,9 @@ static void test_unicode_import_with_whitespace(void)
     HKEY hkey;
     DWORD r, dword;
     LONG err;
+
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
 
     test_import_wstr("\xef\xbb\xbf  Windows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n", &r);
