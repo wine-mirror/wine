@@ -302,13 +302,6 @@ static void round_points(POINT *pti, GpPointF *ptf, INT count)
     }
 }
 
-static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
-    GpPointF *ptf, INT count)
-{
-    gdip_transform_points(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, ptf, count);
-    round_points(pti, ptf, count);
-}
-
 static void gdi_alpha_blend(GpGraphics *graphics, INT dst_x, INT dst_y, INT dst_width, INT dst_height,
                             HDC hdc, INT src_x, INT src_y, INT src_width, INT src_height)
 {
@@ -2226,7 +2219,7 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
         GdipTransformMatrixPoints(&xform, pt, 3);
     }
 
-    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
     angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
     rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
                      (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
@@ -5263,7 +5256,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     pt[1].Y = 0.0;
     pt[2].X = 0.0;
     pt[2].Y = 1.0;
-    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
     args.rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
                      (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
     args.rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
@@ -5292,8 +5285,12 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
 
     args.regions = regions;
 
+    gdi_transform_acquire(graphics);
+
     stat = gdip_format_string(hdc, string, length, font, &scaled_rect, stringFormat,
         (stringFormat->attr & StringFormatFlagsNoClip) != 0, measure_ranges_callback, &args);
+
+    gdi_transform_release(graphics);
 
     SelectObject(hdc, oldfont);
     DeleteObject(gdifont);
@@ -5382,7 +5379,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     pt[1].Y = 0.0;
     pt[2].X = 0.0;
     pt[2].Y = 1.0;
-    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
     args.rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
                      (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
     args.rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
@@ -5417,8 +5414,12 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     args.linesfilled = &lines;
     lines = glyphs = 0;
 
+    gdi_transform_acquire(graphics);
+
     gdip_format_string(hdc, string, length, font, &scaled_rect, format, TRUE,
         measure_string_callback, &args);
+
+    gdi_transform_release(graphics);
 
     if (linesfilled) *linesfilled = lines;
     if (codepointsfitted) *codepointsfitted = glyphs;
@@ -5549,7 +5550,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     pt[1].Y = 0.0;
     pt[2].X = 0.0;
     pt[2].Y = 1.0;
-    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
     rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
                      (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
     rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
@@ -5559,7 +5560,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     rectcpy[1].Y = rectcpy[0].Y = rect->Y;
     rectcpy[2].X = rectcpy[1].X = rect->X + rect->Width;
     rectcpy[3].Y = rectcpy[2].Y = rect->Y + rect->Height;
-    transform_and_round_points(graphics, corners, rectcpy, 4);
+    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, rectcpy, 4);
+    round_points(corners, rectcpy, 4);
 
     margin_x = (format && format->generic_typographic) ? 0.0 : font->emSize / 6.0;
     margin_x *= units_scale(font->unit, graphics->unit, graphics->xres);
@@ -5598,11 +5600,15 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     args.rel_width = rel_width;
     args.rel_height = rel_height;
 
+    gdi_transform_acquire(graphics);
+
     GetTextMetricsW(hdc, &textmetric);
     args.ascent = textmetric.tmAscent / rel_height;
 
     gdip_format_string(hdc, string, length, font, &scaled_rect, format, TRUE,
         draw_string_callback, &args);
+
+    gdi_transform_release(graphics);
 
     DeleteObject(rgn);
     DeleteObject(gdifont);
@@ -6907,7 +6913,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
         GpMatrix xform = *matrix;
         GdipTransformMatrixPoints(&xform, pt, 3);
     }
-    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
     rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
                      (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
     rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
@@ -7001,14 +7007,18 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     }
 
     pt = positions[0];
-    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &pt, 1);
+    gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, &pt, 1);
 
     get_font_hfont(graphics, font, format, &hfont, matrix);
     SelectObject(graphics->hdc, hfont);
 
     SetTextAlign(graphics->hdc, TA_BASELINE|TA_LEFT);
 
+    gdi_transform_acquire(graphics);
+
     ExtTextOutW(graphics->hdc, gdip_round(pt.X), gdip_round(pt.Y), eto_flags, NULL, text, length, NULL);
+
+    gdi_transform_release(graphics);
 
     RestoreDC(graphics->hdc, save_state);
 
@@ -7057,7 +7067,8 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
     {
         real_position = positions[0];
 
-        transform_and_round_points(graphics, pti, &real_position, 1);
+        gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, &real_position, 1);
+        round_points(pti, &real_position, 1);
     }
     else
     {
@@ -7070,7 +7081,8 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
 
         memcpy(real_positions, positions, sizeof(PointF) * length);
 
-        transform_and_round_points(graphics, pti, real_positions, length);
+        gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, real_positions, length);
+        round_points(pti, real_positions, length);
 
         heap_free(real_positions);
     }
@@ -7210,9 +7222,13 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
 
     heap_free(text_mask);
 
+    gdi_transform_acquire(graphics);
+
     /* draw the result */
     stat = alpha_blend_pixels(graphics, min_x, min_y, pixel_data, pixel_area.Width,
         pixel_area.Height, pixel_data_stride, PixelFormat32bppARGB);
+
+    gdi_transform_release(graphics);
 
     heap_free(pixel_data);
 
