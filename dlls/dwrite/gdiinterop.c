@@ -256,22 +256,6 @@ static inline DWORD *get_pixel_ptr_32(struct dib_data *dib, int x, int y)
     return (DWORD *)((BYTE*)dib->ptr + y * dib->stride + x * 4);
 }
 
-static void blit_8(struct dib_data *dib, const BYTE *src, const RECT *rect, DWORD text_pixel)
-{
-    DWORD *dst_ptr = get_pixel_ptr_32(dib, rect->left, rect->top);
-    int x, y, src_width = rect->right - rect->left;
-
-    for (y = rect->top; y < rect->bottom; y++) {
-        for (x = 0; x < src_width; x++) {
-            if (src[x] < DWRITE_ALPHA_MAX) continue;
-            dst_ptr[x] = text_pixel;
-        }
-
-        src += src_width;
-        dst_ptr += dib->stride / 4;
-    }
-}
-
 static inline BYTE blend_color(BYTE dst, BYTE src, BYTE alpha)
 {
     return (src * alpha + dst * (255 - alpha) + 127) / 255;
@@ -282,6 +266,32 @@ static inline DWORD blend_subpixel(BYTE r, BYTE g, BYTE b, DWORD text, const BYT
     return blend_color(r, text >> 16, alpha[0]) << 16 |
            blend_color(g, text >> 8,  alpha[1]) << 8  |
            blend_color(b, text,       alpha[2]);
+}
+
+static inline DWORD blend_pixel(BYTE r, BYTE g, BYTE b, DWORD text, BYTE alpha)
+{
+    return blend_color(r, text >> 16, alpha) << 16 |
+           blend_color(g, text >> 8,  alpha) << 8  |
+           blend_color(b, text,       alpha);
+}
+
+static void blit_8(struct dib_data *dib, const BYTE *src, const RECT *rect, DWORD text_pixel)
+{
+    DWORD *dst_ptr = get_pixel_ptr_32(dib, rect->left, rect->top);
+    int x, y, src_width = rect->right - rect->left;
+
+    for (y = rect->top; y < rect->bottom; y++) {
+        for (x = 0; x < src_width; x++) {
+            if (src[x]) continue;
+            if (src[x] == DWRITE_ALPHA_MAX)
+                dst_ptr[x] = text_pixel;
+            else
+                dst_ptr[x] = blend_pixel(dst_ptr[x] >> 16, dst_ptr[x] >> 8, dst_ptr[x], text_pixel, src[x]);
+        }
+
+        src += src_width;
+        dst_ptr += dib->stride / 4;
+    }
 }
 
 static void blit_subpixel_888(struct dib_data *dib, int dib_width, const BYTE *src,
