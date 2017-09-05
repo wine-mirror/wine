@@ -1404,17 +1404,23 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 }
 
 
+struct alloc_virtual_heap
+{
+    void  *base;
+    size_t size;
+};
+
 /* callback for wine_mmap_enum_reserved_areas to allocate space for the virtual heap */
 static int alloc_virtual_heap( void *base, size_t size, void *arg )
 {
-    void **heap_base = arg;
+    struct alloc_virtual_heap *alloc = arg;
 
     if (is_beyond_limit( base, size, address_space_limit )) address_space_limit = (char *)base + size;
-    if (size < VIRTUAL_HEAP_SIZE) return 0;
+    if (size < alloc->size) return 0;
     if (is_win64 && base < (void *)0x80000000) return 0;
-    *heap_base = wine_anon_mmap( (char *)base + size - VIRTUAL_HEAP_SIZE,
-                                 VIRTUAL_HEAP_SIZE, PROT_READ|PROT_WRITE, MAP_FIXED );
-    return (*heap_base != (void *)-1);
+    alloc->base = wine_anon_mmap( (char *)base + size - alloc->size, alloc->size,
+                                  PROT_READ|PROT_WRITE, MAP_FIXED );
+    return (alloc->base != (void *)-1);
 }
 
 /***********************************************************************
@@ -1423,7 +1429,7 @@ static int alloc_virtual_heap( void *base, size_t size, void *arg )
 void virtual_init(void)
 {
     const char *preload;
-    void *heap_base;
+    struct alloc_virtual_heap alloc_heap;
     size_t size;
     struct file_view *heap_view;
 
@@ -1447,13 +1453,14 @@ void virtual_init(void)
     }
 
     /* try to find space in a reserved area for the virtual heap */
-    if (!wine_mmap_enum_reserved_areas( alloc_virtual_heap, &heap_base, 1 ))
-        heap_base = wine_anon_mmap( NULL, VIRTUAL_HEAP_SIZE, PROT_READ|PROT_WRITE, 0 );
+    alloc_heap.size = VIRTUAL_HEAP_SIZE;
+    if (!wine_mmap_enum_reserved_areas( alloc_virtual_heap, &alloc_heap, 1 ))
+        alloc_heap.base = wine_anon_mmap( NULL, alloc_heap.size, PROT_READ|PROT_WRITE, 0 );
 
-    assert( heap_base != (void *)-1 );
-    virtual_heap = RtlCreateHeap( HEAP_NO_SERIALIZE, heap_base, VIRTUAL_HEAP_SIZE,
+    assert( alloc_heap.base != (void *)-1 );
+    virtual_heap = RtlCreateHeap( HEAP_NO_SERIALIZE, alloc_heap.base, VIRTUAL_HEAP_SIZE,
                                   VIRTUAL_HEAP_SIZE, NULL, NULL );
-    create_view( &heap_view, heap_base, VIRTUAL_HEAP_SIZE, VPROT_COMMITTED | VPROT_READ | VPROT_WRITE );
+    create_view( &heap_view, alloc_heap.base, alloc_heap.size, VPROT_COMMITTED|VPROT_READ|VPROT_WRITE );
 
     /* make the DOS area accessible (except the low 64K) to hide bugs in broken apps like Excel 2003 */
     size = (char *)address_space_start - (char *)0x10000;
