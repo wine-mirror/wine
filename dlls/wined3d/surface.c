@@ -3716,6 +3716,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             TRACE("Not doing upload because of scaling.\n");
         else if (convert)
             TRACE("Not doing upload because of format conversion.\n");
+        else if (dst_texture->resource.format->convert)
+            TRACE("Not doing upload because the destination format needs conversion.\n");
         else
         {
             POINT dst_point = {dst_rect->left, dst_rect->top};
