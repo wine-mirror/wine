@@ -154,6 +154,29 @@ static BOOL force_exec_prot;  /* whether to force PROT_EXEC on all PROT_READ mma
 
 
 /***********************************************************************
+ *           get_page_vprot
+ *
+ * Return the page protection byte.
+ */
+static BYTE get_page_vprot( struct file_view *view, const void *addr )
+{
+    return view->prot[((const char *)addr - (const char *)view->base) >> page_shift];
+}
+
+
+/***********************************************************************
+ *           set_page_vprot
+ *
+ * Set a range of page protection bytes.
+ */
+static void set_page_vprot( struct file_view *view, const void *addr, size_t size, BYTE vprot )
+{
+    BYTE *ptr = view->prot + (((const char *)addr - (const char *)view->base) >> page_shift);
+    memset( ptr, vprot, ROUND_SIZE( addr, size ) >> page_shift );
+}
+
+
+/***********************************************************************
  *           VIRTUAL_GetProtStr
  */
 static const char *VIRTUAL_GetProtStr( BYTE prot )
@@ -197,7 +220,7 @@ static void VIRTUAL_DumpView( struct file_view *view )
 {
     UINT i, count;
     char *addr = view->base;
-    BYTE prot = view->prot[0];
+    BYTE prot = get_page_vprot( view, addr );
 
     TRACE( "View: %p - %p", addr, addr + view->size - 1 );
     if (view->protect & VPROT_SYSTEM)
@@ -211,11 +234,12 @@ static void VIRTUAL_DumpView( struct file_view *view )
 
     for (count = i = 1; i < view->size >> page_shift; i++, count++)
     {
-        if (view->prot[i] == prot) continue;
+        BYTE next = get_page_vprot( view, addr + (count << page_shift) );
+        if (next == prot) continue;
         TRACE( "      %p - %p %s\n",
                  addr, addr + (count << page_shift) - 1, VIRTUAL_GetProtStr(prot) );
         addr += (count << page_shift);
-        prot = view->prot[i];
+        prot = next;
         count = 0;
     }
     if (count)
@@ -529,7 +553,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     view->mapping = 0;
     view->map_protect = 0;
     view->protect = vprot;
-    memset( view->prot, vprot, size >> page_shift );
+    set_page_vprot( view, base, size, vprot );
 
     /* Insert it in the linked list */
 
@@ -683,7 +707,6 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
                              BYTE vprot )     /* [in] Protections to use */
 {
     int unix_prot = VIRTUAL_GetUnixProt(vprot);
-    BYTE *p = view->prot + (((char *)base - (char *)view->base) >> page_shift);
 
     TRACE("%p-%p %s\n",
           base, (char *)base + size - 1, VIRTUAL_GetProtStr( vprot ) );
@@ -694,6 +717,7 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
         UINT i, count;
         char *addr = base;
         int prot;
+        BYTE *p = view->prot + ((addr - (char *)view->base) >> page_shift);
 
         p[0] = vprot | (p[0] & VPROT_WRITEWATCH);
         unix_prot = VIRTUAL_GetUnixProt( p[0] );
@@ -718,7 +742,7 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
         (base >= NtCurrentTeb()->DeallocationStack) &&
         (base < NtCurrentTeb()->Tib.StackBase))
     {
-        memset( p, vprot, size >> page_shift );
+        set_page_vprot( view, base, size, vprot );
         mprotect( base, size, unix_prot );
         VIRTUAL_DEBUG_DUMP_VIEW( view );
         return TRUE;
@@ -727,7 +751,7 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
     if (mprotect_exec( base, size, unix_prot, view->protect )) /* FIXME: last error */
         return FALSE;
 
-    memset( p, vprot, size >> page_shift );
+    set_page_vprot( view, base, size, vprot );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
     return TRUE;
 }
@@ -996,7 +1020,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
     pread( fd, ptr, size, offset );
     if (prot != (PROT_READ|PROT_WRITE)) mprotect( ptr, size, prot );  /* Set the right protection */
 done:
-    memset( view->prot + (start >> page_shift), vprot, ROUND_SIZE(start,size) >> page_shift );
+    set_page_vprot( view, (char *)view->base + start, size, vprot );
     return STATUS_SUCCESS;
 }
 
@@ -1012,7 +1036,7 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, BYTE *vpro
     SIZE_T i, start;
 
     start = ((char *)base - (char *)view->base) >> page_shift;
-    *vprot = view->prot[start];
+    *vprot = get_page_vprot( view, base );
 
     if (view->mapping && !(view->protect & VPROT_COMMITTED))
     {
@@ -1035,7 +1059,7 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, BYTE *vpro
         return ret;
     }
     for (i = start + 1; i < view->size >> page_shift; i++)
-        if ((*vprot ^ view->prot[i]) & VPROT_COMMITTED) break;
+        if ((*vprot ^ get_page_vprot( view, (char *)view->base + (i << page_shift) )) & VPROT_COMMITTED) break;
     return (i - start) << page_shift;
 }
 
@@ -1495,7 +1519,7 @@ NTSTATUS virtual_create_builtin_view( void *module )
     if (status) return status;
 
     /* The PE header is always read-only, no write, no execute. */
-    view->prot[0] = VPROT_COMMITTED | VPROT_READ;
+    set_page_vprot( view, view->base, page_size, VPROT_COMMITTED | VPROT_READ );
 
     sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
@@ -1505,8 +1529,7 @@ NTSTATUS virtual_create_builtin_view( void *module )
         if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) flags |= VPROT_EXEC;
         if (sec[i].Characteristics & IMAGE_SCN_MEM_READ) flags |= VPROT_READ;
         if (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE) flags |= VPROT_WRITE;
-        memset (view->prot + (sec[i].VirtualAddress >> page_shift), flags,
-                ROUND_SIZE( sec[i].VirtualAddress, sec[i].Misc.VirtualSize ) >> page_shift );
+        set_page_vprot( view, (char *)view->base + sec[i].VirtualAddress, sec[i].Misc.VirtualSize, flags );
     }
 
     return status;
@@ -1642,14 +1665,14 @@ BOOL virtual_handle_stack_fault( void *addr )
     if ((view = VIRTUAL_FindView( addr, 0 )))
     {
         void *page = ROUND_ADDR( addr, page_mask );
-        BYTE vprot = view->prot[((const char *)page - (const char *)view->base) >> page_shift];
+        BYTE vprot = get_page_vprot( view, page );
         if (vprot & VPROT_GUARD)
         {
             VIRTUAL_SetProt( view, page, page_size, vprot & ~VPROT_GUARD );
             NtCurrentTeb()->Tib.StackLimit = page;
             if ((char *)page >= (char *)NtCurrentTeb()->DeallocationStack + 2*page_size)
             {
-                vprot = view->prot[((char *)page - page_size - (char *)view->base) >> page_shift];
+                vprot = get_page_vprot( view, (char *)page - page_size );
                 VIRTUAL_SetProt( view, (char *)page - page_size, page_size, vprot | VPROT_COMMITTED | VPROT_GUARD );
             }
             ret = TRUE;
@@ -1747,10 +1770,9 @@ SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T
     {
         if (!(view->protect & VPROT_SYSTEM))
         {
-            void *page = ROUND_ADDR( addr, page_mask );
-            BYTE *p = view->prot + (((const char *)page - (const char *)view->base) >> page_shift);
+            char *page = ROUND_ADDR( addr, page_mask );
 
-            while (bytes_read < size && (VIRTUAL_GetUnixProt( *p++ ) & PROT_READ))
+            while (bytes_read < size && (VIRTUAL_GetUnixProt( get_page_vprot( view, page )) & PROT_READ))
             {
                 SIZE_T block_size = min( size, page_size - ((UINT_PTR)addr & page_mask) );
                 memcpy( buffer, addr, block_size );
@@ -1758,6 +1780,7 @@ SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T
                 addr   = (const void *)((const char *)addr + block_size);
                 buffer = (void *)((char *)buffer + block_size);
                 bytes_read += block_size;
+                page += page_size;
             }
         }
     }
@@ -1844,12 +1867,12 @@ void VIRTUAL_SetForceExec( BOOL enable )
             UINT i, count;
             char *addr = view->base;
             BYTE commit = view->mapping ? VPROT_COMMITTED : 0;  /* file mappings are always accessible */
-            int unix_prot = VIRTUAL_GetUnixProt( view->prot[0] | commit );
+            int unix_prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr ) | commit );
 
             if (view->protect & VPROT_NOEXEC) continue;
             for (count = i = 1; i < view->size >> page_shift; i++, count++)
             {
-                int prot = VIRTUAL_GetUnixProt( view->prot[i] | commit );
+                int prot = VIRTUAL_GetUnixProt( get_page_vprot( view, addr + (count << page_shift) ) | commit );
                 if (prot == unix_prot) continue;
                 if ((unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
                 {
@@ -2457,18 +2480,18 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     else
     {
         BYTE vprot;
+        char *ptr;
         SIZE_T range_size = get_committed_size( view, base, &vprot );
 
         info->State = (vprot & VPROT_COMMITTED) ? MEM_COMMIT : MEM_RESERVE;
         info->Protect = (vprot & VPROT_COMMITTED) ? VIRTUAL_GetWin32Prot( vprot ) : 0;
-        info->AllocationBase = alloc_base;
         info->AllocationProtect = VIRTUAL_GetWin32Prot( view->protect );
         if (view->protect & VPROT_IMAGE) info->Type = MEM_IMAGE;
         else if (view->protect & VPROT_VALLOC) info->Type = MEM_PRIVATE;
         else info->Type = MEM_MAPPED;
-        for (size = base - alloc_base; size < base + range_size - alloc_base; size += page_size)
-            if ((view->prot[size >> page_shift] ^ vprot) & ~VPROT_WRITEWATCH) break;
-        info->RegionSize = size - (base - alloc_base);
+        for (ptr = base; ptr < base + range_size; ptr += page_size)
+            if ((get_page_vprot( view, ptr ) ^ vprot) & ~VPROT_WRITEWATCH) break;
+        info->RegionSize = ptr - base;
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
@@ -3003,8 +3026,7 @@ NTSTATUS WINAPI NtGetWriteWatch( HANDLE process, ULONG flags, PVOID base, SIZE_T
 
         while (pos < *count && addr < end)
         {
-            BYTE prot = view->prot[(addr - (char *)view->base) >> page_shift];
-            if (!(prot & VPROT_WRITEWATCH)) addresses[pos++] = addr;
+            if (!(get_page_vprot( view, addr ) & VPROT_WRITEWATCH)) addresses[pos++] = addr;
             addr += page_size;
         }
         if (flags & WRITE_WATCH_FLAG_RESET) reset_write_watches( view, base, addr - (char *)base );
