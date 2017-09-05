@@ -5092,7 +5092,7 @@ static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysi
 
     /* make sure buffer is large enough for requested texture type */
     required = (bounds->right - bounds->left) * (bounds->bottom - bounds->top);
-    if (type == DWRITE_TEXTURE_CLEARTYPE_3x1)
+    if (This->texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         required *= 3;
 
     if (size < required)
