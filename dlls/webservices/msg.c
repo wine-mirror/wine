@@ -64,6 +64,7 @@ struct msg
     WS_MESSAGE_INITIALIZATION           init;
     WS_MESSAGE_STATE                    state;
     GUID                                id;
+    GUID                                id_req;
     WS_ENVELOPE_VERSION                 version_env;
     WS_ADDRESSING_VERSION               version_addr;
     BOOL                                is_addressed;
@@ -126,6 +127,7 @@ static void reset_msg( struct msg *msg )
     msg->state         = WS_MESSAGE_STATE_EMPTY;
     msg->init          = 0;
     UuidCreate( &msg->id );
+    memset( &msg->id_req, 0, sizeof(msg->id_req) );
     msg->is_addressed  = FALSE;
     heap_free( msg->addr.chars );
     msg->addr.chars    = NULL;
@@ -779,10 +781,31 @@ static BOOL match_current_element( WS_XML_READER *reader, const WS_XML_STRING *l
     return WsXmlStringEquals( elem->localName, localname, NULL ) == S_OK;
 }
 
-static HRESULT read_envelope_start( WS_XML_READER *reader )
+static HRESULT read_message_id( WS_XML_READER *reader, GUID *ret )
+{
+    const WS_XML_NODE *node;
+    const WS_XML_TEXT_NODE *text;
+    const WS_XML_UNIQUE_ID_TEXT *id;
+    HRESULT hr;
+
+    if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
+    if ((hr = WsGetReaderNode( reader, &node, NULL )) != S_OK) return hr;
+    if (node->nodeType != WS_XML_NODE_TYPE_TEXT) return WS_E_INVALID_FORMAT;
+    text = (const WS_XML_TEXT_NODE *)node;
+    if (text->text->textType != WS_XML_TEXT_TYPE_UNIQUE_ID)
+    {
+        FIXME( "unhandled text type %u\n", text->text->textType );
+        return E_NOTIMPL;
+    }
+    id = (const WS_XML_UNIQUE_ID_TEXT *)text->text;
+    *ret = id->value;
+    return S_OK;
+}
+
+static HRESULT read_envelope_start( struct msg *msg, WS_XML_READER *reader )
 {
     static const WS_XML_STRING envelope = {8, (BYTE *)"Envelope"}, body = {4, (BYTE *)"Body"};
-    static const WS_XML_STRING header = {6, (BYTE *)"Header"};
+    static const WS_XML_STRING header = {6, (BYTE *)"Header"}, msgid = {9, (BYTE *)"MessageID"};
     HRESULT hr;
 
     if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
@@ -793,6 +816,8 @@ static HRESULT read_envelope_start( WS_XML_READER *reader )
         for (;;)
         {
             if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
+            if (match_current_element( reader, &msgid ) && (hr = read_message_id( reader, &msg->id_req )) != S_OK)
+                return hr;
             if (match_current_element( reader, &body )) break;
         }
     }
@@ -833,7 +858,7 @@ HRESULT WINAPI WsReadEnvelopeStart( WS_MESSAGE *handle, WS_XML_READER *reader, W
         return WS_E_INVALID_OPERATION;
     }
 
-    if ((hr = read_envelope_start( reader )) == S_OK &&
+    if ((hr = read_envelope_start( msg, reader )) == S_OK &&
         (hr = create_header_buffer( reader, msg->heap, &msg->buf )) == S_OK)
     {
         msg->reader_body = reader;
