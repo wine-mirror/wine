@@ -583,3 +583,21 @@ interface IMFPluginControl : IUnknown
    HRESULT GetDisabledByIndex(DWORD pluginType, DWORD index, CLSID *clsid);
    HRESULT SetDisabled(DWORD pluginType, REFCLSID clsid, BOOL disabled);
 }
+
+[
+    object,
+    uuid(36f846fc-2256-48b6-b58e-e2b638316581),
+    local
+]
+interface IMFMediaEventQueue : IUnknown
+{
+    HRESULT GetEvent([in] DWORD flags, [out] IMFMediaEvent **event);
+    HRESULT BeginGetEvent([in] IMFAsyncCallback *callback, [in] IUnknown *state);
+    HRESULT EndGetEvent([in] IMFAsyncResult *result, [out] IMFMediaEvent **event);
+    HRESULT QueueEvent([in] IMFMediaEvent *event);
+    HRESULT QueueEventParamVar([in] MediaEventType met, [in] REFGUID type,
+        [in] HRESULT status, [in, unique] const PROPVARIANT *value);
+    HRESULT QueueEventParamUnk([in] MediaEventType met, [in] REFGUID type,
+        [in] HRESULT status, [in, unique] IUnknown *unk);
+    HRESULT Shutdown();
+}
