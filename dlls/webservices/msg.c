@@ -794,7 +794,6 @@ static HRESULT read_envelope_start( WS_XML_READER *reader )
     {
         for (;;)
         {
-            /* FIXME: store headers */
             if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
             if (match_current_element( reader, &body )) break;
         }
@@ -836,7 +835,8 @@ HRESULT WINAPI WsReadEnvelopeStart( WS_MESSAGE *handle, WS_XML_READER *reader, W
         return WS_E_INVALID_OPERATION;
     }
 
-    if ((hr = read_envelope_start( reader )) == S_OK)
+    if ((hr = read_envelope_start( reader )) == S_OK &&
+        (hr = create_header_buffer( reader, msg->heap, &msg->buf )) == S_OK)
     {
         msg->reader_body = reader;
         msg->state       = WS_MESSAGE_STATE_READING;

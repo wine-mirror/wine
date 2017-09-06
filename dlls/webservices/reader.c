@@ -6931,6 +6931,8 @@ HRESULT WINAPI WsSetInputToBuffer( WS_XML_READER *handle, WS_XML_BUFFER *buffer,
 
     reader->input_enc     = xmlbuf->encoding;
     reader->input_charset = xmlbuf->charset;
+    reader->dict_static   = xmlbuf->dict_static;
+    reader->dict          = xmlbuf->dict;
     set_input_buffer( reader, xmlbuf, xmlbuf->bytes.bytes, xmlbuf->bytes.length );
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) hr = E_OUTOFMEMORY;
@@ -7264,6 +7266,33 @@ HRESULT WINAPI WsReadXmlBuffer( WS_XML_READER *handle, WS_HEAP *heap, WS_XML_BUF
 done:
     if (hr != S_OK) free_xmlbuf( (struct xmlbuf *)buffer );
     WsFreeWriter( writer );
+    LeaveCriticalSection( &reader->cs );
+    return hr;
+}
+
+HRESULT create_header_buffer( WS_XML_READER *handle, WS_HEAP *heap, WS_XML_BUFFER **ret )
+{
+    struct reader *reader = (struct reader *)handle;
+    HRESULT hr = WS_E_QUOTA_EXCEEDED;
+    struct xmlbuf *xmlbuf;
+
+    EnterCriticalSection( &reader->cs );
+
+    if (reader->magic != READER_MAGIC)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return E_INVALIDARG;
+    }
+
+    if ((xmlbuf = alloc_xmlbuf( heap, reader->read_pos, reader->input_enc, reader->input_charset,
+                                reader->dict_static, reader->dict )))
+    {
+        memcpy( xmlbuf->bytes.bytes, reader->read_bufptr, reader->read_pos );
+        xmlbuf->bytes.length = reader->read_pos;
+        *ret = (WS_XML_BUFFER *)xmlbuf;
+        hr = S_OK;
+    }
+
     LeaveCriticalSection( &reader->cs );
     return hr;
 }

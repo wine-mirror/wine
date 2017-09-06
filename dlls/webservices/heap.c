@@ -315,21 +315,25 @@ HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void 
 }
 
 #define XML_BUFFER_INITIAL_ALLOCATED_SIZE 256
-struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap, WS_XML_WRITER_ENCODING_TYPE encoding, WS_CHARSET charset )
+struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap, SIZE_T size, WS_XML_WRITER_ENCODING_TYPE encoding, WS_CHARSET charset,
+                             const WS_XML_DICTIONARY *dict_static, WS_XML_DICTIONARY *dict )
 {
     struct xmlbuf *ret;
 
+    if (!size) size = XML_BUFFER_INITIAL_ALLOCATED_SIZE;
     if (!(ret = ws_alloc( heap, sizeof(*ret) ))) return NULL;
-    if (!(ret->bytes.bytes = ws_alloc( heap, XML_BUFFER_INITIAL_ALLOCATED_SIZE )))
+    if (!(ret->bytes.bytes = ws_alloc( heap, size )))
     {
         ws_free( heap, ret, sizeof(*ret) );
         return NULL;
     }
     ret->heap         = heap;
-    ret->size         = XML_BUFFER_INITIAL_ALLOCATED_SIZE;
+    ret->size         = size;
     ret->bytes.length = 0;
     ret->encoding     = encoding;
     ret->charset      = charset;
+    ret->dict_static  = dict_static;
+    ret->dict         = dict;
     return ret;
 }
 
@@ -348,10 +352,13 @@ HRESULT WINAPI WsCreateXmlBuffer( WS_HEAP *heap, const WS_XML_BUFFER_PROPERTY *p
 {
     struct xmlbuf *xmlbuf;
 
+    TRACE( "%p %p %u %p %p\n", heap, properties, count, handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
     if (!heap || !handle) return E_INVALIDARG;
     if (count) FIXME( "properties not implemented\n" );
 
-    if (!(xmlbuf = alloc_xmlbuf( heap, WS_XML_WRITER_ENCODING_TYPE_TEXT, WS_CHARSET_UTF8 )))
+    if (!(xmlbuf = alloc_xmlbuf( heap, 0, WS_XML_WRITER_ENCODING_TYPE_TEXT, WS_CHARSET_UTF8, NULL, NULL )))
     {
         return WS_E_QUOTA_EXCEEDED;
     }

@@ -85,7 +85,7 @@ struct writer
     WS_XML_WRITER_OUTPUT_TYPE    output_type;
     struct xmlbuf               *output_buf;
     WS_HEAP                     *output_heap;
-    WS_XML_DICTIONARY           *dict;
+    const WS_XML_DICTIONARY     *dict;
     WS_DYNAMIC_STRING_CALLBACK   dict_cb;
     void                        *dict_cb_state;
     ULONG                        prop_count;
@@ -408,7 +408,8 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
     case WS_XML_WRITER_OUTPUT_TYPE_BUFFER:
     {
         struct xmlbuf *xmlbuf;
-        if (!(xmlbuf = alloc_xmlbuf( writer->output_heap, writer->output_enc, writer->output_charset )))
+        if (!(xmlbuf = alloc_xmlbuf( writer->output_heap, 0, writer->output_enc, writer->output_charset,
+                                     writer->dict, NULL )))
         {
             hr = WS_E_QUOTA_EXCEEDED;
             goto done;
