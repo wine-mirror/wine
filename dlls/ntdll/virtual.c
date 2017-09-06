@@ -1907,54 +1907,36 @@ SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T
  * permissions are checked before accessing each page, to ensure that no
  * exceptions can happen.
  */
-SIZE_T virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_T size )
+NTSTATUS virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_T size )
 {
     struct file_view *view;
     sigset_t sigset;
-    SIZE_T bytes_written = 0;
+    NTSTATUS ret = STATUS_ACCESS_VIOLATION;
 
-    if (!size) return 0;
+    if (!size) return STATUS_SUCCESS;
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    if ((view = VIRTUAL_FindView( addr, size )))
+    if ((view = VIRTUAL_FindView( addr, size )) && !(view->protect & VPROT_SYSTEM))
     {
-        if (!(view->protect & VPROT_SYSTEM))
+        char *page = ROUND_ADDR( addr, page_mask );
+        size_t i, total = ROUND_SIZE( addr, size );
+
+        for (i = 0; i < total; i += page_size)
         {
-            while (bytes_written < size)
-            {
-                void *page = ROUND_ADDR( addr, page_mask );
-                BYTE vprot = get_page_vprot( page );
-                SIZE_T block_size;
-
-                /* If the page is not writable then check for write watches
-                 * before giving up. This can be done without raising a real
-                 * exception. Similar to virtual_handle_fault. */
-                if (!(VIRTUAL_GetUnixProt( vprot ) & PROT_WRITE))
-                {
-                    if (!(view->protect & VPROT_WRITEWATCH))
-                        break;
-
-                    if (vprot & VPROT_WRITEWATCH)
-                    {
-                        set_page_vprot_bits( page, page_size, 0, VPROT_WRITEWATCH );
-                        mprotect_range( view, page, page_size, 0, 0 );
-                    }
-                    /* ignore fault if page is writable now */
-                    if (!(VIRTUAL_GetUnixProt( get_page_vprot( page )) & PROT_WRITE))
-                        break;
-                }
-
-                block_size = min( size, page_size - ((UINT_PTR)addr & page_mask) );
-                memcpy( addr, buffer, block_size );
-
-                addr   = (void *)((char *)addr + block_size);
-                buffer = (const void *)((const char *)buffer + block_size);
-                bytes_written += block_size;
-            }
+            int prot = VIRTUAL_GetUnixProt( get_page_vprot( page + i ) & ~VPROT_WRITEWATCH );
+            if (!(prot & PROT_WRITE)) goto done;
         }
+        if (view->protect & VPROT_WRITEWATCH)  /* enable write access by clearing write watches */
+        {
+            set_page_vprot_bits( addr, size, 0, VPROT_WRITEWATCH );
+            mprotect_range( view, addr, size, 0, 0 );
+        }
+        memcpy( addr, buffer, size );
+        ret = STATUS_SUCCESS;
     }
+done:
     server_leave_uninterrupted_section( &csVirtual, &sigset );
-    return bytes_written;
+    return ret;
 }
 
 

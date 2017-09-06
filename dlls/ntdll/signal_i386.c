@@ -1808,8 +1808,8 @@ static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
     if (thunk_len >= sizeof(thunk_copy.t1) && thunk_copy.t1.movl == 0x042444c7 &&
                                               thunk_copy.t1.jmp == 0xe9)
     {
-        if (virtual_uninterrupted_write_memory( (DWORD *)context->Esp + 1,
-            &thunk_copy.t1.this, sizeof(DWORD) ) == sizeof(DWORD))
+        if (!virtual_uninterrupted_write_memory( (DWORD *)context->Esp + 1,
+                                                 &thunk_copy.t1.this, sizeof(DWORD) ))
         {
             context->Eip = (DWORD_PTR)(&thunk->t1.func + 1) + thunk_copy.t1.func;
             TRACE( "emulating ATL thunk type 1 at %p, func=%08x arg=%08x\n",
@@ -1856,8 +1856,7 @@ static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
             stack, sizeof(stack) ) == sizeof(stack) &&
             virtual_uninterrupted_read_memory( (DWORD *)stack[1] + 1,
             &func, sizeof(DWORD) ) == sizeof(DWORD) &&
-            virtual_uninterrupted_write_memory( (DWORD *)context->Esp + 1,
-            &stack[0], sizeof(stack[0]) ) == sizeof(stack[0]))
+            !virtual_uninterrupted_write_memory( (DWORD *)context->Esp + 1, &stack[0], sizeof(stack[0]) ))
         {
             context->Ecx = stack[0];
             context->Eax = stack[1];
