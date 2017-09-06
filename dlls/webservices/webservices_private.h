@@ -48,7 +48,7 @@ struct dictionary dict_builtin DECLSPEC_HIDDEN;
 const struct dictionary dict_builtin_static DECLSPEC_HIDDEN;
 
 int find_string( const struct dictionary *, const unsigned char *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
-BOOL insert_string( struct dictionary *, unsigned char *, ULONG, int, ULONG * ) DECLSPEC_HIDDEN;
+HRESULT insert_string( struct dictionary *, unsigned char *, ULONG, int, ULONG * ) DECLSPEC_HIDDEN;
 HRESULT CALLBACK insert_string_cb( void *, const WS_XML_STRING *, BOOL *, ULONG *, WS_ERROR * ) DECLSPEC_HIDDEN;
 void clear_dict( struct dictionary * ) DECLSPEC_HIDDEN;
 

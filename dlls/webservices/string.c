@@ -87,37 +87,37 @@ int find_string( const struct dictionary *dict, const unsigned char *data, ULONG
 #define MIN_DICTIONARY_SIZE 256
 #define MAX_DICTIONARY_SIZE 2048
 
-static BOOL grow_dict( struct dictionary *dict, ULONG size )
+static HRESULT grow_dict( struct dictionary *dict, ULONG size )
 {
     WS_XML_STRING *tmp;
     ULONG new_size, *tmp_sorted;
 
     assert( !dict->dict.isConst );
-    if (dict->size >= dict->dict.stringCount + size) return TRUE;
-    if (dict->size + size > MAX_DICTIONARY_SIZE) return FALSE;
+    if (dict->size >= dict->dict.stringCount + size) return S_OK;
+    if (dict->size + size > MAX_DICTIONARY_SIZE) return WS_E_QUOTA_EXCEEDED;
 
     if (!dict->dict.strings)
     {
         new_size = max( MIN_DICTIONARY_SIZE, size );
-        if (!(dict->dict.strings = heap_alloc( new_size * sizeof(*dict->dict.strings) ))) return FALSE;
+        if (!(dict->dict.strings = heap_alloc( new_size * sizeof(*dict->dict.strings) ))) return E_OUTOFMEMORY;
         if (!(dict->sorted = heap_alloc( new_size * sizeof(*dict->sorted) )))
         {
             heap_free( dict->dict.strings );
             dict->dict.strings = NULL;
-            return FALSE;
+            return E_OUTOFMEMORY;
         }
         dict->size = new_size;
-        return TRUE;
+        return S_OK;
     }
 
     new_size = max( dict->size * 2, size );
-    if (!(tmp = heap_realloc( dict->dict.strings, new_size * sizeof(*tmp) ))) return FALSE;
+    if (!(tmp = heap_realloc( dict->dict.strings, new_size * sizeof(*tmp) ))) return E_OUTOFMEMORY;
     dict->dict.strings = tmp;
-    if (!(tmp_sorted = heap_realloc( dict->sorted, new_size * sizeof(*tmp_sorted) ))) return FALSE;
+    if (!(tmp_sorted = heap_realloc( dict->sorted, new_size * sizeof(*tmp_sorted) ))) return E_OUTOFMEMORY;
     dict->sorted = tmp_sorted;
 
     dict->size = new_size;
-    return TRUE;
+    return S_OK;
 }
 
 void clear_dict( struct dictionary *dict )
@@ -133,11 +133,13 @@ void clear_dict( struct dictionary *dict )
     dict->size = 0;
 }
 
-BOOL insert_string( struct dictionary *dict, unsigned char *data, ULONG len, int i, ULONG *ret_id )
+HRESULT insert_string( struct dictionary *dict, unsigned char *data, ULONG len, int i, ULONG *ret_id )
 {
     ULONG id = dict->dict.stringCount;
+    HRESULT hr;
+
     assert( !dict->dict.isConst );
-    if (!grow_dict( dict, 1 )) return FALSE;
+    if ((hr = grow_dict( dict, 1 )) != S_OK) return hr;
     memmove( &dict->sorted[i] + 1, &dict->sorted[i], (dict->dict.stringCount - i) * sizeof(*dict->sorted) );
     dict->sorted[i] = id;
 
@@ -147,22 +149,24 @@ BOOL insert_string( struct dictionary *dict, unsigned char *data, ULONG len, int
     dict->dict.strings[id].id         = id;
     dict->dict.stringCount++;
     if (ret_id) *ret_id = id;
-    return TRUE;
+    return S_OK;
 }
 
 HRESULT CALLBACK insert_string_cb( void *state, const WS_XML_STRING *str, BOOL *found, ULONG *id, WS_ERROR *error )
 {
     struct dictionary *dict = state;
     int index = find_string( dict, str->bytes, str->length, id );
+    HRESULT hr = S_OK;
 
     assert( !dict->dict.isConst );
-    if (index == -1 || insert_string( dict, str->bytes, str->length, index, id )) *found = TRUE;
+    if (index == -1 || (hr = insert_string( dict, str->bytes, str->length, index, id )) == S_OK) *found = TRUE;
     else *found = FALSE;
-    return S_OK;
+    return hr;
 }
 
 HRESULT add_xml_string( WS_XML_STRING *str )
 {
+    HRESULT hr = S_OK;
     int index;
     ULONG id;
 
@@ -172,17 +176,13 @@ HRESULT add_xml_string( WS_XML_STRING *str )
     {
         heap_free( str->bytes );
         *str = dict_builtin.dict.strings[id];
-        LeaveCriticalSection( &dict_cs );
-        return S_OK;
     }
-    if (insert_string( &dict_builtin, str->bytes, str->length, index, &id ))
+    else if ((hr = insert_string( &dict_builtin, str->bytes, str->length, index, &id )) == S_OK)
     {
         *str = dict_builtin.dict.strings[id];
-        LeaveCriticalSection( &dict_cs );
-        return S_OK;
     }
     LeaveCriticalSection( &dict_cs );
-    return WS_E_QUOTA_EXCEEDED;
+    return hr;
 }
 
 WS_XML_STRING *alloc_xml_string( const unsigned char *data, ULONG len )
@@ -214,6 +214,7 @@ WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src )
 {
     WS_XML_STRING *ret;
     unsigned char *data;
+    HRESULT hr;
     int index;
     ULONG id;
 
@@ -237,7 +238,7 @@ WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src )
         return NULL;
     }
     memcpy( data, src->bytes, src->length );
-    if (insert_string( &dict_builtin, data, src->length, index, &id ))
+    if ((hr = insert_string( &dict_builtin, data, src->length, index, &id )) == S_OK)
     {
         *ret = dict_builtin.dict.strings[id];
         LeaveCriticalSection( &dict_cs );

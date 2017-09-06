@@ -1497,10 +1497,10 @@ static HRESULT build_dict( const BYTE *buf, ULONG buflen, struct dictionary *dic
             ptr += size;
             continue;
         }
-        if (!insert_string( dict, bytes, size, index, NULL ))
+        if ((hr = insert_string( dict, bytes, size, index, NULL )) != S_OK)
         {
             clear_dict( dict );
-            return E_OUTOFMEMORY;
+            return hr;
         }
         ptr += size;
     }
