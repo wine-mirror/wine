@@ -148,6 +148,8 @@ HRESULT prop_set( const struct prop *, ULONG, ULONG, const void *, ULONG ) DECLS
 HRESULT prop_get( const struct prop *, ULONG, ULONG, void *, ULONG ) DECLSPEC_HIDDEN;
 
 HRESULT message_set_action( WS_MESSAGE *, const WS_XML_STRING * ) DECLSPEC_HIDDEN;
+HRESULT message_get_id( WS_MESSAGE *, GUID * ) DECLSPEC_HIDDEN;
+HRESULT message_set_request_id( WS_MESSAGE *, const GUID * ) DECLSPEC_HIDDEN;
 void message_set_send_context( WS_MESSAGE *, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT * ) DECLSPEC_HIDDEN;
 void message_set_receive_context( WS_MESSAGE *, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT * ) DECLSPEC_HIDDEN;
 void message_do_send_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
