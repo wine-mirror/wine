@@ -1665,26 +1665,12 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
 {
     struct channel *channel = (struct channel *)handle;
     HRESULT hr;
+    ULONG i;
 
     TRACE( "%p %p %p %u %08x %08x %p %p %u %p %p %p\n", handle, msg, desc, count, option, read_option, heap,
            value, size, index, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
-    if (index)
-    {
-        FIXME( "index parameter not supported\n" );
-        return E_NOTIMPL;
-    }
-    if (count != 1)
-    {
-        FIXME( "no support for multiple descriptions\n" );
-        return E_NOTIMPL;
-    }
-    if (option != WS_RECEIVE_REQUIRED_MESSAGE)
-    {
-        FIXME( "receive option %08x not supported\n", option );
-        return E_NOTIMPL;
-    }
 
     if (!channel || !msg || !desc || !count) return E_INVALIDARG;
 
@@ -1696,8 +1682,22 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
         return E_INVALIDARG;
     }
 
-    if ((hr = receive_message( channel )) != S_OK) goto done;
-    hr = read_message( msg, channel->reader, desc[0]->bodyElementDescription, read_option, heap, value, size );
+    if (!channel->read_size) hr = receive_message( channel );
+    else if (option == WS_RECEIVE_OPTIONAL_MESSAGE) hr = WS_S_END;
+    else hr = WS_E_INVALID_FORMAT;
+
+    if (hr != S_OK) goto done;
+
+    for (i = 0; i < count; i++)
+    {
+        if ((hr = read_message( msg, channel->reader, desc[i]->bodyElementDescription, read_option, heap,
+                                value, size )) == S_OK)
+        {
+            if (index) *index = i;
+            break;
+        }
+        if ((hr = init_reader( channel )) != S_OK) break;
+    }
 
 done:
     LeaveCriticalSection( &channel->cs );
