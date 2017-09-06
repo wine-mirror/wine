@@ -156,9 +156,9 @@ static WS_XML_ATTRIBUTE *dup_attribute( const WS_XML_ATTRIBUTE *src )
     dst->isXmlNs     = src->isXmlNs;
 
     if (!prefix) dst->prefix = NULL;
-    else if (!(dst->prefix = dup_xml_string( prefix ))) goto error;
-    if (!(dst->localName = dup_xml_string( localname ))) goto error;
-    if (!(dst->ns = dup_xml_string( ns ))) goto error;
+    else if (!(dst->prefix = dup_xml_string( prefix, FALSE ))) goto error;
+    if (!(dst->localName = dup_xml_string( localname, FALSE ))) goto error;
+    if (!(dst->ns = dup_xml_string( ns, FALSE ))) goto error;
 
     if (text)
     {
@@ -209,9 +209,9 @@ static struct node *dup_element_node( const WS_XML_ELEMENT_NODE *src )
     if (count && !(dst->attributes = dup_attributes( attrs, count ))) goto error;
     dst->attributeCount = count;
 
-    if (prefix && !(dst->prefix = dup_xml_string( prefix ))) goto error;
-    if (localname && !(dst->localName = dup_xml_string( localname ))) goto error;
-    if (ns && !(dst->ns = dup_xml_string( ns ))) goto error;
+    if (prefix && !(dst->prefix = dup_xml_string( prefix, FALSE ))) goto error;
+    if (localname && !(dst->localName = dup_xml_string( localname, FALSE ))) goto error;
+    if (ns && !(dst->ns = dup_xml_string( ns, FALSE ))) goto error;
     return node;
 
 error:
@@ -420,10 +420,10 @@ static HRESULT set_prefix( struct prefix *prefix, const WS_XML_STRING *str, cons
     if (str)
     {
         free_xml_string( prefix->str );
-        if (!(prefix->str = dup_xml_string( str ))) return E_OUTOFMEMORY;
+        if (!(prefix->str = dup_xml_string( str, FALSE ))) return E_OUTOFMEMORY;
     }
     if (prefix->ns) free_xml_string( prefix->ns );
-    if (!(prefix->ns = dup_xml_string( ns ))) return E_OUTOFMEMORY;
+    if (!(prefix->ns = dup_xml_string( ns, FALSE ))) return E_OUTOFMEMORY;
     return S_OK;
 }
 
@@ -1113,7 +1113,7 @@ static HRESULT parse_qname( const BYTE *str, ULONG len, WS_XML_STRING **prefix_r
 
     if ((hr = split_qname( str, len, &prefix, &localname )) != S_OK) return hr;
     if (!(*prefix_ret = alloc_xml_string( NULL, prefix.length ))) return E_OUTOFMEMORY;
-    if (!(*localname_ret = dup_xml_string( &localname )))
+    if (!(*localname_ret = dup_xml_string( &localname, FALSE )))
     {
         free_xml_string( *prefix_ret );
         return E_OUTOFMEMORY;
@@ -1821,7 +1821,7 @@ static HRESULT set_namespaces( struct reader *reader, WS_XML_ELEMENT_NODE *elem 
     ULONG i;
 
     if (!(ns = get_namespace( reader, elem->prefix ))) return WS_E_INVALID_FORMAT;
-    if (!(elem->ns = dup_xml_string( ns ))) return E_OUTOFMEMORY;
+    if (!(elem->ns = dup_xml_string( ns, FALSE ))) return E_OUTOFMEMORY;
 
     for (i = 0; i < elem->attributeCount; i++)
     {

@@ -210,7 +210,7 @@ void free_xml_string( WS_XML_STRING *str )
     heap_free( str );
 }
 
-WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src )
+WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src, BOOL use_static_dict )
 {
     WS_XML_STRING *ret;
     unsigned char *data;
@@ -222,6 +222,11 @@ WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src )
     if (src->dictionary)
     {
         *ret = *src;
+        return ret;
+    }
+    if (use_static_dict && (index = find_string( &dict_builtin_static, src->bytes, src->length, &id )) == -1)
+    {
+        *ret = dict_builtin_static.dict.strings[id];
         return ret;
     }
     EnterCriticalSection( &dict_cs );

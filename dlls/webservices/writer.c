@@ -86,6 +86,7 @@ struct writer
     struct xmlbuf               *output_buf;
     WS_HEAP                     *output_heap;
     const WS_XML_DICTIONARY     *dict;
+    BOOL                         dict_do_lookup;
     WS_DYNAMIC_STRING_CALLBACK   dict_cb;
     void                        *dict_cb_state;
     ULONG                        prop_count;
@@ -171,6 +172,7 @@ static HRESULT init_writer( struct writer *writer )
     writer->output_enc     = WS_XML_WRITER_ENCODING_TYPE_TEXT;
     writer->output_charset = WS_CHARSET_UTF8;
     writer->dict           = NULL;
+    writer->dict_do_lookup = FALSE;
     writer->dict_cb        = NULL;
     writer->dict_cb_state  = NULL;
     return S_OK;
@@ -1131,12 +1133,12 @@ static HRESULT add_namespace_attribute( struct writer *writer, const WS_XML_STRI
 
     attr->singleQuote = !!single;
     attr->isXmlNs = 1;
-    if (prefix && !(attr->prefix = dup_xml_string( prefix )))
+    if (prefix && !(attr->prefix = dup_xml_string( prefix, writer->dict_do_lookup )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
     }
-    if (!(attr->ns = dup_xml_string( ns )))
+    if (!(attr->ns = dup_xml_string( ns, writer->dict_do_lookup )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
@@ -1179,7 +1181,7 @@ static BOOL namespace_in_scope( const WS_XML_ELEMENT_NODE *elem, const WS_XML_ST
 static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING *ns )
 {
     WS_XML_STRING *str;
-    if (!(str = dup_xml_string( ns ))) return E_OUTOFMEMORY;
+    if (!(str = dup_xml_string( ns, writer->dict_do_lookup ))) return E_OUTOFMEMORY;
     free_xml_string( writer->current_ns );
     writer->current_ns = str;
     return S_OK;
@@ -1545,17 +1547,17 @@ static HRESULT write_add_attribute( struct writer *writer, const WS_XML_STRING *
     if (!prefix && ns->length) prefix = elem->prefix;
 
     attr->singleQuote = !!single;
-    if (prefix && !(attr->prefix = dup_xml_string( prefix )))
+    if (prefix && !(attr->prefix = dup_xml_string( prefix, writer->dict_do_lookup )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
     }
-    if (!(attr->localName = dup_xml_string( localname )))
+    if (!(attr->localName = dup_xml_string( localname, writer->dict_do_lookup )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
     }
-    if (!(attr->ns = dup_xml_string( ns )))
+    if (!(attr->ns = dup_xml_string( ns, writer->dict_do_lookup )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
@@ -1750,17 +1752,17 @@ static HRESULT write_add_element_node( struct writer *writer, const WS_XML_STRIN
     if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) return E_OUTOFMEMORY;
     elem = &node->hdr;
 
-    if (prefix && !(elem->prefix = dup_xml_string( prefix )))
+    if (prefix && !(elem->prefix = dup_xml_string( prefix, writer->dict_do_lookup )))
     {
         free_node( node );
         return E_OUTOFMEMORY;
     }
-    if (!(elem->localName = dup_xml_string( localname )))
+    if (!(elem->localName = dup_xml_string( localname, writer->dict_do_lookup )))
     {
         free_node( node );
         return E_OUTOFMEMORY;
     }
-    if (!(elem->ns = dup_xml_string( ns )))
+    if (!(elem->ns = dup_xml_string( ns, writer->dict_do_lookup )))
     {
         free_node( node );
         return E_OUTOFMEMORY;
@@ -4729,4 +4731,22 @@ HRESULT write_input_params( WS_XML_WRITER *handle, const WS_ELEMENT_DESCRIPTION 
 done:
     LeaveCriticalSection( &writer->cs );
     return hr;
+}
+
+HRESULT writer_enable_lookup( WS_XML_WRITER *handle )
+{
+    struct writer *writer = (struct writer *)handle;
+
+    EnterCriticalSection( &writer->cs );
+
+    if (writer->magic != WRITER_MAGIC)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return E_INVALIDARG;
+    }
+
+    writer->dict_do_lookup = TRUE;
+
+    LeaveCriticalSection( &writer->cs );
+    return S_OK;
 }

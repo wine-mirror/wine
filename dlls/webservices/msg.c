@@ -1833,7 +1833,7 @@ HRESULT message_set_action( WS_MESSAGE *handle, const WS_XML_STRING *action )
     else
     {
         WS_XML_STRING *str;
-        if (!(str = dup_xml_string( action ))) hr = E_OUTOFMEMORY;
+        if (!(str = dup_xml_string( action, FALSE ))) hr = E_OUTOFMEMORY;
         else
         {
             free_xml_string( msg->action );
