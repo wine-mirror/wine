@@ -1126,6 +1126,45 @@ done:
     return hr;
 }
 
+/**************************************************************************
+ *          WsSendReplyMessage		[webservices.@]
+ */
+HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESSAGE_DESCRIPTION *desc,
+                                   WS_WRITE_OPTION option, const void *body, ULONG size, WS_MESSAGE *request,
+                                   const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %p %08x %p %u %p %p %p\n", handle, msg, desc, option, body, size, request, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    if (!channel || !msg || !desc || !request) return E_INVALIDARG;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    if ((hr = WsInitializeMessage( msg, WS_REPLY_MESSAGE, NULL, NULL )) != S_OK) goto done;
+    if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) goto done;
+    if ((hr = message_set_action( msg, desc->action )) != S_OK) goto done;
+
+    if ((hr = init_writer( channel )) != S_OK) goto done;
+    if ((hr = write_message( msg, channel->writer, desc->bodyElementDescription, option, body, size )) != S_OK)
+        goto done;
+    hr = send_message( channel, msg );
+
+done:
+    LeaveCriticalSection( &channel->cs );
+    FIXME( "returning %08x\n", hr );
+    return hr;
+}
+
 static HRESULT resize_read_buffer( struct channel *channel, ULONG size )
 {
     if (!channel->read_buf)

@@ -144,7 +144,7 @@
 @ stub WsRevokeSecurityContext
 @ stub WsSendFaultMessageForError
 @ stdcall WsSendMessage(ptr ptr ptr long ptr long ptr ptr)
-@ stub WsSendReplyMessage
+@ stdcall WsSendReplyMessage(ptr ptr ptr long ptr long ptr ptr ptr)
 @ stdcall WsSetChannelProperty(ptr long ptr long ptr)
 @ stdcall WsSetErrorProperty(ptr long ptr long)
 @ stub WsSetFaultErrorDetail
