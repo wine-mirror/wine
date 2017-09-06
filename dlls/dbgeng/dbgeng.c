@@ -58,8 +58,8 @@ HRESULT WINAPI DebugExtensionInitialize(ULONG * pVersion, ULONG * pFlags)
 * Creating Debug Engine client object
 *
 * PARAMS
-*   InterfaceId   [I] Interface Id of debugger client
-*   pInterface    [O] Pointer to interface as requested via InterfaceId
+*   riid   [I] Interface Id of debugger client
+*   obj    [O] Pointer to interface as requested via riid
 *
 * RETURNS
 *   Success: S_OK
@@ -68,11 +68,21 @@ HRESULT WINAPI DebugExtensionInitialize(ULONG * pVersion, ULONG * pFlags)
 * BUGS
 *   Unimplemented
 */
-HRESULT WINAPI DebugCreate(REFIID InterfaceId, PVOID * pInterface)
+HRESULT WINAPI DebugCreate(REFIID riid, void **obj)
 {
-    FIXME("(%p,%p): stub\n", InterfaceId, pInterface);
+    FIXME("(%s, %p): stub\n", debugstr_guid(riid), obj);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    return E_NOTIMPL;
+}
+
+/************************************************************
+*                    DebugCreateEx   (DBGENG.@)
+*/
+HRESULT WINAPI DebugCreateEx(REFIID riid, DWORD flags, void **obj)
+{
+    FIXME("(%s, %#x, %p): stub\n", debugstr_guid(riid), flags, obj);
 
     return E_NOTIMPL;
 }
