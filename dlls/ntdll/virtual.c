@@ -143,8 +143,6 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
     do { if (TRACE_ON(virtual)) VIRTUAL_DumpView(view); } while (0)
 
-#define VIRTUAL_HEAP_SIZE (sizeof(void*)*1024*1024)
-
 #ifdef _WIN64  /* on 64-bit the page protection bytes use a 2-level table */
 static const size_t pages_vprot_shift = 20;
 static const size_t pages_vprot_mask = (1 << 20) - 1;
@@ -154,7 +152,8 @@ static BYTE **pages_vprot;
 static BYTE *pages_vprot;
 #endif
 
-static HANDLE virtual_heap;
+static struct file_view *view_block_start, *view_block_end, *next_free_view;
+static const size_t view_block_size = 0x100000;
 static void *preload_reserve_start;
 static void *preload_reserve_end;
 static BOOL use_locks;
@@ -587,6 +586,30 @@ static inline void unmap_area( void *addr, size_t size )
 
 
 /***********************************************************************
+ *           alloc_view
+ *
+ * Allocate a new view. The csVirtual section must be held by caller.
+ */
+static struct file_view *alloc_view(void)
+{
+    if (next_free_view)
+    {
+        struct file_view *ret = next_free_view;
+        next_free_view = *(struct file_view **)ret;
+        return ret;
+    }
+    if (view_block_start == view_block_end)
+    {
+        void *ptr = wine_anon_mmap( NULL, view_block_size, PROT_READ | PROT_WRITE, 0 );
+        if (ptr == (void *)-1) return NULL;
+        view_block_start = ptr;
+        view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
+    }
+    return view_block_start++;
+}
+
+
+/***********************************************************************
  *           delete_view
  *
  * Deletes a view. The csVirtual section must be held by caller.
@@ -596,7 +619,8 @@ static void delete_view( struct file_view *view ) /* [in] View */
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
     list_remove( &view->entry );
     if (view->mapping) close_handle( view->mapping );
-    RtlFreeHeap( virtual_heap, 0, view );
+    *(struct file_view **)view = next_free_view;
+    next_free_view = view;
 }
 
 
@@ -618,9 +642,9 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
 
     /* Create the view structure */
 
-    if (!(view = RtlAllocateHeap( virtual_heap, 0, sizeof(*view) )))
+    if (!(view = alloc_view()))
     {
-        FIXME( "out of memory in virtual heap for %p-%p\n", base, (char *)base + size );
+        FIXME( "out of memory for %p-%p\n", base, (char *)base + size );
         return STATUS_NO_MEMORY;
     }
 
@@ -1490,9 +1514,8 @@ static int alloc_virtual_heap( void *base, size_t size, void *arg )
 void virtual_init(void)
 {
     const char *preload;
-    struct alloc_virtual_heap alloc_heap;
+    struct alloc_virtual_heap alloc_views;
     size_t size;
-    struct file_view *heap_view;
 
 #if !defined(__i386__) && !defined(__x86_64__)
     page_size = sysconf( _SC_PAGESIZE );
@@ -1518,21 +1541,22 @@ void virtual_init(void)
         }
     }
 
-    /* try to find space in a reserved area for the virtual heap and pages protection table */
+    /* try to find space in a reserved area for the views and pages protection table */
 #ifdef _WIN64
     pages_vprot_size = ((size_t)address_space_limit >> page_shift >> pages_vprot_shift) + 1;
-    alloc_heap.size = VIRTUAL_HEAP_SIZE + pages_vprot_size * sizeof(*pages_vprot);
+    alloc_views.size = view_block_size + pages_vprot_size * sizeof(*pages_vprot);
 #else
-    alloc_heap.size = VIRTUAL_HEAP_SIZE + (1U << (32 - page_shift));
+    alloc_views.size = view_block_size + (1U << (32 - page_shift));
 #endif
-    if (!wine_mmap_enum_reserved_areas( alloc_virtual_heap, &alloc_heap, 1 ))
-        alloc_heap.base = wine_anon_mmap( NULL, alloc_heap.size, PROT_READ|PROT_WRITE, 0 );
+    if (wine_mmap_enum_reserved_areas( alloc_virtual_heap, &alloc_views, 1 ))
+        wine_mmap_remove_reserved_area( alloc_views.base, alloc_views.size, 0 );
+    else
+        alloc_views.base = wine_anon_mmap( NULL, alloc_views.size, PROT_READ | PROT_WRITE, 0 );
 
-    assert( alloc_heap.base != (void *)-1 );
-    pages_vprot = (void *)((char *)alloc_heap.base + VIRTUAL_HEAP_SIZE);
-    virtual_heap = RtlCreateHeap( HEAP_NO_SERIALIZE, alloc_heap.base, VIRTUAL_HEAP_SIZE,
-                                  VIRTUAL_HEAP_SIZE, NULL, NULL );
-    create_view( &heap_view, alloc_heap.base, alloc_heap.size, VPROT_COMMITTED|VPROT_READ|VPROT_WRITE );
+    assert( alloc_views.base != (void *)-1 );
+    view_block_start = alloc_views.base;
+    view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
+    pages_vprot = (void *)((char *)alloc_views.base + view_block_size);
 
     /* make the DOS area accessible (except the low 64K) to hide bugs in broken apps like Excel 2003 */
     size = (char *)address_space_start - (char *)0x10000;
