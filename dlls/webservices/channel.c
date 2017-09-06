@@ -1055,6 +1055,22 @@ HRESULT channel_send_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
     return hr;
 }
 
+static HRESULT CALLBACK dict_cb( void *state, const WS_XML_STRING *str, BOOL *found, ULONG *id, WS_ERROR *error )
+{
+    struct dictionary *dict = state;
+    HRESULT hr = S_OK;
+    int index;
+
+    if ((index = find_string( dict, str->bytes, str->length, id )) == -1 ||
+        (hr = insert_string( dict, str->bytes, str->length, index, id )) == S_OK)
+    {
+        *found = TRUE;
+        return S_OK;
+    }
+    *found = FALSE;
+    return hr;
+}
+
 static HRESULT init_writer( struct channel *channel )
 {
     WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
@@ -1073,8 +1089,13 @@ static HRESULT init_writer( struct channel *channel )
         break;
 
     case WS_ENCODING_XML_BINARY_SESSION_1:
-        bin.staticDictionary = (WS_XML_DICTIONARY *)&dict_builtin_static.dict;
-        /* fall through */
+        if ((hr = writer_enable_lookup( channel->writer )) != S_OK) return hr;
+        clear_dict( &channel->dict );
+        bin.staticDictionary           = (WS_XML_DICTIONARY *)&dict_builtin_static.dict;
+        bin.dynamicStringCallback      = dict_cb;
+        bin.dynamicStringCallbackState = &channel->dict;
+        encoding = &bin.encoding;
+        break;
 
     case WS_ENCODING_XML_BINARY_1:
         encoding = &bin.encoding;
