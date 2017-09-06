@@ -68,7 +68,7 @@ struct msg
     WS_ADDRESSING_VERSION               version_addr;
     BOOL                                is_addressed;
     WS_STRING                           addr;
-    WS_STRING                           action;
+    WS_XML_STRING                      *action;
     WS_HEAP                            *heap;
     WS_XML_BUFFER                      *buf;
     WS_XML_WRITER                      *writer;
@@ -131,9 +131,8 @@ static void reset_msg( struct msg *msg )
     msg->addr.chars    = NULL;
     msg->addr.length   = 0;
 
-    heap_free( msg->action.chars );
-    msg->action.chars  = NULL;
-    msg->action.length = 0;
+    free_xml_string( msg->action );
+    msg->action = NULL;
 
     WsResetHeap( msg->heap, NULL );
     msg->buf           = NULL; /* allocated on msg->heap */
@@ -546,13 +545,12 @@ static HRESULT write_headers( struct msg *msg, WS_XML_WRITER *writer, const WS_X
     if ((hr = WsWriteXmlnsAttribute( writer, prefix_addr, ns_addr, FALSE, NULL )) != S_OK) return hr;
     if ((hr = WsWriteStartElement( writer, prefix_env, &header, ns_env, NULL )) != S_OK) return hr;
 
-    if (msg->action.length)
+    if (msg->action)
     {
-        WS_XML_UTF16_TEXT utf16 = {{WS_XML_TEXT_TYPE_UTF16}, (BYTE *)msg->action.chars,
-                                   msg->action.length * sizeof(WCHAR)};
+        WS_XML_UTF8_TEXT utf8 = {{WS_XML_TEXT_TYPE_UTF8}, {msg->action->length, msg->action->bytes}};
         if ((hr = WsWriteStartElement( writer, prefix_addr, action, ns_addr, NULL )) != S_OK) return hr;
         if ((hr = write_must_understand( writer, prefix_env, ns_env )) != S_OK) return hr;
-        if ((hr = WsWriteText( writer, &utf16.text, NULL )) != S_OK) return hr;
+        if ((hr = WsWriteText( writer, &utf8.text, NULL )) != S_OK) return hr;
         if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:Action> */
     }
     if (msg->addr.length)
@@ -600,7 +598,7 @@ static HRESULT write_headers_transport( struct msg *msg, WS_XML_WRITER *writer, 
     HRESULT hr = S_OK;
     ULONG i;
 
-    if ((msg->header_count || !msg->action.length) &&
+    if ((msg->header_count || !msg->action) &&
         (hr = WsWriteStartElement( writer, prefix, &header, ns, NULL )) != S_OK) return hr;
 
     for (i = 0; i < msg->header_count; i++)
@@ -609,7 +607,7 @@ static HRESULT write_headers_transport( struct msg *msg, WS_XML_WRITER *writer, 
         if ((hr = WsWriteXmlBuffer( writer, msg->header[i]->u.buf, NULL )) != S_OK) return hr;
     }
 
-    if (msg->header_count || !msg->action.length) hr = WsWriteEndElement( writer, NULL ); /* </s:Header> */
+    if (msg->header_count || !msg->action) hr = WsWriteEndElement( writer, NULL ); /* </s:Header> */
     return hr;
 }
 
@@ -1681,12 +1679,13 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     {
         static const WCHAR soapactionW[] = {'S','O','A','P','A','c','t','i','o','n',':',' ',0};
 
-        if (!(len = msg->action.length)) break;
+        if (!(len = MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, NULL, 0 )))
+            break;
 
         hr = E_OUTOFMEMORY;
         if (!(buf = heap_alloc( (len + 3) * sizeof(WCHAR) ))) goto done;
         buf[0] = '"';
-        memcpy( buf + 1, msg->action.chars, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, buf + 1, len );
         buf[len + 1] = '"';
         buf[len + 2] = 0;
 
@@ -1702,12 +1701,13 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
         static const WCHAR actionW[] = {'a','c','t','i','o','n','=','"'};
         ULONG len_action = sizeof(actionW)/sizeof(actionW[0]);
 
-        if (!(len = msg->action.length)) break;
+        if (!(len = MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, NULL, 0 )))
+            break;
 
         hr = E_OUTOFMEMORY;
         if (!(buf = heap_alloc( (len + len_action + 2) * sizeof(WCHAR) ))) goto done;
         memcpy( buf, actionW, len_action * sizeof(WCHAR) );
-        memcpy( buf + len_action, msg->action.chars, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, buf + len_action, len );
         len += len_action;
         buf[len++] = '"';
         buf[len] = 0;
@@ -1827,21 +1827,17 @@ HRESULT message_set_action( WS_MESSAGE *handle, const WS_XML_STRING *action )
 
     if (!action || !action->length)
     {
-        heap_free( msg->action.chars );
-        msg->action.chars  = NULL;
-        msg->action.length = 0;
+        free_xml_string( msg->action );
+        msg->action = NULL;
     }
     else
     {
-        WCHAR *chars;
-        int len = MultiByteToWideChar( CP_UTF8, 0, (char *)action->bytes, action->length, NULL, 0 );
-        if (!(chars = heap_alloc( len * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
+        WS_XML_STRING *str;
+        if (!(str = dup_xml_string( action ))) hr = E_OUTOFMEMORY;
         else
         {
-            MultiByteToWideChar( CP_UTF8, 0, (char *)action->bytes, action->length, chars, len );
-            heap_free( msg->action.chars );
-            msg->action.chars  = chars;
-            msg->action.length = len;
+            free_xml_string( msg->action );
+            msg->action = str;
         }
     }
 
