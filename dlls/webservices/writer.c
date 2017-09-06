@@ -653,7 +653,7 @@ static HRESULT write_dict_string( struct writer *writer, ULONG id )
     return S_OK;
 }
 
-static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text )
+static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text, BOOL use_dict )
 {
     if (!text) return RECORD_CHARS8_TEXT;
     switch (text->textType)
@@ -661,6 +661,7 @@ static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text )
     case WS_XML_TEXT_TYPE_UTF8:
     {
         const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        if (use_dict) return RECORD_DICTIONARY_TEXT;
         if (text_utf8->value.length <= MAX_UINT8) return RECORD_CHARS8_TEXT;
         if (text_utf8->value.length <= MAX_UINT16) return RECORD_CHARS16_TEXT;
         return RECORD_CHARS32_TEXT;
@@ -765,10 +766,36 @@ static INT64 get_text_value_int( const WS_XML_TEXT *text )
     }
 }
 
+static BOOL get_string_id( struct writer *writer, const WS_XML_STRING *str, ULONG *id )
+{
+    if (writer->dict && str->dictionary == writer->dict)
+    {
+        *id = str->id << 1;
+        return TRUE;
+    }
+    if (writer->dict_cb)
+    {
+        BOOL found = FALSE;
+        writer->dict_cb( writer->dict_cb_state, str, &found, id, NULL );
+        if (found) *id = (*id << 1) | 1;
+        return found;
+    }
+    return FALSE;
+}
+
 static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TEXT *text )
 {
-    enum record_type type = get_attr_text_record_type( text );
+    enum record_type type;
+    BOOL use_dict = FALSE;
     HRESULT hr;
+    ULONG id;
+
+    if (text && text->textType == WS_XML_TEXT_TYPE_UTF8)
+    {
+        const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
+        use_dict = get_string_id( writer, &utf8->value, &id );
+    }
+    type = get_attr_text_record_type( text, use_dict );
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
     write_char( writer, type );
@@ -896,23 +923,6 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
     }
 }
 
-static BOOL lookup_string_id( struct writer *writer, const WS_XML_STRING *str, ULONG *id )
-{
-    if (writer->dict && str->dictionary == writer->dict)
-    {
-        *id = str->id << 1;
-        return TRUE;
-    }
-    if (writer->dict_cb)
-    {
-        BOOL found = FALSE;
-        writer->dict_cb( writer->dict_cb_state, str, &found, id, NULL );
-        if (found) *id = (*id << 1) | 1;
-        return found;
-    }
-    return FALSE;
-}
-
 static enum record_type get_attr_record_type( const WS_XML_ATTRIBUTE *attr, BOOL use_dict )
 {
     if (!attr->prefix || !attr->prefix->length)
@@ -932,7 +942,7 @@ static enum record_type get_attr_record_type( const WS_XML_ATTRIBUTE *attr, BOOL
 static HRESULT write_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUTE *attr )
 {
     ULONG id;
-    enum record_type type = get_attr_record_type( attr, lookup_string_id(writer, attr->localName, &id) );
+    enum record_type type = get_attr_record_type( attr, get_string_id(writer, attr->localName, &id) );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
@@ -1080,7 +1090,7 @@ static enum record_type get_xmlns_record_type( const WS_XML_ATTRIBUTE *attr, BOO
 static HRESULT write_namespace_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUTE *attr )
 {
     ULONG id;
-    enum record_type type = get_xmlns_record_type( attr, lookup_string_id(writer, attr->ns, &id) );
+    enum record_type type = get_xmlns_record_type( attr, get_string_id(writer, attr->ns, &id) );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
@@ -1299,7 +1309,7 @@ static HRESULT write_startelement_bin( struct writer *writer )
 {
     const WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
     ULONG id;
-    enum record_type type = get_elem_record_type( elem, lookup_string_id(writer, elem->localName, &id) );
+    enum record_type type = get_elem_record_type( elem, get_string_id(writer, elem->localName, &id) );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
@@ -2454,13 +2464,14 @@ static HRESULT write_text_text( struct writer *writer, const WS_XML_TEXT *text, 
     return WS_E_INVALID_FORMAT;
 }
 
-static enum record_type get_text_record_type( const WS_XML_TEXT *text )
+static enum record_type get_text_record_type( const WS_XML_TEXT *text, BOOL use_dict )
 {
     switch (text->textType)
     {
     case WS_XML_TEXT_TYPE_UTF8:
     {
         const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        if (use_dict) return RECORD_DICTIONARY_TEXT_WITH_ENDELEMENT;
         if (text_utf8->value.length <= MAX_UINT8) return RECORD_CHARS8_TEXT_WITH_ENDELEMENT;
         if (text_utf8->value.length <= MAX_UINT16) return RECORD_CHARS16_TEXT_WITH_ENDELEMENT;
         return RECORD_CHARS32_TEXT_WITH_ENDELEMENT;
@@ -2537,8 +2548,10 @@ static enum record_type get_text_record_type( const WS_XML_TEXT *text )
 
 static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, ULONG offset )
 {
-    enum record_type type = get_text_record_type( text );
+    enum record_type type;
+    BOOL use_dict = FALSE;
     HRESULT hr;
+    ULONG id;
 
     if (offset)
     {
@@ -2546,7 +2559,13 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         return E_NOTIMPL;
     }
 
-    switch (type)
+    if (text->textType == WS_XML_TEXT_TYPE_UTF8)
+    {
+        const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
+        use_dict = get_string_id( writer, &utf8->value, &id );
+    }
+
+    switch ((type = get_text_record_type( text, use_dict )))
     {
     case RECORD_CHARS8_TEXT_WITH_ENDELEMENT:
     {
@@ -2698,6 +2717,12 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         write_char( writer, type );
         write_bytes( writer, (const BYTE *)&val, sizeof(val) );
         return S_OK;
+    }
+    case RECORD_DICTIONARY_TEXT_WITH_ENDELEMENT:
+    {
+        if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+        write_char( writer, type );
+        return write_dict_string( writer, id );
     }
     default:
         FIXME( "unhandled record type %02x\n", type );
