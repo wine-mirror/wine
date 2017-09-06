@@ -42,7 +42,7 @@
 @ stdcall MFCreateAttributes(ptr long)
 @ stub MFCreateAudioMediaType
 @ stub MFCreateCollection
-@ stub MFCreateEventQueue
+@ stdcall MFCreateEventQueue(ptr)
 @ stub MFCreateFile
 @ stub MFCreateLegacyMediaBufferOnMFMediaBuffer
 @ stub MFCreateMFByteStreamOnStream

@@ -65,6 +65,7 @@ typedef unsigned __int64 MFWORKITEM_KEY;
 
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size);
+HRESULT WINAPI MFCreateEventQueue(IMFMediaEventQueue **queue);
 HRESULT WINAPI MFCreateMediaType(IMFMediaType **type);
 HRESULT WINAPI MFGetTimerPeriodicity(DWORD *periodicity);
 HRESULT WINAPI MFTEnum(GUID category, UINT32 flags, MFT_REGISTER_TYPE_INFO *input_type,

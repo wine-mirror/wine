@@ -1513,3 +1513,16 @@ HRESULT WINAPI MFCreateMediaType(IMFMediaType **type)
     *type = &object->IMFMediaType_iface;
     return S_OK;
 }
+
+/***********************************************************************
+ *      MFCreateEventQueue (mfplat.@)
+ */
+HRESULT WINAPI MFCreateEventQueue(IMFMediaEventQueue **queue)
+{
+    FIXME("%p\n", queue);
+
+    if(queue)
+        *queue = NULL;
+
+    return E_FAIL;
+}
