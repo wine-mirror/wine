@@ -4223,6 +4223,48 @@ static void test_import_31(void)
     ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", err);
 }
 
+static void test_export(void)
+{
+    LONG err;
+    DWORD r;
+
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
+
+    run_reg_exe("reg export", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg export /?", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+
+    run_reg_exe("reg export \\remote-pc\\HKLM\\Wine file.reg", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg export HKEY_DYN_DATA file.reg", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg export HKDD file.reg", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE, &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg export file.reg", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg export file.reg HKEY_CURRENT_USER\\" KEY_BASE, &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE, &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg file2.reg", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+}
+
 START_TEST(reg)
 {
     DWORD r;
@@ -4240,4 +4282,5 @@ START_TEST(reg)
     test_import_with_whitespace();
     test_unicode_import_with_whitespace();
     test_import_31();
+    test_export();
 }
