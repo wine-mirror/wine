@@ -164,6 +164,54 @@ interface IMFSourceResolver : IUnknown
     [local] HRESULT CanceObjectCreation([in] IUnknown *cancel_cookie);
 }
 
+[
+    object,
+    uuid(e93dcf6c-4b07-4e1e-8123-aa16ed6eadf5)
+]
+interface IMFMediaTypeHandler : IUnknown
+{
+    [local]
+    HRESULT IsMediaTypeSupported([in] IMFMediaType *in_type, [out] IMFMediaType **out_type);
+
+    [call_as(IsMediaTypeSupported)]
+    HRESULT RemoteIsMediaTypeSupported([in, size_is(size)] BYTE *data, [in] DWORD size,
+        [out, size_is(, *match_count)] BYTE **match, [out] DWORD *match_count);
+
+    HRESULT GetMediaTypeCount([out] DWORD *count);
+
+    [local]
+    HRESULT GetMediaTypeByIndex([in] DWORD index, [out] IMFMediaType **type);
+
+    [call_as(GetMediaTypeByIndex)]
+    HRESULT RemoteGetMediaTypeByIndex([in] DWORD index, [out, size_is(, *count)] BYTE **data,
+        [out] DWORD *count);
+
+    [local]
+    HRESULT SetCurrentMediaType([in] IMFMediaType *type);
+
+    [call_as(SetCurrentMediaType)]
+    HRESULT RemoteSetCurrentMediaType([in, size_is(count)] BYTE *data, [in] DWORD count);
+
+    [local]
+    HRESULT GetCurrentMediaType([out] IMFMediaType **type);
+
+    [call_as(GetCurrentMediaType)]
+    HRESULT RemoteGetCurrentMediaType([out, size_is(, *count)] BYTE **data, [out] DWORD *count);
+
+    HRESULT GetMajorType([out] GUID *type);
+}
+
+[
+    object,
+    uuid(56c03d9c-9dbb-45f5-ab4b-d80f47c05938)
+]
+interface IMFStreamDescriptor : IMFAttributes
+{
+    HRESULT GetStreamIdentifier([out] DWORD *identifier);
+
+    HRESULT GetMediaTypeHandler([out] IMFMediaTypeHandler **handler);
+}
+
 cpp_quote("HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **session);")
 cpp_quote("HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver);")
 cpp_quote("HRESULT WINAPI MFCreateTopology(IMFTopology **topology);")
