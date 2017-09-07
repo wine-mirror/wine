@@ -7162,6 +7162,130 @@ static void test_effect_unsupported_shader(void)
     DestroyWindow(window);
 }
 
+#if 0
+vertexshader vs_arr[2];
+
+int i;
+
+technique tech0
+{
+    pass p0
+    {
+        VertexShader = null;
+    }
+}
+technique tech1
+{
+    pass p0
+    {
+        VertexShader = vs_arr[i];
+    }
+}
+#endif
+static const DWORD test_effect_null_shader_blob[] =
+{
+    0xfeff0901, 0x000000b4, 0x00000000, 0x00000010, 0x00000004, 0x00000020, 0x00000000, 0x00000002,
+    0x00000001, 0x00000002, 0x00000007, 0x615f7376, 0x00007272, 0x00000002, 0x00000000, 0x0000004c,
+    0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000002, 0x00000069, 0x00000000,
+    0x00000002, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000003,
+    0x00003070, 0x00000006, 0x68636574, 0x00000030, 0x00000003, 0x00000010, 0x00000004, 0x00000000,
+    0x00000000, 0x00000000, 0x00000003, 0x00003070, 0x00000006, 0x68636574, 0x00000031, 0x00000002,
+    0x00000002, 0x00000005, 0x00000004, 0x00000004, 0x00000018, 0x00000000, 0x00000000, 0x0000002c,
+    0x00000048, 0x00000000, 0x00000000, 0x0000007c, 0x00000000, 0x00000001, 0x00000074, 0x00000000,
+    0x00000001, 0x00000092, 0x00000000, 0x00000058, 0x00000054, 0x000000a8, 0x00000000, 0x00000001,
+    0x000000a0, 0x00000000, 0x00000001, 0x00000092, 0x00000000, 0x0000008c, 0x00000088, 0x00000002,
+    0x00000001, 0x00000001, 0x00000000, 0x00000002, 0x00000000, 0x00000001, 0x00000000, 0xffffffff,
+    0x00000000, 0x00000002, 0x000000e4, 0x00000008, 0x615f7376, 0x00007272, 0x46580200, 0x0023fffe,
+    0x42415443, 0x0000001c, 0x00000057, 0x46580200, 0x00000001, 0x0000001c, 0x00000100, 0x00000054,
+    0x00000030, 0x00000002, 0x00000001, 0x00000034, 0x00000044, 0xabab0069, 0x00020000, 0x00010001,
+    0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x4d007874, 0x6f726369,
+    0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072,
+    0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe, 0x54494c43, 0x00000000, 0x000cfffe, 0x434c5846,
+    0x00000001, 0x10000001, 0x00000001, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000004,
+    0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+};
+
+static void test_effect_null_shader(void)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device;
+    ID3DXEffect *effect;
+    D3DXPASS_DESC desc;
+    IDirect3D9 *d3d;
+    D3DXHANDLE pass;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    /* Creating a fresh device because the existing device can have invalid
+     * render states from previous tests. If IDirect3DDevice9_ValidateDevice()
+     * returns certain error codes, native ValidateTechnique() fails. */
+    if (!(window = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
+    {
+        skip("Failed to create window.\n");
+        return;
+    }
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object.\n");
+        DestroyWindow(window);
+        return;
+    }
+    present_parameters.Windowed = TRUE;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object, hr %#x.\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = D3DXCreateEffectEx(device, test_effect_null_shader_blob,
+            sizeof(test_effect_null_shader_blob), NULL, NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Failed to create effect, hr %#x.\n", hr);
+
+    pass = effect->lpVtbl->GetPass(effect, "tech0", 0);
+    ok(!!pass, "GetPass() failed.\n");
+    hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    todo_wine
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!desc.pVertexShaderFunction, "Got non NULL vertex function.\n");
+
+    pass = effect->lpVtbl->GetPass(effect, "tech1", 0);
+    ok(!!pass, "GetPass() failed.\n");
+    hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!desc.pVertexShaderFunction, "Got non NULL vertex function.\n");
+
+    hr = effect->lpVtbl->ValidateTechnique(effect, "tech0");
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    effect->lpVtbl->SetInt(effect, "i", 0);
+    ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
+    hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    effect->lpVtbl->SetInt(effect, "i", 1);
+    ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
+    hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    effect->lpVtbl->SetInt(effect, "i", 2);
+    ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
+    hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
+    todo_wine
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -7169,7 +7293,7 @@ START_TEST(effect)
     IDirect3DDevice9 *device;
     D3DPRESENT_PARAMETERS d3dpp;
     HRESULT hr;
-    ULONG count;
+    ULONG refcount;
 
     if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
             640, 480, NULL, NULL, NULL, NULL)))
@@ -7214,13 +7338,13 @@ START_TEST(effect)
     test_effect_large_address_aware_flag(device);
     test_effect_get_pass_desc(device);
     test_effect_skip_constants(device);
-    test_effect_unsupported_shader();
 
-    count = IDirect3DDevice9_Release(device);
-    ok(count == 0, "The device was not properly freed: refcount %u\n", count);
-
-    count = IDirect3D9_Release(d3d);
-    ok(count == 0, "Release failed %u\n", count);
-
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDirect3D9_Release(d3d);
+    ok(!refcount, "D3D9 object has %u references left.\n", refcount);
     DestroyWindow(wnd);
+
+    test_effect_unsupported_shader();
+    test_effect_null_shader();
 }
