@@ -319,11 +319,6 @@ MAKE_FUNCPTR(png_get_tRNS);
 MAKE_FUNCPTR(png_set_bgr);
 MAKE_FUNCPTR(png_set_crc_action);
 MAKE_FUNCPTR(png_set_error_fn);
-#ifdef HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8
-MAKE_FUNCPTR(png_set_expand_gray_1_2_4_to_8);
-#else
-MAKE_FUNCPTR(png_set_gray_1_2_4_to_8);
-#endif
 MAKE_FUNCPTR(png_set_filler);
 MAKE_FUNCPTR(png_set_filter);
 MAKE_FUNCPTR(png_set_gray_to_rgb);
@@ -388,11 +383,6 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_set_bgr);
         LOAD_FUNCPTR(png_set_crc_action);
         LOAD_FUNCPTR(png_set_error_fn);
-#ifdef HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8
-        LOAD_FUNCPTR(png_set_expand_gray_1_2_4_to_8);
-#else
-        LOAD_FUNCPTR(png_set_gray_1_2_4_to_8);
-#endif
         LOAD_FUNCPTR(png_set_filler);
         LOAD_FUNCPTR(png_set_filter);
         LOAD_FUNCPTR(png_set_gray_to_rgb);
@@ -651,43 +641,18 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     /* check for color-keyed alpha */
     transparency = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans, &num_trans, &trans_values);
 
-    if (transparency && color_type != PNG_COLOR_TYPE_PALETTE)
+    if (transparency && (color_type == PNG_COLOR_TYPE_RGB ||
+        (color_type == PNG_COLOR_TYPE_GRAY && bit_depth == 16)))
     {
         /* expand to RGBA */
         if (color_type == PNG_COLOR_TYPE_GRAY)
-        {
-            if (bit_depth < 8)
-            {
-#ifdef HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8
-                ppng_set_expand_gray_1_2_4_to_8(This->png_ptr);
-#else
-                ppng_set_gray_1_2_4_to_8(This->png_ptr);
-#endif
-                bit_depth = 8;
-            }
             ppng_set_gray_to_rgb(This->png_ptr);
-        }
         ppng_set_tRNS_to_alpha(This->png_ptr);
         color_type = PNG_COLOR_TYPE_RGB_ALPHA;
     }
 
     switch (color_type)
     {
-    case PNG_COLOR_TYPE_GRAY:
-        This->bpp = bit_depth;
-        switch (bit_depth)
-        {
-        case 1: This->format = &GUID_WICPixelFormatBlackWhite; break;
-        case 2: This->format = &GUID_WICPixelFormat2bppGray; break;
-        case 4: This->format = &GUID_WICPixelFormat4bppGray; break;
-        case 8: This->format = &GUID_WICPixelFormat8bppGray; break;
-        case 16: This->format = &GUID_WICPixelFormat16bppGray; break;
-        default:
-            ERR("invalid grayscale bit depth: %i\n", bit_depth);
-            hr = E_FAIL;
-            goto end;
-        }
-        break;
     case PNG_COLOR_TYPE_GRAY_ALPHA:
         /* WIC does not support grayscale alpha formats so use RGBA */
         ppng_set_gray_to_rgb(This->png_ptr);
@@ -707,6 +672,25 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
             goto end;
         }
         break;
+    case PNG_COLOR_TYPE_GRAY:
+        This->bpp = bit_depth;
+        if (!transparency)
+        {
+            switch (bit_depth)
+            {
+            case 1: This->format = &GUID_WICPixelFormatBlackWhite; break;
+            case 2: This->format = &GUID_WICPixelFormat2bppGray; break;
+            case 4: This->format = &GUID_WICPixelFormat4bppGray; break;
+            case 8: This->format = &GUID_WICPixelFormat8bppGray; break;
+            case 16: This->format = &GUID_WICPixelFormat16bppGray; break;
+            default:
+                ERR("invalid grayscale bit depth: %i\n", bit_depth);
+                hr = E_FAIL;
+                goto end;
+            }
+            break;
+        }
+        /* else fall through */
     case PNG_COLOR_TYPE_PALETTE:
         This->bpp = bit_depth;
         switch (bit_depth)
@@ -1034,7 +1018,7 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    png_uint_32 ret;
+    png_uint_32 ret, color_type, bit_depth;
     png_colorp png_palette;
     int num_palette;
     WICColor palette[256];
@@ -1048,30 +1032,58 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
 
     EnterCriticalSection(&This->lock);
 
-    ret = ppng_get_PLTE(This->png_ptr, This->info_ptr, &png_palette, &num_palette);
-    if (!ret)
+    color_type = ppng_get_color_type(This->png_ptr, This->info_ptr);
+    bit_depth = ppng_get_bit_depth(This->png_ptr, This->info_ptr);
+
+    if (color_type == PNG_COLOR_TYPE_PALETTE)
+    {
+        ret = ppng_get_PLTE(This->png_ptr, This->info_ptr, &png_palette, &num_palette);
+        if (!ret)
+        {
+            hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
+            goto end;
+        }
+
+        if (num_palette > 256)
+        {
+            ERR("palette has %i colors?!\n", num_palette);
+            hr = E_FAIL;
+            goto end;
+        }
+
+        ret = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans_alpha, &num_trans, &trans_values);
+        if (!ret) num_trans = 0;
+
+        for (i=0; i<num_palette; i++)
+        {
+            BYTE alpha = (i < num_trans) ? trans_alpha[i] : 0xff;
+            palette[i] = (alpha << 24 |
+                          png_palette[i].red << 16|
+                          png_palette[i].green << 8|
+                          png_palette[i].blue);
+        }
+    }
+    else if (color_type == PNG_COLOR_TYPE_GRAY) {
+        ret = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans_alpha, &num_trans, &trans_values);
+
+        if (!ret)
+        {
+            hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
+            goto end;
+        }
+
+        num_palette = 1 << bit_depth;
+
+        for (i=0; i<num_palette; i++)
+        {
+            BYTE alpha = (i == trans_values[0].gray) ? 0 : 0xff;
+            BYTE val = i * 255 / (num_palette - 1);
+            palette[i] = (alpha << 24 | val << 16 | val << 8 | val);
+        }
+    }
+    else
     {
         hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
-        goto end;
-    }
-
-    if (num_palette > 256)
-    {
-        ERR("palette has %i colors?!\n", num_palette);
-        hr = E_FAIL;
-        goto end;
-    }
-
-    ret = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans_alpha, &num_trans, &trans_values);
-    if (!ret) num_trans = 0;
-
-    for (i=0; i<num_palette; i++)
-    {
-        BYTE alpha = (i < num_trans) ? trans_alpha[i] : 0xff;
-        palette[i] = (alpha << 24 |
-                      png_palette[i].red << 16|
-                      png_palette[i].green << 8|
-                      png_palette[i].blue);
     }
 
 end:

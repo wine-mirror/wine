@@ -1647,9 +1647,7 @@ then
         [AC_CHECK_HEADERS([png.h])
         if test "$ac_cv_header_png_h" = "yes"
         then
-            WINE_CHECK_SONAME(png,png_create_read_struct,
-                [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <png.h>]],[[typeof(png_set_expand_gray_1_2_4_to_8) *p]])],
-                    [AC_DEFINE(HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8,1,[Define to 1 if libpng has the png_set_expand_gray_1_2_4_to_8 function.])])],
+            WINE_CHECK_SONAME(png,png_create_read_struct,,
                 [PNG_CFLAGS=""],[$PNG_LIBS -lm -lz],[[libpng[[0-9]]*]])
         else
             PNG_CFLAGS=""

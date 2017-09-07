@@ -13890,23 +13890,7 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBPNG "$ac_cv_lib_soname_png"
 _ACEOF
 
-       cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <png.h>
-int
-main ()
-{
-typeof(png_set_expand_gray_1_2_4_to_8) *p
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
 
-$as_echo "#define HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8 1" >>confdefs.h
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
         else
             PNG_CFLAGS=""
