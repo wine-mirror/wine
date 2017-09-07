@@ -312,6 +312,7 @@ my @dll_groups =
   "api-ms-win-core-registryuserspecific-l1-1-0",
   "api-ms-win-core-shlwapi-legacy-l1-1-0",
   "api-ms-win-core-shlwapi-obsolete-l1-1-0",
+  "api-ms-win-core-shlwapi-obsolete-l1-2-0",
   "api-ms-win-core-url-l1-1-0",
  ],
  [
