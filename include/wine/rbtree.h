@@ -101,10 +101,24 @@ static inline struct wine_rb_entry *wine_rb_head(struct wine_rb_entry *iter)
     return iter;
 }
 
+static inline struct wine_rb_entry *wine_rb_tail(struct wine_rb_entry *iter)
+{
+    if (!iter) return NULL;
+    while (iter->right) iter = iter->right;
+    return iter;
+}
+
 static inline struct wine_rb_entry *wine_rb_next(struct wine_rb_entry *iter)
 {
     if (iter->right) return wine_rb_head(iter->right);
     while (iter->parent && iter->parent->right == iter) iter = iter->parent;
+    return iter->parent;
+}
+
+static inline struct wine_rb_entry *wine_rb_prev(struct wine_rb_entry *iter)
+{
+    if (iter->left) return wine_rb_tail(iter->left);
+    while (iter->parent && iter->parent->left == iter) iter = iter->parent;
     return iter->parent;
 }
 
