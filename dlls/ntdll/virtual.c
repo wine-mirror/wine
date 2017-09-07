@@ -53,7 +53,7 @@
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/exception.h"
-#include "wine/list.h"
+#include "wine/rbtree.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
@@ -67,12 +67,12 @@ WINE_DECLARE_DEBUG_CHANNEL(module);
 /* File view */
 struct file_view
 {
-    struct list   entry;       /* Entry in global view list */
-    void         *base;        /* Base address */
-    size_t        size;        /* Size in bytes */
-    HANDLE        mapping;     /* Handle to the file mapping */
-    unsigned int  map_protect; /* Mapping protection */
-    unsigned int  protect;     /* Protection for all pages at allocation time */
+    struct wine_rb_entry entry;  /* entry in global view tree */
+    void         *base;          /* base address */
+    size_t        size;          /* size in bytes */
+    HANDLE        mapping;       /* handle to the file mapping */
+    unsigned int  map_protect;   /* mapping protection */
+    unsigned int  protect;       /* protection for all pages at allocation time */
 };
 
 
@@ -97,7 +97,7 @@ static const BYTE VIRTUAL_Win32Flags[16] =
     PAGE_EXECUTE_WRITECOPY      /* READ | WRITE | EXEC | WRITECOPY */
 };
 
-static struct list views_list = LIST_INIT(views_list);
+static struct wine_rb_tree views_tree;
 
 static RTL_CRITICAL_SECTION csVirtual;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
@@ -250,6 +250,21 @@ static BOOL alloc_pages_vprot( const void *addr, size_t size )
 
 
 /***********************************************************************
+ *           compare_view
+ *
+ * View comparison function used for the rb tree.
+ */
+static int compare_view( const void *addr, const struct wine_rb_entry *entry )
+{
+    struct file_view *view = WINE_RB_ENTRY_VALUE( entry, struct file_view, entry );
+
+    if (addr < view->base) return -1;
+    if (addr > view->base) return 1;
+    return 0;
+}
+
+
+/***********************************************************************
  *           VIRTUAL_GetProtStr
  */
 static const char *VIRTUAL_GetProtStr( BYTE prot )
@@ -332,7 +347,7 @@ static void VIRTUAL_Dump(void)
 
     TRACE( "Dump of all virtual memory views:\n" );
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
+    WINE_RB_FOR_EACH_ENTRY( view, &views_tree, struct file_view, entry )
     {
         VIRTUAL_DumpView( view );
     }
@@ -355,15 +370,18 @@ static void VIRTUAL_Dump(void)
  */
 static struct file_view *VIRTUAL_FindView( const void *addr, size_t size )
 {
-    struct file_view *view;
+    struct wine_rb_entry *ptr = views_tree.root;
 
-    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
+    if ((const char *)addr + size < (const char *)addr) return NULL; /* overflow */
+
+    while (ptr)
     {
-        if (view->base > addr) break;  /* no matching view */
-        if ((const char *)view->base + view->size <= (const char *)addr) continue;
-        if ((const char *)view->base + view->size < (const char *)addr + size) break;  /* size too large */
-        if ((const char *)addr + size < (const char *)addr) break; /* overflow */
-        return view;
+        struct file_view *view = WINE_RB_ENTRY_VALUE( ptr, struct file_view, entry );
+
+        if (view->base > addr) ptr = ptr->left;
+        else if ((const char *)view->base + view->size <= (const char *)addr) ptr = ptr->right;
+        else if ((const char *)view->base + view->size < (const char *)addr + size) break;  /* size too large */
+        else return view;
     }
     return NULL;
 }
@@ -389,12 +407,15 @@ static inline UINT_PTR get_mask( ULONG zero_bits )
  */
 static struct file_view *find_view_range( const void *addr, size_t size )
 {
-    struct file_view *view;
+    struct wine_rb_entry *ptr = views_tree.root;
 
-    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
+    while (ptr)
     {
-        if ((const char *)view->base >= (const char *)addr + size) break;
-        if ((const char *)view->base + view->size > (const char *)addr) return view;
+        struct file_view *view = WINE_RB_ENTRY_VALUE( ptr, struct file_view, entry );
+
+        if ((const char *)view->base >= (const char *)addr + size) ptr = ptr->left;
+        else if ((const char *)view->base + view->size <= (const char *)addr) ptr = ptr->right;
+        else return view;
     }
     return NULL;
 }
@@ -408,39 +429,60 @@ static struct file_view *find_view_range( const void *addr, size_t size )
  */
 static void *find_free_area( void *base, void *end, size_t size, size_t mask, int top_down )
 {
-    struct list *ptr;
+    struct wine_rb_entry *first = NULL, *ptr = views_tree.root;
     void *start;
+
+    /* find the first (resp. last) view inside the range */
+    while (ptr)
+    {
+        struct file_view *view = WINE_RB_ENTRY_VALUE( ptr, struct file_view, entry );
+        if ((char *)view->base + view->size >= (char *)end)
+        {
+            end = min( end, view->base );
+            ptr = ptr->left;
+        }
+        else if (view->base <= base)
+        {
+            base = max( (char *)base, (char *)view->base + view->size );
+            ptr = ptr->right;
+        }
+        else
+        {
+            first = ptr;
+            ptr = top_down ? ptr->right : ptr->left;
+        }
+    }
 
     if (top_down)
     {
         start = ROUND_ADDR( (char *)end - size, mask );
         if (start >= end || start < base) return NULL;
 
-        for (ptr = views_list.prev; ptr != &views_list; ptr = ptr->prev)
+        while (first)
         {
-            struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
+            struct file_view *view = WINE_RB_ENTRY_VALUE( first, struct file_view, entry );
 
             if ((char *)view->base + view->size <= (char *)start) break;
-            if ((char *)view->base >= (char *)start + size) continue;
             start = ROUND_ADDR( (char *)view->base - size, mask );
             /* stop if remaining space is not large enough */
             if (!start || start >= end || start < base) return NULL;
+            first = wine_rb_prev( first );
         }
     }
     else
     {
         start = ROUND_ADDR( (char *)base + mask, mask );
-        if (start >= end || (char *)end - (char *)start < size) return NULL;
+        if (!start || start >= end || (char *)end - (char *)start < size) return NULL;
 
-        for (ptr = views_list.next; ptr != &views_list; ptr = ptr->next)
+        while (first)
         {
-            struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
+            struct file_view *view = WINE_RB_ENTRY_VALUE( first, struct file_view, entry );
 
             if ((char *)view->base >= (char *)start + size) break;
-            if ((char *)view->base + view->size <= (char *)start) continue;
             start = ROUND_ADDR( (char *)view->base + view->size + mask, mask );
             /* stop if remaining space is not large enough */
             if (!start || start >= end || (char *)end - (char *)start < size) return NULL;
+            first = wine_rb_next( first );
         }
     }
     return start;
@@ -485,7 +527,7 @@ static void remove_reserved_area( void *addr, size_t size )
     wine_mmap_remove_reserved_area( addr, size, 0 );
 
     /* unmap areas not covered by an existing view */
-    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
+    WINE_RB_FOR_EACH_ENTRY( view, &views_tree, struct file_view, entry )
     {
         if ((char *)view->base >= (char *)addr + size)
         {
@@ -617,7 +659,7 @@ static struct file_view *alloc_view(void)
 static void delete_view( struct file_view *view ) /* [in] View */
 {
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
-    list_remove( &view->entry );
+    wine_rb_remove( &views_tree, &view->entry );
     if (view->mapping) close_handle( view->mapping );
     *(struct file_view **)view = next_free_view;
     next_free_view = view;
@@ -632,7 +674,6 @@ static void delete_view( struct file_view *view ) /* [in] View */
 static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t size, unsigned int vprot )
 {
     struct file_view *view;
-    struct list *ptr;
     int unix_prot = VIRTUAL_GetUnixProt( vprot );
 
     assert( !((UINT_PTR)base & page_mask) );
@@ -667,14 +708,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     view->protect = vprot;
     set_page_vprot( base, size, vprot );
 
-    /* Insert it in the linked list */
-
-    LIST_FOR_EACH( ptr, &views_list )
-    {
-        struct file_view *next = LIST_ENTRY( ptr, struct file_view, entry );
-        if (next->base > base) break;
-    }
-    list_add_before( ptr, &view->entry );
+    wine_rb_put( &views_tree, view->base, &view->entry );
 
     *view_ret = view;
     VIRTUAL_DEBUG_DUMP_VIEW( view );
@@ -1535,6 +1569,7 @@ void virtual_init(void)
     view_block_start = alloc_views.base;
     view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
     pages_vprot = (void *)((char *)alloc_views.base + view_block_size);
+    wine_rb_init( &views_tree, compare_view );
 
     /* make the DOS area accessible (except the low 64K) to hide bugs in broken apps like Excel 2003 */
     size = (char *)address_space_start - (char *)0x10000;
@@ -1933,7 +1968,7 @@ void VIRTUAL_SetForceExec( BOOL enable )
     {
         force_exec_prot = enable;
 
-        LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
+        WINE_RB_FOR_EACH_ENTRY( view, &views_tree, struct file_view, entry )
         {
             BYTE commit = view->mapping ? VPROT_COMMITTED : 0;  /* file mappings are always accessible */
 
@@ -2406,9 +2441,8 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
                                       SIZE_T len, SIZE_T *res_len )
 {
     struct file_view *view;
-    char *base, *alloc_base = 0;
-    struct list *ptr;
-    SIZE_T size = 0;
+    char *base, *alloc_base = 0, *alloc_end = working_set_limit;
+    struct wine_rb_entry *ptr;
     MEMORY_BASIC_INFORMATION *info = buffer;
     sigset_t sigset;
 
@@ -2463,39 +2497,35 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     /* Find the view containing the address */
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    ptr = list_head( &views_list );
-    for (;;)
+    ptr = views_tree.root;
+    while (ptr)
     {
-        if (!ptr)
-        {
-            size = (char *)working_set_limit - alloc_base;
-            view = NULL;
-            break;
-        }
-        view = LIST_ENTRY( ptr, struct file_view, entry );
+        view = WINE_RB_ENTRY_VALUE( ptr, struct file_view, entry );
         if ((char *)view->base > base)
         {
-            size = (char *)view->base - alloc_base;
-            view = NULL;
-            break;
+            alloc_end = view->base;
+            ptr = ptr->left;
         }
-        if ((char *)view->base + view->size > base)
+        else if ((char *)view->base + view->size <= base)
+        {
+            alloc_base = (char *)view->base + view->size;
+            ptr = ptr->right;
+        }
+        else
         {
             alloc_base = view->base;
-            size = view->size;
+            alloc_end = (char *)view->base + view->size;
             break;
         }
-        alloc_base = (char *)view->base + view->size;
-        ptr = list_next( &views_list, ptr );
     }
 
     /* Fill the info structure */
 
     info->AllocationBase = alloc_base;
     info->BaseAddress    = base;
-    info->RegionSize     = size - (base - alloc_base);
+    info->RegionSize     = alloc_end - base;
 
-    if (!view)
+    if (!ptr)
     {
         if (!wine_mmap_enum_reserved_areas( get_free_mem_state_callback, info, 0 ))
         {
