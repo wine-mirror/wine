@@ -282,7 +282,7 @@ static void blit_8(struct dib_data *dib, const BYTE *src, const RECT *rect, DWOR
 
     for (y = rect->top; y < rect->bottom; y++) {
         for (x = 0; x < src_width; x++) {
-            if (src[x]) continue;
+            if (!src[x]) continue;
             if (src[x] == DWRITE_ALPHA_MAX)
                 dst_ptr[x] = text_pixel;
             else
