@@ -972,6 +972,7 @@ enable_api_ms_win_core_string_obsolete_l1_1_0
 enable_api_ms_win_core_stringansi_l1_1_0
 enable_api_ms_win_core_synch_l1_1_0
 enable_api_ms_win_core_synch_l1_2_0
+enable_api_ms_win_core_synch_l1_2_1
 enable_api_ms_win_core_sysinfo_l1_1_0
 enable_api_ms_win_core_sysinfo_l1_2_0
 enable_api_ms_win_core_sysinfo_l1_2_1
@@ -18050,6 +18051,7 @@ wine_fn_config_dll api-ms-win-core-string-obsolete-l1-1-0 enable_api_ms_win_core
 wine_fn_config_dll api-ms-win-core-stringansi-l1-1-0 enable_api_ms_win_core_stringansi_l1_1_0
 wine_fn_config_dll api-ms-win-core-synch-l1-1-0 enable_api_ms_win_core_synch_l1_1_0
 wine_fn_config_dll api-ms-win-core-synch-l1-2-0 enable_api_ms_win_core_synch_l1_2_0
+wine_fn_config_dll api-ms-win-core-synch-l1-2-1 enable_api_ms_win_core_synch_l1_2_1
 wine_fn_config_dll api-ms-win-core-sysinfo-l1-1-0 enable_api_ms_win_core_sysinfo_l1_1_0
 wine_fn_config_dll api-ms-win-core-sysinfo-l1-2-0 enable_api_ms_win_core_sysinfo_l1_2_0
 wine_fn_config_dll api-ms-win-core-sysinfo-l1-2-1 enable_api_ms_win_core_sysinfo_l1_2_1
