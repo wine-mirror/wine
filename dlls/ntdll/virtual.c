@@ -638,6 +638,18 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     assert( !((UINT_PTR)base & page_mask) );
     assert( !(size & page_mask) );
 
+    /* Check for overlapping views. This can happen if the previous view
+     * was a system view that got unmapped behind our back. In that case
+     * we recover by simply deleting it. */
+
+    while ((view = find_view_range( base, size )))
+    {
+        TRACE( "overlapping view %p-%p for %p-%p\n",
+               view->base, (char *)view->base + view->size, base, (char *)base + size );
+        assert( view->protect & VPROT_SYSTEM );
+        delete_view( view );
+    }
+
     if (!alloc_pages_vprot( base, size )) return STATUS_NO_MEMORY;
 
     /* Create the view structure */
@@ -663,35 +675,6 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
         if (next->base > base) break;
     }
     list_add_before( ptr, &view->entry );
-
-    /* Check for overlapping views. This can happen if the previous view
-     * was a system view that got unmapped behind our back. In that case
-     * we recover by simply deleting it. */
-
-    if ((ptr = list_prev( &views_list, &view->entry )) != NULL)
-    {
-        struct file_view *prev = LIST_ENTRY( ptr, struct file_view, entry );
-        if ((char *)prev->base + prev->size > (char *)base)
-        {
-            TRACE( "overlapping prev view %p-%p for %p-%p\n",
-                   prev->base, (char *)prev->base + prev->size,
-                   base, (char *)base + view->size );
-            assert( prev->protect & VPROT_SYSTEM );
-            delete_view( prev );
-        }
-    }
-    if ((ptr = list_next( &views_list, &view->entry )) != NULL)
-    {
-        struct file_view *next = LIST_ENTRY( ptr, struct file_view, entry );
-        if ((char *)base + view->size > (char *)next->base)
-        {
-            TRACE( "overlapping next view %p-%p for %p-%p\n",
-                   next->base, (char *)next->base + next->size,
-                   base, (char *)base + view->size );
-            assert( next->protect & VPROT_SYSTEM );
-            delete_view( next );
-        }
-    }
 
     *view_ret = view;
     VIRTUAL_DEBUG_DUMP_VIEW( view );
@@ -1187,15 +1170,10 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
     void * const low_64k = (void *)0x10000;
     const size_t dosmem_size = 0x110000;
     int unix_prot = VIRTUAL_GetUnixProt( vprot );
-    struct list *ptr;
 
     /* check for existing view */
 
-    if ((ptr = list_head( &views_list )))
-    {
-        struct file_view *first_view = LIST_ENTRY( ptr, struct file_view, entry );
-        if (first_view->base < (void *)dosmem_size) return STATUS_CONFLICTING_ADDRESSES;
-    }
+    if (find_view_range( 0, dosmem_size )) return STATUS_CONFLICTING_ADDRESSES;
 
     /* check without the first 64K */
 
