@@ -103,6 +103,7 @@ struct d3dx_object
     UINT size;
     void *data;
     struct d3dx_parameter *param;
+    BOOL creation_failed;
 };
 
 struct d3dx_state
@@ -3941,11 +3942,50 @@ static D3DXHANDLE WINAPI ID3DXEffectImpl_GetCurrentTechnique(ID3DXEffect *iface)
 
 static HRESULT WINAPI ID3DXEffectImpl_ValidateTechnique(ID3DXEffect* iface, D3DXHANDLE technique)
 {
-    struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
+    struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx9_base_effect *base = &effect->base_effect;
+    struct d3dx_technique *tech = get_valid_technique(base, technique);
+    HRESULT ret = D3D_OK;
+    unsigned int i, j;
 
-    FIXME("(%p)->(%p): stub\n", This, technique);
+    FIXME("iface %p, technique %p semi-stub.\n", iface, technique);
 
-    return D3D_OK;
+    if (!tech)
+    {
+        ret = D3DERR_INVALIDCALL;
+        goto done;
+    }
+    for (i = 0; i < tech->pass_count; ++i)
+    {
+        struct d3dx_pass *pass = &tech->passes[i];
+
+        for (j = 0; j < pass->state_count; ++j)
+        {
+            struct d3dx_state *state = &pass->states[j];
+
+            if (state_table[state->operation].class == SC_VERTEXSHADER
+                    || state_table[state->operation].class == SC_PIXELSHADER)
+            {
+                struct d3dx_parameter *param;
+                void *param_value;
+                BOOL param_dirty;
+                HRESULT hr;
+
+                if (FAILED(hr = d3dx9_get_param_value_ptr(pass, &pass->states[j], &param_value, &param,
+                        FALSE, &param_dirty)))
+                    return hr;
+
+                if (param->object_id && base->objects[param->object_id].creation_failed)
+                {
+                    ret = E_FAIL;
+                    goto done;
+                }
+            }
+        }
+    }
+done:
+    TRACE("Returning %#x.\n", ret);
+    return ret;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_FindNextValidTechnique(ID3DXEffect* iface, D3DXHANDLE technique, D3DXHANDLE* next_technique)
@@ -5938,7 +5978,7 @@ static HRESULT d3dx9_create_object(struct d3dx9_base_effect *base, struct d3dx_o
                     (IDirect3DVertexShader9 **)param->data)))
             {
                 WARN("Failed to create vertex shader.\n");
-                return D3D_OK;
+                object->creation_failed = TRUE;
             }
             break;
         case D3DXPT_PIXELSHADER:
@@ -5946,7 +5986,7 @@ static HRESULT d3dx9_create_object(struct d3dx9_base_effect *base, struct d3dx_o
                     (IDirect3DPixelShader9 **)param->data)))
             {
                 WARN("Failed to create pixel shader.\n");
-                return D3D_OK;
+                object->creation_failed = TRUE;
             }
             break;
         default:

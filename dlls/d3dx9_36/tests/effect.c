@@ -7090,10 +7090,8 @@ static void test_effect_unsupported_shader(void)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->ValidateTechnique(effect, "missing_technique");
-    todo_wine
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech0");
-    todo_wine
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
@@ -7101,7 +7099,6 @@ static void test_effect_unsupported_shader(void)
     effect->lpVtbl->SetInt(effect, "i", 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
-    todo_wine
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
     effect->lpVtbl->SetInt(effect, "i", 0);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
@@ -7275,7 +7272,6 @@ static void test_effect_null_shader(void)
     effect->lpVtbl->SetInt(effect, "i", 2);
     ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
-    todo_wine
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
 
     effect->lpVtbl->Release(effect);
