@@ -522,6 +522,7 @@ HEADER_SRCS = \
 	msxml6did.h \
 	msxmldid.h \
 	mtxdm.h \
+	multimon.h \
 	nb30.h \
 	ncrypt.h \
 	ndrtypes.h \
