@@ -5289,6 +5289,16 @@ INT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
 
 
 /**********************************************************************
+ *      CalcMenuBar     (USER32.@)
+ */
+DWORD WINAPI CalcMenuBar(HWND hwnd, DWORD left, DWORD right, DWORD top, RECT *rect)
+{
+    FIXME("(%p, %d, %d, %d, %p): stub\n", hwnd, left, right, top, rect);
+    return 0;
+}
+
+
+/**********************************************************************
  *           translate_accelerator
  */
 static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam,
