@@ -1731,6 +1731,28 @@ static void test_XMLHTTP(void)
     EXPECT_HR(hr, S_OK);
 
     IObjectWithSite_Release(obj_site);
+
+    /* HEAD request */
+    hr = IXMLHttpRequest_put_onreadystatechange(xhr, NULL);
+    ok(hr == S_OK, "Failed to reset state change handler, hr %#x.\n", hr);
+
+    test_open(xhr, "HEAD", xmltestA, S_OK);
+
+    V_VT(&varbody) = VT_EMPTY;
+    hr = IXMLHttpRequest_send(xhr, varbody);
+    ok(hr == S_OK, "Failed to send HEAD request, hr %#x.\n", hr);
+
+    str = NULL;
+    hr = IXMLHttpRequest_get_responseText(xhr, &str);
+    ok(hr == S_OK, "Failed to get response text, hr %#x.\n", hr);
+    ok(!*str, "Unexpected text %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLHttpRequest_getAllResponseHeaders(xhr, &str);
+    ok(hr == S_OK, "Failed to get response headers, hr %#x.\n", hr);
+    ok(str && *str, "Expected response headers.\n");
+    SysFreeString(str);
+
     IXMLHttpRequest_Release(xhr);
     free_bstrs();
 }
