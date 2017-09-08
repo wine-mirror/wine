@@ -362,6 +362,75 @@ static void test_VirtualAlloc(void)
 
     ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
 
+    /* PAGE_NOCACHE cannot be set per page in recent Windows */
+    addr1 = VirtualAlloc( NULL, 0x2000, MEM_COMMIT, PAGE_READWRITE | PAGE_NOCACHE );
+    ok( addr1 != NULL, "VirtualAlloc failed\n");
+    ok(VirtualQuery(addr1, &info, sizeof(info)) == sizeof(info), "VirtualQuery failed\n");
+    ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
+    ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+    ok(info.AllocationProtect == (PAGE_READWRITE | PAGE_NOCACHE),
+       "wrong protect %x\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x2000, "wrong size %lx\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "wrong state %x\n", info.State);
+    ok(info.Protect == (PAGE_READWRITE | PAGE_NOCACHE), "wrong protect %x\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "wrong type %x\n", info.Type);
+
+    ok(VirtualProtect(addr1, 0x1000, PAGE_READWRITE, &old_prot), "VirtualProtect failed\n");
+    ok( old_prot == (PAGE_READWRITE | PAGE_NOCACHE), "wrong protect %x\n", old_prot );
+    ok(VirtualQuery(addr1, &info, sizeof(info)) == sizeof(info), "VirtualQuery failed\n");
+    ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
+    ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+    ok(info.AllocationProtect == (PAGE_READWRITE | PAGE_NOCACHE),
+       "wrong protect %x\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x2000 || broken(info.RegionSize == 0x1000),
+       "wrong size %lx\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "wrong state %x\n", info.State);
+    ok(info.Protect == (PAGE_READWRITE | PAGE_NOCACHE) || broken(info.Protect == PAGE_READWRITE),
+       "wrong protect %x\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "wrong type %x\n", info.Type);
+
+    ok(VirtualProtect(addr1, 0x1000, PAGE_READONLY, &old_prot), "VirtualProtect failed\n");
+    ok( old_prot == (PAGE_READWRITE | PAGE_NOCACHE) || broken(old_prot == PAGE_READWRITE),
+        "wrong protect %x\n", old_prot );
+    ok(VirtualQuery(addr1, &info, sizeof(info)) == sizeof(info), "VirtualQuery failed\n");
+    ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
+    ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+    ok(info.AllocationProtect == (PAGE_READWRITE | PAGE_NOCACHE),
+       "wrong protect %x\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x1000, "wrong size %lx\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "wrong state %x\n", info.State);
+    ok(info.Protect == (PAGE_READONLY | PAGE_NOCACHE) || broken(info.Protect == PAGE_READONLY),
+       "wrong protect %x\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "wrong type %x\n", info.Type);
+
+    ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
+
+    addr1 = VirtualAlloc( NULL, 0x2000, MEM_COMMIT, PAGE_READWRITE );
+    ok( addr1 != NULL, "VirtualAlloc failed\n");
+    ok(VirtualQuery(addr1, &info, sizeof(info)) == sizeof(info), "VirtualQuery failed\n");
+    ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
+    ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+    ok(info.AllocationProtect == PAGE_READWRITE,
+       "wrong protect %x\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x2000, "wrong size %lx\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "wrong state %x\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "wrong protect %x\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "wrong type %x\n", info.Type);
+
+    ok(VirtualProtect(addr1, 0x1000, PAGE_READONLY | PAGE_NOCACHE, &old_prot), "VirtualProtect failed\n");
+    ok( old_prot == PAGE_READWRITE, "wrong protect %x\n", old_prot );
+    ok(VirtualQuery(addr1, &info, sizeof(info)) == sizeof(info), "VirtualQuery failed\n");
+    ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
+    ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+    ok(info.AllocationProtect == PAGE_READWRITE, "wrong protect %x\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x1000, "wrong size %lx\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "wrong state %x\n", info.State);
+    ok(info.Protect == PAGE_READONLY || broken(info.Protect == (PAGE_READONLY | PAGE_NOCACHE)),
+       "wrong protect %x\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "wrong type %x\n", info.Type);
+
+    ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
+
     /* memory returned by VirtualAlloc should be aligned to 64k */
     addr1 = VirtualAlloc(0, 0x2000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     ok(addr1 != NULL, "VirtualAlloc failed\n");

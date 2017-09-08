@@ -2369,6 +2369,8 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
                     if (!view->mapping || is_compatible_protection( view, new_vprot ))
                     {
                         new_vprot |= VPROT_COMMITTED;
+                        if (view->protect & VPROT_NOCACHE) new_vprot |= VPROT_NOCACHE;
+                        else new_vprot &= ~VPROT_NOCACHE;
                         if (old_prot) *old_prot = VIRTUAL_GetWin32Prot( vprot );
                         if (!VIRTUAL_SetProt( view, base, size, new_vprot )) status = STATUS_ACCESS_DENIED;
                     }
