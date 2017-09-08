@@ -340,8 +340,8 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
                                   DWORD protect, DWORD size_high,
                                   DWORD size_low, LPCWSTR name )
 {
-    static const int sec_flags = SEC_FILE | SEC_IMAGE | SEC_RESERVE | SEC_COMMIT | SEC_NOCACHE;
-
+    static const int sec_flags = (SEC_FILE | SEC_IMAGE | SEC_RESERVE | SEC_COMMIT |
+                                  SEC_NOCACHE | SEC_WRITECOMBINE | SEC_LARGE_PAGES);
     HANDLE ret;
     NTSTATUS status;
     DWORD access, sec_type;

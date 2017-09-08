@@ -497,6 +497,28 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     return STATUS_INVALID_FILE_FOR_SECTION;
 }
 
+static unsigned int get_mapping_flags( obj_handle_t handle, unsigned int flags )
+{
+    switch (flags & (SEC_IMAGE | SEC_RESERVE | SEC_COMMIT | SEC_FILE))
+    {
+    case SEC_IMAGE:
+        if (flags & (SEC_WRITECOMBINE | SEC_LARGE_PAGES)) break;
+        if (handle) return SEC_FILE | SEC_IMAGE;
+        set_error( STATUS_INVALID_FILE_FOR_SECTION );
+        return 0;
+    case SEC_COMMIT:
+        if (!handle) return flags;
+        /* fall through */
+    case SEC_RESERVE:
+        if (flags & SEC_LARGE_PAGES) break;
+        if (handle) return SEC_FILE | (flags & (SEC_NOCACHE | SEC_WRITECOMBINE));
+        return flags;
+    }
+    set_error( STATUS_INVALID_PARAMETER );
+    return 0;
+}
+
+
 static struct object *create_mapping( struct object *root, const struct unicode_str *name,
                                       unsigned int attr, mem_size_t size, unsigned int flags, int protect,
                                       obj_handle_t handle, const struct security_descriptor *sd )
@@ -516,11 +538,12 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         return &mapping->obj;  /* Nothing else to do */
 
     mapping->size        = size;
-    mapping->flags       = flags & (SEC_IMAGE | SEC_NOCACHE | SEC_WRITECOMBINE | SEC_LARGE_PAGES);
     mapping->protect     = protect;
     mapping->fd          = NULL;
     mapping->shared_file = NULL;
     mapping->committed   = NULL;
+
+    if (!(mapping->flags = get_mapping_flags( handle, flags ))) goto error;
 
     if (protect & VPROT_READ) access |= FILE_READ_DATA;
     if (protect & VPROT_WRITE) access |= FILE_WRITE_DATA;
@@ -530,11 +553,6 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         const unsigned int sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
         unsigned int mapping_access = FILE_MAPPING_ACCESS;
 
-        if (flags & SEC_RESERVE)
-        {
-            set_error( STATUS_INVALID_PARAMETER );
-            goto error;
-        }
         if (!(file = get_file_obj( current->process, handle, access ))) goto error;
         fd = get_obj_fd( (struct object *)file );
 
@@ -542,7 +560,6 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         if (flags & SEC_IMAGE) mapping_access |= FILE_MAPPING_IMAGE;
         else if (protect & VPROT_WRITE) mapping_access |= FILE_MAPPING_WRITE;
 
-        mapping->flags |= SEC_FILE;
         if (!(mapping->fd = get_fd_object_for_mapping( fd, mapping_access, sharing )))
         {
             mapping->fd = dup_fd_object( fd, mapping_access, sharing, FILE_SYNCHRONOUS_IO_NONALERT );
@@ -585,12 +602,11 @@ static struct object *create_mapping( struct object *root, const struct unicode_
     }
     else  /* Anonymous mapping (no associated file) */
     {
-        if (!mapping->size || (flags & SEC_IMAGE))
+        if (!mapping->size)
         {
             set_error( STATUS_INVALID_PARAMETER );
             goto error;
         }
-        mapping->flags |= flags & (SEC_COMMIT | SEC_RESERVE);
         if (flags & SEC_RESERVE)
         {
             if (!(mapping->committed = mem_alloc( offsetof(struct ranges, ranges[8]) ))) goto error;

@@ -1444,7 +1444,61 @@ static void test_NtAreMappedFilesTheSame(void)
 
 static void test_CreateFileMapping(void)
 {
-    HANDLE handle, handle2;
+    HANDLE handle, handle2, file[3];
+    char path[MAX_PATH], filename[MAX_PATH];
+    unsigned int i;
+    NTSTATUS status;
+
+    static const struct { DWORD file, flags, error, attrs; } sec_flag_tests[] =
+    {
+        /* anonymous mapping */
+        { 0, SEC_RESERVE, 0 }, /* 0 */
+        { 0, SEC_RESERVE | SEC_NOCACHE, 0 },
+        { 0, SEC_RESERVE | SEC_LARGE_PAGES, ERROR_INVALID_PARAMETER },
+        { 0, SEC_RESERVE | SEC_WRITECOMBINE, 0 },
+        { 0, SEC_COMMIT, 0 },
+        { 0, SEC_COMMIT | SEC_NOCACHE, 0 }, /* 5 */
+        { 0, SEC_COMMIT | SEC_WRITECOMBINE, 0 },
+        { 0, SEC_RESERVE | SEC_COMMIT, ERROR_INVALID_PARAMETER },
+        { 0, SEC_IMAGE, ERROR_BAD_EXE_FORMAT },
+        { 0, SEC_IMAGE | SEC_RESERVE, ERROR_INVALID_PARAMETER },
+        { 0, SEC_IMAGE | SEC_COMMIT, ERROR_INVALID_PARAMETER }, /* 10 */
+        { 0, SEC_NOCACHE, ERROR_INVALID_PARAMETER },
+        { 0, SEC_LARGE_PAGES, ERROR_INVALID_PARAMETER },
+        { 0, SEC_WRITECOMBINE, ERROR_INVALID_PARAMETER },
+        { 0, SEC_FILE, ERROR_INVALID_PARAMETER },
+        { 0, SEC_FILE | SEC_RESERVE, ERROR_INVALID_PARAMETER }, /* 15 */
+        { 0, SEC_FILE | SEC_COMMIT, ERROR_INVALID_PARAMETER },
+        { 0, 0, 0, SEC_COMMIT },
+        /* normal file */
+        { 1, SEC_RESERVE, 0, SEC_FILE },
+        { 1, SEC_RESERVE | SEC_NOCACHE, 0, SEC_FILE | SEC_NOCACHE },
+        { 1, SEC_RESERVE | SEC_LARGE_PAGES, ERROR_INVALID_PARAMETER }, /* 20 */
+        { 1, SEC_RESERVE | SEC_WRITECOMBINE, 0, SEC_FILE | SEC_WRITECOMBINE },
+        { 1, SEC_COMMIT, 0, SEC_FILE },
+        { 1, SEC_COMMIT | SEC_NOCACHE, 0, SEC_FILE | SEC_NOCACHE },
+        { 1, SEC_COMMIT | SEC_LARGE_PAGES, ERROR_INVALID_PARAMETER },
+        { 1, SEC_COMMIT | SEC_WRITECOMBINE, 0, SEC_FILE | SEC_WRITECOMBINE }, /* 25 */
+        { 1, SEC_RESERVE | SEC_COMMIT, ERROR_INVALID_PARAMETER },
+        { 1, SEC_IMAGE, ERROR_BAD_EXE_FORMAT },
+        { 1, SEC_IMAGE | SEC_RESERVE, ERROR_INVALID_PARAMETER },
+        { 1, SEC_IMAGE | SEC_COMMIT, ERROR_INVALID_PARAMETER },
+        { 1, SEC_NOCACHE, ERROR_INVALID_PARAMETER }, /* 30 */
+        { 1, SEC_LARGE_PAGES, ERROR_INVALID_PARAMETER },
+        { 1, SEC_WRITECOMBINE, ERROR_INVALID_PARAMETER },
+        { 1, SEC_FILE, ERROR_INVALID_PARAMETER },
+        { 1, SEC_FILE | SEC_RESERVE, ERROR_INVALID_PARAMETER },
+        { 1, SEC_FILE | SEC_COMMIT, ERROR_INVALID_PARAMETER }, /* 35 */
+        { 1, 0, 0, SEC_FILE },
+        /* PE image file */
+        { 2, SEC_IMAGE, 0, SEC_FILE | SEC_IMAGE },
+        { 2, SEC_IMAGE | SEC_FILE, ERROR_INVALID_PARAMETER },
+        { 2, SEC_IMAGE | SEC_NOCACHE, 0, SEC_FILE | SEC_IMAGE },
+        { 2, SEC_IMAGE | SEC_LARGE_PAGES, ERROR_INVALID_PARAMETER }, /* 40 */
+        { 2, SEC_IMAGE | SEC_WRITECOMBINE, ERROR_INVALID_PARAMETER },
+        { 2, SEC_IMAGE | SEC_RESERVE, ERROR_INVALID_PARAMETER },
+        { 2, SEC_IMAGE | SEC_COMMIT, ERROR_INVALID_PARAMETER },
+    };
 
     /* test case sensitivity */
 
@@ -1479,6 +1533,62 @@ static void test_CreateFileMapping(void)
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     CloseHandle( handle );
+
+    /* test SEC_* flags */
+
+    file[0] = INVALID_HANDLE_VALUE;
+    GetTempPathA( MAX_PATH, path );
+    GetTempFileNameA( path, "map", 0, filename );
+
+    file[1] = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( file[1] != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError() );
+    SetFilePointer( file[1], 0x2000, NULL, FILE_BEGIN );
+    SetEndOfFile( file[1] );
+
+    GetSystemDirectoryA( path, MAX_PATH );
+    strcat( path, "\\kernel32.dll" );
+    file[2] = CreateFileA( path, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file[2] != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError() );
+
+    for (i = 0; i < sizeof(sec_flag_tests) / sizeof(sec_flag_tests[0]); i++)
+    {
+        DWORD flags = sec_flag_tests[i].flags;
+        DWORD perm = sec_flag_tests[i].file == 2 ? PAGE_READONLY : PAGE_READWRITE;
+        SetLastError( 0xdeadbeef );
+        handle = CreateFileMappingA( file[sec_flag_tests[i].file], NULL,
+                                     flags | perm, 0, 0x1000, "Wine Test Mapping" );
+        if (sec_flag_tests[i].error)
+        {
+            ok( !handle, "%u: CreateFileMapping succeeded\n", i );
+            ok( GetLastError() == sec_flag_tests[i].error, "%u: wrong error %u\n", i, GetLastError());
+        }
+        else
+        {
+            /* SEC_WRITECOMBINE and SEC_IMAGE_NO_EXECUTE not supported on older Windows */
+            BOOL new_flags = ((flags & SEC_WRITECOMBINE) ||
+                              ((flags & SEC_IMAGE_NO_EXECUTE) == SEC_IMAGE_NO_EXECUTE));
+            ok( handle != NULL || broken(new_flags),
+                "%u: CreateFileMapping failed with error %u\n", i, GetLastError());
+            ok( GetLastError() == 0 || broken(new_flags && GetLastError() == ERROR_INVALID_PARAMETER),
+                "%u: wrong error %u\n", i, GetLastError());
+        }
+
+        if (handle)
+        {
+            SECTION_BASIC_INFORMATION info;
+            DWORD expect = sec_flag_tests[i].attrs ? sec_flag_tests[i].attrs : sec_flag_tests[i].flags;
+
+            status = pNtQuerySection( handle, SectionBasicInformation, &info, sizeof(info), NULL );
+            ok( !status, "%u: NtQuerySection failed err %x\n", i, status );
+            /* SEC_NOCACHE not supported on older Windows */
+            ok( info.Attributes == expect || broken( info.Attributes == (expect & ~SEC_NOCACHE) ),
+                "%u: NtQuerySection wrong attr %08x\n", i, info.Attributes );
+            CloseHandle( handle );
+        }
+    }
+    CloseHandle( file[1] );
+    CloseHandle( file[2] );
+    DeleteFileA( filename );
 }
 
 static void test_IsBadReadPtr(void)
