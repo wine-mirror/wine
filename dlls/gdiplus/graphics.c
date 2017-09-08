@@ -6668,7 +6668,7 @@ GpStatus gdi_transform_release(GpGraphics *graphics)
 {
     if (graphics->gdi_transform_acquire_count <= 0)
     {
-        ERR("called without matching gdi_transform_acquire");
+        ERR("called without matching gdi_transform_acquire\n");
         return GenericError;
     }
     if (graphics->gdi_transform_acquire_count == 1 && graphics->hdc)
