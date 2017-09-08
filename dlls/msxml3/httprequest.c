@@ -880,6 +880,7 @@ static HRESULT verify_uri(httprequest *This, IUri *uri)
 static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
         VARIANT async, VARIANT user, VARIANT password)
 {
+    static const WCHAR MethodHeadW[] = {'H','E','A','D',0};
     static const WCHAR MethodGetW[] = {'G','E','T',0};
     static const WCHAR MethodPutW[] = {'P','U','T',0};
     static const WCHAR MethodPostW[] = {'P','O','S','T',0};
@@ -915,6 +916,7 @@ static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
         This->verb = BINDVERB_POST;
     }
     else if (!strcmpiW(method, MethodDeleteW) ||
+             !strcmpiW(method, MethodHeadW) ||
              !strcmpiW(method, MethodPropFindW))
     {
         This->verb = BINDVERB_CUSTOM;
