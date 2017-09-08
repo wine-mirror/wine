@@ -343,6 +343,7 @@ static void setup_options(void)
         WCHAR *p, *appname = bufferW;
         if ((p = strrchrW( appname, '/' ))) appname = p + 1;
         if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
+        CharLowerW(appname);
         len = WideCharToMultiByte( CP_UNIXCP, 0, appname, -1, NULL, 0, NULL, NULL );
         if ((process_name = HeapAlloc( GetProcessHeap(), 0, len )))
             WideCharToMultiByte( CP_UNIXCP, 0, appname, -1, process_name, len, NULL, NULL );
