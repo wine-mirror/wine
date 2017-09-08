@@ -1514,17 +1514,162 @@ HRESULT WINAPI MFCreateMediaType(IMFMediaType **type)
     return S_OK;
 }
 
+typedef struct _mfeventqueue
+{
+    IMFMediaEventQueue IMFMediaEventQueue_iface;
+    LONG ref;
+} mfeventqueue;
+
+static inline mfeventqueue *impl_from_IMFMediaEventQueue(IMFMediaEventQueue *iface)
+{
+    return CONTAINING_RECORD(iface, mfeventqueue, IMFMediaEventQueue_iface);
+}
+
+static HRESULT WINAPI mfeventqueue_QueryInterface(IMFMediaEventQueue *iface, REFIID riid, void **out)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), out);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)      ||
+       IsEqualGUID(riid, &IID_IMFMediaEventQueue))
+    {
+        *out = &This->IMFMediaEventQueue_iface;
+    }
+    else
+    {
+        FIXME("(%s, %p)\n", debugstr_guid(riid), out);
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI mfeventqueue_AddRef(IMFMediaEventQueue *iface)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI mfeventqueue_Release(IMFMediaEventQueue *iface)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI mfeventqueue_GetEvent(IMFMediaEventQueue *iface, DWORD flags, IMFMediaEvent **event)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+
+    FIXME("%p, %p\n", This, event);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfeventqueue_BeginGetEvent(IMFMediaEventQueue *iface, IMFAsyncCallback *callback, IUnknown *state)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+
+    FIXME("%p, %p, %p\n", This, callback, state);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfeventqueue_EndGetEvent(IMFMediaEventQueue *iface, IMFAsyncResult *result, IMFMediaEvent **event)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+
+    FIXME("%p, %p, %p\n", This, result, event);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfeventqueue_QueueEvent(IMFMediaEventQueue *iface, IMFMediaEvent *event)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+
+    FIXME("%p, %p\n", This, event);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfeventqueue_QueueEventParamVar(IMFMediaEventQueue *iface, MediaEventType met,
+        REFGUID type, HRESULT status, const PROPVARIANT *value)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+
+    FIXME("%p, %d, %s, 0x%08x, %p\n", This, met, debugstr_guid(type), status, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfeventqueue_QueueEventParamUnk(IMFMediaEventQueue *iface, MediaEventType met, REFGUID type,
+        HRESULT status, IUnknown *unk)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+
+    FIXME("%p, %d, %s, 0x%08x, %p\n", This, met, debugstr_guid(type), status, unk);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfeventqueue_Shutdown(IMFMediaEventQueue *iface)
+{
+    mfeventqueue *This = impl_from_IMFMediaEventQueue(iface);
+
+    FIXME("%p\n", This);
+
+    return E_NOTIMPL;
+}
+
+static const IMFMediaEventQueueVtbl mfeventqueue_vtbl =
+{
+    mfeventqueue_QueryInterface,
+    mfeventqueue_AddRef,
+    mfeventqueue_Release,
+    mfeventqueue_GetEvent,
+    mfeventqueue_BeginGetEvent,
+    mfeventqueue_EndGetEvent,
+    mfeventqueue_QueueEvent,
+    mfeventqueue_QueueEventParamVar,
+    mfeventqueue_QueueEventParamUnk,
+    mfeventqueue_Shutdown
+};
+
 /***********************************************************************
  *      MFCreateEventQueue (mfplat.@)
  */
 HRESULT WINAPI MFCreateEventQueue(IMFMediaEventQueue **queue)
 {
-    FIXME("%p\n", queue);
+    mfeventqueue *object;
 
-    if(queue)
-        *queue = NULL;
+    TRACE("%p\n", queue);
 
-    return E_FAIL;
+    object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );
+    if(!object)
+        return E_OUTOFMEMORY;
+
+    object->ref = 1;
+    object->IMFMediaEventQueue_iface.lpVtbl = &mfeventqueue_vtbl;
+
+    *queue = &object->IMFMediaEventQueue_iface;
+
+    return S_OK;
 }
 
 typedef struct _mfdescriptor
