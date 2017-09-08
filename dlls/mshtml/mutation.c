@@ -373,7 +373,7 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
 static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode, BOOL lock)
 {
     if(doc->document_mode_locked) {
-        WARN("attemting to set document mode %d on locked document %p\n", document_mode, doc);
+        WARN("attempting to set document mode %d on locked document %p\n", document_mode, doc);
         return;
     }
 
