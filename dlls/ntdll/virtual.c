@@ -713,7 +713,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     *view_ret = view;
     VIRTUAL_DEBUG_DUMP_VIEW( view );
 
-    if (force_exec_prot && !(vprot & VPROT_NOEXEC) && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
+    if (force_exec_prot && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
     {
         TRACE( "forcing exec permission on %p-%p\n", base, (char *)base + size - 1 );
         mprotect( base, size, unix_prot | PROT_EXEC );
@@ -797,8 +797,7 @@ static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot, BOOL image 
  */
 static inline int mprotect_exec( void *base, size_t size, int unix_prot, unsigned int view_protect )
 {
-    if (force_exec_prot && !(view_protect & VPROT_NOEXEC) &&
-        (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
+    if (force_exec_prot && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
     {
         TRACE( "forcing exec permission on %p-%p\n", base, (char *)base + size - 1 );
         if (!mprotect( base, size, unix_prot | PROT_EXEC )) return 0;
@@ -1096,7 +1095,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
     assert( start < view->size );
     assert( start + size <= view->size );
 
-    if (force_exec_prot && !(vprot & VPROT_NOEXEC) && (vprot & VPROT_READ))
+    if (force_exec_prot && (vprot & VPROT_READ))
     {
         TRACE( "forcing exec permission on mapping %p-%p\n",
                (char *)view->base + start, (char *)view->base + start + size - 1 );
@@ -1972,7 +1971,6 @@ void VIRTUAL_SetForceExec( BOOL enable )
         {
             BYTE commit = view->mapping ? VPROT_COMMITTED : 0;  /* file mappings are always accessible */
 
-            if (view->protect & VPROT_NOEXEC) continue;
             mprotect_range( view, view->base, view->size, commit, 0 );
         }
     }

@@ -2199,7 +2199,6 @@ struct create_mapping_reply
 #define VPROT_IMAGE      0x0100
 #define VPROT_SYSTEM     0x0200
 #define VPROT_VALLOC     0x0400
-#define VPROT_NOEXEC     0x0800
 
 
 
