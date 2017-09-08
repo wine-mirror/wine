@@ -72,7 +72,7 @@ struct file_view
     size_t        size;          /* size in bytes */
     HANDLE        mapping;       /* handle to the file mapping */
     unsigned int  map_protect;   /* mapping protection */
-    unsigned int  protect;       /* protection for all pages at allocation time */
+    unsigned int  protect;       /* protection for all pages at allocation time and SEC_* flags */
 };
 
 
@@ -727,11 +727,11 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
  *
  * Convert page protections to Win32 flags.
  */
-static DWORD VIRTUAL_GetWin32Prot( BYTE vprot )
+static DWORD VIRTUAL_GetWin32Prot( BYTE vprot, unsigned int map_prot )
 {
     DWORD ret = VIRTUAL_Win32Flags[vprot & 0x0f];
-    if (vprot & VPROT_NOCACHE) ret |= PAGE_NOCACHE;
     if (vprot & VPROT_GUARD) ret |= PAGE_GUARD;
+    if (map_prot & SEC_NOCACHE) ret |= PAGE_NOCACHE;
     return ret;
 }
 
@@ -785,7 +785,6 @@ static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot, BOOL image 
         return STATUS_INVALID_PAGE_PROTECTION;
     }
     if (protect & PAGE_GUARD) *vprot |= VPROT_GUARD;
-    if (protect & PAGE_NOCACHE) *vprot |= VPROT_NOCACHE;
     return STATUS_SUCCESS;
 }
 
@@ -1148,7 +1147,7 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, BYTE *vpro
     start = ((char *)base - (char *)view->base) >> page_shift;
     *vprot = get_page_vprot( base );
 
-    if (view->mapping && !(view->protect & VPROT_COMMITTED))
+    if (view->protect & SEC_RESERVE)
     {
         SIZE_T ret = 0;
         SERVER_START_REQ( get_mapping_committed_range )
@@ -1295,12 +1294,12 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if (base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, total_size, mask, FALSE,
-                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
+        status = map_view( &view, base, total_size, mask, FALSE, SEC_IMAGE | SEC_FILE |
+                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY );
 
     if (status != STATUS_SUCCESS)
-        status = map_view( &view, NULL, total_size, mask, FALSE,
-                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
+        status = map_view( &view, NULL, total_size, mask, FALSE, SEC_IMAGE | SEC_FILE |
+                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY );
 
     if (status != STATUS_SUCCESS) goto error;
 
@@ -1633,7 +1632,7 @@ NTSTATUS virtual_create_builtin_view( void *module )
     size = ROUND_SIZE( module, size );
     base = ROUND_ADDR( module, page_mask );
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    status = create_view( &view, base, size, VPROT_SYSTEM | VPROT_IMAGE |
+    status = create_view( &view, base, size, SEC_IMAGE | SEC_FILE | VPROT_SYSTEM |
                           VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
     if (!status) TRACE( "created %p-%p\n", base, (char *)base + size );
     server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -2103,6 +2102,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     if (vprot & VPROT_WRITECOPY) return STATUS_INVALID_PAGE_PROTECTION;
     vprot |= VPROT_VALLOC;
     if (type & MEM_COMMIT) vprot |= VPROT_COMMITTED;
+    if (protect & PAGE_NOCACHE) vprot |= SEC_NOCACHE;
 
     if (*ret)
     {
@@ -2165,9 +2165,9 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     else  /* commit the pages */
     {
         if (!(view = VIRTUAL_FindView( base, size ))) status = STATUS_NOT_MAPPED_VIEW;
-        else if (view->mapping && (view->protect & VPROT_COMMITTED)) status = STATUS_ALREADY_COMMITTED;
+        else if (view->mapping && !(view->protect & SEC_RESERVE)) status = STATUS_ALREADY_COMMITTED;
         else if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
-        else if (view->mapping && !(view->protect & VPROT_COMMITTED))
+        else if (view->protect & SEC_RESERVE)
         {
             SERVER_START_REQ( add_mapping_committed_range )
             {
@@ -2358,7 +2358,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
         /* Make sure all the pages are committed */
         if (get_committed_size( view, base, &vprot ) >= size && (vprot & VPROT_COMMITTED))
         {
-            if (!(status = get_vprot_flags( new_prot, &new_vprot, view->protect & VPROT_IMAGE )))
+            if (!(status = get_vprot_flags( new_prot, &new_vprot, view->protect & SEC_IMAGE )))
             {
                 if ((new_vprot & VPROT_WRITECOPY) && (view->protect & VPROT_VALLOC))
                     status = STATUS_INVALID_PAGE_PROTECTION;
@@ -2367,9 +2367,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
                     if (!view->mapping || is_compatible_protection( view, new_vprot ))
                     {
                         new_vprot |= VPROT_COMMITTED;
-                        if (view->protect & VPROT_NOCACHE) new_vprot |= VPROT_NOCACHE;
-                        else new_vprot &= ~VPROT_NOCACHE;
-                        if (old_prot) *old_prot = VIRTUAL_GetWin32Prot( vprot );
+                        if (old_prot) *old_prot = VIRTUAL_GetWin32Prot( vprot, view->protect );
                         if (!VIRTUAL_SetProt( view, base, size, new_vprot )) status = STATUS_ACCESS_DENIED;
                     }
                     else status = STATUS_INVALID_PAGE_PROTECTION;
@@ -2556,9 +2554,9 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         SIZE_T range_size = get_committed_size( view, base, &vprot );
 
         info->State = (vprot & VPROT_COMMITTED) ? MEM_COMMIT : MEM_RESERVE;
-        info->Protect = (vprot & VPROT_COMMITTED) ? VIRTUAL_GetWin32Prot( vprot ) : 0;
-        info->AllocationProtect = VIRTUAL_GetWin32Prot( view->protect );
-        if (view->protect & VPROT_IMAGE) info->Type = MEM_IMAGE;
+        info->Protect = (vprot & VPROT_COMMITTED) ? VIRTUAL_GetWin32Prot( vprot, view->protect ) : 0;
+        info->AllocationProtect = VIRTUAL_GetWin32Prot( view->protect, view->protect );
+        if (view->protect & SEC_IMAGE) info->Type = MEM_IMAGE;
         else if (view->protect & VPROT_VALLOC) info->Type = MEM_PRIVATE;
         else info->Type = MEM_MAPPED;
         for (ptr = base; ptr < base + range_size; ptr += page_size)
@@ -2807,10 +2805,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     SERVER_END_REQ;
     if (res) return res;
 
-    if (!(sec_flags & SEC_RESERVE)) map_vprot |= VPROT_COMMITTED;
-    if (sec_flags & SEC_NOCACHE) map_vprot |= VPROT_NOCACHE;
-    if (sec_flags & SEC_IMAGE) map_vprot |= VPROT_IMAGE;
-
     if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
 
     if (sec_flags & SEC_IMAGE)
@@ -2875,7 +2869,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE );
-    vprot |= (map_vprot & VPROT_COMMITTED);
+    vprot |= sec_flags;
+    if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
     res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot );
     if (res)
     {
@@ -3225,7 +3220,7 @@ NTSTATUS WINAPI NtAreMappedFilesTheSame(PVOID addr1, PVOID addr2)
         status = STATUS_CONFLICTING_ADDRESSES;
     else if (view1 == view2)
         status = STATUS_SUCCESS;
-    else if (!(view1->protect & VPROT_IMAGE) || !(view2->protect & VPROT_IMAGE))
+    else if (!(view1->protect & SEC_IMAGE) || !(view2->protect & SEC_IMAGE))
         status = STATUS_NOT_SAME_DEVICE;
     else if (!stat_mapping_file( view1, &st1 ) && !stat_mapping_file( view2, &st2 ) &&
              st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino)
