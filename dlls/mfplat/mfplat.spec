@@ -59,7 +59,7 @@
 @ stub MFCreateSocket
 @ stub MFCreateSocketListener
 @ stdcall MFCreateSourceResolver(ptr)
-@ stub MFCreateStreamDescriptor
+@ stdcall MFCreateStreamDescriptor(long long ptr ptr)
 @ stub MFCreateSystemTimeSource
 @ stub MFCreateSystemUnderlyingClock
 @ stub MFCreateTempFile
