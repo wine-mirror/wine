@@ -4893,7 +4893,7 @@ static const tid_t HTMLDocumentNode_iface_tids[] = {
     0
 };
 
-void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     HTMLDOMNode_init_dispex_info(info, mode);
 
