@@ -18958,8 +18958,8 @@ static void test_signed_formats(void)
 
                     color = getPixelColor(device, 80 + 160 * x, 60 + 120 * y);
                     ok(color_match(color, expected_color, 1) || broken(r200_broken),
-                            "Expected color 0x%08x, got 0x%08x, format %s, location %ux%u.\n",
-                            expected_color, color, formats[i].name, x, y);
+                            "Expected color 0x%08x, got 0x%08x, format %s, test %u, location %ux%u.\n",
+                            expected_color, color, formats[i].name, j, x, y);
                 }
             }
             hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
@@ -18988,8 +18988,8 @@ static void test_signed_formats(void)
                     color = getPixelColor(device, 80 + 160 * x, 60 + 120 * y);
                     ok(color_match(color, expected_color, formats[i].slop)
                             || broken(color_match(color, expected_color, formats[i].slop_broken)),
-                            "Expected color 0x%08x, got 0x%08x, format %s, location %ux%u.\n",
-                            expected_color, color, formats[i].name, x, y);
+                            "Expected color 0x%08x, got 0x%08x, format %s, test %u, location %ux%u.\n",
+                            expected_color, color, formats[i].name, j, x, y);
                 }
             }
             hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
@@ -19037,8 +19037,8 @@ static void test_signed_formats(void)
                     color = getPixelColor(device, 80 + 160 * x, 60 + 120 * y);
                     ok(color_match(color, expected_color, formats[i].slop)
                             || broken(color_match(color, expected_color, formats[i].slop_broken)),
-                            "Expected color 0x%08x, got 0x%08x, format %s, location %ux%u.\n",
-                            expected_color, color, formats[i].name, x, y);
+                            "Expected color 0x%08x, got 0x%08x, format %s, test %u, location %ux%u.\n",
+                            expected_color, color, formats[i].name, j, x, y);
                 }
             }
             hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
