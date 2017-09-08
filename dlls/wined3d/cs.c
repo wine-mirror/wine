@@ -2569,10 +2569,15 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
     unsigned int spin_count = 0;
     struct wined3d_cs *cs = ctx;
     enum wined3d_cs_op opcode;
+    HMODULE wined3d_module;
     unsigned int poll = 0;
     LONG tail;
 
     TRACE("Started.\n");
+
+    /* Copy the module handle to a local variable to avoid racing with the
+     * thread freeing "cs" before the FreeLibraryAndExitThread() call. */
+    wined3d_module = cs->wined3d_module;
 
     list_init(&cs->query_poll_list);
     cs->thread_id = GetCurrentThreadId();
@@ -2621,7 +2626,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
     cs->queue[WINED3D_CS_QUEUE_MAP].tail = cs->queue[WINED3D_CS_QUEUE_MAP].head;
     cs->queue[WINED3D_CS_QUEUE_DEFAULT].tail = cs->queue[WINED3D_CS_QUEUE_DEFAULT].head;
     TRACE("Stopped.\n");
-    FreeLibraryAndExitThread(cs->wined3d_module, 0);
+    FreeLibraryAndExitThread(wined3d_module, 0);
 }
 
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
