@@ -947,12 +947,6 @@ struct fontfacecached *factory_cache_fontface(IDWriteFactory5 *iface, struct lis
     return cached;
 }
 
-void factory_release_cached_fontface(struct fontfacecached *cached)
-{
-    list_remove(&cached->entry);
-    heap_free(cached);
-}
-
 static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory5 *iface, DWRITE_FONT_FACE_TYPE req_facetype,
     UINT32 files_number, IDWriteFontFile* const* font_files, UINT32 index, DWRITE_FONT_SIMULATIONS simulations,
     IDWriteFontFace **fontface)
