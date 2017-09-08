@@ -36,7 +36,7 @@
 @ cdecl _errno() ucrtbase._errno
 @ cdecl _execute_onexit_table(ptr) ucrtbase._execute_onexit_table
 @ cdecl _exit(long) ucrtbase._exit
-@ cdecl -arch=i386,x86_64,arm _fpieee_flt(long ptr ptr) ucrtbase._fpieee_flt
+@ cdecl -arch=i386,x86_64,arm,arm64 _fpieee_flt(long ptr ptr) ucrtbase._fpieee_flt
 @ cdecl _fpreset() ucrtbase._fpreset
 @ cdecl _get_doserrno(ptr) ucrtbase._get_doserrno
 @ cdecl _get_errno(ptr) ucrtbase._get_errno
@@ -63,7 +63,7 @@
 @ cdecl _register_onexit_function(ptr ptr) ucrtbase._register_onexit_function
 @ stub _register_thread_local_exe_atexit_callback
 @ cdecl _resetstkoflw() ucrtbase._resetstkoflw
-@ cdecl -arch=i386,x86_64,arm _seh_filter_dll(long ptr) ucrtbase._seh_filter_dll
+@ cdecl -arch=i386,x86_64,arm,arm64 _seh_filter_dll(long ptr) ucrtbase._seh_filter_dll
 @ cdecl _seh_filter_exe(long ptr) ucrtbase._seh_filter_exe
 @ cdecl _set_abort_behavior(long long) ucrtbase._set_abort_behavior
 @ cdecl _set_app_type(long) ucrtbase._set_app_type

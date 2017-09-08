@@ -14,6 +14,7 @@ C_SRCS = \
 	errno.c \
 	except.c \
 	except_arm.c \
+	except_arm64.c \
 	except_i386.c \
 	except_x86_64.c \
 	exit.c \

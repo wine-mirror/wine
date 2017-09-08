@@ -539,6 +539,28 @@ struct MSVCRT___JUMP_BUFFER
     unsigned long Fpscr;
     unsigned long long D[8];
 };
+#elif defined(__aarch64__)
+struct MSVCRT___JUMP_BUFFER
+{
+    unsigned __int64 Frame;
+    unsigned __int64 Reserved;
+    unsigned __int64 X19;
+    unsigned __int64 X20;
+    unsigned __int64 X21;
+    unsigned __int64 X22;
+    unsigned __int64 X23;
+    unsigned __int64 X24;
+    unsigned __int64 X25;
+    unsigned __int64 X26;
+    unsigned __int64 X27;
+    unsigned __int64 X28;
+    unsigned __int64 Fp;
+    unsigned __int64 Lr;
+    unsigned __int64 Sp;
+    unsigned long Fpcr;
+    unsigned long Fpsr;
+    double D[8];
+};
 #endif /* __i386__ */
 
 struct MSVCRT__diskfree_t {
