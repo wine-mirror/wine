@@ -248,7 +248,7 @@ static const cxx_type_info *find_caught_type(cxx_exception_type *exc_type, ULONG
 static inline void copy_exception(void *object, ULONG64 frame,
                                   DISPATCHER_CONTEXT *dispatch,
                                   const catchblock_info *catchblock,
-                                  const cxx_type_info *type)
+                                  const cxx_type_info *type, ULONG64 exc_base)
 {
     const type_info *catch_ti = rva_to_ptr(catchblock->type_info, dispatch->ImageBase);
     void **dest = rva_to_ptr(catchblock->offset, frame);
@@ -273,13 +273,13 @@ static inline void copy_exception(void *object, ULONG64 frame,
             if (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS)
             {
                 void (__cdecl *copy_ctor)(void*, void*, int) =
-                    rva_to_ptr(type->copy_ctor, dispatch->ImageBase);
+                    rva_to_ptr(type->copy_ctor, exc_base);
                 copy_ctor(dest, get_this_pointer(&type->offsets, object), 1);
             }
             else
             {
                 void (__cdecl *copy_ctor)(void*, void*) =
-                    rva_to_ptr(type->copy_ctor, dispatch->ImageBase);
+                    rva_to_ptr(type->copy_ctor, exc_base);
                 copy_ctor(dest, get_this_pointer(&type->offsets, object));
             }
         }
@@ -462,7 +462,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, EXCEPTION_RECORD *unt
 
                 /* copy the exception to its destination on the stack */
                 copy_exception((void*)rec->ExceptionInformation[1],
-                        orig_frame, dispatch, catchblock, type);
+                        orig_frame, dispatch, catchblock, type, exc_base);
             }
             else
             {
