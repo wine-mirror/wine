@@ -333,6 +333,10 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_D32_FLOAT,            WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_S8_UINT_D24_FLOAT,    WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_D32_FLOAT_S8X24_UINT, WINED3DFMT_FLAG_FLOAT},
+    {WINED3DFMT_INST,                 WINED3DFMT_FLAG_EXTENSION},
+    {WINED3DFMT_NULL,                 WINED3DFMT_FLAG_EXTENSION},
+    {WINED3DFMT_NVDB,                 WINED3DFMT_FLAG_EXTENSION},
+    {WINED3DFMT_RESZ,                 WINED3DFMT_FLAG_EXTENSION},
 };
 
 struct wined3d_format_block_info

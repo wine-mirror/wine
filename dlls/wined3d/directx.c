@@ -5220,6 +5220,13 @@ static BOOL wined3d_check_surface_capability(const struct wined3d_format *format
         return TRUE;
     }
 
+    if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_EXTENSION | WINED3DFMT_FLAG_TEXTURE))
+            == (WINED3DFMT_FLAG_EXTENSION | WINED3DFMT_FLAG_TEXTURE))
+    {
+        TRACE("[OK]\n");
+        return TRUE;
+    }
+
     /* Reject other formats */
     TRACE("[FAILED]\n");
     return FALSE;
