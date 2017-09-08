@@ -775,7 +775,7 @@ static void test_MapViewOfFile(void)
 
     /* read/write mapping with SEC_RESERVE */
     mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_RESERVE, 0, MAPPING_SIZE, NULL);
-    ok(mapping != INVALID_HANDLE_VALUE, "CreateFileMappingA failed with error %d\n", GetLastError());
+    ok(mapping != 0, "CreateFileMappingA failed with error %d\n", GetLastError());
     status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
                               sizeof(section_info), NULL );
     ok( !status, "NtQuerySection failed err %x\n", status );
@@ -861,6 +861,100 @@ static void test_MapViewOfFile(void)
     ok(ret, "UnmapViewOfFile failed with error %d\n", GetLastError());
     ret = UnmapViewOfFile(ptr);
     ok(ret, "UnmapViewOfFile failed with error %d\n", GetLastError());
+    CloseHandle(mapping);
+
+    /* same thing with SEC_COMMIT */
+    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_COMMIT, 0, MAPPING_SIZE, NULL);
+    ok(mapping != 0, "CreateFileMappingA failed with error %d\n", GetLastError());
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), NULL );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( section_info.Attributes == SEC_COMMIT, "NtQuerySection wrong attr %08x\n",
+        section_info.Attributes );
+    ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
+    ok( section_info.Size.QuadPart == MAPPING_SIZE, "NtQuerySection wrong size %x%08x / %08x\n",
+        section_info.Size.u.HighPart, section_info.Size.u.LowPart, MAPPING_SIZE );
+
+    ptr = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
+    ok(ptr != NULL, "MapViewOfFile failed with error %d\n", GetLastError());
+
+    ret = VirtualQuery(ptr, &info, sizeof(info));
+    ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+    ok(info.BaseAddress == ptr, "wrong BaseAddress %p/%p\n", ptr, info.BaseAddress);
+    ok(info.AllocationBase == ptr, "wrong AllocationBase %p/%p\n", ptr, info.AllocationBase);
+    ok(info.RegionSize == MAPPING_SIZE, "wrong RegionSize 0x%lx\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State);
+    ok(info.AllocationProtect == PAGE_READWRITE, "wrong AllocationProtect 0x%x\n", info.AllocationProtect);
+    ok(info.Protect == PAGE_READWRITE, "wrong Protect 0x%x\n", info.Protect);
+    ok(info.Type == MEM_MAPPED, "wrong Type 0x%x\n", info.Type);
+
+    ptr = VirtualAlloc(ptr, 0x10000, MEM_COMMIT, PAGE_READONLY);
+    ok(ptr != NULL, "VirtualAlloc failed with error %d\n", GetLastError());
+
+    ret = VirtualQuery(ptr, &info, sizeof(info));
+    ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+    ok(info.BaseAddress == ptr, "wrong BaseAddress %p/%p\n", ptr, info.BaseAddress);
+    ok(info.AllocationBase == ptr, "wrong AllocationBase %p/%p\n", ptr, info.AllocationBase);
+    ok(info.RegionSize == 0x10000, "wrong RegionSize 0x%lx\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State);
+    ok(info.AllocationProtect == PAGE_READWRITE, "wrong AllocationProtect 0x%x\n", info.AllocationProtect);
+    ok(info.Protect == PAGE_READONLY, "wrong Protect 0x%x\n", info.Protect);
+    ok(info.Type == MEM_MAPPED, "wrong Type 0x%x\n", info.Type);
+
+    addr = VirtualAlloc( ptr, MAPPING_SIZE, MEM_RESET, PAGE_READONLY );
+    ok( addr == ptr, "VirtualAlloc failed with error %u\n", GetLastError() );
+
+    ret = VirtualFree( ptr, 0x10000, MEM_DECOMMIT );
+    ok( !ret, "VirtualFree succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "VirtualFree failed with %u\n", GetLastError() );
+
+    ret = UnmapViewOfFile(ptr);
+    ok(ret, "UnmapViewOfFile failed with error %d\n", GetLastError());
+    CloseHandle(mapping);
+
+    /* same thing with SEC_NOCACHE (only supported on recent Windows versions) */
+    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_COMMIT | SEC_NOCACHE,
+                                 0, MAPPING_SIZE, NULL);
+    ok(mapping != 0, "CreateFileMappingA failed with error %d\n", GetLastError());
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), NULL );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( section_info.Attributes == (SEC_COMMIT | SEC_NOCACHE) ||
+        broken(section_info.Attributes == SEC_COMMIT),
+        "NtQuerySection wrong attr %08x\n", section_info.Attributes );
+    if (section_info.Attributes & SEC_NOCACHE)
+    {
+        ptr = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
+        ok(ptr != NULL, "MapViewOfFile failed with error %d\n", GetLastError());
+
+        ret = VirtualQuery(ptr, &info, sizeof(info));
+        ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+        ok(info.BaseAddress == ptr, "wrong BaseAddress %p/%p\n", ptr, info.BaseAddress);
+        ok(info.AllocationBase == ptr, "wrong AllocationBase %p/%p\n", ptr, info.AllocationBase);
+        ok(info.RegionSize == MAPPING_SIZE, "wrong RegionSize 0x%lx\n", info.RegionSize);
+        ok(info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State);
+        ok(info.AllocationProtect == (PAGE_READWRITE | PAGE_NOCACHE),
+           "wrong AllocationProtect 0x%x\n", info.AllocationProtect);
+        ok(info.Protect == (PAGE_READWRITE | PAGE_NOCACHE), "wrong Protect 0x%x\n", info.Protect);
+        ok(info.Type == MEM_MAPPED, "wrong Type 0x%x\n", info.Type);
+
+        ptr = VirtualAlloc(ptr, 0x10000, MEM_COMMIT, PAGE_READONLY);
+        ok(ptr != NULL, "VirtualAlloc failed with error %d\n", GetLastError());
+
+        ret = VirtualQuery(ptr, &info, sizeof(info));
+        ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+        ok(info.BaseAddress == ptr, "wrong BaseAddress %p/%p\n", ptr, info.BaseAddress);
+        ok(info.AllocationBase == ptr, "wrong AllocationBase %p/%p\n", ptr, info.AllocationBase);
+        ok(info.RegionSize == 0x10000, "wrong RegionSize 0x%lx\n", info.RegionSize);
+        ok(info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State);
+        ok(info.AllocationProtect == (PAGE_READWRITE | PAGE_NOCACHE),
+           "wrong AllocationProtect 0x%x\n", info.AllocationProtect);
+        ok(info.Protect == (PAGE_READONLY | PAGE_NOCACHE), "wrong Protect 0x%x\n", info.Protect);
+        ok(info.Type == MEM_MAPPED, "wrong Type 0x%x\n", info.Type);
+
+        ret = UnmapViewOfFile(ptr);
+        ok(ret, "UnmapViewOfFile failed with error %d\n", GetLastError());
+    }
     CloseHandle(mapping);
 
     addr = VirtualAlloc(NULL, 0x10000, MEM_COMMIT, PAGE_READONLY );
