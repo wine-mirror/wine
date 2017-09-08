@@ -389,7 +389,7 @@ HRESULT CDECL wined3d_query_get_data(struct wined3d_query *query,
     }
     else if (query->counter_main != query->counter_retrieved)
     {
-        if (flags & WINED3DGETDATA_FLUSH)
+        if (flags & WINED3DGETDATA_FLUSH && !query->device->cs->queries_flushed)
             wined3d_cs_emit_flush(query->device->cs);
         return S_FALSE;
     }

@@ -877,6 +877,7 @@ void wined3d_cs_emit_flush(struct wined3d_cs *cs)
     op->opcode = WINED3D_CS_OP_FLUSH;
 
     cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
+    cs->queries_flushed = TRUE;
 }
 
 static void wined3d_cs_exec_set_predication(struct wined3d_cs *cs, const void *data)
@@ -1863,6 +1864,7 @@ void wined3d_cs_emit_query_issue(struct wined3d_cs *cs, struct wined3d_query *qu
     op->flags = flags;
 
     cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
+    cs->queries_flushed = FALSE;
 }
 
 static void wined3d_cs_exec_preload_resource(struct wined3d_cs *cs, const void *data)

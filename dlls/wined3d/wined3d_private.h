@@ -3427,6 +3427,7 @@ struct wined3d_cs
     size_t data_size, start, end;
     void *data;
     struct list query_poll_list;
+    BOOL queries_flushed;
 
     HANDLE event;
     BOOL waiting_for_event;
