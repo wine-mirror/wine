@@ -1152,6 +1152,7 @@ struct d3d11_test_context
 
     ID3D11InputLayout *input_layout;
     ID3D11VertexShader *vs;
+    ID3D11Buffer *vs_cb;
     ID3D11Buffer *vb;
 
     ID3D11PixelShader *ps;
@@ -1203,7 +1204,7 @@ static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *con
     return TRUE;
 }
 
-#define release_test_context(c) release_test_context_(__LINE__, c)
+#define release_test_context(context) release_test_context_(__LINE__, context)
 static void release_test_context_(unsigned int line, struct d3d11_test_context *context)
 {
     ULONG ref;
@@ -1212,6 +1213,8 @@ static void release_test_context_(unsigned int line, struct d3d11_test_context *
         ID3D11InputLayout_Release(context->input_layout);
     if (context->vs)
         ID3D11VertexShader_Release(context->vs);
+    if (context->vs_cb)
+        ID3D11Buffer_Release(context->vs_cb);
     if (context->vb)
         ID3D11Buffer_Release(context->vb);
     if (context->ps)
@@ -1229,14 +1232,51 @@ static void release_test_context_(unsigned int line, struct d3d11_test_context *
     ok_(__FILE__, line)(!ref, "Device has %u references left.\n", ref);
 }
 
-#define draw_quad(c) draw_quad_(__LINE__, c)
-static void draw_quad_(unsigned int line, struct d3d11_test_context *context)
+static void draw_quad_vs(unsigned int line, struct d3d11_test_context *context,
+        const DWORD *vs_code, size_t vs_code_size)
 {
     static const D3D11_INPUT_ELEMENT_DESC default_layout_desc[] =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
-    static const DWORD default_vs_code[] =
+    static const struct vec2 quad[] =
+    {
+        {-1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f, -1.0f},
+        { 1.0f,  1.0f},
+    };
+
+    ID3D11Device *device = context->device;
+    unsigned int stride, offset;
+    HRESULT hr;
+
+    if (!context->input_layout)
+    {
+        hr = ID3D11Device_CreateInputLayout(device, default_layout_desc, ARRAY_SIZE(default_layout_desc),
+                vs_code, vs_code_size, &context->input_layout);
+        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+        context->vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
+
+        hr = ID3D11Device_CreateVertexShader(device, vs_code, vs_code_size, NULL, &context->vs);
+        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    }
+
+    ID3D11DeviceContext_IASetInputLayout(context->immediate_context, context->input_layout);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context->immediate_context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    stride = sizeof(*quad);
+    offset = 0;
+    ID3D11DeviceContext_IASetVertexBuffers(context->immediate_context, 0, 1, &context->vb, &stride, &offset);
+    ID3D11DeviceContext_VSSetShader(context->immediate_context, context->vs, NULL, 0);
+
+    ID3D11DeviceContext_Draw(context->immediate_context, 4, 0);
+}
+
+#define draw_quad(context) draw_quad_(__LINE__, context)
+static void draw_quad_(unsigned int line, struct d3d11_test_context *context)
+{
+    static const DWORD vs_code[] =
     {
 #if 0
         float4 main(float4 position : POSITION) : SV_POSITION
@@ -1260,38 +1300,44 @@ static void draw_quad_(unsigned int line, struct d3d11_test_context *context)
         0x49534f50, 0x4e4f4954, 0xababab00, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
         0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49,
     };
-    static const struct vec2 quad[] =
+
+    draw_quad_vs(__LINE__, context, vs_code, sizeof(vs_code));
+}
+
+#define draw_quad_z(context, z) draw_quad_z_(__LINE__, context, z)
+static void draw_quad_z_(unsigned int line, struct d3d11_test_context *context, float z)
+{
+    static const DWORD vs_code[] =
     {
-        {-1.0f, -1.0f},
-        {-1.0f,  1.0f},
-        { 1.0f, -1.0f},
-        { 1.0f,  1.0f},
+#if 0
+        float depth;
+
+        void main(float4 in_position : POSITION, out float4 out_position : SV_Position)
+        {
+            out_position = in_position;
+            out_position.z = depth;
+        }
+#endif
+        0x43425844, 0x22d7ff76, 0xd53b167c, 0x1b49ccf1, 0xbebfec39, 0x00000001, 0x00000100, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000b0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69, 0x52444853, 0x00000064, 0x00010040,
+        0x00000019, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0300005f, 0x001010b2, 0x00000000,
+        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x05000036, 0x001020b2, 0x00000000, 0x00101c46,
+        0x00000000, 0x06000036, 0x00102042, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x0100003e,
     };
 
-    ID3D11Device *device = context->device;
-    unsigned int stride, offset;
-    HRESULT hr;
+    struct vec4 data = {z};
 
-    if (!context->input_layout)
-    {
-        hr = ID3D11Device_CreateInputLayout(device, default_layout_desc, ARRAY_SIZE(default_layout_desc),
-                default_vs_code, sizeof(default_vs_code), &context->input_layout);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    if (!context->vs_cb)
+        context->vs_cb = create_buffer(context->device, D3D11_BIND_CONSTANT_BUFFER, sizeof(data), NULL);
 
-        context->vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
+    ID3D11DeviceContext_UpdateSubresource(context->immediate_context,
+            (ID3D11Resource *)context->vs_cb, 0, NULL, &data, 0, 0);
 
-        hr = ID3D11Device_CreateVertexShader(device, default_vs_code, sizeof(default_vs_code), NULL, &context->vs);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-    }
-
-    ID3D11DeviceContext_IASetInputLayout(context->immediate_context, context->input_layout);
-    ID3D11DeviceContext_IASetPrimitiveTopology(context->immediate_context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-    stride = sizeof(*quad);
-    offset = 0;
-    ID3D11DeviceContext_IASetVertexBuffers(context->immediate_context, 0, 1, &context->vb, &stride, &offset);
-    ID3D11DeviceContext_VSSetShader(context->immediate_context, context->vs, NULL, 0);
-
-    ID3D11DeviceContext_Draw(context->immediate_context, 4, 0);
+    ID3D11DeviceContext_VSSetConstantBuffers(context->immediate_context, 0, 1, &context->vs_cb);
+    draw_quad_vs(__LINE__, context, vs_code, sizeof(vs_code));
 }
 
 static void set_quad_color(struct d3d11_test_context *context, const struct vec4 *color)
@@ -1300,7 +1346,7 @@ static void set_quad_color(struct d3d11_test_context *context, const struct vec4
             (ID3D11Resource *)context->ps_cb, 0, NULL, color, 0, 0);
 }
 
-#define draw_color_quad(c, color) draw_color_quad_(__LINE__, c, color)
+#define draw_color_quad(context, color) draw_color_quad_(__LINE__, context, color)
 static void draw_color_quad_(unsigned int line, struct d3d11_test_context *context, const struct vec4 *color)
 {
     static const DWORD ps_color_code[] =
@@ -20986,6 +21032,159 @@ static void test_early_depth_stencil(void)
     release_test_context(&test_context);
 }
 
+static void test_conservative_depth_output(void)
+{
+    struct shader
+    {
+        const DWORD *code;
+        size_t size;
+    };
+
+    ID3D11DepthStencilState *depth_stencil_state;
+    D3D11_DEPTH_STENCIL_DESC depth_stencil_desc;
+    struct d3d11_test_context test_context;
+    const struct shader *current_shader;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11DeviceContext *context;
+    ID3D11DepthStencilView *dsv;
+    ID3D11Texture2D *texture;
+    ID3D11PixelShader *ps;
+    DWORD expected_color;
+    float expected_depth;
+    ID3D11Device *device;
+    struct vec4 ps_depth;
+    ID3D11Buffer *cb;
+    unsigned int i;
+    HRESULT hr;
+
+    static const DWORD ps_depth_le_code[] =
+    {
+#if 0
+        float depth;
+
+        float4 main(out float out_depth : SV_DepthLessEqual) : SV_Target0
+        {
+            out_depth = depth;
+            return float4(0.0f, 1.0f, 0.f, 1.0f);
+        }
+#endif
+        0x43425844, 0x045c8d00, 0xc49e2ebe, 0x76f6022a, 0xf6996ecc, 0x00000001, 0x00000108, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000098, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000054, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x00000042, 0x00000000, 0x00000000, 0x00000003, 0xffffffff, 0x00000e01, 0x545f5653,
+        0x65677261, 0x56530074, 0x7065445f, 0x654c6874, 0x71457373, 0x006c6175, 0x58454853, 0x00000068,
+        0x00000050, 0x0000001a, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065,
+        0x001020f2, 0x00000000, 0x02000065, 0x00027001, 0x08000036, 0x001020f2, 0x00000000, 0x00004002,
+        0x00000000, 0x3f800000, 0x00000000, 0x3f800000, 0x05000036, 0x00027001, 0x0020800a, 0x00000000,
+        0x00000000, 0x0100003e,
+    };
+    static const struct shader ps_depth_le = {ps_depth_le_code, sizeof(ps_depth_le_code)};
+    static const DWORD ps_depth_ge_code[] =
+    {
+#if 0
+        float depth;
+
+        float4 main(out float out_depth : SV_DepthGreaterEqual) : SV_Target0
+        {
+            out_depth = depth;
+            return float4(0.0f, 1.0f, 0.f, 1.0f);
+        }
+#endif
+        0x43425844, 0xd17af83e, 0xa32c01cc, 0x0d8e9665, 0xe6dc17c2, 0x00000001, 0x0000010c, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000009c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000058, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x00000042, 0x00000000, 0x00000000, 0x00000003, 0xffffffff, 0x00000e01, 0x545f5653,
+        0x65677261, 0x56530074, 0x7065445f, 0x72476874, 0x65746165, 0x75714572, 0xab006c61, 0x58454853,
+        0x00000068, 0x00000050, 0x0000001a, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001,
+        0x03000065, 0x001020f2, 0x00000000, 0x02000065, 0x00026001, 0x08000036, 0x001020f2, 0x00000000,
+        0x00004002, 0x00000000, 0x3f800000, 0x00000000, 0x3f800000, 0x05000036, 0x00026001, 0x0020800a,
+        0x00000000, 0x00000000, 0x0100003e,
+    };
+    static const struct shader ps_depth_ge = {ps_depth_ge_code, sizeof(ps_depth_ge_code)};
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const struct
+    {
+        const struct shader *ps;
+        float vs_depth;
+        float ps_depth;
+        BOOL passes_depth_test;
+    }
+    tests[] =
+    {
+        {&ps_depth_le, 0.7f, 0.7f, TRUE},
+        {&ps_depth_le, 0.7f, 0.4f, FALSE},
+        {&ps_depth_le, 0.4f, 0.4f, FALSE},
+        /* {&ps_depth_le, 0.4f, 0.6f, FALSE}, undefined result */
+        {&ps_depth_ge, 0.7f, 0.7f, TRUE},
+        /* {&ps_depth_ge, 0.7f, 0.4f, TRUE}, undefined result */
+        {&ps_depth_ge, 0.4f, 0.4f, FALSE},
+        {&ps_depth_ge, 0.4f, 0.6f, TRUE},
+    };
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(ps_depth), NULL);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+
+    depth_stencil_desc.DepthEnable = TRUE;
+    depth_stencil_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    depth_stencil_desc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
+    depth_stencil_desc.StencilEnable = FALSE;
+    hr = ID3D11Device_CreateDepthStencilState(device, &depth_stencil_desc, &depth_stencil_state);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil state, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, dsv);
+    ID3D11DeviceContext_OMSetDepthStencilState(context, depth_stencil_state, 0);
+
+    ps = NULL;
+    current_shader = NULL;
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        if (current_shader != tests[i].ps)
+        {
+            if (ps)
+                ID3D11PixelShader_Release(ps);
+
+            current_shader = tests[i].ps;
+            hr = ID3D11Device_CreatePixelShader(device, current_shader->code, current_shader->size, NULL, &ps);
+            ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+            ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+        }
+
+        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+        ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.5f, 0);
+        ps_depth.x = tests[i].ps_depth;
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &ps_depth, 0, 0);
+        draw_quad_z(&test_context, tests[i].vs_depth);
+
+        expected_color = tests[i].passes_depth_test ? 0xff00ff00 : 0xffffffff;
+        expected_depth = tests[i].passes_depth_test ? max(tests[i].vs_depth, tests[i].ps_depth) : 0.5f;
+        check_texture_color(test_context.backbuffer, expected_color, 0);
+        check_texture_float(texture, expected_depth, 1);
+    }
+
+    ID3D11Buffer_Release(cb);
+    ID3D11PixelShader_Release(ps);
+    ID3D11DepthStencilView_Release(dsv);
+    ID3D11DepthStencilState_Release(depth_stencil_state);
+    ID3D11Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -21085,4 +21284,5 @@ START_TEST(d3d11)
     test_gather_c();
     test_fractional_viewports();
     test_early_depth_stencil();
+    test_conservative_depth_output();
 }
