@@ -7244,6 +7244,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     shader_glsl_add_version_declaration(buffer, gl_info);
 
     shader_glsl_enable_extensions(buffer, gl_info);
+    if (gl_info->supported[ARB_CONSERVATIVE_DEPTH])
+        shader_addline(buffer, "#extension GL_ARB_conservative_depth : enable\n");
     if (gl_info->supported[ARB_DERIVATIVE_CONTROL])
         shader_addline(buffer, "#extension GL_ARB_derivative_control : enable\n");
     if (shader_glsl_use_explicit_attrib_location(gl_info))
@@ -7261,6 +7263,14 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+
+    if (gl_info->supported[ARB_CONSERVATIVE_DEPTH])
+    {
+        if (shader->u.ps.depth_output == WINED3DSPR_DEPTHOUTGE)
+            shader_addline(buffer, "layout (depth_greater) out float gl_FragDepth;\n");
+        else if (shader->u.ps.depth_output == WINED3DSPR_DEPTHOUTLE)
+            shader_addline(buffer, "layout (depth_less) out float gl_FragDepth;\n");
+    }
 
     /* Declare uniforms for NP2 texcoord fixup:
      * This is NOT done inside the loop that declares the texture samplers

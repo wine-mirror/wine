@@ -3907,6 +3907,7 @@ struct wined3d_pixel_shader
     DWORD color0_reg;
 
     BOOL force_early_depth_stencil;
+    enum wined3d_shader_register_type depth_output;
 };
 
 struct wined3d_compute_shader
