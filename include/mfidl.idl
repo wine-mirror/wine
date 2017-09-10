@@ -212,6 +212,44 @@ interface IMFStreamDescriptor : IMFAttributes
     HRESULT GetMediaTypeHandler([out] IMFMediaTypeHandler **handler);
 }
 
+[
+    object,
+    uuid(f6696e82-74f7-4f3d-a178-8a5e09c3659f)
+]
+interface IMFClockStateSink : IUnknown
+{
+    HRESULT OnClockStart(
+        [in] MFTIME hnsSystemTime,
+        [in] LONGLONG llClockStartOffset
+    );
+    HRESULT OnClockStop(
+        [in] MFTIME hnssSystemTime
+    );
+    HRESULT OnClockPause(
+        [in] MFTIME hnsSystemTime
+    );
+    HRESULT OnClockRestart(
+        [in] MFTIME hnsSystemTime
+    );
+    HRESULT OnClockSetRate(
+        [in] MFTIME hnsSystemTime,
+        [in] float flRate
+    );
+}
+
+[
+    object,
+    uuid(fa993888-4383-415a-a930-dd472a8cf6f7)
+]
+interface IMFGetService : IUnknown
+{
+    HRESULT GetService(
+        [in] REFGUID guidService,
+        [in] REFIID riid,
+        [out, iid_is(riid)] LPVOID *ppvObject
+    );
+}
+
 cpp_quote("HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **session);")
 cpp_quote("HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver);")
 cpp_quote("HRESULT WINAPI MFCreateTopology(IMFTopology **topology);")
