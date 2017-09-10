@@ -70,6 +70,7 @@ IDL_SRCS = \
 	dyngraph.idl \
 	endpointvolume.idl \
 	errrec.idl \
+	evr.idl \
 	exdisp.idl \
 	fusion.idl \
 	gameux.idl \
