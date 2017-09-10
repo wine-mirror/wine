@@ -2143,6 +2143,14 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "oDepth");
             break;
 
+        case WINED3DSPR_DEPTHOUTGE:
+            shader_addline(buffer, "oDepthGE");
+            break;
+
+        case WINED3DSPR_DEPTHOUTLE:
+            shader_addline(buffer, "oDepthLE");
+            break;
+
         case WINED3DSPR_ATTROUT:
             shader_addline(buffer, "oD");
             break;
