@@ -292,6 +292,13 @@ typedef struct _DXVA2_VideoSample
     DWORD SampleData;
 } DXVA2_VideoSample;
 
+typedef enum
+{
+    DXVA2_SurfaceType_DecoderRenderTarget,
+    DXVA2_SurfaceType_ProcessorRenderTarget,
+    DXVA2_SurfaceType_D3DRenderTargetTexture,
+} DXVA2_SurfaceType;
+
 interface IDirectXVideoDecoder;
 interface IDirectXVideoProcessor;
 
@@ -525,3 +532,21 @@ interface IDirectXVideoProcessor : IUnknown
         [in] UINT NumSamples,
         [out] HANDLE* pHandleCompleteIDirect3DDeviceManager9);
 };
+
+/*****************************************************************************
+ * IDirectXVideoMemoryConfiguration interface
+ */
+[
+    object,
+    uuid(b7f916dd-db3b-49c1-84d7-e45ef99ec726),
+    local
+]
+interface IDirectXVideoMemoryConfiguration : IUnknown
+{
+    HRESULT GetAvailableSurfaceTypeByIndex(
+        [in] DWORD wTypeIndex,
+        [out] DXVA2_SurfaceType *pdwType);
+
+    HRESULT SetSurfaceType(
+        [in] DXVA2_SurfaceType dwType);
+}
