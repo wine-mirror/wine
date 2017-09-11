@@ -3674,51 +3674,35 @@ static void test_CreateFileMapping_protection(void)
 #define ACCESS_READ      0x01
 #define ACCESS_WRITE     0x02
 #define ACCESS_EXECUTE   0x04
-#define ACCESS_WRITECOPY 0x08
 
 static DWORD page_prot_to_access(DWORD prot)
 {
     switch (prot)
     {
-    case PAGE_READWRITE:
-        return ACCESS_READ | ACCESS_WRITE;
-
-    case PAGE_EXECUTE:
-    case PAGE_EXECUTE_READ:
-        return ACCESS_READ | ACCESS_EXECUTE;
-
-    case PAGE_EXECUTE_READWRITE:
-        return ACCESS_READ | ACCESS_WRITE | ACCESS_WRITECOPY | ACCESS_EXECUTE;
-
-    case PAGE_EXECUTE_WRITECOPY:
-        return ACCESS_READ | ACCESS_WRITECOPY | ACCESS_EXECUTE;
-
     case PAGE_READONLY:
-        return ACCESS_READ;
-
     case PAGE_WRITECOPY:
         return ACCESS_READ;
-
+    case PAGE_READWRITE:
+        return ACCESS_READ | ACCESS_WRITE;
+    case PAGE_EXECUTE:
+    case PAGE_EXECUTE_READ:
+    case PAGE_EXECUTE_WRITECOPY:
+        return ACCESS_READ | ACCESS_EXECUTE;
+    case PAGE_EXECUTE_READWRITE:
+        return ACCESS_READ | ACCESS_WRITE | ACCESS_EXECUTE;
     default:
         return 0;
     }
 }
 
-static BOOL is_compatible_protection(DWORD map_prot, DWORD view_prot, DWORD prot)
+static BOOL is_compatible_protection(DWORD view_prot, DWORD prot)
 {
-    DWORD map_access, view_access, prot_access;
+    DWORD view_access, prot_access;
 
-    map_access = page_prot_to_access(map_prot);
     view_access = page_prot_to_access(view_prot);
     prot_access = page_prot_to_access(prot);
 
-    if (view_access == prot_access) return TRUE;
-    if (!view_access) return FALSE;
-
-    if ((view_access & prot_access) != prot_access) return FALSE;
-    if ((map_access & prot_access) == prot_access) return TRUE;
-
-    return FALSE;
+    return ((view_access & prot_access) == prot_access);
 }
 
 static DWORD map_prot_to_access(DWORD prot)
@@ -3726,10 +3710,12 @@ static DWORD map_prot_to_access(DWORD prot)
     switch (prot)
     {
     case PAGE_READWRITE:
+        return SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE | SECTION_QUERY;
     case PAGE_EXECUTE_READWRITE:
         return SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE | SECTION_MAP_EXECUTE_EXPLICIT | SECTION_QUERY;
     case PAGE_READONLY:
     case PAGE_WRITECOPY:
+        return SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_QUERY;
     case PAGE_EXECUTE:
     case PAGE_EXECUTE_READ:
     case PAGE_EXECUTE_WRITECOPY:
@@ -3739,11 +3725,23 @@ static DWORD map_prot_to_access(DWORD prot)
     }
 }
 
+static DWORD file_access_to_prot( DWORD access )
+{
+    BOOL exec = access & FILE_MAP_EXECUTE;
+    access &= ~FILE_MAP_EXECUTE;
+
+    if (access == FILE_MAP_COPY) return exec ? PAGE_EXECUTE_WRITECOPY : PAGE_WRITECOPY;
+    if (access & FILE_MAP_WRITE) return exec ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
+    if (access & FILE_MAP_READ)  return exec ? PAGE_EXECUTE_READ : PAGE_READONLY;
+    return PAGE_NOACCESS;
+}
+
 static BOOL is_compatible_access(DWORD map_prot, DWORD view_prot)
 {
     DWORD access = map_prot_to_access(map_prot);
-    if (!view_prot) view_prot = SECTION_MAP_READ;
-    return (view_prot & access) == view_prot;
+    DWORD view_access = map_prot_to_access( file_access_to_prot( view_prot ));
+    if (!view_access) view_access = SECTION_MAP_READ;
+    return (view_access & access) == view_access;
 }
 
 static void *map_view_of_file(HANDLE handle, DWORD access)
@@ -3752,7 +3750,6 @@ static void *map_view_of_file(HANDLE handle, DWORD access)
     LARGE_INTEGER offset;
     SIZE_T count;
     ULONG protect;
-    BOOL exec;
     void *addr;
 
     if (!pNtMapViewOfSection) return NULL;
@@ -3761,32 +3758,7 @@ static void *map_view_of_file(HANDLE handle, DWORD access)
     offset.u.LowPart  = 0;
     offset.u.HighPart = 0;
 
-    exec = access & FILE_MAP_EXECUTE;
-    access &= ~FILE_MAP_EXECUTE;
-
-    if (access == FILE_MAP_COPY)
-    {
-        if (exec)
-            protect = PAGE_EXECUTE_WRITECOPY;
-        else
-            protect = PAGE_WRITECOPY;
-    }
-    else if (access & FILE_MAP_WRITE)
-    {
-        if (exec)
-            protect = PAGE_EXECUTE_READWRITE;
-        else
-            protect = PAGE_READWRITE;
-    }
-    else if (access & FILE_MAP_READ)
-    {
-        if (exec)
-            protect = PAGE_EXECUTE_READ;
-        else
-            protect = PAGE_READONLY;
-    }
-    else protect = PAGE_NOACCESS;
-
+    protect = file_access_to_prot( access );
     addr = NULL;
     status = pNtMapViewOfSection(handle, GetCurrentProcess(), &addr, 0, 0, &offset,
                                  &count, 1 /* ViewShare */, 0, protect);
@@ -3804,7 +3776,7 @@ static void test_mapping(void)
     static const DWORD page_prot[] =
     {
         PAGE_NOACCESS, PAGE_READONLY, PAGE_READWRITE, PAGE_WRITECOPY,
-        PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY
+        PAGE_EXECUTE, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY
     };
     static const struct
     {
@@ -3882,6 +3854,13 @@ static void test_mapping(void)
             CloseHandle(hmap);
             hmap = hmap2;
         }
+        if (page_prot[i] == PAGE_EXECUTE)
+        {
+            ok(!hmap, "CreateFileMapping(PAGE_NOACCESS) should fail\n");
+            ok(GetLastError() == ERROR_INVALID_PARAMETER,
+               "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+            continue;
+        }
 
         if (!hmap)
         {
@@ -3924,8 +3903,25 @@ static void test_mapping(void)
 
             if (!is_compatible_access(page_prot[i], view[j].access))
             {
-                ok(!base, "%d: MapViewOfFile(%04x/%04x) should fail\n", j, page_prot[i], view[j].access);
-                ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+                /* FILE_MAP_EXECUTE | FILE_MAP_COPY broken on XP */
+                if (base != NULL && view[j].access == (FILE_MAP_EXECUTE | FILE_MAP_COPY))
+                {
+                    todo_wine
+                    ok( broken(base != NULL), "%d: MapViewOfFile(%04x/%04x) should fail\n",
+                        j, page_prot[i], view[j].access);
+                    UnmapViewOfFile( base );
+                }
+                else todo_wine_if ((page_prot[i] == PAGE_READONLY &&
+                                    is_compatible_access( PAGE_EXECUTE_READ, view[j].access )) ||
+                                   (page_prot[i] == PAGE_READWRITE &&
+                                    is_compatible_access( PAGE_EXECUTE_READWRITE, view[j].access )) ||
+                                   (page_prot[i] == PAGE_WRITECOPY &&
+                                    is_compatible_access( PAGE_EXECUTE_WRITECOPY, view[j].access )))
+                {
+                    ok(!base, "%d: MapViewOfFile(%04x/%04x) should fail\n",
+                       j, page_prot[i], view[j].access);
+                    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+                }
                 continue;
             }
 
@@ -3974,11 +3970,12 @@ static void test_mapping(void)
                 SetLastError(0xdeadbeef);
                 old_prot = 0xdeadbeef;
                 ret = VirtualProtect(base, si.dwPageSize, page_prot[k], &old_prot);
-                if (is_compatible_protection(page_prot[i], view[j].prot, page_prot[k]))
+                if (is_compatible_protection(view[j].prot, page_prot[k]))
                 {
                     /* win2k and XP don't support EXEC on file mappings */
                     if (!ret && page_prot[k] == PAGE_EXECUTE)
                     {
+                        todo_wine
                         ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE\n");
                         continue;
                     }
@@ -3991,6 +3988,7 @@ static void test_mapping(void)
                     /* Vista+ supports PAGE_EXECUTE_WRITECOPY, earlier versions don't */
                     if (!ret && page_prot[k] == PAGE_EXECUTE_WRITECOPY)
                     {
+                        todo_wine
                         ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE_WRITECOPY\n");
                         continue;
                     }
@@ -4004,17 +4002,15 @@ static void test_mapping(void)
                     ok(ret, "VirtualProtect error %d, map %#x, view %#x, requested prot %#x\n", GetLastError(), page_prot[i], view[j].prot, page_prot[k]);
                     ok(old_prot == prev_prot, "got %#x, expected %#x\n", old_prot, prev_prot);
                     prev_prot = page_prot[k];
+
+                    ret = VirtualQuery(base, &info, sizeof(info));
+                    ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
+                    ok(info.Protect == page_prot[k],
+                       "VirtualProtect wrong prot, map %#x, view %#x, requested prot %#x got %#x\n",
+                       page_prot[i], view[j].prot, page_prot[k], info.Protect );
                 }
                 else
                 {
-                    /* NT4 doesn't fail on incompatible map and view */
-                    if (ret)
-                    {
-                        ok(broken(ret), "VirtualProtect should fail, map %#x, view %#x, requested prot %#x\n", page_prot[i], view[j].prot, page_prot[k]);
-                        skip("Incompatible map and view are not properly handled on this platform\n");
-                        break; /* NT4 won't pass remaining tests */
-                    }
-
                     ok(!ret, "VirtualProtect should fail, map %#x, view %#x, requested prot %#x\n", page_prot[i], view[j].prot, page_prot[k]);
                     ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
                 }
