@@ -3725,6 +3725,16 @@ static DWORD map_prot_to_access(DWORD prot)
     }
 }
 
+static DWORD map_prot_no_write(DWORD prot)
+{
+    switch (prot)
+    {
+    case PAGE_READWRITE: return PAGE_WRITECOPY;
+    case PAGE_EXECUTE_READWRITE: return PAGE_EXECUTE_WRITECOPY;
+    default: return prot;
+    }
+}
+
 static DWORD file_access_to_prot( DWORD access )
 {
     BOOL exec = access & FILE_MAP_EXECUTE;
@@ -3771,7 +3781,7 @@ static void *map_view_of_file(HANDLE handle, DWORD access)
     return addr;
 }
 
-static void test_mapping(void)
+static void test_mapping( HANDLE hfile )
 {
     static const DWORD page_prot[] =
     {
@@ -3818,20 +3828,11 @@ static void test_mapping(void)
     };
     void *base, *nt_base, *ptr;
     DWORD i, j, k, ret, old_prot, prev_prot;
-    char temp_path[MAX_PATH];
-    char file_name[MAX_PATH];
-    HANDLE hfile, hmap;
+    HANDLE hmap;
     MEMORY_BASIC_INFORMATION info, nt_info;
+    BOOL anon_mapping = (hfile == INVALID_HANDLE_VALUE);
 
-    GetTempPathA(MAX_PATH, temp_path);
-    GetTempFileNameA(temp_path, "map", 0, file_name);
-
-    SetLastError(0xdeadbeef);
-    hfile = CreateFileA(file_name, GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile(%s) error %d\n", file_name, GetLastError());
-    SetFilePointer(hfile, si.dwPageSize, NULL, FILE_BEGIN);
-    SetEndOfFile(hfile);
-
+    trace( "testing %s mapping\n", anon_mapping ? "anonymous" : "file" );
     for (i = 0; i < sizeof(page_prot)/sizeof(page_prot[0]); i++)
     {
         SetLastError(0xdeadbeef);
@@ -4021,10 +4022,43 @@ static void test_mapping(void)
                 /*trace("map %#x, view %#x, requested prot %#x\n", page_prot[i], view[j].prot, page_prot[k]);*/
                 SetLastError(0xdeadbeef);
                 ptr = VirtualAlloc(base, si.dwPageSize, MEM_COMMIT, page_prot[k]);
-                ok(!ptr, "VirtualAlloc(%02x) should fail\n", page_prot[k]);
-                /* FIXME: remove once Wine is fixed */
-                todo_wine_if (page_prot[k] == PAGE_WRITECOPY || page_prot[k] == PAGE_EXECUTE_WRITECOPY)
+                if (anon_mapping)
+                {
+                    if (is_compatible_protection(view[j].prot, page_prot[k]))
+                    {
+                        todo_wine_if (!ptr)
+                        ok(ptr != NULL, "VirtualAlloc error %u, map %#x, view %#x, requested prot %#x\n",
+                           GetLastError(), page_prot[i], view[j].prot, page_prot[k]);
+                    }
+                    else
+                    {
+                        /* versions <= Vista accept all protections without checking */
+                        todo_wine_if (ptr)
+                        ok(!ptr || broken(ptr != NULL),
+                           "VirtualAlloc should fail, map %#x, view %#x, requested prot %#x\n",
+                           page_prot[i], view[j].prot, page_prot[k]);
+                        if (!ptr) ok( GetLastError() == ERROR_INVALID_PARAMETER,
+                                      "wrong error %u\n", GetLastError());
+                    }
+                    if (ptr)
+                    {
+                        ret = VirtualQuery(base, &info, sizeof(info));
+                        ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
+                        ok(info.Protect == page_prot[k] ||
+                           /* if the mapping doesn't have write access,
+                            *  broken versions silently switch to WRITECOPY */
+                           broken( info.Protect == map_prot_no_write(page_prot[k]) ),
+                           "VirtualAlloc wrong prot, map %#x, view %#x, requested prot %#x got %#x\n",
+                           page_prot[i], view[j].prot, page_prot[k], info.Protect );
+                    }
+                }
+                else
+                {
+                    ok(!ptr, "VirtualAlloc(%02x) should fail\n", page_prot[k]);
+                    /* FIXME: remove once Wine is fixed */
+                    todo_wine_if (page_prot[k] == PAGE_WRITECOPY || page_prot[k] == PAGE_EXECUTE_WRITECOPY)
                     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+                }
             }
 
             UnmapViewOfFile(base);
@@ -4032,9 +4066,29 @@ static void test_mapping(void)
 
         CloseHandle(hmap);
     }
+}
 
-    CloseHandle(hfile);
-    DeleteFileA(file_name);
+static void test_mappings(void)
+{
+    char temp_path[MAX_PATH];
+    char file_name[MAX_PATH];
+    HANDLE hfile;
+
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "map", 0, file_name);
+
+    hfile = CreateFileA(file_name, GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile(%s) error %d\n", file_name, GetLastError());
+    SetFilePointer(hfile, si.dwPageSize, NULL, FILE_BEGIN);
+    SetEndOfFile(hfile);
+
+    test_mapping( hfile );
+
+    CloseHandle( hfile );
+    DeleteFileA( file_name );
+
+    /* now anonymous mappings */
+    test_mapping( INVALID_HANDLE_VALUE );
 }
 
 static void test_shared_memory(BOOL is_child)
@@ -4189,7 +4243,7 @@ START_TEST(virtual)
     test_shared_memory_ro(FALSE, FILE_MAP_READ|FILE_MAP_WRITE);
     test_shared_memory_ro(FALSE, FILE_MAP_COPY);
     test_shared_memory_ro(FALSE, FILE_MAP_COPY|FILE_MAP_WRITE);
-    test_mapping();
+    test_mappings();
     test_CreateFileMapping_protection();
     test_VirtualAlloc_protection();
     test_VirtualProtect();
