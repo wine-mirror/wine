@@ -1634,25 +1634,25 @@ NTSTATUS virtual_create_builtin_view( void *module )
     server_enter_uninterrupted_section( &csVirtual, &sigset );
     status = create_view( &view, base, size, SEC_IMAGE | SEC_FILE | VPROT_SYSTEM |
                           VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
-    if (!status) TRACE( "created %p-%p\n", base, (char *)base + size );
-    server_leave_uninterrupted_section( &csVirtual, &sigset );
-
-    if (status) return status;
-
-    /* The PE header is always read-only, no write, no execute. */
-    set_page_vprot( view->base, page_size, VPROT_COMMITTED | VPROT_READ );
-
-    sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
-    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    if (!status)
     {
-        BYTE flags = VPROT_COMMITTED;
+        TRACE( "created %p-%p\n", base, (char *)base + size );
 
-        if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) flags |= VPROT_EXEC;
-        if (sec[i].Characteristics & IMAGE_SCN_MEM_READ) flags |= VPROT_READ;
-        if (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE) flags |= VPROT_WRITE;
-        set_page_vprot( (char *)view->base + sec[i].VirtualAddress, sec[i].Misc.VirtualSize, flags );
+        /* The PE header is always read-only, no write, no execute. */
+        set_page_vprot( base, page_size, VPROT_COMMITTED | VPROT_READ );
+
+        sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+        for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+        {
+            BYTE flags = VPROT_COMMITTED;
+
+            if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) flags |= VPROT_EXEC;
+            if (sec[i].Characteristics & IMAGE_SCN_MEM_READ) flags |= VPROT_READ;
+            if (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE) flags |= VPROT_WRITE;
+            set_page_vprot( (char *)base + sec[i].VirtualAddress, sec[i].Misc.VirtualSize, flags );
+        }
     }
-
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
 }
 
