@@ -36,6 +36,7 @@
 #define MAPPING_SIZE 0x100000
 
 static HINSTANCE hkernel32, hntdll;
+static SYSTEM_INFO si;
 static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
 static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 static UINT   (WINAPI *pGetWriteWatch)(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
@@ -3184,13 +3185,9 @@ static void test_VirtualProtect(void)
     char *base, *ptr;
     DWORD ret, old_prot, rw_prot, exec_prot, i, j;
     MEMORY_BASIC_INFORMATION info;
-    SYSTEM_INFO si;
     void *addr;
     SIZE_T size;
     NTSTATUS status;
-
-    GetSystemInfo(&si);
-    trace("system page size %#x\n", si.dwPageSize);
 
     SetLastError(0xdeadbeef);
     base = VirtualAlloc(0, si.dwPageSize, MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
@@ -3381,10 +3378,6 @@ static void test_VirtualAlloc_protection(void)
     char *base, *ptr;
     DWORD ret, i;
     MEMORY_BASIC_INFORMATION info;
-    SYSTEM_INFO si;
-
-    GetSystemInfo(&si);
-    trace("system page size %#x\n", si.dwPageSize);
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
@@ -3475,14 +3468,10 @@ static void test_CreateFileMapping_protection(void)
     char *base, *ptr;
     DWORD ret, i, alloc_prot, prot, old_prot;
     MEMORY_BASIC_INFORMATION info;
-    SYSTEM_INFO si;
     char temp_path[MAX_PATH];
     char file_name[MAX_PATH];
     HANDLE hfile, hmap;
     BOOL page_exec_supported = TRUE;
-
-    GetSystemInfo(&si);
-    trace("system page size %#x\n", si.dwPageSize);
 
     GetTempPathA(MAX_PATH, temp_path);
     GetTempFileNameA(temp_path, "map", 0, file_name);
@@ -3857,14 +3846,10 @@ static void test_mapping(void)
     };
     void *base, *nt_base, *ptr;
     DWORD i, j, k, ret, old_prot, prev_prot;
-    SYSTEM_INFO si;
     char temp_path[MAX_PATH];
     char file_name[MAX_PATH];
     HANDLE hfile, hmap;
     MEMORY_BASIC_INFORMATION info, nt_info;
-
-    GetSystemInfo(&si);
-    trace("system page size %#x\n", si.dwPageSize);
 
     GetTempPathA(MAX_PATH, temp_path);
     GetTempFileNameA(temp_path, "map", 0, file_name);
@@ -4200,6 +4185,9 @@ START_TEST(virtual)
     pNtProtectVirtualMemory = (void *)GetProcAddress( hntdll, "NtProtectVirtualMemory" );
     pNtAllocateVirtualMemory = (void *)GetProcAddress( hntdll, "NtAllocateVirtualMemory" );
     pNtFreeVirtualMemory = (void *)GetProcAddress( hntdll, "NtFreeVirtualMemory" );
+
+    GetSystemInfo(&si);
+    trace("system page size %#x\n", si.dwPageSize);
 
     test_shared_memory(FALSE);
     test_shared_memory_ro(FALSE, FILE_MAP_READ|FILE_MAP_WRITE);
