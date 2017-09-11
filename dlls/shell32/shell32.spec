@@ -410,6 +410,7 @@
 @ stdcall SHLoadInProc(ptr)
 @ stdcall SHLoadNonloadedIconOverlayIdentifiers()
 @ stdcall SHOpenFolderAndSelectItems(ptr long ptr long)
+@ stdcall SHOpenWithDialog(long ptr)
 @ stdcall SHParseDisplayName(wstr ptr ptr long ptr)
 @ stdcall SHPathPrepareForWriteA(long ptr str long)
 @ stdcall SHPathPrepareForWriteW(long ptr wstr long)

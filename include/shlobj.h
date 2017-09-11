@@ -152,6 +152,30 @@ BOOL WINAPI SHObjectProperties(HWND,DWORD,LPCWSTR,LPCWSTR);
 
 int WINAPI PathCleanupSpec(LPCWSTR,LPWSTR);
 
+/* SHOpenWithDialog API */
+
+typedef enum
+{
+    OAIF_ALLOW_REGISTRATION = 0x00000001,
+    OAIF_REGISTER_EXT       = 0x00000002,
+    OAIF_EXEC               = 0x00000004,
+    OAIF_FORCE_REGISTRATION = 0x00000008,
+    OAIF_HIDE_REGISTRATION  = 0x00000020,
+    OAIF_URL_PROTOCOL       = 0x00000040,
+    OAIF_FILE_IS_URI        = 0x00000080
+} OPEN_AS_INFO_FLAGS;
+
+#include <pshpack8.h>
+typedef struct
+{
+    LPCWSTR pcszFile;
+    LPCWSTR pcszClass;
+    OPEN_AS_INFO_FLAGS oaifInFlags;
+} OPENASINFO;
+#include <poppack.h>
+
+HRESULT WINAPI SHOpenWithDialog(HWND,const OPENASINFO*);
+
 /* Shell_MergeMenus flags */
 #define MM_ADDSEPARATOR     0x00000001
 #define MM_SUBMENUSHAVEIDS  0x00000002
