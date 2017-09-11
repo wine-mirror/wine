@@ -403,7 +403,7 @@ static void TOOLTIPS_GetDispInfoA(const TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *too
         }
     }
     else {
-        ERR("recursive text callback!\n");
+        ERR("recursive text callback\n");
         buffer[0] = '\0';
     }
 
@@ -459,7 +459,7 @@ static void TOOLTIPS_GetDispInfoW(const TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *too
         }
     }
     else {
-        ERR("recursive text callback!\n");
+        ERR("recursive text callback\n");
         buffer[0] = '\0';
     }
 
@@ -594,7 +594,7 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
     {
         if (infoPtr->nTrackTool == -1)
         {
-            TRACE("invalid tracking tool (-1)!\n");
+            TRACE("invalid tracking tool %d\n", infoPtr->nTrackTool);
             return;
         }
         nTool = infoPtr->nTrackTool;
@@ -603,13 +603,13 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
     {
         if (infoPtr->nTool == -1)
         {
-            TRACE("invalid tool (-1)!\n");
-		return;
+            TRACE("invalid tool %d\n", infoPtr->nTool);
+            return;
         }
         nTool = infoPtr->nTool;
     }
 
-    TRACE("Show tooltip pre %d! (%p)\n", nTool, infoPtr->hwndSelf);
+    TRACE("Show tooltip pre %d, %p\n", nTool, infoPtr->hwndSelf);
 
     current = infoPtr->nCurrentTool;
     if (!track_activate)
@@ -625,7 +625,7 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
 
     toolPtr = &infoPtr->tools[nTool];
 
-    TRACE("Show tooltip %d!\n", nTool);
+    TRACE("Show tooltip %d\n", nTool);
 
     hdr.hwndFrom = infoPtr->hwndSelf;
     hdr.idFrom = toolPtr->uId;
@@ -835,9 +835,9 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
     if (!track_activate)
     {
         SetTimer (infoPtr->hwndSelf, ID_TIMERPOP, infoPtr->nAutoPopTime, 0);
-        TRACE("timer 2 started!\n");
+        TRACE("timer 2 started\n");
         SetTimer (infoPtr->hwndSelf, ID_TIMERLEAVE, infoPtr->nReshowTime, 0);
-        TRACE("timer 3 started!\n");
+        TRACE("timer 3 started\n");
     }
 }
 
@@ -848,7 +848,7 @@ TOOLTIPS_Hide (TOOLTIPS_INFO *infoPtr)
     TTTOOL_INFO *toolPtr;
     NMHDR hdr;
 
-    TRACE("Hide tooltip %d! (%p)\n", infoPtr->nCurrentTool, infoPtr->hwndSelf);
+    TRACE("Hide tooltip %d, %p.\n", infoPtr->nCurrentTool, infoPtr->hwndSelf);
 
     if (infoPtr->nCurrentTool == -1)
 	return;
@@ -1039,8 +1039,7 @@ TOOLTIPS_Activate (TOOLTIPS_INFO *infoPtr, BOOL activate)
 {
     infoPtr->bActive = activate;
 
-    if (infoPtr->bActive)
-	TRACE("activate!\n");
+    TRACE("activate %d\n", activate);
 
     if (!(infoPtr->bActive) && (infoPtr->nCurrentTool != -1))
 	TOOLTIPS_Hide (infoPtr);
@@ -1057,9 +1056,8 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 
     if (!ti) return FALSE;
 
-    TRACE("add tool (%p) %p %ld%s!\n",
-	   infoPtr->hwndSelf, ti->hwnd, ti->uId,
-	   (ti->uFlags & TTF_IDISHWND) ? " TTF_IDISHWND" : "");
+    TRACE("add tool (%p) %p %ld%s\n", infoPtr->hwndSelf, ti->hwnd, ti->uId,
+        (ti->uFlags & TTF_IDISHWND) ? " TTF_IDISHWND" : "");
 
     if (ti->cbSize >= TTTOOLINFOW_V2_SIZE && !ti->lpszText && isW)
         return FALSE;
@@ -1095,18 +1093,18 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
         }
         else if (ti->lpszText) {
             if (TOOLTIPS_IsCallbackString(ti->lpszText, isW)) {
-                TRACE("add CALLBACK!\n");
+                TRACE("add CALLBACK\n");
                 toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
             }
             else if (isW) {
                 INT len = lstrlenW (ti->lpszText);
-                TRACE("add text %s!\n", debugstr_w(ti->lpszText));
+                TRACE("add text %s\n", debugstr_w(ti->lpszText));
                 toolPtr->lpszText =	Alloc ((len + 1)*sizeof(WCHAR));
                 strcpyW (toolPtr->lpszText, ti->lpszText);
             }
             else {
                 INT len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText, -1, NULL, 0);
-                TRACE("add text \"%s\"!\n", (LPSTR)ti->lpszText);
+                TRACE("add text \"%s\"\n", debugstr_a((char *)ti->lpszText));
                 toolPtr->lpszText =	Alloc (len * sizeof(WCHAR));
                 MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText, -1, toolPtr->lpszText, len);
             }
@@ -1126,7 +1124,7 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 	    SetWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1,
 			      (DWORD_PTR)infoPtr->hwndSelf);
 	}
-	TRACE("subclassing installed!\n");
+	TRACE("subclassing installed\n");
     }
 
     nResult = SendMessageW (toolPtr->hwnd, WM_NOTIFYFORMAT,
@@ -1138,7 +1136,7 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
         toolPtr->bNotifyUnicode = TRUE;
 	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_UNICODE\n");
     } else {
-        TRACE (" -- WM_NOTIFYFORMAT returns: error!\n");
+        TRACE (" -- WM_NOTIFYFORMAT returns: %d\n", nResult);
     }
 
     return TRUE;
@@ -1423,7 +1421,7 @@ TOOLTIPS_HitTestT (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOW lptthit,
     if (nTool == -1)
 	return FALSE;
 
-    TRACE("tool %d!\n", nTool);
+    TRACE("tool %d\n", nTool);
 
     /* copy tool data */
     if (lptthit->ti.cbSize >= TTTOOLINFOW_V1_SIZE)
@@ -1470,7 +1468,7 @@ TOOLTIPS_RelayEvent (TOOLTIPS_INFO *infoPtr, LPMSG lpMsg)
     INT nOldTool;
 
     if (!lpMsg) {
-	ERR("lpMsg == NULL!\n");
+	ERR("lpMsg == NULL\n");
 	return 0;
     }
 
@@ -1501,14 +1499,14 @@ TOOLTIPS_RelayEvent (TOOLTIPS_INFO *infoPtr, LPMSG lpMsg)
 		} else if (nOldTool == -1) { /* Moved from outside */
 		    if(infoPtr->bActive) {
 		        SetTimer(infoPtr->hwndSelf, ID_TIMERSHOW, infoPtr->nInitialTime, 0);
-			TRACE("timer 1 started!\n");
+                        TRACE("timer 1 started\n");
 		    }
 		} else { /* Moved from one to another */
 		    TOOLTIPS_Hide (infoPtr);
 		    KillTimer(infoPtr->hwndSelf, ID_TIMERLEAVE);
 		    if(infoPtr->bActive) {
 		        SetTimer (infoPtr->hwndSelf, ID_TIMERSHOW, infoPtr->nReshowTime, 0);
-			TRACE("timer 1 started!\n");
+                        TRACE("timer 1 started\n");
 		    }
 		}
 	    } else if(infoPtr->nCurrentTool != -1) { /* restart autopop */
@@ -1518,7 +1516,7 @@ TOOLTIPS_RelayEvent (TOOLTIPS_INFO *infoPtr, LPMSG lpMsg)
 	    } else if(infoPtr->nTool != -1 && infoPtr->bActive) {
                 /* previous show attempt didn't result in tooltip so try again */
 		SetTimer(infoPtr->hwndSelf, ID_TIMERSHOW, infoPtr->nInitialTime, 0);
-		TRACE("timer 1 started!\n");
+                TRACE("timer 1 started\n");
 	    }
 	    break;
     }
@@ -1674,7 +1672,7 @@ TOOLTIPS_SetToolInfoT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     toolPtr->hinst  = ti->hinst;
 
     if (IS_INTRESOURCE(ti->lpszText)) {
-	TRACE("set string id %x!\n", LOWORD(ti->lpszText));
+	TRACE("set string id %x\n", LOWORD(ti->lpszText));
 	toolPtr->lpszText = ti->lpszText;
     }
     else {
@@ -1733,7 +1731,7 @@ TOOLTIPS_TrackActivate (TOOLTIPS_INFO *infoPtr, BOOL track_activate, const TTTOO
 	/* activate */
 	infoPtr->nTrackTool = TOOLTIPS_GetToolFromInfoT (infoPtr, (const TTTOOLINFOW*)ti);
 	if (infoPtr->nTrackTool != -1) {
-	    TRACE("activated!\n");
+	    TRACE("activated\n");
 	    infoPtr->bTrackActive = TRUE;
 	    TOOLTIPS_TrackShow (infoPtr);
 	}
@@ -1745,7 +1743,7 @@ TOOLTIPS_TrackActivate (TOOLTIPS_INFO *infoPtr, BOOL track_activate, const TTTOO
 	infoPtr->bTrackActive = FALSE;
 	infoPtr->nTrackTool = -1;
 
-	TRACE("deactivated!\n");
+        TRACE("deactivated\n");
     }
 
     return 0;
@@ -1968,7 +1966,7 @@ TOOLTIPS_NCHitTest (const TOOLTIPS_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if ((nTool > -1) && (nTool < infoPtr->uNumTools)) {
 	if (infoPtr->tools[nTool].uFlags & TTF_TRANSPARENT) {
-	    TRACE("-- in transparent mode!\n");
+	    TRACE("-- in transparent mode\n");
 	    return HTTRANSPARENT;
 	}
     }
@@ -2015,9 +2013,8 @@ TOOLTIPS_SetFont (TOOLTIPS_INFO *infoPtr, HFONT hFont, BOOL redraw)
     lf.lfWeight = FW_BOLD;
     infoPtr->hTitleFont = CreateFontIndirectW(&lf);
 
-    if (redraw && infoPtr->nCurrentTool != -1) {
-	FIXME("full redraw needed!\n");
-    }
+    if (redraw && infoPtr->nCurrentTool != -1)
+        FIXME("full redraw needed\n");
 
     return 0;
 }
@@ -2066,7 +2063,7 @@ TOOLTIPS_Timer (TOOLTIPS_INFO *infoPtr, INT iTimer)
 {
     INT nOldTool;
 
-    TRACE("timer %d (%p) expired!\n", iTimer, infoPtr->hwndSelf);
+    TRACE("timer %d (%p) expired\n", iTimer, infoPtr->hwndSelf);
 
     switch (iTimer) {
     case ID_TIMERSHOW:
