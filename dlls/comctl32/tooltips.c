@@ -588,7 +588,7 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
     NMHDR  hdr;
     int ptfx = 0;
     DWORD style = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
-    INT nTool;
+    INT nTool, current;
 
     if (track_activate)
     {
@@ -611,15 +611,19 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
 
     TRACE("Show tooltip pre %d! (%p)\n", nTool, infoPtr->hwndSelf);
 
+    current = infoPtr->nCurrentTool;
+    if (!track_activate)
+        infoPtr->nCurrentTool = infoPtr->nTool;
+
     TOOLTIPS_GetTipText (infoPtr, nTool, infoPtr->szTipText);
 
     if (infoPtr->szTipText[0] == '\0')
+    {
+        infoPtr->nCurrentTool = current;
         return;
+    }
 
     toolPtr = &infoPtr->tools[nTool];
-
-    if (!track_activate)
-        infoPtr->nCurrentTool = infoPtr->nTool;
 
     TRACE("Show tooltip %d!\n", nTool);
 
