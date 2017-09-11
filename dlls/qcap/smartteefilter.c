@@ -149,9 +149,7 @@ static HRESULT WINAPI SmartTeeFilter_Stop(IBaseFilter *iface)
     SmartTeeFilter *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)\n", This);
     EnterCriticalSection(&This->filter.csFilter);
-    if(This->filter.state != State_Stopped) {
-        This->filter.state = State_Stopped;
-    }
+    This->filter.state = State_Stopped;
     LeaveCriticalSection(&This->filter.csFilter);
     return S_OK;
 }
