@@ -1409,8 +1409,18 @@ static HRESULT WINAPI JpegEncoder_SetColorContexts(IWICBitmapEncoder *iface,
 
 static HRESULT WINAPI JpegEncoder_SetPalette(IWICBitmapEncoder *iface, IWICPalette *pIPalette)
 {
+    JpegEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    HRESULT hr;
+
     TRACE("(%p,%p)\n", iface, pIPalette);
-    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+
+    EnterCriticalSection(&This->lock);
+
+    hr = This->initialized ? WINCODEC_ERR_UNSUPPORTEDOPERATION : WINCODEC_ERR_NOTINITIALIZED;
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI JpegEncoder_SetThumbnail(IWICBitmapEncoder *iface, IWICBitmapSource *pIThumbnail)
