@@ -151,8 +151,8 @@ static void test_customdraw(void) {
 
    DWORD       iterationNumber;
    WNDCLASSA wc;
-   LRESULT   lResult;
    POINT orig_pos;
+   LRESULT ret;
 
    /* Create a class to use the custom draw wndproc */
    wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -216,8 +216,8 @@ static void test_customdraw(void) {
        toolInfo.lpszText = (LPSTR)"This is a test tooltip";
        toolInfo.lParam = 0xdeadbeef;
        GetClientRect (parent, &toolInfo.rect);
-       lResult = SendMessageA(hwndTip, TTM_ADDTOOLA, 0, (LPARAM)&toolInfo);
-       ok(lResult, "Adding the tool to the tooltip failed\n");
+       ret = SendMessageA(hwndTip, TTM_ADDTOOLA, 0, (LPARAM)&toolInfo);
+       ok(ret, "Failed to add the tool.\n");
 
        /* Make tooltip appear quickly */
        SendMessageA(hwndTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(1,0));
@@ -235,6 +235,20 @@ static void test_customdraw(void) {
               "CustomDraw run %d stages %x, expected %x\n", iterationNumber, CD_Stages,
               expectedResults[iterationNumber].ExpectedCalls);
        }
+
+       ret = SendMessageA(hwndTip, TTM_GETCURRENTTOOLA, 0, 0);
+       ok(ret, "Failed to get current tool %#lx.\n", ret);
+
+       memset(&toolInfo, 0xcc, sizeof(toolInfo));
+       toolInfo.cbSize = sizeof(toolInfo);
+       toolInfo.lpszText = NULL;
+       toolInfo.lpReserved = (void *)0xdeadbeef;
+       SendMessageA(hwndTip, TTM_GETCURRENTTOOLA, 0, (LPARAM)&toolInfo);
+       ok(toolInfo.hwnd == parent, "Unexpected hwnd %p.\n", toolInfo.hwnd);
+       ok(toolInfo.hinst == GetModuleHandleA(NULL), "Unexpected hinst %p.\n", toolInfo.hinst);
+       ok(toolInfo.uId == 0x1234abcd, "Unexpected uId %lx.\n", toolInfo.uId);
+       ok(toolInfo.lParam == 0, "Unexpected lParam %lx.\n", toolInfo.lParam);
+       ok(toolInfo.lpReserved == (void *)0xdeadbeef, "Unexpected lpReserved %p.\n", toolInfo.lpReserved);
 
        /* Clean up */
        DestroyWindow(hwndTip);
@@ -491,9 +505,8 @@ static void test_ttm_gettoolinfo(void)
     HWND hwnd;
     DWORD r;
 
-    hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0,
-                           10, 10, 300, 100,
-                           NULL, NULL, NULL, 0);
+    hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0, 10, 10, 300, 100, NULL, NULL, NULL, 0);
+    ok(hwnd != NULL, "Failed to create tooltip control.\n");
 
     ti.cbSize = TTTOOLINFOA_V2_SIZE;
     ti.hwnd = NULL;
@@ -611,11 +624,7 @@ static void test_ttm_gettoolinfo(void)
     hwnd = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0,
                            10, 10, 300, 100,
                            NULL, NULL, NULL, 0);
-    if(!hwnd)
-    {
-        win_skip("CreateWindowExW() not supported. Skipping.\n");
-        return;
-    }
+    ok(hwnd != NULL, "Failed to create tooltip window.\n");
 
     tiW.cbSize = TTTOOLINFOW_V1_SIZE - 1;
     tiW.hwnd = NULL;
@@ -757,11 +766,7 @@ static void test_longtextW(void)
     hwnd = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0,
                            10, 10, 300, 100,
                            NULL, NULL, NULL, 0);
-    if(!hwnd)
-    {
-        win_skip("CreateWindowExW() not supported. Skipping.\n");
-        return;
-    }
+    ok(hwnd != NULL, "Failed to create tooltip window.\n");
 
     toolinfoW.cbSize = TTTOOLINFOW_V2_SIZE;
     toolinfoW.hwnd = NULL;

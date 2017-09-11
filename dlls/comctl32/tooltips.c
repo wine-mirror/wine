@@ -953,8 +953,16 @@ TOOLTIPS_GetToolFromPoint (const TOOLTIPS_INFO *infoPtr, HWND hwnd, const POINT 
 }
 
 static inline void
-TOOLTIPS_CopyInfoT (const TTTOOL_INFO *toolPtr, TTTOOLINFOW *ti, BOOL isW)
+TOOLTIPS_CopyInfoT (const TOOLTIPS_INFO *infoPtr, INT index, TTTOOLINFOW *ti, BOOL isW)
 {
+    const TTTOOL_INFO *toolPtr = &infoPtr->tools[index];
+
+    ti->uFlags = toolPtr->uFlags;
+    ti->hwnd   = toolPtr->hwnd;
+    ti->uId    = toolPtr->uId;
+    ti->rect   = toolPtr->rect;
+    ti->hinst  = toolPtr->hinst;
+
     if (ti->lpszText) {
         if (toolPtr->lpszText == NULL ||
             IS_INTRESOURCE(toolPtr->lpszText) ||
@@ -967,6 +975,11 @@ TOOLTIPS_CopyInfoT (const TTTOOL_INFO *toolPtr, TTTOOLINFOW *ti, BOOL isW)
             WideCharToMultiByte(CP_ACP, 0, toolPtr->lpszText, -1,
                                 (LPSTR)ti->lpszText, MAX_TEXT_SIZE_A, NULL, NULL);
     }
+
+    if (ti->cbSize >= TTTOOLINFOW_V2_SIZE)
+        ti->lParam = toolPtr->lParam;
+
+    /* lpReserved is intentionally not set. */
 }
 
 static BOOL
@@ -1220,28 +1233,14 @@ static LRESULT
 TOOLTIPS_EnumToolsT (const TOOLTIPS_INFO *infoPtr, UINT uIndex, TTTOOLINFOW *ti,
                      BOOL isW)
 {
-    TTTOOL_INFO *toolPtr;
-
-    if (!ti) return FALSE;
-    if (ti->cbSize < TTTOOLINFOW_V1_SIZE)
+    if (!ti || ti->cbSize < TTTOOLINFOW_V1_SIZE)
 	return FALSE;
     if (uIndex >= infoPtr->uNumTools)
 	return FALSE;
 
     TRACE("index=%u\n", uIndex);
 
-    toolPtr = &infoPtr->tools[uIndex];
-
-    /* copy tool data */
-    ti->uFlags   = toolPtr->uFlags;
-    ti->hwnd     = toolPtr->hwnd;
-    ti->uId      = toolPtr->uId;
-    ti->rect     = toolPtr->rect;
-    ti->hinst    = toolPtr->hinst;
-    TOOLTIPS_CopyInfoT (toolPtr, ti, isW);
-
-    if (ti->cbSize >= TTTOOLINFOA_V2_SIZE)
-	ti->lParam = toolPtr->lParam;
+    TOOLTIPS_CopyInfoT (infoPtr, uIndex, ti, isW);
 
     return TRUE;
 }
@@ -1271,31 +1270,15 @@ TOOLTIPS_GetBubbleSize (const TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpToolI
 static LRESULT
 TOOLTIPS_GetCurrentToolT (const TOOLTIPS_INFO *infoPtr, TTTOOLINFOW *ti, BOOL isW)
 {
-    TTTOOL_INFO *toolPtr;
-
     if (ti) {
         if (ti->cbSize < TTTOOLINFOW_V1_SIZE)
             return FALSE;
 
-	if (infoPtr->nCurrentTool > -1) {
-	    toolPtr = &infoPtr->tools[infoPtr->nCurrentTool];
-
-	    /* copy tool data */
-	    ti->uFlags   = toolPtr->uFlags;
-	    ti->rect     = toolPtr->rect;
-	    ti->hinst    = toolPtr->hinst;
-	    TOOLTIPS_CopyInfoT (toolPtr, ti, isW);
-
-	    if (ti->cbSize >= TTTOOLINFOW_V2_SIZE)
-		ti->lParam = toolPtr->lParam;
-
-	    return TRUE;
-	}
-	else
-	    return FALSE;
+        if (infoPtr->nCurrentTool != -1)
+            TOOLTIPS_CopyInfoT (infoPtr, infoPtr->nCurrentTool, ti, isW);
     }
-    else
-	return (infoPtr->nCurrentTool != -1);
+
+    return infoPtr->nCurrentTool != -1;
 }
 
 
@@ -1400,8 +1383,8 @@ TOOLTIPS_GetToolCount (const TOOLTIPS_INFO *infoPtr)
 static LRESULT
 TOOLTIPS_GetToolInfoT (const TOOLTIPS_INFO *infoPtr, TTTOOLINFOW *ti, BOOL isW)
 {
-    TTTOOL_INFO *toolPtr;
     INT nTool;
+    HWND hwnd;
 
     if (!ti) return FALSE;
     if (ti->cbSize < TTTOOLINFOW_V1_SIZE)
@@ -1415,16 +1398,9 @@ TOOLTIPS_GetToolInfoT (const TOOLTIPS_INFO *infoPtr, TTTOOLINFOW *ti, BOOL isW)
 
     TRACE("tool %d\n", nTool);
 
-    toolPtr = &infoPtr->tools[nTool];
-
-    /* copy tool data */
-    ti->uFlags   = toolPtr->uFlags;
-    ti->rect     = toolPtr->rect;
-    ti->hinst    = toolPtr->hinst;
-    TOOLTIPS_CopyInfoT (toolPtr, ti, isW);
-
-    if (ti->cbSize >= TTTOOLINFOW_V2_SIZE)
-	ti->lParam = toolPtr->lParam;
+    hwnd = ti->hwnd;
+    TOOLTIPS_CopyInfoT (infoPtr, nTool, ti, isW);
+    ti->hwnd = hwnd;
 
     return TRUE;
 }
@@ -1434,7 +1410,6 @@ static LRESULT
 TOOLTIPS_HitTestT (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOW lptthit,
                    BOOL isW)
 {
-    TTTOOL_INFO *toolPtr;
     INT nTool;
 
     if (lptthit == 0)
@@ -1447,18 +1422,8 @@ TOOLTIPS_HitTestT (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOW lptthit,
     TRACE("tool %d!\n", nTool);
 
     /* copy tool data */
-    if (lptthit->ti.cbSize >= TTTOOLINFOW_V1_SIZE) {
-	toolPtr = &infoPtr->tools[nTool];
-
-	lptthit->ti.uFlags   = toolPtr->uFlags;
-	lptthit->ti.hwnd     = toolPtr->hwnd;
-	lptthit->ti.uId      = toolPtr->uId;
-	lptthit->ti.rect     = toolPtr->rect;
-	lptthit->ti.hinst    = toolPtr->hinst;
-	TOOLTIPS_CopyInfoT (toolPtr, &lptthit->ti, isW);
-	if (lptthit->ti.cbSize >= TTTOOLINFOW_V2_SIZE)
-	    lptthit->ti.lParam   = toolPtr->lParam;
-    }
+    if (lptthit->ti.cbSize >= TTTOOLINFOW_V1_SIZE)
+        TOOLTIPS_CopyInfoT (infoPtr, nTool, &lptthit->ti, isW);
 
     return TRUE;
 }
