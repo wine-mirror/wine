@@ -3772,16 +3772,11 @@ static void *map_view_of_file(HANDLE handle, DWORD access)
     addr = NULL;
     status = pNtMapViewOfSection(handle, GetCurrentProcess(), &addr, 0, 0, &offset,
                                  &count, 1 /* ViewShare */, 0, protect);
-    if (status)
-    {
-        /* for simplicity */
-        SetLastError(ERROR_ACCESS_DENIED);
-        addr = NULL;
-    }
+    if ((int)status < 0) addr = NULL;
     return addr;
 }
 
-static void test_mapping( HANDLE hfile )
+static void test_mapping( HANDLE hfile, DWORD sec_flags )
 {
     static const DWORD page_prot[] =
     {
@@ -3827,16 +3822,16 @@ static void test_mapping( HANDLE hfile )
         { FILE_MAP_EXECUTE | SECTION_MAP_EXECUTE | FILE_MAP_READ | FILE_MAP_WRITE | FILE_MAP_COPY, PAGE_EXECUTE_READWRITE } /* 0x2f */
     };
     void *base, *nt_base, *ptr;
-    DWORD i, j, k, ret, old_prot, prev_prot;
+    DWORD i, j, k, ret, old_prot, prev_prot, alloc_prot;
     HANDLE hmap;
     MEMORY_BASIC_INFORMATION info, nt_info;
     BOOL anon_mapping = (hfile == INVALID_HANDLE_VALUE);
 
-    trace( "testing %s mapping\n", anon_mapping ? "anonymous" : "file" );
+    trace( "testing %s mapping flags %08x\n", anon_mapping ? "anonymous" : "file", sec_flags );
     for (i = 0; i < sizeof(page_prot)/sizeof(page_prot[0]); i++)
     {
         SetLastError(0xdeadbeef);
-        hmap = CreateFileMappingW(hfile, NULL, page_prot[i] | SEC_COMMIT, 0, si.dwPageSize, NULL);
+        hmap = CreateFileMappingW(hfile, NULL, page_prot[i] | sec_flags, 0, si.dwPageSize, NULL);
 
         if (page_prot[i] == PAGE_NOACCESS)
         {
@@ -3847,7 +3842,10 @@ static void test_mapping( HANDLE hfile )
 
             /* A trick to create a not accessible mapping */
             SetLastError(0xdeadbeef);
-            hmap = CreateFileMappingW(hfile, NULL, PAGE_READWRITE | SEC_COMMIT, 0, si.dwPageSize, NULL);
+            if (sec_flags & SEC_IMAGE)
+                hmap = CreateFileMappingW(hfile, NULL, PAGE_WRITECOPY | sec_flags, 0, si.dwPageSize, NULL);
+            else
+                hmap = CreateFileMappingW(hfile, NULL, PAGE_READWRITE | sec_flags, 0, si.dwPageSize, NULL);
             ok(hmap != 0, "CreateFileMapping(PAGE_READWRITE) error %d\n", GetLastError());
             SetLastError(0xdeadbeef);
             ret = DuplicateHandle(GetCurrentProcess(), hmap, GetCurrentProcess(), &hmap2, 0, FALSE, 0);
@@ -3866,6 +3864,10 @@ static void test_mapping( HANDLE hfile )
         if (!hmap)
         {
             trace("%d: CreateFileMapping(%04x) failed: %d\n", i, page_prot[i], GetLastError());
+
+            if ((sec_flags & SEC_IMAGE) &&
+                (page_prot[i] == PAGE_READWRITE || page_prot[i] == PAGE_EXECUTE_READWRITE))
+                continue;  /* SEC_IMAGE doesn't support write access */
 
             /* NT4 and win2k don't support EXEC on file mappings */
             if (page_prot[i] == PAGE_EXECUTE_READ || page_prot[i] == PAGE_EXECUTE_READWRITE)
@@ -3940,15 +3942,25 @@ static void test_mapping( HANDLE hfile )
             ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
             ok(info.BaseAddress == base, "%d: (%04x) got %p, expected %p\n", j, view[j].access, info.BaseAddress, base);
             ok(info.RegionSize == si.dwPageSize, "%d: (%04x) got %#lx != expected %#x\n", j, view[j].access, info.RegionSize, si.dwPageSize);
-            ok(info.Protect == view[j].prot ||
-               broken(view[j].prot == PAGE_EXECUTE_READ && info.Protect == PAGE_READONLY) || /* win2k */
-               broken(view[j].prot == PAGE_EXECUTE_READWRITE && info.Protect == PAGE_READWRITE) || /* win2k */
-               broken(view[j].prot == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
-               "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, info.Protect, view[j].prot);
+            if (sec_flags & SEC_IMAGE)
+                ok(info.Protect == PAGE_READONLY,
+                    "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, info.Protect, view[j].prot);
+            else
+                ok(info.Protect == view[j].prot ||
+                   broken(view[j].prot == PAGE_EXECUTE_READ && info.Protect == PAGE_READONLY) || /* win2k */
+                   broken(view[j].prot == PAGE_EXECUTE_READWRITE && info.Protect == PAGE_READWRITE) || /* win2k */
+                   broken(view[j].prot == PAGE_EXECUTE_WRITECOPY && info.Protect == PAGE_NOACCESS), /* XP */
+                   "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, info.Protect, view[j].prot);
             ok(info.AllocationBase == base, "%d: (%04x) got %p, expected %p\n", j, view[j].access, info.AllocationBase, base);
-            ok(info.AllocationProtect == info.Protect, "%d: (%04x) got %#x, expected %#x\n", j, view[j].access, info.AllocationProtect, info.Protect);
+            if (sec_flags & SEC_IMAGE)
+                ok(info.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "%d: (%04x) got %#x, expected %#x\n",
+                   j, view[j].access, info.AllocationProtect, info.Protect);
+            else
+                ok(info.AllocationProtect == info.Protect, "%d: (%04x) got %#x, expected %#x\n",
+                   j, view[j].access, info.AllocationProtect, info.Protect);
             ok(info.State == MEM_COMMIT, "%d: (%04x) got %#x, expected MEM_COMMIT\n", j, view[j].access, info.State);
-            ok(info.Type == MEM_MAPPED, "%d: (%04x) got %#x, expected MEM_MAPPED\n", j, view[j].access, info.Type);
+            ok(info.Type == (sec_flags & SEC_IMAGE) ? SEC_IMAGE : MEM_MAPPED,
+               "%d: (%04x) got %#x, expected MEM_MAPPED\n", j, view[j].access, info.Type);
 
             if (nt_base && base)
             {
@@ -3964,14 +3976,16 @@ static void test_mapping( HANDLE hfile )
             }
 
             prev_prot = info.Protect;
+            alloc_prot = info.AllocationProtect;
 
             for (k = 0; k < sizeof(page_prot)/sizeof(page_prot[0]); k++)
             {
                 /*trace("map %#x, view %#x, requested prot %#x\n", page_prot[i], view[j].prot, page_prot[k]);*/
+                DWORD actual_prot = (sec_flags & SEC_IMAGE) ? map_prot_no_write(page_prot[k]) : page_prot[k];
                 SetLastError(0xdeadbeef);
                 old_prot = 0xdeadbeef;
                 ret = VirtualProtect(base, si.dwPageSize, page_prot[k], &old_prot);
-                if (is_compatible_protection(view[j].prot, page_prot[k]))
+                if (is_compatible_protection(alloc_prot, actual_prot))
                 {
                     /* win2k and XP don't support EXEC on file mappings */
                     if (!ret && page_prot[k] == PAGE_EXECUTE)
@@ -3983,6 +3997,7 @@ static void test_mapping( HANDLE hfile )
                     /* NT4 and win2k don't support EXEC on file mappings */
                     if (!ret && (page_prot[k] == PAGE_EXECUTE_READ || page_prot[k] == PAGE_EXECUTE_READWRITE))
                     {
+                        todo_wine
                         ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE\n");
                         continue;
                     }
@@ -4002,11 +4017,11 @@ static void test_mapping( HANDLE hfile )
 
                     ok(ret, "VirtualProtect error %d, map %#x, view %#x, requested prot %#x\n", GetLastError(), page_prot[i], view[j].prot, page_prot[k]);
                     ok(old_prot == prev_prot, "got %#x, expected %#x\n", old_prot, prev_prot);
-                    prev_prot = page_prot[k];
+                    prev_prot = actual_prot;
 
                     ret = VirtualQuery(base, &info, sizeof(info));
                     ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
-                    ok(info.Protect == page_prot[k],
+                    ok(info.Protect == actual_prot,
                        "VirtualProtect wrong prot, map %#x, view %#x, requested prot %#x got %#x\n",
                        page_prot[i], view[j].prot, page_prot[k], info.Protect );
                 }
@@ -4082,13 +4097,24 @@ static void test_mappings(void)
     SetFilePointer(hfile, si.dwPageSize, NULL, FILE_BEGIN);
     SetEndOfFile(hfile);
 
-    test_mapping( hfile );
+    test_mapping( hfile, SEC_COMMIT );
 
     CloseHandle( hfile );
     DeleteFileA( file_name );
 
+    /* SEC_IMAGE mapping */
+    GetSystemDirectoryA( file_name, MAX_PATH );
+    strcat( file_name, "\\kernel32.dll" );
+
+    hfile = CreateFileA( file_name, GENERIC_READ|GENERIC_EXECUTE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile(%s) error %d\n", file_name, GetLastError());
+
+    test_mapping( hfile, SEC_IMAGE );
+
+    CloseHandle( hfile );
+
     /* now anonymous mappings */
-    test_mapping( INVALID_HANDLE_VALUE );
+    test_mapping( INVALID_HANDLE_VALUE, SEC_COMMIT );
 }
 
 static void test_shared_memory(BOOL is_child)
