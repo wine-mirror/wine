@@ -598,13 +598,8 @@ static void test_ScriptItemize( void )
     SCRIPT_CONTROL  Control;
     SCRIPT_STATE    State;
     HRESULT hr;
-    HMODULE usp10;
     int nItems;
 
-    usp10 = LoadLibraryA("usp10.dll");
-    ok (usp10 != 0,"Unable to LoadLibrary on usp10.dll\n");
-    pScriptItemizeOpenType = (void*)GetProcAddress(usp10, "ScriptItemizeOpenType");
-    pScriptShapeOpenType = (void*)GetProcAddress(usp10, "ScriptShapeOpenType");
     pGetGlyphIndicesW = (void*)GetProcAddress(GetModuleHandleA("gdi32.dll"), "GetGlyphIndicesW");
 
     memset(&Control, 0, sizeof(Control));
@@ -1810,6 +1805,7 @@ static void test_ScriptShape(HDC hdc)
 {
     static const WCHAR test1[] = {'w', 'i', 'n', 'e',0};
     static const WCHAR test2[] = {0x202B, 'i', 'n', 0x202C,0};
+    static const WCHAR test3[] = {0x30b7};
     HRESULT hr;
     SCRIPT_CACHE sc = NULL;
     WORD glyphs[4], glyphs2[4], logclust[4], glyphs3[4];
@@ -2041,6 +2037,23 @@ static void test_ScriptShape(HDC hdc)
             DeleteObject(SelectObject(hdc, oldfont));
         ScriptFreeCache(&sc);
     }
+
+    /* Text does not support this range. */
+    memset(items, 0, sizeof(items));
+    nb = 0;
+    hr = ScriptItemize(test3, sizeof(test3)/sizeof(test3[0]), sizeof(items)/sizeof(items[0]), NULL, NULL, items, &nb);
+    ok(hr == S_OK, "ScriptItemize failed, hr %#x.\n", hr);
+    ok(items[0].a.eScript > 0, "Expected script id.\n");
+    ok(nb == 1, "Unexpected number of items.\n");
+
+    memset(glyphs, 0xff, sizeof(glyphs));
+    nb = 0;
+    hr = ScriptShape(hdc, &sc, test3, sizeof(test3)/sizeof(test3[0]), sizeof(glyphs)/sizeof(glyphs[0]), &items[0].a,
+        glyphs, logclust, attrs, &nb);
+    ok(hr == S_OK, "ScriptShape failed, hr %#x.\n", hr);
+    ok(nb == 1, "Unexpected glyph count %u\n", nb);
+    ok(glyphs[0] == 0, "Unexpected glyph id\n");
+    ScriptFreeCache(&sc);
 }
 
 static void test_ScriptPlace(HDC hdc)
@@ -3777,9 +3790,6 @@ static void test_newlines(void)
 static void test_ScriptGetFontFunctions(HDC hdc)
 {
     HRESULT hr;
-    pScriptGetFontScriptTags = (void*)GetProcAddress(GetModuleHandleA("usp10.dll"), "ScriptGetFontScriptTags");
-    pScriptGetFontLanguageTags = (void*)GetProcAddress(GetModuleHandleA("usp10.dll"), "ScriptGetFontLanguageTags");
-    pScriptGetFontFeatureTags = (void*)GetProcAddress(GetModuleHandleA("usp10.dll"), "ScriptGetFontFeatureTags");
     if (!pScriptGetFontScriptTags || !pScriptGetFontLanguageTags || !pScriptGetFontFeatureTags)
     {
         win_skip("ScriptGetFontScriptTags,ScriptGetFontLanguageTags or ScriptGetFontFeatureTags not available on this platform\n");
@@ -4005,6 +4015,19 @@ static void test_ScriptIsComplex(void)
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
 }
 
+static void init_tests(void)
+{
+    HMODULE module = GetModuleHandleA("usp10.dll");
+
+    ok(module != 0, "Expected usp10.dll to be loaded.\n");
+
+    pScriptItemizeOpenType = (void *)GetProcAddress(module, "ScriptItemizeOpenType");
+    pScriptShapeOpenType = (void *)GetProcAddress(module, "ScriptShapeOpenType");
+    pScriptGetFontScriptTags = (void *)GetProcAddress(module, "ScriptGetFontScriptTags");
+    pScriptGetFontLanguageTags = (void *)GetProcAddress(module, "ScriptGetFontLanguageTags");
+    pScriptGetFontFeatureTags = (void *)GetProcAddress(module, "ScriptGetFontFeatureTags");
+}
+
 START_TEST(usp10)
 {
     HWND            hwnd;
@@ -4033,6 +4056,8 @@ START_TEST(usp10)
 
     hfont = SelectObject(hdc, CreateFontIndirectA(&lf));
     ok(hfont != NULL, "SelectObject failed: %p\n", hfont);
+
+    init_tests();
 
     test_ScriptItemize();
     test_ScriptItemize_surrogates();
