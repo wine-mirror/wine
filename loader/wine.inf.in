@@ -2517,6 +2517,8 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,,rundll.exe,rundll.exe16
 10,,twain.dll,twain.dll16
 10,,twain_32.dll
+10,twain_32,sane.ds
+10,twain_32,gphoto2.ds
 10,,winhelp.exe,winhelp.exe16
 10,,winhlp32.exe
 10,command,start.exe
