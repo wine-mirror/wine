@@ -312,13 +312,15 @@ static void VIRTUAL_DumpView( struct file_view *view )
 
     TRACE( "View: %p - %p", addr, addr + view->size - 1 );
     if (view->protect & VPROT_SYSTEM)
-        TRACE( " (system)\n" );
-    else if (view->protect & VPROT_VALLOC)
-        TRACE( " (valloc)\n" );
-    else if (view->mapping)
-        TRACE( " %p\n", view->mapping );
+        TRACE( " (builtin image)\n" );
+    else if (view->protect & SEC_IMAGE)
+        TRACE( " (image) %p\n", view->mapping );
+    else if (view->protect & SEC_FILE)
+        TRACE( " (file) %p\n", view->mapping );
+    else if (view->protect & (SEC_RESERVE | SEC_COMMIT))
+        TRACE( " (anonymous) %p\n", view->mapping );
     else
-        TRACE( " (anonymous)\n");
+        TRACE( " (valloc)\n");
 
     for (count = i = 1; i < view->size >> page_shift; i++, count++)
     {
@@ -711,7 +713,6 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     wine_rb_put( &views_tree, view->base, &view->entry );
 
     *view_ret = view;
-    VIRTUAL_DEBUG_DUMP_VIEW( view );
 
     if (force_exec_prot && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
     {
@@ -849,15 +850,11 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
 {
     int unix_prot = VIRTUAL_GetUnixProt(vprot);
 
-    TRACE("%p-%p %s\n",
-          base, (char *)base + size - 1, VIRTUAL_GetProtStr( vprot ) );
-
     if (view->protect & VPROT_WRITEWATCH)
     {
         /* each page may need different protections depending on write watch flag */
         set_page_vprot_bits( base, size, vprot & ~VPROT_WRITEWATCH, ~vprot & ~VPROT_WRITEWATCH );
         mprotect_range( view, base, size, 0, 0 );
-        VIRTUAL_DEBUG_DUMP_VIEW( view );
         return TRUE;
     }
 
@@ -869,7 +866,6 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
     {
         set_page_vprot( base, size, vprot );
         mprotect( base, size, unix_prot );
-        VIRTUAL_DEBUG_DUMP_VIEW( view );
         return TRUE;
     }
 
@@ -877,7 +873,6 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
         return FALSE;
 
     set_page_vprot( base, size, vprot );
-    VIRTUAL_DEBUG_DUMP_VIEW( view );
     return TRUE;
 }
 
@@ -1482,6 +1477,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
  done:
     view->mapping = dup_mapping;
     view->map_protect = map_vprot;
+    VIRTUAL_DEBUG_DUMP_VIEW( view );
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
     *addr_ptr = ptr;
@@ -1651,6 +1647,7 @@ NTSTATUS virtual_create_builtin_view( void *module )
             if (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE) flags |= VPROT_WRITE;
             set_page_vprot( (char *)base + sec[i].VirtualAddress, sec[i].Misc.VirtualSize, flags );
         }
+        VIRTUAL_DEBUG_DUMP_VIEW( view );
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
@@ -1692,6 +1689,7 @@ NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commi
     VIRTUAL_SetProt( view, view->base, page_size, VPROT_COMMITTED );
     VIRTUAL_SetProt( view, (char *)view->base + page_size, page_size,
                      VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
+    VIRTUAL_DEBUG_DUMP_VIEW( view );
 
     /* note: limit is lower than base since the stack grows down */
     teb->DeallocationStack = view->base;
@@ -2119,6 +2117,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
             status = allocate_dos_memory( &view, vprot );
             if (status == STATUS_SUCCESS)
             {
+                VIRTUAL_DEBUG_DUMP_VIEW( view );
                 *ret = view->base;
                 *size_ptr = view->size;
             }
@@ -2179,6 +2178,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
             SERVER_END_REQ;
         }
     }
+
+    if (!status) VIRTUAL_DEBUG_DUMP_VIEW( view );
 
     if (use_locks) server_leave_uninterrupted_section( &csVirtual, &sigset );
 
@@ -2377,6 +2378,8 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
         else status = STATUS_NOT_COMMITTED;
     }
     else status = STATUS_INVALID_PARAMETER;
+
+    if (!status) VIRTUAL_DEBUG_DUMP_VIEW( view );
 
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
@@ -2891,6 +2894,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         view->mapping = dup_mapping;
         view->map_protect = map_vprot;
         dup_mapping = 0;  /* don't close it */
+        VIRTUAL_DEBUG_DUMP_VIEW( view );
     }
     else
     {
