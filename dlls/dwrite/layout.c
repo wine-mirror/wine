@@ -1879,7 +1879,15 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
             while (last_cluster > first_cluster) {
                 if (trimmed_width + sign_metrics.width <= layout->metrics.layoutWidth)
                     break;
-                trimmed_width -= layout->clustermetrics[last_cluster--].width;
+                if (layout->format.trimming.granularity == DWRITE_TRIMMING_GRANULARITY_CHARACTER)
+                    trimmed_width -= layout->clustermetrics[last_cluster--].width;
+                else {
+                    while (last_cluster > first_cluster) {
+                        trimmed_width -= layout->clustermetrics[last_cluster].width;
+                        if (layout->clustermetrics[last_cluster--].canWrapLineAfter)
+                            break;
+                    }
+                }
             }
             append_trimming_run = TRUE;
         }
