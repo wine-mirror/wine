@@ -992,14 +992,6 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
     winetest_ok(SUCCEEDED(hr), "Failed to get script properties, hr %#x.\n", hr);
 
     hr = pScriptItemizeOpenType(string, cchString, 15, Control, State, outpItems, tags, &outnItems);
-    if (hr == USP_E_SCRIPT_NOT_IN_FONT)
-    {
-        if (valid > 0)
-            winetest_win_skip("Select font does not support script\n");
-        else
-            winetest_trace("Select font does not support script\n");
-        return;
-    }
     if (valid > 0)
         winetest_ok(hr == S_OK, "ScriptItemizeOpenType should return S_OK not %08x\n", hr);
     else if (hr != S_OK)
