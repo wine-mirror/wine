@@ -1061,9 +1061,12 @@ static HRESULT WINAPI FolderItemsImpl_Invoke(FolderItems3 *iface,
 
 static HRESULT WINAPI FolderItemsImpl_get_Count(FolderItems3 *iface, LONG *count)
 {
-    FIXME("(%p,%p)\n", iface, count);
+    FolderItemsImpl *This = impl_from_FolderItems(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, count);
+
+    *count = PathIsDirectoryW(V_BSTR(&This->dir)) ? This->item_count : 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI FolderItemsImpl_get_Application(FolderItems3 *iface, IDispatch **ppid)

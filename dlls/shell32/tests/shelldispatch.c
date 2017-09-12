@@ -444,9 +444,7 @@ static void test_items(void)
         r = FolderItems_get_Count(items, NULL);
 
     r = FolderItems_get_Count(items, &count);
-todo_wine
     ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
-todo_wine
     ok(!count, "expected 0 files, got %d\n", count);
 
     V_VT(&var) = VT_I4;
@@ -484,9 +482,7 @@ todo_wine
     /* test that get_Count is not aware of the newly created files */
     count = -1;
     r = FolderItems_get_Count(items, &count);
-todo_wine
     ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
-todo_wine
     ok(!count, "expected 0 files, got %d\n", count);
 
     /* test that the newly created files CAN be retrieved by string index */
@@ -514,9 +510,7 @@ todo_wine
 
     count = -1;
     r = FolderItems_get_Count(items, &count);
-todo_wine
     ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
-todo_wine
     ok(count == sizeof(file_defs)/sizeof(file_defs[0]),
        "expected %d files, got %d\n", (LONG)(sizeof(file_defs)/sizeof(file_defs[0])), count);
 
@@ -737,9 +731,7 @@ todo_wine
     /* test that everything stops working after the directory has been removed */
     count = -1;
     r = FolderItems_get_Count(items, &count);
-todo_wine
     ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
-todo_wine
     ok(!count, "expected 0 files, got %d\n", count);
 
     item = NULL;
