@@ -2750,18 +2750,20 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     switch(protect)
     {
     case PAGE_NOACCESS:
+    case PAGE_READONLY:
+    case PAGE_WRITECOPY:
         access = SECTION_MAP_READ;
         break;
     case PAGE_READWRITE:
-    case PAGE_EXECUTE_READWRITE:
         access = SECTION_MAP_WRITE;
         break;
-    case PAGE_READONLY:
-    case PAGE_WRITECOPY:
     case PAGE_EXECUTE:
     case PAGE_EXECUTE_READ:
     case PAGE_EXECUTE_WRITECOPY:
-        access = SECTION_MAP_READ;
+        access = SECTION_MAP_READ | SECTION_MAP_EXECUTE;
+        break;
+    case PAGE_EXECUTE_READWRITE:
+        access = SECTION_MAP_WRITE | SECTION_MAP_EXECUTE;
         break;
     default:
         return STATUS_INVALID_PAGE_PROTECTION;

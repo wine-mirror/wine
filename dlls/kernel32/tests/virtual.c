@@ -3710,16 +3710,16 @@ static DWORD map_prot_to_access(DWORD prot)
     switch (prot)
     {
     case PAGE_READWRITE:
-        return SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE | SECTION_QUERY;
+        return SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_QUERY;
     case PAGE_EXECUTE_READWRITE:
-        return SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE | SECTION_MAP_EXECUTE_EXPLICIT | SECTION_QUERY;
+        return SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE | SECTION_QUERY;
     case PAGE_READONLY:
     case PAGE_WRITECOPY:
-        return SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_QUERY;
+        return SECTION_MAP_READ | SECTION_QUERY;
     case PAGE_EXECUTE:
     case PAGE_EXECUTE_READ:
     case PAGE_EXECUTE_WRITECOPY:
-        return SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_MAP_EXECUTE_EXPLICIT | SECTION_QUERY;
+        return SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_QUERY;
     default:
         return 0;
     }
@@ -3909,17 +3909,11 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
                 /* FILE_MAP_EXECUTE | FILE_MAP_COPY broken on XP */
                 if (base != NULL && view[j].access == (FILE_MAP_EXECUTE | FILE_MAP_COPY))
                 {
-                    todo_wine
                     ok( broken(base != NULL), "%d: MapViewOfFile(%04x/%04x) should fail\n",
                         j, page_prot[i], view[j].access);
                     UnmapViewOfFile( base );
                 }
-                else todo_wine_if ((page_prot[i] == PAGE_READONLY &&
-                                    is_compatible_access( PAGE_EXECUTE_READ, view[j].access )) ||
-                                   (page_prot[i] == PAGE_READWRITE &&
-                                    is_compatible_access( PAGE_EXECUTE_READWRITE, view[j].access )) ||
-                                   (page_prot[i] == PAGE_WRITECOPY &&
-                                    is_compatible_access( PAGE_EXECUTE_WRITECOPY, view[j].access )))
+                else
                 {
                     ok(!base, "%d: MapViewOfFile(%04x/%04x) should fail\n",
                        j, page_prot[i], view[j].access);
