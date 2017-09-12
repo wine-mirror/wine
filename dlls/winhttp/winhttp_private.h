@@ -120,6 +120,8 @@ typedef struct
     LPWSTR proxy_password;
     struct list cookie_cache;
     HANDLE unload_event;
+    CredHandle cred_handle;
+    BOOL cred_handle_initialized;
 } session_t;
 
 typedef struct
@@ -300,7 +302,7 @@ void netconn_unload( void ) DECLSPEC_HIDDEN;
 ULONG netconn_query_data_available( netconn_t * ) DECLSPEC_HIDDEN;
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
 BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
-BOOL netconn_secure_connect( netconn_t *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;
+BOOL netconn_secure_connect( netconn_t *, WCHAR *, DWORD, CredHandle * ) DECLSPEC_HIDDEN;
 BOOL netconn_send( netconn_t *, const void *, size_t, int * ) DECLSPEC_HIDDEN;
 DWORD netconn_set_timeout( netconn_t *, BOOL, int ) DECLSPEC_HIDDEN;
 BOOL netconn_is_alive( netconn_t * ) DECLSPEC_HIDDEN;

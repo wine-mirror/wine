@@ -254,46 +254,8 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD secu
     return err;
 }
 
-static SecHandle cred_handle;
-static BOOL cred_handle_initialized;
-
-static CRITICAL_SECTION init_sechandle_cs;
-static CRITICAL_SECTION_DEBUG init_sechandle_cs_debug = {
-    0, 0, &init_sechandle_cs,
-    { &init_sechandle_cs_debug.ProcessLocksList,
-      &init_sechandle_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": init_sechandle_cs") }
-};
-static CRITICAL_SECTION init_sechandle_cs = { &init_sechandle_cs_debug, -1, 0, 0, 0, 0 };
-
-static BOOL ensure_cred_handle(void)
-{
-    BOOL ret = TRUE;
-
-    EnterCriticalSection(&init_sechandle_cs);
-
-    if(!cred_handle_initialized) {
-        SECURITY_STATUS res;
-
-        res = AcquireCredentialsHandleW(NULL, (WCHAR*)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL, NULL,
-                NULL, NULL, &cred_handle, NULL);
-        if(res == SEC_E_OK) {
-            cred_handle_initialized = TRUE;
-        }else {
-            WARN("AcquireCredentialsHandleW failed: %u\n", res);
-            ret = FALSE;
-        }
-    }
-
-    LeaveCriticalSection(&init_sechandle_cs);
-    return ret;
-}
-
 void netconn_unload( void )
 {
-    if(cred_handle_initialized)
-        FreeCredentialsHandle(&cred_handle);
-    DeleteCriticalSection(&init_sechandle_cs);
 #ifndef HAVE_GETADDRINFO
     DeleteCriticalSection(&cs_gethostbyname);
 #endif
@@ -409,7 +371,7 @@ BOOL netconn_close( netconn_t *conn )
     return TRUE;
 }
 
-BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_flags )
+BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_flags, CredHandle *cred_handle )
 {
     SecBuffer out_buf = {0, SECBUFFER_TOKEN, NULL}, in_bufs[2] = {{0, SECBUFFER_TOKEN}, {0, SECBUFFER_EMPTY}};
     SecBufferDesc out_desc = {SECBUFFER_VERSION, 1, &out_buf}, in_desc = {SECBUFFER_VERSION, 2, in_bufs};
@@ -425,14 +387,11 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_fl
     const DWORD isc_req_flags = ISC_REQ_ALLOCATE_MEMORY|ISC_REQ_USE_SESSION_KEY|ISC_REQ_CONFIDENTIALITY
         |ISC_REQ_SEQUENCE_DETECT|ISC_REQ_REPLAY_DETECT|ISC_REQ_MANUAL_CRED_VALIDATION;
 
-    if(!ensure_cred_handle())
-        return FALSE;
-
     read_buf = heap_alloc(read_buf_size);
     if(!read_buf)
         return FALSE;
 
-    status = InitializeSecurityContextW(&cred_handle, NULL, hostname, isc_req_flags, 0, 0, NULL, 0,
+    status = InitializeSecurityContextW(cred_handle, NULL, hostname, isc_req_flags, 0, 0, NULL, 0,
             &ctx, &out_desc, &attrs, NULL);
 
     assert(status != SEC_E_OK);
@@ -492,7 +451,7 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_fl
 
         in_bufs[0].cbBuffer += size;
         in_bufs[0].pvBuffer = read_buf;
-        status = InitializeSecurityContextW(&cred_handle, &ctx, hostname,  isc_req_flags, 0, 0, &in_desc,
+        status = InitializeSecurityContextW(cred_handle, &ctx, hostname,  isc_req_flags, 0, 0, &in_desc,
                 0, NULL, &out_desc, &attrs, NULL);
         TRACE("InitializeSecurityContext ret %08x\n", status);
 

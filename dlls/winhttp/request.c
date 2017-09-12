@@ -35,6 +35,7 @@
 #include "initguid.h"
 #include "httprequest.h"
 #include "httprequestid.h"
+#include "schannel.h"
 #include "winhttp.h"
 
 #include "winhttp_private.h"
@@ -1092,6 +1093,20 @@ static void cache_connection( netconn_t *netconn )
     LeaveCriticalSection( &connection_pool_cs );
 }
 
+static BOOL ensure_cred_handle( session_t *session )
+{
+    SECURITY_STATUS status;
+    if (session->cred_handle_initialized) return TRUE;
+    if ((status = AcquireCredentialsHandleW( NULL, (WCHAR *)UNISP_NAME_W, SECPKG_CRED_OUTBOUND, NULL, NULL,
+                                             NULL, NULL, &session->cred_handle, NULL )) != SEC_E_OK)
+    {
+        WARN( "AcquireCredentialsHandleW failed: 0x%08x\n", status );
+        return FALSE;
+    }
+    session->cred_handle_initialized = TRUE;
+    return TRUE;
+}
+
 static BOOL open_connection( request_t *request )
 {
     BOOL is_secure = request->hdr.flags & WINHTTP_FLAG_SECURE;
@@ -1219,7 +1234,9 @@ static BOOL open_connection( request_t *request )
                     return FALSE;
                 }
             }
-            if (!netconn_secure_connect( netconn, connect->hostname, request->security_flags ))
+            if (!ensure_cred_handle( connect->session ) ||
+                !netconn_secure_connect( netconn, connect->hostname, request->security_flags,
+                                         &connect->session->cred_handle ))
             {
                 heap_free( addressW );
                 netconn_close( netconn );
