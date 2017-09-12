@@ -4939,6 +4939,9 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
 {
     HTMLDOMNode_init_dispex_info(info, mode);
 
+    if(mode >= COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLDocument7_tid, NULL);
+
     /* Depending on compatibility version, we add interfaces in different order
      * so that the right getElementById implementation is used. */
     if(mode < COMPAT_MODE_IE8) {

@@ -51,6 +51,11 @@ function test_doc_props() {
 
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);
+    test_exposed("defaultView", v >= 9);
+    test_exposed("head", v >= 9);
+
+    test_exposed("parentWindow", true);
+    if(v >= 9) ok(document.defaultView === document.parentWindow, "defaultView != parentWindow");
 
     next_test();
 }
