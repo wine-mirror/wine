@@ -144,7 +144,7 @@ static int sock_send(int fd, const void *msg, size_t len, int flags)
     int ret;
     do
     {
-        ret = send(fd, msg, len, flags);
+        if ((ret = send(fd, msg, len, flags)) == -1) WARN("send error %s\n", strerror(errno));
     }
     while(ret == -1 && errno == EINTR);
     return ret;
@@ -155,7 +155,7 @@ static int sock_recv(int fd, void *msg, size_t len, int flags)
     int ret;
     do
     {
-        ret = recv(fd, msg, len, flags);
+        if ((ret = recv(fd, msg, len, flags)) == -1) WARN("recv error %s\n", strerror(errno));
     }
     while(ret == -1 && errno == EINTR);
     return ret;
@@ -484,7 +484,6 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname, DWORD security_fl
 
         size = sock_recv(conn->socket, read_buf+in_bufs[0].cbBuffer, read_buf_size-in_bufs[0].cbBuffer, 0);
         if(size < 1) {
-            WARN("recv error\n");
             status = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
             break;
         }
@@ -620,10 +619,8 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, SIZE_T *
         conn->extra_buf = NULL;
     }else {
         buf_len = sock_recv(conn->socket, conn->ssl_buf+conn->extra_len, ssl_buf_size-conn->extra_len, 0);
-        if(buf_len < 0) {
-            WARN("recv failed\n");
+        if(buf_len < 0)
             return FALSE;
-        }
 
         if(!buf_len) {
             *eof = TRUE;
