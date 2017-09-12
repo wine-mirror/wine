@@ -3332,15 +3332,19 @@ static HRESULT WINAPI HTMLDocument7_get_characterSet(IHTMLDocument7 *iface, BSTR
 static HRESULT WINAPI HTMLDocument7_createElement(IHTMLDocument7 *iface, BSTR bstrTag, IHTMLElement **newElem)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrTag), newElem);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrTag), newElem);
+
+    return IHTMLDocument2_createElement(&This->IHTMLDocument2_iface, bstrTag, newElem);
 }
 
 static HRESULT WINAPI HTMLDocument7_createAttribute(IHTMLDocument7 *iface, BSTR bstrAttrName, IHTMLDOMAttribute **ppAttribute)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrAttrName), ppAttribute);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrAttrName), ppAttribute);
+
+    return IHTMLDocument5_createAttribute(&This->IHTMLDocument5_iface, bstrAttrName, ppAttribute);
 }
 
 static HRESULT WINAPI HTMLDocument7_getElementByClassName(IHTMLDocument7 *iface, BSTR v, IHTMLElementCollection **pel)
@@ -3382,8 +3386,10 @@ static HRESULT WINAPI HTMLDocument7_get_onmssitemodejumplistitemremoved(IHTMLDoc
 static HRESULT WINAPI HTMLDocument7_get_all(IHTMLDocument7 *iface, IHTMLElementCollection **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLDocument2_get_all(&This->IHTMLDocument2_iface, p);
 }
 
 static HRESULT WINAPI HTMLDocument7_get_inputEncoding(IHTMLDocument7 *iface, BSTR *p)
@@ -3995,8 +4001,10 @@ static HRESULT WINAPI HTMLDocument7_put_body(IHTMLDocument7 *iface, IHTMLElement
 static HRESULT WINAPI HTMLDocument7_get_body(IHTMLDocument7 *iface, IHTMLElement **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLDocument2_get_body(&This->IHTMLDocument2_iface, p);
 }
 
 static HRESULT WINAPI HTMLDocument7_get_head(IHTMLDocument7 *iface, IHTMLElement **p)
