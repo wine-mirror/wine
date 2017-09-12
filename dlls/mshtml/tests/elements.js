@@ -96,8 +96,17 @@ function test_ElementTraversal() {
     next_test();
 }
 
+function test_head() {
+    var h = document.head;
+    ok(h.tagName === "HEAD", "h.tagName = " + h.tagName);
+    ok(h === document.getElementsByTagName("head")[0], "unexpected head element");
+
+    next_test();
+}
+
 var tests = [
     test_input_selection,
     test_textContent,
-    test_ElementTraversal
+    test_ElementTraversal,
+    test_head
 ];

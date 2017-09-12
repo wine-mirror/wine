@@ -4038,8 +4038,38 @@ static HRESULT WINAPI HTMLDocument7_get_body(IHTMLDocument7 *iface, IHTMLElement
 static HRESULT WINAPI HTMLDocument7_get_head(IHTMLDocument7 *iface, IHTMLElement **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMHTMLHeadElement *nshead;
+    nsIDOMElement *nselem;
+    HTMLElement *elem;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->doc_node->nsdoc) {
+        FIXME("No document\n");
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMHTMLDocument_GetHead(This->doc_node->nsdoc, &nshead);
+    assert(nsres == NS_OK);
+
+    if(!nshead) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    nsres = nsIDOMHTMLHeadElement_QueryInterface(nshead, &IID_nsIDOMElement, (void**)&nselem);
+    nsIDOMHTMLHeadElement_Release(nshead);
+    assert(nsres == NS_OK);
+
+    hres = get_elem(This->doc_node, nselem, &elem);
+    nsIDOMElement_Release(nselem);
+    if(FAILED(hres))
+        return hres;
+
+    *p = &elem->IHTMLElement_iface;
+    return S_OK;
 }
 
 static const IHTMLDocument7Vtbl HTMLDocument7Vtbl = {
