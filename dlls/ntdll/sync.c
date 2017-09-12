@@ -77,9 +77,9 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
                                   data_size_t *ret_len )
 {
     unsigned int len = sizeof(**ret);
-    PSID owner, group;
+    PSID owner = NULL, group = NULL;
     ACL *dacl, *sacl;
-    BOOLEAN owner_present, group_present, dacl_present, sacl_present, defaulted;
+    BOOLEAN dacl_present, sacl_present, defaulted;
     PSECURITY_DESCRIPTOR sd;
     NTSTATUS status;
 
@@ -94,12 +94,12 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
     {
         len += sizeof(struct security_descriptor);
 
-        if ((status = RtlGetOwnerSecurityDescriptor( sd, &owner, &owner_present ))) return status;
-        if ((status = RtlGetGroupSecurityDescriptor( sd, &group, &group_present ))) return status;
+        if ((status = RtlGetOwnerSecurityDescriptor( sd, &owner, &defaulted ))) return status;
+        if ((status = RtlGetGroupSecurityDescriptor( sd, &group, &defaulted ))) return status;
         if ((status = RtlGetSaclSecurityDescriptor( sd, &sacl_present, &sacl, &defaulted ))) return status;
         if ((status = RtlGetDaclSecurityDescriptor( sd, &dacl_present, &dacl, &defaulted ))) return status;
-        if (owner_present) len += RtlLengthSid( owner );
-        if (group_present) len += RtlLengthSid( group );
+        if (owner) len += RtlLengthSid( owner );
+        if (group) len += RtlLengthSid( group );
         if (sacl_present && sacl) len += sacl->AclSize;
         if (dacl_present && dacl) len += dacl->AclSize;
 
@@ -126,8 +126,8 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
         unsigned char *ptr = (unsigned char *)(descr + 1);
 
         descr->control = ((SECURITY_DESCRIPTOR *)sd)->Control & ~SE_SELF_RELATIVE;
-        if (owner_present) descr->owner_len = RtlLengthSid( owner );
-        if (group_present) descr->group_len = RtlLengthSid( group );
+        if (owner) descr->owner_len = RtlLengthSid( owner );
+        if (group) descr->group_len = RtlLengthSid( group );
         if (sacl_present && sacl) descr->sacl_len = sacl->AclSize;
         if (dacl_present && dacl) descr->dacl_len = dacl->AclSize;
 
