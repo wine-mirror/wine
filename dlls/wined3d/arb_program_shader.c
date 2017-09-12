@@ -7910,6 +7910,9 @@ void wined3d_arbfp_blitter_create(struct wined3d_blitter **next, const struct wi
     if (!gl_info->supported[ARB_FRAGMENT_PROGRAM])
         return;
 
+    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        return;
+
     if (!(blitter = HeapAlloc(GetProcessHeap(), 0, sizeof(*blitter))))
     {
         ERR("Failed to allocate blitter.\n");
