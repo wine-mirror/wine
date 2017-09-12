@@ -68,6 +68,9 @@ typedef struct {
 typedef struct {
     FolderItems3 FolderItems3_iface;
     LONG ref;
+    VARIANT dir;
+    WCHAR **item_filenames;
+    LONG item_count;
 } FolderItemsImpl;
 
 typedef struct {
@@ -989,11 +992,18 @@ static ULONG WINAPI FolderItemsImpl_Release(FolderItems3 *iface)
 {
     FolderItemsImpl *This = impl_from_FolderItems(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+    LONG i;
 
     TRACE("(%p), new refcount=%i\n", iface, ref);
 
     if (!ref)
+    {
+        VariantClear(&This->dir);
+        for (i = 0; i < This->item_count; i++)
+            HeapFree(GetProcessHeap(), 0, This->item_filenames[i]);
+        HeapFree(GetProcessHeap(), 0, This->item_filenames);
         HeapFree(GetProcessHeap(), 0, This);
+    }
     return ref;
 }
 
@@ -1079,10 +1089,63 @@ static HRESULT WINAPI FolderItemsImpl_get_Parent(FolderItems3 *iface, IDispatch 
 
 static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, FolderItem **ppid)
 {
-    FIXME("(%p,%s,%p)\n", iface, debugstr_variant(&index), ppid);
+    FolderItemsImpl *This = impl_from_FolderItems(iface);
+    WCHAR canonicalized_index[MAX_PATH], path_str[MAX_PATH];
+    VARIANT path_var;
+    HRESULT ret;
+
+    TRACE("(%p,%s,%p)\n", iface, debugstr_variant(&index), ppid);
 
     *ppid = NULL;
-    return E_NOTIMPL;
+
+    if (!PathIsDirectoryW(V_BSTR(&This->dir)))
+        return S_FALSE;
+
+    switch (V_VT(&index))
+    {
+        case VT_I2:
+            VariantChangeType(&index, &index, 0, VT_I4);
+            /* fall through */
+
+        case VT_I4:
+            if (V_I4(&index) >= This->item_count || V_I4(&index) < 0)
+                return S_FALSE;
+
+            if (!PathCombineW(path_str, V_BSTR(&This->dir), This->item_filenames[V_I4(&index)]))
+                return S_FALSE;
+
+            break;
+
+        case VT_BSTR:
+            if (!V_BSTR(&index))
+                return S_FALSE;
+
+            if (!PathCanonicalizeW(canonicalized_index, V_BSTR(&index)))
+                return S_FALSE;
+
+            if (strcmpW(V_BSTR(&index), canonicalized_index) != 0)
+                return S_FALSE;
+
+            if (!PathCombineW(path_str, V_BSTR(&This->dir), V_BSTR(&index)))
+                return S_FALSE;
+
+            if (!PathFileExistsW(path_str))
+                return S_FALSE;
+
+            break;
+
+        case VT_ERROR:
+            return FolderItem_Constructor(&This->dir, ppid);
+
+        default:
+            return E_NOTIMPL;
+    }
+
+    V_VT(&path_var) = VT_BSTR;
+    V_BSTR(&path_var) = SysAllocString(path_str);
+    ret = FolderItem_Constructor(&path_var, ppid);
+    VariantClear(&path_var);
+    return ret;
 }
 
 static HRESULT WINAPI FolderItemsImpl__NewEnum(FolderItems3 *iface, IUnknown **ppunk)
@@ -1139,21 +1202,90 @@ static const FolderItems3Vtbl FolderItemsImpl_Vtbl = {
     FolderItemsImpl_get_Verbs
 };
 
-static HRESULT FolderItems_Constructor(FolderItems **ppfi)
+static HRESULT FolderItems_Constructor(VARIANT *dir, FolderItems **ppfi)
 {
+    static const WCHAR backslash_star[] = {'\\','*',0};
+    static const WCHAR dot[] = {'.',0};
+    static const WCHAR dot_dot[] = {'.','.',0};
     FolderItemsImpl *This;
+    LONG item_size;
+    WCHAR glob[MAX_PATH + 2];
+    HANDLE first_file;
+    WIN32_FIND_DATAW file_info;
+    WCHAR **filenames;
+    HRESULT ret;
 
-    TRACE("\n");
+    TRACE("(%s,%p)\n", debugstr_variant(dir), ppfi);
 
     *ppfi = NULL;
+
+    if (V_VT(dir) == VT_I4)
+    {
+        FIXME("special folder constants are not supported\n");
+        return E_NOTIMPL;
+    }
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderItemsImpl));
     if (!This) return E_OUTOFMEMORY;
     This->FolderItems3_iface.lpVtbl = &FolderItemsImpl_Vtbl;
     This->ref = 1;
 
+    VariantInit(&This->dir);
+    ret = VariantCopy(&This->dir, dir);
+    if (FAILED(ret))
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return ret;
+    }
+
+    This->item_count = 0;
+    lstrcpyW(glob, V_BSTR(dir));
+    lstrcatW(glob, backslash_star);
+    first_file = FindFirstFileW(glob, &file_info);
+    if (first_file != INVALID_HANDLE_VALUE)
+    {
+        item_size = 128;
+        This->item_filenames = HeapAlloc(GetProcessHeap(), 0, item_size * sizeof(WCHAR*));
+        if (!This->item_filenames)
+            goto fail;
+
+        do
+        {
+            if (!strcmpW(file_info.cFileName, dot) || !strcmpW(file_info.cFileName, dot_dot))
+                continue;
+
+            if (This->item_count >= item_size)
+            {
+                item_size *= 2;
+                filenames = HeapReAlloc(GetProcessHeap(), 0, This->item_filenames, item_size * sizeof(WCHAR*));
+                if (!filenames)
+                    goto fail;
+                This->item_filenames = filenames;
+            }
+
+            This->item_filenames[This->item_count] = strdupW(file_info.cFileName);
+            if (!This->item_filenames[This->item_count])
+                goto fail;
+            This->item_count++;
+        }
+        while (FindNextFileW(first_file, &file_info));
+
+        FindClose(first_file);
+        HeapReAlloc(GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY,
+                    This->item_filenames, This->item_count * sizeof(WCHAR*));
+    }
+    else
+    {
+        This->item_filenames = NULL;
+    }
+
     *ppfi = (FolderItems*)&This->FolderItems3_iface;
     return S_OK;
+
+fail:
+    FindClose(first_file);
+    FolderItems3_Release(&This->FolderItems3_iface);
+    return E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI FolderImpl_QueryInterface(Folder3 *iface, REFIID riid,
@@ -1308,9 +1440,11 @@ static HRESULT WINAPI FolderImpl_get_ParentFolder(Folder3 *iface, Folder **ppsf)
 
 static HRESULT WINAPI FolderImpl_Items(Folder3 *iface, FolderItems **ppid)
 {
-    FIXME("(%p,%p)\n", iface, ppid);
+    FolderImpl *This = impl_from_Folder(iface);
 
-    return FolderItems_Constructor(ppid);
+    TRACE("(%p,%p)\n", iface, ppid);
+
+    return FolderItems_Constructor(&This->dir, ppid);
 }
 
 static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR name, FolderItem **item)

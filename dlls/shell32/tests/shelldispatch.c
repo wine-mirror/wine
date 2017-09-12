@@ -456,7 +456,6 @@ todo_wine
         r = FolderItems_Item(items, var, NULL);
 
     r = FolderItems_Item(items, var, &item);
-todo_wine
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     ok(!item, "item is not null\n");
 
@@ -494,9 +493,7 @@ todo_wine
     variant_set_string(&var, file_defs[0].name);
     item = NULL;
     r = FolderItems_Item(items, var, &item);
-todo_wine
     ok(r == S_OK, "FolderItems::Item failed: %08x\n", r);
-todo_wine
     ok(!!item, "item is null\n");
     if (item) FolderItem_Release(item);
     VariantClear(&var);
@@ -533,9 +530,7 @@ todo_wine
     V_I2(&var) = 0;
     item = NULL;
     r = FolderItems_Item(items, var, &item);
-todo_wine
     ok(r == S_OK, "FolderItems::Item failed: %08x\n", r);
-todo_wine
     ok(!!item, "item is null\n");
     if (item) FolderItem_Release(item);
 
@@ -543,16 +538,13 @@ todo_wine
     V_I4(&var) = 0;
     item = NULL;
     r = FolderItems_Item(items, var, &item);
-todo_wine
     ok(r == S_OK, "FolderItems::Item failed: %08x\n", r);
-todo_wine
     ok(!!item, "item is null\n");
     if (item) FolderItem_Release(item);
 
     V_I4(&var) = -1;
     item = (FolderItem*)0xdeadbeef;
     r = FolderItems_Item(items, var, &item);
-todo_wine
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     ok(!item, "item is not null\n");
 
@@ -560,9 +552,7 @@ todo_wine
     V_ERROR(&var) = 0;
     item = NULL;
     r = FolderItems_Item(items, var, &item);
-todo_wine
     ok(r == S_OK, "expected S_OK, got %08x\n", r);
-todo_wine
     ok(!!item, "item is null\n");
     if (item)
     {
@@ -585,11 +575,8 @@ todo_wine
 
         item = NULL;
         r = FolderItems_Item(items, int_index, &item);
-todo_wine
         ok(r == S_OK, "file_defs[%d]: FolderItems::Item failed: %08x\n", i, r);
-todo_wine
         ok(!!item, "file_defs[%d]: item is null\n", i);
-        if (!item) goto cleanup;
 
         item2 = NULL;
         r = FolderItems_Item(items, int_index, &item2);
@@ -620,7 +607,6 @@ todo_wine
 
         FolderItem_Release(item);
 
-cleanup:
         if (file_defs[i].type == DIRECTORY)
         {
             /* test that getting an item object for a file in a subdirectory succeeds */
@@ -628,9 +614,7 @@ cleanup:
             variant_set_string(&str_index2, cstr);
             item2 = NULL;
             r = FolderItems_Item(items, str_index2, &item2);
-todo_wine
             ok(r == S_OK, "file_defs[%d]: FolderItems::Item failed: %08x\n", i, r);
-todo_wine
             ok(!!item2, "file_defs[%d]: item is null\n", i);
             if (item2) FolderItem_Release(item2);
             VariantClear(&str_index2);
@@ -645,7 +629,6 @@ todo_wine
             variant_set_string(&str_index2, cstr);
             item2 = (FolderItem*)0xdeadbeef;
             r = FolderItems_Item(items, str_index2, &item2);
-todo_wine
             ok(r == S_FALSE, "file_defs[%d]: expected S_FALSE, got %08x\n", i, r);
             ok(!item2, "file_defs[%d]: item is not null\n", i);
             VariantClear(&str_index2);
@@ -657,7 +640,6 @@ todo_wine
         {
             ok(DeleteFileA(file_defs[i].name), "file_defs[%d]: DeleteFile failed: %08x\n", i, GetLastError());
         }
-        if (!item) continue;
 
         /* test that the folder item is still accessible by integer index */
         item = NULL;
@@ -688,7 +670,6 @@ todo_wine
     V_I4(&int_index) = sizeof(file_defs)/sizeof(file_defs[0]);
     item = (FolderItem*)0xdeadbeef;
     r = FolderItems_Item(items, int_index, &item);
-todo_wine
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     ok(!item, "item is not null\n");
 
@@ -765,14 +746,12 @@ todo_wine
     V_I4(&int_index) = 0;
     item = (FolderItem*)0xdeadbeef;
     r = FolderItems_Item(items, int_index, &item);
-todo_wine
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     ok(!item, "item is not null\n");
 
     variant_set_string(&str_index, file_defs[0].name);
     item = (FolderItem*)0xdeadbeef;
     r = FolderItems_Item(items, str_index, &item);
-todo_wine
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     ok(!item, "item is not null\n");
     VariantClear(&str_index);
