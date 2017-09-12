@@ -104,9 +104,35 @@ function test_head() {
     next_test();
 }
 
+function test_getElementsByClassName() {
+    var elems;
+
+    document.body.innerHTML = '<div class="class1">'
+        + '<div class="class1"></div>'
+        + '<a id="class1" class="class2"></a>'
+        + '</div>'
+        + '<script class="class1"></script>';
+
+    elems = document.getElementsByClassName("class1");
+    ok(elems.length === 3, "elems.length = " + elems.length);
+    ok(elems[0].tagName === "DIV", "elems[0].tagName = " + elems[0].tagName);
+    ok(elems[1].tagName === "DIV", "elems[1].tagName = " + elems[1].tagName);
+    ok(elems[2].tagName === "SCRIPT", "elems[2].tagName = " + elems[2].tagName);
+
+    elems = document.getElementsByClassName("class2");
+    ok(elems.length === 1, "elems.length = " + elems.length);
+    ok(elems[0].tagName === "A", "elems[0].tagName = " + elems[0].tagName);
+
+    elems = document.getElementsByClassName("classnotfound");
+    ok(elems.length == 0, "elems.length = " + elems.length);
+
+    next_test();
+}
+
 var tests = [
     test_input_selection,
     test_textContent,
     test_ElementTraversal,
+    test_getElementsByClassName,
     test_head
 ];

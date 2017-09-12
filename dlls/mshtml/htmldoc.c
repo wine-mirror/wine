@@ -3347,11 +3347,32 @@ static HRESULT WINAPI HTMLDocument7_createAttribute(IHTMLDocument7 *iface, BSTR 
     return IHTMLDocument5_createAttribute(&This->IHTMLDocument5_iface, bstrAttrName, ppAttribute);
 }
 
-static HRESULT WINAPI HTMLDocument7_getElementByClassName(IHTMLDocument7 *iface, BSTR v, IHTMLElementCollection **pel)
+static HRESULT WINAPI HTMLDocument7_getElementsByClassName(IHTMLDocument7 *iface, BSTR v, IHTMLElementCollection **pel)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(v), pel);
-    return E_NOTIMPL;
+    nsIDOMNodeList *nslist;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pel);
+
+    if(!This->doc_node->nsdoc) {
+        FIXME("NULL nsdoc not supported\n");
+        return E_NOTIMPL;
+    }
+
+    nsAString_InitDepend(&nsstr, v);
+    nsres = nsIDOMHTMLDocument_GetElementsByClassName(This->doc_node->nsdoc, &nsstr, &nslist);
+    nsAString_Finish(&nsstr);
+    if(FAILED(nsres)) {
+        ERR("GetElementByClassName failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+
+    *pel = create_collection_from_nodelist(This->doc_node, nslist);
+    nsIDOMNodeList_Release(nslist);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument7_createProcessingInstruction(IHTMLDocument7 *iface, BSTR target,
@@ -4091,7 +4112,7 @@ static const IHTMLDocument7Vtbl HTMLDocument7Vtbl = {
     HTMLDocument7_get_characterSet,
     HTMLDocument7_createElement,
     HTMLDocument7_createAttribute,
-    HTMLDocument7_getElementByClassName,
+    HTMLDocument7_getElementsByClassName,
     HTMLDocument7_createProcessingInstruction,
     HTMLDocument7_adoptNode,
     HTMLDocument7_put_onmssitemodejumplistitemremoved,
