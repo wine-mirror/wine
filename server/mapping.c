@@ -60,7 +60,6 @@ struct mapping
     struct object   obj;             /* object header */
     mem_size_t      size;            /* mapping size */
     unsigned int    flags;           /* SEC_* flags */
-    int             protect;         /* protection flags */
     struct fd      *fd;              /* fd for mapped file */
     enum cpu_type   cpu;             /* client CPU (for PE image mapping) */
     pe_image_info_t image;           /* image info (for PE image mapping) */
@@ -520,13 +519,13 @@ static unsigned int get_mapping_flags( obj_handle_t handle, unsigned int flags )
 
 
 static struct object *create_mapping( struct object *root, const struct unicode_str *name,
-                                      unsigned int attr, mem_size_t size, unsigned int flags, int protect,
-                                      obj_handle_t handle, const struct security_descriptor *sd )
+                                      unsigned int attr, mem_size_t size, unsigned int flags,
+                                      obj_handle_t handle, unsigned int file_access,
+                                      const struct security_descriptor *sd )
 {
     struct mapping *mapping;
     struct file *file;
     struct fd *fd;
-    int access = 0;
     int unix_fd;
     struct stat st;
 
@@ -538,27 +537,23 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         return &mapping->obj;  /* Nothing else to do */
 
     mapping->size        = size;
-    mapping->protect     = protect;
     mapping->fd          = NULL;
     mapping->shared_file = NULL;
     mapping->committed   = NULL;
 
     if (!(mapping->flags = get_mapping_flags( handle, flags ))) goto error;
 
-    if (protect & VPROT_READ) access |= FILE_READ_DATA;
-    if (protect & VPROT_WRITE) access |= FILE_WRITE_DATA;
-
     if (handle)
     {
         const unsigned int sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
         unsigned int mapping_access = FILE_MAPPING_ACCESS;
 
-        if (!(file = get_file_obj( current->process, handle, access ))) goto error;
+        if (!(file = get_file_obj( current->process, handle, file_access ))) goto error;
         fd = get_obj_fd( (struct object *)file );
 
         /* file sharing rules for mappings are different so we use magic the access rights */
         if (flags & SEC_IMAGE) mapping_access |= FILE_MAPPING_IMAGE;
-        else if (protect & VPROT_WRITE) mapping_access |= FILE_MAPPING_WRITE;
+        else if (file_access & FILE_WRITE_DATA) mapping_access |= FILE_MAPPING_WRITE;
 
         if (!(mapping->fd = get_fd_object_for_mapping( fd, mapping_access, sharing )))
         {
@@ -592,7 +587,7 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         }
         else if (st.st_size < mapping->size)
         {
-            if (!(access & FILE_WRITE_DATA))
+            if (!(file_access & FILE_WRITE_DATA))
             {
                 set_error( STATUS_SECTION_TOO_BIG );
                 goto error;
@@ -654,9 +649,9 @@ static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    fprintf( stderr, "Mapping size=%08x%08x flags=%08x prot=%08x fd=%p shared_file=%p\n",
+    fprintf( stderr, "Mapping size=%08x%08x flags=%08x fd=%p shared_file=%p\n",
              (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
-             mapping->flags, mapping->protect, mapping->fd, mapping->shared_file );
+             mapping->flags, mapping->fd, mapping->shared_file );
 }
 
 static struct object_type *mapping_get_type( struct object *obj )
@@ -715,8 +710,8 @@ DECL_HANDLER(create_mapping)
 
     if (!objattr) return;
 
-    if ((obj = create_mapping( root, &name, objattr->attributes,
-                               req->size, req->flags, req->protect, req->file_handle, sd )))
+    if ((obj = create_mapping( root, &name, objattr->attributes, req->size, req->flags,
+                               req->file_handle, req->file_access, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, obj, req->access, objattr->attributes );
@@ -748,7 +743,6 @@ DECL_HANDLER(get_mapping_info)
 
     reply->size    = mapping->size;
     reply->flags   = mapping->flags;
-    reply->protect = mapping->protect;
 
     if (mapping->flags & SEC_IMAGE)
         set_reply_data( &mapping->image, min( sizeof(mapping->image), get_reply_max_size() ));

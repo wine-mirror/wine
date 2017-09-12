@@ -2199,7 +2199,7 @@ static void dump_create_mapping_request( const struct create_mapping_request *re
 {
     fprintf( stderr, " access=%08x", req->access );
     fprintf( stderr, ", flags=%08x", req->flags );
-    fprintf( stderr, ", protect=%08x", req->protect );
+    fprintf( stderr, ", file_access=%08x", req->file_access );
     dump_uint64( ", size=", &req->size );
     fprintf( stderr, ", file_handle=%04x", req->file_handle );
     dump_varargs_object_attributes( ", objattr=", cur_size );
@@ -2233,7 +2233,6 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *re
 {
     dump_uint64( " size=", &req->size );
     fprintf( stderr, ", flags=%08x", req->flags );
-    fprintf( stderr, ", protect=%d", req->protect );
     fprintf( stderr, ", mapping=%04x", req->mapping );
     fprintf( stderr, ", shared_file=%04x", req->shared_file );
     dump_varargs_pe_image_info( ", image=", cur_size );

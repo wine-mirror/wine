@@ -74,6 +74,17 @@ struct file_view
     unsigned int  protect;       /* protection for all pages at allocation time and SEC_* flags */
 };
 
+/* per-page protection flags */
+#define VPROT_READ       0x01
+#define VPROT_WRITE      0x02
+#define VPROT_EXEC       0x04
+#define VPROT_WRITECOPY  0x08
+#define VPROT_GUARD      0x10
+#define VPROT_COMMITTED  0x20
+#define VPROT_WRITEWATCH 0x40
+/* per-mapping protection flags */
+#define VPROT_SYSTEM     0x0200  /* system view (underlying mmap not under our control) */
+#define VPROT_VALLOC     0x0400  /* allocated by VirtualAlloc */
 
 /* Conversion from VPROT_* to Win32 flags */
 static const BYTE VIRTUAL_Win32Flags[16] =
@@ -2632,20 +2643,23 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
                                  ULONG sec_flags, HANDLE file )
 {
     NTSTATUS ret;
-    unsigned int vprot;
+    unsigned int vprot, file_access = 0;
     data_size_t len;
     struct object_attributes *objattr;
 
     if ((ret = get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE ))) return ret;
     if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
 
+    if (vprot & VPROT_READ)  file_access |= FILE_READ_DATA;
+    if (vprot & VPROT_WRITE) file_access |= FILE_WRITE_DATA;
+
     SERVER_START_REQ( create_mapping )
     {
         req->access      = access;
         req->flags       = sec_flags;
         req->file_handle = wine_server_obj_handle( file );
+        req->file_access = file_access;
         req->size        = size ? size->QuadPart : 0;
-        req->protect     = vprot;
         wine_server_add_data( req, objattr, len );
         ret = wine_server_call( req );
         *handle = wine_server_ptr_handle( reply->handle );

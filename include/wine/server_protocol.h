@@ -2174,7 +2174,7 @@ struct create_mapping_request
     struct request_header __header;
     unsigned int access;
     unsigned int flags;
-    unsigned int protect;
+    unsigned int file_access;
     mem_size_t   size;
     obj_handle_t file_handle;
     /* VARARG(objattr,object_attributes); */
@@ -2186,17 +2186,6 @@ struct create_mapping_reply
     obj_handle_t handle;
     char __pad_12[4];
 };
-
-#define VPROT_READ       0x01
-#define VPROT_WRITE      0x02
-#define VPROT_EXEC       0x04
-#define VPROT_WRITECOPY  0x08
-#define VPROT_GUARD      0x10
-#define VPROT_COMMITTED  0x20
-#define VPROT_WRITEWATCH 0x40
-
-#define VPROT_SYSTEM     0x0200
-#define VPROT_VALLOC     0x0400
 
 
 
@@ -2229,10 +2218,10 @@ struct get_mapping_info_reply
     struct reply_header __header;
     mem_size_t   size;
     unsigned int flags;
-    int          protect;
     obj_handle_t mapping;
     obj_handle_t shared_file;
     /* VARARG(image,pe_image_info); */
+    char __pad_28[4];
 };
 
 
@@ -6417,6 +6406,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 535
+#define SERVER_PROTOCOL_VERSION 536
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
