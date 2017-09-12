@@ -43,6 +43,14 @@ static DWORD (WINAPI *pGetLongPathNameW)(LPCWSTR, LPWSTR, DWORD);
 /* Updated Windows 7 has a new IShellDispatch6 in its typelib */
 DEFINE_GUID(IID_IWin7ShellDispatch6, 0x34936ba1, 0x67ad, 0x4c41, 0x99,0xb8, 0x8c,0x12,0xdf,0xf1,0xe9,0x74);
 
+static void variant_set_string(VARIANT *v, const char *s)
+{
+    WCHAR wstr[MAX_PATH];
+    MultiByteToWideChar(CP_ACP, 0, s, -1, wstr, MAX_PATH);
+    V_VT(v) = VT_BSTR;
+    V_BSTR(v) = SysAllocString(wstr);
+}
+
 static void init_function_pointers(void)
 {
     HMODULE hshell32, hkernel32;
@@ -374,57 +382,72 @@ static void test_namespace(void)
 
 static void test_items(void)
 {
-    WCHAR wstr[MAX_PATH], orig_dir[MAX_PATH];
+    static const struct
+    {
+        char name[32];
+        enum
+        {
+            DIRECTORY,
+            EMPTY_FILE,
+        }
+        type;
+    }
+    file_defs[] =
+    {
+        { "00-Myfolder",        DIRECTORY  },
+        { "01-empty.bin",       EMPTY_FILE },
+    };
+    WCHAR path[MAX_PATH], cur_dir[MAX_PATH], orig_dir[MAX_PATH];
     HRESULT r;
     IShellDispatch *sd = NULL;
     Folder *folder = NULL;
     FolderItems *items = NULL;
     FolderItems2 *items2 = NULL;
     FolderItems3 *items3 = NULL;
-    FolderItem *item = (FolderItem*)0xdeadbeef;
+    FolderItem *item = (FolderItem*)0xdeadbeef, *item2;
     IDispatch *disp = NULL;
     IUnknown *unk = NULL;
     FolderItemVerbs *verbs = (FolderItemVerbs*)0xdeadbeef;
-    VARIANT var;
-    LONG lcount = -1;
+    VARIANT var, int_index, str_index, str_index2;
+    LONG count = -1;
+    HANDLE file;
+    BSTR bstr;
+    char cstr[64];
+    int i;
 
     r = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER, &IID_IShellDispatch, (void**)&sd);
     ok(SUCCEEDED(r), "CoCreateInstance failed: %08x\n", r);
     ok(!!sd, "sd is null\n");
 
-    GetTempPathW(MAX_PATH, wstr);
+    /* create and enter a temporary directory and a folder object for it */
+    GetTempPathW(MAX_PATH, path);
     GetCurrentDirectoryW(MAX_PATH, orig_dir);
-    SetCurrentDirectoryW(wstr);
-    CreateDirectoryW(winetestW, NULL);
-    GetFullPathNameW(winetestW, MAX_PATH, wstr, NULL);
+    SetCurrentDirectoryW(path);
+    ok(CreateDirectoryW(winetestW, NULL), "CreateDirectory failed: %08x\n", GetLastError());
+    GetFullPathNameW(winetestW, MAX_PATH, path, NULL);
     V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = SysAllocString(wstr);
+    V_BSTR(&var) = SysAllocString(path);
     r = IShellDispatch_NameSpace(sd, var, &folder);
     ok(r == S_OK, "IShellDispatch::NameSpace failed: %08x\n", r);
     ok(!!folder, "folder is null\n");
-    SysFreeString(V_BSTR(&var));
+    VariantClear(&var);
     IShellDispatch_Release(sd);
     SetCurrentDirectoryW(winetestW);
+    GetCurrentDirectoryW(MAX_PATH, path);
+    GetLongPathNameW(path, cur_dir, MAX_PATH);
 
     r = Folder_Items(folder, &items);
     ok(r == S_OK, "Folder::Items failed: %08x\n", r);
     ok(!!items, "items is null\n");
-    r = FolderItems_QueryInterface(items, &IID_FolderItems2, (void**)&items2);
-    ok(r == S_OK || broken(r == E_NOINTERFACE) /* xp and later */, "FolderItems::QueryInterface failed: %08x\n", r);
-    ok(!!items2 || broken(!items2) /* xp and later */, "items2 is null\n");
-    r = FolderItems_QueryInterface(items, &IID_FolderItems3, (void**)&items3);
-    ok(r == S_OK, "FolderItems::QueryInterface failed: %08x\n", r);
-    ok(!!items3, "items3 is null\n");
-    Folder_Release(folder);
 
     if (0) /* crashes on all versions of Windows */
         r = FolderItems_get_Count(items, NULL);
 
-    r = FolderItems_get_Count(items, &lcount);
+    r = FolderItems_get_Count(items, &count);
 todo_wine
     ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
 todo_wine
-    ok(!lcount, "expected 0 files, got %d\n", lcount);
+    ok(!count, "expected 0 files, got %d\n", count);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 0;
@@ -433,6 +456,238 @@ todo_wine
         r = FolderItems_Item(items, var, NULL);
 
     r = FolderItems_Item(items, var, &item);
+todo_wine
+    ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
+    ok(!item, "item is not null\n");
+
+    /* create test files */
+    for (i = 0; i < sizeof(file_defs)/sizeof(file_defs[0]); i++)
+    {
+        switch (file_defs[i].type)
+        {
+            case DIRECTORY:
+                r = CreateDirectoryA(file_defs[i].name, NULL);
+                ok(r, "CreateDirectory failed: %08x\n", GetLastError());
+                PathCombineA(cstr, file_defs[i].name, "foo.txt");
+                file = CreateFileA(cstr, 0, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+                ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %08x\n", GetLastError());
+                CloseHandle(file);
+                break;
+
+            case EMPTY_FILE:
+                file = CreateFileA(file_defs[i].name, 0, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+                ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %08x\n", GetLastError());
+                CloseHandle(file);
+                break;
+        }
+    }
+
+    /* test that get_Count is not aware of the newly created files */
+    count = -1;
+    r = FolderItems_get_Count(items, &count);
+todo_wine
+    ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
+todo_wine
+    ok(!count, "expected 0 files, got %d\n", count);
+
+    /* test that the newly created files CAN be retrieved by string index */
+    variant_set_string(&var, file_defs[0].name);
+    item = NULL;
+    r = FolderItems_Item(items, var, &item);
+todo_wine
+    ok(r == S_OK, "FolderItems::Item failed: %08x\n", r);
+todo_wine
+    ok(!!item, "item is null\n");
+    if (item) FolderItem_Release(item);
+    VariantClear(&var);
+
+    /* recreate the folder object */
+    FolderItems_Release(items);
+    items = NULL;
+    r = Folder_Items(folder, &items);
+    ok(r == S_OK, "Folder::Items failed: %08x\n", r);
+    ok(!!items, "items is null\n");
+    r = FolderItems_QueryInterface(items, &IID_FolderItems2, (void**)&items2);
+    ok(r == S_OK || broken(r == E_NOINTERFACE) /* xp and later */, "FolderItems::QueryInterface failed: %08x\n", r);
+    if (r == S_OK) ok(!!items2, "items2 is null\n");
+    r = FolderItems_QueryInterface(items, &IID_FolderItems3, (void**)&items3);
+    ok(r == S_OK, "FolderItems::QueryInterface failed: %08x\n", r);
+    ok(!!items3, "items3 is null\n");
+    Folder_Release(folder);
+
+    count = -1;
+    r = FolderItems_get_Count(items, &count);
+todo_wine
+    ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
+todo_wine
+    ok(count == sizeof(file_defs)/sizeof(file_defs[0]),
+       "expected %d files, got %d\n", (LONG)(sizeof(file_defs)/sizeof(file_defs[0])), count);
+
+    V_VT(&var) = VT_EMPTY;
+    item = (FolderItem*)0xdeadbeef;
+    r = FolderItems_Item(items, var, &item);
+    ok(r == E_NOTIMPL, "expected E_NOTIMPL, got %08x\n", r);
+    ok(!item, "item is not null\n");
+
+    V_VT(&var) = VT_I2;
+    V_I2(&var) = 0;
+    item = NULL;
+    r = FolderItems_Item(items, var, &item);
+todo_wine
+    ok(r == S_OK, "FolderItems::Item failed: %08x\n", r);
+todo_wine
+    ok(!!item, "item is null\n");
+    if (item) FolderItem_Release(item);
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 0;
+    item = NULL;
+    r = FolderItems_Item(items, var, &item);
+todo_wine
+    ok(r == S_OK, "FolderItems::Item failed: %08x\n", r);
+todo_wine
+    ok(!!item, "item is null\n");
+    if (item) FolderItem_Release(item);
+
+    V_I4(&var) = -1;
+    item = (FolderItem*)0xdeadbeef;
+    r = FolderItems_Item(items, var, &item);
+todo_wine
+    ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
+    ok(!item, "item is not null\n");
+
+    V_VT(&var) = VT_ERROR;
+    V_ERROR(&var) = 0;
+    item = NULL;
+    r = FolderItems_Item(items, var, &item);
+todo_wine
+    ok(r == S_OK, "expected S_OK, got %08x\n", r);
+todo_wine
+    ok(!!item, "item is null\n");
+    if (item)
+    {
+        bstr = NULL;
+        r = FolderItem_get_Path(item, &bstr);
+        ok(r == S_OK, "FolderItem::get_Path failed: %08x\n", r);
+        ok(!lstrcmpW(bstr, cur_dir),
+           "expected %s, got %s\n", wine_dbgstr_w(cur_dir), wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+        FolderItem_Release(item);
+    }
+
+    V_VT(&int_index) = VT_I4;
+
+    /* test the folder item corresponding to each file */
+    for (i = 0; i < sizeof(file_defs)/sizeof(file_defs[0]); i++)
+    {
+        V_I4(&int_index) = i;
+        variant_set_string(&str_index, file_defs[i].name);
+
+        item = NULL;
+        r = FolderItems_Item(items, int_index, &item);
+todo_wine
+        ok(r == S_OK, "file_defs[%d]: FolderItems::Item failed: %08x\n", i, r);
+todo_wine
+        ok(!!item, "file_defs[%d]: item is null\n", i);
+        if (!item) goto cleanup;
+
+        item2 = NULL;
+        r = FolderItems_Item(items, int_index, &item2);
+        ok(r == S_OK, "file_defs[%d]: FolderItems::Item failed: %08x\n", i, r);
+        ok(item2 != item, "file_defs[%d]: item and item2 are the same\n", i);
+        FolderItem_Release(item2);
+
+        bstr = NULL;
+        r = FolderItem_get_Path(item, &bstr);
+        ok(r == S_OK, "file_defs[%d]: FolderItem::get_Path failed: %08x\n", i, r);
+        PathCombineW(path, cur_dir, V_BSTR(&str_index));
+        ok(!lstrcmpW(bstr, path),
+           "file_defs[%d]: expected %s, got %s\n", i, wine_dbgstr_w(path), wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        item = NULL;
+        r = FolderItems_Item(items, str_index, &item);
+        ok(r == S_OK, "file_defs[%d]: FolderItems::Item failed: %08x\n", i, r);
+        ok(!!item, "file_defs[%d]: item is null\n", i);
+
+        bstr = NULL;
+        r = FolderItem_get_Path(item, &bstr);
+        ok(r == S_OK, "file_defs[%d]: FolderItem::get_Path failed: %08x\n", i, r);
+        PathCombineW(path, cur_dir, V_BSTR(&str_index));
+        ok(!lstrcmpW(bstr, path),
+           "file_defs[%d]: expected %s, got %s\n", i, wine_dbgstr_w(path), wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        FolderItem_Release(item);
+
+cleanup:
+        if (file_defs[i].type == DIRECTORY)
+        {
+            /* test that getting an item object for a file in a subdirectory succeeds */
+            PathCombineA(cstr, file_defs[i].name, "foo.txt");
+            variant_set_string(&str_index2, cstr);
+            item2 = NULL;
+            r = FolderItems_Item(items, str_index2, &item2);
+todo_wine
+            ok(r == S_OK, "file_defs[%d]: FolderItems::Item failed: %08x\n", i, r);
+todo_wine
+            ok(!!item2, "file_defs[%d]: item is null\n", i);
+            if (item2) FolderItem_Release(item2);
+            VariantClear(&str_index2);
+
+            /* delete the file in the subdirectory */
+            ok(DeleteFileA(cstr), "file_defs[%d]: DeleteFile failed: %08x\n", i, GetLastError());
+
+            /* test that getting an item object via a relative path fails */
+            strcpy(cstr, file_defs[i].name);
+            strcat(cstr, "\\..\\");
+            strcat(cstr, file_defs[i].name);
+            variant_set_string(&str_index2, cstr);
+            item2 = (FolderItem*)0xdeadbeef;
+            r = FolderItems_Item(items, str_index2, &item2);
+todo_wine
+            ok(r == S_FALSE, "file_defs[%d]: expected S_FALSE, got %08x\n", i, r);
+            ok(!item2, "file_defs[%d]: item is not null\n", i);
+            VariantClear(&str_index2);
+
+            /* remove the directory */
+            ok(RemoveDirectoryA(file_defs[i].name), "file_defs[%d]: RemoveDirectory failed: %08x\n", i, GetLastError());
+        }
+        else
+        {
+            ok(DeleteFileA(file_defs[i].name), "file_defs[%d]: DeleteFile failed: %08x\n", i, GetLastError());
+        }
+        if (!item) continue;
+
+        /* test that the folder item is still accessible by integer index */
+        item = NULL;
+        r = FolderItems_Item(items, int_index, &item);
+        ok(r == S_OK, "file_defs[%d]: FolderItems::Item failed: %08x\n", i, r);
+        ok(!!item, "file_defs[%d]: item is null\n", i);
+
+        bstr = NULL;
+        r = FolderItem_get_Path(item, &bstr);
+        ok(r == S_OK, "file_defs[%d]: FolderItem::get_Path failed: %08x\n", i, r);
+        PathCombineW(path, cur_dir, V_BSTR(&str_index));
+        ok(!lstrcmpW(bstr, path),
+           "file_defs[%d]: expected %s, got %s\n", i, wine_dbgstr_w(path), wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        FolderItem_Release(item);
+
+        /* test that the folder item is no longer accessible by string index */
+        item = (FolderItem*)0xdeadbeef;
+        r = FolderItems_Item(items, str_index, &item);
+        ok(r == S_FALSE, "file_defs[%d]: expected S_FALSE, got %08x\n", i, r);
+        ok(!item, "file_defs[%d]: item is not null\n", i);
+
+        VariantClear(&str_index);
+    }
+
+    /* test that there are only as many folder items as there were files */
+    V_I4(&int_index) = sizeof(file_defs)/sizeof(file_defs[0]);
+    item = (FolderItem*)0xdeadbeef;
+    r = FolderItems_Item(items, int_index, &item);
 todo_wine
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     ok(!item, "item is not null\n");
@@ -492,10 +747,35 @@ todo_wine
         ok(!verbs, "verbs is not null\n");
     }
 
-    GetTempPathW(MAX_PATH, wstr);
-    SetCurrentDirectoryW(wstr);
-    RemoveDirectoryW(winetestW);
+    /* remove the temporary directory and restore the original working directory */
+    GetTempPathW(MAX_PATH, path);
+    SetCurrentDirectoryW(path);
+    ok(RemoveDirectoryW(winetestW), "RemoveDirectory failed: %08x\n", GetLastError());
     SetCurrentDirectoryW(orig_dir);
+
+    /* test that everything stops working after the directory has been removed */
+    count = -1;
+    r = FolderItems_get_Count(items, &count);
+todo_wine
+    ok(r == S_OK, "FolderItems::get_Count failed: %08x\n", r);
+todo_wine
+    ok(!count, "expected 0 files, got %d\n", count);
+
+    item = NULL;
+    V_I4(&int_index) = 0;
+    item = (FolderItem*)0xdeadbeef;
+    r = FolderItems_Item(items, int_index, &item);
+todo_wine
+    ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
+    ok(!item, "item is not null\n");
+
+    variant_set_string(&str_index, file_defs[0].name);
+    item = (FolderItem*)0xdeadbeef;
+    r = FolderItems_Item(items, str_index, &item);
+todo_wine
+    ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
+    ok(!item, "item is not null\n");
+    VariantClear(&str_index);
 
     FolderItems_Release(items);
     if (items2) FolderItems2_Release(items2);
