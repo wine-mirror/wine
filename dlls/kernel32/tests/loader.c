@@ -586,8 +586,6 @@ static void test_Loader(void)
             SetLastError(0xdeadbeef);
             ptr = VirtualAlloc(hlib, page_size, MEM_COMMIT, info.Protect);
             ok(!ptr, "%d: VirtualAlloc should fail\n", i);
-            /* FIXME: Remove once Wine is fixed */
-            todo_wine_if (info.Protect == PAGE_WRITECOPY || info.Protect == PAGE_EXECUTE_WRITECOPY)
             ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
 
             SetLastError(0xdeadbeef);
@@ -672,8 +670,6 @@ static void test_Loader(void)
                 SetLastError(0xdeadbeef);
                 ptr = VirtualAlloc((char *)hlib + section.VirtualAddress, page_size, MEM_COMMIT, info.Protect);
                 ok(!ptr, "%d: VirtualAlloc should fail\n", i);
-                /* FIXME: Remove once Wine is fixed */
-                todo_wine_if (info.Protect == PAGE_WRITECOPY || info.Protect == PAGE_EXECUTE_WRITECOPY)
                 ok(GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_ADDRESS,
                    "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
             }

@@ -3536,9 +3536,7 @@ static void test_CreateFileMapping_protection(void)
             SetLastError(0xdeadbeef);
             ptr = VirtualAlloc(base, si.dwPageSize, MEM_COMMIT, td[i].prot);
             ok(!ptr, "%d: VirtualAlloc(%02x) should fail\n", i, td[i].prot);
-            /* FIXME: remove once Wine is fixed */
-            todo_wine_if (td[i].prot == PAGE_WRITECOPY || td[i].prot == PAGE_EXECUTE_WRITECOPY)
-                ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
 
             SetLastError(0xdeadbeef);
             ret = VirtualProtect(base, si.dwPageSize, td[i].prot, &old_prot);
@@ -3984,21 +3982,18 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
                     /* win2k and XP don't support EXEC on file mappings */
                     if (!ret && page_prot[k] == PAGE_EXECUTE)
                     {
-                        todo_wine
                         ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE\n");
                         continue;
                     }
                     /* NT4 and win2k don't support EXEC on file mappings */
                     if (!ret && (page_prot[k] == PAGE_EXECUTE_READ || page_prot[k] == PAGE_EXECUTE_READWRITE))
                     {
-                        todo_wine
                         ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE\n");
                         continue;
                     }
                     /* Vista+ supports PAGE_EXECUTE_WRITECOPY, earlier versions don't */
                     if (!ret && page_prot[k] == PAGE_EXECUTE_WRITECOPY)
                     {
-                        todo_wine
                         ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE_WRITECOPY\n");
                         continue;
                     }
@@ -4035,14 +4030,12 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
                 {
                     if (is_compatible_protection(view[j].prot, page_prot[k]))
                     {
-                        todo_wine_if (!ptr)
                         ok(ptr != NULL, "VirtualAlloc error %u, map %#x, view %#x, requested prot %#x\n",
                            GetLastError(), page_prot[i], view[j].prot, page_prot[k]);
                     }
                     else
                     {
                         /* versions <= Vista accept all protections without checking */
-                        todo_wine_if (ptr)
                         ok(!ptr || broken(ptr != NULL),
                            "VirtualAlloc should fail, map %#x, view %#x, requested prot %#x\n",
                            page_prot[i], view[j].prot, page_prot[k]);
@@ -4064,8 +4057,6 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
                 else
                 {
                     ok(!ptr, "VirtualAlloc(%02x) should fail\n", page_prot[k]);
-                    /* FIXME: remove once Wine is fixed */
-                    todo_wine_if (page_prot[k] == PAGE_WRITECOPY || page_prot[k] == PAGE_EXECUTE_WRITECOPY)
                     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
                 }
             }
