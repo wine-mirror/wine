@@ -122,6 +122,7 @@ typedef struct
     HANDLE unload_event;
     CredHandle cred_handle;
     BOOL cred_handle_initialized;
+    DWORD secure_protocols;
 } session_t;
 
 typedef struct

@@ -184,6 +184,17 @@ static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
         hdr->redirect_policy = policy;
         return TRUE;
     }
+    case WINHTTP_OPTION_SECURE_PROTOCOLS:
+    {
+        if (buflen != sizeof(session->secure_protocols))
+        {
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+        session->secure_protocols = *(DWORD *)buffer;
+        TRACE("0x%x\n", session->secure_protocols);
+        return TRUE;
+    }
     case WINHTTP_OPTION_DISABLE_FEATURE:
         set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
         return FALSE;
