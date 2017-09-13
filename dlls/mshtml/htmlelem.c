@@ -5349,8 +5349,10 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     if(mode >= COMPAT_MODE_IE8)
         dispex_info_add_interface(info, IElementSelector_tid, NULL);
 
-    if(mode >= COMPAT_MODE_IE9)
+    if(mode >= COMPAT_MODE_IE9) {
+        dispex_info_add_interface(info, IHTMLElement6_tid, NULL);
         dispex_info_add_interface(info, IElementTraversal_tid, NULL);
+    }
 }
 
 static const tid_t HTMLElement_iface_tids[] = {

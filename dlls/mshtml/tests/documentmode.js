@@ -35,6 +35,9 @@ function test_elem_props() {
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);
     test_exposed("firstElementChild", v >= 9);
+    test_exposed("onsubmit", v >= 9);
+    test_exposed("getElementsByClassName", v >= 9);
+    test_exposed("removeAttributeNS", v >= 9);
 
     next_test();
 }
