@@ -2000,7 +2000,8 @@ void VIRTUAL_SetForceExec( BOOL enable )
 
         WINE_RB_FOR_EACH_ENTRY( view, &views_tree, struct file_view, entry )
         {
-            BYTE commit = view->mapping ? VPROT_COMMITTED : 0;  /* file mappings are always accessible */
+            /* file mappings are always accessible */
+            BYTE commit = is_view_valloc( view ) ? 0 : VPROT_COMMITTED;
 
             mprotect_range( view, view->base, view->size, commit, 0 );
         }
