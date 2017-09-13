@@ -544,17 +544,14 @@ static void remove_reserved_area( void *addr, size_t size )
     /* unmap areas not covered by an existing view */
     WINE_RB_FOR_EACH_ENTRY( view, &views_tree, struct file_view, entry )
     {
-        if ((char *)view->base >= (char *)addr + size)
-        {
-            munmap( addr, size );
-            break;
-        }
+        if ((char *)view->base >= (char *)addr + size) break;
         if ((char *)view->base + view->size <= (char *)addr) continue;
         if (view->base > addr) munmap( addr, (char *)view->base - (char *)addr );
-        if ((char *)view->base + view->size > (char *)addr + size) break;
+        if ((char *)view->base + view->size > (char *)addr + size) return;
         size = (char *)addr + size - ((char *)view->base + view->size);
         addr = (char *)view->base + view->size;
     }
+    munmap( addr, size );
 }
 
 
