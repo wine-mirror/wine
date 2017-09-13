@@ -1884,42 +1884,14 @@ LPWSTR msi_get_error_message(MSIDATABASE *db, int error)
 INT MSI_ProcessMessageVerbatim(MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIRECORD *record)
 {
     LPWSTR message = {0};
-    DWORD len, log_type = 0;
+    DWORD len;
+    DWORD log_type = 1 << (eMessageType >> 24);
     UINT res;
     INT rc = 0;
     char *msg;
 
     TRACE("%x\n", eMessageType);
     if (TRACE_ON(msi)) dump_record(record);
-
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_FATALEXIT)
-        log_type |= INSTALLLOGMODE_FATALEXIT;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ERROR)
-        log_type |= INSTALLLOGMODE_ERROR;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_WARNING)
-        log_type |= INSTALLLOGMODE_WARNING;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_USER)
-        log_type |= INSTALLLOGMODE_USER;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_INFO)
-        log_type |= INSTALLLOGMODE_INFO;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_RESOLVESOURCE)
-        log_type |= INSTALLLOGMODE_RESOLVESOURCE;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_OUTOFDISKSPACE)
-        log_type |= INSTALLLOGMODE_OUTOFDISKSPACE;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_COMMONDATA)
-        log_type |= INSTALLLOGMODE_COMMONDATA;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
-        log_type |= INSTALLLOGMODE_ACTIONSTART;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONDATA)
-        log_type |= INSTALLLOGMODE_ACTIONDATA;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_PROGRESS)
-        log_type |= INSTALLLOGMODE_PROGRESS;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_INITIALIZE)
-        log_type |= INSTALLLOGMODE_INITIALIZE;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_TERMINATE)
-        log_type |= INSTALLLOGMODE_TERMINATE;
-    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_SHOWDIALOG)
-        log_type |= INSTALLLOGMODE_SHOWDIALOG;
 
     if (!package || !record)
         message = NULL;
