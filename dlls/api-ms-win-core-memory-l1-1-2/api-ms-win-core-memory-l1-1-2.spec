@@ -8,7 +8,7 @@
 @ stdcall FreeUserPhysicalPages(long ptr ptr) kernel32.FreeUserPhysicalPages
 @ stdcall GetLargePageMinimum() kernel32.GetLargePageMinimum
 @ stub GetMemoryErrorHandlingCapabilities
-@ stub GetProcessWorkingSetSizeEx
+@ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr) kernel32.GetProcessWorkingSetSizeEx
 @ stdcall GetSystemFileCacheSize(ptr ptr ptr) kernel32.GetSystemFileCacheSize
 @ stdcall GetWriteWatch(long ptr long ptr ptr ptr) kernel32.GetWriteWatch
 @ stub MapUserPhysicalPages

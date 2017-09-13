@@ -4,7 +4,7 @@
 @ stdcall CreateMemoryResourceNotification(long) kernel32.CreateMemoryResourceNotification
 @ stdcall FlushViewOfFile(ptr long) kernel32.FlushViewOfFile
 @ stdcall GetLargePageMinimum() kernel32.GetLargePageMinimum
-@ stub GetProcessWorkingSetSizeEx
+@ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr) kernel32.GetProcessWorkingSetSizeEx
 @ stdcall GetSystemFileCacheSize(ptr ptr ptr) kernel32.GetSystemFileCacheSize
 @ stdcall GetWriteWatch(long ptr long ptr ptr ptr) kernel32.GetWriteWatch
 @ stdcall MapViewOfFile(long long long long long) kernel32.MapViewOfFile

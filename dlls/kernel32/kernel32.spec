@@ -793,7 +793,7 @@
 # @ stub GetProcessUserModeExceptionPolicy
 @ stdcall GetProcessVersion(long)
 @ stdcall GetProcessWorkingSetSize(long ptr ptr)
-# @ stub GetProcessWorkingSetSizeEx
+@ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr)
 @ stdcall GetProductInfo(long long long long ptr)
 @ stub GetProductName
 @ stdcall GetProfileIntA(str str long)

@@ -637,7 +637,7 @@
 @ stdcall GetProcessShutdownParameters(ptr ptr) kernel32.GetProcessShutdownParameters
 @ stdcall GetProcessTimes(long ptr ptr ptr ptr) kernel32.GetProcessTimes
 @ stdcall GetProcessVersion(long) kernel32.GetProcessVersion
-# @ stub GetProcessWorkingSetSizeEx
+@ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr) kernel32.GetProcessWorkingSetSizeEx
 # @ stub GetProcessorSystemCycleTime
 @ stdcall GetProductInfo(long long long long ptr) kernel32.GetProductInfo
 @ stub GetPtrCalData

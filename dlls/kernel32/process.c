@@ -3424,17 +3424,29 @@ BOOL WINAPI K32EmptyWorkingSet(HANDLE hProcess)
     return SetProcessWorkingSetSize(hProcess, (SIZE_T)-1, (SIZE_T)-1);
 }
 
+
 /***********************************************************************
- *           GetProcessWorkingSetSize    (KERNEL32.@)
+ *           GetProcessWorkingSetSizeEx    (KERNEL32.@)
  */
-BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess, PSIZE_T minset,
-                                     PSIZE_T maxset)
+BOOL WINAPI GetProcessWorkingSetSizeEx(HANDLE process, SIZE_T *minset,
+                                       SIZE_T *maxset, DWORD *flags)
 {
-    FIXME("(%p,%p,%p): stub\n",hProcess,minset,maxset);
+    FIXME("(%p,%p,%p,%p): stub\n", process, minset, maxset, flags);
     /* 32 MB working set size */
     if (minset) *minset = 32*1024*1024;
     if (maxset) *maxset = 32*1024*1024;
+    if (flags) *flags = QUOTA_LIMITS_HARDWS_MIN_DISABLE |
+                        QUOTA_LIMITS_HARDWS_MAX_DISABLE;
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetProcessWorkingSetSize    (KERNEL32.@)
+ */
+BOOL WINAPI GetProcessWorkingSetSize(HANDLE process, SIZE_T *minset, SIZE_T *maxset)
+{
+    return GetProcessWorkingSetSizeEx(process, minset, maxset, NULL);
 }
 
 
