@@ -1168,15 +1168,26 @@ static IHTMLDOMNode *_clone_node(unsigned line, IUnknown *unk, VARIANT_BOOL deep
 static void _test_elem_tag(unsigned line, IUnknown *unk, const char *extag)
 {
     IHTMLElement *elem = _get_elem_iface(line, unk);
+    IHTMLElement6 *elem6;
     BSTR tag;
     HRESULT hres;
 
     hres = IHTMLElement_get_tagName(elem, &tag);
-    IHTMLElement_Release(elem);
     ok_(__FILE__, line) (hres == S_OK, "get_tagName failed: %08x\n", hres);
     ok_(__FILE__, line) (!strcmp_wa(tag, extag), "got tag: %s, expected %s\n", wine_dbgstr_w(tag), extag);
-
     SysFreeString(tag);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLElement6, (void**)&elem6);
+    if(SUCCEEDED(hres)) {
+        hres = IHTMLElement6_get_tagName(elem6, &tag);
+        ok_(__FILE__, line)(hres == S_OK, "(elem6) get_tagName failed: %08x\n", hres);
+        ok_(__FILE__, line)(!strcmp_wa(tag, extag), "(elem6) got tag: %s, expected %s\n",
+                            wine_dbgstr_w(tag), extag);
+        SysFreeString(tag);
+        IHTMLElement6_Release(elem6);
+    }
+
+    IHTMLElement_Release(elem);
 }
 
 #define test_elem_type(ifc,t) _test_elem_type(__LINE__,ifc,t)

@@ -4092,8 +4092,10 @@ static HRESULT WINAPI HTMLElement6_getElementsByTagNameNS(IHTMLElement6 *iface, 
 static HRESULT WINAPI HTMLElement6_get_tagName(IHTMLElement6 *iface, BSTR *p)
 {
     HTMLElement *This = impl_from_IHTMLElement6(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLElement_get_tagName(&This->IHTMLElement_iface, p);
 }
 
 static HRESULT WINAPI HTMLElement6_get_nodeName(IHTMLElement6 *iface, BSTR *p)
