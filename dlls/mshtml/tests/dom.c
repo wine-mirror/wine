@@ -1091,15 +1091,26 @@ static IHTMLDOMAttribute2 *_get_attr2_iface(unsigned line, IUnknown *unk)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
     IHTMLDOMNode *node = _get_node_iface(line, unk);
+    IHTMLElement6 *elem;
     BSTR name;
     HRESULT hres;
 
     hres = IHTMLDOMNode_get_nodeName(node, &name);
-    IHTMLDOMNode_Release(node);
     ok_(__FILE__, line) (hres == S_OK, "get_nodeName failed: %08x\n", hres);
     ok_(__FILE__, line) (!strcmp_wa(name, exname), "got name: %s, expected %s\n", wine_dbgstr_w(name), exname);
-
     SysFreeString(name);
+
+    hres = IHTMLDOMNode_QueryInterface(node, &IID_IHTMLElement6, (void**)&elem);
+    if(SUCCEEDED(hres)) {
+        hres = IHTMLElement6_get_nodeName(elem, &name);
+        ok_(__FILE__, line) (hres == S_OK, "(elem) get_nodeName failed: %08x\n", hres);
+        ok_(__FILE__, line) (!strcmp_wa(name, exname), "(elem) got name: %s, expected %s\n",
+                             wine_dbgstr_w(name), exname);
+        SysFreeString(name);
+        IHTMLElement6_Release(elem);
+    }
+
+    IHTMLDOMNode_Release(node);
 }
 
 #define get_owner_doc(u) _get_owner_doc(__LINE__,u)
