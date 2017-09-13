@@ -67,6 +67,8 @@ typedef struct BmpFrameEncode {
     double xres, yres;
     UINT lineswritten;
     UINT stride;
+    WICColor palette[256];
+    UINT colors;
     BOOL committed;
 } BmpFrameEncode;
 
@@ -197,10 +199,18 @@ static HRESULT WINAPI BmpFrameEncode_SetColorContexts(IWICBitmapFrameEncode *ifa
 }
 
 static HRESULT WINAPI BmpFrameEncode_SetPalette(IWICBitmapFrameEncode *iface,
-    IWICPalette *pIPalette)
+    IWICPalette *palette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    BmpFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+
+    TRACE("(%p,%p)\n", iface, palette);
+
+    if (!palette) return E_INVALIDARG;
+
+    if (!This->initialized)
+        return WINCODEC_ERR_NOTINITIALIZED;
+
+    return IWICPalette_GetColors(palette, 256, This->palette, &This->colors);
 }
 
 static HRESULT WINAPI BmpFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
@@ -520,6 +530,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     encode->xres = 0.0;
     encode->yres = 0.0;
     encode->lineswritten = 0;
+    encode->colors = 0;
     encode->committed = FALSE;
 
     *ppIFrameEncode = &encode->IWICBitmapFrameEncode_iface;
