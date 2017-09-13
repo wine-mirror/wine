@@ -3747,7 +3747,7 @@ UINT WINAPI MsiCollectUserInfoW(LPCWSTR szProduct)
     if (!package)
         return ERROR_CALL_NOT_IMPLEMENTED;
 
-    rc = ACTION_PerformUIAction(package, szFirstRun, SCRIPT_NONE);
+    rc = ACTION_PerformAction(package, szFirstRun, SCRIPT_NONE);
     msiobj_release( &package->hdr );
 
     MsiCloseHandle(handle);
@@ -3773,7 +3773,7 @@ UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
     if (!package)
         return ERROR_CALL_NOT_IMPLEMENTED;
 
-    rc = ACTION_PerformUIAction(package, szFirstRun, SCRIPT_NONE);
+    rc = ACTION_PerformAction(package, szFirstRun, SCRIPT_NONE);
     msiobj_release( &package->hdr );
 
     MsiCloseHandle(handle);
@@ -3854,7 +3854,7 @@ UINT WINAPI MsiConfigureFeatureW(LPCWSTR szProduct, LPCWSTR szFeature, INSTALLST
 
     MsiSetInternalUI( INSTALLUILEVEL_BASIC, NULL );
 
-    r = ACTION_PerformUIAction( package, szCostInitialize, SCRIPT_NONE );
+    r = ACTION_PerformAction( package, szCostInitialize, SCRIPT_NONE );
     if (r != ERROR_SUCCESS)
         goto end;
 

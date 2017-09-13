@@ -504,10 +504,7 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
         return ERROR_SUCCESS;
     }
 
-    if (needs_ui_sequence(package))
-        rc = ACTION_PerformUIAction(package, action, SCRIPT_NONE);
-    else
-        rc = ACTION_PerformAction(package, action, SCRIPT_NONE);
+    rc = ACTION_PerformAction(package, action, SCRIPT_NONE);
 
     msi_dialog_check_messages( NULL );
 
@@ -7775,23 +7772,6 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script)
 
     TRACE("Performing action (%s)\n", debugstr_w(action));
 
-    rc = ACTION_HandleStandardAction(package, action);
-
-    if (rc == ERROR_FUNCTION_NOT_CALLED)
-        rc = ACTION_HandleCustomAction(package, action, script);
-
-    if (rc == ERROR_FUNCTION_NOT_CALLED)
-        WARN("unhandled msi action %s\n", debugstr_w(action));
-
-    return rc;
-}
-
-UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT script)
-{
-    UINT rc;
-
-    TRACE("Performing action (%s)\n", debugstr_w(action));
-
     package->action_progress_increment = 0;
     rc = ACTION_HandleStandardAction(package, action);
 
@@ -7849,10 +7829,7 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
             return ERROR_FUNCTION_FAILED;
         }
 
-        if (needs_ui_sequence(package))
-            rc = ACTION_PerformUIAction(package, action, SCRIPT_NONE);
-        else
-            rc = ACTION_PerformAction(package, action, SCRIPT_NONE);
+        rc = ACTION_PerformAction(package, action, SCRIPT_NONE);
 
         msiobj_release(&row->hdr);
     }
