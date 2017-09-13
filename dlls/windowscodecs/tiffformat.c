@@ -1441,6 +1441,8 @@ typedef struct TiffFrameEncode {
     UINT width, height;
     double xres, yres;
     UINT lines_written;
+    WICColor palette[256];
+    UINT colors;
 } TiffFrameEncode;
 
 static inline TiffFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
@@ -1602,10 +1604,24 @@ static HRESULT WINAPI TiffFrameEncode_SetColorContexts(IWICBitmapFrameEncode *if
 }
 
 static HRESULT WINAPI TiffFrameEncode_SetPalette(IWICBitmapFrameEncode *iface,
-    IWICPalette *pIPalette)
+    IWICPalette *palette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    TiffFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    HRESULT hr;
+
+    TRACE("(%p,%p)\n", iface, palette);
+
+    if (!palette) return E_INVALIDARG;
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (This->initialized)
+        hr = IWICPalette_GetColors(palette, 256, This->palette, &This->colors);
+    else
+        hr = WINCODEC_ERR_NOTINITIALIZED;
+
+    LeaveCriticalSection(&This->parent->lock);
+    return hr;
 }
 
 static HRESULT WINAPI TiffFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
@@ -1974,6 +1990,7 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
             result->xres = 0.0;
             result->yres = 0.0;
             result->lines_written = 0;
+            result->colors = 0;
 
             IWICBitmapEncoder_AddRef(iface);
             *ppIFrameEncode = &result->IWICBitmapFrameEncode_iface;
