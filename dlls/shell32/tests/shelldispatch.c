@@ -33,6 +33,15 @@
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown *)obj, ref, __LINE__)
+static void _expect_ref(IUnknown *obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "Unexpected refcount %d, expected %d\n", rc, ref);
+}
+
 static const WCHAR winetestW[] = {'w','i','n','e','t','e','s','t',0};
 
 static HRESULT (WINAPI *pSHGetFolderPathW)(HWND, int, HANDLE, DWORD, LPWSTR);
@@ -401,15 +410,15 @@ static void test_items(void)
     HRESULT r;
     IShellDispatch *sd = NULL;
     Folder *folder = NULL;
-    FolderItems *items = NULL;
+    FolderItems *items;
     FolderItems2 *items2 = NULL;
     FolderItems3 *items3 = NULL;
     FolderItem *item = (FolderItem*)0xdeadbeef, *item2;
-    IDispatch *disp = NULL;
-    IUnknown *unk = NULL;
     FolderItemVerbs *verbs = (FolderItemVerbs*)0xdeadbeef;
     VARIANT var, int_index, str_index, str_index2;
+    IDispatch *disp, *disp2;
     LONG count = -1;
+    IUnknown *unk;
     HANDLE file;
     BSTR bstr;
     char cstr[64];
@@ -427,18 +436,56 @@ static void test_items(void)
     GetFullPathNameW(winetestW, MAX_PATH, path, NULL);
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(path);
+
+    EXPECT_REF(sd, 1);
     r = IShellDispatch_NameSpace(sd, var, &folder);
     ok(r == S_OK, "IShellDispatch::NameSpace failed: %08x\n", r);
     ok(!!folder, "folder is null\n");
+    EXPECT_REF(folder, 1);
+    EXPECT_REF(sd, 1);
+
     VariantClear(&var);
-    IShellDispatch_Release(sd);
     SetCurrentDirectoryW(winetestW);
     GetCurrentDirectoryW(MAX_PATH, path);
     GetLongPathNameW(path, cur_dir, MAX_PATH);
 
+    /* FolderItems grabs its Folder reference */
+    items = NULL;
     r = Folder_Items(folder, &items);
     ok(r == S_OK, "Folder::Items failed: %08x\n", r);
     ok(!!items, "items is null\n");
+    EXPECT_REF(folder, 2);
+    EXPECT_REF(items, 1);
+
+    unk = NULL;
+    r = Folder_Items(folder, (FolderItems **)&unk);
+    ok(r == S_OK, "Folder::Items failed: %08x\n", r);
+    EXPECT_REF(folder, 3);
+    IUnknown_Release(unk);
+    EXPECT_REF(folder, 2);
+
+    FolderItems_AddRef(items);
+    EXPECT_REF(folder, 2);
+    FolderItems_Release(items);
+
+    /* Application property */
+    disp = NULL;
+    EXPECT_REF(sd, 1);
+    r = Folder_get_Application(folder, &disp);
+    ok(r == S_OK, "Failed to get application %#x.\n", r);
+    ok(disp != (IDispatch *)sd, "Unexpected application pointer\n");
+    EXPECT_REF(sd, 1);
+
+    disp2 = NULL;
+    r = Folder_get_Application(folder, &disp2);
+    ok(r == S_OK, "Failed to get application %#x.\n", r);
+    ok(disp2 == disp, "Unexpected application pointer\n");
+    IDispatch_Release(disp2);
+
+    r = IDispatch_QueryInterface(disp, &IID_IShellDispatch, (void **)&disp2);
+    ok(r == S_OK, "Wrong instance, hr %#x.\n", r);
+    IDispatch_Release(disp2);
+    IDispatch_Release(disp);
 
     if (0) /* crashes on all versions of Windows */
         r = FolderItems_get_Count(items, NULL);
@@ -506,7 +553,6 @@ static void test_items(void)
     r = FolderItems_QueryInterface(items, &IID_FolderItems3, (void**)&items3);
     ok(r == S_OK, "FolderItems::QueryInterface failed: %08x\n", r);
     ok(!!items3, "items3 is null\n");
-    Folder_Release(folder);
 
     count = -1;
     r = FolderItems_get_Count(items, &count);
@@ -674,11 +720,13 @@ static void test_items(void)
     }
 
     r = FolderItems_get_Application(items, &disp);
-todo_wine
     ok(r == S_OK, "FolderItems::get_Application failed: %08x\n", r);
-todo_wine
-    ok(!!disp, "disp is null\n");
-    if (disp) IDispatch_Release(disp);
+
+    r = Folder_get_Application(folder, &disp2);
+    ok(r == S_OK, "Failed to get application pointer, hr %#x.\n", r);
+    ok(disp == disp2, "Unexpected application pointer.\n");
+    IDispatch_Release(disp2);
+    IDispatch_Release(disp);
 
     if (0) /* crashes on xp */
     {
@@ -749,8 +797,10 @@ todo_wine
     VariantClear(&str_index);
 
     FolderItems_Release(items);
+    Folder_Release(folder);
     if (items2) FolderItems2_Release(items2);
     if (items3) FolderItems3_Release(items3);
+    IShellDispatch_Release(sd);
 }
 
 static void test_service(void)
