@@ -465,10 +465,12 @@ static HRESULT WINAPI BmpEncoder_SetColorContexts(IWICBitmapEncoder *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI BmpEncoder_SetPalette(IWICBitmapEncoder *iface, IWICPalette *pIPalette)
+static HRESULT WINAPI BmpEncoder_SetPalette(IWICBitmapEncoder *iface, IWICPalette *palette)
 {
-    TRACE("(%p,%p)\n", iface, pIPalette);
-    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    BmpEncoder *This = impl_from_IWICBitmapEncoder(iface);
+
+    TRACE("(%p,%p)\n", iface, palette);
+    return This->stream ? WINCODEC_ERR_UNSUPPORTEDOPERATION : WINCODEC_ERR_NOTINITIALIZED;
 }
 
 static HRESULT WINAPI BmpEncoder_SetThumbnail(IWICBitmapEncoder *iface, IWICBitmapSource *pIThumbnail)
