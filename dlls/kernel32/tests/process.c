@@ -1382,7 +1382,7 @@ static  void    test_SuspendFlag(void)
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startup, &info), "CreateProcess\n");
 
     ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running\n");
-    Sleep(8000);
+    Sleep(1000);
     ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running\n");
     ok(ResumeThread(info.hThread) == 1, "Resuming thread\n");
 
@@ -1651,6 +1651,9 @@ static void test_Console(void)
     memset(buffer, 0, sizeof(buffer));
     ok(ReadFile(hParentIn, buffer, sizeof(buffer), &w, NULL), "Reading from child\n");
     ok(strcmp(buffer, msg) == 0, "Should have received '%s'\n", msg);
+
+    /* the child may also send the final "n tests executed" string, so read it to avoid a deadlock */
+    ReadFile(hParentIn, buffer, sizeof(buffer), &w, NULL);
 
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
