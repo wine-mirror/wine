@@ -546,22 +546,15 @@ UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR table )
     return r;
 }
 
-static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
+static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package)
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
         '`','I','n','s','t','a','l','l','E','x','e','c','u','t','e',
         'S','e','q','u','e','n','c','e','`',' ', 'W','H','E','R','E',' ',
-        '`','S','e','q','u','e','n','c','e','`',' ', '>',' ','%','i',' ',
+        '`','S','e','q','u','e','n','c','e','`',' ', '>',' ','0',' ',
         'O','R','D','E','R',' ', 'B','Y',' ','`','S','e','q','u','e','n','c','e','`',0};
-    static const WCHAR query_validate[] = {
-        'S','E','L','E','C','T',' ','`','S','e','q','u','e','n','c','e','`',
-        ' ', 'F','R','O','M',' ','`','I','n','s','t','a','l','l',
-        'E','x','e','c','u','t','e','S','e','q','u','e','n','c','e','`',' ',
-        'W','H','E','R','E',' ','`','A','c','t','i','o','n','`',' ','=',
-        ' ','\'', 'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e','\'',0};
     MSIQUERY *view;
-    INT seq = 0;
     UINT rc;
 
     if (package->script->ExecuteSequenceRun)
@@ -572,15 +565,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
 
     package->script->ExecuteSequenceRun = TRUE;
 
-    /* get the sequence number */
-    if (UIran)
-    {
-        MSIRECORD *row = MSI_QueryGetRecord(package->db, query_validate);
-        if (!row) return ERROR_FUNCTION_FAILED;
-        seq = MSI_RecordGetInteger(row,1);
-        msiobj_release(&row->hdr);
-    }
-    rc = MSI_OpenQuery(package->db, &view, query, seq);
+    rc = MSI_OpenQuery(package->db, &view, query);
     if (rc == ERROR_SUCCESS)
     {
         TRACE("Running the actions\n");
@@ -5633,7 +5618,7 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 
         /* Perform the installation. Always use the ExecuteSequence. */
         package->script->InWhatSequence |= SEQUENCE_EXEC;
-        rc = ACTION_ProcessExecSequence(package, FALSE);
+        rc = ACTION_ProcessExecSequence(package);
 
         /* Send return value and INSTALLEND. */
         ui_actioninfo(package, szINSTALL, FALSE, !rc);
@@ -7970,12 +7955,9 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 {
     static const WCHAR szDisableRollback[] = {'D','I','S','A','B','L','E','R','O','L','L','B','A','C','K',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
-    static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
-    WCHAR *reinstall, *remove, *patch, *productcode;
-    BOOL ui_exists;
+    WCHAR *reinstall, *remove, *patch, *productcode, *action;
     UINT rc;
-
-    msi_set_property( package->db, szAction, szInstall, -1 );
+    DWORD len = 0;
 
     package->script->InWhatSequence = SEQUENCE_INSTALL;
 
@@ -8031,6 +8013,10 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         msi_set_property( package->db, szReinstall, szAll, -1 );
         package->full_reinstall = 1;
     }
+    if (msi_get_property( package->db, szAction, NULL, &len ))
+        msi_set_property( package->db, szAction, szINSTALL, -1 );
+    action = msi_dup_property( package->db, szAction );
+    CharUpperW(action);
 
     msi_set_original_database_property( package->db, szPackagePath );
     msi_parse_command_line( package, szCommandLine, FALSE );
@@ -8052,19 +8038,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         msi_set_property( package->db, szRollbackDisabled, szOne, -1 );
     }
 
-    if (needs_ui_sequence( package))
-    {
-        package->script->InWhatSequence |= SEQUENCE_UI;
-        rc = ACTION_ProcessUISequence(package);
-        ui_exists = ui_sequence_exists(package);
-        if (rc == ERROR_SUCCESS || !ui_exists)
-        {
-            package->script->InWhatSequence |= SEQUENCE_EXEC;
-            rc = ACTION_ProcessExecSequence(package, ui_exists);
-        }
-    }
-    else
-        rc = ACTION_ProcessExecSequence(package, FALSE);
+    rc = ACTION_PerformAction(package, action, SCRIPT_NONE);
 
     /* process the ending type action */
     if (rc == ERROR_SUCCESS)
@@ -8093,6 +8067,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_free( reinstall );
     msi_free( remove );
     msi_free( patch );
+    msi_free( action );
 
     if (rc == ERROR_SUCCESS && package->need_reboot_at_end)
         return ERROR_SUCCESS_REBOOT_REQUIRED;
