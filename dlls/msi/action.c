@@ -5681,6 +5681,18 @@ end:
     return rc;
 }
 
+static UINT ACTION_INSTALL(MSIPACKAGE *package)
+{
+    msi_set_property(package->db, szEXECUTEACTION, szINSTALL, -1);
+    if (needs_ui_sequence(package) && ui_sequence_exists(package))
+    {
+        package->script->InWhatSequence |= SEQUENCE_UI;
+        return ACTION_ProcessUISequence(package);
+    }
+    else
+        return ACTION_ExecuteAction(package);
+}
+
 WCHAR *msi_create_component_advertise_string( MSIPACKAGE *package, MSICOMPONENT *component, const WCHAR *feature )
 {
     static const WCHAR fmt[] = {'%','s','%','s','%','c','%','s',0};
@@ -7832,6 +7844,7 @@ StandardActions[] =
     { szWriteEnvironmentStrings, IDS_DESC_WRITEENVIRONMENTSTRINGS, IDS_TEMP_WRITEENVIRONMENTSTRINGS, ACTION_WriteEnvironmentStrings, szRemoveEnvironmentStrings },
     { szWriteIniValues, IDS_DESC_WRITEINIVALUES, IDS_TEMP_WRITEINIVALUES, ACTION_WriteIniValues, szRemoveIniValues },
     { szWriteRegistryValues, IDS_DESC_WRITEREGISTRYVALUES, IDS_TEMP_WRITEREGISTRYVALUES, ACTION_WriteRegistryValues, szRemoveRegistryValues },
+    { szINSTALL, 0, 0, ACTION_INSTALL, NULL },
     { 0 }
 };
 
