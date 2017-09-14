@@ -9468,6 +9468,8 @@ static void test_create_elems(IHTMLDocument2 *doc)
             test_comment_text((IUnknown*)node2, "<!--testing-->");
             IHTMLDOMNode_Release(node2);
 
+            test_elem_getelembytag((IUnknown*)comment, ET_COMMENT, 0, NULL);
+
             IHTMLDOMNode_Release(comment);
         }
 

@@ -3101,6 +3101,11 @@ static HRESULT WINAPI HTMLElement2_getElementsByTagName(IHTMLElement2 *iface, BS
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pelColl);
 
+    if(!This->nselem) {
+        *pelColl = create_collection_from_htmlcol(This->node.doc, NULL);
+        return S_OK;
+    }
+
     nsAString_InitDepend(&tag_str, v);
     nsres = nsIDOMHTMLElement_GetElementsByTagName(This->nselem, &tag_str, &nscol);
     nsAString_Finish(&tag_str);
