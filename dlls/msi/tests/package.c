@@ -572,6 +572,16 @@ static UINT create_install_execute_sequence_table( MSIHANDLE hdb )
             "PRIMARY KEY `Action`)" );
 }
 
+static UINT create_install_ui_sequence_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `InstallUISequence` ("
+            "`Action` CHAR(72) NOT NULL, "
+            "`Condition` CHAR(255), "
+            "`Sequence` SHORT "
+            "PRIMARY KEY `Action`)" );
+}
+
 static UINT create_media_table( MSIHANDLE hdb )
 {
     return run_query( hdb,
@@ -753,6 +763,10 @@ make_add_entry(property,
 
 make_add_entry(install_execute_sequence,
                "INSERT INTO `InstallExecuteSequence` "
+               "(`Action`, `Condition`, `Sequence`) VALUES( %s )")
+
+make_add_entry(install_ui_sequence,
+               "INSERT INTO `InstallUISequence` "
                "(`Action`, `Condition`, `Sequence`) VALUES( %s )")
 
 make_add_entry(media,
@@ -9542,6 +9556,10 @@ static INT CALLBACK externalui_message_callback(void *context, UINT message, MSI
         memcpy(msg.field[i], buffer, min(100, length+1));
     }
 
+    /* top-level actions dump a list of all set properties; skip them since they're inconsistent */
+    if (message == (INSTALLMESSAGE_INFO|MB_ICONHAND) && msg.field_count > 0 && !strncmp(msg.field[0], "Property", 8))
+        return retval;
+
     add_message(&msg);
 
     return retval;
@@ -9864,6 +9882,257 @@ static void test_controlevent(void)
     DeleteFileA("forcecodepage.idt");
 }
 
+static const struct externalui_message toplevel_install_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "INSTALL", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", ""}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO|MB_ICONHAND, 0, {""}, {0}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "1", "", ""}, {0, 1, 0, 0}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "INSTALL", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_INSTALLSTART, 2, {"", "", "{7262AC98-EEBD-4364-8CE3-D654F6A425B9}"}, {1, 1, 1}, 1},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostInitialize", "", ""}, {0, 1, 0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "FileCost", "", ""}, {0, 1, 0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "FileCost", "1"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "FileCost", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostFinalize", "", ""}, {0, 1, 0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostFinalize", "1"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostFinalize", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", "1"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INSTALLEND, 3, {"", "", "{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "1"}, {1, 1, 1, 1}, 1},
+
+    /* property dump */
+
+    {INSTALLMESSAGE_COMMONDATA, 2, {"", "2", "0"}, {0, 1, 1}, 1},
+    {INSTALLMESSAGE_COMMONDATA, 2, {"", "2", "1"}, {0, 1, 1}, 1},
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", "1"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message toplevel_install_ui_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "INSTALL", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", ""}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "AppSearch", "", ""}, {0, 1, 0, 0}},
+    {INSTALLMESSAGE_INFO, 2, {"", "AppSearch", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "AppSearch", "0"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", "1"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message toplevel_executeaction_install_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "ExecuteAction", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "ExecuteAction", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "1", "", ""}, {0, 1, 0, 0}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "INSTALL", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_INSTALLSTART, 2, {"", "", "{7262AC98-EEBD-4364-8CE3-D654F6A425B9}"}, {1, 1, 1}, 1},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostInitialize", "", ""}, {0, 1, 0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize"}, {0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "FileCost", "", ""}, {0, 1, 0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "FileCost", "1"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "FileCost", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostFinalize", "", ""}, {0, 1, 0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostFinalize", "1"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostFinalize", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", "1"}, {0, 1, 1}},
+    {INSTALLMESSAGE_INSTALLEND, 3, {"", "", "{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "1"}, {1, 1, 1, 1}, 1},
+
+    /* property dump */
+
+    {INSTALLMESSAGE_COMMONDATA, 2, {"", "2", "0"}, {0, 1, 1}, 1},
+    {INSTALLMESSAGE_COMMONDATA, 2, {"", "2", "1"}, {0, 1, 1}, 1},
+    {INSTALLMESSAGE_INFO, 2, {"", "ExecuteAction", "1"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message toplevel_executeaction_costinitialize_sequence[] = {
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "ExecuteAction", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "ExecuteAction", "1"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "1", "", ""}, {0, 1, 0, 0}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CostInitialize", "", ""}, {0, 1, 0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", ""}, {0, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CostInitialize", "1"}, {0, 1, 1}},
+
+    /* property dump */
+
+    {INSTALLMESSAGE_COMMONDATA, 2, {"", "2", "0"}, {0, 1, 1}, 1},
+    {INSTALLMESSAGE_COMMONDATA, 2, {"", "2", "1"}, {0, 1, 1}, 1},
+    {INSTALLMESSAGE_INFO, 2, {"", "ExecuteAction", "1"}, {0, 1, 1}},
+    {0}
+};
+
+static const struct externalui_message toplevel_msiinstallproduct_sequence[] = {
+    {INSTALLMESSAGE_INITIALIZE, -1},
+
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO|MB_ICONHAND, 0, {""}, {0}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "1", "", ""}, {0, 1, 0, 0}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "INSTALL", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", ""}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "AppSearch", "", ""}, {0, 1, 0, 0}},
+    {INSTALLMESSAGE_INFO, 2, {"", "AppSearch", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "AppSearch", "0"}, {0, 1, 1}},
+
+    {INSTALLMESSAGE_INFO, 2, {"", "INSTALL", "1"}, {0, 1, 1}},
+
+    /* property dump */
+
+    {INSTALLMESSAGE_INFO|MB_ICONHAND, 0, {""}, {0}},
+    {INSTALLMESSAGE_TERMINATE, -1},
+    {0}
+};
+
+static const struct externalui_message toplevel_msiinstallproduct_custom_sequence[] = {
+    {INSTALLMESSAGE_INITIALIZE, -1},
+
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {1, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO|MB_ICONHAND, 0, {""}, {0}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "0", "1033", "1252"}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_COMMONDATA, 3, {"", "1", "", ""}, {0, 1, 0, 0}},
+
+    {INSTALLMESSAGE_ACTIONSTART, 3, {"", "CUSTOM", "", ""}, {0, 1, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CUSTOM", ""}, {0, 1, 1}},
+    {INSTALLMESSAGE_INFO, 2, {"", "CUSTOM", "0"}, {0, 1, 1}},
+
+    /* property dump */
+
+    {INSTALLMESSAGE_INFO|MB_ICONHAND, 0, {""}, {0}},
+    {INSTALLMESSAGE_TERMINATE, -1},
+    {0}
+};
+
+/* tests involving top-level actions: INSTALL, ExecuteAction */
+static void test_top_level_action(void)
+{
+    INSTALLUI_HANDLER_RECORD prev;
+    MSIHANDLE hdb, hpkg;
+    UINT r;
+    char msifile_absolute[MAX_PATH];
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    MsiSetExternalUIA(externalui_message_string_callback, INSTALLLOGMODE_SHOWDIALOG, NULL);
+    r = MsiSetExternalUIRecord(externalui_message_callback, MSITEST_INSTALLLOGMODE, NULL, &prev);
+
+    flush_sequence();
+
+    CoInitialize(NULL);
+
+    hdb = create_package_db();
+    ok(hdb, "failed to create database\n");
+
+    create_file_data("forcecodepage.idt", "\r\n\r\n1252\t_ForceCodepage\r\n");
+    r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_property_table(hdb);
+    ok(r == ERROR_SUCCESS, "failed to create Property table: %u\n", r);
+    r = add_property_entry(hdb, "'ProductCode', '{7262AC98-EEBD-4364-8CE3-D654F6A425B9}'");
+    ok(r == ERROR_SUCCESS, "failed to insert into Property table: %u\n", r);
+
+    r = create_install_execute_sequence_table(hdb);
+    ok(r == ERROR_SUCCESS, "failed to create InstallExecuteSequence table: %u\n", r);
+    r = add_install_execute_sequence_entry(hdb, "'CostInitialize', '', 1");
+    ok(r == ERROR_SUCCESS, "failed to insert into InstallExecuteSequence table: %u\n", r);
+    r = add_install_execute_sequence_entry(hdb, "'FileCost', '', 2");
+    ok(r == ERROR_SUCCESS, "failed to insert into InstallExecuteSequence table: %u\n", r);
+    r = add_install_execute_sequence_entry(hdb, "'CostFinalize', '', 3");
+    ok(r == ERROR_SUCCESS, "failed to insert into InstallExecuteSequence table: %u\n", r);
+
+    r = create_install_ui_sequence_table(hdb);
+    ok(r == ERROR_SUCCESS, "failed to create InstallUISequence table: %u\n", r);
+    r = add_install_ui_sequence_entry(hdb, "'AppSearch', '', 1");
+    ok(r == ERROR_SUCCESS, "failed to insert into InstallUISequence table: %u\n", r);
+
+    MsiDatabaseCommit(hdb);
+
+    /* for some reason we have to open the package from file using an absolute path */
+    MsiCloseHandle(hdb);
+    GetFullPathNameA(msifile, MAX_PATH, msifile_absolute, NULL);
+    r = MsiOpenPackageA(msifile_absolute, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package: %u\n", r);
+    ok_sequence(openpackage_sequence, "MsiOpenPackage()", FALSE);
+
+    /* test INSTALL */
+    r = MsiDoActionA(hpkg, "INSTALL");
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok_sequence(toplevel_install_sequence, "INSTALL (no UI)", TRUE);
+
+    /* test INSTALL with reduced+ UI */
+    /* for some reason we need to re-open the package to change the internal UI */
+    MsiCloseHandle(hpkg);
+    ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);
+    MsiSetInternalUI(INSTALLUILEVEL_REDUCED, NULL);
+    r = MsiOpenPackageA(msifile_absolute, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package: %u\n", r);
+    ok_sequence(openpackage_sequence, "MsiOpenPackage()", FALSE);
+
+    r = MsiDoActionA(hpkg, "INSTALL");
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok_sequence(toplevel_install_ui_sequence, "INSTALL (reduced+ UI)", TRUE);
+
+    /* test ExecuteAction with EXECUTEACTION property unset */
+    MsiSetPropertyA(hpkg, "EXECUTEACTION", NULL);
+    r = MsiDoActionA(hpkg, "ExecuteAction");
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok_sequence(toplevel_executeaction_install_sequence, "ExecuteAction: INSTALL", FALSE);
+
+    /* test ExecuteAction with EXECUTEACTION property set */
+    MsiSetPropertyA(hpkg, "EXECUTEACTION", "CostInitialize");
+    r = MsiDoActionA(hpkg, "ExecuteAction");
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok_sequence(toplevel_executeaction_costinitialize_sequence, "ExecuteAction: CostInitialize", FALSE);
+
+    MsiCloseHandle(hpkg);
+    ok_sequence(closehandle_sequence, "MsiCloseHandle()", FALSE);
+
+    /* test MsiInstallProduct() */
+    r = MsiInstallProductA(msifile_absolute, NULL);
+    ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+    ok_sequence(toplevel_msiinstallproduct_sequence, "MsiInstallProduct()", TRUE);
+
+    r = MsiInstallProductA(msifile_absolute, "ACTION=custom");
+    todo_wine
+    ok(r == ERROR_INSTALL_FAILURE, "expected ERROR_INSTALL_FAILURE, got %u\n", r);
+    ok_sequence(toplevel_msiinstallproduct_custom_sequence, "MsiInstallProduct(ACTION=custom)", TRUE);
+
+    CoUninitialize();
+    DeleteFileA(msifile);
+    DeleteFileA("forcecodepage.idt");
+}
+
 START_TEST(package)
 {
     STATEMGRSTATUS status;
@@ -9924,6 +10193,7 @@ START_TEST(package)
     test_externalui();
     test_externalui_message();
     test_controlevent();
+    test_top_level_action();
 
     if (pSRSetRestorePointA && !pMsiGetComponentPathExA && ret)
     {
