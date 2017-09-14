@@ -9301,7 +9301,7 @@ static void ok_sequence_(const struct externalui_message *expected, const char *
     {
         if (expected->message == actual->message)
         {
-            if (expected->field_count != actual->field_count)
+            if (expected->field_count < actual->field_count)
             {
                 todo_wine_if (todo)
                     ok_(file, line) (FALSE, "%s: in msg 0x%08x expecting field count %d got %d\n",
@@ -9322,6 +9322,10 @@ static void ok_sequence_(const struct externalui_message *expected, const char *
 
             expected++;
             actual++;
+        }
+        else if (expected->optional)
+        {
+            expected++;
         }
         else
         {
@@ -9356,6 +9360,26 @@ done:
 
 #define ok_sequence(exp, contx, todo) \
         ok_sequence_((exp), (contx), (todo), __FILE__, __LINE__)
+
+/* don't use PROGRESS, which is timing-dependent,
+ * or SHOWDIALOG, which due to a bug causes a hang on XP */
+static const INSTALLLOGMODE MSITEST_INSTALLLOGMODE =
+    INSTALLLOGMODE_FATALEXIT |
+    INSTALLLOGMODE_ERROR |
+    INSTALLLOGMODE_WARNING |
+    INSTALLLOGMODE_USER |
+    INSTALLLOGMODE_INFO |
+    INSTALLLOGMODE_FILESINUSE |
+    INSTALLLOGMODE_RESOLVESOURCE |
+    INSTALLLOGMODE_OUTOFDISKSPACE |
+    INSTALLLOGMODE_ACTIONSTART |
+    INSTALLLOGMODE_ACTIONDATA |
+    INSTALLLOGMODE_COMMONDATA |
+    INSTALLLOGMODE_INITIALIZE |
+    INSTALLLOGMODE_TERMINATE |
+    INSTALLLOGMODE_RMFILESINUSE |
+    INSTALLLOGMODE_INSTALLSTART |
+    INSTALLLOGMODE_INSTALLEND;
 
 static const struct externalui_message empty_sequence[] = {
     {0}
@@ -9534,9 +9558,8 @@ static void test_externalui_message(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
-    /* processing SHOWDIALOG with a record handler causes a crash on XP */
     MsiSetExternalUIA(externalui_message_string_callback, INSTALLLOGMODE_SHOWDIALOG, &retval);
-    r = MsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS ^ INSTALLLOGMODE_SHOWDIALOG, &retval, &prev);
+    r = MsiSetExternalUIRecord(externalui_message_callback, MSITEST_INSTALLLOGMODE, &retval, &prev);
 
     flush_sequence();
 
@@ -9759,9 +9782,8 @@ static void test_controlevent(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
-    /* processing SHOWDIALOG with a record handler causes a crash on XP */
     MsiSetExternalUIA(externalui_message_string_callback, INSTALLLOGMODE_SHOWDIALOG, NULL);
-    r = MsiSetExternalUIRecord(externalui_message_callback, 0xffffffff ^ INSTALLLOGMODE_PROGRESS ^ INSTALLLOGMODE_SHOWDIALOG, NULL, &prev);
+    r = MsiSetExternalUIRecord(externalui_message_callback, MSITEST_INSTALLLOGMODE, NULL, &prev);
 
     flush_sequence();
 
