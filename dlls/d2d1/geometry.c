@@ -503,6 +503,14 @@ static float d2d_point_ccw(const D2D1_POINT_2F *a, const D2D1_POINT_2F *b, const
     return det_d[det_d_len - 1];
 }
 
+static void d2d_rect_union(D2D1_RECT_F *l, const D2D1_RECT_F *r)
+{
+    l->left   = min(l->left, r->left);
+    l->top    = min(l->top, r->top);
+    l->right  = max(l->right, r->right);
+    l->bottom = max(l->bottom, r->bottom);
+}
+
 static BOOL d2d_rect_check_overlap(const D2D_RECT_F *p, const D2D_RECT_F *q)
 {
     return p->left < q->right && p->top < q->bottom && p->right > q->left && p->bottom > q->top;
@@ -2527,12 +2535,17 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
 
     for (i = 0; i < count; ++i)
     {
+        D2D1_RECT_F bezier_bounds;
+
         /* FIXME: This tries to approximate a cubic bezier with a quadratic one. */
         p.x = (beziers[i].point1.x + beziers[i].point2.x) * 0.75f;
         p.y = (beziers[i].point1.y + beziers[i].point2.y) * 0.75f;
         p.x -= (figure->vertices[figure->vertex_count - 1].x + beziers[i].point3.x) * 0.25f;
         p.y -= (figure->vertices[figure->vertex_count - 1].y + beziers[i].point3.y) * 0.25f;
         figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_BEZIER;
+
+        d2d_rect_get_bezier_bounds(&bezier_bounds, &figure->vertices[figure->vertex_count - 1],
+                &p, &beziers[i].point3);
 
         if (!d2d_figure_add_bezier_control(figure, &p))
         {
@@ -2547,6 +2560,8 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
             geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
             return;
         }
+
+        d2d_rect_union(&figure->bounds, &bezier_bounds);
     }
 
     geometry->u.path.segment_count += count;
