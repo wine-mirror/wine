@@ -367,7 +367,16 @@ struct testanalysissource
 {
     IDWriteTextAnalysisSource IDWriteTextAnalysisSource_iface;
     const WCHAR *text;
+    UINT32 text_length;
     DWRITE_READING_DIRECTION direction;
+};
+
+static void init_textsource(struct testanalysissource *source, const WCHAR *text,
+        DWRITE_READING_DIRECTION direction)
+{
+    source->text = text;
+    source->text_length = lstrlenW(text);
+    source->direction = direction;
 };
 
 static inline struct testanalysissource *impl_from_IDWriteTextAnalysisSource(IDWriteTextAnalysisSource *iface)
@@ -380,7 +389,7 @@ static HRESULT WINAPI analysissource_GetTextAtPosition(IDWriteTextAnalysisSource
 {
     struct testanalysissource *source = impl_from_IDWriteTextAnalysisSource(iface);
 
-    if (position >= lstrlenW(source->text))
+    if (position >= source->text_length)
     {
         *text = NULL;
         *text_len = 0;
@@ -388,7 +397,7 @@ static HRESULT WINAPI analysissource_GetTextAtPosition(IDWriteTextAnalysisSource
     else
     {
         *text = source->text + position;
-        *text_len = lstrlenW(source->text) - position;
+        *text_len = source->text_length - position;
     }
 
     return S_OK;
@@ -998,7 +1007,7 @@ static void get_script_analysis(const WCHAR *str, DWRITE_SCRIPT_ANALYSIS *sa)
     IDWriteTextAnalyzer *analyzer;
     HRESULT hr;
 
-    analysissource.text = str;
+    init_textsource(&analysissource, str, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -1020,7 +1029,7 @@ static void test_AnalyzeScript(void)
 
     while (*ptr->string)
     {
-        analysissource.text = ptr->string;
+        init_textsource(&analysissource, ptr->string, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
 
         init_expected_sa(expected_seq, ptr);
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
@@ -1122,7 +1131,7 @@ static void test_AnalyzeLineBreakpoints(void)
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    analysissource.text = emptyW;
+    init_textsource(&analysissource, emptyW, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
     hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0, 0,
         &analysissink);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1131,9 +1140,9 @@ static void test_AnalyzeLineBreakpoints(void)
     {
         UINT32 len;
 
-        analysissource.text = ptr->text;
-        len = lstrlenW(ptr->text);
+        init_textsource(&analysissource, ptr->text, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
 
+        len = lstrlenW(ptr->text);
         if (len > BREAKPOINT_COUNT) {
             ok(0, "test %u: increase BREAKPOINT_COUNT to at least %u\n", i, len);
             i++;
@@ -2414,10 +2423,9 @@ static void test_AnalyzeBidi(void)
     {
         UINT32 len;
 
-        analysissource.text = ptr->text;
-        len = lstrlenW(ptr->text);
-        analysissource.direction = ptr->direction;
+        init_textsource(&analysissource, ptr->text, ptr->direction);
 
+        len = lstrlenW(ptr->text);
         if (len > BIDI_LEVELS_COUNT) {
             ok(0, "test %u: increase BIDI_LEVELS_COUNT to at least %u\n", i, len);
             i++;
