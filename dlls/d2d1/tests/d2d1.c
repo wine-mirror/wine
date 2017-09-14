@@ -1739,6 +1739,7 @@ static void test_path_geometry(void)
     ID2D1Factory *factory;
     BOOL match, contains;
     D2D1_COLOR_F color;
+    D2D1_RECT_F rect;
     ULONG refcount;
     UINT32 count;
     HWND window;
@@ -2216,6 +2217,7 @@ static void test_path_geometry(void)
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    set_point(&point, 123.0f, 456.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
     hr = ID2D1GeometrySink_Close(sink);
@@ -2227,6 +2229,102 @@ static void test_path_geometry(void)
     hr = ID2D1PathGeometry_GetSegmentCount(geometry, &count);
     ok(SUCCEEDED(hr), "Failed to get segment count, hr %#x.\n", hr);
     ok(count == 1, "Got unexpected segment count %u.\n", count);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, 123.0f, 456.0f, 123.0f, 456.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 80.0f, 640.0f);
+    scale_matrix(&matrix, 2.0f, 0.5f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, 326.0f, 868.0f, 326.0f, 868.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    ID2D1PathGeometry_Release(geometry);
+
+    /* Close right after Open(). */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+
+    /* Not open yet. */
+    set_rect(&rect, 1.0f, 2.0f, 3.0f, 4.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
+    ok(hr == D2DERR_WRONG_STATE, "Unexpected hr %#x.\n", hr);
+    match = compare_rect(&rect, 1.0f, 2.0f, 3.0f, 4.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+
+    /* Open, not closed. */
+    set_rect(&rect, 1.0f, 2.0f, 3.0f, 4.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
+    ok(hr == D2DERR_WRONG_STATE, "Unexpected hr %#x.\n", hr);
+    match = compare_rect(&rect, 1.0f, 2.0f, 3.0f, 4.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get figure count, hr %#x.\n", hr);
+    ok(count == 0, "Got unexpected figure count %u.\n", count);
+    hr = ID2D1PathGeometry_GetSegmentCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get segment count, hr %#x.\n", hr);
+    ok(count == 0, "Got unexpected segment count %u.\n", count);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    ok(rect.left > rect.right && rect.top > rect.bottom,
+            "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n", rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 10.0f, 20.0f);
+    scale_matrix(&matrix, 10.0f, 20.0f);
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    ok(rect.left > rect.right && rect.top > rect.bottom,
+            "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n", rect.left, rect.top, rect.right, rect.bottom);
+
+    ID2D1PathGeometry_Release(geometry);
+
+    /* GetBounds() with bezier segments. */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    fill_geometry_sink_bezier(sink);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, 5.0f, 20.0f, 75.0f, 752.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 80.0f, 640.0f);
+    scale_matrix(&matrix, 2.0f, 0.5f);
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, 90.0f, 650.0f, 230.0f, 1016.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
     ID2D1PathGeometry_Release(geometry);
 
     hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
@@ -2341,6 +2439,24 @@ static void test_path_geometry(void)
     ok(SUCCEEDED(hr), "Failed to get segment count, hr %#x.\n", hr);
     ok(count == 44, "Got unexpected segment count %u.\n", count);
     ID2D1GeometrySink_Release(sink);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, NULL, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, 5.0f, 20.0f, 235.0f, 300.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 100.0f, 50.0f);
+    scale_matrix(&matrix, 2.0f, 1.5f);
+    rotate_matrix(&matrix, M_PI / 4.0f);
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1PathGeometry_GetBounds(geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, -3.17192993e+02f, 8.71231079e+01f, 4.04055908e+02f, 6.17453125e+02f, 1);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,

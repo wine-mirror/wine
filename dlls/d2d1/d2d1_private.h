@@ -392,6 +392,8 @@ struct d2d_geometry
             enum d2d_geometry_state state;
             D2D1_FILL_MODE fill_mode;
             UINT32 segment_count;
+
+            D2D1_RECT_F bounds;
         } path;
         struct
         {
