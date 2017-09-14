@@ -5294,6 +5294,7 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
   SIZE          sz;
   BOOL          has_size;
   HBITMAP       old_bm;
+  RECT          rc;
 
   assert(run->nFlags & MERF_GRAPHICS);
   assert(run->ole_obj);
@@ -5331,8 +5332,8 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
     {
       convert_sizel(c, &run->ole_obj->sizel, &sz);
     } else {
-      sz.cx = MulDiv(dibsect.dsBm.bmWidth, c->dpi.cx, 96);
-      sz.cy = MulDiv(dibsect.dsBm.bmHeight, c->dpi.cy, 96);
+      sz.cx = dibsect.dsBm.bmWidth;
+      sz.cy = dibsect.dsBm.bmHeight;
     }
     if (c->editor->nZoomNumerator != 0)
     {
@@ -5351,8 +5352,8 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
     {
       convert_sizel(c, &run->ole_obj->sizel, &sz);
     } else {
-      sz.cy = MulDiv(emh.rclBounds.bottom - emh.rclBounds.top, c->dpi.cx, 96);
-      sz.cx = MulDiv(emh.rclBounds.right - emh.rclBounds.left, c->dpi.cy, 96);
+      sz.cx = emh.rclBounds.right - emh.rclBounds.left;
+      sz.cy = emh.rclBounds.bottom - emh.rclBounds.top;
     }
     if (c->editor->nZoomNumerator != 0)
     {
@@ -5360,15 +5361,11 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
       sz.cy = MulDiv(sz.cy, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
     }
 
-    {
-      RECT    rc;
-
-      rc.left = x;
-      rc.top = y - sz.cy;
-      rc.right = x + sz.cx;
-      rc.bottom = y;
-      PlayEnhMetaFile(c->hDC, stgm.u.hEnhMetaFile, &rc);
-    }
+    rc.left = x;
+    rc.top = y - sz.cy;
+    rc.right = x + sz.cx;
+    rc.bottom = y;
+    PlayEnhMetaFile(c->hDC, stgm.u.hEnhMetaFile, &rc);
     break;
   default:
     FIXME("Unsupported tymed %d\n", stgm.tymed);
