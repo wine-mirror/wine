@@ -318,9 +318,11 @@ float CDECL MSVCRT_log10f( float x )
  */
 float CDECL MSVCRT_powf( float x, float y )
 {
-  /* FIXME: If x < 0 and y is not integral, set EDOM */
   float z = powf(x,y);
-  if (!finitef(z)) math_error(_DOMAIN, "powf", x, 0, z);
+  if (x < 0 && y != floorf(y)) math_error(_DOMAIN, "powf", x, y, z);
+  else if (!x && finitef(y) && y < 0) math_error(_SING, "powf", x, y, z);
+  else if (finitef(x) && finitef(y) && !finitef(z)) math_error(_OVERFLOW, "powf", x, y, z);
+  else if (x && finitef(x) && finitef(y) && !z) math_error(_UNDERFLOW, "powf", x, y, z);
   return z;
 }
 
@@ -530,9 +532,11 @@ double CDECL MSVCRT_log10( double x )
  */
 double CDECL MSVCRT_pow( double x, double y )
 {
-  /* FIXME: If x < 0 and y is not integral, set EDOM */
   double z = pow(x,y);
-  if (!isfinite(z)) math_error(_DOMAIN, "pow", x, y, z);
+  if (x < 0 && y != floor(y)) math_error(_DOMAIN, "pow", x, y, z);
+  else if (!x && isfinite(y) && y < 0) math_error(_SING, "pow", x, y, z);
+  else if (isfinite(x) && isfinite(y) && !isfinite(z)) math_error(_OVERFLOW, "pow", x, y, z);
+  else if (x && isfinite(x) && isfinite(y) && !z) math_error(_UNDERFLOW, "pow", x, y, z);
   return z;
 }
 
