@@ -157,6 +157,8 @@ static const WCHAR szValidateProductID[] =
     {'V','a','l','i','d','a','t','e','P','r','o','d','u','c','t','I','D',0};
 static const WCHAR szWriteEnvironmentStrings[] =
     {'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
+static const WCHAR szINSTALL[] =
+    {'I','N','S','T','A','L','L',0};
 
 static INT ui_actionstart(MSIPACKAGE *package, LPCWSTR action, LPCWSTR description, LPCWSTR template)
 {
@@ -5560,13 +5562,122 @@ end:
     return rc;
 }
 
+static UINT iterate_properties(MSIRECORD *record, void *param)
+{
+    static const WCHAR prop_template[] =
+        {'P','r','o','p','e','r','t','y','(','S',')',':',' ','[','1',']',' ','=',' ','[','2',']',0};
+    MSIRECORD *uirow;
+
+    uirow = MSI_CloneRecord(record);
+    if (!uirow) return ERROR_OUTOFMEMORY;
+    MSI_RecordSetStringW(uirow, 0, prop_template);
+    MSI_ProcessMessage(param, INSTALLMESSAGE_INFO|MB_ICONHAND, uirow);
+    msiobj_release(&uirow->hdr);
+
+    return ERROR_SUCCESS;
+}
+
 
 static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 {
+    static const WCHAR prop_query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','_','P','r','o','p','e','r','t','y','`',0};
+    WCHAR *productname;
+    WCHAR *action;
+    MSIQUERY *view;
+    MSIRECORD *uirow;
     UINT rc;
 
-    package->script->InWhatSequence |= SEQUENCE_EXEC;
-    rc = ACTION_ProcessExecSequence(package,FALSE);
+    /* Send COMMONDATA and INFO messages. */
+    /* FIXME: when should these messages be sent? [see also MsiOpenPackage()] */
+    uirow = MSI_CreateRecord(3);
+    if (!uirow) return ERROR_OUTOFMEMORY;
+    MSI_RecordSetStringW(uirow, 0, NULL);
+    MSI_RecordSetInteger(uirow, 1, 0);
+    MSI_RecordSetInteger(uirow, 2, package->num_langids ? package->langids[0] : 0);
+    MSI_RecordSetInteger(uirow, 3, msi_get_string_table_codepage(package->db->strings));
+    MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_COMMONDATA, uirow);
+    /* FIXME: send INSTALLMESSAGE_PROGRESS */
+    MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_COMMONDATA, uirow);
+    MSI_ProcessMessage(package, INSTALLMESSAGE_COMMONDATA, uirow);
+
+    productname = msi_dup_property(package->db, INSTALLPROPERTY_PRODUCTNAMEW);
+    MSI_RecordSetInteger(uirow, 1, 1);
+    MSI_RecordSetStringW(uirow, 2, productname);
+    MSI_RecordSetStringW(uirow, 3, NULL);
+    MSI_ProcessMessage(package, INSTALLMESSAGE_COMMONDATA, uirow);
+    msiobj_release(&uirow->hdr);
+
+    package->LastActionResult = MSI_NULL_INTEGER;
+
+    action = msi_dup_property(package->db, szEXECUTEACTION);
+    if (!action) action = msi_strdupW(szINSTALL, strlenW(szINSTALL));
+
+    /* Perform the action. Top-level actions trigger a sequence. */
+    if (!strcmpW(action, szINSTALL))
+    {
+        /* Send ACTIONSTART/INFO and INSTALLSTART. */
+        ui_actionstart(package, szINSTALL, NULL, NULL);
+        ui_actioninfo(package, szINSTALL, TRUE, 0);
+        uirow = MSI_CreateRecord(2);
+        if (!uirow)
+        {
+            rc = ERROR_OUTOFMEMORY;
+            goto end;
+        }
+        MSI_RecordSetStringW(uirow, 0, NULL);
+        MSI_RecordSetStringW(uirow, 1, productname);
+        MSI_RecordSetStringW(uirow, 2, package->ProductCode);
+        MSI_ProcessMessage(package, INSTALLMESSAGE_INSTALLSTART, uirow);
+        msiobj_release(&uirow->hdr);
+
+        /* Perform the installation. Always use the ExecuteSequence. */
+        package->script->InWhatSequence |= SEQUENCE_EXEC;
+        rc = ACTION_ProcessExecSequence(package, FALSE);
+
+        /* Send return value and INSTALLEND. */
+        ui_actioninfo(package, szINSTALL, FALSE, !rc);
+        uirow = MSI_CreateRecord(3);
+        if (!uirow)
+        {
+            rc = ERROR_OUTOFMEMORY;
+            goto end;
+        }
+        MSI_RecordSetStringW(uirow, 0, NULL);
+        MSI_RecordSetStringW(uirow, 1, productname);
+        MSI_RecordSetStringW(uirow, 2, package->ProductCode);
+        MSI_RecordSetInteger(uirow, 3, !rc);
+        MSI_ProcessMessage(package, INSTALLMESSAGE_INSTALLEND, uirow);
+        msiobj_release(&uirow->hdr);
+    }
+    else
+        rc = ACTION_PerformAction(package, action, SCRIPT_NONE);
+
+    /* Send all set properties. */
+    if (!MSI_OpenQuery(package->db, &view, prop_query))
+    {
+        MSI_IterateRecords(view, NULL, iterate_properties, package);
+        msiobj_release(&view->hdr);
+    }
+
+    /* And finally, toggle the cancel off and on. */
+    uirow = MSI_CreateRecord(2);
+    if (!uirow)
+    {
+        rc = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+    MSI_RecordSetStringW(uirow, 0, NULL);
+    MSI_RecordSetInteger(uirow, 1, 2);
+    MSI_RecordSetInteger(uirow, 2, 0);
+    MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_COMMONDATA, uirow);
+    MSI_RecordSetInteger(uirow, 2, 1);
+    MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_COMMONDATA, uirow);
+    msiobj_release(&uirow->hdr);
+
+end:
+    msi_free(productname);
+    msi_free(action);
     return rc;
 }
 
