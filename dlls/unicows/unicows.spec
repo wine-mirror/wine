@@ -44,7 +44,7 @@
 @ stdcall CreateColorSpaceW(ptr)
 @ stdcall CreateDCW(wstr wstr wstr ptr)
 @ stdcall CreateDialogIndirectParamW(long ptr long ptr long)
-@ stdcall CreateDialogParamW(long ptr long ptr long)
+@ stdcall CreateDialogParamW(long wstr long ptr long)
 @ stdcall CreateDirectoryExW(wstr wstr ptr)
 @ stdcall CreateDirectoryW(wstr ptr)
 @ stdcall CreateEnhMetaFileW(long wstr ptr wstr)
