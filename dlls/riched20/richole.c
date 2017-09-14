@@ -5339,16 +5339,9 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
       sz.cx = MulDiv(sz.cx, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
       sz.cy = MulDiv(sz.cy, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
     }
-    if (sz.cx == dibsect.dsBm.bmWidth && sz.cy == dibsect.dsBm.bmHeight)
-    {
-      BitBlt(c->hDC, x, y - sz.cy,
-             dibsect.dsBm.bmWidth, dibsect.dsBm.bmHeight,
-             hMemDC, 0, 0, SRCCOPY);
-    } else {
-      StretchBlt(c->hDC, x, y - sz.cy, sz.cx, sz.cy,
-                 hMemDC, 0, 0, dibsect.dsBm.bmWidth,
-                 dibsect.dsBm.bmHeight, SRCCOPY);
-    }
+    StretchBlt(c->hDC, x, y - sz.cy, sz.cx, sz.cy,
+               hMemDC, 0, 0, dibsect.dsBm.bmWidth, dibsect.dsBm.bmHeight, SRCCOPY);
+
     SelectObject(hMemDC, old_bm);
     DeleteDC(hMemDC);
     break;
