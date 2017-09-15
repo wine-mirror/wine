@@ -1359,6 +1359,10 @@ static GUID const * const png_encode_formats[] = {
     &GUID_WICPixelFormat32bppBGRA,
     &GUID_WICPixelFormat48bppRGB,
     &GUID_WICPixelFormat64bppRGBA,
+    &GUID_WICPixelFormat1bppIndexed,
+    &GUID_WICPixelFormat2bppIndexed,
+    &GUID_WICPixelFormat4bppIndexed,
+    &GUID_WICPixelFormat8bppIndexed,
     NULL
 };
 
