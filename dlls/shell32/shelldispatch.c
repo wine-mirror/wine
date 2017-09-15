@@ -77,6 +77,7 @@ typedef struct {
 typedef struct {
     FolderItem2 FolderItem2_iface;
     LONG ref;
+    FolderImpl *folder;
     VARIANT dir;
 } FolderItemImpl;
 
@@ -646,6 +647,7 @@ static ULONG WINAPI FolderItemImpl_Release(FolderItem2 *iface)
     if (!ref)
     {
         VariantClear(&This->dir);
+        Folder3_Release(&This->folder->Folder3_iface);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -707,13 +709,13 @@ static HRESULT WINAPI FolderItemImpl_Invoke(FolderItem2 *iface,
     return hr;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_Application(FolderItem2 *iface,
-        IDispatch **ppid)
+static HRESULT WINAPI FolderItemImpl_get_Application(FolderItem2 *iface, IDispatch **disp)
 {
-    FIXME("(%p,%p)\n", iface, ppid);
+    FolderItemImpl *This = impl_from_FolderItem(iface);
 
-    *ppid = NULL;
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, disp);
+
+    return Folder3_get_Application(&This->folder->Folder3_iface, disp);
 }
 
 static HRESULT WINAPI FolderItemImpl_get_Parent(FolderItem2 *iface,
@@ -928,7 +930,7 @@ static const FolderItem2Vtbl FolderItemImpl_Vtbl = {
     FolderItemImpl_ExtendedProperty
 };
 
-static HRESULT FolderItem_Constructor(VARIANT *dir, FolderItem **ppfi)
+static HRESULT FolderItem_Constructor(FolderImpl *folder, VARIANT *dir, FolderItem **ppfi)
 {
     FolderItemImpl *This;
     HRESULT ret;
@@ -950,7 +952,10 @@ static HRESULT FolderItem_Constructor(VARIANT *dir, FolderItem **ppfi)
         return E_OUTOFMEMORY;
     }
 
-    *ppfi = (FolderItem*)&This->FolderItem2_iface;
+    This->folder = folder;
+    Folder3_AddRef(&folder->Folder3_iface);
+
+    *ppfi = (FolderItem *)&This->FolderItem2_iface;
     return ret;
 }
 
@@ -1137,7 +1142,7 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
             break;
 
         case VT_ERROR:
-            return FolderItem_Constructor(&This->folder->dir, ppid);
+            return FolderItem_Constructor(This->folder, &This->folder->dir, ppid);
 
         default:
             return E_NOTIMPL;
@@ -1145,7 +1150,7 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
 
     V_VT(&path_var) = VT_BSTR;
     V_BSTR(&path_var) = SysAllocString(path_str);
-    ret = FolderItem_Constructor(&path_var, ppid);
+    ret = FolderItem_Constructor(This->folder, &path_var, ppid);
     VariantClear(&path_var);
     return ret;
 }
@@ -1451,6 +1456,7 @@ static HRESULT WINAPI FolderImpl_Items(Folder3 *iface, FolderItems **ppid)
 
 static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR name, FolderItem **item)
 {
+    FolderImpl *This = impl_from_Folder(iface);
     FolderItem *self;
     BSTR str;
     WCHAR pathW[MAX_PATH];
@@ -1479,7 +1485,7 @@ static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR name, FolderItem
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = SysAllocString(pathW);
-    hr = FolderItem_Constructor(&v, item);
+    hr = FolderItem_Constructor(This, &v, item);
     VariantClear(&v);
     return hr;
 }
@@ -1523,7 +1529,7 @@ static HRESULT WINAPI FolderImpl_get_Self(Folder3 *iface, FolderItem **ppfi)
 
     TRACE("(%p,%p)\n", iface, ppfi);
 
-    return FolderItem_Constructor(&This->dir, ppfi);
+    return FolderItem_Constructor(This, &This->dir, ppfi);
 }
 
 static HRESULT WINAPI FolderImpl_get_OfflineStatus(Folder3 *iface, LONG *pul)

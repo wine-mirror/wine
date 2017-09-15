@@ -483,7 +483,7 @@ static void test_items(void)
     if (item) FolderItem_Release(item);
     VariantClear(&var);
 
-    /* recreate the folder object */
+    /* recreate the items object */
     FolderItems_Release(items);
     items = NULL;
     r = Folder_Items(folder, &items);
@@ -491,7 +491,11 @@ static void test_items(void)
     ok(!!items, "items is null\n");
     r = FolderItems_QueryInterface(items, &IID_FolderItems2, (void**)&items2);
     ok(r == S_OK || broken(r == E_NOINTERFACE) /* xp and later */, "FolderItems::QueryInterface failed: %08x\n", r);
-    if (r == S_OK) ok(!!items2, "items2 is null\n");
+    if (r == S_OK)
+    {
+        ok(!!items2, "items2 is null\n");
+        FolderItems2_Release(items2);
+    }
     r = FolderItems_QueryInterface(items, &IID_FolderItems3, (void**)&items3);
     ok(r == S_OK, "FolderItems::QueryInterface failed: %08x\n", r);
     ok(!!items3, "items3 is null\n");
@@ -510,11 +514,25 @@ static void test_items(void)
 
     V_VT(&var) = VT_I2;
     V_I2(&var) = 0;
+
+    EXPECT_REF(folder, 2);
+    EXPECT_REF(items, 2);
     item = NULL;
     r = FolderItems_Item(items, var, &item);
     ok(r == S_OK, "FolderItems::Item failed: %08x\n", r);
     ok(!!item, "item is null\n");
-    if (item) FolderItem_Release(item);
+    EXPECT_REF(folder, 3);
+    EXPECT_REF(items, 2);
+
+    r = Folder_get_Application(folder, &disp);
+    ok(r == S_OK, "Failed to get application pointer %#x.\n", r);
+    r = FolderItem_get_Application(item, &disp2);
+    ok(r == S_OK, "Failed to get application pointer %#x.\n", r);
+    ok(disp == disp2, "Unexpected application pointer.\n");
+    IDispatch_Release(disp2);
+    IDispatch_Release(disp);
+
+    FolderItem_Release(item);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 0;
@@ -740,7 +758,6 @@ todo_wine
 
     FolderItems_Release(items);
     Folder_Release(folder);
-    if (items2) FolderItems2_Release(items2);
     if (items3) FolderItems3_Release(items3);
     IShellDispatch_Release(sd);
 }
