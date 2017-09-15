@@ -404,7 +404,7 @@ static void test_setpixelformat(HDC winhdc)
         ok( GetLastError() == ERROR_INVALID_PIXEL_FORMAT, "wrong error %u\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         res = SetPixelFormat( hdc, pf, &pfd );
-        ok( i == 0, "SetPixelFormat succeeded\n" );
+        ok( !res, "SetPixelFormat succeeded\n" );
         ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         res = DescribePixelFormat( hdc, 0, 0, NULL );
