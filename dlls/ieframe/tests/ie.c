@@ -28,6 +28,8 @@
 #include "exdisp.h"
 #include "exdispid.h"
 #include "mshtml.h"
+#include "initguid.h"
+#include "ieautomation.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -275,9 +277,31 @@ static void test_InternetExplorer(void)
     ok(!ref, "object not destroyed, ref=%u\n", ref);
 }
 
+static void test_InternetExplorerManager(void)
+{
+    IUnknown *unk;
+    ULONG ref;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_InternetExplorerManager, NULL, CLSCTX_LOCAL_SERVER,
+            &IID_IInternetExplorerManager, (void**)&unk);
+    ok(hres == S_OK || broken(hres == REGDB_E_CLASSNOTREG), "Could not create InternetExplorerManager instance: %08x\n", hres);
+
+    if(hres != S_OK)
+    {
+        win_skip("InternetExplorerManager not available\n");
+        return;
+    }
+
+    ref = IUnknown_Release(unk);
+    ok(!ref, "object not destroyed, ref=%u\n", ref);
+}
+
 START_TEST(ie)
 {
     CoInitialize(NULL);
+
+    test_InternetExplorerManager();
 
     test_InternetExplorer();
 

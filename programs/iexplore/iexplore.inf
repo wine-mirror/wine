@@ -22,6 +22,8 @@ HKCR,"CLSID\%CLSID_Internet%\Shell\OpenHomePage",,,"Open &Home Page"
 HKCR,"CLSID\%CLSID_Internet%\Shell\OpenHomePage\Command",,,"""%16422%\Internet Explorer\iexplore.exe"""
 HKCR,"CLSID\%CLSID_Internet%\ShellFolder",,2,"0x24"
 
+HKCR,"CLSID\%CLSID_InternetExplorerManager%\LocalServer32",,,"""%16422%\Internet Explorer\iexplore.exe"" -startmanager"
+
 
 [Settings.Reg]
 HKCU,"Software\Microsoft\Internet Explorer\Main","Start Page",2,"http://www.winehq.org"
@@ -42,3 +44,4 @@ HKLM,"Software\Microsoft\Internet Explorer","W2kVersion",,"9.0.8112.16421"
 [Strings]
 CLSID_InternetExplorer="{0002df01-0000-0000-c000-000000000046}"
 CLSID_Internet="{871c5380-42a0-1069-a2ea-08002b30309d}"
+CLSID_InternetExplorerManager="{df4fcc34-067a-4e0a-8352-4a1a5095346e}"
