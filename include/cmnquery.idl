@@ -18,6 +18,12 @@
 
 import "oaidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 [
     object,
     uuid(1a3114b8-a62e-11d0-a6c5-00a0c906af45),
@@ -76,4 +82,8 @@ interface ICommonQuery : IUnknown
     HRESULT OpenQueryWindow([in] HWND parent, [in] LPOPENQUERYWINDOW query_window, [out] IDataObject **data_object);
 }
 
-cpp_quote("DEFINE_GUID(CLSID_CommonQuery, 0x83bc5ec0, 0x6f2a, 0x11d0, 0xa1,0xc4, 0x00,0xaa,0x00,0xc1,0x6e,0x65);")
+[
+    threading(apartment),
+    uuid(83bc5ec0-6f2a-11d0-a1c4-00aa00c16e65)
+]
+coclass CommonQuery { interface ICommonQuery; }

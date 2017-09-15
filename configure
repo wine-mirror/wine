@@ -18307,7 +18307,7 @@ wine_fn_config_dll dpwsockx enable_dpwsockx
 wine_fn_config_dll drmclien enable_drmclien
 wine_fn_config_dll dsound enable_dsound clean,implib
 wine_fn_config_test dlls/dsound/tests dsound_test
-wine_fn_config_dll dsquery enable_dsquery
+wine_fn_config_dll dsquery enable_dsquery clean
 wine_fn_config_dll dssenh enable_dssenh
 wine_fn_config_test dlls/dssenh/tests dssenh_test
 wine_fn_config_dll dswave enable_dswave clean
