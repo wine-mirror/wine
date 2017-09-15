@@ -851,8 +851,8 @@ void wined3d_texture_apply_sampler_desc(struct wined3d_texture *texture,
     state = sampler_desc->max_anisotropy;
     if (state != gl_tex->sampler_desc.max_anisotropy)
     {
-        if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, state);
+        if (gl_info->supported[ARB_TEXTURE_FILTER_ANISOTROPIC])
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY, state);
         else
             WARN("Anisotropic filtering not supported.\n");
         gl_tex->sampler_desc.max_anisotropy = state;

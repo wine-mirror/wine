@@ -175,6 +175,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_cube_map_array",       ARB_TEXTURE_CUBE_MAP_ARRAY    },
     {"GL_ARB_texture_env_combine",          ARB_TEXTURE_ENV_COMBINE       },
     {"GL_ARB_texture_env_dot3",             ARB_TEXTURE_ENV_DOT3          },
+    {"GL_ARB_texture_filter_anisotropic",   ARB_TEXTURE_FILTER_ANISOTROPIC},
     {"GL_ARB_texture_float",                ARB_TEXTURE_FLOAT             },
     {"GL_ARB_texture_gather",               ARB_TEXTURE_GATHER            },
     {"GL_ARB_texture_mirrored_repeat",      ARB_TEXTURE_MIRRORED_REPEAT   },
@@ -233,7 +234,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_EXT_texture_compression_s3tc",     EXT_TEXTURE_COMPRESSION_S3TC  },
     {"GL_EXT_texture_env_combine",          EXT_TEXTURE_ENV_COMBINE       },
     {"GL_EXT_texture_env_dot3",             EXT_TEXTURE_ENV_DOT3          },
-    {"GL_EXT_texture_filter_anisotropic",   EXT_TEXTURE_FILTER_ANISOTROPIC},
+    {"GL_EXT_texture_filter_anisotropic",   ARB_TEXTURE_FILTER_ANISOTROPIC},
     {"GL_EXT_texture_integer",              EXT_TEXTURE_INTEGER           },
     {"GL_EXT_texture_lod_bias",             EXT_TEXTURE_LOD_BIAS          },
     {"GL_EXT_texture_mirror_clamp",         EXT_TEXTURE_MIRROR_CLAMP      },
@@ -3595,9 +3596,9 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.texture3d_size = gl_max;
         TRACE("Max texture3D size: %d.\n", gl_info->limits.texture3d_size);
     }
-    if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
+    if (gl_info->supported[ARB_TEXTURE_FILTER_ANISOTROPIC])
     {
-        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &gl_max);
         gl_info->limits.anisotropy = gl_max;
         TRACE("Max anisotropy: %d.\n", gl_info->limits.anisotropy);
     }
@@ -3904,6 +3905,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_DERIVATIVE_CONTROL,           MAKEDWORD_VERSION(4, 5)},
 
         {ARB_PIPELINE_STATISTICS_QUERY,    MAKEDWORD_VERSION(4, 6)},
+        {ARB_TEXTURE_FILTER_ANISOTROPIC,   MAKEDWORD_VERSION(4, 6)},
     };
     struct wined3d_driver_info *driver_info = &adapter->driver_info;
     const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
@@ -5631,7 +5633,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                      WINED3DPRASTERCAPS_SLOPESCALEDEPTHBIAS |
                                      WINED3DPRASTERCAPS_DEPTHBIAS;
 
-    if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
+    if (gl_info->supported[ARB_TEXTURE_FILTER_ANISOTROPIC])
     {
         caps->RasterCaps  |= WINED3DPRASTERCAPS_ANISOTROPY    |
                              WINED3DPRASTERCAPS_ZBIAS         |
@@ -5750,7 +5752,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                WINED3DPTFILTERCAPS_MIPNEAREST       |
                                WINED3DPTFILTERCAPS_NEAREST;
 
-    if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
+    if (gl_info->supported[ARB_TEXTURE_FILTER_ANISOTROPIC])
     {
         caps->TextureFilterCaps  |= WINED3DPTFILTERCAPS_MAGFANISOTROPIC |
                                     WINED3DPTFILTERCAPS_MINFANISOTROPIC;
@@ -5771,7 +5773,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                        WINED3DPTFILTERCAPS_MIPNEAREST       |
                                        WINED3DPTFILTERCAPS_NEAREST;
 
-        if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
+        if (gl_info->supported[ARB_TEXTURE_FILTER_ANISOTROPIC])
         {
             caps->CubeTextureFilterCaps  |= WINED3DPTFILTERCAPS_MAGFANISOTROPIC |
                                             WINED3DPTFILTERCAPS_MINFANISOTROPIC;
