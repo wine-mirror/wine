@@ -139,7 +139,7 @@ extern GpStatus trace_path(GpGraphics *graphics, GpPath *path) DECLSPEC_HIDDEN;
 typedef struct region_element region_element;
 extern void delete_element(region_element *element) DECLSPEC_HIDDEN;
 
-extern GpStatus get_hatch_data(HatchStyle hatchstyle, const char **result) DECLSPEC_HIDDEN;
+extern GpStatus get_hatch_data(GpHatchStyle hatchstyle, const char **result) DECLSPEC_HIDDEN;
 
 static inline INT gdip_round(REAL x)
 {
@@ -276,7 +276,7 @@ struct GpBrush{
 
 struct GpHatch{
     GpBrush brush;
-    HatchStyle hatchstyle;
+    GpHatchStyle hatchstyle;
     ARGB forecol;
     ARGB backcol;
 };

@@ -230,7 +230,7 @@ static const char HatchBrushes[][8] = {
     { 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0xff }, /* HatchStyleDarkHorizontal */
 };
 
-GpStatus get_hatch_data(HatchStyle hatchstyle, const char **result)
+GpStatus get_hatch_data(GpHatchStyle hatchstyle, const char **result)
 {
     if (hatchstyle < sizeof(HatchBrushes) / sizeof(HatchBrushes[0]))
     {
@@ -244,7 +244,7 @@ GpStatus get_hatch_data(HatchStyle hatchstyle, const char **result)
 /******************************************************************************
  * GdipCreateHatchBrush [GDIPLUS.@]
  */
-GpStatus WINGDIPAPI GdipCreateHatchBrush(HatchStyle hatchstyle, ARGB forecol, ARGB backcol, GpHatch **brush)
+GpStatus WINGDIPAPI GdipCreateHatchBrush(GpHatchStyle hatchstyle, ARGB forecol, ARGB backcol, GpHatch **brush)
 {
     TRACE("(%d, %d, %d, %p)\n", hatchstyle, forecol, backcol, brush);
 
@@ -941,7 +941,7 @@ GpStatus WINGDIPAPI GdipGetHatchForegroundColor(GpHatch *brush, ARGB *forecol)
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipGetHatchStyle(GpHatch *brush, HatchStyle *hatchstyle)
+GpStatus WINGDIPAPI GdipGetHatchStyle(GpHatch *brush, GpHatchStyle *hatchstyle)
 {
     TRACE("(%p, %p)\n", brush, hatchstyle);
 

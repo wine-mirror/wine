@@ -1556,6 +1556,27 @@ static void test_pathgradientblend(void)
     expect(Ok, status);
 }
 
+static void test_getHatchStyle(void)
+{
+    GpStatus status;
+    GpHatch *brush;
+    GpHatchStyle hatchStyle;
+
+    GdipCreateHatchBrush(HatchStyleHorizontal, 11, 12, &brush);
+
+    status = GdipGetHatchStyle(NULL, &hatchStyle);
+    expect(InvalidParameter, status);
+
+    status = GdipGetHatchStyle(brush, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipGetHatchStyle(brush, &hatchStyle);
+    expect(Ok, status);
+    expect(HatchStyleHorizontal, hatchStyle);
+
+    GdipDeleteBrush((GpBrush *)brush);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1606,6 +1627,7 @@ START_TEST(brush)
     test_pathgradientcenterpoint();
     test_pathgradientpresetblend();
     test_pathgradientblend();
+    test_getHatchStyle();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow(hwnd);
