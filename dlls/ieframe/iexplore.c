@@ -845,7 +845,7 @@ void released_obj(void)
         PostQuitMessage(0);
 }
 
-static BOOL create_ie_window(const WCHAR *cmdline)
+static BOOL create_ie_window(BOOL nohome, const WCHAR *cmdline)
 {
     InternetExplorer *ie;
     HRESULT hres;
@@ -858,33 +858,27 @@ static BOOL create_ie_window(const WCHAR *cmdline)
     IWebBrowser2_put_MenuBar(&ie->IWebBrowser2_iface, VARIANT_TRUE);
 
     if(!*cmdline) {
-        IWebBrowser2_GoHome(&ie->IWebBrowser2_iface);
+        if (nohome)
+            ie->nohome = TRUE;
+        else
+            IWebBrowser2_GoHome(&ie->IWebBrowser2_iface);
     }else {
         VARIANT var_url;
         int cmdlen;
 
-        static const WCHAR nohomeW[] = {'-','n','o','h','o','m','e'};
-
-        while(*cmdline == ' ' || *cmdline == '\t')
-            cmdline++;
         cmdlen = strlenW(cmdline);
         if(cmdlen > 2 && cmdline[0] == '"' && cmdline[cmdlen-1] == '"') {
             cmdline++;
             cmdlen -= 2;
         }
 
-        if(cmdlen == sizeof(nohomeW)/sizeof(*nohomeW) && !memcmp(cmdline, nohomeW, sizeof(nohomeW))) {
-            ie->nohome = TRUE;
-        }else {
-            V_VT(&var_url) = VT_BSTR;
+        V_VT(&var_url) = VT_BSTR;
+        V_BSTR(&var_url) = SysAllocStringLen(cmdline, cmdlen);
 
-            V_BSTR(&var_url) = SysAllocStringLen(cmdline, cmdlen);
+        /* navigate to the first page */
+        IWebBrowser2_Navigate2(&ie->IWebBrowser2_iface, &var_url, NULL, NULL, NULL, NULL);
 
-            /* navigate to the first page */
-            IWebBrowser2_Navigate2(&ie->IWebBrowser2_iface, &var_url, NULL, NULL, NULL, NULL);
-
-            SysFreeString(V_BSTR(&var_url));
-        }
+        SysFreeString(V_BSTR(&var_url));
     }
 
     IWebBrowser2_Release(&ie->IWebBrowser2_iface);
@@ -1042,8 +1036,10 @@ DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
 {
     MSG msg;
     HRESULT hres;
+    BOOL embedding = FALSE, nohome = FALSE;
 
     static const WCHAR embeddingW[] = {'-','e','m','b','e','d','d','i','n','g',0};
+    static const WCHAR nohomeW[] = {'-','n','o','h','o','m','e',0};
 
     TRACE("%s %d\n", debugstr_w(cmdline), nShowWindow);
 
@@ -1057,8 +1053,29 @@ DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
 
     init_dde();
 
-    if(strcmpiW(cmdline, embeddingW)) {
-        if(!create_ie_window(cmdline)) {
+    while (*cmdline)
+    {
+        int length = 0;
+
+        while (*cmdline == ' ' || *cmdline == '\t') cmdline++;
+        if (!*cmdline) break;
+
+        while (cmdline[length] && cmdline[length] != ' ' && cmdline[length] != '\t') length++;
+
+        if (!strncmpiW(cmdline, embeddingW, length))
+            embedding = TRUE;
+        else if (!strncmpiW(cmdline, nohomeW, length))
+            nohome = TRUE;
+        else
+            break;
+
+        cmdline += length;
+    }
+
+    if (!embedding)
+    {
+        if(!create_ie_window(nohome, cmdline))
+        {
             CoUninitialize();
             ExitProcess(1);
         }
