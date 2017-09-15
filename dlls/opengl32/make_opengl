@@ -126,7 +126,9 @@ my %debug_conv =
      "GLDEBUGPROCARB" => "%p",
      "GLDEBUGPROCAMD" => "%p",
      "GLDEBUGPROCKHR" => "%p",
+     "GLeglClientBufferEXT" => "%p",
      "GLvdpauSurfaceNV" => "%ld",
+     "GLVULKANPROCNV" => "%p",
      "int" => "%d",
      "unsigned int" => "%u",
      "UINT" => "%u",
@@ -195,6 +197,8 @@ sub ConvertType($)
               "GLDEBUGPROCARB" => "void *",
               "GLDEBUGPROCAMD" => "void *",
               "GLDEBUGPROCKHR" => "void *",
+              "GLeglClientBufferEXT" => "void *",
+              "GLVULKANPROCNV" => "void *",
               "HPBUFFERARB" => "struct wgl_pbuffer *",
               "HPBUFFEREXT" => "struct wgl_pbuffer *",
         );
@@ -228,9 +232,9 @@ sub ConvertVarName($)
 #
 # This functions generates the thunk for a given function.
 #
-sub GenerateThunk($$$$)
+sub GenerateThunk($$$)
 {
-    my ($name, $func_ref, $comment, $prefix) = @_;
+    my ($name, $func_ref, $prefix) = @_;
     my $ret = "";
     my $call_arg = "";
     my $trace_call_arg = "";
@@ -241,13 +245,6 @@ sub GenerateThunk($$$$)
     return "" if $name eq "glGetString";
     return "" if $func_ref->[2] && $func_ref->[2]->[0] =~ /WGL_/;
 
-    # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
-    # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)
-    if ($comment eq 1) {
-        $ret .= "/***********************************************************************\n";
-        $ret .= " *              $name (OPENGL32.\@)\n";
-        $ret .= " */\n";
-    }
     $ret .= ConvertType($func_ref->[0]) . " WINAPI $name( ";
     for (my $i = 0; $i < @{$func_ref->[1]}; $i++) {
         my $type = $func_ref->[1]->[$i]->[0];
@@ -930,7 +927,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 ";
 
 foreach (sort keys %norm_functions) {
-    my $string = GenerateThunk($_, $norm_functions{$_}, 1, "gl");
+    my $string = GenerateThunk($_, $norm_functions{$_}, "gl");
     print NORM "\n$string" if $string;
 }
 
@@ -980,7 +977,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 my $count = keys %ext_functions;
 print EXT "const int extension_registry_size = $count;\n";
 foreach (sort keys %ext_functions) {
-    my $string = GenerateThunk($_, $ext_functions{$_}, 0, "ext");
+    my $string = GenerateThunk($_, $ext_functions{$_}, "ext");
     if ($string =~ /DECLSPEC_HIDDEN/) {
         print EXT "\n$string";
     } else {
