@@ -1,17 +1,17 @@
-The Wine development release 2.16 is now available.
+The Wine development release 2.17 is now available.
 
 What's new in this release (see below for details):
-  - Support for pasting metafiles in RichEdit.
-  - Better support for grayscale PNG images.
-  - Support for safety features in library loading.
-  - Better handling of transforms in GdiPlus.
-  - Rendering improvements in DirectWrite.
+  - Better support for grayscale mode in DirectWrite.
+  - Per-application StartupWMClass in desktop files.
+  - Virtual memory compatibility improvements.
+  - Palette handling improvements in WindowsCodecs.
+  - Reply messages improvements in WebServices.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/2.x/wine-2.16.tar.xz
-  http://mirrors.ibiblio.org/wine/source/2.x/wine-2.16.tar.xz
+  http://dl.winehq.org/wine/source/2.x/wine-2.17.tar.xz
+  http://mirrors.ibiblio.org/wine/source/2.x/wine-2.17.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -27,238 +27,255 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 2.16 (total 19):
+Bugs fixed in 2.17 (total 20):
 
-  26046  comctl32/monthcal tests show some invalid reads under valgrind
-  28741  Odd coordinate in hit test causes uninitialized value references in MONTHCAL_CalculateDayOfWeek()?
-  35282  Multiple applications/installers need 'reg.exe' 'import' operation implementation (Muvee Reveal 8.0.x)
-  35935  Enterprise Architect fails to draw basic shapes when using gdiplus
-  37982  Illustrator CS6: alternate color selection does not display colours
-  40025  Winrar installer fails to start
-  42256  PhotoFiltre 6 and 7 don't erase the mouse selection when dragging it
-  42891  Unigine Superposition needs unimplemented function KERNEL32.dll.AddDllDirectory
-  43293  strange behavior- Eudora scrambles email addresses
-  43328  dotnet 4.5 applications crash in factory_get_cached_fontface
-  43389  valgrind shows a few invalid reads in dlls/wsdapi/tests/xml.c
-  43391  valgrind shows several definite leaks in programs/regedit/tests/regedit.c
-  43392  valgrind shows a couple invalid reads in programs/regedit/tests/regedit.c
-  43423  Multiple applications and games need 'ProgramData' environment variable set (SteelSeries Engine SDK based games, World of Warships 0.6.9+)
-  43510  Monster Girl Quest: crashes while playing
-  43536  WIC can't encode to GUID_WICPixelFormat32bppPBGRA PNG
-  43603  clipboard PIXMAP regression after upgrading from 1.8.x to 2.x
-  43617  [Crash] Application crash when running C:\GOG Games\Baldur's Gate\BGMain2.exe
-  43632  Drop down menu for DLL override doesn't work
+  12185  Before You Know It crashes
+  19177  Gorky-17 does not start in Direct3D HAL (SW Renderer is OK)
+  29958  UIRibbon Framework not implemented: 926749fa-2615-4987-8845-c33e65f2b957
+  38622  gdiplus should return PixelFormat32bppARGB instead of PixelFormat8bppIndexed for a grayscale PNG file
+  39885  Cannot allocate more than 32gb of memory
+  41370  TTM_GETCURRENTTOOL returns always FALSE when send from TTN_NEEDTEXT handler.
+  41827  Wrong specular rendering with some applications
+  42427  Steam application claims no internet connection
+  43046  Multiple apps need api-ms-win-crt-stdio-l1-1-0.dll.__stdio_common_vfprintf_s (Civilization VI, Mafia 3, SketchBook)
+  43197  5Plus: Print dialog crashes with illegal floating point operation
+  43290  MyLifeOrganized crashes when mousing over tabs
+  43319  Steam Store/Uplay/Epic Games Launcher no longer display text in Windows 7 mode (libcef applications)
+  43476  Skyrim hardware detection spinlocks with CSMT enabled
+  43519  Path of Exile: Corrupt/flickering UI textures after ~1 minute of gameplay
+  43577  unit test: DBGrid inplace editor dropdown does not work and worked on version 2.0.2
+  43586  Dead Space: no shadows in game
+  43649  dbgeng stub DebugCreateEx causes jadesentinel crash in JADE thin client
+  43658  Text in Deletion Confirmation MsgBox has wrong background colour
+  43668  Terris Universal Remote UFB 234 - update database does not work
+  43685  Many games fail to start, or run without audio
 
 ----------------------------------------------------------------
 
-Changes since 2.15:
+Changes since 2.16:
 
-Alex Henrie (1):
-      include: Allow programs to take the address of byte-swapping functions.
+Alex Henrie (7):
+      msvcrt: Note that __stdio_common functions are for ucrtbase.
+      ucrtbase: Add __stdio_common_vfprintf_s.
+      ucrtbase: Add __stdio_common_vfwprintf_s.
+      include: Add multimon.h.
+      shell32/tests: Add tests for FolderItems_Item and FolderItems_get_Count.
+      shell32: Implement FolderItems_Item.
+      shell32: Implement FolderItems_get_Count.
 
-Alexandre Julliard (32):
-      winex11: If importing an X11 clipboard format fails, try other candidate formats for the target.
-      gdi32/tests: Add a test case for DIB color painting.
-      gdi32: Always dither brush when painting to a 1-bpp device.
-      gdi32/tests: Run DIB tests also against a monochrome DDB.
-      gdi32: Pass the brush origin explicitly to the brush backend functions.
-      gdi32: Use the correct brush origin when the blit operation requires an intermediate bitmap.
-      gdi32: Do not dither non-extended wide pens.
-      kernel32: Implement safe dll search mode.
-      kernel32: Implement SetDefaultDllDirectories.
-      kernel32: Add support for LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE flag.
-      include: Add libloaderapi.h.
-      oleaut32: Don't copy uninitialized data.
-      shell32: Avoid zeroing a buffer that will get overwritten.
-      propsys: Don't use the format string size as buffer size.
-      crypt32/tests: Increase buffer size to avoid gcc warnings.
-      kernel32: Implement AddDllDirectory and RemoveDllDirectory.
-      kernel32: Add helper functions for building the load path.
-      kernel32: Implement LOAD_LIBRARY_SEARCH_* flags.
-      kernel32/tests: Add tests for the LOAD_LIBRARY_SEARCH_* flags.
-      kernel32/tests: Fix a dll reference leak.
-      kernel32: Implement safe search mode for SearchPath.
-      kernel32/tests: Add tests for SetSearchPathMode.
-      rsaenh: Avoid potential buffer overflows in registry key name.
-      wintrust: Increase buffer size to silence a gcc warning.
-      crypt32: Increase buffer size to silence a gcc warning.
-      kernel32/tests: Use function pointers to avoid gcc warnings for invalid parameter tests.
-      ntdll: Store the PEB lock pointer in the PEB.
-      fusion/tests: Correctly test non-string properties.
-      fusion/tests: Simplify directory recursion and avoid redundant buffers.
-      kernel32: Silence buffer overflow gcc warnings.
-      user32: Consistently print the HDC value in DCE traces.
-      user32: Use the correct top-level window when activating through a mouse click.
+Alexandre Julliard (29):
+      ntdll: Add helper functions for getting and setting page protection bytes.
+      ntdll: Add a helper function for setting bits in page protection bytes.
+      ntdll: Add a helper function for applying page protection bytes with mprotect.
+      ntdll: Pass the allocation size to the alloc_virtual_heap function.
+      ntdll: Allocate the per-page protection byte separately from the view.
+      ntdll: Remove the view parameter from the page protection helpers.
+      ntdll: Allocate views out of a memory block instead of using a heap.
+      ntdll: Don't do partial writes in virtual_uninterrupted_write_memory.
+      ntdll: Use the find_view_range helper function to check for overlapping views.
+      rbtree.h: Add a wine_rb_prev iteration helper function.
+      ntdll: Store memory views in a binary tree instead of a list.
+      server: Enforce valid flags for file mappings.
+      ntdll: Disallow changing PAGE_NOCACHE flag for individual pages.
+      ntdll: Remove the no longer used VPROT_NOEXEC flag.
+      ntdll: Store the SEC_* section flags directly in the view protection.
+      ntdll: Ignore attempts to commit pages in an already committed anonymous mapping.
+      kernel32/tests: Retrieve the page size only once.
+      kernel32/tests: Fix mapping protection tests to succeed on recent Windows versions.
+      kernel32/tests: Also run mapping tests against an anonymous mapping.
+      kernel32/tests: Also run mapping tests against an executable image.
+      ntdll: Avoid accessing builtin views outside of the critical section.
+      ntdll: Trace views once they are properly initialized.
+      ntdll: Fix access rights checks for mapping objects.
+      ntdll: Verify page protection against the mapping protections in VirtualAlloc and VirtualProtect.
+      ntdll: Pass the mapping file access instead of the protection bits to the server.
+      ntdll: Get rid of the VPROT_VALLOC flag.
+      ntdll: Also release memory past the last view in remove_reserved_area.
+      ntdll: Don't use the mapping handle to detect file mappings.
+      kernel32/tests: Avoid some delays in the process test.
 
-Alistair Leslie-Hughes (7):
-      sxs: Use standard wine_dbgstr_longlong.
-      fusion: Use standard wine_dbgstr_longlong.
-      quartz: Use standard wine_dbgstr_longlong.
-      include: Add IWMPEvents/2/3/4 and supporting interfaces.
-      wmp/tests: Add tests for IConnectionPointContainer.
-      ntdll: Use standard wine_dbgstr_longlong.
-      wininet: Use standard wine_dbgstr_longlong.
+Alistair Leslie-Hughes (6):
+      include: Added IMFMediaEventQueue interface.
+      include: Add interfaces IMFMediaTypeHandler, IMFStreamDescriptor.
+      mfplat: Added MFCreateEventQueue stub.
+      include: Add IMFSinkWriterEx interface.
+      mfplat: Implement MFCreateStreamDescriptor.
+      mfplat: Implement MFCreateEventQueue.
 
-Andrew Eikum (3):
-      gdiplus: Fix copy-paste typo.
-      gdiplus: Don't call PlayEnhMetaFileRecord for records handled by gdiplus.
-      gdi32: Update metafile world transform immediately in winnt mode.
+Andrey Gusev (1):
+      unicows: Fix CreateDialogParamW spec file entry.
 
-Andrey Gusev (3):
-      api-ms-win-eventing-legacy-l1-1-0: Add dll.
-      avrt: Add AvQuerySystemResponsiveness stub.
-      api-ms-win-core-kernel32-legacy-l1-1-1: Update spec file.
+Daniel Lehman (3):
+      wininet: Fix proxy bypass with wildcard if domain length matches with server.
+      msvcrt: Use exception base to create copy constructor pointer.
+      msvcrt: Protect onexit table with critical section.
 
-Anton Romanov (1):
-      windowscodecs: PNGEncoder: Return 32bppRGBA pixel format by default.
+Dmitry Timoshkov (11):
+      windowscodecs: Implement IWICBitmapDecoder::CopyPalette in PNG decoder.
+      windowscodecs: Fix IWICBitmapEncoder::SetPalette for a not initialized case in PNG encoder.
+      windowscodecs/tests: Make create_decoder() return an error code in PNG tests.
+      windowscodecs/tests: Add more tests for loading PNG images in various color formats.
+      windowscodecs: Implement IWICBitmapFrameEncode::SetPalette in JPEG encoder.
+      windowscodecs: Fix IWICBitmapEncoder::SetPalette for a not initialized case in JPEG encoder.
+      windowscodecs: Fix IWICBitmapEncoder::SetPalette for a not initialized case in BMP encoder.
+      windowscodecs: Implement IWICBitmapFrameEncode::SetPalette in BMP encoder.
+      windowscodecs: Implement IWICBitmapDecoder::CopyPalette in TIFF decoder.
+      windowscodecs: Implement IWICBitmapFrameEncode::SetPalette in the TIFF encoder.
+      windowscodecs: Fix IWICBitmapEncoder::SetPalette for a not initialized case in TIFF encoder.
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
+Fabian Maurer (11):
+      shell32: Draw text on message boxes without background.
+      winecfg: Remove processorArchitecture from manifest.
+      user32: Add stub for CalcMenuBar.
+      api-ms-win-core-heap-l2-1-0: Add dll.
+      api-ms-win-core-localization-obsolete-l1-3-0: Add dll.
+      api-ms-win-core-shlwapi-obsolete-l1-2-0: Add dll.
+      api-ms-win-core-synch-l1-2-1: Add dll.
+      mfidl.idl: Add interfaces IMFClockStateSink, IMFGetService.
+      dxva2api.idl: Add interface IDirectXVideoMemoryConfiguration.
+      evr: Add interface definitions for EVR filter.
+      comctl32/tests: Dump failed message sequence correctly.
 
-Austin English (2):
-      advapi32: Only show OpenTraceA/W FIXME once.
-      advapi32: Only show NotifyServiceStatusChangeW FIXME once.
+François Gouget (7):
+      dsquery: Case fixes.
+      ieproxy: Case fixes.
+      mshtml: A spelling fix in a WARN() message.
+      mshtml: Make HTMLDocumentNode_init_dispex_info() static.
+      dwrite: Factory_release_cached_fontface() is unused so remove it.
+      webservices: Alloc_utf16_text() is unused, so remove it.
+      gdiplus: Add a trailing linefeed to an ERR() message.
 
-Changhui Liu (2):
-      gdiplus/tests: Add test for hdc with window origin point changed.
-      gdiplus/tests: Add drawing tests for GdipFillRegion with gdi transform.
+Hans Leidekker (13):
+      webservices: Store headers in WsReadEnvelopeStart.
+      webservices: Implement WsSendReplyMessage.
+      webservices: Return HRESULT from insert_string.
+      webservices: Store the action header as WS_XML_STRING.
+      webservices: Add a mechanism to use the builtin static dictionary in the writer.
+      webservices: Also use the dictionary for writing UTF-8 text values.
+      webservices: Build a session dictionary for strings not present in the static dictionary.
+      webservices: Add support for multiple message descriptions in WsReceiveMessage.
+      webservices: Parse the MessageID header.
+      webservices: Include a RelatesTo header in reply messages.
+      winhttp: Trace errors from send and recv.
+      winhttp: Allocate a credential handle for each session.
+      winhttp: Implement WINHTTP_OPTION_SECURE_PROTOCOLS.
 
-Dmitry Timoshkov (6):
-      gdiplus/tests: Add a test for loading PNG grayscale images.
-      user32/tests: Test DialogBoxParam using a dialog template with invalid control class.
-      user32: DialogBoxParam should return -1 when dialog control creation fails.
-      gdiplus: Force conversion of 8 bpp grayscale PNG images to 32 bpp BGRA.
-      gdiplus/tests: Add a test for image flags to PNG grayscale image tests.
-      gdiplus: Set correct color space flags for grayscale images.
+Hugh McMaster (3):
+      reg/tests: Delete the test registry key before starting each test.
+      reg/tests: Add basic tests for the export operation.
+      setupapi: Recursively remove any subkeys before calling NtDeleteKey().
 
-Fabian Maurer (10):
-      user32/combo: Set listbox popup height correctly and add tests.
-      winecfg: Use proper size for combobox controls.
-      comctl32/tests: Use proper size for combobox controls.
-      comdlg32: Use proper size for combobox controls.
-      cryptui: Use proper size for combobox controls.
-      dinput: Use proper size for combobox controls.
-      joy.cpl: Use proper size for combobox controls.
-      serialui: Use proper size for combobox controls.
-      wineps.drv: Use proper size for combobox controls.
-      wineconsole: Use proper size for combobox controls.
+Huw D. M. Davies (4):
+      riched20: Remove an unused parameter.
+      riched20: Correctly release the STGMEDIUM.
+      riched20: Don't special case the non-stretching case.
+      riched20: Don't scale the picture size with dpi.
 
-Hans Leidekker (2):
-      webservices: Create a new HTTP request for each message.
-      webservices: Set cache control headers.
+Jacek Caban (12):
+      mshtml: Added IHTMLDocument7::get_characterSet implementation and use it in get_charset.
+      mshtml: Added IHTMLDocument7::get_defaultView implementation and use it for get_parentWindow implementation.
+      mshtml: Forward common function from IHTMLDocument7 to IHTMLDocument2.
+      mshtml: Added implementation of IHTMLDocument7 event handler properties for supported events.
+      mshtml: Expose IHTMLDocument7 interface to scripts.
+      mshtml: Added IHTMLDocument7::head property implementation.
+      mshtml: Added IHTMLDocument7::getElementsByClassName implementation.
+      mshtml: Forward IHTMLElement6::get_nodeName to IHTMLDOMNode implementation.
+      mshtml: Forward IHTMLElement6::get_tagName to IHTMLElement implementation.
+      mshtml: Forward attributes functions from IHTMLElement6 to older interfaces.
+      mshtml: Expose IHTMLElement6 to scripts.
+      mshtml: Fixed getElementsByTagName for comment elements.
 
-Hugh McMaster (15):
-      reg/tests: Pass MultiByteToWideChar() the buffer size in characters.
-      reg/tests: Free the WCHAR memory buffer if CreateFile() fails.
-      regedit/tests: Add Unicode import tests and remove the WCHAR support check.
-      regedit/tests: Delete the test registry key before starting each test.
-      regedit/tests: Add Unicode tests for importing registry data with inter-mixed comments.
-      regedit/tests: Add Unicode tests for importing registry data with whitespace.
-      regedit/tests: Add Unicode tests for registry key creation and deletion.
-      regedit/tests: Add Unicode tests for value deletion.
-      regedit/tests: Add Unicode tests for importing invalid registry data.
-      regedit/tests: Add some mixed key creation and deletion tests.
-      regedit: Close any open registry keys before starting the key deletion process.
-      reg/tests: Add some mixed key creation and deletion tests.
-      reg: Close any open registry keys before starting the key deletion process.
-      regedit: Null-terminate incomplete REG_EXPAND_SZ and REG_MULTI_SZ Unicode data.
-      reg: Null-terminate incomplete REG_EXPAND_SZ and REG_MULTI_SZ Unicode data.
+Jonathan Doron (2):
+      ntdll: Apply owner and group regardless of the SE_OWNER_DEFAULTED or SE_GROUP_DEFAULTED flags.
+      kernel32/tests: Test suspended process states.
 
-Huw D. M. Davies (11):
-      riched20: Move the editor initialization out of CreateTextHost().
-      riched20: Retrieve the default paragraph alignment from the text host.
-      riched20: Initialize ME_TextEditor members in ME_MakeEditor().
-      riched20: Don't create a special richedit ole instance for the RTF parser.
-      riched20: Add support for EM_PASTESPECIAL.
-      riched20: Use the implementation of EM_PASTESPECIAL for WM_PASTE.
-      riched20: Use the implementation of EM_PASTESPECIAL for EM_CANPASTE.
-      riched20: Add support for pasting EMFs.
-      gdi32: Cache the device caps from the reference dc, since the dc may become invalid.
-      wineps: Fall back to the null driver for common device caps.
-      riched20: Remove the separate implementation of IOleWindow as IOleInPlaceSite inherits from IOleWindow.
+Józef Kucia (1):
+      d3d11/tests: Add test for conservative depth output.
 
-Jacek Caban (7):
-      jscript: Added support for VT_R4 VARIANT types.
-      mshtml: Return documentMode as VT_R4.
-      mshtml: Don't allow changing document mode after script insertion or when it's already set.
-      mshtml: Added delayed DispatchEx init support and use it to expose IHTMLDOMNode3 from document node.
-      mshtml.idl: Added IHTMLDocument8 declaration.
-      mshtml: Added IHTMLDocument6::getElementById implementation.
-      mshtml: Properly expose IHTMLDocument6 interface to scripts.
+Marcin Mikołajczak (1):
+      po: Update Polish translation.
 
-Józef Kucia (6):
-      wined3d: Avoid potential NULL pointer dereference (Coverity).
-      d3d10core/tests: Remove needless assignment.
-      d3d11/tests: Remove needless assignment.
-      d3d11/tests: Add 10_1 to default feature levels list.
-      d3d11: Simplify d3d10_query_GetData().
-      msvcrt: Fix precision handling for string arguments.
+Martin Storsjo (1):
+      msvcrt: Implement setjmp/longjmp on aarch64.
 
-Lauri Kenttä (1):
-      po: Update Finnish translation.
+Matteo Bruni (13):
+      d3d9/tests: Add a test for "NULL" FourCC format.
+      wined3d: Return the up-to-date locations from blitters.
+      wined3d: Don't take the upload path for blits to formats requiring conversion.
+      wined3d: Restore support for d3d9 extension formats.
+      wined3d: Get rid of most of the redundant query flushes.
+      d3d9/tests: Trace the current test in test_signed_formats().
+      d3d8/tests: Trace the current test in test_signed_formats().
+      wined3d: Copy the module handle to a local variable in wined3d_cs_run().
+      wined3d: Disable YUV formats when not supported.
+      wined3d: Disable the ARBfp blitter on core profile.
+      opengl32/tests: Fix typo in ok() condition.
+      opengl32: Support a couple new typedefs in the XML.
+      opengl32: Update to OpenGL 4.6.
 
-Marcus Meissner (1):
-      kernel32/tests: Fixed size to GetTempPathW.
+Michael Müller (2):
+      wined3d: Recognize conservative depth output registers.
+      wined3d: Add conservative depth output information to GLSL pixel shaders.
 
-Miklós Máté (1):
-      winex11: Improve the desktop resolution list.
+Nikolay Sivov (22):
+      dwrite: Handle 8bpp gray bitmaps for bitmap target.
+      dwrite: Validate buffer size passed to CreateAlphaTexture() against analysis texture type.
+      dwrite: Use 8bpp bitmaps in grayscale mode.
+      d2d1: Use 8bpp text bitmaps for grayscale mode.
+      dbgeng: Added DebugCreateEx() stub.
+      dwrite: Fix 8bpp bitmap copy.
+      msxml3/httpreq: Support HEAD request.
+      dwrite: Support DWRITE_TRIMMING_GRANULARITY_WORD mode.
+      comctl32/tooltips: Return full toolinfo from TTM_GETCURRENTTOOL.
+      comctl32/tooltips: Set current tool before sending TTN_NEEDTEXT.
+      comctl32/tooltips: Calm down trace messages.
+      qcap: Remove redundant filter state check.
+      usp10/tests: Remove special itemization failure test that doesn't happen.
+      usp10/tests: Move initialization to a separate function, add another ScriptShape() test.
+      usp10/tests: Remove workarounds that are no longer useful.
+      shell32: Implement Application() property for Folder and FolderItems.
+      dwrite/tests: Added a helper to initialize test text source.
+      d2d1: Use better bezier segment bounds approximation when updating figure bounds.
+      d2d1: Implement GetBounds() for path geometries.
+      d3d9: Ask for texture GetDC() capability GET_DC based on texture format instead of initial swapchain buffer format.
+      shell32/tests: Remove workarounds that are no longer relevant.
+      shell32: Implement Application property for FolderItem.
 
-Nikolay Sivov (21):
-      po: Update Russian translation.
-      dwrite: Use more readable names for spacing attributes.
-      dwrite: Set drawing effect for trimming sign.
-      dwrite: Split initial cluster computation by stage.
-      dwrite: Use safer method to set per-factory system collection reference.
-      dwrite: Use safer method to set per-factory EUDC collection reference.
-      dwrite/tests: Some tests for system font set.
-      gdiplus: Use defined constants for wrap modes.
-      dwrite/tests: A test to draw trimming sign with drawing effect.
-      d2d1: Pass inline object effect through rendering context.
-      dwrite: Don't use drawing effect for trimming signs.
-      dwrite: Set leading text alignment for default trimming sign.
-      dwrite: Remove unused call.
-      dwrite: Improve empty contours handling in GetGlyphRunOutline().
-      wsdapi: Fix use-after-free when checking for unique prefix (Valgrind).
-      wsdapi/tests: Use constants for test strings when possible.
-      comctl32/monthcal: Initialize day field before setting final hit test result (Valgrind).
-      comctl32/monthcal: Make sure set today date is valid before using it (Valgrind).
-      comctl32/monthcal: Make sure set focus date is valid before using it (Valgrind).
-      dwrite: Fix proportional spacing method.
-      d2d1: Fix rounding when setting scissor rectangle.
+Paul Gofman (3):
+      d3dx9/tests: Add test for null shaders in effect.
+      d3dx9: Return E_FAIL from ValidateTechnique() for techniques with unsupported shaders.
+      d3dx9: Fix zero object_id handling in d3dx9_base_effect_get_pass_desc().
 
-Paul Gofman (10):
-      d3d9/tests: Add tests for setting vertex shader constants in SWVP and MVP modes.
-      d3d9/tests: Add tests for SW shaders creation in SWVP and MVP modes.
-      d3d9/tests: Add test for SW shader in MVP mode.
-      d3dx9: Factor out set_constants_device() function.
-      d3dx9: Get rid of constants modification bitmasks.
-      d3dx9: Do not support preshader instructions which output multiple registers.
-      d3dx9: Dump bytecode if parameter evaluator creation failed.
-      d3dx9: Use bitmask instead of BOOL array for light_updated.
-      d3dx9/tests: Add test for effect with unsupported shader.
-      d3dx9: Do not fail effect creation if a shader cannot be created.
+Rafał Mużyło (1):
+      itss: Fix handling non-ASCII content paths.
 
-Stefan Dösinger (3):
-      wined3d: Avoid writing queue->head in the CS thread.
-      wined3d: Do not call queue_is_empty in wined3d_cs_mt_finish.
-      ws2_32: Also check the FQDN when injecting the local IP.
+Sebastian Lackner (1):
+      kernel32: Add stub for GetProcessWorkingSetSizeEx.
 
-Vincent Povirk (15):
-      wmphoto: Add stub dll.
-      wmphoto: Register WMP encoder and decoder classes.
-      shell32: Change default ProgramData folder and set ProfileList key.
-      kernel32: Set the ProgramData environment variable.
-      gdiplus: Check for invalid coordinate space in GdipTransformPoints.
-      gdiplus: Replace DPtoLP with an internal coordinate space constant.
-      gdiplus: Test that clip region doesn't account for gdi32 transform changes.
-      gdiplus: Transform clipping region to gdi device coordinates.
-      gdiplus: Test that GdipGetRegionHRgn includes gdi32 transform.
-      gdiplus: Account for gdi transform in SOFTWARE_GdipFillRegion.
-      gdiplus: Account for gdi transform in brush_fill_pixels.
-      gdiplus: Use SOFTWARE_GdipDrawPath with alpha hdc's.
-      gdiplus: Account for gdi32 transform in GdipDrawImage.
-      gdiplus: Send paths to gdi32 in device coordinates.
-      gdiplus: Account for gdi32 transform in SOFTWARE_GdipDrawThinPath.
+Stefan Dösinger (1):
+      ntdll: Make RtlDeregisterWaitEx(handle, INVALID_HANDLE_VALUE) thread safe.
+
+Vincent Povirk (9):
+      gdiplus: Account for gdi32 transform in SOFTWARE_GdipDrawPath.
+      gdiplus: Account for gdi32 transforms in text functions.
+      gdiplus: Account for gdi32 transform in GdipSetClipHrgn.
+      windowscodecs: Generate a palette for color-keyed grayscale PNG's.
+      winex11: Convert process name to lowercase for WM name hint.
+      winemenubuilder: Set StartupWMClass for shortcuts to exe files.
+      loader/wine.inf: Put 32-bit .ds fakedlls in windows/twain_32.
+      sane.ds: Add support for word list options.
+      shell32: Stub SHOpenWithDialog.
+
+Zebediah Figura (9):
+      msi: Remove ACTION_PerformUIAction().
+      msi: Simplify message type processing.
+      msi: More fully implement the ExecuteAction action.
+      msi: Implement the INSTALL top-level action.
+      msi: Perform the given action, or INSTALL, from MsiInstallProduct().
+      msi/tests: Some cleanup for external UI tests.
+      msi/tests: Add external UI tests for top-level actions.
+      ieframe: Parse multiple command-line arguments.
+      dsquery: Register CommonQuery coclass.
 
 --
 Alexandre Julliard
