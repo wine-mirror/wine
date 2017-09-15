@@ -3539,7 +3539,8 @@ static DWORD cpu_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
         ERR("Failed to blit.\n");
     wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, dst_location);
 
-    return dst_texture->resource.map_binding | dst_location;
+    return dst_location | (dst_texture->sub_resources[dst_sub_resource_idx].locations
+            & dst_texture->resource.map_binding);
 }
 
 static const struct wined3d_blitter_ops cpu_blitter_ops =
