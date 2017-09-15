@@ -11,3006 +11,2004 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
-/***********************************************************************
- *              glAccum (OPENGL32.@)
- */
 void WINAPI glAccum( GLenum op, GLfloat value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f)\n", op, value );
   funcs->gl.p_glAccum( op, value );
 }
 
-/***********************************************************************
- *              glAlphaFunc (OPENGL32.@)
- */
 void WINAPI glAlphaFunc( GLenum func, GLfloat ref ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f)\n", func, ref );
   funcs->gl.p_glAlphaFunc( func, ref );
 }
 
-/***********************************************************************
- *              glAreTexturesResident (OPENGL32.@)
- */
 GLboolean WINAPI glAreTexturesResident( GLsizei n, const GLuint* textures, GLboolean* residences ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %p)\n", n, textures, residences );
   return funcs->gl.p_glAreTexturesResident( n, textures, residences );
 }
 
-/***********************************************************************
- *              glArrayElement (OPENGL32.@)
- */
 void WINAPI glArrayElement( GLint i ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", i );
   funcs->gl.p_glArrayElement( i );
 }
 
-/***********************************************************************
- *              glBegin (OPENGL32.@)
- */
 void WINAPI glBegin( GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mode );
   funcs->gl.p_glBegin( mode );
 }
 
-/***********************************************************************
- *              glBindTexture (OPENGL32.@)
- */
 void WINAPI glBindTexture( GLenum target, GLuint texture ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", target, texture );
   funcs->gl.p_glBindTexture( target, texture );
 }
 
-/***********************************************************************
- *              glBitmap (OPENGL32.@)
- */
 void WINAPI glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte* bitmap ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %f, %f, %f, %f, %p)\n", width, height, xorig, yorig, xmove, ymove, bitmap );
   funcs->gl.p_glBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 }
 
-/***********************************************************************
- *              glBlendFunc (OPENGL32.@)
- */
 void WINAPI glBlendFunc( GLenum sfactor, GLenum dfactor ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", sfactor, dfactor );
   funcs->gl.p_glBlendFunc( sfactor, dfactor );
 }
 
-/***********************************************************************
- *              glCallList (OPENGL32.@)
- */
 void WINAPI glCallList( GLuint list ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", list );
   funcs->gl.p_glCallList( list );
 }
 
-/***********************************************************************
- *              glCallLists (OPENGL32.@)
- */
 void WINAPI glCallLists( GLsizei n, GLenum type, const void* lists ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", n, type, lists );
   funcs->gl.p_glCallLists( n, type, lists );
 }
 
-/***********************************************************************
- *              glClear (OPENGL32.@)
- */
 void WINAPI glClear( GLbitfield mask ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mask );
   funcs->gl.p_glClear( mask );
 }
 
-/***********************************************************************
- *              glClearAccum (OPENGL32.@)
- */
 void WINAPI glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
   funcs->gl.p_glClearAccum( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glClearColor (OPENGL32.@)
- */
 void WINAPI glClearColor( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
   funcs->gl.p_glClearColor( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glClearDepth (OPENGL32.@)
- */
 void WINAPI glClearDepth( GLdouble depth ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", depth );
   funcs->gl.p_glClearDepth( depth );
 }
 
-/***********************************************************************
- *              glClearIndex (OPENGL32.@)
- */
 void WINAPI glClearIndex( GLfloat c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", c );
   funcs->gl.p_glClearIndex( c );
 }
 
-/***********************************************************************
- *              glClearStencil (OPENGL32.@)
- */
 void WINAPI glClearStencil( GLint s ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", s );
   funcs->gl.p_glClearStencil( s );
 }
 
-/***********************************************************************
- *              glClipPlane (OPENGL32.@)
- */
 void WINAPI glClipPlane( GLenum plane, const GLdouble* equation ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", plane, equation );
   funcs->gl.p_glClipPlane( plane, equation );
 }
 
-/***********************************************************************
- *              glColor3b (OPENGL32.@)
- */
 void WINAPI glColor3b( GLbyte red, GLbyte green, GLbyte blue ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", red, green, blue );
   funcs->gl.p_glColor3b( red, green, blue );
 }
 
-/***********************************************************************
- *              glColor3bv (OPENGL32.@)
- */
 void WINAPI glColor3bv( const GLbyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3bv( v );
 }
 
-/***********************************************************************
- *              glColor3d (OPENGL32.@)
- */
 void WINAPI glColor3d( GLdouble red, GLdouble green, GLdouble blue ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", red, green, blue );
   funcs->gl.p_glColor3d( red, green, blue );
 }
 
-/***********************************************************************
- *              glColor3dv (OPENGL32.@)
- */
 void WINAPI glColor3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3dv( v );
 }
 
-/***********************************************************************
- *              glColor3f (OPENGL32.@)
- */
 void WINAPI glColor3f( GLfloat red, GLfloat green, GLfloat blue ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", red, green, blue );
   funcs->gl.p_glColor3f( red, green, blue );
 }
 
-/***********************************************************************
- *              glColor3fv (OPENGL32.@)
- */
 void WINAPI glColor3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3fv( v );
 }
 
-/***********************************************************************
- *              glColor3i (OPENGL32.@)
- */
 void WINAPI glColor3i( GLint red, GLint green, GLint blue ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", red, green, blue );
   funcs->gl.p_glColor3i( red, green, blue );
 }
 
-/***********************************************************************
- *              glColor3iv (OPENGL32.@)
- */
 void WINAPI glColor3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3iv( v );
 }
 
-/***********************************************************************
- *              glColor3s (OPENGL32.@)
- */
 void WINAPI glColor3s( GLshort red, GLshort green, GLshort blue ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", red, green, blue );
   funcs->gl.p_glColor3s( red, green, blue );
 }
 
-/***********************************************************************
- *              glColor3sv (OPENGL32.@)
- */
 void WINAPI glColor3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3sv( v );
 }
 
-/***********************************************************************
- *              glColor3ub (OPENGL32.@)
- */
 void WINAPI glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", red, green, blue );
   funcs->gl.p_glColor3ub( red, green, blue );
 }
 
-/***********************************************************************
- *              glColor3ubv (OPENGL32.@)
- */
 void WINAPI glColor3ubv( const GLubyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3ubv( v );
 }
 
-/***********************************************************************
- *              glColor3ui (OPENGL32.@)
- */
 void WINAPI glColor3ui( GLuint red, GLuint green, GLuint blue ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", red, green, blue );
   funcs->gl.p_glColor3ui( red, green, blue );
 }
 
-/***********************************************************************
- *              glColor3uiv (OPENGL32.@)
- */
 void WINAPI glColor3uiv( const GLuint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3uiv( v );
 }
 
-/***********************************************************************
- *              glColor3us (OPENGL32.@)
- */
 void WINAPI glColor3us( GLushort red, GLushort green, GLushort blue ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", red, green, blue );
   funcs->gl.p_glColor3us( red, green, blue );
 }
 
-/***********************************************************************
- *              glColor3usv (OPENGL32.@)
- */
 void WINAPI glColor3usv( const GLushort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor3usv( v );
 }
 
-/***********************************************************************
- *              glColor4b (OPENGL32.@)
- */
 void WINAPI glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
   funcs->gl.p_glColor4b( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glColor4bv (OPENGL32.@)
- */
 void WINAPI glColor4bv( const GLbyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4bv( v );
 }
 
-/***********************************************************************
- *              glColor4d (OPENGL32.@)
- */
 void WINAPI glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
   funcs->gl.p_glColor4d( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glColor4dv (OPENGL32.@)
- */
 void WINAPI glColor4dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4dv( v );
 }
 
-/***********************************************************************
- *              glColor4f (OPENGL32.@)
- */
 void WINAPI glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
   funcs->gl.p_glColor4f( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glColor4fv (OPENGL32.@)
- */
 void WINAPI glColor4fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4fv( v );
 }
 
-/***********************************************************************
- *              glColor4i (OPENGL32.@)
- */
 void WINAPI glColor4i( GLint red, GLint green, GLint blue, GLint alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
   funcs->gl.p_glColor4i( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glColor4iv (OPENGL32.@)
- */
 void WINAPI glColor4iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4iv( v );
 }
 
-/***********************************************************************
- *              glColor4s (OPENGL32.@)
- */
 void WINAPI glColor4s( GLshort red, GLshort green, GLshort blue, GLshort alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
   funcs->gl.p_glColor4s( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glColor4sv (OPENGL32.@)
- */
 void WINAPI glColor4sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4sv( v );
 }
 
-/***********************************************************************
- *              glColor4ub (OPENGL32.@)
- */
 void WINAPI glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
   funcs->gl.p_glColor4ub( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glColor4ubv (OPENGL32.@)
- */
 void WINAPI glColor4ubv( const GLubyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4ubv( v );
 }
 
-/***********************************************************************
- *              glColor4ui (OPENGL32.@)
- */
 void WINAPI glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
   funcs->gl.p_glColor4ui( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glColor4uiv (OPENGL32.@)
- */
 void WINAPI glColor4uiv( const GLuint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4uiv( v );
 }
 
-/***********************************************************************
- *              glColor4us (OPENGL32.@)
- */
 void WINAPI glColor4us( GLushort red, GLushort green, GLushort blue, GLushort alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
   funcs->gl.p_glColor4us( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glColor4usv (OPENGL32.@)
- */
 void WINAPI glColor4usv( const GLushort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glColor4usv( v );
 }
 
-/***********************************************************************
- *              glColorMask (OPENGL32.@)
- */
 void WINAPI glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
   funcs->gl.p_glColorMask( red, green, blue, alpha );
 }
 
-/***********************************************************************
- *              glColorMaterial (OPENGL32.@)
- */
 void WINAPI glColorMaterial( GLenum face, GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", face, mode );
   funcs->gl.p_glColorMaterial( face, mode );
 }
 
-/***********************************************************************
- *              glColorPointer (OPENGL32.@)
- */
 void WINAPI glColorPointer( GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->gl.p_glColorPointer( size, type, stride, pointer );
 }
 
-/***********************************************************************
- *              glCopyPixels (OPENGL32.@)
- */
 void WINAPI glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d)\n", x, y, width, height, type );
   funcs->gl.p_glCopyPixels( x, y, width, height, type );
 }
 
-/***********************************************************************
- *              glCopyTexImage1D (OPENGL32.@)
- */
 void WINAPI glCopyTexImage1D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d)\n", target, level, internalformat, x, y, width, border );
   funcs->gl.p_glCopyTexImage1D( target, level, internalformat, x, y, width, border );
 }
 
-/***********************************************************************
- *              glCopyTexImage2D (OPENGL32.@)
- */
 void WINAPI glCopyTexImage2D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, internalformat, x, y, width, height, border );
   funcs->gl.p_glCopyTexImage2D( target, level, internalformat, x, y, width, height, border );
 }
 
-/***********************************************************************
- *              glCopyTexSubImage1D (OPENGL32.@)
- */
 void WINAPI glCopyTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d)\n", target, level, xoffset, x, y, width );
   funcs->gl.p_glCopyTexSubImage1D( target, level, xoffset, x, y, width );
 }
 
-/***********************************************************************
- *              glCopyTexSubImage2D (OPENGL32.@)
- */
 void WINAPI glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, xoffset, yoffset, x, y, width, height );
   funcs->gl.p_glCopyTexSubImage2D( target, level, xoffset, yoffset, x, y, width, height );
 }
 
-/***********************************************************************
- *              glCullFace (OPENGL32.@)
- */
 void WINAPI glCullFace( GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mode );
   funcs->gl.p_glCullFace( mode );
 }
 
-/***********************************************************************
- *              glDeleteLists (OPENGL32.@)
- */
 void WINAPI glDeleteLists( GLuint list, GLsizei range ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", list, range );
   funcs->gl.p_glDeleteLists( list, range );
 }
 
-/***********************************************************************
- *              glDeleteTextures (OPENGL32.@)
- */
 void WINAPI glDeleteTextures( GLsizei n, const GLuint* textures ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", n, textures );
   funcs->gl.p_glDeleteTextures( n, textures );
 }
 
-/***********************************************************************
- *              glDepthFunc (OPENGL32.@)
- */
 void WINAPI glDepthFunc( GLenum func ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", func );
   funcs->gl.p_glDepthFunc( func );
 }
 
-/***********************************************************************
- *              glDepthMask (OPENGL32.@)
- */
 void WINAPI glDepthMask( GLboolean flag ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", flag );
   funcs->gl.p_glDepthMask( flag );
 }
 
-/***********************************************************************
- *              glDepthRange (OPENGL32.@)
- */
 void WINAPI glDepthRange( GLdouble nearParam, GLdouble farParam ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", nearParam, farParam );
   funcs->gl.p_glDepthRange( nearParam, farParam );
 }
 
-/***********************************************************************
- *              glDisable (OPENGL32.@)
- */
 void WINAPI glDisable( GLenum cap ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", cap );
   funcs->gl.p_glDisable( cap );
 }
 
-/***********************************************************************
- *              glDisableClientState (OPENGL32.@)
- */
 void WINAPI glDisableClientState( GLenum array ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", array );
   funcs->gl.p_glDisableClientState( array );
 }
 
-/***********************************************************************
- *              glDrawArrays (OPENGL32.@)
- */
 void WINAPI glDrawArrays( GLenum mode, GLint first, GLsizei count ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", mode, first, count );
   funcs->gl.p_glDrawArrays( mode, first, count );
 }
 
-/***********************************************************************
- *              glDrawBuffer (OPENGL32.@)
- */
 void WINAPI glDrawBuffer( GLenum buf ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", buf );
   funcs->gl.p_glDrawBuffer( buf );
 }
 
-/***********************************************************************
- *              glDrawElements (OPENGL32.@)
- */
 void WINAPI glDrawElements( GLenum mode, GLsizei count, GLenum type, const void* indices ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", mode, count, type, indices );
   funcs->gl.p_glDrawElements( mode, count, type, indices );
 }
 
-/***********************************************************************
- *              glDrawPixels (OPENGL32.@)
- */
 void WINAPI glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", width, height, format, type, pixels );
   funcs->gl.p_glDrawPixels( width, height, format, type, pixels );
 }
 
-/***********************************************************************
- *              glEdgeFlag (OPENGL32.@)
- */
 void WINAPI glEdgeFlag( GLboolean flag ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", flag );
   funcs->gl.p_glEdgeFlag( flag );
 }
 
-/***********************************************************************
- *              glEdgeFlagPointer (OPENGL32.@)
- */
 void WINAPI glEdgeFlagPointer( GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", stride, pointer );
   funcs->gl.p_glEdgeFlagPointer( stride, pointer );
 }
 
-/***********************************************************************
- *              glEdgeFlagv (OPENGL32.@)
- */
 void WINAPI glEdgeFlagv( const GLboolean* flag ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", flag );
   funcs->gl.p_glEdgeFlagv( flag );
 }
 
-/***********************************************************************
- *              glEnable (OPENGL32.@)
- */
 void WINAPI glEnable( GLenum cap ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", cap );
   funcs->gl.p_glEnable( cap );
 }
 
-/***********************************************************************
- *              glEnableClientState (OPENGL32.@)
- */
 void WINAPI glEnableClientState( GLenum array ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", array );
   funcs->gl.p_glEnableClientState( array );
 }
 
-/***********************************************************************
- *              glEnd (OPENGL32.@)
- */
 void WINAPI glEnd( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glEnd( );
 }
 
-/***********************************************************************
- *              glEndList (OPENGL32.@)
- */
 void WINAPI glEndList( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glEndList( );
 }
 
-/***********************************************************************
- *              glEvalCoord1d (OPENGL32.@)
- */
 void WINAPI glEvalCoord1d( GLdouble u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", u );
   funcs->gl.p_glEvalCoord1d( u );
 }
 
-/***********************************************************************
- *              glEvalCoord1dv (OPENGL32.@)
- */
 void WINAPI glEvalCoord1dv( const GLdouble* u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", u );
   funcs->gl.p_glEvalCoord1dv( u );
 }
 
-/***********************************************************************
- *              glEvalCoord1f (OPENGL32.@)
- */
 void WINAPI glEvalCoord1f( GLfloat u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", u );
   funcs->gl.p_glEvalCoord1f( u );
 }
 
-/***********************************************************************
- *              glEvalCoord1fv (OPENGL32.@)
- */
 void WINAPI glEvalCoord1fv( const GLfloat* u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", u );
   funcs->gl.p_glEvalCoord1fv( u );
 }
 
-/***********************************************************************
- *              glEvalCoord2d (OPENGL32.@)
- */
 void WINAPI glEvalCoord2d( GLdouble u, GLdouble v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", u, v );
   funcs->gl.p_glEvalCoord2d( u, v );
 }
 
-/***********************************************************************
- *              glEvalCoord2dv (OPENGL32.@)
- */
 void WINAPI glEvalCoord2dv( const GLdouble* u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", u );
   funcs->gl.p_glEvalCoord2dv( u );
 }
 
-/***********************************************************************
- *              glEvalCoord2f (OPENGL32.@)
- */
 void WINAPI glEvalCoord2f( GLfloat u, GLfloat v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", u, v );
   funcs->gl.p_glEvalCoord2f( u, v );
 }
 
-/***********************************************************************
- *              glEvalCoord2fv (OPENGL32.@)
- */
 void WINAPI glEvalCoord2fv( const GLfloat* u ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", u );
   funcs->gl.p_glEvalCoord2fv( u );
 }
 
-/***********************************************************************
- *              glEvalMesh1 (OPENGL32.@)
- */
 void WINAPI glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", mode, i1, i2 );
   funcs->gl.p_glEvalMesh1( mode, i1, i2 );
 }
 
-/***********************************************************************
- *              glEvalMesh2 (OPENGL32.@)
- */
 void WINAPI glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d)\n", mode, i1, i2, j1, j2 );
   funcs->gl.p_glEvalMesh2( mode, i1, i2, j1, j2 );
 }
 
-/***********************************************************************
- *              glEvalPoint1 (OPENGL32.@)
- */
 void WINAPI glEvalPoint1( GLint i ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", i );
   funcs->gl.p_glEvalPoint1( i );
 }
 
-/***********************************************************************
- *              glEvalPoint2 (OPENGL32.@)
- */
 void WINAPI glEvalPoint2( GLint i, GLint j ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", i, j );
   funcs->gl.p_glEvalPoint2( i, j );
 }
 
-/***********************************************************************
- *              glFeedbackBuffer (OPENGL32.@)
- */
 void WINAPI glFeedbackBuffer( GLsizei size, GLenum type, GLfloat* buffer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", size, type, buffer );
   funcs->gl.p_glFeedbackBuffer( size, type, buffer );
 }
 
-/***********************************************************************
- *              glFinish (OPENGL32.@)
- */
 void WINAPI glFinish( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glFinish( );
 }
 
-/***********************************************************************
- *              glFlush (OPENGL32.@)
- */
 void WINAPI glFlush( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glFlush( );
 }
 
-/***********************************************************************
- *              glFogf (OPENGL32.@)
- */
 void WINAPI glFogf( GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f)\n", pname, param );
   funcs->gl.p_glFogf( pname, param );
 }
 
-/***********************************************************************
- *              glFogfv (OPENGL32.@)
- */
 void WINAPI glFogfv( GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glFogfv( pname, params );
 }
 
-/***********************************************************************
- *              glFogi (OPENGL32.@)
- */
 void WINAPI glFogi( GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", pname, param );
   funcs->gl.p_glFogi( pname, param );
 }
 
-/***********************************************************************
- *              glFogiv (OPENGL32.@)
- */
 void WINAPI glFogiv( GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glFogiv( pname, params );
 }
 
-/***********************************************************************
- *              glFrontFace (OPENGL32.@)
- */
 void WINAPI glFrontFace( GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mode );
   funcs->gl.p_glFrontFace( mode );
 }
 
-/***********************************************************************
- *              glFrustum (OPENGL32.@)
- */
 void WINAPI glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f, %f, %f)\n", left, right, bottom, top, zNear, zFar );
   funcs->gl.p_glFrustum( left, right, bottom, top, zNear, zFar );
 }
 
-/***********************************************************************
- *              glGenLists (OPENGL32.@)
- */
 GLuint WINAPI glGenLists( GLsizei range ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", range );
   return funcs->gl.p_glGenLists( range );
 }
 
-/***********************************************************************
- *              glGenTextures (OPENGL32.@)
- */
 void WINAPI glGenTextures( GLsizei n, GLuint* textures ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", n, textures );
   funcs->gl.p_glGenTextures( n, textures );
 }
 
-/***********************************************************************
- *              glGetBooleanv (OPENGL32.@)
- */
 void WINAPI glGetBooleanv( GLenum pname, GLboolean* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, data );
   funcs->gl.p_glGetBooleanv( pname, data );
 }
 
-/***********************************************************************
- *              glGetClipPlane (OPENGL32.@)
- */
 void WINAPI glGetClipPlane( GLenum plane, GLdouble* equation ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", plane, equation );
   funcs->gl.p_glGetClipPlane( plane, equation );
 }
 
-/***********************************************************************
- *              glGetDoublev (OPENGL32.@)
- */
 void WINAPI glGetDoublev( GLenum pname, GLdouble* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, data );
   funcs->gl.p_glGetDoublev( pname, data );
 }
 
-/***********************************************************************
- *              glGetError (OPENGL32.@)
- */
 GLenum WINAPI glGetError( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   return funcs->gl.p_glGetError( );
 }
 
-/***********************************************************************
- *              glGetFloatv (OPENGL32.@)
- */
 void WINAPI glGetFloatv( GLenum pname, GLfloat* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, data );
   funcs->gl.p_glGetFloatv( pname, data );
 }
 
-/***********************************************************************
- *              glGetLightfv (OPENGL32.@)
- */
 void WINAPI glGetLightfv( GLenum light, GLenum pname, GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", light, pname, params );
   funcs->gl.p_glGetLightfv( light, pname, params );
 }
 
-/***********************************************************************
- *              glGetLightiv (OPENGL32.@)
- */
 void WINAPI glGetLightiv( GLenum light, GLenum pname, GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", light, pname, params );
   funcs->gl.p_glGetLightiv( light, pname, params );
 }
 
-/***********************************************************************
- *              glGetMapdv (OPENGL32.@)
- */
 void WINAPI glGetMapdv( GLenum target, GLenum query, GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, query, v );
   funcs->gl.p_glGetMapdv( target, query, v );
 }
 
-/***********************************************************************
- *              glGetMapfv (OPENGL32.@)
- */
 void WINAPI glGetMapfv( GLenum target, GLenum query, GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, query, v );
   funcs->gl.p_glGetMapfv( target, query, v );
 }
 
-/***********************************************************************
- *              glGetMapiv (OPENGL32.@)
- */
 void WINAPI glGetMapiv( GLenum target, GLenum query, GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, query, v );
   funcs->gl.p_glGetMapiv( target, query, v );
 }
 
-/***********************************************************************
- *              glGetMaterialfv (OPENGL32.@)
- */
 void WINAPI glGetMaterialfv( GLenum face, GLenum pname, GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", face, pname, params );
   funcs->gl.p_glGetMaterialfv( face, pname, params );
 }
 
-/***********************************************************************
- *              glGetMaterialiv (OPENGL32.@)
- */
 void WINAPI glGetMaterialiv( GLenum face, GLenum pname, GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", face, pname, params );
   funcs->gl.p_glGetMaterialiv( face, pname, params );
 }
 
-/***********************************************************************
- *              glGetPixelMapfv (OPENGL32.@)
- */
 void WINAPI glGetPixelMapfv( GLenum map, GLfloat* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", map, values );
   funcs->gl.p_glGetPixelMapfv( map, values );
 }
 
-/***********************************************************************
- *              glGetPixelMapuiv (OPENGL32.@)
- */
 void WINAPI glGetPixelMapuiv( GLenum map, GLuint* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", map, values );
   funcs->gl.p_glGetPixelMapuiv( map, values );
 }
 
-/***********************************************************************
- *              glGetPixelMapusv (OPENGL32.@)
- */
 void WINAPI glGetPixelMapusv( GLenum map, GLushort* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", map, values );
   funcs->gl.p_glGetPixelMapusv( map, values );
 }
 
-/***********************************************************************
- *              glGetPointerv (OPENGL32.@)
- */
 void WINAPI glGetPointerv( GLenum pname, void** params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glGetPointerv( pname, params );
 }
 
-/***********************************************************************
- *              glGetPolygonStipple (OPENGL32.@)
- */
 void WINAPI glGetPolygonStipple( GLubyte* mask ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", mask );
   funcs->gl.p_glGetPolygonStipple( mask );
 }
 
-/***********************************************************************
- *              glGetTexEnvfv (OPENGL32.@)
- */
 void WINAPI glGetTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glGetTexEnvfv( target, pname, params );
 }
 
-/***********************************************************************
- *              glGetTexEnviv (OPENGL32.@)
- */
 void WINAPI glGetTexEnviv( GLenum target, GLenum pname, GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glGetTexEnviv( target, pname, params );
 }
 
-/***********************************************************************
- *              glGetTexGendv (OPENGL32.@)
- */
 void WINAPI glGetTexGendv( GLenum coord, GLenum pname, GLdouble* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", coord, pname, params );
   funcs->gl.p_glGetTexGendv( coord, pname, params );
 }
 
-/***********************************************************************
- *              glGetTexGenfv (OPENGL32.@)
- */
 void WINAPI glGetTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", coord, pname, params );
   funcs->gl.p_glGetTexGenfv( coord, pname, params );
 }
 
-/***********************************************************************
- *              glGetTexGeniv (OPENGL32.@)
- */
 void WINAPI glGetTexGeniv( GLenum coord, GLenum pname, GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", coord, pname, params );
   funcs->gl.p_glGetTexGeniv( coord, pname, params );
 }
 
-/***********************************************************************
- *              glGetTexImage (OPENGL32.@)
- */
 void WINAPI glGetTexImage( GLenum target, GLint level, GLenum format, GLenum type, void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", target, level, format, type, pixels );
   funcs->gl.p_glGetTexImage( target, level, format, type, pixels );
 }
 
-/***********************************************************************
- *              glGetTexLevelParameterfv (OPENGL32.@)
- */
 void WINAPI glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, level, pname, params );
   funcs->gl.p_glGetTexLevelParameterfv( target, level, pname, params );
 }
 
-/***********************************************************************
- *              glGetTexLevelParameteriv (OPENGL32.@)
- */
 void WINAPI glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, level, pname, params );
   funcs->gl.p_glGetTexLevelParameteriv( target, level, pname, params );
 }
 
-/***********************************************************************
- *              glGetTexParameterfv (OPENGL32.@)
- */
 void WINAPI glGetTexParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glGetTexParameterfv( target, pname, params );
 }
 
-/***********************************************************************
- *              glGetTexParameteriv (OPENGL32.@)
- */
 void WINAPI glGetTexParameteriv( GLenum target, GLenum pname, GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glGetTexParameteriv( target, pname, params );
 }
 
-/***********************************************************************
- *              glHint (OPENGL32.@)
- */
 void WINAPI glHint( GLenum target, GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", target, mode );
   funcs->gl.p_glHint( target, mode );
 }
 
-/***********************************************************************
- *              glIndexMask (OPENGL32.@)
- */
 void WINAPI glIndexMask( GLuint mask ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mask );
   funcs->gl.p_glIndexMask( mask );
 }
 
-/***********************************************************************
- *              glIndexPointer (OPENGL32.@)
- */
 void WINAPI glIndexPointer( GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   funcs->gl.p_glIndexPointer( type, stride, pointer );
 }
 
-/***********************************************************************
- *              glIndexd (OPENGL32.@)
- */
 void WINAPI glIndexd( GLdouble c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", c );
   funcs->gl.p_glIndexd( c );
 }
 
-/***********************************************************************
- *              glIndexdv (OPENGL32.@)
- */
 void WINAPI glIndexdv( const GLdouble* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexdv( c );
 }
 
-/***********************************************************************
- *              glIndexf (OPENGL32.@)
- */
 void WINAPI glIndexf( GLfloat c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", c );
   funcs->gl.p_glIndexf( c );
 }
 
-/***********************************************************************
- *              glIndexfv (OPENGL32.@)
- */
 void WINAPI glIndexfv( const GLfloat* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexfv( c );
 }
 
-/***********************************************************************
- *              glIndexi (OPENGL32.@)
- */
 void WINAPI glIndexi( GLint c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", c );
   funcs->gl.p_glIndexi( c );
 }
 
-/***********************************************************************
- *              glIndexiv (OPENGL32.@)
- */
 void WINAPI glIndexiv( const GLint* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexiv( c );
 }
 
-/***********************************************************************
- *              glIndexs (OPENGL32.@)
- */
 void WINAPI glIndexs( GLshort c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", c );
   funcs->gl.p_glIndexs( c );
 }
 
-/***********************************************************************
- *              glIndexsv (OPENGL32.@)
- */
 void WINAPI glIndexsv( const GLshort* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexsv( c );
 }
 
-/***********************************************************************
- *              glIndexub (OPENGL32.@)
- */
 void WINAPI glIndexub( GLubyte c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", c );
   funcs->gl.p_glIndexub( c );
 }
 
-/***********************************************************************
- *              glIndexubv (OPENGL32.@)
- */
 void WINAPI glIndexubv( const GLubyte* c ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", c );
   funcs->gl.p_glIndexubv( c );
 }
 
-/***********************************************************************
- *              glInitNames (OPENGL32.@)
- */
 void WINAPI glInitNames( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glInitNames( );
 }
 
-/***********************************************************************
- *              glInterleavedArrays (OPENGL32.@)
- */
 void WINAPI glInterleavedArrays( GLenum format, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", format, stride, pointer );
   funcs->gl.p_glInterleavedArrays( format, stride, pointer );
 }
 
-/***********************************************************************
- *              glIsEnabled (OPENGL32.@)
- */
 GLboolean WINAPI glIsEnabled( GLenum cap ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", cap );
   return funcs->gl.p_glIsEnabled( cap );
 }
 
-/***********************************************************************
- *              glIsList (OPENGL32.@)
- */
 GLboolean WINAPI glIsList( GLuint list ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", list );
   return funcs->gl.p_glIsList( list );
 }
 
-/***********************************************************************
- *              glIsTexture (OPENGL32.@)
- */
 GLboolean WINAPI glIsTexture( GLuint texture ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", texture );
   return funcs->gl.p_glIsTexture( texture );
 }
 
-/***********************************************************************
- *              glLightModelf (OPENGL32.@)
- */
 void WINAPI glLightModelf( GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f)\n", pname, param );
   funcs->gl.p_glLightModelf( pname, param );
 }
 
-/***********************************************************************
- *              glLightModelfv (OPENGL32.@)
- */
 void WINAPI glLightModelfv( GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glLightModelfv( pname, params );
 }
 
-/***********************************************************************
- *              glLightModeli (OPENGL32.@)
- */
 void WINAPI glLightModeli( GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", pname, param );
   funcs->gl.p_glLightModeli( pname, param );
 }
 
-/***********************************************************************
- *              glLightModeliv (OPENGL32.@)
- */
 void WINAPI glLightModeliv( GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->gl.p_glLightModeliv( pname, params );
 }
 
-/***********************************************************************
- *              glLightf (OPENGL32.@)
- */
 void WINAPI glLightf( GLenum light, GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %f)\n", light, pname, param );
   funcs->gl.p_glLightf( light, pname, param );
 }
 
-/***********************************************************************
- *              glLightfv (OPENGL32.@)
- */
 void WINAPI glLightfv( GLenum light, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", light, pname, params );
   funcs->gl.p_glLightfv( light, pname, params );
 }
 
-/***********************************************************************
- *              glLighti (OPENGL32.@)
- */
 void WINAPI glLighti( GLenum light, GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", light, pname, param );
   funcs->gl.p_glLighti( light, pname, param );
 }
 
-/***********************************************************************
- *              glLightiv (OPENGL32.@)
- */
 void WINAPI glLightiv( GLenum light, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", light, pname, params );
   funcs->gl.p_glLightiv( light, pname, params );
 }
 
-/***********************************************************************
- *              glLineStipple (OPENGL32.@)
- */
 void WINAPI glLineStipple( GLint factor, GLushort pattern ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", factor, pattern );
   funcs->gl.p_glLineStipple( factor, pattern );
 }
 
-/***********************************************************************
- *              glLineWidth (OPENGL32.@)
- */
 void WINAPI glLineWidth( GLfloat width ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", width );
   funcs->gl.p_glLineWidth( width );
 }
 
-/***********************************************************************
- *              glListBase (OPENGL32.@)
- */
 void WINAPI glListBase( GLuint base ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", base );
   funcs->gl.p_glListBase( base );
 }
 
-/***********************************************************************
- *              glLoadIdentity (OPENGL32.@)
- */
 void WINAPI glLoadIdentity( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glLoadIdentity( );
 }
 
-/***********************************************************************
- *              glLoadMatrixd (OPENGL32.@)
- */
 void WINAPI glLoadMatrixd( const GLdouble* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
   funcs->gl.p_glLoadMatrixd( m );
 }
 
-/***********************************************************************
- *              glLoadMatrixf (OPENGL32.@)
- */
 void WINAPI glLoadMatrixf( const GLfloat* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
   funcs->gl.p_glLoadMatrixf( m );
 }
 
-/***********************************************************************
- *              glLoadName (OPENGL32.@)
- */
 void WINAPI glLoadName( GLuint name ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", name );
   funcs->gl.p_glLoadName( name );
 }
 
-/***********************************************************************
- *              glLogicOp (OPENGL32.@)
- */
 void WINAPI glLogicOp( GLenum opcode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", opcode );
   funcs->gl.p_glLogicOp( opcode );
 }
 
-/***********************************************************************
- *              glMap1d (OPENGL32.@)
- */
 void WINAPI glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %d, %p)\n", target, u1, u2, stride, order, points );
   funcs->gl.p_glMap1d( target, u1, u2, stride, order, points );
 }
 
-/***********************************************************************
- *              glMap1f (OPENGL32.@)
- */
 void WINAPI glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %d, %p)\n", target, u1, u2, stride, order, points );
   funcs->gl.p_glMap1f( target, u1, u2, stride, order, points );
 }
 
-/***********************************************************************
- *              glMap2d (OPENGL32.@)
- */
 void WINAPI glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %d, %f, %f, %d, %d, %p)\n", target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
   funcs->gl.p_glMap2d( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
 }
 
-/***********************************************************************
- *              glMap2f (OPENGL32.@)
- */
 void WINAPI glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %d, %f, %f, %d, %d, %p)\n", target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
   funcs->gl.p_glMap2f( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
 }
 
-/***********************************************************************
- *              glMapGrid1d (OPENGL32.@)
- */
 void WINAPI glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f)\n", un, u1, u2 );
   funcs->gl.p_glMapGrid1d( un, u1, u2 );
 }
 
-/***********************************************************************
- *              glMapGrid1f (OPENGL32.@)
- */
 void WINAPI glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f)\n", un, u1, u2 );
   funcs->gl.p_glMapGrid1f( un, u1, u2 );
 }
 
-/***********************************************************************
- *              glMapGrid2d (OPENGL32.@)
- */
 void WINAPI glMapGrid2d( GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %f, %f)\n", un, u1, u2, vn, v1, v2 );
   funcs->gl.p_glMapGrid2d( un, u1, u2, vn, v1, v2 );
 }
 
-/***********************************************************************
- *              glMapGrid2f (OPENGL32.@)
- */
 void WINAPI glMapGrid2f( GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %d, %f, %f)\n", un, u1, u2, vn, v1, v2 );
   funcs->gl.p_glMapGrid2f( un, u1, u2, vn, v1, v2 );
 }
 
-/***********************************************************************
- *              glMaterialf (OPENGL32.@)
- */
 void WINAPI glMaterialf( GLenum face, GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %f)\n", face, pname, param );
   funcs->gl.p_glMaterialf( face, pname, param );
 }
 
-/***********************************************************************
- *              glMaterialfv (OPENGL32.@)
- */
 void WINAPI glMaterialfv( GLenum face, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", face, pname, params );
   funcs->gl.p_glMaterialfv( face, pname, params );
 }
 
-/***********************************************************************
- *              glMateriali (OPENGL32.@)
- */
 void WINAPI glMateriali( GLenum face, GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", face, pname, param );
   funcs->gl.p_glMateriali( face, pname, param );
 }
 
-/***********************************************************************
- *              glMaterialiv (OPENGL32.@)
- */
 void WINAPI glMaterialiv( GLenum face, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", face, pname, params );
   funcs->gl.p_glMaterialiv( face, pname, params );
 }
 
-/***********************************************************************
- *              glMatrixMode (OPENGL32.@)
- */
 void WINAPI glMatrixMode( GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mode );
   funcs->gl.p_glMatrixMode( mode );
 }
 
-/***********************************************************************
- *              glMultMatrixd (OPENGL32.@)
- */
 void WINAPI glMultMatrixd( const GLdouble* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
   funcs->gl.p_glMultMatrixd( m );
 }
 
-/***********************************************************************
- *              glMultMatrixf (OPENGL32.@)
- */
 void WINAPI glMultMatrixf( const GLfloat* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
   funcs->gl.p_glMultMatrixf( m );
 }
 
-/***********************************************************************
- *              glNewList (OPENGL32.@)
- */
 void WINAPI glNewList( GLuint list, GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", list, mode );
   funcs->gl.p_glNewList( list, mode );
 }
 
-/***********************************************************************
- *              glNormal3b (OPENGL32.@)
- */
 void WINAPI glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", nx, ny, nz );
   funcs->gl.p_glNormal3b( nx, ny, nz );
 }
 
-/***********************************************************************
- *              glNormal3bv (OPENGL32.@)
- */
 void WINAPI glNormal3bv( const GLbyte* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3bv( v );
 }
 
-/***********************************************************************
- *              glNormal3d (OPENGL32.@)
- */
 void WINAPI glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", nx, ny, nz );
   funcs->gl.p_glNormal3d( nx, ny, nz );
 }
 
-/***********************************************************************
- *              glNormal3dv (OPENGL32.@)
- */
 void WINAPI glNormal3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3dv( v );
 }
 
-/***********************************************************************
- *              glNormal3f (OPENGL32.@)
- */
 void WINAPI glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", nx, ny, nz );
   funcs->gl.p_glNormal3f( nx, ny, nz );
 }
 
-/***********************************************************************
- *              glNormal3fv (OPENGL32.@)
- */
 void WINAPI glNormal3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3fv( v );
 }
 
-/***********************************************************************
- *              glNormal3i (OPENGL32.@)
- */
 void WINAPI glNormal3i( GLint nx, GLint ny, GLint nz ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", nx, ny, nz );
   funcs->gl.p_glNormal3i( nx, ny, nz );
 }
 
-/***********************************************************************
- *              glNormal3iv (OPENGL32.@)
- */
 void WINAPI glNormal3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3iv( v );
 }
 
-/***********************************************************************
- *              glNormal3s (OPENGL32.@)
- */
 void WINAPI glNormal3s( GLshort nx, GLshort ny, GLshort nz ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", nx, ny, nz );
   funcs->gl.p_glNormal3s( nx, ny, nz );
 }
 
-/***********************************************************************
- *              glNormal3sv (OPENGL32.@)
- */
 void WINAPI glNormal3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glNormal3sv( v );
 }
 
-/***********************************************************************
- *              glNormalPointer (OPENGL32.@)
- */
 void WINAPI glNormalPointer( GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   funcs->gl.p_glNormalPointer( type, stride, pointer );
 }
 
-/***********************************************************************
- *              glOrtho (OPENGL32.@)
- */
 void WINAPI glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f, %f, %f)\n", left, right, bottom, top, zNear, zFar );
   funcs->gl.p_glOrtho( left, right, bottom, top, zNear, zFar );
 }
 
-/***********************************************************************
- *              glPassThrough (OPENGL32.@)
- */
 void WINAPI glPassThrough( GLfloat token ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", token );
   funcs->gl.p_glPassThrough( token );
 }
 
-/***********************************************************************
- *              glPixelMapfv (OPENGL32.@)
- */
 void WINAPI glPixelMapfv( GLenum map, GLsizei mapsize, const GLfloat* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", map, mapsize, values );
   funcs->gl.p_glPixelMapfv( map, mapsize, values );
 }
 
-/***********************************************************************
- *              glPixelMapuiv (OPENGL32.@)
- */
 void WINAPI glPixelMapuiv( GLenum map, GLsizei mapsize, const GLuint* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", map, mapsize, values );
   funcs->gl.p_glPixelMapuiv( map, mapsize, values );
 }
 
-/***********************************************************************
- *              glPixelMapusv (OPENGL32.@)
- */
 void WINAPI glPixelMapusv( GLenum map, GLsizei mapsize, const GLushort* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", map, mapsize, values );
   funcs->gl.p_glPixelMapusv( map, mapsize, values );
 }
 
-/***********************************************************************
- *              glPixelStoref (OPENGL32.@)
- */
 void WINAPI glPixelStoref( GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f)\n", pname, param );
   funcs->gl.p_glPixelStoref( pname, param );
 }
 
-/***********************************************************************
- *              glPixelStorei (OPENGL32.@)
- */
 void WINAPI glPixelStorei( GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", pname, param );
   funcs->gl.p_glPixelStorei( pname, param );
 }
 
-/***********************************************************************
- *              glPixelTransferf (OPENGL32.@)
- */
 void WINAPI glPixelTransferf( GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f)\n", pname, param );
   funcs->gl.p_glPixelTransferf( pname, param );
 }
 
-/***********************************************************************
- *              glPixelTransferi (OPENGL32.@)
- */
 void WINAPI glPixelTransferi( GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", pname, param );
   funcs->gl.p_glPixelTransferi( pname, param );
 }
 
-/***********************************************************************
- *              glPixelZoom (OPENGL32.@)
- */
 void WINAPI glPixelZoom( GLfloat xfactor, GLfloat yfactor ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", xfactor, yfactor );
   funcs->gl.p_glPixelZoom( xfactor, yfactor );
 }
 
-/***********************************************************************
- *              glPointSize (OPENGL32.@)
- */
 void WINAPI glPointSize( GLfloat size ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", size );
   funcs->gl.p_glPointSize( size );
 }
 
-/***********************************************************************
- *              glPolygonMode (OPENGL32.@)
- */
 void WINAPI glPolygonMode( GLenum face, GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", face, mode );
   funcs->gl.p_glPolygonMode( face, mode );
 }
 
-/***********************************************************************
- *              glPolygonOffset (OPENGL32.@)
- */
 void WINAPI glPolygonOffset( GLfloat factor, GLfloat units ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", factor, units );
   funcs->gl.p_glPolygonOffset( factor, units );
 }
 
-/***********************************************************************
- *              glPolygonStipple (OPENGL32.@)
- */
 void WINAPI glPolygonStipple( const GLubyte* mask ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", mask );
   funcs->gl.p_glPolygonStipple( mask );
 }
 
-/***********************************************************************
- *              glPopAttrib (OPENGL32.@)
- */
 void WINAPI glPopAttrib( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glPopAttrib( );
 }
 
-/***********************************************************************
- *              glPopClientAttrib (OPENGL32.@)
- */
 void WINAPI glPopClientAttrib( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glPopClientAttrib( );
 }
 
-/***********************************************************************
- *              glPopMatrix (OPENGL32.@)
- */
 void WINAPI glPopMatrix( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glPopMatrix( );
 }
 
-/***********************************************************************
- *              glPopName (OPENGL32.@)
- */
 void WINAPI glPopName( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glPopName( );
 }
 
-/***********************************************************************
- *              glPrioritizeTextures (OPENGL32.@)
- */
 void WINAPI glPrioritizeTextures( GLsizei n, const GLuint* textures, const GLfloat* priorities ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %p)\n", n, textures, priorities );
   funcs->gl.p_glPrioritizeTextures( n, textures, priorities );
 }
 
-/***********************************************************************
- *              glPushAttrib (OPENGL32.@)
- */
 void WINAPI glPushAttrib( GLbitfield mask ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mask );
   funcs->gl.p_glPushAttrib( mask );
 }
 
-/***********************************************************************
- *              glPushClientAttrib (OPENGL32.@)
- */
 void WINAPI glPushClientAttrib( GLbitfield mask ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mask );
   funcs->gl.p_glPushClientAttrib( mask );
 }
 
-/***********************************************************************
- *              glPushMatrix (OPENGL32.@)
- */
 void WINAPI glPushMatrix( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->gl.p_glPushMatrix( );
 }
 
-/***********************************************************************
- *              glPushName (OPENGL32.@)
- */
 void WINAPI glPushName( GLuint name ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", name );
   funcs->gl.p_glPushName( name );
 }
 
-/***********************************************************************
- *              glRasterPos2d (OPENGL32.@)
- */
 void WINAPI glRasterPos2d( GLdouble x, GLdouble y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", x, y );
   funcs->gl.p_glRasterPos2d( x, y );
 }
 
-/***********************************************************************
- *              glRasterPos2dv (OPENGL32.@)
- */
 void WINAPI glRasterPos2dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos2dv( v );
 }
 
-/***********************************************************************
- *              glRasterPos2f (OPENGL32.@)
- */
 void WINAPI glRasterPos2f( GLfloat x, GLfloat y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", x, y );
   funcs->gl.p_glRasterPos2f( x, y );
 }
 
-/***********************************************************************
- *              glRasterPos2fv (OPENGL32.@)
- */
 void WINAPI glRasterPos2fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos2fv( v );
 }
 
-/***********************************************************************
- *              glRasterPos2i (OPENGL32.@)
- */
 void WINAPI glRasterPos2i( GLint x, GLint y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", x, y );
   funcs->gl.p_glRasterPos2i( x, y );
 }
 
-/***********************************************************************
- *              glRasterPos2iv (OPENGL32.@)
- */
 void WINAPI glRasterPos2iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos2iv( v );
 }
 
-/***********************************************************************
- *              glRasterPos2s (OPENGL32.@)
- */
 void WINAPI glRasterPos2s( GLshort x, GLshort y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", x, y );
   funcs->gl.p_glRasterPos2s( x, y );
 }
 
-/***********************************************************************
- *              glRasterPos2sv (OPENGL32.@)
- */
 void WINAPI glRasterPos2sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos2sv( v );
 }
 
-/***********************************************************************
- *              glRasterPos3d (OPENGL32.@)
- */
 void WINAPI glRasterPos3d( GLdouble x, GLdouble y, GLdouble z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", x, y, z );
   funcs->gl.p_glRasterPos3d( x, y, z );
 }
 
-/***********************************************************************
- *              glRasterPos3dv (OPENGL32.@)
- */
 void WINAPI glRasterPos3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos3dv( v );
 }
 
-/***********************************************************************
- *              glRasterPos3f (OPENGL32.@)
- */
 void WINAPI glRasterPos3f( GLfloat x, GLfloat y, GLfloat z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", x, y, z );
   funcs->gl.p_glRasterPos3f( x, y, z );
 }
 
-/***********************************************************************
- *              glRasterPos3fv (OPENGL32.@)
- */
 void WINAPI glRasterPos3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos3fv( v );
 }
 
-/***********************************************************************
- *              glRasterPos3i (OPENGL32.@)
- */
 void WINAPI glRasterPos3i( GLint x, GLint y, GLint z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", x, y, z );
   funcs->gl.p_glRasterPos3i( x, y, z );
 }
 
-/***********************************************************************
- *              glRasterPos3iv (OPENGL32.@)
- */
 void WINAPI glRasterPos3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos3iv( v );
 }
 
-/***********************************************************************
- *              glRasterPos3s (OPENGL32.@)
- */
 void WINAPI glRasterPos3s( GLshort x, GLshort y, GLshort z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", x, y, z );
   funcs->gl.p_glRasterPos3s( x, y, z );
 }
 
-/***********************************************************************
- *              glRasterPos3sv (OPENGL32.@)
- */
 void WINAPI glRasterPos3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos3sv( v );
 }
 
-/***********************************************************************
- *              glRasterPos4d (OPENGL32.@)
- */
 void WINAPI glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", x, y, z, w );
   funcs->gl.p_glRasterPos4d( x, y, z, w );
 }
 
-/***********************************************************************
- *              glRasterPos4dv (OPENGL32.@)
- */
 void WINAPI glRasterPos4dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos4dv( v );
 }
 
-/***********************************************************************
- *              glRasterPos4f (OPENGL32.@)
- */
 void WINAPI glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", x, y, z, w );
   funcs->gl.p_glRasterPos4f( x, y, z, w );
 }
 
-/***********************************************************************
- *              glRasterPos4fv (OPENGL32.@)
- */
 void WINAPI glRasterPos4fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos4fv( v );
 }
 
-/***********************************************************************
- *              glRasterPos4i (OPENGL32.@)
- */
 void WINAPI glRasterPos4i( GLint x, GLint y, GLint z, GLint w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
   funcs->gl.p_glRasterPos4i( x, y, z, w );
 }
 
-/***********************************************************************
- *              glRasterPos4iv (OPENGL32.@)
- */
 void WINAPI glRasterPos4iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos4iv( v );
 }
 
-/***********************************************************************
- *              glRasterPos4s (OPENGL32.@)
- */
 void WINAPI glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
   funcs->gl.p_glRasterPos4s( x, y, z, w );
 }
 
-/***********************************************************************
- *              glRasterPos4sv (OPENGL32.@)
- */
 void WINAPI glRasterPos4sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glRasterPos4sv( v );
 }
 
-/***********************************************************************
- *              glReadBuffer (OPENGL32.@)
- */
 void WINAPI glReadBuffer( GLenum src ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", src );
   funcs->gl.p_glReadBuffer( src );
 }
 
-/***********************************************************************
- *              glReadPixels (OPENGL32.@)
- */
 void WINAPI glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", x, y, width, height, format, type, pixels );
   funcs->gl.p_glReadPixels( x, y, width, height, format, type, pixels );
 }
 
-/***********************************************************************
- *              glRectd (OPENGL32.@)
- */
 void WINAPI glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", x1, y1, x2, y2 );
   funcs->gl.p_glRectd( x1, y1, x2, y2 );
 }
 
-/***********************************************************************
- *              glRectdv (OPENGL32.@)
- */
 void WINAPI glRectdv( const GLdouble* v1, const GLdouble* v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", v1, v2 );
   funcs->gl.p_glRectdv( v1, v2 );
 }
 
-/***********************************************************************
- *              glRectf (OPENGL32.@)
- */
 void WINAPI glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", x1, y1, x2, y2 );
   funcs->gl.p_glRectf( x1, y1, x2, y2 );
 }
 
-/***********************************************************************
- *              glRectfv (OPENGL32.@)
- */
 void WINAPI glRectfv( const GLfloat* v1, const GLfloat* v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", v1, v2 );
   funcs->gl.p_glRectfv( v1, v2 );
 }
 
-/***********************************************************************
- *              glRecti (OPENGL32.@)
- */
 void WINAPI glRecti( GLint x1, GLint y1, GLint x2, GLint y2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", x1, y1, x2, y2 );
   funcs->gl.p_glRecti( x1, y1, x2, y2 );
 }
 
-/***********************************************************************
- *              glRectiv (OPENGL32.@)
- */
 void WINAPI glRectiv( const GLint* v1, const GLint* v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", v1, v2 );
   funcs->gl.p_glRectiv( v1, v2 );
 }
 
-/***********************************************************************
- *              glRects (OPENGL32.@)
- */
 void WINAPI glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", x1, y1, x2, y2 );
   funcs->gl.p_glRects( x1, y1, x2, y2 );
 }
 
-/***********************************************************************
- *              glRectsv (OPENGL32.@)
- */
 void WINAPI glRectsv( const GLshort* v1, const GLshort* v2 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", v1, v2 );
   funcs->gl.p_glRectsv( v1, v2 );
 }
 
-/***********************************************************************
- *              glRenderMode (OPENGL32.@)
- */
 GLint WINAPI glRenderMode( GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mode );
   return funcs->gl.p_glRenderMode( mode );
 }
 
-/***********************************************************************
- *              glRotated (OPENGL32.@)
- */
 void WINAPI glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", angle, x, y, z );
   funcs->gl.p_glRotated( angle, x, y, z );
 }
 
-/***********************************************************************
- *              glRotatef (OPENGL32.@)
- */
 void WINAPI glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", angle, x, y, z );
   funcs->gl.p_glRotatef( angle, x, y, z );
 }
 
-/***********************************************************************
- *              glScaled (OPENGL32.@)
- */
 void WINAPI glScaled( GLdouble x, GLdouble y, GLdouble z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", x, y, z );
   funcs->gl.p_glScaled( x, y, z );
 }
 
-/***********************************************************************
- *              glScalef (OPENGL32.@)
- */
 void WINAPI glScalef( GLfloat x, GLfloat y, GLfloat z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", x, y, z );
   funcs->gl.p_glScalef( x, y, z );
 }
 
-/***********************************************************************
- *              glScissor (OPENGL32.@)
- */
 void WINAPI glScissor( GLint x, GLint y, GLsizei width, GLsizei height ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
   funcs->gl.p_glScissor( x, y, width, height );
 }
 
-/***********************************************************************
- *              glSelectBuffer (OPENGL32.@)
- */
 void WINAPI glSelectBuffer( GLsizei size, GLuint* buffer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", size, buffer );
   funcs->gl.p_glSelectBuffer( size, buffer );
 }
 
-/***********************************************************************
- *              glShadeModel (OPENGL32.@)
- */
 void WINAPI glShadeModel( GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mode );
   funcs->gl.p_glShadeModel( mode );
 }
 
-/***********************************************************************
- *              glStencilFunc (OPENGL32.@)
- */
 void WINAPI glStencilFunc( GLenum func, GLint ref, GLuint mask ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", func, ref, mask );
   funcs->gl.p_glStencilFunc( func, ref, mask );
 }
 
-/***********************************************************************
- *              glStencilMask (OPENGL32.@)
- */
 void WINAPI glStencilMask( GLuint mask ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mask );
   funcs->gl.p_glStencilMask( mask );
 }
 
-/***********************************************************************
- *              glStencilOp (OPENGL32.@)
- */
 void WINAPI glStencilOp( GLenum fail, GLenum zfail, GLenum zpass ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", fail, zfail, zpass );
   funcs->gl.p_glStencilOp( fail, zfail, zpass );
 }
 
-/***********************************************************************
- *              glTexCoord1d (OPENGL32.@)
- */
 void WINAPI glTexCoord1d( GLdouble s ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", s );
   funcs->gl.p_glTexCoord1d( s );
 }
 
-/***********************************************************************
- *              glTexCoord1dv (OPENGL32.@)
- */
 void WINAPI glTexCoord1dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord1dv( v );
 }
 
-/***********************************************************************
- *              glTexCoord1f (OPENGL32.@)
- */
 void WINAPI glTexCoord1f( GLfloat s ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", s );
   funcs->gl.p_glTexCoord1f( s );
 }
 
-/***********************************************************************
- *              glTexCoord1fv (OPENGL32.@)
- */
 void WINAPI glTexCoord1fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord1fv( v );
 }
 
-/***********************************************************************
- *              glTexCoord1i (OPENGL32.@)
- */
 void WINAPI glTexCoord1i( GLint s ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", s );
   funcs->gl.p_glTexCoord1i( s );
 }
 
-/***********************************************************************
- *              glTexCoord1iv (OPENGL32.@)
- */
 void WINAPI glTexCoord1iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord1iv( v );
 }
 
-/***********************************************************************
- *              glTexCoord1s (OPENGL32.@)
- */
 void WINAPI glTexCoord1s( GLshort s ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", s );
   funcs->gl.p_glTexCoord1s( s );
 }
 
-/***********************************************************************
- *              glTexCoord1sv (OPENGL32.@)
- */
 void WINAPI glTexCoord1sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord1sv( v );
 }
 
-/***********************************************************************
- *              glTexCoord2d (OPENGL32.@)
- */
 void WINAPI glTexCoord2d( GLdouble s, GLdouble t ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", s, t );
   funcs->gl.p_glTexCoord2d( s, t );
 }
 
-/***********************************************************************
- *              glTexCoord2dv (OPENGL32.@)
- */
 void WINAPI glTexCoord2dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord2dv( v );
 }
 
-/***********************************************************************
- *              glTexCoord2f (OPENGL32.@)
- */
 void WINAPI glTexCoord2f( GLfloat s, GLfloat t ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", s, t );
   funcs->gl.p_glTexCoord2f( s, t );
 }
 
-/***********************************************************************
- *              glTexCoord2fv (OPENGL32.@)
- */
 void WINAPI glTexCoord2fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord2fv( v );
 }
 
-/***********************************************************************
- *              glTexCoord2i (OPENGL32.@)
- */
 void WINAPI glTexCoord2i( GLint s, GLint t ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", s, t );
   funcs->gl.p_glTexCoord2i( s, t );
 }
 
-/***********************************************************************
- *              glTexCoord2iv (OPENGL32.@)
- */
 void WINAPI glTexCoord2iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord2iv( v );
 }
 
-/***********************************************************************
- *              glTexCoord2s (OPENGL32.@)
- */
 void WINAPI glTexCoord2s( GLshort s, GLshort t ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", s, t );
   funcs->gl.p_glTexCoord2s( s, t );
 }
 
-/***********************************************************************
- *              glTexCoord2sv (OPENGL32.@)
- */
 void WINAPI glTexCoord2sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord2sv( v );
 }
 
-/***********************************************************************
- *              glTexCoord3d (OPENGL32.@)
- */
 void WINAPI glTexCoord3d( GLdouble s, GLdouble t, GLdouble r ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", s, t, r );
   funcs->gl.p_glTexCoord3d( s, t, r );
 }
 
-/***********************************************************************
- *              glTexCoord3dv (OPENGL32.@)
- */
 void WINAPI glTexCoord3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord3dv( v );
 }
 
-/***********************************************************************
- *              glTexCoord3f (OPENGL32.@)
- */
 void WINAPI glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", s, t, r );
   funcs->gl.p_glTexCoord3f( s, t, r );
 }
 
-/***********************************************************************
- *              glTexCoord3fv (OPENGL32.@)
- */
 void WINAPI glTexCoord3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord3fv( v );
 }
 
-/***********************************************************************
- *              glTexCoord3i (OPENGL32.@)
- */
 void WINAPI glTexCoord3i( GLint s, GLint t, GLint r ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", s, t, r );
   funcs->gl.p_glTexCoord3i( s, t, r );
 }
 
-/***********************************************************************
- *              glTexCoord3iv (OPENGL32.@)
- */
 void WINAPI glTexCoord3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord3iv( v );
 }
 
-/***********************************************************************
- *              glTexCoord3s (OPENGL32.@)
- */
 void WINAPI glTexCoord3s( GLshort s, GLshort t, GLshort r ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", s, t, r );
   funcs->gl.p_glTexCoord3s( s, t, r );
 }
 
-/***********************************************************************
- *              glTexCoord3sv (OPENGL32.@)
- */
 void WINAPI glTexCoord3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord3sv( v );
 }
 
-/***********************************************************************
- *              glTexCoord4d (OPENGL32.@)
- */
 void WINAPI glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", s, t, r, q );
   funcs->gl.p_glTexCoord4d( s, t, r, q );
 }
 
-/***********************************************************************
- *              glTexCoord4dv (OPENGL32.@)
- */
 void WINAPI glTexCoord4dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord4dv( v );
 }
 
-/***********************************************************************
- *              glTexCoord4f (OPENGL32.@)
- */
 void WINAPI glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", s, t, r, q );
   funcs->gl.p_glTexCoord4f( s, t, r, q );
 }
 
-/***********************************************************************
- *              glTexCoord4fv (OPENGL32.@)
- */
 void WINAPI glTexCoord4fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord4fv( v );
 }
 
-/***********************************************************************
- *              glTexCoord4i (OPENGL32.@)
- */
 void WINAPI glTexCoord4i( GLint s, GLint t, GLint r, GLint q ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", s, t, r, q );
   funcs->gl.p_glTexCoord4i( s, t, r, q );
 }
 
-/***********************************************************************
- *              glTexCoord4iv (OPENGL32.@)
- */
 void WINAPI glTexCoord4iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord4iv( v );
 }
 
-/***********************************************************************
- *              glTexCoord4s (OPENGL32.@)
- */
 void WINAPI glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", s, t, r, q );
   funcs->gl.p_glTexCoord4s( s, t, r, q );
 }
 
-/***********************************************************************
- *              glTexCoord4sv (OPENGL32.@)
- */
 void WINAPI glTexCoord4sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glTexCoord4sv( v );
 }
 
-/***********************************************************************
- *              glTexCoordPointer (OPENGL32.@)
- */
 void WINAPI glTexCoordPointer( GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->gl.p_glTexCoordPointer( size, type, stride, pointer );
 }
 
-/***********************************************************************
- *              glTexEnvf (OPENGL32.@)
- */
 void WINAPI glTexEnvf( GLenum target, GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %f)\n", target, pname, param );
   funcs->gl.p_glTexEnvf( target, pname, param );
 }
 
-/***********************************************************************
- *              glTexEnvfv (OPENGL32.@)
- */
 void WINAPI glTexEnvfv( GLenum target, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glTexEnvfv( target, pname, params );
 }
 
-/***********************************************************************
- *              glTexEnvi (OPENGL32.@)
- */
 void WINAPI glTexEnvi( GLenum target, GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", target, pname, param );
   funcs->gl.p_glTexEnvi( target, pname, param );
 }
 
-/***********************************************************************
- *              glTexEnviv (OPENGL32.@)
- */
 void WINAPI glTexEnviv( GLenum target, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glTexEnviv( target, pname, params );
 }
 
-/***********************************************************************
- *              glTexGend (OPENGL32.@)
- */
 void WINAPI glTexGend( GLenum coord, GLenum pname, GLdouble param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %f)\n", coord, pname, param );
   funcs->gl.p_glTexGend( coord, pname, param );
 }
 
-/***********************************************************************
- *              glTexGendv (OPENGL32.@)
- */
 void WINAPI glTexGendv( GLenum coord, GLenum pname, const GLdouble* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", coord, pname, params );
   funcs->gl.p_glTexGendv( coord, pname, params );
 }
 
-/***********************************************************************
- *              glTexGenf (OPENGL32.@)
- */
 void WINAPI glTexGenf( GLenum coord, GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %f)\n", coord, pname, param );
   funcs->gl.p_glTexGenf( coord, pname, param );
 }
 
-/***********************************************************************
- *              glTexGenfv (OPENGL32.@)
- */
 void WINAPI glTexGenfv( GLenum coord, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", coord, pname, params );
   funcs->gl.p_glTexGenfv( coord, pname, params );
 }
 
-/***********************************************************************
- *              glTexGeni (OPENGL32.@)
- */
 void WINAPI glTexGeni( GLenum coord, GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", coord, pname, param );
   funcs->gl.p_glTexGeni( coord, pname, param );
 }
 
-/***********************************************************************
- *              glTexGeniv (OPENGL32.@)
- */
 void WINAPI glTexGeniv( GLenum coord, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", coord, pname, params );
   funcs->gl.p_glTexGeniv( coord, pname, params );
 }
 
-/***********************************************************************
- *              glTexImage1D (OPENGL32.@)
- */
 void WINAPI glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, border, format, type, pixels );
   funcs->gl.p_glTexImage1D( target, level, internalformat, width, border, format, type, pixels );
 }
 
-/***********************************************************************
- *              glTexImage2D (OPENGL32.@)
- */
 void WINAPI glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, border, format, type, pixels );
   funcs->gl.p_glTexImage2D( target, level, internalformat, width, height, border, format, type, pixels );
 }
 
-/***********************************************************************
- *              glTexParameterf (OPENGL32.@)
- */
 void WINAPI glTexParameterf( GLenum target, GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %f)\n", target, pname, param );
   funcs->gl.p_glTexParameterf( target, pname, param );
 }
 
-/***********************************************************************
- *              glTexParameterfv (OPENGL32.@)
- */
 void WINAPI glTexParameterfv( GLenum target, GLenum pname, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glTexParameterfv( target, pname, params );
 }
 
-/***********************************************************************
- *              glTexParameteri (OPENGL32.@)
- */
 void WINAPI glTexParameteri( GLenum target, GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", target, pname, param );
   funcs->gl.p_glTexParameteri( target, pname, param );
 }
 
-/***********************************************************************
- *              glTexParameteriv (OPENGL32.@)
- */
 void WINAPI glTexParameteriv( GLenum target, GLenum pname, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->gl.p_glTexParameteriv( target, pname, params );
 }
 
-/***********************************************************************
- *              glTexSubImage1D (OPENGL32.@)
- */
 void WINAPI glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, width, format, type, pixels );
   funcs->gl.p_glTexSubImage1D( target, level, xoffset, width, format, type, pixels );
 }
 
-/***********************************************************************
- *              glTexSubImage2D (OPENGL32.@)
- */
 void WINAPI glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, type, pixels );
   funcs->gl.p_glTexSubImage2D( target, level, xoffset, yoffset, width, height, format, type, pixels );
 }
 
-/***********************************************************************
- *              glTranslated (OPENGL32.@)
- */
 void WINAPI glTranslated( GLdouble x, GLdouble y, GLdouble z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", x, y, z );
   funcs->gl.p_glTranslated( x, y, z );
 }
 
-/***********************************************************************
- *              glTranslatef (OPENGL32.@)
- */
 void WINAPI glTranslatef( GLfloat x, GLfloat y, GLfloat z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", x, y, z );
   funcs->gl.p_glTranslatef( x, y, z );
 }
 
-/***********************************************************************
- *              glVertex2d (OPENGL32.@)
- */
 void WINAPI glVertex2d( GLdouble x, GLdouble y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", x, y );
   funcs->gl.p_glVertex2d( x, y );
 }
 
-/***********************************************************************
- *              glVertex2dv (OPENGL32.@)
- */
 void WINAPI glVertex2dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex2dv( v );
 }
 
-/***********************************************************************
- *              glVertex2f (OPENGL32.@)
- */
 void WINAPI glVertex2f( GLfloat x, GLfloat y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f)\n", x, y );
   funcs->gl.p_glVertex2f( x, y );
 }
 
-/***********************************************************************
- *              glVertex2fv (OPENGL32.@)
- */
 void WINAPI glVertex2fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex2fv( v );
 }
 
-/***********************************************************************
- *              glVertex2i (OPENGL32.@)
- */
 void WINAPI glVertex2i( GLint x, GLint y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", x, y );
   funcs->gl.p_glVertex2i( x, y );
 }
 
-/***********************************************************************
- *              glVertex2iv (OPENGL32.@)
- */
 void WINAPI glVertex2iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex2iv( v );
 }
 
-/***********************************************************************
- *              glVertex2s (OPENGL32.@)
- */
 void WINAPI glVertex2s( GLshort x, GLshort y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", x, y );
   funcs->gl.p_glVertex2s( x, y );
 }
 
-/***********************************************************************
- *              glVertex2sv (OPENGL32.@)
- */
 void WINAPI glVertex2sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex2sv( v );
 }
 
-/***********************************************************************
- *              glVertex3d (OPENGL32.@)
- */
 void WINAPI glVertex3d( GLdouble x, GLdouble y, GLdouble z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", x, y, z );
   funcs->gl.p_glVertex3d( x, y, z );
 }
 
-/***********************************************************************
- *              glVertex3dv (OPENGL32.@)
- */
 void WINAPI glVertex3dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex3dv( v );
 }
 
-/***********************************************************************
- *              glVertex3f (OPENGL32.@)
- */
 void WINAPI glVertex3f( GLfloat x, GLfloat y, GLfloat z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f)\n", x, y, z );
   funcs->gl.p_glVertex3f( x, y, z );
 }
 
-/***********************************************************************
- *              glVertex3fv (OPENGL32.@)
- */
 void WINAPI glVertex3fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex3fv( v );
 }
 
-/***********************************************************************
- *              glVertex3i (OPENGL32.@)
- */
 void WINAPI glVertex3i( GLint x, GLint y, GLint z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", x, y, z );
   funcs->gl.p_glVertex3i( x, y, z );
 }
 
-/***********************************************************************
- *              glVertex3iv (OPENGL32.@)
- */
 void WINAPI glVertex3iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex3iv( v );
 }
 
-/***********************************************************************
- *              glVertex3s (OPENGL32.@)
- */
 void WINAPI glVertex3s( GLshort x, GLshort y, GLshort z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", x, y, z );
   funcs->gl.p_glVertex3s( x, y, z );
 }
 
-/***********************************************************************
- *              glVertex3sv (OPENGL32.@)
- */
 void WINAPI glVertex3sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex3sv( v );
 }
 
-/***********************************************************************
- *              glVertex4d (OPENGL32.@)
- */
 void WINAPI glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", x, y, z, w );
   funcs->gl.p_glVertex4d( x, y, z, w );
 }
 
-/***********************************************************************
- *              glVertex4dv (OPENGL32.@)
- */
 void WINAPI glVertex4dv( const GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex4dv( v );
 }
 
-/***********************************************************************
- *              glVertex4f (OPENGL32.@)
- */
 void WINAPI glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", x, y, z, w );
   funcs->gl.p_glVertex4f( x, y, z, w );
 }
 
-/***********************************************************************
- *              glVertex4fv (OPENGL32.@)
- */
 void WINAPI glVertex4fv( const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex4fv( v );
 }
 
-/***********************************************************************
- *              glVertex4i (OPENGL32.@)
- */
 void WINAPI glVertex4i( GLint x, GLint y, GLint z, GLint w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
   funcs->gl.p_glVertex4i( x, y, z, w );
 }
 
-/***********************************************************************
- *              glVertex4iv (OPENGL32.@)
- */
 void WINAPI glVertex4iv( const GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex4iv( v );
 }
 
-/***********************************************************************
- *              glVertex4s (OPENGL32.@)
- */
 void WINAPI glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
   funcs->gl.p_glVertex4s( x, y, z, w );
 }
 
-/***********************************************************************
- *              glVertex4sv (OPENGL32.@)
- */
 void WINAPI glVertex4sv( const GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->gl.p_glVertex4sv( v );
 }
 
-/***********************************************************************
- *              glVertexPointer (OPENGL32.@)
- */
 void WINAPI glVertexPointer( GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->gl.p_glVertexPointer( size, type, stride, pointer );
 }
 
-/***********************************************************************
- *              glViewport (OPENGL32.@)
- */
 void WINAPI glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
@@ -3363,6 +2361,7 @@ static void null_glVertex4sv( const GLshort* v ) { }
 static void null_glVertexPointer( GLint size, GLenum type, GLsizei stride, const void* pointer ) { }
 static void null_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) { }
 static void null_glAccumxOES( GLenum op, GLfixed value ) { }
+static GLboolean null_glAcquireKeyedMutexWin32EXT( GLuint memory, GLuint64 key, GLuint timeout ) { return 0; }
 static void null_glActiveProgramEXT( GLuint program ) { }
 static void null_glActiveShaderProgram( GLuint pipeline, GLuint program ) { }
 static void null_glActiveStencilFaceEXT( GLenum face ) { }
@@ -3373,6 +2372,7 @@ static void null_glAlphaFragmentOp1ATI( GLenum op, GLuint dst, GLuint dstMod, GL
 static void null_glAlphaFragmentOp2ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod ) { }
 static void null_glAlphaFragmentOp3ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod ) { }
 static void null_glAlphaFuncxOES( GLenum func, GLfixed ref ) { }
+static void null_glAlphaToCoverageDitherControlNV( GLenum mode ) { }
 static void null_glApplyFramebufferAttachmentCMAAINTEL( void ) { }
 static void null_glApplyTextureEXT( GLenum mode ) { }
 static GLboolean null_glAreProgramsResidentNV( GLsizei n, const GLuint* programs, GLboolean* residences ) { return 0; }
@@ -3492,6 +2492,8 @@ static void null_glBufferPageCommitmentARB( GLenum target, GLintptr offset, GLsi
 static void null_glBufferParameteriAPPLE( GLenum target, GLenum pname, GLint param ) { }
 static GLuint null_glBufferRegionEnabled( void ) { return 0; }
 static void null_glBufferStorage( GLenum target, GLsizeiptr size, const void* data, GLbitfield flags ) { }
+static void null_glBufferStorageExternalEXT( GLenum target, GLintptr offset, GLsizeiptr size, void * clientBuffer, GLbitfield flags ) { }
+static void null_glBufferStorageMemEXT( GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset ) { }
 static void null_glBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, const void* data ) { }
 static void null_glBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, const void* data ) { }
 static void null_glCallCommandListNV( GLuint list ) { }
@@ -3611,6 +2613,7 @@ static void null_glCompressedTextureSubImage2DEXT( GLuint texture, GLenum target
 static void null_glCompressedTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data ) { }
 static void null_glCompressedTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* bits ) { }
 static void null_glConservativeRasterParameterfNV( GLenum pname, GLfloat value ) { }
+static void null_glConservativeRasterParameteriNV( GLenum pname, GLint param ) { }
 static void null_glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void* image ) { }
 static void null_glConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void* image ) { }
 static void null_glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* image ) { }
@@ -3666,6 +2669,7 @@ static void null_glCoverageModulationTableNV( GLsizei n, const GLfloat* v ) { }
 static void null_glCreateBuffers( GLsizei n, GLuint* buffers ) { }
 static void null_glCreateCommandListsNV( GLsizei n, GLuint* lists ) { }
 static void null_glCreateFramebuffers( GLsizei n, GLuint* framebuffers ) { }
+static void null_glCreateMemoryObjectsEXT( GLsizei n, GLuint* memoryObjects ) { }
 static void null_glCreatePerfQueryINTEL( GLuint queryId, GLuint* queryHandle ) { }
 static GLuint null_glCreateProgram( void ) { return 0; }
 static GLhandleARB null_glCreateProgramObjectARB( void ) { return 0; }
@@ -3707,6 +2711,7 @@ static void null_glDeleteFencesNV( GLsizei n, const GLuint* fences ) { }
 static void null_glDeleteFragmentShaderATI( GLuint id ) { }
 static void null_glDeleteFramebuffers( GLsizei n, const GLuint* framebuffers ) { }
 static void null_glDeleteFramebuffersEXT( GLsizei n, const GLuint* framebuffers ) { }
+static void null_glDeleteMemoryObjectsEXT( GLsizei n, const GLuint* memoryObjects ) { }
 static void null_glDeleteNamedStringARB( GLint namelen, const GLchar* name ) { }
 static void null_glDeleteNamesAMD( GLenum identifier, GLuint num, const GLuint* names ) { }
 static void null_glDeleteObjectARB( GLhandleARB obj ) { }
@@ -3721,9 +2726,11 @@ static void null_glDeleteProgramsARB( GLsizei n, const GLuint* programs ) { }
 static void null_glDeleteProgramsNV( GLsizei n, const GLuint* programs ) { }
 static void null_glDeleteQueries( GLsizei n, const GLuint* ids ) { }
 static void null_glDeleteQueriesARB( GLsizei n, const GLuint* ids ) { }
+static void null_glDeleteQueryResourceTagNV( GLsizei n, const GLint* tagIds ) { }
 static void null_glDeleteRenderbuffers( GLsizei n, const GLuint* renderbuffers ) { }
 static void null_glDeleteRenderbuffersEXT( GLsizei n, const GLuint* renderbuffers ) { }
 static void null_glDeleteSamplers( GLsizei count, const GLuint* samplers ) { }
+static void null_glDeleteSemaphoresEXT( GLsizei n, const GLuint* semaphores ) { }
 static void null_glDeleteShader( GLuint shader ) { }
 static void null_glDeleteStatesNV( GLsizei n, const GLuint* states ) { }
 static void null_glDeleteSync( GLsync sync ) { }
@@ -3794,6 +2801,7 @@ static void null_glDrawTransformFeedbackInstanced( GLenum mode, GLuint id, GLsiz
 static void null_glDrawTransformFeedbackNV( GLenum mode, GLuint id ) { }
 static void null_glDrawTransformFeedbackStream( GLenum mode, GLuint id, GLuint stream ) { }
 static void null_glDrawTransformFeedbackStreamInstanced( GLenum mode, GLuint id, GLuint stream, GLsizei instancecount ) { }
+static void null_glDrawVkImageNV( GLuint64 vkImage, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 ) { }
 static void null_glEdgeFlagFormatNV( GLsizei stride ) { }
 static void null_glEdgeFlagPointerEXT( GLsizei stride, GLsizei count, const GLboolean* pointer ) { }
 static void null_glEdgeFlagPointerListIBM( GLint stride, const GLboolean** pointer, GLint ptrstride ) { }
@@ -3891,6 +2899,7 @@ static void null_glFramebufferRenderbuffer( GLenum target, GLenum attachment, GL
 static void null_glFramebufferRenderbufferEXT( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
 static void null_glFramebufferSampleLocationsfvARB( GLenum target, GLuint start, GLsizei count, const GLfloat* v ) { }
 static void null_glFramebufferSampleLocationsfvNV( GLenum target, GLuint start, GLsizei count, const GLfloat* v ) { }
+static void null_glFramebufferSamplePositionsfvAMD( GLenum target, GLuint numsamples, GLuint pixelindex, const GLfloat* values ) { }
 static void null_glFramebufferTexture( GLenum target, GLenum attachment, GLuint texture, GLint level ) { }
 static void null_glFramebufferTexture1D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
 static void null_glFramebufferTexture1DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
@@ -3926,9 +2935,11 @@ static void null_glGenProgramsARB( GLsizei n, GLuint* programs ) { }
 static void null_glGenProgramsNV( GLsizei n, GLuint* programs ) { }
 static void null_glGenQueries( GLsizei n, GLuint* ids ) { }
 static void null_glGenQueriesARB( GLsizei n, GLuint* ids ) { }
+static void null_glGenQueryResourceTagNV( GLsizei n, GLint* tagIds ) { }
 static void null_glGenRenderbuffers( GLsizei n, GLuint* renderbuffers ) { }
 static void null_glGenRenderbuffersEXT( GLsizei n, GLuint* renderbuffers ) { }
 static void null_glGenSamplers( GLsizei count, GLuint* samplers ) { }
+static void null_glGenSemaphoresEXT( GLsizei n, GLuint* semaphores ) { }
 static GLuint null_glGenSymbolsEXT( GLenum datatype, GLenum storagetype, GLenum range, GLuint components ) { return 0; }
 static void null_glGenTexturesEXT( GLsizei n, GLuint* textures ) { }
 static void null_glGenTransformFeedbacks( GLsizei n, GLuint* ids ) { }
@@ -4026,6 +3037,7 @@ static void null_glGetFragmentMaterialfvSGIX( GLenum face, GLenum pname, GLfloat
 static void null_glGetFragmentMaterialivSGIX( GLenum face, GLenum pname, GLint* params ) { }
 static void null_glGetFramebufferAttachmentParameteriv( GLenum target, GLenum attachment, GLenum pname, GLint* params ) { }
 static void null_glGetFramebufferAttachmentParameterivEXT( GLenum target, GLenum attachment, GLenum pname, GLint* params ) { }
+static void null_glGetFramebufferParameterfvAMD( GLenum target, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat* values ) { }
 static void null_glGetFramebufferParameteriv( GLenum target, GLenum pname, GLint* params ) { }
 static void null_glGetFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint* params ) { }
 static GLenum null_glGetGraphicsResetStatus( void ) { return 0; }
@@ -4069,6 +3081,7 @@ static void null_glGetMapParameterfvNV( GLenum target, GLenum pname, GLfloat* pa
 static void null_glGetMapParameterivNV( GLenum target, GLenum pname, GLint* params ) { }
 static void null_glGetMapxvOES( GLenum target, GLenum query, GLfixed* v ) { }
 static void null_glGetMaterialxOES( GLenum face, GLenum pname, GLfixed param ) { }
+static void null_glGetMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, GLint* params ) { }
 static void null_glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, void* values ) { }
 static void null_glGetMinmaxEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, void* values ) { }
 static void null_glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat* params ) { }
@@ -4099,6 +3112,7 @@ static void null_glGetNamedBufferSubData( GLuint buffer, GLintptr offset, GLsize
 static void null_glGetNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, void* data ) { }
 static void null_glGetNamedFramebufferAttachmentParameteriv( GLuint framebuffer, GLenum attachment, GLenum pname, GLint* params ) { }
 static void null_glGetNamedFramebufferAttachmentParameterivEXT( GLuint framebuffer, GLenum attachment, GLenum pname, GLint* params ) { }
+static void null_glGetNamedFramebufferParameterfvAMD( GLuint framebuffer, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat* values ) { }
 static void null_glGetNamedFramebufferParameteriv( GLuint framebuffer, GLenum pname, GLint* param ) { }
 static void null_glGetNamedFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint* params ) { }
 static void null_glGetNamedProgramLocalParameterIivEXT( GLuint program, GLenum target, GLuint index, GLint* params ) { }
@@ -4204,6 +3218,7 @@ static void null_glGetSamplerParameterIiv( GLuint sampler, GLenum pname, GLint* 
 static void null_glGetSamplerParameterIuiv( GLuint sampler, GLenum pname, GLuint* params ) { }
 static void null_glGetSamplerParameterfv( GLuint sampler, GLenum pname, GLfloat* params ) { }
 static void null_glGetSamplerParameteriv( GLuint sampler, GLenum pname, GLint* params ) { }
+static void null_glGetSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, GLuint64* params ) { }
 static void null_glGetSeparableFilter( GLenum target, GLenum format, GLenum type, void* row, void* column, void* span ) { }
 static void null_glGetSeparableFilterEXT( GLenum target, GLenum format, GLenum type, void* row, void* column, void* span ) { }
 static void null_glGetShaderInfoLog( GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog ) { }
@@ -4273,6 +3288,8 @@ static void null_glGetUniformui64vARB( GLuint program, GLint location, GLuint64*
 static void null_glGetUniformui64vNV( GLuint program, GLint location, GLuint64EXT* params ) { }
 static void null_glGetUniformuiv( GLuint program, GLint location, GLuint* params ) { }
 static void null_glGetUniformuivEXT( GLuint program, GLint location, GLuint* params ) { }
+static void null_glGetUnsignedBytei_vEXT( GLenum target, GLuint index, GLubyte* data ) { }
+static void null_glGetUnsignedBytevEXT( GLenum pname, GLubyte* data ) { }
 static void null_glGetVariantArrayObjectfvATI( GLuint id, GLenum pname, GLfloat* params ) { }
 static void null_glGetVariantArrayObjectivATI( GLuint id, GLenum pname, GLint* params ) { }
 static void null_glGetVariantBooleanvEXT( GLuint id, GLenum value, GLboolean* data ) { }
@@ -4318,6 +3335,7 @@ static void null_glGetVideoi64vNV( GLuint video_slot, GLenum pname, GLint64EXT* 
 static void null_glGetVideoivNV( GLuint video_slot, GLenum pname, GLint* params ) { }
 static void null_glGetVideoui64vNV( GLuint video_slot, GLenum pname, GLuint64EXT* params ) { }
 static void null_glGetVideouivNV( GLuint video_slot, GLenum pname, GLuint* params ) { }
+static void * null_glGetVkProcAddrNV( const GLchar* name ) { return 0; }
 static void null_glGetnColorTable( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void* table ) { }
 static void null_glGetnColorTableARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void* table ) { }
 static void null_glGetnCompressedTexImage( GLenum target, GLint lod, GLsizei bufSize, void* pixels ) { }
@@ -4372,6 +3390,12 @@ static void null_glImageTransformParameterfHP( GLenum target, GLenum pname, GLfl
 static void null_glImageTransformParameterfvHP( GLenum target, GLenum pname, const GLfloat* params ) { }
 static void null_glImageTransformParameteriHP( GLenum target, GLenum pname, GLint param ) { }
 static void null_glImageTransformParameterivHP( GLenum target, GLenum pname, const GLint* params ) { }
+static void null_glImportMemoryFdEXT( GLuint memory, GLuint64 size, GLenum handleType, GLint fd ) { }
+static void null_glImportMemoryWin32HandleEXT( GLuint memory, GLuint64 size, GLenum handleType, void* handle ) { }
+static void null_glImportMemoryWin32NameEXT( GLuint memory, GLuint64 size, GLenum handleType, const void* name ) { }
+static void null_glImportSemaphoreFdEXT( GLuint semaphore, GLenum handleType, GLint fd ) { }
+static void null_glImportSemaphoreWin32HandleEXT( GLuint semaphore, GLenum handleType, void* handle ) { }
+static void null_glImportSemaphoreWin32NameEXT( GLuint semaphore, GLenum handleType, const void* name ) { }
 static GLsync null_glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags ) { return 0; }
 static void null_glIndexFormatNV( GLenum type, GLsizei stride ) { }
 static void null_glIndexFuncEXT( GLenum func, GLclampf ref ) { }
@@ -4405,6 +3429,7 @@ static GLboolean null_glIsFramebuffer( GLuint framebuffer ) { return 0; }
 static GLboolean null_glIsFramebufferEXT( GLuint framebuffer ) { return 0; }
 static GLboolean null_glIsImageHandleResidentARB( GLuint64 handle ) { return 0; }
 static GLboolean null_glIsImageHandleResidentNV( GLuint64 handle ) { return 0; }
+static GLboolean null_glIsMemoryObjectEXT( GLuint memoryObject ) { return 0; }
 static GLboolean null_glIsNameAMD( GLenum identifier, GLuint name ) { return 0; }
 static GLboolean null_glIsNamedBufferResidentNV( GLuint buffer ) { return 0; }
 static GLboolean null_glIsNamedStringARB( GLint namelen, const GLchar* name ) { return 0; }
@@ -4422,6 +3447,7 @@ static GLboolean null_glIsQueryARB( GLuint id ) { return 0; }
 static GLboolean null_glIsRenderbuffer( GLuint renderbuffer ) { return 0; }
 static GLboolean null_glIsRenderbufferEXT( GLuint renderbuffer ) { return 0; }
 static GLboolean null_glIsSampler( GLuint sampler ) { return 0; }
+static GLboolean null_glIsSemaphoreEXT( GLuint semaphore ) { return 0; }
 static GLboolean null_glIsShader( GLuint shader ) { return 0; }
 static GLboolean null_glIsStateNV( GLuint state ) { return 0; }
 static GLboolean null_glIsSync( GLsync sync ) { return 0; }
@@ -4434,6 +3460,9 @@ static GLboolean null_glIsVariantEnabledEXT( GLuint id, GLenum cap ) { return 0;
 static GLboolean null_glIsVertexArray( GLuint array ) { return 0; }
 static GLboolean null_glIsVertexArrayAPPLE( GLuint array ) { return 0; }
 static GLboolean null_glIsVertexAttribEnabledAPPLE( GLuint index, GLenum pname ) { return 0; }
+static void null_glLGPUCopyImageSubDataNVX( GLuint sourceGpu, GLbitfield destinationGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srxY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth ) { }
+static void null_glLGPUInterlockNVX( void ) { }
+static void null_glLGPUNamedBufferSubDataNVX( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data ) { }
 static void null_glLabelObjectEXT( GLenum type, GLuint object, GLsizei length, const GLchar* label ) { }
 static void null_glLightEnviSGIX( GLenum pname, GLint param ) { }
 static void null_glLightModelxOES( GLenum pname, GLfixed param ) { }
@@ -4523,9 +3552,11 @@ static void null_glMatrixScalefEXT( GLenum mode, GLfloat x, GLfloat y, GLfloat z
 static void null_glMatrixTranslatedEXT( GLenum mode, GLdouble x, GLdouble y, GLdouble z ) { }
 static void null_glMatrixTranslatefEXT( GLenum mode, GLfloat x, GLfloat y, GLfloat z ) { }
 static void null_glMaxShaderCompilerThreadsARB( GLuint count ) { }
+static void null_glMaxShaderCompilerThreadsKHR( GLuint count ) { }
 static void null_glMemoryBarrier( GLbitfield barriers ) { }
 static void null_glMemoryBarrierByRegion( GLbitfield barriers ) { }
 static void null_glMemoryBarrierEXT( GLbitfield barriers ) { }
+static void null_glMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, const GLint* params ) { }
 static void null_glMinSampleShading( GLfloat value ) { }
 static void null_glMinSampleShadingARB( GLfloat value ) { }
 static void null_glMinmax( GLenum target, GLenum internalformat, GLboolean sink ) { }
@@ -4542,7 +3573,8 @@ static void null_glMultiDrawArraysIndirect( GLenum mode, const void* indirect, G
 static void null_glMultiDrawArraysIndirectAMD( GLenum mode, const void* indirect, GLsizei primcount, GLsizei stride ) { }
 static void null_glMultiDrawArraysIndirectBindlessCountNV( GLenum mode, const void* indirect, GLsizei drawCount, GLsizei maxDrawCount, GLsizei stride, GLint vertexBufferCount ) { }
 static void null_glMultiDrawArraysIndirectBindlessNV( GLenum mode, const void* indirect, GLsizei drawCount, GLsizei stride, GLint vertexBufferCount ) { }
-static void null_glMultiDrawArraysIndirectCountARB( GLenum mode, GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
+static void null_glMultiDrawArraysIndirectCount( GLenum mode, const void* indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
+static void null_glMultiDrawArraysIndirectCountARB( GLenum mode, const void* indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
 static void null_glMultiDrawElementArrayAPPLE( GLenum mode, const GLint* first, const GLsizei* count, GLsizei primcount ) { }
 static void null_glMultiDrawElements( GLenum mode, const GLsizei* count, GLenum type, const void*const* indices, GLsizei drawcount ) { }
 static void null_glMultiDrawElementsBaseVertex( GLenum mode, const GLsizei* count, GLenum type, const void*const* indices, GLsizei drawcount, const GLint* basevertex ) { }
@@ -4551,7 +3583,8 @@ static void null_glMultiDrawElementsIndirect( GLenum mode, GLenum type, const vo
 static void null_glMultiDrawElementsIndirectAMD( GLenum mode, GLenum type, const void* indirect, GLsizei primcount, GLsizei stride ) { }
 static void null_glMultiDrawElementsIndirectBindlessCountNV( GLenum mode, GLenum type, const void* indirect, GLsizei drawCount, GLsizei maxDrawCount, GLsizei stride, GLint vertexBufferCount ) { }
 static void null_glMultiDrawElementsIndirectBindlessNV( GLenum mode, GLenum type, const void* indirect, GLsizei drawCount, GLsizei stride, GLint vertexBufferCount ) { }
-static void null_glMultiDrawElementsIndirectCountARB( GLenum mode, GLenum type, GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
+static void null_glMultiDrawElementsIndirectCount( GLenum mode, GLenum type, const void* indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
+static void null_glMultiDrawElementsIndirectCountARB( GLenum mode, GLenum type, const void* indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
 static void null_glMultiDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, const GLint* first, const GLsizei* count, GLsizei primcount ) { }
 static void null_glMultiModeDrawArraysIBM( const GLenum* mode, const GLint* first, const GLsizei* count, GLsizei primcount, GLint modestride ) { }
 static void null_glMultiModeDrawElementsIBM( const GLenum* mode, const GLsizei* count, GLenum type, const void*const* indices, GLsizei primcount, GLint modestride ) { }
@@ -4709,12 +3742,25 @@ static void null_glMultiTexRenderbufferEXT( GLenum texunit, GLenum target, GLuin
 static void null_glMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels ) { }
 static void null_glMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels ) { }
 static void null_glMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels ) { }
+static void null_glMulticastBarrierNV( void ) { }
+static void null_glMulticastBlitFramebufferNV( GLuint srcGpu, GLuint dstGpu, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter ) { }
+static void null_glMulticastBufferSubDataNV( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const GLvoid* data ) { }
+static void null_glMulticastCopyBufferSubDataNV( GLuint readGpu, GLbitfield writeGpuMask, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size ) { }
+static void null_glMulticastCopyImageSubDataNV( GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth ) { }
+static void null_glMulticastFramebufferSampleLocationsfvNV( GLuint gpu, GLuint framebuffer, GLuint start, GLsizei count, const GLfloat* v ) { }
+static void null_glMulticastGetQueryObjecti64vNV( GLuint gpu, GLuint id, GLenum pname, GLint64* params ) { }
+static void null_glMulticastGetQueryObjectivNV( GLuint gpu, GLuint id, GLenum pname, GLint* params ) { }
+static void null_glMulticastGetQueryObjectui64vNV( GLuint gpu, GLuint id, GLenum pname, GLuint64* params ) { }
+static void null_glMulticastGetQueryObjectuivNV( GLuint gpu, GLuint id, GLenum pname, GLuint* params ) { }
+static void null_glMulticastWaitSyncNV( GLuint signalGpu, GLbitfield waitGpuMask ) { }
 static void null_glNamedBufferData( GLuint buffer, GLsizeiptr size, const void* data, GLenum usage ) { }
 static void null_glNamedBufferDataEXT( GLuint buffer, GLsizeiptr size, const void* data, GLenum usage ) { }
 static void null_glNamedBufferPageCommitmentARB( GLuint buffer, GLintptr offset, GLsizeiptr size, GLboolean commit ) { }
 static void null_glNamedBufferPageCommitmentEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLboolean commit ) { }
 static void null_glNamedBufferStorage( GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags ) { }
 static void null_glNamedBufferStorageEXT( GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags ) { }
+static void null_glNamedBufferStorageExternalEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, void * clientBuffer, GLbitfield flags ) { }
+static void null_glNamedBufferStorageMemEXT( GLuint buffer, GLsizeiptr size, GLuint memory, GLuint64 offset ) { }
 static void null_glNamedBufferSubData( GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data ) { }
 static void null_glNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data ) { }
 static void null_glNamedCopyBufferSubDataEXT( GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size ) { }
@@ -4727,6 +3773,7 @@ static void null_glNamedFramebufferRenderbuffer( GLuint framebuffer, GLenum atta
 static void null_glNamedFramebufferRenderbufferEXT( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
 static void null_glNamedFramebufferSampleLocationsfvARB( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat* v ) { }
 static void null_glNamedFramebufferSampleLocationsfvNV( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat* v ) { }
+static void null_glNamedFramebufferSamplePositionsfvAMD( GLuint framebuffer, GLuint numsamples, GLuint pixelindex, const GLfloat* values ) { }
 static void null_glNamedFramebufferTexture( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level ) { }
 static void null_glNamedFramebufferTexture1DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
 static void null_glNamedFramebufferTexture2DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
@@ -4843,6 +3890,7 @@ static void null_glPointParameterxvOES( GLenum pname, const GLfixed* params ) { 
 static void null_glPointSizexOES( GLfixed size ) { }
 static GLint null_glPollAsyncSGIX( GLuint* markerp ) { return 0; }
 static GLint null_glPollInstrumentsSGIX( GLint* marker_p ) { return 0; }
+static void null_glPolygonOffsetClamp( GLfloat factor, GLfloat units, GLfloat clamp ) { }
 static void null_glPolygonOffsetClampEXT( GLfloat factor, GLfloat units, GLfloat clamp ) { }
 static void null_glPolygonOffsetEXT( GLfloat factor, GLfloat bias ) { }
 static void null_glPolygonOffsetxOES( GLfixed factor, GLfixed units ) { }
@@ -5045,6 +4093,8 @@ static void null_glPushGroupMarkerEXT( GLsizei length, const GLchar* marker ) { 
 static void null_glQueryCounter( GLuint id, GLenum target ) { }
 static GLbitfield null_glQueryMatrixxOES( GLfixed* mantissa, GLint* exponent ) { return 0; }
 static void null_glQueryObjectParameteruiAMD( GLenum target, GLuint id, GLenum pname, GLuint param ) { }
+static GLint null_glQueryResourceNV( GLenum queryType, GLint tagId, GLuint bufSize, GLint* buffer ) { return 0; }
+static void null_glQueryResourceTagNV( GLint tagId, const GLchar* tagString ) { }
 static void null_glRasterPos2xOES( GLfixed x, GLfixed y ) { }
 static void null_glRasterPos2xvOES( const GLfixed* coords ) { }
 static void null_glRasterPos3xOES( GLfixed x, GLfixed y, GLfixed z ) { }
@@ -5059,7 +4109,9 @@ static void null_glReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei heig
 static void null_glRectxOES( GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2 ) { }
 static void null_glRectxvOES( const GLfixed* v1, const GLfixed* v2 ) { }
 static void null_glReferencePlaneSGIX( const GLdouble* equation ) { }
+static GLboolean null_glReleaseKeyedMutexWin32EXT( GLuint memory, GLuint64 key ) { return 0; }
 static void null_glReleaseShaderCompiler( void ) { }
+static void null_glRenderGpuMaskNV( GLbitfield mask ) { }
 static void null_glRenderbufferStorage( GLenum target, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glRenderbufferStorageEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height ) { }
 static void null_glRenderbufferStorageMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height ) { }
@@ -5160,6 +4212,7 @@ static void null_glSecondaryColorPointerListIBM( GLint size, GLenum type, GLint 
 static void null_glSelectPerfMonitorCountersAMD( GLuint monitor, GLboolean enable, GLuint group, GLint numCounters, GLuint* counterList ) { }
 static void null_glSelectTextureCoordSetSGIS( GLenum target ) { }
 static void null_glSelectTextureSGIS( GLenum target ) { }
+static void null_glSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, const GLuint64* params ) { }
 static void null_glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* row, const void* column ) { }
 static void null_glSeparableFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* row, const void* column ) { }
 static void null_glSetFenceAPPLE( GLuint fence ) { }
@@ -5176,6 +4229,11 @@ static void null_glShaderSource( GLuint shader, GLsizei count, const GLchar*cons
 static void null_glShaderSourceARB( GLhandleARB shaderObj, GLsizei count, const GLcharARB** string, const GLint* length ) { }
 static void null_glShaderStorageBlockBinding( GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding ) { }
 static void null_glSharpenTexFuncSGIS( GLenum target, GLsizei n, const GLfloat* points ) { }
+static void null_glSignalSemaphoreEXT( GLuint semaphore, GLuint numBufferBarriers, const GLuint* buffers, GLuint numTextureBarriers, const GLuint* textures, const GLenum* dstLayouts ) { }
+static void null_glSignalVkFenceNV( GLuint64 vkFence ) { }
+static void null_glSignalVkSemaphoreNV( GLuint64 vkSemaphore ) { }
+static void null_glSpecializeShader( GLuint shader, const GLchar* pEntryPoint, GLuint numSpecializationConstants, const GLuint* pConstantIndex, const GLuint* pConstantValue ) { }
+static void null_glSpecializeShaderARB( GLuint shader, const GLchar* pEntryPoint, GLuint numSpecializationConstants, const GLuint* pConstantIndex, const GLuint* pConstantValue ) { }
 static void null_glSpriteParameterfSGIX( GLenum pname, GLfloat param ) { }
 static void null_glSpriteParameterfvSGIX( GLenum pname, const GLfloat* params ) { }
 static void null_glSpriteParameteriSGIX( GLenum pname, GLint param ) { }
@@ -5301,6 +4359,11 @@ static void null_glTexStorage2D( GLenum target, GLsizei levels, GLenum internalf
 static void null_glTexStorage2DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) { }
 static void null_glTexStorage3D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth ) { }
 static void null_glTexStorage3DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
+static void null_glTexStorageMem1DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLuint memory, GLuint64 offset ) { }
+static void null_glTexStorageMem2DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset ) { }
+static void null_glTexStorageMem2DMultisampleEXT( GLenum target, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset ) { }
+static void null_glTexStorageMem3DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset ) { }
+static void null_glTexStorageMem3DMultisampleEXT( GLenum target, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset ) { }
 static void null_glTexStorageSparseAMD( GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei layers, GLbitfield flags ) { }
 static void null_glTexSubImage1DEXT( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels ) { }
 static void null_glTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels ) { }
@@ -5349,6 +4412,11 @@ static void null_glTextureStorage3D( GLuint texture, GLsizei levels, GLenum inte
 static void null_glTextureStorage3DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth ) { }
 static void null_glTextureStorage3DMultisample( GLuint texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
 static void null_glTextureStorage3DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
+static void null_glTextureStorageMem1DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLuint memory, GLuint64 offset ) { }
+static void null_glTextureStorageMem2DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset ) { }
+static void null_glTextureStorageMem2DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset ) { }
+static void null_glTextureStorageMem3DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset ) { }
+static void null_glTextureStorageMem3DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset ) { }
 static void null_glTextureStorageSparseAMD( GLuint texture, GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei layers, GLbitfield flags ) { }
 static void null_glTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels ) { }
 static void null_glTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels ) { }
@@ -5849,7 +4917,11 @@ static void null_glVideoCaptureStreamParameterivNV( GLuint video_capture_slot, G
 static void null_glViewportArrayv( GLuint first, GLsizei count, const GLfloat* v ) { }
 static void null_glViewportIndexedf( GLuint index, GLfloat x, GLfloat y, GLfloat w, GLfloat h ) { }
 static void null_glViewportIndexedfv( GLuint index, const GLfloat* v ) { }
+static void null_glViewportPositionWScaleNV( GLuint index, GLfloat xcoeff, GLfloat ycoeff ) { }
+static void null_glViewportSwizzleNV( GLuint index, GLenum swizzlex, GLenum swizzley, GLenum swizzlez, GLenum swizzlew ) { }
+static void null_glWaitSemaphoreEXT( GLuint semaphore, GLuint numBufferBarriers, const GLuint* buffers, GLuint numTextureBarriers, const GLuint* textures, const GLenum* srcLayouts ) { }
 static void null_glWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout ) { }
+static void null_glWaitVkSemaphoreNV( GLuint64 vkSemaphore ) { }
 static void null_glWeightPathsNV( GLuint resultPath, GLsizei numPaths, const GLuint* paths, const GLfloat* weights ) { }
 static void null_glWeightPointerARB( GLint size, GLenum type, GLsizei stride, const void* pointer ) { }
 static void null_glWeightbvARB( GLint size, const GLbyte* weights ) { }
@@ -5916,6 +4988,7 @@ static void null_glWindowPos4iMESA( GLint x, GLint y, GLint z, GLint w ) { }
 static void null_glWindowPos4ivMESA( const GLint* v ) { }
 static void null_glWindowPos4sMESA( GLshort x, GLshort y, GLshort z, GLshort w ) { }
 static void null_glWindowPos4svMESA( const GLshort* v ) { }
+static void null_glWindowRectanglesEXT( GLenum mode, GLsizei count, const GLint* box ) { }
 static void null_glWriteMaskEXT( GLuint res, GLuint in, GLenum outX, GLenum outY, GLenum outZ, GLenum outW ) { }
 static void* null_wglAllocateMemoryNV( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority ) { return 0; }
 static BOOL null_wglBindTexImageARB( struct wgl_pbuffer * hPbuffer, int iBuffer ) { return 0; }
@@ -6297,6 +5370,7 @@ struct opengl_funcs null_opengl_funcs =
     },
     {
         null_glAccumxOES,
+        null_glAcquireKeyedMutexWin32EXT,
         null_glActiveProgramEXT,
         null_glActiveShaderProgram,
         null_glActiveStencilFaceEXT,
@@ -6307,6 +5381,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glAlphaFragmentOp2ATI,
         null_glAlphaFragmentOp3ATI,
         null_glAlphaFuncxOES,
+        null_glAlphaToCoverageDitherControlNV,
         null_glApplyFramebufferAttachmentCMAAINTEL,
         null_glApplyTextureEXT,
         null_glAreProgramsResidentNV,
@@ -6426,6 +5501,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glBufferParameteriAPPLE,
         null_glBufferRegionEnabled,
         null_glBufferStorage,
+        null_glBufferStorageExternalEXT,
+        null_glBufferStorageMemEXT,
         null_glBufferSubData,
         null_glBufferSubDataARB,
         null_glCallCommandListNV,
@@ -6545,6 +5622,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glCompressedTextureSubImage3D,
         null_glCompressedTextureSubImage3DEXT,
         null_glConservativeRasterParameterfNV,
+        null_glConservativeRasterParameteriNV,
         null_glConvolutionFilter1D,
         null_glConvolutionFilter1DEXT,
         null_glConvolutionFilter2D,
@@ -6600,6 +5678,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glCreateBuffers,
         null_glCreateCommandListsNV,
         null_glCreateFramebuffers,
+        null_glCreateMemoryObjectsEXT,
         null_glCreatePerfQueryINTEL,
         null_glCreateProgram,
         null_glCreateProgramObjectARB,
@@ -6641,6 +5720,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glDeleteFragmentShaderATI,
         null_glDeleteFramebuffers,
         null_glDeleteFramebuffersEXT,
+        null_glDeleteMemoryObjectsEXT,
         null_glDeleteNamedStringARB,
         null_glDeleteNamesAMD,
         null_glDeleteObjectARB,
@@ -6655,9 +5735,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glDeleteProgramsNV,
         null_glDeleteQueries,
         null_glDeleteQueriesARB,
+        null_glDeleteQueryResourceTagNV,
         null_glDeleteRenderbuffers,
         null_glDeleteRenderbuffersEXT,
         null_glDeleteSamplers,
+        null_glDeleteSemaphoresEXT,
         null_glDeleteShader,
         null_glDeleteStatesNV,
         null_glDeleteSync,
@@ -6728,6 +5810,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glDrawTransformFeedbackNV,
         null_glDrawTransformFeedbackStream,
         null_glDrawTransformFeedbackStreamInstanced,
+        null_glDrawVkImageNV,
         null_glEdgeFlagFormatNV,
         null_glEdgeFlagPointerEXT,
         null_glEdgeFlagPointerListIBM,
@@ -6825,6 +5908,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glFramebufferRenderbufferEXT,
         null_glFramebufferSampleLocationsfvARB,
         null_glFramebufferSampleLocationsfvNV,
+        null_glFramebufferSamplePositionsfvAMD,
         null_glFramebufferTexture,
         null_glFramebufferTexture1D,
         null_glFramebufferTexture1DEXT,
@@ -6860,9 +5944,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glGenProgramsNV,
         null_glGenQueries,
         null_glGenQueriesARB,
+        null_glGenQueryResourceTagNV,
         null_glGenRenderbuffers,
         null_glGenRenderbuffersEXT,
         null_glGenSamplers,
+        null_glGenSemaphoresEXT,
         null_glGenSymbolsEXT,
         null_glGenTexturesEXT,
         null_glGenTransformFeedbacks,
@@ -6960,6 +6046,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetFragmentMaterialivSGIX,
         null_glGetFramebufferAttachmentParameteriv,
         null_glGetFramebufferAttachmentParameterivEXT,
+        null_glGetFramebufferParameterfvAMD,
         null_glGetFramebufferParameteriv,
         null_glGetFramebufferParameterivEXT,
         null_glGetGraphicsResetStatus,
@@ -7003,6 +6090,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetMapParameterivNV,
         null_glGetMapxvOES,
         null_glGetMaterialxOES,
+        null_glGetMemoryObjectParameterivEXT,
         null_glGetMinmax,
         null_glGetMinmaxEXT,
         null_glGetMinmaxParameterfv,
@@ -7033,6 +6121,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetNamedBufferSubDataEXT,
         null_glGetNamedFramebufferAttachmentParameteriv,
         null_glGetNamedFramebufferAttachmentParameterivEXT,
+        null_glGetNamedFramebufferParameterfvAMD,
         null_glGetNamedFramebufferParameteriv,
         null_glGetNamedFramebufferParameterivEXT,
         null_glGetNamedProgramLocalParameterIivEXT,
@@ -7138,6 +6227,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetSamplerParameterIuiv,
         null_glGetSamplerParameterfv,
         null_glGetSamplerParameteriv,
+        null_glGetSemaphoreParameterui64vEXT,
         null_glGetSeparableFilter,
         null_glGetSeparableFilterEXT,
         null_glGetShaderInfoLog,
@@ -7207,6 +6297,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetUniformui64vNV,
         null_glGetUniformuiv,
         null_glGetUniformuivEXT,
+        null_glGetUnsignedBytei_vEXT,
+        null_glGetUnsignedBytevEXT,
         null_glGetVariantArrayObjectfvATI,
         null_glGetVariantArrayObjectivATI,
         null_glGetVariantBooleanvEXT,
@@ -7252,6 +6344,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetVideoivNV,
         null_glGetVideoui64vNV,
         null_glGetVideouivNV,
+        null_glGetVkProcAddrNV,
         null_glGetnColorTable,
         null_glGetnColorTableARB,
         null_glGetnCompressedTexImage,
@@ -7306,6 +6399,12 @@ struct opengl_funcs null_opengl_funcs =
         null_glImageTransformParameterfvHP,
         null_glImageTransformParameteriHP,
         null_glImageTransformParameterivHP,
+        null_glImportMemoryFdEXT,
+        null_glImportMemoryWin32HandleEXT,
+        null_glImportMemoryWin32NameEXT,
+        null_glImportSemaphoreFdEXT,
+        null_glImportSemaphoreWin32HandleEXT,
+        null_glImportSemaphoreWin32NameEXT,
         null_glImportSyncEXT,
         null_glIndexFormatNV,
         null_glIndexFuncEXT,
@@ -7339,6 +6438,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glIsFramebufferEXT,
         null_glIsImageHandleResidentARB,
         null_glIsImageHandleResidentNV,
+        null_glIsMemoryObjectEXT,
         null_glIsNameAMD,
         null_glIsNamedBufferResidentNV,
         null_glIsNamedStringARB,
@@ -7356,6 +6456,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glIsRenderbuffer,
         null_glIsRenderbufferEXT,
         null_glIsSampler,
+        null_glIsSemaphoreEXT,
         null_glIsShader,
         null_glIsStateNV,
         null_glIsSync,
@@ -7368,6 +6469,9 @@ struct opengl_funcs null_opengl_funcs =
         null_glIsVertexArray,
         null_glIsVertexArrayAPPLE,
         null_glIsVertexAttribEnabledAPPLE,
+        null_glLGPUCopyImageSubDataNVX,
+        null_glLGPUInterlockNVX,
+        null_glLGPUNamedBufferSubDataNVX,
         null_glLabelObjectEXT,
         null_glLightEnviSGIX,
         null_glLightModelxOES,
@@ -7457,9 +6561,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glMatrixTranslatedEXT,
         null_glMatrixTranslatefEXT,
         null_glMaxShaderCompilerThreadsARB,
+        null_glMaxShaderCompilerThreadsKHR,
         null_glMemoryBarrier,
         null_glMemoryBarrierByRegion,
         null_glMemoryBarrierEXT,
+        null_glMemoryObjectParameterivEXT,
         null_glMinSampleShading,
         null_glMinSampleShadingARB,
         null_glMinmax,
@@ -7476,6 +6582,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glMultiDrawArraysIndirectAMD,
         null_glMultiDrawArraysIndirectBindlessCountNV,
         null_glMultiDrawArraysIndirectBindlessNV,
+        null_glMultiDrawArraysIndirectCount,
         null_glMultiDrawArraysIndirectCountARB,
         null_glMultiDrawElementArrayAPPLE,
         null_glMultiDrawElements,
@@ -7485,6 +6592,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glMultiDrawElementsIndirectAMD,
         null_glMultiDrawElementsIndirectBindlessCountNV,
         null_glMultiDrawElementsIndirectBindlessNV,
+        null_glMultiDrawElementsIndirectCount,
         null_glMultiDrawElementsIndirectCountARB,
         null_glMultiDrawRangeElementArrayAPPLE,
         null_glMultiModeDrawArraysIBM,
@@ -7643,12 +6751,25 @@ struct opengl_funcs null_opengl_funcs =
         null_glMultiTexSubImage1DEXT,
         null_glMultiTexSubImage2DEXT,
         null_glMultiTexSubImage3DEXT,
+        null_glMulticastBarrierNV,
+        null_glMulticastBlitFramebufferNV,
+        null_glMulticastBufferSubDataNV,
+        null_glMulticastCopyBufferSubDataNV,
+        null_glMulticastCopyImageSubDataNV,
+        null_glMulticastFramebufferSampleLocationsfvNV,
+        null_glMulticastGetQueryObjecti64vNV,
+        null_glMulticastGetQueryObjectivNV,
+        null_glMulticastGetQueryObjectui64vNV,
+        null_glMulticastGetQueryObjectuivNV,
+        null_glMulticastWaitSyncNV,
         null_glNamedBufferData,
         null_glNamedBufferDataEXT,
         null_glNamedBufferPageCommitmentARB,
         null_glNamedBufferPageCommitmentEXT,
         null_glNamedBufferStorage,
         null_glNamedBufferStorageEXT,
+        null_glNamedBufferStorageExternalEXT,
+        null_glNamedBufferStorageMemEXT,
         null_glNamedBufferSubData,
         null_glNamedBufferSubDataEXT,
         null_glNamedCopyBufferSubDataEXT,
@@ -7661,6 +6782,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glNamedFramebufferRenderbufferEXT,
         null_glNamedFramebufferSampleLocationsfvARB,
         null_glNamedFramebufferSampleLocationsfvNV,
+        null_glNamedFramebufferSamplePositionsfvAMD,
         null_glNamedFramebufferTexture,
         null_glNamedFramebufferTexture1DEXT,
         null_glNamedFramebufferTexture2DEXT,
@@ -7777,6 +6899,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glPointSizexOES,
         null_glPollAsyncSGIX,
         null_glPollInstrumentsSGIX,
+        null_glPolygonOffsetClamp,
         null_glPolygonOffsetClampEXT,
         null_glPolygonOffsetEXT,
         null_glPolygonOffsetxOES,
@@ -7979,6 +7102,8 @@ struct opengl_funcs null_opengl_funcs =
         null_glQueryCounter,
         null_glQueryMatrixxOES,
         null_glQueryObjectParameteruiAMD,
+        null_glQueryResourceNV,
+        null_glQueryResourceTagNV,
         null_glRasterPos2xOES,
         null_glRasterPos2xvOES,
         null_glRasterPos3xOES,
@@ -7993,7 +7118,9 @@ struct opengl_funcs null_opengl_funcs =
         null_glRectxOES,
         null_glRectxvOES,
         null_glReferencePlaneSGIX,
+        null_glReleaseKeyedMutexWin32EXT,
         null_glReleaseShaderCompiler,
+        null_glRenderGpuMaskNV,
         null_glRenderbufferStorage,
         null_glRenderbufferStorageEXT,
         null_glRenderbufferStorageMultisample,
@@ -8094,6 +7221,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glSelectPerfMonitorCountersAMD,
         null_glSelectTextureCoordSetSGIS,
         null_glSelectTextureSGIS,
+        null_glSemaphoreParameterui64vEXT,
         null_glSeparableFilter2D,
         null_glSeparableFilter2DEXT,
         null_glSetFenceAPPLE,
@@ -8110,6 +7238,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glShaderSourceARB,
         null_glShaderStorageBlockBinding,
         null_glSharpenTexFuncSGIS,
+        null_glSignalSemaphoreEXT,
+        null_glSignalVkFenceNV,
+        null_glSignalVkSemaphoreNV,
+        null_glSpecializeShader,
+        null_glSpecializeShaderARB,
         null_glSpriteParameterfSGIX,
         null_glSpriteParameterfvSGIX,
         null_glSpriteParameteriSGIX,
@@ -8235,6 +7368,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glTexStorage2DMultisample,
         null_glTexStorage3D,
         null_glTexStorage3DMultisample,
+        null_glTexStorageMem1DEXT,
+        null_glTexStorageMem2DEXT,
+        null_glTexStorageMem2DMultisampleEXT,
+        null_glTexStorageMem3DEXT,
+        null_glTexStorageMem3DMultisampleEXT,
         null_glTexStorageSparseAMD,
         null_glTexSubImage1DEXT,
         null_glTexSubImage2DEXT,
@@ -8283,6 +7421,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glTextureStorage3DEXT,
         null_glTextureStorage3DMultisample,
         null_glTextureStorage3DMultisampleEXT,
+        null_glTextureStorageMem1DEXT,
+        null_glTextureStorageMem2DEXT,
+        null_glTextureStorageMem2DMultisampleEXT,
+        null_glTextureStorageMem3DEXT,
+        null_glTextureStorageMem3DMultisampleEXT,
         null_glTextureStorageSparseAMD,
         null_glTextureSubImage1D,
         null_glTextureSubImage1DEXT,
@@ -8783,7 +7926,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glViewportArrayv,
         null_glViewportIndexedf,
         null_glViewportIndexedfv,
+        null_glViewportPositionWScaleNV,
+        null_glViewportSwizzleNV,
+        null_glWaitSemaphoreEXT,
         null_glWaitSync,
+        null_glWaitVkSemaphoreNV,
         null_glWeightPathsNV,
         null_glWeightPointerARB,
         null_glWeightbvARB,
@@ -8850,6 +7997,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glWindowPos4ivMESA,
         null_glWindowPos4sMESA,
         null_glWindowPos4svMESA,
+        null_glWindowRectanglesEXT,
         null_glWriteMaskEXT,
         null_wglAllocateMemoryNV,
         null_wglBindTexImageARB,

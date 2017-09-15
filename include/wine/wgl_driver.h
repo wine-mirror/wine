@@ -7,7 +7,7 @@
 #define WINE_GLAPI
 #endif
 
-#define WINE_WGL_DRIVER_VERSION 15
+#define WINE_WGL_DRIVER_VERSION 16
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -371,6 +371,7 @@ struct opengl_funcs
     struct
     {
         void       (WINE_GLAPI *p_glAccumxOES)(GLenum,GLfixed);
+        GLboolean  (WINE_GLAPI *p_glAcquireKeyedMutexWin32EXT)(GLuint,GLuint64,GLuint);
         void       (WINE_GLAPI *p_glActiveProgramEXT)(GLuint);
         void       (WINE_GLAPI *p_glActiveShaderProgram)(GLuint,GLuint);
         void       (WINE_GLAPI *p_glActiveStencilFaceEXT)(GLenum);
@@ -381,6 +382,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glAlphaFragmentOp2ATI)(GLenum,GLuint,GLuint,GLuint,GLuint,GLuint,GLuint,GLuint,GLuint);
         void       (WINE_GLAPI *p_glAlphaFragmentOp3ATI)(GLenum,GLuint,GLuint,GLuint,GLuint,GLuint,GLuint,GLuint,GLuint,GLuint,GLuint,GLuint);
         void       (WINE_GLAPI *p_glAlphaFuncxOES)(GLenum,GLfixed);
+        void       (WINE_GLAPI *p_glAlphaToCoverageDitherControlNV)(GLenum);
         void       (WINE_GLAPI *p_glApplyFramebufferAttachmentCMAAINTEL)(void);
         void       (WINE_GLAPI *p_glApplyTextureEXT)(GLenum);
         GLboolean  (WINE_GLAPI *p_glAreProgramsResidentNV)(GLsizei,const GLuint*,GLboolean*);
@@ -500,6 +502,8 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glBufferParameteriAPPLE)(GLenum,GLenum,GLint);
         GLuint     (WINE_GLAPI *p_glBufferRegionEnabled)(void);
         void       (WINE_GLAPI *p_glBufferStorage)(GLenum,GLsizeiptr,const void*,GLbitfield);
+        void       (WINE_GLAPI *p_glBufferStorageExternalEXT)(GLenum,GLintptr,GLsizeiptr,void *,GLbitfield);
+        void       (WINE_GLAPI *p_glBufferStorageMemEXT)(GLenum,GLsizeiptr,GLuint,GLuint64);
         void       (WINE_GLAPI *p_glBufferSubData)(GLenum,GLintptr,GLsizeiptr,const void*);
         void       (WINE_GLAPI *p_glBufferSubDataARB)(GLenum,GLintptrARB,GLsizeiptrARB,const void*);
         void       (WINE_GLAPI *p_glCallCommandListNV)(GLuint);
@@ -619,6 +623,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glCompressedTextureSubImage3D)(GLuint,GLint,GLint,GLint,GLint,GLsizei,GLsizei,GLsizei,GLenum,GLsizei,const void*);
         void       (WINE_GLAPI *p_glCompressedTextureSubImage3DEXT)(GLuint,GLenum,GLint,GLint,GLint,GLint,GLsizei,GLsizei,GLsizei,GLenum,GLsizei,const void*);
         void       (WINE_GLAPI *p_glConservativeRasterParameterfNV)(GLenum,GLfloat);
+        void       (WINE_GLAPI *p_glConservativeRasterParameteriNV)(GLenum,GLint);
         void       (WINE_GLAPI *p_glConvolutionFilter1D)(GLenum,GLenum,GLsizei,GLenum,GLenum,const void*);
         void       (WINE_GLAPI *p_glConvolutionFilter1DEXT)(GLenum,GLenum,GLsizei,GLenum,GLenum,const void*);
         void       (WINE_GLAPI *p_glConvolutionFilter2D)(GLenum,GLenum,GLsizei,GLsizei,GLenum,GLenum,const void*);
@@ -674,6 +679,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glCreateBuffers)(GLsizei,GLuint*);
         void       (WINE_GLAPI *p_glCreateCommandListsNV)(GLsizei,GLuint*);
         void       (WINE_GLAPI *p_glCreateFramebuffers)(GLsizei,GLuint*);
+        void       (WINE_GLAPI *p_glCreateMemoryObjectsEXT)(GLsizei,GLuint*);
         void       (WINE_GLAPI *p_glCreatePerfQueryINTEL)(GLuint,GLuint*);
         GLuint     (WINE_GLAPI *p_glCreateProgram)(void);
         GLhandleARB (WINE_GLAPI *p_glCreateProgramObjectARB)(void);
@@ -715,6 +721,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glDeleteFragmentShaderATI)(GLuint);
         void       (WINE_GLAPI *p_glDeleteFramebuffers)(GLsizei,const GLuint*);
         void       (WINE_GLAPI *p_glDeleteFramebuffersEXT)(GLsizei,const GLuint*);
+        void       (WINE_GLAPI *p_glDeleteMemoryObjectsEXT)(GLsizei,const GLuint*);
         void       (WINE_GLAPI *p_glDeleteNamedStringARB)(GLint,const GLchar*);
         void       (WINE_GLAPI *p_glDeleteNamesAMD)(GLenum,GLuint,const GLuint*);
         void       (WINE_GLAPI *p_glDeleteObjectARB)(GLhandleARB);
@@ -729,9 +736,11 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glDeleteProgramsNV)(GLsizei,const GLuint*);
         void       (WINE_GLAPI *p_glDeleteQueries)(GLsizei,const GLuint*);
         void       (WINE_GLAPI *p_glDeleteQueriesARB)(GLsizei,const GLuint*);
+        void       (WINE_GLAPI *p_glDeleteQueryResourceTagNV)(GLsizei,const GLint*);
         void       (WINE_GLAPI *p_glDeleteRenderbuffers)(GLsizei,const GLuint*);
         void       (WINE_GLAPI *p_glDeleteRenderbuffersEXT)(GLsizei,const GLuint*);
         void       (WINE_GLAPI *p_glDeleteSamplers)(GLsizei,const GLuint*);
+        void       (WINE_GLAPI *p_glDeleteSemaphoresEXT)(GLsizei,const GLuint*);
         void       (WINE_GLAPI *p_glDeleteShader)(GLuint);
         void       (WINE_GLAPI *p_glDeleteStatesNV)(GLsizei,const GLuint*);
         void       (WINE_GLAPI *p_glDeleteSync)(GLsync);
@@ -802,6 +811,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glDrawTransformFeedbackNV)(GLenum,GLuint);
         void       (WINE_GLAPI *p_glDrawTransformFeedbackStream)(GLenum,GLuint,GLuint);
         void       (WINE_GLAPI *p_glDrawTransformFeedbackStreamInstanced)(GLenum,GLuint,GLuint,GLsizei);
+        void       (WINE_GLAPI *p_glDrawVkImageNV)(GLuint64,GLuint,GLfloat,GLfloat,GLfloat,GLfloat,GLfloat,GLfloat,GLfloat,GLfloat,GLfloat);
         void       (WINE_GLAPI *p_glEdgeFlagFormatNV)(GLsizei);
         void       (WINE_GLAPI *p_glEdgeFlagPointerEXT)(GLsizei,GLsizei,const GLboolean*);
         void       (WINE_GLAPI *p_glEdgeFlagPointerListIBM)(GLint,const GLboolean**,GLint);
@@ -899,6 +909,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glFramebufferRenderbufferEXT)(GLenum,GLenum,GLenum,GLuint);
         void       (WINE_GLAPI *p_glFramebufferSampleLocationsfvARB)(GLenum,GLuint,GLsizei,const GLfloat*);
         void       (WINE_GLAPI *p_glFramebufferSampleLocationsfvNV)(GLenum,GLuint,GLsizei,const GLfloat*);
+        void       (WINE_GLAPI *p_glFramebufferSamplePositionsfvAMD)(GLenum,GLuint,GLuint,const GLfloat*);
         void       (WINE_GLAPI *p_glFramebufferTexture)(GLenum,GLenum,GLuint,GLint);
         void       (WINE_GLAPI *p_glFramebufferTexture1D)(GLenum,GLenum,GLenum,GLuint,GLint);
         void       (WINE_GLAPI *p_glFramebufferTexture1DEXT)(GLenum,GLenum,GLenum,GLuint,GLint);
@@ -934,9 +945,11 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGenProgramsNV)(GLsizei,GLuint*);
         void       (WINE_GLAPI *p_glGenQueries)(GLsizei,GLuint*);
         void       (WINE_GLAPI *p_glGenQueriesARB)(GLsizei,GLuint*);
+        void       (WINE_GLAPI *p_glGenQueryResourceTagNV)(GLsizei,GLint*);
         void       (WINE_GLAPI *p_glGenRenderbuffers)(GLsizei,GLuint*);
         void       (WINE_GLAPI *p_glGenRenderbuffersEXT)(GLsizei,GLuint*);
         void       (WINE_GLAPI *p_glGenSamplers)(GLsizei,GLuint*);
+        void       (WINE_GLAPI *p_glGenSemaphoresEXT)(GLsizei,GLuint*);
         GLuint     (WINE_GLAPI *p_glGenSymbolsEXT)(GLenum,GLenum,GLenum,GLuint);
         void       (WINE_GLAPI *p_glGenTexturesEXT)(GLsizei,GLuint*);
         void       (WINE_GLAPI *p_glGenTransformFeedbacks)(GLsizei,GLuint*);
@@ -1034,6 +1047,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGetFragmentMaterialivSGIX)(GLenum,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetFramebufferAttachmentParameteriv)(GLenum,GLenum,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetFramebufferAttachmentParameterivEXT)(GLenum,GLenum,GLenum,GLint*);
+        void       (WINE_GLAPI *p_glGetFramebufferParameterfvAMD)(GLenum,GLenum,GLuint,GLuint,GLsizei,GLfloat*);
         void       (WINE_GLAPI *p_glGetFramebufferParameteriv)(GLenum,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetFramebufferParameterivEXT)(GLuint,GLenum,GLint*);
         GLenum     (WINE_GLAPI *p_glGetGraphicsResetStatus)(void);
@@ -1077,6 +1091,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGetMapParameterivNV)(GLenum,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetMapxvOES)(GLenum,GLenum,GLfixed*);
         void       (WINE_GLAPI *p_glGetMaterialxOES)(GLenum,GLenum,GLfixed);
+        void       (WINE_GLAPI *p_glGetMemoryObjectParameterivEXT)(GLuint,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetMinmax)(GLenum,GLboolean,GLenum,GLenum,void*);
         void       (WINE_GLAPI *p_glGetMinmaxEXT)(GLenum,GLboolean,GLenum,GLenum,void*);
         void       (WINE_GLAPI *p_glGetMinmaxParameterfv)(GLenum,GLenum,GLfloat*);
@@ -1107,6 +1122,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGetNamedBufferSubDataEXT)(GLuint,GLintptr,GLsizeiptr,void*);
         void       (WINE_GLAPI *p_glGetNamedFramebufferAttachmentParameteriv)(GLuint,GLenum,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetNamedFramebufferAttachmentParameterivEXT)(GLuint,GLenum,GLenum,GLint*);
+        void       (WINE_GLAPI *p_glGetNamedFramebufferParameterfvAMD)(GLuint,GLenum,GLuint,GLuint,GLsizei,GLfloat*);
         void       (WINE_GLAPI *p_glGetNamedFramebufferParameteriv)(GLuint,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetNamedFramebufferParameterivEXT)(GLuint,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetNamedProgramLocalParameterIivEXT)(GLuint,GLenum,GLuint,GLint*);
@@ -1212,6 +1228,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGetSamplerParameterIuiv)(GLuint,GLenum,GLuint*);
         void       (WINE_GLAPI *p_glGetSamplerParameterfv)(GLuint,GLenum,GLfloat*);
         void       (WINE_GLAPI *p_glGetSamplerParameteriv)(GLuint,GLenum,GLint*);
+        void       (WINE_GLAPI *p_glGetSemaphoreParameterui64vEXT)(GLuint,GLenum,GLuint64*);
         void       (WINE_GLAPI *p_glGetSeparableFilter)(GLenum,GLenum,GLenum,void*,void*,void*);
         void       (WINE_GLAPI *p_glGetSeparableFilterEXT)(GLenum,GLenum,GLenum,void*,void*,void*);
         void       (WINE_GLAPI *p_glGetShaderInfoLog)(GLuint,GLsizei,GLsizei*,GLchar*);
@@ -1281,6 +1298,8 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGetUniformui64vNV)(GLuint,GLint,GLuint64EXT*);
         void       (WINE_GLAPI *p_glGetUniformuiv)(GLuint,GLint,GLuint*);
         void       (WINE_GLAPI *p_glGetUniformuivEXT)(GLuint,GLint,GLuint*);
+        void       (WINE_GLAPI *p_glGetUnsignedBytei_vEXT)(GLenum,GLuint,GLubyte*);
+        void       (WINE_GLAPI *p_glGetUnsignedBytevEXT)(GLenum,GLubyte*);
         void       (WINE_GLAPI *p_glGetVariantArrayObjectfvATI)(GLuint,GLenum,GLfloat*);
         void       (WINE_GLAPI *p_glGetVariantArrayObjectivATI)(GLuint,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetVariantBooleanvEXT)(GLuint,GLenum,GLboolean*);
@@ -1326,6 +1345,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGetVideoivNV)(GLuint,GLenum,GLint*);
         void       (WINE_GLAPI *p_glGetVideoui64vNV)(GLuint,GLenum,GLuint64EXT*);
         void       (WINE_GLAPI *p_glGetVideouivNV)(GLuint,GLenum,GLuint*);
+        void *     (WINE_GLAPI *p_glGetVkProcAddrNV)(const GLchar*);
         void       (WINE_GLAPI *p_glGetnColorTable)(GLenum,GLenum,GLenum,GLsizei,void*);
         void       (WINE_GLAPI *p_glGetnColorTableARB)(GLenum,GLenum,GLenum,GLsizei,void*);
         void       (WINE_GLAPI *p_glGetnCompressedTexImage)(GLenum,GLint,GLsizei,void*);
@@ -1380,6 +1400,12 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glImageTransformParameterfvHP)(GLenum,GLenum,const GLfloat*);
         void       (WINE_GLAPI *p_glImageTransformParameteriHP)(GLenum,GLenum,GLint);
         void       (WINE_GLAPI *p_glImageTransformParameterivHP)(GLenum,GLenum,const GLint*);
+        void       (WINE_GLAPI *p_glImportMemoryFdEXT)(GLuint,GLuint64,GLenum,GLint);
+        void       (WINE_GLAPI *p_glImportMemoryWin32HandleEXT)(GLuint,GLuint64,GLenum,void*);
+        void       (WINE_GLAPI *p_glImportMemoryWin32NameEXT)(GLuint,GLuint64,GLenum,const void*);
+        void       (WINE_GLAPI *p_glImportSemaphoreFdEXT)(GLuint,GLenum,GLint);
+        void       (WINE_GLAPI *p_glImportSemaphoreWin32HandleEXT)(GLuint,GLenum,void*);
+        void       (WINE_GLAPI *p_glImportSemaphoreWin32NameEXT)(GLuint,GLenum,const void*);
         GLsync     (WINE_GLAPI *p_glImportSyncEXT)(GLenum,GLintptr,GLbitfield);
         void       (WINE_GLAPI *p_glIndexFormatNV)(GLenum,GLsizei);
         void       (WINE_GLAPI *p_glIndexFuncEXT)(GLenum,GLclampf);
@@ -1413,6 +1439,7 @@ struct opengl_funcs
         GLboolean  (WINE_GLAPI *p_glIsFramebufferEXT)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsImageHandleResidentARB)(GLuint64);
         GLboolean  (WINE_GLAPI *p_glIsImageHandleResidentNV)(GLuint64);
+        GLboolean  (WINE_GLAPI *p_glIsMemoryObjectEXT)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsNameAMD)(GLenum,GLuint);
         GLboolean  (WINE_GLAPI *p_glIsNamedBufferResidentNV)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsNamedStringARB)(GLint,const GLchar*);
@@ -1430,6 +1457,7 @@ struct opengl_funcs
         GLboolean  (WINE_GLAPI *p_glIsRenderbuffer)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsRenderbufferEXT)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsSampler)(GLuint);
+        GLboolean  (WINE_GLAPI *p_glIsSemaphoreEXT)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsShader)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsStateNV)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsSync)(GLsync);
@@ -1442,6 +1470,9 @@ struct opengl_funcs
         GLboolean  (WINE_GLAPI *p_glIsVertexArray)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsVertexArrayAPPLE)(GLuint);
         GLboolean  (WINE_GLAPI *p_glIsVertexAttribEnabledAPPLE)(GLuint,GLenum);
+        void       (WINE_GLAPI *p_glLGPUCopyImageSubDataNVX)(GLuint,GLbitfield,GLuint,GLenum,GLint,GLint,GLint,GLint,GLuint,GLenum,GLint,GLint,GLint,GLint,GLsizei,GLsizei,GLsizei);
+        void       (WINE_GLAPI *p_glLGPUInterlockNVX)(void);
+        void       (WINE_GLAPI *p_glLGPUNamedBufferSubDataNVX)(GLbitfield,GLuint,GLintptr,GLsizeiptr,const void*);
         void       (WINE_GLAPI *p_glLabelObjectEXT)(GLenum,GLuint,GLsizei,const GLchar*);
         void       (WINE_GLAPI *p_glLightEnviSGIX)(GLenum,GLint);
         void       (WINE_GLAPI *p_glLightModelxOES)(GLenum,GLfixed);
@@ -1531,9 +1562,11 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glMatrixTranslatedEXT)(GLenum,GLdouble,GLdouble,GLdouble);
         void       (WINE_GLAPI *p_glMatrixTranslatefEXT)(GLenum,GLfloat,GLfloat,GLfloat);
         void       (WINE_GLAPI *p_glMaxShaderCompilerThreadsARB)(GLuint);
+        void       (WINE_GLAPI *p_glMaxShaderCompilerThreadsKHR)(GLuint);
         void       (WINE_GLAPI *p_glMemoryBarrier)(GLbitfield);
         void       (WINE_GLAPI *p_glMemoryBarrierByRegion)(GLbitfield);
         void       (WINE_GLAPI *p_glMemoryBarrierEXT)(GLbitfield);
+        void       (WINE_GLAPI *p_glMemoryObjectParameterivEXT)(GLuint,GLenum,const GLint*);
         void       (WINE_GLAPI *p_glMinSampleShading)(GLfloat);
         void       (WINE_GLAPI *p_glMinSampleShadingARB)(GLfloat);
         void       (WINE_GLAPI *p_glMinmax)(GLenum,GLenum,GLboolean);
@@ -1550,7 +1583,8 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glMultiDrawArraysIndirectAMD)(GLenum,const void*,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glMultiDrawArraysIndirectBindlessCountNV)(GLenum,const void*,GLsizei,GLsizei,GLsizei,GLint);
         void       (WINE_GLAPI *p_glMultiDrawArraysIndirectBindlessNV)(GLenum,const void*,GLsizei,GLsizei,GLint);
-        void       (WINE_GLAPI *p_glMultiDrawArraysIndirectCountARB)(GLenum,GLintptr,GLintptr,GLsizei,GLsizei);
+        void       (WINE_GLAPI *p_glMultiDrawArraysIndirectCount)(GLenum,const void*,GLintptr,GLsizei,GLsizei);
+        void       (WINE_GLAPI *p_glMultiDrawArraysIndirectCountARB)(GLenum,const void*,GLintptr,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glMultiDrawElementArrayAPPLE)(GLenum,const GLint*,const GLsizei*,GLsizei);
         void       (WINE_GLAPI *p_glMultiDrawElements)(GLenum,const GLsizei*,GLenum,const void*const*,GLsizei);
         void       (WINE_GLAPI *p_glMultiDrawElementsBaseVertex)(GLenum,const GLsizei*,GLenum,const void*const*,GLsizei,const GLint*);
@@ -1559,7 +1593,8 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glMultiDrawElementsIndirectAMD)(GLenum,GLenum,const void*,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glMultiDrawElementsIndirectBindlessCountNV)(GLenum,GLenum,const void*,GLsizei,GLsizei,GLsizei,GLint);
         void       (WINE_GLAPI *p_glMultiDrawElementsIndirectBindlessNV)(GLenum,GLenum,const void*,GLsizei,GLsizei,GLint);
-        void       (WINE_GLAPI *p_glMultiDrawElementsIndirectCountARB)(GLenum,GLenum,GLintptr,GLintptr,GLsizei,GLsizei);
+        void       (WINE_GLAPI *p_glMultiDrawElementsIndirectCount)(GLenum,GLenum,const void*,GLintptr,GLsizei,GLsizei);
+        void       (WINE_GLAPI *p_glMultiDrawElementsIndirectCountARB)(GLenum,GLenum,const void*,GLintptr,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glMultiDrawRangeElementArrayAPPLE)(GLenum,GLuint,GLuint,const GLint*,const GLsizei*,GLsizei);
         void       (WINE_GLAPI *p_glMultiModeDrawArraysIBM)(const GLenum*,const GLint*,const GLsizei*,GLsizei,GLint);
         void       (WINE_GLAPI *p_glMultiModeDrawElementsIBM)(const GLenum*,const GLsizei*,GLenum,const void*const*,GLsizei,GLint);
@@ -1717,12 +1752,25 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glMultiTexSubImage1DEXT)(GLenum,GLenum,GLint,GLint,GLsizei,GLenum,GLenum,const void*);
         void       (WINE_GLAPI *p_glMultiTexSubImage2DEXT)(GLenum,GLenum,GLint,GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,const void*);
         void       (WINE_GLAPI *p_glMultiTexSubImage3DEXT)(GLenum,GLenum,GLint,GLint,GLint,GLint,GLsizei,GLsizei,GLsizei,GLenum,GLenum,const void*);
+        void       (WINE_GLAPI *p_glMulticastBarrierNV)(void);
+        void       (WINE_GLAPI *p_glMulticastBlitFramebufferNV)(GLuint,GLuint,GLint,GLint,GLint,GLint,GLint,GLint,GLint,GLint,GLbitfield,GLenum);
+        void       (WINE_GLAPI *p_glMulticastBufferSubDataNV)(GLbitfield,GLuint,GLintptr,GLsizeiptr,const GLvoid*);
+        void       (WINE_GLAPI *p_glMulticastCopyBufferSubDataNV)(GLuint,GLbitfield,GLuint,GLuint,GLintptr,GLintptr,GLsizeiptr);
+        void       (WINE_GLAPI *p_glMulticastCopyImageSubDataNV)(GLuint,GLbitfield,GLuint,GLenum,GLint,GLint,GLint,GLint,GLuint,GLenum,GLint,GLint,GLint,GLint,GLsizei,GLsizei,GLsizei);
+        void       (WINE_GLAPI *p_glMulticastFramebufferSampleLocationsfvNV)(GLuint,GLuint,GLuint,GLsizei,const GLfloat*);
+        void       (WINE_GLAPI *p_glMulticastGetQueryObjecti64vNV)(GLuint,GLuint,GLenum,GLint64*);
+        void       (WINE_GLAPI *p_glMulticastGetQueryObjectivNV)(GLuint,GLuint,GLenum,GLint*);
+        void       (WINE_GLAPI *p_glMulticastGetQueryObjectui64vNV)(GLuint,GLuint,GLenum,GLuint64*);
+        void       (WINE_GLAPI *p_glMulticastGetQueryObjectuivNV)(GLuint,GLuint,GLenum,GLuint*);
+        void       (WINE_GLAPI *p_glMulticastWaitSyncNV)(GLuint,GLbitfield);
         void       (WINE_GLAPI *p_glNamedBufferData)(GLuint,GLsizeiptr,const void*,GLenum);
         void       (WINE_GLAPI *p_glNamedBufferDataEXT)(GLuint,GLsizeiptr,const void*,GLenum);
         void       (WINE_GLAPI *p_glNamedBufferPageCommitmentARB)(GLuint,GLintptr,GLsizeiptr,GLboolean);
         void       (WINE_GLAPI *p_glNamedBufferPageCommitmentEXT)(GLuint,GLintptr,GLsizeiptr,GLboolean);
         void       (WINE_GLAPI *p_glNamedBufferStorage)(GLuint,GLsizeiptr,const void*,GLbitfield);
         void       (WINE_GLAPI *p_glNamedBufferStorageEXT)(GLuint,GLsizeiptr,const void*,GLbitfield);
+        void       (WINE_GLAPI *p_glNamedBufferStorageExternalEXT)(GLuint,GLintptr,GLsizeiptr,void *,GLbitfield);
+        void       (WINE_GLAPI *p_glNamedBufferStorageMemEXT)(GLuint,GLsizeiptr,GLuint,GLuint64);
         void       (WINE_GLAPI *p_glNamedBufferSubData)(GLuint,GLintptr,GLsizeiptr,const void*);
         void       (WINE_GLAPI *p_glNamedBufferSubDataEXT)(GLuint,GLintptr,GLsizeiptr,const void*);
         void       (WINE_GLAPI *p_glNamedCopyBufferSubDataEXT)(GLuint,GLuint,GLintptr,GLintptr,GLsizeiptr);
@@ -1735,6 +1783,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glNamedFramebufferRenderbufferEXT)(GLuint,GLenum,GLenum,GLuint);
         void       (WINE_GLAPI *p_glNamedFramebufferSampleLocationsfvARB)(GLuint,GLuint,GLsizei,const GLfloat*);
         void       (WINE_GLAPI *p_glNamedFramebufferSampleLocationsfvNV)(GLuint,GLuint,GLsizei,const GLfloat*);
+        void       (WINE_GLAPI *p_glNamedFramebufferSamplePositionsfvAMD)(GLuint,GLuint,GLuint,const GLfloat*);
         void       (WINE_GLAPI *p_glNamedFramebufferTexture)(GLuint,GLenum,GLuint,GLint);
         void       (WINE_GLAPI *p_glNamedFramebufferTexture1DEXT)(GLuint,GLenum,GLenum,GLuint,GLint);
         void       (WINE_GLAPI *p_glNamedFramebufferTexture2DEXT)(GLuint,GLenum,GLenum,GLuint,GLint);
@@ -1851,6 +1900,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glPointSizexOES)(GLfixed);
         GLint      (WINE_GLAPI *p_glPollAsyncSGIX)(GLuint*);
         GLint      (WINE_GLAPI *p_glPollInstrumentsSGIX)(GLint*);
+        void       (WINE_GLAPI *p_glPolygonOffsetClamp)(GLfloat,GLfloat,GLfloat);
         void       (WINE_GLAPI *p_glPolygonOffsetClampEXT)(GLfloat,GLfloat,GLfloat);
         void       (WINE_GLAPI *p_glPolygonOffsetEXT)(GLfloat,GLfloat);
         void       (WINE_GLAPI *p_glPolygonOffsetxOES)(GLfixed,GLfixed);
@@ -2053,6 +2103,8 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glQueryCounter)(GLuint,GLenum);
         GLbitfield (WINE_GLAPI *p_glQueryMatrixxOES)(GLfixed*,GLint*);
         void       (WINE_GLAPI *p_glQueryObjectParameteruiAMD)(GLenum,GLuint,GLenum,GLuint);
+        GLint      (WINE_GLAPI *p_glQueryResourceNV)(GLenum,GLint,GLuint,GLint*);
+        void       (WINE_GLAPI *p_glQueryResourceTagNV)(GLint,const GLchar*);
         void       (WINE_GLAPI *p_glRasterPos2xOES)(GLfixed,GLfixed);
         void       (WINE_GLAPI *p_glRasterPos2xvOES)(const GLfixed*);
         void       (WINE_GLAPI *p_glRasterPos3xOES)(GLfixed,GLfixed,GLfixed);
@@ -2067,7 +2119,9 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glRectxOES)(GLfixed,GLfixed,GLfixed,GLfixed);
         void       (WINE_GLAPI *p_glRectxvOES)(const GLfixed*,const GLfixed*);
         void       (WINE_GLAPI *p_glReferencePlaneSGIX)(const GLdouble*);
+        GLboolean  (WINE_GLAPI *p_glReleaseKeyedMutexWin32EXT)(GLuint,GLuint64);
         void       (WINE_GLAPI *p_glReleaseShaderCompiler)(void);
+        void       (WINE_GLAPI *p_glRenderGpuMaskNV)(GLbitfield);
         void       (WINE_GLAPI *p_glRenderbufferStorage)(GLenum,GLenum,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glRenderbufferStorageEXT)(GLenum,GLenum,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glRenderbufferStorageMultisample)(GLenum,GLsizei,GLenum,GLsizei,GLsizei);
@@ -2168,6 +2222,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glSelectPerfMonitorCountersAMD)(GLuint,GLboolean,GLuint,GLint,GLuint*);
         void       (WINE_GLAPI *p_glSelectTextureCoordSetSGIS)(GLenum);
         void       (WINE_GLAPI *p_glSelectTextureSGIS)(GLenum);
+        void       (WINE_GLAPI *p_glSemaphoreParameterui64vEXT)(GLuint,GLenum,const GLuint64*);
         void       (WINE_GLAPI *p_glSeparableFilter2D)(GLenum,GLenum,GLsizei,GLsizei,GLenum,GLenum,const void*,const void*);
         void       (WINE_GLAPI *p_glSeparableFilter2DEXT)(GLenum,GLenum,GLsizei,GLsizei,GLenum,GLenum,const void*,const void*);
         void       (WINE_GLAPI *p_glSetFenceAPPLE)(GLuint);
@@ -2184,6 +2239,11 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glShaderSourceARB)(GLhandleARB,GLsizei,const GLcharARB**,const GLint*);
         void       (WINE_GLAPI *p_glShaderStorageBlockBinding)(GLuint,GLuint,GLuint);
         void       (WINE_GLAPI *p_glSharpenTexFuncSGIS)(GLenum,GLsizei,const GLfloat*);
+        void       (WINE_GLAPI *p_glSignalSemaphoreEXT)(GLuint,GLuint,const GLuint*,GLuint,const GLuint*,const GLenum*);
+        void       (WINE_GLAPI *p_glSignalVkFenceNV)(GLuint64);
+        void       (WINE_GLAPI *p_glSignalVkSemaphoreNV)(GLuint64);
+        void       (WINE_GLAPI *p_glSpecializeShader)(GLuint,const GLchar*,GLuint,const GLuint*,const GLuint*);
+        void       (WINE_GLAPI *p_glSpecializeShaderARB)(GLuint,const GLchar*,GLuint,const GLuint*,const GLuint*);
         void       (WINE_GLAPI *p_glSpriteParameterfSGIX)(GLenum,GLfloat);
         void       (WINE_GLAPI *p_glSpriteParameterfvSGIX)(GLenum,const GLfloat*);
         void       (WINE_GLAPI *p_glSpriteParameteriSGIX)(GLenum,GLint);
@@ -2309,6 +2369,11 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glTexStorage2DMultisample)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLboolean);
         void       (WINE_GLAPI *p_glTexStorage3D)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glTexStorage3DMultisample)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei,GLboolean);
+        void       (WINE_GLAPI *p_glTexStorageMem1DEXT)(GLenum,GLsizei,GLenum,GLsizei,GLuint,GLuint64);
+        void       (WINE_GLAPI *p_glTexStorageMem2DEXT)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLuint,GLuint64);
+        void       (WINE_GLAPI *p_glTexStorageMem2DMultisampleEXT)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLboolean,GLuint,GLuint64);
+        void       (WINE_GLAPI *p_glTexStorageMem3DEXT)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei,GLuint,GLuint64);
+        void       (WINE_GLAPI *p_glTexStorageMem3DMultisampleEXT)(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei,GLboolean,GLuint,GLuint64);
         void       (WINE_GLAPI *p_glTexStorageSparseAMD)(GLenum,GLenum,GLsizei,GLsizei,GLsizei,GLsizei,GLbitfield);
         void       (WINE_GLAPI *p_glTexSubImage1DEXT)(GLenum,GLint,GLint,GLsizei,GLenum,GLenum,const void*);
         void       (WINE_GLAPI *p_glTexSubImage2DEXT)(GLenum,GLint,GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,const void*);
@@ -2357,6 +2422,11 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glTextureStorage3DEXT)(GLuint,GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei);
         void       (WINE_GLAPI *p_glTextureStorage3DMultisample)(GLuint,GLsizei,GLenum,GLsizei,GLsizei,GLsizei,GLboolean);
         void       (WINE_GLAPI *p_glTextureStorage3DMultisampleEXT)(GLuint,GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLsizei,GLboolean);
+        void       (WINE_GLAPI *p_glTextureStorageMem1DEXT)(GLuint,GLsizei,GLenum,GLsizei,GLuint,GLuint64);
+        void       (WINE_GLAPI *p_glTextureStorageMem2DEXT)(GLuint,GLsizei,GLenum,GLsizei,GLsizei,GLuint,GLuint64);
+        void       (WINE_GLAPI *p_glTextureStorageMem2DMultisampleEXT)(GLuint,GLsizei,GLenum,GLsizei,GLsizei,GLboolean,GLuint,GLuint64);
+        void       (WINE_GLAPI *p_glTextureStorageMem3DEXT)(GLuint,GLsizei,GLenum,GLsizei,GLsizei,GLsizei,GLuint,GLuint64);
+        void       (WINE_GLAPI *p_glTextureStorageMem3DMultisampleEXT)(GLuint,GLsizei,GLenum,GLsizei,GLsizei,GLsizei,GLboolean,GLuint,GLuint64);
         void       (WINE_GLAPI *p_glTextureStorageSparseAMD)(GLuint,GLenum,GLenum,GLsizei,GLsizei,GLsizei,GLsizei,GLbitfield);
         void       (WINE_GLAPI *p_glTextureSubImage1D)(GLuint,GLint,GLint,GLsizei,GLenum,GLenum,const void*);
         void       (WINE_GLAPI *p_glTextureSubImage1DEXT)(GLuint,GLenum,GLint,GLint,GLsizei,GLenum,GLenum,const void*);
@@ -2857,7 +2927,11 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glViewportArrayv)(GLuint,GLsizei,const GLfloat*);
         void       (WINE_GLAPI *p_glViewportIndexedf)(GLuint,GLfloat,GLfloat,GLfloat,GLfloat);
         void       (WINE_GLAPI *p_glViewportIndexedfv)(GLuint,const GLfloat*);
+        void       (WINE_GLAPI *p_glViewportPositionWScaleNV)(GLuint,GLfloat,GLfloat);
+        void       (WINE_GLAPI *p_glViewportSwizzleNV)(GLuint,GLenum,GLenum,GLenum,GLenum);
+        void       (WINE_GLAPI *p_glWaitSemaphoreEXT)(GLuint,GLuint,const GLuint*,GLuint,const GLuint*,const GLenum*);
         void       (WINE_GLAPI *p_glWaitSync)(GLsync,GLbitfield,GLuint64);
+        void       (WINE_GLAPI *p_glWaitVkSemaphoreNV)(GLuint64);
         void       (WINE_GLAPI *p_glWeightPathsNV)(GLuint,GLsizei,const GLuint*,const GLfloat*);
         void       (WINE_GLAPI *p_glWeightPointerARB)(GLint,GLenum,GLsizei,const void*);
         void       (WINE_GLAPI *p_glWeightbvARB)(GLint,const GLbyte*);
@@ -2924,6 +2998,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glWindowPos4ivMESA)(const GLint*);
         void       (WINE_GLAPI *p_glWindowPos4sMESA)(GLshort,GLshort,GLshort,GLshort);
         void       (WINE_GLAPI *p_glWindowPos4svMESA)(const GLshort*);
+        void       (WINE_GLAPI *p_glWindowRectanglesEXT)(GLenum,GLsizei,const GLint*);
         void       (WINE_GLAPI *p_glWriteMaskEXT)(GLuint,GLuint,GLenum,GLenum,GLenum,GLenum);
         void*      (WINE_GLAPI *p_wglAllocateMemoryNV)(GLsizei,GLfloat,GLfloat,GLfloat);
         BOOL       (WINE_GLAPI *p_wglBindTexImageARB)(struct wgl_pbuffer *,int);
