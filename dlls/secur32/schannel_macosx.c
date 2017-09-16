@@ -185,6 +185,7 @@ enum {
 struct mac_session {
     SSLContextRef context;
     struct schan_transport *transport;
+    CRITICAL_SECTION cs;
 };
 
 
@@ -742,6 +743,9 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
     if (!s)
         return FALSE;
 
+    InitializeCriticalSection(&s->cs);
+    s->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": mac_session.cs");
+
     status = SSLNewContext(cred->credential_use == SECPKG_CRED_INBOUND, &s->context);
     if (status != noErr)
     {
@@ -803,6 +807,7 @@ void schan_imp_dispose_session(schan_imp_session session)
     status = SSLDisposeContext(s->context);
     if (status != noErr)
         ERR("Failed to dispose of session context: %d\n", status);
+    DeleteCriticalSection(&s->cs);
     HeapFree(GetProcessHeap(), 0, s);
 }
 
@@ -1090,7 +1095,9 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
 
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
+    EnterCriticalSection(&s->cs);
     status = SSLWrite(s->context, buffer, *length, length);
+    LeaveCriticalSection(&s->cs);
     if (status == noErr)
         TRACE("Wrote %lu bytes\n", *length);
     else if (status == errSSLWouldBlock)
@@ -1120,7 +1127,9 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
 
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
+    EnterCriticalSection(&s->cs);
     status = SSLRead(s->context, buffer, *length, length);
+    LeaveCriticalSection(&s->cs);
     if (status == noErr || status == errSSLClosedGraceful)
         TRACE("Read %lu bytes\n", *length);
     else if (status == errSSLWouldBlock)
