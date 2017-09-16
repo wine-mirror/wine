@@ -56,6 +56,7 @@ struct schan_handle
 struct schan_context
 {
     schan_imp_session session;
+    struct schan_transport transport;
     ULONG req_ctx_attr;
     const CERT_CONTEXT *cert;
 };
@@ -788,7 +789,6 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     struct schan_context *ctx;
     struct schan_buffers *out_buffers;
     struct schan_credentials *cred;
-    struct schan_transport transport;
     SIZE_T expected_size = ~0UL;
     SECURITY_STATUS ret;
 
@@ -831,6 +831,9 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             HeapFree(GetProcessHeap(), 0, ctx);
             return SEC_E_INTERNAL_ERROR;
         }
+
+        ctx->transport.ctx = ctx;
+        schan_imp_set_session_transport(ctx->session, &ctx->transport);
 
         if (pszTargetName && *pszTargetName)
         {
@@ -890,24 +893,22 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
 
     ctx->req_ctx_attr = fContextReq;
 
-    transport.ctx = ctx;
-    init_schan_buffers(&transport.in, pInput, schan_init_sec_ctx_get_next_input_buffer);
-    transport.in.limit = expected_size;
-    init_schan_buffers(&transport.out, pOutput, schan_init_sec_ctx_get_next_output_buffer);
-    schan_imp_set_session_transport(ctx->session, &transport);
+    init_schan_buffers(&ctx->transport.in, pInput, schan_init_sec_ctx_get_next_input_buffer);
+    ctx->transport.in.limit = expected_size;
+    init_schan_buffers(&ctx->transport.out, pOutput, schan_init_sec_ctx_get_next_output_buffer);
 
     /* Perform the TLS handshake */
     ret = schan_imp_handshake(ctx->session);
 
-    if(transport.in.offset && transport.in.offset != pInput->pBuffers[0].cbBuffer) {
+    if(ctx->transport.in.offset && ctx->transport.in.offset != pInput->pBuffers[0].cbBuffer) {
         if(pInput->cBuffers<2 || pInput->pBuffers[1].BufferType!=SECBUFFER_EMPTY)
             return SEC_E_INVALID_TOKEN;
 
         pInput->pBuffers[1].BufferType = SECBUFFER_EXTRA;
-        pInput->pBuffers[1].cbBuffer = pInput->pBuffers[0].cbBuffer-transport.in.offset;
+        pInput->pBuffers[1].cbBuffer = pInput->pBuffers[0].cbBuffer-ctx->transport.in.offset;
     }
 
-    out_buffers = &transport.out;
+    out_buffers = &ctx->transport.out;
     if (out_buffers->current_buffer_idx != -1)
     {
         SecBuffer *buffer = &out_buffers->desc->pBuffers[out_buffers->current_buffer_idx];
@@ -1100,7 +1101,6 @@ static int schan_encrypt_message_get_next_buffer_token(const struct schan_transp
 static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle,
         ULONG quality, PSecBufferDesc message, ULONG message_seq_no)
 {
-    struct schan_transport transport;
     struct schan_context *ctx;
     struct schan_buffers *b;
     SECURITY_STATUS status;
@@ -1130,13 +1130,10 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     data = HeapAlloc(GetProcessHeap(), 0, data_size);
     memcpy(data, buffer->pvBuffer, data_size);
 
-    transport.ctx = ctx;
-    init_schan_buffers(&transport.in, NULL, NULL);
     if (schan_find_sec_buffer_idx(message, 0, SECBUFFER_STREAM_HEADER) != -1)
-        init_schan_buffers(&transport.out, message, schan_encrypt_message_get_next_buffer);
+        init_schan_buffers(&ctx->transport.out, message, schan_encrypt_message_get_next_buffer);
     else
-        init_schan_buffers(&transport.out, message, schan_encrypt_message_get_next_buffer_token);
-    schan_imp_set_session_transport(ctx->session, &transport);
+        init_schan_buffers(&ctx->transport.out, message, schan_encrypt_message_get_next_buffer_token);
 
     length = data_size;
     status = schan_imp_send(ctx->session, data, &length);
@@ -1146,7 +1143,7 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     if (length != data_size)
         status = SEC_E_INTERNAL_ERROR;
 
-    b = &transport.out;
+    b = &ctx->transport.out;
     b->desc->pBuffers[b->current_buffer_idx].cbBuffer = b->offset;
     HeapFree(GetProcessHeap(), 0, data);
 
@@ -1222,7 +1219,6 @@ static void schan_decrypt_fill_buffer(PSecBufferDesc message, ULONG buffer_type,
 static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle,
         PSecBufferDesc message, ULONG message_seq_no, PULONG quality)
 {
-    struct schan_transport transport;
     struct schan_context *ctx;
     SecBuffer *buffer;
     SIZE_T data_size;
@@ -1266,11 +1262,8 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     data_size = expected_size - 5;
     data = HeapAlloc(GetProcessHeap(), 0, data_size);
 
-    transport.ctx = ctx;
-    init_schan_buffers(&transport.in, message, schan_decrypt_message_get_next_buffer);
-    transport.in.limit = expected_size;
-    init_schan_buffers(&transport.out, NULL, NULL);
-    schan_imp_set_session_transport(ctx->session, &transport);
+    init_schan_buffers(&ctx->transport.in, message, schan_decrypt_message_get_next_buffer);
+    ctx->transport.in.limit = expected_size;
 
     while (received < data_size)
     {
