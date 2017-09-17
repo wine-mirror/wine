@@ -250,6 +250,9 @@ GpStatus WINGDIPAPI GdipCreateHatchBrush(HatchStyle hatchstyle, ARGB forecol, AR
 
     if(!brush)  return InvalidParameter;
 
+    if(hatchstyle < HatchStyleMin || hatchstyle > HatchStyleMax)
+        return InvalidParameter;
+
     *brush = heap_alloc_zero(sizeof(GpHatch));
     if (!*brush) return OutOfMemory;
 

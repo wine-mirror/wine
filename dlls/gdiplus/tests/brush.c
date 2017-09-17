@@ -45,6 +45,33 @@ static void test_constructor_destructor(void)
     expect(Ok, status);
 }
 
+static void test_createHatchBrush(void)
+{
+    GpStatus status;
+    GpHatch *brush;
+
+    status = GdipCreateHatchBrush(HatchStyleMin, 1, 2, &brush);
+    expect(Ok, status);
+    ok(brush != NULL, "Expected the brush to be initialized.");
+
+    GdipDeleteBrush((GpBrush *)brush);
+
+    status = GdipCreateHatchBrush(HatchStyleMax, 1, 2, &brush);
+    expect(Ok, status);
+    ok(brush != NULL, "Expected the brush to be initialized.");
+
+    GdipDeleteBrush((GpBrush *)brush);
+
+    status = GdipCreateHatchBrush(HatchStyle05Percent, 1, 2, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipCreateHatchBrush((HatchStyle)(HatchStyleMin - 1), 1, 2, &brush);
+    expect(InvalidParameter, status);
+
+    status = GdipCreateHatchBrush((HatchStyle)(HatchStyleMax + 1), 1, 2, &brush);
+    expect(InvalidParameter, status);
+}
+
 static void test_type(void)
 {
     GpStatus status;
@@ -1563,6 +1590,7 @@ START_TEST(brush)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_constructor_destructor();
+    test_createHatchBrush();
     test_type();
     test_gradientblendcount();
     test_getblend();
