@@ -180,10 +180,10 @@ typedef struct {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
 	HWND		hInstance; /* Should be an HINSTANCE but MS made a typo */
-	DWORD	        rgbResult;
-	LPDWORD         lpCustColors;
+	COLORREF        rgbResult;
+	COLORREF       *lpCustColors;
 	DWORD 		Flags;
-	DWORD		lCustData;
+	LPARAM		lCustData;
         LPCCHOOKPROC    lpfnHook;
 	LPCSTR 		lpTemplateName;
 } CHOOSECOLORA;
@@ -193,10 +193,10 @@ typedef struct {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
 	HWND		hInstance; /* Should be an HINSTANCE but MS made a typo */
-	DWORD	        rgbResult;
-	LPDWORD         lpCustColors;
+	COLORREF        rgbResult;
+	COLORREF       *lpCustColors;
 	DWORD 		Flags;
-	DWORD		lCustData;
+	LPARAM		lCustData;
         LPCCHOOKPROC    lpfnHook;
 	LPCWSTR 	lpTemplateName;
 } CHOOSECOLORW;
