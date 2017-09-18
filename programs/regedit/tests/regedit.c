@@ -67,48 +67,38 @@ static BOOL write_file(const void *str, DWORD size)
     return ret;
 }
 
-#define exec_import_str(c) r_exec_import_str(__LINE__, c)
-static BOOL r_exec_import_str(unsigned line, const char *file_contents)
-{
-    BOOL br;
+#define exec_import_str(c)  import_reg(__LINE__,c,FALSE)
+#define exec_import_wstr(c) import_reg(__LINE__,c,TRUE)
 
-    if (!write_file(file_contents, strlen(file_contents)))
-        return FALSE;
+static BOOL import_reg(unsigned line, const char *contents, BOOL unicode)
+{
+    int lenA;
+    BOOL ret;
+
+    lenA = strlen(contents);
+
+    if (unicode)
+    {
+        int len = MultiByteToWideChar(CP_UTF8, 0, contents, lenA, NULL, 0);
+        int size = len * sizeof(WCHAR);
+        WCHAR *wstr = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!wstr) return FALSE;
+        MultiByteToWideChar(CP_UTF8, 0, contents, lenA, wstr, len);
+
+        ret = write_file(wstr, size);
+        HeapFree(GetProcessHeap(), 0, wstr);
+    }
+    else
+        ret = write_file(contents, lenA);
+
+    if (!ret) return FALSE;
 
     run_regedit_exe("regedit.exe /s test.reg");
 
-    br = DeleteFileA("test.reg");
-    lok(br, "DeleteFile failed: %u\n", GetLastError());
+    ret = DeleteFileA("test.reg");
+    lok(ret, "DeleteFile failed: %u\n", GetLastError());
 
-    return br;
-}
-
-#define exec_import_wstr(c) r_exec_import_wstr(__LINE__, c)
-static BOOL r_exec_import_wstr(unsigned line, const char *file_contents)
-{
-    int lenA, len, memsize;
-    WCHAR *wstr;
-    BOOL br = FALSE;
-
-    lenA = strlen(file_contents);
-
-    len = MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, NULL, 0);
-    memsize = len * sizeof(WCHAR);
-    wstr = HeapAlloc(GetProcessHeap(), 0, memsize);
-    if (!wstr) return FALSE;
-    MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, wstr, len);
-
-    if (!write_file(wstr, memsize))
-        goto exit;
-
-    run_regedit_exe("regedit.exe /s test.reg");
-
-    br = DeleteFileA("test.reg");
-    lok(br, "DeleteFile failed: %u\n", GetLastError());
-
-exit:
-    HeapFree(GetProcessHeap(), 0, wstr);
-    return br;
+    return ret;
 }
 
 #define TODO_REG_TYPE    (0x0001u)
