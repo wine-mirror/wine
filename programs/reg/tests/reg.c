@@ -750,47 +750,37 @@ static BOOL write_file(const void *str, DWORD size)
     return ret;
 }
 
-#define test_import_str(c,r) test_import_str_(__LINE__,c,r)
-static BOOL test_import_str_(unsigned line, const char *file_contents, DWORD *rc)
+#define test_import_str(c,r) import_reg(__LINE__,c,FALSE,r)
+#define test_import_wstr(c,r) import_reg(__LINE__,c,TRUE,r)
+
+static BOOL import_reg(unsigned line, const char *contents, BOOL unicode, DWORD *rc)
 {
+    int lenA;
     BOOL ret;
 
-    if (!write_file(file_contents, strlen(file_contents)))
-        return FALSE;
+    lenA = strlen(contents);
+
+    if (unicode)
+    {
+        int len = MultiByteToWideChar(CP_UTF8, 0, contents, lenA, NULL, 0);
+        int size = len * sizeof(WCHAR);
+        WCHAR *wstr = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!wstr) return FALSE;
+        MultiByteToWideChar(CP_UTF8, 0, contents, lenA, wstr, len);
+
+        ret = write_file(wstr, size);
+        HeapFree(GetProcessHeap(), 0, wstr);
+    }
+    else
+        ret = write_file(contents, lenA);
+
+    if (!ret) return FALSE;
 
     run_reg_exe("reg import test.reg", rc);
 
     ret = DeleteFileA("test.reg");
     lok(ret, "DeleteFile failed: %u\n", GetLastError());
 
-    return ret;
-}
-
-#define test_import_wstr(c,r) test_import_wstr_(__LINE__,c,r)
-static BOOL test_import_wstr_(unsigned line, const char *file_contents, DWORD *rc)
-{
-    int lenA, len, memsize;
-    WCHAR *wstr;
-    BOOL ret = FALSE;
-
-    lenA = strlen(file_contents);
-
-    len = MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, NULL, 0);
-    memsize = len * sizeof(WCHAR);
-    wstr = HeapAlloc(GetProcessHeap(), 0, memsize);
-    if (!wstr) return FALSE;
-    MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, wstr, len);
-
-    if (!write_file(wstr, memsize))
-        goto exit;
-
-    run_reg_exe("reg import test.reg", rc);
-
-    ret = DeleteFileA("test.reg");
-    lok(ret, "DeleteFile failed: %u\n", GetLastError());
-
-exit:
-    HeapFree(GetProcessHeap(), 0, wstr);
     return ret;
 }
 
