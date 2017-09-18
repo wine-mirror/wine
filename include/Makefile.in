@@ -66,6 +66,7 @@ IDL_SRCS = \
 	dwrite_3.idl \
 	dxgi.idl \
 	dxgi1_2.idl \
+	dxgi1_3.idl \
 	dxva2api.idl \
 	dyngraph.idl \
 	endpointvolume.idl \
