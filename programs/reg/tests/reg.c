@@ -4210,11 +4210,55 @@ static void test_import_31(void)
     ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", err);
 }
 
+#define compare_export(f,e) compare_export_(__LINE__,f,e)
+static BOOL compare_export_(unsigned line, const char *filename, const char *expected)
+{
+    FILE *fp;
+    long file_size;
+    WCHAR *fbuf = NULL, *wstr = NULL;
+    size_t len;
+    BOOL ret = FALSE;
+
+    fp = fopen(filename, "rb");
+    if (!fp) return FALSE;
+
+    if (fseek(fp, 0, SEEK_END)) goto error;
+    file_size = ftell(fp);
+    if (file_size == -1) goto error;
+    rewind(fp);
+
+    fbuf = HeapAlloc(GetProcessHeap(), 0, file_size + sizeof(WCHAR));
+    if (!fbuf) goto error;
+
+    fread(fbuf, file_size, 1, fp);
+    fbuf[file_size/sizeof(WCHAR)] = 0;
+    fclose(fp);
+
+    len = MultiByteToWideChar(CP_UTF8, 0, expected, -1, NULL, 0);
+    wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!wstr) goto exit;
+    MultiByteToWideChar(CP_UTF8, 0, expected, -1, wstr, len);
+
+    lok(!lstrcmpW(fbuf, wstr), "export data does not match expected data\n");
+    ret = TRUE;
+
+exit:
+    HeapFree(GetProcessHeap(), 0, fbuf);
+    HeapFree(GetProcessHeap(), 0, wstr);
+    return ret;
+
+error:
+    fclose(fp);
+    return FALSE;
+}
+
 static void test_export(void)
 {
     LONG err;
     DWORD r, os_version, major_version, minor_version;
     HKEY hkey;
+    const char *empty_key_test = "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+                                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n\r\n";
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
@@ -4275,6 +4319,8 @@ static void test_export(void)
     }
     else /* Windows XP (32-bit) and older */
         win_skip("File overwrite flag [/y] not supported; skipping position tests\n");
+
+    todo_wine ok(compare_export("file.reg", empty_key_test), "compare_export() failed\n");
 
     err = DeleteFileA("file.reg");
     todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
