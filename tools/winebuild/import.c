@@ -708,7 +708,7 @@ int has_imports(void)
 /* output the import table of a Win32 module */
 static void output_immediate_imports(void)
 {
-    int j;
+    int i, j;
     struct import *import;
 
     if (list_empty( &dll_imports )) return;  /* no immediate imports */
@@ -742,30 +742,28 @@ static void output_immediate_imports(void)
     output( "\t.long 0\n" );     /* FirstThunk */
 
     output( "\n\t.align %d\n", get_alignment(get_ptr_size()) );
-    output( ".L__wine_spec_import_data_names:\n" );
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+    /* output the names twice, once for OriginalFirstThunk and once for FirstThunk */
+    for (i = 0; i < 2; i++)
     {
-        for (j = 0; j < import->nb_imports; j++)
+        output( ".L__wine_spec_import_data_%s:\n", i ? "ptrs" : "names" );
+        LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
         {
-            struct import_func *func = &import->imports[j];
-            if (func->name)
-                output( "\t%s .L__wine_spec_import_data_%s_%s-.L__wine_spec_rva_base\n",
-                        get_asm_ptr_keyword(), import->c_name, func->name );
-            else
+            for (j = 0; j < import->nb_imports; j++)
             {
-                if (get_ptr_size() == 8)
-                    output( "\t.quad 0x800000000000%04x\n", func->ordinal );
+                struct import_func *func = &import->imports[j];
+                if (func->name)
+                    output( "\t%s .L__wine_spec_import_data_%s_%s-.L__wine_spec_rva_base\n",
+                            get_asm_ptr_keyword(), import->c_name, func->name );
                 else
-                    output( "\t.long 0x8000%04x\n", func->ordinal );
+                {
+                    if (get_ptr_size() == 8)
+                        output( "\t.quad 0x800000000000%04x\n", func->ordinal );
+                    else
+                        output( "\t.long 0x8000%04x\n", func->ordinal );
+                }
             }
+            output( "\t%s 0\n", get_asm_ptr_keyword() );
         }
-        output( "\t%s 0\n", get_asm_ptr_keyword() );
-    }
-    output( ".L__wine_spec_import_data_ptrs:\n" );
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
-    {
-        for (j = 0; j < import->nb_imports; j++) output( "\t%s 0\n", get_asm_ptr_keyword() );
-        output( "\t%s 0\n", get_asm_ptr_keyword() );
     }
     output( ".L__wine_spec_imports_end:\n" );
 
