@@ -4213,7 +4213,8 @@ static void test_import_31(void)
 static void test_export(void)
 {
     LONG err;
-    DWORD r;
+    DWORD r, os_version, major_version, minor_version;
+    HKEY hkey;
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
@@ -4250,6 +4251,36 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg file2.reg", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    /* Test registry export with an empty key */
+    add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
+
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+
+    os_version = GetVersion();
+    major_version = LOBYTE(LOWORD(os_version));
+    minor_version = HIBYTE(LOWORD(os_version));
+
+    if (major_version > 5 || (major_version == 5 && minor_version == 2))
+    {
+        run_reg_exe("reg export /y HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
+        ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+        run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " /y file.reg", &r);
+        ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+        run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
+        todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    }
+    else /* Windows XP (32-bit) and older */
+        win_skip("File overwrite flag [/y] not supported; skipping position tests\n");
+
+    err = DeleteFileA("file.reg");
+    todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
+
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", err);
 }
 
 START_TEST(reg)
