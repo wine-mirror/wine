@@ -1653,7 +1653,7 @@ DECL_HANDLER(get_thread_context)
         memset( context, 0, sizeof(context_t) );
         context->cpu = thread->process->cpu;
         if (thread->context) copy_context( context, thread->context, req->flags & ~flags );
-        if (flags) get_thread_context( thread, context, flags );
+        if (req->flags & flags) get_thread_context( thread, context, req->flags & flags );
     }
     release_object( thread );
 }
