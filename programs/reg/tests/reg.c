@@ -128,6 +128,16 @@ static void add_key_(unsigned line, const HKEY hkey, const char *path, HKEY *sub
     lok(err == ERROR_SUCCESS, "RegCreateKeyExA failed: %d\n", err);
 }
 
+#define add_value(k,n,t,d,s) add_value_(__LINE__,k,n,t,d,s)
+static void add_value_(unsigned line, HKEY hkey, const char *name, DWORD type,
+                       const void *data, size_t size)
+{
+    LONG err;
+
+    err = RegSetValueExA(hkey, name, 0, type, (const BYTE *)data, size);
+    lok(err == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", err);
+}
+
 static void test_add(void)
 {
     HKEY hkey;
@@ -527,15 +537,9 @@ static void test_delete(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
-
-    err = RegSetValueExA(hkey, "foo", 0, REG_DWORD, (LPBYTE)&deadbeef, sizeof(deadbeef));
-    ok(err == ERROR_SUCCESS, "got %d\n" ,err);
-
-    err = RegSetValueExA(hkey, "bar", 0, REG_DWORD, (LPBYTE)&deadbeef, sizeof(deadbeef));
-    ok(err == ERROR_SUCCESS, "got %d\n" ,err);
-
-    err = RegSetValueExA(hkey, "", 0, REG_DWORD, (LPBYTE)&deadbeef, sizeof(deadbeef));
-    ok(err == ERROR_SUCCESS, "got %d\n" ,err);
+    add_value(hkey, "foo", REG_DWORD, &deadbeef, sizeof(deadbeef));
+    add_value(hkey, "bar", REG_DWORD, &deadbeef, sizeof(deadbeef));
+    add_value(hkey, NULL, REG_DWORD, &deadbeef, sizeof(deadbeef));
 
     add_key(hkey, "subkey", &hsubkey);
     RegCloseKey(hsubkey);
@@ -591,14 +595,9 @@ static void test_query(void)
     ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE /* WinXP */),
        "got exit code %d, expected 0\n", r);
 
-    err = RegSetValueExA(key, "Test", 0, REG_SZ, (BYTE *)hello, sizeof(hello));
-    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
-
-    err = RegSetValueExA(key, "Wine", 0, REG_DWORD, (BYTE *)&dword1, sizeof(dword1));
-    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
-
-    err = RegSetValueExA(key, NULL, 0, REG_SZ, (BYTE *)empty1, sizeof(empty1));
-    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    add_value(key, "Test", REG_SZ, hello, sizeof(hello));
+    add_value(key, "Wine", REG_DWORD, &dword1, sizeof(dword1));
+    add_value(key, NULL, REG_SZ, empty1, sizeof(empty1));
 
     run_reg_exe("reg query HKCU\\" KEY_BASE, &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
@@ -620,15 +619,9 @@ static void test_query(void)
 
     /* Create a test subkey */
     add_key(key, "Subkey", &subkey);
-
-    err = RegSetValueExA(subkey, "Test", 0, REG_SZ, (BYTE *)world, sizeof(world));
-    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
-
-    err = RegSetValueExA(subkey, "Wine", 0, REG_DWORD, (BYTE *)&dword2, sizeof(dword2));
-    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
-
-    err = RegSetValueExA(subkey, NULL, 0, REG_SZ, (BYTE *)empty2, sizeof(empty2));
-    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    add_value(subkey, "Test", REG_SZ, world, sizeof(world));
+    add_value(subkey, "Wine", REG_DWORD, &dword2, sizeof(dword2));
+    add_value(subkey, NULL, REG_SZ, empty2, sizeof(empty2));
 
     err = RegCloseKey(subkey);
     ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
