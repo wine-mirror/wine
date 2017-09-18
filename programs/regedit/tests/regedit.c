@@ -48,22 +48,32 @@ static BOOL run_regedit_exe_(unsigned line, const char *cmd)
     return (ret != WAIT_TIMEOUT);
 }
 
+static BOOL write_file(const void *str, DWORD size)
+{
+    HANDLE file;
+    BOOL ret;
+    DWORD written;
+
+    file = CreateFileA("test.reg", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create registry file\n");
+    if (file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    ret = WriteFile(file, str, size, &written, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    CloseHandle(file);
+
+    return ret;
+}
+
 #define exec_import_str(c) r_exec_import_str(__LINE__, c)
 static BOOL r_exec_import_str(unsigned line, const char *file_contents)
 {
-    HANDLE regfile;
-    DWORD written;
     BOOL br;
 
-    regfile = CreateFileA("test.reg", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-            FILE_ATTRIBUTE_NORMAL, NULL);
-    lok(regfile != INVALID_HANDLE_VALUE, "Failed to create test.reg file\n");
-    if(regfile == INVALID_HANDLE_VALUE)
+    if (!write_file(file_contents, strlen(file_contents)))
         return FALSE;
-
-    br = WriteFile(regfile, file_contents, strlen(file_contents), &written, NULL);
-    lok(br, "WriteFile failed: %u\n", GetLastError());
-    CloseHandle(regfile);
 
     run_regedit_exe("regedit.exe /s test.reg");
 
@@ -78,9 +88,7 @@ static BOOL r_exec_import_wstr(unsigned line, const char *file_contents)
 {
     int lenA, len, memsize;
     WCHAR *wstr;
-    HANDLE regfile;
-    DWORD written;
-    BOOL br;
+    BOOL br = FALSE;
 
     lenA = strlen(file_contents);
 
@@ -90,26 +98,16 @@ static BOOL r_exec_import_wstr(unsigned line, const char *file_contents)
     if (!wstr) return FALSE;
     MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, wstr, len);
 
-    regfile = CreateFileA("test.reg", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-            FILE_ATTRIBUTE_NORMAL, NULL);
-    lok(regfile != INVALID_HANDLE_VALUE, "Failed to create test.reg file\n");
-    if (regfile == INVALID_HANDLE_VALUE)
-    {
-        HeapFree(GetProcessHeap(), 0, wstr);
-        return FALSE;
-    }
-
-    br = WriteFile(regfile, wstr, memsize, &written, NULL);
-    lok(br, "WriteFile failed: %u\n", GetLastError());
-    CloseHandle(regfile);
-
-    HeapFree(GetProcessHeap(), 0, wstr);
+    if (!write_file(wstr, memsize))
+        goto exit;
 
     run_regedit_exe("regedit.exe /s test.reg");
 
     br = DeleteFileA("test.reg");
     lok(br, "DeleteFile failed: %u\n", GetLastError());
 
+exit:
+    HeapFree(GetProcessHeap(), 0, wstr);
     return br;
 }
 
