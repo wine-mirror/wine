@@ -320,22 +320,27 @@ static inline void fixup_rva_dwords( DWORD *ptr, int delta, unsigned int count )
 }
 
 
+/* fixup an array of name/ordinal RVAs by adding the specified delta */
+static inline void fixup_rva_names( UINT_PTR *ptr, int delta )
+{
+    while (*ptr)
+    {
+        if (!(*ptr & IMAGE_ORDINAL_FLAG)) *ptr += delta;
+        ptr++;
+    }
+}
+
+
 /* fixup RVAs in the import directory */
 static void fixup_imports( IMAGE_IMPORT_DESCRIPTOR *dir, BYTE *base, int delta )
 {
-    UINT_PTR *ptr;
-
     while (dir->Name)
     {
         fixup_rva_dwords( &dir->u.OriginalFirstThunk, delta, 1 );
         fixup_rva_dwords( &dir->Name, delta, 1 );
         fixup_rva_dwords( &dir->FirstThunk, delta, 1 );
-        ptr = (UINT_PTR *)(base + (dir->u.OriginalFirstThunk ? dir->u.OriginalFirstThunk : dir->FirstThunk));
-        while (*ptr)
-        {
-            if (!(*ptr & IMAGE_ORDINAL_FLAG)) *ptr += delta;
-            ptr++;
-        }
+        if (dir->u.OriginalFirstThunk) fixup_rva_names( (UINT_PTR *)(base + dir->u.OriginalFirstThunk), delta );
+        if (dir->FirstThunk) fixup_rva_names( (UINT_PTR *)(base + dir->FirstThunk), delta );
         dir++;
     }
 }
