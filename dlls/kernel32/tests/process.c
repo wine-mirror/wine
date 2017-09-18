@@ -3020,6 +3020,8 @@ static void test_SuspendProcessState(void)
     BOOL pipe_connected;
     ULONG pipe_magic, numb;
     BOOL ret;
+    void *entry_ptr, *peb_ptr;
+    PEB child_peb;
 
     exit_process_ptr = GetProcAddress(hkernel32, "ExitProcess");
     ok(exit_process_ptr != NULL, "GetProcAddress ExitProcess failed\n");
@@ -3103,6 +3105,19 @@ static void test_SuspendProcessState(void)
     ok(ret, "Failed to write to remote process memory (%d)\n", GetLastError());
 
 #ifdef __x86_64__
+    ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
+    ok( !ctx.Rax, "rax is not zero %lx\n", ctx.Rax );
+    todo_wine
+    {
+    ok( !ctx.Rbx, "rbx is not zero %lx\n", ctx.Rbx );
+    ok( !ctx.Rsi, "rsi is not zero %lx\n", ctx.Rsi );
+    ok( !ctx.Rdi, "rdi is not zero %lx\n", ctx.Rdi );
+    ok( !ctx.Rbp, "rbp is not zero %lx\n", ctx.Rbp );
+    ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %lx\n", ctx.Rsp );
+    }
+    entry_ptr = (void *)ctx.Rcx;
+    peb_ptr = (void *)ctx.Rdx;
+
     rop_chain.exit_process_ptr = exit_process_ptr;
     ctx.Rcx = (ULONG_PTR)remote_pipe_params + offsetof(struct pipe_params, pipe_name);
     ctx.Rdx = (ULONG_PTR)remote_pipe_params + offsetof(struct pipe_params, pipe_write_buf);
@@ -3117,6 +3132,20 @@ static void test_SuspendProcessState(void)
     ret = WriteProcessMemory(pi.hProcess, (void *)ctx.Rsp, &rop_chain, sizeof(rop_chain), NULL);
     ok(ret, "Failed to write to remote process thread stack (%d)\n", GetLastError());
 #else
+    ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
+    todo_wine
+    ok( !ctx.Ebp || broken(ctx.Ebp), /* winxp */ "ebp is not zero %08x\n", ctx.Ebp );
+    if (!ctx.Ebp)  /* winxp is completely different */
+    {
+        ok( !ctx.Ecx, "ecx is not zero %08x\n", ctx.Ecx );
+        ok( !ctx.Edx, "edx is not zero %08x\n", ctx.Edx );
+        ok( !ctx.Esi, "esi is not zero %08x\n", ctx.Esi );
+        ok( !ctx.Edi, "edi is not zero %08x\n", ctx.Edi );
+        ok( !((ctx.Esp + 0x10) & 0xfff), "esp is not at top of stack page %08x\n", ctx.Esp );
+    }
+    entry_ptr = (void *)ctx.Eax;
+    peb_ptr = (void *)ctx.Ebx;
+
     rop_chain.exit_process_ptr = exit_process_ptr;
     rop_chain.pipe_name = (ULONG_PTR)remote_pipe_params + offsetof(struct pipe_params, pipe_name);
     rop_chain.pipe_write_buf = (ULONG_PTR)remote_pipe_params + offsetof(struct pipe_params, pipe_write_buf);
@@ -3132,6 +3161,18 @@ static void test_SuspendProcessState(void)
     ret = WriteProcessMemory(pi.hProcess, (void *)ctx.Esp, &rop_chain, sizeof(rop_chain), NULL);
     ok(ret, "Failed to write to remote process thread stack (%d)\n", GetLastError());
 #endif
+
+    ret = ReadProcessMemory( pi.hProcess, peb_ptr, &child_peb, sizeof(child_peb), NULL );
+    todo_wine
+    ok( ret, "Failed to read PEB (%u)\n", GetLastError() );
+    if (ret)
+    ok( child_peb.ImageBaseAddress == exe_base, "wrong base %p/%p\n",
+        child_peb.ImageBaseAddress, exe_base );
+    todo_wine
+    ok( entry_ptr == (char *)exe_base + nt_header.OptionalHeader.AddressOfEntryPoint,
+        "wrong entry point %p/%p\n", entry_ptr,
+        (char *)exe_base + nt_header.OptionalHeader.AddressOfEntryPoint );
+
     ret = SetThreadContext(pi.hThread, &ctx);
     ok(ret, "Failed to set remote thread context (%d)\n", GetLastError());
 
