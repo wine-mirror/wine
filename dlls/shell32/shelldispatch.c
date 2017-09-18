@@ -292,7 +292,10 @@ static HRESULT WINAPI FolderItemVerbImpl_Invoke(FolderItemVerb *iface,
 
 static HRESULT WINAPI FolderItemVerbImpl_get_Application(FolderItemVerb *iface, IDispatch **disp)
 {
-    FIXME("(%p, %p)\n", iface, disp);
+    TRACE("(%p, %p)\n", iface, disp);
+
+    if (disp)
+        *disp = NULL;
     return E_NOTIMPL;
 }
 
@@ -474,7 +477,10 @@ static HRESULT WINAPI FolderItemVerbsImpl_get_Count(FolderItemVerbs *iface, LONG
 
 static HRESULT WINAPI FolderItemVerbsImpl_get_Application(FolderItemVerbs *iface, IDispatch **disp)
 {
-    FIXME("(%p, %p)\n", iface, disp);
+    TRACE("(%p, %p)\n", iface, disp);
+
+    if (disp)
+        *disp = NULL;
     return E_NOTIMPL;
 }
 
@@ -1764,13 +1770,16 @@ static HRESULT WINAPI ShellDispatch_Invoke(IShellDispatch6 *iface,
     return hr;
 }
 
-static HRESULT WINAPI ShellDispatch_get_Application(IShellDispatch6 *iface,
-        IDispatch **ppid)
+static HRESULT WINAPI ShellDispatch_get_Application(IShellDispatch6 *iface, IDispatch **disp)
 {
-    FIXME("(%p,%p)\n", iface, ppid);
+    TRACE("(%p,%p)\n", iface, disp);
 
-    *ppid = NULL;
-    return E_NOTIMPL;
+    if (!disp)
+        return E_INVALIDARG;
+
+    *disp = (IDispatch *)iface;
+    IDispatch_AddRef(*disp);
+    return S_OK;
 }
 
 static HRESULT WINAPI ShellDispatch_get_Parent(IShellDispatch6 *iface, IDispatch **disp)

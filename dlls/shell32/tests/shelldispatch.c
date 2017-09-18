@@ -131,6 +131,12 @@ static void test_namespace(void)
     ok(SUCCEEDED(r), "Failed to create ShellDispatch object: %#x.\n", r);
 
     disp = NULL;
+    r = IShellDispatch_get_Application(sd, &disp);
+    ok(r == S_OK, "Failed to get application pointer, hr %#x.\n", r);
+    ok(disp == (IDispatch *)sd, "Unexpected application pointer %p.\n", disp);
+    IDispatch_Release(disp);
+
+    disp = NULL;
     r = IShellDispatch_get_Parent(sd, &disp);
     ok(r == S_OK, "Failed to get Shell object parent, hr %#x.\n", r);
     ok(disp == (IDispatch *)sd, "Unexpected parent pointer %p.\n", disp);
@@ -1226,7 +1232,7 @@ static void test_ParseName(void)
 
 static void test_Verbs(void)
 {
-    FolderItemVerbs *verbs;
+    FolderItemVerbs *verbs, *verbs2;
     WCHAR pathW[MAX_PATH];
     FolderItemVerb *verb;
     IShellDispatch *sd;
@@ -1265,6 +1271,16 @@ if (0) { /* crashes on some systems */
     hr = FolderItem_Verbs(item, &verbs);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = FolderItem_Verbs(item, &verbs2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(verbs2 != verbs, "Unexpected verbs pointer.\n");
+    FolderItemVerbs_Release(verbs2);
+
+    disp = (void *)0xdeadbeef;
+    hr = FolderItemVerbs_get_Application(verbs, &disp);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(disp == NULL, "Unexpected application pointer.\n");
+
     disp = (void *)0xdeadbeef;
     hr = FolderItemVerbs_get_Parent(verbs, &disp);
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
@@ -1300,6 +1316,11 @@ if (0) { /* crashes on winxp/win2k3 */
 
         disp = (void *)0xdeadbeef;
         hr = FolderItemVerb_get_Parent(verb, &disp);
+        ok(hr == E_NOTIMPL, "got %#x.\n", hr);
+        ok(disp == NULL, "Unexpected parent pointer %p.\n", disp);
+
+        disp = (void *)0xdeadbeef;
+        hr = FolderItemVerb_get_Application(verb, &disp);
         ok(hr == E_NOTIMPL, "got %#x.\n", hr);
         ok(disp == NULL, "Unexpected parent pointer %p.\n", disp);
 
