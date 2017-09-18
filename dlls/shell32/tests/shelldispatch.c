@@ -124,10 +124,17 @@ static void test_namespace(void)
     FolderItem *item;
     VARIANT var;
     BSTR title, item_path;
+    IDispatch *disp;
     int len, i;
 
     r = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER, &IID_IShellDispatch, (void **)&sd);
     ok(SUCCEEDED(r), "Failed to create ShellDispatch object: %#x.\n", r);
+
+    disp = NULL;
+    r = IShellDispatch_get_Parent(sd, &disp);
+    ok(r == S_OK, "Failed to get Shell object parent, hr %#x.\n", r);
+    ok(disp == (IDispatch *)sd, "Unexpected parent pointer %p.\n", disp);
+    IDispatch_Release(disp);
 
     VariantInit(&var);
     folder = (void*)0xdeadbeef;
@@ -265,6 +272,11 @@ todo_wine {
     V_BSTR(&var) = SysAllocString(tempW);
     r = IShellDispatch_NameSpace(sd, var, &folder);
     ok(r == S_OK, "IShellDispatch::NameSpace failed: %08x\n", r);
+
+    disp = (void *)0xdeadbeef;
+    r = Folder_get_Parent(folder, &disp);
+    ok(r == E_NOTIMPL, "Unexpected hr %#x.\n", r);
+    ok(disp == NULL, "Unexpected parent pointer %p.\n", disp);
 
     r = Folder_get_Title(folder, &title);
     ok(r == S_OK, "Failed to get folder title: %#x.\n", r);
@@ -480,6 +492,17 @@ static void test_items(void)
     r = FolderItems_Item(items, var, &item);
     ok(r == S_OK, "FolderItems::Item failed: %08x\n", r);
     ok(!!item, "item is null\n");
+
+    disp = (void *)0xdeadbeef;
+    r = FolderItems_get_Parent(items, &disp);
+    ok(r == E_NOTIMPL, "Unexpected hr %#x.\n", r);
+    ok(disp == NULL, "Unexpected parent pointer %p.\n", disp);
+
+    r = FolderItem_get_Parent(item, &disp);
+    ok(r == S_OK, "Failed to get parent pointer, hr %#x.\n", r);
+    ok(disp == (IDispatch *)folder, "Unexpected parent pointer %p.\n", disp);
+    IDispatch_Release(disp);
+
     if (item) FolderItem_Release(item);
     VariantClear(&var);
 
@@ -1209,6 +1232,7 @@ static void test_Verbs(void)
     IShellDispatch *sd;
     FolderItem *item;
     Folder2 *folder2;
+    IDispatch *disp;
     Folder *folder;
     HRESULT hr;
     LONG count, i;
@@ -1241,6 +1265,11 @@ if (0) { /* crashes on some systems */
     hr = FolderItem_Verbs(item, &verbs);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    disp = (void *)0xdeadbeef;
+    hr = FolderItemVerbs_get_Parent(verbs, &disp);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(disp == NULL, "Unexpected parent pointer %p.\n", disp);
+
 if (0) { /* crashes on winxp/win2k3 */
     hr = FolderItemVerbs_get_Count(verbs, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -1267,7 +1296,12 @@ if (0) { /* crashes on winxp/win2k3 */
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(str != NULL, "%d: name %s\n", i, wine_dbgstr_w(str));
         if (i == count)
-            ok(str[0] == 0, "%d: got teminating item %s\n", i, wine_dbgstr_w(str));
+            ok(str[0] == 0, "%d: got terminating item %s\n", i, wine_dbgstr_w(str));
+
+        disp = (void *)0xdeadbeef;
+        hr = FolderItemVerb_get_Parent(verb, &disp);
+        ok(hr == E_NOTIMPL, "got %#x.\n", hr);
+        ok(disp == NULL, "Unexpected parent pointer %p.\n", disp);
 
         SysFreeString(str);
         FolderItemVerb_Release(verb);

@@ -298,7 +298,10 @@ static HRESULT WINAPI FolderItemVerbImpl_get_Application(FolderItemVerb *iface, 
 
 static HRESULT WINAPI FolderItemVerbImpl_get_Parent(FolderItemVerb *iface, IDispatch **disp)
 {
-    FIXME("(%p, %p)\n", iface, disp);
+    TRACE("(%p, %p)\n", iface, disp);
+
+    if (disp)
+        *disp = NULL;
     return E_NOTIMPL;
 }
 
@@ -477,7 +480,10 @@ static HRESULT WINAPI FolderItemVerbsImpl_get_Application(FolderItemVerbs *iface
 
 static HRESULT WINAPI FolderItemVerbsImpl_get_Parent(FolderItemVerbs *iface, IDispatch **disp)
 {
-    FIXME("(%p, %p)\n", iface, disp);
+    TRACE("(%p, %p)\n", iface, disp);
+
+    if (disp)
+        *disp = NULL;
     return E_NOTIMPL;
 }
 
@@ -718,13 +724,19 @@ static HRESULT WINAPI FolderItemImpl_get_Application(FolderItem2 *iface, IDispat
     return Folder3_get_Application(&This->folder->Folder3_iface, disp);
 }
 
-static HRESULT WINAPI FolderItemImpl_get_Parent(FolderItem2 *iface,
-        IDispatch **ppid)
+static HRESULT WINAPI FolderItemImpl_get_Parent(FolderItem2 *iface, IDispatch **disp)
 {
-    FIXME("(%p,%p)\n", iface, ppid);
+    FolderItemImpl *This = impl_from_FolderItem(iface);
 
-    *ppid = NULL;
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, disp);
+
+    if (disp)
+    {
+        *disp = (IDispatch *)&This->folder->Folder3_iface;
+        IDispatch_AddRef(*disp);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI FolderItemImpl_get_Name(FolderItem2 *iface, BSTR *pbs)
@@ -1429,11 +1441,12 @@ static HRESULT WINAPI FolderImpl_get_Application(Folder3 *iface, IDispatch **dis
     return S_OK;
 }
 
-static HRESULT WINAPI FolderImpl_get_Parent(Folder3 *iface, IDispatch **ppid)
+static HRESULT WINAPI FolderImpl_get_Parent(Folder3 *iface, IDispatch **disp)
 {
-    FIXME("(%p,%p)\n", iface, ppid);
+    TRACE("(%p,%p)\n", iface, disp);
 
-    *ppid = NULL;
+    if (disp)
+        *disp = NULL;
     return E_NOTIMPL;
 }
 
@@ -1760,13 +1773,17 @@ static HRESULT WINAPI ShellDispatch_get_Application(IShellDispatch6 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_get_Parent(IShellDispatch6 *iface,
-        IDispatch **ppid)
+static HRESULT WINAPI ShellDispatch_get_Parent(IShellDispatch6 *iface, IDispatch **disp)
 {
-    FIXME("(%p,%p)\n", iface, ppid);
+    TRACE("(%p,%p)\n", iface, disp);
 
-    *ppid = NULL;
-    return E_NOTIMPL;
+    if (disp)
+    {
+        *disp = (IDispatch *)iface;
+        IDispatch_AddRef(*disp);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch6 *iface,
