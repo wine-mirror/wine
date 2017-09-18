@@ -431,7 +431,7 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAMEW *pofn)
         snprintfW( FilterBuffer, MAX_PATH, filterW, filter_reg, 0, 0, filter_reg4, 0, 0, filter_all, 0, 0 );
     }
     pofn->lpstrFilter = FilterBuffer;
-    pofn->nFilterIndex = 2;
+    pofn->nFilterIndex = 1;
     pofn->lpstrFile = FileNameBuffer;
     pofn->nMaxFile = _MAX_PATH;
     pofn->lpstrFileTitle = FileTitleBuffer;

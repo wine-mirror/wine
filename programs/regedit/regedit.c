@@ -157,9 +157,9 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
             WCHAR *key_name = argv[++(*i)];
 
             if (key_name && *key_name)
-                export_registry_key(filename, key_name, REG_FORMAT_4);
+                export_registry_key(filename, key_name, REG_FORMAT_5);
             else
-                export_registry_key(filename, NULL, REG_FORMAT_4);
+                export_registry_key(filename, NULL, REG_FORMAT_5);
             break;
         }
     default:
