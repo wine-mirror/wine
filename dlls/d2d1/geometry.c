@@ -2956,6 +2956,11 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
 
     for (i = 0; i < bezier_count; ++i)
     {
+        D2D1_RECT_F bezier_bounds;
+
+        d2d_rect_get_bezier_bounds(&bezier_bounds, &figure->vertices[figure->vertex_count - 1],
+                &beziers[i].point1, &beziers[i].point2);
+
         figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_BEZIER;
         if (!d2d_figure_add_bezier_control(figure, &beziers[i].point1))
         {
@@ -2970,6 +2975,8 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
             geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
             return;
         }
+
+        d2d_rect_union(&figure->bounds, &bezier_bounds);
     }
 
     geometry->u.path.segment_count += bezier_count;
