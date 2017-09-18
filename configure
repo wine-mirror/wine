@@ -18444,6 +18444,7 @@ wine_fn_config_dll mf3216 enable_mf3216
 wine_fn_config_dll mfplat enable_mfplat implib
 wine_fn_config_test dlls/mfplat/tests mfplat_test
 wine_fn_config_dll mfreadwrite enable_mfreadwrite
+wine_fn_config_lib mfuuid
 wine_fn_config_dll mgmtapi enable_mgmtapi
 wine_fn_config_dll midimap enable_midimap
 wine_fn_config_dll mlang enable_mlang clean,implib
