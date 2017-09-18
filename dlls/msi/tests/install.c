@@ -1285,6 +1285,27 @@ static const char ft_install_exec_seq_dat[] =
     "PublishProduct\t\t1400\n"
     "InstallFinalize\t\t1500\n";
 
+static const char da_custom_action_dat[] =
+    "Action\tType\tSource\tTarget\tISComments\n"
+    "s72\ti2\tS64\tS0\tS255\n"
+    "CustomAction\tAction\n"
+    "deferred\t1074\tCMDEXE\t/c if exist msitest (exit 0) else (exit 1)\t\n"
+    "immediate\t50\tCMDEXE\t/c mkdir msitest\t\n"
+    "cleanup\t50\tCMDEXE\t/c rmdir msitest\t\n";
+
+static const char da_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "CostInitialize\t\t200\n"
+    "FileCost\t\t300\n"
+    "CostFinalize\t\t400\n"
+    "InstallInitialize\t\t500\n"
+    "deferred\t\t600\n"
+    "immediate\t\t700\n"
+    "InstallFinalize\t\t1100\n"
+    "cleanup\t\t1200\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1937,6 +1958,19 @@ static const msi_table ft_tables[] =
     ADD_TABLE(ft_custom_action),
     ADD_TABLE(ft_install_exec_seq),
     ADD_TABLE(property)
+};
+
+static const msi_table da_tables[] =
+{
+    ADD_TABLE(media),
+    ADD_TABLE(directory),
+    ADD_TABLE(file),
+    ADD_TABLE(component),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(property),
+    ADD_TABLE(da_install_exec_seq),
+    ADD_TABLE(da_custom_action),
 };
 
 /* cabinet definitions */
@@ -6046,6 +6080,26 @@ static void test_feature_tree(void)
     DeleteFileA( msifile );
 }
 
+static void test_deferred_action(void)
+{
+    UINT r;
+
+    create_database(msifile, da_tables, sizeof(da_tables) / sizeof(da_tables[0]));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, "CMDEXE=\"cmd.exe\"");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+error:
+    DeleteFileA(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6134,6 +6188,7 @@ START_TEST(install)
     test_shared_component();
     test_remove_upgrade_code();
     test_feature_tree();
+    test_deferred_action();
 
     DeleteFileA(log_file);
 
