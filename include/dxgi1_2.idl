@@ -32,6 +32,122 @@ typedef enum DXGI_ALPHA_MODE {
     DXGI_ALPHA_MODE_FORCE_DWORD = 0xffffffff
 } DXGI_ALPHA_MODE;
 
+typedef struct DXGI_OUTDUPL_MOVE_RECT
+{
+    POINT SourcePoint;
+    RECT DestinationRect;
+} DXGI_OUTDUPL_MOVE_RECT;
+
+typedef struct DXGI_OUTDUPL_DESC
+{
+    DXGI_MODE_DESC ModeDesc;
+    DXGI_MODE_ROTATION Rotation;
+    BOOL DesktopImageInSystemMemory;
+} DXGI_OUTDUPL_DESC;
+
+typedef struct DXGI_OUTDUPL_POINTER_POSITION
+{
+    POINT Position;
+    BOOL Visible;
+} DXGI_OUTDUPL_POINTER_POSITION;
+
+typedef enum DXGI_OUTDUPL_POINTER_SHAPE_TYPE
+{
+    DXGI_OUTDUPL_POINTER_SHAPE_TYPE_MONOCHROME = 0x00000001,
+    DXGI_OUTDUPL_POINTER_SHAPE_TYPE_COLOR = 0x00000002,
+    DXGI_OUTDUPL_POINTER_SHAPE_TYPE_MASKED_COLOR = 0x00000004
+} DXGI_OUTDUPL_POINTER_SHAPE_TYPE;
+
+typedef struct DXGI_OUTDUPL_POINTER_SHAPE_INFO
+{
+    UINT Type;
+    UINT Width;
+    UINT Height;
+    UINT Pitch;
+    POINT HotSpot;
+} DXGI_OUTDUPL_POINTER_SHAPE_INFO;
+
+typedef struct DXGI_OUTDUPL_FRAME_INFO
+{
+    LARGE_INTEGER LastPresentTime;
+    LARGE_INTEGER LastMouseUpdateTime;
+    UINT AccumulatedFrames;
+    BOOL RectsCoalesced;
+    BOOL ProtectedContentMaskedOut;
+    DXGI_OUTDUPL_POINTER_POSITION PointerPosition;
+    UINT TotalMetadataBufferSize;
+    UINT PointerShapeBufferSize;
+} DXGI_OUTDUPL_FRAME_INFO;
+
+typedef struct DXGI_MODE_DESC1
+{
+    UINT Width;
+    UINT Height;
+    DXGI_RATIONAL RefreshRate;
+    DXGI_FORMAT Format;
+    DXGI_MODE_SCANLINE_ORDER ScanlineOrdering;
+    DXGI_MODE_SCALING Scaling;
+    BOOL Stereo;
+} DXGI_MODE_DESC1;
+
+[
+    object,
+    uuid(191cfac3-a341-470d-b26e-a864f428319c),
+    local,
+    pointer_default(unique)
+]
+interface IDXGIOutputDuplication : IDXGIObject
+{
+    void GetDesc(
+        [out] DXGI_OUTDUPL_DESC *desc
+    );
+
+    HRESULT AcquireNextFrame(
+        [in] UINT timeout_in_milliseconds,
+        [out] DXGI_OUTDUPL_FRAME_INFO *frame_info,
+        [out] IDXGIResource **desktop_resource
+    );
+
+    HRESULT GetFrameDirtyRects(
+        [in] UINT dirty_rects_buffer_size,
+        [out] RECT *dirty_rects_buffer,
+        [out] UINT *dirty_rects_buffer_size_required
+    );
+
+    HRESULT GetFrameMoveRects(
+        [in] UINT move_rects_buffer_size,
+        [out] DXGI_OUTDUPL_MOVE_RECT *move_rect_buffer,
+        [out] UINT *move_rects_buffer_size_required
+    );
+
+    HRESULT GetFramePointerShape(
+        [in] UINT pointer_shape_buffer_size,
+        [out] void *pointer_shape_buffer,
+        [out] UINT *pointer_shape_buffer_size_required,
+        [out] DXGI_OUTDUPL_POINTER_SHAPE_INFO *pointer_shape_info
+    );
+
+    HRESULT MapDesktopSurface(
+        [out] DXGI_MAPPED_RECT *locked_rect
+    );
+
+    HRESULT UnMapDesktopSurface();
+
+    HRESULT ReleaseFrame();
+}
+
+[
+    object,
+    uuid(ea9dbf1a-c88e-4486-854a-98aa0138f30c),
+    local,
+    pointer_default(unique)
+]
+interface IDXGIDisplayControl : IUnknown
+{
+    BOOL IsStereoEnabled();
+    void SetStereoEnabled(BOOL enabled);
+}
+
 [
     object,
     uuid(05008617-fbfd-4051-a790-144884b4f6a9),
@@ -231,4 +347,35 @@ typedef struct DXGI_ADAPTER_DESC2 {
 interface IDXGIAdapter2 : IDXGIAdapter1
 {
     HRESULT GetDesc2([out] DXGI_ADAPTER_DESC2 *pDesc);
+}
+
+[
+    object,
+    uuid(00cddea8-939b-4b83-a340-a685226666cc),
+    local,
+    pointer_default(unique)
+]
+interface IDXGIOutput1 : IDXGIOutput
+{
+    HRESULT GetDisplayModeList1(
+        [in] DXGI_FORMAT enum_format,
+        [in] UINT flags,
+        [in, out] UINT *num_modes,
+        [out] DXGI_MODE_DESC1 *desc
+    );
+
+    HRESULT FindClosestMatchingMode1(
+        [in] const DXGI_MODE_DESC1 *mode_to_match,
+        [out] DXGI_MODE_DESC1 *closest_match,
+        [in] IUnknown *concerned_device
+    );
+
+    HRESULT GetDisplaySurfaceData1(
+        [in] IDXGIResource *destination
+    );
+
+    HRESULT DuplicateOutput(
+        [in] IUnknown *device,
+        [out] IDXGIOutputDuplication **output_duplication
+    );
 }
