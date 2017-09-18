@@ -118,6 +118,16 @@ static void verify_key_nonexist_(unsigned line, HKEY key_base, const char *subke
         RegCloseKey(hkey);
 }
 
+#define add_key(k,p,s) add_key_(__LINE__,k,p,s)
+static void add_key_(unsigned line, const HKEY hkey, const char *path, HKEY *subkey)
+{
+    LONG err;
+
+    err = RegCreateKeyExA(hkey, path, 0, NULL, REG_OPTION_NON_VOLATILE,
+                          KEY_READ|KEY_WRITE, NULL, subkey, NULL);
+    lok(err == ERROR_SUCCESS, "RegCreateKeyExA failed: %d\n", err);
+}
+
 static void test_add(void)
 {
     HKEY hkey;
@@ -516,8 +526,7 @@ static void test_delete(void)
     run_reg_exe("reg delete /?", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
-    err = RegCreateKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
-    ok(err == ERROR_SUCCESS, "got %d\n", err);
+    add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
 
     err = RegSetValueExA(hkey, "foo", 0, REG_DWORD, (LPBYTE)&deadbeef, sizeof(deadbeef));
     ok(err == ERROR_SUCCESS, "got %d\n" ,err);
@@ -528,8 +537,7 @@ static void test_delete(void)
     err = RegSetValueExA(hkey, "", 0, REG_DWORD, (LPBYTE)&deadbeef, sizeof(deadbeef));
     ok(err == ERROR_SUCCESS, "got %d\n" ,err);
 
-    err = RegCreateKeyExA(hkey, "subkey", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hsubkey, NULL);
-    ok(err == ERROR_SUCCESS, "got %d\n" ,err);
+    add_key(hkey, "subkey", &hsubkey);
     RegCloseKey(hsubkey);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v bar /f", &r);
@@ -577,8 +585,7 @@ static void test_query(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     /* Create a test key */
-    err = RegCreateKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
-    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+    add_key(HKEY_CURRENT_USER, KEY_BASE, &key);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /ve", &r);
     ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE /* WinXP */),
@@ -612,8 +619,7 @@ static void test_query(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     /* Create a test subkey */
-    err = RegCreateKeyExA(key, "Subkey", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &subkey, NULL);
-    ok(err == ERROR_SUCCESS, "got %d\n", err);
+    add_key(key, "Subkey", &subkey);
 
     err = RegSetValueExA(subkey, "Test", 0, REG_SZ, (BYTE *)world, sizeof(world));
     ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
