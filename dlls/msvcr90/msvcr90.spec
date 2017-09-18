@@ -1088,7 +1088,7 @@
 @ stub _vcwprintf_p_l
 @ stub _vcwprintf_s
 @ stub _vcwprintf_s_l
-@ stub _vfprintf_l
+@ cdecl _vfprintf_l(ptr str ptr ptr) MSVCRT__vfprintf_l
 @ stub _vfprintf_p
 @ stub _vfprintf_p_l
 @ stub _vfprintf_s_l

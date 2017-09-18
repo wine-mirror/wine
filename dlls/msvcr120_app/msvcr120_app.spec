@@ -1502,7 +1502,7 @@
 @ cdecl _utime32(str ptr) msvcr120._utime32
 @ cdecl _utime64(str ptr) msvcr120._utime64
 @ cdecl _vacopy(ptr ptr) msvcr120._vacopy
-@ stub _vfprintf_l
+@ cdecl _vfprintf_l(ptr str ptr ptr) msvcr120._vfprintf_l
 @ stub _vfprintf_p
 @ stub _vfprintf_p_l
 @ stub _vfprintf_s_l
