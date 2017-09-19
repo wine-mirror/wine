@@ -3057,6 +3057,16 @@ static void *mac_thread_gsbase(void)
 }
 #endif
 
+
+/***********************************************************************
+ *           start_process
+ */
+static void CDECL start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
+{
+    call_thread_entry_point( kernel32_start_process, entry );
+}
+
+
 /**********************************************************************
  *		signal_init_thread
  */
@@ -3132,7 +3142,15 @@ void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry )
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
 #endif
 
-    /* FIXME: set the initial context */
+    /* build the initial context */
+    context->ContextFlags = CONTEXT_FULL;
+    __asm__( "movw %%cs,%0" : "=m" (context->SegCs) );
+    __asm__( "movw %%ss,%0" : "=m" (context->SegSs) );
+    __asm__( "fxsave %0" : "=m" (context->u.FltSave) );
+    context->Rcx   = (ULONG_PTR)entry;
+    context->Rdx   = (ULONG_PTR)NtCurrentTeb()->Peb;
+    context->Rsp   = (ULONG_PTR)NtCurrentTeb()->Tib.StackBase - 0x28;
+    context->Rip   = (ULONG_PTR)start_process;
     return;
 
  error:
