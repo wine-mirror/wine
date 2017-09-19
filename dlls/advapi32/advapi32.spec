@@ -446,7 +446,7 @@
 @ stdcall LsaLookupNames2(ptr long long ptr ptr ptr)
 @ stdcall LsaLookupNames(long long ptr ptr ptr)
 @ stub LsaLookupPrivilegeDisplayName
-# @ stub LsaLookupPrivilegeName
+@ stdcall LsaLookupPrivilegeName(long ptr ptr)
 # @ stub LsaLookupPrivilegeValue
 @ stdcall LsaLookupSids(ptr long ptr ptr ptr)
 # @ stub LsaManageSidNameMapping
