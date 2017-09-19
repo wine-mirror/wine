@@ -973,3 +973,16 @@ NTSTATUS WINAPI LsaUnregisterPolicyChangeNotification(
     FIXME("(%d,%p) stub\n", class, event);
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * LsaLookupPrivilegeName [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaLookupPrivilegeName(
+    LSA_HANDLE handle,
+    LUID *luid,
+    UNICODE_STRING **name)
+{
+    FIXME("(%p,%p,%p) stub\n", handle, luid, name);
+    return STATUS_NO_SUCH_PRIVILEGE;
+}
