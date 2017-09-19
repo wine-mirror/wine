@@ -2557,7 +2557,7 @@ void signal_init_thread( TEB *teb )
 /**********************************************************************
  *		signal_init_process
  */
-void signal_init_process(void)
+void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry )
 {
     struct sigaction sig_act;
 
@@ -2599,6 +2599,8 @@ void signal_init_process(void)
 #endif
 
     wine_ldt_init_locking( ldt_lock, ldt_unlock );
+
+    /* FIXME: set the initial context */
     return;
 
  error:

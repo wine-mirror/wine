@@ -1421,10 +1421,11 @@ void server_init_process(void)
 /***********************************************************************
  *           server_init_process_done
  */
-NTSTATUS server_init_process_done(void)
+NTSTATUS server_init_process_done( CONTEXT *context )
 {
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
+    void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
     NTSTATUS status;
 
     /* Install signal handlers; this cannot be done earlier, since we cannot
@@ -1433,7 +1434,7 @@ NTSTATUS server_init_process_done(void)
      * We do need the handlers in place by the time the request is over, so
      * we set them up here. If we segfault between here and the server call
      * something is very wrong... */
-    signal_init_process();
+    signal_init_process( context, entry );
 
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
@@ -1442,7 +1443,7 @@ NTSTATUS server_init_process_done(void)
 #ifdef __i386__
         req->ldt_copy = wine_server_client_ptr( &wine_ldt_copy );
 #endif
-        req->entry    = wine_server_client_ptr( (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint );
+        req->entry    = wine_server_client_ptr( entry );
         req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
         status = wine_server_call( req );
     }

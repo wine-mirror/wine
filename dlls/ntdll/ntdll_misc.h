@@ -67,7 +67,7 @@ extern LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa) DECLSPEC_HI
 extern NTSTATUS signal_alloc_thread( TEB **teb ) DECLSPEC_HIDDEN;
 extern void signal_free_thread( TEB *teb ) DECLSPEC_HIDDEN;
 extern void signal_init_thread( TEB *teb ) DECLSPEC_HIDDEN;
-extern void signal_init_process(void) DECLSPEC_HIDDEN;
+extern void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry ) DECLSPEC_HIDDEN;
 extern void version_init( const WCHAR *appname ) DECLSPEC_HIDDEN;
 extern void debug_init(void) DECLSPEC_HIDDEN;
 extern HANDLE thread_init(void) DECLSPEC_HIDDEN;
@@ -82,7 +82,7 @@ extern timeout_t server_start_time DECLSPEC_HIDDEN;
 extern unsigned int server_cpus DECLSPEC_HIDDEN;
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
 extern void server_init_process(void) DECLSPEC_HIDDEN;
-extern NTSTATUS server_init_process_done(void) DECLSPEC_HIDDEN;
+extern NTSTATUS server_init_process_done( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern size_t server_init_thread( void *entry_point ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN terminate_thread( int status ) DECLSPEC_HIDDEN;

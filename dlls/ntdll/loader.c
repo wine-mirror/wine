@@ -3115,6 +3115,7 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     WINE_MODREF *wm;
     LPCWSTR load_path;
     PEB *peb = NtCurrentTeb()->Peb;
+    CONTEXT context = { 0 };
 
     kernel32_start_process = kernel_start;
     if (main_exe_file) NtClose( main_exe_file );  /* at this point the main module is created */
@@ -3145,7 +3146,7 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
 
     if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0 )) != STATUS_SUCCESS) goto error;
-    if ((status = server_init_process_done()) != STATUS_SUCCESS) goto error;
+    if ((status = server_init_process_done( &context )) != STATUS_SUCCESS) goto error;
 
     actctx_init();
     load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
@@ -3157,6 +3158,7 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
 
     virtual_release_address_space();
     virtual_clear_thread_stack();
+    if (context.ContextFlags) NtSetContextThread( GetCurrentThread(), &context );
     wine_switch_to_stack( start_process, wm->ldr.EntryPoint, NtCurrentTeb()->Tib.StackBase );
 
 error:

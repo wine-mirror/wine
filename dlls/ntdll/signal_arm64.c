@@ -852,7 +852,7 @@ void signal_init_thread( TEB *teb )
 /**********************************************************************
  *		signal_init_process
  */
-void signal_init_process(void)
+void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry )
 {
     struct sigaction sig_act;
 
@@ -881,6 +881,8 @@ void signal_init_process(void)
     sig_act.sa_sigaction = trap_handler;
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
 #endif
+
+    /* FIXME: set the initial context */
     return;
 
  error:
