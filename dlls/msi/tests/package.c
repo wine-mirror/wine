@@ -445,7 +445,7 @@ static UINT run_query( MSIHANDLE hdb, const char *query )
 
 static UINT create_component_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `Component` ( "
             "`Component` CHAR(72) NOT NULL, "
             "`ComponentId` CHAR(38), "
@@ -454,11 +454,13 @@ static UINT create_component_table( MSIHANDLE hdb )
             "`Condition` CHAR(255), "
             "`KeyPath` CHAR(72) "
             "PRIMARY KEY `Component`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create Component table: %u\n", r);
+    return r;
 }
 
 static UINT create_feature_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `Feature` ( "
             "`Feature` CHAR(38) NOT NULL, "
             "`Feature_Parent` CHAR(38), "
@@ -469,20 +471,24 @@ static UINT create_feature_table( MSIHANDLE hdb )
             "`Directory_` CHAR(72), "
             "`Attributes` SHORT NOT NULL "
             "PRIMARY KEY `Feature`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create Feature table: %u\n", r);
+    return r;
 }
 
 static UINT create_feature_components_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `FeatureComponents` ( "
             "`Feature_` CHAR(38) NOT NULL, "
             "`Component_` CHAR(72) NOT NULL "
             "PRIMARY KEY `Feature_`, `Component_` )" );
+    ok(r == ERROR_SUCCESS, "Failed to create FeatureComponents table: %u\n", r);
+    return r;
 }
 
 static UINT create_file_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `File` ("
             "`File` CHAR(72) NOT NULL, "
             "`Component_` CHAR(72) NOT NULL, "
@@ -493,11 +499,13 @@ static UINT create_file_table( MSIHANDLE hdb )
             "`Attributes` SHORT, "
             "`Sequence` SHORT NOT NULL "
             "PRIMARY KEY `File`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create File table: %u\n", r);
+    return r;
 }
 
 static UINT create_remove_file_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `RemoveFile` ("
             "`FileKey` CHAR(72) NOT NULL, "
             "`Component_` CHAR(72) NOT NULL, "
@@ -505,20 +513,24 @@ static UINT create_remove_file_table( MSIHANDLE hdb )
             "`DirProperty` CHAR(72) NOT NULL, "
             "`InstallMode` SHORT NOT NULL "
             "PRIMARY KEY `FileKey`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create RemoveFile table: %u\n", r);
+    return r;
 }
 
 static UINT create_appsearch_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `AppSearch` ("
             "`Property` CHAR(72) NOT NULL, "
             "`Signature_` CHAR(72) NOT NULL "
             "PRIMARY KEY `Property`, `Signature_`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create AppSearch table: %u\n", r);
+    return r;
 }
 
 static UINT create_reglocator_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `RegLocator` ("
             "`Signature_` CHAR(72) NOT NULL, "
             "`Root` SHORT NOT NULL, "
@@ -526,11 +538,13 @@ static UINT create_reglocator_table( MSIHANDLE hdb )
             "`Name` CHAR(255), "
             "`Type` SHORT "
             "PRIMARY KEY `Signature_`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create RegLocator table: %u\n", r);
+    return r;
 }
 
 static UINT create_signature_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `Signature` ("
             "`Signature` CHAR(72) NOT NULL, "
             "`FileName` CHAR(255) NOT NULL, "
@@ -542,49 +556,59 @@ static UINT create_signature_table( MSIHANDLE hdb )
             "`MaxDate` LONG, "
             "`Languages` CHAR(255) "
             "PRIMARY KEY `Signature`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create Signature table: %u\n", r);
+    return r;
 }
 
 static UINT create_launchcondition_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `LaunchCondition` ("
             "`Condition` CHAR(255) NOT NULL, "
             "`Description` CHAR(255) NOT NULL "
             "PRIMARY KEY `Condition`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create LaunchCondition table: %u\n", r);
+    return r;
 }
 
 static UINT create_property_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `Property` ("
             "`Property` CHAR(72) NOT NULL, "
             "`Value` CHAR(0) "
             "PRIMARY KEY `Property`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create Property table: %u\n", r);
+    return r;
 }
 
 static UINT create_install_execute_sequence_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `InstallExecuteSequence` ("
             "`Action` CHAR(72) NOT NULL, "
             "`Condition` CHAR(255), "
             "`Sequence` SHORT "
             "PRIMARY KEY `Action`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create InstallExecuteSequence table: %u\n", r);
+    return r;
 }
 
 static UINT create_install_ui_sequence_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `InstallUISequence` ("
             "`Action` CHAR(72) NOT NULL, "
             "`Condition` CHAR(255), "
             "`Sequence` SHORT "
             "PRIMARY KEY `Action`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create InstallUISequence table: %u\n", r);
+    return r;
 }
 
 static UINT create_media_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `Media` ("
             "`DiskId` SHORT NOT NULL, "
             "`LastSequence` SHORT NOT NULL, "
@@ -593,40 +617,48 @@ static UINT create_media_table( MSIHANDLE hdb )
             "`VolumeLabel` CHAR(32), "
             "`Source` CHAR(72) "
             "PRIMARY KEY `DiskId`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create Media table: %u\n", r);
+    return r;
 }
 
 static UINT create_ccpsearch_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `CCPSearch` ("
             "`Signature_` CHAR(72) NOT NULL "
             "PRIMARY KEY `Signature_`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create CCPSearch table: %u\n", r);
+    return r;
 }
 
 static UINT create_drlocator_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `DrLocator` ("
             "`Signature_` CHAR(72) NOT NULL, "
             "`Parent` CHAR(72), "
             "`Path` CHAR(255), "
             "`Depth` SHORT "
             "PRIMARY KEY `Signature_`, `Parent`, `Path`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create DrLocator table: %u\n", r);
+    return r;
 }
 
 static UINT create_complocator_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `CompLocator` ("
             "`Signature_` CHAR(72) NOT NULL, "
             "`ComponentId` CHAR(38) NOT NULL, "
             "`Type` SHORT "
             "PRIMARY KEY `Signature_`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create CompLocator table: %u\n", r);
+    return r;
 }
 
 static UINT create_inilocator_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `IniLocator` ("
             "`Signature_` CHAR(72) NOT NULL, "
             "`FileName` CHAR(255) NOT NULL, "
@@ -635,22 +667,26 @@ static UINT create_inilocator_table( MSIHANDLE hdb )
             "`Field` SHORT, "
             "`Type` SHORT "
             "PRIMARY KEY `Signature_`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create IniLocator table: %u\n", r);
+    return r;
 }
 
 static UINT create_custom_action_table( MSIHANDLE hdb )
 {
-    return run_query( hdb,
+    UINT r = run_query( hdb,
             "CREATE TABLE `CustomAction` ("
             "`Action` CHAR(72) NOT NULL, "
             "`Type` SHORT NOT NULL, "
             "`Source` CHAR(75), "
             "`Target` CHAR(255) "
             "PRIMARY KEY `Action`)" );
+    ok(r == ERROR_SUCCESS, "Failed to create CustomAction table: %u\n", r);
+    return r;
 }
 
 static UINT create_dialog_table( MSIHANDLE hdb )
 {
-    return run_query(hdb,
+    UINT r = run_query(hdb,
             "CREATE TABLE `Dialog` ("
             "`Dialog` CHAR(72) NOT NULL, "
             "`HCentering` SHORT NOT NULL, "
@@ -663,11 +699,13 @@ static UINT create_dialog_table( MSIHANDLE hdb )
             "`Control_Default` CHAR(50), "
             "`Control_Cancel` CHAR(50) "
             "PRIMARY KEY `Dialog`)");
+    ok(r == ERROR_SUCCESS, "Failed to create Dialog table: %u\n", r);
+    return r;
 }
 
 static UINT create_control_table( MSIHANDLE hdb )
 {
-    return run_query(hdb,
+    UINT r = run_query(hdb,
             "CREATE TABLE `Control` ("
             "`Dialog_` CHAR(72) NOT NULL, "
             "`Control` CHAR(50) NOT NULL, "
@@ -682,11 +720,13 @@ static UINT create_control_table( MSIHANDLE hdb )
             "`Control_Next` CHAR(50), "
             "`Help` CHAR(255) LOCALIZABLE "
             "PRIMARY KEY `Dialog_`, `Control`)");
+    ok(r == ERROR_SUCCESS, "Failed to create Control table: %u\n", r);
+    return r;
 }
 
 static UINT create_controlevent_table( MSIHANDLE hdb )
 {
-    return run_query(hdb,
+    UINT r = run_query(hdb,
             "CREATE TABLE `ControlEvent` ("
             "`Dialog_` CHAR(72) NOT NULL, "
             "`Control_` CHAR(50) NOT NULL, "
@@ -695,119 +735,123 @@ static UINT create_controlevent_table( MSIHANDLE hdb )
             "`Condition` CHAR(255), "
             "`Ordering` SHORT "
             "PRIMARY KEY `Dialog_`, `Control_`, `Event`, `Argument`, `Condition`)");
+    ok(r == ERROR_SUCCESS, "Failed to create ControlEvent table: %u\n", r);
+    return r;
 }
 
 static UINT create_actiontext_table( MSIHANDLE hdb )
 {
-    return run_query(hdb,
+    UINT r = run_query(hdb,
             "CREATE TABLE `ActionText` ("
             "`Action` CHAR(72) NOT NULL, "
             "`Description` CHAR(64) LOCALIZABLE, "
             "`Template` CHAR(128) LOCALIZABLE "
             "PRIMARY KEY `Action`)");
+    ok(r == ERROR_SUCCESS, "Failed to create ActionText table: %u\n", r);
+    return r;
 }
 
-#define make_add_entry(type, qtext) \
-    static UINT add##_##type##_##entry( MSIHANDLE hdb, const char *values ) \
-    { \
-        char insert[] = qtext; \
-        char *query; \
-        UINT sz, r; \
-        sz = strlen(values) + sizeof insert; \
-        query = HeapAlloc(GetProcessHeap(),0,sz); \
-        sprintf(query,insert,values); \
-        r = run_query( hdb, query ); \
-        HeapFree(GetProcessHeap(), 0, query); \
-        return r; \
-    }
+static inline UINT add_entry(const char *file, int line, const char *type, MSIHANDLE hdb, const char *values, const char *insert)
+{
+    char *query;
+    UINT sz, r;
 
-make_add_entry(component,
-               "INSERT INTO `Component`  "
-               "(`Component`, `ComponentId`, `Directory_`, "
+    sz = strlen(values) + strlen(insert) + 1;
+    query = HeapAlloc(GetProcessHeap(), 0, sz);
+    sprintf(query, insert, values);
+    r = run_query(hdb, query);
+    HeapFree(GetProcessHeap(), 0, query);
+    ok_(file, line)(r == ERROR_SUCCESS, "failed to insert into %s table: %u\n", type, r);
+    return r;
+}
+
+#define add_component_entry(hdb, values) add_entry(__FILE__, __LINE__, "Component", hdb, values, \
+               "INSERT INTO `Component`  " \
+               "(`Component`, `ComponentId`, `Directory_`, " \
                "`Attributes`, `Condition`, `KeyPath`) VALUES( %s )")
 
-make_add_entry(directory,
-               "INSERT INTO `Directory` "
+#define add_directory_entry(hdb, values) add_entry(__FILE__, __LINE__, "Directory", hdb, values, \
+               "INSERT INTO `Directory` " \
                "(`Directory`,`Directory_Parent`,`DefaultDir`) VALUES( %s )")
 
-make_add_entry(feature,
-               "INSERT INTO `Feature` "
-               "(`Feature`, `Feature_Parent`, `Title`, `Description`, "
+#define add_feature_entry(hdb, values) add_entry(__FILE__, __LINE__, "Feature", hdb, values, \
+               "INSERT INTO `Feature` " \
+               "(`Feature`, `Feature_Parent`, `Title`, `Description`, " \
                "`Display`, `Level`, `Directory_`, `Attributes`) VALUES( %s )")
 
-make_add_entry(feature_components,
-               "INSERT INTO `FeatureComponents` "
+#define add_feature_components_entry(hdb, values) add_entry(__FILE__, __LINE__, "FeatureComponents", hdb, values, \
+               "INSERT INTO `FeatureComponents` " \
                "(`Feature_`, `Component_`) VALUES( %s )")
 
-make_add_entry(file,
-               "INSERT INTO `File` "
-               "(`File`, `Component_`, `FileName`, `FileSize`, "
+#define add_file_entry(hdb, values) add_entry(__FILE__, __LINE__, "File", hdb, values, \
+               "INSERT INTO `File` " \
+               "(`File`, `Component_`, `FileName`, `FileSize`, " \
                "`Version`, `Language`, `Attributes`, `Sequence`) VALUES( %s )")
 
-make_add_entry(appsearch,
-               "INSERT INTO `AppSearch` "
+#define add_appsearch_entry(hdb, values) add_entry(__FILE__, __LINE__, "AppSearch", hdb, values, \
+               "INSERT INTO `AppSearch` " \
                "(`Property`, `Signature_`) VALUES( %s )")
 
-make_add_entry(signature,
-               "INSERT INTO `Signature` "
-               "(`Signature`, `FileName`, `MinVersion`, `MaxVersion`,"
-               " `MinSize`, `MaxSize`, `MinDate`, `MaxDate`, `Languages`) "
+#define add_signature_entry(hdb, values) add_entry(__FILE__, __LINE__, "Signature", hdb, values, \
+               "INSERT INTO `Signature` " \
+               "(`Signature`, `FileName`, `MinVersion`, `MaxVersion`," \
+               " `MinSize`, `MaxSize`, `MinDate`, `MaxDate`, `Languages`) " \
                "VALUES( %s )")
 
-make_add_entry(launchcondition,
-               "INSERT INTO `LaunchCondition` "
+#define add_launchcondition_entry(hdb, values) add_entry(__FILE__, __LINE__, "LaunchCondition", hdb, values, \
+               "INSERT INTO `LaunchCondition` " \
                "(`Condition`, `Description`) VALUES( %s )")
 
-make_add_entry(property,
+#define add_property_entry(hdb, values) add_entry(__FILE__, __LINE__, "Property", hdb, values, \
                "INSERT INTO `Property` (`Property`, `Value`) VALUES( %s )")
 
-make_add_entry(install_execute_sequence,
-               "INSERT INTO `InstallExecuteSequence` "
+#define add_install_execute_sequence_entry(hdb, values) add_entry(__FILE__, __LINE__, "InstallExecuteSequence", hdb, values, \
+               "INSERT INTO `InstallExecuteSequence` " \
                "(`Action`, `Condition`, `Sequence`) VALUES( %s )")
 
-make_add_entry(install_ui_sequence,
-               "INSERT INTO `InstallUISequence` "
+#define add_install_ui_sequence_entry(hdb, values) add_entry(__FILE__, __LINE__, "InstallUISequence", hdb, values, \
+               "INSERT INTO `InstallUISequence` " \
                "(`Action`, `Condition`, `Sequence`) VALUES( %s )")
 
-make_add_entry(media,
-               "INSERT INTO `Media` "
-               "(`DiskId`, `LastSequence`, `DiskPrompt`, "
+#define add_media_entry(hdb, values) add_entry(__FILE__, __LINE__, "Media", hdb, values, \
+               "INSERT INTO `Media` " \
+               "(`DiskId`, `LastSequence`, `DiskPrompt`, " \
                "`Cabinet`, `VolumeLabel`, `Source`) VALUES( %s )")
 
-make_add_entry(ccpsearch,
+#define add_ccpsearch_entry(hdb, values) add_entry(__FILE__, __LINE__, "CCPSearch", hdb, values, \
                "INSERT INTO `CCPSearch` (`Signature_`) VALUES( %s )")
 
-make_add_entry(drlocator,
-               "INSERT INTO `DrLocator` "
+#define add_drlocator_entry(hdb, values) add_entry(__FILE__, __LINE__, "DrLocator", hdb, values, \
+               "INSERT INTO `DrLocator` " \
                "(`Signature_`, `Parent`, `Path`, `Depth`) VALUES( %s )")
 
-make_add_entry(complocator,
-               "INSERT INTO `CompLocator` "
+#define add_complocator_entry(hdb, values) add_entry(__FILE__, __LINE__, "CompLocator", hdb, values, \
+               "INSERT INTO `CompLocator` " \
                "(`Signature_`, `ComponentId`, `Type`) VALUES( %s )")
 
-make_add_entry(inilocator,
-               "INSERT INTO `IniLocator` "
-               "(`Signature_`, `FileName`, `Section`, `Key`, `Field`, `Type`) "
+#define add_inilocator_entry(hdb, values) add_entry(__FILE__, __LINE__, "IniLocator", hdb, values, \
+               "INSERT INTO `IniLocator` " \
+               "(`Signature_`, `FileName`, `Section`, `Key`, `Field`, `Type`) " \
                "VALUES( %s )")
 
-make_add_entry(custom_action,
-               "INSERT INTO `CustomAction`  "
+#define add_custom_action_entry(hdb, values) add_entry(__FILE__, __LINE__, "CustomAction", hdb, values, \
+               "INSERT INTO `CustomAction`  " \
                "(`Action`, `Type`, `Source`, `Target`) VALUES( %s )")
 
-make_add_entry(dialog,
-               "INSERT INTO `Dialog` "
+#define add_dialog_entry(hdb, values) add_entry(__FILE__, __LINE__, "Dialog", hdb, values, \
+               "INSERT INTO `Dialog` " \
                "(`Dialog`, `HCentering`, `VCentering`, `Width`, `Height`, `Attributes`, `Control_First`) VALUES ( %s )")
 
-make_add_entry(control,
-               "INSERT INTO `Control` "
+#define add_control_entry(hdb, values) add_entry(__FILE__, __LINE__, "Control", hdb, values, \
+               "INSERT INTO `Control` " \
                "(`Dialog_`, `Control`, `Type`, `X`, `Y`, `Width`, `Height`, `Attributes`, `Text`) VALUES( %s )");
 
-make_add_entry(controlevent,
-               "INSERT INTO `ControlEvent` "
+#define add_controlevent_entry(hdb, values) add_entry(__FILE__, __LINE__, "ControlEvent", hdb, values, \
+               "INSERT INTO `ControlEvent` " \
                "(`Dialog_`, `Control_`, `Event`, `Argument`, `Condition`, `Ordering`) VALUES( %s )");
 
-make_add_entry(actiontext,
-               "INSERT INTO `ActionText` "
+#define add_actiontext_entry(hdb, values) add_entry(__FILE__, __LINE__, "ActionText", hdb, values, \
+               "INSERT INTO `ActionText` " \
                "(`Action`, `Description`, `Template`) VALUES( %s )");
 
 static UINT add_reglocator_entry( MSIHANDLE hdb, const char *sig, UINT root, const char *path,
@@ -824,6 +868,7 @@ static UINT add_reglocator_entry( MSIHANDLE hdb, const char *sig, UINT root, con
     sprintf( query, insert, sig, root, path, name, type );
     r = run_query( hdb, query );
     HeapFree( GetProcessHeap(), 0, query );
+    ok(r == ERROR_SUCCESS, "failed to insert into reglocator table: %u\n", r); \
     return r;
 }
 
@@ -1183,44 +1228,25 @@ static void test_settargetpath(void)
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
 
-    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'" );
-    ok( r == S_OK, "failed to add directory entry: %d\n" , r );
+    add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'" );
 
-    r = create_component_table( hdb );
-    ok( r == S_OK, "cannot create Component table: %d\n", r );
+    create_component_table( hdb );
+    add_component_entry( hdb, "'RootComp', '{83e2694d-0864-4124-9323-6d37630912a1}', 'TARGETDIR', 8, '', 'RootFile'" );
+    add_component_entry( hdb, "'TestComp', '{A3FB59C8-C293-4F7E-B8C5-F0E1D8EEE4E5}', 'TestDir', 0, '', 'TestFile'" );
 
-    r = add_component_entry( hdb, "'RootComp', '{83e2694d-0864-4124-9323-6d37630912a1}', 'TARGETDIR', 8, '', 'RootFile'" );
-    ok( r == S_OK, "cannot add dummy component: %d\n", r );
+    create_feature_table( hdb );
+    add_feature_entry( hdb, "'TestFeature', '', '', '', 0, 1, '', 0" );
 
-    r = add_component_entry( hdb, "'TestComp', '{A3FB59C8-C293-4F7E-B8C5-F0E1D8EEE4E5}', 'TestDir', 0, '', 'TestFile'" );
-    ok( r == S_OK, "cannot add test component: %d\n", r );
-
-    r = create_feature_table( hdb );
-    ok( r == S_OK, "cannot create Feature table: %d\n", r );
-
-    r = add_feature_entry( hdb, "'TestFeature', '', '', '', 0, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add TestFeature to Feature table: %d\n", r );
-
-    r = create_feature_components_table( hdb );
-    ok( r == S_OK, "cannot create FeatureComponents table: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'TestFeature', 'RootComp'" );
-    ok( r == S_OK, "cannot insert component into FeatureComponents table: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'TestFeature', 'TestComp'" );
-    ok( r == S_OK, "cannot insert component into FeatureComponents table: %d\n", r );
+    create_feature_components_table( hdb );
+    add_feature_components_entry( hdb, "'TestFeature', 'RootComp'" );
+    add_feature_components_entry( hdb, "'TestFeature', 'TestComp'" );
 
     add_directory_entry( hdb, "'TestParent', 'TARGETDIR', 'TestParent'" );
     add_directory_entry( hdb, "'TestDir', 'TestParent', 'TestDir'" );
 
-    r = create_file_table( hdb );
-    ok( r == S_OK, "cannot create File table: %d\n", r );
-
-    r = add_file_entry( hdb, "'RootFile', 'RootComp', 'rootfile.txt', 0, '', '1033', 8192, 1" );
-    ok( r == S_OK, "cannot add file to the File table: %d\n", r );
-
-    r = add_file_entry( hdb, "'TestFile', 'TestComp', 'testfile.txt', 0, '', '1033', 8192, 1" );
-    ok( r == S_OK, "cannot add file to the File table: %d\n", r );
+    create_file_table( hdb );
+    add_file_entry( hdb, "'RootFile', 'RootComp', 'rootfile.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'TestFile', 'TestComp', 'testfile.txt', 0, '', '1033', 8192, 1" );
 
     r = package_from_db( hdb, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -2124,18 +2150,9 @@ static void test_props(void)
     char buffer[0x100];
 
     hdb = create_package_db();
-    r = run_query( hdb,
-            "CREATE TABLE `Property` ( "
-            "`Property` CHAR(255) NOT NULL, "
-            "`Value` CHAR(255) "
-            "PRIMARY KEY `Property`)" );
-    ok( r == ERROR_SUCCESS , "Failed\n" );
 
-    r = run_query(hdb,
-            "INSERT INTO `Property` "
-            "(`Property`, `Value`) "
-            "VALUES( 'MetadataCompName', 'Photoshop.dll' )");
-    ok( r == ERROR_SUCCESS , "Failed\n" );
+    create_property_table(hdb);
+    add_property_entry(hdb, "'MetadataCompName', 'Photoshop.dll'");
 
     r = package_from_db( hdb, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -2403,17 +2420,11 @@ static void test_property_table(void)
     hdb = create_package_db();
     ok (hdb, "failed to create package database\n");
 
-    r = create_property_table(hdb);
-    ok(r == ERROR_SUCCESS, "cannot create Property table: %d\n", r);
+    create_property_table(hdb);
+    add_property_entry(hdb, "'prop', 'val'");
 
-    r = add_property_entry(hdb, "'prop', 'val'");
-    ok(r == ERROR_SUCCESS, "cannot add property: %d\n", r);
-
-    r = create_custom_action_table(hdb);
-    ok(r == ERROR_SUCCESS, "cannot create CustomAction table: %d\n", r);
-
-    r = add_custom_action_entry( hdb, "'EmbedNull', 51, 'prop2', '[~]np'" );
-    ok( r == ERROR_SUCCESS, "cannot add custom action: %d\n", r);
+    create_custom_action_table(hdb);
+    add_custom_action_entry( hdb, "'EmbedNull', 51, 'prop2', '[~]np'" );
 
     r = package_from_db(hdb, &hpkg);
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
@@ -2430,8 +2441,7 @@ static void test_property_table(void)
     found = find_prop_in_property(hdb, "prop", "val", -1);
     ok(found, "prop should be in the _Property table\n");
 
-    r = add_property_entry(hdb, "'dantes', 'mercedes'");
-    ok(r == ERROR_SUCCESS, "cannot add property: %d\n", r);
+    add_property_entry(hdb, "'dantes', 'mercedes'");
 
     query = "SELECT * FROM `_Property` WHERE `Property` = 'dantes'";
     r = do_query(hdb, query, &hrec);
@@ -2800,382 +2810,201 @@ static void test_states(void)
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
 
-    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'");
-    ok( r == ERROR_SUCCESS, "cannot add directory: %d\n", r );
+    add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'");
 
-    r = create_property_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Property table: %d\n", r );
+    create_property_table( hdb );
+    add_property_entry( hdb, "'ProductCode', '{7262AC98-EEBD-4364-8CE3-D654F6A425B9}'" );
+    add_property_entry( hdb, "'ProductLanguage', '1033'" );
+    add_property_entry( hdb, "'ProductName', 'MSITEST'" );
+    add_property_entry( hdb, "'ProductVersion', '1.1.1'" );
+    add_property_entry( hdb, "'MSIFASTINSTALL', '1'" );
 
-    r = add_property_entry( hdb, "'ProductCode', '{7262AC98-EEBD-4364-8CE3-D654F6A425B9}'" );
-    ok( r == ERROR_SUCCESS, "cannot add property entry: %d\n", r );
+    create_install_execute_sequence_table( hdb );
+    add_install_execute_sequence_entry( hdb, "'CostInitialize', '', '800'" );
+    add_install_execute_sequence_entry( hdb, "'FileCost', '', '900'" );
+    add_install_execute_sequence_entry( hdb, "'CostFinalize', '', '1000'" );
+    add_install_execute_sequence_entry( hdb, "'InstallValidate', '', '1400'" );
+    add_install_execute_sequence_entry( hdb, "'InstallInitialize', '', '1500'" );
+    add_install_execute_sequence_entry( hdb, "'ProcessComponents', '', '1600'" );
+    add_install_execute_sequence_entry( hdb, "'UnpublishFeatures', '', '1800'" );
+    add_install_execute_sequence_entry( hdb, "'RegisterProduct', '', '6100'" );
+    add_install_execute_sequence_entry( hdb, "'PublishFeatures', '', '6300'" );
+    add_install_execute_sequence_entry( hdb, "'PublishProduct', '', '6400'" );
+    add_install_execute_sequence_entry( hdb, "'InstallFinalize', '', '6600'" );
 
-    r = add_property_entry( hdb, "'ProductLanguage', '1033'" );
-    ok( r == ERROR_SUCCESS, "cannot add property entry: %d\n", r );
+    create_media_table( hdb );
+    add_media_entry( hdb, "'1', '3', '', '', 'DISK1', ''");
 
-    r = add_property_entry( hdb, "'ProductName', 'MSITEST'" );
-    ok( r == ERROR_SUCCESS, "cannot add property entry: %d\n", r );
+    create_feature_table( hdb );
 
-    r = add_property_entry( hdb, "'ProductVersion', '1.1.1'" );
-    ok( r == ERROR_SUCCESS, "cannot add property entry: %d\n", r );
-
-    r = add_property_entry( hdb, "'MSIFASTINSTALL', '1'" );
-    ok( r == ERROR_SUCCESS, "cannot add property entry: %d\n", r );
-
-    r = create_install_execute_sequence_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create InstallExecuteSequence table: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'CostInitialize', '', '800'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'FileCost', '', '900'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'CostFinalize', '', '1000'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'InstallValidate', '', '1400'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'InstallInitialize', '', '1500'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'ProcessComponents', '', '1600'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'UnpublishFeatures', '', '1800'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'RegisterProduct', '', '6100'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'PublishFeatures', '', '6300'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'PublishProduct', '', '6400'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'InstallFinalize', '', '6600'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry: %d\n", r );
-
-    r = create_media_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create media table: %d\n", r );
-
-    r = add_media_entry( hdb, "'1', '3', '', '', 'DISK1', ''");
-    ok( r == ERROR_SUCCESS, "cannot add media entry: %d\n", r );
-
-    r = create_feature_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Feature table: %d\n", r );
-
-    r = create_component_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Component table: %d\n", r );
+    create_component_table( hdb );
 
     /* msidbFeatureAttributesFavorLocal */
-    r = add_feature_entry( hdb, "'one', '', '', '', 2, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'one', '', '', '', 2, 1, '', 0" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesLocalOnly */
-    r = add_component_entry( hdb, "'alpha', '{467EC132-739D-4784-A37B-677AA43DBC94}', 'TARGETDIR', 0, '', 'alpha_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'alpha', '{467EC132-739D-4784-A37B-677AA43DBC94}', 'TARGETDIR', 0, '', 'alpha_file'" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesSourceOnly */
-    r = add_component_entry( hdb, "'beta', '{2C1F189C-24A6-4C34-B26B-994A6C026506}', 'TARGETDIR', 1, '', 'beta_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'beta', '{2C1F189C-24A6-4C34-B26B-994A6C026506}', 'TARGETDIR', 1, '', 'beta_file'" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesOptional */
-    r = add_component_entry( hdb, "'gamma', '{C271E2A4-DE2E-4F70-86D1-6984AF7DE2CA}', 'TARGETDIR', 2, '', 'gamma_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'gamma', '{C271E2A4-DE2E-4F70-86D1-6984AF7DE2CA}', 'TARGETDIR', 2, '', 'gamma_file'" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesSharedDllRefCount */
-    r = add_component_entry( hdb, "'theta', '{4EB3129D-81A8-48D5-9801-75600FED3DD9}', 'TARGETDIR', 8, '', 'theta_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'theta', '{4EB3129D-81A8-48D5-9801-75600FED3DD9}', 'TARGETDIR', 8, '', 'theta_file'" );
 
     /* msidbFeatureAttributesFavorSource */
-    r = add_feature_entry( hdb, "'two', '', '', '', 2, 1, '', 1" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'two', '', '', '', 2, 1, '', 1" );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesLocalOnly */
-    r = add_component_entry( hdb, "'delta', '{938FD4F2-C648-4259-A03C-7AA3B45643F3}', 'TARGETDIR', 0, '', 'delta_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'delta', '{938FD4F2-C648-4259-A03C-7AA3B45643F3}', 'TARGETDIR', 0, '', 'delta_file'" );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesSourceOnly */
-    r = add_component_entry( hdb, "'epsilon', '{D59713B6-C11D-47F2-A395-1E5321781190}', 'TARGETDIR', 1, '', 'epsilon_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'epsilon', '{D59713B6-C11D-47F2-A395-1E5321781190}', 'TARGETDIR', 1, '', 'epsilon_file'" );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesOptional */
-    r = add_component_entry( hdb, "'zeta', '{377D33AB-2FAA-42B9-A629-0C0DAE9B9C7A}', 'TARGETDIR', 2, '', 'zeta_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'zeta', '{377D33AB-2FAA-42B9-A629-0C0DAE9B9C7A}', 'TARGETDIR', 2, '', 'zeta_file'" );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesSharedDllRefCount */
-    r = add_component_entry( hdb, "'iota', '{5D36F871-B5ED-4801-9E0F-C46B9E5C9669}', 'TARGETDIR', 8, '', 'iota_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'iota', '{5D36F871-B5ED-4801-9E0F-C46B9E5C9669}', 'TARGETDIR', 8, '', 'iota_file'" );
 
     /* msidbFeatureAttributesFavorSource */
-    r = add_feature_entry( hdb, "'three', '', '', '', 2, 1, '', 1" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'three', '', '', '', 2, 1, '', 1" );
 
     /* msidbFeatureAttributesFavorLocal */
-    r = add_feature_entry( hdb, "'four', '', '', '', 2, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'four', '', '', '', 2, 1, '', 0" );
 
     /* disabled */
-    r = add_feature_entry( hdb, "'five', '', '', '', 2, 0, '', 1" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'five', '', '', '', 2, 0, '', 1" );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesSourceOnly */
-    r = add_component_entry( hdb, "'eta', '{DD89003F-0DD4-41B8-81C0-3411A7DA2695}', 'TARGETDIR', 1, '', 'eta_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'eta', '{DD89003F-0DD4-41B8-81C0-3411A7DA2695}', 'TARGETDIR', 1, '', 'eta_file'" );
 
     /* no feature parent:msidbComponentAttributesLocalOnly */
-    r = add_component_entry( hdb, "'kappa', '{D6B93DC3-8DA5-4769-9888-42BFE156BB8B}', 'TARGETDIR', 1, '', 'kappa_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'kappa', '{D6B93DC3-8DA5-4769-9888-42BFE156BB8B}', 'TARGETDIR', 1, '', 'kappa_file'" );
 
     /* msidbFeatureAttributesFavorLocal:removed */
-    r = add_feature_entry( hdb, "'six', '', '', '', 2, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'six', '', '', '', 2, 1, '', 0" );
 
     /* msidbFeatureAttributesFavorLocal:removed:msidbComponentAttributesLocalOnly */
-    r = add_component_entry( hdb, "'lambda', '{6528C5E4-02A4-4636-A214-7A66A6C35B64}', 'TARGETDIR', 0, '', 'lambda_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'lambda', '{6528C5E4-02A4-4636-A214-7A66A6C35B64}', 'TARGETDIR', 0, '', 'lambda_file'" );
 
     /* msidbFeatureAttributesFavorLocal:removed:msidbComponentAttributesSourceOnly */
-    r = add_component_entry( hdb, "'mu', '{97014BAB-6C56-4013-9A63-2BF913B42519}', 'TARGETDIR', 1, '', 'mu_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'mu', '{97014BAB-6C56-4013-9A63-2BF913B42519}', 'TARGETDIR', 1, '', 'mu_file'" );
 
     /* msidbFeatureAttributesFavorLocal:removed:msidbComponentAttributesOptional */
-    r = add_component_entry( hdb, "'nu', '{943DD0D8-5808-4954-8526-3B8493FEDDCD}', 'TARGETDIR', 2, '', 'nu_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'nu', '{943DD0D8-5808-4954-8526-3B8493FEDDCD}', 'TARGETDIR', 2, '', 'nu_file'" );
 
     /* msidbFeatureAttributesFavorLocal:removed:msidbComponentAttributesSharedDllRefCount */
-    r = add_component_entry( hdb, "'xi', '{D6CF9EF7-6FCF-4930-B34B-F938AEFF9BDB}', 'TARGETDIR', 8, '', 'xi_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'xi', '{D6CF9EF7-6FCF-4930-B34B-F938AEFF9BDB}', 'TARGETDIR', 8, '', 'xi_file'" );
 
     /* msidbFeatureAttributesFavorSource:removed */
-    r = add_feature_entry( hdb, "'seven', '', '', '', 2, 1, '', 1" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'seven', '', '', '', 2, 1, '', 1" );
 
     /* msidbFeatureAttributesFavorSource:removed:msidbComponentAttributesLocalOnly */
-    r = add_component_entry( hdb, "'omicron', '{7B57521D-15DB-4141-9AA6-01D934A4433F}', 'TARGETDIR', 0, '', 'omicron_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'omicron', '{7B57521D-15DB-4141-9AA6-01D934A4433F}', 'TARGETDIR', 0, '', 'omicron_file'" );
 
     /* msidbFeatureAttributesFavorSource:removed:msidbComponentAttributesSourceOnly */
-    r = add_component_entry( hdb, "'pi', '{FB85346B-378E-4492-8769-792305471C81}', 'TARGETDIR', 1, '', 'pi_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'pi', '{FB85346B-378E-4492-8769-792305471C81}', 'TARGETDIR', 1, '', 'pi_file'" );
 
     /* msidbFeatureAttributesFavorSource:removed:msidbComponentAttributesOptional */
-    r = add_component_entry( hdb, "'rho', '{798F2047-7B0C-4783-8BB0-D703E554114B}', 'TARGETDIR', 2, '', 'rho_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'rho', '{798F2047-7B0C-4783-8BB0-D703E554114B}', 'TARGETDIR', 2, '', 'rho_file'" );
 
     /* msidbFeatureAttributesFavorSource:removed:msidbComponentAttributesSharedDllRefCount */
-    r = add_component_entry( hdb, "'sigma', '{5CE9DDA8-B67B-4736-9D93-99D61C5B93E7}', 'TARGETDIR', 8, '', 'sigma_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'sigma', '{5CE9DDA8-B67B-4736-9D93-99D61C5B93E7}', 'TARGETDIR', 8, '', 'sigma_file'" );
 
     /* msidbFeatureAttributesFavorLocal */
-    r = add_feature_entry( hdb, "'eight', '', '', '', 2, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'eight', '', '', '', 2, 1, '', 0" );
 
-    r = add_component_entry( hdb, "'tau', '{07DEB510-677C-4A6F-A0A6-7CD8EFEA77ED}', 'TARGETDIR', 1, '', 'tau_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'tau', '{07DEB510-677C-4A6F-A0A6-7CD8EFEA77ED}', 'TARGETDIR', 1, '', 'tau_file'" );
 
     /* msidbFeatureAttributesFavorSource */
-    r = add_feature_entry( hdb, "'nine', '', '', '', 2, 1, '', 1" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'nine', '', '', '', 2, 1, '', 1" );
 
-    r = add_component_entry( hdb, "'phi', '{9F0594C5-35AD-43EA-94DD-8DF73FAA664D}', 'TARGETDIR', 1, '', 'phi_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'phi', '{9F0594C5-35AD-43EA-94DD-8DF73FAA664D}', 'TARGETDIR', 1, '', 'phi_file'" );
 
     /* msidbFeatureAttributesFavorAdvertise */
-    r = add_feature_entry( hdb, "'ten', '', '', '', 2, 1, '', 4" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'ten', '', '', '', 2, 1, '', 4" );
 
-    r = add_component_entry( hdb, "'chi', '{E6B539AB-5DA9-4236-A2D2-E341A50B4C38}', 'TARGETDIR', 1, '', 'chi_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'chi', '{E6B539AB-5DA9-4236-A2D2-E341A50B4C38}', 'TARGETDIR', 1, '', 'chi_file'" );
 
     /* msidbFeatureAttributesUIDisallowAbsent */
-    r = add_feature_entry( hdb, "'eleven', '', '', '', 2, 1, '', 16" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'eleven', '', '', '', 2, 1, '', 16" );
 
-    r = add_component_entry( hdb, "'psi', '{A06B23B5-746B-427A-8A6E-FD6AC8F46A95}', 'TARGETDIR', 1, '', 'psi_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'psi', '{A06B23B5-746B-427A-8A6E-FD6AC8F46A95}', 'TARGETDIR', 1, '', 'psi_file'" );
 
     /* high install level */
-    r = add_feature_entry( hdb, "'twelve', '', '', '', 2, 2, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'twelve', '', '', '', 2, 2, '', 0" );
 
-    r = add_component_entry( hdb, "'upsilon', '{557e0c04-ceba-4c58-86a9-4a73352e8cf6}', 'TARGETDIR', 1, '', 'upsilon_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'upsilon', '{557e0c04-ceba-4c58-86a9-4a73352e8cf6}', 'TARGETDIR', 1, '', 'upsilon_file'" );
 
     /* msidbFeatureAttributesFollowParent */
-    r = add_feature_entry( hdb, "'thirteen', '', '', '', 2, 2, '', 2" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'thirteen', '', '', '', 2, 2, '', 2" );
 
-    r = create_feature_components_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table: %d\n", r );
+    create_feature_components_table( hdb );
+    add_feature_components_entry( hdb, "'one', 'alpha'" );
+    add_feature_components_entry( hdb, "'one', 'beta'" );
+    add_feature_components_entry( hdb, "'one', 'gamma'" );
+    add_feature_components_entry( hdb, "'one', 'theta'" );
+    add_feature_components_entry( hdb, "'two', 'delta'" );
+    add_feature_components_entry( hdb, "'two', 'epsilon'" );
+    add_feature_components_entry( hdb, "'two', 'zeta'" );
+    add_feature_components_entry( hdb, "'two', 'iota'" );
+    add_feature_components_entry( hdb, "'three', 'eta'" );
+    add_feature_components_entry( hdb, "'four', 'eta'" );
+    add_feature_components_entry( hdb, "'five', 'eta'" );
+    add_feature_components_entry( hdb, "'six', 'lambda'" );
+    add_feature_components_entry( hdb, "'six', 'mu'" );
+    add_feature_components_entry( hdb, "'six', 'nu'" );
+    add_feature_components_entry( hdb, "'six', 'xi'" );
+    add_feature_components_entry( hdb, "'seven', 'omicron'" );
+    add_feature_components_entry( hdb, "'seven', 'pi'" );
+    add_feature_components_entry( hdb, "'seven', 'rho'" );
+    add_feature_components_entry( hdb, "'seven', 'sigma'" );
+    add_feature_components_entry( hdb, "'eight', 'tau'" );
+    add_feature_components_entry( hdb, "'nine', 'phi'" );
+    add_feature_components_entry( hdb, "'ten', 'chi'" );
+    add_feature_components_entry( hdb, "'eleven', 'psi'" );
+    add_feature_components_entry( hdb, "'twelve', 'upsilon'" );
+    add_feature_components_entry( hdb, "'thirteen', 'upsilon'" );
 
-    r = add_feature_components_entry( hdb, "'one', 'alpha'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'beta'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'gamma'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'theta'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'two', 'delta'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'two', 'epsilon'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'two', 'zeta'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'two', 'iota'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'three', 'eta'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'four', 'eta'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'five', 'eta'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'six', 'lambda'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'six', 'mu'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'six', 'nu'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'six', 'xi'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'seven', 'omicron'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'seven', 'pi'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'seven', 'rho'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'seven', 'sigma'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'eight', 'tau'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'nine', 'phi'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'ten', 'chi'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'eleven', 'psi'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'twelve', 'upsilon'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'thirteen', 'upsilon'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = create_file_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create File table: %d\n", r );
-
-    r = add_file_entry( hdb, "'alpha_file', 'alpha', 'alpha.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'beta_file', 'beta', 'beta.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'gamma_file', 'gamma', 'gamma.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'theta_file', 'theta', 'theta.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'delta_file', 'delta', 'delta.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'epsilon_file', 'epsilon', 'epsilon.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'zeta_file', 'zeta', 'zeta.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'iota_file', 'iota', 'iota.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+    create_file_table( hdb );
+    add_file_entry( hdb, "'alpha_file', 'alpha', 'alpha.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'beta_file', 'beta', 'beta.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'gamma_file', 'gamma', 'gamma.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'theta_file', 'theta', 'theta.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'delta_file', 'delta', 'delta.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'epsilon_file', 'epsilon', 'epsilon.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'zeta_file', 'zeta', 'zeta.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'iota_file', 'iota', 'iota.txt', 0, '', '1033', 8192, 1" );
 
     /* compressed file */
-    r = add_file_entry( hdb, "'eta_file', 'eta', 'eta.txt', 0, '', '1033', 16384, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+    add_file_entry( hdb, "'eta_file', 'eta', 'eta.txt', 0, '', '1033', 16384, 1" );
 
-    r = add_file_entry( hdb, "'kappa_file', 'kappa', 'kappa.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'lambda_file', 'lambda', 'lambda.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'mu_file', 'mu', 'mu.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'nu_file', 'nu', 'nu.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'xi_file', 'xi', 'xi.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'omicron_file', 'omicron', 'omicron.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'pi_file', 'pi', 'pi.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'rho_file', 'rho', 'rho.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'sigma_file', 'sigma', 'sigma.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'tau_file', 'tau', 'tau.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'phi_file', 'phi', 'phi.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'chi_file', 'chi', 'chi.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'psi_file', 'psi', 'psi.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'upsilon_file', 'upsilon', 'upsilon.txt', 0, '', '1033', 16384, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+    add_file_entry( hdb, "'kappa_file', 'kappa', 'kappa.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'lambda_file', 'lambda', 'lambda.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'mu_file', 'mu', 'mu.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'nu_file', 'nu', 'nu.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'xi_file', 'xi', 'xi.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'omicron_file', 'omicron', 'omicron.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'pi_file', 'pi', 'pi.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'rho_file', 'rho', 'rho.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'sigma_file', 'sigma', 'sigma.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'tau_file', 'tau', 'tau.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'phi_file', 'phi', 'phi.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'chi_file', 'chi', 'chi.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'psi_file', 'psi', 'psi.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'upsilon_file', 'upsilon', 'upsilon.txt', 0, '', '1033', 16384, 1" );
 
     MsiDatabaseCommit(hdb);
 
     /* these properties must not be in the saved msi file */
-    r = add_property_entry( hdb, "'ADDLOCAL', 'one,four'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
-
-    r = add_property_entry( hdb, "'ADDSOURCE', 'two,three'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
-
-    r = add_property_entry( hdb, "'REMOVE', 'six,seven'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
-
-    r = add_property_entry( hdb, "'REINSTALL', 'eight,nine,ten'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
-
-    r = add_property_entry( hdb, "'REINSTALLMODE', 'omus'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
+    add_property_entry( hdb, "'ADDLOCAL', 'one,four'");
+    add_property_entry( hdb, "'ADDSOURCE', 'two,three'");
+    add_property_entry( hdb, "'REMOVE', 'six,seven'");
+    add_property_entry( hdb, "'REINSTALL', 'eight,nine,ten'");
+    add_property_entry( hdb, "'REINSTALLMODE', 'omus'");
 
     r = package_from_db( hdb, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -3262,17 +3091,10 @@ static void test_states(void)
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* these properties must not be in the saved msi file */
-    r = add_property_entry( hdb, "'ADDLOCAL', 'one,four'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
-
-    r = add_property_entry( hdb, "'ADDSOURCE', 'two,three'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
-
-    r = add_property_entry( hdb, "'REMOVE', 'six,seven'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
-
-    r = add_property_entry( hdb, "'REINSTALL', 'eight,nine,ten'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
+    add_property_entry( hdb, "'ADDLOCAL', 'one,four'");
+    add_property_entry( hdb, "'ADDSOURCE', 'two,three'");
+    add_property_entry( hdb, "'REMOVE', 'six,seven'");
+    add_property_entry( hdb, "'REINSTALL', 'eight,nine,ten'");
 
     r = package_from_db( hdb, &hpkg );
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
@@ -3359,8 +3181,7 @@ static void test_states(void)
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* these properties must not be in the saved msi file */
-    r = add_property_entry( hdb, "'ADDLOCAL', 'one,two,three,four,five,six,seven,eight,nine,ten,twelve'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
+    add_property_entry( hdb, "'ADDLOCAL', 'one,two,three,four,five,six,seven,eight,nine,ten,twelve'");
 
     r = package_from_db( hdb, &hpkg );
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
@@ -3434,8 +3255,7 @@ static void test_states(void)
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* this property must not be in the saved msi file */
-    r = add_property_entry( hdb, "'ADDSOURCE', 'one,two,three,four,five,six,seven,eight,nine,ten'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
+    add_property_entry( hdb, "'ADDSOURCE', 'one,two,three,four,five,six,seven,eight,nine,ten'");
 
     r = package_from_db( hdb, &hpkg );
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
@@ -3511,8 +3331,7 @@ static void test_states(void)
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* this property must not be in the saved msi file */
-    r = add_property_entry( hdb, "'ADDSOURCE', 'one,two,three,four,five,six,seven,eight,nine,ten'");
-    ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
+    add_property_entry( hdb, "'ADDSOURCE', 'one,two,three,four,five,six,seven,eight,nine,ten'");
 
     r = package_from_db( hdb, &hpkg );
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
@@ -3646,89 +3465,39 @@ static void test_removefiles(void)
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
 
-    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'");
-    ok( r == ERROR_SUCCESS, "cannot add directory: %d\n", r );
+    add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'");
 
-    r = create_feature_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Feature table: %d\n", r );
+    create_feature_table( hdb );
+    add_feature_entry( hdb, "'one', '', '', '', 2, 1, '', 0" );
 
-    r = create_component_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Component table: %d\n", r );
+    create_component_table( hdb );
+    add_component_entry( hdb, "'hydrogen', '', 'TARGETDIR', 0, '', 'hydrogen_file'" );
+    add_component_entry( hdb, "'helium', '', 'TARGETDIR', 0, '', 'helium_file'" );
+    add_component_entry( hdb, "'lithium', '', 'TARGETDIR', 0, '', 'lithium_file'" );
+    add_component_entry( hdb, "'beryllium', '', 'TARGETDIR', 0, '', 'beryllium_file'" );
+    add_component_entry( hdb, "'boron', '', 'TARGETDIR', 0, '', 'boron_file'" );
+    add_component_entry( hdb, "'carbon', '', 'TARGETDIR', 0, '', 'carbon_file'" );
+    add_component_entry( hdb, "'oxygen', '', 'TARGETDIR', 0, '0', 'oxygen_file'" );
 
-    r = add_feature_entry( hdb, "'one', '', '', '', 2, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    create_feature_components_table( hdb );
+    add_feature_components_entry( hdb, "'one', 'hydrogen'" );
+    add_feature_components_entry( hdb, "'one', 'helium'" );
+    add_feature_components_entry( hdb, "'one', 'lithium'" );
+    add_feature_components_entry( hdb, "'one', 'beryllium'" );
+    add_feature_components_entry( hdb, "'one', 'boron'" );
+    add_feature_components_entry( hdb, "'one', 'carbon'" );
+    add_feature_components_entry( hdb, "'one', 'oxygen'" );
 
-    r = add_component_entry( hdb, "'hydrogen', '', 'TARGETDIR', 0, '', 'hydrogen_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    create_file_table( hdb );
+    add_file_entry( hdb, "'hydrogen_file', 'hydrogen', 'hydrogen.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'helium_file', 'helium', 'helium.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'lithium_file', 'lithium', 'lithium.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'beryllium_file', 'beryllium', 'beryllium.txt', 0, '', '1033', 16384, 1" );
+    add_file_entry( hdb, "'boron_file', 'boron', 'boron.txt', 0, '', '1033', 16384, 1" );
+    add_file_entry( hdb, "'carbon_file', 'carbon', 'carbon.txt', 0, '', '1033', 16384, 1" );
+    add_file_entry( hdb, "'oxygen_file', 'oxygen', 'oxygen.txt', 0, '', '1033', 16384, 1" );
 
-    r = add_component_entry( hdb, "'helium', '', 'TARGETDIR', 0, '', 'helium_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
-
-    r = add_component_entry( hdb, "'lithium', '', 'TARGETDIR', 0, '', 'lithium_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
-
-    r = add_component_entry( hdb, "'beryllium', '', 'TARGETDIR', 0, '', 'beryllium_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
-
-    r = add_component_entry( hdb, "'boron', '', 'TARGETDIR', 0, '', 'boron_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
-
-    r = add_component_entry( hdb, "'carbon', '', 'TARGETDIR', 0, '', 'carbon_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
-
-    r = add_component_entry( hdb, "'oxygen', '', 'TARGETDIR', 0, '0', 'oxygen_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
-
-    r = create_feature_components_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'hydrogen'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'helium'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'lithium'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'beryllium'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'boron'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'carbon'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'oxygen'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = create_file_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create File table: %d\n", r );
-
-    r = add_file_entry( hdb, "'hydrogen_file', 'hydrogen', 'hydrogen.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'helium_file', 'helium', 'helium.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'lithium_file', 'lithium', 'lithium.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'beryllium_file', 'beryllium', 'beryllium.txt', 0, '', '1033', 16384, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'boron_file', 'boron', 'boron.txt', 0, '', '1033', 16384, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'carbon_file', 'carbon', 'carbon.txt', 0, '', '1033', 16384, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'oxygen_file', 'oxygen', 'oxygen.txt', 0, '', '1033', 16384, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = create_remove_file_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Remove File table: %d\n", r);
+    create_remove_file_table( hdb );
 
     r = package_from_db( hdb, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -3848,49 +3617,28 @@ static void test_appsearch(void)
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
 
-    r = create_appsearch_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create AppSearch table: %d\n", r );
+    create_appsearch_table( hdb );
+    add_appsearch_entry( hdb, "'WEBBROWSERPROG', 'NewSignature1'" );
+    add_appsearch_entry( hdb, "'NOTEPAD', 'NewSignature2'" );
+    add_appsearch_entry( hdb, "'REGEXPANDVAL', 'NewSignature3'" );
 
-    r = add_appsearch_entry( hdb, "'WEBBROWSERPROG', 'NewSignature1'" );
-    ok( r == ERROR_SUCCESS, "cannot add entry: %d\n", r );
-
-    r = add_appsearch_entry( hdb, "'NOTEPAD', 'NewSignature2'" );
-    ok( r == ERROR_SUCCESS, "cannot add entry: %d\n", r );
-
-    r = add_appsearch_entry( hdb, "'REGEXPANDVAL', 'NewSignature3'" );
-    ok( r == ERROR_SUCCESS, "cannot add entry: %d\n", r );
-
-    r = create_reglocator_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
-
-    r = add_reglocator_entry( hdb, "NewSignature1", 0, "htmlfile\\shell\\open\\command", "", 1 );
-    ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
+    create_reglocator_table( hdb );
+    add_reglocator_entry( hdb, "NewSignature1", 0, "htmlfile\\shell\\open\\command", "", 1 );
 
     r = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Winetest_msi", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
     ok( r == ERROR_SUCCESS, "Could not create key: %d.\n", r );
     r = RegSetValueExA(hkey, NULL, 0, REG_EXPAND_SZ, (const BYTE*)reg_expand_value, strlen(reg_expand_value) + 1);
     ok( r == ERROR_SUCCESS, "Could not set key value: %d.\n", r);
     RegCloseKey(hkey);
-    r = add_reglocator_entry( hdb, "NewSignature3", 1, "Software\\Winetest_msi", "", 1 );
-    ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
+    add_reglocator_entry( hdb, "NewSignature3", 1, "Software\\Winetest_msi", "", 1 );
 
-    r = create_drlocator_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create DrLocator table: %d\n", r );
+    create_drlocator_table( hdb );
+    add_drlocator_entry( hdb, "'NewSignature2', 0, 'c:\\windows\\system32', 0" );
 
-    r = add_drlocator_entry( hdb, "'NewSignature2', 0, 'c:\\windows\\system32', 0" );
-    ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
-
-    r = create_signature_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Signature table: %d\n", r );
-
-    r = add_signature_entry( hdb, "'NewSignature1', 'FileName', '', '', '', '', '', '', ''" );
-    ok( r == ERROR_SUCCESS, "cannot add signature: %d\n", r );
-
-    r = add_signature_entry( hdb, "'NewSignature2', 'NOTEPAD.EXE|notepad.exe', '', '', '', '', '', '', ''" );
-    ok( r == ERROR_SUCCESS, "cannot add signature: %d\n", r );
-
-    r = add_signature_entry( hdb, "'NewSignature3', 'NOTEPAD.EXE|notepad.exe', '', '', '', '', '', '', ''" );
-    ok( r == ERROR_SUCCESS, "cannot add signature: %d\n", r );
+    create_signature_table( hdb );
+    add_signature_entry( hdb, "'NewSignature1', 'FileName', '', '', '', '', '', '', ''" );
+    add_signature_entry( hdb, "'NewSignature2', 'NOTEPAD.EXE|notepad.exe', '', '', '', '', '', '', ''" );
+    add_signature_entry( hdb, "'NewSignature3', 'NOTEPAD.EXE|notepad.exe', '', '', '', '', '', '', ''" );
 
     r = package_from_db( hdb, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -3990,122 +3738,67 @@ static void test_appsearch_complocator(void)
     hdb = create_package_db();
     ok(hdb, "Expected a valid database handle\n");
 
-    r = create_appsearch_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_appsearch_table(hdb);
+    add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
+    add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
+    add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
+    add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
+    add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
+    add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
+    add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
+    add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
+    add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
+    add_appsearch_entry(hdb, "'SIGPROP10', 'NewSignature10'");
+    add_appsearch_entry(hdb, "'SIGPROP11', 'NewSignature11'");
+    add_appsearch_entry(hdb, "'SIGPROP12', 'NewSignature12'");
 
-    r = add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP10', 'NewSignature10'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP11', 'NewSignature11'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP12', 'NewSignature12'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = create_complocator_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_complocator_table(hdb);
 
     /* published component, machine, file, signature, misdbLocatorTypeFile */
-    r = add_complocator_entry(hdb, "'NewSignature1', '{A8AE6692-96BA-4198-8399-145D7D1D0D0E}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature1', '{A8AE6692-96BA-4198-8399-145D7D1D0D0E}', 1");
 
     /* published component, user-unmanaged, file, signature, misdbLocatorTypeFile */
-    r = add_complocator_entry(hdb, "'NewSignature2', '{1D2CE6F3-E81C-4949-AB81-78D7DAD2AF2E}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature2', '{1D2CE6F3-E81C-4949-AB81-78D7DAD2AF2E}', 1");
 
     /* published component, user-managed, file, signature, misdbLocatorTypeFile */
-    r = add_complocator_entry(hdb, "'NewSignature3', '{19E0B999-85F5-4973-A61B-DBE4D66ECB1D}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature3', '{19E0B999-85F5-4973-A61B-DBE4D66ECB1D}', 1");
 
     /* published component, machine, file, signature, misdbLocatorTypeDirectory */
-    r = add_complocator_entry(hdb, "'NewSignature4', '{A8AE6692-96BA-4198-8399-145D7D1D0D0E}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature4', '{A8AE6692-96BA-4198-8399-145D7D1D0D0E}', 0");
 
     /* published component, machine, dir, signature, misdbLocatorTypeDirectory */
-    r = add_complocator_entry(hdb, "'NewSignature5', '{F0CCA976-27A3-4808-9DDD-1A6FD50A0D5A}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature5', '{F0CCA976-27A3-4808-9DDD-1A6FD50A0D5A}', 0");
 
     /* published component, machine, dir, no signature, misdbLocatorTypeDirectory */
-    r = add_complocator_entry(hdb, "'NewSignature6', '{C0ECD96F-7898-4410-9667-194BD8C1B648}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature6', '{C0ECD96F-7898-4410-9667-194BD8C1B648}', 0");
 
     /* published component, machine, file, no signature, misdbLocatorTypeFile */
-    r = add_complocator_entry(hdb, "'NewSignature7', '{DB20F535-9C26-4127-9C2B-CC45A8B51DA1}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature7', '{DB20F535-9C26-4127-9C2B-CC45A8B51DA1}', 1");
 
     /* unpublished component, no signature, misdbLocatorTypeDir */
-    r = add_complocator_entry(hdb, "'NewSignature8', '{FB671D5B-5083-4048-90E0-481C48D8F3A5}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature8', '{FB671D5B-5083-4048-90E0-481C48D8F3A5}', 0");
 
     /* published component, no signature, dir does not exist misdbLocatorTypeDir */
-    r = add_complocator_entry(hdb, "'NewSignature9', '{91B7359B-07F2-4221-AA8D-DE102BB87A5F}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature9', '{91B7359B-07F2-4221-AA8D-DE102BB87A5F}', 0");
 
     /* published component, signature w/ ver, misdbLocatorTypeFile */
-    r = add_complocator_entry(hdb, "'NewSignature10', '{4A2E1B5B-4034-4177-833B-8CC35F1B3EF1}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature10', '{4A2E1B5B-4034-4177-833B-8CC35F1B3EF1}', 1");
 
     /* published component, signature w/ ver, ver > max, misdbLocatorTypeFile */
-    r = add_complocator_entry(hdb, "'NewSignature11', '{A204DF48-7346-4635-BA2E-66247DBAC9DF}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature11', '{A204DF48-7346-4635-BA2E-66247DBAC9DF}', 1");
 
     /* published component, signature w/ ver, sig->name ignored, misdbLocatorTypeFile */
-    r = add_complocator_entry(hdb, "'NewSignature12', '{EC30CE73-4CF9-4908-BABD-1ED82E1515FD}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_complocator_entry(hdb, "'NewSignature12', '{EC30CE73-4CF9-4908-BABD-1ED82E1515FD}', 1");
 
-    r = create_signature_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature1', 'FileName1', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature2', 'FileName2', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature3', 'FileName3', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature4', 'FileName4', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature5', 'FileName5', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature10', 'FileName8.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature11', 'FileName9.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature12', 'ignored', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_signature_table(hdb);
+    add_signature_entry(hdb, "'NewSignature1', 'FileName1', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature2', 'FileName2', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature3', 'FileName3', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature4', 'FileName4', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature5', 'FileName5', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature10', 'FileName8.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature11', 'FileName9.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature12', 'ignored', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
 
     r = package_from_db(hdb, &hpkg);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -4241,7 +3934,6 @@ static void test_appsearch_reglocator(void)
     BOOL space, version, is_64bit = sizeof(void *) > sizeof(int);
     HKEY hklm, classes, hkcu, users;
     LPSTR pathdata, pathvar, ptr;
-    LPCSTR str;
     LONG res;
     UINT r, type = 0;
     SYSTEM_INFO si;
@@ -4381,295 +4073,175 @@ static void test_appsearch_reglocator(void)
     hdb = create_package_db();
     ok(hdb, "Expected a valid database handle\n");
 
-    r = create_appsearch_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_appsearch_table(hdb);
+    add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
+    add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
+    add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
+    add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
+    add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
+    add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
+    add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
+    add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
+    add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
+    add_appsearch_entry(hdb, "'SIGPROP10', 'NewSignature10'");
+    add_appsearch_entry(hdb, "'SIGPROP11', 'NewSignature11'");
+    add_appsearch_entry(hdb, "'SIGPROP12', 'NewSignature12'");
+    add_appsearch_entry(hdb, "'SIGPROP13', 'NewSignature13'");
+    add_appsearch_entry(hdb, "'SIGPROP14', 'NewSignature14'");
+    add_appsearch_entry(hdb, "'SIGPROP15', 'NewSignature15'");
+    add_appsearch_entry(hdb, "'SIGPROP16', 'NewSignature16'");
+    add_appsearch_entry(hdb, "'SIGPROP17', 'NewSignature17'");
+    add_appsearch_entry(hdb, "'SIGPROP18', 'NewSignature18'");
+    add_appsearch_entry(hdb, "'SIGPROP19', 'NewSignature19'");
+    add_appsearch_entry(hdb, "'SIGPROP20', 'NewSignature20'");
+    add_appsearch_entry(hdb, "'SIGPROP21', 'NewSignature21'");
+    add_appsearch_entry(hdb, "'SIGPROP22', 'NewSignature22'");
+    add_appsearch_entry(hdb, "'SIGPROP23', 'NewSignature23'");
+    add_appsearch_entry(hdb, "'SIGPROP24', 'NewSignature24'");
+    add_appsearch_entry(hdb, "'SIGPROP25', 'NewSignature25'");
+    add_appsearch_entry(hdb, "'SIGPROP26', 'NewSignature26'");
+    add_appsearch_entry(hdb, "'SIGPROP27', 'NewSignature27'");
+    add_appsearch_entry(hdb, "'SIGPROP28', 'NewSignature28'");
+    add_appsearch_entry(hdb, "'SIGPROP29', 'NewSignature29'");
+    add_appsearch_entry(hdb, "'SIGPROP30', 'NewSignature30'");
 
-    r = add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP10', 'NewSignature10'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP11', 'NewSignature11'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP12', 'NewSignature12'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP13', 'NewSignature13'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP14', 'NewSignature14'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP15', 'NewSignature15'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP16', 'NewSignature16'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP17', 'NewSignature17'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP18', 'NewSignature18'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP19', 'NewSignature19'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP20', 'NewSignature20'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP21', 'NewSignature21'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP22', 'NewSignature22'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP23', 'NewSignature23'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP24', 'NewSignature24'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP25', 'NewSignature25'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP26', 'NewSignature26'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP27', 'NewSignature27'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP28', 'NewSignature28'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP29', 'NewSignature29'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP30', 'NewSignature30'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = create_reglocator_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_reglocator_table(hdb);
 
     type = msidbLocatorTypeRawValue;
     if (is_64bit)
         type |= msidbLocatorType64bit;
 
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ */
-    r = add_reglocator_entry(hdb, "NewSignature1", 2, "Software\\Wine", "Value1", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature1", 2, "Software\\Wine", "Value1", type);
 
     /* HKLM, msidbLocatorTypeRawValue, positive DWORD */
-    r = add_reglocator_entry(hdb, "NewSignature2", 2, "Software\\Wine", "Value2", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature2", 2, "Software\\Wine", "Value2", type);
 
     /* HKLM, msidbLocatorTypeRawValue, negative DWORD */
-    r = add_reglocator_entry(hdb, "NewSignature3", 2, "Software\\Wine", "Value3", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature3", 2, "Software\\Wine", "Value3", type);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_EXPAND_SZ */
-    r = add_reglocator_entry(hdb, "NewSignature4", 2, "Software\\Wine", "Value4", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature4", 2, "Software\\Wine", "Value4", type);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_EXPAND_SZ */
-    r = add_reglocator_entry(hdb, "NewSignature5", 2, "Software\\Wine", "Value5", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature5", 2, "Software\\Wine", "Value5", type);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_MULTI_SZ */
-    r = add_reglocator_entry(hdb, "NewSignature6", 2, "Software\\Wine", "Value6", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature6", 2, "Software\\Wine", "Value6", type);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_BINARY */
-    r = add_reglocator_entry(hdb, "NewSignature7", 2, "Software\\Wine", "Value7", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature7", 2, "Software\\Wine", "Value7", type);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ first char is # */
-    r = add_reglocator_entry(hdb, "NewSignature8", 2, "Software\\Wine", "Value8", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature8", 2, "Software\\Wine", "Value8", type);
 
     type = msidbLocatorTypeFileName;
     if (is_64bit)
         type |= msidbLocatorType64bit;
 
     /* HKLM, msidbLocatorTypeFileName, signature, file exists */
-    r = add_reglocator_entry(hdb, "NewSignature9", 2, "Software\\Wine", "Value9", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature9", 2, "Software\\Wine", "Value9", type);
 
     /* HKLM, msidbLocatorTypeFileName, signature, file does not exist */
-    r = add_reglocator_entry(hdb, "NewSignature10", 2, "Software\\Wine", "Value10", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature10", 2, "Software\\Wine", "Value10", type);
 
     /* HKLM, msidbLocatorTypeFileName, no signature */
-    r = add_reglocator_entry(hdb, "NewSignature11", 2, "Software\\Wine", "Value9", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature11", 2, "Software\\Wine", "Value9", type);
 
     type = msidbLocatorTypeDirectory;
     if (is_64bit)
         type |= msidbLocatorType64bit;
 
     /* HKLM, msidbLocatorTypeDirectory, no signature, file exists */
-    r = add_reglocator_entry(hdb, "NewSignature12", 2, "Software\\Wine", "Value9", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature12", 2, "Software\\Wine", "Value9", type);
 
     /* HKLM, msidbLocatorTypeDirectory, no signature, directory exists */
-    r = add_reglocator_entry(hdb, "NewSignature13", 2, "Software\\Wine", "Value11", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature13", 2, "Software\\Wine", "Value11", type);
 
     /* HKLM, msidbLocatorTypeDirectory, signature, file exists */
-    r = add_reglocator_entry(hdb, "NewSignature14", 2, "Software\\Wine", "Value9", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature14", 2, "Software\\Wine", "Value9", type);
 
     type = msidbLocatorTypeRawValue;
     if (is_64bit)
         type |= msidbLocatorType64bit;
 
     /* HKCR, msidbLocatorTypeRawValue, REG_SZ */
-    r = add_reglocator_entry(hdb, "NewSignature15", 0, "Software\\Wine", "Value1", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature15", 0, "Software\\Wine", "Value1", type);
 
     /* HKCU, msidbLocatorTypeRawValue, REG_SZ */
-    r = add_reglocator_entry(hdb, "NewSignature16", 1, "Software\\Wine", "Value1", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature16", 1, "Software\\Wine", "Value1", type);
 
     /* HKU, msidbLocatorTypeRawValue, REG_SZ */
-    r = add_reglocator_entry(hdb, "NewSignature17", 3, "S-1-5-18\\Software\\Wine", "Value1", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature17", 3, "S-1-5-18\\Software\\Wine", "Value1", type);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ, NULL Name */
-    r = add_reglocator_entry(hdb, "NewSignature18", 2, "Software\\Wine", "", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature18", 2, "Software\\Wine", "", type);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ, key does not exist */
-    r = add_reglocator_entry(hdb, "NewSignature19", 2, "Software\\IDontExist", "", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature19", 2, "Software\\IDontExist", "", type);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ, value is empty */
-    r = add_reglocator_entry(hdb, "NewSignature20", 2, "Software\\Wine", "Value12", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature20", 2, "Software\\Wine", "Value12", type);
 
     type = msidbLocatorTypeFileName;
     if (is_64bit)
         type |= msidbLocatorType64bit;
 
     /* HKLM, msidbLocatorTypeFileName, signature, file exists w/ version */
-    r = add_reglocator_entry(hdb, "NewSignature21", 2, "Software\\Wine", "Value13", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature21", 2, "Software\\Wine", "Value13", type);
 
     /* HKLM, msidbLocatorTypeFileName, file exists w/ version, version > max */
-    r = add_reglocator_entry(hdb, "NewSignature22", 2, "Software\\Wine", "Value14", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature22", 2, "Software\\Wine", "Value14", type);
 
     /* HKLM, msidbLocatorTypeFileName, file exists w/ version, sig->name ignored */
-    r = add_reglocator_entry(hdb, "NewSignature23", 2, "Software\\Wine", "Value15", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature23", 2, "Software\\Wine", "Value15", type);
 
     /* HKLM, msidbLocatorTypeFileName, no signature, directory exists */
-    r = add_reglocator_entry(hdb, "NewSignature24", 2, "Software\\Wine", "Value11", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature24", 2, "Software\\Wine", "Value11", type);
 
     /* HKLM, msidbLocatorTypeFileName, no signature, file does not exist */
-    r = add_reglocator_entry(hdb, "NewSignature25", 2, "Software\\Wine", "Value10", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature25", 2, "Software\\Wine", "Value10", type);
 
     type = msidbLocatorTypeDirectory;
     if (is_64bit)
         type |= msidbLocatorType64bit;
 
     /* HKLM, msidbLocatorTypeDirectory, signature, directory exists */
-    r = add_reglocator_entry(hdb, "NewSignature26", 2, "Software\\Wine", "Value11", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature26", 2, "Software\\Wine", "Value11", type);
 
     /* HKLM, msidbLocatorTypeDirectory, signature, file does not exist */
-    r = add_reglocator_entry(hdb, "NewSignature27", 2, "Software\\Wine", "Value10", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature27", 2, "Software\\Wine", "Value10", type);
 
     /* HKLM, msidbLocatorTypeDirectory, no signature, file does not exist */
-    r = add_reglocator_entry(hdb, "NewSignature28", 2, "Software\\Wine", "Value10", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature28", 2, "Software\\Wine", "Value10", type);
 
     type = msidbLocatorTypeFileName;
     if (is_64bit)
         type |= msidbLocatorType64bit;
 
     /* HKLM, msidbLocatorTypeFile, file exists, in quotes */
-    r = add_reglocator_entry(hdb, "NewSignature29", 2, "Software\\Wine", "Value16", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature29", 2, "Software\\Wine", "Value16", type);
 
     /* HKLM, msidbLocatorTypeFile, file exists, no quotes */
-    r = add_reglocator_entry(hdb, "NewSignature30", 2, "Software\\Wine", "Value17", type);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature30", 2, "Software\\Wine", "Value17", type);
 
-    r = create_signature_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature9', 'FileName1', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature10', 'FileName2', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature14', 'FileName1', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature21', 'FileName3.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature22', 'FileName4.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature23', 'ignored', '1.1.1.1', '2.1.1.1', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_signature_table(hdb);
+    add_signature_entry(hdb, "'NewSignature9', 'FileName1', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature10', 'FileName2', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature14', 'FileName1', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature21', 'FileName3.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature22', 'FileName4.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature23', 'ignored', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
 
     if (!is_root(CURR_DIR))
     {
         ptr = strrchr(expected, '\\') + 1;
         sprintf(path, "'NewSignature26', '%s', '', '', '', '', '', '', ''", ptr);
-        r = add_signature_entry(hdb, path);
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        add_signature_entry(hdb, path);
     }
-    str = "'NewSignature27', 'FileName2', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature29', 'FileName1', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature30', 'FileName1', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_signature_entry(hdb, "'NewSignature27', 'FileName2', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature29', 'FileName1', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature30', 'FileName1', '', '', '', '', '', '', ''");
 
     r = package_from_db(hdb, &hpkg);
     ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
@@ -4941,7 +4513,6 @@ static void test_appsearch_inilocator(void)
     MSIHANDLE hpkg, hdb;
     char path[MAX_PATH], expected[MAX_PATH], prop[MAX_PATH];
     BOOL version;
-    LPCSTR str;
     LPSTR ptr;
     DWORD size;
     UINT r;
@@ -4981,125 +4552,64 @@ static void test_appsearch_inilocator(void)
     hdb = create_package_db();
     ok(hdb, "Expected a valid database handle\n");
 
-    r = create_appsearch_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_appsearch_table(hdb);
+    add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
+    add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
+    add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
+    add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
+    add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
+    add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
+    add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
+    add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
+    add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
+    add_appsearch_entry(hdb, "'SIGPROP10', 'NewSignature10'");
+    add_appsearch_entry(hdb, "'SIGPROP11', 'NewSignature11'");
+    add_appsearch_entry(hdb, "'SIGPROP12', 'NewSignature12'");
 
-    r = add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP10', 'NewSignature10'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP11', 'NewSignature11'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP12', 'NewSignature12'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = create_inilocator_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_inilocator_table(hdb);
 
     /* msidbLocatorTypeRawValue, field 1 */
-    str = "'NewSignature1', 'IniFile.ini', 'Section', 'Key', 1, 2";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature1', 'IniFile.ini', 'Section', 'Key', 1, 2");
 
     /* msidbLocatorTypeRawValue, field 2 */
-    str = "'NewSignature2', 'IniFile.ini', 'Section', 'Key', 2, 2";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature2', 'IniFile.ini', 'Section', 'Key', 2, 2");
 
     /* msidbLocatorTypeRawValue, entire field */
-    str = "'NewSignature3', 'IniFile.ini', 'Section', 'Key', 0, 2";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature3', 'IniFile.ini', 'Section', 'Key', 0, 2");
 
     /* msidbLocatorTypeFile */
-    str = "'NewSignature4', 'IniFile.ini', 'Section', 'Key2', 1, 1";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature4', 'IniFile.ini', 'Section', 'Key2', 1, 1");
 
     /* msidbLocatorTypeDirectory, file */
-    str = "'NewSignature5', 'IniFile.ini', 'Section', 'Key2', 1, 0";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature5', 'IniFile.ini', 'Section', 'Key2', 1, 0");
 
     /* msidbLocatorTypeDirectory, directory */
-    str = "'NewSignature6', 'IniFile.ini', 'Section', 'Key3', 1, 0";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature6', 'IniFile.ini', 'Section', 'Key3', 1, 0");
 
     /* msidbLocatorTypeFile, file, no signature */
-    str = "'NewSignature7', 'IniFile.ini', 'Section', 'Key2', 1, 1";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature7', 'IniFile.ini', 'Section', 'Key2', 1, 1");
 
     /* msidbLocatorTypeFile, dir, no signature */
-    str = "'NewSignature8', 'IniFile.ini', 'Section', 'Key3', 1, 1";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature8', 'IniFile.ini', 'Section', 'Key3', 1, 1");
 
     /* msidbLocatorTypeFile, file does not exist */
-    str = "'NewSignature9', 'IniFile.ini', 'Section', 'Key4', 1, 1";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature9', 'IniFile.ini', 'Section', 'Key4', 1, 1");
 
     /* msidbLocatorTypeFile, signature with version */
-    str = "'NewSignature10', 'IniFile.ini', 'Section', 'Key5', 1, 1";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature10', 'IniFile.ini', 'Section', 'Key5', 1, 1");
 
     /* msidbLocatorTypeFile, signature with version, ver > max */
-    str = "'NewSignature11', 'IniFile.ini', 'Section', 'Key6', 1, 1";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature11', 'IniFile.ini', 'Section', 'Key6', 1, 1");
 
     /* msidbLocatorTypeFile, signature with version, sig->name ignored */
-    str = "'NewSignature12', 'IniFile.ini', 'Section', 'Key7', 1, 1";
-    r = add_inilocator_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_inilocator_entry(hdb, "'NewSignature12', 'IniFile.ini', 'Section', 'Key7', 1, 1");
 
-    r = create_signature_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature4', 'FileName1', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature9', 'IDontExist', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature10', 'FileName2.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature11', 'FileName3.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'NewSignature12', 'ignored', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_signature_table(hdb);
+    add_signature_entry(hdb, "'NewSignature4', 'FileName1', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature9', 'IDontExist', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature10', 'FileName2.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature11', 'FileName3.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature12', 'ignored', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
 
     r = package_from_db(hdb, &hpkg);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -5240,7 +4750,6 @@ static void test_appsearch_drlocator(void)
     MSIHANDLE hpkg, hdb;
     char path[MAX_PATH], expected[MAX_PATH], prop[MAX_PATH];
     BOOL version;
-    LPCSTR str;
     DWORD size;
     UINT r;
 
@@ -5263,152 +4772,87 @@ static void test_appsearch_drlocator(void)
     hdb = create_package_db();
     ok(hdb, "Expected a valid database handle\n");
 
-    r = create_appsearch_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_appsearch_table(hdb);
+    add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
+    add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
+    add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
+    add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
+    add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
+    add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
+    add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
+    add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
+    add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
+    add_appsearch_entry(hdb, "'SIGPROP10', 'NewSignature10'");
+    add_appsearch_entry(hdb, "'SIGPROP11', 'NewSignature11'");
+    add_appsearch_entry(hdb, "'SIGPROP13', 'NewSignature13'");
 
-    r = add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP10', 'NewSignature10'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP11', 'NewSignature11'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'SIGPROP13', 'NewSignature13'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = create_drlocator_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_drlocator_table(hdb);
 
     strcpy(expected, CURR_DIR);
     if (is_root(CURR_DIR)) expected[2] = 0;
 
     /* no parent, full path, depth 0, signature */
     sprintf(path, "'NewSignature1', '', '%s', 0", expected);
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* no parent, full path, depth 0, no signature */
     sprintf(path, "'NewSignature2', '', '%s', 0", expected);
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* no parent, relative path, depth 0, no signature */
     sprintf(path, "'NewSignature3', '', '%s', 0", expected + 3);
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* no parent, full path, depth 2, signature */
     sprintf(path, "'NewSignature4', '', '%s', 2", expected);
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* no parent, full path, depth 3, signature */
     sprintf(path, "'NewSignature5', '', '%s', 3", expected);
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* no parent, full path, depth 1, signature is dir */
     sprintf(path, "'NewSignature6', '', '%s', 1", expected);
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* parent is in DrLocator, relative path, depth 0, signature */
     sprintf(path, "'NewSignature7', 'NewSignature1', 'one\\two\\three', 1");
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* no parent, full path, depth 0, signature w/ version */
     sprintf(path, "'NewSignature8', '', '%s', 0", expected);
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* no parent, full path, depth 0, signature w/ version, ver > max */
     sprintf(path, "'NewSignature9', '', '%s', 0", expected);
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* no parent, full path, depth 0, signature w/ version, sig->name not ignored */
     sprintf(path, "'NewSignature10', '', '%s', 0", expected);
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
     /* no parent, relative empty path, depth 0, no signature */
     sprintf(path, "'NewSignature11', '', '', 0");
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
-    r = create_reglocator_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_reglocator_table(hdb);
 
     /* parent */
-    r = add_reglocator_entry(hdb, "NewSignature12", 2, "htmlfile\\shell\\open\\nonexistent", "", 1);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_reglocator_entry(hdb, "NewSignature12", 2, "htmlfile\\shell\\open\\nonexistent", "", 1);
 
     /* parent is in RegLocator, no path, depth 0, no signature */
     sprintf(path, "'NewSignature13', 'NewSignature12', '', 0");
-    r = add_drlocator_entry(hdb, path);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    add_drlocator_entry(hdb, path);
 
-    r = create_signature_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature1', 'FileName1', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature4', 'FileName2', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature5', 'FileName2', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature6', 'another', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature7', 'FileName2', '', '', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature8', 'FileName3.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature9', 'FileName4.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    str = "'NewSignature10', 'necessary', '1.1.1.1', '2.1.1.1', '', '', '', '', ''";
-    r = add_signature_entry(hdb, str);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_signature_table(hdb);
+    add_signature_entry(hdb, "'NewSignature1', 'FileName1', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature4', 'FileName2', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature5', 'FileName2', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature6', 'another', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature7', 'FileName2', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature8', 'FileName3.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature9', 'FileName4.dll', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
+    add_signature_entry(hdb, "'NewSignature10', 'necessary', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
 
     r = package_from_db(hdb, &hpkg);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -5518,172 +4962,93 @@ static void test_featureparents(void)
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
 
-    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'");
-    ok( r == ERROR_SUCCESS, "cannot add directory: %d\n", r );
+    add_directory_entry(hdb, "'TARGETDIR', '', 'SourceDir'");
 
-    r = create_feature_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Feature table: %d\n", r );
-
-    r = create_component_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Component table: %d\n", r );
-
-    r = create_feature_components_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table: %d\n", r );
-
-    r = create_file_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create File table: %d\n", r );
+    create_feature_table( hdb );
+    create_component_table( hdb );
+    create_feature_components_table( hdb );
+    create_file_table( hdb );
 
     /* msidbFeatureAttributesFavorLocal */
-    r = add_feature_entry( hdb, "'zodiac', '', '', '', 2, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'zodiac', '', '', '', 2, 1, '', 0" );
 
     /* msidbFeatureAttributesFavorSource */
-    r = add_feature_entry( hdb, "'perseus', '', '', '', 2, 1, '', 1" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'perseus', '', '', '', 2, 1, '', 1" );
 
     /* msidbFeatureAttributesFavorLocal */
-    r = add_feature_entry( hdb, "'orion', '', '', '', 2, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'orion', '', '', '', 2, 1, '', 0" );
 
     /* msidbFeatureAttributesUIDisallowAbsent */
-    r = add_feature_entry( hdb, "'lyra', '', '', '', 2, 1, '', 16" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'lyra', '', '', '', 2, 1, '', 16" );
 
     /* disabled because of install level */
-    r = add_feature_entry( hdb, "'waters', '', '', '', 15, 101, '', 9" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'waters', '', '', '', 15, 101, '', 9" );
 
     /* child feature of disabled feature */
-    r = add_feature_entry( hdb, "'bayer', 'waters', '', '', 14, 1, '', 9" );
-    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+    add_feature_entry( hdb, "'bayer', 'waters', '', '', 14, 1, '', 9" );
 
     /* component of disabled feature (install level) */
-    r = add_component_entry( hdb, "'delphinus', '', 'TARGETDIR', 0, '', 'delphinus_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'delphinus', '', 'TARGETDIR', 0, '', 'delphinus_file'" );
 
     /* component of disabled child feature (install level) */
-    r = add_component_entry( hdb, "'hydrus', '', 'TARGETDIR', 0, '', 'hydrus_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'hydrus', '', 'TARGETDIR', 0, '', 'hydrus_file'" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesLocalOnly */
-    r = add_component_entry( hdb, "'leo', '', 'TARGETDIR', 0, '', 'leo_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'leo', '', 'TARGETDIR', 0, '', 'leo_file'" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesSourceOnly */
-    r = add_component_entry( hdb, "'virgo', '', 'TARGETDIR', 1, '', 'virgo_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'virgo', '', 'TARGETDIR', 1, '', 'virgo_file'" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesOptional */
-    r = add_component_entry( hdb, "'libra', '', 'TARGETDIR', 2, '', 'libra_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'libra', '', 'TARGETDIR', 2, '', 'libra_file'" );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesLocalOnly */
-    r = add_component_entry( hdb, "'cassiopeia', '', 'TARGETDIR', 0, '', 'cassiopeia_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'cassiopeia', '', 'TARGETDIR', 0, '', 'cassiopeia_file'" );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesSourceOnly */
-    r = add_component_entry( hdb, "'cepheus', '', 'TARGETDIR', 1, '', 'cepheus_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'cepheus', '', 'TARGETDIR', 1, '', 'cepheus_file'" );
 
     /* msidbFeatureAttributesFavorSource:msidbComponentAttributesOptional */
-    r = add_component_entry( hdb, "'andromeda', '', 'TARGETDIR', 2, '', 'andromeda_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'andromeda', '', 'TARGETDIR', 2, '', 'andromeda_file'" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesLocalOnly */
-    r = add_component_entry( hdb, "'canis', '', 'TARGETDIR', 0, '', 'canis_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'canis', '', 'TARGETDIR', 0, '', 'canis_file'" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesSourceOnly */
-    r = add_component_entry( hdb, "'monoceros', '', 'TARGETDIR', 1, '', 'monoceros_file'" );
-    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+    add_component_entry( hdb, "'monoceros', '', 'TARGETDIR', 1, '', 'monoceros_file'" );
 
     /* msidbFeatureAttributesFavorLocal:msidbComponentAttributesOptional */
-    r = add_component_entry( hdb, "'lepus', '', 'TARGETDIR', 2, '', 'lepus_file'" );
-    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
+    add_component_entry( hdb, "'lepus', '', 'TARGETDIR', 2, '', 'lepus_file'" );
 
-    r = add_feature_components_entry( hdb, "'zodiac', 'leo'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+    add_feature_components_entry( hdb, "'zodiac', 'leo'" );
+    add_feature_components_entry( hdb, "'zodiac', 'virgo'" );
+    add_feature_components_entry( hdb, "'zodiac', 'libra'" );
+    add_feature_components_entry( hdb, "'perseus', 'cassiopeia'" );
+    add_feature_components_entry( hdb, "'perseus', 'cepheus'" );
+    add_feature_components_entry( hdb, "'perseus', 'andromeda'" );
+    add_feature_components_entry( hdb, "'orion', 'leo'" );
+    add_feature_components_entry( hdb, "'orion', 'virgo'" );
+    add_feature_components_entry( hdb, "'orion', 'libra'" );
+    add_feature_components_entry( hdb, "'orion', 'cassiopeia'" );
+    add_feature_components_entry( hdb, "'orion', 'cepheus'" );
+    add_feature_components_entry( hdb, "'orion', 'andromeda'" );
+    add_feature_components_entry( hdb, "'orion', 'canis'" );
+    add_feature_components_entry( hdb, "'orion', 'monoceros'" );
+    add_feature_components_entry( hdb, "'orion', 'lepus'" );
+    add_feature_components_entry( hdb, "'waters', 'delphinus'" );
+    add_feature_components_entry( hdb, "'bayer', 'hydrus'" );
 
-    r = add_feature_components_entry( hdb, "'zodiac', 'virgo'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'zodiac', 'libra'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'perseus', 'cassiopeia'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'perseus', 'cepheus'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'perseus', 'andromeda'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'orion', 'leo'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'orion', 'virgo'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'orion', 'libra'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'orion', 'cassiopeia'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'orion', 'cepheus'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'orion', 'andromeda'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'orion', 'canis'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'orion', 'monoceros'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'orion', 'lepus'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'waters', 'delphinus'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_feature_components_entry( hdb, "'bayer', 'hydrus'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
-
-    r = add_file_entry( hdb, "'leo_file', 'leo', 'leo.txt', 100, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'virgo_file', 'virgo', 'virgo.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'libra_file', 'libra', 'libra.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'cassiopeia_file', 'cassiopeia', 'cassiopeia.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'cepheus_file', 'cepheus', 'cepheus.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'andromeda_file', 'andromeda', 'andromeda.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'canis_file', 'canis', 'canis.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'monoceros_file', 'monoceros', 'monoceros.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'lepus_file', 'lepus', 'lepus.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'delphinus_file', 'delphinus', 'delphinus.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
-
-    r = add_file_entry( hdb, "'hydrus_file', 'hydrus', 'hydrus.txt', 0, '', '1033', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+    add_file_entry( hdb, "'leo_file', 'leo', 'leo.txt', 100, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'virgo_file', 'virgo', 'virgo.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'libra_file', 'libra', 'libra.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'cassiopeia_file', 'cassiopeia', 'cassiopeia.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'cepheus_file', 'cepheus', 'cepheus.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'andromeda_file', 'andromeda', 'andromeda.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'canis_file', 'canis', 'canis.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'monoceros_file', 'monoceros', 'monoceros.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'lepus_file', 'lepus', 'lepus.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'delphinus_file', 'delphinus', 'delphinus.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'hydrus_file', 'hydrus', 'hydrus.txt', 0, '', '1033', 8192, 1" );
 
     r = package_from_db( hdb, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -6150,15 +5515,12 @@ static void test_launchconditions(void)
     hdb = create_package_db();
     ok( hdb, "failed to create package database\n" );
 
-    r = create_launchcondition_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create LaunchCondition table: %d\n", r );
+    create_launchcondition_table( hdb );
 
-    r = add_launchcondition_entry( hdb, "'X = \"1\"', 'one'" );
-    ok( r == ERROR_SUCCESS, "cannot add launch condition: %d\n", r );
+    add_launchcondition_entry( hdb, "'X = \"1\"', 'one'" );
 
     /* invalid condition */
-    r = add_launchcondition_entry( hdb, "'X != \"1\"', 'one'" );
-    ok( r == ERROR_SUCCESS, "cannot add launch condition: %d\n", r );
+    add_launchcondition_entry( hdb, "'X != \"1\"', 'one'" );
 
     r = package_from_db( hdb, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -6201,29 +5563,17 @@ static void test_ccpsearch(void)
     hdb = create_package_db();
     ok(hdb, "failed to create package database\n");
 
-    r = create_ccpsearch_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_ccpsearch_table(hdb);
+    add_ccpsearch_entry(hdb, "'CCP_random'");
+    add_ccpsearch_entry(hdb, "'RMCCP_random'");
 
-    r = add_ccpsearch_entry(hdb, "'CCP_random'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_reglocator_table(hdb);
+    add_reglocator_entry(hdb, "CCP_random", 0, "htmlfile\\shell\\open\\nonexistent", "", 1);
 
-    r = add_ccpsearch_entry(hdb, "'RMCCP_random'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_drlocator_table(hdb);
+    add_drlocator_entry(hdb, "'RMCCP_random', '', 'C:\\', '0'");
 
-    r = create_reglocator_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_reglocator_entry(hdb, "CCP_random", 0, "htmlfile\\shell\\open\\nonexistent", "", 1);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = create_drlocator_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_drlocator_entry(hdb, "'RMCCP_random', '', 'C:\\', '0'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = create_signature_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_signature_table(hdb);
 
     r = package_from_db(hdb, &hpkg);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -6260,134 +5610,51 @@ static void test_complocator(void)
     hdb = create_package_db();
     ok(hdb, "failed to create package database\n");
 
-    r = create_appsearch_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_appsearch_table(hdb);
+    add_appsearch_entry(hdb, "'ABELISAURUS', 'abelisaurus'");
+    add_appsearch_entry(hdb, "'BACTROSAURUS', 'bactrosaurus'");
+    add_appsearch_entry(hdb, "'CAMELOTIA', 'camelotia'");
+    add_appsearch_entry(hdb, "'DICLONIUS', 'diclonius'");
+    add_appsearch_entry(hdb, "'ECHINODON', 'echinodon'");
+    add_appsearch_entry(hdb, "'FALCARIUS', 'falcarius'");
+    add_appsearch_entry(hdb, "'GALLIMIMUS', 'gallimimus'");
+    add_appsearch_entry(hdb, "'HAGRYPHUS', 'hagryphus'");
+    add_appsearch_entry(hdb, "'IGUANODON', 'iguanodon'");
+    add_appsearch_entry(hdb, "'JOBARIA', 'jobaria'");
+    add_appsearch_entry(hdb, "'KAKURU', 'kakuru'");
+    add_appsearch_entry(hdb, "'LABOCANIA', 'labocania'");
+    add_appsearch_entry(hdb, "'MEGARAPTOR', 'megaraptor'");
+    add_appsearch_entry(hdb, "'NEOSODON', 'neosodon'");
+    add_appsearch_entry(hdb, "'OLOROTITAN', 'olorotitan'");
+    add_appsearch_entry(hdb, "'PANTYDRACO', 'pantydraco'");
 
-    r = add_appsearch_entry(hdb, "'ABELISAURUS', 'abelisaurus'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_complocator_table(hdb);
+    add_complocator_entry(hdb, "'abelisaurus', '{E3619EED-305A-418C-B9C7-F7D7377F0934}', 1");
+    add_complocator_entry(hdb, "'bactrosaurus', '{D56B688D-542F-42Ef-90FD-B6DA76EE8119}', 0");
+    add_complocator_entry(hdb, "'camelotia', '{8211BE36-2466-47E3-AFB7-6AC72E51AED2}', 1");
+    add_complocator_entry(hdb, "'diclonius', '{5C767B20-A33C-45A4-B80B-555E512F01AE}', 0");
+    add_complocator_entry(hdb, "'echinodon', '{A19E16C5-C75D-4699-8111-C4338C40C3CB}', 1");
+    add_complocator_entry(hdb, "'falcarius', '{17762FA1-A7AE-4CC6-8827-62873C35361D}', 0");
+    add_complocator_entry(hdb, "'gallimimus', '{75EBF568-C959-41E0-A99E-9050638CF5FB}', 1");
+    add_complocator_entry(hdb, "'hagrphus', '{D4969B72-17D9-4AB6-BE49-78F2FEE857AC}', 0");
+    add_complocator_entry(hdb, "'iguanodon', '{8E0DA02E-F6A7-4A8F-B25D-6F564C492308}', 1");
+    add_complocator_entry(hdb, "'jobaria', '{243C22B1-8C51-4151-B9D1-1AE5265E079E}', 0");
+    add_complocator_entry(hdb, "'kakuru', '{5D0F03BA-50BC-44F2-ABB1-72C972F4E514}', 1");
+    add_complocator_entry(hdb, "'labocania', '{C7DDB60C-7828-4046-A6F8-699D5E92F1ED}', 0");
+    add_complocator_entry(hdb, "'megaraptor', '{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}', 1");
+    add_complocator_entry(hdb, "'neosodon', '{0B499649-197A-48EF-93D2-AF1C17ED6E90}', 0");
+    add_complocator_entry(hdb, "'olorotitan', '{54E9E91F-AED2-46D5-A25A-7E50AFA24513}', 1");
+    add_complocator_entry(hdb, "'pantydraco', '{2A989951-5565-4FA7-93A7-E800A3E67D71}', 0");
 
-    r = add_appsearch_entry(hdb, "'BACTROSAURUS', 'bactrosaurus'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'CAMELOTIA', 'camelotia'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'DICLONIUS', 'diclonius'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'ECHINODON', 'echinodon'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'FALCARIUS', 'falcarius'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'GALLIMIMUS', 'gallimimus'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'HAGRYPHUS', 'hagryphus'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'IGUANODON', 'iguanodon'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'JOBARIA', 'jobaria'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'KAKURU', 'kakuru'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'LABOCANIA', 'labocania'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'MEGARAPTOR', 'megaraptor'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'NEOSODON', 'neosodon'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'OLOROTITAN', 'olorotitan'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_appsearch_entry(hdb, "'PANTYDRACO', 'pantydraco'");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = create_complocator_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'abelisaurus', '{E3619EED-305A-418C-B9C7-F7D7377F0934}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'bactrosaurus', '{D56B688D-542F-42Ef-90FD-B6DA76EE8119}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'camelotia', '{8211BE36-2466-47E3-AFB7-6AC72E51AED2}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'diclonius', '{5C767B20-A33C-45A4-B80B-555E512F01AE}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'echinodon', '{A19E16C5-C75D-4699-8111-C4338C40C3CB}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'falcarius', '{17762FA1-A7AE-4CC6-8827-62873C35361D}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'gallimimus', '{75EBF568-C959-41E0-A99E-9050638CF5FB}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'hagrphus', '{D4969B72-17D9-4AB6-BE49-78F2FEE857AC}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'iguanodon', '{8E0DA02E-F6A7-4A8F-B25D-6F564C492308}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'jobaria', '{243C22B1-8C51-4151-B9D1-1AE5265E079E}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'kakuru', '{5D0F03BA-50BC-44F2-ABB1-72C972F4E514}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'labocania', '{C7DDB60C-7828-4046-A6F8-699D5E92F1ED}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'megaraptor', '{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'neosodon', '{0B499649-197A-48EF-93D2-AF1C17ED6E90}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'olorotitan', '{54E9E91F-AED2-46D5-A25A-7E50AFA24513}', 1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_complocator_entry(hdb, "'pantydraco', '{2A989951-5565-4FA7-93A7-E800A3E67D71}', 0");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = create_signature_table(hdb);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'abelisaurus', 'abelisaurus', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'bactrosaurus', 'bactrosaurus', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'camelotia', 'camelotia', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'diclonius', 'diclonius', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'iguanodon', 'iguanodon', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'jobaria', 'jobaria', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'kakuru', 'kakuru', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    r = add_signature_entry(hdb, "'labocania', 'labocania', '', '', '', '', '', '', ''");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_signature_table(hdb);
+    add_signature_entry(hdb, "'abelisaurus', 'abelisaurus', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'bactrosaurus', 'bactrosaurus', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'camelotia', 'camelotia', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'diclonius', 'diclonius', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'iguanodon', 'iguanodon', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'jobaria', 'jobaria', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'kakuru', 'kakuru', '', '', '', '', '', '', ''");
+    add_signature_entry(hdb, "'labocania', 'labocania', '', '', '', '', '', '', ''");
 
     r = package_from_db(hdb, &hpkg);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -6618,14 +5885,9 @@ static void test_MsiGetSourcePath(void)
 
     set_suminfo_prop(hdb, PID_WORDCOUNT, 0);
 
-    r = add_directory_entry(hdb, "'TARGETDIR', '', 'SourceDir'");
-    ok(r == S_OK, "failed\n");
-
-    r = add_directory_entry(hdb, "'SubDir', 'TARGETDIR', 'subtarget:subsource'");
-    ok(r == S_OK, "failed\n");
-
-    r = add_directory_entry(hdb, "'SubDir2', 'SubDir', 'sub2'");
-    ok(r == S_OK, "failed\n");
+    add_directory_entry(hdb, "'TARGETDIR', '', 'SourceDir'");
+    add_directory_entry(hdb, "'SubDir', 'TARGETDIR', 'subtarget:subsource'");
+    add_directory_entry(hdb, "'SubDir2', 'SubDir', 'sub2'");
 
     r = MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS , "Failed to commit database\n");
@@ -7399,35 +6661,26 @@ static void test_shortlongsource(void)
 
     set_suminfo_prop(hdb, PID_WORDCOUNT, 0);
 
-    r = add_directory_entry(hdb, "'TARGETDIR', '', 'SourceDir'");
-    ok(r == S_OK, "failed\n");
-
-    r = add_directory_entry(hdb, "'SubDir', 'TARGETDIR', 'short|long'");
-    ok(r == S_OK, "failed\n");
+    add_directory_entry(hdb, "'TARGETDIR', '', 'SourceDir'");
+    add_directory_entry(hdb, "'SubDir', 'TARGETDIR', 'short|long'");
 
     /* CostInitialize:short */
-    r = add_directory_entry(hdb, "'SubDir2', 'TARGETDIR', 'one|two'");
-    ok(r == S_OK, "failed\n");
+    add_directory_entry(hdb, "'SubDir2', 'TARGETDIR', 'one|two'");
 
     /* CostInitialize:long */
-    r = add_directory_entry(hdb, "'SubDir3', 'TARGETDIR', 'three|four'");
-    ok(r == S_OK, "failed\n");
+    add_directory_entry(hdb, "'SubDir3', 'TARGETDIR', 'three|four'");
 
     /* FileCost:short */
-    r = add_directory_entry(hdb, "'SubDir4', 'TARGETDIR', 'five|six'");
-    ok(r == S_OK, "failed\n");
+    add_directory_entry(hdb, "'SubDir4', 'TARGETDIR', 'five|six'");
 
     /* FileCost:long */
-    r = add_directory_entry(hdb, "'SubDir5', 'TARGETDIR', 'seven|eight'");
-    ok(r == S_OK, "failed\n");
+    add_directory_entry(hdb, "'SubDir5', 'TARGETDIR', 'seven|eight'");
 
     /* CostFinalize:short */
-    r = add_directory_entry(hdb, "'SubDir6', 'TARGETDIR', 'nine|ten'");
-    ok(r == S_OK, "failed\n");
+    add_directory_entry(hdb, "'SubDir6', 'TARGETDIR', 'nine|ten'");
 
     /* CostFinalize:long */
-    r = add_directory_entry(hdb, "'SubDir7', 'TARGETDIR', 'eleven|twelve'");
-    ok(r == S_OK, "failed\n");
+    add_directory_entry(hdb, "'SubDir7', 'TARGETDIR', 'eleven|twelve'");
 
     MsiDatabaseCommit(hdb);
 
@@ -7738,8 +6991,7 @@ static void test_sourcedir(void)
     hdb = create_package_db();
     ok( hdb, "failed to create database\n");
 
-    r = add_directory_entry(hdb, "'TARGETDIR', '', 'SourceDir'");
-    ok(r == S_OK, "failed\n");
+    add_directory_entry(hdb, "'TARGETDIR', '', 'SourceDir'");
 
     sprintf(package, "#%u", hdb);
     r = MsiOpenPackageA(package, &hpkg);
@@ -8438,18 +7690,10 @@ static void test_MsiGetProductProperty(void)
             "PRIMARY KEY `Directory`)");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = run_query(hdb,
-            "CREATE TABLE `Property` ( "
-            "`Property` CHAR(72) NOT NULL, "
-            "`Value` CHAR(255) "
-            "PRIMARY KEY `Property`)");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    create_property_table(hdb);
 
-    sprintf(query, "INSERT INTO `Property` "
-            "(`Property`, `Value`) "
-            "VALUES( 'ProductCode', '%s' )", prodcode);
-    r = run_query(hdb, query);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    sprintf(query, "'ProductCode', '%s'", prodcode);
+    r = add_property_entry(hdb, query);
 
     r = MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8906,71 +8150,34 @@ static void test_MsiEnumComponentCosts(void)
     hdb = create_package_db();
     ok( hdb, "failed to create database\n" );
 
-    r = create_property_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Property table %u\n", r );
+    create_property_table( hdb );
+    add_property_entry( hdb, "'ProductCode', '{379B1C47-40C1-42FA-A9BB-BEBB6F1B0172}'" );
+    add_property_entry( hdb, "'MSIFASTINSTALL', '1'" );
+    add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'" );
 
-    r = add_property_entry( hdb, "'ProductCode', '{379B1C47-40C1-42FA-A9BB-BEBB6F1B0172}'" );
-    ok( r == ERROR_SUCCESS, "cannot add property entry %u\n", r );
+    create_media_table( hdb );
+    add_media_entry( hdb, "'1', '2', 'cabinet', '', '', ''");
 
-    r = add_property_entry( hdb, "'MSIFASTINSTALL', '1'" );
-    ok( r == ERROR_SUCCESS, "cannot add property entry %u\n", r );
+    create_file_table( hdb );
+    add_file_entry( hdb, "'one.txt', 'one', 'one.txt', 4096, '', '', 8192, 1" );
 
-    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'" );
-    ok( r == ERROR_SUCCESS, "failed to add directory entry %u\n" , r );
+    create_component_table( hdb );
+    add_component_entry( hdb, "'one', '{B2F86B9D-8447-4BC5-8883-750C45AA31CA}', 'TARGETDIR', 0, '', 'one.txt'" );
+    add_component_entry( hdb, "'two', '{62A09F6E-0B74-4829-BDB7-CAB66F42CCE8}', 'TARGETDIR', 0, '', ''" );
 
-    r = create_media_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Media table %u\n", r );
+    create_feature_table( hdb );
+    add_feature_entry( hdb, "'one', '', '', '', 0, 1, '', 0" );
+    add_feature_entry( hdb, "'two', '', '', '', 0, 1, '', 0" );
 
-    r = add_media_entry( hdb, "'1', '2', 'cabinet', '', '', ''");
-    ok( r == ERROR_SUCCESS, "cannot add media entry %u\n", r );
+    create_feature_components_table( hdb );
+    add_feature_components_entry( hdb, "'one', 'one'" );
+    add_feature_components_entry( hdb, "'two', 'two'" );
 
-    r = create_file_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create File table %u\n", r );
-
-    r = add_file_entry( hdb, "'one.txt', 'one', 'one.txt', 4096, '', '', 8192, 1" );
-    ok( r == ERROR_SUCCESS, "cannot add file %u\n", r );
-
-    r = create_component_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Component table %u\n", r );
-
-    r = add_component_entry( hdb, "'one', '{B2F86B9D-8447-4BC5-8883-750C45AA31CA}', 'TARGETDIR', 0, '', 'one.txt'" );
-    ok( r == ERROR_SUCCESS, "cannot add component %u\n", r );
-
-    r = add_component_entry( hdb, "'two', '{62A09F6E-0B74-4829-BDB7-CAB66F42CCE8}', 'TARGETDIR', 0, '', ''" );
-    ok( r == ERROR_SUCCESS, "cannot add component %u\n", r );
-
-    r = create_feature_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create Feature table %u\n", r );
-
-    r = add_feature_entry( hdb, "'one', '', '', '', 0, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature %u\n", r );
-
-    r = add_feature_entry( hdb, "'two', '', '', '', 0, 1, '', 0" );
-    ok( r == ERROR_SUCCESS, "cannot add feature %u\n", r );
-
-    r = create_feature_components_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table %u\n", r );
-
-    r = add_feature_components_entry( hdb, "'one', 'one'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature/component pair %u\n", r );
-
-    r = add_feature_components_entry( hdb, "'two', 'two'" );
-    ok( r == ERROR_SUCCESS, "cannot add feature/component pair %u\n", r );
-
-    r = create_install_execute_sequence_table( hdb );
-    ok( r == ERROR_SUCCESS, "cannot create InstallExecuteSequence table %u\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'CostInitialize', '', '800'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry %u\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'FileCost', '', '900'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry %u\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'CostFinalize', '', '1000'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry %u\n", r );
-
-    r = add_install_execute_sequence_entry( hdb, "'InstallValidate', '', '1100'" );
-    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry %u\n", r );
+    create_install_execute_sequence_table( hdb );
+    add_install_execute_sequence_entry( hdb, "'CostInitialize', '', '800'" );
+    add_install_execute_sequence_entry( hdb, "'FileCost', '', '900'" );
+    add_install_execute_sequence_entry( hdb, "'CostFinalize', '', '1000'" );
+    add_install_execute_sequence_entry( hdb, "'InstallValidate', '', '1100'" );
 
     MsiDatabaseCommit( hdb );
 
@@ -9130,8 +8337,7 @@ static void test_MsiDatabaseCommit(void)
     hdb = create_package_db();
     ok( hdb, "failed to create database\n" );
 
-    r = create_property_table( hdb );
-    ok( r == ERROR_SUCCESS, "can't create Property table %u\n", r );
+    create_property_table( hdb );
 
     sprintf( package, "#%u", hdb );
     r = MsiOpenPackageA( package, &hpkg );
@@ -9595,12 +8801,9 @@ static void test_externalui_message(void)
     r = run_query(hdb, "INSERT INTO `Error` (`Error`, `Message`) VALUES (5, 'internal error')");
     ok(r == ERROR_SUCCESS, "Failed to insert into Error table: %u\n", r);
 
-    r = create_actiontext_table(hdb);
-    ok(r == ERROR_SUCCESS, "Failed to create ActionText table: %u\n", r);
-    r = add_actiontext_entry(hdb, "'custom', 'description', 'template'");
-    ok(r == ERROR_SUCCESS, "Failed to insert into ActionText table: %u\n", r);
-    r = add_actiontext_entry(hdb, "'CostInitialize', 'cost description', 'cost template'");
-    ok(r == ERROR_SUCCESS, "Failed to insert into ActionText table: %u\n", r);
+    create_actiontext_table(hdb);
+    add_actiontext_entry(hdb, "'custom', 'description', 'template'");
+    add_actiontext_entry(hdb, "'CostInitialize', 'cost description', 'cost template'");
 
     r = MsiOpenPackageA(NULL, &hpkg);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
@@ -9688,15 +8891,11 @@ static void test_externalui_message(void)
     r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = create_dialog_table(hdb);
-    ok(r == ERROR_SUCCESS, "failed to create dialog table %u\n", r);
-    r = add_dialog_entry(hdb, "'dialog', 50, 50, 100, 100, 0, 'dummy'");
-    ok(r == ERROR_SUCCESS, "failed to insert into dialog table %u\n", r);
+    create_dialog_table(hdb);
+    add_dialog_entry(hdb, "'dialog', 50, 50, 100, 100, 0, 'dummy'");
 
-    r = create_control_table(hdb);
-    ok(r == ERROR_SUCCESS, "failed to create control table %u\n", r);
-    r = add_control_entry(hdb, "'dialog', 'dummy', 'Text', 5, 5, 5, 5, 3, 'dummy'");
-    ok(r == ERROR_SUCCESS, "failed to insert into control table %u\n", r);
+    create_control_table(hdb);
+    add_control_entry(hdb, "'dialog', 'dummy', 'Text', 5, 5, 5, 5, 3, 'dummy'");
 
     r = package_from_db(hdb, &hpkg);
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
@@ -9814,53 +9013,33 @@ static void test_controlevent(void)
     r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = create_dialog_table(hdb);
-    ok(r == ERROR_SUCCESS, "failed to create Dialog table: %u\n", r);
-    r = add_dialog_entry(hdb, "'spawn', 50, 50, 100, 100, 3, 'button'");
-    ok(r == ERROR_SUCCESS, "failed to insert into Dialog table: %u\n", r);
-    r = add_dialog_entry(hdb, "'spawn2', 50, 50, 100, 100, 3, 'button'");
-    ok(r == ERROR_SUCCESS, "failed to insert into Dialog table: %u\n", r);
-    r = add_dialog_entry(hdb, "'child1', 50, 50, 80, 40, 3, 'exit'");
-    ok(r == ERROR_SUCCESS, "failed to insert into Dialog table: %u\n", r);
-    r = add_dialog_entry(hdb, "'child2', 50, 50, 80, 40, 3, 'exit'");
-    ok(r == ERROR_SUCCESS, "failed to insert into Dialog table: %u\n", r);
+    create_dialog_table(hdb);
+    add_dialog_entry(hdb, "'spawn', 50, 50, 100, 100, 3, 'button'");
+    add_dialog_entry(hdb, "'spawn2', 50, 50, 100, 100, 3, 'button'");
+    add_dialog_entry(hdb, "'child1', 50, 50, 80, 40, 3, 'exit'");
+    add_dialog_entry(hdb, "'child2', 50, 50, 80, 40, 3, 'exit'");
 
-    r = create_control_table(hdb);
-    ok(r == ERROR_SUCCESS, "failed to create Control table: %u\n", r);
-    r = add_control_entry(hdb, "'spawn', 'button', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
-    ok(r == ERROR_SUCCESS, "failed to insert into Control table: %u\n", r);
-    r = add_control_entry(hdb, "'spawn2', 'button', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
-    ok(r == ERROR_SUCCESS, "failed to insert into Control table: %u\n", r);
-    r = add_control_entry(hdb, "'child1', 'exit', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
-    ok(r == ERROR_SUCCESS, "failed to insert into Control table: %u\n", r);
-    r = add_control_entry(hdb, "'child2', 'exit', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
-    ok(r == ERROR_SUCCESS, "failed to insert into Control table: %u\n", r);
+    create_control_table(hdb);
+    add_control_entry(hdb, "'spawn', 'button', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
+    add_control_entry(hdb, "'spawn2', 'button', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
+    add_control_entry(hdb, "'child1', 'exit', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
+    add_control_entry(hdb, "'child2', 'exit', 'PushButton', 10, 10, 66, 17, 3, 'Click me'");
 
-    r = create_controlevent_table(hdb);
-    ok(r == ERROR_SUCCESS, "failed to create ControlEvent table: %u\n", r);
-    r = add_controlevent_entry(hdb, "'child1', 'exit', 'EndDialog', 'Exit', 1, 1");
-    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
-    r = add_controlevent_entry(hdb, "'child2', 'exit', 'EndDialog', 'Exit', 1, 1");
-    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+    create_controlevent_table(hdb);
+    add_controlevent_entry(hdb, "'child1', 'exit', 'EndDialog', 'Exit', 1, 1");
+    add_controlevent_entry(hdb, "'child2', 'exit', 'EndDialog', 'Exit', 1, 1");
 
-    r = create_custom_action_table(hdb);
-    ok(r == ERROR_SUCCESS, "failed to create CustomAction table: %u\n", r);
-    r = add_custom_action_entry(hdb, "'custom', 51, 'dummy', 'dummy value'");
-    ok(r == ERROR_SUCCESS, "failed to insert into CustomAction table: %u\n", r);
+    create_custom_action_table(hdb);
+    add_custom_action_entry(hdb, "'custom', 51, 'dummy', 'dummy value'");
 
     /* SpawnDialog and EndDialog should trigger after all other events */
-    r = add_controlevent_entry(hdb, "'spawn', 'button', 'SpawnDialog', 'child1', 1, 1");
-    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
-    r = add_controlevent_entry(hdb, "'spawn', 'button', 'DoAction', 'custom', 1, 2");
-    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+    add_controlevent_entry(hdb, "'spawn', 'button', 'SpawnDialog', 'child1', 1, 1");
+    add_controlevent_entry(hdb, "'spawn', 'button', 'DoAction', 'custom', 1, 2");
 
     /* Multiple dialog events cause only the last one to be triggered */
-    r = add_controlevent_entry(hdb, "'spawn2', 'button', 'SpawnDialog', 'child1', 1, 1");
-    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
-    r = add_controlevent_entry(hdb, "'spawn2', 'button', 'SpawnDialog', 'child2', 1, 2");
-    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
-    r = add_controlevent_entry(hdb, "'spawn2', 'button', 'DoAction', 'custom', 1, 3");
-    ok(r == ERROR_SUCCESS, "failed to insert into ControlEvent table: %u\n", r);
+    add_controlevent_entry(hdb, "'spawn2', 'button', 'SpawnDialog', 'child1', 1, 1");
+    add_controlevent_entry(hdb, "'spawn2', 'button', 'SpawnDialog', 'child2', 1, 2");
+    add_controlevent_entry(hdb, "'spawn2', 'button', 'DoAction', 'custom', 1, 3");
 
     r = package_from_db(hdb, &hpkg);
     ok(r == ERROR_SUCCESS, "failed to create package: %u\n", r);
@@ -10057,24 +9236,16 @@ static void test_top_level_action(void)
     r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = create_property_table(hdb);
-    ok(r == ERROR_SUCCESS, "failed to create Property table: %u\n", r);
-    r = add_property_entry(hdb, "'ProductCode', '{7262AC98-EEBD-4364-8CE3-D654F6A425B9}'");
-    ok(r == ERROR_SUCCESS, "failed to insert into Property table: %u\n", r);
+    create_property_table(hdb);
+    add_property_entry(hdb, "'ProductCode', '{7262AC98-EEBD-4364-8CE3-D654F6A425B9}'");
 
-    r = create_install_execute_sequence_table(hdb);
-    ok(r == ERROR_SUCCESS, "failed to create InstallExecuteSequence table: %u\n", r);
-    r = add_install_execute_sequence_entry(hdb, "'CostInitialize', '', 1");
-    ok(r == ERROR_SUCCESS, "failed to insert into InstallExecuteSequence table: %u\n", r);
-    r = add_install_execute_sequence_entry(hdb, "'FileCost', '', 2");
-    ok(r == ERROR_SUCCESS, "failed to insert into InstallExecuteSequence table: %u\n", r);
-    r = add_install_execute_sequence_entry(hdb, "'CostFinalize', '', 3");
-    ok(r == ERROR_SUCCESS, "failed to insert into InstallExecuteSequence table: %u\n", r);
+    create_install_execute_sequence_table(hdb);
+    add_install_execute_sequence_entry(hdb, "'CostInitialize', '', 1");
+    add_install_execute_sequence_entry(hdb, "'FileCost', '', 2");
+    add_install_execute_sequence_entry(hdb, "'CostFinalize', '', 3");
 
-    r = create_install_ui_sequence_table(hdb);
-    ok(r == ERROR_SUCCESS, "failed to create InstallUISequence table: %u\n", r);
-    r = add_install_ui_sequence_entry(hdb, "'AppSearch', '', 1");
-    ok(r == ERROR_SUCCESS, "failed to insert into InstallUISequence table: %u\n", r);
+    create_install_ui_sequence_table(hdb);
+    add_install_ui_sequence_entry(hdb, "'AppSearch', '', 1");
 
     MsiDatabaseCommit(hdb);
 
