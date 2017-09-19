@@ -2600,7 +2600,20 @@ void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry )
 
     wine_ldt_init_locking( ldt_lock, ldt_unlock );
 
-    /* FIXME: set the initial context */
+    /* build the initial context */
+    context->ContextFlags = CONTEXT_FULL;
+    context->SegCs = wine_get_cs();
+    context->SegDs = wine_get_ds();
+    context->SegEs = wine_get_es();
+    context->SegFs = wine_get_fs();
+    context->SegGs = wine_get_gs();
+    context->SegSs = wine_get_ss();
+    context->Eax   = (DWORD)entry;
+    context->Ebx   = (DWORD)NtCurrentTeb()->Peb;
+    context->Esp   = (DWORD)NtCurrentTeb()->Tib.StackBase - 16;
+    context->Eip   = (DWORD)call_thread_entry_point;
+    ((void **)context->Esp)[1] = kernel32_start_process;
+    ((void **)context->Esp)[2] = entry;
     return;
 
  error:
