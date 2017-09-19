@@ -2732,6 +2732,266 @@ static void test_formatrecord2(void)
     DeleteFileA(msifile);
 }
 
+static void test_formatrecord_tables(void)
+{
+    MSIHANDLE hdb, hrec, hpkg = 0;
+    CHAR buf[MAX_PATH];
+    CHAR curr_dir[MAX_PATH];
+    CHAR expected[MAX_PATH];
+    CHAR root[MAX_PATH];
+    DWORD size;
+    UINT r;
+
+    GetCurrentDirectoryA( MAX_PATH, curr_dir );
+
+    hdb = create_package_db();
+    ok ( hdb, "failed to create package database\n");
+
+    add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'" );
+    add_directory_entry( hdb, "'ReallyLongDir', 'TARGETDIR', "
+                             "'I am a really long directory'" );
+
+    create_feature_table( hdb );
+    add_feature_entry( hdb, "'occipitofrontalis', '', '', '', 2, 1, '', 0" );
+
+    create_component_table( hdb );
+    add_component_entry( hdb, "'frontal', '', 'TARGETDIR', 0, '', 'frontal_file'" );
+    add_component_entry( hdb, "'parietal', '', 'TARGETDIR', 1, '', 'parietal_file'" );
+    add_component_entry( hdb, "'temporal', '', 'ReallyLongDir', 0, '', 'temporal_file'" );
+
+    create_feature_components_table( hdb );
+    add_feature_components_entry( hdb, "'occipitofrontalis', 'frontal'" );
+    add_feature_components_entry( hdb, "'occipitofrontalis', 'parietal'" );
+    add_feature_components_entry( hdb, "'occipitofrontalis', 'temporal'" );
+
+    create_file_table( hdb );
+    add_file_entry( hdb, "'frontal_file', 'frontal', 'frontal.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'parietal_file', 'parietal', 'parietal.txt', 0, '', '1033', 8192, 1" );
+    add_file_entry( hdb, "'temporal_file', 'temporal', 'temporal.txt', 0, '', '1033', 8192, 1" );
+
+    create_custom_action_table( hdb );
+    add_custom_action_entry( hdb, "'MyCustom', 51, 'prop', '[!temporal_file]'" );
+    add_custom_action_entry( hdb, "'EscapeIt1', 51, 'prop', '[\\[]Bracket Text[\\]]'" );
+    add_custom_action_entry( hdb, "'EscapeIt2', 51, 'prop', '[\\xabcd]'" );
+    add_custom_action_entry( hdb, "'EscapeIt3', 51, 'prop', '[abcd\\xefgh]'" );
+    add_custom_action_entry( hdb, "'EmbedNull', 51, 'prop', '[~]np'" );
+
+    r = package_from_db( hdb, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        MsiCloseHandle( hdb );
+        DeleteFileA( msifile );
+        return;
+    }
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
+
+    MsiCloseHandle( hdb );
+
+    r = MsiSetPropertyA( hpkg, "imaprop", "ringer" );
+    ok( r == ERROR_SUCCESS, "cannot set property: %d\n", r);
+
+    hrec = MsiCreateRecord( 1 );
+
+    /* property doesn't exist */
+    size = MAX_PATH;
+    /*MsiRecordSetStringA( hrec, 0, "[1]" ); */
+    MsiRecordSetStringA( hrec, 1, "[idontexist]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
+
+    /* property exists */
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 1, "[imaprop]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, "1: ringer " ), "Expected '1: ringer ', got %s\n", buf );
+
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 0, "1: [1] " );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, "1: ringer " ), "Expected '1: ringer ', got %s\n", buf );
+
+    /* environment variable doesn't exist */
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 1, "[%idontexist]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
+
+    /* environment variable exists */
+    size = MAX_PATH;
+    SetEnvironmentVariableA( "crazyvar", "crazyval" );
+    MsiRecordSetStringA( hrec, 1, "[%crazyvar]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, "1: crazyval " ), "Expected '1: crazyval ', got %s\n", buf );
+
+    /* file key before CostInitialize */
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 1, "[#frontal_file]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiDoActionA(hpkg, "CostInitialize");
+    ok( r == ERROR_SUCCESS, "CostInitialize failed: %d\n", r);
+
+    r = MsiDoActionA(hpkg, "FileCost");
+    ok( r == ERROR_SUCCESS, "FileCost failed: %d\n", r);
+
+    r = MsiDoActionA(hpkg, "CostFinalize");
+    ok( r == ERROR_SUCCESS, "CostFinalize failed: %d\n", r);
+
+    size = MAX_PATH;
+    MsiGetPropertyA( hpkg, "ROOTDRIVE", root, &size );
+
+    sprintf( expected, "1: %sfrontal.txt ", root);
+
+    /* frontal full file key */
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 1, "[#frontal_file]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, expected ), "Expected \"%s\", got \"%s\"\n", expected, buf);
+
+    /* frontal short file key */
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 1, "[!frontal_file]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, expected ), "Expected \"%s\", got \"%s\"\n", expected, buf);
+
+    sprintf( expected, "1: %sI am a really long directory\\temporal.txt ", root);
+
+    /* temporal full file key */
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 1, "[#temporal_file]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, expected ), "Expected \"%s\", got \"%s\"\n", expected, buf);
+
+    /* temporal short file key */
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 1, "[!temporal_file]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, expected ), "Expected \"%s\", got \"%s\"\n", expected, buf);
+
+    /* custom action 51, files don't exist */
+    r = MsiDoActionA( hpkg, "MyCustom" );
+    ok( r == ERROR_SUCCESS, "MyCustom failed: %d\n", r);
+
+    sprintf( expected, "%sI am a really long directory\\temporal.txt", root);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA( hpkg, "prop", buf, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    ok( !lstrcmpA( buf, expected ), "Expected \"%s\", got \"%s\"\n", expected, buf);
+
+    sprintf( buf, "%sI am a really long directory", root );
+    CreateDirectoryA( buf, NULL );
+
+    lstrcatA( buf, "\\temporal.txt" );
+    create_test_file( buf );
+
+    /* custom action 51, files exist */
+    r = MsiDoActionA( hpkg, "MyCustom" );
+    ok( r == ERROR_SUCCESS, "MyCustom failed: %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA( hpkg, "prop", buf, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    todo_wine
+    {
+        ok( !lstrcmpA( buf, expected ), "Expected \"%s\", got \"%s\"\n", expected, buf);
+    }
+
+    /* custom action 51, escaped text 1 */
+    r = MsiDoActionA( hpkg, "EscapeIt1" );
+    ok( r == ERROR_SUCCESS, "EscapeIt1 failed: %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA( hpkg, "prop", buf, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    ok( !lstrcmpA( buf, "[Bracket Text]" ), "Expected '[Bracket Text]', got %s\n", buf);
+
+    /* custom action 51, escaped text 2 */
+    r = MsiDoActionA( hpkg, "EscapeIt2" );
+    ok( r == ERROR_SUCCESS, "EscapeIt2 failed: %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA( hpkg, "prop", buf, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    ok( !lstrcmpA( buf, "x" ), "Expected 'x', got %s\n", buf);
+
+    /* custom action 51, escaped text 3 */
+    r = MsiDoActionA( hpkg, "EscapeIt3" );
+    ok( r == ERROR_SUCCESS, "EscapeIt3 failed: %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA( hpkg, "prop", buf, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    ok( !lstrcmpA( buf, "" ), "Expected '', got %s\n", buf);
+
+    /* custom action 51, embedded null */
+    r = MsiDoActionA( hpkg, "EmbedNull" );
+    ok( r == ERROR_SUCCESS, "EmbedNull failed: %d\n", r);
+
+    size = MAX_PATH;
+    memset( buf, 'a', sizeof(buf) );
+    r = MsiGetPropertyA( hpkg, "prop", buf, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    ok( !memcmp( buf, "\0np", sizeof("\0np") ), "wrong value\n");
+    ok( size == sizeof("\0np") - 1, "got %u\n", size );
+
+    r = MsiSetPropertyA( hpkg, "prop", "[~]np" );
+    ok( r == ERROR_SUCCESS, "cannot set property: %d\n", r);
+
+    size = MAX_PATH;
+    memset( buf, 'a', sizeof(buf) );
+    r = MsiGetPropertyA( hpkg, "prop", buf, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    ok( !lstrcmpA( buf, "[~]np" ), "Expected '[~]np', got %s\n", buf);
+
+    sprintf( expected, "1: %sI am a really long directory\\ ", root);
+
+    /* component with INSTALLSTATE_LOCAL */
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 1, "[$temporal]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, expected ), "Expected \"%s\", got \"%s\"\n", expected, buf);
+
+    r = MsiSetComponentStateA( hpkg, "temporal", INSTALLSTATE_SOURCE );
+    ok( r == ERROR_SUCCESS, "failed to set install state: %d\n", r);
+
+    /* component with INSTALLSTATE_SOURCE */
+    lstrcpyA( expected, "1: " );
+    lstrcatA( expected, curr_dir );
+    if (strlen(curr_dir) > 3) lstrcatA( expected, "\\" );
+    lstrcatA( expected, " " );
+    size = MAX_PATH;
+    MsiRecordSetStringA( hrec, 1, "[$parietal]" );
+    r = MsiFormatRecordA( hpkg, hrec, buf, &size );
+    ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
+    ok( !lstrcmpA( buf, expected ), "Expected '%s', got '%s'\n", expected, buf);
+
+    sprintf( buf, "%sI am a really long directory\\temporal.txt", root );
+    DeleteFileA( buf );
+
+    sprintf( buf, "%sI am a really long directory", root );
+    RemoveDirectoryA( buf );
+
+    MsiCloseHandle( hrec );
+    MsiCloseHandle( hpkg );
+    DeleteFileA( msifile );
+}
+
 static void test_feature_states( UINT line, MSIHANDLE package, const char *feature, UINT error,
                                  INSTALLSTATE expected_state, INSTALLSTATE expected_action, BOOL todo )
 {
@@ -9337,6 +9597,7 @@ START_TEST(package)
     test_condition();
     test_msipackage();
     test_formatrecord2();
+    test_formatrecord_tables();
     test_states();
     test_getproperty();
     test_removefiles();
