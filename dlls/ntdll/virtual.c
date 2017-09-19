@@ -1745,8 +1745,8 @@ void virtual_clear_thread_stack(void)
     void *stack = NtCurrentTeb()->Tib.StackLimit;
     size_t size = (char *)NtCurrentTeb()->Tib.StackBase - (char *)NtCurrentTeb()->Tib.StackLimit;
 
-    wine_anon_mmap( stack, size, PROT_READ | PROT_WRITE, MAP_FIXED );
-    if (force_exec_prot) mprotect( stack, size, PROT_READ | PROT_WRITE | PROT_EXEC );
+    wine_anon_mmap( stack, size - page_size, PROT_READ | PROT_WRITE, MAP_FIXED );
+    if (force_exec_prot) mprotect( stack, size - page_size, PROT_READ | PROT_WRITE | PROT_EXEC );
 }
 
 
