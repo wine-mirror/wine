@@ -1132,24 +1132,6 @@ static UINT HANDLE_CustomType53_54( MSIPACKAGE *package, const WCHAR *source, co
     return wait_thread_handle( info );
 }
 
-static BOOL action_type_matches_script( UINT type, UINT script )
-{
-    switch (script)
-    {
-    case SCRIPT_NONE:
-        return FALSE;
-    case SCRIPT_INSTALL:
-        return !(type & msidbCustomActionTypeCommit) && !(type & msidbCustomActionTypeRollback);
-    case SCRIPT_COMMIT:
-        return (type & msidbCustomActionTypeCommit);
-    case SCRIPT_ROLLBACK:
-        return (type & msidbCustomActionTypeRollback);
-    default:
-        ERR("unhandled script %u\n", script);
-    }
-    return FALSE;
-}
-
 static UINT defer_custom_action( MSIPACKAGE *package, const WCHAR *action, UINT type )
 {
     WCHAR *actiondata = msi_dup_property( package->db, action );
@@ -1187,7 +1169,7 @@ static UINT defer_custom_action( MSIPACKAGE *package, const WCHAR *action, UINT 
     return ERROR_SUCCESS;
 }
 
-UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action, UINT script )
+UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
@@ -1227,7 +1209,7 @@ UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action, UINT script )
         if (type & msidbCustomActionTypeNoImpersonate)
             WARN("msidbCustomActionTypeNoImpersonate not handled\n");
 
-        if (!action_type_matches_script( type, script ))
+        if (package->script == SCRIPT_NONE)
         {
             rc = defer_custom_action( package, action, type );
             goto end;
@@ -1235,15 +1217,6 @@ UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action, UINT script )
         else
         {
             LPWSTR actiondata = msi_dup_property( package->db, action );
-
-            if (type & msidbCustomActionTypeInScript)
-                package->scheduled_action_running = TRUE;
-
-            if (type & msidbCustomActionTypeCommit)
-                package->commit_action_running = TRUE;
-
-            if (type & msidbCustomActionTypeRollback)
-                package->rollback_action_running = TRUE;
 
             if (deferred_data)
                 set_deferred_action_props(package, deferred_data);
@@ -1326,9 +1299,6 @@ UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action, UINT script )
     }
 
 end:
-    package->scheduled_action_running = FALSE;
-    package->commit_action_running = FALSE;
-    package->rollback_action_running = FALSE;
     msiobj_release(&row->hdr);
     return rc;
 }
