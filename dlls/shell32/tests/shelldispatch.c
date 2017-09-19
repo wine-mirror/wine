@@ -156,6 +156,7 @@ static void test_namespace(void)
         folder = (void*)0xdeadbeef;
         r = IShellDispatch_NameSpace(sd, var, &folder);
         if (special_folders[i] == ssfALTSTARTUP || special_folders[i] == ssfCOMMONALTSTARTUP)
+        todo_wine
             ok(r == S_OK || broken(r == S_FALSE) /* winxp */, "Failed to get folder for index %#x, got %08x\n", special_folders[i], r);
         else
             ok(r == S_OK, "Failed to get folder for index %#x, got %08x\n", special_folders[i], r);
@@ -165,14 +166,11 @@ static void test_namespace(void)
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = -1;
-    folder = (void*)0xdeadbeef;
+    folder = (void *)0xdeadbeef;
     r = IShellDispatch_NameSpace(sd, var, &folder);
-    todo_wine {
-    ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
-    ok(folder == NULL, "got %p\n", folder);
-    if (r == S_OK)
-        Folder_Release(folder);
-}
+    ok(r == S_FALSE, "Unexpected hr %#x.\n", r);
+    ok(folder == NULL, "Unexpected folder instance %p\n", folder);
+
     V_VT(&var) = VT_I4;
     V_I4(&var) = ssfPROGRAMFILES;
     r = IShellDispatch_NameSpace(sd, var, &folder);
@@ -185,7 +183,6 @@ static void test_namespace(void)
         ok(r == S_OK, "Failed to get folder path: %#x.\n", r);
 
         r = Folder_get_Title(folder, &title);
-        todo_wine
         ok(r == S_OK, "Folder::get_Title failed: %08x\n", r);
         if (r == S_OK)
         {
@@ -202,9 +199,7 @@ static void test_namespace(void)
                 ok(r == S_OK, "SHGetSpecialFolderLocation failed: %08x\n", r);
                 r = pSHGetNameFromIDList(pidl, SIGDN_NORMALDISPLAY, &name);
                 ok(r == S_OK, "SHGetNameFromIDList failed: %08x\n", r);
-                todo_wine
-                ok(!lstrcmpW(title, name), "expected %s, got %s\n",
-                 wine_dbgstr_w(name), wine_dbgstr_w(title));
+                ok(!lstrcmpW(title, name), "expected %s, got %s\n", wine_dbgstr_w(name), wine_dbgstr_w(title));
                 CoTaskMemFree(name);
                 CoTaskMemFree(pidl);
             }

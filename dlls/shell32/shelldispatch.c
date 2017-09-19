@@ -35,6 +35,7 @@
 #include "debughlp.h"
 
 #include "shell32_main.h"
+#include "pidl.h"
 
 #include "wine/debug.h"
 
@@ -64,6 +65,8 @@ typedef struct {
     LONG ref;
     VARIANT dir;
     IDispatch *application;
+    IShellFolder2 *folder;
+    PIDLIST_ABSOLUTE pidl;
 } FolderImpl;
 
 typedef struct {
@@ -1350,6 +1353,8 @@ static ULONG WINAPI FolderImpl_Release(Folder3 *iface)
 
     if (!ref)
     {
+        ILFree(This->pidl);
+        IShellFolder2_Release(This->folder);
         IDispatch_Release(This->application);
         VariantClear(&This->dir);
         HeapFree(GetProcessHeap(), 0, This);
@@ -1411,25 +1416,31 @@ static HRESULT WINAPI FolderImpl_Invoke(Folder3 *iface, DISPID dispIdMember,
     return hr;
 }
 
-static HRESULT WINAPI FolderImpl_get_Title(Folder3 *iface, BSTR *pbs)
+static HRESULT WINAPI FolderImpl_get_Title(Folder3 *iface, BSTR *title)
 {
     FolderImpl *This = impl_from_Folder(iface);
-    WCHAR *p;
-    int len;
+    PCUITEMID_CHILD last_part;
+    IShellFolder2 *parent;
+    WCHAR buffW[MAX_PATH];
+    SHELLDETAILS sd;
+    HRESULT hr;
 
-    TRACE("(%p,%p)\n", iface, pbs);
+    TRACE("(%p,%p)\n", iface, title);
 
-    *pbs = NULL;
+    *title = NULL;
 
-    if (V_VT(&This->dir) == VT_I4)
-    {
-        FIXME("special folder constants are not supported\n");
-        return E_NOTIMPL;
-    }
-    p = PathFindFileNameW(V_BSTR(&This->dir));
-    len = lstrlenW(p);
-    *pbs = SysAllocStringLen(p, p[len - 1] == '\\' ? len - 1 : len);
-    return *pbs ? S_OK : E_OUTOFMEMORY;
+    if (FAILED(hr = SHBindToParent(This->pidl, &IID_IShellFolder2, (void **)&parent, &last_part)))
+        return hr;
+
+    hr = IShellFolder2_GetDetailsOf(parent, last_part, 0, &sd);
+    IShellFolder2_Release(parent);
+    if (FAILED(hr))
+        return hr;
+
+    StrRetToBufW(&sd.str, NULL, buffW, sizeof(buffW)/sizeof(buffW[0]));
+    *title = SysAllocString(buffW);
+
+    return *title ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI FolderImpl_get_Application(Folder3 *iface, IDispatch **disp)
@@ -1623,43 +1634,33 @@ static const Folder3Vtbl FolderImpl_Vtbl = {
     FolderImpl_put_ShowWebViewBarricade
 };
 
-static HRESULT Folder_Constructor(VARIANT *dir, Folder **ppsdf)
+static HRESULT Folder_Constructor(VARIANT *dir, IShellFolder2 *folder, LPITEMIDLIST pidl, Folder **ret)
 {
     FolderImpl *This;
-    HRESULT ret;
+    HRESULT hr;
 
-    *ppsdf = NULL;
+    *ret = NULL;
 
-    switch (V_VT(dir))
-    {
-        case VT_I4:
-            /* FIXME: add some checks */
-            break;
-        case VT_BSTR:
-            if (PathIsDirectoryW(V_BSTR(dir)) &&
-                !PathIsRelativeW(V_BSTR(dir)) &&
-                PathFileExistsW(V_BSTR(dir)))
-                break;
-        default:
-            return S_FALSE;
-    }
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderImpl));
-    if (!This) return E_OUTOFMEMORY;
     This->Folder3_iface.lpVtbl = &FolderImpl_Vtbl;
     This->ref = 1;
+    This->folder = folder;
+    This->pidl = pidl;
     IShellDispatch_Constructor(NULL, &IID_IDispatch, (void **)&This->application);
 
     VariantInit(&This->dir);
-    ret = VariantCopy(&This->dir, dir);
-    if (FAILED(ret))
+    hr = VariantCopy(&This->dir, dir);
+    if (FAILED(hr))
     {
         HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
     }
 
-    *ppsdf = (Folder*)&This->Folder3_iface;
-    return ret;
+    *ret = (Folder *)&This->Folder3_iface;
+    return hr;
 }
 
 static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch6 *iface,
@@ -1796,11 +1797,53 @@ static HRESULT WINAPI ShellDispatch_get_Parent(IShellDispatch6 *iface, IDispatch
 }
 
 static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch6 *iface,
-        VARIANT vDir, Folder **ppsdf)
+        VARIANT dir, Folder **ret)
 {
-    TRACE("(%p,%p)\n", iface, ppsdf);
+    IShellFolder2 *folder;
+    IShellFolder *desktop;
+    LPITEMIDLIST pidl;
+    HRESULT hr;
 
-    return Folder_Constructor(&vDir, ppsdf);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_variant(&dir), ret);
+
+    *ret = NULL;
+
+    switch (V_VT(&dir))
+    {
+        case VT_I2:
+            if (FAILED(hr = VariantChangeType(&dir, &dir, 0, VT_I4)))
+                return hr;
+
+            /* fallthrough */
+        case VT_I4:
+            if (FAILED(hr = SHGetFolderLocation(NULL, V_I4(&dir), NULL, 0, &pidl)))
+                return S_FALSE;
+
+            break;
+        case VT_BSTR:
+            if (FAILED(hr = SHParseDisplayName(V_BSTR(&dir), NULL, &pidl, 0, NULL)))
+                return S_FALSE;
+
+            break;
+        default:
+            WARN("Ignoring directory value %s\n", debugstr_variant(&dir));
+            return S_FALSE;
+    }
+
+    if (FAILED(hr = SHGetDesktopFolder(&desktop)))
+        return hr;
+
+    if (_ILIsDesktop(pidl))
+        hr = IShellFolder_QueryInterface(desktop, &IID_IShellFolder2, (void **)&folder);
+    else
+        hr = IShellFolder_BindToObject(desktop, pidl, NULL, &IID_IShellFolder2, (void **)&folder);
+
+    IShellFolder_Release(desktop);
+
+    if (FAILED(hr))
+        return S_FALSE;
+
+    return Folder_Constructor(&dir, folder, pidl, ret);
 }
 
 static HRESULT WINAPI ShellDispatch_BrowseForFolder(IShellDispatch6 *iface,
