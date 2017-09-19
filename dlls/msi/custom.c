@@ -76,14 +76,14 @@ UINT msi_schedule_action( MSIPACKAGE *package, UINT script, const WCHAR *action 
     }
     TRACE("Scheduling action %s in script %u\n", debugstr_w(action), script);
 
-    count = package->script->ActionCount[script];
-    package->script->ActionCount[script]++;
-    if (count != 0) newbuf = msi_realloc( package->script->Actions[script],
-                                          package->script->ActionCount[script] * sizeof(WCHAR *) );
+    count = package->script_actions_count[script];
+    package->script_actions_count[script]++;
+    if (count != 0) newbuf = msi_realloc( package->script_actions[script],
+                                          package->script_actions_count[script] * sizeof(WCHAR *) );
     else newbuf = msi_alloc( sizeof(WCHAR *) );
 
     newbuf[count] = strdupW( action );
-    package->script->Actions[script] = newbuf;
+    package->script_actions[script] = newbuf;
     return ERROR_SUCCESS;
 }
 
@@ -92,18 +92,16 @@ UINT msi_register_unique_action( MSIPACKAGE *package, const WCHAR *action )
     UINT count;
     WCHAR **newbuf = NULL;
 
-    if (!package->script) return FALSE;
-
     TRACE("Registering %s as unique action\n", debugstr_w(action));
 
-    count = package->script->UniqueActionsCount;
-    package->script->UniqueActionsCount++;
-    if (count != 0) newbuf = msi_realloc( package->script->UniqueActions,
-                                          package->script->UniqueActionsCount * sizeof(WCHAR *) );
+    count = package->unique_actions_count;
+    package->unique_actions_count++;
+    if (count != 0) newbuf = msi_realloc( package->unique_actions,
+                                          package->unique_actions_count * sizeof(WCHAR *) );
     else newbuf = msi_alloc( sizeof(WCHAR *) );
 
     newbuf[count] = strdupW( action );
-    package->script->UniqueActions = newbuf;
+    package->unique_actions = newbuf;
     return ERROR_SUCCESS;
 }
 
@@ -111,25 +109,20 @@ BOOL msi_action_is_unique( const MSIPACKAGE *package, const WCHAR *action )
 {
     UINT i;
 
-    if (!package->script) return FALSE;
-
-    for (i = 0; i < package->script->UniqueActionsCount; i++)
+    for (i = 0; i < package->unique_actions_count; i++)
     {
-        if (!strcmpW( package->script->UniqueActions[i], action )) return TRUE;
+        if (!strcmpW( package->unique_actions[i], action )) return TRUE;
     }
     return FALSE;
 }
 
 static BOOL check_execution_scheduling_options(MSIPACKAGE *package, LPCWSTR action, UINT options)
 {
-    if (!package->script)
-        return TRUE;
-
     if ((options & msidbCustomActionTypeClientRepeat) ==
             msidbCustomActionTypeClientRepeat)
     {
-        if (!(package->script->InWhatSequence & SEQUENCE_UI &&
-            package->script->InWhatSequence & SEQUENCE_EXEC))
+        if (!(package->InWhatSequence & SEQUENCE_UI &&
+            package->InWhatSequence & SEQUENCE_EXEC))
         {
             TRACE("Skipping action due to dbCustomActionTypeClientRepeat option.\n");
             return FALSE;
@@ -137,8 +130,8 @@ static BOOL check_execution_scheduling_options(MSIPACKAGE *package, LPCWSTR acti
     }
     else if (options & msidbCustomActionTypeFirstSequence)
     {
-        if (package->script->InWhatSequence & SEQUENCE_UI &&
-            package->script->InWhatSequence & SEQUENCE_EXEC )
+        if (package->InWhatSequence & SEQUENCE_UI &&
+            package->InWhatSequence & SEQUENCE_EXEC )
         {
             TRACE("Skipping action due to msidbCustomActionTypeFirstSequence option.\n");
             return FALSE;

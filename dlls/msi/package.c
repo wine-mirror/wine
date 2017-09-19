@@ -129,17 +129,18 @@ static void free_assembly( MSIASSEMBLY *assembly )
 void msi_free_action_script( MSIPACKAGE *package, UINT script )
 {
     UINT i;
-    for (i = 0; i < package->script->ActionCount[script]; i++)
-        msi_free( package->script->Actions[script][i] );
+    for (i = 0; i < package->script_actions_count[script]; i++)
+        msi_free( package->script_actions[script][i] );
 
-    msi_free( package->script->Actions[script] );
-    package->script->Actions[script] = NULL;
-    package->script->ActionCount[script] = 0;
+    msi_free( package->script_actions[script] );
+    package->script_actions[script] = NULL;
+    package->script_actions_count[script] = 0;
 }
 
 static void free_package_structures( MSIPACKAGE *package )
 {
     struct list *item, *cursor;
+    int i;
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->features )
     {
@@ -275,20 +276,12 @@ static void free_package_structures( MSIPACKAGE *package )
         msi_free( info );
     }
 
-    if (package->script)
-    {
-        INT i;
-        UINT j;
+    for (i = 0; i < SCRIPT_MAX; i++)
+        msi_free_action_script( package, i );
 
-        for (i = 0; i < SCRIPT_MAX; i++)
-            msi_free_action_script( package, i );
-
-        for (j = 0; j < package->script->UniqueActionsCount; j++)
-            msi_free( package->script->UniqueActions[j] );
-
-        msi_free( package->script->UniqueActions );
-        msi_free( package->script );
-    }
+    for (i = 0; i < package->unique_actions_count; i++)
+        msi_free( package->unique_actions[i] );
+    msi_free( package->unique_actions);
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->binaries )
     {
@@ -1087,7 +1080,6 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         msi_adjust_privilege_properties( package );
 
         package->ProductCode = msi_dup_property( package->db, szProductCode );
-        package->script = msi_alloc_zero( sizeof(MSISCRIPT) );
 
         set_installer_properties( package );
 

@@ -371,6 +371,15 @@ enum clr_version
     CLR_VERSION_MAX
 };
 
+enum script
+{
+    SCRIPT_NONE     = -1,
+    SCRIPT_INSTALL  = 0,
+    SCRIPT_COMMIT   = 1,
+    SCRIPT_ROLLBACK = 2,
+    SCRIPT_MAX      = 3
+};
+
 typedef struct tagMSIPACKAGE
 {
     MSIOBJECTHDR hdr;
@@ -403,7 +412,12 @@ typedef struct tagMSIPACKAGE
     struct list mimes;
     struct list appids;
 
-    struct tagMSISCRIPT *script;
+    LPWSTR *script_actions[SCRIPT_MAX];
+    int    script_actions_count[SCRIPT_MAX];
+    LPWSTR *unique_actions;
+    int    unique_actions_count;
+    BOOL   ExecuteSequenceRun;
+    UINT   InWhatSequence;
 
     struct list RunningActions;
 
@@ -679,28 +693,8 @@ struct tagMSIMIME
     MSICLASS *Class;
 };
 
-enum SCRIPTS
-{
-    SCRIPT_NONE     = -1,
-    SCRIPT_INSTALL  = 0,
-    SCRIPT_COMMIT   = 1,
-    SCRIPT_ROLLBACK = 2,
-    SCRIPT_MAX      = 3
-};
-
 #define SEQUENCE_UI       0x1
 #define SEQUENCE_EXEC     0x2
-#define SEQUENCE_INSTALL  0x10
-
-typedef struct tagMSISCRIPT
-{
-    LPWSTR  *Actions[SCRIPT_MAX];
-    UINT    ActionCount[SCRIPT_MAX];
-    BOOL    ExecuteSequenceRun;
-    UINT    InWhatSequence;
-    LPWSTR  *UniqueActions;
-    UINT    UniqueActionsCount;
-} MSISCRIPT;
 
 #define MSIHANDLETYPE_ANY 0
 #define MSIHANDLETYPE_DATABASE 1

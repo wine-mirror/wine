@@ -557,13 +557,13 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package)
     MSIQUERY *view;
     UINT rc;
 
-    if (package->script->ExecuteSequenceRun)
+    if (package->ExecuteSequenceRun)
     {
         TRACE("Execute Sequence already Run\n");
         return ERROR_SUCCESS;
     }
 
-    package->script->ExecuteSequenceRun = TRUE;
+    package->ExecuteSequenceRun = TRUE;
 
     rc = MSI_OpenQuery(package->db, &view, query);
     if (rc == ERROR_SUCCESS)
@@ -1536,39 +1536,36 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
-static UINT execute_script_action( MSIPACKAGE *package, UINT script, UINT index )
-{
-    const WCHAR *action = package->script->Actions[script][index];
-    ui_actionstart( package, action, NULL, NULL );
-    TRACE("executing %s\n", debugstr_w(action));
-    return ACTION_PerformAction( package, action, script );
-}
-
 static UINT execute_script( MSIPACKAGE *package, UINT script )
 {
     UINT i, rc = ERROR_SUCCESS;
 
     TRACE("executing script %u\n", script);
 
-    if (!package->script)
-    {
-        ERR("no script!\n");
-        return ERROR_FUNCTION_FAILED;
-    }
     if (script == SCRIPT_ROLLBACK)
     {
-        for (i = package->script->ActionCount[script]; i > 0; i--)
+        for (i = package->script_actions_count[script]; i > 0; i--)
         {
-            rc = execute_script_action( package, script, i - 1 );
-            if (rc != ERROR_SUCCESS) break;
+            rc = ACTION_PerformAction(package, package->script_actions[script][i-1], script);
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Execution of script %i halted; action %s returned %u\n",
+                    script, debugstr_w(package->script_actions[script][i-1]), rc);
+                break;
+            }
         }
     }
     else
     {
-        for (i = 0; i < package->script->ActionCount[script]; i++)
+        for (i = 0; i < package->script_actions_count[script]; i++)
         {
-            rc = execute_script_action( package, script, i );
-            if (rc != ERROR_SUCCESS) break;
+            rc = ACTION_PerformAction(package, package->script_actions[script][i], script);
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Execution of script %i halted; action %s returned %u\n",
+                    script, debugstr_w(package->script_actions[script][i]), rc);
+                break;
+            }
         }
     }
     msi_free_action_script(package, script);
@@ -5617,7 +5614,7 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
         msiobj_release(&uirow->hdr);
 
         /* Perform the installation. Always use the ExecuteSequence. */
-        package->script->InWhatSequence |= SEQUENCE_EXEC;
+        package->InWhatSequence |= SEQUENCE_EXEC;
         rc = ACTION_ProcessExecSequence(package);
 
         /* Send return value and INSTALLEND. */
@@ -5671,7 +5668,7 @@ static UINT ACTION_INSTALL(MSIPACKAGE *package)
     msi_set_property(package->db, szEXECUTEACTION, szINSTALL, -1);
     if (needs_ui_sequence(package) && ui_sequence_exists(package))
     {
-        package->script->InWhatSequence |= SEQUENCE_UI;
+        package->InWhatSequence |= SEQUENCE_UI;
         return ACTION_ProcessUISequence(package);
     }
     else
@@ -7958,8 +7955,6 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     WCHAR *reinstall, *remove, *patch, *productcode, *action;
     UINT rc;
     DWORD len = 0;
-
-    package->script->InWhatSequence = SEQUENCE_INSTALL;
 
     if (szPackagePath)
     {
