@@ -42,6 +42,7 @@ IDL_SRCS = \
 	d3d11.idl \
 	d3d11_1.idl \
 	d3d11_2.idl \
+	d3d11_3.idl \
 	d3d11sdklayers.idl \
 	d3dcommon.idl \
 	d3dx10core.idl \
