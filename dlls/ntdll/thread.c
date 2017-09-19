@@ -51,6 +51,7 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
 
 PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter = NULL;
+LPTHREAD_START_ROUTINE kernel32_start_process = NULL;
 
 /* info passed to a starting thread */
 struct startup_info
