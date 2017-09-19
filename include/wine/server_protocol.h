@@ -799,6 +799,8 @@ struct init_process_done_request
 struct init_process_done_reply
 {
     struct reply_header __header;
+    int          suspend;
+    char __pad_12[4];
 };
 
 
@@ -6406,6 +6408,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 536
+#define SERVER_PROTOCOL_VERSION 537
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

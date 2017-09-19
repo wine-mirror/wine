@@ -757,6 +757,8 @@ C_ASSERT( FIELD_OFFSET(struct init_process_done_request, module) == 16 );
 C_ASSERT( FIELD_OFFSET(struct init_process_done_request, ldt_copy) == 24 );
 C_ASSERT( FIELD_OFFSET(struct init_process_done_request, entry) == 32 );
 C_ASSERT( sizeof(struct init_process_done_request) == 40 );
+C_ASSERT( FIELD_OFFSET(struct init_process_done_reply, suspend) == 8 );
+C_ASSERT( sizeof(struct init_process_done_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct init_thread_request, unix_pid) == 12 );
 C_ASSERT( FIELD_OFFSET(struct init_thread_request, unix_tid) == 16 );
 C_ASSERT( FIELD_OFFSET(struct init_thread_request, debug_level) == 20 );

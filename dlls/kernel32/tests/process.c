@@ -3079,7 +3079,6 @@ static void test_SuspendProcessState(void)
     ok(orig_iat_entry_value, "IAT entry in OriginalFirstThunk is NULL\n");
 
     /* The IAT should be UNRESOLVED */
-    todo_wine
     ok(iat_entry_value == orig_iat_entry_value, "IAT entry resolved prematurely\n");
 
     server_pipe_handle = CreateNamedPipeA(pipe_name, PIPE_ACCESS_DUPLEX | FILE_FLAG_WRITE_THROUGH,
@@ -3107,14 +3106,19 @@ static void test_SuspendProcessState(void)
 #ifdef __x86_64__
     ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
     ok( !ctx.Rax, "rax is not zero %lx\n", ctx.Rax );
-    todo_wine
-    {
     ok( !ctx.Rbx, "rbx is not zero %lx\n", ctx.Rbx );
     ok( !ctx.Rsi, "rsi is not zero %lx\n", ctx.Rsi );
     ok( !ctx.Rdi, "rdi is not zero %lx\n", ctx.Rdi );
     ok( !ctx.Rbp, "rbp is not zero %lx\n", ctx.Rbp );
+    ok( !ctx.R8, "r8 is not zero %lx\n", ctx.R8 );
+    ok( !ctx.R9, "r9 is not zero %lx\n", ctx.R9 );
+    ok( !ctx.R10, "r10 is not zero %lx\n", ctx.R10 );
+    ok( !ctx.R11, "r11 is not zero %lx\n", ctx.R11 );
+    ok( !ctx.R12, "r12 is not zero %lx\n", ctx.R12 );
+    ok( !ctx.R13, "r13 is not zero %lx\n", ctx.R13 );
+    ok( !ctx.R14, "r14 is not zero %lx\n", ctx.R14 );
+    ok( !ctx.R15, "r15 is not zero %lx\n", ctx.R15 );
     ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %lx\n", ctx.Rsp );
-    }
     entry_ptr = (void *)ctx.Rcx;
     peb_ptr = (void *)ctx.Rdx;
 
@@ -3133,7 +3137,6 @@ static void test_SuspendProcessState(void)
     ok(ret, "Failed to write to remote process thread stack (%d)\n", GetLastError());
 #else
     ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
-    todo_wine
     ok( !ctx.Ebp || broken(ctx.Ebp), /* winxp */ "ebp is not zero %08x\n", ctx.Ebp );
     if (!ctx.Ebp)  /* winxp is completely different */
     {
@@ -3141,8 +3144,9 @@ static void test_SuspendProcessState(void)
         ok( !ctx.Edx, "edx is not zero %08x\n", ctx.Edx );
         ok( !ctx.Esi, "esi is not zero %08x\n", ctx.Esi );
         ok( !ctx.Edi, "edi is not zero %08x\n", ctx.Edi );
-        ok( !((ctx.Esp + 0x10) & 0xfff), "esp is not at top of stack page %08x\n", ctx.Esp );
     }
+    ok( !((ctx.Esp + 0x10) & 0xfff) || broken( !((ctx.Esp + 4) & 0xfff) ), /* winxp, w2k3 */
+        "esp is not at top of stack page or properly aligned: %08x\n", ctx.Esp );
     entry_ptr = (void *)ctx.Eax;
     peb_ptr = (void *)ctx.Ebx;
 
@@ -3163,12 +3167,9 @@ static void test_SuspendProcessState(void)
 #endif
 
     ret = ReadProcessMemory( pi.hProcess, peb_ptr, &child_peb, sizeof(child_peb), NULL );
-    todo_wine
     ok( ret, "Failed to read PEB (%u)\n", GetLastError() );
-    if (ret)
     ok( child_peb.ImageBaseAddress == exe_base, "wrong base %p/%p\n",
         child_peb.ImageBaseAddress, exe_base );
-    todo_wine
     ok( entry_ptr == (char *)exe_base + nt_header.OptionalHeader.AddressOfEntryPoint,
         "wrong entry point %p/%p\n", entry_ptr,
         (char *)exe_base + nt_header.OptionalHeader.AddressOfEntryPoint );

@@ -1281,6 +1281,11 @@ static void dump_init_process_done_request( const struct init_process_done_reque
     dump_uint64( ", entry=", &req->entry );
 }
 
+static void dump_init_process_done_reply( const struct init_process_done_reply *req )
+{
+    fprintf( stderr, " suspend=%d", req->suspend );
+}
+
 static void dump_init_thread_request( const struct init_thread_request *req )
 {
     fprintf( stderr, " unix_pid=%d", req->unix_pid );
@@ -4755,7 +4760,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_new_process_info_reply,
     (dump_func)dump_new_thread_reply,
     (dump_func)dump_get_startup_info_reply,
-    NULL,
+    (dump_func)dump_init_process_done_reply,
     (dump_func)dump_init_thread_reply,
     (dump_func)dump_terminate_process_reply,
     (dump_func)dump_terminate_thread_reply,

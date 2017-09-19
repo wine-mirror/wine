@@ -1427,6 +1427,7 @@ NTSTATUS server_init_process_done( CONTEXT *context )
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
     void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
     NTSTATUS status;
+    int suspend;
 
     /* Install signal handlers; this cannot be done earlier, since we cannot
      * send exceptions to the debugger before the create process event that
@@ -1446,9 +1447,11 @@ NTSTATUS server_init_process_done( CONTEXT *context )
         req->entry    = wine_server_client_ptr( entry );
         req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
         status = wine_server_call( req );
+        suspend = reply->suspend;
     }
     SERVER_END_REQ;
 
+    if (suspend) wait_suspend( context );
     return status;
 }
 
