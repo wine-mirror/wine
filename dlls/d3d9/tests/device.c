@@ -6801,7 +6801,7 @@ static void test_cube_texture_mipmap_gen(IDirect3DDevice9 *device)
     hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
             D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_CUBETEXTURE, D3DFMT_X8R8G8B8);
     IDirect3D9_Release(d3d);
-    if (FAILED(hr))
+    if (hr != D3D_OK)
     {
         skip("No cube mipmap generation support, skipping tests.\n");
         return;
@@ -6937,8 +6937,8 @@ static void test_mipmap_gen(void)
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
 
-    if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-            D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8)))
+    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8) != D3D_OK)
     {
         skip("No mipmap generation support, skipping tests.\n");
         IDirect3D9_Release(d3d);
