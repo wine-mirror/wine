@@ -2085,7 +2085,7 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
   HRESULT hRes;
   DirEntry currentEntry;
 
-  TRACE("(%p, %p)\n", iface, clsid);
+  TRACE("(%p, %s)\n", iface, wine_dbgstr_guid(clsid));
 
   if (This->reverted)
     return STG_E_REVERTED;
