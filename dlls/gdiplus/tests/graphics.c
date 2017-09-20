@@ -6225,11 +6225,6 @@ static DWORD* GetBitmapPixelBuffer(HDC hdc, HBITMAP hbmp, int width, int height)
     return buffer;
 }
 
-static void ReleaseBitmapPixelBuffer(DWORD* buffer)
-{
-    if (buffer) GdipFree(buffer);
-}
-
 static void test_GdipFillRectanglesOnMemoryDCSolidBrush(void)
 {
     ARGB color[6] = {0,0,0,0,0,0};
@@ -6279,7 +6274,7 @@ static void test_GdipFillRectanglesOnMemoryDCSolidBrush(void)
     ok(is_blue_color(color[0]) && is_blue_color(color[1]) && is_blue_color(color[2]) &&
        color[3] == 0 && color[4] == 0 && color[5] == 0,
        "Expected GdipFillRectangleI take effect!\n" );
-    ReleaseBitmapPixelBuffer(pixel);
+    GdipFree(pixel);
 
     SelectObject(hdc, old);
     DeleteObject(bmp);
@@ -6364,7 +6359,7 @@ static void test_GdipFillRectanglesOnMemoryDCTextureBrush(void)
     ok(is_blue_color(color[0]) && is_blue_color(color[1]) && is_blue_color(color[2]) &&
        color[3] == 0 && color[4] == 0 && color[5] == 0,
       "Expected GdipFillRectangleI take effect!\n" );
-    ReleaseBitmapPixelBuffer(pixel);
+    GdipFree(pixel);
 
     SelectObject(hdc, old);
     DeleteObject(bmp);
@@ -6521,7 +6516,7 @@ static void test_GdipDrawImagePointsRectOnMemoryDC(void)
     ok(is_blue_color(color[0]) && is_blue_color(color[1]) && is_blue_color(color[2]) &&
        color[3] == 0 && color[4] == 0 && color[5] == 0,
        "Expected GdipDrawImageRectRectI take effect!\n" );
-    ReleaseBitmapPixelBuffer(pixel);
+    GdipFree(pixel);
 
     SelectObject(hdc, old);
     DeleteObject(bmp);
