@@ -61,7 +61,7 @@
 @ stub _invoke_watson
 @ stub _query_app_type
 @ cdecl _register_onexit_function(ptr ptr) ucrtbase._register_onexit_function
-@ stub _register_thread_local_exe_atexit_callback
+@ cdecl _register_thread_local_exe_atexit_callback(ptr) ucrtbase._register_thread_local_exe_atexit_callback
 @ cdecl _resetstkoflw() ucrtbase._resetstkoflw
 @ cdecl -arch=i386,x86_64,arm,arm64 _seh_filter_dll(long ptr) ucrtbase._seh_filter_dll
 @ cdecl _seh_filter_exe(long ptr) ucrtbase._seh_filter_exe

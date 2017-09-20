@@ -41,6 +41,9 @@ typedef struct MSVCRT__onexit_table_t
     MSVCRT__onexit_t *_end;
 } MSVCRT__onexit_table_t;
 
+typedef void (__stdcall *_tls_callback_type)(void*,ULONG,void*);
+static _tls_callback_type tls_atexit_callback;
+
 static CRITICAL_SECTION MSVCRT_onexit_cs;
 static CRITICAL_SECTION_DEBUG MSVCRT_onexit_cs_debug =
 {
@@ -63,6 +66,7 @@ static void __MSVCRT__call_atexit(void)
 {
   /* Note: should only be called with the exit lock held */
   TRACE("%d atext functions to call\n", MSVCRT_atexit_registered);
+  if (tls_atexit_callback) tls_atexit_callback(NULL, DLL_PROCESS_DETACH, NULL);
   /* Last registered gets executed first */
   while (MSVCRT_atexit_registered > 0)
   {
@@ -447,6 +451,15 @@ int CDECL MSVCRT__execute_onexit_table(MSVCRT__onexit_table_t *table)
 
     MSVCRT_free(copy._first);
     return 0;
+}
+
+/*********************************************************************
+ *		_register_thread_local_exe_atexit_callback (UCRTBASE.@)
+ */
+void CDECL _register_thread_local_exe_atexit_callback(_tls_callback_type callback)
+{
+    TRACE("(%p)\n", callback);
+    tls_atexit_callback = callback;
 }
 
 /*********************************************************************
