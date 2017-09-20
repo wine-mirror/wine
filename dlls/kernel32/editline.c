@@ -1000,8 +1000,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
             ctx.insert = !ctx.insert;
 
         GetConsoleScreenBufferInfo(ctx.hConOut, &csbi);
-        if (ctx.csbi.wAttributes != csbi.wAttributes)
-            ctx.csbi.wAttributes = csbi.wAttributes;
+        ctx.csbi.wAttributes = csbi.wAttributes;
 
 	if (func)
 	    (func)(&ctx);
