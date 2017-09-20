@@ -1245,6 +1245,8 @@ static HRESULT WINAPI DataCache_GetData(
     DataCache *This = impl_from_IDataObject(iface);
     DataCacheEntry *cache_entry;
 
+    TRACE("(%p, %s, %p)\n", iface, debugstr_formatetc(pformatetcIn), pmedium);
+
     memset(pmedium, 0, sizeof(*pmedium));
 
     cache_entry = DataCache_GetEntryForFormatEtc(This, pformatetcIn);
