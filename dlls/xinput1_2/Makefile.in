@@ -1,3 +1,7 @@
 MODULE    = xinput1_2.dll
+PARENTSRC = ../xinput1_3
+
+C_SRCS = \
+	xinput_main.c
 
 RC_SRCS = version.rc
