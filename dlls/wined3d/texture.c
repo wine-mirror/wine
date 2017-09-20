@@ -2547,7 +2547,7 @@ static const struct wined3d_texture_ops texture3d_ops =
 };
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
-        UINT layer_count, UINT level_count, struct wined3d_device *device, void *parent,
+        UINT layer_count, UINT level_count, DWORD flags, struct wined3d_device *device, void *parent,
         const struct wined3d_parent_ops *parent_ops)
 {
     struct wined3d_device_parent *device_parent = device->device_parent;
@@ -2627,7 +2627,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture3d_ops, 1, level_count, desc,
-            0, device, parent, parent_ops, &texture_resource_ops)))
+            flags, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;
@@ -2967,7 +2967,7 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
             break;
 
         case WINED3D_RTYPE_TEXTURE_3D:
-            hr = volumetexture_init(object, desc, layer_count, level_count, device, parent, parent_ops);
+            hr = volumetexture_init(object, desc, layer_count, level_count, flags, device, parent, parent_ops);
             break;
 
         default:
