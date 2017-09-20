@@ -4665,21 +4665,27 @@ static void test_FontFallbackBuilder(void)
     IDWriteFont *font;
     FLOAT scale;
     HRESULT hr;
+    ULONG ref;
 
     factory = create_factory();
 
     hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory2, (void**)&factory2);
     IDWriteFactory_Release(factory);
 
-    if (factory2)
+    if (factory2) {
+        EXPECT_REF(factory2, 1);
         hr = IDWriteFactory2_CreateFontFallbackBuilder(factory2, &builder);
+        EXPECT_REF(factory2, 2);
+    }
 
     if (hr != S_OK) {
         skip("IDWriteFontFallbackBuilder is not supported\n");
         return;
     }
 
+    fallback = NULL;
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, NULL, 0, NULL, 0, NULL, NULL, NULL, 0.0f);
@@ -4717,13 +4723,18 @@ static void test_FontFallbackBuilder(void)
     range.last = 'A';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 4.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+}
+    if (fallback)
+        IDWriteFontFallback_Release(fallback);
 
     if (0) /* crashes on native */
         hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, NULL);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+if (hr == S_OK) {
     /* fallback font missing from system collection */
     g_source = strW;
     mappedlength = 0;
@@ -4737,15 +4748,18 @@ static void test_FontFallbackBuilder(void)
     ok(font == NULL, "got %p\n", font);
 
     IDWriteFontFallback_Release(fallback);
-
+}
     /* remap with custom collection */
     range.first = range.last = 'A';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, NULL, NULL, 5.0f);
+todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+if (hr == S_OK) {
     g_source = strW;
     mappedlength = 0;
     scale = 0.0f;
@@ -4759,15 +4773,18 @@ static void test_FontFallbackBuilder(void)
     IDWriteFont_Release(font);
 
     IDWriteFontFallback_Release(fallback);
-
+}
     range.first = 'B';
     range.last = 'A';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, NULL, NULL, 6.0f);
+todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+if (hr == S_OK) {
     g_source = strW;
     mappedlength = 0;
     scale = 0.0f;
@@ -4781,16 +4798,19 @@ static void test_FontFallbackBuilder(void)
     IDWriteFont_Release(font);
 
     IDWriteFontFallback_Release(fallback);
-
+}
     /* explicit locale */
     range.first = 'A';
     range.last = 'B';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, localeW, NULL, 6.0f);
+todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+if (hr == S_OK) {
     g_source = strW;
     mappedlength = 0;
     scale = 0.0f;
@@ -4803,8 +4823,12 @@ static void test_FontFallbackBuilder(void)
     ok(font != NULL, "got %p\n", font);
     IDWriteFont_Release(font);
 
+    IDWriteFontFallback_Release(fallback);
+}
+
     IDWriteFontFallbackBuilder_Release(builder);
-    IDWriteFactory2_Release(factory2);
+    ref = IDWriteFactory2_Release(factory2);
+    ok(ref == 0, "Factory is not released, ref %u.\n", ref);
 }
 
 static void test_SetTypography(void)

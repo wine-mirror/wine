@@ -1329,8 +1329,10 @@ static HRESULT WINAPI dwritefactory2_CreateFontFallbackBuilder(IDWriteFactory5 *
         IDWriteFontFallbackBuilder **fallbackbuilder)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory5(iface);
-    FIXME("(%p)->(%p): stub\n", This, fallbackbuilder);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, fallbackbuilder);
+
+    return create_fontfallback_builder(iface, fallbackbuilder);
 }
 
 static HRESULT WINAPI dwritefactory2_TranslateColorGlyphRun(IDWriteFactory5 *iface, FLOAT originX, FLOAT originY,
