@@ -31,6 +31,27 @@ static HRESULT (WINAPI *pTaskDialogIndirect)(const TASKDIALOGCONFIG *, int *, in
 static HRESULT (WINAPI *pTaskDialog)(HWND, HINSTANCE, const WCHAR *, const WCHAR *, const WCHAR *,
         TASKDIALOG_COMMON_BUTTON_FLAGS, const WCHAR *, int *);
 
+static void test_invalid_parameters(void)
+{
+    TASKDIALOGCONFIG info = { 0 };
+    HRESULT hr;
+
+    hr = pTaskDialogIndirect(NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected return value %#x.\n", hr);
+
+    info.cbSize = 0;
+    hr = pTaskDialogIndirect(&info, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected return value %#x.\n", hr);
+
+    info.cbSize = sizeof(TASKDIALOGCONFIG) - 1;
+    hr = pTaskDialogIndirect(&info, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected return value %#x.\n", hr);
+
+    info.cbSize = sizeof(TASKDIALOGCONFIG) + 1;
+    hr = pTaskDialogIndirect(&info, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected return value %#x.\n", hr);
+}
+
 START_TEST(taskdialog)
 {
     ULONG_PTR ctx_cookie;
@@ -61,6 +82,8 @@ START_TEST(taskdialog)
     ptr_ordinal = GetProcAddress(hinst, (const char *)345);
     ok(pTaskDialogIndirect == ptr_ordinal, "got wrong pointer for ordinal 345, %p expected %p\n",
                                             ptr_ordinal, pTaskDialogIndirect);
+
+    test_invalid_parameters();
 
     unload_v6_module(ctx_cookie, hCtx);
 }

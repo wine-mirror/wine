@@ -80,6 +80,13 @@ struct taskdialog_button_desc
     HINSTANCE hinst;
 };
 
+struct taskdialog_info
+{
+    HWND hwnd;
+    PFTASKDIALOGCALLBACK callback;
+    LONG_PTR callback_data;
+};
+
 static void pixels_to_dialogunits(const struct taskdialog_template_desc *desc, LONG *width, LONG *height)
 {
     if (width)
@@ -482,19 +489,53 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
     return template;
 }
 
+static HRESULT taskdialog_notify(struct taskdialog_info *dialog_info, UINT notification, WPARAM wparam, LPARAM lparam)
+{
+    return dialog_info->callback ? dialog_info->callback(dialog_info->hwnd, notification, wparam, lparam,
+            dialog_info->callback_data) : S_OK;
+}
+
+static void taskdialog_on_button_click(struct taskdialog_info *dialog_info, WORD command_id)
+{
+    if (taskdialog_notify(dialog_info, TDN_BUTTON_CLICKED, command_id, 0) == S_OK)
+        EndDialog(dialog_info->hwnd, command_id);
+}
+
 static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    static const WCHAR taskdialog_info_propnameW[] = {'T','a','s','k','D','i','a','l','o','g','I','n','f','o',0};
+    struct taskdialog_info *dialog_info;
+
     TRACE("hwnd=%p msg=0x%04x wparam=%lx lparam=%lx\n", hwnd, msg, wParam, lParam);
+
+    if (msg != WM_INITDIALOG)
+        dialog_info = GetPropW(hwnd, taskdialog_info_propnameW);
 
     switch (msg)
     {
+        case TDM_CLICK_BUTTON:
+            taskdialog_on_button_click(dialog_info, LOWORD(wParam));
+            break;
+        case WM_INITDIALOG:
+            dialog_info = (struct taskdialog_info *)lParam;
+            dialog_info->hwnd = hwnd;
+            SetPropW(hwnd, taskdialog_info_propnameW, dialog_info);
+
+            taskdialog_notify(dialog_info, TDN_DIALOG_CONSTRUCTED, 0, 0);
+            break;
+        case WM_SHOWWINDOW:
+            taskdialog_notify(dialog_info, TDN_CREATED, 0, 0);
+            break;
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
-                WORD command_id = LOWORD(wParam);
-                EndDialog(hwnd, command_id);
+                taskdialog_on_button_click(dialog_info, LOWORD(wParam));
                 return TRUE;
             }
+            break;
+        case WM_DESTROY:
+            taskdialog_notify(dialog_info, TDN_DESTROYED, 0, 0);
+            RemovePropW(hwnd, taskdialog_info_propnameW);
             break;
     }
     return FALSE;
@@ -506,13 +547,21 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *taskconfig, int *button,
                                   int *radio_button, BOOL *verification_flag_checked)
 {
+    struct taskdialog_info dialog_info;
     DLGTEMPLATE *template;
     INT ret;
 
     TRACE("%p, %p, %p, %p\n", taskconfig, button, radio_button, verification_flag_checked);
 
+    if (!taskconfig || taskconfig->cbSize != sizeof(TASKDIALOGCONFIG))
+        return E_INVALIDARG;
+
+    dialog_info.callback = taskconfig->pfCallback;
+    dialog_info.callback_data = taskconfig->lpCallbackData;
+
     template = create_taskdialog_template(taskconfig);
-    ret = DialogBoxIndirectParamW(taskconfig->hInstance, template, taskconfig->hwndParent, taskdialog_proc, 0);
+    ret = DialogBoxIndirectParamW(taskconfig->hInstance, template, taskconfig->hwndParent,
+            taskdialog_proc, (LPARAM)&dialog_info);
     Free(template);
 
     if (button) *button = ret;
