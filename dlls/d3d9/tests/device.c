@@ -6921,6 +6921,18 @@ static void test_cube_textures(void)
 
 static void test_mipmap_gen(void)
 {
+    static const D3DFORMAT formats[] =
+    {
+        D3DFMT_A8R8G8B8,
+        D3DFMT_X8R8G8B8,
+        D3DFMT_A1R5G5B5,
+        D3DFMT_A4R4G4B4,
+        D3DFMT_A8,
+        D3DFMT_L8,
+        D3DFMT_A8L8,
+        D3DFMT_V8U8,
+        D3DFMT_DXT5,
+    };
     D3DTEXTUREFILTERTYPE filter_type;
     IDirect3DTexture9 *texture;
     IDirect3DSurface9 *surface;
@@ -6928,6 +6940,7 @@ static void test_mipmap_gen(void)
     D3DSURFACE_DESC desc;
     D3DLOCKED_RECT lr;
     IDirect3D9 *d3d;
+    BOOL renderable;
     ULONG refcount;
     unsigned int i;
     DWORD levels;
@@ -6936,6 +6949,25 @@ static void test_mipmap_gen(void)
 
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
+
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
+    {
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                0, D3DRTYPE_TEXTURE, formats[i]);
+        if (FAILED(hr))
+        {
+            skip("Skipping unsupported format %#x.\n", formats[i]);
+            continue;
+        }
+        renderable = SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, formats[i]));
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, formats[i]);
+        todo_wine_if (!renderable && hr == D3D_OK)
+        ok((hr == D3D_OK && renderable) || hr == D3DOK_NOAUTOGEN,
+                "Got unexpected hr %#x for %srenderable format %#x.\n",
+                hr, renderable ? "" : "non", formats[i]);
+    }
 
     if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
             D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8) != D3D_OK)
