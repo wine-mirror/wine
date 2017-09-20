@@ -28,6 +28,8 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 
+#include "evr_private.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(evr);
@@ -71,7 +73,7 @@ struct object_creation_info
 
 static const struct object_creation_info object_creation[] =
 {
-    { &GUID_NULL, 0 },
+    { &CLSID_EnhancedVideoRenderer, evr_filter_create },
 };
 
 static HRESULT WINAPI classfactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)

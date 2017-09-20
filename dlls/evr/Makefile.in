@@ -1,5 +1,8 @@
 MODULE    = evr.dll
-IMPORTS   = uuid ole32
+IMPORTS   = mfuuid strmiids strmbase uuid ole32 oleaut32
 
 C_SRCS = \
+	evr.c \
 	main.c
+
+IDL_SRCS = evr_classes.idl
