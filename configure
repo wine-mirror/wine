@@ -997,6 +997,7 @@ enable_api_ms_win_core_winrt_registration_l1_1_0
 enable_api_ms_win_core_winrt_roparameterizediid_l1_1_0
 enable_api_ms_win_core_winrt_string_l1_1_0
 enable_api_ms_win_core_wow64_l1_1_0
+enable_api_ms_win_core_wow64_l1_1_1
 enable_api_ms_win_core_xstate_l1_1_0
 enable_api_ms_win_core_xstate_l2_1_0
 enable_api_ms_win_crt_conio_l1_1_0
@@ -18062,6 +18063,7 @@ wine_fn_config_dll api-ms-win-core-winrt-registration-l1-1-0 enable_api_ms_win_c
 wine_fn_config_dll api-ms-win-core-winrt-roparameterizediid-l1-1-0 enable_api_ms_win_core_winrt_roparameterizediid_l1_1_0
 wine_fn_config_dll api-ms-win-core-winrt-string-l1-1-0 enable_api_ms_win_core_winrt_string_l1_1_0
 wine_fn_config_dll api-ms-win-core-wow64-l1-1-0 enable_api_ms_win_core_wow64_l1_1_0
+wine_fn_config_dll api-ms-win-core-wow64-l1-1-1 enable_api_ms_win_core_wow64_l1_1_1
 wine_fn_config_dll api-ms-win-core-xstate-l1-1-0 enable_api_ms_win_core_xstate_l1_1_0
 wine_fn_config_dll api-ms-win-core-xstate-l2-1-0 enable_api_ms_win_core_xstate_l2_1_0
 wine_fn_config_dll api-ms-win-crt-conio-l1-1-0 enable_api_ms_win_crt_conio_l1_1_0
