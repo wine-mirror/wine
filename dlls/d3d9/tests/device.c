@@ -6963,7 +6963,6 @@ static void test_mipmap_gen(void)
                 D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, formats[i]));
         hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
                 D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, formats[i]);
-        todo_wine_if (!renderable && hr == D3D_OK)
         ok((hr == D3D_OK && renderable) || hr == D3DOK_NOAUTOGEN,
                 "Got unexpected hr %#x for %srenderable format %#x.\n",
                 hr, renderable ? "" : "non", formats[i]);
