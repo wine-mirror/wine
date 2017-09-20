@@ -72,6 +72,68 @@ static void test_createHatchBrush(void)
     expect(InvalidParameter, status);
 }
 
+static void test_createLineBrushFromRectWithAngle(void)
+{
+    GpStatus status;
+    GpLineGradient *brush;
+    GpRectF rect1 = { 1, 3, 1, 2 };
+    GpRectF rect2 = { 1, 3, -1, -2 };
+    GpRectF rect3 = { 1, 3, 0, 1 };
+    GpRectF rect4 = { 1, 3, 1, 0 };
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect1, 10, 11, 0, TRUE, WrapModeTile, &brush);
+    expect(Ok, status);
+    GdipDeleteBrush((GpBrush *) brush);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect2, 10, 11, 135, TRUE, (WrapMode)(WrapModeTile - 1), &brush);
+    expect(Ok, status);
+    GdipDeleteBrush((GpBrush *) brush);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect2, 10, 11, -225, FALSE, (WrapMode)(WrapModeTile - 1), &brush);
+    expect(Ok, status);
+    GdipDeleteBrush((GpBrush *) brush);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect1, 10, 11, 405, TRUE, (WrapMode)(WrapModeClamp + 1), &brush);
+    expect(Ok, status);
+    GdipDeleteBrush((GpBrush *) brush);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect1, 10, 11, 45, FALSE, (WrapMode)(WrapModeClamp + 1), &brush);
+    expect(Ok, status);
+    GdipDeleteBrush((GpBrush *) brush);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect1, 10, 11, 90, TRUE, WrapModeTileFlipX, &brush);
+    expect(Ok, status);
+
+    status = GdipCreateLineBrushFromRectWithAngle(NULL, 10, 11, 90, TRUE, WrapModeTile, &brush);
+    expect(InvalidParameter, status);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect3, 10, 11, 90, TRUE, WrapModeTileFlipXY, &brush);
+    expect(OutOfMemory, status);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect4, 10, 11, 90, TRUE, WrapModeTileFlipXY, &brush);
+    expect(OutOfMemory, status);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect3, 10, 11, 90, TRUE, WrapModeTileFlipXY, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect4, 10, 11, 90, TRUE, WrapModeTileFlipXY, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect3, 10, 11, 90, TRUE, WrapModeClamp, &brush);
+    expect(InvalidParameter, status);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect4, 10, 11, 90, TRUE, WrapModeClamp, &brush);
+    expect(InvalidParameter, status);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect1, 10, 11, 90, TRUE, WrapModeClamp, &brush);
+    expect(InvalidParameter, status);
+
+    status = GdipCreateLineBrushFromRectWithAngle(&rect1, 10, 11, 90, TRUE, WrapModeTile, NULL);
+    expect(InvalidParameter, status);
+
+    GdipDeleteBrush((GpBrush *) brush);
+}
+
 static void test_type(void)
 {
     GpStatus status;
@@ -1612,6 +1674,7 @@ START_TEST(brush)
 
     test_constructor_destructor();
     test_createHatchBrush();
+    test_createLineBrushFromRectWithAngle();
     test_type();
     test_gradientblendcount();
     test_getblend();

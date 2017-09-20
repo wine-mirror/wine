@@ -481,8 +481,11 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngle(GDIPCONST GpRectF* rect
     TRACE("(%p, %x, %x, %.2f, %d, %d, %p)\n", rect, startcolor, endcolor, angle, isAngleScalable,
           wrap, line);
 
-    if (!rect || !rect->Width || !rect->Height)
+    if (!rect || !line || wrap == WrapModeClamp)
         return InvalidParameter;
+
+    if (!rect->Width || !rect->Height)
+        return OutOfMemory;
 
     angle = fmodf(angle, 360);
     if (angle < 0)
