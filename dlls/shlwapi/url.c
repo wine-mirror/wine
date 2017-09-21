@@ -169,7 +169,7 @@ HRESULT WINAPI ParseURLA(LPCSTR x, PARSEDURLA *y)
     if(y->cbSize != sizeof(*y))
         return E_INVALIDARG;
 
-    while(*ptr && (isalnum(*ptr) || *ptr == '-'))
+    while(*ptr && (isalnum(*ptr) || *ptr == '-' || *ptr == '+' || *ptr == '.'))
         ptr++;
 
     if (*ptr != ':' || ptr <= x+1) {
@@ -203,7 +203,7 @@ HRESULT WINAPI ParseURLW(LPCWSTR x, PARSEDURLW *y)
     if(y->cbSize != sizeof(*y))
         return E_INVALIDARG;
 
-    while(*ptr && (isalnumW(*ptr) || *ptr == '-'))
+    while(*ptr && (isalnumW(*ptr) || *ptr == '-' || *ptr == '+' || *ptr == '.'))
         ptr++;
 
     if (*ptr != ':' || ptr <= x+1) {
