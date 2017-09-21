@@ -227,6 +227,7 @@ HRESULT WINAPI WsCreateListener( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING bindin
 
     if ((hr = create_listener( type, binding, properties, count, &listener )) != S_OK) return hr;
 
+    TRACE( "created %p\n", listener );
     *handle = (WS_LISTENER *)listener;
     return S_OK;
 }

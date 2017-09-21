@@ -236,6 +236,7 @@ HRESULT WINAPI WsCreateWriter( const WS_XML_WRITER_PROPERTY *properties, ULONG c
         return hr;
     }
 
+    TRACE( "created %p\n", writer );
     *handle = (WS_XML_WRITER *)writer;
     return S_OK;
 }

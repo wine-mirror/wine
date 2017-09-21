@@ -214,6 +214,8 @@ HRESULT WINAPI WsCreateMessage( WS_ENVELOPE_VERSION env_version, WS_ADDRESSING_V
                                 const WS_MESSAGE_PROPERTY *properties, ULONG count, WS_MESSAGE **handle,
                                 WS_ERROR *error )
 {
+    HRESULT hr;
+
     TRACE( "%u %u %p %u %p %p\n", env_version, addr_version, properties, count, handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
@@ -222,7 +224,10 @@ HRESULT WINAPI WsCreateMessage( WS_ENVELOPE_VERSION env_version, WS_ADDRESSING_V
     {
         return E_INVALIDARG;
     }
-    return create_msg( env_version, addr_version, properties, count, handle );
+
+    if ((hr = create_msg( env_version, addr_version, properties, count, handle )) != S_OK) return hr;
+    TRACE( "created %p\n", *handle );
+    return S_OK;
 }
 
 /**************************************************************************
@@ -248,7 +253,9 @@ HRESULT WINAPI WsCreateMessageForChannel( WS_CHANNEL *channel_handle, const WS_M
                                     sizeof(version_addr), NULL )) != S_OK || !version_addr)
         version_addr = WS_ADDRESSING_VERSION_1_0;
 
-    return create_msg( version_env, version_addr, properties, count, handle );
+    if ((hr = create_msg( version_env, version_addr, properties, count, handle )) != S_OK) return hr;
+    TRACE( "created %p\n", *handle );
+    return S_OK;
 }
 
 /**************************************************************************

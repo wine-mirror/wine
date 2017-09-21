@@ -135,9 +135,13 @@ HRESULT WINAPI WsCreateServiceProxy( const WS_CHANNEL_TYPE type, const WS_CHANNE
                                NULL )) != S_OK) return hr;
 
     if ((hr = create_proxy( channel, proxy_props, proxy_props_count, handle )) != S_OK)
+    {
         WsFreeChannel( channel );
+        return hr;
+    }
 
-    return hr;
+    TRACE( "created %p\n", *handle );
+    return S_OK;
 }
 
 /**************************************************************************
@@ -194,8 +198,14 @@ HRESULT WINAPI WsCreateServiceProxyFromTemplate( WS_CHANNEL_TYPE channel_type,
     if ((hr = WsCreateChannel( channel_type, binding, channel_props, channel_props_count, NULL,
                                &channel, NULL )) != S_OK) return hr;
 
-    if ((hr = create_proxy( channel, properties, count, handle )) != S_OK) WsFreeChannel( channel );
-    return hr;
+    if ((hr = create_proxy( channel, properties, count, handle )) != S_OK)
+    {
+        WsFreeChannel( channel );
+        return hr;
+    }
+
+    TRACE( "created %p\n", *handle );
+    return S_OK;
 }
 
 /**************************************************************************

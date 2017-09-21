@@ -304,6 +304,7 @@ HRESULT WINAPI WsCreateChannel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding
 
     if ((hr = create_channel( type, binding, properties, count, &channel )) != S_OK) return hr;
 
+    TRACE( "created %p\n", channel );
     *handle = (WS_CHANNEL *)channel;
     return S_OK;
 }
@@ -332,6 +333,7 @@ HRESULT WINAPI WsCreateChannelForListener( WS_LISTENER *listener_handle, const W
 
     if ((hr = create_channel( type, binding, properties, count, &channel )) != S_OK) return hr;
 
+    TRACE( "created %p\n", channel );
     *handle = (WS_CHANNEL *)channel;
     return S_OK;
 }

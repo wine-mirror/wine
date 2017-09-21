@@ -102,6 +102,7 @@ HRESULT WINAPI WsCreateError( const WS_ERROR_PROPERTY *properties, ULONG count, 
         }
     }
 
+    TRACE( "created %p\n", error );
     *handle = (WS_ERROR *)error;
     return S_OK;
 }

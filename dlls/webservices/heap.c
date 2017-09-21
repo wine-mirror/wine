@@ -208,6 +208,7 @@ HRESULT WINAPI WsCreateHeap( SIZE_T max_size, SIZE_T trim_size, const WS_HEAP_PR
     prop_set( heap->prop, heap->prop_count, WS_HEAP_PROPERTY_MAX_SIZE, &max_size, sizeof(max_size) );
     prop_set( heap->prop, heap->prop_count, WS_HEAP_PROPERTY_TRIM_SIZE, &trim_size, sizeof(trim_size) );
 
+    TRACE( "created %p\n", heap );
     *handle = (WS_HEAP *)heap;
     return S_OK;
 }
@@ -363,6 +364,7 @@ HRESULT WINAPI WsCreateXmlBuffer( WS_HEAP *heap, const WS_XML_BUFFER_PROPERTY *p
         return WS_E_QUOTA_EXCEEDED;
     }
 
+    TRACE( "created %p\n", xmlbuf );
     *handle = (WS_XML_BUFFER *)xmlbuf;
     return S_OK;
 }

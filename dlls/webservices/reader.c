@@ -558,6 +558,7 @@ HRESULT WINAPI WsCreateReader( const WS_XML_READER_PROPERTY *properties, ULONG c
         return hr;
     }
 
+    TRACE( "created %p\n", reader );
     *handle = (WS_XML_READER *)reader;
     return S_OK;
 }
