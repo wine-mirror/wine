@@ -5911,6 +5911,18 @@ static BOOL is_empty_text_node( const struct node *node )
         const WS_XML_BASE64_TEXT *base64 = (const WS_XML_BASE64_TEXT *)text->text;
         return !base64->length;
     }
+    case WS_XML_TEXT_TYPE_BOOL:
+    case WS_XML_TEXT_TYPE_INT32:
+    case WS_XML_TEXT_TYPE_INT64:
+    case WS_XML_TEXT_TYPE_UINT64:
+    case WS_XML_TEXT_TYPE_FLOAT:
+    case WS_XML_TEXT_TYPE_DOUBLE:
+    case WS_XML_TEXT_TYPE_DECIMAL:
+    case WS_XML_TEXT_TYPE_GUID:
+    case WS_XML_TEXT_TYPE_UNIQUE_ID:
+    case WS_XML_TEXT_TYPE_DATETIME:
+        return FALSE;
+
     default:
         ERR( "unhandled text type %u\n", text->text->textType );
         return FALSE;
