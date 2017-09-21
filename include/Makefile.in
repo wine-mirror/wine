@@ -70,6 +70,7 @@ IDL_SRCS = \
 	dxgi.idl \
 	dxgi1_2.idl \
 	dxgi1_3.idl \
+	dxgi1_4.idl \
 	dxgicommon.idl \
 	dxgiformat.idl \
 	dxgitype.idl \
