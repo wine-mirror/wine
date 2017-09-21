@@ -6091,12 +6091,65 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
     }
 }
 
+static HRESULT read_type_field( struct reader *, const WS_FIELD_DESCRIPTION *, WS_HEAP *, char *, ULONG );
+
+static HRESULT read_type_union( struct reader *reader, const WS_UNION_DESCRIPTION *desc, WS_READ_OPTION option,
+                                WS_HEAP *heap, void *ret, ULONG size )
+{
+    BOOL found = FALSE;
+    HRESULT hr;
+    ULONG i;
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_VALUE:
+    case WS_READ_NILLABLE_VALUE:
+        if (size != desc->size) return E_INVALIDARG;
+        break;
+
+    default:
+        return E_INVALIDARG;
+    }
+
+    if ((hr = read_type_next_node( reader )) != S_OK) return hr;
+    if (node_type( reader->current ) != WS_XML_NODE_TYPE_ELEMENT) return WS_E_INVALID_FORMAT;
+    for (i = 0; i < desc->fieldCount; i++)
+    {
+        if ((found = match_element( reader->current, desc->fields[i]->field.localName, desc->fields[i]->field.ns )))
+            break;
+    }
+
+    if (!found) *(int *)((char *)ret + desc->enumOffset) = desc->noneEnumValue;
+    else
+    {
+        ULONG offset = desc->fields[i]->field.offset;
+        if ((hr = read_type_field( reader, &desc->fields[i]->field, heap, ret, offset )) == S_OK)
+            *(int *)((char *)ret + desc->enumOffset) = desc->fields[i]->value;
+    }
+
+    switch (option)
+    {
+    case WS_READ_NILLABLE_VALUE:
+        if (!found) move_to_parent_element( &reader->current );
+        break;
+
+    case WS_READ_REQUIRED_VALUE:
+        if (!found) hr = WS_E_INVALID_FORMAT;
+        break;
+
+    default:
+        return E_INVALIDARG;
+    }
+
+    return hr;
+}
+
 static HRESULT read_type( struct reader *, WS_TYPE_MAPPING, WS_TYPE, const WS_XML_STRING *,
                           const WS_XML_STRING *, const void *, WS_READ_OPTION, WS_HEAP *,
                           void *, ULONG );
 
-static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIELD_DESCRIPTION *desc,
-                                            WS_HEAP *heap, void **ret, ULONG *count )
+static HRESULT read_type_array( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap,
+                                void **ret, ULONG *count )
 {
     HRESULT hr;
     ULONG item_size, nb_items = 0, nb_allocated = 1, offset = 0;
@@ -6120,12 +6173,16 @@ static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIEL
         if (nb_items >= nb_allocated)
         {
             SIZE_T old_size = nb_allocated * item_size, new_size = old_size * 2;
-            if (!(buf = ws_realloc_zero( heap, buf, old_size, new_size )))
-                return WS_E_QUOTA_EXCEEDED;
+            if (!(buf = ws_realloc_zero( heap, buf, old_size, new_size ))) return WS_E_QUOTA_EXCEEDED;
             nb_allocated *= 2;
         }
-        hr = read_type( reader, WS_ELEMENT_TYPE_MAPPING, desc->type, desc->itemLocalName, desc->itemNs,
-                        desc->typeDescription, option, heap, buf + offset, item_size );
+
+        if (desc->type == WS_UNION_TYPE)
+            hr = read_type_union( reader, desc->typeDescription, option, heap, buf + offset, item_size );
+        else
+            hr = read_type( reader, WS_ELEMENT_TYPE_MAPPING, desc->type, desc->itemLocalName, desc->itemNs,
+                            desc->typeDescription, option, heap, buf + offset, item_size );
+
         if (hr == WS_E_INVALID_FORMAT) break;
         if (hr != S_OK)
         {
@@ -6167,60 +6224,6 @@ static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION
 
     return read_type( reader, WS_ANY_ELEMENT_TYPE_MAPPING, desc->type, NULL, NULL,
                       desc->typeDescription, option, heap, ret, size );
-}
-
-static HRESULT read_type_field( struct reader *, const WS_FIELD_DESCRIPTION *, WS_HEAP *, char *, ULONG );
-
-static HRESULT read_type_union( struct reader *reader, const WS_UNION_DESCRIPTION *desc, WS_READ_OPTION option,
-                                WS_HEAP *heap, void *ret, ULONG size )
-{
-    ULONG offset, i;
-    HRESULT hr = WS_E_INVALID_FORMAT;
-
-    switch (option)
-    {
-    case WS_READ_REQUIRED_VALUE:
-    case WS_READ_NILLABLE_VALUE:
-        if (size != desc->size) return E_INVALIDARG;
-        break;
-
-    default:
-        return E_INVALIDARG;
-    }
-
-    if ((hr = read_type_next_node( reader )) != S_OK) return hr;
-    if (node_type( reader->current ) != WS_XML_NODE_TYPE_ELEMENT) return WS_E_INVALID_FORMAT;
-    for (i = 0; i < desc->fieldCount; i++)
-    {
-        if (match_element( reader->current, desc->fields[i]->field.localName, desc->fields[i]->field.ns ))
-            break;
-    }
-    if (i == desc->fieldCount)
-    {
-        if (!move_to_parent_element( &reader->current )) return WS_E_INVALID_FORMAT;
-        *(int *)((char *)ret + desc->enumOffset) = desc->noneEnumValue;
-    }
-    else
-    {
-        offset = desc->fields[i]->field.offset;
-        if ((hr = read_type_field( reader, &desc->fields[i]->field, heap, ret, offset )) == S_OK)
-            *(int *)((char *)ret + desc->enumOffset) = desc->fields[i]->value;
-    }
-
-    switch (option)
-    {
-    case WS_READ_NILLABLE_VALUE:
-        break;
-
-    case WS_READ_REQUIRED_VALUE:
-        if (hr != S_OK) return hr;
-        break;
-
-    default:
-        return E_INVALIDARG;
-    }
-
-    return S_OK;
 }
 
 static HRESULT read_type_field( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap, char *buf,
@@ -6268,9 +6271,10 @@ static HRESULT read_type_field( struct reader *reader, const WS_FIELD_DESCRIPTIO
         break;
 
     case WS_REPEATING_ELEMENT_FIELD_MAPPING:
+    case WS_REPEATING_ELEMENT_CHOICE_FIELD_MAPPING:
     {
         ULONG count;
-        hr = read_type_repeating_element( reader, desc, heap, (void **)ptr, &count );
+        hr = read_type_array( reader, desc, heap, (void **)ptr, &count );
         if (hr == S_OK) *(ULONG *)(buf + desc->countOffset) = count;
         break;
     }
@@ -7341,7 +7345,7 @@ static HRESULT read_param_array( struct reader *reader, const WS_FIELD_DESCRIPTI
                                  void **ret, ULONG *count )
 {
     if (!ret && !(ret = ws_alloc_zero( heap, sizeof(void **) ))) return WS_E_QUOTA_EXCEEDED;
-    return read_type_repeating_element( reader, desc, heap, ret, count );
+    return read_type_array( reader, desc, heap, ret, count );
 }
 
 static void set_array_len( const WS_PARAMETER_DESCRIPTION *params, ULONG count, ULONG index, ULONG len,

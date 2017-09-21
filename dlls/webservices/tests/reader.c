@@ -6128,6 +6128,9 @@ static void test_union_type(void)
     ok( test != NULL, "test not set\n" );
     ok( test->choice == CHOICE_A, "got %d\n", test->choice );
     ok( !lstrcmpW(test->value.a, testW), "got %s\n", wine_dbgstr_w(test->value.a) );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
 
     test = NULL;
     prepare_struct_type_test( reader, "<b>123</b>" );
@@ -6142,6 +6145,9 @@ static void test_union_type(void)
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
                      WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
 
     f_struct.options = WS_FIELD_NILLABLE;
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
@@ -6262,6 +6268,147 @@ static void test_float(void)
     WsFreeHeap( heap );
 }
 
+static void test_repeating_element_choice(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    static WS_XML_STRING str_ns = {0, NULL}, str_a = {1, (BYTE *)"a"}, str_b = {1, (BYTE *)"b"};
+    static WS_XML_STRING str_s = {1, (BYTE *)"s"}, str_t = {1, (BYTE *)"t"};
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    WS_UNION_DESCRIPTION u;
+    WS_UNION_FIELD_DESCRIPTION f, f2, *fields[2];
+    WS_FIELD_DESCRIPTION f_items, *fields_items[1];
+    WS_STRUCT_DESCRIPTION s;
+    const WS_XML_NODE *node;
+    enum choice {CHOICE_A, CHOICE_B, CHOICE_NONE};
+    struct item
+    {
+        enum choice choice;
+        union
+        {
+            WCHAR  *a;
+            UINT32  b;
+        } value;
+    };
+    struct test
+    {
+        struct item *items;
+        ULONG        count;
+    } *test;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.value           = CHOICE_A;
+    f.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f.field.localName = &str_a;
+    f.field.ns        = &str_ns;
+    f.field.type      = WS_WSZ_TYPE;
+    f.field.offset    = FIELD_OFFSET(struct item, value.a);
+    fields[0] = &f;
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.value           = CHOICE_B;
+    f2.field.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f2.field.localName = &str_b;
+    f2.field.ns        = &str_ns;
+    f2.field.type      = WS_UINT32_TYPE;
+    f2.field.offset    = FIELD_OFFSET(struct item, value.b);
+    fields[1] = &f2;
+
+    memset( &u, 0, sizeof(u) );
+    u.size          = sizeof(struct item);
+    u.alignment     = TYPE_ALIGNMENT(struct item);
+    u.fields        = fields;
+    u.fieldCount    = 2;
+    u.enumOffset    = FIELD_OFFSET(struct item, choice);
+    u.noneEnumValue = CHOICE_NONE;
+
+    memset( &f_items, 0, sizeof(f_items) );
+    f_items.mapping         = WS_REPEATING_ELEMENT_CHOICE_FIELD_MAPPING;
+    f_items.localName       = &str_t;
+    f_items.ns              = &str_ns;
+    f_items.type            = WS_UNION_TYPE;
+    f_items.typeDescription = &u;
+    f_items.countOffset     = FIELD_OFFSET(struct test, count);
+    fields_items[0] = &f_items;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields_items;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_s;
+    s.typeNs        = &str_ns;
+
+    test = NULL;
+    prepare_struct_type_test( reader, "<t><a>test</a></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    ok( test->count == 1, "got %u\n", test->count );
+    ok( test->items[0].choice == CHOICE_A, "got %d\n", test->items[0].choice );
+    ok( !lstrcmpW(test->items[0].value.a, testW), "got %s\n", wine_dbgstr_w(test->items[0].value.a) );
+
+    test = NULL;
+    prepare_struct_type_test( reader, "<t><b>123</b></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    ok( test->count == 1, "got %u\n", test->count );
+    ok( test->items[0].choice == CHOICE_B, "got %d\n", test->items[0].choice );
+    ok( test->items[0].value.b == 123, "got %u\n", test->items[0].value.b );
+
+    test = NULL;
+    prepare_struct_type_test( reader, "<t><a>test</a><b>123</b></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    ok( test->count == 2, "got %u\n", test->count );
+    ok( test->items[0].choice == CHOICE_A, "got %d\n", test->items[0].choice );
+    ok( !lstrcmpW(test->items[0].value.a, testW), "got %s\n", wine_dbgstr_w(test->items[0].value.a) );
+    ok( test->items[1].choice == CHOICE_B, "got %d\n", test->items[1].choice );
+    ok( test->items[1].value.b == 123, "got %u\n", test->items[1].value.b );
+
+    prepare_struct_type_test( reader, "<t><c>123</c></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+    if (node->nodeType == WS_XML_NODE_TYPE_ELEMENT)
+    {
+        const WS_XML_ELEMENT_NODE *elem = (const WS_XML_ELEMENT_NODE *)node;
+        ok( elem->localName->length == 1, "got %u\n", elem->localName->length );
+        ok( elem->localName->bytes[0] == 'c', "got '%c'\n", elem->localName->bytes[0] );
+    }
+
+    prepare_struct_type_test( reader, "<t></t>" );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    ok( !test->count, "got %u\n", test->count );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -6309,4 +6456,5 @@ START_TEST(reader)
     test_WsReadXmlBuffer();
     test_union_type();
     test_float();
+    test_repeating_element_choice();
 }
