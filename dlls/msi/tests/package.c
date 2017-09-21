@@ -9519,7 +9519,7 @@ static void test_top_level_action(void)
     /* test INSTALL */
     r = MsiDoActionA(hpkg, "INSTALL");
     ok(r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
-    ok_sequence(toplevel_install_sequence, "INSTALL (no UI)", TRUE);
+    ok_sequence(toplevel_install_sequence, "INSTALL (no UI)", FALSE);
 
     /* test INSTALL with reduced+ UI */
     /* for some reason we need to re-open the package to change the internal UI */

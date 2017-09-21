@@ -5571,8 +5571,9 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','_','P','r','o','p','e','r','t','y','`',0};
     WCHAR *productname;
     WCHAR *action;
+    WCHAR *info_template;
     MSIQUERY *view;
-    MSIRECORD *uirow;
+    MSIRECORD *uirow, *uirow_info;
     UINT rc;
 
     /* Send COMMONDATA and INFO messages. */
@@ -5586,6 +5587,22 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
     MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_COMMONDATA, uirow);
     /* FIXME: send INSTALLMESSAGE_PROGRESS */
     MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_COMMONDATA, uirow);
+
+    if (!(needs_ui_sequence(package) && ui_sequence_exists(package)))
+    {
+        uirow_info = MSI_CreateRecord(0);
+        if (!uirow_info)
+        {
+            msiobj_release(&uirow->hdr);
+            return ERROR_OUTOFMEMORY;
+        }
+        info_template = msi_get_error_message(package->db, MSIERR_INFO_LOGGINGSTART);
+        MSI_RecordSetStringW(uirow_info, 0, info_template);
+        msi_free(info_template);
+        MSI_ProcessMessage(package, INSTALLMESSAGE_INFO|MB_ICONHAND, uirow_info);
+        msiobj_release(&uirow_info->hdr);
+    }
+
     MSI_ProcessMessage(package, INSTALLMESSAGE_COMMONDATA, uirow);
 
     productname = msi_dup_property(package->db, INSTALLPROPERTY_PRODUCTNAMEW);
