@@ -10582,7 +10582,10 @@ static float expected_document_mode;
 
 static void test_document_mode(IHTMLDocument2 *doc2)
 {
+    IEventTarget *event_target;
+    IHTMLDocument2 *doc_node;
     IHTMLDocument6 *doc;
+    IHTMLElement *body;
     VARIANT v;
     HRESULT hres;
 
@@ -10605,6 +10608,31 @@ static void test_document_mode(IHTMLDocument2 *doc2)
     ok(V_VT(&v) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&v));
     ok(V_R4(&v) == expected_document_mode, "documentMode = %f\n", V_R4(&v));
     IHTMLDocument6_Release(doc);
+
+    doc_node = get_doc_node(doc2);
+
+    hres = IHTMLDocument2_QueryInterface(doc_node, &IID_IEventTarget, (void**)&event_target);
+    if(expected_document_mode >= 9) {
+        ok(hres == S_OK, "Could not get IEventTarget interface: %08x\n", hres);
+        IEventTarget_Release(event_target);
+    }else {
+        ok(hres == E_NOINTERFACE, "QI(IEventTarget) returned %08x\n", hres);
+    }
+
+    IHTMLDocument2_Release(doc_node);
+
+
+    body = doc_get_body(doc2);
+
+    hres = IHTMLElement_QueryInterface(body, &IID_IEventTarget, (void**)&event_target);
+    if(expected_document_mode >= 9) {
+        ok(hres == S_OK, "Could not get IEventTarget interface: %08x\n", hres);
+        IEventTarget_Release(event_target);
+    }else {
+        ok(hres == E_NOINTERFACE, "QI(IEventTarget) returned %08x\n", hres);
+    }
+
+    IHTMLElement_Release(body);
 }
 
 static void test_quirks_mode(void)

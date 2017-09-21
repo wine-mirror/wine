@@ -1346,6 +1346,11 @@ HRESULT remove_attribute(DispatchEx *This, DISPID id, VARIANT_BOOL *success)
     }
 }
 
+compat_mode_t dispex_compat_mode(DispatchEx *dispex)
+{
+    return dispex->info->desc->vtbl->get_compat_mode(dispex);
+}
+
 static dispex_data_t *ensure_dispex_info(dispex_static_data_t *desc, compat_mode_t compat_mode)
 {
     if(!desc->info_cache[compat_mode]) {
@@ -1362,8 +1367,7 @@ static BOOL ensure_real_info(DispatchEx *dispex)
     if(dispex->info != dispex->info->desc->delayed_init_info)
         return TRUE;
 
-    dispex->info = ensure_dispex_info(dispex->info->desc,
-                                      dispex->info->desc->vtbl->get_compat_mode(dispex));
+    dispex->info = ensure_dispex_info(dispex->info->desc, dispex_compat_mode(dispex));
     return dispex->info != NULL;
 }
 
