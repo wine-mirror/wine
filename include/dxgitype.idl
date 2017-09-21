@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+import "dxgicommon.idl";
 import "dxgiformat.idl";
 
 cpp_quote("#if 0")
@@ -58,18 +59,6 @@ typedef struct _D3DCOLORVALUE
 } D3DCOLORVALUE;
 cpp_quote("#endif")
 typedef D3DCOLORVALUE DXGI_RGBA;
-
-typedef struct DXGI_SAMPLE_DESC
-{
-    UINT Count;
-    UINT Quality;
-} DXGI_SAMPLE_DESC;
-
-typedef struct DXGI_RATIONAL
-{
-    UINT Numerator;
-    UINT Denominator;
-} DXGI_RATIONAL;
 
 typedef struct DXGI_MODE_DESC
 {
