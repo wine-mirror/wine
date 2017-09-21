@@ -6849,6 +6849,200 @@ end:
         WSACloseEvent(event);
 }
 
+struct write_watch_thread_args
+{
+    int func;
+    SOCKET dest;
+    void *base;
+    DWORD size;
+    const char *expect;
+};
+
+static DWORD CALLBACK write_watch_thread( void *arg )
+{
+    struct write_watch_thread_args *args = arg;
+    struct sockaddr addr;
+    int addr_len, ret;
+    DWORD bytes, flags = 0;
+    WSABUF buf[1];
+
+    switch (args->func)
+    {
+    case 0:
+        ret = recv( args->dest, args->base, args->size, 0 );
+        ok( ret == strlen(args->expect) + 1, "wrong len %d\n", ret );
+        ok( !strcmp( args->base, args->expect ), "wrong data\n" );
+        break;
+    case 1:
+        ret = recvfrom( args->dest, args->base, args->size, 0, &addr, &addr_len );
+        ok( ret == strlen(args->expect) + 1, "wrong len %d\n", ret );
+        ok( !strcmp( args->base, args->expect ), "wrong data\n" );
+        break;
+    case 2:
+        buf[0].len = args->size;
+        buf[0].buf = args->base;
+        ret = WSARecv( args->dest, buf, 1, &bytes, &flags, NULL, NULL );
+        ok( !ret, "WSARecv failed %u\n", GetLastError() );
+        ok( bytes == strlen(args->expect) + 1, "wrong len %d\n", bytes );
+        ok( !strcmp( args->base, args->expect ), "wrong data\n" );
+        break;
+    case 3:
+        buf[0].len = args->size;
+        buf[0].buf = args->base;
+        ret = WSARecvFrom( args->dest, buf, 1, &bytes, &flags, &addr, &addr_len, NULL, NULL );
+        ok( !ret, "WSARecvFrom failed %u\n", GetLastError() );
+        ok( bytes == strlen(args->expect) + 1, "wrong len %d\n", bytes );
+        ok( !strcmp( args->base, args->expect ), "wrong data\n" );
+        break;
+    }
+    return 0;
+}
+
+static void test_write_watch(void)
+{
+    SOCKET src, dest;
+    WSABUF bufs[2];
+    WSAOVERLAPPED ov;
+    struct write_watch_thread_args args;
+    DWORD bytesReturned, flags, size;
+    struct sockaddr addr;
+    int addr_len, ret;
+    HANDLE thread, event;
+    char *base;
+    void *results[64];
+    ULONG_PTR count;
+    ULONG pagesize;
+    UINT (WINAPI *pGetWriteWatch)(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
+
+    pGetWriteWatch = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), "GetWriteWatch" );
+    if (!pGetWriteWatch)
+    {
+        win_skip( "write watched not supported\n" );
+        return;
+    }
+
+    tcp_socketpair(&src, &dest);
+    if (src == INVALID_SOCKET || dest == INVALID_SOCKET)
+    {
+        skip("failed to create sockets\n");
+        return;
+    }
+
+    memset(&ov, 0, sizeof(ov));
+    ov.hEvent = event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
+
+    flags = 0;
+
+    size = 0x10000;
+    base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH, PAGE_READWRITE );
+    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+
+    memset( base, 0, size );
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 16, "wrong count %lu\n", count );
+
+    bufs[0].len = 5;
+    bufs[0].buf = base;
+    bufs[1].len = 0x8000;
+    bufs[1].buf = base + 0x4000;
+
+    ret = WSARecv( dest, bufs, 2, NULL, &flags, &ov, NULL);
+    ok(ret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING,
+       "WSARecv failed - %d error %d\n", ret, GetLastError());
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 9, "wrong count %lu\n", count );
+    ok( !base[0], "data set\n" );
+
+    send(src, "test message", sizeof("test message"), 0);
+
+    ret = GetOverlappedResult( (HANDLE)dest, &ov, &bytesReturned, TRUE );
+    todo_wine
+    {
+    ok( ret, "GetOverlappedResult failed %u\n", GetLastError() );
+    ok( bytesReturned == sizeof("test message"), "wrong size %u\n", bytesReturned );
+    ok( !memcmp( base, "test ", 5 ), "wrong data %s\n", base );
+    ok( !memcmp( base + 0x4000, "message", 8 ), "wrong data %s\n", base + 0x4000 );
+    }
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    memset( base, 0, size );
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 16, "wrong count %lu\n", count );
+
+    bufs[1].len = 0x4000;
+    bufs[1].buf = base + 0x2000;
+    ret = WSARecvFrom( dest, bufs, 2, NULL, &flags, &addr, &addr_len, &ov, NULL);
+    todo_wine
+    ok(ret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING,
+       "WSARecv failed - %d error %d\n", ret, GetLastError());
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 5, "wrong count %lu\n", count );
+    todo_wine
+    ok( !base[0], "data set\n" );
+
+    send(src, "test message", sizeof("test message"), 0);
+
+    ret = GetOverlappedResult( (HANDLE)dest, &ov, &bytesReturned, TRUE );
+    ok( ret, "GetOverlappedResult failed %u\n", GetLastError() );
+    ok( bytesReturned == sizeof("test message"), "wrong size %u\n", bytesReturned );
+    ok( !memcmp( base, "test ", 5 ), "wrong data %s\n", base );
+    ok( !memcmp( base + 0x2000, "message", 8 ), "wrong data %s\n", base + 0x2000 );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    memset( base, 0, size );
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 16, "wrong count %lu\n", count );
+
+    args.dest = dest;
+    args.base = base;
+    args.size = 0x7002;
+    args.expect = "test message";
+    for (args.func = 0; args.func < 4; args.func++)
+    {
+        thread = CreateThread( NULL, 0, write_watch_thread, &args, 0, NULL );
+        Sleep( 200 );
+
+        count = 64;
+        ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+        ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+        ok( count == 8, "wrong count %lu\n", count );
+
+        send(src, "test message", sizeof("test message"), 0);
+        WaitForSingleObject( thread, 10000 );
+        CloseHandle( thread );
+
+        count = 64;
+        ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+        ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+        ok( count == 0, "wrong count %lu\n", count );
+    }
+    WSACloseEvent( event );
+    closesocket( dest );
+    closesocket( src );
+    VirtualFree( base, 0, MEM_FREE );
+}
+
 #define POLL_CLEAR() ix = 0
 #define POLL_SET(s, ev) {fds[ix].fd = s; fds[ix++].events = ev;}
 #define POLL_ISSET(s, rev) poll_isset(fds, ix, s, rev)
@@ -10662,6 +10856,7 @@ START_TEST( sock )
     test_WSASendTo();
     test_WSARecv();
     test_WSAPoll();
+    test_write_watch();
 
     test_events(0);
     test_events(1);
