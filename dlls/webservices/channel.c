@@ -105,7 +105,8 @@ struct channel
     WS_MESSAGE             *msg;
     WS_ENCODING             encoding;
     enum session_state      session_state;
-    struct dictionary       dict;
+    struct dictionary       dict_send;
+    struct dictionary       dict_recv;
     union
     {
         struct
@@ -160,7 +161,8 @@ static void reset_channel( struct channel *channel )
     channel->msg                  = NULL;
     channel->read_size            = 0;
     channel->session_state        = SESSION_STATE_UNINITIALIZED;
-    clear_dict( &channel->dict );
+    clear_dict( &channel->dict_send );
+    clear_dict( &channel->dict_recv );
 
     switch (channel->binding)
     {
@@ -967,13 +969,13 @@ static HRESULT receive_preamble_ack( struct channel *channel )
 
 static HRESULT send_sized_envelope( struct channel *channel, BYTE *data, ULONG len )
 {
-    ULONG table_size = string_table_size( &channel->dict.dict );
+    ULONG table_size = string_table_size( &channel->dict_send.dict );
     HRESULT hr;
 
     if ((hr = send_byte( channel->u.tcp.socket, FRAME_RECORD_TYPE_SIZED_ENVELOPE )) != S_OK) return hr;
     if ((hr = send_size( channel->u.tcp.socket, size_length(table_size) + table_size + len )) != S_OK) return hr;
     if ((hr = send_size( channel->u.tcp.socket, table_size )) != S_OK) return hr;
-    if ((hr = send_string_table( channel->u.tcp.socket, &channel->dict.dict )) != S_OK) return hr;
+    if ((hr = send_string_table( channel->u.tcp.socket, &channel->dict_send.dict )) != S_OK) return hr;
     return send_bytes( channel->u.tcp.socket, data, len );
 }
 
@@ -1092,10 +1094,10 @@ static HRESULT init_writer( struct channel *channel )
 
     case WS_ENCODING_XML_BINARY_SESSION_1:
         if ((hr = writer_enable_lookup( channel->writer )) != S_OK) return hr;
-        clear_dict( &channel->dict );
+        clear_dict( &channel->dict_send );
         bin.staticDictionary           = (WS_XML_DICTIONARY *)&dict_builtin_static.dict;
         bin.dynamicStringCallback      = dict_cb;
-        bin.dynamicStringCallbackState = &channel->dict;
+        bin.dynamicStringCallbackState = &channel->dict_send;
         encoding = &bin.encoding;
         break;
 
@@ -1229,7 +1231,7 @@ static HRESULT init_reader( struct channel *channel )
 
     case WS_ENCODING_XML_BINARY_SESSION_1:
         bin.staticDictionary  = (WS_XML_DICTIONARY *)&dict_builtin_static.dict;
-        bin.dynamicDictionary = &channel->dict.dict;
+        bin.dynamicDictionary = &channel->dict_recv.dict;
         /* fall through */
 
     case WS_ENCODING_XML_BINARY_1:
@@ -1555,8 +1557,8 @@ static HRESULT receive_message_session_setup( struct channel *channel )
     if (channel->encoding == WS_ENCODING_XML_BINARY_SESSION_1)
     {
         ULONG size;
-        if ((hr = build_dict( (const BYTE *)channel->read_buf, channel->read_size, &channel->dict, &size )) != S_OK)
-            return hr;
+        if ((hr = build_dict( (const BYTE *)channel->read_buf, channel->read_size, &channel->dict_recv,
+                              &size )) != S_OK) return hr;
         channel->read_size -= size;
         memmove( channel->read_buf, channel->read_buf + size, channel->read_size );
     }
