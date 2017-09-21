@@ -1547,12 +1547,10 @@ static HRESULT send_preamble_ack( struct channel *channel )
     return S_OK;
 }
 
-static HRESULT receive_message_session_setup( struct channel *channel )
+static HRESULT receive_message_session( struct channel *channel )
 {
     HRESULT hr;
 
-    if ((hr = receive_preamble( channel )) != S_OK) return hr;
-    if ((hr = send_preamble_ack( channel )) != S_OK) return hr;
     if ((hr = receive_sized_envelope( channel )) != S_OK) return hr;
     if (channel->encoding == WS_ENCODING_XML_BINARY_SESSION_1)
     {
@@ -1563,13 +1561,6 @@ static HRESULT receive_message_session_setup( struct channel *channel )
         memmove( channel->read_buf, channel->read_buf + size, channel->read_size );
     }
 
-    return init_reader( channel );
-}
-
-static HRESULT receive_message_session( struct channel *channel )
-{
-    HRESULT hr;
-    if ((hr = receive_sized_envelope( channel )) != S_OK) return hr;
     return init_reader( channel );
 }
 
@@ -1596,7 +1587,9 @@ static HRESULT receive_message( struct channel *channel )
             switch (channel->session_state)
             {
             case SESSION_STATE_UNINITIALIZED:
-                return receive_message_session_setup( channel );
+                if ((hr = receive_preamble( channel )) != S_OK) return hr;
+                if ((hr = send_preamble_ack( channel )) != S_OK) return hr;
+                /* fall through */
 
             case SESSION_STATE_SETUP_COMPLETE:
                 return receive_message_session( channel );
