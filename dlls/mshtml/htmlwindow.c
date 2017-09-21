@@ -198,9 +198,7 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
         assert(!*ppv);
         return E_NOINTERFACE;
     }else {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
+        return EventTarget_QI(&This->inner_window->event_target, riid, ppv);
     }
 
     IUnknown_AddRef((IUnknown*)*ppv);

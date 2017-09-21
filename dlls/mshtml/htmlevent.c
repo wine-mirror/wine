@@ -1638,6 +1638,16 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
     return S_OK;
 }
 
+HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
+{
+    if(dispex_query_interface(&event_target->dispex, riid, ppv))
+        return *ppv ? S_OK : E_NOINTERFACE;
+
+    WARN("(%p)->(%s %p)\n", event_target, debugstr_mshtml_guid(riid), ppv);
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
 static int event_id_cmp(const void *key, const struct wine_rb_entry *entry)
 {
     return (INT_PTR)key - WINE_RB_ENTRY_VALUE(entry, handler_vector_t, entry)->event_id;
