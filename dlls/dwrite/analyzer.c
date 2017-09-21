@@ -209,6 +209,7 @@ static const struct fallback_mapping fontfallback_neutral_data[] = {
 
 struct dwrite_fontfallback {
     IDWriteFontFallback IDWriteFontFallback_iface;
+    LONG ref;
     IDWriteFactory5 *factory;
     IDWriteFontCollection1 *systemcollection;
     const struct fallback_mapping *mappings;
@@ -2178,6 +2179,50 @@ void release_system_fontfallback(IDWriteFontFallback *iface)
     heap_free(fallback);
 }
 
+static ULONG WINAPI customfontfallback_AddRef(IDWriteFontFallback *iface)
+{
+    struct dwrite_fontfallback *fallback = impl_from_IDWriteFontFallback(iface);
+    ULONG ref = InterlockedIncrement(&fallback->ref);
+    TRACE("(%p)->(%d)\n", fallback, ref);
+    return ref;
+}
+
+static ULONG WINAPI customfontfallback_Release(IDWriteFontFallback *iface)
+{
+    struct dwrite_fontfallback *fallback = impl_from_IDWriteFontFallback(iface);
+    ULONG ref = InterlockedDecrement(&fallback->ref);
+
+    TRACE("(%p)->(%d)\n", fallback, ref);
+
+    if (!ref) {
+        IDWriteFactory5_Release(fallback->factory);
+        heap_free(fallback);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI customfontfallback_MapCharacters(IDWriteFontFallback *iface, IDWriteTextAnalysisSource *source,
+    UINT32 position, UINT32 length, IDWriteFontCollection *basecollection, const WCHAR *basefamily,
+    DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, UINT32 *mapped_length,
+    IDWriteFont **ret_font, FLOAT *scale)
+{
+    struct dwrite_fontfallback *fallback = impl_from_IDWriteFontFallback(iface);
+
+    FIXME("(%p)->(%p %u %u %p, %s, %u, %u, %u, %p, %p, %p)\n", fallback, source, position, length,
+        basecollection, debugstr_w(basefamily), weight, style, stretch, mapped_length, ret_font, scale);
+
+    return E_NOTIMPL;
+}
+
+static const IDWriteFontFallbackVtbl customfontfallbackvtbl =
+{
+    fontfallback_QueryInterface,
+    customfontfallback_AddRef,
+    customfontfallback_Release,
+    customfontfallback_MapCharacters,
+};
+
 static HRESULT WINAPI fontfallbackbuilder_QueryInterface(IDWriteFontFallbackBuilder *iface, REFIID riid, void **obj)
 {
     struct dwrite_fontfallback_builder *fallbackbuilder = impl_from_IDWriteFontFallbackBuilder(iface);
@@ -2239,13 +2284,26 @@ static HRESULT WINAPI fontfallbackbuilder_AddMappings(IDWriteFontFallbackBuilder
 }
 
 static HRESULT WINAPI fontfallbackbuilder_CreateFontFallback(IDWriteFontFallbackBuilder *iface,
-        IDWriteFontFallback **fallback)
+        IDWriteFontFallback **ret)
 {
     struct dwrite_fontfallback_builder *fallbackbuilder = impl_from_IDWriteFontFallbackBuilder(iface);
+    struct dwrite_fontfallback *fallback;
 
-    FIXME("(%p)->(%p): stub\n", fallbackbuilder, fallback);
+    FIXME("(%p)->(%p): stub\n", fallbackbuilder, ret);
 
-    return E_NOTIMPL;
+    *ret = NULL;
+
+    fallback = heap_alloc(sizeof(*fallback));
+    if (!fallback)
+        return E_OUTOFMEMORY;
+
+    fallback->IDWriteFontFallback_iface.lpVtbl = &customfontfallbackvtbl;
+    fallback->ref = 1;
+    fallback->factory = fallbackbuilder->factory;
+    IDWriteFactory5_AddRef(fallback->factory);
+
+    *ret = &fallback->IDWriteFontFallback_iface;
+    return S_OK;
 }
 
 static const IDWriteFontFallbackBuilderVtbl fontfallbackbuildervtbl =

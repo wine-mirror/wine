@@ -4655,8 +4655,8 @@ static void test_FontFallbackBuilder(void)
 {
     static const WCHAR localeW[] = {'l','o','c','a','l','e',0};
     static const WCHAR strW[] = {'A',0};
+    IDWriteFontFallback *fallback, *fallback2;
     IDWriteFontFallbackBuilder *builder;
-    IDWriteFontFallback *fallback;
     DWRITE_UNICODE_RANGE range;
     IDWriteFactory2 *factory2;
     IDWriteFactory *factory;
@@ -4684,10 +4684,27 @@ static void test_FontFallbackBuilder(void)
     }
 
     fallback = NULL;
+    EXPECT_REF(factory2, 2);
+    EXPECT_REF(builder, 1);
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(factory2, 3);
+    EXPECT_REF(fallback, 1);
+    EXPECT_REF(builder, 1);
 
+    IDWriteFontFallback_AddRef(fallback);
+    EXPECT_REF(builder, 1);
+    EXPECT_REF(fallback, 2);
+    EXPECT_REF(factory2, 3);
+    IDWriteFontFallback_Release(fallback);
+
+    /* New instance is created every time, even if mappings have not changed. */
+    hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback2);
+    ok(hr == S_OK, "Failed to create fallback object, hr %#x.\n", hr);
+    ok(fallback != fallback2, "Unexpected fallback instance.\n");
+    IDWriteFontFallback_Release(fallback2);
+
+todo_wine {
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, NULL, 0, NULL, 0, NULL, NULL, NULL, 0.0f);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
@@ -4724,17 +4741,14 @@ todo_wine {
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 4.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 }
-    if (fallback)
-        IDWriteFontFallback_Release(fallback);
+    IDWriteFontFallback_Release(fallback);
 
     if (0) /* crashes on native */
         hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, NULL);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (hr == S_OK) {
     /* fallback font missing from system collection */
     g_source = strW;
     mappedlength = 0;
@@ -4742,13 +4756,14 @@ if (hr == S_OK) {
     font = (void*)0xdeadbeef;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font == NULL, "got %p\n", font);
-
-    IDWriteFontFallback_Release(fallback);
 }
+    IDWriteFontFallback_Release(fallback);
+
     /* remap with custom collection */
     range.first = range.last = 'A';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, NULL, NULL, 5.0f);
@@ -4756,24 +4771,25 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (hr == S_OK) {
     g_source = strW;
     mappedlength = 0;
     scale = 0.0f;
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 5.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
-    IDWriteFont_Release(font);
+}
+    if (font)
+        IDWriteFont_Release(font);
 
     IDWriteFontFallback_Release(fallback);
-}
+
     range.first = 'B';
     range.last = 'A';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, NULL, NULL, 6.0f);
@@ -4781,24 +4797,25 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (hr == S_OK) {
     g_source = strW;
     mappedlength = 0;
     scale = 0.0f;
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 5.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
-    IDWriteFont_Release(font);
+}
+    if (font)
+        IDWriteFont_Release(font);
 
     IDWriteFontFallback_Release(fallback);
-}
+
     /* explicit locale */
     range.first = 'A';
     range.last = 'B';
@@ -4807,24 +4824,24 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (hr == S_OK) {
     g_source = strW;
     mappedlength = 0;
     scale = 0.0f;
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 5.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
-    IDWriteFont_Release(font);
+}
+    if (font)
+        IDWriteFont_Release(font);
 
     IDWriteFontFallback_Release(fallback);
-}
 
     IDWriteFontFallbackBuilder_Release(builder);
     ref = IDWriteFactory2_Release(factory2);
