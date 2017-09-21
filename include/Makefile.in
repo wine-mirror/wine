@@ -69,6 +69,7 @@ IDL_SRCS = \
 	dxgi.idl \
 	dxgi1_2.idl \
 	dxgi1_3.idl \
+	dxgitype.idl \
 	dxva2api.idl \
 	dyngraph.idl \
 	endpointvolume.idl \
@@ -369,7 +370,6 @@ HEADER_SRCS = \
 	dxerr9.h \
 	dxfile.h \
 	dxgiformat.h \
-	dxgitype.h \
 	errorrep.h \
 	errors.h \
 	evcode.h \

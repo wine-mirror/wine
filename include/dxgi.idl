@@ -18,7 +18,7 @@
 
 import "oaidl.idl";
 import "ocidl.idl";
-import "dxgitype.h";
+import "dxgitype.idl";
 
 const UINT _FACDXGI = 0x87a;
 
