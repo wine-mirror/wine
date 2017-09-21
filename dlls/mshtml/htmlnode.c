@@ -1450,9 +1450,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     node->IHTMLDOMNode3_iface.lpVtbl = &HTMLDOMNode3Vtbl;
 
     ccref_init(&node->ccref, 1);
-    init_dispex_with_compat_mode(&node->event_target.dispex, (IUnknown*)&node->IHTMLDOMNode_iface,
-                                 dispex_data, doc->document_mode);
-    init_event_target(&node->event_target);
+    EventTarget_Init(&node->event_target, (IUnknown*)&node->IHTMLDOMNode_iface, dispex_data, doc->document_mode);
 
     if(&doc->node != node)
         htmldoc_addref(&doc->basedoc);

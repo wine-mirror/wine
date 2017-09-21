@@ -901,9 +901,8 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
 
     ret->IHTMLXMLHttpRequest_iface.lpVtbl = &HTMLXMLHttpRequestVtbl;
     ret->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
-    init_event_target(&ret->event_target);
-    init_dispex(&ret->event_target.dispex, (IUnknown*)&ret->IHTMLXMLHttpRequest_iface,
-            &HTMLXMLHttpRequest_dispex);
+    EventTarget_Init(&ret->event_target, (IUnknown*)&ret->IHTMLXMLHttpRequest_iface,
+                     &HTMLXMLHttpRequest_dispex, COMPAT_MODE_NONE);
     ret->ref = 1;
 
     *p = &ret->IHTMLXMLHttpRequest_iface;

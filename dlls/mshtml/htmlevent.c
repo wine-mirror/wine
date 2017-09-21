@@ -1643,8 +1643,10 @@ static int event_id_cmp(const void *key, const struct wine_rb_entry *entry)
     return (INT_PTR)key - WINE_RB_ENTRY_VALUE(entry, handler_vector_t, entry)->event_id;
 }
 
-void init_event_target(EventTarget *event_target)
+void EventTarget_Init(EventTarget *event_target, IUnknown *outer, dispex_static_data_t *dispex_data,
+                      compat_mode_t compat_mode)
 {
+    init_dispex_with_compat_mode(&event_target->dispex, outer, dispex_data, compat_mode);
     wine_rb_init(&event_target->handler_map, event_id_cmp);
 }
 
