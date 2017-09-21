@@ -53,6 +53,7 @@ IDL_SRCS = \
 	dbinit.idl \
 	dbprop.idl \
 	dbs.idl \
+	dcommon.idl \
 	ddstream.idl \
 	devenum.idl \
 	devicetopology.idl \
@@ -294,7 +295,6 @@ HEADER_SRCS = \
 	dbt.h \
 	dciddi.h \
 	dciman.h \
-	dcommon.h \
 	dde.h \
 	dde.rh \
 	ddeml.h \

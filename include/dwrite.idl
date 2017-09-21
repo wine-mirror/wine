@@ -17,7 +17,7 @@
  */
 
 import "unknwn.idl";
-import "dcommon.h";
+import "dcommon.idl";
 
 interface IDWriteFactory;
 interface IDWriteFontCollection;
