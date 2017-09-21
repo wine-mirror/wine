@@ -2246,9 +2246,14 @@ HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *nam
     nsChannelBSC *bsc;
     HRESULT hres;
 
-    hres = do_query_service((IUnknown*)window->doc_obj->client, &SID_SNewWindowManager, &IID_INewWindowManager,
-            (void**)&new_window_mgr);
-    if(SUCCEEDED(hres)) {
+    if (window->doc_obj->client) {
+        hres = do_query_service((IUnknown*)window->doc_obj->client, &SID_SNewWindowManager,
+                                &IID_INewWindowManager, (void**)&new_window_mgr);
+        if (FAILED(hres)) {
+            FIXME("No INewWindowManager\n");
+            return hres;
+        }
+
         hres = IUri_GetDisplayUri(window->uri_nofrag, &context_url);
         if(FAILED(hres))
             return hres;
@@ -2270,9 +2275,6 @@ HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *nam
                 *ret = NULL;
             return S_OK;
         }
-    }else {
-        FIXME("No INewWindowManager\n");
-        return E_NOTIMPL;
     }
 
 
