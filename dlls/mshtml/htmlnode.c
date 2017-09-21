@@ -1441,7 +1441,7 @@ static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
     HTMLDOMNode_clone
 };
 
-void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsnode)
+void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsnode, dispex_static_data_t *dispex_data)
 {
     nsresult nsres;
 
@@ -1450,6 +1450,8 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     node->IHTMLDOMNode3_iface.lpVtbl = &HTMLDOMNode3Vtbl;
 
     ccref_init(&node->ccref, 1);
+    init_dispex_with_compat_mode(&node->event_target.dispex, (IUnknown*)&node->IHTMLDOMNode_iface,
+                                 dispex_data, doc->document_mode);
     init_event_target(&node->event_target);
 
     if(&doc->node != node)
@@ -1462,6 +1464,17 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     nsres = nsIDOMNode_SetMshtmlNode(nsnode, (nsISupports*)&node->IHTMLDOMNode_iface);
     assert(nsres == NS_OK);
 }
+
+static const tid_t HTMLDOMNode_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    0
+};
+static dispex_static_data_t HTMLDOMNode_dispex = {
+    NULL,
+    IHTMLDOMNode_tid,
+    HTMLDOMNode_iface_tids,
+    HTMLDOMNode_init_dispex_info
+};
 
 static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
@@ -1500,12 +1513,14 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
     default: {
         HTMLDOMNode *node;
 
+        FIXME("unimplemented node type %u\n", node_type);
+
         node = heap_alloc_zero(sizeof(HTMLDOMNode));
         if(!node)
             return E_OUTOFMEMORY;
 
         node->vtbl = &HTMLDOMNodeImplVtbl;
-        HTMLDOMNode_Init(doc, node, nsnode);
+        HTMLDOMNode_Init(doc, node, nsnode, &HTMLDOMNode_dispex);
         *ret = node;
     }
     }

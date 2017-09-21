@@ -5396,11 +5396,9 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
 
     if(dispex_data && !dispex_data->vtbl)
         dispex_data->vtbl = &HTMLElement_dispex_vtbl;
-    init_dispex_with_compat_mode(&This->node.event_target.dispex, (IUnknown*)&This->IHTMLElement_iface,
-            dispex_data ? dispex_data : &HTMLElement_dispex, doc->document_mode);
 
     if(nselem) {
-        HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem);
+        HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem, dispex_data ? dispex_data : &HTMLElement_dispex);
 
         /* No AddRef, share reference with HTMLDOMNode */
         assert((nsIDOMNode*)nselem == This->node.nsnode);

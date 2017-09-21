@@ -217,7 +217,7 @@ HRESULT HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTM
     ret->IHTMLCommentElement_iface.lpVtbl = &HTMLCommentElementVtbl;
 
     HTMLElement_Init(&ret->element, doc, NULL, &HTMLCommentElement_dispex);
-    HTMLDOMNode_Init(doc, &ret->element.node, nsnode);
+    HTMLDOMNode_Init(doc, &ret->element.node, nsnode, &HTMLCommentElement_dispex);
 
     *elem = &ret->element;
     return S_OK;

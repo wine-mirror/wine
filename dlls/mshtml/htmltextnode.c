@@ -378,10 +378,7 @@ HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDO
     ret->IHTMLDOMTextNode_iface.lpVtbl = &HTMLDOMTextNodeVtbl;
     ret->IHTMLDOMTextNode2_iface.lpVtbl = &HTMLDOMTextNode2Vtbl;
 
-    init_dispex_with_compat_mode(&ret->node.event_target.dispex, (IUnknown*)&ret->IHTMLDOMTextNode_iface,
-                                 &HTMLDOMTextNode_dispex, doc->document_mode);
-
-    HTMLDOMNode_Init(doc, &ret->node, nsnode);
+    HTMLDOMNode_Init(doc, &ret->node, nsnode, &HTMLDOMTextNode_dispex);
 
     nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMText, (void**)&ret->nstext);
     assert(nsres == NS_OK && (nsIDOMNode*)ret->nstext == ret->node.nsnode);

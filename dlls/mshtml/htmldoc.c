@@ -5025,8 +5025,6 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     doc->basedoc.window = window->base.outer_window;
     doc->window = window;
 
-    init_dispex(&doc->node.event_target.dispex, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
-            &HTMLDocumentNode_dispex);
     init_doc(&doc->basedoc, (IUnknown*)&doc->node.IHTMLDOMNode_iface,
             &doc->node.event_target.dispex.IDispatchEx_iface);
     HTMLDocumentNode_SecMgr_Init(doc);
@@ -5049,7 +5047,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     if(!doc_obj->basedoc.window || window->base.outer_window == doc_obj->basedoc.window)
         doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
 
-    HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
+    HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc, &HTMLDocumentNode_dispex);
 
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->nsdoc = nsdoc;
@@ -5074,7 +5072,7 @@ static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *do
 
     IHTMLWindow2_AddRef(&doc_frag->window->base.IHTMLWindow2_iface);
 
-    HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode);
+    HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode, &HTMLDocumentNode_dispex);
     doc_frag->node.vtbl = &HTMLDocumentFragmentImplVtbl;
     doc_frag->node.cp_container = &doc_frag->basedoc.cp_container;
 
