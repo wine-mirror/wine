@@ -517,7 +517,7 @@ static NTSTATUS FILE_AsyncReadService( void *user, IO_STATUS_BLOCK *iosb, NTSTAT
                                           &needs_close, NULL, NULL )))
             break;
 
-        result = read(fd, &fileio->buffer[fileio->already], fileio->count - fileio->already);
+        result = virtual_locked_read(fd, &fileio->buffer[fileio->already], fileio->count-fileio->already);
         if (needs_close) close( fd );
 
         if (result < 0)
@@ -869,7 +869,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         if (offset && offset->QuadPart != FILE_USE_FILE_POINTER_POSITION)
         {
             /* async I/O doesn't make sense on regular files */
-            while ((result = pread( unix_handle, buffer, length, offset->QuadPart )) == -1)
+            while ((result = virtual_locked_pread( unix_handle, buffer, length, offset->QuadPart )) == -1)
             {
                 if (errno != EINTR)
                 {
@@ -911,7 +911,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
     for (;;)
     {
-        if ((result = read( unix_handle, (char *)buffer + total, length - total )) >= 0)
+        if ((result = virtual_locked_read( unix_handle, (char *)buffer + total, length - total )) >= 0)
         {
             total += result;
             if (!result || total == length)

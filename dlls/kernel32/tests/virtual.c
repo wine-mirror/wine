@@ -1840,13 +1840,10 @@ static DWORD CALLBACK read_pipe( void *arg )
         "%u: ConnectNamedPipe failed %u\n", args->index, GetLastError() );
 
     success = ReadFile( args->pipe, args->base, args->size, &num_bytes, NULL );
-    todo_wine_if (!args->index)
-    {
     ok( success, "%u: ReadFile failed %u\n", args->index, GetLastError() );
     ok( num_bytes == sizeof(testdata), "%u: wrong number of bytes read %u\n", args->index, num_bytes );
     ok( !memcmp( args->base, testdata, sizeof(testdata)),
         "%u: didn't receive expected data\n", args->index );
-    }
     return 0;
 }
 
@@ -2056,22 +2053,16 @@ static void test_write_watch(void)
 
         num_bytes = 0;
         success = GetOverlappedResult( readpipe, &overlapped, &num_bytes, TRUE );
-        todo_wine_if (!i)
-        {
         ok( success, "%u: GetOverlappedResult failed %u\n", i, GetLastError() );
         ok( num_bytes == sizeof(testdata), "%u: wrong number of bytes read %u\n", i, num_bytes );
         ok( !memcmp( base, testdata, sizeof(testdata)), "%u: didn't receive expected data\n", i );
-        }
 
         count = 64;
         memset( results, 0, sizeof(results) );
         ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
         ok( !ret, "%u: GetWriteWatch failed %u\n", i, GetLastError() );
-        todo_wine_if (!i)
-        {
         ok( count == 1, "%u: wrong count %lu\n", i, count );
         ok( results[0] == base, "%u: wrong result %p\n", i, results[0] );
-        }
 
         CloseHandle( readpipe );
         CloseHandle( writepipe );
@@ -2120,11 +2111,8 @@ static void test_write_watch(void)
         memset( results, 0, sizeof(results) );
         ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
         ok( !ret, "%u: GetWriteWatch failed %u\n", i, GetLastError() );
-        todo_wine_if (!i)
-        {
         ok( count == 1, "%u: wrong count %lu\n", i, count );
         ok( results[0] == base, "%u: wrong result %p\n", i, results[0] );
-        }
 
         CloseHandle( readpipe );
         CloseHandle( writepipe );

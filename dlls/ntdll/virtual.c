@@ -1863,6 +1863,56 @@ unsigned int virtual_locked_server_call( void *req_ptr )
 }
 
 
+/***********************************************************************
+ *           virtual_locked_read
+ */
+ssize_t virtual_locked_read( int fd, void *addr, size_t size )
+{
+    sigset_t sigset;
+    BOOL has_write_watch = FALSE;
+    int err = EFAULT;
+
+    ssize_t ret = read( fd, addr, size );
+    if (ret != -1 || errno != EFAULT) return ret;
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    if (!check_write_access( addr, size, &has_write_watch ))
+    {
+        ret = read( fd, addr, size );
+        err = errno;
+        if (has_write_watch) update_write_watches( addr, size, max( 0, ret ));
+    }
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    errno = err;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           virtual_locked_pread
+ */
+ssize_t virtual_locked_pread( int fd, void *addr, size_t size, off_t offset )
+{
+    sigset_t sigset;
+    BOOL has_write_watch = FALSE;
+    int err = EFAULT;
+
+    ssize_t ret = pread( fd, addr, size, offset );
+    if (ret != -1 || errno != EFAULT) return ret;
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    if (!check_write_access( addr, size, &has_write_watch ))
+    {
+        ret = pread( fd, addr, size, offset );
+        err = errno;
+        if (has_write_watch) update_write_watches( addr, size, max( 0, ret ));
+    }
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    errno = err;
+    return ret;
+}
+
+
 
 /***********************************************************************
  *           virtual_is_valid_code_address
