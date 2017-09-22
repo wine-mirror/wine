@@ -804,7 +804,7 @@ static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot, BOOL image 
  *
  * Wrapper for mprotect, adds PROT_EXEC if forced by force_exec_prot
  */
-static inline int mprotect_exec( void *base, size_t size, int unix_prot, unsigned int view_protect )
+static inline int mprotect_exec( void *base, size_t size, int unix_prot )
 {
     if (force_exec_prot && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
     {
@@ -823,7 +823,7 @@ static inline int mprotect_exec( void *base, size_t size, int unix_prot, unsigne
  *
  * Call mprotect on a page range, applying the protections from the per-page byte.
  */
-static void mprotect_range( struct file_view *view, void *base, size_t size, BYTE set, BYTE clear )
+static void mprotect_range( void *base, size_t size, BYTE set, BYTE clear )
 {
     size_t i, count;
     char *addr = base;
@@ -834,12 +834,12 @@ static void mprotect_range( struct file_view *view, void *base, size_t size, BYT
     {
         next = VIRTUAL_GetUnixProt( (get_page_vprot( addr + (count << page_shift) ) & ~clear) | set );
         if (next == prot) continue;
-        mprotect_exec( addr, count << page_shift, prot, view->protect );
+        mprotect_exec( addr, count << page_shift, prot );
         addr += count << page_shift;
         prot = next;
         count = 0;
     }
-    if (count) mprotect_exec( addr, count << page_shift, prot, view->protect );
+    if (count) mprotect_exec( addr, count << page_shift, prot );
 }
 
 
@@ -863,7 +863,7 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
     {
         /* each page may need different protections depending on write watch flag */
         set_page_vprot_bits( base, size, vprot & ~VPROT_WRITEWATCH, ~vprot & ~VPROT_WRITEWATCH );
-        mprotect_range( view, base, size, 0, 0 );
+        mprotect_range( base, size, 0, 0 );
         return TRUE;
     }
 
@@ -878,7 +878,7 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
         return TRUE;
     }
 
-    if (mprotect_exec( base, size, unix_prot, view->protect )) /* FIXME: last error */
+    if (mprotect_exec( base, size, unix_prot )) /* FIXME: last error */
         return FALSE;
 
     set_page_vprot( base, size, vprot );
@@ -917,10 +917,10 @@ static NTSTATUS set_protection( struct file_view *view, void *base, SIZE_T size,
  *
  * Reset write watches in a memory range.
  */
-static void reset_write_watches( struct file_view *view, void *base, SIZE_T size )
+static void reset_write_watches( void *base, SIZE_T size )
 {
     set_page_vprot_bits( base, size, VPROT_WRITEWATCH, 0 );
-    mprotect_range( view, base, size, 0, 0 );
+    mprotect_range( base, size, 0, 0 );
 }
 
 
@@ -1769,7 +1769,7 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
             if (vprot & VPROT_WRITEWATCH)
             {
                 set_page_vprot_bits( page, page_size, 0, VPROT_WRITEWATCH );
-                mprotect_range( view, page, page_size, 0, 0 );
+                mprotect_range( page, page_size, 0, 0 );
             }
             /* ignore fault if page is writable now */
             if (VIRTUAL_GetUnixProt( get_page_vprot( page )) & PROT_WRITE) ret = STATUS_SUCCESS;
@@ -1777,7 +1777,7 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
         if (!on_signal_stack && (vprot & VPROT_GUARD))
         {
             set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
-            mprotect_range( view, page, page_size, 0, 0 );
+            mprotect_range( page, page_size, 0, 0 );
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
     }
@@ -1972,7 +1972,7 @@ NTSTATUS virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZ
         if (view->protect & VPROT_WRITEWATCH)  /* enable write access by clearing write watches */
         {
             set_page_vprot_bits( addr, size, 0, VPROT_WRITEWATCH );
-            mprotect_range( view, addr, size, 0, 0 );
+            mprotect_range( addr, size, 0, 0 );
         }
         memcpy( addr, buffer, size );
         ret = STATUS_SUCCESS;
@@ -2003,7 +2003,7 @@ void VIRTUAL_SetForceExec( BOOL enable )
             /* file mappings are always accessible */
             BYTE commit = is_view_valloc( view ) ? 0 : VPROT_COMMITTED;
 
-            mprotect_range( view, view->base, view->size, commit, 0 );
+            mprotect_range( view->base, view->size, commit, 0 );
         }
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -3090,7 +3090,7 @@ NTSTATUS WINAPI NtGetWriteWatch( HANDLE process, ULONG flags, PVOID base, SIZE_T
             if (!(get_page_vprot( addr ) & VPROT_WRITEWATCH)) addresses[pos++] = addr;
             addr += page_size;
         }
-        if (flags & WRITE_WATCH_FLAG_RESET) reset_write_watches( view, base, addr - (char *)base );
+        if (flags & WRITE_WATCH_FLAG_RESET) reset_write_watches( base, addr - (char *)base );
         *count = pos;
         *granularity = page_size;
     }
@@ -3121,7 +3121,7 @@ NTSTATUS WINAPI NtResetWriteWatch( HANDLE process, PVOID base, SIZE_T size )
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if ((view = VIRTUAL_FindView( base, size )) && (view->protect & VPROT_WRITEWATCH))
-        reset_write_watches( view, base, size );
+        reset_write_watches( base, size );
     else
         status = STATUS_INVALID_PARAMETER;
 
