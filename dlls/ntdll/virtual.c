@@ -183,6 +183,7 @@ static BYTE get_page_vprot( const void *addr )
     size_t idx = (size_t)addr >> page_shift;
 
 #ifdef _WIN64
+    if (!pages_vprot[idx >> pages_vprot_shift]) return 0;
     return pages_vprot[idx >> pages_vprot_shift][idx & pages_vprot_mask];
 #else
     return pages_vprot[idx];
@@ -671,6 +672,7 @@ static struct file_view *alloc_view(void)
 static void delete_view( struct file_view *view ) /* [in] View */
 {
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
+    set_page_vprot( view->base, view->size, 0 );
     wine_rb_remove( &views_tree, &view->entry );
     if (view->mapping) close_handle( view->mapping );
     *(struct file_view **)view = next_free_view;
@@ -1720,9 +1722,10 @@ NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commi
 #endif
 
     /* setup no access guard page */
-    VIRTUAL_SetProt( view, view->base, page_size, VPROT_COMMITTED );
-    VIRTUAL_SetProt( view, (char *)view->base + page_size, page_size,
-                     VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
+    set_page_vprot( view->base, page_size, VPROT_COMMITTED );
+    set_page_vprot( (char *)view->base + page_size, page_size,
+                    VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
+    mprotect_range( view->base, 2 * page_size, 0, 0 );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
 
     /* note: limit is lower than base since the stack grows down */
@@ -1812,25 +1815,22 @@ BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size )
  */
 BOOL virtual_handle_stack_fault( void *addr )
 {
-    struct file_view *view;
     BOOL ret = FALSE;
 
     RtlEnterCriticalSection( &csVirtual );  /* no need for signal masking inside signal handler */
-    if ((view = VIRTUAL_FindView( addr, 0 )))
+    if (get_page_vprot( addr ) & VPROT_GUARD)
     {
-        void *page = ROUND_ADDR( addr, page_mask );
-        BYTE vprot = get_page_vprot( page );
-        if (vprot & VPROT_GUARD)
+        char *page = ROUND_ADDR( addr, page_mask );
+        set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
+        mprotect_range( page, page_size, 0, 0 );
+        NtCurrentTeb()->Tib.StackLimit = page;
+        if (page >= (char *)NtCurrentTeb()->DeallocationStack + 2*page_size)
         {
-            VIRTUAL_SetProt( view, page, page_size, vprot & ~VPROT_GUARD );
-            NtCurrentTeb()->Tib.StackLimit = page;
-            if ((char *)page >= (char *)NtCurrentTeb()->DeallocationStack + 2*page_size)
-            {
-                vprot = get_page_vprot( (char *)page - page_size );
-                VIRTUAL_SetProt( view, (char *)page - page_size, page_size, vprot | VPROT_COMMITTED | VPROT_GUARD );
-            }
-            ret = TRUE;
+            page -= page_size;
+            set_page_vprot_bits( page, page_size, VPROT_COMMITTED | VPROT_GUARD, 0 );
+            mprotect_range( page, page_size, 0, 0 );
         }
+        ret = TRUE;
     }
     RtlLeaveCriticalSection( &csVirtual );
     return ret;
