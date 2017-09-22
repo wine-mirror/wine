@@ -438,7 +438,7 @@ static NTSTATUS irp_completion( void *user, IO_STATUS_BLOCK *io, NTSTATUS status
         {
             req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->buffer, async->size );
-            status = wine_server_call( req );
+            status = virtual_locked_server_call( req );
             information = reply->size;
         }
         SERVER_END_REQ;
@@ -577,7 +577,7 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
         req->async = server_async( handle, &async->io, event, apc, apc_context, io );
         req->pos   = offset ? offset->QuadPart : 0;
         wine_server_set_reply( req, buffer, size );
-        status = wine_server_call( req );
+        status = virtual_locked_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
         if (wait_handle && status != STATUS_PENDING)
@@ -1540,7 +1540,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         if ((code & 3) != METHOD_BUFFERED)
             wine_server_add_data( req, out_buffer, out_size );
         wine_server_set_reply( req, out_buffer, out_size );
-        status = wine_server_call( req );
+        status = virtual_locked_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
         if (wait_handle && status != STATUS_PENDING)

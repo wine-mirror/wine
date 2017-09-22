@@ -278,6 +278,19 @@ static inline unsigned int wait_reply( struct __server_request_info *req )
 
 
 /***********************************************************************
+ *           server_call_unlocked
+ */
+unsigned int server_call_unlocked( void *req_ptr )
+{
+    struct __server_request_info * const req = req_ptr;
+    unsigned int ret;
+
+    if ((ret = send_request( req ))) return ret;
+    return wait_reply( req );
+}
+
+
+/***********************************************************************
  *           wine_server_call (NTDLL.@)
  *
  * Perform a server call.
@@ -301,13 +314,11 @@ static inline unsigned int wait_reply( struct __server_request_info *req )
  */
 unsigned int wine_server_call( void *req_ptr )
 {
-    struct __server_request_info * const req = req_ptr;
     sigset_t old_set;
     unsigned int ret;
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, &old_set );
-    ret = send_request( req );
-    if (!ret) ret = wait_reply( req );
+    ret = server_call_unlocked( req_ptr );
     pthread_sigmask( SIG_SETMASK, &old_set, NULL );
     return ret;
 }

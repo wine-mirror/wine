@@ -1840,7 +1840,7 @@ static DWORD CALLBACK read_pipe( void *arg )
         "%u: ConnectNamedPipe failed %u\n", args->index, GetLastError() );
 
     success = ReadFile( args->pipe, args->base, args->size, &num_bytes, NULL );
-    todo_wine
+    todo_wine_if (!args->index)
     {
     ok( success, "%u: ReadFile failed %u\n", args->index, GetLastError() );
     ok( num_bytes == sizeof(testdata), "%u: wrong number of bytes read %u\n", args->index, num_bytes );
@@ -2056,7 +2056,7 @@ static void test_write_watch(void)
 
         num_bytes = 0;
         success = GetOverlappedResult( readpipe, &overlapped, &num_bytes, TRUE );
-        todo_wine
+        todo_wine_if (!i)
         {
         ok( success, "%u: GetOverlappedResult failed %u\n", i, GetLastError() );
         ok( num_bytes == sizeof(testdata), "%u: wrong number of bytes read %u\n", i, num_bytes );
@@ -2067,7 +2067,7 @@ static void test_write_watch(void)
         memset( results, 0, sizeof(results) );
         ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
         ok( !ret, "%u: GetWriteWatch failed %u\n", i, GetLastError() );
-        todo_wine
+        todo_wine_if (!i)
         {
         ok( count == 1, "%u: wrong count %lu\n", i, count );
         ok( results[0] == base, "%u: wrong result %p\n", i, results[0] );
@@ -2076,7 +2076,6 @@ static void test_write_watch(void)
         CloseHandle( readpipe );
         CloseHandle( writepipe );
         CloseHandle( overlapped.hEvent );
-        if (!success) break;  /* don't try message mode if byte mode already doesn't work */
     }
 
     for (i = 0; i < 2; i++)
@@ -2121,7 +2120,7 @@ static void test_write_watch(void)
         memset( results, 0, sizeof(results) );
         ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
         ok( !ret, "%u: GetWriteWatch failed %u\n", i, GetLastError() );
-        todo_wine
+        todo_wine_if (!i)
         {
         ok( count == 1, "%u: wrong count %lu\n", i, count );
         ok( results[0] == base, "%u: wrong result %p\n", i, results[0] );
@@ -2130,7 +2129,6 @@ static void test_write_watch(void)
         CloseHandle( readpipe );
         CloseHandle( writepipe );
         CloseHandle( thread );
-        if (!count) break;  /* don't try message mode if byte mode already doesn't work */
     }
 
     GetTempPathA( MAX_PATH, path );

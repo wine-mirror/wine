@@ -1838,6 +1838,31 @@ static NTSTATUS check_write_access( void *base, size_t size, BOOL *has_write_wat
 }
 
 
+/***********************************************************************
+ *           virtual_locked_server_call
+ */
+unsigned int virtual_locked_server_call( void *req_ptr )
+{
+    struct __server_request_info * const req = req_ptr;
+    sigset_t sigset;
+    void *addr = req->reply_data;
+    data_size_t size = req->u.req.request_header.reply_size;
+    BOOL has_write_watch = FALSE;
+    unsigned int ret = STATUS_ACCESS_VIOLATION;
+
+    if (!size) return wine_server_call( req_ptr );
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    if (!(ret = check_write_access( addr, size, &has_write_watch )))
+    {
+        ret = server_call_unlocked( req );
+        if (has_write_watch) update_write_watches( addr, size, wine_server_reply_size( req ));
+    }
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    return ret;
+}
+
+
 
 /***********************************************************************
  *           virtual_is_valid_code_address
