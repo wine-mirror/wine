@@ -1076,6 +1076,45 @@ static DWORD CALLBACK serverThreadMain4(LPVOID arg)
         }
         trace("Server done writing.\n");
 
+        /* Client will finish this connection, the following ops will trigger broken pipe errors. */
+
+        /* Wait for the pipe to break. */
+        while (PeekNamedPipe(hnp, NULL, 0, NULL, &written, &written));
+
+        trace("Server writing on disconnected pipe...\n");
+        SetLastError(ERROR_SUCCESS);
+        success = WriteFile(hnp, buf, readden, &written, &oWrite);
+        err = GetLastError();
+        todo_wine_if (!success && err == ERROR_PIPE_NOT_CONNECTED) ok(!success && err == ERROR_NO_DATA,
+            "overlapped WriteFile on disconnected pipe returned %u, err=%i\n", success, err);
+
+        /* No completion status is queued on immediate error. */
+        SetLastError(ERROR_SUCCESS);
+        oResult = (OVERLAPPED *)0xdeadbeef;
+        success = GetQueuedCompletionStatus(hcompletion, &written, &compkey,
+            &oResult, 0);
+        err = GetLastError();
+        ok(!success && err == WAIT_TIMEOUT && !oResult,
+           "WriteFile GetQueuedCompletionStatus returned %u, err=%i, oResult %p\n",
+           success, err, oResult);
+
+        trace("Server reading from disconnected pipe...\n");
+        SetLastError(ERROR_SUCCESS);
+        success = ReadFile(hnp, buf, sizeof(buf), &readden, &oRead);
+        trace("Server ReadFile from disconnected pipe returned...\n");
+        err = GetLastError();
+        ok(!success && err == ERROR_BROKEN_PIPE,
+            "overlapped ReadFile on disconnected pipe returned %u, err=%i\n", success, err);
+
+        SetLastError(ERROR_SUCCESS);
+        oResult = (OVERLAPPED *)0xdeadbeef;
+        success = GetQueuedCompletionStatus(hcompletion, &readden, &compkey,
+            &oResult, 0);
+        err = GetLastError();
+        ok(!success && err == WAIT_TIMEOUT && !oResult,
+           "ReadFile GetQueuedCompletionStatus returned %u, err=%i, oResult %p\n",
+           success, err, oResult);
+
         /* finish this connection, wait for next one */
         ok(FlushFileBuffers(hnp), "FlushFileBuffers\n");
         success = DisconnectNamedPipe(hnp);
