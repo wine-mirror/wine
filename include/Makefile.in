@@ -172,6 +172,7 @@ IDL_SRCS = \
 	transact.idl \
 	txcoord.idl \
 	txdtc.idl \
+	uianimation.idl \
 	uiautomationclient.idl \
 	uiautomationcore.idl \
 	uiribbon.idl \
