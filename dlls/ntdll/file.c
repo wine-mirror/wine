@@ -945,7 +945,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                     break;
                 default:
                     status = STATUS_PIPE_BROKEN;
-                    goto done;
+                    goto err;
                 }
             }
             else if (type == FD_TYPE_FILE) continue;  /* no async I/O on regular files */
@@ -954,7 +954,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         {
             if (errno == EINTR) continue;
             if (!total) status = FILE_GetNtStatus();
-            goto done;
+            goto err;
         }
 
         if (async_read)
@@ -1342,7 +1342,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 if (errno == EFAULT) status = STATUS_INVALID_USER_BUFFER;
                 else status = FILE_GetNtStatus();
             }
-            goto done;
+            goto err;
         }
 
         if (async_write)
