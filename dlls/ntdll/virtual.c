@@ -416,6 +416,16 @@ static inline UINT_PTR get_mask( ULONG zero_bits )
 
 
 /***********************************************************************
+ *           is_write_watch_range
+ */
+static inline BOOL is_write_watch_range( const void *addr, size_t size )
+{
+    struct file_view *view = VIRTUAL_FindView( addr, size );
+    return view && (view->protect & VPROT_WRITEWATCH);
+}
+
+
+/***********************************************************************
  *           find_view_range
  *
  * Find the first view overlapping at least part of the specified range.
@@ -1758,30 +1768,31 @@ void virtual_clear_thread_stack(void)
  */
 NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
 {
-    struct file_view *view;
     NTSTATUS ret = STATUS_ACCESS_VIOLATION;
+    void *page = ROUND_ADDR( addr, page_mask );
     sigset_t sigset;
+    BYTE vprot;
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    if ((view = VIRTUAL_FindView( addr, 0 )))
+    vprot = get_page_vprot( page );
+    if (!on_signal_stack && (vprot & VPROT_GUARD))
     {
-        void *page = ROUND_ADDR( addr, page_mask );
-        BYTE vprot = get_page_vprot( page );
-        if ((err & EXCEPTION_WRITE_FAULT) && (view->protect & VPROT_WRITEWATCH))
+        set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
+        mprotect_range( page, page_size, 0, 0 );
+        ret = STATUS_GUARD_PAGE_VIOLATION;
+    }
+    else if (err & EXCEPTION_WRITE_FAULT)
+    {
+        if (vprot & VPROT_WRITEWATCH)
         {
-            if (vprot & VPROT_WRITEWATCH)
-            {
-                set_page_vprot_bits( page, page_size, 0, VPROT_WRITEWATCH );
-                mprotect_range( page, page_size, 0, 0 );
-            }
-            /* ignore fault if page is writable now */
-            if (VIRTUAL_GetUnixProt( get_page_vprot( page )) & PROT_WRITE) ret = STATUS_SUCCESS;
-        }
-        if (!on_signal_stack && (vprot & VPROT_GUARD))
-        {
-            set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
+            set_page_vprot_bits( page, page_size, 0, VPROT_WRITEWATCH );
             mprotect_range( page, page_size, 0, 0 );
-            ret = STATUS_GUARD_PAGE_VIOLATION;
+        }
+        /* ignore fault if page is writable now */
+        if (VIRTUAL_GetUnixProt( get_page_vprot( page )) & PROT_WRITE)
+        {
+            if ((vprot & VPROT_WRITEWATCH) || is_write_watch_range( page, page_size ))
+                ret = STATUS_SUCCESS;
         }
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -3061,7 +3072,6 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
 NTSTATUS WINAPI NtGetWriteWatch( HANDLE process, ULONG flags, PVOID base, SIZE_T size, PVOID *addresses,
                                  ULONG_PTR *count, ULONG *granularity )
 {
-    struct file_view *view;
     NTSTATUS status = STATUS_SUCCESS;
     sigset_t sigset;
 
@@ -3079,7 +3089,7 @@ NTSTATUS WINAPI NtGetWriteWatch( HANDLE process, ULONG flags, PVOID base, SIZE_T
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    if ((view = VIRTUAL_FindView( base, size )) && (view->protect & VPROT_WRITEWATCH))
+    if (is_write_watch_range( base, size ))
     {
         ULONG_PTR pos = 0;
         char *addr = base;
@@ -3107,7 +3117,6 @@ NTSTATUS WINAPI NtGetWriteWatch( HANDLE process, ULONG flags, PVOID base, SIZE_T
  */
 NTSTATUS WINAPI NtResetWriteWatch( HANDLE process, PVOID base, SIZE_T size )
 {
-    struct file_view *view;
     NTSTATUS status = STATUS_SUCCESS;
     sigset_t sigset;
 
@@ -3120,7 +3129,7 @@ NTSTATUS WINAPI NtResetWriteWatch( HANDLE process, PVOID base, SIZE_T size )
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    if ((view = VIRTUAL_FindView( base, size )) && (view->protect & VPROT_WRITEWATCH))
+    if (is_write_watch_range( base, size ))
         reset_write_watches( base, size );
     else
         status = STATUS_INVALID_PARAMETER;
