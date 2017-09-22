@@ -870,11 +870,6 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue )
         reselect_read_queue( pipe_end );
 }
 
-static inline int is_overlapped( unsigned int options )
-{
-    return !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
-}
-
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd )
 {
     return FD_TYPE_PIPE;
@@ -1144,11 +1139,8 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
         {
             assert( !server->pipe_end.fd );
 
-            /* for performance reasons, only set nonblocking mode when using
-             * overlapped I/O. Otherwise, we will be doing too much busy
-             * looping */
-            if (is_overlapped( options )) fcntl( fds[1], F_SETFL, O_NONBLOCK );
-            if (is_overlapped( server->options )) fcntl( fds[0], F_SETFL, O_NONBLOCK );
+            fcntl( fds[0], F_SETFL, O_NONBLOCK );
+            fcntl( fds[1], F_SETFL, O_NONBLOCK );
 
             if (pipe->insize)
             {
