@@ -4702,7 +4702,6 @@ static void test_FontFallbackBuilder(void)
     ok(fallback != fallback2, "Unexpected fallback instance.\n");
     IDWriteFontFallback_Release(fallback2);
 
-todo_wine {
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, NULL, 0, NULL, 0, NULL, NULL, NULL, 0.0f);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
@@ -4714,11 +4713,20 @@ todo_wine {
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 0, NULL, 0, NULL, NULL, NULL, 1.0f);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 0, &familyW, 1, NULL, NULL, NULL, 1.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, NULL, 0, &familyW, 1, NULL, NULL, NULL, 1.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     /* negative scaling factor */
     range.first = range.last = 0;
     familyW = g_blahfontW;
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, -1.0f);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 0.0f);
+    ok(hr == S_OK, "Unexected hr %#x.\n", hr);
 
     /* empty range */
     range.first = range.last = 0;
@@ -4738,7 +4746,7 @@ todo_wine {
     range.last = 'A';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 4.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-}
+
     IDWriteFontFallback_Release(fallback);
 
     if (0) /* crashes on native */
@@ -4765,7 +4773,6 @@ todo_wine {
     /* remap with custom collection */
     range.first = range.last = 'A';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, NULL, NULL, 5.0f);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
@@ -4791,7 +4798,6 @@ todo_wine {
     range.first = 'B';
     range.last = 'A';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, NULL, NULL, 6.0f);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
@@ -4818,7 +4824,6 @@ todo_wine {
     range.first = 'A';
     range.last = 'B';
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, localeW, NULL, 6.0f);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
