@@ -4672,16 +4672,14 @@ static void test_FontFallbackBuilder(void)
     hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory2, (void**)&factory2);
     IDWriteFactory_Release(factory);
 
-    if (factory2) {
-        EXPECT_REF(factory2, 1);
-        hr = IDWriteFactory2_CreateFontFallbackBuilder(factory2, &builder);
-        EXPECT_REF(factory2, 2);
-    }
-
     if (hr != S_OK) {
-        skip("IDWriteFontFallbackBuilder is not supported\n");
+        win_skip("IDWriteFontFallbackBuilder is not supported\n");
         return;
     }
+
+    EXPECT_REF(factory2, 1);
+    hr = IDWriteFactory2_CreateFontFallbackBuilder(factory2, &builder);
+    EXPECT_REF(factory2, 2);
 
     fallback = NULL;
     EXPECT_REF(factory2, 2);
