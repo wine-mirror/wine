@@ -818,6 +818,8 @@ static HRESULT WINAPI dwritetextanalyzer_QueryInterface(IDWriteTextAnalyzer2 *if
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
     return E_NOINTERFACE;
 }
@@ -1863,6 +1865,8 @@ static HRESULT WINAPI dwritenumbersubstitution_QueryInterface(IDWriteNumberSubst
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
 
     return E_NOINTERFACE;
@@ -1947,6 +1951,8 @@ static HRESULT WINAPI fontfallback_QueryInterface(IDWriteFontFallback *iface, RE
         IDWriteFontFallback_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
     return E_NOINTERFACE;
@@ -2234,6 +2240,8 @@ static HRESULT WINAPI fontfallbackbuilder_QueryInterface(IDWriteFontFallbackBuil
         IDWriteFontFallbackBuilder_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
     return E_NOINTERFACE;

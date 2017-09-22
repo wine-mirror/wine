@@ -473,6 +473,8 @@ static HRESULT WINAPI dwritefontface_QueryInterface(IDWriteFontFace4 *iface, REF
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
     return E_NOINTERFACE;
 }
@@ -1421,6 +1423,8 @@ static HRESULT WINAPI dwritefont_QueryInterface(IDWriteFont3 *iface, REFIID riid
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
     return E_NOINTERFACE;
 }
@@ -1824,6 +1828,8 @@ static HRESULT WINAPI dwritefontlist_QueryInterface(IDWriteFontList1 *iface, REF
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
     return E_NOINTERFACE;
 }
@@ -1960,6 +1966,8 @@ static HRESULT WINAPI dwritefontfamily_QueryInterface(IDWriteFontFamily1 *iface,
         IDWriteFontFamily1_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
     return E_NOINTERFACE;
@@ -2295,6 +2303,8 @@ static HRESULT WINAPI dwritesystemfontcollection_QueryInterface(IDWriteFontColle
     if (IsEqualIID(riid, &IID_issystemcollection))
         return S_OK;
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     return E_NOINTERFACE;
 }
 
@@ -2311,6 +2321,8 @@ static HRESULT WINAPI dwritefontcollection_QueryInterface(IDWriteFontCollection1
         IDWriteFontCollection1_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
 
@@ -3825,13 +3837,15 @@ static inline struct system_fontfile_enumerator *impl_from_IDWriteFontFileEnumer
 
 static HRESULT WINAPI systemfontfileenumerator_QueryInterface(IDWriteFontFileEnumerator *iface, REFIID riid, void **obj)
 {
-    *obj = NULL;
-
     if (IsEqualIID(riid, &IID_IDWriteFontFileEnumerator) || IsEqualIID(riid, &IID_IUnknown)) {
         IDWriteFontFileEnumerator_AddRef(iface);
         *obj = iface;
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
+    *obj = NULL;
 
     return E_NOINTERFACE;
 }
@@ -4180,6 +4194,8 @@ static HRESULT WINAPI dwritefontfile_QueryInterface(IDWriteFontFile *iface, REFI
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
     return E_NOINTERFACE;
 }
@@ -4483,6 +4499,8 @@ static HRESULT WINAPI localfontfilestream_QueryInterface(IDWriteFontFileStream *
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
     return E_NOINTERFACE;
 }
@@ -4609,6 +4627,8 @@ static HRESULT WINAPI localfontfileloader_QueryInterface(IDWriteLocalFontFileLoa
         IDWriteLocalFontFileLoader_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
     return E_NOINTERFACE;
@@ -4827,6 +4847,8 @@ static HRESULT WINAPI glyphrunanalysis_QueryInterface(IDWriteGlyphRunAnalysis *i
         IDWriteGlyphRunAnalysis_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *ppv = NULL;
     return E_NOINTERFACE;
@@ -5356,6 +5378,8 @@ static HRESULT WINAPI colorglyphenum_QueryInterface(IDWriteColorGlyphRunEnumerat
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -5671,6 +5695,8 @@ static HRESULT WINAPI fontfacereference_QueryInterface(IDWriteFontFaceReference 
         IDWriteFontFaceReference_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
 

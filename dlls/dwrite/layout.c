@@ -2823,6 +2823,8 @@ static HRESULT WINAPI dwritetextlayout_QueryInterface(IDWriteTextLayout3 *iface,
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     return E_NOINTERFACE;
 }
 
@@ -4519,6 +4521,8 @@ static HRESULT WINAPI dwritetextlayout_sink_QueryInterface(IDWriteTextAnalysisSi
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
     return E_NOINTERFACE;
 }
@@ -4658,6 +4662,8 @@ static HRESULT WINAPI dwritetextlayout_source_QueryInterface(IDWriteTextAnalysis
         IDWriteTextAnalysisSource1_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
     return E_NOINTERFACE;
@@ -4991,6 +4997,8 @@ static HRESULT WINAPI dwritetrimmingsign_QueryInterface(IDWriteInlineObject *ifa
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
     return E_NOINTERFACE;
 }
@@ -5161,6 +5169,8 @@ static HRESULT WINAPI dwritetextformat_QueryInterface(IDWriteTextFormat2 *iface,
         IDWriteTextFormat2_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
 
@@ -5596,6 +5606,8 @@ static HRESULT WINAPI dwritetypography_QueryInterface(IDWriteTypography *iface, 
         IDWriteTypography_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
 

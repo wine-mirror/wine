@@ -121,6 +121,8 @@ static HRESULT WINAPI rendertarget_sink_QueryInterface(ID2D1SimplifiedGeometrySi
         return S_OK;
     }
 
+    WARN("%s not implemented.\n", debugstr_guid(riid));
+
     *obj = NULL;
 
     return E_NOINTERFACE;
@@ -220,6 +222,8 @@ static HRESULT WINAPI rendertarget_QueryInterface(IDWriteBitmapRenderTarget1 *if
         IDWriteBitmapRenderTarget1_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
 
@@ -610,6 +614,8 @@ static HRESULT WINAPI gdiinterop_QueryInterface(IDWriteGdiInterop1 *iface, REFII
         IDWriteGdiInterop1_AddRef(iface);
         return S_OK;
     }
+
+    WARN("%s not implemented.\n", debugstr_guid(riid));
 
     *obj = NULL;
     return E_NOINTERFACE;
