@@ -137,6 +137,8 @@ static void d2d_rt_draw(struct d2d_d3d_render_target *render_target, enum d2d_sh
     D3D10_VIEWPORT vp;
     HRESULT hr;
 
+    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
     vp.TopLeftX = 0;
     vp.TopLeftY = 0;
     vp.Width = render_target->pixel_size.width;
@@ -160,6 +162,7 @@ static void d2d_rt_draw(struct d2d_d3d_render_target *render_target, enum d2d_sh
     ID3D10Device_VSSetConstantBuffers(device, 0, 1, &vs_cb);
     ID3D10Device_VSSetShader(device, shape_resources->vs);
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &ps_cb);
+    ID3D10Device_PSSetShader(device, shape_resources->ps);
     ID3D10Device_RSSetViewports(device, 1, &vp);
     if (render_target->clip_stack.count)
     {
@@ -182,9 +185,12 @@ static void d2d_rt_draw(struct d2d_d3d_render_target *render_target, enum d2d_sh
     ID3D10Device_RSSetState(device, render_target->rs);
     ID3D10Device_OMSetRenderTargets(device, 1, &render_target->view, NULL);
     if (brush)
-        d2d_brush_bind_resources(brush, opacity_brush, render_target, shape_type);
-    else
-        ID3D10Device_PSSetShader(device, shape_resources->ps[D2D_BRUSH_TYPE_SOLID][D2D_BRUSH_TYPE_COUNT]);
+    {
+        ID3D10Device_OMSetBlendState(device, render_target->bs, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+        d2d_brush_bind_resources(brush, device, 0);
+    }
+    if (opacity_brush)
+        d2d_brush_bind_resources(opacity_brush, device, 1);
 
     if (ib)
         ID3D10Device_DrawIndexed(device, index_count, 0, 0);
@@ -246,7 +252,7 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
 
     if (!refcount)
     {
-        unsigned int i, j, k;
+        unsigned int i;
 
         d2d_clip_stack_cleanup(&render_target->clip_stack);
         IDWriteRenderingParams_Release(render_target->default_text_rendering_params);
@@ -258,14 +264,7 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
         ID3D10Buffer_Release(render_target->ib);
         for (i = 0; i < D2D_SHAPE_TYPE_COUNT; ++i)
         {
-            for (j = 0; j < D2D_BRUSH_TYPE_COUNT; ++j)
-            {
-                for (k = 0; k < D2D_BRUSH_TYPE_COUNT + 1; ++k)
-                {
-                    if (render_target->shape_resources[i].ps[j][k])
-                        ID3D10PixelShader_Release(render_target->shape_resources[i].ps[j][k]);
-                }
-            }
+            ID3D10PixelShader_Release(render_target->shape_resources[i].ps);
             ID3D10VertexShader_Release(render_target->shape_resources[i].vs);
             ID3D10InputLayout_Release(render_target->shape_resources[i].il);
         }
@@ -1504,13 +1503,14 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_PopAxisAlignedClip(ID2D1Rend
     d2d_clip_stack_pop(&render_target->clip_stack);
 }
 
-static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *iface, const D2D1_COLOR_F *color)
+static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *iface, const D2D1_COLOR_F *colour)
 {
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
-    D2D1_COLOR_F c = {0.0f, 0.0f, 0.0f, 0.0f};
+    struct d2d_brush_cb brush_cb[2] = {{0}};
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Buffer *vs_cb, *ps_cb;
+    D2D1_COLOR_F *c;
     HRESULT hr;
 
     static const float transform[] =
@@ -1519,7 +1519,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
         0.0f, -1.0f, 0.0f, 0.0f,
     };
 
-    TRACE("iface %p, color %p.\n", iface, color);
+    TRACE("iface %p, colour %p.\n", iface, colour);
 
     buffer_desc.ByteWidth = sizeof(transform);
     buffer_desc.Usage = D3D10_USAGE_DEFAULT;
@@ -1537,15 +1537,21 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
         return;
     }
 
-    if (color)
-        c = *color;
+    brush_cb[0].type = D2D_BRUSH_TYPE_SOLID;
+    brush_cb[0].opacity = 1.0f;
+    c = &brush_cb[0].u.solid.colour;
+    if (colour)
+        *c = *colour;
     if (render_target->desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_IGNORE)
-        c.a = 1.0f;
-    c.r *= c.a;
-    c.g *= c.a;
-    c.b *= c.a;
-    buffer_desc.ByteWidth = sizeof(c);
-    buffer_data.pSysMem = &c;
+        c->a = 1.0f;
+    c->r *= c->a;
+    c->g *= c->a;
+    c->b *= c->a;
+
+    brush_cb[1].type = D2D_BRUSH_TYPE_COUNT;
+
+    buffer_desc.ByteWidth = sizeof(brush_cb);
+    buffer_data.pSysMem = brush_cb;
 
     if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ps_cb)))
     {
@@ -2128,7 +2134,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
     D3D10_BUFFER_DESC buffer_desc;
     D3D10_BLEND_DESC blend_desc;
     ID3D10Resource *resource;
-    unsigned int i, j, k;
+    unsigned int i;
     HRESULT hr;
 
     static const D3D10_INPUT_ELEMENT_DESC il_desc_outline[] =
@@ -2136,10 +2142,6 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
         {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D10_INPUT_PER_VERTEX_DATA, 0},
         {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D10_INPUT_PER_VERTEX_DATA, 0},
-    };
-    static const D3D10_INPUT_ELEMENT_DESC il_desc_triangle[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
     };
     static const D3D10_INPUT_ELEMENT_DESC il_desc_bezier_outline[] =
     {
@@ -2149,6 +2151,10 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         {"P", 2, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D10_INPUT_PER_VERTEX_DATA, 0},
         {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D10_INPUT_PER_VERTEX_DATA, 0},
         {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D10_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const D3D10_INPUT_ELEMENT_DESC il_desc_triangle[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
     };
     static const D3D10_INPUT_ELEMENT_DESC il_desc_bezier[] =
     {
@@ -2172,7 +2178,8 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
          *   q⃑ᵢ = q̂ₚᵣₑᵥ⊥ + tan(½θ) · -q̂ₚᵣₑᵥ
          *   θ  = ∠PₚᵣₑᵥP₀Pₙₑₓₜ
          *   q⃑ₚᵣₑᵥ = P₀ - Pₚᵣₑᵥ */
-        float4 main(float2 position : POSITION, float2 prev : PREV, float2 next : NEXT) : SV_POSITION
+        float4 main(float2 position : POSITION, float2 prev : PREV,
+                float2 next : NEXT, out float3 b : BEZIER) : SV_POSITION
         {
             float2 q_prev, q_next, v_p, q_i;
             float l;
@@ -2190,64 +2197,49 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
             q_i = l * q_prev + v_p;
             position = mul(float3(position, 1.0f), transform_geometry) + stroke_width * 0.5f * q_i;
 
+            b = float3(1.0, 0.0, 1.0);
             return float4(mul(float2x3(transform_rtx.xyz * transform_rtx.w, transform_rty.xyz * transform_rty.w),
                     float3(position.xy, 1.0f)) + float2(-1.0f, 1.0f), 0.0f, 1.0f);
         }
 #endif
-        0x43425844, 0xe88f7af5, 0x480b101b, 0xfd80f66b, 0xd878e0b8, 0x00000001, 0x0000047c, 0x00000003,
-        0x0000002c, 0x00000098, 0x000000cc, 0x4e475349, 0x00000064, 0x00000003, 0x00000008, 0x00000050,
+        0x43425844, 0xf54c4bf8, 0xa8a4ab16, 0x05ee4e9c, 0x55549ca4, 0x00000001, 0x000004c8, 0x00000003,
+        0x0000002c, 0x00000098, 0x000000ec, 0x4e475349, 0x00000064, 0x00000003, 0x00000008, 0x00000050,
         0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000303, 0x00000059, 0x00000000, 0x00000000,
         0x00000003, 0x00000001, 0x00000303, 0x0000005e, 0x00000000, 0x00000000, 0x00000003, 0x00000002,
-        0x00000303, 0x49534f50, 0x4e4f4954, 0x45525000, 0x454e0056, 0xab005458, 0x4e47534f, 0x0000002c,
-        0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f,
-        0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x000003a8, 0x00010040, 0x000000ea, 0x04000059,
+        0x00000303, 0x49534f50, 0x4e4f4954, 0x45525000, 0x454e0056, 0xab005458, 0x4e47534f, 0x0000004c,
+        0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f,
+        0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x00000807, 0x505f5653, 0x5449534f,
+        0x004e4f49, 0x495a4542, 0xab005245, 0x52444853, 0x000003d4, 0x00010040, 0x000000f5, 0x04000059,
         0x00208e46, 0x00000000, 0x00000004, 0x0300005f, 0x00101032, 0x00000000, 0x0300005f, 0x00101032,
         0x00000001, 0x0300005f, 0x00101032, 0x00000002, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
-        0x02000068, 0x00000003, 0x0800000f, 0x00100012, 0x00000000, 0x00101046, 0x00000002, 0x00208046,
-        0x00000000, 0x00000000, 0x0800000f, 0x00100022, 0x00000000, 0x00101046, 0x00000002, 0x00208046,
-        0x00000000, 0x00000001, 0x0700000f, 0x00100042, 0x00000000, 0x00100046, 0x00000000, 0x00100046,
-        0x00000000, 0x05000044, 0x00100042, 0x00000000, 0x0010002a, 0x00000000, 0x07000038, 0x00100032,
-        0x00000000, 0x00100aa6, 0x00000000, 0x00100046, 0x00000000, 0x0800000f, 0x00100012, 0x00000001,
-        0x00101046, 0x00000001, 0x00208046, 0x00000000, 0x00000000, 0x0800000f, 0x00100022, 0x00000001,
-        0x00101046, 0x00000001, 0x00208046, 0x00000000, 0x00000001, 0x0700000f, 0x00100042, 0x00000000,
-        0x00100046, 0x00000001, 0x00100046, 0x00000001, 0x05000044, 0x00100042, 0x00000000, 0x0010002a,
-        0x00000000, 0x07000038, 0x00100032, 0x00000001, 0x00100aa6, 0x00000000, 0x00100046, 0x00000001,
-        0x06000036, 0x001000c2, 0x00000001, 0x80100556, 0x00000041, 0x00000001, 0x0700000f, 0x00100042,
-        0x00000000, 0x00100a26, 0x00000001, 0x00100046, 0x00000000, 0x0700000f, 0x00100012, 0x00000000,
-        0x00100046, 0x00000001, 0x00100046, 0x00000000, 0x07000000, 0x00100012, 0x00000000, 0x0010000a,
-        0x00000000, 0x00004001, 0x3f800000, 0x0800000e, 0x00100012, 0x00000000, 0x8010002a, 0x00000041,
-        0x00000000, 0x0010000a, 0x00000000, 0x09000032, 0x00100032, 0x00000000, 0x00100006, 0x00000000,
-        0x00100046, 0x00000001, 0x00100f36, 0x00000001, 0x08000038, 0x00100042, 0x00000000, 0x0020803a,
-        0x00000000, 0x00000001, 0x00004001, 0x3f000000, 0x05000036, 0x00100032, 0x00000001, 0x00101046,
-        0x00000000, 0x05000036, 0x00100042, 0x00000001, 0x00004001, 0x3f800000, 0x08000010, 0x00100012,
-        0x00000002, 0x00100246, 0x00000001, 0x00208246, 0x00000000, 0x00000000, 0x08000010, 0x00100022,
-        0x00000002, 0x00100246, 0x00000001, 0x00208246, 0x00000000, 0x00000001, 0x09000032, 0x00100032,
-        0x00000000, 0x00100aa6, 0x00000000, 0x00100046, 0x00000000, 0x00100046, 0x00000002, 0x09000038,
-        0x00100072, 0x00000001, 0x00208ff6, 0x00000000, 0x00000002, 0x00208246, 0x00000000, 0x00000002,
-        0x05000036, 0x00100042, 0x00000000, 0x00004001, 0x3f800000, 0x07000010, 0x00100012, 0x00000001,
-        0x00100246, 0x00000001, 0x00100246, 0x00000000, 0x09000038, 0x00100072, 0x00000002, 0x00208ff6,
-        0x00000000, 0x00000003, 0x00208246, 0x00000000, 0x00000003, 0x07000010, 0x00100022, 0x00000001,
-        0x00100246, 0x00000002, 0x00100246, 0x00000000, 0x0a000000, 0x00102032, 0x00000000, 0x00100046,
-        0x00000001, 0x00004002, 0xbf800000, 0x3f800000, 0x00000000, 0x00000000, 0x08000036, 0x001020c2,
-        0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x0100003e,
-    };
-    static const DWORD vs_code_triangle[] =
-    {
-        /* float3x2 transform;
-         *
-         * float4 main(float4 position : POSITION) : SV_POSITION
-         * {
-         *     return float4(mul(position.xyw, transform), position.zw);
-         * } */
-        0x43425844, 0x0add3194, 0x205f74ec, 0xab527fe7, 0xbe6ad704, 0x00000001, 0x00000128, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
-        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
-        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000008c, 0x00010040,
-        0x00000023, 0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x0300005f, 0x001010f2, 0x00000000,
-        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x08000010, 0x00102012, 0x00000000, 0x00101346,
-        0x00000000, 0x00208246, 0x00000000, 0x00000000, 0x08000010, 0x00102022, 0x00000000, 0x00101346,
-        0x00000000, 0x00208246, 0x00000000, 0x00000001, 0x05000036, 0x001020c2, 0x00000000, 0x00101ea6,
+        0x03000065, 0x00102072, 0x00000001, 0x02000068, 0x00000003, 0x0800000f, 0x00100012, 0x00000000,
+        0x00101046, 0x00000002, 0x00208046, 0x00000000, 0x00000000, 0x0800000f, 0x00100022, 0x00000000,
+        0x00101046, 0x00000002, 0x00208046, 0x00000000, 0x00000001, 0x0700000f, 0x00100042, 0x00000000,
+        0x00100046, 0x00000000, 0x00100046, 0x00000000, 0x05000044, 0x00100042, 0x00000000, 0x0010002a,
+        0x00000000, 0x07000038, 0x00100032, 0x00000000, 0x00100aa6, 0x00000000, 0x00100046, 0x00000000,
+        0x0800000f, 0x00100012, 0x00000001, 0x00101046, 0x00000001, 0x00208046, 0x00000000, 0x00000000,
+        0x0800000f, 0x00100022, 0x00000001, 0x00101046, 0x00000001, 0x00208046, 0x00000000, 0x00000001,
+        0x0700000f, 0x00100042, 0x00000000, 0x00100046, 0x00000001, 0x00100046, 0x00000001, 0x05000044,
+        0x00100042, 0x00000000, 0x0010002a, 0x00000000, 0x07000038, 0x00100032, 0x00000001, 0x00100aa6,
+        0x00000000, 0x00100046, 0x00000001, 0x06000036, 0x001000c2, 0x00000001, 0x80100556, 0x00000041,
+        0x00000001, 0x0700000f, 0x00100042, 0x00000000, 0x00100a26, 0x00000001, 0x00100046, 0x00000000,
+        0x0700000f, 0x00100012, 0x00000000, 0x00100046, 0x00000001, 0x00100046, 0x00000000, 0x07000000,
+        0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x3f800000, 0x0800000e, 0x00100012,
+        0x00000000, 0x8010002a, 0x00000041, 0x00000000, 0x0010000a, 0x00000000, 0x09000032, 0x00100032,
+        0x00000000, 0x00100006, 0x00000000, 0x00100046, 0x00000001, 0x00100f36, 0x00000001, 0x08000038,
+        0x00100042, 0x00000000, 0x0020803a, 0x00000000, 0x00000001, 0x00004001, 0x3f000000, 0x05000036,
+        0x00100032, 0x00000001, 0x00101046, 0x00000000, 0x05000036, 0x00100042, 0x00000001, 0x00004001,
+        0x3f800000, 0x08000010, 0x00100012, 0x00000002, 0x00100246, 0x00000001, 0x00208246, 0x00000000,
+        0x00000000, 0x08000010, 0x00100022, 0x00000002, 0x00100246, 0x00000001, 0x00208246, 0x00000000,
+        0x00000001, 0x09000032, 0x00100032, 0x00000000, 0x00100aa6, 0x00000000, 0x00100046, 0x00000000,
+        0x00100046, 0x00000002, 0x09000038, 0x00100072, 0x00000001, 0x00208ff6, 0x00000000, 0x00000002,
+        0x00208246, 0x00000000, 0x00000002, 0x05000036, 0x00100042, 0x00000000, 0x00004001, 0x3f800000,
+        0x07000010, 0x00100012, 0x00000001, 0x00100246, 0x00000001, 0x00100246, 0x00000000, 0x09000038,
+        0x00100072, 0x00000002, 0x00208ff6, 0x00000000, 0x00000003, 0x00208246, 0x00000000, 0x00000003,
+        0x07000010, 0x00100022, 0x00000001, 0x00100246, 0x00000002, 0x00100246, 0x00000000, 0x0a000000,
+        0x00102032, 0x00000000, 0x00100046, 0x00000001, 0x00004002, 0xbf800000, 0x3f800000, 0x00000000,
+        0x00000000, 0x08000036, 0x001020c2, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000,
+        0x3f800000, 0x08000036, 0x00102072, 0x00000001, 0x00004002, 0x3f800000, 0x00000000, 0x3f800000,
         0x00000000, 0x0100003e,
     };
     /*     ⎡p0.x p0.y 1⎤
@@ -2413,6 +2405,30 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         0x3f000000, 0x3f000000, 0x3f000000, 0x3f000000, 0x05000036, 0x00102032, 0x00000002, 0x00100086,
         0x00000000, 0x05000036, 0x00102032, 0x00000003, 0x001005d6, 0x00000000, 0x0100003e,
     };
+    static const DWORD vs_code_triangle[] =
+    {
+#if 0
+        float3x2 transform;
+
+        float4 main(float4 position : POSITION, out float3 b : BEZIER) : SV_POSITION
+        {
+            b = float3(1.0, 0.0, 1.0);
+            return float4(mul(position.xyw, transform), position.zw);
+        }
+#endif
+        0x43425844, 0x846013ae, 0x13dddb07, 0xbbef6d72, 0xb2dd83d5, 0x00000001, 0x00000174, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000b4, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x00000807,
+        0x505f5653, 0x5449534f, 0x004e4f49, 0x495a4542, 0xab005245, 0x52444853, 0x000000b8, 0x00010040,
+        0x0000002e, 0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x0300005f, 0x001010f2, 0x00000000,
+        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x00102072, 0x00000001, 0x08000010,
+        0x00102012, 0x00000000, 0x00101346, 0x00000000, 0x00208246, 0x00000000, 0x00000000, 0x08000010,
+        0x00102022, 0x00000000, 0x00101346, 0x00000000, 0x00208246, 0x00000000, 0x00000001, 0x05000036,
+        0x001020c2, 0x00000000, 0x00101ea6, 0x00000000, 0x08000036, 0x00102072, 0x00000001, 0x00004002,
+        0x3f800000, 0x00000000, 0x3f800000, 0x00000000, 0x0100003e,
+    };
     static const DWORD vs_code_bezier[] =
     {
 #if 0
@@ -2438,314 +2454,264 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         0x00208246, 0x00000000, 0x00000001, 0x05000036, 0x001020c2, 0x00000000, 0x00101ea6, 0x00000000,
         0x05000036, 0x00102072, 0x00000001, 0x00101246, 0x00000001, 0x0100003e,
     };
-    static const DWORD ps_code_triangle_solid[] =
-    {
-        /* float4 color;
-         *
-         * float4 main(float4 position : SV_POSITION) : SV_Target
-         * {
-         *     return color;
-         * } */
-        0x43425844, 0x88eefcfd, 0x93d6fd47, 0x173c242f, 0x0106d07a, 0x00000001, 0x000000dc, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49,
-        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000040, 0x00000040,
-        0x00000010, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
-        0x06000036, 0x001020f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000000, 0x0100003e,
-    };
-    static const DWORD ps_code_triangle_solid_bitmap[] =
+    static const DWORD ps_code_fill[] =
     {
 #if 0
-        float4 color;
+#define BRUSH_TYPE_SOLID    0
+#define BRUSH_TYPE_LINEAR   1
+#define BRUSH_TYPE_BITMAP   2
+#define BRUSH_TYPE_COUNT    3
 
-        float3x2 transform;
-        float opacity;
-        bool ignore_alpha;
-
-        SamplerState s;
-        Texture2D t;
-
-        float4 main(float4 position : SV_POSITION) : SV_Target
-        {
-            float2 texcoord;
-            float4 ret;
-
-            texcoord.x = position.x * transform._11 + position.y * transform._21 + transform._31;
-            texcoord.y = position.x * transform._12 + position.y * transform._22 + transform._32;
-            ret = t.Sample(s, texcoord) * opacity;
-            if (ignore_alpha)
-                ret.a = opacity;
-
-            return color * ret.a;
-        }
-#endif
-        0x43425844, 0x2260a2ae, 0x81907b3e, 0xcaf27063, 0xccb83ef2, 0x00000001, 0x00000208, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
-        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x0000016c, 0x00000040,
-        0x0000005b, 0x04000059, 0x00208e46, 0x00000000, 0x00000004, 0x0300005a, 0x00106000, 0x00000000,
-        0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001,
-        0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0800000f, 0x00100012, 0x00000000,
-        0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000001, 0x08000000, 0x00100012, 0x00000000,
-        0x0010000a, 0x00000000, 0x0020802a, 0x00000000, 0x00000001, 0x0800000f, 0x00100042, 0x00000000,
-        0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000002, 0x08000000, 0x00100022, 0x00000000,
-        0x0010002a, 0x00000000, 0x0020802a, 0x00000000, 0x00000002, 0x09000045, 0x001000f2, 0x00000000,
-        0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x08000038, 0x00100012,
-        0x00000000, 0x0010003a, 0x00000000, 0x0020803a, 0x00000000, 0x00000002, 0x0b000037, 0x00100012,
-        0x00000000, 0x0020800a, 0x00000000, 0x00000003, 0x0020803a, 0x00000000, 0x00000002, 0x0010000a,
-        0x00000000, 0x08000038, 0x001020f2, 0x00000000, 0x00100006, 0x00000000, 0x00208e46, 0x00000000,
-        0x00000000, 0x0100003e,
-    };
-    static const DWORD ps_code_triangle_bitmap[] =
-    {
-#if 0
-        float3x2 transform;
-        float opacity;
-        bool ignore_alpha;
-
-        SamplerState s;
-        Texture2D t;
-
-        float4 main(float4 position : SV_POSITION) : SV_Target
-        {
-            float2 texcoord;
-            float4 ret;
-
-            texcoord.x = position.x * transform._11 + position.y * transform._21 + transform._31;
-            texcoord.y = position.x * transform._12 + position.y * transform._22 + transform._32;
-            ret = t.Sample(s, texcoord) * opacity;
-            if (ignore_alpha)
-                ret.a = opacity;
-
-            return ret;
-        }
-#endif
-        0x43425844, 0xf5bb1e01, 0xe3386963, 0xcaa095bd, 0xea2887de, 0x00000001, 0x000001fc, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
-        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000160, 0x00000040,
-        0x00000058, 0x04000059, 0x00208e46, 0x00000000, 0x00000003, 0x0300005a, 0x00106000, 0x00000000,
-        0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001,
-        0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0800000f, 0x00100012, 0x00000000,
-        0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x08000000, 0x00100012, 0x00000000,
-        0x0010000a, 0x00000000, 0x0020802a, 0x00000000, 0x00000000, 0x0800000f, 0x00100042, 0x00000000,
-        0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000001, 0x08000000, 0x00100022, 0x00000000,
-        0x0010002a, 0x00000000, 0x0020802a, 0x00000000, 0x00000001, 0x09000045, 0x001000f2, 0x00000000,
-        0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x08000038, 0x001000f2,
-        0x00000000, 0x00100e46, 0x00000000, 0x00208ff6, 0x00000000, 0x00000001, 0x0b000037, 0x00102082,
-        0x00000000, 0x0020800a, 0x00000000, 0x00000002, 0x0020803a, 0x00000000, 0x00000001, 0x0010003a,
-        0x00000000, 0x05000036, 0x00102072, 0x00000000, 0x00100246, 0x00000000, 0x0100003e,
-    };
-    static const DWORD ps_code_triangle_bitmap_solid[] =
-    {
-#if 0
-        float3x2 transform;
-        float opacity;
-        bool ignore_alpha;
-
-        float4 color;
-
-        SamplerState s;
-        Texture2D t;
-
-        float4 main(float4 position : SV_POSITION) : SV_Target
-        {
-            float2 texcoord;
-            float4 ret;
-
-            texcoord.x = position.x * transform._11 + position.y * transform._21 + transform._31;
-            texcoord.y = position.x * transform._12 + position.y * transform._22 + transform._32;
-            ret = t.Sample(s, texcoord) * opacity;
-            if (ignore_alpha)
-                ret.a = opacity;
-
-            return ret * color.a;
-        }
-#endif
-        0x43425844, 0x45447736, 0x63a6dd80, 0x1778fc71, 0x1e6d322e, 0x00000001, 0x00000208, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
-        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x0000016c, 0x00000040,
-        0x0000005b, 0x04000059, 0x00208e46, 0x00000000, 0x00000004, 0x0300005a, 0x00106000, 0x00000000,
-        0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001,
-        0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0800000f, 0x00100012, 0x00000000,
-        0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x08000000, 0x00100012, 0x00000000,
-        0x0010000a, 0x00000000, 0x0020802a, 0x00000000, 0x00000000, 0x0800000f, 0x00100042, 0x00000000,
-        0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000001, 0x08000000, 0x00100022, 0x00000000,
-        0x0010002a, 0x00000000, 0x0020802a, 0x00000000, 0x00000001, 0x09000045, 0x001000f2, 0x00000000,
-        0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x08000038, 0x001000f2,
-        0x00000000, 0x00100e46, 0x00000000, 0x00208ff6, 0x00000000, 0x00000001, 0x0b000037, 0x00100082,
-        0x00000000, 0x0020800a, 0x00000000, 0x00000002, 0x0020803a, 0x00000000, 0x00000001, 0x0010003a,
-        0x00000000, 0x08000038, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00208ff6, 0x00000000,
-        0x00000003, 0x0100003e,
-    };
-    static const DWORD ps_code_triangle_bitmap_bitmap[] =
-    {
-#if 0
         struct brush
         {
-            float3x2 transform;
+            uint type;
             float opacity;
-            bool ignore_alpha;
-        } brush0, brush1;
+            float4 data[2];
+        } colour_brush, opacity_brush;
 
         SamplerState s0, s1;
         Texture2D t0, t1;
 
-        float4 main(float4 position : SV_POSITION) : SV_Target
+        float4 brush_bitmap(struct brush brush, Texture2D t, SamplerState s, float2 position)
         {
+            float3 transform[2];
+            bool ignore_alpha;
             float2 texcoord;
-            float opacity;
-            float4 ret;
+            float4 colour;
 
-            texcoord.x = position.x * brush0.transform._11 + position.y * brush0.transform._21 + brush0.transform._31;
-            texcoord.y = position.x * brush0.transform._12 + position.y * brush0.transform._22 + brush0.transform._32;
-            ret = t0.Sample(s0, texcoord) * brush0.opacity;
-            if (brush0.ignore_alpha)
-                ret.a = brush0.opacity;
+            transform[0] = brush.data[0].xyz;
+            transform[1] = brush.data[1].xyz;
+            ignore_alpha = asuint(brush.data[1].w);
 
-            texcoord.x = position.x * brush1.transform._11 + position.y * brush1.transform._21 + brush1.transform._31;
-            texcoord.y = position.x * brush1.transform._12 + position.y * brush1.transform._22 + brush1.transform._32;
-            opacity = t1.Sample(s1, texcoord).a * brush1.opacity;
-            if (brush1.ignore_alpha)
-                opacity = brush1.opacity;
+            texcoord.x = dot(position.xy, transform[0].xy) + transform[0].z;
+            texcoord.y = dot(position.xy, transform[1].xy) + transform[1].z;
+            colour = t.Sample(s, texcoord);
+            if (ignore_alpha)
+                colour.a = 1.0;
+            return colour;
+        }
 
-            return ret * opacity;
+        float4 sample_brush(struct brush brush, Texture2D t, SamplerState s, float2 position)
+        {
+            if (brush.type == BRUSH_TYPE_SOLID)
+                return brush.data[0] * brush.opacity;
+            if (brush.type == BRUSH_TYPE_BITMAP)
+                return brush_bitmap(brush, t, s, position) * brush.opacity;
+            return float4(0.0, 0.0, 0.0, brush.opacity);
+        }
+
+        float4 main(float4 position : SV_POSITION, float3 b : BEZIER) : SV_Target
+        {
+            float4 colour;
+
+            colour = sample_brush(colour_brush, t0, s0, position.xy);
+            if (opacity_brush.type < BRUSH_TYPE_COUNT)
+                colour *= sample_brush(opacity_brush, t1, s1, position.xy).a;
+
+            /* Evaluate the implicit form of the curve in texture space.
+             * "b.z" determines which side of the curve is shaded. */
+            clip((b.x * b.x - b.y) * b.z);
+
+            return colour;
         }
 #endif
-        0x43425844, 0x8eee6bfc, 0x57b72708, 0xa0f7c086, 0x867c11ec, 0x00000001, 0x00000310, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x43425844, 0xdd58588a, 0xd71e170f, 0xcc16526c, 0xbf705c92, 0x00000001, 0x00000530, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000707, 0x505f5653, 0x5449534f, 0x004e4f49, 0x495a4542, 0xab005245,
         0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000274, 0x00000040,
-        0x0000009d, 0x04000059, 0x00208e46, 0x00000000, 0x00000006, 0x0300005a, 0x00106000, 0x00000000,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000474, 0x00000040,
+        0x0000011d, 0x04000059, 0x00208e46, 0x00000000, 0x00000006, 0x0300005a, 0x00106000, 0x00000000,
         0x0300005a, 0x00106000, 0x00000001, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04001858,
-        0x00107000, 0x00000001, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065,
-        0x001020f2, 0x00000000, 0x02000068, 0x00000002, 0x0800000f, 0x00100012, 0x00000000, 0x00101046,
-        0x00000000, 0x00208046, 0x00000000, 0x00000003, 0x08000000, 0x00100012, 0x00000000, 0x0010000a,
-        0x00000000, 0x0020802a, 0x00000000, 0x00000003, 0x0800000f, 0x00100042, 0x00000000, 0x00101046,
-        0x00000000, 0x00208046, 0x00000000, 0x00000004, 0x08000000, 0x00100022, 0x00000000, 0x0010002a,
-        0x00000000, 0x0020802a, 0x00000000, 0x00000004, 0x09000045, 0x001000f2, 0x00000000, 0x00100046,
-        0x00000000, 0x00107e46, 0x00000001, 0x00106000, 0x00000001, 0x08000038, 0x00100012, 0x00000000,
-        0x0010003a, 0x00000000, 0x0020803a, 0x00000000, 0x00000004, 0x0b000037, 0x00100012, 0x00000000,
-        0x0020800a, 0x00000000, 0x00000005, 0x0020803a, 0x00000000, 0x00000004, 0x0010000a, 0x00000000,
-        0x0800000f, 0x00100022, 0x00000000, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000000,
-        0x08000000, 0x00100012, 0x00000001, 0x0010001a, 0x00000000, 0x0020802a, 0x00000000, 0x00000000,
-        0x0800000f, 0x00100022, 0x00000000, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000001,
-        0x08000000, 0x00100022, 0x00000001, 0x0010001a, 0x00000000, 0x0020802a, 0x00000000, 0x00000001,
-        0x09000045, 0x001000f2, 0x00000001, 0x00100046, 0x00000001, 0x00107e46, 0x00000000, 0x00106000,
-        0x00000000, 0x08000038, 0x001000f2, 0x00000001, 0x00100e46, 0x00000001, 0x00208ff6, 0x00000000,
-        0x00000001, 0x0b000037, 0x00100082, 0x00000001, 0x0020800a, 0x00000000, 0x00000002, 0x0020803a,
-        0x00000000, 0x00000001, 0x0010003a, 0x00000001, 0x07000038, 0x001020f2, 0x00000000, 0x00100006,
-        0x00000000, 0x00100e46, 0x00000001, 0x0100003e,
+        0x00107000, 0x00000001, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03001062,
+        0x00101072, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000003, 0x09000038,
+        0x001000f2, 0x00000000, 0x00208556, 0x00000000, 0x00000000, 0x00208e46, 0x00000000, 0x00000001,
+        0x0404001f, 0x0020800a, 0x00000000, 0x00000000, 0x08000020, 0x00100012, 0x00000001, 0x0020800a,
+        0x00000000, 0x00000000, 0x00004001, 0x00000002, 0x0304001f, 0x0010000a, 0x00000001, 0x0800000f,
+        0x00100022, 0x00000001, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000001, 0x08000000,
+        0x00100012, 0x00000002, 0x0010001a, 0x00000001, 0x0020802a, 0x00000000, 0x00000001, 0x0800000f,
+        0x00100022, 0x00000001, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000002, 0x08000000,
+        0x00100022, 0x00000002, 0x0010001a, 0x00000001, 0x0020802a, 0x00000000, 0x00000002, 0x09000045,
+        0x001000f2, 0x00000002, 0x00100046, 0x00000002, 0x00107e46, 0x00000000, 0x00106000, 0x00000000,
+        0x0a000037, 0x00100082, 0x00000002, 0x0020803a, 0x00000000, 0x00000002, 0x00004001, 0x3f800000,
+        0x0010003a, 0x00000002, 0x08000038, 0x001000f2, 0x00000000, 0x00100e46, 0x00000002, 0x00208556,
+        0x00000000, 0x00000000, 0x01000015, 0x05000036, 0x00100012, 0x00000002, 0x00004001, 0x00000000,
+        0x06000036, 0x00100082, 0x00000002, 0x0020801a, 0x00000000, 0x00000000, 0x09000037, 0x001000f2,
+        0x00000000, 0x00100006, 0x00000001, 0x00100e46, 0x00000000, 0x00100c06, 0x00000002, 0x01000015,
+        0x0800004f, 0x00100012, 0x00000001, 0x0020800a, 0x00000000, 0x00000003, 0x00004001, 0x00000003,
+        0x0304001f, 0x0010000a, 0x00000001, 0x09000038, 0x00100012, 0x00000001, 0x0020801a, 0x00000000,
+        0x00000003, 0x0020803a, 0x00000000, 0x00000004, 0x0404001f, 0x0020800a, 0x00000000, 0x00000003,
+        0x08000020, 0x00100022, 0x00000001, 0x0020800a, 0x00000000, 0x00000003, 0x00004001, 0x00000002,
+        0x0304001f, 0x0010001a, 0x00000001, 0x0800000f, 0x00100042, 0x00000001, 0x00101046, 0x00000000,
+        0x00208046, 0x00000000, 0x00000004, 0x08000000, 0x00100012, 0x00000002, 0x0010002a, 0x00000001,
+        0x0020802a, 0x00000000, 0x00000004, 0x0800000f, 0x00100042, 0x00000001, 0x00101046, 0x00000000,
+        0x00208046, 0x00000000, 0x00000005, 0x08000000, 0x00100022, 0x00000002, 0x0010002a, 0x00000001,
+        0x0020802a, 0x00000000, 0x00000005, 0x09000045, 0x001000f2, 0x00000002, 0x00100046, 0x00000002,
+        0x00107e46, 0x00000001, 0x00106000, 0x00000001, 0x0a000037, 0x00100042, 0x00000001, 0x0020803a,
+        0x00000000, 0x00000005, 0x00004001, 0x3f800000, 0x0010003a, 0x00000002, 0x08000038, 0x00100012,
+        0x00000001, 0x0010002a, 0x00000001, 0x0020801a, 0x00000000, 0x00000003, 0x01000015, 0x0a000037,
+        0x00100012, 0x00000001, 0x0010001a, 0x00000001, 0x0010000a, 0x00000001, 0x0020801a, 0x00000000,
+        0x00000003, 0x01000015, 0x07000038, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00100006,
+        0x00000001, 0x01000012, 0x05000036, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x01000015,
+        0x0a000032, 0x00100012, 0x00000000, 0x0010100a, 0x00000001, 0x0010100a, 0x00000001, 0x8010101a,
+        0x00000041, 0x00000001, 0x07000038, 0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x0010102a,
+        0x00000001, 0x07000031, 0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000000,
+        0x0304000d, 0x0010000a, 0x00000000, 0x0100003e,
     };
-    /* Evaluate the implicit form of the curve (u² - v = 0) in texture space,
-     * using the screen-space partial derivatives to convert the calculated
-     * distance to object space.
-     *
-     * d(x, y) = |f(x, y)| / ‖∇f(x, y)‖
-     *         = |f(x, y)| / √((∂f/∂x)² + (∂f/∂y)²)
-     * f(x, y) = u(x, y)² - v(x, y)
-     * ∂f/∂x = 2u · ∂u/∂x - ∂v/∂x
-     * ∂f/∂y = 2u · ∂u/∂y - ∂v/∂y */
-    static const DWORD ps_code_bezier_solid_outline[] =
+    static const DWORD ps_code_bezier_outline[] =
     {
 #if 0
-        float4 color;
+#define BRUSH_TYPE_SOLID    0
+#define BRUSH_TYPE_LINEAR   1
+#define BRUSH_TYPE_BITMAP   2
+#define BRUSH_TYPE_COUNT    3
+
+        struct brush
+        {
+            uint type;
+            float opacity;
+            float4 data[2];
+        } colour_brush, opacity_brush;
+
+        SamplerState s0, s1;
+        Texture2D t0, t1;
+
+        float4 brush_bitmap(struct brush brush, Texture2D t, SamplerState s, float2 position)
+        {
+            float3 transform[2];
+            bool ignore_alpha;
+            float2 texcoord;
+            float4 colour;
+
+            transform[0] = brush.data[0].xyz;
+            transform[1] = brush.data[1].xyz;
+            ignore_alpha = asuint(brush.data[1].w);
+
+            texcoord.x = dot(position.xy, transform[0].xy) + transform[0].z;
+            texcoord.y = dot(position.xy, transform[1].xy) + transform[1].z;
+            colour = t.Sample(s, texcoord);
+            if (ignore_alpha)
+                colour.a = 1.0;
+            return colour;
+        }
+
+        float4 sample_brush(struct brush brush, Texture2D t, SamplerState s, float2 position)
+        {
+            if (brush.type == BRUSH_TYPE_SOLID)
+                return brush.data[0] * brush.opacity;
+            if (brush.type == BRUSH_TYPE_BITMAP)
+                return brush_bitmap(brush, t, s, position) * brush.opacity;
+            return float4(0.0, 0.0, 0.0, brush.opacity);
+        }
 
         float4 main(float4 position : SV_POSITION, float4 uv : UV,
                 nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM) : SV_Target
         {
             float2 du, dv, df;
+            float4 colour;
 
+            colour = sample_brush(colour_brush, t0, s0, position.xy);
+            if (opacity_brush.type < BRUSH_TYPE_COUNT)
+                colour *= sample_brush(opacity_brush, t1, s1, position.xy).a;
+
+            /* Evaluate the implicit form of the curve (u² - v = 0) in texture space,
+             * using the screen-space partial derivatives to convert the calculated
+             * distance to object space.
+             *
+             * d(x, y) = |f(x, y)| / ‖∇f(x, y)‖
+             *         = |f(x, y)| / √((∂f/∂x)² + (∂f/∂y)²)
+             * f(x, y) = u(x, y)² - v(x, y)
+             * ∂f/∂x = 2u · ∂u/∂x - ∂v/∂x
+             * ∂f/∂y = 2u · ∂u/∂y - ∂v/∂y */
             du = float2(ddx(uv.x), ddy(uv.x));
             dv = float2(ddx(uv.y), ddy(uv.y));
             df = 2.0f * uv.x * du - dv;
 
             clip(dot(df, uv.zw));
             clip(length(mul(stroke_transform, df)) - abs(uv.x * uv.x - uv.y));
-            return color;
+
+            return colour;
         }
 #endif
-        0x43425844, 0x9da521d4, 0x4c86449e, 0x4f2c1641, 0x6f798508, 0x00000001, 0x000002f4, 0x00000003,
+        0x43425844, 0x02d0d058, 0x91f8cb40, 0x6353fe27, 0x6e2f51f5, 0x00000001, 0x000006a8, 0x00000003,
         0x0000002c, 0x000000bc, 0x000000f0, 0x4e475349, 0x00000088, 0x00000004, 0x00000008, 0x00000068,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000074, 0x00000000, 0x00000000,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x00000074, 0x00000000, 0x00000000,
         0x00000003, 0x00000001, 0x00000f0f, 0x00000077, 0x00000000, 0x00000000, 0x00000003, 0x00000002,
         0x00000303, 0x00000077, 0x00000001, 0x00000000, 0x00000003, 0x00000003, 0x00000303, 0x505f5653,
         0x5449534f, 0x004e4f49, 0x53005655, 0x4b4f5254, 0x52545f45, 0x46534e41, 0x004d524f, 0x4e47534f,
         0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
-        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000001fc, 0x00000040, 0x0000007f,
-        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03001062, 0x001010f2, 0x00000001, 0x03000862,
-        0x00101032, 0x00000002, 0x03000862, 0x00101032, 0x00000003, 0x03000065, 0x001020f2, 0x00000000,
-        0x02000068, 0x00000002, 0x0500000b, 0x00100032, 0x00000000, 0x00101046, 0x00000001, 0x0500000c,
-        0x001000c2, 0x00000000, 0x00101406, 0x00000001, 0x07000000, 0x00100012, 0x00000001, 0x0010100a,
-        0x00000001, 0x0010100a, 0x00000001, 0x0a000032, 0x00100032, 0x00000000, 0x00100006, 0x00000001,
-        0x00100086, 0x00000000, 0x801005d6, 0x00000041, 0x00000000, 0x0700000f, 0x00100042, 0x00000000,
-        0x00100046, 0x00000000, 0x00101ae6, 0x00000001, 0x07000031, 0x00100042, 0x00000000, 0x0010002a,
-        0x00000000, 0x00004001, 0x00000000, 0x0304000d, 0x0010002a, 0x00000000, 0x07000038, 0x00100062,
-        0x00000000, 0x00100556, 0x00000000, 0x00101106, 0x00000003, 0x09000032, 0x00100032, 0x00000000,
-        0x00101046, 0x00000002, 0x00100006, 0x00000000, 0x00100596, 0x00000000, 0x0700000f, 0x00100012,
-        0x00000000, 0x00100046, 0x00000000, 0x00100046, 0x00000000, 0x0500004b, 0x00100012, 0x00000000,
-        0x0010000a, 0x00000000, 0x0a000032, 0x00100022, 0x00000000, 0x0010100a, 0x00000001, 0x0010100a,
-        0x00000001, 0x8010101a, 0x00000041, 0x00000001, 0x08000000, 0x00100012, 0x00000000, 0x8010001a,
-        0x000000c1, 0x00000000, 0x0010000a, 0x00000000, 0x07000031, 0x00100012, 0x00000000, 0x0010000a,
-        0x00000000, 0x00004001, 0x00000000, 0x0304000d, 0x0010000a, 0x00000000, 0x06000036, 0x001020f2,
-        0x00000000, 0x00208e46, 0x00000000, 0x00000000, 0x0100003e,
-    };
-    /* The basic idea here is to evaluate the implicit form of the curve in
-     * texture space. "t.z" determines which side of the curve is shaded. */
-    static const DWORD ps_code_bezier_solid[] =
-    {
-#if 0
-        float4 color;
-
-        float4 main(float4 position : SV_POSITION, float3 t : TEXCOORD0) : SV_Target
-        {
-            clip((t.x * t.x - t.y) * t.z);
-            return color;
-        }
-#endif
-        0x43425844, 0x66075f9e, 0x2ffe405b, 0xb551ee63, 0xa0d9f457, 0x00000001, 0x00000180, 0x00000003,
-        0x0000002c, 0x00000084, 0x000000b8, 0x4e475349, 0x00000050, 0x00000002, 0x00000008, 0x00000038,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000,
-        0x00000003, 0x00000001, 0x00000707, 0x505f5653, 0x5449534f, 0x004e4f49, 0x43584554, 0x44524f4f,
-        0xababab00, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
-        0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000c0,
-        0x00000040, 0x00000030, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03001062, 0x00101072,
-        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0a000032, 0x00100012,
-        0x00000000, 0x0010100a, 0x00000001, 0x0010100a, 0x00000001, 0x8010101a, 0x00000041, 0x00000001,
-        0x07000038, 0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x0010102a, 0x00000001, 0x07000031,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000005b0, 0x00000040, 0x0000016c,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000006, 0x0300005a, 0x00106000, 0x00000000, 0x0300005a,
+        0x00106000, 0x00000001, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04001858, 0x00107000,
+        0x00000001, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03001062, 0x001010f2,
+        0x00000001, 0x03000862, 0x00101032, 0x00000002, 0x03000862, 0x00101032, 0x00000003, 0x03000065,
+        0x001020f2, 0x00000000, 0x02000068, 0x00000003, 0x09000038, 0x001000f2, 0x00000000, 0x00208556,
+        0x00000000, 0x00000000, 0x00208e46, 0x00000000, 0x00000001, 0x0404001f, 0x0020800a, 0x00000000,
+        0x00000000, 0x08000020, 0x00100012, 0x00000001, 0x0020800a, 0x00000000, 0x00000000, 0x00004001,
+        0x00000002, 0x0304001f, 0x0010000a, 0x00000001, 0x0800000f, 0x00100022, 0x00000001, 0x00101046,
+        0x00000000, 0x00208046, 0x00000000, 0x00000001, 0x08000000, 0x00100012, 0x00000002, 0x0010001a,
+        0x00000001, 0x0020802a, 0x00000000, 0x00000001, 0x0800000f, 0x00100022, 0x00000001, 0x00101046,
+        0x00000000, 0x00208046, 0x00000000, 0x00000002, 0x08000000, 0x00100022, 0x00000002, 0x0010001a,
+        0x00000001, 0x0020802a, 0x00000000, 0x00000002, 0x09000045, 0x001000f2, 0x00000002, 0x00100046,
+        0x00000002, 0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0a000037, 0x00100082, 0x00000002,
+        0x0020803a, 0x00000000, 0x00000002, 0x00004001, 0x3f800000, 0x0010003a, 0x00000002, 0x08000038,
+        0x001000f2, 0x00000000, 0x00100e46, 0x00000002, 0x00208556, 0x00000000, 0x00000000, 0x01000015,
+        0x05000036, 0x00100012, 0x00000002, 0x00004001, 0x00000000, 0x06000036, 0x00100082, 0x00000002,
+        0x0020801a, 0x00000000, 0x00000000, 0x09000037, 0x001000f2, 0x00000000, 0x00100006, 0x00000001,
+        0x00100e46, 0x00000000, 0x00100c06, 0x00000002, 0x01000015, 0x0800004f, 0x00100012, 0x00000001,
+        0x0020800a, 0x00000000, 0x00000003, 0x00004001, 0x00000003, 0x0304001f, 0x0010000a, 0x00000001,
+        0x09000038, 0x00100012, 0x00000001, 0x0020801a, 0x00000000, 0x00000003, 0x0020803a, 0x00000000,
+        0x00000004, 0x0404001f, 0x0020800a, 0x00000000, 0x00000003, 0x08000020, 0x00100022, 0x00000001,
+        0x0020800a, 0x00000000, 0x00000003, 0x00004001, 0x00000002, 0x0304001f, 0x0010001a, 0x00000001,
+        0x0800000f, 0x00100042, 0x00000001, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000004,
+        0x08000000, 0x00100012, 0x00000002, 0x0010002a, 0x00000001, 0x0020802a, 0x00000000, 0x00000004,
+        0x0800000f, 0x00100042, 0x00000001, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000005,
+        0x08000000, 0x00100022, 0x00000002, 0x0010002a, 0x00000001, 0x0020802a, 0x00000000, 0x00000005,
+        0x09000045, 0x001000f2, 0x00000002, 0x00100046, 0x00000002, 0x00107e46, 0x00000001, 0x00106000,
+        0x00000001, 0x0a000037, 0x00100042, 0x00000001, 0x0020803a, 0x00000000, 0x00000005, 0x00004001,
+        0x3f800000, 0x0010003a, 0x00000002, 0x08000038, 0x00100012, 0x00000001, 0x0010002a, 0x00000001,
+        0x0020801a, 0x00000000, 0x00000003, 0x01000015, 0x0a000037, 0x00100012, 0x00000001, 0x0010001a,
+        0x00000001, 0x0010000a, 0x00000001, 0x0020801a, 0x00000000, 0x00000003, 0x01000015, 0x07000038,
+        0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00100006, 0x00000001, 0x01000012, 0x05000036,
+        0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x01000015, 0x0500000b, 0x00100032, 0x00000000,
+        0x00101046, 0x00000001, 0x0500000c, 0x001000c2, 0x00000000, 0x00101406, 0x00000001, 0x07000000,
+        0x00100012, 0x00000001, 0x0010100a, 0x00000001, 0x0010100a, 0x00000001, 0x0a000032, 0x00100032,
+        0x00000000, 0x00100006, 0x00000001, 0x00100086, 0x00000000, 0x801005d6, 0x00000041, 0x00000000,
+        0x0700000f, 0x00100042, 0x00000000, 0x00100046, 0x00000000, 0x00101ae6, 0x00000001, 0x07000031,
+        0x00100042, 0x00000000, 0x0010002a, 0x00000000, 0x00004001, 0x00000000, 0x0304000d, 0x0010002a,
+        0x00000000, 0x07000038, 0x00100062, 0x00000000, 0x00100556, 0x00000000, 0x00101106, 0x00000003,
+        0x09000032, 0x00100032, 0x00000000, 0x00101046, 0x00000002, 0x00100006, 0x00000000, 0x00100596,
+        0x00000000, 0x0700000f, 0x00100012, 0x00000000, 0x00100046, 0x00000000, 0x00100046, 0x00000000,
+        0x0500004b, 0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x0a000032, 0x00100022, 0x00000000,
+        0x0010100a, 0x00000001, 0x0010100a, 0x00000001, 0x8010101a, 0x00000041, 0x00000001, 0x08000000,
+        0x00100012, 0x00000000, 0x8010001a, 0x000000c1, 0x00000000, 0x0010000a, 0x00000000, 0x07000031,
         0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000000, 0x0304000d, 0x0010000a,
-        0x00000000, 0x06000036, 0x001020f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000000, 0x0100003e,
+        0x00000000, 0x0100003e,
     };
-    static const struct brush_shader
+    static const struct shape_info
     {
-        const void *byte_code;
-        size_t byte_code_size;
         enum d2d_shape_type shape_type;
-        enum d2d_brush_type brush_type;
-        enum d2d_brush_type opacity_brush_type;
+        const D3D10_INPUT_ELEMENT_DESC *il_desc;
+        unsigned int il_element_count;
+        const void *vs_code;
+        size_t vs_code_size;
+        const void *ps_code;
+        size_t ps_code_size;
     }
-    brush_shaders[] =
+    shape_info[] =
     {
-        {ps_code_triangle_solid, sizeof(ps_code_triangle_solid),
-                D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_SOLID, D2D_BRUSH_TYPE_COUNT},
-        {ps_code_triangle_solid_bitmap, sizeof(ps_code_triangle_solid_bitmap),
-                D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_SOLID, D2D_BRUSH_TYPE_BITMAP},
-        {ps_code_triangle_bitmap, sizeof(ps_code_triangle_bitmap),
-                D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_BITMAP, D2D_BRUSH_TYPE_COUNT},
-        {ps_code_triangle_bitmap_solid, sizeof(ps_code_triangle_bitmap_solid),
-                D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_BITMAP, D2D_BRUSH_TYPE_SOLID},
-        {ps_code_triangle_bitmap_bitmap, sizeof(ps_code_triangle_bitmap_bitmap),
-                D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_BITMAP, D2D_BRUSH_TYPE_BITMAP},
-        {ps_code_bezier_solid, sizeof(ps_code_bezier_solid),
-                D2D_SHAPE_TYPE_BEZIER, D2D_BRUSH_TYPE_SOLID, D2D_BRUSH_TYPE_COUNT},
-        {ps_code_bezier_solid_outline, sizeof(ps_code_bezier_solid_outline),
-                D2D_SHAPE_TYPE_BEZIER_OUTLINE, D2D_BRUSH_TYPE_SOLID, D2D_BRUSH_TYPE_COUNT},
+        {D2D_SHAPE_TYPE_OUTLINE,        il_desc_outline,        ARRAY_SIZE(il_desc_outline),
+                                        vs_code_outline,        sizeof(vs_code_outline),
+                                        ps_code_fill,           sizeof(ps_code_fill)},
+        {D2D_SHAPE_TYPE_BEZIER_OUTLINE, il_desc_bezier_outline, ARRAY_SIZE(il_desc_bezier_outline),
+                                        vs_code_bezier_outline, sizeof(vs_code_bezier_outline),
+                                        ps_code_bezier_outline, sizeof(ps_code_bezier_outline)},
+        {D2D_SHAPE_TYPE_TRIANGLE,       il_desc_triangle,       ARRAY_SIZE(il_desc_triangle),
+                                        vs_code_triangle,       sizeof(vs_code_triangle),
+                                        ps_code_fill,           sizeof(ps_code_fill)},
+        {D2D_SHAPE_TYPE_BEZIER,         il_desc_bezier,         ARRAY_SIZE(il_desc_bezier),
+                                        vs_code_bezier,         sizeof(vs_code_bezier),
+                                        ps_code_fill,           sizeof(ps_code_fill)},
     };
     static const struct
     {
@@ -2822,87 +2788,29 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         goto err;
     }
 
-    if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_outline,
-            ARRAY_SIZE(il_desc_outline), vs_code_outline, sizeof(vs_code_outline),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_OUTLINE].il)))
+    for (i = 0; i < ARRAY_SIZE(shape_info); ++i)
     {
-        WARN("Failed to create outline input layout, hr %#x.\n", hr);
-        goto err;
-    }
+        const struct shape_info *si = &shape_info[i];
 
-    if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_triangle,
-            ARRAY_SIZE(il_desc_triangle), vs_code_triangle, sizeof(vs_code_triangle),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].il)))
-    {
-        WARN("Failed to create triangle input layout, hr %#x.\n", hr);
-        goto err;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_bezier_outline,
-            ARRAY_SIZE(il_desc_bezier_outline), vs_code_bezier_outline, sizeof(vs_code_bezier_outline),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER_OUTLINE].il)))
-    {
-        WARN("Failed to create bezier outline input layout, hr %#x.\n", hr);
-        goto err;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_bezier,
-            ARRAY_SIZE(il_desc_bezier), vs_code_bezier, sizeof(vs_code_bezier),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER].il)))
-    {
-        WARN("Failed to create bezier input layout, hr %#x.\n", hr);
-        goto err;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreateVertexShader(render_target->device, vs_code_outline,
-            sizeof(vs_code_outline), &render_target->shape_resources[D2D_SHAPE_TYPE_OUTLINE].vs)))
-    {
-        WARN("Failed to create outline vertex shader, hr %#x.\n", hr);
-        goto err;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreateVertexShader(render_target->device, vs_code_bezier_outline,
-            sizeof(vs_code_bezier_outline), &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER_OUTLINE].vs)))
-    {
-        WARN("Failed to create bezier outline vertex shader, hr %#x.\n", hr);
-        goto err;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreateVertexShader(render_target->device, vs_code_triangle,
-            sizeof(vs_code_triangle), &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].vs)))
-    {
-        WARN("Failed to create triangle vertex shader, hr %#x.\n", hr);
-        goto err;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreateVertexShader(render_target->device,  vs_code_bezier,
-            sizeof(vs_code_bezier), &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER].vs)))
-    {
-        WARN("Failed to create bezier vertex shader, hr %#x.\n", hr);
-        goto err;
-    }
-
-    for (i = 0; i < ARRAY_SIZE(brush_shaders); ++i)
-    {
-        const struct brush_shader *bs = &brush_shaders[i];
-        if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device, bs->byte_code, bs->byte_code_size,
-                &render_target->shape_resources[bs->shape_type].ps[bs->brush_type][bs->opacity_brush_type])))
+        if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, si->il_desc, si->il_element_count,
+                si->vs_code, si->vs_code_size, &render_target->shape_resources[si->shape_type].il)))
         {
-            WARN("Failed to create pixel shader for shape type %#x and brush types %#x/%#x.\n",
-                    bs->shape_type, bs->brush_type, bs->opacity_brush_type);
+            WARN("Failed to create input layout for shape type %#x, hr %#x.\n", si->shape_type, hr);
             goto err;
         }
-    }
 
-    for (j = 0; j < D2D_BRUSH_TYPE_COUNT; ++j)
-    {
-        for (k = 0; k < D2D_BRUSH_TYPE_COUNT + 1; ++k)
+        if (FAILED(hr = ID3D10Device_CreateVertexShader(render_target->device, si->vs_code,
+                si->vs_code_size, &render_target->shape_resources[si->shape_type].vs)))
         {
-            struct d2d_shape_resources *outline = &render_target->shape_resources[D2D_SHAPE_TYPE_OUTLINE];
-            struct d2d_shape_resources *triangle = &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE];
+            WARN("Failed to create vertex shader for shape type %#x, hr %#x.\n", si->shape_type, hr);
+            goto err;
+        }
 
-            if (triangle->ps[j][k])
-                ID3D10PixelShader_AddRef(outline->ps[j][k] = triangle->ps[j][k]);
+        if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device, si->ps_code,
+                si->ps_code_size, &render_target->shape_resources[si->shape_type].ps)))
+        {
+            WARN("Failed to create pixel shader for shape type %#x, hr %#x.\n", si->shape_type, hr);
+            goto err;
         }
     }
 
@@ -3025,14 +2933,8 @@ err:
         ID3D10Buffer_Release(render_target->ib);
     for (i = 0; i < D2D_SHAPE_TYPE_COUNT; ++i)
     {
-        for (j = 0; j < D2D_BRUSH_TYPE_COUNT; ++j)
-        {
-            for (k = 0; k < D2D_BRUSH_TYPE_COUNT + 1; ++k)
-            {
-                if (render_target->shape_resources[i].ps[j][k])
-                    ID3D10PixelShader_Release(render_target->shape_resources[i].ps[j][k]);
-            }
-        }
+        if (render_target->shape_resources[i].ps)
+            ID3D10PixelShader_Release(render_target->shape_resources[i].ps);
         if (render_target->shape_resources[i].vs)
             ID3D10VertexShader_Release(render_target->shape_resources[i].vs);
         if (render_target->shape_resources[i].il)
