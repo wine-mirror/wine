@@ -26,6 +26,13 @@
 #include "dwrite.h"
 #include "wincodec.h"
 
+struct resource_readback
+{
+    ID3D10Resource *resource;
+    D3D10_MAPPED_TEXTURE2D map_desc;
+    unsigned int width, height;
+};
+
 struct figure
 {
     unsigned int *spans;
@@ -209,6 +216,51 @@ static void cubic_to(ID2D1GeometrySink *sink, float x1, float y1, float x2, floa
     ID2D1GeometrySink_AddBezier(sink, &b);
 }
 
+static void get_surface_readback(IDXGISurface *surface, struct resource_readback *rb)
+{
+    D3D10_TEXTURE2D_DESC texture_desc;
+    DXGI_SURFACE_DESC surface_desc;
+    ID3D10Resource *src_resource;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    hr = IDXGISurface_GetDevice(surface, &IID_ID3D10Device, (void **)&device);
+    ok(SUCCEEDED(hr), "Failed to get device, hr %#x.\n", hr);
+    hr = IDXGISurface_QueryInterface(surface, &IID_ID3D10Resource, (void **)&src_resource);
+    ok(SUCCEEDED(hr), "Failed to query resource interface, hr %#x.\n", hr);
+
+    hr = IDXGISurface_GetDesc(surface, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    texture_desc.Width = surface_desc.Width;
+    texture_desc.Height = surface_desc.Height;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = surface_desc.Format;
+    texture_desc.SampleDesc = surface_desc.SampleDesc;
+    texture_desc.Usage = D3D10_USAGE_STAGING;
+    texture_desc.BindFlags = 0;
+    texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D10Texture2D **)&rb->resource);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    rb->width = texture_desc.Width;
+    rb->height = texture_desc.Height;
+
+    ID3D10Device_CopyResource(device, rb->resource, src_resource);
+    ID3D10Resource_Release(src_resource);
+    ID3D10Device_Release(device);
+
+    hr = ID3D10Texture2D_Map((ID3D10Texture2D *)rb->resource, 0, D3D10_MAP_READ, 0, &rb->map_desc);
+    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+}
+
+static void release_resource_readback(struct resource_readback *rb)
+{
+    ID3D10Texture2D_Unmap((ID3D10Texture2D *)rb->resource, 0);
+    ID3D10Resource_Release(rb->resource);
+}
+
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -292,45 +344,13 @@ static BOOL compare_sha1(void *data, unsigned int pitch, unsigned int bpp,
 
 static BOOL compare_surface(IDXGISurface *surface, const char *ref_sha1)
 {
-    D3D10_MAPPED_TEXTURE2D mapped_texture;
-    D3D10_TEXTURE2D_DESC texture_desc;
-    DXGI_SURFACE_DESC surface_desc;
-    ID3D10Resource *src_resource;
-    ID3D10Texture2D *texture;
-    ID3D10Device *device;
-    HRESULT hr;
+    struct resource_readback rb;
     BOOL ret;
 
-    hr = IDXGISurface_GetDevice(surface, &IID_ID3D10Device, (void **)&device);
-    ok(SUCCEEDED(hr), "Failed to get device, hr %#x.\n", hr);
-    hr = IDXGISurface_QueryInterface(surface, &IID_ID3D10Resource, (void **)&src_resource);
-    ok(SUCCEEDED(hr), "Failed to query resource interface, hr %#x.\n", hr);
-
-    hr = IDXGISurface_GetDesc(surface, &surface_desc);
-    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
-    texture_desc.Width = surface_desc.Width;
-    texture_desc.Height = surface_desc.Height;
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = surface_desc.Format;
-    texture_desc.SampleDesc = surface_desc.SampleDesc;
-    texture_desc.Usage = D3D10_USAGE_STAGING;
-    texture_desc.BindFlags = 0;
-    texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
-    texture_desc.MiscFlags = 0;
-    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-
-    ID3D10Device_CopyResource(device, (ID3D10Resource *)texture, src_resource);
-    hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_READ, 0, &mapped_texture);
-    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
-    ret = compare_sha1(mapped_texture.pData, mapped_texture.RowPitch, 4,
-            texture_desc.Width, texture_desc.Height, ref_sha1);
-    ID3D10Texture2D_Unmap(texture, 0);
-
-    ID3D10Texture2D_Release(texture);
-    ID3D10Resource_Release(src_resource);
-    ID3D10Device_Release(device);
+    get_surface_readback(surface, &rb);
+    ret = compare_sha1(rb.map_desc.pData, rb.map_desc.RowPitch, 4,
+            rb.width, rb.height, ref_sha1);
+    release_resource_readback(&rb);
 
     return ret;
 }
@@ -496,45 +516,17 @@ static void read_figure(struct figure *figure, BYTE *data, unsigned int pitch,
 static BOOL compare_figure(IDXGISurface *surface, unsigned int x, unsigned int y,
         unsigned int w, unsigned int h, DWORD prev, unsigned int max_diff, const char *ref)
 {
-    D3D10_MAPPED_TEXTURE2D mapped_texture;
-    D3D10_TEXTURE2D_DESC texture_desc;
     struct figure ref_figure, figure;
-    DXGI_SURFACE_DESC surface_desc;
     unsigned int i, j, span, diff;
-    ID3D10Resource *src_resource;
-    ID3D10Texture2D *texture;
-    ID3D10Device *device;
-    HRESULT hr;
+    struct resource_readback rb;
 
-    hr = IDXGISurface_GetDevice(surface, &IID_ID3D10Device, (void **)&device);
-    ok(SUCCEEDED(hr), "Failed to get device, hr %#x.\n", hr);
-    hr = IDXGISurface_QueryInterface(surface, &IID_ID3D10Resource, (void **)&src_resource);
-    ok(SUCCEEDED(hr), "Failed to query resource interface, hr %#x.\n", hr);
-
-    hr = IDXGISurface_GetDesc(surface, &surface_desc);
-    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
-    texture_desc.Width = surface_desc.Width;
-    texture_desc.Height = surface_desc.Height;
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = surface_desc.Format;
-    texture_desc.SampleDesc = surface_desc.SampleDesc;
-    texture_desc.Usage = D3D10_USAGE_STAGING;
-    texture_desc.BindFlags = 0;
-    texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
-    texture_desc.MiscFlags = 0;
-    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-
-    ID3D10Device_CopyResource(device, (ID3D10Resource *)texture, src_resource);
-    hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_READ, 0, &mapped_texture);
-    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    get_surface_readback(surface, &rb);
 
     figure.span_count = 0;
     figure.spans_size = 64;
     figure.spans = HeapAlloc(GetProcessHeap(), 0, figure.spans_size * sizeof(*figure.spans));
 
-    read_figure(&figure, mapped_texture.pData, mapped_texture.RowPitch, x, y, w, h, prev);
+    read_figure(&figure, rb.map_desc.pData, rb.map_desc.RowPitch, x, y, w, h, prev);
 
     deserialize_figure(&ref_figure, (BYTE *)ref);
     span = w * h;
@@ -572,17 +564,13 @@ static BOOL compare_figure(IDXGISurface *surface, unsigned int x, unsigned int y
     if (diff > max_diff)
     {
         trace("diff %u > max_diff %u.\n", diff, max_diff);
-        read_figure(&figure, mapped_texture.pData, mapped_texture.RowPitch, x, y, w, h, prev);
+        read_figure(&figure, rb.map_desc.pData, rb.map_desc.RowPitch, x, y, w, h, prev);
         serialize_figure(&figure);
     }
 
     HeapFree(GetProcessHeap(), 0, ref_figure.spans);
     HeapFree(GetProcessHeap(), 0, figure.spans);
-    ID3D10Texture2D_Unmap(texture, 0);
-
-    ID3D10Texture2D_Release(texture);
-    ID3D10Resource_Release(src_resource);
-    ID3D10Device_Release(device);
+    release_resource_readback(&rb);
 
     return diff <= max_diff;
 }
