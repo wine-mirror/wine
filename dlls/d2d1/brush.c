@@ -771,8 +771,8 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
         const struct d2d_d3d_render_target *render_target, struct d2d_brush_cb *cb)
 {
     struct d2d_bitmap *bitmap;
-    D2D_MATRIX_3X2_F w, b;
     D2D1_COLOR_F *colour;
+    D2D_MATRIX_3X2_F b;
     float dpi_scale, d;
 
     if (!brush)
@@ -799,17 +799,6 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
         case D2D_BRUSH_TYPE_BITMAP:
             bitmap = brush->u.bitmap.bitmap;
 
-            /* Scale for dpi. */
-            w = render_target->drawing_state.transform;
-            dpi_scale = render_target->desc.dpiX / 96.0f;
-            w._11 *= dpi_scale;
-            w._21 *= dpi_scale;
-            w._31 *= dpi_scale;
-            dpi_scale = render_target->desc.dpiY / 96.0f;
-            w._12 *= dpi_scale;
-            w._22 *= dpi_scale;
-            w._32 *= dpi_scale;
-
             /* Scale for bitmap size and dpi. */
             b = brush->transform;
             dpi_scale = bitmap->pixel_size.width * (96.0f / bitmap->dpi_x);
@@ -818,8 +807,6 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
             dpi_scale = bitmap->pixel_size.height * (96.0f / bitmap->dpi_y);
             b._12 *= dpi_scale;
             b._22 *= dpi_scale;
-
-            d2d_matrix_multiply(&b, &w);
 
             /* Invert the matrix. (Because the matrix is applied to the
              * sampling coordinates. I.e., to scale the bitmap by 2 we need to
