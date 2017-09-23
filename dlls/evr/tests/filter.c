@@ -83,8 +83,8 @@ static void test_aggregation(const CLSID clsid_inner, const IID iid_inner, const
 
     /* aggregation, request IUnknown */
     hr = CoCreateInstance(&clsid_inner, unk_outer, CLSCTX_INPROC_SERVER, &IID_IUnknown, (LPVOID*)&unk_inner);
-    ok(hr == S_OK, "%s: run %d: Third CoCreateInstance returned %x\n", testid, testrun, hr);
-    ok(unk_inner != NULL, "%s: run %d: unk_inner is NULL\n", testid, testrun);
+    todo_wine ok(hr == S_OK, "%s: run %d: Third CoCreateInstance returned %x\n", testid, testrun, hr);
+    todo_wine ok(unk_inner != NULL, "%s: run %d: unk_inner is NULL\n", testid, testrun);
 
     if (!unk_inner)
     {
@@ -162,12 +162,6 @@ static void test_evr_filter_aggregations(void)
         &IID_IMFVideoRenderer, &IID_IQualityControl
     };
     int i;
-
-    if(!strcmp(winetest_platform, "wine"))
-    {
-        skip("Not supported yet.\n");
-        return;
-    }
 
     for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
     {
