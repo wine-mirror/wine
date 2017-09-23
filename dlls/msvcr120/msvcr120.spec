@@ -2436,10 +2436,10 @@
 @ stub vscanf_s
 @ cdecl vsprintf(ptr str ptr) MSVCRT_vsprintf
 @ cdecl vsprintf_s(ptr long str ptr) MSVCRT_vsprintf_s
-@ stub vsscanf
+@ cdecl vsscanf(ptr str ptr) MSVCRT_vsscanf
 @ stub vsscanf_s
 @ cdecl vswprintf_s(ptr long wstr ptr) MSVCRT_vswprintf_s
-@ stub vswscanf
+@ cdecl vswscanf(ptr wstr ptr) MSVCRT_vswscanf
 @ stub vswscanf_s
 @ cdecl vwprintf(wstr ptr) MSVCRT_vwprintf
 @ cdecl vwprintf_s(wstr ptr) MSVCRT_vwprintf_s

@@ -795,3 +795,23 @@ int CDECL MSVCRT__snwscanf_s_l(MSVCRT_wchar_t *input, MSVCRT_size_t length,
     __ms_va_end(valist);
     return res;
 }
+
+/*********************************************************************
+ *		vsscanf (MSVCRT120.@)
+ */
+int CDECL MSVCRT_vsscanf(const char *buffer, const char *format, __ms_va_list valist)
+{
+    if (!MSVCRT_CHECK_PMT(buffer != NULL && format != NULL)) return -1;
+
+    return MSVCRT_vsscanf_l(buffer, format, NULL, valist);
+}
+
+/*********************************************************************
+ *		vswscanf (MSVCRT120.@)
+ */
+int CDECL MSVCRT_vswscanf(const MSVCRT_wchar_t *buffer, const MSVCRT_wchar_t *format, __ms_va_list valist)
+{
+    if (!MSVCRT_CHECK_PMT(buffer != NULL && format != NULL)) return -1;
+
+    return MSVCRT_vswscanf_l(buffer, format, NULL, valist);
+}

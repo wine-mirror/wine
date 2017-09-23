@@ -183,6 +183,7 @@ static int (CDECL *p__clearfp)(void);
 static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
 static void (__cdecl *p_free_locale)(_locale_t);
 static unsigned short (__cdecl *p_wctype)(const char*);
+static int (__cdecl *p_vsscanf)(const char*, const char *, __ms_va_list valist);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -240,6 +241,7 @@ static BOOL init(void)
     SET(p_wctype, "wctype");
     SET(p_fegetenv, "fegetenv");
     SET(p__clearfp, "_clearfp");
+    SET(p_vsscanf, "vsscanf");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_critical_section_ctor,
                 "??0critical_section@Concurrency@@QEAA@XZ");
@@ -911,6 +913,29 @@ static void test_wctype(void)
     }
 }
 
+static int __cdecl _vsscanf_wrapper(const char *buffer, const char *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p_vsscanf(buffer, format, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static void test_vsscanf(void)
+{
+    static const char *fmt = "%d";
+    char buff[16];
+    int ret, v;
+
+    v = 0;
+    strcpy(buff, "10");
+    ret = _vsscanf_wrapper(buff, fmt, &v);
+    ok(ret == 1, "Unexpected ret %d.\n", ret);
+    ok(v == 10, "got %d.\n", v);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -928,4 +953,5 @@ START_TEST(msvcr120)
     test__wcreate_locale();
     test__Condition_variable();
     test_wctype();
+    test_vsscanf();
 }
