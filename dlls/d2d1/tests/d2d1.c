@@ -173,6 +173,19 @@ static void rotate_matrix(D2D1_MATRIX_3X2_F *matrix, float theta)
     matrix->_22 = -sin_theta * tmp_12 + cos_theta * matrix->_22;
 }
 
+static void skew_matrix(D2D1_MATRIX_3X2_F *matrix, float x, float y)
+{
+    float tmp_11, tmp_12;
+
+    tmp_11 = matrix->_11;
+    tmp_12 = matrix->_12;
+
+    matrix->_11 += y * matrix->_21;
+    matrix->_12 += y * matrix->_22;
+    matrix->_21 += x * tmp_11;
+    matrix->_22 += x * tmp_12;
+}
+
 static void scale_matrix(D2D1_MATRIX_3X2_F *matrix, float x, float y)
 {
     matrix->_11 *= x;
@@ -1428,6 +1441,8 @@ static void test_color_brush(void)
 static void test_bitmap_brush(void)
 {
     D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode;
+    ID2D1TransformedGeometry *transformed_geometry;
+    ID2D1RectangleGeometry *rectangle_geometry;
     D2D1_MATRIX_3X2_F matrix, tmp_matrix;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     ID2D1Bitmap *bitmap, *tmp_bitmap;
@@ -1438,6 +1453,7 @@ static void test_bitmap_brush(void)
     ID2D1RenderTarget *rt;
     ID3D10Device1 *device;
     IDXGISurface *surface;
+    ID2D1Factory *factory;
     D2D1_COLOR_F color;
     D2D1_SIZE_U size;
     unsigned int i;
@@ -1597,6 +1613,55 @@ static void test_bitmap_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     match = compare_surface(surface, "b4b775afecdae2d26642001f4faff73663bb8b31");
+    ok(match, "Surface does not match.\n");
+
+    ID2D1Bitmap_Release(bitmap);
+    bitmap_desc.dpiX = 96.0f / 20.0f;
+    bitmap_desc.dpiY = 96.0f / 60.0f;
+    hr = ID2D1RenderTarget_CreateBitmap(rt, size, bitmap_data, 4 * sizeof(*bitmap_data), &bitmap_desc, &bitmap);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    ID2D1BitmapBrush_SetBitmap(brush, bitmap);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    ID2D1RenderTarget_Clear(rt, &color);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 40.0f, 120.0f);
+    skew_matrix(&matrix, 0.125f, 2.0f);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    set_matrix_identity(&matrix);
+    ID2D1BitmapBrush_SetTransform(brush, &matrix);
+    set_rect(&dst_rect, 0.0f, 0.0f, 80.0f, 240.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &dst_rect, (ID2D1Brush *)brush);
+
+    ID2D1RenderTarget_GetFactory(rt, &factory);
+
+    set_rect(&dst_rect, -1.0f, -1.0f, 1.0f, 1.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &dst_rect, &rectangle_geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 240.0f, 720.0f);
+    scale_matrix(&matrix, 40.0f, 120.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(factory, (ID2D1Geometry *)rectangle_geometry,
+            &matrix, &transformed_geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+    ID2D1RectangleGeometry_Release(rectangle_geometry);
+
+    set_matrix_identity(&matrix);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 200.0f, 600.0f);
+    ID2D1BitmapBrush_SetTransform(brush, &matrix);
+    ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
+    ID2D1TransformedGeometry_Release(transformed_geometry);
+
+    ID2D1Factory_Release(factory);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+    match = compare_surface(surface, "cf7b90ba7b139fdfbe9347e1907d635cfb4ed197");
     ok(match, "Surface does not match.\n");
 
     ID2D1BitmapBrush_Release(brush);
