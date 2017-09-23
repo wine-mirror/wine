@@ -68,7 +68,6 @@ struct d2d_shape_resources
 {
     ID3D10InputLayout *il;
     ID3D10VertexShader *vs;
-    ID3D10PixelShader *ps;
 };
 
 struct d2d_brush_cb
@@ -91,6 +90,14 @@ struct d2d_brush_cb
     } u;
 };
 
+struct d2d_ps_cb
+{
+    BOOL outline;
+    BOOL pad[3];
+    struct d2d_brush_cb colour_brush;
+    struct d2d_brush_cb opacity_brush;
+};
+
 struct d2d_d3d_render_target
 {
     ID2D1RenderTarget ID2D1RenderTarget_iface;
@@ -105,6 +112,7 @@ struct d2d_d3d_render_target
     ID3D10RenderTargetView *view;
     ID3D10StateBlock *stateblock;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
+    ID3D10PixelShader *ps;
     ID3D10Buffer *ib;
     unsigned int vb_stride;
     ID3D10Buffer *vb;
@@ -241,7 +249,7 @@ HRESULT d2d_linear_gradient_brush_create(ID2D1Factory *factory, const D2D1_LINEA
 HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
         const D2D1_BRUSH_PROPERTIES *brush_desc, struct d2d_brush **brush) DECLSPEC_HIDDEN;
 void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx) DECLSPEC_HIDDEN;
-HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
+HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush, BOOL outline,
         struct d2d_d3d_render_target *render_target, ID3D10Buffer **ps_cb) DECLSPEC_HIDDEN;
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN;
 

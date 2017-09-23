@@ -846,25 +846,26 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
 }
 
 HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
-        struct d2d_d3d_render_target *render_target, ID3D10Buffer **ps_cb)
+        BOOL outline, struct d2d_d3d_render_target *render_target, ID3D10Buffer **ps_cb)
 {
-    struct d2d_brush_cb brush_cb[2] = {{0}};
     D3D10_SUBRESOURCE_DATA buffer_data;
+    struct d2d_ps_cb cb_data = {0};
     D3D10_BUFFER_DESC buffer_desc;
     HRESULT hr;
 
-    if (!d2d_brush_fill_cb(brush, render_target, &brush_cb[0]))
+    cb_data.outline = outline;
+    if (!d2d_brush_fill_cb(brush, render_target, &cb_data.colour_brush))
         return E_NOTIMPL;
-    if (!d2d_brush_fill_cb(opacity_brush, render_target, &brush_cb[1]))
+    if (!d2d_brush_fill_cb(opacity_brush, render_target, &cb_data.opacity_brush))
         return E_NOTIMPL;
 
-    buffer_desc.ByteWidth = sizeof(brush_cb);
+    buffer_desc.ByteWidth = sizeof(cb_data);
     buffer_desc.Usage = D3D10_USAGE_DEFAULT;
     buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = 0;
 
-    buffer_data.pSysMem = brush_cb;
+    buffer_data.pSysMem = &cb_data;
     buffer_data.SysMemPitch = 0;
     buffer_data.SysMemSlicePitch = 0;
 
