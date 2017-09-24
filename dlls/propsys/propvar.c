@@ -282,7 +282,7 @@ HRESULT WINAPI PropVariantToBoolean(REFPROPVARIANT propvarIn, BOOL *ret)
             break;
     }
 
-    hr = PROPVAR_ConvertNumber(propvarIn, 64, FALSE, &res);
+    hr = PROPVAR_ConvertNumber(propvarIn, 64, TRUE, &res);
     *ret = !!res;
     return hr;
 }

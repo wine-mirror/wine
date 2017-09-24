@@ -956,7 +956,6 @@ static void test_PropVariantToBoolean(void)
     propvar.u.lVal = -67;
     val = FALSE;
     hr = PropVariantToBoolean(&propvar, &val);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(val == TRUE, "Unexpected value %d\n", val);
 
@@ -986,7 +985,6 @@ todo_wine
     propvar.u.pwszVal = str_n7;
     val = FALSE;
     hr = PropVariantToBoolean(&propvar, &val);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(val == TRUE, "Unexpected value %d\n", val);
 
@@ -1092,7 +1090,6 @@ todo_wine
     propvar.vt = VT_LPSTR;
     propvar.u.pszVal = (char *)"-1";
     hr = PropVariantToBoolean(&propvar, &val);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(val == TRUE, "Unexpected value %d\n", val);
 }
