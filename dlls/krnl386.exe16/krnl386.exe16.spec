@@ -706,6 +706,7 @@
 @ stdcall -arch=win32 GetCurrentTask()
 @ stdcall -arch=win32 GetDOSEnvironment16()
 @ stdcall -arch=win32 GetExePtr(long)
+@ stdcall -arch=win32 GetExeVersion16()
 @ stdcall -arch=win32 GetExpWinVer16(long)
 @ stdcall -arch=win32 GetModuleHandle16(str)
 @ stdcall -arch=win32 GlobalReAlloc16(long long long)
