@@ -2625,6 +2625,53 @@ static void _create_process(int line, const char *command, LPPROCESS_INFORMATION
     ok_(__FILE__, line)(ret, "CreateProcess error %lu\n", GetLastError());
 }
 
+#define test_assigned_proc(job, ...) _test_assigned_proc(__LINE__, job, __VA_ARGS__)
+static void _test_assigned_proc(int line, HANDLE job, unsigned int count, ...)
+{
+    char buf[sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST) + sizeof(ULONG_PTR) * 20];
+    JOBOBJECT_BASIC_PROCESS_ID_LIST *list = (JOBOBJECT_BASIC_PROCESS_ID_LIST *)buf;
+    unsigned int i, pid;
+    va_list valist;
+    DWORD size;
+    BOOL ret;
+
+    memset(buf, 0, sizeof(buf));
+    ret = pQueryInformationJobObject(job, JobObjectBasicProcessIdList, list, sizeof(buf), &size);
+    ok_(__FILE__, line)(ret, "failed to get process id list, error %lu\n", GetLastError());
+
+    ok_(__FILE__, line)(list->NumberOfAssignedProcesses == count,
+                        "expected %u assigned processes, got %lu\n", count, list->NumberOfAssignedProcesses);
+    ok_(__FILE__, line)(list->NumberOfProcessIdsInList == count,
+                        "expected %u process IDs, got %lu\n", count, list->NumberOfProcessIdsInList);
+
+    va_start(valist, count);
+    for (i = 0; i < min(count, list->NumberOfProcessIdsInList); ++i)
+    {
+        pid = va_arg(valist, unsigned int);
+        ok_(__FILE__, line)(pid == list->ProcessIdList[i],
+                            "wrong pid %u: expected %#04x, got %#04Ix\n", i, pid, list->ProcessIdList[i]);
+    }
+    va_end(valist);
+}
+
+#define test_accounting(a, b, c, d) _test_accounting(__LINE__, a, b, c, d)
+static void _test_accounting(int line, HANDLE job, unsigned int total, unsigned int active, unsigned int terminated)
+{
+    JOBOBJECT_BASIC_ACCOUNTING_INFORMATION info;
+    DWORD size;
+    BOOL ret;
+
+    memset(&info, 0, sizeof(info));
+    ret = pQueryInformationJobObject(job, JobObjectBasicAccountingInformation, &info, sizeof(info), &size);
+    ok_(__FILE__, line)(ret, "failed to get accounting information, error %lu\n", GetLastError());
+
+    ok_(__FILE__, line)(info.TotalProcesses == total,
+                        "expected %u total processes, got %lu\n", total, info.TotalProcesses);
+    ok_(__FILE__, line)(info.ActiveProcesses == active,
+                        "expected %u active processes, got %lu\n", active, info.ActiveProcesses);
+    ok_(__FILE__, line)(info.TotalTerminatedProcesses == terminated,
+                        "expected %u terminated processes, got %lu\n", terminated, info.TotalTerminatedProcesses);
+}
 
 static void test_IsProcessInJob(void)
 {
@@ -2650,11 +2697,15 @@ static void test_IsProcessInJob(void)
     ret = pIsProcessInJob(pi.hProcess, job, &out);
     ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
+    test_assigned_proc(job, 0);
+    test_accounting(job, 0, 0, 0);
 
     out = TRUE;
     ret = pIsProcessInJob(pi.hProcess, job2, &out);
     ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
+    test_assigned_proc(job2, 0);
+    test_accounting(job2, 0, 0, 0);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
     ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
@@ -2663,11 +2714,15 @@ static void test_IsProcessInJob(void)
     ret = pIsProcessInJob(pi.hProcess, job, &out);
     ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
+    test_assigned_proc(job, 1, pi.dwProcessId);
+    test_accounting(job, 1, 1, 0);
 
     out = TRUE;
     ret = pIsProcessInJob(pi.hProcess, job2, &out);
     ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
+    test_assigned_proc(job2, 0);
+    test_accounting(job2, 0, 0, 0);
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, NULL, &out);
@@ -2681,6 +2736,8 @@ static void test_IsProcessInJob(void)
     ret = pIsProcessInJob(pi.hProcess, job, &out);
     ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
+    test_assigned_proc(job, 0);
+    test_accounting(job, 1, 0, 0);
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -2697,11 +2754,15 @@ static void test_TerminateJobObject(void)
 
     job = pCreateJobObjectW(NULL, NULL);
     ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
+    test_assigned_proc(job, 0);
+    test_accounting(job, 0, 0, 0);
 
     create_process("wait", &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
     ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
+    test_assigned_proc(job, 1, pi.dwProcessId);
+    test_accounting(job, 1, 1, 0);
 
     ret = pTerminateJobObject(job, 123);
     ok(ret, "TerminateJobObject error %lu\n", GetLastError());
@@ -2710,6 +2771,8 @@ static void test_TerminateJobObject(void)
     dwret = WaitForSingleObject(pi.hProcess, 1000);
     ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", dwret);
     if (dwret == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 0);
+    test_assigned_proc(job, 0);
+    test_accounting(job, 1, 0, 0);
 
     ret = GetExitCodeProcess(pi.hProcess, &dwret);
     ok(ret, "GetExitCodeProcess error %lu\n", GetLastError());
@@ -2727,6 +2790,8 @@ static void test_TerminateJobObject(void)
     ret = pAssignProcessToJobObject(job, pi.hProcess);
     ok(!ret, "AssignProcessToJobObject unexpectedly succeeded\n");
     expect_eq_d(ERROR_ACCESS_DENIED, GetLastError());
+    test_assigned_proc(job, 0);
+    test_accounting(job, 1, 0, 0);
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -2925,11 +2990,15 @@ static void test_KillOnJobClose(void)
         return;
     }
     ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
+    test_assigned_proc(job, 0);
+    test_accounting(job, 0, 0, 0);
 
     create_process("wait", &pi);
 
     ret = pAssignProcessToJobObject(job, pi.hProcess);
     ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
+    test_assigned_proc(job, 1, pi.dwProcessId);
+    test_accounting(job, 1, 1, 0);
 
     CloseHandle(job);
 
@@ -3039,6 +3108,8 @@ static HANDLE test_AddSelfToJob(void)
 
     ret = pAssignProcessToJobObject(job, GetCurrentProcess());
     ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
+    test_assigned_proc(job, 1, GetCurrentProcessId());
+    test_accounting(job, 1, 1, 0);
 
     return job;
 }
@@ -3060,6 +3131,8 @@ static void test_jobInheritance(HANDLE job)
     ret = pIsProcessInJob(pi.hProcess, job, &out);
     ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
+    test_assigned_proc(job, 2, GetCurrentProcessId(), pi.dwProcessId);
+    test_accounting(job, 2, 2, 0);
 
     wait_and_close_child_process(&pi);
 }
@@ -3102,6 +3175,9 @@ static void test_BreakawayOk(HANDLE parent_job)
 
     if (nested_jobs)
     {
+        test_assigned_proc(job, 1, GetCurrentProcessId());
+        test_accounting(job, 1, 1, 0);
+
         limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK;
         ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
         ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
@@ -3132,6 +3208,11 @@ static void test_BreakawayOk(HANDLE parent_job)
     ret = pIsProcessInJob(pi.hProcess, job, &out);
     ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
+    if (nested_jobs)
+    {
+        test_assigned_proc(job, 1, GetCurrentProcessId());
+        test_accounting(job, 1, 1, 0);
+    }
 
     ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
     ok(ret, "IsProcessInJob error %lu\n", GetLastError());
@@ -3149,6 +3230,11 @@ static void test_BreakawayOk(HANDLE parent_job)
     ret = pIsProcessInJob(pi.hProcess, job, &out);
     ok(ret, "IsProcessInJob error %lu\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
+    if (nested_jobs)
+    {
+        test_assigned_proc(job, 1, GetCurrentProcessId());
+        test_accounting(job, 1, 1, 0);
+    }
 
     wait_and_close_child_process(&pi);
 
