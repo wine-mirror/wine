@@ -1,0 +1,4 @@
+MODULE    = dx8vb.dll
+
+C_SRCS = \
+	main.c
