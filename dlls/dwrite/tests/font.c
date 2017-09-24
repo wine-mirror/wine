@@ -340,7 +340,7 @@ static IDWriteFactory *create_factory(void)
 {
     IDWriteFactory *factory;
     HRESULT hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&factory);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
     return factory;
 }
 
@@ -7964,6 +7964,43 @@ static void test_CreateCustomRenderingParams(void)
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
+static void test_localfontfileloader(void)
+{
+    IDWriteFontFileLoader *loader, *loader2;
+    IDWriteFactory *factory, *factory2;
+    IDWriteFontFile *file, *file2;
+    WCHAR *path;
+    HRESULT hr;
+    ULONG ref;
+
+    factory = create_factory();
+    factory2 = create_factory();
+
+    path = create_testfontfile(test_fontfile);
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
+    ok(hr == S_OK, "Failed to create file reference, hr %#x.\n", hr);
+
+    hr = IDWriteFactory_CreateFontFileReference(factory2, path, NULL, &file2);
+    ok(hr == S_OK, "Failed to create file reference, hr %#x.\n", hr);
+    ok(file != file2, "Unexpected file instance.\n");
+
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "Failed to get loader, hr %#x.\n", hr);
+
+    hr = IDWriteFontFile_GetLoader(file2, &loader2);
+    ok(hr == S_OK, "Failed to get loader, hr %#x.\n", hr);
+    ok(loader == loader2, "Unexpected loader instance\n");
+
+    IDWriteFontFile_Release(file);
+    IDWriteFontFile_Release(file2);
+    IDWriteFontFileLoader_Release(loader);
+    IDWriteFontFileLoader_Release(loader2);
+    ref = IDWriteFactory_Release(factory);
+    ok(ref == 0, "factory not released, %u\n", ref);
+    DELETE_FONTFILE(path);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -8028,6 +8065,7 @@ START_TEST(font)
     test_inmemory_file_loader();
     test_GetGlyphImageFormats();
     test_CreateCustomRenderingParams();
+    test_localfontfileloader();
 
     IDWriteFactory_Release(factory);
 }
