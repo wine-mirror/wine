@@ -195,9 +195,7 @@ static HRESULT WINAPI FolderItemVerbImpl_QueryInterface(FolderItemVerb *iface,
 {
     FolderItemVerbImpl *This = impl_from_FolderItemVerb(iface);
 
-    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
-
-    *ppv = NULL;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
 
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IDispatch, riid) ||
@@ -205,7 +203,7 @@ static HRESULT WINAPI FolderItemVerbImpl_QueryInterface(FolderItemVerb *iface,
         *ppv = &This->FolderItemVerb_iface;
     else
     {
-        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        WARN("not implemented for %s\n", debugstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -367,9 +365,7 @@ static HRESULT WINAPI FolderItemVerbsImpl_QueryInterface(FolderItemVerbs *iface,
 {
     FolderItemVerbsImpl *This = impl_from_FolderItemVerbs(iface);
 
-    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
-
-    *ppv = NULL;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
 
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IDispatch, riid) ||
@@ -377,7 +373,7 @@ static HRESULT WINAPI FolderItemVerbsImpl_QueryInterface(FolderItemVerbs *iface,
         *ppv = &This->FolderItemVerbs_iface;
     else
     {
-        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        WARN("not implemented for %s\n", debugstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -623,7 +619,7 @@ static HRESULT WINAPI FolderItemImpl_QueryInterface(FolderItem2 *iface,
 {
     FolderItemImpl *This = impl_from_FolderItem(iface);
 
-    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 
@@ -634,7 +630,7 @@ static HRESULT WINAPI FolderItemImpl_QueryInterface(FolderItem2 *iface,
         *ppv = &This->FolderItem2_iface;
     else
     {
-        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        WARN("not implemented for %s\n", debugstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -985,7 +981,7 @@ static HRESULT WINAPI FolderItemsImpl_QueryInterface(FolderItems3 *iface,
 {
     FolderItemsImpl *This = impl_from_FolderItems(iface);
 
-    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 
@@ -997,7 +993,7 @@ static HRESULT WINAPI FolderItemsImpl_QueryInterface(FolderItems3 *iface,
         *ppv = &This->FolderItems3_iface;
     else
     {
-        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        WARN("not implemented for %s\n", debugstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -1314,7 +1310,7 @@ static HRESULT WINAPI FolderImpl_QueryInterface(Folder3 *iface, REFIID riid,
 {
     FolderImpl *This = impl_from_Folder(iface);
 
-    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 
@@ -1326,7 +1322,7 @@ static HRESULT WINAPI FolderImpl_QueryInterface(Folder3 *iface, REFIID riid,
         *ppv = &This->Folder3_iface;
     else
     {
-        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        WARN("not implemented for %s\n", debugstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -1668,7 +1664,7 @@ static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch6 *iface,
 {
     ShellDispatch *This = impl_from_IShellDispatch6(iface);
 
-    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 
@@ -1683,7 +1679,7 @@ static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch6 *iface,
         *ppv = &This->IShellDispatch6_iface;
     else
     {
-        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        WARN("not implemented for %s\n", debugstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }
