@@ -1745,7 +1745,7 @@
 @ stub cimagf
 @ stub cimagl
 @ cdecl clearerr(ptr) msvcr120.clearerr
-@ stub clearerr_s
+@ cdecl clearerr_s(ptr) msvcr120.clearerr_s
 @ cdecl clock() msvcr120.clock
 @ stub clog
 @ stub clog10

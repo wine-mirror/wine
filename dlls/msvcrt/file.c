@@ -1467,6 +1467,21 @@ void CDECL MSVCRT_clearerr(MSVCRT_FILE* file)
 }
 
 /*********************************************************************
+ *		clearerr_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_clearerr_s(MSVCRT_FILE* file)
+{
+  TRACE(":file (%p)\n",file);
+
+  if (!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EINVAL;
+
+  MSVCRT__lock_file(file);
+  file->_flag &= ~(MSVCRT__IOERR | MSVCRT__IOEOF);
+  MSVCRT__unlock_file(file);
+  return 0;
+}
+
+/*********************************************************************
  *		rewind (MSVCRT.@)
  */
 void CDECL MSVCRT_rewind(MSVCRT_FILE* file)

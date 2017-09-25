@@ -143,6 +143,7 @@ int    __cdecl _putc_nolock(int,FILE*);
 int    __cdecl _ungetc_nolock(int,FILE*);
 
 void   __cdecl clearerr(FILE*);
+errno_t __cdecl clearerr_s(FILE*);
 int    __cdecl fclose(FILE*);
 int    __cdecl feof(FILE*);
 int    __cdecl ferror(FILE*);

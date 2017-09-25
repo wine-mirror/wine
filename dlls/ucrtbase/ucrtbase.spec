@@ -2222,7 +2222,7 @@
 @ stub cimagf
 @ stub cimagl
 @ cdecl clearerr(ptr) MSVCRT_clearerr
-@ stub clearerr_s
+@ cdecl clearerr_s(ptr) MSVCRT_clearerr_s
 @ cdecl clock() MSVCRT_clock
 @ stub clog
 @ stub clog10

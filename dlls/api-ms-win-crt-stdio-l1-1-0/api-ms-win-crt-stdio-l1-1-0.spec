@@ -113,7 +113,7 @@
 @ cdecl _wtmpnam(ptr) ucrtbase._wtmpnam
 @ cdecl _wtmpnam_s(ptr long) ucrtbase._wtmpnam_s
 @ cdecl clearerr(ptr) ucrtbase.clearerr
-@ stub clearerr_s
+@ cdecl clearerr_s(ptr) ucrtbase.clearerr_s
 @ cdecl fclose(ptr) ucrtbase.fclose
 @ cdecl feof(ptr) ucrtbase.feof
 @ cdecl ferror(ptr) ucrtbase.ferror
