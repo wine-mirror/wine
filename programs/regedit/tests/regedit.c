@@ -188,6 +188,48 @@ static void delete_key_(unsigned line, const HKEY hkey, const char *path)
     }
 }
 
+static LONG delete_tree(const HKEY key, const char *subkey)
+{
+    HKEY hkey;
+    LONG ret;
+    char *subkey_name = NULL;
+    DWORD max_subkey_len, subkey_len;
+    static const char empty[1];
+
+    ret = RegOpenKeyExA(key, subkey, 0, KEY_READ, &hkey);
+    if (ret) return ret;
+
+    ret = RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, &max_subkey_len,
+                           NULL, NULL, NULL, NULL, NULL, NULL);
+    if (ret) goto cleanup;
+
+    max_subkey_len++;
+
+    subkey_name = HeapAlloc(GetProcessHeap(), 0, max_subkey_len);
+    if (!subkey_name)
+    {
+        ret = ERROR_NOT_ENOUGH_MEMORY;
+        goto cleanup;
+    }
+
+    for (;;)
+    {
+        subkey_len = max_subkey_len;
+        ret = RegEnumKeyExA(hkey, 0, subkey_name, &subkey_len, NULL, NULL, NULL, NULL);
+        if (ret == ERROR_NO_MORE_ITEMS) break;
+        if (ret) goto cleanup;
+        ret = delete_tree(hkey, subkey_name);
+        if (ret) goto cleanup;
+    }
+
+    ret = RegDeleteKeyA(hkey, empty);
+
+cleanup:
+    HeapFree(GetProcessHeap(), 0, subkey_name);
+    RegCloseKey(hkey);
+    return ret;
+}
+
 #define add_value(k,n,t,d,s) add_value_(__LINE__,k,n,t,d,s)
 static void add_value_(unsigned line, HKEY hkey, const char *name, DWORD type,
                        const void *data, size_t size)
@@ -3329,7 +3371,7 @@ error:
 static void test_export(void)
 {
     LONG lr;
-    HKEY hkey;
+    HKEY hkey, subkey;
     DWORD dword;
 
     const char *empty_key_test =
@@ -3341,6 +3383,32 @@ static void test_export(void)
         "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
         "\"DWORD\"=dword:00000100\r\n"
         "\"String\"=\"Your text here...\"\r\n\r\n";
+
+    const char *complex_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+        "\"DWORD\"=dword:00000100\r\n"
+        "\"String\"=\"Your text here...\"\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1]\r\n"
+        "\"Binary\"=hex:11,22,33,44\r\n"
+        "\"Undefined hex\"=hex(100):25,50,41,54,48,25,00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a]\r\n"
+        "\"double\\\"quote\"=\"\\\"Hello, World!\\\"\"\r\n"
+        "\"single'quote\"=dword:00000008\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2a\\Subkey2b]\r\n"
+        "@=\"Default value name\"\r\n"
+        "\"Multiple strings\"=hex(7):4c,00,69,00,6e,00,65,00,31,00,00,00,4c,00,69,00,6e,\\\r\n"
+        "  00,65,00,32,00,00,00,4c,00,69,00,6e,00,65,00,33,00,00,00,00,00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey3a]\r\n"
+        "\"Backslash\"=\"Use \\\\\\\\ to escape a backslash\"\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey3a\\Subkey3b]\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey3a\\Subkey3b\\Subkey3c]\r\n"
+        "\"String expansion\"=hex(2):25,00,48,00,4f,00,4d,00,45,00,25,00,5c,00,25,00,50,\\\r\n"
+        "  00,41,00,54,00,48,00,25,00,00,00\r\n"
+        "\"Zero data type\"=hex(0):56,61,6c,75,65,00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey4]\r\n"
+        "@=dword:12345678\r\n"
+        "\"43981\"=hex(abcd):56,61,6c,75,65,00\r\n\r\n";
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
@@ -3365,9 +3433,48 @@ static void test_export(void)
     lr = DeleteFileA("file.reg");
     ok(lr, "DeleteFile failed: %u\n", GetLastError());
 
+    /* Test registry export with a complex data structure */
+    add_key(hkey, "Subkey1", &subkey);
+    add_value(subkey, "Binary", REG_BINARY, "\x11\x22\x33\x44", 4);
+    add_value(subkey, "Undefined hex", 0x100, "%PATH%", 7);
+    RegCloseKey(subkey);
+
+    add_key(hkey, "Subkey2a", &subkey);
+    add_value(subkey, "double\"quote", REG_SZ, "\"Hello, World!\"", 16);
+    dword = 0x8;
+    add_value(subkey, "single'quote", REG_DWORD, &dword, sizeof(dword));
+    RegCloseKey(subkey);
+
+    add_key(hkey, "Subkey2a\\Subkey2b", &subkey);
+    add_value(subkey, NULL, REG_SZ, "Default value name", 19);
+    add_value(subkey, "Multiple strings", REG_MULTI_SZ, "Line1\0Line2\0Line3\0", 19);
+    RegCloseKey(subkey);
+
+    add_key(hkey, "Subkey3a", &subkey);
+    add_value(subkey, "Backslash", REG_SZ, "Use \\\\ to escape a backslash", 29);
+    RegCloseKey(subkey);
+
+    add_key(hkey, "Subkey3a\\Subkey3b\\Subkey3c", &subkey);
+    add_value(subkey, "String expansion", REG_EXPAND_SZ, "%HOME%\\%PATH%", 14);
+    add_value(subkey, "Zero data type", REG_NONE, "Value", 6);
+    RegCloseKey(subkey);
+
+    add_key(hkey, "Subkey4", &subkey);
+    dword = 0x12345678;
+    add_value(subkey, NULL, REG_DWORD, &dword, sizeof(dword));
+    add_value(subkey, "43981", 0xabcd, "Value", 6);
+    RegCloseKey(subkey);
+
     RegCloseKey(hkey);
 
-    delete_key(HKEY_CURRENT_USER, KEY_BASE);
+    run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
+    ok(compare_export("file.reg", complex_test), "compare_export() failed\n");
+
+    lr = DeleteFileA("file.reg");
+    ok(lr, "DeleteFile failed: %u\n", GetLastError());
+
+    lr = delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS, "delete_tree() failed: %d\n", lr);
 }
 
 START_TEST(regedit)
