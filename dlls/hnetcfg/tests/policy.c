@@ -28,6 +28,41 @@
 
 #include "netfw.h"
 
+static void test_policy2_rules(INetFwPolicy2 *policy2)
+{
+    HRESULT hr;
+    INetFwRules *rules, *rules2;
+    INetFwServiceRestriction *restriction;
+
+    hr = INetFwPolicy2_QueryInterface(policy2, &IID_INetFwRules, (void**)&rules);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    hr = INetFwPolicy2_get_Rules(policy2, &rules);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = INetFwPolicy2_get_Rules(policy2, &rules2);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(rules == rules2, "Different pointers\n");
+
+    hr = INetFwPolicy2_get_ServiceRestriction(policy2, &restriction);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    if(hr == S_OK)
+    {
+        INetFwRules *rules3;
+
+        hr = INetFwServiceRestriction_get_Rules(restriction, &rules3);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(rules != rules3, "same pointers\n");
+
+        if(rules3)
+            INetFwRules_Release(rules3);
+        INetFwServiceRestriction_Release(restriction);
+    }
+
+    INetFwRules_Release(rules);
+    INetFwRules_Release(rules2);
+}
+
 static void test_interfaces(void)
 {
     INetFwMgr *manager;
@@ -57,6 +92,8 @@ static void test_interfaces(void)
             &IID_INetFwPolicy2, (void**)&policy2);
     if(hr == S_OK)
     {
+        test_policy2_rules(policy2);
+
         INetFwPolicy2_Release(policy2);
     }
     else
