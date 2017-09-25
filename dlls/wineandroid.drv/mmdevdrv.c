@@ -647,7 +647,7 @@ static HRESULT get_audio_session(const GUID *sessionguid,
     return S_OK;
 }
 
-static HRESULT waveformat_to_pcm(ACImpl *This, const WAVEFORMATEX *fmt, SLDataFormat_PCM *pcm)
+static HRESULT waveformat_to_pcm(ACImpl *This, const WAVEFORMATEX *fmt, SLAndroidDataFormat_PCM_EX *pcm)
 {
     /* only support non-float PCM */
     if(fmt->wFormatTag != WAVE_FORMAT_PCM &&
@@ -660,19 +660,25 @@ static HRESULT waveformat_to_pcm(ACImpl *This, const WAVEFORMATEX *fmt, SLDataFo
     if(fmt->nSamplesPerSec < 8000 || fmt->nSamplesPerSec > 48000)
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
 
-    pcm->formatType = SL_DATAFORMAT_PCM;
+    pcm->formatType = SL_ANDROID_DATAFORMAT_PCM_EX;
     pcm->numChannels = fmt->nChannels;
-    pcm->samplesPerSec = fmt->nSamplesPerSec * 1000; /* no typo, actually in milli-Hz */
+    pcm->sampleRate = fmt->nSamplesPerSec * 1000; /* sampleRate is in milli-Hz */
     pcm->bitsPerSample = fmt->wBitsPerSample;
     pcm->containerSize = fmt->wBitsPerSample;
     /* only up to stereo */
     if(pcm->numChannels == 1)
-        pcm->channelMask = SL_SPEAKER_FRONT_LEFT;
+        pcm->channelMask = SL_SPEAKER_FRONT_CENTER;
     else if(This->dataflow == eRender && pcm->numChannels == 2)
         pcm->channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
     else
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
+
     pcm->endianness = SL_BYTEORDER_LITTLEENDIAN;
+
+    if(pcm->bitsPerSample == 8)
+        pcm->representation = SL_ANDROID_PCM_REPRESENTATION_UNSIGNED_INT;
+    else
+        pcm->representation = SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT;
 
     return S_OK;
 }
@@ -686,7 +692,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     int i;
     HRESULT hr;
     SLresult sr;
-    SLDataFormat_PCM pcm;
+    SLAndroidDataFormat_PCM_EX pcm;
     SLDataLocator_AndroidSimpleBufferQueue loc_bq;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
@@ -1056,7 +1062,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         WAVEFORMATEX **outpwfx)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
-    SLDataFormat_PCM pcm;
+    SLAndroidDataFormat_PCM_EX pcm;
     HRESULT hr;
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, pwfx, outpwfx);
