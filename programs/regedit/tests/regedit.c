@@ -17,7 +17,7 @@
  */
 
 #include <windows.h>
-
+#include <stdio.h>
 #include "wine/test.h"
 
 #define lok ok_(__FILE__,line)
@@ -164,6 +164,16 @@ static void verify_key_nonexist_(unsigned line, HKEY key_base, const char *subke
 
     if (hkey)
         RegCloseKey(hkey);
+}
+
+#define add_key(k,p,s) add_key_(__LINE__,k,p,s)
+static void add_key_(unsigned line, const HKEY hkey, const char *path, HKEY *subkey)
+{
+    LONG lr;
+
+    lr = RegCreateKeyExA(hkey, path, 0, NULL, REG_OPTION_NON_VOLATILE,
+                         KEY_READ|KEY_WRITE, NULL, subkey, NULL);
+    lok(lr == ERROR_SUCCESS, "RegCreateKeyExA failed: %d\n", lr);
 }
 
 #define delete_key(k,p) delete_key_(__LINE__,k,p)
@@ -3264,6 +3274,74 @@ static void test_value_deletion_unicode(void)
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
+#define compare_export(f,e) compare_export_(__LINE__,f,e)
+static BOOL compare_export_(unsigned line, const char *filename, const char *expected)
+{
+    FILE *fp;
+    long file_size;
+    WCHAR *fbuf = NULL, *wstr = NULL;
+    size_t len;
+    BOOL ret = FALSE;
+
+    fp = fopen(filename, "rb");
+    if (!fp) return FALSE;
+
+    if (fseek(fp, 0, SEEK_END)) goto error;
+    file_size = ftell(fp);
+    if (file_size == -1) goto error;
+    rewind(fp);
+
+    fbuf = HeapAlloc(GetProcessHeap(), 0, file_size + sizeof(WCHAR));
+    if (!fbuf) goto error;
+
+    fread(fbuf, file_size, 1, fp);
+    fbuf[file_size/sizeof(WCHAR)] = 0;
+    fclose(fp);
+
+    len = MultiByteToWideChar(CP_UTF8, 0, expected, -1, NULL, 0);
+    wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!wstr) goto exit;
+    MultiByteToWideChar(CP_UTF8, 0, expected, -1, wstr, len);
+
+    lok(!lstrcmpW(fbuf, wstr), "export data does not match expected data\n");
+    ret = TRUE;
+
+exit:
+    HeapFree(GetProcessHeap(), 0, fbuf);
+    HeapFree(GetProcessHeap(), 0, wstr);
+    return ret;
+
+error:
+    fclose(fp);
+    return FALSE;
+}
+
+static void test_export(void)
+{
+    LONG lr;
+    HKEY hkey;
+
+    const char *empty_key_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n\r\n";
+
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+
+    /* Test registry export with an empty key */
+    add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
+
+    run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
+    ok(compare_export("file.reg", empty_key_test), "compare_export() failed\n");
+
+    lr = DeleteFileA("file.reg");
+    ok(lr, "DeleteFile failed: %u\n", GetLastError());
+
+    RegCloseKey(hkey);
+
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
+}
+
 START_TEST(regedit)
 {
     if(!exec_import_str("REGEDIT4\r\n\r\n")){
@@ -3285,4 +3363,5 @@ START_TEST(regedit)
     test_key_creation_and_deletion_unicode();
     test_value_deletion();
     test_value_deletion_unicode();
+    test_export();
 }
