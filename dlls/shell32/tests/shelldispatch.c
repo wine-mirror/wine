@@ -1032,7 +1032,7 @@ todo_wine {
     ok(hr == S_OK || broken(hr == S_FALSE), "got 0x%08x\n", hr);
     if (hr == S_FALSE) /* winxp and earlier */ {
         win_skip("SWC_DESKTOP is not supported, some tests will be skipped.\n");
-        /* older versions allowed to regiser SWC_DESKTOP and access it with FindWindowSW */
+        /* older versions allowed to register SWC_DESKTOP and access it with FindWindowSW */
         ok(disp == NULL, "got %p\n", disp);
         ok(ret == 0, "got %d\n", ret);
     }
