@@ -1140,7 +1140,7 @@ static HRESULT WINAPI ShellFolder2_GetAttributesOf(IShellFolder2* iface, UINT ci
         UINT i;
 
         *attrs = SFGAO_CANCOPY | SFGAO_CANMOVE | SFGAO_CANLINK | SFGAO_CANRENAME | SFGAO_CANDELETE |
-            SFGAO_HASPROPSHEET | SFGAO_DROPTARGET | SFGAO_FILESYSTEM;
+            SFGAO_HASPROPSHEET | SFGAO_DROPTARGET | SFGAO_FILESYSTEM | SFGAO_LINK;
         lstrcpyA(szAbsolutePath, This->m_pszPath);
         pszRelativePath = szAbsolutePath + lstrlenA(szAbsolutePath);
         for (i=0; i<cidl; i++) {
@@ -1158,6 +1158,13 @@ static HRESULT WINAPI ShellFolder2_GetAttributesOf(IShellFolder2* iface, UINT ci
                     SFGAO_STORAGEANCESTOR | SFGAO_STORAGE;
             else
                 *attrs |= SFGAO_STREAM;
+            if ((*attrs & SFGAO_LINK))
+            {
+                char ext[MAX_PATH];
+
+                if (!_ILGetExtension(apidl[i], ext, MAX_PATH) || lstrcmpiA(ext, "lnk"))
+                    *attrs &= ~SFGAO_LINK;
+            }
         }
     }
 
