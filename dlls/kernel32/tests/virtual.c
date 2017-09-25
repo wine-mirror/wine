@@ -3584,7 +3584,7 @@ static void test_CreateFileMapping_protection(void)
         { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ | PAGE_EXECUTE, FALSE, PAGE_NOACCESS } /* 0xf0 */
     };
     char *base, *ptr;
-    DWORD ret, i, alloc_prot, prot, old_prot;
+    DWORD ret, i, alloc_prot, old_prot;
     MEMORY_BASIC_INFORMATION info;
     char temp_path[MAX_PATH];
     char file_name[MAX_PATH];
@@ -3641,16 +3641,6 @@ static void test_CreateFileMapping_protection(void)
             ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
             ok(info.Type == MEM_MAPPED, "%d: %#x != MEM_MAPPED\n", i, info.Type);
 
-            if (is_mem_writable(info.Protect))
-            {
-                base[0] = 0xfe;
-
-                SetLastError(0xdeadbeef);
-                ret = VirtualQuery(base, &info, sizeof(info));
-                ok(ret, "VirtualQuery failed %d\n", GetLastError());
-                ok(info.Protect == td[i].prot, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot);
-            }
-
             SetLastError(0xdeadbeef);
             ptr = VirtualAlloc(base, si.dwPageSize, MEM_COMMIT, td[i].prot);
             ok(!ptr, "%d: VirtualAlloc(%02x) should fail\n", i, td[i].prot);
@@ -3682,18 +3672,18 @@ static void test_CreateFileMapping_protection(void)
     hmap = CreateFileMappingW(hfile, NULL, alloc_prot, 0, si.dwPageSize, NULL);
     ok(hmap != 0, "%d: CreateFileMapping error %d\n", i, GetLastError());
 
-    SetLastError(0xdeadbeef);
-    base = MapViewOfFile(hmap, FILE_MAP_READ | FILE_MAP_WRITE | (page_exec_supported ? FILE_MAP_EXECUTE : 0), 0, 0, 0);
-    ok(base != NULL, "MapViewOfFile failed %d\n", GetLastError());
-
-    old_prot = 0xdeadbeef;
-    SetLastError(0xdeadbeef);
-    ret = VirtualProtect(base, si.dwPageSize, PAGE_NOACCESS, &old_prot);
-    ok(ret, "VirtualProtect error %d\n", GetLastError());
-    ok(old_prot == alloc_prot, "got %#x != expected %#x\n", old_prot, alloc_prot);
-
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
+        SetLastError(0xdeadbeef);
+        base = MapViewOfFile(hmap, FILE_MAP_READ | FILE_MAP_WRITE | (page_exec_supported ? FILE_MAP_EXECUTE : 0), 0, 0, 0);
+        ok(base != NULL, "MapViewOfFile failed %d\n", GetLastError());
+
+        old_prot = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = VirtualProtect(base, si.dwPageSize, PAGE_NOACCESS, &old_prot);
+        ok(ret, "VirtualProtect error %d\n", GetLastError());
+        ok(old_prot == alloc_prot, "got %#x != expected %#x\n", old_prot, alloc_prot);
+
         SetLastError(0xdeadbeef);
         ret = VirtualQuery(base, &info, sizeof(info));
         ok(ret, "VirtualQuery failed %d\n", GetLastError());
@@ -3735,18 +3725,12 @@ static void test_CreateFileMapping_protection(void)
             ok(ret, "%d: VirtualProtect error %d\n", i, GetLastError());
             ok(old_prot == PAGE_NOACCESS, "%d: got %#x != expected PAGE_NOACCESS\n", i, old_prot);
 
-            prot = td[i].prot;
-            /* looks strange but Windows doesn't do this for PAGE_WRITECOPY */
-            if (prot == PAGE_EXECUTE_WRITECOPY) prot = PAGE_EXECUTE_READWRITE;
-
             SetLastError(0xdeadbeef);
             ret = VirtualQuery(base, &info, sizeof(info));
             ok(ret, "VirtualQuery failed %d\n", GetLastError());
             ok(info.BaseAddress == base, "%d: got %p != expected %p\n", i, info.BaseAddress, base);
             ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
-            /* FIXME: remove the condition below once Wine is fixed */
-            todo_wine_if (td[i].prot == PAGE_EXECUTE_WRITECOPY)
-                ok(info.Protect == prot, "%d: got %#x != expected %#x\n", i, info.Protect, prot);
+            ok(info.Protect == td[i].prot, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot);
             ok(info.AllocationBase == base, "%d: %p != %p\n", i, info.AllocationBase, base);
             ok(info.AllocationProtect == alloc_prot, "%d: %#x != %#x\n", i, info.AllocationProtect, alloc_prot);
             ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
@@ -3778,9 +3762,10 @@ static void test_CreateFileMapping_protection(void)
         /* FIXME: remove the condition below once Wine is fixed */
         todo_wine_if (td[i].prot == PAGE_WRITECOPY || td[i].prot == PAGE_EXECUTE_WRITECOPY)
             ok(old_prot == td[i].prot_after_write, "%d: got %#x != expected %#x\n", i, old_prot, td[i].prot_after_write);
+
+        UnmapViewOfFile(base);
     }
 
-    UnmapViewOfFile(base);
     CloseHandle(hmap);
 
     CloseHandle(hfile);
