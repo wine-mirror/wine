@@ -166,6 +166,18 @@ static void verify_key_nonexist_(unsigned line, HKEY key_base, const char *subke
         RegCloseKey(hkey);
 }
 
+#define delete_key(k,p) delete_key_(__LINE__,k,p)
+static void delete_key_(unsigned line, const HKEY hkey, const char *path)
+{
+    if (path && *path)
+    {
+        LONG lr;
+
+        lr = RegDeleteKeyA(hkey, path);
+        lok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+    }
+}
+
 #define KEY_BASE "Software\\Wine\\regedit_test"
 
 static void test_basic_import(void)
@@ -391,8 +403,7 @@ static void test_basic_import(void)
     verify_reg(subkey, "Wine\\31", REG_SZ, "Test value", 11, 0);
     lr = RegCloseKey(subkey);
     ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
-    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey/2]\n"
@@ -402,8 +413,7 @@ static void test_basic_import(void)
     verify_reg(subkey, "123/\"4;'5", REG_SZ, "Random value name", 18, 0);
     lr = RegCloseKey(subkey);
     ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
-    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
 
     /* Test the accepted range of the hex-based data types */
     exec_import_str("REGEDIT4\n\n"
@@ -561,8 +571,7 @@ static void test_basic_import(void)
 
     RegCloseKey(hkey);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_basic_import_unicode(void)
@@ -788,8 +797,7 @@ static void test_basic_import_unicode(void)
     verify_reg(subkey, "Wine\\31", REG_SZ, "Test value", 11, 0);
     lr = RegCloseKey(subkey);
     ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
-    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey/2]\n"
@@ -799,8 +807,7 @@ static void test_basic_import_unicode(void)
     verify_reg(subkey, "123/\"4;'5", REG_SZ, "Random value name", 18, 0);
     lr = RegCloseKey(subkey);
     ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
-    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
 
     /* Test the accepted range of the hex-based data types */
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -961,8 +968,7 @@ static void test_basic_import_unicode(void)
 
     RegCloseKey(hkey);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_basic_import_31(void)
@@ -1024,8 +1030,7 @@ static void test_basic_import_31(void)
 
     RegCloseKey(hkey);
 
-    lr = RegDeleteKeyA(HKEY_CLASSES_ROOT, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+    delete_key(HKEY_CLASSES_ROOT, KEY_BASE);
 }
 
 static void test_invalid_import(void)
@@ -1352,8 +1357,7 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine24b");
     verify_key(hkey, "Subkey2");
 
-    lr = RegDeleteKeyA(hkey, "Subkey2");
-    ok(lr == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", lr);
+    delete_key(hkey, "Subkey2");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1518,8 +1522,7 @@ static void test_invalid_import(void)
 
     RegCloseKey(hkey);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_invalid_import_unicode(void)
@@ -1859,8 +1862,7 @@ static void test_invalid_import_unicode(void)
     verify_reg_nonexist(hkey, "Wine24b");
     verify_key(hkey, "Subkey2");
 
-    lr = RegDeleteKeyA(hkey, "Subkey2");
-    ok(lr == ERROR_SUCCESS, "RegDeleteKey failed: %u\n", lr);
+    delete_key(hkey, "Subkey2");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2027,8 +2029,7 @@ static void test_invalid_import_unicode(void)
 
     RegCloseKey(hkey);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_invalid_import_31(void)
@@ -2082,8 +2083,7 @@ static void test_invalid_import_31(void)
 
     RegCloseKey(hkey);
 
-    lr = RegDeleteKeyA(HKEY_CLASSES_ROOT, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+    delete_key(HKEY_CLASSES_ROOT, KEY_BASE);
 }
 
 static void test_comments(void)
@@ -2323,8 +2323,7 @@ static void test_comments(void)
 
     RegCloseKey(hkey);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_comments_unicode(void)
@@ -2566,8 +2565,7 @@ static void test_comments_unicode(void)
 
     RegCloseKey(hkey);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_import_with_whitespace(void)
@@ -2716,8 +2714,7 @@ static void test_import_with_whitespace(void)
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_import_with_whitespace_unicode(void)
@@ -2866,8 +2863,7 @@ static void test_import_with_whitespace_unicode(void)
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_key_creation_and_deletion(void)
@@ -2904,14 +2900,12 @@ static void test_key_creation_and_deletion(void)
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1c ]\n");
     verify_key(hkey, "Subkey1c ");
-    lr = RegDeleteKeyA(hkey, "Subkey1c ");
-    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    delete_key(hkey, "Subkey1c ");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1d\t]\n");
     verify_key(hkey, "Subkey1d\t");
-    lr = RegDeleteKeyA(hkey, "Subkey1d\t");
-    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    delete_key(hkey, "Subkey1d\t");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1e\\]\n"
@@ -2922,8 +2916,7 @@ static void test_key_creation_and_deletion(void)
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", lr);
     verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
-    lr = RegDeleteKeyA(hkey, "Subkey1e");
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", lr);
+    delete_key(hkey, "Subkey1e");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1f\\\\]\n"
@@ -2935,8 +2928,7 @@ static void test_key_creation_and_deletion(void)
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", lr);
     verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
-    lr = RegDeleteKeyA(hkey, "Subkey1f\\\\");
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", lr);
+    delete_key(hkey, "Subkey1f\\\\");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1g\\\\\\\\]\n"
@@ -2949,8 +2941,7 @@ static void test_key_creation_and_deletion(void)
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", lr);
     verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
-    lr = RegDeleteKeyA(hkey, "Subkey1g\\\\");
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", lr);
+    delete_key(hkey, "Subkey1g\\\\");
 
     /* Test key deletion. We start by creating some registry keys. */
     exec_import_str("REGEDIT4\n\n"
@@ -3016,8 +3007,7 @@ static void test_key_creation_and_deletion(void)
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_key_creation_and_deletion_unicode(void)
@@ -3054,14 +3044,12 @@ static void test_key_creation_and_deletion_unicode(void)
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1c ]\n");
     verify_key(hkey, "Subkey1c ");
-    lr = RegDeleteKeyA(hkey, "Subkey1c ");
-    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    delete_key(hkey, "Subkey1c ");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1d\t]\n");
     verify_key(hkey, "Subkey1d\t");
-    lr = RegDeleteKeyA(hkey, "Subkey1d\t");
-    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    delete_key(hkey, "Subkey1d\t");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1e\\]\n"
@@ -3072,8 +3060,7 @@ static void test_key_creation_and_deletion_unicode(void)
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", lr);
     verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
-    lr = RegDeleteKeyA(hkey, "Subkey1e");
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", lr);
+    delete_key(hkey, "Subkey1e");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1f\\\\]\n"
@@ -3085,8 +3072,7 @@ static void test_key_creation_and_deletion_unicode(void)
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", lr);
     verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
-    lr = RegDeleteKeyA(hkey, "Subkey1f\\\\");
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", lr);
+    delete_key(hkey, "Subkey1f\\\\");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1g\\\\\\\\]\n"
@@ -3099,8 +3085,7 @@ static void test_key_creation_and_deletion_unicode(void)
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %u, expected 0\n", lr);
     verify_reg(subkey, "Wine", REG_SZ, "Test value", 11, 0);
     RegCloseKey(subkey);
-    lr = RegDeleteKeyA(hkey, "Subkey1g\\\\");
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %u, expected 0\n", lr);
+    delete_key(hkey, "Subkey1g\\\\");
 
     /* Test key deletion. We start by creating some registry keys. */
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3166,8 +3151,7 @@ static void test_key_creation_and_deletion_unicode(void)
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_value_deletion(void)
@@ -3221,8 +3205,7 @@ static void test_value_deletion(void)
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 
@@ -3278,8 +3261,7 @@ static void test_value_deletion_unicode(void)
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 START_TEST(regedit)
