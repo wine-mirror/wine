@@ -156,7 +156,7 @@ static void test_get_set(void)
     /* Test Getting / Setting the path */
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
-    todo_wine ok(r == S_FALSE || broken(r == S_OK) /* NT4/W2K */, "GetPath failed (0x%08x)\n", r);
+    ok(r == S_FALSE || broken(r == S_OK) /* NT4/W2K */, "GetPath failed (0x%08x)\n", r);
     ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
 
     CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
@@ -177,7 +177,7 @@ static void test_get_set(void)
 
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
-    todo_wine ok(r == S_FALSE, "GetPath failed (0x%08x)\n", r);
+    ok(r == S_FALSE, "GetPath failed (0x%08x)\n", r);
     ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
 
     /* Win98 returns S_FALSE, but WinXP returns S_OK */

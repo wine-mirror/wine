@@ -1254,6 +1254,7 @@ static HRESULT WINAPI IShellLinkA_fnGetPath(IShellLinkA *iface, LPSTR pszFile, I
         WIN32_FIND_DATAA *pfd, DWORD fFlags)
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
+    HRESULT res = S_OK;
 
     TRACE("(%p)->(pfile=%p len=%u find_data=%p flags=%u)(%s)\n",
           This, pszFile, cchMaxPath, pfd, fFlags, debugstr_w(This->sPath));
@@ -1263,13 +1264,15 @@ static HRESULT WINAPI IShellLinkA_fnGetPath(IShellLinkA *iface, LPSTR pszFile, I
 
     if (cchMaxPath)
         pszFile[0] = 0;
-    if (This->sPath)
+    if (This->sPath && This->sPath[0])
         WideCharToMultiByte( CP_ACP, 0, This->sPath, -1,
                              pszFile, cchMaxPath, NULL, NULL);
+    else
+        res = S_FALSE;
 
     if (pfd) FIXME("(%p): WIN32_FIND_DATA is not yet filled.\n", This);
 
-    return S_OK;
+    return res;
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetIDList(IShellLinkA *iface, LPITEMIDLIST *ppidl)
@@ -1639,6 +1642,7 @@ static ULONG WINAPI IShellLinkW_fnRelease(IShellLinkW * iface)
 static HRESULT WINAPI IShellLinkW_fnGetPath(IShellLinkW * iface, LPWSTR pszFile,INT cchMaxPath, WIN32_FIND_DATAW *pfd, DWORD fFlags)
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
+    HRESULT res = S_OK;
 
     TRACE("(%p)->(pfile=%p len=%u find_data=%p flags=%u)(%s)\n",
           This, pszFile, cchMaxPath, pfd, fFlags, debugstr_w(This->sPath));
@@ -1650,10 +1654,12 @@ static HRESULT WINAPI IShellLinkW_fnGetPath(IShellLinkW * iface, LPWSTR pszFile,
         pszFile[0] = 0;
     if (This->sPath)
         lstrcpynW( pszFile, This->sPath, cchMaxPath );
+    else
+        res = S_FALSE;
 
     if (pfd) FIXME("(%p): WIN32_FIND_DATA is not yet filled.\n", This);
 
-    return S_OK;
+    return res;
 }
 
 static HRESULT WINAPI IShellLinkW_fnGetIDList(IShellLinkW * iface, LPITEMIDLIST * ppidl)
