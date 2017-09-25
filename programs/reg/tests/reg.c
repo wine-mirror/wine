@@ -4336,6 +4336,18 @@ static void test_export(void)
         "@=dword:12345678\r\n"
         "\"43981\"=hex(abcd):56,61,6c,75,65,00\r\n\r\n";
 
+    const char *key_order_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1]\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2]\r\n\r\n";
+
+    const char *value_order_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+        "\"Value 2\"=\"I was added first!\"\r\n"
+        "\"Value 1\"=\"I was added second!\"\r\n\r\n";
+
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
 
@@ -4456,6 +4468,43 @@ static void test_export(void)
 
     err = delete_tree(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS, "delete_tree() failed: %d\n", err);
+
+    /* Test the export order of registry keys */
+    add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
+    add_key(hkey, "Subkey2", &subkey);
+    RegCloseKey(subkey);
+    add_key(hkey, "Subkey1", &subkey);
+    RegCloseKey(subkey);
+
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine ok(compare_export("file.reg", key_order_test), "compare_export() failed\n");
+
+    err = DeleteFileA("file.reg");
+    todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
+
+    err = RegDeleteKeyA(hkey, "Subkey1");
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", err);
+    err = RegDeleteKeyA(hkey, "Subkey2");
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", err);
+
+    /* Test the export order of registry values. Windows exports registry values
+     * in order of creation; Wine uses alphabetical order.
+     */
+    add_value(hkey, "Value 2", REG_SZ, "I was added first!", 19);
+    add_value(hkey, "Value 1", REG_SZ, "I was added second!", 20);
+
+    RegCloseKey(hkey);
+
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine ok(compare_export("file.reg", value_order_test), "compare_export() failed\n");
+
+    err = DeleteFileA("file.reg");
+    todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
+
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", err);
 }
 
 START_TEST(reg)
