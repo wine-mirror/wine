@@ -39,6 +39,7 @@
 static void (WINAPI *pILFree)(LPITEMIDLIST);
 static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
+static HRESULT (WINAPI *pSHGetFolderLocation)(HWND,INT,HANDLE,DWORD,PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHDefExtractIconA)(LPCSTR, int, UINT, HICON*, HICON*, UINT);
 static HRESULT (WINAPI *pSHGetStockIconInfo)(SHSTOCKICONID, UINT, SHSTOCKICONINFO *);
 static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR, LPSTR, DWORD);
@@ -240,6 +241,24 @@ static void test_get_set(void)
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
         ok(r == S_OK, "GetPath failed (0x%08x)\n", r);
         ok(lstrcmpiA(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
+    }
+
+    if (pSHGetFolderLocation)
+    {
+        LPITEMIDLIST pidl_controls;
+
+        r = pSHGetFolderLocation(NULL, CSIDL_CONTROLS, NULL, 0, &pidl_controls);
+        ok(r == S_OK, "SHGetFolderLocation failed (0x%08x)\n", r);
+
+        r = IShellLinkA_SetIDList(sl, pidl_controls);
+        ok(r == S_OK, "SetIDList failed (0x%08x)\n", r);
+
+        strcpy(buffer,"garbage");
+        r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
+        ok(r == S_FALSE, "GetPath failed (0x%08x)\n", r);
+        ok(buffer[0] == 0, "GetPath returned '%s'\n", buffer);
+
+        pILFree(pidl_controls);
     }
 
     /* test path with quotes (IShellLinkA_SetPath returns S_FALSE on W2K and below and S_OK on XP and above */
@@ -1407,6 +1426,7 @@ START_TEST(shelllink)
     pILFree = (void *)GetProcAddress(hmod, (LPSTR)155);
     pILIsEqual = (void *)GetProcAddress(hmod, (LPSTR)21);
     pSHILCreateFromPath = (void *)GetProcAddress(hmod, (LPSTR)28);
+    pSHGetFolderLocation = (void *)GetProcAddress(hmod, "SHGetFolderLocation");
     pSHDefExtractIconA = (void *)GetProcAddress(hmod, "SHDefExtractIconA");
     pSHGetStockIconInfo = (void *)GetProcAddress(hmod, "SHGetStockIconInfo");
     pGetLongPathNameA = (void *)GetProcAddress(hkernel32, "GetLongPathNameA");
