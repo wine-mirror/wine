@@ -4255,10 +4255,18 @@ error:
 static void test_export(void)
 {
     LONG err;
-    DWORD r, os_version, major_version, minor_version;
+    DWORD r, os_version, major_version, minor_version, dword;
     HKEY hkey;
-    const char *empty_key_test = "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
-                                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n\r\n";
+
+    const char *empty_key_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n\r\n";
+
+    const char *simple_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+        "\"DWORD\"=dword:00000100\r\n"
+        "\"String\"=\"Your text here...\"\r\n\r\n";
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
@@ -4324,6 +4332,20 @@ static void test_export(void)
 
     err = DeleteFileA("file.reg");
     todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
+
+    /* Test registry export with a simple data structure */
+    dword = 0x100;
+    add_value(hkey, "DWORD", REG_DWORD, &dword, sizeof(dword));
+    add_value(hkey, "String", REG_SZ, "Your text here...", 18);
+
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine ok(compare_export("file.reg", simple_test), "compare_export() failed\n");
+
+    err = DeleteFileA("file.reg");
+    todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
+
+    RegCloseKey(hkey);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", err);
