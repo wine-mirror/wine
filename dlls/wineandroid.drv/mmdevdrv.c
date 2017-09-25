@@ -128,7 +128,6 @@ struct ACImpl {
     HANDLE event;
     float *vols;
 
-    SLObjectItf outputmix;
     SLObjectItf player;
     SLObjectItf recorder;
     SLAndroidSimpleBufferQueueItf bufq;
@@ -284,6 +283,7 @@ int WINAPI AUDDRV_GetPriority(void)
 
 static SLObjectItf sl;
 static SLEngineItf engine;
+static SLObjectItf outputmix;
 
 HRESULT AUDDRV_Init(void)
 {
@@ -307,6 +307,21 @@ HRESULT AUDDRV_Init(void)
     if(sr != SL_RESULT_SUCCESS){
         SLCALL_N(sl, Destroy);
         WARN("GetInterface failed: 0x%x\n", sr);
+        return E_FAIL;
+    }
+
+    sr = SLCALL(engine, CreateOutputMix, &outputmix, 0, NULL, NULL);
+    if(sr != SL_RESULT_SUCCESS){
+        SLCALL_N(sl, Destroy);
+        WARN("CreateOutputMix failed: 0x%x\n", sr);
+        return E_FAIL;
+    }
+
+    sr = SLCALL(outputmix, Realize, SL_BOOLEAN_FALSE);
+    if(sr != SL_RESULT_SUCCESS){
+        SLCALL_N(outputmix, Destroy);
+        SLCALL_N(sl, Destroy);
+        WARN("outputmix Realize failed: 0x%x\n", sr);
         return E_FAIL;
     }
 
@@ -347,7 +362,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
     ACImpl *This;
     HRESULT hr;
     EDataFlow flow;
-    SLresult sr;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
 
@@ -370,24 +384,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
     if (FAILED(hr)) {
          HeapFree(GetProcessHeap(), 0, This);
          return hr;
-    }
-
-    if(flow == eRender){
-        sr = SLCALL(engine, CreateOutputMix, &This->outputmix, 0, NULL, NULL);
-        if(sr != SL_RESULT_SUCCESS){
-            WARN("CreateOutputMix failed: 0x%x\n", sr);
-            HeapFree(GetProcessHeap(), 0, This);
-            return E_FAIL;
-        }
-
-        sr = SLCALL(This->outputmix, Realize, SL_BOOLEAN_FALSE);
-        if(sr != SL_RESULT_SUCCESS){
-            SLCALL_N(This->outputmix, Destroy);
-            This->outputmix = NULL;
-            HeapFree(GetProcessHeap(), 0, This);
-            WARN("outputmix Realize failed: 0x%x\n", sr);
-            return E_FAIL;
-        }
     }
 
     This->dataflow = flow;
@@ -472,8 +468,6 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
             SLCALL_N(This->recorder, Destroy);
         if(This->player)
             SLCALL_N(This->player, Destroy);
-        if(This->outputmix)
-            SLCALL_N(This->outputmix, Destroy);
 
         if(This->initted){
             EnterCriticalSection(&g_sessions_lock);
@@ -776,7 +770,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         source.pFormat = &pcm;
 
         loc_outmix.locatorType = SL_DATALOCATOR_OUTPUTMIX;
-        loc_outmix.outputMix = This->outputmix;
+        loc_outmix.outputMix = outputmix;
         sink.pLocator = &loc_outmix;
         sink.pFormat = NULL;
 
