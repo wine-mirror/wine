@@ -1680,6 +1680,7 @@ static HRESULT WINAPI IShellLinkW_fnGetIDList(IShellLinkW * iface, LPITEMIDLIST 
 static HRESULT WINAPI IShellLinkW_fnSetIDList(IShellLinkW * iface, LPCITEMIDLIST pidl)
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
+    WCHAR path[MAX_PATH];
 
     TRACE("(%p)->(pidl=%p)\n",This, pidl);
 
@@ -1688,6 +1689,18 @@ static HRESULT WINAPI IShellLinkW_fnSetIDList(IShellLinkW * iface, LPCITEMIDLIST
     This->pPidl = ILClone( pidl );
     if( !This->pPidl )
         return E_FAIL;
+
+    HeapFree( GetProcessHeap(), 0, This->sPath );
+    This->sPath = NULL;
+
+    if ( SHGetPathFromIDListW( pidl, path ) )
+    {
+        This->sPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(path)+1)*sizeof(WCHAR));
+        if (!This->sPath)
+            return E_OUTOFMEMORY;
+
+        lstrcpyW(This->sPath, path);
+    }
 
     This->bDirty = TRUE;
 

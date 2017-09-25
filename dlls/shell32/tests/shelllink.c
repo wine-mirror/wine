@@ -239,7 +239,6 @@ static void test_get_set(void)
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
         ok(r == S_OK, "GetPath failed (0x%08x)\n", r);
-        todo_wine
         ok(lstrcmpiA(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
     }
 
