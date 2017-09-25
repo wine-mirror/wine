@@ -188,6 +188,16 @@ static void delete_key_(unsigned line, const HKEY hkey, const char *path)
     }
 }
 
+#define add_value(k,n,t,d,s) add_value_(__LINE__,k,n,t,d,s)
+static void add_value_(unsigned line, HKEY hkey, const char *name, DWORD type,
+                       const void *data, size_t size)
+{
+    LONG lr;
+
+    lr = RegSetValueExA(hkey, name, 0, type, (const BYTE *)data, size);
+    lok(lr == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", lr);
+}
+
 #define KEY_BASE "Software\\Wine\\regedit_test"
 
 static void test_basic_import(void)
@@ -3320,10 +3330,17 @@ static void test_export(void)
 {
     LONG lr;
     HKEY hkey;
+    DWORD dword;
 
     const char *empty_key_test =
         "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
         "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n\r\n";
+
+    const char *simple_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+        "\"DWORD\"=dword:00000100\r\n"
+        "\"String\"=\"Your text here...\"\r\n\r\n";
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
@@ -3333,6 +3350,17 @@ static void test_export(void)
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", empty_key_test), "compare_export() failed\n");
+
+    lr = DeleteFileA("file.reg");
+    ok(lr, "DeleteFile failed: %u\n", GetLastError());
+
+    /* Test registry export with a simple data structure */
+    dword = 0x100;
+    add_value(hkey, "DWORD", REG_DWORD, &dword, sizeof(dword));
+    add_value(hkey, "String", REG_SZ, "Your text here...", 18);
+
+    run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
+    ok(compare_export("file.reg", simple_test), "compare_export() failed\n");
 
     lr = DeleteFileA("file.reg");
     ok(lr, "DeleteFile failed: %u\n", GetLastError());
