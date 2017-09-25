@@ -241,6 +241,15 @@ static void add_value_(unsigned line, HKEY hkey, const char *name, DWORD type,
     lok(lr == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", lr);
 }
 
+#define delete_value(k,n) delete_value_(__LINE__,k,n)
+static void delete_value_(unsigned line, const HKEY hkey, const char *name)
+{
+    LONG lr;
+
+    lr = RegDeleteValueA(hkey, name);
+    lok(lr == ERROR_SUCCESS, "RegDeleteValueA failed: %d\n", lr);
+}
+
 #define KEY_BASE "Software\\Wine\\regedit_test"
 
 static void test_basic_import(void)
@@ -1532,8 +1541,7 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Wine28c");
     verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
 
-    lr = RegDeleteValueW(hkey, NULL);
-    ok(lr == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", lr);
+    delete_value(hkey, NULL);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2037,8 +2045,7 @@ static void test_invalid_import_unicode(void)
     verify_reg_nonexist(hkey, "Wine28c");
     verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
 
-    lr = RegDeleteValueW(hkey, NULL);
-    ok(lr == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", lr);
+    delete_value(hkey, NULL);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
