@@ -3836,6 +3836,16 @@ static DWORD map_prot_no_write(DWORD prot)
     }
 }
 
+static DWORD map_prot_written(DWORD prot)
+{
+    switch (prot)
+    {
+    case PAGE_WRITECOPY: return PAGE_READWRITE;
+    case PAGE_EXECUTE_WRITECOPY: return PAGE_EXECUTE_READWRITE;
+    default: return prot;
+    }
+}
+
 static DWORD file_access_to_prot( DWORD access )
 {
     BOOL exec = access & FILE_MAP_EXECUTE;
@@ -4083,27 +4093,9 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
                 if (is_compatible_protection(alloc_prot, actual_prot))
                 {
                     /* win2k and XP don't support EXEC on file mappings */
-                    if (!ret && page_prot[k] == PAGE_EXECUTE)
+                    if (!ret && (page_prot[k] == PAGE_EXECUTE || page_prot[k] == PAGE_EXECUTE_WRITECOPY || view[j].prot == PAGE_EXECUTE_WRITECOPY))
                     {
                         ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE\n");
-                        continue;
-                    }
-                    /* NT4 and win2k don't support EXEC on file mappings */
-                    if (!ret && (page_prot[k] == PAGE_EXECUTE_READ || page_prot[k] == PAGE_EXECUTE_READWRITE))
-                    {
-                        ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE\n");
-                        continue;
-                    }
-                    /* Vista+ supports PAGE_EXECUTE_WRITECOPY, earlier versions don't */
-                    if (!ret && page_prot[k] == PAGE_EXECUTE_WRITECOPY)
-                    {
-                        ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE_WRITECOPY\n");
-                        continue;
-                    }
-                    /* win2k and XP don't support PAGE_EXECUTE_WRITECOPY views properly  */
-                    if (!ret && view[j].prot == PAGE_EXECUTE_WRITECOPY)
-                    {
-                        ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE_WRITECOPY view properly\n");
                         continue;
                     }
 
@@ -4164,6 +4156,53 @@ static void test_mapping( HANDLE hfile, DWORD sec_flags )
                 }
             }
 
+            if (!anon_mapping && is_compatible_protection(alloc_prot, PAGE_WRITECOPY))
+            {
+                ret = VirtualProtect(base, si.dwPageSize, PAGE_WRITECOPY, &old_prot);
+                ok(ret, "VirtualProtect error %d, map %#x, view %#x\n", GetLastError(), page_prot[i], view[j].prot);
+                if (ret) *(DWORD*)base = 0xdeadbeef;
+                ret = VirtualQuery(base, &info, sizeof(info));
+                ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
+                todo_wine
+                ok(info.Protect == PAGE_READWRITE, "VirtualProtect wrong prot, map %#x, view %#x got %#x\n",
+                   page_prot[i], view[j].prot, info.Protect );
+
+                prev_prot = info.Protect;
+                alloc_prot = info.AllocationProtect;
+
+                for (k = 0; k < sizeof(page_prot)/sizeof(page_prot[0]); k++)
+                {
+                    DWORD actual_prot = (sec_flags & SEC_IMAGE) ? map_prot_no_write(page_prot[k]) : page_prot[k];
+                    SetLastError(0xdeadbeef);
+                    old_prot = 0xdeadbeef;
+                    ret = VirtualProtect(base, si.dwPageSize, page_prot[k], &old_prot);
+                    if (is_compatible_protection(alloc_prot, actual_prot))
+                    {
+                        /* win2k and XP don't support EXEC on file mappings */
+                        if (!ret && (page_prot[k] == PAGE_EXECUTE || page_prot[k] == PAGE_EXECUTE_WRITECOPY || view[j].prot == PAGE_EXECUTE_WRITECOPY))
+                        {
+                            ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE\n");
+                            continue;
+                        }
+
+                        ok(ret, "VirtualProtect error %d, map %#x, view %#x, requested prot %#x\n", GetLastError(), page_prot[i], view[j].prot, page_prot[k]);
+                        ok(old_prot == prev_prot, "got %#x, expected %#x\n", old_prot, prev_prot);
+
+                        ret = VirtualQuery(base, &info, sizeof(info));
+                        ok(ret, "%d: VirtualQuery failed %d\n", j, GetLastError());
+                        todo_wine_if( map_prot_written( page_prot[k] ) != actual_prot )
+                        ok(info.Protect == map_prot_written( page_prot[k] ),
+                           "VirtualProtect wrong prot, map %#x, view %#x, requested prot %#x got %#x\n",
+                           page_prot[i], view[j].prot, page_prot[k], info.Protect );
+                        prev_prot = info.Protect;
+                    }
+                    else
+                    {
+                        ok(!ret, "VirtualProtect should fail, map %#x, view %#x, requested prot %#x\n", page_prot[i], view[j].prot, page_prot[k]);
+                        ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+                    }
+                }
+            }
             UnmapViewOfFile(base);
         }
 
