@@ -180,6 +180,15 @@ static void add_value_(unsigned line, HKEY hkey, const char *name, DWORD type,
     lok(err == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", err);
 }
 
+#define delete_value(k,n) delete_value_(__LINE__,k,n)
+static void delete_value_(unsigned line, const HKEY hkey, const char *name)
+{
+    LONG err;
+
+    err = RegDeleteValueA(hkey, name);
+    lok(err == ERROR_SUCCESS, "RegDeleteValueA failed: %d\n", err);
+}
+
 static void test_add(void)
 {
     HKEY hkey;
@@ -2058,8 +2067,7 @@ static void test_import(void)
     verify_reg_nonexist(hkey, "Wine57i");
     verify_reg(hkey, "Wine57j", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
-    err = RegDeleteValueW(hkey, NULL);
-    ok(err == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", err);
+    delete_value(hkey, NULL);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2087,8 +2095,7 @@ static void test_import(void)
     verify_reg_nonexist(hkey, "Wine58c");
     verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
 
-    err = RegDeleteValueW(hkey, NULL);
-    ok(err == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", err);
+    delete_value(hkey, NULL);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3542,8 +3549,7 @@ static void test_unicode_import(void)
     verify_reg_nonexist(hkey, "Wine57i");
     verify_reg(hkey, "Wine57j", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
-    err = RegDeleteValueW(hkey, NULL);
-    ok(err == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", err);
+    delete_value(hkey, NULL);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -3571,8 +3577,7 @@ static void test_unicode_import(void)
     verify_reg_nonexist(hkey, "Wine58c");
     verify_reg(hkey, NULL, REG_SZ, "Default value 3", 16, 0);
 
-    err = RegDeleteValueW(hkey, NULL);
-    ok(err == ERROR_SUCCESS, "RegDeleteValue failed: %u\n", err);
+    delete_value(hkey, NULL);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -4201,8 +4206,7 @@ static void test_import_31(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg(hkey, "", REG_SZ, "No newline", 11, 0);
 
-    err = RegDeleteValueW(hkey, NULL);
-    ok(err == ERROR_SUCCESS, "RegDeleteValue failed: %d\n", err);
+    delete_value(hkey, NULL);
 
     /* Test character validity at the start of the line */
     test_import_str("REGEDIT\r\n"
