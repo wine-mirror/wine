@@ -20,9 +20,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "stgprop.h"
+
 #define CHARS_IN_GUID 39
 
 typedef struct {
+    const GUID *fmtid;
+    DWORD pid;
     int colnameid;
     int pcsFlags;
     int fmt;
@@ -30,6 +34,7 @@ typedef struct {
 } shvheader;
 
 HRESULT SHELL32_GetColumnDetails(const shvheader *data, int column, SHELLDETAILS *details) DECLSPEC_HIDDEN;
+HRESULT shellfolder_map_column_to_scid(const shvheader *data, UINT column, SHCOLUMNID *scid) DECLSPEC_HIDDEN;
 
 #define GET_SHGDN_FOR(dwFlags)         ((DWORD)dwFlags & (DWORD)0x0000FF00)
 #define GET_SHGDN_RELATION(dwFlags)    ((DWORD)dwFlags & (DWORD)0x000000FF)

@@ -565,6 +565,21 @@ HRESULT SHELL32_GetColumnDetails(const shvheader *data, int column, SHELLDETAILS
     return S_OK;
 }
 
+HRESULT shellfolder_map_column_to_scid(const shvheader *header, UINT column, SHCOLUMNID *scid)
+{
+    if (header[column].fmtid == NULL)
+    {
+        FIXME("missing property id for column %u.\n", column);
+        memset(scid, 0, sizeof(*scid));
+        return E_NOTIMPL;
+    }
+
+    scid->fmtid = *header[column].fmtid;
+    scid->pid = header[column].pid;
+
+    return S_OK;
+}
+
 /***********************************************************************
  *  SHCreateLinks
  *

@@ -100,9 +100,10 @@ static inline ICPanelImpl *impl_from_IShellExecuteHookA(IShellExecuteHookA *ifac
 *   IShellFolder [ControlPanel] implementation
 */
 
-static const shvheader ControlPanelSFHeader[] = {
-    {IDS_SHV_COLUMN8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},/*FIXME*/
-    {IDS_SHV_COLUMN9, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 80},/*FIXME*/
+static const shvheader ControlPanelSFHeader[] =
+{
+    { &FMTID_Storage, PID_STG_NAME, IDS_SHV_COLUMN8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15 },/*FIXME*/
+    { NULL, 0, IDS_SHV_COLUMN9, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 80 },/*FIXME*/
 };
 
 #define CONROLPANELSHELLVIEWCOLUMNS 2

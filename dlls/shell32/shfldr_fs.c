@@ -182,12 +182,13 @@ static const IUnknownVtbl unkvt =
       IUnknown_fnRelease,
 };
 
-static const shvheader GenericSFHeader[] = {
-    {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
-    {IDS_SHV_COLUMN2, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
-    {IDS_SHV_COLUMN3, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
-    {IDS_SHV_COLUMN4, SHCOLSTATE_TYPE_DATE | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 12},
-    {IDS_SHV_COLUMN5, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 5}
+static const shvheader GenericSFHeader[] =
+{
+    { &FMTID_Storage, PID_STG_NAME,        IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT,  LVCFMT_RIGHT, 15 },
+    { &FMTID_Storage, PID_STG_SIZE,        IDS_SHV_COLUMN2, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT,  LVCFMT_RIGHT, 10 },
+    { &FMTID_Storage, PID_STG_STORAGETYPE, IDS_SHV_COLUMN3, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT,  LVCFMT_RIGHT, 10 },
+    { &FMTID_Storage, PID_STG_WRITETIME,   IDS_SHV_COLUMN4, SHCOLSTATE_TYPE_DATE | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 12 },
+    { &FMTID_Storage, PID_STG_ATTRIBUTES,  IDS_SHV_COLUMN5, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT,  LVCFMT_RIGHT, 5  },
 };
 
 #define GENERICSHELLVIEWCOLUMNS 5
@@ -1014,12 +1015,16 @@ IShellFolder_fnGetDetailsOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
 }
 
 static HRESULT WINAPI
-IShellFolder_fnMapColumnToSCID (IShellFolder2 * iface, UINT column,
-                                SHCOLUMNID * pscid)
+IShellFolder_fnMapColumnToSCID (IShellFolder2 *iface, UINT column, SHCOLUMNID *scid)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
-    FIXME ("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %p)\n", This, column, scid);
+
+    if (column >= GENERICSHELLVIEWCOLUMNS)
+        return E_INVALIDARG;
+
+    return shellfolder_map_column_to_scid(GenericSFHeader, column, scid);
 }
 
 static const IShellFolder2Vtbl sfvt =

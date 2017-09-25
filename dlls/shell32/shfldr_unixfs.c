@@ -1470,6 +1470,15 @@ static HRESULT WINAPI ShellFolder2_GetDetailsEx(IShellFolder2* iface,
 }
 
 #define SHELLVIEWCOLUMNS 7 
+static const shvheader unixfs_header[SHELLVIEWCOLUMNS] = {
+    { &FMTID_Storage, PID_STG_NAME, IDS_SHV_COLUMN1,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15 },
+    { &FMTID_Storage, PID_STG_SIZE, IDS_SHV_COLUMN2,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10 },
+    { &FMTID_Storage, PID_STG_STORAGETYPE, IDS_SHV_COLUMN3,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10 },
+    { &FMTID_Storage, PID_STG_WRITETIME, IDS_SHV_COLUMN4,  SHCOLSTATE_TYPE_DATE | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 12 },
+    { NULL, 0, IDS_SHV_COLUMN5,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 9  },
+    { NULL, 0, IDS_SHV_COLUMN10, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 7  },
+    { NULL, 0, IDS_SHV_COLUMN11, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 7  },
+};
 
 static HRESULT WINAPI ShellFolder2_GetDetailsOf(IShellFolder2* iface,
     LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS *psd)
@@ -1479,16 +1488,6 @@ static HRESULT WINAPI ShellFolder2_GetDetailsOf(IShellFolder2* iface,
     struct group *pGroup;
     struct stat statItem;
     HRESULT hr = S_OK;
-
-    static const shvheader unixfs_header[SHELLVIEWCOLUMNS] = {
-        {IDS_SHV_COLUMN1,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
-        {IDS_SHV_COLUMN2,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
-        {IDS_SHV_COLUMN3,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
-        {IDS_SHV_COLUMN4,  SHCOLSTATE_TYPE_DATE | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 12},
-        {IDS_SHV_COLUMN5,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 9},
-        {IDS_SHV_COLUMN10, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 7},
-        {IDS_SHV_COLUMN11, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 7}
-    };
 
     TRACE("(%p)->(%p %d %p)\n", This, pidl, iColumn, psd);
     
@@ -1549,12 +1548,16 @@ static HRESULT WINAPI ShellFolder2_GetDetailsOf(IShellFolder2* iface,
     return hr;
 }
 
-static HRESULT WINAPI ShellFolder2_MapColumnToSCID(IShellFolder2* iface, UINT column,
-    SHCOLUMNID *pscid)
+static HRESULT WINAPI ShellFolder2_MapColumnToSCID(IShellFolder2* iface, UINT column, SHCOLUMNID *scid)
 {
     UnixFolder *This = impl_from_IShellFolder2(iface);
-    FIXME("(%p)->(%u %p): stub\n", This, column, pscid);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %p)\n", This, column, scid);
+
+    if (column >= SHELLVIEWCOLUMNS)
+        return E_INVALIDARG;
+
+    return shellfolder_map_column_to_scid(unixfs_header, column, scid);
 }
 
 static const IShellFolder2Vtbl ShellFolder2Vtbl = {

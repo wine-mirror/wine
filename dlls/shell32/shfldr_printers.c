@@ -55,12 +55,12 @@ static inline IPrintersFolderImpl *impl_from_IPersistFolder2(IPersistFolder2 *if
 }
 
 static const shvheader printers_header[] = {
-    { IDS_SHV_COLUMN8,      SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 20 },
-    { IDS_SHV_COL_DOCS,     SHCOLSTATE_TYPE_INT | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 12 },
-    { IDS_SHV_COL_STATUS,   SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 12 },
-    { IDS_SHV_COLUMN9,      SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 30 },
-    { IDS_SHV_COL_LOCATION, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 20 },
-    { IDS_SHV_COL_MODEL,    SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 20 }
+    { &FMTID_Storage, PID_STG_NAME, IDS_SHV_COLUMN8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 20 },
+    { NULL, 0, IDS_SHV_COL_DOCS, SHCOLSTATE_TYPE_INT | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 12 },
+    { NULL, 0, IDS_SHV_COL_STATUS, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 12 },
+    { &FMTID_SummaryInformation, PIDSI_COMMENTS, IDS_SHV_COLUMN9, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 30 },
+    { NULL, 0, IDS_SHV_COL_LOCATION, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 20 },
+    { NULL, 0, IDS_SHV_COL_MODEL, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 20 }
 };
 
 #define PRINTERS_FOLDER_COL_NUM sizeof(printers_header)/sizeof(shvheader)
@@ -316,12 +316,16 @@ static HRESULT WINAPI IShellFolder_Printers_fnGetDetailsOf (IShellFolder2 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IShellFolder_Printers_fnMapColumnToSCID (
-               IShellFolder2 * iface, UINT column, SHCOLUMNID * pscid)
+static HRESULT WINAPI IShellFolder_Printers_fnMapColumnToSCID (IShellFolder2 *iface, UINT column, SHCOLUMNID *scid)
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
-    FIXME ("(%p)->(%u %p) stub\n", This, column, pscid);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %p)\n", This, column, scid);
+
+    if (column >= PRINTERS_FOLDER_COL_NUM)
+        return E_INVALIDARG;
+
+    return shellfolder_map_column_to_scid(printers_header, column, scid);
 }
 
 static const IShellFolder2Vtbl vtbl_ShellFolder2 =
