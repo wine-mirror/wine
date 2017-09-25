@@ -104,6 +104,7 @@ static BOOL import_reg(unsigned line, const char *contents, BOOL unicode)
 #define TODO_REG_TYPE    (0x0001u)
 #define TODO_REG_SIZE    (0x0002u)
 #define TODO_REG_DATA    (0x0004u)
+#define TODO_REG_COMPARE (0x0008u)
 
 /* verify_reg() adapted from programs/reg/tests/reg.c */
 #define verify_reg(k,v,t,d,s,todo) verify_reg_(__LINE__,k,v,t,d,s,todo)
@@ -3326,8 +3327,8 @@ static void test_value_deletion_unicode(void)
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
-#define compare_export(f,e) compare_export_(__LINE__,f,e)
-static BOOL compare_export_(unsigned line, const char *filename, const char *expected)
+#define compare_export(f,e,todo) compare_export_(__LINE__,f,e,todo)
+static BOOL compare_export_(unsigned line, const char *filename, const char *expected, DWORD todo)
 {
     FILE *fp;
     long file_size;
@@ -3355,7 +3356,8 @@ static BOOL compare_export_(unsigned line, const char *filename, const char *exp
     if (!wstr) goto exit;
     MultiByteToWideChar(CP_UTF8, 0, expected, -1, wstr, len);
 
-    lok(!lstrcmpW(fbuf, wstr), "export data does not match expected data\n");
+    todo_wine_if (todo & TODO_REG_COMPARE)
+        lok(!lstrcmpW(fbuf, wstr), "export data does not match expected data\n");
     ret = TRUE;
 
 exit:
@@ -3410,6 +3412,18 @@ static void test_export(void)
         "@=dword:12345678\r\n"
         "\"43981\"=hex(abcd):56,61,6c,75,65,00\r\n\r\n";
 
+    const char *key_order_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1]\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2]\r\n\r\n";
+
+    const char *value_order_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+        "\"Value 2\"=\"I was added first!\"\r\n"
+        "\"Value 1\"=\"I was added second!\"\r\n\r\n";
+
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
 
@@ -3417,7 +3431,7 @@ static void test_export(void)
     add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
-    ok(compare_export("file.reg", empty_key_test), "compare_export() failed\n");
+    ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
     lr = DeleteFileA("file.reg");
     ok(lr, "DeleteFile failed: %u\n", GetLastError());
@@ -3428,7 +3442,7 @@ static void test_export(void)
     add_value(hkey, "String", REG_SZ, "Your text here...", 18);
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
-    ok(compare_export("file.reg", simple_test), "compare_export() failed\n");
+    ok(compare_export("file.reg", simple_test, 0), "compare_export() failed\n");
 
     lr = DeleteFileA("file.reg");
     ok(lr, "DeleteFile failed: %u\n", GetLastError());
@@ -3468,13 +3482,45 @@ static void test_export(void)
     RegCloseKey(hkey);
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
-    ok(compare_export("file.reg", complex_test), "compare_export() failed\n");
+    ok(compare_export("file.reg", complex_test, 0), "compare_export() failed\n");
 
     lr = DeleteFileA("file.reg");
     ok(lr, "DeleteFile failed: %u\n", GetLastError());
 
     lr = delete_tree(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS, "delete_tree() failed: %d\n", lr);
+
+    /* Test the export order of registry keys */
+    add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
+    add_key(hkey, "Subkey2", &subkey);
+    RegCloseKey(subkey);
+    add_key(hkey, "Subkey1", &subkey);
+    RegCloseKey(subkey);
+
+    run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
+    ok(compare_export("file.reg", key_order_test, 0), "compare_export() failed\n");
+
+    lr = DeleteFileA("file.reg");
+    ok(lr, "DeleteFile failed: %u\n", GetLastError());
+
+    delete_key(hkey, "Subkey1");
+    delete_key(hkey, "Subkey2");
+
+    /* Test the export order of registry values. Windows exports registry values
+     * in order of creation; Wine uses alphabetical order.
+     */
+    add_value(hkey, "Value 2", REG_SZ, "I was added first!", 19);
+    add_value(hkey, "Value 1", REG_SZ, "I was added second!", 20);
+
+    RegCloseKey(hkey);
+
+    run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
+    ok(compare_export("file.reg", value_order_test, TODO_REG_COMPARE), "compare_export() failed\n");
+
+    lr = DeleteFileA("file.reg");
+    ok(lr, "DeleteFile failed: %u\n", GetLastError());
+
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 START_TEST(regedit)
