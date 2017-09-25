@@ -1270,7 +1270,39 @@ static HRESULT WINAPI IShellLinkA_fnGetPath(IShellLinkA *iface, LPSTR pszFile, I
     else
         res = S_FALSE;
 
-    if (pfd) FIXME("(%p): WIN32_FIND_DATA is not yet filled.\n", This);
+    if (pfd)
+    {
+        memset(pfd, 0, sizeof(*pfd));
+
+        if (res == S_OK)
+        {
+            char path[MAX_PATH];
+            WIN32_FILE_ATTRIBUTE_DATA fad;
+
+            WideCharToMultiByte(CP_ACP, 0, This->sPath, -1, path, MAX_PATH, NULL, NULL);
+
+            if (GetFileAttributesExW(This->sPath, GetFileExInfoStandard, &fad))
+            {
+                pfd->dwFileAttributes = fad.dwFileAttributes;
+                pfd->ftCreationTime = fad.ftCreationTime;
+                pfd->ftLastAccessTime = fad.ftLastAccessTime;
+                pfd->ftLastWriteTime = fad.ftLastWriteTime;
+                pfd->nFileSizeHigh = fad.nFileSizeHigh;
+                pfd->nFileSizeLow = fad.nFileSizeLow;
+            }
+
+            lstrcpyA(pfd->cFileName, PathFindFileNameA(path));
+
+            if (GetShortPathNameA(path, path, MAX_PATH))
+            {
+                lstrcpyA(pfd->cAlternateFileName, PathFindFileNameA(path));
+            }
+        }
+
+        TRACE("attr 0x%08x size 0x%08x%08x name %s shortname %s\n", pfd->dwFileAttributes,
+            pfd->nFileSizeHigh, pfd->nFileSizeLow, wine_dbgstr_a(pfd->cFileName),
+            wine_dbgstr_a(pfd->cAlternateFileName));
+    }
 
     return res;
 }
@@ -1657,7 +1689,37 @@ static HRESULT WINAPI IShellLinkW_fnGetPath(IShellLinkW * iface, LPWSTR pszFile,
     else
         res = S_FALSE;
 
-    if (pfd) FIXME("(%p): WIN32_FIND_DATA is not yet filled.\n", This);
+    if (pfd)
+    {
+        memset(pfd, 0, sizeof(*pfd));
+
+        if (res == S_OK)
+        {
+            WCHAR path[MAX_PATH];
+            WIN32_FILE_ATTRIBUTE_DATA fad;
+
+            if (GetFileAttributesExW(This->sPath, GetFileExInfoStandard, &fad))
+            {
+                pfd->dwFileAttributes = fad.dwFileAttributes;
+                pfd->ftCreationTime = fad.ftCreationTime;
+                pfd->ftLastAccessTime = fad.ftLastAccessTime;
+                pfd->ftLastWriteTime = fad.ftLastWriteTime;
+                pfd->nFileSizeHigh = fad.nFileSizeHigh;
+                pfd->nFileSizeLow = fad.nFileSizeLow;
+            }
+
+            lstrcpyW(pfd->cFileName, PathFindFileNameW(This->sPath));
+
+            if (GetShortPathNameW(This->sPath, path, MAX_PATH))
+            {
+                lstrcpyW(pfd->cAlternateFileName, PathFindFileNameW(path));
+            }
+        }
+
+        TRACE("attr 0x%08x size 0x%08x%08x name %s shortname %s\n", pfd->dwFileAttributes,
+            pfd->nFileSizeHigh, pfd->nFileSizeLow, wine_dbgstr_w(pfd->cFileName),
+            wine_dbgstr_w(pfd->cAlternateFileName));
+    }
 
     return res;
 }

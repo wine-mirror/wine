@@ -105,6 +105,7 @@ static void test_get_set(void)
     IShellLinkW *slW = NULL;
     char mypath[MAX_PATH];
     char buffer[INFOTIPSIZE];
+    WIN32_FIND_DATAA finddata;
     LPITEMIDLIST pidl, tmp_pidl;
     const char * str;
     int i;
@@ -160,6 +161,14 @@ static void test_get_set(void)
     ok(r == S_FALSE || broken(r == S_OK) /* NT4/W2K */, "GetPath failed (0x%08x)\n", r);
     ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
 
+    strcpy(buffer,"garbage");
+    memset(&finddata, 0xaa, sizeof(finddata));
+    r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), &finddata, SLGP_RAWPATH);
+    ok(r == S_FALSE || broken(r == S_OK) /* NT4/W2K */, "GetPath failed (0x%08x)\n", r);
+    ok(*buffer=='\0', "GetPath returned '%s'\n", buffer);
+    ok(finddata.dwFileAttributes == 0, "unexpected attributes %x\n", finddata.dwFileAttributes);
+    ok(finddata.cFileName[0] == 0, "unexpected filename '%s'\n", finddata.cFileName);
+
     CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                      &IID_IShellLinkW, (LPVOID*)&slW);
     if (!slW /* Win9x */ || !pGetLongPathNameA /* NT4 */)
@@ -190,6 +199,14 @@ static void test_get_set(void)
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
     ok(r == S_OK, "GetPath failed (0x%08x)\n", r);
     ok(lstrcmpiA(buffer,str)==0, "GetPath returned '%s'\n", buffer);
+
+    strcpy(buffer,"garbage");
+    memset(&finddata, 0xaa, sizeof(finddata));
+    r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), &finddata, SLGP_RAWPATH);
+    ok(r == S_OK, "GetPath failed (0x%08x)\n", r);
+    ok(lstrcmpiA(buffer,str)==0, "GetPath returned '%s'\n", buffer);
+    ok(finddata.dwFileAttributes == 0, "unexpected attributes %x\n", finddata.dwFileAttributes);
+    ok(lstrcmpiA(finddata.cFileName, "file") == 0, "unexpected filename '%s'\n", finddata.cFileName);
 
     /* Get some real path to play with */
     GetWindowsDirectoryA( mypath, sizeof(mypath)-12 );
@@ -241,6 +258,14 @@ static void test_get_set(void)
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
         ok(r == S_OK, "GetPath failed (0x%08x)\n", r);
         ok(lstrcmpiA(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
+
+        strcpy(buffer,"garbage");
+        memset(&finddata, 0xaa, sizeof(finddata));
+        r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), &finddata, SLGP_RAWPATH);
+        ok(r == S_OK, "GetPath failed (0x%08x)\n", r);
+        ok(lstrcmpiA(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
+        ok(finddata.dwFileAttributes != 0, "unexpected attributes %x\n", finddata.dwFileAttributes);
+        ok(lstrcmpiA(finddata.cFileName, "regedit.exe") == 0, "unexpected filename '%s'\n", finddata.cFileName);
     }
 
     if (pSHGetFolderLocation)
@@ -257,6 +282,14 @@ static void test_get_set(void)
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
         ok(r == S_FALSE, "GetPath failed (0x%08x)\n", r);
         ok(buffer[0] == 0, "GetPath returned '%s'\n", buffer);
+
+        strcpy(buffer,"garbage");
+        memset(&finddata, 0xaa, sizeof(finddata));
+        r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), &finddata, SLGP_RAWPATH);
+        ok(r == S_FALSE, "GetPath failed (0x%08x)\n", r);
+        ok(buffer[0] == 0, "GetPath returned '%s'\n", buffer);
+        ok(finddata.dwFileAttributes == 0, "unexpected attributes %x\n", finddata.dwFileAttributes);
+        ok(finddata.cFileName[0] == 0, "unexpected filename '%s'\n", finddata.cFileName);
 
         pILFree(pidl_controls);
     }
