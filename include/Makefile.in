@@ -620,6 +620,7 @@ HEADER_SRCS = \
 	sqlucode.h \
 	srrestoreptapi.h \
 	sspi.h \
+	stgprop.h \
 	sti.h \
 	storage.h \
 	strsafe.h \
