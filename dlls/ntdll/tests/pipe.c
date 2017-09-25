@@ -73,6 +73,7 @@ static NTSTATUS (WINAPI *pNtCreateNamedPipeFile) (PHANDLE handle, ULONG access,
                                         ULONG inbound_quota, ULONG outbound_quota,
                                         PLARGE_INTEGER timeout);
 static NTSTATUS (WINAPI *pNtQueryInformationFile) (IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID FileInformation, IN ULONG Length, IN FILE_INFORMATION_CLASS FileInformationClass);
+static NTSTATUS (WINAPI *pNtQueryVolumeInformationFile)(HANDLE handle, PIO_STATUS_BLOCK io, void *buffer, ULONG length, FS_INFORMATION_CLASS info_class);
 static NTSTATUS (WINAPI *pNtSetInformationFile) (HANDLE handle, PIO_STATUS_BLOCK io, PVOID ptr, ULONG len, FILE_INFORMATION_CLASS class);
 static NTSTATUS (WINAPI *pNtCancelIoFile) (HANDLE hFile, PIO_STATUS_BLOCK io_status);
 static NTSTATUS (WINAPI *pNtCancelIoFileEx) (HANDLE hFile, IO_STATUS_BLOCK *iosb, IO_STATUS_BLOCK *io_status);
@@ -94,6 +95,7 @@ static BOOL init_func_ptrs(void)
     loadfunc(NtFsControlFile)
     loadfunc(NtCreateNamedPipeFile)
     loadfunc(NtQueryInformationFile)
+    loadfunc(NtQueryVolumeInformationFile)
     loadfunc(NtSetInformationFile)
     loadfunc(NtCancelIoFile)
     loadfunc(NtCancelIoFileEx)
@@ -1100,6 +1102,43 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     CloseHandle(event);
 }
 
+static void test_volume_info(void)
+{
+    FILE_FS_DEVICE_INFORMATION *device_info;
+    IO_STATUS_BLOCK iosb;
+    HANDLE read, write;
+    char buffer[128];
+    NTSTATUS status;
+
+    if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_INBOUND,
+                           PIPE_TYPE_MESSAGE, 4096 )) return;
+
+    memset( buffer, 0xaa, sizeof(buffer) );
+    status = pNtQueryVolumeInformationFile( read, &iosb, buffer, sizeof(buffer), FileFsDeviceInformation );
+    todo_wine {
+    ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %x\n", status );
+    ok( iosb.Information == sizeof(*device_info), "Information = %lu\n", iosb.Information );
+    device_info = (FILE_FS_DEVICE_INFORMATION*)buffer;
+    ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %u\n", device_info->DeviceType );
+    ok( !(device_info->Characteristics & ~FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL),
+        "Characteristics = %x\n", device_info->Characteristics );
+    }
+
+    memset( buffer, 0xaa, sizeof(buffer) );
+    status = pNtQueryVolumeInformationFile( write, &iosb, buffer, sizeof(buffer), FileFsDeviceInformation );
+    todo_wine {
+    ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %x\n", status );
+    ok( iosb.Information == sizeof(*device_info), "Information = %lu\n", iosb.Information );
+    device_info = (FILE_FS_DEVICE_INFORMATION*)buffer;
+    ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %u\n", device_info->DeviceType );
+    ok( !(device_info->Characteristics & ~FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL),
+        "Characteristics = %x\n", device_info->Characteristics );
+    }
+
+    CloseHandle( read );
+    CloseHandle( write );
+}
+
 START_TEST(pipe)
 {
     if (!init_func_ptrs())
@@ -1141,4 +1180,6 @@ START_TEST(pipe)
     read_pipe_test(PIPE_ACCESS_OUTBOUND, PIPE_TYPE_MESSAGE);
     trace("starting message read in message mode server -> client\n");
     read_pipe_test(PIPE_ACCESS_OUTBOUND, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
+
+    test_volume_info();
 }
