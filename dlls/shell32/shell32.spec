@@ -436,9 +436,9 @@
 @ stub SheShortenPathW
 @ stdcall ShellAboutA(long str str long)
 @ stdcall ShellAboutW(long wstr wstr long)
-@ stub ShellExec_RunDLL
-@ stub ShellExec_RunDLLA
-@ stub ShellExec_RunDLLW
+@ stdcall ShellExec_RunDLL(long long str long) ShellExec_RunDLLA
+@ stdcall ShellExec_RunDLLA(long long str long)
+@ stdcall ShellExec_RunDLLW(long long wstr long)
 @ stdcall ShellExecuteA(long str str str str long)
 @ stdcall ShellExecuteEx (long) ShellExecuteExA
 @ stdcall ShellExecuteExA (long)
