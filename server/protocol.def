@@ -1744,7 +1744,7 @@ enum char_info_mode
 
 /* Get a range of committed pages in a file mapping */
 @REQ(get_mapping_committed_range)
-    obj_handle_t handle;        /* handle to the mapping */
+    client_ptr_t base;          /* view base address */
     file_pos_t   offset;        /* starting offset (page-aligned, in bytes) */
 @REPLY
     mem_size_t   size;          /* size of range starting at offset (page-aligned, in bytes) */
@@ -1754,7 +1754,7 @@ enum char_info_mode
 
 /* Add a range to the committed pages in a file mapping */
 @REQ(add_mapping_committed_range)
-    obj_handle_t handle;        /* handle to the mapping */
+    client_ptr_t base;          /* view base address */
     file_pos_t   offset;        /* starting offset (page-aligned, in bytes) */
     mem_size_t   size;          /* size to set (page-aligned, in bytes) or 0 if only retrieving */
 @END

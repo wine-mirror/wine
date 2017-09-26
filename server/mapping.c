@@ -85,6 +85,7 @@ static const struct object_ops ranges_ops =
 struct memory_view
 {
     struct list     entry;           /* entry in per-process view list */
+    struct ranges  *committed;       /* list of committed ranges in this mapping */
     unsigned int    flags;           /* SEC_* flags */
     client_ptr_t    base;            /* view base address (in process addr space) */
     mem_size_t      size;            /* view size */
@@ -258,6 +259,7 @@ static struct memory_view *find_mapped_view( struct process *process, client_ptr
 
 static void free_memory_view( struct memory_view *view )
 {
+    if (view->committed) release_object( view->committed );
     list_remove( &view->entry );
     free( view );
 }
@@ -297,13 +299,24 @@ static inline void get_section_sizes( const IMAGE_SECTION_HEADER *sec, size_t *m
 }
 
 /* add a range to the committed list */
-static void add_committed_range( struct mapping *mapping, file_pos_t start, file_pos_t end )
+static void add_committed_range( struct memory_view *view, file_pos_t start, file_pos_t end )
 {
     unsigned int i, j;
-    struct ranges *committed = mapping->committed;
+    struct ranges *committed = view->committed;
     struct range *ranges;
 
+    if ((start & page_mask) || (end & page_mask) ||
+        start >= view->size || end >= view->size ||
+        start >= end)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
     if (!committed) return;  /* everything committed already */
+
+    start += view->start;
+    end += view->start;
 
     for (i = 0, ranges = committed->ranges; i < committed->count; i++)
     {
@@ -344,31 +357,36 @@ static void add_committed_range( struct mapping *mapping, file_pos_t start, file
 }
 
 /* find the range containing start and return whether it's committed */
-static int find_committed_range( struct mapping *mapping, file_pos_t start, mem_size_t *size )
+static int find_committed_range( struct memory_view *view, file_pos_t start, mem_size_t *size )
 {
     unsigned int i;
-    struct ranges *committed = mapping->committed;
+    struct ranges *committed = view->committed;
     struct range *ranges;
 
+    if ((start & page_mask) || start >= view->size)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return 0;
+    }
     if (!committed)  /* everything is committed */
     {
-        *size = mapping->size - start;
+        *size = view->size - start;
         return 1;
     }
     for (i = 0, ranges = committed->ranges; i < committed->count; i++)
     {
-        if (ranges[i].start > start)
+        if (ranges[i].start > view->start + start)
         {
-            *size = ranges[i].start - start;
+            *size = min( ranges[i].start, view->start + view->size ) - (view->start + start);
             return 0;
         }
-        if (ranges[i].end > start)
+        if (ranges[i].end > view->start + start)
         {
-            *size = ranges[i].end - start;
+            *size = min( ranges[i].end, view->start + view->size ) - (view->start + start);
             return 1;
         }
     }
-    *size = mapping->size - start;
+    *size = view->size - start;
     return 0;
 }
 
@@ -907,6 +925,7 @@ DECL_HANDLER(map_view)
         view->size      = req->size;
         view->start     = req->start;
         view->flags     = mapping->flags;
+        view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
         list_add_tail( &current->process->views, &view->entry );
     }
 
@@ -925,35 +944,15 @@ DECL_HANDLER(unmap_view)
 /* get a range of committed pages in a file mapping */
 DECL_HANDLER(get_mapping_committed_range)
 {
-    struct mapping *mapping;
+    struct memory_view *view = find_mapped_view( current->process, req->base );
 
-    if ((mapping = get_mapping_obj( current->process, req->handle, 0 )))
-    {
-        if (!(req->offset & page_mask) && req->offset < mapping->size)
-            reply->committed = find_committed_range( mapping, req->offset, &reply->size );
-        else
-            set_error( STATUS_INVALID_PARAMETER );
-
-        release_object( mapping );
-    }
+    if (view) reply->committed = find_committed_range( view, req->offset, &reply->size );
 }
 
 /* add a range to the committed pages in a file mapping */
 DECL_HANDLER(add_mapping_committed_range)
 {
-    struct mapping *mapping;
+    struct memory_view *view = find_mapped_view( current->process, req->base );
 
-    if ((mapping = get_mapping_obj( current->process, req->handle, 0 )))
-    {
-        if (!(req->size & page_mask) &&
-            !(req->offset & page_mask) &&
-            req->offset < mapping->size &&
-            req->size > 0 &&
-            req->size <= mapping->size - req->offset)
-            add_committed_range( mapping, req->offset, req->offset + req->size );
-        else
-            set_error( STATUS_INVALID_PARAMETER );
-
-        release_object( mapping );
-    }
+    if (view) add_committed_range( view, req->offset, req->offset + req->size );
 }

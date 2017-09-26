@@ -2259,7 +2259,7 @@ static void dump_unmap_view_request( const struct unmap_view_request *req )
 
 static void dump_get_mapping_committed_range_request( const struct get_mapping_committed_range_request *req )
 {
-    fprintf( stderr, " handle=%04x", req->handle );
+    dump_uint64( " base=", &req->base );
     dump_uint64( ", offset=", &req->offset );
 }
 
@@ -2271,7 +2271,7 @@ static void dump_get_mapping_committed_range_reply( const struct get_mapping_com
 
 static void dump_add_mapping_committed_range_request( const struct add_mapping_committed_range_request *req )
 {
-    fprintf( stderr, " handle=%04x", req->handle );
+    dump_uint64( " base=", &req->base );
     dump_uint64( ", offset=", &req->offset );
     dump_uint64( ", size=", &req->size );
 }

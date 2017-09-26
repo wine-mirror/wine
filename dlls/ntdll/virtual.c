@@ -1208,7 +1208,7 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, BYTE *vpro
         SIZE_T ret = 0;
         SERVER_START_REQ( get_mapping_committed_range )
         {
-            req->handle = wine_server_obj_handle( view->mapping );
+            req->base   = wine_server_client_ptr( view->base );
             req->offset = start << page_shift;
             if (!wine_server_call( req ))
             {
@@ -2320,7 +2320,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         {
             SERVER_START_REQ( add_mapping_committed_range )
             {
-                req->handle = wine_server_obj_handle( view->mapping );
+                req->base   = wine_server_client_ptr( view->base );
                 req->offset = (char *)base - (char *)view->base;
                 req->size   = size;
                 wine_server_call( req );

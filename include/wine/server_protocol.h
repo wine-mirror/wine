@@ -2261,7 +2261,8 @@ struct unmap_view_reply
 struct get_mapping_committed_range_request
 {
     struct request_header __header;
-    obj_handle_t handle;
+    char __pad_12[4];
+    client_ptr_t base;
     file_pos_t   offset;
 };
 struct get_mapping_committed_range_reply
@@ -2277,7 +2278,8 @@ struct get_mapping_committed_range_reply
 struct add_mapping_committed_range_request
 {
     struct request_header __header;
-    obj_handle_t handle;
+    char __pad_12[4];
+    client_ptr_t base;
     file_pos_t   offset;
     mem_size_t   size;
 };
@@ -6444,6 +6446,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 538
+#define SERVER_PROTOCOL_VERSION 539
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
