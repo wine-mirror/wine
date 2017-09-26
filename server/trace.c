@@ -2235,7 +2235,6 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *re
 {
     dump_uint64( " size=", &req->size );
     fprintf( stderr, ", flags=%08x", req->flags );
-    fprintf( stderr, ", mapping=%04x", req->mapping );
     fprintf( stderr, ", shared_file=%04x", req->shared_file );
     dump_varargs_pe_image_info( ", image=", cur_size );
 }

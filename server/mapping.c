@@ -839,7 +839,6 @@ DECL_HANDLER(open_mapping)
 DECL_HANDLER(get_mapping_info)
 {
     struct mapping *mapping;
-    struct fd *fd;
 
     if (!(mapping = get_mapping_obj( current->process, req->handle, req->access ))) return;
 
@@ -862,19 +861,9 @@ DECL_HANDLER(get_mapping_info)
         return;
     }
 
-    if ((fd = get_obj_fd( &mapping->obj )))
-    {
-        if (!is_fd_removable(fd)) reply->mapping = alloc_handle( current->process, mapping, 0, 0 );
-        release_object( fd );
-    }
     if (mapping->shared_file)
-    {
-        if (!(reply->shared_file = alloc_handle( current->process, mapping->shared_file,
-                                                 GENERIC_READ|GENERIC_WRITE, 0 )))
-        {
-            if (reply->mapping) close_handle( current->process, reply->mapping );
-        }
-    }
+        reply->shared_file = alloc_handle( current->process, mapping->shared_file,
+                                           GENERIC_READ|GENERIC_WRITE, 0 );
     release_object( mapping );
 }
 

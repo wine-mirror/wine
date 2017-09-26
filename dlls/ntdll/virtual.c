@@ -70,7 +70,6 @@ struct file_view
     struct wine_rb_entry entry;  /* entry in global view tree */
     void         *base;          /* base address */
     size_t        size;          /* size in bytes */
-    HANDLE        mapping;       /* handle to the file mapping */
     unsigned int  protect;       /* protection for all pages at allocation time and SEC_* flags */
 };
 
@@ -328,11 +327,11 @@ static void VIRTUAL_DumpView( struct file_view *view )
     if (view->protect & VPROT_SYSTEM)
         TRACE( " (builtin image)\n" );
     else if (view->protect & SEC_IMAGE)
-        TRACE( " (image) %p\n", view->mapping );
+        TRACE( " (image)\n" );
     else if (view->protect & SEC_FILE)
-        TRACE( " (file) %p\n", view->mapping );
+        TRACE( " (file)\n" );
     else if (view->protect & (SEC_RESERVE | SEC_COMMIT))
-        TRACE( " (anonymous) %p\n", view->mapping );
+        TRACE( " (anonymous)\n" );
     else
         TRACE( " (valloc)\n");
 
@@ -684,7 +683,6 @@ static void delete_view( struct file_view *view ) /* [in] View */
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
     set_page_vprot( view->base, view->size, 0 );
     wine_rb_remove( &views_tree, &view->entry );
-    if (view->mapping) close_handle( view->mapping );
     *(struct file_view **)view = next_free_view;
     next_free_view = view;
 }
@@ -727,7 +725,6 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
 
     view->base    = base;
     view->size    = size;
-    view->mapping = 0;
     view->protect = vprot;
     set_page_vprot( base, size, vprot );
 
@@ -1311,7 +1308,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
  * Map an executable (PE format) image into memory.
  */
 static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *base, SIZE_T total_size,
-                           SIZE_T mask, SIZE_T header_size, int shared_fd, HANDLE dup_mapping, PVOID *addr_ptr )
+                           SIZE_T mask, SIZE_T header_size, int shared_fd, BOOL removable, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -1354,7 +1351,7 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
     if (!st.st_size) goto error;
     header_size = min( header_size, st.st_size );
     if (map_file_into_view( view, fd, 0, header_size, 0, VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
-                            !dup_mapping ) != STATUS_SUCCESS) goto error;
+                            removable ) != STATUS_SUCCESS) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
     header_end = ptr + ROUND_SIZE( 0, header_size );
@@ -1379,7 +1376,7 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
         /* in that case Windows simply maps in the whole file */
 
         if (map_file_into_view( view, fd, 0, total_size, 0, VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
-                                !dup_mapping ) != STATUS_SUCCESS) goto error;
+                                removable ) != STATUS_SUCCESS) goto error;
 
         /* check that all sections are loaded at the right offset */
         if (nt->OptionalHeader.FileAlignment != nt->OptionalHeader.SectionAlignment) goto error;
@@ -1470,7 +1467,7 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
             end < file_start ||
             map_file_into_view( view, fd, sec->VirtualAddress, file_size, file_start,
                                 VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
-                                !dup_mapping ) != STATUS_SUCCESS)
+                                removable ) != STATUS_SUCCESS)
         {
             ERR_(module)( "Could not map section %.8s, file probably truncated\n", sec->Name );
             goto error;
@@ -1517,7 +1514,6 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
     }
 
  done:
-    view->mapping = dup_mapping;
 
     SERVER_START_REQ( map_view )
     {
@@ -1544,7 +1540,6 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
  error:
     if (view) delete_view( view );
     server_leave_uninterrupted_section( &csVirtual, &sigset );
-    if (dup_mapping) close_handle( dup_mapping );
     return status;
 }
 
@@ -2816,7 +2811,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     unsigned int vprot, sec_flags;
     struct file_view *view;
     pe_image_info_t image_info;
-    HANDLE dup_mapping, shared_file;
+    HANDLE shared_file;
     LARGE_INTEGER offset;
     sigset_t sigset;
 
@@ -2897,7 +2892,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         res = wine_server_call( req );
         sec_flags   = reply->flags;
         full_size   = reply->size;
-        dup_mapping = wine_server_ptr_handle( reply->mapping );
         shared_file = wine_server_ptr_handle( reply->shared_file );
     }
     SERVER_END_REQ;
@@ -2925,14 +2919,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
                                            &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
             res = map_image( handle, access, unix_handle, base, size, mask, image_info.header_size,
-                             shared_fd, dup_mapping, addr_ptr );
+                             shared_fd, needs_close, addr_ptr );
             if (shared_needs_close) close( shared_fd );
             close_handle( shared_file );
         }
         else
         {
             res = map_image( handle, access, unix_handle, base, size, mask, image_info.header_size,
-                             -1, dup_mapping, addr_ptr );
+                             -1, needs_close, addr_ptr );
         }
         if (needs_close) close( unix_handle );
         if (res >= 0) *size_ptr = size;
@@ -2981,7 +2975,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     TRACE("handle=%p size=%lx offset=%x%08x\n",
           handle, size, offset.u.HighPart, offset.u.LowPart );
 
-    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, !dup_mapping );
+    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, needs_close );
     if (res == STATUS_SUCCESS)
     {
         SERVER_START_REQ( map_view )
@@ -3000,8 +2994,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     {
         *addr_ptr = view->base;
         *size_ptr = size;
-        view->mapping = dup_mapping;
-        dup_mapping = 0;  /* don't close it */
         VIRTUAL_DEBUG_DUMP_VIEW( view );
     }
     else
@@ -3014,7 +3006,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
 done:
-    if (dup_mapping) close_handle( dup_mapping );
     if (needs_close) close( unix_handle );
     return res;
 }

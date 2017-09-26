@@ -2218,10 +2218,8 @@ struct get_mapping_info_reply
     struct reply_header __header;
     mem_size_t   size;
     unsigned int flags;
-    obj_handle_t mapping;
     obj_handle_t shared_file;
     /* VARARG(image,pe_image_info); */
-    char __pad_28[4];
 };
 
 
@@ -6461,6 +6459,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 541
+#define SERVER_PROTOCOL_VERSION 542
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

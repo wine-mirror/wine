@@ -1717,7 +1717,6 @@ enum char_info_mode
 @REPLY
     mem_size_t   size;          /* mapping size */
     unsigned int flags;         /* SEC_* flags */
-    obj_handle_t mapping;       /* duplicate mapping handle unless removable */
     obj_handle_t shared_file;   /* shared mapping file handle */
     VARARG(image,pe_image_info);/* image info for SEC_IMAGE mappings */
 @END

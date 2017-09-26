@@ -1009,15 +1009,12 @@ static void test_MapViewOfFile(void)
 
     SetLastError(0xdeadbeef);
     map2 = OpenFileMappingA(FILE_MAP_READ, FALSE, name);
-    todo_wine
     ok( map2 == 0, "OpenFileMappingA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "OpenFileMappingA set error %d\n", GetLastError() );
     if (map2) CloseHandle(map2); /* FIXME: remove once Wine is fixed */
     SetLastError(0xdeadbeef);
     mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, MAPPING_SIZE, name);
     ok( mapping != 0, "CreateFileMappingA failed\n" );
-    todo_wine
     ok( GetLastError() == ERROR_SUCCESS, "CreateFileMappingA set error %d\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ret = CloseHandle(mapping);
@@ -1098,15 +1095,12 @@ static void test_MapViewOfFile(void)
 
     SetLastError(0xdeadbeef);
     map2 = OpenFileMappingA(FILE_MAP_READ, FALSE, name);
-    todo_wine
     ok( map2 == 0, "OpenFileMappingA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "OpenFileMappingA set error %d\n", GetLastError() );
     CloseHandle(map2);
     SetLastError(0xdeadbeef);
     mapping = CreateFileMappingA(file, NULL, PAGE_READWRITE, 0, MAPPING_SIZE, name);
     ok( mapping != 0, "CreateFileMappingA failed\n" );
-    todo_wine
     ok( GetLastError() == ERROR_SUCCESS, "CreateFileMappingA set error %d\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ret = CloseHandle(mapping);
