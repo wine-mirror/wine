@@ -45,6 +45,16 @@ const DXGI_USAGE DXGI_USAGE_UNORDERED_ACCESS        = 0x400L;
 const UINT DXGI_ENUM_MODES_INTERLACED               = 1;
 const UINT DXGI_ENUM_MODES_SCALING                  = 2;
 
+const UINT DXGI_RESOURCE_PRIORITY_MINIMUM           = 0x28000000;
+const UINT DXGI_RESOURCE_PRIORITY_LOW               = 0x50000000;
+const UINT DXGI_RESOURCE_PRIORITY_NORMAL            = 0x78000000;
+const UINT DXGI_RESOURCE_PRIORITY_HIGH              = 0xa0000000;
+const UINT DXGI_RESOURCE_PRIORITY_MAXIMUM           = 0xc8000000;
+
+const UINT DXGI_MAP_READ                            = 0x1;
+const UINT DXGI_MAP_WRITE                           = 0x2;
+const UINT DXGI_MAP_DISCARD                         = 0x4;
+
 typedef enum DXGI_SWAP_EFFECT {
     DXGI_SWAP_EFFECT_DISCARD    = 0,
     DXGI_SWAP_EFFECT_SEQUENTIAL = 1,
@@ -297,6 +307,8 @@ cpp_quote("#define DXGI_PRESENT_DO_NOT_WAIT            __MSABI_LONG(0x00000008U)
 cpp_quote("#define DXGI_PRESENT_STEREO_PREFER_RIGHT    __MSABI_LONG(0x00000010U)")
 cpp_quote("#define DXGI_PRESENT_STEREO_TEMPORARY_MONO  __MSABI_LONG(0x00000020U)")
 cpp_quote("#define DXGI_PRESENT_RESTRICT_TO_OUTPUT     __MSABI_LONG(0x00000040U)")
+cpp_quote("#define DXGI_PRESENT_USE_DURATION           __MSABI_LONG(0x00000100U)")
+cpp_quote("#define DXGI_PRESENT_ALLOW_TEARING          __MSABI_LONG(0x00000200U)")
 
 [
     object,
