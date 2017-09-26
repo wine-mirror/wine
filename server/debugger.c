@@ -169,9 +169,9 @@ static int fill_create_process_event( struct debug_event *event, const void *arg
     event->data.create_process.name       = exe_module->name;
     event->data.create_process.unicode    = 1;
 
-    if (exe_module->mapping)  /* the doc says write access too, but this doesn't seem a good idea */
-        event->data.create_process.file = open_mapping_file( debugger, exe_module->mapping, GENERIC_READ,
-                                                             FILE_SHARE_READ | FILE_SHARE_WRITE );
+    /* the doc says write access too, but this doesn't seem a good idea */
+    event->data.create_process.file = open_mapping_file( debugger, exe_module->base, GENERIC_READ,
+                                                         FILE_SHARE_READ | FILE_SHARE_WRITE );
     return 1;
 }
 
@@ -200,8 +200,7 @@ static int fill_load_dll_event( struct debug_event *event, const void *arg )
     event->data.load_dll.dbg_size   = dll->dbg_size;
     event->data.load_dll.name       = dll->name;
     event->data.load_dll.unicode    = 1;
-    if (dll->mapping)
-        event->data.load_dll.handle = open_mapping_file( debugger, dll->mapping, GENERIC_READ,
+    event->data.load_dll.handle     = open_mapping_file( debugger, dll->base, GENERIC_READ,
                                                          FILE_SHARE_READ | FILE_SHARE_WRITE );
     return 1;
 }

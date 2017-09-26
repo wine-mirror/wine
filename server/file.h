@@ -147,7 +147,7 @@ extern mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner
 
 extern struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle,
                                         unsigned int access );
-extern obj_handle_t open_mapping_file( struct process *process, struct mapping *mapping,
+extern obj_handle_t open_mapping_file( struct process *process, client_ptr_t base,
                                        unsigned int access, unsigned int sharing );
 extern struct mapping *grab_mapping_unless_removable( struct mapping *mapping );
 extern void free_mapped_views( struct process *process );

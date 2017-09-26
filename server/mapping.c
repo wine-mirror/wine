@@ -85,6 +85,7 @@ static const struct object_ops ranges_ops =
 struct memory_view
 {
     struct list     entry;           /* entry in per-process view list */
+    struct fd      *fd;              /* fd for mapped file */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     unsigned int    flags;           /* SEC_* flags */
     client_ptr_t    base;            /* view base address (in process addr space) */
@@ -259,6 +260,7 @@ static struct memory_view *find_mapped_view( struct process *process, client_ptr
 
 static void free_memory_view( struct memory_view *view )
 {
+    if (view->fd) release_object( view->fd );
     if (view->committed) release_object( view->committed );
     list_remove( &view->entry );
     free( view );
@@ -731,13 +733,15 @@ struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle, u
 }
 
 /* open a new file handle to the file backing the mapping */
-obj_handle_t open_mapping_file( struct process *process, struct mapping *mapping,
+obj_handle_t open_mapping_file( struct process *process, client_ptr_t base,
                                 unsigned int access, unsigned int sharing )
 {
     obj_handle_t handle;
-    struct file *file = create_file_for_fd_obj( mapping->fd, access, sharing );
+    struct memory_view *view = find_mapped_view( process, base );
+    struct file *file;
 
-    if (!file) return 0;
+    if (!view || !view->fd) return 0;
+    if (!(file = create_file_for_fd_obj( view->fd, access, sharing ))) return 0;
     handle = alloc_handle( process, file, access, 0 );
     release_object( file );
     return handle;
@@ -925,6 +929,7 @@ DECL_HANDLER(map_view)
         view->size      = req->size;
         view->start     = req->start;
         view->flags     = mapping->flags;
+        view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
         view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
         list_add_tail( &current->process->views, &view->entry );
     }
