@@ -201,11 +201,12 @@ struct d2d_gradient
     LONG refcount;
 
     ID2D1Factory *factory;
+    ID3D10ShaderResourceView *view;
     D2D1_GRADIENT_STOP *stops;
     UINT32 stop_count;
 };
 
-HRESULT d2d_gradient_create(ID2D1Factory *factory, const D2D1_GRADIENT_STOP *stops,
+HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D2D1_GRADIENT_STOP *stops,
         UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode,
         struct d2d_gradient **gradient) DECLSPEC_HIDDEN;
 

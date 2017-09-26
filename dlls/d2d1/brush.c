@@ -68,6 +68,7 @@ static ULONG STDMETHODCALLTYPE d2d_gradient_Release(ID2D1GradientStopCollection 
     if (!refcount)
     {
         HeapFree(GetProcessHeap(), 0, gradient->stops);
+        ID3D10ShaderResourceView_Release(gradient->view);
         ID2D1Factory_Release(gradient->factory);
         HeapFree(GetProcessHeap(), 0, gradient);
     }
@@ -129,21 +130,84 @@ static const struct ID2D1GradientStopCollectionVtbl d2d_gradient_vtbl =
     d2d_gradient_GetExtendMode,
 };
 
-HRESULT d2d_gradient_create(ID2D1Factory *factory, const D2D1_GRADIENT_STOP *stops,
+HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D2D1_GRADIENT_STOP *stops,
         UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode, struct d2d_gradient **gradient)
 {
-    if (!(*gradient = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**gradient))))
-        return E_OUTOFMEMORY;
+    D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    D3D10_SUBRESOURCE_DATA buffer_data;
+    ID3D10ShaderResourceView *view;
+    D3D10_BUFFER_DESC buffer_desc;
+    struct d2d_vec4 *data;
+    ID3D10Buffer *buffer;
+    unsigned int i;
+    HRESULT hr;
 
-    FIXME("Ignoring gradient properties.\n");
+    if (!(data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 2 * stop_count * sizeof(*data))))
+    {
+        ERR("Failed to allocate data.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < stop_count; ++i)
+    {
+        data[i * 2].x = stops[i].position;
+        data[i * 2 + 1].x = stops[i].color.r;
+        data[i * 2 + 1].y = stops[i].color.g;
+        data[i * 2 + 1].z = stops[i].color.b;
+        data[i * 2 + 1].w = stops[i].color.a;
+    }
+
+    buffer_desc.ByteWidth = 2 * stop_count * sizeof(*data);
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    buffer_data.pSysMem = data;
+    buffer_data.SysMemPitch = 0;
+    buffer_data.SysMemSlicePitch = 0;
+
+    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &buffer_data, &buffer);
+    HeapFree(GetProcessHeap(), 0, data);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create buffer, hr %#x.\n", hr);
+        return hr;
+    }
+
+    srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    srv_desc.ViewDimension = D3D10_SRV_DIMENSION_BUFFER;
+    srv_desc.Buffer.ElementOffset = 0;
+    srv_desc.Buffer.ElementWidth = 2 * stop_count;
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)buffer, &srv_desc, &view);
+    ID3D10Buffer_Release(buffer);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create view, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (!(*gradient = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**gradient))))
+    {
+        ID3D10ShaderResourceView_Release(view);
+        return E_OUTOFMEMORY;
+    }
+
+    if (gamma != D2D1_GAMMA_2_2)
+        FIXME("Ignoring gamma %#x.\n", gamma);
+    if (extend_mode != D2D1_EXTEND_MODE_CLAMP)
+        FIXME("Ignoring extend mode %#x.\n", extend_mode);
 
     (*gradient)->ID2D1GradientStopCollection_iface.lpVtbl = &d2d_gradient_vtbl;
     (*gradient)->refcount = 1;
     ID2D1Factory_AddRef((*gradient)->factory = factory);
+    (*gradient)->view = view;
 
     (*gradient)->stop_count = stop_count;
     if (!((*gradient)->stops = HeapAlloc(GetProcessHeap(), 0, stop_count * sizeof(*stops))))
     {
+        ID3D10ShaderResourceView_Release(view);
         HeapFree(GetProcessHeap(), 0, *gradient);
         return E_OUTOFMEMORY;
     }
