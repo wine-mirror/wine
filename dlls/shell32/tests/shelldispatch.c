@@ -244,10 +244,10 @@ static void test_namespace(void)
     r = Folder2_get_Self(folder2, &item);
     ok(r == S_OK, "Folder::get_Self failed: %08x\n", r);
     r = FolderItem_get_Path(item, &item_path);
-todo_wine {
     ok(r == S_OK, "FolderItem::get_Path failed: %08x\n", r);
-    ok(!lstrcmpW(item_path, clsidW), "expected %s, got %s\n", wine_dbgstr_w(clsidW), wine_dbgstr_w(item_path));
-}
+    /* TODO: we return lowercase GUID here */
+    ok(!lstrcmpiW(item_path, clsidW), "expected %s, got %s\n", wine_dbgstr_w(clsidW), wine_dbgstr_w(item_path));
+
     SysFreeString(item_path);
     FolderItem_Release(item);
     Folder2_Release(folder2);
