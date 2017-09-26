@@ -39,6 +39,8 @@
 @ stub DwmQueryThumbnailSourceSize
 @ stdcall DwmRegisterThumbnail(long long ptr)
 @ stub DwmSetDxFrameDuration
+@ stub DwmSetIconicLivePreviewBitmap
+@ stub DwmSetIconicThumbnail
 @ stdcall DwmSetPresentParameters(ptr ptr)
 @ stdcall DwmSetWindowAttribute(long long ptr long)
 @ stdcall DwmUnregisterThumbnail(long)
