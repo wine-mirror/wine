@@ -1329,8 +1329,8 @@ static NTSTATUS stat_mapping_file( struct file_view *view, struct stat *st )
  *
  * Map an executable (PE format) image into memory.
  */
-static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_size, SIZE_T mask,
-                           SIZE_T header_size, int shared_fd, HANDLE dup_mapping, PVOID *addr_ptr )
+static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *base, SIZE_T total_size,
+                           SIZE_T mask, SIZE_T header_size, int shared_fd, HANDLE dup_mapping, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -1537,6 +1537,19 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
  done:
     view->mapping = dup_mapping;
+
+    SERVER_START_REQ( map_view )
+    {
+        req->mapping = wine_server_obj_handle( hmapping );
+        req->access  = access;
+        req->base    = wine_server_client_ptr( view->base );
+        req->size    = view->size;
+        req->start   = 0;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (status) goto error;
+
     VIRTUAL_DEBUG_DUMP_VIEW( view );
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
@@ -2930,14 +2943,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
             if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
                                            &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
-            res = map_image( handle, unix_handle, base, size, mask, image_info.header_size,
+            res = map_image( handle, access, unix_handle, base, size, mask, image_info.header_size,
                              shared_fd, dup_mapping, addr_ptr );
             if (shared_needs_close) close( shared_fd );
             close_handle( shared_file );
         }
         else
         {
-            res = map_image( handle, unix_handle, base, size, mask, image_info.header_size,
+            res = map_image( handle, access, unix_handle, base, size, mask, image_info.header_size,
                              -1, dup_mapping, addr_ptr );
         }
         if (needs_close) close( unix_handle );
@@ -2990,6 +3003,20 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, !dup_mapping );
     if (res == STATUS_SUCCESS)
     {
+        SERVER_START_REQ( map_view )
+        {
+            req->mapping = wine_server_obj_handle( handle );
+            req->access  = access;
+            req->base    = wine_server_client_ptr( view->base );
+            req->size    = size;
+            req->start   = offset.QuadPart;
+            res = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
+
+    if (res == STATUS_SUCCESS)
+    {
         *addr_ptr = view->base;
         *size_ptr = size;
         view->mapping = dup_mapping;
@@ -3039,8 +3066,13 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     server_enter_uninterrupted_section( &csVirtual, &sigset );
     if ((view = VIRTUAL_FindView( addr, 0 )) && !is_view_valloc( view ))
     {
-        delete_view( view );
-        status = STATUS_SUCCESS;
+        SERVER_START_REQ( unmap_view )
+        {
+            req->base = wine_server_client_ptr( view->base );
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        if (!status) delete_view( view );
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;

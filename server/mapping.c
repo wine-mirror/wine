@@ -55,6 +55,16 @@ struct ranges
     } ranges[1];
 };
 
+/* memory view mapped in client address space */
+struct memory_view
+{
+    struct list     entry;           /* entry in per-process view list */
+    unsigned int    flags;           /* SEC_* flags */
+    client_ptr_t    base;            /* view base address (in process addr space) */
+    mem_size_t      size;            /* view size */
+    file_pos_t      start;           /* start offset in mapping */
+};
+
 struct mapping
 {
     struct object   obj;             /* object header */
@@ -194,6 +204,33 @@ static int create_temp_file( file_pos_t size )
 
     if (temp_dir_fd != server_dir_fd) fchdir( server_dir_fd );
     return fd;
+}
+
+/* find a memory view from its base address */
+static struct memory_view *find_mapped_view( struct process *process, client_ptr_t base )
+{
+    struct memory_view *view;
+
+    LIST_FOR_EACH_ENTRY( view, &process->views, struct memory_view, entry )
+        if (view->base == base) return view;
+
+    set_error( STATUS_NOT_MAPPED_VIEW );
+    return NULL;
+}
+
+static void free_memory_view( struct memory_view *view )
+{
+    list_remove( &view->entry );
+    free( view );
+}
+
+/* free all mapped views at process exit */
+void free_mapped_views( struct process *process )
+{
+    struct list *ptr;
+
+    while ((ptr = list_head( &process->views )))
+        free_memory_view( LIST_ENTRY( ptr, struct memory_view, entry ));
 }
 
 /* find the shared PE mapping for a given mapping */
@@ -774,6 +811,66 @@ DECL_HANDLER(get_mapping_info)
         }
     }
     release_object( mapping );
+}
+
+/* add a memory view in the current process */
+DECL_HANDLER(map_view)
+{
+    struct mapping *mapping = NULL;
+    struct memory_view *view;
+
+    if (!req->size || (req->base & page_mask) || req->base + req->size < req->base)  /* overflow */
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    /* make sure we don't already have an overlapping view */
+    LIST_FOR_EACH_ENTRY( view, &current->process->views, struct memory_view, entry )
+    {
+        if (view->base + view->size <= req->base) continue;
+        if (view->base >= req->base + req->size) continue;
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (!(mapping = get_mapping_obj( current->process, req->mapping, req->access ))) return;
+
+    if (mapping->flags & SEC_IMAGE)
+    {
+        if (req->start || req->size > mapping->image.map_size)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            goto done;
+        }
+    }
+    else if (req->start >= mapping->size ||
+             req->start + req->size < req->start ||
+             req->start + req->size > ((mapping->size + page_mask) & ~(mem_size_t)page_mask))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        goto done;
+    }
+
+    if ((view = mem_alloc( sizeof(*view) )))
+    {
+        view->base      = req->base;
+        view->size      = req->size;
+        view->start     = req->start;
+        view->flags     = mapping->flags;
+        list_add_tail( &current->process->views, &view->entry );
+    }
+
+done:
+    release_object( mapping );
+}
+
+/* unmap a memory view from the current process */
+DECL_HANDLER(unmap_view)
+{
+    struct memory_view *view = find_mapped_view( current->process, req->base );
+
+    if (view) free_memory_view( view );
 }
 
 /* get a range of committed pages in a file mapping */

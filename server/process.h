@@ -88,6 +88,7 @@ struct process
     obj_handle_t         winstation;      /* main handle to process window station */
     obj_handle_t         desktop;         /* handle to desktop to use for new threads */
     struct token        *token;           /* security token associated with this process */
+    struct list          views;           /* list of memory views */
     struct list          dlls;            /* list of loaded dlls */
     client_ptr_t         peb;             /* PEB address in client address space */
     client_ptr_t         ldt_copy;        /* pointer to LDT copy in client addr space */

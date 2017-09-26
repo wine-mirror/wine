@@ -150,6 +150,7 @@ extern struct mapping *get_mapping_obj( struct process *process, obj_handle_t ha
 extern obj_handle_t open_mapping_file( struct process *process, struct mapping *mapping,
                                        unsigned int access, unsigned int sharing );
 extern struct mapping *grab_mapping_unless_removable( struct mapping *mapping );
+extern void free_mapped_views( struct process *process );
 extern int get_page_size(void);
 
 /* device functions */

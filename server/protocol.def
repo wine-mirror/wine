@@ -1726,6 +1726,22 @@ enum char_info_mode
 @END
 
 
+/* Add a memory view in the current process */
+@REQ(map_view)
+    obj_handle_t mapping;       /* file mapping handle */
+    unsigned int access;        /* wanted access rights */
+    client_ptr_t base;          /* view base address (page-aligned) */
+    mem_size_t   size;          /* view size */
+    file_pos_t   start;         /* start offset in mapping */
+@END
+
+
+/* Unmap a memory view from the current process */
+@REQ(unmap_view)
+    client_ptr_t base;          /* view base address */
+@END
+
+
 /* Get a range of committed pages in a file mapping */
 @REQ(get_mapping_committed_range)
     obj_handle_t handle;        /* handle to the mapping */
