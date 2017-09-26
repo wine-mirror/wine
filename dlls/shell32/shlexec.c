@@ -2016,6 +2016,58 @@ HINSTANCE WINAPI WOWShellExecute(HWND hWnd, LPCSTR lpVerb,LPCSTR lpFile,
 }
 
 /*************************************************************************
+ * ShellExec_RunDLLW        [SHELL32.@]
+ */
+void WINAPI ShellExec_RunDLLW(HWND hwnd, HINSTANCE instance, WCHAR *cmdline, int cmdshow)
+{
+    BOOL in_single_quotes = FALSE, in_double_quotes = FALSE;
+    WCHAR *args;
+
+    TRACE("%p, %p, %s, %d\n", hwnd, instance, debugstr_w(cmdline), cmdshow);
+
+    /* Replace the first whitespace character in the command line string with a
+       null terminator to separate the program name from the program arguments */
+    for (args = cmdline; *args; args++)
+    {
+        switch (*args)
+        {
+        case '\\':
+            args++; /* skip the next character */
+            break;
+        case '\'':
+            if (!in_double_quotes)
+                in_single_quotes = !in_single_quotes;
+            break;
+        case '"':
+            if (!in_single_quotes)
+                in_double_quotes = !in_double_quotes;
+            break;
+        case ' ':
+        case '\t':
+            if (!in_single_quotes && !in_double_quotes)
+            {
+                *args = 0;
+                args++;
+                goto execute;
+            }
+        }
+    }
+
+execute:
+    ShellExecuteW(hwnd, NULL, cmdline, args, NULL, cmdshow);
+}
+
+/*************************************************************************
+ * ShellExec_RunDLLA        [SHELL32.@]
+ */
+void WINAPI ShellExec_RunDLLA(HWND hwnd, HINSTANCE instance, CHAR *cmdline, int cmdshow)
+{
+    WCHAR *cmdlineW;
+    ShellExec_RunDLLW(hwnd, instance, __SHCloneStrAtoW(&cmdlineW, cmdline), cmdshow);
+    SHFree(cmdlineW);
+}
+
+/*************************************************************************
  * OpenAs_RunDLLA          [SHELL32.@]
  */
 void WINAPI OpenAs_RunDLLA(HWND hwnd, HINSTANCE hinst, LPCSTR cmdline, int cmdshow)
