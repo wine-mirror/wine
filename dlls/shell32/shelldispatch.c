@@ -1148,6 +1148,8 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
 
         default:
             FIXME("Index type %d not handled.\n", V_VT(&index));
+            /* fall through */
+        case VT_EMPTY:
             return E_NOTIMPL;
     }
 
