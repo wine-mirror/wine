@@ -7267,6 +7267,8 @@ BlockChainStream* BlockChainStream_Construct(
   BlockChainStream* newStream;
 
   newStream = HeapAlloc(GetProcessHeap(), 0, sizeof(BlockChainStream));
+  if(!newStream)
+    return NULL;
 
   newStream->parentStorage           = parentStorage;
   newStream->headOfStreamPlaceHolder = headOfStreamPlaceHolder;
