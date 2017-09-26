@@ -437,24 +437,24 @@ static void test_createconfigstream(void)
     GetFullPathNameW(file, MAX_PATH, path, NULL);
 
     hr = pCreateConfigStream(NULL, &stream);
-    todo_wine ok(hr == E_FAIL ||
-                 broken(hr == HRESULT_FROM_WIN32(ERROR_PROC_NOT_FOUND)) || /* some WinXP, Win2K3 and Win7 */
-                 broken(hr == S_OK && !stream), /* some Win2K3 */
-                 "CreateConfigStream returned %x\n", hr);
+    ok(hr == E_FAIL ||
+       broken(hr == HRESULT_FROM_WIN32(ERROR_PROC_NOT_FOUND)) || /* some WinXP, Win2K3 and Win7 */
+       broken(hr == S_OK && !stream), /* some Win2K3 */
+       "CreateConfigStream returned %x\n", hr);
 
     hr = pCreateConfigStream(path, NULL);
-    todo_wine ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %x\n", hr);
+    ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %x\n", hr);
 
     hr = pCreateConfigStream(NULL, NULL);
-    todo_wine ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %x\n", hr);
+    ok(hr == COR_E_NULLREFERENCE, "CreateConfigStream returned %x\n", hr);
 
     hr = pCreateConfigStream(nonexistent, &stream);
-    todo_wine ok(hr == COR_E_FILENOTFOUND, "CreateConfigStream returned %x\n", hr);
+    ok(hr == COR_E_FILENOTFOUND, "CreateConfigStream returned %x\n", hr);
     ok(stream == NULL, "Expected stream to be NULL\n");
 
     hr = pCreateConfigStream(path, &stream);
-    todo_wine ok(hr == S_OK, "CreateConfigStream failed, hr=%x\n", hr);
-    todo_wine ok(stream != NULL, "Expected non-NULL stream\n");
+    ok(hr == S_OK, "CreateConfigStream failed, hr=%x\n", hr);
+    ok(stream != NULL, "Expected non-NULL stream\n");
 
     if (stream)
     {
@@ -462,11 +462,16 @@ static void test_createconfigstream(void)
         LARGE_INTEGER pos;
         ULARGE_INTEGER size;
         IStream *stream2 = NULL;
+        ULONG ref;
 
         hr = IStream_Read(stream, buffer, strlen(xmldata), &count);
         ok(hr == S_OK, "IStream_Read failed, hr=%x\n", hr);
         ok(count == strlen(xmldata), "wrong count: %u\n", count);
         ok(!strcmp(buffer, xmldata), "Strings do not match\n");
+
+        hr = IStream_Read(stream, buffer, sizeof(buffer), &count);
+        ok(hr == S_OK, "IStream_Read failed, hr=%x\n", hr);
+        ok(!count, "wrong count: %u\n", count);
 
         hr = IStream_Write(stream, xmldata, strlen(xmldata), &count);
         ok(hr == E_FAIL, "IStream_Write returned hr=%x\n", hr);
@@ -488,8 +493,8 @@ static void test_createconfigstream(void)
         hr = IStream_Revert(stream);
         ok(hr == E_NOTIMPL, "IStream_Revert returned hr=%x\n", hr);
 
-        hr = IStream_Release(stream);
-        ok(hr == S_OK, "IStream_Release returned hr=%x\n", hr);
+        ref = IStream_Release(stream);
+        ok(!ref, "IStream_Release returned %u\n", ref);
     }
     DeleteFileW(file);
 }

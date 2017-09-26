@@ -551,12 +551,6 @@ BOOL WINAPI StrongNameSignatureVerificationEx(LPCWSTR filename, BOOL forceVerifi
     return FALSE;
 }
 
-HRESULT WINAPI CreateConfigStream(LPCWSTR filename, IStream **stream)
-{
-    FIXME("(%s, %p): stub\n", debugstr_w(filename), stream);
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI CreateDebuggingInterfaceFromVersion(int nDebugVersion, LPCWSTR version, IUnknown **ppv)
 {
     const WCHAR v2_0[] = {'v','2','.','0','.','5','0','7','2','7',0};
