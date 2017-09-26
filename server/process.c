@@ -735,9 +735,8 @@ static inline struct process_dll *find_process_dll( struct process *process, mod
 }
 
 /* add a dll to a process list */
-static struct process_dll *process_load_dll( struct process *process, struct mapping *mapping,
-                                             mod_handle_t base, const WCHAR *filename,
-                                             data_size_t name_len )
+static struct process_dll *process_load_dll( struct process *process, mod_handle_t base,
+                                             const WCHAR *filename, data_size_t name_len )
 {
     struct process_dll *dll;
 
@@ -750,7 +749,6 @@ static struct process_dll *process_load_dll( struct process *process, struct map
 
     if ((dll = mem_alloc( sizeof(*dll) )))
     {
-        dll->mapping = NULL;
         dll->base = base;
         dll->filename = NULL;
         dll->namelen  = name_len;
@@ -759,7 +757,6 @@ static struct process_dll *process_load_dll( struct process *process, struct map
             free( dll );
             return NULL;
         }
-        if (mapping) dll->mapping = grab_mapping_unless_removable( mapping );
         list_add_tail( &process->dlls, &dll->entry );
     }
     return dll;
@@ -772,7 +769,6 @@ static void process_unload_dll( struct process *process, mod_handle_t base )
 
     if (dll && (&dll->entry != list_head( &process->dlls )))  /* main exe can't be unloaded */
     {
-        if (dll->mapping) release_object( dll->mapping );
         free( dll->filename );
         list_remove( &dll->entry );
         free( dll );
@@ -866,7 +862,6 @@ static void process_killed( struct process *process )
     while ((ptr = list_head( &process->dlls )))
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
-        if (dll->mapping) release_object( dll->mapping );
         free( dll->filename );
         list_remove( &dll->entry );
         free( dll );
@@ -1491,15 +1486,9 @@ DECL_HANDLER(write_process_memory)
 DECL_HANDLER(load_dll)
 {
     struct process_dll *dll;
-    struct mapping *mapping = NULL;
 
-    if (req->mapping && !(mapping = get_mapping_obj( current->process, req->mapping, SECTION_QUERY )))
-        return;
-
-    if ((dll = process_load_dll( current->process, mapping, req->base,
-                                 get_req_data(), get_req_data_size() )))
+    if ((dll = process_load_dll( current->process, req->base, get_req_data(), get_req_data_size() )))
     {
-        dll->size       = req->size;
         dll->dbg_offset = req->dbg_offset;
         dll->dbg_size   = req->dbg_size;
         dll->name       = req->name;
@@ -1507,7 +1496,6 @@ DECL_HANDLER(load_dll)
         if (is_process_init_done( current->process ))
             generate_debug_event( current, LOAD_DLL_DEBUG_EVENT, dll );
     }
-    if (mapping) release_object( mapping );
 }
 
 /* notify the server that a dll is being unloaded */
@@ -1533,7 +1521,6 @@ DECL_HANDLER(get_dll_info)
 
         if (dll)
         {
-            reply->size = dll->size;
             reply->entry_point = 0; /* FIXME */
             reply->filename_len = dll->namelen;
             if (dll->filename)

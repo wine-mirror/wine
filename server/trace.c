@@ -1422,7 +1422,6 @@ static void dump_get_dll_info_request( const struct get_dll_info_request *req )
 static void dump_get_dll_info_reply( const struct get_dll_info_reply *req )
 {
     dump_uint64( " entry_point=", &req->entry_point );
-    fprintf( stderr, ", size=%u", req->size );
     fprintf( stderr, ", filename_len=%u", req->filename_len );
     dump_varargs_unicode_str( ", filename=", cur_size );
 }
@@ -1449,12 +1448,10 @@ static void dump_resume_thread_reply( const struct resume_thread_reply *req )
 
 static void dump_load_dll_request( const struct load_dll_request *req )
 {
-    fprintf( stderr, " mapping=%04x", req->mapping );
+    fprintf( stderr, " dbg_offset=%u", req->dbg_offset );
     dump_uint64( ", base=", &req->base );
     dump_uint64( ", name=", &req->name );
-    fprintf( stderr, ", size=%u", req->size );
-    fprintf( stderr, ", dbg_offset=%d", req->dbg_offset );
-    fprintf( stderr, ", dbg_size=%d", req->dbg_size );
+    fprintf( stderr, ", dbg_size=%u", req->dbg_size );
     dump_varargs_unicode_str( ", filename=", cur_size );
 }
 

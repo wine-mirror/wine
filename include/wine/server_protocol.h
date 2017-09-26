@@ -991,9 +991,9 @@ struct get_dll_info_reply
 {
     struct reply_header __header;
     client_ptr_t entry_point;
-    data_size_t  size;
     data_size_t  filename_len;
     /* VARARG(filename,unicode_str); */
+    char __pad_20[4];
 };
 
 
@@ -1029,14 +1029,12 @@ struct resume_thread_reply
 struct load_dll_request
 {
     struct request_header __header;
-    obj_handle_t mapping;
+    data_size_t  dbg_offset;
     mod_handle_t base;
     client_ptr_t name;
-    data_size_t  size;
-    int          dbg_offset;
-    int          dbg_size;
+    data_size_t  dbg_size;
     /* VARARG(filename,unicode_str); */
-    char __pad_44[4];
+    char __pad_36[4];
 };
 struct load_dll_reply
 {
@@ -6463,6 +6461,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 540
+#define SERVER_PROTOCOL_VERSION 541
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

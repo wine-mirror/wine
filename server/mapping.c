@@ -747,12 +747,6 @@ obj_handle_t open_mapping_file( struct process *process, client_ptr_t base,
     return handle;
 }
 
-struct mapping *grab_mapping_unless_removable( struct mapping *mapping )
-{
-    if (is_fd_removable( mapping->fd )) return NULL;
-    return (struct mapping *)grab_object( mapping );
-}
-
 static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
