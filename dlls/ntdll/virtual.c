@@ -1306,25 +1306,6 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
 
 
 /***********************************************************************
- *           stat_mapping_file
- *
- * Stat the underlying file for a memory view.
- */
-static NTSTATUS stat_mapping_file( struct file_view *view, struct stat *st )
-{
-    NTSTATUS status;
-    int unix_fd, needs_close;
-
-    if (!view->mapping) return STATUS_NOT_MAPPED_VIEW;
-    if (!(status = server_get_unix_fd( view->mapping, 0, &unix_fd, &needs_close, NULL, NULL )))
-    {
-        if (fstat( unix_fd, st ) == -1) status = FILE_GetNtStatus();
-        if (needs_close) close( unix_fd );
-    }
-    return status;
-}
-
-/***********************************************************************
  *           map_image
  *
  * Map an executable (PE format) image into memory.
@@ -3337,7 +3318,6 @@ NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *bu
 NTSTATUS WINAPI NtAreMappedFilesTheSame(PVOID addr1, PVOID addr2)
 {
     struct file_view *view1, *view2;
-    struct stat st1, st2;
     NTSTATUS status;
     sigset_t sigset;
 
@@ -3354,13 +3334,18 @@ NTSTATUS WINAPI NtAreMappedFilesTheSame(PVOID addr1, PVOID addr2)
         status = STATUS_CONFLICTING_ADDRESSES;
     else if (view1 == view2)
         status = STATUS_SUCCESS;
-    else if (!(view1->protect & SEC_IMAGE) || !(view2->protect & SEC_IMAGE))
+    else if ((view1->protect & VPROT_SYSTEM) || (view2->protect & VPROT_SYSTEM))
         status = STATUS_NOT_SAME_DEVICE;
-    else if (!stat_mapping_file( view1, &st1 ) && !stat_mapping_file( view2, &st2 ) &&
-             st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino)
-        status = STATUS_SUCCESS;
     else
-        status = STATUS_NOT_SAME_DEVICE;
+    {
+        SERVER_START_REQ( is_same_mapping )
+        {
+            req->base1 = wine_server_client_ptr( view1->base );
+            req->base2 = wine_server_client_ptr( view2->base );
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
 
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;

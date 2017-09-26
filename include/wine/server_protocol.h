@@ -2289,6 +2289,20 @@ struct add_mapping_committed_range_reply
 };
 
 
+
+struct is_same_mapping_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+    client_ptr_t base1;
+    client_ptr_t base2;
+};
+struct is_same_mapping_reply
+{
+    struct reply_header __header;
+};
+
+
 #define SNAP_PROCESS    0x00000001
 #define SNAP_THREAD     0x00000002
 
@@ -5662,6 +5676,7 @@ enum request
     REQ_unmap_view,
     REQ_get_mapping_committed_range,
     REQ_add_mapping_committed_range,
+    REQ_is_same_mapping,
     REQ_create_snapshot,
     REQ_next_process,
     REQ_next_thread,
@@ -5955,6 +5970,7 @@ union generic_request
     struct unmap_view_request unmap_view_request;
     struct get_mapping_committed_range_request get_mapping_committed_range_request;
     struct add_mapping_committed_range_request add_mapping_committed_range_request;
+    struct is_same_mapping_request is_same_mapping_request;
     struct create_snapshot_request create_snapshot_request;
     struct next_process_request next_process_request;
     struct next_thread_request next_thread_request;
@@ -6246,6 +6262,7 @@ union generic_reply
     struct unmap_view_reply unmap_view_reply;
     struct get_mapping_committed_range_reply get_mapping_committed_range_reply;
     struct add_mapping_committed_range_reply add_mapping_committed_range_reply;
+    struct is_same_mapping_reply is_same_mapping_reply;
     struct create_snapshot_reply create_snapshot_reply;
     struct next_process_reply next_process_reply;
     struct next_thread_reply next_thread_reply;
@@ -6446,6 +6463,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 539
+#define SERVER_PROTOCOL_VERSION 540
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

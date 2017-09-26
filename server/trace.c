@@ -2276,6 +2276,12 @@ static void dump_add_mapping_committed_range_request( const struct add_mapping_c
     dump_uint64( ", size=", &req->size );
 }
 
+static void dump_is_same_mapping_request( const struct is_same_mapping_request *req )
+{
+    dump_uint64( " base1=", &req->base1 );
+    dump_uint64( ", base2=", &req->base2 );
+}
+
 static void dump_create_snapshot_request( const struct create_snapshot_request *req )
 {
     fprintf( stderr, " attributes=%08x", req->attributes );
@@ -4571,6 +4577,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_unmap_view_request,
     (dump_func)dump_get_mapping_committed_range_request,
     (dump_func)dump_add_mapping_committed_range_request,
+    (dump_func)dump_is_same_mapping_request,
     (dump_func)dump_create_snapshot_request,
     (dump_func)dump_next_process_request,
     (dump_func)dump_next_thread_request,
@@ -4859,6 +4866,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     (dump_func)dump_get_mapping_committed_range_reply,
+    NULL,
     NULL,
     (dump_func)dump_create_snapshot_reply,
     (dump_func)dump_next_process_reply,
@@ -5149,6 +5157,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "unmap_view",
     "get_mapping_committed_range",
     "add_mapping_committed_range",
+    "is_same_mapping",
     "create_snapshot",
     "next_process",
     "next_thread",
@@ -5429,6 +5438,7 @@ static const struct
     { "NOT_IMPLEMENTED",             STATUS_NOT_IMPLEMENTED },
     { "NOT_MAPPED_VIEW",             STATUS_NOT_MAPPED_VIEW },
     { "NOT_REGISTRY_FILE",           STATUS_NOT_REGISTRY_FILE },
+    { "NOT_SAME_DEVICE",             STATUS_NOT_SAME_DEVICE },
     { "NOT_SUPPORTED",               STATUS_NOT_SUPPORTED },
     { "NO_DATA_DETECTED",            STATUS_NO_DATA_DETECTED },
     { "NO_IMPERSONATION_TOKEN",      STATUS_NO_IMPERSONATION_TOKEN },

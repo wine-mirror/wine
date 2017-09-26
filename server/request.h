@@ -200,6 +200,7 @@ DECL_HANDLER(map_view);
 DECL_HANDLER(unmap_view);
 DECL_HANDLER(get_mapping_committed_range);
 DECL_HANDLER(add_mapping_committed_range);
+DECL_HANDLER(is_same_mapping);
 DECL_HANDLER(create_snapshot);
 DECL_HANDLER(next_process);
 DECL_HANDLER(next_thread);
@@ -492,6 +493,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_unmap_view,
     (req_handler)req_get_mapping_committed_range,
     (req_handler)req_add_mapping_committed_range,
+    (req_handler)req_is_same_mapping,
     (req_handler)req_create_snapshot,
     (req_handler)req_next_process,
     (req_handler)req_next_thread,
@@ -1288,6 +1290,9 @@ C_ASSERT( FIELD_OFFSET(struct add_mapping_committed_range_request, base) == 16 )
 C_ASSERT( FIELD_OFFSET(struct add_mapping_committed_range_request, offset) == 24 );
 C_ASSERT( FIELD_OFFSET(struct add_mapping_committed_range_request, size) == 32 );
 C_ASSERT( sizeof(struct add_mapping_committed_range_request) == 40 );
+C_ASSERT( FIELD_OFFSET(struct is_same_mapping_request, base1) == 16 );
+C_ASSERT( FIELD_OFFSET(struct is_same_mapping_request, base2) == 24 );
+C_ASSERT( sizeof(struct is_same_mapping_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct create_snapshot_request, attributes) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_snapshot_request, flags) == 16 );
 C_ASSERT( sizeof(struct create_snapshot_request) == 24 );

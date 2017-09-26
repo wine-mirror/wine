@@ -1760,6 +1760,13 @@ enum char_info_mode
 @END
 
 
+/* Check if two memory maps are for the same file */
+@REQ(is_same_mapping)
+    client_ptr_t base1;         /* first view base address */
+    client_ptr_t base2;         /* second view base address */
+@END
+
+
 #define SNAP_PROCESS    0x00000001
 #define SNAP_THREAD     0x00000002
 /* Create a snapshot */
