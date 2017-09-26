@@ -73,7 +73,7 @@ typedef struct {
     FolderItems3 FolderItems3_iface;
     LONG ref;
     FolderImpl *folder;
-    WCHAR **item_filenames;
+    WCHAR **item_names;
     LONG item_count;
 } FolderItemsImpl;
 
@@ -1023,8 +1023,8 @@ static ULONG WINAPI FolderItemsImpl_Release(FolderItems3 *iface)
     {
         Folder3_Release(&This->folder->Folder3_iface);
         for (i = 0; i < This->item_count; i++)
-            HeapFree(GetProcessHeap(), 0, This->item_filenames[i]);
-        HeapFree(GetProcessHeap(), 0, This->item_filenames);
+            HeapFree(GetProcessHeap(), 0, This->item_names[i]);
+        HeapFree(GetProcessHeap(), 0, This->item_names);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -1111,16 +1111,16 @@ static HRESULT WINAPI FolderItemsImpl_get_Parent(FolderItems3 *iface, IDispatch 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, FolderItem **ppid)
+static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, FolderItem **item)
 {
     FolderItemsImpl *This = impl_from_FolderItems(iface);
-    WCHAR canonicalized_index[MAX_PATH], path_str[MAX_PATH];
-    VARIANT path_var;
-    HRESULT ret;
+    WCHAR buffW[MAX_PATH], *display_name;
+    HRESULT hr;
+    VARIANT v;
 
-    TRACE("(%p,%s,%p)\n", iface, debugstr_variant(&index), ppid);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_variant(&index), item);
 
-    *ppid = NULL;
+    *item = NULL;
 
     if (!PathIsDirectoryW(V_BSTR(&This->folder->dir)))
         return S_FALSE;
@@ -1135,41 +1135,41 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
             if (V_I4(&index) >= This->item_count || V_I4(&index) < 0)
                 return S_FALSE;
 
-            if (!PathCombineW(path_str, V_BSTR(&This->folder->dir), This->item_filenames[V_I4(&index)]))
-                return S_FALSE;
-
+            display_name = This->item_names[V_I4(&index)];
             break;
 
         case VT_BSTR:
+        {
+            LPITEMIDLIST pidl;
+            STRRET strret;
+
             if (!V_BSTR(&index))
                 return S_FALSE;
 
-            if (!PathCanonicalizeW(canonicalized_index, V_BSTR(&index)))
+            if (FAILED(hr = IShellFolder2_ParseDisplayName(This->folder->folder, NULL, NULL, V_BSTR(&index),
+                    NULL, &pidl, NULL)))
                 return S_FALSE;
 
-            if (strcmpW(V_BSTR(&index), canonicalized_index) != 0)
-                return S_FALSE;
+            IShellFolder2_GetDisplayNameOf(This->folder->folder, pidl, SHGDN_FORPARSING, &strret);
+            StrRetToBufW(&strret, NULL, buffW, sizeof(buffW)/sizeof(*buffW));
+            ILFree(pidl);
 
-            if (!PathCombineW(path_str, V_BSTR(&This->folder->dir), V_BSTR(&index)))
-                return S_FALSE;
-
-            if (!PathFileExistsW(path_str))
-                return S_FALSE;
-
+            display_name = buffW;
             break;
-
+        }
         case VT_ERROR:
-            return FolderItem_Constructor(This->folder, &This->folder->dir, ppid);
+            return FolderItem_Constructor(This->folder, &This->folder->dir, item);
 
         default:
+            FIXME("Index type %d not handled.\n", V_VT(&index));
             return E_NOTIMPL;
     }
 
-    V_VT(&path_var) = VT_BSTR;
-    V_BSTR(&path_var) = SysAllocString(path_str);
-    ret = FolderItem_Constructor(This->folder, &path_var, ppid);
-    VariantClear(&path_var);
-    return ret;
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(display_name);
+    hr = FolderItem_Constructor(This->folder, &v, item);
+    VariantClear(&v);
+    return hr;
 }
 
 static HRESULT WINAPI FolderItemsImpl__NewEnum(FolderItems3 *iface, IUnknown **ppunk)
@@ -1226,21 +1226,49 @@ static const FolderItems3Vtbl FolderItemsImpl_Vtbl = {
     FolderItemsImpl_get_Verbs
 };
 
-static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ppfi)
+static void idlist_sort(LPITEMIDLIST *idlist, unsigned int l, unsigned int r, IShellFolder2 *folder)
 {
-    static const WCHAR backslash_star[] = {'\\','*',0};
-    static const WCHAR dot[] = {'.',0};
-    static const WCHAR dot_dot[] = {'.','.',0};
+    unsigned int m;
+
+    if (l == r)
+        return;
+
+    if (r < l)
+    {
+        idlist_sort(idlist, r, l, folder);
+        return;
+    }
+
+    m = (l + r) / 2;
+    idlist_sort(idlist, l, m, folder);
+    idlist_sort(idlist, m + 1, r, folder);
+
+    /* join the two sides */
+    while (l <= m && m < r)
+    {
+        if ((short)IShellFolder2_CompareIDs(folder, 0, idlist[l], idlist[m + 1]) > 0)
+        {
+            LPITEMIDLIST t = idlist[m + 1];
+            memmove(&idlist[l + 1], &idlist[l], (m - l + 1) * sizeof(idlist[l]));
+            idlist[l] = t;
+
+            m++;
+        }
+        l++;
+    }
+}
+
+static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ret)
+{
+    IEnumIDList *enumidlist;
     FolderItemsImpl *This;
-    LONG item_size;
-    WCHAR glob[MAX_PATH + 2];
-    HANDLE first_file;
-    WIN32_FIND_DATAW file_info;
-    WCHAR **filenames;
+    LPITEMIDLIST pidl;
+    unsigned int i;
+    HRESULT hr;
 
-    TRACE("(%s,%p)\n", debugstr_variant(&folder->dir), ppfi);
+    TRACE("(%s,%p)\n", debugstr_variant(&folder->dir), ret);
 
-    *ppfi = NULL;
+    *ret = NULL;
 
     if (V_VT(&folder->dir) == VT_I4)
     {
@@ -1248,61 +1276,68 @@ static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ppfi)
         return E_NOTIMPL;
     }
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderItemsImpl));
-    if (!This) return E_OUTOFMEMORY;
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+
     This->FolderItems3_iface.lpVtbl = &FolderItemsImpl_Vtbl;
     This->ref = 1;
     This->folder = folder;
     Folder3_AddRef(&folder->Folder3_iface);
 
-    This->item_count = 0;
-    lstrcpyW(glob, V_BSTR(&folder->dir));
-    lstrcatW(glob, backslash_star);
-    first_file = FindFirstFileW(glob, &file_info);
-    if (first_file != INVALID_HANDLE_VALUE)
+    enumidlist = NULL;
+    if (FAILED(hr = IShellFolder2_EnumObjects(folder->folder, NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,
+            &enumidlist)))
     {
-        item_size = 128;
-        This->item_filenames = HeapAlloc(GetProcessHeap(), 0, item_size * sizeof(WCHAR*));
-        if (!This->item_filenames)
-            goto fail;
+        goto failed;
+    }
 
-        do
+    while (IEnumIDList_Next(enumidlist, 1, &pidl, NULL) == S_OK)
+    {
+        This->item_count++;
+        ILFree(pidl);
+    }
+
+    if (This->item_count)
+    {
+        LPITEMIDLIST *pidls = HeapAlloc(GetProcessHeap(), 0, This->item_count * sizeof(*pidls));
+        This->item_names = HeapAlloc(GetProcessHeap(), 0, This->item_count * sizeof(*This->item_names));
+
+        if (!pidls || !This->item_names)
         {
-            if (!strcmpW(file_info.cFileName, dot) || !strcmpW(file_info.cFileName, dot_dot))
-                continue;
-
-            if (This->item_count >= item_size)
-            {
-                item_size *= 2;
-                filenames = HeapReAlloc(GetProcessHeap(), 0, This->item_filenames, item_size * sizeof(WCHAR*));
-                if (!filenames)
-                    goto fail;
-                This->item_filenames = filenames;
-            }
-
-            This->item_filenames[This->item_count] = strdupW(file_info.cFileName);
-            if (!This->item_filenames[This->item_count])
-                goto fail;
-            This->item_count++;
+            HeapFree(GetProcessHeap(), 0, pidls);
+            HeapFree(GetProcessHeap(), 0, This->item_names);
+            hr = E_OUTOFMEMORY;
+            goto failed;
         }
-        while (FindNextFileW(first_file, &file_info));
 
-        FindClose(first_file);
-        HeapReAlloc(GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY,
-                    This->item_filenames, This->item_count * sizeof(WCHAR*));
-    }
-    else
-    {
-        This->item_filenames = NULL;
-    }
+        IEnumIDList_Reset(enumidlist);
+        if (IEnumIDList_Next(enumidlist, This->item_count, pidls, NULL) == S_OK)
+            idlist_sort(pidls, 0, This->item_count - 1, folder->folder);
 
-    *ppfi = (FolderItems*)&This->FolderItems3_iface;
+        for (i = 0; i < This->item_count; i++)
+        {
+            WCHAR buffW[MAX_PATH];
+            STRRET strret;
+
+            IShellFolder2_GetDisplayNameOf(folder->folder, pidls[i], SHGDN_FORPARSING, &strret);
+            StrRetToBufW(&strret, NULL, buffW, sizeof(buffW)/sizeof(*buffW));
+
+            This->item_names[i] = strdupW(buffW);
+
+            ILFree(pidls[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, pidls);
+    }
+    IEnumIDList_Release(enumidlist);
+
+    *ret = (FolderItems *)&This->FolderItems3_iface;
     return S_OK;
 
-fail:
-    FindClose(first_file);
-    FolderItems3_Release(&This->FolderItems3_iface);
-    return E_OUTOFMEMORY;
+failed:
+    if (enumidlist)
+        IEnumIDList_Release(enumidlist);
+    return hr;
 }
 
 static HRESULT WINAPI FolderImpl_QueryInterface(Folder3 *iface, REFIID riid,
