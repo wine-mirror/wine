@@ -83,6 +83,12 @@ struct d2d_brush_cb
         } solid;
         struct
         {
+            D2D1_POINT_2F start;
+            D2D1_POINT_2F end;
+            unsigned int stop_count;
+        } linear;
+        struct
+        {
             float _11, _21, _31, pad;
             float _12, _22, _32;
             BOOL ignore_alpha;
@@ -228,17 +234,18 @@ struct d2d_brush
         } solid;
         struct
         {
+            struct d2d_gradient *gradient;
+            D2D1_POINT_2F start;
+            D2D1_POINT_2F end;
+        } linear;
+        struct
+        {
             struct d2d_bitmap *bitmap;
             D2D1_EXTEND_MODE extend_mode_x;
             D2D1_EXTEND_MODE extend_mode_y;
             D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode;
             ID3D10SamplerState *sampler_state;
         } bitmap;
-        struct
-        {
-            D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES desc;
-            ID2D1GradientStopCollection *gradient;
-        } linear;
     } u;
 };
 

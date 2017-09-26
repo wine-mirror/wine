@@ -274,6 +274,27 @@ static void release_resource_readback(struct resource_readback *rb)
     ID3D10Resource_Release(rb->resource);
 }
 
+static DWORD get_readback_colour(struct resource_readback *rb, unsigned int x, unsigned int y)
+{
+    return ((DWORD *)((BYTE *)rb->map_desc.pData + y * rb->map_desc.RowPitch))[x];
+}
+
+static BOOL compare_colour(DWORD c1, DWORD c2, BYTE max_diff)
+{
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
+        return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
+        return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
+        return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
+        return FALSE;
+    return TRUE;
+}
+
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -1667,6 +1688,212 @@ static void test_bitmap_brush(void)
     ID2D1BitmapBrush_Release(brush);
     refcount = ID2D1Bitmap_Release(bitmap);
     ok(!refcount, "Bitmap has %u references left.\n", refcount);
+    ID2D1RenderTarget_Release(rt);
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID3D10Device1_Release(device);
+    DestroyWindow(window);
+}
+
+static void test_linear_brush(void)
+{
+    D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES gradient_properties;
+    ID2D1GradientStopCollection *gradient, *tmp_gradient;
+    ID2D1TransformedGeometry *transformed_geometry;
+    ID2D1RectangleGeometry *rectangle_geometry;
+    D2D1_MATRIX_3X2_F matrix, tmp_matrix;
+    ID2D1LinearGradientBrush *brush;
+    struct resource_readback rb;
+    IDXGISwapChain *swapchain;
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    IDXGISurface *surface;
+    ID2D1Factory *factory;
+    D2D1_COLOR_F colour;
+    D2D1_POINT_2F p;
+    unsigned int i;
+    ULONG refcount;
+    D2D1_RECT_F r;
+    float opacity;
+    HWND window;
+    HRESULT hr;
+
+    static const D2D1_GRADIENT_STOP stops[] =
+    {
+        {0.0f, {1.0f, 0.0f, 0.0f, 1.0f}},
+        {0.5f, {0.0f, 1.0f, 0.0f, 1.0f}},
+        {1.0f, {0.0f, 0.0f, 1.0f, 1.0f}},
+    };
+    static const struct
+    {
+        unsigned int x, y;
+        DWORD colour;
+    }
+    test1[] =
+    {
+        {80,  80, 0xff857a00}, {240,  80, 0xff926d00}, {400,  80, 0xff9f6000}, {560,  80, 0xffac5300},
+        {80, 240, 0xff00eb14}, {240, 240, 0xff00f807}, {400, 240, 0xff06f900}, {560, 240, 0xff13ec00},
+        {80, 400, 0xff0053ac}, {240, 400, 0xff005fa0}, {400, 400, 0xff006c93}, {560, 400, 0xff007986},
+    },
+    test2[] =
+    {
+        { 40,  30, 0xff005ba4}, {120,  30, 0xffffffff}, { 40,  60, 0xffffffff}, { 80,  60, 0xff00b44b},
+        {120,  60, 0xff006c93}, {200,  60, 0xffffffff}, { 40,  90, 0xffffffff}, {120,  90, 0xff0ef100},
+        {160,  90, 0xff00c53a}, {200,  90, 0xffffffff}, { 80, 120, 0xffffffff}, {120, 120, 0xffaf5000},
+        {160, 120, 0xff679800}, {200, 120, 0xff1fe000}, {240, 120, 0xffffffff}, {160, 150, 0xffffffff},
+        {200, 150, 0xffc03e00}, {240, 150, 0xffffffff}, {280, 150, 0xffffffff}, {320, 150, 0xffffffff},
+        {240, 180, 0xffffffff}, {280, 180, 0xffff4040}, {320, 180, 0xffff4040}, {380, 180, 0xffffffff},
+        {200, 210, 0xffffffff}, {240, 210, 0xffa99640}, {280, 210, 0xffb28d40}, {320, 210, 0xffbb8440},
+        {360, 210, 0xffc47b40}, {400, 210, 0xffffffff}, {200, 240, 0xffffffff}, {280, 240, 0xff41fd40},
+        {320, 240, 0xff49f540}, {360, 240, 0xff52ec40}, {440, 240, 0xffffffff}, {240, 270, 0xffffffff},
+        {280, 270, 0xff408eb0}, {320, 270, 0xff4097a7}, {360, 270, 0xff40a19e}, {440, 270, 0xffffffff},
+        {280, 300, 0xffffffff}, {320, 300, 0xff4040ff}, {360, 300, 0xff4040ff}, {400, 300, 0xff406ad4},
+        {440, 300, 0xff4061de}, {480, 300, 0xff4057e7}, {520, 300, 0xff404ef1}, {280, 330, 0xffffffff},
+        {360, 330, 0xffffffff}, {400, 330, 0xff40c17e}, {440, 330, 0xff40b788}, {480, 330, 0xff40ae91},
+        {520, 330, 0xff40a49b}, {400, 360, 0xff57e740}, {440, 360, 0xff4ef140}, {480, 360, 0xff44fb40},
+        {520, 360, 0xff40fa45}, {400, 390, 0xffae9140}, {440, 390, 0xffa49b40}, {480, 390, 0xff9aa540},
+        {520, 390, 0xff90ae40},
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = create_window();
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    rt = create_render_target(surface);
+    ok(!!rt, "Failed to create render target.\n");
+
+    ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
+    ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
+
+    hr = ID2D1RenderTarget_CreateGradientStopCollection(rt, stops, sizeof(stops) / sizeof(*stops),
+            D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_CLAMP, &gradient);
+    ok(SUCCEEDED(hr), "Failed to create stop collection, hr %#x.\n", hr);
+
+    set_point(&gradient_properties.startPoint, 320.0f, 0.0f);
+    set_point(&gradient_properties.endPoint, 0.0f, 960.0f);
+    hr = ID2D1RenderTarget_CreateLinearGradientBrush(rt, &gradient_properties, NULL, gradient, &brush);
+    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
+
+    opacity = ID2D1LinearGradientBrush_GetOpacity(brush);
+    ok(opacity == 1.0f, "Got unexpected opacity %.8e.\n", opacity);
+    set_matrix_identity(&matrix);
+    ID2D1LinearGradientBrush_GetTransform(brush, &tmp_matrix);
+    ok(!memcmp(&tmp_matrix, &matrix, sizeof(matrix)),
+            "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            tmp_matrix._11, tmp_matrix._12, tmp_matrix._21,
+            tmp_matrix._22, tmp_matrix._31, tmp_matrix._32);
+    p = ID2D1LinearGradientBrush_GetStartPoint(brush);
+    ok(compare_point(&p, 320.0f, 0.0f, 0), "Got unexpected start point {%.8e, %.8e}.\n", p.x, p.y);
+    p = ID2D1LinearGradientBrush_GetEndPoint(brush);
+    ok(compare_point(&p, 0.0f, 960.0f, 0), "Got unexpected end point {%.8e, %.8e}.\n", p.x, p.y);
+    ID2D1LinearGradientBrush_GetGradientStopCollection(brush, &tmp_gradient);
+    ok(tmp_gradient == gradient, "Got unexpected gradient %p, expected %p.\n", tmp_gradient, gradient);
+    ID2D1GradientStopCollection_Release(tmp_gradient);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    set_color(&colour, 1.0f, 1.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &colour);
+
+    set_rect(&r, 0.0f, 0.0f, 320.0f, 960.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &r, (ID2D1Brush *)brush);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+
+    get_surface_readback(surface, &rb);
+    for (i = 0; i < sizeof(test1) / sizeof(*test1); ++i)
+    {
+        DWORD colour;
+
+        colour = get_readback_colour(&rb, test1[i].x, test1[i].y);
+        ok(compare_colour(colour, test1[i].colour, 1),
+                "Got unexpected colour 0x%08x at position {%u, %u}.\n",
+                colour, test1[i].x, test1[i].y);
+    }
+    release_resource_readback(&rb);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    ID2D1RenderTarget_Clear(rt, &colour);
+
+    set_matrix_identity(&matrix);
+    skew_matrix(&matrix, 0.2146f, 1.575f);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 0.0f, 240.0f);
+    scale_matrix(&matrix, 0.25f, -0.25f);
+    ID2D1LinearGradientBrush_SetTransform(brush, &matrix);
+
+    set_rect(&r, 0.0f, 0.0f, 80.0f, 240.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &r, (ID2D1Brush *)brush);
+
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 0.5f, 2.0f);
+    translate_matrix(&matrix, 320.0f, 240.0f);
+    rotate_matrix(&matrix, M_PI / 4.0f);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 0.0f, -50.0f);
+    scale_matrix(&matrix, 0.1f, 0.1f);
+    rotate_matrix(&matrix, -M_PI / 3.0f);
+    ID2D1LinearGradientBrush_SetTransform(brush, &matrix);
+
+    ID2D1LinearGradientBrush_SetOpacity(brush, 0.75f);
+    set_rect(&r, -80.0f, -60.0f, 80.0f, 60.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &r, (ID2D1Brush *)brush);
+
+    ID2D1RenderTarget_GetFactory(rt, &factory);
+
+    set_rect(&r, -1.0f, -1.0f, 1.0f, 1.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &r, &rectangle_geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 228.5f, 714.0f);
+    scale_matrix(&matrix, 40.0f, 120.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(factory, (ID2D1Geometry *)rectangle_geometry,
+            &matrix, &transformed_geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+    ID2D1RectangleGeometry_Release(rectangle_geometry);
+
+    set_matrix_identity(&matrix);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    ID2D1LinearGradientBrush_SetTransform(brush, &matrix);
+    set_point(&p, 188.5f, 834.0f);
+    ID2D1LinearGradientBrush_SetStartPoint(brush, p);
+    set_point(&p, 268.5f, 594.0f);
+    ID2D1LinearGradientBrush_SetEndPoint(brush, p);
+    ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
+    ID2D1TransformedGeometry_Release(transformed_geometry);
+
+    ID2D1Factory_Release(factory);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+
+    get_surface_readback(surface, &rb);
+    for (i = 0; i < sizeof(test2) / sizeof(*test2); ++i)
+    {
+        DWORD colour;
+
+        colour = get_readback_colour(&rb, test2[i].x, test2[i].y);
+        ok(compare_colour(colour, test2[i].colour, 1),
+                "Got unexpected colour 0x%08x at position {%u, %u}.\n",
+                colour, test2[i].x, test2[i].y);
+    }
+    release_resource_readback(&rb);
+
+    ID2D1LinearGradientBrush_Release(brush);
+    refcount = ID2D1GradientStopCollection_Release(gradient);
+    ok(!refcount, "Gradient has %u references left.\n", refcount);
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
@@ -5949,6 +6176,7 @@ START_TEST(d2d1)
     test_state_block();
     test_color_brush();
     test_bitmap_brush();
+    test_linear_brush();
     test_path_geometry();
     test_rectangle_geometry();
     test_rounded_rectangle_geometry();

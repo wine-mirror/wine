@@ -217,6 +217,14 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     return S_OK;
 }
 
+static struct d2d_gradient *unsafe_impl_from_ID2D1GradientStopCollection(ID2D1GradientStopCollection *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d2d_gradient_vtbl);
+    return CONTAINING_RECORD(iface, struct d2d_gradient, ID2D1GradientStopCollection_iface);
+}
+
 static void d2d_brush_destroy(struct d2d_brush *brush)
 {
     ID2D1Factory_Release(brush->factory);
@@ -429,7 +437,7 @@ static ULONG STDMETHODCALLTYPE d2d_linear_gradient_brush_Release(ID2D1LinearGrad
 
     if (!refcount)
     {
-        ID2D1GradientStopCollection_Release(brush->u.linear.gradient);
+        ID2D1GradientStopCollection_Release(&brush->u.linear.gradient->ID2D1GradientStopCollection_iface);
         d2d_brush_destroy(brush);
     }
 
@@ -491,7 +499,7 @@ static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetStartPoint(ID2D1Linea
 
     TRACE("iface %p, start_point {%.8e, %.8e}.\n", iface, start_point.x, start_point.y);
 
-    brush->u.linear.desc.startPoint = start_point;
+    brush->u.linear.start = start_point;
 }
 
 static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetEndPoint(ID2D1LinearGradientBrush *iface,
@@ -501,7 +509,7 @@ static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetEndPoint(ID2D1LinearG
 
     TRACE("iface %p, end_point {%.8e, %.8e}.\n", iface, end_point.x, end_point.y);
 
-    brush->u.linear.desc.endPoint = end_point;
+    brush->u.linear.end = end_point;
 }
 
 static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_linear_gradient_brush_GetStartPoint(ID2D1LinearGradientBrush *iface,
@@ -511,7 +519,7 @@ static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_linear_gradient_brush_GetStartPoint
 
     TRACE("iface %p, point %p.\n", iface, point);
 
-    *point = brush->u.linear.desc.startPoint;
+    *point = brush->u.linear.start;
     return point;
 }
 
@@ -522,7 +530,7 @@ static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_linear_gradient_brush_GetEndPoint(I
 
     TRACE("iface %p, point %p.\n", iface, point);
 
-    *point = brush->u.linear.desc.endPoint;
+    *point = brush->u.linear.end;
     return point;
 }
 
@@ -533,7 +541,7 @@ static void STDMETHODCALLTYPE d2d_linear_gradient_brush_GetGradientStopCollectio
 
     TRACE("iface %p, gradient %p.\n", iface, gradient);
 
-    ID2D1GradientStopCollection_AddRef(*gradient = brush->u.linear.gradient);
+    ID2D1GradientStopCollection_AddRef(*gradient = &brush->u.linear.gradient->ID2D1GradientStopCollection_iface);
 }
 
 static const struct ID2D1LinearGradientBrushVtbl d2d_linear_gradient_brush_vtbl =
@@ -561,8 +569,10 @@ HRESULT d2d_linear_gradient_brush_create(ID2D1Factory *factory, const D2D1_LINEA
 
     d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_LINEAR, brush_desc,
             (ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
-    (*brush)->u.linear.desc = *gradient_brush_desc;
-    ID2D1GradientStopCollection_AddRef((*brush)->u.linear.gradient = gradient);
+    (*brush)->u.linear.gradient = unsafe_impl_from_ID2D1GradientStopCollection(gradient);
+    ID2D1GradientStopCollection_AddRef(&(*brush)->u.linear.gradient->ID2D1GradientStopCollection_iface);
+    (*brush)->u.linear.start = gradient_brush_desc->startPoint;
+    (*brush)->u.linear.end = gradient_brush_desc->endPoint;
 
     TRACE("Created brush %p.\n", *brush);
     return S_OK;
@@ -866,6 +876,14 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
 
             return TRUE;
 
+        case D2D_BRUSH_TYPE_LINEAR:
+            b = brush->transform;
+            d2d_point_transform(&cb->u.linear.start, &b, brush->u.linear.start.x, brush->u.linear.start.y);
+            d2d_point_transform(&cb->u.linear.end, &b, brush->u.linear.end.x, brush->u.linear.end.y);
+            cb->u.linear.stop_count = brush->u.linear.gradient->stop_count;
+
+            return TRUE;
+
         case D2D_BRUSH_TYPE_BITMAP:
             bitmap = brush->u.bitmap.bitmap;
 
@@ -932,6 +950,11 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
     return hr;
 }
 
+static void d2d_brush_bind_gradient(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx)
+{
+    ID3D10Device_PSSetShaderResources(device, 2 + brush_idx, 1, &brush->u.linear.gradient->view);
+}
+
 static void d2d_brush_bind_bitmap(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx)
 {
     HRESULT hr;
@@ -967,8 +990,21 @@ static void d2d_brush_bind_bitmap(struct d2d_brush *brush, ID3D10Device *device,
 
 void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx)
 {
-    if (brush->type == D2D_BRUSH_TYPE_BITMAP)
-        d2d_brush_bind_bitmap(brush, device, brush_idx);
-    else if (brush->type != D2D_BRUSH_TYPE_SOLID)
-        FIXME("Unhandled brush type %#x.\n", brush->type);
+    switch (brush->type)
+    {
+        case D2D_BRUSH_TYPE_SOLID:
+            break;
+
+        case D2D_BRUSH_TYPE_LINEAR:
+            d2d_brush_bind_gradient(brush, device, brush_idx);
+            break;
+
+        case D2D_BRUSH_TYPE_BITMAP:
+            d2d_brush_bind_bitmap(brush, device, brush_idx);
+            break;
+
+        default:
+            FIXME("Unhandled brush type %#x.\n", brush->type);
+            break;
+    }
 }
