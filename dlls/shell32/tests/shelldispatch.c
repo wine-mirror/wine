@@ -594,6 +594,8 @@ static void test_items(void)
     /* test the folder item corresponding to each file */
     for (i = 0; i < sizeof(file_defs)/sizeof(file_defs[0]); i++)
     {
+        VARIANT_BOOL b;
+
         V_I4(&int_index) = i;
         variant_set_string(&str_index, file_defs[i].name);
 
@@ -628,6 +630,11 @@ static void test_items(void)
         ok(!lstrcmpW(bstr, path),
            "file_defs[%d]: expected %s, got %s\n", i, wine_dbgstr_w(path), wine_dbgstr_w(bstr));
         SysFreeString(bstr);
+
+        b = 0xdead;
+        r = FolderItem_get_IsFolder(item, &b);
+        ok(r == S_OK, "Failed to get IsFolder property, %#x.\n", r);
+        ok(file_defs[i].type == DIRECTORY ? b == VARIANT_TRUE : b == VARIANT_FALSE, "Unexpected prop value %#x.\n", b);
 
         FolderItem_Release(item);
 

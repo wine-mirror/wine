@@ -83,6 +83,7 @@ typedef struct {
     LONG ref;
     FolderImpl *folder;
     WCHAR *path; /* if NULL, folder path is used */
+    DWORD attributes;
 } FolderItemImpl;
 
 typedef struct {
@@ -788,36 +789,48 @@ static HRESULT WINAPI FolderItemImpl_get_GetFolder(FolderItem2 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_IsLink(FolderItem2 *iface,
-        VARIANT_BOOL *pb)
+static HRESULT WINAPI FolderItemImpl_get_IsLink(FolderItem2 *iface, VARIANT_BOOL *b)
 {
-    FIXME("(%p,%p)\n", iface, pb);
+    FolderItemImpl *This = impl_from_FolderItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, b);
+
+    *b = This->attributes & SFGAO_LINK ? VARIANT_TRUE : VARIANT_FALSE;
+
+    return S_OK;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_IsFolder(FolderItem2 *iface,
-        VARIANT_BOOL *pb)
+static HRESULT WINAPI FolderItemImpl_get_IsFolder(FolderItem2 *iface, VARIANT_BOOL *b)
 {
-    FIXME("(%p,%p)\n", iface, pb);
+    FolderItemImpl *This = impl_from_FolderItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, b);
+
+    *b = This->attributes & SFGAO_FOLDER ? VARIANT_TRUE : VARIANT_FALSE;
+
+    return S_OK;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_IsFileSystem(FolderItem2 *iface,
-        VARIANT_BOOL *pb)
+static HRESULT WINAPI FolderItemImpl_get_IsFileSystem(FolderItem2 *iface, VARIANT_BOOL *b)
 {
-    FIXME("(%p,%p)\n", iface, pb);
+    FolderItemImpl *This = impl_from_FolderItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, b);
+
+    *b = This->attributes & SFGAO_FILESYSTEM ? VARIANT_TRUE : VARIANT_FALSE;
+
+    return S_OK;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_IsBrowsable(FolderItem2 *iface,
-        VARIANT_BOOL *pb)
+static HRESULT WINAPI FolderItemImpl_get_IsBrowsable(FolderItem2 *iface, VARIANT_BOOL *b)
 {
-    FIXME("(%p,%p)\n", iface, pb);
+    FolderItemImpl *This = impl_from_FolderItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, b);
+
+    *b = This->attributes & SFGAO_BROWSABLE ? VARIANT_TRUE : VARIANT_FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI FolderItemImpl_get_ModifyDate(FolderItem2 *iface,
@@ -924,6 +937,7 @@ static const FolderItem2Vtbl FolderItemImpl_Vtbl = {
 
 static HRESULT FolderItem_Constructor(FolderImpl *folder, const WCHAR *path, FolderItem **item)
 {
+    PIDLIST_ABSOLUTE pidl;
     FolderItemImpl *This;
 
     TRACE("%s\n", debugstr_w(path));
@@ -941,6 +955,9 @@ static HRESULT FolderItem_Constructor(FolderImpl *folder, const WCHAR *path, Fol
 
     This->folder = folder;
     Folder3_AddRef(&folder->Folder3_iface);
+
+    if (SHParseDisplayName(This->path, NULL, &pidl, ~0u, &This->attributes) == S_OK)
+        ILFree(pidl);
 
     *item = (FolderItem *)&This->FolderItem2_iface;
     return S_OK;
