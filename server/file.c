@@ -265,12 +265,6 @@ done:
     return obj;
 }
 
-/* check if two file objects point to the same file */
-int is_same_file( struct file *file1, struct file *file2 )
-{
-    return is_same_file_fd( file1->fd, file2->fd );
-}
-
 static void file_dump( struct object *obj, int verbose )
 {
     struct file *file = (struct file *)obj;
