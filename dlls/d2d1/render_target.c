@@ -409,10 +409,18 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateRadialGradientBrush
         const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient, ID2D1RadialGradientBrush **brush)
 {
-    FIXME("iface %p, gradient_brush_desc %p, brush_desc %p, gradient %p, brush %p stub!\n",
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    struct d2d_brush *object;
+    HRESULT hr;
+
+    TRACE("iface %p, gradient_brush_desc %p, brush_desc %p, gradient %p, brush %p.\n",
             iface, gradient_brush_desc, brush_desc, gradient, brush);
 
-    return E_NOTIMPL;
+    if (SUCCEEDED(hr = d2d_radial_gradient_brush_create(render_target->factory,
+            brush_desc, gradient, &object)))
+        *brush = (ID2D1RadialGradientBrush *)&object->ID2D1Brush_iface;
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateCompatibleRenderTarget(ID2D1RenderTarget *iface,
@@ -2565,8 +2573,9 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
 #if 0
 #define BRUSH_TYPE_SOLID    0
 #define BRUSH_TYPE_LINEAR   1
-#define BRUSH_TYPE_BITMAP   2
-#define BRUSH_TYPE_COUNT    3
+#define BRUSH_TYPE_RADIAL   2
+#define BRUSH_TYPE_BITMAP   3
+#define BRUSH_TYPE_COUNT    4
 
         bool outline;
         struct brush
@@ -2694,7 +2703,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
             return colour;
         }
 #endif
-        0x43425844, 0x8b6abf47, 0x898d4cd7, 0x0052859f, 0x209737c6, 0x00000001, 0x00001094, 0x00000003,
+        0x43425844, 0x6387f851, 0xd0684a53, 0xfac88e1c, 0xb2e1e70c, 0x00000001, 0x00001094, 0x00000003,
         0x0000002c, 0x000000c4, 0x000000f8, 0x4e475349, 0x00000090, 0x00000004, 0x00000008, 0x00000068,
         0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000303, 0x00000077, 0x00000000, 0x00000000,
         0x00000003, 0x00000001, 0x00000f0f, 0x0000007e, 0x00000000, 0x00000000, 0x00000003, 0x00000002,
@@ -2746,7 +2755,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         0x00100e46, 0x00000004, 0x00100e46, 0x00000006, 0x01000015, 0x08000038, 0x001000f2, 0x00000000,
         0x00100e46, 0x00000003, 0x00208556, 0x00000000, 0x00000001, 0x01000015, 0x0300001f, 0x0010000a,
         0x00000001, 0x08000020, 0x00100012, 0x00000001, 0x0020800a, 0x00000000, 0x00000001, 0x00004001,
-        0x00000002, 0x0304001f, 0x0010000a, 0x00000001, 0x0800000f, 0x00100022, 0x00000001, 0x00101046,
+        0x00000003, 0x0304001f, 0x0010000a, 0x00000001, 0x0800000f, 0x00100022, 0x00000001, 0x00101046,
         0x00000000, 0x00208046, 0x00000000, 0x00000002, 0x08000000, 0x00100012, 0x00000002, 0x0010001a,
         0x00000001, 0x0020802a, 0x00000000, 0x00000002, 0x0800000f, 0x00100022, 0x00000001, 0x00101046,
         0x00000000, 0x00208046, 0x00000000, 0x00000003, 0x08000000, 0x00100022, 0x00000002, 0x0010001a,
@@ -2757,7 +2766,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         0x05000036, 0x00100012, 0x00000002, 0x00004001, 0x00000000, 0x06000036, 0x00100082, 0x00000002,
         0x0020801a, 0x00000000, 0x00000001, 0x09000037, 0x001000f2, 0x00000000, 0x00100006, 0x00000001,
         0x00100e46, 0x00000000, 0x00100c06, 0x00000002, 0x01000015, 0x01000015, 0x0800004f, 0x00100012,
-        0x00000001, 0x0020800a, 0x00000000, 0x00000004, 0x00004001, 0x00000003, 0x0304001f, 0x0010000a,
+        0x00000001, 0x0020800a, 0x00000000, 0x00000004, 0x00004001, 0x00000004, 0x0304001f, 0x0010000a,
         0x00000001, 0x09000038, 0x00100012, 0x00000001, 0x0020801a, 0x00000000, 0x00000004, 0x0020803a,
         0x00000000, 0x00000005, 0x0404001f, 0x0020800a, 0x00000000, 0x00000004, 0x08000020, 0x00100022,
         0x00000001, 0x0020800a, 0x00000000, 0x00000004, 0x00004001, 0x00000001, 0x0304001f, 0x0010001a,
@@ -2796,7 +2805,7 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         0x00000002, 0x01000012, 0x05000036, 0x00100042, 0x00000001, 0x0010003a, 0x00000003, 0x01000015,
         0x08000038, 0x00100012, 0x00000001, 0x0010002a, 0x00000001, 0x0020801a, 0x00000000, 0x00000004,
         0x01000015, 0x0300001f, 0x0010001a, 0x00000001, 0x08000020, 0x00100022, 0x00000001, 0x0020800a,
-        0x00000000, 0x00000004, 0x00004001, 0x00000002, 0x0304001f, 0x0010001a, 0x00000001, 0x0800000f,
+        0x00000000, 0x00000004, 0x00004001, 0x00000003, 0x0304001f, 0x0010001a, 0x00000001, 0x0800000f,
         0x00100042, 0x00000001, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000005, 0x08000000,
         0x00100012, 0x00000002, 0x0010002a, 0x00000001, 0x0020802a, 0x00000000, 0x00000005, 0x0800000f,
         0x00100042, 0x00000001, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000006, 0x08000000,

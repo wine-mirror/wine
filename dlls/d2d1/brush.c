@@ -578,6 +578,202 @@ HRESULT d2d_linear_gradient_brush_create(ID2D1Factory *factory, const D2D1_LINEA
     return S_OK;
 }
 
+static inline struct d2d_brush *impl_from_ID2D1RadialGradientBrush(ID2D1RadialGradientBrush *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_radial_gradient_brush_QueryInterface(ID2D1RadialGradientBrush *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1RadialGradientBrush)
+            || IsEqualGUID(iid, &IID_ID2D1Brush)
+            || IsEqualGUID(iid, &IID_ID2D1Resource)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1RadialGradientBrush_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_radial_gradient_brush_AddRef(ID2D1RadialGradientBrush *iface)
+{
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
+    ULONG refcount = InterlockedIncrement(&brush->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_radial_gradient_brush_Release(ID2D1RadialGradientBrush *iface)
+{
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
+    ULONG refcount = InterlockedDecrement(&brush->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+        d2d_brush_destroy(brush);
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d2d_radial_gradient_brush_GetFactory(ID2D1RadialGradientBrush *iface,
+        ID2D1Factory **factory)
+{
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
+
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = brush->factory);
+}
+
+static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetOpacity(ID2D1RadialGradientBrush *iface, float opacity)
+{
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
+
+    TRACE("iface %p, opacity %.8e.\n", iface, opacity);
+
+    brush->opacity = opacity;
+}
+
+static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetTransform(ID2D1RadialGradientBrush *iface,
+        const D2D1_MATRIX_3X2_F *transform)
+{
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
+
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    brush->transform = *transform;
+}
+
+static float STDMETHODCALLTYPE d2d_radial_gradient_brush_GetOpacity(ID2D1RadialGradientBrush *iface)
+{
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return brush->opacity;
+}
+
+static void STDMETHODCALLTYPE d2d_radial_gradient_brush_GetTransform(ID2D1RadialGradientBrush *iface,
+        D2D1_MATRIX_3X2_F *transform)
+{
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
+
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    *transform = brush->transform;
+}
+
+static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetCenter(ID2D1RadialGradientBrush *iface,
+        D2D1_POINT_2F centre)
+{
+    FIXME("iface %p, centre {%.8e, %.8e} stub!\n", iface, centre.x, centre.y);
+}
+
+static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetGradientOriginOffset(ID2D1RadialGradientBrush *iface,
+        D2D1_POINT_2F offset)
+{
+    FIXME("iface %p, offset {%.8e, %.8e} stub!\n", iface, offset.x, offset.y);
+}
+
+static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetRadiusX(ID2D1RadialGradientBrush *iface, float radius)
+{
+    FIXME("iface %p, radius %.8e stub!\n", iface, radius);
+}
+
+static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetRadiusY(ID2D1RadialGradientBrush *iface, float radius)
+{
+    FIXME("iface %p, radius %.8e stub!\n", iface, radius);
+}
+
+static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_radial_gradient_brush_GetCenter(ID2D1RadialGradientBrush *iface,
+        D2D1_POINT_2F *centre)
+{
+    FIXME("iface %p, centre %p stub!\n", iface, centre);
+
+    d2d_point_set(centre, 0.0f, 0.0f);
+    return centre;
+}
+
+static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_radial_gradient_brush_GetGradientOriginOffset(
+        ID2D1RadialGradientBrush *iface, D2D1_POINT_2F *offset)
+{
+    FIXME("iface %p, offset %p stub!\n", iface, offset);
+
+    d2d_point_set(offset, 0.0f, 0.0f);
+    return offset;
+}
+
+static float STDMETHODCALLTYPE d2d_radial_gradient_brush_GetRadiusX(ID2D1RadialGradientBrush *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0.0f;
+}
+
+static float STDMETHODCALLTYPE d2d_radial_gradient_brush_GetRadiusY(ID2D1RadialGradientBrush *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0.0f;
+}
+
+static void STDMETHODCALLTYPE d2d_radial_gradient_brush_GetGradientStopCollection(ID2D1RadialGradientBrush *iface,
+        ID2D1GradientStopCollection **gradient)
+{
+    FIXME("iface %p, gradient %p stub!\n", iface, gradient);
+
+    *gradient = NULL;
+}
+
+static const struct ID2D1RadialGradientBrushVtbl d2d_radial_gradient_brush_vtbl =
+{
+    d2d_radial_gradient_brush_QueryInterface,
+    d2d_radial_gradient_brush_AddRef,
+    d2d_radial_gradient_brush_Release,
+    d2d_radial_gradient_brush_GetFactory,
+    d2d_radial_gradient_brush_SetOpacity,
+    d2d_radial_gradient_brush_SetTransform,
+    d2d_radial_gradient_brush_GetOpacity,
+    d2d_radial_gradient_brush_GetTransform,
+    d2d_radial_gradient_brush_SetCenter,
+    d2d_radial_gradient_brush_SetGradientOriginOffset,
+    d2d_radial_gradient_brush_SetRadiusX,
+    d2d_radial_gradient_brush_SetRadiusY,
+    d2d_radial_gradient_brush_GetCenter,
+    d2d_radial_gradient_brush_GetGradientOriginOffset,
+    d2d_radial_gradient_brush_GetRadiusX,
+    d2d_radial_gradient_brush_GetRadiusY,
+    d2d_radial_gradient_brush_GetGradientStopCollection,
+};
+
+HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory, const D2D1_BRUSH_PROPERTIES *brush_desc,
+        ID2D1GradientStopCollection *gradient, struct d2d_brush **brush)
+{
+    struct d2d_brush *b;
+
+    if (!(b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*b))))
+        return E_OUTOFMEMORY;
+
+    d2d_brush_init(b, factory, D2D_BRUSH_TYPE_RADIAL, brush_desc, (ID2D1BrushVtbl *)&d2d_radial_gradient_brush_vtbl);
+
+    TRACE("Created brush %p.\n", b);
+    *brush = b;
+
+    return S_OK;
+}
+
 static inline struct d2d_brush *impl_from_ID2D1BitmapBrush(ID2D1BitmapBrush *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
@@ -827,6 +1023,7 @@ struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface)
         return NULL;
     assert(iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl
             || iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl
+            || iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_radial_gradient_brush_vtbl
             || iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_bitmap_brush_vtbl);
     return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
 }
