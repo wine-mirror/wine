@@ -5145,6 +5145,13 @@ static FT_Encoding pick_charmap( FT_Face face, int charset )
         if (select_charmap( face, *encs )) break;
         encs++;
     }
+
+    if (!face->charmap && face->num_charmaps)
+    {
+        if (!pFT_Set_Charmap(face, face->charmaps[0]))
+            return face->charmap->encoding;
+    }
+
     return *encs;
 }
 
