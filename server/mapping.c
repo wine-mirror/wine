@@ -46,13 +46,39 @@
 /* list of memory ranges, used to store committed info */
 struct ranges
 {
-    unsigned int count;
-    unsigned int max;
+    struct object   obj;             /* object header */
+    unsigned int    count;           /* number of used ranges */
+    unsigned int    max;             /* number of allocated ranges */
     struct range
     {
         file_pos_t  start;
         file_pos_t  end;
-    } ranges[1];
+    } *ranges;
+};
+
+static void ranges_dump( struct object *obj, int verbose );
+static void ranges_destroy( struct object *obj );
+
+static const struct object_ops ranges_ops =
+{
+    sizeof(struct ranges),     /* size */
+    ranges_dump,               /* dump */
+    no_get_type,               /* get_type */
+    no_add_queue,              /* add_queue */
+    NULL,                      /* remove_queue */
+    NULL,                      /* signaled */
+    NULL,                      /* satisfied */
+    no_signal,                 /* signal */
+    no_get_fd,                 /* get_fd */
+    no_map_access,             /* map_access */
+    default_get_sd,            /* get_sd */
+    default_set_sd,            /* set_sd */
+    no_lookup_name,            /* lookup_name */
+    no_link_name,              /* link_name */
+    NULL,                      /* unlink_name */
+    no_open_file,              /* open_file */
+    no_close_handle,           /* close_handle */
+    ranges_destroy             /* destroy */
 };
 
 /* memory view mapped in client address space */
@@ -126,6 +152,18 @@ static size_t page_mask;
 
 #define ROUND_SIZE(size)  (((size) + page_mask) & ~page_mask)
 
+
+static void ranges_dump( struct object *obj, int verbose )
+{
+    struct ranges *ranges = (struct ranges *)obj;
+    fprintf( stderr, "Memory ranges count=%u\n", ranges->count );
+}
+
+static void ranges_destroy( struct object *obj )
+{
+    struct ranges *ranges = (struct ranges *)obj;
+    free( ranges->ranges );
+}
 
 /* extend a file beyond the current end of file */
 static int grow_file( int unix_fd, file_pos_t new_size )
@@ -262,26 +300,27 @@ static inline void get_section_sizes( const IMAGE_SECTION_HEADER *sec, size_t *m
 static void add_committed_range( struct mapping *mapping, file_pos_t start, file_pos_t end )
 {
     unsigned int i, j;
+    struct ranges *committed = mapping->committed;
     struct range *ranges;
 
-    if (!mapping->committed) return;  /* everything committed already */
+    if (!committed) return;  /* everything committed already */
 
-    for (i = 0, ranges = mapping->committed->ranges; i < mapping->committed->count; i++)
+    for (i = 0, ranges = committed->ranges; i < committed->count; i++)
     {
         if (ranges[i].start > end) break;
         if (ranges[i].end < start) continue;
         if (ranges[i].start > start) ranges[i].start = start;   /* extend downwards */
         if (ranges[i].end < end)  /* extend upwards and maybe merge with next */
         {
-            for (j = i + 1; j < mapping->committed->count; j++)
+            for (j = i + 1; j < committed->count; j++)
             {
                 if (ranges[j].start > end) break;
                 if (ranges[j].end > end) end = ranges[j].end;
             }
             if (j > i + 1)
             {
-                memmove( &ranges[i + 1], &ranges[j], (mapping->committed->count - j) * sizeof(*ranges) );
-                mapping->committed->count -= j - (i + 1);
+                memmove( &ranges[i + 1], &ranges[j], (committed->count - j) * sizeof(*ranges) );
+                committed->count -= j - (i + 1);
             }
             ranges[i].end = end;
         }
@@ -290,33 +329,33 @@ static void add_committed_range( struct mapping *mapping, file_pos_t start, file
 
     /* now add a new range */
 
-    if (mapping->committed->count == mapping->committed->max)
+    if (committed->count == committed->max)
     {
-        unsigned int new_size = mapping->committed->max * 2;
-        struct ranges *new_ptr = realloc( mapping->committed, offsetof( struct ranges, ranges[new_size] ));
+        unsigned int new_size = committed->max * 2;
+        struct range *new_ptr = realloc( committed->ranges, new_size * sizeof(*new_ptr) );
         if (!new_ptr) return;
-        new_ptr->max = new_size;
-        ranges = new_ptr->ranges;
-        mapping->committed = new_ptr;
+        committed->max = new_size;
+        committed->ranges = new_ptr;
     }
-    memmove( &ranges[i + 1], &ranges[i], (mapping->committed->count - i) * sizeof(*ranges) );
+    memmove( &ranges[i + 1], &ranges[i], (committed->count - i) * sizeof(*ranges) );
     ranges[i].start = start;
     ranges[i].end = end;
-    mapping->committed->count++;
+    committed->count++;
 }
 
 /* find the range containing start and return whether it's committed */
 static int find_committed_range( struct mapping *mapping, file_pos_t start, mem_size_t *size )
 {
     unsigned int i;
+    struct ranges *committed = mapping->committed;
     struct range *ranges;
 
-    if (!mapping->committed)  /* everything is committed */
+    if (!committed)  /* everything is committed */
     {
         *size = mapping->size - start;
         return 1;
     }
-    for (i = 0, ranges = mapping->committed->ranges; i < mapping->committed->count; i++)
+    for (i = 0, ranges = committed->ranges; i < committed->count; i++)
     {
         if (ranges[i].start > start)
         {
@@ -533,6 +572,21 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     return STATUS_INVALID_FILE_FOR_SECTION;
 }
 
+static struct ranges *create_ranges(void)
+{
+    struct ranges *ranges = alloc_object( &ranges_ops );
+
+    if (!ranges) return NULL;
+    ranges->count = 0;
+    ranges->max   = 8;
+    if (!(ranges->ranges = mem_alloc( ranges->max * sizeof(ranges->ranges) )))
+    {
+        release_object( ranges );
+        return NULL;
+    }
+    return ranges;
+}
+
 static unsigned int get_mapping_flags( obj_handle_t handle, unsigned int flags )
 {
     switch (flags & (SEC_IMAGE | SEC_RESERVE | SEC_COMMIT | SEC_FILE))
@@ -639,12 +693,7 @@ static struct object *create_mapping( struct object *root, const struct unicode_
             set_error( STATUS_INVALID_PARAMETER );
             goto error;
         }
-        if (flags & SEC_RESERVE)
-        {
-            if (!(mapping->committed = mem_alloc( offsetof(struct ranges, ranges[8]) ))) goto error;
-            mapping->committed->count = 0;
-            mapping->committed->max   = 8;
-        }
+        if ((flags & SEC_RESERVE) && !(mapping->committed = create_ranges())) goto error;
         mapping->size = (mapping->size + page_mask) & ~((mem_size_t)page_mask);
         if ((unix_fd = create_temp_file( mapping->size )) == -1) goto error;
         if (!(mapping->fd = create_anonymous_fd( &mapping_fd_ops, unix_fd, &mapping->obj,
@@ -718,12 +767,12 @@ static void mapping_destroy( struct object *obj )
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
     if (mapping->fd) release_object( mapping->fd );
+    if (mapping->committed) release_object( mapping->committed );
     if (mapping->shared_file)
     {
         release_object( mapping->shared_file );
         list_remove( &mapping->shared_entry );
     }
-    free( mapping->committed );
 }
 
 static enum server_fd_type mapping_get_fd_type( struct fd *fd )
