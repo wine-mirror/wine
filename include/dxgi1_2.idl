@@ -18,6 +18,12 @@
 
 import "dxgi.idl";
 
+const UINT DXGI_ENUM_MODES_STEREO = 0x4;
+const UINT DXGI_ENUM_MODES_DISABLED_STEREO = 0x8;
+
+const DWORD DXGI_SHARED_RESOURCE_READ = 0x80000000;
+const DWORD DXGI_SHARED_RESOURCE_WRITE = 0x00000001;
+
 typedef enum _DXGI_OFFER_RESOURCE_PRIORITY {
     DXGI_OFFER_RESOURCE_PRIORITY_LOW = 1,
     DXGI_OFFER_RESOURCE_PRIORITY_NORMAL,
@@ -134,6 +140,41 @@ interface IDXGIOutputDuplication : IDXGIObject
     HRESULT UnMapDesktopSurface();
 
     HRESULT ReleaseFrame();
+}
+
+[
+    object,
+    uuid(aba496dd-b617-4cb8-a866-bc44d7eb1fa2),
+    local,
+    pointer_default(unique)
+]
+interface IDXGISurface2 : IDXGISurface1
+{
+    HRESULT GetResource(
+        [in] REFIID iid,
+        [out] void **parent_resource,
+        [out] UINT *subresource_idx
+    );
+}
+
+[
+    object,
+    uuid(30961379-4609-4a41-998e-54fe567ee0c1),
+    local,
+    pointer_default(unique)
+]
+interface IDXGIResource1 : IDXGIResource
+{
+    HRESULT CreateSubresourceSurface(
+        UINT index,
+        [out] IDXGISurface2 **surface
+    );
+    HRESULT CreateSharedHandle(
+        [in] const SECURITY_ATTRIBUTES *attributes,
+        [in] DWORD access,
+        [in] const WCHAR *name,
+        [out] HANDLE *handle
+    );
 }
 
 [
