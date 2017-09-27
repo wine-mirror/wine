@@ -154,6 +154,7 @@ IDL_SRCS = \
 	rstinf.idl \
 	rstloc.idl \
 	rstnot.idl \
+	sapi.idl \
 	sensevts.idl \
 	servprov.idl \
 	sesprp.idl \
