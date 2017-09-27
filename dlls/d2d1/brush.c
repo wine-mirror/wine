@@ -678,7 +678,11 @@ static void STDMETHODCALLTYPE d2d_radial_gradient_brush_GetTransform(ID2D1Radial
 static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetCenter(ID2D1RadialGradientBrush *iface,
         D2D1_POINT_2F centre)
 {
-    FIXME("iface %p, centre {%.8e, %.8e} stub!\n", iface, centre.x, centre.y);
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
+
+    TRACE("iface %p, centre {%.8e, %.8e}.\n", iface, centre.x, centre.y);
+
+    brush->u.radial.centre = centre;
 }
 
 static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetGradientOriginOffset(ID2D1RadialGradientBrush *iface,
