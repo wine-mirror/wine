@@ -3,3 +3,6 @@ IMPORTS   = uuid ole32 user32 advapi32
 
 C_SRCS = \
 	main.c
+
+IDL_SRCS = \
+	sapi_typelib.idl
