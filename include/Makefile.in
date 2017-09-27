@@ -618,6 +618,7 @@ HEADER_SRCS = \
 	slpublic.h \
 	snmp.h \
 	softpub.h \
+	sperror.h \
 	sql.h \
 	sqlext.h \
 	sqltypes.h \
