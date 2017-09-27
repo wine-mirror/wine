@@ -715,9 +715,11 @@ static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_radial_gradient_brush_GetCenter(ID2
 static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_radial_gradient_brush_GetGradientOriginOffset(
         ID2D1RadialGradientBrush *iface, D2D1_POINT_2F *offset)
 {
-    FIXME("iface %p, offset %p stub!\n", iface, offset);
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
 
-    d2d_point_set(offset, 0.0f, 0.0f);
+    TRACE("iface %p, offset %p.\n", iface, offset);
+
+    *offset = brush->u.radial.offset;
     return offset;
 }
 
@@ -775,6 +777,7 @@ HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory,
 
     d2d_brush_init(b, factory, D2D_BRUSH_TYPE_RADIAL, brush_desc, (ID2D1BrushVtbl *)&d2d_radial_gradient_brush_vtbl);
     b->u.radial.centre = gradient_desc->center;
+    b->u.radial.offset = gradient_desc->gradientOriginOffset;
 
     TRACE("Created brush %p.\n", b);
     *brush = b;

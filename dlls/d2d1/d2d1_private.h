@@ -242,6 +242,7 @@ struct d2d_brush
         struct
         {
             D2D1_POINT_2F centre;
+            D2D1_POINT_2F offset;
         } radial;
         struct
         {
