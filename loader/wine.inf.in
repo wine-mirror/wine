@@ -2534,6 +2534,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 ; create some directories first
 11,mui,
 11,gecko\plugin,npmshtml.dll
+11,Speech\Common,sapi.dll
 11,wbem,mofcomp.exe
 10,syswow64,stdole2.tlb
 11,,iexplore.exe
@@ -2604,6 +2605,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,msxml6.dll
 11,,shdocvw.dll
 11,gecko\plugin,npmshtml.dll
+11,Speech\Common,sapi.dll
 11,wbem,mofcomp.exe
 11,wbem,wbemdisp.dll
 11,wbem,wbemprox.dll
