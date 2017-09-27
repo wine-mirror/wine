@@ -1502,30 +1502,24 @@ static HRESULT WINAPI FolderImpl_Items(Folder3 *iface, FolderItems **ppid)
 static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR name, FolderItem **item)
 {
     FolderImpl *This = impl_from_Folder(iface);
-    FolderItem *self;
-    BSTR str;
     WCHAR pathW[MAX_PATH];
+    LPITEMIDLIST pidl;
+    STRRET strret;
     HRESULT hr;
 
     TRACE("(%p,%s,%p)\n", iface, debugstr_w(name), item);
 
     *item = NULL;
 
-    if (!name || !name[0])
+    if (FAILED(IShellFolder2_ParseDisplayName(This->folder, NULL, NULL, name, NULL, &pidl, NULL)))
         return S_FALSE;
 
-    hr = Folder3_get_Self(iface, &self);
+    hr = IShellFolder2_GetDisplayNameOf(This->folder, pidl, SHGDN_FORPARSING, &strret);
+    ILFree(pidl);
     if (FAILED(hr))
-        return hr;
-
-    hr = FolderItem_get_Path(self, &str);
-    FolderItem_Release(self);
-
-    PathCombineW(pathW, str, name);
-    SysFreeString(str);
-
-    if (!PathFileExistsW(pathW))
         return S_FALSE;
+
+    StrRetToBufW(&strret, NULL, pathW, sizeof(pathW)/sizeof(*pathW));
 
     return FolderItem_Constructor(This, pathW, item);
 }
