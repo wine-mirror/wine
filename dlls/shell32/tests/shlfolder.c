@@ -5446,6 +5446,54 @@ static void test_GetDefaultColumn(void)
     CoUninitialize();
 }
 
+static void test_GetDefaultSearchGUID(void)
+{
+    static const CLSID *folders[] =
+    {
+        &CLSID_MyComputer,
+        &CLSID_MyDocuments,
+        &CLSID_ControlPanel,
+        &CLSID_NetworkPlaces,
+        &CLSID_Printers,
+        &CLSID_RecycleBin,
+        &CLSID_ShellDesktop,
+    };
+    HRESULT hr;
+    int i;
+
+    CoInitialize(NULL);
+
+    for (i = 0; i < sizeof(folders)/sizeof(folders[0]); i++)
+    {
+        IShellFolder2 *folder;
+        GUID guid;
+
+        hr = CoCreateInstance(folders[i], NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder2, (void **)&folder);
+        if (hr != S_OK)
+        {
+            win_skip("Failed to create folder %s, hr %#x.\n", wine_dbgstr_guid(folders[i]), hr);
+            continue;
+        }
+
+        if (0)
+        {
+            /* crashes on XP */
+            hr = IShellFolder2_GetDefaultSearchGUID(folder, NULL);
+            ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+        }
+
+        memcpy(&guid, &CLSID_MyComputer, sizeof(guid));
+        hr = IShellFolder2_GetDefaultSearchGUID(folder, &guid);
+        ok(hr == E_NOTIMPL || broken(hr == S_OK) /* Method was last supported on XP */, "Unexpected hr %#x.\n", hr);
+        if (hr == E_NOTIMPL)
+            ok(IsEqualGUID(&guid, &CLSID_MyComputer), "Unexpected guid %s.\n", wine_dbgstr_guid(&guid));
+
+        IShellFolder2_Release(folder);
+    }
+
+    CoUninitialize();
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -5486,6 +5534,7 @@ START_TEST(shlfolder)
     test_SHCreateDefaultContextMenu();
     test_DataObject();
     test_GetDefaultColumn();
+    test_GetDefaultSearchGUID();
 
     OleUninitialize();
 }

@@ -501,12 +501,10 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnSetNameOf (IShellFolder2 * iface,
     return E_FAIL;
 }
 
-static HRESULT WINAPI ISF_NetworkPlaces_fnGetDefaultSearchGUID (
-               IShellFolder2 * iface, GUID * pguid)
+static HRESULT WINAPI ISF_NetworkPlaces_fnGetDefaultSearchGUID(IShellFolder2 *iface, GUID *guid)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
-
-    FIXME ("(%p)\n", This);
+    TRACE("(%p)->(%p)\n", This, guid);
     return E_NOTIMPL;
 }
 

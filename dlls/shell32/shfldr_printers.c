@@ -251,11 +251,10 @@ static HRESULT WINAPI IShellFolder_Printers_fnSetNameOf (
     return E_FAIL;
 }
 
-static HRESULT WINAPI IShellFolder_Printers_fnGetDefaultSearchGUID (
-               IShellFolder2 * iface, GUID * pguid)
+static HRESULT WINAPI IShellFolder_Printers_fnGetDefaultSearchGUID(IShellFolder2 *iface, GUID *guid)
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
-    FIXME ("(%p) stub\n", This);
+    TRACE("(%p)->(%p)\n", This, guid);
     return E_NOTIMPL;
 }
 

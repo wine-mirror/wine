@@ -1454,11 +1454,10 @@ static HRESULT WINAPI ShellFolder2_GetDefaultColumnState(IShellFolder2* iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellFolder2_GetDefaultSearchGUID(IShellFolder2* iface,
-    GUID *guid)
+static HRESULT WINAPI ShellFolder2_GetDefaultSearchGUID(IShellFolder2* iface, GUID *guid)
 {
     UnixFolder *This = impl_from_IShellFolder2(iface);
-    FIXME("(%p)->(%p): stub\n", This, guid);
+    TRACE("(%p)->(%p)\n", This, guid);
     return E_NOTIMPL;
 }
 

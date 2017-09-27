@@ -711,12 +711,13 @@ static HRESULT WINAPI ISF_ControlPanel_fnSetNameOf(IShellFolder2 *iface, HWND hw
     return E_FAIL;
 }
 
-static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultSearchGUID(IShellFolder2 *iface, GUID *pguid)
+static HRESULT WINAPI ISF_ControlPanel_fnGetDefaultSearchGUID(IShellFolder2 *iface, GUID *guid)
 {
     ICPanelImpl *This = impl_from_IShellFolder2(iface);
-    FIXME("(%p)\n", This);
+    TRACE("(%p)->(%p)\n", This, guid);
     return E_NOTIMPL;
 }
+
 static HRESULT WINAPI ISF_ControlPanel_fnEnumSearches(IShellFolder2 *iface,
         IEnumExtraSearch **ppenum)
 {

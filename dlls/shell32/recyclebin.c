@@ -567,9 +567,10 @@ static HRESULT WINAPI RecycleBin_GetCurFolder(IPersistFolder2 *iface, LPITEMIDLI
     return S_OK;
 }
 
-static HRESULT WINAPI RecycleBin_GetDefaultSearchGUID(IShellFolder2 *iface, GUID *pguid)
+static HRESULT WINAPI RecycleBin_GetDefaultSearchGUID(IShellFolder2 *iface, GUID *guid)
 {
-    FIXME("stub\n");
+    RecycleBin *This = impl_from_IShellFolder2(iface);
+    TRACE("(%p)->(%p)\n", This, guid);
     return E_NOTIMPL;
 }
 

@@ -768,11 +768,10 @@ static HRESULT WINAPI ISF_MyComputer_fnSetNameOf (
     return E_FAIL;
 }
 
-static HRESULT WINAPI ISF_MyComputer_fnGetDefaultSearchGUID (
-               IShellFolder2 * iface, GUID * pguid)
+static HRESULT WINAPI ISF_MyComputer_fnGetDefaultSearchGUID(IShellFolder2 *iface, GUID *guid)
 {
     IMyComputerFolderImpl *This = impl_from_IShellFolder2(iface);
-    FIXME ("(%p)\n", This);
+    TRACE("(%p)->(%p)\n", This, guid);
     return E_NOTIMPL;
 }
 static HRESULT WINAPI ISF_MyComputer_fnEnumSearches (

@@ -753,11 +753,10 @@ static HRESULT WINAPI ISF_Desktop_fnSetNameOf (IShellFolder2 * iface,
     return E_FAIL;
 }
 
-static HRESULT WINAPI ISF_Desktop_fnGetDefaultSearchGUID(IShellFolder2 *iface,
-                GUID * pguid)
+static HRESULT WINAPI ISF_Desktop_fnGetDefaultSearchGUID(IShellFolder2 *iface, GUID *guid)
 {
     IDesktopFolderImpl *This = impl_from_IShellFolder2(iface);
-    FIXME ("(%p)->(%p) stub\n", This, pguid);
+    TRACE("(%p)->(%p)\n", This, guid);
     return E_NOTIMPL;
 }
 
