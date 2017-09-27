@@ -241,6 +241,10 @@ struct d2d_brush
         } linear;
         struct
         {
+            D2D1_POINT_2F centre;
+        } radial;
+        struct
+        {
             struct d2d_bitmap *bitmap;
             D2D1_EXTEND_MODE extend_mode_x;
             D2D1_EXTEND_MODE extend_mode_y;
@@ -255,7 +259,8 @@ HRESULT d2d_solid_color_brush_create(ID2D1Factory *factory, const D2D1_COLOR_F *
 HRESULT d2d_linear_gradient_brush_create(ID2D1Factory *factory,
         const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient, struct d2d_brush **brush) DECLSPEC_HIDDEN;
-HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory, const D2D1_BRUSH_PROPERTIES *brush_desc,
+HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory,
+        const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES *gradient_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient, struct d2d_brush **brush) DECLSPEC_HIDDEN;
 HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap,
         const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,

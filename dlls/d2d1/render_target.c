@@ -417,7 +417,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateRadialGradientBrush
             iface, gradient_brush_desc, brush_desc, gradient, brush);
 
     if (SUCCEEDED(hr = d2d_radial_gradient_brush_create(render_target->factory,
-            brush_desc, gradient, &object)))
+            gradient_brush_desc, brush_desc, gradient, &object)))
         *brush = (ID2D1RadialGradientBrush *)&object->ID2D1Brush_iface;
 
     return hr;

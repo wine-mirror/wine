@@ -700,9 +700,11 @@ static void STDMETHODCALLTYPE d2d_radial_gradient_brush_SetRadiusY(ID2D1RadialGr
 static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_radial_gradient_brush_GetCenter(ID2D1RadialGradientBrush *iface,
         D2D1_POINT_2F *centre)
 {
-    FIXME("iface %p, centre %p stub!\n", iface, centre);
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
 
-    d2d_point_set(centre, 0.0f, 0.0f);
+    TRACE("iface %p, centre %p.\n", iface, centre);
+
+    *centre = brush->u.radial.centre;
     return centre;
 }
 
@@ -758,7 +760,8 @@ static const struct ID2D1RadialGradientBrushVtbl d2d_radial_gradient_brush_vtbl 
     d2d_radial_gradient_brush_GetGradientStopCollection,
 };
 
-HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory, const D2D1_BRUSH_PROPERTIES *brush_desc,
+HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory,
+        const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES *gradient_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient, struct d2d_brush **brush)
 {
     struct d2d_brush *b;
@@ -767,6 +770,7 @@ HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory, const D2D1_BRUSH
         return E_OUTOFMEMORY;
 
     d2d_brush_init(b, factory, D2D_BRUSH_TYPE_RADIAL, brush_desc, (ID2D1BrushVtbl *)&d2d_radial_gradient_brush_vtbl);
+    b->u.radial.centre = gradient_desc->center;
 
     TRACE("Created brush %p.\n", b);
     *brush = b;
