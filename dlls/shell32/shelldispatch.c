@@ -1284,7 +1284,10 @@ static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ret)
 
     if (This->item_count)
     {
-        LPITEMIDLIST *pidls = HeapAlloc(GetProcessHeap(), 0, This->item_count * sizeof(*pidls));
+        LPITEMIDLIST *pidls;
+        ULONG fetched;
+
+        pidls = HeapAlloc(GetProcessHeap(), 0, This->item_count * sizeof(*pidls));
         This->item_names = HeapAlloc(GetProcessHeap(), 0, This->item_count * sizeof(*This->item_names));
 
         if (!pidls || !This->item_names)
@@ -1296,7 +1299,7 @@ static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ret)
         }
 
         IEnumIDList_Reset(enumidlist);
-        if (IEnumIDList_Next(enumidlist, This->item_count, pidls, NULL) == S_OK)
+        if (IEnumIDList_Next(enumidlist, This->item_count, pidls, &fetched) == S_OK)
             idlist_sort(pidls, 0, This->item_count - 1, folder->folder);
 
         for (i = 0; i < This->item_count; i++)
