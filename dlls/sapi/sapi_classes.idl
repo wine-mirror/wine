@@ -1,0 +1,52 @@
+/*
+ * Speech API (SAPI) classes.
+ *
+ * Copyright (C) 2017 Huw Davies
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/*
+ * These are the classes from the typelib in sapiddk.idl.  They don't get
+ * registered because the typelib is not registered.
+ */
+
+#pragma makedep register
+
+[
+    uuid(d9f6ee60-58c9-458b-88e1-2f908fd7f87c),
+    helpstring("Data Key"),
+    progid("SAPI.SpDataKey.1"),
+    vi_progid("SAPI.SpDataKey"),
+    threading(both)
+]
+coclass SpDataKey
+{
+    interface ISpRegDataKey;
+    [default] interface ISpDataKey;
+}
+
+[
+    uuid(3918d75f-0acb-41f2-b733-92aa15bcecf6),
+    helpstring("Object Token Enumerator"),
+    progid("SAPI.SpObjectTokenEnum.1"),
+    vi_progid("SAPI.SpObjectTokenEnum"),
+    threading(both)
+]
+coclass SpObjectTokenEnum
+{
+    interface ISpObjectTokenEnumBuilder;
+    [default] interface IEnumSpObjectTokens;
+}

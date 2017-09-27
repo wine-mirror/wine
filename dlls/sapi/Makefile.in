@@ -5,4 +5,5 @@ C_SRCS = \
 	main.c
 
 IDL_SRCS = \
+	sapi_classes.idl \
 	sapi_typelib.idl
