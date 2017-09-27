@@ -5395,6 +5395,57 @@ static void test_DataObject(void)
     IDataObject_Release(data_obj);
 }
 
+static void test_GetDefaultColumn(void)
+{
+    static const CLSID *folders[] =
+    {
+        &CLSID_MyComputer,
+        &CLSID_MyDocuments,
+        &CLSID_ControlPanel,
+        &CLSID_NetworkPlaces,
+        &CLSID_Printers,
+        &CLSID_RecycleBin,
+        &CLSID_ShellDesktop,
+    };
+    HRESULT hr;
+    int i;
+
+    CoInitialize(NULL);
+
+    for (i = 0; i < sizeof(folders)/sizeof(folders[0]); i++)
+    {
+        IShellFolder2 *folder;
+        ULONG sort, display;
+
+        hr = CoCreateInstance(folders[i], NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder2, (void **)&folder);
+        if (hr != S_OK)
+        {
+            win_skip("Failed to create folder %s, hr %#x.\n", wine_dbgstr_guid(folders[i]), hr);
+            continue;
+        }
+
+        hr = IShellFolder2_GetDefaultColumn(folder, 0, NULL, NULL);
+        ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+        sort = display = 123;
+        hr = IShellFolder2_GetDefaultColumn(folder, 0, &sort, &display);
+        ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+        ok(sort == 123 && display == 123, "Unexpected default column.\n");
+
+        display = 123;
+        hr = IShellFolder2_GetDefaultColumn(folder, 0, NULL, &display);
+        ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+        ok(display == 123, "Unexpected default column.\n");
+
+        sort = 123;
+        hr = IShellFolder2_GetDefaultColumn(folder, 0, &sort, NULL);
+        ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+        ok(sort == 123, "Unexpected default column.\n");
+    }
+
+    CoUninitialize();
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -5434,6 +5485,7 @@ START_TEST(shlfolder)
     test_ShellItemArrayGetAttributes();
     test_SHCreateDefaultContextMenu();
     test_DataObject();
+    test_GetDefaultColumn();
 
     OleUninitialize();
 }

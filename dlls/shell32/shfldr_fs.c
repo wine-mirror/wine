@@ -926,19 +926,13 @@ static HRESULT WINAPI IShellFolder_fnEnumSearches (IShellFolder2 * iface,
 }
 
 static HRESULT WINAPI
-IShellFolder_fnGetDefaultColumn (IShellFolder2 * iface, DWORD dwRes,
-                                 ULONG * pSort, ULONG * pDisplay)
+IShellFolder_fnGetDefaultColumn(IShellFolder2 *iface, DWORD reserved, ULONG *sort, ULONG *display)
 {
     IGenericSFImpl *This = impl_from_IShellFolder2(iface);
 
-    TRACE ("(%p)\n", This);
+    TRACE("(%p)->(%#x, %p, %p)\n", This, reserved, sort, display);
 
-    if (pSort)
-        *pSort = 0;
-    if (pDisplay)
-        *pDisplay = 0;
-
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI

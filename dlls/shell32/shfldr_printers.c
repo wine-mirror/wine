@@ -267,11 +267,13 @@ static HRESULT WINAPI IShellFolder_Printers_fnEnumSearches (
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IShellFolder_Printers_fnGetDefaultColumn (
-               IShellFolder2 *iface, DWORD dwRes, ULONG *pSort, ULONG *pDisplay)
+static HRESULT WINAPI IShellFolder_Printers_fnGetDefaultColumn(IShellFolder2 *iface, DWORD reserved,
+        ULONG *sort, ULONG *display)
 {
     IPrintersFolderImpl *This = impl_from_IShellFolder2(iface);
-    FIXME("(%p) stub\n", This);
+
+    TRACE("(%p)->(%#x, %p, %p)\n", This, reserved, sort, display);
+
     return E_NOTIMPL;
 }
 

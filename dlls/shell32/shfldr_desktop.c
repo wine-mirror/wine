@@ -769,20 +769,15 @@ static HRESULT WINAPI ISF_Desktop_fnEnumSearches (IShellFolder2 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ISF_Desktop_fnGetDefaultColumn (IShellFolder2 * iface,
-                DWORD reserved, ULONG * pSort, ULONG * pDisplay)
+static HRESULT WINAPI ISF_Desktop_fnGetDefaultColumn(IShellFolder2 *iface, DWORD reserved, ULONG *sort, ULONG *display)
 {
     IDesktopFolderImpl *This = impl_from_IShellFolder2(iface);
 
-    TRACE ("(%p)->(%d %p %p)\n", This, reserved, pSort, pDisplay);
+    TRACE ("(%p)->(%#x, %p, %p)\n", This, reserved, sort, display);
 
-    if (pSort)
-        *pSort = 0;
-    if (pDisplay)
-        *pDisplay = 0;
-
-    return S_OK;
+    return E_NOTIMPL;
 }
+
 static HRESULT WINAPI ISF_Desktop_fnGetDefaultColumnState (
                 IShellFolder2 * iface, UINT iColumn, DWORD * pcsFlags)
 {

@@ -1437,19 +1437,13 @@ static HRESULT WINAPI ShellFolder2_EnumSearches(IShellFolder2* iface, IEnumExtra
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellFolder2_GetDefaultColumn(IShellFolder2* iface,
-    DWORD dwReserved, ULONG *pSort, ULONG *pDisplay)
+static HRESULT WINAPI ShellFolder2_GetDefaultColumn(IShellFolder2* iface, DWORD reserved, ULONG *sort, ULONG *display)
 {
     UnixFolder *This = impl_from_IShellFolder2(iface);
 
-    TRACE("(%p)->(0x%x %p %p)\n", This, dwReserved, pSort, pDisplay);
+    TRACE("(%p)->(%#x, %p, %p)\n", This, reserved, sort, display);
 
-    if (pSort)
-        *pSort = 0;
-    if (pDisplay)
-        *pDisplay = 0;
-
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ShellFolder2_GetDefaultColumnState(IShellFolder2* iface,

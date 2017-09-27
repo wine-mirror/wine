@@ -782,19 +782,17 @@ static HRESULT WINAPI ISF_MyComputer_fnEnumSearches (
     FIXME ("(%p)\n", This);
     return E_NOTIMPL;
 }
-static HRESULT WINAPI ISF_MyComputer_fnGetDefaultColumn (
-               IShellFolder2 *iface, DWORD dwRes, ULONG *pSort, ULONG *pDisplay)
+
+static HRESULT WINAPI ISF_MyComputer_fnGetDefaultColumn(IShellFolder2 *iface, DWORD reserved,
+        ULONG *sort, ULONG *display)
 {
     IMyComputerFolderImpl *This = impl_from_IShellFolder2(iface);
 
-    TRACE ("(%p)\n", This);
+    TRACE("(%p)->(%#x, %p, %p)\n", This, reserved, sort, display);
 
-    if (pSort)
-         *pSort = 0;
-    if (pDisplay)
-        *pDisplay = 0;
-    return S_OK;
+    return E_NOTIMPL;
 }
+
 static HRESULT WINAPI ISF_MyComputer_fnGetDefaultColumnState (
                IShellFolder2 * iface, UINT iColumn, DWORD * pcsFlags)
 {

@@ -580,13 +580,13 @@ static HRESULT WINAPI RecycleBin_EnumSearches(IShellFolder2 *iface, IEnumExtraSe
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI RecycleBin_GetDefaultColumn(IShellFolder2 *iface, DWORD dwReserved, ULONG *pSort, ULONG *pDisplay)
+static HRESULT WINAPI RecycleBin_GetDefaultColumn(IShellFolder2 *iface, DWORD reserved, ULONG *sort, ULONG *display)
 {
     RecycleBin *This = impl_from_IShellFolder2(iface);
-    TRACE("(%p, %x, %p, %p)\n", This, dwReserved, pSort, pDisplay);
-    *pSort = 0;
-    *pDisplay = 0;
-    return S_OK;
+
+    TRACE("(%p)->(%#x, %p, %p)\n", This, reserved, sort, display);
+
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI RecycleBin_GetDefaultColumnState(IShellFolder2 *iface, UINT iColumn, SHCOLSTATEF *pcsFlags)
