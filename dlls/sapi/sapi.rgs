@@ -1,0 +1,15 @@
+HKLM
+{
+    NoRemove Software
+    {
+        NoRemove Microsoft
+        {
+            NoRemove Speech
+            {
+                NoRemove Voices
+                {
+                }
+            }
+        }
+    }
+}
