@@ -622,7 +622,10 @@ static ULONG STDMETHODCALLTYPE d2d_radial_gradient_brush_Release(ID2D1RadialGrad
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        ID2D1GradientStopCollection_Release(&brush->u.radial.gradient->ID2D1GradientStopCollection_iface);
         d2d_brush_destroy(brush);
+    }
 
     return refcount;
 }
@@ -744,9 +747,11 @@ static float STDMETHODCALLTYPE d2d_radial_gradient_brush_GetRadiusY(ID2D1RadialG
 static void STDMETHODCALLTYPE d2d_radial_gradient_brush_GetGradientStopCollection(ID2D1RadialGradientBrush *iface,
         ID2D1GradientStopCollection **gradient)
 {
-    FIXME("iface %p, gradient %p stub!\n", iface, gradient);
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
 
-    *gradient = NULL;
+    TRACE("iface %p, gradient %p.\n", iface, gradient);
+
+    ID2D1GradientStopCollection_AddRef(*gradient = &brush->u.radial.gradient->ID2D1GradientStopCollection_iface);
 }
 
 static const struct ID2D1RadialGradientBrushVtbl d2d_radial_gradient_brush_vtbl =
@@ -780,6 +785,8 @@ HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory,
         return E_OUTOFMEMORY;
 
     d2d_brush_init(b, factory, D2D_BRUSH_TYPE_RADIAL, brush_desc, (ID2D1BrushVtbl *)&d2d_radial_gradient_brush_vtbl);
+    b->u.radial.gradient = unsafe_impl_from_ID2D1GradientStopCollection(gradient);
+    ID2D1GradientStopCollection_AddRef(&b->u.radial.gradient->ID2D1GradientStopCollection_iface);
     b->u.radial.centre = gradient_desc->center;
     b->u.radial.offset = gradient_desc->gradientOriginOffset;
 
