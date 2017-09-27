@@ -577,6 +577,8 @@ static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
     LPITEMIDLIST pidl;
     HRESULT hr;
 
+    *verbs = NULL;
+
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderItemVerbsImpl));
     if (!This)
         return E_OUTOFMEMORY;
@@ -865,23 +867,14 @@ static HRESULT WINAPI FolderItemImpl_get_Type(FolderItem2 *iface, BSTR *pbs)
 
 static HRESULT WINAPI FolderItemImpl_Verbs(FolderItem2 *iface, FolderItemVerbs **verbs)
 {
-    HRESULT hr;
-    BSTR path;
+    FolderItemImpl *This = impl_from_FolderItem(iface);
 
     TRACE("(%p, %p)\n", iface, verbs);
 
     if (!verbs)
         return E_INVALIDARG;
 
-    *verbs = NULL;
-
-    hr = FolderItem2_get_Path(iface, &path);
-    if (FAILED(hr))
-        return hr;
-
-    hr = FolderItemVerbs_Constructor(path, verbs);
-    SysFreeString(path);
-    return hr;
+    return FolderItemVerbs_Constructor(This->path ? This->path : This->folder->path, verbs);
 }
 
 static HRESULT WINAPI FolderItemImpl_InvokeVerb(FolderItem2 *iface,
