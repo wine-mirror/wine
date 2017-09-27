@@ -439,9 +439,9 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
         el = 0;
 
     first_char = FT_Get_First_Char(face, &gi);
-    if(first_char == 0xd) /* fontforge's first glyph is 0xd, we'll catch this and skip it */
-        first_char = 32; /* FT_Get_Next_Char for some reason returns too high
-                            number in this case */
+    if(first_char < 0x20)  /* Ignore glyphs below 0x20 */
+        first_char = 0x20; /* FT_Get_Next_Char for some reason returns too high
+                              number in this case */
 
     info = calloc( 1, sizeof(*info) );
 
