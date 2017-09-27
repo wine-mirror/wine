@@ -7,10 +7,11 @@ Copyright: Copyright (C) 2006 Huw D M Davies, Dmitry Timoshkov, Aric Stewart
 UComments: "#pragma makedep font jsmalle.fon -d 128 11,932,7"
 Version: 001.000
 ItalicAngle: 0
-UnderlinePosition: -100
-UnderlineWidth: 50
-Ascent: 9
-Descent: 2
+UnderlinePosition: -18618.2
+UnderlineWidth: 9309.09
+Ascent: 1676
+Descent: 372
+InvalidEm: 0
 LayerCount: 2
 Layer: 0 0 "Back" 1
 Layer: 1 0 "Fore" 0
@@ -22,14 +23,14 @@ OS2_UseTypoMetrics: 0
 PfmFamily: 33
 TTFWeight: 400
 TTFWidth: 5
-LineGap: 90
+LineGap: 16756
 VLineGap: 0
 Panose: 2 11 6 3 0 0 0 0 0 0
 OS2TypoAscent: 0
 OS2TypoAOffset: 1
 OS2TypoDescent: 0
 OS2TypoDOffset: 1
-OS2TypoLinegap: 90
+OS2TypoLinegap: 16756
 OS2WinAscent: 0
 OS2WinAOffset: 1
 OS2WinDescent: 0
@@ -38,16 +39,16 @@ HheadAscent: 0
 HheadAOffset: 1
 HheadDescent: 0
 HheadDOffset: 1
-OS2SubXSize: -8828
-OS2SubYSize: 427
-OS2SubXOff: 275
-OS2SubYOff: 3768
-OS2SupXSize: 7854
-OS2SupYSize: 10092
-OS2SupXOff: 3804
-OS2SupYOff: 14120
-OS2StrikeYSize: 390
-OS2StrikeYPos: 63
+OS2SubXSize: -5213
+OS2SubYSize: 13964
+OS2SubXOff: -14336
+OS2SubYOff: -19363
+OS2SupXSize: 20480
+OS2SupYSize: -21597
+OS2SupXOff: -12660
+OS2SupYOff: 7447
+OS2StrikeYSize: 7075
+OS2StrikeYPos: 11729
 OS2Vendor: 'Wine'
 Lookup: 4 0 0 "'frac' Diagonal Fractions lookup 0" {"'frac' Diagonal Fractions lookup 0 subtable" } ['frac' ('DFLT' <'dflt' > ) ]
 DEI: 91125
@@ -65,1289 +66,1289 @@ BeginChars: 65536 228
 
 StartChar: A
 Encoding: 65 65 0
-Width: 7
+Width: 1303
 Flags: W
-TeX: 65 0
+TeX: 12102 0
 LayerCount: 2
 EndChar
 
 StartChar: exclam
 Encoding: 33 33 1
-Width: 7
+Width: 1303
 Flags: W
-TeX: 101 0
+TeX: 18804 0
 LayerCount: 2
 EndChar
 
 StartChar: quotedbl
 Encoding: 34 34 2
-Width: 7
+Width: 1303
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: space
 Encoding: 32 32 3
-Width: 7
+Width: 1303
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: numbersign
 Encoding: 35 35 4
-Width: 7
+Width: 1303
 Flags: W
-TeX: 110 0
+TeX: 20480 0
 LayerCount: 2
 EndChar
 
 StartChar: dollar
 Encoding: 36 36 5
-Width: 7
+Width: 1303
 Flags: W
-TeX: 100 0
+TeX: 18618 0
 LayerCount: 2
 EndChar
 
 StartChar: percent
 Encoding: 37 37 6
-Width: 7
+Width: 1303
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: ampersand
 Encoding: 38 38 7
-Width: 7
+Width: 1303
 Flags: W
-TeX: 97 0
+TeX: 18060 0
 LayerCount: 2
 EndChar
 
 StartChar: quotesingle
 Encoding: 39 39 8
-Width: 7
+Width: 1303
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: parenleft
 Encoding: 40 40 9
-Width: 7
+Width: 1303
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: parenright
 Encoding: 41 41 10
-Width: 7
+Width: 1303
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: asterisk
 Encoding: 42 42 11
-Width: 7
+Width: 1303
 Flags: W
-TeX: 97 0
+TeX: 18060 0
 LayerCount: 2
 EndChar
 
 StartChar: plus
 Encoding: 43 43 12
-Width: 7
+Width: 1303
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: comma
 Encoding: 44 44 13
-Width: 7
+Width: 1303
 Flags: W
-TeX: 99 0
+TeX: 18432 0
 LayerCount: 2
 EndChar
 
 StartChar: hyphen
 Encoding: 45 45 14
-Width: 7
+Width: 1303
 Flags: W
-TeX: 104 0
+TeX: 19363 0
 LayerCount: 2
 EndChar
 
 StartChar: period
 Encoding: 46 46 15
-Width: 7
+Width: 1303
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: slash
 Encoding: 47 47 16
-Width: 7
+Width: 1303
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: zero
 Encoding: 48 48 17
-Width: 7
+Width: 1303
 Flags: W
-TeX: 122 0
+TeX: 22714 0
 LayerCount: 2
 EndChar
 
 StartChar: one
 Encoding: 49 49 18
-Width: 7
+Width: 1303
 Flags: W
-TeX: 111 0
+TeX: 20666 0
 LayerCount: 2
 EndChar
 
 StartChar: two
 Encoding: 50 50 19
-Width: 7
+Width: 1303
 Flags: W
-TeX: 116 0
+TeX: 21597 0
 LayerCount: 2
 EndChar
 
 StartChar: three
 Encoding: 51 51 20
-Width: 7
+Width: 1303
 Flags: W
-TeX: 116 0
+TeX: 21597 0
 LayerCount: 2
 EndChar
 
 StartChar: four
 Encoding: 52 52 21
-Width: 7
+Width: 1303
 Flags: W
-TeX: 102 0
+TeX: 18991 0
 LayerCount: 2
 EndChar
 
 StartChar: five
 Encoding: 53 53 22
-Width: 7
+Width: 1303
 Flags: W
-TeX: 102 0
+TeX: 18991 0
 LayerCount: 2
 EndChar
 
 StartChar: six
 Encoding: 54 54 23
-Width: 7
+Width: 1303
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: seven
 Encoding: 55 55 24
-Width: 7
+Width: 1303
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: eight
 Encoding: 56 56 25
-Width: 7
+Width: 1303
 Flags: W
-TeX: 101 0
+TeX: 18804 0
 LayerCount: 2
 EndChar
 
 StartChar: nine
 Encoding: 57 57 26
-Width: 7
+Width: 1303
 Flags: W
-TeX: 110 0
+TeX: 20480 0
 LayerCount: 2
 EndChar
 
 StartChar: colon
 Encoding: 58 58 27
-Width: 7
+Width: 1303
 Flags: W
-TeX: 99 0
+TeX: 18432 0
 LayerCount: 2
 EndChar
 
 StartChar: semicolon
 Encoding: 59 59 28
-Width: 7
+Width: 1303
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: less
 Encoding: 60 60 29
-Width: 7
+Width: 1303
 Flags: W
-TeX: 108 0
+TeX: 20108 0
 LayerCount: 2
 EndChar
 
 StartChar: equal
 Encoding: 61 61 30
-Width: 7
+Width: 1303
 Flags: W
-TeX: 101 0
+TeX: 18804 0
 LayerCount: 2
 EndChar
 
 StartChar: greater
 Encoding: 62 62 31
-Width: 7
+Width: 1303
 Flags: W
-TeX: 103 0
+TeX: 19177 0
 LayerCount: 2
 EndChar
 
 StartChar: question
 Encoding: 63 63 32
-Width: 7
+Width: 1303
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: at
 Encoding: 64 64 33
-Width: 7
+Width: 1303
 Flags: W
-TeX: 97 0
+TeX: 18060 0
 LayerCount: 2
 EndChar
 
 StartChar: B
 Encoding: 66 66 34
-Width: 7
+Width: 1303
 Flags: W
-TeX: 66 0
+TeX: 12288 0
 LayerCount: 2
 EndChar
 
 StartChar: C
 Encoding: 67 67 35
-Width: 7
+Width: 1303
 Flags: W
-TeX: 67 0
+TeX: 12474 0
 LayerCount: 2
 EndChar
 
 StartChar: D
 Encoding: 68 68 36
-Width: 7
+Width: 1303
 Flags: W
-TeX: 68 0
+TeX: 12660 0
 LayerCount: 2
 EndChar
 
 StartChar: E
 Encoding: 69 69 37
-Width: 7
+Width: 1303
 Flags: W
-TeX: 69 0
+TeX: 12847 0
 LayerCount: 2
 EndChar
 
 StartChar: F
 Encoding: 70 70 38
-Width: 7
+Width: 1303
 Flags: W
-TeX: 70 0
+TeX: 13033 0
 LayerCount: 2
 EndChar
 
 StartChar: G
 Encoding: 71 71 39
-Width: 7
+Width: 1303
 Flags: W
-TeX: 71 0
+TeX: 13219 0
 LayerCount: 2
 EndChar
 
 StartChar: H
 Encoding: 72 72 40
-Width: 7
+Width: 1303
 Flags: W
-TeX: 72 0
+TeX: 13405 0
 LayerCount: 2
 EndChar
 
 StartChar: I
 Encoding: 73 73 41
-Width: 7
+Width: 1303
 Flags: W
-TeX: 73 0
+TeX: 13591 0
 LayerCount: 2
 EndChar
 
 StartChar: J
 Encoding: 74 74 42
-Width: 7
+Width: 1303
 Flags: W
-TeX: 74 0
+TeX: 13777 0
 LayerCount: 2
 EndChar
 
 StartChar: K
 Encoding: 75 75 43
-Width: 7
+Width: 1303
 Flags: W
-TeX: 75 0
+TeX: 13964 0
 LayerCount: 2
 EndChar
 
 StartChar: L
 Encoding: 76 76 44
-Width: 7
+Width: 1303
 Flags: W
-TeX: 76 0
+TeX: 14150 0
 LayerCount: 2
 EndChar
 
 StartChar: M
 Encoding: 77 77 45
-Width: 7
+Width: 1303
 Flags: W
-TeX: 77 0
+TeX: 14336 0
 LayerCount: 2
 EndChar
 
 StartChar: N
 Encoding: 78 78 46
-Width: 7
+Width: 1303
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: O
 Encoding: 79 79 47
-Width: 7
+Width: 1303
 Flags: W
-TeX: 79 0
+TeX: 14708 0
 LayerCount: 2
 EndChar
 
 StartChar: P
 Encoding: 80 80 48
-Width: 7
+Width: 1303
 Flags: W
-TeX: 80 0
+TeX: 14895 0
 LayerCount: 2
 EndChar
 
 StartChar: Q
 Encoding: 81 81 49
-Width: 7
+Width: 1303
 Flags: W
-TeX: 81 0
+TeX: 15081 0
 LayerCount: 2
 EndChar
 
 StartChar: R
 Encoding: 82 82 50
-Width: 7
+Width: 1303
 Flags: W
-TeX: 82 0
+TeX: 15267 0
 LayerCount: 2
 EndChar
 
 StartChar: S
 Encoding: 83 83 51
-Width: 7
+Width: 1303
 Flags: W
-TeX: 83 0
+TeX: 15453 0
 LayerCount: 2
 EndChar
 
 StartChar: T
 Encoding: 84 84 52
-Width: 7
+Width: 1303
 Flags: W
-TeX: 84 0
+TeX: 15639 0
 LayerCount: 2
 EndChar
 
 StartChar: U
 Encoding: 85 85 53
-Width: 7
+Width: 1303
 Flags: W
-TeX: 85 0
+TeX: 15825 0
 LayerCount: 2
 EndChar
 
 StartChar: V
 Encoding: 86 86 54
-Width: 7
+Width: 1303
 Flags: W
-TeX: 86 0
+TeX: 16012 0
 LayerCount: 2
 EndChar
 
 StartChar: W
 Encoding: 87 87 55
-Width: 7
+Width: 1303
 Flags: W
-TeX: 87 0
+TeX: 16198 0
 LayerCount: 2
 EndChar
 
 StartChar: X
 Encoding: 88 88 56
-Width: 7
+Width: 1303
 Flags: W
-TeX: 88 0
+TeX: 16384 0
 LayerCount: 2
 EndChar
 
 StartChar: Y
 Encoding: 89 89 57
-Width: 7
+Width: 1303
 Flags: W
-TeX: 89 0
+TeX: 16570 0
 LayerCount: 2
 EndChar
 
 StartChar: Z
 Encoding: 90 90 58
-Width: 7
+Width: 1303
 Flags: W
-TeX: 90 0
+TeX: 16756 0
 LayerCount: 2
 EndChar
 
 StartChar: bracketleft
 Encoding: 91 91 59
-Width: 7
+Width: 1303
 Flags: W
-TeX: 98 0
+TeX: 18246 0
 LayerCount: 2
 EndChar
 
 StartChar: backslash
 Encoding: 92 92 60
-Width: 7
+Width: 1303
 Flags: W
-TeX: 98 0
+TeX: 18246 0
 LayerCount: 2
 EndChar
 
 StartChar: bracketright
 Encoding: 93 93 61
-Width: 7
+Width: 1303
 Flags: W
-TeX: 98 0
+TeX: 18246 0
 LayerCount: 2
 EndChar
 
 StartChar: asciicircum
 Encoding: 94 94 62
-Width: 7
+Width: 1303
 Flags: W
-TeX: 97 0
+TeX: 18060 0
 LayerCount: 2
 EndChar
 
 StartChar: underscore
 Encoding: 95 95 63
-Width: 7
+Width: 1303
 Flags: W
-TeX: 117 0
+TeX: 21783 0
 LayerCount: 2
 EndChar
 
 StartChar: grave
 Encoding: 96 96 64
-Width: 7
+Width: 1303
 Flags: W
-TeX: 103 0
+TeX: 19177 0
 LayerCount: 2
 EndChar
 
 StartChar: a
 Encoding: 97 97 65
-Width: 7
+Width: 1303
 Flags: W
-TeX: 97 0
+TeX: 18060 0
 LayerCount: 2
 EndChar
 
 StartChar: b
 Encoding: 98 98 66
-Width: 7
+Width: 1303
 Flags: W
-TeX: 98 0
+TeX: 18246 0
 LayerCount: 2
 EndChar
 
 StartChar: c
 Encoding: 99 99 67
-Width: 7
+Width: 1303
 Flags: W
-TeX: 99 0
+TeX: 18432 0
 LayerCount: 2
 EndChar
 
 StartChar: d
 Encoding: 100 100 68
-Width: 7
+Width: 1303
 Flags: W
-TeX: 100 0
+TeX: 18618 0
 LayerCount: 2
 EndChar
 
 StartChar: e
 Encoding: 101 101 69
-Width: 7
+Width: 1303
 Flags: W
-TeX: 101 0
+TeX: 18804 0
 LayerCount: 2
 EndChar
 
 StartChar: f
 Encoding: 102 102 70
-Width: 7
+Width: 1303
 Flags: W
-TeX: 102 0
+TeX: 18991 0
 LayerCount: 2
 EndChar
 
 StartChar: g
 Encoding: 103 103 71
-Width: 7
+Width: 1303
 Flags: W
-TeX: 103 0
+TeX: 19177 0
 LayerCount: 2
 EndChar
 
 StartChar: h
 Encoding: 104 104 72
-Width: 7
+Width: 1303
 Flags: W
-TeX: 104 0
+TeX: 19363 0
 LayerCount: 2
 EndChar
 
 StartChar: i
 Encoding: 105 105 73
-Width: 7
+Width: 1303
 Flags: W
-TeX: 105 0
+TeX: 19549 0
 LayerCount: 2
 EndChar
 
 StartChar: j
 Encoding: 106 106 74
-Width: 7
+Width: 1303
 Flags: W
-TeX: 106 0
+TeX: 19735 0
 LayerCount: 2
 EndChar
 
 StartChar: k
 Encoding: 107 107 75
-Width: 7
+Width: 1303
 Flags: W
-TeX: 107 0
+TeX: 19921 0
 LayerCount: 2
 EndChar
 
 StartChar: l
 Encoding: 108 108 76
-Width: 7
+Width: 1303
 Flags: W
-TeX: 108 0
+TeX: 20108 0
 LayerCount: 2
 EndChar
 
 StartChar: m
 Encoding: 109 109 77
-Width: 7
+Width: 1303
 Flags: W
-TeX: 109 0
+TeX: 20294 0
 LayerCount: 2
 EndChar
 
 StartChar: n
 Encoding: 110 110 78
-Width: 7
+Width: 1303
 Flags: W
-TeX: 110 0
+TeX: 20480 0
 LayerCount: 2
 EndChar
 
 StartChar: o
 Encoding: 111 111 79
-Width: 7
+Width: 1303
 Flags: W
-TeX: 111 0
+TeX: 20666 0
 LayerCount: 2
 EndChar
 
 StartChar: p
 Encoding: 112 112 80
-Width: 7
+Width: 1303
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: q
 Encoding: 113 113 81
-Width: 7
+Width: 1303
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: r
 Encoding: 114 114 82
-Width: 7
+Width: 1303
 Flags: W
-TeX: 114 0
+TeX: 21225 0
 LayerCount: 2
 EndChar
 
 StartChar: s
 Encoding: 115 115 83
-Width: 7
+Width: 1303
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: t
 Encoding: 116 116 84
-Width: 7
+Width: 1303
 Flags: W
-TeX: 116 0
+TeX: 21597 0
 LayerCount: 2
 EndChar
 
 StartChar: u
 Encoding: 117 117 85
-Width: 7
+Width: 1303
 Flags: W
-TeX: 117 0
+TeX: 21783 0
 LayerCount: 2
 EndChar
 
 StartChar: v
 Encoding: 118 118 86
-Width: 7
+Width: 1303
 Flags: W
-TeX: 118 0
+TeX: 21969 0
 LayerCount: 2
 EndChar
 
 StartChar: w
 Encoding: 119 119 87
-Width: 7
+Width: 1303
 Flags: W
-TeX: 119 0
+TeX: 22156 0
 LayerCount: 2
 EndChar
 
 StartChar: x
 Encoding: 120 120 88
-Width: 7
+Width: 1303
 Flags: W
-TeX: 120 0
+TeX: 22342 0
 LayerCount: 2
 EndChar
 
 StartChar: y
 Encoding: 121 121 89
-Width: 7
+Width: 1303
 Flags: W
-TeX: 121 0
+TeX: 22528 0
 LayerCount: 2
 EndChar
 
 StartChar: z
 Encoding: 122 122 90
-Width: 7
+Width: 1303
 Flags: W
-TeX: 122 0
+TeX: 22714 0
 LayerCount: 2
 EndChar
 
 StartChar: braceleft
 Encoding: 123 123 91
-Width: 7
+Width: 1303
 Flags: W
-TeX: 98 0
+TeX: 18246 0
 LayerCount: 2
 EndChar
 
 StartChar: bar
 Encoding: 124 124 92
-Width: 7
+Width: 1303
 Flags: W
-TeX: 98 0
+TeX: 18246 0
 LayerCount: 2
 EndChar
 
 StartChar: braceright
 Encoding: 125 125 93
-Width: 7
+Width: 1303
 Flags: W
-TeX: 98 0
+TeX: 18246 0
 LayerCount: 2
 EndChar
 
 StartChar: asciitilde
 Encoding: 126 126 94
-Width: 7
+Width: 1303
 Flags: W
-TeX: 97 0
+TeX: 18060 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-127
 Encoding: 127 127 95
-Width: 7
+Width: 1303
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-128
 Encoding: 128 128 96
-Width: 10
+Width: 1861
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-129
 Encoding: 129 129 97
-Width: 2
+Width: 372
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-130
 Encoding: 130 130 98
-Width: 10
+Width: 1861
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-131
 Encoding: 131 131 99
-Width: 2
+Width: 372
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-132
 Encoding: 132 132 100
-Width: 10
+Width: 1861
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: Euro
 Encoding: 8364 8364 101
-Width: 2
+Width: 372
 Flags: W
-TeX: 69 0
+TeX: 12847 0
 LayerCount: 2
 EndChar
 
 StartChar: quotesinglbase
 Encoding: 8218 8218 102
-Width: 2
+Width: 372
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: florin
 Encoding: 402 402 103
-Width: 11
+Width: 2048
 Flags: W
-TeX: 102 0
+TeX: 18991 0
 LayerCount: 2
 EndChar
 
 StartChar: quotedblbase
 Encoding: 8222 8222 104
-Width: 4
+Width: 744
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: ellipsis
 Encoding: 8230 8230 105
-Width: 6
+Width: 1117
 Flags: W
-TeX: 101 0
+TeX: 18804 0
 LayerCount: 2
 EndChar
 
 StartChar: dagger
 Encoding: 8224 8224 106
-Width: 6
+Width: 1117
 Flags: W
-TeX: 100 0
+TeX: 18618 0
 LayerCount: 2
 EndChar
 
 StartChar: daggerdbl
 Encoding: 8225 8225 107
-Width: 6
+Width: 1117
 Flags: W
-TeX: 100 0
+TeX: 18618 0
 LayerCount: 2
 EndChar
 
 StartChar: perthousand
 Encoding: 8240 8240 108
-Width: 8
+Width: 1489
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: guilsinglleft
 Encoding: 8249 8249 109
-Width: 5
+Width: 930
 Flags: W
-TeX: 103 0
+TeX: 19177 0
 LayerCount: 2
 EndChar
 
 StartChar: quoteleft
 Encoding: 8216 8216 110
-Width: 3
+Width: 558
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: quoteright
 Encoding: 8217 8217 111
-Width: 3
+Width: 558
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: quotedblleft
 Encoding: 8220 8220 112
-Width: 5
+Width: 930
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: quotedblright
 Encoding: 8221 8221 113
-Width: 5
+Width: 930
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: bullet
 Encoding: 8226 8226 114
-Width: 3
+Width: 558
 Flags: W
-TeX: 98 0
+TeX: 18246 0
 LayerCount: 2
 EndChar
 
 StartChar: endash
 Encoding: 8211 8211 115
-Width: 5
+Width: 930
 Flags: W
-TeX: 101 0
+TeX: 18804 0
 LayerCount: 2
 EndChar
 
 StartChar: emdash
 Encoding: 8212 8212 116
-Width: 8
+Width: 1489
 Flags: W
-TeX: 101 0
+TeX: 18804 0
 LayerCount: 2
 EndChar
 
 StartChar: trademark
 Encoding: 8482 8482 117
-Width: 9
+Width: 1675
 Flags: W
-TeX: 116 0
+TeX: 21597 0
 LayerCount: 2
 EndChar
 
 StartChar: guilsinglright
 Encoding: 8250 8250 118
-Width: 5
+Width: 930
 Flags: W
-TeX: 103 0
+TeX: 19177 0
 LayerCount: 2
 EndChar
 
 StartChar: circumflex
 Encoding: 710 710 119
-Width: 4
+Width: 744
 Flags: W
-TeX: 99 0
+TeX: 18432 0
 LayerCount: 2
 EndChar
 
 StartChar: tilde
 Encoding: 732 732 120
-Width: 5
+Width: 930
 Flags: W
-TeX: 116 0
+TeX: 21597 0
 LayerCount: 2
 EndChar
 
 StartChar: Scaron
 Encoding: 352 352 121
-Width: 11
+Width: 2048
 Flags: W
-TeX: 83 0
+TeX: 15453 0
 LayerCount: 2
 EndChar
 
 StartChar: OE
 Encoding: 338 338 122
-Width: 11
+Width: 2048
 Flags: W
-TeX: 79 0
+TeX: 14708 0
 LayerCount: 2
 EndChar
 
 StartChar: Zcaron
 Encoding: 381 381 123
-Width: 11
+Width: 2048
 Flags: W
-TeX: 90 0
+TeX: 16756 0
 LayerCount: 2
 EndChar
 
 StartChar: scaron
 Encoding: 353 353 124
-Width: 11
+Width: 2048
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: oe
 Encoding: 339 339 125
-Width: 11
+Width: 2048
 Flags: W
-TeX: 111 0
+TeX: 20666 0
 LayerCount: 2
 EndChar
 
 StartChar: zcaron
 Encoding: 382 382 126
-Width: 11
+Width: 2048
 Flags: W
-TeX: 122 0
+TeX: 22714 0
 LayerCount: 2
 EndChar
 
 StartChar: Ydieresis
 Encoding: 376 376 127
-Width: 11
+Width: 2048
 Flags: W
-TeX: 89 0
+TeX: 16570 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-141
 Encoding: 141 141 128
-Width: 2
+Width: 372
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-143
 Encoding: 143 143 129
-Width: 2
+Width: 372
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-144
 Encoding: 144 144 130
-Width: 2
+Width: 372
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: NameMe-157
 Encoding: 157 157 131
-Width: 2
+Width: 372
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: nonbreakingspace
 Encoding: 160 160 132
-Width: 2
+Width: 372
 Flags: W
-TeX: 110 0
+TeX: 20480 0
 LayerCount: 2
 EndChar
 
 StartChar: exclamdown
 Encoding: 161 161 133
-Width: 7
+Width: 1303
 Flags: W
-TeX: 101 0
+TeX: 18804 0
 LayerCount: 2
 EndChar
 
 StartChar: cent
 Encoding: 162 162 134
-Width: 7
+Width: 1303
 Flags: W
-TeX: 99 0
+TeX: 18432 0
 LayerCount: 2
 EndChar
 
 StartChar: sterling
 Encoding: 163 163 135
-Width: 7
+Width: 1303
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: currency
 Encoding: 164 164 136
-Width: 7
+Width: 1303
 Flags: W
-TeX: 99 0
+TeX: 18432 0
 LayerCount: 2
 EndChar
 
 StartChar: yen
 Encoding: 165 165 137
-Width: 7
+Width: 1303
 Flags: W
-TeX: 121 0
+TeX: 22528 0
 LayerCount: 2
 EndChar
 
 StartChar: brokenbar
 Encoding: 166 166 138
-Width: 7
+Width: 1303
 Flags: W
-TeX: 98 0
+TeX: 18246 0
 LayerCount: 2
 EndChar
 
 StartChar: section
 Encoding: 167 167 139
-Width: 7
+Width: 1303
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: dieresis
 Encoding: 168 168 140
-Width: 7
+Width: 1303
 Flags: W
-TeX: 100 0
+TeX: 18618 0
 LayerCount: 2
 EndChar
 
 StartChar: copyright
 Encoding: 169 169 141
-Width: 7
+Width: 1303
 Flags: W
-TeX: 99 0
+TeX: 18432 0
 LayerCount: 2
 EndChar
 
 StartChar: ordfeminine
 Encoding: 170 170 142
-Width: 7
+Width: 1303
 Flags: W
-TeX: 111 0
+TeX: 20666 0
 LayerCount: 2
 EndChar
 
 StartChar: guillemotleft
 Encoding: 171 171 143
-Width: 7
+Width: 1303
 Flags: W
-TeX: 103 0
+TeX: 19177 0
 LayerCount: 2
 EndChar
 
 StartChar: logicalnot
 Encoding: 172 172 144
-Width: 7
+Width: 1303
 Flags: W
-TeX: 108 0
+TeX: 20108 0
 LayerCount: 2
 EndChar
 
 StartChar: softhyphen
 Encoding: 173 173 145
-Width: 7
+Width: 1303
 Flags: W
-TeX: 115 0
+TeX: 21411 0
 LayerCount: 2
 EndChar
 
 StartChar: registered
 Encoding: 174 174 146
-Width: 7
+Width: 1303
 Flags: W
-TeX: 114 0
+TeX: 21225 0
 LayerCount: 2
 EndChar
 
 StartChar: macron
 Encoding: 175 175 147
-Width: 7
+Width: 1303
 Flags: W
-TeX: 109 0
+TeX: 20294 0
 LayerCount: 2
 EndChar
 
 StartChar: degree
 Encoding: 176 176 148
-Width: 7
+Width: 1303
 Flags: W
-TeX: 100 0
+TeX: 18618 0
 LayerCount: 2
 EndChar
 
 StartChar: plusminus
 Encoding: 177 177 149
-Width: 7
+Width: 1303
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: uni00B2
 Encoding: 178 178 150
-Width: 7
+Width: 1303
 Flags: W
-TeX: 117 0
+TeX: 21783 0
 LayerCount: 2
 EndChar
 
 StartChar: uni00B3
 Encoding: 179 179 151
-Width: 7
+Width: 1303
 Flags: W
-TeX: 117 0
+TeX: 21783 0
 LayerCount: 2
 EndChar
 
 StartChar: acute
 Encoding: 180 180 152
-Width: 7
+Width: 1303
 Flags: W
-TeX: 97 0
+TeX: 18060 0
 LayerCount: 2
 EndChar
 
 StartChar: uni00B5
 Encoding: 181 181 153
-Width: 7
+Width: 1303
 Flags: W
-TeX: 117 0
+TeX: 21783 0
 LayerCount: 2
 EndChar
 
 StartChar: paragraph
 Encoding: 182 182 154
-Width: 7
+Width: 1303
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: periodcentered
 Encoding: 183 183 155
-Width: 7
+Width: 1303
 Flags: W
-TeX: 112 0
+TeX: 20852 0
 LayerCount: 2
 EndChar
 
 StartChar: cedilla
 Encoding: 184 184 156
-Width: 7
+Width: 1303
 Flags: W
-TeX: 99 0
+TeX: 18432 0
 LayerCount: 2
 EndChar
 
 StartChar: uni00B9
 Encoding: 185 185 157
-Width: 7
+Width: 1303
 Flags: W
-TeX: 117 0
+TeX: 21783 0
 LayerCount: 2
 EndChar
 
 StartChar: ordmasculine
 Encoding: 186 186 158
-Width: 7
+Width: 1303
 Flags: W
-TeX: 111 0
+TeX: 20666 0
 LayerCount: 2
 EndChar
 
 StartChar: guillemotright
 Encoding: 187 187 159
-Width: 7
+Width: 1303
 Flags: W
-TeX: 103 0
+TeX: 19177 0
 LayerCount: 2
 EndChar
 
 StartChar: onequarter
 Encoding: 188 188 160
-Width: 7
+Width: 1303
 Flags: W
-TeX: 111 0
+TeX: 20666 0
 LayerCount: 2
 Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" one slash four
 Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" one fraction four
@@ -1355,9 +1356,9 @@ EndChar
 
 StartChar: onehalf
 Encoding: 189 189 161
-Width: 7
+Width: 1303
 Flags: W
-TeX: 111 0
+TeX: 20666 0
 LayerCount: 2
 Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" one slash two
 Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" one fraction two
@@ -1365,9 +1366,9 @@ EndChar
 
 StartChar: threequarters
 Encoding: 190 190 162
-Width: 7
+Width: 1303
 Flags: W
-TeX: 116 0
+TeX: 21597 0
 LayerCount: 2
 Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" three slash four
 Ligature2: "'frac' Diagonal Fractions lookup 0 subtable" three fraction four
@@ -1375,488 +1376,488 @@ EndChar
 
 StartChar: questiondown
 Encoding: 191 191 163
-Width: 7
+Width: 1303
 Flags: W
-TeX: 113 0
+TeX: 21039 0
 LayerCount: 2
 EndChar
 
 StartChar: Agrave
 Encoding: 192 192 164
-Width: 7
+Width: 1303
 Flags: W
-TeX: 65 0
+TeX: 12102 0
 LayerCount: 2
 EndChar
 
 StartChar: Aacute
 Encoding: 193 193 165
-Width: 7
+Width: 1303
 Flags: W
-TeX: 65 0
+TeX: 12102 0
 LayerCount: 2
 EndChar
 
 StartChar: Acircumflex
 Encoding: 194 194 166
-Width: 7
+Width: 1303
 Flags: W
-TeX: 65 0
+TeX: 12102 0
 LayerCount: 2
 EndChar
 
 StartChar: Atilde
 Encoding: 195 195 167
-Width: 7
+Width: 1303
 Flags: W
-TeX: 65 0
+TeX: 12102 0
 LayerCount: 2
 EndChar
 
 StartChar: Adieresis
 Encoding: 196 196 168
-Width: 7
+Width: 1303
 Flags: W
-TeX: 65 0
+TeX: 12102 0
 LayerCount: 2
 EndChar
 
 StartChar: Aring
 Encoding: 197 197 169
-Width: 7
+Width: 1303
 Flags: W
-TeX: 65 0
+TeX: 12102 0
 LayerCount: 2
 EndChar
 
 StartChar: AE
 Encoding: 198 198 170
-Width: 7
+Width: 1303
 Flags: W
-TeX: 65 0
+TeX: 12102 0
 LayerCount: 2
 EndChar
 
 StartChar: Ccedilla
 Encoding: 199 199 171
-Width: 7
+Width: 1303
 Flags: W
-TeX: 67 0
+TeX: 12474 0
 LayerCount: 2
 EndChar
 
 StartChar: Egrave
 Encoding: 200 200 172
-Width: 7
+Width: 1303
 Flags: W
-TeX: 69 0
+TeX: 12847 0
 LayerCount: 2
 EndChar
 
 StartChar: Eacute
 Encoding: 201 201 173
-Width: 7
+Width: 1303
 Flags: W
-TeX: 69 0
+TeX: 12847 0
 LayerCount: 2
 EndChar
 
 StartChar: Ecircumflex
 Encoding: 202 202 174
-Width: 7
+Width: 1303
 Flags: W
-TeX: 69 0
+TeX: 12847 0
 LayerCount: 2
 EndChar
 
 StartChar: Edieresis
 Encoding: 203 203 175
-Width: 7
+Width: 1303
 Flags: W
-TeX: 69 0
+TeX: 12847 0
 LayerCount: 2
 EndChar
 
 StartChar: Igrave
 Encoding: 204 204 176
-Width: 7
+Width: 1303
 Flags: W
-TeX: 73 0
+TeX: 13591 0
 LayerCount: 2
 EndChar
 
 StartChar: Iacute
 Encoding: 205 205 177
-Width: 7
+Width: 1303
 Flags: W
-TeX: 73 0
+TeX: 13591 0
 LayerCount: 2
 EndChar
 
 StartChar: Icircumflex
 Encoding: 206 206 178
-Width: 7
+Width: 1303
 Flags: W
-TeX: 73 0
+TeX: 13591 0
 LayerCount: 2
 EndChar
 
 StartChar: Idieresis
 Encoding: 207 207 179
-Width: 7
+Width: 1303
 Flags: W
-TeX: 73 0
+TeX: 13591 0
 LayerCount: 2
 EndChar
 
 StartChar: Eth
 Encoding: 208 208 180
-Width: 7
+Width: 1303
 Flags: W
-TeX: 69 0
+TeX: 12847 0
 LayerCount: 2
 EndChar
 
 StartChar: Ntilde
 Encoding: 209 209 181
-Width: 7
+Width: 1303
 Flags: W
-TeX: 78 0
+TeX: 14522 0
 LayerCount: 2
 EndChar
 
 StartChar: Ograve
 Encoding: 210 210 182
-Width: 7
+Width: 1303
 Flags: W
-TeX: 79 0
+TeX: 14708 0
 LayerCount: 2
 EndChar
 
 StartChar: Oacute
 Encoding: 211 211 183
-Width: 7
+Width: 1303
 Flags: W
-TeX: 79 0
+TeX: 14708 0
 LayerCount: 2
 EndChar
 
 StartChar: Ocircumflex
 Encoding: 212 212 184
-Width: 7
+Width: 1303
 Flags: W
-TeX: 79 0
+TeX: 14708 0
 LayerCount: 2
 EndChar
 
 StartChar: Otilde
 Encoding: 213 213 185
-Width: 7
+Width: 1303
 Flags: W
-TeX: 79 0
+TeX: 14708 0
 LayerCount: 2
 EndChar
 
 StartChar: Odieresis
 Encoding: 214 214 186
-Width: 7
+Width: 1303
 Flags: W
-TeX: 79 0
+TeX: 14708 0
 LayerCount: 2
 EndChar
 
 StartChar: multiply
 Encoding: 215 215 187
-Width: 7
+Width: 1303
 Flags: W
-TeX: 109 0
+TeX: 20294 0
 LayerCount: 2
 EndChar
 
 StartChar: Oslash
 Encoding: 216 216 188
-Width: 7
+Width: 1303
 Flags: W
-TeX: 79 0
+TeX: 14708 0
 LayerCount: 2
 EndChar
 
 StartChar: Ugrave
 Encoding: 217 217 189
-Width: 7
+Width: 1303
 Flags: W
-TeX: 85 0
+TeX: 15825 0
 LayerCount: 2
 EndChar
 
 StartChar: Uacute
 Encoding: 218 218 190
-Width: 7
+Width: 1303
 Flags: W
-TeX: 85 0
+TeX: 15825 0
 LayerCount: 2
 EndChar
 
 StartChar: Ucircumflex
 Encoding: 219 219 191
-Width: 7
+Width: 1303
 Flags: W
-TeX: 85 0
+TeX: 15825 0
 LayerCount: 2
 EndChar
 
 StartChar: Udieresis
 Encoding: 220 220 192
-Width: 7
+Width: 1303
 Flags: W
-TeX: 85 0
+TeX: 15825 0
 LayerCount: 2
 EndChar
 
 StartChar: Yacute
 Encoding: 221 221 193
-Width: 7
+Width: 1303
 Flags: W
-TeX: 89 0
+TeX: 16570 0
 LayerCount: 2
 EndChar
 
 StartChar: Thorn
 Encoding: 222 222 194
-Width: 7
+Width: 1303
 Flags: W
-TeX: 84 0
+TeX: 15639 0
 LayerCount: 2
 EndChar
 
 StartChar: germandbls
 Encoding: 223 223 195
-Width: 7
+Width: 1303
 Flags: W
-TeX: 103 0
+TeX: 19177 0
 LayerCount: 2
 EndChar
 
 StartChar: agrave
 Encoding: 224 224 196
-Width: 1272
+Width: -25321
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: aacute
 Encoding: 225 225 197
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: acircumflex
 Encoding: 226 226 198
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: atilde
 Encoding: 227 227 199
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: adieresis
 Encoding: 228 228 200
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: aring
 Encoding: 229 229 201
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ae
 Encoding: 230 230 202
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ccedilla
 Encoding: 231 231 203
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: egrave
 Encoding: 232 232 204
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: eacute
 Encoding: 233 233 205
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ecircumflex
 Encoding: 234 234 206
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: edieresis
 Encoding: 235 235 207
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: igrave
 Encoding: 236 236 208
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: iacute
 Encoding: 237 237 209
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: icircumflex
 Encoding: 238 238 210
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: idieresis
 Encoding: 239 239 211
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: eth
 Encoding: 240 240 212
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ntilde
 Encoding: 241 241 213
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ograve
 Encoding: 242 242 214
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: oacute
 Encoding: 243 243 215
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ocircumflex
 Encoding: 244 244 216
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: otilde
 Encoding: 245 245 217
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: odieresis
 Encoding: 246 246 218
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: oslash
 Encoding: 248 248 219
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ugrave
 Encoding: 249 249 220
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uacute
 Encoding: 250 250 221
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ucircumflex
 Encoding: 251 251 222
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: udieresis
 Encoding: 252 252 223
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: yacute
 Encoding: 253 253 224
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ydieresis
 Encoding: 255 255 225
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: divide
 Encoding: 247 247 226
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: thorn
 Encoding: 254 254 227
-Width: 11
+Width: 2048
 Flags: W
 LayerCount: 2
 EndChar

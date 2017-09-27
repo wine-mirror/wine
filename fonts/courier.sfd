@@ -7,10 +7,11 @@ Copyright: Copyright (C) 2004 Huw D M Davies, Dmitry Timoshkov
 UComments: "#pragma makedep font coue1255.fon -d 128 13,1255,8+AAoA#pragma makedep font coue1256.fon -d 128 13,1256,8+AAoA#pragma makedep font coue1257.fon -d 128 13,1257,8+AAoA#pragma makedep font coure.fon -d 128 13,1252,8+AAoA#pragma makedep font couree.fon -d 128 13,1250,8+AAoA#pragma makedep font coureg.fon -d 128 13,1253,8+AAoA#pragma makedep font courer.fon -d 128 13,1251,8+AAoA#pragma makedep font couret.fon -d 128 13,1254,8"
 Version: 001.000
 ItalicAngle: 0
-UnderlinePosition: -100
-UnderlineWidth: 50
-Ascent: 11
-Descent: 2
+UnderlinePosition: -15753.8
+UnderlineWidth: 7876.92
+Ascent: 1733
+Descent: 315
+InvalidEm: 0
 LayerCount: 2
 Layer: 0 0 "Back" 1
 Layer: 1 0 "Fore" 0
@@ -21,7 +22,7 @@ OS2_UseTypoMetrics: 0
 PfmFamily: 49
 TTFWeight: 400
 TTFWidth: 5
-LineGap: 1
+LineGap: 158
 VLineGap: 0
 Panose: 2 0 6 9 0 0 0 0 0 0
 OS2TypoAscent: 0
@@ -56,770 +57,770 @@ BeginChars: 65536 477
 
 StartChar: space
 Encoding: 32 32 0
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: exclam
 Encoding: 33 33 1
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: quotedbl
 Encoding: 34 34 2
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: numbersign
 Encoding: 35 35 3
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: dollar
 Encoding: 36 36 4
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: percent
 Encoding: 37 37 5
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ampersand
 Encoding: 38 38 6
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: quotesingle
 Encoding: 39 39 7
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: parenleft
 Encoding: 40 40 8
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: parenright
 Encoding: 41 41 9
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: asterisk
 Encoding: 42 42 10
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: plus
 Encoding: 43 43 11
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: comma
 Encoding: 44 44 12
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: hyphen
 Encoding: 45 45 13
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: period
 Encoding: 46 46 14
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: slash
 Encoding: 47 47 15
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: zero
 Encoding: 48 48 16
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: one
 Encoding: 49 49 17
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: two
 Encoding: 50 50 18
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: three
 Encoding: 51 51 19
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: four
 Encoding: 52 52 20
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: five
 Encoding: 53 53 21
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: six
 Encoding: 54 54 22
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: seven
 Encoding: 55 55 23
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: eight
 Encoding: 56 56 24
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: nine
 Encoding: 57 57 25
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: colon
 Encoding: 58 58 26
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: semicolon
 Encoding: 59 59 27
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: less
 Encoding: 60 60 28
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: equal
 Encoding: 61 61 29
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: greater
 Encoding: 62 62 30
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: question
 Encoding: 63 63 31
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: at
 Encoding: 64 64 32
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: A
 Encoding: 65 65 33
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: B
 Encoding: 66 66 34
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: C
 Encoding: 67 67 35
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: D
 Encoding: 68 68 36
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: E
 Encoding: 69 69 37
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: F
 Encoding: 70 70 38
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: G
 Encoding: 71 71 39
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: H
 Encoding: 72 72 40
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: I
 Encoding: 73 73 41
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: J
 Encoding: 74 74 42
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: K
 Encoding: 75 75 43
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: L
 Encoding: 76 76 44
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: M
 Encoding: 77 77 45
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: N
 Encoding: 78 78 46
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: O
 Encoding: 79 79 47
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: P
 Encoding: 80 80 48
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Q
 Encoding: 81 81 49
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: R
 Encoding: 82 82 50
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: S
 Encoding: 83 83 51
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: T
 Encoding: 84 84 52
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: U
 Encoding: 85 85 53
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: V
 Encoding: 86 86 54
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: W
 Encoding: 87 87 55
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: X
 Encoding: 88 88 56
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Y
 Encoding: 89 89 57
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Z
 Encoding: 90 90 58
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: bracketleft
 Encoding: 91 91 59
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: backslash
 Encoding: 92 92 60
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: bracketright
 Encoding: 93 93 61
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: asciicircum
 Encoding: 94 94 62
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: underscore
 Encoding: 95 95 63
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: grave
 Encoding: 96 96 64
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: a
 Encoding: 97 97 65
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: b
 Encoding: 98 98 66
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: c
 Encoding: 99 99 67
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: d
 Encoding: 100 100 68
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: e
 Encoding: 101 101 69
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: f
 Encoding: 102 102 70
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: g
 Encoding: 103 103 71
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: h
 Encoding: 104 104 72
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: i
 Encoding: 105 105 73
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: j
 Encoding: 106 106 74
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: k
 Encoding: 107 107 75
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: l
 Encoding: 108 108 76
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: m
 Encoding: 109 109 77
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: n
 Encoding: 110 110 78
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: o
 Encoding: 111 111 79
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: p
 Encoding: 112 112 80
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: q
 Encoding: 113 113 81
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: r
 Encoding: 114 114 82
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: s
 Encoding: 115 115 83
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: t
 Encoding: 116 116 84
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: u
 Encoding: 117 117 85
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: v
 Encoding: 118 118 86
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: w
 Encoding: 119 119 87
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: x
 Encoding: 120 120 88
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: y
 Encoding: 121 121 89
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: z
 Encoding: 122 122 90
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: braceleft
 Encoding: 123 123 91
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: bar
 Encoding: 124 124 92
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: braceright
 Encoding: 125 125 93
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: asciitilde
 Encoding: 126 126 94
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni007F
 Encoding: 127 127 95
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni0081
 Encoding: 129 129 96
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni0083
 Encoding: 131 131 97
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni0088
 Encoding: 136 136 98
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni0090
 Encoding: 144 144 99
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni0098
 Encoding: 152 152 100
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: nonbreakingspace
 Encoding: 160 160 101
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: exclamdown
 Encoding: 161 161 102
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: cent
 Encoding: 162 162 103
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: sterling
 Encoding: 163 163 104
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: currency
 Encoding: 164 164 105
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: yen
 Encoding: 165 165 106
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: brokenbar
 Encoding: 166 166 107
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: section
 Encoding: 167 167 108
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: dieresis
 Encoding: 168 168 109
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space uni0308
@@ -827,140 +828,140 @@ EndChar
 
 StartChar: copyright
 Encoding: 169 169 110
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ordfeminine
 Encoding: 170 170 111
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: guillemotleft
 Encoding: 171 171 112
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: logicalnot
 Encoding: 172 172 113
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: softhyphen
 Encoding: 173 173 114
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: registered
 Encoding: 174 174 115
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: macron
 Encoding: 175 175 116
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: degree
 Encoding: 176 176 117
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: plusminus
 Encoding: 177 177 118
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni00B2
 Encoding: 178 178 119
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni00B3
 Encoding: 179 179 120
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: acute
 Encoding: 180 180 121
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: mu
 Encoding: 181 181 122
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: paragraph
 Encoding: 182 182 123
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: periodcentered
 Encoding: 183 183 124
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: cedilla
 Encoding: 184 184 125
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni00B9
 Encoding: 185 185 126
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ordmasculine
 Encoding: 186 186 127
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: guillemotright
 Encoding: 187 187 128
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: onequarter
 Encoding: 188 188 129
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'frac' Diagonal Fractions lookup 2 subtable" one slash four
@@ -969,7 +970,7 @@ EndChar
 
 StartChar: onehalf
 Encoding: 189 189 130
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'frac' Diagonal Fractions lookup 2 subtable" one slash two
@@ -978,7 +979,7 @@ EndChar
 
 StartChar: threequarters
 Encoding: 190 190 131
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'frac' Diagonal Fractions lookup 2 subtable" three slash four
@@ -987,490 +988,490 @@ EndChar
 
 StartChar: questiondown
 Encoding: 191 191 132
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Agrave
 Encoding: 192 192 133
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Aacute
 Encoding: 193 193 134
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Acircumflex
 Encoding: 194 194 135
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Atilde
 Encoding: 195 195 136
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Adieresis
 Encoding: 196 196 137
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: agrave
 Encoding: 224 224 138
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: aacute
 Encoding: 225 225 139
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: acircumflex
 Encoding: 226 226 140
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: atilde
 Encoding: 227 227 141
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: adieresis
 Encoding: 228 228 142
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: aring
 Encoding: 229 229 143
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ae
 Encoding: 230 230 144
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ccedilla
 Encoding: 231 231 145
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: egrave
 Encoding: 232 232 146
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: eacute
 Encoding: 233 233 147
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ecircumflex
 Encoding: 234 234 148
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: edieresis
 Encoding: 235 235 149
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: igrave
 Encoding: 236 236 150
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: iacute
 Encoding: 237 237 151
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: icircumflex
 Encoding: 238 238 152
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: idieresis
 Encoding: 239 239 153
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: eth
 Encoding: 240 240 154
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ntilde
 Encoding: 241 241 155
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ograve
 Encoding: 242 242 156
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: oacute
 Encoding: 243 243 157
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ocircumflex
 Encoding: 244 244 158
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: otilde
 Encoding: 245 245 159
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: odieresis
 Encoding: 246 246 160
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: divide
 Encoding: 247 247 161
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: oslash
 Encoding: 248 248 162
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ugrave
 Encoding: 249 249 163
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uacute
 Encoding: 250 250 164
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ucircumflex
 Encoding: 251 251 165
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: udieresis
 Encoding: 252 252 166
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: yacute
 Encoding: 253 253 167
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: thorn
 Encoding: 254 254 168
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ydieresis
 Encoding: 255 255 169
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Abreve
 Encoding: 258 258 170
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: abreve
 Encoding: 259 259 171
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Aogonek
 Encoding: 260 260 172
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: aogonek
 Encoding: 261 261 173
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Cacute
 Encoding: 262 262 174
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: cacute
 Encoding: 263 263 175
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ccaron
 Encoding: 268 268 176
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ccaron
 Encoding: 269 269 177
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Dcaron
 Encoding: 270 270 178
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: dcaron
 Encoding: 271 271 179
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Dcroat
 Encoding: 272 272 180
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: dcroat
 Encoding: 273 273 181
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Eogonek
 Encoding: 280 280 182
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: eogonek
 Encoding: 281 281 183
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ecaron
 Encoding: 282 282 184
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ecaron
 Encoding: 283 283 185
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Lacute
 Encoding: 313 313 186
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: lacute
 Encoding: 314 314 187
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Lcaron
 Encoding: 317 317 188
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: lcaron
 Encoding: 318 318 189
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Lslash
 Encoding: 321 321 190
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: lslash
 Encoding: 322 322 191
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Nacute
 Encoding: 323 323 192
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: nacute
 Encoding: 324 324 193
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ncaron
 Encoding: 327 327 194
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ncaron
 Encoding: 328 328 195
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ohungarumlaut
 Encoding: 336 336 196
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ohungarumlaut
 Encoding: 337 337 197
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni008D
 Encoding: 141 141 198
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni008F
 Encoding: 143 143 199
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni009D
 Encoding: 157 157 200
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Aring
 Encoding: 197 197 201
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" A uni030A
@@ -1478,259 +1479,259 @@ EndChar
 
 StartChar: AE
 Encoding: 198 198 202
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ccedilla
 Encoding: 199 199 203
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Egrave
 Encoding: 200 200 204
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Eacute
 Encoding: 201 201 205
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ecircumflex
 Encoding: 202 202 206
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Edieresis
 Encoding: 203 203 207
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Igrave
 Encoding: 204 204 208
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Iacute
 Encoding: 205 205 209
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Icircumflex
 Encoding: 206 206 210
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Idieresis
 Encoding: 207 207 211
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Eth
 Encoding: 208 208 212
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ntilde
 Encoding: 209 209 213
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ograve
 Encoding: 210 210 214
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Oacute
 Encoding: 211 211 215
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ocircumflex
 Encoding: 212 212 216
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Otilde
 Encoding: 213 213 217
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Odieresis
 Encoding: 214 214 218
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: multiply
 Encoding: 215 215 219
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Oslash
 Encoding: 216 216 220
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ugrave
 Encoding: 217 217 221
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Uacute
 Encoding: 218 218 222
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ucircumflex
 Encoding: 219 219 223
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Udieresis
 Encoding: 220 220 224
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Yacute
 Encoding: 221 221 225
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Thorn
 Encoding: 222 222 226
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: germandbls
 Encoding: 223 223 227
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: OE
 Encoding: 338 338 228
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: oe
 Encoding: 339 339 229
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Racute
 Encoding: 340 340 230
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: racute
 Encoding: 341 341 231
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Rcaron
 Encoding: 344 344 232
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: rcaron
 Encoding: 345 345 233
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Sacute
 Encoding: 346 346 234
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: sacute
 Encoding: 347 347 235
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Scedilla
 Encoding: 350 350 236
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: scedilla
 Encoding: 351 351 237
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Scaron
 Encoding: 352 352 238
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" S uni030C
@@ -1738,7 +1739,7 @@ EndChar
 
 StartChar: scaron
 Encoding: 353 353 239
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" s uni030C
@@ -1746,63 +1747,63 @@ EndChar
 
 StartChar: Tcommaaccent
 Encoding: 354 354 240
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: tcommaaccent
 Encoding: 355 355 241
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Tcaron
 Encoding: 356 356 242
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: tcaron
 Encoding: 357 357 243
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Uring
 Encoding: 366 366 244
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uring
 Encoding: 367 367 245
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Uhungarumlaut
 Encoding: 368 368 246
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uhungarumlaut
 Encoding: 369 369 247
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ydieresis
 Encoding: 376 376 248
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" Y uni0308
@@ -1810,35 +1811,35 @@ EndChar
 
 StartChar: Zacute
 Encoding: 377 377 249
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: zacute
 Encoding: 378 378 250
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Zdotaccent
 Encoding: 379 379 251
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: zdotaccent
 Encoding: 380 380 252
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Zcaron
 Encoding: 381 381 253
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" Z uni030C
@@ -1846,7 +1847,7 @@ EndChar
 
 StartChar: zcaron
 Encoding: 382 382 254
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures in Latin lookup 0 subtable" z uni030C
@@ -1854,49 +1855,49 @@ EndChar
 
 StartChar: florin
 Encoding: 402 402 255
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: circumflex
 Encoding: 710 710 256
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: caron
 Encoding: 711 711 257
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: breve
 Encoding: 728 728 258
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: dotaccent
 Encoding: 729 729 259
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ogonek
 Encoding: 731 731 260
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: tilde
 Encoding: 732 732 261
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures lookup 1 subtable" space tildecomb
@@ -1904,539 +1905,539 @@ EndChar
 
 StartChar: hungarumlaut
 Encoding: 733 733 262
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10017
 Encoding: 1040 1040 263
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10018
 Encoding: 1041 1041 264
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10019
 Encoding: 1042 1042 265
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10020
 Encoding: 1043 1043 266
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10021
 Encoding: 1044 1044 267
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10022
 Encoding: 1045 1045 268
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10024
 Encoding: 1046 1046 269
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10025
 Encoding: 1047 1047 270
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10026
 Encoding: 1048 1048 271
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10027
 Encoding: 1049 1049 272
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10028
 Encoding: 1050 1050 273
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10029
 Encoding: 1051 1051 274
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10030
 Encoding: 1052 1052 275
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10031
 Encoding: 1053 1053 276
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10032
 Encoding: 1054 1054 277
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10033
 Encoding: 1055 1055 278
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10034
 Encoding: 1056 1056 279
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10035
 Encoding: 1057 1057 280
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10036
 Encoding: 1058 1058 281
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10037
 Encoding: 1059 1059 282
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10038
 Encoding: 1060 1060 283
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10039
 Encoding: 1061 1061 284
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10040
 Encoding: 1062 1062 285
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10041
 Encoding: 1063 1063 286
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10042
 Encoding: 1064 1064 287
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10043
 Encoding: 1065 1065 288
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10044
 Encoding: 1066 1066 289
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10045
 Encoding: 1067 1067 290
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10046
 Encoding: 1068 1068 291
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10047
 Encoding: 1069 1069 292
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10048
 Encoding: 1070 1070 293
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10049
 Encoding: 1071 1071 294
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10065
 Encoding: 1072 1072 295
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10066
 Encoding: 1073 1073 296
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10067
 Encoding: 1074 1074 297
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10068
 Encoding: 1075 1075 298
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10069
 Encoding: 1076 1076 299
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10070
 Encoding: 1077 1077 300
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10072
 Encoding: 1078 1078 301
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10073
 Encoding: 1079 1079 302
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10074
 Encoding: 1080 1080 303
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10075
 Encoding: 1081 1081 304
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10076
 Encoding: 1082 1082 305
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10077
 Encoding: 1083 1083 306
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10078
 Encoding: 1084 1084 307
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10079
 Encoding: 1085 1085 308
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10080
 Encoding: 1086 1086 309
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10081
 Encoding: 1087 1087 310
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10082
 Encoding: 1088 1088 311
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10083
 Encoding: 1089 1089 312
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10084
 Encoding: 1090 1090 313
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10085
 Encoding: 1091 1091 314
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10086
 Encoding: 1092 1092 315
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10087
 Encoding: 1093 1093 316
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10088
 Encoding: 1094 1094 317
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10089
 Encoding: 1095 1095 318
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10090
 Encoding: 1096 1096 319
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10091
 Encoding: 1097 1097 320
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10092
 Encoding: 1098 1098 321
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10093
 Encoding: 1099 1099 322
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10094
 Encoding: 1100 1100 323
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10095
 Encoding: 1101 1101 324
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10096
 Encoding: 1102 1102 325
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10097
 Encoding: 1103 1103 326
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: endash
 Encoding: 8211 8211 327
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: emdash
 Encoding: 8212 8212 328
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: quoteleft
 Encoding: 8216 8216 329
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: quoteright
 Encoding: 8217 8217 330
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: quotesinglbase
 Encoding: 8218 8218 331
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: quotedblleft
 Encoding: 8220 8220 332
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: quotedblright
 Encoding: 8221 8221 333
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: quotedblbase
 Encoding: 8222 8222 334
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: dagger
 Encoding: 8224 8224 335
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: daggerdbl
 Encoding: 8225 8225 336
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: bullet
 Encoding: 8226 8226 337
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ellipsis
 Encoding: 8230 8230 338
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures lookup 1 subtable" period period period
@@ -2444,35 +2445,35 @@ EndChar
 
 StartChar: perthousand
 Encoding: 8240 8240 339
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: guilsinglleft
 Encoding: 8249 8249 340
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: guilsinglright
 Encoding: 8250 8250 341
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Euro
 Encoding: 8364 8364 342
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: trademark
 Encoding: 8482 8482 343
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 Ligature2: "'liga' Standard Ligatures lookup 1 subtable" T M
@@ -2480,913 +2481,913 @@ EndChar
 
 StartChar: afii61352
 Encoding: 8470 8470 344
-Width: 8
+Width: 1260
 Flags: W
-TeX: 97 0
+TeX: 15281 0
 LayerCount: 2
 EndChar
 
 StartChar: afii10023
 Encoding: 1025 1025 345
-Width: 8
+Width: 1260
 Flags: W
-TeX: 97 0
+TeX: 15281 0
 LayerCount: 2
 EndChar
 
 StartChar: afii10071
 Encoding: 1105 1105 346
-Width: 8
+Width: 1260
 Flags: W
-TeX: 97 0
+TeX: 15281 0
 LayerCount: 2
 EndChar
 
 StartChar: dotlessi
 Encoding: 305 305 347
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Idotaccent
 Encoding: 304 304 348
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: gbreve
 Encoding: 287 287 349
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: gcircumflex
 Encoding: 285 285 350
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Gbreve
 Encoding: 286 286 351
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10055
 Encoding: 1030 1030 352
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10056
 Encoding: 1031 1031 353
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10053
 Encoding: 1028 1028 354
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10101
 Encoding: 1108 1108 355
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10103
 Encoding: 1110 1110 356
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10104
 Encoding: 1111 1111 357
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10062
 Encoding: 1038 1038 358
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10110
 Encoding: 1118 1118 359
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10050
 Encoding: 1168 1168 360
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii10098
 Encoding: 1169 1169 361
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Edotaccent
 Encoding: 278 278 362
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: edotaccent
 Encoding: 279 279 363
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Iogonek
 Encoding: 302 302 364
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: iogonek
 Encoding: 303 303 365
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Umacron
 Encoding: 362 362 366
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: umacron
 Encoding: 363 363 367
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Uogonek
 Encoding: 370 370 368
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uogonek
 Encoding: 371 371 369
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni008E
 Encoding: 142 142 370
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni008C
 Encoding: 140 140 371
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni009E
 Encoding: 158 158 372
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni009F
 Encoding: 159 159 373
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni009C
 Encoding: 156 156 374
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni009A
 Encoding: 154 154 375
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Amacron
 Encoding: 256 256 376
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: amacron
 Encoding: 257 257 377
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Emacron
 Encoding: 274 274 378
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: emacron
 Encoding: 275 275 379
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Gcommaaccent
 Encoding: 290 290 380
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: gcommaaccent
 Encoding: 291 291 381
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Imacron
 Encoding: 298 298 382
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: imacron
 Encoding: 299 299 383
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Kcommaaccent
 Encoding: 310 310 384
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: kcommaaccent
 Encoding: 311 311 385
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Lcommaaccent
 Encoding: 315 315 386
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: lcommaaccent
 Encoding: 316 316 387
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Ncommaaccent
 Encoding: 325 325 388
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: ncommaaccent
 Encoding: 326 326 389
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Omacron
 Encoding: 332 332 390
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: omacron
 Encoding: 333 333 391
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Rcommaaccent
 Encoding: 342 342 392
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: rcommaaccent
 Encoding: 343 343 393
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Alpha
 Encoding: 913 913 394
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Alphatonos
 Encoding: 902 902 395
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Epsilontonos
 Encoding: 904 904 396
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Epsilon
 Encoding: 917 917 397
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Etatonos
 Encoding: 905 905 398
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Eta
 Encoding: 919 919 399
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Iotatonos
 Encoding: 906 906 400
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Iota
 Encoding: 921 921 401
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Omicrontonos
 Encoding: 908 908 402
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Omicron
 Encoding: 927 927 403
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Upsilon
 Encoding: 933 933 404
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Upsilontonos
 Encoding: 910 910 405
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Omega
 Encoding: 937 937 406
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Omegatonos
 Encoding: 911 911 407
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: iota
 Encoding: 953 953 408
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: iotadieresistonos
 Encoding: 912 912 409
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: iotatonos
 Encoding: 943 943 410
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: iotadieresis
 Encoding: 970 970 411
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: dieresistonos
 Encoding: 901 901 412
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Beta
 Encoding: 914 914 413
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Gamma
 Encoding: 915 915 414
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Zeta
 Encoding: 918 918 415
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Kappa
 Encoding: 922 922 416
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Mu
 Encoding: 924 924 417
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Nu
 Encoding: 925 925 418
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Rho
 Encoding: 929 929 419
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Tau
 Encoding: 932 932 420
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Chi
 Encoding: 935 935 421
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Iotadieresis
 Encoding: 938 938 422
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Upsilondieresis
 Encoding: 939 939 423
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Pi
 Encoding: 928 928 424
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Delta
 Encoding: 916 916 425
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Lambda
 Encoding: 923 923 426
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Theta
 Encoding: 920 920 427
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Xi
 Encoding: 926 926 428
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Sigma
 Encoding: 931 931 429
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Phi
 Encoding: 934 934 430
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: Psi
 Encoding: 936 936 431
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: alphatonos
 Encoding: 940 940 432
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: epsilontonos
 Encoding: 941 941 433
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: epsilon
 Encoding: 949 949 434
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: alpha
 Encoding: 945 945 435
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: eta
 Encoding: 951 951 436
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: etatonos
 Encoding: 942 942 437
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: rho
 Encoding: 961 961 438
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: sigma1
 Encoding: 962 962 439
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: omicron
 Encoding: 959 959 440
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: sigma
 Encoding: 963 963 441
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: pi
 Encoding: 960 960 442
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: omicrontonos
 Encoding: 972 972 443
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: upsilon
 Encoding: 965 965 444
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: tau
 Encoding: 964 964 445
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: upsilondieresis
 Encoding: 971 971 446
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: upsilontonos
 Encoding: 973 973 447
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: upsilondieresistonos
 Encoding: 944 944 448
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: kappa
 Encoding: 954 954 449
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: omega
 Encoding: 969 969 450
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: omegatonos
 Encoding: 974 974 451
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: psi
 Encoding: 968 968 452
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: mu
 Encoding: 956 956 453
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: nu
 Encoding: 957 957 454
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: theta
 Encoding: 952 952 455
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: beta
 Encoding: 946 946 456
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: gamma
 Encoding: 947 947 457
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: delta
 Encoding: 948 948 458
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: zeta
 Encoding: 950 950 459
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: lambda
 Encoding: 955 955 460
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: xi
 Encoding: 958 958 461
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: phi
 Encoding: 966 966 462
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: chi
 Encoding: 967 967 463
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: tonos
 Encoding: 900 900 464
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uni008A
 Encoding: 138 138 465
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uniF8FA
 Encoding: 63738 63738 466
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uniF8FB
 Encoding: 63739 63739 467
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uniF8F9
 Encoding: 63737 63737 468
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uniF8FC
 Encoding: 63740 63740 469
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uniF8FE
 Encoding: 63742 63742 470
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: uniF8FD
 Encoding: 63741 63741 471
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii00208
 Encoding: 8213 8213 472
-Width: 8
+Width: 1260
 Flags: W
 LayerCount: 2
 EndChar
 
 StartChar: afii299
 Encoding: 8206 8206 473
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3394,7 +3395,7 @@ EndChar
 
 StartChar: afii300
 Encoding: 8207 8207 474
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3402,7 +3403,7 @@ EndChar
 
 StartChar: afii61664
 Encoding: 8204 8204 475
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3410,7 +3411,7 @@ EndChar
 
 StartChar: afii301
 Encoding: 8205 8205 476
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3418,7 +3419,7 @@ EndChar
 
 StartChar: afii10051
 Encoding: 1026 1026 477
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3426,7 +3427,7 @@ EndChar
 
 StartChar: afii10060
 Encoding: 1035 1035 478
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3434,7 +3435,7 @@ EndChar
 
 StartChar: afii10058
 Encoding: 1033 1033 479
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3442,7 +3443,7 @@ EndChar
 
 StartChar: afii10059
 Encoding: 1034 1034 480
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3450,7 +3451,7 @@ EndChar
 
 StartChar: afii10145
 Encoding: 1039 1039 481
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3458,7 +3459,7 @@ EndChar
 
 StartChar: afii10052
 Encoding: 1027 1027 482
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3466,7 +3467,7 @@ EndChar
 
 StartChar: afii10061
 Encoding: 1036 1036 483
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3474,7 +3475,7 @@ EndChar
 
 StartChar: uni040D
 Encoding: 1037 1037 484
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3482,7 +3483,7 @@ EndChar
 
 StartChar: afii10054
 Encoding: 1029 1029 485
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3490,7 +3491,7 @@ EndChar
 
 StartChar: afii10057
 Encoding: 1032 1032 486
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3498,7 +3499,7 @@ EndChar
 
 StartChar: afii10100
 Encoding: 1107 1107 487
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3506,7 +3507,7 @@ EndChar
 
 StartChar: afii10099
 Encoding: 1106 1106 488
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3514,7 +3515,7 @@ EndChar
 
 StartChar: afii10108
 Encoding: 1115 1115 489
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3522,7 +3523,7 @@ EndChar
 
 StartChar: afii10106
 Encoding: 1113 1113 490
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3530,7 +3531,7 @@ EndChar
 
 StartChar: afii10107
 Encoding: 1114 1114 491
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3538,7 +3539,7 @@ EndChar
 
 StartChar: afii10109
 Encoding: 1116 1116 492
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3546,7 +3547,7 @@ EndChar
 
 StartChar: uni045D
 Encoding: 1117 1117 493
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3554,7 +3555,7 @@ EndChar
 
 StartChar: afii10193
 Encoding: 1119 1119 494
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3562,7 +3563,7 @@ EndChar
 
 StartChar: afii10102
 Encoding: 1109 1109 495
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3570,7 +3571,7 @@ EndChar
 
 StartChar: afii10105
 Encoding: 1112 1112 496
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
@@ -3578,13 +3579,13 @@ EndChar
 
 StartChar: afii57636
 Encoding: 8362 8362 497
-Width: 8
+Width: 1260
 VWidth: 0
 Flags: W
 LayerCount: 2
 EndChar
 EndChars
-BitmapFont: 13 498 11 2 1
+BitmapFont: 13 499 11 2 1
 BDFChar: 0 32 8 0 0 0 0
 z
 BDFChar: 1 33 8 4 4 0 8
