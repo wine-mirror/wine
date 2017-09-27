@@ -51,7 +51,7 @@ AntiAlias: 0
 FitToEm: 1
 WinInfo: 0 21 19
 OnlyBitmaps: 1
-BeginChars: 65536 538
+BeginChars: 65536 549
 
 StartChar: space
 Encoding: 32 32 0
