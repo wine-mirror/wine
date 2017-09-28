@@ -225,6 +225,11 @@ static struct d2d_gradient *unsafe_impl_from_ID2D1GradientStopCollection(ID2D1Gr
     return CONTAINING_RECORD(iface, struct d2d_gradient, ID2D1GradientStopCollection_iface);
 }
 
+static void d2d_gradient_bind(struct d2d_gradient *gradient, ID3D10Device *device, unsigned int brush_idx)
+{
+    ID3D10Device_PSSetShaderResources(device, 2 + brush_idx, 1, &gradient->view);
+}
+
 static void d2d_brush_destroy(struct d2d_brush *brush)
 {
     ID2D1Factory_Release(brush->factory);
@@ -1083,10 +1088,12 @@ static D3D10_TEXTURE_ADDRESS_MODE texture_address_mode_from_extend_mode(D2D1_EXT
 static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
         const struct d2d_d3d_render_target *render_target, struct d2d_brush_cb *cb)
 {
+    float theta, sin_theta, cos_theta;
+    float dpi_scale, d, s1, s2, t, u;
     struct d2d_bitmap *bitmap;
+    D2D1_POINT_2F v_p, v_q;
     D2D1_COLOR_F *colour;
     D2D_MATRIX_3X2_F b;
-    float dpi_scale, d;
 
     if (!brush)
     {
@@ -1114,6 +1121,48 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
             d2d_point_transform(&cb->u.linear.start, &b, brush->u.linear.start.x, brush->u.linear.start.y);
             d2d_point_transform(&cb->u.linear.end, &b, brush->u.linear.end.x, brush->u.linear.end.y);
             cb->u.linear.stop_count = brush->u.linear.gradient->stop_count;
+
+            return TRUE;
+
+        case D2D_BRUSH_TYPE_RADIAL:
+            b = brush->transform;
+            d2d_point_transform(&cb->u.radial.centre, &b, brush->u.radial.centre.x, brush->u.radial.centre.y);
+            b._31 = b._32 = 0.0f;
+            d2d_point_transform(&cb->u.radial.offset, &b, brush->u.radial.offset.x, brush->u.radial.offset.y);
+
+            /* After a transformation, the axes of the ellipse are no longer
+             * necessarily orthogonal, but they are conjugate diameters.
+             *
+             * A = ⎡a.x b.x⎤
+             *     ⎣a.y b.y⎦
+             *
+             *   = ⎡cos(θ) -sin(θ)⎤⎡σ₁ 0 ⎤⎡cos(φ) -sin(φ)⎤
+             *     ⎣sin(θ)  cos(θ)⎦⎣0  σ₂⎦⎣sin(φ)  cos(φ)⎦
+             *
+             * a' = [σ₁· cos(θ) σ₁·sin(θ)]
+             * b' = [σ₂·-sin(θ) σ₂·cos(θ)] */
+
+            d2d_point_set(&v_p, brush->u.radial.radius.x * b._11, brush->u.radial.radius.y * b._21);
+            d2d_point_set(&v_q, brush->u.radial.radius.x * b._12, brush->u.radial.radius.y * b._22);
+
+            t = 0.5f * d2d_point_dot(&v_p, &v_p);
+            u = 0.5f * d2d_point_dot(&v_q, &v_q);
+            s1 = t + u;
+
+            t = t - u;
+            u = d2d_point_dot(&v_p, &v_q);
+            s2 = sqrtf(t * t + u * u);
+
+            theta = 0.5f * atan2(u, t);
+            sin_theta = sinf(theta);
+            cos_theta = cosf(theta);
+
+            t = sqrtf(s1 + s2);
+            d2d_point_set(&cb->u.radial.ra, t * cos_theta, t * sin_theta);
+            t = sqrtf(s1 - s2);
+            d2d_point_set(&cb->u.radial.rb, t * -sin_theta, t * cos_theta);
+
+            cb->u.radial.stop_count = brush->u.linear.gradient->stop_count;
 
             return TRUE;
 
@@ -1183,11 +1232,6 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
     return hr;
 }
 
-static void d2d_brush_bind_gradient(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx)
-{
-    ID3D10Device_PSSetShaderResources(device, 2 + brush_idx, 1, &brush->u.linear.gradient->view);
-}
-
 static void d2d_brush_bind_bitmap(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx)
 {
     HRESULT hr;
@@ -1229,7 +1273,11 @@ void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device, uns
             break;
 
         case D2D_BRUSH_TYPE_LINEAR:
-            d2d_brush_bind_gradient(brush, device, brush_idx);
+            d2d_gradient_bind(brush->u.linear.gradient, device, brush_idx);
+            break;
+
+        case D2D_BRUSH_TYPE_RADIAL:
+            d2d_gradient_bind(brush->u.radial.gradient, device, brush_idx);
             break;
 
         case D2D_BRUSH_TYPE_BITMAP:

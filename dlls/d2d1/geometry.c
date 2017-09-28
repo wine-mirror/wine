@@ -406,11 +406,6 @@ static void d2d_point_calculate_bezier(D2D1_POINT_2F *out, const D2D1_POINT_2F *
     out->y = t_c * (t_c * p0->y + t * p1->y) + t * (t_c * p1->y + t * p2->y);
 }
 
-static float d2d_point_dot(const D2D1_POINT_2F *p0, const D2D1_POINT_2F *p1)
-{
-    return p0->x * p1->x + p0->y * p1->y;
-}
-
 static void d2d_point_normalise(D2D1_POINT_2F *p)
 {
     float l;

@@ -90,6 +90,15 @@ struct d2d_brush_cb
         } linear;
         struct
         {
+            D2D1_POINT_2F centre;
+            D2D1_POINT_2F offset;
+            D2D1_POINT_2F ra;
+            D2D1_POINT_2F rb;
+            unsigned int stop_count;
+            float pad[3];
+        } radial;
+        struct
+        {
             float _11, _21, _31, pad;
             float _12, _22, _32;
             BOOL ignore_alpha;
@@ -494,6 +503,11 @@ static inline void d2d_point_set(D2D1_POINT_2F *dst, float x, float y)
 {
     dst->x = x;
     dst->y = y;
+}
+
+static inline float d2d_point_dot(const D2D1_POINT_2F *p0, const D2D1_POINT_2F *p1)
+{
+    return p0->x * p1->x + p0->y * p1->y;
 }
 
 static inline void d2d_point_transform(D2D1_POINT_2F *dst, const D2D1_MATRIX_3X2_F *matrix, float x, float y)
