@@ -455,8 +455,29 @@ static HRESULT WINAPI token_category_EnumTokens( ISpObjectTokenCategory *iface,
                                                  LPCWSTR req, LPCWSTR opt,
                                                  IEnumSpObjectTokens **enum_tokens )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct token_category *This = impl_from_ISpObjectTokenCategory( iface );
+    ISpObjectTokenEnumBuilder *builder;
+    HRESULT hr;
+
+    FIXME( "(%p)->(%s %s %p): semi-stub\n", This, debugstr_w( req ), debugstr_w( opt ), enum_tokens );
+
+    if (!This->data_key) return SPERR_UNINITIALIZED;
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_ALL,
+                           &IID_ISpObjectTokenEnumBuilder, (void **)&builder );
+    if (FAILED(hr)) return hr;
+
+    hr = ISpObjectTokenEnumBuilder_SetAttribs( builder, req, opt );
+    if (FAILED(hr)) goto fail;
+
+    /* FIXME: Build the enumerator */
+
+    hr = ISpObjectTokenEnumBuilder_QueryInterface( builder, &IID_IEnumSpObjectTokens,
+                                                   (void **)enum_tokens );
+
+fail:
+    ISpObjectTokenEnumBuilder_Release( builder );
+    return hr;
 }
 
 static HRESULT WINAPI token_category_SetDefaultTokenId( ISpObjectTokenCategory *iface,

@@ -49,6 +49,40 @@ static void test_data_key(void)
     ISpRegDataKey_Release( data_key );
 }
 
+static void test_token_category(void)
+{
+    ISpObjectTokenCategory *cat;
+    IEnumSpObjectTokens *enum_tokens;
+    HRESULT hr;
+    WCHAR bogus[] = {'b','o','g','u','s',0};
+    ULONG count;
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenCategory, (void **)&cat );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = ISpObjectTokenCategory_EnumTokens( cat, NULL, NULL, &enum_tokens );
+    ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
+
+    hr = ISpObjectTokenCategory_SetId( cat, bogus, FALSE );
+    ok( hr == SPERR_INVALID_REGISTRY_KEY, "got %08x\n", hr );
+
+    hr = ISpObjectTokenCategory_SetId( cat, SPCAT_VOICES, FALSE );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = ISpObjectTokenCategory_SetId( cat, SPCAT_VOICES, FALSE );
+    ok( hr == SPERR_ALREADY_INITIALIZED, "got %08x\n", hr );
+
+    hr = ISpObjectTokenCategory_EnumTokens( cat, NULL, NULL, &enum_tokens );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IEnumSpObjectTokens_GetCount( enum_tokens, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    IEnumSpObjectTokens_Release( enum_tokens );
+    ISpObjectTokenCategory_Release( cat );
+}
+
 static void test_token_enum(void)
 {
     ISpObjectTokenEnumBuilder *token_enum;
@@ -86,6 +120,7 @@ START_TEST(token)
 {
     CoInitialize( NULL );
     test_data_key();
+    test_token_category();
     test_token_enum();
     CoUninitialize();
 }
