@@ -732,9 +732,11 @@ static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_radial_gradient_brush_GetGradientOr
 
 static float STDMETHODCALLTYPE d2d_radial_gradient_brush_GetRadiusX(ID2D1RadialGradientBrush *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_brush *brush = impl_from_ID2D1RadialGradientBrush(iface);
 
-    return 0.0f;
+    TRACE("iface %p.\n", iface);
+
+    return brush->u.radial.radius.x;
 }
 
 static float STDMETHODCALLTYPE d2d_radial_gradient_brush_GetRadiusY(ID2D1RadialGradientBrush *iface)
@@ -789,6 +791,8 @@ HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory,
     ID2D1GradientStopCollection_AddRef(&b->u.radial.gradient->ID2D1GradientStopCollection_iface);
     b->u.radial.centre = gradient_desc->center;
     b->u.radial.offset = gradient_desc->gradientOriginOffset;
+    b->u.radial.radius.x = gradient_desc->radiusX;
+    b->u.radial.radius.y = gradient_desc->radiusY;
 
     TRACE("Created brush %p.\n", b);
     *brush = b;

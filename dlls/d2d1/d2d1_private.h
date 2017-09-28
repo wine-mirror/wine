@@ -244,6 +244,7 @@ struct d2d_brush
             struct d2d_gradient *gradient;
             D2D1_POINT_2F centre;
             D2D1_POINT_2F offset;
+            D2D1_POINT_2F radius;
         } radial;
         struct
         {
