@@ -748,12 +748,40 @@ static HRESULT WINAPI FolderItemImpl_get_Parent(FolderItem2 *iface, IDispatch **
     return S_OK;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_Name(FolderItem2 *iface, BSTR *pbs)
+static HRESULT WINAPI FolderItemImpl_get_Name(FolderItem2 *iface, BSTR *name)
 {
-    FIXME("(%p,%p)\n", iface, pbs);
+    FolderItemImpl *This = impl_from_FolderItem(iface);
+    LPCITEMIDLIST last_part;
+    IShellFolder2 *parent;
+    HRESULT hr = S_OK;
+    LPITEMIDLIST pidl;
+    STRRET strret;
 
-    *pbs = NULL;
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, name);
+
+    *name = NULL;
+
+    if (This->path)
+        hr = SHParseDisplayName(This->path, NULL, &pidl, 0, NULL);
+    else
+        pidl = This->folder->pidl;
+
+    if (FAILED(hr))
+        return S_FALSE;
+
+    hr = SHBindToParent(pidl, &IID_IShellFolder2, (void **)&parent, &last_part);
+    if (hr == S_OK)
+        hr = IShellFolder2_GetDisplayNameOf(parent, last_part, SHGDN_INFOLDER, &strret);
+
+    IShellFolder2_Release(parent);
+
+    if (hr == S_OK)
+        hr = StrRetToBSTR(&strret, last_part, name);
+
+    if (This->path)
+        ILFree(pidl);
+
+    return hr;
 }
 
 static HRESULT WINAPI FolderItemImpl_put_Name(FolderItem2 *iface, BSTR bs)

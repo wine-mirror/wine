@@ -49,12 +49,22 @@ static HRESULT (WINAPI *pSHGetNameFromIDList)(PCIDLIST_ABSOLUTE,SIGDN,PWSTR*);
 /* Updated Windows 7 has a new IShellDispatch6 in its typelib */
 DEFINE_GUID(IID_IWin7ShellDispatch6, 0x34936ba1, 0x67ad, 0x4c41, 0x99,0xb8, 0x8c,0x12,0xdf,0xf1,0xe9,0x74);
 
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
+}
+
 static void variant_set_string(VARIANT *v, const char *s)
 {
-    WCHAR wstr[MAX_PATH];
-    MultiByteToWideChar(CP_ACP, 0, s, -1, wstr, MAX_PATH);
     V_VT(v) = VT_BSTR;
-    V_BSTR(v) = SysAllocString(wstr);
+    V_BSTR(v) = a2bstr(s);
 }
 
 static void init_function_pointers(void)
@@ -595,6 +605,7 @@ static void test_items(void)
     for (i = 0; i < sizeof(file_defs)/sizeof(file_defs[0]); i++)
     {
         VARIANT_BOOL b;
+        BSTR name;
 
         V_I4(&int_index) = i;
         variant_set_string(&str_index, file_defs[i].name);
@@ -616,6 +627,15 @@ static void test_items(void)
         PathCombineW(path, cur_dir, V_BSTR(&str_index));
         ok(!lstrcmpW(bstr, path),
            "file_defs[%d]: expected %s, got %s\n", i, wine_dbgstr_w(path), wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        bstr = a2bstr(file_defs[i].name);
+        r = FolderItem_get_Name(item, &name);
+        ok(r == S_OK, "Failed to get item name, hr %#x.\n", r);
+        /* Returned display name does not have to strictly match file name, e.g. extension could be omitted. */
+        ok(lstrlenW(name) <= lstrlenW(bstr), "file_defs[%d]: unexpected name length.\n", i);
+        ok(!memcmp(bstr, name, lstrlenW(name) * sizeof(WCHAR)), "file_defs[%d]: unexpected name %s.\n", i, wine_dbgstr_w(name));
+        SysFreeString(name);
         SysFreeString(bstr);
 
         item = NULL;
