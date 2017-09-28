@@ -49,9 +49,43 @@ static void test_data_key(void)
     ISpRegDataKey_Release( data_key );
 }
 
+static void test_token_enum(void)
+{
+    ISpObjectTokenEnumBuilder *token_enum;
+    HRESULT hr;
+    ISpObjectToken *token;
+    ULONG count;
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenEnumBuilder, (void **)&token_enum );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = ISpObjectTokenEnumBuilder_GetCount( token_enum, &count );
+    ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
+
+    hr = ISpObjectTokenEnumBuilder_Next( token_enum, 1, &token, &count );
+    ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
+
+    hr = ISpObjectTokenEnumBuilder_SetAttribs( token_enum, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = 0xdeadbeef;
+    hr = ISpObjectTokenEnumBuilder_GetCount( token_enum, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == 0, "got %u\n", count );
+
+    count = 0xdeadbeef;
+    hr = ISpObjectTokenEnumBuilder_Next( token_enum, 1, &token, &count );
+    ok( hr == S_FALSE, "got %08x\n", hr );
+    ok( count == 0, "got %u\n", count );
+
+    ISpObjectTokenEnumBuilder_Release( token_enum );
+}
+
 START_TEST(token)
 {
     CoInitialize( NULL );
     test_data_key();
+    test_token_enum();
     CoUninitialize();
 }

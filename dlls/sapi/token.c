@@ -293,8 +293,16 @@ static HRESULT WINAPI token_enum_Next( ISpObjectTokenEnumBuilder *iface,
                                        ULONG num, ISpObjectToken **tokens,
                                        ULONG *fetched )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct token_enum *This = impl_from_ISpObjectTokenEnumBuilder( iface );
+
+    TRACE( "(%p)->(%u %p %p)\n", This, num, tokens, fetched );
+
+    if (!This->init) return SPERR_UNINITIALIZED;
+
+    FIXME( "semi-stub: Returning an empty enumerator\n" );
+
+    if (fetched) *fetched = 0;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI token_enum_Skip( ISpObjectTokenEnumBuilder *iface,
