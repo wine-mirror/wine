@@ -234,6 +234,7 @@ struct token_enum
 
     BOOL init;
     WCHAR *req, *opt;
+    ULONG count;
 };
 
 struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
@@ -326,8 +327,14 @@ static HRESULT WINAPI token_enum_Item( ISpObjectTokenEnumBuilder *iface,
 static HRESULT WINAPI token_enum_GetCount( ISpObjectTokenEnumBuilder *iface,
                                            ULONG *count )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct token_enum *This = impl_from_ISpObjectTokenEnumBuilder( iface );
+
+    TRACE( "(%p)->(%p)\n", This, count );
+
+    if (!This->init) return SPERR_UNINITIALIZED;
+
+    *count = This->count;
+    return S_OK;
 }
 
 static HRESULT WINAPI token_enum_SetAttribs( ISpObjectTokenEnumBuilder *iface,
@@ -417,6 +424,7 @@ HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj )
     This->req = NULL;
     This->opt = NULL;
     This->init = FALSE;
+    This->count = 0;
 
     hr = ISpObjectTokenEnumBuilder_QueryInterface( &This->ISpObjectTokenEnumBuilder_iface, iid, obj );
 
