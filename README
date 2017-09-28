@@ -74,13 +74,9 @@ Basic requirements:
 Optional support libraries:
   Configure will display notices when optional libraries are not found
   on your system. See http://wiki.winehq.org/Recommended_Packages for
-  hints about the packages you should install.
-
-  On 64-bit platforms, if compiling Wine as 32-bit (default), you have
-  to make sure to install the 32-bit versions of these libraries; see
-  http://wiki.winehq.org/WineOn64bit for details. If you want a true
-  64-bit Wine (or a mixed 32-bit and 64-bit Wine setup), see
-  http://wiki.winehq.org/Wine64 for details.
+  hints about the packages you should install. On 64-bit platforms,
+  you have to make sure to install the 32-bit versions of these
+  libraries.
 
 
 4. COMPILATION
