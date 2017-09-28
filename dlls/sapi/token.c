@@ -227,6 +227,231 @@ HRESULT data_key_create( IUnknown *outer, REFIID iid, void **obj )
     return hr;
 }
 
+struct token_category
+{
+    ISpObjectTokenCategory ISpObjectTokenCategory_iface;
+    LONG ref;
+};
+
+struct token_category *impl_from_ISpObjectTokenCategory( ISpObjectTokenCategory *iface )
+{
+    return CONTAINING_RECORD( iface, struct token_category, ISpObjectTokenCategory_iface );
+}
+
+static HRESULT WINAPI token_category_QueryInterface( ISpObjectTokenCategory *iface,
+                                                     REFIID iid, void **obj )
+{
+    struct token_category *This = impl_from_ISpObjectTokenCategory( iface );
+
+    TRACE( "(%p)->(%s %p)\n", This, debugstr_guid( iid ), obj );
+
+    if (IsEqualIID( iid, &IID_IUnknown ) ||
+        IsEqualIID( iid, &IID_ISpDataKey ) ||
+        IsEqualIID( iid, &IID_ISpObjectTokenCategory ))
+    {
+        ISpObjectTokenCategory_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI token_category_AddRef( ISpObjectTokenCategory *iface )
+{
+    struct token_category *This = impl_from_ISpObjectTokenCategory( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+    return ref;
+}
+
+static ULONG WINAPI token_category_Release( ISpObjectTokenCategory *iface )
+{
+    struct token_category *This = impl_from_ISpObjectTokenCategory( iface );
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+
+    if (!ref)
+    {
+        heap_free( This );
+    }
+    return ref;
+}
+
+static HRESULT WINAPI token_category_SetData( ISpObjectTokenCategory *iface,
+                                              LPCWSTR name, ULONG size,
+                                              const BYTE *data )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_GetData( ISpObjectTokenCategory *iface,
+                                              LPCWSTR name, ULONG *size,
+                                              BYTE *data )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_SetStringValue( ISpObjectTokenCategory *iface,
+                                                     LPCWSTR name, LPCWSTR value )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_GetStringValue( ISpObjectTokenCategory *iface,
+                                                     LPCWSTR name, LPWSTR *value )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_SetDWORD( ISpObjectTokenCategory *iface,
+                                               LPCWSTR name, DWORD value )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_GetDWORD( ISpObjectTokenCategory *iface,
+                                               LPCWSTR name, DWORD *pdwValue )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_OpenKey( ISpObjectTokenCategory *iface,
+                                              LPCWSTR name, ISpDataKey **sub_key )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_CreateKey( ISpObjectTokenCategory *iface,
+                                                LPCWSTR name, ISpDataKey **sub_key )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_DeleteKey( ISpObjectTokenCategory *iface,
+                                                LPCWSTR name )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_DeleteValue( ISpObjectTokenCategory *iface,
+                                                  LPCWSTR name )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_EnumKeys( ISpObjectTokenCategory *iface,
+                                               ULONG index, LPWSTR *sub_key )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_EnumValues( ISpObjectTokenCategory *iface,
+                                                 ULONG index, LPWSTR *value )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_SetId( ISpObjectTokenCategory *iface,
+                                            LPCWSTR id, BOOL create )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_GetId( ISpObjectTokenCategory *iface,
+                                            LPWSTR *id )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_GetDataKey( ISpObjectTokenCategory *iface,
+                                                 SPDATAKEYLOCATION location,
+                                                 ISpDataKey **data_key )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_EnumTokens( ISpObjectTokenCategory *iface,
+                                                 LPCWSTR req, LPCWSTR opt,
+                                                 IEnumSpObjectTokens **enum_tokens )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_SetDefaultTokenId( ISpObjectTokenCategory *iface,
+                                                        LPCWSTR id )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_category_GetDefaultTokenId( ISpObjectTokenCategory *iface,
+                                                        LPWSTR *id )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+const struct ISpObjectTokenCategoryVtbl token_category_vtbl =
+{
+    token_category_QueryInterface,
+    token_category_AddRef,
+    token_category_Release,
+    token_category_SetData,
+    token_category_GetData,
+    token_category_SetStringValue,
+    token_category_GetStringValue,
+    token_category_SetDWORD,
+    token_category_GetDWORD,
+    token_category_OpenKey,
+    token_category_CreateKey,
+    token_category_DeleteKey,
+    token_category_DeleteValue,
+    token_category_EnumKeys,
+    token_category_EnumValues,
+    token_category_SetId,
+    token_category_GetId,
+    token_category_GetDataKey,
+    token_category_EnumTokens,
+    token_category_SetDefaultTokenId,
+    token_category_GetDefaultTokenId,
+};
+
+HRESULT token_category_create( IUnknown *outer, REFIID iid, void **obj )
+{
+    struct token_category *This = heap_alloc( sizeof(*This) );
+    HRESULT hr;
+
+    if (!This) return E_OUTOFMEMORY;
+    This->ISpObjectTokenCategory_iface.lpVtbl = &token_category_vtbl;
+    This->ref = 1;
+
+    hr = ISpObjectTokenCategory_QueryInterface( &This->ISpObjectTokenCategory_iface, iid, obj );
+
+    ISpObjectTokenCategory_Release( &This->ISpObjectTokenCategory_iface );
+    return hr;
+}
+
 struct token_enum
 {
     ISpObjectTokenEnumBuilder ISpObjectTokenEnumBuilder_iface;

@@ -21,6 +21,7 @@
 #include "wine/unicode.h"
 
 HRESULT data_key_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
+HRESULT token_category_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
