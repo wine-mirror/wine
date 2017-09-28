@@ -1547,36 +1547,32 @@ static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR name, FolderItem
     return hr;
 }
 
-static HRESULT WINAPI FolderImpl_NewFolder(Folder3 *iface, BSTR bName,
-        VARIANT vOptions)
+static HRESULT WINAPI FolderImpl_NewFolder(Folder3 *iface, BSTR name, VARIANT options)
 {
-    FIXME("(%p,%s)\n", iface, debugstr_w(bName));
+    FIXME("(%p,%s,%s)\n", iface, debugstr_w(name), debugstr_variant(&options));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderImpl_MoveHere(Folder3 *iface, VARIANT vItem,
-        VARIANT vOptions)
+static HRESULT WINAPI FolderImpl_MoveHere(Folder3 *iface, VARIANT item, VARIANT options)
 {
-    FIXME("(%p)\n", iface);
+    FIXME("(%p,%s,%s)\n", iface, debugstr_variant(&item), debugstr_variant(&options));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderImpl_CopyHere(Folder3 *iface, VARIANT vItem,
-        VARIANT vOptions)
+static HRESULT WINAPI FolderImpl_CopyHere(Folder3 *iface, VARIANT item, VARIANT options)
 {
-    FIXME("(%p)\n", iface);
+    FIXME("(%p,%s,%s)\n", iface, debugstr_variant(&item), debugstr_variant(&options));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderImpl_GetDetailsOf(Folder3 *iface, VARIANT vItem,
-        int iColumn, BSTR *pbs)
+static HRESULT WINAPI FolderImpl_GetDetailsOf(Folder3 *iface, VARIANT item, int column, BSTR *str)
 {
-    FIXME("(%p,%d,%p)\n", iface, iColumn, pbs);
+    FIXME("(%p,%s,%d,%p)\n", iface, debugstr_variant(&item), column, str);
 
-    *pbs = NULL;
+    *str = NULL;
     return E_NOTIMPL;
 }
 
@@ -1877,7 +1873,7 @@ static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch6 *iface,
 static HRESULT WINAPI ShellDispatch_BrowseForFolder(IShellDispatch6 *iface,
         LONG Hwnd, BSTR Title, LONG Options, VARIANT RootFolder, Folder **ppsdf)
 {
-    FIXME("(%p,%x,%s,%x,%p)\n", iface, Hwnd, debugstr_w(Title), Options, ppsdf);
+    FIXME("(%p,%x,%s,%x,%s,%p)\n", iface, Hwnd, debugstr_w(Title), Options, debugstr_variant(&RootFolder), ppsdf);
 
     *ppsdf = NULL;
     return E_NOTIMPL;
@@ -1892,16 +1888,16 @@ static HRESULT WINAPI ShellDispatch_Windows(IShellDispatch6 *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_Open(IShellDispatch6 *iface, VARIANT vDir)
+static HRESULT WINAPI ShellDispatch_Open(IShellDispatch6 *iface, VARIANT dir)
 {
-    FIXME("(%p)\n", iface);
+    FIXME("(%p,%s)\n", iface, debugstr_variant(&dir));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_Explore(IShellDispatch6 *iface, VARIANT vDir)
+static HRESULT WINAPI ShellDispatch_Explore(IShellDispatch6 *iface, VARIANT dir)
 {
-    FIXME("(%p)\n", iface);
+    FIXME("(%p,%s)\n", iface, debugstr_variant(&dir));
 
     return E_NOTIMPL;
 }
@@ -2080,13 +2076,13 @@ static HRESULT WINAPI ShellDispatch_GetSystemInformation(IShellDispatch6 *iface,
 
 static HRESULT WINAPI ShellDispatch_ServiceStart(IShellDispatch6 *iface, BSTR service, VARIANT persistent, VARIANT *ret)
 {
-    FIXME("(%s, %p): stub\n", debugstr_w(service), ret);
+    FIXME("(%s, %s, %p): stub\n", debugstr_w(service), debugstr_variant(&persistent), ret);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ShellDispatch_ServiceStop(IShellDispatch6 *iface, BSTR service, VARIANT persistent, VARIANT *ret)
 {
-    FIXME("(%s, %p): stub\n", debugstr_w(service), ret);
+    FIXME("(%s, %s, %p): stub\n", debugstr_w(service), debugstr_variant(&persistent), ret);
     return E_NOTIMPL;
 }
 
@@ -2142,13 +2138,13 @@ static HRESULT WINAPI ShellDispatch_CanStartStopService(IShellDispatch6 *iface, 
 
 static HRESULT WINAPI ShellDispatch_ShowBrowserBar(IShellDispatch6 *iface, BSTR clsid, VARIANT show, VARIANT *ret)
 {
-    FIXME("(%s, %p): stub\n", debugstr_w(clsid), ret);
+    FIXME("(%s, %s, %p): stub\n", debugstr_w(clsid), debugstr_variant(&show), ret);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ShellDispatch_AddToRecent(IShellDispatch6 *iface, VARIANT file, BSTR category)
 {
-    FIXME("(%s): stub\n", debugstr_w(category));
+    FIXME("(%s, %s): stub\n", debugstr_variant(&file), debugstr_w(category));
     return E_NOTIMPL;
 }
 
