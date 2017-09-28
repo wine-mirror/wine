@@ -27,6 +27,7 @@
 #define TODO_REG_TYPE    (0x0001u)
 #define TODO_REG_SIZE    (0x0002u)
 #define TODO_REG_DATA    (0x0004u)
+#define TODO_REG_COMPARE (0x0008u)
 
 #define run_reg_exe(c,r) run_reg_exe_(__LINE__,c,r)
 static BOOL run_reg_exe_(unsigned line, const char *cmd, DWORD *rc)
@@ -4241,8 +4242,8 @@ static void test_import_31(void)
     delete_key(HKEY_CLASSES_ROOT, KEY_BASE);
 }
 
-#define compare_export(f,e) compare_export_(__LINE__,f,e)
-static BOOL compare_export_(unsigned line, const char *filename, const char *expected)
+#define compare_export(f,e,todo) compare_export_(__LINE__,f,e,todo)
+static BOOL compare_export_(unsigned line, const char *filename, const char *expected, DWORD todo)
 {
     FILE *fp;
     long file_size;
@@ -4270,7 +4271,8 @@ static BOOL compare_export_(unsigned line, const char *filename, const char *exp
     if (!wstr) goto exit;
     MultiByteToWideChar(CP_UTF8, 0, expected, -1, wstr, len);
 
-    lok(!lstrcmpW(fbuf, wstr), "export data does not match expected data\n");
+    todo_wine_if (todo & TODO_REG_COMPARE)
+        lok(!lstrcmpW(fbuf, wstr), "export data does not match expected data\n");
     ret = TRUE;
 
 exit:
@@ -4397,7 +4399,7 @@ static void test_export(void)
     else /* Windows XP (32-bit) and older */
         win_skip("File overwrite flag [/y] not supported; skipping position tests\n");
 
-    todo_wine ok(compare_export("file.reg", empty_key_test), "compare_export() failed\n");
+    todo_wine ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
     err = DeleteFileA("file.reg");
     todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
@@ -4409,7 +4411,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", simple_test), "compare_export() failed\n");
+    todo_wine ok(compare_export("file.reg", simple_test, 0), "compare_export() failed\n");
 
     err = DeleteFileA("file.reg");
     todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
@@ -4450,7 +4452,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", complex_test), "compare_export() failed\n");
+    todo_wine ok(compare_export("file.reg", complex_test, 0), "compare_export() failed\n");
 
     err = DeleteFileA("file.reg");
     todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
@@ -4467,7 +4469,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", key_order_test), "compare_export() failed\n");
+    todo_wine ok(compare_export("file.reg", key_order_test, 0), "compare_export() failed\n");
 
     err = DeleteFileA("file.reg");
     todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
@@ -4485,7 +4487,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", value_order_test), "compare_export() failed\n");
+    todo_wine ok(compare_export("file.reg", value_order_test, 0), "compare_export() failed\n");
 
     err = DeleteFileA("file.reg");
     todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
