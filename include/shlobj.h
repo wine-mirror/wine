@@ -1800,6 +1800,8 @@ HRESULT WINAPI CDefFolderMenu_Create2(LPCITEMIDLIST pidlFolder, HWND hwnd, UINT 
                                       LPFNDFMCALLBACK lpfn, UINT nKeys, const HKEY *ahkeys,
                                       IContextMenu **ppcm);
 
+int WINAPI PickIconDlg(HWND owner, WCHAR *path, UINT path_len, int *index);
+
 #include <poppack.h>
 
 #ifdef __cplusplus

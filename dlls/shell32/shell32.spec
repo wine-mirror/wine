@@ -57,7 +57,7 @@
   59 stdcall -ordinal RestartDialog(long wstr long)
   60 stdcall -noname ExitWindowsDialog(long)
   61 stdcall -noname RunFileDlg(long long str str str long) RunFileDlgAW
-  62 stdcall -ordinal PickIconDlg(long ptr long ptr)
+  62 stdcall -ordinal PickIconDlg(long wstr long ptr)
   63 stdcall -ordinal GetFileNameFromBrowse(long ptr long str str str str) GetFileNameFromBrowseAW
   64 stdcall -ordinal DriveType(long)
   65 stdcall -noname InvalidateDriveType(long)

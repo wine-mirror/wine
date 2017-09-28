@@ -60,15 +60,10 @@ static void FillList (HWND, char *, BOOL) ;
  * PickIconDlg					[SHELL32.62]
  *
  */
-INT WINAPI PickIconDlg(
-	HWND hwndOwner,
-	LPSTR lpstrFile,
-	DWORD nMaxFile,
-	LPDWORD lpdwIconIndex)
+INT WINAPI PickIconDlg(HWND hwndOwner, WCHAR *path, UINT path_len, INT *index)
 {
-	FIXME("(%p,%s,%08x,%p):stub.\n",
-	  hwndOwner, lpstrFile, nMaxFile,lpdwIconIndex);
-	return 0xffffffff;
+    FIXME("(%p,%s,%u,%p):stub.\n", hwndOwner, debugstr_w(path), path_len, index);
+    return 0xffffffff;
 }
 
 HRESULT WINAPI SHOpenWithDialog(HWND parent, const OPENASINFO *info)
