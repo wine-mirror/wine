@@ -1835,6 +1835,36 @@ static void test_token_attr(void)
     LocalFree(SidString);
     HeapFree(GetProcessHeap(), 0, User);
 
+    /* logon */
+    ret = GetTokenInformation(Token, TokenLogonSid, NULL, 0, &Size);
+    if (!ret && (GetLastError() == ERROR_INVALID_PARAMETER))
+        todo_wine win_skip("TokenLogonSid not supported. Skipping tests\n");
+    else
+    {
+        todo_wine ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+            "GetTokenInformation(TokenLogonSid) failed with error %d\n", GetLastError());
+        Groups = HeapAlloc(GetProcessHeap(), 0, Size);
+        ret = GetTokenInformation(Token, TokenLogonSid, Groups, Size, &Size);
+        todo_wine ok(ret,
+            "GetTokenInformation(TokenLogonSid) failed with error %d\n", GetLastError());
+        if (ret)
+        {
+            ok(Groups->GroupCount == 1, "got %d\n", Groups->GroupCount);
+            if(Groups->GroupCount == 1)
+            {
+                ConvertSidToStringSidA(Groups->Groups[0].Sid, &SidString);
+                trace("TokenLogon: %s\n", SidString);
+                LocalFree(SidString);
+
+                /* S-1-5-5-0-XXXXXX */
+                ret = IsWellKnownSid(Groups->Groups[0].Sid, WinLogonIdsSid);
+                ok(ret, "Unknown SID\n");
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, Groups);
+    }
+
     /* privileges */
     ret = GetTokenInformation(Token, TokenPrivileges, NULL, 0, &Size);
     ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
