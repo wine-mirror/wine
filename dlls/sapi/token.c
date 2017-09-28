@@ -39,6 +39,9 @@ struct data_key
 {
     ISpRegDataKey ISpRegDataKey_iface;
     LONG ref;
+
+    HKEY key;
+    BOOL read_only;
 };
 
 struct data_key *impl_from_ISpRegDataKey( ISpRegDataKey *iface )
@@ -84,6 +87,7 @@ static ULONG WINAPI data_key_Release( ISpRegDataKey *iface )
 
     if (!ref)
     {
+        if (This->key) RegCloseKey( This->key );
         heap_free( This );
     }
 
@@ -175,8 +179,15 @@ static HRESULT WINAPI data_key_EnumValues( ISpRegDataKey *iface,
 static HRESULT WINAPI data_key_SetKey( ISpRegDataKey *iface,
                                        HKEY key, BOOL read_only )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct data_key *This = impl_from_ISpRegDataKey( iface );
+
+    TRACE( "(%p)->(%p %d)\n", This, key, read_only );
+
+    if (This->key) return SPERR_ALREADY_INITIALIZED;
+
+    This->key = key;
+    This->read_only = read_only;
+    return S_OK;
 }
 
 const struct ISpRegDataKeyVtbl data_key_vtbl =
@@ -207,6 +218,8 @@ HRESULT data_key_create( IUnknown *outer, REFIID iid, void **obj )
     if (!This) return E_OUTOFMEMORY;
     This->ISpRegDataKey_iface.lpVtbl = &data_key_vtbl;
     This->ref = 1;
+    This->key = NULL;
+    This->read_only = FALSE;
 
     hr = ISpRegDataKey_QueryInterface( &This->ISpRegDataKey_iface, iid, obj );
 
