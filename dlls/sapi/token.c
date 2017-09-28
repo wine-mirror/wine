@@ -231,6 +231,8 @@ struct token_category
 {
     ISpObjectTokenCategory ISpObjectTokenCategory_iface;
     LONG ref;
+
+    ISpRegDataKey *data_key;
 };
 
 struct token_category *impl_from_ISpObjectTokenCategory( ISpObjectTokenCategory *iface )
@@ -277,6 +279,7 @@ static ULONG WINAPI token_category_Release( ISpObjectTokenCategory *iface )
 
     if (!ref)
     {
+        if (This->data_key) ISpRegDataKey_Release( This->data_key );
         heap_free( This );
     }
     return ref;
@@ -368,11 +371,69 @@ static HRESULT WINAPI token_category_EnumValues( ISpObjectTokenCategory *iface,
     return E_NOTIMPL;
 }
 
+static HRESULT parse_cat_id( const WCHAR *str, HKEY *root, const WCHAR **sub_key )
+{
+    static const WCHAR HKLM[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\'};
+    static const WCHAR HKCU[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','\\'};
+    struct table
+    {
+        const WCHAR *name;
+        int size;
+        HKEY key;
+    } table[] =
+    {
+        { HKLM, sizeof(HKLM), HKEY_LOCAL_MACHINE },
+        { HKCU, sizeof(HKCU), HKEY_CURRENT_USER },
+        { NULL }
+    };
+    struct table *ptr;
+    int len = strlenW( str );
+
+    for (ptr = table; ptr->name; ptr++)
+    {
+        if (len >= ptr->size / sizeof(ptr->name[0]) && !memcmp( str, ptr->name, ptr->size ))
+        {
+            *root = ptr->key;
+            *sub_key = str + ptr->size / sizeof(ptr->name[0]);
+            return S_OK;
+        }
+    }
+    return S_FALSE;
+}
+
 static HRESULT WINAPI token_category_SetId( ISpObjectTokenCategory *iface,
                                             LPCWSTR id, BOOL create )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct token_category *This = impl_from_ISpObjectTokenCategory( iface );
+    HKEY root, key;
+    const WCHAR *subkey;
+    LONG res;
+    HRESULT hr;
+
+    TRACE( "(%p)->(%s %d)\n", This, debugstr_w( id ), create );
+
+    if (This->data_key) return SPERR_ALREADY_INITIALIZED;
+
+    hr = parse_cat_id( id, &root, &subkey );
+    if (hr != S_OK) return SPERR_INVALID_REGISTRY_KEY;
+
+    if (create) FIXME( "Ignoring create\n" );
+
+    res = RegOpenKeyExW( root, subkey, 0, KEY_ALL_ACCESS, &key );
+    if (res) return SPERR_INVALID_REGISTRY_KEY;
+
+    hr = CoCreateInstance( &CLSID_SpDataKey, NULL, CLSCTX_ALL,
+                           &IID_ISpRegDataKey, (void **)&This->data_key );
+    if (FAILED(hr)) goto fail;
+
+    hr = ISpRegDataKey_SetKey( This->data_key, key, FALSE );
+    if (FAILED(hr)) goto fail;
+
+    return hr;
+
+fail:
+    RegCloseKey( key );
+    return hr;
 }
 
 static HRESULT WINAPI token_category_GetId( ISpObjectTokenCategory *iface,
@@ -445,6 +506,7 @@ HRESULT token_category_create( IUnknown *outer, REFIID iid, void **obj )
     if (!This) return E_OUTOFMEMORY;
     This->ISpObjectTokenCategory_iface.lpVtbl = &token_category_vtbl;
     This->ref = 1;
+    This->data_key = NULL;
 
     hr = ISpObjectTokenCategory_QueryInterface( &This->ISpObjectTokenCategory_iface, iid, obj );
 
