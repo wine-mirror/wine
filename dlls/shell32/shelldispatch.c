@@ -63,7 +63,6 @@ typedef struct {
 typedef struct {
     Folder3 Folder3_iface;
     LONG ref;
-    VARIANT dir;
     IDispatch *application;
     IShellFolder2 *folder;
     PIDLIST_ABSOLUTE pidl;
@@ -1090,13 +1089,24 @@ static HRESULT WINAPI FolderItemsImpl_Invoke(FolderItems3 *iface,
     return hr;
 }
 
+static BOOL shellfolder_exists(const WCHAR *path)
+{
+    PIDLIST_ABSOLUTE pidl = NULL;
+    HRESULT hr;
+
+    hr = SHParseDisplayName(path, NULL, &pidl, 0, NULL);
+    ILFree(pidl);
+
+    return SUCCEEDED(hr);
+}
+
 static HRESULT WINAPI FolderItemsImpl_get_Count(FolderItems3 *iface, LONG *count)
 {
     FolderItemsImpl *This = impl_from_FolderItems(iface);
 
     TRACE("(%p,%p)\n", iface, count);
 
-    *count = PathIsDirectoryW(V_BSTR(&This->folder->dir)) ? This->item_count : 0;
+    *count = shellfolder_exists(This->folder->path) ? This->item_count : 0;
     return S_OK;
 }
 
@@ -1129,7 +1139,7 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
 
     *item = NULL;
 
-    if (!PathIsDirectoryW(V_BSTR(&This->folder->dir)))
+    if (!shellfolder_exists(This->folder->path))
         return S_FALSE;
 
     switch (V_VT(&index))
@@ -1271,15 +1281,9 @@ static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ret)
     unsigned int i;
     HRESULT hr;
 
-    TRACE("(%s,%p)\n", debugstr_variant(&folder->dir), ret);
+    TRACE("(%s,%p)\n", debugstr_w(folder->path), ret);
 
     *ret = NULL;
-
-    if (V_VT(&folder->dir) == VT_I4)
-    {
-        FIXME("special folder constants are not supported\n");
-        return E_NOTIMPL;
-    }
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This));
     if (!This)
@@ -1395,7 +1399,6 @@ static ULONG WINAPI FolderImpl_Release(Folder3 *iface)
         ILFree(This->pidl);
         IShellFolder2_Release(This->folder);
         IDispatch_Release(This->application);
-        VariantClear(&This->dir);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -1662,7 +1665,7 @@ static const Folder3Vtbl FolderImpl_Vtbl = {
     FolderImpl_put_ShowWebViewBarricade
 };
 
-static HRESULT Folder_Constructor(VARIANT *dir, IShellFolder2 *folder, LPITEMIDLIST pidl, Folder **ret)
+static HRESULT Folder_Constructor(IShellFolder2 *folder, LPITEMIDLIST pidl, Folder **ret)
 {
     PCUITEMID_CHILD last_part;
     IShellFolder2 *parent;
@@ -1687,14 +1690,6 @@ static HRESULT Folder_Constructor(VARIANT *dir, IShellFolder2 *folder, LPITEMIDL
     IShellFolder2_Release(parent);
 
     IShellDispatch_Constructor(NULL, &IID_IDispatch, (void **)&This->application);
-
-    VariantInit(&This->dir);
-    hr = VariantCopy(&This->dir, dir);
-    if (FAILED(hr))
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_OUTOFMEMORY;
-    }
 
     *ret = (Folder *)&This->Folder3_iface;
     return hr;
@@ -1880,7 +1875,7 @@ static HRESULT WINAPI ShellDispatch_NameSpace(IShellDispatch6 *iface,
     if (FAILED(hr))
         return S_FALSE;
 
-    return Folder_Constructor(&dir, folder, pidl, ret);
+    return Folder_Constructor(folder, pidl, ret);
 }
 
 static HRESULT WINAPI ShellDispatch_BrowseForFolder(IShellDispatch6 *iface,
