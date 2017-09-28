@@ -894,6 +894,15 @@ NTSTATUS WINAPI RtlIpv4StringToAddressExW(const WCHAR *str, BOOLEAN strict, IN_A
 }
 
 /***********************************************************************
+ * RtlIpv4StringToAddressW [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlIpv4StringToAddressW(const WCHAR *str, BOOLEAN strict, const WCHAR **terminator, IN_ADDR *address)
+{
+    FIXME("(%s, %u, %p, %p): stub\n", debugstr_w(str), strict, terminator, address);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  * RtlIpv4AddressToStringExW [NTDLL.@]
  *
  * Convert the given ipv4 address and optional the port to a string

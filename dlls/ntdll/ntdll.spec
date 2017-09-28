@@ -726,7 +726,7 @@
 # @ stub RtlIpv4StringToAddressA
 # @ stub RtlIpv4StringToAddressExA
 @ stdcall RtlIpv4StringToAddressExW(wstr long ptr ptr)
-# @ stub RtlIpv4StringToAddressW
+@ stdcall RtlIpv4StringToAddressW(wstr long ptr ptr)
 # @ stub RtlIpv6AddressToStringA
 # @ stub RtlIpv6AddressToStringExA
 # @ stub RtlIpv6AddressToStringExW
