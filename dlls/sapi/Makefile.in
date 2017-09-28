@@ -2,7 +2,8 @@ MODULE    = sapi.dll
 IMPORTS   = uuid ole32 user32 advapi32
 
 C_SRCS = \
-	main.c
+	main.c \
+	token.c
 
 IDL_SRCS = \
 	sapi_classes.idl \

@@ -27,12 +27,103 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "rpcproxy.h"
+#include "oaidl.h"
+#include "ocidl.h"
+
+#include "initguid.h"
+#include "sapiddk.h"
 
 #include "wine/debug.h"
+
+#include "sapi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sapi);
 
 static HINSTANCE hinstance;
+
+struct class_factory
+{
+    IClassFactory IClassFactory_iface;
+    HRESULT (*create_instance)(IUnknown *, REFIID, void **);
+};
+
+static inline struct class_factory *impl_from_IClassFactory( IClassFactory *iface )
+{
+    return CONTAINING_RECORD( iface, struct class_factory, IClassFactory_iface );
+}
+
+static HRESULT WINAPI class_factory_QueryInterface( IClassFactory *iface,
+                                                    REFIID iid, void **obj )
+{
+    if (IsEqualIID( iid, &IID_IUnknown ) ||
+        IsEqualIID( iid, &IID_IClassFactory ))
+    {
+        IClassFactory_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI class_factory_AddRef( IClassFactory *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI class_factory_Release( IClassFactory *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI class_factory_CreateInstance( IClassFactory *iface,
+                                                    IUnknown *outer, REFIID iid,
+                                                    void **obj )
+{
+    struct class_factory *This = impl_from_IClassFactory( iface );
+
+    TRACE( "%p %s %p\n", outer, debugstr_guid( iid ), obj );
+
+    *obj = NULL;
+    return This->create_instance( outer, iid, obj );
+}
+
+static HRESULT WINAPI class_factory_LockServer( IClassFactory *iface,
+                                                BOOL lock )
+{
+    FIXME( "%d: stub!\n", lock );
+    return S_OK;
+}
+
+static const struct IClassFactoryVtbl class_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    class_factory_CreateInstance,
+    class_factory_LockServer
+};
+
+static struct class_factory data_key_cf       = { { &class_factory_vtbl }, data_key_create };
+
+/******************************************************************
+ *             DllGetClassObject
+ */
+HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **obj )
+{
+    IClassFactory *cf = NULL;
+
+    TRACE( "(%s %s %p)\n", debugstr_guid( clsid ), debugstr_guid( iid ), obj );
+
+    if (IsEqualCLSID( clsid, &CLSID_SpDataKey ))
+        cf = &data_key_cf.IClassFactory_iface;
+
+    if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
+
+    return IClassFactory_QueryInterface( cf, iid, obj );
+}
 
 BOOL WINAPI DllMain( HINSTANCE dll, DWORD reason, LPVOID reserved )
 {
