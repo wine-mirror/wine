@@ -1080,7 +1080,7 @@
 @ stdcall RtlIpv4AddressToStringW(ptr ptr) ntdll.RtlIpv4AddressToStringW
 @ stub RtlIpv4StringToAddressA
 @ stub RtlIpv4StringToAddressExA
-@ stdcall RtlIpv4StringToAddressExW(ptr ptr wstr ptr) ntdll.RtlIpv4StringToAddressExW
+@ stdcall RtlIpv4StringToAddressExW(wstr long ptr ptr) ntdll.RtlIpv4StringToAddressExW
 @ stub RtlIpv4StringToAddressW
 @ stub RtlIpv6AddressToStringA
 @ stub RtlIpv6AddressToStringExA
