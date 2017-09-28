@@ -66,14 +66,14 @@ typedef struct {
     IDispatch *application;
     IShellFolder2 *folder;
     PIDLIST_ABSOLUTE pidl;
-    WCHAR path[MAX_PATH];
+    BSTR path;
 } FolderImpl;
 
 typedef struct {
     FolderItems3 FolderItems3_iface;
     LONG ref;
     FolderImpl *folder;
-    WCHAR **item_names;
+    BSTR *item_names;
     LONG item_count;
 } FolderItemsImpl;
 
@@ -1030,7 +1030,7 @@ static ULONG WINAPI FolderItemsImpl_Release(FolderItems3 *iface)
     {
         Folder3_Release(&This->folder->Folder3_iface);
         for (i = 0; i < This->item_count; i++)
-            HeapFree(GetProcessHeap(), 0, This->item_names[i]);
+            SysFreeString(This->item_names[i]);
         HeapFree(GetProcessHeap(), 0, This->item_names);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -1132,7 +1132,7 @@ static HRESULT WINAPI FolderItemsImpl_get_Parent(FolderItems3 *iface, IDispatch 
 static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, FolderItem **item)
 {
     FolderItemsImpl *This = impl_from_FolderItems(iface);
-    WCHAR buffW[MAX_PATH], *display_name;
+    BSTR display_name = NULL;
     HRESULT hr;
 
     TRACE("(%p,%s,%p)\n", iface, debugstr_variant(&index), item);
@@ -1152,7 +1152,7 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
             if (V_I4(&index) >= This->item_count || V_I4(&index) < 0)
                 return S_FALSE;
 
-            display_name = This->item_names[V_I4(&index)];
+            display_name = SysAllocString(This->item_names[V_I4(&index)]);
             break;
 
         case VT_BSTR:
@@ -1167,15 +1167,13 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
                     NULL, &pidl, NULL)))
                 return S_FALSE;
 
-            IShellFolder2_GetDisplayNameOf(This->folder->folder, pidl, SHGDN_FORPARSING, &strret);
-            StrRetToBufW(&strret, NULL, buffW, sizeof(buffW)/sizeof(*buffW));
+            if (IShellFolder2_GetDisplayNameOf(This->folder->folder, pidl, SHGDN_FORPARSING, &strret) == S_OK)
+                StrRetToBSTR(&strret, pidl, &display_name);
             ILFree(pidl);
-
-            display_name = buffW;
             break;
         }
         case VT_ERROR:
-            return FolderItem_Constructor(This->folder, NULL, item);
+            break;
 
         default:
             FIXME("Index type %d not handled.\n", V_VT(&index));
@@ -1184,7 +1182,9 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
             return E_NOTIMPL;
     }
 
-    return FolderItem_Constructor(This->folder, display_name, item);
+    hr = FolderItem_Constructor(This->folder, display_name, item);
+    SysFreeString(display_name);
+    return hr;
 }
 
 static HRESULT WINAPI FolderItemsImpl__NewEnum(FolderItems3 *iface, IUnknown **ppunk)
@@ -1313,7 +1313,7 @@ static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ret)
         ULONG fetched;
 
         pidls = HeapAlloc(GetProcessHeap(), 0, This->item_count * sizeof(*pidls));
-        This->item_names = HeapAlloc(GetProcessHeap(), 0, This->item_count * sizeof(*This->item_names));
+        This->item_names = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->item_count * sizeof(*This->item_names));
 
         if (!pidls || !This->item_names)
         {
@@ -1329,13 +1329,10 @@ static HRESULT FolderItems_Constructor(FolderImpl *folder, FolderItems **ret)
 
         for (i = 0; i < This->item_count; i++)
         {
-            WCHAR buffW[MAX_PATH];
             STRRET strret;
 
-            IShellFolder2_GetDisplayNameOf(folder->folder, pidls[i], SHGDN_FORPARSING, &strret);
-            StrRetToBufW(&strret, NULL, buffW, sizeof(buffW)/sizeof(*buffW));
-
-            This->item_names[i] = strdupW(buffW);
+            if (IShellFolder2_GetDisplayNameOf(folder->folder, pidls[i], SHGDN_FORPARSING, &strret) == S_OK)
+                StrRetToBSTR(&strret, pidls[i], &This->item_names[i]);
 
             ILFree(pidls[i]);
         }
@@ -1397,6 +1394,7 @@ static ULONG WINAPI FolderImpl_Release(Folder3 *iface)
     if (!ref)
     {
         ILFree(This->pidl);
+        SysFreeString(This->path);
         IShellFolder2_Release(This->folder);
         IDispatch_Release(This->application);
         HeapFree(GetProcessHeap(), 0, This);
@@ -1463,7 +1461,6 @@ static HRESULT WINAPI FolderImpl_get_Title(Folder3 *iface, BSTR *title)
     FolderImpl *This = impl_from_Folder(iface);
     PCUITEMID_CHILD last_part;
     IShellFolder2 *parent;
-    WCHAR buffW[MAX_PATH];
     SHELLDETAILS sd;
     HRESULT hr;
 
@@ -1479,10 +1476,7 @@ static HRESULT WINAPI FolderImpl_get_Title(Folder3 *iface, BSTR *title)
     if (FAILED(hr))
         return hr;
 
-    StrRetToBufW(&sd.str, NULL, buffW, sizeof(buffW)/sizeof(buffW[0]));
-    *title = SysAllocString(buffW);
-
-    return *title ? S_OK : E_OUTOFMEMORY;
+    return StrRetToBSTR(&sd.str, last_part, title);
 }
 
 static HRESULT WINAPI FolderImpl_get_Application(Folder3 *iface, IDispatch **disp)
@@ -1529,10 +1523,10 @@ static HRESULT WINAPI FolderImpl_Items(Folder3 *iface, FolderItems **ppid)
 static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR name, FolderItem **item)
 {
     FolderImpl *This = impl_from_Folder(iface);
-    WCHAR pathW[MAX_PATH];
     LPITEMIDLIST pidl;
     STRRET strret;
     HRESULT hr;
+    BSTR path;
 
     TRACE("(%p,%s,%p)\n", iface, debugstr_w(name), item);
 
@@ -1541,14 +1535,16 @@ static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR name, FolderItem
     if (FAILED(IShellFolder2_ParseDisplayName(This->folder, NULL, NULL, name, NULL, &pidl, NULL)))
         return S_FALSE;
 
-    hr = IShellFolder2_GetDisplayNameOf(This->folder, pidl, SHGDN_FORPARSING, &strret);
+    if ((hr = IShellFolder2_GetDisplayNameOf(This->folder, pidl, SHGDN_FORPARSING, &strret)) == S_OK)
+        StrRetToBSTR(&strret, pidl, &path);
+
     ILFree(pidl);
     if (FAILED(hr))
         return S_FALSE;
 
-    StrRetToBufW(&strret, NULL, pathW, sizeof(pathW)/sizeof(*pathW));
-
-    return FolderItem_Constructor(This, pathW, item);
+    hr = FolderItem_Constructor(This, path, item);
+    SysFreeString(path);
+    return hr;
 }
 
 static HRESULT WINAPI FolderImpl_NewFolder(Folder3 *iface, BSTR bName,
@@ -1686,7 +1682,7 @@ static HRESULT Folder_Constructor(IShellFolder2 *folder, LPITEMIDLIST pidl, Fold
 
     hr = SHBindToParent(pidl, &IID_IShellFolder2, (void **)&parent, &last_part);
     IShellFolder2_GetDisplayNameOf(parent, last_part, SHGDN_FORPARSING, &strret);
-    StrRetToBufW(&strret, NULL, This->path, sizeof(This->path)/sizeof(*This->path));
+    StrRetToBSTR(&strret, last_part, &This->path);
     IShellFolder2_Release(parent);
 
     IShellDispatch_Constructor(NULL, &IID_IDispatch, (void **)&This->application);
