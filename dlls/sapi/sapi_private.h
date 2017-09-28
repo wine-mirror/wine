@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/unicode.h"
+
 HRESULT data_key_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 
@@ -29,4 +31,19 @@ static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
 static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR heap_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+    DWORD size;
+
+    if (str)
+    {
+        size = (strlenW( str ) + 1) * sizeof(WCHAR);
+        ret = heap_alloc( size );
+        if (ret) memcpy( ret, str, size );
+    }
+
+    return ret;
 }

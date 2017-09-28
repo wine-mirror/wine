@@ -231,6 +231,9 @@ struct token_enum
 {
     ISpObjectTokenEnumBuilder ISpObjectTokenEnumBuilder_iface;
     LONG ref;
+
+    BOOL init;
+    WCHAR *req, *opt;
 };
 
 struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
@@ -276,7 +279,11 @@ static ULONG WINAPI token_enum_Release( ISpObjectTokenEnumBuilder *iface )
     TRACE( "(%p) ref = %u\n", This, ref );
 
     if (!ref)
+    {
+        heap_free( This->req );
+        heap_free( This->opt );
         heap_free( This );
+    }
 
     return ref;
 }
@@ -326,8 +333,30 @@ static HRESULT WINAPI token_enum_GetCount( ISpObjectTokenEnumBuilder *iface,
 static HRESULT WINAPI token_enum_SetAttribs( ISpObjectTokenEnumBuilder *iface,
                                              LPCWSTR req, LPCWSTR opt)
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct token_enum *This = impl_from_ISpObjectTokenEnumBuilder( iface );
+
+    TRACE( "(%p)->(%s %s)\n", This, debugstr_w( req ), debugstr_w( opt ) );
+
+    if (This->init) return SPERR_ALREADY_INITIALIZED;
+
+    if (req)
+    {
+        This->req = heap_strdupW( req );
+        if (!This->req) goto out_of_mem;
+    }
+
+    if (opt)
+    {
+        This->opt = heap_strdupW( opt );
+        if (!This->opt) goto out_of_mem;
+    }
+
+    This->init = TRUE;
+    return S_OK;
+
+out_of_mem:
+    heap_free( This->req );
+    return E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI token_enum_AddTokens( ISpObjectTokenEnumBuilder *iface,
@@ -385,6 +414,9 @@ HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj )
     if (!This) return E_OUTOFMEMORY;
     This->ISpObjectTokenEnumBuilder_iface.lpVtbl = &token_enum_vtbl;
     This->ref = 1;
+    This->req = NULL;
+    This->opt = NULL;
+    This->init = FALSE;
 
     hr = ISpObjectTokenEnumBuilder_QueryInterface( &This->ISpObjectTokenEnumBuilder_iface, iid, obj );
 
