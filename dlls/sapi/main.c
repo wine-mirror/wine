@@ -107,6 +107,7 @@ static const struct IClassFactoryVtbl class_factory_vtbl =
 };
 
 static struct class_factory data_key_cf       = { { &class_factory_vtbl }, data_key_create };
+static struct class_factory token_enum_cf     = { { &class_factory_vtbl }, token_enum_create };
 
 /******************************************************************
  *             DllGetClassObject
@@ -119,6 +120,8 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **obj )
 
     if (IsEqualCLSID( clsid, &CLSID_SpDataKey ))
         cf = &data_key_cf.IClassFactory_iface;
+    else if (IsEqualCLSID( clsid, &CLSID_SpObjectTokenEnum ))
+        cf = &token_enum_cf.IClassFactory_iface;
 
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
 

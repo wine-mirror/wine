@@ -226,3 +226,168 @@ HRESULT data_key_create( IUnknown *outer, REFIID iid, void **obj )
     ISpRegDataKey_Release( &This->ISpRegDataKey_iface );
     return hr;
 }
+
+struct token_enum
+{
+    ISpObjectTokenEnumBuilder ISpObjectTokenEnumBuilder_iface;
+    LONG ref;
+};
+
+struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
+{
+    return CONTAINING_RECORD( iface, struct token_enum, ISpObjectTokenEnumBuilder_iface );
+}
+
+static HRESULT WINAPI token_enum_QueryInterface( ISpObjectTokenEnumBuilder *iface,
+                                                 REFIID iid, void **obj )
+{
+    struct token_enum *This = impl_from_ISpObjectTokenEnumBuilder( iface );
+
+    TRACE( "(%p)->(%s %p)\n", This, debugstr_guid( iid ), obj );
+
+    if (IsEqualIID( iid, &IID_IUnknown ) ||
+        IsEqualIID( iid, &IID_IEnumSpObjectTokens ) ||
+        IsEqualIID( iid, &IID_ISpObjectTokenEnumBuilder ))
+    {
+        ISpObjectTokenEnumBuilder_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI token_enum_AddRef( ISpObjectTokenEnumBuilder *iface )
+{
+    struct token_enum *This = impl_from_ISpObjectTokenEnumBuilder( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+    return ref;
+}
+
+static ULONG WINAPI token_enum_Release( ISpObjectTokenEnumBuilder *iface )
+{
+    struct token_enum *This = impl_from_ISpObjectTokenEnumBuilder( iface );
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+
+    if (!ref)
+        heap_free( This );
+
+    return ref;
+}
+
+static HRESULT WINAPI token_enum_Next( ISpObjectTokenEnumBuilder *iface,
+                                       ULONG num, ISpObjectToken **tokens,
+                                       ULONG *fetched )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_Skip( ISpObjectTokenEnumBuilder *iface,
+                                       ULONG num )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_Reset( ISpObjectTokenEnumBuilder *iface)
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_Clone( ISpObjectTokenEnumBuilder *iface,
+                                        IEnumSpObjectTokens **clone )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_Item( ISpObjectTokenEnumBuilder *iface,
+                                       ULONG index, ISpObjectToken **token )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_GetCount( ISpObjectTokenEnumBuilder *iface,
+                                           ULONG *count )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_SetAttribs( ISpObjectTokenEnumBuilder *iface,
+                                             LPCWSTR req, LPCWSTR opt)
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_AddTokens( ISpObjectTokenEnumBuilder *iface,
+                                            ULONG num, ISpObjectToken **tokens )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_AddTokensFromDataKey( ISpObjectTokenEnumBuilder *iface,
+                                                       ISpDataKey *data_key,
+                                                       LPCWSTR sub_key, LPCWSTR cat_id )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_AddTokensFromTokenEnum( ISpObjectTokenEnumBuilder *iface,
+                                                         IEnumSpObjectTokens *token_enum )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_enum_Sort( ISpObjectTokenEnumBuilder *iface,
+                                       LPCWSTR first )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+const struct ISpObjectTokenEnumBuilderVtbl token_enum_vtbl =
+{
+    token_enum_QueryInterface,
+    token_enum_AddRef,
+    token_enum_Release,
+    token_enum_Next,
+    token_enum_Skip,
+    token_enum_Reset,
+    token_enum_Clone,
+    token_enum_Item,
+    token_enum_GetCount,
+    token_enum_SetAttribs,
+    token_enum_AddTokens,
+    token_enum_AddTokensFromDataKey,
+    token_enum_AddTokensFromTokenEnum,
+    token_enum_Sort
+};
+
+HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj )
+{
+    struct token_enum *This = heap_alloc( sizeof(*This) );
+    HRESULT hr;
+
+    if (!This) return E_OUTOFMEMORY;
+    This->ISpObjectTokenEnumBuilder_iface.lpVtbl = &token_enum_vtbl;
+    This->ref = 1;
+
+    hr = ISpObjectTokenEnumBuilder_QueryInterface( &This->ISpObjectTokenEnumBuilder_iface, iid, obj );
+
+    ISpObjectTokenEnumBuilder_Release( &This->ISpObjectTokenEnumBuilder_iface );
+    return hr;
+}
