@@ -99,6 +99,22 @@ function test_doc_mode() {
     next_test();
 }
 
+function test_iframe_doc_mode() {
+    var iframe = document.createElement("iframe");
+
+    iframe.onload = function() {
+        var iframe_mode = iframe.contentWindow.document.documentMode;
+        if(document.documentMode < 9)
+            ok(iframe_mode === 5, "iframe_mode = " + iframe_mode);
+        else
+            ok(iframe_mode === document.documentMode, "iframe_mode = " + iframe_mode);
+        next_test();
+    }
+
+    iframe.src = "about:blank";
+    document.body.appendChild(iframe);
+}
+
 function test_conditional_comments() {
     var div = document.createElement("div");
     document.body.appendChild(div);
@@ -137,6 +153,7 @@ function test_conditional_comments() {
 
 var tests = [
     test_doc_mode,
+    test_iframe_doc_mode,
     test_elem_props,
     test_doc_props,
     test_elem_by_id,

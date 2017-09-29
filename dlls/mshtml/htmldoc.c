@@ -5044,6 +5044,15 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     if(!doc)
         return E_OUTOFMEMORY;
 
+    if(window->base.outer_window->parent) {
+        compat_mode_t parent_mode = window->base.outer_window->parent->base.inner_window->doc->document_mode;
+        TRACE("parent mode %u\n", parent_mode);
+        if(parent_mode >= COMPAT_MODE_IE9) {
+            doc->document_mode_locked = TRUE;
+            doc->document_mode = parent_mode;
+        }
+    }
+
     if(!doc_obj->basedoc.window || window->base.outer_window == doc_obj->basedoc.window)
         doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
 
