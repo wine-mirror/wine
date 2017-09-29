@@ -1339,6 +1339,16 @@ static IXMLHttpRequest *create_xhr(void)
     return SUCCEEDED(hr) ? ret : NULL;
 }
 
+static IServerXMLHTTPRequest *create_server_xhr(void)
+{
+    IServerXMLHTTPRequest *ret;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_ServerXMLHTTP30, NULL, CLSCTX_INPROC_SERVER, &IID_IServerXMLHTTPRequest, (void **)&ret);
+
+    return SUCCEEDED(hr) ? ret : NULL;
+}
+
 static void set_safety_opt(IUnknown *unk, DWORD mask, DWORD opts)
 {
     IObjectSafety *obj_safety;
@@ -1777,20 +1787,67 @@ static void test_safe_httpreq(void)
     free_bstrs();
 }
 
+static void test_supporterrorinfo(void)
+{
+    HRESULT hr;
+    IXMLHttpRequest *xhr;
+    IServerXMLHTTPRequest *server_xhr;
+    ISupportErrorInfo *errorinfo, *errorinfo2;
+
+    xhr = create_xhr();
+
+    EXPECT_REF(xhr, 1);
+    hr = IXMLHttpRequest_QueryInterface(xhr, &IID_ISupportErrorInfo, (void **)&errorinfo);
+    ok(hr == S_OK, "Failed to get ISupportErrorInfo, hr %#x.\n", hr);
+    EXPECT_REF(xhr, 2);
+
+    hr = IXMLHttpRequest_QueryInterface(xhr, &IID_ISupportErrorInfo, (void **)&errorinfo2);
+    ok(hr == S_OK, "Failed to get ISupportErrorInfo, hr %#x.\n", hr);
+    ok(errorinfo == errorinfo2, "Unexpected error info instance.\n");
+    EXPECT_REF(xhr, 3);
+
+    ISupportErrorInfo_Release(errorinfo2);
+    ISupportErrorInfo_Release(errorinfo);
+
+    IXMLHttpRequest_Release(xhr);
+
+    /* ServerXMLHTTP */
+    server_xhr = create_server_xhr();
+
+    EXPECT_REF(server_xhr, 1);
+    hr = IServerXMLHTTPRequest_QueryInterface(server_xhr, &IID_ISupportErrorInfo, (void **)&errorinfo);
+    ok(hr == S_OK, "Failed to get ISupportErrorInfo, hr %#x.\n", hr);
+    EXPECT_REF(server_xhr, 2);
+
+    hr = IServerXMLHTTPRequest_QueryInterface(server_xhr, &IID_ISupportErrorInfo, (void **)&errorinfo2);
+    ok(hr == S_OK, "Failed to get ISupportErrorInfo, hr %#x.\n", hr);
+    ok(errorinfo == errorinfo2, "Unexpected error info instance.\n");
+    EXPECT_REF(server_xhr, 3);
+
+    ISupportErrorInfo_Release(errorinfo2);
+    ISupportErrorInfo_Release(errorinfo);
+
+    IServerXMLHTTPRequest_Release(server_xhr);
+}
+
 START_TEST(httpreq)
 {
     IXMLHttpRequest *xhr;
 
     CoInitialize(NULL);
 
-    if((xhr = create_xhr())) {
-        IXMLHttpRequest_Release(xhr);
-
-        test_XMLHTTP();
-        test_safe_httpreq();
-    }else {
+    if (!(xhr = create_xhr()))
+    {
         win_skip("IXMLHTTPRequest is not available\n");
+        CoUninitialize();
+        return;
     }
+
+    IXMLHttpRequest_Release(xhr);
+
+    test_XMLHTTP();
+    test_safe_httpreq();
+    test_supporterrorinfo();
 
     CoUninitialize();
 }

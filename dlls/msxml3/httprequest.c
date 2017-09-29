@@ -73,6 +73,7 @@ typedef struct
     IXMLHTTPRequest IXMLHTTPRequest_iface;
     IObjectWithSite IObjectWithSite_iface;
     IObjectSafety   IObjectSafety_iface;
+    ISupportErrorInfo ISupportErrorInfo_iface;
     LONG ref;
 
     READYSTATE state;
@@ -129,6 +130,11 @@ static inline httprequest *impl_from_IObjectWithSite(IObjectWithSite *iface)
 static inline httprequest *impl_from_IObjectSafety(IObjectSafety *iface)
 {
     return CONTAINING_RECORD(iface, httprequest, IObjectSafety_iface);
+}
+
+static inline httprequest *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
+{
+    return CONTAINING_RECORD(iface, httprequest, ISupportErrorInfo_iface);
 }
 
 static inline serverhttp *impl_from_IServerXMLHTTPRequest(IServerXMLHTTPRequest *iface)
@@ -1329,6 +1335,10 @@ static HRESULT WINAPI XMLHTTPRequest_QueryInterface(IXMLHTTPRequest *iface, REFI
     {
         *ppvObject = &This->IObjectSafety_iface;
     }
+    else if (IsEqualGUID(&IID_ISupportErrorInfo, riid))
+    {
+        *ppvObject = &This->ISupportErrorInfo_iface;
+    }
     else
     {
         TRACE("Unsupported interface %s\n", debugstr_guid(riid));
@@ -1336,7 +1346,7 @@ static HRESULT WINAPI XMLHTTPRequest_QueryInterface(IXMLHTTPRequest *iface, REFI
         return E_NOINTERFACE;
     }
 
-    IXMLHTTPRequest_AddRef( iface );
+    IUnknown_AddRef((IUnknown *)*ppvObject);
 
     return S_OK;
 }
@@ -1709,6 +1719,41 @@ static const IObjectSafetyVtbl ObjectSafetyVtbl = {
     httprequest_Safety_SetInterfaceSafetyOptions
 };
 
+static HRESULT WINAPI SupportErrorInfo_QueryInterface(ISupportErrorInfo *iface, REFIID riid, void **obj)
+{
+    httprequest *This = impl_from_ISupportErrorInfo(iface);
+    return IXMLHTTPRequest_QueryInterface(&This->IXMLHTTPRequest_iface, riid, obj);
+}
+
+static ULONG WINAPI SupportErrorInfo_AddRef(ISupportErrorInfo *iface)
+{
+    httprequest *This = impl_from_ISupportErrorInfo(iface);
+    return IXMLHTTPRequest_AddRef(&This->IXMLHTTPRequest_iface);
+}
+
+static ULONG WINAPI SupportErrorInfo_Release(ISupportErrorInfo *iface)
+{
+    httprequest *This = impl_from_ISupportErrorInfo(iface);
+    return IXMLHTTPRequest_Release(&This->IXMLHTTPRequest_iface);
+}
+
+static HRESULT WINAPI SupportErrorInfo_InterfaceSupportsErrorInfo(ISupportErrorInfo *iface, REFIID riid)
+{
+    httprequest *This = impl_from_ISupportErrorInfo(iface);
+
+    FIXME("(%p)->(%s)\n", This, debugstr_guid(riid));
+
+    return E_NOTIMPL;
+}
+
+static const ISupportErrorInfoVtbl SupportErrorInfoVtbl =
+{
+    SupportErrorInfo_QueryInterface,
+    SupportErrorInfo_AddRef,
+    SupportErrorInfo_Release,
+    SupportErrorInfo_InterfaceSupportsErrorInfo,
+};
+
 /* IServerXMLHTTPRequest */
 static HRESULT WINAPI ServerXMLHTTPRequest_QueryInterface(IServerXMLHTTPRequest *iface, REFIID riid, void **obj)
 {
@@ -1723,6 +1768,10 @@ static HRESULT WINAPI ServerXMLHTTPRequest_QueryInterface(IServerXMLHTTPRequest 
     {
         *obj = iface;
     }
+    else if ( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        *obj = &This->req.ISupportErrorInfo_iface;
+    }
     else
     {
         TRACE("Unsupported interface %s\n", debugstr_guid(riid));
@@ -1730,7 +1779,7 @@ static HRESULT WINAPI ServerXMLHTTPRequest_QueryInterface(IServerXMLHTTPRequest 
         return E_NOINTERFACE;
     }
 
-    IServerXMLHTTPRequest_AddRef( iface );
+    IUnknown_AddRef( (IUnknown *)*obj );
 
     return S_OK;
 }
@@ -1987,6 +2036,7 @@ static void init_httprequest(httprequest *req)
     req->IXMLHTTPRequest_iface.lpVtbl = &XMLHTTPRequestVtbl;
     req->IObjectWithSite_iface.lpVtbl = &ObjectWithSiteVtbl;
     req->IObjectSafety_iface.lpVtbl = &ObjectSafetyVtbl;
+    req->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
     req->ref = 1;
 
     req->async = FALSE;
