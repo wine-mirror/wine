@@ -185,6 +185,8 @@ static const event_info_t event_info[] = {
         EVENT_FIXME}
 };
 
+static BOOL use_event_quirks(EventTarget*);
+
 eventid_t str_to_eid(LPCWSTR str)
 {
     int i;
@@ -953,6 +955,9 @@ void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, EventTa
         VARIANTARG arg;
         DISPPARAMS dp = {&arg, &named_arg, 1, 1};
 
+        if(!use_event_quirks(event_target))
+            FIXME("Event argument not supported\n");
+
         V_VT(&arg) = VT_DISPATCH;
         V_DISPATCH(&arg) = this_obj;
         V_VT(&v) = VT_EMPTY;
@@ -1381,6 +1386,12 @@ static HRESULT set_event_handler_disp(EventTarget *event_target, eventid_t eid, 
 HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var)
 {
     switch(V_VT(var)) {
+    case VT_EMPTY:
+        if(use_event_quirks(event_target)) {
+            WARN("attempt to set to VT_EMPTY in quirks mode\n");
+            return E_NOTIMPL;
+        }
+        /* fall through */
     case VT_NULL:
         remove_event_handler(event_target, eid);
         return S_OK;
@@ -1391,6 +1402,9 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
     case VT_BSTR: {
         VARIANT *v;
         HRESULT hres;
+
+        if(!use_event_quirks(event_target))
+            FIXME("Setting to string %s not supported\n", debugstr_w(V_BSTR(var)));
 
         /*
          * Setting event handler to string is a rare case and we don't want to
@@ -1413,8 +1427,6 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
 
     default:
         FIXME("not handler %s\n", debugstr_variant(var));
-        /* fall through */
-    case VT_EMPTY:
         return E_NOTIMPL;
     }
 
