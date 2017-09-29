@@ -92,6 +92,7 @@ static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
 static IOleDocumentView *view;
 static BOOL is_ie9plus;
+static int document_mode;
 
 typedef struct {
     LONG x;
@@ -105,13 +106,18 @@ static const xy_test_t no_xy = {-10,-10,-10,-10};
 static const char empty_doc_str[] =
     "<html></html>";
 
-static const char click_doc_str[] =
-    "<html><body>"
-    "<div id=\"clickdiv\" style=\"text-align: center; background: red; font-size: 32\">click here</div>"
-    "</body></html>";
+static const char empty_doc_ie9_str[] =
+    "<html>"
+    "<head><meta http-equiv=\"x-ua-compatible\" content=\"IE=9\" /></head>"
+    "</html>";
 
 static const char readystate_doc_str[] =
     "<html><body><iframe id=\"iframe\"></iframe></body></html>";
+
+static const char readystate_doc_ie9_str[] =
+    "<html>"
+    "<head><meta http-equiv=\"x-ua-compatible\" content=\"IE=9\" /></head>"
+    "<body><iframe id=\"iframe\"></iframe></body></html>";
 
 static const char img_doc_str[] =
     "<html><body><img id=\"imgid\"></img></body></html>";
@@ -124,12 +130,6 @@ static const char input_doc_str[] =
 
 static const char iframe_doc_str[] =
     "<html><body><iframe id=\"ifr\">Testing</iframe></body></html>";
-
-static const char form_doc_str[] =
-    "<html><body><form id=\"formid\" method=\"post\" action=\"about:blank\">"
-    "<input type=\"text\" value=\"test\" name=\"i\"/>"
-    "<input type=\"submit\" id=\"submitid\" />"
-    "</form></body></html>";
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
@@ -191,8 +191,9 @@ static void _test_disp(unsigned line, IUnknown *unk, const IID *diid)
 
         hres = ITypeInfo_GetTypeAttr(typeinfo, &type_attr);
         ok_(__FILE__,line) (hres == S_OK, "GetTypeAttr failed: %08x\n", hres);
-        ok_(__FILE__,line) (IsEqualGUID(&type_attr->guid, diid), "unexpected guid %s\n",
-                            wine_dbgstr_guid(&type_attr->guid));
+        if(diid)
+            ok_(__FILE__,line) (IsEqualGUID(&type_attr->guid, diid), "unexpected guid %s\n",
+                                wine_dbgstr_guid(&type_attr->guid));
 
         ITypeInfo_ReleaseTypeAttr(typeinfo, type_attr);
         ITypeInfo_Release(typeinfo);
@@ -328,9 +329,23 @@ static IHTMLEventObj *_get_event_obj(unsigned line)
     hres = IHTMLWindow2_get_event(window, &event);
     ok_(__FILE__,line) (hres == S_OK, "get_event failed: %08x\n", hres);
     ok_(__FILE__,line) (event != NULL, "event = NULL\n");
-    _test_disp(line, (IUnknown*)event, &DIID_DispCEventObj);
+
+    /* Native IE uses an undocumented DIID in IE9+ mode */
+    _test_disp(line, (IUnknown*)event, document_mode < 9 ? &DIID_DispCEventObj : NULL);
 
     return event;
+}
+
+#define set_elem_innerhtml(e,t) _set_elem_innerhtml(__LINE__,e,t)
+static void _set_elem_innerhtml(unsigned line, IHTMLElement *elem, const char *inner_html)
+{
+    BSTR html;
+    HRESULT hres;
+
+    html = a2bstr(inner_html);
+    hres = IHTMLElement_put_innerHTML(elem, html);
+    ok_(__FILE__,line)(hres == S_OK, "put_innerHTML failed: %08x\n", hres);
+    SysFreeString(html);
 }
 
 #define elem_fire_event(a,b,c) _elem_fire_event(__LINE__,a,b,c)
@@ -356,11 +371,14 @@ static void _test_event_args(unsigned line, const IID *dispiid, DISPID id, WORD 
     ok_(__FILE__,line) (id == DISPID_VALUE, "id = %d\n", id);
     ok_(__FILE__,line) (wFlags == DISPATCH_METHOD, "wFlags = %x\n", wFlags);
     ok_(__FILE__,line) (pdp != NULL, "pdp == NULL\n");
-    ok_(__FILE__,line) (pdp->cArgs == 1, "pdp->cArgs = %d\n", pdp->cArgs);
+    todo_wine_if(document_mode >= 9)
+    ok_(__FILE__,line) (pdp->cArgs == (document_mode < 9 ? 1 : 2), "pdp->cArgs = %d\n", pdp->cArgs);
     ok_(__FILE__,line) (pdp->cNamedArgs == 1, "pdp->cNamedArgs = %d\n", pdp->cNamedArgs);
     ok_(__FILE__,line) (pdp->rgdispidNamedArgs[0] == DISPID_THIS, "pdp->rgdispidNamedArgs[0] = %d\n",
                         pdp->rgdispidNamedArgs[0]);
     ok_(__FILE__,line) (V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(rgvarg) = %d\n", V_VT(pdp->rgvarg));
+    if(pdp->cArgs > 1)
+        ok_(__FILE__,line) (V_VT(pdp->rgvarg+1) == VT_DISPATCH, "V_VT(rgvarg) = %d\n", V_VT(pdp->rgvarg));
     ok_(__FILE__,line) (pvarRes != NULL, "pvarRes == NULL\n");
     ok_(__FILE__,line) (pei != NULL, "pei == NULL");
     ok_(__FILE__,line) (!pspCaller, "pspCaller != NULL\n");
@@ -674,7 +692,11 @@ static void _test_event_obj(unsigned line, const char *type, const xy_test_t *xy
     V_VT(&v) = VT_NULL;
     hres = IHTMLEventObj_get_returnValue(event, &v);
     ok_(__FILE__,line)(hres == S_OK, "get_returnValue failed: %08x\n", hres);
-    ok_(__FILE__,line)(V_VT(&v) == VT_EMPTY, "V_VT(returnValue) = %d\n", V_VT(&v));
+    /* Depending on source of event, returnValue may be true bool in IE9+ mode */
+    ok_(__FILE__,line)(V_VT(&v) == VT_EMPTY || (document_mode >= 9 && V_VT(&v) == VT_BOOL),
+                       "V_VT(returnValue) = %d\n", V_VT(&v));
+    if(V_VT(&v) == VT_BOOL)
+        ok_(__FILE__,line)(V_BOOL(&v) == VARIANT_TRUE, "V_BOOL(returnValue) = %x\n", V_BOOL(&v));
 
     IHTMLEventObj_Release(event);
 }
@@ -741,14 +763,12 @@ static void _doc_detach_event(unsigned line, IHTMLDocument2 *doc, const char *na
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
-    *ppv = NULL;
-
     if(IsEqualGUID(riid, &IID_IUnknown)
        || IsEqualGUID(riid, &IID_IDispatch)
        || IsEqualGUID(riid, &IID_IDispatchEx))
         *ppv = iface;
     else {
-        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+        *ppv = NULL;
         return E_NOINTERFACE;
     }
 
@@ -757,15 +777,11 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
 
 static HRESULT WINAPI Dispatch_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
-    *ppv = NULL;
-
-    if(IsEqualGUID(riid, &IID_IUnknown)
+     if(IsEqualGUID(riid, &IID_IUnknown)
        || IsEqualGUID(riid, &IID_IDispatch)) {
         *ppv = iface;
-    }else if(IsEqualGUID(riid, &IID_IDispatchEx)) {
-        return E_NOINTERFACE;
     }else {
-        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+        *ppv = NULL;
         return E_NOINTERFACE;
     }
 
@@ -901,6 +917,7 @@ static HRESULT WINAPI div_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WORD
     CHECK_EXPECT(div_onclick);
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     test_event_src("DIV");
+    test_event_obj("click", &no_xy);
     return S_OK;
 }
 
@@ -934,7 +951,8 @@ static HRESULT WINAPI body_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WOR
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     CHECK_EXPECT(body_onclick);
-    test_event_args(&DIID_DispHTMLBody, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    /* Native IE returns undocumented DIID in IE9+ mode */
+    test_event_args(document_mode < 9 ? &DIID_DispHTMLBody : NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     test_event_src("DIV");
     return S_OK;
 }
@@ -1142,7 +1160,12 @@ static HRESULT WINAPI submit_onclick_setret(IDispatchEx *iface, DISPID id, LCID 
     V_VT(&v) = VT_ERROR;
     hres = IHTMLEventObj_get_returnValue(event, &v);
     ok(hres == S_OK, "get_returnValue failed: %08x\n", hres);
-    ok(V_VT(&v) == VT_EMPTY, "V_VT(returnValue) = %d\n", V_VT(&v));
+    if(document_mode < 9) {
+        ok(V_VT(&v) == VT_EMPTY, "V_VT(returnValue) = %d\n", V_VT(&v));
+    }else todo_wine {
+        ok(V_VT(&v) == VT_BOOL, "V_VT(returnValue) = %d\n", V_VT(&v));
+        ok(V_BOOL(&v) == VARIANT_TRUE, "V_BOOL(returnValue) = %x\n", V_BOOL(&v));
+    }
 
     hres = IHTMLEventObj_put_returnValue(event, onclick_event_retval);
     ok(hres == S_OK, "put_returnValue failed: %08x\n", hres);
@@ -1193,7 +1216,7 @@ static HRESULT WINAPI iframedoc_onreadystatechange(IDispatchEx *iface, DISPID id
     HRESULT hres;
 
     CHECK_EXPECT2(iframedoc_onreadystatechange);
-    test_event_args(&DIID_DispHTMLDocument, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_args(document_mode < 9 ? &DIID_DispHTMLDocument : NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
 
     event = (void*)0xdeadbeef;
     hres = IHTMLWindow2_get_event(window, &event);
@@ -1217,7 +1240,7 @@ static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, L
     BSTR str, str2;
     HRESULT hres;
 
-    test_event_args(&DIID_DispHTMLIFrame, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_args(document_mode < 9 ? &DIID_DispHTMLIFrame : NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     test_event_src("IFRAME");
 
     elem = get_event_src();
@@ -1654,12 +1677,26 @@ static const IDispatchVtbl EventDispatchVtbl = {
 
 static IDispatch EventDispatch = { &EventDispatchVtbl };
 
+static void set_body_html(IHTMLDocument2 *doc, const char *html)
+{
+    IHTMLElement *body = doc_get_body(doc);
+    set_elem_innerhtml(body, html);
+    IHTMLElement_Release(body);
+}
+
 static void test_onclick(IHTMLDocument2 *doc)
 {
     DWORD cp_cookie, elem2_cp_cookie;
     IHTMLElement *div, *body;
     VARIANT v;
     HRESULT hres;
+
+    trace("onclick tests in document mode %d\n", document_mode);
+
+    set_body_html(doc, "<div id=\"clickdiv\""
+                       " style=\"text-align: center; background: red; font-size: 32\">"
+                       "click here"
+                       "</div>");
 
     register_cp((IUnknown*)doc, &IID_IDispatch, (IUnknown*)&EventDispatch);
 
@@ -1675,19 +1712,28 @@ static void test_onclick(IHTMLDocument2 *doc)
 
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLElement_put_onclick(div, v);
-    ok(hres == E_NOTIMPL, "put_onclick failed: %08x\n", hres);
+    ok(hres == (document_mode < 9 ? E_NOTIMPL : S_OK), "put_onclick failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLElement_get_onclick(div, &v);
+    ok(hres == S_OK, "get_onclick failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_NULL, "V_VT(onclick) = %d\n", V_VT(&v));
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("function();");
     hres = IHTMLElement_put_onclick(div, v);
     ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
+    SysFreeString(V_BSTR(&v));
 
-    if(hres == S_OK) {
-        V_VT(&v) = VT_EMPTY;
-        hres = IHTMLElement_get_onclick(div, &v);
-        ok(hres == S_OK, "get_onclick failed: %08x\n", hres);
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLElement_get_onclick(div, &v);
+    ok(hres == S_OK, "get_onclick failed: %08x\n", hres);
+    if(document_mode < 9) {
         ok(V_VT(&v) == VT_BSTR, "V_VT(onclick) = %d\n", V_VT(&v));
         ok(!strcmp_wa(V_BSTR(&v), "function();"), "V_BSTR(onclick) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    }else {
+        todo_wine
+        ok(V_VT(&v) == VT_NULL, "V_VT(onclick) = %d\n", V_VT(&v));
     }
     VariantClear(&v);
 
@@ -2163,6 +2209,12 @@ static void test_submit(IHTMLDocument2 *doc)
     VARIANT v;
     DWORD cp_cookie;
     HRESULT hres;
+
+    set_body_html(doc,
+                  "<form id=\"formid\" method=\"post\" action=\"about:blank\">"
+                  "<input type=\"text\" value=\"test\" name=\"i\"/>"
+                  "<input type=\"submit\" id=\"submitid\" />"
+                  "</form>");
 
     elem = get_elem_id(doc, "formid");
 
@@ -3014,7 +3066,21 @@ static void run_test(const char *str, testfunc_t test)
     ok(hres == S_OK, "get_body failed: %08x\n", hres);
 
     if(body) {
+        IHTMLDocument6 *doc6;
+
         IHTMLElement_Release(body);
+
+        hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument6, (void**)&doc6);
+        if(SUCCEEDED(hres)) {
+            VARIANT v;
+            hres = IHTMLDocument6_get_documentMode(doc6, &v);
+            ok(hres == S_OK, "get_documentMode failed: %08x\n", hres);
+            ok(V_VT(&v) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&v));
+            document_mode = V_R4(&v);
+            IHTMLDocument6_Release(doc6);
+        }else {
+            document_mode = 0;
+        }
 
         hres = IHTMLDocument2_get_parentWindow(doc, &window);
         ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
@@ -3123,12 +3189,15 @@ START_TEST(events)
             ShowWindow(container_hwnd, SW_SHOW);
 
         run_test(empty_doc_str, test_timeout);
-        run_test(click_doc_str, test_onclick);
+        run_test(empty_doc_str, test_onclick);
+        run_test(empty_doc_ie9_str, test_onclick);
         run_test(readystate_doc_str, test_onreadystatechange);
+        run_test(readystate_doc_ie9_str, test_onreadystatechange);
         run_test(img_doc_str, test_imgload);
         run_test(link_doc_str, test_link_load);
         run_test(input_doc_str, test_focus);
-        run_test(form_doc_str, test_submit);
+        run_test(empty_doc_str, test_submit);
+        run_test(empty_doc_ie9_str, test_submit);
         run_test(iframe_doc_str, test_iframe_connections);
 
         test_empty_document();
