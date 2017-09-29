@@ -558,6 +558,23 @@ interface IWinInetHttpInfo : IWinInetInfo
 }
 
 /*****************************************************************************
+ * IWinInetHttpTimeouts interface
+ */
+[
+    local,
+    object,
+    uuid(f286fa56-c1fd-4270-8e67-b3eb790a81e8),
+    pointer_default(unique)
+]
+interface IWinInetHttpTimeouts : IUnknown
+{
+    HRESULT GetRequestTimeouts(
+        [out] DWORD *connect_timeout,
+        [out] DWORD *send_timeout,
+        [out] DWORD *receive_timeout);
+}
+
+/*****************************************************************************
  * IWindowForBindingUI interface
  */
 [
