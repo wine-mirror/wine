@@ -2305,10 +2305,10 @@ static ULONG WINAPI fontfallbackbuilder_Release(IDWriteFontFallbackBuilder *ifac
                 IDWriteFontCollection_Release(mapping->collection);
             heap_free(mapping->ranges);
             heap_free(mapping->locale);
-            heap_free(mapping);
         }
 
         IDWriteFactory5_Release(fallbackbuilder->factory);
+        heap_free(fallbackbuilder->mappings);
         heap_free(fallbackbuilder);
     }
 
