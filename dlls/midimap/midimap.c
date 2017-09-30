@@ -77,6 +77,7 @@
  */
 
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 typedef struct tagMIDIOUTPORT
 {
@@ -553,6 +554,8 @@ static LRESULT MIDIMAP_drvOpen(void)
 {
     MIDIOUTCAPSW	moc;
     unsigned		dev, i;
+    WCHAR               throughportW[] = {'M','i','d','i',' ','T','h','r','o','u','g','h',0};
+    BOOL                found_valid_port = FALSE;
 
     if (midiOutPorts)
 	return 0;
@@ -571,12 +574,17 @@ static LRESULT MIDIMAP_drvOpen(void)
 	    midiOutPorts[dev].lpbPatch = NULL;
 	    for (i = 0; i < 16; i++)
 		midiOutPorts[dev].aChn[i] = i;
+	    if (strncmpW(midiOutPorts[0].name, throughportW, strlenW(throughportW)) != 0)
+	        found_valid_port = TRUE;
 	}
 	else
 	{
 	    midiOutPorts[dev].loaded = -1;
 	}
     }
+
+    if (!found_valid_port)
+        ERR_(winediag)("No software synthesizer midi port found, Midi sound output probably won't work.\n");
 
     return 1;
 }
