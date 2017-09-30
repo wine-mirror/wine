@@ -10,6 +10,7 @@ avulla voidaan myös kääntää Windows-koodia natiiveiksi Unix-ohjelmiksi.
 Wine on vapaa ohjelma, ja se on julkaistu GNU LGPL:n alaisena; lisätietoja
 lisenssistä on englanniksi tiedostossa LICENSE.
 
+
 2. PIKAOPAS
 
 Aja Winen lähdekoodin juurihakemistossa seuraavat komennot:
@@ -71,12 +72,9 @@ Perusvaatimukset:
 Valinnaisia tukikirjastoja:
   configure-skripti näyttää varoituksia, kun valinnaisia kirjastoja puuttuu.
   Osoitteessa http://wiki.winehq.org/Recommended_Packages on tietoa, mitkä
-  paketit ovat hyödyksi.
+  paketit ovat hyödyksi. 64-bittisissä järjestelmissä täytyy varmistaa, että
+  kirjastoista on asennettu 32-bittiset versiot.
 
-  64-bittisissä järjestelmissä täytyy olla kirjastojen 32-bittiset versiot
-  32-bittistä Wineä varten. Sivulla http://wiki.winehq.org/WineOn64bit
-  kerrotaan tästä lisää. Sivulla http://wiki.winehq.org/Wine64 kerrotaan
-  64-bittisen Winen kääntämisestä (erikseen tai 32-bittisen version kanssa).
 
 4. KÄÄNTÄMINEN
 
@@ -94,6 +92,7 @@ Komento './configure --help' näyttää asetuksia ja valintoja, joita
 käännösprosessiin voi lisätä.
 
 Lisätietoja on osoitteessa https://wiki.winehq.org/Building_Wine
+
 
 5. ASENNUS
 
