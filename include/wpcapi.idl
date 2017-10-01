@@ -109,7 +109,7 @@ interface IWindowsParentalControlsCore : IUnknown
 }
 
 [
-    uuid(4ff40a0f-3f3b-4d7c-a41b-4f39d7b44d05),
+    uuid(28b4d88b-e072-49e6-804d-26edbe21a7b9),
     object
 ]
 interface IWindowsParentalControls : IWindowsParentalControlsCore
