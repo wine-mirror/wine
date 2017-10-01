@@ -86,7 +86,10 @@ cpp_quote("#define DXVA2_ModeVC1_VLD           DXVA2_ModeVC1_D")
 /* Encryption */
 cpp_quote("DEFINE_GUID(DXVA_NoEncrypt,         0x1b81bed0, 0xa0c7,0x11d3, 0xb9,0x84,0x00,0xc0,0x4f,0x2e,0x73,0xc5);")
 
+cpp_quote("#ifndef REFERENCE_TIME_DEFINED")
+cpp_quote("#define REFERENCE_TIME_DEFINED")
 typedef LONGLONG REFERENCE_TIME;
+cpp_quote("#endif")
 
 enum
 {
