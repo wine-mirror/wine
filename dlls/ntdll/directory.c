@@ -640,6 +640,7 @@ static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
     {
         /* don't even bother stat'ing network mounts, there's no meaningful device anyway */
         if (!strcmp( entry->mnt_type, "nfs" ) ||
+            !strcmp( entry->mnt_type, "cifs" ) ||
             !strcmp( entry->mnt_type, "smbfs" ) ||
             !strcmp( entry->mnt_type, "ncpfs" )) continue;
 
@@ -918,6 +919,7 @@ static char *get_device_mount_point( dev_t dev )
         {
             /* don't even bother stat'ing network mounts, there's no meaningful device anyway */
             if (!strcmp( entry->mnt_type, "nfs" ) ||
+                !strcmp( entry->mnt_type, "cifs" ) ||
                 !strcmp( entry->mnt_type, "smbfs" ) ||
                 !strcmp( entry->mnt_type, "ncpfs" )) continue;
 

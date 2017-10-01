@@ -3114,7 +3114,9 @@ static NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
             info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
             break;
         case 0x6969:  /* nfs */
-        case 0x517B:  /* smbfs */
+        case 0xff534d42: /* cifs */
+        case 0xfe534d42: /* smb2 */
+        case 0x517b:  /* smbfs */
         case 0x564c:  /* ncpfs */
             info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
             info->Characteristics |= FILE_REMOTE_DEVICE;
