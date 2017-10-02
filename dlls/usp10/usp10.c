@@ -690,14 +690,14 @@ typedef struct {
 
 enum stringanalysis_flags
 {
-    SCRIPT_STRING_ANALYSIS_FLAGS_SIZE = 0x1,
+    SCRIPT_STRING_ANALYSIS_FLAGS_SIZE    = 0x1,
+    SCRIPT_STRING_ANALYSIS_FLAGS_INVALID = 0x2,
 };
 
 typedef struct {
     HDC hdc;
     DWORD ssa_flags;
     DWORD flags;
-    BOOL invalid;
     int clip_len;
     int cItems;
     int cMaxGlyphs;
@@ -2367,7 +2367,7 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
     /* icp out of range */
     if(icp < 0)
     {
-        analysis->invalid = TRUE;
+        analysis->flags |= SCRIPT_STRING_ANALYSIS_FLAGS_INVALID;
         return E_INVALIDARG;
     }
 
@@ -2408,7 +2408,7 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
     }
 
     /* icp out of range */
-    analysis->invalid = TRUE;
+    analysis->flags |= SCRIPT_STRING_ANALYSIS_FLAGS_INVALID;
     return E_INVALIDARG;
 }
 
@@ -2508,7 +2508,7 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
 
     if (!pssa || !(analysis = *pssa)) return E_INVALIDARG;
 
-    invalid = analysis->invalid;
+    invalid = analysis->flags & SCRIPT_STRING_ANALYSIS_FLAGS_INVALID;
 
     if (analysis->glyphs)
     {
@@ -3800,7 +3800,7 @@ HRESULT WINAPI ScriptStringValidate(SCRIPT_STRING_ANALYSIS ssa)
     TRACE("(%p)\n", ssa);
 
     if (!analysis) return E_INVALIDARG;
-    return (analysis->invalid) ? S_FALSE : S_OK;
+    return analysis->flags & SCRIPT_STRING_ANALYSIS_FLAGS_INVALID ? S_FALSE : S_OK;
 }
 
 /***********************************************************************
