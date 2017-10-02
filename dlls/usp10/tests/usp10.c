@@ -3173,7 +3173,7 @@ static void test_ScriptString(HDC hdc)
  * This set of tests are for the string functions of uniscribe.  The ScriptStringAnalyse
  * function allocates memory pointed to by the SCRIPT_STRING_ANALYSIS ssa pointer.  This
  * memory is freed by ScriptStringFree.  There needs to be a valid hdc for this as
- * ScriptStringAnalyse calls ScriptSItemize, ScriptShape and ScriptPlace which require it.
+ * ScriptStringAnalyse calls ScriptItemize, ScriptShape and ScriptPlace which require it.
  *
  */
 
@@ -4048,6 +4048,36 @@ static void test_ScriptIsComplex(void)
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
 }
 
+static void test_ScriptString_pSize(HDC hdc)
+{
+    static const WCHAR textW[] = {'A',0};
+    SCRIPT_STRING_ANALYSIS ssa;
+    const SIZE *size;
+    TEXTMETRICW tm;
+    HRESULT hr;
+    ABC abc;
+
+    hr = ScriptStringAnalyse(hdc, textW, 1, 16, -1, SSA_GLYPHS, 0, NULL, NULL, NULL, NULL, NULL, &ssa);
+    ok(hr == S_OK, "ScriptStringAnalyse failed, hr %#x.\n", hr);
+
+    size = ScriptString_pSize(NULL);
+    ok(size == NULL || broken(size != NULL) /* <win7 */, "Unexpected size pointer.\n");
+
+    GetCharABCWidthsW(hdc, textW[0], textW[0], &abc);
+
+    memset(&tm, 0, sizeof(tm));
+    GetTextMetricsW(hdc, &tm);
+    ok(tm.tmHeight > 0, "Unexpected tmHeight.\n");
+
+    size = ScriptString_pSize(ssa);
+    ok(size != NULL, "Unexpected size pointer.\n");
+    ok(size->cx == abc.abcA + abc.abcB + abc.abcC, "Unexpected cx size %d.\n", size->cx);
+    ok(size->cy == tm.tmHeight, "Unexpected cy size %d.\n", size->cy);
+
+    hr = ScriptStringFree(&ssa);
+    ok(hr == S_OK, "Failed to free ssa, hr %#x.\n", hr);
+}
+
 static void init_tests(void)
 {
     HMODULE module = GetModuleHandleA("usp10.dll");
@@ -4109,6 +4139,7 @@ START_TEST(usp10)
     test_ScriptXtoX();
     test_ScriptString(hdc);
     test_ScriptStringXtoCP_CPtoX(hdc);
+    test_ScriptString_pSize(hdc);
 
     test_ScriptLayout();
     test_digit_substitution();
