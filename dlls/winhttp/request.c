@@ -1142,24 +1142,25 @@ static BOOL do_authorization( request_t *request, DWORD target, DWORD scheme_fla
     const WCHAR *auth_target, *username, *password;
     WCHAR auth_value[2048], *auth_reply;
     DWORD len = sizeof(auth_value), len_scheme, flags;
-    BOOL ret;
+    BOOL ret, has_auth_value;
 
     if (scheme == SCHEME_INVALID) return FALSE;
 
     switch (target)
     {
     case WINHTTP_AUTH_TARGET_SERVER:
-        if (!get_authvalue( request, WINHTTP_QUERY_WWW_AUTHENTICATE, scheme_flag, auth_value, len ))
-            return FALSE;
+        has_auth_value = get_authvalue( request, WINHTTP_QUERY_WWW_AUTHENTICATE, scheme_flag, auth_value, len );
         auth_ptr = &request->authinfo;
         auth_target = attr_authorization;
         if (request->creds[TARGET_SERVER][scheme].username)
         {
+            if (scheme != SCHEME_BASIC && !has_auth_value) return FALSE;
             username = request->creds[TARGET_SERVER][scheme].username;
             password = request->creds[TARGET_SERVER][scheme].password;
         }
         else
         {
+            if (!has_auth_value) return FALSE;
             username = request->connect->username;
             password = request->connect->password;
         }
@@ -2085,6 +2086,9 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
 
     if (connect->hostname)
         add_host_header( request, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
+
+    if (request->creds[TARGET_SERVER][SCHEME_BASIC].username)
+        do_authorization( request, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC );
 
     if (total_len || (request->verb && !strcmpW( request->verb, postW )))
     {

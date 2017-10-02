@@ -2075,6 +2075,7 @@ static const char largeauth[] =
 
 static const char unauthorized[] = "Unauthorized";
 static const char hello_world[] = "Hello World";
+static const char auth_unseen[] = "Auth Unseen";
 
 struct server_info
 {
@@ -2133,6 +2134,15 @@ static DWORD CALLBACK server_thread(LPVOID param)
         {
             send(c, okmsg, sizeof okmsg - 1, 0);
             send(c, page1, sizeof page1 - 1, 0);
+        }
+        if (strstr(buffer, "/auth_with_creds"))
+        {
+            send(c, okauthmsg, sizeof okauthmsg - 1, 0);
+            if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
+                send(c, hello_world, sizeof hello_world - 1, 0);
+            else
+                send(c, auth_unseen, sizeof auth_unseen - 1, 0);
+            continue;
         }
         if (strstr(buffer, "/auth"))
         {
@@ -2309,6 +2319,7 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
 static void test_basic_authentication(int port)
 {
     static const WCHAR authW[] = {'/','a','u','t','h',0};
+    static const WCHAR auth_with_credsW[] = {'/','a','u','t','h','_','w','i','t','h','_','c','r','e','d','s',0};
     static WCHAR userW[] = {'u','s','e','r',0};
     static WCHAR passW[] = {'p','w','d',0};
     static WCHAR pass2W[] = {'p','w','d','2',0};
@@ -2442,6 +2453,45 @@ static void test_basic_authentication(int port)
     error = GetLastError();
     ok(!ret, "expected failure\n");
     ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, passW, NULL);
+    ok(ret, "failed to set credentials %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %u\n", GetLastError());
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed to query status code %u\n", GetLastError());
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status);
+
+    size = 0;
+    ret = WinHttpReadData(req, buffer, sizeof(buffer), &size);
+    error = GetLastError();
+    ok(ret || broken(error == ERROR_WINHTTP_SHUTDOWN || error == ERROR_WINHTTP_TIMEOUT) /* XP */, "failed to read data %u\n", GetLastError());
+    if (ret)
+    {
+        ok(size == 11, "expected 11, got %u\n", size);
+        ok(!memcmp(buffer, hello_world, 11), "got %s\n", buffer);
+    }
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+
+    /* now set the credentials first to show that they get sent with the first request */
+    ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, localhostW, port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, NULL, auth_with_credsW, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, passW, NULL);
     ok(ret, "failed to set credentials %u\n", GetLastError());
