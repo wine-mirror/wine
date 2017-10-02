@@ -683,7 +683,7 @@ typedef struct {
     int* piAdvance;
     SCRIPT_VISATTR* psva;
     GOFFSET* pGoffset;
-    ABC* abc;
+    ABC abc;
     int iMaxPosX;
     HFONT fallbackFont;
 } StringGlyphs;
@@ -2029,7 +2029,6 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
             int *piAdvance = heap_alloc_zero(sizeof(int) * numGlyphs);
             SCRIPT_VISATTR *psva = heap_alloc_zero(sizeof(SCRIPT_VISATTR) * numGlyphs);
             GOFFSET *pGoffset = heap_alloc_zero(sizeof(GOFFSET) * numGlyphs);
-            ABC *abc = heap_alloc_zero(sizeof(ABC));
             int numGlyphsReturned;
             HFONT originalFont = 0x0;
 
@@ -2037,7 +2036,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
             const WCHAR* pStr = (const WCHAR*)pString;
             analysis->glyphs[i].fallbackFont = NULL;
 
-            if (!glyphs || !pwLogClust || !piAdvance || !psva || !pGoffset || !abc)
+            if (!glyphs || !pwLogClust || !piAdvance || !psva || !pGoffset)
             {
                 heap_free (BidiLevel);
                 heap_free (glyphs);
@@ -2045,7 +2044,6 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
                 heap_free (piAdvance);
                 heap_free (psva);
                 heap_free (pGoffset);
-                heap_free (abc);
                 hr = E_OUTOFMEMORY;
                 goto error;
             }
@@ -2078,7 +2076,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
             ScriptShape(hdc, sc, &pStr[analysis->pItem[i].iCharPos], cChar, numGlyphs,
                         &analysis->pItem[i].a, glyphs, pwLogClust, psva, &numGlyphsReturned);
             hr = ScriptPlace(hdc, sc, glyphs, numGlyphsReturned, psva, &analysis->pItem[i].a,
-                             piAdvance, pGoffset, abc);
+                        piAdvance, pGoffset, &analysis->glyphs[i].abc);
             if (originalFont)
                 SelectObject(hdc,originalFont);
 
@@ -2099,7 +2097,6 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
             analysis->glyphs[i].piAdvance = piAdvance;
             analysis->glyphs[i].psva = psva;
             analysis->glyphs[i].pGoffset = pGoffset;
-            analysis->glyphs[i].abc = abc;
             analysis->glyphs[i].iMaxPosX= -1;
 
             BidiLevel[i] = analysis->pItem[i].a.s.uBidiLevel;
@@ -2516,7 +2513,6 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
             heap_free(analysis->glyphs[i].piAdvance);
             heap_free(analysis->glyphs[i].psva);
             heap_free(analysis->glyphs[i].pGoffset);
-            heap_free(analysis->glyphs[i].abc);
             if (analysis->glyphs[i].fallbackFont)
                 DeleteObject(analysis->glyphs[i].fallbackFont);
             ScriptFreeCache((SCRIPT_CACHE *)&analysis->glyphs[i].sc);
