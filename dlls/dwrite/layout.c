@@ -3673,10 +3673,37 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
     d2d_rect_offset(bbox, run->origin.x + run->align_dx, run->origin.y);
 }
 
+static void layout_get_inlineobj_bbox(struct dwrite_textlayout *layout, struct layout_effective_inline *run,
+        D2D1_RECT_F *bbox)
+{
+    DWRITE_OVERHANG_METRICS overhang_metrics = { 0 };
+    DWRITE_INLINE_OBJECT_METRICS metrics = { 0 };
+    HRESULT hr;
+
+    if (FAILED(hr = IDWriteInlineObject_GetMetrics(run->object, &metrics))) {
+        WARN("Failed to get inline object metrics, hr %#x.\n", hr);
+        memset(bbox, 0, sizeof(*bbox));
+        return;
+    }
+
+    bbox->left = run->origin.x + run->align_dx;
+    bbox->right = bbox->left + metrics.width;
+    bbox->top = run->origin.y;
+    bbox->bottom = bbox->top + metrics.height;
+
+    IDWriteInlineObject_GetOverhangMetrics(run->object, &overhang_metrics);
+
+    bbox->left -= overhang_metrics.left;
+    bbox->right += overhang_metrics.right;
+    bbox->top -= overhang_metrics.top;
+    bbox->bottom += overhang_metrics.bottom;
+}
+
 static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout3 *iface,
         DWRITE_OVERHANG_METRICS *overhangs)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
+    struct layout_effective_inline *inline_run;
     struct layout_effective_run *run;
     D2D1_RECT_F bbox = { 0 };
     HRESULT hr;
@@ -3701,9 +3728,14 @@ static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout3 *if
         d2d_rect_union(&bbox, &run_bbox);
     }
 
-    /* FIXME: iterate over inline objects too */
+    LIST_FOR_EACH_ENTRY(inline_run, &This->inlineobjects, struct layout_effective_inline, entry) {
+        D2D1_RECT_F object_bbox;
 
-    /* deltas from text content metrics */
+        layout_get_inlineobj_bbox(This, inline_run, &object_bbox);
+        d2d_rect_union(&bbox, &object_bbox);
+    }
+
+    /* Deltas from layout box. */
     This->overhangs.left = -bbox.left;
     This->overhangs.top = -bbox.top;
     This->overhangs.right = bbox.right - This->metrics.layoutWidth;

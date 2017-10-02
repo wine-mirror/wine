@@ -782,6 +782,51 @@ static IDWriteInlineObject testinlineobj = { &testinlineobjvtbl };
 static IDWriteInlineObject testinlineobj2 = { &testinlineobjvtbl };
 static IDWriteInlineObject testinlineobj3 = { &testinlineobjvtbl2 };
 
+struct test_inline_obj
+{
+    IDWriteInlineObject IDWriteInlineObject_iface;
+    DWRITE_INLINE_OBJECT_METRICS metrics;
+    DWRITE_OVERHANG_METRICS overhangs;
+};
+
+static inline struct test_inline_obj *impl_from_IDWriteInlineObject(IDWriteInlineObject *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_inline_obj, IDWriteInlineObject_iface);
+}
+
+static HRESULT WINAPI testinlineobj3_GetMetrics(IDWriteInlineObject *iface, DWRITE_INLINE_OBJECT_METRICS *metrics)
+{
+    struct test_inline_obj *obj = impl_from_IDWriteInlineObject(iface);
+    *metrics = obj->metrics;
+    return S_OK;
+}
+
+static HRESULT WINAPI testinlineobj3_GetOverhangMetrics(IDWriteInlineObject *iface, DWRITE_OVERHANG_METRICS *overhangs)
+{
+    struct test_inline_obj *obj = impl_from_IDWriteInlineObject(iface);
+    *overhangs = obj->overhangs;
+    /* Return value is ignored. */
+    return E_NOTIMPL;
+}
+
+static const IDWriteInlineObjectVtbl testinlineobjvtbl3 = {
+    testinlineobj_QI,
+    testinlineobj_AddRef,
+    testinlineobj_Release,
+    testinlineobj_Draw,
+    testinlineobj3_GetMetrics,
+    testinlineobj3_GetOverhangMetrics,
+    testinlineobj_GetBreakConditions,
+};
+
+static void test_inline_obj_init(struct test_inline_obj *obj, const DWRITE_INLINE_OBJECT_METRICS *metrics,
+        const DWRITE_OVERHANG_METRICS *overhangs)
+{
+    obj->IDWriteInlineObject_iface.lpVtbl = &testinlineobjvtbl3;
+    obj->metrics = *metrics;
+    obj->overhangs = *overhangs;
+}
+
 struct test_effect
 {
     IUnknown IUnknown_iface;
@@ -5398,6 +5443,77 @@ static void test_line_spacing(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_GetOverhangMetrics(void)
+{
+    static const struct overhangs_test
+    {
+        FLOAT uniform_baseline;
+        DWRITE_INLINE_OBJECT_METRICS metrics;
+        DWRITE_OVERHANG_METRICS overhang_metrics;
+        DWRITE_OVERHANG_METRICS expected;
+    } overhangs_tests[] = {
+        { 16.0f, { 10.0f, 50.0f, 20.0f }, { 1.0f, 2.0f, 3.0f, 4.0f }, { 1.0f, 6.0f, 3.0f, 0.0f } },
+        { 15.0f, { 10.0f, 50.0f, 20.0f }, { 1.0f, 2.0f, 3.0f, 4.0f }, { 1.0f, 7.0f, 3.0f, -1.0f } },
+        { 16.0f, { 10.0f, 50.0f, 20.0f }, { -1.0f, 0.0f, -3.0f, 4.0f }, { -1.0f, 4.0f, -3.0f, 0.0f } },
+        { 15.0f, { 10.0f, 50.0f, 20.0f }, { -1.0f, 10.0f, 3.0f, -4.0f }, { -1.0f, 15.0f, 3.0f, -9.0f } },
+    };
+    static const WCHAR strW[] = {'A',0};
+    IDWriteFactory *factory;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    HRESULT hr;
+    UINT32 i;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 100.0f, enusW, &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %x.\n", hr);
+
+    for (i = 0; i < sizeof(overhangs_tests)/sizeof(overhangs_tests[0]); i++) {
+        const struct overhangs_test *test = &overhangs_tests[i];
+        DWRITE_OVERHANG_METRICS overhang_metrics;
+        DWRITE_TEXT_RANGE range = { 0, 1 };
+        DWRITE_TEXT_METRICS metrics;
+        struct test_inline_obj obj;
+
+        test_inline_obj_init(&obj, &test->metrics, &test->overhang_metrics);
+
+        hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_UNIFORM, test->metrics.height * 2.0f,
+                test->uniform_baseline);
+        ok(hr == S_OK, "Failed to set line spacing, hr %#x.\n", hr);
+
+        hr = IDWriteTextLayout_SetInlineObject(layout, NULL, range);
+        ok(hr == S_OK, "Failed to reset inline object, hr %#x.\n", hr);
+
+        hr = IDWriteTextLayout_SetInlineObject(layout, &obj.IDWriteInlineObject_iface, range);
+        ok(hr == S_OK, "Failed to set inline object, hr %#x.\n", hr);
+
+        hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+        ok(hr == S_OK, "Failed to get layout metrics, hr %#x.\n", hr);
+
+        ok(metrics.width == test->metrics.width, "%u: unexpected formatted width.\n", i);
+        ok(metrics.height == test->metrics.height * 2.0f, "%u: unexpected formatted height.\n", i);
+
+        hr = IDWriteTextLayout_SetMaxWidth(layout, metrics.width);
+        hr = IDWriteTextLayout_SetMaxHeight(layout, test->metrics.height);
+
+        hr = IDWriteTextLayout_GetOverhangMetrics(layout, &overhang_metrics);
+        ok(hr == S_OK, "Failed to get overhang metrics, hr %#x.\n", hr);
+
+        ok(!memcmp(&overhang_metrics, &test->expected, sizeof(overhang_metrics)),
+                "%u: unexpected overhang metrics (%f, %f, %f, %f).\n", i, overhang_metrics.left, overhang_metrics.top,
+                overhang_metrics.right, overhang_metrics.bottom);
+    }
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     IDWriteFactory *factory;
@@ -5447,6 +5563,7 @@ START_TEST(layout)
     test_SetUnderline();
     test_InvalidateLayout();
     test_line_spacing();
+    test_GetOverhangMetrics();
 
     IDWriteFactory_Release(factory);
 }
