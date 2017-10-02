@@ -399,6 +399,20 @@ static unsigned int taskdialog_get_reference_rect(const struct taskdialog_templa
     return info.rcWork.right - info.rcWork.left;
 }
 
+static WCHAR *taskdialog_get_exe_name(const TASKDIALOGCONFIG *taskconfig, WCHAR *name, DWORD length)
+{
+    DWORD len = GetModuleFileNameW(NULL, name, length);
+    if (len && len < length)
+    {
+        WCHAR *p;
+        if ((p = strrchrW(name, '/'))) name = p + 1;
+        if ((p = strrchrW(name, '\\'))) name = p + 1;
+        return name;
+    }
+    else
+        return NULL;
+}
+
 static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfig)
 {
     struct taskdialog_control *control, *control2;
@@ -409,15 +423,19 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
     const WCHAR *titleW = NULL;
     DLGTEMPLATE *template;
     NONCLIENTMETRICSW ncm;
+    WCHAR pathW[MAX_PATH];
     RECT ref_rect;
     char *ptr;
     HDC hdc;
 
     /* Window title */
     if (!taskconfig->pszWindowTitle)
-        FIXME("use executable name for window title\n");
+        titleW = taskdialog_get_exe_name(taskconfig, pathW, sizeof(pathW)/sizeof(pathW[0]));
     else if (IS_INTRESOURCE(taskconfig->pszWindowTitle))
-        FIXME("load window title from resources\n");
+    {
+        if (!LoadStringW(taskconfig->hInstance, LOWORD(taskconfig->pszWindowTitle), (WCHAR *)&titleW, 0))
+            titleW = taskdialog_get_exe_name(taskconfig, pathW, sizeof(pathW)/sizeof(pathW[0]));
+    }
     else
         titleW = taskconfig->pszWindowTitle;
     if (!titleW)
