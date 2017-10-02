@@ -1012,6 +1012,7 @@ static void test_SystemSecurity( IWbemServices *services )
         win_skip( "__SystemSecurity not available\n" );
         return;
     }
+    IWbemClassObject_Release( reg );
 
     sid_size = sizeof(sid_admin_buffer);
     ret = CreateWellKnownSid( WinBuiltinAdministratorsSid, NULL, sid_admin, &sid_size );
@@ -1297,6 +1298,7 @@ static void test_PhysicalMemory( IWbemServices *services )
     VariantClear( &val );
 
     IWbemClassObject_Release( obj );
+    IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
 }
