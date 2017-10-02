@@ -638,6 +638,8 @@ static void test_items(void)
         SysFreeString(name);
         SysFreeString(bstr);
 
+        FolderItem_Release(item);
+
         item = NULL;
         r = FolderItems_Item(items, str_index, &item);
         ok(r == S_OK, "file_defs[%d]: FolderItems::Item failed: %08x\n", i, r);
@@ -1403,6 +1405,7 @@ static void test_ShellExecute(void)
     ok(hr == S_OK, "ShellExecute failed: %08x\n", hr);
 
     SysFreeString(name);
+    IShellDispatch2_Release(sd);
 }
 
 START_TEST(shelldispatch)
