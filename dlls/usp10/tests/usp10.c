@@ -3440,11 +3440,27 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
     }
 }
 
+static HWND create_test_window(void)
+{
+    HWND hwnd = CreateWindowExA(0, "Static", "", WS_POPUP, 0, 0, 100, 100, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "Failed to create test window.\n");
+
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+
+    return hwnd;
+}
+
 static void test_ScriptCacheGetHeight(HDC hdc)
 {
-    HRESULT hr;
+    HFONT hfont, prev_hfont;
     SCRIPT_CACHE sc = NULL;
-    LONG height;
+    LONG height, height2;
+    TEXTMETRICW tm;
+    LOGFONTA lf;
+    HRESULT hr;
+    HWND hwnd;
+    HDC hdc2;
 
     hr = ScriptCacheGetHeight(NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
@@ -3455,11 +3471,54 @@ static void test_ScriptCacheGetHeight(HDC hdc)
     hr = ScriptCacheGetHeight(NULL, &sc, &height);
     ok(hr == E_PENDING, "expected E_PENDING, got 0x%08x\n", hr);
 
-    height = 0;
+    height = 123;
+    hr = ScriptCacheGetHeight(hdc, NULL, &height);
+    ok(hr == E_INVALIDARG, "Uexpected hr %#x.\n", hr);
+    ok(height == 123, "Unexpected height.\n");
 
+    memset(&tm, 0, sizeof(tm));
+    GetTextMetricsW(hdc, &tm);
+    ok(tm.tmHeight > 0, "Unexpected tmHeight %u.\n", tm.tmHeight);
+
+    height = 0;
     hr = ScriptCacheGetHeight(hdc, &sc, &height);
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
-    ok(height > 0, "expected height > 0\n");
+    ok(height == tm.tmHeight, "expected height > 0\n");
+
+    /* Try again with NULL dc. */
+    height2 = 0;
+    hr = ScriptCacheGetHeight(NULL, &sc, &height2);
+    ok(hr == S_OK, "Failed to get cached height, hr %#x.\n", hr);
+    ok(height2 == height, "Unexpected height %u.\n", height2);
+
+    hwnd = create_test_window();
+
+    hdc2 = GetDC(hwnd);
+    ok(hdc2 != NULL, "Failed to get window dc.\n");
+
+    memset(&lf, 0, sizeof(LOGFONTA));
+    lstrcpyA(lf.lfFaceName, "Tahoma");
+    lf.lfHeight = -32;
+
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != NULL, "Failed to create font.\n");
+
+    prev_hfont = SelectObject(hdc2, hfont);
+
+    memset(&tm, 0, sizeof(tm));
+    GetTextMetricsW(hdc2, &tm);
+    ok(tm.tmHeight > height, "Unexpected tmHeight %u.\n", tm.tmHeight);
+
+    height2 = 0;
+    hr = ScriptCacheGetHeight(hdc2, &sc, &height2);
+    ok(hr == S_OK, "Failed to get cached height, hr %#x.\n", hr);
+    ok(height2 == height, "Unexpected height.\n");
+
+    SelectObject(hdc2, prev_hfont);
+    DeleteObject(hfont);
+
+    ReleaseDC(hwnd, hdc2);
+    DestroyWindow(hwnd);
 
     ScriptFreeCache(&sc);
 }
