@@ -2298,7 +2298,7 @@ static ULONG WINAPI fontfallbackbuilder_Release(IDWriteFontFallbackBuilder *ifac
             UINT32 j;
 
             for (j = 0; j < mapping->families_count; j++)
-                heap_free(mapping->families[i]);
+                heap_free(mapping->families[j]);
             heap_free(mapping->families);
 
             if (mapping->collection)
