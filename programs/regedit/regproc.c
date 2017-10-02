@@ -1243,11 +1243,12 @@ static size_t export_value_name(FILE *fp, WCHAR *name, size_t len, BOOL unicode)
 
 static void export_string_data(WCHAR **buf, WCHAR *data, size_t size)
 {
-    size_t len, line_len;
+    size_t len = 0, line_len;
     WCHAR *str;
     static const WCHAR fmt[] = {'"','%','s','"',0};
 
-    len = size / sizeof(WCHAR) - 1;
+    if (size)
+        len = size / sizeof(WCHAR) - 1;
     str = REGPROC_escape_string(data, len, &line_len);
     *buf = heap_xalloc((line_len + 3) * sizeof(WCHAR));
     sprintfW(*buf, fmt, str);
