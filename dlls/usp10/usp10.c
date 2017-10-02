@@ -741,6 +741,8 @@ BOOL usp10_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T
 /* TODO Fix font properties on Arabic locale */
 static inline BOOL set_cache_font_properties(const HDC hdc, ScriptCache *sc)
 {
+    sc->sfp.cBytes = sizeof(sc->sfp);
+
     if (!sc->sfnt)
     {
         sc->sfp.wgBlank = sc->tm.tmBreakChar;
@@ -788,11 +790,7 @@ static inline BOOL set_cache_font_properties(const HDC hdc, ScriptCache *sc)
 
 static inline void get_cache_font_properties(SCRIPT_FONTPROPERTIES *sfp, ScriptCache *sc)
 {
-    sfp->wgBlank = sc->sfp.wgBlank;
-    sfp->wgDefault = sc->sfp.wgDefault;
-    sfp->wgInvalid = sc->sfp.wgInvalid;
-    sfp->wgKashida = sc->sfp.wgKashida;
-    sfp->iKashidaWidth = sc->sfp.iKashidaWidth;
+    *sfp = sc->sfp;
 }
 
 static inline LONG get_cache_height(SCRIPT_CACHE *psc)

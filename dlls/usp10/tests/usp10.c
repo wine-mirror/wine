@@ -2515,6 +2515,7 @@ static void test_ScriptGetFontProperties(HDC hdc)
     hr = ScriptGetFontProperties(hdc,&psc,&sfp);
     ok( hr == E_INVALIDARG, "(hdc,&psc,&sfp) invalid, expected E_INVALIDARG, got %08x\n", hr);
     ok( psc != NULL, "Expected a pointer in psc, got NULL\n");
+    ok( sfp.cBytes == sizeof(SCRIPT_FONTPROPERTIES) - 1, "Unexpected cBytes.\n");
     ScriptFreeCache(&psc);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
