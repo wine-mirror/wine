@@ -1807,6 +1807,17 @@ static void dump_flush_reply( const struct flush_reply *req )
     fprintf( stderr, " event=%04x", req->event );
 }
 
+static void dump_get_volume_info_request( const struct get_volume_info_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", info_class=%08x", req->info_class );
+}
+
+static void dump_get_volume_info_reply( const struct get_volume_info_reply *req )
+{
+    dump_varargs_bytes( " data=", cur_size );
+}
+
 static void dump_lock_file_request( const struct lock_file_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4533,6 +4544,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_handle_fd_request,
     (dump_func)dump_get_directory_cache_entry_request,
     (dump_func)dump_flush_request,
+    (dump_func)dump_get_volume_info_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
     (dump_func)dump_create_socket_request,
@@ -4823,6 +4835,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_handle_fd_reply,
     (dump_func)dump_get_directory_cache_entry_reply,
     (dump_func)dump_flush_reply,
+    (dump_func)dump_get_volume_info_reply,
     (dump_func)dump_lock_file_reply,
     NULL,
     (dump_func)dump_create_socket_reply,
@@ -5113,6 +5126,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_handle_fd",
     "get_directory_cache_entry",
     "flush",
+    "get_volume_info",
     "lock_file",
     "unlock_file",
     "create_socket",

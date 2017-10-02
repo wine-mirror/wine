@@ -3212,8 +3212,21 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
     struct stat st;
     static int once;
 
-    if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )) != STATUS_SUCCESS)
+    io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
+    if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
+    {
+        SERVER_START_REQ( get_volume_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->info_class = info_class;
+            wine_server_set_reply( req, buffer, length );
+            io->u.Status = wine_server_call( req );
+            if (!io->u.Status) io->Information = wine_server_reply_size( reply );
+        }
+        SERVER_END_REQ;
         return io->u.Status;
+    }
+    else if (io->u.Status) return io->u.Status;
 
     io->u.Status = STATUS_NOT_IMPLEMENTED;
     io->Information = 0;

@@ -143,6 +143,7 @@ static const struct fd_ops mapping_fd_ops =
     no_fd_read,                   /* read */
     no_fd_write,                  /* write */
     no_fd_flush,                  /* flush */
+    no_fd_get_volume_info,        /* get_volume_info */
     no_fd_ioctl,                  /* ioctl */
     no_fd_queue_async,            /* queue_async */
     default_fd_reselect_async     /* reselect_async */

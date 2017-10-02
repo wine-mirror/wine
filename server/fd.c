@@ -2175,6 +2175,12 @@ int no_fd_flush( struct fd *fd, struct async *async )
     return 0;
 }
 
+/* default get_volume_info() routine */
+void no_fd_get_volume_info( struct fd *fd, unsigned int info_class )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+}
+
 /* default ioctl() routine */
 int no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
@@ -2376,6 +2382,18 @@ DECL_HANDLER(flush)
         release_object( async );
     }
     release_object( fd );
+}
+
+/* query volume info */
+DECL_HANDLER(get_volume_info)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+
+    if (fd)
+    {
+        fd->fd_ops->get_volume_info( fd, req->info_class );
+        release_object( fd );
+    }
 }
 
 /* open a file object */

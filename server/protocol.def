@@ -1259,6 +1259,13 @@ enum server_fd_type
     obj_handle_t event;         /* event set when finished */
 @END
 
+/* Queries volume information */
+@REQ(get_volume_info)
+    obj_handle_t handle;        /* handle to the file */
+    unsigned int info_class;    /* queried information class */
+@REPLY
+    VARARG(data,bytes);         /* volume info data */
+@END
 
 /* Lock a region of a file */
 @REQ(lock_file)

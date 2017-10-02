@@ -62,6 +62,8 @@ struct fd_ops
     int (*write)(struct fd *, struct async *, file_pos_t );
     /* flush the object buffers */
     int (*flush)(struct fd *, struct async *);
+    /* query volume info */
+    void (*get_volume_info)( struct fd *, unsigned int );
     /* perform an ioctl on the file */
     int (*ioctl)(struct fd *fd, ioctl_code_t code, struct async *async );
     /* queue an async operation */
@@ -108,6 +110,7 @@ extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern int no_fd_read( struct fd *fd, struct async *async, file_pos_t pos );
 extern int no_fd_write( struct fd *fd, struct async *async, file_pos_t pos );
 extern int no_fd_flush( struct fd *fd, struct async *async );
+extern void no_fd_get_volume_info( struct fd *fd, unsigned int info_class );
 extern int no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 extern int default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 extern void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count );

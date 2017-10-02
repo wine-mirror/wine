@@ -114,6 +114,7 @@ static const struct fd_ops serial_fd_ops =
     no_fd_read,                   /* read */
     no_fd_write,                  /* write */
     no_fd_flush,                  /* flush */
+    no_fd_get_volume_info,        /* get_volume_info */
     serial_ioctl,                 /* ioctl */
     serial_queue_async,           /* queue_async */
     serial_reselect_async         /* reselect_async */

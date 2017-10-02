@@ -167,6 +167,7 @@ static const struct fd_ops sock_fd_ops =
     no_fd_read,                   /* read */
     no_fd_write,                  /* write */
     no_fd_flush,                  /* flush */
+    no_fd_get_volume_info,        /* get_volume_info */
     sock_ioctl,                   /* ioctl */
     sock_queue_async,             /* queue_async */
     sock_reselect_async           /* reselect_async */
@@ -990,6 +991,7 @@ static const struct fd_ops ifchange_fd_ops =
     no_fd_read,               /* read */
     no_fd_write,              /* write */
     no_fd_flush,              /* flush */
+    no_fd_get_volume_info,    /* get_volume_info */
     no_fd_ioctl,              /* ioctl */
     NULL,                     /* queue_async */
     NULL                      /* reselect_async */
