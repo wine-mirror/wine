@@ -19,6 +19,14 @@ run:
 ./configure
 make
 
+Then either install wine:
+
+make install
+
+Or run from it the build directory:
+
+./wine notepad
+
 Run programs as "wine program".  For more information and problem
 resolution, read the rest of this file, the Wine man page, and
 especially the wealth of information found at http://www.winehq.org.
