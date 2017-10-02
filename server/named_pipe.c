@@ -156,6 +156,7 @@ static const struct object_ops named_pipe_ops =
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd );
 static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
+static void pipe_end_get_volume_info( struct fd *fd, unsigned int info_class );
 static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 
@@ -196,7 +197,7 @@ static const struct fd_ops pipe_server_fd_ops =
     pipe_end_read,                /* read */
     pipe_end_write,               /* write */
     pipe_server_flush,            /* flush */
-    no_fd_get_volume_info,        /* get_volume_info */
+    pipe_end_get_volume_info,     /* get_volume_info */
     pipe_server_ioctl,            /* ioctl */
     pipe_end_queue_async,         /* queue_async */
     pipe_end_reselect_async       /* reselect_async */
@@ -240,7 +241,7 @@ static const struct fd_ops pipe_client_fd_ops =
     pipe_end_read,                /* read */
     pipe_end_write,               /* write */
     pipe_client_flush,            /* flush */
-    no_fd_get_volume_info,        /* get_volume_info */
+    pipe_end_get_volume_info,     /* get_volume_info */
     pipe_client_ioctl,            /* ioctl */
     pipe_end_queue_async,         /* queue_async */
     pipe_end_reselect_async       /* reselect_async */
@@ -683,6 +684,28 @@ static int pipe_client_flush( struct fd *fd, struct async *async )
     struct pipe_end *pipe_end = get_fd_user( fd );
     /* FIXME: Support byte mode. */
     return use_server_io( pipe_end ) ? pipe_end_flush( pipe_end, async ) : 1;
+}
+
+static void pipe_end_get_volume_info( struct fd *fd, unsigned int info_class )
+{
+    switch (info_class)
+    {
+    case FileFsDeviceInformation:
+        {
+            static const FILE_FS_DEVICE_INFORMATION device_info =
+            {
+                FILE_DEVICE_NAMED_PIPE,
+                FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL
+            };
+            if (get_reply_max_size() >= sizeof(device_info))
+                set_reply_data( &device_info, sizeof(device_info) );
+            else
+                set_error( STATUS_BUFFER_TOO_SMALL );
+            break;
+        }
+    default:
+        set_error( STATUS_NOT_IMPLEMENTED );
+    }
 }
 
 static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )

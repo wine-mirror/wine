@@ -1115,25 +1115,21 @@ static void test_volume_info(void)
 
     memset( buffer, 0xaa, sizeof(buffer) );
     status = pNtQueryVolumeInformationFile( read, &iosb, buffer, sizeof(buffer), FileFsDeviceInformation );
-    todo_wine {
     ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %x\n", status );
     ok( iosb.Information == sizeof(*device_info), "Information = %lu\n", iosb.Information );
     device_info = (FILE_FS_DEVICE_INFORMATION*)buffer;
     ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %u\n", device_info->DeviceType );
     ok( !(device_info->Characteristics & ~FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL),
         "Characteristics = %x\n", device_info->Characteristics );
-    }
 
     memset( buffer, 0xaa, sizeof(buffer) );
     status = pNtQueryVolumeInformationFile( write, &iosb, buffer, sizeof(buffer), FileFsDeviceInformation );
-    todo_wine {
     ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %x\n", status );
     ok( iosb.Information == sizeof(*device_info), "Information = %lu\n", iosb.Information );
     device_info = (FILE_FS_DEVICE_INFORMATION*)buffer;
     ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %u\n", device_info->DeviceType );
     ok( !(device_info->Characteristics & ~FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL),
         "Characteristics = %x\n", device_info->Characteristics );
-    }
 
     CloseHandle( read );
     CloseHandle( write );
