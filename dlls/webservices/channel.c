@@ -166,8 +166,11 @@ static HRESULT start_queue( struct queue *queue )
 
 error:
     CloseHandle( queue->wait );
+    queue->wait   = NULL;
     CloseHandle( queue->cancel );
+    queue->cancel = NULL;
     CloseHandle( queue->ready );
+    queue->ready  = NULL;
     return hr;
 }
 
