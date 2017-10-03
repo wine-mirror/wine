@@ -1536,10 +1536,10 @@ static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR name, FolderItem
         return S_FALSE;
 
     if ((hr = IShellFolder2_GetDisplayNameOf(This->folder, pidl, SHGDN_FORPARSING, &strret)) == S_OK)
-        StrRetToBSTR(&strret, pidl, &path);
+        hr = StrRetToBSTR(&strret, pidl, &path);
 
     ILFree(pidl);
-    if (FAILED(hr))
+    if (hr != S_OK)
         return S_FALSE;
 
     hr = FolderItem_Constructor(This, path, item);
