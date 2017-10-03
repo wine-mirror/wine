@@ -241,6 +241,8 @@ static struct interface_filter generic_interface_filter = {
 };
 #endif /* LINUX_BOUND_IF */
 
+extern ssize_t CDECL __wine_locked_recvmsg( int fd, struct msghdr *hdr, int flags );
+
 /*
  * The actual definition of WSASendTo, wrapped in a different function name
  * so that internal calls from ws2_32 itself will not trigger programs like
@@ -2356,7 +2358,7 @@ static int WS2_recv( int fd, struct ws2_async *wsa, int flags )
     hdr.msg_flags = 0;
 #endif
 
-    while ((n = recvmsg(fd, &hdr, flags)) == -1)
+    while ((n = __wine_locked_recvmsg( fd, &hdr, flags )) == -1)
     {
         if (errno != EINTR)
             return -1;

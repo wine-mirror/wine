@@ -1480,6 +1480,9 @@
 @ cdecl wine_server_send_fd(long)
 @ cdecl __wine_make_process_system()
 
+# Virtual memory
+@ cdecl __wine_locked_recvmsg(long ptr long)
+
 # Version
 @ cdecl wine_get_version() NTDLL_wine_get_version
 @ cdecl wine_get_build_id() NTDLL_wine_get_build_id

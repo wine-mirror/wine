@@ -32,6 +32,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
@@ -1903,6 +1906,36 @@ ssize_t virtual_locked_pread( int fd, void *addr, size_t size, off_t offset )
     return ret;
 }
 
+
+/***********************************************************************
+ *           __wine_locked_recvmsg
+ */
+ssize_t CDECL __wine_locked_recvmsg( int fd, struct msghdr *hdr, int flags )
+{
+    sigset_t sigset;
+    size_t i;
+    BOOL has_write_watch = FALSE;
+    int err = EFAULT;
+
+    ssize_t ret = recvmsg( fd, hdr, flags );
+    if (ret != -1 || errno != EFAULT) return ret;
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    for (i = 0; i < hdr->msg_iovlen; i++)
+        if (check_write_access( hdr->msg_iov[i].iov_base, hdr->msg_iov[i].iov_len, &has_write_watch ))
+            break;
+    if (i == hdr->msg_iovlen)
+    {
+        ret = recvmsg( fd, hdr, flags );
+        err = errno;
+    }
+    if (has_write_watch)
+        while (i--) update_write_watches( hdr->msg_iov[i].iov_base, hdr->msg_iov[i].iov_len, 0 );
+
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    errno = err;
+    return ret;
+}
 
 
 /***********************************************************************
