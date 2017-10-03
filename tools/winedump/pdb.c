@@ -215,7 +215,8 @@ static void *read_string_table(struct pdb_reader* reader)
     stream_idx = get_stream_by_name(reader, "/names");
     if (stream_idx == -1) return NULL;
     ret = reader->read_file(reader, stream_idx);
-    if (ret && *(const DWORD*)ret == 0xeffeeffe) return ret;
+    if (!ret) return NULL;
+    if(*(const DWORD*)ret == 0xeffeeffe) return ret;
     printf("wrong header %x expecting 0xeffeeffe\n", *(const DWORD*)ret);
     free( ret );
     return NULL;
