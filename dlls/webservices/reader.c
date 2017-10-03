@@ -6216,7 +6216,7 @@ static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION
     if (reader->current == reader->last)
     {
         BOOL found;
-        if ((hr = read_to_startelement( reader, &found )) != S_OK) return S_OK;
+        if ((hr = read_to_startelement( reader, &found )) != S_OK) return hr;
         if (!found) return WS_E_INVALID_FORMAT;
     }
     if ((hr = read_next_node( reader )) != S_OK) return hr;
