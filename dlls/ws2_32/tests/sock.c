@@ -6862,7 +6862,7 @@ static DWORD CALLBACK write_watch_thread( void *arg )
 {
     struct write_watch_thread_args *args = arg;
     struct sockaddr addr;
-    int addr_len, ret;
+    int addr_len = sizeof(addr), ret;
     DWORD bytes, flags = 0;
     WSABUF buf[1];
 
