@@ -6453,7 +6453,6 @@ static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc,
         break;
 
     case TKIND_ALIAS:
-        tdesc = &tattr->tdescAlias;
         hr = typedescvt_to_variantvt(tinfo2, &tattr->tdescAlias, vt);
         break;
 
