@@ -1208,14 +1208,24 @@ static HRESULT CALLBACK dict_cb( void *state, const WS_XML_STRING *str, BOOL *fo
 {
     struct dictionary *dict = state;
     HRESULT hr = S_OK;
+    BYTE *bytes;
     int index;
 
-    if ((index = find_string( dict, str->bytes, str->length, id )) == -1 ||
-        (hr = insert_string( dict, str->bytes, str->length, index, id )) == S_OK)
+    if ((index = find_string( dict, str->bytes, str->length, id )) == -1)
     {
         *found = TRUE;
         return S_OK;
     }
+
+    if (!(bytes = heap_alloc( str->length ))) return E_OUTOFMEMORY;
+    memcpy( bytes, str->bytes, str->length );
+    if ((hr = insert_string( dict, bytes, str->length, index, id )) == S_OK)
+    {
+        *found = TRUE;
+        return S_OK;
+    }
+    heap_free( bytes );
+
     *found = FALSE;
     return hr;
 }
@@ -1672,6 +1682,7 @@ static HRESULT build_dict( const BYTE *buf, ULONG buflen, struct dictionary *dic
         }
         if ((hr = insert_string( dict, bytes, size, index, NULL )) != S_OK)
         {
+            heap_free( bytes );
             clear_dict( dict );
             return hr;
         }
