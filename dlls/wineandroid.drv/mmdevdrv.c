@@ -1079,11 +1079,8 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 
     dump_fmt(pwfx);
 
-    if(outpwfx){
+    if(outpwfx)
         *outpwfx = NULL;
-        if(mode != AUDCLNT_SHAREMODE_SHARED)
-            outpwfx = NULL;
-    }
 
     hr = waveformat_to_pcm(This, pwfx, &pcm);
     TRACE("returning: %08x\n", hr);
