@@ -152,18 +152,6 @@ HRESULT insert_string( struct dictionary *dict, unsigned char *data, ULONG len, 
     return S_OK;
 }
 
-HRESULT CALLBACK insert_string_cb( void *state, const WS_XML_STRING *str, BOOL *found, ULONG *id, WS_ERROR *error )
-{
-    struct dictionary *dict = state;
-    int index = find_string( dict, str->bytes, str->length, id );
-    HRESULT hr = S_OK;
-
-    assert( !dict->dict.isConst );
-    if (index == -1 || (hr = insert_string( dict, str->bytes, str->length, index, id )) == S_OK) *found = TRUE;
-    else *found = FALSE;
-    return hr;
-}
-
 HRESULT add_xml_string( WS_XML_STRING *str )
 {
     HRESULT hr = S_OK;
