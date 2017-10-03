@@ -96,7 +96,7 @@ NTSTATUS WINAPI LsaLookupAuthenticationPackage(HANDLE LsaHandle,
         PLSA_STRING PackageName, PULONG AuthenticationPackage)
 {
     FIXME("%p %p %p stub\n", LsaHandle, PackageName, AuthenticationPackage);
-    AuthenticationPackage = NULL;
+    *AuthenticationPackage = 0;
     return STATUS_SUCCESS;
 }
 
