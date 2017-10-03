@@ -733,19 +733,14 @@ struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle, u
     return (struct mapping *)get_handle_obj( process, handle, access, &mapping_ops );
 }
 
-/* open a new file handle to the file backing the mapping */
-obj_handle_t open_mapping_file( struct process *process, client_ptr_t base,
-                                unsigned int access, unsigned int sharing )
+/* open a new file for the file descriptor backing the mapping */
+struct file *get_mapping_file( struct process *process, client_ptr_t base,
+                               unsigned int access, unsigned int sharing )
 {
-    obj_handle_t handle;
     struct memory_view *view = find_mapped_view( process, base );
-    struct file *file;
 
-    if (!view || !view->fd) return 0;
-    if (!(file = create_file_for_fd_obj( view->fd, access, sharing ))) return 0;
-    handle = alloc_handle( process, file, access, 0 );
-    release_object( file );
-    return handle;
+    if (!view || !view->fd) return NULL;
+    return create_file_for_fd_obj( view->fd, access, sharing );
 }
 
 static void mapping_dump( struct object *obj, int verbose )

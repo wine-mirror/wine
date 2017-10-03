@@ -147,6 +147,7 @@ static int fill_create_process_event( struct debug_event *event, const void *arg
     struct process *process = thread->process;
     struct process_dll *exe_module = get_process_exe_module( process );
     const client_ptr_t *entry = arg;
+    struct file *file;
     obj_handle_t handle;
 
     /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
@@ -170,8 +171,12 @@ static int fill_create_process_event( struct debug_event *event, const void *arg
     event->data.create_process.unicode    = 1;
 
     /* the doc says write access too, but this doesn't seem a good idea */
-    event->data.create_process.file = open_mapping_file( debugger, exe_module->base, GENERIC_READ,
-                                                         FILE_SHARE_READ | FILE_SHARE_WRITE );
+    if ((file = get_mapping_file( process, exe_module->base, GENERIC_READ,
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE )))
+    {
+        event->data.create_process.file = alloc_handle( debugger, file, GENERIC_READ, 0 );
+        release_object( file );
+    }
     return 1;
 }
 
@@ -191,8 +196,10 @@ static int fill_exit_process_event( struct debug_event *event, const void *arg )
 
 static int fill_load_dll_event( struct debug_event *event, const void *arg )
 {
+    struct process *process = event->sender->process;
     struct process *debugger = event->debugger->process;
     const struct process_dll *dll = arg;
+    struct file *file;
 
     event->data.load_dll.handle     = 0;
     event->data.load_dll.base       = dll->base;
@@ -200,8 +207,11 @@ static int fill_load_dll_event( struct debug_event *event, const void *arg )
     event->data.load_dll.dbg_size   = dll->dbg_size;
     event->data.load_dll.name       = dll->name;
     event->data.load_dll.unicode    = 1;
-    event->data.load_dll.handle     = open_mapping_file( debugger, dll->base, GENERIC_READ,
-                                                         FILE_SHARE_READ | FILE_SHARE_WRITE );
+    if ((file = get_mapping_file( process, dll->base, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE )))
+    {
+        event->data.load_dll.handle = alloc_handle( debugger, file, GENERIC_READ, 0 );
+        release_object( file );
+    }
     return 1;
 }
 
