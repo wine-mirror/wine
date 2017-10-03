@@ -600,7 +600,7 @@ static struct ranges *create_ranges(void)
     if (!ranges) return NULL;
     ranges->count = 0;
     ranges->max   = 8;
-    if (!(ranges->ranges = mem_alloc( ranges->max * sizeof(ranges->ranges) )))
+    if (!(ranges->ranges = mem_alloc( ranges->max * sizeof(*ranges->ranges) )))
     {
         release_object( ranges );
         return NULL;
