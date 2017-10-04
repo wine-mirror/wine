@@ -3109,6 +3109,8 @@ static void test_VarDateFromStr(void)
   DFS("6/30/2011 01:20:34");          EXPECT_DBL(40724.05594907407);
   DFS("6/30/2011 01:20:34 AM");       EXPECT_DBL(40724.05594907407);
   DFS("6/30/2011 01:20:34 PM");       EXPECT_DBL(40724.55594907407);
+  DFS("2013-05-14 02:04:12");         EXPECT_DBL(41408.08625000001);
+  DFS("2013-05-14 02:04:12.017000000"); EXPECT_MISMATCH;
   /* Native fails "1999 January 3, 9AM". I consider that a bug in native */
 
   /* test a data with ideographic space */
