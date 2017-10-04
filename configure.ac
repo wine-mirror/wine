@@ -1585,19 +1585,19 @@ WINE_NOTICE_WITH(capi,[test "x$ac_cv_lib_soname_capi20" = "x"],
                  [libcapi20 ${notice_platform}development files not found, ISDN won't be supported.])
 
 dnl **** Check for cups ****
-AC_SUBST(CUPS_CFLAGS,"")
 if test "x$with_cups" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_cups_cflags=`${CUPS_CONFIG:-cups-config} --cflags 2>/dev/null`
-    ac_cups_libs=`${CUPS_CONFIG:-cups-config} --ldflags 2>/dev/null`
-    CPPFLAGS="$CPPFLAGS $ac_cups_cflags"
-    AC_CHECK_HEADERS(cups/cups.h,
-            [WINE_CHECK_SONAME(cups,cupsGetDefault,
-                       [CUPS_CFLAGS="$ac_cups_cflags"],,
-                       [$ac_cups_libs])
-             AC_CHECK_HEADERS(cups/ppd.h)])
-    CPPFLAGS="$ac_save_CPPFLAGS"
+    WINE_PACKAGE_FLAGS(CUPS,[cups],[-lcups],
+                       [`${CUPS_CONFIG:-cups-config} --cflags 2>/dev/null`],
+                       [`${CUPS_CONFIG:-cups-config} --libs 2>/dev/null`],
+                       [AC_CHECK_HEADERS(cups/cups.h cups/ppd.h)
+                        if test "$ac_cv_header_cups_cups_h" = "yes"
+                        then
+                            WINE_CHECK_SONAME(cups,cupsGetDefault,,[CUPS_LIBS=""],[$CUPS_LIBS])
+                        else
+                            CUPS_CFLAGS=""
+                            CUPS_LIBS=""
+                        fi])
 fi
 WINE_NOTICE_WITH(cups,[test "x$ac_cv_lib_soname_cups" = "x"],
                  [libcups ${notice_platform}development files not found, CUPS won't be supported.])

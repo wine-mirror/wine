@@ -650,6 +650,7 @@ JPEG_LIBS
 JPEG_CFLAGS
 FONTCONFIG_LIBS
 FONTCONFIG_CFLAGS
+CUPS_LIBS
 CUPS_CFLAGS
 CAPI20_LIBS
 CAPI20_CFLAGS
@@ -1714,6 +1715,8 @@ UDEV_CFLAGS
 UDEV_LIBS
 CAPI20_CFLAGS
 CAPI20_LIBS
+CUPS_CFLAGS
+CUPS_LIBS
 FONTCONFIG_CFLAGS
 FONTCONFIG_LIBS
 JPEG_CFLAGS
@@ -2473,6 +2476,8 @@ Some influential environment variables:
   CAPI20_CFLAGS
               C compiler flags for capi20, overriding pkg-config
   CAPI20_LIBS Linker flags for capi20, overriding pkg-config
+  CUPS_CFLAGS C compiler flags for cups, overriding pkg-config
+  CUPS_LIBS   Linker flags for cups, overriding pkg-config
   FONTCONFIG_CFLAGS
               C compiler flags for fontconfig, overriding pkg-config
   FONTCONFIG_LIBS
@@ -13446,28 +13451,47 @@ esac
 
 fi
 
-CUPS_CFLAGS=""
-
 if test "x$with_cups" != "xno"
 then
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_cups_cflags=`${CUPS_CONFIG:-cups-config} --cflags 2>/dev/null`
-    ac_cups_libs=`${CUPS_CONFIG:-cups-config} --ldflags 2>/dev/null`
-    CPPFLAGS="$CPPFLAGS $ac_cups_cflags"
-    for ac_header in cups/cups.h
+    if ${CUPS_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  CUPS_CFLAGS=`$PKG_CONFIG --cflags cups 2>/dev/null`
+fi
+fi
+test "$cross_compiling" = yes || CUPS_CFLAGS=${CUPS_CFLAGS:-`${CUPS_CONFIG:-cups-config} --cflags 2>/dev/null`}
+if ${CUPS_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  CUPS_LIBS=`$PKG_CONFIG --libs cups 2>/dev/null`
+fi
+fi
+test "$cross_compiling" = yes || CUPS_LIBS=${CUPS_LIBS:-`${CUPS_CONFIG:-cups-config} --libs 2>/dev/null`}
+CUPS_LIBS=${CUPS_LIBS:-"-lcups"}
+$as_echo "$as_me:${as_lineno-$LINENO}: cups cflags: $CUPS_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: cups libs: $CUPS_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $CUPS_CFLAGS"
+for ac_header in cups/cups.h cups/ppd.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "cups/cups.h" "ac_cv_header_cups_cups_h" "$ac_includes_default"
-if test "x$ac_cv_header_cups_cups_h" = xyes; then :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_CUPS_CUPS_H 1
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
- { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lcups" >&5
+
+fi
+
+done
+
+                        if test "$ac_cv_header_cups_cups_h" = "yes"
+                        then
+                            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lcups" >&5
 $as_echo_n "checking for -lcups... " >&6; }
 if ${ac_cv_lib_soname_cups+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lcups $ac_cups_libs $LIBS"
+LIBS="-lcups $CUPS_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13503,7 +13527,7 @@ fi
 if ${ac_cv_lib_soname_cups:+false} :; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
-
+       CUPS_LIBS=""
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_cups" >&5
 $as_echo "$ac_cv_lib_soname_cups" >&6; }
@@ -13512,25 +13536,16 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBCUPS "$ac_cv_lib_soname_cups"
 _ACEOF
 
-       CUPS_CFLAGS="$ac_cups_cflags"
-fi
-             for ac_header in cups/ppd.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "cups/ppd.h" "ac_cv_header_cups_ppd_h" "$ac_includes_default"
-if test "x$ac_cv_header_cups_ppd_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_CUPS_PPD_H 1
-_ACEOF
 
 fi
+                        else
+                            CUPS_CFLAGS=""
+                            CUPS_LIBS=""
+                        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$CUPS_CFLAGS" || CUPS_CFLAGS=`echo " $CUPS_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$CUPS_LIBS" || CUPS_LIBS=`echo " $CUPS_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
-done
-
-fi
-
-done
-
-    CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "x$ac_cv_lib_soname_cups" = "x"; then :
   case "x$with_cups" in
@@ -17883,6 +17898,7 @@ UDEV_LIBS = $UDEV_LIBS
 CAPI20_CFLAGS = $CAPI20_CFLAGS
 CAPI20_LIBS = $CAPI20_LIBS
 CUPS_CFLAGS = $CUPS_CFLAGS
+CUPS_LIBS = $CUPS_LIBS
 FONTCONFIG_CFLAGS = $FONTCONFIG_CFLAGS
 FONTCONFIG_LIBS = $FONTCONFIG_LIBS
 JPEG_CFLAGS = $JPEG_CFLAGS
