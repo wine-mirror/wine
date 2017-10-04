@@ -487,6 +487,14 @@ static void test_chore(void)
     wait = WaitForSingleObject(event, 500);
     ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait);
 
+    if(!GetProcAddress(GetModuleHandleA("kernel32"), "CreateThreadpoolWork"))
+    {
+        win_skip("_Reschedule_chore not supported\n");
+        p__Release_chore(&chore);
+        CloseHandle(event);
+        return;
+    }
+
     old_chore = chore;
     ret = p__Schedule_chore(&chore);
     ok(!ret, "_Schedule_chore returned %d\n", ret);
@@ -505,6 +513,8 @@ static void test_chore(void)
     ok(chore.callback == chore_callback, "chore.callback = %p, expected %p\n", chore.callback, chore_callback);
     ok(chore.arg == event, "chore.arg = %p, expected %p\n", chore.arg, event);
     p__Release_chore(&chore);
+
+    CloseHandle(event);
 }
 
 static void test_to_byte(void)
