@@ -2142,10 +2142,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 	            SendMessageW(lphc->hWndLBox, LB_SETTOPINDEX, wParam, 0);
 
 		/* no LBN_SELCHANGE in this case, update manually */
-		if( lphc->wState & CBF_EDIT )
-		    CBUpdateEdit( lphc, (INT)wParam );
-		else
-		    InvalidateRect(lphc->self, &lphc->textRect, TRUE);
+                CBPaintText( lphc, NULL );
 		lphc->wState &= ~CBF_SELCHANGE;
 	        return  lParam;
 	case CB_GETLBTEXT:

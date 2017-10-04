@@ -6937,7 +6937,7 @@ static void test_combobox_messages(void)
     log_all_parent_messages++;
     SendMessageA(combo, CB_SETCURSEL, 0, 0);
     log_all_parent_messages--;
-    ok_sequence(SetCurSelComboSeq, "CB_SETCURSEL on a ComboBox", TRUE);
+    ok_sequence(SetCurSelComboSeq, "CB_SETCURSEL on a ComboBox", FALSE);
 
     DestroyWindow(combo);
     DestroyWindow(parent);
