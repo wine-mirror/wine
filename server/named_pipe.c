@@ -24,21 +24,10 @@
 #include "wine/port.h"
 
 #include <assert.h>
-#include <fcntl.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#include <time.h>
-#include <unistd.h>
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -91,7 +80,6 @@ struct pipe_server
     enum pipe_state      state;      /* server state */
     struct pipe_client  *client;     /* client that this server is connected to */
     struct named_pipe   *pipe;
-    struct timeout_user *flush_poll;
     unsigned int         options;    /* pipe options */
 };
 
@@ -156,6 +144,7 @@ static const struct object_ops named_pipe_ops =
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd );
 static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
+static int pipe_end_flush( struct fd *fd, struct async *async );
 static void pipe_end_get_volume_info( struct fd *fd, unsigned int info_class );
 static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
@@ -164,7 +153,6 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 static void pipe_server_dump( struct object *obj, int verbose );
 static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
-static int pipe_server_flush( struct fd *fd, struct async *async );
 static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct object_ops pipe_server_ops =
@@ -196,7 +184,7 @@ static const struct fd_ops pipe_server_fd_ops =
     pipe_end_get_fd_type,         /* get_fd_type */
     pipe_end_read,                /* read */
     pipe_end_write,               /* write */
-    pipe_server_flush,            /* flush */
+    pipe_end_flush,               /* flush */
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_server_ioctl,            /* ioctl */
     pipe_end_queue_async,         /* queue_async */
@@ -208,7 +196,6 @@ static void pipe_client_dump( struct object *obj, int verbose );
 static int pipe_client_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
-static int pipe_client_flush( struct fd *fd, struct async *async );
 static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct object_ops pipe_client_ops =
@@ -240,7 +227,7 @@ static const struct fd_ops pipe_client_fd_ops =
     pipe_end_get_fd_type,         /* get_fd_type */
     pipe_end_read,                /* read */
     pipe_end_write,               /* write */
-    pipe_client_flush,            /* flush */
+    pipe_end_flush,               /* flush */
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_client_ioctl,            /* ioctl */
     pipe_end_queue_async,         /* queue_async */
@@ -384,16 +371,6 @@ static struct fd *pipe_server_get_fd( struct object *obj )
 }
 
 
-static void notify_empty( struct pipe_server *server )
-{
-    if (!server->flush_poll)
-        return;
-    assert( server->state == ps_connected_server );
-    remove_timeout_user( server->flush_poll );
-    server->flush_poll = NULL;
-    fd_async_wake_up( server->pipe_end.fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
-}
-
 static void wake_message( struct pipe_message *message )
 {
     struct async *async = message->async;
@@ -458,8 +435,6 @@ static void do_disconnect( struct pipe_server *server )
         }
     }
     assert( server->pipe_end.fd );
-    if (!use_server_io( &server->pipe_end ))
-        shutdown( get_unix_fd( server->pipe_end.fd ), SHUT_RDWR );
     release_object( server->pipe_end.fd );
     server->pipe_end.fd = NULL;
 }
@@ -487,11 +462,7 @@ static void pipe_server_destroy( struct object *obj)
 
     pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_BROKEN );
 
-    if (server->pipe_end.fd)
-    {
-        notify_empty( server );
-        do_disconnect( server );
-    }
+    if (server->pipe_end.fd) do_disconnect( server );
 
     pipe_end_destroy( &server->pipe_end );
     if (server->client)
@@ -519,8 +490,6 @@ static void pipe_client_destroy( struct object *obj)
 
     if (server)
     {
-        notify_empty( server );
-
         switch(server->state)
         {
         case ps_connected_server:
@@ -615,76 +584,16 @@ struct object *create_named_pipe_device( struct object *root, const struct unico
     return &dev->obj;
 }
 
-static int pipe_data_remaining( struct pipe_server *server )
-{
-    struct pollfd pfd;
-    int fd;
-
-    assert( server->client );
-
-    if (use_server_io( &server->pipe_end ))
-        return !list_empty( &server->client->pipe_end.message_queue );
-
-    fd = get_unix_fd( server->client->pipe_end.fd );
-    if (fd < 0)
-        return 0;
-    pfd.fd = fd;
-    pfd.events = POLLIN;
-    pfd.revents = 0;
-
-    if (0 > poll( &pfd, 1, 0 ))
-        return 0;
- 
-    return pfd.revents&POLLIN;
-}
-
-static void check_flushed( void *arg )
-{
-    struct pipe_server *server = (struct pipe_server*) arg;
-
-    if (pipe_data_remaining( server ))
-    {
-        server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
-    }
-    else
-    {
-        server->flush_poll = NULL;
-        fd_async_wake_up( server->pipe_end.fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
-    }
-}
-
-static int pipe_end_flush( struct pipe_end *pipe_end, struct async *async )
-{
-    if (use_server_io( pipe_end ) && (!pipe_end->connection || list_empty( &pipe_end->connection->message_queue )))
-        return 1;
-
-    fd_queue_async( pipe_end->fd, async, ASYNC_TYPE_WAIT );
-    set_error( STATUS_PENDING );
-    return 1;
-}
-
-static int pipe_server_flush( struct fd *fd, struct async *async )
-{
-    struct pipe_server *server = get_fd_user( fd );
-    obj_handle_t handle;
-
-    if (!server || server->state != ps_connected_server) return 1;
-
-    if (!pipe_data_remaining( server )) return 1;
-
-    handle = pipe_end_flush( &server->pipe_end, async );
-
-    /* there's no unix way to be alerted when a pipe becomes empty, so resort to polling */
-    if (handle && !use_server_io( &server->pipe_end ) && !server->flush_poll)
-        server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
-    return handle;
-}
-
-static int pipe_client_flush( struct fd *fd, struct async *async )
+static int pipe_end_flush( struct fd *fd, struct async *async )
 {
     struct pipe_end *pipe_end = get_fd_user( fd );
-    /* FIXME: Support byte mode. */
-    return use_server_io( pipe_end ) ? pipe_end_flush( pipe_end, async ) : 1;
+
+    if (pipe_end->connection && !list_empty( &pipe_end->connection->message_queue ))
+    {
+        fd_queue_async( pipe_end->fd, async, ASYNC_TYPE_WAIT );
+        set_error( STATUS_PENDING );
+    }
+    return 1;
 }
 
 static void pipe_end_get_volume_info( struct fd *fd, unsigned int info_class )
@@ -998,8 +907,6 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
             assert( server->client );
             assert( server->client->pipe_end.fd );
 
-            notify_empty( server );
-
             /* dump the client and server fds - client loses all waiting data */
             pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
             do_disconnect( server );
@@ -1075,7 +982,6 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
 
     server->pipe = pipe;
     server->client = NULL;
-    server->flush_poll = NULL;
     server->options = options;
     init_pipe_end( &server->pipe_end, pipe_flags, pipe->insize );
 
