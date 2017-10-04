@@ -646,13 +646,58 @@ static void CBPaintButton( LPHEADCOMBO lphc, HDC hdc, RECT rectButton)
 }
 
 /***********************************************************************
+ *           COMBO_PrepareColors
+ *
+ * This method will sent the appropriate WM_CTLCOLOR message to
+ * prepare and setup the colors for the combo's DC.
+ *
+ * It also returns the brush to use for the background.
+ */
+static HBRUSH COMBO_PrepareColors(
+        LPHEADCOMBO lphc,
+        HDC         hDC)
+{
+    HBRUSH  hBkgBrush;
+
+    /*
+     * Get the background brush for this control.
+     */
+    if (CB_DISABLED(lphc))
+    {
+        hBkgBrush = (HBRUSH)SendMessageW(lphc->owner, WM_CTLCOLORSTATIC,
+                (WPARAM)hDC, (LPARAM)lphc->self );
+
+        /*
+         * We have to change the text color since WM_CTLCOLORSTATIC will
+         * set it to the "enabled" color. This is the same behavior as the
+         * edit control
+         */
+        SetTextColor(hDC, GetSysColor(COLOR_GRAYTEXT));
+    }
+    else
+    {
+        /* FIXME: In which cases WM_CTLCOLORLISTBOX should be sent? */
+        hBkgBrush = (HBRUSH)SendMessageW(lphc->owner, WM_CTLCOLOREDIT,
+                (WPARAM)hDC, (LPARAM)lphc->self );
+    }
+
+    /*
+     * Catch errors.
+     */
+    if( !hBkgBrush )
+        hBkgBrush = GetSysColorBrush(COLOR_WINDOW);
+
+    return hBkgBrush;
+}
+
+/***********************************************************************
  *           CBPaintText
  *
  * Paint CBS_DROPDOWNLIST text field / update edit control contents.
  */
 static void CBPaintText(
   LPHEADCOMBO lphc,
-  HDC         hdc)
+  HDC         hdc_paint)
 {
    RECT rectEdit = lphc->textRect;
    INT	id, size = 0;
@@ -690,13 +735,19 @@ static void CBPaintText(
    }
    else /* paint text field ourselves */
    {
-     UINT	itemState = ODS_COMBOBOXEDIT;
-     HFONT	hPrevFont = (lphc->hFont) ? SelectObject(hdc, lphc->hFont) : 0;
+     HDC hdc = hdc_paint ? hdc_paint : GetDC(lphc->self);
+     UINT itemState = ODS_COMBOBOXEDIT;
+     HFONT hPrevFont = (lphc->hFont) ? SelectObject(hdc, lphc->hFont) : 0;
+     HBRUSH hPrevBrush, hBkgBrush;
 
      /*
       * Give ourselves some space.
       */
      InflateRect( &rectEdit, -1, -1 );
+
+     hBkgBrush = COMBO_PrepareColors( lphc, hdc );
+     hPrevBrush = SelectObject( hdc, hBkgBrush );
+     FillRect( hdc, &rectEdit, hBkgBrush );
 
      if( CB_OWNERDRAWN(lphc) )
      {
@@ -757,6 +808,12 @@ static void CBPaintText(
 
      if( hPrevFont )
        SelectObject(hdc, hPrevFont );
+
+    if( hPrevBrush )
+        SelectObject( hdc, hPrevBrush );
+
+     if( !hdc_paint )
+       ReleaseDC( lphc->self, hdc );
    }
    HeapFree( GetProcessHeap(), 0, pText );
 }
@@ -785,52 +842,6 @@ static void CBPaintBorder(
 
   DrawEdge(hdc, &clientRect, EDGE_SUNKEN, BF_RECT);
 }
-
-/***********************************************************************
- *           COMBO_PrepareColors
- *
- * This method will sent the appropriate WM_CTLCOLOR message to
- * prepare and setup the colors for the combo's DC.
- *
- * It also returns the brush to use for the background.
- */
-static HBRUSH COMBO_PrepareColors(
-  LPHEADCOMBO lphc,
-  HDC         hDC)
-{
-  HBRUSH  hBkgBrush;
-
-  /*
-   * Get the background brush for this control.
-   */
-  if (CB_DISABLED(lphc))
-  {
-    hBkgBrush = (HBRUSH)SendMessageW(lphc->owner, WM_CTLCOLORSTATIC,
-				     (WPARAM)hDC, (LPARAM)lphc->self );
-
-    /*
-     * We have to change the text color since WM_CTLCOLORSTATIC will
-     * set it to the "enabled" color. This is the same behavior as the
-     * edit control
-     */
-    SetTextColor(hDC, GetSysColor(COLOR_GRAYTEXT));
-  }
-  else
-  {
-      /* FIXME: In which cases WM_CTLCOLORLISTBOX should be sent? */
-      hBkgBrush = (HBRUSH)SendMessageW(lphc->owner, WM_CTLCOLOREDIT,
-				       (WPARAM)hDC, (LPARAM)lphc->self );
-  }
-
-  /*
-   * Catch errors.
-   */
-  if( !hBkgBrush )
-    hBkgBrush = GetSysColorBrush(COLOR_WINDOW);
-
-  return hBkgBrush;
-}
-
 
 /***********************************************************************
  *           COMBO_Paint
@@ -1285,18 +1296,8 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		if( HIWORD(wParam) == LBN_SELCHANGE)
 		{
 		   if( lphc->wState & CBF_EDIT )
-		   {
-		       INT index = SendMessageW(lphc->hWndLBox, LB_GETCURSEL, 0, 0);
 		       lphc->wState |= CBF_NOLBSELECT;
-		       CBUpdateEdit( lphc, index );
-		       /* select text in edit, as Windows does */
-                      SendMessageW(lphc->hWndEdit, EM_SETSEL, 0, -1);
-		   }
-		   else
-                   {
-		       InvalidateRect(lphc->self, &lphc->textRect, TRUE);
-                       UpdateWindow(lphc->self);
-                   }
+		   CBPaintText( lphc, NULL );
 		}
                 break;
 
