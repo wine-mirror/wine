@@ -2576,7 +2576,6 @@ static void test_readfileex_pending(void)
     SetLastError(0xdeadbeef);
     ret = ReadFile(server, read_buf, 0, &num_bytes, &overlapped);
     ok(!ret, "ReadFile should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
     ok(num_bytes == 0, "bytes %u\n", num_bytes);
     ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "expected STATUS_PENDING, got %#lx\n", overlapped.Internal);
@@ -2592,11 +2591,9 @@ todo_wine
     ok(num_bytes == 1, "bytes %u\n", num_bytes);
 
     wait = WaitForSingleObject(event, 100);
-todo_wine
     ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", wait);
 
     ok(num_bytes == 1, "bytes %u\n", num_bytes);
-todo_wine
     ok((NTSTATUS)overlapped.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", overlapped.Internal);
     ok(overlapped.InternalHigh == 0, "expected 0, got %lu\n", overlapped.InternalHigh);
 
@@ -3132,6 +3129,5 @@ START_TEST(pipe)
     test_readfileex_pending();
     test_overlapped_transport(TRUE, FALSE);
     test_overlapped_transport(TRUE, TRUE);
-    if (broken(1)) /* FIXME: Remove once Wine is ready. */
-        test_overlapped_transport(FALSE, FALSE);
+    test_overlapped_transport(FALSE, FALSE);
 }

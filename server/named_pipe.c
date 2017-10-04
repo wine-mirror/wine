@@ -294,10 +294,11 @@ static const struct fd_ops named_pipe_device_fd_ops =
     default_fd_reselect_async         /* reselect_async */
 };
 
-/* Returns if we handle I/O via server calls. Currently message-mode pipes are handled this way. */
+/* Returns if we handle I/O via server calls.
+ * FIXME: no longer needed. */
 static int use_server_io( struct pipe_end *pipe_end )
 {
-    return pipe_end->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE;
+    return 1;
 }
 
 static void named_pipe_dump( struct object *obj, int verbose )
