@@ -262,6 +262,7 @@ struct GpGraphics{
     INT origin_x, origin_y;
     INT gdi_transform_acquire_count, gdi_transform_save;
     GpMatrix gdi_transform;
+    HRGN gdi_clip;
     /* For giving the caller an HDC when we technically can't: */
     HBITMAP temp_hbitmap;
     int temp_hbitmap_width;

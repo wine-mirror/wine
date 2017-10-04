@@ -348,6 +348,17 @@ static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
         GdipDeleteRegion(rgn);
     }
 
+    if (stat == Ok && graphics->gdi_clip)
+    {
+        if (*hrgn)
+            CombineRgn(*hrgn, *hrgn, graphics->gdi_clip, RGN_AND);
+        else
+        {
+            *hrgn = CreateRectRgn(0,0,0,0);
+            CombineRgn(*hrgn, graphics->gdi_clip, graphics->gdi_clip, RGN_COPY);
+        }
+    }
+
     return stat;
 }
 
@@ -498,8 +509,7 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
 
         save = SaveDC(graphics->hdc);
 
-        if (hrgn)
-            ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
 
         if (hregion)
             ExtSelectClipRgn(graphics->hdc, hregion, RGN_AND);
@@ -2315,6 +2325,13 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     (*graphics)->contid = 0;
     get_gdi_transform(*graphics, &(*graphics)->gdi_transform);
 
+    (*graphics)->gdi_clip = CreateRectRgn(0,0,0,0);
+    if (!GetClipRgn(hdc, (*graphics)->gdi_clip))
+    {
+        DeleteObject((*graphics)->gdi_clip);
+        (*graphics)->gdi_clip = NULL;
+    }
+
     TRACE("<-- %p\n", *graphics);
 
     return Ok;
@@ -2438,6 +2455,8 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
     }
 
     GdipDeleteRegion(graphics->clip);
+
+    DeleteObject(graphics->gdi_clip);
 
     /* Native returns ObjectBusy on the second free, instead of crashing as we'd
      * do otherwise, but we can't have that in the test suite because it means
@@ -3223,9 +3242,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             stat = get_clip_hrgn(graphics, &hrgn);
 
-            if (stat == Ok && hrgn)
+            if (stat == Ok)
             {
-                ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+                ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
                 DeleteObject(hrgn);
             }
 
@@ -3466,8 +3485,7 @@ static GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *pat
     if (retval != Ok)
         goto end;
 
-    if (hrgn)
-        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
 
     gdi_transform_acquire(graphics);
 
@@ -4155,8 +4173,7 @@ static GpStatus GDI32_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath 
     if (retval != Ok)
         goto end;
 
-    if (hrgn)
-        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
 
     gdi_transform_acquire(graphics);
 
@@ -4443,31 +4460,29 @@ static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     if(!graphics->hdc || !brush_can_fill_path(brush, TRUE))
         return NotImplemented;
 
-    status = GdipGetRegionHRgn(region, graphics, &hrgn);
-    if(status != Ok)
-        return status;
-
     save_state = SaveDC(graphics->hdc);
     EndPath(graphics->hdc);
 
-    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
-
-    DeleteObject(hrgn);
-
     hrgn = NULL;
     status = get_clip_hrgn(graphics, &hrgn);
-
     if (status != Ok)
     {
         RestoreDC(graphics->hdc, save_state);
         return status;
     }
 
-    if (hrgn)
+    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
+    DeleteObject(hrgn);
+
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    if (status != Ok)
     {
-        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
-        DeleteObject(hrgn);
+        RestoreDC(graphics->hdc, save_state);
+        return status;
     }
+
+    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+    DeleteObject(hrgn);
 
     if (GetClipBox(graphics->hdc, &rc) != NULLREGION)
     {
@@ -7001,9 +7016,9 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
 
     status = get_clip_hrgn(graphics, &hrgn);
 
-    if (status == Ok && hrgn)
+    if (status == Ok)
     {
-        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
         DeleteObject(hrgn);
     }
 
