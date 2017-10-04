@@ -123,6 +123,7 @@ struct memory_view
     struct list     entry;           /* entry in per-process view list */
     struct fd      *fd;              /* fd for mapped file */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
+    struct shared_map *shared;       /* temp file for shared PE mapping */
     unsigned int    flags;           /* SEC_* flags */
     client_ptr_t    base;            /* view base address (in process addr space) */
     mem_size_t      size;            /* view size */
@@ -311,6 +312,7 @@ static void free_memory_view( struct memory_view *view )
 {
     if (view->fd) release_object( view->fd );
     if (view->committed) release_object( view->committed );
+    if (view->shared) release_object( view->shared );
     list_remove( &view->entry );
     free( view );
 }
@@ -958,6 +960,7 @@ DECL_HANDLER(map_view)
         view->flags     = mapping->flags;
         view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
         view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
+        view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
         list_add_tail( &current->process->views, &view->entry );
     }
 
