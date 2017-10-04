@@ -1653,3 +1653,22 @@ NTSTATUS WINAPI RtlCreateUserProcess(UNICODE_STRING *path, ULONG attributes, RTL
                                      parent, inherit, debug, exception, info);
     return STATUS_NOT_IMPLEMENTED;
 }
+
+typedef struct _RTL_UNLOAD_EVENT_TRACE
+{
+    PVOID BaseAddress;
+    SIZE_T SizeOfImage;
+    ULONG Sequence;
+    ULONG TimeDateStamp;
+    ULONG CheckSum;
+    WCHAR ImageName[32];
+} RTL_UNLOAD_EVENT_TRACE, *PRTL_UNLOAD_EVENT_TRACE;
+
+/*********************************************************************
+ *           RtlGetUnloadEventTrace [NTDLL.@]
+ */
+RTL_UNLOAD_EVENT_TRACE * WINAPI RtlGetUnloadEventTrace(void)
+{
+    FIXME("stub!\n");
+    return NULL;
+}

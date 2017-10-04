@@ -669,7 +669,7 @@
 # @ stub RtlGetSecurityDescriptorRMControl
 # @ stub RtlGetSetBootStatusData
 @ stdcall RtlGetThreadErrorMode()
-# @ stub RtlGetUnloadEventTrace
+@ stdcall RtlGetUnloadEventTrace()
 @ stub RtlGetUserInfoHeap
 @ stdcall RtlGetVersion(ptr)
 @ stub RtlGuidToPropertySetName
