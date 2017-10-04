@@ -2249,6 +2249,20 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
     return GdipCreateFromHDC2(hdc, NULL, graphics);
 }
 
+static void get_gdi_transform(GpGraphics *graphics, GpMatrix *matrix)
+{
+    XFORM xform;
+
+    if (graphics->hdc == NULL)
+    {
+        GdipSetMatrixElements(matrix, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        return;
+    }
+
+    GetTransform(graphics->hdc, 0x204, &xform);
+    GdipSetMatrixElements(matrix, xform.eM11, xform.eM12, xform.eM21, xform.eM22, xform.eDx, xform.eDy);
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **graphics)
 {
     GpStatus retval;
@@ -2299,6 +2313,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     (*graphics)->textcontrast = 4;
     list_init(&(*graphics)->containers);
     (*graphics)->contid = 0;
+    get_gdi_transform(*graphics, &(*graphics)->gdi_transform);
 
     TRACE("<-- %p\n", *graphics);
 
@@ -2313,6 +2328,7 @@ GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics)
     if(!*graphics)  return OutOfMemory;
 
     GdipSetMatrixElements(&(*graphics)->worldtrans, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+    GdipSetMatrixElements(&(*graphics)->gdi_transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
     if((retval = GdipCreateRegion(&(*graphics)->clip)) != Ok){
         heap_free(*graphics);
@@ -6629,31 +6645,10 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
     return Ok;
 }
 
-static void get_gdi_transform(GpGraphics *graphics, GpMatrix *matrix)
-{
-    XFORM xform;
-
-    if (graphics->hdc == NULL)
-    {
-        GdipSetMatrixElements(matrix, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-        return;
-    }
-
-    if (graphics->gdi_transform_acquire_count)
-    {
-        *matrix = graphics->gdi_transform;
-        return;
-    }
-
-    GetTransform(graphics->hdc, 0x204, &xform);
-    GdipSetMatrixElements(matrix, xform.eM11, xform.eM12, xform.eM21, xform.eM22, xform.eDx, xform.eDy);
-}
-
 GpStatus gdi_transform_acquire(GpGraphics *graphics)
 {
     if (graphics->gdi_transform_acquire_count == 0 && graphics->hdc)
     {
-        get_gdi_transform(graphics, &graphics->gdi_transform);
         graphics->gdi_transform_save = SaveDC(graphics->hdc);
         SetGraphicsMode(graphics->hdc, GM_COMPATIBLE);
         SetMapMode(graphics->hdc, MM_TEXT);
@@ -6706,7 +6701,7 @@ GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_spac
             case WineCoordinateSpaceGdiDevice:
             {
                 GpMatrix gdixform;
-                get_gdi_transform(graphics, &gdixform);
+                gdixform = graphics->gdi_transform;
                 stat = GdipInvertMatrix(&gdixform);
                 if (stat != Ok)
                     break;
@@ -6747,9 +6742,7 @@ GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_spac
                 /* else fall-through */
             case CoordinateSpaceDevice:
             {
-                GpMatrix gdixform;
-                get_gdi_transform(graphics, &gdixform);
-                GdipMultiplyMatrix(matrix, &gdixform, MatrixOrderAppend);
+                GdipMultiplyMatrix(matrix, &graphics->gdi_transform, MatrixOrderAppend);
                 break;
             }
             }
