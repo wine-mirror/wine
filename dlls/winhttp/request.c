@@ -519,7 +519,7 @@ BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD
     BOOL ret;
     request_t *request;
 
-    TRACE("%p, %s, 0x%x, 0x%08x\n", hrequest, debugstr_w(headers), len, flags);
+    TRACE("%p, %s, %u, 0x%08x\n", hrequest, debugstr_wn(headers, len), len, flags);
 
     if (!headers || !len)
     {
@@ -2172,8 +2172,8 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
     BOOL ret;
     request_t *request;
 
-    TRACE("%p, %s, 0x%x, %u, %u, %lx\n",
-          hrequest, debugstr_w(headers), headers_len, optional_len, total_len, context);
+    TRACE("%p, %s, %u, %u, %u, %lx\n", hrequest, debugstr_wn(headers, headers_len), headers_len, optional_len,
+          total_len, context);
 
     if (!(request = (request_t *)grab_object( hrequest )))
     {
