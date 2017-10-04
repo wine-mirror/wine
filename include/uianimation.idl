@@ -58,6 +58,24 @@ typedef enum
     UI_ANIMATION_STORYBOARD_INSUFFICIENT_PRIORITY
 } UI_ANIMATION_STORYBOARD_STATUS;
 
+typedef enum
+{
+    UI_ANIMATION_UPDATE_NO_CHANGE,
+    UI_ANIMATION_UPDATE_VARIABLES_CHANGED,
+} UI_ANIMATION_UPDATE_RESULT;
+
+typedef enum
+{
+    UI_ANIMATION_TIMER_CLIENT_IDLE,
+    UI_ANIMATION_TIMER_CLIENT_BUSY,
+} UI_ANIMATION_TIMER_CLIENT_STATUS;
+
+typedef enum
+{
+    UI_ANIMATION_IDLE_BEHAVIOR_CONTINUE,
+    UI_ANIMATION_IDLE_BEHAVIOR_DISABLE,
+} UI_ANIMATION_IDLE_BEHAVIOR;
+
 [
     local,
     object,
@@ -239,4 +257,94 @@ interface IUIAnimationStoryboard : IUnknown
     HRESULT GetElapsedTime ([out] UI_ANIMATION_SECONDS *elapsed);
 
     HRESULT SetStoryboardEventHandler ([in, unique] IUIAnimationStoryboardEventHandler *handler);
+}
+
+[
+    local,
+    object,
+    uuid(bedb4db6-94fa-4bfb-a47f-ef2d9e408c25),
+    pointer_default(unique)
+]
+interface IUIAnimationTimerClientEventHandler : IUnknown
+{
+    HRESULT OnTimerClientStatusChanged (
+        [in] UI_ANIMATION_TIMER_CLIENT_STATUS new_status,
+        [in] UI_ANIMATION_TIMER_CLIENT_STATUS previous_status);
+}
+
+[
+    local,
+    object,
+    uuid(195509b7-5d5e-4e3e-b278-ee3759b367ad),
+    pointer_default(unique)
+]
+interface IUIAnimationTimerUpdateHandler : IUnknown
+{
+    HRESULT OnUpdate (
+        [in] UI_ANIMATION_SECONDS now,
+        [out, retval] UI_ANIMATION_UPDATE_RESULT *result);
+
+    HRESULT SetTimerClientEventHandler (
+        [in] IUIAnimationTimerClientEventHandler *handler);
+
+    HRESULT ClearTimerClientEventHandler ();
+}
+
+[
+    local,
+    object,
+    uuid(274a7dea-d771-4095-abbd-8df7abd23ce3),
+    pointer_default(unique)
+]
+interface IUIAnimationTimerEventHandler : IUnknown
+{
+    HRESULT OnPreUpdate ();
+
+    HRESULT OnPostUpdate ();
+
+    HRESULT OnRenderingTooSlow (
+        [in] UINT32 fps);
+}
+
+[
+    local,
+    object,
+    uuid(6b0efad1-a053-41d6-9085-33a689144665),
+    pointer_default(unique)
+]
+interface IUIAnimationTimer : IUnknown
+{
+    HRESULT SetTimerUpdateHandler (
+        [in, unique] IUIAnimationTimerUpdateHandler *handler,
+        [in] UI_ANIMATION_IDLE_BEHAVIOR idlebehavior);
+
+    HRESULT SetTimerEventHandler (
+        [in, unique] IUIAnimationTimerEventHandler *handler);
+
+    HRESULT Enable ();
+
+    HRESULT Disable ();
+
+    HRESULT IsEnabled ();
+
+    HRESULT GetTime (
+        [out] UI_ANIMATION_SECONDS *time);
+
+    HRESULT SetFrameRateThreshold (
+        [in] UINT32 fps);
+}
+
+[
+    uuid(44ca24db-1a92-4149-bab5-fb14d64b401e),
+    version(1.0)
+]
+library UIAnimation
+{
+    [
+        uuid(bfcd4a0c-06b6-4384-b768-0daa792c380e)
+    ]
+    coclass UIAnimationTimer
+    {
+        [default] interface IUIAnimationTimer;
+    }
 }
