@@ -652,9 +652,9 @@ static void CBPaintButton( LPHEADCOMBO lphc, HDC hdc, RECT rectButton)
  */
 static void CBPaintText(
   LPHEADCOMBO lphc,
-  HDC         hdc,
-  RECT        rectEdit)
+  HDC         hdc)
 {
+   RECT rectEdit = lphc->textRect;
    INT	id, size = 0;
    LPWSTR pText = NULL;
 
@@ -880,7 +880,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
       }
 
       if( !(lphc->wState & CBF_EDIT) )
-	CBPaintText( lphc, hDC, lphc->textRect);
+	CBPaintText( lphc, hDC );
 
       if( hPrevBrush )
 	SelectObject( hDC, hPrevBrush );
