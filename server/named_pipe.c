@@ -1091,7 +1091,8 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     return server;
 }
 
-static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int pipe_flags, data_size_t buffer_size )
+static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int pipe_flags,
+                                               data_size_t buffer_size, unsigned int options )
 {
     struct pipe_client *client;
 
@@ -1102,6 +1103,15 @@ static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int 
     client->server = NULL;
     client->flags = flags;
     init_pipe_end( &client->pipe_end, pipe_flags, buffer_size );
+
+    client->pipe_end.fd = alloc_pseudo_fd( &pipe_client_fd_ops, &client->pipe_end.obj, options );
+    if (!client->pipe_end.fd)
+    {
+        release_object( client );
+        return NULL;
+    }
+    allow_fd_caching( client->pipe_end.fd );
+    set_fd_signaled( client->pipe_end.fd, 1 );
 
     return client;
 }
@@ -1148,7 +1158,6 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
     struct pipe_server *server;
     struct pipe_client *client;
     unsigned int pipe_sharing;
-    int fds[2];
 
     if (!(server = find_available_server( pipe )))
     {
@@ -1165,71 +1174,18 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
         return NULL;
     }
 
-    if ((client = create_pipe_client( options, pipe->flags, pipe->outsize )))
+    if ((client = create_pipe_client( options, pipe->flags, pipe->outsize, options )))
     {
-        if (use_server_io( &server->pipe_end ))
-        {
-            client->pipe_end.fd = alloc_pseudo_fd( &pipe_client_fd_ops, &client->pipe_end.obj, options );
-            if (client->pipe_end.fd)
-            {
-                set_fd_signaled( client->pipe_end.fd, 1 );
-                server->pipe_end.fd = (struct fd *)grab_object( server->ioctl_fd );
-                set_no_fd_status( server->ioctl_fd, STATUS_BAD_DEVICE_TYPE );
-            }
-            else
-            {
-                release_object( client );
-                client = NULL;
-            }
-        }
-        else if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
-        {
-            assert( !server->pipe_end.fd );
-
-            fcntl( fds[0], F_SETFL, O_NONBLOCK );
-            fcntl( fds[1], F_SETFL, O_NONBLOCK );
-
-            if (pipe->insize)
-            {
-                setsockopt( fds[0], SOL_SOCKET, SO_RCVBUF, &pipe->insize, sizeof(pipe->insize) );
-                setsockopt( fds[1], SOL_SOCKET, SO_RCVBUF, &pipe->insize, sizeof(pipe->insize) );
-            }
-            if (pipe->outsize)
-            {
-                setsockopt( fds[0], SOL_SOCKET, SO_SNDBUF, &pipe->outsize, sizeof(pipe->outsize) );
-                setsockopt( fds[1], SOL_SOCKET, SO_SNDBUF, &pipe->outsize, sizeof(pipe->outsize) );
-            }
-
-            client->pipe_end.fd = create_anonymous_fd( &pipe_client_fd_ops, fds[1], &client->pipe_end.obj, options );
-            server->pipe_end.fd = create_anonymous_fd( &pipe_server_fd_ops, fds[0], &server->pipe_end.obj, server->options );
-            if (client->pipe_end.fd && server->pipe_end.fd)
-            {
-                fd_copy_completion( server->ioctl_fd, server->pipe_end.fd );
-            }
-            else
-            {
-                release_object( client );
-                client = NULL;
-            }
-        }
-        else
-        {
-            file_set_error();
-            release_object( client );
-            client = NULL;
-        }
-        if (client)
-        {
-            allow_fd_caching( client->pipe_end.fd );
-            allow_fd_caching( server->pipe_end.fd );
-            if (server->state == ps_wait_open)
-                fd_async_wake_up( server->ioctl_fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
-            set_server_state( server, ps_connected_server );
-            server->client = client;
-            client->server = server;
-            server->pipe_end.connection = &client->pipe_end;
-            client->pipe_end.connection = &server->pipe_end;
-        }
+        server->pipe_end.fd = (struct fd *)grab_object( server->ioctl_fd );
+        set_no_fd_status( server->ioctl_fd, STATUS_BAD_DEVICE_TYPE );
+        allow_fd_caching( server->pipe_end.fd );
+        if (server->state == ps_wait_open)
+            fd_async_wake_up( server->ioctl_fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
+        set_server_state( server, ps_connected_server );
+        server->client = client;
+        client->server = server;
+        server->pipe_end.connection = &client->pipe_end;
+        client->pipe_end.connection = &server->pipe_end;
     }
     release_object( server );
     return &client->pipe_end.obj;
