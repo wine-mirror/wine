@@ -922,6 +922,12 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
     }
     reply_size -= offsetof( FILE_PIPE_PEEK_BUFFER, Data );
 
+    if (!pipe_end->connection && list_empty( &pipe_end->message_queue ))
+    {
+        set_error( STATUS_PIPE_BROKEN );
+        return 0;
+    }
+
     LIST_FOR_EACH_ENTRY( message, &pipe_end->message_queue, struct pipe_message, entry )
         avail += message->iosb->in_size - message->read_pos;
 

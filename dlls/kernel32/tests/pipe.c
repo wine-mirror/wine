@@ -209,6 +209,11 @@ static void test_CreateNamedPipe(int pipemode)
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
     test_signaled(hnp);
 
+    ret = PeekNamedPipe(hnp, NULL, 0, NULL, &readden, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_BAD_PIPE, "PeekNamedPipe returned %x (%u)\n",
+       ret, GetLastError());
+
     ret = WaitNamedPipeA(PIPENAME, 2000);
     ok(ret, "WaitNamedPipe failed (%d)\n", GetLastError());
 
@@ -1387,10 +1392,20 @@ static int test_DisconnectNamedPipe(void)
         ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL) == 0
             && GetLastError() == ERROR_PIPE_NOT_CONNECTED,
             "ReadFile from disconnected pipe with bytes waiting\n");
+
         ok(!DisconnectNamedPipe(hnp) && GetLastError() == ERROR_PIPE_NOT_CONNECTED,
            "DisconnectNamedPipe worked twice\n");
         ret = WaitForSingleObject(hFile, 0);
         ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %X\n", ret);
+
+        ret = PeekNamedPipe(hFile, NULL, 0, NULL, &readden, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "PeekNamedPipe returned %x (%u)\n",
+           ret, GetLastError());
+        ret = PeekNamedPipe(hnp, NULL, 0, NULL, &readden, NULL);
+        todo_wine
+        ok(!ret && GetLastError() == ERROR_BAD_PIPE, "PeekNamedPipe returned %x (%u)\n",
+           ret, GetLastError());
         ok(CloseHandle(hFile), "CloseHandle\n");
     }
 
@@ -1502,6 +1517,11 @@ static void test_CloseHandle(void)
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
 
     numbytes = 0xdeadbeef;
+    ret = PeekNamedPipe(hfile, NULL, 0, NULL, &numbytes, NULL);
+    ok(ret, "PeekNamedPipe failed with %u\n", GetLastError());
+    ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
+
+    numbytes = 0xdeadbeef;
     memset(buffer, 0, sizeof(buffer));
     ret = ReadFile(hfile, buffer, sizeof(buffer), &numbytes, NULL);
     ok(ret, "ReadFile failed with %u\n", GetLastError());
@@ -1517,6 +1537,12 @@ static void test_CloseHandle(void)
     ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
     ok(!ret, "ReadFile unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
+
+    numbytes = 0xdeadbeef;
+    ret = PeekNamedPipe(hfile, NULL, 0, NULL, &numbytes, NULL);
+    ok(!ret && GetLastError() == ERROR_BROKEN_PIPE, "PeekNamedPipe returned %x (%u)\n",
+       ret, GetLastError());
+    ok(numbytes == 0xdeadbeef, "numbytes = %u\n", numbytes);
 
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, testdata, sizeof(testdata), &numbytes, NULL);
@@ -1601,6 +1627,11 @@ static void test_CloseHandle(void)
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
 
     numbytes = 0xdeadbeef;
+    ret = PeekNamedPipe(hpipe, NULL, 0, NULL, &numbytes, NULL);
+    ok(ret, "PeekNamedPipe failed with %u\n", GetLastError());
+    ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
+
+    numbytes = 0xdeadbeef;
     memset(buffer, 0, sizeof(buffer));
     ret = ReadFile(hpipe, buffer, sizeof(buffer), &numbytes, NULL);
     ok(ret, "ReadFile failed with %u\n", GetLastError());
@@ -1616,6 +1647,12 @@ static void test_CloseHandle(void)
     ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);
     ok(!ret, "ReadFile unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
+
+    numbytes = 0xdeadbeef;
+    ret = PeekNamedPipe(hpipe, NULL, 0, NULL, &numbytes, NULL);
+    ok(!ret && GetLastError() == ERROR_BROKEN_PIPE, "PeekNamedPipe returned %x (%u)\n",
+       ret, GetLastError());
+    ok(numbytes == 0xdeadbeef, "numbytes = %u\n", numbytes);
 
     SetLastError(0xdeadbeef);
     ret = WriteFile(hpipe, testdata, sizeof(testdata), &numbytes, NULL);
