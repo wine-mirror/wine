@@ -6598,6 +6598,21 @@ static void test_static_messages(void)
 /****************** ComboBox message test *************************/
 #define ID_COMBOBOX 0x000f
 
+static const struct message SetCurSelComboSeq[] =
+{
+    { CB_SETCURSEL, sent|wparam|lparam, 0, 0 },
+    { LB_SETCURSEL, sent|wparam|lparam, 0, 0 },
+    { LB_SETTOPINDEX, sent|wparam|lparam, 0, 0 },
+    { LB_GETCURSEL, sent|wparam|lparam, 0, 0 },
+    { LB_GETTEXTLEN, sent|wparam|lparam, 0, 0 },
+    { LB_GETTEXTLEN, sent|wparam|lparam|optional, 0, 0 }, /* TODO: it's sent on all Windows versions */
+    { LB_GETTEXT, sent|wparam, 0 },
+    { WM_CTLCOLOREDIT, sent|parent },
+    { LB_GETITEMDATA, sent|wparam|lparam, 0, 0 },
+    { WM_DRAWITEM, sent|wparam|lparam|parent, ID_COMBOBOX, 0x100010f3 },
+    { 0 }
+};
+
 static const struct message WmKeyDownComboSeq[] =
 {
     { WM_KEYDOWN, sent|wparam|lparam, VK_DOWN, 0 },
@@ -6681,9 +6696,10 @@ static const struct message SetFocusButtonSeq2[] =
     { 0 }
 };
 
-static WNDPROC old_combobox_proc, edit_window_proc;
+static WNDPROC old_combobox_proc, edit_window_proc, lbox_window_proc;
 
-static LRESULT CALLBACK combobox_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK combobox_edit_subclass_proc(HWND hwnd, UINT message,
+        WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
     LRESULT ret;
@@ -6704,12 +6720,44 @@ static LRESULT CALLBACK combobox_subclass_proc(HWND hwnd, UINT message, WPARAM w
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
-        msg.descr = "combo";
+        msg.descr = "combo edit";
         add_message(&msg);
     }
 
     defwndproc_counter++;
     ret = CallWindowProcA(edit_window_proc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static LRESULT CALLBACK combobox_lbox_subclass_proc(HWND hwnd, UINT message,
+        WPARAM wParam, LPARAM lParam)
+{
+    static LONG defwndproc_counter = 0;
+    LRESULT ret;
+    struct recvd_message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_NCPAINT &&
+        message != WM_SYNCPAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCHITTEST &&
+        !ignore_message( message ))
+    {
+        msg.hwnd = hwnd;
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        msg.descr = "combo lbox";
+        add_message(&msg);
+    }
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(lbox_window_proc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
 
     return ret;
@@ -6764,7 +6812,7 @@ static void subclass_combobox(void)
 
 static void test_combobox_messages(void)
 {
-    HWND parent, combo, button, edit;
+    HWND parent, combo, button, edit, lbox;
     LRESULT ret;
     BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
     COMBOBOXINFO cbInfo;
@@ -6832,7 +6880,8 @@ static void test_combobox_messages(void)
     ok(res, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
     edit = cbInfo.hwndItem;
 
-    edit_window_proc = (WNDPROC)SetWindowLongPtrA(edit, GWLP_WNDPROC, (ULONG_PTR)combobox_subclass_proc);
+    edit_window_proc = (WNDPROC)SetWindowLongPtrA(edit, GWLP_WNDPROC,
+            (ULONG_PTR)combobox_edit_subclass_proc);
 
     button = CreateWindowExA(0, "Button", "OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
                              5, 50, 100, 20, parent, NULL,
@@ -6866,6 +6915,30 @@ static void test_combobox_messages(void)
     ok_sequence(SetFocusButtonSeq2, "SetFocus on a Button (2)", TRUE);
 
     DestroyWindow(button);
+    DestroyWindow(combo);
+
+    combo = CreateWindowExA(0, "my_combobox_class", "test",
+                            WS_CHILD | WS_VISIBLE | CBS_OWNERDRAWFIXED | CBS_DROPDOWNLIST,
+                            5, 5, 100, 100, parent, (HMENU)ID_COMBOBOX, NULL, NULL);
+    ok(combo != 0, "Failed to create combobox window\n");
+
+    ret = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"item 0");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+
+    cbInfo.cbSize = sizeof(COMBOBOXINFO);
+    SetLastError(0xdeadbeef);
+    res = pGetComboBoxInfo(combo, &cbInfo);
+    ok(res, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
+    lbox = cbInfo.hwndList;
+    lbox_window_proc = (WNDPROC)SetWindowLongPtrA(lbox, GWLP_WNDPROC,
+            (ULONG_PTR)combobox_lbox_subclass_proc);
+    flush_sequence();
+
+    log_all_parent_messages++;
+    SendMessageA(combo, CB_SETCURSEL, 0, 0);
+    log_all_parent_messages--;
+    ok_sequence(SetCurSelComboSeq, "CB_SETCURSEL on a ComboBox", TRUE);
+
     DestroyWindow(combo);
     DestroyWindow(parent);
 }
