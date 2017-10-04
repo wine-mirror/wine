@@ -81,6 +81,42 @@ static const struct object_ops ranges_ops =
     ranges_destroy             /* destroy */
 };
 
+/* file backing the shared sections of a PE image mapping */
+struct shared_map
+{
+    struct object   obj;             /* object header */
+    struct fd      *fd;              /* file descriptor of the mapped PE file */
+    struct file    *file;            /* temp file holding the shared data */
+    struct list     entry;           /* entry in global shared maps list */
+};
+
+static void shared_map_dump( struct object *obj, int verbose );
+static void shared_map_destroy( struct object *obj );
+
+static const struct object_ops shared_map_ops =
+{
+    sizeof(struct shared_map), /* size */
+    shared_map_dump,           /* dump */
+    no_get_type,               /* get_type */
+    no_add_queue,              /* add_queue */
+    NULL,                      /* remove_queue */
+    NULL,                      /* signaled */
+    NULL,                      /* satisfied */
+    no_signal,                 /* signal */
+    no_get_fd,                 /* get_fd */
+    no_map_access,             /* map_access */
+    default_get_sd,            /* get_sd */
+    default_set_sd,            /* set_sd */
+    no_lookup_name,            /* lookup_name */
+    no_link_name,              /* link_name */
+    NULL,                      /* unlink_name */
+    no_open_file,              /* open_file */
+    no_close_handle,           /* close_handle */
+    shared_map_destroy         /* destroy */
+};
+
+static struct list shared_map_list = LIST_INIT( shared_map_list );
+
 /* memory view mapped in client address space */
 struct memory_view
 {
@@ -102,8 +138,7 @@ struct mapping
     enum cpu_type   cpu;             /* client CPU (for PE image mapping) */
     pe_image_info_t image;           /* image info (for PE image mapping) */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
-    struct file    *shared_file;     /* temp file for shared PE mapping */
-    struct list     shared_entry;    /* entry in global shared PE mappings list */
+    struct shared_map *shared;       /* temp file for shared PE mapping */
 };
 
 static void mapping_dump( struct object *obj, int verbose );
@@ -149,8 +184,6 @@ static const struct fd_ops mapping_fd_ops =
     default_fd_reselect_async     /* reselect_async */
 };
 
-static struct list shared_list = LIST_INIT(shared_list);
-
 static size_t page_mask;
 
 #define ROUND_SIZE(size)  (((size) + page_mask) & ~page_mask)
@@ -166,6 +199,21 @@ static void ranges_destroy( struct object *obj )
 {
     struct ranges *ranges = (struct ranges *)obj;
     free( ranges->ranges );
+}
+
+static void shared_map_dump( struct object *obj, int verbose )
+{
+    struct shared_map *shared = (struct shared_map *)obj;
+    fprintf( stderr, "Shared mapping fd=%p file=%p\n", shared->fd, shared->file );
+}
+
+static void shared_map_destroy( struct object *obj )
+{
+    struct shared_map *shared = (struct shared_map *)obj;
+
+    release_object( shared->fd );
+    release_object( shared->file );
+    list_remove( &shared->entry );
 }
 
 /* extend a file beyond the current end of file */
@@ -277,13 +325,13 @@ void free_mapped_views( struct process *process )
 }
 
 /* find the shared PE mapping for a given mapping */
-static struct file *get_shared_file( struct mapping *mapping )
+static struct shared_map *get_shared_file( struct fd *fd )
 {
-    struct mapping *ptr;
+    struct shared_map *ptr;
 
-    LIST_FOR_EACH_ENTRY( ptr, &shared_list, struct mapping, shared_entry )
-        if (is_same_file_fd( ptr->fd, mapping->fd ))
-            return (struct file *)grab_object( ptr->shared_file );
+    LIST_FOR_EACH_ENTRY( ptr, &shared_map_list, struct shared_map, entry )
+        if (is_same_file_fd( ptr->fd, fd ))
+            return (struct shared_map *)grab_object( ptr );
     return NULL;
 }
 
@@ -397,6 +445,8 @@ static int find_committed_range( struct memory_view *view, file_pos_t start, mem
 static int build_shared_mapping( struct mapping *mapping, int fd,
                                  IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
+    struct shared_map *shared;
+    struct file *file;
     unsigned int i;
     mem_size_t total_size;
     size_t file_size, map_size, max_size;
@@ -420,13 +470,12 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
     }
     if (!total_size) return 1;  /* nothing to do */
 
-    if ((mapping->shared_file = get_shared_file( mapping ))) return 1;
+    if ((mapping->shared = get_shared_file( mapping->fd ))) return 1;
 
     /* create a temp file for the mapping */
 
     if ((shared_fd = create_temp_file( total_size )) == -1) return 0;
-    if (!(mapping->shared_file = create_file_for_fd( shared_fd, FILE_GENERIC_READ|FILE_GENERIC_WRITE, 0 )))
-        return 0;
+    if (!(file = create_file_for_fd( shared_fd, FILE_GENERIC_READ|FILE_GENERIC_WRITE, 0 ))) return 0;
 
     if (!(buffer = malloc( max_size ))) goto error;
 
@@ -457,11 +506,16 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         if (pwrite( shared_fd, buffer, file_size, write_pos ) != file_size) goto error;
     }
     free( buffer );
+
+    if (!(shared = alloc_object( &shared_map_ops ))) goto error;
+    shared->fd = (struct fd *)grab_object( mapping->fd );
+    shared->file = file;
+    list_add_head( &shared_map_list, &shared->entry );
+    mapping->shared = shared;
     return 1;
 
  error:
-    release_object( mapping->shared_file );
-    mapping->shared_file = NULL;
+    release_object( file );
     free( buffer );
     return 0;
 }
@@ -583,8 +637,6 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
 
     if (!build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections )) goto error;
 
-    if (mapping->shared_file) list_add_head( &shared_list, &mapping->shared_entry );
-
     free( sec );
     return 0;
 
@@ -650,7 +702,7 @@ static struct object *create_mapping( struct object *root, const struct unicode_
 
     mapping->size        = size;
     mapping->fd          = NULL;
-    mapping->shared_file = NULL;
+    mapping->shared      = NULL;
     mapping->committed   = NULL;
 
     if (!(mapping->flags = get_mapping_flags( handle, flags ))) goto error;
@@ -747,9 +799,9 @@ static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    fprintf( stderr, "Mapping size=%08x%08x flags=%08x fd=%p shared_file=%p\n",
+    fprintf( stderr, "Mapping size=%08x%08x flags=%08x fd=%p shared=%p\n",
              (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
-             mapping->flags, mapping->fd, mapping->shared_file );
+             mapping->flags, mapping->fd, mapping->shared );
 }
 
 static struct object_type *mapping_get_type( struct object *obj )
@@ -780,11 +832,7 @@ static void mapping_destroy( struct object *obj )
     assert( obj->ops == &mapping_ops );
     if (mapping->fd) release_object( mapping->fd );
     if (mapping->committed) release_object( mapping->committed );
-    if (mapping->shared_file)
-    {
-        release_object( mapping->shared_file );
-        list_remove( &mapping->shared_entry );
-    }
+    if (mapping->shared) release_object( mapping->shared );
 }
 
 static enum server_fd_type mapping_get_fd_type( struct fd *fd )
@@ -857,8 +905,8 @@ DECL_HANDLER(get_mapping_info)
         return;
     }
 
-    if (mapping->shared_file)
-        reply->shared_file = alloc_handle( current->process, mapping->shared_file,
+    if (mapping->shared)
+        reply->shared_file = alloc_handle( current->process, mapping->shared->file,
                                            GENERIC_READ|GENERIC_WRITE, 0 );
     release_object( mapping );
 }
