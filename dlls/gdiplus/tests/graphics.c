@@ -6569,6 +6569,75 @@ static void test_cliphrgn_transform(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_hdc_caching(void)
+{
+    GpStatus status;
+    HDC hdc;
+    HBITMAP hbm;
+    GpGraphics *graphics;
+    ULONG *bits;
+    BITMAPINFO bmi;
+    HRGN hrgn;
+    GpBrush *brush;
+
+    hdc = CreateCompatibleDC(0);
+    ok(hdc != NULL, "CreateCompatibleDC failed\n");
+    bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+    bmi.bmiHeader.biHeight = -5;
+    bmi.bmiHeader.biWidth = 5;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    bmi.bmiHeader.biClrUsed = 0;
+
+    hbm = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hbm != NULL, "CreateDIBSection failed\n");
+
+    SelectObject(hdc, hbm);
+
+    SetViewportOrgEx(hdc, 1, 1, NULL);
+
+    hrgn = CreateRectRgn(0, 0, 3, 3);
+    SelectClipRgn(hdc, hrgn);
+    DeleteObject(hrgn);
+
+    status = GdipCreateSolidFill((ARGB)0xffaaaaaa, (GpSolidFill**)&brush);
+    expect(Ok, status);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    memset(bits, 0, sizeof(*bits) * 25);
+    status = GdipFillRectangleI(graphics, brush, 0, 0, 4, 4);
+    expect(Ok, status);
+
+    expect(0, bits[0]);
+    expect(0xffaaaaaa, bits[6]);
+    expect(0xffaaaaaa, bits[12]);
+    expect(0, bits[18]);
+    expect(0, bits[24]);
+
+    SetViewportOrgEx(hdc, 0, 0, NULL);
+    OffsetClipRgn(hdc, 2, 2);
+
+    memset(bits, 0, sizeof(*bits) * 25);
+    status = GdipFillRectangleI(graphics, brush, 0, 0, 4, 4);
+    expect(Ok, status);
+
+    expect(0, bits[0]);
+    expect(0xffaaaaaa, bits[6]);
+    expect(0xffaaaaaa, bits[12]);
+    expect(0, bits[18]);
+    expect(0, bits[24]);
+
+    GdipDeleteGraphics(graphics);
+
+    GdipDeleteBrush(brush);
+
+    DeleteDC(hdc);
+    DeleteObject(hbm);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -6659,6 +6728,7 @@ START_TEST(graphics)
     test_container_rects();
     test_GdipGraphicsSetAbort();
     test_cliphrgn_transform();
+    test_hdc_caching();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
