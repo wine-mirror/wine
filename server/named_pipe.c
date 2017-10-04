@@ -863,6 +863,8 @@ static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
         return 0;
     }
 
+    if (!(write_end->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) && !get_req_data_size()) return 1;
+
     if (!(message = mem_alloc( sizeof(*message) ))) return 0;
     message->async = (struct async *)grab_object( async );
     message->iosb = async_get_iosb( async );
