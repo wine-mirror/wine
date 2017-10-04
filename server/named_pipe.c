@@ -930,21 +930,33 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
 
     LIST_FOR_EACH_ENTRY( message, &pipe_end->message_queue, struct pipe_message, entry )
         avail += message->iosb->in_size - message->read_pos;
+    reply_size = min( reply_size, avail );
 
-    if (avail)
+    if (avail && (pipe_end->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE))
     {
         message = LIST_ENTRY( list_head(&pipe_end->message_queue), struct pipe_message, entry );
         message_length = message->iosb->in_size - message->read_pos;
         reply_size = min( reply_size, message_length );
     }
-    else reply_size = 0;
 
     if (!(buffer = set_reply_data_size( offsetof( FILE_PIPE_PEEK_BUFFER, Data[reply_size] )))) return 0;
     buffer->NamedPipeState    = 0;  /* FIXME */
     buffer->ReadDataAvailable = avail;
     buffer->NumberOfMessages  = 0;  /* FIXME */
     buffer->MessageLength     = message_length;
-    if (reply_size) memcpy( buffer->Data, (const char *)message->iosb->in_data + message->read_pos, reply_size );
+
+    if (reply_size)
+    {
+        data_size_t write_pos = 0, writing;
+        LIST_FOR_EACH_ENTRY( message, &pipe_end->message_queue, struct pipe_message, entry )
+        {
+            writing = min( reply_size - write_pos, message->iosb->in_size - message->read_pos );
+            memcpy( buffer->Data + write_pos, (const char *)message->iosb->in_data + message->read_pos,
+                    writing );
+            write_pos += writing;
+            if (write_pos == reply_size) break;
+        }
+    }
     return 1;
 }
 
