@@ -225,6 +225,7 @@ HEADER_SRCS = \
 	amaudio.h \
 	appcompatapi.h \
 	appmgmt.h \
+	appmodel.h \
 	atlbase.h \
 	atlcom.h \
 	atlwin.h \
