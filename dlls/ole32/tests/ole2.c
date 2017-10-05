@@ -1560,7 +1560,7 @@ static void test_data_cache(void)
     IOleCache2 *pOleCache;
     IOleCache *olecache;
     IStorage *pStorage;
-    IUnknown *unk;
+    IUnknown *unk, *unk2;
     IPersistStorage *pPS;
     IViewObject *pViewObject;
     IOleCacheControl *pOleCacheControl;
@@ -1651,10 +1651,12 @@ static void test_data_cache(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IUnknown_QueryInterface(unk, &IID_IOleCache2, (void**)&pOleCache);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
+    hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void**)&unk2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(unk == (IUnknown*)olecache, "got %p, expected %p\n", olecache, unk);
     ok(unk == (IUnknown*)pOleCache, "got %p, expected %p\n", pOleCache, unk);
-}
+    ok(unk == unk2, "got %p, expected %p\n", unk2, unk);
+    IUnknown_Release(unk2);
     IOleCache2_Release(pOleCache);
     IOleCache_Release(olecache);
     IUnknown_Release(unk);

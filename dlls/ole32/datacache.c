@@ -1123,7 +1123,10 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
 
   if (IsEqualIID(&IID_IUnknown, riid))
   {
-    *ppvObject = iface;
+    if (this->outer_unk == iface) /* non-aggregated, return IUnknown from IOleCache2 */
+      *ppvObject = &this->IOleCache2_iface;
+    else
+      *ppvObject = iface;
   }
   else if (IsEqualIID(&IID_IDataObject, riid))
   {
