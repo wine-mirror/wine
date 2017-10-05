@@ -96,6 +96,7 @@ static double (__cdecl *p__atof_l)(const char*,_locale_t);
 static double (__cdecl *p__strtod_l)(const char *,char**,_locale_t);
 static int (__cdecl *p__strnset_s)(char*,size_t,int,size_t);
 static int (__cdecl *p__wcsset_s)(wchar_t*,size_t,wchar_t);
+static size_t (__cdecl *p__mbsnlen)(const unsigned char*, size_t);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -315,6 +316,20 @@ static void test_mbcp(void)
     expect_eq(_mbslen(mbstring2), 4, int, "%d");
     expect_eq(_mbslen(mbsonlylead), 0, int, "%d");          /* lead + NUL not counted as character */
     expect_eq(_mbslen(mbstring), 4, int, "%d");             /* lead + invalid trail counted */
+
+    if(!p__mbsnlen) {
+        win_skip("_mbsnlen tests\n");
+    }else {
+        expect_eq(p__mbsnlen(mbstring, 8), 8, int, "%d");
+        expect_eq(p__mbsnlen(mbstring, 9), 4, int, "%d");
+        expect_eq(p__mbsnlen(mbstring, 10), 4, int, "%d");
+        expect_eq(p__mbsnlen(mbsonlylead, 0), 0, int, "%d");
+        expect_eq(p__mbsnlen(mbsonlylead, 1), 1, int, "%d");
+        expect_eq(p__mbsnlen(mbsonlylead, 2), 0, int, "%d");
+        expect_eq(p__mbsnlen(mbstring2, 7), 7, int, "%d");
+        expect_eq(p__mbsnlen(mbstring2, 8), 4, int, "%d");
+        expect_eq(p__mbsnlen(mbstring2, 9), 4, int, "%d");
+    }
 
     /* mbrlen */
     if(!setlocale(LC_ALL, ".936") || !p_mbrlen) {
@@ -3270,6 +3285,7 @@ START_TEST(string)
     p__strtod_l = (void*)GetProcAddress(hMsvcrt, "_strtod_l");
     p__strnset_s = (void*)GetProcAddress(hMsvcrt, "_strnset_s");
     p__wcsset_s = (void*)GetProcAddress(hMsvcrt, "_wcsset_s");
+    p__mbsnlen = (void*)GetProcAddress(hMsvcrt, "_mbsnlen");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
