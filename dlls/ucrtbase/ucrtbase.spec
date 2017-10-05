@@ -631,7 +631,7 @@
 @ cdecl _mbsinc(str)
 @ stub _mbsinc_l
 @ cdecl _mbslen(str)
-@ stub _mbslen_l
+@ cdecl _mbslen_l(str ptr)
 @ cdecl _mbslwr(str)
 @ stub _mbslwr_l
 @ cdecl _mbslwr_s(str long)
@@ -680,8 +680,8 @@
 @ stub _mbsnicoll_l
 @ cdecl _mbsninc(str long)
 @ stub _mbsninc_l
-@ stub _mbsnlen
-@ stub _mbsnlen_l
+@ cdecl _mbsnlen(str long)
+@ cdecl _mbsnlen_l(str long ptr)
 @ cdecl _mbsnset(ptr long long)
 @ stub _mbsnset_l
 @ stub _mbsnset_s

@@ -112,7 +112,7 @@
 @ cdecl _mbsinc(str) ucrtbase._mbsinc
 @ stub _mbsinc_l
 @ cdecl _mbslen(str) ucrtbase._mbslen
-@ stub _mbslen_l
+@ cdecl _mbslen_l(str ptr) ucrtbase._mbslen_l
 @ cdecl _mbslwr(str) ucrtbase._mbslwr
 @ stub _mbslwr_l
 @ cdecl _mbslwr_s(str long) ucrtbase._mbslwr_s
@@ -161,8 +161,8 @@
 @ stub _mbsnicoll_l
 @ cdecl _mbsninc(str long) ucrtbase._mbsninc
 @ stub _mbsninc_l
-@ stub _mbsnlen
-@ stub _mbsnlen_l
+@ cdecl _mbsnlen(str long) ucrtbase._mbsnlen
+@ cdecl _mbsnlen_l(str long ptr) ucrtbase._mbsnlen_l
 @ cdecl _mbsnset(ptr long long) ucrtbase._mbsnset
 @ stub _mbsnset_l
 @ stub _mbsnset_s

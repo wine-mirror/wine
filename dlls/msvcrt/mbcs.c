@@ -569,23 +569,58 @@ unsigned char* CDECL _mbsninc(const unsigned char* str, MSVCRT_size_t num)
 }
 
 /*********************************************************************
+ *              _mbsnlen_l(MSVCRT.@)
+ */
+MSVCRT_size_t CDECL _mbsnlen_l(const unsigned char *str,
+        MSVCRT_size_t maxsize, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+    MSVCRT_size_t i = 0, len = 0;
+
+    if(!locale)
+        mbcinfo = get_mbcinfo();
+    else
+        mbcinfo = locale->mbcinfo;
+
+    if(!mbcinfo->ismbcodepage)
+        return MSVCRT_strnlen((const char*)str, maxsize);
+
+    while(i<maxsize && str[i])
+    {
+        if (_ismbblead_l(str[i], locale))
+        {
+            i++;
+            if (!str[i])  /* count only full chars */
+                break;
+        }
+        i++;
+        len++;
+    }
+    return i < maxsize ? len : maxsize;
+}
+
+/*********************************************************************
  *		_mbslen(MSVCRT.@)
  */
 MSVCRT_size_t CDECL _mbslen(const unsigned char* str)
 {
-  MSVCRT_size_t len = 0;
-  while(*str)
-  {
-    if (_ismbblead(*str))
-    {
-      str++;
-      if (!*str)  /* count only full chars */
-        break;
-    }
-    str++;
-    len++;
-  }
-  return len;
+    return _mbsnlen_l(str, -1, NULL);
+}
+
+/*********************************************************************
+ *              _mbslen_l(MSVCRT.@)
+ */
+MSVCRT_size_t CDECL _mbslen_l(const unsigned char* str, MSVCRT__locale_t locale)
+{
+    return _mbsnlen_l(str, -1, locale);
+}
+
+/*********************************************************************
+ *              _mbsnlen(MSVCRT.@)
+ */
+MSVCRT_size_t CDECL _mbsnlen(const unsigned char* str, MSVCRT_size_t maxsize)
+{
+    return _mbsnlen_l(str, maxsize, NULL);
 }
 
 /*********************************************************************
