@@ -2,7 +2,7 @@
 @ stub AppPolicyGetCreateFileAccess
 @ stub AppPolicyGetLifecycleManagement
 @ stub AppPolicyGetMediaFoundationCodecLoading
-@ stub AppPolicyGetProcessTerminationMethod
+@ stdcall AppPolicyGetProcessTerminationMethod(ptr ptr) kernelbase.AppPolicyGetProcessTerminationMethod
 @ stub AppPolicyGetShowDeveloperDiagnostic
 @ stub AppPolicyGetThreadInitializationType
 @ stub AppPolicyGetWindowingModel

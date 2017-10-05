@@ -16,9 +16,25 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "windows.h"
+#include "appmodel.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kernelbase);
+
+/***********************************************************************
+ *          AppPolicyGetProcessTerminationMethod (KERNELBASE.@)
+ */
+LONG WINAPI AppPolicyGetProcessTerminationMethod(HANDLE token, AppPolicyProcessTerminationMethod *policy)
+{
+    FIXME("%p, %p\n", token, policy);
+
+    if(policy)
+        *policy = AppPolicyProcessTerminationMethod_ExitProcess;
+
+    return ERROR_SUCCESS;
+}
 
 /***********************************************************************
  *          QuirkIsEnabled3 (KERNELBASE.@)
