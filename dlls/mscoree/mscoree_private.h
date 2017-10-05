@@ -142,6 +142,7 @@ extern BOOL is_mono_started DECLSPEC_HIDDEN;
 extern MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
 extern MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status) DECLSPEC_HIDDEN;
 extern MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status) DECLSPEC_HIDDEN;
+extern void (CDECL *mono_callspec_set_assembly)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
 extern MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type) DECLSPEC_HIDDEN;
 extern MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name) DECLSPEC_HIDDEN;
 extern MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count) DECLSPEC_HIDDEN;
@@ -165,7 +166,6 @@ extern void (CDECL *mono_runtime_quit)(void) DECLSPEC_HIDDEN;
 extern MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str) DECLSPEC_HIDDEN;
 extern MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain) DECLSPEC_HIDDEN;
 extern void (CDECL *mono_thread_manage)(void) DECLSPEC_HIDDEN;
-extern void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
 extern void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback) DECLSPEC_HIDDEN;
 extern void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback) DECLSPEC_HIDDEN;
 

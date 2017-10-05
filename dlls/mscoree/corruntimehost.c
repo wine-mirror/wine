@@ -1457,7 +1457,7 @@ __int32 WINAPI _CorExeMain(void)
 
             if (assembly)
             {
-                mono_trace_set_assembly(assembly);
+                mono_callspec_set_assembly(assembly);
 
                 exit_code = mono_jit_exec(domain, assembly, argc, argv);
             }

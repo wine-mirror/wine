@@ -87,6 +87,7 @@ typedef void (CDECL *MonoProfilerRuntimeShutdownBeginCallback) (MonoProfiler *pr
 MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
 MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status);
 MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
+void (CDECL *mono_callspec_set_assembly)(MonoAssembly *assembly);
 MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
 MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
 MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
@@ -122,7 +123,6 @@ MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
 static char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
 MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 void (CDECL *mono_thread_manage)(void);
-void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
 void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback);
 void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback);
 
@@ -224,7 +224,6 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_string_new);
         LOAD_MONO_FUNCTION(mono_thread_attach);
         LOAD_MONO_FUNCTION(mono_thread_manage);
-        LOAD_MONO_FUNCTION(mono_trace_set_assembly);
 
 #undef LOAD_MONO_FUNCTION
 
@@ -235,6 +234,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
     } \
 } while (0);
 
+        LOAD_OPT_MONO_FUNCTION(mono_callspec_set_assembly, NULL);
         LOAD_OPT_MONO_FUNCTION(mono_image_open_from_module_handle, image_open_module_handle_dummy);
         LOAD_OPT_MONO_FUNCTION(mono_profiler_create, NULL);
         LOAD_OPT_MONO_FUNCTION(mono_profiler_install, NULL);
@@ -244,6 +244,12 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_OPT_MONO_FUNCTION(mono_trace_set_printerr_handler, set_print_handler_dummy);
 
 #undef LOAD_OPT_MONO_FUNCTION
+
+        if (mono_callspec_set_assembly == NULL)
+        {
+            mono_callspec_set_assembly = (void*)GetProcAddress(mono_handle, "mono_trace_set_assembly");
+            if (!mono_callspec_set_assembly) goto fail;
+        }
 
         if (mono_profiler_create != NULL)
         {
