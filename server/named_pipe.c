@@ -280,13 +280,6 @@ static const struct fd_ops named_pipe_device_fd_ops =
     default_fd_reselect_async         /* reselect_async */
 };
 
-/* Returns if we handle I/O via server calls.
- * FIXME: no longer needed. */
-static int use_server_io( struct pipe_end *pipe_end )
-{
-    return 1;
-}
-
 static void named_pipe_dump( struct object *obj, int verbose )
 {
     fputs( "Named pipe\n", stderr );
@@ -394,25 +387,23 @@ static void free_message( struct pipe_message *message )
 static void pipe_end_disconnect( struct pipe_end *pipe_end, unsigned int status )
 {
     struct pipe_end *connection = pipe_end->connection;
+    struct pipe_message *message, *next;
+    struct async *async;
 
     pipe_end->connection = NULL;
 
-    if (use_server_io( pipe_end ))
+    if (pipe_end->fd) fd_async_wake_up( pipe_end->fd, ASYNC_TYPE_WAIT, status );
+    async_wake_up( &pipe_end->read_q, status );
+    LIST_FOR_EACH_ENTRY_SAFE( message, next, &pipe_end->message_queue, struct pipe_message, entry )
     {
-        struct pipe_message *message, *next;
-        struct async *async;
-        if (pipe_end->fd) fd_async_wake_up( pipe_end->fd, ASYNC_TYPE_WAIT, status );
-        async_wake_up( &pipe_end->read_q, status );
-        LIST_FOR_EACH_ENTRY_SAFE( message, next, &pipe_end->message_queue, struct pipe_message, entry )
-        {
-            async = message->async;
-            if (async || status == STATUS_PIPE_DISCONNECTED) free_message( message );
-            if (!async) continue;
-            async_terminate( async, status );
-            release_object( async );
-        }
-        if (status == STATUS_PIPE_DISCONNECTED) set_fd_signaled( pipe_end->fd, 0 );
+        async = message->async;
+        if (async || status == STATUS_PIPE_DISCONNECTED) free_message( message );
+        if (!async) continue;
+        async_terminate( async, status );
+        release_object( async );
     }
+    if (status == STATUS_PIPE_DISCONNECTED) set_fd_signaled( pipe_end->fd, 0 );
+
     if (connection)
     {
         connection->connection = NULL;
@@ -427,11 +418,6 @@ static void do_disconnect( struct pipe_server *server )
     {
         assert( server->client->server == server );
         assert( server->client->pipe_end.fd );
-        if (!use_server_io( &server->pipe_end ))
-        {
-            release_object( server->client->pipe_end.fd );
-            server->client->pipe_end.fd = NULL;
-        }
     }
     assert( server->pipe_end.fd );
     release_object( server->pipe_end.fd );
@@ -744,8 +730,6 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct pipe_end *pipe_end = get_fd_user( fd );
 
-    if (!use_server_io( pipe_end )) return no_fd_read( fd, async, pos );
-
     if (!pipe_end->connection && list_empty( &pipe_end->message_queue ))
     {
         set_error( STATUS_PIPE_BROKEN );
@@ -763,8 +747,6 @@ static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
     struct pipe_end *write_end = get_fd_user( fd );
     struct pipe_end *read_end = write_end->connection;
     struct pipe_message *message;
-
-    if (!use_server_io( write_end )) return no_fd_write( fd, async, pos );
 
     if (!read_end)
     {
@@ -792,9 +774,7 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue )
 
     if (ignore_reselect) return;
 
-    if (!use_server_io( pipe_end ))
-        default_fd_reselect_async( fd, queue );
-    else if (&pipe_end->write_q == queue)
+    if (&pipe_end->write_q == queue)
         reselect_write_queue( pipe_end );
     else if (&pipe_end->read_q == queue)
         reselect_read_queue( pipe_end );
@@ -812,12 +792,6 @@ static int pipe_end_peek( struct pipe_end *pipe_end )
     struct pipe_message *message;
     data_size_t avail = 0;
     data_size_t message_length = 0;
-
-    if (!use_server_io( pipe_end ))
-    {
-        set_error( STATUS_NOT_SUPPORTED );
-        return 0;
-    }
 
     if (reply_size < offsetof( FILE_PIPE_PEEK_BUFFER, Data ))
     {
