@@ -7591,12 +7591,60 @@ static void test_object_lifetime(void)
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
+struct testowner_object
+{
+    IUnknown IUnknown_iface;
+    LONG ref;
+};
+
+static inline struct testowner_object *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct testowner_object, IUnknown_iface);
+}
+
+static HRESULT WINAPI testowner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testowner_AddRef(IUnknown *iface)
+{
+    struct testowner_object *object = impl_from_IUnknown(iface);
+    return InterlockedIncrement(&object->ref);
+}
+
+static ULONG WINAPI testowner_Release(IUnknown *iface)
+{
+    struct testowner_object *object = impl_from_IUnknown(iface);
+    return InterlockedDecrement(&object->ref);
+}
+
+static const IUnknownVtbl testownervtbl = {
+    testowner_QueryInterface,
+    testowner_AddRef,
+    testowner_Release,
+};
+
+static void testowner_init(struct testowner_object *object)
+{
+    object->IUnknown_iface.lpVtbl = &testownervtbl;
+    object->ref = 1;
+}
+
 static void test_inmemory_file_loader(void)
 {
+    IDWriteFontFileStream *stream, *stream2, *stream3;
     IDWriteFontFileLoader *loader, *loader2;
     IDWriteInMemoryFontFileLoader *inmemory;
+    struct testowner_object ownerobject;
     IDWriteFontFile *file, *file2;
-    IDWriteFontFileStream *stream;
     IDWriteFontFace *fontface;
     IDWriteFactory5 *factory5;
     IDWriteFactory *factory;
@@ -7616,15 +7664,18 @@ static void test_inmemory_file_loader(void)
         return;
     }
 
+    EXPECT_REF(factory5, 1);
     hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory5, &loader);
 todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
+    EXPECT_REF(factory5, 1);
 
     if (FAILED(hr)) {
         IDWriteFactory5_Release(factory5);
         return;
     }
 
+    testowner_init(&ownerobject);
     fontface = create_fontface((IDWriteFactory *)factory5);
 
     hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory5, &loader2);
@@ -7635,6 +7686,7 @@ todo_wine
     hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteInMemoryFontFileLoader, (void **)&inmemory);
     ok(hr == S_OK, "got %#x\n", hr);
     IDWriteFontFileLoader_Release(loader);
+    EXPECT_REF(inmemory, 1);
 
     /* Use whole font blob to construct in-memory file. */
     count = 1;
@@ -7658,21 +7710,28 @@ todo_wine
     hr = IDWriteFontFileStream_ReadFileFragment(stream, &data, 0, file_size, &context);
     ok(hr == S_OK, "got %#x\n", hr);
 
+    /* Not registered yet. */
     hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
         file_size, NULL, &file);
     ok(hr == E_INVALIDARG, "got %#x\n", hr);
 
     hr = IDWriteFactory5_RegisterFontFileLoader(factory5, (IDWriteFontFileLoader *)inmemory);
     ok(hr == S_OK, "got %#x\n", hr);
+    EXPECT_REF(inmemory, 2);
 
+    EXPECT_REF(&ownerobject.IUnknown_iface, 1);
     hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
-        file_size, NULL, &file);
+        file_size, &ownerobject.IUnknown_iface, &file);
     ok(hr == S_OK, "got %#x\n", hr);
+    EXPECT_REF(&ownerobject.IUnknown_iface, 2);
+    EXPECT_REF(inmemory, 3);
 
     hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
-        file_size, NULL, &file2);
+        file_size, &ownerobject.IUnknown_iface, &file2);
     ok(hr == S_OK, "got %#x\n", hr);
     ok(file2 != file, "got unexpected file\n");
+    EXPECT_REF(&ownerobject.IUnknown_iface, 3);
+    EXPECT_REF(inmemory, 4);
 
     /* Check in-memory reference key format. */
     hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
@@ -7687,32 +7746,42 @@ todo_wine
     ok(key && *(DWORD*)key == 2, "got wrong ref key\n");
     ok(key_size == 4, "ref key size %u\n", key_size);
 
-    /* Release file and index 1, create new one to see if index is reused. */
+    EXPECT_REF(inmemory, 4);
+    hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, key, key_size, &stream2);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+    EXPECT_REF(stream2, 1);
+    EXPECT_REF(inmemory, 4);
+
+    hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, key, key_size, &stream3);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+
+    ok(stream2 != stream3, "Unexpected stream.\n");
+
+    IDWriteFontFileStream_Release(stream2);
+    IDWriteFontFileStream_Release(stream3);
+
+    /* Release file at index 1, create new one to see if index is reused. */
+    EXPECT_REF(&ownerobject.IUnknown_iface, 3);
     IDWriteFontFile_Release(file);
+    EXPECT_REF(&ownerobject.IUnknown_iface, 3);
 
-    hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
-        file_size, NULL, &file);
-    ok(hr == S_OK, "got %#x\n", hr);
-    ok(file2 != file, "got unexpected file\n");
-
-    hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
-    ok(hr == S_OK, "got %#x\n", hr);
-
-    ok(key && *(DWORD*)key == 3, "got wrong ref key\n");
-    ok(key_size == 4, "ref key size %u\n", key_size);
-
-    IDWriteFontFile_Release(file);
+    EXPECT_REF(&ownerobject.IUnknown_iface, 3);
     IDWriteFontFile_Release(file2);
+    EXPECT_REF(&ownerobject.IUnknown_iface, 3);
 
     hr = IDWriteFactory5_UnregisterFontFileLoader(factory5, (IDWriteFontFileLoader *)inmemory);
     ok(hr == S_OK, "got %#x\n", hr);
+    EXPECT_REF(&ownerobject.IUnknown_iface, 3);
 
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
     IDWriteFontFileStream_Release(stream);
-
-    IDWriteInMemoryFontFileLoader_Release(inmemory);
-
     IDWriteFontFace_Release(fontface);
+
+    EXPECT_REF(&ownerobject.IUnknown_iface, 3);
+    ref = IDWriteInMemoryFontFileLoader_Release(inmemory);
+    ok(ref == 0, "loader not released, %u.\n", ref);
+    EXPECT_REF(&ownerobject.IUnknown_iface, 1);
+
     ref = IDWriteFactory5_Release(factory5);
     ok(ref == 0, "factory not released, %u\n", ref);
 }
