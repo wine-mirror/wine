@@ -146,7 +146,6 @@ static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
 static int pipe_end_flush( struct fd *fd, struct async *async );
 static void pipe_end_get_volume_info( struct fd *fd, unsigned int info_class );
-static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 
 /* server end functions */
@@ -187,7 +186,7 @@ static const struct fd_ops pipe_server_fd_ops =
     pipe_end_flush,               /* flush */
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_server_ioctl,            /* ioctl */
-    pipe_end_queue_async,         /* queue_async */
+    no_fd_queue_async,            /* queue_async */
     pipe_end_reselect_async       /* reselect_async */
 };
 
@@ -230,7 +229,7 @@ static const struct fd_ops pipe_client_fd_ops =
     pipe_end_flush,               /* flush */
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_client_ioctl,            /* ioctl */
-    pipe_end_queue_async,         /* queue_async */
+    no_fd_queue_async,            /* queue_async */
     pipe_end_reselect_async       /* reselect_async */
 };
 
@@ -785,13 +784,6 @@ static int pipe_end_write( struct fd *fd, struct async *async, file_pos_t pos )
     reselect_write_queue( write_end );
     set_error( STATUS_PENDING );
     return 1;
-}
-
-static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count )
-{
-    struct pipe_end *pipe_end = get_fd_user( fd );
-    if (use_server_io( pipe_end )) no_fd_queue_async( fd, async, type, count );
-    else default_fd_queue_async( fd, async, type, count );
 }
 
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue )
