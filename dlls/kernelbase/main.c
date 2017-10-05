@@ -37,6 +37,19 @@ LONG WINAPI AppPolicyGetProcessTerminationMethod(HANDLE token, AppPolicyProcessT
 }
 
 /***********************************************************************
+ *          AppPolicyGetThreadInitializationType (KERNELBASE.@)
+ */
+LONG WINAPI AppPolicyGetThreadInitializationType(HANDLE token, AppPolicyThreadInitializationType *policy)
+{
+    FIXME("%p, %p\n", token, policy);
+
+    if(policy)
+        *policy = AppPolicyThreadInitializationType_None;
+
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
  *          QuirkIsEnabled3 (KERNELBASE.@)
  */
 BOOL WINAPI QuirkIsEnabled3(void *unk1, void *unk2)
