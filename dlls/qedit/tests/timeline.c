@@ -124,11 +124,17 @@ static void test_timelineobj_interfaces(void)
     if(hr == S_OK)
     {
         IAMTimelineGroup *group;
+        IAMTimelineObj *obj2;
 
         hr = IAMTimelineObj_QueryInterface(obj, &IID_IAMTimelineGroup, (void **)&group);
-        todo_wine ok(hr == S_OK, "got %08x\n", hr);
-        if(hr == S_OK)
-            IAMTimelineGroup_Release(group);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        hr = IAMTimelineGroup_QueryInterface(group, &IID_IAMTimelineObj, (void **)&obj2);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(obj == obj2, "Different pointers\n");
+        IAMTimelineObj_Release(obj2);
+
+        IAMTimelineGroup_Release(group);
 
         IAMTimelineObj_Release(obj);
     }
