@@ -1181,10 +1181,6 @@ end:
     pDeleteSecurityContext(&client.ctxt);
     pFreeCredentialsHandle(&client.cred);
 
-    HeapFree(GetProcessHeap(), 0, fake_data[0].pvBuffer);
-    HeapFree(GetProcessHeap(), 0, fake_data[1].pvBuffer);
-    HeapFree(GetProcessHeap(), 0, data[0].pvBuffer);
-    HeapFree(GetProcessHeap(), 0, data[1].pvBuffer);
     HeapFree(GetProcessHeap(), 0, complex_data[1].pvBuffer);
     HeapFree(GetProcessHeap(), 0, complex_data[3].pvBuffer);
 }
