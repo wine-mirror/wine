@@ -1699,69 +1699,6 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         if (!status) status = DIR_unmount_device( handle );
         return status;
 
-    case FSCTL_PIPE_PEEK:
-        {
-            FILE_PIPE_PEEK_BUFFER *buffer = out_buffer;
-            int avail = 0, fd, needs_close;
-
-            if (out_size < FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data ))
-            {
-                status = STATUS_INFO_LENGTH_MISMATCH;
-                break;
-            }
-
-            if ((status = server_get_unix_fd( handle, FILE_READ_DATA, &fd, &needs_close, NULL, NULL )))
-            {
-                if (status == STATUS_BAD_DEVICE_TYPE)
-                    return server_ioctl_file( handle, event, apc, apc_context, io, code,
-                                              in_buffer, in_size, out_buffer, out_size );
-                break;
-            }
-
-#ifdef FIONREAD
-            if (ioctl( fd, FIONREAD, &avail ) != 0)
-            {
-                TRACE("FIONREAD failed reason: %s\n",strerror(errno));
-                if (needs_close) close( fd );
-                status = FILE_GetNtStatus();
-                break;
-            }
-#endif
-            if (!avail)  /* check for closed pipe */
-            {
-                struct pollfd pollfd;
-                int ret;
-
-                pollfd.fd = fd;
-                pollfd.events = POLLIN;
-                pollfd.revents = 0;
-                ret = poll( &pollfd, 1, 0 );
-                if (ret == -1 || (ret == 1 && (pollfd.revents & (POLLHUP|POLLERR))))
-                {
-                    if (needs_close) close( fd );
-                    status = STATUS_PIPE_BROKEN;
-                    break;
-                }
-            }
-            buffer->NamedPipeState    = 0;  /* FIXME */
-            buffer->ReadDataAvailable = avail;
-            buffer->NumberOfMessages  = 0;  /* FIXME */
-            buffer->MessageLength     = 0;  /* FIXME */
-            io->Information = FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data );
-            status = STATUS_SUCCESS;
-            if (avail)
-            {
-                ULONG data_size = out_size - FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data );
-                if (data_size)
-                {
-                    int res = recv( fd, buffer->Data, data_size, MSG_PEEK );
-                    if (res >= 0) io->Information += res;
-                }
-            }
-            if (needs_close) close( fd );
-        }
-        break;
-
     case FSCTL_PIPE_DISCONNECT:
         status = server_ioctl_file( handle, event, apc, apc_context, io, code,
                                     in_buffer, in_size, out_buffer, out_size );

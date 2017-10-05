@@ -4179,6 +4179,7 @@ static void test_read_write(void)
 static void test_ioctl(void)
 {
     HANDLE event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    FILE_PIPE_PEEK_BUFFER peek_buf;
     IO_STATUS_BLOCK iosb;
     HANDLE file;
     NTSTATUS status;
@@ -4194,6 +4195,13 @@ static void test_ioctl(void)
 
     status = pNtFsControlFile(file, (HANDLE)0xdeadbeef, NULL, NULL, &iosb, 0xdeadbeef, 0, 0, 0, 0);
     ok(status == STATUS_INVALID_HANDLE, "NtFsControlFile returned %x\n", status);
+
+    memset(&iosb, 0x55, sizeof(iosb));
+    status = NtFsControlFile(file, NULL, NULL, NULL, &iosb, FSCTL_PIPE_PEEK, NULL, 0,
+                             &peek_buf, sizeof(peek_buf));
+    todo_wine
+    ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtFsControlFile failed: %x\n", status);
+    ok(iosb.Status == 0x55555555, "iosb.Status = %x\n", iosb.Status);
 
     CloseHandle(event);
     CloseHandle(file);
