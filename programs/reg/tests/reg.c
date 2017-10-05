@@ -78,8 +78,11 @@ static void verify_reg_(unsigned line, HKEY hkey, const char* value,
         lok(type == exp_type, "got wrong type %d, expected %d\n", type, exp_type);
     todo_wine_if (todo & TODO_REG_SIZE)
         lok(size == exp_size, "got wrong size %d, expected %d\n", size, exp_size);
-    todo_wine_if (todo & TODO_REG_DATA)
-        lok(memcmp(data, exp_data, size) == 0, "got wrong data\n");
+    if (exp_data)
+    {
+        todo_wine_if (todo & TODO_REG_DATA)
+            lok(memcmp(data, exp_data, size) == 0, "got wrong data\n");
+    }
 }
 
 #define verify_reg_nonexist(k,v) verify_reg_nonexist_(__LINE__,k,v)
@@ -2343,6 +2346,24 @@ static void test_import(void)
     verify_reg(hkey, "Wine67c", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine67d", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine68a\"=hex(1):\n"
+                    "\"Wine68b\"=hex(2):\n"
+                    "\"Wine68c\"=hex(3):\n"
+                    "\"Wine68d\"=hex(4):\n"
+                    "\"Wine68e\"=hex(7):\n"
+                    "\"Wine68f\"=hex(100):\n"
+                    "\"Wine68g\"=hex(abcd):\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "Wine68a", REG_SZ, NULL, 0, 0);
+    verify_reg(hkey, "Wine68b", REG_EXPAND_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine68c", REG_BINARY, NULL, 0, 0);
+    verify_reg(hkey, "Wine68d", REG_DWORD, NULL, 0, 0);
+    verify_reg(hkey, "Wine68e", REG_MULTI_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine68f", 0x100, NULL, 0, 0);
+    verify_reg(hkey, "Wine68g", 0xabcd, NULL, 0, 0);
+
     err = RegCloseKey(hkey);
     ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
@@ -3822,6 +3843,24 @@ static void test_unicode_import(void)
     verify_reg(hkey, "Wine67b", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine67c", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine67d", REG_EXPAND_SZ, "%PATH%", 7, 0);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine68a\"=hex(1):\n"
+                     "\"Wine68b\"=hex(2):\n"
+                     "\"Wine68c\"=hex(3):\n"
+                     "\"Wine68d\"=hex(4):\n"
+                     "\"Wine68e\"=hex(7):\n"
+                     "\"Wine68f\"=hex(100):\n"
+                     "\"Wine68g\"=hex(abcd):\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "Wine68a", REG_SZ, NULL, 0, 0);
+    verify_reg(hkey, "Wine68b", REG_EXPAND_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine68c", REG_BINARY, NULL, 0, 0);
+    verify_reg(hkey, "Wine68d", REG_DWORD, NULL, 0, 0);
+    verify_reg(hkey, "Wine68e", REG_MULTI_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine68f", 0x100, NULL, 0, 0);
+    verify_reg(hkey, "Wine68g", 0xabcd, NULL, 0, 0);
 
     err = RegCloseKey(hkey);
     ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
