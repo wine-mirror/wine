@@ -356,9 +356,7 @@ static void test_CreateNamedPipe(int pipemode)
         ok(avail == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes available\n", avail);
         ok(PeekNamedPipe(hFile, ibuf, sizeof(ibuf), &readden, &avail, &left), "Peek3\n");
         if (pipemode == PIPE_TYPE_BYTE) {
-            /* currently the Wine behavior depends on the kernel version */
-            /* ok(readden == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes\n", readden); */
-            if (readden != sizeof(obuf) + sizeof(obuf2)) todo_wine ok(0, "peek3 got %d bytes\n", readden);
+            ok(readden == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes\n", readden);
             ok(left == (DWORD) -(sizeof(obuf) + sizeof(obuf2)), "peek3 got %d bytes left\n", left);
         }
         else
@@ -395,9 +393,7 @@ static void test_CreateNamedPipe(int pipemode)
         ok(avail == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes available\n", avail);
         ok(PeekNamedPipe(hnp, ibuf, sizeof(ibuf), &readden, &avail, &left), "Peek4\n");
         if (pipemode == PIPE_TYPE_BYTE) {
-            /* currently the Wine behavior depends on the kernel version */
-            /* ok(readden == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes\n", readden); */
-            if (readden != sizeof(obuf) + sizeof(obuf2)) todo_wine ok(0, "peek4 got %d bytes\n", readden);
+            ok(readden == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes\n", readden);
             ok(left == (DWORD) -(sizeof(obuf) + sizeof(obuf2)), "peek4 got %d bytes left\n", left);
         }
         else
