@@ -2070,7 +2070,7 @@ static enum fill_status fill_ip4routetable( struct table *table, const struct ex
         heap_free( forwards );
         return FILL_STATUS_FAILED;
     }
-    if (!resize_table( table, forwards->dwNumEntries, sizeof(*rec) ))
+    if (!resize_table( table, max(forwards->dwNumEntries, 1), sizeof(*rec) ))
     {
         heap_free( forwards );
         return FILL_STATUS_FAILED;
