@@ -126,8 +126,11 @@ static void verify_reg_(unsigned line, HKEY hkey, const char *value,
         lok(type == exp_type, "got wrong type %d, expected %d\n", type, exp_type);
     todo_wine_if (todo & TODO_REG_SIZE)
         lok(size == exp_size, "got wrong size %d, expected %d\n", size, exp_size);
-    todo_wine_if (todo & TODO_REG_DATA)
-        lok(memcmp(data, exp_data, size) == 0, "got wrong data\n");
+    if (exp_data)
+    {
+        todo_wine_if (todo & TODO_REG_DATA)
+            lok(memcmp(data, exp_data, size) == 0, "got wrong data\n");
+    }
 }
 
 #define verify_reg_nonexist(k,n) r_verify_reg_nonexist(__LINE__,k,n)
@@ -641,6 +644,23 @@ static void test_basic_import(void)
     verify_reg(hkey, "Wine21c", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine21d", REG_EXPAND_SZ, "%PATH%", 7, 0);
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine22a\"=hex(1):\n"
+                    "\"Wine22b\"=hex(2):\n"
+                    "\"Wine22c\"=hex(3):\n"
+                    "\"Wine22d\"=hex(4):\n"
+                    "\"Wine22e\"=hex(7):\n"
+                    "\"Wine22f\"=hex(100):\n"
+                    "\"Wine22g\"=hex(abcd):\n\n");
+    verify_reg(hkey, "Wine22a", REG_SZ, NULL, 0, 0);
+    verify_reg(hkey, "Wine22b", REG_EXPAND_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine22c", REG_BINARY, NULL, 0, 0);
+    verify_reg(hkey, "Wine22d", REG_DWORD, NULL, 0, 0);
+    verify_reg(hkey, "Wine22e", REG_MULTI_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine22f", 0x100, NULL, 0, 0);
+    verify_reg(hkey, "Wine22g", 0xabcd, NULL, 0, 0);
+
     RegCloseKey(hkey);
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
@@ -1037,6 +1057,23 @@ static void test_basic_import_unicode(void)
     verify_reg(hkey, "Wine21b", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine21c", REG_EXPAND_SZ, "%PATH%", 7, 0);
     verify_reg(hkey, "Wine21d", REG_EXPAND_SZ, "%PATH%", 7, 0);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine22a\"=hex(1):\n"
+                     "\"Wine22b\"=hex(2):\n"
+                     "\"Wine22c\"=hex(3):\n"
+                     "\"Wine22d\"=hex(4):\n"
+                     "\"Wine22e\"=hex(7):\n"
+                     "\"Wine22f\"=hex(100):\n"
+                     "\"Wine22g\"=hex(abcd):\n\n");
+    verify_reg(hkey, "Wine22a", REG_SZ, NULL, 0, 0);
+    verify_reg(hkey, "Wine22b", REG_EXPAND_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine22c", REG_BINARY, NULL, 0, 0);
+    verify_reg(hkey, "Wine22d", REG_DWORD, NULL, 0, 0);
+    verify_reg(hkey, "Wine22e", REG_MULTI_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine22f", 0x100, NULL, 0, 0);
+    verify_reg(hkey, "Wine22g", 0xabcd, NULL, 0, 0);
 
     RegCloseKey(hkey);
 
