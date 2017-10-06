@@ -67,10 +67,10 @@
 @ cdecl _mbbtype(long long) ucrtbase._mbbtype
 @ stub _mbbtype_l
 @ stub _mbcasemap
-@ cdecl _mbccpy(ptr str) ucrtbase._mbccpy
-@ stub _mbccpy_l
-@ stub _mbccpy_s
-@ stub _mbccpy_s_l
+@ cdecl _mbccpy(ptr ptr) ucrtbase._mbccpy
+@ cdecl _mbccpy_l(ptr ptr ptr) ucrtbase._mbccpy_l
+@ cdecl _mbccpy_s(ptr long ptr ptr) ucrtbase._mbccpy_s
+@ cdecl _mbccpy_s_l(ptr long ptr ptr ptr) ucrtbase._mbccpy_s_l
 @ cdecl _mbcjistojms(long) ucrtbase._mbcjistojms
 @ stub _mbcjistojms_l
 @ cdecl _mbcjmstojis(long) ucrtbase._mbcjmstojis

@@ -396,7 +396,7 @@
 @ cdecl _mbbtombc(long) msvcrt._mbbtombc
 @ cdecl _mbbtype(long long) msvcrt._mbbtype
 # extern _mbcasemap
-@ cdecl _mbccpy(ptr str) msvcrt._mbccpy
+@ cdecl _mbccpy(ptr ptr) msvcrt._mbccpy
 @ cdecl _mbcjistojms(long) msvcrt._mbcjistojms
 @ cdecl _mbcjmstojis(long) msvcrt._mbcjmstojis
 @ cdecl _mbclen(ptr) msvcrt._mbclen

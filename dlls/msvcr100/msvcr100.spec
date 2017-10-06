@@ -1073,10 +1073,10 @@
 @ cdecl _mbbtype(long long)
 @ stub _mbbtype_l
 # extern _mbcasemap
-@ cdecl _mbccpy(ptr str)
-@ stub _mbccpy_l
-@ stub _mbccpy_s
-@ stub _mbccpy_s_l
+@ cdecl _mbccpy(ptr ptr)
+@ cdecl _mbccpy_l(ptr ptr ptr)
+@ cdecl _mbccpy_s(ptr long ptr ptr)
+@ cdecl _mbccpy_s_l(ptr long ptr ptr ptr)
 @ cdecl _mbcjistojms(long)
 @ stub _mbcjistojms_l
 @ cdecl _mbcjmstojis(long)
