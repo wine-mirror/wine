@@ -843,6 +843,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     COLORREF oldBackground;
     COLORREF oldForeground;
     int oldStretchMode;
+    DIBSECTION dib;
 
     if(widthDest < 0 || heightDest < 0 || widthSrc < 0 || heightSrc < 0) {
         TRACE("Cannot mirror\n");
@@ -857,9 +858,11 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     if(oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
         SetStretchBltMode(hdcSrc, COLORONCOLOR);
     hdcWork = CreateCompatibleDC(hdcDest);
-    if (GetObjectType( hdcDest ) != OBJ_MEMDC && GetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
+    if ((GetObjectType( hdcDest ) != OBJ_MEMDC ||
+         GetObjectW( GetCurrentObject( hdcDest, OBJ_BITMAP ), sizeof(dib), &dib ) == sizeof(BITMAP)) &&
+        GetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
     {
-        /* screen DCs are not supposed to have an alpha channel, so use a 24-bpp bitmap as copy */
+        /* screen DCs or DDBs are not supposed to have an alpha channel, so use a 24-bpp bitmap as copy */
         BITMAPINFO info;
         info.bmiHeader.biSize = sizeof(info.bmiHeader);
         info.bmiHeader.biWidth = widthDest;
