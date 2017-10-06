@@ -34,7 +34,14 @@ typedef enum AppPolicyThreadInitializationType
     AppPolicyThreadInitializationType_InitializeWinRT = 1,
 } AppPolicyThreadInitializationType;
 
+typedef enum AppPolicyShowDeveloperDiagnostic
+{
+    AppPolicyShowDeveloperDiagnostic_None   = 0,
+    AppPolicyShowDeveloperDiagnostic_ShowUI = 1,
+} AppPolicyShowDeveloperDiagnostic;
+
 LONG WINAPI AppPolicyGetProcessTerminationMethod(HANDLE token, AppPolicyProcessTerminationMethod *policy);
+LONG WINAPI AppPolicyGetShowDeveloperDiagnostic(HANDLE token, AppPolicyShowDeveloperDiagnostic *policy);
 LONG WINAPI AppPolicyGetThreadInitializationType(HANDLE token, AppPolicyThreadInitializationType *policy);
 
 #if defined(__cplusplus)

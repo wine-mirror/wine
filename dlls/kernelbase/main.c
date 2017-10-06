@@ -50,6 +50,20 @@ LONG WINAPI AppPolicyGetThreadInitializationType(HANDLE token, AppPolicyThreadIn
 }
 
 /***********************************************************************
+ *          AppPolicyGetShowDeveloperDiagnostic (KERNELBASE.@)
+ */
+LONG WINAPI AppPolicyGetShowDeveloperDiagnostic(HANDLE token, AppPolicyShowDeveloperDiagnostic *policy)
+{
+    FIXME("%p, %p\n", token, policy);
+
+    if(policy)
+        *policy = AppPolicyShowDeveloperDiagnostic_ShowUI;
+
+    return ERROR_SUCCESS;
+}
+
+
+/***********************************************************************
  *          QuirkIsEnabled3 (KERNELBASE.@)
  */
 BOOL WINAPI QuirkIsEnabled3(void *unk1, void *unk2)

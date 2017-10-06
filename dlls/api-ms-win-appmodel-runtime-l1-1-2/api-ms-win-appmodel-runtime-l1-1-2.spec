@@ -3,7 +3,7 @@
 @ stub AppPolicyGetLifecycleManagement
 @ stub AppPolicyGetMediaFoundationCodecLoading
 @ stdcall AppPolicyGetProcessTerminationMethod(ptr ptr) kernelbase.AppPolicyGetProcessTerminationMethod
-@ stub AppPolicyGetShowDeveloperDiagnostic
+@ stdcall AppPolicyGetShowDeveloperDiagnostic(ptr ptr) kernelbase.AppPolicyGetShowDeveloperDiagnostic
 @ stdcall AppPolicyGetThreadInitializationType(ptr ptr) kernelbase.AppPolicyGetThreadInitializationType
 @ stub AppPolicyGetWindowingModel
 @ stub GetApplicationUserModelIdFromToken
