@@ -649,23 +649,36 @@ static HRESULT get_audio_session(const GUID *sessionguid,
 
 static HRESULT waveformat_to_pcm(ACImpl *This, const WAVEFORMATEX *fmt, SLAndroidDataFormat_PCM_EX *pcm)
 {
-    /* only support non-float PCM */
-    if(fmt->wFormatTag != WAVE_FORMAT_PCM &&
-            !(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-                IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)fmt)->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)))
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-
-    /* TODO: does android only support 16-bit PCM? */
-
     if(fmt->nSamplesPerSec < 8000 || fmt->nSamplesPerSec > 48000)
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
 
     pcm->formatType = SL_ANDROID_DATAFORMAT_PCM_EX;
-    pcm->numChannels = fmt->nChannels;
+
     pcm->sampleRate = fmt->nSamplesPerSec * 1000; /* sampleRate is in milli-Hz */
     pcm->bitsPerSample = fmt->wBitsPerSample;
     pcm->containerSize = fmt->wBitsPerSample;
+
+    if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
+            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)fmt)->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
+        if(pcm->bitsPerSample == 8)
+            pcm->representation = SL_ANDROID_PCM_REPRESENTATION_UNSIGNED_INT;
+        else if(pcm->bitsPerSample == 16)
+            pcm->representation = SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT;
+        else
+            return AUDCLNT_E_UNSUPPORTED_FORMAT;
+    }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+                (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+                 IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)fmt)->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
+        if(pcm->bitsPerSample == 32)
+            pcm->representation = SL_ANDROID_PCM_REPRESENTATION_FLOAT;
+        else
+            return AUDCLNT_E_UNSUPPORTED_FORMAT;
+    }else
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
+
     /* only up to stereo */
+    pcm->numChannels = fmt->nChannels;
     if(pcm->numChannels == 1)
         pcm->channelMask = SL_SPEAKER_FRONT_CENTER;
     else if(This->dataflow == eRender && pcm->numChannels == 2)
@@ -674,11 +687,6 @@ static HRESULT waveformat_to_pcm(ACImpl *This, const WAVEFORMATEX *fmt, SLAndroi
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
 
     pcm->endianness = SL_BYTEORDER_LITTLEENDIAN;
-
-    if(pcm->bitsPerSample == 8)
-        pcm->representation = SL_ANDROID_PCM_REPRESENTATION_UNSIGNED_INT;
-    else
-        pcm->representation = SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT;
 
     return S_OK;
 }

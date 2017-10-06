@@ -58,7 +58,7 @@ tasks.whenTaskAdded { t ->
 
 android
 {
-    compileSdkVersion 17
+    compileSdkVersion 21
     buildToolsVersion "25.0.3"
 
     defaultConfig
