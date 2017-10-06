@@ -330,6 +330,13 @@ WHILE x < 3 : x = x + 1
 Wend
 Call ok(x = 3, "x not equal to 3")
 
+z = 2
+while z > -4 :
+
+
+z = z -2
+wend
+
 x = false
 y = false
 do while not (x and y)
@@ -353,6 +360,12 @@ Do While x < 2 : x = x + 1
 Loop
 Call ok(x = 2, "x not equal to 2")
 
+x = 0
+Do While x >= -2 :
+x = x - 1
+Loop
+Call ok(x = -3, "x not equal to -3")
+
 x = false
 y = false
 do until x and y
@@ -375,6 +388,14 @@ x = 0
 Do: :: x = x + 2
 Loop Until x = 4
 Call ok(x = 4, "x not equal to 4")
+
+x = 5
+Do: :
+
+: x = x * 2
+Loop Until x = 40
+Call ok(x = 40, "x not equal to 40")
+
 
 x = false
 do
@@ -495,6 +516,12 @@ for x = 1 to 100
     Call ok(false, "exit for not escaped the loop?")
 next
 
+for x = 1 to 5 :
+:
+:   :exit for
+    Call ok(false, "exit for not escaped the loop?")
+next
+
 do while true
     for x = 1 to 100
         exit do
@@ -506,6 +533,14 @@ if null then call ok(false, "if null evaluated")
 while null
     call ok(false, "while null evaluated")
 wend
+
+Call collectionObj.reset()
+y = 0
+for each x in collectionObj :
+
+   :y = y + 3
+next
+Call ok(y = 9, "y = " & y)
 
 Call collectionObj.reset()
 y = 0
@@ -608,6 +643,21 @@ select case 2: case 5,6,7: Call ok(false, "unexpected case")
     case 2,1,2,4
         x = true
     case else: Call ok(false, "unexpected case else")
+end select
+Call ok(x, "wrong case")
+
+x = False
+select case 1  :
+
+    :case 3, 4 :
+
+
+    case 5
+:
+        Call ok(false, "unexpected case") :
+    Case Else:
+
+        x = True
 end select
 Call ok(x, "wrong case")
 

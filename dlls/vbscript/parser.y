@@ -164,7 +164,7 @@ StatementsNl
     | StatementNl StatementsNl              { $$ = link_statements($1, $2); }
 
 StatementNl
-    : Statement tNL                 { $$ = $1; }
+    : Statement tNL                         { $$ = $1; }
 
 Statement
     : ':'                                   { $$ = NULL; }
@@ -448,10 +448,12 @@ Identifier
     : tIdentifier    { $$ = $1; }
     | tPROPERTY      { $$ = propertyW; }
 
-/* Some statements accept both new line and ':' as a separator */
+/* Most statements accept both new line and ':' as separators */
 StSep
     : tNL
     | ':'
+    | tNL StSep
+    | ':' StSep
 
 %%
 
