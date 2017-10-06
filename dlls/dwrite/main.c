@@ -1617,9 +1617,9 @@ static HRESULT WINAPI dwritefactory5_CreateInMemoryFontFileLoader(IDWriteFactory
 {
     struct dwritefactory *This = impl_from_IDWriteFactory5(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, loader);
+    TRACE("(%p)->(%p)\n", This, loader);
 
-    return E_NOTIMPL;
+    return create_inmemory_fileloader(loader);
 }
 
 static HRESULT WINAPI dwritefactory5_CreateHttpFontFileLoader(IDWriteFactory5 *iface, WCHAR const *referrer_url, WCHAR const *extra_headers,

@@ -7644,14 +7644,15 @@ static void test_inmemory_file_loader(void)
     IDWriteFontFileLoader *loader, *loader2;
     IDWriteInMemoryFontFileLoader *inmemory;
     struct testowner_object ownerobject;
+    const void *key, *data, *frag_start;
+    UINT64 file_size, size, writetime;
     IDWriteFontFile *file, *file2;
     IDWriteFontFace *fontface;
     IDWriteFactory5 *factory5;
+    void *context, *context2;
     IDWriteFactory *factory;
-    const void *key, *data;
     UINT32 count, key_size;
-    UINT64 file_size;
-    void *context;
+    DWORD ref_key;
     HRESULT hr;
     ULONG ref;
 
@@ -7666,14 +7667,8 @@ static void test_inmemory_file_loader(void)
 
     EXPECT_REF(factory5, 1);
     hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory5, &loader);
-todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
     EXPECT_REF(factory5, 1);
-
-    if (FAILED(hr)) {
-        IDWriteFactory5_Release(factory5);
-        return;
-    }
 
     testowner_init(&ownerobject);
     fontface = create_fontface((IDWriteFactory *)factory5);
@@ -7687,6 +7682,9 @@ todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
     IDWriteFontFileLoader_Release(loader);
     EXPECT_REF(inmemory, 1);
+
+    count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
+    ok(!count, "Unexpected file count %u.\n", count);
 
     /* Use whole font blob to construct in-memory file. */
     count = 1;
@@ -7715,6 +7713,9 @@ todo_wine
         file_size, NULL, &file);
     ok(hr == E_INVALIDARG, "got %#x\n", hr);
 
+    count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
+    ok(count == 1, "Unexpected file count %u.\n", count);
+
     hr = IDWriteFactory5_RegisterFontFileLoader(factory5, (IDWriteFontFileLoader *)inmemory);
     ok(hr == S_OK, "got %#x\n", hr);
     EXPECT_REF(inmemory, 2);
@@ -7726,12 +7727,18 @@ todo_wine
     EXPECT_REF(&ownerobject.IUnknown_iface, 2);
     EXPECT_REF(inmemory, 3);
 
+    count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
+    ok(count == 2, "Unexpected file count %u.\n", count);
+
     hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
         file_size, &ownerobject.IUnknown_iface, &file2);
     ok(hr == S_OK, "got %#x\n", hr);
     ok(file2 != file, "got unexpected file\n");
     EXPECT_REF(&ownerobject.IUnknown_iface, 3);
     EXPECT_REF(inmemory, 4);
+
+    count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
+    ok(count == 3, "Unexpected file count %u.\n", count);
 
     /* Check in-memory reference key format. */
     hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
@@ -7762,25 +7769,104 @@ todo_wine
 
     /* Release file at index 1, create new one to see if index is reused. */
     EXPECT_REF(&ownerobject.IUnknown_iface, 3);
-    IDWriteFontFile_Release(file);
+    ref = IDWriteFontFile_Release(file);
+    ok(ref == 0, "File object not released, %u.\n", ref);
     EXPECT_REF(&ownerobject.IUnknown_iface, 3);
 
+    count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
+    ok(count == 3, "Unexpected file count %u.\n", count);
+
     EXPECT_REF(&ownerobject.IUnknown_iface, 3);
-    IDWriteFontFile_Release(file2);
+    ref = IDWriteFontFile_Release(file2);
+    ok(ref == 0, "File object not released, %u.\n", ref);
     EXPECT_REF(&ownerobject.IUnknown_iface, 3);
+
+    count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
+    ok(count == 3, "Unexpected file count %u.\n", count);
 
     hr = IDWriteFactory5_UnregisterFontFileLoader(factory5, (IDWriteFontFileLoader *)inmemory);
     ok(hr == S_OK, "got %#x\n", hr);
     EXPECT_REF(&ownerobject.IUnknown_iface, 3);
 
-    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
-    IDWriteFontFileStream_Release(stream);
-    IDWriteFontFace_Release(fontface);
-
     EXPECT_REF(&ownerobject.IUnknown_iface, 3);
     ref = IDWriteInMemoryFontFileLoader_Release(inmemory);
     ok(ref == 0, "loader not released, %u.\n", ref);
     EXPECT_REF(&ownerobject.IUnknown_iface, 1);
+
+    /* Test reference key for first added file. */
+    hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory5, &loader);
+    ok(hr == S_OK, "Failed to create loader, hr %#x.\n", hr);
+
+    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteInMemoryFontFileLoader, (void **)&inmemory);
+    ok(hr == S_OK, "Failed to get in-memory interface, hr %#x.\n", hr);
+    IDWriteFontFileLoader_Release(loader);
+
+    hr = IDWriteFactory5_RegisterFontFileLoader(factory5, (IDWriteFontFileLoader *)inmemory);
+    ok(hr == S_OK, "Failed to register loader, hr %#x.\n", hr);
+
+    ref_key = 0;
+    hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, &ref_key, sizeof(ref_key), &stream2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
+        file_size, &ownerobject.IUnknown_iface, &file);
+    ok(hr == S_OK, "Failed to create in-memory file reference, hr %#x.\n", hr);
+
+    ref_key = 0;
+    hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, &ref_key, sizeof(ref_key), &stream2);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
+
+    context2 = (void *)0xdeadbeef;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream2, &frag_start, 0, file_size, &context2);
+    ok(hr == S_OK, "Failed to read a fragment, hr %#x.\n", hr);
+    ok(context == NULL, "Unexpected context %p.\n", context2);
+    ok(frag_start == data, "Unexpected fragment pointer %p.\n", frag_start);
+
+    hr = IDWriteFontFileStream_GetFileSize(stream2, &size);
+    ok(hr == S_OK, "Failed to get file size, hr %#x.\n", hr);
+    ok(size == file_size, "Unexpected file size.\n");
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream2, context2);
+
+    writetime = 1;
+    hr = IDWriteFontFileStream_GetLastWriteTime(stream2, &writetime);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+    ok(writetime == 0, "Unexpected writetime.\n");
+
+    IDWriteFontFileStream_Release(stream2);
+
+    ref_key = 0;
+    hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, NULL, sizeof(ref_key) - 1, &stream2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    ref_key = 0;
+    hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, &ref_key, sizeof(ref_key) - 1, &stream2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    ref_key = 0;
+    hr = IDWriteInMemoryFontFileLoader_CreateStreamFromKey(inmemory, &ref_key, sizeof(ref_key) + 1, &stream2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
+    ok(count == 1, "Unexpected file count %u.\n", count);
+
+    hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
+    ok(hr == S_OK, "Failed to get reference key, hr %#x.\n", hr);
+
+    ok(key && *(DWORD*)key == 0, "Unexpected reference key.\n");
+    ok(key_size == 4, "Unexpected key size %u.\n", key_size);
+
+    IDWriteFontFile_Release(file);
+
+    count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
+    ok(count == 1, "Unexpected file count %u.\n", count);
+
+    hr = IDWriteFactory5_UnregisterFontFileLoader(factory5, (IDWriteFontFileLoader *)inmemory);
+    ok(hr == S_OK, "Failed to unregister loader, hr %#x.\n", hr);
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+    IDWriteFontFileStream_Release(stream);
+    IDWriteFontFace_Release(fontface);
 
     ref = IDWriteFactory5_Release(factory5);
     ok(ref == 0, "factory not released, %u\n", ref);
