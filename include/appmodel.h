@@ -40,9 +40,18 @@ typedef enum AppPolicyShowDeveloperDiagnostic
     AppPolicyShowDeveloperDiagnostic_ShowUI = 1,
 } AppPolicyShowDeveloperDiagnostic;
 
+typedef enum AppPolicyWindowingModel
+{
+    AppPolicyWindowingModel_None           = 0,
+    AppPolicyWindowingModel_Universal      = 1,
+    AppPolicyWindowingModel_ClassicDesktop = 2,
+    AppPolicyWindowingModel_ClassicPhone   = 3
+} AppPolicyWindowingModel;
+
 LONG WINAPI AppPolicyGetProcessTerminationMethod(HANDLE token, AppPolicyProcessTerminationMethod *policy);
 LONG WINAPI AppPolicyGetShowDeveloperDiagnostic(HANDLE token, AppPolicyShowDeveloperDiagnostic *policy);
 LONG WINAPI AppPolicyGetThreadInitializationType(HANDLE token, AppPolicyThreadInitializationType *policy);
+LONG WINAPI AppPolicyGetWindowingModel(HANDLE processToken, AppPolicyWindowingModel *policy);
 
 #if defined(__cplusplus)
 }

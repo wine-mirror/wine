@@ -62,6 +62,18 @@ LONG WINAPI AppPolicyGetShowDeveloperDiagnostic(HANDLE token, AppPolicyShowDevel
     return ERROR_SUCCESS;
 }
 
+/***********************************************************************
+ *          AppPolicyGetWindowingModel (KERNELBASE.@)
+ */
+LONG WINAPI AppPolicyGetWindowingModel(HANDLE token, AppPolicyWindowingModel *policy)
+{
+    FIXME("%p, %p\n", token, policy);
+
+    if(policy)
+        *policy = AppPolicyWindowingModel_ClassicDesktop;
+
+    return ERROR_SUCCESS;
+}
 
 /***********************************************************************
  *          QuirkIsEnabled3 (KERNELBASE.@)

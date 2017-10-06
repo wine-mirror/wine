@@ -5,7 +5,7 @@
 @ stdcall AppPolicyGetProcessTerminationMethod(ptr ptr) kernelbase.AppPolicyGetProcessTerminationMethod
 @ stdcall AppPolicyGetShowDeveloperDiagnostic(ptr ptr) kernelbase.AppPolicyGetShowDeveloperDiagnostic
 @ stdcall AppPolicyGetThreadInitializationType(ptr ptr) kernelbase.AppPolicyGetThreadInitializationType
-@ stub AppPolicyGetWindowingModel
+@ stdcall AppPolicyGetWindowingModel(ptr ptr) kernelbase.AppPolicyGetWindowingModel
 @ stub GetApplicationUserModelIdFromToken
 @ stub GetPackageFamilyNameFromToken
 @ stub GetPackageFullNameFromToken
