@@ -75,7 +75,6 @@ struct pipe_end
 struct pipe_server
 {
     struct pipe_end      pipe_end;   /* common header for pipe_client and pipe_server */
-    struct fd           *ioctl_fd;   /* file descriptor for ioctls when not connected */
     struct list          entry;      /* entry in named pipe servers list */
     enum pipe_state      state;      /* server state */
     struct pipe_client  *client;     /* client that this server is connected to */
@@ -142,6 +141,7 @@ static const struct object_ops named_pipe_ops =
 
 /* common server and client pipe end functions */
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd );
+static struct fd *pipe_end_get_fd( struct object *obj );
 static int pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
 static int pipe_end_flush( struct fd *fd, struct async *async );
@@ -150,7 +150,6 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
-static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
 static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
@@ -164,7 +163,7 @@ static const struct object_ops pipe_server_ops =
     default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
-    pipe_server_get_fd,           /* get_fd */
+    pipe_end_get_fd,              /* get_fd */
     default_fd_map_access,        /* map_access */
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
@@ -193,7 +192,6 @@ static const struct fd_ops pipe_server_fd_ops =
 /* client end functions */
 static void pipe_client_dump( struct object *obj, int verbose );
 static int pipe_client_signaled( struct object *obj, struct wait_queue_entry *entry );
-static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
 static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
@@ -207,7 +205,7 @@ static const struct object_ops pipe_client_ops =
     pipe_client_signaled,         /* signaled */
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
-    pipe_client_get_fd,           /* get_fd */
+    pipe_end_get_fd,              /* get_fd */
     default_fd_map_access,        /* map_access */
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
@@ -324,13 +322,10 @@ static void named_pipe_destroy( struct object *obj)
     free_async_queue( &pipe->waiters );
 }
 
-static struct fd *pipe_client_get_fd( struct object *obj )
+static struct fd *pipe_end_get_fd( struct object *obj )
 {
-    struct pipe_client *client = (struct pipe_client *) obj;
-    if (client->pipe_end.fd)
-        return (struct fd *) grab_object( client->pipe_end.fd );
-    set_error( STATUS_PIPE_DISCONNECTED );
-    return NULL;
+    struct pipe_end *pipe_end = (struct pipe_end *) obj;
+    return (struct fd *) grab_object( pipe_end->fd );
 }
 
 static void set_server_state( struct pipe_server *server, enum pipe_state state )
@@ -341,25 +336,15 @@ static void set_server_state( struct pipe_server *server, enum pipe_state state 
     {
     case ps_connected_server:
     case ps_wait_disconnect:
-        assert( server->pipe_end.fd );
         break;
     case ps_wait_open:
     case ps_idle_server:
-        assert( !server->pipe_end.fd );
-        set_no_fd_status( server->ioctl_fd, STATUS_PIPE_LISTENING );
+        set_no_fd_status( server->pipe_end.fd, STATUS_PIPE_LISTENING );
         break;
     case ps_wait_connect:
-        assert( !server->pipe_end.fd );
-        set_no_fd_status( server->ioctl_fd, STATUS_PIPE_DISCONNECTED );
+        set_no_fd_status( server->pipe_end.fd, STATUS_PIPE_DISCONNECTED );
         break;
     }
-}
-
-static struct fd *pipe_server_get_fd( struct object *obj )
-{
-    struct pipe_server *server = (struct pipe_server *) obj;
-
-    return (struct fd *)grab_object( server->pipe_end.fd ? server->pipe_end.fd : server->ioctl_fd );
 }
 
 
@@ -411,19 +396,6 @@ static void pipe_end_disconnect( struct pipe_end *pipe_end, unsigned int status 
     }
 }
 
-static void do_disconnect( struct pipe_server *server )
-{
-    /* we may only have a server fd, if the client disconnected */
-    if (server->client)
-    {
-        assert( server->client->server == server );
-        assert( server->client->pipe_end.fd );
-    }
-    assert( server->pipe_end.fd );
-    release_object( server->pipe_end.fd );
-    server->pipe_end.fd = NULL;
-}
-
 static void pipe_end_destroy( struct pipe_end *pipe_end )
 {
     struct pipe_message *message;
@@ -437,6 +409,7 @@ static void pipe_end_destroy( struct pipe_end *pipe_end )
 
     free_async_queue( &pipe_end->read_q );
     free_async_queue( &pipe_end->write_q );
+    if (pipe_end->fd) release_object( pipe_end->fd );
 }
 
 static void pipe_server_destroy( struct object *obj)
@@ -446,8 +419,6 @@ static void pipe_server_destroy( struct object *obj)
     assert( obj->ops == &pipe_server_ops );
 
     pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_BROKEN );
-
-    if (server->pipe_end.fd) do_disconnect( server );
 
     pipe_end_destroy( &server->pipe_end );
     if (server->client)
@@ -459,7 +430,6 @@ static void pipe_server_destroy( struct object *obj)
     assert( server->pipe->instances );
     server->pipe->instances--;
 
-    if (server->ioctl_fd) release_object( server->ioctl_fd );
     list_remove( &server->entry );
     release_object( server->pipe );
 }
@@ -494,7 +464,6 @@ static void pipe_client_destroy( struct object *obj)
     }
 
     pipe_end_destroy( &client->pipe_end );
-    if (client->pipe_end.fd) release_object( client->pipe_end.fd );
 }
 
 static void named_pipe_device_dump( struct object *obj, int verbose )
@@ -849,7 +818,7 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         {
         case ps_idle_server:
         case ps_wait_connect:
-            fd_queue_async( server->ioctl_fd, async, ASYNC_TYPE_WAIT );
+            fd_queue_async( server->pipe_end.fd, async, ASYNC_TYPE_WAIT );
             set_server_state( server, ps_wait_open );
             async_wake_up( &server->pipe->waiters, STATUS_SUCCESS );
             set_error( STATUS_PENDING );
@@ -871,11 +840,9 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         {
         case ps_connected_server:
             assert( server->client );
-            assert( server->client->pipe_end.fd );
 
             /* dump the client and server fds - client loses all waiting data */
             pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
-            do_disconnect( server );
             server->client->server = NULL;
             server->client = NULL;
             set_server_state( server, ps_wait_connect );
@@ -883,7 +850,6 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         case ps_wait_disconnect:
             assert( !server->client );
             pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
-            do_disconnect( server );
             set_server_state( server, ps_wait_connect );
             break;
         case ps_idle_server:
@@ -953,12 +919,12 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
 
     list_add_head( &pipe->servers, &server->entry );
     grab_object( pipe );
-    if (!(server->ioctl_fd = alloc_pseudo_fd( &pipe_server_fd_ops, &server->pipe_end.obj, options )))
+    if (!(server->pipe_end.fd = alloc_pseudo_fd( &pipe_server_fd_ops, &server->pipe_end.obj, options )))
     {
         release_object( server );
         return NULL;
     }
-    set_fd_signaled( server->ioctl_fd, 1 );
+    set_fd_signaled( server->pipe_end.fd, 1 );
     set_server_state( server, ps_idle_server );
     return server;
 }
@@ -1048,11 +1014,10 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
 
     if ((client = create_pipe_client( options, pipe->flags, pipe->outsize, options )))
     {
-        server->pipe_end.fd = (struct fd *)grab_object( server->ioctl_fd );
-        set_no_fd_status( server->ioctl_fd, STATUS_BAD_DEVICE_TYPE );
+        set_no_fd_status( server->pipe_end.fd, STATUS_BAD_DEVICE_TYPE );
         allow_fd_caching( server->pipe_end.fd );
         if (server->state == ps_wait_open)
-            fd_async_wake_up( server->ioctl_fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
+            fd_async_wake_up( server->pipe_end.fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
         set_server_state( server, ps_connected_server );
         server->client = client;
         client->server = server;
