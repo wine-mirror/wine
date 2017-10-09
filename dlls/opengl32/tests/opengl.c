@@ -24,7 +24,6 @@
 #include "wine/wgl.h"
 
 #define MAX_FORMATS 256
-DECLARE_HANDLE(HPBUFFERARB);
 
 /* WGL_ARB_create_context */
 static HGLRC (WINAPI *pwglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, const int *attribList);

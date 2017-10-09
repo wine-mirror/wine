@@ -2826,7 +2826,7 @@ static void null_glBufferPageCommitmentARB( GLenum target, GLintptr offset, GLsi
 static void null_glBufferParameteriAPPLE( GLenum target, GLenum pname, GLint param ) { }
 static GLuint null_glBufferRegionEnabled(void) { return 0; }
 static void null_glBufferStorage( GLenum target, GLsizeiptr size, const void *data, GLbitfield flags ) { }
-static void null_glBufferStorageExternalEXT( GLenum target, GLintptr offset, GLsizeiptr size, void * clientBuffer, GLbitfield flags ) { }
+static void null_glBufferStorageExternalEXT( GLenum target, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags ) { }
 static void null_glBufferStorageMemEXT( GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset ) { }
 static void null_glBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, const void *data ) { }
 static void null_glBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, const void *data ) { }
@@ -3016,16 +3016,16 @@ static GLhandleARB null_glCreateShaderObjectARB( GLenum shaderType ) { return 0;
 static GLuint null_glCreateShaderProgramEXT( GLenum type, const GLchar *string ) { return 0; }
 static GLuint null_glCreateShaderProgramv( GLenum type, GLsizei count, const GLchar *const*strings ) { return 0; }
 static void null_glCreateStatesNV( GLsizei n, GLuint *states ) { }
-static GLsync null_glCreateSyncFromCLeventARB( void *context, void *event, GLbitfield flags ) { return 0; }
+static GLsync null_glCreateSyncFromCLeventARB( struct _cl_context *context, struct _cl_event *event, GLbitfield flags ) { return 0; }
 static void null_glCreateTextures( GLenum target, GLsizei n, GLuint *textures ) { }
 static void null_glCreateTransformFeedbacks( GLsizei n, GLuint *ids ) { }
 static void null_glCreateVertexArrays( GLsizei n, GLuint *arrays ) { }
 static void null_glCullParameterdvEXT( GLenum pname, GLdouble *params ) { }
 static void null_glCullParameterfvEXT( GLenum pname, GLfloat *params ) { }
 static void null_glCurrentPaletteMatrixARB( GLint index ) { }
-static void null_glDebugMessageCallback( void * callback, const void *userParam ) { }
-static void null_glDebugMessageCallbackAMD( void * callback, void *userParam ) { }
-static void null_glDebugMessageCallbackARB( void * callback, const void *userParam ) { }
+static void null_glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam ) { }
+static void null_glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam ) { }
+static void null_glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam ) { }
 static void null_glDebugMessageControl( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled ) { }
 static void null_glDebugMessageControlARB( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled ) { }
 static void null_glDebugMessageEnableAMD( GLenum category, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled ) { }
@@ -3669,7 +3669,7 @@ static void null_glGetVideoi64vNV( GLuint video_slot, GLenum pname, GLint64EXT *
 static void null_glGetVideoivNV( GLuint video_slot, GLenum pname, GLint *params ) { }
 static void null_glGetVideoui64vNV( GLuint video_slot, GLenum pname, GLuint64EXT *params ) { }
 static void null_glGetVideouivNV( GLuint video_slot, GLenum pname, GLuint *params ) { }
-static void * null_glGetVkProcAddrNV( const GLchar *name ) { return 0; }
+static GLVULKANPROCNV null_glGetVkProcAddrNV( const GLchar *name ) { return 0; }
 static void null_glGetnColorTable( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *table ) { }
 static void null_glGetnColorTableARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *table ) { }
 static void null_glGetnCompressedTexImage( GLenum target, GLint lod, GLsizei bufSize, void *pixels ) { }
@@ -4093,7 +4093,7 @@ static void null_glNamedBufferPageCommitmentARB( GLuint buffer, GLintptr offset,
 static void null_glNamedBufferPageCommitmentEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLboolean commit ) { }
 static void null_glNamedBufferStorage( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags ) { }
 static void null_glNamedBufferStorageEXT( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags ) { }
-static void null_glNamedBufferStorageExternalEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, void * clientBuffer, GLbitfield flags ) { }
+static void null_glNamedBufferStorageExternalEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags ) { }
 static void null_glNamedBufferStorageMemEXT( GLuint buffer, GLsizeiptr size, GLuint memory, GLuint64 offset ) { }
 static void null_glNamedBufferSubData( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data ) { }
 static void null_glNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data ) { }

@@ -83,140 +83,80 @@ my %cat_1_5 = ( %cat_1_4, "GL_VERSION_1_5" => 1 );
 my %norm_categories = ();
 
 #
-# This hash table gives the conversion between OpenGL types and what
-# is used by the TRACE printfs
+# This hash table gives the conversion between OpenGL types and
+# the .spec type and debug format
 #
-my %debug_conv =
-    ("GLbitfield" => "%d",
-     "GLboolean" => "%d",
-     "GLbyte" => "%d",
-     "GLclampd" => "%f",
-     "GLclampf" => "%f",
-     "GLclampx" => "%d",
-     "GLdouble" => "%f",
-     "GLenum" => "%d",
-     "GLfloat" => "%f",
-     "GLfixed" => "%d",
-     "GLint" => "%d",
-     "GLshort" => "%d",
-     "GLsizei" => "%d",
-     "GLstring" => "%s",
-     "GLsync" => "%p",
-     "GLubyte" => "%d",
-     "GLuint" => "%d",
-     "GLushort" => "%d",
-     "GLhalfNV" => "%d",
-     "GLintptrARB" => "%ld",
-     "GLsizeiptrARB" => "%ld",
-     "GLintptr" => "%ld",
-     "GLsizeiptr" => "%ld",
-     "GLhandleARB" => "%d",
-     "GLcharARB" => "%c",
-     "GLuint64" => "%s,wine_dbgstr_longlong(%s)",
-     "GLint64" => "%s,wine_dbgstr_longlong(%s)",
-     "GLuint64EXT" => "%s,wine_dbgstr_longlong(%s)",
-     "GLint64EXT" => "%s,wine_dbgstr_longlong(%s)",
-     "GLvoid" => "(void)",
-     "_GLfuncptr" => "%p",
-     "GLDEBUGPROC" => "%p",
-     "GLDEBUGPROCARB" => "%p",
-     "GLDEBUGPROCAMD" => "%p",
-     "GLDEBUGPROCKHR" => "%p",
-     "GLeglClientBufferEXT" => "%p",
-     "GLvdpauSurfaceNV" => "%ld",
-     "GLVULKANPROCNV" => "%p",
-     "int" => "%d",
-     "unsigned int" => "%u",
-     "UINT" => "%u",
-     "DWORD" => "%u",
-     "BOOL" => "%u",
-     "INT64" => "%s,wine_dbgstr_longlong(%s)",
-     "UINT64" => "%s,wine_dbgstr_longlong(%s)",
-     "LPVOID" => "%p",
-     "HANDLE" => "%p",
-     "HDC" => "%p",
-     "HGLRC" => "%p",
-     "HPBUFFERARB" => "%p",
-     "HPBUFFEREXT" => "%p",
+my %arg_types =
+    (
+     "GLbitfield" =>           [ "long",   "%d" ],
+     "GLboolean" =>            [ "long",   "%d" ],
+     "GLbyte" =>               [ "long",   "%d" ],
+     "GLchar" =>               [ "long",   "%c" ],
+     "GLcharARB" =>            [ "long",   "%c" ],
+     "GLclampd" =>             [ "double", "%f" ],
+     "GLclampf" =>             [ "float",  "%f" ],
+     "GLclampx" =>             [ "long",   "%d" ],
+     "GLdouble" =>             [ "double", "%f" ],
+     "GLeglClientBufferEXT" => [ "ptr",    "%p" ],
+     "GLenum" =>               [ "long",   "%d" ],
+     "GLfixed" =>              [ "long",   "%d" ],
+     "GLfloat" =>              [ "float",  "%f" ],
+     "GLhalfNV" =>             [ "long",   "%d" ],
+     "GLhandleARB" =>          [ "long",   "%d" ],
+     "GLint" =>                [ "long",   "%d" ],
+     "GLint64" =>              [ "int64",  "wine_dbgstr_longlong(%s)" ],
+     "GLint64EXT" =>           [ "int64",  "wine_dbgstr_longlong(%s)" ],
+     "GLintptr" =>             [ "long",   "%ld" ],
+     "GLintptrARB" =>          [ "long",   "%ld" ],
+     "GLshort" =>              [ "long",   "%d" ],
+     "GLsizei" =>              [ "long",   "%d" ],
+     "GLsizeiptr" =>           [ "long",   "%ld" ],
+     "GLsizeiptrARB" =>        [ "long",   "%ld" ],
+     "GLstring" =>             [ "str",    "wine_dbgstr_a(%s)" ],
+     "GLsync" =>               [ "ptr",    "%p" ],
+     "GLubyte" =>              [ "long",   "%d" ],
+     "GLuint" =>               [ "long",   "%d" ],
+     "GLuint64" =>             [ "int64",  "wine_dbgstr_longlong(%s)" ],
+     "GLuint64EXT" =>          [ "int64",  "wine_dbgstr_longlong(%s)" ],
+     "GLushort" =>             [ "long",   "%d" ],
+     "GLvdpauSurfaceNV" =>     [ "long",   "%ld" ],
+     "GLDEBUGPROC" =>          [ "ptr",    "%p" ],
+     "GLDEBUGPROCARB" =>       [ "ptr",    "%p" ],
+     "GLDEBUGPROCAMD" =>       [ "ptr",    "%p" ],
+     "GLDEBUGPROCKHR" =>       [ "ptr",    "%p" ],
+     "GLVULKANPROCNV" =>       [ "ptr",    "%p" ],
+     "HDC" =>                  [ "long",   "%p" ],
+     "HGLRC" =>                [ "long",   "%p" ],
+     "HPBUFFERARB" =>          [ "long",   "%p" ],
+     "HENHMETAFILE" =>         [ "long",   "%p" ],
+     "LPGLYPHMETRICSFLOAT" =>  [ "ptr",    "%p" ],
+     "LPCSTR" =>               [ "str",    "wine_dbgstr_a(%s)" ],
+     "UINT" =>                 [ "long",   "%u" ],
+     "DWORD" =>                [ "long",   "%u" ],
+     "BOOL" =>                 [ "long",   "%u" ],
+     "FLOAT" =>                [ "float",  "%f" ],
     );
 
-#
-# This hash table gives the conversion between OpenGL types and what
-# is used in the .spec and header files.
-#
-my %arg_conv =
-    ("GLbitfield" =>       [ "long", "unsigned int" ],
-     "GLboolean" =>        [ "long", "unsigned char" ],
-     "GLbyte" =>           [ "long", "signed char" ],
-     "GLchar" =>           [ "long", "char" ],
-     "GLclampd" =>         [ "double", "double" ],
-     "GLclampf" =>         [ "float", "float" ],
-     "GLclampx" =>         [ "long", "int" ],
-     "GLdouble" =>         [ "double", "double" ],
-     "GLenum" =>           [ "long", "unsigned int" ],
-     "GLfloat" =>          [ "float", "float" ],
-     "GLfixed" =>          [ "long", "int" ],
-     "GLint" =>            [ "long", "int" ],
-     "GLint64" =>          [ "int64", "INT64" ],
-     "GLint64EXT" =>       [ "int64", "INT64" ],
-     "GLintptr" =>         [ "long", "INT_PTR" ],
-     "GLshort" =>          [ "long", "short" ],
-     "GLsizei" =>          [ "long", "int" ],
-     "GLsizeiptr" =>       [ "long", "INT_PTR" ],
-     "GLstring" =>         [ "str", "const unsigned char *" ],
-     "GLsync" =>           [ "ptr", "struct __GLsync *" ],
-     "GLubyte" =>          [ "long", "unsigned char" ],
-     "GLuint" =>           [ "long", "unsigned int" ],
-     "GLuint64" =>         [ "int64", "UINT64" ],
-     "GLuint64EXT" =>      [ "int64", "UINT64" ],
-     "GLushort" =>         [ "long", "unsigned short" ],
-     "GLvoid" =>           [ "void", "void" ],
-     "GLcharARB" =>        [ "long", "char" ],
-     "GLhandleARB" =>      [ "long", "unsigned int" ],
-     "GLintptrARB" =>      [ "long", "INT_PTR" ],
-     "GLsizeiptrARB" =>    [ "long", "INT_PTR" ],
-     "GLhalfNV" =>         [ "long", "unsigned short" ],
-     "GLvdpauSurfaceNV" => [ "long", "INT_PTR" ],
-     "HDC" =>              [ "long" ],
-     "HGLRC" =>            [ "long" ],
-     "HENHMETAFILE" =>     [ "long" ],
-     "LPGLYPHMETRICSFLOAT" => [ "ptr" ],
-     "LPCSTR" =>           [ "str" ],
-     "int" =>              [ "long" ],
-     "INT" =>              [ "long" ],
-     "BOOL" =>             [ "long" ],
-     "DWORD" =>            [ "long" ],
-     "FLOAT" =>            [ "float" ],
-     "UINT" =>             [ "long" ],
+my %remap_types =
+    (
+     "HGLRC" => "struct wgl_context *",
+     "HPBUFFERARB" => "struct wgl_pbuffer *",
     );
-
 #
 # Used to convert some types
 #
 sub ConvertType($)
 {
-    my ($type) = @_;
+    my $arg = shift;
+    my $ret = $arg->textContent();
+    my @type = $arg->findnodes("./ptype");
 
-    my %hash = (
-              "struct _cl_context" => "void",
-              "struct _cl_event" => "void",
-              "HGLRC" => "struct wgl_context *",
-              "GLDEBUGPROC" => "void *",
-              "GLDEBUGPROCARB" => "void *",
-              "GLDEBUGPROCAMD" => "void *",
-              "GLDEBUGPROCKHR" => "void *",
-              "GLeglClientBufferEXT" => "void *",
-              "GLVULKANPROCNV" => "void *",
-              "HPBUFFERARB" => "struct wgl_pbuffer *",
-              "HPBUFFEREXT" => "struct wgl_pbuffer *",
-        );
-
-    foreach my $org (reverse sort keys %hash) {
-        if ($type =~ /^(.*)$org(.*)$/) {
-            return "$1$hash{$org}$2";
-        }
+    if (@type)
+    {
+        my $type = $type[0]->textContent();
+        $ret =~ s/$type/$remap_types{$type}/ if defined $remap_types{$type};
     }
-    return $type;
+    return $ret;
 }
 
 #
@@ -241,22 +181,17 @@ sub GenerateThunk($$$)
         my $param = $arg->textContent();
         $call_arg .= " " . $pname . ",";
         if ($param =~ /\*/ || $param =~ /\[/) {
-            $trace_arg .= "%p";
+            $trace_arg .= ", %p";
             $trace_call_arg .= ", " . $pname;
-        } elsif (defined $debug_conv{$ptype}) {
-            if ($debug_conv{$ptype} =~ /(.*),(.*)/) {
-                $trace_arg .= $1;
-                $trace_call_arg .= ", " . sprintf $2, $pname;
-            } else {
-                $trace_arg .= $debug_conv{$ptype};
-                $trace_call_arg .= ", " . $pname;
-            }
+        } elsif (defined $arg_types{$ptype}) {
+            my $format = ${$arg_types{$ptype}}[1];
+            $trace_arg .= ", " . ($format =~ /^%/ ? $format : "%s");
+            $trace_call_arg .= ", " . sprintf $format =~ /^%/ ? "%s" : $format, $pname;
         }
         else { printf "Unknown type %s in %s\n", $param, $name; }
-        $trace_arg .= ", ";
     }
     $call_arg =~ s/,$/ /;
-    $trace_arg =~ s/, $//;
+    $trace_arg =~ s/^, //;
     return "$ret DECLSPEC_HIDDEN;\n" if $name eq "glGetStringi";
     $ret .= "\n{\n  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
     $ret .= "  TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
@@ -264,8 +199,6 @@ sub GenerateThunk($$$)
     $ret .= "return " unless is_void_func( $func_ref );
     $ret .= "funcs->$prefix.p_$name($call_arg);\n";
     $ret .= "}\n";
-
-    # Return this string....
     return $ret;
 }
 
@@ -300,8 +233,8 @@ sub generate_spec_entry($$)
         my $param = $arg->textContent();
         if ($param =~ /[[*]/) {
             $args .= "ptr ";
-        } elsif (defined($arg_conv{$ptype})) {
-            $args .= "$@$arg_conv{$ptype}[0] ";
+        } elsif (defined($arg_types{$ptype})) {
+            $args .= "$@$arg_types{$ptype}[0] ";
         } else {
             die "No conversion for func $name type $param\n";
         }
@@ -335,12 +268,12 @@ sub get_func_proto($$$)
 {
     my ($format, $name, $func) = @_;
     die "unknown func $name" unless defined $func->[0];
-    my $proto = ConvertType( $func->[0]->textContent() );
+    my $proto = ConvertType( $func->[0] );
     $proto =~ s/ $//;
     my $args = "";
     foreach my $arg (@{$func->[1]})
     {
-        $args .= " " . ConvertType( $arg->textContent() ) . ",";
+        $args .= " " . ConvertType( $arg ) . ",";
     }
     $args =~ s/,$/ /;
     $args ||= "void";
@@ -396,6 +329,7 @@ if ($version eq "1.0") {
 my %norm_functions;
 my %ext_functions;
 my %wgl_functions;
+my (%gl_types, @gl_types);  # also use an array to preserve declaration order
 
 my %supported_wgl_functions =
     (
@@ -478,6 +412,17 @@ sub parse_file($$)
         {
             $enums{$enum->{name}} = $enum->{value};
         }
+    }
+
+    # save all types
+    foreach my $type ($xml->findnodes("/registry/types/type"))
+    {
+        next if $type->{api};
+        my $name = @{$type->findnodes("./name")}[0];
+        next unless $name;
+        $name = $name->textContent;
+        push @gl_types, $name unless $gl_types{$name};
+        $gl_types{$name} = $type;
     }
 
     # generate norm functions
@@ -636,10 +581,9 @@ print HEADER "#endif\n\n";
 print HEADER "#undef near\n";
 print HEADER "#undef far\n\n";
 
-foreach (sort keys %arg_conv)
+foreach (@gl_types)
 {
-    next unless $arg_conv{$_}[1];
-    printf HEADER "typedef %-22s %s;\n", $arg_conv{$_}[1], $_;
+    printf HEADER $gl_types{$_}->textContent() . "\n";
 }
 print HEADER "\n";
 

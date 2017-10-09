@@ -502,7 +502,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glBufferParameteriAPPLE)( GLenum target, GLenum pname, GLint param );
         GLuint     (WINE_GLAPI *p_glBufferRegionEnabled)(void);
         void       (WINE_GLAPI *p_glBufferStorage)( GLenum target, GLsizeiptr size, const void *data, GLbitfield flags );
-        void       (WINE_GLAPI *p_glBufferStorageExternalEXT)( GLenum target, GLintptr offset, GLsizeiptr size, void * clientBuffer, GLbitfield flags );
+        void       (WINE_GLAPI *p_glBufferStorageExternalEXT)( GLenum target, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags );
         void       (WINE_GLAPI *p_glBufferStorageMemEXT)( GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset );
         void       (WINE_GLAPI *p_glBufferSubData)( GLenum target, GLintptr offset, GLsizeiptr size, const void *data );
         void       (WINE_GLAPI *p_glBufferSubDataARB)( GLenum target, GLintptrARB offset, GLsizeiptrARB size, const void *data );
@@ -692,16 +692,16 @@ struct opengl_funcs
         GLuint     (WINE_GLAPI *p_glCreateShaderProgramEXT)( GLenum type, const GLchar *string );
         GLuint     (WINE_GLAPI *p_glCreateShaderProgramv)( GLenum type, GLsizei count, const GLchar *const*strings );
         void       (WINE_GLAPI *p_glCreateStatesNV)( GLsizei n, GLuint *states );
-        GLsync     (WINE_GLAPI *p_glCreateSyncFromCLeventARB)( void *context, void *event, GLbitfield flags );
+        GLsync     (WINE_GLAPI *p_glCreateSyncFromCLeventARB)( struct _cl_context *context, struct _cl_event *event, GLbitfield flags );
         void       (WINE_GLAPI *p_glCreateTextures)( GLenum target, GLsizei n, GLuint *textures );
         void       (WINE_GLAPI *p_glCreateTransformFeedbacks)( GLsizei n, GLuint *ids );
         void       (WINE_GLAPI *p_glCreateVertexArrays)( GLsizei n, GLuint *arrays );
         void       (WINE_GLAPI *p_glCullParameterdvEXT)( GLenum pname, GLdouble *params );
         void       (WINE_GLAPI *p_glCullParameterfvEXT)( GLenum pname, GLfloat *params );
         void       (WINE_GLAPI *p_glCurrentPaletteMatrixARB)( GLint index );
-        void       (WINE_GLAPI *p_glDebugMessageCallback)( void * callback, const void *userParam );
-        void       (WINE_GLAPI *p_glDebugMessageCallbackAMD)( void * callback, void *userParam );
-        void       (WINE_GLAPI *p_glDebugMessageCallbackARB)( void * callback, const void *userParam );
+        void       (WINE_GLAPI *p_glDebugMessageCallback)( GLDEBUGPROC callback, const void *userParam );
+        void       (WINE_GLAPI *p_glDebugMessageCallbackAMD)( GLDEBUGPROCAMD callback, void *userParam );
+        void       (WINE_GLAPI *p_glDebugMessageCallbackARB)( GLDEBUGPROCARB callback, const void *userParam );
         void       (WINE_GLAPI *p_glDebugMessageControl)( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled );
         void       (WINE_GLAPI *p_glDebugMessageControlARB)( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled );
         void       (WINE_GLAPI *p_glDebugMessageEnableAMD)( GLenum category, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled );
@@ -1345,7 +1345,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGetVideoivNV)( GLuint video_slot, GLenum pname, GLint *params );
         void       (WINE_GLAPI *p_glGetVideoui64vNV)( GLuint video_slot, GLenum pname, GLuint64EXT *params );
         void       (WINE_GLAPI *p_glGetVideouivNV)( GLuint video_slot, GLenum pname, GLuint *params );
-        void *     (WINE_GLAPI *p_glGetVkProcAddrNV)( const GLchar *name );
+        GLVULKANPROCNV (WINE_GLAPI *p_glGetVkProcAddrNV)( const GLchar *name );
         void       (WINE_GLAPI *p_glGetnColorTable)( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *table );
         void       (WINE_GLAPI *p_glGetnColorTableARB)( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *table );
         void       (WINE_GLAPI *p_glGetnCompressedTexImage)( GLenum target, GLint lod, GLsizei bufSize, void *pixels );
@@ -1769,7 +1769,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glNamedBufferPageCommitmentEXT)( GLuint buffer, GLintptr offset, GLsizeiptr size, GLboolean commit );
         void       (WINE_GLAPI *p_glNamedBufferStorage)( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags );
         void       (WINE_GLAPI *p_glNamedBufferStorageEXT)( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags );
-        void       (WINE_GLAPI *p_glNamedBufferStorageExternalEXT)( GLuint buffer, GLintptr offset, GLsizeiptr size, void * clientBuffer, GLbitfield flags );
+        void       (WINE_GLAPI *p_glNamedBufferStorageExternalEXT)( GLuint buffer, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags );
         void       (WINE_GLAPI *p_glNamedBufferStorageMemEXT)( GLuint buffer, GLsizeiptr size, GLuint memory, GLuint64 offset );
         void       (WINE_GLAPI *p_glNamedBufferSubData)( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data );
         void       (WINE_GLAPI *p_glNamedBufferSubDataEXT)( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data );

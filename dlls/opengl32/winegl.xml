@@ -22,6 +22,24 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
     </comment>
 
+    <types>
+        <!-- Override some types for Win32 API -->
+        <type>typedef INT_PTR <name>GLintptr</name>;</type>
+        <type>typedef INT_PTR <name>GLsizeiptr</name>;</type>
+        <type>typedef INT64 <name>GLint64</name>;</type>
+        <type>typedef UINT64 <name>GLuint64</name>;</type>
+        <type>typedef INT_PTR <name>GLintptrARB</name>;</type>
+        <type>typedef INT_PTR <name>GLsizeiptrARB</name>;</type>
+        <type>typedef INT64 <name>GLint64EXT</name>;</type>
+        <type>typedef UINT64 <name>GLuint64EXT</name>;</type>
+        <type>typedef unsigned int <name>GLhandleARB</name>;</type>
+        <type>typedef void *<name>GLDEBUGPROC</name>;</type>
+        <type>typedef void *<name>GLDEBUGPROCAMD</name>;</type>
+        <type>typedef void *<name>GLDEBUGPROCARB</name>;</type>
+        <type>typedef void *<name>GLDEBUGPROCKHR</name>;</type>
+        <type>typedef void *<name>GLVULKANPROCNV</name>;</type>
+    </types>
+
     <commands namespace="GL">
         <command>
             <proto>GLint <name>glDebugEntry</name></proto>

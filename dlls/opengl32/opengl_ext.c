@@ -940,7 +940,7 @@ static void WINAPI glBufferStorage( GLenum target, GLsizeiptr size, const void *
   funcs->ext.p_glBufferStorage( target, size, data, flags );
 }
 
-static void WINAPI glBufferStorageExternalEXT( GLenum target, GLintptr offset, GLsizeiptr size, void * clientBuffer, GLbitfield flags )
+static void WINAPI glBufferStorageExternalEXT( GLenum target, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %ld, %ld, %p, %d)\n", target, offset, size, clientBuffer, flags );
@@ -2270,7 +2270,7 @@ static void WINAPI glCreateStatesNV( GLsizei n, GLuint *states )
   funcs->ext.p_glCreateStatesNV( n, states );
 }
 
-static GLsync WINAPI glCreateSyncFromCLeventARB( void *context, void *event, GLbitfield flags )
+static GLsync WINAPI glCreateSyncFromCLeventARB( struct _cl_context *context, struct _cl_event *event, GLbitfield flags )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%p, %p, %d)\n", context, event, flags );
@@ -2319,21 +2319,21 @@ static void WINAPI glCurrentPaletteMatrixARB( GLint index )
   funcs->ext.p_glCurrentPaletteMatrixARB( index );
 }
 
-static void WINAPI glDebugMessageCallback( void * callback, const void *userParam )
+static void WINAPI glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%p, %p)\n", callback, userParam );
   funcs->ext.p_glDebugMessageCallback( callback, userParam );
 }
 
-static void WINAPI glDebugMessageCallbackAMD( void * callback, void *userParam )
+static void WINAPI glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%p, %p)\n", callback, userParam );
   funcs->ext.p_glDebugMessageCallbackAMD( callback, userParam );
 }
 
-static void WINAPI glDebugMessageCallbackARB( void * callback, const void *userParam )
+static void WINAPI glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%p, %p)\n", callback, userParam );
@@ -6836,7 +6836,7 @@ static void WINAPI glGetVideouivNV( GLuint video_slot, GLenum pname, GLuint *par
   funcs->ext.p_glGetVideouivNV( video_slot, pname, params );
 }
 
-static void * WINAPI glGetVkProcAddrNV( const GLchar *name )
+static GLVULKANPROCNV WINAPI glGetVkProcAddrNV( const GLchar *name )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%p)\n", name );
@@ -9804,7 +9804,7 @@ static void WINAPI glNamedBufferStorageEXT( GLuint buffer, GLsizeiptr size, cons
   funcs->ext.p_glNamedBufferStorageEXT( buffer, size, data, flags );
 }
 
-static void WINAPI glNamedBufferStorageExternalEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, void * clientBuffer, GLbitfield flags )
+static void WINAPI glNamedBufferStorageExternalEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %ld, %ld, %p, %d)\n", buffer, offset, size, clientBuffer, flags );
