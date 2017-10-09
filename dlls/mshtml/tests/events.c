@@ -159,7 +159,7 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 
     IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
     IUnknown_Release(unk1);
-    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk2);
+    IUnknown_QueryInterface(iface2, &IID_IUnknown, (void**)&unk2);
     IUnknown_Release(unk2);
 
     return unk1 == unk2;
@@ -407,7 +407,8 @@ static void _test_attached_event_args(unsigned line, DISPID id, WORD wFlags, DIS
     ok(V_DISPATCH(pdp->rgvarg) != NULL, "V_DISPATCH(pdp->rgvarg) = %p\n", V_DISPATCH(pdp->rgvarg));
 
     event = _get_event_obj(line);
-    ok(iface_cmp((IUnknown*)event, (IUnknown*)V_DISPATCH(pdp->rgvarg)), "event != arg0\n");
+    todo_wine
+    ok(!iface_cmp((IUnknown*)event, (IUnknown*)V_DISPATCH(pdp->rgvarg)), "event != arg0\n");
     IHTMLEventObj_Release(event);
 }
 
@@ -1376,7 +1377,8 @@ static void _test_cp_eventarg(unsigned line, REFIID riid, WORD flags, DISPPARAMS
     ok(V_DISPATCH(dp->rgvarg) != NULL, "V_DISPATCH(dp->rgvarg) = %p\n", V_DISPATCH(dp->rgvarg));
 
     event = _get_event_obj(line);
-    ok(iface_cmp((IUnknown*)event, (IUnknown*)V_DISPATCH(dp->rgvarg)), "event != arg0\n");
+    todo_wine
+    ok(!iface_cmp((IUnknown*)event, (IUnknown*)V_DISPATCH(dp->rgvarg)), "event != arg0\n");
     IHTMLEventObj_Release(event);
 }
 
