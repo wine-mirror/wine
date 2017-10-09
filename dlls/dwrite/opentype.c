@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
 #define MS_GLYF_TAG DWRITE_MAKE_OPENTYPE_TAG('g','l','y','f')
 #define MS_CFF__TAG DWRITE_MAKE_OPENTYPE_TAG('C','F','F',' ')
+#define MS_CFF2_TAG DWRITE_MAKE_OPENTYPE_TAG('C','F','F','2')
 #define MS_COLR_TAG DWRITE_MAKE_OPENTYPE_TAG('C','O','L','R')
 #define MS_SVG__TAG DWRITE_MAKE_OPENTYPE_TAG('S','V','G',' ')
 #define MS_SBIX_TAG DWRITE_MAKE_OPENTYPE_TAG('s','b','i','x')
@@ -2217,7 +2218,8 @@ UINT32 opentype_get_glyph_image_formats(IDWriteFontFace4 *fontface)
     if (opentype_has_font_table(fontface, MS_GLYF_TAG))
         ret |= DWRITE_GLYPH_IMAGE_FORMATS_TRUETYPE;
 
-    if (opentype_has_font_table(fontface, MS_CFF__TAG))
+    if (opentype_has_font_table(fontface, MS_CFF__TAG) ||
+            opentype_has_font_table(fontface, MS_CFF2_TAG))
         ret |= DWRITE_GLYPH_IMAGE_FORMATS_CFF;
 
     if (opentype_has_font_table(fontface, MS_COLR_TAG))
