@@ -98,10 +98,10 @@ static BOOL init_func_ptrs(void)
     loadfunc(NtQueryVolumeInformationFile)
     loadfunc(NtSetInformationFile)
     loadfunc(NtCancelIoFile)
-    loadfunc(NtCancelIoFileEx)
     loadfunc(RtlInitUnicodeString)
 
     /* not fatal */
+    pNtCancelIoFileEx = (void *)GetProcAddress(module, "NtCancelIoFileEx");
     module = GetModuleHandleA("kernel32.dll");
     pOpenThread = (void *)GetProcAddress(module, "OpenThread");
     pQueueUserAPC = (void *)GetProcAddress(module, "QueueUserAPC");
@@ -516,21 +516,27 @@ static void test_cancelio(void)
 
     CloseHandle(hPipe);
 
-    res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    if (pNtCancelIoFileEx)
+    {
+        res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
+        ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
-    memset(&iosb, 0x55, sizeof(iosb));
-    res = listen_pipe(hPipe, hEvent, &iosb, FALSE);
-    ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
+        memset(&iosb, 0x55, sizeof(iosb));
+        res = listen_pipe(hPipe, hEvent, &iosb, FALSE);
+        ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
 
-    res = pNtCancelIoFileEx(hPipe, &iosb, &cancel_sb);
-    ok(!res, "NtCancelIoFileEx returned %x\n", res);
+        res = pNtCancelIoFileEx(hPipe, &iosb, &cancel_sb);
+        ok(!res, "NtCancelIoFileEx returned %x\n", res);
 
-    ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %x\n", U(iosb).Status);
-    ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
+        ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %x\n", U(iosb).Status);
+        ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
+
+        CloseHandle(hPipe);
+    }
+    else
+        win_skip("NtCancelIoFileEx not available\n");
 
     CloseHandle(hEvent);
-    CloseHandle(hPipe);
 }
 
 static void _check_pipe_handle_state(int line, HANDLE handle, ULONG read, ULONG completion)
@@ -1094,6 +1100,8 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
         CloseHandle( read );
         CloseHandle( write );
     }
+    else
+        win_skip("NtCancelIoFileEx not available\n");
 
     CloseHandle(event);
 }
