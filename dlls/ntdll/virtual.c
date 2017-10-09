@@ -3074,13 +3074,18 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     server_enter_uninterrupted_section( &csVirtual, &sigset );
     if ((view = VIRTUAL_FindView( addr, 0 )) && !is_view_valloc( view ))
     {
-        SERVER_START_REQ( unmap_view )
+        if (!(view->protect & VPROT_SYSTEM))
         {
-            req->base = wine_server_client_ptr( view->base );
-            status = wine_server_call( req );
+            SERVER_START_REQ( unmap_view )
+            {
+                req->base = wine_server_client_ptr( view->base );
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+            if (!status) delete_view( view );
+            else FIXME( "failed to unmap %p %x\n", view->base, status );
         }
-        SERVER_END_REQ;
-        if (!status) delete_view( view );
+        else delete_view( view );
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
