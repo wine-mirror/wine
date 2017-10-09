@@ -606,7 +606,7 @@ static BOOL add_printer_driver(const WCHAR *name, WCHAR *ppd)
         res = AddPrinterDriverExW( NULL, 3, (LPBYTE)&di3, APD_COPY_NEW_FILES | APD_COPY_FROM_DIRECTORY );
         TRACE("got %d and %d for %s (%s)\n", res, GetLastError(), debugstr_w(name), debugstr_w(di3.pEnvironment));
 
-        if (!res & (GetLastError() != ERROR_PRINTER_DRIVER_ALREADY_INSTALLED))
+        if (!res && (GetLastError() != ERROR_PRINTER_DRIVER_ALREADY_INSTALLED))
         {
             ERR("failed with %u for %s (%s) %s\n", GetLastError(), debugstr_w(name),
                 debugstr_w(di3.pEnvironment), debugstr_w(di3.pDriverPath));
