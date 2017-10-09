@@ -24,7 +24,7 @@
 #include "wine/wgl.h"
 
 #define MAX_FORMATS 256
-typedef void* HPBUFFERARB;
+DECLARE_HANDLE(HPBUFFERARB);
 
 /* WGL_ARB_create_context */
 static HGLRC (WINAPI *pwglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, const int *attribList);
@@ -64,7 +64,7 @@ static BOOL (WINAPI *pwglGetPixelFormatAttribivARB)(HDC, int, int, UINT, const i
 
 /* WGL_ARB_pbuffer */
 #define WGL_DRAW_TO_PBUFFER_ARB 0x202D
-static HPBUFFERARB* (WINAPI *pwglCreatePbufferARB)(HDC, int, int, int, const int *);
+static HPBUFFERARB (WINAPI *pwglCreatePbufferARB)(HDC, int, int, int, const int *);
 static HDC (WINAPI *pwglGetPbufferDCARB)(HPBUFFERARB);
 
 /* WGL_EXT_swap_control */
