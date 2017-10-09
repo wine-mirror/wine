@@ -3548,9 +3548,12 @@ static HRESULT WINAPI d3d9_device_CheckResourceResidency(IDirect3DDevice9Ex *ifa
 
 static HRESULT WINAPI d3d9_device_SetMaximumFrameLatency(IDirect3DDevice9Ex *iface, UINT max_latency)
 {
-    FIXME("iface %p, max_latency %u stub!\n", iface, max_latency);
+    TRACE("iface %p, max_latency %u.\n", iface, max_latency);
 
-    return E_NOTIMPL;
+    if (max_latency)
+        FIXME("Ignoring max_latency %u.\n", max_latency);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3d9_device_GetMaximumFrameLatency(IDirect3DDevice9Ex *iface, UINT *max_latency)
