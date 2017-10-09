@@ -74,7 +74,7 @@ typedef struct {
 } TTC_SFNT_V1;
 
 typedef struct {
-    CHAR tag[4];
+    DWORD tag;
     DWORD checkSum;
     DWORD offset;
     DWORD length;
@@ -1041,13 +1041,12 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count,
 HRESULT opentype_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag, const void **table_data,
     void **table_context, UINT32 *table_size, BOOL *found)
 {
-    HRESULT hr;
-    TTC_SFNT_V1 *font_header = NULL;
-    void *sfnt_context;
+    void *table_directory_context, *sfnt_context;
     TT_TableRecord *table_record = NULL;
-    void *table_record_context;
-    int table_count, table_offset = 0;
-    int i;
+    TTC_SFNT_V1 *font_header = NULL;
+    UINT32 table_offset = 0;
+    UINT16 table_count;
+    HRESULT hr;
 
     if (found) *found = FALSE;
     if (table_size) *table_size = 0;
@@ -1077,27 +1076,31 @@ HRESULT opentype_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag
 
     table_count = GET_BE_WORD(font_header->numTables);
     table_offset += sizeof(*font_header);
-    for (i = 0; i < table_count; i++)
-    {
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void**)&table_record, table_offset, sizeof(*table_record), &table_record_context);
-        if (FAILED(hr))
-            break;
-        if (DWRITE_MAKE_OPENTYPE_TAG(table_record->tag[0], table_record->tag[1], table_record->tag[2], table_record->tag[3]) == tag)
-            break;
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, table_record_context);
-        table_offset += sizeof(*table_record);
-    }
 
     IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, sfnt_context);
-    if (SUCCEEDED(hr) && i < table_count)
-    {
-        int offset = GET_BE_DWORD(table_record->offset);
-        int length = GET_BE_DWORD(table_record->length);
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, table_record_context);
 
-        if (found) *found = TRUE;
-        if (table_size) *table_size = length;
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, table_data, offset, length, table_context);
+    hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_record, table_offset,
+            table_count * sizeof(*table_record), &table_directory_context);
+    if (hr == S_OK) {
+        UINT16 i;
+
+        for (i = 0; i < table_count; i++) {
+            if (table_record->tag == tag) {
+                UINT32 offset = GET_BE_DWORD(table_record->offset);
+                UINT32 length = GET_BE_DWORD(table_record->length);
+
+                if (found)
+                    *found = TRUE;
+                if (table_size)
+                    *table_size = length;
+                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, table_data, offset,
+                        length, table_context);
+                break;
+            }
+            table_record++;
+        }
+
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, table_directory_context);
     }
 
     return hr;
