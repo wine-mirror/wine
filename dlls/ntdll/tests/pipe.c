@@ -811,7 +811,6 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     ret = WriteFile( write, buffer, 1, &written, NULL );
     ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
     /* iosb updated here by async i/o */
-    Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
     ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
     ok( !is_signaled( read ), "read handle is signaled\n" );
@@ -837,7 +836,6 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     ret = WriteFile( write, buffer, 1, &written, NULL );
     ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
     /* iosb updated here by async i/o */
-    Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
     ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
     ok( is_signaled( read ), "read handle is not signaled\n" );
