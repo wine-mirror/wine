@@ -105,6 +105,7 @@ C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 /* minimum data size (without arenas) of an allocated block */
 /* make sure that it's larger than a free list entry */
 #define HEAP_MIN_DATA_SIZE    ROUND_SIZE(2 * sizeof(struct list))
+#define HEAP_MIN_ARENA_SIZE   (HEAP_MIN_DATA_SIZE + sizeof(ARENA_INUSE))
 /* minimum size that must remain to shrink an allocated block */
 #define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(ARENA_FREE))
 /* minimum size to start allocating large blocks */
@@ -113,12 +114,17 @@ C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 #define HEAP_TAIL_EXTRA_SIZE(flags) \
     ((flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND ? ALIGNMENT : 0)
 
-/* Max size of the blocks on the free lists */
+/* There will be a free list bucket for every arena size up to and including this value */
+#define HEAP_MAX_SMALL_FREE_LIST 0x100
+C_ASSERT( HEAP_MAX_SMALL_FREE_LIST % ALIGNMENT == 0 );
+#define HEAP_NB_SMALL_FREE_LISTS (((HEAP_MAX_SMALL_FREE_LIST - HEAP_MIN_ARENA_SIZE) / ALIGNMENT) + 1)
+
+/* Max size of the blocks on the free lists above HEAP_MAX_SMALL_FREE_LIST */
 static const SIZE_T HEAP_freeListSizes[] =
 {
-    0x10, 0x20, 0x30, 0x40, 0x60, 0x80, 0x100, 0x200, 0x400, 0x1000, ~0UL
+    0x200, 0x400, 0x1000, ~0UL
 };
-#define HEAP_NB_FREE_LISTS  (sizeof(HEAP_freeListSizes)/sizeof(HEAP_freeListSizes[0]))
+#define HEAP_NB_FREE_LISTS (sizeof(HEAP_freeListSizes) / sizeof(HEAP_freeListSizes[0]) + HEAP_NB_SMALL_FREE_LISTS)
 
 typedef union
 {
@@ -303,8 +309,11 @@ static inline unsigned int get_freelist_index( SIZE_T size )
 {
     unsigned int i;
 
-    size -= sizeof(ARENA_FREE);
-    for (i = 0; i < HEAP_NB_FREE_LISTS - 1; i++) if (size <= HEAP_freeListSizes[i]) break;
+    if (size <= HEAP_MAX_SMALL_FREE_LIST)
+        return (size - HEAP_MIN_ARENA_SIZE) / ALIGNMENT;
+
+    for (i = HEAP_NB_SMALL_FREE_LISTS; i < HEAP_NB_FREE_LISTS - 1; i++)
+        if (size <= HEAP_freeListSizes[i - HEAP_NB_SMALL_FREE_LISTS]) break;
     return i;
 }
 
@@ -338,7 +347,8 @@ static void HEAP_Dump( HEAP *heap )
     DPRINTF( "\nFree lists:\n Block   Stat   Size    Id\n" );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
         DPRINTF( "%p free %08lx prev=%p next=%p\n",
-                 &heap->freeList[i].arena, HEAP_freeListSizes[i],
+                 &heap->freeList[i].arena, i < HEAP_NB_SMALL_FREE_LISTS ?
+                 HEAP_MIN_ARENA_SIZE + i * ALIGNMENT : HEAP_freeListSizes[i - HEAP_NB_SMALL_FREE_LISTS],
                  LIST_ENTRY( heap->freeList[i].arena.entry.prev, ARENA_FREE, entry ),
                  LIST_ENTRY( heap->freeList[i].arena.entry.next, ARENA_FREE, entry ));
 
