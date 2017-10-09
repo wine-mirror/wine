@@ -16019,6 +16019,21 @@ interface IHTMLDocument8 : IDispatch
 }
 
 /*****************************************************************************
+ *    IDocumentEvent interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305104bc-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDocumentEvent : IDispatch
+{
+    [id(DISPID_IDOCUMENTEVENT_CREATEEVENT)]
+    HRESULT createEvent([in] BSTR eventType, [out, retval] IDOMEvent **ppEvent);
+}
+
+/*****************************************************************************
  *    IDocumentSelector interface
  */
 [
@@ -16667,6 +16682,7 @@ coclass HTMLDocument
                       interface IHTMLDocument6;
                       interface IHTMLDOMNode;
                       interface IHTMLDOMNode2;
+                      interface IDocumentEvent;
 }
 
 /*****************************************************************************
