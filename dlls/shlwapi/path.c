@@ -538,17 +538,25 @@ int WINAPI PathGetDriveNumberA(LPCSTR lpszPath)
  *
  * See PathGetDriveNumberA.
  */
-int WINAPI PathGetDriveNumberW(LPCWSTR lpszPath)
+int WINAPI PathGetDriveNumberW(const WCHAR *path)
 {
-  TRACE ("(%s)\n",debugstr_w(lpszPath));
+    WCHAR drive;
 
-  if (lpszPath)
-  {
-      WCHAR tl = tolowerW(lpszPath[0]);
-      if (tl >= 'a' && tl <= 'z' && lpszPath[1] == ':')
-          return tl - 'a';
-  }
-  return -1;
+    static const WCHAR nt_prefixW[] = {'\\','\\','?','\\'};
+
+    TRACE("(%s)\n", debugstr_w(path));
+
+    if (!path)
+        return -1;
+
+    if (!strncmpW(path, nt_prefixW, 4))
+        path += 4;
+
+    drive = tolowerW(path[0]);
+    if (drive < 'a' || drive > 'z' || path[1] != ':')
+        return -1;
+
+    return drive - 'a';
 }
 
 /*************************************************************************
