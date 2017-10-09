@@ -1636,9 +1636,9 @@ static DWRITE_CONTAINER_TYPE WINAPI dwritefactory5_AnalyzeContainerType(IDWriteF
 {
     struct dwritefactory *This = impl_from_IDWriteFactory5(iface);
 
-    FIXME("(%p)->(%p %u): stub\n", This, data, data_size);
+    TRACE("(%p)->(%p %u)\n", This, data, data_size);
 
-    return DWRITE_CONTAINER_TYPE_UNKNOWN;
+    return opentype_analyze_container_type(data, data_size);
 }
 
 static HRESULT WINAPI dwritefactory5_UnpackFontFile(IDWriteFactory5 *iface, DWRITE_CONTAINER_TYPE container_type, void const *data,

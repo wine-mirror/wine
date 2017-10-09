@@ -47,6 +47,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_JPG__TAG DWRITE_MAKE_OPENTYPE_TAG('j','p','g',' ')
 #define MS_TIFF_TAG DWRITE_MAKE_OPENTYPE_TAG('t','i','f','f')
 
+#define MS_WOFF_TAG DWRITE_MAKE_OPENTYPE_TAG('w','O','F','F')
+#define MS_WOF2_TAG DWRITE_MAKE_OPENTYPE_TAG('w','O','F','2')
+
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
 #define GET_BE_DWORD(x) (x)
@@ -2166,4 +2169,25 @@ UINT32 opentype_get_glyph_image_formats(IDWriteFontFace4 *fontface)
 
     /* TODO: handle embedded bitmaps tables */
     return ret;
+}
+
+DWRITE_CONTAINER_TYPE opentype_analyze_container_type(void const *data, UINT32 data_size)
+{
+    DWORD signature;
+
+    if (data_size < sizeof(DWORD))
+        return DWRITE_CONTAINER_TYPE_UNKNOWN;
+
+    /* Both WOFF and WOFF2 start with 4 bytes signature. */
+    signature = *(DWORD *)data;
+
+    switch (signature)
+    {
+    case MS_WOFF_TAG:
+        return DWRITE_CONTAINER_TYPE_WOFF;
+    case MS_WOF2_TAG:
+        return DWRITE_CONTAINER_TYPE_WOFF2;
+    default:
+        return DWRITE_CONTAINER_TYPE_UNKNOWN;
+    }
 }
