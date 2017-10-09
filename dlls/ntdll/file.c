@@ -711,7 +711,6 @@ static NTSTATUS get_io_timeouts( HANDLE handle, enum server_fd_type type, ULONG 
         }
         break;
     case FD_TYPE_SOCKET:
-    case FD_TYPE_PIPE:
     case FD_TYPE_CHAR:
         if (is_read) timeouts->interval = 0;  /* return as soon as we got something */
         break;
@@ -764,7 +763,6 @@ static NTSTATUS get_io_avail_mode( HANDLE handle, enum server_fd_type type, BOOL
         break;
     case FD_TYPE_MAILSLOT:
     case FD_TYPE_SOCKET:
-    case FD_TYPE_PIPE:
     case FD_TYPE_CHAR:
         *avail_mode = TRUE;
         break;
@@ -1128,7 +1126,7 @@ static NTSTATUS FILE_AsyncWriteService( void *user, IO_STATUS_BLOCK *iosb, NTSTA
                                           &needs_close, &type, NULL )))
             break;
 
-        if (!fileio->count && (type == FD_TYPE_MAILSLOT || type == FD_TYPE_PIPE || type == FD_TYPE_SOCKET))
+        if (!fileio->count && (type == FD_TYPE_MAILSLOT || type == FD_TYPE_SOCKET))
             result = send( fd, fileio->buffer, 0, 0 );
         else
             result = write( fd, &fileio->buffer[fileio->already], fileio->count - fileio->already );
@@ -1308,7 +1306,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     for (;;)
     {
         /* zero-length writes on sockets may not work with plain write(2) */
-        if (!length && (type == FD_TYPE_MAILSLOT || type == FD_TYPE_PIPE || type == FD_TYPE_SOCKET))
+        if (!length && (type == FD_TYPE_MAILSLOT || type == FD_TYPE_SOCKET))
             result = send( unix_handle, buffer, 0, 0 );
         else
             result = write( unix_handle, (const char *)buffer + total, length - total );
