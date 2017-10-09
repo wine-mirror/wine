@@ -3487,7 +3487,7 @@ static void null_glLoadTransposeMatrixfARB( const GLfloat* m ) { }
 static void null_glLoadTransposeMatrixxOES( const GLfixed* m ) { }
 static void null_glLockArraysEXT( GLint first, GLsizei count ) { }
 static void null_glMTexCoord2fSGIS( GLenum target, GLfloat s, GLfloat t ) { }
-static void null_glMTexCoord2fvSGIS( GLenum target, GLfloat * v ) { }
+static void null_glMTexCoord2fvSGIS( GLenum target, GLfloat* v ) { }
 static void null_glMakeBufferNonResidentNV( GLenum target ) { }
 static void null_glMakeBufferResidentNV( GLenum target, GLenum access ) { }
 static void null_glMakeImageHandleNonResidentARB( GLuint64 handle ) { }
@@ -3596,13 +3596,13 @@ static void null_glMultiTexCoord1dARB( GLenum target, GLdouble s ) { }
 static void null_glMultiTexCoord1dSGIS( GLenum target, GLdouble s ) { }
 static void null_glMultiTexCoord1dv( GLenum target, const GLdouble* v ) { }
 static void null_glMultiTexCoord1dvARB( GLenum target, const GLdouble* v ) { }
-static void null_glMultiTexCoord1dvSGIS( GLenum target, GLdouble * v ) { }
+static void null_glMultiTexCoord1dvSGIS( GLenum target, GLdouble* v ) { }
 static void null_glMultiTexCoord1f( GLenum target, GLfloat s ) { }
 static void null_glMultiTexCoord1fARB( GLenum target, GLfloat s ) { }
 static void null_glMultiTexCoord1fSGIS( GLenum target, GLfloat s ) { }
 static void null_glMultiTexCoord1fv( GLenum target, const GLfloat* v ) { }
 static void null_glMultiTexCoord1fvARB( GLenum target, const GLfloat* v ) { }
-static void null_glMultiTexCoord1fvSGIS( GLenum target, const GLfloat * v ) { }
+static void null_glMultiTexCoord1fvSGIS( GLenum target, const GLfloat* v ) { }
 static void null_glMultiTexCoord1hNV( GLenum target, GLhalfNV s ) { }
 static void null_glMultiTexCoord1hvNV( GLenum target, const GLhalfNV* v ) { }
 static void null_glMultiTexCoord1i( GLenum target, GLint s ) { }
@@ -3610,13 +3610,13 @@ static void null_glMultiTexCoord1iARB( GLenum target, GLint s ) { }
 static void null_glMultiTexCoord1iSGIS( GLenum target, GLint s ) { }
 static void null_glMultiTexCoord1iv( GLenum target, const GLint* v ) { }
 static void null_glMultiTexCoord1ivARB( GLenum target, const GLint* v ) { }
-static void null_glMultiTexCoord1ivSGIS( GLenum target, GLint * v ) { }
+static void null_glMultiTexCoord1ivSGIS( GLenum target, GLint* v ) { }
 static void null_glMultiTexCoord1s( GLenum target, GLshort s ) { }
 static void null_glMultiTexCoord1sARB( GLenum target, GLshort s ) { }
 static void null_glMultiTexCoord1sSGIS( GLenum target, GLshort s ) { }
 static void null_glMultiTexCoord1sv( GLenum target, const GLshort* v ) { }
 static void null_glMultiTexCoord1svARB( GLenum target, const GLshort* v ) { }
-static void null_glMultiTexCoord1svSGIS( GLenum target, GLshort * v ) { }
+static void null_glMultiTexCoord1svSGIS( GLenum target, GLshort* v ) { }
 static void null_glMultiTexCoord1xOES( GLenum texture, GLfixed s ) { }
 static void null_glMultiTexCoord1xvOES( GLenum texture, const GLfixed* coords ) { }
 static void null_glMultiTexCoord2bOES( GLenum texture, GLbyte s, GLbyte t ) { }
@@ -3626,13 +3626,13 @@ static void null_glMultiTexCoord2dARB( GLenum target, GLdouble s, GLdouble t ) {
 static void null_glMultiTexCoord2dSGIS( GLenum target, GLdouble s, GLdouble t ) { }
 static void null_glMultiTexCoord2dv( GLenum target, const GLdouble* v ) { }
 static void null_glMultiTexCoord2dvARB( GLenum target, const GLdouble* v ) { }
-static void null_glMultiTexCoord2dvSGIS( GLenum target, GLdouble * v ) { }
+static void null_glMultiTexCoord2dvSGIS( GLenum target, GLdouble* v ) { }
 static void null_glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t ) { }
 static void null_glMultiTexCoord2fARB( GLenum target, GLfloat s, GLfloat t ) { }
 static void null_glMultiTexCoord2fSGIS( GLenum target, GLfloat s, GLfloat t ) { }
 static void null_glMultiTexCoord2fv( GLenum target, const GLfloat* v ) { }
 static void null_glMultiTexCoord2fvARB( GLenum target, const GLfloat* v ) { }
-static void null_glMultiTexCoord2fvSGIS( GLenum target, GLfloat * v ) { }
+static void null_glMultiTexCoord2fvSGIS( GLenum target, GLfloat* v ) { }
 static void null_glMultiTexCoord2hNV( GLenum target, GLhalfNV s, GLhalfNV t ) { }
 static void null_glMultiTexCoord2hvNV( GLenum target, const GLhalfNV* v ) { }
 static void null_glMultiTexCoord2i( GLenum target, GLint s, GLint t ) { }
@@ -3640,13 +3640,13 @@ static void null_glMultiTexCoord2iARB( GLenum target, GLint s, GLint t ) { }
 static void null_glMultiTexCoord2iSGIS( GLenum target, GLint s, GLint t ) { }
 static void null_glMultiTexCoord2iv( GLenum target, const GLint* v ) { }
 static void null_glMultiTexCoord2ivARB( GLenum target, const GLint* v ) { }
-static void null_glMultiTexCoord2ivSGIS( GLenum target, GLint * v ) { }
+static void null_glMultiTexCoord2ivSGIS( GLenum target, GLint* v ) { }
 static void null_glMultiTexCoord2s( GLenum target, GLshort s, GLshort t ) { }
 static void null_glMultiTexCoord2sARB( GLenum target, GLshort s, GLshort t ) { }
 static void null_glMultiTexCoord2sSGIS( GLenum target, GLshort s, GLshort t ) { }
 static void null_glMultiTexCoord2sv( GLenum target, const GLshort* v ) { }
 static void null_glMultiTexCoord2svARB( GLenum target, const GLshort* v ) { }
-static void null_glMultiTexCoord2svSGIS( GLenum target, GLshort * v ) { }
+static void null_glMultiTexCoord2svSGIS( GLenum target, GLshort* v ) { }
 static void null_glMultiTexCoord2xOES( GLenum texture, GLfixed s, GLfixed t ) { }
 static void null_glMultiTexCoord2xvOES( GLenum texture, const GLfixed* coords ) { }
 static void null_glMultiTexCoord3bOES( GLenum texture, GLbyte s, GLbyte t, GLbyte r ) { }
@@ -3656,13 +3656,13 @@ static void null_glMultiTexCoord3dARB( GLenum target, GLdouble s, GLdouble t, GL
 static void null_glMultiTexCoord3dSGIS( GLenum target, GLdouble s, GLdouble t, GLdouble r ) { }
 static void null_glMultiTexCoord3dv( GLenum target, const GLdouble* v ) { }
 static void null_glMultiTexCoord3dvARB( GLenum target, const GLdouble* v ) { }
-static void null_glMultiTexCoord3dvSGIS( GLenum target, GLdouble * v ) { }
+static void null_glMultiTexCoord3dvSGIS( GLenum target, GLdouble* v ) { }
 static void null_glMultiTexCoord3f( GLenum target, GLfloat s, GLfloat t, GLfloat r ) { }
 static void null_glMultiTexCoord3fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r ) { }
 static void null_glMultiTexCoord3fSGIS( GLenum target, GLfloat s, GLfloat t, GLfloat r ) { }
 static void null_glMultiTexCoord3fv( GLenum target, const GLfloat* v ) { }
 static void null_glMultiTexCoord3fvARB( GLenum target, const GLfloat* v ) { }
-static void null_glMultiTexCoord3fvSGIS( GLenum target, GLfloat * v ) { }
+static void null_glMultiTexCoord3fvSGIS( GLenum target, GLfloat* v ) { }
 static void null_glMultiTexCoord3hNV( GLenum target, GLhalfNV s, GLhalfNV t, GLhalfNV r ) { }
 static void null_glMultiTexCoord3hvNV( GLenum target, const GLhalfNV* v ) { }
 static void null_glMultiTexCoord3i( GLenum target, GLint s, GLint t, GLint r ) { }
@@ -3670,13 +3670,13 @@ static void null_glMultiTexCoord3iARB( GLenum target, GLint s, GLint t, GLint r 
 static void null_glMultiTexCoord3iSGIS( GLenum target, GLint s, GLint t, GLint r ) { }
 static void null_glMultiTexCoord3iv( GLenum target, const GLint* v ) { }
 static void null_glMultiTexCoord3ivARB( GLenum target, const GLint* v ) { }
-static void null_glMultiTexCoord3ivSGIS( GLenum target, GLint * v ) { }
+static void null_glMultiTexCoord3ivSGIS( GLenum target, GLint* v ) { }
 static void null_glMultiTexCoord3s( GLenum target, GLshort s, GLshort t, GLshort r ) { }
 static void null_glMultiTexCoord3sARB( GLenum target, GLshort s, GLshort t, GLshort r ) { }
 static void null_glMultiTexCoord3sSGIS( GLenum target, GLshort s, GLshort t, GLshort r ) { }
 static void null_glMultiTexCoord3sv( GLenum target, const GLshort* v ) { }
 static void null_glMultiTexCoord3svARB( GLenum target, const GLshort* v ) { }
-static void null_glMultiTexCoord3svSGIS( GLenum target, GLshort * v ) { }
+static void null_glMultiTexCoord3svSGIS( GLenum target, GLshort* v ) { }
 static void null_glMultiTexCoord3xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r ) { }
 static void null_glMultiTexCoord3xvOES( GLenum texture, const GLfixed* coords ) { }
 static void null_glMultiTexCoord4bOES( GLenum texture, GLbyte s, GLbyte t, GLbyte r, GLbyte q ) { }
@@ -3686,13 +3686,13 @@ static void null_glMultiTexCoord4dARB( GLenum target, GLdouble s, GLdouble t, GL
 static void null_glMultiTexCoord4dSGIS( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) { }
 static void null_glMultiTexCoord4dv( GLenum target, const GLdouble* v ) { }
 static void null_glMultiTexCoord4dvARB( GLenum target, const GLdouble* v ) { }
-static void null_glMultiTexCoord4dvSGIS( GLenum target, GLdouble * v ) { }
+static void null_glMultiTexCoord4dvSGIS( GLenum target, GLdouble* v ) { }
 static void null_glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) { }
 static void null_glMultiTexCoord4fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) { }
 static void null_glMultiTexCoord4fSGIS( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) { }
 static void null_glMultiTexCoord4fv( GLenum target, const GLfloat* v ) { }
 static void null_glMultiTexCoord4fvARB( GLenum target, const GLfloat* v ) { }
-static void null_glMultiTexCoord4fvSGIS( GLenum target, GLfloat * v ) { }
+static void null_glMultiTexCoord4fvSGIS( GLenum target, GLfloat* v ) { }
 static void null_glMultiTexCoord4hNV( GLenum target, GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q ) { }
 static void null_glMultiTexCoord4hvNV( GLenum target, const GLhalfNV* v ) { }
 static void null_glMultiTexCoord4i( GLenum target, GLint s, GLint t, GLint r, GLint q ) { }
@@ -3700,13 +3700,13 @@ static void null_glMultiTexCoord4iARB( GLenum target, GLint s, GLint t, GLint r,
 static void null_glMultiTexCoord4iSGIS( GLenum target, GLint s, GLint t, GLint r, GLint q ) { }
 static void null_glMultiTexCoord4iv( GLenum target, const GLint* v ) { }
 static void null_glMultiTexCoord4ivARB( GLenum target, const GLint* v ) { }
-static void null_glMultiTexCoord4ivSGIS( GLenum target, GLint * v ) { }
+static void null_glMultiTexCoord4ivSGIS( GLenum target, GLint* v ) { }
 static void null_glMultiTexCoord4s( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) { }
 static void null_glMultiTexCoord4sARB( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) { }
 static void null_glMultiTexCoord4sSGIS( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) { }
 static void null_glMultiTexCoord4sv( GLenum target, const GLshort* v ) { }
 static void null_glMultiTexCoord4svARB( GLenum target, const GLshort* v ) { }
-static void null_glMultiTexCoord4svSGIS( GLenum target, GLshort * v ) { }
+static void null_glMultiTexCoord4svSGIS( GLenum target, GLshort* v ) { }
 static void null_glMultiTexCoord4xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q ) { }
 static void null_glMultiTexCoord4xvOES( GLenum texture, const GLfixed* coords ) { }
 static void null_glMultiTexCoordP1ui( GLenum texture, GLenum type, GLuint coords ) { }
@@ -3718,7 +3718,7 @@ static void null_glMultiTexCoordP3uiv( GLenum texture, GLenum type, const GLuint
 static void null_glMultiTexCoordP4ui( GLenum texture, GLenum type, GLuint coords ) { }
 static void null_glMultiTexCoordP4uiv( GLenum texture, GLenum type, const GLuint* coords ) { }
 static void null_glMultiTexCoordPointerEXT( GLenum texunit, GLint size, GLenum type, GLsizei stride, const void* pointer ) { }
-static void null_glMultiTexCoordPointerSGIS( GLenum target, GLint size, GLenum type, GLsizei stride, GLvoid * pointer ) { }
+static void null_glMultiTexCoordPointerSGIS( GLenum target, GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) { }
 static void null_glMultiTexEnvfEXT( GLenum texunit, GLenum target, GLenum pname, GLfloat param ) { }
 static void null_glMultiTexEnvfvEXT( GLenum texunit, GLenum target, GLenum pname, const GLfloat* params ) { }
 static void null_glMultiTexEnviEXT( GLenum texunit, GLenum target, GLenum pname, GLint param ) { }
@@ -5005,11 +5005,11 @@ static BOOL null_wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int iL
 static BOOL null_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int* piAttributes, int* piValues ) { return 0; }
 static int null_wglGetSwapIntervalEXT( void ) { return 0; }
 static BOOL null_wglMakeContextCurrentARB( HDC hDrawDC, HDC hReadDC, struct wgl_context * hglrc ) { return 0; }
-static BOOL null_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint * value ) { return 0; }
-static const GLchar * null_wglQueryCurrentRendererStringWINE( GLenum attribute ) { return 0; }
+static BOOL null_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint* value ) { return 0; }
+static const GLchar* null_wglQueryCurrentRendererStringWINE( GLenum attribute ) { return 0; }
 static BOOL null_wglQueryPbufferARB( struct wgl_pbuffer * hPbuffer, int iAttribute, int* piValue ) { return 0; }
-static BOOL null_wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum attribute, GLuint * value ) { return 0; }
-static const GLchar * null_wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute ) { return 0; }
+static BOOL null_wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum attribute, GLuint* value ) { return 0; }
+static const GLchar* null_wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute ) { return 0; }
 static int null_wglReleasePbufferDCARB( struct wgl_pbuffer * hPbuffer, HDC hDC ) { return 0; }
 static BOOL null_wglReleaseTexImageARB( struct wgl_pbuffer * hPbuffer, int iBuffer ) { return 0; }
 static BOOL null_wglSetPbufferAttribARB( struct wgl_pbuffer * hPbuffer, const int* piAttribList ) { return 0; }

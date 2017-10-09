@@ -443,147 +443,8 @@ if ($version eq "1.0") {
 #     [ "GLfloat", "ymove" ],
 #     [ "GLubyte *", "bitmap"] ] ];
 #
-my %norm_functions = ( "glDebugEntry" => [ "GLint", [[ "GLint", "unknown1" ],
-                                                     [ "GLint", "unknown2" ]] ] );
-
-#
-# This stores various extensions NOT part of the GL extension registry but still
-# implemented by most OpenGL libraries out there...
-#
-
-my %ext_functions  =
-   (
-    "glDeleteBufferRegion" => [ "void", [ [ "GLenum", "region" ] ], [ "GL_KTX_buffer_region" ] ],
-    "glReadBufferRegion" => [ "void", [ [ "GLenum", "region" ],
-                                        [ "GLint", "x" ],
-                                        [ "GLint", "y" ],
-                                        [ "GLsizei", "width" ],
-                                        [ "GLsizei", "height" ] ], [ "GL_KTX_buffer_region" ] ],
-    "glDrawBufferRegion" => [ "void", [ [ "GLenum", "region" ],
-                                        [ "GLint", "x" ],
-                                        [ "GLint", "y" ],
-                                        [ "GLsizei", "width" ],
-                                        [ "GLsizei", "height" ],
-                                        [ "GLint", "xDest" ],
-                                        [ "GLint", "yDest" ] ], [ "GL_KTX_buffer_region" ] ],
-    "glBufferRegionEnabled" => [ "GLuint", [ ], [ "GL_KTX_buffer_region" ] ],
-    "glNewBufferRegion" => [ "GLuint", [ [ "GLenum", "type" ] ], [ "GL_KTX_buffer_region" ] ],
-    "glMTexCoord2fSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                       [ "GLfloat", "s" ],
-                                       [ "GLfloat", "t" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMTexCoord2fvSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                        [ "GLfloat *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord1dSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLdouble", "s" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord1dvSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLdouble *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord1fSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLfloat", "s" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord1fvSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "const GLfloat *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord1iSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLint", "s" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord1ivSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLint *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord1sSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLshort", "s" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord1svSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLshort *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord2dSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLdouble", "s"],
-                                           [ "GLdouble", "t" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord2dvSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLdouble *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord2fSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLfloat", "s" ],
-                                           [ "GLfloat", "t" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord2fvSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLfloat *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord2iSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLint", "s" ],
-                                           [ "GLint", "t" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord2ivSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLint *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord2sSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLshort", "s" ],
-                                           [ "GLshort", "t" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord2svSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLshort *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord3dSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLdouble", "s" ],
-                                           [ "GLdouble", "t" ],
-                                           [ "GLdouble", "r" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord3dvSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLdouble *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord3fSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLfloat", "s" ],
-                                           [ "GLfloat", "t" ],
-                                           [ "GLfloat", "r" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord3fvSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLfloat *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord3iSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLint", "s" ],
-                                           [ "GLint", "t" ],
-                                           [ "GLint", "r" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord3ivSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLint *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord3sSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLshort", "s" ],
-                                           [ "GLshort", "t" ],
-                                           [ "GLshort", "r" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord3svSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLshort *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord4dSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLdouble", "s" ],
-                                           [ "GLdouble", "t" ],
-                                           [ "GLdouble", "r" ],
-                                           [ "GLdouble", "q" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord4dvSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLdouble *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord4fSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLfloat", "s" ],
-                                           [ "GLfloat", "t" ],
-                                           [ "GLfloat", "r" ],
-                                           [ "GLfloat", "q" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord4fvSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLfloat *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord4iSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLint", "s" ],
-                                           [ "GLint", "t" ],
-                                           [ "GLint", "r" ],
-                                           [ "GLint", "q" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord4ivSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLint *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord4sSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                           [ "GLshort", "s" ],
-                                           [ "GLshort", "t" ],
-                                           [ "GLshort", "r" ],
-                                           [ "GLshort", "q" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoord4svSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                            [ "GLshort *", "v" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glMultiTexCoordPointerSGIS" => [ "void", [ [ "GLenum", "target" ],
-                                                [ "GLint", "size" ],
-                                                [ "GLenum", "type" ],
-                                                [ "GLsizei", "stride" ],
-                                                [ "GLvoid *", "pointer" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glSelectTextureSGIS" => [ "void", [ [ "GLenum", "target" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glSelectTextureCoordSetSGIS" => [ "void", [ [ "GLenum", "target" ] ], [ "GL_SGIS_multitexture" ] ],
-    "glDeleteObjectBufferATI" => [ "void", [ [ "GLuint", "buffer" ] ], [ "GL_ATI_vertex_array_object" ] ],
-    "wglSetPixelFormatWINE" => [ "BOOL", [ [ "HDC", "hdc" ],
-                                           [ "int", "format" ] ], [ "WGL_WINE_pixel_format_passthrough" ] ],
-    "wglQueryCurrentRendererIntegerWINE" => [ "BOOL", [ [ "GLenum", "attribute" ],
-                                                        [ "GLuint *", "value" ] ], [ "WGL_WINE_query_renderer" ] ],
-    "wglQueryCurrentRendererStringWINE" => [ "const GLchar *", [ [ "GLenum", "attribute" ] ],
-                                             [ "WGL_WINE_query_renderer" ] ],
-    "wglQueryRendererIntegerWINE" => [ "BOOL", [ [ "HDC", "dc" ],
-                                                 [ "GLint", "renderer" ],
-                                                 [ "GLenum", "attribute" ],
-                                                 [ "GLuint *", "value" ] ], [ "WGL_WINE_query_renderer" ] ],
-    "wglQueryRendererStringWINE" => [ "const GLchar *", [ [ "HDC", "dc" ],
-                                                          [ "GLint", "renderer" ],
-                                                          [ "GLenum", "attribute" ] ], [ "WGL_WINE_query_renderer" ] ],
-   );
-
+my %norm_functions;
+my %ext_functions;
 
 my %wgl_functions =
    (
@@ -620,23 +481,10 @@ my %supported_wgl_extensions =
     "WGL_EXT_swap_control" => 1,
     "WGL_NV_vertex_array_range" => 1,
     "WGL_WINE_pixel_format_passthrough" => 1,
+    "WGL_WINE_query_renderer" => 1,
    );
 
-my %enums =
-   (
-    "WGL_RENDERER_VENDOR_ID_WINE" => "0x8183",
-    "WGL_RENDERER_DEVICE_ID_WINE" => "0x8184",
-    "WGL_RENDERER_VERSION_WINE" => "0x8185",
-    "WGL_RENDERER_ACCELERATED_WINE" => "0x8186",
-    "WGL_RENDERER_VIDEO_MEMORY_WINE" => "0x8187",
-    "WGL_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_WINE" => "0x8188",
-    "WGL_RENDERER_PREFERRED_PROFILE_WINE" => "0x8189",
-    "WGL_RENDERER_OPENGL_CORE_PROFILE_VERSION_WINE" => "0x818A",
-    "WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE" => "0x818B",
-    "WGL_RENDERER_OPENGL_ES_PROFILE_VERSION_WINE" => "0x818C",
-    "WGL_RENDERER_OPENGL_ES2_PROFILE_VERSION_WINE" => "0x818D",
-    "WGL_RENDERER_ID_WINE" => "0x818E",
-   );
+my %enums;
 
 sub parse_variable($)
 {
@@ -677,7 +525,8 @@ sub parse_file($$)
     my %functions;
 
     # save all functions
-    for my $command ( @{${$data->{commands}}[0]->{'command'}} ) {
+    for my $cmds (@{$data->{commands}}) {
+      for my $command ( @{$cmds->{'command'}} ) {
         my $name = '';
         my $ret = '';
         my $params = [];
@@ -690,6 +539,7 @@ sub parse_file($$)
             }
         }
         $functions{$name} = [ $ret, $params ];
+      }
     }
 
     # save all enums (only GL)
@@ -758,6 +608,7 @@ sub parse_file($$)
 
 parse_file( "gl.xml", 1 );
 parse_file( "wgl.xml", 0 );
+parse_file( "winegl.xml", 1 );
 
 #
 # Get the current wgl_driver.h version

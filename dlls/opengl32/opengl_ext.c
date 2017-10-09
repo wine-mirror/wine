@@ -6774,7 +6774,7 @@ static void WINAPI glMTexCoord2fSGIS( GLenum target, GLfloat s, GLfloat t ) {
   funcs->ext.p_glMTexCoord2fSGIS( target, s, t );
 }
 
-static void WINAPI glMTexCoord2fvSGIS( GLenum target, GLfloat * v ) {
+static void WINAPI glMTexCoord2fvSGIS( GLenum target, GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMTexCoord2fvSGIS( target, v );
@@ -7428,7 +7428,7 @@ static void WINAPI glMultiTexCoord1dvARB( GLenum target, const GLdouble* v ) {
   funcs->ext.p_glMultiTexCoord1dvARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord1dvSGIS( GLenum target, GLdouble * v ) {
+static void WINAPI glMultiTexCoord1dvSGIS( GLenum target, GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord1dvSGIS( target, v );
@@ -7464,7 +7464,7 @@ static void WINAPI glMultiTexCoord1fvARB( GLenum target, const GLfloat* v ) {
   funcs->ext.p_glMultiTexCoord1fvARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord1fvSGIS( GLenum target, const GLfloat * v ) {
+static void WINAPI glMultiTexCoord1fvSGIS( GLenum target, const GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord1fvSGIS( target, v );
@@ -7512,7 +7512,7 @@ static void WINAPI glMultiTexCoord1ivARB( GLenum target, const GLint* v ) {
   funcs->ext.p_glMultiTexCoord1ivARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord1ivSGIS( GLenum target, GLint * v ) {
+static void WINAPI glMultiTexCoord1ivSGIS( GLenum target, GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord1ivSGIS( target, v );
@@ -7548,7 +7548,7 @@ static void WINAPI glMultiTexCoord1svARB( GLenum target, const GLshort* v ) {
   funcs->ext.p_glMultiTexCoord1svARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord1svSGIS( GLenum target, GLshort * v ) {
+static void WINAPI glMultiTexCoord1svSGIS( GLenum target, GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord1svSGIS( target, v );
@@ -7608,7 +7608,7 @@ static void WINAPI glMultiTexCoord2dvARB( GLenum target, const GLdouble* v ) {
   funcs->ext.p_glMultiTexCoord2dvARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord2dvSGIS( GLenum target, GLdouble * v ) {
+static void WINAPI glMultiTexCoord2dvSGIS( GLenum target, GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord2dvSGIS( target, v );
@@ -7644,7 +7644,7 @@ static void WINAPI glMultiTexCoord2fvARB( GLenum target, const GLfloat* v ) {
   funcs->ext.p_glMultiTexCoord2fvARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord2fvSGIS( GLenum target, GLfloat * v ) {
+static void WINAPI glMultiTexCoord2fvSGIS( GLenum target, GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord2fvSGIS( target, v );
@@ -7692,7 +7692,7 @@ static void WINAPI glMultiTexCoord2ivARB( GLenum target, const GLint* v ) {
   funcs->ext.p_glMultiTexCoord2ivARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord2ivSGIS( GLenum target, GLint * v ) {
+static void WINAPI glMultiTexCoord2ivSGIS( GLenum target, GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord2ivSGIS( target, v );
@@ -7728,7 +7728,7 @@ static void WINAPI glMultiTexCoord2svARB( GLenum target, const GLshort* v ) {
   funcs->ext.p_glMultiTexCoord2svARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord2svSGIS( GLenum target, GLshort * v ) {
+static void WINAPI glMultiTexCoord2svSGIS( GLenum target, GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord2svSGIS( target, v );
@@ -7788,7 +7788,7 @@ static void WINAPI glMultiTexCoord3dvARB( GLenum target, const GLdouble* v ) {
   funcs->ext.p_glMultiTexCoord3dvARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord3dvSGIS( GLenum target, GLdouble * v ) {
+static void WINAPI glMultiTexCoord3dvSGIS( GLenum target, GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord3dvSGIS( target, v );
@@ -7824,7 +7824,7 @@ static void WINAPI glMultiTexCoord3fvARB( GLenum target, const GLfloat* v ) {
   funcs->ext.p_glMultiTexCoord3fvARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord3fvSGIS( GLenum target, GLfloat * v ) {
+static void WINAPI glMultiTexCoord3fvSGIS( GLenum target, GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord3fvSGIS( target, v );
@@ -7872,7 +7872,7 @@ static void WINAPI glMultiTexCoord3ivARB( GLenum target, const GLint* v ) {
   funcs->ext.p_glMultiTexCoord3ivARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord3ivSGIS( GLenum target, GLint * v ) {
+static void WINAPI glMultiTexCoord3ivSGIS( GLenum target, GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord3ivSGIS( target, v );
@@ -7908,7 +7908,7 @@ static void WINAPI glMultiTexCoord3svARB( GLenum target, const GLshort* v ) {
   funcs->ext.p_glMultiTexCoord3svARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord3svSGIS( GLenum target, GLshort * v ) {
+static void WINAPI glMultiTexCoord3svSGIS( GLenum target, GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord3svSGIS( target, v );
@@ -7968,7 +7968,7 @@ static void WINAPI glMultiTexCoord4dvARB( GLenum target, const GLdouble* v ) {
   funcs->ext.p_glMultiTexCoord4dvARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord4dvSGIS( GLenum target, GLdouble * v ) {
+static void WINAPI glMultiTexCoord4dvSGIS( GLenum target, GLdouble* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord4dvSGIS( target, v );
@@ -8004,7 +8004,7 @@ static void WINAPI glMultiTexCoord4fvARB( GLenum target, const GLfloat* v ) {
   funcs->ext.p_glMultiTexCoord4fvARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord4fvSGIS( GLenum target, GLfloat * v ) {
+static void WINAPI glMultiTexCoord4fvSGIS( GLenum target, GLfloat* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord4fvSGIS( target, v );
@@ -8052,7 +8052,7 @@ static void WINAPI glMultiTexCoord4ivARB( GLenum target, const GLint* v ) {
   funcs->ext.p_glMultiTexCoord4ivARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord4ivSGIS( GLenum target, GLint * v ) {
+static void WINAPI glMultiTexCoord4ivSGIS( GLenum target, GLint* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord4ivSGIS( target, v );
@@ -8088,7 +8088,7 @@ static void WINAPI glMultiTexCoord4svARB( GLenum target, const GLshort* v ) {
   funcs->ext.p_glMultiTexCoord4svARB( target, v );
 }
 
-static void WINAPI glMultiTexCoord4svSGIS( GLenum target, GLshort * v ) {
+static void WINAPI glMultiTexCoord4svSGIS( GLenum target, GLshort* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord4svSGIS( target, v );
@@ -8160,7 +8160,7 @@ static void WINAPI glMultiTexCoordPointerEXT( GLenum texunit, GLint size, GLenum
   funcs->ext.p_glMultiTexCoordPointerEXT( texunit, size, type, stride, pointer );
 }
 
-static void WINAPI glMultiTexCoordPointerSGIS( GLenum target, GLint size, GLenum type, GLsizei stride, GLvoid * pointer ) {
+static void WINAPI glMultiTexCoordPointerSGIS( GLenum target, GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", target, size, type, stride, pointer );
   funcs->ext.p_glMultiTexCoordPointerSGIS( target, size, type, stride, pointer );
