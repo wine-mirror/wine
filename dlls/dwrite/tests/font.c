@@ -48,6 +48,7 @@
 #define MS_SVG__TAG DWRITE_MAKE_OPENTYPE_TAG('S','V','G',' ')
 #define MS_SBIX_TAG DWRITE_MAKE_OPENTYPE_TAG('s','b','i','x')
 #define MS_MAXP_TAG DWRITE_MAKE_OPENTYPE_TAG('m','a','x','p')
+#define MS_CBLC_TAG DWRITE_MAKE_OPENTYPE_TAG('C','B','L','C')
 
 /* 'sbix' formats */
 #define MS_PNG__TAG DWRITE_MAKE_OPENTYPE_TAG('p','n','g',' ')
@@ -335,6 +336,31 @@ typedef struct {
     DWORD graphicType;
     BYTE data[1];
 } sbix_glyph_data;
+
+typedef struct {
+    WORD majorVersion;
+    WORD minorVersion;
+    DWORD numSizes;
+} CBLCHeader;
+
+typedef struct {
+    BYTE res[12];
+} sbitLineMetrics;
+
+typedef struct {
+    DWORD indexSubTableArrayOffset;
+    DWORD indexTablesSize;
+    DWORD numberofIndexSubTables;
+    DWORD colorRef;
+    sbitLineMetrics hori;
+    sbitLineMetrics vert;
+    WORD startGlyphIndex;
+    WORD endGlyphIndex;
+    BYTE ppemX;
+    BYTE ppemY;
+    BYTE bitDepth;
+    BYTE flags;
+} CBLCBitmapSizeTable;
 
 typedef struct {
     DWORD version;
@@ -7981,6 +8007,40 @@ static DWORD get_sbix_formats(IDWriteFontFace4 *fontface)
     return ret;
 }
 
+static DWORD get_cblc_formats(IDWriteFontFace4 *fontface)
+{
+    CBLCBitmapSizeTable *sizes;
+    UINT32 num_sizes, size, s;
+    BOOL exists = FALSE;
+    CBLCHeader *header;
+    DWORD ret = 0;
+    void *context;
+    HRESULT hr;
+
+    hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_CBLC_TAG, (const void **)&header, &size, &context, &exists);
+    ok(hr == S_OK, "TryGetFontTable() failed, %#x\n", hr);
+    ok(exists, "Expected CBLC table\n");
+
+    if (!exists)
+        return 0;
+
+    num_sizes = GET_BE_DWORD(header->numSizes);
+    sizes = (CBLCBitmapSizeTable *)(header + 1);
+
+    for (s = 0; s < num_sizes; s++) {
+        BYTE bpp = sizes->bitDepth;
+
+        if (bpp == 1 || bpp == 2 || bpp == 4 || bpp == 8)
+            ret |= DWRITE_GLYPH_IMAGE_FORMATS_PNG;
+        else if (bpp == 32)
+            ret |= DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8;
+    }
+
+    IDWriteFontFace4_ReleaseFontTable(fontface, context);
+
+    return ret;
+}
+
 static DWORD get_face_glyph_image_formats(IDWriteFontFace4 *fontface)
 {
     DWORD ret = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
@@ -8000,7 +8060,9 @@ static DWORD get_face_glyph_image_formats(IDWriteFontFace4 *fontface)
     if (face_has_table(fontface, MS_SBIX_TAG))
         ret |= get_sbix_formats(fontface);
 
-    /* TODO: handle embedded bitmaps tables */
+    if (face_has_table(fontface, MS_CBLC_TAG))
+        ret |= get_cblc_formats(fontface);
+
     return ret;
 }
 

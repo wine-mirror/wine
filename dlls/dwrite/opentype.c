@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_SVG__TAG DWRITE_MAKE_OPENTYPE_TAG('S','V','G',' ')
 #define MS_SBIX_TAG DWRITE_MAKE_OPENTYPE_TAG('s','b','i','x')
 #define MS_MAXP_TAG DWRITE_MAKE_OPENTYPE_TAG('m','a','x','p')
+#define MS_CBLC_TAG DWRITE_MAKE_OPENTYPE_TAG('C','B','L','C')
 
 /* 'sbix' formats */
 #define MS_PNG__TAG DWRITE_MAKE_OPENTYPE_TAG('p','n','g',' ')
@@ -262,6 +263,30 @@ typedef struct {
     WORD numGlyphs;
 } maxp;
 
+typedef struct {
+    WORD majorVersion;
+    WORD minorVersion;
+    DWORD numSizes;
+} CBLCHeader;
+
+typedef struct {
+    BYTE res[12];
+} sbitLineMetrics;
+
+typedef struct {
+    DWORD indexSubTableArrayOffset;
+    DWORD indexTablesSize;
+    DWORD numberofIndexSubTables;
+    DWORD colorRef;
+    sbitLineMetrics hori;
+    sbitLineMetrics vert;
+    WORD startGlyphIndex;
+    WORD endGlyphIndex;
+    BYTE ppemX;
+    BYTE ppemY;
+    BYTE bitDepth;
+    BYTE flags;
+} CBLCBitmapSizeTable;
 #include "poppack.h"
 
 enum OS2_FSSELECTION {
@@ -2151,6 +2176,40 @@ static DWORD opentype_get_sbix_formats(IDWriteFontFace4 *fontface)
     return ret;
 }
 
+static UINT32 opentype_get_cblc_formats(IDWriteFontFace4 *fontface)
+{
+    CBLCBitmapSizeTable *sizes;
+    UINT32 num_sizes, size, s;
+    BOOL exists = FALSE;
+    CBLCHeader *header;
+    UINT32 ret = 0;
+    void *context;
+    HRESULT hr;
+
+    if (FAILED(hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_CBLC_TAG, (const void **)&header, &size,
+            &context, &exists)))
+        return 0;
+
+    if (!exists)
+        return 0;
+
+    num_sizes = GET_BE_DWORD(header->numSizes);
+    sizes = (CBLCBitmapSizeTable *)(header + 1);
+
+    for (s = 0; s < num_sizes; s++) {
+        BYTE bpp = sizes->bitDepth;
+
+        if (bpp == 1 || bpp == 2 || bpp == 4 || bpp == 8)
+            ret |= DWRITE_GLYPH_IMAGE_FORMATS_PNG;
+        else if (bpp == 32)
+            ret |= DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8;
+    }
+
+    IDWriteFontFace4_ReleaseFontTable(fontface, context);
+
+    return ret;
+}
+
 UINT32 opentype_get_glyph_image_formats(IDWriteFontFace4 *fontface)
 {
     UINT32 ret = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
@@ -2170,7 +2229,9 @@ UINT32 opentype_get_glyph_image_formats(IDWriteFontFace4 *fontface)
     if (opentype_has_font_table(fontface, MS_SBIX_TAG))
         ret |= opentype_get_sbix_formats(fontface);
 
-    /* TODO: handle embedded bitmaps tables */
+    if (opentype_has_font_table(fontface, MS_CBLC_TAG))
+        ret |= opentype_get_cblc_formats(fontface);
+
     return ret;
 }
 
