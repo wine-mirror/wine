@@ -148,7 +148,7 @@ Program
 
 OptionExplicit_opt
     : /* empty */                { $$ = FALSE; }
-    | tOPTION tEXPLICIT tNL      { $$ = TRUE; }
+    | tOPTION tEXPLICIT StSep    { $$ = TRUE; }
 
 SourceElements
     : /* empty */

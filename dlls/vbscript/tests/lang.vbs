@@ -16,7 +16,7 @@
 ' Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 '
 
-Option Explicit
+OPTION EXPLICIT  : : DIM W
 
 dim x, y, z
 Dim obj
@@ -52,6 +52,9 @@ Call ok(true = -1, "! true = -1")
 Call ok(false = 0, "false <> 0")
 Call ok(&hff = 255, "&hff <> 255")
 Call ok(&Hff = 255, "&Hff <> 255")
+
+W = 5
+Call ok(W = 5, "W = " & W & " expected " & 5)
 
 x = "xx"
 Call ok(x = "xx", "x = " & x & " expected ""xx""")
