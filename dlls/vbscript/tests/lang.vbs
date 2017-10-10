@@ -1250,6 +1250,20 @@ Call testarrarg(1, "VT_I2*")
 Call testarrarg(false, "VT_BOOL*")
 Call testarrarg(Empty, "VT_EMPTY*")
 
+Sub modifyarr(arr)
+    'Following test crashes on wine
+    'Call ok(arr(0) = "not modified", "arr(0) = " & arr(0))
+    arr(0) = "modified"
+End Sub
+
+arr(0) = "not modified"
+Call modifyarr(arr)
+Call ok(arr(0) = "modified", "arr(0) = " & arr(0))
+
+arr(0) = "not modified"
+modifyarr(arr)
+Call todo_wine_ok(arr(0) = "not modified", "arr(0) = " & arr(0))
+
 ' It's allowed to declare non-builtin RegExp class...
 class RegExp
      public property get Global()
