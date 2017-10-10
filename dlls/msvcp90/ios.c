@@ -15036,6 +15036,20 @@ int __cdecl tr2_sys__Link(char const* existing_path, char const* new_path)
     return GetLastError();
 }
 
+/* ?_Link@sys@tr2@std@@YAHPB_W0@Z */
+/* ?_Link@sys@tr2@std@@YAHPEB_W0@Z */
+/* _Link */
+int __cdecl tr2_sys__Link_wchar(WCHAR const* existing_path, WCHAR const* new_path)
+{
+    TRACE("(%s %s)\n", debugstr_w(existing_path), debugstr_w(new_path));
+    if(!existing_path || !new_path)
+        return ERROR_INVALID_PARAMETER;
+
+    if(CreateHardLinkW(new_path, existing_path, NULL))
+        return ERROR_SUCCESS;
+    return GetLastError();
+}
+
 /* ?_Symlink@sys@tr2@std@@YAHPBD0@Z */
 /* ?_Symlink@sys@tr2@std@@YAHPEBD0@Z */
 int __cdecl tr2_sys__Symlink(char const* existing_file_name, char const* file_name)

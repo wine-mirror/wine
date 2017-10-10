@@ -1533,8 +1533,8 @@
 @ cdecl -arch=win64 ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z(ptr ptr) msvcp120.?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z
 @ cdecl -arch=win32 ?_Link@sys@tr2@std@@YAHPBD0@Z(str str) msvcp120.?_Link@sys@tr2@std@@YAHPBD0@Z
 @ cdecl -arch=win64 ?_Link@sys@tr2@std@@YAHPEBD0@Z(str str) msvcp120.?_Link@sys@tr2@std@@YAHPEBD0@Z
-@ stub -arch=win32 ?_Link@sys@tr2@std@@YAHPB_W0@Z
-@ stub -arch=win64 ?_Link@sys@tr2@std@@YAHPEB_W0@Z
+@ cdecl -arch=win32 ?_Link@sys@tr2@std@@YAHPB_W0@Z(wstr wstr) msvcp120.?_Link@sys@tr2@std@@YAHPB_W0@Z
+@ cdecl -arch=win64 ?_Link@sys@tr2@std@@YAHPEB_W0@Z(wstr wstr) msvcp120.?_Link@sys@tr2@std@@YAHPEB_W0@Z
 @ cdecl -arch=win32 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z(ptr ptr long) msvcp120.?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z
 @ cdecl -arch=win64 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z(ptr ptr long) msvcp120.?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z
 @ cdecl -arch=win32 ?_Locimp_ctor@_Locimp@locale@std@@CAXPAV123@ABV123@@Z(ptr ptr) msvcp120.?_Locimp_ctor@_Locimp@locale@std@@CAXPAV123@ABV123@@Z

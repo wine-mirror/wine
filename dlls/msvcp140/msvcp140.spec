@@ -3667,7 +3667,7 @@
 @ stub _LSinh
 @ extern _LSnan _LSnan
 @ stub _Last_write_time
-@ stub _Link
+@ cdecl _Link(wstr wstr) tr2_sys__Link_wchar
 @ cdecl _Lock_shared_ptr_spin_lock()
 @ cdecl _Lstat(wstr ptr)
 @ cdecl _Make_dir(wstr) tr2_sys__Make_dir_wchar

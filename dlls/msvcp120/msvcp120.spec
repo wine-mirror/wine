@@ -1533,8 +1533,8 @@
 @ cdecl -arch=win64 ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z(ptr ptr) _Pad__Launch
 @ cdecl -arch=win32 ?_Link@sys@tr2@std@@YAHPBD0@Z(str str) tr2_sys__Link
 @ cdecl -arch=win64 ?_Link@sys@tr2@std@@YAHPEBD0@Z(str str) tr2_sys__Link
-@ stub -arch=win32 ?_Link@sys@tr2@std@@YAHPB_W0@Z
-@ stub -arch=win64 ?_Link@sys@tr2@std@@YAHPEB_W0@Z
+@ cdecl -arch=win32 ?_Link@sys@tr2@std@@YAHPB_W0@Z(wstr wstr) tr2_sys__Link_wchar
+@ cdecl -arch=win64 ?_Link@sys@tr2@std@@YAHPEB_W0@Z(wstr wstr) tr2_sys__Link_wchar
 @ cdecl -arch=win32 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z(ptr ptr long) locale__Locimp__Locimp_Addfac
 @ cdecl -arch=win64 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z(ptr ptr long) locale__Locimp__Locimp_Addfac
 @ cdecl -arch=win32 ?_Locimp_ctor@_Locimp@locale@std@@CAXPAV123@ABV123@@Z(ptr ptr) locale__Locimp__Locimp_ctor
