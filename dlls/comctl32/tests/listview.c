@@ -1523,6 +1523,8 @@ static LRESULT CALLBACK create_test_wndproc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
 static void test_create(void)
 {
+    static const WCHAR testtextW[] = {'t','e','s','t',' ','t','e','x','t',0};
+    char buff[16];
     HWND hList;
     HWND hHeader;
     LONG_PTR ret;
@@ -1733,6 +1735,23 @@ static void test_create(void)
     hList = create_listview_control(LVS_OWNERDRAWFIXED | LVS_REPORT);
     ok_sequence(sequences, PARENT_SEQ_INDEX, create_ownerdrawfixed_parent_seq,
                 "created with LVS_OWNERDRAWFIXED|LVS_REPORT - parent seq", FALSE);
+    DestroyWindow(hList);
+
+    /* Test that window text is preserved. */
+    hList = CreateWindowExA(0, WC_LISTVIEWA, "test text", WS_CHILD | WS_BORDER | WS_VISIBLE,
+        0, 0, 100, 100, hwndparent, NULL, GetModuleHandleA(NULL), NULL);
+    ok(hList != NULL, "Failed to create ListView window.\n");
+    *buff = 0;
+    GetWindowTextA(hList, buff, sizeof(buff));
+    ok(!strcmp(buff, "test text"), "Unexpected window text %s.\n", buff);
+    DestroyWindow(hList);
+
+    hList = CreateWindowExW(0, WC_LISTVIEWW, testtextW, WS_CHILD | WS_BORDER | WS_VISIBLE,
+        0, 0, 100, 100, hwndparent, NULL, GetModuleHandleA(NULL), NULL);
+    ok(hList != NULL, "Failed to create ListView window.\n");
+    *buff = 0;
+    GetWindowTextA(hList, buff, sizeof(buff));
+    ok(!strcmp(buff, "test text"), "Unexpected window text %s.\n", buff);
     DestroyWindow(hList);
 }
 

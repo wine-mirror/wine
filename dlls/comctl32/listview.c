@@ -9473,7 +9473,7 @@ static VOID CALLBACK LISTVIEW_DelayedEditItem(HWND hwnd, UINT uMsg, UINT_PTR idE
  *   Success: TRUE
  *   Failure: FALSE
  */
-static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
+static LRESULT LISTVIEW_NCCreate(HWND hwnd, WPARAM wParam, const CREATESTRUCTW *lpcs)
 {
   LISTVIEW_INFO *infoPtr;
   LOGFONTW logFont;
@@ -9532,7 +9532,8 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   if (!(infoPtr->hdpaPosX  = DPA_Create(10))) goto fail;
   if (!(infoPtr->hdpaPosY  = DPA_Create(10))) goto fail;
   if (!(infoPtr->hdpaColumns = DPA_Create(10))) goto fail;
-  return TRUE;
+
+  return DefWindowProcW(hwnd, WM_NCCREATE, wParam, (LPARAM)lpcs);
 
 fail:
     DestroyWindow(infoPtr->hwndHeader);
@@ -11691,7 +11692,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_Command(infoPtr, wParam, lParam);
 
   case WM_NCCREATE:
-    return LISTVIEW_NCCreate(hwnd, (LPCREATESTRUCTW)lParam);
+    return LISTVIEW_NCCreate(hwnd, wParam, (LPCREATESTRUCTW)lParam);
 
   case WM_CREATE:
     return LISTVIEW_Create(hwnd, (LPCREATESTRUCTW)lParam);
