@@ -3737,7 +3737,7 @@
 @ cdecl _Toupper(long ptr) _Toupper
 @ cdecl _Towlower(long ptr) _Towlower
 @ cdecl _Towupper(long ptr) _Towupper
-@ stub _Unlink
+@ cdecl _Unlink(wstr) tr2_sys__Unlink_wchar
 @ cdecl _Unlock_shared_ptr_spin_lock()
 @ stub _WStod
 @ stub _WStodx

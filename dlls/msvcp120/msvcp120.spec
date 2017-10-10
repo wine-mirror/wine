@@ -1768,8 +1768,8 @@
 @ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ(ptr) ios_base_Tidy
 @ cdecl -arch=win32 ?_Unlink@sys@tr2@std@@YAHPBD@Z(str) tr2_sys__Unlink
 @ cdecl -arch=win64 ?_Unlink@sys@tr2@std@@YAHPEBD@Z(str) tr2_sys__Unlink
-@ stub -arch=win32 ?_Unlink@sys@tr2@std@@YAHPB_W@Z
-@ stub -arch=win64 ?_Unlink@sys@tr2@std@@YAHPEB_W@Z
+@ cdecl -arch=win32 ?_Unlink@sys@tr2@std@@YAHPB_W@Z(wstr) tr2_sys__Unlink_wchar
+@ cdecl -arch=win64 ?_Unlink@sys@tr2@std@@YAHPEB_W@Z(wstr) tr2_sys__Unlink_wchar
 @ cdecl -arch=arm ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAAXXZ(ptr) basic_streambuf_char__Unlock
 @ thiscall -arch=i386 ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAEXXZ(ptr) basic_streambuf_char__Unlock
 @ cdecl -arch=win64 ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@UEAAXXZ(ptr) basic_streambuf_char__Unlock

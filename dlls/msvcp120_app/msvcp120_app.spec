@@ -1768,8 +1768,8 @@
 @ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ(ptr) msvcp120.?_Tidy@ios_base@std@@AEAAXXZ
 @ cdecl -arch=win32 ?_Unlink@sys@tr2@std@@YAHPBD@Z(str) msvcp120.?_Unlink@sys@tr2@std@@YAHPBD@Z
 @ cdecl -arch=win64 ?_Unlink@sys@tr2@std@@YAHPEBD@Z(str) msvcp120.?_Unlink@sys@tr2@std@@YAHPEBD@Z
-@ stub -arch=win32 ?_Unlink@sys@tr2@std@@YAHPB_W@Z
-@ stub -arch=win64 ?_Unlink@sys@tr2@std@@YAHPEB_W@Z
+@ cdecl -arch=win32 ?_Unlink@sys@tr2@std@@YAHPB_W@Z(wstr) msvcp120.?_Unlink@sys@tr2@std@@YAHPB_W@Z
+@ cdecl -arch=win64 ?_Unlink@sys@tr2@std@@YAHPEB_W@Z(wstr) msvcp120.?_Unlink@sys@tr2@std@@YAHPEB_W@Z
 @ cdecl -arch=arm ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAAXXZ(ptr) msvcp120.?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAAXXZ
 @ thiscall -arch=i386 ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAEXXZ(ptr) msvcp120.?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAEXXZ
 @ cdecl -arch=win64 ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@UEAAXXZ(ptr) msvcp120.?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@UEAAXXZ

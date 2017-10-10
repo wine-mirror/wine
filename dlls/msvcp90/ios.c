@@ -15060,6 +15060,18 @@ int __cdecl tr2_sys__Unlink(char const* path)
     return GetLastError();
 }
 
+/* ?_Unlink@sys@tr2@std@@YAHPB_W@Z */
+/* ?_Unlink@sys@tr2@std@@YAHPEB_W@Z */
+/* _Unlink */
+int __cdecl tr2_sys__Unlink_wchar(WCHAR const* path)
+{
+    TRACE("(%s)\n", debugstr_w(path));
+
+    if(DeleteFileW(path))
+        return ERROR_SUCCESS;
+    return GetLastError();
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64
