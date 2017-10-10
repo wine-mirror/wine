@@ -3693,7 +3693,7 @@
 @ cdecl -ret64 _Query_perf_counter()
 @ cdecl -ret64 _Query_perf_frequency()
 @ cdecl _Read_dir(ptr ptr ptr) tr2_sys__Read_dir_wchar
-@ stub _Remove_dir
+@ cdecl _Remove_dir(wstr) tr2_sys__Remove_dir_wchar
 @ stub _Rename
 @ stub _Resize
 @ stub _Set_last_write_time
