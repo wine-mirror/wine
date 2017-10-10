@@ -212,6 +212,21 @@ arr(0) = 2
 arr(1) = 3
 Call ok(not isNumeric(arr), "isNumeric(arr) is not true?")
 
+Call ok(getVT(Array()) = "VT_ARRAY|VT_VARIANT", "getVT(Array()) = " & getVT(Array()))
+x = Array("a1", 2, "a3")
+Call ok(getVT(x) = "VT_ARRAY|VT_VARIANT*", "getVT(array) = " & getVT(x))
+Call ok(getVT(x(0)) = "VT_BSTR*", "getVT(array(0)) = " & getVT(x(0)))
+Call ok(x(0) = "a1", "array(0) = " & x(0))
+Call ok(getVT(x(1)) = "VT_I2*", "getVT(array(1)) = " & getVT(x(1)))
+Call ok(x(1) = 2, "array(1) = " & x(1))
+Call ok(getVT(x(2)) = "VT_BSTR*", "getVT(array(2)) = " & getVT(x(2)))
+Call ok(x(2) = "a3", "array(2) = " & x(2))
+
+Dim new_array
+new_array = x
+x(0) = "new value"
+Call ok(new_array(0) = "a1", "new_array(0) = " & new_array(0))
+
 Dim newObject
 Set newObject = New ValClass
 newObject.myval = 1

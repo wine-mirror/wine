@@ -1792,8 +1792,44 @@ static HRESULT Global_TypeName(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, 
 
 static HRESULT Global_Array(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SAFEARRAYBOUND bounds;
+    SAFEARRAY *sa;
+    VARIANT *data;
+    HRESULT hres;
+    unsigned i;
+
+    TRACE("arg_cnt=%u\n", args_cnt);
+
+    bounds.lLbound = 0;
+    bounds.cElements = args_cnt;
+    sa = SafeArrayCreate(VT_VARIANT, 1, &bounds);
+    if(!sa)
+        return E_OUTOFMEMORY;
+
+    hres = SafeArrayAccessData(sa, (void**)&data);
+    if(FAILED(hres)) {
+        SafeArrayDestroy(sa);
+        return hres;
+    }
+
+    for(i=0; i<args_cnt; i++) {
+        hres = VariantCopyInd(data+i, arg+i);
+        if(FAILED(hres)) {
+            SafeArrayUnaccessData(sa);
+            SafeArrayDestroy(sa);
+            return hres;
+        }
+    }
+    SafeArrayUnaccessData(sa);
+
+    if(res) {
+        V_VT(res) = VT_ARRAY|VT_VARIANT;
+        V_ARRAY(res) = sa;
+    }else {
+        SafeArrayDestroy(sa);
+    }
+
+    return S_OK;
 }
 
 static HRESULT Global_Erase(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -2272,7 +2308,7 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_DATEDIFF,                  Global_DateDiff, 0, 3, 5},
     {DISPID_GLOBAL_DATEPART,                  Global_DatePart, 0, 2, 4},
     {DISPID_GLOBAL_TYPENAME,                  Global_TypeName, 0, 1},
-    {DISPID_GLOBAL_ARRAY,                     Global_Array, 0, 1},
+    {DISPID_GLOBAL_ARRAY,                     Global_Array, 0, 0, MAXDWORD},
     {DISPID_GLOBAL_ERASE,                     Global_Erase, 0, 1},
     {DISPID_GLOBAL_FILTER,                    Global_Filter, 0, 2, 4},
     {DISPID_GLOBAL_JOIN,                      Global_Join, 0, 1, 2},
