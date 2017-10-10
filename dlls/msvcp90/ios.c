@@ -15049,6 +15049,20 @@ int __cdecl tr2_sys__Symlink(char const* existing_file_name, char const* file_na
     return GetLastError();
 }
 
+/* ?_Symlink@sys@tr2@std@@YAHPB_W0@Z */
+/* ?_Symlink@sys@tr2@std@@YAHPEB_W0@Z */
+/* _Symlink */
+int __cdecl tr2_sys__Symlink_wchar(WCHAR const* existing_file_name, WCHAR const* file_name)
+{
+    TRACE("(%s %s)\n", debugstr_w(existing_file_name), debugstr_w(file_name));
+    if(!existing_file_name || !file_name)
+        return ERROR_INVALID_PARAMETER;
+
+    if(CreateSymbolicLinkW(file_name, existing_file_name, 0))
+        return ERROR_SUCCESS;
+    return GetLastError();
+}
+
 /* ?_Unlink@sys@tr2@std@@YAHPBD@Z */
 /* ?_Unlink@sys@tr2@std@@YAHPEBD@Z */
 int __cdecl tr2_sys__Unlink(char const* path)
