@@ -276,6 +276,8 @@ static void (__cdecl *p_threads__Mtx_unlock)(void *mtx);
 
 static BOOLEAN (WINAPI *pCreateSymbolicLinkA)(LPCSTR,LPCSTR,DWORD);
 
+static size_t (__cdecl *p_vector_base_v4__Segment_index_of)(size_t);
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -391,6 +393,8 @@ static BOOL init(void)
                 "?_Mtx_lock@threads@stdext@@YAXPEAX@Z");
         SET(p_threads__Mtx_unlock,
                 "?_Mtx_unlock@threads@stdext@@YAXPEAX@Z");
+        SET(p_vector_base_v4__Segment_index_of,
+                "?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KA_K_K@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -460,6 +464,8 @@ static BOOL init(void)
                 "?_Mtx_lock@threads@stdext@@YAXPAX@Z");
         SET(p_threads__Mtx_unlock,
                 "?_Mtx_unlock@threads@stdext@@YAXPAX@Z");
+        SET(p_vector_base_v4__Segment_index_of,
+                "?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z");
 #ifdef __i386__
         SET(p_i386_Thrd_current,
                 "_Thrd_current");
@@ -2093,6 +2099,35 @@ static void test_threads__Mtx(void)
     p_threads__Mtx_delete(mtx);
 }
 
+static void test_vector_base_v4__Segment_index_of(void)
+{
+    size_t i;
+    size_t ret;
+    struct {
+        size_t x;
+        size_t expect;
+    } tests[] = {
+        {0, 0},
+        {1, 0},
+        {2, 1},
+        {3, 1},
+        {4, 2},
+        {7, 2},
+        {8, 3},
+        {15, 3},
+        {16, 4},
+        {31, 4},
+        {32, 5},
+        {~0, 8*sizeof(void*)-1}
+    };
+
+    for(i=0; i<sizeof(tests) / sizeof(tests[0]); i++) {
+        ret = p_vector_base_v4__Segment_index_of(tests[i].x);
+        ok(ret == tests[i].expect, "expected %ld, got %ld for %ld\n",
+            (long)tests[i].expect, (long)ret, (long)tests[i].x);
+    }
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -2125,6 +2160,8 @@ START_TEST(msvcp120)
     test_cnd();
     test__Pad();
     test_threads__Mtx();
+
+    test_vector_base_v4__Segment_index_of();
 
     test_vbtable_size_exports();
 
