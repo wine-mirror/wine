@@ -256,6 +256,9 @@ static void test_create(void)
                    res, access[k], sharing[j]);
                 ok(info.NamedPipeConfiguration == pipe_config[j], "wrong duplex status for pipe: %d, expected %d\n",
                    info.NamedPipeConfiguration, pipe_config[j]);
+
+                res = listen_pipe(hclient, hEvent, &iosb, FALSE);
+                ok(res == STATUS_ILLEGAL_FUNCTION, "expected STATUS_ILLEGAL_FUNCTION, got %x\n", res);
                 CloseHandle(hclient);
             }
 

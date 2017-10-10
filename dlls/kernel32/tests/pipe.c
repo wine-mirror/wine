@@ -224,6 +224,12 @@ static void test_CreateNamedPipe(int pipemode)
 
     ok(GetLastError() == ERROR_SEM_TIMEOUT, "wrong error %u\n", GetLastError());
 
+    /* Test ConnectNamedPipe() in both directions */
+    ok(!ConnectNamedPipe(hnp, NULL), "ConnectNamedPipe(server) succeeded\n");
+    ok(GetLastError() == ERROR_PIPE_CONNECTED, "expected ERROR_PIPE_CONNECTED, got %u\n", GetLastError());
+    ok(!ConnectNamedPipe(hFile, NULL), "ConnectNamedPipe(client) succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_FUNCTION, "expected ERROR_INVALID_FUNCTION, got %u\n", GetLastError());
+
     /* don't try to do i/o if one side couldn't be opened, as it hangs */
     if (hFile != INVALID_HANDLE_VALUE) {
         HANDLE hFile2;

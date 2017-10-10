@@ -876,6 +876,10 @@ static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
 
     switch(code)
     {
+    case FSCTL_PIPE_LISTEN:
+        set_error( STATUS_ILLEGAL_FUNCTION );
+        return 0;
+
     case FSCTL_PIPE_PEEK:
         return pipe_end_peek( &client->pipe_end );
 
