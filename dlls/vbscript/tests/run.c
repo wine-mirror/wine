@@ -1626,8 +1626,20 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, S
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *pscripterror)
 {
     HRESULT hr = onerror_hres;
-    CHECK_EXPECT(OnScriptError);
 
+    if(!expect_OnScriptError) {
+        EXCEPINFO info;
+        ULONG line;
+        HRESULT hres;
+
+        hres = IActiveScriptError_GetSourcePosition(pscripterror, NULL, &line, NULL);
+        if(SUCCEEDED(hres))
+            hres = IActiveScriptError_GetExceptionInfo(pscripterror, &info);
+        if(SUCCEEDED(hres))
+            trace("Error in line %u: %s\n", line+1, wine_dbgstr_w(info.bstrDescription));
+    }
+
+    CHECK_EXPECT(OnScriptError);
     onerror_hres = E_NOTIMPL;
 
     return hr;
