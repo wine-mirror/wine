@@ -2641,7 +2641,7 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
     iPosX = 0.0;
     for (item=0; item < iCP && item < cChars; item++)
     {
-        if (iSpecial == -1 && (iCluster == -1 || (iCluster != -1 && iCluster+clust_size <= item)))
+        if (iSpecial == -1 && (iCluster == -1 || iCluster+clust_size <= item))
         {
             int check;
             int clust = pwLogClust[item];
