@@ -1505,11 +1505,11 @@
 @ cdecl _vfprintf_l(ptr str ptr ptr) msvcr120._vfprintf_l
 @ stub _vfprintf_p
 @ stub _vfprintf_p_l
-@ stub _vfprintf_s_l
+@ cdecl _vfprintf_s_l(ptr str ptr ptr) msvcr120._vfprintf_s_l
 @ cdecl _vfwprintf_l(ptr wstr ptr ptr) msvcr120._vfwprintf_l
 @ stub _vfwprintf_p
 @ stub _vfwprintf_p_l
-@ stub _vfwprintf_s_l
+@ cdecl _vfwprintf_s_l(ptr wstr ptr ptr) msvcr120._vfwprintf_s_l
 @ stub _vprintf_l
 @ stub _vprintf_p
 @ stub _vprintf_p_l

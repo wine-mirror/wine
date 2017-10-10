@@ -1047,11 +1047,11 @@
 @ cdecl _vfprintf_l(ptr str ptr ptr) MSVCRT__vfprintf_l
 # stub _vfprintf_p(ptr str ptr)
 # stub _vfprintf_p_l(ptr str ptr ptr)
-# stub _vfprintf_s_l(ptr str ptr ptr)
+@ cdecl _vfprintf_s_l(ptr str ptr ptr) MSVCRT__vfprintf_s_l
 @ cdecl _vfwprintf_l(ptr wstr ptr ptr) MSVCRT__vfwprintf_l
 # stub _vfwprintf_p(ptr wstr ptr)
 # stub _vfwprintf_p_l(ptr wstr ptr ptr)
-# stub _vfwprintf_s_l(ptr wstr ptr ptr)
+@ cdecl _vfwprintf_s_l(ptr wstr ptr ptr) MSVCRT__vfwprintf_s_l
 # stub _vprintf_l(str ptr ptr)
 # stub _vprintf_p(str ptr)
 # stub _vprintf_p_l(str ptr ptr)

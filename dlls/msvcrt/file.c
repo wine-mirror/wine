@@ -5085,6 +5085,24 @@ static int vfwprintf_helper(DWORD options, MSVCRT_FILE* file, const MSVCRT_wchar
 }
 
 /*********************************************************************
+ *    _vfprintf_s_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__vfprintf_s_l(MSVCRT_FILE* file, const char *format,
+        MSVCRT__locale_t locale, __ms_va_list valist)
+{
+    return vfprintf_helper(MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, locale, valist);
+}
+
+/*********************************************************************
+ *    _vfwprintf_s_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__vfwprintf_s_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format,
+        MSVCRT__locale_t locale, __ms_va_list valist)
+{
+    return vfwprintf_helper(MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, locale, valist);
+}
+
+/*********************************************************************
  *		vfprintf (MSVCRT.@)
  */
 int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
@@ -5097,7 +5115,7 @@ int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list va
  */
 int CDECL MSVCRT_vfprintf_s(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
 {
-    return vfprintf_helper(MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, NULL, valist);
+    return MSVCRT__vfprintf_s_l(file, format, NULL, valist);
 }
 
 /*********************************************************************
@@ -5113,7 +5131,7 @@ int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms
  */
 int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
-    return vfwprintf_helper(MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, NULL, valist);
+    return MSVCRT__vfwprintf_s_l(file, format, NULL, valist);
 }
 
 /*********************************************************************
