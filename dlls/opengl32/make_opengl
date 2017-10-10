@@ -67,10 +67,6 @@ my $ext_file  = "opengl_ext.c";
 my $wgl_driver_file = "../../include/wine/wgl_driver.h";
 my $wgl_file = "../../include/wine/wgl.h";
 
-# Set to 0 for removing the ENTER / LEAVE GL calls
-my $gen_thread_safe = 0;
-# Prefix used for the local variables
-my $ext_prefix = "func_";
 # If set to 1, generate TRACEs for each OpenGL function
 my $gen_traces = 1;
 
@@ -299,9 +295,6 @@ sub GenerateThunk($$$)
     return "$ret) DECLSPEC_HIDDEN;\n" if $name eq "glGetStringi";
     $ret .= ") {\n";
     $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
-    if ($func_ref->[0] ne "void" && $gen_thread_safe) {
-        $ret .= "  " . ConvertType($func_ref->[0]) . " ret_value;\n";
-    }
     if ($gen_traces) {
         $ret .= "  TRACE(\"($trace_arg)\\n\"";
         if ($trace_arg ne "") {
@@ -309,25 +302,11 @@ sub GenerateThunk($$$)
         }
         $ret .= ");\n";
     }
-    if ($gen_thread_safe) {
-        $ret .= "  ENTER_GL();\n";
-        $ret .= "  ";
-        if ($func_ref->[0] ne "void") {
-            $ret .= "ret_value = ";
-        }
-        $ret .= "funcs->$prefix.p_$name( $call_arg);\n";
-        $ret .= "  LEAVE_GL();\n";
-        if ($func_ref->[0] ne "void") {
-            $ret .= "  return ret_value;\n"
-        }
+    $ret .= "  ";
+    if ($func_ref->[0] ne "void") {
+        $ret .= "return ";
     }
-    else {
-        $ret .= "  ";
-        if ($func_ref->[0] ne "void") {
-            $ret .= "return ";
-        }
-        $ret .= "funcs->$prefix.p_$name( $call_arg);\n";
-    }
+    $ret .= "funcs->$prefix.p_$name( $call_arg);\n";
     $ret .= "}\n";
 
     # Return this string....
