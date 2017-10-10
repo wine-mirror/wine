@@ -180,7 +180,19 @@ my %arg_conv =
      "GLintptrARB" =>      [ "long", "INT_PTR" ],
      "GLsizeiptrARB" =>    [ "long", "INT_PTR" ],
      "GLhalfNV" =>         [ "long", "unsigned short" ],
-     "GLvdpauSurfaceNV" => [ "long", "INT_PTR" ]);
+     "GLvdpauSurfaceNV" => [ "long", "INT_PTR" ],
+     "HDC" =>              [ "long" ],
+     "HGLRC" =>            [ "long" ],
+     "HENHMETAFILE" =>     [ "long" ],
+     "LPGLYPHMETRICSFLOAT" => [ "ptr" ],
+     "LPCSTR" =>           [ "str" ],
+     "int" =>              [ "long" ],
+     "INT" =>              [ "long" ],
+     "BOOL" =>             [ "long" ],
+     "DWORD" =>            [ "long" ],
+     "FLOAT" =>            [ "float" ],
+     "UINT" =>             [ "long" ],
+    );
 
 #
 # Used to convert some types
@@ -358,9 +370,29 @@ sub generate_null_func($$)
     return $ret;
 }
 
+sub generate_spec_entry($$)
+{
+    my ($name, $func) = @_;
+    my $args=" ";
+    foreach my $arg (@{$func->[1]})
+    {
+        my $type = $arg->[0];
+        if ($type =~ /\*/) {
+            $args .= "ptr ";
+        } elsif (defined($arg_conv{$type})) {
+            $args .= "$@$arg_conv{$type}[0] ";
+        } else {
+            die "No conversion for func $name type $type\n";
+        }
+    }
+    $args = substr($args,1,-1);
+    return "@ stdcall $_($args)";
+}
+
 sub get_func_proto($$$)
 {
     my ($format, $name, $func) = @_;
+    die "unknown func $name" unless defined $func->[0];
     my $ret = sprintf "%-10s", ConvertType($func->[0]);
     $ret .= " " . sprintf($format,$name) . "(";
     for (my $i = 0; $i < @{$func->[1]}; $i++)
@@ -445,29 +477,33 @@ if ($version eq "1.0") {
 #
 my %norm_functions;
 my %ext_functions;
+my %wgl_functions;
 
-my %wgl_functions =
-   (
-    "wglCopyContext" => [ "BOOL", [ [ "struct wgl_context *", "src" ],
-                                    [ "struct wgl_context *", "dst" ],
-                                    [ "UINT", "mask" ] ] ],
-    "wglCreateContext" => [ "struct wgl_context *", [ [ "HDC", "hdc" ] ] ],
-    "wglDeleteContext" => [ "void", [ [ "struct wgl_context *", "context" ] ] ],
-    "wglDescribePixelFormat" => [ "INT", [ [ "HDC", "hdc" ],
-                                           [ "INT", "format" ],
-                                           [ "UINT", "size" ],
-                                           [ "PIXELFORMATDESCRIPTOR *", "descr" ] ] ],
-    "wglGetPixelFormat" => [ "INT", [ [ "HDC", "hdc" ] ] ],
-    "wglGetProcAddress" => [ "PROC", [ [ "LPCSTR", "name" ] ] ],
-    "wglMakeCurrent" => [ "BOOL", [ [ "HDC", "hdc" ],
-                                    [ "struct wgl_context *", "context" ] ] ],
-    "wglSetPixelFormat" => [ "BOOL", [ [ "HDC", "hdc" ],
-                                       [ "INT", "format" ],
-                                       [ "const PIXELFORMATDESCRIPTOR *", "descr" ] ] ],
-    "wglShareLists" => [ "BOOL", [ [ "struct wgl_context *", "org" ],
-                                   [ "struct wgl_context *", "dst" ] ] ],
-    "wglSwapBuffers" => [ "BOOL", [ [ "HDC", "hdc" ] ] ],
-   );
+my %supported_wgl_functions =
+    (
+     "wglCopyContext" => 1,
+     "wglCreateContext" => 1,
+     "wglDeleteContext" => 1,
+     "wglDescribePixelFormat" => 1,
+     "wglGetPixelFormat" => 1,
+     "wglGetProcAddress" => 1,
+     "wglMakeCurrent" => 1,
+     "wglSetPixelFormat" => 1,
+     "wglShareLists" => 1,
+     "wglSwapBuffers" => 1,
+    );
+
+my %remapped_wgl_functions =
+    (
+     "ChoosePixelFormat" => "wglChoosePixelFormat",
+     "DescribePixelFormat" => "wglDescribePixelFormat",
+     "GetPixelFormat" => "wglGetPixelFormat",
+     "GetEnhMetaFilePixelFormat" => 0,
+     "SetPixelFormat" => "wglSetPixelFormat",
+     "SwapBuffers" => "wglSwapBuffers",
+     "wglUseFontBitmaps" => 0,
+     "wglUseFontOutlines" => 0,
+    );
 
 my %supported_wgl_extensions =
    (
@@ -578,6 +614,19 @@ sub parse_file($$)
                 }
             }
         }
+        elsif ($v->{api} eq "wgl")
+        {
+            for my $req (@{$v->{require}}) {
+                for (keys %{$req->{command}}) {
+                    if (defined $remapped_wgl_functions{$_}) {
+                        $wgl_functions{$remapped_wgl_functions{$_}} = $functions{$_} if $remapped_wgl_functions{$_};
+                    }
+                    else {
+                        $wgl_functions{$_} = $functions{$_};
+                    }
+                }
+            }
+        }
     }
 
     # generate extension functions
@@ -643,6 +692,7 @@ print HEADER "struct opengl_funcs\n{\n";
 print HEADER "    struct\n    {\n";
 foreach (sort keys %wgl_functions)
 {
+    next unless defined $supported_wgl_functions{$_};
     printf HEADER "        %s;\n", get_func_proto("(WINE_GLAPI *p_%s)", $_, $wgl_functions{$_});
 }
 print HEADER "    } wgl;\n\n";
@@ -690,6 +740,7 @@ print HEADER "#endif\n\n";
 
 foreach (sort keys %arg_conv)
 {
+    next unless $arg_conv{$_}[1];
     printf HEADER "typedef %-22s %s;\n", $arg_conv{$_}[1], $_;
 }
 print HEADER "\n";
@@ -716,46 +767,11 @@ close HEADER;
 open(SPEC, ">$spec_file") or die "cannot create $spec_file";
 
 foreach (sort keys %norm_functions) {
-    my $args=" ";
-    for (my $i = 0; $i < @{$norm_functions{$_}->[1]}; $i++) {
-        my $type = $norm_functions{$_}->[1]->[$i]->[0];
-        if ($type =~ /\*/) {
-            $args .= "ptr ";
-        } elsif (defined($arg_conv{$type})) {
-            $args .= "$@$arg_conv{$type}[0] ";
-        } else {
-            die "No conversion for GL type $type...\n";
-        }
-    }
-    $args = substr($args,1,-1);
-    print SPEC "@ stdcall $_($args)\n";
+    printf SPEC "%s\n", generate_spec_entry( $_, $norm_functions{$_} );
 }
-
-print SPEC "@ stdcall wglChoosePixelFormat(long ptr)
-@ stdcall wglCopyContext(long long long)
-@ stdcall wglCreateContext(long)
-@ stdcall wglCreateLayerContext(long long)
-@ stdcall wglDeleteContext(long)
-@ stdcall wglDescribeLayerPlane(long long long long ptr)
-@ stdcall wglDescribePixelFormat(long long long ptr)
-@ stdcall wglGetCurrentContext()
-@ stdcall wglGetCurrentDC()
-@ stub    wglGetDefaultProcAddress
-@ stdcall wglGetLayerPaletteEntries(long long long long ptr)
-@ stdcall wglGetPixelFormat(long)
-@ stdcall wglGetProcAddress(str)
-@ stdcall wglMakeCurrent(long long)
-@ stdcall wglRealizeLayerPalette(long long long)
-@ stdcall wglSetLayerPaletteEntries(long long long long ptr)
-@ stdcall wglSetPixelFormat(long long ptr)
-@ stdcall wglShareLists(long long)
-@ stdcall wglSwapBuffers(long)
-@ stdcall wglSwapLayerBuffers(long long)
-@ stdcall wglUseFontBitmapsA(long long long long)
-@ stdcall wglUseFontBitmapsW(long long long long)
-@ stdcall wglUseFontOutlinesA(long long long long long long long ptr)
-@ stdcall wglUseFontOutlinesW(long long long long long long long ptr)
-";
+foreach (sort keys %wgl_functions) {
+    printf SPEC "%s\n", generate_spec_entry( $_, $wgl_functions{$_} );
+}
 
 close(SPEC);
 
@@ -783,6 +799,7 @@ foreach (sort keys %norm_functions) {
 }
 
 foreach (sort keys %wgl_functions) {
+    next unless defined $supported_wgl_functions{$_};
     print NORM generate_null_func($_, $wgl_functions{$_});
 }
 foreach (sort keys %norm_functions) {
@@ -793,7 +810,11 @@ foreach (sort keys %ext_functions) {
 }
 
 print NORM "\nstruct opengl_funcs null_opengl_funcs =\n{\n    {\n";
-foreach (sort keys %wgl_functions) { print NORM "        null_$_,\n"; }
+foreach (sort keys %wgl_functions)
+{
+    next unless defined $supported_wgl_functions{$_};
+    print NORM "        null_$_,\n";
+}
 print NORM "    },\n    {\n";
 foreach (sort keys %norm_functions) { print NORM "        null_$_,\n" unless $_ eq "glDebugEntry"; }
 print NORM "    },\n    {\n";

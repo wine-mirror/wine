@@ -276,6 +276,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
     <commands namespace="WGL">
         <command>
+            <proto>int <name>wglDescribePixelFormat</name></proto>
+            <param><ptype>HDC</ptype> <name>hdc</name></param>
+            <param>int <name>ipfd</name></param>
+            <param><ptype>UINT</ptype> <name>cjpfd</name></param>
+            <!-- pixel format is wrongly specified 'const' in wgl.xml -->
+            <param><ptype>PIXELFORMATDESCRIPTOR</ptype> *<name>ppfd</name></param>
+        </command>
+        <command>
             <proto>BOOL <name>wglSetPixelFormatWINE</name></proto>
             <param><ptype>HDC</ptype> <name>hdc</name></param>
             <param>int <name>format</name></param>
@@ -307,6 +315,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
     <feature api="gl" name="GL_VERSION_1_0" number="1.0">
         <require>
             <command name="glDebugEntry"/>
+        </require>
+    </feature>
+
+    <feature api="wgl" name="WGL_VERSION_1_0" number="1.0">
+        <require>
+            <command name="wglDescribePixelFormat"/>
         </require>
     </feature>
 

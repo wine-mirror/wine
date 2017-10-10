@@ -344,7 +344,6 @@
 @ stdcall wglDescribePixelFormat(long long long ptr)
 @ stdcall wglGetCurrentContext()
 @ stdcall wglGetCurrentDC()
-@ stub    wglGetDefaultProcAddress
 @ stdcall wglGetLayerPaletteEntries(long long long long ptr)
 @ stdcall wglGetPixelFormat(long)
 @ stdcall wglGetProcAddress(str)
@@ -357,5 +356,5 @@
 @ stdcall wglSwapLayerBuffers(long long)
 @ stdcall wglUseFontBitmapsA(long long long long)
 @ stdcall wglUseFontBitmapsW(long long long long)
-@ stdcall wglUseFontOutlinesA(long long long long long long long ptr)
-@ stdcall wglUseFontOutlinesW(long long long long long long long ptr)
+@ stdcall wglUseFontOutlinesA(long long long long float float long ptr)
+@ stdcall wglUseFontOutlinesW(long long long long float float long ptr)

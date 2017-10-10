@@ -214,10 +214,10 @@ static struct wgl_context *dibdrv_wglCreateContext( HDC hdc )
 /***********************************************************************
  *		dibdrv_wglDeleteContext
  */
-static void dibdrv_wglDeleteContext( struct wgl_context *context )
+static BOOL dibdrv_wglDeleteContext( struct wgl_context *context )
 {
     pOSMesaDestroyContext( context->context );
-    HeapFree( GetProcessHeap(), 0, context );
+    return HeapFree( GetProcessHeap(), 0, context );
 }
 
 /***********************************************************************

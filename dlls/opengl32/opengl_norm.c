@@ -2014,15 +2014,15 @@ void WINAPI glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
   funcs->gl.p_glViewport( x, y, width, height );
 }
-static BOOL null_wglCopyContext( struct wgl_context * src, struct wgl_context * dst, UINT mask ) { return 0; }
-static struct wgl_context * null_wglCreateContext( HDC hdc ) { return 0; }
-static void null_wglDeleteContext( struct wgl_context * context ) { }
-static INT null_wglDescribePixelFormat( HDC hdc, INT format, UINT size, PIXELFORMATDESCRIPTOR * descr ) { return 0; }
-static INT null_wglGetPixelFormat( HDC hdc ) { return 0; }
-static PROC null_wglGetProcAddress( LPCSTR name ) { return 0; }
-static BOOL null_wglMakeCurrent( HDC hdc, struct wgl_context * context ) { return 0; }
-static BOOL null_wglSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR * descr ) { return 0; }
-static BOOL null_wglShareLists( struct wgl_context * org, struct wgl_context * dst ) { return 0; }
+static BOOL null_wglCopyContext( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask ) { return 0; }
+static struct wgl_context * null_wglCreateContext( HDC hDc ) { return 0; }
+static BOOL null_wglDeleteContext( struct wgl_context * oldContext ) { return 0; }
+static int null_wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR* ppfd ) { return 0; }
+static int null_wglGetPixelFormat( HDC hdc ) { return 0; }
+static PROC null_wglGetProcAddress( LPCSTR lpszProc ) { return 0; }
+static BOOL null_wglMakeCurrent( HDC hDc, struct wgl_context * newContext ) { return 0; }
+static BOOL null_wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR* ppfd ) { return 0; }
+static BOOL null_wglShareLists( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource ) { return 0; }
 static BOOL null_wglSwapBuffers( HDC hdc ) { return 0; }
 static void null_glAccum( GLenum op, GLfloat value ) { }
 static void null_glAlphaFunc( GLenum func, GLfloat ref ) { }
