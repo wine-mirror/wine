@@ -122,6 +122,7 @@ DEFINE_EXPECT(OnScriptError);
 #define DISPID_GLOBAL_TESTOPTIONALARG 1017
 #define DISPID_GLOBAL_LETOBJ        1018
 #define DISPID_GLOBAL_SETOBJ        1019
+#define DISPID_GLOBAL_TODO_WINE_OK  1020
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -983,6 +984,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_OK;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "todo_wine_ok")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_TODO_WINE_OK;
+        return S_OK;
+    }
     if(!strcmp_wa(bstrName, "trace")) {
         test_grfdex(grfdex, fdexNameCaseInsensitive);
         *pid = DISPID_GLOBAL_TRACE;
@@ -1092,6 +1098,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     switch(id) {
+    case DISPID_GLOBAL_TODO_WINE_OK:
     case DISPID_GLOBAL_OK: {
         VARIANT *b;
 
@@ -1115,7 +1122,8 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(V_VT(b) == VT_BOOL, "V_VT(b) = %d\n", V_VT(b));
 
-        ok(V_BOOL(b), "%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
+        todo_wine_if(id == DISPID_GLOBAL_TODO_WINE_OK)
+            ok(V_BOOL(b), "%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
         return S_OK;
     }
 
