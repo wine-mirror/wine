@@ -169,12 +169,17 @@ static void (__cdecl *p_Close_dir)(void*);
 static MSVCP_bool (__cdecl *p_Current_get)(WCHAR *);
 static MSVCP_bool (__cdecl *p_Current_set)(WCHAR const *);
 static ULONGLONG (__cdecl *p_File_size)(WCHAR const *);
+static int (__cdecl *p_Link)(WCHAR const*, WCHAR const*);
 static enum file_type (__cdecl *p_Lstat)(WCHAR const *, int *);
+static int (__cdecl *p_Make_dir)(WCHAR const*);
 static void* (__cdecl *p_Open_dir)(WCHAR*, WCHAR const*, int *, enum file_type*);
 static WCHAR* (__cdecl *p_Read_dir)(WCHAR*, void*, enum file_type*);
+static MSVCP_bool (__cdecl *p_Remove_dir)(WCHAR const*);
 static enum file_type (__cdecl *p_Stat)(WCHAR const *, int *);
+static int (__cdecl *p_Symlink)(WCHAR const*, WCHAR const*);
 static int (__cdecl *p_To_byte)(const WCHAR *src, char *dst);
 static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
+static int (__cdecl *p_Unlink)(WCHAR const*);
 
 static BOOLEAN (WINAPI *pCreateSymbolicLinkW)(const WCHAR *, const WCHAR *, DWORD);
 
@@ -245,12 +250,17 @@ static BOOL init(void)
     SET(p_Current_get, "_Current_get");
     SET(p_Current_set, "_Current_set");
     SET(p_File_size, "_File_size");
+    SET(p_Link, "_Link");
     SET(p_Lstat, "_Lstat");
+    SET(p_Make_dir, "_Make_dir");
     SET(p_Open_dir, "_Open_dir");
     SET(p_Read_dir, "_Read_dir");
+    SET(p_Remove_dir, "_Remove_dir");
     SET(p_Stat, "_Stat");
+    SET(p_Symlink, "_Symlink");
     SET(p_To_byte, "_To_byte");
     SET(p_To_wide, "_To_wide");
+    SET(p_Unlink, "_Unlink");
 
     hdll = GetModuleHandleA("kernel32.dll");
     pCreateSymbolicLinkW = (void*)GetProcAddress(hdll, "CreateSymbolicLinkW");
@@ -971,6 +981,79 @@ static void test_dir_operation(void)
     ok(SetCurrentDirectoryW(origin_path), "SetCurrentDirectoryW to origin_path failed\n");
 }
 
+static void test_Unlink(void)
+{
+    WCHAR temp_path[MAX_PATH], current_path[MAX_PATH];
+    int ret, i;
+    HANDLE file;
+    LARGE_INTEGER file_size;
+    static const WCHAR f1_symlinkW[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','f','1','_','s','y','m','l','i','n','k',0};
+    static const WCHAR f1_linkW[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','f','1','_','l','i','n','k',0};
+    static const WCHAR f1W[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r','\\','f','1',0};
+    static const WCHAR wine_test_dirW[] =
+            {'w','i','n','e','_','t','e','s','t','_','d','i','r',0};
+    static const WCHAR not_existW[] =
+            {'n','o','t','_','e','x','i','s','t',0};
+    static const WCHAR not_exist_fileW[] =
+            {'n','o','t','_','e','x','i','s','t','_','d','i','r','\\','n','o','t','_','e','x','i','s','t','_','f','i','l','e',0};
+    struct {
+        WCHAR const *path;
+        int last_error;
+        MSVCP_bool is_todo;
+    } tests[] = {
+        { f1_symlinkW, ERROR_SUCCESS, TRUE },
+        { f1_linkW, ERROR_SUCCESS, FALSE },
+        { f1W, ERROR_SUCCESS, FALSE },
+        { wine_test_dirW, ERROR_ACCESS_DENIED, FALSE },
+        { not_existW, ERROR_FILE_NOT_FOUND, FALSE },
+        { not_exist_fileW, ERROR_PATH_NOT_FOUND, FALSE },
+        { NULL, ERROR_PATH_NOT_FOUND, FALSE }
+    };
+
+    GetCurrentDirectoryW(MAX_PATH, current_path);
+    GetTempPathW(MAX_PATH, temp_path);
+    ok(SetCurrentDirectoryW(temp_path), "SetCurrentDirectoryW to temp_path failed\n");
+
+    ret = p_Make_dir(wine_test_dirW);
+    ok(ret == 1, "_Make_dir(): expect 1 got %d\n", ret);
+    file = CreateFileW(f1W, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    file_size.QuadPart = 7;
+    ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
+    ok(SetEndOfFile(file), "SetEndOfFile failed\n");
+    CloseHandle(file);
+
+    ret = p_Symlink(f1W, f1_symlinkW);
+    if(ret==ERROR_PRIVILEGE_NOT_HELD || ret==ERROR_INVALID_FUNCTION || ret==ERROR_CALL_NOT_IMPLEMENTED) {
+        tests[0].last_error = ERROR_FILE_NOT_FOUND;
+        win_skip("Privilege not held or symbolic link not supported, skipping symbolic link tests.\n");
+    }else {
+        ok(ret == ERROR_SUCCESS, "_Symlink(): expect: ERROR_SUCCESS, got %d\n", ret);
+    }
+    ret = p_Link(f1W, f1_linkW);
+    ok(ret == ERROR_SUCCESS, "_Link(): expect: ERROR_SUCCESS, got %d\n", ret);
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        errno = 0xdeadbeef;
+        ret = p_Unlink(tests[i].path);
+        todo_wine_if(tests[i].is_todo)
+            ok(ret == tests[i].last_error, "_Unlink(): test %d expect: %d, got %d\n",
+                    i+1, tests[i].last_error, ret);
+        ok(errno == 0xdeadbeef, "_Unlink(): test %d errno expect: 0xdeadbeef, got %d\n", i+1, ret);
+    }
+
+    ok(!DeleteFileW(f1W), "expect wine_test_dir/f1 not to exist\n");
+    ok(!DeleteFileW(f1_linkW), "expect wine_test_dir/f1_link not to exist\n");
+    ok(!DeleteFileW(f1_symlinkW), "expect wine_test_dir/f1_symlink not to exist\n");
+    ret = p_Remove_dir(wine_test_dirW);
+    ok(ret == 1, "_Remove_dir(): expect 1 got %d\n", ret);
+
+    ok(SetCurrentDirectoryW(current_path), "SetCurrentDirectoryW failed\n");
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -987,5 +1070,6 @@ START_TEST(msvcp140)
     test_Current_set();
     test_Stat();
     test_dir_operation();
+    test_Unlink();
     FreeLibrary(msvcp);
 }
