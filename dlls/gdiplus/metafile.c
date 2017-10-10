@@ -1844,6 +1844,10 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         {
             return GdipSetInterpolationMode(real_metafile->playback_graphics, flags & 0xff);
         }
+        case EmfPlusRecordTypeSetTextRenderingHint:
+        {
+            return GdipSetTextRenderingHint(real_metafile->playback_graphics, flags & 0xff);
+        }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
             return NotImplemented;
