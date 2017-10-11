@@ -572,6 +572,7 @@ struct HTMLDocument {
     IHTMLDocument6              IHTMLDocument6_iface;
     IHTMLDocument7              IHTMLDocument7_iface;
     IDocumentSelector           IDocumentSelector_iface;
+    IDocumentEvent              IDocumentEvent_iface;
     IPersistMoniker             IPersistMoniker_iface;
     IPersistFile                IPersistFile_iface;
     IPersistHistory             IPersistHistory_iface;

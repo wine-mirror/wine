@@ -2530,6 +2530,19 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
     IHTMLDocument2_Release(iframes_doc);
 }
 
+static void test_create_event(IHTMLDocument2 *doc)
+{
+    IDocumentEvent *doc_event;
+    HRESULT hres;
+
+    trace("createEvent tests...\n");
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IDocumentEvent, (void**)&doc_event);
+    ok(hres == S_OK, "Could not get IDocumentEvent iface: %08x\n", hres);
+
+    IDocumentEvent_Release(doc_event);
+}
+
 static HRESULT QueryInterface(REFIID,void**);
 
 static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
@@ -3201,6 +3214,8 @@ START_TEST(events)
         run_test(empty_doc_str, test_submit);
         run_test(empty_doc_ie9_str, test_submit);
         run_test(iframe_doc_str, test_iframe_connections);
+        if(is_ie9plus)
+            run_test(empty_doc_ie9_str, test_create_event);
 
         test_empty_document();
 

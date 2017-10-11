@@ -4300,6 +4300,76 @@ static const IDocumentSelectorVtbl DocumentSelectorVtbl = {
     DocumentSelector_querySelectorAll
 };
 
+static inline HTMLDocument *impl_from_IDocumentEvent(IDocumentEvent *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IDocumentEvent_iface);
+}
+
+static HRESULT WINAPI DocumentEvent_QueryInterface(IDocumentEvent *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = impl_from_IDocumentEvent(iface);
+    return htmldoc_query_interface(This, riid, ppv);
+}
+
+static ULONG WINAPI DocumentEvent_AddRef(IDocumentEvent *iface)
+{
+    HTMLDocument *This = impl_from_IDocumentEvent(iface);
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI DocumentEvent_Release(IDocumentEvent *iface)
+{
+    HTMLDocument *This = impl_from_IDocumentEvent(iface);
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI DocumentEvent_GetTypeInfoCount(IDocumentEvent *iface, UINT *pctinfo)
+{
+    HTMLDocument *This = impl_from_IDocumentEvent(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI DocumentEvent_GetTypeInfo(IDocumentEvent *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLDocument *This = impl_from_IDocumentEvent(iface);
+    return IDispatchEx_GetTypeInfo(&This->IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DocumentEvent_GetIDsOfNames(IDocumentEvent *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLDocument *This = impl_from_IDocumentEvent(iface);
+    return IDispatchEx_GetIDsOfNames(&This->IDispatchEx_iface, riid, rgszNames, cNames, lcid,
+            rgDispId);
+}
+
+static HRESULT WINAPI DocumentEvent_Invoke(IDocumentEvent *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLDocument *This = impl_from_IDocumentEvent(iface);
+    return IDispatchEx_Invoke(&This->IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DocumentEvent_createEvent(IDocumentEvent *iface, BSTR eventType, IDOMEvent **p)
+{
+    HTMLDocument *This = impl_from_IDocumentEvent(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(eventType), p);
+    return E_NOTIMPL;
+}
+
+static const IDocumentEventVtbl DocumentEventVtbl = {
+    DocumentEvent_QueryInterface,
+    DocumentEvent_AddRef,
+    DocumentEvent_Release,
+    DocumentEvent_GetTypeInfoCount,
+    DocumentEvent_GetTypeInfo,
+    DocumentEvent_GetIDsOfNames,
+    DocumentEvent_Invoke,
+    DocumentEvent_createEvent
+};
+
 static void HTMLDocument_on_advise(IUnknown *iface, cp_static_data_t *cp)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2((IHTMLDocument2*)iface);
@@ -4652,6 +4722,8 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
         *ppv = &This->IHTMLDocument7_iface;
     else if(IsEqualGUID(&IID_IDocumentSelector, riid))
         *ppv = &This->IDocumentSelector_iface;
+    else if(IsEqualGUID(&IID_IDocumentEvent, riid))
+        *ppv = &This->IDocumentEvent_iface;
     else if(IsEqualGUID(&IID_IPersist, riid))
         *ppv = &This->IPersistFile_iface;
     else if(IsEqualGUID(&IID_IPersistMoniker, riid))
@@ -4754,6 +4826,7 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     doc->IHTMLDocument7_iface.lpVtbl = &HTMLDocument7Vtbl;
     doc->IDispatchEx_iface.lpVtbl = &DocDispatchExVtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocumentSelectorVtbl;
+    doc->IDocumentEvent_iface.lpVtbl = &DocumentEventVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
     doc->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
 
