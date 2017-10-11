@@ -263,11 +263,16 @@ TW_UINT16 TWAIN_UserSelect (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 {
 	pTW_IDENTITY	selected = (pTW_IDENTITY)pData;
 
+        TRACE("DG_CONTROL/DAT_IDENTITY/MSG_USERSELECT SupportedGroups=0x%x ProductName=%s\n",
+            selected->SupportedGroups, wine_dbgstr_a(selected->ProductName));
+
 	if (!nrdevices) {
+                TRACE("<-- TWRC_FAILURE\n");
 		DSM_twCC = TWCC_OPERATIONERROR;
 		return TWRC_FAILURE;
 	}
 	*selected = devices[0].identity;
+        TRACE("<-- %s\n", wine_dbgstr_a(selected->ProductName));
 	DSM_twCC = TWCC_SUCCESS;
 	return TWRC_SUCCESS;
 }
