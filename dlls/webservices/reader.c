@@ -3061,7 +3061,7 @@ static HRESULT skip_node( struct reader *reader )
 
     for (;;)
     {
-        if ((hr = read_node( reader ) != S_OK) || !parent) break;
+        if ((hr = read_node( reader )) != S_OK || !parent) break;
         if (node_type( reader->current ) != WS_XML_NODE_TYPE_END_ELEMENT) continue;
         if (reader->current->parent == parent) return read_node( reader );
     }
