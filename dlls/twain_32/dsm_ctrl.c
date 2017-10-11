@@ -266,6 +266,7 @@ TW_UINT16 TWAIN_UserSelect (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         TRACE("DG_CONTROL/DAT_IDENTITY/MSG_USERSELECT SupportedGroups=0x%x ProductName=%s\n",
             selected->SupportedGroups, wine_dbgstr_a(selected->ProductName));
 
+        twain_autodetect();
 	if (!nrdevices) {
                 TRACE("<-- TWRC_FAILURE\n");
 		DSM_twCC = TWCC_OPERATIONERROR;
