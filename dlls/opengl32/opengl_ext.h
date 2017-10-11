@@ -20,7 +20,10 @@
 #define __DLLS_OPENGL32_OPENGL_EXT_H
 
 #include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "wine/wgl.h"
+#include "wine/wgl_driver.h"
 
 typedef struct {
   const char  *name;     /* name of the extension */
@@ -30,12 +33,14 @@ typedef struct {
 
 extern const OpenGL_extension extension_registry[] DECLSPEC_HIDDEN;
 extern const int extension_registry_size DECLSPEC_HIDDEN;
+extern struct opengl_funcs null_opengl_funcs DECLSPEC_HIDDEN;
 
-extern BOOL WINAPI wglSetPixelFormatWINE( HDC hdc, int format ) DECLSPEC_HIDDEN;
-extern BOOL WINAPI wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value ) DECLSPEC_HIDDEN;
-extern const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute );
-extern BOOL WINAPI wglQueryRendererIntegerWINE( HDC dc, GLint renderer,
-        GLenum attribute, GLuint *value ) DECLSPEC_HIDDEN;
-extern const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute ) DECLSPEC_HIDDEN;
+static inline struct opengl_funcs *get_dc_funcs( HDC hdc )
+{
+    struct opengl_funcs *funcs = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
+    if (!funcs) SetLastError( ERROR_INVALID_HANDLE );
+    else if (funcs == (void *)-1) funcs = &null_opengl_funcs;
+    return funcs;
+}
 
 #endif /* __DLLS_OPENGL32_OPENGL_EXT_H */

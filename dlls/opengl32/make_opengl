@@ -169,12 +169,7 @@ sub GenerateThunk($$$)
     my $trace_call_arg = "";
     my $trace_arg = "";
 
-    return "" if $name eq "glDebugEntry";
-    return "" if $name eq "glGetIntegerv";
-    return "" if $name eq "glGetString";
-    return "" if $func_ref->[2] && $func_ref->[2]->[0] =~ /WGL_/;
-
-    my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func_ref );
+    my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func_ref, 0 );
     foreach my $arg (@{$func_ref->[1]}) {
         my $ptype = get_arg_type( $arg );
         my $pname = get_arg_name( $arg );
@@ -192,13 +187,26 @@ sub GenerateThunk($$$)
     }
     $call_arg =~ s/,$/ /;
     $trace_arg =~ s/^, //;
-    return "$ret DECLSPEC_HIDDEN;\n" if $name eq "glGetStringi";
-    $ret .= "\n{\n  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
-    $ret .= "  TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+    $ret .= "\n{\n";
+    # special case for functions that take an HDC as first parameter
+    if (@{$func_ref->[1]} && get_arg_type( ${$func_ref->[1]}[0] ) eq "HDC")
+    {
+        my $pname = get_arg_name( ${$func_ref->[1]}[0] );
+        $ret .= "  const struct opengl_funcs *funcs = get_dc_funcs( $pname );\n";
+        $ret .= "  TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+        $ret .= "  if (!funcs || !funcs->$prefix.p_$name) return";
+        $ret .= " 0" unless is_void_func( $func_ref );
+        $ret .= ";\n";
+    }
+    else
+    {
+        $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
+        $ret .= "  TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+    }
     $ret .= "  ";
     $ret .= "return " unless is_void_func( $func_ref );
     $ret .= "funcs->$prefix.p_$name($call_arg);\n";
-    $ret .= "}\n";
+    $ret .= "}\n\n";
     return $ret;
 }
 
@@ -209,7 +217,7 @@ sub generate_null_func($$)
 
     return "" if $name eq "glDebugEntry";
 
-    $ret = get_func_proto( "static %s null_%s(%s)", $name, $func_ref );
+    $ret = get_func_proto( "static %s null_%s(%s)", $name, $func_ref, 1 );
     $ret .= " {";
     if ($name eq "glGetError")
     {
@@ -264,16 +272,16 @@ sub get_arg_name($)
     return $name[0]->textContent();
 }
 
-sub get_func_proto($$$)
+sub get_func_proto($$$$)
 {
-    my ($format, $name, $func) = @_;
+    my ($format, $name, $func, $convert_args) = @_;
     die "unknown func $name" unless defined $func->[0];
-    my $proto = ConvertType( $func->[0] );
+    my $proto = $convert_args ? ConvertType( $func->[0] ) : $func->[0]->textContent();
     $proto =~ s/ $//;
     my $args = "";
     foreach my $arg (@{$func->[1]})
     {
-        $args .= " " . ConvertType( $arg ) . ",";
+        $args .= " " . ($convert_args ? ConvertType( $arg ) : $arg->textContent()) . ",";
     }
     $args =~ s/,$/ /;
     $args ||= "void";
@@ -396,6 +404,32 @@ sub is_supported_api($)
     foreach my $i (split /\|/, $api)
     {
         return 1 if defined $supported_apis{$i};
+    }
+    return 0;
+}
+
+# some functions need a hand-written wrapper
+sub needs_wrapper($$)
+{
+    my %funcs =
+        (
+         "glDebugEntry" => 1,
+         "glGetIntegerv" => 1,
+         "glGetString" => 1,
+         "glGetStringi" => 1,
+         "wglGetCurrentReadDCARB" => 1,
+        );
+    my ($name, $func) = @_;
+
+    return 1 if defined $funcs{$name};
+    # check if return value needs special handling
+    (my $type = $func->[0]->textContent()) =~ s/ $//;
+    return 1 if defined $remap_types{$type};
+    # check if one of the arguments needs special handling
+    foreach (@{$func->[1]})
+    {
+        $type = get_arg_type( $_ );
+        return 1 if defined $remap_types{$type};
     }
     return 0;
 }
@@ -558,7 +592,7 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %wgl_functions)
 {
     next unless defined $supported_wgl_functions{$_};
-    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $wgl_functions{$_});
+    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $wgl_functions{$_}, 1);
 }
 print HEADER "    } wgl;\n\n";
 
@@ -566,14 +600,14 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %norm_functions)
 {
     next if $_ eq "glDebugEntry";
-    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $norm_functions{$_});
+    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $norm_functions{$_}, 1);
 }
 print HEADER "    } gl;\n\n";
 
 print HEADER "    struct\n    {\n";
 foreach (sort keys %ext_functions)
 {
-    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $ext_functions{$_});
+    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $ext_functions{$_}, 1);
 }
 print HEADER "    } ext;\n";
 print HEADER "};\n\n";
@@ -622,7 +656,7 @@ print HEADER "\n";
 
 foreach (sort keys %norm_functions)
 {
-    printf HEADER "%s;\n", get_func_proto("%-10s GLAPIENTRY %s(%s)", $_, $norm_functions{$_});
+    printf HEADER "%s;\n", get_func_proto("%-10s GLAPIENTRY %s(%s)", $_, $norm_functions{$_}, 0);
 }
 
 print HEADER "\n#endif /* __WINE_WGL_H */\n";
@@ -642,27 +676,25 @@ foreach (sort keys %wgl_functions) {
 
 close(SPEC);
 
+my $file_header =
+"/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n" .
+"#include \"config.h\"\n" .
+"#include <stdarg.h>\n" .
+"#include \"winternl.h\"\n" .
+"#include \"opengl_ext.h\"\n" .
+"#include \"wine/debug.h\"\n\n";
+
+$file_header .= "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n" if $gen_traces;
+
 #
 # After the spec file, the opengl_norm.c file
 #
 open(NORM, ">$norm_file") or die "cannot create $norm_file";
-print NORM "
-/* Auto-generated file... Do not edit ! */
-
-#include \"config.h\"
-#include <stdarg.h>
-#include \"winternl.h\"
-#include \"wingdi.h\"
-#include \"wine/wgl.h\"
-#include \"wine/wgl_driver.h\"
-#include \"wine/debug.h\"
-
-WINE_DEFAULT_DEBUG_CHANNEL(opengl);
-";
+print NORM $file_header;
 
 foreach (sort keys %norm_functions) {
-    my $string = GenerateThunk($_, $norm_functions{$_}, "gl");
-    print NORM "\n$string" if $string;
+    next if needs_wrapper( $_, $norm_functions{$_} );
+    print NORM GenerateThunk($_, $norm_functions{$_}, "gl");
 }
 
 foreach (sort keys %wgl_functions) {
@@ -694,35 +726,23 @@ close(NORM);
 # Finally, more complex, the opengl_ext.c file
 #
 open(EXT, ">$ext_file") or die "cannot create $ext_file";
-print EXT "
-/* Auto-generated file... Do not edit ! */
-
-#include \"config.h\"
-#include <stdarg.h>
-#include \"opengl_ext.h\"
-#include \"winternl.h\"
-#include \"wingdi.h\"
-#include \"wine/wgl.h\"
-#define WGL_WGLEXT_PROTOTYPES
-#include \"wine/wglext.h\"
-#include \"wine/wgl_driver.h\"
-#include \"wine/debug.h\"
-
-WINE_DEFAULT_DEBUG_CHANNEL(opengl);
-
-";
+print EXT $file_header;
 
 # The thunks themselves....
 my $count = keys %ext_functions;
-print EXT "const int extension_registry_size = $count;\n";
+my $wrappers = "";
+print EXT "const int extension_registry_size = $count;\n\n";
 foreach (sort keys %ext_functions) {
-    my $string = GenerateThunk($_, $ext_functions{$_}, "ext");
-    if ($string =~ /DECLSPEC_HIDDEN/) {
-        print EXT "\n$string";
-    } else {
-        print EXT "\nstatic $string" if $string;
+    if (needs_wrapper( $_, $ext_functions{$_} ))
+    {
+        $wrappers .= get_func_proto("extern %s WINAPI %s(%s) DECLSPEC_HIDDEN;\n", $_, $ext_functions{$_}, 0);
+    }
+    else
+    {
+        print EXT "static " . GenerateThunk($_, $ext_functions{$_}, "ext");
     }
 }
+print EXT $wrappers;
 
 # Then the table giving the string <-> function correspondence */
 print EXT "\nconst OpenGL_extension extension_registry[$count] = {\n";

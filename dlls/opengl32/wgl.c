@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "opengl_ext.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -34,17 +33,13 @@
 #include "winternl.h"
 #include "winnt.h"
 
-#define WGL_WGLEXT_PROTOTYPES
-#include "wine/wglext.h"
+#include "opengl_ext.h"
 #include "wine/gdi_driver.h"
-#include "wine/wgl_driver.h"
 #include "wine/glu.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
-
-extern struct opengl_funcs null_opengl_funcs;
 
 /* handle management */
 
@@ -94,14 +89,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION wgl_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-
-static inline struct opengl_funcs *get_dc_funcs( HDC hdc )
-{
-    struct opengl_funcs *funcs = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
-    if (!funcs) SetLastError( ERROR_INVALID_HANDLE );
-    else if (funcs == (void *)-1) funcs = &null_opengl_funcs;
-    return funcs;
-}
 
 static inline HANDLE next_handle( struct wgl_handle *ptr, enum wgl_handle_type type )
 {
@@ -971,31 +958,6 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 }
 
 /***********************************************************************
- *		wglAllocateMemoryNV
- *
- * Provided by the WGL_NV_vertex_array_range extension.
- */
-void * WINAPI wglAllocateMemoryNV( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority )
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglAllocateMemoryNV) return NULL;
-    return funcs->ext.p_wglAllocateMemoryNV( size, readfreq, writefreq, priority );
-}
-
-/***********************************************************************
- *		wglFreeMemoryNV
- *
- * Provided by the WGL_NV_vertex_array_range extension.
- */
-void WINAPI wglFreeMemoryNV( void *pointer )
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (funcs->ext.p_wglFreeMemoryNV) funcs->ext.p_wglFreeMemoryNV( pointer );
-}
-
-/***********************************************************************
  *		wglBindTexImageARB
  *
  * Provided by the WGL_ARB_render_texture extension.
@@ -1041,48 +1003,6 @@ BOOL WINAPI wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs )
     ret = ptr->funcs->ext.p_wglSetPbufferAttribARB( ptr->u.pbuffer, attribs );
     release_handle_ptr( ptr );
     return ret;
-}
-
-/***********************************************************************
- *		wglChoosePixelFormatARB
- *
- * Provided by the WGL_ARB_pixel_format extension.
- */
-BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *iattribs, const FLOAT *fattribs,
-                                     UINT max, int *formats, UINT *count )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglChoosePixelFormatARB) return FALSE;
-    return funcs->ext.p_wglChoosePixelFormatARB( hdc, iattribs, fattribs, max, formats, count );
-}
-
-/***********************************************************************
- *		wglGetPixelFormatAttribivARB
- *
- * Provided by the WGL_ARB_pixel_format extension.
- */
-BOOL WINAPI wglGetPixelFormatAttribivARB( HDC hdc, int format, int layer, UINT count, const int *attribs,
-                                          int *values )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglGetPixelFormatAttribivARB) return FALSE;
-    return funcs->ext.p_wglGetPixelFormatAttribivARB( hdc, format, layer, count, attribs, values );
-}
-
-/***********************************************************************
- *		wglGetPixelFormatAttribfvARB
- *
- * Provided by the WGL_ARB_pixel_format extension.
- */
-BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int format, int layer, UINT count, const int *attribs,
-                                          FLOAT *values )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglGetPixelFormatAttribfvARB) return FALSE;
-    return funcs->ext.p_wglGetPixelFormatAttribfvARB( hdc, format, layer, count, attribs, values );
 }
 
 /***********************************************************************
@@ -1164,123 +1084,6 @@ BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
     ret = ptr->funcs->ext.p_wglQueryPbufferARB( ptr->u.pbuffer, attrib, value );
     release_handle_ptr( ptr );
     return ret;
-}
-
-/***********************************************************************
- *		wglGetExtensionsStringARB
- *
- * Provided by the WGL_ARB_extensions_string extension.
- */
-const char * WINAPI wglGetExtensionsStringARB( HDC hdc )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglGetExtensionsStringARB) return NULL;
-    return (const char *)funcs->ext.p_wglGetExtensionsStringARB( hdc );
-}
-
-/***********************************************************************
- *		wglGetExtensionsStringEXT
- *
- * Provided by the WGL_EXT_extensions_string extension.
- */
-const char * WINAPI wglGetExtensionsStringEXT(void)
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglGetExtensionsStringEXT) return NULL;
-    return (const char *)funcs->ext.p_wglGetExtensionsStringEXT();
-}
-
-/***********************************************************************
- *		wglSwapIntervalEXT
- *
- * Provided by the WGL_EXT_swap_control extension.
- */
-BOOL WINAPI wglSwapIntervalEXT( int interval )
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglSwapIntervalEXT) return FALSE;
-    return funcs->ext.p_wglSwapIntervalEXT( interval );
-}
-
-/***********************************************************************
- *		wglGetSwapIntervalEXT
- *
- * Provided by the WGL_EXT_swap_control extension.
- */
-int WINAPI wglGetSwapIntervalEXT(void)
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglGetSwapIntervalEXT) return FALSE;
-    return funcs->ext.p_wglGetSwapIntervalEXT();
-}
-
-/***********************************************************************
- *		wglSetPixelFormatWINE
- *
- * Provided by the WGL_WINE_pixel_format_passthrough extension.
- */
-BOOL WINAPI wglSetPixelFormatWINE( HDC hdc, int format )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->ext.p_wglSetPixelFormatWINE) return FALSE;
-    return funcs->ext.p_wglSetPixelFormatWINE( hdc, format );
-}
-
-/***********************************************************************
- *              wglQueryCurrentRendererIntegerWINE
- *
- * Provided by the WGL_WINE_query_renderer extension.
- */
-BOOL WINAPI wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglQueryCurrentRendererIntegerWINE) return FALSE;
-    return funcs->ext.p_wglQueryCurrentRendererIntegerWINE( attribute, value );
-}
-
-/***********************************************************************
- *              wglQueryCurrentRendererStringWINE
- *
- * Provided by the WGL_WINE_query_renderer extension.
- */
-const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute )
-{
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-
-    if (!funcs->ext.p_wglQueryCurrentRendererStringWINE) return NULL;
-    return funcs->ext.p_wglQueryCurrentRendererStringWINE( attribute );
-}
-
-/***********************************************************************
- *              wglQueryRendererIntegerWINE
- *
- * Provided by the WGL_WINE_query_renderer extension.
- */
-BOOL WINAPI wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum attribute, GLuint *value )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( dc );
-
-    if (!funcs || !funcs->ext.p_wglQueryRendererIntegerWINE) return FALSE;
-    return funcs->ext.p_wglQueryRendererIntegerWINE( dc, renderer, attribute, value );
-}
-
-/***********************************************************************
- *              wglQueryRendererStringWINE
- *
- * Provided by the WGL_WINE_query_renderer extension.
- */
-const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute )
-{
-    const struct opengl_funcs *funcs = get_dc_funcs( dc );
-
-    if (!funcs || !funcs->ext.p_wglQueryRendererStringWINE) return NULL;
-    return funcs->ext.p_wglQueryRendererStringWINE( dc, renderer, attribute );
 }
 
 /***********************************************************************

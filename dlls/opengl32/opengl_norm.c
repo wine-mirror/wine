@@ -1,12 +1,9 @@
-
-/* Auto-generated file... Do not edit ! */
+/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */
 
 #include "config.h"
 #include <stdarg.h>
 #include "winternl.h"
-#include "wingdi.h"
-#include "wine/wgl.h"
-#include "wine/wgl_driver.h"
+#include "opengl_ext.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
@@ -2348,6 +2345,7 @@ void WINAPI glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
   TRACE( "(%d, %d, %d, %d)\n", x, y, width, height );
   funcs->gl.p_glViewport( x, y, width, height );
 }
+
 static BOOL null_wglCopyContext( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask ) { return 0; }
 static struct wgl_context * null_wglCreateContext( HDC hDc ) { return 0; }
 static BOOL null_wglDeleteContext( struct wgl_context * oldContext ) { return 0; }
