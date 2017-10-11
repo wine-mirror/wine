@@ -25,7 +25,6 @@
 #define __WINE_WINED3D_GL_H
 
 #include "wine/wgl.h"
-#include "wine/wglext.h"
 
 #define GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI 0x8837  /* not in the gl spec */
 

@@ -31,7 +31,6 @@
 #include "wine/debug.h"
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"
-#include "wine/wglext.h"
 
 #define __gl_h_
 #define __gltypes_h_

@@ -50,7 +50,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"
-#include "wine/wglext.h"
 
 typedef struct __GLXcontextRec *GLXContext;
 typedef struct __GLXFBConfigRec *GLXFBConfig;

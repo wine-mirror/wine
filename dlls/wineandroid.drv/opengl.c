@@ -42,7 +42,6 @@
 #include "wine/wgl.h"
 #undef GLAPIENTRY
 #include "wine/wgl_driver.h"
-#include "wine/wglext.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
