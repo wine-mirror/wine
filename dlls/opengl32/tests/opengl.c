@@ -28,15 +28,6 @@
 /* WGL_ARB_create_context */
 static HGLRC (WINAPI *pwglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, const int *attribList);
 
-#define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
-#define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
-#define WGL_CONTEXT_LAYER_PLANE_ARB 0x2093
-#define WGL_CONTEXT_FLAGS_ARB 0x2094
-
-/* Flags for WGL_CONTEXT_FLAGS_ARB */
-#define WGL_CONTEXT_DEBUG_BIT_ARB 0x0001
-#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB	0x0002
-
 /* WGL_ARB_extensions_string */
 static const char* (WINAPI *pwglGetExtensionsStringARB)(HDC);
 static int (WINAPI *pwglReleasePbufferDCARB)(HPBUFFERARB, HDC);
@@ -46,23 +37,10 @@ static BOOL (WINAPI *pwglMakeContextCurrentARB)(HDC hdraw, HDC hread, HGLRC hglr
 static HDC (WINAPI *pwglGetCurrentReadDCARB)(void);
 
 /* WGL_ARB_pixel_format */
-#define WGL_ACCELERATION_ARB 0x2003
-#define WGL_COLOR_BITS_ARB 0x2014
-#define WGL_RED_BITS_ARB   0x2015
-#define WGL_GREEN_BITS_ARB 0x2017
-#define WGL_BLUE_BITS_ARB  0x2019
-#define WGL_ALPHA_BITS_ARB 0x201B
-#define WGL_SUPPORT_GDI_ARB   0x200F
-#define WGL_DOUBLE_BUFFER_ARB 0x2011
-#define WGL_NO_ACCELERATION_ARB        0x2025
-#define WGL_GENERIC_ACCELERATION_ARB   0x2026
-#define WGL_FULL_ACCELERATION_ARB      0x2027
-
 static BOOL (WINAPI *pwglChoosePixelFormatARB)(HDC, const int *, const FLOAT *, UINT, int *, UINT *);
 static BOOL (WINAPI *pwglGetPixelFormatAttribivARB)(HDC, int, int, UINT, const int *, int *);
 
 /* WGL_ARB_pbuffer */
-#define WGL_DRAW_TO_PBUFFER_ARB 0x202D
 static HPBUFFERARB (WINAPI *pwglCreatePbufferARB)(HDC, int, int, int, const int *);
 static HDC (WINAPI *pwglGetPbufferDCARB)(HPBUFFERARB);
 

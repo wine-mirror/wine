@@ -329,6 +329,7 @@ if ($version eq "1.0") {
 my %norm_functions;
 my %ext_functions;
 my %wgl_functions;
+my %gl_enums;
 my (%gl_types, @gl_types);  # also use an array to preserve declaration order
 
 my %supported_wgl_functions =
@@ -360,19 +361,29 @@ my %remapped_wgl_functions =
 my %supported_wgl_extensions =
    (
     "WGL_ARB_create_context" => 1,
+    "WGL_ARB_create_context_profile" => 1,
     "WGL_ARB_extensions_string" => 1,
     "WGL_ARB_make_current_read" => 1,
+    "WGL_ARB_multisample" => 1,
     "WGL_ARB_pbuffer" => 1,
     "WGL_ARB_pixel_format" => 1,
+    "WGL_ARB_framebuffer_sRGB" => 1,
+    "WGL_ARB_pixel_format_float" => 1,
     "WGL_ARB_render_texture" => 1,
+    "WGL_ATI_pixel_format_float" => 1,
+    "WGL_EXT_create_context_es2_profile" => 1,
     "WGL_EXT_extensions_string" => 1,
+    "WGL_EXT_framebuffer_sRGB" => 1,
+    "WGL_EXT_pixel_format_packed_float" => 1,
     "WGL_EXT_swap_control" => 1,
+    "WGL_EXT_swap_control_tear" => 1,
+    "WGL_NV_float_buffer" => 1,
+    "WGL_NV_render_depth_texture" => 1,
+    "WGL_NV_render_texture_rectangle" => 1,
     "WGL_NV_vertex_array_range" => 1,
     "WGL_WINE_pixel_format_passthrough" => 1,
     "WGL_WINE_query_renderer" => 1,
    );
-
-my %enums;
 
 my %supported_apis =
     (
@@ -389,11 +400,12 @@ sub is_supported_api($)
     return 0;
 }
 
-sub parse_file($$)
+sub parse_file($)
 {
-    my ($file, $generate_enums) = @_;
+    my $file = shift;
     my $xml = XML::LibXML->load_xml( location => $file );
     my %functions;
+    my %enums;
 
     # save all functions
     foreach my $command ($xml->findnodes("/registry/commands/command"))
@@ -405,13 +417,10 @@ sub parse_file($$)
         $functions{$name->textContent()} = [ $proto, \@params ];
     }
 
-    # save all enums (only GL)
-    if ($generate_enums)
+    # save all enums
+    foreach my $enum ($xml->findnodes("/registry/enums/enum"))
     {
-        foreach my $enum ($xml->findnodes("/registry/enums/enum"))
-        {
-            $enums{$enum->{name}} = $enum->{value};
-        }
+        $enums{$enum->{name}} = $enum->{value};
     }
 
     # save all types
@@ -446,6 +455,10 @@ sub parse_file($$)
         {
             $norm_functions{$cmd->{name}} = $functions{$cmd->{name}};
         }
+        foreach my $enum ($feature->findnodes("./require/enum"))
+        {
+            $gl_enums{$enum->{name}} = $enums{$enum->{name}};
+        }
     }
 
     # generate extension functions from norm functions, if they are newer than the category
@@ -459,6 +472,10 @@ sub parse_file($$)
             next if $norm_functions{$name} || $ext_functions{$name};
             $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $feature->{name} ] ];
         }
+        foreach my $enum ($feature->findnodes("./require/enum"))
+        {
+            $gl_enums{$enum->{name}} = $enums{$enum->{name}};
+        }
     }
 
     # generate extension functions
@@ -471,6 +488,10 @@ sub parse_file($$)
             {
                 my $name = $cmd->{name};
                 $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $ext->{name} ] ];
+            }
+            foreach my $enum ($ext->findnodes("./require/enum"))
+            {
+                $gl_enums{$enum->{name}} = $enums{$enum->{name}};
             }
             next;
         }
@@ -492,12 +513,16 @@ sub parse_file($$)
                 }
             }
         }
+        foreach my $enum ($ext->findnodes("./require/enum"))
+        {
+            $gl_enums{$enum->{name}} = $enums{$enum->{name}};
+        }
     }
 }
 
-parse_file( "gl.xml", 1 );
-parse_file( "wgl.xml", 0 );
-parse_file( "winegl.xml", 1 );
+parse_file( "gl.xml" );
+parse_file( "wgl.xml" );
+parse_file( "winegl.xml" );
 
 #
 # Get the current wgl_driver.h version
@@ -588,10 +613,10 @@ foreach (@gl_types)
 print HEADER "\n";
 
 my $maxlen = 1;
-foreach (keys %enums) { $maxlen = length($_) if length($_) > $maxlen; }
-foreach (sort keys %enums)
+foreach (keys %gl_enums) { $maxlen = length($_) if length($_) > $maxlen; }
+foreach (sort keys %gl_enums)
 {
-    printf HEADER "#define %-*s %s\n", $maxlen, $_, $enums{$_};
+    printf HEADER "#define %-*s %s\n", $maxlen, $_, $gl_enums{$_};
 }
 print HEADER "\n";
 
