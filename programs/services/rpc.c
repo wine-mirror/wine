@@ -826,6 +826,9 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, SC_RPC_CONFI
         {
             WCHAR *descr = NULL;
 
+            if (!config.u.descr->lpDescription)
+                break;
+
             if (config.u.descr->lpDescription[0])
             {
                 if (!(descr = strdupW( config.u.descr->lpDescription )))

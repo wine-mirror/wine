@@ -36,6 +36,7 @@ static const CHAR spooler[] = "Spooler"; /* Should be available on all platforms
 static CHAR selfname[MAX_PATH];
 
 static BOOL (WINAPI *pChangeServiceConfig2A)(SC_HANDLE,DWORD,LPVOID);
+static BOOL (WINAPI *pChangeServiceConfig2W)(SC_HANDLE,DWORD,LPVOID);
 static BOOL (WINAPI *pEnumServicesStatusExA)(SC_HANDLE, SC_ENUM_TYPE, DWORD,
                                              DWORD, LPBYTE, DWORD, LPDWORD,
                                              LPDWORD, LPDWORD, LPCSTR);
@@ -57,6 +58,7 @@ static void init_function_pointers(void)
     HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
 
     pChangeServiceConfig2A = (void*)GetProcAddress(hadvapi32, "ChangeServiceConfig2A");
+    pChangeServiceConfig2W = (void*)GetProcAddress(hadvapi32, "ChangeServiceConfig2W");
     pEnumServicesStatusExA= (void*)GetProcAddress(hadvapi32, "EnumServicesStatusExA");
     pEnumServicesStatusExW= (void*)GetProcAddress(hadvapi32, "EnumServicesStatusExW");
     pGetSecurityInfo = (void *)GetProcAddress(hadvapi32, "GetSecurityInfo");
@@ -1954,6 +1956,7 @@ static void test_queryconfig2(void)
     DWORD expected, needed;
     BYTE buffer[MAX_PATH];
     LPSERVICE_DESCRIPTIONA pConfig = (LPSERVICE_DESCRIPTIONA)buffer;
+    LPSERVICE_DESCRIPTIONW pConfigW = (LPSERVICE_DESCRIPTIONW)buffer;
     SERVICE_PRESHUTDOWN_INFO preshutdown_info;
     static const CHAR servicename [] = "Winetest";
     static const CHAR displayname [] = "Winetest dummy service";
@@ -1961,6 +1964,9 @@ static void test_queryconfig2(void)
     static const CHAR dependencies[] = "Master1\0Master2\0+MasterGroup1\0";
     static const CHAR password    [] = "";
     static const CHAR description [] = "Description";
+    static const CHAR description_empty[] = "";
+    static const WCHAR descriptionW [] = {'D','e','s','c','r','i','p','t','i','o','n','W',0};
+    static const WCHAR descriptionW_empty[] = {0};
 
     if(!pQueryServiceConfig2A)
     {
@@ -2120,6 +2126,66 @@ static void test_queryconfig2(void)
     SetLastError(0xdeadbeef);
     ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer, needed,&needed);
     ok(ret, "expected QueryServiceConfig2W to succeed\n");
+
+    pConfig->lpDescription = (LPSTR)description;
+    ret = pChangeServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION, &buffer);
+    ok(ret, "expected ChangeServiceConfig2A to succeed\n");
+
+    pConfig->lpDescription = NULL;
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION, buffer, sizeof(buffer), &needed);
+    ok(ret, "expected QueryServiceConfig2A to succeed\n");
+    ok(pConfig->lpDescription && !strcmp(description, pConfig->lpDescription),
+        "expected lpDescription to be %s, got %s\n", description, pConfig->lpDescription);
+
+    pConfig->lpDescription = NULL;
+    ret = pChangeServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION, &buffer);
+    ok(ret, "expected ChangeServiceConfig2A to succeed\n");
+
+    pConfig->lpDescription = NULL;
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION, buffer, sizeof(buffer), &needed);
+    ok(ret, "expected QueryServiceConfig2A to succeed\n");
+    ok(pConfig->lpDescription && !strcmp(description, pConfig->lpDescription),
+        "expected lpDescription to be %s, got %s\n", description, pConfig->lpDescription);
+
+    pConfig->lpDescription = (LPSTR)description_empty;
+    ret = pChangeServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION, &buffer);
+    ok(ret, "expected ChangeServiceConfig2A to succeed\n");
+
+    pConfig->lpDescription = (void*)0xdeadbeef;
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION, buffer, sizeof(buffer), &needed);
+    ok(ret, "expected QueryServiceConfig2A to succeed\n");
+    ok(!pConfig->lpDescription,
+        "expected lpDescription to be null, got %s\n", pConfig->lpDescription);
+
+    pConfigW->lpDescription = (LPWSTR)descriptionW;
+    ret = pChangeServiceConfig2W(svc_handle, SERVICE_CONFIG_DESCRIPTION, &buffer);
+    ok(ret, "expected ChangeServiceConfig2W to succeed\n");
+
+    pConfigW->lpDescription = NULL;
+    ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DESCRIPTION, buffer, sizeof(buffer), &needed);
+    ok(ret, "expected QueryServiceConfig2A to succeed\n");
+    ok(pConfigW->lpDescription && !lstrcmpW(descriptionW, pConfigW->lpDescription),
+        "expected lpDescription to be %s, got %s\n", wine_dbgstr_w(descriptionW), wine_dbgstr_w(pConfigW->lpDescription));
+
+    pConfigW->lpDescription = NULL;
+    ret = pChangeServiceConfig2W(svc_handle, SERVICE_CONFIG_DESCRIPTION, &buffer);
+    ok(ret, "expected ChangeServiceConfig2W to succeed\n");
+
+    pConfigW->lpDescription = NULL;
+    ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DESCRIPTION, buffer, sizeof(buffer), &needed);
+    ok(ret, "expected QueryServiceConfig2A to succeed\n");
+    ok(pConfigW->lpDescription && !lstrcmpW(descriptionW, pConfigW->lpDescription),
+        "expected lpDescription to be %s, got %s\n", wine_dbgstr_w(descriptionW), wine_dbgstr_w(pConfigW->lpDescription));
+
+    pConfigW->lpDescription = (LPWSTR)descriptionW_empty;
+    ret = pChangeServiceConfig2W(svc_handle, SERVICE_CONFIG_DESCRIPTION, &buffer);
+    ok(ret, "expected ChangeServiceConfig2W to succeed\n");
+
+    pConfigW->lpDescription = (void*)0xdeadbeef;
+    ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DESCRIPTION, buffer, sizeof(buffer), &needed);
+    ok(ret, "expected QueryServiceConfig2A to succeed\n");
+    ok(!pConfigW->lpDescription,
+        "expected lpDescription to be null, got %s\n", wine_dbgstr_w(pConfigW->lpDescription));
 
     SetLastError(0xdeadbeef);
     ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_PRESHUTDOWN_INFO,
