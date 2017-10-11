@@ -1545,15 +1545,6 @@ static void test_create(void)
     hList = CreateWindowA("MyListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, GetModuleHandleA(NULL), 0);
     ok((HIMAGELIST)SendMessageA(hList, LVM_GETIMAGELIST, 0, 0) == test_create_imagelist, "Image list not obtained\n");
     hHeader = (HWND)SendMessageA(hList, LVM_GETHEADER, 0, 0);
-
-    if (!IsWindow(hHeader))
-    {
-        /* version 4.0 */
-        win_skip("LVM_GETHEADER not implemented. Skipping.\n");
-        DestroyWindow(hList);
-        return;
-    }
-
     ok(IsWindow(hHeader) && IsWindowVisible(hHeader), "Listview not in report mode\n");
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
     DestroyWindow(hList);
@@ -1939,13 +1930,6 @@ static void test_icon_spacing(void)
        "Expected %d, got %d\n", MAKELONG(w, h), r);
 
     r = SendMessageA(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(25, 35));
-    if (r == 0)
-    {
-        /* version 4.0 */
-        win_skip("LVM_SETICONSPACING unimplemented. Skipping.\n");
-        DestroyWindow(hwnd);
-        return;
-    }
     expect(MAKELONG(20,30), r);
 
     r = SendMessageA(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(-1,-1));
@@ -4394,19 +4378,11 @@ static void test_notifyformat(void)
     r = SendMessageA(hwnd, LVM_SETUNICODEFORMAT, 1, 0);
     expect(0, r);
     r = SendMessageA(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
-    if (r == 1)
-    {
-        r = SendMessageA(hwnd, LVM_SETUNICODEFORMAT, 0, 0);
-        expect(1, r);
-        r = SendMessageA(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
-        expect(0, r);
-    }
-    else
-    {
-        win_skip("LVM_GETUNICODEFORMAT is unsupported\n");
-        DestroyWindow(hwnd);
-        return;
-    }
+    ok(r == 1, "Unexpected return value %d.\n", r);
+    r = SendMessageA(hwnd, LVM_SETUNICODEFORMAT, 0, 0);
+    expect(1, r);
+    r = SendMessageA(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
+    expect(0, r);
 
     DestroyWindow(hwnd);
 
@@ -5011,12 +4987,7 @@ static void test_approximate_viewrect(void)
     expect(0, ret);
 
     ret = SendMessageA(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(75, 75));
-    if (ret == 0)
-    {
-        /* version 4.0 */
-        win_skip("LVM_SETICONSPACING unimplemented. Skipping.\n");
-        return;
-    }
+    ok(ret != 0, "Unexpected return value %#x.\n", ret);
 
     ret = SendMessageA(hwnd, LVM_APPROXIMATEVIEWRECT, 11, MAKELPARAM(100,100));
     expect(MAKELONG(77,827), ret);
@@ -5110,12 +5081,6 @@ static void test_finditem(void)
     fi.flags = LVFI_SUBSTRING;
     fi.psz = f;
     r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
-    if (r == -1)
-    {
-        win_skip("LVFI_SUBSTRING not supported\n");
-        DestroyWindow(hwnd);
-        return;
-    }
     expect(0, r);
     strcpy(f, "f");
     fi.flags = LVFI_SUBSTRING;
