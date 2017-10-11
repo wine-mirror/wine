@@ -3619,7 +3619,7 @@ static void test_ProcThreadAttributeList(void)
     ok(GetLastError() == ERROR_OBJECT_NAME_EXISTS, "got %d\n", GetLastError());
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_IDEAL_PROCESSOR, handles, sizeof(PROCESSOR_NUMBER), NULL, NULL);
-    ok(ret || (!ret && GetLastError() == ERROR_NOT_SUPPORTED), "got %d gle %d\n", ret, GetLastError());
+    ok(ret || GetLastError() == ERROR_NOT_SUPPORTED, "got %d gle %d\n", ret, GetLastError());
 
     if (ret)
     {
