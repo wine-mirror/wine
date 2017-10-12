@@ -274,6 +274,7 @@ static ULONG STDMETHODCALLTYPE d3d10_stateblock_Release(ID3D10StateBlock *iface)
     if (!refcount)
     {
         stateblock_cleanup(stateblock);
+        ID3D10Device_Release(stateblock->device);
         HeapFree(GetProcessHeap(), 0, stateblock);
     }
 
