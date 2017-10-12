@@ -432,7 +432,6 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     HTMLOptionElement_traverse,
     HTMLOptionElement_unlink
 };

@@ -1264,22 +1264,6 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
     return S_OK;
 }
 
-HRESULT call_fire_event(HTMLDOMNode *node, eventid_t eid)
-{
-    HRESULT hres;
-
-    if(node->vtbl->fire_event) {
-        BOOL handled = FALSE;
-
-        hres = node->vtbl->fire_event(node, eid, &handled);
-        if(handled)
-            return hres;
-    }
-
-    fire_event(node->doc, eid, TRUE, node, NULL, NULL);
-    return S_OK;
-}
-
 HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
 {
     nsIDOMNode *nsnode = NULL;

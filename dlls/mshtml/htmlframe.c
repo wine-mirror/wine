@@ -297,7 +297,6 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     HTMLFrameElement_get_document,
     HTMLFrameElement_get_readystate,
     HTMLFrameElement_get_dispid,

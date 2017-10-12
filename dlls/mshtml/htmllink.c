@@ -430,7 +430,6 @@ static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
     NULL,
-    NULL,
     HTMLLinkElementImpl_put_disabled,
     HTMLLinkElementImpl_get_disabled,
     NULL,

@@ -778,7 +778,6 @@ static const NodeImplVtbl HTMLFormElementImplVtbl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     HTMLFormElement_get_dispid,
     HTMLFormElement_invoke,
     NULL,

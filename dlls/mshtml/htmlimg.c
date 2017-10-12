@@ -718,7 +718,6 @@ static const NodeImplVtbl HTMLImgElementImplVtbl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     HTMLImgElement_get_readystate,
     NULL,
     NULL,

@@ -438,7 +438,6 @@ static const NodeImplVtbl HTMLTableRowImplVtbl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     HTMLTableRow_traverse,
     HTMLTableRow_unlink
 };

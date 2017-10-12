@@ -484,7 +484,6 @@ static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
     NULL,
-    NULL,
     HTMLTextAreaElementImpl_put_disabled,
     HTMLTextAreaElementImpl_get_disabled,
     NULL,

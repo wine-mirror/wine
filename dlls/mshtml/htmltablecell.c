@@ -476,7 +476,6 @@ static const NodeImplVtbl HTMLTableCellImplVtbl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     HTMLTableCell_traverse,
     HTMLTableCell_unlink
 };

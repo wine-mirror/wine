@@ -4949,7 +4949,6 @@ static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
     NULL,
     NULL,
     NULL,
-    NULL,
     HTMLDocumentNode_traverse,
     HTMLDocumentNode_unlink
 };

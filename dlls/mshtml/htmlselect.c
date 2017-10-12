@@ -697,7 +697,6 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
     NULL,
-    NULL,
     HTMLSelectElementImpl_put_disabled,
     HTMLSelectElementImpl_get_disabled,
     NULL,

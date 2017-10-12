@@ -1785,10 +1785,22 @@ static HRESULT WINAPI HTMLElement_get_isTextEdit(IHTMLElement *iface, VARIANT_BO
 static HRESULT WINAPI HTMLElement_click(IHTMLElement *iface)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
+    nsresult nsres;
 
     TRACE("(%p)\n", This);
 
-    return call_fire_event(&This->node, EVENTID_CLICK);
+    if(!This->nselem) {
+        FIXME("not implemented for comments\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_Click(This->nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Click failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_filters(IHTMLElement *iface,
