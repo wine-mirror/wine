@@ -2085,24 +2085,7 @@ static GpStatus free_image_data(GpImage *image)
         heap_free(((GpBitmap*)image)->prop_item);
     }
     else if (image->type == ImageTypeMetafile)
-    {
-        GpMetafile *metafile = (GpMetafile*)image;
-        heap_free(metafile->comment_data);
-        DeleteEnhMetaFile(CloseEnhMetaFile(metafile->record_dc));
-        if (!metafile->preserve_hemf)
-            DeleteEnhMetaFile(metafile->hemf);
-        if (metafile->record_graphics)
-        {
-            WARN("metafile closed while recording\n");
-            /* not sure what to do here; for now just prevent the graphics from functioning or using this object */
-            metafile->record_graphics->image = NULL;
-            metafile->record_graphics->busy = TRUE;
-        }
-        if (metafile->record_stream)
-        {
-            IStream_Release(metafile->record_stream);
-        }
-    }
+        METAFILE_Free((GpMetafile *)image);
     else
     {
         WARN("invalid image: %p\n", image);

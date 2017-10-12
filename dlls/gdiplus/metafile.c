@@ -297,20 +297,6 @@ typedef struct EmfPlusImageAttributes
     DWORD Reserved2;
 } EmfPlusImageAttributes;
 
-typedef enum ObjectType
-{
-    ObjectTypeInvalid,
-    ObjectTypeBrush,
-    ObjectTypePen,
-    ObjectTypePath,
-    ObjectTypeRegion,
-    ObjectTypeImage,
-    ObjectTypeFont,
-    ObjectTypeStringFormat,
-    ObjectTypeImageAttributes,
-    ObjectTypeCustomLineCap,
-} ObjectType;
-
 typedef struct EmfPlusObject
 {
     EmfPlusRecordHeader Header;
@@ -370,9 +356,52 @@ typedef struct EmfPlusFillPath
     } data;
 } EmfPlusFillPath;
 
+static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
+{
+    struct emfplus_object *object = &metafile->objtable[id];
+
+    switch (object->type)
+    {
+    case ObjectTypeInvalid:
+        break;
+    case ObjectTypeImageAttributes:
+        GdipDisposeImageAttributes(object->u.image_attributes);
+        break;
+    default:
+        FIXME("not implemented for object type %u.\n", object->type);
+        return;
+    }
+
+    object->type = ObjectTypeInvalid;
+    object->u.object = NULL;
+}
+
+void METAFILE_Free(GpMetafile *metafile)
+{
+    unsigned int i;
+
+    heap_free(metafile->comment_data);
+    DeleteEnhMetaFile(CloseEnhMetaFile(metafile->record_dc));
+    if (!metafile->preserve_hemf)
+        DeleteEnhMetaFile(metafile->hemf);
+    if (metafile->record_graphics)
+    {
+        WARN("metafile closed while recording\n");
+        /* not sure what to do here; for now just prevent the graphics from functioning or using this object */
+        metafile->record_graphics->image = NULL;
+        metafile->record_graphics->busy = TRUE;
+    }
+
+    if (metafile->record_stream)
+        IStream_Release(metafile->record_stream);
+
+    for (i = 0; i < sizeof(metafile->objtable)/sizeof(metafile->objtable[0]); i++)
+        metafile_free_object_table_entry(metafile, i);
+}
+
 static DWORD METAFILE_AddObjectId(GpMetafile *metafile)
 {
-    return (metafile->next_object_id++) % 64;
+    return (metafile->next_object_id++) % EmfPlusObjectTableSize;
 }
 
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
@@ -1407,6 +1436,55 @@ static GpStatus METAFILE_PlaybackUpdateWorldTransform(GpMetafile *metafile)
     return stat;
 }
 
+static void metafile_set_object_table_entry(GpMetafile *metafile, BYTE id, BYTE type, void *object)
+{
+    metafile_free_object_table_entry(metafile, id);
+    metafile->objtable[id].type = type;
+    metafile->objtable[id].u.object = object;
+}
+
+static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT data_size, const BYTE *record_data)
+{
+    BYTE type = (flags >> 8) & 0xff;
+    BYTE id = flags & 0xff;
+    void *object = NULL;
+    GpStatus status;
+
+    if (type > ObjectTypeMax || id >= EmfPlusObjectTableSize)
+        return InvalidParameter;
+
+    switch (type)
+    {
+    case ObjectTypeImageAttributes:
+    {
+        EmfPlusImageAttributes *data = (EmfPlusImageAttributes *)record_data;
+        GpImageAttributes *attributes = NULL;
+
+        if (data_size != sizeof(*data))
+            return InvalidParameter;
+
+        if ((status = GdipCreateImageAttributes(&attributes)) != Ok)
+            return status;
+
+        status = GdipSetImageAttributesWrapMode(attributes, data->WrapMode, *(DWORD *)&data->ClampColor,
+                !!data->ObjectClamp);
+        if (status == Ok)
+            object = attributes;
+        else
+            GdipDisposeImageAttributes(attributes);
+        break;
+    }
+    default:
+        FIXME("not implemented for object type %d.\n", type);
+        return NotImplemented;
+    }
+
+    if (status == Ok)
+        metafile_set_object_table_entry(metafile, id, type, object);
+
+    return status;
+}
+
 GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
     EmfPlusRecordType recordType, UINT flags, UINT dataSize, GDIPCONST BYTE *data)
 {
@@ -1851,6 +1929,10 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         case EmfPlusRecordTypeSetAntiAliasMode:
         {
             return GdipSetSmoothingMode(real_metafile->playback_graphics, (flags >> 1) & 0xff);
+        }
+        case EmfPlusRecordTypeObject:
+        {
+            return METAFILE_PlaybackObject(real_metafile, flags, dataSize, data);
         }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
