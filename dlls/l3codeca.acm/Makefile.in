@@ -1,4 +1,4 @@
-MODULE    = winemp3.acm
+MODULE    = l3codeca.acm
 IMPORTS   = winmm user32
 EXTRAINCL = $(MPG123_CFLAGS)
 EXTRALIBS = $(MPG123_LIBS) $(COREAUDIO_LIBS)

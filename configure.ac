@@ -1684,7 +1684,7 @@ then
 fi
 WINE_NOTICE_WITH(mpg123,[test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_CoreAudio_h" != xyes],
                  [libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.],
-                 [enable_winemp3_acm])
+                 [enable_l3codeca_acm])
 
 dnl **** Check for OpenAL 1.1 ****
 if test "$ac_cv_header_AL_al_h" = "yes"
@@ -3220,6 +3220,7 @@ WINE_CONFIG_DLL(keyboard.drv16,enable_win16)
 WINE_CONFIG_DLL(krnl386.exe16,enable_win16,[implib],[kernel])
 WINE_CONFIG_DLL(ksuser)
 WINE_CONFIG_DLL(ktmw32)
+WINE_CONFIG_DLL(l3codeca.acm)
 WINE_CONFIG_DLL(loadperf,,[implib])
 WINE_CONFIG_DLL(localspl,,[clean])
 WINE_CONFIG_TEST(dlls/localspl/tests)
@@ -3590,7 +3591,6 @@ WINE_CONFIG_DLL(winehid.sys)
 WINE_CONFIG_DLL(winejoystick.drv)
 WINE_CONFIG_DLL(winemac.drv,,[clean])
 WINE_CONFIG_DLL(winemapi)
-WINE_CONFIG_DLL(winemp3.acm)
 WINE_CONFIG_DLL(wineoss.drv)
 WINE_CONFIG_DLL(wineps.drv,,[clean])
 WINE_CONFIG_DLL(wineps16.drv16,enable_win16)

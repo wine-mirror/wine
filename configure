@@ -1277,6 +1277,7 @@ enable_kernel32
 enable_kernelbase
 enable_ksuser
 enable_ktmw32
+enable_l3codeca_acm
 enable_loadperf
 enable_localspl
 enable_localui
@@ -1508,7 +1509,6 @@ enable_winehid_sys
 enable_winejoystick_drv
 enable_winemac_drv
 enable_winemapi
-enable_winemp3_acm
 enable_wineoss_drv
 enable_wineps_drv
 enable_winepulse_drv
@@ -14128,7 +14128,7 @@ if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_Co
   *)   as_fn_error $? "libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.
 This is an error since --with-mpg123 was requested." "$LINENO" 5 ;;
 esac
-enable_winemp3_acm=${enable_winemp3_acm:-no}
+enable_l3codeca_acm=${enable_l3codeca_acm:-no}
 fi
 
 if test "$ac_cv_header_AL_al_h" = "yes"
@@ -18456,6 +18456,7 @@ wine_fn_config_dll keyboard.drv16 enable_win16
 wine_fn_config_dll krnl386.exe16 enable_win16 implib kernel
 wine_fn_config_dll ksuser enable_ksuser
 wine_fn_config_dll ktmw32 enable_ktmw32
+wine_fn_config_dll l3codeca.acm enable_l3codeca_acm
 wine_fn_config_dll loadperf enable_loadperf implib
 wine_fn_config_dll localspl enable_localspl clean
 wine_fn_config_test dlls/localspl/tests localspl_test
@@ -18826,7 +18827,6 @@ wine_fn_config_dll winehid.sys enable_winehid_sys
 wine_fn_config_dll winejoystick.drv enable_winejoystick_drv
 wine_fn_config_dll winemac.drv enable_winemac_drv clean
 wine_fn_config_dll winemapi enable_winemapi
-wine_fn_config_dll winemp3.acm enable_winemp3_acm
 wine_fn_config_dll wineoss.drv enable_wineoss_drv
 wine_fn_config_dll wineps.drv enable_wineps_drv clean
 wine_fn_config_dll wineps16.drv16 enable_win16
