@@ -134,6 +134,7 @@ static ULONG STDMETHODCALLTYPE d3d11_input_layout_AddRef(ID3D11InputLayout *ifac
 
     if (refcount == 1)
     {
+        ID3D11Device_AddRef(layout->device);
         wined3d_mutex_lock();
         wined3d_vertex_declaration_incref(layout->wined3d_decl);
         wined3d_mutex_unlock();
