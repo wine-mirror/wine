@@ -1,15 +1,10 @@
 <html>
 <head>
+<script src="winetest.js" type="text/javascript"></script>
+</head>
+<head>
 <script>
 var testevent_divid2_called = false, testevent_document_called = false, cnt=0;
-
-function ok(b,m) {
-    return external.ok(b, m);
-}
-
-function broken(expr) {
-    return external.broken(expr);
-}
 
 function ondataavailable_test() {
     var evobj, div, b = false;
@@ -130,7 +125,7 @@ function test_insert_script() {
         ok(extern_cnt === 1, "extern_cnt = " + extern_cnt);
         if(e.readyState === "complete") {
             ok(readystatechange_log === "append,complete", "readystatechange_log = " + readystatechange_log);
-            external.reportSuccess();
+            reportSuccess();
         }
     }
 
@@ -202,7 +197,7 @@ img.src = "http://test.winehq.org/tests/winehq_snapshot/index_files/winehq_logo_
 
 var img_onload_called = false;
 img.onload = function() {
-    external.trace("img.onload");
+    trace("img.onload");
     img_onload_called = true;
 }
 </script>
@@ -242,7 +237,7 @@ function extern_res_script_readystatechange() {
     if(elem.readyState != "loading")
         extern_res_script_rs += elem.readyState + extern_cnt + ",";
     else
-        external.trace("Got loading readyState from external res script.");
+        trace("Got loading readyState from external res script.");
 }
 
 function http_script_readystatechange() {
