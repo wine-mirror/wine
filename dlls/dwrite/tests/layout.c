@@ -4771,7 +4771,7 @@ static void test_FontFallbackBuilder(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 0.0f);
-    ok(hr == S_OK, "Unexected hr %#x.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* empty range */
     range.first = range.last = 0;
