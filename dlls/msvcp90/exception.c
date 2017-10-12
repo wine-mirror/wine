@@ -59,6 +59,8 @@ extern const vtable_ptr MSVCP_runtime_error_vtable;
 extern const vtable_ptr MSVCP_failure_vtable;
 /* ??_7bad_cast@std@@6B@ */
 extern const vtable_ptr MSVCP_bad_cast_vtable;
+/* ??_7range_error@std@@6B@ */
+extern const vtable_ptr MSVCP_range_error_vtable;
 
 static void MSVCP_type_info_dtor(type_info * _this)
 {
@@ -195,6 +197,8 @@ exception* __thiscall MSVCP_exception_assign(exception *this, const exception *a
 /* ?_Doraise@runtime_error@std@@MEBAXXZ */
 /* ?_Doraise@bad_cast@std@@MBEXXZ */
 /* ?_Doraise@bad_cast@std@@MEBAXXZ */
+/* ?_Doraise@range_error@std@@MBEXXZ */
+/* ?_Doraise@range_error@std@@MEBAXXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_exception__Doraise, 4)
 void __thiscall MSVCP_exception__Doraise(exception *this)
 {
@@ -585,6 +589,8 @@ runtime_error* __thiscall MSVCP_runtime_error_ctor_bstr(runtime_error *this, con
 
 /* ??1runtime_error@std@@UAE@XZ */
 /* ??1runtime_error@std@@UEAA@XZ */
+/* ??1range_error@std@@UAE@XZ */
+/* ??1range_error@std@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_runtime_error_dtor, 4)
 void __thiscall MSVCP_runtime_error_dtor(runtime_error *this)
 {
@@ -766,6 +772,53 @@ bad_cast* __thiscall MSVCP_bad_cast_opequals(bad_cast *this, const bad_cast *rhs
 DEFINE_RTTI_DATA1(bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@std@@")
 DEFINE_CXX_DATA1(bad_cast, &exception_cxx_type_info, MSVCP_bad_cast_dtor)
 
+/* range_error class data */
+typedef runtime_error range_error;
+
+static range_error* MSVCP_range_error_ctor( range_error *this, exception_name name )
+{
+    TRACE("%p %s\n", this, EXCEPTION_STR(name));
+    MSVCP_runtime_error_ctor(this, name);
+    this->e.vtable = &MSVCP_range_error_vtable;
+    return this;
+}
+
+/* ??0range_error@std@@QAE@ABV01@@Z */
+/* ??0range_error@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_range_error_copy_ctor, 8)
+range_error* __thiscall MSVCP_range_error_copy_ctor(
+        range_error *this, const range_error *rhs)
+{
+    TRACE("%p %p\n", this, rhs);
+    MSVCP_runtime_error_copy_ctor(this, rhs);
+    this->e.vtable = &MSVCP_range_error_vtable;
+    return this;
+}
+
+/* ??0range_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z */
+/* ??0range_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z */
+#ifndef _MSVCIRT
+DEFINE_THISCALL_WRAPPER(MSVCP_range_error_ctor_bstr, 8)
+range_error* __thiscall MSVCP_range_error_ctor_bstr(range_error *this, const basic_string_char *str)
+{
+    const char *name = MSVCP_basic_string_char_c_str(str);
+    TRACE("(%p %p %s)\n", this, str, name);
+    return MSVCP_range_error_ctor(this, EXCEPTION_NAME(name));
+}
+#endif
+
+/* ??4range_error@std@@QAEAAV01@ABV01@@Z */
+/* ??4range_error@std@@QEAAAEAV01@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_range_error_assign, 8)
+range_error* __thiscall MSVCP_range_error_assign(range_error *this, const range_error *assign)
+{
+    MSVCP_runtime_error_dtor(this);
+    return MSVCP_range_error_copy_ctor(this, assign);
+}
+
+DEFINE_RTTI_DATA2(range_error, 0, &runtime_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVrange_error@std@@")
+DEFINE_CXX_DATA2(range_error, &runtime_error_cxx_type_info, &exception_cxx_type_info, MSVCP_runtime_error_dtor)
+
 /* ?_Nomemory@std@@YAXXZ */
 void __cdecl _Nomemory(void)
 {
@@ -856,6 +909,9 @@ void __asm_dummy_vtables(void) {
     EXCEPTION_VTABLE(bad_cast,
             VTABLE_ADD_FUNC(MSVCP_bad_cast_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_exception_what));
+    EXCEPTION_VTABLE(range_error,
+            VTABLE_ADD_FUNC(MSVCP_runtime_error_vector_dtor)
+            VTABLE_ADD_FUNC(MSVCP_exception_what));
 #ifndef __GNUC__
 }
 #endif
@@ -913,6 +969,11 @@ void throw_exception(exception_type et, const char *str)
         MSVCP_failure_ctor(&e, name);
         _CxxThrowException((exception*)&e, &failure_cxx_type);
     }
+    case EXCEPTION_RANGE_ERROR: {
+        range_error e;
+        MSVCP_range_error_ctor(&e, name);
+        _CxxThrowException((exception*)&e, &range_error_cxx_type);
+    }
     }
 }
 
@@ -929,6 +990,7 @@ void init_exception(void *base)
     init_runtime_error_rtti(base);
     init_failure_rtti(base);
     init_bad_cast_rtti(base);
+    init_range_error_rtti(base);
 
     init_exception_cxx(base);
     init_bad_alloc_cxx(base);
@@ -939,5 +1001,6 @@ void init_exception(void *base)
     init_runtime_error_cxx(base);
     init_failure_cxx(base);
     init_bad_cast_cxx(base);
+    init_range_error_cxx(base);
 #endif
 }

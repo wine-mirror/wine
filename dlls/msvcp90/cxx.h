@@ -311,6 +311,7 @@ typedef enum __exception_type {
     EXCEPTION_INVALID_ARGUMENT,
     EXCEPTION_RUNTIME_ERROR,
     EXCEPTION_FAILURE,
+    EXCEPTION_RANGE_ERROR,
 } exception_type;
 void throw_exception(exception_type, const char *);
 

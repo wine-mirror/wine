@@ -907,10 +907,10 @@
 @ stub -arch=win64 ??0overflow_error@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0overflow_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
 @ stub -arch=win64 ??0overflow_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
-@ stub -arch=win32 ??0range_error@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0range_error@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0range_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
-@ stub -arch=win64 ??0range_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
+@ thiscall -arch=win32 ??0range_error@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_range_error_copy_ctor
+@ cdecl -arch=win64 ??0range_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_range_error_copy_ctor
+@ thiscall -arch=win32 ??0range_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_range_error_ctor_bstr
+@ cdecl -arch=win64 ??0range_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_range_error_ctor_bstr
 @ thiscall -arch=win32 ??0runtime_error@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_runtime_error_copy_ctor
 @ cdecl -arch=win64 ??0runtime_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_runtime_error_copy_ctor
 @ thiscall -arch=win32 ??0runtime_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_runtime_error_ctor_bstr
@@ -1083,8 +1083,8 @@
 @ cdecl -arch=win64 ??1out_of_range@std@@UEAA@XZ(ptr) MSVCP_logic_error_dtor
 @ stub -arch=win32 ??1overflow_error@std@@UAE@XZ
 @ stub -arch=win64 ??1overflow_error@std@@UEAA@XZ
-@ stub -arch=win32 ??1range_error@std@@UAE@XZ
-@ stub -arch=win64 ??1range_error@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1range_error@std@@UAE@XZ(ptr) MSVCP_runtime_error_dtor
+@ cdecl -arch=win64 ??1range_error@std@@UEAA@XZ(ptr) MSVCP_runtime_error_dtor
 @ thiscall -arch=win32 ??1runtime_error@std@@UAE@XZ(ptr) MSVCP_logic_error_dtor
 @ cdecl -arch=win64 ??1runtime_error@std@@UEAA@XZ(ptr) MSVCP_logic_error_dtor
 @ thiscall -arch=win32 ??1strstream@std@@UAE@XZ(ptr) strstream_dtor
@@ -1257,8 +1257,8 @@
 @ cdecl -arch=win64 ??4out_of_range@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_out_of_range_assign
 @ stub -arch=win32 ??4overflow_error@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4overflow_error@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4range_error@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4range_error@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4range_error@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_range_error_assign
+@ cdecl -arch=win64 ??4range_error@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_range_error_assign
 @ thiscall -arch=win32 ??4runtime_error@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_runtime_error_assign
 @ cdecl -arch=win64 ??4runtime_error@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_runtime_error_assign
 @ stub -arch=win32 ??4underflow_error@std@@QAEAAV01@ABV01@@Z
@@ -1829,7 +1829,7 @@
 # extern ??_7money_base@std@@6B@
 @ extern ??_7out_of_range@std@@6B@ MSVCP_out_of_range_vtable
 # extern ??_7overflow_error@std@@6B@
-# extern ??_7range_error@std@@6B@
+@ extern ??_7range_error@std@@6B@ MSVCP_range_error_vtable
 @ extern ??_7runtime_error@std@@6B@ MSVCP_runtime_error_vtable
 # extern ??_7time_base@std@@6B@
 # extern ??_7underflow_error@std@@6B@
@@ -2045,8 +2045,8 @@
 @ cdecl -arch=win64 ?_Doraise@out_of_range@std@@MEBAXXZ(ptr) MSVCP_exception__Doraise
 @ stub -arch=win32 ?_Doraise@overflow_error@std@@MBEXXZ
 @ stub -arch=win64 ?_Doraise@overflow_error@std@@MEBAXXZ
-@ stub -arch=win32 ?_Doraise@range_error@std@@MBEXXZ
-@ stub -arch=win64 ?_Doraise@range_error@std@@MEBAXXZ
+@ thiscall -arch=win32 ?_Doraise@range_error@std@@MBEXXZ(ptr) MSVCP_exception__Doraise
+@ cdecl -arch=win64 ?_Doraise@range_error@std@@MEBAXXZ(ptr) MSVCP_exception__Doraise
 @ thiscall -arch=win32 ?_Doraise@runtime_error@std@@MBEXXZ(ptr) MSVCP_exception__Doraise
 @ cdecl -arch=win64 ?_Doraise@runtime_error@std@@MEBAXXZ(ptr) MSVCP_exception__Doraise
 @ stub -arch=win32 ?_Doraise@underflow_error@std@@MBEXXZ
