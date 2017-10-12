@@ -95,9 +95,11 @@ function test_handler_this() {
     }
 
     function registerHandler(name, target) {
-        var b = target.attachEvent("onclick", function() {
+        var b = target.attachEvent("onclick", function(event_arg) {
             ok(this === window, "this !== window");
             calls.push(name+"*");
+            with(todo_wine)
+            ok(event_arg != window.event, "event_arg == window.event");
         });
         ok(b, "attachEvent failed");
     }

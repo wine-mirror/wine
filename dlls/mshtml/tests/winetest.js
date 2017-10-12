@@ -51,3 +51,9 @@ function win_skip(m) {
 function reportSuccess() {
     external.reportSuccess();
 }
+
+var todo_wine = {
+    ok: function(b,m) {
+        return external.todo_wine_ok(b,m);
+    }
+};
