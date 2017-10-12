@@ -253,7 +253,7 @@ static void init_load_order(void)
     entry = strW.Buffer;
     while (*entry)
     {
-        while (*entry && *entry == ';') entry++;
+        while (*entry == ';') entry++;
         if (!*entry) break;
         next = strchrW( entry, ';' );
         if (next) *next++ = 0;
