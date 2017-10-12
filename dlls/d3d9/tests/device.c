@@ -4723,7 +4723,7 @@ static void test_cursor_pos(void)
     wc.lpfnWndProc = test_cursor_proc;
     wc.lpszClassName = "d3d9_test_cursor_wc";
     ok(RegisterClassA(&wc), "Failed to register window class.\n");
-    window = CreateWindowA("d3d9_test_cursor_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+    window = CreateWindowA("d3d9_test_cursor_wc", "d3d9_test", WS_POPUP | WS_SYSMENU,
             0, 0, 320, 240, NULL, NULL, NULL, NULL);
     ShowWindow(window, SW_SHOW);
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
