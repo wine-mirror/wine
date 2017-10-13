@@ -721,7 +721,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                     DWORD size = sizeof(buf);
                     int icon_idx;
 
-                    while ((hr = SIC_get_location( psfi->iIcon, file, &size, &icon_idx ) == E_NOT_SUFFICIENT_BUFFER))
+                    while ((hr = SIC_get_location( psfi->iIcon, file, &size, &icon_idx )) == E_NOT_SUFFICIENT_BUFFER)
                     {
                         if (file == buf) file = HeapAlloc( GetProcessHeap(), 0, size );
                         else file = HeapReAlloc( GetProcessHeap(), 0, file, size );
