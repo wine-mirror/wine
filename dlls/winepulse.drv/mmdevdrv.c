@@ -611,7 +611,7 @@ fail:
 static HRESULT pulse_stream_valid(ACImpl *This) {
     if (!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
-    if (!This->stream || pa_stream_get_state(This->stream) != PA_STREAM_READY)
+    if (pa_stream_get_state(This->stream) != PA_STREAM_READY)
         return AUDCLNT_E_DEVICE_INVALIDATED;
     return S_OK;
 }
