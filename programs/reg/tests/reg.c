@@ -778,29 +778,6 @@ static void test_v_flags(void)
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 }
 
-static BOOL write_reg_file(const char *value, char *tmp_name)
-{
-    static const char regedit4[] = "REGEDIT4";
-    static const char key[] = "[HKEY_CURRENT_USER\\" KEY_BASE "]";
-    char file_data[MAX_PATH], tmp_path[MAX_PATH];
-    HANDLE hfile;
-    DWORD written;
-    BOOL ret;
-
-    sprintf(file_data, "%s\n\n%s\n%s\n", regedit4, key, value);
-
-    GetTempPathA(MAX_PATH, tmp_path);
-    GetTempFileNameA(tmp_path, "reg", 0, tmp_name);
-
-    hfile = CreateFileA(tmp_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-    if (hfile == INVALID_HANDLE_VALUE)
-        return FALSE;
-
-    ret = WriteFile(hfile, file_data, strlen(file_data), &written, NULL);
-    CloseHandle(hfile);
-    return ret;
-}
-
 static BOOL write_file(const void *str, DWORD size)
 {
     HANDLE file;
@@ -857,8 +834,7 @@ static BOOL import_reg(unsigned line, const char *contents, BOOL unicode, DWORD 
 static void test_import(void)
 {
     DWORD r, dword = 0x123, type, size;
-    char test1_reg[MAX_PATH], test2_reg[MAX_PATH], cmdline[MAX_PATH];
-    char test_string[] = "Test string", buffer[24];
+    char buffer[24];
     HKEY hkey, subkey = NULL;
     LONG err;
     BYTE hex[8];
@@ -875,34 +851,8 @@ static void test_import(void)
     run_reg_exe("reg import missing.reg", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 
-    /* Create test files */
-    ok(write_reg_file("\"Wine\"=dword:00000123", test1_reg), "Failed to write registry file\n");
-    ok(write_reg_file("@=\"Test string\"", test2_reg), "Failed to write registry file\n");
-
-    sprintf(cmdline, "reg import %s", test1_reg);
-    run_reg_exe(cmdline, &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-
-    sprintf(cmdline, "reg import %s", test2_reg);
-    run_reg_exe(cmdline, &r);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-
-    open_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
-
-    verify_reg(hkey, "Wine", REG_DWORD, &dword, sizeof(dword), 0);
-    verify_reg(hkey, "", REG_SZ, test_string, sizeof(test_string), 0);
-
-    err = RegCloseKey(hkey);
-    ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
-
-    delete_key(HKEY_CURRENT_USER, KEY_BASE);
-
-    sprintf(cmdline, "reg import %s %s", test1_reg, test2_reg);
-    run_reg_exe(cmdline, &r);
+    run_reg_exe("reg import a.reg b.reg", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
-
-    DeleteFileA(test1_reg);
-    DeleteFileA(test2_reg);
 
     /* Test file contents */
     test_import_str("regedit\n", &r);
@@ -960,6 +910,18 @@ static void test_import(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     open_key(HKEY_CURRENT_USER, KEY_BASE, KEY_SET_VALUE, &hkey);
+
+    test_import_str("REGEDIT4\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine\"=dword:00000123\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "Wine", REG_DWORD, &dword, sizeof(dword), 0);
+
+    test_import_str("REGEDIT4\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "@=\"Test string\"\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, NULL, REG_SZ, "Test string", 12, 0);
 
     test_import_str("REGEDIT3\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2549,6 +2511,18 @@ static void test_unicode_import(void)
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
     verify_reg_nonexist(hkey, "Test12");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine\"=dword:00000123\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, "Wine", REG_DWORD, &dword, sizeof(dword), 0);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "@=\"Test string\"\n\n", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    verify_reg(hkey, NULL, REG_SZ, "Test string", 12, 0);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
