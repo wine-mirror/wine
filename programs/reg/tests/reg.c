@@ -4309,7 +4309,9 @@ static BOOL compare_export_(unsigned line, const char *filename, const char *exp
 
     todo_wine_if (todo & TODO_REG_COMPARE)
         lok(!lstrcmpW(fbuf, wstr), "export data does not match expected data\n");
-    ret = TRUE;
+
+    ret = DeleteFileA(filename);
+    todo_wine lok(ret, "DeleteFile failed: %u\n", GetLastError());
 
 exit:
     HeapFree(GetProcessHeap(), 0, fbuf);
@@ -4437,9 +4439,6 @@ static void test_export(void)
 
     todo_wine ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
-    err = DeleteFileA("file.reg");
-    todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
-
     /* Test registry export with a simple data structure */
     dword = 0x100;
     add_value(hkey, "DWORD", REG_DWORD, &dword, sizeof(dword));
@@ -4448,9 +4447,6 @@ static void test_export(void)
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine ok(compare_export("file.reg", simple_test, 0), "compare_export() failed\n");
-
-    err = DeleteFileA("file.reg");
-    todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
 
     /* Test registry export with a complex data structure */
     add_key(hkey, "Subkey1", &subkey);
@@ -4490,9 +4486,6 @@ static void test_export(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine ok(compare_export("file.reg", complex_test, 0), "compare_export() failed\n");
 
-    err = DeleteFileA("file.reg");
-    todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
-
     err = delete_tree(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS, "delete_tree() failed: %d\n", err);
 
@@ -4506,9 +4499,6 @@ static void test_export(void)
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine ok(compare_export("file.reg", key_order_test, 0), "compare_export() failed\n");
-
-    err = DeleteFileA("file.reg");
-    todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
 
     delete_key(hkey, "Subkey1");
     delete_key(hkey, "Subkey2");
@@ -4524,9 +4514,6 @@ static void test_export(void)
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine ok(compare_export("file.reg", value_order_test, 0), "compare_export() failed\n");
-
-    err = DeleteFileA("file.reg");
-    todo_wine ok(err, "DeleteFile failed: %u\n", GetLastError());
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
