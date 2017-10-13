@@ -3416,6 +3416,7 @@ static void test_export(void)
     LONG lr;
     HKEY hkey, subkey;
     DWORD dword;
+    BYTE hex[4];
 
     const char *empty_key_test =
         "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
@@ -3464,6 +3465,32 @@ static void test_export(void)
         "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
         "\"Value 2\"=\"I was added first!\"\r\n"
         "\"Value 1\"=\"I was added second!\"\r\n\r\n";
+
+    const char *empty_hex_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+        "\"Wine1a\"=hex(0):\r\n"
+        "\"Wine1b\"=\"\"\r\n"
+        "\"Wine1c\"=hex(2):\r\n"
+        "\"Wine1d\"=hex:\r\n"
+        "\"Wine1e\"=hex(4):\r\n"
+        "\"Wine1f\"=hex(7):\r\n"
+        "\"Wine1g\"=hex(100):\r\n"
+        "\"Wine1h\"=hex(abcd):\r\n\r\n";
+
+    const char *empty_hex_test2 =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+        "\"Wine2a\"=\"\"\r\n"
+        "\"Wine2b\"=hex:\r\n"
+        "\"Wine2c\"=hex(4):\r\n\r\n";
+
+    const char *hex_types_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+        "\"Wine3a\"=\"Value\"\r\n"
+        "\"Wine3b\"=hex:12,34,56,78\r\n"
+        "\"Wine3c\"=dword:10203040\r\n\r\n";
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
@@ -3545,6 +3572,58 @@ static void test_export(void)
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", value_order_test, TODO_REG_COMPARE), "compare_export() failed\n");
+
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
+
+    /* Test registry export with empty hex data */
+    add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
+    add_value(hkey, "Wine1a", REG_NONE, NULL, 0);
+    add_value(hkey, "Wine1b", REG_SZ, NULL, 0);
+    add_value(hkey, "Wine1c", REG_EXPAND_SZ, NULL, 0);
+    add_value(hkey, "Wine1d", REG_BINARY, NULL, 0);
+    add_value(hkey, "Wine1e", REG_DWORD, NULL, 0);
+    add_value(hkey, "Wine1f", REG_MULTI_SZ, NULL, 0);
+    add_value(hkey, "Wine1g", 0x100, NULL, 0);
+    add_value(hkey, "Wine1h", 0xabcd, NULL, 0);
+    RegCloseKey(hkey);
+
+    run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
+    ok(compare_export("file.reg", empty_hex_test, TODO_REG_COMPARE), "compare_export() failed\n");
+
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
+
+    /* Test registry export after importing alternative registry data types */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine2a\"=hex(1):\n"
+                     "\"Wine2b\"=hex(3):\n"
+                     "\"Wine2c\"=hex(4):\n\n");
+    open_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
+    verify_reg(hkey, "Wine2a", REG_SZ, NULL, 0, 0);
+    verify_reg(hkey, "Wine2b", REG_BINARY, NULL, 0, 0);
+    verify_reg(hkey, "Wine2c", REG_DWORD, NULL, 0, 0);
+    RegCloseKey(hkey);
+
+    run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
+    ok(compare_export("file.reg", empty_hex_test2, TODO_REG_COMPARE), "compare_export() failed\n");
+
+    delete_key(HKEY_CURRENT_USER, KEY_BASE);
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine3a\"=hex(1):56,00,61,00,6c,00,75,00,65,00,00,00\n"
+                     "\"Wine3b\"=hex(3):12,34,56,78\n"
+                     "\"Wine3c\"=hex(4):40,30,20,10\n\n");
+    open_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
+    verify_reg(hkey, "Wine3a", REG_SZ, "Value", 6, 0);
+    memcpy(hex, "\x12\x34\x56\x78", 4);
+    verify_reg(hkey, "Wine3b", REG_BINARY, hex, 4, 0);
+    dword = 0x10203040;
+    verify_reg(hkey, "Wine3c", REG_DWORD, &dword, sizeof(dword), 0);
+    RegCloseKey(hkey);
+
+    run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
+    ok(compare_export("file.reg", hex_types_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
