@@ -742,7 +742,7 @@ static printf_arg arg_clbk_type(void *ctx, int pos, int type, __ms_va_list *vali
 }
 #endif
 
-static int FUNC_NAME(create_positional_ctx)(void *args_ctx, const APICHAR *format, __ms_va_list valist)
+int FUNC_NAME(create_positional_ctx)(void *args_ctx, const APICHAR *format, __ms_va_list valist)
 {
     struct FUNC_NAME(_str_ctx) puts_ctx = {INT_MAX, NULL};
     printf_arg *args = args_ctx;

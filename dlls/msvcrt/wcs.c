@@ -706,7 +706,7 @@ printf_arg arg_clbk_valist(void *ctx, int arg_pos, int type, __ms_va_list *valis
 /*********************************************************************
  * arg_clbk_positional (INTERNAL)
  */
-static printf_arg arg_clbk_positional(void *ctx, int pos, int type, __ms_va_list *valist)
+printf_arg arg_clbk_positional(void *ctx, int pos, int type, __ms_va_list *valist)
 {
     printf_arg *args = ctx;
     return args[pos];

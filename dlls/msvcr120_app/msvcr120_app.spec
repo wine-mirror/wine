@@ -1503,12 +1503,12 @@
 @ cdecl _utime64(str ptr) msvcr120._utime64
 @ cdecl _vacopy(ptr ptr) msvcr120._vacopy
 @ cdecl _vfprintf_l(ptr str ptr ptr) msvcr120._vfprintf_l
-@ stub _vfprintf_p
-@ stub _vfprintf_p_l
+@ cdecl _vfprintf_p(ptr str ptr) msvcr120._vfprintf_p
+@ cdecl _vfprintf_p_l(ptr str ptr ptr) msvcr120._vfprintf_p_l
 @ cdecl _vfprintf_s_l(ptr str ptr ptr) msvcr120._vfprintf_s_l
 @ cdecl _vfwprintf_l(ptr wstr ptr ptr) msvcr120._vfwprintf_l
-@ stub _vfwprintf_p
-@ stub _vfwprintf_p_l
+@ cdecl _vfwprintf_p(ptr wstr ptr) msvcr120._vfwprintf_p
+@ cdecl _vfwprintf_p_l(ptr wstr ptr ptr) msvcr120._vfwprintf_p_l
 @ cdecl _vfwprintf_s_l(ptr wstr ptr ptr) msvcr120._vfwprintf_s_l
 @ stub _vprintf_l
 @ stub _vprintf_p

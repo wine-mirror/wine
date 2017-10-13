@@ -1167,7 +1167,10 @@ int pf_printf_a(puts_clbk_a, void*, const char*, MSVCRT__locale_t,
         DWORD, args_clbk, void*, __ms_va_list*) DECLSPEC_HIDDEN;
 int pf_printf_w(puts_clbk_w, void*, const MSVCRT_wchar_t*, MSVCRT__locale_t,
         DWORD, args_clbk, void*, __ms_va_list*) DECLSPEC_HIDDEN;
+int create_positional_ctx_a(void*, const char*, __ms_va_list) DECLSPEC_HIDDEN;
+int create_positional_ctx_w(void*, const MSVCRT_wchar_t*, __ms_va_list) DECLSPEC_HIDDEN;
 printf_arg arg_clbk_valist(void*, int, int, __ms_va_list*) DECLSPEC_HIDDEN;
+printf_arg arg_clbk_positional(void*, int, int, __ms_va_list*) DECLSPEC_HIDDEN;
 
 #define MSVCRT_FLT_MIN 1.175494351e-38F
 #define MSVCRT_DBL_MIN 2.2250738585072014e-308
