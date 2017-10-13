@@ -364,6 +364,9 @@ static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
     {
     case ObjectTypeInvalid:
         break;
+    case ObjectTypeBrush:
+        GdipDeleteBrush(object->u.brush);
+        break;
     case ObjectTypeImageAttributes:
         GdipDisposeImageAttributes(object->u.image_attributes);
         break;
@@ -1443,6 +1446,33 @@ static void metafile_set_object_table_entry(GpMetafile *metafile, BYTE id, BYTE 
     metafile->objtable[id].u.object = object;
 }
 
+static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_size, GpBrush **brush)
+{
+    static const UINT header_size = FIELD_OFFSET(EmfPlusBrush, BrushData);
+    EmfPlusBrush *data = (EmfPlusBrush *)record_data;
+    GpStatus status;
+
+    *brush = NULL;
+
+    if (data_size < header_size)
+        return InvalidParameter;
+
+    switch (data->Type)
+    {
+    case BrushTypeSolidColor:
+        if (data_size != header_size + sizeof(EmfPlusSolidBrushData))
+            return InvalidParameter;
+
+        status = GdipCreateSolidFill(*(ARGB *)&data->BrushData.solid.SolidColor, (GpSolidFill **)brush);
+        break;
+    default:
+        FIXME("brush type %u is not supported.\n", data->Type);
+        return NotImplemented;
+    }
+
+    return status;
+}
+
 static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT data_size, const BYTE *record_data)
 {
     BYTE type = (flags >> 8) & 0xff;
@@ -1455,6 +1485,9 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
 
     switch (type)
     {
+    case ObjectTypeBrush:
+        status = metafile_deserialize_brush(record_data, data_size, (GpBrush **)&object);
+        break;
     case ObjectTypeImageAttributes:
     {
         EmfPlusImageAttributes *data = (EmfPlusImageAttributes *)record_data;

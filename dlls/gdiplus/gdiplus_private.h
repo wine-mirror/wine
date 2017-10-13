@@ -393,6 +393,7 @@ typedef enum EmfPlusObjectType
 struct emfplus_object {
     EmfPlusObjectType type;
     union {
+        GpBrush *brush;
         GpImageAttributes *image_attributes;
         void *object;
     } u;
