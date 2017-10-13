@@ -801,7 +801,7 @@ static BOOL write_file(const void *str, DWORD size)
 
     file = CreateFileA("test.reg", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to create registry file\n");
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
     if (file == INVALID_HANDLE_VALUE)
         return FALSE;
 
