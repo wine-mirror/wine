@@ -933,8 +933,7 @@ static void test_Input_blackbox(void)
     empty_message_queue();
 
     prevWndProc = SetWindowLongPtrA(window, GWLP_WNDPROC, (LONG_PTR) WndProc2);
-    ok(prevWndProc != 0 || (prevWndProc == 0 && GetLastError() == 0),
-       "error: %d\n", (int) GetLastError());
+    ok(prevWndProc != 0 || GetLastError() == 0, "error: %d\n", (int) GetLastError());
 
     i.type = INPUT_KEYBOARD;
     i.u.ki.time = 0;
