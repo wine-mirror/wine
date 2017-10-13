@@ -1447,11 +1447,8 @@ int CDECL MSVCRT_vswprintf_s_l(MSVCRT_wchar_t* str, MSVCRT_size_t numberOfElemen
             format, locale, args );
 }
 
-/*********************************************************************
- *		_vsprintf_p_l (MSVCRT.@)
- */
-int CDECL MSVCRT_vsprintf_p_l(char *buffer, MSVCRT_size_t length, const char *format,
-        MSVCRT__locale_t locale, __ms_va_list args)
+static int MSVCRT_vsprintf_p_l_opt(char *buffer, MSVCRT_size_t length, const char *format,
+        DWORD options, MSVCRT__locale_t locale, __ms_va_list args)
 {
     static const char nullbyte = '\0';
     printf_arg args_ctx[MSVCRT__ARGMAX+1];
@@ -1466,15 +1463,24 @@ int CDECL MSVCRT_vsprintf_p_l(char *buffer, MSVCRT_size_t length, const char *fo
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return ret;
     } else if(ret == 0)
-        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
-                arg_clbk_valist, NULL, &args);
+        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale,
+                MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER | options, arg_clbk_valist, NULL, &args);
     else
         ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale,
-                MSVCRT_PRINTF_POSITIONAL_PARAMS | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
+                MSVCRT_PRINTF_POSITIONAL_PARAMS | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER | options,
                 arg_clbk_positional, args_ctx, NULL);
 
     puts_clbk_str_a(&puts_ctx, 1, &nullbyte);
     return ret;
+}
+
+/*********************************************************************
+ *              _vsprintf_p_l (MSVCRT.@)
+ */
+int CDECL MSVCRT_vsprintf_p_l(char *buffer, MSVCRT_size_t length, const char *format,
+        MSVCRT__locale_t locale, __ms_va_list args)
+{
+    return MSVCRT_vsprintf_p_l_opt(buffer, length, format, 0, locale, args);
 }
 
 /*********************************************************************
@@ -1484,6 +1490,17 @@ int CDECL MSVCRT_vsprintf_p(char *buffer, MSVCRT_size_t length,
         const char *format, __ms_va_list args)
 {
     return MSVCRT_vsprintf_p_l(buffer, length, format, NULL, args);
+}
+
+/*********************************************************************
+ *              __stdio_common_vsprintf_p (UCRTBASE.@)
+ */
+int CDECL MSVCRT__stdio_common_vsprintf_p(unsigned __int64 options, char *buffer, MSVCRT_size_t length,
+        const char *format, MSVCRT__locale_t locale, __ms_va_list args)
+{
+    if (options & ~UCRTBASE_PRINTF_MASK)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+    return MSVCRT_vsprintf_p_l_opt(buffer, length, format, options & UCRTBASE_PRINTF_MASK, locale, args);
 }
 
 /*********************************************************************
