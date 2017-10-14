@@ -2475,7 +2475,8 @@ static void shader_glsl_gen_modifier(enum wined3d_shader_src_modifier src_modifi
 /** Writes the GLSL variable name that corresponds to the register that the
  * DX opcode parameter is trying to access */
 static void shader_glsl_get_register_name(const struct wined3d_shader_register *reg,
-        char *register_name, BOOL *is_color, const struct wined3d_shader_instruction *ins)
+        enum wined3d_data_type data_type, char *register_name, BOOL *is_color,
+        const struct wined3d_shader_instruction *ins)
 {
     /* oPos, oFog and oPts in D3D */
     static const char * const hwrastout_reg_names[] = {"vs_out[10]", "vs_out[11].x", "vs_out[11].y"};
@@ -2697,7 +2698,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             switch (reg->immconst_type)
             {
                 case WINED3D_IMMCONST_SCALAR:
-                    switch (reg->data_type)
+                    switch (data_type)
                     {
                         case WINED3D_DATA_FLOAT:
                             if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
@@ -2714,13 +2715,13 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                             sprintf(register_name, "%#xu", reg->u.immconst_data[0]);
                             break;
                         default:
-                            sprintf(register_name, "<unhandled data type %#x>", reg->data_type);
+                            sprintf(register_name, "<unhandled data type %#x>", data_type);
                             break;
                     }
                     break;
 
                 case WINED3D_IMMCONST_VEC4:
-                    switch (reg->data_type)
+                    switch (data_type)
                     {
                         case WINED3D_DATA_FLOAT:
                             if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
@@ -2752,7 +2753,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                                     reg->u.immconst_data[2], reg->u.immconst_data[3]);
                             break;
                         default:
-                            sprintf(register_name, "<unhandled data type %#x>", reg->data_type);
+                            sprintf(register_name, "<unhandled data type %#x>", data_type);
                             break;
                     }
                     break;
@@ -2874,7 +2875,7 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_instructio
     glsl_src->param_str[0] = '\0';
     swizzle_str[0] = '\0';
 
-    shader_glsl_get_register_name(&wined3d_src->reg, glsl_src->reg_name, &is_color, ins);
+    shader_glsl_get_register_name(&wined3d_src->reg, data_type, glsl_src->reg_name, &is_color, ins);
     shader_glsl_get_swizzle(wined3d_src, is_color, mask, swizzle_str);
 
     if (wined3d_src->reg.type == WINED3DSPR_IMMCONST || wined3d_src->reg.type == WINED3DSPR_PRIMID)
@@ -2925,7 +2926,8 @@ static DWORD shader_glsl_add_dst_param(const struct wined3d_shader_instruction *
     glsl_dst->mask_str[0] = '\0';
     glsl_dst->reg_name[0] = '\0';
 
-    shader_glsl_get_register_name(&wined3d_dst->reg, glsl_dst->reg_name, &is_color, ins);
+    shader_glsl_get_register_name(&wined3d_dst->reg, wined3d_dst->reg.data_type,
+            glsl_dst->reg_name, &is_color, ins);
     return shader_glsl_get_write_mask(wined3d_dst, glsl_dst->mask_str);
 }
 
@@ -3212,7 +3214,7 @@ static void shader_glsl_color_correction(const struct wined3d_shader_instruction
     char reg_name[256];
     BOOL is_color;
 
-    shader_glsl_get_register_name(&ins->dst[0].reg, reg_name, &is_color, ins);
+    shader_glsl_get_register_name(&ins->dst[0].reg, ins->dst[0].reg.data_type, reg_name, &is_color, ins);
     shader_glsl_color_correction_ext(ins->ctx->buffer, reg_name, ins->dst[0].write_mask, fixup);
 }
 
