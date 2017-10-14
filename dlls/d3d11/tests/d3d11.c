@@ -15883,6 +15883,109 @@ static void test_cs_uav_store(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_uav_store_immediate_constant(void)
+{
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    struct d3d11_test_context test_context;
+    ID3D11UnorderedAccessView *uav;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11ComputeShader *cs;
+    ID3D11Device *device;
+    ID3D11Buffer *buffer;
+    float float_data;
+    int int_data;
+    HRESULT hr;
+
+    static const DWORD cs_store_int_code[] =
+    {
+#if 0
+        RWBuffer<int> u;
+
+        [numthreads(1, 1, 1)]
+        void main()
+        {
+            u[0] = 42;
+        }
+#endif
+        0x43425844, 0x7246d785, 0x3f4ccbd6, 0x6a7cdbc0, 0xe2b58c72, 0x00000001, 0x000000b8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000064, 0x00050050, 0x00000019, 0x0100086a,
+        0x0400089c, 0x0011e000, 0x00000000, 0x00003333, 0x0400009b, 0x00000001, 0x00000001, 0x00000001,
+        0x0d0000a4, 0x0011e0f2, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00004002, 0x0000002a, 0x0000002a, 0x0000002a, 0x0000002a, 0x0100003e,
+    };
+    static const DWORD cs_store_float_code[] =
+    {
+#if 0
+        RWBuffer<float> u;
+
+        [numthreads(1, 1, 1)]
+        void main()
+        {
+            u[0] = 1.0;
+        }
+#endif
+        0x43425844, 0x525eea68, 0xc4cd5716, 0xc588f9c4, 0x0da27c5a, 0x00000001, 0x000000b8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000064, 0x00050050, 0x00000019, 0x0100086a,
+        0x0400089c, 0x0011e000, 0x00000000, 0x00005555, 0x0400009b, 0x00000001, 0x00000001, 0x00000001,
+        0x0d0000a4, 0x0011e0f2, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00004002, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000, 0x0100003e,
+    };
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const unsigned int zero[4] = {0};
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    buffer = create_buffer(device, D3D11_BIND_UNORDERED_ACCESS, 1024, NULL);
+
+    uav_desc.Format = DXGI_FORMAT_R32_SINT;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    U(uav_desc).Buffer.FirstElement = 0;
+    U(uav_desc).Buffer.NumElements = 1;
+    U(uav_desc).Buffer.Flags = 0;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateComputeShader(device, cs_store_int_code, sizeof(cs_store_int_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    get_buffer_readback(buffer, &rb);
+    int_data = get_readback_color(&rb, 0, 0);
+    ok(int_data == 42, "Got unexpected value %u.\n", int_data);
+    release_resource_readback(&rb);
+
+    ID3D11ComputeShader_Release(cs);
+    ID3D11UnorderedAccessView_Release(uav);
+    uav_desc.Format = DXGI_FORMAT_R32_FLOAT;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateComputeShader(device, cs_store_float_code, sizeof(cs_store_float_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    get_buffer_readback(buffer, &rb);
+    float_data = get_readback_float(&rb, 0, 0);
+    ok(float_data == 1.0f, "Got unexpected value %.8e.\n", float_data);
+    release_resource_readback(&rb);
+
+    ID3D11Buffer_Release(buffer);
+    ID3D11ComputeShader_Release(cs);
+    ID3D11UnorderedAccessView_Release(uav);
+    release_test_context(&test_context);
+}
+
 static void test_ps_cs_uav_binding(void)
 {
     static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
@@ -21261,6 +21364,7 @@ START_TEST(d3d11)
     test_stencil_separate();
     test_uav_load();
     test_cs_uav_store();
+    test_uav_store_immediate_constant();
     test_ps_cs_uav_binding();
     test_atomic_instructions();
     test_sm4_ret_instruction();
