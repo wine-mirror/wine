@@ -106,6 +106,9 @@ static void test_timeline(void)
     hr = IAMTimelineObj_GetTimelineNoRef(obj, &timeline2);
     ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE got %08x\n", hr);
     ok(!timeline2, "Expected NULL got %p\n", timeline2);
+
+    IAMTimelineObj_Release(obj);
+    IAMTimeline_Release(timeline);
 }
 
 static void test_timelineobj_interfaces(void)
