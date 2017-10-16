@@ -2155,7 +2155,7 @@ static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VAR
         return E_FAIL;
     }
 
-    fire_event(This->inner_window->doc, EVENTID_MESSAGE, TRUE, &This->inner_window->doc->node, NULL, NULL);
+    fire_event(This->inner_window->doc, EVENTID_MESSAGE, TRUE, NULL, NULL, NULL);
     return S_OK;
 }
 

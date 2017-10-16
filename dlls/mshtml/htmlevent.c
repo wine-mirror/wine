@@ -153,7 +153,7 @@ static const event_info_t event_info[] = {
     {loadW,              EVENTT_HTML,   DISPID_EVMETH_ONLOAD,
         EVENT_BIND_TO_BODY},
     {messageW,           EVENTT_NONE,   DISPID_EVMETH_ONMESSAGE,
-        EVENT_BUBBLE /* FIXME: remove when we get the target right */ },
+        0},
     {mousedownW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEDOWN,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE},
     {mousemoveW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEMOVE,
