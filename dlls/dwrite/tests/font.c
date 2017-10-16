@@ -7924,6 +7924,9 @@ static void test_inmemory_file_loader(void)
     IDWriteFontFileStream_Release(stream);
     IDWriteFontFace_Release(fontface);
 
+    ref = IDWriteInMemoryFontFileLoader_Release(inmemory);
+    ok(ref == 0, "loader not released, %u.\n", ref);
+
     ref = IDWriteFactory5_Release(factory);
     ok(ref == 0, "factory not released, %u\n", ref);
 }
