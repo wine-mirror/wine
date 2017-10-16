@@ -2233,6 +2233,39 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 points, 3, draw->SrcRect.X, draw->SrcRect.Y, draw->SrcRect.Width, draw->SrcRect.Height, draw->SrcUnit,
                 real_metafile->objtable[draw->ImageAttributesID].u.image_attributes, NULL, NULL);
         }
+        case EmfPlusRecordTypeFillPath:
+        {
+            EmfPlusFillPath *fill = (EmfPlusFillPath *)header;
+            GpSolidFill *solidfill = NULL;
+            BYTE path = flags & 0xff;
+            GpBrush *brush;
+
+            if (path >= EmfPlusObjectTableSize || real_metafile->objtable[path].type != ObjectTypePath)
+                return InvalidParameter;
+
+            if (dataSize != sizeof(fill->data.BrushId))
+                return InvalidParameter;
+
+            if (flags & 0x8000)
+            {
+                stat = GdipCreateSolidFill(*(ARGB *)&fill->data.Color, (GpSolidFill **)&solidfill);
+                if (stat != Ok)
+                    return stat;
+                brush = (GpBrush *)solidfill;
+            }
+            else
+            {
+                if (fill->data.BrushId >= EmfPlusObjectTableSize ||
+                        real_metafile->objtable[fill->data.BrushId].type != ObjectTypeBrush)
+                    return InvalidParameter;
+
+                brush = real_metafile->objtable[fill->data.BrushId].u.brush;
+            }
+
+            stat = GdipFillPath(real_metafile->playback_graphics, brush, real_metafile->objtable[path].u.path);
+            GdipDeleteBrush((GpBrush *)solidfill);
+            return stat;
+        }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
             return NotImplemented;
