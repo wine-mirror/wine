@@ -2322,10 +2322,10 @@ static void test_import(void)
                     "\"Wine68i\"=hex(0):\n\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg(hkey, "Wine68a", REG_SZ, NULL, 0, 0);
-    verify_reg(hkey, "Wine68b", REG_EXPAND_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine68b", REG_EXPAND_SZ, NULL, 0, 0);
     verify_reg(hkey, "Wine68c", REG_BINARY, NULL, 0, 0);
     verify_reg(hkey, "Wine68d", REG_DWORD, NULL, 0, 0);
-    verify_reg(hkey, "Wine68e", REG_MULTI_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine68e", REG_MULTI_SZ, NULL, 0, 0);
     verify_reg(hkey, "Wine68f", 0x100, NULL, 0, 0);
     verify_reg(hkey, "Wine68g", 0xabcd, NULL, 0, 0);
     verify_reg(hkey, "Wine68h", REG_BINARY, NULL, 0, 0);
@@ -3830,10 +3830,10 @@ static void test_unicode_import(void)
                      "\"Wine68i\"=hex(0):\n\n", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg(hkey, "Wine68a", REG_SZ, NULL, 0, 0);
-    verify_reg(hkey, "Wine68b", REG_EXPAND_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine68b", REG_EXPAND_SZ, NULL, 0, 0);
     verify_reg(hkey, "Wine68c", REG_BINARY, NULL, 0, 0);
     verify_reg(hkey, "Wine68d", REG_DWORD, NULL, 0, 0);
-    verify_reg(hkey, "Wine68e", REG_MULTI_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine68e", REG_MULTI_SZ, NULL, 0, 0);
     verify_reg(hkey, "Wine68f", 0x100, NULL, 0, 0);
     verify_reg(hkey, "Wine68g", 0xabcd, NULL, 0, 0);
     verify_reg(hkey, "Wine68h", REG_BINARY, NULL, 0, 0);
