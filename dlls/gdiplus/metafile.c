@@ -328,6 +328,18 @@ typedef struct EmfPlusRectF
     float Height;
 } EmfPlusRectF;
 
+typedef struct EmfPlusPointR7
+{
+    BYTE X;
+    BYTE Y;
+} EmfPlusPointR7;
+
+typedef struct EmfPlusPoint
+{
+    short X;
+    short Y;
+} EmfPlusPoint;
+
 typedef struct EmfPlusPointF
 {
     float X;
@@ -343,10 +355,10 @@ typedef struct EmfPlusDrawImagePoints
     DWORD count;
     union
     {
-        /*EmfPlusPointR pointR;
-        EmfPlusPoint point;*/
-        EmfPlusPointF pointF;
-    } PointData[3];
+        EmfPlusPointR7 pointsR[3];
+        EmfPlusPoint points[3];
+        EmfPlusPointF pointsF[3];
+    } PointData;
 } EmfPlusDrawImagePoints;
 
 typedef struct EmfPlusDrawPath
@@ -2084,6 +2096,68 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         {
             return METAFILE_PlaybackObject(real_metafile, flags, dataSize, data);
         }
+        case EmfPlusRecordTypeDrawImagePoints:
+        {
+            EmfPlusDrawImagePoints *draw = (EmfPlusDrawImagePoints *)header;
+            static const UINT fixed_part_size = FIELD_OFFSET(EmfPlusDrawImagePoints, PointData) -
+                FIELD_OFFSET(EmfPlusDrawImagePoints, ImageAttributesID);
+            BYTE image = flags & 0xff;
+            GpPointF points[3];
+            unsigned int i;
+            UINT size;
+
+            if (image >= EmfPlusObjectTableSize || real_metafile->objtable[image].type != ObjectTypeImage)
+                return InvalidParameter;
+
+            if (dataSize <= fixed_part_size)
+                return InvalidParameter;
+            dataSize -= fixed_part_size;
+
+            if (draw->ImageAttributesID >= EmfPlusObjectTableSize ||
+                    real_metafile->objtable[draw->ImageAttributesID].type != ObjectTypeImageAttributes)
+                return InvalidParameter;
+
+            if (draw->count != 3)
+                return InvalidParameter;
+
+            if ((flags >> 13) & 1) /* E */
+                FIXME("image effects are not supported.\n");
+
+            if ((flags >> 11) & 1) /* P */
+                size = sizeof(EmfPlusPointR7) * draw->count;
+            else if ((flags >> 14) & 1) /* C */
+                size = sizeof(EmfPlusPoint) * draw->count;
+            else
+                size = sizeof(EmfPlusPointF) * draw->count;
+
+            if (dataSize != size)
+                return InvalidParameter;
+
+            if ((flags >> 11) & 1) /* P */
+            {
+                points[0].X = draw->PointData.pointsR[0].X;
+                points[0].Y = draw->PointData.pointsR[0].Y;
+                for (i = 1; i < 3; i++)
+                {
+                    points[i].X = points[i-1].X + draw->PointData.pointsR[i].X;
+                    points[i].Y = points[i-1].Y + draw->PointData.pointsR[i].Y;
+                }
+            }
+            else if ((flags >> 14) & 1) /* C */
+            {
+                for (i = 0; i < 3; i++)
+                {
+                    points[i].X = draw->PointData.points[i].X;
+                    points[i].Y = draw->PointData.points[i].Y;
+                }
+            }
+            else
+                memcpy(points, draw->PointData.pointsF, sizeof(points));
+
+            return GdipDrawImagePointsRect(real_metafile->playback_graphics, real_metafile->objtable[image].u.image,
+                points, 3, draw->SrcRect.X, draw->SrcRect.Y, draw->SrcRect.Width, draw->SrcRect.Height, draw->SrcUnit,
+                real_metafile->objtable[draw->ImageAttributesID].u.image_attributes, NULL, NULL);
+        }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
             return NotImplemented;
@@ -2982,12 +3056,7 @@ GpStatus METAFILE_DrawImagePointsRect(GpMetafile *metafile, GpImage *image,
     draw_image_record->SrcRect.Width = units_to_pixels(srcwidth, srcUnit, metafile->image.xres);
     draw_image_record->SrcRect.Height = units_to_pixels(srcheight, srcUnit, metafile->image.yres);
     draw_image_record->count = 3;
-    draw_image_record->PointData[0].pointF.X = points[0].X;
-    draw_image_record->PointData[0].pointF.Y = points[0].Y;
-    draw_image_record->PointData[1].pointF.X = points[1].X;
-    draw_image_record->PointData[1].pointF.Y = points[1].Y;
-    draw_image_record->PointData[2].pointF.X = points[2].X;
-    draw_image_record->PointData[2].pointF.Y = points[2].Y;
+    memcpy(draw_image_record->PointData.pointsF, points, 3 * sizeof(*points));
     METAFILE_WriteRecords(metafile);
     return Ok;
 }
