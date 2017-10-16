@@ -1852,8 +1852,12 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             }
             else
             {
-                FIXME("brush deserialization not implemented\n");
-                return NotImplemented;
+                if (record->BrushID >= EmfPlusObjectTableSize ||
+                        real_metafile->objtable[record->BrushID].type != ObjectTypeBrush)
+                    return InvalidParameter;
+
+                brush = real_metafile->objtable[record->BrushID].u.brush;
+                stat = Ok;
             }
 
             if (stat == Ok)
