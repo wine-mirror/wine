@@ -3825,8 +3825,8 @@ struct system_fontfile_enumerator
     HKEY hkey;
     int index;
 
-    WCHAR *value;
-    DWORD max_val_count;
+    WCHAR *filename;
+    DWORD filename_size;
 };
 
 static inline struct system_fontfile_enumerator *impl_from_IDWriteFontFileEnumerator(IDWriteFontFileEnumerator* iface)
@@ -3863,7 +3863,7 @@ static ULONG WINAPI systemfontfileenumerator_Release(IDWriteFontFileEnumerator *
     if (!ref) {
         IDWriteFactory5_Release(enumerator->factory);
         RegCloseKey(enumerator->hkey);
-        heap_free(enumerator->value);
+        heap_free(enumerator->filename);
         heap_free(enumerator);
     }
 
@@ -3894,77 +3894,69 @@ static HRESULT create_local_file_reference(IDWriteFactory5 *factory, const WCHAR
 static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFileEnumerator *iface, IDWriteFontFile **file)
 {
     struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
-    DWORD ret, type, val_count, count;
-    WCHAR *value, *filename;
-    HRESULT hr;
 
     *file = NULL;
 
-    if (enumerator->index < 0)
+    if (enumerator->index < 0 || !enumerator->filename || !*enumerator->filename)
         return E_FAIL;
 
-    ret = RegQueryInfoKeyW(enumerator->hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &val_count, &count, NULL, NULL);
-    if (ret != ERROR_SUCCESS)
-        return E_FAIL;
-
-    val_count++;
-    value = heap_alloc( val_count * sizeof(value[0]) );
-    filename = heap_alloc(count);
-    if (!value || !filename) {
-        heap_free(value);
-        heap_free(filename);
-        return E_OUTOFMEMORY;
-    }
-
-    ret = RegEnumValueW(enumerator->hkey, enumerator->index, value, &val_count, NULL, &type, (BYTE*)filename, &count);
-    if (ret) {
-        heap_free(value);
-        heap_free(filename);
-        return E_FAIL;
-    }
-
-    hr = create_local_file_reference(enumerator->factory, filename, file);
-
-    heap_free(value);
-    heap_free(filename);
-    return hr;
+    return create_local_file_reference(enumerator->factory, enumerator->filename, file);
 }
 
 static HRESULT WINAPI systemfontfileenumerator_MoveNext(IDWriteFontFileEnumerator *iface, BOOL *current)
 {
     struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
+    WCHAR name_buf[256], *name = name_buf;
+    DWORD name_count, max_name_count = sizeof(name_buf) / sizeof(*name_buf), type, data_size;
+    HRESULT hr = S_OK;
+    LONG r;
 
     *current = FALSE;
     enumerator->index++;
 
-    if (!enumerator->value) {
-        if (RegQueryInfoKeyW(enumerator->hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                &enumerator->max_val_count, NULL, NULL, NULL))
-            return E_FAIL;
-
-        enumerator->max_val_count++;
-        if (!(enumerator->value = heap_alloc(enumerator->max_val_count * sizeof(*enumerator->value))))
-            return E_OUTOFMEMORY;
-    }
-
     /* iterate until we find next string value */
     for (;;) {
-        DWORD type = 0, count, val_count;
+        do {
+            name_count = max_name_count;
+            data_size = enumerator->filename_size - sizeof(*enumerator->filename);
 
-        val_count = enumerator->max_val_count;
-        *enumerator->value = 0;
-        if (RegEnumValueW(enumerator->hkey, enumerator->index, enumerator->value, &val_count,
-                NULL, &type, NULL, &count))
+            r = RegEnumValueW(enumerator->hkey, enumerator->index, name, &name_count,
+                              NULL, &type, (BYTE *)enumerator->filename, &data_size);
+            if (r == ERROR_MORE_DATA) {
+                if (name_count >= max_name_count) {
+                    if (name != name_buf) heap_free(name);
+                    max_name_count *= 2;
+                    name = heap_alloc(max_name_count * sizeof(*name));
+                    if (!name) return E_OUTOFMEMORY;
+                }
+                if (data_size > enumerator->filename_size - sizeof(*enumerator->filename)) {
+                    heap_free(enumerator->filename);
+                    enumerator->filename_size = max(data_size + sizeof(*enumerator->filename), enumerator->filename_size * 2);
+                    enumerator->filename = heap_alloc(enumerator->filename_size);
+                    if (!enumerator->filename) {
+                        hr = E_OUTOFMEMORY;
+                        goto err;
+                    }
+                }
+            }
+        } while (r == ERROR_MORE_DATA);
+
+        if (r != ERROR_SUCCESS) {
+            enumerator->filename[0] = 0;
             break;
-        if (type == REG_SZ && *enumerator->value && *enumerator->value != '@') {
+        }
+        enumerator->filename[data_size / sizeof(*enumerator->filename)] = 0;
+        if (type == REG_SZ && *name != '@') {
             *current = TRUE;
             break;
         }
         enumerator->index++;
     }
-
     TRACE("index = %d, current = %d\n", enumerator->index, *current);
-    return S_OK;
+
+err:
+    if (name != name_buf) heap_free(name);
+    return hr;
 }
 
 static const struct IDWriteFontFileEnumeratorVtbl systemfontfileenumeratorvtbl =
@@ -3995,13 +3987,19 @@ static HRESULT create_system_fontfile_enumerator(IDWriteFactory5 *factory, IDWri
     enumerator->ref = 1;
     enumerator->factory = factory;
     enumerator->index = -1;
-    enumerator->value = NULL;
-    enumerator->max_val_count = 0;
+    enumerator->filename_size = MAX_PATH * sizeof(*enumerator->filename);
+    enumerator->filename = heap_alloc(enumerator->filename_size);
+    if (!enumerator->filename) {
+        heap_free(enumerator);
+        return E_OUTOFMEMORY;
+    }
+
     IDWriteFactory5_AddRef(factory);
 
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, fontslistW, 0, GENERIC_READ, &enumerator->hkey)) {
         ERR("failed to open fonts list key\n");
         IDWriteFactory5_Release(factory);
+        heap_free(enumerator->filename);
         heap_free(enumerator);
         return E_FAIL;
     }
