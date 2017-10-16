@@ -885,6 +885,9 @@ static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos)
 {
     WCHAR *line = pos;
 
+    if (!*line)
+        goto set_value;
+
     if (!convert_hex_csv_to_hex(parser, &line))
         goto invalid;
 
@@ -896,6 +899,7 @@ static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos)
 
     prepare_hex_string_data(parser);
 
+set_value:
     set_state(parser, SET_VALUE);
     return line;
 

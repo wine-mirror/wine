@@ -662,10 +662,10 @@ static void test_basic_import(void)
                     "\"Wine22h\"=hex:\n"
                     "\"Wine22i\"=hex(0):\n\n");
     verify_reg(hkey, "Wine22a", REG_SZ, NULL, 0, 0);
-    verify_reg(hkey, "Wine22b", REG_EXPAND_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine22b", REG_EXPAND_SZ, NULL, 0, 0);
     verify_reg(hkey, "Wine22c", REG_BINARY, NULL, 0, 0);
     verify_reg(hkey, "Wine22d", REG_DWORD, NULL, 0, 0);
-    verify_reg(hkey, "Wine22e", REG_MULTI_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine22e", REG_MULTI_SZ, NULL, 0, 0);
     verify_reg(hkey, "Wine22f", 0x100, NULL, 0, 0);
     verify_reg(hkey, "Wine22g", 0xabcd, NULL, 0, 0);
     verify_reg(hkey, "Wine22h", REG_BINARY, NULL, 0, 0);
@@ -1077,10 +1077,10 @@ static void test_basic_import_unicode(void)
                      "\"Wine22h\"=hex:\n"
                      "\"Wine22i\"=hex(0):\n\n");
     verify_reg(hkey, "Wine22a", REG_SZ, NULL, 0, 0);
-    verify_reg(hkey, "Wine22b", REG_EXPAND_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine22b", REG_EXPAND_SZ, NULL, 0, 0);
     verify_reg(hkey, "Wine22c", REG_BINARY, NULL, 0, 0);
     verify_reg(hkey, "Wine22d", REG_DWORD, NULL, 0, 0);
-    verify_reg(hkey, "Wine22e", REG_MULTI_SZ, NULL, 0, TODO_REG_SIZE);
+    verify_reg(hkey, "Wine22e", REG_MULTI_SZ, NULL, 0, 0);
     verify_reg(hkey, "Wine22f", 0x100, NULL, 0, 0);
     verify_reg(hkey, "Wine22g", 0xabcd, NULL, 0, 0);
     verify_reg(hkey, "Wine22h", REG_BINARY, NULL, 0, 0);
