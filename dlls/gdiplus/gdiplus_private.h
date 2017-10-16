@@ -394,6 +394,7 @@ struct emfplus_object {
     EmfPlusObjectType type;
     union {
         GpBrush *brush;
+        GpImage *image;
         GpImageAttributes *image_attributes;
         void *object;
     } u;

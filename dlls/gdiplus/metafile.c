@@ -43,6 +43,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
+
 typedef struct EmfPlusARGB
 {
     BYTE Blue;
@@ -246,6 +248,13 @@ typedef struct EmfPlusRegion
     BYTE RegionNode[1];
 } EmfPlusRegion;
 
+typedef struct EmfPlusPalette
+{
+    DWORD PaletteStyleFlags;
+    DWORD PaletteCount;
+    BYTE PaletteEntries[1];
+} EmfPlusPalette;
+
 typedef enum
 {
     BitmapDataTypePixel,
@@ -366,6 +375,9 @@ static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
         break;
     case ObjectTypeBrush:
         GdipDeleteBrush(object->u.brush);
+        break;
+    case ObjectTypeImage:
+        GdipDisposeImage(object->u.image);
         break;
     case ObjectTypeImageAttributes:
         GdipDisposeImageAttributes(object->u.image_attributes);
@@ -1446,6 +1458,108 @@ static void metafile_set_object_table_entry(GpMetafile *metafile, BYTE id, BYTE 
     metafile->objtable[id].u.object = object;
 }
 
+static GpStatus metafile_deserialize_image(const BYTE *record_data, UINT data_size, GpImage **image)
+{
+    EmfPlusImage *data = (EmfPlusImage *)record_data;
+    GpStatus status;
+
+    *image = NULL;
+
+    if (data_size < FIELD_OFFSET(EmfPlusImage, ImageData))
+        return InvalidParameter;
+    data_size -= FIELD_OFFSET(EmfPlusImage, ImageData);
+
+    switch (data->Type)
+    {
+    case ImageDataTypeBitmap:
+    {
+        EmfPlusBitmap *bitmapdata = &data->ImageData.bitmap;
+
+        if (data_size <= FIELD_OFFSET(EmfPlusBitmap, BitmapData))
+            return InvalidParameter;
+        data_size -= FIELD_OFFSET(EmfPlusBitmap, BitmapData);
+
+        switch (bitmapdata->Type)
+        {
+        case BitmapDataTypePixel:
+        {
+            ColorPalette *palette;
+            BYTE *scan0;
+
+            if (bitmapdata->PixelFormat & PixelFormatIndexed)
+            {
+                EmfPlusPalette *palette_obj = (EmfPlusPalette *)bitmapdata->BitmapData;
+                UINT palette_size = FIELD_OFFSET(EmfPlusPalette, PaletteEntries);
+
+                if (data_size <= palette_size)
+                    return InvalidParameter;
+                palette_size += palette_obj->PaletteCount * sizeof(EmfPlusARGB);
+
+                if (data_size < palette_size)
+                    return InvalidParameter;
+                data_size -= palette_size;
+
+                palette = (ColorPalette *)bitmapdata->BitmapData;
+                scan0 = (BYTE *)bitmapdata->BitmapData + palette_size;
+            }
+            else
+            {
+                palette = NULL;
+                scan0 = bitmapdata->BitmapData;
+            }
+
+            if (data_size < bitmapdata->Height * bitmapdata->Stride)
+                return InvalidParameter;
+
+            status = GdipCreateBitmapFromScan0(bitmapdata->Width, bitmapdata->Height, bitmapdata->Stride,
+                bitmapdata->PixelFormat, scan0, (GpBitmap **)image);
+            if (status == Ok && palette)
+            {
+                status = GdipSetImagePalette(*image, palette);
+                if (status != Ok)
+                {
+                    GdipDisposeImage(*image);
+                    *image = NULL;
+                }
+            }
+            break;
+        }
+        case BitmapDataTypeCompressed:
+        {
+            IWICImagingFactory *factory;
+            IWICStream *stream;
+            HRESULT hr;
+
+            if (WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory) != S_OK)
+                return GenericError;
+
+            hr = IWICImagingFactory_CreateStream(factory, &stream);
+            IWICImagingFactory_Release(factory);
+            if (hr != S_OK)
+                return GenericError;
+
+            if (IWICStream_InitializeFromMemory(stream, bitmapdata->BitmapData, data_size) == S_OK)
+                status = GdipCreateBitmapFromStream((IStream *)stream, (GpBitmap **)image);
+            else
+                status = GenericError;
+
+            IWICStream_Release(stream);
+            break;
+        }
+        default:
+            WARN("Invalid bitmap type %d.\n", bitmapdata->Type);
+            return InvalidParameter;
+        }
+        break;
+    }
+    default:
+        FIXME("image type %d not supported.\n", data->Type);
+        return NotImplemented;
+    }
+
+    return status;
+}
+
 static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_size, GpBrush **brush)
 {
     static const UINT header_size = FIELD_OFFSET(EmfPlusBrush, BrushData);
@@ -1487,6 +1601,9 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
     {
     case ObjectTypeBrush:
         status = metafile_deserialize_brush(record_data, data_size, (GpBrush **)&object);
+        break;
+    case ObjectTypeImage:
+        status = metafile_deserialize_image(record_data, data_size, (GpImage **)&object);
         break;
     case ObjectTypeImageAttributes:
     {
