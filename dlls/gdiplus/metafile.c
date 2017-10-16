@@ -388,6 +388,9 @@ static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
     case ObjectTypeBrush:
         GdipDeleteBrush(object->u.brush);
         break;
+    case ObjectTypePath:
+        GdipDeletePath(object->u.path);
+        break;
     case ObjectTypeImage:
         GdipDisposeImage(object->u.image);
         break;
@@ -1572,6 +1575,75 @@ static GpStatus metafile_deserialize_image(const BYTE *record_data, UINT data_si
     return status;
 }
 
+static GpStatus metafile_deserialize_path(const BYTE *record_data, UINT data_size, GpPath **path)
+{
+    EmfPlusPath *data = (EmfPlusPath *)record_data;
+    GpStatus status;
+    BYTE *types;
+    UINT size;
+    DWORD i;
+
+    *path = NULL;
+
+    if (data_size <= FIELD_OFFSET(EmfPlusPath, data))
+        return InvalidParameter;
+    data_size -= FIELD_OFFSET(EmfPlusPath, data);
+
+    if (data->PathPointFlags & 0x800) /* R */
+    {
+        FIXME("RLE encoded path data is not supported.\n");
+        return NotImplemented;
+    }
+    else
+    {
+        if (data->PathPointFlags & 0x4000) /* C */
+            size = sizeof(EmfPlusPoint);
+        else
+            size = sizeof(EmfPlusPointF);
+        size += sizeof(BYTE); /* EmfPlusPathPointType */
+        size *= data->PathPointCount;
+    }
+
+    if (data_size < size)
+        return InvalidParameter;
+
+    status = GdipCreatePath(FillModeAlternate, path);
+    if (status != Ok)
+        return status;
+
+    (*path)->pathdata.Count = data->PathPointCount;
+    (*path)->pathdata.Points = GdipAlloc(data->PathPointCount * sizeof(*(*path)->pathdata.Points));
+    (*path)->pathdata.Types = GdipAlloc(data->PathPointCount * sizeof(*(*path)->pathdata.Types));
+    (*path)->datalen = (*path)->pathdata.Count;
+
+    if (!(*path)->pathdata.Points || !(*path)->pathdata.Types)
+    {
+        GdipDeletePath(*path);
+        return OutOfMemory;
+    }
+
+    if (data->PathPointFlags & 0x4000) /* C */
+    {
+        EmfPlusPoint *points = (EmfPlusPoint *)data->data;
+        for (i = 0; i < data->PathPointCount; i++)
+        {
+            (*path)->pathdata.Points[i].X = points[i].X;
+            (*path)->pathdata.Points[i].Y = points[i].Y;
+        }
+        types = (BYTE *)(points + i);
+    }
+    else
+    {
+        EmfPlusPointF *points = (EmfPlusPointF *)data->data;
+        memcpy((*path)->pathdata.Points, points, sizeof(*points) * data->PathPointCount);
+        types = (BYTE *)(points + data->PathPointCount);
+    }
+
+    memcpy((*path)->pathdata.Types, types, sizeof(*types) * data->PathPointCount);
+
+    return Ok;
+}
+
 static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_size, GpBrush **brush)
 {
     static const UINT header_size = FIELD_OFFSET(EmfPlusBrush, BrushData);
@@ -1613,6 +1685,9 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
     {
     case ObjectTypeBrush:
         status = metafile_deserialize_brush(record_data, data_size, (GpBrush **)&object);
+        break;
+    case ObjectTypePath:
+        status = metafile_deserialize_path(record_data, data_size, (GpPath **)&object);
         break;
     case ObjectTypeImage:
         status = metafile_deserialize_image(record_data, data_size, (GpImage **)&object);
