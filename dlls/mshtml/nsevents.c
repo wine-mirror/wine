@@ -267,23 +267,10 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
                 &doc->basedoc.window->base.IHTMLWindow2_iface, 0);
 
     if(doc->nsdoc) {
-        nsIDOMHTMLElement *nsbody;
-
         flush_pending_tasks(doc->basedoc.task_magic);
 
-        nsres = nsIDOMHTMLDocument_GetBody(doc->nsdoc, &nsbody);
-        if(NS_SUCCEEDED(nsres) && nsbody) {
-            HTMLDOMNode *node;
-            HRESULT hres;
-
-            hres = get_node(doc, (nsIDOMNode*)nsbody, TRUE, &node);
-            nsIDOMHTMLElement_Release(nsbody);
-            if(SUCCEEDED(hres)) {
-                fire_event(doc, EVENTID_LOAD, TRUE, node, event,
-                        (IDispatch*)&doc->window->base.IDispatchEx_iface);
-                node_release(node);
-            }
-        }
+        fire_event(doc, EVENTID_LOAD, TRUE, &doc->node, event, (IDispatch*)&doc->window->base.IDispatchEx_iface);
+        fire_event(doc, EVENTID_LOAD, TRUE, NULL, event, (IDispatch*)&doc->window->base.IDispatchEx_iface);
     }else {
         ERR("NULL nsdoc\n");
         nsres = NS_ERROR_FAILURE;

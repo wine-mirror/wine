@@ -271,7 +271,6 @@ typedef struct {
     compat_mode_t (*get_compat_mode)(DispatchEx*);
     HRESULT (*populate_props)(DispatchEx*);
     /* We abuse this vtbl for EventTarget functions to avoid separated vtbl. */
-    EventTarget *(*get_event_target)(DispatchEx*);
     void (*bind_event)(DispatchEx*,int);
 } dispex_static_data_vtbl_t;
 
@@ -714,7 +713,7 @@ typedef struct {
     HRESULT (*clone)(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
     HRESULT (*handle_event)(HTMLDOMNode*,DWORD,nsIDOMEvent*,BOOL*);
     HRESULT (*get_attr_col)(HTMLDOMNode*,HTMLAttributeCollection**);
-    EventTarget *(*get_event_target)(HTMLDOMNode*);
+    EventTarget *(*get_event_prop_target)(HTMLDOMNode*,int);
     HRESULT (*put_disabled)(HTMLDOMNode*,VARIANT_BOOL);
     HRESULT (*get_disabled)(HTMLDOMNode*,VARIANT_BOOL*);
     HRESULT (*get_document)(HTMLDOMNode*,IDispatch**);

@@ -5036,7 +5036,6 @@ static const dispex_static_data_vtbl_t HTMLDocumentNode_dispex_vtbl = {
     HTMLDocumentNode_invoke,
     HTMLDocumentNode_get_compat_mode,
     NULL,
-    NULL,
     HTMLDocumentNode_bind_event
 };
 

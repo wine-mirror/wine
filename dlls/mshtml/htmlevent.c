@@ -106,7 +106,6 @@ typedef struct {
 
 #define EVENT_DEFAULTLISTENER    0x0001
 #define EVENT_BUBBLE             0x0002
-#define EVENT_FORWARDBODY        0x0004
 #define EVENT_BIND_TO_BODY       0x0008
 #define EVENT_CANCELABLE         0x0010
 #define EVENT_HASDEFAULTHANDLERS 0x0020
@@ -118,7 +117,7 @@ static const event_info_t event_info[] = {
     {beforeactivateW,    EVENTT_NONE,   DISPID_EVMETH_ONBEFOREACTIVATE,
         EVENT_FIXME},
     {beforeunloadW,      EVENTT_NONE,   DISPID_EVMETH_ONBEFOREUNLOAD,
-        EVENT_DEFAULTLISTENER|EVENT_FORWARDBODY},
+        EVENT_DEFAULTLISTENER},
     {blurW,              EVENTT_HTML,   DISPID_EVMETH_ONBLUR,
         EVENT_DEFAULTLISTENER},
     {changeW,            EVENTT_HTML,   DISPID_EVMETH_ONCHANGE,
@@ -154,7 +153,7 @@ static const event_info_t event_info[] = {
     {loadW,              EVENTT_HTML,   DISPID_EVMETH_ONLOAD,
         EVENT_BIND_TO_BODY},
     {messageW,           EVENTT_NONE,   DISPID_EVMETH_ONMESSAGE,
-        EVENT_FORWARDBODY /* FIXME: remove when we get the target right */ },
+        EVENT_BUBBLE /* FIXME: remove when we get the target right */ },
     {mousedownW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEDOWN,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE},
     {mousemoveW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEMOVE,
@@ -848,10 +847,6 @@ static handler_vector_t *get_handler_vector(EventTarget *event_target, eventid_t
     handler_vector_t *handler_vector;
     struct wine_rb_entry *entry;
 
-    vtbl = dispex_get_vtbl(&event_target->dispex);
-    if(vtbl->get_event_target)
-        event_target = vtbl->get_event_target(&event_target->dispex);
-
     entry = wine_rb_get(&event_target->handler_map, (const void*)eid);
     if(entry)
         return WINE_RB_ENTRY_VALUE(entry, handler_vector_t, entry);
@@ -1067,11 +1062,11 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
         HTMLDOMNode *target, IDispatch *script_this)
 {
     IHTMLEventObj *prev_event;
-    nsIDOMNode *parent, *nsnode;
+    nsIDOMNode *parent, *nsnode = NULL;
     BOOL prevent_default = FALSE;
     HTMLInnerWindow *window;
     HTMLDOMNode *node;
-    UINT16 node_type;
+    UINT16 node_type = 0;
     nsresult nsres;
     HRESULT hres;
 
@@ -1088,9 +1083,11 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
     prev_event = window->event;
     window->event = event_obj ? &event_obj->IHTMLEventObj_iface : NULL;
 
-    nsIDOMNode_GetNodeType(target->nsnode, &node_type);
-    nsnode = target->nsnode;
-    nsIDOMNode_AddRef(nsnode);
+    if(target) {
+        nsIDOMNode_GetNodeType(target->nsnode, &node_type);
+        nsnode = target->nsnode;
+        nsIDOMNode_AddRef(nsnode);
+    }
 
     switch(node_type) {
     case ELEMENT_NODE:
@@ -1116,32 +1113,18 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
 
         if(!(event_info[eid].flags & EVENT_BUBBLE) || (event_obj && event_obj->cancel_bubble))
             break;
+        /* fallthrough */
 
     case DOCUMENT_NODE:
-        if(event_info[eid].flags & EVENT_FORWARDBODY) {
-            nsIDOMHTMLElement *nsbody;
-            nsresult nsres;
-
-            nsres = nsIDOMHTMLDocument_GetBody(doc->nsdoc, &nsbody);
-            if(NS_SUCCEEDED(nsres) && nsbody) {
-                hres = get_node(doc, (nsIDOMNode*)nsbody, FALSE, &node);
-                if(SUCCEEDED(hres) && node) {
-                    call_event_handlers(doc, event_obj, &node->event_target, node->cp_container, eid,
-                            script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
-                    node_release(node);
-                }
-                nsIDOMHTMLElement_Release(nsbody);
-            }else {
-                ERR("Could not get body: %08x\n", nsres);
-            }
-        }
-
         call_event_handlers(doc, event_obj, &doc->node.event_target, &doc->basedoc.cp_container, eid,
                 script_this ? script_this : (IDispatch*)&doc->basedoc.IHTMLDocument2_iface);
-        break;
+        if(!(event_info[eid].flags & EVENT_BUBBLE) || (event_obj && event_obj->cancel_bubble))
+            break;
+        /* fallthrough */
 
-    default:
-        FIXME("unimplemented node type %d\n", node_type);
+    default: /* window object */
+        call_event_handlers(doc, event_obj, &doc->window->event_target, NULL, eid,
+                script_this ? script_this : (IDispatch*)&doc->window->base.IHTMLWindow2_iface);
     }
 
     if(nsnode)
@@ -1151,7 +1134,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
         prevent_default = TRUE;
     window->event = prev_event;
 
-    if(!prevent_default && (event_info[eid].flags & EVENT_HASDEFAULTHANDLERS)) {
+    if(target && !prevent_default && (event_info[eid].flags & EVENT_HASDEFAULTHANDLERS)) {
         nsnode = target->nsnode;
         nsIDOMNode_AddRef(nsnode);
 
@@ -1601,7 +1584,7 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
             }
         }
 
-        set_event_handler_disp(&node->event_target, eid, disp);
+        set_event_handler_disp(get_node_event_prop_target(node, eid), eid, disp);
         IDispatch_Release(disp);
     }
 

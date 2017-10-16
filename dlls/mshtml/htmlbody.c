@@ -825,13 +825,22 @@ static void HTMLBodyElement_unlink(HTMLDOMNode *iface)
     }
 }
 
-static EventTarget *HTMLBodyElement_get_event_target(HTMLDOMNode *iface)
+static EventTarget *HTMLBodyElement_get_event_prop_target(HTMLDOMNode *iface, int event_id)
 {
     HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
 
-    return This->textcont.element.node.doc && This->textcont.element.node.doc->window
-        ? &This->textcont.element.node.doc->window->event_target
-        : &This->textcont.element.node.event_target;
+    switch(event_id) {
+    case EVENTID_BLUR:
+    case EVENTID_ERROR:
+    case EVENTID_FOCUS:
+    case EVENTID_LOAD:
+    case EVENTID_SCROLL:
+        return This->textcont.element.node.doc && This->textcont.element.node.doc->window
+            ? &This->textcont.element.node.doc->window->event_target
+            : &This->textcont.element.node.event_target;
+    default:
+        return &This->textcont.element.node.event_target;
+    }
 }
 
 static BOOL HTMLBodyElement_is_text_edit(HTMLDOMNode *iface)
@@ -864,7 +873,7 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
-    HTMLBodyElement_get_event_target,
+    HTMLBodyElement_get_event_prop_target,
     NULL,
     NULL,
     NULL,

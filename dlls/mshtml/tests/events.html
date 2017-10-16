@@ -155,7 +155,7 @@ function test_string_event_handler() {
 }
 
 function test_body_events() {
-    var f = function() {}
+    var f = function() {}, g = function() {};
 
     document.body.onload = f;
     ok(document.body.onload === f, "body.onload != f");
@@ -164,6 +164,16 @@ function test_body_events() {
     document.body.onfocus = f;
     ok(document.body.onfocus === f, "body.onfocus != f");
     ok(window.onfocus === f, "window.onfocus != f");
+    window.onfocus = g;
+    ok(document.body.onfocus === g, "body.onfocus != g");
+    ok(window.onfocus === g, "window.onfocus != g");
+
+    var onclick_called = false;
+    var onclick_handler = function() { onclick_called = true; };
+    document.body.attachEvent("onclick", onclick_handler);
+    window.detachEvent("onclick", onclick_handler);
+    document.body.click();
+    ok(onclick_called, "onclick handler not invoked");
 }
 
 window.onload = function() {
