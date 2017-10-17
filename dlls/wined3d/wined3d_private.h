@@ -61,6 +61,8 @@
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif
 
+#define MAKEDWORD_VERSION(maj, min) (((maj & 0xffffu) << 16) | (min & 0xffffu))
+
 /* Driver quirks */
 #define WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT       0x00000001
 #define WINED3D_QUIRK_SET_TEXCOORD_W            0x00000002
@@ -1323,7 +1325,8 @@ enum wined3d_shader_tex_types
     WINED3D_SHADER_TEX_CUBE = 2,
 };
 
-struct ps_compile_args {
+struct ps_compile_args
+{
     struct color_fixup_desc     color_fixup[MAX_FRAGMENT_SAMPLERS];
     enum vertexprocessing_mode  vp_mode;
     enum wined3d_ffp_ps_fog_mode fog;
@@ -1343,7 +1346,8 @@ struct ps_compile_args {
     DWORD padding : 26;
 };
 
-enum fog_src_type {
+enum fog_src_type
+{
     VS_FOG_Z        = 0,
     VS_FOG_COORD    = 1
 };
@@ -1359,6 +1363,7 @@ struct vs_compile_args
     BYTE padding : 1;
     WORD swizzle_map;   /* MAX_ATTRIBS, 16 */
     unsigned int next_shader_input_count;
+    enum wined3d_shader_interpolation_mode interpolation_mode[MAX_REG_INPUT];
 };
 
 struct ds_compile_args
@@ -1369,11 +1374,13 @@ struct ds_compile_args
     unsigned int next_shader_type : 3;
     unsigned int render_offscreen : 1;
     unsigned int padding : 12;
+    enum wined3d_shader_interpolation_mode interpolation_mode[MAX_REG_INPUT];
 };
 
 struct gs_compile_args
 {
     unsigned int output_count;
+    enum wined3d_shader_interpolation_mode interpolation_mode[MAX_REG_INPUT];
 };
 
 struct wined3d_context;
@@ -3970,13 +3977,13 @@ BOOL vshader_get_input(const struct wined3d_shader *shader,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum) DECLSPEC_HIDDEN;
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         WORD swizzle_map, struct vs_compile_args *args,
-        const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
+        const struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 void find_ds_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         struct ds_compile_args *args, const struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 void find_gs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
-        struct gs_compile_args *args) DECLSPEC_HIDDEN;
+        struct gs_compile_args *args, const struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 void string_buffer_clear(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;
 BOOL string_buffer_init(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;
@@ -4277,6 +4284,15 @@ static inline BOOL can_use_texture_swizzle(const struct wined3d_gl_info *gl_info
             && !is_scaling_fixup(format->color_fixup);
 }
 
+static inline BOOL needs_interpolation_qualifiers_for_shader_outputs(const struct wined3d_gl_info *gl_info)
+{
+    /* In GLSL 4.40+ it is fine to specify interpolation qualifiers only in
+     * fragment shaders. In older GLSL versions interpolation qualifiers must
+     * match between shader stages.
+     */
+    return gl_info->glsl_version < MAKEDWORD_VERSION(4, 40);
+}
+
 static inline struct wined3d_surface *context_get_rt_surface(const struct wined3d_context *context)
 {
     struct wined3d_texture *texture = context->current_rt.texture;
@@ -4299,7 +4315,5 @@ static inline void wined3d_not_from_cs(struct wined3d_cs *cs)
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
-
-#define MAKEDWORD_VERSION(maj, min) (((maj & 0xffffu) << 16) | (min & 0xffffu))
 
 #endif
