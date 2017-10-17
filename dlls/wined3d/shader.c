@@ -961,6 +961,16 @@ static HRESULT shader_record_shader_phase(struct wined3d_shader *shader,
     return WINED3D_OK;
 }
 
+static void wined3d_insert_interpolation_mode(DWORD *packed_interpolation_mode,
+        unsigned int register_idx, enum wined3d_shader_interpolation_mode mode)
+{
+    if (mode > WINED3DSIM_LINEAR_NOPERSPECTIVE_SAMPLE)
+        FIXME("Unexpected interpolation mode %#x.\n", mode);
+
+    wined3d_insert_bits(packed_interpolation_mode,
+            register_idx * WINED3D_PACKED_INTERPOLATION_BIT_COUNT, WINED3D_PACKED_INTERPOLATION_BIT_COUNT, mode);
+}
+
 /* Note that this does not count the loop register as an address register. */
 static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const struct wined3d_shader_frontend *fe,
         struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_signature *input_signature,
@@ -1151,13 +1161,13 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PS)
         {
             unsigned int reg_idx = ins.declaration.dst.reg.idx[0].offset;
-            if (reg_idx >= ARRAY_SIZE(shader->u.ps.interpolation_mode))
+            if (reg_idx >= MAX_REG_INPUT)
             {
                 ERR("Invalid register index %u.\n", reg_idx);
                 break;
             }
             if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
-                shader->u.ps.interpolation_mode[reg_idx] = ins.flags;
+                wined3d_insert_interpolation_mode(shader->u.ps.interpolation_mode, reg_idx, ins.flags);
             else
                 FIXME("Invalid instruction %#x for shader type %#x.\n",
                         ins.handler_idx, shader_version.type);
@@ -3400,13 +3410,13 @@ HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *sh
     return WINED3D_OK;
 }
 
-static void init_interpolation_compile_args(enum wined3d_shader_interpolation_mode *interpolation_args,
+static void init_interpolation_compile_args(DWORD *interpolation_args,
         const struct wined3d_shader *pixel_shader, const struct wined3d_gl_info *gl_info)
 {
     if (!needs_interpolation_qualifiers_for_shader_outputs(gl_info)
             || !pixel_shader || pixel_shader->reg_maps.shader_version.major < 4)
     {
-        memset(interpolation_args, 0, MAX_REG_INPUT * sizeof(*interpolation_args));
+        memset(interpolation_args, 0, sizeof(pixel_shader->u.ps.interpolation_mode));
         return;
     }
 

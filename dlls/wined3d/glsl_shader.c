@@ -2141,10 +2141,18 @@ static const char *shader_glsl_interpolation_qualifiers(enum wined3d_shader_inte
     }
 }
 
+static enum wined3d_shader_interpolation_mode wined3d_extract_interpolation_mode(
+        const DWORD *packed_interpolation_mode, unsigned int register_idx)
+{
+    return wined3d_extract_bits(packed_interpolation_mode,
+            register_idx * WINED3D_PACKED_INTERPOLATION_BIT_COUNT, WINED3D_PACKED_INTERPOLATION_BIT_COUNT);
+}
+
 static void shader_glsl_declare_shader_inputs(const struct wined3d_gl_info *gl_info,
         struct wined3d_string_buffer *buffer, unsigned int element_count,
-        const enum wined3d_shader_interpolation_mode *interpolation_mode, BOOL unroll)
+        const DWORD *interpolation_mode, BOOL unroll)
 {
+    enum wined3d_shader_interpolation_mode mode;
     unsigned int i;
 
     if (shader_glsl_use_interface_blocks(gl_info))
@@ -2154,8 +2162,8 @@ static void shader_glsl_declare_shader_inputs(const struct wined3d_gl_info *gl_i
             shader_addline(buffer, "in shader_in_out {\n");
             for (i = 0; i < element_count; ++i)
             {
-                shader_addline(buffer, "%s vec4 reg%u;\n",
-                        shader_glsl_interpolation_qualifiers(interpolation_mode[i]), i);
+                mode = wined3d_extract_interpolation_mode(interpolation_mode, i);
+                shader_addline(buffer, "%s vec4 reg%u;\n", shader_glsl_interpolation_qualifiers(mode), i);
             }
             shader_addline(buffer, "} shader_in;\n");
         }
@@ -2172,8 +2180,9 @@ static void shader_glsl_declare_shader_inputs(const struct wined3d_gl_info *gl_i
 
 static void shader_glsl_declare_shader_outputs(const struct wined3d_gl_info *gl_info,
         struct wined3d_string_buffer *buffer, unsigned int element_count, BOOL rasterizer_setup,
-        const enum wined3d_shader_interpolation_mode *interpolation_mode)
+        const DWORD *interpolation_mode)
 {
+    enum wined3d_shader_interpolation_mode mode;
     unsigned int i;
 
     if (shader_glsl_use_interface_blocks(gl_info))
@@ -2185,7 +2194,10 @@ static void shader_glsl_declare_shader_outputs(const struct wined3d_gl_info *gl_
             {
                 const char *interpolation_qualifiers = "";
                 if (needs_interpolation_qualifiers_for_shader_outputs(gl_info))
-                    interpolation_qualifiers = shader_glsl_interpolation_qualifiers(interpolation_mode[i]);
+                {
+                    mode = wined3d_extract_interpolation_mode(interpolation_mode, i);
+                    interpolation_qualifiers = shader_glsl_interpolation_qualifiers(mode);
+                }
                 shader_addline(buffer, "%s vec4 reg%u;\n", interpolation_qualifiers, i);
             }
             shader_addline(buffer, "} shader_out;\n");
@@ -7063,8 +7075,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
 
 static void shader_glsl_generate_sm4_output_setup(struct shader_glsl_priv *priv,
         const struct wined3d_shader *shader, unsigned int input_count,
-        const struct wined3d_gl_info *gl_info, BOOL rasterizer_setup,
-        const enum wined3d_shader_interpolation_mode *interpolation_mode)
+        const struct wined3d_gl_info *gl_info, BOOL rasterizer_setup, const DWORD *interpolation_mode)
 {
     const char *prefix = shader_glsl_get_prefix(shader->reg_maps.shader_version.type);
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
