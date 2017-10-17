@@ -51,6 +51,27 @@
      inkscape:window-maximized="0"
      inkscape:current-layer="svg2" />
   <rect
+     id="hotspot:64"
+     height="1"
+     width="1"
+     y="16"
+     x="16"
+     style="fill:none" />
+  <rect
+     id="hotspot:48"
+     height="1"
+     width="1"
+     y="12"
+     x="12"
+     style="fill:none" />
+  <rect
+     id="hotspot:32"
+     height="1"
+     width="1"
+     y="8"
+     x="8"
+     style="fill:none" />
+  <rect
      id="cursor:64-32"
      height="64"
      width="64"
@@ -70,13 +91,6 @@
      width="32"
      y="32"
      x="112"
-     style="fill:none" />
-  <rect
-     id="hotspot"
-     height="1"
-     width="1"
-     y="8"
-     x="8"
      style="fill:none" />
   <g
      style="display:inline;opacity:1"

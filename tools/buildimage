@@ -38,6 +38,7 @@ die "Only BMP, ICO and CUR outputs are supported" unless $ext eq "bmp" or $ext e
 
 my $renderedSVGFileName = "$svgFileName.png";
 my @pngFiles;
+my @hotspot;
 
 # Get the programs from the environment variables
 my $convert = $ENV{"CONVERT"} || "convert";
@@ -77,9 +78,9 @@ sub svg_element_start
     my $width = 0;
     my $height = 0;
 
-    if ($id eq "hotspot")
+    if ($id =~ /hotspot:(\d*)/)
     {
-        push @icotool_args, "--hotspot-x=$attr{x}", "--hotspot-y=$attr{y}";
+        $hotspot[$1] = [ $attr{x}, $attr{y} ];
         return;
     }
 
@@ -146,6 +147,12 @@ sub svg_element_start
         }
     } else {
         return;
+    }
+
+    if (defined $hotspot[$size])
+    {
+        my @coords = @{$hotspot[$size]};
+        push @icotool_args, "--hotspot-x=$coords[0]", "--hotspot-y=$coords[1]";
     }
 
     if ($width >= 128 && $height >= 128)
