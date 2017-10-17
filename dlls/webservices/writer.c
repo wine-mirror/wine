@@ -4472,9 +4472,20 @@ static HRESULT write_set_attributes( struct writer *writer, WS_XML_ATTRIBUTE **a
 
     for (i = 0; i < count; i++)
     {
-        if ((hr = write_add_attribute( writer, attrs[i]->prefix, attrs[i]->localName, attrs[i]->ns,
-                                       attrs[i]->singleQuote )) != S_OK) return hr;
-        if ((hr = write_set_attribute_value( writer, attrs[i]->value )) != S_OK) return hr;
+        const WS_XML_STRING *prefix = attrs[i]->prefix;
+        const WS_XML_STRING *localname = attrs[i]->localName;
+        const WS_XML_STRING *ns = attrs[i]->ns;
+        BOOL single = attrs[i]->singleQuote;
+
+        if (attrs[i]->isXmlNs)
+        {
+            if ((hr = add_namespace_attribute( writer, prefix, ns, single )) != S_OK) return hr;
+        }
+        else
+        {
+            if ((hr = write_add_attribute( writer, prefix, localname, ns, single )) != S_OK) return hr;
+            if ((hr = write_set_attribute_value( writer, attrs[i]->value )) != S_OK) return hr;
+        }
     }
     return S_OK;
 }
