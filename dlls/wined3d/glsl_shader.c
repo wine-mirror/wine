@@ -2125,8 +2125,25 @@ static const char *shader_glsl_shader_output_name(const struct wined3d_gl_info *
     return shader_glsl_use_interface_blocks(gl_info) ? "shader_out.reg" : "ps_link";
 }
 
+static const char *shader_glsl_interpolation_qualifiers(enum wined3d_shader_interpolation_mode mode)
+{
+    switch (mode)
+    {
+        case WINED3DSIM_CONSTANT:
+            return "flat";
+        case WINED3DSIM_LINEAR_NOPERSPECTIVE:
+            return "noperspective";
+        default:
+            FIXME("Unhandled interpolation mode %#x.\n", mode);
+        case WINED3DSIM_NONE:
+        case WINED3DSIM_LINEAR:
+            return "";
+    }
+}
+
 static void shader_glsl_declare_shader_inputs(const struct wined3d_gl_info *gl_info,
-        struct wined3d_string_buffer *buffer, unsigned int element_count, BOOL unroll)
+        struct wined3d_string_buffer *buffer, unsigned int element_count,
+        const enum wined3d_shader_interpolation_mode *interpolation_mode, BOOL unroll)
 {
     unsigned int i;
 
@@ -2136,7 +2153,14 @@ static void shader_glsl_declare_shader_inputs(const struct wined3d_gl_info *gl_i
         {
             shader_addline(buffer, "in shader_in_out {\n");
             for (i = 0; i < element_count; ++i)
-                shader_addline(buffer, "    vec4 reg%u;\n", i);
+            {
+                const char *interpolation_qualifiers = "";
+                if (shader_glsl_get_version(gl_info) >= 440)
+                    interpolation_qualifiers = shader_glsl_interpolation_qualifiers(interpolation_mode[i]);
+                else if (interpolation_mode[i] && interpolation_mode[i] != WINED3DSIM_LINEAR)
+                    FIXME("Unhandled interpolation mode %#x.\n", interpolation_mode[i]);
+                shader_addline(buffer, "%s vec4 reg%u;\n", interpolation_qualifiers, i);
+            }
             shader_addline(buffer, "} shader_in;\n");
         }
         else
@@ -7379,7 +7403,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
         unsigned int in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
 
         if (args->vp_mode == vertexshader && reg_maps->input_registers)
-            shader_glsl_declare_shader_inputs(gl_info, buffer, in_count, version->major >= 4);
+            shader_glsl_declare_shader_inputs(gl_info, buffer, in_count,
+                    shader->u.ps.interpolation_mode, version->major >= 4);
         shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
     }
 
@@ -10780,7 +10805,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_INPUT                        */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT    */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE              */ shader_glsl_nop,
-    /* WINED3DSIH_DCL_INPUT_PS                     */ NULL,
+    /* WINED3DSIH_DCL_INPUT_PS                     */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INPUT_PS_SGV                 */ NULL,
     /* WINED3DSIH_DCL_INPUT_PS_SIV                 */ NULL,
     /* WINED3DSIH_DCL_INPUT_SGV                    */ shader_glsl_nop,

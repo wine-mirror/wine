@@ -549,6 +549,7 @@ enum wined3d_shader_dst_modifier
 
 enum wined3d_shader_interpolation_mode
 {
+    WINED3DSIM_NONE = 0,
     WINED3DSIM_CONSTANT = 1,
     WINED3DSIM_LINEAR = 2,
     WINED3DSIM_LINEAR_CENTROID = 3,
@@ -3908,6 +3909,7 @@ struct wined3d_pixel_shader
 
     BOOL force_early_depth_stencil;
     enum wined3d_shader_register_type depth_output;
+    enum wined3d_shader_interpolation_mode interpolation_mode[MAX_REG_INPUT];
 };
 
 struct wined3d_compute_shader
