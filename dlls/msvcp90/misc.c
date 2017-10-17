@@ -362,6 +362,7 @@ void __thiscall _Container_base12__Swap_all(
 #define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
 #define NANOSEC_PER_MILLISEC 1000000
 #define MILLISEC_PER_SEC 1000
+#define NANOSEC_PER_SEC (NANOSEC_PER_MILLISEC * MILLISEC_PER_SEC)
 
 typedef int MSVCRT_long;
 
@@ -401,16 +402,24 @@ int __cdecl xtime_get(xtime* t, int unknown)
 /* _Xtime_diff_to_millis2 */
 MSVCRT_long __cdecl _Xtime_diff_to_millis2(const xtime *t1, const xtime *t2)
 {
-    __time64_t diff_sec;
-    MSVCRT_long diff_nsec, ret;
+    LONGLONG diff_sec, diff_nsec;
 
     TRACE("(%p, %p)\n", t1, t2);
 
     diff_sec = t1->sec - t2->sec;
     diff_nsec = t1->nsec - t2->nsec;
-    ret = diff_sec * MILLISEC_PER_SEC +
-            (diff_nsec + NANOSEC_PER_MILLISEC - 1) / NANOSEC_PER_MILLISEC;
-    return ret > 0 ? ret : 0;
+
+    diff_sec += diff_nsec / NANOSEC_PER_SEC;
+    diff_nsec %= NANOSEC_PER_SEC;
+    if (diff_nsec < 0) {
+        diff_sec -= 1;
+        diff_nsec += NANOSEC_PER_SEC;
+    }
+
+    if (diff_sec<0 || (diff_sec==0 && diff_nsec<0))
+        return 0;
+    return diff_sec * MILLISEC_PER_SEC +
+        (diff_nsec + NANOSEC_PER_MILLISEC - 1) / NANOSEC_PER_MILLISEC;
 }
 
 /* _Xtime_diff_to_millis */
