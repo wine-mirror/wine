@@ -565,7 +565,7 @@ static void test_cookie_attrs(void)
     DWORD size, state;
     BOOL ret;
 
-    if(!GetProcAddress(GetModuleHandleA("wininet.dll"), "InternetGetSecurityInfoByURLA")) {
+    if(!GetProcAddress(GetModuleHandleA("wininet.dll"), "DeleteWpadCacheForNetworks")) {
         win_skip("Skipping cookie attributes tests. Too old IE.\n");
         return;
     }
