@@ -1823,6 +1823,9 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         {
             EmfPlusClear *record = (EmfPlusClear*)header;
 
+            if (dataSize != sizeof(record->Color))
+                return InvalidParameter;
+
             return GdipGraphicsClear(metafile->playback_graphics, record->Color);
         }
         case EmfPlusRecordTypeFillRects:
