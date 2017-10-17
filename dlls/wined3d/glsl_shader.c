@@ -386,7 +386,9 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
 
 static unsigned int shader_glsl_get_version(const struct wined3d_gl_info *gl_info)
 {
-    if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50))
+    if (gl_info->glsl_version >= MAKEDWORD_VERSION(4, 40))
+        return 440;
+    else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50))
         return 150;
     else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30))
         return 130;
