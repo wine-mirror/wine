@@ -840,7 +840,7 @@ static void shader_glsl_generate_transform_feedback_varyings(const struct wined3
                 continue;
             }
 
-            string_buffer_sprintf(buffer, "shader_in_out.reg[%u]", e->register_idx);
+            string_buffer_sprintf(buffer, "shader_in_out.reg%u", e->register_idx);
             append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
         }
 
@@ -2124,21 +2124,53 @@ static const char *shader_glsl_shader_output_name(const struct wined3d_gl_info *
 }
 
 static void shader_glsl_declare_shader_inputs(const struct wined3d_gl_info *gl_info,
-        struct wined3d_string_buffer *buffer, unsigned int element_count)
+        struct wined3d_string_buffer *buffer, unsigned int element_count, BOOL unroll)
 {
+    unsigned int i;
+
     if (shader_glsl_use_interface_blocks(gl_info))
-        shader_addline(buffer, "in shader_in_out { vec4 reg[%u]; } shader_in;\n", element_count);
+    {
+        if (unroll)
+        {
+            shader_addline(buffer, "in shader_in_out {\n");
+            for (i = 0; i < element_count; ++i)
+                shader_addline(buffer, "    vec4 reg%u;\n", i);
+            shader_addline(buffer, "} shader_in;\n");
+        }
+        else
+        {
+            shader_addline(buffer, "in shader_in_out { vec4 reg[%u]; } shader_in;\n", element_count);
+        }
+    }
     else
+    {
         declare_in_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", element_count);
+    }
 }
 
 static void shader_glsl_declare_shader_outputs(const struct wined3d_gl_info *gl_info,
-        struct wined3d_string_buffer *buffer, unsigned int element_count)
+        struct wined3d_string_buffer *buffer, unsigned int element_count, BOOL rasterizer_setup)
 {
+    unsigned int i;
+
     if (shader_glsl_use_interface_blocks(gl_info))
-        shader_addline(buffer, "out shader_in_out { vec4 reg[%u]; } shader_out;\n", element_count);
+    {
+        if (rasterizer_setup)
+        {
+            shader_addline(buffer, "out shader_in_out {\n");
+            for (i = 0; i < element_count; ++i)
+                shader_addline(buffer, "    vec4 reg%u;\n", i);
+            shader_addline(buffer, "} shader_out;\n");
+        }
+        else
+        {
+            shader_addline(buffer, "out shader_in_out { vec4 reg[%u]; } shader_out;\n", element_count);
+        }
+    }
     else
+    {
         declare_out_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", element_count);
+    }
 }
 
 static const char *get_fragment_output(const struct wined3d_gl_info *gl_info)
@@ -6531,7 +6563,7 @@ static void shader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
         const struct wined3d_shader_signature *input_signature,
         const struct wined3d_shader_reg_maps *reg_maps,
-        const struct ps_compile_args *args, const struct wined3d_gl_info *gl_info)
+        const struct ps_compile_args *args, const struct wined3d_gl_info *gl_info, BOOL unroll)
 {
     unsigned int i;
 
@@ -6578,7 +6610,7 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
             {
                 if (input->sysval_semantic)
                     FIXME("Unhandled sysval semantic %#x.\n", input->sysval_semantic);
-                shader_addline(buffer, "ps_in[%u]%s = %s[%u]%s;\n",
+                shader_addline(buffer, unroll ? "ps_in[%u]%s = %s%u%s;\n" : "ps_in[%u]%s = %s[%u]%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask,
                         shader_glsl_shader_input_name(gl_info),
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask);
@@ -6772,7 +6804,8 @@ static void shader_glsl_setup_vs3_output(struct shader_glsl_priv *priv,
 
 static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
         unsigned int input_count, const struct wined3d_shader_signature *output_signature,
-        const struct wined3d_shader_reg_maps *reg_maps_out, const char *output_variable_name)
+        const struct wined3d_shader_reg_maps *reg_maps_out, const char *output_variable_name,
+        BOOL rasterizer_setup)
 {
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     char reg_mask[6];
@@ -6793,7 +6826,8 @@ static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
 
         shader_glsl_write_mask_to_str(output->mask, reg_mask);
 
-        shader_addline(buffer, "%s.reg[%u]%s = outputs[%u]%s;\n",
+        shader_addline(buffer,
+                rasterizer_setup ? "%s.reg%u%s = outputs[%u]%s;\n" : "%s.reg[%u]%s = outputs[%u]%s;\n",
                 output_variable_name, output->register_idx, reg_mask, output->register_idx, reg_mask);
     }
 }
@@ -6852,7 +6886,7 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
         shader_glsl_setup_vs3_output(priv, gl_info, map, input_signature, reg_maps_in,
                 output_signature, reg_maps_out);
     else
-        shader_glsl_setup_sm4_shader_output(priv, input_count, output_signature, reg_maps_out, "shader_out");
+        shader_glsl_setup_sm4_shader_output(priv, input_count, output_signature, reg_maps_out, "shader_out", TRUE);
 }
 
 /* Context activation is done by the caller. */
@@ -6984,7 +7018,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
     {
         unsigned int in_count = min(vec4_varyings(ps_major, gl_info), ps->limits->packed_input);
 
-        shader_glsl_declare_shader_outputs(gl_info, buffer, in_count);
+        shader_glsl_declare_shader_outputs(gl_info, buffer, in_count, FALSE);
         shader_addline(buffer, "void setup_vs_output(in vec4 outputs[%u])\n{\n", vs->limits->packed_output);
         shader_glsl_setup_sm3_rasterizer_input(priv, gl_info, ps->u.ps.input_reg_map, &ps->input_signature,
                 &ps->reg_maps, 0, &vs->output_signature, &vs->reg_maps, per_vertex_point_size);
@@ -7010,7 +7044,7 @@ static void shader_glsl_generate_sm4_output_setup(struct shader_glsl_priv *priv,
         input_count = min(vec4_varyings(4, gl_info), input_count);
 
     if (input_count)
-        shader_glsl_declare_shader_outputs(gl_info, buffer, input_count);
+        shader_glsl_declare_shader_outputs(gl_info, buffer, input_count, rasterizer_setup);
 
     shader_addline(buffer, "void setup_%s_output(in vec4 outputs[%u])\n{\n",
             prefix, shader->limits->packed_output);
@@ -7020,7 +7054,7 @@ static void shader_glsl_generate_sm4_output_setup(struct shader_glsl_priv *priv,
                 NULL, input_count, &shader->output_signature, &shader->reg_maps, FALSE);
     else
         shader_glsl_setup_sm4_shader_output(priv, input_count, &shader->output_signature,
-                &shader->reg_maps, "shader_out");
+                &shader->reg_maps, "shader_out", rasterizer_setup);
 
     shader_addline(buffer, "}\n");
 }
@@ -7343,7 +7377,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
         unsigned int in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
 
         if (args->vp_mode == vertexshader && reg_maps->input_registers)
-            shader_glsl_declare_shader_inputs(gl_info, buffer, in_count);
+            shader_glsl_declare_shader_inputs(gl_info, buffer, in_count, version->major >= 4);
         shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
     }
 
@@ -7474,7 +7508,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
     /* Pack 3.0 inputs */
     if (reg_maps->shader_version.major >= 3)
-        shader_glsl_input_pack(shader, buffer, &shader->input_signature, reg_maps, args, gl_info);
+        shader_glsl_input_pack(shader, buffer, &shader->input_signature, reg_maps, args, gl_info,
+                reg_maps->shader_version.major >= 4);
 
     /* Base Shader Body */
     if (FAILED(shader_generate_code(shader, buffer, reg_maps, &priv_ctx, NULL, NULL)))
@@ -7703,7 +7738,7 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
         shader_addline(buffer, "void setup_hs_output(in vec4 outputs[%u])\n{\n",
                 shader->limits->packed_output);
         shader_glsl_setup_sm4_shader_output(priv, shader->limits->packed_output, &shader->output_signature,
-                &shader->reg_maps, "shader_out[gl_InvocationID]");
+                &shader->reg_maps, "shader_out[gl_InvocationID]", FALSE);
         shader_addline(buffer, "}\n");
     }
 
