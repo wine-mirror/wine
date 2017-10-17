@@ -396,6 +396,7 @@ struct emfplus_object {
         GpBrush *brush;
         GpPath *path;
         GpImage *image;
+        GpFont *font;
         GpImageAttributes *image_attributes;
         void *object;
     } u;

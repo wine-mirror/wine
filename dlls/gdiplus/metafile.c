@@ -377,6 +377,17 @@ typedef struct EmfPlusFillPath
     } data;
 } EmfPlusFillPath;
 
+typedef struct EmfPlusFont
+{
+    DWORD Version;
+    float EmSize;
+    DWORD SizeUnit;
+    DWORD FontStyleFlags;
+    DWORD Reserved;
+    DWORD Length;
+    WCHAR FamilyName[1];
+} EmfPlusFont;
+
 static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
 {
     struct emfplus_object *object = &metafile->objtable[id];
@@ -393,6 +404,9 @@ static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
         break;
     case ObjectTypeImage:
         GdipDisposeImage(object->u.image);
+        break;
+    case ObjectTypeFont:
+        GdipDeleteFont(object->u.font);
         break;
     case ObjectTypeImageAttributes:
         GdipDisposeImageAttributes(object->u.image_attributes);
@@ -1692,6 +1706,34 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
     case ObjectTypeImage:
         status = metafile_deserialize_image(record_data, data_size, (GpImage **)&object);
         break;
+    case ObjectTypeFont:
+    {
+        EmfPlusFont *data = (EmfPlusFont *)record_data;
+        GpFontFamily *family;
+        WCHAR *familyname;
+
+        if (data_size <= FIELD_OFFSET(EmfPlusFont, FamilyName))
+            return InvalidParameter;
+        data_size -= FIELD_OFFSET(EmfPlusFont, FamilyName);
+
+        if (data_size < data->Length * sizeof(WCHAR))
+            return InvalidParameter;
+
+        if (!(familyname = GdipAlloc((data->Length + 1) * sizeof(*familyname))))
+            return OutOfMemory;
+
+        memcpy(familyname, data->FamilyName, data->Length * sizeof(*familyname));
+        familyname[data->Length] = 0;
+
+        status = GdipCreateFontFamilyFromName(familyname, NULL, &family);
+        GdipFree(familyname);
+        if (status != Ok)
+            return InvalidParameter;
+
+        status = GdipCreateFont(family, data->EmSize, data->FontStyleFlags, data->SizeUnit, (GpFont **)&object);
+        GdipDeleteFontFamily(family);
+        break;
+    }
     case ObjectTypeImageAttributes:
     {
         EmfPlusImageAttributes *data = (EmfPlusImageAttributes *)record_data;
