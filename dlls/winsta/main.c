@@ -68,6 +68,13 @@ BOOLEAN WINAPI WinStationRegisterConsoleNotification( HANDLE server, HWND hwnd, 
     return FALSE;
 }
 
+BOOLEAN WINAPI WinStationUnRegisterConsoleNotification( HANDLE server, HWND hwnd )
+{
+    FIXME( "%p %p\n", server, hwnd );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 BOOLEAN WINAPI WinStationGetAllProcesses( HANDLE server, ULONG level,
                                           ULONG *process_count, PTS_ALL_PROCESSES_INFO *info )
 {
