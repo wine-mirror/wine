@@ -943,10 +943,11 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory5 *iface, DWRIT
     struct dwritefactory *This = impl_from_IDWriteFactory5(iface);
     DWRITE_FONT_FILE_TYPE file_type;
     DWRITE_FONT_FACE_TYPE face_type;
+    IDWriteFontFileStream *stream;
     struct fontface_desc desc;
     struct list *fontfaces;
     BOOL is_supported;
-    UINT32 count;
+    UINT32 face_count;
     HRESULT hr;
 
     TRACE("(%p)->(%d %u %p %u 0x%x %p)\n", This, req_facetype, files_number, font_files, index,
@@ -963,32 +964,44 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory5 *iface, DWRIT
     if (!is_simulation_valid(simulations))
         return E_INVALIDARG;
 
+    if (FAILED(hr = get_filestream_from_file(*font_files, &stream)))
+        return hr;
+
     /* check actual file/face type */
     is_supported = FALSE;
     face_type = DWRITE_FONT_FACE_TYPE_UNKNOWN;
-    hr = IDWriteFontFile_Analyze(*font_files, &is_supported, &file_type, &face_type, &count);
+    hr = opentype_analyze_font(stream, &is_supported, &file_type, &face_type, &face_count);
     if (FAILED(hr))
-        return hr;
+        goto failed;
 
-    if (!is_supported)
-        return E_FAIL;
+    if (!is_supported) {
+        hr = E_FAIL;
+        goto failed;
+    }
 
-    if (face_type != req_facetype)
-        return DWRITE_E_FILEFORMAT;
+    if (face_type != req_facetype) {
+        hr = DWRITE_E_FILEFORMAT;
+        goto failed;
+    }
 
     hr = factory_get_cached_fontface(iface, font_files, index, simulations, &fontfaces,
             &IID_IDWriteFontFace, (void **)fontface);
     if (hr != S_FALSE)
-        return hr;
+        goto failed;
 
     desc.factory = iface;
     desc.face_type = req_facetype;
     desc.files = font_files;
+    desc.stream = stream;
     desc.files_number = files_number;
     desc.index = index;
     desc.simulations = simulations;
     desc.font_data = NULL;
-    return create_fontface(&desc, fontfaces, (IDWriteFontFace4 **)fontface);
+    hr = create_fontface(&desc, fontfaces, (IDWriteFontFace4 **)fontface);
+
+failed:
+    IDWriteFontFileStream_Release(stream);
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory_CreateRenderingParams(IDWriteFactory5 *iface, IDWriteRenderingParams **params)

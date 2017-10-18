@@ -151,6 +151,7 @@ struct fontface_desc
     IDWriteFactory5 *factory;
     DWRITE_FONT_FACE_TYPE face_type;
     IDWriteFontFile * const *files;
+    IDWriteFontFileStream *stream;
     UINT32 files_number;
     UINT32 index;
     DWRITE_FONT_SIMULATIONS simulations;
@@ -228,7 +229,7 @@ struct file_stream_desc {
     UINT32 face_index;
 };
 
-extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,UINT32*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,BOOL*) DECLSPEC_HIDDEN;
+extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,BOOL*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,UINT32*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_table(struct file_stream_desc*,UINT32,const void**,void**,UINT32*,BOOL*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_cmap_get_unicode_ranges(void*,UINT32,DWRITE_UNICODE_RANGE*,UINT32*) DECLSPEC_HIDDEN;
 extern void opentype_get_font_properties(struct file_stream_desc*,struct dwrite_font_props*) DECLSPEC_HIDDEN;

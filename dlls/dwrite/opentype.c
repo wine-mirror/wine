@@ -1029,7 +1029,8 @@ static HRESULT opentype_type1_analyzer(IDWriteFontFileStream *stream, UINT32 *fo
     return *file_type != DWRITE_FONT_FILE_TYPE_UNKNOWN ? S_OK : S_FALSE;
 }
 
-HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
+HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, BOOL *supported, DWRITE_FONT_FILE_TYPE *file_type,
+        DWRITE_FONT_FACE_TYPE *face_type, UINT32 *face_count)
 {
     static dwrite_fontfile_analyzer fontfile_analyzers[] = {
         opentype_ttf_analyzer,
@@ -1047,10 +1048,10 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count,
 
     *file_type = DWRITE_FONT_FILE_TYPE_UNKNOWN;
     *face_type = DWRITE_FONT_FACE_TYPE_UNKNOWN;
-    *font_count = 0;
+    *face_count = 0;
 
     while (*analyzer) {
-        hr = (*analyzer)(stream, font_count, file_type, face_type);
+        hr = (*analyzer)(stream, face_count, file_type, face_type);
         if (FAILED(hr))
             return hr;
 
