@@ -79,108 +79,117 @@ static const WCHAR selectionchangeW[] = {'s','e','l','e','c','t','i','o','n','c'
 static const WCHAR submitW[] = {'s','u','b','m','i','t',0};
 static const WCHAR unloadW[] = {'u','n','l','o','a','d',0};
 
-static const WCHAR HTMLEventsW[] = {'H','T','M','L','E','v','e','n','t','s',0};
+static const WCHAR EventW[] = {'E','v','e','n','t',0};
+static const WCHAR UIEventW[] = {'U','I','E','v','e','n','t',0};
 static const WCHAR KeyboardEventW[] = {'K','e','y','b','o','a','r','d','E','v','e','n','t',0};
 static const WCHAR MouseEventW[] = {'M','o','u','s','e','E','v','e','n','t',0};
 
-enum {
-    EVENTT_NONE,
-    EVENTT_HTML,
-    EVENTT_KEY,
-    EVENTT_MOUSE
-};
+typedef enum {
+    EVENT_TYPE_EVENT,
+    EVENT_TYPE_UIEVENT,
+    EVENT_TYPE_KEYBOARD,
+    EVENT_TYPE_MOUSE,
+    EVENT_TYPE_FOCUS,
+    EVENT_TYPE_DRAG,
+    EVENT_TYPE_MESSAGE,
+    EVENT_TYPE_CLIPBOARD
+} event_type_t;
 
 static const WCHAR *event_types[] = {
-    NULL,
-    HTMLEventsW,
+    EventW,
+    UIEventW,
     KeyboardEventW,
-    MouseEventW
+    MouseEventW,
+    EventW, /* FIXME */
+    EventW, /* FIXME */
+    EventW, /* FIXME */
+    EventW  /* FIXME */
 };
 
 typedef struct {
     const WCHAR *name;
-    DWORD type;
+    event_type_t type;
     DISPID dispid;
     DWORD flags;
 } event_info_t;
 
 #define EVENT_DEFAULTLISTENER    0x0001
-#define EVENT_BUBBLE             0x0002
+#define EVENT_BUBBLES            0x0002
 #define EVENT_BIND_TO_BODY       0x0008
 #define EVENT_CANCELABLE         0x0010
 #define EVENT_HASDEFAULTHANDLERS 0x0020
 #define EVENT_FIXME              0x0040
 
 static const event_info_t event_info[] = {
-    {abortW,             EVENTT_NONE,   DISPID_EVMETH_ONABORT,
+    {abortW,             EVENT_TYPE_EVENT,     DISPID_EVMETH_ONABORT,
         EVENT_BIND_TO_BODY},
-    {beforeactivateW,    EVENTT_NONE,   DISPID_EVMETH_ONBEFOREACTIVATE,
-        EVENT_FIXME},
-    {beforeunloadW,      EVENTT_NONE,   DISPID_EVMETH_ONBEFOREUNLOAD,
+    {beforeactivateW,    EVENT_TYPE_EVENT,     DISPID_EVMETH_ONBEFOREACTIVATE,
+        EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {beforeunloadW,      EVENT_TYPE_EVENT,     DISPID_EVMETH_ONBEFOREUNLOAD,
+        EVENT_DEFAULTLISTENER | EVENT_CANCELABLE },
+    {blurW,              EVENT_TYPE_FOCUS,     DISPID_EVMETH_ONBLUR,
         EVENT_DEFAULTLISTENER},
-    {blurW,              EVENTT_HTML,   DISPID_EVMETH_ONBLUR,
-        EVENT_DEFAULTLISTENER},
-    {changeW,            EVENTT_HTML,   DISPID_EVMETH_ONCHANGE,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {clickW,             EVENTT_MOUSE,  DISPID_EVMETH_ONCLICK,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE|EVENT_HASDEFAULTHANDLERS},
-    {contextmenuW,       EVENTT_MOUSE,  DISPID_EVMETH_ONCONTEXTMENU,
-        EVENT_BUBBLE|EVENT_CANCELABLE},
-    {dataavailableW,     EVENTT_NONE,   DISPID_EVMETH_ONDATAAVAILABLE,
-        EVENT_BUBBLE},
-    {dblclickW,          EVENTT_MOUSE,  DISPID_EVMETH_ONDBLCLICK,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE},
-    {dragW,              EVENTT_MOUSE,  DISPID_EVMETH_ONDRAG,
-        EVENT_FIXME|EVENT_CANCELABLE},
-    {dragstartW,         EVENTT_MOUSE,  DISPID_EVMETH_ONDRAGSTART,
-        EVENT_FIXME|EVENT_CANCELABLE},
-    {errorW,             EVENTT_NONE,   DISPID_EVMETH_ONERROR,
+    {changeW,            EVENT_TYPE_EVENT,     DISPID_EVMETH_ONCHANGE,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES},
+    {clickW,             EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONCLICK,
+        EVENT_DEFAULTLISTENER | EVENT_HASDEFAULTHANDLERS | EVENT_BUBBLES | EVENT_CANCELABLE },
+    {contextmenuW,       EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONCONTEXTMENU,
+        EVENT_BUBBLES | EVENT_CANCELABLE},
+    {dataavailableW,     EVENT_TYPE_EVENT,     DISPID_EVMETH_ONDATAAVAILABLE,
+        EVENT_FIXME | EVENT_BUBBLES},
+    {dblclickW,          EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONDBLCLICK,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {dragW,              EVENT_TYPE_DRAG,      DISPID_EVMETH_ONDRAG,
+        EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {dragstartW,         EVENT_TYPE_DRAG,      DISPID_EVMETH_ONDRAGSTART,
+        EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {errorW,             EVENT_TYPE_EVENT,     DISPID_EVMETH_ONERROR,
         EVENT_BIND_TO_BODY},
-    {focusW,             EVENTT_HTML,   DISPID_EVMETH_ONFOCUS,
+    {focusW,             EVENT_TYPE_FOCUS,     DISPID_EVMETH_ONFOCUS,
         EVENT_DEFAULTLISTENER},
-    {focusinW,           EVENTT_HTML,   DISPID_EVMETH_ONFOCUSIN,
-        EVENT_BUBBLE},
-    {focusoutW,          EVENTT_HTML,   DISPID_EVMETH_ONFOCUSOUT,
-        EVENT_BUBBLE},
-    {helpW,              EVENTT_KEY,    DISPID_EVMETH_ONHELP,
-        EVENT_BUBBLE|EVENT_CANCELABLE},
-    {keydownW,           EVENTT_KEY,    DISPID_EVMETH_ONKEYDOWN,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_HASDEFAULTHANDLERS},
-    {keypressW,          EVENTT_KEY,    DISPID_EVMETH_ONKEYPRESS,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {keyupW,             EVENTT_KEY,    DISPID_EVMETH_ONKEYUP,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {loadW,              EVENTT_HTML,   DISPID_EVMETH_ONLOAD,
+    {focusinW,           EVENT_TYPE_FOCUS,     DISPID_EVMETH_ONFOCUSIN,
+        EVENT_BUBBLES},
+    {focusoutW,          EVENT_TYPE_FOCUS,     DISPID_EVMETH_ONFOCUSOUT,
+        EVENT_BUBBLES},
+    {helpW,              EVENT_TYPE_EVENT,     DISPID_EVMETH_ONHELP,
+        EVENT_BUBBLES | EVENT_CANCELABLE},
+    {keydownW,           EVENT_TYPE_KEYBOARD,  DISPID_EVMETH_ONKEYDOWN,
+        EVENT_DEFAULTLISTENER | EVENT_HASDEFAULTHANDLERS | EVENT_BUBBLES | EVENT_CANCELABLE },
+    {keypressW,          EVENT_TYPE_KEYBOARD,  DISPID_EVMETH_ONKEYPRESS,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {keyupW,             EVENT_TYPE_KEYBOARD,  DISPID_EVMETH_ONKEYUP,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {loadW,              EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONLOAD,
         EVENT_BIND_TO_BODY},
-    {messageW,           EVENTT_NONE,   DISPID_EVMETH_ONMESSAGE,
+    {messageW,           EVENT_TYPE_MESSAGE,   DISPID_EVMETH_ONMESSAGE,
         0},
-    {mousedownW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEDOWN,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE},
-    {mousemoveW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEMOVE,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseoutW,          EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEOUT,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseoverW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEOVER,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseupW,           EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEUP,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mousewheelW,        EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEWHEEL,
+    {mousedownW,         EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEDOWN,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {mousemoveW,         EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEMOVE,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {mouseoutW,          EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEOUT,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {mouseoverW,         EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEOVER,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {mouseupW,           EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEUP,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {mousewheelW,        EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEWHEEL,
         EVENT_FIXME},
-    {pasteW,             EVENTT_NONE,   DISPID_EVMETH_ONPASTE,
-        EVENT_CANCELABLE},
-    {readystatechangeW,  EVENTT_NONE,   DISPID_EVMETH_ONREADYSTATECHANGE,
+    {pasteW,             EVENT_TYPE_CLIPBOARD, DISPID_EVMETH_ONPASTE,
+        EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {readystatechangeW,  EVENT_TYPE_EVENT,     DISPID_EVMETH_ONREADYSTATECHANGE,
         0},
-    {resizeW,            EVENTT_NONE,   DISPID_EVMETH_ONRESIZE,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {scrollW,            EVENTT_HTML,   DISPID_EVMETH_ONSCROLL,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {selectionchangeW,   EVENTT_NONE,   DISPID_EVMETH_ONSELECTIONCHANGE,
+    {resizeW,            EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONRESIZE,
+        EVENT_DEFAULTLISTENER},
+    {scrollW,            EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONSCROLL,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES /* FIXME: not for elements */},
+    {selectionchangeW,   EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSELECTIONCHANGE,
         EVENT_FIXME},
-    {selectstartW,       EVENTT_MOUSE,  DISPID_EVMETH_ONSELECTSTART,
-        EVENT_CANCELABLE},
-    {submitW,            EVENTT_HTML,   DISPID_EVMETH_ONSUBMIT,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE|EVENT_HASDEFAULTHANDLERS},
-    {unloadW,            EVENTT_HTML,   DISPID_EVMETH_ONUNLOAD,
+    {selectstartW,       EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSELECTSTART,
+        EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {submitW,            EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSUBMIT,
+        EVENT_DEFAULTLISTENER | EVENT_HASDEFAULTHANDLERS | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {unloadW,            EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONUNLOAD,
         EVENT_FIXME}
 };
 
@@ -1094,7 +1103,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
                 node_release(node);
             }
 
-            if(!(event_info[eid].flags & EVENT_BUBBLE) || (event_obj && event_obj->cancel_bubble))
+            if(!(event_info[eid].flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
                 break;
 
             nsIDOMNode_GetParentNode(nsnode, &parent);
@@ -1106,13 +1115,13 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
             nsIDOMNode_GetNodeType(nsnode, &node_type);
         }while(node_type == ELEMENT_NODE);
 
-        if(!(event_info[eid].flags & EVENT_BUBBLE) || (event_obj && event_obj->cancel_bubble))
+        if(!(event_info[eid].flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
             break;
         /* fallthrough */
 
     case DOCUMENT_NODE:
         call_event_handlers(event_obj, &doc->node.event_target, eid);
-        if(!(event_info[eid].flags & EVENT_BUBBLE) || (event_obj && event_obj->cancel_bubble))
+        if(!(event_info[eid].flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
             break;
         /* fallthrough */
 
