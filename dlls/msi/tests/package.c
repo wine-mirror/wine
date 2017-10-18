@@ -3654,6 +3654,21 @@ static void test_states(void)
 
     MsiCloseHandle(hpkg);
 
+    /* test source only install */
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "one");
+    ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "two");
+    ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
+
+    r = MsiInstallProductA(msifile, "ADDSOURCE=one");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "one");
+    ok(state == INSTALLSTATE_SOURCE, "state = %d\n", state);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "two");
+    ok(state == INSTALLSTATE_ABSENT, "state = %d\n", state);
+
     /* uninstall the product */
     r = MsiInstallProductA(msifile4, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);

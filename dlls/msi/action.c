@@ -4315,7 +4315,7 @@ static BOOL msi_check_publish(MSIPACKAGE *package)
     LIST_FOR_EACH_ENTRY(feature, &package->features, MSIFEATURE, entry)
     {
         feature->Action = msi_get_feature_action( package, feature );
-        if (feature->Action == INSTALLSTATE_LOCAL)
+        if (feature->Action == INSTALLSTATE_LOCAL || feature->Action == INSTALLSTATE_SOURCE)
             return TRUE;
     }
 
@@ -5358,7 +5358,7 @@ static BOOL is_full_uninstall( MSIPACKAGE *package )
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if (feature->Action == INSTALLSTATE_LOCAL) ret = FALSE;
+        if (feature->Action == INSTALLSTATE_LOCAL || feature->Action == INSTALLSTATE_SOURCE) ret = FALSE;
     }
 
     features = msi_split_string( remove, ',' );
