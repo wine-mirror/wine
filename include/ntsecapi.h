@@ -340,6 +340,18 @@ typedef enum _POLICY_NOTIFICATION_INFORMATION_CLASS
     PolicyNotifyMachineAccountPasswordInformation
 } POLICY_NOTIFICATION_INFORMATION_CLASS, *PPOLICY_NOTIFICATION_INFORMATION_CLASS;
 
+#ifdef UNICODE
+#if defined(_MSC_VER)
+#define MICROSOFT_KERBEROS_NAME_W L"Kerberos"
+#elif defined(__GNUC__)
+#define MICROSOFT_KERBEROS_NAME_W (const WCHAR []){ 'K','e','r','b','e','r','o','s',0 }
+#else /* _MSC_VER/__GNUC__ */
+static const WCHAR MICROSOFT_KERBEROS_NAME_W[] = { 'K','e','r','b','e','r','o','s',0 };
+#endif
+#else /* UNICODE */
+#define MICROSOFT_KERBEROS_NAME_A "Kerberos"
+#endif
+
 #define RtlGenRandom                    SystemFunction036
 #define RtlEncryptMemory                SystemFunction040
 #define RtlDecryptMemory                SystemFunction041

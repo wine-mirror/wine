@@ -1,0 +1,5 @@
+MODULE    = kerberos.dll
+EXTRAINCL = $(KRB5_CFLAGS)
+
+C_SRCS = \
+	krb5_ap.c

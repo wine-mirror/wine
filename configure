@@ -648,6 +648,8 @@ PNG_LIBS
 PNG_CFLAGS
 JPEG_LIBS
 JPEG_CFLAGS
+KRB5_LIBS
+KRB5_CFLAGS
 FONTCONFIG_LIBS
 FONTCONFIG_CFLAGS
 CUPS_LIBS
@@ -838,6 +840,7 @@ with_gsm
 with_gstreamer
 with_hal
 with_jpeg
+with_krb5
 with_ldap
 with_mpg123
 with_netapi
@@ -1276,6 +1279,7 @@ enable_itss
 enable_joy_cpl
 enable_jscript
 enable_jsproxy
+enable_kerberos
 enable_kernel32
 enable_kernelbase
 enable_ksuser
@@ -1722,6 +1726,8 @@ CUPS_CFLAGS
 CUPS_LIBS
 FONTCONFIG_CFLAGS
 FONTCONFIG_LIBS
+KRB5_CFLAGS
+KRB5_LIBS
 JPEG_CFLAGS
 JPEG_LIBS
 PNG_CFLAGS
@@ -2391,6 +2397,7 @@ Optional Packages:
   --without-gstreamer     do not use GStreamer (codecs support)
   --without-hal           do not use HAL (dynamic device support)
   --without-jpeg          do not use JPEG
+  --without-krb5          do not use krb5 (Kerberos)
   --without-ldap          do not use LDAP
   --without-mpg123        do not use the mpg123 library
   --without-netapi        do not use the Samba NetAPI library
@@ -2485,6 +2492,8 @@ Some influential environment variables:
               C compiler flags for fontconfig, overriding pkg-config
   FONTCONFIG_LIBS
               Linker flags for fontconfig, overriding pkg-config
+  KRB5_CFLAGS C compiler flags for krb5, overriding pkg-config
+  KRB5_LIBS   Linker flags for krb5, overriding pkg-config
   JPEG_CFLAGS C compiler flags for libjpeg, overriding pkg-config
   JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
   PNG_CFLAGS  C compiler flags for libpng, overriding pkg-config
@@ -3597,6 +3606,12 @@ fi
 # Check whether --with-jpeg was given.
 if test "${with_jpeg+set}" = set; then :
   withval=$with_jpeg;
+fi
+
+
+# Check whether --with-krb5 was given.
+if test "${with_krb5+set}" = set; then :
+  withval=$with_krb5;
 fi
 
 
@@ -13730,6 +13745,110 @@ esac
 
 fi
 
+if test "x$with_krb5" != "xno"
+then
+    if ${KRB5_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  KRB5_CFLAGS=`$PKG_CONFIG --cflags krb5 2>/dev/null`
+fi
+fi
+test "$cross_compiling" = yes || KRB5_CFLAGS=${KRB5_CFLAGS:-`krb5-config --cflags`}
+if ${KRB5_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  KRB5_LIBS=`$PKG_CONFIG --libs krb5 2>/dev/null`
+fi
+fi
+test "$cross_compiling" = yes || KRB5_LIBS=${KRB5_LIBS:-`krb5-config --libs`}
+
+$as_echo "$as_me:${as_lineno-$LINENO}: krb5 cflags: $KRB5_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: krb5 libs: $KRB5_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $KRB5_CFLAGS"
+for ac_header in krb5/krb5.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "krb5/krb5.h" "ac_cv_header_krb5_krb5_h" "$ac_includes_default"
+if test "x$ac_cv_header_krb5_krb5_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_KRB5_KRB5_H 1
+_ACEOF
+
+fi
+
+done
+
+         if test "$ac_cv_header_krb5_krb5_h" = "yes"
+         then
+             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lkrb5" >&5
+$as_echo_n "checking for -lkrb5... " >&6; }
+if ${ac_cv_lib_soname_krb5+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lkrb5 $KRB5_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char krb5_init_context ();
+int
+main ()
+{
+return krb5_init_context ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_krb5=`$ac_cv_path_LDD conftest.exe | grep "krb5" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_krb5=`$OTOOL -L conftest$ac_exeext | grep "libkrb5\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libkrb5\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_krb5=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libkrb5\\.$LIBEXT" | sed -e "s/^.*\\[\\(libkrb5\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_krb5:+false} :; then :
+  ac_cv_lib_soname_krb5=`$LDD conftest$ac_exeext | grep "libkrb5\\.$LIBEXT" | sed -e "s/^.*\(libkrb5\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_krb5:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+       KRB5_CFLAGS=""
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_krb5" >&5
+$as_echo "$ac_cv_lib_soname_krb5" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBKRB5 "$ac_cv_lib_soname_krb5"
+_ACEOF
+
+
+fi
+         else
+             KRB5_CFLAGS=""
+         fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$KRB5_CFLAGS" || KRB5_CFLAGS=`echo " $KRB5_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$KRB5_LIBS" || KRB5_LIBS=`echo " $KRB5_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
+fi
+if test "x$ac_cv_lib_soname_krb5" = "x"; then :
+  case "x$with_krb5" in
+  x)   as_fn_append wine_notices "|libkrb5 ${notice_platform}development files not found, Kerberos won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libkrb5 ${notice_platform}development files not found, Kerberos won't be supported.
+This is an error since --with-krb5 was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
 if test "x$with_jpeg" != "xno"
 then
     if ${JPEG_CFLAGS:+false} :; then :
@@ -17904,6 +18023,8 @@ CUPS_CFLAGS = $CUPS_CFLAGS
 CUPS_LIBS = $CUPS_LIBS
 FONTCONFIG_CFLAGS = $FONTCONFIG_CFLAGS
 FONTCONFIG_LIBS = $FONTCONFIG_LIBS
+KRB5_CFLAGS = $KRB5_CFLAGS
+KRB5_LIBS = $KRB5_LIBS
 JPEG_CFLAGS = $JPEG_CFLAGS
 JPEG_LIBS = $JPEG_LIBS
 PNG_CFLAGS = $PNG_CFLAGS
@@ -18455,6 +18576,7 @@ wine_fn_config_dll jscript enable_jscript clean
 wine_fn_config_test dlls/jscript/tests jscript_test
 wine_fn_config_dll jsproxy enable_jsproxy implib
 wine_fn_config_test dlls/jsproxy/tests jsproxy_test
+wine_fn_config_dll kerberos enable_kerberos
 wine_fn_config_dll kernel32 enable_kernel32 clean,implib
 wine_fn_config_test dlls/kernel32/tests kernel32_test
 wine_fn_config_dll kernelbase enable_kernelbase
