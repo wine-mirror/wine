@@ -72,7 +72,7 @@ void bind_target_event(HTMLDocumentNode*,EventTarget*,const WCHAR*,IDispatch*) D
 HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode*,eventid_t) DECLSPEC_HIDDEN;
 
 typedef struct HTMLEventObj HTMLEventObj;
-void call_event_handlers(HTMLDocumentNode*,HTMLEventObj*,EventTarget*,ConnectionPointContainer*,eventid_t,IDispatch*);
+void call_event_handlers(HTMLEventObj*,EventTarget*,eventid_t,IDispatch*);
 
 void init_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void release_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
@@ -83,6 +83,7 @@ void detach_nsevent(HTMLDocumentNode*,const WCHAR*) DECLSPEC_HIDDEN;
 typedef struct {
     dispex_static_data_vtbl_t dispex_vtbl;
     void (*bind_event)(DispatchEx*,eventid_t);
+    ConnectionPointContainer *(*get_cp_container)(DispatchEx*);
 } event_target_vtbl_t;
 
 static inline EventTarget *get_node_event_prop_target(HTMLDOMNode *node, eventid_t eid)

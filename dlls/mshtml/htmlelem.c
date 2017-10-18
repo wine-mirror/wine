@@ -5347,6 +5347,13 @@ static void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
     }
 }
 
+static ConnectionPointContainer *HTMLElement_get_cp_container(DispatchEx *dispex)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+    IConnectionPointContainer_AddRef(&This->cp_container.IConnectionPointContainer_iface);
+    return &This->cp_container;
+}
+
 void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const DISPID elem2_ie11_blacklist[] = {DISPID_IHTMLELEMENT2_DOSCROLL, DISPID_UNKNOWN};
@@ -5377,7 +5384,8 @@ static event_target_vtbl_t HTMLElement_event_target_vtbl = {
         NULL,
         HTMLElement_populate_props
     },
-    HTMLElement_bind_event
+    HTMLElement_bind_event,
+    HTMLElement_get_cp_container
 };
 
 static dispex_static_data_t HTMLElement_dispex = {
@@ -5410,7 +5418,6 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
         This->nselem = nselem;
     }
 
-    This->node.cp_container = &This->cp_container;
     ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)&This->IHTMLElement_iface, This->node.vtbl->cpc_entries);
 }
 

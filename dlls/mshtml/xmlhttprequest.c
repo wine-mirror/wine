@@ -190,7 +190,7 @@ static nsresult NSAPI XMLHttpReqEventListener_HandleEvent(nsIDOMEventListener *i
     if(!This->xhr)
         return NS_OK;
 
-    call_event_handlers(NULL, NULL, &This->xhr->event_target, NULL, EVENTID_READYSTATECHANGE,
+    call_event_handlers(NULL, &This->xhr->event_target, EVENTID_READYSTATECHANGE,
             (IDispatch*)&This->xhr->IHTMLXMLHttpRequest_iface);
     return NS_OK;
 }

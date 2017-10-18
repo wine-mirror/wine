@@ -736,7 +736,6 @@ struct HTMLDOMNode {
 
     nsIDOMNode *nsnode;
     HTMLDocumentNode *doc;
-    ConnectionPointContainer *cp_container;
 };
 
 static inline void node_addref(HTMLDOMNode *node)
