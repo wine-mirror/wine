@@ -937,7 +937,7 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
     return FALSE;
 }
 
-void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, eventid_t eid, IDispatch *this_obj)
+void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, eventid_t eid)
 {
     handler_vector_t *handler_vector = get_handler_vector(event_target, eid, FALSE);
     const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
@@ -955,7 +955,7 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, eve
             FIXME("Event argument not supported\n");
 
         V_VT(&arg) = VT_DISPATCH;
-        V_DISPATCH(&arg) = this_obj;
+        V_DISPATCH(&arg) = (IDispatch*)&event_target->dispex.IDispatchEx_iface;
         V_VT(&v) = VT_EMPTY;
 
         TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
@@ -1055,7 +1055,7 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, eve
 }
 
 static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *event_obj,
-        HTMLDOMNode *target, IDispatch *script_this)
+        HTMLDOMNode *target)
 {
     IHTMLEventObj *prev_event;
     nsIDOMNode *parent, *nsnode = NULL;
@@ -1090,8 +1090,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
         do {
             hres = get_node(doc, nsnode, FALSE, &node);
             if(SUCCEEDED(hres) && node) {
-                call_event_handlers(event_obj, &node->event_target, eid,
-                        script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
+                call_event_handlers(event_obj, &node->event_target, eid);
                 node_release(node);
             }
 
@@ -1112,15 +1111,13 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
         /* fallthrough */
 
     case DOCUMENT_NODE:
-        call_event_handlers(event_obj, &doc->node.event_target, eid,
-                script_this ? script_this : (IDispatch*)&doc->basedoc.IHTMLDocument2_iface);
+        call_event_handlers(event_obj, &doc->node.event_target, eid);
         if(!(event_info[eid].flags & EVENT_BUBBLE) || (event_obj && event_obj->cancel_bubble))
             break;
         /* fallthrough */
 
     default: /* window object */
-        call_event_handlers(event_obj, &doc->window->event_target, eid,
-                script_this ? script_this : (IDispatch*)&doc->window->base.IHTMLWindow2_iface);
+        call_event_handlers(event_obj, &doc->window->event_target, eid);
     }
 
     if(nsnode)
@@ -1167,8 +1164,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
     htmldoc_release(&doc->basedoc);
 }
 
-void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, HTMLDOMNode *target, nsIDOMEvent *nsevent,
-        IDispatch *script_this)
+void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, HTMLDOMNode *target, nsIDOMEvent *nsevent)
 {
     HTMLEventObj *event_obj = NULL;
     HRESULT hres;
@@ -1185,7 +1181,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, HTMLDOMNod
         }
     }
 
-    fire_event_obj(doc, eid, event_obj, target, script_this);
+    fire_event_obj(doc, eid, event_obj, target);
 
     if(event_obj)
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
@@ -1230,13 +1226,13 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
     if(event_obj) {
         hres = set_event_info(event_obj, node, eid, NULL);
         if(SUCCEEDED(hres))
-            fire_event_obj(node->doc, eid, event_obj, node, NULL);
+            fire_event_obj(node->doc, eid, event_obj, node);
 
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
         if(FAILED(hres))
             return hres;
     }else {
-        fire_event(node->doc, eid, TRUE, node, NULL, NULL);
+        fire_event(node->doc, eid, TRUE, node, NULL);
     }
 
     *cancelled = VARIANT_TRUE; /* FIXME */

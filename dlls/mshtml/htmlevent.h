@@ -58,7 +58,7 @@ typedef enum {
 eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;
 void check_event_attr(HTMLDocumentNode*,nsIDOMHTMLElement*) DECLSPEC_HIDDEN;
 void release_event_target(EventTarget*) DECLSPEC_HIDDEN;
-void fire_event(HTMLDocumentNode*,eventid_t,BOOL,HTMLDOMNode*,nsIDOMEvent*,IDispatch*) DECLSPEC_HIDDEN;
+void fire_event(HTMLDocumentNode*,eventid_t,BOOL,HTMLDOMNode*,nsIDOMEvent*) DECLSPEC_HIDDEN;
 HRESULT set_event_handler(EventTarget*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT get_event_handler(EventTarget*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT attach_event(EventTarget*,BSTR,IDispatch*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
@@ -72,7 +72,7 @@ void bind_target_event(HTMLDocumentNode*,EventTarget*,const WCHAR*,IDispatch*) D
 HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode*,eventid_t) DECLSPEC_HIDDEN;
 
 typedef struct HTMLEventObj HTMLEventObj;
-void call_event_handlers(HTMLEventObj*,EventTarget*,eventid_t,IDispatch*);
+void call_event_handlers(HTMLEventObj*,EventTarget*,eventid_t);
 
 void init_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void release_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
