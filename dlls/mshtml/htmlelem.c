@@ -5332,7 +5332,7 @@ static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
     return S_OK;
 }
 
-static void HTMLElement_bind_event(DispatchEx *dispex, int eid)
+static void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
 
@@ -5343,7 +5343,7 @@ static void HTMLElement_bind_event(DispatchEx *dispex, int eid)
         add_nsevent_listener(This->node.doc, This->node.nsnode, loadW);
         return;
     default:
-        dispex_get_vtbl(&This->node.doc->node.event_target.dispex)->bind_event(&This->node.doc->node.event_target.dispex, eid);
+        ensure_doc_nsevent_handler(This->node.doc, eid);
     }
 }
 
@@ -5369,17 +5369,19 @@ static const tid_t HTMLElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_vtbl_t HTMLElement_dispex_vtbl = {
-    NULL,
-    HTMLElement_get_dispid,
-    HTMLElement_invoke,
-    NULL,
-    HTMLElement_populate_props,
+static event_target_vtbl_t HTMLElement_event_target_vtbl = {
+    {
+        NULL,
+        HTMLElement_get_dispid,
+        HTMLElement_invoke,
+        NULL,
+        HTMLElement_populate_props
+    },
     HTMLElement_bind_event
 };
 
 static dispex_static_data_t HTMLElement_dispex = {
-    &HTMLElement_dispex_vtbl,
+    &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLUnknownElement_tid,
     HTMLElement_iface_tids,
     HTMLElement_init_dispex_info
@@ -5398,7 +5400,7 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
     This->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
 
     if(dispex_data && !dispex_data->vtbl)
-        dispex_data->vtbl = &HTMLElement_dispex_vtbl;
+        dispex_data->vtbl = &HTMLElement_event_target_vtbl.dispex_vtbl;
 
     if(nselem) {
         HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem, dispex_data ? dispex_data : &HTMLElement_dispex);

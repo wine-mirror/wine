@@ -843,7 +843,7 @@ HRESULT create_event_obj(IHTMLEventObj **ret)
 
 static handler_vector_t *get_handler_vector(EventTarget *event_target, eventid_t eid, BOOL alloc)
 {
-    const dispex_static_data_vtbl_t *vtbl;
+    const event_target_vtbl_t *vtbl;
     handler_vector_t *handler_vector;
     struct wine_rb_entry *entry;
 

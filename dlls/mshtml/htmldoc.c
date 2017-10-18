@@ -5024,18 +5024,20 @@ static compat_mode_t HTMLDocumentNode_get_compat_mode(DispatchEx *dispex)
     return This->document_mode;
 }
 
-static void HTMLDocumentNode_bind_event(DispatchEx *dispex, int eid)
+static void HTMLDocumentNode_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
     ensure_doc_nsevent_handler(This, eid);
 }
 
-static const dispex_static_data_vtbl_t HTMLDocumentNode_dispex_vtbl = {
-    NULL,
-    NULL,
-    HTMLDocumentNode_invoke,
-    HTMLDocumentNode_get_compat_mode,
-    NULL,
+static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
+    {
+        NULL,
+        NULL,
+        HTMLDocumentNode_invoke,
+        HTMLDocumentNode_get_compat_mode,
+        NULL
+    },
     HTMLDocumentNode_bind_event
 };
 
@@ -5076,7 +5078,7 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
 }
 
 static dispex_static_data_t HTMLDocumentNode_dispex = {
-    &HTMLDocumentNode_dispex_vtbl,
+    &HTMLDocumentNode_event_target_vtbl.dispex_vtbl,
     DispHTMLDocument_tid,
     HTMLDocumentNode_iface_tids,
     HTMLDocumentNode_init_dispex_info

@@ -1767,7 +1767,7 @@ void dispex_unlink(DispatchEx *This)
     }
 }
 
-const dispex_static_data_vtbl_t *dispex_get_vtbl(DispatchEx *dispex)
+const void *dispex_get_vtbl(DispatchEx *dispex)
 {
     return dispex->info->desc->vtbl;
 }

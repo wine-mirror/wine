@@ -270,8 +270,6 @@ typedef struct {
     HRESULT (*invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     compat_mode_t (*get_compat_mode)(DispatchEx*);
     HRESULT (*populate_props)(DispatchEx*);
-    /* We abuse this vtbl for EventTarget functions to avoid separated vtbl. */
-    void (*bind_event)(DispatchEx*,int);
 } dispex_static_data_vtbl_t;
 
 typedef struct {
@@ -330,7 +328,7 @@ void dispex_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*) DECLSPEC_H
 void dispex_unlink(DispatchEx*) DECLSPEC_HIDDEN;
 void release_typelib(void) DECLSPEC_HIDDEN;
 HRESULT get_class_typeinfo(const CLSID*,ITypeInfo**) DECLSPEC_HIDDEN;
-const dispex_static_data_vtbl_t *dispex_get_vtbl(DispatchEx*) DECLSPEC_HIDDEN;
+const void *dispex_get_vtbl(DispatchEx*) DECLSPEC_HIDDEN;
 void dispex_info_add_interface(dispex_data_t*,tid_t,const DISPID*) DECLSPEC_HIDDEN;
 compat_mode_t dispex_compat_mode(DispatchEx*) DECLSPEC_HIDDEN;
 

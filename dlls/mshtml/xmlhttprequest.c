@@ -733,7 +733,7 @@ static inline HTMLXMLHttpRequest *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, event_target.dispex);
 }
 
-static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, int eid)
+static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
     nsIDOMEventTarget *nstarget;
@@ -768,12 +768,8 @@ static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, int eid)
         ERR("AddEventListener failed: %08x\n", nsres);
 }
 
-static dispex_static_data_vtbl_t HTMLXMLHttpRequest_dispex_vtbl = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+static event_target_vtbl_t HTMLXMLHttpRequest_event_target_vtbl = {
+    {NULL},
     HTMLXMLHttpRequest_bind_event
 };
 
@@ -782,7 +778,7 @@ static const tid_t HTMLXMLHttpRequest_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLXMLHttpRequest_dispex = {
-    &HTMLXMLHttpRequest_dispex_vtbl,
+    &HTMLXMLHttpRequest_event_target_vtbl.dispex_vtbl,
     DispHTMLXMLHttpRequest_tid,
     HTMLXMLHttpRequest_iface_tids
 };

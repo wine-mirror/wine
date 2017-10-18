@@ -2995,10 +2995,10 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
     return hres;
 }
 
-static void HTMLWindow_bind_event(DispatchEx *dispex, int eid)
+static void HTMLWindow_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
-    dispex_get_vtbl(&This->doc->node.event_target.dispex)->bind_event(&This->doc->node.event_target.dispex, eid);
+    ensure_doc_nsevent_handler(This->doc, eid);
 }
 
 static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
@@ -3006,12 +3006,14 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
     dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
 }
 
-static const dispex_static_data_vtbl_t HTMLWindow_dispex_vtbl = {
-    NULL,
-    NULL,
-    HTMLWindow_invoke,
-    NULL,
-    NULL,
+static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
+    {
+        NULL,
+        NULL,
+        HTMLWindow_invoke,
+        NULL,
+        NULL
+    },
     HTMLWindow_bind_event
 };
 
@@ -3024,7 +3026,7 @@ static const tid_t HTMLWindow_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLWindow_dispex = {
-    &HTMLWindow_dispex_vtbl,
+    &HTMLWindow_event_target_vtbl.dispex_vtbl,
     DispHTMLWindow2_tid,
     HTMLWindow_iface_tids,
     HTMLWindow_init_dispex_info

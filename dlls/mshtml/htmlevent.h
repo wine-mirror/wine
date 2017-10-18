@@ -79,6 +79,12 @@ void release_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void add_nsevent_listener(HTMLDocumentNode*,nsIDOMNode*,LPCWSTR) DECLSPEC_HIDDEN;
 void detach_nsevent(HTMLDocumentNode*,const WCHAR*) DECLSPEC_HIDDEN;
 
+/* We extend dispex vtbl for EventTarget functions to avoid separated vtbl. */
+typedef struct {
+    dispex_static_data_vtbl_t dispex_vtbl;
+    void (*bind_event)(DispatchEx*,eventid_t);
+} event_target_vtbl_t;
+
 static inline EventTarget *get_node_event_prop_target(HTMLDOMNode *node, eventid_t eid)
 {
     return node->vtbl->get_event_prop_target ? node->vtbl->get_event_prop_target(node, eid) : &node->event_target;
