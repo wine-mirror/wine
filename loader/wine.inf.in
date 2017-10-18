@@ -79,7 +79,7 @@ AddReg=\
 
 [DefaultInstall.ntamd64]
 RegisterDlls=RegisterDllsSection
-WineFakeDlls=FakeDlls
+WineFakeDlls=FakeDllsWin64,FakeDlls
 WinePreInstall=Wow64
 UpdateInis=SystemIni
 CopyFiles=@l_intl.nls
@@ -2528,6 +2528,11 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dosx.exe
 11,,dsound.vxd
 11,,winhlp32.exe
+
+; 64bit-only fake dlls
+[FakeDllsWin64]
+10,twain_64,sane.ds
+10,twain_64,gphoto2.ds
 
 ; Wow64-only fake dlls
 [FakeDllsWow64]
