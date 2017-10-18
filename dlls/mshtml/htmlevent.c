@@ -220,7 +220,7 @@ struct HTMLEventObj {
 
     LONG ref;
 
-    HTMLDOMNode *target;
+    EventTarget *target;
     const event_info_t *type;
     nsIDOMEvent *nsevent;
     VARIANT return_value;
@@ -274,7 +274,7 @@ static ULONG WINAPI HTMLEventObj_Release(IHTMLEventObj *iface)
 
     if(!ref) {
         if(This->target)
-            IHTMLDOMNode_Release(&This->target->IHTMLDOMNode_iface);
+            IDispatchEx_Release(&This->target->dispex.IDispatchEx_iface);
         if(This->nsevent)
             nsIDOMEvent_Release(This->nsevent);
         release_dispex(&This->dispex);
@@ -323,7 +323,7 @@ static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLEle
 
     *p = NULL;
     if(This->target)
-        IHTMLDOMNode_QueryInterface(&This->target->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
+        IDispatchEx_QueryInterface(&This->target->dispex.IDispatchEx_iface, &IID_IHTMLElement, (void**)p);
     return S_OK;
 }
 
@@ -803,7 +803,7 @@ static HTMLEventObj *create_event(void)
     return ret;
 }
 
-static HRESULT set_event_info(HTMLEventObj *event, HTMLDOMNode *target, eventid_t eid, nsIDOMEvent *nsevent)
+static HRESULT set_event_info(HTMLEventObj *event, EventTarget *target, eventid_t eid, HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
 {
     event->type = event_info+eid;
     event->nsevent = nsevent;
@@ -815,7 +815,7 @@ static HRESULT set_event_info(HTMLEventObj *event, HTMLDOMNode *target, eventid_
         nsresult nsres;
 
         nsAString_InitDepend(&type_str, event_types[event_info[eid].type]);
-        nsres = nsIDOMHTMLDocument_CreateEvent(target->doc->nsdoc, &type_str, &event->nsevent);
+        nsres = nsIDOMHTMLDocument_CreateEvent(doc->nsdoc, &type_str, &event->nsevent);
         nsAString_Finish(&type_str);
         if(NS_FAILED(nsres)) {
             ERR("Could not create event: %08x\n", nsres);
@@ -825,7 +825,7 @@ static HRESULT set_event_info(HTMLEventObj *event, HTMLDOMNode *target, eventid_
 
     event->target = target;
     if(target)
-        IHTMLDOMNode_AddRef(&target->IHTMLDOMNode_iface);
+        IDispatchEx_AddRef(&target->dispex.IDispatchEx_iface);
     return S_OK;
 }
 
@@ -1175,7 +1175,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, HTMLDOMNod
         if(!event_obj)
             return;
 
-        hres = set_event_info(event_obj, target, eid, nsevent);
+        hres = set_event_info(event_obj, &target->event_target, eid, doc, nsevent);
         if(FAILED(hres)) {
             IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
             return;
@@ -1225,7 +1225,7 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
     }
 
     if(event_obj) {
-        hres = set_event_info(event_obj, node, eid, NULL);
+        hres = set_event_info(event_obj, &node->event_target, eid, node->doc, NULL);
         if(SUCCEEDED(hres))
             fire_event_obj(node->doc, eid, event_obj, node);
 
