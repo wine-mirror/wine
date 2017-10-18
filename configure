@@ -1074,6 +1074,7 @@ enable_api_ms_win_service_management_l2_1_0
 enable_api_ms_win_service_private_l1_1_1
 enable_api_ms_win_service_winsvc_l1_1_0
 enable_api_ms_win_service_winsvc_l1_2_0
+enable_api_ms_win_shcore_scaling_l1_1_1
 enable_api_ms_win_shell_shellcom_l1_1_0
 enable_api_ms_win_shell_shellfolders_l1_1_0
 enable_apphelp
@@ -18283,6 +18284,7 @@ wine_fn_config_dll api-ms-win-service-management-l2-1-0 enable_api_ms_win_servic
 wine_fn_config_dll api-ms-win-service-private-l1-1-1 enable_api_ms_win_service_private_l1_1_1
 wine_fn_config_dll api-ms-win-service-winsvc-l1-1-0 enable_api_ms_win_service_winsvc_l1_1_0
 wine_fn_config_dll api-ms-win-service-winsvc-l1-2-0 enable_api_ms_win_service_winsvc_l1_2_0
+wine_fn_config_dll api-ms-win-shcore-scaling-l1-1-1 enable_api_ms_win_shcore_scaling_l1_1_1
 wine_fn_config_dll api-ms-win-shell-shellcom-l1-1-0 enable_api_ms_win_shell_shellcom_l1_1_0
 wine_fn_config_dll api-ms-win-shell-shellfolders-l1-1-0 enable_api_ms_win_shell_shellfolders_l1_1_0
 wine_fn_config_dll apphelp enable_apphelp
