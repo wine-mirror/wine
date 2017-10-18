@@ -232,6 +232,12 @@ Timezone database
 M:	Sebastian Lackner <sebastian@fds-team.de>
 F:	loader/wine.inf.in
 
+TWAIN
+P:	Vincent Povirk <vincent@codeweavers.com>
+F:	dlls/twain_32/
+F:	dlls/sane.ds/
+F:	dlls/gphoto2.ds/
+
 Uniscribe
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/usp10/
