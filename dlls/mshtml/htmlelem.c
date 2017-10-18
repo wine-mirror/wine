@@ -5347,6 +5347,15 @@ static void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
     }
 }
 
+static HRESULT HTMLElement_handle_event_default(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *nsevent, BOOL *prevent_default)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+
+    if(!This->node.vtbl->handle_event)
+        return S_OK;
+    return This->node.vtbl->handle_event(&This->node, eid, nsevent, prevent_default);
+}
+
 static ConnectionPointContainer *HTMLElement_get_cp_container(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
@@ -5385,6 +5394,7 @@ static event_target_vtbl_t HTMLElement_event_target_vtbl = {
         HTMLElement_populate_props
     },
     HTMLElement_bind_event,
+    HTMLElement_handle_event_default,
     HTMLElement_get_cp_container
 };
 

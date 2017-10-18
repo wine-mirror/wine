@@ -5048,6 +5048,7 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
         NULL
     },
     HTMLDocumentNode_bind_event,
+    NULL,
     HTMLDocumentNode_get_cp_container
 };
 

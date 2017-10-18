@@ -83,6 +83,7 @@ void detach_nsevent(HTMLDocumentNode*,const WCHAR*) DECLSPEC_HIDDEN;
 typedef struct {
     dispex_static_data_vtbl_t dispex_vtbl;
     void (*bind_event)(DispatchEx*,eventid_t);
+    HRESULT (*handle_event_default)(DispatchEx*,eventid_t,nsIDOMEvent*,BOOL*);
     ConnectionPointContainer *(*get_cp_container)(DispatchEx*);
 } event_target_vtbl_t;
 

@@ -1137,8 +1137,9 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
                 break;
 
             if(node) {
-                if(node->vtbl->handle_event)
-                    hres = node->vtbl->handle_event(node, eid, event_obj ? event_obj->nsevent : NULL, &prevent_default);
+                const event_target_vtbl_t *vtbl = dispex_get_vtbl(&node->event_target.dispex);
+                if(vtbl && vtbl->handle_event_default)
+                    hres = vtbl->handle_event_default(&node->event_target.dispex, eid, event_obj ? event_obj->nsevent : NULL, &prevent_default);
                 node_release(node);
                 if(FAILED(hres) || prevent_default || (event_obj && event_obj->cancel_bubble))
                     break;
