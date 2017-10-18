@@ -392,8 +392,9 @@ static DWORD WINAPI call_RenderFile_multithread(LPVOID lParam)
     CloseHandle(handle);
 
     hr = IFilterGraph2_RenderFile(filter_graph, mp3file, NULL);
-    todo_wine ok(hr == VFW_E_CANNOT_RENDER || /* xp or older */
-                 hr == VFW_E_NO_TRANSPORT, /* win7 or newer */
+    todo_wine ok(hr == VFW_E_CANNOT_RENDER || /* xp or older + DirectX 9 */
+                 hr == VFW_E_NO_TRANSPORT || /* win7 or newer */
+                 broken(hr == CLASS_E_CLASSNOTAVAILABLE), /* xp or older + DirectX 8 or older */
                  "Expected 0x%08x or 0x%08x, returned 0x%08x\n", VFW_E_CANNOT_RENDER, VFW_E_NO_TRANSPORT, hr);
 
     DeleteFileW(mp3file);
