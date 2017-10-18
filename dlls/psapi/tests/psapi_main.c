@@ -225,7 +225,7 @@ static void test_GetPerformanceInfo(void)
         ok(check_with_margin(info.CommitPeak,           sys_performance_info->PeakCommitment,       32),
            "expected approximately %ld but got %d\n", info.CommitPeak, sys_performance_info->PeakCommitment);
 
-        ok(check_with_margin(info.PhysicalAvailable,    sys_performance_info->AvailablePages,       128),
+        ok(check_with_margin(info.PhysicalAvailable,    sys_performance_info->AvailablePages,       512),
            "expected approximately %ld but got %d\n", info.PhysicalAvailable, sys_performance_info->AvailablePages);
 
         /* TODO: info.SystemCache not checked yet - to which field(s) does this value correspond to? */
@@ -237,7 +237,7 @@ static void test_GetPerformanceInfo(void)
         ok(check_with_margin(info.KernelPaged,          sys_performance_info->PagedPoolUsage,       64),
            "expected approximately %ld but got %d\n", info.KernelPaged, sys_performance_info->PagedPoolUsage);
 
-        ok(check_with_margin(info.KernelNonpaged,       sys_performance_info->NonPagedPoolUsage,    8),
+        ok(check_with_margin(info.KernelNonpaged,       sys_performance_info->NonPagedPoolUsage,    16),
            "expected approximately %ld but got %d\n", info.KernelNonpaged, sys_performance_info->NonPagedPoolUsage);
 
         /* compare with values from SYSTEM_BASIC_INFORMATION */
