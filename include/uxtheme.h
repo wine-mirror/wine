@@ -209,6 +209,7 @@ HTHEME WINAPI GetWindowTheme(HWND);
 HRESULT WINAPI HitTestThemeBackground(HTHEME,HDC,int,int,DWORD,const RECT*,
                                       HRGN,POINT,WORD*);
 BOOL WINAPI IsAppThemed(void);
+BOOL WINAPI IsCompositionActive(void);
 BOOL WINAPI IsThemeActive(void);
 BOOL WINAPI IsThemeBackgroundPartiallyTransparent(HTHEME,int,int);
 BOOL WINAPI IsThemeDialogTextureEnabled(HWND);
