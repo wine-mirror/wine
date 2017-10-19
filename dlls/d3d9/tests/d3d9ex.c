@@ -2843,11 +2843,13 @@ static void test_wndproc(void)
         change_ret = ChangeDisplaySettingsW(&devmode, CDS_FULLSCREEN);
         ok(change_ret == DISP_CHANGE_SUCCESSFUL, "Failed to change display mode, ret %#x, i=%u.\n", change_ret, i);
 
-        /* Native needs a present call to pick up the mode change. */
+        /* Native needs a present call to pick up the mode change. Windows 10 15.07 never picks up the mode change
+         * in these calls and returns S_OK. This is a regression from Windows 8 and has been fixed in later Win10
+         * builds. */
         hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
-        todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x, i=%u.\n", hr, i);
+        todo_wine ok(hr == S_PRESENT_MODE_CHANGED || broken(hr == S_OK), "Got unexpected hr %#x, i=%u.\n", hr, i);
         hr = IDirect3DDevice9Ex_CheckDeviceState(device, device_window);
-        todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x, i=%u.\n", hr, i);
+        todo_wine ok(hr == S_PRESENT_MODE_CHANGED || broken(hr == S_OK), "Got unexpected hr %#x, i=%u.\n", hr, i);
 
         expect_messages = tests[i].focus_loss_messages;
         /* SetForegroundWindow is a poor replacement for the user pressing alt-tab or
