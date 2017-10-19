@@ -839,6 +839,8 @@ static void shader_glsl_generate_transform_feedback_varyings(const struct wined3
             if (e->component_idx || e->component_count != 4)
             {
                 FIXME("Unsupported component range %u-%u.\n", e->component_idx, e->component_count);
+                append_transform_feedback_skip_components(varyings, &count,
+                        &strings, &length, buffer, e->component_count);
                 continue;
             }
 
