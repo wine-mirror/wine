@@ -62,6 +62,7 @@ typedef struct {
     LONG ref;
 
     nsIDOMEvent *nsevent;
+    eventid_t event_id;
 } DOMEvent;
 
 eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;

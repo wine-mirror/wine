@@ -1058,19 +1058,44 @@ static dispex_static_data_t DOMEvent_dispex = {
     DOMEvent_iface_tids
 };
 
-static HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, DOMEvent **ret_event)
+static DOMEvent *alloc_event(nsIDOMEvent *nsevent)
 {
     DOMEvent *event;
 
     event = heap_alloc_zero(sizeof(*event));
     if(!event)
-        return E_OUTOFMEMORY;
+        return NULL;
 
     init_dispex(&event->dispex, (IUnknown*)&event->IDOMEvent_iface, &DOMEvent_dispex);
     event->IDOMEvent_iface.lpVtbl = &DOMEventVtbl;
     event->ref = 1;
-
     nsIDOMEvent_AddRef(event->nsevent = nsevent);
+    event->event_id = EVENTID_LAST;
+    return event;
+}
+
+static HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, DOMEvent **ret_event)
+{
+    DOMEvent *event;
+    nsAString nsstr;
+    nsresult nsres;
+
+    event = alloc_event(nsevent);
+    if(!event)
+        return E_OUTOFMEMORY;
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMEvent_GetType(event->nsevent, &nsstr);
+    if(NS_SUCCEEDED(nsres)) {
+        const WCHAR *type;
+        nsAString_GetData(&nsstr, &type);
+        event->event_id = str_to_eid(type);
+        if(event->event_id == EVENTID_LAST)
+            FIXME("unknown event type %s\n", debugstr_w(type));
+    }else {
+        ERR("GetType failed: %08x\n", nsres);
+    }
+    nsAString_Finish(&nsstr);
 
     *ret_event = event;
     return S_OK;
@@ -1082,7 +1107,6 @@ HRESULT create_document_event_str(HTMLDocumentNode *doc, const WCHAR *type, IDOM
     DOMEvent *event;
     nsAString nsstr;
     nsresult nsres;
-    HRESULT hres;
 
     nsAString_InitDepend(&nsstr, type);
     nsres = nsIDOMHTMLDocument_CreateEvent(doc->nsdoc, &nsstr, &nsevent);
@@ -1092,10 +1116,10 @@ HRESULT create_document_event_str(HTMLDocumentNode *doc, const WCHAR *type, IDOM
         return E_FAIL;
     }
 
-    hres = create_event_from_nsevent(nsevent, &event);
+    event = alloc_event(nsevent);
     nsIDOMEvent_Release(nsevent);
-    if(FAILED(hres))
-        return hres;
+    if(!event)
+        return E_OUTOFMEMORY;
 
     *ret_event = &event->IDOMEvent_iface;
     return S_OK;
@@ -1104,6 +1128,7 @@ HRESULT create_document_event_str(HTMLDocumentNode *doc, const WCHAR *type, IDOM
 static HRESULT create_document_event(HTMLDocumentNode *doc, eventid_t event_id, DOMEvent **ret_event)
 {
     nsIDOMEvent *nsevent;
+    DOMEvent *event;
     nsAString nsstr;
     nsresult nsres;
 
@@ -1115,7 +1140,13 @@ static HRESULT create_document_event(HTMLDocumentNode *doc, eventid_t event_id, 
         return E_FAIL;
     }
 
-    return create_event_from_nsevent(nsevent, ret_event);
+    event = alloc_event(nsevent);
+    if(!event)
+        return E_OUTOFMEMORY;
+
+    event->event_id = event_id;
+    *ret_event = event;
+    return S_OK;
 }
 
 static handler_vector_t *get_handler_vector(EventTarget *event_target, eventid_t eid, BOOL alloc)
