@@ -812,7 +812,7 @@ static HTMLEventObj *create_event(void)
     return ret;
 }
 
-static HRESULT set_event_info(HTMLEventObj *event, EventTarget *target, eventid_t eid, HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
+static HRESULT set_event_info(HTMLEventObj *event, eventid_t eid, HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
 {
     event->type = event_info+eid;
     event->nsevent = nsevent;
@@ -832,9 +832,6 @@ static HRESULT set_event_info(HTMLEventObj *event, EventTarget *target, eventid_
         }
     }
 
-    event->target = target;
-    if(target)
-        IDispatchEx_AddRef(&target->dispex.IDispatchEx_iface);
     return S_OK;
 }
 
@@ -1109,6 +1106,11 @@ static void fire_event_obj(EventTarget *event_target, eventid_t eid, HTMLEventOb
     if(target_vtbl && target_vtbl->set_current_event)
         prev_event = target_vtbl->set_current_event(&event_target->dispex, event_obj ? &event_obj->IHTMLEventObj_iface : NULL);
 
+    if(event_obj) {
+        event_obj->target = event_target;
+        IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
+    }
+
     for(i = 0; i < chain_cnt; i++) {
         call_event_handlers(event_obj, target_chain[i], eid);
         if(!(event_info[eid].flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
@@ -1156,7 +1158,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, EventTarge
         if(!event_obj)
             return;
 
-        hres = set_event_info(event_obj, target, eid, doc, nsevent);
+        hres = set_event_info(event_obj, eid, doc, nsevent);
         if(FAILED(hres)) {
             IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
             return;
@@ -1206,7 +1208,7 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
     }
 
     if(event_obj) {
-        hres = set_event_info(event_obj, &node->event_target, eid, node->doc, NULL);
+        hres = set_event_info(event_obj, eid, node->doc, NULL);
         if(SUCCEEDED(hres))
             fire_event_obj(&node->event_target, eid, event_obj);
 

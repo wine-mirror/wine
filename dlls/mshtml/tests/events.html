@@ -176,6 +176,21 @@ function test_body_events() {
     ok(onclick_called, "onclick handler not invoked");
 }
 
+function test_event_target() {
+    var div = document.createElement("div");
+    document.body.appendChild(div);
+
+    var last_event_arg;
+    div.attachEvent("onclick", function(event_arg) {
+        ok(event_arg.srcElement === div, "srcElement != div");
+        last_event_arg = event_arg;
+    });
+
+    div.click();
+    with(todo_wine)
+    ok(last_event_arg.srcElement === null, "srcElement != null");
+}
+
 window.onload = function() {
     try {
         ok(inlscr_complete_called, "onreadystatechange not fired");
@@ -198,6 +213,7 @@ window.onload = function() {
         test_insert_script();
         test_string_event_handler();
         test_body_events();
+        test_event_target();
     }catch(e) {
         ok(false, "Got an exception: " + e.message);
     }
