@@ -199,6 +199,30 @@ enum LineStyle
     LineStyleCustom
 };
 
+typedef struct EmfPlusDashedLineData
+{
+    DWORD DashedLineDataSize;
+    BYTE data[1];
+} EmfPlusDashedLineData;
+
+typedef struct EmfPlusCompoundLineData
+{
+    DWORD CompoundLineDataSize;
+    BYTE data[1];
+} EmfPlusCompoundLineData;
+
+typedef struct EmfPlusCustomStartCapData
+{
+    DWORD CustomStartCapSize;
+    BYTE data[1];
+} EmfPlusCustomStartCapData;
+
+typedef struct EmfPlusCustomEndCapData
+{
+    DWORD CustomEndCapSize;
+    BYTE data[1];
+} EmfPlusCustomEndCapData;
+
 typedef struct EmfPlusPenData
 {
     DWORD PenDataFlags;
@@ -398,6 +422,9 @@ static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
         break;
     case ObjectTypeBrush:
         GdipDeleteBrush(object->u.brush);
+        break;
+    case ObjectTypePen:
+        GdipDeletePen(object->u.pen);
         break;
     case ObjectTypePath:
         GdipDeletePath(object->u.path);
@@ -1685,6 +1712,93 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
     return status;
 }
 
+static GpStatus metafile_get_pen_brush_data_offset(EmfPlusPen *data, UINT data_size, DWORD *ret)
+{
+    EmfPlusPenData *pendata = (EmfPlusPenData *)data->data;
+    DWORD offset = FIELD_OFFSET(EmfPlusPen, data);
+
+    if (data_size <= offset)
+        return InvalidParameter;
+
+    offset += FIELD_OFFSET(EmfPlusPenData, OptionalData);
+    if (data_size <= offset)
+        return InvalidParameter;
+
+    if (pendata->PenDataFlags & PenDataTransform)
+        offset += sizeof(EmfPlusTransformMatrix);
+
+    if (pendata->PenDataFlags & PenDataStartCap)
+        offset += sizeof(DWORD);
+
+    if (pendata->PenDataFlags & PenDataEndCap)
+        offset += sizeof(DWORD);
+
+    if (pendata->PenDataFlags & PenDataJoin)
+        offset += sizeof(DWORD);
+
+    if (pendata->PenDataFlags & PenDataMiterLimit)
+        offset += sizeof(REAL);
+
+    if (pendata->PenDataFlags & PenDataLineStyle)
+        offset += sizeof(DWORD);
+
+    if (pendata->PenDataFlags & PenDataDashedLineCap)
+        offset += sizeof(DWORD);
+
+    if (pendata->PenDataFlags & PenDataDashedLineOffset)
+        offset += sizeof(REAL);
+
+    if (pendata->PenDataFlags & PenDataDashedLine)
+    {
+        EmfPlusDashedLineData *dashedline = (EmfPlusDashedLineData *)((BYTE *)data + offset);
+
+        offset += FIELD_OFFSET(EmfPlusDashedLineData, data);
+        if (data_size <= offset)
+            return InvalidParameter;
+
+        offset += dashedline->DashedLineDataSize * sizeof(float);
+    }
+
+    if (pendata->PenDataFlags & PenDataNonCenter)
+        offset += sizeof(DWORD);
+
+    if (pendata->PenDataFlags & PenDataCompoundLine)
+    {
+        EmfPlusCompoundLineData *compoundline = (EmfPlusCompoundLineData *)((BYTE *)data + offset);
+
+        offset += FIELD_OFFSET(EmfPlusCompoundLineData, data);
+        if (data_size <= offset)
+            return InvalidParameter;
+
+        offset += compoundline->CompoundLineDataSize * sizeof(float);
+    }
+
+    if (pendata->PenDataFlags & PenDataCustomStartCap)
+    {
+        EmfPlusCustomStartCapData *startcap = (EmfPlusCustomStartCapData *)((BYTE *)data + offset);
+
+        offset += FIELD_OFFSET(EmfPlusCustomStartCapData, data);
+        if (data_size <= offset)
+            return InvalidParameter;
+
+        offset += startcap->CustomStartCapSize;
+    }
+
+    if (pendata->PenDataFlags & PenDataCustomEndCap)
+    {
+        EmfPlusCustomEndCapData *endcap = (EmfPlusCustomEndCapData *)((BYTE *)data + offset);
+
+        offset += FIELD_OFFSET(EmfPlusCustomEndCapData, data);
+        if (data_size <= offset)
+            return InvalidParameter;
+
+        offset += endcap->CustomEndCapSize;
+    }
+
+    *ret = offset;
+    return Ok;
+}
+
 static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT data_size, const BYTE *record_data)
 {
     BYTE type = (flags >> 8) & 0xff;
@@ -1700,6 +1814,124 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
     case ObjectTypeBrush:
         status = metafile_deserialize_brush(record_data, data_size, (GpBrush **)&object);
         break;
+    case ObjectTypePen:
+    {
+        EmfPlusPen *data = (EmfPlusPen *)record_data;
+        EmfPlusPenData *pendata = (EmfPlusPenData *)data->data;
+        GpBrush *brush;
+        DWORD offset;
+        GpPen *pen;
+
+        status = metafile_get_pen_brush_data_offset(data, data_size, &offset);
+        if (status != Ok)
+            return status;
+
+        status = metafile_deserialize_brush(record_data + offset, data_size - offset, &brush);
+        if (status != Ok)
+            return status;
+
+        status = GdipCreatePen2(brush, pendata->PenWidth, pendata->PenUnit, &pen);
+        GdipDeleteBrush(brush);
+        if (status != Ok)
+            return status;
+
+        offset = FIELD_OFFSET(EmfPlusPenData, OptionalData);
+
+        if (pendata->PenDataFlags & PenDataTransform)
+        {
+            FIXME("PenDataTransform is not supported.\n");
+            offset += sizeof(EmfPlusTransformMatrix);
+        }
+
+        if (pendata->PenDataFlags & PenDataStartCap)
+        {
+            if ((status = GdipSetPenStartCap(pen, *(DWORD *)((BYTE *)pendata + offset))) != Ok)
+                goto penfailed;
+            offset += sizeof(DWORD);
+        }
+
+        if (pendata->PenDataFlags & PenDataEndCap)
+        {
+            if ((status = GdipSetPenEndCap(pen, *(DWORD *)((BYTE *)pendata + offset))) != Ok)
+                goto penfailed;
+            offset += sizeof(DWORD);
+        }
+
+        if (pendata->PenDataFlags & PenDataJoin)
+        {
+            if ((status = GdipSetPenLineJoin(pen, *(DWORD *)((BYTE *)pendata + offset))) != Ok)
+                goto penfailed;
+            offset += sizeof(DWORD);
+        }
+
+        if (pendata->PenDataFlags & PenDataMiterLimit)
+        {
+            if ((status = GdipSetPenMiterLimit(pen, *(REAL *)((BYTE *)pendata + offset)) != Ok))
+                goto penfailed;
+            offset += sizeof(REAL);
+        }
+
+        if (pendata->PenDataFlags & PenDataLineStyle)
+        {
+            if ((status = GdipSetPenDashStyle(pen, *(DWORD *)((BYTE *)pendata + offset)) != Ok))
+                goto penfailed;
+            offset += sizeof(DWORD);
+        }
+
+        if (pendata->PenDataFlags & PenDataDashedLineCap)
+        {
+            FIXME("PenDataDashedLineCap is not supported.\n");
+            offset += sizeof(DWORD);
+        }
+
+        if (pendata->PenDataFlags & PenDataDashedLineOffset)
+        {
+            if ((status = GdipSetPenDashOffset(pen, *(REAL *)((BYTE *)pendata + offset))) != Ok)
+                goto penfailed;
+            offset += sizeof(REAL);
+        }
+
+        if (pendata->PenDataFlags & PenDataDashedLine)
+        {
+            EmfPlusDashedLineData *dashedline = (EmfPlusDashedLineData *)((BYTE *)pendata + offset);
+            FIXME("PenDataDashedLine is not supported.\n");
+            offset += FIELD_OFFSET(EmfPlusDashedLineData, data) + dashedline->DashedLineDataSize * sizeof(float);
+        }
+
+        if (pendata->PenDataFlags & PenDataNonCenter)
+        {
+            FIXME("PenDataNonCenter is not supported.\n");
+            offset += sizeof(DWORD);
+        }
+
+        if (pendata->PenDataFlags & PenDataCompoundLine)
+        {
+            EmfPlusCompoundLineData *compoundline = (EmfPlusCompoundLineData *)((BYTE *)pendata + offset);
+            FIXME("PenDataCompundLine is not supported.\n");
+            offset += FIELD_OFFSET(EmfPlusCompoundLineData, data) + compoundline->CompoundLineDataSize * sizeof(float);
+        }
+
+        if (pendata->PenDataFlags & PenDataCustomStartCap)
+        {
+            EmfPlusCustomStartCapData *startcap = (EmfPlusCustomStartCapData *)((BYTE *)pendata + offset);
+            FIXME("PenDataCustomStartCap is not supported.\n");
+            offset += FIELD_OFFSET(EmfPlusCustomStartCapData, data) + startcap->CustomStartCapSize;
+        }
+
+        if (pendata->PenDataFlags & PenDataCustomEndCap)
+        {
+            EmfPlusCustomEndCapData *endcap = (EmfPlusCustomEndCapData *)((BYTE *)pendata + offset);
+            FIXME("PenDataCustomEndCap is not supported.\n");
+            offset += FIELD_OFFSET(EmfPlusCustomEndCapData, data) + endcap->CustomEndCapSize;
+        }
+
+        object = pen;
+        break;
+
+    penfailed:
+        GdipDeletePen(pen);
+        return status;
+    }
     case ObjectTypePath:
         status = metafile_deserialize_path(record_data, data_size, (GpPath **)&object);
         break;

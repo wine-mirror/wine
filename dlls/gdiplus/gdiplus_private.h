@@ -394,6 +394,7 @@ struct emfplus_object {
     EmfPlusObjectType type;
     union {
         GpBrush *brush;
+        GpPen *pen;
         GpPath *path;
         GpImage *image;
         GpFont *font;
