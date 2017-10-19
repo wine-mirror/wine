@@ -2533,12 +2533,21 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 static void test_create_event(IHTMLDocument2 *doc)
 {
     IDocumentEvent *doc_event;
+    IDOMEvent *event;
+    BSTR str;
     HRESULT hres;
 
     trace("createEvent tests...\n");
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IDocumentEvent, (void**)&doc_event);
     ok(hres == S_OK, "Could not get IDocumentEvent iface: %08x\n", hres);
+
+    str = a2bstr("Event");
+    hres = IDocumentEvent_createEvent(doc_event, str, &event);
+    SysFreeString(str);
+    ok(hres == S_OK, "createEvent failed: %08x\n", hres);
+
+    IDOMEvent_Release(event);
 
     IDocumentEvent_Release(doc_event);
 }

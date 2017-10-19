@@ -4355,8 +4355,10 @@ static HRESULT WINAPI DocumentEvent_Invoke(IDocumentEvent *iface, DISPID dispIdM
 static HRESULT WINAPI DocumentEvent_createEvent(IDocumentEvent *iface, BSTR eventType, IDOMEvent **p)
 {
     HTMLDocument *This = impl_from_IDocumentEvent(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(eventType), p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(eventType), p);
+
+    return create_document_event_str(This->doc_node, eventType, p);
 }
 
 static const IDocumentEventVtbl DocumentEventVtbl = {

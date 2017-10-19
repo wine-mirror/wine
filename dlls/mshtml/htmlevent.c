@@ -223,6 +223,15 @@ static eventid_t attr_to_eid(const WCHAR *str)
     return EVENTID_LAST;
 }
 
+typedef struct {
+    DispatchEx dispex;
+    IDOMEvent IDOMEvent_iface;
+
+    LONG ref;
+
+    nsIDOMEvent *nsevent;
+} DOMEvent;
+
 struct HTMLEventObj {
     DispatchEx dispex;
     IHTMLEventObj IHTMLEventObj_iface;
@@ -810,6 +819,276 @@ static HTMLEventObj *create_event(void)
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLEventObj_iface, &HTMLEventObj_dispex);
 
     return ret;
+}
+
+static inline DOMEvent *impl_from_IDOMEvent(IDOMEvent *iface)
+{
+    return CONTAINING_RECORD(iface, DOMEvent, IDOMEvent_iface);
+}
+
+static HRESULT WINAPI DOMEvent_QueryInterface(IDOMEvent *iface, REFIID riid, void **ppv)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        *ppv = &This->IDOMEvent_iface;
+    else if(IsEqualGUID(&IID_IDOMEvent, riid))
+        *ppv = &This->IDOMEvent_iface;
+    else if(dispex_query_interface(&This->dispex, riid, ppv))
+        return *ppv ? S_OK : E_NOINTERFACE;
+    else {
+        *ppv = NULL;
+        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI DOMEvent_AddRef(IDOMEvent *iface)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI DOMEvent_Release(IDOMEvent *iface)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    if(!ref) {
+        nsIDOMEvent_Release(This->nsevent);
+        release_dispex(&This->dispex);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI DOMEvent_GetTypeInfoCount(IDOMEvent *iface, UINT *pctinfo)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI DOMEvent_GetTypeInfo(IDOMEvent *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DOMEvent_GetIDsOfNames(IDOMEvent *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI DOMEvent_Invoke(IDOMEvent *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DOMEvent_get_bubbles(IDOMEvent *iface, VARIANT_BOOL *p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_cancelable(IDOMEvent *iface, VARIANT_BOOL *p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_currentTarget(IDOMEvent *iface, IEventTarget **p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_defaultPrevented(IDOMEvent *iface, VARIANT_BOOL *p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_eventPhase(IDOMEvent *iface, USHORT *p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_target(IDOMEvent *iface, IEventTarget **p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_timeStamp(IDOMEvent *iface, ULONGLONG *p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_type(IDOMEvent *iface, BSTR *p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_initEvent(IDOMEvent *iface, BSTR type, VARIANT_BOOL can_bubble, VARIANT_BOOL cancelable)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_preventDefault(IDOMEvent *iface)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_stopPropagation(IDOMEvent *iface)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_stopImmediatePropagation(IDOMEvent *iface)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_isTrusted(IDOMEvent *iface, VARIANT_BOOL *p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_put_cancelBubble(IDOMEvent *iface, VARIANT_BOOL v)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_cancelBubble(IDOMEvent *iface, VARIANT_BOOL *p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMEvent_get_srcElement(IDOMEvent *iface, IHTMLElement **p)
+{
+    DOMEvent *This = impl_from_IDOMEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IDOMEventVtbl DOMEventVtbl = {
+    DOMEvent_QueryInterface,
+    DOMEvent_AddRef,
+    DOMEvent_Release,
+    DOMEvent_GetTypeInfoCount,
+    DOMEvent_GetTypeInfo,
+    DOMEvent_GetIDsOfNames,
+    DOMEvent_Invoke,
+    DOMEvent_get_bubbles,
+    DOMEvent_get_cancelable,
+    DOMEvent_get_currentTarget,
+    DOMEvent_get_defaultPrevented,
+    DOMEvent_get_eventPhase,
+    DOMEvent_get_target,
+    DOMEvent_get_timeStamp,
+    DOMEvent_get_type,
+    DOMEvent_initEvent,
+    DOMEvent_preventDefault,
+    DOMEvent_stopPropagation,
+    DOMEvent_stopImmediatePropagation,
+    DOMEvent_get_isTrusted,
+    DOMEvent_put_cancelBubble,
+    DOMEvent_get_cancelBubble,
+    DOMEvent_get_srcElement
+};
+
+static const tid_t DOMEvent_iface_tids[] = {
+    IDOMEvent_tid,
+    0
+};
+
+static dispex_static_data_t DOMEvent_dispex = {
+    NULL,
+    IDOMEvent_tid,
+    DOMEvent_iface_tids
+};
+
+static HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, IDOMEvent **ret_event)
+{
+    DOMEvent *event;
+
+    event = heap_alloc_zero(sizeof(*event));
+    if(!event)
+        return E_OUTOFMEMORY;
+
+    init_dispex(&event->dispex, (IUnknown*)&event->IDOMEvent_iface, &DOMEvent_dispex);
+    event->IDOMEvent_iface.lpVtbl = &DOMEventVtbl;
+    event->ref = 1;
+
+    nsIDOMEvent_AddRef(event->nsevent = nsevent);
+
+    *ret_event = &event->IDOMEvent_iface;
+    return S_OK;
+}
+
+HRESULT create_document_event_str(HTMLDocumentNode *doc, const WCHAR *type, IDOMEvent **ret_event)
+{
+    nsIDOMEvent *nsevent;
+    nsAString nsstr;
+    nsresult nsres;
+    HRESULT hres;
+
+    nsAString_InitDepend(&nsstr, type);
+    nsres = nsIDOMHTMLDocument_CreateEvent(doc->nsdoc, &nsstr, &nsevent);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        FIXME("CreateEvent failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = create_event_from_nsevent(nsevent, ret_event);
+    nsIDOMEvent_Release(nsevent);
+    return hres;
 }
 
 static HRESULT set_event_info(HTMLEventObj *event, eventid_t eid, HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
