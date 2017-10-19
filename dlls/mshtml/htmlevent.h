@@ -55,6 +55,15 @@ typedef enum {
     EVENTID_LAST
 } eventid_t;
 
+typedef struct {
+    DispatchEx dispex;
+    IDOMEvent IDOMEvent_iface;
+
+    LONG ref;
+
+    nsIDOMEvent *nsevent;
+} DOMEvent;
+
 eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;
 void check_event_attr(HTMLDocumentNode*,nsIDOMHTMLElement*) DECLSPEC_HIDDEN;
 void release_event_target(EventTarget*) DECLSPEC_HIDDEN;
