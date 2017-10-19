@@ -8305,6 +8305,149 @@ static void test_AnalyzeContainerType(void)
     IDWriteFactory5_Release(factory);
 }
 
+static void test_fontsetbuilder(void)
+{
+    IDWriteFontCollection1 *collection;
+    IDWriteFontSetBuilder *builder;
+    IDWriteFactory3 *factory;
+    UINT32 count, i, ref;
+    HRESULT hr;
+
+    factory = create_factory_iid(&IID_IDWriteFactory3);
+    if (!factory) {
+        skip("IDWriteFontSetBuilder is not supported.\n");
+        return;
+    }
+
+    EXPECT_REF(factory, 1);
+    hr = IDWriteFactory3_CreateFontSetBuilder(factory, &builder);
+todo_wine
+    ok(hr == S_OK, "Failed to create font set builder, hr %#x.\n", hr);
+
+    if (FAILED(hr)) {
+        IDWriteFactory3_Release(factory);
+        return;
+    }
+
+    EXPECT_REF(factory, 2);
+    IDWriteFontSetBuilder_Release(builder);
+
+    hr = IDWriteFactory3_GetSystemFontCollection(factory, FALSE, &collection, FALSE);
+    ok(hr == S_OK, "Failed to get system collection, hr %#x.\n", hr);
+    count = IDWriteFontCollection1_GetFontFamilyCount(collection);
+
+    for (i = 0; i < count; i++) {
+        IDWriteFontFamily1 *family;
+        UINT32 j, fontcount;
+        IDWriteFont3 *font;
+
+        hr = IDWriteFontCollection1_GetFontFamily(collection, i, &family);
+        ok(hr == S_OK, "Failed to get family, hr %#x.\n", hr);
+
+        fontcount = IDWriteFontFamily1_GetFontCount(family);
+        for (j = 0; j < fontcount; j++) {
+            IDWriteFontFaceReference *ref, *ref2;
+            IDWriteFontSet *fontset;
+            UINT32 setcount, id;
+
+            hr = IDWriteFontFamily1_GetFont(family, j, &font);
+            ok(hr == S_OK, "Failed to get font, hr %#x.\n", hr);
+
+            /* Create a set with a single font reference, test set properties. */
+            hr = IDWriteFactory3_CreateFontSetBuilder(factory, &builder);
+            ok(hr == S_OK, "Failed to create font set builder, hr %#x.\n", hr);
+
+            hr = IDWriteFont3_GetFontFaceReference(font, &ref);
+            ok(hr == S_OK, "Failed to get fontface reference, hr %#x.\n", hr);
+
+            EXPECT_REF(ref, 1);
+            hr = IDWriteFontSetBuilder_AddFontFaceReference(builder, ref);
+            ok(hr == S_OK, "Failed to add fontface reference, hr %#x.\n", hr);
+            EXPECT_REF(ref, 1);
+
+            hr = IDWriteFontSetBuilder_CreateFontSet(builder, &fontset);
+            ok(hr == S_OK, "Failed to create a font set, hr %#x.\n", hr);
+
+            setcount = IDWriteFontSet_GetFontCount(fontset);
+            ok(setcount == 1, "Unexpected font count %u.\n", setcount);
+
+            hr = IDWriteFontSet_GetFontFaceReference(fontset, 0, &ref2);
+            ok(hr == S_OK, "Failed to get font face reference, hr %#x.\n", hr);
+            ok(ref2 != ref, "Unexpected reference.\n");
+            IDWriteFontFaceReference_Release(ref2);
+
+            for (id = DWRITE_FONT_PROPERTY_ID_FAMILY_NAME; id < DWRITE_FONT_PROPERTY_ID_TOTAL; id++) {
+                static const WCHAR fmtW[] = {'%','u',0};
+                IDWriteLocalizedStrings *values;
+                WCHAR buffW[255], buff2W[255];
+                UINT32 c, ivalue;
+                BOOL exists;
+
+                hr = IDWriteFontSet_GetPropertyValues(fontset, 0, id, &exists, &values);
+                ok(hr == S_OK, "Failed to get property value, hr %#x.\n", hr);
+
+                if (!exists)
+                    continue;
+
+                switch (id)
+                {
+                case DWRITE_FONT_PROPERTY_ID_WEIGHT:
+                    ivalue = IDWriteFont3_GetWeight(font);
+                    break;
+                case DWRITE_FONT_PROPERTY_ID_STRETCH:
+                    ivalue = IDWriteFont3_GetStretch(font);
+                    break;
+                case DWRITE_FONT_PROPERTY_ID_STYLE:
+                    ivalue = IDWriteFont3_GetStyle(font);
+                    break;
+                default:
+                    ;
+                }
+
+                switch (id)
+                {
+                case DWRITE_FONT_PROPERTY_ID_WEIGHT:
+                case DWRITE_FONT_PROPERTY_ID_STRETCH:
+                case DWRITE_FONT_PROPERTY_ID_STYLE:
+                    c = IDWriteLocalizedStrings_GetCount(values);
+                    ok(c == 1, "Unexpected string count %u.\n", c);
+
+                    buffW[0] = 'a';
+                    hr = IDWriteLocalizedStrings_GetLocaleName(values, 0, buffW, sizeof(buffW)/sizeof(buffW[0]));
+                    ok(hr == S_OK, "Failed to get locale name, hr %#x.\n", hr);
+                    ok(!*buffW, "Unexpected locale %s.\n", wine_dbgstr_w(buffW));
+
+                    buff2W[0] = 0;
+                    hr = IDWriteLocalizedStrings_GetString(values, 0, buff2W, sizeof(buff2W)/sizeof(buff2W[0]));
+                    ok(hr == S_OK, "Failed to get property string, hr %#x.\n", hr);
+
+                    wsprintfW(buffW, fmtW, ivalue);
+                    ok(!lstrcmpW(buffW, buff2W), "Unexpected property value %s, expected %s.\n", wine_dbgstr_w(buff2W),
+                        wine_dbgstr_w(buffW));
+                    break;
+                default:
+                    ;
+                }
+
+                IDWriteLocalizedStrings_Release(values);
+            }
+
+            IDWriteFontSet_Release(fontset);
+            IDWriteFontFaceReference_Release(ref);
+            IDWriteFontSetBuilder_Release(builder);
+
+            IDWriteFont3_Release(font);
+        }
+
+        IDWriteFontFamily1_Release(family);
+    }
+
+    IDWriteFontCollection1_Release(collection);
+
+    ref = IDWriteFactory3_Release(factory);
+    ok(ref == 0, "factory not released, %u\n", ref);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -8371,6 +8514,7 @@ START_TEST(font)
     test_CreateCustomRenderingParams();
     test_localfontfileloader();
     test_AnalyzeContainerType();
+    test_fontsetbuilder();
 
     IDWriteFactory_Release(factory);
 }
