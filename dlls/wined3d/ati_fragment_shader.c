@@ -21,7 +21,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <math.h>
 #include <stdio.h>
 
 #include "wined3d_private.h"

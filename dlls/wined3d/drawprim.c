@@ -33,9 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
-#include <stdio.h>
-#include <math.h>
-
 /* Context activation is done by the caller. */
 static void draw_primitive_arrays(struct wined3d_context *context, const struct wined3d_state *state,
         const void *idx_data, unsigned int idx_size, int base_vertex_idx, unsigned int start_idx,
