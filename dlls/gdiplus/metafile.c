@@ -265,6 +265,12 @@ typedef struct EmfPlusPath
     BYTE data[1];
 } EmfPlusPath;
 
+typedef struct EmfPlusRegionNodePath
+{
+    DWORD RegionNodePathLength;
+    EmfPlusPath RegionNodePath;
+} EmfPlusRegionNodePath;
+
 typedef struct EmfPlusRegion
 {
     DWORD Version;
@@ -428,6 +434,9 @@ static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
         break;
     case ObjectTypePath:
         GdipDeletePath(object->u.path);
+        break;
+    case ObjectTypeRegion:
+        GdipDeleteRegion(object->u.region);
         break;
     case ObjectTypeImage:
         GdipDisposeImage(object->u.image);
@@ -1685,6 +1694,132 @@ static GpStatus metafile_deserialize_path(const BYTE *record_data, UINT data_siz
     return Ok;
 }
 
+static GpStatus metafile_read_region_node(struct memory_buffer *mbuf, GpRegion *region, region_element *node, UINT *count)
+{
+    const DWORD *type;
+    GpStatus status;
+
+    type = buffer_read(mbuf, sizeof(*type));
+    if (!type) return Ok;
+
+    node->type = *type;
+
+    switch (node->type)
+    {
+    case CombineModeReplace:
+    case CombineModeIntersect:
+    case CombineModeUnion:
+    case CombineModeXor:
+    case CombineModeExclude:
+    case CombineModeComplement:
+    {
+        region_element *left, *right;
+
+        left = heap_alloc_zero(sizeof(*left));
+        if (!left)
+            return OutOfMemory;
+
+        right = heap_alloc_zero(sizeof(*right));
+        if (!right)
+        {
+            heap_free(left);
+            return OutOfMemory;
+        }
+
+        status = metafile_read_region_node(mbuf, region, left, count);
+        if (status == Ok)
+        {
+            status = metafile_read_region_node(mbuf, region, right, count);
+            if (status == Ok)
+            {
+                node->elementdata.combine.left = left;
+                node->elementdata.combine.right = right;
+                region->num_children += 2;
+                return Ok;
+            }
+        }
+
+        heap_free(left);
+        heap_free(right);
+        return status;
+    }
+    case RegionDataRect:
+    {
+        const EmfPlusRectF *rect;
+
+        rect = buffer_read(mbuf, sizeof(*rect));
+        if (!rect)
+            return InvalidParameter;
+
+        memcpy(&node->elementdata.rect, rect, sizeof(*rect));
+        *count += 1;
+        return Ok;
+    }
+    case RegionDataPath:
+    {
+        const BYTE *path_data;
+        const UINT *data_size;
+        GpPath *path;
+
+        data_size = buffer_read(mbuf, FIELD_OFFSET(EmfPlusRegionNodePath, RegionNodePath));
+        if (!data_size)
+            return InvalidParameter;
+
+        path_data = buffer_read(mbuf, *data_size);
+        if (!path_data)
+            return InvalidParameter;
+
+        status = metafile_deserialize_path(path_data, *data_size, &path);
+        if (status == Ok)
+        {
+            node->elementdata.path = path;
+            *count += 1;
+        }
+        return Ok;
+    }
+    case RegionDataEmptyRect:
+    case RegionDataInfiniteRect:
+        *count += 1;
+        return Ok;
+    default:
+        FIXME("element type %#x is not supported\n", *type);
+        break;
+    }
+
+    return InvalidParameter;
+}
+
+static GpStatus metafile_deserialize_region(const BYTE *record_data, UINT data_size, GpRegion **region)
+{
+    struct memory_buffer mbuf;
+    GpStatus status;
+    UINT count;
+
+    *region = NULL;
+
+    init_memory_buffer(&mbuf, record_data, data_size);
+
+    if (!buffer_read(&mbuf, FIELD_OFFSET(EmfPlusRegion, RegionNode)))
+        return InvalidParameter;
+
+    status = GdipCreateRegion(region);
+    if (status != Ok)
+        return status;
+
+    count = 0;
+    status = metafile_read_region_node(&mbuf, *region, &(*region)->node, &count);
+    if (status == Ok && !count)
+        status = InvalidParameter;
+
+    if (status != Ok)
+    {
+        GdipDeleteRegion(*region);
+        *region = NULL;
+    }
+
+    return status;
+}
+
 static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_size, GpBrush **brush)
 {
     static const UINT header_size = FIELD_OFFSET(EmfPlusBrush, BrushData);
@@ -1934,6 +2069,9 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
     }
     case ObjectTypePath:
         status = metafile_deserialize_path(record_data, data_size, (GpPath **)&object);
+        break;
+    case ObjectTypeRegion:
+        status = metafile_deserialize_region(record_data, data_size, (GpRegion **)&object);
         break;
     case ObjectTypeImage:
         status = metafile_deserialize_image(record_data, data_size, (GpImage **)&object);

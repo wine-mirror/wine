@@ -396,6 +396,7 @@ struct emfplus_object {
         GpBrush *brush;
         GpPen *pen;
         GpPath *path;
+        GpRegion *region;
         GpImage *image;
         GpFont *font;
         GpImageAttributes *image_attributes;
@@ -560,6 +561,30 @@ struct GpRegion{
     DWORD num_children;
     region_element node;
 };
+
+struct memory_buffer
+{
+    const BYTE *buffer;
+    INT size, pos;
+};
+
+static inline void init_memory_buffer(struct memory_buffer *mbuf, const BYTE *buffer, INT size)
+{
+    mbuf->buffer = buffer;
+    mbuf->size = size;
+    mbuf->pos = 0;
+}
+
+static inline const void *buffer_read(struct memory_buffer *mbuf, INT size)
+{
+    if (mbuf->size - mbuf->pos >= size)
+    {
+        const void *data = mbuf->buffer + mbuf->pos;
+        mbuf->pos += size;
+        return data;
+    }
+    return NULL;
+}
 
 typedef GpStatus (*gdip_format_string_callback)(HDC hdc,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
