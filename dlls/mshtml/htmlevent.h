@@ -58,7 +58,7 @@ typedef enum {
 eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;
 void check_event_attr(HTMLDocumentNode*,nsIDOMHTMLElement*) DECLSPEC_HIDDEN;
 void release_event_target(EventTarget*) DECLSPEC_HIDDEN;
-void fire_event(HTMLDocumentNode*,eventid_t,BOOL,HTMLDOMNode*,nsIDOMEvent*) DECLSPEC_HIDDEN;
+void fire_event(HTMLDocumentNode*,eventid_t,BOOL,EventTarget*,nsIDOMEvent*) DECLSPEC_HIDDEN;
 HRESULT set_event_handler(EventTarget*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT get_event_handler(EventTarget*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT attach_event(EventTarget*,BSTR,IDispatch*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
@@ -83,6 +83,7 @@ void detach_nsevent(HTMLDocumentNode*,const WCHAR*) DECLSPEC_HIDDEN;
 typedef struct {
     dispex_static_data_vtbl_t dispex_vtbl;
     void (*bind_event)(DispatchEx*,eventid_t);
+    EventTarget *(*get_parent_event_target)(DispatchEx*);
     HRESULT (*handle_event_default)(DispatchEx*,eventid_t,nsIDOMEvent*,BOOL*);
     ConnectionPointContainer *(*get_cp_container)(DispatchEx*);
 } event_target_vtbl_t;

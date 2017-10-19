@@ -5191,7 +5191,7 @@ HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *eve
             switch(code) {
             case VK_F1: /* DOM_VK_F1 */
                 TRACE("F1 pressed\n");
-                fire_event(This->node.doc, EVENTID_HELP, TRUE, &This->node, NULL);
+                fire_event(This->node.doc, EVENTID_HELP, TRUE, &This->node.event_target, NULL);
                 *prevent_default = TRUE;
             }
 
@@ -5356,6 +5356,27 @@ static HRESULT HTMLElement_handle_event_default(DispatchEx *dispex, eventid_t ei
     return This->node.vtbl->handle_event(&This->node, eid, nsevent, prevent_default);
 }
 
+static EventTarget *HTMLElement_get_parent_event_target(DispatchEx *dispex)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode *node;
+    nsIDOMNode *nsnode;
+    nsresult nsres;
+    HRESULT hres;
+
+    nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &nsnode);
+    assert(nsres == NS_OK);
+    if(!nsnode)
+        return NULL;
+
+    hres = get_node(This->node.doc, nsnode, TRUE, &node);
+    nsIDOMNode_Release(nsnode);
+    if(FAILED(hres))
+        return NULL;
+
+    return &node->event_target;
+}
+
 static ConnectionPointContainer *HTMLElement_get_cp_container(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
@@ -5394,6 +5415,7 @@ static event_target_vtbl_t HTMLElement_event_target_vtbl = {
         HTMLElement_populate_props
     },
     HTMLElement_bind_event,
+    HTMLElement_get_parent_event_target,
     HTMLElement_handle_event_default,
     HTMLElement_get_cp_container
 };

@@ -269,8 +269,8 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(doc->nsdoc) {
         flush_pending_tasks(doc->basedoc.task_magic);
 
-        fire_event(doc, EVENTID_LOAD, TRUE, &doc->node, event);
-        fire_event(doc, EVENTID_LOAD, TRUE, NULL, event);
+        fire_event(doc, EVENTID_LOAD, TRUE, &doc->node.event_target, event);
+        fire_event(doc, EVENTID_LOAD, TRUE, &doc->window->event_target, event);
     }else {
         ERR("NULL nsdoc\n");
         nsres = NS_ERROR_FAILURE;
@@ -328,17 +328,17 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
     switch(eid) {
     case EVENTID_FOCUS:
         if(doc->event_vector[EVENTID_FOCUSIN])
-            fire_event(doc, EVENTID_FOCUSIN, TRUE, node, NULL);
+            fire_event(doc, EVENTID_FOCUSIN, TRUE, &node->event_target, NULL);
         break;
     case EVENTID_BLUR:
         if(doc->event_vector[EVENTID_FOCUSOUT])
-            fire_event(doc, EVENTID_FOCUSOUT, TRUE, node, NULL);
+            fire_event(doc, EVENTID_FOCUSOUT, TRUE, &node->event_target, NULL);
         break;
     default:
         break;
     }
 
-    fire_event(doc, eid, TRUE, node, event);
+    fire_event(doc, eid, TRUE, &node->event_target, event);
 
     node_release(node);
     return NS_OK;

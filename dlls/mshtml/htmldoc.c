@@ -5030,6 +5030,15 @@ static void HTMLDocumentNode_bind_event(DispatchEx *dispex, eventid_t eid)
     ensure_doc_nsevent_handler(This, eid);
 }
 
+static EventTarget *HTMLDocumentNode_get_parent_event_target(DispatchEx *dispex)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    if(!This->window)
+        return NULL;
+    IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
+    return &This->window->event_target;
+}
+
 static ConnectionPointContainer *HTMLDocumentNode_get_cp_container(DispatchEx *dispex)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
@@ -5048,6 +5057,7 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
         NULL
     },
     HTMLDocumentNode_bind_event,
+    HTMLDocumentNode_get_parent_event_target,
     NULL,
     HTMLDocumentNode_get_cp_container
 };

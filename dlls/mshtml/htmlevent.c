@@ -1063,16 +1063,15 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, eve
     }
 }
 
-static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *event_obj,
-        HTMLDOMNode *target)
+static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *event_obj, EventTarget *event_target)
 {
+    EventTarget *target_chain_buf[8], **target_chain = target_chain_buf;
+    unsigned chain_cnt, chain_buf_size, i;
     IHTMLEventObj *prev_event;
-    nsIDOMNode *parent, *nsnode = NULL;
+    const event_target_vtbl_t *vtbl;
     BOOL prevent_default = FALSE;
     HTMLInnerWindow *window;
-    HTMLDOMNode *node;
-    UINT16 node_type = 0;
-    nsresult nsres;
+    EventTarget *iter;
     HRESULT hres;
 
     TRACE("(%p) %s\n", doc, debugstr_w(event_info[eid].name));
@@ -1088,83 +1087,61 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
     prev_event = window->event;
     window->event = event_obj ? &event_obj->IHTMLEventObj_iface : NULL;
 
-    if(target) {
-        nsIDOMNode_GetNodeType(target->nsnode, &node_type);
-        nsnode = target->nsnode;
-        nsIDOMNode_AddRef(nsnode);
-    }
+    iter = event_target;
+    IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
 
-    switch(node_type) {
-    case ELEMENT_NODE:
-        do {
-            hres = get_node(doc, nsnode, FALSE, &node);
-            if(SUCCEEDED(hres) && node) {
-                call_event_handlers(event_obj, &node->event_target, eid);
-                node_release(node);
+    chain_cnt = 0;
+    chain_buf_size = sizeof(target_chain_buf)/sizeof(*target_chain_buf);
+
+    do {
+        if(chain_cnt == chain_buf_size) {
+            EventTarget **new_chain;
+            if(target_chain == target_chain_buf) {
+                new_chain = heap_alloc(chain_buf_size * 2 * sizeof(*new_chain));
+                if(!new_chain)
+                    break;
+                memcpy(new_chain, target_chain, chain_buf_size * sizeof(*new_chain));
+            }else {
+                new_chain = heap_realloc(target_chain, chain_buf_size * 2 * sizeof(*new_chain));
+                if(!new_chain)
+                    break;
             }
+            chain_buf_size *= 2;
+            target_chain = new_chain;
+        }
 
-            if(!(event_info[eid].flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
-                break;
+        target_chain[chain_cnt++] = iter;
 
-            nsIDOMNode_GetParentNode(nsnode, &parent);
-            nsIDOMNode_Release(nsnode);
-            nsnode = parent;
-            if(!nsnode)
-                break;
+        if(!(vtbl = dispex_get_vtbl(&iter->dispex)) || !vtbl->get_parent_event_target)
+            break;
+        iter = vtbl->get_parent_event_target(&iter->dispex);
+    } while(iter);
 
-            nsIDOMNode_GetNodeType(nsnode, &node_type);
-        }while(node_type == ELEMENT_NODE);
-
+    for(i = 0; i < chain_cnt; i++) {
+        call_event_handlers(event_obj, target_chain[i], eid);
         if(!(event_info[eid].flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
             break;
-        /* fallthrough */
-
-    case DOCUMENT_NODE:
-        call_event_handlers(event_obj, &doc->node.event_target, eid);
-        if(!(event_info[eid].flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
-            break;
-        /* fallthrough */
-
-    default: /* window object */
-        call_event_handlers(event_obj, &doc->window->event_target, eid);
     }
-
-    if(nsnode)
-        nsIDOMNode_Release(nsnode);
 
     if(event_obj && event_obj->prevent_default)
         prevent_default = TRUE;
     window->event = prev_event;
 
-    if(target && !prevent_default && (event_info[eid].flags & EVENT_HASDEFAULTHANDLERS)) {
-        nsnode = target->nsnode;
-        nsIDOMNode_AddRef(nsnode);
-
-        do {
-            hres = get_node(doc, nsnode, TRUE, &node);
-            if(FAILED(hres))
+    if(event_info[eid].flags & EVENT_HASDEFAULTHANDLERS) {
+        for(i = 0; !prevent_default && i < chain_cnt; i++) {
+            vtbl = dispex_get_vtbl(&target_chain[i]->dispex);
+            if(!vtbl || !vtbl->handle_event_default)
+                continue;
+            hres = vtbl->handle_event_default(&event_target->dispex, eid, event_obj ? event_obj->nsevent : NULL, &prevent_default);
+            if(FAILED(hres) || (event_obj && event_obj->cancel_bubble))
                 break;
-
-            if(node) {
-                const event_target_vtbl_t *vtbl = dispex_get_vtbl(&node->event_target.dispex);
-                if(vtbl && vtbl->handle_event_default)
-                    hres = vtbl->handle_event_default(&node->event_target.dispex, eid, event_obj ? event_obj->nsevent : NULL, &prevent_default);
-                node_release(node);
-                if(FAILED(hres) || prevent_default || (event_obj && event_obj->cancel_bubble))
-                    break;
-            }
-
-            nsres = nsIDOMNode_GetParentNode(nsnode, &parent);
-            if(NS_FAILED(nsres))
-                break;
-
-            nsIDOMNode_Release(nsnode);
-            nsnode = parent;
-        } while(nsnode);
-
-        if(nsnode)
-            nsIDOMNode_Release(nsnode);
+        }
     }
+
+    for(i = 0; i < chain_cnt; i++)
+        IDispatchEx_Release(&target_chain[i]->dispex.IDispatchEx_iface);
+    if(target_chain != target_chain_buf)
+        heap_free(target_chain);
 
     if(prevent_default && event_obj && event_obj->nsevent) {
         TRACE("calling PreventDefault\n");
@@ -1174,7 +1151,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
     htmldoc_release(&doc->basedoc);
 }
 
-void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, HTMLDOMNode *target, nsIDOMEvent *nsevent)
+void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, EventTarget *target, nsIDOMEvent *nsevent)
 {
     HTMLEventObj *event_obj = NULL;
     HRESULT hres;
@@ -1184,7 +1161,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, HTMLDOMNod
         if(!event_obj)
             return;
 
-        hres = set_event_info(event_obj, &target->event_target, eid, doc, nsevent);
+        hres = set_event_info(event_obj, target, eid, doc, nsevent);
         if(FAILED(hres)) {
             IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
             return;
@@ -1236,13 +1213,13 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
     if(event_obj) {
         hres = set_event_info(event_obj, &node->event_target, eid, node->doc, NULL);
         if(SUCCEEDED(hres))
-            fire_event_obj(node->doc, eid, event_obj, node);
+            fire_event_obj(node->doc, eid, event_obj, &node->event_target);
 
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
         if(FAILED(hres))
             return hres;
     }else {
-        fire_event(node->doc, eid, TRUE, node, NULL);
+        fire_event(node->doc, eid, TRUE, &node->event_target, NULL);
     }
 
     *cancelled = VARIANT_TRUE; /* FIXME */

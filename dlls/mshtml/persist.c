@@ -449,11 +449,11 @@ static void notif_readystate(HTMLOuterWindow *window)
         call_property_onchanged(&window->doc_obj->basedoc.cp_container, DISPID_READYSTATE);
 
     fire_event(window->base.inner_window->doc, EVENTID_READYSTATECHANGE, FALSE,
-            &window->base.inner_window->doc->node, NULL);
+            &window->base.inner_window->doc->node.event_target, NULL);
 
     if(window->frame_element)
         fire_event(window->frame_element->element.node.doc, EVENTID_READYSTATECHANGE,
-                   TRUE, &window->frame_element->element.node, NULL);
+                   TRUE, &window->frame_element->element.node.event_target, NULL);
 }
 
 typedef struct {
