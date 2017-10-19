@@ -42,7 +42,7 @@ my @hotspot;
 
 # Get the programs from the environment variables
 my $convert = $ENV{"CONVERT"} || "convert";
-my $rsvg = $ENV{"RSVG"} || "rsvg";
+my $rsvg = $ENV{"RSVG"} || "rsvg-convert";
 my @icotool_args = ($ENV{"ICOTOOL"} || "icotool", "--create",
                     $ext eq "cur" ? "--cursor" : "--icon", "-o", $outFileName);
 
