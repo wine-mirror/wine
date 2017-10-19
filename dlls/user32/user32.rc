@@ -317,6 +317,8 @@ OIC_NOTE ICON resources/oic_note.ico
 /* @makedep: resources/oic_winlogo.ico */
 OIC_WINLOGO ICON resources/oic_winlogo.ico
 
+/* @makedep: resources/oic_shield.ico */
+OIC_SHIELD ICON resources/oic_shield.ico
 
 /****************************************************************/
 /* Version */

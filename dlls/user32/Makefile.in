@@ -74,4 +74,5 @@ SVG_SRCS = \
 	resources/oic_note.svg \
 	resources/oic_ques.svg \
 	resources/oic_sample.svg \
+	resources/oic_shield.svg \
 	resources/oic_winlogo.svg
