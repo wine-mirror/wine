@@ -1312,7 +1312,7 @@ static void test_reset(void)
     UINT mode_count = 0;
     DEVMODEW devmode;
     IDirect3D8 *d3d8;
-    RECT winrect;
+    RECT winrect, client_rect;
     D3DVIEWPORT8 vp;
     D3DCAPS8 caps;
     DWORD shader;
@@ -1579,6 +1579,9 @@ static void test_reset(void)
                     SWP_NOMOVE|SWP_NOZORDER),
        "SetWindowPos failed\n");
 
+    /* Windows 10 gives us a different size than we requested with some DPI scaling settings (e.g. 172%). */
+    GetClientRect(window, &client_rect);
+
     memset(&d3dpp, 0, sizeof(d3dpp));
     d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed = TRUE;
@@ -1614,8 +1617,10 @@ static void test_reset(void)
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %u, expected 0.\n", vp.X);
         ok(vp.Y == 0, "D3DVIEWPORT->Y = %u, expected 0.\n", vp.Y);
-        ok(vp.Width == 200, "D3DVIEWPORT->Width = %u, expected 200.\n", vp.Width);
-        ok(vp.Height == 150, "D3DVIEWPORT->Height = %u, expected 150.\n", vp.Height);
+        ok(vp.Width == client_rect.right, "D3DVIEWPORT->Width = %d, expected %d\n",
+                vp.Width, client_rect.right);
+        ok(vp.Height == client_rect.bottom, "D3DVIEWPORT->Height = %d, expected %d\n",
+                vp.Height, client_rect.bottom);
         ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %.8e, expected 0.\n", vp.MinZ);
         ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %.8e, expected 1.\n", vp.MaxZ);
     }
@@ -1627,8 +1632,10 @@ static void test_reset(void)
     ok(surface_desc.Format == d3ddm.Format, "Got unexpected Format %#x, expected %#x.\n",
             surface_desc.Format, d3ddm.Format);
     ok(!surface_desc.MultiSampleType, "Got unexpected MultiSampleType %u.\n", d3dpp.MultiSampleType);
-    ok(surface_desc.Width == 200, "Back buffer width is %u, expected 200.\n", surface_desc.Width);
-    ok(surface_desc.Height == 150, "Back buffer height is %u, expected 150.\n", surface_desc.Height);
+    ok(surface_desc.Width == client_rect.right,
+            "Back buffer width is %u, expected %d.\n", surface_desc.Width, client_rect.right);
+    ok(surface_desc.Height == client_rect.bottom,
+            "Back buffer height is %u, expected %d.\n", surface_desc.Height, client_rect.bottom);
     IDirect3DSurface8_Release(surface);
 
     memset(&d3dpp, 0, sizeof(d3dpp));
