@@ -229,7 +229,6 @@ struct HTMLEventObj {
 
     LONG ref;
 
-    EventTarget *target;
     const event_info_t *type;
     DOMEvent *event;
     VARIANT return_value;
@@ -282,8 +281,6 @@ static ULONG WINAPI HTMLEventObj_Release(IHTMLEventObj *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->target)
-            IDispatchEx_Release(&This->target->dispex.IDispatchEx_iface);
         if(This->event)
             IDOMEvent_Release(&This->event->IDOMEvent_iface);
         release_dispex(&This->dispex);
@@ -331,8 +328,8 @@ static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLEle
     TRACE("(%p)->(%p)\n", This, p);
 
     *p = NULL;
-    if(This->target)
-        IDispatchEx_QueryInterface(&This->target->dispex.IDispatchEx_iface, &IID_IHTMLElement, (void**)p);
+    if(This->event && This->event->target)
+        IDispatchEx_QueryInterface(&This->event->target->dispex.IDispatchEx_iface, &IID_IHTMLElement, (void**)p);
     return S_OK;
 }
 
@@ -871,6 +868,8 @@ static ULONG WINAPI DOMEvent_Release(IDOMEvent *iface)
     TRACE("(%p) ref=%u\n", This, ref);
 
     if(!ref) {
+        if(This->target)
+            IDispatchEx_Release(&This->target->dispex.IDispatchEx_iface);
         nsIDOMEvent_Release(This->nsevent);
         release_dispex(&This->dispex);
         heap_free(This);
@@ -1415,10 +1414,8 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
     if(target_vtbl && target_vtbl->set_current_event)
         prev_event = target_vtbl->set_current_event(&event_target->dispex, event_obj ? &event_obj->IHTMLEventObj_iface : NULL);
 
-    if(event_obj) {
-        event_obj->target = event_target;
-        IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
-    }
+    event->target = event_target;
+    IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
 
     for(i = 0; i < chain_cnt; i++) {
         call_event_handlers(event_obj, target_chain[i], event->event_id);
