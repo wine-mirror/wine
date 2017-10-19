@@ -1241,6 +1241,20 @@ static HRESULT WINAPI HTMLWindow2_get_document(IHTMLWindow2 *iface, IHTMLDocumen
     return S_OK;
 }
 
+IHTMLEventObj *default_set_current_event(HTMLInnerWindow *window, IHTMLEventObj *event_obj)
+{
+    IHTMLEventObj *prev_event = NULL;
+
+    if(window) {
+        if(event_obj)
+            IHTMLEventObj_AddRef(event_obj);
+        prev_event = window->event;
+        window->event = event_obj;
+    }
+
+    return prev_event;
+}
+
 static HRESULT WINAPI HTMLWindow2_get_event(IHTMLWindow2 *iface, IHTMLEventObj **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
@@ -3006,6 +3020,12 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
     dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
 }
 
+static IHTMLEventObj *HTMLWindow_set_current_event(DispatchEx *dispex, IHTMLEventObj *event)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    return default_set_current_event(This, event);
+}
+
 static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
     {
         NULL,
@@ -3014,7 +3034,11 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         NULL,
         NULL
     },
-    HTMLWindow_bind_event
+    HTMLWindow_bind_event,
+    NULL,
+    NULL,
+    NULL,
+    HTMLWindow_set_current_event
 };
 
 static const tid_t HTMLWindow_iface_tids[] = {

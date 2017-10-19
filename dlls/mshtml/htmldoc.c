@@ -5048,6 +5048,12 @@ static ConnectionPointContainer *HTMLDocumentNode_get_cp_container(DispatchEx *d
     return container;
 }
 
+static IHTMLEventObj *HTMLDocumentNode_set_current_event(DispatchEx *dispex, IHTMLEventObj *event)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    return default_set_current_event(This->window, event);
+}
+
 static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
     {
         NULL,
@@ -5059,7 +5065,8 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
     HTMLDocumentNode_bind_event,
     HTMLDocumentNode_get_parent_event_target,
     NULL,
-    HTMLDocumentNode_get_cp_container
+    HTMLDocumentNode_get_cp_container,
+    HTMLDocumentNode_set_current_event
 };
 
 static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
