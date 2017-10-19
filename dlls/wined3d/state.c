@@ -6049,7 +6049,7 @@ static void validate_state_table(struct StateEntry *state_table)
         if (i == STATE_RENDER(rs_holes[current].last)) ++current;
     }
 
-    for (i = 0; i < sizeof(simple_states) / sizeof(*simple_states); ++i)
+    for (i = 0; i < ARRAY_SIZE(simple_states); ++i)
     {
         if (!state_table[simple_states[i]].representative)
             ERR("State %s (%#x) should have a representative.\n",

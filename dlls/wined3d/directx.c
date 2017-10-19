@@ -580,7 +580,7 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
         0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x000000ff,
         0x80ff00ff, 0x0000ffff, 0x00ff00ff, 0x40ff00ff
     };
-    unsigned int check[sizeof(pattern) / sizeof(pattern[0])];
+    unsigned int check[ARRAY_SIZE(pattern)];
 
     /* No PBO -> No point in testing them. */
     if (!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]) return;
@@ -1525,7 +1525,7 @@ static const struct driver_version_information *get_driver_version_info(enum win
     unsigned int i;
 
     TRACE("Looking up version info for driver=%d driver_model=%d\n", driver, driver_model);
-    for (i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); i++)
+    for (i = 0; i < ARRAY_SIZE(driver_version_table); ++i)
     {
         const struct driver_version_information *entry = &driver_version_table[i];
 
@@ -1545,7 +1545,7 @@ static const struct gpu_description *get_gpu_description(enum wined3d_pci_vendor
 {
     unsigned int i;
 
-    for (i = 0; i < (sizeof(gpu_description_table) / sizeof(*gpu_description_table)); ++i)
+    for (i = 0; i < ARRAY_SIZE(gpu_description_table); ++i)
     {
         if (vendor == gpu_description_table[i].vendor && device == gpu_description_table[i].card)
             return &gpu_description_table[i];
@@ -1731,7 +1731,7 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_cap
 {
     unsigned int i;
 
-    for (i = 0; i < (sizeof(quirk_table) / sizeof(*quirk_table)); ++i)
+    for (i = 0; i < ARRAY_SIZE(quirk_table); ++i)
     {
         if (!quirk_table[i].match(gl_info, ctx, gl_renderer, gl_vendor, card_vendor, device)) continue;
         TRACE("Applying driver quirk \"%s\".\n", quirk_table[i].description);
@@ -2479,16 +2479,16 @@ static const struct
 card_vendor_table[] =
 {
     {HW_VENDOR_AMD,         "AMD",      amd_gl_vendor_table,
-            sizeof(amd_gl_vendor_table) / sizeof(*amd_gl_vendor_table),
+            ARRAY_SIZE(amd_gl_vendor_table),
             card_fallback_amd},
     {HW_VENDOR_NVIDIA,      "Nvidia",   nvidia_gl_vendor_table,
-            sizeof(nvidia_gl_vendor_table) / sizeof(*nvidia_gl_vendor_table),
+            ARRAY_SIZE(nvidia_gl_vendor_table),
             card_fallback_nvidia},
     {HW_VENDOR_VMWARE,      "VMware",   vmware_gl_vendor_table,
-            sizeof(vmware_gl_vendor_table) / sizeof(*vmware_gl_vendor_table),
+            ARRAY_SIZE(vmware_gl_vendor_table),
             card_fallback_amd},
     {HW_VENDOR_INTEL,       "Intel",    intel_gl_vendor_table,
-            sizeof(intel_gl_vendor_table) / sizeof(*intel_gl_vendor_table),
+            ARRAY_SIZE(intel_gl_vendor_table),
             card_fallback_intel},
 };
 
@@ -2550,7 +2550,7 @@ static enum wined3d_pci_device wined3d_guess_card(const struct shader_caps *shad
     enum wined3d_d3d_level d3d_level = d3d_level_from_caps(shader_caps, fragment_caps, glsl_version);
     enum wined3d_pci_device device;
 
-    for (i = 0; i < (sizeof(card_vendor_table) / sizeof(*card_vendor_table)); ++i)
+    for (i = 0; i < ARRAY_SIZE(card_vendor_table); ++i)
     {
         if (card_vendor_table[i].card_vendor != *card_vendor)
             continue;
@@ -3975,13 +3975,11 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
             ERR("Received a NULL GL_EXTENSIONS.\n");
             return FALSE;
         }
-        parse_extension_string(gl_info, gl_extensions, gl_extension_map,
-                sizeof(gl_extension_map) / sizeof(*gl_extension_map));
+        parse_extension_string(gl_info, gl_extensions, gl_extension_map, ARRAY_SIZE(gl_extension_map));
     }
     else
     {
-        enumerate_gl_extensions(gl_info, gl_extension_map,
-                sizeof(gl_extension_map) / sizeof(*gl_extension_map));
+        enumerate_gl_extensions(gl_info, gl_extension_map, ARRAY_SIZE(gl_extension_map));
     }
 
     hdc = wglGetCurrentDC();
@@ -3991,8 +3989,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
     if (!WGL_Extensions)
         WARN("WGL extensions not supported.\n");
     else
-        parse_extension_string(gl_info, WGL_Extensions, wgl_extension_map,
-                sizeof(wgl_extension_map) / sizeof(*wgl_extension_map));
+        parse_extension_string(gl_info, WGL_Extensions, wgl_extension_map, ARRAY_SIZE(wgl_extension_map));
 
     for (i = 0; i < ARRAY_SIZE(core_extensions); ++i)
     {

@@ -237,16 +237,16 @@ static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states
 
     states->pixelShader = 1;
 
-    for (i = 0; i < sizeof(pixel_states_render) / sizeof(*pixel_states_render); ++i)
+    for (i = 0; i < ARRAY_SIZE(pixel_states_render); ++i)
     {
         DWORD rs = pixel_states_render[i];
         states->renderState[rs >> 5] |= 1u << (rs & 0x1f);
     }
 
-    for (i = 0; i < sizeof(pixel_states_texture) / sizeof(*pixel_states_texture); ++i)
+    for (i = 0; i < ARRAY_SIZE(pixel_states_texture); ++i)
         texture_mask |= 1u << pixel_states_texture[i];
     for (i = 0; i < MAX_TEXTURES; ++i) states->textureState[i] = texture_mask;
-    for (i = 0; i < sizeof(pixel_states_sampler) / sizeof(*pixel_states_sampler); ++i)
+    for (i = 0; i < ARRAY_SIZE(pixel_states_sampler); ++i)
         sampler_mask |= 1u << pixel_states_sampler[i];
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = sampler_mask;
     states->pixelShaderConstantsB = 0xffff;
@@ -264,16 +264,16 @@ static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *state
     states->vertexDecl = 1;
     states->vertexShader = 1;
 
-    for (i = 0; i < sizeof(vertex_states_render) / sizeof(*vertex_states_render); ++i)
+    for (i = 0; i < ARRAY_SIZE(vertex_states_render); ++i)
     {
         DWORD rs = vertex_states_render[i];
         states->renderState[rs >> 5] |= 1u << (rs & 0x1f);
     }
 
-    for (i = 0; i < sizeof(vertex_states_texture) / sizeof(*vertex_states_texture); ++i)
+    for (i = 0; i < ARRAY_SIZE(vertex_states_texture); ++i)
         texture_mask |= 1u << vertex_states_texture[i];
     for (i = 0; i < MAX_TEXTURES; ++i) states->textureState[i] = texture_mask;
-    for (i = 0; i < sizeof(vertex_states_sampler) / sizeof(*vertex_states_sampler); ++i)
+    for (i = 0; i < ARRAY_SIZE(vertex_states_sampler); ++i)
         sampler_mask |= 1u << vertex_states_sampler[i];
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = sampler_mask;
     states->vertexShaderConstantsB = 0xffff;

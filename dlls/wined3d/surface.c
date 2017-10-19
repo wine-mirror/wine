@@ -1236,7 +1236,7 @@ static inline const struct d3dfmt_converter_desc *find_converter(enum wined3d_fo
 {
     unsigned int i;
 
-    for (i = 0; i < (sizeof(converters) / sizeof(*converters)); ++i)
+    for (i = 0; i < ARRAY_SIZE(converters); ++i)
     {
         if (converters[i].from == from && converters[i].to == to)
             return &converters[i];

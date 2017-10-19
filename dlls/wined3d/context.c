@@ -289,7 +289,7 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
             unsigned int i;
 
             tex_type_str = NULL;
-            for (i = 0; i < sizeof(texture_type) / sizeof(*texture_type); ++i)
+            for (i = 0; i < ARRAY_SIZE(texture_type); ++i)
             {
                 if (!gl_info->supported[texture_type[i].extension])
                     continue;

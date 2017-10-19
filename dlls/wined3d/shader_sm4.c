@@ -1158,7 +1158,7 @@ static const struct wined3d_sm4_opcode_info *get_opcode_info(enum wined3d_sm4_op
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(opcode_table) / sizeof(*opcode_table); ++i)
+    for (i = 0; i < ARRAY_SIZE(opcode_table); ++i)
     {
         if (opcode == opcode_table[i].opcode) return &opcode_table[i];
     }
@@ -1386,7 +1386,7 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
     token = *(*ptr)++;
 
     register_type = (token & WINED3D_SM4_REGISTER_TYPE_MASK) >> WINED3D_SM4_REGISTER_TYPE_SHIFT;
-    if (register_type >= sizeof(register_type_table) / sizeof(*register_type_table)
+    if (register_type >= ARRAY_SIZE(register_type_table)
             || register_type_table[register_type] == ~0u)
     {
         FIXME("Unhandled register type %#x.\n", register_type);
