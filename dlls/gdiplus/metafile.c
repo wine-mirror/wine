@@ -2547,6 +2547,24 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             GdipDeleteBrush((GpBrush *)solidfill);
             return stat;
         }
+        case EmfPlusRecordTypeDrawPath:
+        {
+            EmfPlusDrawPath *draw = (EmfPlusDrawPath *)header;
+            BYTE path = flags & 0xff;
+
+            if (dataSize != sizeof(draw->PenId))
+                return InvalidParameter;
+
+            if (path >= EmfPlusObjectTableSize || draw->PenId >= EmfPlusObjectTableSize)
+                return InvalidParameter;
+
+            if (real_metafile->objtable[path].type != ObjectTypePath ||
+                    real_metafile->objtable[draw->PenId].type != ObjectTypePen)
+                return InvalidParameter;
+
+            return GdipDrawPath(real_metafile->playback_graphics, real_metafile->objtable[draw->PenId].u.pen,
+                real_metafile->objtable[path].u.path);
+        }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
             return NotImplemented;
