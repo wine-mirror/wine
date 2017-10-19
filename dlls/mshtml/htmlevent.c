@@ -1073,7 +1073,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent)
     return event;
 }
 
-static HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, DOMEvent **ret_event)
+HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, DOMEvent **ret_event)
 {
     DOMEvent *event;
     nsAString nsstr;
@@ -1244,8 +1244,9 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
     return FALSE;
 }
 
-void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, eventid_t eid)
+void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, DOMEvent *event)
 {
+    const eventid_t eid = event->event_id;
     handler_vector_t *handler_vector = get_handler_vector(event_target, eid, FALSE);
     const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
     ConnectionPointContainer *cp_container = NULL;
@@ -1418,7 +1419,7 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
     IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
 
     for(i = 0; i < chain_cnt; i++) {
-        call_event_handlers(event_obj, target_chain[i], event->event_id);
+        call_event_handlers(event_obj, target_chain[i], event);
         if(!(event_flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
             break;
     }

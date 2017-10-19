@@ -181,16 +181,22 @@ static nsrefcnt NSAPI XMLHttpReqEventListener_Release(nsIDOMEventListener *iface
     return ref;
 }
 
-static nsresult NSAPI XMLHttpReqEventListener_HandleEvent(nsIDOMEventListener *iface, nsIDOMEvent *event)
+static nsresult NSAPI XMLHttpReqEventListener_HandleEvent(nsIDOMEventListener *iface, nsIDOMEvent *nsevent)
 {
     XMLHttpReqEventListener *This = impl_from_nsIDOMEventListener(iface);
+    DOMEvent *event;
+    HRESULT hres;
 
     TRACE("(%p)\n", This);
 
     if(!This->xhr)
         return NS_OK;
 
-    call_event_handlers(NULL, &This->xhr->event_target, EVENTID_READYSTATECHANGE);
+    hres = create_event_from_nsevent(nsevent, &event);
+    if(SUCCEEDED(hres) ){
+        call_event_handlers(NULL, &This->xhr->event_target, event);
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+    }
     return NS_OK;
 }
 
