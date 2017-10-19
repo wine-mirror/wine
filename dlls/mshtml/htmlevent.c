@@ -1362,7 +1362,7 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, eve
     }
 }
 
-static void fire_event_obj(EventTarget *event_target, eventid_t eid, HTMLEventObj *event_obj)
+static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEventObj *event_obj)
 {
     EventTarget *target_chain_buf[8], **target_chain = target_chain_buf;
     unsigned chain_cnt, chain_buf_size, i;
@@ -1370,10 +1370,17 @@ static void fire_event_obj(EventTarget *event_target, eventid_t eid, HTMLEventOb
     IHTMLEventObj *prev_event = NULL;
     BOOL prevent_default = FALSE;
     EventTarget *iter;
+    DWORD event_flags;
     HRESULT hres;
 
-    TRACE("(%p) %s\n", event_target, debugstr_w(event_info[eid].name));
+    if(event->event_id == EVENTID_LAST) {
+        FIXME("Unsupported on unknown events\n");
+        return;
+    }
 
+    TRACE("(%p) %s\n", event_target, debugstr_w(event_info[event->event_id].name));
+
+    event_flags = event_info[event->event_id].flags;
     iter = event_target;
     IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
 
@@ -1414,8 +1421,8 @@ static void fire_event_obj(EventTarget *event_target, eventid_t eid, HTMLEventOb
     }
 
     for(i = 0; i < chain_cnt; i++) {
-        call_event_handlers(event_obj, target_chain[i], eid);
-        if(!(event_info[eid].flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
+        call_event_handlers(event_obj, target_chain[i], event->event_id);
+        if(!(event_flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
             break;
     }
 
@@ -1428,13 +1435,13 @@ static void fire_event_obj(EventTarget *event_target, eventid_t eid, HTMLEventOb
     if(event_obj && event_obj->prevent_default)
         prevent_default = TRUE;
 
-    if(event_info[eid].flags & EVENT_HASDEFAULTHANDLERS) {
+    if(event_flags & EVENT_HASDEFAULTHANDLERS) {
         for(i = 0; !prevent_default && i < chain_cnt; i++) {
             vtbl = dispex_get_vtbl(&target_chain[i]->dispex);
             if(!vtbl || !vtbl->handle_event_default)
                 continue;
-            hres = vtbl->handle_event_default(&event_target->dispex, eid,
-                    event_obj && event_obj->event ? event_obj->event->nsevent : NULL, &prevent_default);
+            hres = vtbl->handle_event_default(&event_target->dispex, event->event_id,
+                    event->nsevent, &prevent_default);
             if(FAILED(hres) || (event_obj && event_obj->cancel_bubble))
                 break;
         }
@@ -1445,9 +1452,9 @@ static void fire_event_obj(EventTarget *event_target, eventid_t eid, HTMLEventOb
     if(target_chain != target_chain_buf)
         heap_free(target_chain);
 
-    if(prevent_default && event_obj && event_obj->event && event_obj->event->nsevent) {
+    if(prevent_default) {
         TRACE("calling PreventDefault\n");
-        nsIDOMEvent_PreventDefault(event_obj->event->nsevent);
+        nsIDOMEvent_PreventDefault(event->nsevent);
     }
 }
 
@@ -1473,7 +1480,7 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, EventTarge
         event_obj->type = event_info + eid;
     }
 
-    fire_event_obj(target, eid, event_obj);
+    fire_event_obj(target, event, event_obj);
 
     if(event_obj)
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
@@ -1527,7 +1534,7 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
         hres = create_document_event(node->doc, eid, &event_obj->event);
 
     if(SUCCEEDED(hres))
-        fire_event_obj(&node->event_target, eid, event_obj);
+        fire_event_obj(&node->event_target, event_obj->event, event_obj);
 
     if(event_obj)
         IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
