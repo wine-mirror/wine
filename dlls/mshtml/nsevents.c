@@ -272,7 +272,11 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
 
         flush_pending_tasks(doc->basedoc.task_magic);
 
-        fire_event(doc, EVENTID_LOAD, TRUE, &doc->node.event_target, event);
+        hres = create_document_event(doc, EVENTID_LOAD, &load_event);
+        if(SUCCEEDED(hres)) {
+            fire_event_obj(&doc->node.event_target, load_event);
+            IDOMEvent_Release(&load_event->IDOMEvent_iface);
+        }
 
         hres = create_event_from_nsevent(event, &load_event);
         if(SUCCEEDED(hres)) {
