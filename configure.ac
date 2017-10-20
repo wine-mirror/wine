@@ -1629,7 +1629,9 @@ WINE_NOTICE_WITH(gsm,[test "x$ac_cv_lib_soname_gsm" = "x"],
 dnl **** Check for krb5 ****
 if test "x$with_krb5" != "xno"
 then
-    WINE_PACKAGE_FLAGS(KRB5,[krb5],,[`krb5-config --cflags`],[`krb5-config --libs`],
+    WINE_PACKAGE_FLAGS(KRB5,[krb5],,
+                       [`${KRB5_CONFIG:-krb5-config} --cflags 2>/dev/null`],
+                       [`${KRB5_CONFIG:-krb5-config} --libs 2>/dev/null`],
         [AC_CHECK_HEADERS([krb5/krb5.h])
          if test "$ac_cv_header_krb5_krb5_h" = "yes"
          then

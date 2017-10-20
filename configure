@@ -13753,13 +13753,13 @@ then
   KRB5_CFLAGS=`$PKG_CONFIG --cflags krb5 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || KRB5_CFLAGS=${KRB5_CFLAGS:-`krb5-config --cflags`}
+test "$cross_compiling" = yes || KRB5_CFLAGS=${KRB5_CFLAGS:-`${KRB5_CONFIG:-krb5-config} --cflags 2>/dev/null`}
 if ${KRB5_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
   KRB5_LIBS=`$PKG_CONFIG --libs krb5 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || KRB5_LIBS=${KRB5_LIBS:-`krb5-config --libs`}
+test "$cross_compiling" = yes || KRB5_LIBS=${KRB5_LIBS:-`${KRB5_CONFIG:-krb5-config} --libs 2>/dev/null`}
 
 $as_echo "$as_me:${as_lineno-$LINENO}: krb5 cflags: $KRB5_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: krb5 libs: $KRB5_LIBS" >&5
