@@ -2980,9 +2980,7 @@ static HRESULT WINAPI Storage_SetElementTimes(IStorage *iface, LPCOLESTR pwcsNam
 
 static HRESULT WINAPI Storage_SetClass(IStorage *iface, REFCLSID clsid)
 {
-todo_wine_if(!expect_Storage_SetClass)
     CHECK_EXPECT(Storage_SetClass);
-todo_wine_if(IsEqualIID(Storage_SetClass_CLSID, &CLSID_NULL))
     ok(IsEqualIID(clsid, Storage_SetClass_CLSID), "expected %s, got %s\n",
        wine_dbgstr_guid(Storage_SetClass_CLSID), wine_dbgstr_guid(clsid));
     return S_OK;
@@ -3491,7 +3489,6 @@ static void check_storage_contents(IStorage *stg, const struct storage_def *stg_
 
     hr = IStorage_Stat(stg, &stat, STATFLAG_NONAME);
     ok(hr == S_OK, "unexpected %#x\n", hr);
-todo_wine_if(!IsEqualCLSID(stg_def->clsid, &stat.clsid))
     ok(IsEqualCLSID(stg_def->clsid, &stat.clsid), "expected %s, got %s\n",
        wine_dbgstr_guid(stg_def->clsid), wine_dbgstr_guid(&stat.clsid));
 
@@ -3702,10 +3699,10 @@ todo_wine_if(test_data[i].in == &stg_def_4 || test_data[i].in == &stg_def_8 || t
 
         enumerated_streams = matched_streams = -1;
         check_storage_contents(doc2, test_data[i].out, &enumerated_streams, &matched_streams);
-todo_wine
+todo_wine_if(!(test_data[i].in == &stg_def_0 || test_data[i].in == &stg_def_1 || test_data[i].in == &stg_def_2))
         ok(enumerated_streams == matched_streams, "%d out: enumerated %d != matched %d\n", i,
            enumerated_streams, matched_streams);
-todo_wine
+todo_wine_if(!(test_data[i].in == &stg_def_0 || test_data[i].in == &stg_def_5))
         ok(enumerated_streams == test_data[i].out->stream_count, "%d: saved streams %d != def streams %d\n", i,
             enumerated_streams, test_data[i].out->stream_count);
 

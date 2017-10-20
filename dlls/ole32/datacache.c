@@ -1665,12 +1665,6 @@ static HRESULT WINAPI DataCache_Save(
         }
     }
 
-    /* this is a shortcut if nothing changed */
-    if (!dirty && !fSameAsLoad && This->presentationStorage)
-    {
-        return IStorage_CopyTo(This->presentationStorage, 0, NULL, NULL, pStg);
-    }
-
     /* assign stream numbers to the cache entries */
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
     {
