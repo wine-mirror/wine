@@ -2161,6 +2161,8 @@ static HRESULT WINAPI HTMLWindow6_get_maxConnectionsPerServer(IHTMLWindow6 *ifac
 static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VARIANT targetOrigin)
 {
     HTMLWindow *This = impl_from_IHTMLWindow6(iface);
+    DOMEvent *event;
+    HRESULT hres;
 
     FIXME("(%p)->(%s %s) semi-stub\n", This, debugstr_w(msg), debugstr_variant(&targetOrigin));
 
@@ -2169,7 +2171,12 @@ static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VAR
         return E_FAIL;
     }
 
-    fire_event(This->inner_window->doc, EVENTID_MESSAGE, TRUE, &This->inner_window->event_target, NULL);
+    hres = create_document_event(This->inner_window->doc, EVENTID_MESSAGE, &event);
+    if(FAILED(hres))
+        return hres;
+
+    fire_event_obj(&This->inner_window->event_target, event);
+    IDOMEvent_Release(&event->IDOMEvent_iface);
     return S_OK;
 }
 
