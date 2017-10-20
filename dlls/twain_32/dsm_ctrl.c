@@ -242,13 +242,14 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	}
 	newSource->hmod = hmod; 
 	newSource->dsEntry = (DSENTRYPROC)GetProcAddress(hmod, "DS_Entry"); 
+	/* Assign id for the opened data source */
+	pIdentity->Id = DSM_sourceId ++;
 	if (TWRC_SUCCESS != newSource->dsEntry (pOrigin, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, pIdentity)) {
 		DSM_twCC = TWCC_OPERATIONERROR;
                 HeapFree(GetProcessHeap(), 0, newSource);
+                DSM_sourceId--;
 		return TWRC_FAILURE;
 	}
-	/* Assign name and id for the opened data source */
-	pIdentity->Id = DSM_sourceId ++;
 	/* add the data source to an internal active source list */
 	newSource->next = activeSources;
 	newSource->identity.Id = pIdentity->Id;
