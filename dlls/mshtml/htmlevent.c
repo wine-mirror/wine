@@ -195,7 +195,7 @@ static const event_info_t event_info[] = {
 
 static BOOL use_event_quirks(EventTarget*);
 
-eventid_t str_to_eid(LPCWSTR str)
+static eventid_t str_to_eid(const WCHAR *str)
 {
     int i;
 

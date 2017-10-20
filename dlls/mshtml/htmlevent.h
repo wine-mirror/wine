@@ -71,7 +71,6 @@ typedef struct {
     BOOL no_event_obj;
 } DOMEvent;
 
-eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;
 void check_event_attr(HTMLDocumentNode*,nsIDOMHTMLElement*) DECLSPEC_HIDDEN;
 void release_event_target(EventTarget*) DECLSPEC_HIDDEN;
 void fire_event(HTMLDocumentNode*,eventid_t,BOOL,EventTarget*,nsIDOMEvent*) DECLSPEC_HIDDEN;
