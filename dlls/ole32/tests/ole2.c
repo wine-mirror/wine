@@ -3315,6 +3315,407 @@ todo_wine
     IOleCache2_Release(cache);
 }
 
+#define MAX_STREAM 16
+
+struct stream_def
+{
+    const char *name;
+    int cf;
+    DVASPECT dvAspect;
+    ADVF advf;
+    const void *data;
+    size_t data_size;
+};
+
+struct storage_def
+{
+    const CLSID *clsid;
+    int stream_count;
+    struct stream_def stream[MAX_STREAM];
+};
+
+static const struct storage_def stg_def_0 =
+{
+    &CLSID_NULL, 1,
+    {{ "Contents", -1, 0, 0, bmpimage, sizeof(bmpimage) }}
+};
+static const struct storage_def stg_def_0_saved =
+{
+    &CLSID_NULL, 0, {{ 0 }}
+};
+static const struct storage_def stg_def_1 =
+{
+    &CLSID_NULL, 2,
+    {{ "Contents", -1, 0, 0, NULL, 0 },
+    { "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 }}
+};
+static const struct storage_def stg_def_1_saved =
+{
+    &CLSID_NULL, 1,
+    {{ "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 }}
+};
+static const struct storage_def stg_def_2 =
+{
+    &CLSID_ManualResetEvent, 2,
+    {{ "Contents", -1, 0, 0, bmpimage, sizeof(bmpimage) },
+    { "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 }}
+};
+static const struct storage_def stg_def_2_saved =
+{
+    &CLSID_NULL, 1,
+    {{ "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 }}
+};
+static const struct storage_def stg_def_3 =
+{
+    &CLSID_NULL, 5,
+    {{ "Contents", -1, 0, 0, bmpimage, sizeof(bmpimage) },
+    { "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 },
+    { "\2OlePres001", CF_METAFILEPICT, DVASPECT_CONTENT, ADVF_PRIMEFIRST, mf_blank_bits, sizeof(mf_blank_bits) },
+    { "\2OlePres002", CF_DIB, DVASPECT_CONTENT, ADVF_PRIMEFIRST, bmpimage, sizeof(bmpimage) },
+    { "MyStream", -1, 0, 0, "Hello World!", 13 }}
+};
+static const struct storage_def stg_def_3_saved =
+{
+    &CLSID_NULL, 3,
+    {{ "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 },
+    { "\2OlePres001", CF_METAFILEPICT, DVASPECT_CONTENT, ADVF_PRIMEFIRST, mf_blank_bits, sizeof(mf_blank_bits) },
+    { "\2OlePres002", CF_DIB, DVASPECT_CONTENT, ADVF_PRIMEFIRST, bmpimage, sizeof(bmpimage) }}
+};
+static const struct storage_def stg_def_4 =
+{
+    &CLSID_Picture_EnhMetafile, 5,
+    {{ "Contents", -1, 0, 0, bmpimage, sizeof(bmpimage) },
+    { "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 },
+    { "\2OlePres001", CF_METAFILEPICT, DVASPECT_CONTENT, ADVF_PRIMEFIRST, mf_blank_bits, sizeof(mf_blank_bits) },
+    { "\2OlePres002", CF_DIB, DVASPECT_CONTENT, ADVF_PRIMEFIRST, bmpimage, sizeof(bmpimage) },
+    { "MyStream", -1, 0, 0, "Hello World!", 13 }}
+};
+static const struct storage_def stg_def_4_saved =
+{
+    &CLSID_NULL, 1,
+    {{ "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 }}
+};
+static const struct storage_def stg_def_5 =
+{
+    &CLSID_Picture_Dib, 5,
+    {{ "Contents", -1, 0, 0, bmpimage, sizeof(bmpimage) },
+    { "\2OlePres002", CF_DIB, DVASPECT_CONTENT, ADVF_PRIMEFIRST, bmpimage, sizeof(bmpimage) },
+    { "\2OlePres001", CF_METAFILEPICT, DVASPECT_CONTENT, ADVF_PRIMEFIRST, mf_blank_bits, sizeof(mf_blank_bits) },
+    { "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 },
+    { "MyStream", -1, 0, 0, "Hello World!", 13 }}
+};
+static const struct storage_def stg_def_5_saved =
+{
+    &CLSID_NULL, 1,
+    {{ "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 }}
+};
+static const struct storage_def stg_def_6 =
+{
+    &CLSID_Picture_Metafile, 5,
+    {{ "Contents", -1, 0, 0, bmpimage, sizeof(bmpimage) },
+    { "\2OlePres001", CF_METAFILEPICT, DVASPECT_CONTENT, ADVF_PRIMEFIRST, mf_blank_bits, sizeof(mf_blank_bits) },
+    { "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 },
+    { "\2OlePres002", CF_DIB, DVASPECT_CONTENT, ADVF_PRIMEFIRST, bmpimage, sizeof(bmpimage) },
+    { "MyStream", -1, 0, 0, "Hello World!", 13 }}
+};
+static const struct storage_def stg_def_6_saved =
+{
+    &CLSID_NULL, 1,
+    {{ "\2OlePres000", 0, DVASPECT_ICON, ADVF_PRIMEFIRST | ADVF_ONLYONCE, NULL, 0 }}
+};
+static const struct storage_def stg_def_7 =
+{
+    &CLSID_Picture_Dib, 1,
+    {{ "Contents", -1, 0, 0, bmpimage, sizeof(bmpimage) }}
+};
+static const struct storage_def stg_def_7_saved =
+{
+    &CLSID_NULL, 0, {{ 0 }}
+};
+static const struct storage_def stg_def_8 =
+{
+    &CLSID_Picture_Metafile, 1,
+    {{ "Contents", -1, 0, 0, mf_blank_bits, sizeof(mf_blank_bits) }}
+};
+static const struct storage_def stg_def_8_saved =
+{
+    &CLSID_NULL, 0, {{ 0 }}
+};
+static const struct storage_def stg_def_9 =
+{
+    &CLSID_Picture_EnhMetafile, 1,
+    {{ "Contents", -1, 0, 0, bmpimage, sizeof(bmpimage) }}
+};
+static const struct storage_def stg_def_9_saved =
+{
+    &CLSID_NULL, 0, {{ 0 }}
+};
+
+static int read_clipformat(IStream *stream)
+{
+    HRESULT hr;
+    ULONG bytes;
+    int length, clipformat = -2;
+
+    hr = IStream_Read(stream, &length, sizeof(length), &bytes);
+    if (hr != S_OK || bytes != sizeof(length))
+        return -2;
+    if (length == 0)
+        return 0;
+    if (length == -1)
+    {
+        hr = IStream_Read(stream, &clipformat, sizeof(clipformat), &bytes);
+        if (hr != S_OK || bytes != sizeof(clipformat))
+            return -2;
+    }
+    else
+        ok(0, "unhandled clipformat length %d\n", length);
+
+    return clipformat;
+}
+
+static void check_storage_contents(IStorage *stg, const struct storage_def *stg_def,
+        int *enumerated_streams, int *matched_streams)
+{
+    HRESULT hr;
+    IEnumSTATSTG *enumstg;
+    IStream *stream;
+    STATSTG stat;
+    int i, seen_stream[MAX_STREAM] = { 0 };
+
+    if (winetest_debug > 1)
+        trace("check_storage_contents:\n=============================================\n");
+
+    *enumerated_streams = 0;
+    *matched_streams = 0;
+
+    hr = IStorage_Stat(stg, &stat, STATFLAG_NONAME);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+todo_wine_if(!IsEqualCLSID(stg_def->clsid, &stat.clsid))
+    ok(IsEqualCLSID(stg_def->clsid, &stat.clsid), "expected %s, got %s\n",
+       wine_dbgstr_guid(stg_def->clsid), wine_dbgstr_guid(&stat.clsid));
+
+    hr = IStorage_EnumElements(stg, 0, NULL, 0, &enumstg);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    for (;;)
+    {
+        ULONG bytes;
+        int clipformat = -1;
+        PresentationDataHeader header;
+        char name[32];
+        BYTE data[256];
+
+        memset(&header, 0, sizeof(header));
+
+        hr = IEnumSTATSTG_Next(enumstg, 1, &stat, NULL);
+        if(hr == S_FALSE) break;
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        if (winetest_debug > 1)
+            trace("name %s, type %u, size %d, clsid %s\n",
+                wine_dbgstr_w(stat.pwcsName), stat.type, stat.cbSize.u.LowPart, wine_dbgstr_guid(&stat.clsid));
+
+        ok(stat.type == STGTY_STREAM, "unexpected %#x\n", stat.type);
+
+        WideCharToMultiByte(CP_ACP, 0, stat.pwcsName, -1, name, sizeof(name), NULL, NULL);
+
+        hr = IStorage_OpenStream(stg, stat.pwcsName, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        if (!memcmp(name, "\2OlePres", 7))
+        {
+            clipformat = read_clipformat(stream);
+
+            hr = IStream_Read(stream, &header, sizeof(header), &bytes);
+            ok(hr == S_OK, "unexpected %#x\n", hr);
+            ok(bytes >= 24, "read %u bytes\n", bytes);
+
+            if (winetest_debug > 1)
+                trace("header: unknown3 %#x, dvAspect %#x, lindex %#x, advf %#x, unknown7 %#x, dwObjectExtentX %#x, dwObjectExtentY %#x, dwSize %#x\n",
+                    header.unknown3, header.dvAspect, header.lindex, header.advf, header.unknown7,
+                    header.dwObjectExtentX, header.dwObjectExtentY, header.dwSize);
+        }
+
+        memset(data, 0, sizeof(data));
+        hr = IStream_Read(stream, data, sizeof(data), &bytes);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+        if (winetest_debug > 1)
+            trace("stream data (%u bytes): %02x %02x %02x %02x\n", bytes, data[0], data[1], data[2], data[3]);
+
+        for (i = 0; i < stg_def->stream_count; i++)
+        {
+            if (seen_stream[i]) continue;
+
+            if (winetest_debug > 1)
+                trace("%s/%s, %d/%d, %d/%d, %d/%d\n",
+                    stg_def->stream[i].name, name,
+                    stg_def->stream[i].cf, clipformat,
+                    stg_def->stream[i].dvAspect, header.dvAspect,
+                    stg_def->stream[i].advf, header.advf);
+
+            if (!strcmp(stg_def->stream[i].name, name) &&
+                stg_def->stream[i].cf == clipformat &&
+                stg_def->stream[i].dvAspect == header.dvAspect &&
+                stg_def->stream[i].advf == header.advf &&
+                stg_def->stream[i].data_size <= bytes &&
+                (!stg_def->stream[i].data_size ||
+                    (!memcmp(stg_def->stream[i].data, data, min(stg_def->stream[i].data_size, bytes)))))
+            {
+                if (winetest_debug > 1)
+                    trace("stream %d matches def stream %d\n", *enumerated_streams, i);
+                seen_stream[i] = 1;
+                *matched_streams += 1;
+            }
+        }
+
+        CoTaskMemFree(stat.pwcsName);
+        IStream_Release(stream);
+
+        *enumerated_streams += 1;
+    }
+}
+
+static IStorage *create_storage_from_def(const struct storage_def *stg_def)
+{
+    HRESULT hr;
+    IStorage *stg;
+    IStream *stm;
+    int i;
+
+    hr = StgCreateDocfile(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &stg);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    hr = IStorage_SetClass(stg, stg_def->clsid);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    for (i = 0; i < stg_def->stream_count; i++)
+    {
+        WCHAR name[32];
+
+        MultiByteToWideChar(CP_ACP, 0, stg_def->stream[i].name, -1, name, 32);
+        hr = IStorage_CreateStream(stg, name, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        if (stg_def->stream[i].cf != -1)
+        {
+            int clipformat[2];
+            PresentationDataHeader hdr;
+
+            if (stg_def->stream[i].cf)
+            {
+                clipformat[0] = -1;
+                clipformat[1] = stg_def->stream[i].cf;
+                hr = IStream_Write(stm, clipformat, sizeof(clipformat), NULL);
+            }
+            else
+            {
+                clipformat[0] = 0;
+                hr = IStream_Write(stm, &clipformat[0], sizeof(clipformat[0]), NULL);
+            }
+            ok(hr == S_OK, "unexpected %#x\n", hr);
+
+            hdr.unknown3 = 4;
+            hdr.dvAspect = stg_def->stream[i].dvAspect;
+            hdr.lindex = -1;
+            hdr.advf = stg_def->stream[i].advf;
+            hdr.unknown7 = 0;
+            hdr.dwObjectExtentX = 0;
+            hdr.dwObjectExtentY = 0;
+            hdr.dwSize = stg_def->stream[i].data_size;
+            hr = IStream_Write(stm, &hdr, sizeof(hdr), NULL);
+            ok(hr == S_OK, "unexpected %#x\n", hr);
+        }
+
+        if (stg_def->stream[i].data_size)
+        {
+            hr = IStream_Write(stm, stg_def->stream[i].data, stg_def->stream[i].data_size, NULL);
+            ok(hr == S_OK, "unexpected %#x\n", hr);
+        }
+
+        IStream_Release(stm);
+    }
+
+    return stg;
+}
+
+static void test_data_cache_contents(void)
+{
+    HRESULT hr;
+    IStorage *doc1, *doc2;
+    IOleCache2 *cache;
+    IPersistStorage *stg;
+    int i, enumerated_streams, matched_streams;
+    static const struct
+    {
+        const struct storage_def *in;
+        const struct storage_def *out;
+    } test_data[] =
+    {
+        { &stg_def_0, &stg_def_0_saved },
+        { &stg_def_1, &stg_def_1_saved },
+        { &stg_def_2, &stg_def_2_saved },
+        { &stg_def_3, &stg_def_3_saved },
+        { &stg_def_4, &stg_def_4_saved },
+        { &stg_def_5, &stg_def_5_saved },
+        { &stg_def_6, &stg_def_6_saved },
+        { &stg_def_7, &stg_def_7_saved },
+        { &stg_def_8, &stg_def_8_saved },
+        { &stg_def_9, &stg_def_9_saved },
+    };
+
+    for (i = 0; i < sizeof(test_data)/sizeof(test_data[0]); i++)
+    {
+        if (winetest_debug > 1)
+            trace("start testing storage def %d\n", i);
+
+        doc1 = create_storage_from_def(test_data[i].in);
+        if (!doc1) continue;
+
+        enumerated_streams = matched_streams = -1;
+        check_storage_contents(doc1, test_data[i].in, &enumerated_streams, &matched_streams);
+        ok(enumerated_streams == matched_streams, "%d in: enumerated %d != matched %d\n", i,
+           enumerated_streams, matched_streams);
+        ok(enumerated_streams == test_data[i].in->stream_count, "%d: created %d != def streams %d\n", i,
+           enumerated_streams, test_data[i].in->stream_count);
+
+        hr = CreateDataCache(NULL, &CLSID_NULL, &IID_IUnknown, (void **)&cache);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+        hr = IOleCache2_QueryInterface(cache, &IID_IPersistStorage, (void **)&stg);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+        hr = IPersistStorage_Load(stg, doc1);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        IStorage_Release(doc1);
+
+        hr = StgCreateDocfile(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &doc2);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        hr = IPersistStorage_IsDirty(stg);
+todo_wine_if(test_data[i].in == &stg_def_4 || test_data[i].in == &stg_def_8 || test_data[i].in == &stg_def_9)
+        ok(hr == S_FALSE, "%d: unexpected %#x\n", i, hr);
+
+        hr = IPersistStorage_Save(stg, doc2, FALSE);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        IPersistStorage_Release(stg);
+
+        enumerated_streams = matched_streams = -1;
+        check_storage_contents(doc2, test_data[i].out, &enumerated_streams, &matched_streams);
+todo_wine
+        ok(enumerated_streams == matched_streams, "%d out: enumerated %d != matched %d\n", i,
+           enumerated_streams, matched_streams);
+todo_wine
+        ok(enumerated_streams == test_data[i].out->stream_count, "%d: saved streams %d != def streams %d\n", i,
+            enumerated_streams, test_data[i].out->stream_count);
+
+        IStorage_Release(doc2);
+
+        if (winetest_debug > 1)
+            trace("done testing storage def %d\n", i);
+    }
+}
+
 START_TEST(ole2)
 {
     DWORD dwRegister;
@@ -3362,6 +3763,7 @@ START_TEST(ole2)
     test_OleDraw();
     test_OleDoAutoConvert();
     test_data_cache_save();
+    test_data_cache_contents();
 
     CoUninitialize();
 }
