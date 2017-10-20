@@ -297,7 +297,7 @@ DEFINE_CXX_DATA1(bad_alloc, &exception_cxx_type_info, MSVCP_bad_alloc_dtor)
 /* logic_error class data */
 typedef struct {
     exception e;
-#ifndef _MSVCIRT
+#if _MSVCP_VER <= 90 && !defined _MSVCIRT
     basic_string_char str;
 #endif
 } logic_error;
@@ -308,12 +308,15 @@ DEFINE_THISCALL_WRAPPER(MSVCP_logic_error_ctor, 8)
 logic_error* __thiscall MSVCP_logic_error_ctor( logic_error *this, exception_name name )
 {
     TRACE("%p %s\n", this, EXCEPTION_STR(name));
-#ifdef _MSVCIRT
-    MSVCP_exception_ctor(&this->e, name);
+#if _MSVCP_VER <= 90 && !defined _MSVCIRT
+#if _MSVCP_VER == 60
+    MSVCP_exception_ctor(&this->e, "");
 #else
-    this->e.name = NULL;
-    this->e.do_free = FALSE;
+    MSVCP_exception_ctor(&this->e, NULL);
+#endif
     MSVCP_basic_string_char_ctor_cstr(&this->str, EXCEPTION_STR(name));
+#else
+    MSVCP_exception_ctor(&this->e, name);
 #endif
     this->e.vtable = &MSVCP_logic_error_vtable;
     return this;
@@ -327,7 +330,7 @@ logic_error* __thiscall MSVCP_logic_error_copy_ctor(
 {
     TRACE("%p %p\n", this, rhs);
     MSVCP_exception_copy_ctor(&this->e, &rhs->e);
-#ifndef _MSVCIRT
+#if _MSVCP_VER <= 90 && !defined _MSVCIRT
     MSVCP_basic_string_char_copy_ctor(&this->str, &rhs->str);
 #endif
     this->e.vtable = &MSVCP_logic_error_vtable;
@@ -357,7 +360,7 @@ void __thiscall MSVCP_logic_error_dtor(logic_error *this)
 {
     TRACE("%p\n", this);
     MSVCP_exception_dtor(&this->e);
-#ifndef _MSVCIRT
+#if _MSVCP_VER <= 90 && !defined _MSVCIRT
     MSVCP_basic_string_char_dtor(&this->str);
 #endif
 }
@@ -408,7 +411,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_logic_error_what, 4)
 const char* __thiscall MSVCP_logic_error_what(logic_error *this)
 {
     TRACE("%p\n", this);
-#ifdef _MSVCIRT
+#if _MSVCP_VER > 90 || defined _MSVCIRT
     return MSVCP_exception_what( &this->e );
 #else
     return MSVCP_basic_string_char_c_str(&this->str);
@@ -543,18 +546,23 @@ DEFINE_CXX_DATA2(invalid_argument, &logic_error_cxx_type_info,  &exception_cxx_t
 /* runtime_error class data */
 typedef struct {
     exception e;
+#if _MSVCP_VER <= 90 && !defined _MSVCIRT
     basic_string_char str;
+#endif
 } runtime_error;
 
 static runtime_error* MSVCP_runtime_error_ctor( runtime_error *this, exception_name name )
 {
     TRACE("%p %s\n", this, EXCEPTION_STR(name));
-#ifdef _MSVCIRT
-    MSVCP_exception_ctor(&this->e, name);
+#if _MSVCP_VER <= 90 && !defined _MSVCIRT
+#if _MSVCP_VER == 60
+    MSVCP_exception_ctor(&this->e, "");
 #else
-    this->e.name = NULL;
-    this->e.do_free = FALSE;
+    MSVCP_exception_ctor(&this->e, NULL);
+#endif
     MSVCP_basic_string_char_ctor_cstr(&this->str, EXCEPTION_STR(name));
+#else
+    MSVCP_exception_ctor(&this->e, name);
 #endif
     this->e.vtable = &MSVCP_runtime_error_vtable;
     return this;
@@ -568,7 +576,7 @@ runtime_error* __thiscall MSVCP_runtime_error_copy_ctor(
 {
     TRACE("%p %p\n", this, rhs);
     MSVCP_exception_copy_ctor(&this->e, &rhs->e);
-#ifndef _MSVCIRT
+#if _MSVCP_VER <= 90 && !defined _MSVCIRT
     MSVCP_basic_string_char_copy_ctor(&this->str, &rhs->str);
 #endif
     this->e.vtable = &MSVCP_runtime_error_vtable;
@@ -596,7 +604,7 @@ void __thiscall MSVCP_runtime_error_dtor(runtime_error *this)
 {
     TRACE("%p\n", this);
     MSVCP_exception_dtor(&this->e);
-#ifndef _MSVCIRT
+#if _MSVCP_VER <= 90 && !defined _MSVCIRT
     MSVCP_basic_string_char_dtor(&this->str);
 #endif
 }
@@ -637,7 +645,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_runtime_error_what, 4)
 const char* __thiscall MSVCP_runtime_error_what(runtime_error *this)
 {
     TRACE("%p\n", this);
-#ifdef _MSVCIRT
+#if _MSVCP_VER > 90 || defined _MSVCIRT
     return MSVCP_exception_what( &this->e );
 #else
     return MSVCP_basic_string_char_c_str(&this->str);
@@ -911,7 +919,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(MSVCP_exception_what));
     EXCEPTION_VTABLE(range_error,
             VTABLE_ADD_FUNC(MSVCP_runtime_error_vector_dtor)
-            VTABLE_ADD_FUNC(MSVCP_exception_what));
+            VTABLE_ADD_FUNC(MSVCP_runtime_error_what));
 #ifndef __GNUC__
 }
 #endif
