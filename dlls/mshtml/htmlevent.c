@@ -223,7 +223,7 @@ static eventid_t attr_to_eid(const WCHAR *str)
     return EVENTID_LAST;
 }
 
-struct HTMLEventObj {
+typedef struct {
     DispatchEx dispex;
     IHTMLEventObj IHTMLEventObj_iface;
 
@@ -232,7 +232,7 @@ struct HTMLEventObj {
     const event_info_t *type;
     DOMEvent *event;
     VARIANT return_value;
-};
+} HTMLEventObj;
 
 static inline HTMLEventObj *impl_from_IHTMLEventObj(IHTMLEventObj *iface)
 {
@@ -1204,7 +1204,7 @@ static HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)
     return hres;
 }
 
-static HRESULT call_cp_func(IDispatch *disp, DISPID dispid, HTMLEventObj *event_obj, VARIANT *retv)
+static HRESULT call_cp_func(IDispatch *disp, DISPID dispid, IHTMLEventObj *event_obj, VARIANT *retv)
 {
     DISPPARAMS dp = {NULL,NULL,0,0};
     VARIANT event_arg;
@@ -1213,7 +1213,7 @@ static HRESULT call_cp_func(IDispatch *disp, DISPID dispid, HTMLEventObj *event_
 
     if(event_obj) {
         V_VT(&event_arg) = VT_DISPATCH;
-        V_DISPATCH(&event_arg) = (IDispatch*)&event_obj->IHTMLEventObj_iface;
+        V_DISPATCH(&event_arg) = (IDispatch*)event_obj;
         dp.rgvarg = &event_arg;
         dp.cArgs = 1;
     }
@@ -1252,7 +1252,7 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
     return FALSE;
 }
 
-void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, DOMEvent *event)
+void call_event_handlers(EventTarget *event_target, DOMEvent *event)
 {
     const eventid_t eid = event->event_id;
     handler_vector_t *handler_vector = get_handler_vector(event_target, eid, FALSE);
@@ -1299,7 +1299,7 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, DOM
         int i;
 
         V_VT(&arg) = VT_DISPATCH;
-        V_DISPATCH(&arg) = (IDispatch*)&event_obj->dispex.IDispatchEx_iface;
+        V_DISPATCH(&arg) = (IDispatch*)event->event_obj;
 
         i = handler_vector->handler_cnt;
         while(i--) {
@@ -1347,7 +1347,7 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, DOM
 
                     TRACE("cp %s [%u] >>>\n", debugstr_w(event_info[eid].name), i);
                     hres = call_cp_func(cp->sinks[i].disp, event_info[eid].dispid,
-                            cp->data->pass_event_arg ? event_obj : NULL, &v);
+                            cp->data->pass_event_arg ? event->event_obj : NULL, &v);
                     if(hres == S_OK) {
                         TRACE("cp %s [%u] <<<\n", debugstr_w(event_info[eid].name), i);
 
@@ -1370,11 +1370,12 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, DOM
     }
 }
 
-static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEventObj *event_obj)
+static void fire_event_obj(EventTarget *event_target, DOMEvent *event)
 {
     EventTarget *target_chain_buf[8], **target_chain = target_chain_buf;
     unsigned chain_cnt, chain_buf_size, i;
     const event_target_vtbl_t *vtbl, *target_vtbl;
+    HTMLEventObj *event_obj_ref = NULL;
     IHTMLEventObj *prev_event = NULL;
     EventTarget *iter;
     DWORD event_flags;
@@ -1418,15 +1419,23 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
         iter = vtbl->get_parent_event_target(&iter->dispex);
     } while(iter);
 
+    if(!event->event_obj && !event->no_event_obj) {
+        event_obj_ref = alloc_event_obj(event);
+        if(event_obj_ref) {
+            event_obj_ref->type = event_info + event->event_id;
+            event->event_obj = &event_obj_ref->IHTMLEventObj_iface;
+        }
+    }
+
     target_vtbl = dispex_get_vtbl(&event_target->dispex);
     if(target_vtbl && target_vtbl->set_current_event)
-        prev_event = target_vtbl->set_current_event(&event_target->dispex, event_obj ? &event_obj->IHTMLEventObj_iface : NULL);
+        prev_event = target_vtbl->set_current_event(&event_target->dispex, event->event_obj);
 
     event->target = event_target;
     IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
 
     for(i = 0; i < chain_cnt; i++) {
-        call_event_handlers(event_obj, target_chain[i], event);
+        call_event_handlers(target_chain[i], event);
         if(!(event_flags & EVENT_BUBBLES) || event->stop_propagation)
             break;
     }
@@ -1452,6 +1461,11 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
         }
     }
 
+    if(event_obj_ref) {
+        event->event_obj = NULL;
+        IHTMLEventObj_Release(&event_obj_ref->IHTMLEventObj_iface);
+    }
+
     for(i = 0; i < chain_cnt; i++)
         IDispatchEx_Release(&target_chain[i]->dispex.IDispatchEx_iface);
     if(target_chain != target_chain_buf)
@@ -1460,7 +1474,6 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
 
 void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, EventTarget *target, nsIDOMEvent *nsevent)
 {
-    HTMLEventObj *event_obj = NULL;
     DOMEvent *event;
     HRESULT hres;
 
@@ -1471,19 +1484,11 @@ void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, EventTarge
     if(FAILED(hres))
         return;
 
-    if(set_event) {
-        event_obj = alloc_event_obj(event);
-        if(!event_obj) {
-            IDOMEvent_Release(&event->IDOMEvent_iface);
-            return;
-        }
-        event_obj->type = event_info + eid;
-    }
+    if(!set_event)
+        event->no_event_obj = TRUE;
 
-    fire_event_obj(target, event, event_obj);
+    fire_event_obj(target, event);
 
-    if(event_obj)
-        IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
     IDOMEvent_Release(&event->IDOMEvent_iface);
 }
 
@@ -1533,11 +1538,13 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
     if(!event_obj->event)
         hres = create_document_event(node->doc, eid, &event_obj->event);
 
-    if(SUCCEEDED(hres))
-        fire_event_obj(&node->event_target, event_obj->event, event_obj);
+    if(SUCCEEDED(hres)) {
+        event_obj->event->event_obj = &event_obj->IHTMLEventObj_iface;
+        fire_event_obj(&node->event_target, event_obj->event);
+        event_obj->event->event_obj = NULL;
+    }
 
-    if(event_obj)
-        IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
+    IHTMLEventObj_Release(&event_obj->IHTMLEventObj_iface);
     if(FAILED(hres))
         return hres;
 

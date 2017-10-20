@@ -66,6 +66,9 @@ typedef struct {
     EventTarget *target;
     BOOL prevent_default;
     BOOL stop_propagation;
+
+    IHTMLEventObj *event_obj;
+    BOOL no_event_obj;
 } DOMEvent;
 
 eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;
@@ -84,8 +87,7 @@ HRESULT create_event_obj(IHTMLEventObj**) DECLSPEC_HIDDEN;
 void bind_target_event(HTMLDocumentNode*,EventTarget*,const WCHAR*,IDispatch*) DECLSPEC_HIDDEN;
 HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode*,eventid_t) DECLSPEC_HIDDEN;
 
-typedef struct HTMLEventObj HTMLEventObj;
-void call_event_handlers(HTMLEventObj*,EventTarget*,DOMEvent*);
+void call_event_handlers(EventTarget*,DOMEvent*);
 
 HRESULT create_document_event_str(HTMLDocumentNode*,const WCHAR*,IDOMEvent**) DECLSPEC_HIDDEN;
 HRESULT create_event_from_nsevent(nsIDOMEvent*,DOMEvent**) DECLSPEC_HIDDEN;
