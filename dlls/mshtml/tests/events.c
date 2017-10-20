@@ -2550,6 +2550,9 @@ static void test_create_event(IHTMLDocument2 *doc)
     hres = IDOMEvent_preventDefault(event);
     ok(hres == S_OK, "preventDefault failed: %08x\n", hres);
 
+    hres = IDOMEvent_stopPropagation(event);
+    ok(hres == S_OK, "stopPropagation failed: %08x\n", hres);
+
     IDOMEvent_Release(event);
 
     IDocumentEvent_Release(doc_event);

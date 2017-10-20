@@ -65,6 +65,7 @@ typedef struct {
     eventid_t event_id;
     EventTarget *target;
     BOOL prevent_default;
+    BOOL stop_propagation;
 } DOMEvent;
 
 eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;

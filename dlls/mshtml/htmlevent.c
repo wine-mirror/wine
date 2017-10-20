@@ -232,7 +232,6 @@ struct HTMLEventObj {
     const event_info_t *type;
     DOMEvent *event;
     VARIANT return_value;
-    BOOL cancel_bubble;
 };
 
 static inline HTMLEventObj *impl_from_IHTMLEventObj(IHTMLEventObj *iface)
@@ -455,7 +454,8 @@ static HRESULT WINAPI HTMLEventObj_put_cancelBubble(IHTMLEventObj *iface, VARIAN
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    This->cancel_bubble = !!v;
+    if(This->event)
+        IDOMEvent_stopPropagation(&This->event->IDOMEvent_iface);
     return S_OK;
 }
 
@@ -465,7 +465,7 @@ static HRESULT WINAPI HTMLEventObj_get_cancelBubble(IHTMLEventObj *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->cancel_bubble ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = This->event && This->event->stop_propagation ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }
 
@@ -984,8 +984,13 @@ static HRESULT WINAPI DOMEvent_preventDefault(IDOMEvent *iface)
 static HRESULT WINAPI DOMEvent_stopPropagation(IDOMEvent *iface)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    This->stop_propagation = TRUE;
+    nsIDOMEvent_StopPropagation(This->nsevent);
+    IDOMEvent_preventDefault(&This->IDOMEvent_iface);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_stopImmediatePropagation(IDOMEvent *iface)
@@ -1422,7 +1427,7 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
 
     for(i = 0; i < chain_cnt; i++) {
         call_event_handlers(event_obj, target_chain[i], event);
-        if(!(event_flags & EVENT_BUBBLES) || (event_obj && event_obj->cancel_bubble))
+        if(!(event_flags & EVENT_BUBBLES) || event->stop_propagation)
             break;
     }
 
@@ -1440,7 +1445,7 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
                 continue;
             hres = vtbl->handle_event_default(&event_target->dispex, event->event_id,
                     event->nsevent, &prevent_default);
-            if(FAILED(hres) || (event_obj && event_obj->cancel_bubble))
+            if(FAILED(hres) || event->stop_propagation)
                 break;
             if(prevent_default)
                 IDOMEvent_preventDefault(&event->IDOMEvent_iface);
