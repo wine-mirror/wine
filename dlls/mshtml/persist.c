@@ -454,14 +454,14 @@ static void notif_readystate(HTMLOuterWindow *window)
     hres = create_document_event(window->base.inner_window->doc, EVENTID_READYSTATECHANGE, &event);
     if(SUCCEEDED(hres)) {
         event->no_event_obj = TRUE;
-        fire_event_obj(&window->base.inner_window->doc->node.event_target, event);
+        dispatch_event(&window->base.inner_window->doc->node.event_target, event);
         IDOMEvent_Release(&event->IDOMEvent_iface);
     }
 
     if(window->frame_element) {
         hres = create_document_event(window->frame_element->element.node.doc, EVENTID_READYSTATECHANGE, &event);
         if(SUCCEEDED(hres)) {
-            fire_event_obj(&window->frame_element->element.node.event_target, event);
+            dispatch_event(&window->frame_element->element.node.event_target, event);
             IDOMEvent_Release(&event->IDOMEvent_iface);
         }
     }

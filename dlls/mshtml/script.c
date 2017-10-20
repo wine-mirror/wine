@@ -733,7 +733,7 @@ static void dispatch_script_readystatechange_event(HTMLScriptElement *script)
     if(FAILED(hres))
         return;
 
-    fire_event_obj(&script->element.node.event_target, event);
+    dispatch_event(&script->element.node.event_target, event);
     IDOMEvent_Release(&event->IDOMEvent_iface);
 }
 

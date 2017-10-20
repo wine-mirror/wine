@@ -2175,7 +2175,7 @@ static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VAR
     if(FAILED(hres))
         return hres;
 
-    fire_event_obj(&This->inner_window->event_target, event);
+    dispatch_event(&This->inner_window->event_target, event);
     IDOMEvent_Release(&event->IDOMEvent_iface);
     return S_OK;
 }

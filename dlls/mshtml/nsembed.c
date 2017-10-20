@@ -1502,7 +1502,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
 
     hres = create_event_from_nsevent(aEvent, &event);
     if(SUCCEEDED(hres)) {
-        fire_event_obj(&node->event_target, event);
+        dispatch_event(&node->event_target, event);
         IDOMEvent_Release(&event->IDOMEvent_iface);
     }
 

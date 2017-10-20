@@ -3526,7 +3526,7 @@ static HRESULT WINAPI HTMLElement3_fireEvent(IHTMLElement3 *iface, BSTR bstrEven
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(bstrEventName), debugstr_variant(pvarEventObject),
           pfCancelled);
 
-    return dispatch_event(&This->node, bstrEventName, pvarEventObject, pfCancelled);
+    return fire_event(&This->node, bstrEventName, pvarEventObject, pfCancelled);
 }
 
 static HRESULT WINAPI HTMLElement3_put_onresizestart(IHTMLElement3 *iface, VARIANT v)
@@ -5196,7 +5196,7 @@ HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *eve
 
                 hres = create_document_event(This->node.doc, EVENTID_HELP, &help_event);
                 if(SUCCEEDED(hres)) {
-                    fire_event_obj(&This->node.event_target, help_event);
+                    dispatch_event(&This->node.event_target, help_event);
                     IDOMEvent_Release(&help_event->IDOMEvent_iface);
                 }
                 *prevent_default = TRUE;

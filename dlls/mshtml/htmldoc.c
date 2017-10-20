@@ -2679,7 +2679,7 @@ static HRESULT WINAPI HTMLDocument4_fireEvent(IHTMLDocument4 *iface, BSTR bstrEv
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(bstrEventName), pvarEventObject, pfCanceled);
 
-    return dispatch_event(&This->doc_node->node, bstrEventName, pvarEventObject, pfCanceled);
+    return fire_event(&This->doc_node->node, bstrEventName, pvarEventObject, pfCanceled);
 }
 
 static HRESULT WINAPI HTMLDocument4_createRenderStyle(IHTMLDocument4 *iface, BSTR v,

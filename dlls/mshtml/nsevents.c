@@ -274,13 +274,13 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
 
         hres = create_document_event(doc, EVENTID_LOAD, &load_event);
         if(SUCCEEDED(hres)) {
-            fire_event_obj(&doc->node.event_target, load_event);
+            dispatch_event(&doc->node.event_target, load_event);
             IDOMEvent_Release(&load_event->IDOMEvent_iface);
         }
 
         hres = create_event_from_nsevent(event, &load_event);
         if(SUCCEEDED(hres)) {
-            fire_event_obj(&doc->window->event_target, load_event);
+            dispatch_event(&doc->window->event_target, load_event);
             IDOMEvent_Release(&load_event->IDOMEvent_iface);
         }
     }else {
@@ -340,12 +340,12 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
 
         hres = create_document_event(doc, event->event_id == EVENTID_FOCUS ? EVENTID_FOCUSIN : EVENTID_FOCUSOUT, &focus_event);
         if(SUCCEEDED(hres)) {
-            fire_event_obj(&node->event_target, focus_event);
+            dispatch_event(&node->event_target, focus_event);
             IDOMEvent_Release(&focus_event->IDOMEvent_iface);
         }
     }
 
-    fire_event_obj(&node->event_target, event);
+    dispatch_event(&node->event_target, event);
 
     IDOMEvent_Release(&event->IDOMEvent_iface);
     node_release(node);

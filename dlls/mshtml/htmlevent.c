@@ -1370,7 +1370,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
     }
 }
 
-void fire_event_obj(EventTarget *event_target, DOMEvent *event)
+void dispatch_event(EventTarget *event_target, DOMEvent *event)
 {
     EventTarget *target_chain_buf[8], **target_chain = target_chain_buf;
     unsigned chain_cnt, chain_buf_size, i;
@@ -1472,7 +1472,7 @@ void fire_event_obj(EventTarget *event_target, DOMEvent *event)
         heap_free(target_chain);
 }
 
-HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_var, VARIANT_BOOL *cancelled)
+HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_var, VARIANT_BOOL *cancelled)
 {
     HTMLEventObj *event_obj = NULL;
     eventid_t eid;
@@ -1520,7 +1520,7 @@ HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *even
 
     if(SUCCEEDED(hres)) {
         event_obj->event->event_obj = &event_obj->IHTMLEventObj_iface;
-        fire_event_obj(&node->event_target, event_obj->event);
+        dispatch_event(&node->event_target, event_obj->event);
         event_obj->event->event_obj = NULL;
     }
 
