@@ -43,6 +43,29 @@ typedef struct
     MSVCP_size_t res;
 } basic_string_wchar;
 
+typedef void (*vtable_ptr)(void);
+typedef struct __exception
+{
+    const vtable_ptr *vtable;
+    char *name;
+    int do_free;
+} exception;
+
+typedef struct {
+    exception e;
+    basic_string_char str;
+} runtime_error;
+
+typedef struct {
+    exception e;
+    basic_string_char str;
+} range_error;
+
+typedef struct {
+    exception e;
+    basic_string_char str;
+} logic_error;
+
 static basic_string_char* (__cdecl *p_basic_string_char_concatenate)(basic_string_char*, const basic_string_char*, const basic_string_char*);
 static basic_string_char* (__cdecl *p_basic_string_char_concatenate_cstr)(basic_string_char*, const basic_string_char*, const char*);
 
@@ -85,6 +108,17 @@ static const wchar_t* (__thiscall *p_basic_string_wchar_data)(basic_string_wchar
 static size_t (__thiscall *p_basic_string_wchar_size)(basic_string_wchar*);
 static size_t (__thiscall *p_basic_string_wchar_capacity)(basic_string_wchar*);
 static void (__thiscall *p_basic_string_wchar_swap)(basic_string_wchar*, basic_string_wchar*);
+
+static runtime_error* (__thiscall *p_runtime_error_ctor_bstr)(runtime_error*, const basic_string_char*);
+static void (__thiscall *p_runtime_error_dtor)(runtime_error*);
+static const char *(__thiscall *p_runtime_error_what)(runtime_error*);
+
+static range_error* (__thiscall *p_range_error_ctor_bstr)(range_error*, const basic_string_char*);
+static void (__thiscall *p_range_error_dtor)(range_error*);
+
+static logic_error* (__thiscall *p_logic_error_ctor_bstr)(logic_error*, const basic_string_char*);
+static void (__thiscall *p_logic_error_dtor)(logic_error*);
+static const char *(__thiscall *p_logic_error_what)(logic_error*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -226,6 +260,25 @@ static BOOL init(void)
                 "?capacity@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KXZ");
         SET(p_basic_string_wchar_swap,
                 "?swap@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXAEAV12@@Z");
+
+        SET(p_runtime_error_ctor_bstr,
+                "??0runtime_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z");
+        SET(p_runtime_error_dtor,
+                "??1runtime_error@std@@UEAA@XZ");
+        SET(p_runtime_error_what,
+                "?what@runtime_error@std@@UEBAPEBDXZ");
+
+        SET(p_range_error_ctor_bstr,
+                "??0range_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z");
+        SET(p_range_error_dtor,
+                "??1range_error@std@@UEAA@XZ");
+
+        SET(p_logic_error_ctor_bstr,
+                "??0logic_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z");
+        SET(p_logic_error_dtor,
+                "??1logic_error@std@@UEAA@XZ");
+        SET(p_logic_error_what,
+                "?what@logic_error@std@@UEBAPEBDXZ");
     } else {
         SET(p_basic_string_char_ctor,
                 "??_F?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ");
@@ -292,6 +345,25 @@ static BOOL init(void)
                 "?capacity@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ");
         SET(p_basic_string_wchar_swap,
                 "?swap@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXAAV12@@Z");
+
+        SET(p_runtime_error_ctor_bstr,
+                "??0runtime_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z");
+        SET(p_runtime_error_dtor,
+                "??1runtime_error@std@@UAE@XZ");
+        SET(p_runtime_error_what,
+                "?what@runtime_error@std@@UBEPBDXZ");
+
+        SET(p_range_error_ctor_bstr,
+                "??0range_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z");
+        SET(p_range_error_dtor,
+                "??1range_error@std@@UAE@XZ");
+
+        SET(p_logic_error_ctor_bstr,
+                "??0logic_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z");
+        SET(p_logic_error_dtor,
+                "??1logic_error@std@@UAE@XZ");
+        SET(p_logic_error_what,
+                "?what@logic_error@std@@UBEPBDXZ");
     }
 
     init_thiscall_thunk();
@@ -687,6 +759,59 @@ static void test_basic_string_wchar_swap(void) {
     call_func1(p_basic_string_wchar_dtor, &str2);
 }
 
+static void test_exception(void)
+{
+    const char *name = "test";
+    const char *what;
+    basic_string_char str;
+    runtime_error re;
+    range_error ra;
+    logic_error le;
+
+    call_func3(p_basic_string_char_ctor_cstr_alloc, &str, name, &fake_allocator);
+
+    /* runtime_error */
+    memset(&re, 0, sizeof(re));
+    what = call_func1(p_runtime_error_what, &re);
+    ok(!strcmp("", what), "what = %s\n", what);
+
+    memset(&re, 0xff, sizeof(re));
+    call_func2(p_runtime_error_ctor_bstr, &re, &str);
+    ok(!strcmp(re.e.name, ""), "re.e.name = %s\n", re.e.name);
+    ok(re.e.do_free, "re.e.do_free == FALSE\n");
+    what = call_func1(p_runtime_error_what, &re);
+    ok(!strcmp(name, what), "what = %s\n", what);
+    call_func1(p_runtime_error_dtor, &re);
+
+    /* range_error */
+    memset(&ra, 0, sizeof(ra));
+    what = call_func1(p_runtime_error_what, (runtime_error*)&ra);
+    ok(!strcmp("", what), "what = %s\n", what);
+
+    memset(&ra, 0xff, sizeof(ra));
+    call_func2(p_range_error_ctor_bstr, &ra, &str);
+    ok(!strcmp(ra.e.name, ""), "ra.e.name = %s\n", ra.e.name);
+    ok(ra.e.do_free, "ra.e.do_free == FALSE\n");
+    what = call_func1(p_runtime_error_what, (runtime_error*)&ra);
+    ok(!strcmp(name, what), "what = %s\n", what);
+    call_func1(p_range_error_dtor, &ra);
+
+    /* logic_error */
+    memset(&le, 0, sizeof(le));
+    what = call_func1(p_logic_error_what, &le);
+    ok(!strcmp("", what), "what = %s\n", what);
+
+    memset(&le, 0xff, sizeof(le));
+    call_func2(p_logic_error_ctor_bstr, &le, &str);
+    ok(!strcmp(le.e.name, ""), "le.e.name = %s\n", le.e.name);
+    ok(le.e.do_free, "le.e.do_free == FALSE\n");
+    what = call_func1(p_logic_error_what, &le);
+    ok(!strcmp(name, what), "what = %s\n", what);
+    call_func1(p_logic_error_dtor, &le);
+
+    call_func1(p_basic_string_char_dtor, &str);
+}
+
 START_TEST(string)
 {
     if(!init())
@@ -702,6 +827,8 @@ START_TEST(string)
     test_basic_string_char_replace();
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
+
+    test_exception();
 
     FreeLibrary(msvcp);
 }
