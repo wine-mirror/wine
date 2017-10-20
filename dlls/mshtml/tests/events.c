@@ -2547,6 +2547,9 @@ static void test_create_event(IHTMLDocument2 *doc)
     SysFreeString(str);
     ok(hres == S_OK, "createEvent failed: %08x\n", hres);
 
+    hres = IDOMEvent_preventDefault(event);
+    ok(hres == S_OK, "preventDefault failed: %08x\n", hres);
+
     IDOMEvent_Release(event);
 
     IDocumentEvent_Release(doc_event);

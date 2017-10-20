@@ -232,7 +232,6 @@ struct HTMLEventObj {
     const event_info_t *type;
     DOMEvent *event;
     VARIANT return_value;
-    BOOL prevent_default;
     BOOL cancel_bubble;
 };
 
@@ -435,8 +434,8 @@ static HRESULT WINAPI HTMLEventObj_put_returnValue(IHTMLEventObj *iface, VARIANT
     }
 
     This->return_value = v;
-    if(!V_BOOL(&v))
-        This->prevent_default = TRUE;
+    if(!V_BOOL(&v) && This->event)
+        IDOMEvent_preventDefault(&This->event->IDOMEvent_iface);
     return S_OK;
 }
 
@@ -974,8 +973,12 @@ static HRESULT WINAPI DOMEvent_initEvent(IDOMEvent *iface, BSTR type, VARIANT_BO
 static HRESULT WINAPI DOMEvent_preventDefault(IDOMEvent *iface)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    This->prevent_default = TRUE;
+    nsIDOMEvent_PreventDefault(This->nsevent);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_stopPropagation(IDOMEvent *iface)
@@ -1274,7 +1277,7 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, DOM
             if(cancelable) {
                 if(V_VT(&v) == VT_BOOL) {
                     if(!V_BOOL(&v))
-                        event_obj->prevent_default = TRUE;
+                        IDOMEvent_preventDefault(&event->IDOMEvent_iface);
                 }else if(V_VT(&v) != VT_EMPTY) {
                     FIXME("unhandled result %s\n", debugstr_variant(&v));
                 }
@@ -1306,7 +1309,7 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, DOM
                     if(cancelable) {
                         if(V_VT(&v) == VT_BOOL) {
                             if(!V_BOOL(&v))
-                                event_obj->prevent_default = TRUE;
+                                IDOMEvent_preventDefault(&event->IDOMEvent_iface);
                         }else if(V_VT(&v) != VT_EMPTY) {
                             FIXME("unhandled result %s\n", debugstr_variant(&v));
                         }
@@ -1346,7 +1349,7 @@ void call_event_handlers(HTMLEventObj *event_obj, EventTarget *event_target, DOM
                         if(cancelable) {
                             if(V_VT(&v) == VT_BOOL) {
                                 if(!V_BOOL(&v))
-                                    event_obj->prevent_default = TRUE;
+                                    IDOMEvent_preventDefault(&event->IDOMEvent_iface);
                             }else if(V_VT(&v) != VT_EMPTY) {
                                 FIXME("unhandled result %s\n", debugstr_variant(&v));
                             }
@@ -1368,7 +1371,6 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
     unsigned chain_cnt, chain_buf_size, i;
     const event_target_vtbl_t *vtbl, *target_vtbl;
     IHTMLEventObj *prev_event = NULL;
-    BOOL prevent_default = FALSE;
     EventTarget *iter;
     DWORD event_flags;
     HRESULT hres;
@@ -1430,11 +1432,9 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
             IHTMLEventObj_Release(prev_event);
     }
 
-    if(event_obj && event_obj->prevent_default)
-        prevent_default = TRUE;
-
     if(event_flags & EVENT_HASDEFAULTHANDLERS) {
-        for(i = 0; !prevent_default && i < chain_cnt; i++) {
+        for(i = 0; !event->prevent_default && i < chain_cnt; i++) {
+            BOOL prevent_default = FALSE;
             vtbl = dispex_get_vtbl(&target_chain[i]->dispex);
             if(!vtbl || !vtbl->handle_event_default)
                 continue;
@@ -1442,6 +1442,8 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
                     event->nsevent, &prevent_default);
             if(FAILED(hres) || (event_obj && event_obj->cancel_bubble))
                 break;
+            if(prevent_default)
+                IDOMEvent_preventDefault(&event->IDOMEvent_iface);
         }
     }
 
@@ -1449,11 +1451,6 @@ static void fire_event_obj(EventTarget *event_target, DOMEvent *event, HTMLEvent
         IDispatchEx_Release(&target_chain[i]->dispex.IDispatchEx_iface);
     if(target_chain != target_chain_buf)
         heap_free(target_chain);
-
-    if(prevent_default) {
-        TRACE("calling PreventDefault\n");
-        nsIDOMEvent_PreventDefault(event->nsevent);
-    }
 }
 
 void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, EventTarget *target, nsIDOMEvent *nsevent)

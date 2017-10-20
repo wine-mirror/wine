@@ -64,6 +64,7 @@ typedef struct {
     nsIDOMEvent *nsevent;
     eventid_t event_id;
     EventTarget *target;
+    BOOL prevent_default;
 } DOMEvent;
 
 eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;
