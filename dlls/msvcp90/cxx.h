@@ -68,7 +68,7 @@
 #ifndef __x86_64__
 
 #define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-    static const type_info name ## _type_info = { \
+    static type_info name ## _type_info = { \
         &MSVCP_type_info_vtable, \
         NULL, \
         mangled_name \
@@ -140,7 +140,7 @@ static const cxx_exception_type type ## _cxx_type = { \
 #else
 
 #define DEFINE_RTTI_DATA(name, off, base_classes_no, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
-    static const type_info name ## _type_info = { \
+    static type_info name ## _type_info = { \
         &MSVCP_type_info_vtable, \
         NULL, \
         mangled_name \
