@@ -87,7 +87,7 @@ HRESULT create_event_obj(IHTMLEventObj**) DECLSPEC_HIDDEN;
 void bind_target_event(HTMLDocumentNode*,EventTarget*,const WCHAR*,IDispatch*) DECLSPEC_HIDDEN;
 HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode*,eventid_t) DECLSPEC_HIDDEN;
 
-void call_event_handlers(EventTarget*,DOMEvent*);
+void fire_event_obj(EventTarget*,DOMEvent*) DECLSPEC_HIDDEN;
 
 HRESULT create_document_event_str(HTMLDocumentNode*,const WCHAR*,IDOMEvent**) DECLSPEC_HIDDEN;
 HRESULT create_event_from_nsevent(nsIDOMEvent*,DOMEvent**) DECLSPEC_HIDDEN;

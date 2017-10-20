@@ -1252,7 +1252,7 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
     return FALSE;
 }
 
-void call_event_handlers(EventTarget *event_target, DOMEvent *event)
+static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
 {
     const eventid_t eid = event->event_id;
     handler_vector_t *handler_vector = get_handler_vector(event_target, eid, FALSE);
@@ -1370,7 +1370,7 @@ void call_event_handlers(EventTarget *event_target, DOMEvent *event)
     }
 }
 
-static void fire_event_obj(EventTarget *event_target, DOMEvent *event)
+void fire_event_obj(EventTarget *event_target, DOMEvent *event)
 {
     EventTarget *target_chain_buf[8], **target_chain = target_chain_buf;
     unsigned chain_cnt, chain_buf_size, i;
