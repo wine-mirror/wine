@@ -2,6 +2,7 @@
  * Object Linking and Embedding Tests
  *
  * Copyright 2005 Robert Shearman
+ * Copyright 2017 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -66,9 +67,15 @@ DEFINE_GUID(CLSID_Picture_EnhMetafile,0x319,0,0,0xc0,0,0,0,0,0,0,0x46);
 
 DEFINE_EXPECT(Storage_Stat);
 DEFINE_EXPECT(Storage_OpenStream_CompObj);
+DEFINE_EXPECT(Storage_OpenStream_OlePres);
 DEFINE_EXPECT(Storage_SetClass);
 DEFINE_EXPECT(Storage_CreateStream_CompObj);
+DEFINE_EXPECT(Storage_CreateStream_OlePres);
 DEFINE_EXPECT(Storage_OpenStream_Ole);
+DEFINE_EXPECT(Storage_DestroyElement);
+
+static const CLSID *Storage_SetClass_CLSID;
+static int Storage_DestroyElement_limit;
 
 static IPersistStorage OleObjectPersistStg;
 static IOleCache *cache;
@@ -2776,9 +2783,12 @@ static void test_OleDraw(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 }
 
+static const WCHAR olepres0W[] = {2,'O','l','e','P','r','e','s','0','0','0',0};
 static const WCHAR comp_objW[] = {1,'C','o','m','p','O','b','j',0};
 static IStream *comp_obj_stream;
 static IStream *ole_stream;
+static IStream *olepres_stream;
+static IStream *contents_stream;
 
 static HRESULT WINAPI Storage_QueryInterface(IStorage *iface, REFIID riid, void **ppvObject)
 {
@@ -2804,18 +2814,40 @@ static HRESULT WINAPI Storage_CreateStream(IStorage *iface, LPCOLESTR pwcsName, 
     LARGE_INTEGER pos = {{0}};
     HRESULT hr;
 
-    CHECK_EXPECT(Storage_CreateStream_CompObj);
-    ok(!lstrcmpW(pwcsName, comp_objW), "pwcsName = %s\n", wine_dbgstr_w(pwcsName));
-    todo_wine ok(grfMode == (STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE), "grfMode = %x\n", grfMode);
+    if (!lstrcmpW(pwcsName, comp_objW))
+    {
+        CHECK_EXPECT(Storage_CreateStream_CompObj);
+        *ppstm = comp_obj_stream;
+
+        todo_wine ok(grfMode == (STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE), "grfMode = %x\n", grfMode);
+    }
+    else if (!lstrcmpW(pwcsName, olepres0W))
+    {
+        CHECK_EXPECT(Storage_CreateStream_OlePres);
+        *ppstm = olepres_stream;
+
+        todo_wine ok(grfMode == (STGM_SHARE_EXCLUSIVE|STGM_READWRITE), "grfMode = %x\n", grfMode);
+    }
+    else
+    {
+todo_wine
+        ok(0, "unexpected stream name %s\n", wine_dbgstr_w(pwcsName));
+#if 0   /* FIXME: return NULL once Wine is fixed */
+        *ppstm = NULL;
+        return E_NOTIMPL;
+#else
+        *ppstm = contents_stream;
+#endif
+    }
+
     ok(!reserved1, "reserved1 = %x\n", reserved1);
     ok(!reserved2, "reserved2 = %x\n", reserved2);
     ok(!!ppstm, "ppstm = NULL\n");
 
-    *ppstm = comp_obj_stream;
-    IStream_AddRef(comp_obj_stream);
-    hr = IStream_Seek(comp_obj_stream, pos, STREAM_SEEK_SET, NULL);
+    IStream_AddRef(*ppstm);
+    hr = IStream_Seek(*ppstm, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek returned %x\n", hr);
-    hr = IStream_SetSize(comp_obj_stream, size);
+    hr = IStream_SetSize(*ppstm, size);
     ok(hr == S_OK, "IStream_SetSize returned %x\n", hr);
     return S_OK;
 }
@@ -2842,11 +2874,30 @@ static HRESULT WINAPI Storage_OpenStream(IStorage *iface, LPCOLESTR pwcsName, vo
         return S_OK;
     }else if(!lstrcmpW(pwcsName, ole1W)) {
         CHECK_EXPECT(Storage_OpenStream_Ole);
+
+        if (!ole_stream)
+        {
+            ok(grfMode == (STGM_SHARE_EXCLUSIVE|STGM_READ), "grfMode = %x\n", grfMode);
+
+            *ppstm = NULL;
+            return STG_E_FILENOTFOUND;
+        }
+
         ok(grfMode == (STGM_SHARE_EXCLUSIVE|STGM_READWRITE), "grfMode = %x\n", grfMode);
 
         *ppstm = ole_stream;
         IStream_AddRef(ole_stream);
         hr = IStream_Seek(ole_stream, pos, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "IStream_Seek returned %x\n", hr);
+        return S_OK;
+
+    }else if(!lstrcmpW(pwcsName, olepres0W)) {
+        CHECK_EXPECT(Storage_OpenStream_OlePres);
+        ok(grfMode == (STGM_SHARE_EXCLUSIVE|STGM_READWRITE), "grfMode = %x\n", grfMode);
+
+        *ppstm = olepres_stream;
+        IStream_AddRef(olepres_stream);
+        hr = IStream_Seek(olepres_stream, pos, STREAM_SEEK_SET, NULL);
         ok(hr == S_OK, "IStream_Seek returned %x\n", hr);
         return S_OK;
     }
@@ -2899,8 +2950,20 @@ static HRESULT WINAPI Storage_EnumElements(IStorage *iface, DWORD reserved1, voi
 
 static HRESULT WINAPI Storage_DestroyElement(IStorage *iface, LPCOLESTR pwcsName)
 {
-    ok(0, "unexpected call to DestroyElement\n");
-    return E_NOTIMPL;
+    char name[32];
+    int stream_n, cmp;
+
+    CHECK_EXPECT2(Storage_DestroyElement);
+    cmp = CompareStringW(LOCALE_NEUTRAL, 0, pwcsName, 8, olepres0W, 8);
+    ok(cmp == CSTR_EQUAL,
+       "unexpected call to DestroyElement(%s)\n", wine_dbgstr_w(pwcsName));
+
+    WideCharToMultiByte(CP_ACP, 0, pwcsName, -1, name, sizeof(name), NULL, NULL);
+    stream_n = atol(name + 8);
+    if (stream_n <= Storage_DestroyElement_limit)
+        return S_OK;
+
+    return STG_E_FILENOTFOUND;
 }
 
 static HRESULT WINAPI Storage_RenameElement(IStorage *iface, LPCOLESTR pwcsOldName, LPCOLESTR pwcsNewName)
@@ -2917,8 +2980,11 @@ static HRESULT WINAPI Storage_SetElementTimes(IStorage *iface, LPCOLESTR pwcsNam
 
 static HRESULT WINAPI Storage_SetClass(IStorage *iface, REFCLSID clsid)
 {
+todo_wine_if(!expect_Storage_SetClass)
     CHECK_EXPECT(Storage_SetClass);
-    ok(IsEqualIID(clsid, &CLSID_WineTest), "clsid = %s\n", wine_dbgstr_guid(clsid));
+todo_wine_if(IsEqualIID(Storage_SetClass_CLSID, &CLSID_NULL))
+    ok(IsEqualIID(clsid, Storage_SetClass_CLSID), "expected %s, got %s\n",
+       wine_dbgstr_guid(Storage_SetClass_CLSID), wine_dbgstr_guid(clsid));
     return S_OK;
 }
 
@@ -3133,6 +3199,122 @@ static void test_OleDoAutoConvert(void)
     RegCloseKey(root);
 }
 
+/* 1x1 pixel bmp */
+static const unsigned char bmpimage[] =
+{
+    0x42,0x4d,0x42,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x3e,0x00,0x00,0x00,0x28,0x00,
+    0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,
+    0x00,0x00,0x01,0x00,0x01,0x00,0x00,0x00,
+    0x00,0x00,0x04,0x00,0x00,0x00,0x12,0x0b,
+    0x00,0x00,0x12,0x0b,0x00,0x00,0x02,0x00,
+    0x00,0x00,0x02,0x00,0x00,0x00,0xff,0xff,
+    0xff,0x00,0xff,0xff,0xff,0x00,0x00,0x00,
+    0x00,0x00
+};
+
+static const unsigned char mf_blank_bits[] =
+{
+    0x01,0x00,0x09,0x00,0x00,0x03,0x0c,0x00,
+    0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00,
+    0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00
+};
+
+static void test_data_cache_save(void)
+{
+    static const WCHAR contentsW[] = { 'C','o','n','t','e','n','t','s',0 };
+    HRESULT hr;
+    ILockBytes *ilb;
+    IStorage *doc;
+    IStream *stm;
+    IOleCache2 *cache;
+    IPersistStorage *stg;
+    DWORD clipformat[2];
+    PresentationDataHeader hdr;
+
+    hr = CreateILockBytesOnHGlobal(0, TRUE, &ilb);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+    hr = StgCreateDocfileOnILockBytes(ilb, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0,  &doc);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    ILockBytes_Release(ilb);
+
+    hr = IStorage_SetClass(doc, &CLSID_WineTest);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    hr = IStorage_CreateStream(doc, contentsW, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+    hr = IStream_Write(stm, bmpimage, sizeof(bmpimage), NULL);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+    IStream_Release(stm);
+
+    hr = IStorage_CreateStream(doc, olepres0W, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    clipformat[0] = -1;
+    clipformat[1] = CF_METAFILEPICT;
+    hr = IStream_Write(stm, clipformat, sizeof(clipformat), NULL);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    hdr.unknown3 = 4;
+    hdr.dvAspect = DVASPECT_CONTENT;
+    hdr.lindex = -1;
+    hdr.advf = ADVF_PRIMEFIRST;
+    hdr.unknown7 = 0;
+    hdr.dwObjectExtentX = 0;
+    hdr.dwObjectExtentY = 0;
+    hdr.dwSize = sizeof(mf_blank_bits);
+    hr = IStream_Write(stm, &hdr, sizeof(hdr), NULL);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+    hr = IStream_Write(stm, mf_blank_bits, sizeof(mf_blank_bits), NULL);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    IStream_Release(stm);
+
+    hr = CreateDataCache(NULL, &CLSID_NULL, &IID_IUnknown, (void **)&cache);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+    hr = IOleCache2_QueryInterface(cache, &IID_IPersistStorage, (void **)&stg);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+    hr = IPersistStorage_Load(stg, doc);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    IStorage_Release(doc);
+
+    hr = IPersistStorage_IsDirty(stg);
+    ok(hr == S_FALSE, "unexpected %#x\n", hr);
+
+    ole_stream = NULL;
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &olepres_stream);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    /* FIXME: remove this stream once Wine is fixed */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &contents_stream);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+
+    SET_EXPECT(Storage_CreateStream_OlePres);
+    SET_EXPECT(Storage_OpenStream_OlePres);
+    SET_EXPECT(Storage_OpenStream_Ole);
+    SET_EXPECT(Storage_DestroyElement);
+    Storage_DestroyElement_limit = 50;
+    Storage_SetClass_CLSID = &CLSID_NULL;
+    trace("IPersistStorage_Save:\n");
+    hr = IPersistStorage_Save(stg, &Storage, FALSE);
+    ok(hr == S_OK, "unexpected %#x\n", hr);
+    CHECK_CALLED(Storage_CreateStream_OlePres);
+todo_wine
+    CHECK_CALLED(Storage_OpenStream_OlePres);
+todo_wine
+    CHECK_CALLED(Storage_OpenStream_Ole);
+todo_wine
+    CHECK_CALLED(Storage_DestroyElement);
+
+    IStream_Release(olepres_stream);
+    IStream_Release(contents_stream);
+
+    IPersistStorage_Release(stg);
+    IOleCache2_Release(cache);
+}
+
 START_TEST(ole2)
 {
     DWORD dwRegister;
@@ -3165,6 +3347,8 @@ START_TEST(ole2)
     hr = CoRevokeClassObject(dwRegister);
     ok_ole_success(hr, "CoRevokeClassObject");
 
+    Storage_SetClass_CLSID = &CLSID_WineTest;
+
     test_data_cache();
     test_data_cache_dib_contents_stream( 0 );
     test_data_cache_dib_contents_stream( 1 );
@@ -3177,6 +3361,7 @@ START_TEST(ole2)
     test_OleLockRunning();
     test_OleDraw();
     test_OleDoAutoConvert();
+    test_data_cache_save();
 
     CoUninitialize();
 }
