@@ -1326,7 +1326,11 @@ void* wld_start( void **stack )
                            MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 ) == (void *)-1)
         {
             /* don't warn for low 64k */
-            if (preload_info[i].addr >= (void *)0x10000)
+            if (preload_info[i].addr >= (void *)0x10000
+#ifdef __aarch64__
+                && preload_info[i].addr < (void *)0x7fffffffff /* ARM64 address space might end here*/
+#endif
+            )
                 wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
                             preload_info[i].addr, (char *)preload_info[i].addr + preload_info[i].size );
             remove_preload_range( i );
