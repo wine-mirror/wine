@@ -5351,25 +5351,16 @@ static UINT ACTION_UnpublishProduct(MSIPACKAGE *package)
 
 static BOOL is_full_uninstall( MSIPACKAGE *package )
 {
-    WCHAR **features, *remove = msi_dup_property( package->db, szRemove );
     MSIFEATURE *feature;
-    BOOL ret = TRUE;
-    UINT i;
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if (feature->Action == INSTALLSTATE_LOCAL || feature->Action == INSTALLSTATE_SOURCE) ret = FALSE;
+        if (feature->Action != INSTALLSTATE_ABSENT &&
+                (feature->Installed != INSTALLSTATE_ABSENT || feature->Action != INSTALLSTATE_UNKNOWN))
+            return FALSE;
     }
 
-    features = msi_split_string( remove, ',' );
-    for (i = 0; features && features[i]; i++)
-    {
-        if (!strcmpW( features[i], szAll )) ret = TRUE;
-    }
-
-    msi_free(features);
-    msi_free(remove);
-    return ret;
+    return TRUE;
 }
 
 static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
