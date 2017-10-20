@@ -2069,6 +2069,8 @@ static void test_condition(void)
     /* feature doesn't exist */
     r = MsiEvaluateConditionA(hpkg, "&nofeature");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    r = MsiEvaluateConditionA(hpkg, "&nofeature=\"\"");
+    todo_wine ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     MsiSetPropertyA(hpkg, "A", "2");
     MsiSetPropertyA(hpkg, "X", "50");

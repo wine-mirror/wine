@@ -318,11 +318,14 @@ value_i:
   | COND_AMPER identifier
         {
             COND_input* cond = (COND_input*) info;
-            INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
+            INSTALLSTATE install, action;
       
-            MSI_GetFeatureStateW(cond->package, $2, &install, &action );
-            if (action == INSTALLSTATE_UNKNOWN)
+            if (MSI_GetFeatureStateW(cond->package, $2, &install, &action ) != ERROR_SUCCESS)
+            {
+                FIXME("condition may be evaluated incorrectly\n");
+                /* we should return empty string in this case */
                 $$ = MSICONDITION_FALSE;
+            }
             else
                 $$ = action;
 
