@@ -1702,4 +1702,24 @@ MSVCP_size_t __cdecl _vector_base_v4__Segment_index_of(MSVCP_size_t x)
 
     return log2i(x);
 }
+
+/* ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IBEXI@Z */
+/* ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IEBAX_K@Z */
+DEFINE_THISCALL_WRAPPER(_vector_base_v4__Internal_throw_exception, 8)
+void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*/ *this, MSVCP_size_t idx)
+{
+    static const struct {
+        exception_type type;
+        const char *msg;
+    } exceptions[] = {
+        { EXCEPTION_OUT_OF_RANGE, "Index out of range" },
+        { EXCEPTION_OUT_OF_RANGE, "Index out of segments table range" },
+        { EXCEPTION_RANGE_ERROR,  "Index is inside segment which failed to be allocated" },
+    };
+
+    TRACE("(%p %lu)\n", this, idx);
+
+    if(idx < sizeof(exceptions)/sizeof(exceptions[0]))
+        throw_exception(exceptions[idx].type, exceptions[idx].msg);
+}
 #endif
