@@ -331,17 +331,14 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
     }
 
     /* If we fine need for more special cases here, we may consider handling it in a more generic way. */
-    switch(event->event_id) {
-    case EVENTID_FOCUS:
-        if(doc->event_vector[EVENTID_FOCUSIN])
-            fire_event(doc, EVENTID_FOCUSIN, TRUE, &node->event_target, NULL);
-        break;
-    case EVENTID_BLUR:
-        if(doc->event_vector[EVENTID_FOCUSOUT])
-            fire_event(doc, EVENTID_FOCUSOUT, TRUE, &node->event_target, NULL);
-        break;
-    default:
-        break;
+    if(event->event_id == EVENTID_FOCUS || event->event_id == EVENTID_BLUR) {
+        DOMEvent *focus_event;
+
+        hres = create_document_event(doc, event->event_id == EVENTID_FOCUS ? EVENTID_FOCUSIN : EVENTID_FOCUSOUT, &focus_event);
+        if(SUCCEEDED(hres)) {
+            fire_event_obj(&node->event_target, focus_event);
+            IDOMEvent_Release(&focus_event->IDOMEvent_iface);
+        }
     }
 
     fire_event_obj(&node->event_target, event);
