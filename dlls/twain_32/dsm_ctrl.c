@@ -27,6 +27,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "twain.h"
 #include "twain_i.h"
 #include "wine/debug.h"
@@ -36,6 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(twain);
 static TW_UINT16 DSM_initialized;	/* whether Source Manager is initialized */
 static TW_UINT32 DSM_sourceId;		/* source id generator */
 static TW_UINT16 DSM_currentDevice;	/* keep track of device during enumeration */
+static HWND DSM_parent;
+static UINT event_message;
 
 struct all_devices {
 	char 		*modname;
@@ -112,6 +115,86 @@ twain_autodetect(void) {
 	twain_add_onedriver("c:\\windows\\Twain_32\\vivicam10\\vivicam10.ds");
 	twain_add_onedriver("c:\\windows\\Twain_32\\ws30slim\\sp500a.ds");
 #endif
+}
+
+/* DG_CONTROL/DAT_NULL/MSG_CLOSEDSREQ|MSG_DEVICEEVENT|MSG_XFERREADY */
+TW_UINT16 TWAIN_ControlNull (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, activeDS *pSource, TW_UINT16 MSG, TW_MEMREF pData)
+{
+    struct pending_message *message;
+
+    TRACE ("DG_CONTROL/DAT_NULL MSG=%i\n", MSG);
+
+    if (MSG != MSG_CLOSEDSREQ &&
+        MSG != MSG_DEVICEEVENT &&
+        MSG != MSG_XFERREADY)
+    {
+        DSM_twCC = TWCC_BADPROTOCOL;
+        return TWRC_FAILURE;
+    }
+
+    message = HeapAlloc(GetProcessHeap(), 0, sizeof(*message));
+    if (!message)
+    {
+        DSM_twCC = TWCC_LOWMEMORY;
+        return TWRC_FAILURE;
+    }
+
+    message->msg = MSG;
+    list_add_tail(&pSource->pending_messages, &message->entry);
+
+    /* Delphi twain only sends us messages from one window, and it
+       doesn't even give us the real handle to that window. Other
+       applications might decide to forward messages sent to DSM_parent
+       or to the one supplied to ENABLEDS. So let's try very hard to
+       find a window that will work. */
+    if (DSM_parent)
+        PostMessageW(DSM_parent, event_message, 0, 0);
+    if (pSource->ui_window && pSource->ui_window != DSM_parent)
+        PostMessageW(pSource->ui_window, event_message, 0, 0);
+    if (pSource->event_window && pSource->event_window != pSource->ui_window &&
+        pSource->event_window != DSM_parent)
+        PostMessageW(pSource->event_window, event_message, 0, 0);
+    PostMessageW(0, event_message, 0, 0);
+
+    return TWRC_SUCCESS;
+}
+
+/* Filters MSG_PROCESSEVENT messages before reaching the data source */
+TW_UINT16 TWAIN_ProcessEvent (pTW_IDENTITY pOrigin, activeDS *pSource, TW_MEMREF pData)
+{
+    TW_EVENT *event = (TW_EVENT*)pData;
+    MSG *msg = (MSG*)event->pEvent;
+    TW_UINT16 result = TWRC_NOTDSEVENT;
+
+    TRACE("%x,%x\n", msg->message, event_message);
+
+    if (msg->message == event_message)
+    {
+        if (!list_empty (&pSource->pending_messages))
+        {
+            struct list *entry = list_head (&pSource->pending_messages);
+            struct pending_message *message = LIST_ENTRY(entry, struct pending_message, entry);
+            event->TWMessage = message->msg;
+            list_remove (entry);
+            TRACE("<-- %x\n", event->TWMessage);
+        }
+        else
+            event->TWMessage = MSG_NULL;
+        result = TWRC_DSEVENT;
+    }
+
+    if (msg->hwnd)
+    {
+        MSG dummy;
+        pSource->event_window = msg->hwnd;
+        if (!list_empty (&pSource->pending_messages) &&
+            !PeekMessageW(&dummy, msg->hwnd, event_message, event_message, PM_NOREMOVE))
+        {
+            PostMessageW(msg->hwnd, event_message, 0, 0);
+        }
+    }
+
+    return result;
 }
 
 /* DG_CONTROL/DAT_IDENTITY/MSG_CLOSEDS */
@@ -254,6 +337,9 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	newSource->next = activeSources;
 	newSource->identity.Id = pIdentity->Id;
 	strcpy (newSource->identity.ProductName, pIdentity->ProductName);
+        list_init(&newSource->pending_messages);
+        newSource->ui_window = NULL;
+        newSource->event_window = NULL;
 	activeSources = newSource;
 	DSM_twCC = TWCC_SUCCESS;
 	return TWRC_SUCCESS;
@@ -299,6 +385,7 @@ TW_UINT16 TWAIN_CloseDSM (pTW_IDENTITY pOrigin, TW_MEMREF pData)
             currentDS = nextDS;
         }
         activeSources = NULL;
+        DSM_parent = NULL;
         DSM_twCC = TWCC_SUCCESS;
         return TWRC_SUCCESS;
     } else {
@@ -314,6 +401,7 @@ TW_UINT16 TWAIN_OpenDSM (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 
 	TRACE("DG_CONTROL/DAT_PARENT/MSG_OPENDSM\n");
         if (!DSM_initialized) {
+                event_message = RegisterWindowMessageA("WINE TWAIN_32 EVENT");
 		DSM_currentDevice = 0;
 		DSM_initialized = TRUE;
 		DSM_twCC = TWCC_SUCCESS;
@@ -323,6 +411,7 @@ TW_UINT16 TWAIN_OpenDSM (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 		DSM_twCC = TWCC_SEQERROR;
 		twRC = TWRC_FAILURE;
 	}
+        DSM_parent = (HWND)pData;
 	return twRC;
 }
 
