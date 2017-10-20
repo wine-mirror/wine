@@ -455,6 +455,110 @@ SYSCALL_NOERR( wld_geteuid, 107 /* SYS_geteuid */ );
 gid_t wld_getegid(void);
 SYSCALL_NOERR( wld_getegid, 108 /* SYS_getegid */ );
 
+#elif defined(__aarch64__)
+
+/*
+ * The _start function is the entry and exit point of this program
+ *
+ *  It calls wld_start, passing a pointer to the args it receives
+ *  then jumps to the address wld_start returns.
+ */
+void _start(void);
+extern char _end[];
+__ASM_GLOBAL_FUNC(_start,
+                  "mov x0, SP\n\t"
+                  "sub SP, SP, #144\n\t" /* allocate some space for extra aux values */
+                  "str x0, [SP]\n\t"     /* orig stack pointer */
+                  "str x30, [SP, #8]\n\t"
+                  "mov x0, SP\n\t"       /* ptr to orig stack pointer */
+                  "bl wld_start\n\t"
+                  "ldr x30, [SP, #8]\n\t"
+                  "ldr x1, [SP]\n\t"     /* new stack pointer */
+                  "mov SP, x1\n\t"
+                  "mov x30, x0\n\t"
+                  "mov x0, #0\n\t"
+                  "mov x1, #0\n\t"
+                  "mov x2, #0\n\t"
+                  "mov x3, #0\n\t"
+                  "mov x4, #0\n\t"
+                  "mov x5, #0\n\t"
+                  "mov x6, #0\n\t"
+                  "mov x7, #0\n\t"
+                  "mov x8, #0\n\t"
+                  "mov x9, #0\n\t"
+                  "mov x10, #0\n\t"
+                  "mov x11, #0\n\t"
+                  "mov x12, #0\n\t"
+                  "mov x13, #0\n\t"
+                  "mov x14, #0\n\t"
+                  "mov x15, #0\n\t"
+                  "mov x16, #0\n\t"
+                  "mov x17, #0\n\t"
+                  "mov x18, #0\n\t"
+                  "ret")
+
+#define SYSCALL_FUNC( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "stp x8, x9, [SP, #-16]!\n\t" \
+                       "mov x8, #" #nr "\n\t" \
+                       "svc #0\n\t" \
+                       "ldp x8, x9, [SP], #16\n\t" \
+                       "cmn x0, #1, lsl#12\n\t" \
+                       "cinv x0, x0, hi\n\t" \
+                       "b.hi 1f\n\t" \
+                       "ret\n\t" \
+                       "1: mov x0, #-1\n\t" \
+                       "ret" )
+
+#define SYSCALL_NOERR( name, nr ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "stp x8, x9, [SP, #-16]!\n\t" \
+                       "mov x8, #" #nr "\n\t" \
+                       "svc #0\n\t" \
+                       "ldp x8, x9, [SP], #16\n\t" \
+                       "ret" )
+
+void wld_exit( int code ) __attribute__((noreturn));
+SYSCALL_NOERR( wld_exit, 93 /* SYS_exit */ );
+
+ssize_t wld_read( int fd, void *buffer, size_t len );
+SYSCALL_FUNC( wld_read, 63 /* SYS_read */ );
+
+ssize_t wld_write( int fd, const void *buffer, size_t len );
+SYSCALL_FUNC( wld_write, 64 /* SYS_write */ );
+
+int wld_openat( int dirfd, const char *name, int flags );
+SYSCALL_FUNC( wld_openat, 56 /* SYS_openat */ );
+
+int wld_open( const char *name, int flags )
+{
+    return wld_openat(-100 /* AT_FDCWD */, name, flags);
+}
+
+int wld_close( int fd );
+SYSCALL_FUNC( wld_close, 57 /* SYS_close */ );
+
+void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off_t offset );
+SYSCALL_FUNC( wld_mmap, 222 /* SYS_mmap */ );
+
+int wld_mprotect( const void *addr, size_t len, int prot );
+SYSCALL_FUNC( wld_mprotect, 226 /* SYS_mprotect */ );
+
+int wld_prctl( int code, long arg );
+SYSCALL_FUNC( wld_prctl, 167 /* SYS_prctl */ );
+
+uid_t wld_getuid(void);
+SYSCALL_NOERR( wld_getuid, 174 /* SYS_getuid */ );
+
+gid_t wld_getgid(void);
+SYSCALL_NOERR( wld_getgid, 176 /* SYS_getgid */ );
+
+uid_t wld_geteuid(void);
+SYSCALL_NOERR( wld_geteuid, 175 /* SYS_geteuid */ );
+
+gid_t wld_getegid(void);
+SYSCALL_NOERR( wld_getegid, 177 /* SYS_getegid */ );
+
 #else
 #error preloader not implemented for this CPU
 #endif
@@ -725,6 +829,9 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
 #elif defined(__x86_64__)
     if( header->e_machine != EM_X86_64 )
         fatal_error("%s: not an x86-64 ELF binary... don't know how to load it\n", name );
+#elif defined(__aarch64__)
+    if( header->e_machine != EM_AARCH64 )
+        fatal_error("%s: not an aarchs64 ELF binary... don't know how to load it\n", name );
 #endif
 
     if (header->e_phnum > sizeof(loadcmds)/sizeof(loadcmds[0]))
