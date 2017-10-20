@@ -5188,10 +5188,17 @@ HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *eve
 
             nsIDOMKeyEvent_GetKeyCode(key_event, &code);
 
-            switch(code) {
-            case VK_F1: /* DOM_VK_F1 */
+            if(code == VK_F1 /* DOM_VK_F1 */) {
+                DOMEvent *help_event;
+                HRESULT hres;
+
                 TRACE("F1 pressed\n");
-                fire_event(This->node.doc, EVENTID_HELP, TRUE, &This->node.event_target, NULL);
+
+                hres = create_document_event(This->node.doc, EVENTID_HELP, &help_event);
+                if(SUCCEEDED(hres)) {
+                    fire_event_obj(&This->node.event_target, help_event);
+                    IDOMEvent_Release(&help_event->IDOMEvent_iface);
+                }
                 *prevent_default = TRUE;
             }
 
