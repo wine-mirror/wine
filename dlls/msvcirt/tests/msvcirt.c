@@ -168,6 +168,18 @@ typedef struct {
     ios base_ios; /* virtually inherited */
 } iostream;
 
+/* class exception */
+typedef struct {
+    const void *vtable;
+    char *name;
+    int do_free;
+} exception;
+
+/* class logic_error */
+typedef struct {
+    exception e;
+} logic_error;
+
 static inline float __port_infinity(void)
 {
     static const unsigned __inf_bytes = 0x7f800000;
@@ -421,6 +433,14 @@ static iostream* (*__thiscall p_stdiostream_assign)(iostream*, const iostream*);
 
 /* Iostream_init */
 static void* (*__thiscall p_Iostream_init_ios_ctor)(void*, ios*, int);
+
+/* exception */
+static exception* (*__thiscall p_exception_ctor)(exception*, const char**);
+static void (*__thiscall p_exception_dtor)(exception*);
+static const char* (*__thiscall p_exception_what)(exception*);
+
+static logic_error* (*__thiscall p_logic_error_ctor)(logic_error*, const char**);
+static void (*__thiscall p_logic_error_dtor)(logic_error*);
 
 /* Predefined streams */
 static istream *p_cin;
@@ -710,6 +730,13 @@ static BOOL init(void)
         SET(p_stdiostream_assign, "??4stdiostream@@QEAAAEAV0@AEAV0@@Z");
 
         SET(p_Iostream_init_ios_ctor, "??0Iostream_init@@QEAA@AEAVios@@H@Z");
+
+        SET(p_exception_ctor, "??0exception@@QEAA@AEBQEBD@Z");
+        SET(p_exception_dtor, "??1exception@@UEAA@XZ");
+        SET(p_exception_what, "?what@exception@@UEBAPEBDXZ");
+
+        SET(p_logic_error_ctor, "??0logic_error@@QEAA@AEBQEBD@Z");
+        SET(p_logic_error_dtor, "??1logic_error@@UEAA@XZ");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -917,6 +944,13 @@ static BOOL init(void)
         SET(p_stdiostream_assign, "??4stdiostream@@QAEAAV0@AAV0@@Z");
 
         SET(p_Iostream_init_ios_ctor, "??0Iostream_init@@QAE@AAVios@@H@Z");
+
+        SET(p_exception_ctor, "??0exception@@QAE@ABQBD@Z");
+        SET(p_exception_dtor, "??1exception@@UAE@XZ");
+        SET(p_exception_what, "?what@exception@@UBEPBDXZ");
+
+        SET(p_logic_error_ctor, "??0logic_error@@QAE@ABQBD@Z");
+        SET(p_logic_error_dtor, "??1logic_error@@UAE@XZ");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -7464,6 +7498,34 @@ static void test_std_streams(void)
     ok(p_cin->count == 0xabababab, "expected %d got %d\n", 0xabababab, p_cin->count);
 }
 
+static void test_exception(void)
+{
+    const char *unknown = "Unknown exception";
+    const char *test = "test";
+    const char *what;
+    logic_error le;
+    exception e;
+
+    /* exception */
+    memset(&e, 0, sizeof(e));
+    what = call_func1(p_exception_what, (void*) &e);
+    ok(!strcmp(what, unknown), "expected %s got %s\n", unknown, what);
+
+    call_func2(p_exception_ctor, (void*) &e, &test);
+    what = call_func1(p_exception_what, (void*) &e);
+    ok(!strcmp(what, test), "expected %s got %s\n", test, what);
+    call_func1(p_exception_dtor, (void*) &e);
+
+    /* logic_error */
+    memset(&le, 0xff, sizeof(le));
+    call_func2(p_logic_error_ctor, (void*) &le, &test);
+    ok(!strcmp(le.e.name, test), "expected %s got %s\n", test, le.e.name);
+    ok(le.e.do_free, "expected TRUE, got FALSE\n");
+    what = call_func1(p_exception_what, (void*) &le.e);
+    ok(!strcmp(what, test), "expected %s got %s\n", test, what);
+    call_func1(p_logic_error_dtor, (void*) &le);
+}
+
 START_TEST(msvcirt)
 {
     if(!init())
@@ -7489,6 +7551,7 @@ START_TEST(msvcirt)
     test_stdiostream();
     test_Iostream_init();
     test_std_streams();
+    test_exception();
 
     FreeLibrary(msvcrt);
     FreeLibrary(msvcirt);
