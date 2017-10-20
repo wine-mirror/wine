@@ -443,17 +443,28 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
 
 static void notif_readystate(HTMLOuterWindow *window)
 {
+    DOMEvent *event;
+    HRESULT hres;
+
     window->readystate_pending = FALSE;
 
     if(window->doc_obj && window->doc_obj->basedoc.window == window)
         call_property_onchanged(&window->doc_obj->basedoc.cp_container, DISPID_READYSTATE);
 
-    fire_event(window->base.inner_window->doc, EVENTID_READYSTATECHANGE, FALSE,
-            &window->base.inner_window->doc->node.event_target, NULL);
+    hres = create_document_event(window->base.inner_window->doc, EVENTID_READYSTATECHANGE, &event);
+    if(SUCCEEDED(hres)) {
+        event->no_event_obj = TRUE;
+        fire_event_obj(&window->base.inner_window->doc->node.event_target, event);
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+    }
 
-    if(window->frame_element)
-        fire_event(window->frame_element->element.node.doc, EVENTID_READYSTATECHANGE,
-                   TRUE, &window->frame_element->element.node.event_target, NULL);
+    if(window->frame_element) {
+        hres = create_document_event(window->frame_element->element.node.doc, EVENTID_READYSTATECHANGE, &event);
+        if(SUCCEEDED(hres)) {
+            fire_event_obj(&window->frame_element->element.node.event_target, event);
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+        }
+    }
 }
 
 typedef struct {

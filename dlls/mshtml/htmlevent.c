@@ -1472,26 +1472,6 @@ void fire_event_obj(EventTarget *event_target, DOMEvent *event)
         heap_free(target_chain);
 }
 
-void fire_event(HTMLDocumentNode *doc, eventid_t eid, BOOL set_event, EventTarget *target, nsIDOMEvent *nsevent)
-{
-    DOMEvent *event;
-    HRESULT hres;
-
-    if(nsevent)
-        hres = create_event_from_nsevent(nsevent, &event);
-    else
-        hres = create_document_event(doc, eid, &event);
-    if(FAILED(hres))
-        return;
-
-    if(!set_event)
-        event->no_event_obj = TRUE;
-
-    fire_event_obj(target, event);
-
-    IDOMEvent_Release(&event->IDOMEvent_iface);
-}
-
 HRESULT dispatch_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_var, VARIANT_BOOL *cancelled)
 {
     HTMLEventObj *event_obj = NULL;
