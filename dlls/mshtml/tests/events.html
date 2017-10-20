@@ -123,6 +123,7 @@ function test_insert_script() {
 
     var readystatechange_log = "";
     e.onreadystatechange = function() {
+        ok(window.event.srcElement === e, "srcElement != e");
         readystatechange_log += "," + e.readyState;
         ok(extern_cnt === 1, "extern_cnt = " + extern_cnt);
         if(e.readyState === "complete") {

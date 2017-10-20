@@ -724,6 +724,19 @@ static ScriptHost *create_script_host(HTMLInnerWindow *window, const GUID *guid)
     return ret;
 }
 
+static void dispatch_script_readystatechange_event(HTMLScriptElement *script)
+{
+    DOMEvent *event;
+    HRESULT hres;
+
+    hres = create_document_event(script->element.node.doc, EVENTID_READYSTATECHANGE, &event);
+    if(FAILED(hres))
+        return;
+
+    fire_event_obj(&script->element.node.event_target, event);
+    IDOMEvent_Release(&event->IDOMEvent_iface);
+}
+
 typedef struct {
     task_t header;
     HTMLScriptElement *elem;
@@ -737,7 +750,7 @@ static void fire_readystatechange_proc(task_t *_task)
         return;
 
     task->elem->pending_readystatechange_event = FALSE;
-    fire_event(task->elem->element.node.doc, EVENTID_READYSTATECHANGE, FALSE, &task->elem->element.node.event_target, NULL);
+    dispatch_script_readystatechange_event(task->elem);
 }
 
 static void fire_readystatechange_task_destr(task_t *_task)
@@ -772,8 +785,7 @@ static void set_script_elem_readystate(HTMLScriptElement *script_elem, READYSTAT
                 script_elem->pending_readystatechange_event = TRUE;
         }else {
             script_elem->pending_readystatechange_event = FALSE;
-            fire_event(script_elem->element.node.doc, EVENTID_READYSTATECHANGE, FALSE,
-                    &script_elem->element.node.event_target, NULL);
+            dispatch_script_readystatechange_event(script_elem);
         }
     }
 }
