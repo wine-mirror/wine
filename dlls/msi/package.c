@@ -2286,7 +2286,10 @@ static MSIRECORD *msi_get_property_row( MSIDATABASE *db, LPCWSTR name )
 
         row = MSI_CreateRecord(1);
         if (!row)
+        {
+            msi_free(buffer);
             return NULL;
+        }
         MSI_RecordSetStringW(row, 1, buffer);
         msi_free(buffer);
         return row;
@@ -2301,7 +2304,10 @@ static MSIRECORD *msi_get_property_row( MSIDATABASE *db, LPCWSTR name )
 
         row = MSI_CreateRecord(1);
         if (!row)
+        {
+            msi_free(buffer);
             return NULL;
+        }
         MSI_RecordSetStringW(row, 1, buffer);
         msi_free(buffer);
         return row;
