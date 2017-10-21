@@ -1770,6 +1770,7 @@ static void test_createhbitmap(void)
     }
 
     /* create HBITMAP with bkgnd colour */
+    /* gdiplus.dll 5.1 is broken and only applies the blue value */
     stat = GdipCreateHBITMAPFromBitmap(bitmap, &hbitmap, 0xff00ff);
     expect(Ok, stat);
 
@@ -1789,20 +1790,20 @@ static void test_createhbitmap(void)
         if (bm.bmBits)
         {
             DWORD val = *(DWORD*)bm.bmBits;
-            ok(val == 0x68c12ac1, "got %x, expected 0x682a2a2a\n", val);
+            ok(val == 0x68c12ac1 || broken(val == 0x682a2ac1), "got %x, expected 0x68c12ac1\n", val);
             val = *((DWORD*)bm.bmBits + (bm.bmHeight-1) * bm.bmWidthBytes/4 + 1);
-            ok(val == 0xff00ff, "got %x, expected 0x682a2a2a\n", val);
+            ok(val == 0xff00ff || broken(val == 0xff), "got %x, expected 0xff00ff\n", val);
         }
 
         hdc = CreateCompatibleDC(NULL);
 
         oldhbitmap = SelectObject(hdc, hbitmap);
         pixel = GetPixel(hdc, 5, 5);
-        expect(0xc12ac1, pixel);
+        ok(pixel == 0xc12ac1 || broken(pixel == 0xc12a2a), "got %x, expected 0xc12ac1\n", pixel);
         pixel = GetPixel(hdc, 1, 0);
-        expect(0xff00ff, pixel);
+        ok(pixel == 0xff00ff || broken(pixel == 0xff0000), "got %x, expected 0xff00ff\n", pixel);
         pixel = GetPixel(hdc, 2, 0);
-        expect(0xb12ac1, pixel);
+        ok(pixel == 0xb12ac1 || broken(pixel == 0xb12a2a), "got %x, expected 0xb12ac1\n", pixel);
 
         SelectObject(hdc, oldhbitmap);
         DeleteDC(hdc);
@@ -1829,20 +1830,20 @@ static void test_createhbitmap(void)
         if (bm.bmBits)
         {
             DWORD val = *(DWORD*)bm.bmBits;
-            ok(val == 0x68c12ac1, "got %x, expected 0x682a2a2a\n", val);
+            ok(val == 0x68c12ac1 || broken(val == 0x682a2ac1), "got %x, expected 0x68c12ac1\n", val);
             val = *((DWORD*)bm.bmBits + (bm.bmHeight-1) * bm.bmWidthBytes/4 + 1);
-            ok(val == 0xff00ff, "got %x, expected 0x682a2a2a\n", val);
+            ok(val == 0xff00ff || broken(val == 0xff), "got %x, expected 0xff00ff\n", val);
         }
 
         hdc = CreateCompatibleDC(NULL);
 
         oldhbitmap = SelectObject(hdc, hbitmap);
         pixel = GetPixel(hdc, 5, 5);
-        expect(0xc12ac1, pixel);
+        ok(pixel == 0xc12ac1 || broken(pixel == 0xc12a2a), "got %x, expected 0xc12ac1\n", pixel);
         pixel = GetPixel(hdc, 1, 0);
-        expect(0xff00ff, pixel);
+        ok(pixel == 0xff00ff || broken(pixel == 0xff0000), "got %x, expected 0xff00ff\n", pixel);
         pixel = GetPixel(hdc, 2, 0);
-        expect(0xb12ac1, pixel);
+        ok(pixel == 0xb12ac1 || broken(pixel == 0xb12a2a), "got %x, expected 0xb12ac1\n", pixel);
 
         SelectObject(hdc, oldhbitmap);
         DeleteDC(hdc);
