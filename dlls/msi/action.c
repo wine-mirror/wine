@@ -195,7 +195,11 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     template = msi_get_error_message(package->db, start ? MSIERR_INFO_ACTIONSTART : MSIERR_INFO_ACTIONENDED);
 
     row = MSI_CreateRecord(2);
-    if (!row) return;
+    if (!row)
+    {
+        msi_free(template);
+        return;
+    }
     MSI_RecordSetStringW(row, 0, template);
     MSI_RecordSetStringW(row, 1, action);
     MSI_RecordSetInteger(row, 2, start ? package->LastActionResult : rc);
