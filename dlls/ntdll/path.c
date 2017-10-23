@@ -325,9 +325,8 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
     return 0;
 }
 
-
 /**************************************************************************
- *                 RtlDosPathNameToNtPathName_U		[NTDLL.@]
+ *                 RtlDosPathNameToNtPathName_U_WithStatus    [NTDLL.@]
  *
  * dos_path: a DOS path name (fully qualified or not)
  * ntpath:   pointer to a UNICODE_STRING to hold the converted
@@ -338,18 +337,15 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
  * FIXME:
  *      + fill the cd structure
  */
-BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
-                                             PUNICODE_STRING ntpath,
-                                             PWSTR* file_part,
-                                             CURDIR* cd)
+NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, UNICODE_STRING *ntpath,
+    WCHAR **file_part, CURDIR *cd)
 {
     static const WCHAR LongFileNamePfxW[] = {'\\','\\','?','\\'};
     ULONG sz, offset;
     WCHAR local[MAX_PATH];
     LPWSTR ptr;
 
-    TRACE("(%s,%p,%p,%p)\n",
-          debugstr_w(dos_path), ntpath, file_part, cd);
+    TRACE("(%s,%p,%p,%p)\n", debugstr_w(dos_path), ntpath, file_part, cd);
 
     if (cd)
     {
@@ -357,14 +353,15 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
         memset(cd, 0, sizeof(*cd));
     }
 
-    if (!dos_path || !*dos_path) return FALSE;
+    if (!dos_path || !*dos_path)
+        return STATUS_OBJECT_NAME_INVALID;
 
     if (!strncmpW(dos_path, LongFileNamePfxW, 4))
     {
         ntpath->Length = strlenW(dos_path) * sizeof(WCHAR);
         ntpath->MaximumLength = ntpath->Length + sizeof(WCHAR);
         ntpath->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, ntpath->MaximumLength);
-        if (!ntpath->Buffer) return FALSE;
+        if (!ntpath->Buffer) return STATUS_NO_MEMORY;
         memcpy( ntpath->Buffer, dos_path, ntpath->MaximumLength );
         ntpath->Buffer[1] = '?';  /* change \\?\ to \??\ */
         if (file_part)
@@ -372,22 +369,23 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
             if ((ptr = strrchrW( ntpath->Buffer, '\\' )) && ptr[1]) *file_part = ptr + 1;
             else *file_part = NULL;
         }
-        return TRUE;
+        return STATUS_SUCCESS;
     }
 
     ptr = local;
     sz = RtlGetFullPathName_U(dos_path, sizeof(local), ptr, file_part);
-    if (sz == 0) return FALSE;
+    if (sz == 0) return STATUS_OBJECT_NAME_INVALID;
+
     if (sz > sizeof(local))
     {
-        if (!(ptr = RtlAllocateHeap(GetProcessHeap(), 0, sz))) return FALSE;
+        if (!(ptr = RtlAllocateHeap(GetProcessHeap(), 0, sz))) return STATUS_NO_MEMORY;
         sz = RtlGetFullPathName_U(dos_path, sz, ptr, file_part);
     }
     sz += (1 /* NUL */ + 4 /* unc\ */ + 4 /* \??\ */) * sizeof(WCHAR);
     if (sz > MAXWORD)
     {
         if (ptr != local) RtlFreeHeap(GetProcessHeap(), 0, ptr);
-        return FALSE;
+        return STATUS_OBJECT_NAME_INVALID;
     }
 
     ntpath->MaximumLength = sz;
@@ -395,7 +393,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
     if (!ntpath->Buffer)
     {
         if (ptr != local) RtlFreeHeap(GetProcessHeap(), 0, ptr);
-        return FALSE;
+        return STATUS_NO_MEMORY;
     }
 
     strcpyW(ntpath->Buffer, NTDosPrefixW);
@@ -422,7 +420,20 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
     /* FIXME: cd filling */
 
     if (ptr != local) RtlFreeHeap(GetProcessHeap(), 0, ptr);
-    return TRUE;
+    return STATUS_SUCCESS;
+}
+
+/**************************************************************************
+ *                 RtlDosPathNameToNtPathName_U    [NTDLL.@]
+ *
+ * See RtlDosPathNameToNtPathName_U_WithStatus
+ */
+BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
+                                             PUNICODE_STRING ntpath,
+                                             PWSTR* file_part,
+                                             CURDIR* cd)
+{
+    return RtlDosPathNameToNtPathName_U_WithStatus(dos_path, ntpath, file_part, cd) == STATUS_SUCCESS;
 }
 
 /******************************************************************
