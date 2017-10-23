@@ -36,6 +36,7 @@
 #include "ole2.h"
 #include "dispex.h"
 #include "objsafe.h"
+#include "mshtml.h"
 #include "initguid.h"
 #include "asptlb.h"
 
@@ -45,6 +46,7 @@
 #undef CLSID_DOMDocument
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+DEFINE_GUID(IID_transformdest_unknown,0xf5078f3a,0xc551,0x11d3,0x89,0xb9,0x00,0x00,0xf8,0x1f,0xe2,0x21);
 
 static int g_unexpectedcall, g_expectedcall;
 
@@ -12559,6 +12561,81 @@ static void test_merging_text(void)
     free_bstrs();
 }
 
+static HRESULT WINAPI transformdest_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    BOOL known_iid = IsEqualIID(riid, &IID_IHTMLObjectElement) ||
+        IsEqualIID(riid, &IID_transformdest_unknown) ||
+        IsEqualIID(riid, &IID_IServiceProvider) ||
+        IsEqualIID(riid, &IID_IStream) ||
+        IsEqualIID(riid, &IID_ISequentialStream) ||
+        IsEqualIID(riid, &IID_IRequestDictionary);
+
+todo_wine_if(IsEqualIID(riid, &IID_IXMLDOMDocument))
+    ok(known_iid, "Unexpected riid %s\n", wine_dbgstr_guid(riid));
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI transformdest_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI transformdest_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl transformdestvtbl =
+{
+    transformdest_QueryInterface,
+    transformdest_AddRef,
+    transformdest_Release,
+};
+
+static void test_transformNodeToObject(void)
+{
+    IUnknown transformdest = { &transformdestvtbl };
+    IXMLDOMDocument *doc, *doc2, *doc3;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    VARIANT v;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    doc2 = create_document(&IID_IXMLDOMDocument);
+    doc3 = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szTransformXML), &b);
+    ok(hr == S_OK, "Failed to load document, hr %#x.\n", hr);
+    hr = IXMLDOMDocument_loadXML(doc2, _bstr_(szTransformSSXML), &b);
+    ok(hr == S_OK, "Failed to load document, hr %#x.\n", hr);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = &transformdest;
+    hr = IXMLDOMDocument_transformNodeToObject(doc, (IXMLDOMNode *)doc2, v);
+    ok(hr == E_INVALIDARG, "Failed to transform node, hr %#x.\n", hr);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = NULL;
+    hr = IXMLDOMDocument_transformNodeToObject(doc, (IXMLDOMNode *)doc2, v);
+    ok(hr == E_INVALIDARG, "Failed to transform node, hr %#x.\n", hr);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    hr = IXMLDOMDocument_transformNodeToObject(doc, (IXMLDOMNode *)doc2, v);
+    ok(hr == E_INVALIDARG, "Failed to transform node, hr %#x.\n", hr);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch *)doc3;
+    hr = IXMLDOMDocument_transformNodeToObject(doc, (IXMLDOMNode *)doc2, v);
+    ok(hr == S_OK, "Failed to transform node, hr %#x.\n", hr);
+
+    IXMLDOMDocument_Release(doc3);
+    IXMLDOMDocument_Release(doc2);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -12640,6 +12717,7 @@ START_TEST(domdoc)
     test_xmlns_attribute();
     test_url();
     test_merging_text();
+    test_transformNodeToObject();
 
     test_xsltemplate();
     test_xsltext();
