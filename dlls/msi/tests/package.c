@@ -3058,10 +3058,13 @@ static void test_states(void)
         {'w','i','n','e','t','e','s','t','3','-','p','a','c','k','a','g','e','.','m','s','i',0};
     static const WCHAR msifile4W[] =
         {'w','i','n','e','t','e','s','t','4','-','p','a','c','k','a','g','e','.','m','s','i',0};
+    char msi_cache_file[MAX_PATH];
+    DWORD cache_file_name_len;
     INSTALLSTATE state;
     MSIHANDLE hpkg;
     UINT r;
     MSIHANDLE hdb;
+    BOOL is_broken;
 
     if (is_process_limited())
     {
@@ -3582,7 +3585,8 @@ static void test_states(void)
 
     /* reinstall the product */
     r = MsiInstallProductA(msifile3, "REINSTALL=ALL");
-    ok(r == ERROR_SUCCESS || broken(r == ERROR_INSTALL_FAILURE) /* win2k3 */, "Expected ERROR_SUCCESS, got %d\n", r);
+    is_broken = (r == ERROR_INSTALL_FAILURE);
+    ok(r == ERROR_SUCCESS || broken(is_broken) /* win2k3 */, "Expected ERROR_SUCCESS, got %d\n", r);
 
     state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "five");
     ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
@@ -3666,6 +3670,40 @@ static void test_states(void)
 
     r = MsiInstallProductA(msifile, "ADDSOURCE=one");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "one");
+    ok(state == INSTALLSTATE_SOURCE, "state = %d\n", state);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "two");
+    ok(state == INSTALLSTATE_ABSENT, "state = %d\n", state);
+
+    /* no arguments test */
+    cache_file_name_len = sizeof(msi_cache_file);
+    r = MsiGetProductInfoA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}",
+            INSTALLPROPERTY_LOCALPACKAGEA, msi_cache_file, &cache_file_name_len);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiOpenDatabaseA(msi_cache_file, (const char*)MSIDBOPEN_DIRECT, &hdb);
+    ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
+
+    create_custom_action_table( hdb );
+    add_custom_action_entry( hdb, "'ConditionCheck1', 19, '', 'Condition check failed (1)'" );
+    add_custom_action_entry( hdb, "'ConditionCheck2', 19, '', 'Condition check failed (2)'" );
+    add_custom_action_entry( hdb, "'ConditionCheck3', 19, '', 'Condition check failed (3)'" );
+    add_custom_action_entry( hdb, "'ConditionCheck4', 19, '', 'Condition check failed (4)'" );
+    add_custom_action_entry( hdb, "'ConditionCheck5', 19, '', 'Condition check failed (5)'" );
+    add_custom_action_entry( hdb, "'ConditionCheck6', 19, '', 'Condition check failed (6)'" );
+
+    add_install_execute_sequence_entry( hdb, "'ConditionCheck1', 'REINSTALL', '798'" );
+    add_install_execute_sequence_entry( hdb, "'ConditionCheck2', 'NOT REMOVE AND Preselected', '799'" );
+    add_install_execute_sequence_entry( hdb, "'ConditionCheck3', 'REINSTALL', '6598'" );
+    add_install_execute_sequence_entry( hdb, "'ConditionCheck4', 'NOT REMOVE AND Preselected', '6599'" );
+    add_install_execute_sequence_entry( hdb, "'ConditionCheck5', 'REINSTALL', '6601'" );
+    add_install_execute_sequence_entry( hdb, "'ConditionCheck6', 'NOT REMOVE AND Preselected', '6602'" );
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed: %d\n", r);
+    MsiCloseHandle(hdb);
+
+    r = MsiInstallProductA(msifile, "");
+    ok(r == ERROR_SUCCESS || (is_broken && r == ERROR_INSTALL_FAILURE) /* win2k3 */,
+            "Expected ERROR_SUCCESS, got %d\n", r);
     state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "one");
     ok(state == INSTALLSTATE_SOURCE, "state = %d\n", state);
     state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "two");
