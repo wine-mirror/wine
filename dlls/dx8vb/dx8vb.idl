@@ -37,6 +37,26 @@ interface D3DXSkinMesh;
 interface D3DXSprite;
 interface D3DXRenderToSurface;
 interface Direct3DBaseTexture8;
+interface DirectSound8;
+interface DirectSoundCapture8;
+interface DirectSoundEnum8;
+interface DirectSoundEnum8;
+interface DirectInput8;
+interface DirectMusicLoader8;
+interface DirectMusicComposer8;
+interface DirectMusicPerformance8;
+interface DirectXEvent8;
+interface DirectPlayVoiceClient8;
+interface DirectPlayVoiceServer8;
+interface DirectPlayVoiceTest8;
+interface DirectXFile;
+interface DirectPlay8Peer;
+interface DirectPlay8Server;
+interface DirectPlay8Client;
+interface DirectPlay8Address;
+interface Direct3D8;
+interface DirectPlay8LobbyClient;
+interface DirectPlay8LobbiedApplication;
 
 typedef enum {
     D3DXIFF_BMP = 0,
@@ -702,6 +722,87 @@ interface ID3DX8 : IUnknown {
 };
 
 [
+    object,
+    uuid(e7ff1301-96a5-11d3-ac85-00c04fc2c602),
+    helpstring("DirectX8 root object functions"),
+    local
+]
+interface IDirectX8 : IUnknown {
+    HRESULT DirectSoundCreate(
+        [in] BSTR guid,
+        [out, retval] DirectSound8 **ret
+    );
+    HRESULT DirectSoundCaptureCreate(
+        [in] BSTR guid,
+        [out, retval] DirectSoundCapture8 **ret
+    );
+    HRESULT GetDSEnum(
+        [out, retval] DirectSoundEnum8 **ret
+    );
+    HRESULT GetDSCaptureEnum(
+        [out, retval] DirectSoundEnum8 **ret
+    );
+    HRESULT DirectInputCreate(
+        [out, retval] DirectInput8 **ret
+    );
+    HRESULT DirectMusicLoaderCreate(
+        [out, retval] DirectMusicLoader8 **ret
+    );
+    HRESULT DirectMusicComposerCreate(
+        [out, retval] DirectMusicComposer8 **ret
+    );
+    HRESULT DirectMusicPerformanceCreate(
+        [out, retval] DirectMusicPerformance8 **ret
+    );
+    HRESULT CreateEvent(
+        [in] DirectXEvent8 *event,
+        [out, retval] LONG *h
+    );
+    HRESULT SetEvent(
+        [in] LONG eventid
+    );
+    HRESULT DestroyEvent(
+        [in] LONG eventid
+    );
+    HRESULT CreateNewGuid(
+        [out, retval] BSTR *retGuid
+    );
+    HRESULT DirectPlayVoiceClientCreate(
+        [out, retval] DirectPlayVoiceClient8 **ret
+    );
+    HRESULT DirectPlayVoiceServerCreate(
+        [out, retval] DirectPlayVoiceServer8 **ret
+    );
+    HRESULT DirectPlayVoiceTestCreate(
+        [out, retval] DirectPlayVoiceTest8 **ret
+    );
+    HRESULT DirectXFileCreate(
+        [out, retval] DirectXFile **ret
+    );
+    HRESULT DirectPlayPeerCreate(
+        [out, retval] DirectPlay8Peer **ret
+    );
+    HRESULT DirectPlayServerCreate(
+        [out, retval] DirectPlay8Server **ret
+    );
+    HRESULT DirectPlayClientCreate(
+        [out, retval] DirectPlay8Client **ret
+    );
+    HRESULT DirectPlayAddressCreate(
+        [out, retval] DirectPlay8Address **ret
+    );
+    HRESULT Direct3DCreate(
+        [out, retval] Direct3D8 **ret
+    );
+    HRESULT DirectPlayLobbyClientCreate(
+        [out, retval] DirectPlay8LobbyClient **ret
+    );
+    HRESULT DirectPlayLobbiedApplicationCreate(
+        [out, retval] DirectPlay8LobbiedApplication **ret
+    );
+};
+
+[
     uuid(58356c5d-0bfd-48ed-93c5-f4520b6233de),
     helpstring("D3DX8"),
     threading(both),
@@ -709,3 +810,12 @@ interface ID3DX8 : IUnknown {
     vi_progid("DIRECT.D3DX8.0")
 ]
 coclass D3DX8 { interface ID3DX8; };
+
+[
+    uuid(e7ff1300-96a5-11d3-ac85-00c04fc2c602),
+    helpstring("DirectX8"),
+    threading(both),
+    progid("DIRECT.DirectX8.0"),
+    vi_progid("DIRECT.DirectX8.0")
+]
+coclass DirectX8 { interface IDirectX8; };
