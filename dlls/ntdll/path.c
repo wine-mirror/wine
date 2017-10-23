@@ -924,7 +924,7 @@ BOOLEAN WINAPI RtlIsNameLegalDOS8Dot3( const UNICODE_STRING *unicode,
  *		RtlGetCurrentDirectory_U (NTDLL.@)
  *
  */
-NTSTATUS WINAPI RtlGetCurrentDirectory_U(ULONG buflen, LPWSTR buf)
+ULONG WINAPI RtlGetCurrentDirectory_U(ULONG buflen, LPWSTR buf)
 {
     UNICODE_STRING*     us;
     ULONG               len;
