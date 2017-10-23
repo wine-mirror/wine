@@ -2362,6 +2362,27 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             return stat;
         }
+        case EmfPlusRecordTypeSetClipPath:
+        {
+            CombineMode mode = (flags >> 8) & 0xf;
+            BYTE pathid = flags & 0xff;
+            GpRegion *region;
+
+            if (dataSize != 0)
+                return InvalidParameter;
+
+            if (pathid >= EmfPlusObjectTableSize || real_metafile->objtable[pathid].type != ObjectTypePath)
+                return InvalidParameter;
+
+            stat = GdipCreateRegionPath(real_metafile->objtable[pathid].u.path, &region);
+            if (stat == Ok)
+            {
+                stat = metafile_set_clip_region(real_metafile, region, mode);
+                GdipDeleteRegion(region);
+            }
+
+            return stat;
+        }
         case EmfPlusRecordTypeSetPageTransform:
         {
             EmfPlusSetPageTransform *record = (EmfPlusSetPageTransform*)header;
