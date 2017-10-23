@@ -84,8 +84,8 @@ struct binary_info
     enum binary_type type;
     DWORD            arch;
     DWORD            flags;
-    void            *res_start;
-    void            *res_end;
+    ULONGLONG        res_start;
+    ULONGLONG        res_end;
 };
 
 /* module.c */

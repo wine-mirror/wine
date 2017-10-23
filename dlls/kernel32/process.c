@@ -207,8 +207,8 @@ static BOOL get_builtin_path( const WCHAR *libname, const WCHAR *ext, WCHAR *fil
     }
     binary_info->type = BINARY_UNIX_LIB;
     binary_info->flags = flags;
-    binary_info->res_start = NULL;
-    binary_info->res_end = NULL;
+    binary_info->res_start = 0;
+    binary_info->res_end = 0;
     /* assume current arch */
 #if defined(__i386__) || defined(__x86_64__)
     binary_info->arch = (flags & BINARY_FLAG_64BIT) ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
@@ -1930,8 +1930,9 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
             signal( SIGPIPE, SIG_DFL );
 
             sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
-            sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx",
-                     (unsigned long)binary_info->res_start, (unsigned long)binary_info->res_end );
+            sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
+                     (ULONG)(binary_info->res_start >> 32), (ULONG)binary_info->res_start,
+                     (ULONG)(binary_info->res_end >> 32), (ULONG)binary_info->res_end );
 
             putenv( preloader_reserve );
             putenv( socket_env );
@@ -2403,10 +2404,10 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     else switch (binary_info.type)
     {
     case BINARY_PE:
-        TRACE( "starting %s as Win%d binary (%p-%p, arch %04x%s)\n",
+        TRACE( "starting %s as Win%d binary (%s-%s, arch %04x%s)\n",
                debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32,
-               binary_info.res_start, binary_info.res_end, binary_info.arch,
-               (binary_info.flags & BINARY_FLAG_FAKEDLL) ? ", fakedll" : "" );
+               wine_dbgstr_longlong(binary_info.res_start), wine_dbgstr_longlong(binary_info.res_end),
+               binary_info.arch, (binary_info.flags & BINARY_FLAG_FAKEDLL) ? ", fakedll" : "" );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
         break;
@@ -2556,9 +2557,10 @@ static void exec_process( LPCWSTR name )
     switch (binary_info.type)
     {
     case BINARY_PE:
-        TRACE( "starting %s as Win%d binary (%p-%p, arch %04x)\n",
+        TRACE( "starting %s as Win%d binary (%s-%s, arch %04x)\n",
                debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32,
-               binary_info.res_start, binary_info.res_end, binary_info.arch );
+               wine_dbgstr_longlong(binary_info.res_start), wine_dbgstr_longlong(binary_info.res_end),
+               binary_info.arch );
         create_process( hFile, name, GetCommandLineW(), NULL, NULL, NULL, NULL,
                         FALSE, 0, &startup_info, &info, NULL, &binary_info, TRUE );
         break;

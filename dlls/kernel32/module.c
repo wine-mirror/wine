@@ -394,6 +394,7 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
         {
             IMAGE_OS2_HEADER os2;
             IMAGE_NT_HEADERS32 nt;
+            IMAGE_NT_HEADERS64 nt64;
         } ext_header;
 
         /* We do have a DOS image so we will now try to seek into
@@ -422,16 +423,17 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
                 info->arch = ext_header.nt.FileHeader.Machine;
                 if (ext_header.nt.FileHeader.Characteristics & IMAGE_FILE_DLL)
                     info->flags |= BINARY_FLAG_DLL;
-                if (len < sizeof(ext_header.nt))  /* clear remaining part of header if missing */
-                    memset( (char *)&ext_header.nt + len, 0, sizeof(ext_header.nt) - len );
+                if (len < sizeof(ext_header))  /* clear remaining part of header if missing */
+                    memset( (char *)&ext_header + len, 0, sizeof(ext_header) - len );
                 switch (ext_header.nt.OptionalHeader.Magic)
                 {
                 case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-                    info->res_start = (void *)(ULONG_PTR)ext_header.nt.OptionalHeader.ImageBase;
-                    info->res_end = (void *)((ULONG_PTR)ext_header.nt.OptionalHeader.ImageBase +
-                                                     ext_header.nt.OptionalHeader.SizeOfImage);
+                    info->res_start = ext_header.nt.OptionalHeader.ImageBase;
+                    info->res_end = info->res_start + ext_header.nt.OptionalHeader.SizeOfImage;
                     break;
                 case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+                    info->res_start = ext_header.nt64.OptionalHeader.ImageBase;
+                    info->res_end = info->res_start + ext_header.nt64.OptionalHeader.SizeOfImage;
                     info->flags |= BINARY_FLAG_64BIT;
                     break;
                 }
