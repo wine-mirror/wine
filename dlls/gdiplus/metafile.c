@@ -2134,6 +2134,18 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
     return status;
 }
 
+static GpStatus metafile_set_clip_region(GpMetafile *metafile, GpRegion *region, CombineMode mode)
+{
+    GpMatrix world_to_device;
+
+    get_graphics_transform(metafile->playback_graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &world_to_device);
+
+    GdipTransformRegion(region, &world_to_device);
+    GdipCombineRegionRegion(metafile->clip, region, mode);
+
+    return METAFILE_PlaybackUpdateClip(metafile);
+}
+
 GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
     EmfPlusRecordType recordType, UINT flags, UINT dataSize, GDIPCONST BYTE *data)
 {
@@ -2315,7 +2327,6 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             EmfPlusSetClipRect *record = (EmfPlusSetClipRect*)header;
             CombineMode mode = (CombineMode)((flags >> 8) & 0xf);
             GpRegion *region;
-            GpMatrix world_to_device;
 
             if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(*record))
                 return InvalidParameter;
@@ -2324,17 +2335,32 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (stat == Ok)
             {
-                get_graphics_transform(real_metafile->playback_graphics,
-                    CoordinateSpaceDevice, CoordinateSpaceWorld, &world_to_device);
-
-                GdipTransformRegion(region, &world_to_device);
-
-                GdipCombineRegionRegion(real_metafile->clip, region, mode);
-
+                stat = metafile_set_clip_region(real_metafile, region, mode);
                 GdipDeleteRegion(region);
             }
 
-            return METAFILE_PlaybackUpdateClip(real_metafile);
+            return stat;
+        }
+        case EmfPlusRecordTypeSetClipRegion:
+        {
+            CombineMode mode = (flags >> 8) & 0xf;
+            BYTE regionid = flags & 0xff;
+            GpRegion *region;
+
+            if (dataSize != 0)
+                return InvalidParameter;
+
+            if (regionid >= EmfPlusObjectTableSize || real_metafile->objtable[regionid].type != ObjectTypeRegion)
+                return InvalidParameter;
+
+            stat = GdipCloneRegion(real_metafile->objtable[regionid].u.region, &region);
+            if (stat == Ok)
+            {
+                stat = metafile_set_clip_region(real_metafile, region, mode);
+                GdipDeleteRegion(region);
+            }
+
+            return stat;
         }
         case EmfPlusRecordTypeSetPageTransform:
         {
