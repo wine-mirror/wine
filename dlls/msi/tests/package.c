@@ -3690,16 +3690,69 @@ static void test_states(void)
     add_custom_action_entry( hdb, "'ConditionCheck4', 19, '', 'Condition check failed (4)'" );
     add_custom_action_entry( hdb, "'ConditionCheck5', 19, '', 'Condition check failed (5)'" );
     add_custom_action_entry( hdb, "'ConditionCheck6', 19, '', 'Condition check failed (6)'" );
+    add_custom_action_entry( hdb, "'ConditionCheck7', 19, '', 'Condition check failed (7)'" );
+    add_custom_action_entry( hdb, "'ConditionCheck8', 19, '', 'Condition check failed (8)'" );
 
     add_install_execute_sequence_entry( hdb, "'ConditionCheck1', 'REINSTALL', '798'" );
     add_install_execute_sequence_entry( hdb, "'ConditionCheck2', 'NOT REMOVE AND Preselected', '799'" );
     add_install_execute_sequence_entry( hdb, "'ConditionCheck3', 'REINSTALL', '6598'" );
     add_install_execute_sequence_entry( hdb, "'ConditionCheck4', 'NOT REMOVE AND Preselected', '6599'" );
     add_install_execute_sequence_entry( hdb, "'ConditionCheck5', 'REINSTALL', '6601'" );
-    add_install_execute_sequence_entry( hdb, "'ConditionCheck6', 'NOT REMOVE AND Preselected', '6602'" );
+    add_install_execute_sequence_entry( hdb, "'ConditionCheck6', 'NOT REMOVE AND Preselected', '6601'" );
+    /* Add "one" feature action tests */
+    add_install_execute_sequence_entry( hdb, "'ConditionCheck7', 'NOT REMOVE AND NOT(&one=-1)', '1501'" );
+    add_install_execute_sequence_entry( hdb, "'ConditionCheck8', 'NOT REMOVE AND NOT(&one=-1)', '6602'" );
     r = MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed: %d\n", r);
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
     MsiCloseHandle(hdb);
+
+    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_UNKNOWN_FEATURE, 0, 0, FALSE );
+    r = MsiDoActionA( hpkg, "CostInitialize");
+    ok( r == ERROR_SUCCESS, "CostInitialize failed\n");
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+
+    r = MsiDoActionA( hpkg, "FileCost");
+    ok( r == ERROR_SUCCESS, "FileCost failed\n");
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+
+    r = MsiDoActionA( hpkg, "CostFinalize");
+    ok( r == ERROR_SUCCESS, "CostFinalize failed\n");
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "upsilon", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+
+    r = MsiDoActionA( hpkg, "InstallValidate");
+    ok( r == ERROR_SUCCESS, "InstallValidate failed %d\n", r);
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    MsiCloseHandle( hpkg );
 
     r = MsiInstallProductA(msifile, "");
     ok(r == ERROR_SUCCESS || (is_broken && r == ERROR_INSTALL_FAILURE) /* win2k3 */,
