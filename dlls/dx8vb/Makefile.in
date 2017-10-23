@@ -3,3 +3,5 @@ IMPORTS   = uuid ole32
 
 C_SRCS = \
 	main.c
+
+IDL_SRCS = dx8vb.idl

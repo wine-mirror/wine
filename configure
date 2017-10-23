@@ -18478,7 +18478,7 @@ wine_fn_config_test dlls/dswave/tests dswave_test
 wine_fn_config_dll dwmapi enable_dwmapi implib
 wine_fn_config_dll dwrite enable_dwrite implib
 wine_fn_config_test dlls/dwrite/tests dwrite_test
-wine_fn_config_dll dx8vb enable_dx8vb
+wine_fn_config_dll dx8vb enable_dx8vb clean
 wine_fn_config_dll dxdiagn enable_dxdiagn clean
 wine_fn_config_test dlls/dxdiagn/tests dxdiagn_test
 wine_fn_config_lib dxerr8
