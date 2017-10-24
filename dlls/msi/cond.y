@@ -115,6 +115,9 @@ static BOOL num_from_prop( LPCWSTR p, INT *val )
     struct cond_str str;
     LPWSTR    string;
     INT       value;
+    LPWSTR identifier;
+    INT operator;
+    BOOL bool;
 }
 
 %token COND_SPACE COND_EOF
@@ -128,9 +131,11 @@ static BOOL num_from_prop( LPCWSTR p, INT *val )
 
 %nonassoc COND_ERROR COND_EOF
 
-%type <value> expression boolean_term boolean_factor 
-%type <value> value_i operator
-%type <string> identifier symbol_s value_s literal
+%type <bool> expression boolean_term boolean_factor
+%type <value> value_i
+%type <string> symbol_s value_s literal
+%type <identifier> identifier
+%type <operator> operator
 
 %%
 
