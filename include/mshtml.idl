@@ -20031,6 +20031,14 @@ interface IEventTarget : IDispatch
             [out, retval] VARIANT_BOOL *pfResult);
 }
 
+typedef enum _DOM_EVENT_PHASE
+{
+    DEP_CAPTURING_PHASE = 1,
+    DEP_AT_TARGET       = 2,
+    DEP_BUBBLING_PHASE  = 3,
+    DOM_EVENT_PHASE_Max = 0x7fffffff
+} DOM_EVENT_PHASE;
+
 /*****************************************************************************
  *    IDOMEvent interface
  */

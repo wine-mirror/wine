@@ -66,6 +66,7 @@ typedef struct {
     EventTarget *target;
     BOOL prevent_default;
     BOOL stop_propagation;
+    USHORT phase;
 
     IHTMLEventObj *event_obj;
     BOOL no_event_obj;

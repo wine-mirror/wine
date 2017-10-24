@@ -938,8 +938,11 @@ static HRESULT WINAPI DOMEvent_get_defaultPrevented(IDOMEvent *iface, VARIANT_BO
 static HRESULT WINAPI DOMEvent_get_eventPhase(IDOMEvent *iface, USHORT *p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = This->phase;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_get_target(IDOMEvent *iface, IEventTarget **p)
@@ -1434,10 +1437,13 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
     event->target = event_target;
     IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
 
-    for(i = 0; i < chain_cnt; i++) {
-        call_event_handlers(target_chain[i], event);
-        if(!(event_flags & EVENT_BUBBLES) || event->stop_propagation)
-            break;
+    event->phase = DEP_AT_TARGET;
+    call_event_handlers(target_chain[0], event);
+
+    if(event_flags & EVENT_BUBBLES) {
+        event->phase = DEP_BUBBLING_PHASE;
+        for(i = 1; !event->stop_propagation && i < chain_cnt; i++)
+            call_event_handlers(target_chain[i], event);
     }
 
     if(target_vtbl && target_vtbl->set_current_event) {

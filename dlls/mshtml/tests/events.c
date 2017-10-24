@@ -2534,6 +2534,7 @@ static void test_create_event(IHTMLDocument2 *doc)
 {
     IDocumentEvent *doc_event;
     IDOMEvent *event;
+    USHORT phase;
     BSTR str;
     HRESULT hres;
 
@@ -2546,6 +2547,11 @@ static void test_create_event(IHTMLDocument2 *doc)
     hres = IDocumentEvent_createEvent(doc_event, str, &event);
     SysFreeString(str);
     ok(hres == S_OK, "createEvent failed: %08x\n", hres);
+
+    phase = 0xdead;
+    hres = IDOMEvent_get_eventPhase(event, &phase);
+    ok(hres == S_OK, "get_eventPhase failed: %08x\n", hres);
+    ok(!phase, "phase = %u\n", phase);
 
     hres = IDOMEvent_preventDefault(event);
     ok(hres == S_OK, "preventDefault failed: %08x\n", hres);
