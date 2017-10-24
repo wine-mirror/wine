@@ -733,7 +733,7 @@ static void CBPaintText(
 	if( lphc->wState & CBF_FOCUSED )
            SendMessageW(lphc->hWndEdit, EM_SETSEL, 0, -1);
    }
-   else /* paint text field ourselves */
+   else if( IsWindowVisible( lphc->self )) /* paint text field ourselves */
    {
      HDC hdc = hdc_paint ? hdc_paint : GetDC(lphc->self);
      UINT itemState = ODS_COMBOBOXEDIT;

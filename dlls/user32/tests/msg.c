@@ -6613,6 +6613,18 @@ static const struct message SetCurSelComboSeq[] =
     { 0 }
 };
 
+static const struct message SetCurSelComboSeq2[] =
+{
+    { CB_SETCURSEL, sent|wparam|lparam, 0, 0 },
+    { LB_SETCURSEL, sent|wparam|lparam, 0, 0 },
+    { LB_SETTOPINDEX, sent|wparam|lparam, 0, 0 },
+    { LB_GETCURSEL, sent|wparam|lparam, 0, 0 },
+    { LB_GETTEXTLEN, sent|wparam|lparam, 0, 0 },
+    { LB_GETTEXTLEN, sent|wparam|lparam|optional, 0, 0 }, /* TODO: it's sent on all Windows versions */
+    { LB_GETTEXT, sent|wparam, 0 },
+    { 0 }
+};
+
 static const struct message WmKeyDownComboSeq[] =
 {
     { WM_KEYDOWN, sent|wparam|lparam, VK_DOWN, 0 },
@@ -6938,6 +6950,13 @@ static void test_combobox_messages(void)
     SendMessageA(combo, CB_SETCURSEL, 0, 0);
     log_all_parent_messages--;
     ok_sequence(SetCurSelComboSeq, "CB_SETCURSEL on a ComboBox", FALSE);
+
+    ShowWindow(combo, SW_HIDE);
+    flush_sequence();
+    log_all_parent_messages++;
+    SendMessageA(combo, CB_SETCURSEL, 0, 0);
+    log_all_parent_messages--;
+    ok_sequence(SetCurSelComboSeq2, "CB_SETCURSEL on a ComboBox", FALSE);
 
     DestroyWindow(combo);
     DestroyWindow(parent);
