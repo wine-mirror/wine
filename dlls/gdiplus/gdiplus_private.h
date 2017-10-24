@@ -481,6 +481,12 @@ struct color_remap_table{
     ColorMap *colormap;
 };
 
+enum imageattr_noop{
+    IMAGEATTR_NOOP_UNDEFINED,
+    IMAGEATTR_NOOP_SET,
+    IMAGEATTR_NOOP_CLEAR,
+};
+
 struct GpImageAttributes{
     WrapMode wrap;
     ARGB outside_color;
@@ -490,6 +496,7 @@ struct GpImageAttributes{
     struct color_remap_table colorremaptables[ColorAdjustTypeCount];
     BOOL gamma_enabled[ColorAdjustTypeCount];
     REAL gamma[ColorAdjustTypeCount];
+    enum imageattr_noop noop[ColorAdjustTypeCount];
 };
 
 struct GpFont{

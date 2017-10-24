@@ -676,6 +676,11 @@ PixelFormat apply_image_attributes(const GpImageAttributes *attributes, LPBYTE d
     UINT x, y;
     INT i;
 
+    if ((attributes->noop[type] == IMAGEATTR_NOOP_UNDEFINED &&
+            attributes->noop[ColorAdjustTypeDefault] == IMAGEATTR_NOOP_SET) ||
+            (attributes->noop[type] == IMAGEATTR_NOOP_SET))
+        return fmt;
+
     if (attributes->colorkeys[type].enabled ||
         attributes->colorkeys[ColorAdjustTypeDefault].enabled)
     {
