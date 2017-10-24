@@ -41,6 +41,8 @@
 static INT (WINAPI *pLCIDToLocaleName)(LCID,LPWSTR,INT,DWORD);
 static LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
 
+static BOOL is_ie9plus;
+
 static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
 static const char range_test_str[] =
@@ -6692,7 +6694,8 @@ static void test_xmlhttprequest(IHTMLWindow5 *window)
     hres = IHTMLXMLHttpRequestFactory_create(factory, &xml);
     ok(hres == S_OK, "create failed: %08x\n", hres);
     ok(xml != NULL, "xml == NULL\n");
-    test_disp((IUnknown*)xml, &DIID_DispHTMLXMLHttpRequest, &CLSID_HTMLXMLHttpRequest, "[object]");
+    if(is_ie9plus)
+        test_disp((IUnknown*)xml, &DIID_DispHTMLXMLHttpRequest, &CLSID_HTMLXMLHttpRequest, "[object]");
 
     IHTMLXMLHttpRequest_Release(xml);
     IHTMLXMLHttpRequestFactory_Release(factory);
@@ -6725,10 +6728,12 @@ static void test_window(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_document failed: %08x\n", hres);
     ok(doc2 != NULL, "doc2 == NULL\n");
 
-    test_ifaces((IUnknown*)doc2, doc_node_iids);
+    if(is_ie9plus)
+        test_ifaces((IUnknown*)doc2, doc_node_iids);
     test_disp((IUnknown*)doc2, &DIID_DispHTMLDocument, &CLSID_HTMLDocument, "[object]");
 
-    test_ifaces((IUnknown*)doc, doc_obj_iids);
+    if(is_ie9plus)
+        test_ifaces((IUnknown*)doc, doc_obj_iids);
     test_disp((IUnknown*)doc, &DIID_DispHTMLDocument, &CLSID_HTMLDocument, "[object]");
 
     unk = (void*)0xdeadbeef;
@@ -10589,16 +10594,6 @@ static void test_document_mode(IHTMLDocument2 *doc2)
     VARIANT v;
     HRESULT hres;
 
-    if(expected_document_mode >= 9) {
-        IHTMLDocument7 *doc7;
-        hres = IHTMLDocument2_QueryInterface(doc2, &IID_IHTMLDocument7, (void**)&doc7);
-        if(FAILED(hres)) {
-            win_skip("IHTMLDocument7 interface not supported: %08x\n", hres);
-            return;
-        }
-        IHTMLDocument7_Release(doc7);
-    }
-
     hres = IHTMLDocument2_QueryInterface(doc2, &IID_IHTMLDocument6, (void**)&doc);
     ok(hres == S_OK, "Could not get IHTMLDocument6 interface: %08x\n", hres);
 
@@ -10645,6 +10640,9 @@ static void test_quirks_mode(void)
     expected_document_mode = 5;
     run_domtest("<html><body></body></html>", test_document_mode);
 
+    if(!is_ie9plus)
+        return;
+
     expected_document_mode = 9;
     run_domtest("<!DOCTYPE html>\n"
                 "<html>"
@@ -10667,6 +10665,27 @@ static void test_quirks_mode(void)
                 "</html>", test_document_mode);
 }
 
+static void check_ie(void)
+{
+    IHTMLDocument2 *doc;
+    IHTMLDocument7 *doc7;
+    HRESULT hres;
+
+    doc = create_document();
+    if(!doc)
+        return;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument7, (void**)&doc7);
+    if(SUCCEEDED(hres)) {
+        is_ie9plus = TRUE;
+        IHTMLDocument7_Release(doc7);
+    }
+
+    trace("is_ie9plus %x\n", is_ie9plus);
+
+    IHTMLDocument2_Release(doc);
+}
+
 START_TEST(dom)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -10676,6 +10695,8 @@ START_TEST(dom)
     CoInitialize(NULL);
     container_hwnd = CreateWindowA("static", NULL, WS_POPUP|WS_VISIBLE,
             CW_USEDEFAULT, CW_USEDEFAULT, 500, 500, NULL, NULL, NULL, NULL);
+
+    check_ie();
 
     run_domtest(doc_str1, test_doc_elem);
     run_domtest(doc_str1, test_get_set_attr);
