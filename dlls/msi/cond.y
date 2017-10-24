@@ -58,6 +58,18 @@ struct cond_str {
     INT len;
 };
 
+struct value {
+    enum value_type {
+        VALUE_INTEGER,
+        VALUE_LITERAL,
+        VALUE_SYMBOL
+    } type;
+    union {
+        INT integer;
+        WCHAR *string;
+    } u;
+};
+
 static LPWSTR COND_GetString( COND_input *info, const struct cond_str *str );
 static LPWSTR COND_GetLiteral( COND_input *info, const struct cond_str *str );
 static int cond_lex( void *COND_lval, COND_input *info);
@@ -69,16 +81,6 @@ static void cond_free( void *ptr );
 
 static INT compare_int( INT a, INT operator, INT b );
 static INT compare_string( LPCWSTR a, INT operator, LPCWSTR b, BOOL convert );
-
-static INT compare_and_free_strings( LPWSTR a, INT op, LPWSTR b, BOOL convert )
-{
-    INT r;
-
-    r = compare_string( a, op, b, convert );
-    cond_free( a );
-    cond_free( b );
-    return r;
-}
 
 static BOOL num_from_prop( LPCWSTR p, INT *val )
 {
@@ -104,6 +106,12 @@ static BOOL num_from_prop( LPCWSTR p, INT *val )
     return TRUE;
 }
 
+static void value_free( struct value val )
+{
+    if (val.type != VALUE_INTEGER)
+        cond_free( val.u.string );
+}
+
 %}
 
 %lex-param { COND_input *info }
@@ -113,8 +121,7 @@ static BOOL num_from_prop( LPCWSTR p, INT *val )
 %union
 {
     struct cond_str str;
-    LPWSTR    string;
-    INT       value;
+    struct value value;
     LPWSTR identifier;
     INT operator;
     BOOL bool;
@@ -132,8 +139,7 @@ static BOOL num_from_prop( LPCWSTR p, INT *val )
 %nonassoc COND_ERROR COND_EOF
 
 %type <bool> expression boolean_term boolean_factor
-%type <value> value_i
-%type <string> symbol_s value_s literal
+%type <value> value
 %type <identifier> identifier
 %type <operator> operator
 
@@ -189,64 +195,50 @@ boolean_term:
 boolean_factor:
     COND_NOT boolean_factor
         {
-            $$ = $2 ? 0 : 1;
+            $$ = !$2;
         }
-  | value_i
+  | value
         {
-            $$ = $1 ? 1 : 0;
+            if ($1.type == VALUE_INTEGER)
+                $$ = $1.u.integer ? 1 : 0;
+            else
+                $$ = $1.u.string && $1.u.string[0];
+            value_free( $1 );
         }
-  | value_s
+  | value operator value
         {
-            $$ = ($1 && $1[0]) ? 1 : 0;
-            cond_free( $1 );
-        }
-  | value_i operator value_i
-        {
-            $$ = compare_int( $1, $2, $3 );
-        }
-  | symbol_s operator value_i
-        {
-            int num;
-            if (num_from_prop( $1, &num ))
-                $$ = compare_int( num, $2, $3 );
-            else 
-                $$ = ($2 == COND_NE || $2 == COND_INE );
-            cond_free( $1 );
-        }
-  | value_i operator symbol_s
-        {
-            int num;
-            if (num_from_prop( $3, &num ))
-                $$ = compare_int( $1, $2, num );
-            else 
-                $$ = ($2 == COND_NE || $2 == COND_INE );
-            cond_free( $3 );
-        }
-  | symbol_s operator symbol_s
-        {
-            $$ = compare_and_free_strings( $1, $2, $3, TRUE );
-        }
-  | symbol_s operator literal
-        {
-            $$ = compare_and_free_strings( $1, $2, $3, TRUE );
-        }
-  | literal operator symbol_s
-        {
-            $$ = compare_and_free_strings( $1, $2, $3, TRUE );
-        }
-  | literal operator literal
-        {
-            $$ = compare_and_free_strings( $1, $2, $3, FALSE );
-        }
-  | literal operator value_i
-        {
-            $$ = 0;
-            cond_free( $1 );
-        }
-  | value_i operator literal
-        {
-            $$ = 0;
-            cond_free( $3 );
+            if ($1.type == VALUE_INTEGER && $3.type == VALUE_INTEGER)
+            {
+                $$ = compare_int($1.u.integer, $2, $3.u.integer);
+            }
+            else if ($1.type != VALUE_INTEGER && $3.type != VALUE_INTEGER)
+            {
+                $$ = compare_string($1.u.string, $2, $3.u.string,
+                        $1.type == VALUE_SYMBOL || $3.type == VALUE_SYMBOL);
+            }
+            else if ($1.type == VALUE_LITERAL || $3.type == VALUE_LITERAL)
+            {
+                $$ = FALSE;
+            }
+            else if ($1.type == VALUE_SYMBOL) /* symbol operator integer */
+            {
+                int num;
+                if (num_from_prop( $1.u.string, &num ))
+                    $$ = compare_int( num, $2, $3.u.integer );
+                else
+                    $$ = ($2 == COND_NE || $2 == COND_INE );
+            }
+            else /* integer operator symbol */
+            {
+                int num;
+                if (num_from_prop( $3.u.string, &num ))
+                    $$ = compare_int( $1.u.integer, $2, num );
+                else
+                    $$ = ($2 == COND_NE || $2 == COND_INE );
+            }
+
+            value_free( $1 );
+            value_free( $3 );
         }
   | COND_LPAR expression COND_RPAR
         {
@@ -276,35 +268,52 @@ operator:
   | COND_IRHS { $$ = COND_IRHS; }
     ;
 
-value_s:
-    symbol_s
-    {
-        $$ = $1;
-    } 
-  | literal
-    {
-        $$ = $1;
-    }
-    ;
-
-literal:
-    COND_LITER
+value:
+    identifier
         {
             COND_input* cond = (COND_input*) info;
-            $$ = COND_GetLiteral( cond, &$1 );
-            if( !$$ )
+            UINT len;
+
+            $$.type = VALUE_SYMBOL;
+            $$.u.string = msi_dup_property( cond->package->db, $1 );
+            if ($$.u.string)
+            {
+                len = (lstrlenW($$.u.string) + 1) * sizeof (WCHAR);
+                $$.u.string = cond_track_mem( cond, $$.u.string, len );
+            }
+            cond_free( $1 );
+        }
+  | COND_PERCENT identifier
+        {
+            COND_input* cond = (COND_input*) info;
+            UINT len = GetEnvironmentVariableW( $2, NULL, 0 );
+            $$.type = VALUE_SYMBOL;
+            $$.u.string = NULL;
+            if (len++)
+            {
+                $$.u.string = cond_alloc( cond, len*sizeof (WCHAR) );
+                if( !$$.u.string )
+                    YYABORT;
+                GetEnvironmentVariableW( $2, $$.u.string, len );
+            }
+            cond_free( $2 );
+        }
+  | COND_LITER
+        {
+            COND_input* cond = (COND_input*) info;
+            $$.type = VALUE_LITERAL;
+            $$.u.string = COND_GetLiteral( cond, &$1 );
+            if( !$$.u.string )
                 YYABORT;
         }
-    ;
-
-value_i:
-    COND_NUMBER
+  | COND_NUMBER
         {
             COND_input* cond = (COND_input*) info;
             LPWSTR szNum = COND_GetString( cond, &$1 );
             if( !szNum )
                 YYABORT;
-            $$ = atoiW( szNum );
+            $$.type = VALUE_INTEGER;
+            $$.u.integer = atoiW( szNum );
             cond_free( szNum );
         }
   | COND_DOLLARS identifier
@@ -313,7 +322,8 @@ value_i:
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
             MSI_GetComponentStateW(cond->package, $2, &install, &action );
-            $$ = action;
+            $$.type = VALUE_INTEGER;
+            $$.u.integer = action;
             cond_free( $2 );
         }
   | COND_QUESTION identifier
@@ -321,8 +331,9 @@ value_i:
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
-            MSI_GetComponentStateW(cond->package, $2, &install, &action );
-            $$ = install;
+            MSI_GetComponentStateW(cond->package, $2, &install, &action );\
+            $$.type = VALUE_INTEGER;
+            $$.u.integer = install;
             cond_free( $2 );
         }
   | COND_AMPER identifier
@@ -334,10 +345,14 @@ value_i:
             {
                 FIXME("condition may be evaluated incorrectly\n");
                 /* we should return empty string in this case */
-                $$ = MSICONDITION_FALSE;
+                $$.type = VALUE_INTEGER;
+                $$.u.integer = MSICONDITION_FALSE;
             }
             else
-                $$ = action;
+            {
+                $$.type = VALUE_INTEGER;
+                $$.u.integer = action;
+            }
 
             cond_free( $2 );
         }
@@ -347,37 +362,8 @@ value_i:
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
             MSI_GetFeatureStateW(cond->package, $2, &install, &action );
-            $$ = install;
-            cond_free( $2 );
-        }
-    ;
-
-symbol_s:
-    identifier
-        {
-            COND_input* cond = (COND_input*) info;
-            UINT len;
-
-            $$ = msi_dup_property( cond->package->db, $1 );
-            if ($$)
-            {
-                len = (lstrlenW($$) + 1) * sizeof (WCHAR);
-                $$ = cond_track_mem( cond, $$, len );
-            }
-            cond_free( $1 );
-        }
-    | COND_PERCENT identifier
-        {
-            COND_input* cond = (COND_input*) info;
-            UINT len = GetEnvironmentVariableW( $2, NULL, 0 );
-            $$ = NULL;
-            if (len++)
-            {
-                $$ = cond_alloc( cond, len*sizeof (WCHAR) );
-                if( !$$ )
-                    YYABORT;
-                GetEnvironmentVariableW( $2, $$, len );
-            }
+            $$.type = VALUE_INTEGER;
+            $$.u.integer = install;
             cond_free( $2 );
         }
     ;
