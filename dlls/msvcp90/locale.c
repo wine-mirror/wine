@@ -9974,6 +9974,36 @@ dateorder __thiscall time_get_char_date_order(const time_get_char *this)
     return call_time_get_char_do_date_order(this);
 }
 
+/* ?do_get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@DD@Z */
+/* ?do_get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@DD@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_do_get, 44) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_char_do_get(this, ret, s, e, base, err, t, fmt, mod) CALL_VTBL_FUNC(this, 28, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*, char, char), \
+        (this, ret, s, e, base, err, t, fmt, mod))
+#else
+#define call_time_get_char_do_get(this, ret, s, e, base, err, t, fmt, mod) CALL_VTBL_FUNC(this, 36, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*, char, char), \
+        (this, ret, s, e, base, err, t, fmt, mod))
+#endif
+istreambuf_iterator_char* __thiscall time_get_char_do_get(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t, char fmt, char mod)
+{
+    FIXME("(%p %p %p %p %p %c %c) stub\n", this, ret, base, err, t, fmt, mod);
+    return NULL;
+}
+
+/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_get, 44)
+istreambuf_iterator_char* __thiscall time_get_char_get(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t, char fmt, char mod)
+{
+    return call_time_get_char_do_get(this, ret, s, e, base, err, t, fmt, mod);
+}
+
 /* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
 /* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
 DEFINE_THISCALL_WRAPPER(time_get_char_do_get_date, 36) /* virtual */
@@ -11617,7 +11647,11 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(time_get_char_do_get_date)
             VTABLE_ADD_FUNC(time_get_char_do_get_weekday)
             VTABLE_ADD_FUNC(time_get_char_do_get_monthname)
-            VTABLE_ADD_FUNC(time_get_char_do_get_year));
+            VTABLE_ADD_FUNC(time_get_char_do_get_year)
+#if _MSVCP_VER >= 100
+            VTABLE_ADD_FUNC(time_get_char_do_get)
+#endif
+            );
 #ifndef __GNUC__
 }
 #endif
