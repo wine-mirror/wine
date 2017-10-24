@@ -321,9 +321,16 @@ value:
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
-            MSI_GetComponentStateW(cond->package, $2, &install, &action );
-            $$.type = VALUE_INTEGER;
-            $$.u.integer = action;
+            if(MSI_GetComponentStateW(cond->package, $2, &install, &action ) != ERROR_SUCCESS)
+            {
+                $$.type = VALUE_LITERAL;
+                $$.u.string = NULL;
+            }
+            else
+            {
+                $$.type = VALUE_INTEGER;
+                $$.u.integer = action;
+            }
             cond_free( $2 );
         }
   | COND_QUESTION identifier
@@ -331,9 +338,16 @@ value:
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
-            MSI_GetComponentStateW(cond->package, $2, &install, &action );\
-            $$.type = VALUE_INTEGER;
-            $$.u.integer = install;
+            if(MSI_GetComponentStateW(cond->package, $2, &install, &action ) != ERROR_SUCCESS)
+            {
+                $$.type = VALUE_LITERAL;
+                $$.u.string = NULL;
+            }
+            else
+            {
+                $$.type = VALUE_INTEGER;
+                $$.u.integer = install;
+            }
             cond_free( $2 );
         }
   | COND_AMPER identifier
@@ -343,17 +357,14 @@ value:
       
             if (MSI_GetFeatureStateW(cond->package, $2, &install, &action ) != ERROR_SUCCESS)
             {
-                FIXME("condition may be evaluated incorrectly\n");
-                /* we should return empty string in this case */
-                $$.type = VALUE_INTEGER;
-                $$.u.integer = MSICONDITION_FALSE;
+                $$.type = VALUE_LITERAL;
+                $$.u.string = NULL;
             }
             else
             {
                 $$.type = VALUE_INTEGER;
                 $$.u.integer = action;
             }
-
             cond_free( $2 );
         }
   | COND_EXCLAM identifier
@@ -361,9 +372,16 @@ value:
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
       
-            MSI_GetFeatureStateW(cond->package, $2, &install, &action );
-            $$.type = VALUE_INTEGER;
-            $$.u.integer = install;
+            if(MSI_GetFeatureStateW(cond->package, $2, &install, &action ) != ERROR_SUCCESS)
+            {
+                $$.type = VALUE_LITERAL;
+                $$.u.string = NULL;
+            }
+            else
+            {
+                $$.type = VALUE_INTEGER;
+                $$.u.integer = install;
+            }
             cond_free( $2 );
         }
     ;
