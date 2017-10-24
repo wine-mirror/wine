@@ -73,9 +73,12 @@ static void test_register(void)
     HRESULT ret;
 
     ret = MFTRegister(DUMMY_CLSID, MFT_CATEGORY_OTHER, name, 0, 1, input, 1, output, NULL);
-    ok(ret == S_OK, "Failed to register dummy filter: %x\n", ret);
-    if (FAILED(ret))
+    if (ret == E_ACCESSDENIED)
+    {
+        win_skip("Not enough permissions to register a filter\n");
         return;
+    }
+    ok(ret == S_OK, "Failed to register dummy filter: %x\n", ret);
 
 if(0)
 {
