@@ -129,7 +129,7 @@ static BOOL num_from_prop( LPCWSTR p, INT *val )
 %nonassoc COND_ERROR COND_EOF
 
 %type <value> expression boolean_term boolean_factor 
-%type <value> value_i integer operator
+%type <value> value_i operator
 %type <string> identifier symbol_s value_s literal
 
 %%
@@ -293,9 +293,14 @@ literal:
     ;
 
 value_i:
-    integer
+    COND_NUMBER
         {
-            $$ = $1;
+            COND_input* cond = (COND_input*) info;
+            LPWSTR szNum = COND_GetString( cond, &$1 );
+            if( !szNum )
+                YYABORT;
+            $$ = atoiW( szNum );
+            cond_free( szNum );
         }
   | COND_DOLLARS identifier
         {
@@ -379,18 +384,6 @@ identifier:
             $$ = COND_GetString( cond, &$1 );
             if( !$$ )
                 YYABORT;
-        }
-    ;
-
-integer:
-    COND_NUMBER
-        {
-            COND_input* cond = (COND_input*) info;
-            LPWSTR szNum = COND_GetString( cond, &$1 );
-            if( !szNum )
-                YYABORT;
-            $$ = atoiW( szNum );
-            cond_free( szNum );
         }
     ;
 
