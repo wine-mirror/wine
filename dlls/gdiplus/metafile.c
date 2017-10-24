@@ -2001,14 +2001,14 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
 
         if (pendata->PenDataFlags & PenDataMiterLimit)
         {
-            if ((status = GdipSetPenMiterLimit(pen, *(REAL *)((BYTE *)pendata + offset)) != Ok))
+            if ((status = GdipSetPenMiterLimit(pen, *(REAL *)((BYTE *)pendata + offset))) != Ok)
                 goto penfailed;
             offset += sizeof(REAL);
         }
 
         if (pendata->PenDataFlags & PenDataLineStyle)
         {
-            if ((status = GdipSetPenDashStyle(pen, *(DWORD *)((BYTE *)pendata + offset)) != Ok))
+            if ((status = GdipSetPenDashStyle(pen, *(DWORD *)((BYTE *)pendata + offset))) != Ok)
                 goto penfailed;
             offset += sizeof(DWORD);
         }
