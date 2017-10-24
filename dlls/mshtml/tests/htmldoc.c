@@ -5051,6 +5051,7 @@ static HRESULT wb_qi(REFIID riid, void **ppv)
 {
     static const IID IID_IWebBrowserPriv2IE7 = {0x1af32b6c, 0xa3ba,0x48b9,{0xb2,0x4e,0x8a,0xa9,0xc4,0x1f,0x6e,0xcd}};
     static const IID IID_IWebBrowserPriv2IE8XP = {0x486f6159,0x9f3f,0x4827,{0x82,0xd4,0x28,0x3c,0xef,0x39,0x77,0x33}};
+    static const IID IID_WB_undoc = {0xd9befc84,0xf21e,0x4166,{0x87,0x4b,0xa8,0xd3,0x01,0x0d,0xc7,0x64}};
 
     *ppv = NULL;
 
@@ -5089,7 +5090,8 @@ static HRESULT wb_qi(REFIID riid, void **ppv)
         return E_NOINTERFACE;
     }
 
-    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    if(!IsEqualGUID(riid, &IID_WB_undoc))
+        ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -6275,6 +6277,7 @@ static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
     if(support_wbapp)
         SET_EXPECT(get_LocationURL);
     SET_EXPECT(TranslateUrl);
+    SET_EXPECT(GetOverrideKeyPath);
     SET_EXPECT(EvaluateNewWindow);
 
     hres = IHTMLWindow2_open(window, url, name, NULL, VARIANT_FALSE, &new_window);
@@ -6286,6 +6289,7 @@ static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
         todo_wine CHECK_CALLED_BROKEN(get_LocationURL);
     todo_wine
     CHECK_CALLED(TranslateUrl);
+    CLEAR_CALLED(GetOverrideKeyPath);
 
     if(!called_EvaluateNewWindow) {
         win_skip("INewWindowManager not supported\n");
