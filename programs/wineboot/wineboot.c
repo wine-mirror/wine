@@ -682,7 +682,7 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
         return TRUE;
 
     if ((res = RegCreateKeyExW( hkWin, szKeyName, 0, NULL, 0, bDelete ? KEY_ALL_ACCESS : KEY_READ,
-                                NULL, &hkRun, &dispos ) != ERROR_SUCCESS))
+                                NULL, &hkRun, &dispos )) != ERROR_SUCCESS)
     {
         RegCloseKey( hkWin );
         return TRUE;
