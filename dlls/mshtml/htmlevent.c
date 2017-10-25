@@ -2125,8 +2125,18 @@ static HRESULT WINAPI EventTarget_removeEventListener(IEventTarget *iface, BSTR 
                                                       IDispatch *listener, VARIANT_BOOL capture)
 {
     EventTarget *This = impl_from_IEventTarget(iface);
-    FIXME("(%p)->(%s %p %x)\n", This, debugstr_w(type), listener, capture);
-    return E_NOTIMPL;
+    eventid_t eid;
+
+    TRACE("(%p)->(%s %p %x)\n", This, debugstr_w(type), listener, capture);
+
+    eid = str_to_eid(type);
+    if(eid == EVENTID_LAST) {
+        FIXME("Unsupported on event %s\n", debugstr_w(type));
+        return E_NOTIMPL;
+    }
+
+    remove_event_listener(This, eid, capture ? LISTENER_TYPE_CAPTURE : LISTENER_TYPE_BUBBLE, listener);
+    return S_OK;
 }
 
 static HRESULT WINAPI EventTarget_dispatchEvent(IEventTarget *iface, IDOMEvent *event, VARIANT_BOOL *result)
