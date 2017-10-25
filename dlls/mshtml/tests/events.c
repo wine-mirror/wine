@@ -62,6 +62,8 @@ DEFINE_EXPECT(body_onclick);
 DEFINE_EXPECT(doc_onclick_attached);
 DEFINE_EXPECT(div_onclick);
 DEFINE_EXPECT(div_onclick_attached);
+DEFINE_EXPECT(div_onclick_capture);
+DEFINE_EXPECT(div_onclick_bubble);
 DEFINE_EXPECT(timeout);
 DEFINE_EXPECT(doccp_onclick);
 DEFINE_EXPECT(doccp_onclick_cancel);
@@ -756,6 +758,42 @@ static void _elem_attach_event(unsigned line, IUnknown *unk, const char *namea, 
     ok_(__FILE__,line)(res == VARIANT_TRUE, "attachEvent returned %x\n", res);
 }
 
+#define add_event_listener(a,b,c,d) _add_event_listener(__LINE__,a,b,c,d)
+static void _add_event_listener(unsigned line, IUnknown *unk, const char *type, IDispatch *listener, VARIANT_BOOL use_capture)
+{
+    IEventTarget *event_target;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IEventTarget, (void**)&event_target);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IEventTarget iface: %08x\n", hres);
+
+    str = a2bstr(type);
+    hres = IEventTarget_addEventListener(event_target, str, listener, use_capture);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hres == S_OK, "addEventListener failed: %08x\n", hres);
+
+    IEventTarget_Release(event_target);
+}
+
+#define remove_event_listener(a,b,c,d) _remove_event_listener(__LINE__,a,b,c,d)
+static void _remove_event_listener(unsigned line, IUnknown *unk, const char *type, IDispatch *listener, VARIANT_BOOL use_capture)
+{
+    IEventTarget *event_target;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IEventTarget, (void**)&event_target);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IEventTarget iface: %08x\n", hres);
+
+    str = a2bstr(type);
+    hres = IEventTarget_removeEventListener(event_target, str, listener, use_capture);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hres == S_OK, "removeEventListener failed: %08x\n", hres);
+
+    IEventTarget_Release(event_target);
+}
+
 #define elem_detach_event(a,b,c) _elem_detach_event(__LINE__,a,b,c)
 static void _elem_detach_event(unsigned line, IUnknown *unk, const char *namea, IDispatch *disp)
 {
@@ -997,6 +1035,30 @@ static HRESULT WINAPI body_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WOR
 }
 
 EVENT_HANDLER_FUNC_OBJ(body_onclick);
+
+static HRESULT WINAPI div_onclick_capture(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(div_onclick_capture);
+
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("DIV");
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(div_onclick_capture);
+
+static HRESULT WINAPI div_onclick_bubble(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(div_onclick_bubble);
+
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("DIV");
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(div_onclick_bubble);
 
 static HRESULT WINAPI img_onload(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
@@ -1810,6 +1872,11 @@ static void test_onclick(IHTMLDocument2 *doc)
     ok(V_DISPATCH(&v) == (IDispatch*)&document_onclick_obj, "V_DISPATCH(onclick) != onclickFunc\n");
     VariantClear(&v);
 
+    if(document_mode >= 9) {
+        add_event_listener((IUnknown*)div, "click", (IDispatch*)&div_onclick_capture_obj, VARIANT_TRUE);
+        add_event_listener((IUnknown*)div, "click", (IDispatch*)&div_onclick_bubble_obj, VARIANT_FALSE);
+    }
+
     body = doc_get_body(doc);
 
     V_VT(&v) = VT_DISPATCH;
@@ -1817,7 +1884,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     hres = IHTMLElement_put_onclick(body, v);
     ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
 
-    if(winetest_interactive) {
+    if(winetest_interactive && document_mode < 9) {
         SET_EXPECT(div_onclick);
         SET_EXPECT(div_onclick_attached);
         SET_EXPECT(body_onclick);
@@ -1833,6 +1900,10 @@ static void test_onclick(IHTMLDocument2 *doc)
 
     SET_EXPECT(div_onclick);
     SET_EXPECT(div_onclick_attached);
+    if(document_mode >= 9) {
+        SET_EXPECT(div_onclick_capture);
+        SET_EXPECT(div_onclick_bubble);
+    }
     SET_EXPECT(body_onclick);
     SET_EXPECT(document_onclick);
     SET_EXPECT(invoke_onclick);
@@ -1842,6 +1913,10 @@ static void test_onclick(IHTMLDocument2 *doc)
 
     CHECK_CALLED(div_onclick);
     CHECK_CALLED(div_onclick_attached);
+    if(document_mode >= 9) {
+        CHECK_CALLED(div_onclick_capture);
+        CHECK_CALLED(div_onclick_bubble);
+    }
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
     CHECK_CALLED(invoke_onclick);
@@ -1868,6 +1943,10 @@ static void test_onclick(IHTMLDocument2 *doc)
     SET_EXPECT(div_onclick);
     SET_EXPECT(div_onclick_disp);
     SET_EXPECT(div_onclick_attached);
+    if(document_mode >= 9) {
+        SET_EXPECT(div_onclick_capture);
+        SET_EXPECT(div_onclick_bubble);
+    }
     SET_EXPECT(body_onclick);
     SET_EXPECT(document_onclick);
     SET_EXPECT(doc_onclick_attached);
@@ -1880,6 +1959,10 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick);
     CHECK_CALLED(div_onclick_disp);
     CHECK_CALLED(div_onclick_attached);
+    if(document_mode >= 9) {
+        CHECK_CALLED(div_onclick_capture);
+        CHECK_CALLED(div_onclick_bubble);
+    }
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
     CHECK_CALLED(doc_onclick_attached);
@@ -1891,6 +1974,10 @@ static void test_onclick(IHTMLDocument2 *doc)
     SET_EXPECT(div_onclick);
     SET_EXPECT(div_onclick_disp);
     SET_EXPECT(div_onclick_attached);
+    if(document_mode >= 9) {
+        SET_EXPECT(div_onclick_capture);
+        SET_EXPECT(div_onclick_bubble);
+    }
     SET_EXPECT(elem2_cp_onclick);
     SET_EXPECT(body_onclick);
     SET_EXPECT(document_onclick);
@@ -1906,6 +1993,10 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick);
     CHECK_CALLED(div_onclick_disp);
     CHECK_CALLED(div_onclick_attached);
+    if(document_mode >= 9) {
+        CHECK_CALLED(div_onclick_capture);
+        CHECK_CALLED(div_onclick_bubble);
+    }
     CHECK_CALLED(elem2_cp_onclick);
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
@@ -1928,6 +2019,11 @@ static void test_onclick(IHTMLDocument2 *doc)
     elem_detach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
     elem_detach_event((IUnknown*)div, "test", (IDispatch*)&div_onclick_disp);
     doc_detach_event(doc, "onclick", (IDispatch*)&doc_onclick_attached_obj);
+
+    if(document_mode >= 9) {
+        remove_event_listener((IUnknown*)div, "click", (IDispatch*)&div_onclick_capture_obj, VARIANT_TRUE);
+        remove_event_listener((IUnknown*)div, "click", (IDispatch*)&div_onclick_bubble_obj, VARIANT_FALSE);
+    }
 
     SET_EXPECT(div_onclick_attached);
     SET_EXPECT(body_onclick);
