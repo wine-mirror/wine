@@ -35,6 +35,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+typedef enum {
+    LISTENER_TYPE_ONEVENT,
+    LISTENER_TYPE_ATTACHED
+} listener_type_t;
+
+typedef struct {
+    listener_type_t type;
+    IDispatch *function;
+} event_listener_t;
+
 typedef struct {
     struct wine_rb_entry entry;
     eventid_t event_id;
@@ -1258,14 +1268,16 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
 static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
 {
     const eventid_t eid = event->event_id;
-    handler_vector_t *handler_vector = get_handler_vector(event_target, eid, FALSE);
+    handler_vector_t *container = get_handler_vector(event_target, eid, FALSE);
     const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
+    event_listener_t *listener, listeners_buf[8], *listeners = listeners_buf;
+    unsigned listeners_cnt, listeners_size;
     ConnectionPointContainer *cp_container = NULL;
     const event_target_vtbl_t *vtbl;
     VARIANT v;
     HRESULT hres;
 
-    if(handler_vector && handler_vector->handler_prop) {
+    if(container && container->handler_prop) {
         DISPID named_arg = DISPID_THIS;
         VARIANTARG arg;
         DISPPARAMS dp = {&arg, &named_arg, 1, 1};
@@ -1278,7 +1290,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
         V_VT(&v) = VT_EMPTY;
 
         TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
-        hres = call_disp_func(handler_vector->handler_prop, &dp, &v);
+        hres = call_disp_func(container->handler_prop, &dp, &v);
         if(hres == S_OK) {
             TRACE("%s <<< %s\n", debugstr_w(event_info[eid].name), debugstr_variant(&v));
 
@@ -1296,39 +1308,68 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
         }
     }
 
-    if(handler_vector && handler_vector->handler_cnt) {
-        VARIANTARG arg;
-        DISPPARAMS dp = {&arg, NULL, 1, 0};
-        int i;
+    listeners_cnt = 0;
+    listeners_size = sizeof(listeners_buf)/sizeof(*listeners_buf);
 
-        V_VT(&arg) = VT_DISPATCH;
-        V_DISPATCH(&arg) = (IDispatch*)event->event_obj;
-
-        i = handler_vector->handler_cnt;
+    if(container) {
+        unsigned i = container->handler_cnt;
         while(i--) {
-            if(handler_vector->handlers[i]) {
-                V_VT(&v) = VT_EMPTY;
+            if(!container->handlers[i])
+                continue;
 
-                TRACE("%s [%d] >>>\n", debugstr_w(event_info[eid].name), i);
-                hres = call_disp_func(handler_vector->handlers[i], &dp, &v);
-                if(hres == S_OK) {
-                    TRACE("%s [%d] <<<\n", debugstr_w(event_info[eid].name), i);
-
-                    if(cancelable) {
-                        if(V_VT(&v) == VT_BOOL) {
-                            if(!V_BOOL(&v))
-                                IDOMEvent_preventDefault(&event->IDOMEvent_iface);
-                        }else if(V_VT(&v) != VT_EMPTY) {
-                            FIXME("unhandled result %s\n", debugstr_variant(&v));
-                        }
-                    }
-                    VariantClear(&v);
+            if(listeners_cnt == listeners_size) {
+                event_listener_t *new_listeners;
+                if(listeners == listeners_buf) {
+                    new_listeners = heap_alloc(listeners_size * 2 * sizeof(*new_listeners));
+                    if(!new_listeners)
+                        break;
+                    memcpy(new_listeners, listeners, listeners_cnt * sizeof(*listeners));
                 }else {
-                    WARN("%s [%d] <<< %08x\n", debugstr_w(event_info[eid].name), i, hres);
+                    new_listeners = heap_realloc(listeners, listeners_size * 2 * sizeof(*new_listeners));
                 }
+                listeners = new_listeners;
+                listeners_size *= 2;
+            }
+
+            listeners[listeners_cnt].type = LISTENER_TYPE_ATTACHED;
+            IDispatch_AddRef(listeners[listeners_cnt].function = container->handlers[i]);
+            listeners_cnt++;
+        }
+    }
+
+    for(listener = listeners; listener < listeners + listeners_cnt; listener++) {
+        if(listener->type == LISTENER_TYPE_ATTACHED) {
+            VARIANTARG arg;
+            DISPPARAMS dp = {&arg, NULL, 1, 0};
+
+            V_VT(&arg) = VT_DISPATCH;
+            V_DISPATCH(&arg) = (IDispatch*)event->event_obj;
+            V_VT(&v) = VT_EMPTY;
+
+            TRACE("%s attached >>>\n", debugstr_w(event_info[eid].name));
+            hres = call_disp_func(listener->function, &dp, &v);
+            if(hres == S_OK) {
+                TRACE("%s attached <<<\n", debugstr_w(event_info[eid].name));
+
+                if(cancelable) {
+                    if(V_VT(&v) == VT_BOOL) {
+                        if(!V_BOOL(&v))
+                            IDOMEvent_preventDefault(&event->IDOMEvent_iface);
+                    }else if(V_VT(&v) != VT_EMPTY) {
+                        FIXME("unhandled result %s\n", debugstr_variant(&v));
+                    }
+                }
+                VariantClear(&v);
+            }else {
+                WARN("%s attached <<< %08x\n", debugstr_w(event_info[eid].name), hres);
             }
         }
     }
+
+    if(listeners != listeners_buf)
+        heap_free(listeners);
+    if(event->phase == DEP_CAPTURING_PHASE)
+        return;
 
     if((vtbl = dispex_get_vtbl(&event_target->dispex)) && vtbl->get_cp_container)
         cp_container = vtbl->get_cp_container(&event_target->dispex);
