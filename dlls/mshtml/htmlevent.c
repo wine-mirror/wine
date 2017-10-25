@@ -41,6 +41,7 @@ typedef enum {
 } listener_type_t;
 
 typedef struct {
+    struct list entry;
     listener_type_t type;
     IDispatch *function;
 } event_listener_t;
@@ -48,10 +49,8 @@ typedef struct {
 typedef struct {
     struct wine_rb_entry entry;
     eventid_t event_id;
-    IDispatch *handler_prop;
-    DWORD handler_cnt;
-    IDispatch **handlers;
-} handler_vector_t;
+    struct list listeners;
+} listener_container_t;
 
 static const WCHAR abortW[] = {'a','b','o','r','t',0};
 static const WCHAR beforeactivateW[] = {'b','e','f','o','r','e','a','c','t','i','v','a','t','e',0};
@@ -231,6 +230,56 @@ static eventid_t attr_to_eid(const WCHAR *str)
     }
 
     return EVENTID_LAST;
+}
+
+static listener_container_t *get_listener_container(EventTarget *event_target, eventid_t eid, BOOL alloc)
+{
+    const event_target_vtbl_t *vtbl;
+    listener_container_t *container;
+    struct wine_rb_entry *entry;
+
+    entry = wine_rb_get(&event_target->handler_map, (const void*)eid);
+    if(entry)
+        return WINE_RB_ENTRY_VALUE(entry, listener_container_t, entry);
+    if(!alloc)
+        return NULL;
+
+    if(event_info[eid].flags & EVENT_FIXME)
+        FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
+
+    container = heap_alloc(sizeof(*container));
+    if(!container)
+        return NULL;
+
+    container->event_id = eid;
+    list_init(&container->listeners);
+    vtbl = dispex_get_vtbl(&event_target->dispex);
+    if(vtbl->bind_event)
+        vtbl->bind_event(&event_target->dispex, eid);
+    else
+        FIXME("Unsupported event binding on target %p\n", event_target);
+
+    wine_rb_put(&event_target->handler_map, (const void*)eid, &container->entry);
+    return container;
+}
+
+static void remove_event_listener(EventTarget *event_target, eventid_t eid, listener_type_t type, IDispatch *function)
+{
+    listener_container_t *container;
+    event_listener_t *listener;
+
+    container = get_listener_container(event_target, eid, FALSE);
+    if(!container)
+        return;
+
+    LIST_FOR_EACH_ENTRY(listener, &container->listeners, event_listener_t, entry) {
+        if(listener->function == function && listener->type == type) {
+            IDispatch_Release(listener->function);
+            list_remove(&listener->entry);
+            heap_free(listener);
+            break;
+        }
+    }
 }
 
 typedef struct {
@@ -1169,33 +1218,6 @@ HRESULT create_document_event(HTMLDocumentNode *doc, eventid_t event_id, DOMEven
     return S_OK;
 }
 
-static handler_vector_t *get_handler_vector(EventTarget *event_target, eventid_t eid, BOOL alloc)
-{
-    const event_target_vtbl_t *vtbl;
-    handler_vector_t *handler_vector;
-    struct wine_rb_entry *entry;
-
-    entry = wine_rb_get(&event_target->handler_map, (const void*)eid);
-    if(entry)
-        return WINE_RB_ENTRY_VALUE(entry, handler_vector_t, entry);
-    if(!alloc)
-        return NULL;
-
-    handler_vector = heap_alloc_zero(sizeof(*handler_vector));
-    if(!handler_vector)
-        return NULL;
-
-    handler_vector->event_id = eid;
-    vtbl = dispex_get_vtbl(&event_target->dispex);
-    if(vtbl->bind_event)
-        vtbl->bind_event(&event_target->dispex, eid);
-    else
-        FIXME("Unsupported event binding on target %p\n", event_target);
-
-    wine_rb_put(&event_target->handler_map, (const void*)eid, &handler_vector->entry);
-    return handler_vector;
-}
-
 static HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)
 {
     IDispatchEx *dispex;
@@ -1268,7 +1290,7 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
 static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
 {
     const eventid_t eid = event->event_id;
-    handler_vector_t *container = get_handler_vector(event_target, eid, FALSE);
+    const listener_container_t *container = get_listener_container(event_target, eid, FALSE);
     const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
     event_listener_t *listener, listeners_buf[8], *listeners = listeners_buf;
     unsigned listeners_cnt, listeners_size;
@@ -1277,34 +1299,34 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
     VARIANT v;
     HRESULT hres;
 
-    if(container && container->handler_prop) {
-        DISPID named_arg = DISPID_THIS;
-        VARIANTARG arg;
-        DISPPARAMS dp = {&arg, &named_arg, 1, 1};
+    if(container && !list_empty(&container->listeners)) {
+        listener = LIST_ENTRY(list_tail(&container->listeners), event_listener_t, entry);
+        if(listener->function && listener->type == LISTENER_TYPE_ONEVENT) {
+            DISPID named_arg = DISPID_THIS;
+            VARIANTARG arg;
+            DISPPARAMS dp = {&arg, &named_arg, 1, 1};
 
-        if(!use_event_quirks(event_target))
-            FIXME("Event argument not supported\n");
+            V_VT(&arg) = VT_DISPATCH;
+            V_DISPATCH(&arg) = (IDispatch*)&event_target->dispex.IDispatchEx_iface;
+            V_VT(&v) = VT_EMPTY;
 
-        V_VT(&arg) = VT_DISPATCH;
-        V_DISPATCH(&arg) = (IDispatch*)&event_target->dispex.IDispatchEx_iface;
-        V_VT(&v) = VT_EMPTY;
+            TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
+            hres = call_disp_func(listener->function, &dp, &v);
+            if(hres == S_OK) {
+                TRACE("%s <<< %s\n", debugstr_w(event_info[eid].name), debugstr_variant(&v));
 
-        TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
-        hres = call_disp_func(container->handler_prop, &dp, &v);
-        if(hres == S_OK) {
-            TRACE("%s <<< %s\n", debugstr_w(event_info[eid].name), debugstr_variant(&v));
-
-            if(cancelable) {
-                if(V_VT(&v) == VT_BOOL) {
-                    if(!V_BOOL(&v))
-                        IDOMEvent_preventDefault(&event->IDOMEvent_iface);
-                }else if(V_VT(&v) != VT_EMPTY) {
-                    FIXME("unhandled result %s\n", debugstr_variant(&v));
+                if(cancelable) {
+                    if(V_VT(&v) == VT_BOOL) {
+                        if(!V_BOOL(&v))
+                            IDOMEvent_preventDefault(&event->IDOMEvent_iface);
+                    }else if(V_VT(&v) != VT_EMPTY) {
+                        FIXME("unhandled result %s\n", debugstr_variant(&v));
+                    }
                 }
+                VariantClear(&v);
+            }else {
+                WARN("%s <<< %08x\n", debugstr_w(event_info[eid].name), hres);
             }
-            VariantClear(&v);
-        }else {
-            WARN("%s <<< %08x\n", debugstr_w(event_info[eid].name), hres);
         }
     }
 
@@ -1312,9 +1334,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
     listeners_size = sizeof(listeners_buf)/sizeof(*listeners_buf);
 
     if(container) {
-        unsigned i = container->handler_cnt;
-        while(i--) {
-            if(!container->handlers[i])
+        LIST_FOR_EACH_ENTRY(listener, &container->listeners, event_listener_t, entry) {
+            if(!listener->function)
                 continue;
 
             if(listeners_cnt == listeners_size) {
@@ -1331,8 +1352,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
                 listeners_size *= 2;
             }
 
-            listeners[listeners_cnt].type = LISTENER_TYPE_ATTACHED;
-            IDispatch_AddRef(listeners[listeners_cnt].function = container->handlers[i]);
+            listeners[listeners_cnt].type = listener->type;
+            IDispatch_AddRef(listeners[listeners_cnt].function = listener->function);
             listeners_cnt++;
         }
     }
@@ -1642,9 +1663,36 @@ static HRESULT get_event_dispex_ref(EventTarget *event_target, eventid_t eid, BO
     return dispex_get_dprop_ref(&event_target->dispex, buf, alloc, ret);
 }
 
+static event_listener_t *get_onevent_listener(EventTarget *event_target, eventid_t eid, BOOL alloc)
+{
+    listener_container_t *container;
+    event_listener_t *listener;
+
+    container = get_listener_container(event_target, eid, alloc);
+    if(!container)
+        return NULL;
+
+    LIST_FOR_EACH_ENTRY_REV(listener, &container->listeners, event_listener_t, entry) {
+        if(listener->type == LISTENER_TYPE_ONEVENT)
+            return listener;
+    }
+
+    if(!alloc)
+        return NULL;
+
+    listener = heap_alloc(sizeof(*listener));
+    if(!listener)
+        return NULL;
+
+    listener->type = LISTENER_TYPE_ONEVENT;
+    listener->function = NULL;
+    list_add_tail(&container->listeners, &listener->entry);
+    return listener;
+}
+
 static void remove_event_handler(EventTarget *event_target, eventid_t eid)
 {
-    handler_vector_t *handler_vector;
+    event_listener_t *listener;
     VARIANT *store;
     HRESULT hres;
 
@@ -1652,16 +1700,16 @@ static void remove_event_handler(EventTarget *event_target, eventid_t eid)
     if(SUCCEEDED(hres))
         VariantClear(store);
 
-    handler_vector = get_handler_vector(event_target, eid, FALSE);
-    if(handler_vector && handler_vector->handler_prop) {
-        IDispatch_Release(handler_vector->handler_prop);
-        handler_vector->handler_prop = NULL;
+    listener = get_onevent_listener(event_target, eid, FALSE);
+    if(listener && listener->function) {
+        IDispatch_Release(listener->function);
+        listener->function = NULL;
     }
 }
 
 static HRESULT set_event_handler_disp(EventTarget *event_target, eventid_t eid, IDispatch *disp)
 {
-    handler_vector_t *handler_vector;
+    event_listener_t *listener;
 
     if(event_info[eid].flags & EVENT_FIXME)
         FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
@@ -1670,15 +1718,14 @@ static HRESULT set_event_handler_disp(EventTarget *event_target, eventid_t eid, 
     if(!disp)
         return S_OK;
 
-    handler_vector = get_handler_vector(event_target, eid, TRUE);
-    if(!handler_vector)
+    listener = get_onevent_listener(event_target, eid, TRUE);
+    if(!listener)
         return E_OUTOFMEMORY;
 
-    if(handler_vector->handler_prop)
-        IDispatch_Release(handler_vector->handler_prop);
+    if(listener->function)
+        IDispatch_Release(listener->function);
 
-    handler_vector->handler_prop = disp;
-    IDispatch_AddRef(disp);
+    IDispatch_AddRef(listener->function = disp);
     return S_OK;
 }
 
@@ -1707,7 +1754,7 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
 
         /*
          * Setting event handler to string is a rare case and we don't want to
-         * complicate nor increase memory of handler_vector_t for that. Instead,
+         * complicate nor increase memory of listener_container_t for that. Instead,
          * we store the value in DispatchEx, which can already handle custom
          * properties.
          */
@@ -1734,7 +1781,7 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
 
 HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var)
 {
-    handler_vector_t *handler_vector;
+    event_listener_t *listener;
     VARIANT *v;
     HRESULT hres;
 
@@ -1744,10 +1791,10 @@ HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
         return VariantCopy(var, v);
     }
 
-    handler_vector = get_handler_vector(event_target, eid, FALSE);
-    if(handler_vector && handler_vector->handler_prop) {
+    listener = get_onevent_listener(event_target, eid, FALSE);
+    if(listener && listener->function) {
         V_VT(var) = VT_DISPATCH;
-        V_DISPATCH(var) = handler_vector->handler_prop;
+        V_DISPATCH(var) = listener->function;
         IDispatch_AddRef(V_DISPATCH(var));
     }else {
         V_VT(var) = VT_NULL;
@@ -1758,9 +1805,9 @@ HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
 
 HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARIANT_BOOL *res)
 {
-    handler_vector_t *handler_vector;
+    listener_container_t *container;
+    event_listener_t *listener;
     eventid_t eid;
-    DWORD i = 0;
 
     eid = attr_to_eid(name);
     if(eid == EVENTID_LAST) {
@@ -1769,28 +1816,17 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
         return S_OK;
     }
 
-    if(event_info[eid].flags & EVENT_FIXME)
-        FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
-
-    handler_vector = get_handler_vector(event_target, eid, TRUE);
-    if(!handler_vector)
+    container = get_listener_container(event_target, eid, TRUE);
+    if(!container)
         return E_OUTOFMEMORY;
 
-    while(i < handler_vector->handler_cnt && handler_vector->handlers[i])
-        i++;
-    if(i == handler_vector->handler_cnt) {
-        if(i)
-            handler_vector->handlers = heap_realloc_zero(handler_vector->handlers,
-                                                         (i + 1) * sizeof(*handler_vector->handlers));
-        else
-            handler_vector->handlers = heap_alloc_zero(sizeof(*handler_vector->handlers));
-        if(!handler_vector->handlers)
-            return E_OUTOFMEMORY;
-        handler_vector->handler_cnt++;
-    }
+    listener = heap_alloc(sizeof(*listener));
+    if(!listener)
+        return E_OUTOFMEMORY;
 
-    IDispatch_AddRef(disp);
-    handler_vector->handlers[i] = disp;
+    listener->type = LISTENER_TYPE_ATTACHED;
+    IDispatch_AddRef(listener->function = disp);
+    list_add_head(&container->listeners, &listener->entry);
 
     *res = VARIANT_TRUE;
     return S_OK;
@@ -1798,9 +1834,7 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
 
 HRESULT detach_event(EventTarget *event_target, BSTR name, IDispatch *disp)
 {
-    handler_vector_t *handler_vector;
     eventid_t eid;
-    unsigned i;
 
     eid = attr_to_eid(name);
     if(eid == EVENTID_LAST) {
@@ -1808,17 +1842,7 @@ HRESULT detach_event(EventTarget *event_target, BSTR name, IDispatch *disp)
         return S_OK;
     }
 
-    handler_vector = get_handler_vector(event_target, eid, FALSE);
-    if(!handler_vector)
-        return S_OK;
-
-    for(i = 0; i < handler_vector->handler_cnt; i++) {
-        if(handler_vector->handlers[i] == disp) {
-            IDispatch_Release(handler_vector->handlers[i]);
-            handler_vector->handlers[i] = NULL;
-        }
-    }
-
+    remove_event_listener(event_target, eid, LISTENER_TYPE_ATTACHED, disp);
     return S_OK;
 }
 
@@ -2073,7 +2097,7 @@ HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
 
 static int event_id_cmp(const void *key, const struct wine_rb_entry *entry)
 {
-    return (INT_PTR)key - WINE_RB_ENTRY_VALUE(entry, handler_vector_t, entry)->event_id;
+    return (INT_PTR)key - WINE_RB_ENTRY_VALUE(entry, listener_container_t, entry)->event_id;
 }
 
 void EventTarget_Init(EventTarget *event_target, IUnknown *outer, dispex_static_data_t *dispex_data,
@@ -2099,16 +2123,16 @@ void EventTarget_Init(EventTarget *event_target, IUnknown *outer, dispex_static_
 
 void release_event_target(EventTarget *event_target)
 {
-    handler_vector_t *iter, *iter2;
-    unsigned i;
+    listener_container_t *iter, *iter2;
 
-    WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(iter, iter2, &event_target->handler_map, handler_vector_t, entry) {
-        if(iter->handler_prop)
-            IDispatch_Release(iter->handler_prop);
-        for(i = 0; i < iter->handler_cnt; i++)
-            if(iter->handlers[i])
-                IDispatch_Release(iter->handlers[i]);
-        heap_free(iter->handlers);
+    WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(iter, iter2, &event_target->handler_map, listener_container_t, entry) {
+        while(!list_empty(&iter->listeners)) {
+            event_listener_t *listener = LIST_ENTRY(list_head(&iter->listeners), event_listener_t, entry);
+            if(listener->function)
+                IDispatch_Release(listener->function);
+            list_remove(&listener->entry);
+            heap_free(listener);
+        }
         heap_free(iter);
     }
 }
