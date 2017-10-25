@@ -93,6 +93,7 @@ static IHTMLWindow2 *window;
 static IOleDocumentView *view;
 static BOOL is_ie9plus;
 static int document_mode;
+static unsigned in_fire_event;
 
 typedef struct {
     LONG x;
@@ -358,7 +359,9 @@ static void _elem_fire_event(unsigned line, IUnknown *unk, const char *event, VA
 
     b = 100;
     str = a2bstr(event);
+    in_fire_event++;
     hres = IHTMLElement3_fireEvent(elem3, str, evobj, &b);
+    in_fire_event--;
     SysFreeString(str);
     ok_(__FILE__,line)(hres == S_OK, "fireEvent failed: %08x\n", hres);
     ok_(__FILE__,line)(b == VARIANT_TRUE, "fireEvent returned %x\n", b);
@@ -371,20 +374,51 @@ static void _test_event_args(unsigned line, const IID *dispiid, DISPID id, WORD 
     ok_(__FILE__,line) (id == DISPID_VALUE, "id = %d\n", id);
     ok_(__FILE__,line) (wFlags == DISPATCH_METHOD, "wFlags = %x\n", wFlags);
     ok_(__FILE__,line) (pdp != NULL, "pdp == NULL\n");
-    todo_wine_if(document_mode >= 9)
     ok_(__FILE__,line) (pdp->cArgs == (document_mode < 9 ? 1 : 2), "pdp->cArgs = %d\n", pdp->cArgs);
     ok_(__FILE__,line) (pdp->cNamedArgs == 1, "pdp->cNamedArgs = %d\n", pdp->cNamedArgs);
     ok_(__FILE__,line) (pdp->rgdispidNamedArgs[0] == DISPID_THIS, "pdp->rgdispidNamedArgs[0] = %d\n",
                         pdp->rgdispidNamedArgs[0]);
     ok_(__FILE__,line) (V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(rgvarg) = %d\n", V_VT(pdp->rgvarg));
     if(pdp->cArgs > 1)
-        ok_(__FILE__,line) (V_VT(pdp->rgvarg+1) == VT_DISPATCH, "V_VT(rgvarg) = %d\n", V_VT(pdp->rgvarg));
+        ok_(__FILE__,line) (V_VT(pdp->rgvarg+1) == VT_DISPATCH, "V_VT(rgvarg) = %d\n", V_VT(pdp->rgvarg+1));
     ok_(__FILE__,line) (pvarRes != NULL, "pvarRes == NULL\n");
     ok_(__FILE__,line) (pei != NULL, "pei == NULL");
     ok_(__FILE__,line) (!pspCaller, "pspCaller != NULL\n");
 
     if(dispiid)
         _test_disp(line, (IUnknown*)V_DISPATCH(pdp->rgvarg), dispiid);
+
+    if(pdp->cArgs > 1) {
+        IHTMLEventObj *window_event, *event_obj;
+        IDOMEvent *event;
+        HRESULT hres;
+
+        hres = IDispatch_QueryInterface(V_DISPATCH(pdp->rgvarg+1), &IID_IDOMEvent, (void**)&event);
+        if(in_fire_event)
+            ok(hres == E_NOINTERFACE, "QI(IID_IDOMEvent) returned %08x\n", hres);
+        else
+            ok(hres == S_OK, "Could not get IDOMEvent iface: %08x\n", hres);
+
+        hres = IDispatch_QueryInterface(V_DISPATCH(pdp->rgvarg+1), &IID_IHTMLEventObj, (void**)&event_obj);
+        if(in_fire_event)
+            ok(hres == S_OK, "Could not get IDOMEventObj iface: %08x\n", hres);
+        else
+            ok(hres == E_NOINTERFACE, "QI(IID_IHTMLEventObj) returned %08x\n", hres);
+
+        if(event)
+            IDOMEvent_Release(event);
+        if(event_obj)
+            IHTMLEventObj_Release(event_obj);
+
+        hres = IHTMLWindow2_get_event(window, &window_event);
+        ok(hres == S_OK, "get_event failed: %08x\n", hres);
+        if(window_event) {
+            todo_wine_if(in_fire_event)
+            ok(!iface_cmp((IUnknown*)V_DISPATCH(pdp->rgvarg+1), (IUnknown*)window_event),
+               "window_event != event arg\n");
+            IHTMLEventObj_Release(window_event);
+        }
+    }
 }
 
 #define test_attached_event_args(a,b,c,d,e) _test_attached_event_args(__LINE__,a,b,c,d,e)
@@ -666,6 +700,7 @@ static void _test_event_srcfilter(unsigned line, IHTMLEventObj *event)
 static void _test_event_obj(unsigned line, const char *type, const xy_test_t *xy)
 {
     IHTMLEventObj *event = _get_event_obj(line);
+    IDOMEvent *dom_event;
     VARIANT v;
     HRESULT hres;
 
@@ -698,6 +733,9 @@ static void _test_event_obj(unsigned line, const char *type, const xy_test_t *xy
                        "V_VT(returnValue) = %d\n", V_VT(&v));
     if(V_VT(&v) == VT_BOOL)
         ok_(__FILE__,line)(V_BOOL(&v) == VARIANT_TRUE, "V_BOOL(returnValue) = %x\n", V_BOOL(&v));
+
+    hres = IHTMLEventObj_QueryInterface(event, &IID_IDOMEvent, (void**)&dom_event);
+    ok(hres == E_NOINTERFACE, "Could not get IDOMEvent iface: %08x\n", hres);
 
     IHTMLEventObj_Release(event);
 }

@@ -1292,6 +1292,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
     const eventid_t eid = event->event_id;
     const listener_container_t *container = get_listener_container(event_target, eid, FALSE);
     const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
+    const BOOL use_quirks = use_event_quirks(event_target);
     event_listener_t *listener, listeners_buf[8], *listeners = listeners_buf;
     unsigned listeners_cnt, listeners_size;
     ConnectionPointContainer *cp_container = NULL;
@@ -1299,9 +1300,10 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
     VARIANT v;
     HRESULT hres;
 
-    if(container && !list_empty(&container->listeners)) {
+    if(use_quirks && container && !list_empty(&container->listeners)
+       && event->phase != DEP_CAPTURING_PHASE) {
         listener = LIST_ENTRY(list_tail(&container->listeners), event_listener_t, entry);
-        if(listener->function && listener->type == LISTENER_TYPE_ONEVENT) {
+        if(listener && listener->function && listener->type == LISTENER_TYPE_ONEVENT) {
             DISPID named_arg = DISPID_THIS;
             VARIANTARG arg;
             DISPPARAMS dp = {&arg, &named_arg, 1, 1};
@@ -1337,6 +1339,16 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
         LIST_FOR_EACH_ENTRY(listener, &container->listeners, event_listener_t, entry) {
             if(!listener->function)
                 continue;
+            switch(listener->type) {
+            case LISTENER_TYPE_ONEVENT:
+                if(use_quirks || event->phase == DEP_CAPTURING_PHASE)
+                    continue;
+                break;
+            case LISTENER_TYPE_ATTACHED:
+                if(event->phase == DEP_CAPTURING_PHASE)
+                    continue;
+                break;
+            }
 
             if(listeners_cnt == listeners_size) {
                 event_listener_t *new_listeners;
@@ -1359,7 +1371,37 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
     }
 
     for(listener = listeners; listener < listeners + listeners_cnt; listener++) {
-        if(listener->type == LISTENER_TYPE_ATTACHED) {
+        if(listener->type != LISTENER_TYPE_ATTACHED) {
+            DISPID named_arg = DISPID_THIS;
+            VARIANTARG args[2];
+            DISPPARAMS dp = {args, &named_arg, 2, 1};
+
+            V_VT(args) = VT_DISPATCH;
+            V_DISPATCH(args) = (IDispatch*)&event_target->dispex.IDispatchEx_iface;
+            V_VT(args+1) = VT_DISPATCH;
+            V_DISPATCH(args+1) = event->in_fire_event
+                ? (IDispatch*)event->event_obj : (IDispatch*)&event->IDOMEvent_iface;
+            V_VT(&v) = VT_EMPTY;
+
+            TRACE("%s >>>\n", debugstr_w(event_info[event->event_id].name));
+            hres = call_disp_func(listener->function, &dp, &v);
+            if(hres == S_OK) {
+                TRACE("%s <<< %s\n", debugstr_w(event_info[event->event_id].name),
+                      debugstr_variant(&v));
+
+                if(cancelable) {
+                    if(V_VT(&v) == VT_BOOL) {
+                        if(!V_BOOL(&v))
+                            IDOMEvent_preventDefault(&event->IDOMEvent_iface);
+                    }else if(V_VT(&v) != VT_EMPTY) {
+                        FIXME("unhandled result %s\n", debugstr_variant(&v));
+                    }
+                }
+                VariantClear(&v);
+            }else {
+                WARN("%s <<< %08x\n", debugstr_w(event_info[event->event_id].name), hres);
+            }
+        }else {
             VARIANTARG arg;
             DISPPARAMS dp = {&arg, NULL, 1, 0};
 
@@ -1588,7 +1630,9 @@ HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_va
 
     if(SUCCEEDED(hres)) {
         event_obj->event->event_obj = &event_obj->IHTMLEventObj_iface;
+        event_obj->event->in_fire_event++;
         dispatch_event(&node->event_target, event_obj->event);
+        event_obj->event->in_fire_event--;
         event_obj->event->event_obj = NULL;
     }
 
@@ -1826,7 +1870,10 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
 
     listener->type = LISTENER_TYPE_ATTACHED;
     IDispatch_AddRef(listener->function = disp);
-    list_add_head(&container->listeners, &listener->entry);
+    if(use_event_quirks(event_target))
+        list_add_head(&container->listeners, &listener->entry);
+    else
+        list_add_tail(&container->listeners, &listener->entry);
 
     *res = VARIANT_TRUE;
     return S_OK;

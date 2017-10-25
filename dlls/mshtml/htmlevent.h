@@ -66,10 +66,11 @@ typedef struct {
     EventTarget *target;
     BOOL prevent_default;
     BOOL stop_propagation;
-    USHORT phase;
+    DOM_EVENT_PHASE phase;
 
     IHTMLEventObj *event_obj;
     BOOL no_event_obj;
+    unsigned in_fire_event;
 } DOMEvent;
 
 void check_event_attr(HTMLDocumentNode*,nsIDOMHTMLElement*) DECLSPEC_HIDDEN;
