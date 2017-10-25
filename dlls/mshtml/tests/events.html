@@ -190,6 +190,92 @@ function test_event_target() {
     div.click();
     with(todo_wine)
     ok(last_event_arg.srcElement === null, "srcElement != null");
+
+    document.body.removeChild(div);
+}
+
+function test_attach_event() {
+    var calls;
+
+    var div = document.createElement("div");
+    document.body.appendChild(div);
+
+    function listener() {
+        calls += "listener,";
+    }
+
+    function listener2() {
+        calls += "listener2,";
+    }
+
+    /* if the same listener is added twice, it will be called twice */
+    div.attachEvent("onclick", listener);
+    div.attachEvent("onclick", listener2);
+    div.attachEvent("onclick", listener);
+
+    calls = "";
+    div.click();
+    ok(calls === "listener,listener2,listener,", "calls = " + calls);
+
+    /* remove listener once, it will be called once */
+    div.detachEvent("onclick", listener);
+
+    calls = "";
+    div.click();
+    ok(calls === "listener2,listener,", "calls = " + calls);
+
+    div.detachEvent("onclick", listener);
+    div.detachEvent("onclick", listener2);
+
+    calls = "";
+    div.click();
+    ok(calls === "", "calls = " + calls);
+
+    document.body.removeChild(div);
+}
+
+function test_listener_order() {
+    var div = document.createElement("div");
+    document.body.appendChild(div);
+
+    var calls;
+    function record_call(msg) {
+        return function() { calls += msg + "," };
+    }
+
+    div.attachEvent("onclick", record_call("click1"));
+    div.onclick = record_call("onclick");
+    div.attachEvent("onclick", record_call("click2"));
+    div.attachEvent("onclick", record_call("click3"));
+
+    calls = "";
+    div.click();
+    ok(calls === "onclick,click3,click2,click1,", "calls = " + calls);
+
+    document.body.removeChild(div);
+}
+
+function test_attach_in_attach() {
+    var calls;
+
+    var div = document.createElement("div");
+    document.body.appendChild(div);
+
+    /* listener attached inside onevent handler will be invoked in this propagation */
+    div.onclick = function () {
+        calls += "div.onclick,";
+        div.attachEvent("onclick", function() {
+            calls += "div.click,";
+            /* listener attached inside an other attached listener will not ve invoked */
+            div.attachEvent("onclick", function () { ok(false, "unexpected call"); });
+        });
+    }
+
+    calls = "";
+    div.click();
+    ok(calls === "div.onclick,div.click,", "calls = " + calls);
+
+    document.body.removeChild(div);
 }
 
 window.onload = function() {
@@ -215,6 +301,9 @@ window.onload = function() {
         test_string_event_handler();
         test_body_events();
         test_event_target();
+        test_attach_event();
+        test_listener_order();
+        test_attach_in_attach();
     }catch(e) {
         ok(false, "Got an exception: " + e.message);
     }
