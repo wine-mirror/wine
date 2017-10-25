@@ -147,7 +147,7 @@ static inline struct wine_rb_entry *wine_rb_postorder_next(struct wine_rb_entry 
 /* iterate through the tree using a tree entry */
 #define WINE_RB_FOR_EACH_ENTRY(elem, tree, type, field) \
     for ((elem) = WINE_RB_ENTRY_VALUE(wine_rb_head((tree)->root), type, field); \
-         &(elem)->field; \
+         (elem) != WINE_RB_ENTRY_VALUE(0, type, field); \
          (elem) = WINE_RB_ENTRY_VALUE(wine_rb_next(&elem->field), type, field))
 
 /* iterate through the tree using using postorder, making it safe to free the entry */
@@ -159,7 +159,7 @@ static inline struct wine_rb_entry *wine_rb_postorder_next(struct wine_rb_entry 
 /* iterate through the tree using a tree entry and postorder, making it safe to free the entry */
 #define WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(elem, elem2, tree, type, field) \
     for ((elem) = WINE_RB_ENTRY_VALUE(wine_rb_postorder_head((tree)->root), type, field); \
-         &(elem)->field \
+         (elem) != WINE_RB_ENTRY_VALUE(0, type, field) \
              && (((elem2) = WINE_RB_ENTRY_VALUE(wine_rb_postorder_next(&(elem)->field), type, field)) || 1); \
          (elem) = (elem2))
 
