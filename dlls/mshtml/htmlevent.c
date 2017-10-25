@@ -1551,8 +1551,15 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
     event->target = event_target;
     IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
 
-    event->phase = DEP_AT_TARGET;
-    call_event_handlers(target_chain[0], event);
+    event->phase = DEP_CAPTURING_PHASE;
+    i = chain_cnt-1;
+    while(!event->stop_propagation && i)
+        call_event_handlers(target_chain[i--], event);
+
+    if(!event->stop_propagation) {
+        event->phase = DEP_AT_TARGET;
+        call_event_handlers(target_chain[0], event);
+    }
 
     if(event_flags & EVENT_BUBBLES) {
         event->phase = DEP_BUBBLING_PHASE;
