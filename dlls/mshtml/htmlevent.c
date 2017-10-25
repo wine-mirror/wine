@@ -36,6 +36,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef enum {
+    LISTENER_TYPE_CAPTURE,
+    LISTENER_TYPE_BUBBLE,
     LISTENER_TYPE_ONEVENT,
     LISTENER_TYPE_ATTACHED
 } listener_type_t;
@@ -1344,6 +1346,14 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
                 if(use_quirks || event->phase == DEP_CAPTURING_PHASE)
                     continue;
                 break;
+            case LISTENER_TYPE_CAPTURE:
+                if(event->phase == DEP_BUBBLING_PHASE || event->in_fire_event)
+                    continue;
+                break;
+            case LISTENER_TYPE_BUBBLE:
+                if(event->in_fire_event)
+                    continue;
+                /* fallthrough */
             case LISTENER_TYPE_ATTACHED:
                 if(event->phase == DEP_CAPTURING_PHASE)
                     continue;
@@ -2074,11 +2084,41 @@ static HRESULT WINAPI EventTarget_Invoke(IEventTarget *iface, DISPID dispIdMembe
 }
 
 static HRESULT WINAPI EventTarget_addEventListener(IEventTarget *iface, BSTR type,
-                                                   IDispatch *listener, VARIANT_BOOL capture)
+                                                   IDispatch *function, VARIANT_BOOL capture)
 {
     EventTarget *This = impl_from_IEventTarget(iface);
-    FIXME("(%p)->(%s %p %x)\n", This, debugstr_w(type), listener, capture);
-    return E_NOTIMPL;
+    listener_type_t listener_type = capture ? LISTENER_TYPE_CAPTURE : LISTENER_TYPE_BUBBLE;
+    listener_container_t *container;
+    event_listener_t *listener;
+    eventid_t eid;
+
+    TRACE("(%p)->(%s %p %x)\n", This, debugstr_w(type), function, capture);
+
+    eid = str_to_eid(type);
+    if(eid == EVENTID_LAST) {
+        FIXME("Unsupported on event %s\n", debugstr_w(type));
+        return E_NOTIMPL;
+    }
+
+
+    container = get_listener_container(This, eid, TRUE);
+    if(!container)
+        return E_OUTOFMEMORY;
+
+    /* check for duplicates */
+    LIST_FOR_EACH_ENTRY(listener, &container->listeners, event_listener_t, entry) {
+        if(listener->type == listener_type && listener->function == function)
+            return S_OK;
+    }
+
+    listener = heap_alloc(sizeof(*listener));
+    if(!listener)
+        return E_OUTOFMEMORY;
+
+    listener->type = listener_type;
+    IDispatch_AddRef(listener->function = function);
+    list_add_tail(&container->listeners, &listener->entry);
+    return S_OK;
 }
 
 static HRESULT WINAPI EventTarget_removeEventListener(IEventTarget *iface, BSTR type,
