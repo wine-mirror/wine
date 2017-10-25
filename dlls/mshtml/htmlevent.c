@@ -1439,6 +1439,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
         }
     }
 
+    for(listener = listeners; listener < listeners + listeners_cnt; listener++)
+        IDispatch_Release(listener->function);
     if(listeners != listeners_buf)
         heap_free(listeners);
     if(event->phase == DEP_CAPTURING_PHASE)
