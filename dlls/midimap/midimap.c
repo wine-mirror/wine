@@ -574,7 +574,7 @@ static LRESULT MIDIMAP_drvOpen(void)
 	    midiOutPorts[dev].lpbPatch = NULL;
 	    for (i = 0; i < 16; i++)
 		midiOutPorts[dev].aChn[i] = i;
-	    if (strncmpW(midiOutPorts[0].name, throughportW, strlenW(throughportW)) != 0)
+	    if (strncmpW(midiOutPorts[dev].name, throughportW, strlenW(throughportW)) != 0)
 	        found_valid_port = TRUE;
 	}
 	else
