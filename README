@@ -23,7 +23,7 @@ Then either install wine:
 
 make install
 
-Or run from it the build directory:
+Or run it from the build directory:
 
 ./wine notepad
 
