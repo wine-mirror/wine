@@ -422,6 +422,17 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     static const WCHAR driver_serialW[] = {'\\','D','r','i','v','e','r','\\','S','e','r','i','a','l',0};
     static const WCHAR driver_parallelW[] = {'\\','D','r','i','v','e','r','\\','P','a','r','a','l','l','e','l',0};
 
+#ifdef _WIN64
+    static const WCHAR qualified_ports_keyW[] = {'\\','R','E','G','I','S','T','R','Y','\\',
+                                                 'M','A','C','H','I','N','E','\\','S','o','f','t','w','a','r','e','\\',
+                                                 'W','i','n','e','\\','P','o','r','t','s'}; /* no null terminator */
+    static const WCHAR wow64_ports_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+                                             'W','o','w','6','4','3','2','N','o','d','e','\\','W','i','n','e','\\',
+                                             'P','o','r','t','s',0};
+    static const WCHAR symbolic_link_valueW[] = {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
+    HKEY wow64_ports_key = NULL;
+#endif
+
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
     NTSTATUS status;
@@ -448,6 +459,15 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     initialize_dbus();
     initialize_diskarbitration();
+
+#ifdef _WIN64
+    /* create a symlink so that the Wine port overrides key can be edited with 32-bit reg or regedit */
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, wow64_ports_keyW, 0, NULL, REG_OPTION_CREATE_LINK,
+                     KEY_SET_VALUE, NULL, &wow64_ports_key, NULL );
+    RegSetValueExW( wow64_ports_key, symbolic_link_valueW, 0, REG_LINK,
+                    (BYTE *)qualified_ports_keyW, sizeof(qualified_ports_keyW) );
+    RegCloseKey( wow64_ports_key );
+#endif
 
     RtlInitUnicodeString( &nameW, driver_serialW );
     IoCreateDriver( &nameW, serial_driver_entry );
