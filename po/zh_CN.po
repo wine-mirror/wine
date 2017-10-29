@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-08-18 22:29+0800\n"
+"PO-Revision-Date: 2017-10-27 00:02-0500\n"
 "Last-Translator: Mingcong Bai <jeffbai@aosc.xyz>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.2\n"
+"X-Generator: Poedit 2.0.4\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: appwiz.rc:58
@@ -11774,17 +11774,6 @@ msgid "Icons (*.ico)"
 msgstr "图标 (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -11923,25 +11912,19 @@ msgstr "(没有设值)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT file.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "reg: The file '%1' was not found.\n"
-msgstr "regedit: 找不到文件 '%1'。\n"
+msgstr "reg: 找不到文件 '%1'。\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "reg: 无法打开注册表键 '%1'。\n"
 
 #: reg.rc:69
-#, fuzzy
-#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: 无法识别的转义序列 [\\%1!c!]\n"
+msgstr "reg: 无法识别的转义序列 [\\%1!c!]\n"
 
 #: regedit.rc:34
 msgid "&Registry"
