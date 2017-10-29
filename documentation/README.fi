@@ -18,6 +18,14 @@ Aja Winen lähdekoodin juurihakemistossa seuraavat komennot:
 ./configure
 make
 
+Sitten joko asenna Wine:
+
+make install
+
+Tai aja se käännöshakemistosta:
+
+./wine notepad
+
 Ohjelmat ajetaan komennolla "wine ohjelma". Lisätietoja sekä apua ongelmien
 ratkaisemiseen on jäljempänä tässä tiedostossa, Winen man-sivuilla sekä
 ennen kaikkea Internetissä osoitteessa http://www.winehq.org/.
