@@ -378,7 +378,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRect( LPRECT rect, DWORD style, BOOL m
  */
 BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 {
-    if (style & WS_ICONIC) return TRUE;
+    if (style & WS_MINIMIZE) return TRUE;
     style &= ~(WS_HSCROLL | WS_VSCROLL);
 
     TRACE("(%s) %08x %d %08x\n", wine_dbgstr_rect(rect), style, menu, exStyle );
@@ -409,7 +409,7 @@ LRESULT NC_HandleNCCalcSize( HWND hwnd, WPARAM wparam, RECT *winRect )
     if (cls_style & CS_VREDRAW) result |= WVR_VREDRAW;
     if (cls_style & CS_HREDRAW) result |= WVR_HREDRAW;
 
-    if (!(style & WS_ICONIC))
+    if (!(style & WS_MINIMIZE))
     {
         NC_AdjustRectOuter( &tmpRect, style, FALSE, exStyle );
 
@@ -472,7 +472,7 @@ static void NC_GetInsideRect( HWND hwnd, enum coords_relative relative, RECT *re
 {
     WIN_GetRectangles( hwnd, relative, rect, NULL );
 
-    if (style & WS_ICONIC) return;
+    if (style & WS_MINIMIZE) return;
 
     /* Remove frame from rectangle */
     if (HAS_THICKFRAME( style, ex_style ))
