@@ -2479,9 +2479,20 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             }
             break;
         case WM_NCCALCSIZE:
+            if (!sp_e->wParam)
             {
                 RECT *rc = (RECT *)sp_e->lParam;
-                TRACE("Rect (%s)\n", wine_dbgstr_rect(rc));
+                TRACE("Rect %s\n", wine_dbgstr_rect(rc));
+            }
+            else
+            {
+                NCCALCSIZE_PARAMS *nc = (NCCALCSIZE_PARAMS *)sp_e->lParam;
+                TRACE("Rects %s %s %s\n", wine_dbgstr_rect(nc->rgrc),
+                      wine_dbgstr_rect(nc->rgrc + 1), wine_dbgstr_rect(nc->rgrc + 2));
+                if (nc->lppos)
+                    TRACE("WINDOWPOS hwnd=%p, after=%p, at (%d,%d) w=%d h=%d, flags=0x%08x\n",
+                          nc->lppos->hwnd, nc->lppos->hwndInsertAfter, nc->lppos->x, nc->lppos->y,
+                          nc->lppos->cx, nc->lppos->cy, nc->lppos->flags);
             }
             break;
         case WM_NOTIFY:
