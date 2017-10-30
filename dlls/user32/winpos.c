@@ -1255,6 +1255,8 @@ UINT WINAPI GetInternalWindowPos( HWND hwnd, LPRECT rectWnd,
                                       LPPOINT ptIcon )
 {
     WINDOWPLACEMENT wndpl;
+
+    wndpl.length = sizeof(wndpl);
     if (GetWindowPlacement( hwnd, &wndpl ))
     {
 	if (rectWnd) *rectWnd = wndpl.rcNormalPosition;

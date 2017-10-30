@@ -415,6 +415,7 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
 
     TRACE("(%p, 0x%08x)\n", hWnd, dwFlags);
 
+    wp.length = sizeof(wp);
     if (IsIconic(hWnd) && GetWindowPlacement(hWnd, &wp))
         return MonitorFromRect( &wp.rcNormalPosition, dwFlags );
 
