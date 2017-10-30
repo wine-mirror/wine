@@ -1923,6 +1923,7 @@ static void frame_get_clientspace(HWND hwnd, PRECT prect)
 	else {
 		WINDOWPLACEMENT wp;
 
+                wp.length = sizeof(wp);
 		GetWindowPlacement(hwnd, &wp);
 
 		prect->left = prect->top = 0;
