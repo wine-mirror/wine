@@ -1,17 +1,20 @@
 # German translations for Wine
 #
+# Marcus Meissner <marcus@jet.franken.de>, 2017.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-08-08 16:25+0200\n"
-"Last-Translator: Julian Rüger\n"
-"Language-Team: German\n"
+"PO-Revision-Date: 2017-10-28 15:22+0100\n"
+"Last-Translator: Marcus Meissner <marcus@jet.franken.de>\n"
+"Language-Team: German <kde-i18n-de@kde.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 2.0\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -12058,17 +12061,6 @@ msgid "Icons (*.ico)"
 msgstr "Symbole (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -12084,7 +12076,7 @@ msgstr ""
 "  REG [Operation] [Parameter]\n"
 "\n"
 "Unterstützte Operationen:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | QUERY\n"
 "\n"
 "Hilfe für eine spezifische Operation:\n"
 "  REG [Operation] /?\n"
@@ -12213,25 +12205,19 @@ msgstr "(Wert nicht gesetzt)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT file.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "reg: The file '%1' was not found.\n"
-msgstr "regedit: Die Datei '%1' wurde nicht gefunden.\n"
+msgstr "reg: Die Datei '%1' wurde nicht gefunden.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "reg: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
 
 #: reg.rc:69
-#, fuzzy
-#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: Unbekannte Escape-Sequenz [\\%1!c!]\n"
+msgstr "reg: Unbekannte Escape-Sequenz [\\%1!c!]\n"
 
 #: regedit.rc:34
 msgid "&Registry"
