@@ -112,6 +112,7 @@ struct expected_method
 {
     const char *method;
     unsigned int flags;
+    FORMATETC fmt;
 };
 
 static const struct expected_method *expected_method_list;
@@ -123,6 +124,8 @@ static HRESULT g_GetMiscStatusFailsWith = S_OK;
 static HRESULT g_QIFailsWith;
 
 static UINT cf_test_1, cf_test_2, cf_test_3;
+
+static FORMATETC *g_dataobject_fmts;
 
 /****************************************************************************
  * PresentationDataHeader
@@ -150,27 +153,43 @@ typedef struct PresentationDataHeader
     DWORD dwSize;
 } PresentationDataHeader;
 
-#define CHECK_EXPECTED_METHOD(method_name) \
-    do { \
-        trace("%s\n", method_name); \
-        ok(expected_method_list->method != NULL, "Extra method %s called\n", method_name); \
-        if (!strcmp(expected_method_list->method, "WINE_EXTRA")) \
-        { \
-            todo_wine ok(0, "Too many method calls.\n"); \
-            break; \
-        } \
-        if (expected_method_list->method) \
-        { \
-            while (expected_method_list->flags & TEST_OPTIONAL && \
-                   strcmp(expected_method_list->method, method_name) != 0) \
-                expected_method_list++; \
-            todo_wine_if (expected_method_list->flags & TEST_TODO) \
-                ok(!strcmp(expected_method_list->method, method_name), \
-                   "Expected %s to be called instead of %s\n", \
-                   expected_method_list->method, method_name); \
-            expected_method_list++; \
-        } \
-    } while(0)
+static void inline check_expected_method_fmt(const char *method_name, const FORMATETC *fmt)
+{
+    trace("%s\n", method_name);
+    ok(expected_method_list->method != NULL, "Extra method %s called\n", method_name);
+    if (!strcmp(expected_method_list->method, "WINE_EXTRA"))
+    {
+        todo_wine ok(0, "Too many method calls.\n");
+        return;
+    }
+    if (expected_method_list->method)
+    {
+        while (expected_method_list->flags & TEST_OPTIONAL &&
+               strcmp(expected_method_list->method, method_name) != 0)
+            expected_method_list++;
+        todo_wine_if (expected_method_list->flags & TEST_TODO)
+        {
+            ok(!strcmp(expected_method_list->method, method_name),
+               "Expected %s to be called instead of %s\n",
+               expected_method_list->method, method_name);
+            if (fmt)
+            {
+                ok(fmt->cfFormat == expected_method_list->fmt.cfFormat, "got cf %04x vs %04x\n",
+                   fmt->cfFormat, expected_method_list->fmt.cfFormat );
+                ok(fmt->dwAspect == expected_method_list->fmt.dwAspect, "got aspect %d vs %d\n",
+                   fmt->dwAspect, expected_method_list->fmt.dwAspect );
+                ok(fmt->lindex == expected_method_list->fmt.lindex, "got lindex %d vs %d\n",
+                   fmt->lindex, expected_method_list->fmt.lindex );
+                ok(fmt->tymed == expected_method_list->fmt.tymed, "got tymed %d vs %d\n",
+                   fmt->tymed, expected_method_list->fmt.tymed );
+            }
+        }
+        expected_method_list++;
+    }
+}
+
+#define CHECK_EXPECTED_METHOD(method_name) check_expected_method_fmt(method_name, NULL)
+#define CHECK_EXPECTED_METHOD_FMT(method_name, fmt) check_expected_method_fmt(method_name, fmt)
 
 #define CHECK_NO_EXTRA_METHODS() \
     do { \
@@ -178,6 +197,41 @@ typedef struct PresentationDataHeader
             expected_method_list++; \
         ok(!expected_method_list->method, "Method sequence starting from %s not called\n", expected_method_list->method); \
     } while (0)
+
+/* 2 x 1 x 32 bpp dib. PelsPerMeter = 200x400 */
+static BYTE dib[] =
+{
+    0x42, 0x4d, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
+
+    0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00,
+    0x00, 0x00, 0x01, 0x00, 0x20, 0x00, 0x00, 0x00,
+
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc8, 0x00,
+    0x00, 0x00, 0x90, 0x01, 0x00, 0x00, 0x00, 0x00,
+
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
+
+static void create_dib( STGMEDIUM *med )
+{
+    void *ptr;
+
+    med->tymed = TYMED_HGLOBAL;
+    U(med)->hGlobal = GlobalAlloc( GMEM_MOVEABLE, sizeof(dib) - sizeof(BITMAPFILEHEADER) );
+    ptr = GlobalLock( U(med)->hGlobal );
+    memcpy( ptr, dib + sizeof(BITMAPFILEHEADER), sizeof(dib) - sizeof(BITMAPFILEHEADER) );
+    GlobalUnlock( U(med)->hGlobal );
+    med->pUnkForRelease = NULL;
+}
+
+static void create_bitmap( STGMEDIUM *med )
+{
+    med->tymed = TYMED_GDI;
+    U(med)->hBitmap = CreateBitmap( 1, 1, 1, 1, NULL );
+    med->pUnkForRelease = NULL;
+}
 
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
@@ -1385,13 +1439,40 @@ static ULONG WINAPI DataObject_Release(
     return 1;
 }
 
-static HRESULT WINAPI DataObject_GetData(
-        IDataObject*     iface,
-        LPFORMATETC      pformatetcIn,
-        STGMEDIUM*       pmedium)
+static inline BOOL fmtetc_equal( const FORMATETC *a, const FORMATETC *b )
 {
-    CHECK_EXPECTED_METHOD("DataObject_GetData");
-    return E_NOTIMPL;
+    /* FIXME ptd */
+    return a->cfFormat == b->cfFormat && a->dwAspect == b->dwAspect &&
+        a->lindex == b->lindex && a->tymed == b->tymed;
+
+}
+
+static HRESULT WINAPI DataObject_GetData( IDataObject *iface, FORMATETC *fmt_in,
+                                          STGMEDIUM *med )
+{
+    FORMATETC *fmt;
+
+    CHECK_EXPECTED_METHOD_FMT("DataObject_GetData", fmt_in);
+
+    for (fmt = g_dataobject_fmts; fmt && fmt->cfFormat != 0; fmt++)
+    {
+        if (fmtetc_equal( fmt_in, fmt ))
+        {
+            switch (fmt->cfFormat)
+            {
+            case CF_DIB:
+                create_dib( med );
+                return S_OK;
+            case CF_BITMAP:
+                create_bitmap( med );
+                return S_OK;
+            default:
+                trace( "unhandled fmt %d\n", fmt->cfFormat );
+            }
+        }
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI DataObject_GetDataHere(
@@ -1403,12 +1484,16 @@ static HRESULT WINAPI DataObject_GetDataHere(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI DataObject_QueryGetData(
-        IDataObject*     iface,
-        LPFORMATETC      pformatetc)
+static HRESULT WINAPI DataObject_QueryGetData( IDataObject *iface, FORMATETC *fmt_in )
 {
-    CHECK_EXPECTED_METHOD("DataObject_QueryGetData");
-    return S_OK;
+    FORMATETC *fmt;
+
+    CHECK_EXPECTED_METHOD_FMT("DataObject_QueryGetData", fmt_in);
+
+    for (fmt = g_dataobject_fmts; fmt && fmt->cfFormat != 0; fmt++)
+        if (fmtetc_equal( fmt_in, fmt )) return S_OK;
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI DataObject_GetCanonicalFormatEtc(
@@ -1601,9 +1686,9 @@ static void test_data_cache(void)
         { "draw_continue", 1 },
         { "draw_continue", 1 },
         { "draw_continue", 1 },
-        { "DataObject_GetData", 0 },
-        { "DataObject_GetData", 0 },
-        { "DataObject_GetData", 0 },
+        { "DataObject_GetData", 0, { CF_DIB,          NULL, DVASPECT_THUMBNAIL, -1, TYMED_HGLOBAL} },
+        { "DataObject_GetData", 0, { CF_BITMAP,       NULL, DVASPECT_THUMBNAIL, -1, TYMED_GDI} },
+        { "DataObject_GetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_ICON,      -1, TYMED_MFPICT} },
         { NULL, 0 }
     };
     static const struct expected_method methods_cachethenrun[] =
@@ -1611,7 +1696,6 @@ static void test_data_cache(void)
         { "DataObject_DAdvise", 0 },
         { "DataObject_DAdvise", 0 },
         { "DataObject_DAdvise", 0 },
-        { "DataObject_QueryGetData", 1 }, /* called by win9x and nt4 */
         { "DataObject_DAdvise", 0 },
         { "DataObject_DUnadvise", 0 },
         { "DataObject_DUnadvise", 0 },
@@ -1961,22 +2045,6 @@ static void test_data_cache(void)
 
 static const WCHAR CONTENTS[] = {'C','O','N','T','E','N','T','S',0};
 
-/* 2 x 1 x 32 bpp dib. PelsPerMeter = 200x400 */
-static BYTE dib[] =
-{
-    0x42, 0x4d, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
-
-    0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00,
-    0x00, 0x00, 0x01, 0x00, 0x20, 0x00, 0x00, 0x00,
-
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc8, 0x00,
-    0x00, 0x00, 0x90, 0x01, 0x00, 0x00, 0x00, 0x00,
-
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-};
-
 static IStorage *create_storage( int num )
 {
     IStorage *stg;
@@ -1999,18 +2067,6 @@ static IStorage *create_storage( int num )
     ok( hr == S_OK, "got %08x\n", hr);
     IStream_Release( stm );
     return stg;
-}
-
-static HGLOBAL create_dib( void )
-{
-    HGLOBAL h;
-    void *ptr;
-
-    h = GlobalAlloc( GMEM_MOVEABLE, sizeof(dib) - sizeof(BITMAPFILEHEADER) );
-    ptr = GlobalLock( h );
-    memcpy( ptr, dib + sizeof(BITMAPFILEHEADER), sizeof(dib) - sizeof(BITMAPFILEHEADER) );
-    GlobalUnlock( h );
-    return h;
 }
 
 static void test_data_cache_dib_contents_stream(int num)
@@ -2220,9 +2276,7 @@ static void test_data_cache_cache(void)
     hr = IOleCache2_QueryInterface( cache, &IID_IDataObject, (void **) &data );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    med.tymed = TYMED_GDI;
-    U(med).hBitmap = CreateBitmap( 1, 1, 1, 1, NULL );
-    med.pUnkForRelease = NULL;
+    create_bitmap( &med );
 
     hr = IOleCache2_SetData( cache, &fmt, &med, TRUE );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2244,8 +2298,7 @@ static void test_data_cache_cache(void)
     /* Now set a 2x1 dib */
     fmt.cfFormat = CF_DIB;
     fmt.tymed = TYMED_HGLOBAL;
-    med.tymed = TYMED_HGLOBAL;
-    U(med).hGlobal = create_dib();
+    create_dib( &med );
 
     hr = IOleCache2_SetData( cache, &fmt, &med, TRUE );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2500,6 +2553,294 @@ static void test_data_cache_initnew(void)
     IStorage_Release( stg_dib );
 
     IPersistStorage_Release( persist );
+    IOleCache2_Release( cache );
+}
+
+static void test_data_cache_updatecache( void )
+{
+    HRESULT hr;
+    IOleCache2 *cache;
+    FORMATETC fmt;
+    DWORD conn[4];
+
+    static const struct expected_method methods_dib[] =
+    {
+        { "DataObject_GetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL } },
+        { "DataObject_GetData", 0, { CF_BITMAP,       NULL, DVASPECT_CONTENT, -1, TYMED_GDI } },
+        { NULL }
+    };
+
+    static const struct expected_method methods_dib_emf[] =
+    {
+        { "DataObject_GetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL } },
+        { "DataObject_GetData", 0, { CF_ENHMETAFILE,  NULL, DVASPECT_CONTENT, -1, TYMED_ENHMF } },
+        { "DataObject_GetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT, -1, TYMED_MFPICT } },
+        { NULL }
+    };
+    static const struct expected_method methods_dib_wmf[] =
+    {
+        { "DataObject_GetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL } },
+        { "DataObject_GetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT, -1, TYMED_MFPICT } },
+        { NULL }
+    };
+    static const struct expected_method methods_viewcache[] =
+    {
+        { "DataObject_QueryGetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT, -1, TYMED_MFPICT } },
+        { "DataObject_QueryGetData", 0, { CF_ENHMETAFILE,  NULL, DVASPECT_CONTENT, -1, TYMED_ENHMF } },
+        { "DataObject_QueryGetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL } },
+        { "DataObject_QueryGetData", 0, { CF_BITMAP,       NULL, DVASPECT_CONTENT, -1, TYMED_GDI } },
+        { NULL }
+    };
+    static const struct expected_method methods_viewcache_with_dib[] =
+    {
+        { "DataObject_QueryGetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT, -1, TYMED_MFPICT } },
+        { "DataObject_QueryGetData", 0, { CF_ENHMETAFILE,  NULL, DVASPECT_CONTENT, -1, TYMED_ENHMF } },
+        { "DataObject_QueryGetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL } },
+        { "DataObject_GetData",      0, { CF_DIB,          NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL } },
+        { NULL }
+    };
+    static const struct expected_method methods_flags_all[] =
+    {
+        { "DataObject_GetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT,   -1, TYMED_HGLOBAL } },
+        { "DataObject_GetData", 0, { CF_ENHMETAFILE,  NULL, DVASPECT_CONTENT,   -1, TYMED_ENHMF } },
+        { "DataObject_GetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT,   -1, TYMED_MFPICT } },
+        { "DataObject_GetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT,   -1, TYMED_MFPICT } },
+        { NULL }
+    };
+    static const struct expected_method methods_flags_ifblank_1[] =
+    {
+        { "DataObject_GetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT,   -1, TYMED_MFPICT } },
+        { NULL }
+    };
+    static const struct expected_method methods_flags_ifblank_2[] =
+    {
+        { "DataObject_GetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT,   -1, TYMED_HGLOBAL } },
+        { "DataObject_GetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT,   -1, TYMED_MFPICT } },
+        { NULL }
+    };
+    static const struct expected_method methods_flags_normal[] =
+    {
+        { "DataObject_GetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT,   -1, TYMED_HGLOBAL } },
+        { NULL }
+    };
+    static const struct expected_method methods_empty[] =
+    {
+        { NULL }
+    };
+
+    static STATDATA view_cache[] =
+    {
+        {{ 0,          0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }, 0, NULL, 0 }
+    };
+    static STATDATA view_cache_after_dib[] =
+    {
+        {{ CF_DIB,          0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }, 0, NULL, 0 },
+        {{ CF_BITMAP,       0, DVASPECT_CONTENT, -1, TYMED_GDI },     0, NULL, 0 }
+    };
+
+    static FORMATETC dib_fmt[] =
+    {
+        { CF_DIB,       NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+        { 0 }
+    };
+
+    hr = CreateDataCache( NULL, &CLSID_WineTestOld, &IID_IOleCache2, (void **)&cache );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* No cache slots */
+    g_dataobject_fmts = NULL;
+    expected_method_list = NULL;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ALL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* A dib cache slot */
+    fmt.cfFormat = CF_DIB;
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_HGLOBAL;
+
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn[0] );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    expected_method_list = methods_dib;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ALL, NULL );
+    ok( hr == CACHE_E_NOCACHE_UPDATED, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+
+    /* Now with a dib available */
+    g_dataobject_fmts = dib_fmt;
+    expected_method_list = methods_dib;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ALL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* Add an EMF cache slot */
+    fmt.cfFormat = CF_ENHMETAFILE;
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_ENHMF;
+
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn[1] );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    g_dataobject_fmts = dib_fmt;
+    expected_method_list = methods_dib_emf;
+
+    /* Two slots to fill, only the dib will succeed */
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ALL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+
+    /* Replace the emf slot with a wmf */
+    hr = IOleCache2_Uncache( cache, conn[1] );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    fmt.cfFormat = CF_METAFILEPICT;
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_MFPICT;
+
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn[1] );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    g_dataobject_fmts = dib_fmt;
+    expected_method_list = methods_dib_wmf;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ALL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IOleCache2_Uncache( cache, conn[1] );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = IOleCache2_Uncache( cache, conn[0] );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* View caching */
+    fmt.cfFormat = 0;
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_HGLOBAL;
+
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn[0] );
+    ok( hr == S_OK, "got %08x\n", hr );
+    view_cache[0].dwConnection = conn[0];
+
+    g_dataobject_fmts = NULL;
+    expected_method_list = methods_viewcache;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ALL, NULL );
+    ok( hr == CACHE_E_NOCACHE_UPDATED, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+    check_enum_cache( cache, view_cache, 1 );
+
+    g_dataobject_fmts = dib_fmt;
+    expected_method_list = methods_viewcache_with_dib;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ALL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+    view_cache_after_dib[0].dwConnection = view_cache_after_dib[1].dwConnection = view_cache[0].dwConnection;
+    check_enum_cache( cache, view_cache_after_dib, 2 );
+
+    hr = IOleCache2_Uncache( cache, conn[0] );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* Try some different flags */
+
+    fmt.cfFormat = CF_DIB;
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_HGLOBAL;
+
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn[0] );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    fmt.cfFormat = CF_ENHMETAFILE;
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_ENHMF;
+
+    hr = IOleCache2_Cache( cache, &fmt, ADVF_NODATA, &conn[1] );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    fmt.cfFormat = CF_METAFILEPICT;
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_MFPICT;
+
+    hr = IOleCache2_Cache( cache, &fmt, ADVFCACHE_ONSAVE, &conn[2] );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    g_dataobject_fmts = dib_fmt;
+    expected_method_list = methods_flags_all;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ALL, NULL );
+
+    CHECK_NO_EXTRA_METHODS();
+
+    expected_method_list = methods_flags_all;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ALL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+
+    expected_method_list = methods_flags_ifblank_1;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_IFBLANK , NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+
+    hr = IOleCache2_DiscardCache( cache, DISCARDCACHE_NOSAVE );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    expected_method_list = methods_flags_ifblank_2;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_IFBLANK , NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+
+    hr = IOleCache2_DiscardCache( cache, DISCARDCACHE_NOSAVE );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    expected_method_list = methods_flags_all;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_IFBLANK | UPDFCACHE_NODATACACHE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+
+    expected_method_list = methods_empty;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ONLYIFBLANK | UPDFCACHE_NORMALCACHE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+
+    hr = IOleCache2_DiscardCache( cache, DISCARDCACHE_NOSAVE );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    expected_method_list = methods_flags_normal;
+
+    hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ONLYIFBLANK | UPDFCACHE_NORMALCACHE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+
     IOleCache2_Release( cache );
 }
 
@@ -3833,6 +4174,7 @@ START_TEST(ole2)
     test_data_cache_cache();
     test_data_cache_init();
     test_data_cache_initnew();
+    test_data_cache_updatecache();
     test_default_handler();
     test_runnable();
     test_OleRun();

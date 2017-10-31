@@ -961,12 +961,33 @@ static HBITMAP synthesize_bitmap( HGLOBAL dib )
     return ret;
 }
 
+static HENHMETAFILE synthesize_emf( HMETAFILEPICT data )
+{
+    METAFILEPICT *pict;
+    HENHMETAFILE emf = 0;
+    UINT size;
+    void *bits;
+
+    if (!(pict = GlobalLock( data ))) return 0;
+
+    size = GetMetaFileBitsEx( pict->hMF, 0, NULL );
+    if ((bits = HeapAlloc( GetProcessHeap(), 0, size )))
+    {
+        GetMetaFileBitsEx( pict->hMF, size, bits );
+        emf = SetWinMetaFileBits( size, bits, NULL, pict );
+        HeapFree( GetProcessHeap(), 0, bits );
+    }
+
+    GlobalUnlock( data );
+    return emf;
+}
+
 static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
                                       const FORMATETC *formatetc,
                                       STGMEDIUM *stgmedium,
                                       BOOL fRelease)
 {
-    STGMEDIUM dib_copy;
+    STGMEDIUM copy;
 
     if ((!cache_entry->fmtetc.cfFormat && !formatetc->cfFormat) ||
         (cache_entry->fmtetc.tymed == TYMED_NULL && formatetc->tymed == TYMED_NULL) ||
@@ -981,11 +1002,19 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
 
     if (formatetc->cfFormat == CF_BITMAP)
     {
-        dib_copy.tymed = TYMED_HGLOBAL;
-        dib_copy.u.hGlobal = synthesize_dib( stgmedium->u.hBitmap );
-        dib_copy.pUnkForRelease = NULL;
+        copy.tymed = TYMED_HGLOBAL;
+        copy.u.hGlobal = synthesize_dib( stgmedium->u.hBitmap );
+        copy.pUnkForRelease = NULL;
         if (fRelease) ReleaseStgMedium(stgmedium);
-        stgmedium = &dib_copy;
+        stgmedium = &copy;
+        fRelease = TRUE;
+    }
+    else if (formatetc->cfFormat == CF_METAFILEPICT && cache_entry->fmtetc.cfFormat == CF_ENHMETAFILE)
+    {
+        copy.tymed = TYMED_ENHMF;
+        copy.u.hEnhMetaFile = synthesize_emf( stgmedium->u.hMetaFilePict );
+        if (fRelease) ReleaseStgMedium(stgmedium);
+        stgmedium = &copy;
         fRelease = TRUE;
     }
 
@@ -2381,14 +2410,102 @@ static HRESULT WINAPI DataCache_IOleCache2_SetData(
     return OLE_E_BLANK;
 }
 
-static HRESULT WINAPI DataCache_UpdateCache(
-            IOleCache2*     iface,
-	    LPDATAOBJECT    pDataObject,
-	    DWORD           grfUpdf,
-	    LPVOID          pReserved)
+static BOOL entry_updateable( DataCacheEntry *entry, DWORD mode )
 {
-  FIXME("(%p, 0x%x, %p): stub\n", pDataObject, grfUpdf, pReserved);
-  return E_NOTIMPL;
+    BOOL is_blank = entry->stgmedium.tymed == TYMED_NULL;
+
+    if ((mode & UPDFCACHE_ONLYIFBLANK) && !is_blank) return FALSE;
+
+    if ((mode & UPDFCACHE_NODATACACHE) && (entry->advise_flags & ADVF_NODATA)) return TRUE;
+    if ((mode & UPDFCACHE_ONSAVECACHE) && (entry->advise_flags & ADVFCACHE_ONSAVE)) return TRUE;
+    if ((mode & UPDFCACHE_ONSTOPCACHE) && (entry->advise_flags & ADVF_DATAONSTOP)) return TRUE;
+    if ((mode & UPDFCACHE_NORMALCACHE) && (entry->advise_flags == 0)) return TRUE;
+    if ((mode & UPDFCACHE_IFBLANK) && (is_blank && !(entry->advise_flags & ADVF_NODATA))) return TRUE;
+
+    return FALSE;
+}
+
+static HRESULT WINAPI DataCache_UpdateCache( IOleCache2 *iface, IDataObject *data,
+                                             DWORD mode, void *reserved )
+{
+    DataCache *This = impl_from_IOleCache2(iface);
+    DataCacheEntry *cache_entry;
+    STGMEDIUM med;
+    HRESULT hr = S_OK;
+    CLIPFORMAT view_list[] = { CF_METAFILEPICT, CF_ENHMETAFILE, CF_DIB, CF_BITMAP };
+    FORMATETC fmt;
+    int i, slots = 0;
+    BOOL done_one = FALSE;
+
+    TRACE( "(%p %p %08x %p)\n", iface, data, mode, reserved );
+
+    LIST_FOR_EACH_ENTRY( cache_entry, &This->cache_list, DataCacheEntry, entry )
+    {
+        slots++;
+
+        if (!entry_updateable( cache_entry, mode ))
+        {
+            done_one = TRUE;
+            continue;
+        }
+
+        fmt = cache_entry->fmtetc;
+
+        if (fmt.cfFormat)
+        {
+            hr = IDataObject_GetData( data, &fmt, &med );
+            if (hr != S_OK && fmt.cfFormat == CF_DIB)
+            {
+                fmt.cfFormat = CF_BITMAP;
+                fmt.tymed = TYMED_GDI;
+                hr = IDataObject_GetData( data, &fmt, &med );
+            }
+            if (hr != S_OK && fmt.cfFormat == CF_ENHMETAFILE)
+            {
+                fmt.cfFormat = CF_METAFILEPICT;
+                fmt.tymed = TYMED_MFPICT;
+                hr = IDataObject_GetData( data, &fmt, &med );
+            }
+            if (hr == S_OK)
+            {
+                hr = DataCacheEntry_SetData( cache_entry, &fmt, &med, TRUE );
+                if (hr != S_OK) ReleaseStgMedium( &med );
+                else done_one = TRUE;
+            }
+        }
+        else
+        {
+            for (i = 0; i < sizeof(view_list) / sizeof(view_list[0]); i++)
+            {
+                fmt.cfFormat = view_list[i];
+                fmt.tymed = tymed_from_cf( fmt.cfFormat );
+                hr = IDataObject_QueryGetData( data, &fmt );
+                if (hr == S_OK)
+                {
+                    hr = IDataObject_GetData( data, &fmt, &med );
+                    if (hr == S_OK)
+                    {
+                        if (fmt.cfFormat == CF_BITMAP)
+                        {
+                            cache_entry->fmtetc.cfFormat = CF_DIB;
+                            cache_entry->fmtetc.tymed = TYMED_HGLOBAL;
+                        }
+                        else
+                        {
+                            cache_entry->fmtetc.cfFormat = fmt.cfFormat;
+                            cache_entry->fmtetc.tymed = fmt.tymed;
+                        }
+                        hr = DataCacheEntry_SetData( cache_entry, &fmt, &med, TRUE );
+                        if (hr != S_OK) ReleaseStgMedium( &med );
+                        else done_one = TRUE;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    return (!slots || done_one) ? S_OK : CACHE_E_NOCACHE_UPDATED;
 }
 
 static HRESULT WINAPI DataCache_DiscardCache(
