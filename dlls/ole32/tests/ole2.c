@@ -2332,6 +2332,13 @@ static void test_data_cache_cache(void)
     hr = IOleCache2_Uncache( cache, conn );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    /* tymed == 0 */
+    fmt.cfFormat = CF_ENHMETAFILE;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.tymed = 0;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == DV_E_TYMED, "got %08x\n", hr );
+
     IDataObject_Release( data );
     IOleCache2_Release( cache );
 }

@@ -328,7 +328,7 @@ static HRESULT check_valid_formatetc( const FORMATETC *fmt )
     if (fmt->dwAspect == DVASPECT_ICON && fmt->cfFormat != CF_METAFILEPICT)
         return DV_E_FORMATETC;
 
-    if (!fmt->cfFormat || !fmt->tymed ||
+    if (!fmt->cfFormat ||
         (fmt->cfFormat == CF_METAFILEPICT && fmt->tymed == TYMED_MFPICT) ||
         (fmt->cfFormat == CF_BITMAP && fmt->tymed == TYMED_GDI) ||
         (fmt->cfFormat == CF_DIB && fmt->tymed == TYMED_HGLOBAL) ||
