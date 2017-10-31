@@ -1963,18 +1963,14 @@ static void test_data_cache(void)
 
     DeleteDC(hdcMem);
 
-    todo_wine {
     hr = IOleCache2_InitCache(pOleCache, &DataObject);
     ok(hr == CACHE_E_NOCACHE_UPDATED, "IOleCache_InitCache should have returned CACHE_E_NOCACHE_UPDATED instead of 0x%08x\n", hr);
-    }
 
     IPersistStorage_Release(pPS);
     IViewObject_Release(pViewObject);
     IOleCache2_Release(pOleCache);
 
-    todo_wine {
     CHECK_NO_EXTRA_METHODS();
-    }
 
     hr = CreateDataCache(NULL, &CLSID_NULL, &IID_IOleCache2, (LPVOID *)&pOleCache);
     ok_ole_success(hr, "CreateDataCache");
@@ -2623,6 +2619,12 @@ static void test_data_cache_updatecache( void )
         { "DataObject_GetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT,   -1, TYMED_HGLOBAL } },
         { NULL }
     };
+    static const struct expected_method methods_initcache[] =
+    {
+        { "DataObject_GetData", 0, { CF_DIB,          NULL, DVASPECT_CONTENT,   -1, TYMED_HGLOBAL } },
+        { "DataObject_GetData", 0, { CF_METAFILEPICT, NULL, DVASPECT_CONTENT,   -1, TYMED_MFPICT } },
+        { NULL }
+    };
     static const struct expected_method methods_empty[] =
     {
         { NULL }
@@ -2837,6 +2839,13 @@ static void test_data_cache_updatecache( void )
     expected_method_list = methods_flags_normal;
 
     hr = IOleCache2_UpdateCache( cache, &DataObject, UPDFCACHE_ONLYIFBLANK | UPDFCACHE_NORMALCACHE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    CHECK_NO_EXTRA_METHODS();
+
+    expected_method_list = methods_initcache;
+
+    hr = IOleCache2_InitCache( cache, &DataObject );
     ok( hr == S_OK, "got %08x\n", hr );
 
     CHECK_NO_EXTRA_METHODS();

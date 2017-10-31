@@ -2373,12 +2373,10 @@ fail:
     return hr;
 }
 
-static HRESULT WINAPI DataCache_InitCache(
-	    IOleCache2*     iface,
-	    IDataObject*    pDataObject)
+static HRESULT WINAPI DataCache_InitCache( IOleCache2 *iface, IDataObject *data )
 {
-  FIXME("stub\n");
-  return E_NOTIMPL;
+    TRACE( "(%p %p)\n", iface, data );
+    return IOleCache2_UpdateCache( iface, data, UPDFCACHE_ALLBUTNODATACACHE, NULL );
 }
 
 static HRESULT WINAPI DataCache_IOleCache2_SetData(
