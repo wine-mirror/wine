@@ -101,8 +101,6 @@ typedef struct DataCacheEntry
   struct list entry;
   /* format of this entry */
   FORMATETC fmtetc;
-  /* the clipboard format of the data */
-  CLIPFORMAT data_cf;
   /* cached data */
   STGMEDIUM stgmedium;
   /*
@@ -351,7 +349,6 @@ static BOOL init_cache_entry(DataCacheEntry *entry, const FORMATETC *fmt, DWORD 
     hr = copy_formatetc(&entry->fmtetc, fmt);
     if (FAILED(hr)) return FALSE;
 
-    entry->data_cf = 0;
     entry->stgmedium.tymed = TYMED_NULL;
     entry->stgmedium.pUnkForRelease = NULL;
     entry->stream = NULL;
@@ -637,7 +634,6 @@ static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
     GlobalUnlock( hmfpict );
     if (SUCCEEDED( hr ))
     {
-        cache_entry->data_cf = cache_entry->fmtetc.cfFormat;
         cache_entry->stgmedium.tymed = TYMED_MFPICT;
         cache_entry->stgmedium.u.hMetaFilePict = hmfpict;
     }
@@ -722,7 +718,6 @@ static HRESULT load_dib( DataCacheEntry *cache_entry, IStream *stm )
 
     GlobalUnlock( hglobal );
 
-    cache_entry->data_cf = cache_entry->fmtetc.cfFormat;
     cache_entry->stgmedium.tymed = TYMED_HGLOBAL;
     cache_entry->stgmedium.u.hGlobal = hglobal;
 
@@ -803,7 +798,7 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *cache_entry, IStorage *storag
     if (FAILED(hr))
         return hr;
 
-    hr = write_clipformat(pres_stream, cache_entry->data_cf);
+    hr = write_clipformat(pres_stream, cache_entry->fmtetc.cfFormat);
     if (FAILED(hr))
         return hr;
 
@@ -819,7 +814,7 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *cache_entry, IStorage *storag
     header.dwSize = 0;
 
     /* size the data */
-    switch (cache_entry->data_cf)
+    switch (cache_entry->fmtetc.cfFormat)
     {
         case CF_METAFILEPICT:
         {
@@ -854,7 +849,7 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *cache_entry, IStorage *storag
     }
 
     /* get the data */
-    switch (cache_entry->data_cf)
+    switch (cache_entry->fmtetc.cfFormat)
     {
         case CF_METAFILEPICT:
         {
@@ -983,7 +978,6 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
 
     cache_entry->dirty = TRUE;
     ReleaseStgMedium(&cache_entry->stgmedium);
-    cache_entry->data_cf = cache_entry->fmtetc.cfFormat ? cache_entry->fmtetc.cfFormat : formatetc->cfFormat;
 
     if (formatetc->cfFormat == CF_BITMAP)
     {
@@ -1001,8 +995,7 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
         return S_OK;
     }
     else
-        return copy_stg_medium(cache_entry->data_cf,
-                               &cache_entry->stgmedium, stgmedium);
+        return copy_stg_medium(cache_entry->fmtetc.cfFormat, &cache_entry->stgmedium, stgmedium);
 }
 
 static HRESULT DataCacheEntry_GetData(DataCacheEntry *cache_entry, FORMATETC *fmt, STGMEDIUM *stgmedium)
@@ -1023,13 +1016,12 @@ static HRESULT DataCacheEntry_GetData(DataCacheEntry *cache_entry, FORMATETC *fm
         stgmedium->pUnkForRelease = NULL;
         return S_OK;
     }
-    return copy_stg_medium(cache_entry->data_cf, stgmedium, &cache_entry->stgmedium);
+    return copy_stg_medium(cache_entry->fmtetc.cfFormat, stgmedium, &cache_entry->stgmedium);
 }
 
 static inline HRESULT DataCacheEntry_DiscardData(DataCacheEntry *cache_entry)
 {
     ReleaseStgMedium(&cache_entry->stgmedium);
-    cache_entry->data_cf = cache_entry->fmtetc.cfFormat;
     return S_OK;
 }
 
@@ -1844,7 +1836,7 @@ static HRESULT WINAPI DataCache_Draw(
 
     if (pfnContinue && !pfnContinue(dwContinue)) return E_ABORT;
 
-    switch (cache_entry->data_cf)
+    switch (cache_entry->fmtetc.cfFormat)
     {
       case CF_METAFILEPICT:
       {
@@ -2103,7 +2095,7 @@ static HRESULT WINAPI DataCache_GetExtent(
       continue;
 
 
-    switch (cache_entry->data_cf)
+    switch (cache_entry->fmtetc.cfFormat)
     {
       case CF_METAFILEPICT:
       {
