@@ -480,7 +480,7 @@ static IDirect3DDevice *create_device(IDirectDraw *ddraw, HWND window, DWORD coo
     /* We used to use EnumDevices() for this, but it seems
      * D3DDEVICEDESC.dwDeviceZBufferBitDepth only has a very casual
      * relationship with reality. */
-    for (i = 0; i < sizeof(z_depths) / sizeof(*z_depths); ++i)
+    for (i = 0; i < ARRAY_SIZE(z_depths); ++i)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -1479,7 +1479,7 @@ static void test_ck_rgba(void)
     hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         UINT draw1_len, draw2_len;
         void *ptr;
@@ -1994,7 +1994,7 @@ static void test_surface_qi(void)
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
-    test_qi("surface_qi", (IUnknown *)surface, &IID_IDirectDrawSurface, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("surface_qi", (IUnknown *)surface, &IID_IDirectDrawSurface, tests, ARRAY_SIZE(tests));
 
     IDirectDrawSurface_Release(surface);
     IDirectDraw_Release(ddraw);
@@ -2065,7 +2065,7 @@ static void test_device_qi(void)
         return;
     }
 
-    test_qi("device_qi", (IUnknown *)device, &IID_IDirectDrawSurface, tests, sizeof(tests) / sizeof(*tests));
+    test_qi("device_qi", (IUnknown *)device, &IID_IDirectDrawSurface, tests, ARRAY_SIZE(tests));
 
     IDirect3DDevice_Release(device);
     IDirectDraw_Release(ddraw);
@@ -3586,13 +3586,13 @@ static void test_unsupported_formats(void)
         return;
     }
 
-    for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
+    for (i = 0; i < ARRAY_SIZE(formats); i++)
     {
         struct format_support_check check = {&formats[i].fmt, FALSE};
         hr = IDirect3DDevice_EnumTextureFormats(device, test_unsupported_formats_cb, &check);
         ok(SUCCEEDED(hr), "Failed to enumerate texture formats %#x.\n", hr);
 
-        for (j = 0; j < sizeof(caps) / sizeof(*caps); j++)
+        for (j = 0; j < ARRAY_SIZE(caps); j++)
         {
             memset(&ddsd, 0, sizeof(ddsd));
             ddsd.dwSize = sizeof(ddsd);
@@ -3829,7 +3829,7 @@ static void test_rt_caps(void)
     hr = IDirectDraw_CreatePalette(ddraw, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, palette_entries, &palette, NULL);
     ok(SUCCEEDED(hr), "Failed to create palette, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         IDirectDrawSurface *surface;
         DDSURFACEDESC surface_desc;
@@ -4013,7 +4013,7 @@ static void test_primary_caps(void)
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hr = IDirectDraw_SetCooperativeLevel(ddraw, window, test_data[i].coop_level);
         ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
@@ -4108,7 +4108,7 @@ static void test_surface_lock(void)
     ok(!!z_depth, "Failed to get device z depth.\n");
     IDirect3DDevice_Release(device);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
@@ -4188,7 +4188,7 @@ static void test_surface_discard(void)
     hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&target);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         BOOL discarded;
 
@@ -4302,7 +4302,7 @@ static void test_flip(void)
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         /* Creating a flippable texture induces a BSoD on some versions of the
          * Intel graphics driver. At least Intel GMA 950 with driver version
@@ -5178,7 +5178,7 @@ static void test_create_surface_pitch(void)
 
     mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ((63 * 4) + 8) * 63);
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -5286,7 +5286,7 @@ static void test_mipmap(void)
         return;
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -5557,7 +5557,7 @@ static void test_p8_blit(void)
 
     if (SUCCEEDED(hr))
     {
-        for (x = 0; x < sizeof(expected) / sizeof(*expected); x++)
+        for (x = 0; x < ARRAY_SIZE(expected); x++)
         {
             color = get_surface_color(dst, x, 0);
             todo_wine ok(compare_color(color, expected[x], 0),
@@ -5666,7 +5666,7 @@ static void test_material(void)
     hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
     ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
         ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
@@ -6028,7 +6028,7 @@ static void test_lighting(void)
     hr = IDirect3DViewport_AddLight(viewport, light);
     ok(SUCCEEDED(hr), "Failed to add a light to the viewport, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3DDevice_SetMatrix(device, world_handle, tests[i].world_matrix);
         ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
@@ -6170,16 +6170,16 @@ static void test_palette_gdi(void)
             "Got unexpected palette %p, expected %p.\n",
             ddraw_palette_handle, GetStockObject(DEFAULT_PALETTE));
 
-    i = GetDIBColorTable(dc, 0, sizeof(rgbquad) / sizeof(*rgbquad), rgbquad);
-    ok(i == sizeof(rgbquad) / sizeof(*rgbquad), "Expected count 255, got %u.\n", i);
-    for (i = 0; i < sizeof(expected1) / sizeof(*expected1); i++)
+    i = GetDIBColorTable(dc, 0, ARRAY_SIZE(rgbquad), rgbquad);
+    ok(i == ARRAY_SIZE(rgbquad), "Expected count 255, got %u.\n", i);
+    for (i = 0; i < ARRAY_SIZE(expected1); i++)
     {
         ok(!memcmp(&rgbquad[i], &expected1[i], sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=%#x g=%#x b=%#x.\n",
                 i, rgbquad[i].rgbRed, rgbquad[i].rgbGreen, rgbquad[i].rgbBlue,
                 expected1[i].rgbRed, expected1[i].rgbGreen, expected1[i].rgbBlue);
     }
-    for (; i < sizeof(rgbquad) / sizeof(*rgbquad); i++)
+    for (; i < ARRAY_SIZE(rgbquad); i++)
     {
         ok(!memcmp(&rgbquad[i], &rgb_zero, sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=0 g=0 b=0.\n",
@@ -6219,16 +6219,16 @@ static void test_palette_gdi(void)
     /* Refresh the DC. This updates the palette. */
     hr = IDirectDrawSurface_GetDC(surface, &dc);
     ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
-    i = GetDIBColorTable(dc, 0, sizeof(rgbquad) / sizeof(*rgbquad), rgbquad);
-    ok(i == sizeof(rgbquad) / sizeof(*rgbquad), "Expected count 255, got %u.\n", i);
-    for (i = 0; i < sizeof(expected2) / sizeof(*expected2); i++)
+    i = GetDIBColorTable(dc, 0, ARRAY_SIZE(rgbquad), rgbquad);
+    ok(i == ARRAY_SIZE(rgbquad), "Expected count 255, got %u.\n", i);
+    for (i = 0; i < ARRAY_SIZE(expected2); i++)
     {
         ok(!memcmp(&rgbquad[i], &expected2[i], sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=%#x g=%#x b=%#x.\n",
                 i, rgbquad[i].rgbRed, rgbquad[i].rgbGreen, rgbquad[i].rgbBlue,
                 expected2[i].rgbRed, expected2[i].rgbGreen, expected2[i].rgbBlue);
     }
-    for (; i < sizeof(rgbquad) / sizeof(*rgbquad); i++)
+    for (; i < ARRAY_SIZE(rgbquad); i++)
     {
         ok(!memcmp(&rgbquad[i], &rgb_zero, sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=0 g=0 b=0.\n",
@@ -6292,16 +6292,16 @@ static void test_palette_gdi(void)
      * the system palette are not included pending an application that depends on this.
      * The relation between those causes problems on Windows Vista and newer for games
      * like Age of Empires or StarCraft. Don't emulate it without a real need. */
-    i = GetDIBColorTable(dc, 0, sizeof(rgbquad) / sizeof(*rgbquad), rgbquad);
-    ok(i == sizeof(rgbquad) / sizeof(*rgbquad), "Expected count 255, got %u.\n", i);
-    for (i = 0; i < sizeof(expected2) / sizeof(*expected2); i++)
+    i = GetDIBColorTable(dc, 0, ARRAY_SIZE(rgbquad), rgbquad);
+    ok(i == ARRAY_SIZE(rgbquad), "Expected count 255, got %u.\n", i);
+    for (i = 0; i < ARRAY_SIZE(expected2); i++)
     {
         ok(!memcmp(&rgbquad[i], &expected2[i], sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=%#x g=%#x b=%#x.\n",
                 i, rgbquad[i].rgbRed, rgbquad[i].rgbGreen, rgbquad[i].rgbBlue,
                 expected2[i].rgbRed, expected2[i].rgbGreen, expected2[i].rgbBlue);
     }
-    for (; i < sizeof(rgbquad) / sizeof(*rgbquad); i++)
+    for (; i < ARRAY_SIZE(rgbquad); i++)
     {
         ok(!memcmp(&rgbquad[i], &rgb_zero, sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=0 g=0 b=0.\n",
@@ -6323,16 +6323,16 @@ static void test_palette_gdi(void)
      * but in all likelihood it is actually the system palette. */
     hr = IDirectDrawSurface_GetDC(surface, &dc);
     ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
-    i = GetDIBColorTable(dc, 0, sizeof(rgbquad) / sizeof(*rgbquad), rgbquad);
-    ok(i == sizeof(rgbquad) / sizeof(*rgbquad), "Expected count 255, got %u.\n", i);
-    for (i = 0; i < sizeof(expected2) / sizeof(*expected2); i++)
+    i = GetDIBColorTable(dc, 0, ARRAY_SIZE(rgbquad), rgbquad);
+    ok(i == ARRAY_SIZE(rgbquad), "Expected count 255, got %u.\n", i);
+    for (i = 0; i < ARRAY_SIZE(expected2); i++)
     {
         ok(!memcmp(&rgbquad[i], &expected2[i], sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=%#x g=%#x b=%#x.\n",
                 i, rgbquad[i].rgbRed, rgbquad[i].rgbGreen, rgbquad[i].rgbBlue,
                 expected2[i].rgbRed, expected2[i].rgbGreen, expected2[i].rgbBlue);
     }
-    for (; i < sizeof(rgbquad) / sizeof(*rgbquad); i++)
+    for (; i < ARRAY_SIZE(rgbquad); i++)
     {
         ok(!memcmp(&rgbquad[i], &rgb_zero, sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=0 g=0 b=0.\n",
@@ -6363,16 +6363,16 @@ static void test_palette_gdi(void)
      * palette. */
     hr = IDirectDrawSurface_GetDC(surface, &dc);
     ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
-    i = GetDIBColorTable(dc, 0, sizeof(rgbquad) / sizeof(*rgbquad), rgbquad);
-    ok(i == sizeof(rgbquad) / sizeof(*rgbquad), "Expected count 255, got %u.\n", i);
-    for (i = 0; i < sizeof(expected3) / sizeof(*expected3); i++)
+    i = GetDIBColorTable(dc, 0, ARRAY_SIZE(rgbquad), rgbquad);
+    ok(i == ARRAY_SIZE(rgbquad), "Expected count 255, got %u.\n", i);
+    for (i = 0; i < ARRAY_SIZE(expected3); i++)
     {
         ok(!memcmp(&rgbquad[i], &expected3[i], sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=%#x g=%#x b=%#x.\n",
                 i, rgbquad[i].rgbRed, rgbquad[i].rgbGreen, rgbquad[i].rgbBlue,
                 expected3[i].rgbRed, expected3[i].rgbGreen, expected3[i].rgbBlue);
     }
-    for (; i < sizeof(rgbquad) / sizeof(*rgbquad); i++)
+    for (; i < ARRAY_SIZE(rgbquad); i++)
     {
         ok(!memcmp(&rgbquad[i], &rgb_zero, sizeof(rgbquad[i])),
                 "Got color table entry %u r=%#x g=%#x b=%#x, expected r=0 g=0 b=0.\n",
@@ -6479,7 +6479,7 @@ static void test_palette_alpha(void)
     ok(palette_entries[3].peFlags == 0x00, "Got unexpected peFlags 0x%02x, expected 0x00.\n",
             palette_entries[3].peFlags);
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); i++)
+    for (i = 0; i < ARRAY_SIZE(test_data); i++)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -7449,7 +7449,7 @@ static void test_color_fill(void)
     if ((!support_yuy2 && !support_uyvy) || !(hal_caps.dwCaps & DDCAPS_OVERLAY))
         skip("Overlays or some YUV formats not supported, skipping YUV colorfill tests.\n");
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         DWORD expected_broken = tests[i].result;
         DWORD mask = 0xffffffffu;
@@ -7684,7 +7684,7 @@ static void test_color_fill(void)
     hr = IDirectDrawSurface_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_ROP | DDBLT_WAIT, &fx);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(rops) / sizeof(*rops); i++)
+    for (i = 0; i < ARRAY_SIZE(rops); i++)
     {
         fx.dwROP = rops[i].rop;
         hr = IDirectDrawSurface_Blt(surface, NULL, surface2, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
@@ -7874,7 +7874,7 @@ static void test_colorkey_precision(void)
     memset(&lock_desc, 0, sizeof(lock_desc));
     lock_desc.dwSize = sizeof(lock_desc);
 
-    for (t = 0; t < sizeof(tests) / sizeof(*tests); ++t)
+    for (t = 0; t < ARRAY_SIZE(tests); ++t)
     {
         if (is_nvidia && tests[t].skip_nv)
         {
@@ -8288,7 +8288,7 @@ static void test_shademode(void)
     /* Try it first with a TRIANGLESTRIP.  Do it with different geometry because
      * the color fixups we have to do for FLAT shading will be dependent on that. */
 
-    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
         ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
@@ -8409,7 +8409,7 @@ static void test_lockrect_invalid(void)
         goto done;
     }
 
-    for (r = 0; r < sizeof(resources) / sizeof(*resources); ++r)
+    for (r = 0; r < ARRAY_SIZE(resources); ++r)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -8430,7 +8430,7 @@ static void test_lockrect_invalid(void)
         hr = IDirectDrawSurface_Lock(surface, NULL, NULL, DDLOCK_WAIT, NULL);
         ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
 
-        for (i = 0; i < sizeof(valid) / sizeof(*valid); ++i)
+        for (i = 0; i < ARRAY_SIZE(valid); ++i)
         {
             RECT *rect = &valid[i];
 
@@ -8445,7 +8445,7 @@ static void test_lockrect_invalid(void)
             ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
         }
 
-        for (i = 0; i < sizeof(invalid) / sizeof(*invalid); ++i)
+        for (i = 0; i < ARRAY_SIZE(invalid); ++i)
         {
             RECT *rect = &invalid[i];
 
@@ -8854,7 +8854,7 @@ static void test_blt(void)
     hr = IDirectDrawSurface_Blt(surface, NULL, rt, NULL, 0, NULL);
     ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hr = IDirectDrawSurface_Blt(surface, &test_data[i].dst_rect,
                 surface, &test_data[i].src_rect, DDBLT_WAIT, NULL);
@@ -8955,7 +8955,7 @@ static void test_blt_z_alpha(void)
     fx.dwAlphaSrcConstBitDepth = 8;
     U4(fx).dwAlphaSrcConst = 0x22;
 
-    for (i = 0; i < sizeof(blt_flags) / sizeof(*blt_flags); ++i)
+    for (i = 0; i < ARRAY_SIZE(blt_flags); ++i)
     {
         fx.dwFillColor = 0x3300ff00;
         hr = IDirectDrawSurface_Blt(src_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
@@ -9049,7 +9049,7 @@ static void test_getdc(void)
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
-    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -10033,7 +10033,7 @@ static void test_surface_desc_size(void)
     hr = IDirectDraw_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(surface_caps) / sizeof(*surface_caps); ++i)
+    for (i = 0; i < ARRAY_SIZE(surface_caps); ++i)
     {
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -10050,7 +10050,7 @@ static void test_surface_desc_size(void)
         ok(hr == DD_OK, "Failed to query IDirectDrawSurface7, hr %#x, type %s.\n", hr, surface_caps[i].name);
 
         /* GetSurfaceDesc() */
-        for (j = 0; j < sizeof(desc_sizes) / sizeof(*desc_sizes); ++j)
+        for (j = 0; j < ARRAY_SIZE(desc_sizes); ++j)
         {
             memset(&desc, 0, sizeof(desc));
             desc.dwSize = desc_sizes[j];
@@ -10068,7 +10068,7 @@ static void test_surface_desc_size(void)
         }
 
         /* Lock() */
-        for (j = 0; j < sizeof(desc_sizes) / sizeof(*desc_sizes); ++j)
+        for (j = 0; j < ARRAY_SIZE(desc_sizes); ++j)
         {
             const BOOL valid_size = desc_sizes[j] == sizeof(DDSURFACEDESC)
                     || desc_sizes[j] == sizeof(DDSURFACEDESC2);
