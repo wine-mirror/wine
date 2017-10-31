@@ -322,19 +322,23 @@ static DataCacheEntry *DataCache_GetEntryForFormatEtc(DataCache *This, const FOR
 /* checks that the clipformat and tymed are valid and returns an error if they
 * aren't and CACHE_S_NOTSUPPORTED if they are valid, but can't be rendered by
 * DataCache_Draw */
-static HRESULT check_valid_clipformat_and_tymed(CLIPFORMAT cfFormat, DWORD tymed)
+static HRESULT check_valid_formatetc( const FORMATETC *fmt )
 {
-    if (!cfFormat || !tymed ||
-        (cfFormat == CF_METAFILEPICT && tymed == TYMED_MFPICT) ||
-        (cfFormat == CF_BITMAP && tymed == TYMED_GDI) ||
-        (cfFormat == CF_DIB && tymed == TYMED_HGLOBAL) ||
-        (cfFormat == CF_ENHMETAFILE && tymed == TYMED_ENHMF))
+    /* DVASPECT_ICON must be CF_METAFILEPICT */
+    if (fmt->dwAspect == DVASPECT_ICON && fmt->cfFormat != CF_METAFILEPICT)
+        return DV_E_FORMATETC;
+
+    if (!fmt->cfFormat || !fmt->tymed ||
+        (fmt->cfFormat == CF_METAFILEPICT && fmt->tymed == TYMED_MFPICT) ||
+        (fmt->cfFormat == CF_BITMAP && fmt->tymed == TYMED_GDI) ||
+        (fmt->cfFormat == CF_DIB && fmt->tymed == TYMED_HGLOBAL) ||
+        (fmt->cfFormat == CF_ENHMETAFILE && fmt->tymed == TYMED_ENHMF))
         return S_OK;
-    else if (tymed == TYMED_HGLOBAL)
+    else if (fmt->tymed == TYMED_HGLOBAL)
         return CACHE_S_FORMATETC_NOTSUPPORTED;
     else
     {
-        WARN("invalid clipformat/tymed combination: %d/%d\n", cfFormat, tymed);
+        WARN("invalid clipformat/tymed combination: %d/%d\n", fmt->cfFormat, fmt->tymed);
         return DV_E_TYMED;
     }
 }
@@ -368,7 +372,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     DWORD id = automatic ? 1 : This->last_cache_id;
     DataCacheEntry *entry;
 
-    hr = check_valid_clipformat_and_tymed(formatetc->cfFormat, formatetc->tymed);
+    hr = check_valid_formatetc( formatetc );
     if (FAILED(hr))
         return hr;
     if (hr == CACHE_S_FORMATETC_NOTSUPPORTED)

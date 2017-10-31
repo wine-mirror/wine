@@ -2309,6 +2309,29 @@ static void test_data_cache_cache(void)
     hr = IOleCache2_Uncache( cache, view_caching[0].dwConnection );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    /* Only able to set cfFormat == CF_METAFILEPICT (or == 0, see above) for DVASPECT_ICON */
+    fmt.dwAspect = DVASPECT_ICON;
+    fmt.cfFormat = CF_DIB;
+    fmt.tymed = TYMED_HGLOBAL;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == DV_E_FORMATETC, "got %08x\n", hr );
+    fmt.cfFormat = CF_BITMAP;
+    fmt.tymed = TYMED_GDI;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == DV_E_FORMATETC, "got %08x\n", hr );
+    fmt.cfFormat = CF_ENHMETAFILE;
+    fmt.tymed = TYMED_ENHMF;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == DV_E_FORMATETC, "got %08x\n", hr );
+    fmt.cfFormat = CF_METAFILEPICT;
+    fmt.tymed = TYMED_MFPICT;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* uncache everything */
+    hr = IOleCache2_Uncache( cache, conn );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     IDataObject_Release( data );
     IOleCache2_Release( cache );
 }
