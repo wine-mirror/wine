@@ -488,7 +488,7 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
 
         state_cleanup(&device->state);
 
-        for (i = 0; i < sizeof(device->multistate_funcs) / sizeof(device->multistate_funcs[0]); ++i)
+        for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
         {
             HeapFree(GetProcessHeap(), 0, device->multistate_funcs[i]);
             device->multistate_funcs[i] = NULL;
@@ -5106,7 +5106,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     return WINED3D_OK;
 
 err:
-    for (i = 0; i < sizeof(device->multistate_funcs) / sizeof(device->multistate_funcs[0]); ++i)
+    for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
     {
         HeapFree(GetProcessHeap(), 0, device->multistate_funcs[i]);
     }
