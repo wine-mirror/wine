@@ -679,6 +679,7 @@ HKLM,Software\Microsoft\SystemCertificates,,16
 HKLM,Software\Microsoft\TermServLicensing,,16
 HKLM,Software\Microsoft\Transaction Server,,16
 HKLM,Software\Microsoft\WBEM,"Installation Directory",2,"%11%\wbem"
+HKLM,Software\Microsoft\Windows Messaging Subsystem,"MAPI",2,"1"
 HKLM,Software\Policies,,16
 HKLM,Software\Registered Applications,,16
 HKLM,System\CurrentControlSet\Control\hivelist,,16
