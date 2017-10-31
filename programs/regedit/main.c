@@ -24,9 +24,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include "wine/debug.h"
 
 #define REGEDIT_DECLARE_FUNCTIONS
 #include "main.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
 WCHAR g_pszDefaultValueName[64];
 
@@ -138,9 +141,34 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 {
     MSG msg;
     HACCEL hAccel;
+    BOOL is_wow64;
 
     if (ProcessCmdLine(GetCommandLineW())) {
         return 0;
+    }
+
+    if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
+    {
+        STARTUPINFOW si;
+        PROCESS_INFORMATION pi;
+        WCHAR filename[MAX_PATH];
+        void *redir;
+        DWORD exit_code;
+
+        memset( &si, 0, sizeof(si) );
+        si.cb = sizeof(si);
+        GetModuleFileNameW( 0, filename, MAX_PATH );
+
+        Wow64DisableWow64FsRedirection( &redir );
+        if (CreateProcessW( filename, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
+        {
+            WINE_TRACE( "restarting %s\n", wine_dbgstr_w(filename) );
+            WaitForSingleObject( pi.hProcess, INFINITE );
+            GetExitCodeProcess( pi.hProcess, &exit_code );
+            ExitProcess( exit_code );
+        }
+        else WINE_ERR( "failed to restart 64-bit %s, err %d\n", wine_dbgstr_w(filename), GetLastError() );
+        Wow64RevertWow64FsRedirection( redir );
     }
 
     /* Initialize global strings */
