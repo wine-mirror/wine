@@ -2122,7 +2122,7 @@ static void check_dib_size( HGLOBAL h, int cx, int cy )
     GlobalUnlock( h );
 }
 
-static void test_data_cache_bitmap(void)
+static void test_data_cache_cache(void)
 {
     HRESULT hr;
     IOleCache2 *cache;
@@ -2136,6 +2136,13 @@ static void test_data_cache_bitmap(void)
         {{ CF_BITMAP,       0, DVASPECT_CONTENT, -1, TYMED_GDI },     0, NULL, 0 },
         {{ CF_METAFILEPICT, 0, DVASPECT_CONTENT, -1, TYMED_MFPICT },  0, NULL, 0 },
         {{ CF_ENHMETAFILE,  0, DVASPECT_CONTENT, -1, TYMED_ENHMF },   0, NULL, 0 }
+    };
+    STATDATA view_caching[] =
+    {
+        {{ 0,               0, DVASPECT_CONTENT,   -1, TYMED_ENHMF },   0, NULL, 0 },
+        {{ 0,               0, DVASPECT_THUMBNAIL, -1, TYMED_HGLOBAL }, 0, NULL, 0 },
+        {{ 0,               0, DVASPECT_DOCPRINT,  -1, TYMED_HGLOBAL }, 0, NULL, 0 },
+        {{ CF_METAFILEPICT, 0, DVASPECT_ICON,      -1, TYMED_MFPICT },  0, NULL, 0 }
     };
 
     hr = CreateDataCache( NULL, &CLSID_NULL, &IID_IOleCache2, (void **)&cache );
@@ -2258,6 +2265,49 @@ static void test_data_cache_bitmap(void)
     ok( med.tymed == TYMED_HGLOBAL, "got %d\n", med.tymed );
     check_dib_size( U(med).hGlobal, 2, 1 );
     ReleaseStgMedium( &med );
+
+    /* uncache everything */
+    hr = IOleCache2_Uncache( cache, conn );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* view caching */
+    fmt.cfFormat = 0;
+    fmt.tymed = TYMED_ENHMF;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == S_OK, "got %08x\n", hr );
+    view_caching[0].dwConnection = conn;
+
+    fmt.tymed = TYMED_HGLOBAL;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == CACHE_S_SAMECACHE, "got %08x\n", hr );
+
+    fmt.dwAspect = DVASPECT_THUMBNAIL;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == S_OK, "got %08x\n", hr );
+    view_caching[1].dwConnection = conn;
+
+    fmt.dwAspect = DVASPECT_DOCPRINT;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == S_OK, "got %08x\n", hr );
+    view_caching[2].dwConnection = conn;
+
+    /* DVASPECT_ICON view cache gets mapped to CF_METAFILEPICT */
+    fmt.dwAspect = DVASPECT_ICON;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == S_OK, "got %08x\n", hr );
+    view_caching[3].dwConnection = conn;
+
+    check_enum_cache( cache, view_caching, 4 );
+
+    /* uncache everything */
+    hr = IOleCache2_Uncache( cache, view_caching[3].dwConnection );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = IOleCache2_Uncache( cache, view_caching[2].dwConnection );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = IOleCache2_Uncache( cache, view_caching[1].dwConnection );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = IOleCache2_Uncache( cache, view_caching[0].dwConnection );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     IDataObject_Release( data );
     IOleCache2_Release( cache );
@@ -3750,7 +3800,7 @@ START_TEST(ole2)
     test_data_cache();
     test_data_cache_dib_contents_stream( 0 );
     test_data_cache_dib_contents_stream( 1 );
-    test_data_cache_bitmap();
+    test_data_cache_cache();
     test_data_cache_init();
     test_data_cache_initnew();
     test_default_handler();

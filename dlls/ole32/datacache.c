@@ -310,10 +310,10 @@ static DataCacheEntry *DataCache_GetEntryForFormatEtc(DataCache *This, const FOR
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
     {
         /* FIXME: also compare DVTARGETDEVICEs */
-        if ((!cache_entry->fmtetc.cfFormat || !fmt.cfFormat || (fmt.cfFormat == cache_entry->fmtetc.cfFormat)) &&
+        if ((fmt.cfFormat == cache_entry->fmtetc.cfFormat) &&
             (fmt.dwAspect == cache_entry->fmtetc.dwAspect) &&
             (fmt.lindex == cache_entry->fmtetc.lindex) &&
-            (!cache_entry->fmtetc.tymed || !fmt.tymed || (fmt.tymed == cache_entry->fmtetc.tymed)))
+            ((fmt.tymed == cache_entry->fmtetc.tymed) || !cache_entry->fmtetc.cfFormat)) /* tymed is ignored for view caching */
             return cache_entry;
     }
     return NULL;
@@ -2243,6 +2243,13 @@ static HRESULT WINAPI DataCache_Cache(
     {
         fmt_cpy.cfFormat = CF_DIB;
         fmt_cpy.tymed = TYMED_HGLOBAL;
+    }
+
+    /* View caching DVASPECT_ICON gets converted to CF_METAFILEPICT */
+    if (fmt_cpy.dwAspect == DVASPECT_ICON && fmt_cpy.cfFormat == 0)
+    {
+        fmt_cpy.cfFormat = CF_METAFILEPICT;
+        fmt_cpy.tymed = TYMED_MFPICT;
     }
 
     *pdwConnection = 0;
