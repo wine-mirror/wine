@@ -1085,6 +1085,7 @@ static void create_port_devices( DRIVER_OBJECT *driver )
 #ifdef linux
         "/dev/ttyS%u",
         "/dev/ttyUSB%u",
+        "/dev/ttyACM%u",
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         "/dev/cuau%u",
 #elif defined(__DragonFly__)
