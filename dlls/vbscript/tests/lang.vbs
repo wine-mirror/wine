@@ -752,6 +752,11 @@ Private Sub TestPrivateSub
 End Sub
 Call TestPrivateSub
 
+Public Sub TestSeparatorSub : :
+:
+End Sub
+Call TestSeparatorSub
+
 if false then
 Function testfunc
     x = true
@@ -866,6 +871,12 @@ Call TestPublicFunc
 Private Function TestPrivateFunc
 End Function
 Call TestPrivateFunc
+
+Public Function TestSepFunc(ByVal a) : :
+: TestSepFunc = a
+End Function
+Call ok(TestSepFunc(1) = 1, "Function did not return 1")
+
 
 ' Stop has an effect only in debugging mode
 Stop
@@ -1126,6 +1137,30 @@ Class Property2
     Sub Test2(byval property)
     End Sub
 End Class
+
+Class SeparatorTest : : Dim varTest1
+:
+    Private Sub Class_Initialize : varTest1 = 1
+    End Sub ::
+
+    Property Get Test1() :
+        Test1 = varTest1
+    End Property ::
+: :
+    Property Let Test1(a) :
+        varTest1 = a
+    End Property :
+
+    Public Function AddToTest1(ByVal a)  :: :
+        varTest1 = varTest1 + a
+        AddToTest1 = varTest1
+    End Function :    End Class : ::   Set obj = New SeparatorTest
+
+Call ok(obj.Test1 = 1, "obj.Test1 is not 1")
+obj.Test1 = 6
+Call ok(obj.Test1 = 6, "obj.Test1 is not 6")
+obj.AddToTest1(5)
+Call ok(obj.Test1 = 11, "obj.Test1 is not 11")
 
 ' Array tests
 
