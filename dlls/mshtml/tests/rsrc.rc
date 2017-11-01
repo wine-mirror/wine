@@ -46,6 +46,9 @@ xhr.js HTML "xhr.js"
 /* @makedep: elements.js */
 elements.js HTML "elements.js"
 
+/* @makedep: events.js */
+events.js HTML "events.js"
+
 /* @makedep: documentmode.js */
 documentmode.js HTML "documentmode.js"
 
