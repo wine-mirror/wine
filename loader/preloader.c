@@ -831,7 +831,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
         fatal_error("%s: not an x86-64 ELF binary... don't know how to load it\n", name );
 #elif defined(__aarch64__)
     if( header->e_machine != EM_AARCH64 )
-        fatal_error("%s: not an aarchs64 ELF binary... don't know how to load it\n", name );
+        fatal_error("%s: not an aarch64 ELF binary... don't know how to load it\n", name );
 #endif
 
     if (header->e_phnum > sizeof(loadcmds)/sizeof(loadcmds[0]))
