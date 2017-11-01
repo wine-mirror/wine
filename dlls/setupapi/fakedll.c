@@ -713,6 +713,10 @@ static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR
     static const char current_arch[] = "x86";
 #elif defined __x86_64__
     static const char current_arch[] = "amd64";
+#elif defined __arm__
+    static const char current_arch[] = "arm";
+#elif defined __aarch64__
+    static const char current_arch[] = "arm64";
 #else
     static const char current_arch[] = "none";
 #endif
