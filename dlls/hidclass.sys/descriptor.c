@@ -440,10 +440,8 @@ static void parse_io_feature(unsigned int bSize, int itemVal, int bTag,
 static void parse_collection(unsigned int bSize, int itemVal,
                              struct collection *collection)
 {
-    if (bSize <= 0)
-        return;
-    else
-     {
+    if (bSize)
+    {
         collection->type = itemVal;
 
         if (itemVal >= 0x07 && itemVal <= 0x7F) {
