@@ -785,7 +785,8 @@ static const tid_t HTMLXMLHttpRequest_iface_tids[] = {
 static dispex_static_data_t HTMLXMLHttpRequest_dispex = {
     &HTMLXMLHttpRequest_event_target_vtbl.dispex_vtbl,
     DispHTMLXMLHttpRequest_tid,
-    HTMLXMLHttpRequest_iface_tids
+    HTMLXMLHttpRequest_iface_tids,
+    EventTarget_init_dispex_info
 };
 
 
@@ -898,7 +899,7 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
     ret->IHTMLXMLHttpRequest_iface.lpVtbl = &HTMLXMLHttpRequestVtbl;
     ret->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
     EventTarget_Init(&ret->event_target, (IUnknown*)&ret->IHTMLXMLHttpRequest_iface,
-                     &HTMLXMLHttpRequest_dispex, COMPAT_MODE_NONE);
+                     &HTMLXMLHttpRequest_dispex, This->window->doc->document_mode);
     ret->ref = 1;
 
     *p = &ret->IHTMLXMLHttpRequest_iface;

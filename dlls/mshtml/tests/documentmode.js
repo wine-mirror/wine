@@ -38,6 +38,9 @@ function test_elem_props() {
     test_exposed("onsubmit", v >= 9);
     test_exposed("getElementsByClassName", v >= 9);
     test_exposed("removeAttributeNS", v >= 9);
+    test_exposed("addEventListener", v >= 9);
+    test_exposed("removeEventListener", v >= 9);
+    test_exposed("dispatchEvent", v >= 9);
 
     next_test();
 }
@@ -56,9 +59,48 @@ function test_doc_props() {
     test_exposed("prefix", v >= 9);
     test_exposed("defaultView", v >= 9);
     test_exposed("head", v >= 9);
+    test_exposed("addEventListener", v >= 9);
+    test_exposed("removeEventListener", v >= 9);
+    test_exposed("dispatchEvent", v >= 9);
 
     test_exposed("parentWindow", true);
     if(v >= 9) ok(document.defaultView === document.parentWindow, "defaultView != parentWindow");
+
+    next_test();
+}
+
+function test_window_props() {
+    function test_exposed(prop, expect) {
+        if(expect)
+            ok(prop in window, prop + " not found in window.");
+        else
+            ok(!(prop in window), prop + " found in window.");
+    }
+
+    var v = document.documentMode;
+
+    test_exposed("addEventListener", v >= 9);
+    test_exposed("removeEventListener", v >= 9);
+    test_exposed("dispatchEvent", v >= 9);
+
+    next_test();
+}
+
+function test_xhr_props() {
+    var xhr = new XMLHttpRequest();
+
+    function test_exposed(prop, expect) {
+        if(expect)
+            ok(prop in xhr, prop + " not found in XMLHttpRequest.");
+        else
+            ok(!(prop in xhr), prop + " found in XMLHttpRequest.");
+    }
+
+    var v = document.documentMode;
+
+    test_exposed("addEventListener", v >= 9);
+    test_exposed("removeEventListener", v >= 9);
+    test_exposed("dispatchEvent", v >= 9);
 
     next_test();
 }
@@ -156,6 +198,8 @@ var tests = [
     test_iframe_doc_mode,
     test_elem_props,
     test_doc_props,
+    test_window_props,
+    test_xhr_props,
     test_elem_by_id,
     test_conditional_comments
 ];

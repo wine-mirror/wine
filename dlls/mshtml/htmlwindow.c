@@ -3016,6 +3016,14 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
     return hres;
 }
 
+static compat_mode_t HTMLWindow_get_compat_mode(DispatchEx *dispex)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+
+    This->doc->document_mode_locked = TRUE;
+    return This->doc->document_mode;
+}
+
 static void HTMLWindow_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
@@ -3025,6 +3033,7 @@ static void HTMLWindow_bind_event(DispatchEx *dispex, eventid_t eid)
 static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
 {
     dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
+    EventTarget_init_dispex_info(info, compat_mode);
 }
 
 static IHTMLEventObj *HTMLWindow_set_current_event(DispatchEx *dispex, IHTMLEventObj *event)
@@ -3038,7 +3047,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         NULL,
         NULL,
         HTMLWindow_invoke,
-        NULL,
+        HTMLWindow_get_compat_mode,
         NULL
     },
     HTMLWindow_bind_event,

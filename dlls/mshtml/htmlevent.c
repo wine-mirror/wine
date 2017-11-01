@@ -2205,6 +2205,12 @@ HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
     return E_NOINTERFACE;
 }
 
+void EventTarget_init_dispex_info(dispex_data_t *dispex_info, compat_mode_t compat_mode)
+{
+    if(compat_mode >= COMPAT_MODE_IE9)
+        dispex_info_add_interface(dispex_info, IEventTarget_tid, NULL);
+}
+
 static int event_id_cmp(const void *key, const struct wine_rb_entry *entry)
 {
     return (INT_PTR)key - WINE_RB_ENTRY_VALUE(entry, listener_container_t, entry)->event_id;

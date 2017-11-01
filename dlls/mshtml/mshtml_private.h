@@ -129,6 +129,7 @@ typedef struct EventTarget EventTarget;
     XIID(IDocumentSelector) \
     XIID(IElementSelector) \
     XIID(IElementTraversal) \
+    XIID(IEventTarget) \
     XIID(IHTMLAnchorElement) \
     XIID(IHTMLAreaElement) \
     XIID(IHTMLAttributeCollection) \
@@ -1041,6 +1042,7 @@ void HTMLFrameBase_Init(HTMLFrameBase*,HTMLDocumentNode*,nsIDOMHTMLElement*,disp
 
 void EventTarget_Init(EventTarget*,IUnknown*,dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 HRESULT EventTarget_QI(EventTarget*,REFIID,void**) DECLSPEC_HIDDEN;
+void EventTarget_init_dispex_info(dispex_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**) DECLSPEC_HIDDEN;
 void HTMLDOMNode_destructor(HTMLDOMNode*) DECLSPEC_HIDDEN;
