@@ -809,24 +809,10 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
 }
 
-void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, unsigned int patch_vertex_count,
-        int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
-        unsigned int start_instance, unsigned int instance_count, BOOL indexed)
+static void acquire_graphics_pipeline_resources(const struct wined3d_state *state,
+        BOOL indexed, const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_state *state = &cs->device->state;
-    struct wined3d_cs_draw *op;
     unsigned int i;
-
-    op = cs->ops->require_space(cs, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_DRAW;
-    op->primitive_type = primitive_type;
-    op->patch_vertex_count = patch_vertex_count;
-    op->base_vertex_idx = base_vertex_idx;
-    op->start_idx = start_idx;
-    op->index_count = index_count;
-    op->start_instance = start_instance;
-    op->instance_count = instance_count;
-    op->indexed = indexed;
 
     if (indexed)
         wined3d_resource_acquire(&state->index_buffer->resource);
@@ -845,7 +831,7 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, unsigned
         if (state->textures[i])
             wined3d_resource_acquire(&state->textures[i]->resource);
     }
-    for (i = 0; i < cs->device->adapter->gl_info.limits.buffers; ++i)
+    for (i = 0; i < gl_info->limits.buffers; ++i)
     {
         if (state->fb->render_targets[i])
             wined3d_resource_acquire(state->fb->render_targets[i]->resource);
@@ -855,6 +841,28 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, unsigned
     acquire_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
     acquire_unordered_access_resources(state->shader[WINED3D_SHADER_TYPE_PIXEL],
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
+}
+
+void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, unsigned int patch_vertex_count,
+        int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
+        unsigned int start_instance, unsigned int instance_count, BOOL indexed)
+{
+    const struct wined3d_gl_info *gl_info = &cs->device->adapter->gl_info;
+    const struct wined3d_state *state = &cs->device->state;
+    struct wined3d_cs_draw *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_DRAW;
+    op->primitive_type = primitive_type;
+    op->patch_vertex_count = patch_vertex_count;
+    op->base_vertex_idx = base_vertex_idx;
+    op->start_idx = start_idx;
+    op->index_count = index_count;
+    op->start_instance = start_instance;
+    op->instance_count = instance_count;
+    op->indexed = indexed;
+
+    acquire_graphics_pipeline_resources(state, indexed, gl_info);
 
     cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
 }
