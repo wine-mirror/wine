@@ -109,6 +109,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_APPLE_ycbcr_422",                  APPLE_YCBCR_422               },
 
     /* ARB */
+    {"GL_ARB_base_instance",                ARB_BASE_INSTANCE             },
     {"GL_ARB_blend_func_extended",          ARB_BLEND_FUNC_EXTENDED       },
     {"GL_ARB_clear_buffer_object",          ARB_CLEAR_BUFFER_OBJECT       },
     {"GL_ARB_clear_texture",                ARB_CLEAR_TEXTURE             },
@@ -2686,6 +2687,9 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     /* GL_APPLE_flush_buffer_range */
     USE_GL_FUNC(glBufferParameteriAPPLE)
     USE_GL_FUNC(glFlushMappedBufferRangeAPPLE)
+    /* GL_ARB_base_instance */
+    USE_GL_FUNC(glDrawArraysInstancedBaseInstance)
+    USE_GL_FUNC(glDrawElementsInstancedBaseVertexBaseInstance)
     /* GL_ARB_blend_func_extended */
     USE_GL_FUNC(glBindFragDataLocationIndexed)
     USE_GL_FUNC(glGetFragDataIndex)
@@ -3881,6 +3885,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_ES2_COMPATIBILITY,            MAKEDWORD_VERSION(4, 1)},
         {ARB_VIEWPORT_ARRAY,               MAKEDWORD_VERSION(4, 1)},
 
+        {ARB_BASE_INSTANCE,                MAKEDWORD_VERSION(4, 2)},
         {ARB_CONSERVATIVE_DEPTH,           MAKEDWORD_VERSION(4, 2)},
         {ARB_INTERNALFORMAT_QUERY,         MAKEDWORD_VERSION(4, 2)},
         {ARB_MAP_BUFFER_ALIGNMENT,         MAKEDWORD_VERSION(4, 2)},
