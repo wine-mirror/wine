@@ -2101,6 +2101,23 @@ typedef struct D3D11_QUERY_DATA_PIPELINE_STATISTICS
     UINT64 CSInvocations;
 } D3D11_QUERY_DATA_PIPELINE_STATISTICS;
 
+typedef struct D3D11_DRAW_INSTANCED_INDIRECT_ARGS
+{
+    UINT VertexCountPerInstance;
+    UINT InstanceCount;
+    UINT StartVertexLocation;
+    UINT StartInstanceLocation;
+} D3D11_DRAW_INSTANCED_INDIRECT_ARGS;
+
+typedef struct D3D11_DRAW_INDEXED_INSTANCED_INDIRECT_ARGS
+{
+    UINT IndexCountPerInstance;
+    UINT InstanceCount;
+    UINT StartIndexLocation;
+    INT BaseVertexLocation;
+    UINT StartInstanceLocation;
+} D3D11_DRAW_INDEXED_INSTANCED_INDIRECT_ARGS;
+
 typedef struct D3D11_AUTHENTICATED_CONFIGURE_INPUT
 {
     D3D11_OMAC omac;
