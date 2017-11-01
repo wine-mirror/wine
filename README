@@ -19,11 +19,11 @@ run:
 ./configure
 make
 
-Then either install wine:
+Then either install Wine:
 
 make install
 
-Or run it from the build directory:
+Or run Wine directly from the build directory:
 
 ./wine notepad
 
