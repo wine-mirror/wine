@@ -460,8 +460,7 @@ static GLenum gl_tfb_primitive_type_from_d3d(enum wined3d_primitive_type primiti
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
-        int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
-        unsigned int start_instance, unsigned int instance_count, BOOL indexed)
+        const struct wined3d_draw_parameters *parameters)
 {
     BOOL emulation = FALSE, rasterizer_discard = FALSE;
     const struct wined3d_fb_state *fb = state->fb;
@@ -474,7 +473,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     unsigned int i, idx_size = 0;
     const void *idx_data = NULL;
 
-    if (!index_count)
+    if (!parameters->indirect && !parameters->u.direct.index_count)
         return;
 
     if (!(rtv = fb->render_targets[0]))
@@ -541,10 +540,8 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     }
 
     stream_info = &context->stream_info;
-    if (context->instance_count)
-        instance_count = context->instance_count;
 
-    if (indexed)
+    if (parameters->indexed)
     {
         struct wined3d_buffer *index_buffer = state->index_buffer;
         if (!index_buffer->buffer_object || !stream_info->all_vbo)
@@ -631,12 +628,51 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         checkGLcall("glPatchParameteri");
     }
 
-    if (context->use_immediate_mode_draw || emulation)
-        draw_primitive_immediate_mode(context, state, stream_info, idx_data,
-                idx_size, base_vertex_idx, start_idx, index_count, instance_count);
+    if (parameters->indirect)
+    {
+        if (!context->use_immediate_mode_draw && !emulation)
+        {
+            struct wined3d_buffer *buffer = parameters->u.indirect.buffer;
+
+            wined3d_buffer_load(buffer, context, state);
+            GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer->buffer_object));
+
+            if (idx_size)
+            {
+                GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+                GL_EXTCALL(glDrawElementsIndirect(state->gl_primitive_type, idx_type,
+                        (void *)(GLintptr)parameters->u.indirect.offset));
+            }
+            else
+            {
+                GL_EXTCALL(glDrawArraysIndirect(state->gl_primitive_type,
+                        (void *)(GLintptr)parameters->u.indirect.offset));
+            }
+
+            GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0));
+
+            checkGLcall("draw indirect");
+        }
+        else
+        {
+            FIXME("Indirect draws with immediate mode/emulation are not supported.\n");
+        }
+    }
     else
-        draw_primitive_arrays(context, state, idx_data, idx_size, base_vertex_idx,
-                start_idx, index_count, start_instance, instance_count);
+    {
+        unsigned int instance_count = parameters->u.direct.instance_count;
+        if (context->instance_count)
+            instance_count = context->instance_count;
+
+        if (context->use_immediate_mode_draw || emulation)
+            draw_primitive_immediate_mode(context, state, stream_info, idx_data,
+                    idx_size, parameters->u.direct.base_vertex_idx,
+                    parameters->u.direct.start_idx, parameters->u.direct.index_count, instance_count);
+        else
+            draw_primitive_arrays(context, state, idx_data, idx_size, parameters->u.direct.base_vertex_idx,
+                    parameters->u.direct.start_idx, parameters->u.direct.index_count,
+                    parameters->u.direct.start_instance, instance_count);
+    }
 
     if (context->uses_uavs)
     {

@@ -120,12 +120,7 @@ struct wined3d_cs_draw
     enum wined3d_cs_op opcode;
     GLenum primitive_type;
     GLint patch_vertex_count;
-    int base_vertex_idx;
-    unsigned int start_idx;
-    unsigned int index_count;
-    unsigned int start_instance;
-    unsigned int instance_count;
-    BOOL indexed;
+    struct wined3d_draw_parameters parameters;
 };
 
 struct wined3d_cs_flush
@@ -758,14 +753,21 @@ void wined3d_cs_emit_dispatch_indirect(struct wined3d_cs *cs,
 
 static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
+    const struct wined3d_gl_info *gl_info = &cs->device->adapter->gl_info;
     struct wined3d_state *state = &cs->state;
     const struct wined3d_cs_draw *op = data;
+    int load_base_vertex_idx;
     unsigned int i;
 
-    if (!cs->device->adapter->gl_info.supported[ARB_DRAW_ELEMENTS_BASE_VERTEX]
-            && state->load_base_vertex_index != op->base_vertex_idx)
+    /* ARB_draw_indirect always supports a base vertex offset. */
+    if (!op->parameters.indirect && !gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+        load_base_vertex_idx = op->parameters.u.direct.base_vertex_idx;
+    else
+        load_base_vertex_idx = 0;
+
+    if (state->load_base_vertex_index != load_base_vertex_idx)
     {
-        state->load_base_vertex_index = op->base_vertex_idx;
+        state->load_base_vertex_index = load_base_vertex_idx;
         device_invalidate_state(cs->device, STATE_BASEVERTEXINDEX);
     }
 
@@ -777,10 +779,15 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
     }
     state->gl_patch_vertices = op->patch_vertex_count;
 
-    draw_primitive(cs->device, state, op->base_vertex_idx, op->start_idx,
-            op->index_count, op->start_instance, op->instance_count, op->indexed);
+    draw_primitive(cs->device, state, &op->parameters);
 
-    if (op->indexed)
+    if (op->parameters.indirect)
+    {
+        struct wined3d_buffer *buffer = op->parameters.u.indirect.buffer;
+        wined3d_resource_release(&buffer->resource);
+    }
+
+    if (op->parameters.indexed)
         wined3d_resource_release(&state->index_buffer->resource);
     for (i = 0; i < ARRAY_SIZE(state->streams); ++i)
     {
@@ -797,7 +804,7 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
         if (state->textures[i])
             wined3d_resource_release(&state->textures[i]->resource);
     }
-    for (i = 0; i < cs->device->adapter->gl_info.limits.buffers; ++i)
+    for (i = 0; i < gl_info->limits.buffers; ++i)
     {
         if (state->fb->render_targets[i])
             wined3d_resource_release(state->fb->render_targets[i]->resource);
@@ -855,14 +862,37 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, unsigned
     op->opcode = WINED3D_CS_OP_DRAW;
     op->primitive_type = primitive_type;
     op->patch_vertex_count = patch_vertex_count;
-    op->base_vertex_idx = base_vertex_idx;
-    op->start_idx = start_idx;
-    op->index_count = index_count;
-    op->start_instance = start_instance;
-    op->instance_count = instance_count;
-    op->indexed = indexed;
+    op->parameters.indirect = FALSE;
+    op->parameters.u.direct.base_vertex_idx = base_vertex_idx;
+    op->parameters.u.direct.start_idx = start_idx;
+    op->parameters.u.direct.index_count = index_count;
+    op->parameters.u.direct.start_instance = start_instance;
+    op->parameters.u.direct.instance_count = instance_count;
+    op->parameters.indexed = indexed;
 
     acquire_graphics_pipeline_resources(state, indexed, gl_info);
+
+    cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
+}
+
+void wined3d_cs_emit_draw_indirect(struct wined3d_cs *cs, GLenum primitive_type, unsigned int patch_vertex_count,
+        struct wined3d_buffer *buffer, unsigned int offset, BOOL indexed)
+{
+    const struct wined3d_gl_info *gl_info = &cs->device->adapter->gl_info;
+    const struct wined3d_state *state = &cs->device->state;
+    struct wined3d_cs_draw *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_DRAW;
+    op->primitive_type = primitive_type;
+    op->patch_vertex_count = patch_vertex_count;
+    op->parameters.indirect = TRUE;
+    op->parameters.u.indirect.buffer = buffer;
+    op->parameters.u.indirect.offset = offset;
+    op->parameters.indexed = indexed;
+
+    acquire_graphics_pipeline_resources(state, indexed, gl_info);
+    wined3d_resource_acquire(&buffer->resource);
 
     cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
 }
