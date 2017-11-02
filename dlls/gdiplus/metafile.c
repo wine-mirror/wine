@@ -3752,25 +3752,45 @@ static GpStatus METAFILE_AddPathObject(GpMetafile *metafile, GpPath *path, DWORD
 
 static GpStatus METAFILE_PrepareBrushData(GpBrush *brush, DWORD *size)
 {
-    if (brush->bt == BrushTypeSolidColor)
+    switch (brush->bt)
     {
-        *size = FIELD_OFFSET(EmfPlusBrush, BrushData.solid) + sizeof(EmfPlusSolidBrushData);
-        return Ok;
+    case BrushTypeSolidColor:
+        *size = FIELD_OFFSET(EmfPlusBrush, BrushData) + sizeof(EmfPlusSolidBrushData);
+        break;
+    case BrushTypeHatchFill:
+        *size = FIELD_OFFSET(EmfPlusBrush, BrushData) + sizeof(EmfPlusHatchBrushData);
+        break;
+    default:
+        FIXME("unsupported brush type: %d\n", brush->bt);
+        return NotImplemented;
     }
 
-    FIXME("unsupported brush type: %d\n", brush->bt);
-    return NotImplemented;
+    return Ok;
 }
 
 static void METAFILE_FillBrushData(GpBrush *brush, EmfPlusBrush *data)
 {
-    if (brush->bt == BrushTypeSolidColor)
-    {
-        GpSolidFill *solid = (GpSolidFill*)brush;
+    data->Version = VERSION_MAGIC2;
+    data->Type = brush->bt;
 
-        data->Version = VERSION_MAGIC2;
-        data->Type = solid->brush.bt;
+    switch (brush->bt)
+    {
+    case BrushTypeSolidColor:
+    {
+        GpSolidFill *solid = (GpSolidFill *)brush;
         data->BrushData.solid.SolidColor = solid->color;
+        break;
+    }
+    case BrushTypeHatchFill:
+    {
+        GpHatch *hatch = (GpHatch *)brush;
+        data->BrushData.hatch.HatchStyle = hatch->hatchstyle;
+        data->BrushData.hatch.ForeColor = hatch->forecol;
+        data->BrushData.hatch.BackColor = hatch->backcol;
+        break;
+    }
+    default:
+        FIXME("unsupported brush type: %d\n", brush->bt);
     }
 }
 
