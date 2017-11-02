@@ -70,7 +70,7 @@ static int output_vprintf(const WCHAR* fmt, __ms_va_list va_args)
     return 0;
 }
 
-static int __cdecl output_printf(const WCHAR* fmt, ...)
+static int WINAPIV output_printf(const WCHAR* fmt, ...)
 {
     __ms_va_list arguments;
 
@@ -80,7 +80,7 @@ static int __cdecl output_printf(const WCHAR* fmt, ...)
     return 0;
 }
 
-static int __cdecl output_string(int msg, ...)
+static int WINAPIV output_string(int msg, ...)
 {
     WCHAR fmt[8192];
     __ms_va_list arguments;
