@@ -398,6 +398,19 @@ typedef struct EmfPlusPointF
     float Y;
 } EmfPlusPointF;
 
+typedef struct EmfPlusDrawImage
+{
+    EmfPlusRecordHeader Header;
+    DWORD ImageAttributesID;
+    DWORD SrcUnit;
+    EmfPlusRectF SrcRect;
+    union
+    {
+        EmfPlusRect rect;
+        EmfPlusRectF rectF;
+    } RectData;
+} EmfPlusDrawImage;
+
 typedef struct EmfPlusDrawImagePoints
 {
     EmfPlusRecordHeader Header;
@@ -2695,6 +2708,46 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         case EmfPlusRecordTypeObject:
         {
             return METAFILE_PlaybackObject(real_metafile, flags, dataSize, data);
+        }
+        case EmfPlusRecordTypeDrawImage:
+        {
+            EmfPlusDrawImage *draw = (EmfPlusDrawImage *)header;
+            BYTE image = flags & 0xff;
+            GpPointF points[3];
+
+            if (image >= EmfPlusObjectTableSize || real_metafile->objtable[image].type != ObjectTypeImage)
+                return InvalidParameter;
+
+            if (dataSize != FIELD_OFFSET(EmfPlusDrawImage, RectData) - sizeof(EmfPlusRecordHeader) +
+                    (flags & 0x4000 ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF)))
+                return InvalidParameter;
+
+            if (draw->ImageAttributesID >= EmfPlusObjectTableSize ||
+                    real_metafile->objtable[draw->ImageAttributesID].type != ObjectTypeImageAttributes)
+                return InvalidParameter;
+
+            if (flags & 0x4000) /* C */
+            {
+                points[0].X = draw->RectData.rect.X;
+                points[0].Y = draw->RectData.rect.Y;
+                points[1].X = points[0].X + draw->RectData.rect.Width;
+                points[1].Y = points[0].Y;
+                points[2].X = points[1].X;
+                points[2].Y = points[1].Y + draw->RectData.rect.Height;
+            }
+            else
+            {
+                points[0].X = draw->RectData.rectF.X;
+                points[0].Y = draw->RectData.rectF.Y;
+                points[1].X = points[0].X + draw->RectData.rectF.Width;
+                points[1].Y = points[0].Y;
+                points[2].X = points[1].X;
+                points[2].Y = points[1].Y + draw->RectData.rectF.Height;
+            }
+
+            return GdipDrawImagePointsRect(real_metafile->playback_graphics, real_metafile->objtable[image].u.image,
+                points, 3, draw->SrcRect.X, draw->SrcRect.Y, draw->SrcRect.Width, draw->SrcRect.Height, draw->SrcUnit,
+                real_metafile->objtable[draw->ImageAttributesID].u.image_attributes, NULL, NULL);
         }
         case EmfPlusRecordTypeDrawImagePoints:
         {
