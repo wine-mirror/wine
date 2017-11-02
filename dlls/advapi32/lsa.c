@@ -966,11 +966,31 @@ NTSTATUS WINAPI LsaUnregisterPolicyChangeNotification(
  * LsaLookupPrivilegeName [ADVAPI32.@]
  *
  */
-NTSTATUS WINAPI LsaLookupPrivilegeName(
-    LSA_HANDLE handle,
-    LUID *luid,
-    UNICODE_STRING **name)
+NTSTATUS WINAPI LsaLookupPrivilegeName(LSA_HANDLE handle, LUID *luid, LSA_UNICODE_STRING **name)
 {
-    FIXME("(%p,%p,%p) stub\n", handle, luid, name);
-    return STATUS_NO_SUCH_PRIVILEGE;
+    const WCHAR *privnameW;
+    DWORD length;
+    WCHAR *strW;
+
+    TRACE("(%p,%p,%p)\n", handle, luid, name);
+
+    if (!luid || !handle)
+        return STATUS_INVALID_PARAMETER;
+
+    *name = NULL;
+
+    if (!(privnameW = get_wellknown_privilege_name(luid)))
+        return STATUS_NO_SUCH_PRIVILEGE;
+
+    length = strlenW(privnameW);
+    *name = heap_alloc(sizeof(**name) + (length + 1) * sizeof(WCHAR));
+    if (!*name)
+        return STATUS_NO_MEMORY;
+
+    strW = (WCHAR *)(*name + 1);
+    memcpy(strW, privnameW, length * sizeof(WCHAR));
+    strW[length] = 0;
+    RtlInitUnicodeString(*name, strW);
+
+    return STATUS_SUCCESS;
 }
