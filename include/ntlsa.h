@@ -16,4 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+NTSTATUS WINAPI LsaLookupPrivilegeDisplayName(LSA_HANDLE policy, LSA_UNICODE_STRING *name,
+    LSA_UNICODE_STRING **display_name, SHORT *language);
 NTSTATUS WINAPI LsaLookupPrivilegeName(LSA_HANDLE policy, LUID *value, LSA_UNICODE_STRING **name);
