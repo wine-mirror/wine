@@ -67,7 +67,7 @@ static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
     LocalFree(str);
 }
 
-void __cdecl output_message(unsigned int id, ...)
+void WINAPIV output_message(unsigned int id, ...)
 {
     WCHAR fmt[1536];
     __ms_va_list va_args;
@@ -82,7 +82,7 @@ void __cdecl output_message(unsigned int id, ...)
     __ms_va_end(va_args);
 }
 
-void __cdecl error_exit(unsigned int id, ...)
+void WINAPIV error_exit(unsigned int id, ...)
 {
     WCHAR fmt[1536];
     __ms_va_list va_args;

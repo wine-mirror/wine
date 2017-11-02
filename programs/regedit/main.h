@@ -160,7 +160,7 @@ extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, BOOL showMessageBox);
 extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR oldName, LPCWSTR newName);
 extern BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName);
-extern int __cdecl messagebox(HWND hwnd, int buttons, int titleId, int resId, ...);
+extern int WINAPIV messagebox(HWND hwnd, int buttons, int titleId, int resId, ...);
 
 /* hexedit.c */
 extern void HexEdit_Register(void);

@@ -64,7 +64,7 @@ static int vmessagebox(HWND hwnd, int buttons, int titleId, int resId, __ms_va_l
     return ret;
 }
 
-int __cdecl messagebox(HWND hwnd, int buttons, int titleId, int resId, ...)
+int WINAPIV messagebox(HWND hwnd, int buttons, int titleId, int resId, ...)
 {
     __ms_va_list ap;
     INT result;
@@ -76,7 +76,7 @@ int __cdecl messagebox(HWND hwnd, int buttons, int titleId, int resId, ...)
     return result;
 }
 
-static void __cdecl error_code_messagebox(HWND hwnd, unsigned int msg_id, ...)
+static void WINAPIV error_code_messagebox(HWND hwnd, unsigned int msg_id, ...)
 {
     __ms_va_list ap;
 
