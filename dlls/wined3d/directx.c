@@ -6515,6 +6515,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, 
 {
     static const DWORD supported_gl_versions[] =
     {
+        MAKEDWORD_VERSION(4, 4),
         MAKEDWORD_VERSION(3, 2),
         MAKEDWORD_VERSION(1, 0),
     };
