@@ -26,7 +26,7 @@
 
 #define ULL(a,b)   (((ULONG64)(a) << 32) | (b))
 
-static DWORD __cdecl doit(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
+static DWORD WINAPIV doit(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
                           LPSTR out, DWORD outsize, ... )
 {
     __ms_va_list list;
@@ -39,7 +39,7 @@ static DWORD __cdecl doit(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
     return r;
 }
 
-static DWORD __cdecl doitW(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
+static DWORD WINAPIV doitW(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
                            LPWSTR out, DWORD outsize, ... )
 {
     __ms_va_list list;
