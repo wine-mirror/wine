@@ -40,7 +40,7 @@ typedef HRESULT (WINAPI *DLLINSTALL)    (BOOL,LPCWSTR);
 
 static BOOL Silent = FALSE;
 
-static void __cdecl output_write(UINT id, ...)
+static void WINAPIV output_write(UINT id, ...)
 {
     WCHAR fmt[1024];
     __ms_va_list va_args;
