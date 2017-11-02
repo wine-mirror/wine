@@ -1333,6 +1333,11 @@ static inline void windowref_release(windowref_t *ref)
         heap_free(ref);
 }
 
+static inline VARIANT_BOOL variant_bool(BOOL b)
+{
+    return b ? VARIANT_TRUE : VARIANT_FALSE;
+}
+
 UINT cp_from_charset_string(BSTR) DECLSPEC_HIDDEN;
 BSTR charset_string_from_cp(UINT) DECLSPEC_HIDDEN;
 HDC get_display_dc(void) DECLSPEC_HIDDEN;

@@ -275,7 +275,7 @@ static HRESULT WINAPI HTMLInputElement_get_disabled(IHTMLInputElement *iface, VA
 
     nsIDOMHTMLInputElement_GetDisabled(This->nsinput, &disabled);
 
-    *p = disabled ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(disabled);
     return S_OK;
 }
 
@@ -474,7 +474,8 @@ static HRESULT WINAPI HTMLInputElement_get_readOnly(IHTMLInputElement *iface, VA
         ERR("Get ReadOnly Failed: %08x\n", nsres);
         return E_FAIL;
     }
-    *p = b ? VARIANT_TRUE : VARIANT_FALSE;
+
+    *p = variant_bool(b);
     return S_OK;
 }
 
@@ -529,7 +530,7 @@ static HRESULT WINAPI HTMLInputElement_get_defaultChecked(IHTMLInputElement *ifa
         return E_FAIL;
     }
 
-    *p = default_checked ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(default_checked);
     return S_OK;
 }
 
@@ -563,7 +564,7 @@ static HRESULT WINAPI HTMLInputElement_get_checked(IHTMLInputElement *iface, VAR
         return E_FAIL;
     }
 
-    *p = checked ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(checked);
     TRACE("checked=%x\n", *p);
     return S_OK;
 }
@@ -1891,7 +1892,7 @@ static HRESULT WINAPI HTMLButtonElement_get_disabled(IHTMLButtonElement *iface, 
         return E_FAIL;
     }
 
-    *p = disabled ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(disabled);
     return S_OK;
 }
 
