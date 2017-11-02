@@ -2051,11 +2051,11 @@ static unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entri
 #elif defined(HAVE_PROC_PIDINFO)
     struct proc_fdinfo *fds;
     struct socket_fdinfo sock;
-    unsigned int i, j, n, fd_len;
+    unsigned int i, j, n;
 
     for (i = 0; i < num_entries; i++)
     {
-        fd_len = proc_pidinfo( map[i].unix_pid, PROC_PIDLISTFDS, 0, NULL, 0 );
+        int fd_len = proc_pidinfo( map[i].unix_pid, PROC_PIDLISTFDS, 0, NULL, 0 );
         if (fd_len <= 0) continue;
 
         fds = HeapAlloc( GetProcessHeap(), 0, fd_len );
