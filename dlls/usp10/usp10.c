@@ -3028,9 +3028,6 @@ HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
 
     for (i = 0; i < len; i+=consumed)
     {
-        if (i >= len)
-            break;
-
         if ((flag & SIC_ASCIIDIGIT) && chars[i] >= 0x30 && chars[i] <= 0x39)
             return S_OK;
 
