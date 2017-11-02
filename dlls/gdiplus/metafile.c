@@ -225,6 +225,18 @@ typedef struct EmfPlusPenData
     BYTE OptionalData[1];
 } EmfPlusPenData;
 
+enum BrushDataFlags
+{
+    BrushDataPath             = 1 << 0,
+    BrushDataTransform        = 1 << 1,
+    BrushDataPresetColors     = 1 << 2,
+    BrushDataBlendFactorsH    = 1 << 3,
+    BrushDataBlendFactorsV    = 1 << 4,
+    BrushDataFocusScales      = 1 << 6,
+    BrushDataIsGammaCorrected = 1 << 7,
+    BrushDataDoNotTransform   = 1 << 8,
+};
+
 typedef struct EmfPlusSolidBrushData
 {
     EmfPlusARGB SolidColor;
@@ -237,6 +249,13 @@ typedef struct EmfPlusHatchBrushData
     EmfPlusARGB BackColor;
 } EmfPlusHatchBrushData;
 
+typedef struct EmfPlusTextureBrushData
+{
+    DWORD BrushDataFlags;
+    INT WrapMode;
+    BYTE OptionalData[1];
+} EmfPlusTextureBrushData;
+
 typedef struct EmfPlusBrush
 {
     DWORD Version;
@@ -244,6 +263,7 @@ typedef struct EmfPlusBrush
     union {
         EmfPlusSolidBrushData solid;
         EmfPlusHatchBrushData hatch;
+        EmfPlusTextureBrushData texture;
     } BrushData;
 } EmfPlusBrush;
 
@@ -1848,6 +1868,36 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
         status = GdipCreateHatchBrush(data->BrushData.hatch.HatchStyle, data->BrushData.hatch.ForeColor,
             data->BrushData.hatch.BackColor, (GpHatch **)brush);
         break;
+    case BrushTypeTextureFill:
+    {
+        UINT offset = header_size + FIELD_OFFSET(EmfPlusTextureBrushData, OptionalData);
+        EmfPlusTransformMatrix *transform = NULL;
+        DWORD brushflags;
+        GpImage *image;
+
+        if (data_size <= offset)
+            return InvalidParameter;
+
+        brushflags = data->BrushData.texture.BrushDataFlags;
+        if (brushflags & BrushDataTransform)
+        {
+            if (data_size <= offset + sizeof(EmfPlusTransformMatrix))
+                return InvalidParameter;
+            transform = (EmfPlusTransformMatrix *)(record_data + offset);
+            offset += sizeof(EmfPlusTransformMatrix);
+        }
+
+        status = metafile_deserialize_image(record_data + offset, data_size - offset, &image);
+        if (status != Ok)
+            return status;
+
+        status = GdipCreateTexture(image, data->BrushData.texture.WrapMode, (GpTexture **)brush);
+        if (status == Ok && transform && !(brushflags & BrushDataDoNotTransform))
+            GdipSetTextureTransform((GpTexture *)*brush, (const GpMatrix *)transform);
+
+        GdipDisposeImage(image);
+        break;
+    }
     default:
         FIXME("brush type %u is not supported.\n", data->Type);
         return NotImplemented;
