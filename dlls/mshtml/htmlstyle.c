@@ -628,7 +628,7 @@ static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR ex
     get_nsstyle_attr_nsval(This->nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
-    *p = strcmpW(value, exval) ? VARIANT_FALSE : VARIANT_TRUE;
+    *p = variant_bool(!strcmpW(value, exval));
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %x\n", debugstr_w(style_tbl[sid].name), *p);
@@ -2927,7 +2927,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
 
     /* filter property is a special case */
     if(style_entry->dispid == DISPID_IHTMLSTYLE_FILTER) {
-        *pfSuccess = This->elem->filter && *This->elem->filter ? VARIANT_TRUE : VARIANT_FALSE;
+        *pfSuccess = variant_bool(This->elem->filter && *This->elem->filter);
         heap_free(This->elem->filter);
         This->elem->filter = NULL;
         update_filter(This);
@@ -2940,7 +2940,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *ret;
         nsAString_GetData(&ret_str, &ret);
-        *pfSuccess = *ret ? VARIANT_TRUE : VARIANT_FALSE;
+        *pfSuccess = variant_bool(*ret);
     }else {
         ERR("RemoveProperty failed: %08x\n", nsres);
     }

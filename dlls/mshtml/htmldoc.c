@@ -2606,7 +2606,7 @@ static HRESULT WINAPI HTMLDocument4_hasFocus(IHTMLDocument4 *iface, VARIANT_BOOL
     nsres = nsIDOMHTMLDocument_HasFocus(This->doc_node->nsdoc, &has_focus);
     assert(nsres == NS_OK);
 
-    *pfFocus = has_focus ? VARIANT_TRUE : VARIANT_FALSE;
+    *pfFocus = variant_bool(has_focus);
     return S_OK;
 }
 

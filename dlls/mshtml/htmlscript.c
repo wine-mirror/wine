@@ -258,9 +258,7 @@ static HRESULT WINAPI HTMLScriptElement_get_defer(IHTMLScriptElement *iface, VAR
         ERR("GetSrc failed: %08x\n", nsres);
     }
 
-    *p = defer ? VARIANT_TRUE : VARIANT_FALSE;
-
-    TRACE("*p = %d\n", *p);
+    *p = variant_bool(defer);
     return S_OK;
 }
 

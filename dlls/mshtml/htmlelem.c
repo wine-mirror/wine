@@ -1267,7 +1267,7 @@ static HRESULT WINAPI HTMLElement_contains(IHTMLElement *iface, IHTMLElement *pC
         assert(nsres == NS_OK);
     }
 
-    *pfResult = result ? VARIANT_TRUE : VARIANT_FALSE;
+    *pfResult = variant_bool(result);
     return S_OK;
 }
 
@@ -1777,8 +1777,7 @@ static HRESULT WINAPI HTMLElement_get_isTextEdit(IHTMLElement *iface, VARIANT_BO
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->node.vtbl->is_text_edit && This->node.vtbl->is_text_edit(&This->node)
-        ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(This->node.vtbl->is_text_edit && This->node.vtbl->is_text_edit(&This->node));
     return S_OK;
 }
 

@@ -129,7 +129,7 @@ static HRESULT WINAPI HTMLOptionElement_get_selected(IHTMLOptionElement *iface, 
         return E_FAIL;
     }
 
-    *p = selected ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(selected);
     return S_OK;
 }
 
@@ -211,7 +211,7 @@ static HRESULT WINAPI HTMLOptionElement_get_defaultSelected(IHTMLOptionElement *
         return E_FAIL;
     }
 
-    *p = val ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(val);
     return S_OK;
 }
 

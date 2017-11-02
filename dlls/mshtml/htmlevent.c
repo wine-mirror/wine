@@ -421,7 +421,7 @@ static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL
         }
     }
 
-    *p = ret ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(ret);
     return S_OK;
 }
 
@@ -451,7 +451,7 @@ static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOO
         }
     }
 
-    *p = ret ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(ret);
     return S_OK;
 }
 
@@ -481,7 +481,7 @@ static HRESULT WINAPI HTMLEventObj_get_shiftKey(IHTMLEventObj *iface, VARIANT_BO
         }
     }
 
-    *p = ret ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(ret);
     return S_OK;
 }
 
@@ -529,7 +529,7 @@ static HRESULT WINAPI HTMLEventObj_get_cancelBubble(IHTMLEventObj *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->event && This->event->stop_propagation ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(This->event && This->event->stop_propagation);
     return S_OK;
 }
 

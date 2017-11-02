@@ -971,7 +971,7 @@ static HRESULT change_type(VARIANT *dst, VARIANT *src, VARTYPE vt, IServiceProvi
     case VT_BOOL:
         if(V_VT(src) == VT_BSTR) {
             V_VT(dst) = VT_BOOL;
-            V_BOOL(dst) = V_BSTR(src) && *V_BSTR(src) ? VARIANT_TRUE : VARIANT_FALSE;
+            V_BOOL(dst) = variant_bool(V_BSTR(src) && *V_BSTR(src));
             return S_OK;
         }
         break;

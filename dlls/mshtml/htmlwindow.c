@@ -862,7 +862,7 @@ static BOOL notify_webbrowser_close(HTMLOuterWindow *window, HTMLDocumentObj *do
         V_VT(args) = VT_BYREF|VT_BOOL;
         V_BOOLREF(args) = &cancel;
         V_VT(args+1) = VT_BOOL;
-        V_BOOL(args+1) = window->parent ? VARIANT_TRUE : VARIANT_FALSE;
+        V_BOOL(args+1) = variant_bool(window->parent != NULL);
         hres = IDispatch_Invoke(disp, DISPID_WINDOWCLOSING, &IID_NULL, 0, DISPATCH_METHOD, &dp, NULL, NULL, NULL);
         IDispatch_Release(disp);
         if(FAILED(hres))

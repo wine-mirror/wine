@@ -610,7 +610,7 @@ static HRESULT WINAPI HTMLDOMNode_hasChildNodes(IHTMLDOMNode *iface, VARIANT_BOO
     if(NS_FAILED(nsres))
         ERR("HasChildNodes failed: %08x\n", nsres);
 
-    *fChildren = has_child ? VARIANT_TRUE : VARIANT_FALSE;
+    *fChildren = variant_bool(has_child);
     return S_OK;
 }
 

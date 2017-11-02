@@ -318,7 +318,7 @@ static HRESULT WINAPI HTMLTextAreaElement_get_readOnly(IHTMLTextAreaElement *ifa
         return E_FAIL;
     }
 
-    *p = b ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(b);
     return S_OK;
 }
 

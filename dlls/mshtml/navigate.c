@@ -610,7 +610,7 @@ static HRESULT WINAPI BindCallbackRedirect_Redirect(IBindCallbackRedirect *iface
         SysFreeString(frame_name);
     }
 
-    *vbCancel = cancel ? VARIANT_TRUE : VARIANT_FALSE;
+    *vbCancel = variant_bool(cancel);
     return hres;
 }
 

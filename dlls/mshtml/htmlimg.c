@@ -131,7 +131,8 @@ static HRESULT WINAPI HTMLImgElement_get_isMap(IHTMLImgElement *iface, VARIANT_B
         ERR("Get IsMap failed: %08x\n", nsres);
         return E_FAIL;
     }
-    *p = b ? VARIANT_TRUE : VARIANT_FALSE;
+
+    *p = variant_bool(b);
     return S_OK;
 }
 
@@ -391,7 +392,7 @@ static HRESULT WINAPI HTMLImgElement_get_complete(IHTMLImgElement *iface, VARIAN
         return E_FAIL;
     }
 
-    *p = complete ? VARIANT_TRUE : VARIANT_FALSE;
+    *p = variant_bool(complete);
     return S_OK;
 }
 
