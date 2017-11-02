@@ -230,12 +230,20 @@ typedef struct EmfPlusSolidBrushData
     EmfPlusARGB SolidColor;
 } EmfPlusSolidBrushData;
 
+typedef struct EmfPlusHatchBrushData
+{
+    DWORD HatchStyle;
+    EmfPlusARGB ForeColor;
+    EmfPlusARGB BackColor;
+} EmfPlusHatchBrushData;
+
 typedef struct EmfPlusBrush
 {
     DWORD Version;
     DWORD Type;
     union {
         EmfPlusSolidBrushData solid;
+        EmfPlusHatchBrushData hatch;
     } BrushData;
 } EmfPlusBrush;
 
@@ -1832,6 +1840,13 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
             return InvalidParameter;
 
         status = GdipCreateSolidFill(data->BrushData.solid.SolidColor, (GpSolidFill **)brush);
+        break;
+    case BrushTypeHatchFill:
+        if (data_size != header_size + sizeof(EmfPlusHatchBrushData))
+            return InvalidParameter;
+
+        status = GdipCreateHatchBrush(data->BrushData.hatch.HatchStyle, data->BrushData.hatch.ForeColor,
+            data->BrushData.hatch.BackColor, (GpHatch **)brush);
         break;
     default:
         FIXME("brush type %u is not supported.\n", data->Type);
