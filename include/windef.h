@@ -69,6 +69,8 @@ extern "C" {
 #  else
 #   define __stdcall __attribute__((ms_abi))
 #  endif
+# elif defined(__arm__) && defined (__GNUC__)
+#   define __stdcall __attribute__((pcs("aapcs-vfp")))
 # else  /* __i386__ */
 #  define __stdcall
 # endif  /* __i386__ */
@@ -87,6 +89,8 @@ extern "C" {
 #  else
 #   define __cdecl __attribute__((ms_abi))
 #  endif
+# elif defined(__arm__) && defined (__GNUC__)
+#   define __cdecl __attribute__((pcs("aapcs-vfp")))
 # elif !defined(_MSC_VER)
 #  define __cdecl
 # endif
@@ -108,6 +112,12 @@ extern "C" {
 #   define __ms_va_copy(dest,src) ((dest) = (src))
 #  endif
 # endif
+#endif
+
+#if defined(__arm__) && defined (__GNUC__)
+# define WINAPIV __attribute__((pcs("aapcs")))
+#else
+# define WINAPIV __cdecl
 #endif
 
 #ifdef __WINESRC__
@@ -179,7 +189,6 @@ extern "C" {
 #define PASCAL      __stdcall
 #define CDECL       __cdecl
 #define _CDECL      __cdecl
-#define WINAPIV     __cdecl
 #define APIENTRY    WINAPI
 #define CONST       __ONLY_IN_WINELIB(const)
 
