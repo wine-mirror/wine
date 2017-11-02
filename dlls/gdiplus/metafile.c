@@ -45,13 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
 
-typedef struct EmfPlusARGB
-{
-    BYTE Blue;
-    BYTE Green;
-    BYTE Red;
-    BYTE Alpha;
-} EmfPlusARGB;
+typedef ARGB EmfPlusARGB;
 
 typedef struct EmfPlusRecordHeader
 {
@@ -1837,7 +1831,7 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
         if (data_size != header_size + sizeof(EmfPlusSolidBrushData))
             return InvalidParameter;
 
-        status = GdipCreateSolidFill(*(ARGB *)&data->BrushData.solid.SolidColor, (GpSolidFill **)brush);
+        status = GdipCreateSolidFill(data->BrushData.solid.SolidColor, (GpSolidFill **)brush);
         break;
     default:
         FIXME("brush type %u is not supported.\n", data->Type);
@@ -2274,7 +2268,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (flags & 0x8000)
             {
-                stat = GdipCreateSolidFill((ARGB)record->BrushID, (GpSolidFill**)&temp_brush);
+                stat = GdipCreateSolidFill(record->BrushID, (GpSolidFill **)&temp_brush);
                 brush = temp_brush;
             }
             else
@@ -2714,7 +2708,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (flags & 0x8000)
             {
-                stat = GdipCreateSolidFill(*(ARGB *)&fill->data.Color, (GpSolidFill **)&solidfill);
+                stat = GdipCreateSolidFill(fill->data.Color, (GpSolidFill **)&solidfill);
                 if (stat != Ok)
                     return stat;
                 brush = (GpBrush *)solidfill;
@@ -3565,10 +3559,7 @@ static GpStatus METAFILE_AddImageAttributesObject(GpMetafile *metafile, const Gp
     attrs_record->Version = VERSION_MAGIC2;
     attrs_record->Reserved1 = 0;
     attrs_record->WrapMode = attrs->wrap;
-    attrs_record->ClampColor.Blue = attrs->outside_color & 0xff;
-    attrs_record->ClampColor.Green = (attrs->outside_color >> 8) & 0xff;
-    attrs_record->ClampColor.Red = (attrs->outside_color >> 16) & 0xff;
-    attrs_record->ClampColor.Alpha = attrs->outside_color >> 24;
+    attrs_record->ClampColor = attrs->outside_color;
     attrs_record->ObjectClamp = attrs->clamp;
     attrs_record->Reserved2 = 0;
     return Ok;
@@ -3714,10 +3705,7 @@ static void METAFILE_FillBrushData(GpBrush *brush, EmfPlusBrush *data)
 
         data->Version = VERSION_MAGIC2;
         data->Type = solid->brush.bt;
-        data->BrushData.solid.SolidColor.Blue = solid->color & 0xff;
-        data->BrushData.solid.SolidColor.Green = (solid->color >> 8) & 0xff;
-        data->BrushData.solid.SolidColor.Red = (solid->color >> 16) & 0xff;
-        data->BrushData.solid.SolidColor.Alpha = solid->color >> 24;
+        data->BrushData.solid.SolidColor = solid->color;
     }
 }
 
@@ -3970,10 +3958,7 @@ GpStatus METAFILE_FillPath(GpMetafile *metafile, GpBrush *brush, GpPath *path)
     if (inline_color)
     {
         fill_path_record->Header.Flags = 0x8000 | path_id;
-        fill_path_record->data.Color.Blue = ((GpSolidFill*)brush)->color & 0xff;
-        fill_path_record->data.Color.Green = (((GpSolidFill*)brush)->color >> 8) & 0xff;
-        fill_path_record->data.Color.Red = (((GpSolidFill*)brush)->color >> 16) & 0xff;
-        fill_path_record->data.Color.Alpha = ((GpSolidFill*)brush)->color >> 24;
+        fill_path_record->data.Color = ((GpSolidFill *)brush)->color;
     }
     else
     {
