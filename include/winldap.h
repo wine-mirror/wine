@@ -628,9 +628,9 @@ void CDECL ber_free(BerElement*,INT);
 BerElement* CDECL ber_init(BERVAL*);
 ULONG CDECL ber_next_element(BerElement*,ULONG*,CHAR*);
 ULONG CDECL ber_peek_tag(BerElement*,ULONG*);
-INT CDECL ber_printf(BerElement*,PCHAR,...);
+INT WINAPIV ber_printf(BerElement*,PCHAR,...);
 ULONG CDECL ber_skip_tag(BerElement*,ULONG*);
-INT CDECL ber_scanf(BerElement*,PCHAR,...);
+INT WINAPIV ber_scanf(BerElement*,PCHAR,...);
 
 ULONG CDECL LdapGetLastError(void);
 ULONG CDECL LdapMapErrorToWin32(ULONG);
