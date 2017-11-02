@@ -1082,10 +1082,10 @@ BOOL WINAPI AVISaveOptions(HWND hWnd,UINT uFlags,INT nStream,
 			   PAVISTREAM *ppavi,LPAVICOMPRESSOPTIONS *ppOptions);
 HRESULT WINAPI AVISaveOptionsFree(INT nStreams,LPAVICOMPRESSOPTIONS*ppOptions);
 
-HRESULT CDECL AVISaveA(LPCSTR szFile, CLSID *pclsidHandler,
+HRESULT WINAPIV AVISaveA(LPCSTR szFile, CLSID *pclsidHandler,
              AVISAVECALLBACK lpfnCallback, int nStreams,
              PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...);
-HRESULT CDECL AVISaveW(LPCWSTR szFile, CLSID *pclsidHandler,
+HRESULT WINAPIV AVISaveW(LPCWSTR szFile, CLSID *pclsidHandler,
              AVISAVECALLBACK lpfnCallback, int nStreams,
              PAVISTREAM pavi, LPAVICOMPRESSOPTIONS lpOptions, ...);
 #define AVISave WINELIB_NAME_AW(AVISave)

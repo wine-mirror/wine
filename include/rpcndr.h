@@ -114,7 +114,7 @@ typedef UINT64 MIDL_uhyper;
 typedef unsigned char boolean;
 
 #define __RPC_CALLEE WINAPI
-#define RPC_VAR_ENTRY __cdecl
+#define RPC_VAR_ENTRY WINAPIV
 #define NDR_SHAREABLE static
 
 #define MIDL_ascii_strlen(s) strlen(s)
