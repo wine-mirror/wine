@@ -27,7 +27,7 @@
 void *heap_xalloc(size_t size);
 void *heap_xrealloc(void *buf, size_t size);
 BOOL heap_free(void *buf);
-void __cdecl output_message(unsigned int id, ...);
+void WINAPIV output_message(unsigned int id, ...);
 HKEY path_get_rootkey(const WCHAR *path);
 
 /* import.c */

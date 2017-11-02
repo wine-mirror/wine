@@ -151,7 +151,7 @@ static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
     LocalFree(str);
 }
 
-void __cdecl output_message(unsigned int id, ...)
+void WINAPIV output_message(unsigned int id, ...)
 {
     WCHAR fmt[1024];
     __ms_va_list va_args;
@@ -166,7 +166,7 @@ void __cdecl output_message(unsigned int id, ...)
     __ms_va_end(va_args);
 }
 
-static void __cdecl output_string(const WCHAR *fmt, ...)
+static void WINAPIV output_string(const WCHAR *fmt, ...)
 {
     __ms_va_list va_args;
 
