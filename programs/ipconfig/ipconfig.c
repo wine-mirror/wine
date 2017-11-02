@@ -62,7 +62,7 @@ static int ipconfig_vprintfW(const WCHAR *msg, __ms_va_list va_args)
     return count;
 }
 
-static int CDECL ipconfig_printfW(const WCHAR *msg, ...)
+static int WINAPIV ipconfig_printfW(const WCHAR *msg, ...)
 {
     __ms_va_list va_args;
     int len;
@@ -74,7 +74,7 @@ static int CDECL ipconfig_printfW(const WCHAR *msg, ...)
     return len;
 }
 
-static int CDECL ipconfig_message_printfW(int msg, ...)
+static int WINAPIV ipconfig_message_printfW(int msg, ...)
 {
     __ms_va_list va_args;
     WCHAR msg_buffer[8192];
