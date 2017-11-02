@@ -259,7 +259,7 @@ static void test_sscanf( void )
 
 static void test_sscanf_s(void)
 {
-    int (__cdecl *psscanf_s)(const char*,const char*,...);
+    int (WINAPIV *psscanf_s)(const char*,const char*,...);
     HMODULE hmod = GetModuleHandleA("msvcrt.dll");
     int i, ret;
     char buf[100];

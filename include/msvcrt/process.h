@@ -32,19 +32,19 @@ uintptr_t __cdecl _beginthreadex(void*,unsigned int,_beginthreadex_start_routine
 intptr_t  __cdecl _cwait(int*,intptr_t,int);
 void      __cdecl _endthread(void);
 void      __cdecl _endthreadex(unsigned int);
-intptr_t  __cdecl _execl(const char*,const char*,...);
-intptr_t  __cdecl _execle(const char*,const char*,...);
-intptr_t  __cdecl _execlp(const char*,const char*,...);
-intptr_t  __cdecl _execlpe(const char*,const char*,...);
+intptr_t  WINAPIV _execl(const char*,const char*,...);
+intptr_t  WINAPIV _execle(const char*,const char*,...);
+intptr_t  WINAPIV _execlp(const char*,const char*,...);
+intptr_t  WINAPIV _execlpe(const char*,const char*,...);
 intptr_t  __cdecl _execv(const char*,const char* const *);
 intptr_t  __cdecl _execve(const char*,const char* const *,const char* const *);
 intptr_t  __cdecl _execvp(const char*,const char* const *);
 intptr_t  __cdecl _execvpe(const char*,const char* const *,const char* const *);
 int       __cdecl _getpid(void);
-intptr_t  __cdecl _spawnl(int,const char*,const char*,...);
-intptr_t  __cdecl _spawnle(int,const char*,const char*,...);
-intptr_t  __cdecl _spawnlp(int,const char*,const char*,...);
-intptr_t  __cdecl _spawnlpe(int,const char*,const char*,...);
+intptr_t  WINAPIV _spawnl(int,const char*,const char*,...);
+intptr_t  WINAPIV _spawnle(int,const char*,const char*,...);
+intptr_t  WINAPIV _spawnlp(int,const char*,const char*,...);
+intptr_t  WINAPIV _spawnlpe(int,const char*,const char*,...);
 intptr_t  __cdecl _spawnv(int,const char*,const char* const *);
 intptr_t  __cdecl _spawnve(int,const char*,const char* const *,const char* const *);
 intptr_t  __cdecl _spawnvp(int,const char*,const char* const *);
@@ -59,18 +59,18 @@ int       __cdecl system(const char*);
 
 #ifndef _WPROCESS_DEFINED
 #define _WPROCESS_DEFINED
-intptr_t __cdecl _wexecl(const wchar_t*,const wchar_t*,...);
-intptr_t __cdecl _wexecle(const wchar_t*,const wchar_t*,...);
-intptr_t __cdecl _wexeclp(const wchar_t*,const wchar_t*,...);
-intptr_t __cdecl _wexeclpe(const wchar_t*,const wchar_t*,...);
+intptr_t WINAPIV _wexecl(const wchar_t*,const wchar_t*,...);
+intptr_t WINAPIV _wexecle(const wchar_t*,const wchar_t*,...);
+intptr_t WINAPIV _wexeclp(const wchar_t*,const wchar_t*,...);
+intptr_t WINAPIV _wexeclpe(const wchar_t*,const wchar_t*,...);
 intptr_t __cdecl _wexecv(const wchar_t*,const wchar_t* const *);
 intptr_t __cdecl _wexecve(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
 intptr_t __cdecl _wexecvp(const wchar_t*,const wchar_t* const *);
 intptr_t __cdecl _wexecvpe(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-intptr_t __cdecl _wspawnl(int,const wchar_t*,const wchar_t*,...);
-intptr_t __cdecl _wspawnle(int,const wchar_t*,const wchar_t*,...);
-intptr_t __cdecl _wspawnlp(int,const wchar_t*,const wchar_t*,...);
-intptr_t __cdecl _wspawnlpe(int,const wchar_t*,const wchar_t*,...);
+intptr_t WINAPIV _wspawnl(int,const wchar_t*,const wchar_t*,...);
+intptr_t WINAPIV _wspawnle(int,const wchar_t*,const wchar_t*,...);
+intptr_t WINAPIV _wspawnlp(int,const wchar_t*,const wchar_t*,...);
+intptr_t WINAPIV _wspawnlpe(int,const wchar_t*,const wchar_t*,...);
 intptr_t __cdecl _wspawnv(int,const wchar_t*,const wchar_t* const *);
 intptr_t __cdecl _wspawnve(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
 intptr_t __cdecl _wspawnvp(int,const wchar_t*,const wchar_t* const *);
@@ -104,14 +104,14 @@ static inline intptr_t spawnvp(int flags, const char* name, const char* const* a
 static inline intptr_t spawnvpe(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnvpe(flags, name, argv, envv); }
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
-extern intptr_t __cdecl execl(const char*,const char*,...) __attribute__((alias("_execl")));
-extern intptr_t __cdecl execle(const char*,const char*,...) __attribute__((alias("_execle")));
-extern intptr_t __cdecl execlp(const char*,const char*,...) __attribute__((alias("_execlp")));
-extern intptr_t __cdecl execlpe(const char*,const char*,...) __attribute__((alias("_execlpe")));
-extern intptr_t __cdecl spawnl(int,const char*,const char*,...) __attribute__((alias("_spawnl")));
-extern intptr_t __cdecl spawnle(int,const char*,const char*,...) __attribute__((alias("_spawnle")));
-extern intptr_t __cdecl spawnlp(int,const char*,const char*,...) __attribute__((alias("_spawnlp")));
-extern intptr_t __cdecl spawnlpe(int,const char*,const char*,...) __attribute__((alias("_spawnlpe")));
+extern intptr_t WINAPIV execl(const char*,const char*,...) __attribute__((alias("_execl")));
+extern intptr_t WINAPIV execle(const char*,const char*,...) __attribute__((alias("_execle")));
+extern intptr_t WINAPIV execlp(const char*,const char*,...) __attribute__((alias("_execlp")));
+extern intptr_t WINAPIV execlpe(const char*,const char*,...) __attribute__((alias("_execlpe")));
+extern intptr_t WINAPIV spawnl(int,const char*,const char*,...) __attribute__((alias("_spawnl")));
+extern intptr_t WINAPIV spawnle(int,const char*,const char*,...) __attribute__((alias("_spawnle")));
+extern intptr_t WINAPIV spawnlp(int,const char*,const char*,...) __attribute__((alias("_spawnlp")));
+extern intptr_t WINAPIV spawnlpe(int,const char*,const char*,...) __attribute__((alias("_spawnlpe")));
 #else
 #define execl    _execl
 #define execle   _execle

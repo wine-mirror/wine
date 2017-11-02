@@ -560,7 +560,7 @@ SchedulerPolicy* __thiscall SchedulerPolicy_ctor(SchedulerPolicy *this)
 /* ??0SchedulerPolicy@Concurrency@@QAA@IZZ */
 /* ??0SchedulerPolicy@Concurrency@@QEAA@_KZZ */
 /* TODO: don't leak policy_container on exception */
-SchedulerPolicy* __cdecl SchedulerPolicy_ctor_policies(
+SchedulerPolicy* WINAPIV SchedulerPolicy_ctor_policies(
         SchedulerPolicy *this, MSVCRT_size_t n, ...)
 {
     unsigned int min_concurrency, max_concurrency;

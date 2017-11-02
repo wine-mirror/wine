@@ -152,7 +152,7 @@ static BOOL init( void )
     return TRUE;
 }
 
-static int __cdecl vsprintf_wrapper(unsigned __int64 options, char *str,
+static int WINAPIV vsprintf_wrapper(unsigned __int64 options, char *str,
                                     size_t len, const char *format, ...)
 {
     int ret;
@@ -217,7 +217,7 @@ static void test_snprintf (void)
         "Failure to snprintf to NULL\n");
 }
 
-static int __cdecl vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
+static int WINAPIV vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
                                      size_t len, const wchar_t *format, ...)
 {
     int ret;
@@ -291,7 +291,7 @@ static void test_swprintf (void)
     }
 }
 
-static int __cdecl vfprintf_wrapper(FILE *file,
+static int WINAPIV vfprintf_wrapper(FILE *file,
                                     const char *format, ...)
 {
     int ret;
@@ -364,7 +364,7 @@ static void test_fprintf(void)
     unlink(file_name);
 }
 
-static int __cdecl vfwprintf_wrapper(FILE *file,
+static int WINAPIV vfwprintf_wrapper(FILE *file,
                                      const wchar_t *format, ...)
 {
     int ret;
@@ -467,7 +467,7 @@ static void test_fwprintf(void)
             "Cannot reset invalid parameter handler\n");
 }
 
-static int __cdecl _vsnprintf_s_wrapper(char *str, size_t sizeOfBuffer,
+static int WINAPIV _vsnprintf_s_wrapper(char *str, size_t sizeOfBuffer,
                                         size_t count, const char *format, ...)
 {
     int ret;
@@ -519,7 +519,7 @@ static void test_vsnprintf_s(void)
     ok( !strcmp(out1, buffer), "buffer wrong, got=%s\n", buffer);
 }
 
-static int __cdecl _vsnwprintf_s_wrapper(WCHAR *str, size_t sizeOfBuffer,
+static int WINAPIV _vsnwprintf_s_wrapper(WCHAR *str, size_t sizeOfBuffer,
                                         size_t count, const WCHAR *format, ...)
 {
     int ret;

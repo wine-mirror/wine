@@ -1069,10 +1069,10 @@ MSVCRT_FILE*   __cdecl MSVCRT__wfdopen(int, const MSVCRT_wchar_t *);
 int            __cdecl MSVCRT_vsnprintf(char *str, MSVCRT_size_t len, const char *format, __ms_va_list valist);
 int            __cdecl MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, MSVCRT_size_t len,
                                        const MSVCRT_wchar_t *format, __ms_va_list valist );
-int            __cdecl MSVCRT__snwprintf(MSVCRT_wchar_t*, unsigned int, const MSVCRT_wchar_t*, ...);
-int            __cdecl MSVCRT_sprintf(char*,const char*,...);
-int            __cdecl MSVCRT__snprintf(char*,unsigned int,const char*,...);
-int            __cdecl MSVCRT__scprintf(const char*,...);
+int            WINAPIV MSVCRT__snwprintf(MSVCRT_wchar_t*, unsigned int, const MSVCRT_wchar_t*, ...);
+int            WINAPIV MSVCRT_sprintf(char*,const char*,...);
+int            WINAPIV MSVCRT__snprintf(char*,unsigned int,const char*,...);
+int            WINAPIV MSVCRT__scprintf(const char*,...);
 int            __cdecl MSVCRT_raise(int sig);
 int            __cdecl MSVCRT__set_printf_count_output(int);
 
@@ -1110,8 +1110,8 @@ char* __cdecl    MSVCRT__strnset(char*,int,MSVCRT_size_t);
 char* __cdecl    _strset(char*,int);
 int __cdecl      _ungetch(int);
 int __cdecl      _cputs(const char*);
-int __cdecl      _cprintf(const char*,...);
-int __cdecl      _cwprintf(const MSVCRT_wchar_t*,...);
+int WINAPIV      _cprintf(const char*,...);
+int WINAPIV      _cwprintf(const MSVCRT_wchar_t*,...);
 char*** __cdecl  MSVCRT___p__environ(void);
 int*    __cdecl  __p___mb_cur_max(void);
 unsigned int*  __cdecl __p__fmode(void);

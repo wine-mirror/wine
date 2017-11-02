@@ -85,7 +85,7 @@ extern int _crtBreakAlloc;
 extern int _crtDbgFlag;
 
 int   __cdecl _CrtCheckMemory(void);
-int   __cdecl _CrtDbgReport(int reportType, const char *filename, int linenumber,
+int   WINAPIV _CrtDbgReport(int reportType, const char *filename, int linenumber,
                             const char *moduleName, const char *format, ...);
 int   __cdecl _CrtDumpMemoryLeaks(void);
 int   __cdecl _CrtSetBreakAlloc(int);

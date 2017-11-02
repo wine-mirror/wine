@@ -525,7 +525,7 @@ int CDECL _vcprintf(const char* format, __ms_va_list valist)
 /*********************************************************************
  *		_cprintf (MSVCRT.@)
  */
-int CDECL _cprintf(const char* format, ...)
+int WINAPIV _cprintf(const char* format, ...)
 {
   int retval;
   __ms_va_list valist;
@@ -549,7 +549,7 @@ int CDECL _vcwprintf(const MSVCRT_wchar_t* format, __ms_va_list valist)
 /*********************************************************************
  *		_cwprintf (MSVCRT.@)
  */
-int CDECL _cwprintf(const MSVCRT_wchar_t* format, ...)
+int WINAPIV _cwprintf(const MSVCRT_wchar_t* format, ...)
 {
   int retval;
   __ms_va_list valist;

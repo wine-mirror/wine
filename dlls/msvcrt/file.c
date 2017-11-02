@@ -2334,7 +2334,7 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
 /*********************************************************************
  *              _wsopen (MSVCRT.@)
  */
-int CDECL MSVCRT__wsopen( const MSVCRT_wchar_t *path, int oflags, int shflags, ... )
+int WINAPIV MSVCRT__wsopen( const MSVCRT_wchar_t *path, int oflags, int shflags, ... )
 {
   int pmode;
   int fd;
@@ -2385,7 +2385,7 @@ int CDECL MSVCRT__sopen_s( int *fd, const char *path, int oflags, int shflags, i
 /*********************************************************************
  *              _sopen (MSVCRT.@)
  */
-int CDECL MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
+int WINAPIV MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
 {
   int pmode;
   int fd;
@@ -2407,7 +2407,7 @@ int CDECL MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
 /*********************************************************************
  *              _open (MSVCRT.@)
  */
-int CDECL MSVCRT__open( const char *path, int flags, ... )
+int WINAPIV MSVCRT__open( const char *path, int flags, ... )
 {
   __ms_va_list ap;
 
@@ -2426,7 +2426,7 @@ int CDECL MSVCRT__open( const char *path, int flags, ... )
 /*********************************************************************
  *              _wopen (MSVCRT.@)
  */
-int CDECL MSVCRT__wopen(const MSVCRT_wchar_t *path,int flags,...)
+int WINAPIV MSVCRT__wopen(const MSVCRT_wchar_t *path,int flags,...)
 {
   __ms_va_list ap;
 
@@ -5301,7 +5301,7 @@ int CDECL MSVCRT_vwprintf_s(const MSVCRT_wchar_t *format, __ms_va_list valist)
 /*********************************************************************
  *		fprintf (MSVCRT.@)
  */
-int CDECL MSVCRT_fprintf(MSVCRT_FILE* file, const char *format, ...)
+int WINAPIV MSVCRT_fprintf(MSVCRT_FILE* file, const char *format, ...)
 {
     __ms_va_list valist;
     int res;
@@ -5314,7 +5314,7 @@ int CDECL MSVCRT_fprintf(MSVCRT_FILE* file, const char *format, ...)
 /*********************************************************************
  *		fprintf_s (MSVCRT.@)
  */
-int CDECL MSVCRT_fprintf_s(MSVCRT_FILE* file, const char *format, ...)
+int WINAPIV MSVCRT_fprintf_s(MSVCRT_FILE* file, const char *format, ...)
 {
     __ms_va_list valist;
     int res;
@@ -5327,7 +5327,7 @@ int CDECL MSVCRT_fprintf_s(MSVCRT_FILE* file, const char *format, ...)
 /*********************************************************************
  *		fwprintf (MSVCRT.@)
  */
-int CDECL MSVCRT_fwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
+int WINAPIV MSVCRT_fwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
@@ -5340,7 +5340,7 @@ int CDECL MSVCRT_fwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
 /*********************************************************************
  *		fwprintf_s (MSVCRT.@)
  */
-int CDECL MSVCRT_fwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
+int WINAPIV MSVCRT_fwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
@@ -5353,7 +5353,7 @@ int CDECL MSVCRT_fwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, ...
 /*********************************************************************
  *              _fwprintf_l (MSVCRT.@)
  */
-int CDECL MSVCRT__fwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, ...)
+int WINAPIV MSVCRT__fwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
@@ -5366,7 +5366,7 @@ int CDECL MSVCRT__fwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, MS
 /*********************************************************************
  *		printf (MSVCRT.@)
  */
-int CDECL MSVCRT_printf(const char *format, ...)
+int WINAPIV MSVCRT_printf(const char *format, ...)
 {
     __ms_va_list valist;
     int res;
@@ -5379,7 +5379,7 @@ int CDECL MSVCRT_printf(const char *format, ...)
 /*********************************************************************
  *		printf_s (MSVCRT.@)
  */
-int CDECL MSVCRT_printf_s(const char *format, ...)
+int WINAPIV MSVCRT_printf_s(const char *format, ...)
 {
     __ms_va_list valist;
     int res;
@@ -5496,7 +5496,7 @@ MSVCRT_wint_t CDECL MSVCRT__ungetwc_nolock(MSVCRT_wint_t wc, MSVCRT_FILE * file)
 /*********************************************************************
  *		wprintf (MSVCRT.@)
  */
-int CDECL MSVCRT_wprintf(const MSVCRT_wchar_t *format, ...)
+int WINAPIV MSVCRT_wprintf(const MSVCRT_wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
@@ -5509,7 +5509,7 @@ int CDECL MSVCRT_wprintf(const MSVCRT_wchar_t *format, ...)
 /*********************************************************************
  *		wprintf_s (MSVCRT.@)
  */
-int CDECL MSVCRT_wprintf_s(const MSVCRT_wchar_t *format, ...)
+int WINAPIV MSVCRT_wprintf_s(const MSVCRT_wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;

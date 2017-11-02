@@ -113,7 +113,7 @@ void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func, const 
    _invalid_parameter_noinfo();
 }
 
-int __cdecl _scprintf(const char* fmt, ...)
+int WINAPIV _scprintf(const char* fmt, ...)
 {
     int ret;
     __ms_va_list valist;
@@ -123,7 +123,7 @@ int __cdecl _scprintf(const char* fmt, ...)
     return ret;
 }
 
-int __cdecl sprintf(char *buf, const char *fmt, ...)
+int WINAPIV sprintf(char *buf, const char *fmt, ...)
 {
     int ret;
     __ms_va_list valist;

@@ -110,12 +110,12 @@ __msvcrt_long __cdecl _lseek(int,__msvcrt_long,int);
 __int64     __cdecl _lseeki64(int,__int64,int);
 char*       __cdecl _mktemp(char*);
 int         __cdecl _mktemp_s(char*,size_t);
-int         __cdecl _open(const char*,int,...);
+int         WINAPIV _open(const char*,int,...);
 int         __cdecl _open_osfhandle(intptr_t,int);
 int         __cdecl _pipe(int*,unsigned int,int);
 int         __cdecl _read(int,void*,unsigned int);
 int         __cdecl _setmode(int,int);
-int         __cdecl _sopen(const char*,int,int,...);
+int         WINAPIV _sopen(const char*,int,int,...);
 __msvcrt_long __cdecl _tell(int);
 __int64     __cdecl _telli64(int);
 int         __cdecl _umask(int);
@@ -135,9 +135,9 @@ intptr_t    __cdecl _wfindfirsti64(const wchar_t*, struct _wfinddatai64_t*);
 int         __cdecl _wfindnext(intptr_t,struct _wfinddata_t*);
 int         __cdecl _wfindnexti64(intptr_t, struct _wfinddatai64_t*);
 wchar_t *   __cdecl _wmktemp(wchar_t*);
-int         __cdecl _wopen(const wchar_t*,int,...);
+int         WINAPIV _wopen(const wchar_t*,int,...);
 int         __cdecl _wrename(const wchar_t*,const wchar_t*);
-int         __cdecl _wsopen(const wchar_t*,int,int,...);
+int         WINAPIV _wsopen(const wchar_t*,int,int,...);
 int         __cdecl _wunlink(const wchar_t*);
 #endif /* _WIO_DEFINED */
 
@@ -173,8 +173,8 @@ static inline int unlink(const char* path) { return _unlink(path); }
 static inline int write(int fd, const void* buf, unsigned int size) { return _write(fd, buf, size); }
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
-extern int __cdecl open(const char*,int,...) __attribute__((alias("_open")));
-extern int __cdecl sopen(const char*,int,int,...) __attribute__((alias("_sopen")));
+extern int WINAPIV open(const char*,int,...) __attribute__((alias("_open")));
+extern int WINAPIV sopen(const char*,int,int,...) __attribute__((alias("_sopen")));
 #else
 #define open _open
 #define sopen _sopen

@@ -15,9 +15,9 @@ extern "C" {
 #endif
 
 char* __cdecl _cgets(char*);
-int   __cdecl _cprintf(const char*,...);
+int   WINAPIV _cprintf(const char*,...);
 int   __cdecl _cputs(const char*);
-int   __cdecl _cscanf(const char*,...);
+int   WINAPIV _cscanf(const char*,...);
 int   __cdecl _getch(void);
 int   __cdecl _getche(void);
 int   __cdecl _kbhit(void);
@@ -53,8 +53,8 @@ static inline unsigned short outpw(unsigned short i, unsigned short j) { return 
 #endif
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
-extern int __cdecl cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
-extern int __cdecl cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
+extern int WINAPIV cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
+extern int WINAPIV cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
 #else
 #define cprintf _cprintf
 #define cscanf _cscanf

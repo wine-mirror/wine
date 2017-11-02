@@ -1071,7 +1071,7 @@ int CDECL DECLSPEC_HIDDEN __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp
  *		_setjmp3 (MSVCRT.@)
  */
 DEFINE_SETJMP_ENTRYPOINT( MSVCRT__setjmp3 )
-int CDECL DECLSPEC_HIDDEN __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, ...)
+int WINAPIV DECLSPEC_HIDDEN __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, ...)
 {
     jmp->Cookie = MSVCRT_JMP_MAGIC;
     jmp->UnwindFunc = 0;

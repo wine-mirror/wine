@@ -913,7 +913,7 @@ static void test_wctype(void)
     }
 }
 
-static int __cdecl _vsscanf_wrapper(const char *buffer, const char *format, ...)
+static int WINAPIV _vsscanf_wrapper(const char *buffer, const char *format, ...)
 {
     int ret;
     __ms_va_list valist;

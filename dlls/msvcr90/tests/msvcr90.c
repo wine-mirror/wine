@@ -1179,7 +1179,7 @@ static void test_getptd(void)
     ok(p_get_unexpected() == ptd->unexpected_handler, "ptd->unexpected_handler != _get_unexpected()\n");
 }
 
-static int __cdecl __vswprintf_l_wrapper(wchar_t *buf,
+static int WINAPIV __vswprintf_l_wrapper(wchar_t *buf,
         const wchar_t *format, _locale_t locale, ...)
 {
     int ret;
@@ -1190,7 +1190,7 @@ static int __cdecl __vswprintf_l_wrapper(wchar_t *buf,
     return ret;
 }
 
-static int __cdecl _vswprintf_l_wrapper(wchar_t *buf,
+static int WINAPIV _vswprintf_l_wrapper(wchar_t *buf,
         const wchar_t *format, _locale_t locale, ...)
 {
     int ret;
