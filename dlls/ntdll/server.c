@@ -808,7 +808,6 @@ static int receive_fd( obj_handle_t *handle )
 /***********************************************************************/
 /* fd cache support */
 
-#include "pshpack1.h"
 union fd_cache_entry
 {
     LONG64 data;
@@ -820,7 +819,6 @@ union fd_cache_entry
         unsigned int        options : 24;
     } s;
 };
-#include "poppack.h"
 
 C_ASSERT( sizeof(union fd_cache_entry) == sizeof(LONG64) );
 
