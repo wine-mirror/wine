@@ -1363,7 +1363,7 @@ static int NTDLL_vsscanf( const char *str, const char *format, __ms_va_list ap)
 /*********************************************************************
  *                  sscanf   (NTDLL.@)
  */
-int __cdecl NTDLL_sscanf( const char *str, const char *format, ... )
+int WINAPIV NTDLL_sscanf( const char *str, const char *format, ... )
 {
     int ret;
     __ms_va_list valist;
