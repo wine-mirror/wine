@@ -1875,6 +1875,15 @@ static const WCHAR * const WellKnownPrivNames[SE_MAX_WELL_KNOWN_PRIVILEGE + 1] =
     SE_CREATE_GLOBAL_NAME_W,
 };
 
+const WCHAR *get_wellknown_privilege_name(const LUID *luid)
+{
+    if (luid->HighPart || luid->LowPart < SE_MIN_WELL_KNOWN_PRIVILEGE ||
+            luid->LowPart > SE_MAX_WELL_KNOWN_PRIVILEGE || !WellKnownPrivNames[luid->LowPart])
+        return NULL;
+
+    return WellKnownPrivNames[luid->LowPart];
+}
+
 /******************************************************************************
  * LookupPrivilegeValueW			[ADVAPI32.@]
  *

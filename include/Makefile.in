@@ -550,6 +550,7 @@ HEADER_SRCS = \
 	ntddstor.h \
 	ntdef.h \
 	ntdsapi.h \
+	ntlsa.h \
 	ntquery.h \
 	ntsecapi.h \
 	ntsecpkg.h \
