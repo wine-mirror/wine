@@ -995,8 +995,11 @@ static HRESULT WINAPI DOMEvent_get_currentTarget(IDOMEvent *iface, IEventTarget 
 static HRESULT WINAPI DOMEvent_get_defaultPrevented(IDOMEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = variant_bool(This->prevent_default);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_get_eventPhase(IDOMEvent *iface, USHORT *p)

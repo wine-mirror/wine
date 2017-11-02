@@ -267,6 +267,31 @@ function test_stop_propagation() {
     next_test();
 }
 
+function test_prevent_default() {
+    document.body.innerHTML = '<div><a href="about:blank"></a></div>';
+    var div = document.body.firstChild;
+    var a = div.firstChild;
+    var calls;
+
+    div.addEventListener("click", function(e) {
+        calls += "div,";
+        ok(e.defaultPrevented === false, "e.defaultPrevented = " + e.defaultPrevented);
+        e.preventDefault();
+        ok(e.defaultPrevented === true, "e.defaultPrevented = " + e.defaultPrevented);
+    }, true);
+
+    a.addEventListener("click", function(e) {
+        calls += "a,";
+        ok(e.defaultPrevented === true, "e.defaultPrevented = " + e.defaultPrevented);
+    }, true);
+
+    calls = "";
+    a.click();
+    ok(calls === "div,a,", "calls = " + calls);
+
+    next_test();
+}
+
 var tests = [
     test_content_loaded,
     test_add_remove_listener,
@@ -274,5 +299,6 @@ var tests = [
     test_remove_listener_in_listener,
     test_event_phase,
     test_stop_propagation,
+    test_prevent_default,
     test_listener_order
 ];
