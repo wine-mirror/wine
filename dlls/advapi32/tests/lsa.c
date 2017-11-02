@@ -328,6 +328,7 @@ static void test_LsaLookupSids(void)
     HANDLE token;
     DWORD size;
     BOOL ret;
+    PSID sid;
 
     memset(&attrs, 0, sizeof(attrs));
     attrs.Length = sizeof(attrs);
@@ -364,26 +365,6 @@ static void test_LsaLookupSids(void)
 
     CloseHandle(token);
 
-    status = LsaClose(policy);
-    ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
-}
-
-static void test_LsaLookupSids_NullBuffers(void)
-{
-    LSA_REFERENCED_DOMAIN_LIST *list;
-    LSA_OBJECT_ATTRIBUTES attrs;
-    LSA_TRANSLATED_NAME *names;
-    LSA_HANDLE policy;
-    NTSTATUS status;
-    BOOL ret;
-    PSID sid;
-
-    memset(&attrs, 0, sizeof(attrs));
-    attrs.Length = sizeof(attrs);
-
-    status = LsaOpenPolicy(NULL, &attrs, POLICY_LOOKUP_NAMES, &policy);
-    ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
-
     ret = ConvertStringSidToSidA("S-1-1-0", &sid);
     ok(ret == TRUE, "ConvertStringSidToSidA returned false\n");
 
@@ -415,5 +396,4 @@ START_TEST(lsa)
     test_lsa();
     test_LsaLookupNames2();
     test_LsaLookupSids();
-    test_LsaLookupSids_NullBuffers();
 }
