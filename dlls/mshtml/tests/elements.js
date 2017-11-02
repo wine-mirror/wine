@@ -129,10 +129,30 @@ function test_getElementsByClassName() {
     next_test();
 }
 
+function test_query_selector() {
+    document.body.innerHTML = '<div class="class1">'
+        + '<div class="class1"></div>'
+        + '<a id="class1" class="class2"></a>'
+        + '</div>'
+        + '<script class="class1"></script>';
+
+    var e = document.querySelector("nomatch");
+    ok(e === null, "e = " + e);
+
+    e = document.querySelector(".class1");
+    ok(e.tagName === "DIV", "e.tagName = " + e.tagName);
+
+    e = document.querySelector("a");
+    ok(e.tagName === "A", "e.tagName = " + e.tagName);
+
+    next_test();
+}
+
 var tests = [
     test_input_selection,
     test_textContent,
     test_ElementTraversal,
     test_getElementsByClassName,
-    test_head
+    test_head,
+    test_query_selector
 ];
