@@ -1375,6 +1375,7 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
             props->style = DWRITE_FONT_STYLE_OBLIQUE;
         else if (fsSelection & OS2_FSSELECTION_ITALIC)
             props->style = DWRITE_FONT_STYLE_ITALIC;
+        props->lf.lfItalic = !!(fsSelection & OS2_FSSELECTION_ITALIC);
 
         memcpy(&props->panose, &tt_os2->panose, sizeof(props->panose));
 
@@ -1404,12 +1405,13 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
         if (macStyle & TT_HEAD_MACSTYLE_BOLD)
             props->weight = DWRITE_FONT_WEIGHT_BOLD;
 
-        if (macStyle & TT_HEAD_MACSTYLE_ITALIC)
+        if (macStyle & TT_HEAD_MACSTYLE_ITALIC) {
             props->style = DWRITE_FONT_STYLE_ITALIC;
+            props->lf.lfItalic = 1;
+        }
     }
 
     props->lf.lfWeight = props->weight;
-    props->lf.lfItalic = props->style == DWRITE_FONT_STYLE_ITALIC;
 
     TRACE("stretch=%d, weight=%d, style %d\n", props->stretch, props->weight, props->style);
 
