@@ -128,7 +128,7 @@ static void WCMD_output_asis_len(const WCHAR *message, DWORD len, HANDLE device)
  *
  */
 
-void CDECL WCMD_output (const WCHAR *format, ...) {
+void WINAPIV WCMD_output (const WCHAR *format, ...) {
 
   __ms_va_list ap;
   WCHAR* string;
@@ -154,7 +154,7 @@ void CDECL WCMD_output (const WCHAR *format, ...) {
  *
  */
 
-void CDECL WCMD_output_stderr (const WCHAR *format, ...) {
+void WINAPIV WCMD_output_stderr (const WCHAR *format, ...) {
 
   __ms_va_list ap;
   WCHAR* string;
@@ -180,8 +180,8 @@ void CDECL WCMD_output_stderr (const WCHAR *format, ...) {
  *
  */
 
-WCHAR* CDECL WCMD_format_string (const WCHAR *format, ...) {
-
+WCHAR* WINAPIV WCMD_format_string (const WCHAR *format, ...)
+{
   __ms_va_list ap;
   WCHAR* string;
   DWORD len;
