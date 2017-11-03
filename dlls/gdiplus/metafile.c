@@ -432,6 +432,18 @@ typedef struct EmfPlusDrawPath
     DWORD PenId;
 } EmfPlusDrawPath;
 
+typedef struct EmfPlusDrawPie
+{
+    EmfPlusRecordHeader Header;
+    float StartAngle;
+    float SweepAngle;
+    union
+    {
+        EmfPlusRect rect;
+        EmfPlusRectF rectF;
+    } RectData;
+} EmfPlusDrawPie;
+
 typedef struct EmfPlusFillPath
 {
     EmfPlusRecordHeader Header;
@@ -2861,6 +2873,27 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             return GdipDrawPath(real_metafile->playback_graphics, real_metafile->objtable[draw->PenId].u.pen,
                 real_metafile->objtable[path].u.path);
+        }
+        case EmfPlusRecordTypeDrawPie:
+        {
+            EmfPlusDrawPie *draw = (EmfPlusDrawPie *)header;
+            BYTE pen = flags & 0xff;
+
+            if (pen >= EmfPlusObjectTableSize || real_metafile->objtable[pen].type != ObjectTypePen)
+                return InvalidParameter;
+
+            if (dataSize != FIELD_OFFSET(EmfPlusDrawPie, RectData) - sizeof(EmfPlusRecordHeader) +
+                    (flags & 0x4000 ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF)))
+                return InvalidParameter;
+
+            if (flags & 0x4000) /* C */
+                return GdipDrawPieI(real_metafile->playback_graphics, real_metafile->objtable[pen].u.pen,
+                    draw->RectData.rect.X, draw->RectData.rect.Y, draw->RectData.rect.Width,
+                    draw->RectData.rect.Height, draw->StartAngle, draw->SweepAngle);
+            else
+                return GdipDrawPie(real_metafile->playback_graphics, real_metafile->objtable[pen].u.pen,
+                    draw->RectData.rectF.X, draw->RectData.rectF.Y, draw->RectData.rectF.Width,
+                    draw->RectData.rectF.Height, draw->StartAngle, draw->SweepAngle);
         }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
