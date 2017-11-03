@@ -136,8 +136,6 @@ static void test_acquire(IDirectInputA *pDI, HWND hwnd)
 
     hr = IDirectInputDevice_GetDeviceState(pMouse, sizeof(m_state), &m_state);
     ok(hr == DIERR_NOTACQUIRED, "GetDeviceState() should have failed: %08x\n", hr);
-    /* Workaround so we can test other things. Remove when Wine is fixed */
-    IDirectInputDevice_Unacquire(pMouse);
 
     hr = IDirectInputDevice_Acquire(pMouse);
     ok(hr == DIERR_OTHERAPPHASPRIO, "Acquire() should have failed: %08x\n", hr);
