@@ -260,10 +260,14 @@ static void test_InternetExplorer(void)
     if(hres != S_OK)
         return;
 
-    advise_cp(unk, TRUE);
-
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
+    if (hres != S_OK) {
+        IUnknown_Release(unk);
+        return;
+    }
+
+    advise_cp(unk, TRUE);
 
     test_visible(wb);
     test_html_window(wb);
