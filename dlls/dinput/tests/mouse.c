@@ -93,7 +93,6 @@ static void test_acquire(IDirectInputA *pDI, HWND hwnd)
     DIPROPDWORD di_op;
     DIDEVICEOBJECTDATA mouse_state;
     DWORD cnt;
-    MSG msg;
     int i;
 
     if (! SetForegroundWindow(hwnd))
@@ -132,7 +131,6 @@ static void test_acquire(IDirectInputA *pDI, HWND hwnd)
     hwnd2 = CreateWindowA("static", "Temporary", WS_VISIBLE, 10, 210, 200, 200, NULL, NULL, NULL,
                           NULL);
     ok(hwnd2 != NULL, "CreateWindowA failed with %u\n", GetLastError());
-    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 
     hr = IDirectInputDevice_GetDeviceState(pMouse, sizeof(m_state), &m_state);
     ok(hr == DIERR_NOTACQUIRED, "GetDeviceState() should have failed: %08x\n", hr);
