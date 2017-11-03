@@ -444,6 +444,17 @@ typedef struct EmfPlusDrawPie
     } RectData;
 } EmfPlusDrawPie;
 
+typedef struct EmfPlusDrawRects
+{
+    EmfPlusRecordHeader Header;
+    DWORD Count;
+    union
+    {
+        EmfPlusRect rect[1];
+        EmfPlusRectF rectF[1];
+    } RectData;
+} EmfPlusDrawRects;
+
 typedef struct EmfPlusFillPath
 {
     EmfPlusRecordHeader Header;
@@ -2894,6 +2905,44 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 return GdipDrawPie(real_metafile->playback_graphics, real_metafile->objtable[pen].u.pen,
                     draw->RectData.rectF.X, draw->RectData.rectF.Y, draw->RectData.rectF.Width,
                     draw->RectData.rectF.Height, draw->StartAngle, draw->SweepAngle);
+        }
+        case EmfPlusRecordTypeDrawRects:
+        {
+            EmfPlusDrawRects *draw = (EmfPlusDrawRects *)header;
+            BYTE pen = flags & 0xff;
+            GpRectF *rects = NULL;
+
+            if (pen >= EmfPlusObjectTableSize || real_metafile->objtable[pen].type != ObjectTypePen)
+                return InvalidParameter;
+
+            if (dataSize <= FIELD_OFFSET(EmfPlusDrawRects, RectData) - sizeof(EmfPlusRecordHeader))
+                return InvalidParameter;
+            dataSize -= FIELD_OFFSET(EmfPlusDrawRects, RectData) - sizeof(EmfPlusRecordHeader);
+
+            if (dataSize != draw->Count * (flags & 0x4000 ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF)))
+                return InvalidParameter;
+
+            if (flags & 0x4000)
+            {
+                DWORD i;
+
+                rects = GdipAlloc(draw->Count * sizeof(*rects));
+                if (!rects)
+                    return OutOfMemory;
+
+                for (i = 0; i < draw->Count; i++)
+                {
+                    rects[i].X = draw->RectData.rect[i].X;
+                    rects[i].Y = draw->RectData.rect[i].Y;
+                    rects[i].Width = draw->RectData.rect[i].Width;
+                    rects[i].Height = draw->RectData.rect[i].Height;
+                }
+            }
+
+            stat = GdipDrawRectangles(real_metafile->playback_graphics, real_metafile->objtable[pen].u.pen,
+                    rects ? rects : (GpRectF *)draw->RectData.rectF, draw->Count);
+            GdipFree(rects);
+            return stat;
         }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
