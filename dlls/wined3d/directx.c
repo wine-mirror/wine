@@ -4211,8 +4211,16 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
     if (gl_info->supported[ARB_TEXTURE_STORAGE] && gl_info->supported[APPLE_YCBCR_422])
     {
         /* AFAIK APPLE_ycbcr_422 is only available in legacy contexts so we shouldn't ever hit this. */
-        FIXME("Disabling APPLE_ycbcr_422 because of ARB_texture_storage.\n");
+        ERR("Disabling APPLE_ycbcr_422 because of ARB_texture_storage.\n");
         gl_info->supported[APPLE_YCBCR_422] = FALSE;
+    }
+    if (gl_info->supported[ARB_DRAW_INDIRECT] && !gl_info->supported[ARB_BASE_INSTANCE])
+    {
+        /* If ARB_base_instance is not supported the baseInstance field
+         * in indirect draw parameters must be 0 or behavior is undefined.
+         */
+        WARN("Disabling ARB_draw_indirect because ARB_base_instance is not supported.\n");
+        gl_info->supported[ARB_DRAW_INDIRECT] = FALSE;
     }
 
     wined3d_adapter_init_limits(gl_info);
