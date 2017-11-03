@@ -395,6 +395,34 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
     checkGLcall("glEnd and previous calls");
 }
 
+static void draw_indirect(struct wined3d_context *context, const struct wined3d_state *state,
+        const struct wined3d_indirect_draw_parameters *parameters, unsigned int idx_size)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_buffer *buffer = parameters->buffer;
+
+    wined3d_buffer_load(buffer, context, state);
+    GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer->buffer_object));
+
+    if (idx_size)
+    {
+        GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+        if (state->index_offset)
+            FIXME("Ignoring index offset %u.\n", state->index_offset);
+        GL_EXTCALL(glDrawElementsIndirect(state->gl_primitive_type, idx_type,
+                (void *)(GLintptr)parameters->offset));
+    }
+    else
+    {
+        GL_EXTCALL(glDrawArraysIndirect(state->gl_primitive_type,
+                (void *)(GLintptr)parameters->offset));
+    }
+
+    GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0));
+
+    checkGLcall("draw indirect");
+}
+
 static void remove_vbos(struct wined3d_context *context,
         const struct wined3d_state *state, struct wined3d_stream_info *s)
 {
@@ -645,34 +673,9 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     if (parameters->indirect)
     {
         if (!context->use_immediate_mode_draw && !emulation)
-        {
-            struct wined3d_buffer *buffer = parameters->u.indirect.buffer;
-
-            wined3d_buffer_load(buffer, context, state);
-            GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer->buffer_object));
-
-            if (idx_size)
-            {
-                GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
-                if (state->index_offset)
-                    FIXME("Ignoring index offset %u.\n", state->index_offset);
-                GL_EXTCALL(glDrawElementsIndirect(state->gl_primitive_type, idx_type,
-                        (void *)(GLintptr)parameters->u.indirect.offset));
-            }
-            else
-            {
-                GL_EXTCALL(glDrawArraysIndirect(state->gl_primitive_type,
-                        (void *)(GLintptr)parameters->u.indirect.offset));
-            }
-
-            GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0));
-
-            checkGLcall("draw indirect");
-        }
+            draw_indirect(context, state, &parameters->u.indirect, idx_size);
         else
-        {
             FIXME("Indirect draws with immediate mode/emulation are not supported.\n");
-        }
     }
     else
     {
