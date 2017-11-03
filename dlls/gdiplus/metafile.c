@@ -931,6 +931,74 @@ static BOOL is_integer_rect(const GpRectF *rect)
     return TRUE;
 }
 
+static GpStatus METAFILE_PrepareBrushData(GpBrush *brush, DWORD *size)
+{
+    switch (brush->bt)
+    {
+    case BrushTypeSolidColor:
+        *size = FIELD_OFFSET(EmfPlusBrush, BrushData) + sizeof(EmfPlusSolidBrushData);
+        break;
+    case BrushTypeHatchFill:
+        *size = FIELD_OFFSET(EmfPlusBrush, BrushData) + sizeof(EmfPlusHatchBrushData);
+        break;
+    default:
+        FIXME("unsupported brush type: %d\n", brush->bt);
+        return NotImplemented;
+    }
+
+    return Ok;
+}
+
+static void METAFILE_FillBrushData(GpBrush *brush, EmfPlusBrush *data)
+{
+    data->Version = VERSION_MAGIC2;
+    data->Type = brush->bt;
+
+    switch (brush->bt)
+    {
+    case BrushTypeSolidColor:
+    {
+        GpSolidFill *solid = (GpSolidFill *)brush;
+        data->BrushData.solid.SolidColor = solid->color;
+        break;
+    }
+    case BrushTypeHatchFill:
+    {
+        GpHatch *hatch = (GpHatch *)brush;
+        data->BrushData.hatch.HatchStyle = hatch->hatchstyle;
+        data->BrushData.hatch.ForeColor = hatch->forecol;
+        data->BrushData.hatch.BackColor = hatch->backcol;
+        break;
+    }
+    default:
+        FIXME("unsupported brush type: %d\n", brush->bt);
+    }
+}
+
+static GpStatus METAFILE_AddBrushObject(GpMetafile *metafile, GpBrush *brush, DWORD *id)
+{
+    EmfPlusObject *object_record;
+    GpStatus stat;
+    DWORD size;
+
+    *id = -1;
+    if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
+        return Ok;
+
+    stat = METAFILE_PrepareBrushData(brush, &size);
+    if (stat != Ok) return stat;
+
+    stat = METAFILE_AllocateRecord(metafile,
+        FIELD_OFFSET(EmfPlusObject, ObjectData) + size, (void**)&object_record);
+    if (stat != Ok) return stat;
+
+    *id = METAFILE_AddObjectId(metafile);
+    object_record->Header.Type = EmfPlusRecordTypeObject;
+    object_record->Header.Flags = *id | ObjectTypeBrush << 8;
+    METAFILE_FillBrushData(brush, &object_record->ObjectData.brush);
+    return Ok;
+}
+
 GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
     GDIPCONST GpRectF* rects, INT count)
 {
@@ -950,8 +1018,9 @@ GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
         }
         else
         {
-            FIXME("brush serialization not implemented\n");
-            return NotImplemented;
+            stat = METAFILE_AddBrushObject(metafile, brush, &brushid);
+            if (stat != Ok)
+                return stat;
         }
 
         for (i=0; i<count; i++)
@@ -3989,50 +4058,6 @@ static GpStatus METAFILE_AddPathObject(GpMetafile *metafile, GpPath *path, DWORD
     return Ok;
 }
 
-static GpStatus METAFILE_PrepareBrushData(GpBrush *brush, DWORD *size)
-{
-    switch (brush->bt)
-    {
-    case BrushTypeSolidColor:
-        *size = FIELD_OFFSET(EmfPlusBrush, BrushData) + sizeof(EmfPlusSolidBrushData);
-        break;
-    case BrushTypeHatchFill:
-        *size = FIELD_OFFSET(EmfPlusBrush, BrushData) + sizeof(EmfPlusHatchBrushData);
-        break;
-    default:
-        FIXME("unsupported brush type: %d\n", brush->bt);
-        return NotImplemented;
-    }
-
-    return Ok;
-}
-
-static void METAFILE_FillBrushData(GpBrush *brush, EmfPlusBrush *data)
-{
-    data->Version = VERSION_MAGIC2;
-    data->Type = brush->bt;
-
-    switch (brush->bt)
-    {
-    case BrushTypeSolidColor:
-    {
-        GpSolidFill *solid = (GpSolidFill *)brush;
-        data->BrushData.solid.SolidColor = solid->color;
-        break;
-    }
-    case BrushTypeHatchFill:
-    {
-        GpHatch *hatch = (GpHatch *)brush;
-        data->BrushData.hatch.HatchStyle = hatch->hatchstyle;
-        data->BrushData.hatch.ForeColor = hatch->forecol;
-        data->BrushData.hatch.BackColor = hatch->backcol;
-        break;
-    }
-    default:
-        FIXME("unsupported brush type: %d\n", brush->bt);
-    }
-}
-
 static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *id)
 {
     DWORD i, data_flags, pen_data_size, brush_size;
@@ -4225,30 +4250,6 @@ GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path)
     draw_path_record->PenId = pen_id;
 
     METAFILE_WriteRecords(metafile);
-    return Ok;
-}
-
-static GpStatus METAFILE_AddBrushObject(GpMetafile *metafile, GpBrush *brush, DWORD *id)
-{
-    EmfPlusObject *object_record;
-    GpStatus stat;
-    DWORD size;
-
-    *id = -1;
-    if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
-        return Ok;
-
-    stat = METAFILE_PrepareBrushData(brush, &size);
-    if (stat != Ok) return stat;
-
-    stat = METAFILE_AllocateRecord(metafile,
-        FIELD_OFFSET(EmfPlusObject, ObjectData) + size, (void**)&object_record);
-    if (stat != Ok) return stat;
-
-    *id = METAFILE_AddObjectId(metafile);
-    object_record->Header.Type = EmfPlusRecordTypeObject;
-    object_record->Header.Flags = *id | ObjectTypeBrush << 8;
-    METAFILE_FillBrushData(brush, &object_record->ObjectData.brush);
     return Ok;
 }
 
