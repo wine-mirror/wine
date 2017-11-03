@@ -2582,6 +2582,11 @@ static void test_ReadConsole(void)
 
     SetLastError(0xdeadbeef);
     ret = GetFileSize(std_input, NULL);
+    if (GetLastError() == 0xdeadbeef)
+    {
+        skip("stdin is redirected\n");
+        return;
+    }
     ok(ret == INVALID_FILE_SIZE, "expected INVALID_FILE_SIZE, got %#x\n", ret);
     ok(GetLastError() == ERROR_INVALID_HANDLE ||
        GetLastError() == ERROR_INVALID_FUNCTION, /* Win 8, 10 */
