@@ -654,6 +654,8 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
             if (idx_size)
             {
                 GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+                if (state->index_offset)
+                    FIXME("Ignoring index offset %u.\n", state->index_offset);
                 GL_EXTCALL(glDrawElementsIndirect(state->gl_primitive_type, idx_type,
                         (void *)(GLintptr)parameters->u.indirect.offset));
             }
