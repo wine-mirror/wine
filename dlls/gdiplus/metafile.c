@@ -465,6 +465,17 @@ typedef struct EmfPlusFillPath
     } data;
 } EmfPlusFillPath;
 
+typedef struct EmfPlusFillEllipse
+{
+    EmfPlusRecordHeader Header;
+    DWORD BrushId;
+    union
+    {
+        EmfPlusRect rect;
+        EmfPlusRectF rectF;
+    } RectData;
+} EmfPlusFillEllipse;
+
 typedef struct EmfPlusFont
 {
     DWORD Version;
@@ -2864,6 +2875,45 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             }
 
             stat = GdipFillPath(real_metafile->playback_graphics, brush, real_metafile->objtable[path].u.path);
+            GdipDeleteBrush((GpBrush *)solidfill);
+            return stat;
+        }
+        case EmfPlusRecordTypeFillEllipse:
+        {
+            EmfPlusFillEllipse *fill = (EmfPlusFillEllipse *)header;
+            GpSolidFill *solidfill = NULL;
+            GpBrush *brush;
+
+            if (dataSize <= FIELD_OFFSET(EmfPlusFillEllipse, RectData) - sizeof(EmfPlusRecordHeader))
+                return InvalidParameter;
+            dataSize -= FIELD_OFFSET(EmfPlusFillEllipse, RectData) - sizeof(EmfPlusRecordHeader);
+
+            if (dataSize != (flags & 0x4000 ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF)))
+                return InvalidParameter;
+
+            if (flags & 0x8000)
+            {
+                stat = GdipCreateSolidFill(fill->BrushId, (GpSolidFill **)&solidfill);
+                if (stat != Ok)
+                    return stat;
+                brush = (GpBrush *)solidfill;
+            }
+            else
+            {
+                if (fill->BrushId >= EmfPlusObjectTableSize ||
+                        real_metafile->objtable[fill->BrushId].type != ObjectTypeBrush)
+                    return InvalidParameter;
+
+                brush = real_metafile->objtable[fill->BrushId].u.brush;
+            }
+
+            if (flags & 0x4000)
+                stat = GdipFillEllipseI(real_metafile->playback_graphics, brush, fill->RectData.rect.X,
+                    fill->RectData.rect.Y, fill->RectData.rect.Width, fill->RectData.rect.Height);
+            else
+                stat = GdipFillEllipse(real_metafile->playback_graphics, brush, fill->RectData.rectF.X,
+                    fill->RectData.rectF.Y, fill->RectData.rectF.Width, fill->RectData.rectF.Height);
+
             GdipDeleteBrush((GpBrush *)solidfill);
             return stat;
         }
