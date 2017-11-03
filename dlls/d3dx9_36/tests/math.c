@@ -302,7 +302,7 @@ static void D3DXFresnelTest(void)
     BOOL equal;
 
     fresnel = D3DXFresnelTerm(0.5f, 1.5f);
-    equal = compare_float(fresnel, 8.91867056e-02f, 1);
+    equal = compare_float(fresnel, 8.91867128e-02f, 1);
     ok(equal, "Got unexpected Fresnel term %.8e.\n", fresnel);
 }
 
