@@ -476,6 +476,19 @@ typedef struct EmfPlusFillEllipse
     } RectData;
 } EmfPlusFillEllipse;
 
+typedef struct EmfPlusFillPie
+{
+    EmfPlusRecordHeader Header;
+    DWORD BrushId;
+    float StartAngle;
+    float SweepAngle;
+    union
+    {
+        EmfPlusRect rect;
+        EmfPlusRectF rectF;
+    } RectData;
+} EmfPlusFillPie;
+
 typedef struct EmfPlusFont
 {
     DWORD Version;
@@ -2913,6 +2926,47 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             else
                 stat = GdipFillEllipse(real_metafile->playback_graphics, brush, fill->RectData.rectF.X,
                     fill->RectData.rectF.Y, fill->RectData.rectF.Width, fill->RectData.rectF.Height);
+
+            GdipDeleteBrush((GpBrush *)solidfill);
+            return stat;
+        }
+        case EmfPlusRecordTypeFillPie:
+        {
+            EmfPlusFillPie *fill = (EmfPlusFillPie *)header;
+            GpSolidFill *solidfill = NULL;
+            GpBrush *brush;
+
+            if (dataSize <= FIELD_OFFSET(EmfPlusFillPie, RectData) - sizeof(EmfPlusRecordHeader))
+                return InvalidParameter;
+            dataSize -= FIELD_OFFSET(EmfPlusFillPie, RectData) - sizeof(EmfPlusRecordHeader);
+
+            if (dataSize != (flags & 0x4000 ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF)))
+                return InvalidParameter;
+
+            if (flags & 0x8000) /* S */
+            {
+                stat = GdipCreateSolidFill(fill->BrushId, (GpSolidFill **)&solidfill);
+                if (stat != Ok)
+                    return stat;
+                brush = (GpBrush *)solidfill;
+            }
+            else
+            {
+                if (fill->BrushId >= EmfPlusObjectTableSize ||
+                        real_metafile->objtable[fill->BrushId].type != ObjectTypeBrush)
+                    return InvalidParameter;
+
+                brush = real_metafile->objtable[fill->BrushId].u.brush;
+            }
+
+            if (flags & 0x4000) /* C */
+                stat = GdipFillPieI(real_metafile->playback_graphics, brush, fill->RectData.rect.X,
+                    fill->RectData.rect.Y, fill->RectData.rect.Width, fill->RectData.rect.Height,
+                    fill->StartAngle, fill->SweepAngle);
+            else
+                stat = GdipFillPie(real_metafile->playback_graphics, brush, fill->RectData.rectF.X,
+                    fill->RectData.rectF.Y, fill->RectData.rectF.Width, fill->RectData.rectF.Height,
+                    fill->StartAngle, fill->SweepAngle);
 
             GdipDeleteBrush((GpBrush *)solidfill);
             return stat;
