@@ -2010,7 +2010,8 @@ static void test_external_connection(void)
     todo_wine
     ok(external_connections == 2, "external_connections = %d\n", external_connections);
 
-    ITestSecondDisp_Release(second);
+    if (hres == S_OK)
+        ITestSecondDisp_Release(second);
     todo_wine
     ok(external_connections == 2, "external_connections = %d\n", external_connections);
 
