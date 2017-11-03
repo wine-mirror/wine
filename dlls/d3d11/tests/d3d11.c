@@ -9737,7 +9737,7 @@ static void test_instance_id(void)
     ID3D11DeviceContext_DrawInstanced(context, 4, 4, 0, 4);
 
     args_buffer = create_buffer_misc(device, 0, D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS,
-            sizeof(argument_data), &argument_data);
+            sizeof(argument_data), argument_data);
 
     ID3D11DeviceContext_DrawInstancedIndirect(context, args_buffer, 0);
     ID3D11DeviceContext_DrawInstancedIndirect(context, args_buffer, sizeof(*argument_data));
@@ -14436,8 +14436,8 @@ static void test_uint_shader_instructions(void)
 
 static void test_index_buffer_offset(void)
 {
+    ID3D11Buffer *vb, *ib, *so_buffer, *args_buffer;
     struct d3d11_test_context test_context;
-    ID3D11Buffer *vb, *ib, *so_buffer;
     ID3D11InputLayout *input_layout;
     ID3D11DeviceContext *context;
     struct resource_readback rb;
@@ -14547,6 +14547,10 @@ static void test_index_buffer_offset(void)
         {-1.0f, -1.0f, 0.0f, 1.0f}, {1.0f},
     };
     static const struct vec4 broken_result = {0.0f, 0.0f, 0.0f, 1.0f};
+    static const D3D11_DRAW_INDEXED_INSTANCED_INDIRECT_ARGS argument_data[] =
+    {
+        {4, 1, 0, 0, 0},
+    };
 
     if (!init_test_context(&test_context, &feature_level))
         return;
@@ -14603,7 +14607,36 @@ static void test_index_buffer_offset(void)
     }
     release_resource_readback(&rb);
 
+    /* indirect draws */
+    args_buffer = create_buffer_misc(device, 0, D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS,
+            sizeof(argument_data), argument_data);
+
+    offset = 0;
+    ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
+
+    ID3D11DeviceContext_IASetIndexBuffer(context, ib, DXGI_FORMAT_R32_UINT, 0);
+    ID3D11DeviceContext_DrawIndexedInstancedIndirect(context, args_buffer, 0);
+
+    ID3D11DeviceContext_IASetIndexBuffer(context, ib, DXGI_FORMAT_R32_UINT, 4 * sizeof(*indices));
+    ID3D11DeviceContext_DrawIndexedInstancedIndirect(context, args_buffer, 0);
+
+    ID3D11DeviceContext_IASetIndexBuffer(context, ib, DXGI_FORMAT_R32_UINT, 8 * sizeof(*indices));
+    ID3D11DeviceContext_DrawIndexedInstancedIndirect(context, args_buffer, 0);
+
+    get_buffer_readback(so_buffer, &rb);
+    for (i = 0; i < ARRAY_SIZE(expected_data); ++i)
+    {
+        data = get_readback_vec4(&rb, i, 0);
+        todo_wine_if(i >= 8 && i != 20 && i != 21)
+        ok(compare_vec4(data, &expected_data[i], 0)
+                || broken(is_nvidia_device(device) && !(i % 2) && compare_vec4(data, &broken_result, 0)),
+                "Got unexpected result {%.8e, %.8e, %.8e, %.8e} at %u.\n",
+                data->x, data->y, data->z, data->w, i);
+    }
+    release_resource_readback(&rb);
+
     ID3D11Buffer_Release(so_buffer);
+    ID3D11Buffer_Release(args_buffer);
     ID3D11Buffer_Release(ib);
     ID3D11Buffer_Release(vb);
     ID3D11VertexShader_Release(vs);
