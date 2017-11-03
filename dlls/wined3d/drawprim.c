@@ -401,6 +401,12 @@ static void draw_indirect(struct wined3d_context *context, const struct wined3d_
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_buffer *buffer = parameters->buffer;
 
+    if (!gl_info->supported[ARB_DRAW_INDIRECT])
+    {
+        FIXME("OpenGL implementation does not support indirect draws.\n");
+        return;
+    }
+
     wined3d_buffer_load(buffer, context, state);
     GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer->buffer_object));
 
