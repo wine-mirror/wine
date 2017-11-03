@@ -16365,9 +16365,6 @@ static const struct message send_message_2[] = {
 };
 static const struct message send_message_3[] = {
     { WM_USER+3, sent|wparam|lparam, 0, 0 },
-    { 0 }
-};
-static const struct message send_message_4[] = {
     { WM_USER+1, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
@@ -16474,15 +16471,10 @@ static void test_SendMessage_other_thread(int thread_n)
     ok(ret == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE), "wrong status %08x\n", ret);
 
     trace("main: call PeekMessage\n");
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE), "PeekMessage should not fail\n");
-    ok(msg.message == WM_USER+1, "expected WM_USER+1, got %04x\n", msg.message);
-    ok_sequence(send_message_3, "SendMessage from other thread 3", thread_n == 2);
-
-    trace("main: call PeekMessage\n");
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "PeekMessage should not fail\n");
     ok(msg.message == WM_USER+1, "expected WM_USER+1, got %04x\n", msg.message);
     DispatchMessageA(&msg);
-    ok_sequence(send_message_4, "SendMessage from other thread 4", FALSE);
+    ok_sequence(send_message_3, "SendMessage from other thread 3", thread_n == 2);
 
     /* intentionally yield */
     MsgWaitForMultipleObjects(0, NULL, FALSE, 100, qs_all_input);
