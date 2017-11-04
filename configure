@@ -14427,6 +14427,31 @@ $as_echo "$ac_cv_cflags__Wignored_qualifiers" >&6; }
 if test "x$ac_cv_cflags__Wignored_qualifiers" = xyes; then :
   EXTRACFLAGS="$EXTRACFLAGS -Wignored-qualifiers"
 fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wno-packed-not-aligned" >&5
+$as_echo_n "checking whether the compiler supports -Wno-packed-not-aligned... " >&6; }
+if ${ac_cv_cflags__Wno_packed_not_aligned+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wno-packed-not-aligned"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Wno_packed_not_aligned=yes
+else
+  ac_cv_cflags__Wno_packed_not_aligned=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wno_packed_not_aligned" >&5
+$as_echo "$ac_cv_cflags__Wno_packed_not_aligned" >&6; }
+if test "x$ac_cv_cflags__Wno_packed_not_aligned" = xyes; then :
+  EXTRACFLAGS="$EXTRACFLAGS -Wno-packed-not-aligned"
+fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wshift-overflow=2" >&5
 $as_echo_n "checking whether the compiler supports -Wshift-overflow=2... " >&6; }
 if ${ac_cv_cflags__Wshift_overflow_2+:} false; then :
