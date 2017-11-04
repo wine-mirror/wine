@@ -53,7 +53,7 @@ static int createfiltergraph(void)
 static void test_basic_video(void)
 {
     IBasicVideo* pbv;
-    LONG video_width, video_height;
+    LONG video_width, video_height, window_width;
     LONG left, top, width, height;
     HRESULT hr;
 
@@ -158,6 +158,8 @@ static void test_basic_video(void)
     ok(height == video_height/4+1, "expected %d, got %d\n", video_height/4+1, height);
 
     /* test destination rectangle */
+    window_width = max(video_width, GetSystemMetrics(SM_CXMIN) - 2 * GetSystemMetrics(SM_CXFRAME));
+
     hr = IBasicVideo_GetDestinationPosition(pbv, NULL, NULL, NULL, NULL);
     ok(hr == E_POINTER, "IBasicVideo_GetDestinationPosition returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, NULL, NULL);
@@ -168,7 +170,7 @@ static void test_basic_video(void)
     ok(hr == S_OK, "Cannot get destination position returned: %x\n", hr);
     ok(left == 0, "expected 0, got %d\n", left);
     ok(top == 0, "expected 0, got %d\n", top);
-    todo_wine ok(width == video_width, "expected %d, got %d\n", video_width, width);
+    todo_wine ok(width == window_width, "expected %d, got %d\n", window_width, width);
     todo_wine ok(height == video_height, "expected %d, got %d\n", video_height, height);
 
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, 0, 0, 0);
