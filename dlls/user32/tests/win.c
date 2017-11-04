@@ -6932,10 +6932,8 @@ static void test_gettext(void)
     memset( bufW, 0x1c, sizeof(bufW) );
     g_wm_gettext_override.dont_terminate = TRUE;
     buf_len = GetWindowTextW( hwnd, bufW, sizeof(bufW)/sizeof(bufW[0]) );
-todo_wine
     ok( buf_len == 4, "Unexpected text length, %d\n", buf_len );
     ok( !memcmp(bufW, textW, 4 * sizeof(WCHAR)), "Unexpected window text, %s\n", wine_dbgstr_w(bufW) );
-todo_wine
     ok( bufW[4] == 0, "Unexpected buffer contents, %#x\n", bufW[4] );
     g_wm_gettext_override.dont_terminate = FALSE;
 
@@ -6945,10 +6943,8 @@ todo_wine
     memset( buf, 0x1c, sizeof(buf) );
     g_wm_gettext_override.dont_terminate = TRUE;
     buf_len = GetWindowTextA( hwnd2, buf, sizeof(buf) );
-todo_wine
     ok( buf_len == 4, "Unexpected text length, %d\n", buf_len );
     ok( !memcmp(buf, "text", 4), "Unexpected window text, '%s'\n", buf );
-todo_wine
     ok( buf[4] == 0, "Unexpected buffer contents, %#x\n", buf[4] );
     g_wm_gettext_override.dont_terminate = FALSE;
 
