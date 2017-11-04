@@ -330,8 +330,7 @@ static void rungraph(void)
     hr = IMediaEvent_GetEventHandle(pme, (OAEVENT*)&hEvent);
     ok(hr==S_OK, "Cannot get event handle returned: %x\n", hr);
 
-    /* WaitForSingleObject(hEvent, INFINITE); */
-    Sleep(20000);
+    ok(WaitForSingleObject(hEvent, 2000) == WAIT_OBJECT_0, "Wait failed\n");
 
     hr = IMediaEvent_Release(pme);
     ok(hr==2, "Releasing mediaevent returned: %x\n", hr);
