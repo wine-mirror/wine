@@ -92,6 +92,12 @@ static WCHAR wszguid[] = {'g','u','i','d',0};
 
 static const BOOL is_win64 = sizeof(void *) > sizeof(int);
 
+#ifdef __i386__
+static const BOOL abi_supports_stdcall = TRUE;
+#else
+static const BOOL abi_supports_stdcall = FALSE;
+#endif
+
 static HRESULT WINAPI invoketest_QueryInterface(IInvokeTest *iface, REFIID riid, void **ret)
 {
     if (IsEqualIID(riid, &IID_IUnknown) ||
@@ -1115,7 +1121,7 @@ static void test_DispCallFunc(void)
     ok( V_UI4(&result) == 4321, "wrong result %u\n", V_UI4(&result) );
 
     /* the function checks the argument sizes for stdcall */
-    if (!is_win64)  /* no stdcall on 64-bit */
+    if (abi_supports_stdcall)
     {
         res = DispCallFunc( NULL, (ULONG_PTR)stdcall_func, CC_STDCALL, VT_UI4, 0, types, pargs, &result );
         ok( res == DISP_E_BADCALLEE, "DispCallFunc wrong error %x\n", res );
