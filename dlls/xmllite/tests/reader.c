@@ -273,7 +273,7 @@ static void test_read_state(IXmlReader *reader, XmlReadState expected,
     state = -1; /* invalid state value */
     IXmlReader_GetProperty(reader, XmlReaderProperty_ReadState, &state);
 
-    if (exp_broken == -1)
+    if (exp_broken == expected)
         broken_state = FALSE;
     else
         broken_state = broken(exp_broken == state);
@@ -282,7 +282,7 @@ static void test_read_state(IXmlReader *reader, XmlReadState expected,
             state_to_str(expected), state_to_str(state));
 }
 
-#define TEST_READER_STATE(reader, state) test_read_state(reader, state, -1, __LINE__)
+#define TEST_READER_STATE(reader, state) test_read_state(reader, state, state, __LINE__)
 #define TEST_READER_STATE2(reader, state, brk) test_read_state(reader, state, brk, __LINE__)
 
 #define reader_value(a,b) _reader_value(__LINE__,a,b)
