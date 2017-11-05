@@ -339,11 +339,6 @@ static inline void to_widechar(LPWSTR dest, LPCSTR src)
     MultiByteToWideChar(CP_ACP, 0, src, -1, dest, MAX_PATH);
 }
 
-static inline void to_multibyte(LPSTR dest, LPWSTR src)
-{
-    WideCharToMultiByte(CP_ACP, 0, src, -1, dest, MAX_PATH, NULL, NULL);
-}
-
 static void test_assembly_name_props_line(IAssemblyName *name,
                                           const ASMPROP_RES *vals, int line)
 {
