@@ -2534,7 +2534,7 @@ static void test_LookupAccountName(void)
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
     ok(sid_size != 0, "Expected non-zero sid size\n");
     ok(domain_size != 0, "Expected non-zero domain size\n");
-    ok(sid_use == 0xcafebabe, "Expected 0xcafebabe, got %d\n", sid_use);
+    ok(sid_use == (SID_NAME_USE)0xcafebabe, "Expected 0xcafebabe, got %d\n", sid_use);
 
     sid_save = sid_size;
     domain_save = domain_size;
@@ -2621,7 +2621,7 @@ static void test_LookupAccountName(void)
            "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
         ok(sid_size != 0, "Expected non-zero sid size\n");
         ok(domain_size != 0, "Expected non-zero domain size\n");
-        ok(sid_use == 0xcafebabe, "Expected 0xcafebabe, got %d\n", sid_use);
+        ok(sid_use == (SID_NAME_USE)0xcafebabe, "Expected 0xcafebabe, got %d\n", sid_use);
 
         psid = HeapAlloc(GetProcessHeap(), 0, sid_size);
         domain = HeapAlloc(GetProcessHeap(), 0, domain_size);
