@@ -743,9 +743,9 @@ static void TestMines( BOARD *p_board, POINT pt, int msg )
     case WM_RBUTTONDOWN:
         AddFlag( p_board, col, row );
         break;
-    default:
-        WINE_TRACE("Unknown message type received in TestMines\n");
-        break;
+
+    case WM_RBUTTONUP:
+        return;
     }
 
     if( draw )
