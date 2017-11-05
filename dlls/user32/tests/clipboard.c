@@ -385,6 +385,9 @@ static void test_RegisterClipboardFormatA(void)
     ok(len == lstrlenA("my_cool_clipboard_format"), "wrong format name length %d\n", len);
     ok(!lstrcmpA(buf, "my_cool_clipboard_format"), "wrong format name \"%s\"\n", buf);
 
+    len = GetClipboardFormatNameA(format_id, NULL, 0);
+    ok(len == 0, "wrong format name length %d\n", len);
+
     lstrcpyA(buf, "foo");
     SetLastError(0xdeadbeef);
     len = GetAtomNameA((ATOM)format_id, buf, 256);
