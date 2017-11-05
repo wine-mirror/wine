@@ -867,7 +867,7 @@ static LRESULT CALLBACK edit3_wnd_procA(HWND hWnd, UINT msg, WPARAM wParam, LPAR
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
 
-/* Test behaviour of WM_SETTEXT, WM_REPLACESEL and notificatisons sent in response
+/* Test behaviour of WM_SETTEXT, WM_REPLACESEL and notifications sent in response
  * to these messages.
  */
 static void test_edit_control_3(void)
@@ -967,6 +967,19 @@ static void test_edit_control_3(void)
     SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str);
     len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
     ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    test_notify(1, 0, 1);
+
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)"");
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str2) == len, "text shouldn't have been truncated\n");
+    test_notify(1, 0, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str2) == len, "text shouldn't have been truncated\n");
     test_notify(1, 0, 1);
 
     SendMessageA(hWnd, EM_SETLIMITTEXT, 5, 0);
@@ -2831,6 +2844,74 @@ static void test_EM_GETHANDLE(void)
     DestroyWindow(hEdit);
 }
 
+static void test_paste(void)
+{
+    HWND hEdit, hMultilineEdit;
+    HANDLE hmem, hmem_ret;
+    char *buffer;
+    int r, len;
+    static const char *str = "this is a simple text";
+    static const char *str2 = "first line\r\nsecond line";
+
+    hEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
+    hMultilineEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL | ES_MULTILINE, 0);
+
+    /* Prepare clipboard data with simple text */
+    hmem = GlobalAlloc(GMEM_MOVEABLE, 255);
+    ok(hmem != NULL, "got %p (expected != NULL)\n", hmem);
+    buffer = GlobalLock(hmem);
+    ok(buffer != NULL, "got %p (expected != NULL)\n", buffer);
+    strcpy(buffer, str);
+    GlobalUnlock(hmem);
+
+    r = OpenClipboard(hEdit);
+    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    r = EmptyClipboard();
+    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    hmem_ret = SetClipboardData(CF_TEXT, hmem);
+    ok(hmem_ret == hmem, "expected %p, got %p\n", hmem, hmem_ret);
+    r = CloseClipboard();
+    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+
+    /* Paste single line */
+    SendMessageA(hEdit, WM_SETTEXT, 0, (LPARAM)"");
+    r = SendMessageA(hEdit, WM_PASTE, 0, 0);
+    len = SendMessageA(hEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(strlen(str) == len, "expected %d, got %d\n", strlen(str), len);
+
+    /* Prepare clipboard data with multiline text */
+    hmem = GlobalAlloc(GMEM_MOVEABLE, 255);
+    ok(hmem != NULL, "got %p (expected != NULL)\n", hmem);
+    buffer = GlobalLock(hmem);
+    ok(buffer != NULL, "got %p (expected != NULL)\n", buffer);
+    strcpy(buffer, str2);
+    GlobalUnlock(hmem);
+
+    r = OpenClipboard(hEdit);
+    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    r = EmptyClipboard();
+    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    hmem_ret = SetClipboardData(CF_TEXT, hmem);
+    ok(hmem_ret == hmem, "expected %p, got %p\n", hmem, hmem_ret);
+    r = CloseClipboard();
+    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+
+    /* Paste multiline text in singleline edit - should be cut */
+    SendMessageA(hEdit, WM_SETTEXT, 0, (LPARAM)"");
+    r = SendMessageA(hEdit, WM_PASTE, 0, 0);
+    len = SendMessageA(hEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(strlen("first line") == len, "expected %d, got %d\n", strlen("first line"), len);
+
+    /* Paste multiline text in multiline edit */
+    SendMessageA(hMultilineEdit, WM_SETTEXT, 0, (LPARAM)"");
+    r = SendMessageA(hMultilineEdit, WM_PASTE, 0, 0);
+    len = SendMessageA(hMultilineEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(strlen(str2) == len, "expected %d, got %d\n", strlen(str2), len);
+
+    /* Cleanup */
+    DestroyWindow(hEdit);
+    DestroyWindow(hMultilineEdit);
+}
 
 START_TEST(edit)
 {
@@ -2871,6 +2952,7 @@ START_TEST(edit)
         win_skip("EndMenu is not available\n");
 
     test_EM_GETHANDLE();
+    test_paste();
 
     UnregisterWindowClasses();
 }
