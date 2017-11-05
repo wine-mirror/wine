@@ -470,6 +470,10 @@ static HRESULT read_clipformat(IStream *stream, CLIPFORMAT *clipformat)
     hr = IStream_Read(stream, &length, sizeof(length), &read);
     if (hr != S_OK || read != sizeof(length))
         return DV_E_CLIPFORMAT;
+    if (!length) {
+        /* No clipboard format present */
+        return S_OK;
+    }
     if (length == -1)
     {
         DWORD cf;
@@ -499,11 +503,16 @@ static HRESULT write_clipformat(IStream *stream, CLIPFORMAT clipformat)
 {
     DWORD length;
     HRESULT hr;
+    char format_name[256];
 
     if (clipformat < 0xc000)
         length = -1;
     else
-        length = GetClipboardFormatNameA(clipformat, NULL, 0);
+    {
+        length = GetClipboardFormatNameA(clipformat, format_name, sizeof(format_name));
+        /* If there is a clipboard format name, we need to include its terminating \0 */
+        if (length) length++;
+    }
     hr = IStream_Write(stream, &length, sizeof(length), NULL);
     if (FAILED(hr))
         return hr;
@@ -514,12 +523,7 @@ static HRESULT write_clipformat(IStream *stream, CLIPFORMAT clipformat)
     }
     else
     {
-        char *format_name = HeapAlloc(GetProcessHeap(), 0, length);
-        if (!format_name)
-            return E_OUTOFMEMORY;
-        GetClipboardFormatNameA(clipformat, format_name, length);
         hr = IStream_Write(stream, format_name, length, NULL);
-        HeapFree(GetProcessHeap(), 0, format_name);
     }
     return hr;
 }
