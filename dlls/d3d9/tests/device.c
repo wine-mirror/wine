@@ -5561,7 +5561,9 @@ static void test_query_support(void)
 
     for (i = 0; i < 40; ++i)
     {
-        if (D3DQUERYTYPE_VCACHE <= i && i <= D3DQUERYTYPE_MEMORYPRESSURE)
+        /* Windows 10 17.09 (build 16299.19) added an undocumented query with an enum value of 0x16 (=22).
+         * It returns D3D_OK when asking for support and E_FAIL when trying to actually create it. */
+        if ((D3DQUERYTYPE_VCACHE <= i && i <= D3DQUERYTYPE_MEMORYPRESSURE) || i == 0x16)
             continue;
 
         hr = IDirect3DDevice9_CreateQuery(device, i, NULL);
