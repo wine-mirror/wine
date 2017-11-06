@@ -255,3 +255,4 @@ cpp_quote("HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver);"
 cpp_quote("HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD cMediaTypes,")
 cpp_quote("     IMFMediaType **types, IMFStreamDescriptor **descriptor);")
 cpp_quote("HRESULT WINAPI MFCreateTopology(IMFTopology **topology);")
+cpp_quote("HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *array);")

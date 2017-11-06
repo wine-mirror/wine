@@ -73,7 +73,7 @@
 @ stub MFEnumDeviceSources
 @ stub MFGetMultipleServiceProviders
 @ stub MFGetService
-@ stub MFGetSupportedMimeTypes
+@ stdcall MFGetSupportedMimeTypes(ptr)
 @ stub MFGetSupportedSchemes
 @ stub MFGetTopoNodeCurrentType
 @ stub MFReadSequencerSegmentOffset
