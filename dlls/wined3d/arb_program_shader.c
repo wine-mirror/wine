@@ -877,7 +877,7 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
     /* After subtracting privately used constants from the hardware limit(they are loaded as
      * local constants), make sure the shader doesn't violate the env constant limit
      */
-    if(pshader)
+    if (pshader)
     {
         max_constantsF = min(max_constantsF, gl_info->limits.arb_ps_float_constants);
     }
@@ -905,10 +905,7 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
     {
         for (i = 0; i < max_constantsF; ++i)
         {
-            DWORD idx, mask;
-            idx = i >> 5;
-            mask = 1u << (i & 0x1fu);
-            if (!shader_constant_is_local(shader, i) && (reg_maps->constf[idx] & mask))
+            if (!shader_constant_is_local(shader, i) && wined3d_extract_bits(reg_maps->constf, i, 1))
             {
                 shader_addline(buffer, "PARAM C%d = program.env[%d];\n",i, i);
             }
