@@ -6014,9 +6014,41 @@ static void shader_glsl_sample(const struct wined3d_shader_instruction *ins)
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
 
+/* GLSL doesn't provide a function to sample from level zero with depth
+ * comparison for array textures and cube textures. We use textureGrad*()
+ * to implement sample_c_lz.
+ */
+static void shader_glsl_gen_sample_c_lz(const struct wined3d_shader_instruction *ins,
+        unsigned int sampler_bind_idx, const struct glsl_sample_function *sample_function,
+        unsigned int coord_size, const char *coord_param, const char *ref_param)
+{
+    const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
+    unsigned int deriv_size = wined3d_popcount(sample_function->deriv_mask);
+    const struct wined3d_shader_texel_offset *offset = &ins->texel_offset;
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
+    char dst_swizzle[6];
+
+    WARN("Emitting textureGrad() for sample_c_lz.\n");
+
+    shader_glsl_swizzle_to_str(WINED3DSP_NOSWIZZLE, FALSE, ins->dst[0].write_mask, dst_swizzle);
+    shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0], sample_function->data_type);
+    shader_addline(buffer, "vec4(textureGrad%s(%s_sampler%u, vec%u(%s, %s), vec%u(0.0), vec%u(0.0)",
+            sample_function->offset_size ? "Offset" : "",
+            shader_glsl_get_prefix(version->type), sampler_bind_idx,
+            coord_size, coord_param, ref_param, deriv_size, deriv_size);
+    if (sample_function->offset_size)
+    {
+        int offset_immdata[4] = {offset->u, offset->v, offset->w};
+        shader_addline(buffer, ", ");
+        shader_glsl_append_imm_ivec(buffer, offset_immdata, sample_function->offset_size);
+    }
+    shader_addline(buffer, "))%s);\n", dst_swizzle);
+}
+
 static void shader_glsl_sample_c(const struct wined3d_shader_instruction *ins)
 {
     unsigned int resource_idx, sampler_idx, sampler_bind_idx;
+    const struct wined3d_shader_resource_info *resource_info;
     struct glsl_src_param coord_param, compare_param;
     struct glsl_sample_function sample_function;
     const char *lod_param = NULL;
@@ -6032,6 +6064,8 @@ static void shader_glsl_sample_c(const struct wined3d_shader_instruction *ins)
     if (wined3d_shader_instruction_has_texel_offset(ins))
         flags |= WINED3D_GLSL_SAMPLE_OFFSET;
 
+    if (!(resource_info = shader_glsl_get_resource_info(ins, &ins->src[1].reg)))
+        return;
     resource_idx = ins->src[1].reg.idx[0].offset;
     sampler_idx = ins->src[2].reg.idx[0].offset;
 
@@ -6040,9 +6074,19 @@ static void shader_glsl_sample_c(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask >> 1, &coord_param);
     shader_glsl_add_src_param(ins, &ins->src[3], WINED3DSP_WRITEMASK_0, &compare_param);
     sampler_bind_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map, resource_idx, sampler_idx);
-    shader_glsl_gen_sample_code(ins, sampler_bind_idx, &sample_function, WINED3DSP_NOSWIZZLE,
-            NULL, NULL, lod_param, &ins->texel_offset, "vec%u(%s, %s)",
-            coord_size, coord_param.param_str, compare_param.param_str);
+    if (ins->handler_idx == WINED3DSIH_SAMPLE_C_LZ
+            && (resource_info->type == WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY
+            || resource_info->type == WINED3D_SHADER_RESOURCE_TEXTURE_CUBE))
+    {
+        shader_glsl_gen_sample_c_lz(ins, sampler_bind_idx, &sample_function,
+                coord_size, coord_param.param_str, compare_param.param_str);
+    }
+    else
+    {
+        shader_glsl_gen_sample_code(ins, sampler_bind_idx, &sample_function, WINED3DSP_NOSWIZZLE,
+                NULL, NULL, lod_param, &ins->texel_offset, "vec%u(%s, %s)",
+                coord_size, coord_param.param_str, compare_param.param_str);
+    }
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
 
