@@ -178,6 +178,8 @@ static void SaveBoard( BOARD *p_board )
         RegSetValueExW( hkey, key_name, 0, REG_DWORD, (LPBYTE) &p_board->best_time[i], sizeof(p_board->best_time[i]) );
     }
     RegCloseKey( hkey );
+
+    WINE_TRACE("Board has been saved.\n");
 }
 
 static void DestroyBoard( BOARD *p_board )
@@ -823,6 +825,7 @@ static void TestBoard( HWND hWnd, BOARD *p_board, int x, int y, int msg )
 
             DialogBoxParamW( p_board->hInst, MAKEINTRESOURCEW(DLG_CONGRATS), hWnd,
                              CongratsDlgProc, (LPARAM) p_board);
+            SaveBoard( p_board );
             DialogBoxParamW( p_board->hInst, MAKEINTRESOURCEW(DLG_TIMES), hWnd,
                              TimesDlgProc, (LPARAM) p_board);
         }
