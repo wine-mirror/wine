@@ -11188,6 +11188,81 @@ static void D3DXCreateAnimationControllerTest(void)
     animation->lpVtbl->Release(animation);
 }
 
+static void test_D3DXFrameFind(void)
+{
+    static char n1[] = "name1";
+    static char n2[] = "name2";
+    static char n3[] = "name3";
+    static char n4[] = "name4";
+    static char n5[] = "name5";
+    static char n6[] = "name6";
+    static char N1[] = "Name1";
+    D3DXFRAME root, sibling, sibling2, child, *ret;
+    D3DXFRAME child2, child3;
+
+    ret = D3DXFrameFind(NULL, NULL);
+    ok(ret == NULL, "Unexpected frame, %p.\n", ret);
+
+    ret = D3DXFrameFind(NULL, "test");
+    ok(ret == NULL, "Unexpected frame, %p.\n", ret);
+
+    memset(&root, 0, sizeof(root));
+
+    ret = D3DXFrameFind(&root, NULL);
+    ok(ret == &root, "Unexpected frame, %p.\n", ret);
+
+    root.Name = n1;
+    ret = D3DXFrameFind(&root, NULL);
+    ok(ret == NULL, "Unexpected frame, %p.\n", ret);
+
+    ret = D3DXFrameFind(&root, n1);
+    ok(ret == &root, "Unexpected frame, %p.\n", ret);
+
+    ret = D3DXFrameFind(&root, N1);
+    ok(ret == NULL, "Unexpected frame, %p.\n", ret);
+
+    /* Test siblings order traversal. */
+    memset(&sibling, 0, sizeof(sibling));
+    sibling.Name = n2;
+    root.pFrameSibling = &sibling;
+    ret = D3DXFrameFind(&root, n2);
+    ok(ret == &sibling, "Unexpected frame, %p.\n", ret);
+
+    memset(&sibling2, 0, sizeof(sibling2));
+    sibling2.Name = n2;
+    sibling.pFrameSibling = &sibling2;
+    ret = D3DXFrameFind(&root, n2);
+    ok(ret == &sibling, "Unexpected frame, %p.\n", ret);
+
+    sibling2.Name = n3;
+    ret = D3DXFrameFind(&root, n3);
+    ok(ret == &sibling2, "Unexpected frame, %p.\n", ret);
+
+    /* Siblings first. */
+    memset(&child, 0, sizeof(child));
+    child.Name = n2;
+    root.pFrameFirstChild = &child;
+    ret = D3DXFrameFind(&root, n2);
+    ok(ret == &sibling, "Unexpected frame, %p.\n", ret);
+
+    child.Name = n4;
+    ret = D3DXFrameFind(&root, n4);
+    ok(ret == &child, "Unexpected frame, %p.\n", ret);
+
+    /* Link a grandchild and another one for sibling. */
+    memset(&child2, 0, sizeof(child2));
+    memset(&child3, 0, sizeof(child3));
+    child2.Name = child3.Name = n5;
+    sibling.pFrameFirstChild = &child2;
+    child.pFrameFirstChild = &child3;
+    ret = D3DXFrameFind(&root, n5);
+    ok(ret == &child2, "Unexpected frame, %p.\n", ret);
+
+    child3.Name = n6;
+    ret = D3DXFrameFind(&root, n6);
+    ok(ret == &child3, "Unexpected frame, %p.\n", ret);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -11218,4 +11293,5 @@ START_TEST(mesh)
     test_valid_mesh();
     test_optimize_faces();
     test_compute_normals();
+    test_D3DXFrameFind();
 }
