@@ -822,8 +822,40 @@ static HRESULT Global_LBound(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
 
 static HRESULT Global_UBound(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SAFEARRAY *sa;
+    HRESULT hres;
+    LONG ubound;
+    int dim;
+
+    assert(args_cnt == 1 || args_cnt == 2);
+
+    TRACE("%s %s\n", debugstr_variant(arg), args_cnt == 2 ? debugstr_variant(arg + 1) : "1");
+
+    switch(V_VT(arg)) {
+    case VT_VARIANT|VT_ARRAY:
+        sa = V_ARRAY(arg);
+        break;
+    case VT_VARIANT|VT_ARRAY|VT_BYREF:
+        sa = *V_ARRAYREF(arg);
+        break;
+    default:
+        FIXME("arg %s not supported\n", debugstr_variant(arg));
+        return E_NOTIMPL;
+    }
+
+    if(args_cnt == 2) {
+        hres = to_int(arg + 1, &dim);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        dim = 1;
+    }
+
+    hres = SafeArrayGetUBound(sa, dim, &ubound);
+    if(FAILED(hres))
+        return hres;
+
+    return return_int(res, ubound);
 }
 
 static HRESULT Global_RGB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -2256,7 +2288,7 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_RND,                       Global_Rnd, 0, 1},
     {DISPID_GLOBAL_TIMER,                     Global_Timer, 0, 0},
     {DISPID_GLOBAL_LBOUND,                    Global_LBound, 0, 1},
-    {DISPID_GLOBAL_UBOUND,                    Global_UBound, 0, 1},
+    {DISPID_GLOBAL_UBOUND,                    Global_UBound, 0, 1, 2},
     {DISPID_GLOBAL_RGB,                       Global_RGB, 0, 3},
     {DISPID_GLOBAL_LEN,                       Global_Len, 0, 1},
     {DISPID_GLOBAL_LENB,                      Global_LenB, 0, 1},

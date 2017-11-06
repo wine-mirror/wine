@@ -227,6 +227,16 @@ new_array = x
 x(0) = "new value"
 Call ok(new_array(0) = "a1", "new_array(0) = " & new_array(0))
 
+Call ok(getVT(UBound(x)) = "VT_I4", "getVT(UBound(x)) = " & getVT(UBound(x)))
+Call ok(UBound(x) = 2, "UBound(x) = " & UBound(x))
+Call ok(getVT(UBound(x, 1)) = "VT_I4", "getVT(UBound(x, 1)) = " & getVT(UBound(x, 1)))
+Call ok(UBound(x, 1) = 2, "UBound(x) = " & UBound(x, 1))
+
+Dim arr2(2, 4)
+Call ok(UBound(arr2) = 2, "UBound(x) = " & UBound(x))
+Call ok(UBound(arr2, 1) = 2, "UBound(x) = " & UBound(x))
+Call ok(UBound(arr2, 2) = 4, "UBound(x) = " & UBound(x))
+
 Dim newObject
 Set newObject = New ValClass
 newObject.myval = 1
