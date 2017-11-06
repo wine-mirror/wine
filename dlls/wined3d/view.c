@@ -712,6 +712,10 @@ static void wined3d_shader_resource_view_cs_init(void *object)
         {
             create_texture_view(&view->gl_view, view_target, desc, texture, view_format);
         }
+        else if (wined3d_format_is_depth_view(resource->format->id, view_format->id))
+        {
+            create_texture_view(&view->gl_view, view_target, desc, texture, resource->format);
+        }
         else
         {
             FIXME("Shader resource view not supported, resource format %s, view format %s.\n",
