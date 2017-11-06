@@ -4,6 +4,7 @@
  * Copyright 2002 Martin Wilck
  * Copyright 2005 Thomas Kho
  * Copyright 2008 Jeff Zaroyko
+ * Copyright 2017 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -87,6 +88,9 @@ static int   (WINAPI *pWSAPoll)(WSAPOLLFD *,ULONG,INT);
 /* Function pointers from iphlpapi */
 static DWORD (WINAPI *pGetAdaptersInfo)(PIP_ADAPTER_INFO,PULONG);
 static DWORD (WINAPI *pGetIpForwardTable)(PMIB_IPFORWARDTABLE,PULONG,BOOL);
+
+/* Function pointers from ntdll */
+static DWORD (WINAPI *pNtClose)(HANDLE);
 
 /**************** Structs and typedefs ***************/
 
@@ -263,6 +267,56 @@ static int tcp_socketpair(SOCKET *src, SOCKET *dst)
 
     len = sizeof(addr);
     *dst = accept(server, (struct sockaddr*)&addr, &len);
+
+end:
+    if (server != INVALID_SOCKET)
+        closesocket(server);
+    if (*src != INVALID_SOCKET && *dst != INVALID_SOCKET)
+        return 0;
+    closesocket(*src);
+    closesocket(*dst);
+    return -1;
+}
+
+static int tcp_socketpair_ovl(SOCKET *src, SOCKET *dst)
+{
+    SOCKET server = INVALID_SOCKET;
+    struct sockaddr_in addr;
+    int len, ret;
+
+    *src = INVALID_SOCKET;
+    *dst = INVALID_SOCKET;
+
+    *src = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    if (*src == INVALID_SOCKET)
+        goto end;
+
+    server = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    if (server == INVALID_SOCKET)
+        goto end;
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ret = bind(server, (struct sockaddr *)&addr, sizeof(addr));
+    if (ret != 0)
+        goto end;
+
+    len = sizeof(addr);
+    ret = getsockname(server, (struct sockaddr *)&addr, &len);
+    if (ret != 0)
+        goto end;
+
+    ret = listen(server, 1);
+    if (ret != 0)
+        goto end;
+
+    ret = connect(*src, (struct sockaddr *)&addr, sizeof(addr));
+    if (ret != 0)
+        goto end;
+
+    len = sizeof(addr);
+    *dst = accept(server, (struct sockaddr *)&addr, &len);
 
 end:
     if (server != INVALID_SOCKET)
@@ -1227,7 +1281,7 @@ static void Init (void)
 {
     WORD ver = MAKEWORD (2, 2);
     WSADATA data;
-    HMODULE hws2_32 = GetModuleHandleA("ws2_32.dll"), hiphlpapi;
+    HMODULE hws2_32 = GetModuleHandleA("ws2_32.dll"), hiphlpapi, ntdll;
 
     pfreeaddrinfo = (void *)GetProcAddress(hws2_32, "freeaddrinfo");
     pgetaddrinfo = (void *)GetProcAddress(hws2_32, "getaddrinfo");
@@ -1253,6 +1307,10 @@ static void Init (void)
         pGetIpForwardTable = (void *)GetProcAddress(hiphlpapi, "GetIpForwardTable");
         pGetAdaptersInfo = (void *)GetProcAddress(hiphlpapi, "GetAdaptersInfo");
     }
+
+    ntdll = LoadLibraryA("ntdll.dll");
+    if (ntdll)
+        pNtClose = (void *)GetProcAddress(ntdll, "NtClose");
 
     ok ( WSAStartup ( ver, &data ) == 0, "WSAStartup failed\n" );
     tls = TlsAlloc();
@@ -10793,7 +10851,646 @@ todo_wine
     HeapFree(GetProcessHeap(), 0, name);
 }
 
-/**************** Main program  ***************/
+static void sync_read(SOCKET src, SOCKET dst)
+{
+    int ret;
+    char data[512];
+
+    ret = send(dst, "Hello World!", 12, 0);
+    ok(ret == 12, "send returned %d\n", ret);
+
+    memset(data, 0, sizeof(data));
+    ret = recv(src, data, sizeof(data), 0);
+    ok(ret == 12, "expected 12, got %d\n", ret);
+    ok(!memcmp(data, "Hello World!", 12), "got %u bytes (%*s)\n", ret, ret, data);
+}
+
+static void iocp_async_read(SOCKET src, SOCKET dst)
+{
+    HANDLE port;
+    WSAOVERLAPPED ovl, *ovl_iocp;
+    WSABUF buf;
+    int ret;
+    char data[512];
+    DWORD flags, bytes;
+    ULONG_PTR key;
+
+    memset(data, 0, sizeof(data));
+    memset(&ovl, 0, sizeof(ovl));
+
+    port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
+    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+
+    buf.len = sizeof(data);
+    buf.buf = data;
+    bytes = 0xdeadbeef;
+    flags = 0;
+    SetLastError(0xdeadbeef);
+    ret = WSARecv(src, &buf, 1, &bytes, &flags, &ovl, NULL);
+    ok(ret == SOCKET_ERROR, "got %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(key == 0xdeadbeef, "got key %#lx\n", key);
+    ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+
+    ret = send(dst, "Hello World!", 12, 0);
+    ok(ret == 12, "send returned %d\n", ret);
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = NULL;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(ret, "got %d\n", ret);
+    ok(bytes == 12, "got bytes %u\n", bytes);
+    ok(key == 0x12345678, "got key %#lx\n", key);
+    ok(ovl_iocp == &ovl, "got ovl %p\n", ovl_iocp);
+    if (ovl_iocp)
+    {
+        ok(ovl_iocp->InternalHigh == 12, "got %#lx\n", ovl_iocp->InternalHigh);
+        ok(!ovl_iocp->Internal , "got %#lx\n", ovl_iocp->Internal);
+        ok(!memcmp(data, "Hello World!", 12), "got %u bytes (%*s)\n", bytes, bytes, data);
+    }
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(key == 0xdeadbeef, "got key %#lx\n", key);
+    ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+
+    CloseHandle(port);
+}
+
+static void iocp_async_read_closesocket(SOCKET src, int how_to_close)
+{
+    HANDLE port;
+    WSAOVERLAPPED ovl, *ovl_iocp;
+    WSABUF buf;
+    int ret;
+    char data[512];
+    DWORD flags, bytes;
+    ULONG_PTR key;
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
+                           0, 0, 0, 0, NULL, NULL, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx failed\n");
+
+    ret = WSAAsyncSelect(src, hwnd, WM_SOCKET, FD_READ | FD_WRITE | FD_OOB | FD_ACCEPT | FD_CONNECT | FD_CLOSE);
+    ok(!ret, "got %d\n", ret);
+
+    Sleep(100);
+    memset(&msg, 0, sizeof(msg));
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(ret, "got %d\n", ret);
+    ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
+    ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
+    ok(msg.wParam == src, "got %08lx\n", msg.wParam);
+    ok(msg.lParam == 2, "got %08lx\n", msg.lParam);
+
+    memset(data, 0, sizeof(data));
+    memset(&ovl, 0, sizeof(ovl));
+
+    port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
+    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    buf.len = sizeof(data);
+    buf.buf = data;
+    bytes = 0xdeadbeef;
+    flags = 0;
+    SetLastError(0xdeadbeef);
+    ret = WSARecv(src, &buf, 1, &bytes, &flags, &ovl, NULL);
+    ok(ret == SOCKET_ERROR, "got %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(key == 0xdeadbeef, "got key %#lx\n", key);
+    ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    switch (how_to_close)
+    {
+    case 0:
+        closesocket(src);
+        break;
+    case 1:
+        CloseHandle((HANDLE)src);
+        break;
+    case 2:
+        pNtClose((HANDLE)src);
+        break;
+    default:
+        ok(0, "wrong value %d\n", how_to_close);
+        break;
+    }
+
+    Sleep(200);
+    memset(&msg, 0, sizeof(msg));
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    switch (how_to_close)
+    {
+    case 0:
+        ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+        break;
+    case 1:
+    case 2:
+todo_wine
+{
+        ok(ret, "got %d\n", ret);
+        ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
+        ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
+        ok(msg.wParam == src, "got %08lx\n", msg.wParam);
+        ok(msg.lParam == 0x20, "got %08lx\n", msg.lParam);
+}
+        break;
+    default:
+        ok(0, "wrong value %d\n", how_to_close);
+        break;
+    }
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = NULL;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+todo_wine
+    ok(GetLastError() == ERROR_CONNECTION_ABORTED || GetLastError() == ERROR_NETNAME_DELETED /* XP */, "got %u\n", GetLastError());
+    ok(!bytes, "got bytes %u\n", bytes);
+    ok(key == 0x12345678, "got key %#lx\n", key);
+    ok(ovl_iocp == &ovl, "got ovl %p\n", ovl_iocp);
+    if (ovl_iocp)
+    {
+        ok(!ovl_iocp->InternalHigh, "got %#lx\n", ovl_iocp->InternalHigh);
+todo_wine
+        ok(ovl_iocp->Internal == (ULONG)STATUS_CONNECTION_ABORTED || ovl_iocp->Internal == (ULONG)STATUS_LOCAL_DISCONNECT /* XP */, "got %#lx\n", ovl_iocp->Internal);
+    }
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(key == 0xdeadbeef, "got key %#lx\n", key);
+    ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+
+    CloseHandle(port);
+
+    DestroyWindow(hwnd);
+}
+
+static void iocp_async_closesocket(SOCKET src)
+{
+    HANDLE port;
+    WSAOVERLAPPED *ovl_iocp;
+    int ret;
+    DWORD bytes;
+    ULONG_PTR key;
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
+                           0, 0, 0, 0, NULL, NULL, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx failed\n");
+
+    ret = WSAAsyncSelect(src, hwnd, WM_SOCKET, FD_READ | FD_WRITE | FD_OOB | FD_ACCEPT | FD_CONNECT | FD_CLOSE);
+    ok(!ret, "got %d\n", ret);
+
+    Sleep(100);
+    memset(&msg, 0, sizeof(msg));
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(ret, "got %d\n", ret);
+    ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
+    ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
+    ok(msg.wParam == src, "got %08lx\n", msg.wParam);
+    ok(msg.lParam == 2, "got %08lx\n", msg.lParam);
+
+    port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
+    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(key == 0xdeadbeef, "got key %lu\n", key);
+    ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    closesocket(src);
+
+    Sleep(100);
+    memset(&msg, 0, sizeof(msg));
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(key == 0xdeadbeef, "got key %lu\n", key);
+    ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+
+    CloseHandle(port);
+
+    DestroyWindow(hwnd);
+}
+
+struct wsa_async_select_info
+{
+    SOCKET sock;
+    HWND hwnd;
+};
+
+static DWORD WINAPI wsa_async_select_thread(void *param)
+{
+    struct wsa_async_select_info *info = param;
+    int ret;
+
+    ret = WSAAsyncSelect(info->sock, info->hwnd, WM_SOCKET, FD_READ | FD_WRITE | FD_OOB | FD_ACCEPT | FD_CONNECT | FD_CLOSE);
+    ok(!ret, "got %d\n", ret);
+
+    return 0;
+}
+
+struct wsa_recv_info
+{
+    SOCKET sock;
+    WSABUF wsa_buf;
+    WSAOVERLAPPED ovl;
+};
+
+static DWORD WINAPI wsa_recv_thread(void *param)
+{
+    struct wsa_recv_info *info = param;
+    int ret;
+    DWORD flags, bytes;
+
+    bytes = 0xdeadbeef;
+    flags = 0;
+    SetLastError(0xdeadbeef);
+    ret = WSARecv(info->sock, &info->wsa_buf, 1, &bytes, &flags, &info->ovl, NULL);
+    ok(ret == SOCKET_ERROR, "got %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+
+    return 0;
+}
+
+static void iocp_async_read_thread_closesocket(SOCKET src)
+{
+    struct wsa_async_select_info select_info;
+    struct wsa_recv_info recv_info;
+    HANDLE port, thread;
+    WSAOVERLAPPED *ovl_iocp;
+    int ret;
+    char data[512];
+    DWORD bytes, tid;
+    ULONG_PTR key;
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
+                           0, 0, 0, 0, NULL, NULL, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx failed\n");
+
+    select_info.sock = src;
+    select_info.hwnd = hwnd;
+    thread = CreateThread(NULL, 0, wsa_async_select_thread, &select_info, 0, &tid);
+    ok(thread != 0, "CreateThread error %u\n", GetLastError());
+    ret = WaitForSingleObject(thread, 10000);
+    ok(ret == WAIT_OBJECT_0, "thread failed to terminate\n");
+
+    Sleep(100);
+    memset(&msg, 0, sizeof(msg));
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(ret, "got %d\n", ret);
+    ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
+    ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
+    ok(msg.wParam == src, "got %08lx\n", msg.wParam);
+    ok(msg.lParam == 2, "got %08lx\n", msg.lParam);
+
+    port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
+    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    memset(data, 0, sizeof(data));
+    memset(&recv_info.ovl, 0, sizeof(recv_info.ovl));
+    recv_info.sock = src;
+    recv_info.wsa_buf.len = sizeof(data);
+    recv_info.wsa_buf.buf = data;
+    thread = CreateThread(NULL, 0, wsa_recv_thread, &recv_info, 0, &tid);
+    ok(thread != 0, "CreateThread error %u\n", GetLastError());
+    ret = WaitForSingleObject(thread, 10000);
+    ok(ret == WAIT_OBJECT_0, "thread failed to terminate\n");
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == WAIT_TIMEOUT || broken(GetLastError() == ERROR_OPERATION_ABORTED) /* XP */,
+       "got %u\n", GetLastError());
+    if (GetLastError() == WAIT_TIMEOUT)
+    {
+        ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+        ok(key == 0xdeadbeef, "got key %lx\n", key);
+        ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+    }
+    else /* document XP behaviour */
+    {
+        ok(!bytes, "got bytes %u\n", bytes);
+        ok(key == 0x12345678, "got key %#lx\n", key);
+        ok(ovl_iocp == &recv_info.ovl, "got ovl %p\n", ovl_iocp);
+        if (ovl_iocp)
+        {
+            ok(!ovl_iocp->InternalHigh, "got %#lx\n", ovl_iocp->InternalHigh);
+            ok(ovl_iocp->Internal == STATUS_CANCELLED, "got %#lx\n", ovl_iocp->Internal);
+        }
+
+        closesocket(src);
+        goto xp_is_broken;
+    }
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    closesocket(src);
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = NULL;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+todo_wine
+    ok(GetLastError() == ERROR_CONNECTION_ABORTED || GetLastError() == ERROR_NETNAME_DELETED /* XP */, "got %u\n", GetLastError());
+todo_wine
+    ok(!bytes, "got bytes %u\n", bytes);
+todo_wine
+    ok(key == 0x12345678, "got key %#lx\n", key);
+todo_wine
+    ok(ovl_iocp == &recv_info.ovl, "got ovl %p\n", ovl_iocp);
+    if (ovl_iocp)
+    {
+        ok(!ovl_iocp->InternalHigh, "got %#lx\n", ovl_iocp->InternalHigh);
+        ok(ovl_iocp->Internal == (ULONG)STATUS_CONNECTION_ABORTED || ovl_iocp->Internal == (ULONG)STATUS_LOCAL_DISCONNECT /* XP */, "got %#lx\n", ovl_iocp->Internal);
+    }
+
+xp_is_broken:
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == WAIT_TIMEOUT, "got %u\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+    ok(key == 0xdeadbeef, "got key %lu\n", key);
+    ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+
+    CloseHandle(port);
+
+    DestroyWindow(hwnd);
+}
+
+static void iocp_async_read_thread(SOCKET src, SOCKET dst)
+{
+    struct wsa_async_select_info select_info;
+    struct wsa_recv_info recv_info;
+    HANDLE port, thread;
+    WSAOVERLAPPED *ovl_iocp;
+    int ret;
+    char data[512];
+    DWORD bytes, tid;
+    ULONG_PTR key;
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
+                           0, 0, 0, 0, NULL, NULL, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx failed\n");
+
+    select_info.sock = src;
+    select_info.hwnd = hwnd;
+    thread = CreateThread(NULL, 0, wsa_async_select_thread, &select_info, 0, &tid);
+    ok(thread != 0, "CreateThread error %u\n", GetLastError());
+    ret = WaitForSingleObject(thread, 10000);
+    ok(ret == WAIT_OBJECT_0, "thread failed to terminate\n");
+
+    Sleep(100);
+    memset(&msg, 0, sizeof(msg));
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(ret, "got %d\n", ret);
+    ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
+    ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
+    ok(msg.wParam == src, "got %08lx\n", msg.wParam);
+    ok(msg.lParam == 2, "got %08lx\n", msg.lParam);
+
+    port = CreateIoCompletionPort((HANDLE)src, 0, 0x12345678, 0);
+    ok(port != 0, "CreateIoCompletionPort error %u\n", GetLastError());
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    memset(data, 0, sizeof(data));
+    memset(&recv_info.ovl, 0, sizeof(recv_info.ovl));
+    recv_info.sock = src;
+    recv_info.wsa_buf.len = sizeof(data);
+    recv_info.wsa_buf.buf = data;
+    thread = CreateThread(NULL, 0, wsa_recv_thread, &recv_info, 0, &tid);
+    ok(thread != 0, "CreateThread error %u\n", GetLastError());
+    ret = WaitForSingleObject(thread, 10000);
+    ok(ret == WAIT_OBJECT_0, "thread failed to terminate\n");
+
+    Sleep(100);
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == WAIT_TIMEOUT || broken(GetLastError() == ERROR_OPERATION_ABORTED) /* XP */, "got %u\n", GetLastError());
+    if (GetLastError() == WAIT_TIMEOUT)
+    {
+        ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+        ok(key == 0xdeadbeef, "got key %lu\n", key);
+        ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+    }
+    else /* document XP behaviour */
+    {
+        ok(bytes == 0, "got bytes %u\n", bytes);
+        ok(key == 0x12345678, "got key %#lx\n", key);
+        ok(ovl_iocp == &recv_info.ovl, "got ovl %p\n", ovl_iocp);
+        if (ovl_iocp)
+        {
+            ok(!ovl_iocp->InternalHigh, "got %#lx\n", ovl_iocp->InternalHigh);
+            ok(ovl_iocp->Internal == STATUS_CANCELLED, "got %#lx\n", ovl_iocp->Internal);
+        }
+    }
+
+    Sleep(100);
+    memset(&msg, 0, sizeof(msg));
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+    ok(!ret || broken(msg.hwnd == hwnd) /* XP */, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    if (ret) /* document XP behaviour */
+    {
+        ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
+        ok(msg.wParam == src, "got %08lx\n", msg.wParam);
+        ok(msg.lParam == 1, "got %08lx\n", msg.lParam);
+    }
+
+    ret = send(dst, "Hello World!", 12, 0);
+    ok(ret == 12, "send returned %d\n", ret);
+
+    Sleep(100);
+    memset(&msg, 0, sizeof(msg));
+    ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
+todo_wine
+    ok(!ret || broken(msg.hwnd == hwnd) /* XP */, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
+    if (ret) /* document XP behaviour */
+    {
+        ok(msg.hwnd == hwnd, "got %p\n", msg.hwnd);
+        ok(msg.message == WM_SOCKET, "got %04x\n", msg.message);
+        ok(msg.wParam == src, "got %08lx\n", msg.wParam);
+        ok(msg.lParam == 1, "got %08lx\n", msg.lParam);
+    }
+
+    bytes = 0xdeadbeef;
+    key = 0xdeadbeef;
+    ovl_iocp = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
+todo_wine
+    ok(ret || broken(GetLastError() == WAIT_TIMEOUT) /* XP */, "got %u\n", GetLastError());
+    if (ret)
+    {
+        ok(bytes == 12, "got bytes %u\n", bytes);
+        ok(key == 0x12345678, "got key %#lx\n", key);
+        ok(ovl_iocp == &recv_info.ovl, "got ovl %p\n", ovl_iocp);
+        if (ovl_iocp)
+        {
+            ok(ovl_iocp->InternalHigh == 12, "got %#lx\n", ovl_iocp->InternalHigh);
+            ok(!ovl_iocp->Internal , "got %#lx\n", ovl_iocp->Internal);
+            ok(!memcmp(data, "Hello World!", 12), "got %u bytes (%*s)\n", bytes, bytes, data);
+        }
+    }
+    else /* document XP behaviour */
+    {
+        ok(bytes == 0xdeadbeef, "got bytes %u\n", bytes);
+        ok(key == 0xdeadbeef, "got key %lu\n", key);
+        ok(!ovl_iocp, "got ovl %p\n", ovl_iocp);
+    }
+
+    CloseHandle(port);
+
+    DestroyWindow(hwnd);
+}
+
+static void test_iocp(void)
+{
+    SOCKET src, dst;
+    int i, ret;
+
+    ret = tcp_socketpair_ovl(&src, &dst);
+    ok(!ret, "creating socket pair failed\n");
+    sync_read(src, dst);
+    iocp_async_read(src, dst);
+    closesocket(src);
+    closesocket(dst);
+
+    ret = tcp_socketpair_ovl(&src, &dst);
+    ok(!ret, "creating socket pair failed\n");
+    iocp_async_read_thread(src, dst);
+    closesocket(src);
+    closesocket(dst);
+
+    for (i = 0; i <= 2; i++)
+    {
+        ret = tcp_socketpair_ovl(&src, &dst);
+        ok(!ret, "creating socket pair failed\n");
+        iocp_async_read_closesocket(src, i);
+        closesocket(dst);
+    }
+
+    ret = tcp_socketpair_ovl(&src, &dst);
+    ok(!ret, "creating socket pair failed\n");
+    iocp_async_closesocket(src);
+    closesocket(dst);
+
+    ret = tcp_socketpair_ovl(&src, &dst);
+    ok(!ret, "creating socket pair failed\n");
+    iocp_async_read_thread_closesocket(src);
+    closesocket(dst);
+}
 
 START_TEST( sock )
 {
@@ -10852,6 +11549,7 @@ START_TEST( sock )
     test_WSARecv();
     test_WSAPoll();
     test_write_watch();
+    test_iocp();
 
     test_events(0);
     test_events(1);
