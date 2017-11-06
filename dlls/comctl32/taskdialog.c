@@ -59,6 +59,15 @@ struct taskdialog_control
     unsigned int template_size;
 };
 
+struct taskdialog_button_desc
+{
+    int id;
+    const WCHAR *text;
+    unsigned int width;
+    unsigned int line;
+    HINSTANCE hinst;
+};
+
 struct taskdialog_template_desc
 {
     const TASKDIALOGCONFIG *taskconfig;
@@ -69,15 +78,7 @@ struct taskdialog_template_desc
     LONG x_baseunit;
     LONG y_baseunit;
     HFONT font;
-};
-
-struct taskdialog_button_desc
-{
-    int id;
-    const WCHAR *text;
-    unsigned int width;
-    unsigned int line;
-    HINSTANCE hinst;
+    struct taskdialog_button_desc *default_button;
 };
 
 struct taskdialog_info
@@ -151,7 +152,7 @@ static void taskdialog_get_text_extent(const struct taskdialog_template_desc *de
 }
 
 static unsigned int taskdialog_add_control(struct taskdialog_template_desc *desc, WORD id, const WCHAR *class,
-        HINSTANCE hInstance, const WCHAR *text, short x, short y, short cx, short cy)
+        HINSTANCE hInstance, const WCHAR *text, DWORD style, short x, short y, short cx, short cy)
 {
     struct taskdialog_control *control = Alloc(sizeof(*control));
     unsigned int size, class_size, text_size;
@@ -178,7 +179,7 @@ static unsigned int taskdialog_add_control(struct taskdialog_template_desc *desc
     control->template = template = Alloc(size);
     control->template_size = size;
 
-    template->style = WS_VISIBLE;
+    template->style = WS_VISIBLE | style;
     template->dwExtendedStyle = 0;
     template->x = x;
     template->y = y;
@@ -206,7 +207,7 @@ static unsigned int taskdialog_add_static_label(struct taskdialog_template_desc 
     taskdialog_get_text_extent(desc, str, TRUE, &sz);
 
     desc->dialog_height += DIALOG_SPACING;
-    size = taskdialog_add_control(desc, id, WC_STATICW, desc->taskconfig->hInstance, str, DIALOG_SPACING,
+    size = taskdialog_add_control(desc, id, WC_STATICW, desc->taskconfig->hInstance, str, 0, DIALOG_SPACING,
             desc->dialog_height, sz.cx, sz.cy);
     desc->dialog_height += sz.cy + DIALOG_SPACING;
     return size;
@@ -234,6 +235,9 @@ static void taskdialog_init_button(struct taskdialog_button_desc *button, struct
     button->width = max(DIALOG_BUTTON_WIDTH, sz.cx + DIALOG_SPACING * 2);
     button->line = 0;
     button->hinst = custom_button ? desc->taskconfig->hInstance : COMCTL32_hModule;
+
+    if (id == desc->taskconfig->nDefaultButton)
+        desc->default_button = button;
 }
 
 static void taskdialog_init_common_buttons(struct taskdialog_template_desc *desc, struct taskdialog_button_desc *buttons,
@@ -290,6 +294,9 @@ static unsigned int taskdialog_add_buttons(struct taskdialog_template_desc *desc
     if (count == 0)
         taskdialog_init_button(&buttons[count++], desc, IDOK, MAKEINTRESOURCEW(IDS_BUTTON_OK), FALSE);
 
+    if (!desc->default_button)
+        desc->default_button = &buttons[0];
+
     /* For easy handling just allocate as many lines as buttons, the worst case. */
     line_widths = Alloc(count * sizeof(*line_widths));
 
@@ -344,14 +351,16 @@ static unsigned int taskdialog_add_buttons(struct taskdialog_template_desc *desc
     location_x = alignment;
     for (i = 0; i < count; i++)
     {
+        DWORD style = &buttons[i] == desc->default_button ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON;
+
         if (i > 0 && buttons[i].line != buttons[i - 1].line) /* New line */
         {
             location_x = alignment;
             desc->dialog_height += DIALOG_BUTTON_HEIGHT + DIALOG_SPACING;
         }
 
-        size += taskdialog_add_control(desc, buttons[i].id, WC_BUTTONW, buttons[i].hinst, buttons[i].text, location_x,
-                desc->dialog_height, buttons[i].width, DIALOG_BUTTON_HEIGHT);
+        size += taskdialog_add_control(desc, buttons[i].id, WC_BUTTONW, buttons[i].hinst, buttons[i].text, style,
+                location_x, desc->dialog_height, buttons[i].width, DIALOG_BUTTON_HEIGHT);
 
         location_x += buttons[i].width + DIALOG_SPACING;
     }
@@ -464,6 +473,7 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
     desc.dialog_height = 0;
     desc.dialog_width = max(taskconfig->cxWidth, DIALOG_MIN_WIDTH);
     desc.dialog_width = min(desc.dialog_width, screen_width);
+    desc.default_button = NULL;
 
     size += taskdialog_add_main_instruction(&desc);
     size += taskdialog_add_content(&desc);
@@ -578,7 +588,7 @@ HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *taskconfig, int *butto
     dialog_info.callback_data = taskconfig->lpCallbackData;
 
     template = create_taskdialog_template(taskconfig);
-    ret = DialogBoxIndirectParamW(taskconfig->hInstance, template, taskconfig->hwndParent,
+    ret = (short)DialogBoxIndirectParamW(taskconfig->hInstance, template, taskconfig->hwndParent,
             taskdialog_proc, (LPARAM)&dialog_info);
     Free(template);
 
