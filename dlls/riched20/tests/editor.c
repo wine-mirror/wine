@@ -5498,6 +5498,21 @@ static void test_WM_PASTE(void)
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
     release_key(VK_CONTROL);
 
+    /* Paste into read-only control */
+    result = SendMessageA(hwndRichEdit, EM_SETREADONLY, TRUE, 0);
+    SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+    SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
+    result = strcmp(buffer,"cut\r\n");
+    ok(result == 0,
+        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+
+    /* Cut from read-only control */
+    SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
+    SendMessageA(hwndRichEdit, WM_CUT, 0, 0);
+    result = strcmp(buffer,"cut\r\n");
+    ok(result == 0,
+        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+
     DestroyWindow(hwndRichEdit);
 }
 
