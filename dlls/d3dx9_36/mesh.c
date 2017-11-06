@@ -7555,3 +7555,83 @@ HRESULT WINAPI D3DXConvertMeshSubsetToSingleStrip(struct ID3DXBaseMesh *mesh_in,
 
     return E_NOTIMPL;
 }
+
+struct frame_node
+{
+    struct list entry;
+    D3DXFRAME *frame;
+};
+
+static BOOL queue_frame_node(struct list *queue, D3DXFRAME *frame)
+{
+    struct frame_node *node;
+
+    if (!frame->pFrameFirstChild)
+        return TRUE;
+
+    node = HeapAlloc(GetProcessHeap(), 0, sizeof(*node));
+    if (!node)
+        return FALSE;
+
+    node->frame = frame;
+    list_add_tail(queue, &node->entry);
+
+    return TRUE;
+}
+
+static void empty_frame_queue(struct list *queue)
+{
+    struct frame_node *cur, *cur2;
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, queue, struct frame_node, entry)
+    {
+        list_remove(&cur->entry);
+        HeapFree(GetProcessHeap(), 0, cur);
+    }
+}
+
+D3DXFRAME * WINAPI D3DXFrameFind(const D3DXFRAME *root, const char *name)
+{
+    D3DXFRAME *found = NULL, *frame;
+    struct list queue;
+
+    TRACE("root frame %p, name %s.\n", root, debugstr_a(name));
+
+    if (!root)
+        return NULL;
+
+    list_init(&queue);
+
+    frame = (D3DXFRAME *)root;
+
+    for (;;)
+    {
+        struct frame_node *node;
+
+        while (frame)
+        {
+            if ((name && frame->Name && !strcmp(frame->Name, name)) || (!name && !frame->Name))
+            {
+                found = frame;
+                goto cleanup;
+            }
+
+            if (!queue_frame_node(&queue, frame))
+                goto cleanup;
+
+            frame = frame->pFrameSibling;
+        }
+
+        if (list_empty(&queue))
+            break;
+
+        node = LIST_ENTRY(list_head(&queue), struct frame_node, entry);
+        list_remove(&node->entry);
+        frame = node->frame->pFrameFirstChild;
+        HeapFree(GetProcessHeap(), 0, node);
+    }
+
+cleanup:
+    empty_frame_queue(&queue);
+
+    return found;
+}

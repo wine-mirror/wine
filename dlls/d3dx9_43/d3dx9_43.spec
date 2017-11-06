@@ -133,7 +133,7 @@
 @ stub D3DXFrameAppendChild(ptr ptr)
 @ stub D3DXFrameCalculateBoundingSphere(ptr ptr ptr)
 @ stdcall D3DXFrameDestroy(ptr ptr)
-@ stub D3DXFrameFind(ptr str)
+@ stdcall D3DXFrameFind(ptr str)
 @ stub D3DXFrameNumNamedMatrices(ptr)
 @ stub D3DXFrameRegisterNamedMatrices(ptr ptr)
 @ stdcall D3DXFresnelTerm(float float)
