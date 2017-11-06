@@ -444,6 +444,16 @@ typedef struct EmfPlusDrawArc
     } RectData;
 } EmfPlusDrawArc;
 
+typedef struct EmfPlusDrawEllipse
+{
+    EmfPlusRecordHeader Header;
+    union
+    {
+        EmfPlusRect rect;
+        EmfPlusRectF rectF;
+    } RectData;
+} EmfPlusDrawEllipse;
+
 typedef struct EmfPlusDrawPie
 {
     EmfPlusRecordHeader Header;
@@ -3090,6 +3100,26 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 return GdipDrawArc(real_metafile->playback_graphics, real_metafile->objtable[pen].u.pen,
                     draw->RectData.rectF.X, draw->RectData.rectF.Y, draw->RectData.rectF.Width,
                     draw->RectData.rectF.Height, draw->StartAngle, draw->SweepAngle);
+        }
+        case EmfPlusRecordTypeDrawEllipse:
+        {
+            EmfPlusDrawEllipse *draw = (EmfPlusDrawEllipse *)header;
+            BYTE pen = flags & 0xff;
+
+            if (pen >= EmfPlusObjectTableSize || real_metafile->objtable[pen].type != ObjectTypePen)
+                return InvalidParameter;
+
+            if (dataSize != (flags & 0x4000 ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF)))
+                return InvalidParameter;
+
+            if (flags & 0x4000) /* C */
+                return GdipDrawEllipseI(real_metafile->playback_graphics, real_metafile->objtable[pen].u.pen,
+                    draw->RectData.rect.X, draw->RectData.rect.Y, draw->RectData.rect.Width,
+                    draw->RectData.rect.Height);
+            else
+                return GdipDrawEllipse(real_metafile->playback_graphics, real_metafile->objtable[pen].u.pen,
+                    draw->RectData.rectF.X, draw->RectData.rectF.Y, draw->RectData.rectF.Width,
+                    draw->RectData.rectF.Height);
         }
         case EmfPlusRecordTypeDrawPie:
         {
