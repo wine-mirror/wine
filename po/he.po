@@ -76,7 +76,7 @@ msgstr "פרטי תמיכה"
 #: regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349 regedit.rc:362
 #: taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
 #: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
-#: winemine.rc:71 winemine.rc:81 winemine.rc:95 wordpad.rc:215 wordpad.rc:226
+#: winemine.rc:71 winemine.rc:82 winemine.rc:96 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
 msgstr "אישור"
@@ -157,7 +157,7 @@ msgstr "ה&תקנה"
 #: progman.rc:200 progman.rc:217 regedit.rc:297 regedit.rc:308 regedit.rc:321
 #: regedit.rc:337 regedit.rc:350 regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518
 #: wineboot.rc:34 winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136
-#: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:96
+#: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:97
 #: wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
 msgid "Cancel"
 msgstr "ביטול"
@@ -15109,28 +15109,34 @@ msgstr "מתקדמים"
 msgid "Expert"
 msgstr "מומחים"
 
-#: winemine.rc:77
+#: winemine.rc:72
+#, fuzzy
+#| msgid "Result"
+msgid "Reset Results"
+msgstr "תוצאה"
+
+#: winemine.rc:78
 msgid "Congratulations!"
 msgstr "כל הכבוד!"
 
-#: winemine.rc:79
+#: winemine.rc:80
 msgid "Please enter your name"
 msgstr "נא להזין את שמך"
 
-#: winemine.rc:87
+#: winemine.rc:88
 msgid "Custom Game"
 msgstr "משחק בהתאמה אישית"
 
-#: winemine.rc:89
+#: winemine.rc:90
 msgid "Rows"
 msgstr "שורות"
 
-#: winemine.rc:90
+#: winemine.rc:91
 #, fuzzy
 msgid "Columns"
 msgstr "&עמודה"
 
-#: winemine.rc:91
+#: winemine.rc:92
 msgid "Mines"
 msgstr "מוקשים"
 

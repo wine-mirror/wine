@@ -146,7 +146,17 @@ static void InitBoard( BOARD *p_board )
     CheckLevel( p_board );
 }
 
-static void SaveBoard( BOARD *p_board )
+void ResetResults( BOARD *p_board )
+{
+    unsigned i;
+
+    for( i = 0; i < 3; i++ ) {
+        LoadStringW( p_board->hInst, IDS_NOBODY, p_board->best_name[i], MAX_PLAYER_NAME_SIZE+1 );
+        p_board->best_time[i] = 999;
+    }
+}
+
+void SaveBoard( BOARD *p_board )
 {
     HKEY hkey;
     unsigned i;
@@ -802,7 +812,7 @@ static void TestBoard( HWND hWnd, BOARD *p_board, int x, int y, int msg )
         p_board->press.y = 0;
     }
 
-    if( p_board->boxes_left == 0 ) {
+    if( p_board->boxes_left == 0 && p_board->status != WON ) {
         p_board->status = WON;
 
         if (p_board->num_flags < p_board->mines) {

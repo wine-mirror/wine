@@ -47,6 +47,7 @@
 #define IDC_EDITROWS   1032
 #define IDC_EDITMINES  1033
 
+#define IDC_RESET           1041
 #define IDS_APPNAME    1101
 #define IDS_NOBODY     1102
 #define IDS_ABOUT      1103

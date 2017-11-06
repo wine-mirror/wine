@@ -104,6 +104,20 @@ INT_PTR CALLBACK TimesDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 
     case WM_COMMAND:
         switch( LOWORD( wParam ) ) {
+        case IDC_RESET:
+            /* reset best names and times */
+            ResetResults( p_board );
+
+            /* save to registry */
+            SaveBoard( p_board );
+
+            /* update dialog */
+            for( i = 0; i < 3; i++ ) {
+                SetDlgItemTextW( hDlg, (IDC_NAME1) + i, p_board->best_name[i] );
+                SetDlgItemInt( hDlg, (IDC_TIME1) + i, p_board->best_time[i], FALSE );
+            }
+            break;
+
         case IDOK:
         case IDCANCEL:
             EndDialog( hDlg, 0 );
