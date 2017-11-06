@@ -692,14 +692,6 @@ static void shader_set_limits(struct wined3d_shader *shader)
     }
 }
 
-static inline void set_bitmap_bit(DWORD *bitmap, DWORD bit)
-{
-    DWORD idx, shift;
-    idx = bit >> 5;
-    shift = bit & 0x1f;
-    bitmap[idx] |= (1u << shift);
-}
-
 static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct wined3d_shader_reg_maps *reg_maps,
         const struct wined3d_shader_register *reg, enum wined3d_shader_type shader_type, unsigned int constf_size)
 {
@@ -767,7 +759,7 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
                 }
                 else
                 {
-                    set_bitmap_bit(reg_maps->constf, reg->idx[0].offset);
+                    wined3d_insert_bits(reg_maps->constf, reg->idx[0].offset, 1, 0x1);
                 }
             }
             break;
