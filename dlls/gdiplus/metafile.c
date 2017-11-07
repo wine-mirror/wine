@@ -487,6 +487,20 @@ typedef struct EmfPlusFillPath
     } data;
 } EmfPlusFillPath;
 
+typedef struct EmfPlusFillClosedCurve
+{
+    EmfPlusRecordHeader Header;
+    DWORD BrushId;
+    float Tension;
+    DWORD Count;
+    union
+    {
+        EmfPlusPointR7 pointsR[1];
+        EmfPlusPoint points[1];
+        EmfPlusPointF pointsF[1];
+    } PointData;
+} EmfPlusFillClosedCurve;
+
 typedef struct EmfPlusFillEllipse
 {
     EmfPlusRecordHeader Header;
@@ -2979,6 +2993,86 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             }
 
             stat = GdipFillPath(real_metafile->playback_graphics, brush, real_metafile->objtable[path].u.path);
+            GdipDeleteBrush((GpBrush *)solidfill);
+            return stat;
+        }
+        case EmfPlusRecordTypeFillClosedCurve:
+        {
+            static const UINT fixed_part_size = FIELD_OFFSET(EmfPlusFillClosedCurve, PointData) -
+                sizeof(EmfPlusRecordHeader);
+            EmfPlusFillClosedCurve *fill = (EmfPlusFillClosedCurve *)header;
+            GpSolidFill *solidfill = NULL;
+            GpFillMode mode;
+            GpBrush *brush;
+            UINT size, i;
+
+            if (dataSize <= fixed_part_size)
+                return InvalidParameter;
+
+            if (fill->Count == 0)
+                return InvalidParameter;
+
+            if (flags & 0x800) /* P */
+                size = (fixed_part_size + sizeof(EmfPlusPointR7) * fill->Count + 3) & ~3;
+            else if (flags & 0x4000) /* C */
+                size = fixed_part_size + sizeof(EmfPlusPoint) * fill->Count;
+            else
+                size = fixed_part_size + sizeof(EmfPlusPointF) * fill->Count;
+
+            if (dataSize != size)
+                return InvalidParameter;
+
+            mode = flags & 0x200 ? FillModeWinding : FillModeAlternate; /* W */
+
+            if (flags & 0x8000) /* S */
+            {
+                stat = GdipCreateSolidFill(fill->BrushId, (GpSolidFill **)&solidfill);
+                if (stat != Ok)
+                    return stat;
+                brush = (GpBrush *)solidfill;
+            }
+            else
+            {
+                if (fill->BrushId >= EmfPlusObjectTableSize ||
+                        real_metafile->objtable[fill->BrushId].type != ObjectTypeBrush)
+                    return InvalidParameter;
+
+                brush = real_metafile->objtable[fill->BrushId].u.brush;
+            }
+
+            if (flags & (0x800 | 0x4000))
+            {
+                GpPointF *points = GdipAlloc(fill->Count * sizeof(*points));
+                if (points)
+                {
+                    if (flags & 0x800) /* P */
+                    {
+                        for (i = 1; i < fill->Count; i++)
+                        {
+                            points[i].X = points[i - 1].X + fill->PointData.pointsR[i].X;
+                            points[i].Y = points[i - 1].Y + fill->PointData.pointsR[i].Y;
+                        }
+                    }
+                    else
+                    {
+                        for (i = 0; i < fill->Count; i++)
+                        {
+                            points[i].X = fill->PointData.points[i].X;
+                            points[i].Y = fill->PointData.points[i].Y;
+                        }
+                    }
+
+                    stat = GdipFillClosedCurve2(real_metafile->playback_graphics, brush,
+                        points, fill->Count, fill->Tension, mode);
+                    GdipFree(points);
+                }
+                else
+                    stat = OutOfMemory;
+            }
+            else
+                stat = GdipFillClosedCurve2(real_metafile->playback_graphics, brush,
+                    (const GpPointF *)fill->PointData.pointsF, fill->Count, fill->Tension, mode);
+
             GdipDeleteBrush((GpBrush *)solidfill);
             return stat;
         }
