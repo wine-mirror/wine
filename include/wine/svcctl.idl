@@ -225,6 +225,12 @@ struct enum_service_status_process
     SERVICE_STATUS_PROCESS service_status_process;
 };
 
+struct service_description
+{
+    USHORT size;
+    WCHAR  description[1];
+};
+
 typedef struct _SERVICE_RPC_REQUIRED_PRIVILEGES_INFO {
     DWORD cbRequiredPrivileges;
     [size_is(cbRequiredPrivileges)] BYTE *pRequiredPrivileges;

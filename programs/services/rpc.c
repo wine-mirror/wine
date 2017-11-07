@@ -879,27 +879,32 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
     switch (level)
     {
     case SERVICE_CONFIG_DESCRIPTION:
-        {
-            SERVICE_DESCRIPTIONW *descr = (SERVICE_DESCRIPTIONW *)buffer;
+    {
+        struct service_description *desc = (struct service_description *)buffer;
+        DWORD total_size = sizeof(*desc);
 
-            service_lock(service->service_entry);
-            *needed = sizeof(*descr);
+        service_lock(service->service_entry);
+        if (service->service_entry->description)
+            total_size += strlenW(service->service_entry->description) * sizeof(WCHAR);
+
+        *needed = total_size;
+        if (size >= total_size)
+        {
             if (service->service_entry->description)
-                *needed += (strlenW(service->service_entry->description) + 1) * sizeof(WCHAR);
-            if (size >= *needed)
             {
-                if (service->service_entry->description)
-                {
-                    /* store a buffer offset instead of a pointer */
-                    descr->lpDescription = (WCHAR *)((BYTE *)(descr + 1) - buffer);
-                    strcpyW( (WCHAR *)(descr + 1), service->service_entry->description );
-                }
-                else descr->lpDescription = NULL;
+                strcpyW( desc->description, service->service_entry->description );
+                desc->size = total_size - FIELD_OFFSET(struct service_description, description);
             }
-            else err = ERROR_INSUFFICIENT_BUFFER;
-            service_unlock(service->service_entry);
+            else
+            {
+                desc->description[0] = 0;
+                desc->size           = 0;
+            }
         }
-        break;
+        else err = ERROR_INSUFFICIENT_BUFFER;
+        service_unlock(service->service_entry);
+    }
+    break;
 
     case SERVICE_CONFIG_PRESHUTDOWN_INFO:
         service_lock(service->service_entry);

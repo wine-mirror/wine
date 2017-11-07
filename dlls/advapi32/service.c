@@ -1543,6 +1543,8 @@ BOOL WINAPI QueryServiceConfig2A(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
     BOOL ret;
     LPBYTE bufferW = NULL;
 
+    TRACE("%p %u %p %u %p\n", hService, dwLevel, buffer, size, needed);
+
     if(buffer && size)
         bufferW = heap_alloc(size);
 
@@ -1591,24 +1593,42 @@ cleanup:
 BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffer,
                                  DWORD size, LPDWORD needed)
 {
+    BYTE *bufptr;
     DWORD err;
 
-    if(dwLevel!=SERVICE_CONFIG_DESCRIPTION && dwLevel!=SERVICE_CONFIG_PRESHUTDOWN_INFO) {
+    TRACE("%p %u %p %u %p\n", hService, dwLevel, buffer, size, needed);
+
+    if (!buffer && size)
+    {
+        SetLastError(ERROR_INVALID_ADDRESS);
+        return FALSE;
+    }
+
+    switch (dwLevel)
+    {
+    case SERVICE_CONFIG_DESCRIPTION:
+        if (!(bufptr = heap_alloc( size ))) return ERROR_OUTOFMEMORY;
+        break;
+
+    case SERVICE_CONFIG_PRESHUTDOWN_INFO:
+        bufptr = buffer;
+        break;
+
+    default:
         FIXME("Level %d not implemented\n", dwLevel);
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
 
-    if(!buffer && size) {
+    if (!needed)
+    {
         SetLastError(ERROR_INVALID_ADDRESS);
         return FALSE;
     }
 
-    TRACE("%p 0x%d %p 0x%d %p\n", hService, dwLevel, buffer, size, needed);
-
     __TRY
     {
-        err = svcctl_QueryServiceConfig2W(hService, dwLevel, buffer, size, needed);
+        err = svcctl_QueryServiceConfig2W(hService, dwLevel, bufptr, size, needed);
     }
     __EXCEPT(rpc_filter)
     {
@@ -1616,22 +1636,53 @@ BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
     }
     __ENDTRY
 
-    if (err != ERROR_SUCCESS)
-    {
-        SetLastError( err );
-        return FALSE;
-    }
-
     switch (dwLevel)
     {
     case SERVICE_CONFIG_DESCRIPTION:
-        if (buffer)
+    {
+        SERVICE_DESCRIPTIONW *desc = (SERVICE_DESCRIPTIONW *)buffer;
+        struct service_description *s = (struct service_description *)bufptr;
+
+        if (err != ERROR_SUCCESS && err != ERROR_INSUFFICIENT_BUFFER)
         {
-            SERVICE_DESCRIPTIONW *descr = (SERVICE_DESCRIPTIONW *)buffer;
-            if (descr->lpDescription)  /* make it an absolute pointer */
-                descr->lpDescription = (WCHAR *)(buffer + (ULONG_PTR)descr->lpDescription);
-            break;
+            heap_free( bufptr );
+            SetLastError( err );
+            return FALSE;
         }
+
+        /* adjust for potentially larger SERVICE_DESCRIPTIONW structure */
+        if (*needed == sizeof(*s)) *needed = sizeof(*desc);
+        else
+            *needed = *needed - FIELD_OFFSET(struct service_description, description) + sizeof(*desc);
+
+        if (size < *needed)
+        {
+            heap_free( bufptr );
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+        if (desc)
+        {
+            if (!s->size) desc->lpDescription = NULL;
+            else
+            {
+                desc->lpDescription = (WCHAR *)(desc + 1);
+                memcpy( desc->lpDescription, s->description, s->size );
+            }
+        }
+        heap_free( bufptr );
+        break;
+    }
+    case SERVICE_CONFIG_PRESHUTDOWN_INFO:
+        if (err != ERROR_SUCCESS)
+        {
+            SetLastError( err );
+            return FALSE;
+        }
+        break;
+
+    default:
+        break;
     }
 
     return TRUE;
