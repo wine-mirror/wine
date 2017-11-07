@@ -7496,7 +7496,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                      * pointer to be valid */
                     VariantInit(pVarResult);
                     hres = IDispatch_Invoke(pDispatch, DISPID_VALUE, &IID_NULL,
-                        GetSystemDefaultLCID(), INVOKE_PROPERTYGET,
+                        GetSystemDefaultLCID(), wFlags,
                         pDispParams, pVarResult, pExcepInfo, pArgErr);
                     IDispatch_Release(pDispatch);
                 }

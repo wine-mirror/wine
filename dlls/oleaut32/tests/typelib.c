@@ -98,6 +98,91 @@ static const BOOL abi_supports_stdcall = TRUE;
 static const BOOL abi_supports_stdcall = FALSE;
 #endif
 
+static HRESULT WINAPI collection_QueryInterface(ICollection *iface, REFIID riid, void **ret)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IDispatch) ||
+        IsEqualIID(riid, &IID_ICollection))
+    {
+        *ret = iface;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI collection_AddRef(ICollection *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI collection_Release(ICollection *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI collection_GetTypeInfoCount(ICollection *iface, UINT *cnt)
+{
+    ok(0, "unexpected call\n");
+    *cnt = 0;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI collection_GetTypeInfo(ICollection *iface, UINT index, LCID lcid, ITypeInfo **ti)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI collection_GetIDsOfNames(ICollection *iface, REFIID riid, LPOLESTR *names,
+    UINT cnt, LCID lcid, DISPID *dispid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI collection_Invoke(ICollection *iface, DISPID dispid, REFIID riid,
+    LCID lcid, WORD flags, DISPPARAMS *dispparams, VARIANT *res, EXCEPINFO *ei, UINT *argerr)
+{
+    if(dispid != DISPID_VALUE) {
+        ok(0, "unexpected call\n");
+        return E_NOTIMPL;
+    }
+
+    ok(flags == (DISPATCH_METHOD|DISPATCH_PROPERTYGET), "flags = %x\n", flags);
+    ok(dispparams != NULL, "dispparams == NULL\n");
+    ok(!dispparams->rgdispidNamedArgs, "dispparams->rgdispidNamedArgs != NULL\n");
+    ok(dispparams->cArgs == 1, "dispparams->cArgs = %d\n", dispparams->cArgs);
+    ok(!dispparams->cNamedArgs, "dispparams->cNamedArgs = %d\n", dispparams->cNamedArgs);
+    ok(V_VT(dispparams->rgvarg) == VT_I4, "V_VT(dispparams->rgvarg) = %d\n", V_VT(dispparams->rgvarg));
+    ok(V_I4(dispparams->rgvarg) == 7, "V_I4(dispparams->rgvarg) = %d\n", V_I4(dispparams->rgvarg));
+    ok(res != NULL, "res == NULL\n");
+    ok(V_VT(res) == VT_EMPTY, "V_VT(res) = %d\n", V_VT(res));
+
+    V_VT(res) = VT_I4;
+    V_I4(res) = 15;
+    return S_OK;
+}
+
+static HRESULT WINAPI collection_Item(ICollection *iface, int i, int *p)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const ICollectionVtbl collectionvtbl = {
+    collection_QueryInterface,
+    collection_AddRef,
+    collection_Release,
+    collection_GetTypeInfoCount,
+    collection_GetTypeInfo,
+    collection_GetIDsOfNames,
+    collection_Invoke,
+    collection_Item
+};
+
+static ICollection collection = { &collectionvtbl };
+
 static HRESULT WINAPI invoketest_QueryInterface(IInvokeTest *iface, REFIID riid, void **ret)
 {
     if (IsEqualIID(riid, &IID_IUnknown) ||
@@ -169,6 +254,13 @@ static HRESULT WINAPI invoketest_testfunc(IInvokeTest *iface, int i, int *p)
     return S_OK;
 }
 
+static HRESULT WINAPI invoketest_testget(IInvokeTest *iface, ICollection **p)
+{
+    *p = &collection;
+    ICollection_AddRef(&collection);
+    return S_OK;
+}
+
 static const IInvokeTestVtbl invoketestvtbl = {
     invoketest_QueryInterface,
     invoketest_AddRef,
@@ -180,7 +272,8 @@ static const IInvokeTestVtbl invoketestvtbl = {
     invoketest_get_test,
     invoketest_putref_testprop,
     invoketest_putref_testprop2,
-    invoketest_testfunc
+    invoketest_testfunc,
+    invoketest_testget
 };
 
 static IInvokeTest invoketest = { &invoketestvtbl };
@@ -967,6 +1060,22 @@ static void test_TypeInfo(void)
     ok(hr == S_OK, "got 0x%08x, %d\n", hr, i);
     ok(V_VT(&res) == VT_I4, "got %d\n", V_VT(&res));
     ok(V_I4(&res) == 1, "got %d\n", V_I4(&res));
+
+    /* call propget with DISPATCH_METHOD|DISPATCH_PROPERTYGET flags */
+    V_VT(&args[0]) = VT_I4;
+    V_I4(&args[0]) = 7;
+
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = args;
+
+    i = 0;
+    V_VT(&res) = VT_EMPTY;
+    V_I4(&res) = 0;
+    hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 4, DISPATCH_METHOD|DISPATCH_PROPERTYGET, &dispparams, &res, NULL, &i);
+    ok(hr == S_OK, "got 0x%08x, %d\n", hr, i);
+    ok(V_VT(&res) == VT_I4, "got %d\n", V_VT(&res));
+    ok(V_I4(&res) == 15, "got %d\n", V_I4(&res));
+
 
     /* DISPATCH_PROPERTYPUTREF */
     l = 1;
@@ -4837,7 +4946,7 @@ static void test_register_typelib(BOOL system_registration)
     {
         TYPEKIND kind;
         WORD flags;
-    } attrs[13] =
+    } attrs[] =
     {
         { TKIND_INTERFACE, 0 },
         { TKIND_INTERFACE, TYPEFLAG_FDISPATCHABLE },
@@ -4850,6 +4959,7 @@ static void test_register_typelib(BOOL system_registration)
         { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE },
         { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE },
         { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE },
+        { TKIND_INTERFACE, TYPEFLAG_FDISPATCHABLE },
         { TKIND_INTERFACE, TYPEFLAG_FDISPATCHABLE },
         { TKIND_RECORD, 0 }
     };
@@ -4886,7 +4996,7 @@ static void test_register_typelib(BOOL system_registration)
     ok(hr == S_OK, "got %08x\n", hr);
 
     count = ITypeLib_GetTypeInfoCount(typelib);
-    ok(count == 13, "got %d\n", count);
+    ok(count == 14, "got %d\n", count);
 
     for(i = 0; i < count; i++)
     {
