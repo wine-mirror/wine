@@ -343,6 +343,11 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI4:         hr = VarR4FromUI4(*(DWORD*)src, d);             break;
         case DBTYPE_I8:          hr = VarR4FromI8(*(LONGLONG*)src, d);           break;
         case DBTYPE_UI8:         hr = VarR4FromUI8(*(ULONGLONG*)src, d);         break;
+        case DBTYPE_VARIANT:
+            VariantInit(&tmp);
+            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_R4)) == S_OK)
+                *d = V_R4(&tmp);
+            break;
         default: FIXME("Unimplemented conversion %04x -> R4\n", src_type); return E_NOTIMPL;
         }
         break;

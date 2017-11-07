@@ -2580,6 +2580,15 @@ static void test_converttor4(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
     ok(dst_len == 44, "got %ld\n", dst_len);
+
+    dst_len = dst = 0x1234;
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = 0x4321;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_R4, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(dst), "got %ld\n", dst_len);
+    ok(dst == 0x4321, "got %f\n", dst);
 }
 
 static void test_converttor8(void)
