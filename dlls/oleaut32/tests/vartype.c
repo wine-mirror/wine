@@ -2729,6 +2729,7 @@ static void test_VarR8FromStr(void)
   CONVERT_STR(VarR8FromStr,"0.5",LOCALE_NOUSEROVERRIDE);  EXPECT(0.5);
   CONVERT_STR(VarR8FromStr,"0.6",LOCALE_NOUSEROVERRIDE);  EXPECT(0.6);
   CONVERT_STR(VarR8FromStr,"1.5",LOCALE_NOUSEROVERRIDE);  EXPECT(1.5);
+  CONVERT_STR(VarR8FromStr,"1e-94938484",LOCALE_NOUSEROVERRIDE);  EXPECT(0);
 
   /* We already have exhaustive tests for number parsing, so skip those tests here */
 }

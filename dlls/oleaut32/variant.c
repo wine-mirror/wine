@@ -2392,8 +2392,8 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
     {
       if (whole < dblMinimums[10] && whole != 0)
       {
-        dwVtBits &= ~(VTBIT_R4|VTBIT_R8|VTBIT_CY); /* Underflow */
-        bOverflow = TRUE;
+        whole = 0; /* ignore underflow */
+        divisor10 = 0;
         break;
       }
       whole = whole / dblMultipliers[10];
@@ -2403,8 +2403,8 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
     {
       if (whole < dblMinimums[divisor10] && whole != 0)
       {
-        dwVtBits &= ~(VTBIT_R4|VTBIT_R8|VTBIT_CY); /* Underflow */
-        bOverflow = TRUE;
+        whole = 0; /* ignore underflow */
+        divisor10 = 0;
       }
       else
         whole = whole / dblMultipliers[divisor10];
