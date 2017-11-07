@@ -9926,7 +9926,13 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         gs_id = find_glsl_geometry_shader(context, priv, gshader, &args);
     }
 
-    if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_PIXEL)) && ctx_data->glsl_program)
+    /* A pixel shader is not used when rasterization is disabled. */
+    if (gshader && gshader->u.gs.so_desc.rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM)
+    {
+        ps_id = 0;
+        ps_list = NULL;
+    }
+    else if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_PIXEL)) && ctx_data->glsl_program)
     {
         ps_id = ctx_data->glsl_program->ps.id;
         ps_list = &ctx_data->glsl_program->ps.shader_entry;
@@ -11274,6 +11280,8 @@ static void glsl_vertex_pipe_hs(struct wined3d_context *context,
 static void glsl_vertex_pipe_geometry_shader(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
+    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
+
     if (state->shader[WINED3D_SHADER_TYPE_DOMAIN])
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_DOMAIN;
     else if (state->shader[WINED3D_SHADER_TYPE_VERTEX]
