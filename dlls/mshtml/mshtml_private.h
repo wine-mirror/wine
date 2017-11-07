@@ -869,7 +869,6 @@ void HTMLDocument_OleObj_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_View_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_Window_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_Service_Init(HTMLDocument*) DECLSPEC_HIDDEN;
-void HTMLDocument_Hlink_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 
 void TargetContainer_Init(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void init_binding_ui(HTMLDocumentObj*) DECLSPEC_HIDDEN;

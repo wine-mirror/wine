@@ -7,7 +7,6 @@ C_SRCS = \
 	conpoint.c \
 	dispex.c \
 	editor.c \
-	hlink.c \
 	htmlanchor.c \
 	htmlarea.c \
 	htmlattr.c \

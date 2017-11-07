@@ -1137,6 +1137,91 @@ static const IPersistHistoryVtbl PersistHistoryVtbl = {
     PersistHistory_GetPositionCookie
 };
 
+/**********************************************************
+ * IHlinkTarget implementation
+ */
+
+static inline HTMLDocument *impl_from_IHlinkTarget(IHlinkTarget *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocument, IHlinkTarget_iface);
+}
+
+static HRESULT WINAPI HlinkTarget_QueryInterface(IHlinkTarget *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = impl_from_IHlinkTarget(iface);
+    return htmldoc_query_interface(This, riid, ppv);
+}
+
+static ULONG WINAPI HlinkTarget_AddRef(IHlinkTarget *iface)
+{
+    HTMLDocument *This = impl_from_IHlinkTarget(iface);
+    return htmldoc_addref(This);
+}
+
+static ULONG WINAPI HlinkTarget_Release(IHlinkTarget *iface)
+{
+    HTMLDocument *This = impl_from_IHlinkTarget(iface);
+    return htmldoc_release(This);
+}
+
+static HRESULT WINAPI HlinkTarget_SetBrowseContext(IHlinkTarget *iface, IHlinkBrowseContext *pihlbc)
+{
+    HTMLDocument *This = impl_from_IHlinkTarget(iface);
+    FIXME("(%p)->(%p)\n", This, pihlbc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HlinkTarget_GetBrowseContext(IHlinkTarget *iface, IHlinkBrowseContext **ppihlbc)
+{
+    HTMLDocument *This = impl_from_IHlinkTarget(iface);
+    FIXME("(%p)->(%p)\n", This, ppihlbc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfHLNF, LPCWSTR pwzJumpLocation)
+{
+    HTMLDocument *This = impl_from_IHlinkTarget(iface);
+
+    TRACE("(%p)->(%08x %s)\n", This, grfHLNF, debugstr_w(pwzJumpLocation));
+
+    if(grfHLNF)
+        FIXME("Unsupported grfHLNF=%08x\n", grfHLNF);
+    if(pwzJumpLocation)
+        FIXME("JumpLocation not supported\n");
+
+    if(!This->doc_obj->client)
+        return navigate_new_window(This->window, This->window->uri, NULL, NULL, NULL);
+
+    return IOleObject_DoVerb(&This->IOleObject_iface, OLEIVERB_SHOW, NULL, NULL, -1, NULL, NULL);
+}
+
+static HRESULT WINAPI HlinkTarget_GetMoniker(IHlinkTarget *iface, LPCWSTR pwzLocation, DWORD dwAssign,
+        IMoniker **ppimkLocation)
+{
+    HTMLDocument *This = impl_from_IHlinkTarget(iface);
+    FIXME("(%p)->(%s %08x %p)\n", This, debugstr_w(pwzLocation), dwAssign, ppimkLocation);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HlinkTarget_GetFriendlyName(IHlinkTarget *iface, LPCWSTR pwzLocation,
+        LPWSTR *ppwzFriendlyName)
+{
+    HTMLDocument *This = impl_from_IHlinkTarget(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(pwzLocation), ppwzFriendlyName);
+    return E_NOTIMPL;
+}
+
+static const IHlinkTargetVtbl HlinkTargetVtbl = {
+    HlinkTarget_QueryInterface,
+    HlinkTarget_AddRef,
+    HlinkTarget_Release,
+    HlinkTarget_SetBrowseContext,
+    HlinkTarget_GetBrowseContext,
+    HlinkTarget_Navigate,
+    HlinkTarget_GetMoniker,
+    HlinkTarget_GetFriendlyName
+};
+
 void HTMLDocument_Persist_Init(HTMLDocument *This)
 {
     This->IPersistMoniker_iface.lpVtbl = &PersistMonikerVtbl;
@@ -1144,4 +1229,5 @@ void HTMLDocument_Persist_Init(HTMLDocument *This)
     This->IMonikerProp_iface.lpVtbl = &MonikerPropVtbl;
     This->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     This->IPersistHistory_iface.lpVtbl = &PersistHistoryVtbl;
+    This->IHlinkTarget_iface.lpVtbl = &HlinkTargetVtbl;
 }

@@ -4866,7 +4866,6 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     HTMLDocument_View_Init(doc);
     HTMLDocument_Window_Init(doc);
     HTMLDocument_Service_Init(doc);
-    HTMLDocument_Hlink_Init(doc);
 
     ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->IHTMLDocument2_iface, HTMLDocument_cpc);
 }
