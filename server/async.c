@@ -167,7 +167,7 @@ void async_terminate( struct async *async, unsigned int status )
             data.async_io.user   = async->data.user;
             data.async_io.sb     = async->data.iosb;
             data.async_io.status = status;
-            thread_queue_apc( async->thread, &async->obj, &data );
+            thread_queue_apc( NULL, async->thread, &async->obj, &data );
         }
         else async_set_result( &async->obj, STATUS_SUCCESS, 0 );
     }
@@ -373,7 +373,7 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
             data.user.args[0] = async->data.apc_context;
             data.user.args[1] = async->data.iosb;
             data.user.args[2] = 0;
-            thread_queue_apc( async->thread, NULL, &data );
+            thread_queue_apc( NULL, async->thread, NULL, &data );
         }
         else if (async->data.apc_context)
             add_async_completion( async, async->data.apc_context, status, total );

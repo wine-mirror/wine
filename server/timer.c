@@ -122,7 +122,7 @@ static void timer_callback( void *private )
         }
         else data.type = APC_NONE;  /* wake up only */
 
-        if (!thread_queue_apc( timer->thread, &timer->obj, &data ))
+        if (!thread_queue_apc( NULL, timer->thread, &timer->obj, &data ))
         {
             release_object( timer->thread );
             timer->thread = NULL;
