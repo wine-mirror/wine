@@ -2857,6 +2857,10 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         {
             return GdipSetSmoothingMode(real_metafile->playback_graphics, (flags >> 1) & 0xff);
         }
+        case EmfPlusRecordTypeSetCompositingMode:
+        {
+            return GdipSetCompositingMode(real_metafile->playback_graphics, flags & 0xff);
+        }
         case EmfPlusRecordTypeObject:
         {
             return METAFILE_PlaybackObject(real_metafile, flags, dataSize, data);
