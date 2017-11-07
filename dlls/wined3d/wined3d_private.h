@@ -4325,6 +4325,12 @@ static inline BOOL needs_interpolation_qualifiers_for_shader_outputs(const struc
     return gl_info->glsl_version < MAKEDWORD_VERSION(4, 40);
 }
 
+static inline BOOL is_rasterization_disabled(const struct wined3d_shader *geometry_shader)
+{
+    return geometry_shader
+            && geometry_shader->u.gs.so_desc.rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM;
+}
+
 static inline DWORD wined3d_extract_bits(const DWORD *bitstream,
         unsigned int offset, unsigned int count)
 {

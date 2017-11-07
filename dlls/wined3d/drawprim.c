@@ -648,7 +648,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     {
         const struct wined3d_shader *shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
 
-        if (shader->u.gs.so_desc.rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM)
+        if (is_rasterization_disabled(shader))
         {
             glEnable(GL_RASTERIZER_DISCARD);
             checkGLcall("enable rasterizer discard");

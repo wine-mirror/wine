@@ -266,6 +266,7 @@ struct glsl_context_data
 {
     struct glsl_shader_prog_link *glsl_program;
     GLenum vertex_color_clamp;
+    BOOL rasterization_disabled;
 };
 
 struct glsl_ps_compiled_shader
@@ -8062,7 +8063,6 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
         struct shader_glsl_priv *priv, const struct wined3d_shader *shader, const struct gs_compile_args *args)
 {
     struct wined3d_string_buffer_list *string_buffers = &priv->string_buffers;
-    const struct wined3d_stream_output_desc *so_desc = &shader->u.gs.so_desc;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -8089,9 +8089,9 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     if (!gl_info->supported[ARB_CLIP_CONTROL])
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
 
-    if (so_desc->rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM)
+    if (is_rasterization_disabled(shader))
     {
-        shader_glsl_generate_stream_output_setup(priv, shader, so_desc);
+        shader_glsl_generate_stream_output_setup(priv, shader, &shader->u.gs.so_desc);
     }
     else
     {
@@ -10013,7 +10013,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     }
 
     /* A pixel shader is not used when rasterization is disabled. */
-    if (gshader && gshader->u.gs.so_desc.rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM)
+    if (is_rasterization_disabled(gshader))
     {
         ps_id = 0;
         ps_list = NULL;
@@ -11366,7 +11366,13 @@ static void glsl_vertex_pipe_hs(struct wined3d_context *context,
 static void glsl_vertex_pipe_geometry_shader(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
+    struct glsl_context_data *ctx_data = context->shader_backend_data;
+    BOOL rasterization_disabled;
+
+    rasterization_disabled = is_rasterization_disabled(state->shader[WINED3D_SHADER_TYPE_GEOMETRY]);
+    if (ctx_data->rasterization_disabled != rasterization_disabled)
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
+    ctx_data->rasterization_disabled = rasterization_disabled;
 
     if (state->shader[WINED3D_SHADER_TYPE_DOMAIN])
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_DOMAIN;
