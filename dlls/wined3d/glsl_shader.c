@@ -838,14 +838,23 @@ static void shader_glsl_generate_transform_feedback_varyings(const struct wined3
 
             if (e->component_idx || e->component_count != 4)
             {
-                FIXME("Unsupported component range %u-%u.\n", e->component_idx, e->component_count);
-                append_transform_feedback_skip_components(varyings, &count,
-                        &strings, &length, buffer, e->component_count);
-                continue;
-            }
+                if (so_desc->rasterizer_stream_idx != WINED3D_NO_RASTERIZER_STREAM)
+                {
+                    FIXME("Unsupported component range %u-%u.\n", e->component_idx, e->component_count);
+                    append_transform_feedback_skip_components(varyings, &count,
+                            &strings, &length, buffer, e->component_count);
+                    continue;
+                }
 
-            string_buffer_sprintf(buffer, "shader_in_out.reg%u", e->register_idx);
-            append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+                string_buffer_sprintf(buffer, "shader_in_out.reg%u_%u_%u",
+                        e->register_idx, e->component_idx, e->component_idx + e->component_count - 1);
+                append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+            }
+            else
+            {
+                string_buffer_sprintf(buffer, "shader_in_out.reg%u", e->register_idx);
+                append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+            }
         }
 
         if (buffer_idx < so_desc->buffer_stride_count
@@ -7119,6 +7128,75 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
     return ret;
 }
 
+static void shader_glsl_generate_stream_output_setup(struct shader_glsl_priv *priv,
+        const struct wined3d_shader *shader, const struct wined3d_stream_output_desc *so_desc)
+{
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
+    unsigned int i;
+
+    shader_addline(buffer, "out shader_in_out\n{\n");
+    for (i = 0; i < so_desc->element_count; ++i)
+    {
+        const struct wined3d_stream_output_element *e = &so_desc->elements[i];
+
+        if (e->stream_idx)
+        {
+            FIXME("Unhandled stream %u.\n", e->stream_idx);
+            continue;
+        }
+        if (e->register_idx == WINED3D_STREAM_OUTPUT_GAP)
+            continue;
+
+        if (e->component_idx || e->component_count != 4)
+        {
+            if (e->component_count == 1)
+                shader_addline(buffer, "float");
+            else
+                shader_addline(buffer, "vec%u", e->component_count);
+            shader_addline(buffer, " reg%u_%u_%u;\n",
+                    e->register_idx, e->component_idx, e->component_idx + e->component_count - 1);
+        }
+        else
+        {
+            shader_addline(buffer, "vec4 reg%u;\n", e->register_idx);
+        }
+    }
+    shader_addline(buffer, "} shader_out;\n");
+
+    shader_addline(buffer, "void setup_gs_output(in vec4 outputs[%u])\n{\n",
+            shader->limits->packed_output);
+    for (i = 0; i < so_desc->element_count; ++i)
+    {
+        const struct wined3d_stream_output_element *e = &so_desc->elements[i];
+
+        if (e->stream_idx)
+        {
+            FIXME("Unhandled stream %u.\n", e->stream_idx);
+            continue;
+        }
+        if (e->register_idx == WINED3D_STREAM_OUTPUT_GAP)
+            continue;
+
+        if (e->component_idx || e->component_count != 4)
+        {
+            DWORD write_mask;
+            char str_mask[6];
+
+            write_mask = ((1u << e->component_count) - 1) << e->component_idx;
+            shader_glsl_write_mask_to_str(write_mask, str_mask);
+            shader_addline(buffer, "shader_out.reg%u_%u_%u = outputs[%u]%s;\n",
+                    e->register_idx, e->component_idx, e->component_idx + e->component_count - 1,
+                    e->register_idx, str_mask);
+        }
+        else
+        {
+            shader_addline(buffer, "shader_out.reg%u = outputs[%u];\n",
+                    e->register_idx, e->register_idx);
+        }
+    }
+    shader_addline(buffer, "}\n");
+}
+
 static void shader_glsl_generate_sm4_output_setup(struct shader_glsl_priv *priv,
         const struct wined3d_shader *shader, unsigned int input_count,
         const struct wined3d_gl_info *gl_info, BOOL rasterizer_setup, const DWORD *interpolation_mode)
@@ -7984,6 +8062,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
         struct shader_glsl_priv *priv, const struct wined3d_shader *shader, const struct gs_compile_args *args)
 {
     struct wined3d_string_buffer_list *string_buffers = &priv->string_buffers;
+    const struct wined3d_stream_output_desc *so_desc = &shader->u.gs.so_desc;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -8010,8 +8089,15 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     if (!gl_info->supported[ARB_CLIP_CONTROL])
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
 
-    shader_glsl_generate_sm4_output_setup(priv, shader, args->output_count,
-            gl_info, TRUE, args->interpolation_mode);
+    if (so_desc->rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM)
+    {
+        shader_glsl_generate_stream_output_setup(priv, shader, so_desc);
+    }
+    else
+    {
+        shader_glsl_generate_sm4_output_setup(priv, shader, args->output_count,
+                gl_info, TRUE, args->interpolation_mode);
+    }
     shader_addline(buffer, "void main()\n{\n");
     if (FAILED(shader_generate_code(shader, buffer, reg_maps, &priv_ctx, NULL, NULL)))
         return 0;
