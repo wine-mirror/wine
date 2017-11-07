@@ -96,6 +96,7 @@ C_SRCS = \
 	pread.c \
 	pwrite.c \
 	readlink.c \
+	rint.c \
 	spawn.c \
 	statvfs.c \
 	strcasecmp.c \
