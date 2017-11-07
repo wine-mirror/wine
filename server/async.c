@@ -167,7 +167,7 @@ void async_terminate( struct async *async, unsigned int status )
             data.async_io.user   = async->data.user;
             data.async_io.sb     = async->data.iosb;
             data.async_io.status = status;
-            thread_queue_apc( NULL, async->thread, &async->obj, &data );
+            thread_queue_apc( async->thread->process, async->thread, &async->obj, &data );
         }
         else async_set_result( &async->obj, STATUS_SUCCESS, 0 );
     }

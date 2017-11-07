@@ -11292,15 +11292,13 @@ static void iocp_async_read_thread_closesocket(SOCKET src)
     ok(!ret, "got %d\n", ret);
 todo_wine
     ok(GetLastError() == ERROR_CONNECTION_ABORTED || GetLastError() == ERROR_NETNAME_DELETED /* XP */, "got %u\n", GetLastError());
-todo_wine
     ok(!bytes, "got bytes %u\n", bytes);
-todo_wine
     ok(key == 0x12345678, "got key %#lx\n", key);
-todo_wine
     ok(ovl_iocp == &recv_info.ovl, "got ovl %p\n", ovl_iocp);
     if (ovl_iocp)
     {
         ok(!ovl_iocp->InternalHigh, "got %#lx\n", ovl_iocp->InternalHigh);
+todo_wine
         ok(ovl_iocp->Internal == (ULONG)STATUS_CONNECTION_ABORTED || ovl_iocp->Internal == (ULONG)STATUS_LOCAL_DISCONNECT /* XP */, "got %#lx\n", ovl_iocp->Internal);
     }
 
@@ -11417,7 +11415,6 @@ static void iocp_async_read_thread(SOCKET src, SOCKET dst)
     Sleep(100);
     memset(&msg, 0, sizeof(msg));
     ret = PeekMessageA(&msg, hwnd, WM_SOCKET, WM_SOCKET, PM_REMOVE);
-todo_wine
     ok(!ret || broken(msg.hwnd == hwnd) /* XP */, "got %04x,%08lx,%08lx\n", msg.message, msg.wParam, msg.lParam);
     if (ret) /* document XP behaviour */
     {
@@ -11432,7 +11429,6 @@ todo_wine
     ovl_iocp = (void *)0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = GetQueuedCompletionStatus(port, &bytes, &key, &ovl_iocp, 100);
-todo_wine
     ok(ret || broken(GetLastError() == WAIT_TIMEOUT) /* XP */, "got %u\n", GetLastError());
     if (ret)
     {
