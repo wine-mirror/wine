@@ -310,6 +310,18 @@ CHOICE is mainly used to build a menu selection in a batch file.\n"
 "EXIT terminates the current command session and returns to the operating\n\
 system or shell from which you invoked cmd.\n"
 
+  WCMD_MKLINK,
+"Create a symbolic link.\n\
+\n\
+Syntax: MKLINK [options] link_name target\n\
+\n\
+Options:\n\
+/d             Create a directory symbolic link.\n\
+/h             Create a hard link.\n\
+/j             Create a directory junction.\n\
+link_name is the name of the new symbolic link.\n\
+target is the path that link_name points to.\n"
+
   WCMD_ALLHELP,
 "CMD built-in commands are:\n\
 ASSOC\t\tShow or modify file extension associations\n\
@@ -328,6 +340,7 @@ ENDLOCAL\tEnd localization of environment changes in a batch file\n\
 FTYPE\t\tShow or modify open commands associated with file types\n\
 HELP\t\tShow brief help details on a topic\n\
 MD (MKDIR)\tCreate a subdirectory\n\
+MKLINK\tCreate a symbolic link\n\
 MORE\t\tDisplay output in pages\n\
 MOVE\t\tMove a file, set of files or directory tree\n\
 PATH\t\tSet or show the search path\n\
@@ -348,7 +361,6 @@ VOL\t\tShow the volume label of a disk device\n\
 XCOPY\t\tCopy source files or directory trees to a destination\n\
 EXIT\t\tClose down CMD\n\n\
 Enter HELP <command> for further information on any of the above commands.\n"
-
   WCMD_CONFIRM, "Are you sure?"
   WCMD_YES, "#msgctxt#Yes key#Y"
   WCMD_NO, "#msgctxt#No key#N"

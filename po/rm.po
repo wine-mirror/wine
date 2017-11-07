@@ -9775,14 +9775,14 @@ msgstr ""
 msgid "Referral hop limit exceeded"
 msgstr ""
 
-#: attrib.rc:30 cmd.rc:361
+#: attrib.rc:30 cmd.rc:373
 #, fuzzy
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr "Na implementa"
 
-#: attrib.rc:31 cmd.rc:364
+#: attrib.rc:31 cmd.rc:376
 msgid "%1: File Not Found\n"
 msgstr ""
 
@@ -10194,13 +10194,27 @@ msgid ""
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 
+#: cmd.rc:324
+msgid ""
+"Create a symbolic link.\n"
+"\n"
+"Syntax: MKLINK [options] link_name target\n"
+"\n"
+"Options:\n"
+"/d             Create a directory symbolic link.\n"
+"/h             Create a hard link.\n"
+"/j             Create a directory junction.\n"
+"link_name is the name of the new symbolic link.\n"
+"target is the path that link_name points to.\n"
+msgstr ""
+
 #: cmd.rc:312
 msgid ""
 "EXIT terminates the current command session and returns to the operating\n"
 "system or shell from which you invoked cmd.\n"
 msgstr ""
 
-#: cmd.rc:351
+#: cmd.rc:364
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10219,6 +10233,7 @@ msgid ""
 "FTYPE\t\tShow or modify open commands associated with file types\n"
 "HELP\t\tShow brief help details on a topic\n"
 "MD (MKDIR)\tCreate a subdirectory\n"
+"MKLINK\tCreate a symbolic link\n"
 "MORE\t\tDisplay output in pages\n"
 "MOVE\t\tMove a file, set of files or directory tree\n"
 "PATH\t\tSet or show the search path\n"
@@ -10242,182 +10257,182 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 
-#: cmd.rc:353
+#: cmd.rc:365
 msgid "Are you sure?"
 msgstr ""
 
-#: cmd.rc:354 reg.rc:50 xcopy.rc:43
+#: cmd.rc:366 reg.rc:50 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr ""
 
-#: cmd.rc:355 reg.rc:51 xcopy.rc:44
+#: cmd.rc:367 reg.rc:51 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr ""
 
-#: cmd.rc:356
+#: cmd.rc:368
 msgid "File association missing for extension %1\n"
 msgstr ""
 
-#: cmd.rc:357
+#: cmd.rc:369
 msgid "No open command associated with file type '%1'\n"
 msgstr ""
 
-#: cmd.rc:358
+#: cmd.rc:370
 msgid "Overwrite %1?"
 msgstr ""
 
-#: cmd.rc:359
+#: cmd.rc:371
 msgid "More..."
 msgstr ""
 
-#: cmd.rc:360
+#: cmd.rc:372
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 
-#: cmd.rc:362
+#: cmd.rc:374
 msgid "Argument missing\n"
 msgstr ""
 
-#: cmd.rc:363
+#: cmd.rc:375
 msgid "Syntax error\n"
 msgstr ""
 
-#: cmd.rc:365
+#: cmd.rc:377
 #, fuzzy
 msgid "No help available for %1\n"
 msgstr "INFUORMAZIUN"
 
-#: cmd.rc:366
+#: cmd.rc:378
 msgid "Target to GOTO not found\n"
 msgstr ""
 
-#: cmd.rc:367
+#: cmd.rc:379
 msgid "Current Date is %1\n"
 msgstr ""
 
-#: cmd.rc:368
+#: cmd.rc:380
 msgid "Current Time is %1\n"
 msgstr ""
 
-#: cmd.rc:369
+#: cmd.rc:381
 msgid "Enter new date: "
 msgstr ""
 
-#: cmd.rc:370
+#: cmd.rc:382
 msgid "Enter new time: "
 msgstr ""
 
-#: cmd.rc:371
+#: cmd.rc:383
 msgid "Environment variable %1 not defined\n"
 msgstr ""
 
-#: cmd.rc:372 xcopy.rc:41
+#: cmd.rc:384 xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr ""
 
-#: cmd.rc:373
+#: cmd.rc:385
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 
-#: cmd.rc:374 xcopy.rc:45
+#: cmd.rc:386 xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr ""
 
-#: cmd.rc:375
+#: cmd.rc:387
 msgid "Delete %1?"
 msgstr ""
 
-#: cmd.rc:376
+#: cmd.rc:388
 msgid "Echo is %1\n"
 msgstr ""
 
-#: cmd.rc:377
+#: cmd.rc:389
 msgid "Verify is %1\n"
 msgstr ""
 
-#: cmd.rc:378
+#: cmd.rc:390
 msgid "Verify must be ON or OFF\n"
 msgstr ""
 
-#: cmd.rc:379
+#: cmd.rc:391
 msgid "Parameter error\n"
 msgstr ""
 
-#: cmd.rc:380
+#: cmd.rc:392
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
 
-#: cmd.rc:381
+#: cmd.rc:393
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr ""
 
-#: cmd.rc:382
+#: cmd.rc:394
 msgid "PATH not found\n"
 msgstr ""
 
-#: cmd.rc:383
+#: cmd.rc:395
 msgid "Press any key to continue... "
 msgstr ""
 
-#: cmd.rc:384
+#: cmd.rc:396
 msgid "Wine Command Prompt"
 msgstr ""
 
-#: cmd.rc:385
+#: cmd.rc:397
 msgid "Microsoft Windows %1!S!\n"
 msgstr ""
 
-#: cmd.rc:386
+#: cmd.rc:398
 msgid "More? "
 msgstr ""
 
-#: cmd.rc:387
+#: cmd.rc:399
 msgid "The input line is too long.\n"
 msgstr ""
 
-#: cmd.rc:388
+#: cmd.rc:400
 msgid "Volume in drive %1!c! is %2\n"
 msgstr ""
 
-#: cmd.rc:389
+#: cmd.rc:401
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:390 reg.rc:49
+#: cmd.rc:402 reg.rc:49
 msgid " (Yes|No)"
 msgstr ""
 
-#: cmd.rc:391
+#: cmd.rc:403
 msgid " (Yes|No|All)"
 msgstr ""
 
-#: cmd.rc:392
+#: cmd.rc:404
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 
-#: cmd.rc:393
+#: cmd.rc:405
 msgid "Division by zero error.\n"
 msgstr ""
 
-#: cmd.rc:394
+#: cmd.rc:406
 msgid "Expected an operand.\n"
 msgstr ""
 
-#: cmd.rc:395
+#: cmd.rc:407
 msgid "Expected an operator.\n"
 msgstr ""
 
-#: cmd.rc:396
+#: cmd.rc:408
 msgid "Mismatch in parentheses.\n"
 msgstr ""
 
-#: cmd.rc:397
+#: cmd.rc:409
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"

@@ -1597,6 +1597,9 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       case WCMD_CHOICE:
         WCMD_choice(p);
         break;
+      case WCMD_MKLINK:
+        WCMD_mklink(p);
+        break;
       case WCMD_EXIT:
         WCMD_exit (cmdList);
         break;

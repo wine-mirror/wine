@@ -94,6 +94,7 @@ const WCHAR inbuilt[][10] = {
         {'F','T','Y','P','E','\0'},
         {'M','O','R','E','\0'},
         {'C','H','O','I','C','E','\0'},
+        {'M','K','L','I','N','K','\0'},
         {'E','X','I','T','\0'}
 };
 static const WCHAR externals[][10] = {
@@ -4958,4 +4959,61 @@ void WCMD_color (void) {
       FillConsoleOutputAttribute(hStdOut, color, screenSize, topLeft, &screenSize);
       SetConsoleTextAttribute(hStdOut, color);
   }
+}
+
+/****************************************************************************
+ * WCMD_mklink
+ */
+
+void WCMD_mklink(WCHAR *args)
+{
+    int   argno = 0;
+    WCHAR *argN = args;
+    BOOL isdir = FALSE;
+    BOOL junction = FALSE;
+    BOOL hard = FALSE;
+    BOOL ret = FALSE;
+    WCHAR file1[MAX_PATH];
+    WCHAR file2[MAX_PATH];
+    static const WCHAR optD[] = {'/', 'D', '\0'};
+    static const WCHAR optH[] = {'/', 'H', '\0'};
+    static const WCHAR optJ[] = {'/', 'J', '\0'};
+
+    if (param1[0] == 0x00 || param2[0] == 0x00) {
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
+        return;
+    }
+
+    file1[0] = 0;
+
+    while (argN) {
+        WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
+
+        if (!argN) break;
+
+        WINE_TRACE("mklink: Processing arg '%s'\n", wine_dbgstr_w(thisArg));
+
+        if(lstrcmpiW(thisArg, optD) == 0)
+            isdir = TRUE;
+        else if(lstrcmpiW(thisArg, optH) == 0)
+            hard = TRUE;
+        else if(lstrcmpiW(thisArg, optJ) == 0)
+            junction = TRUE;
+        else {
+            if(!file1[0])
+                lstrcpyW(file1, thisArg);
+            else
+                lstrcpyW(file2, thisArg);
+        }
+    }
+
+    if(hard)
+        ret = CreateHardLinkW(file1, file2, NULL);
+    else if(!junction)
+        ret = CreateSymbolicLinkW(file1, file2, isdir);
+    else
+        WINE_TRACE("Juction links currently not supported.\n");
+
+    if(!ret)
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), file1);
 }

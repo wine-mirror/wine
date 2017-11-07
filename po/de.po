@@ -10017,7 +10017,7 @@ msgstr "Schleife während der Abarbeitung von Weiterleitungen"
 msgid "Referral hop limit exceeded"
 msgstr "Überschreitung der maximalen Anzahl von Weiterleitungen"
 
-#: attrib.rc:30 cmd.rc:361
+#: attrib.rc:30 cmd.rc:373
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -10025,7 +10025,7 @@ msgstr ""
 "Noch nicht implementiert\n"
 "\n"
 
-#: attrib.rc:31 cmd.rc:364
+#: attrib.rc:31 cmd.rc:376
 msgid "%1: File Not Found\n"
 msgstr "%1: Datei nicht gefunden\n"
 
@@ -10648,6 +10648,20 @@ msgstr ""
 "eine erlaubte Taste aus einer wählbaren Liste drückt.\n"
 "CHOICE wird hauptsächlich als Menüauswahl in einer Batchdatei genutzt.\n"
 
+#: cmd.rc:324
+msgid ""
+"Create a symbolic link.\n"
+"\n"
+"Syntax: MKLINK [options] link_name target\n"
+"\n"
+"Options:\n"
+"/d             Create a directory symbolic link.\n"
+"/h             Create a hard link.\n"
+"/j             Create a directory junction.\n"
+"link_name is the name of the new symbolic link.\n"
+"target is the path that link_name points to.\n"
+msgstr ""
+
 #: cmd.rc:312
 msgid ""
 "EXIT terminates the current command session and returns to the operating\n"
@@ -10656,7 +10670,48 @@ msgstr ""
 "EXIT beendet die aktuelle Befehlssitzung und kehrt zum Betriebssystem oder\n"
 "der Shell zurück, von der CMD gestartet wurde.\n"
 
-#: cmd.rc:351
+#: cmd.rc:364
+#, fuzzy
+#| msgid ""
+#| "CMD built-in commands are:\n"
+#| "ASSOC\t\tShow or modify file extension associations\n"
+#| "ATTRIB\t\tShow or change DOS file attributes\n"
+#| "CALL\t\tInvoke a batch file from inside another\n"
+#| "CD (CHDIR)\tChange current default directory\n"
+#| "CHOICE\t\tWait for an keypress from a selectable list\n"
+#| "CLS\t\tClear the console screen\n"
+#| "COPY\t\tCopy file\n"
+#| "CTTY\t\tChange input/output device\n"
+#| "DATE\t\tShow or change the system date\n"
+#| "DEL (ERASE)\tDelete a file or set of files\n"
+#| "DIR\t\tList the contents of a directory\n"
+#| "ECHO\t\tCopy text directly to the console output\n"
+#| "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
+#| "FTYPE\t\tShow or modify open commands associated with file types\n"
+#| "HELP\t\tShow brief help details on a topic\n"
+#| "MD (MKDIR)\tCreate a subdirectory\n"
+#| "MORE\t\tDisplay output in pages\n"
+#| "MOVE\t\tMove a file, set of files or directory tree\n"
+#| "PATH\t\tSet or show the search path\n"
+#| "PAUSE\t\tSuspend execution of a batch file\n"
+#| "POPD\t\tRestore the directory to the last one saved with PUSHD\n"
+#| "PROMPT\t\tChange the command prompt\n"
+#| "PUSHD\t\tChange to a new directory, saving the current one\n"
+#| "REN (RENAME)\tRename a file\n"
+#| "RD (RMDIR)\tDelete a subdirectory\n"
+#| "SET\t\tSet or show environment variables\n"
+#| "SETLOCAL\tStart localization of environment changes in a batch file\n"
+#| "START\t\tStart a program, or open a document in the associated program\n"
+#| "TIME\t\tSet or show the current system time\n"
+#| "TITLE\t\tSet the window title for the CMD session\n"
+#| "TYPE\t\tType the contents of a text file\n"
+#| "VER\t\tShow the current version of CMD\n"
+#| "VOL\t\tShow the volume label of a disk device\n"
+#| "XCOPY\t\tCopy source files or directory trees to a destination\n"
+#| "EXIT\t\tClose down CMD\n"
+#| "\n"
+#| "Enter HELP <command> for further information on any of the above "
+#| "commands.\n"
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10675,6 +10730,7 @@ msgid ""
 "FTYPE\t\tShow or modify open commands associated with file types\n"
 "HELP\t\tShow brief help details on a topic\n"
 "MD (MKDIR)\tCreate a subdirectory\n"
+"MKLINK\tCreate a symbolic link\n"
 "MORE\t\tDisplay output in pages\n"
 "MOVE\t\tMove a file, set of files or directory tree\n"
 "PATH\t\tSet or show the search path\n"
@@ -10737,112 +10793,112 @@ msgstr ""
 "Geben Sie HELP <Befehl> ein, um weitere Informationen zu einem der obigen\n"
 "Befehle zu erhalten.\n"
 
-#: cmd.rc:353
+#: cmd.rc:365
 msgid "Are you sure?"
 msgstr "Sind Sie sicher?"
 
-#: cmd.rc:354 reg.rc:50 xcopy.rc:43
+#: cmd.rc:366 reg.rc:50 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "J"
 
-#: cmd.rc:355 reg.rc:51 xcopy.rc:44
+#: cmd.rc:367 reg.rc:51 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:356
+#: cmd.rc:368
 msgid "File association missing for extension %1\n"
 msgstr "Verknüpfung für Dateiendung %1 fehlt\n"
 
-#: cmd.rc:357
+#: cmd.rc:369
 msgid "No open command associated with file type '%1'\n"
 msgstr "Kein Befehl zum Öffnen für Dateityp '%1'\n"
 
-#: cmd.rc:358
+#: cmd.rc:370
 msgid "Overwrite %1?"
 msgstr "%1 überschreiben?"
 
-#: cmd.rc:359
+#: cmd.rc:371
 msgid "More..."
 msgstr "Mehr..."
 
-#: cmd.rc:360
+#: cmd.rc:372
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 "Die Zeile bei der Batchverarbeitung ist möglicherweise abgeschnitten. "
 "Benutze:\n"
 
-#: cmd.rc:362
+#: cmd.rc:374
 msgid "Argument missing\n"
 msgstr "Argument fehlt\n"
 
-#: cmd.rc:363
+#: cmd.rc:375
 msgid "Syntax error\n"
 msgstr "Syntaxfehler\n"
 
-#: cmd.rc:365
+#: cmd.rc:377
 msgid "No help available for %1\n"
 msgstr "Hilfe für %1 ist nicht verfügbar\n"
 
-#: cmd.rc:366
+#: cmd.rc:378
 msgid "Target to GOTO not found\n"
 msgstr "Das Sprungziel von GOTO wurde nicht gefunden\n"
 
-#: cmd.rc:367
+#: cmd.rc:379
 msgid "Current Date is %1\n"
 msgstr "Aktuelles Datum ist %1\n"
 
-#: cmd.rc:368
+#: cmd.rc:380
 msgid "Current Time is %1\n"
 msgstr "Aktuelle Zeit ist %1\n"
 
-#: cmd.rc:369
+#: cmd.rc:381
 msgid "Enter new date: "
 msgstr "Geben Sie das neue Datum ein: "
 
-#: cmd.rc:370
+#: cmd.rc:382
 msgid "Enter new time: "
 msgstr "Geben Sie die neue Zeit ein: "
 
-#: cmd.rc:371
+#: cmd.rc:383
 msgid "Environment variable %1 not defined\n"
 msgstr "Die Umgebungsvariable %1 ist nicht definiert\n"
 
-#: cmd.rc:372 xcopy.rc:41
+#: cmd.rc:384 xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr "'%1' konnte nicht geöffnet werden\n"
 
-#: cmd.rc:373
+#: cmd.rc:385
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Kann kein Batch-Label außerhalb eines Batch-Skripts aufrufen\n"
 
-#: cmd.rc:374 xcopy.rc:45
+#: cmd.rc:386 xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:375
+#: cmd.rc:387
 msgid "Delete %1?"
 msgstr "Lösche %1?"
 
-#: cmd.rc:376
+#: cmd.rc:388
 msgid "Echo is %1\n"
 msgstr "Echo ist %1\n"
 
-#: cmd.rc:377
+#: cmd.rc:389
 msgid "Verify is %1\n"
 msgstr "Verify ist %1\n"
 
-#: cmd.rc:378
+#: cmd.rc:390
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify muss ON oder OFF sein\n"
 
-#: cmd.rc:379
+#: cmd.rc:391
 msgid "Parameter error\n"
 msgstr "Parameterfehler\n"
 
-#: cmd.rc:380
+#: cmd.rc:392
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10850,74 +10906,74 @@ msgstr ""
 "Datenträgernummer ist %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:381
+#: cmd.rc:393
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Datenträgerbezeichnung (11 Zeichen, <Enter> für keine)?"
 
-#: cmd.rc:382
+#: cmd.rc:394
 msgid "PATH not found\n"
 msgstr "PATH nicht gefunden\n"
 
-#: cmd.rc:383
+#: cmd.rc:395
 msgid "Press any key to continue... "
 msgstr "Drücken Sie eine Taste um fortzufahren... "
 
-#: cmd.rc:384
+#: cmd.rc:396
 msgid "Wine Command Prompt"
 msgstr "Wine-Befehlsprozessor"
 
-#: cmd.rc:385
+#: cmd.rc:397
 msgid "Microsoft Windows %1!S!\n"
 msgstr "Microsoft Windows %1!S!\n"
 
-#: cmd.rc:386
+#: cmd.rc:398
 msgid "More? "
 msgstr "Mehr? "
 
-#: cmd.rc:387
+#: cmd.rc:399
 msgid "The input line is too long.\n"
 msgstr "Die Eingabezeile ist zu lang.\n"
 
-#: cmd.rc:388
+#: cmd.rc:400
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Datenträger in Laufwerk %1!c! ist %2\n"
 
-#: cmd.rc:389
+#: cmd.rc:401
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Datenträger in Laufwerk %1!c! hat keine Bezeichnung.\n"
 
-#: cmd.rc:390 reg.rc:49
+#: cmd.rc:402 reg.rc:49
 msgid " (Yes|No)"
 msgstr " (Ja|Nein)"
 
-#: cmd.rc:391
+#: cmd.rc:403
 msgid " (Yes|No|All)"
 msgstr " (Ja|Nein|Alle)"
 
-#: cmd.rc:392
+#: cmd.rc:404
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 "'%1' konnte nicht als interner oder externer Befehl\n"
 "oder als Batch-Skript erkannt werden.\n"
 
-#: cmd.rc:393
+#: cmd.rc:405
 msgid "Division by zero error.\n"
 msgstr "'Division durch Null'-Fehler.\n"
 
-#: cmd.rc:394
+#: cmd.rc:406
 msgid "Expected an operand.\n"
 msgstr "Operand erwartet.\n"
 
-#: cmd.rc:395
+#: cmd.rc:407
 msgid "Expected an operator.\n"
 msgstr "Operator erwartet.\n"
 
-#: cmd.rc:396
+#: cmd.rc:408
 msgid "Mismatch in parentheses.\n"
 msgstr "Klammern stimmen nicht überein.\n"
 
-#: cmd.rc:397
+#: cmd.rc:409
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
