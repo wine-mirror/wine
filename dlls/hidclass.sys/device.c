@@ -316,7 +316,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
             IoCompleteRequest(irp, IO_NO_INCREMENT );
 
-            rc = WaitForSingleObject(ext->halt_event, ext->poll_interval);
+            rc = WaitForSingleObject(ext->halt_event, ext->poll_interval ? ext->poll_interval : DEFAULT_POLL_INTERVAL);
 
             if (rc == WAIT_OBJECT_0)
                 break;
@@ -546,9 +546,7 @@ NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 break;
             }
             poll_interval = *(ULONG *)irp->AssociatedIrp.SystemBuffer;
-            if (poll_interval == 0)
-                FIXME("Handle opportunistic reads\n");
-            else if (poll_interval <= MAX_POLL_INTERVAL_MSEC)
+            if (poll_interval <= MAX_POLL_INTERVAL_MSEC)
             {
                 extension->poll_interval = poll_interval;
                 irp->IoStatus.u.Status = STATUS_SUCCESS;
@@ -668,6 +666,7 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     UINT buffer_size = RingBuffer_GetBufferSize(ext->ring_buffer);
     NTSTATUS rc = STATUS_SUCCESS;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     int ptr = -1;
 
     packet = HeapAlloc(GetProcessHeap(), 0, buffer_size);
@@ -691,9 +690,30 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
     }
     else
     {
-        TRACE_(hid_report)("Queue irp\n");
-        InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.s.ListEntry);
-        rc = STATUS_PENDING;
+        BASE_DEVICE_EXTENSION *extension = device->DeviceExtension;
+        if (extension->poll_interval)
+        {
+            TRACE_(hid_report)("Queue irp\n");
+            InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.s.ListEntry);
+            rc = STATUS_PENDING;
+        }
+        else
+        {
+            HID_XFER_PACKET packet;
+            TRACE("No packet, but opportunistic reads enabled\n");
+            packet.reportId = ((BYTE*)irp->AssociatedIrp.SystemBuffer)[0];
+            packet.reportBuffer = &((BYTE*)irp->AssociatedIrp.SystemBuffer)[1];
+            packet.reportBufferLen = irpsp->Parameters.Read.Length - 1;
+            rc = call_minidriver(IOCTL_HID_GET_INPUT_REPORT, device, NULL, 0, &packet, sizeof(packet));
+
+            if (rc == STATUS_SUCCESS)
+            {
+                ((BYTE*)irp->AssociatedIrp.SystemBuffer)[0] = packet.reportId;
+                irp->IoStatus.Information = packet.reportBufferLen + 1;
+                irp->IoStatus.u.Status = rc;
+            }
+            IoCompleteRequest(irp, IO_NO_INCREMENT);
+        }
     }
     HeapFree(GetProcessHeap(), 0, packet);
 
