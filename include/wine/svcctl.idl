@@ -218,6 +218,13 @@ struct enum_service_status
     SERVICE_STATUS service_status;
 };
 
+struct enum_service_status_process
+{
+    DWORD                  service_name;
+    DWORD                  display_name;
+    SERVICE_STATUS_PROCESS service_status_process;
+};
+
 typedef struct _SERVICE_RPC_REQUIRED_PRIVILEGES_INFO {
     DWORD cbRequiredPrivileges;
     [size_is(cbRequiredPrivileges)] BYTE *pRequiredPrivileges;

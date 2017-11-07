@@ -1461,7 +1461,7 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
     DWORD_PTR offset;
     struct sc_manager_handle *manager;
     struct service_entry *service;
-    ENUM_SERVICE_STATUS_PROCESSW *s;
+    struct enum_service_status_process *s;
 
     WINE_TRACE("(%p, 0x%x, 0x%x, %p, %u, %p, %p, %s)\n", hmngr, type, state, buffer, size,
                needed, returned, wine_dbgstr_w(group));
@@ -1489,7 +1489,7 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
         if ((service->status.dwServiceType & type) && map_state(service->status.dwCurrentState, state)
             && match_group(service->config.lpLoadOrderGroup, group))
         {
-            total_size += sizeof(ENUM_SERVICE_STATUS_PROCESSW);
+            total_size += sizeof(*s);
             total_size += (strlenW(service->name) + 1) * sizeof(WCHAR);
             if (service->config.lpDisplayName)
             {
@@ -1505,8 +1505,8 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
         scmdatabase_unlock(manager->db);
         return ERROR_MORE_DATA;
     }
-    s = (ENUM_SERVICE_STATUS_PROCESSW *)buffer;
-    offset = num_services * sizeof(ENUM_SERVICE_STATUS_PROCESSW);
+    s = (struct enum_service_status_process *)buffer;
+    offset = num_services * sizeof(*s);
     LIST_FOR_EACH_ENTRY(service, &manager->db->services, struct service_entry, entry)
     {
         if ((service->status.dwServiceType & type) && map_state(service->status.dwCurrentState, state)
@@ -1514,18 +1514,18 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
         {
             sz = (strlenW(service->name) + 1) * sizeof(WCHAR);
             memcpy(buffer + offset, service->name, sz);
-            s->lpServiceName = (WCHAR *)offset; /* store a buffer offset instead of a pointer */
+            s->service_name = offset;
             offset += sz;
 
-            if (!service->config.lpDisplayName) s->lpDisplayName = NULL;
+            if (!service->config.lpDisplayName) s->display_name = 0;
             else
             {
                 sz = (strlenW(service->config.lpDisplayName) + 1) * sizeof(WCHAR);
                 memcpy(buffer + offset, service->config.lpDisplayName, sz);
-                s->lpDisplayName = (WCHAR *)offset;
+                s->display_name = offset;
                 offset += sz;
             }
-            fill_status_process(&s->ServiceStatusProcess, service);
+            fill_status_process(&s->service_status_process, service);
             s++;
         }
     }
