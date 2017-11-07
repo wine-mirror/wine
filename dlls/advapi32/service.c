@@ -1654,6 +1654,17 @@ EnumServicesStatusA( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
     TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", hmngr, type, state, services, size, needed,
           returned, resume_handle);
 
+    if (!hmngr)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (!needed || !returned)
+    {
+        SetLastError( ERROR_INVALID_ADDRESS );
+        return FALSE;
+    }
+
     sz = max( 2 * size, sizeof(*servicesW) );
     if (!(servicesW = heap_alloc( sz )))
     {
@@ -1701,8 +1712,10 @@ EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
                      services, DWORD size, LPDWORD needed, LPDWORD returned,
                      LPDWORD resume_handle )
 {
-    DWORD err, i;
-    ENUM_SERVICE_STATUSW dummy_status;
+    DWORD err, i, offset, buflen, count, total_size = 0;
+    struct enum_service_status *entry;
+    const WCHAR *str;
+    BYTE *buf;
 
     TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", hmngr, type, state, services, size, needed,
           returned, resume_handle);
@@ -1712,17 +1725,23 @@ EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
+    if (!needed || !returned)
+    {
+        SetLastError( ERROR_INVALID_ADDRESS );
+        return FALSE;
+    }
 
     /* make sure we pass a valid pointer */
-    if (!services || size < sizeof(*services))
+    buflen = max( size, sizeof(*services) );
+    if (!(buf = heap_alloc( buflen )))
     {
-        services = &dummy_status;
-        size = sizeof(dummy_status);
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
     }
 
     __TRY
     {
-        err = svcctl_EnumServicesStatusW( hmngr, type, state, (BYTE *)services, size, needed, returned, resume_handle );
+        err = svcctl_EnumServicesStatusW( hmngr, type, state, buf, buflen, needed, &count, resume_handle );
     }
     __EXCEPT(rpc_filter)
     {
@@ -1730,20 +1749,68 @@ EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
     }
     __ENDTRY
 
+    *returned = 0;
     if (err != ERROR_SUCCESS)
     {
+        /* double the needed size to fit the potentially larger ENUM_SERVICE_STATUSW */
+        if (err == ERROR_MORE_DATA) *needed *= 2;
+        heap_free( buf );
         SetLastError( err );
         return FALSE;
     }
 
-    for (i = 0; i < *returned; i++)
+    entry = (struct enum_service_status *)buf;
+    for (i = 0; i < count; i++)
     {
-        /* convert buffer offsets into pointers */
-        services[i].lpServiceName = (WCHAR *)((char *)services + (DWORD_PTR)services[i].lpServiceName);
-        if (services[i].lpDisplayName)
-            services[i].lpDisplayName = (WCHAR *)((char *)services + (DWORD_PTR)services[i].lpDisplayName);
+        total_size += sizeof(*services);
+        if (entry->service_name)
+        {
+            str = (const WCHAR *)(buf + entry->service_name);
+            total_size += (strlenW( str ) + 1) * sizeof(WCHAR);
+        }
+        if (entry->display_name)
+        {
+            str = (const WCHAR *)(buf + entry->display_name);
+            total_size += (strlenW( str ) + 1) * sizeof(WCHAR);
+        }
+        entry++;
     }
 
+    if (total_size > size)
+    {
+        heap_free( buf );
+        *needed = total_size;
+        SetLastError( ERROR_MORE_DATA );
+        return FALSE;
+    }
+
+    offset = count * sizeof(*services);
+    entry = (struct enum_service_status *)buf;
+    for (i = 0; i < count; i++)
+    {
+        DWORD str_size;
+        str = (const WCHAR *)(buf + entry->service_name);
+        str_size = (strlenW( str ) + 1) * sizeof(WCHAR);
+        services[i].lpServiceName = (WCHAR *)((char *)services + offset);
+        memcpy( services[i].lpServiceName, str, str_size );
+        offset += str_size;
+
+        if (!entry->display_name) services[i].lpDisplayName = NULL;
+        else
+        {
+            str = (const WCHAR *)(buf + entry->display_name);
+            str_size = (strlenW( str ) + 1) * sizeof(WCHAR);
+            services[i].lpDisplayName = (WCHAR *)((char *)services + offset);
+            memcpy( services[i].lpDisplayName, str, str_size );
+            offset += str_size;
+        }
+        services[i].ServiceStatus = entry->service_status;
+        entry++;
+    }
+
+    heap_free( buf );
+    *needed = 0;
+    *returned = count;
     return TRUE;
 }
 

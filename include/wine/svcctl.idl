@@ -210,6 +210,14 @@ typedef enum _SC_ENUM_TYPE {
 
 cpp_quote("#endif")
 
+/* internal version of ENUM_SERVICE_STATUSA/W that doesn't depend on pointer size */
+struct enum_service_status
+{
+    DWORD          service_name;
+    DWORD          display_name;
+    SERVICE_STATUS service_status;
+};
+
 typedef struct _SERVICE_RPC_REQUIRED_PRIVILEGES_INFO {
     DWORD cbRequiredPrivileges;
     [size_is(cbRequiredPrivileges)] BYTE *pRequiredPrivileges;
