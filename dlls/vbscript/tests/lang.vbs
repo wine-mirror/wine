@@ -1304,6 +1304,35 @@ arr(0) = "not modified"
 modifyarr(arr)
 Call todo_wine_ok(arr(0) = "not modified", "arr(0) = " & arr(0))
 
+for x = 0 to UBound(arr)
+    arr(x) = x
+next
+y = 0
+for each x in arr
+    Call ok(x = y, "x = " & x & ", expected " & y)
+    Call ok(arr(y) = y, "arr(" & y & ") = " & arr(y))
+    arr(y) = 1
+    x = 1
+    y = y+1
+next
+Call ok(y = 4, "y = " & y & " after array enumeration")
+
+for x=0 to UBound(arr2, 1)
+    for y=0 to UBound(arr2, 2)
+        arr2(x, y) = x + y*(UBound(arr2, 1)+1)
+    next
+next
+y = 0
+for each x in arr2
+    Call ok(x = y, "x = " & x & ", expected " & y)
+    y = y+1
+next
+Call ok(y = 20, "y = " & y & " after array enumeration")
+
+for each x in noarr
+    Call ok(false, "Empty array contains: " & x)
+next
+
 ' It's allowed to declare non-builtin RegExp class...
 class RegExp
      public property get Global()
