@@ -21,7 +21,7 @@
 @ stub TdhGetPropertySize
 @ stub TdhGetWppMessage
 @ stub TdhGetWppProperty
-@ stub TdhLoadManifest
+@ stdcall TdhLoadManifest(wstr)
 @ stub TdhLoadManifestFromBinary
 @ stub TdhOpenDecodingHandle
 @ stub TdhQueryProviderFieldInformation

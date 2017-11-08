@@ -20,8 +20,11 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(tdh);
@@ -40,4 +43,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     }
 
     return TRUE;
+}
+
+ULONG WINAPI TdhLoadManifest(LPWSTR manifest)
+{
+    FIXME("(%s): stub\n", debugstr_w(manifest));
+    return STATUS_SUCCESS;
 }
