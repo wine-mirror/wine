@@ -10004,6 +10004,17 @@ istreambuf_iterator_char* __thiscall time_get_char_get(const time_get_char *this
     return call_time_get_char_do_get(this, ret, s, e, base, err, t, fmt, mod);
 }
 
+/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@PBD4@Z */
+/* ?get@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@PEBD4@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_get_fmt, 44)
+istreambuf_iterator_char* __thiscall time_get_char_get_fmt(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t, const char *fmtstart, const char *fmtend)
+{
+    FIXME("(%p %p %p %p %p %p %p) stub\n", this, ret, base, err, t, fmtstart, fmtend);
+    return NULL;
+}
+
 /* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
 /* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
 DEFINE_THISCALL_WRAPPER(time_get_char_do_get_date, 36) /* virtual */
