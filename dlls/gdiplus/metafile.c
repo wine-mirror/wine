@@ -256,6 +256,26 @@ typedef struct EmfPlusTextureBrushData
     BYTE OptionalData[1];
 } EmfPlusTextureBrushData;
 
+typedef struct EmfPlusRectF
+{
+    float X;
+    float Y;
+    float Width;
+    float Height;
+} EmfPlusRectF;
+
+typedef struct EmfPlusLinearGradientBrushData
+{
+    DWORD BrushDataFlags;
+    INT WrapMode;
+    EmfPlusRectF RectF;
+    EmfPlusARGB StartColor;
+    EmfPlusARGB EndColor;
+    DWORD Reserved1;
+    DWORD Reserved2;
+    BYTE OptionalData[1];
+} EmfPlusLinearGradientBrushData;
+
 typedef struct EmfPlusBrush
 {
     DWORD Version;
@@ -264,6 +284,7 @@ typedef struct EmfPlusBrush
         EmfPlusSolidBrushData solid;
         EmfPlusHatchBrushData hatch;
         EmfPlusTextureBrushData texture;
+        EmfPlusLinearGradientBrushData lineargradient;
     } BrushData;
 } EmfPlusBrush;
 
@@ -371,14 +392,6 @@ typedef struct EmfPlusObject
         EmfPlusImageAttributes image_attributes;
     } ObjectData;
 } EmfPlusObject;
-
-typedef struct EmfPlusRectF
-{
-    float X;
-    float Y;
-    float Width;
-    float Height;
-} EmfPlusRectF;
 
 typedef struct EmfPlusPointR7
 {
@@ -2011,7 +2024,10 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
 {
     static const UINT header_size = FIELD_OFFSET(EmfPlusBrush, BrushData);
     EmfPlusBrush *data = (EmfPlusBrush *)record_data;
+    EmfPlusTransformMatrix *transform = NULL;
+    DWORD brushflags;
     GpStatus status;
+    UINT offset;
 
     *brush = NULL;
 
@@ -2035,11 +2051,9 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
         break;
     case BrushTypeTextureFill:
     {
-        UINT offset = header_size + FIELD_OFFSET(EmfPlusTextureBrushData, OptionalData);
-        EmfPlusTransformMatrix *transform = NULL;
-        DWORD brushflags;
         GpImage *image;
 
+        offset = header_size + FIELD_OFFSET(EmfPlusTextureBrushData, OptionalData);
         if (data_size <= offset)
             return InvalidParameter;
 
@@ -2061,6 +2075,80 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
             GdipSetTextureTransform((GpTexture *)*brush, (const GpMatrix *)transform);
 
         GdipDisposeImage(image);
+        break;
+    }
+    case BrushTypeLinearGradient:
+    {
+        GpLineGradient *gradient = NULL;
+        GpPointF startpoint, endpoint;
+        UINT position_count = 0;
+
+        offset = header_size + FIELD_OFFSET(EmfPlusLinearGradientBrushData, OptionalData);
+        if (data_size <= offset)
+            return InvalidParameter;
+
+        brushflags = data->BrushData.lineargradient.BrushDataFlags;
+        if ((brushflags & BrushDataPresetColors) && (brushflags & (BrushDataBlendFactorsH | BrushDataBlendFactorsV)))
+            return InvalidParameter;
+
+        if (brushflags & BrushDataTransform)
+        {
+            if (data_size <= offset + sizeof(EmfPlusTransformMatrix))
+                return InvalidParameter;
+            transform = (EmfPlusTransformMatrix *)(record_data + offset);
+            offset += sizeof(EmfPlusTransformMatrix);
+        }
+
+        if (brushflags & (BrushDataPresetColors | BrushDataBlendFactorsH | BrushDataBlendFactorsV))
+        {
+            if (data_size <= offset + sizeof(DWORD)) /* Number of factors/preset colors. */
+                return InvalidParameter;
+            position_count = *(DWORD *)(record_data + offset);
+            offset += sizeof(DWORD);
+        }
+
+        if (brushflags & BrushDataPresetColors)
+        {
+            if (data_size != offset + position_count * (sizeof(float) + sizeof(EmfPlusARGB)))
+                return InvalidParameter;
+        }
+        else if (brushflags & BrushDataBlendFactorsH)
+        {
+            if (data_size != offset + position_count * 2 * sizeof(float))
+                return InvalidParameter;
+        }
+
+        startpoint.X = data->BrushData.lineargradient.RectF.X;
+        startpoint.Y = data->BrushData.lineargradient.RectF.Y;
+        endpoint.X = startpoint.X + data->BrushData.lineargradient.RectF.Width;
+        endpoint.Y = startpoint.Y + data->BrushData.lineargradient.RectF.Height;
+
+        status = GdipCreateLineBrush(&startpoint, &endpoint, data->BrushData.lineargradient.StartColor,
+            data->BrushData.lineargradient.EndColor, data->BrushData.lineargradient.WrapMode, &gradient);
+        if (status == Ok)
+        {
+            if (transform)
+                status = GdipSetLineTransform(gradient, (const GpMatrix *)transform);
+
+            if (status == Ok)
+            {
+                if (brushflags & BrushDataPresetColors)
+                    status = GdipSetLinePresetBlend(gradient, (ARGB *)(record_data + offset +
+                        position_count * sizeof(REAL)), (REAL *)(record_data + offset), position_count);
+                else if (brushflags & BrushDataBlendFactorsH)
+                    status = GdipSetLineBlend(gradient, (REAL *)(record_data + offset + position_count * sizeof(REAL)),
+                        (REAL *)(record_data + offset), position_count);
+
+                if (brushflags & BrushDataIsGammaCorrected)
+                    FIXME("BrushDataIsGammaCorrected is not handled.\n");
+            }
+        }
+
+        if (status == Ok)
+            *brush = (GpBrush *)gradient;
+        else
+            GdipDeleteBrush((GpBrush *)gradient);
+
         break;
     }
     default:
