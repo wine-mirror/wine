@@ -98,6 +98,8 @@ static int (__cdecl *p__strnset_s)(char*,size_t,int,size_t);
 static int (__cdecl *p__wcsset_s)(wchar_t*,size_t,wchar_t);
 static size_t (__cdecl *p__mbsnlen)(const unsigned char*, size_t);
 static int (__cdecl *p__mbccpy_s)(unsigned char*, size_t, int*, const unsigned char*);
+static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
+static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -3266,6 +3268,84 @@ static void test__ismbclx(void)
     _setmbcp(cp);
 }
 
+static void test__memicmp(void)
+{
+    static const char *s1 = "abc";
+    static const char *s2 = "aBd";
+    int ret;
+
+    ret = p__memicmp(NULL, NULL, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = p__memicmp(s1, s2, 2);
+    ok(!ret, "got %d\n", ret);
+
+    ret = p__memicmp(s1, s2, 3);
+    ok(ret == -1, "got %d\n", ret);
+
+    if (!p__memicmp_l)
+        return;
+
+    /* Following calls crash on WinXP/W2k3. */
+    errno = 0xdeadbeef;
+    ret = p__memicmp(NULL, NULL, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = p__memicmp(s1, NULL, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = p__memicmp(NULL, s2, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+}
+
+static void test__memicmp_l(void)
+{
+    static const char *s1 = "abc";
+    static const char *s2 = "aBd";
+    int ret;
+
+    if (!p__memicmp_l)
+    {
+        win_skip("_memicmp_l not found.\n");
+        return;
+    }
+
+    errno = 0xdeadbeef;
+    ret = p__memicmp_l(NULL, NULL, 0, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(errno == 0xdeadbeef, "errno is %d, expected 0xdeadbeef\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = p__memicmp_l(NULL, NULL, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = p__memicmp_l(s1, NULL, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = p__memicmp_l(NULL, s2, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = p__memicmp_l(s1, s2, 2, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(errno == 0xdeadbeef, "errno is %d, expected 0xdeadbeef\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = p__memicmp_l(s1, s2, 3, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(errno == 0xdeadbeef, "errno is %d, expected 0xdeadbeef\n", errno);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -3322,6 +3402,8 @@ START_TEST(string)
     p__wcsset_s = (void*)GetProcAddress(hMsvcrt, "_wcsset_s");
     p__mbsnlen = (void*)GetProcAddress(hMsvcrt, "_mbsnlen");
     p__mbccpy_s = (void*)GetProcAddress(hMsvcrt, "_mbccpy_s");
+    p__memicmp = (void*)GetProcAddress(hMsvcrt, "_memicmp");
+    p__memicmp_l = (void*)GetProcAddress(hMsvcrt, "_memicmp_l");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -3384,4 +3466,6 @@ START_TEST(string)
     test__wcsset_s();
     test__mbscmp();
     test__ismbclx();
+    test__memicmp();
+    test__memicmp_l();
 }

@@ -472,7 +472,7 @@
 @ cdecl _mbstrlen(str)
 @ cdecl _mbsupr(str)
 @ cdecl _memccpy(ptr ptr long long) ntdll._memccpy
-@ cdecl _memicmp(str str long) ntdll._memicmp
+@ cdecl _memicmp(str str long) MSVCRT__memicmp
 @ cdecl _mkdir(str) MSVCRT__mkdir
 @ cdecl _mktemp(str) MSVCRT__mktemp
 @ cdecl _mktime64(ptr) MSVCRT__mktime64

@@ -28,6 +28,34 @@
 
 #include <math.h>
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call &quot; #func &quot;\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected &quot; #func &quot;\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(invalid_parameter_handler);
+
+static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
+
 #ifndef INFINITY
 static inline float __port_infinity(void)
 {
@@ -46,7 +74,21 @@ static inline float __port_nan(void)
 #define NAN __port_nan()
 #endif
 
-static double (CDECL *p_strtod)(const char*, char** end);
+static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
+        const wchar_t *function, const wchar_t *file,
+        unsigned line, uintptr_t arg)
+{
+    CHECK_EXPECT(invalid_parameter_handler);
+    ok(expression == NULL, "expression is not NULL\n");
+    ok(function == NULL, "function is not NULL\n");
+    ok(file == NULL, "file is not NULL\n");
+    ok(line == 0, "line = %u\n", line);
+    ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
+}
+
+static double (__cdecl *p_strtod)(const char*, char** end);
+static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
+static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
 
 static BOOL init(void)
 {
@@ -59,7 +101,10 @@ static BOOL init(void)
         return FALSE;
     }
 
+    p_set_invalid_parameter_handler = (void*)GetProcAddress(module, "_set_invalid_parameter_handler");
     p_strtod = (void*)GetProcAddress(module, "strtod");
+    p__memicmp = (void*)GetProcAddress(module, "_memicmp");
+    p__memicmp_l = (void*)GetProcAddress(module, "_memicmp_l");
     return TRUE;
 }
 
@@ -114,8 +159,95 @@ static void test_strtod(void)
     test_strtod_str("0x1p1a", 2, 5);
 }
 
+static void test__memicmp(void)
+{
+    static const char *s1 = "abc";
+    static const char *s2 = "aBd";
+    int ret;
+
+    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    ret = p__memicmp(NULL, NULL, 0);
+    ok(!ret, "got %d\n", ret);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = p__memicmp(NULL, NULL, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = p__memicmp(s1, NULL, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = p__memicmp(NULL, s2, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    ret = p__memicmp(s1, s2, 2);
+    ok(!ret, "got %d\n", ret);
+
+    ret = p__memicmp(s1, s2, 3);
+    ok(ret == -1, "got %d\n", ret);
+
+    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
+}
+
+static void test__memicmp_l(void)
+{
+    static const char *s1 = "abc";
+    static const char *s2 = "aBd";
+    int ret;
+
+    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    ret = p__memicmp_l(NULL, NULL, 0, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = p__memicmp_l(NULL, NULL, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = p__memicmp_l(s1, NULL, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = p__memicmp_l(NULL, s2, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == 0xdeadbeef, "Unexpected errno = %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    ret = p__memicmp_l(s1, s2, 2, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    ret = p__memicmp_l(s1, s2, 3, NULL);
+    ok(ret == -1, "got %d\n", ret);
+
+    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
+}
 START_TEST(string)
 {
     if (!init()) return;
     test_strtod();
+    test__memicmp();
+    test__memicmp_l();
 }
