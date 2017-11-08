@@ -1203,7 +1203,7 @@ static HRESULT interp_enumnext(exec_ctx_t *ctx)
     if(do_continue) {
         ctx->instr++;
     }else {
-        stack_pop(ctx);
+        stack_popn(ctx, 1);
         instr_jmp(ctx, loop_end);
     }
     return S_OK;
