@@ -2877,7 +2877,7 @@ static void test_paste(void)
     SendMessageA(hEdit, WM_SETTEXT, 0, (LPARAM)"");
     r = SendMessageA(hEdit, WM_PASTE, 0, 0);
     len = SendMessageA(hEdit, WM_GETTEXTLENGTH, 0, 0);
-    ok(strlen(str) == len, "expected %d, got %d\n", strlen(str), len);
+    ok(strlen(str) == len, "got %d\n", len);
 
     /* Prepare clipboard data with multiline text */
     hmem = GlobalAlloc(GMEM_MOVEABLE, 255);
@@ -2900,13 +2900,13 @@ static void test_paste(void)
     SendMessageA(hEdit, WM_SETTEXT, 0, (LPARAM)"");
     r = SendMessageA(hEdit, WM_PASTE, 0, 0);
     len = SendMessageA(hEdit, WM_GETTEXTLENGTH, 0, 0);
-    ok(strlen("first line") == len, "expected %d, got %d\n", strlen("first line"), len);
+    ok(strlen("first line") == len, "got %d\n", len);
 
     /* Paste multiline text in multiline edit */
     SendMessageA(hMultilineEdit, WM_SETTEXT, 0, (LPARAM)"");
     r = SendMessageA(hMultilineEdit, WM_PASTE, 0, 0);
     len = SendMessageA(hMultilineEdit, WM_GETTEXTLENGTH, 0, 0);
-    ok(strlen(str2) == len, "expected %d, got %d\n", strlen(str2), len);
+    ok(strlen(str2) == len, "got %d\n", len);
 
     /* Cleanup */
     DestroyWindow(hEdit);
