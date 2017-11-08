@@ -1148,6 +1148,18 @@ static HRESULT interp_newenum(exec_ctx_t *ctx)
         V_UNKNOWN(r) = (IUnknown*)iter;
         break;
     }
+    case VT_VARIANT|VT_ARRAY:
+    case VT_VARIANT|VT_ARRAY|VT_BYREF: {
+        IEnumVARIANT *iter;
+
+        hres = create_safearray_iter(V_ISBYREF(v.v) ? *V_ARRAYREF(v.v) : V_ARRAY(v.v), &iter);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(r) = VT_UNKNOWN;
+        V_UNKNOWN(r) = (IUnknown*)iter;
+        break;
+    }
     default:
         FIXME("Unsupported for %s\n", debugstr_variant(v.v));
         release_val(&v);
