@@ -131,6 +131,8 @@ static size_t (__cdecl *p_mbstowcs)(wchar_t*, const char*, size_t);
 static size_t (__cdecl *p_wcstombs)(char*, const wchar_t*, size_t);
 static char* (__cdecl *p_setlocale)(int, const char*);
 static int (__cdecl *p__fpieee_flt)(ULONG, EXCEPTION_POINTERS*, int (__cdecl *handler)(_FPIEEE_RECORD*));
+static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
+static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -397,6 +399,9 @@ static BOOL init(void)
     SET(p_wcstombs, "wcstombs");
     SET(p_setlocale, "setlocale");
     SET(p__fpieee_flt, "_fpieee_flt");
+    SET(p__memicmp, "_memicmp");
+    SET(p__memicmp_l, "_memicmp_l");
+
     if (sizeof(void *) == 8)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
@@ -1797,6 +1802,68 @@ static void test__fpieee_flt(void)
 }
 #endif
 
+static void test__memicmp(void)
+{
+    static const char *s1 = "abc";
+    static const char *s2 = "aBd";
+    int ret;
+
+    ret = p__memicmp(NULL, NULL, 0);
+    ok(!ret, "got %d\n", ret);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp(NULL, NULL, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp(s1, NULL, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp(NULL, s2, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
+
+    ret = p__memicmp(s1, s2, 2);
+    ok(!ret, "got %d\n", ret);
+
+    ret = p__memicmp(s1, s2, 3);
+    ok(ret == -1, "got %d\n", ret);
+}
+
+static void test__memicmp_l(void)
+{
+    static const char *s1 = "abc";
+    static const char *s2 = "aBd";
+    int ret;
+
+    ret = p__memicmp_l(NULL, NULL, 0, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp_l(NULL, NULL, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp_l(s1, NULL, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp_l(NULL, s2, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
+
+    ret = p__memicmp_l(s1, s2, 2, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    ret = p__memicmp_l(s1, s2, 3, NULL);
+    ok(ret == -1, "got %d\n", ret);
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1828,6 +1895,8 @@ START_TEST(msvcr90)
     test_mbstowcs();
     test_strtok_s();
     test__mbstok_s();
+    test__memicmp();
+    test__memicmp_l();
 #ifdef __i386__
     test__fpieee_flt();
 #endif

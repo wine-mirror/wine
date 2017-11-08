@@ -37,7 +37,7 @@
 @ cdecl _isxdigit_l(long ptr) ucrtbase._isxdigit_l
 @ cdecl _memccpy(ptr ptr long long) ucrtbase._memccpy
 @ cdecl _memicmp(str str long) ucrtbase._memicmp
-@ stub _memicmp_l
+@ cdecl _memicmp_l(str str long ptr) ucrtbase._memicmp_l
 @ cdecl _strcoll_l(str str ptr) ucrtbase._strcoll_l
 @ cdecl _strdup(str) ucrtbase._strdup
 @ cdecl _stricmp(str str) ucrtbase._stricmp

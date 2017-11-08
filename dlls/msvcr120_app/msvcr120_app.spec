@@ -1310,7 +1310,7 @@
 @ cdecl _mbtowc_l(ptr str long ptr) msvcr120._mbtowc_l
 @ cdecl _memccpy(ptr ptr long long) msvcr120._memccpy
 @ cdecl _memicmp(str str long) msvcr120._memicmp
-@ stub _memicmp_l
+@ cdecl _memicmp_l(str str long ptr) msvcr120._memicmp_l
 @ cdecl _mkdir(str) msvcr120._mkdir
 @ cdecl _mkgmtime32(ptr) msvcr120._mkgmtime32
 @ cdecl _mkgmtime64(ptr) msvcr120._mkgmtime64

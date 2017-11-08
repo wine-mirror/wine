@@ -1940,3 +1940,37 @@ char* __cdecl MSVCRT_strstr(const char *haystack, const char *needle)
 {
     return strstr(haystack, needle);
 }
+
+/*********************************************************************
+ *                  _memicmp_l   (MSVCRT.@)
+ */
+int __cdecl MSVCRT__memicmp_l(const char *s1, const char *s2, MSVCRT_size_t len, MSVCRT__locale_t locale)
+{
+    int ret = 0;
+
+#if _MSVCR_VER == 0 || _MSVCR_VER >= 80
+    if (!s1 || !s2)
+    {
+        if (len)
+            MSVCRT_INVALID_PMT(NULL, EINVAL);
+        return len ? MSVCRT__NLSCMPERROR : 0;
+    }
+#endif
+
+    while (len--)
+    {
+        if ((ret = MSVCRT__tolower_l(*s1, locale) - MSVCRT__tolower_l(*s2, locale)))
+            break;
+        s1++;
+        s2++;
+    }
+    return ret;
+}
+
+/*********************************************************************
+ *                  _memicmp   (MSVCRT.@)
+ */
+int __cdecl MSVCRT__memicmp(const char *s1, const char *s2, MSVCRT_size_t len)
+{
+    return MSVCRT__memicmp_l(s1, s2, len, NULL);
+}

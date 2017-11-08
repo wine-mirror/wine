@@ -155,6 +155,9 @@ static void (__thiscall *pSpinWait__SetSpinCount)(SpinWait*, unsigned int);
 static MSVCRT_bool (__thiscall *pSpinWait__ShouldSpinAgain)(SpinWait*);
 static MSVCRT_bool (__thiscall *pSpinWait__SpinOnce)(SpinWait*);
 
+static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
+static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
+
 /* make sure we use the correct errno */
 #undef errno
 #define errno (*p_errno())
@@ -186,6 +189,8 @@ static BOOL init(void)
     SET(p__aligned_free, "_aligned_free");
     SET(p__aligned_msize, "_aligned_msize");
     SET(p_atoi, "atoi");
+    SET(p__memicmp, "_memicmp");
+    SET(p__memicmp_l, "_memicmp_l");
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QEAA@P6AXXZ@Z");
@@ -557,6 +562,86 @@ static void test__SpinWait(void)
     call_func1(pSpinWait_dtor, &sp);
 }
 
+static void test__memicmp(void)
+{
+    static const char *s1 = "abc";
+    static const char *s2 = "aBd";
+    int ret;
+
+    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    ret = p__memicmp(NULL, NULL, 0);
+    ok(!ret, "got %d\n", ret);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp(NULL, NULL, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp(s1, NULL, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp(NULL, s2, 1);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    ret = p__memicmp(s1, s2, 2);
+    ok(!ret, "got %d\n", ret);
+
+    ret = p__memicmp(s1, s2, 3);
+    ok(ret == -1, "got %d\n", ret);
+
+    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
+}
+
+static void test__memicmp_l(void)
+{
+    static const char *s1 = "abc";
+    static const char *s2 = "aBd";
+    int ret;
+
+    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    ret = p__memicmp_l(NULL, NULL, 0, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp_l(NULL, NULL, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp_l(s1, NULL, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p__memicmp_l(NULL, s2, 1, NULL);
+    ok(ret == _NLSCMPERROR, "got %d\n", ret);
+    ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    ret = p__memicmp_l(s1, s2, 2, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    ret = p__memicmp_l(s1, s2, 3, NULL);
+    ok(ret == -1, "got %d\n", ret);
+
+    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -568,4 +653,6 @@ START_TEST(msvcr100)
     test__aligned_msize();
     test_atoi();
     test__SpinWait();
+    test__memicmp();
+    test__memicmp_l();
 }
