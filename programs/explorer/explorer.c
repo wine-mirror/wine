@@ -42,9 +42,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
 #define NAV_TOOLBAR_HEIGHT 30
 #define PATHBOX_HEIGHT 24
+static int nav_toolbar_height;
+static int pathbox_height;
 
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
+static int default_width;
+static int default_height;
 
 
 static const WCHAR EXPLORER_CLASS[] = {'W','I','N','E','_','E','X','P','L','O','R','E','R','\0'};
@@ -313,11 +317,25 @@ static void make_explorer_window(IShellFolder* startFolder)
     TBBUTTON nav_buttons[3];
     int hist_offset,view_offset;
     REBARBANDINFOW band_info;
+    UINT dpix, dpiy;
+    HDC hdc;
+
     memset(nav_buttons,0,sizeof(nav_buttons));
+
     LoadStringW(explorer_hInstance,IDS_EXPLORER_TITLE,explorer_title,
                 sizeof(explorer_title)/sizeof(WCHAR));
     LoadStringW(explorer_hInstance,IDS_PATHBOX_LABEL,pathbox_label,
                 sizeof(pathbox_label)/sizeof(WCHAR));
+
+    hdc = GetDC(0);
+    dpix = GetDeviceCaps(hdc, LOGPIXELSX);
+    dpiy = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(0, hdc);
+    nav_toolbar_height = MulDiv(NAV_TOOLBAR_HEIGHT, dpiy, USER_DEFAULT_SCREEN_DPI);
+    pathbox_height = MulDiv(PATHBOX_HEIGHT, dpiy, USER_DEFAULT_SCREEN_DPI);
+    default_width = MulDiv(DEFAULT_WIDTH, dpix, USER_DEFAULT_SCREEN_DPI);
+    default_height = MulDiv(DEFAULT_HEIGHT, dpiy, USER_DEFAULT_SCREEN_DPI);
+
     info = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(explorer_info));
     if(!info)
     {
@@ -335,13 +353,13 @@ static void make_explorer_window(IShellFolder* startFolder)
     info->rebar_height=0;
     info->main_window
         = CreateWindowW(EXPLORER_CLASS,explorer_title,WS_OVERLAPPEDWINDOW,
-                        CW_USEDEFAULT,CW_USEDEFAULT,DEFAULT_WIDTH,
-                        DEFAULT_HEIGHT,NULL,NULL,explorer_hInstance,NULL);
+                        CW_USEDEFAULT,CW_USEDEFAULT,default_width,
+                        default_height,NULL,NULL,explorer_hInstance,NULL);
 
     fs.ViewMode = FVM_DETAILS;
     fs.fFlags = FWF_AUTOARRANGE;
 
-    SetRect(&rect, 0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    SetRect(&rect, 0, 0, default_width, default_height);
     IExplorerBrowser_Initialize(info->browser,info->main_window,&rect,&fs);
     IExplorerBrowser_SetOptions(info->browser,EBO_SHOWFRAMES);
     SetWindowLongPtrW(info->main_window,EXPLORER_INFO_INDEX,(LONG_PTR)info);
@@ -380,14 +398,14 @@ static void make_explorer_window(IShellFolder* startFolder)
     band_info.fMask = RBBIM_STYLE|RBBIM_CHILD|RBBIM_CHILDSIZE|RBBIM_SIZE;
     band_info.hwndChild = nav_toolbar;
     band_info.fStyle=RBBS_GRIPPERALWAYS|RBBS_CHILDEDGE;
-    band_info.cyChild=NAV_TOOLBAR_HEIGHT;
+    band_info.cyChild=nav_toolbar_height;
     band_info.cx=0;
-    band_info.cyMinChild=NAV_TOOLBAR_HEIGHT;
+    band_info.cyMinChild=nav_toolbar_height;
     band_info.cxMinChild=0;
     SendMessageW(rebar,RB_INSERTBANDW,-1,(LPARAM)&band_info);
     info->path_box = CreateWindowW(WC_COMBOBOXEXW,PATH_BOX_NAME,
                                    WS_CHILD | WS_VISIBLE | CBS_DROPDOWN,
-                                   0,0,DEFAULT_WIDTH,PATHBOX_HEIGHT,rebar,NULL,
+                                   0,0,default_width,pathbox_height,rebar,NULL,
                                    explorer_hInstance,NULL);
     GetWindowRect(info->path_box, &rect);
     band_info.cyChild = rect.bottom - rect.top;
