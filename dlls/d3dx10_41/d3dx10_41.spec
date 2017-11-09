@@ -2,7 +2,7 @@
 @ stdcall D3DX10CheckVersion(long long)
 @ stdcall D3DX10CompileFromFileA(str ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromFileA
 @ stdcall D3DX10CompileFromFileW(wstr ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromFileW
-@ stdcall D3DX10CompileFromMemory(str long str ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromMemory
+@ stdcall D3DX10CompileFromMemory(ptr long str ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromMemory
 @ stdcall D3DX10CompileFromResourceA(long str str ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromResourceA
 @ stdcall D3DX10CompileFromResourceW(long wstr wstr ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromResourceW
 @ stdcall D3DX10ComputeNormalMap(ptr long long long ptr) d3dx10_43.D3DX10ComputeNormalMap
@@ -57,7 +57,7 @@
 @ stdcall D3DX10LoadTextureFromTexture(ptr ptr ptr) d3dx10_43.D3DX10LoadTextureFromTexture
 @ stdcall D3DX10PreprocessShaderFromFileA(str ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromFileA
 @ stdcall D3DX10PreprocessShaderFromFileW(wstr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromFileW
-@ stdcall D3DX10PreprocessShaderFromMemory(str long str ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromMemory
+@ stdcall D3DX10PreprocessShaderFromMemory(ptr long str ptr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromMemory
 @ stdcall D3DX10PreprocessShaderFromResourceA(long str str ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromResourceA
 @ stdcall D3DX10PreprocessShaderFromResourceW(long wstr wstr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromResourceW
 @ stdcall D3DX10SHProjectCubeMap(long ptr ptr ptr ptr) d3dx10_43.D3DX10SHProjectCubeMap
