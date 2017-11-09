@@ -609,6 +609,7 @@ static IShellFolder* get_starting_shell_folder(parameters_struct* params)
     hres = IShellFolder_BindToObject(desktop,root_pidl,NULL,
                                      &IID_IShellFolder,
                                      (void**)&folder);
+    ILFree(root_pidl);
     if(FAILED(hres))
     {
         return desktop;
