@@ -226,6 +226,139 @@ static const info_table_entry  info_table[] = {
 
 };
 
+struct cpinfo_test_data
+{
+    MIMECPINFO cpinfo;
+
+    BOOL todo_GetCodePageInfo;
+    BOOL todo_dwFlags;
+    BOOL todo_uiFamilyCodePage;
+    BOOL todo_wszDescription;
+    BOOL todo_wszWebCharset;
+    BOOL todo_wszHeaderCharset;
+    BOOL todo_wszBodyCharset;
+    BOOL todo_wszFixedWidthFont;
+    BOOL todo_wszProportionalFont;
+};
+
+const static struct cpinfo_test_data iml2_cpinfo_data[] =
+{
+    /* 0. Chinese Simplified (Auto-Select) */
+    {
+        {
+            MIMECONTF_IMPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
+            50936, 936, {'C','h','i','n','e','s','e',' ','S','i','m','p','l','i','f','i','e','d',' ','(','A','u','t','o','-','S','e','l','e','c','t',')',0},
+            {'_','a','u','t','o','d','e','t','e','c','t','_','c','h','s',0},
+            {'_','a','u','t','o','d','e','t','e','c','t','_','c','h','s',0},
+            {'_','a','u','t','o','d','e','t','e','c','t','_','c','h','s',0},
+            {'S','i','m','s','u','n',0},
+            {'S','i','m','s','u','n',0}, 134
+        },
+        TRUE
+    },
+    /* 1. Chinese Simplified (GB2312) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
+            MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
+            MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
+            936, 936, {'C','h','i','n','e','s','e',' ','S','i','m','p','l','i','f','i','e','d',' ','(','G','B','2','3','1','2',')',0},
+            {'g','b','2','3','1','2',0},
+            {'g','b','2','3','1','2',0},
+            {'g','b','2','3','1','2',0},
+            {'S','i','m','s','u','n',0},
+            {'S','i','m','s','u','n',0}, 134
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+    },
+    /* 2. Chinese Simplified (GB2312-80) */
+    {
+        {
+            MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
+            MIMECONTF_MIME_LATEST,
+            20936, 936, {'C','h','i','n','e','s','e',' ','S','i','m','p','l','i','f','i','e','d',' ','(','G','B','2','3','1','2','-','8','0',')',0},
+            {'x','-','c','p','2','0','9','3','6',0},
+            {'x','-','c','p','2','0','9','3','6',0},
+            {'x','-','c','p','2','0','9','3','6',0},
+            {'S','i','m','s','u','n',0},
+            {'S','i','m','s','u','n',0}, 134
+        },
+        TRUE
+    },
+    /* 3. Chinese Simplified (HZ) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
+            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
+            MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
+            52936, 936, {'C','h','i','n','e','s','e',' ','S','i','m','p','l','i','f','i','e','d',' ','(','H','Z',')',0},
+            {'h','z','-','g','b','-','2','3','1','2',0},
+            {'h','z','-','g','b','-','2','3','1','2',0},
+            {'h','z','-','g','b','-','2','3','1','2',0},
+            {'S','i','m','s','u','n',0},
+            {'S','i','m','s','u','n',0}, 134
+        },
+        TRUE
+    },
+    /* 4. Chinese Simplified (GB18030) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
+            MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
+            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
+            54936, 936, {'C','h','i','n','e','s','e',' ','S','i','m','p','l','i','f','i','e','d',' ','(','G','B','1','8','0','3','0',')',0},
+            {'G','B','1','8','0','3','0',0},
+            {'G','B','1','8','0','3','0',0},
+            {'G','B','1','8','0','3','0',0},
+            {'S','i','m','s','u','n',0},
+            {'S','i','m','s','u','n',0}, 134
+        },
+        TRUE
+    },
+    /* 5. Chinese Traditional (Auto-Select) */
+    {
+        {
+            MIMECONTF_IMPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
+            50950, 950, {'C','h','i','n','e','s','e',' ','T','r','a','d','i','t','i','o','n','a','l',' ','(','A','u','t','o','-','S','e','l','e','c','t',')',0},
+            {'_','a','u','t','o','d','e','t','e','c','t','_','c','h','t',0},
+            {'_','a','u','t','o','d','e','t','e','c','t','_','c','h','t',0},
+            {'_','a','u','t','o','d','e','t','e','c','t','_','c','h','t',0},
+            {'M','i','n','g','L','i','u',0},
+            {'N','e','w',' ','M','i','n','g','L','i','u',0}, 136
+        },
+        TRUE
+    },
+    /* 6. Chinese Traditional (Big5) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
+            MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
+            MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
+            950, 950, {'C','h','i','n','e','s','e',' ','T','r','a','d','i','t','i','o','n','a','l',' ','(','B','i','g','5',')',0},
+            {'b','i','g','5',0},
+            {'b','i','g','5',0},
+            {'b','i','g','5',0},
+            {'M','i','n','g','L','i','u',0},
+            {'N','e','w',' ','M','i','n','g','L','i','u',0}, 136
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+    },
+    /* 7. Chinese Traditional (CNS) */
+    {
+        {
+            MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
+            MIMECONTF_MIME_LATEST,
+            20000, 950, {'C','h','i','n','e','s','e',' ','T','r','a','d','i','t','i','o','n','a','l',' ','(','C','N','S',')',0},
+            {'x','-','C','h','i','n','e','s','e','-','C','N','S',0},
+            {'x','-','C','h','i','n','e','s','e','-','C','N','S',0},
+            {'x','-','C','h','i','n','e','s','e','-','C','N','S',0},
+            {'M','i','n','g','L','i','u',0},
+            {'N','e','w',' ','M','i','n','g','L','i','u',0}, 136
+        },
+        TRUE
+    }
+};
+
 static BOOL init_function_ptrs(void)
 {
     HMODULE hMlang;
@@ -2212,6 +2345,80 @@ static void test_DetectOutboundCodePageInIStream(IMultiLanguage3 *ml)
     todo_wine ok(detected[2] == 1200, "got %u\n", detected[2]);
 }
 
+static void test_GetCodePageInfo(IMultiLanguage2 *iML2)
+{
+    static const DWORD VALID_MASK = (DWORD)(~(MIMECONTF_VALID_NLS | MIMECONTF_VALID));
+
+    const struct cpinfo_test_data *test_data = NULL;
+    UINT test_data_num;
+    MIMECPINFO cpinfo_cmp;
+    MIMECPINFO cpinfo;
+    UINT i;
+    HRESULT ret;
+
+    test_data = iml2_cpinfo_data;
+    test_data_num = sizeof(iml2_cpinfo_data) / sizeof(iml2_cpinfo_data[0]);
+    for (i = 0; i < test_data_num; i++)
+    {
+        ret = IMultiLanguage2_GetCodePageInfo(iML2, test_data[i].cpinfo.uiCodePage, LANG_NEUTRAL, &cpinfo);
+        todo_wine_if(test_data[i].todo_GetCodePageInfo)
+        ok(ret == S_OK, "%d: IMultiLanguage2_GetCodePageInfo failed: 0x%08x.\n", i, ret);
+
+        if (ret == S_OK)
+        {
+            cpinfo_cmp = test_data[i].cpinfo;
+            todo_wine_if(test_data[i].todo_dwFlags)
+            ok((cpinfo.dwFlags == cpinfo_cmp.dwFlags ) ||
+               /* some code pages are not installed on the Wine Test Bot */
+               ((cpinfo.dwFlags & VALID_MASK) == (cpinfo_cmp.dwFlags & VALID_MASK)),
+               "%d: got wrong dwFlags expected 0x%x return 0x%x.\n",
+               i, cpinfo_cmp.dwFlags, cpinfo.dwFlags);
+            ok(cpinfo.uiCodePage == cpinfo_cmp.uiCodePage,
+               "%d: got wrong uiCodePage expected %u return %u.\n",
+               i, cpinfo_cmp.uiCodePage, cpinfo.uiCodePage);
+            todo_wine_if(test_data[i].todo_uiFamilyCodePage)
+            ok(cpinfo.uiFamilyCodePage == cpinfo_cmp.uiFamilyCodePage,
+               "%d: got wrong uiFamilyCodePage expected %u return %u.\n",
+               i, cpinfo_cmp.uiFamilyCodePage, cpinfo.uiFamilyCodePage);
+
+            todo_wine_if(test_data[i].todo_wszWebCharset)
+            ok(!lstrcmpW(cpinfo.wszWebCharset, cpinfo_cmp.wszWebCharset),
+               "%d: got wrong wszWebCharset expected %s return %s.\n",
+               i, wine_dbgstr_w(cpinfo_cmp.wszWebCharset), wine_dbgstr_w(cpinfo.wszWebCharset));
+            todo_wine_if(test_data[i].todo_wszHeaderCharset)
+            ok(!lstrcmpW(cpinfo.wszHeaderCharset, cpinfo_cmp.wszHeaderCharset),
+               "%d: got wrong wszHeaderCharset expected %s return %s.\n",
+               i, wine_dbgstr_w(cpinfo_cmp.wszHeaderCharset), wine_dbgstr_w(cpinfo.wszHeaderCharset));
+            todo_wine_if(test_data[i].todo_wszBodyCharset)
+            ok(!lstrcmpW(cpinfo.wszBodyCharset, cpinfo_cmp.wszBodyCharset),
+                   "%d: got wrong wszBodyCharset expected %s return %s.\n",
+               i, wine_dbgstr_w(cpinfo_cmp.wszBodyCharset), wine_dbgstr_w(cpinfo.wszBodyCharset));
+
+            if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
+                (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH))
+            {
+                /* FIXME: Windows returns description and font name in system's language */
+                skip("Non-English locale\n");
+            }
+            else
+            {
+                todo_wine_if(test_data[i].todo_wszDescription)
+                ok(!lstrcmpW(cpinfo.wszDescription, cpinfo_cmp.wszDescription),
+                   "%d: got wrong wszDescription expected %s return %s.\n",
+                   i, wine_dbgstr_w(cpinfo_cmp.wszDescription), wine_dbgstr_w(cpinfo.wszDescription));
+                todo_wine_if(test_data[i].todo_wszFixedWidthFont)
+                ok(!lstrcmpW(cpinfo.wszFixedWidthFont, cpinfo_cmp.wszFixedWidthFont),
+                    "%d: got wrong wszFixedWidthFont expected %s return %s.\n",
+                    i, wine_dbgstr_w(cpinfo_cmp.wszFixedWidthFont), wine_dbgstr_w(cpinfo.wszFixedWidthFont));
+                todo_wine_if(test_data[i].todo_wszProportionalFont)
+                ok(!lstrcmpW(cpinfo.wszProportionalFont, cpinfo_cmp.wszProportionalFont),
+                    "%d: got wrong wszProportionalFont expected %s return %s.\n",
+                    i, wine_dbgstr_w(cpinfo_cmp.wszProportionalFont), wine_dbgstr_w(cpinfo.wszProportionalFont));
+            }
+        }
+    }
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage  *iML = NULL;
@@ -2255,6 +2462,7 @@ START_TEST(mlang)
     test_GetRfc1766FromLcid(iML2);
     test_GetRfc1766Info(iML2);
     test_GetNumberOfCodePageInfo(iML2);
+    test_GetCodePageInfo(iML2);
 
     test_EnumCodePages(iML2, 0);
     test_EnumCodePages(iML2, MIMECONTF_MIME_LATEST);
