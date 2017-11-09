@@ -24,6 +24,7 @@
 #include <mscoree.h>
 #include <fusion.h>
 #include <corerror.h>
+#include <strsafe.h>
 
 #include "wine/test.h"
 
@@ -362,13 +363,26 @@ static void test_assembly_name_props_line(IAssemblyName *name,
         if (hr != E_INVALIDARG)
         {
             ok(size == vals[i].size, "%d: prop %d: Expected %d, got %d\n", line, i, vals[i].size, size);
-            if (size && size != MAX_PATH)
+            if (!size)
+            {
+                ok(str[0] == 0xcccc, "%d: prop %d: str[0] = %x\n", line, i, str[0]);
+            }
+            else if (size != MAX_PATH)
             {
                 if (i != ASM_NAME_NAME && i != ASM_NAME_CULTURE)
                     ok( !memcmp( vals[i].val, str, size ), "%d: prop %d: wrong value\n", line, i );
                 else
                     ok( !lstrcmpW( expect, str ), "%d: prop %d: Expected %s, got %s\n",
                         line, i, wine_dbgstr_w(expect), wine_dbgstr_w(str) );
+            }
+
+            if (size != 0 && size != MAX_PATH)
+            {
+                size--;
+                hr = IAssemblyName_GetProperty(name, i, str, &size);
+                ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER,
+                        "%d: prop %d: Expected STRSAFE_E_INSUFFICIENT_BUFFER, got %08x\n", line, i, hr);
+                ok(size == vals[i].size, "%d: prop %d: Expected %d, got %d\n", line, i, vals[i].size, size);
             }
         }
     }

@@ -31,6 +31,7 @@
 #include "guiddef.h"
 #include "fusion.h"
 #include "corerror.h"
+#include "strsafe.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -138,11 +139,11 @@ static HRESULT WINAPI IAssemblyNameImpl_GetProperty(IAssemblyName *iface,
                                                     LPDWORD pcbProperty)
 {
     IAssemblyNameImpl *name = impl_from_IAssemblyName(iface);
+    DWORD size;
 
     TRACE("(%p, %d, %p, %p)\n", iface, PropertyId, pvProperty, pcbProperty);
 
-    *((LPWSTR)pvProperty) = '\0';
-
+    size = *pcbProperty;
     switch (PropertyId)
     {
         case ASM_NAME_NULL_PUBLIC_KEY:
@@ -158,45 +159,65 @@ static HRESULT WINAPI IAssemblyNameImpl_GetProperty(IAssemblyName *iface,
             *pcbProperty = 0;
             if (name->name)
             {
-                lstrcpyW(pvProperty, name->name);
                 *pcbProperty = (lstrlenW(name->name) + 1) * 2;
+                if (size < *pcbProperty)
+                    return STRSAFE_E_INSUFFICIENT_BUFFER;
+                lstrcpyW(pvProperty, name->name);
             }
             break;
 
         case ASM_NAME_MAJOR_VERSION:
             *pcbProperty = 0;
-            *((WORD *)pvProperty) = name->version[0];
             if (name->versize >= 1)
+            {
                 *pcbProperty = sizeof(WORD);
+                if (size < *pcbProperty)
+                    return STRSAFE_E_INSUFFICIENT_BUFFER;
+                *((WORD *)pvProperty) = name->version[0];
+            }
             break;
 
         case ASM_NAME_MINOR_VERSION:
             *pcbProperty = 0;
-            *((WORD *)pvProperty) = name->version[1];
             if (name->versize >= 2)
+            {
                 *pcbProperty = sizeof(WORD);
+                if (size < *pcbProperty)
+                    return STRSAFE_E_INSUFFICIENT_BUFFER;
+                *((WORD *)pvProperty) = name->version[1];
+            }
             break;
 
         case ASM_NAME_BUILD_NUMBER:
             *pcbProperty = 0;
-            *((WORD *)pvProperty) = name->version[2];
             if (name->versize >= 3)
+            {
                 *pcbProperty = sizeof(WORD);
+                if (size < *pcbProperty)
+                    return STRSAFE_E_INSUFFICIENT_BUFFER;
+                *((WORD *)pvProperty) = name->version[2];
+            }
             break;
 
         case ASM_NAME_REVISION_NUMBER:
             *pcbProperty = 0;
-            *((WORD *)pvProperty) = name->version[3];
             if (name->versize >= 4)
+            {
                 *pcbProperty = sizeof(WORD);
+                if (size < *pcbProperty)
+                    return STRSAFE_E_INSUFFICIENT_BUFFER;
+                *((WORD *)pvProperty) = name->version[3];
+            }
             break;
 
         case ASM_NAME_CULTURE:
             *pcbProperty = 0;
             if (name->culture)
             {
-                lstrcpyW(pvProperty, name->culture);
                 *pcbProperty = (lstrlenW(name->culture) + 1) * 2;
+                if (size < *pcbProperty)
+                    return STRSAFE_E_INSUFFICIENT_BUFFER;
+                lstrcpyW(pvProperty, name->culture);
             }
             break;
 
@@ -204,8 +225,10 @@ static HRESULT WINAPI IAssemblyNameImpl_GetProperty(IAssemblyName *iface,
             *pcbProperty = 0;
             if (name->haspubkey)
             {
-                memcpy(pvProperty, name->pubkey, sizeof(DWORD) * 2);
                 *pcbProperty = sizeof(DWORD) * 2;
+                if (size < *pcbProperty)
+                    return STRSAFE_E_INSUFFICIENT_BUFFER;
+                memcpy(pvProperty, name->pubkey, sizeof(DWORD) * 2);
             }
             break;
 
