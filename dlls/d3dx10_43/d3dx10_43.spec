@@ -57,7 +57,7 @@
 @ stub D3DX10LoadTextureFromTexture(ptr ptr ptr)
 @ stub D3DX10PreprocessShaderFromFileA(str ptr ptr ptr ptr ptr)
 @ stub D3DX10PreprocessShaderFromFileW(wstr ptr ptr ptr ptr ptr)
-@ stub D3DX10PreprocessShaderFromMemory(str long str ptr ptr ptr ptr ptr)
+@ stdcall D3DX10PreprocessShaderFromMemory(str long str ptr ptr ptr ptr ptr ptr)
 @ stub D3DX10PreprocessShaderFromResourceA(long str str ptr ptr ptr ptr ptr)
 @ stub D3DX10PreprocessShaderFromResourceW(long wstr wstr ptr ptr ptr ptr ptr)
 @ stub D3DX10SHProjectCubeMap(long ptr ptr ptr ptr)
