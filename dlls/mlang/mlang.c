@@ -470,9 +470,9 @@ static const struct mlang_data
     { "Baltic",1257,sizeof(baltic_cp)/sizeof(baltic_cp[0]),baltic_cp,
       "Courier","Arial", sidAsciiLatin }, /* FIXME */
     { "Chinese Simplified",936,sizeof(chinese_simplified_cp)/sizeof(chinese_simplified_cp[0]),chinese_simplified_cp,
-      "Courier","Arial", sidHan }, /* FIXME */
+      "Simsun","Simsun", sidHan },
     { "Chinese Traditional",950,sizeof(chinese_traditional_cp)/sizeof(chinese_traditional_cp[0]),chinese_traditional_cp,
-      "Courier","Arial", sidBopomofo }, /* FIXME */
+      "MingLiu","New MingLiu", sidBopomofo },
     { "Central European",1250,sizeof(central_european_cp)/sizeof(central_european_cp[0]),central_european_cp,
       "Courier","Arial", sidAsciiLatin }, /* FIXME */
     { "Cyrillic",1251,sizeof(cyrillic_cp)/sizeof(cyrillic_cp[0]),cyrillic_cp,

@@ -269,7 +269,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'S','i','m','s','u','n',0},
             {'S','i','m','s','u','n',0}, 134
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
     },
     /* 2. Chinese Simplified (GB2312-80) */
     {
@@ -341,7 +340,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'M','i','n','g','L','i','u',0},
             {'N','e','w',' ','M','i','n','g','L','i','u',0}, 136
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
     },
     /* 7. Chinese Traditional (CNS) */
     {
