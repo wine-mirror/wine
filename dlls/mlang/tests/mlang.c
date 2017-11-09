@@ -254,7 +254,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'S','i','m','s','u','n',0},
             {'S','i','m','s','u','n',0}, 134
         },
-        TRUE
     },
     /* 1. Chinese Simplified (GB2312) */
     {
@@ -282,7 +281,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'S','i','m','s','u','n',0},
             {'S','i','m','s','u','n',0}, 134
         },
-        TRUE
     },
     /* 3. Chinese Simplified (HZ) */
     {
@@ -297,7 +295,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'S','i','m','s','u','n',0},
             {'S','i','m','s','u','n',0}, 134
         },
-        TRUE
     },
     /* 4. Chinese Simplified (GB18030) */
     {
@@ -312,7 +309,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'S','i','m','s','u','n',0},
             {'S','i','m','s','u','n',0}, 134
         },
-        TRUE
     },
     /* 5. Chinese Traditional (Auto-Select) */
     {
@@ -325,7 +321,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'M','i','n','g','L','i','u',0},
             {'N','e','w',' ','M','i','n','g','L','i','u',0}, 136
         },
-        TRUE
     },
     /* 6. Chinese Traditional (Big5) */
     {
@@ -353,7 +348,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'M','i','n','g','L','i','u',0},
             {'N','e','w',' ','M','i','n','g','L','i','u',0}, 136
         },
-        TRUE
     }
 };
 
