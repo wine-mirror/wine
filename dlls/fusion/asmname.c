@@ -55,6 +55,8 @@ typedef struct {
     BYTE pubkey[8];
     BOOL haspubkey;
 
+    PEKIND pekind;
+
     LONG ref;
 } IAssemblyNameImpl;
 
@@ -229,6 +231,17 @@ static HRESULT WINAPI IAssemblyNameImpl_GetProperty(IAssemblyName *iface,
                 if (size < *pcbProperty)
                     return STRSAFE_E_INSUFFICIENT_BUFFER;
                 memcpy(pvProperty, name->pubkey, sizeof(DWORD) * 2);
+            }
+            break;
+
+        case ASM_NAME_ARCHITECTURE:
+            *pcbProperty = 0;
+            if (name->pekind != peNone)
+            {
+                *pcbProperty = sizeof(PEKIND);
+                if (size < *pcbProperty)
+                    return STRSAFE_E_INSUFFICIENT_BUFFER;
+                *((PEKIND *)pvProperty) = name->pekind;
             }
             break;
 
@@ -616,6 +629,30 @@ static HRESULT parse_pubkey(IAssemblyNameImpl *name, LPCWSTR pubkey)
     return S_OK;
 }
 
+static HRESULT parse_procarch(IAssemblyNameImpl *name, LPCWSTR procarch)
+{
+    static const WCHAR msilW[] = {'m','s','i','l',0};
+    static const WCHAR x86W[] = {'x','8','6',0};
+    static const WCHAR ia64W[] = {'i','a','6','4',0};
+    static const WCHAR amd64W[] = {'a','m','d','6','4',0};
+
+    if (!lstrcmpiW(procarch, msilW))
+        name->pekind = peMSIL;
+    else if (!lstrcmpiW(procarch, x86W))
+        name->pekind = peI386;
+    else if (!lstrcmpiW(procarch, ia64W))
+        name->pekind = peIA64;
+    else if (!lstrcmpiW(procarch, amd64W))
+        name->pekind = peAMD64;
+    else
+    {
+        ERR("unrecognized architecture: %s\n", wine_dbgstr_w(procarch));
+        return FUSION_E_INVALID_NAME;
+    }
+
+    return S_OK;
+}
+
 static WCHAR *parse_value( const WCHAR *str, unsigned int len )
 {
     WCHAR *ret;
@@ -726,6 +763,8 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
         {
             name->procarch = value;
             value = NULL;
+
+            hr = parse_procarch( name, name->procarch );
         }
         HeapFree( GetProcessHeap(), 0, value );
 

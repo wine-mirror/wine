@@ -397,6 +397,7 @@ static void test_CreateAssemblyNameObject(void)
     WCHAR str[MAX_PATH];
     WCHAR namestr[MAX_PATH];
     DWORD size, hi, lo;
+    PEKIND arch;
     HRESULT hr;
 
     static const WCHAR empty[] = {0};
@@ -794,6 +795,12 @@ static void test_CreateAssemblyNameObject(void)
         ok_aw("wine, processorArchitecture=x86", str);
         ok(size == 32, "Expected 32, got %d\n", size);
 
+        size = sizeof(arch);
+        hr = IAssemblyName_GetProperty(name, ASM_NAME_ARCHITECTURE, &arch, &size);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(arch == peI386, "Expected peI386, got %d\n", arch);
+        ok(size == sizeof(arch), "Wrong size %d\n", size);
+
         IAssemblyName_Release(name);
 
         /* amd64 */
@@ -807,6 +814,12 @@ static void test_CreateAssemblyNameObject(void)
         ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
         ok_aw("wine, processorArchitecture=AMD64", str);
         ok(size == 34, "Expected 34, got %d\n", size);
+
+        size = sizeof(arch);
+        hr = IAssemblyName_GetProperty(name, ASM_NAME_ARCHITECTURE, &arch, &size);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(arch == peAMD64, "Expected peAMD64, got %d\n", arch);
+        ok(size == sizeof(arch), "Wrong size %d\n", size);
 
         IAssemblyName_Release(name);
 
@@ -822,6 +835,12 @@ static void test_CreateAssemblyNameObject(void)
         ok_aw("wine, processorArchitecture=IA64", str);
         ok(size == 33, "Expected 33, got %d\n", size);
 
+        size = sizeof(arch);
+        hr = IAssemblyName_GetProperty(name, ASM_NAME_ARCHITECTURE, &arch, &size);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(arch == peIA64, "Expected peIA64, got %d\n", arch);
+        ok(size == sizeof(arch), "Wrong size %d\n", size);
+
         IAssemblyName_Release(name);
 
         /* msil */
@@ -835,6 +854,12 @@ static void test_CreateAssemblyNameObject(void)
         ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
         ok_aw("wine, processorArchitecture=MSIL", str);
         ok(size == 33, "Expected 33, got %d\n", size);
+
+        size = sizeof(arch);
+        hr = IAssemblyName_GetProperty(name, ASM_NAME_ARCHITECTURE, &arch, &size);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(arch == peMSIL, "Expected peMSIL, got %d\n", arch);
+        ok(size == sizeof(arch), "Wrong size %d\n", size);
 
         IAssemblyName_Release(name);
     }
