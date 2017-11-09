@@ -14869,10 +14869,8 @@ msgid "Expert"
 msgstr "Ekspertti"
 
 #: winemine.rc:72
-#, fuzzy
-#| msgid "Result"
 msgid "Reset Results"
-msgstr "Tulos"
+msgstr "Poista tulokset"
 
 #: winemine.rc:78
 msgid "Congratulations!"
