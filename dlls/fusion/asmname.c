@@ -361,8 +361,8 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
     if ((dwDisplayFlags & ASM_DISPLAYF_PUBLIC_KEY_TOKEN) && (name->haspubkey))
     {
         WCHAR pkt[CHARS_PER_PUBKEY + 1];
-        static const WCHAR spec[] = {'%','0','x','%','0','x','%','0','x',
-            '%','0','x','%','0','x','%','0','x','%','0','x','%','0','x',0};
+        static const WCHAR spec[] = {'%','0','2','x','%','0','2','x','%','0','2','x',
+            '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',0};
 
         lstrcatW(szDisplayName, separator);
 

@@ -306,7 +306,7 @@ static const ASMPROP_RES enname[ASM_NAME_MAX_PARAMS] =
 static const ASMPROP_RES pubkeyname[ASM_NAME_MAX_PARAMS] =
 {
     {S_OK, "", 0},
-    {S_OK, "\x12\x34\x56\x78\x90\xab\xcd\xef", 8},
+    {S_OK, "\x01\x23\x45\x67\x89\x0a\xbc\xde", 8},
     {S_OK, "", 0},
     {S_OK, "wine", 10},
     {S_OK, "", 0},
@@ -748,8 +748,8 @@ static void test_CreateAssemblyNameObject(void)
 
     IAssemblyName_Release(name);
 
-    /* 'wine, PublicKeyToken=1234567890abcdef' */
-    to_widechar(namestr, "wine, PublicKeyToken=1234567890abcdef");
+    /* 'wine, PublicKeyToken=01234567890abcde' */
+    to_widechar(namestr, "wine, PublicKeyToken=01234567890abcde");
     name = NULL;
     hr = pCreateAssemblyNameObject(&name, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -758,7 +758,7 @@ static void test_CreateAssemblyNameObject(void)
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(name, str, &size, ASM_DISPLAYF_FULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok_aw("wine, PublicKeyToken=1234567890abcdef", str);
+    ok_aw("wine, PublicKeyToken=01234567890abcde", str);
     ok(size == 38, "Expected 38, got %d\n", size);
 
     size = MAX_PATH;
