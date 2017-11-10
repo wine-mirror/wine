@@ -154,7 +154,7 @@ Git:       Wines nuvarande utvecklingsversion finns tillgänglig genom Git.
            Gå till http://www.winehq.org/git för mer information.
 
 Om du lägger till något eller fixar ett fel, är det bra om du sänder
-en patch (förslagsvis med git-format-patch) till listan wine-patches@winehq.org
+en patch (förslagsvis med git-format-patch) till listan wine-devel@winehq.org
 för inkludering i nästa utgåva av Wine.
 
 --

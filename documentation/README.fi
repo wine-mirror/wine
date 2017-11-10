@@ -161,7 +161,7 @@ Git:	Winen tämänhetkinen kehitysversio on jaossa Git-järjestelmän kautta.
 
 
 Jos lisäät jotain tai korjaat jonkin virheen, lähetä toki muutoksesi
-(mieluiten komennon git-format-patch avulla) listalle wine-patches@winehq.org,
+(mieluiten komennon git-format-patch avulla) listalle wine-devel@winehq.org,
 jotta se voidaan lisätä Winen seuraavaan versioon.
 
 --

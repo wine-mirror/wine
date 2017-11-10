@@ -166,7 +166,7 @@ Git:	A árvore de desenvolvimento atual do Wine está disponível por Git.
 	Visite http://www.winehq.org/git para mais informação.
 
 Se você alterar algo ou reparar um erro, envie, por favor, um patch
-(preferencialmente usando git-format-patch) à lista wine-patches@winehq.org
+(preferencialmente usando git-format-patch) à lista wine-devel@winehq.org
 para inclusão na próxima distribuição.
 
 --

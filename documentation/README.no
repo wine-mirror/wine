@@ -157,7 +157,7 @@ Git:       Wines oppdaterte utvikler-versjon er tilgjengelig gjennom GIT.
 
 Hvis du legger til noe eller fikser en feil er det fint som du sender
 en oppdateringsfil (helst laget med git format-patch) til listen
-wine-patches@winehq.org, slik at endringen kan tas med i neste Wine-utgivelse.
+wine-devel@winehq.org, slik at endringen kan tas med i neste Wine-utgivelse.
 
 --
 Den originale versjonen ble skrevet av

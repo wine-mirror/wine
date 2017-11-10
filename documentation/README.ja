@@ -159,7 +159,7 @@ Git:	現在のWine開発ツリーはGitを通して入手できます。
 	詳細についてはhttp://www.winehq.org/gitに行ってください。
 
 何かを追加するか、バグを修正するならば、次のリリースに含めるためにパッチ
-（git-format-patchをなるべく使用）をwine-patches@winehq.orgのリストに送って
+（git-format-patchをなるべく使用）をwine-devel@winehq.orgのリストに送って
 ください。
 
 --

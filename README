@@ -163,7 +163,7 @@ Git:	The current Wine development tree is available through Git.
 	Go to http://www.winehq.org/git for more information.
 
 If you add something, or fix a bug, please send a patch (preferably
-using git-format-patch) to the wine-patches@winehq.org list for
+using git-format-patch) to the wine-devel@winehq.org list for
 inclusion in the next release.
 
 --
