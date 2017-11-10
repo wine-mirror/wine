@@ -13,3 +13,6 @@ C_SRCS = \
 	videorenderer.c
 
 IDL_SRCS = fil_data.idl
+
+RC_SRCS = \
+	rsrc.rc

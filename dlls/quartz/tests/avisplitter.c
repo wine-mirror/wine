@@ -270,8 +270,32 @@ static void test_filesourcefilter(void)
     }
 }
 
-static const WCHAR wfile[] = {'t','e','s','t','.','a','v','i',0};
-static const char afile[] = "test.avi";
+static const WCHAR avifile[] = {'t','e','s','t','.','a','v','i',0};
+
+static WCHAR *load_resource(const WCHAR *name)
+{
+    static WCHAR pathW[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    lstrcatW(pathW, name);
+
+    file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", wine_dbgstr_w(pathW),
+        GetLastError());
+
+    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
+    ok( res != 0, "couldn't find resource\n" );
+    ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
+    WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
+    ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
+    CloseHandle( file );
+
+    return pathW;
+}
 
 static void test_filter_graph(void)
 {
@@ -286,11 +310,14 @@ static void test_filter_graph(void)
     DWORD readbytes;
     FILTER_STATE state;
 
-    file = CreateFileW(wfile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    WCHAR *filename = load_resource(avifile);
+
+    file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
         NULL, OPEN_EXISTING, 0, NULL);
     if (file == INVALID_HANDLE_VALUE)
     {
-        skip("Could not read test file \"%s\", skipping test\n", afile);
+        skip("Could not read test file \"%s\", skipping test\n", wine_dbgstr_w(filename));
+        DeleteFileW(filename);
         return;
     }
 
@@ -301,7 +328,8 @@ static void test_filter_graph(void)
     if (strncmp(buffer, "RIFF", 4) || strcmp(buffer + 8, "AVI "))
     {
         skip("%s is not an avi riff file, not doing the avi splitter test\n",
-            afile);
+            wine_dbgstr_w(filename));
+        DeleteFileW(filename);
         return;
     }
 
@@ -331,10 +359,10 @@ static void test_filter_graph(void)
     if (hr != S_OK)
         goto fail;
 
-    hr = IFileSourceFilter_Load(pfile, wfile, NULL);
+    hr = IFileSourceFilter_Load(pfile, filename, NULL);
     if (hr != S_OK)
     {
-        trace("Could not load file\n");
+        trace("Could not load file: %08x\n", hr);
         goto fail;
     }
 
@@ -509,6 +537,8 @@ fail:
         IBaseFilter_Release(pavi);
     if (pfile)
         IFileSourceFilter_Release(pfile);
+
+    DeleteFileW(filename);
 }
 
 START_TEST(avisplitter)
