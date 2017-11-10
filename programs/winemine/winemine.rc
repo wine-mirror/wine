@@ -26,9 +26,11 @@
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE {
-     IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Nobody"
-     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
+     IDS_APPNAME,         "WineMine"
+     IDS_NOBODY,          "Nobody"
+     IDS_ABOUT,           "Copyright 2000 Joshua Thielen"
+     IDC_CONFIRMTITLE,    "Reset Results"
+     IDC_CONFIRMTEXT,     "All results will be lost. Are you sure?"
 }
 
 IDM_WINEMINE MENU

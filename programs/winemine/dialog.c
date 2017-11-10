@@ -88,6 +88,8 @@ INT_PTR CALLBACK TimesDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 {
     static BOARD *p_board;
     unsigned i;
+    int confirm_msgbox_result;
+    WCHAR confirm_title[256], confirm_text[256];
 
     switch( uMsg ) {
     case WM_INITDIALOG:
@@ -105,6 +107,12 @@ INT_PTR CALLBACK TimesDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
     case WM_COMMAND:
         switch( LOWORD( wParam ) ) {
         case IDC_RESET:
+            LoadStringW( NULL, IDC_CONFIRMTITLE, confirm_title, sizeof(confirm_title)/sizeof(WCHAR) );
+            LoadStringW( NULL, IDC_CONFIRMTEXT, confirm_text, sizeof(confirm_text)/sizeof(WCHAR) );
+            confirm_msgbox_result = MessageBoxW( hDlg, confirm_text, confirm_title, MB_OKCANCEL | MB_DEFBUTTON2 | MB_ICONWARNING );
+            if( confirm_msgbox_result != IDOK )
+                break;
+
             /* reset best names and times */
             ResetResults( p_board );
 

@@ -74,7 +74,7 @@ msgstr "Informácie o podpore"
 #: regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349 regedit.rc:362
 #: taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
 #: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
-#: winemine.rc:71 winemine.rc:82 winemine.rc:96 wordpad.rc:215 wordpad.rc:226
+#: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
 msgid "OK"
 msgstr "OK"
@@ -158,7 +158,7 @@ msgstr "&Inštalovať"
 #: progman.rc:200 progman.rc:217 regedit.rc:297 regedit.rc:308 regedit.rc:321
 #: regedit.rc:337 regedit.rc:350 regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518
 #: wineboot.rc:34 winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136
-#: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:97
+#: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:99
 #: wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
 msgid "Cancel"
 msgstr "Zrušiť"
@@ -371,7 +371,7 @@ msgstr "Pr&edvolené"
 #: clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72 progman.rc:55
 #: progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160 progman.rc:184
 #: progman.rc:202 progman.rc:219 regedit.rc:77 taskmgr.rc:87 winefile.rc:82
-#: winemine.rc:51 winhlp32.rc:57 wordpad.rc:102
+#: winemine.rc:53 winhlp32.rc:57 wordpad.rc:102
 msgid "&Help"
 msgstr "&Pomoc"
 
@@ -8511,7 +8511,7 @@ msgid "&Rename"
 msgstr ""
 
 #: shell32.rc:117 notepad.rc:39 oleview.rc:38 regedit.rc:41 view.rc:34
-#: winefile.rc:40 winemine.rc:49 winhlp32.rc:37 wordpad.rc:40
+#: winefile.rc:40 winemine.rc:51 winhlp32.rc:37 wordpad.rc:40
 msgid "E&xit"
 msgstr "U&končiť"
 
@@ -14605,90 +14605,94 @@ msgstr ""
 msgid "%1 of %2 free"
 msgstr ""
 
-#: winemine.rc:37
+#: winemine.rc:39
 msgid "&Game"
 msgstr "&Hra"
 
-#: winemine.rc:38
+#: winemine.rc:40
 msgid "&New\tF2"
 msgstr "&Nová\tF2"
 
-#: winemine.rc:40
+#: winemine.rc:42
 msgid "Question &Marks"
 msgstr "&Otázniky"
 
-#: winemine.rc:42
+#: winemine.rc:44
 msgid "&Beginner"
 msgstr "&Začiatočník"
 
-#: winemine.rc:43
+#: winemine.rc:45
 msgid "&Advanced"
 msgstr "&Pokročilý"
 
-#: winemine.rc:44
+#: winemine.rc:46
 msgid "&Expert"
 msgstr "&Skúsený"
 
-#: winemine.rc:45
+#: winemine.rc:47
 msgid "&Custom..."
 msgstr "&Vlastná..."
 
-#: winemine.rc:47
+#: winemine.rc:49
 msgid "&Fastest Times"
 msgstr "&Najrýchlejšie časy"
 
-#: winemine.rc:52
+#: winemine.rc:54
 msgid "&About WineMine"
 msgstr "&O programe WineMine"
 
-#: winemine.rc:59
+#: winemine.rc:61
 msgid "Fastest Times"
 msgstr "Najrýchlejšie časy"
 
-#: winemine.rc:61
+#: winemine.rc:63
 msgid "Fastest times"
 msgstr "Najrýchlejšie časy"
 
-#: winemine.rc:62
+#: winemine.rc:64
 msgid "Beginner"
 msgstr "Začiatočník"
 
-#: winemine.rc:63
+#: winemine.rc:65
 msgid "Advanced"
 msgstr "Pokročilý"
 
-#: winemine.rc:64
+#: winemine.rc:66
 msgid "Expert"
 msgstr "Skúsený"
 
-#: winemine.rc:72
+#: winemine.rc:74 winemine.rc:33
 #, fuzzy
 #| msgid "Activation"
 msgid "Reset Results"
 msgstr "Aktivácia"
 
-#: winemine.rc:78
+#: winemine.rc:80
 msgid "Congratulations!"
 msgstr "Gratulujem!"
 
-#: winemine.rc:80
+#: winemine.rc:82
 msgid "Please enter your name"
 msgstr "Prosím vložte svoje meno"
 
-#: winemine.rc:88
+#: winemine.rc:90
 msgid "Custom Game"
 msgstr "Vlastná hra"
 
-#: winemine.rc:90
+#: winemine.rc:92
 msgid "Rows"
 msgstr "Riadky"
 
-#: winemine.rc:91
+#: winemine.rc:93
 msgid "Columns"
 msgstr "Stĺpce"
 
-#: winemine.rc:92
+#: winemine.rc:94
 msgid "Mines"
+msgstr ""
+
+#: winemine.rc:34
+msgid "All results will be lost. Are you sure?"
 msgstr ""
 
 #: winemine.rc:30
