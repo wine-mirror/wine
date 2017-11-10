@@ -387,9 +387,12 @@ static void test_filter_graph(void)
 
             hr = CoCreateInstance(&CLSID_NullRenderer, NULL,
                 CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&pnull);
-            ok(hr == S_OK, "Could not create null renderer: %08x\n", hr);
-            if (hr != S_OK)
+            if (hr == REGDB_E_CLASSNOTREG)
+            {
+                win_skip("Null renderer not registered, skipping\n");
                 break;
+            }
+            ok(hr == S_OK, "Could not create null renderer: %08x\n", hr);
 
             IBaseFilter_EnumPins(pnull, &nullenum);
             IEnumPins_Next(nullenum, 1, &nullpin, NULL);
