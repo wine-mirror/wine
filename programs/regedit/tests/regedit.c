@@ -3588,7 +3588,7 @@ static void test_export(void)
     RegCloseKey(hkey);
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
-    ok(compare_export("file.reg", empty_hex_test, TODO_REG_COMPARE), "compare_export() failed\n");
+    ok(compare_export("file.reg", empty_hex_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
@@ -3605,7 +3605,7 @@ static void test_export(void)
     RegCloseKey(hkey);
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
-    ok(compare_export("file.reg", empty_hex_test2, TODO_REG_COMPARE), "compare_export() failed\n");
+    ok(compare_export("file.reg", empty_hex_test2, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 

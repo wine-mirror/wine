@@ -1345,8 +1345,12 @@ static void export_data(FILE *fp, WCHAR *value_name, DWORD value_len, DWORD type
         export_string_data(&buf, data, size);
         break;
     case REG_DWORD:
-        export_dword_data(&buf, data);
-        break;
+        if (size)
+        {
+            export_dword_data(&buf, data);
+            break;
+        }
+        /* fall through */
     case REG_NONE:
     case REG_EXPAND_SZ:
     case REG_BINARY:
