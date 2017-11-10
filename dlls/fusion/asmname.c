@@ -332,7 +332,10 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
         size += lstrlenW(separator) + lstrlenW(procarch) + lstrlenW(equals) + lstrlenW(name->procarch);
 
     if (size > *pccDisplayName)
-        return S_FALSE;
+    {
+        *pccDisplayName = size;
+        return E_NOT_SUFFICIENT_BUFFER;
+    }
 
     /* Construct the string */
     lstrcpyW(szDisplayName, name->name);

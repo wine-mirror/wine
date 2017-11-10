@@ -537,6 +537,13 @@ static void test_CreateAssemblyNameObject(void)
     ok(str[0] == 'a', "got %c\n", str[0]);
     ok(size == 5, "got %u\n", size);
 
+    size = 0;
+    str[0] = 'a';
+    hr = IAssemblyName_GetDisplayName(name, str, &size, ASM_DISPLAYF_FULL);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got %08x\n", hr);
+    ok(str[0] == 'a', "got %c\n", str[0]);
+    ok(size == 5, "Wrong size %u\n", size);
+
     size = MAX_PATH;
     hr = IAssemblyName_GetDisplayName(name, str, &size, ASM_DISPLAYF_FULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
