@@ -195,6 +195,18 @@ static void expect_vec4_array_(unsigned int line, unsigned int count, const D3DX
     }
 }
 
+static void set_matrix(D3DXMATRIX* mat,
+        float m00, float m01, float m02, float m03,
+        float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23,
+        float m30, float m31, float m32, float m33)
+{
+    U(mat)->m[0][0] = m00; U(mat)->m[0][1] = m01; U(mat)->m[0][2] = m02; U(mat)->m[0][3] = m03;
+    U(mat)->m[1][0] = m10; U(mat)->m[1][1] = m11; U(mat)->m[1][2] = m12; U(mat)->m[1][3] = m13;
+    U(mat)->m[2][0] = m20; U(mat)->m[2][1] = m21; U(mat)->m[2][2] = m22; U(mat)->m[2][3] = m23;
+    U(mat)->m[3][0] = m30; U(mat)->m[3][1] = m31; U(mat)->m[3][2] = m32; U(mat)->m[3][3] = m33;
+}
+
 static void D3DXColorTest(void)
 {
     D3DXCOLOR color, color1, color2, expected, got;
@@ -346,10 +358,11 @@ static void D3DXMatrixTest(void)
     angle = D3DX_PI/3.0f;
 
 /*____________D3DXMatrixAffineTransformation______*/
-    U(expectedmat).m[0][0] = -459.239990f; U(expectedmat).m[0][1] = -576.719971f; U(expectedmat).m[0][2] = -263.440002f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 519.760010f; U(expectedmat).m[1][1] = -352.440002f; U(expectedmat).m[1][2] = -277.679993f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 363.119995f; U(expectedmat).m[2][1] = -121.040001f; U(expectedmat).m[2][2] = -117.479996f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = -1239.0f; U(expectedmat).m[3][1] = 667.0f; U(expectedmat).m[3][2] = 567.0f; U(expectedmat).m[3][3] = 1.0f;
+    set_matrix(&expectedmat,
+            -459.239990f, -576.719971f, -263.440002f, 0.0f,
+            519.760010f, -352.440002f, -277.679993f, 0.0f,
+            363.119995f, -121.040001f, -117.479996f, 0.0f,
+            -1239.0f, 667.0f, 567.0f, 1.0f);
     D3DXMatrixAffineTransformation(&gotmat, 3.56f, &at, &q, &axis);
     expect_matrix(&expectedmat, &gotmat, 0);
 
@@ -366,10 +379,11 @@ static void D3DXMatrixTest(void)
     D3DXMatrixAffineTransformation(&gotmat, 3.56f, NULL, &q, NULL);
     expect_matrix(&expectedmat, &gotmat, 0);
 
-    U(expectedmat).m[0][0] = 3.56f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 3.56f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 3.56f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 1.0f; U(expectedmat).m[3][1] = -3.0f; U(expectedmat).m[3][2] = 7.0f; U(expectedmat).m[3][3] = 1.0f;
+    set_matrix(&expectedmat,
+            3.56f, 0.0f, 0.0f, 0.0f,
+            0.0f, 3.56f, 0.0f, 0.0f,
+            0.0f, 0.0f, 3.56f, 0.0f,
+            1.0f, -3.0f, 7.0f, 1.0f);
     D3DXMatrixAffineTransformation(&gotmat, 3.56f, NULL, NULL, &axis);
     expect_matrix(&expectedmat, &gotmat, 0);
 
@@ -389,11 +403,12 @@ static void D3DXMatrixTest(void)
     ok(equal, "Got unexpected determinant %.8e.\n", determinant);
 
 /*____________D3DXMatrixInverse______________*/
-    U(expectedmat).m[0][0] = 16067.0f/73944.0f; U(expectedmat).m[0][1] = -10165.0f/147888.0f; U(expectedmat).m[0][2] = -2729.0f/147888.0f; U(expectedmat).m[0][3] = -1631.0f/49296.0f;
-    U(expectedmat).m[1][0] = -565.0f/36972.0f; U(expectedmat).m[1][1] = 2723.0f/73944.0f; U(expectedmat).m[1][2] = -1073.0f/73944.0f; U(expectedmat).m[1][3] = 289.0f/24648.0f;
-    U(expectedmat).m[2][0] = -389.0f/2054.0f; U(expectedmat).m[2][1] = 337.0f/4108.0f; U(expectedmat).m[2][2] = 181.0f/4108.0f; U(expectedmat).m[2][3] = 317.0f/4108.0f;
-    U(expectedmat).m[3][0] = 163.0f/5688.0f; U(expectedmat).m[3][1] = -101.0f/11376.0f; U(expectedmat).m[3][2] = -73.0f/11376.0f; U(expectedmat).m[3][3] = -127.0f/3792.0f;
-    D3DXMatrixInverse(&gotmat,&determinant,&mat);
+    set_matrix(&expectedmat,
+            16067.0f/73944.0f, -10165.0f/147888.0f, -2729.0f/147888.0f, -1631.0f/49296.0f,
+            -565.0f/36972.0f, 2723.0f/73944.0f, -1073.0f/73944.0f, 289.0f/24648.0f,
+            -389.0f/2054.0f, 337.0f/4108.0f, 181.0f/4108.0f, 317.0f/4108.0f,
+            163.0f/5688.0f, -101.0f/11376.0f, -73.0f/11376.0f, -127.0f/3792.0f);
+    D3DXMatrixInverse(&gotmat, &determinant, &mat);
     expect_matrix(&expectedmat, &gotmat, 1);
     equal = compare_float(determinant, -147888.0f, 0);
     ok(equal, "Got unexpected determinant %.8e.\n", determinant);
@@ -419,211 +434,237 @@ static void D3DXMatrixTest(void)
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
 
 /*____________D3DXMatrixLookAtLH_______________*/
-    U(expectedmat).m[0][0] = -0.82246518f; U(expectedmat).m[0][1] = -0.40948939f; U(expectedmat).m[0][2] = -0.39480308f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = -0.55585691f; U(expectedmat).m[1][1] = 0.43128574f; U(expectedmat).m[1][2] = 0.71064550f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = -0.12072885f; U(expectedmat).m[2][1] = 0.80393475f; U(expectedmat).m[2][2] = -0.58233452f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 4.4946337f; U(expectedmat).m[3][1] = 0.80971903f; U(expectedmat).m[3][2] = 10.060076f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixLookAtLH(&gotmat,&eye,&at,&axis);
+    set_matrix(&expectedmat,
+            -0.82246518f, -0.40948939f, -0.39480308f, 0.0f,
+            -0.55585691f, 0.43128574f, 0.71064550f, 0.0f,
+            -0.12072885f, 0.80393475f, -0.58233452f, 0.0f,
+            4.4946337f, 0.80971903f, 10.060076f, 1.0f);
+    D3DXMatrixLookAtLH(&gotmat, &eye, &at, &axis);
     expect_matrix(&expectedmat, &gotmat, 32);
 
 /*____________D3DXMatrixLookAtRH_______________*/
-    U(expectedmat).m[0][0] = 0.82246518f; U(expectedmat).m[0][1] = -0.40948939f; U(expectedmat).m[0][2] = 0.39480308f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.55585691f; U(expectedmat).m[1][1] = 0.43128574f; U(expectedmat).m[1][2] = -0.71064550f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.12072885f; U(expectedmat).m[2][1] = 0.80393475f; U(expectedmat).m[2][2] = 0.58233452f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = -4.4946337f; U(expectedmat).m[3][1] = 0.80971903f; U(expectedmat).m[3][2] = -10.060076f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixLookAtRH(&gotmat,&eye,&at,&axis);
+    set_matrix(&expectedmat,
+            0.82246518f, -0.40948939f, 0.39480308f, 0.0f,
+            0.55585691f, 0.43128574f, -0.71064550f, 0.0f,
+            0.12072885f, 0.80393475f, 0.58233452f, 0.0f,
+            -4.4946337f, 0.80971903f, -10.060076f, 1.0f);
+    D3DXMatrixLookAtRH(&gotmat, &eye, &at, &axis);
     expect_matrix(&expectedmat, &gotmat, 32);
 
 /*____________D3DXMatrixMultiply______________*/
-    U(expectedmat).m[0][0] = 73.0f; U(expectedmat).m[0][1] = 193.0f; U(expectedmat).m[0][2] = -197.0f; U(expectedmat).m[0][3] = -77.0f;
-    U(expectedmat).m[1][0] = 231.0f; U(expectedmat).m[1][1] = 551.0f; U(expectedmat).m[1][2] = -489.0f; U(expectedmat).m[1][3] = -169.0;
-    U(expectedmat).m[2][0] = 239.0f; U(expectedmat).m[2][1] = 523.0f; U(expectedmat).m[2][2] = -400.0f; U(expectedmat).m[2][3] = -116.0f;
-    U(expectedmat).m[3][0] = -164.0f; U(expectedmat).m[3][1] = -320.0f; U(expectedmat).m[3][2] = 187.0f; U(expectedmat).m[3][3] = 31.0f;
-    D3DXMatrixMultiply(&gotmat,&mat,&mat2);
+    set_matrix(&expectedmat,
+            73.0f, 193.0f, -197.0f, -77.0f,
+            231.0f, 551.0f, -489.0f, -169.0f,
+            239.0f, 523.0f, -400.0f, -116.0f,
+            -164.0f, -320.0f, 187.0f, 31.0f);
+    D3DXMatrixMultiply(&gotmat, &mat, &mat2);
     expect_matrix(&expectedmat, &gotmat, 0);
 
 /*____________D3DXMatrixMultiplyTranspose____*/
-    U(expectedmat).m[0][0] = 73.0f; U(expectedmat).m[0][1] = 231.0f; U(expectedmat).m[0][2] = 239.0f; U(expectedmat).m[0][3] = -164.0f;
-    U(expectedmat).m[1][0] = 193.0f; U(expectedmat).m[1][1] = 551.0f; U(expectedmat).m[1][2] = 523.0f; U(expectedmat).m[1][3] = -320.0;
-    U(expectedmat).m[2][0] = -197.0f; U(expectedmat).m[2][1] = -489.0f; U(expectedmat).m[2][2] = -400.0f; U(expectedmat).m[2][3] = 187.0f;
-    U(expectedmat).m[3][0] = -77.0f; U(expectedmat).m[3][1] = -169.0f; U(expectedmat).m[3][2] = -116.0f; U(expectedmat).m[3][3] = 31.0f;
-    D3DXMatrixMultiplyTranspose(&gotmat,&mat,&mat2);
+    set_matrix(&expectedmat,
+            73.0f, 231.0f, 239.0f, -164.0f,
+            193.0f, 551.0f, 523.0f, -320.0f,
+            -197.0f, -489.0f, -400.0f, 187.0f,
+            -77.0f, -169.0f, -116.0f, 31.0f);
+    D3DXMatrixMultiplyTranspose(&gotmat, &mat, &mat2);
     expect_matrix(&expectedmat, &gotmat, 0);
 
 /*____________D3DXMatrixOrthoLH_______________*/
-    U(expectedmat).m[0][0] = 0.8f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 0.27027027f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = -0.15151515f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = -0.48484848f; U(expectedmat).m[3][3] = 1.0f;
+    set_matrix(&expectedmat,
+            0.8f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.27027027f, 0.0f, 0.0f,
+            0.0f, 0.0f, -0.15151515f, 0.0f,
+            0.0f, 0.0f, -0.48484848f, 1.0f);
     D3DXMatrixOrthoLH(&gotmat, 2.5f, 7.4f, -3.2f, -9.8f);
     expect_matrix(&expectedmat, &gotmat, 16);
 
 /*____________D3DXMatrixOrthoOffCenterLH_______________*/
-    U(expectedmat).m[0][0] = 3.6363636f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 0.18018018f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = -0.045662100f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = -1.7272727f; U(expectedmat).m[3][1] = -0.56756757f; U(expectedmat).m[3][2] = 0.42465753f; U(expectedmat).m[3][3] = 1.0f;
+    set_matrix(&expectedmat,
+            3.6363636f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.18018018f, 0.0f, 0.0f,
+            0.0f, 0.0f, -0.045662100f, 0.0f,
+            -1.7272727f, -0.56756757f, 0.42465753f, 1.0f);
     D3DXMatrixOrthoOffCenterLH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f, 9.3, -12.6);
     expect_matrix(&expectedmat, &gotmat, 32);
 
 /*____________D3DXMatrixOrthoOffCenterRH_______________*/
-    U(expectedmat).m[0][0] = 3.6363636f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 0.18018018f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 0.045662100f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = -1.7272727f; U(expectedmat).m[3][1] = -0.56756757f; U(expectedmat).m[3][2] = 0.42465753f; U(expectedmat).m[3][3] = 1.0f;
+    set_matrix(&expectedmat,
+            3.6363636f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.18018018f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.045662100f, 0.0f,
+            -1.7272727f, -0.56756757f, 0.42465753f, 1.0f);
     D3DXMatrixOrthoOffCenterRH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f, 9.3, -12.6);
     expect_matrix(&expectedmat, &gotmat, 32);
 
 /*____________D3DXMatrixOrthoRH_______________*/
-    U(expectedmat).m[0][0] = 0.8f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 0.27027027f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 0.15151515f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = -0.48484848f; U(expectedmat).m[3][3] = 1.0f;
+    set_matrix(&expectedmat,
+            0.8f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.27027027f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.15151515f, 0.0f,
+            0.0f, 0.0f, -0.48484848f, 1.0f);
     D3DXMatrixOrthoRH(&gotmat, 2.5f, 7.4f, -3.2f, -9.8f);
     expect_matrix(&expectedmat, &gotmat, 16);
 
 /*____________D3DXMatrixPerspectiveFovLH_______________*/
-    U(expectedmat).m[0][0] = 13.288858f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 9.9666444f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 0.78378378f; U(expectedmat).m[2][3] = 1.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 1.8810811f; U(expectedmat).m[3][3] = 0.0f;
+    set_matrix(&expectedmat,
+            13.288858f, 0.0f, 0.0f, 0.0f,
+            0.0f, 9.9666444f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.78378378f, 1.0f,
+            0.0f, 0.0f, 1.8810811f, 0.0f);
     D3DXMatrixPerspectiveFovLH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f);
     expect_matrix(&expectedmat, &gotmat, 4);
 
 /*____________D3DXMatrixPerspectiveFovRH_______________*/
-    U(expectedmat).m[0][0] = 13.288858f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 9.9666444f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = -0.78378378f; U(expectedmat).m[2][3] = -1.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 1.8810811f; U(expectedmat).m[3][3] = 0.0f;
+    set_matrix(&expectedmat,
+            13.288858f, 0.0f, 0.0f, 0.0f,
+            0.0f, 9.9666444f, 0.0f, 0.0f,
+            0.0f, 0.0f, -0.78378378f, -1.0f,
+            0.0f, 0.0f, 1.8810811f, 0.0f);
     D3DXMatrixPerspectiveFovRH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f);
     expect_matrix(&expectedmat, &gotmat, 4);
 
 /*____________D3DXMatrixPerspectiveLH_______________*/
-    U(expectedmat).m[0][0] = -24.0f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = -6.4f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 0.78378378f; U(expectedmat).m[2][3] = 1.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 1.8810811f; U(expectedmat).m[3][3] = 0.0f;
+    set_matrix(&expectedmat,
+            -24.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, -6.4f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.78378378f, 1.0f,
+            0.0f, 0.0f, 1.8810811f, 0.0f);
     D3DXMatrixPerspectiveLH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f);
     expect_matrix(&expectedmat, &gotmat, 4);
 
 /*____________D3DXMatrixPerspectiveOffCenterLH_______________*/
-    U(expectedmat).m[0][0] = 11.636364f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 0.57657658f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = -1.7272727f; U(expectedmat).m[2][1] = -0.56756757f; U(expectedmat).m[2][2] = 0.84079602f; U(expectedmat).m[2][3] = 1.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = -2.6905473f; U(expectedmat).m[3][3] = 0.0f;
+    set_matrix(&expectedmat,
+            11.636364f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.57657658f, 0.0f, 0.0f,
+            -1.7272727f, -0.56756757f, 0.84079602f, 1.0f,
+            0.0f, 0.0f, -2.6905473f, 0.0f);
     D3DXMatrixPerspectiveOffCenterLH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f, 3.2f, -16.9f);
     expect_matrix(&expectedmat, &gotmat, 8);
 
 /*____________D3DXMatrixPerspectiveOffCenterRH_______________*/
-    U(expectedmat).m[0][0] = 11.636364f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 0.57657658f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 1.7272727f; U(expectedmat).m[2][1] = 0.56756757f; U(expectedmat).m[2][2] = -0.84079602f; U(expectedmat).m[2][3] = -1.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = -2.6905473f; U(expectedmat).m[3][3] = 0.0f;
+    set_matrix(&expectedmat,
+            11.636364f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.57657658f, 0.0f, 0.0f,
+            1.7272727f, 0.56756757f, -0.84079602f, -1.0f,
+            0.0f, 0.0f, -2.6905473f, 0.0f);
     D3DXMatrixPerspectiveOffCenterRH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f, 3.2f, -16.9f);
     expect_matrix(&expectedmat, &gotmat, 8);
 
 /*____________D3DXMatrixPerspectiveRH_______________*/
-    U(expectedmat).m[0][0] = -24.0f; U(expectedmat).m[0][1] = -0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = -6.4f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = -0.78378378f; U(expectedmat).m[2][3] = -1.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 1.8810811f; U(expectedmat).m[3][3] = 0.0f;
+    set_matrix(&expectedmat,
+            -24.0f, -0.0f, 0.0f, 0.0f,
+            0.0f, -6.4f, 0.0f, 0.0f,
+            0.0f, 0.0f, -0.78378378f, -1.0f,
+            0.0f, 0.0f, 1.8810811f, 0.0f);
     D3DXMatrixPerspectiveRH(&gotmat, 0.2f, 0.75f, -2.4f, 8.7f);
     expect_matrix(&expectedmat, &gotmat, 4);
 
 /*____________D3DXMatrixReflect______________*/
-    U(expectedmat).m[0][0] = 0.30769235f; U(expectedmat).m[0][1] = -0.23076922f; U(expectedmat).m[0][2] = 0.92307687f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = -0.23076922; U(expectedmat).m[1][1] = 0.92307693f; U(expectedmat).m[1][2] = 0.30769232f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.92307687f; U(expectedmat).m[2][1] = 0.30769232f; U(expectedmat).m[2][2] = -0.23076922f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 1.6153846f; U(expectedmat).m[3][1] = 0.53846157f; U(expectedmat).m[3][2] = -2.1538463f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixReflect(&gotmat,&plane);
+    set_matrix(&expectedmat,
+            0.30769235f, -0.23076922f, 0.92307687f, 0.0f,
+            -0.23076922, 0.92307693f, 0.30769232f, 0.0f,
+            0.92307687f, 0.30769232f, -0.23076922f, 0.0f,
+            1.6153846f, 0.53846157f, -2.1538463f, 1.0f);
+    D3DXMatrixReflect(&gotmat, &plane);
     expect_matrix(&expectedmat, &gotmat, 32);
 
 /*____________D3DXMatrixRotationAxis_____*/
-    U(expectedmat).m[0][0] = 0.50847453f; U(expectedmat).m[0][1] = 0.76380461f; U(expectedmat).m[0][2] = 0.39756277f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = -0.81465209f; U(expectedmat).m[1][1] = 0.57627118f; U(expectedmat).m[1][2] = -0.065219201f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = -0.27891868f; U(expectedmat).m[2][1] = -0.29071301f; U(expectedmat).m[2][2] = 0.91525424f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixRotationAxis(&gotmat,&axis,angle);
+    set_matrix(&expectedmat,
+            0.50847453f, 0.76380461f, 0.39756277f, 0.0f,
+            -0.81465209f, 0.57627118f, -0.065219201f, 0.0f,
+            -0.27891868f, -0.29071301f, 0.91525424f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    D3DXMatrixRotationAxis(&gotmat, &axis, angle);
     expect_matrix(&expectedmat, &gotmat, 32);
 
 /*____________D3DXMatrixRotationQuaternion______________*/
-    U(expectedmat).m[0][0] = -129.0f; U(expectedmat).m[0][1] = -162.0f; U(expectedmat).m[0][2] = -74.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 146.0f; U(expectedmat).m[1][1] = -99.0f; U(expectedmat).m[1][2] = -78.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 102.0f; U(expectedmat).m[2][1] = -34.0f; U(expectedmat).m[2][2] = -33.0f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixRotationQuaternion(&gotmat,&q);
+    set_matrix(&expectedmat,
+            -129.0f, -162.0f, -74.0f, 0.0f,
+            146.0f, -99.0f, -78.0f, 0.0f,
+            102.0f, -34.0f, -33.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    D3DXMatrixRotationQuaternion(&gotmat, &q);
     expect_matrix(&expectedmat, &gotmat, 0);
 
 /*____________D3DXMatrixRotationX______________*/
-    U(expectedmat).m[0][0] = 1.0f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 0.5f; U(expectedmat).m[1][2] = sqrt(3.0f)/2.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = -sqrt(3.0f)/2.0f; U(expectedmat).m[2][2] = 0.5f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixRotationX(&gotmat,angle);
+    set_matrix(&expectedmat,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.5f, sqrt(3.0f)/2.0f, 0.0f,
+            0.0f, -sqrt(3.0f)/2.0f, 0.5f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    D3DXMatrixRotationX(&gotmat, angle);
     expect_matrix(&expectedmat, &gotmat, 1);
 
 /*____________D3DXMatrixRotationY______________*/
-    U(expectedmat).m[0][0] = 0.5f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = -sqrt(3.0f)/2.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 1.0f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = sqrt(3.0f)/2.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 0.5f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixRotationY(&gotmat,angle);
+    set_matrix(&expectedmat,
+            0.5f, 0.0f, -sqrt(3.0f)/2.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            sqrt(3.0f)/2.0f, 0.0f, 0.5f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    D3DXMatrixRotationY(&gotmat, angle);
     expect_matrix(&expectedmat, &gotmat, 1);
 
 /*____________D3DXMatrixRotationYawPitchRoll____*/
-    U(expectedmat).m[0][0] = 0.88877726f; U(expectedmat).m[0][1] = 0.091874748f; U(expectedmat).m[0][2] = -0.44903678f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.35171318f; U(expectedmat).m[1][1] = 0.49148652f; U(expectedmat).m[1][2] = 0.79670501f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.29389259f; U(expectedmat).m[2][1] = -0.86602545f; U(expectedmat).m[2][2] = 0.40450847f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixRotationYawPitchRoll(&gotmat, 3.0f*angle/5.0f, angle, 3.0f*angle/17.0f);
+    set_matrix(&expectedmat,
+            0.88877726f, 0.091874748f, -0.44903678f, 0.0f,
+            0.35171318f, 0.49148652f, 0.79670501f, 0.0f,
+            0.29389259f, -0.86602545f, 0.40450847f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    D3DXMatrixRotationYawPitchRoll(&gotmat, 3.0f * angle / 5.0f, angle, 3.0f * angle / 17.0f);
     expect_matrix(&expectedmat, &gotmat, 64);
 
 /*____________D3DXMatrixRotationZ______________*/
-    U(expectedmat).m[0][0] = 0.5f; U(expectedmat).m[0][1] = sqrt(3.0f)/2.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = -sqrt(3.0f)/2.0f; U(expectedmat).m[1][1] = 0.5f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 1.0f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixRotationZ(&gotmat,angle);
+    set_matrix(&expectedmat,
+            0.5f, sqrt(3.0f)/2.0f, 0.0f, 0.0f,
+            -sqrt(3.0f)/2.0f, 0.5f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    D3DXMatrixRotationZ(&gotmat, angle);
     expect_matrix(&expectedmat, &gotmat, 1);
 
 /*____________D3DXMatrixScaling______________*/
-    U(expectedmat).m[0][0] = 0.69f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 0.53f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 4.11f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixScaling(&gotmat,0.69f,0.53f,4.11f);
+    set_matrix(&expectedmat,
+            0.69f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.53f, 0.0f, 0.0f,
+            0.0f, 0.0f, 4.11f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    D3DXMatrixScaling(&gotmat, 0.69f, 0.53f, 4.11f);
     expect_matrix(&expectedmat, &gotmat, 0);
 
 /*____________D3DXMatrixShadow______________*/
-    U(expectedmat).m[0][0] = 12.786773f; U(expectedmat).m[0][1] = 5.0009613f; U(expectedmat).m[0][2] = 4.3537784f; U(expectedmat).m[0][3] = 3.7065949f;
-    U(expectedmat).m[1][0] = 1.8827150f; U(expectedmat).m[1][1] = 8.8056154f; U(expectedmat).m[1][2] = 1.4512594f; U(expectedmat).m[1][3] = 1.2355317f;
-    U(expectedmat).m[2][0] = -7.5308599f; U(expectedmat).m[2][1] = -6.6679487f; U(expectedmat).m[2][2] = 1.3335901f; U(expectedmat).m[2][3] = -4.9421268f;
-    U(expectedmat).m[3][0] = -13.179006f; U(expectedmat).m[3][1] = -11.668910f; U(expectedmat).m[3][2] = -10.158816f; U(expectedmat).m[3][3] = -1.5100943f;
-    D3DXMatrixShadow(&gotmat,&light,&plane);
+    set_matrix(&expectedmat,
+            12.786773f, 5.0009613f, 4.3537784f, 3.7065949f,
+            1.8827150f, 8.8056154f, 1.4512594f, 1.2355317f,
+            -7.5308599f, -6.6679487f, 1.3335901f, -4.9421268f,
+            -13.179006f, -11.668910f, -10.158816f, -1.5100943f);
+    D3DXMatrixShadow(&gotmat, &light, &plane);
     expect_matrix(&expectedmat, &gotmat, 8);
 
 /*____________D3DXMatrixTransformation______________*/
-    U(expectedmat).m[0][0] = -0.21480007f; U(expectedmat).m[0][1] = 1.3116000f; U(expectedmat).m[0][2] = 0.47520003f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.95040143f; U(expectedmat).m[1][1] = -0.88360137f; U(expectedmat).m[1][2] = 0.92439979f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 1.0212044f; U(expectedmat).m[2][1] = 0.19359307f; U(expectedmat).m[2][2] = -1.3588026f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 18.298532f; U(expectedmat).m[3][1] = -29.624001f; U(expectedmat).m[3][2] = 15.683499f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixTransformation(&gotmat,&at,&q,NULL,&eye,&r,&last);
+    set_matrix(&expectedmat,
+            -0.21480007f, 1.3116000f, 0.47520003f, 0.0f,
+            0.95040143f, -0.88360137f, 0.92439979f, 0.0f,
+            1.0212044f, 0.19359307f, -1.3588026f, 0.0f,
+            18.298532f, -29.624001f, 15.683499f, 1.0f);
+    D3DXMatrixTransformation(&gotmat, &at, &q, NULL, &eye, &r, &last);
     expect_matrix(&expectedmat, &gotmat, 512);
 
 /*____________D3DXMatrixTranslation______________*/
-    U(expectedmat).m[0][0] = 1.0f; U(expectedmat).m[0][1] = 0.0f; U(expectedmat).m[0][2] = 0.0f; U(expectedmat).m[0][3] = 0.0f;
-    U(expectedmat).m[1][0] = 0.0f; U(expectedmat).m[1][1] = 1.0f; U(expectedmat).m[1][2] = 0.0f; U(expectedmat).m[1][3] = 0.0f;
-    U(expectedmat).m[2][0] = 0.0f; U(expectedmat).m[2][1] = 0.0f; U(expectedmat).m[2][2] = 1.0f; U(expectedmat).m[2][3] = 0.0f;
-    U(expectedmat).m[3][0] = 0.69f; U(expectedmat).m[3][1] = 0.53f; U(expectedmat).m[3][2] = 4.11f; U(expectedmat).m[3][3] = 1.0f;
-    D3DXMatrixTranslation(&gotmat,0.69f,0.53f,4.11f);
+    set_matrix(&expectedmat,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.69f, 0.53f, 4.11f, 1.0f);
+    D3DXMatrixTranslation(&gotmat, 0.69f, 0.53f, 4.11f);
     expect_matrix(&expectedmat, &gotmat, 0);
 
 /*____________D3DXMatrixTranspose______________*/
-    U(expectedmat).m[0][0] = 10.0f; U(expectedmat).m[0][1] = 11.0f; U(expectedmat).m[0][2] = 19.0f; U(expectedmat).m[0][3] = 2.0f;
-    U(expectedmat).m[1][0] = 5.0f; U(expectedmat).m[1][1] = 20.0f; U(expectedmat).m[1][2] = -21.0f; U(expectedmat).m[1][3] = 3.0f;
-    U(expectedmat).m[2][0] = 7.0f; U(expectedmat).m[2][1] = 16.0f; U(expectedmat).m[2][2] = 30.f; U(expectedmat).m[2][3] = -4.0f;
-    U(expectedmat).m[3][0] = 8.0f; U(expectedmat).m[3][1] = 33.0f; U(expectedmat).m[3][2] = 43.0f; U(expectedmat).m[3][3] = -40.0f;
-    D3DXMatrixTranspose(&gotmat,&mat);
+    set_matrix(&expectedmat,
+            10.0f, 11.0f, 19.0f, 2.0f,
+            5.0f, 20.0f, -21.0f, 3.0f,
+            7.0f, 16.0f, 30.f, -4.0f,
+            8.0f, 33.0f, 43.0f, -40.0f);
+    D3DXMatrixTranspose(&gotmat, &mat);
     expect_matrix(&expectedmat, &gotmat, 0);
 }
 
@@ -1134,10 +1175,11 @@ static void D3DXVector2Test(void)
     w.x = 4.0f; w.y = -3.0f;
     x.x = 2.0f; x.y = -11.0f;
 
-    U(mat).m[0][0] = 1.0f; U(mat).m[0][1] = 2.0f; U(mat).m[0][2] = 3.0f; U(mat).m[0][3] = 4.0f;
-    U(mat).m[1][0] = 5.0f; U(mat).m[1][1] = 6.0f; U(mat).m[1][2] = 7.0f; U(mat).m[1][3] = 8.0f;
-    U(mat).m[2][0] = 9.0f; U(mat).m[2][1] = 10.0f; U(mat).m[2][2] = 11.0f; U(mat).m[2][3] = 12.0f;
-    U(mat).m[3][0] = 13.0f; U(mat).m[3][1] = 14.0f; U(mat).m[3][2] = 15.0f; U(mat).m[3][3] = 16.0f;
+    set_matrix(&mat,
+            1.0f, 2.0f, 3.0f, 4.0f,
+            5.0f, 6.0f, 7.0f, 8.0f,
+            9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f);
 
     coeff1 = 2.0f; coeff2 = 5.0f;
     scale = -6.5f;
@@ -1309,10 +1351,11 @@ static void D3DXVector3Test(void)
     viewport.Width = 800; viewport.MinZ = 0.2f; viewport.X = 10;
     viewport.Height = 680; viewport.MaxZ = 0.9f; viewport.Y = 5;
 
-    U(mat).m[0][0] = 1.0f; U(mat).m[0][1] = 2.0f; U(mat).m[0][2] = 3.0f; U(mat).m[0][3] = 4.0f;
-    U(mat).m[1][0] = 5.0f; U(mat).m[1][1] = 6.0f; U(mat).m[1][2] = 7.0f; U(mat).m[1][3] = 8.0f;
-    U(mat).m[2][0] = 9.0f; U(mat).m[2][1] = 10.0f; U(mat).m[2][2] = 11.0f; U(mat).m[2][3] = 12.0f;
-    U(mat).m[3][0] = 13.0f; U(mat).m[3][1] = 14.0f; U(mat).m[3][2] = 15.0f; U(mat).m[3][3] = 16.0f;
+    set_matrix(&mat,
+            1.0f, 2.0f, 3.0f, 4.0f,
+            5.0f, 6.0f, 7.0f, 8.0f,
+            9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f);
 
     U(view).m[0][1] = 5.0f; U(view).m[0][2] = 7.0f; U(view).m[0][3] = 8.0f;
     U(view).m[1][0] = 11.0f; U(view).m[1][2] = 16.0f; U(view).m[1][3] = 33.0f;
@@ -1321,10 +1364,11 @@ static void D3DXVector3Test(void)
     U(view).m[0][0] = 10.0f; U(view).m[1][1] = 20.0f; U(view).m[2][2] = 30.0f;
     U(view).m[3][3] = -40.0f;
 
-    U(world).m[0][0] = 21.0f; U(world).m[0][1] = 2.0f; U(world).m[0][2] = 3.0f; U(world).m[0][3] = 4.0;
-    U(world).m[1][0] = 5.0f; U(world).m[1][1] = 23.0f; U(world).m[1][2] = 7.0f; U(world).m[1][3] = 8.0f;
-    U(world).m[2][0] = -8.0f; U(world).m[2][1] = -7.0f; U(world).m[2][2] = 25.0f; U(world).m[2][3] = -5.0f;
-    U(world).m[3][0] = -4.0f; U(world).m[3][1] = -3.0f; U(world).m[3][2] = -2.0f; U(world).m[3][3] = 27.0f;
+    set_matrix(&world,
+            21.0f, 2.0f, 3.0f, 4.0f,
+            5.0f, 23.0f, 7.0f, 8.0f,
+            -8.0f, -7.0f, 25.0f, -5.0f,
+            -4.0f, -3.0f, -2.0f, 27.0f);
 
     coeff1 = 2.0f; coeff2 = 5.0f;
     scale = -6.5f;
@@ -1542,10 +1586,11 @@ static void D3DXVector4Test(void)
     w.x = 4.0f; w.y =6.0f; w.z = -2.0f; w.w = 1.0f;
     x.x = 6.0f; x.y = -7.0f; x.z =8.0f; x.w = -9.0f;
 
-    U(mat).m[0][0] = 1.0f; U(mat).m[0][1] = 2.0f; U(mat).m[0][2] = 3.0f; U(mat).m[0][3] = 4.0f;
-    U(mat).m[1][0] = 5.0f; U(mat).m[1][1] = 6.0f; U(mat).m[1][2] = 7.0f; U(mat).m[1][3] = 8.0f;
-    U(mat).m[2][0] = 9.0f; U(mat).m[2][1] = 10.0f; U(mat).m[2][2] = 11.0f; U(mat).m[2][3] = 12.0f;
-    U(mat).m[3][0] = 13.0f; U(mat).m[3][1] = 14.0f; U(mat).m[3][2] = 15.0f; U(mat).m[3][3] = 16.0f;
+    set_matrix(&mat,
+            1.0f, 2.0f, 3.0f, 4.0f,
+            5.0f, 6.0f, 7.0f, 8.0f,
+            9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f);
 
     coeff1 = 2.0f; coeff2 = 5.0;
     scale = -6.5f;
@@ -2319,12 +2364,13 @@ static void test_D3DXVec_Array(void)
         inp_plane[i].b = inp_plane[i].d = inp_vec[i].y = inp_vec[i].w = ARRAY_SIZE(inp_vec) - i;
     }
 
-    U(mat).m[0][0] = 1.0f; U(mat).m[0][1] = 2.0f; U(mat).m[0][2] = 3.0f; U(mat).m[0][3] = 4.0f;
-    U(mat).m[1][0] = 5.0f; U(mat).m[1][1] = 6.0f; U(mat).m[1][2] = 7.0f; U(mat).m[1][3] = 8.0f;
-    U(mat).m[2][0] = 9.0f; U(mat).m[2][1] = 10.0f; U(mat).m[2][2] = 11.0f; U(mat).m[2][3] = 12.0f;
-    U(mat).m[3][0] = 13.0f; U(mat).m[3][1] = 14.0f; U(mat).m[3][2] = 15.0f; U(mat).m[3][3] = 16.0f;
+    set_matrix(&mat,
+            1.0f, 2.0f, 3.0f, 4.0f,
+            5.0f, 6.0f, 7.0f, 8.0f,
+            9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f);
 
-    D3DXMatrixPerspectiveFovLH(&projection,D3DX_PI/4.0f,20.0f/17.0f,1.0f,1000.0f);
+    D3DXMatrixPerspectiveFovLH(&projection, D3DX_PI / 4.0f, 20.0f / 17.0f, 1.0f, 1000.0f);
 
     U(view).m[0][1] = 5.0f; U(view).m[0][2] = 7.0f; U(view).m[0][3] = 8.0f;
     U(view).m[1][0] = 11.0f; U(view).m[1][2] = 16.0f; U(view).m[1][3] = 33.0f;
@@ -2333,10 +2379,11 @@ static void test_D3DXVec_Array(void)
     U(view).m[0][0] = 10.0f; U(view).m[1][1] = 20.0f; U(view).m[2][2] = 30.0f;
     U(view).m[3][3] = -40.0f;
 
-    U(world).m[0][0] = 21.0f; U(world).m[0][1] = 2.0f; U(world).m[0][2] = 3.0f; U(world).m[0][3] = 4.0;
-    U(world).m[1][0] = 5.0f; U(world).m[1][1] = 23.0f; U(world).m[1][2] = 7.0f; U(world).m[1][3] = 8.0f;
-    U(world).m[2][0] = -8.0f; U(world).m[2][1] = -7.0f; U(world).m[2][2] = 25.0f; U(world).m[2][3] = -5.0f;
-    U(world).m[3][0] = -4.0f; U(world).m[3][1] = -3.0f; U(world).m[3][2] = -2.0f; U(world).m[3][3] = 27.0f;
+    set_matrix(&world,
+            21.0f, 2.0f, 3.0f, 4.0f,
+            5.0f, 23.0f, 7.0f, 8.0f,
+            -8.0f, -7.0f, 25.0f, -5.0f,
+            -4.0f, -3.0f, -2.0f, 27.0f);
 
     /* D3DXVec2TransformCoordArray */
     exp_vec[1].x = 6.78571403e-01f; exp_vec[1].y = 7.85714269e-01f;
