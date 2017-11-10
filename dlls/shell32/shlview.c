@@ -385,6 +385,9 @@ static void ShellView_InitList(IShellViewImpl *This)
     SHELLDETAILS sd;
     WCHAR nameW[50];
     HRESULT hr;
+    HFONT list_font, old_font;
+    HDC list_dc;
+    TEXTMETRICW tm;
 
     TRACE("(%p)\n", This);
 
@@ -406,6 +409,13 @@ static void ShellView_InitList(IShellViewImpl *This)
         }
     }
 
+    list_font = (HFONT)SendMessageW(This->hWndList, WM_GETFONT, 0, 0);
+    list_dc = GetDC(This->hWndList);
+    old_font = SelectObject(list_dc, list_font);
+    GetTextMetricsW(list_dc, &tm);
+    SelectObject(list_dc, old_font);
+    ReleaseDC(This->hWndList, list_dc);
+
     for (This->columns = 0;; This->columns++)
     {
         if (This->pSF2Parent)
@@ -415,9 +425,9 @@ static void ShellView_InitList(IShellViewImpl *This)
         if (FAILED(hr)) break;
 
         lvColumn.fmt = sd.fmt;
-	lvColumn.cx = sd.cxChar*8; /* chars->pixel */
-	StrRetToStrNW(nameW, sizeof(nameW)/sizeof(WCHAR), &sd.str, NULL);
-	SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, This->columns, (LPARAM)&lvColumn);
+        lvColumn.cx = MulDiv(sd.cxChar, tm.tmAveCharWidth * 3, 2); /* chars->pixel */
+        StrRetToStrNW(nameW, sizeof(nameW)/sizeof(WCHAR), &sd.str, NULL);
+        SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, This->columns, (LPARAM)&lvColumn);
     }
 
     if (details) IShellDetails_Release(details);
