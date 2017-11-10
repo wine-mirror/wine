@@ -1099,7 +1099,7 @@ static void D3DXQuaternionTest(void)
     expectedvec.x = 1.0f/22.0f; expectedvec.y = 2.0f/22.0f; expectedvec.z = 4.0f/22.0f;
     D3DXQuaternionToAxisAngle(&Nq,&axis,&angle);
     expect_vec3(&expectedvec, &axis, 0);
-    equal = compare_float(angle, 2.197869f, 0);
+    equal = compare_float(angle, 2.197869f, 1);
     ok(equal, "Got unexpected angle %.8e.\n", angle);
     /* Test if |w|>1.0f */
     expectedvec.x = 1.0f; expectedvec.y = 2.0f; expectedvec.z = 4.0f;
