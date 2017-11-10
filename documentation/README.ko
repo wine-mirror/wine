@@ -184,7 +184,7 @@ GIT:    Wine 개발 트리는 현재 GIT로 관리되고 있습니다.  더 자세한 정보는
 위키:	Wine 위키는 http://wiki.winehq.org 에 있습니다.
 
 추가할 내용이나 수정할 버그가 있다면 다음번 릴리스에 포함될 수 있도록
-wine-patches@winehq.org 메일링 리스트로 패치('diff -u' 형식으로 된)를 보내
+wine-devel@winehq.org 메일링 리스트로 패치('diff -u' 형식으로 된)를 보내
 주시기 바랍니다.
 
 --

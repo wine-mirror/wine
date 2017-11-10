@@ -166,7 +166,7 @@ Git:    Der aktuelle Wine-Entwicklungsstand ist über Git verfügbar.
         Besuchen Sie http://www.winehq.org/git für weitere Informationen.
 
 Wenn Sie etwas hinzufügen oder einen Fehler beheben, senden Sie bitte einen
-Patch (vorzugsweise mit git-format-patch) an die Liste wine-patches@winehq.org,
+Patch (vorzugsweise mit git-format-patch) an die Liste wine-devel@winehq.org,
 damit dieser in die nächste Ausgabe aufgenommen werden kann.
 
 --

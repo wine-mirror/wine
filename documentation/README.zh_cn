@@ -151,7 +151,7 @@ Git:	当前 Wine 的开发树可经由 Git 获取。
 	请前往 http://www.winehq.org/git 以了解更多信息。
 
 如果您在代码中添加了某些内容，或是修复了某个 bug，请向
-wine-patches@winehq.org 这个邮件列表发送对应的补丁（建议使用
+wine-devel@winehq.org 这个邮件列表发送对应的补丁（建议使用
 git-format-patch 生成补丁），以便我们将其加入下一个版本中。
 
 --
