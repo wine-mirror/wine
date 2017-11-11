@@ -806,11 +806,54 @@ static void test_listbox_size(DWORD style)
     }
 }
 
+void test_WS_VSCROLL(void)
+{
+    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
+    HWND hCombo, hList;
+    COMBOBOXINFO info;
+    DWORD style;
+    BOOL ret;
+    int i;
+
+    pGetComboBoxInfo = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
+    if (!pGetComboBoxInfo)
+    {
+        win_skip("GetComboBoxInfo is not available\n");
+        return;
+    }
+    info.cbSize = sizeof(info);
+    hCombo = build_combo(CBS_DROPDOWNLIST);
+
+    SetLastError(0xdeadbeef);
+    ret = pGetComboBoxInfo(hCombo, &info);
+    ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
+    hList = info.hwndList;
+
+    for(i = 0; i < 3; i++)
+    {
+        char buffer[2];
+        sprintf(buffer, "%d", i);
+        SendMessageA(hCombo, CB_ADDSTRING, 0, (LPARAM)buffer);
+    }
+
+    style = GetWindowLongA(info.hwndList, GWL_STYLE);
+    SetWindowLongA(hList, GWL_STYLE, style | WS_VSCROLL);
+
+    SendMessageA(hCombo, CB_SHOWDROPDOWN, TRUE, 0);
+    SendMessageA(hCombo, CB_SHOWDROPDOWN, FALSE, 0);
+
+    style = GetWindowLongA(hList, GWL_STYLE);
+    ok((style & WS_VSCROLL) != 0, "Style does not include WS_VSCROLL\n");
+
+    DestroyWindow(hCombo);
+}
+
 START_TEST(combo)
 {
     hMainWnd = CreateWindowA("static", "Test", WS_OVERLAPPEDWINDOW, 10, 10, 300, 300, NULL, NULL, NULL, 0);
     ShowWindow(hMainWnd, SW_SHOW);
 
+    test_WS_VSCROLL();
     test_setfont(CBS_DROPDOWN);
     test_setfont(CBS_DROPDOWNLIST);
     test_setitemheight(CBS_DROPDOWN);
