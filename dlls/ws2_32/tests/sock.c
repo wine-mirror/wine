@@ -7657,10 +7657,13 @@ static void test_GetAddrInfoExW(void)
     ok(overlapped.Internal == ERROR_SUCCESS, "overlapped.Internal = %lx\n", overlapped.Internal);
     ok(overlapped.Pointer == &result, "overlapped.Pointer != &result\n");
     ok(result != NULL, "result == NULL\n");
-    ok(!result->ai_blob, "ai_blob != NULL\n");
-    ok(!result->ai_bloblen, "ai_bloblen != 0\n");
-    ok(!result->ai_provider, "ai_provider = %s\n", wine_dbgstr_guid(result->ai_provider));
-    pFreeAddrInfoExW(result);
+    if (result != NULL)
+    {
+        ok(!result->ai_blob, "ai_blob != NULL\n");
+        ok(!result->ai_bloblen, "ai_bloblen != 0\n");
+        ok(!result->ai_provider, "ai_provider = %s\n", wine_dbgstr_guid(result->ai_provider));
+        pFreeAddrInfoExW(result);
+    }
 
     result = (void*)0xdeadbeef;
     memset(&overlapped, 0xcc, sizeof(overlapped));
