@@ -499,6 +499,14 @@ static ALenum get_al_format(const WAVEFORMATEX *fmt)
                 return AL_FORMAT_MONO_FLOAT32;
             case 2:
                 return AL_FORMAT_STEREO_FLOAT32;
+            case 4:
+                return AL_FORMAT_QUAD32;
+            case 6:
+                return AL_FORMAT_51CHN32;
+            case 7:
+                return AL_FORMAT_61CHN32;
+            case 8:
+                return AL_FORMAT_71CHN32;
             }
         }
     }
