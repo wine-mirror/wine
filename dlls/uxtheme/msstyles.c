@@ -188,6 +188,7 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
     return S_OK;
 
 invalid_theme:
+    *tf = NULL;
     if(hTheme) FreeLibrary(hTheme);
     return hr;
 }
