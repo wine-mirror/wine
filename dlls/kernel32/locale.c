@@ -362,31 +362,36 @@ static UINT find_charset( const WCHAR *name )
     return 0;
 }
 
-static WORD get_default_sublang(LCID lang)
+static LANGID get_default_sublang( LANGID lang )
 {
-    switch (PRIMARYLANGID(lang))
+    switch (lang)
     {
-    case LANG_SPANISH:
-        return SUBLANG_SPANISH_MODERN;
-    case LANG_CHINESE:
-        return SUBLANG_CHINESE_SIMPLIFIED;
-    default:
-        return SUBLANG_DEFAULT;
+    case MAKELANGID( LANG_SPANISH, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_SPANISH, SUBLANG_SPANISH_MODERN );
+    case MAKELANGID( LANG_CHINESE, SUBLANG_NEUTRAL ):
+        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED );
+    case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE ):
+        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED );
+    case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL ):
+    case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_MACAU ):
+        return MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG );
     }
+    if (SUBLANGID( lang ) == SUBLANG_NEUTRAL) lang = MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT );
+    return lang;
 }
 
 /***********************************************************************
  *           find_locale_id_callback
  */
 static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
-                                              LPCWSTR name, WORD LangID, LPARAM lParam )
+                                              LPCWSTR name, LANGID lang, LPARAM lParam )
 {
     struct locale_name *data = (struct locale_name *)lParam;
     WCHAR buffer[128];
     int matches = 0;
-    LCID lcid = MAKELCID( LangID, SORT_DEFAULT );  /* FIXME: handle sort order */
+    LCID lcid = MAKELCID( lang, SORT_DEFAULT );  /* FIXME: handle sort order */
 
-    if (PRIMARYLANGID(LangID) == LANG_NEUTRAL) return TRUE; /* continue search */
+    if (PRIMARYLANGID(lang) == LANG_NEUTRAL) return TRUE; /* continue search */
 
     /* first check exact name */
     if (data->win_name[0] &&
@@ -435,7 +440,8 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
     }
     else  /* match default language */
     {
-        if (SUBLANGID(LangID) == get_default_sublang( LangID )) matches++;
+        LANGID def_lang = data->script ? lang : MAKELANGID( PRIMARYLANGID(lang), LANG_NEUTRAL );
+        if (lang == get_default_sublang( def_lang )) matches++;
     }
 
     if (data->codepage)
@@ -1720,8 +1726,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     lang_id = LANGIDFROMLCID( lcid );
 
     /* replace SUBLANG_NEUTRAL by SUBLANG_DEFAULT */
-    if (SUBLANGID(lang_id) == SUBLANG_NEUTRAL)
-        lang_id = MAKELANGID(PRIMARYLANGID(lang_id), get_default_sublang( lang_id ));
+    if (SUBLANGID(lang_id) == SUBLANG_NEUTRAL) lang_id = get_default_sublang( lang_id );
 
     if (!(hrsrc = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
                                    ULongToPtr((lctype >> 4) + 1), lang_id )))
@@ -2846,7 +2851,7 @@ LCID WINAPI ConvertDefaultLocale( LCID lcid )
         langid = LANGIDFROMLCID(lcid);
         if (SUBLANGID(langid) == SUBLANG_NEUTRAL)
         {
-          langid = MAKELANGID(PRIMARYLANGID(langid), get_default_sublang( langid ));
+          langid = get_default_sublang( langid );
           lcid = MAKELCID(langid, SORTIDFROMLCID(lcid));
         }
     }
@@ -4281,8 +4286,7 @@ static BOOL NLS_GetLanguageGroupName(LGRPID lgrpid, LPWSTR szName, ULONG nameSiz
     /* FIXME: Is it correct to use the system default langid? */
     langId = GetSystemDefaultLangID();
 
-    if (SUBLANGID(langId) == SUBLANG_NEUTRAL)
-        langId = MAKELANGID(PRIMARYLANGID(langId), get_default_sublang( langId ));
+    if (SUBLANGID(langId) == SUBLANG_NEUTRAL) langId = get_default_sublang( langId );
 
     hResource = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING, szResourceName, langId );
 
