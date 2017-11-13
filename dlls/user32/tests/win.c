@@ -2573,17 +2573,6 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
                        orig_win_rc.right, orig_win_rc.bottom, 0);
     ok(ret, "Got %d\n", ret);
 
-    ok(!(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST), "WS_EX_TOPMOST should not be set\n");
-    ret = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
-    ok(ret, "Got %d\n", ret);
-    ok(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST, "WS_EX_TOPMOST should be set\n");
-    ret = SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
-    ok(ret, "Got %d\n", ret);
-    ok(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST, "WS_EX_TOPMOST should be set\n");
-    ret = SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
-    ok(ret, "Got %d\n", ret);
-    ok(!(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST), "WS_EX_TOPMOST should not be set\n");
-
     hwnd_desktop = GetDesktopWindow();
     ok(!!hwnd_desktop, "Failed to get hwnd_desktop window (%d).\n", GetLastError());
     hwnd_child = create_tool_window(WS_VISIBLE|WS_CHILD, hwnd);
@@ -9867,6 +9856,22 @@ static void test_desktop( void )
     }
 }
 
+static void test_topmost(HWND hwnd)
+{
+    BOOL ret;
+
+    ok(!(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST), "WS_EX_TOPMOST should not be set\n");
+    ret = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    ok(ret, "Got %d\n", ret);
+    ok(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST, "WS_EX_TOPMOST should be set\n");
+    ret = SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    ok(ret, "Got %d\n", ret);
+    ok(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST, "WS_EX_TOPMOST should be set\n");
+    ret = SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    ok(ret, "Got %d\n", ret);
+    ok(!(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST), "WS_EX_TOPMOST should not be set\n");
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -9944,6 +9949,7 @@ START_TEST(win)
     our_pid = GetWindowThreadProcessId(hwndMain, NULL);
 
     /* Add the tests below this line */
+    test_topmost(hwndMain);
     test_child_window_from_point();
     test_window_from_point(argv[0]);
     test_thick_child_size(hwndMain);
