@@ -422,8 +422,10 @@ static void test_filter_graph(void)
             }
             ok(hr == S_OK, "Could not create null renderer: %08x\n", hr);
 
-            IBaseFilter_EnumPins(pnull, &nullenum);
-            IEnumPins_Next(nullenum, 1, &nullpin, NULL);
+            hr = IBaseFilter_EnumPins(pnull, &nullenum);
+            ok(hr == S_OK, "Failed to enum pins, hr %#x.\n", hr);
+            hr = IEnumPins_Next(nullenum, 1, &nullpin, NULL);
+            ok(hr == S_OK, "Failed to get next pin, hr %#x.\n", hr);
             IEnumPins_Release(nullenum);
             IPin_QueryDirection(nullpin, &dir);
 
@@ -489,7 +491,9 @@ fail2:
             if (dir == PINDIR_OUTPUT)
             {
                 PIN_INFO info;
-                IPin_QueryPinInfo(to, &info);
+
+                hr = IPin_QueryPinInfo(to, &info);
+                ok(hr == S_OK, "Failed to query pin info, hr %#x.\n", hr);
 
                 /* Release twice: Once normal, second from the
                  * previous while loop
