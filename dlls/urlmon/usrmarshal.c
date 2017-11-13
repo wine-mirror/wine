@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
+
 #include "urlmon_main.h"
 
 #include "wine/debug.h"
@@ -84,6 +86,115 @@ HRESULT __RPC_STUB IBindHost_MonikerBindToObject_Stub(IBindHost* This,
     return IBindHost_MonikerBindToObject(This, moniker, bc, bsc, riid, (void**)obj);
 }
 
+static HRESULT marshal_stgmed(STGMEDIUM *stgmed, RemSTGMEDIUM **ret)
+{
+    RemSTGMEDIUM *rem_stgmed;
+    IStream *stream = NULL;
+    ULONG size = 0;
+    HRESULT hres = S_OK;
+
+    if((stgmed->tymed == TYMED_ISTREAM && stgmed->u.pstm) || stgmed->pUnkForRelease) {
+        hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    switch(stgmed->tymed) {
+    case TYMED_NULL:
+        break;
+    case TYMED_ISTREAM:
+        if(stgmed->u.pstm)
+            hres = CoMarshalInterface(stream, &IID_IStream, (IUnknown*)stgmed->u.pstm,
+                                      MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
+        break;
+    default:
+        FIXME("unsupported tymed %u\n", stgmed->tymed);
+        break;
+    }
+
+    if(SUCCEEDED(hres) && stgmed->pUnkForRelease)
+        hres = CoMarshalInterface(stream, &IID_IUnknown, stgmed->pUnkForRelease,
+                                  MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
+    if(FAILED(hres)) {
+        if(stream)
+            IStream_Release(stream);
+        return hres;
+    }
+
+    if(stream) {
+        LARGE_INTEGER zero;
+        ULARGE_INTEGER off;
+
+        zero.QuadPart = 0;
+        IStream_Seek(stream, zero, STREAM_SEEK_CUR, &off);
+        size = off.QuadPart;
+        IStream_Seek(stream, zero, STREAM_SEEK_SET, &off);
+    }
+
+    rem_stgmed = heap_alloc_zero(FIELD_OFFSET(RemSTGMEDIUM, data[size]));
+    if(!rem_stgmed) {
+        if(stream)
+            IStream_Release(stream);
+        return E_OUTOFMEMORY;
+    }
+
+    rem_stgmed->tymed = stgmed->tymed;
+    rem_stgmed->dwHandleType = 0;
+    rem_stgmed->pData = stgmed->u.pstm != NULL;
+    rem_stgmed->pUnkForRelease = stgmed->pUnkForRelease != NULL;
+    rem_stgmed->cbData = size;
+    if(stream) {
+        IStream_Read(stream, rem_stgmed->data, size, &size);
+        IStream_Release(stream);
+    }
+
+    *ret = rem_stgmed;
+    return S_OK;
+}
+
+static HRESULT unmarshal_stgmed(RemSTGMEDIUM *rem_stgmed, STGMEDIUM *stgmed)
+{
+    IStream *stream = NULL;
+    HRESULT hres = S_OK;
+
+    stgmed->tymed = rem_stgmed->tymed;
+
+    if((stgmed->tymed == TYMED_ISTREAM && rem_stgmed->pData) || rem_stgmed->pUnkForRelease) {
+        LARGE_INTEGER zero;
+
+        hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IStream_Write(stream, rem_stgmed->data, rem_stgmed->cbData, NULL);
+        if(FAILED(hres)) {
+            IStream_Release(stream);
+            return hres;
+        }
+
+        zero.QuadPart = 0;
+        IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    }
+
+    switch(stgmed->tymed) {
+    case TYMED_NULL:
+        break;
+    case TYMED_ISTREAM:
+        if(rem_stgmed->pData)
+            hres = CoUnmarshalInterface(stream, &IID_IStream, (void**)&stgmed->u.pstm);
+        break;
+    default:
+        FIXME("unsupported tymed %u\n", stgmed->tymed);
+        break;
+    }
+
+    if(SUCCEEDED(hres) && rem_stgmed->pUnkForRelease)
+        hres = CoUnmarshalInterface(stream, &IID_IUnknown, (void**)&stgmed->pUnkForRelease);
+    if(stream)
+        IStream_Release(stream);
+    return hres;
+}
+
 HRESULT CALLBACK IBindStatusCallbackEx_GetBindInfoEx_Proxy(
         IBindStatusCallbackEx* This, DWORD *grfBINDF, BINDINFO *pbindinfo,
         DWORD *grfBINDF2, DWORD *pdwReserved)
@@ -119,16 +230,52 @@ HRESULT CALLBACK IBindStatusCallback_OnDataAvailable_Proxy(
         IBindStatusCallback* This, DWORD grfBSCF, DWORD dwSize,
         FORMATETC *pformatetc, STGMEDIUM *pstgmed)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    RemFORMATETC rem_formatetc;
+    RemSTGMEDIUM *rem_stgmed;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %u %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+
+    hres = marshal_stgmed(pstgmed, &rem_stgmed);
+    if(FAILED(hres))
+        return hres;
+
+    rem_formatetc.cfFormat = pformatetc->cfFormat;
+    rem_formatetc.ptd = 0;
+    rem_formatetc.dwAspect = pformatetc->dwAspect;
+    rem_formatetc.lindex = pformatetc->lindex;
+    rem_formatetc.tymed = pformatetc->tymed;
+
+    hres = IBindStatusCallback_RemoteOnDataAvailable_Proxy(This, grfBSCF, dwSize, &rem_formatetc, rem_stgmed);
+
+    heap_free(rem_stgmed);
+    return hres;
 }
 
 HRESULT __RPC_STUB IBindStatusCallback_OnDataAvailable_Stub(
         IBindStatusCallback* This, DWORD grfBSCF, DWORD dwSize,
         RemFORMATETC *pformatetc, RemSTGMEDIUM *pstgmed)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    STGMEDIUM stgmed = { TYMED_NULL };
+    FORMATETC formatetc;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %u %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+
+    hres = unmarshal_stgmed(pstgmed, &stgmed);
+    if(FAILED(hres))
+        return hres;
+
+    formatetc.cfFormat = pformatetc->cfFormat;
+    formatetc.ptd = NULL;
+    formatetc.dwAspect = pformatetc->dwAspect;
+    formatetc.lindex = pformatetc->lindex;
+    formatetc.tymed = pformatetc->tymed;
+
+    hres = IBindStatusCallback_OnDataAvailable(This, grfBSCF, dwSize, &formatetc, &stgmed);
+
+    ReleaseStgMedium(&stgmed);
+    return hres;
 }
 
 HRESULT CALLBACK IBinding_GetBindResult_Proxy(IBinding* This,
