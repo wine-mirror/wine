@@ -4932,6 +4932,7 @@ static void test_dialog_parent(void)
     ok(!IsWindowEnabled(other), "other is enabled\n");
     EnableWindow(other, TRUE);
 
+    DestroyWindow(other);
     DestroyWindow(parent);
 }
 
