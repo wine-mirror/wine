@@ -1088,6 +1088,9 @@ todo_wine {
         IUnknown *unk;
 
         ok(disp != NULL, "got %p\n", disp);
+
+        if (disp == NULL) goto skip_disp_tests;
+
         ok(ret != HandleToUlong(hwnd), "got %d\n", ret);
 
         /* IDispatch-related tests */
@@ -1165,6 +1168,7 @@ if (hr == S_OK) {
         IServiceProvider_Release(sp);
         IDispatch_Release(disp);
     }
+skip_disp_tests:
 
     disp = (void*)0xdeadbeef;
     ret = 0xdead;
