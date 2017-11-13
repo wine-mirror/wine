@@ -9867,18 +9867,382 @@ static void swp_after(HWND hwnd, HWND after)
 
     ret = SetWindowPos(hwnd, after, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
     ok(ret, "SetWindowPos failed\n");
+    flush_events( TRUE );
 }
 
-static void test_topmost(HWND hwnd)
+static void reset_window_state(HWND *state, int n)
 {
-    ok(!is_topmost(hwnd), "WS_EX_TOPMOST should not be set\n");
+    int i;
+
+    for (i = 0; i < n; i++)
+    {
+        if (state[i])
+        {
+            swp_after(state[i], HWND_NOTOPMOST);
+            todo_wine_if(i == 5) /* FIXME: remove once Wine is fixed */
+            ok(!is_topmost(state[i]), "%d: hwnd %p is still topmost\n", i, state[i]);
+            swp_after(state[i], HWND_TOP);
+        }
+    }
+}
+
+static void test_topmost(void)
+{
+    HWND owner, hwnd, hwnd2, hwnd_child, hwnd_child2, hwnd_grandchild, state[6] = { 0 };
+    BOOL is_wine = !strcmp(winetest_platform, "wine");
+
+    owner = create_tool_window(WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                              WS_MAXIMIZEBOX | WS_POPUP | WS_VISIBLE, 0);
+    ok(owner != 0, "Failed to create owner window (%d)\n", GetLastError());
+
+    /* Give current thread foreground state otherwise the tests may fail. */
+    if (!SetForegroundWindow(owner))
+    {
+        DestroyWindow(owner);
+        skip("SetForegroundWindow not working\n");
+        return;
+    }
+
+    hwnd = create_tool_window(WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                              WS_MAXIMIZEBOX | WS_POPUP | WS_VISIBLE, owner);
+    ok(hwnd != 0, "Failed to create popup window (%d)\n", GetLastError());
+    hwnd2 = create_tool_window(WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                              WS_MAXIMIZEBOX | WS_POPUP | WS_VISIBLE, owner);
+    ok(hwnd2 != 0, "Failed to create popup window (%d)\n", GetLastError());
+
+    flush_events( TRUE );
+
+    trace("owner %p, hwnd %p, hwnd2 %p\n", owner, hwnd, hwnd2);
+    state[0] = owner;
+    state[1] = hwnd;
+    state[2] = hwnd2;
+
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, 0, hwnd2, owner, FALSE);
 
     swp_after(hwnd, HWND_TOPMOST);
-    ok(is_topmost(hwnd), "WS_EX_TOPMOST should be set\n");
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
     swp_after(hwnd, HWND_TOP);
-    ok(is_topmost(hwnd), "WS_EX_TOPMOST should be set\n");
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
     swp_after(hwnd, HWND_NOTOPMOST);
-    ok(!is_topmost(hwnd), "WS_EX_TOPMOST should not be set\n");
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
+    swp_after(hwnd2, hwnd);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
+    swp_after(hwnd, hwnd2);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
+    swp_after(hwnd2, HWND_TOP);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
+    swp_after(owner, HWND_TOPMOST);
+todo_wine
+    ok(is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+todo_wine
+    ok(is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    swp_after(hwnd, HWND_NOTOPMOST);
+    ok(!is_topmost(owner) || broken(is_topmost(owner)) /*win7 64-bit*/, "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2) || broken(is_topmost(hwnd2)) /*win7 64-bit*/, "hwnd %p topmost state is wrong\n", hwnd2);
+    if (0) /*win7 64-bit is broken*/
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+    swp_after(hwnd2, HWND_NOTOPMOST);
+    ok(!is_topmost(owner) || broken(is_topmost(owner)) /*win7 64-bit*/, "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, 0, hwnd2, owner, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
+    swp_after(hwnd, HWND_BOTTOM);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+todo_wine
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, 0, hwnd2, owner, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
+    swp_after(hwnd, hwnd2);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+todo_wine
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, 0, hwnd2, owner, FALSE);
+    /* FIXME: compensate todo_wine above */
+    swp_after(hwnd, HWND_NOTOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, 0, hwnd2, owner, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    hwnd_child2 = create_tool_window(WS_VISIBLE|WS_POPUP, hwnd);
+    ok(hwnd_child2 != 0, "Failed to create popup window (%d)\n", GetLastError());
+    hwnd_child = create_tool_window(WS_VISIBLE|WS_POPUP, hwnd);
+    ok(hwnd_child != 0, "Failed to create popup window (%d)\n", GetLastError());
+    hwnd_grandchild = create_tool_window(WS_VISIBLE|WS_POPUP, hwnd_child);
+    ok(hwnd_grandchild != 0, "Failed to create popup window (%d)\n", GetLastError());
+
+    flush_events( TRUE );
+
+    trace("hwnd_child %p, hwnd_child2 %p, hwnd_grandchild %p\n", hwnd_child, hwnd_child2, hwnd_grandchild);
+    state[3] = hwnd_child2;
+    state[4] = hwnd_child;
+    state[5] = hwnd_grandchild;
+
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd2), "hwnd %p topmost state is wrong\n", hwnd2);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(!is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, FALSE);
+
+    swp_after(hwnd, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+todo_wine
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+todo_wine
+    ok(is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+todo_wine
+    ok(is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, TRUE);
+    swp_after(hwnd, HWND_NOTOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+todo_wine
+    ok(!is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+todo_wine
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+todo_wine
+    ok(is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+todo_wine
+    ok(is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, TRUE);
+    swp_after(hwnd_child, HWND_NOTOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+todo_wine
+    ok(!is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+todo_wine
+    ok(is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+todo_wine
+    ok(is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+todo_wine
+    ok(is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, TRUE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, TRUE);
+    swp_after(hwnd_grandchild, HWND_NOTOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+todo_wine
+    ok(!is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd_child, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+todo_wine
+    ok(is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, TRUE);
+    swp_after(hwnd_child, HWND_TOP);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+todo_wine
+    ok(is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, TRUE);
+    swp_after(hwnd, HWND_NOTOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+todo_wine
+    ok(!is_topmost(hwnd_grandchild) || broken(is_topmost(hwnd_grandchild))/*win2008 64-bit*/, "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd_child, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+todo_wine
+    ok(is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, TRUE);
+    swp_after(hwnd, HWND_NOTOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+todo_wine
+    ok(!is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd_grandchild, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, FALSE);
+    swp_after(hwnd_child2, HWND_NOTOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild) || broken(!is_topmost(hwnd_grandchild)) /* win8+ */, "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, 0, hwnd_child2, hwnd, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd_child, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+todo_wine
+    ok(is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, TRUE);
+    swp_after(hwnd_child, HWND_BOTTOM);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+todo_wine
+    ok(!is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, 0, hwnd2, owner, FALSE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, 0, hwnd_child2, hwnd, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    swp_after(hwnd_child, HWND_TOPMOST);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+todo_wine
+    ok(is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+    ok(is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, hwnd_child2, 0, hwnd, TRUE);
+    swp_after(hwnd_child, hwnd_child2);
+    ok(!is_topmost(owner), "hwnd %p topmost state is wrong\n", owner);
+    ok(!is_topmost(hwnd), "hwnd %p topmost state is wrong\n", hwnd);
+    ok(!is_topmost(hwnd_child), "hwnd %p topmost state is wrong\n", hwnd_child);
+    ok(!is_topmost(hwnd_child2), "hwnd %p topmost state is wrong\n", hwnd_child2);
+todo_wine
+    ok(!is_topmost(hwnd_grandchild), "hwnd %p topmost state is wrong\n", hwnd_grandchild);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd, hwnd2, 0, owner, FALSE);
+if (!is_wine) /* FIXME: remove once Wine is fixed */
+    check_z_order(hwnd_child, 0, hwnd_child2, hwnd, FALSE);
+    reset_window_state(state, sizeof(state)/sizeof(state[0]));
+
+    DestroyWindow(hwnd_grandchild);
+    DestroyWindow(hwnd_child);
+    DestroyWindow(hwnd_child2);
+    DestroyWindow(hwnd);
+    DestroyWindow(hwnd2);
+    DestroyWindow(owner);
 }
 
 START_TEST(win)
@@ -9958,7 +10322,6 @@ START_TEST(win)
     our_pid = GetWindowThreadProcessId(hwndMain, NULL);
 
     /* Add the tests below this line */
-    test_topmost(hwndMain);
     test_child_window_from_point();
     test_window_from_point(argv[0]);
     test_thick_child_size(hwndMain);
@@ -10037,4 +10400,10 @@ START_TEST(win)
 
     DestroyWindow(hwndMain2);
     DestroyWindow(hwndMain);
+
+    /* Make sure that following tests are executed last, under Windows they
+     * tend to break the tests which are sensitive to z-order and activation
+     * state of hwndMain and hwndMain2 windows.
+     */
+    test_topmost();
 }
