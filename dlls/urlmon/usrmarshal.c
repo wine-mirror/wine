@@ -195,35 +195,120 @@ static HRESULT unmarshal_stgmed(RemSTGMEDIUM *rem_stgmed, STGMEDIUM *stgmed)
     return hres;
 }
 
+static void proxy_marshal_bindinfo(BINDINFO *bindinfo, RemBINDINFO *rem_bindinfo)
+{
+    rem_bindinfo->szExtraInfo = bindinfo->szExtraInfo;
+    rem_bindinfo->grfBindInfoF = bindinfo->grfBindInfoF;
+    rem_bindinfo->dwBindVerb = bindinfo->dwBindVerb;
+    rem_bindinfo->szCustomVerb = bindinfo->szCustomVerb;
+    rem_bindinfo->cbstgmedData = bindinfo->cbstgmedData;
+}
+
+static void proxy_unmarshal_bindinfo(RemBINDINFO *rem_bindinfo, BINDINFO *bindinfo)
+{
+    bindinfo->szExtraInfo = rem_bindinfo->szExtraInfo;
+    bindinfo->grfBindInfoF = rem_bindinfo->grfBindInfoF;
+    bindinfo->dwBindVerb = rem_bindinfo->dwBindVerb;
+    bindinfo->szCustomVerb = rem_bindinfo->szCustomVerb;
+    bindinfo->cbstgmedData = rem_bindinfo->cbstgmedData;
+    bindinfo->dwOptions = rem_bindinfo->dwOptions;
+    bindinfo->dwOptionsFlags = rem_bindinfo->dwOptionsFlags;
+    bindinfo->dwCodePage = rem_bindinfo->dwCodePage;
+    bindinfo->iid = IID_NULL;
+    bindinfo->pUnk = NULL;
+}
+
+static void stub_unmarshal_bindinfo(RemBINDINFO *rem_bindinfo, BINDINFO *bindinfo)
+{
+    bindinfo->szExtraInfo = rem_bindinfo->szExtraInfo;
+    bindinfo->grfBindInfoF = rem_bindinfo->grfBindInfoF;
+    bindinfo->dwBindVerb = rem_bindinfo->dwBindVerb;
+    bindinfo->szCustomVerb = rem_bindinfo->szCustomVerb;
+    bindinfo->cbstgmedData = rem_bindinfo->cbstgmedData;
+
+    if(bindinfo->stgmedData.tymed != TYMED_NULL)
+        WARN("stgmed data (tymed %u) will be lost!\n", bindinfo->stgmedData.tymed);
+}
+
+static void stub_marshal_bindinfo(BINDINFO *bindinfo, RemBINDINFO *rem_bindinfo)
+{
+    rem_bindinfo->cbSize = sizeof(*rem_bindinfo);
+    rem_bindinfo->szExtraInfo = bindinfo->szExtraInfo;
+    rem_bindinfo->grfBindInfoF = bindinfo->grfBindInfoF;
+    rem_bindinfo->dwBindVerb = bindinfo->dwBindVerb;
+    rem_bindinfo->szCustomVerb = bindinfo->szCustomVerb;
+    rem_bindinfo->cbstgmedData = bindinfo->cbstgmedData;
+    rem_bindinfo->dwOptions = bindinfo->dwOptions;
+    rem_bindinfo->dwOptionsFlags = bindinfo->dwOptionsFlags;
+    rem_bindinfo->dwCodePage = bindinfo->dwCodePage;
+    rem_bindinfo->pUnk = NULL;
+    rem_bindinfo->dwReserved = bindinfo->dwReserved;
+}
+
+
 HRESULT CALLBACK IBindStatusCallbackEx_GetBindInfoEx_Proxy(
-        IBindStatusCallbackEx* This, DWORD *grfBINDF, BINDINFO *pbindinfo,
+        IBindStatusCallbackEx* This, DWORD *grfBINDF, BINDINFO *bindinfo,
         DWORD *grfBINDF2, DWORD *pdwReserved)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    RemBINDINFO rem_bindinfo = {sizeof(rem_bindinfo)};
+    RemSTGMEDIUM rem_stgmed = {0};
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p %p %p)\n", This, grfBINDF, bindinfo, grfBINDF2, pdwReserved);
+
+    proxy_marshal_bindinfo(bindinfo, &rem_bindinfo);
+    hres = IBindStatusCallbackEx_RemoteGetBindInfoEx_Proxy(This, grfBINDF, &rem_bindinfo,
+            &rem_stgmed, grfBINDF2, pdwReserved);
+    proxy_unmarshal_bindinfo(&rem_bindinfo, bindinfo);
+    return hres;
 }
 
 HRESULT __RPC_STUB IBindStatusCallbackEx_GetBindInfoEx_Stub(
-        IBindStatusCallbackEx* This, DWORD *grfBINDF, RemBINDINFO *pbindinfo,
-        RemSTGMEDIUM *pstgmed, DWORD *grfBINDF2, DWORD *pdwReserved)
+        IBindStatusCallbackEx* This, DWORD *grfBINDF, RemBINDINFO *rem_bindinfo,
+        RemSTGMEDIUM *rem_stgmed, DWORD *grfBINDF2, DWORD *pdwReserved)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
-}
+    BINDINFO bindinfo = {sizeof(bindinfo)};
+    HRESULT hres;
 
+    TRACE("(%p)->(%p %p %p %p %p)\n", This, grfBINDF, rem_bindinfo, rem_stgmed, grfBINDF2, pdwReserved);
+
+    /*
+     * Although arguments suggest support for STGMEDIUM from BINDINFO, tests show
+     * that it's not supported and returned data is lost.
+     */
+    stub_unmarshal_bindinfo(rem_bindinfo, &bindinfo);
+    hres = IBindStatusCallbackEx_GetBindInfoEx(This, grfBINDF, &bindinfo, grfBINDF2, pdwReserved);
+    stub_marshal_bindinfo(&bindinfo, rem_bindinfo);
+    return hres;
+}
 HRESULT CALLBACK IBindStatusCallback_GetBindInfo_Proxy(
-        IBindStatusCallback* This, DWORD *grfBINDF, BINDINFO *pbindinfo)
+        IBindStatusCallback* This, DWORD *grfBINDF, BINDINFO *bindinfo)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    RemBINDINFO rem_bindinfo = {sizeof(rem_bindinfo)};
+    RemSTGMEDIUM rem_stgmed = {0};
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p)\n", This, grfBINDF, bindinfo);
+
+    proxy_marshal_bindinfo(bindinfo, &rem_bindinfo);
+    hres = IBindStatusCallback_RemoteGetBindInfo_Proxy(This, grfBINDF, &rem_bindinfo, &rem_stgmed);
+    proxy_unmarshal_bindinfo(&rem_bindinfo, bindinfo);
+    return hres;
 }
 
 HRESULT __RPC_STUB IBindStatusCallback_GetBindInfo_Stub(
         IBindStatusCallback* This, DWORD *grfBINDF,
-        RemBINDINFO *pbindinfo, RemSTGMEDIUM *pstgmed)
+        RemBINDINFO *rem_bindinfo, RemSTGMEDIUM *rem_stgmed)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    BINDINFO bindinfo = {sizeof(bindinfo)};
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p %p)\n", This, grfBINDF, rem_bindinfo, rem_stgmed);
+
+    stub_unmarshal_bindinfo(rem_bindinfo, &bindinfo);
+    hres = IBindStatusCallback_GetBindInfo(This, grfBINDF, &bindinfo);
+    stub_marshal_bindinfo(&bindinfo, rem_bindinfo);
+    return hres;
 }
 
 HRESULT CALLBACK IBindStatusCallback_OnDataAvailable_Proxy(
