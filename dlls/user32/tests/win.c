@@ -2909,6 +2909,13 @@ static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E, DWORD style)
 {
     HWND hwnd_A, hwnd_B, hwnd_C, hwnd_F;
 
+    /* Give current thread foreground state otherwise the tests may fail. */
+    if (!SetForegroundWindow(hwnd_D))
+    {
+        skip("SetForegroundWindow not working\n");
+        return;
+    }
+
     trace("hwnd_D %p, hwnd_E %p\n", hwnd_D, hwnd_E);
 
     SetWindowPos(hwnd_E, hwnd_D, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
