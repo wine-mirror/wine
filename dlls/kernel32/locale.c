@@ -406,6 +406,24 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
     if (strcmpiW( buffer, data->lang )) return TRUE;
     matches++;  /* language name matched */
 
+    if (data->script)
+    {
+        if (GetLocaleInfoW( lcid, LOCALE_SSCRIPTS | LOCALE_NOUSEROVERRIDE,
+                            buffer, sizeof(buffer)/sizeof(WCHAR) ))
+        {
+            const WCHAR *p = buffer;
+            unsigned int len = strlenW( data->script );
+            while (*p)
+            {
+                if (!strncmpiW( p, data->script, len ) && (!p[len] || p[len] == ';')) break;
+                if (!(p = strchrW( p, ';'))) goto done;
+                p++;
+            }
+            if (!*p) goto done;
+            matches++;  /* script matched */
+        }
+    }
+
     if (data->country)
     {
         if (GetLocaleInfoW( lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE,
@@ -489,16 +507,24 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
         strcpyW( name->win_name, name->lang );
         *p++ = 0;
         name->country = p;
-        if (!(p = strpbrkW( p, winsepW ))) goto done;
-        if (*p == '-')
+        if ((p = strpbrkW( p, winsepW )) && *p == '-')
         {
             *p++ = 0;
             name->script = name->country;
             name->country = p;
-            if (!(p = strpbrkW( p, winsepW ))) goto done;
+            p = strpbrkW( p, winsepW );
         }
-        *p++ = 0;
-        name->modifier = p;
+        if (p)
+        {
+            *p++ = 0;
+            name->modifier = p;
+        }
+        /* second value can be script or country, check length to resolve the ambiguity */
+        if (!name->script && strlenW( name->country ) == 4)
+        {
+            name->script = name->country;
+            name->country = NULL;
+        }
     }
     else  /* Unix format */
     {
