@@ -9856,20 +9856,29 @@ static void test_desktop( void )
     }
 }
 
-static void test_topmost(HWND hwnd)
+static BOOL is_topmost(HWND hwnd)
+{
+    return (GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+}
+
+static void swp_after(HWND hwnd, HWND after)
 {
     BOOL ret;
 
-    ok(!(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST), "WS_EX_TOPMOST should not be set\n");
-    ret = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
-    ok(ret, "Got %d\n", ret);
-    ok(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST, "WS_EX_TOPMOST should be set\n");
-    ret = SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
-    ok(ret, "Got %d\n", ret);
-    ok(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST, "WS_EX_TOPMOST should be set\n");
-    ret = SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
-    ok(ret, "Got %d\n", ret);
-    ok(!(GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST), "WS_EX_TOPMOST should not be set\n");
+    ret = SetWindowPos(hwnd, after, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    ok(ret, "SetWindowPos failed\n");
+}
+
+static void test_topmost(HWND hwnd)
+{
+    ok(!is_topmost(hwnd), "WS_EX_TOPMOST should not be set\n");
+
+    swp_after(hwnd, HWND_TOPMOST);
+    ok(is_topmost(hwnd), "WS_EX_TOPMOST should be set\n");
+    swp_after(hwnd, HWND_TOP);
+    ok(is_topmost(hwnd), "WS_EX_TOPMOST should be set\n");
+    swp_after(hwnd, HWND_NOTOPMOST);
+    ok(!is_topmost(hwnd), "WS_EX_TOPMOST should not be set\n");
 }
 
 START_TEST(win)
