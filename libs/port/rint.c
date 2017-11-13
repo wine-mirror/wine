@@ -33,7 +33,7 @@ double rint(double x)
 #ifndef HAVE_RINTF
 float rintf(float x)
 {
-    return rintf(x);
+    return rint(x);
 }
 #endif
 
