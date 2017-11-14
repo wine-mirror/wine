@@ -62,10 +62,10 @@ extern HINSTANCE SANE_instance DECLSPEC_HIDDEN;
 struct tagActiveDS
 {
     struct tagActiveDS	*next;			/* next active DS */
-    TW_IDENTITY		identity;		/* identity */
+    TW_IDENTITY		identity;		/* identity of the DS */
     TW_UINT16		currentState;		/* current state */
-    UINT                windowMessage;          /* message to use to send status */
     TW_UINT16		twCC;			/* condition code */
+    TW_IDENTITY         appIdentity;            /* identity of the app */
     HWND		hwndOwner;		/* window handle of the app */
     HWND		progressWnd;		/* window handle of the scanning window */
 #ifdef SONAME_LIBSANE
@@ -89,6 +89,7 @@ struct tagActiveDS
 /* Helper functions */
 extern TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action) DECLSPEC_HIDDEN;
 extern TW_UINT16 SANE_SaneSetDefaults (void) DECLSPEC_HIDDEN;
+extern void SANE_Notify (TW_UINT16 message) DECLSPEC_HIDDEN;
 
 /* Implementation of operation triplets
  * From Application to Source (Control Information) */

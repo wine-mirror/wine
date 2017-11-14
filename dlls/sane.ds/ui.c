@@ -1034,13 +1034,11 @@ static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
                         if (psn->lParam)
                         {
                             activeDS.currentState = 6;
-                            if (activeDS.windowMessage)
-                                PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_XFERREADY, 0);
+                            SANE_Notify(MSG_XFERREADY);
                         }
                         break;
                     case PSN_QUERYCANCEL:
-                        if (activeDS.windowMessage)
-                            PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_CLOSEDSREQ, 0);
+                        SANE_Notify(MSG_CLOSEDSREQ);
                         break;
                     case PSN_SETACTIVE:
                         InitializeDialog(hwndDlg);

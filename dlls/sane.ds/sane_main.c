@@ -30,6 +30,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
+DSMENTRYPROC SANE_dsmentry;
+
 #ifdef SONAME_LIBSANE
 
 HINSTANCE SANE_instance;
@@ -113,6 +115,8 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY, pTW_IDENTITY);
 
 #endif /* SONAME_LIBSANE */
 
+static TW_UINT16 SANE_SetEntryPoint (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+
 static TW_UINT16 SANE_SourceControlHandler (
            pTW_IDENTITY pOrigin,
            TW_UINT16    DAT,
@@ -178,6 +182,17 @@ static TW_UINT16 SANE_SourceControlHandler (
                     activeDS.twCC = TWCC_CAPBADOPERATION;
                     FIXME("unrecognized operation triplet\n");
                     break;
+            }
+            break;
+
+        case DAT_ENTRYPOINT:
+            if (MSG == MSG_SET)
+                twRC = SANE_SetEntryPoint (pOrigin, pData);
+            else
+            {
+                twRC = TWRC_FAILURE;
+                activeDS.twCC = TWCC_CAPBADOPERATION;
+                FIXME("unrecognized operation triplet\n");
             }
             break;
 
@@ -380,6 +395,21 @@ DS_Entry ( pTW_IDENTITY pOrigin,
     return twRC;
 }
 
+void SANE_Notify (TW_UINT16 message)
+{
+    SANE_dsmentry (&activeDS.identity, &activeDS.appIdentity, DG_CONTROL, DAT_NULL, message, NULL);
+}
+
+/* DG_CONTROL/DAT_ENTRYPOINT/MSG_SET */
+TW_UINT16 SANE_SetEntryPoint (pTW_IDENTITY pOrigin, TW_MEMREF pData)
+{
+    TW_ENTRYPOINT *entry = (TW_ENTRYPOINT*)pData;
+
+    SANE_dsmentry = entry->DSM_Entry;
+
+    return TWRC_SUCCESS;
+}
+
 #ifdef SONAME_LIBSANE
 /* Sane returns device names that are longer than the 32 bytes allowed
    by TWAIN.  However, it colon separates them, and the last bit is
@@ -432,7 +462,7 @@ SANE_GetIdentity( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
 	return TWRC_FAILURE;
     self->ProtocolMajor = TWON_PROTOCOLMAJOR;
     self->ProtocolMinor = TWON_PROTOCOLMINOR;
-    self->SupportedGroups = DG_CONTROL | DG_IMAGE;
+    self->SupportedGroups = DG_CONTROL | DG_IMAGE | DF_DS2;
     copy_sane_short_name(sane_devlist[cursanedev]->name, self->ProductName, sizeof(self->ProductName) - 1);
     lstrcpynA (self->Manufacturer, sane_devlist[cursanedev]->vendor, sizeof(self->Manufacturer) - 1);
     lstrcpynA (self->ProductFamily, sane_devlist[cursanedev]->model, sizeof(self->ProductFamily) - 1);
@@ -450,6 +480,21 @@ SANE_GetIdentity( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
 static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
     SANE_Status status;
     int i;
+
+    if (SANE_dsmentry == NULL)
+    {
+        static const WCHAR twain32W[] = {'t','w','a','i','n','_','3','2',0};
+        HMODULE moddsm = GetModuleHandleW(twain32W);
+
+        if (moddsm)
+            SANE_dsmentry = (void*)GetProcAddress(moddsm, "DSM_Entry");
+
+        if (!SANE_dsmentry)
+        {
+            ERR("can't find DSM entry point\n");
+            return TWRC_FAILURE;
+        }
+    }
 
     detect_sane_devices();
     if (!sane_devlist[0]) {
@@ -481,6 +526,8 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
         activeDS.twCC = SANE_SaneSetDefaults();
         if (activeDS.twCC == TWCC_SUCCESS) {
 	    activeDS.currentState = 4;
+            activeDS.identity.Id = self->Id;
+            activeDS.appIdentity = *pOrigin;
 	    return TWRC_SUCCESS;
         }
         else

@@ -184,13 +184,7 @@ TW_UINT16 SANE_ProcessEvent (pTW_IDENTITY pOrigin,
     TRACE("DG_CONTROL/DAT_EVENT/MSG_PROCESSEVENT  msg 0x%x, wParam 0x%lx\n", pMsg->message, pMsg->wParam);
 
     activeDS.twCC = TWCC_SUCCESS;
-    if (pMsg->message == activeDS.windowMessage && activeDS.windowMessage)
-    {
-        twRC = TWRC_DSEVENT;
-        pEvent->TWMessage = pMsg->wParam;
-    }
-    else
-        pEvent->TWMessage = MSG_NULL;  /* no message to the application */
+    pEvent->TWMessage = MSG_NULL;  /* no message to the application */
 
     if (activeDS.currentState < 5 || activeDS.currentState > 7)
     {
@@ -232,8 +226,7 @@ TW_UINT16 SANE_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
                 pPendingXfers->Count = 0;
                 activeDS.currentState = 5;
                 /* Notify the application that it can close the data source */
-                if (activeDS.windowMessage)
-                    PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_CLOSEDSREQ, 0);
+                SANE_Notify(MSG_CLOSEDSREQ);
             }
             else
                 activeDS.sane_started = TRUE;
@@ -403,8 +396,6 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
     else
     {
         activeDS.hwndOwner = pUserInterface->hParent;
-        if (! activeDS.windowMessage)
-            activeDS.windowMessage = RegisterWindowMessageA("SANE.DS ACTIVITY MESSAGE");
         if (pUserInterface->ShowUI)
         {
             BOOL rc;
@@ -413,8 +404,7 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
             pUserInterface->ModalUI = TRUE;
             if (!rc)
             {
-                if (activeDS.windowMessage)
-                    PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_CLOSEDSREQ, 0);
+                SANE_Notify(MSG_CLOSEDSREQ);
             }
 #ifdef SONAME_LIBSANE
             else
@@ -428,8 +418,7 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
         {
             /* no UI will be displayed, so source is ready to transfer data */
             activeDS.currentState = 6; /* Transitions to state 6 directly */
-            if (activeDS.windowMessage)
-                PostMessageA(activeDS.hwndOwner, activeDS.windowMessage, MSG_XFERREADY, 0);
+            SANE_Notify(MSG_XFERREADY);
         }
 
         twRC = TWRC_SUCCESS;

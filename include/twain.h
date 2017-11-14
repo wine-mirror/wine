@@ -1843,6 +1843,30 @@ typedef TW_UINT16 (*DSENTRYPROC)(pTW_IDENTITY,
 }
 #endif  /* cplusplus */
 
+/* Definitions from TWAIN 2.x used by our builtin data sources */
+#define DAT_ENTRYPOINT 0x0403
+#define DF_DS2 0x40000000
+
+#ifdef  __cplusplus
+extern "C" {
+#endif  /* __cplusplus */
+typedef TW_HANDLE (PASCAL *DSM_MEMALLOCATE)(TW_UINT32 _size);
+typedef void (PASCAL *DSM_MEMFREE)(TW_HANDLE _handle);
+typedef TW_MEMREF (PASCAL *DSM_MEMLOCK)(TW_HANDLE _handle);
+typedef void (PASCAL *DSM_MEMUNLOCK)(TW_HANDLE _handle);
+#ifdef  __cplusplus
+}
+#endif  /* cplusplus */
+
+typedef struct {
+    TW_UINT32 Size;
+    DSMENTRYPROC DSM_Entry;
+    DSM_MEMALLOCATE DSM_MemAllocate;
+    DSM_MEMFREE DSM_MemFree;
+    DSM_MEMLOCK DSM_MemLock;
+    DSM_MEMUNLOCK DSM_MemUnlock;
+} TW_ENTRYPOINT;
+
 /* The Twain structures must be packed on 2 byte alignment */
 #include "poppack.h"
 
