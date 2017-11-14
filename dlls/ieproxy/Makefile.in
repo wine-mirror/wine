@@ -1,7 +1,8 @@
 MODULE = ieproxy.dll
-IMPORTS = uuid rpcrt4
+IMPORTS = uuid ole32 rpcrt4
 
 IDL_SRCS = \
-	ieproxy_ieautomation.idl
+	ieproxy_ieautomation.idl \
+	ieproxy_perhist.idl
 
-dlldata_EXTRADEFS = -DWINE_REGISTER_DLL -DPROXY_CLSID=CLSID_PSFactoryBuffer
+dlldata_EXTRADEFS = -DWINE_REGISTER_DLL -DPROXY_DELEGATION -DPROXY_CLSID=CLSID_PSFactoryBuffer
