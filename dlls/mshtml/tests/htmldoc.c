@@ -6301,6 +6301,10 @@ static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
     CHECK_CALLED(EvaluateNewWindow);
 
     ok(hres == S_OK, "open failed: %08x\n", hres);
+    if (hres != S_OK) {
+        IHTMLWindow2_Release(window);
+        return;
+    }
 
     if(do_block) {
         ok(!new_window, "new_window != NULL\n");
