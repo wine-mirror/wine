@@ -3843,33 +3843,44 @@ static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, INT x, INT y)
  *   None.
  */
 static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, const POINT *coords_orig,
-                                      const POINT *coords_offs, const POINT *offset,
                                       INT scroll)
 {
     BOOL controlDown = FALSE;
     LVITEMW item;
     ITERATOR old_elems, new_elems;
     RECT rect;
+    POINT coords_offs, offset;
 
-    if (coords_offs->x > infoPtr->marqueeOrigin.x)
+    /* Ensure coordinates are within client bounds */
+    coords_offs.x = max(min(coords_orig->x, infoPtr->rcList.right), 0);
+    coords_offs.y = max(min(coords_orig->y, infoPtr->rcList.bottom), 0);
+
+    /* Get offset */
+    LISTVIEW_GetOrigin(infoPtr, &offset);
+
+    /* Offset coordinates by the appropriate amount */
+    coords_offs.x -= offset.x;
+    coords_offs.y -= offset.y;
+
+    if (coords_offs.x > infoPtr->marqueeOrigin.x)
     {
         rect.left = infoPtr->marqueeOrigin.x;
-        rect.right = coords_offs->x;
+        rect.right = coords_offs.x;
     }
     else
     {
-        rect.left = coords_offs->x;
+        rect.left = coords_offs.x;
         rect.right = infoPtr->marqueeOrigin.x;
     }
 
-    if (coords_offs->y > infoPtr->marqueeOrigin.y)
+    if (coords_offs.y > infoPtr->marqueeOrigin.y)
     {
         rect.top = infoPtr->marqueeOrigin.y;
-        rect.bottom = coords_offs->y;
+        rect.bottom = coords_offs.y;
     }
     else
     {
-        rect.top = coords_offs->y;
+        rect.top = coords_offs.y;
         rect.bottom = infoPtr->marqueeOrigin.y;
     }
 
@@ -3895,7 +3906,7 @@ static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, const POINT *coord
 
     infoPtr->marqueeRect = rect;
     infoPtr->marqueeDrawRect = rect;
-    OffsetRect(&infoPtr->marqueeDrawRect, offset->x, offset->y);
+    OffsetRect(&infoPtr->marqueeDrawRect, offset.x, offset.y);
 
     iterator_frameditems_absolute(&new_elems, infoPtr, &infoPtr->marqueeRect);
     iterator_remove_common_items(&old_elems, &new_elems);
@@ -3960,9 +3971,7 @@ static VOID CALLBACK LISTVIEW_ScrollTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent
 {
     LISTVIEW_INFO *infoPtr;
     SCROLLINFO scrollInfo;
-    POINT coords_orig;
-    POINT coords_offs;
-    POINT offset;
+    POINT coords;
     INT scroll = 0;
 
     infoPtr = (LISTVIEW_INFO *) idEvent;
@@ -3971,19 +3980,8 @@ static VOID CALLBACK LISTVIEW_ScrollTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent
         return;
 
     /* Get the current cursor position and convert to client coordinates */
-    GetCursorPos(&coords_orig);
-    ScreenToClient(hWnd, &coords_orig);
-
-    /* Ensure coordinates are within client bounds */
-    coords_offs.x = max(min(coords_orig.x, infoPtr->rcList.right), 0);
-    coords_offs.y = max(min(coords_orig.y, infoPtr->rcList.bottom), 0);
-
-    /* Get offset */
-    LISTVIEW_GetOrigin(infoPtr, &offset);
-
-    /* Offset coordinates by the appropriate amount */
-    coords_offs.x -= offset.x;
-    coords_offs.y -= offset.y;
+    GetCursorPos(&coords);
+    ScreenToClient(hWnd, &coords);
 
     scrollInfo.cbSize = sizeof(SCROLLINFO);
     scrollInfo.fMask = SIF_ALL;
@@ -4007,12 +4005,12 @@ static VOID CALLBACK LISTVIEW_ScrollTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent
             scroll |= SCROLL_RIGHT;
     }
 
-    if (((coords_orig.x <= 0) && (scroll & SCROLL_LEFT)) ||
-        ((coords_orig.y <= 0) && (scroll & SCROLL_UP))   ||
-        ((coords_orig.x >= infoPtr->rcList.right) && (scroll & SCROLL_RIGHT)) ||
-        ((coords_orig.y >= infoPtr->rcList.bottom) && (scroll & SCROLL_DOWN)))
+    if (((coords.x <= 0) && (scroll & SCROLL_LEFT)) ||
+        ((coords.y <= 0) && (scroll & SCROLL_UP))   ||
+        ((coords.x >= infoPtr->rcList.right) && (scroll & SCROLL_RIGHT)) ||
+        ((coords.y >= infoPtr->rcList.bottom) && (scroll & SCROLL_DOWN)))
     {
-        LISTVIEW_MarqueeHighlight(infoPtr, &coords_orig, &coords_offs, &offset, scroll);
+        LISTVIEW_MarqueeHighlight(infoPtr, &coords, scroll);
     }
 }
 
@@ -4034,6 +4032,9 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
     RECT rect;
     POINT pt;
 
+    pt.x = x;
+    pt.y = y;
+
     if (!(fwKeys & MK_LBUTTON))
         infoPtr->bLButtonDown = FALSE;
 
@@ -4046,24 +4047,6 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
 
         if (infoPtr->bMarqueeSelect)
         {
-            POINT coords_orig;
-            POINT coords_offs;
-            POINT offset;
-
-            coords_orig.x = x;
-            coords_orig.y = y;
-
-            /* Get offset */
-            LISTVIEW_GetOrigin(infoPtr, &offset);
-
-            /* Ensure coordinates are within client bounds */
-            coords_offs.x = max(min(x, infoPtr->rcList.right), 0);
-            coords_offs.y = max(min(y, infoPtr->rcList.bottom), 0);
-
-            /* Offset coordinates by the appropriate amount */
-            coords_offs.x -= offset.x;
-            coords_offs.y -= offset.y;
-
             /* Enable the timer if we're going outside our bounds, in case the user doesn't
                move the mouse again */
 
@@ -4082,12 +4065,9 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
                 KillTimer(infoPtr->hwndSelf, (UINT_PTR) infoPtr);
             }
 
-            LISTVIEW_MarqueeHighlight(infoPtr, &coords_orig, &coords_offs, &offset, 0);
+            LISTVIEW_MarqueeHighlight(infoPtr, &pt, 0);
             return 0;
         }
-
-        pt.x = x;
-        pt.y = y;
 
         ht.pt = pt;
         LISTVIEW_HitTest(infoPtr, &ht, TRUE, TRUE);
