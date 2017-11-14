@@ -355,6 +355,63 @@ static void test_ImmNotifyIME(void) {
 
 }
 
+static struct {
+    WNDPROC old_wnd_proc;
+    BOOL catch_result_str;
+    BOOL catch_ime_char;
+    DWORD start;
+    DWORD timer_id;
+} ime_composition_test;
+
+static LRESULT WINAPI test_ime_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+    case WM_IME_COMPOSITION:
+        if ((lParam & GCS_RESULTSTR) && !ime_composition_test.catch_result_str) {
+            WCHAR wstring[20];
+            HIMC imc;
+            LONG size;
+            LRESULT ret;
+
+            ret = CallWindowProcA(ime_composition_test.old_wnd_proc,
+                                  hWnd, msg, wParam, lParam);
+
+            imc = ImmGetContext(hWnd);
+            size = ImmGetCompositionStringW(imc, GCS_RESULTSTR,
+                                            wstring, sizeof(wstring));
+            todo_wine
+            ok(size > 0, "ImmGetCompositionString(GCS_RESULTSTR) is %d\n", size);
+            ImmReleaseContext(hwnd, imc);
+
+            ime_composition_test.catch_result_str = TRUE;
+            return ret;
+        }
+        break;
+    case WM_IME_CHAR:
+        if (!ime_composition_test.catch_ime_char)
+            ime_composition_test.catch_ime_char = TRUE;
+        break;
+    case WM_TIMER:
+        if (wParam == ime_composition_test.timer_id) {
+            HWND parent = GetParent(hWnd);
+            char title[64];
+            int left = 20 - (GetTickCount() - ime_composition_test.start) / 1000;
+            wsprintfA(title, "%sLeft %d sec. - IME composition test",
+                      ime_composition_test.catch_result_str ? "[*] " : "", left);
+            SetWindowTextA(parent, title);
+            if (left <= 0)
+                DestroyWindow(parent);
+            else
+                SetTimer(hWnd, wParam, 100, NULL);
+            return TRUE;
+        }
+        break;
+    }
+    return CallWindowProcA(ime_composition_test.old_wnd_proc,
+                           hWnd, msg, wParam, lParam);
+}
+
 static void test_ImmGetCompositionString(void)
 {
     HIMC imc;
@@ -364,6 +421,7 @@ static void test_ImmGetCompositionString(void)
     LONG len;
     LONG alen,wlen;
     BOOL ret;
+    DWORD prop;
 
     imc = ImmGetContext(hwnd);
     ret = ImmSetCompositionStringW(imc, SCS_SETSTR, string, sizeof(string), NULL,0);
@@ -388,6 +446,89 @@ static void test_ImmGetCompositionString(void)
         win_skip("Composition string isn't available\n");
 
     ImmReleaseContext(hwnd, imc);
+
+    /* Test composition results input by IMM API */
+    prop = ImmGetProperty(GetKeyboardLayout(0), IGP_SETCOMPSTR);
+    if (!(prop & SCS_CAP_COMPSTR)) {
+        /* Wine's IME doesn't support SCS_SETSTR in ImmSetCompositionString */
+        skip("This IME doesn't support SCS_SETSTR\n");
+    }
+    else {
+        ime_composition_test.old_wnd_proc =
+            (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                       (LONG_PTR)test_ime_wnd_proc);
+        imc = ImmGetContext(hwnd);
+        msg_spy_flush_msgs();
+
+        ret = ImmSetCompositionStringW(imc, SCS_SETSTR,
+                                       string, sizeof(string), NULL,0);
+        ok(ret, "ImmSetCompositionStringW failed\n");
+        wlen = ImmGetCompositionStringW(imc, GCS_COMPSTR,
+                                        wstring, sizeof(wstring));
+        if (wlen > 0) {
+            ret = ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
+            ok(ret, "ImmNotifyIME(CPS_COMPLETE) failed\n");
+            msg_spy_flush_msgs();
+            ok(ime_composition_test.catch_result_str,
+               "WM_IME_COMPOSITION(GCS_RESULTSTR) isn't sent\n");
+            ok(ime_composition_test.catch_ime_char,
+               "WM_IME_CHAR isn't sent\n");
+        }
+        else
+            win_skip("Composition string isn't available\n");
+        ImmReleaseContext(hwnd, imc);
+        SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                          (LONG_PTR)ime_composition_test.old_wnd_proc);
+        msg_spy_flush_msgs();
+    }
+
+    /* Test composition results input by hand */
+    memset(&ime_composition_test, 0, sizeof(ime_composition_test));
+    if (winetest_interactive) {
+        HWND hwndMain, hwndChild;
+        MSG msg;
+        const DWORD MY_TIMER = 0xcaffe;
+
+        hwndMain = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls,
+                                   "IME composition test",
+                                   WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                                   CW_USEDEFAULT, CW_USEDEFAULT, 320, 160,
+                                   NULL, NULL, GetModuleHandleA(NULL), NULL);
+        hwndChild = CreateWindowExA(0, "static",
+                                    "Input a DBCS character here using IME.",
+                                    WS_CHILD | WS_VISIBLE | 0
+                                    /* ES_AUTOHSCROLL | ES_MULTILINE */,
+                                    0, 0, 320, 100, hwndMain, NULL,
+                                    GetModuleHandleA(NULL), NULL);
+
+        ime_composition_test.old_wnd_proc =
+            (WNDPROC)SetWindowLongPtrA(hwndChild, GWLP_WNDPROC,
+                                       (LONG_PTR)test_ime_wnd_proc);
+
+        SetFocus(hwndChild);
+
+        /* FIXME: In wine, IME UI window is created in ImmSetOpenStatus().
+           So, we prepare it here to generate WM_IME_CHAR messages. */
+        imc = ImmGetContext(hwndChild);
+        ImmSetOpenStatus(imc, FALSE);
+        ImmReleaseContext(hwndChild, imc);
+
+        ime_composition_test.timer_id = MY_TIMER;
+        ime_composition_test.start = GetTickCount();
+        SetTimer(hwndChild, ime_composition_test.timer_id, 100, NULL);
+        while (GetMessageA(&msg, NULL, 0, 0)) {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+            if (!IsWindow(hwndMain))
+                break;
+        }
+        if (!ime_composition_test.catch_result_str)
+            skip("WM_IME_COMPOSITION(GCS_RESULTSTR) isn't tested\n");
+        else
+            ok(ime_composition_test.catch_ime_char,
+               "WM_IME_CHAR isn't sent\n");
+        msg_spy_flush_msgs();
+    }
 }
 
 static void test_ImmSetCompositionString(void)
