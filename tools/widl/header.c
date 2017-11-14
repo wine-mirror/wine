@@ -960,7 +960,7 @@ static void write_method_macro(FILE *header, const type_t *iface, const type_t *
     if (is_override_method(iface, child, func))
       continue;
 
-    if (!is_callas(func->attrs) && !is_aggregate_return(func)) {
+    if (!is_callas(func->attrs)) {
       const var_t *arg;
 
       fprintf(header, "#define %s_%s(This", name, get_name(func));
@@ -968,6 +968,12 @@ static void write_method_macro(FILE *header, const type_t *iface, const type_t *
           LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
       fprintf(header, ") ");
+
+      if (is_aggregate_return(func))
+      {
+        fprintf(header, "%s_%s_define_WIDL_C_INLINE_WRAPPERS_for_aggregate_return_support\n", name, get_name(func));
+        continue;
+      }
 
       fprintf(header, "(This)->lpVtbl->%s(This", get_vtbl_entry_name(iface, func));
       if (type_get_function_args(func->type))
