@@ -380,7 +380,6 @@ static LRESULT WINAPI test_ime_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
             imc = ImmGetContext(hWnd);
             size = ImmGetCompositionStringW(imc, GCS_RESULTSTR,
                                             wstring, sizeof(wstring));
-            todo_wine
             ok(size > 0, "ImmGetCompositionString(GCS_RESULTSTR) is %d\n", size);
             ImmReleaseContext(hwnd, imc);
 
