@@ -361,11 +361,19 @@ static void test_ImmGetCompositionString(void)
     static const WCHAR string[] = {'w','i','n','e',0x65e5,0x672c,0x8a9e};
     char cstring[20];
     WCHAR wstring[20];
-    DWORD len;
-    DWORD alen,wlen;
+    LONG len;
+    LONG alen,wlen;
+    BOOL ret;
 
     imc = ImmGetContext(hwnd);
-    ImmSetCompositionStringW(imc, SCS_SETSTR, string, sizeof(string), NULL,0);
+    ret = ImmSetCompositionStringW(imc, SCS_SETSTR, string, sizeof(string), NULL,0);
+    if (!ret) {
+        win_skip("Composition isn't supported\n");
+        ImmReleaseContext(hwnd, imc);
+        return;
+    }
+    msg_spy_flush_msgs();
+
     alen = ImmGetCompositionStringA(imc, GCS_COMPSTR, cstring, 20);
     wlen = ImmGetCompositionStringW(imc, GCS_COMPSTR, wstring, 20);
     /* windows machines without any IME installed just return 0 above */
@@ -376,6 +384,9 @@ static void test_ImmGetCompositionString(void)
         len = ImmGetCompositionStringA(imc, GCS_COMPATTR, NULL, 0);
         ok(len==alen,"GCS_COMPATTR(A) not returning correct count\n");
     }
+    else
+        win_skip("Composition string isn't available\n");
+
     ImmReleaseContext(hwnd, imc);
 }
 
