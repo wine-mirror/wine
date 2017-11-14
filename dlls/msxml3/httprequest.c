@@ -1978,7 +1978,7 @@ static HRESULT WINAPI ServerXMLHTTPRequest_setTimeouts(IServerXMLHTTPRequest *if
 {
     serverhttp *This = impl_from_IServerXMLHTTPRequest( iface );
     FIXME("(%p)->(%d %d %d %d): stub\n", This, resolveTimeout, connectTimeout, sendTimeout, receiveTimeout);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI ServerXMLHTTPRequest_waitForResponse(IServerXMLHTTPRequest *iface, VARIANT timeout, VARIANT_BOOL *isSuccessful)
