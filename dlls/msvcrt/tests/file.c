@@ -31,6 +31,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winnls.h>
+#include <winreg.h>
 #include <process.h>
 #include <errno.h>
 #include <locale.h>
@@ -1522,6 +1523,61 @@ static void test_file_inherit( const char* selfname )
     DeleteFileA("fdopen.tst");
 }
 
+static void test_invalid_stdin_child( void )
+{
+    HANDLE handle;
+    ioinfo *info;
+
+    errno = 0xdeadbeef;
+    handle = (HANDLE)_get_osfhandle(STDIN_FILENO);
+    ok(handle == (HANDLE)-2, "handle = %p\n", handle);
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    info = &__pioinfo[STDIN_FILENO/MSVCRT_FD_BLOCK_SIZE][STDIN_FILENO%MSVCRT_FD_BLOCK_SIZE];
+    ok(info->handle == (HANDLE)-2, "info->handle = %p\n", info->handle);
+    ok(info->wxflag == 0xc1, "info->wxflag = %x\n", info->wxflag);
+
+    ok(stdin->_file == -2, "stdin->_file = %d\n", stdin->_file);
+}
+
+static void test_invalid_stdin( const char* selfname )
+{
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION proc;
+    SECURITY_ATTRIBUTES sa;
+    STARTUPINFOA startup;
+    HKEY key;
+    LONG ret;
+
+    if(!p_fopen_s) {
+        /* Behaviour of the dll has changed in newer version */
+        win_skip("skipping invalid stdin tests\n");
+        return;
+    }
+
+    ret = RegOpenCurrentUser(KEY_READ, &key);
+    ok(!ret, "RegOpenCurrentUser failed: %x\n", ret);
+
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESTDHANDLES;
+    startup.hStdInput = key;
+    startup.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    startup.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+
+    sprintf(cmdline, "%s file stdin", selfname);
+    CreateProcessA(NULL, cmdline, NULL, NULL, TRUE,
+            CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS, NULL, NULL, &startup, &proc);
+    winetest_wait_child_process(proc.hProcess);
+
+    ret = RegCloseKey(key);
+    ok(!ret, "RegCloseKey failed: %x\n", ret);
+}
+
 static void test_tmpnam( void )
 {
   char name[MAX_PATH] = "abc";
@@ -2461,12 +2517,15 @@ START_TEST(file)
             test_file_inherit_child_no(arg_v[3]);
         else if (strcmp(arg_v[2], "pipes") == 0)
             test_pipes_child(arg_c, arg_v);
+        else if (strcmp(arg_v[2], "stdin") == 0)
+            test_invalid_stdin_child();
         else
             ok(0, "invalid argument '%s'\n", arg_v[2]);
         return;
     }
     test_dup2();
     test_file_inherit(arg_v[0]);
+    test_invalid_stdin(arg_v[0]);
     test_file_write_read();
     test_chsize();
     test_stat();

@@ -1,6 +1,7 @@
 TESTDLL   = msvcrt.dll
 APPMODE   = -mno-cygwin
 EXTRAINCL = -I$(srcdir)/..
+IMPORTS   = advapi32
 
 C_SRCS = \
 	cpp.c \
