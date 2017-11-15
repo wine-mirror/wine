@@ -4125,7 +4125,10 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
 
         if (!src_box)
         {
-            wined3d_box_set(&b, 0, 0, src_resource->size, 1, 0, 1);
+            unsigned int dst_w;
+
+            dst_w = dst_resource->size - dst_x;
+            wined3d_box_set(&b, 0, 0, min(src_resource->size, dst_w), 1, 0, 1);
             src_box = &b;
         }
         else if ((src_box->left >= src_box->right
@@ -4178,8 +4181,16 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
 
         if (!src_box)
         {
-            wined3d_box_set(&b, 0, 0, wined3d_texture_get_level_width(src_texture, src_level),
-                    wined3d_texture_get_level_height(src_texture, src_level), 0, 1);
+            unsigned int src_w, src_h, dst_w, dst_h, dst_level;
+
+            src_w = wined3d_texture_get_level_width(src_texture, src_level);
+            src_h = wined3d_texture_get_level_height(src_texture, src_level);
+
+            dst_level = dst_sub_resource_idx % dst_texture->level_count;
+            dst_w = wined3d_texture_get_level_width(dst_texture, dst_level) - dst_x;
+            dst_h = wined3d_texture_get_level_height(dst_texture, dst_level) - dst_y;
+
+            wined3d_box_set(&b, 0, 0, min(src_w, dst_w), min(src_h, dst_h), 0, 1);
             src_box = &b;
         }
         else if (FAILED(wined3d_texture_check_box_dimensions(src_texture, src_level, src_box)))
