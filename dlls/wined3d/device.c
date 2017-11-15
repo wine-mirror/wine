@@ -4029,9 +4029,10 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         return;
     }
 
-    if (src_resource->format->id != dst_resource->format->id)
+    if (src_resource->format->typeless_id != dst_resource->format->typeless_id
+            || (!src_resource->format->typeless_id && src_resource->format->id != dst_resource->format->id))
     {
-        WARN("Resource formats (%s / %s) don't match.\n",
+        WARN("Resource formats %s and %s are incompatible.\n",
                 debug_d3dformat(dst_resource->format->id),
                 debug_d3dformat(src_resource->format->id));
         return;
