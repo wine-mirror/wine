@@ -1527,6 +1527,7 @@ static void test_invalid_stdin_child( void )
 {
     HANDLE handle;
     ioinfo *info;
+    int ret;
 
     errno = 0xdeadbeef;
     handle = (HANDLE)_get_osfhandle(STDIN_FILENO);
@@ -1538,6 +1539,21 @@ static void test_invalid_stdin_child( void )
     ok(info->wxflag == 0xc1, "info->wxflag = %x\n", info->wxflag);
 
     ok(stdin->_file == -2, "stdin->_file = %d\n", stdin->_file);
+
+    errno = 0xdeadbeef;
+    ret = fclose(stdin);
+    ok(ret == -1, "fclose(stdin) returned %d\n", ret);
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = close(-2);
+    ok(ret == -1, "close(-2) returned %d\n", ret);
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = close(STDIN_FILENO);
+    ok(ret==-1 || !ret, "close(STDIN_FILENO) returned %d\n", ret);
+    ok((ret==-1 && errno==EBADF) || (!ret && errno==0xdeadbeef), "errno = %d\n", errno);
 }
 
 static void test_invalid_stdin( const char* selfname )
