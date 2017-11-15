@@ -176,7 +176,7 @@
   + ES_DISABLENOSCROLL (scrollbar is always visible)
   - ES_EX_NOCALLOLEINIT
   + ES_LEFT
-  - ES_MULTILINE (currently single line controls aren't supported)
+  + ES_MULTILINE
   - ES_NOIME
   - ES_READONLY (I'm not sure if beeping is the proper behaviour)
   + ES_RIGHT
@@ -3421,21 +3421,7 @@ static void ME_SetText(ME_TextEditor *editor, void *text, BOOL unicode)
   int textLen;
 
   LPWSTR wszText = ME_ToUnicode(codepage, text, &textLen);
-
-  if (textLen > 0)
-  {
-    int len = -1;
-
-    /* uses default style! */
-    if (!(editor->styleFlags & ES_MULTILINE))
-    {
-      WCHAR *p = wszText;
-
-      while (*p != '\0' && *p != '\r' && *p != '\n') p++;
-      len = p - wszText;
-    }
-    ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
-  }
+  ME_InsertTextFromCursor(editor, 0, wszText, textLen, editor->pBuffer->pDefaultStyle);
   ME_EndToUnicode(codepage, wszText);
 }
 
