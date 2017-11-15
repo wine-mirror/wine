@@ -457,6 +457,8 @@ SYSCALL_NOERR( wld_getegid, 108 /* SYS_getegid */ );
 
 #elif defined(__aarch64__)
 
+void *thread_data[256];
+
 /*
  * The _start function is the entry and exit point of this program
  *
@@ -469,6 +471,8 @@ __ASM_GLOBAL_FUNC(_start,
                   "mov x0, SP\n\t"
                   "sub SP, SP, #144\n\t" /* allocate some space for extra aux values */
                   "str x0, [SP]\n\t"     /* orig stack pointer */
+                  "ldr x0, =thread_data\n\t"
+                  "msr tpidr_el0, x0\n\t"
                   "mov x0, SP\n\t"       /* ptr to orig stack pointer */
                   "bl wld_start\n\t"
                   "ldr x1, [SP]\n\t"     /* new stack pointer */
