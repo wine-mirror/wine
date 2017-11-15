@@ -3073,7 +3073,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         same_sub_resource = FALSE;
         dst_format = dst_texture->resource.format;
         dst_fmt_flags = dst_texture->resource.format_flags;
-        if (dst_texture->resource.format->id != src_texture->resource.format->id)
+        if (!(flags & WINED3D_BLT_RAW) && dst_texture->resource.format->id != src_texture->resource.format->id)
         {
             if (!(converted_texture = surface_convert_format(src_texture, src_sub_resource_idx, dst_format)))
             {
@@ -3108,6 +3108,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         dst_map.data = context_map_bo_address(context, &dst_data,
                 dst_texture->sub_resources[dst_sub_resource_idx].size, GL_PIXEL_UNPACK_BUFFER, 0);
     }
+    flags &= ~WINED3D_BLT_RAW;
 
     bpp = dst_format->byte_count;
     src_height = src_box->bottom - src_box->top;
@@ -3737,7 +3738,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
     static const DWORD simple_blit = WINED3D_BLT_SRC_CKEY
             | WINED3D_BLT_SRC_CKEY_OVERRIDE
-            | WINED3D_BLT_ALPHA_TEST;
+            | WINED3D_BLT_ALPHA_TEST
+            | WINED3D_BLT_RAW;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
@@ -3908,7 +3910,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
         return WINED3D_OK;
     }
-    else if (!scale && !convert)
+    else if ((flags & WINED3D_BLT_RAW) || (!scale && !convert))
     {
         blit_op = WINED3D_BLIT_OP_RAW_BLIT;
     }

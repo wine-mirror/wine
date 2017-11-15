@@ -2045,14 +2045,14 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
         struct wined3d_context *context;
         struct wined3d_bo_address addr;
 
-        if (op->flags)
+        if (op->flags & ~WINED3D_BLT_RAW)
         {
             FIXME("Flags %#x not implemented for %s resources.\n",
                     op->flags, debug_d3dresourcetype(op->dst_resource->type));
             goto error;
         }
 
-        if (op->src_resource->format != op->dst_resource->format)
+        if (!(op->flags & WINED3D_BLT_RAW) && op->src_resource->format != op->dst_resource->format)
         {
             FIXME("Format conversion not implemented for %s resources.\n",
                     debug_d3dresourcetype(op->dst_resource->type));
