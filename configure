@@ -8907,7 +8907,7 @@ if test "x$ac_cv_cflags__Wl___enable_new_dtags" = xyes; then :
 fi
 
       case $host_cpu in
-        *i[3456789]86* | x86_64)
+        *i[3456789]86* | x86_64 | *aarch64*)
           { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000" >&5
 $as_echo_n "checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000... " >&6; }
 if ${ac_cv_cflags__Wl__Ttext_segment_0x7bc00000+:} false; then :
