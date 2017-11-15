@@ -2892,6 +2892,7 @@ static int read_i(int fd, ioinfo *fdinfo, void *buf, unsigned int count)
         else
         {
             TRACE(":failed-last error (%d)\n",GetLastError());
+            msvcrt_set_errno(GetLastError());
             return -1;
         }
     }
@@ -2906,8 +2907,16 @@ static int read_i(int fd, ioinfo *fdinfo, void *buf, unsigned int count)
  */
 int CDECL MSVCRT__read(int fd, void *buf, unsigned int count)
 {
-    ioinfo *info = get_ioinfo(fd);
-    int num_read = read_i(fd, info, buf, count);
+    ioinfo *info;
+    int num_read;
+
+    if(fd == MSVCRT_NO_CONSOLE_FD) {
+        *MSVCRT__errno() = MSVCRT_EBADF;
+        return -1;
+    }
+
+    info = get_ioinfo(fd);
+    num_read = read_i(fd, info, buf, count);
     release_ioinfo(info);
     return num_read;
 }
@@ -4291,9 +4300,12 @@ MSVCRT_size_t CDECL MSVCRT__fread_nolock(void *ptr, MSVCRT_size_t size, MSVCRT_s
   {
     int i;
     if (!file->_cnt && rcnt<MSVCRT_BUFSIZ && (file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF))) {
-      file->_cnt = MSVCRT__read(file->_file, file->_base, file->_bufsiz);
+      i = MSVCRT__read(file->_file, file->_base, file->_bufsiz);
       file->_ptr = file->_base;
-      i = (file->_cnt<rcnt) ? file->_cnt : rcnt;
+      if (i != -1) {
+          file->_cnt = i;
+          if (i > rcnt) i = rcnt;
+      }
       /* If the buffer fill reaches eof but fread wouldn't, clear eof. */
       if (i > 0 && i < file->_cnt) {
         get_ioinfo_nolock(file->_file)->wxflag &= ~WX_ATEOF;
