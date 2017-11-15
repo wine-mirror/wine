@@ -3423,7 +3423,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
     if (count > 32)
         TRACE(":fd (%d) handle (%d) buf (%p) len (%d)\n",fd,hand,buf,count);
 #endif
-    if (hand == INVALID_HANDLE_VALUE)
+    if (hand == INVALID_HANDLE_VALUE || fd == MSVCRT_NO_CONSOLE_FD)
     {
         *MSVCRT__errno() = MSVCRT_EBADF;
         release_ioinfo(info);
@@ -3451,14 +3451,14 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
         }
         TRACE("WriteFile (fd %d, hand %p) failed-last error (%d)\n", fd,
                 hand, GetLastError());
-        *MSVCRT__errno() = MSVCRT_ENOSPC;
+        msvcrt_set_errno(GetLastError());
     }
     else
     {
         unsigned int i, j, nr_lf, size;
         char *p = NULL;
         const char *q;
-        const char *s = buf, *buf_start = buf;
+        const char *s = buf;
 
         if (!(info->exflag & (EF_UTF8|EF_UTF16)))
         {
@@ -3577,8 +3577,8 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
         {
             TRACE("WriteFile (fd %d, hand %p) failed-last error (%d), num_written %d\n",
                     fd, hand, GetLastError(), num_written);
-            *MSVCRT__errno() = MSVCRT_ENOSPC;
-            return s - buf_start;
+            msvcrt_set_errno(GetLastError());
+            return -1;
         }
         return count;
     }
@@ -3927,6 +3927,7 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
     if(!(file->_flag & MSVCRT__IOWRT)) {
         if(!(file->_flag & MSVCRT__IORW)) {
             file->_flag |= MSVCRT__IOERR;
+            *MSVCRT__errno() = MSVCRT_EBADF;
             return MSVCRT_EOF;
         }
         file->_flag |= MSVCRT__IOWRT;

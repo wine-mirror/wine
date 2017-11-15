@@ -1557,6 +1557,26 @@ static void test_invalid_stdin_child( void )
     ok(errno == EBADF, "errno = %d\n", errno);
 
     errno = 0xdeadbeef;
+    ret = _flsbuf('a', stdin);
+    ok(ret == EOF, "_flsbuf(stdin) returned %d\n", ret);
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = fwrite(&c, 1, 1, stdin);
+    ok(!ret, "fwrite(stdin) returned %d\n", ret);
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = write(-2, &c, 1);
+    ok(ret == -1, "write(-2) returned %d\n", ret);
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = write(STDIN_FILENO, &c, 1);
+    ok(ret == -1, "write(STDIN_FILENO) returned %d\n", ret);
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
     ret = fclose(stdin);
     ok(ret == -1, "fclose(stdin) returned %d\n", ret);
     ok(errno == EBADF, "errno = %d\n", errno);
