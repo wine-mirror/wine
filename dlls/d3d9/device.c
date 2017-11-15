@@ -1393,6 +1393,7 @@ static HRESULT WINAPI d3d9_device_UpdateSurface(IDirect3DDevice9Ex *iface,
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_surface *src = unsafe_impl_from_IDirect3DSurface9(src_surface);
     struct d3d9_surface *dst = unsafe_impl_from_IDirect3DSurface9(dst_surface);
+    struct wined3d_sub_resource_desc src_desc, dst_desc;
     struct wined3d_box src_box;
     HRESULT hr;
 
@@ -1403,6 +1404,18 @@ static HRESULT WINAPI d3d9_device_UpdateSurface(IDirect3DDevice9Ex *iface,
         wined3d_box_set(&src_box, src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1);
 
     wined3d_mutex_lock();
+
+    wined3d_texture_get_sub_resource_desc(src->wined3d_texture, src->sub_resource_idx, &src_desc);
+    wined3d_texture_get_sub_resource_desc(dst->wined3d_texture, dst->sub_resource_idx, &dst_desc);
+    if (src_desc.format != dst_desc.format)
+    {
+        wined3d_mutex_unlock();
+        WARN("Surface formats (%#x/%#x) don't match.\n",
+                d3dformat_from_wined3dformat(src_desc.format),
+                d3dformat_from_wined3dformat(dst_desc.format));
+        return D3DERR_INVALIDCALL;
+    }
+
     hr = wined3d_device_copy_sub_resource_region(device->wined3d_device,
             wined3d_texture_get_resource(dst->wined3d_texture), dst->sub_resource_idx, dst_point ? dst_point->x : 0,
             dst_point ? dst_point->y : 0, 0, wined3d_texture_get_resource(src->wined3d_texture),
