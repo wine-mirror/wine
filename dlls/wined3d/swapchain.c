@@ -1429,6 +1429,7 @@ HRESULT CDECL wined3d_swapchain_set_fullscreen(struct wined3d_swapchain *swapcha
             device->filter_messages = TRUE;
 
             MoveWindow(swapchain->device_window, 0, 0, width, height, TRUE);
+            ShowWindow(swapchain->device_window, SW_SHOW);
 
             device->filter_messages = filter_messages;
         }

@@ -2470,6 +2470,7 @@ struct message
     enum message_window window;
     BOOL check_wparam;
     WPARAM expect_wparam;
+    WINDOWPOS *store_wp;
 };
 
 static const struct message *expect_messages;
@@ -2517,6 +2518,9 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
                 ok(wparam == expect_messages->expect_wparam,
                         "Got unexpected wparam %lx for message %x, expected %lx.\n",
                         wparam, message, expect_messages->expect_wparam);
+
+            if (expect_messages->store_wp)
+                *expect_messages->store_wp = *(WINDOWPOS *)lparam;
 
             ++expect_messages;
         }
@@ -2585,9 +2589,10 @@ static void test_wndproc(void)
     D3DDISPLAYMODE d3ddm;
     DWORD d3d_width = 0, d3d_height = 0, user32_width = 0, user32_height = 0;
     DEVMODEW devmode;
-    LONG change_ret;
+    LONG change_ret, device_style;
     BOOL ret;
     IDirect3D9Ex *d3d9ex;
+    WINDOWPOS windowpos;
 
     static const struct message create_messages[] =
     {
@@ -2680,16 +2685,59 @@ static void test_wndproc(void)
         /* WM_SIZE(SIZE_MAXIMIZED) is unreliable on native. */
         {0,                     0,              FALSE,  0},
     };
-    static const struct
+    struct message mode_change_messages[] =
+    {
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
+        {WM_SIZE,               DEVICE_WINDOW,  FALSE,  0},
+        /* TODO: WM_DISPLAYCHANGE is sent to the focus window too, but the order is
+         * differs between Wine and Windows. */
+        /* TODO 2: Windows sends a second WM_WINDOWPOSCHANGING(SWP_NOMOVE | SWP_NOSIZE
+         * | SWP_NOACTIVATE) in this situation, suggesting a difference in their ShowWindow
+         * implementation. This SetWindowPos call could in theory affect the Z order. Wine's
+         * ShowWindow does not send such a message because the window is already visible. */
+        {0,                     0,              FALSE,  0},
+    };
+    struct message mode_change_messages_hidden[] =
+    {
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
+        {WM_SIZE,               DEVICE_WINDOW,  FALSE,  0},
+        {WM_SHOWWINDOW,         DEVICE_WINDOW,  FALSE,  0},
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0, &windowpos},
+        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
+        /* TODO: WM_DISPLAYCHANGE is sent to the focus window too, but the order is
+         * differs between Wine and Windows. */
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct message mode_change_messages_nowc[] =
+    {
+        {WM_DISPLAYCHANGE,      FOCUS_WINDOW,   FALSE,  0},
+        {0,                     0,              FALSE,  0},
+    };
+    struct
     {
         DWORD create_flags;
         const struct message *focus_loss_messages;
+        const struct message *mode_change_messages, *mode_change_messages_hidden;
         BOOL iconic;
     }
     tests[] =
     {
-        {0,                               focus_loss_messages,          TRUE},
-        {CREATE_DEVICE_NOWINDOWCHANGES,   focus_loss_messages_nowc,     FALSE},
+        {
+            0,
+            focus_loss_messages,
+            mode_change_messages,
+            mode_change_messages_hidden,
+            TRUE
+        },
+        {
+            CREATE_DEVICE_NOWINDOWCHANGES,
+            focus_loss_messages_nowc,
+            mode_change_messages_nowc,
+            mode_change_messages_nowc,
+            FALSE
+        },
     };
 
     hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex);
@@ -3052,6 +3100,68 @@ static void test_wndproc(void)
         {
             skip("Failed to create a D3D device, skipping tests.\n");
             goto done;
+        }
+        filter_messages = NULL;
+        flush_events();
+
+        device_desc.width = user32_width;
+        device_desc.height = user32_height;
+
+        expect_messages = tests[i].mode_change_messages;
+        filter_messages = focus_window;
+        hr = reset_device(device, &device_desc);
+        ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
+        filter_messages = NULL;
+
+        /* The WINDOWPOS structure passed to the first WM_WINDOWPOSCHANGING differs between windows versions.
+         * Prior to Win10 17.03 it is consistent with a MoveWindow(0, 0, width, height) call. Since Windows
+         * 10 17.03 it has x = 0, y = 0, width = 0, height = 0, flags = SWP_NOCLIENTMOVE | SWP_NOCLIENTSIZE
+         * | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER (0x1837). Visually
+         * it is clear that the window has not been resized. In previous Windows version the window is resized. */
+
+        flush_events();
+        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+                expect_messages->message, expect_messages->window, i);
+
+        /* World of Warplanes hides the window by removing WS_VISIBLE and expects Reset() to show it again. */
+        device_style = GetWindowLongA(device_window, GWL_STYLE);
+        SetWindowLongA(device_window, GWL_STYLE, device_style & ~WS_VISIBLE);
+
+        flush_events();
+        device_desc.width = d3d_width;
+        device_desc.height = d3d_height;
+        memset(&windowpos, 0, sizeof(windowpos));
+
+        expect_messages = tests[i].mode_change_messages_hidden;
+        filter_messages = focus_window;
+        hr = reset_device(device, &device_desc);
+        ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
+        filter_messages = NULL;
+
+        flush_events();
+        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+                expect_messages->message, expect_messages->window, i);
+
+        if (!(tests[i].create_flags & CREATE_DEVICE_NOWINDOWCHANGES))
+        {
+            ok(windowpos.hwnd == device_window && !windowpos.hwndInsertAfter
+                    && !windowpos.x && !windowpos.y && !windowpos.cx && !windowpos.cy
+                    && windowpos.flags == (SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE),
+                    "Got unexpected WINDOWPOS hwnd=%p, insertAfter=%p, x=%d, y=%d, cx=%d, cy=%d, flags=%x\n",
+                    windowpos.hwnd, windowpos.hwndInsertAfter, windowpos.x, windowpos.y, windowpos.cx,
+                    windowpos.cy, windowpos.flags);
+        }
+
+        device_style = GetWindowLongA(device_window, GWL_STYLE);
+        if (tests[i].create_flags & CREATE_DEVICE_NOWINDOWCHANGES)
+        {
+            todo_wine ok(!(device_style & WS_VISIBLE), "Expected the device window to be hidden, i=%u.\n", i);
+            ShowWindow(device_window, SW_MINIMIZE);
+            ShowWindow(device_window, SW_RESTORE);
+        }
+        else
+        {
+            ok(device_style & WS_VISIBLE, "Expected the device window to be visible, i=%u.\n", i);
         }
 
         proc = SetWindowLongPtrA(focus_window, GWLP_WNDPROC, (LONG_PTR)DefWindowProcA);
