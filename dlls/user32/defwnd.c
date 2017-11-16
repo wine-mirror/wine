@@ -854,8 +854,44 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         result = PostMessageA( hwnd, WM_KEYUP, wParam, lParam );
         break;
 
-    case WM_IME_STARTCOMPOSITION:
     case WM_IME_COMPOSITION:
+        if (lParam & GCS_RESULTSTR)
+        {
+            LONG size, i;
+            unsigned char lead = 0;
+            char *buf = NULL;
+            HIMC himc = ImmGetContext( hwnd );
+
+            if (himc)
+            {
+                if ((size = ImmGetCompositionStringA( himc, GCS_RESULTSTR, NULL, 0 )))
+                {
+                    if (!(buf = HeapAlloc( GetProcessHeap(), 0, size ))) size = 0;
+                    else size = ImmGetCompositionStringA( himc, GCS_RESULTSTR, buf, size );
+                }
+                ImmReleaseContext( hwnd, himc );
+
+                for (i = 0; i < size; i++)
+                {
+                    unsigned char c = buf[i];
+                    if (!lead)
+                    {
+                        if (IsDBCSLeadByte( c ))
+                            lead = c;
+                        else
+                            SendMessageA( hwnd, WM_IME_CHAR, c, 1 );
+                    }
+                    else
+                    {
+                        SendMessageA( hwnd, WM_IME_CHAR, MAKEWORD(c, lead), 1 );
+                        lead = 0;
+                    }
+                }
+                HeapFree( GetProcessHeap(), 0, buf );
+            }
+        }
+        /* fall through */
+    case WM_IME_STARTCOMPOSITION:
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_SELECT:
     case WM_IME_NOTIFY:
@@ -1006,8 +1042,29 @@ LRESULT WINAPI DefWindowProcW(
         }
         break;
 
-    case WM_IME_STARTCOMPOSITION:
     case WM_IME_COMPOSITION:
+        if (lParam & GCS_RESULTSTR)
+        {
+            LONG size, i;
+            WCHAR *buf = NULL;
+            HIMC himc = ImmGetContext( hwnd );
+
+            if (himc)
+            {
+                if ((size = ImmGetCompositionStringW( himc, GCS_RESULTSTR, NULL, 0 )))
+                {
+                    if (!(buf = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) size = 0;
+                    else size = ImmGetCompositionStringW( himc, GCS_RESULTSTR, buf, size * sizeof(WCHAR) );
+                }
+                ImmReleaseContext( hwnd, himc );
+
+                for (i = 0; i < size / sizeof(WCHAR); i++)
+                    SendMessageW( hwnd, WM_IME_CHAR, buf[i], 1 );
+                HeapFree( GetProcessHeap(), 0, buf );
+            }
+        }
+        /* fall through */
+    case WM_IME_STARTCOMPOSITION:
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_SELECT:
     case WM_IME_NOTIFY:

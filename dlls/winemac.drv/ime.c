@@ -459,43 +459,6 @@ static void GenerateIMEMessage(HIMC hIMC, UINT msg, WPARAM wParam, LPARAM lParam
     UnlockRealIMC(hIMC);
 }
 
-static void GenerateIMECHARMessages(HIMC hIMC, LPWSTR String, DWORD length)
-{
-    LPINPUTCONTEXT lpIMC;
-    LPTRANSMSG lpTransMsg;
-    DWORD i;
-
-    if (length <= 0)
-        return;
-
-    lpIMC = LockRealIMC(hIMC);
-    if (lpIMC == NULL)
-        return;
-
-    lpIMC->hMsgBuf = ImmReSizeIMCC(lpIMC->hMsgBuf, (lpIMC->dwNumMsgBuf + length) * sizeof(TRANSMSG));
-    if (!lpIMC->hMsgBuf)
-        return;
-
-    lpTransMsg = ImmLockIMCC(lpIMC->hMsgBuf);
-    if (!lpTransMsg)
-        return;
-
-    lpTransMsg += lpIMC->dwNumMsgBuf;
-    for (i = 0; i < length; i++)
-    {
-        lpTransMsg->message = WM_IME_CHAR;
-        lpTransMsg->wParam = String[i];
-        lpTransMsg->lParam = 1;
-        lpTransMsg++;
-    }
-
-    ImmUnlockIMCC(lpIMC->hMsgBuf);
-    lpIMC->dwNumMsgBuf += length;
-
-    ImmGenerateMessage(RealIMC(hIMC));
-    UnlockRealIMC(hIMC);
-}
-
 static BOOL GenerateMessageToTransKey(LPDWORD lpTransBuf, UINT *uNumTranMsgs,
                                       UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -1166,26 +1129,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
 static void DefaultIMEComposition(HIMC hIMC, HWND hwnd, LPARAM lParam)
 {
     TRACE("IME message WM_IME_COMPOSITION 0x%lx\n", lParam);
-    if (lParam & GCS_RESULTSTR)
-    {
-        LPCOMPOSITIONSTRING compstr;
-        LPBYTE compdata;
-        LPWSTR ResultStr;
-        LPINPUTCONTEXT lpIMC;
-
-        lpIMC = LockRealIMC(hIMC);
-        if (lpIMC == NULL)
-            return;
-
-        TRACE("Posting result as IME_CHAR\n");
-        compdata = ImmLockIMCC(lpIMC->hCompStr);
-        compstr = (LPCOMPOSITIONSTRING)compdata;
-        ResultStr = (LPWSTR)(compdata + compstr->dwResultStrOffset);
-        GenerateIMECHARMessages(hIMC, ResultStr, compstr->dwResultStrLen);
-        ImmUnlockIMCC(lpIMC->hCompStr);
-        UnlockRealIMC(hIMC);
-    }
-    else
+    if (!(lParam & GCS_RESULTSTR))
          UpdateDataInDefaultIMEWindow(hIMC, hwnd, TRUE);
 }
 

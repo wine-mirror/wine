@@ -385,7 +385,7 @@ static LRESULT WINAPI test_ime_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 
             ime_composition_test.catch_ime_char = FALSE;
             SendMessageA(hwndIme, msg, wParam, lParam);
-            todo_wine ok(!ime_composition_test.catch_ime_char, "WM_IME_CHAR is sent\n");
+            ok(!ime_composition_test.catch_ime_char, "WM_IME_CHAR is sent\n");
 
             imc = ImmGetContext(hWnd);
             size = ImmGetCompositionStringW(imc, GCS_RESULTSTR,
@@ -512,12 +512,6 @@ static void test_ImmGetCompositionString(void)
                                        (LONG_PTR)test_ime_wnd_proc);
 
         SetFocus(hwndChild);
-
-        /* FIXME: In wine, IME UI window is created in ImmSetOpenStatus().
-           So, we prepare it here to generate WM_IME_CHAR messages. */
-        imc = ImmGetContext(hwndChild);
-        ImmSetOpenStatus(imc, FALSE);
-        ImmReleaseContext(hwndChild, imc);
 
         ime_composition_test.timer_id = MY_TIMER;
         ime_composition_test.start = GetTickCount();
