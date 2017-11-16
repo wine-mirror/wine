@@ -965,6 +965,11 @@ static BOOL IME_SetCompositionString(void* hIMC, DWORD dwIndex, LPCVOID lpComp, 
             myPrivate->bInComposition = TRUE;
         }
 
+        /* clear existing result */
+        newCompStr = updateResultStr(lpIMC->hCompStr, NULL, 0);
+        ImmDestroyIMCC(lpIMC->hCompStr);
+        lpIMC->hCompStr = newCompStr;
+
         flags = GCS_COMPSTR;
 
         if (dwCompLen && lpComp)
@@ -1166,7 +1171,6 @@ static void DefaultIMEComposition(HIMC hIMC, HWND hwnd, LPARAM lParam)
         LPCOMPOSITIONSTRING compstr;
         LPBYTE compdata;
         LPWSTR ResultStr;
-        HIMCC newCompStr;
         LPINPUTCONTEXT lpIMC;
 
         lpIMC = LockRealIMC(hIMC);
@@ -1179,11 +1183,6 @@ static void DefaultIMEComposition(HIMC hIMC, HWND hwnd, LPARAM lParam)
         ResultStr = (LPWSTR)(compdata + compstr->dwResultStrOffset);
         GenerateIMECHARMessages(hIMC, ResultStr, compstr->dwResultStrLen);
         ImmUnlockIMCC(lpIMC->hCompStr);
-
-        /* clear the buffer */
-        newCompStr = updateResultStr(lpIMC->hCompStr, NULL, 0);
-        ImmDestroyIMCC(lpIMC->hCompStr);
-        lpIMC->hCompStr = newCompStr;
         UnlockRealIMC(hIMC);
     }
     else
