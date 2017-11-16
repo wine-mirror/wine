@@ -2138,3 +2138,12 @@ HRESULT channel_accept_udp( SOCKET socket, HANDLE wait, HANDLE cancel, WS_CHANNE
     LeaveCriticalSection( &channel->cs );
     return hr;
 }
+
+/**************************************************************************
+ *          WsAbortChannel		[webservices.@]
+ */
+HRESULT WINAPI WsAbortChannel( WS_CHANNEL *handle, WS_ERROR *error )
+{
+    FIXME( "%p %p: stub!\n", handle, error );
+    return E_NOTIMPL;
+}

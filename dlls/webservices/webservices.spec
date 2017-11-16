@@ -1,6 +1,6 @@
 @ stub WsAbandonCall
 @ stub WsAbandonMessage
-@ stub WsAbortChannel
+@ stdcall WsAbortChannel(ptr ptr)
 @ stub WsAbortListener
 @ stub WsAbortServiceHost
 @ stdcall WsAbortServiceProxy(ptr ptr)
