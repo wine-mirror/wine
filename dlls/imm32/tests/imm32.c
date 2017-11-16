@@ -369,13 +369,23 @@ static LRESULT WINAPI test_ime_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
     {
     case WM_IME_COMPOSITION:
         if ((lParam & GCS_RESULTSTR) && !ime_composition_test.catch_result_str) {
+            HWND hwndIme;
             WCHAR wstring[20];
             HIMC imc;
             LONG size;
             LRESULT ret;
 
+            hwndIme = ImmGetDefaultIMEWnd(hWnd);
+            ok(hwndIme != NULL, "expected IME window existence\n");
+
+            ok(!ime_composition_test.catch_ime_char, "WM_IME_CHAR is sent\n");
             ret = CallWindowProcA(ime_composition_test.old_wnd_proc,
                                   hWnd, msg, wParam, lParam);
+            ok(ime_composition_test.catch_ime_char, "WM_IME_CHAR isn't sent\n");
+
+            ime_composition_test.catch_ime_char = FALSE;
+            SendMessageA(hwndIme, msg, wParam, lParam);
+            todo_wine ok(!ime_composition_test.catch_ime_char, "WM_IME_CHAR is sent\n");
 
             imc = ImmGetContext(hWnd);
             size = ImmGetCompositionStringW(imc, GCS_RESULTSTR,
@@ -388,7 +398,7 @@ static LRESULT WINAPI test_ime_wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
         }
         break;
     case WM_IME_CHAR:
-        if (!ime_composition_test.catch_ime_char)
+        if (!ime_composition_test.catch_result_str)
             ime_composition_test.catch_ime_char = TRUE;
         break;
     case WM_TIMER:
@@ -470,8 +480,6 @@ static void test_ImmGetCompositionString(void)
             msg_spy_flush_msgs();
             ok(ime_composition_test.catch_result_str,
                "WM_IME_COMPOSITION(GCS_RESULTSTR) isn't sent\n");
-            ok(ime_composition_test.catch_ime_char,
-               "WM_IME_CHAR isn't sent\n");
         }
         else
             win_skip("Composition string isn't available\n");
@@ -495,8 +503,7 @@ static void test_ImmGetCompositionString(void)
                                    NULL, NULL, GetModuleHandleA(NULL), NULL);
         hwndChild = CreateWindowExA(0, "static",
                                     "Input a DBCS character here using IME.",
-                                    WS_CHILD | WS_VISIBLE | 0
-                                    /* ES_AUTOHSCROLL | ES_MULTILINE */,
+                                    WS_CHILD | WS_VISIBLE,
                                     0, 0, 320, 100, hwndMain, NULL,
                                     GetModuleHandleA(NULL), NULL);
 
@@ -523,9 +530,6 @@ static void test_ImmGetCompositionString(void)
         }
         if (!ime_composition_test.catch_result_str)
             skip("WM_IME_COMPOSITION(GCS_RESULTSTR) isn't tested\n");
-        else
-            ok(ime_composition_test.catch_ime_char,
-               "WM_IME_CHAR isn't sent\n");
         msg_spy_flush_msgs();
     }
 }
