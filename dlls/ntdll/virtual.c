@@ -185,6 +185,7 @@ static BYTE get_page_vprot( const void *addr )
     size_t idx = (size_t)addr >> page_shift;
 
 #ifdef _WIN64
+    if ((idx >> pages_vprot_shift) >= pages_vprot_size) return 0;
     if (!pages_vprot[idx >> pages_vprot_shift]) return 0;
     return pages_vprot[idx >> pages_vprot_shift][idx & pages_vprot_mask];
 #else
