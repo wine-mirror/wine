@@ -195,11 +195,11 @@ static int pre_exec(void)
 #endif
 }
 
-#elif defined(__linux__) && defined(__x86_64__)
+#elif defined(__linux__) && (defined(__x86_64__) || defined(__aarch64__))
 
 static int pre_exec(void)
 {
-    return 1;  /* we have a preloader on x86-64 */
+    return 1;  /* we have a preloader on x86-64/arm64 */
 }
 
 #elif (defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__))
