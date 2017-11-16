@@ -1307,6 +1307,39 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
 
 
 /***********************************************************************
+ *           map_pe_header
+ *
+ * Map the header of a PE file into memory.
+ */
+static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
+{
+    if (!size) return STATUS_INVALID_IMAGE_FORMAT;
+
+    if (!*removable)
+    {
+        if (mmap( ptr, size, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_FIXED|MAP_PRIVATE, fd, 0 ) != (void *)-1)
+            return STATUS_SUCCESS;
+
+        switch (errno)
+        {
+        case EPERM:
+            WARN( "noexec file system, falling back to read\n" );
+            break;
+        case ENOEXEC:
+        case ENODEV:
+            WARN( "file system doesn't support mmap, falling back to read\n" );
+            break;
+        default:
+            return FILE_GetNtStatus();
+        }
+        *removable = TRUE;
+    }
+    pread( fd, ptr, size, 0 );
+    return STATUS_SUCCESS;  /* page protections will be updated later */
+}
+
+
+/***********************************************************************
  *           map_image
  *
  * Map an executable (PE format) image into memory.
@@ -1351,11 +1384,10 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
         status = FILE_GetNtStatus();
         goto error;
     }
-    status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
-    if (!st.st_size) goto error;
     header_size = min( header_size, st.st_size );
-    if (map_file_into_view( view, fd, 0, header_size, 0, VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
-                            removable ) != STATUS_SUCCESS) goto error;
+    if ((status = map_pe_header( view->base, header_size, fd, &removable )) != STATUS_SUCCESS) goto error;
+
+    status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
     header_end = ptr + ROUND_SIZE( 0, header_size );
