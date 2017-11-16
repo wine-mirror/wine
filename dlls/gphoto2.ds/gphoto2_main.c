@@ -1086,6 +1086,7 @@ GPHOTO2_GetIdentity( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
     TRACE("%d cameras detected.\n", count);
     self->ProtocolMajor = TWON_PROTOCOLMAJOR;
     self->ProtocolMinor = TWON_PROTOCOLMINOR;
+    self->SupportedGroups = DG_CONTROL | DG_IMAGE;
     lstrcpynA (self->Manufacturer, "The Wine Team", sizeof(self->Manufacturer) - 1);
     lstrcpynA (self->ProductFamily, "GPhoto2 Camera", sizeof(self->ProductFamily) - 1);
 
