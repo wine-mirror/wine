@@ -30,6 +30,7 @@
 #include "winuser.h"
 #include "twain.h"
 #include "twain_i.h"
+#include "resource.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
@@ -345,24 +346,111 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	return TWRC_SUCCESS;
 }
 
+typedef struct {
+    pTW_IDENTITY origin;
+    pTW_IDENTITY result;
+} userselect_data;
+
+INT_PTR CALLBACK userselect_dlgproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        userselect_data *data = (userselect_data*)lparam;
+        int i;
+        HWND sourcelist;
+        BOOL any_devices = FALSE;
+
+        SetWindowLongPtrW(hwnd, DWLP_USER, (LONG_PTR)data);
+
+        sourcelist = GetDlgItem(hwnd, IDC_LISTSOURCE);
+
+        for (i=0; i<nrdevices; i++)
+        {
+            TW_IDENTITY *id = &devices[i].identity;
+            LRESULT index;
+
+            if ((id->SupportedGroups & data->origin->SupportedGroups) == 0)
+                continue;
+
+            index = SendMessageA(sourcelist, LB_ADDSTRING, 0, (LPARAM)id->ProductName);
+            SendMessageW(sourcelist, LB_SETITEMDATA, (WPARAM)index, (LPARAM)i);
+            any_devices = TRUE;
+        }
+
+        if (any_devices)
+        {
+            EnableWindow(GetDlgItem(hwnd, IDOK), TRUE);
+
+            /* FIXME: Select the supplied product name or default source. */
+            SendMessageW(sourcelist, LB_SETCURSEL, 0, 0);
+        }
+
+        return TRUE;
+    }
+    case WM_CLOSE:
+        EndDialog(hwnd, 0);
+        return TRUE;
+    case WM_COMMAND:
+        if (wparam == MAKEWPARAM(IDCANCEL, BN_CLICKED))
+        {
+            EndDialog(hwnd, 0);
+            return TRUE;
+        }
+        else if (wparam == MAKEWPARAM(IDOK, BN_CLICKED) ||
+                 wparam == MAKEWPARAM(IDC_LISTSOURCE, LBN_DBLCLK))
+        {
+            userselect_data *data = (userselect_data*)GetWindowLongPtrW(hwnd, DWLP_USER);
+            HWND sourcelist;
+            LRESULT index;
+
+            sourcelist = GetDlgItem(hwnd, IDC_LISTSOURCE);
+
+            index = SendMessageW(sourcelist, LB_GETCURSEL, 0, 0);
+
+            if (index == LB_ERR)
+                return TRUE;
+
+            index = SendMessageW(sourcelist, LB_GETITEMDATA, (WPARAM)index, 0);
+
+            *data->result = devices[index].identity;
+
+            /* FIXME: Save this as the default source */
+
+            EndDialog(hwnd, 1);
+            return TRUE;
+        }
+        break;
+    }
+    return FALSE;
+}
+
 /* DG_CONTROL/DAT_IDENTITY/MSG_USERSELECT */
 TW_UINT16 TWAIN_UserSelect (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 {
-	pTW_IDENTITY	selected = (pTW_IDENTITY)pData;
+    userselect_data param = {pOrigin, pData};
+    HWND parent = DSM_parent;
 
-        TRACE("DG_CONTROL/DAT_IDENTITY/MSG_USERSELECT SupportedGroups=0x%x ProductName=%s\n",
-            selected->SupportedGroups, wine_dbgstr_a(selected->ProductName));
+    TRACE("DG_CONTROL/DAT_IDENTITY/MSG_USERSELECT SupportedGroups=0x%x ProductName=%s\n",
+        pOrigin->SupportedGroups, wine_dbgstr_a(param.result->ProductName));
 
-        twain_autodetect();
-	if (!nrdevices) {
-                TRACE("<-- TWRC_FAILURE\n");
-		DSM_twCC = TWCC_OPERATIONERROR;
-		return TWRC_FAILURE;
-	}
-	*selected = devices[0].identity;
-        TRACE("<-- %s\n", wine_dbgstr_a(selected->ProductName));
-	DSM_twCC = TWCC_SUCCESS;
-	return TWRC_SUCCESS;
+    twain_autodetect();
+
+    if (!IsWindow(parent))
+        parent = NULL;
+
+    if (DialogBoxParamW(DSM_hinstance, MAKEINTRESOURCEW(DLG_USERSELECT),
+        parent, userselect_dlgproc, (LPARAM)&param) == 0)
+    {
+        TRACE("canceled\n");
+        DSM_twCC = TWCC_SUCCESS;
+        return TWRC_CANCEL;
+    }
+
+    TRACE("<-- %s\n", wine_dbgstr_a(param.result->ProductName));
+    DSM_twCC = TWCC_SUCCESS;
+    return TWRC_SUCCESS;
 }
 
 /* DG_CONTROL/DAT_PARENT/MSG_CLOSEDSM */

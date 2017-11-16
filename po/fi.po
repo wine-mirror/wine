@@ -61,12 +61,12 @@ msgstr "Tukitietoja"
 #: dinput.rc:46 ieframe.rc:96 localui.rc:44 localui.rc:57 mpr.rc:49
 #: msacm32.rc:53 mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62
 #: oledlg.rc:94 serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300
-#: shell32.rc:322 shell32.rc:341 shlwapi.rc:44 user32.rc:83 user32.rc:98
-#: wininet.rc:51 wininet.rc:71 winspool.rc:42 net.rc:47 notepad.rc:117
-#: oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124 progman.rc:142
-#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:296
-#: regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349 regedit.rc:362
-#: taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: shell32.rc:322 shell32.rc:341 shlwapi.rc:44 twain.rc:32 user32.rc:83
+#: user32.rc:98 wininet.rc:51 wininet.rc:71 winspool.rc:42 net.rc:47
+#: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
+#: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
+#: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
 #: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -143,14 +143,14 @@ msgstr "&Asenna"
 #: localui.rc:45 localui.rc:58 mpr.rc:50 msacm32.rc:54 mshtml.rc:48
 #: mshtml.rc:58 msvfw32.rc:37 oledlg.rc:63 oledlg.rc:95 serialui.rc:42
 #: setupapi.rc:42 setupapi.rc:60 shell32.rc:277 shell32.rc:301 shell32.rc:312
-#: shell32.rc:342 shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52
-#: wininet.rc:72 winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175
-#: progman.rc:107 progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181
-#: progman.rc:200 progman.rc:217 regedit.rc:297 regedit.rc:308 regedit.rc:321
-#: regedit.rc:337 regedit.rc:350 regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518
-#: wineboot.rc:34 winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136
-#: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:99
-#: wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
+#: shell32.rc:342 shlwapi.rc:45 twain.rc:33 user32.rc:84 user32.rc:99
+#: wininet.rc:52 wininet.rc:72 winspool.rc:43 notepad.rc:118 oleview.rc:162
+#: oleview.rc:175 progman.rc:107 progman.rc:125 progman.rc:143 progman.rc:159
+#: progman.rc:181 progman.rc:200 progman.rc:217 regedit.rc:297 regedit.rc:308
+#: regedit.rc:321 regedit.rc:337 regedit.rc:350 regedit.rc:363 taskmgr.rc:443
+#: taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215 winecfg.rc:225
+#: wineconsole.rc:136 winefile.rc:129 winefile.rc:152 winefile.rc:182
+#: winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
 msgid "Cancel"
 msgstr "Peruuta"
 
@@ -8911,6 +8911,12 @@ msgstr " min"
 msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " s"
+
+#: twain.rc:29
+#, fuzzy
+#| msgid "Select Folder"
+msgid "Select Source"
+msgstr "Valitse kansio"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"

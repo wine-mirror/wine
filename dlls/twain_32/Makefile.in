@@ -4,3 +4,5 @@ IMPORTS   = user32
 C_SRCS = \
 	dsm_ctrl.c \
 	twain32_main.c
+
+RC_SRCS = twain.rc

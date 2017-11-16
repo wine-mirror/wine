@@ -18927,7 +18927,7 @@ wine_fn_config_dll tdi.sys enable_tdi_sys
 wine_fn_config_dll toolhelp.dll16 enable_win16
 wine_fn_config_dll traffic enable_traffic
 wine_fn_config_dll twain.dll16 enable_win16
-wine_fn_config_dll twain_32 enable_twain_32
+wine_fn_config_dll twain_32 enable_twain_32 clean
 wine_fn_config_test dlls/twain_32/tests twain_32_test
 wine_fn_config_dll typelib.dll16 enable_win16
 wine_fn_config_dll ucrtbase enable_ucrtbase implib

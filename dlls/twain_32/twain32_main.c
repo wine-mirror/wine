@@ -31,6 +31,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
+extern HINSTANCE DSM_hinstance;
+
+BOOL WINAPI DllMain (HINSTANCE hinstance, DWORD reason, LPVOID reserved)
+{
+    TRACE("%p,%x,%p\n", hinstance, reason, reserved);
+
+    switch (reason)
+    {
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hinstance);
+            DSM_hinstance = hinstance;
+            break;
+        case DLL_PROCESS_DETACH:
+            break;
+    }
+    return TRUE;
+}
+
 /* A helper function that looks up a destination identity in the active
    source list */
 static activeDS *TWAIN_LookupSource (const TW_IDENTITY *pDest)

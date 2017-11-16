@@ -53,6 +53,8 @@ TW_UINT16 DSM_twCC DECLSPEC_HIDDEN;             /* current condition code of Sou
 
 activeDS *activeSources DECLSPEC_HIDDEN;	/* list of active data sources */
 
+HINSTANCE DSM_hinstance DECLSPEC_HIDDEN;
+
 /* Implementation of operation triplets (From Application to Source Manager) */
 extern TW_UINT16 TWAIN_CloseDS
            (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
