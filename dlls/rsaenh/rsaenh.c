@@ -242,7 +242,6 @@ static const PROV_ENUMALGS_EX aProvEnumAlgsEx[5][RSAENH_MAX_ENUMALGS+1] =
   {CALG_DES, 56, 56, 56, 0, S("DES"), S("Data Encryption Standard (DES)")},
   {CALG_3DES_112, 112, 112, 112, 0, S("3DES TWO KEY"), S("Two Key Triple DES")},
   {CALG_3DES, 168, 168, 168, 0, S("3DES"), S("Three Key Triple DES")},
-  {CALG_AES, 128, 128, 128, 0, S("AES"), S("Advanced Encryption Standard (AES)")},
   {CALG_AES_128, 128, 128, 128, 0, S("AES-128"), S("Advanced Encryption Standard (AES-128)")},
   {CALG_AES_192, 192, 192, 192, 0, S("AES-192"), S("Advanced Encryption Standard (AES-192)")},
   {CALG_AES_256, 256, 256, 256, 0, S("AES-256"), S("Advanced Encryption Standard (AES-256)")},
@@ -791,7 +790,7 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
 {
     HCRYPTKEY hCryptKey;
     CRYPTKEY *pCryptKey;
-    DWORD dwKeyLen = HIWORD(dwFlags), bKeyLen = dwKeyLen;
+    DWORD dwKeyLen = HIWORD(dwFlags);
     const PROV_ENUMALGS_EX *peaAlgidInfo;
 
     *ppCryptKey = NULL;
@@ -850,14 +849,6 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
              */
             break;
 
-        case CALG_AES:
-            if (!bKeyLen)
-            {
-                TRACE("missing key len for CALG_AES\n");
-                SetLastError(NTE_BAD_ALGID);
-                return (HCRYPTKEY)INVALID_HANDLE_VALUE;
-            }
-            /* fall through */
         default:
             if (dwKeyLen % 8 || 
                 dwKeyLen > peaAlgidInfo->dwMaxLen || 
@@ -924,7 +915,6 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
                 pCryptKey->dwMode = CRYPT_MODE_CBC;
                 break;
 
-            case CALG_AES:
             case CALG_AES_128:
             case CALG_AES_192:
             case CALG_AES_256:
@@ -3197,7 +3187,6 @@ BOOL WINAPI RSAENH_CPGenKey(HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYP
         case CALG_DES:
         case CALG_3DES_112:
         case CALG_3DES:
-        case CALG_AES:
         case CALG_AES_128:
         case CALG_AES_192:
         case CALG_AES_256:
