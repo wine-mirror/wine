@@ -6261,6 +6261,14 @@ static void test_CreateWindow(void)
     ok( rc.bottom <= expected_cy, "invalid rect bottom %u\n", rc.bottom );
     DestroyWindow(hwnd);
 
+    /* invalid class */
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowExA(0, "INVALID_CLASS", NULL, WS_CHILD, 10, 10, 100, 100, parent, 0, 0, NULL);
+    ok(hwnd == 0, "CreateWindowEx succeeded\n");
+    ok(GetLastError() == ERROR_CLASS_DOES_NOT_EXIST || GetLastError() == ERROR_CANNOT_FIND_WND_CLASS,
+        "invalid error %u\n", GetLastError());
+    DestroyWindow(hwnd);
+
     if (pGetLayout && pSetLayout)
     {
         HDC hdc = GetDC( parent );

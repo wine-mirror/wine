@@ -345,7 +345,10 @@ extern DWORD thread_data_tls_index DECLSPEC_HIDDEN;
 
 static inline struct x11drv_thread_data *x11drv_thread_data(void)
 {
-    return TlsGetValue( thread_data_tls_index );
+    DWORD err = GetLastError();  /* TlsGetValue always resets last error */
+    struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
+    SetLastError( err );
+    return data;
 }
 
 /* retrieve the thread display, or NULL if not created yet */

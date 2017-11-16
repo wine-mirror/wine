@@ -1928,8 +1928,17 @@ static void test_Input_mouse(void)
     DWORD thread_id;
     POINT pt, pt_org;
     MSG msg;
+    BOOL ret;
 
-    GetCursorPos(&pt_org);
+    SetLastError(0xdeadbeef);
+    ret = GetCursorPos(NULL);
+    ok(!ret, "GetCursorPos succeed\n");
+    ok(GetLastError() == 0xdeadbeef || GetLastError() == ERROR_NOACCESS, "error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetCursorPos(&pt_org);
+    ok(ret, "GetCursorPos failed\n");
+    ok(GetLastError() == 0xdeadbeef, "error %u\n", GetLastError());
 
     button_win = CreateWindowA("button", "button", WS_VISIBLE | WS_POPUP,
             100, 100, 100, 100, 0, NULL, NULL, NULL);

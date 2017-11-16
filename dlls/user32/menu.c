@@ -3518,6 +3518,7 @@ BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
                SendMessageW( hWnd, WM_UNINITMENUPOPUP, (WPARAM)hMenu,
                              MAKELPARAM(0, IS_SYSTEM_MENU(menu)) );
         }
+        SetLastError(0);
     }
 
     return ret;
