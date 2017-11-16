@@ -398,7 +398,7 @@ void mmap_init(void)
     }
     reserve_dos_area();
 
-#elif defined(__x86_64__)
+#elif defined(__x86_64__) || defined(__aarch64__)
 
     if (!list_head( &reserved_areas ))
     {
