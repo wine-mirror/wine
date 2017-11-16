@@ -7932,7 +7932,7 @@ basic_istream_char* __thiscall basic_istream_char_get_str_delim(basic_istream_ch
     basic_ios_char *base = basic_istream_char_get_basic_ios(this);
     int ch = delim;
 
-    TRACE("(%p %p %s %c)\n", this, str, wine_dbgstr_longlong(count), delim);
+    TRACE("(%p %p %s %s)\n", this, str, wine_dbgstr_longlong(count), debugstr_an(&delim, 1));
 
     this->count = 0;
 
@@ -7978,7 +7978,7 @@ basic_istream_char* __thiscall basic_istream_char_get_streambuf_delim(basic_istr
     basic_ios_char *base = basic_istream_char_get_basic_ios(this);
     int ch = delim;
 
-    TRACE("(%p %p %c)\n", this, strbuf, delim);
+    TRACE("(%p %p %s)\n", this, strbuf, debugstr_an(&delim, 1));
 
     this->count = 0;
 
@@ -8022,7 +8022,7 @@ basic_istream_char* __thiscall basic_istream_char_getline_delim(basic_istream_ch
     basic_ios_char *base = basic_istream_char_get_basic_ios(this);
     int ch = (unsigned char)delim;
 
-    TRACE("(%p %p %s %c)\n", this, str, wine_dbgstr_longlong(count), delim);
+    TRACE("(%p %p %s %s)\n", this, str, wine_dbgstr_longlong(count), debugstr_an(&delim, 1));
 
     this->count = 0;
 
@@ -8724,7 +8724,7 @@ basic_istream_char* __cdecl basic_istream_char_getline_bstr_delim(
     IOSB_iostate state = IOSTATE_goodbit;
     int c = (unsigned char)delim;
 
-    TRACE("(%p %p %c)\n", istream, str, delim);
+    TRACE("(%p %p %s)\n", istream, str, debugstr_an(&delim, 1));
 
     MSVCP_basic_string_char_clear(str);
     if(basic_istream_char_sentry_create(istream, TRUE)) {
@@ -9400,7 +9400,7 @@ basic_istream_wchar* __thiscall basic_istream_wchar_get_str_delim(basic_istream_
     basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
     unsigned short ch = delim;
 
-    TRACE("(%p %p %s %c)\n", this, str, wine_dbgstr_longlong(count), delim);
+    TRACE("(%p %p %s %s)\n", this, str, wine_dbgstr_longlong(count), debugstr_wn(&delim, 1));
 
     this->count = 0;
 
@@ -9450,7 +9450,7 @@ basic_istream_wchar* __thiscall basic_istream_wchar_get_streambuf_delim(basic_is
     basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
     unsigned short ch = delim;
 
-    TRACE("(%p %p %c)\n", this, strbuf, delim);
+    TRACE("(%p %p %s)\n", this, strbuf, debugstr_wn(&delim, 1));
 
     this->count = 0;
 
@@ -9498,7 +9498,7 @@ basic_istream_wchar* __thiscall basic_istream_wchar_getline_delim(basic_istream_
     basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
     unsigned short ch = delim;
 
-    TRACE("(%p %p %s %c)\n", this, str, wine_dbgstr_longlong(count), delim);
+    TRACE("(%p %p %s %s)\n", this, str, wine_dbgstr_longlong(count), debugstr_wn(&delim, 1));
 
     this->count = 0;
 
@@ -10397,7 +10397,7 @@ basic_istream_wchar* __cdecl basic_istream_wchar_getline_bstr_delim(
     IOSB_iostate state = IOSTATE_goodbit;
     int c = delim;
 
-    TRACE("(%p %p %c)\n", istream, str, delim);
+    TRACE("(%p %p %s)\n", istream, str, debugstr_wn(&delim, 1));
 
     MSVCP_basic_string_wchar_clear(str);
     if(basic_istream_wchar_sentry_create(istream, TRUE)) {
