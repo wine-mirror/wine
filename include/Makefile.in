@@ -568,6 +568,7 @@ HEADER_SRCS = \
 	patchapi.h \
 	pdh.h \
 	pdhmsg.h \
+	perflib.h \
 	physicalmonitorenumerationapi.h \
 	pktdef.h \
 	poppack.h \

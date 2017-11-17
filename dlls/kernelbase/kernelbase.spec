@@ -1144,20 +1144,20 @@
 @ stdcall PeekConsoleInputA(ptr ptr long ptr) kernel32.PeekConsoleInputA
 @ stdcall PeekConsoleInputW(ptr ptr long ptr) kernel32.PeekConsoleInputW
 @ stdcall PeekNamedPipe(long ptr long ptr ptr ptr) kernel32.PeekNamedPipe
-# @ stub PerfCreateInstance
+@ stdcall PerfCreateInstance(long ptr wstr long) advapi32.PerfCreateInstance
 # @ stub PerfDecrementULongCounterValue
 # @ stub PerfDecrementULongLongCounterValue
-# @ stub PerfDeleteInstance
+@ stdcall PerfDeleteInstance(long ptr) advapi32.PerfDeleteInstance
 # @ stub PerfIncrementULongCounterValue
 # @ stub PerfIncrementULongLongCounterValue
 # @ stub PerfQueryInstance
-# @ stub PerfSetCounterRefValue
-# @ stub PerfSetCounterSetInfo
+@ stdcall PerfSetCounterRefValue(long ptr long ptr) advapi32.PerfSetCounterRefValue
+@ stdcall PerfSetCounterSetInfo(long ptr long) advapi32.PerfSetCounterSetInfo
 # @ stub PerfSetULongCounterValue
 # @ stub PerfSetULongLongCounterValue
-# @ stub PerfStartProvider
-# @ stub PerfStartProviderEx
-# @ stub PerfStopProvider
+@ stdcall PerfStartProvider(ptr ptr ptr) advapi32.PerfStartProvider
+@ stdcall PerfStartProviderEx(ptr ptr ptr) advapi32.PerfStartProviderEx
+@ stdcall PerfStopProvider(long) advapi32.PerfStopProvider
 # @ stub PoolPerAppKeyStateInternal
 @ stdcall PostQueuedCompletionStatus(long long ptr ptr) kernel32.PostQueuedCompletionStatus
 # @ stub PrefetchVirtualMemory
