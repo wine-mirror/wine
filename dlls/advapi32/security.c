@@ -4314,7 +4314,7 @@ static DWORD ParseAclStringFlags(LPCWSTR* StringAcl)
     DWORD flags = 0;
     LPCWSTR szAcl = *StringAcl;
 
-    while (*szAcl != '(')
+    while (*szAcl && *szAcl != '(')
     {
         if (*szAcl == 'P')
 	{
@@ -4625,7 +4625,7 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
         pAcl->AclRevision = ACL_REVISION;
         pAcl->Sbz1 = 0;
         pAcl->AclSize = length;
-        pAcl->AceCount = acecount++;
+        pAcl->AceCount = acecount;
         pAcl->Sbz2 = 0;
     }
     return TRUE;

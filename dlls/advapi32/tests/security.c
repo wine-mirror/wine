@@ -4101,6 +4101,8 @@ static void test_ConvertStringSecurityDescriptor(void)
     PSECURITY_DESCRIPTOR pSD;
     static const WCHAR Blank[] = { 0 };
     unsigned int i;
+    ULONG size;
+    ACL *acl;
     static const struct
     {
         const char *sidstring;
@@ -4211,6 +4213,33 @@ static void test_ConvertStringSecurityDescriptor(void)
     ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_DATATYPE) /* win2k */,
        "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %u\n", GetLastError());
     if (ret) LocalFree(pSD);
+
+    /* empty DACL */
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA("D:", SDDL_REVISION_1, &pSD, &size);
+    ok(ret, "unexpected error %u\n", GetLastError());
+    ok(size == sizeof(SECURITY_DESCRIPTOR_RELATIVE) + sizeof(ACL), "got %u\n", size);
+    acl = (ACL *)((char *)pSD + sizeof(SECURITY_DESCRIPTOR_RELATIVE));
+    ok(acl->AclRevision == ACL_REVISION, "got %u\n", acl->AclRevision);
+    ok(!acl->Sbz1, "got %u\n", acl->Sbz1);
+    ok(acl->AclSize == sizeof(*acl), "got %u\n", acl->AclSize);
+    ok(!acl->AceCount, "got %u\n", acl->AceCount);
+    ok(!acl->Sbz2, "got %u\n", acl->Sbz2);
+    LocalFree(pSD);
+
+    /* empty SACL */
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA("S:", SDDL_REVISION_1, &pSD, &size);
+    ok(ret, "unexpected error %u\n", GetLastError());
+    ok(size == sizeof(SECURITY_DESCRIPTOR_RELATIVE) + sizeof(ACL), "got %u\n", size);
+    acl = (ACL *)((char *)pSD + sizeof(SECURITY_DESCRIPTOR_RELATIVE));
+    ok(!acl->Sbz1, "got %u\n", acl->Sbz1);
+    ok(acl->AclSize == sizeof(*acl), "got %u\n", acl->AclSize);
+    ok(!acl->AceCount, "got %u\n", acl->AceCount);
+    ok(!acl->Sbz2, "got %u\n", acl->Sbz2);
+    LocalFree(pSD);
 }
 
 static void test_ConvertSecurityDescriptorToString(void)
