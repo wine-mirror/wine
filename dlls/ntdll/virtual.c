@@ -1177,6 +1177,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
                 return STATUS_NOT_SUPPORTED;
             }
             break;
+        case EACCES:
         case EPERM:  /* noexec filesystem, fall back to read() */
             if (flags & MAP_SHARED)
             {
@@ -1334,6 +1335,7 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
         switch (errno)
         {
         case EPERM:
+        case EACCES:
             WARN( "noexec file system, falling back to read\n" );
             break;
         case ENOEXEC:
