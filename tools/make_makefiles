@@ -542,6 +542,7 @@ my $git_dir = $ENV{GIT_DIR} || ".git";
 die "needs to be run from a git checkout" unless -d $git_dir;
 
 my @all_files = split /\0/, `git ls-files -c -z`;
+map { $ignored_source_files{$_} = 1; } split /\0/, `git ls-files -d -z`;
 @makefiles = map { (my $ret = $_) =~ s/\.in$//; $ret; } grep /Makefile.in$/, @all_files;
 
 foreach my $file (sort @makefiles)
