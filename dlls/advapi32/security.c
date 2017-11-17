@@ -4793,6 +4793,9 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
     BOOL ret;
     LPWSTR StringSecurityDescriptorW;
 
+    TRACE("%s, %u, %p, %p\n", debugstr_a(StringSecurityDescriptor), StringSDRevision,
+          SecurityDescriptor, SecurityDescriptorSize);
+
     if(!StringSecurityDescriptor)
         return FALSE;
 
@@ -4818,7 +4821,8 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(
     SECURITY_DESCRIPTOR* psd;
     BOOL bret = FALSE;
 
-    TRACE("%s\n", debugstr_w(StringSecurityDescriptor));
+    TRACE("%s, %u, %p, %p\n", debugstr_w(StringSecurityDescriptor), StringSDRevision,
+          SecurityDescriptor, SecurityDescriptorSize);
 
     if (GetVersion() & 0x80000000)
     {
