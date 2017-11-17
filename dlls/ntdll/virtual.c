@@ -1164,18 +1164,29 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
         if (mmap( (char *)view->base + start, size, prot, flags, fd, offset ) != (void *)-1)
             goto done;
 
-        if ((errno == EPERM) && (prot & PROT_EXEC))
-            ERR( "failed to set %08x protection on file map, noexec filesystem?\n", prot );
-
-        /* mmap() failed; if this is because the file offset is not    */
-        /* page-aligned (EINVAL), or because the underlying filesystem */
-        /* does not support mmap() (ENOEXEC,ENODEV), we do it by hand. */
-        if ((errno != ENOEXEC) && (errno != EINVAL) && (errno != ENODEV)) return FILE_GetNtStatus();
-        if (flags & MAP_SHARED)  /* we cannot fake shared mappings */
+        switch (errno)
         {
-            if (errno == EINVAL) return STATUS_INVALID_PARAMETER;
-            ERR( "shared writable mmap not supported, broken filesystem?\n" );
-            return STATUS_NOT_SUPPORTED;
+        case EINVAL:  /* file offset is not page-aligned, fall back to read() */
+            if (flags & MAP_SHARED) return STATUS_INVALID_PARAMETER;
+            break;
+        case ENOEXEC:
+        case ENODEV:  /* filesystem doesn't support mmap(), fall back to read() */
+            if (flags & MAP_SHARED)
+            {
+                ERR( "shared writable mmap not supported, broken filesystem?\n" );
+                return STATUS_NOT_SUPPORTED;
+            }
+            break;
+        case EPERM:  /* noexec filesystem, fall back to read() */
+            if (flags & MAP_SHARED)
+            {
+                if (prot & PROT_EXEC) ERR( "failed to set PROT_EXEC on file map, noexec filesystem?\n" );
+                return STATUS_ACCESS_DENIED;
+            }
+            if (prot & PROT_EXEC) WARN( "failed to set PROT_EXEC on file map, noexec filesystem?\n" );
+            break;
+        default:
+            return FILE_GetNtStatus();
         }
     }
 
