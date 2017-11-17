@@ -253,7 +253,7 @@
 @ stub RoGetApartmentIdentifier
 @ stub RoGetErrorReportingFlags
 @ stub RoGetMatchingRestrictedErrorInfo
-@ stub RoGetParameterizedTypeInstanceIID
+@ stdcall RoGetParameterizedTypeInstanceIID(long ptr ptr ptr ptr)
 @ stub RoGetServerActivatableClasses
 @ stdcall RoInitialize(long)
 @ stub RoInspectCapturedStackBackTrace

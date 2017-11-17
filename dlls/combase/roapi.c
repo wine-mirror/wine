@@ -18,6 +18,7 @@
 
 #include "objbase.h"
 #include "roapi.h"
+#include "roparameterizediid.h"
 #include "hstring.h"
 
 #include "wine/debug.h"
@@ -53,5 +54,18 @@ void WINAPI RoUninitialize(void)
 HRESULT WINAPI RoGetActivationFactory(HSTRING classid, REFIID iid, void **factory)
 {
     FIXME("stub: %p %p %p\n", classid, iid, factory);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      RoGetParameterizedTypeInstanceIID (combase.@)
+ */
+HRESULT WINAPI RoGetParameterizedTypeInstanceIID(UINT32 name_element_count, const WCHAR **name_elements,
+                                                 const IRoMetaDataLocator *meta_data_locator, GUID *iid,
+                                                 ROPARAMIIDHANDLE *hiid)
+{
+    FIXME("stub: %d %p %p %p %p\n", name_element_count, name_elements, meta_data_locator, iid, hiid);
+    if (iid) *iid = GUID_NULL;
+    if (hiid) *hiid = INVALID_HANDLE_VALUE;
     return E_NOTIMPL;
 }

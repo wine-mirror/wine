@@ -1,3 +1,3 @@
 @ stub RoFreeParameterizedTypeExtra
-@ stub RoGetParameterizedTypeInstanceIID
+@ stdcall RoGetParameterizedTypeInstanceIID(long ptr ptr ptr ptr) combase.RoGetParameterizedTypeInstanceIID
 @ stub RoParameterizedTypeExtraGetTypeSignature
