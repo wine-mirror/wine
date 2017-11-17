@@ -1523,7 +1523,7 @@ static DWORD WINAPI mutex_thread_proc(void *param)
     wait_list[2] = peb_lock_event;
     wait_list[3] = heap_lock_event;
 
-    trace("%04u: mutex_thread_proc: starting\n", GetCurrentThreadId());
+    trace("%04x: mutex_thread_proc: starting\n", GetCurrentThreadId());
     while (1)
     {
         ret = WaitForMultipleObjects(sizeof(wait_list)/sizeof(wait_list[0]), wait_list, FALSE, 50);
@@ -1531,7 +1531,7 @@ static DWORD WINAPI mutex_thread_proc(void *param)
         else if (ret == WAIT_OBJECT_0 + 1)
         {
             ULONG_PTR loader_lock_magic;
-            trace("%04u: mutex_thread_proc: Entering loader lock\n", GetCurrentThreadId());
+            trace("%04x: mutex_thread_proc: Entering loader lock\n", GetCurrentThreadId());
             ret = pLdrLockLoaderLock(0, NULL, &loader_lock_magic);
             ok(!ret, "LdrLockLoaderLock error %#x\n", ret);
             inside_loader_lock++;
@@ -1539,21 +1539,21 @@ static DWORD WINAPI mutex_thread_proc(void *param)
         }
         else if (ret == WAIT_OBJECT_0 + 2)
         {
-            trace("%04u: mutex_thread_proc: Entering PEB lock\n", GetCurrentThreadId());
+            trace("%04x: mutex_thread_proc: Entering PEB lock\n", GetCurrentThreadId());
             pRtlAcquirePebLock();
             inside_peb_lock++;
             SetEvent(ack_event);
         }
         else if (ret == WAIT_OBJECT_0 + 3)
         {
-            trace("%04u: mutex_thread_proc: Entering heap lock\n", GetCurrentThreadId());
+            trace("%04x: mutex_thread_proc: Entering heap lock\n", GetCurrentThreadId());
             HeapLock(GetProcessHeap());
             inside_heap_lock++;
             SetEvent(ack_event);
         }
     }
 
-    trace("%04u: mutex_thread_proc: exiting\n", GetCurrentThreadId());
+    trace("%04x: mutex_thread_proc: exiting\n", GetCurrentThreadId());
     return 196;
 }
 
@@ -1569,11 +1569,11 @@ static DWORD WINAPI semaphore_thread_proc(void *param)
     while (1)
     {
         if (winetest_debug > 1)
-            trace("%04u: semaphore_thread_proc: still alive\n", GetCurrentThreadId());
+            trace("%04x: semaphore_thread_proc: still alive\n", GetCurrentThreadId());
         if (WaitForSingleObject(stop_event, 50) != WAIT_TIMEOUT) break;
     }
 
-    trace("%04u: semaphore_thread_proc: exiting\n", GetCurrentThreadId());
+    trace("%04x: semaphore_thread_proc: exiting\n", GetCurrentThreadId());
     return 196;
 }
 
@@ -1585,7 +1585,7 @@ static DWORD WINAPI noop_thread_proc(void *param)
         InterlockedIncrement(noop_thread_started);
     }
 
-    trace("%04u: noop_thread_proc: exiting\n", GetCurrentThreadId());
+    trace("%04x: noop_thread_proc: exiting\n", GetCurrentThreadId());
     return 195;
 }
 
