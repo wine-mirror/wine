@@ -59,7 +59,6 @@ C_SRCS = \
 	nsservice.c \
 	olecmd.c \
 	oleobj.c \
-	olewnd.c \
 	omnavigator.c \
 	persist.c \
 	pluginhost.c \
