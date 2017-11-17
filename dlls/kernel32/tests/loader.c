@@ -2149,7 +2149,6 @@ static void child_process(const char *dll_name, DWORD target_offset)
     case 3:
         trace("signalling thread exit\n");
         SetEvent(stop_event);
-        CloseHandle(stop_event);
         break;
 
     case 4:
