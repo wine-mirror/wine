@@ -48,16 +48,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 
 static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes);
-static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags, 
-    PACL pAcl, LPDWORD cBytes);
-static BYTE ParseAceStringFlags(LPCWSTR* StringAcl);
-static BYTE ParseAceStringType(LPCWSTR* StringAcl);
-static DWORD ParseAceStringRights(LPCWSTR* StringAcl);
-static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
-    LPCWSTR StringSecurityDescriptor,
-    SECURITY_DESCRIPTOR_RELATIVE* SecurityDescriptor,
-    LPDWORD cBytes);
-static DWORD ParseAclStringFlags(LPCWSTR* StringAcl);
 
 typedef struct _ACEFLAG
 {
