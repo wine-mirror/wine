@@ -215,6 +215,10 @@ static void test_snprintf (void)
 
     ok (vsprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, NULL, 0, "abcd") == 4,
         "Failure to snprintf to NULL\n");
+    ok (vsprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, "abcd") == 4,
+        "Failure to snprintf to NULL\n");
+    ok (vsprintf_wrapper (0, NULL, 0, "abcd") == 4,
+        "Failure to snprintf to NULL\n");
 }
 
 static int WINAPIV vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
@@ -289,6 +293,13 @@ static void test_swprintf (void)
         ok (buffer[valid] == '\0',
             "\"%s\": Missing null termination (ret %d) - is %d\n", narrow_fmt, n, buffer[valid]);
     }
+
+    ok (vswprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, NULL, 0, str_short) == 5,
+        "Failure to swprintf to NULL\n");
+    ok (vswprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, str_short) == 5,
+        "Failure to swprintf to NULL\n");
+    ok (vswprintf_wrapper (0, NULL, 0, str_short) == 5,
+        "Failure to swprintf to NULL\n");
 }
 
 static int WINAPIV vfprintf_wrapper(FILE *file,

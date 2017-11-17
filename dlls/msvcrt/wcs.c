@@ -764,6 +764,8 @@ int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MS
             &ctx, format, locale, options & UCRTBASE_PRINTF_MASK, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
 
+    if(!str)
+        return ret;
     if(options & UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
         return ret>len ? -1 : ret;
     if(ret>=len) {
@@ -1282,6 +1284,8 @@ int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options,
             &ctx, format, locale, options & UCRTBASE_PRINTF_MASK, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
 
+    if(!str)
+        return ret;
     if(options & UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
         return ret>len ? -1 : ret;
     if(ret>=len) {
