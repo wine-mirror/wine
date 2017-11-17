@@ -146,6 +146,7 @@ IDL_SRCS = \
 	pstore.idl \
 	qedit.idl \
 	richole.idl \
+	roparameterizediid.idl \
 	row.idl \
 	rowchg.idl \
 	rowpos.idl \
