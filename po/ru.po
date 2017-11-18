@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-11-15 17:25+0300\n"
+"PO-Revision-Date: 2017-11-18 12:12+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -8922,10 +8922,8 @@ msgid " sec"
 msgstr " сек"
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "Select Folder"
 msgid "Select Source"
-msgstr "Выберите папку"
+msgstr "Выберите источник"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
