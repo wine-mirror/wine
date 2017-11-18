@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-11-15 21:43+0300\n"
+"PO-Revision-Date: 2017-11-18 20:45+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -8922,10 +8922,8 @@ msgid " sec"
 msgstr " sek."
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "Select Folder"
 msgid "Select Source"
-msgstr "Parinkite aplanką"
+msgstr "Parinkite šaltinį"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
