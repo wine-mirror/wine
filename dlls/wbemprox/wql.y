@@ -414,6 +414,30 @@ expr:
             if (!$$)
                 YYABORT;
         }
+  | prop_val TK_EQ TK_NULL
+        {
+            $$ = expr_unary( ctx, $1, OP_ISNULL );
+            if (!$$)
+                YYABORT;
+        }
+  | TK_NULL TK_EQ prop_val
+        {
+            $$ = expr_unary( ctx, $3, OP_ISNULL );
+            if (!$$)
+                YYABORT;
+        }
+  | prop_val TK_NE TK_NULL
+        {
+            $$ = expr_unary( ctx, $1, OP_NOTNULL );
+            if (!$$)
+                YYABORT;
+        }
+  | TK_NULL TK_NE prop_val
+        {
+            $$ = expr_unary( ctx, $3, OP_NOTNULL );
+            if (!$$)
+                YYABORT;
+        }
     ;
 
 string_val:
