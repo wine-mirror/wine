@@ -3060,7 +3060,6 @@ static void test_SuspendProcessNewThread(void)
     ok(exit_code == 0x1234, "Invalid remote thread exit code\n");
 
     ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
-    todo_wine
     ok(ret, "EXE IAT entry not resolved\n");
 
     if (thread_handle)

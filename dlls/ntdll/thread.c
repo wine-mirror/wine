@@ -349,7 +349,6 @@ HANDLE thread_init(void)
     thread_data->wait_fd[0] = -1;
     thread_data->wait_fd[1] = -1;
     thread_data->debug_info = &debug_info;
-    InsertHeadList( &tls_links, &teb->TlsLinks );
 
     signal_init_thread( teb );
     virtual_init_threading();
@@ -488,9 +487,8 @@ static void start_thread( struct startup_info *info )
 
     signal_init_thread( teb );
     server_init_thread( func );
-    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
 
-    MODULE_DllThreadAttach( NULL );
+    attach_dlls( (void *)1 );
 
     if (TRACE_ON(relay))
         DPRINTF( "%04x:Starting thread proc %p (arg=%p)\n", GetCurrentThreadId(), func, arg );
