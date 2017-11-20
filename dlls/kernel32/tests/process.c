@@ -2965,6 +2965,113 @@ static BOOL read_nt_header(HANDLE process_handle, MEMORY_BASIC_INFORMATION *mbi,
     return (nt_header->Signature == IMAGE_NT_SIGNATURE);
 }
 
+static PVOID get_process_exe(HANDLE process_handle, IMAGE_NT_HEADERS *nt_header)
+{
+    PVOID exe_base, address;
+    MEMORY_BASIC_INFORMATION mbi;
+
+    /* Find the EXE base in the new process */
+    exe_base = NULL;
+    for (address = NULL ;
+         VirtualQueryEx(process_handle, address, &mbi, sizeof(mbi)) ;
+         address = (char *)mbi.BaseAddress + mbi.RegionSize) {
+        if ((mbi.Type == SEC_IMAGE) &&
+            read_nt_header(process_handle, &mbi, nt_header) &&
+            !(nt_header->FileHeader.Characteristics & IMAGE_FILE_DLL)) {
+            exe_base = mbi.BaseAddress;
+            break;
+        }
+    }
+
+    return exe_base;
+}
+
+static BOOL are_imports_resolved(HANDLE process_handle, PVOID module_base, IMAGE_NT_HEADERS *nt_header)
+{
+    BOOL ret;
+    IMAGE_IMPORT_DESCRIPTOR iid;
+    ULONG_PTR orig_iat_entry_value, iat_entry_value;
+
+    ok(nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, "Import table VA is zero\n");
+    ok(nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size, "Import table Size is zero\n");
+
+    if (!nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress ||
+        !nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size)
+        return FALSE;
+
+    /* Read the first IID */
+    ret = ReadProcessMemory(process_handle,
+                            (char *)module_base + nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress,
+                            &iid, sizeof(iid), NULL);
+    ok(ret, "Failed to read remote module IID (%d)\n", GetLastError());
+
+    /* Validate the IID is present and not a bound import, and that we have
+       an OriginalFirstThunk to compare with */
+    ok(iid.Name, "Module first IID does not have a Name\n");
+    ok(iid.FirstThunk, "Module first IID does not have a FirstThunk\n");
+    ok(!iid.TimeDateStamp, "Module first IID is a bound import (UNSUPPORTED for current test)\n");
+    ok(iid.OriginalFirstThunk, "Module first IID does not have an OriginalFirstThunk (UNSUPPORTED for current test)\n");
+
+    /* Read a single IAT entry from the FirstThunk */
+    ret = ReadProcessMemory(process_handle, (char *)module_base + iid.FirstThunk,
+                            &iat_entry_value, sizeof(iat_entry_value), NULL);
+    ok(ret, "Failed to read IAT entry from FirstThunk (%d)\n", GetLastError());
+    ok(iat_entry_value, "IAT entry in FirstThunk is NULL\n");
+
+    /* Read a single IAT entry from the OriginalFirstThunk */
+    ret = ReadProcessMemory(process_handle, (char *)module_base + iid.OriginalFirstThunk,
+                            &orig_iat_entry_value, sizeof(orig_iat_entry_value), NULL);
+    ok(ret, "Failed to read IAT entry from OriginalFirstThunk (%d)\n", GetLastError());
+    ok(orig_iat_entry_value, "IAT entry in OriginalFirstThunk is NULL\n");
+
+    return iat_entry_value != orig_iat_entry_value;
+}
+
+static void test_SuspendProcessNewThread(void)
+{
+    BOOL ret;
+    STARTUPINFOA si = {0};
+    PROCESS_INFORMATION pi = {0};
+    PVOID exe_base, exit_thread_ptr;
+    IMAGE_NT_HEADERS nt_header;
+    HANDLE thread_handle = NULL;
+    DWORD exit_code = 0;
+
+    exit_thread_ptr = GetProcAddress(hkernel32, "ExitThread");
+    ok(exit_thread_ptr != NULL, "GetProcAddress ExitThread failed\n");
+
+    si.cb = sizeof(si);
+    ret = CreateProcessA(NULL, selfname, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    ok(ret, "Failed to create process (%d)\n", GetLastError());
+
+    exe_base = get_process_exe(pi.hProcess, &nt_header);
+    ok(exe_base != NULL, "Could not find EXE in remote process\n");
+
+    ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
+    ok(!ret, "IAT entry resolved prematurely\n");
+
+    thread_handle = CreateRemoteThread(pi.hProcess, NULL, 0,
+                                       (LPTHREAD_START_ROUTINE)exit_thread_ptr,
+                                       (PVOID)(ULONG_PTR)0x1234, 0, NULL);
+    ok(thread_handle != NULL, "Could not create remote thread (%d)\n", GetLastError());
+
+    ok(WaitForSingleObject(thread_handle, 60000) == WAIT_OBJECT_0, "Waiting for remote thread failed (%d)\n", GetLastError());
+    ok(GetExitCodeThread(thread_handle, &exit_code), "Failed to retrieve remote thread exit code (%d)\n", GetLastError());
+    ok(exit_code == 0x1234, "Invalid remote thread exit code\n");
+
+    ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
+    todo_wine
+    ok(ret, "EXE IAT entry not resolved\n");
+
+    if (thread_handle)
+        CloseHandle(thread_handle);
+
+    TerminateProcess(pi.hProcess, 0);
+    WaitForSingleObject(pi.hProcess, 10000);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+
 static void test_SuspendProcessState(void)
 {
     struct pipe_params
@@ -3007,12 +3114,9 @@ static void test_SuspendProcessState(void)
     static const ULONG pipe_write_magic = 0x454e4957;
     STARTUPINFOA si = {0};
     PROCESS_INFORMATION pi = {0};
-    PVOID exe_base, address, remote_pipe_params, exit_process_ptr,
+    PVOID exe_base, remote_pipe_params, exit_process_ptr,
           call_named_pipe_a;
     IMAGE_NT_HEADERS nt_header;
-    MEMORY_BASIC_INFORMATION mbi;
-    IMAGE_IMPORT_DESCRIPTOR iid;
-    ULONG_PTR orig_iat_entry_value, iat_entry_value;
     struct pipe_params pipe_params;
     struct remote_rop_chain rop_chain;
     CONTEXT ctx;
@@ -3033,53 +3137,12 @@ static void test_SuspendProcessState(void)
     ret = CreateProcessA(NULL, selfname, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
     ok(ret, "Failed to create process (%d)\n", GetLastError());
 
-    /* Find the EXE base in the new process */
-    exe_base = NULL;
-    for (address = NULL ;
-         VirtualQueryEx(pi.hProcess, address, &mbi, sizeof(mbi)) ;
-         address = (char *)mbi.BaseAddress + mbi.RegionSize) {
-        if ((mbi.Type == SEC_IMAGE) &&
-            read_nt_header(pi.hProcess, &mbi, &nt_header) &&
-            !(nt_header.FileHeader.Characteristics & IMAGE_FILE_DLL)) {
-            exe_base = mbi.BaseAddress;
-            break;
-        }
-    }
-
+    exe_base = get_process_exe(pi.hProcess, &nt_header);
     /* Make sure we found the EXE in the new process */
     ok(exe_base != NULL, "Could not find EXE in remote process\n");
 
-    /* Check the EXE has import table */
-    ok(nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, "Import table VA is zero\n");
-    ok(nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size, "Import table Size is zero\n");
-
-    /* Read the first IID */
-    ret = ReadProcessMemory(pi.hProcess,
-                            (char *)exe_base + nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress,
-                            &iid, sizeof(iid), NULL);
-    ok(ret, "Failed to read process EXE IID (%d)\n", GetLastError());
-
-    /* Validate the IID is present and not a bound import, and that we have
-       an OriginalFirstThunk to compare with */
-    ok(iid.Name, "Exe first IID does not have a Name\n");
-    ok(iid.FirstThunk, "Exe first IID does not have a FirstThunk\n");
-    ok(!iid.TimeDateStamp, "Exe first IID is a bound import (UNSUPPORTED for current test)\n");
-    ok(iid.OriginalFirstThunk, "Exe first IID does not have an OriginalFirstThunk (UNSUPPORTED for current test)\n");
-
-    /* Read a single IAT entry from the FirstThunk */
-    ret = ReadProcessMemory(pi.hProcess, (char *)exe_base + iid.FirstThunk,
-                            &iat_entry_value, sizeof(iat_entry_value), NULL);
-    ok(ret, "Failed to read IAT entry from FirstThunk (%d)\n", GetLastError());
-    ok(iat_entry_value, "IAT entry in FirstThunk is NULL\n");
-
-    /* Read a single IAT entry from the OriginalFirstThunk */
-    ret = ReadProcessMemory(pi.hProcess, (char *)exe_base + iid.OriginalFirstThunk,
-                            &orig_iat_entry_value, sizeof(orig_iat_entry_value), NULL);
-    ok(ret, "Failed to read IAT entry from OriginalFirstThunk (%d)\n", GetLastError());
-    ok(orig_iat_entry_value, "IAT entry in OriginalFirstThunk is NULL\n");
-
-    /* The IAT should be UNRESOLVED */
-    ok(iat_entry_value == orig_iat_entry_value, "IAT entry resolved prematurely\n");
+    ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
+    ok(!ret, "IAT entry resolved prematurely\n");
 
     server_pipe_handle = CreateNamedPipeA(pipe_name, PIPE_ACCESS_DUPLEX | FILE_FLAG_WRITE_THROUGH,
                                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 1, 0x20000, 0x20000,
@@ -3190,30 +3253,22 @@ static void test_SuspendProcessState(void)
     /* Validate the Imports, at this point the thread in the new process should have
        initialized the EXE module imports and call each dll DllMain notifying it on
        the new thread in the process. */
-    iat_entry_value = orig_iat_entry_value = 0;
-
-    /* Read a single IAT entry from the FirstThunk */
-    ret = ReadProcessMemory(pi.hProcess, (char *)exe_base + iid.FirstThunk,
-                            &iat_entry_value, sizeof(iat_entry_value), NULL);
-    ok(ret, "Failed to read IAT entry from FirstThunk [2] (%d)\n", GetLastError());
-
-    /* Read a single IAT entry from the OriginalFirstThunk */
-    ret = ReadProcessMemory(pi.hProcess, (char *)exe_base + iid.OriginalFirstThunk,
-                            &orig_iat_entry_value, sizeof(orig_iat_entry_value), NULL);
-    ok(ret, "Failed to read IAT entry from OriginalFirstThunk [2] (%d)\n", GetLastError());
-
-    /* The IAT should be RESOLVED */
-    ok(iat_entry_value != orig_iat_entry_value, "EXE IAT is not resolved\n");
+    ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
+    ok(ret, "EXE IAT is not resolved\n");
 
     ret = WriteFile(server_pipe_handle, &pipe_magic, sizeof(pipe_magic), &numb, NULL);
     ok(ret, "Failed to write the magic back to the pipe (%d)\n", GetLastError());
 
     CloseHandle(server_pipe_handle);
+    TerminateProcess(pi.hProcess, 0);
     WaitForSingleObject(pi.hProcess, 10000);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 }
 #else
+static void test_SuspendProcessNewThread(void)
+{
+}
 static void test_SuspendProcessState(void)
 {
 }
@@ -3712,6 +3767,7 @@ START_TEST(process)
     test_largepages();
     test_ProcThreadAttributeList();
     test_SuspendProcessState();
+    test_SuspendProcessNewThread();
 
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
