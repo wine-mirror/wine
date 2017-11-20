@@ -39,6 +39,7 @@
 
 #include "wine/test.h"
 #include "v6util.h"
+#include "resources.h"
 
 #define IMAGELIST_MAGIC (('L' << 8) | 'I')
 
@@ -67,6 +68,7 @@ static HRESULT (WINAPI *pImageList_CoCreateInstance)(REFCLSID,const IUnknown *,
     REFIID,void **);
 static HRESULT (WINAPI *pHIMAGELIST_QueryInterface)(HIMAGELIST,REFIID,void **);
 static int (WINAPI *pImageList_SetColorTable)(HIMAGELIST,int,int,RGBQUAD*);
+static DWORD (WINAPI *pImageList_GetFlags)(HIMAGELIST);
 
 static HINSTANCE hinst;
 
@@ -2237,6 +2239,26 @@ static void test_copy(void)
     ImageList_Destroy(src);
 }
 
+static void test_loadimage(void)
+{
+    HIMAGELIST list;
+    DWORD flags;
+
+    list = ImageList_LoadImageW( hinst, MAKEINTRESOURCEW(IDB_BITMAP_128x15), 16, 1, CLR_DEFAULT,
+                                 IMAGE_BITMAP, LR_CREATEDIBSECTION );
+    ok( list != NULL, "got %p\n", list );
+    flags = pImageList_GetFlags( list );
+    ok( flags == (ILC_COLOR4 | ILC_MASK), "got %08x\n", flags );
+    ImageList_Destroy( list );
+
+    list = ImageList_LoadImageW( hinst, MAKEINTRESOURCEW(IDB_BITMAP_128x15), 16, 1, CLR_NONE,
+                                 IMAGE_BITMAP, LR_CREATEDIBSECTION );
+    ok( list != NULL, "got %p\n", list );
+    flags = pImageList_GetFlags( list );
+    ok( flags == ILC_COLOR4, "got %08x\n", flags );
+    ImageList_Destroy( list );
+}
+
 static void test_IImageList_Clone(void)
 {
     IImageList *imgl, *imgl2;
@@ -2370,6 +2392,7 @@ START_TEST(imagelist)
     pImageList_DrawIndirect = (void*)GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
     pImageList_SetImageCount = (void*)GetProcAddress(hComCtl32, "ImageList_SetImageCount");
     pImageList_SetColorTable = (void*)GetProcAddress(hComCtl32, (const char*)390);
+    pImageList_GetFlags = (void*)GetProcAddress(hComCtl32, "ImageList_GetFlags");
 
     hinst = GetModuleHandleA(NULL);
 
@@ -2388,6 +2411,7 @@ START_TEST(imagelist)
     test_color_table(ILC_COLOR4);
     test_color_table(ILC_COLOR8);
     test_copy();
+    test_loadimage();
 
     FreeLibrary(hComCtl32);
 

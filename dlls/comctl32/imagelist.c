@@ -2037,7 +2037,8 @@ ImageList_LoadImageW (HINSTANCE hi, LPCWSTR lpbmp, INT cx, INT cGrow,
 
         nImageCount = dib.dsBm.bmWidth / cx;
 
-        himl = ImageList_Create (cx, dib.dsBm.bmHeight, ILC_MASK | color, nImageCount, cGrow);
+        if (clrMask != CLR_NONE) color |= ILC_MASK;
+        himl = ImageList_Create (cx, dib.dsBm.bmHeight, color, nImageCount, cGrow);
         if (!himl) {
             DeleteObject (handle);
             return NULL;
