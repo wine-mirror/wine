@@ -33,6 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
+DSMENTRYPROC GPHOTO2_dsmentry;
 
 #ifdef HAVE_GPHOTO2
 static char* GPHOTO2_StrDup(const char* str)
@@ -295,11 +296,25 @@ static TW_UINT16 GPHOTO2_FileSystemRename (pTW_IDENTITY pOrigin,
     return TWRC_FAILURE;
 }
 
+static void GPHOTO2_Notify (TW_UINT16 message)
+{
+    GPHOTO2_dsmentry (&activeDS.identity, &activeDS.appIdentity, DG_CONTROL, DAT_NULL, message, NULL);
+}
+
+/* DG_CONTROL/DAT_ENTRYPOINT/MSG_SET */
+static TW_UINT16 GPHOTO2_SetEntryPoint (pTW_IDENTITY pOrigin, TW_MEMREF pData)
+{
+    TW_ENTRYPOINT *entry = (TW_ENTRYPOINT*)pData;
+
+    GPHOTO2_dsmentry = entry->DSM_Entry;
+
+    return TWRC_SUCCESS;
+}
+
 /* DG_CONTROL/DAT_EVENT/MSG_PROCESSEVENT */
 static TW_UINT16 GPHOTO2_ProcessEvent (pTW_IDENTITY pOrigin,
                               TW_MEMREF pData)
 {
-    TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_EVENT pEvent = (pTW_EVENT) pData;
 
     TRACE("DG_CONTROL/DAT_EVENT/MSG_PROCESSEVENT\n");
@@ -309,16 +324,9 @@ static TW_UINT16 GPHOTO2_ProcessEvent (pTW_IDENTITY pOrigin,
         return TWRC_FAILURE;
     }
 
-    if (activeDS.pendingEvent.TWMessage != MSG_NULL) {
-        pEvent->TWMessage = activeDS.pendingEvent.TWMessage;
-        activeDS.pendingEvent.TWMessage = MSG_NULL;
-        twRC = TWRC_SUCCESS;
-    } else {
-        pEvent->TWMessage = MSG_NULL;  /* no message to the application */
-        twRC = TWRC_NOTDSEVENT;
-    }
+    pEvent->TWMessage = MSG_NULL;  /* no message to the application */
     activeDS.twCC = TWCC_SUCCESS;
-    return twRC;
+    return TWRC_NOTDSEVENT;
 }
 
 /* DG_CONTROL/DAT_PASSTHRU/MSG_PASSTHRU */
@@ -356,7 +364,7 @@ static TW_UINT16 GPHOTO2_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
     } else {
         activeDS.currentState = 5;
         /* Notify the application that it can close the data source */
-        activeDS.pendingEvent.TWMessage = MSG_CLOSEDSREQ;
+        GPHOTO2_Notify(MSG_CLOSEDSREQ);
         /* close any Transferring dialog */
         TransferringDialogBox(activeDS.progressWnd,-1);
         activeDS.progressWnd = 0;
@@ -502,25 +510,23 @@ static TW_UINT16 GPHOTO2_EnableDSUserInterface (pTW_IDENTITY pOrigin,
         activeDS.twCC = TWCC_SEQERROR;
 	return TWRC_FAILURE;
     }
-    activeDS.hwndOwner = pUserInterface->hParent;
     if (pUserInterface->ShowUI)
     {
 	BOOL rc;
 	activeDS.currentState = 5; /* Transitions to state 5 */
 	rc = DoCameraUI();
 	if (!rc) {
-	    activeDS.pendingEvent.TWMessage = MSG_CLOSEDSREQ;
+	    GPHOTO2_Notify(MSG_CLOSEDSREQ);
 	} else {
 	    /* FIXME: The GUI should have marked the files to download... */
-	    activeDS.pendingEvent.TWMessage = MSG_XFERREADY;
+	    GPHOTO2_Notify(MSG_XFERREADY);
 	    activeDS.currentState = 6; /* Transitions to state 6 directly */
 	}
     } else {
 	/* no UI will be displayed, so source is ready to transfer data */
-	activeDS.pendingEvent.TWMessage = MSG_XFERREADY;
+	GPHOTO2_Notify(MSG_XFERREADY);
 	activeDS.currentState = 6; /* Transitions to state 6 directly */
     }
-    activeDS.hwndOwner = pUserInterface->hParent;
     activeDS.twCC = TWCC_SUCCESS;
     return TWRC_SUCCESS;
 }
@@ -702,6 +708,13 @@ static TW_UINT16 GPHOTO2_SourceControlHandler (
                     twRC = TWRC_FAILURE;
                     break;
             }
+            break;
+
+        case DAT_ENTRYPOINT:
+            if (MSG == MSG_SET)
+                twRC = GPHOTO2_SetEntryPoint (pOrigin, pData);
+            else
+                twRC = TWRC_FAILURE;
             break;
 
         case DAT_EVENT:
@@ -1086,7 +1099,7 @@ GPHOTO2_GetIdentity( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
     TRACE("%d cameras detected.\n", count);
     self->ProtocolMajor = TWON_PROTOCOLMAJOR;
     self->ProtocolMinor = TWON_PROTOCOLMINOR;
-    self->SupportedGroups = DG_CONTROL | DG_IMAGE;
+    self->SupportedGroups = DG_CONTROL | DG_IMAGE | DF_DS2;
     lstrcpynA (self->Manufacturer, "The Wine Team", sizeof(self->Manufacturer) - 1);
     lstrcpynA (self->ProductFamily, "GPhoto2 Camera", sizeof(self->ProductFamily) - 1);
 
@@ -1110,6 +1123,21 @@ GPHOTO2_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
     CameraAbilities a;
     GPPortInfo info;
     const char	*model, *port;
+
+    if (GPHOTO2_dsmentry == NULL)
+    {
+        static const WCHAR twain32W[] = {'t','w','a','i','n','_','3','2',0};
+        HMODULE moddsm = GetModuleHandleW(twain32W);
+
+        if (moddsm)
+            GPHOTO2_dsmentry = (void*)GetProcAddress(moddsm, "DSM_Entry");
+
+        if (!GPHOTO2_dsmentry)
+        {
+            ERR("can't find DSM entry point\n");
+            return TWRC_FAILURE;
+        }
+    }
 
     if (TWRC_SUCCESS != gphoto2_auto_detect())
 	return TWRC_FAILURE;
@@ -1193,6 +1221,8 @@ GPHOTO2_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self) {
     activeDS.pixelflavor	= TWPF_CHOCOLATE;
     activeDS.pixeltype		= TWPT_RGB;
     activeDS.capXferMech	= TWSX_MEMORY;
+    activeDS.identity.Id = self->Id;
+    activeDS.appIdentity = *pOrigin;
     TRACE("OK!\n");
     return TWRC_SUCCESS;
 }

@@ -73,12 +73,10 @@ struct gphoto2_file  {
 /* internal information about an active data source */
 struct tagActiveDS
 {
-    TW_IDENTITY		identity;		/* identity */
+    TW_IDENTITY		identity;		/* identity of the data source */
+    TW_IDENTITY         appIdentity;            /* identity of the app */
     TW_UINT16		currentState;		/* current state */
-    TW_EVENT		pendingEvent;		/* pending event to be sent to
-                                                   application */
     TW_UINT16		twCC;			/* condition code */
-    HWND		hwndOwner;		/* window handle of the app */
     HWND		progressWnd;		/* window handle of the scanning window */
 
 #ifdef HAVE_GPHOTO2
