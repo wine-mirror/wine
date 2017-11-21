@@ -114,7 +114,7 @@ STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMEN
 CAPTION "Wine Mono Installer"
 FONT 8, "MS Shell Dlg"
 {
-    CONTROL "Wine could not find a Mono package which is needed for .NET applications " \
+    CONTROL "Wine could not find a wine-mono package which is needed for .NET applications " \
           "to work correctly. Wine can automatically download and install it for you.\n\n" \
           "Note: it is recommended to use your distribution's packages instead. " \
           "See <a href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for details.",

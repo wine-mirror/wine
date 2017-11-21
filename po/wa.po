@@ -159,8 +159,9 @@ msgstr ""
 
 #: appwiz.rc:118
 msgid ""
-"Wine could not find a Mono package which is needed for .NET applications to "
-"work correctly. Wine can automatically download and install it for you.\n"
+"Wine could not find a wine-mono package which is needed for .NET "
+"applications to work correctly. Wine can automatically download and install "
+"it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
