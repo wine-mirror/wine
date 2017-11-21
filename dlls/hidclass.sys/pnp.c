@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hid);
 static const WCHAR device_enumeratorW[] = {'H','I','D',0};
 static const WCHAR separator_W[] = {'\\',0};
 static const WCHAR device_deviceid_fmtW[] = {'%','s','\\',
-    'v','i','d','_','%','0','4','x','&','p','i','d','_','%', '0','4','x'};
+    'v','i','d','_','%','0','4','x','&','p','i','d','_','%', '0','4','x',0};
 
 static NTSTATUS WINAPI internalComplete(DEVICE_OBJECT *deviceObject, IRP *irp,
     void *context)
