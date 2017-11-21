@@ -199,19 +199,14 @@ static void inline check_expected_method_fmt(const char *method_name, const FORM
     } while (0)
 
 /* 2 x 1 x 32 bpp dib. PelsPerMeter = 200x400 */
-static BYTE dib[] =
+static const BYTE dib[] =
 {
-    0x42, 0x4d, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
-
-    0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00,
-    0x00, 0x00, 0x01, 0x00, 0x20, 0x00, 0x00, 0x00,
-
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc8, 0x00,
-    0x00, 0x00, 0x90, 0x01, 0x00, 0x00, 0x00, 0x00,
-
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    0x28, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x20, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xc8, 0x00, 0x00, 0x00, 0x90, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
 static void create_dib( STGMEDIUM *med )
@@ -219,9 +214,9 @@ static void create_dib( STGMEDIUM *med )
     void *ptr;
 
     med->tymed = TYMED_HGLOBAL;
-    U(med)->hGlobal = GlobalAlloc( GMEM_MOVEABLE, sizeof(dib) - sizeof(BITMAPFILEHEADER) );
+    U(med)->hGlobal = GlobalAlloc( GMEM_MOVEABLE, sizeof(dib) );
     ptr = GlobalLock( U(med)->hGlobal );
-    memcpy( ptr, dib + sizeof(BITMAPFILEHEADER), sizeof(dib) - sizeof(BITMAPFILEHEADER) );
+    memcpy( ptr, dib, sizeof(dib) );
     GlobalUnlock( U(med)->hGlobal );
     med->pUnkForRelease = NULL;
 }
@@ -2038,8 +2033,20 @@ static void test_data_cache(void)
     IStorage_Release(pStorage);
 }
 
-
 static const WCHAR CONTENTS[] = {'C','O','N','T','E','N','T','S',0};
+
+/* 2 x 1 x 32 bpp dib. PelsPerMeter = 200x400 */
+static BYTE file_dib[] =
+{
+    0x42, 0x4d, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
+    0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00,
+    0x00, 0x00, 0x01, 0x00, 0x20, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc8, 0x00,
+    0x00, 0x00, 0x90, 0x01, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
 
 static IStorage *create_storage( int num )
 {
@@ -2056,10 +2063,10 @@ static IStorage *create_storage( int num )
     ok( hr == S_OK, "got %08x\n", hr);
     if (num == 1) /* Set biXPelsPerMeter = 0 */
     {
-        dib[0x26] = 0;
-        dib[0x27] = 0;
+        file_dib[0x26] = 0;
+        file_dib[0x27] = 0;
     }
-    hr = IStream_Write( stm, dib, sizeof(dib), &written );
+    hr = IStream_Write( stm, file_dib, sizeof(file_dib), &written );
     ok( hr == S_OK, "got %08x\n", hr);
     IStream_Release( stm );
     return stg;
@@ -2114,7 +2121,7 @@ static void test_data_cache_dib_contents_stream(int num)
         "got %lu\n", GlobalSize( U(med).hGlobal ) );
     ptr = GlobalLock( U(med).hGlobal );
 
-    expect_info = *(BITMAPINFOHEADER *)(dib + sizeof(BITMAPFILEHEADER));
+    expect_info = *(BITMAPINFOHEADER *)(file_dib + sizeof(BITMAPFILEHEADER));
     if (expect_info.biXPelsPerMeter == 0 || expect_info.biYPelsPerMeter == 0)
     {
         HDC hdc = GetDC( 0 );
@@ -2123,8 +2130,8 @@ static void test_data_cache_dib_contents_stream(int num)
         ReleaseDC( 0, hdc );
     }
     ok( !memcmp( ptr, &expect_info, sizeof(expect_info) ), "mismatch\n" );
-    ok( !memcmp( ptr + sizeof(expect_info), dib + sizeof(BITMAPFILEHEADER) + sizeof(expect_info),
-                 sizeof(dib) - sizeof(BITMAPFILEHEADER) - sizeof(expect_info) ), "mismatch\n" );
+    ok( !memcmp( ptr + sizeof(expect_info), file_dib + sizeof(BITMAPFILEHEADER) + sizeof(expect_info),
+                 sizeof(file_dib) - sizeof(BITMAPFILEHEADER) - sizeof(expect_info) ), "mismatch\n" );
     GlobalUnlock( U(med).hGlobal );
     ReleaseStgMedium( &med );
 
