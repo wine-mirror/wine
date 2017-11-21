@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <limits.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -468,6 +469,24 @@ void exit_thread( int status )
 
 
 /***********************************************************************
+ *           thread_startup
+ */
+static void thread_startup( void *param )
+{
+    struct startup_info *info = param;
+    PRTL_THREAD_START_ROUTINE func = info->entry_point;
+    void *arg = info->entry_arg;
+
+    attach_dlls( (void *)1 );
+
+    if (TRACE_ON(relay))
+        DPRINTF( "%04x:Starting thread proc %p (arg=%p)\n", GetCurrentThreadId(), func, arg );
+
+    call_thread_entry_point( (LPTHREAD_START_ROUTINE)func, arg );
+}
+
+
+/***********************************************************************
  *           start_thread
  *
  * Startup routine for a newly created thread.
@@ -476,8 +495,6 @@ static void start_thread( struct startup_info *info )
 {
     TEB *teb = info->teb;
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    PRTL_THREAD_START_ROUTINE func = info->entry_point;
-    void *arg = info->entry_arg;
     struct debug_info debug_info;
 
     debug_info.str_pos = debug_info.strings;
@@ -486,14 +503,9 @@ static void start_thread( struct startup_info *info )
     thread_data->pthread_id = pthread_self();
 
     signal_init_thread( teb );
-    server_init_thread( func );
+    server_init_thread( info->entry_point );
 
-    attach_dlls( (void *)1 );
-
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Starting thread proc %p (arg=%p)\n", GetCurrentThreadId(), func, arg );
-
-    call_thread_entry_point( (LPTHREAD_START_ROUTINE)func, arg );
+    wine_switch_to_stack( thread_startup, info, teb->Tib.StackBase );
 }
 
 
@@ -603,8 +615,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     if ((status = virtual_alloc_thread_stack( teb, stack_reserve, stack_commit ))) goto error;
 
     pthread_attr_init( &attr );
-    pthread_attr_setstack( &attr, teb->DeallocationStack,
-                           (char *)teb->Tib.StackBase - (char *)teb->DeallocationStack );
+    pthread_attr_setstacksize( &attr, PTHREAD_STACK_MIN );
     pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
     interlocked_xchg_add( &nb_threads, 1 );
     if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, info ))
