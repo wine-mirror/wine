@@ -473,7 +473,21 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
         if (load_dll( load_path, mod_name, 0, &wm ) == STATUS_SUCCESS &&
             !(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS))
         {
-            if (process_attach( wm, NULL ) != STATUS_SUCCESS)
+            if (!imports_fixup_done && current_modref)
+            {
+                WINE_MODREF **deps;
+                if (current_modref->nDeps)
+                    deps = RtlReAllocateHeap( GetProcessHeap(), 0, current_modref->deps,
+                                              (current_modref->nDeps + 1) * sizeof(*deps) );
+                else
+                    deps = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*deps) );
+                if (deps)
+                {
+                    deps[current_modref->nDeps++] = wm;
+                    current_modref->deps = deps;
+                }
+            }
+            else if (process_attach( wm, NULL ) != STATUS_SUCCESS)
             {
                 LdrUnloadDll( wm->ldr.BaseAddress );
                 wm = NULL;
@@ -906,7 +920,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
 {
     int i, nb_imports;
     const IMAGE_IMPORT_DESCRIPTOR *imports;
-    WINE_MODREF *prev;
+    WINE_MODREF *prev, *imp;
     DWORD size;
     NTSTATUS status;
     ULONG_PTR cookie;
@@ -940,11 +954,12 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     status = STATUS_SUCCESS;
     for (i = 0; i < nb_imports; i++)
     {
-        if (!import_dll( wm->ldr.BaseAddress, &imports[i], load_path, &wm->deps[i] ))
+        if (!import_dll( wm->ldr.BaseAddress, &imports[i], load_path, &imp ))
         {
-            wm->deps[i] = NULL;
+            imp = NULL;
             status = STATUS_DLL_NOT_FOUND;
         }
+        wm->deps[i] = imp;
     }
     current_modref = prev;
     if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
