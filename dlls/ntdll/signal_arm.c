@@ -1011,7 +1011,12 @@ void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry )
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
 #endif
 
-    /* FIXME: set the initial context */
+    /* set the initial context */
+    context->ContextFlags = CONTEXT_FULL;
+    context->R0 = (DWORD)kernel32_start_process;
+    context->R1 = (DWORD)entry;
+    context->Sp = (DWORD)NtCurrentTeb()->Tib.StackBase;
+    context->Pc = (DWORD)call_thread_entry_point;
     return;
 
  error:
