@@ -5396,8 +5396,10 @@ static HRESULT WINAPI knownfolder_GetRedirectionCapabilities(
     IKnownFolder *iface,
     KF_REDIRECTION_CAPABILITIES *pCapabilities)
 {
-    FIXME("%p\n", pCapabilities);
-    return E_NOTIMPL;
+    FIXME("%p stub\n", pCapabilities);
+    if(!pCapabilities) return E_INVALIDARG;
+    *pCapabilities = KF_REDIRECTION_CAPABILITIES_DENY_ALL;
+    return S_OK;
 }
 
 static HRESULT WINAPI knownfolder_GetFolderDefinition(
