@@ -333,7 +333,7 @@
 @ stdcall CreateThread(ptr long ptr long long ptr)
 @ stdcall CreateThreadpool(ptr)
 @ stdcall CreateThreadpoolCleanupGroup()
-# @ stub CreateThreadpoolIo
+@ stdcall CreateThreadpoolIo(ptr ptr ptr ptr)
 @ stdcall CreateThreadpoolTimer(ptr ptr ptr)
 @ stdcall CreateThreadpoolWait(ptr ptr ptr)
 @ stdcall CreateThreadpoolWork(ptr ptr ptr)

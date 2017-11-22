@@ -225,7 +225,7 @@
 @ stdcall CreateThread(ptr long ptr long long ptr) kernel32.CreateThread
 @ stdcall CreateThreadpool(ptr) kernel32.CreateThreadpool
 @ stdcall CreateThreadpoolCleanupGroup() kernel32.CreateThreadpoolCleanupGroup
-@ stub CreateThreadpoolIo
+@ stdcall CreateThreadpoolIo(ptr ptr ptr ptr) kernel32.CreateThreadpoolIo
 @ stdcall CreateThreadpoolTimer(ptr ptr ptr) kernel32.CreateThreadpoolTimer
 @ stdcall CreateThreadpoolWait(ptr ptr ptr) kernel32.CreateThreadpoolWait
 @ stdcall CreateThreadpoolWork(ptr ptr ptr) kernel32.CreateThreadpoolWork

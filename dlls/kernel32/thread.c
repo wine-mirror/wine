@@ -1001,6 +1001,16 @@ PTP_CLEANUP_GROUP WINAPI CreateThreadpoolCleanupGroup( void )
 }
 
 /***********************************************************************
+ *              CreateThreadpoolIo (KERNEL32.@)
+ */
+PTP_IO WINAPI CreateThreadpoolIo( HANDLE handle, PTP_WIN32_IO_CALLBACK callback,
+                                  PVOID userdata, TP_CALLBACK_ENVIRON *environment )
+{
+    FIXME("(%p, %p, %p, %p): stub\n", handle, callback, userdata, environment);
+    return FALSE;
+}
+
+/***********************************************************************
  *              CreateThreadpoolTimer (KERNEL32.@)
  */
 PTP_TIMER WINAPI CreateThreadpoolTimer( PTP_TIMER_CALLBACK callback, PVOID userdata,
