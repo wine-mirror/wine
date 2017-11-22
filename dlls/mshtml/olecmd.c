@@ -396,7 +396,7 @@ static HRESULT exec_select_all(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *i
     if(This->doc_obj->nscontainer)
         do_ns_command(This, NSCMD_SELECTALL, NULL);
 
-    update_doc(This, UPDATE_UI);
+    update_doc(This->doc_obj, UPDATE_UI);
     return S_OK;
 }
 

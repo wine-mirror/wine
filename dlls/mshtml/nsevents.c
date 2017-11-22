@@ -181,7 +181,7 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
 
     TRACE("(%p)->(%p)\n", doc, event);
 
-    update_doc(&doc_obj->basedoc, UPDATE_UI);
+    update_doc(doc_obj, UPDATE_UI);
     if(doc_obj->usermode == EDITMODE)
         handle_edit_event(&doc_obj->basedoc, event);
 

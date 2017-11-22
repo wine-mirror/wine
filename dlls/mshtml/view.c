@@ -77,12 +77,12 @@ static void activate_gecko(NSContainer *This)
     nsIBaseWindow_SetEnabled(This->window, TRUE);
 }
 
-void update_doc(HTMLDocument *This, DWORD flags)
+void update_doc(HTMLDocumentObj *This, DWORD flags)
 {
-    if(!This->doc_obj->update && This->doc_obj->hwnd)
-        SetTimer(This->doc_obj->hwnd, TIMER_ID, 100, NULL);
+    if(!This->update && This->hwnd)
+        SetTimer(This->hwnd, TIMER_ID, 100, NULL);
 
-    This->doc_obj->update |= flags;
+    This->update |= flags;
 }
 
 void update_title(HTMLDocumentObj *This)
@@ -551,7 +551,7 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
             if(FAILED(hres))
                 return hres;
         }
-        update_doc(This, UPDATE_UI);
+        update_doc(This->doc_obj, UPDATE_UI);
         ShowWindow(This->doc_obj->hwnd, SW_SHOW);
     }else {
         ShowWindow(This->doc_obj->hwnd, SW_HIDE);
@@ -624,7 +624,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             nsIWebBrowserFocus_Activate(This->doc_obj->nscontainer->focus);
         notif_focus(This->doc_obj);
 
-        update_doc(This, UPDATE_UI);
+        update_doc(This->doc_obj, UPDATE_UI);
 
         hres = IOleInPlaceSite_OnUIActivate(This->doc_obj->ipsite);
         if(SUCCEEDED(hres)) {

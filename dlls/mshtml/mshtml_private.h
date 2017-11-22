@@ -1099,7 +1099,7 @@ void do_ns_command(HTMLDocument*,const char*,nsICommandParams*) DECLSPEC_HIDDEN;
 #define UPDATE_UI       0x0001
 #define UPDATE_TITLE    0x0002
 
-void update_doc(HTMLDocument*,DWORD) DECLSPEC_HIDDEN;
+void update_doc(HTMLDocumentObj*,DWORD) DECLSPEC_HIDDEN;
 void update_title(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void set_document_navigation(HTMLDocumentObj*,BOOL) DECLSPEC_HIDDEN;
 

@@ -320,9 +320,9 @@ void prepare_for_binding(HTMLDocument *This, IMoniker *mon, DWORD flags)
     }
 
     if(This->window->mon) {
-        update_doc(This, UPDATE_TITLE|UPDATE_UI);
+        update_doc(This->doc_obj, UPDATE_TITLE|UPDATE_UI);
     }else {
-        update_doc(This, UPDATE_TITLE);
+        update_doc(This->doc_obj, UPDATE_TITLE);
         set_current_mon(This->window, mon, flags);
     }
 
