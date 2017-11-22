@@ -6604,10 +6604,11 @@ static void shader_glsl_texkill(const struct wined3d_shader_instruction *ins)
 {
     if (ins->ctx->reg_maps->shader_version.major >= 4)
     {
+        const char *condition = ins->flags == WINED3D_SHADER_CONDITIONAL_OP_NZ ? "bool" : "!bool";
         struct glsl_src_param src_param;
 
         shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src_param);
-        shader_addline(ins->ctx->buffer, "if (bool(%s)) discard;\n", src_param.param_str);
+        shader_addline(ins->ctx->buffer, "if (%s(%s)) discard;\n", condition, src_param.param_str);
     }
     else
     {

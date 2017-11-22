@@ -2958,7 +2958,8 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             if (ins.handler_idx == WINED3DSIH_BREAKP
                     || ins.handler_idx == WINED3DSIH_CONTINUEP
                     || ins.handler_idx == WINED3DSIH_IF
-                    || ins.handler_idx == WINED3DSIH_RETP)
+                    || ins.handler_idx == WINED3DSIH_RETP
+                    || ins.handler_idx == WINED3DSIH_TEXKILL)
             {
                 switch (ins.flags)
                 {
