@@ -5274,8 +5274,8 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
             This->basedoc.window->doc_obj = NULL;
             IHTMLWindow2_Release(&This->basedoc.window->base.IHTMLWindow2_iface);
         }
-        if(This->basedoc.advise_holder)
-            IOleAdviseHolder_Release(This->basedoc.advise_holder);
+        if(This->advise_holder)
+            IOleAdviseHolder_Release(This->advise_holder);
 
         if(This->view_sink)
             IAdviseSink_Release(This->view_sink);

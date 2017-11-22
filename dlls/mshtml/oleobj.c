@@ -490,8 +490,8 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 
     HTMLDocument_LockContainer(This->doc_obj, FALSE);
 
-    if(This->advise_holder)
-        IOleAdviseHolder_SendOnClose(This->advise_holder);
+    if(This->doc_obj->advise_holder)
+        IOleAdviseHolder_SendOnClose(This->doc_obj->advise_holder);
     
     return S_OK;
 }
@@ -632,13 +632,13 @@ static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink,
         return E_INVALIDARG;
     }
 
-    if(!This->advise_holder) {
-        CreateOleAdviseHolder(&This->advise_holder);
-        if(!This->advise_holder)
+    if(!This->doc_obj->advise_holder) {
+        CreateOleAdviseHolder(&This->doc_obj->advise_holder);
+        if(!This->doc_obj->advise_holder)
             return E_OUTOFMEMORY;
     }
 
-    return IOleAdviseHolder_Advise(This->advise_holder, pAdvSink, pdwConnection);
+    return IOleAdviseHolder_Advise(This->doc_obj->advise_holder, pAdvSink, pdwConnection);
 }
 
 static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
@@ -646,22 +646,22 @@ static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
     HTMLDocument *This = impl_from_IOleObject(iface);
     TRACE("(%p)->(%d)\n", This, dwConnection);
 
-    if(!This->advise_holder)
+    if(!This->doc_obj->advise_holder)
         return OLE_E_NOCONNECTION;
 
-    return IOleAdviseHolder_Unadvise(This->advise_holder, dwConnection);
+    return IOleAdviseHolder_Unadvise(This->doc_obj->advise_holder, dwConnection);
 }
 
 static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **ppenumAdvise)
 {
     HTMLDocument *This = impl_from_IOleObject(iface);
 
-    if(!This->advise_holder) {
+    if(!This->doc_obj->advise_holder) {
         *ppenumAdvise = NULL;
         return S_OK;
     }
 
-    return IOleAdviseHolder_EnumAdvise(This->advise_holder, ppenumAdvise);
+    return IOleAdviseHolder_EnumAdvise(This->doc_obj->advise_holder, ppenumAdvise);
 }
 
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)

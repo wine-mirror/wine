@@ -605,7 +605,6 @@ struct HTMLDocument {
     LONG task_magic;
 
     ConnectionPointContainer cp_container;
-    IOleAdviseHolder *advise_holder;
 };
 
 static inline HRESULT htmldoc_query_interface(HTMLDocument *This, REFIID riid, void **ppv)
@@ -648,6 +647,7 @@ struct HTMLDocumentObj {
     IUnknown *webbrowser;
     ITravelLog *travel_log;
     IUnknown *browser_service;
+    IOleAdviseHolder *advise_holder;
 
     DOCHOSTUIINFO hostinfo;
 
