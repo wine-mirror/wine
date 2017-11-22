@@ -168,10 +168,15 @@ static void test_host(IHTMLLocation *loc, const struct location_test *test)
 
     hres = IHTMLLocation_get_host(loc, &str);
     ok(hres == S_OK, "%s: get_host failed: 0x%08x\n", test->name, hres);
-    if(hres == S_OK)
+    if(hres == S_OK){
+        int len = test->host ? strlen(test->host) : 0;
         ok(str_eq_wa(str, test->host),
                 "%s: expected retrieved host to be L\"%s\", was: %s\n",
                 test->name, test->host, wine_dbgstr_w(str));
+        ok(SysStringLen(str) == len, "%s: unexpected string length %u, expected %u\n",
+                test->name, SysStringLen(str), len);
+    }
+
     SysFreeString(str);
 }
 

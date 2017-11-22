@@ -351,13 +351,16 @@ static HRESULT WINAPI HTMLLocation_get_host(IHTMLLocation *iface, BSTR *p)
     if(url.nPort) {
         /* <hostname>:<port> */
         const WCHAR format[] = {'%','u',0};
-        DWORD len = url.dwHostNameLength + 1 + 5;
+        DWORD len, port_len;
+        WCHAR portW[6];
         WCHAR *buf;
 
+        port_len = snprintfW(portW, sizeof(portW)/sizeof(portW[0]), format, url.nPort);
+        len = url.dwHostNameLength + 1 /* ':' */ + port_len;
         buf = *p = SysAllocStringLen(NULL, len);
         memcpy(buf, url.lpszHostName, url.dwHostNameLength * sizeof(WCHAR));
         buf[url.dwHostNameLength] = ':';
-        snprintfW(buf + url.dwHostNameLength + 1, 6, format, url.nPort);
+        memcpy(buf + url.dwHostNameLength + 1, portW, port_len * sizeof(WCHAR));
     }else
         *p = SysAllocStringLen(url.lpszHostName, url.dwHostNameLength);
 
