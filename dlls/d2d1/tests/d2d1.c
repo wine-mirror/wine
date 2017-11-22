@@ -1476,6 +1476,7 @@ static void test_bitmap_brush(void)
     IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F color;
+    ID2D1Image *image;
     D2D1_SIZE_U size;
     unsigned int i;
     ULONG refcount;
@@ -1534,6 +1535,11 @@ static void test_bitmap_brush(void)
     bitmap_desc.dpiY = 96.0f;
     hr = ID2D1RenderTarget_CreateBitmap(rt, size, bitmap_data, 4 * sizeof(*bitmap_data), &bitmap_desc, &bitmap);
     ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+
+    hr = ID2D1Bitmap_QueryInterface(bitmap, &IID_ID2D1Image, (void **)&image);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Vista */, "Failed to get ID2D1Image, hr %#x.\n", hr);
+    if (hr == S_OK)
+        ID2D1Image_Release(image);
 
     /* Creating a brush with a NULL bitmap crashes on Vista, but works fine on
      * Windows 7+. */
