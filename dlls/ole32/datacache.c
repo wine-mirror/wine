@@ -79,7 +79,8 @@ typedef struct PresentationDataHeader
    *  DWORD length;
    *  CHAR format_name[length]; (null-terminated)
    */
-  DWORD unknown3;	/* 4, possibly TYMED_ISTREAM */
+  DWORD tdSize; /* This is actually a truncated DVTARGETDEVICE, if tdSize > sizeof(DWORD)
+                   then there are tdSize - sizeof(DWORD) more bytes before dvAspect */
   DVASPECT dvAspect;
   DWORD lindex;
   DWORD advf;
@@ -808,7 +809,7 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *cache_entry, IStorage *storag
 
     if (cache_entry->fmtetc.ptd)
         FIXME("ptd not serialized\n");
-    header.unknown3 = 4;
+    header.tdSize = sizeof(header.tdSize);
     header.dvAspect = cache_entry->fmtetc.dwAspect;
     header.lindex = cache_entry->fmtetc.lindex;
     header.advf = cache_entry->advise_flags;

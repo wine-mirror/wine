@@ -143,7 +143,8 @@ typedef struct PresentationDataHeader
      *  DWORD length;
      *  CHAR format_name[length]; (null-terminated)
      */
-    DWORD unknown3; /* 4, possibly TYMED_ISTREAM */
+    DWORD tdSize; /* This is actually a truncated DVTARGETDEVICE, if tdSize > sizeof(DWORD)
+                     then there are tdSize - sizeof(DWORD) more bytes before dvAspect */
     DVASPECT dvAspect;
     DWORD lindex;
     DWORD advf;
@@ -1279,7 +1280,7 @@ static void test_OleLoad(IStorage *pStorage)
                 break;
             }
 
-            header.unknown3 = 4;
+            header.tdSize = sizeof(header.tdSize);
             header.dvAspect = DVASPECT_CONTENT;
             header.lindex = -1;
             header.advf = 1 << i;
@@ -3691,7 +3692,7 @@ static void test_data_cache_save(void)
     hr = IStream_Write(stm, clipformat, sizeof(clipformat), NULL);
     ok(hr == S_OK, "unexpected %#x\n", hr);
 
-    hdr.unknown3 = 4;
+    hdr.tdSize = sizeof(hdr.tdSize);
     hdr.dvAspect = DVASPECT_CONTENT;
     hdr.lindex = -1;
     hdr.advf = ADVF_PRIMEFIRST;
@@ -3966,8 +3967,8 @@ static void check_storage_contents(IStorage *stg, const struct storage_def *stg_
             ok(bytes >= 24, "read %u bytes\n", bytes);
 
             if (winetest_debug > 1)
-                trace("header: unknown3 %#x, dvAspect %#x, lindex %#x, advf %#x, unknown7 %#x, dwObjectExtentX %#x, dwObjectExtentY %#x, dwSize %#x\n",
-                    header.unknown3, header.dvAspect, header.lindex, header.advf, header.unknown7,
+                trace("header: tdSize %#x, dvAspect %#x, lindex %#x, advf %#x, unknown7 %#x, dwObjectExtentX %#x, dwObjectExtentY %#x, dwSize %#x\n",
+                    header.tdSize, header.dvAspect, header.lindex, header.advf, header.unknown7,
                     header.dwObjectExtentX, header.dwObjectExtentY, header.dwSize);
         }
 
@@ -4049,7 +4050,7 @@ static IStorage *create_storage_from_def(const struct storage_def *stg_def)
             }
             ok(hr == S_OK, "unexpected %#x\n", hr);
 
-            hdr.unknown3 = 4;
+            hdr.tdSize = sizeof(hdr.tdSize);
             hdr.dvAspect = stg_def->stream[i].dvAspect;
             hdr.lindex = -1;
             hdr.advf = stg_def->stream[i].advf;
