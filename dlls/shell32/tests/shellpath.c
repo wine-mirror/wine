@@ -2121,7 +2121,6 @@ static void test_knownFolders(void)
             CoTaskMemFree(folderPath);
 
             hr = IKnownFolder_GetRedirectionCapabilities(folder, &redirectionCapabilities);
-            todo_wine
             ok(hr == S_OK, "failed to get redirection capabilities: 0x%08x\n", hr);
             todo_wine
             ok(redirectionCapabilities==0, "invalid redirection capabilities returned: %d\n", redirectionCapabilities);
