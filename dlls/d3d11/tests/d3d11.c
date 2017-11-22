@@ -12991,6 +12991,102 @@ static void test_sm4_continuec_instruction(void)
     release_test_context(&test_context);
 }
 
+static void test_sm4_discard_instruction(void)
+{
+    ID3D11PixelShader *ps_discard_nz, *ps_discard_z;
+    struct d3d11_test_context test_context;
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+    ID3D11Buffer *cb;
+    unsigned int i;
+    HRESULT hr;
+
+    static const DWORD ps_discard_nz_code[] =
+    {
+#if 0
+        uint data;
+
+        float4 main() : SV_Target
+        {
+            if (data)
+                discard;
+            return float4(0.0f, 0.5f, 0.0f, 1.0f);
+        }
+#endif
+        0x43425844, 0xfa7e5758, 0xd8716ffc, 0x5ad6a940, 0x2b99bba2, 0x00000001, 0x000000d0, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000058, 0x00000040, 0x00000016,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x0404000d,
+        0x0020800a, 0x00000000, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x00000000,
+        0x3f000000, 0x00000000, 0x3f800000, 0x0100003e,
+    };
+    static const DWORD ps_discard_z_code[] =
+    {
+#if 0
+        uint data;
+
+        float4 main() : SV_Target
+        {
+            if (!data)
+                discard;
+            return float4(0.0f, 1.0f, 0.0f, 1.0f);
+        }
+#endif
+        0x43425844, 0x5c4dd108, 0x1eb43558, 0x7c02c98c, 0xd81eb34c, 0x00000001, 0x000000d0, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000058, 0x00000040, 0x00000016,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x0400000d,
+        0x0020800a, 0x00000000, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x00000000,
+        0x3f800000, 0x00000000, 0x3f800000, 0x0100003e,
+    };
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const struct uvec4 values[] =
+    {
+        {0x0000000},
+        {0x0000001},
+        {0x8000000},
+        {0xfffffff},
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(*values), NULL);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_discard_nz_code, sizeof(ps_discard_nz_code),
+            NULL, &ps_discard_nz);
+    ok(SUCCEEDED(hr), "Failed to create discard_nz pixel shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreatePixelShader(device, ps_discard_z_code, sizeof(ps_discard_z_code),
+            NULL, &ps_discard_z);
+    ok(SUCCEEDED(hr), "Failed to create discard_z pixel shader, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(values); ++i)
+    {
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &values[i], 0, 0);
+
+        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+        ID3D11DeviceContext_PSSetShader(context, ps_discard_nz, NULL, 0);
+        draw_quad(&test_context);
+        check_texture_color(test_context.backbuffer, values[i].x ? 0xffffffff : 0xff007f00, 1);
+
+        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+        ID3D11DeviceContext_PSSetShader(context, ps_discard_z, NULL, 0);
+        draw_quad(&test_context);
+        check_texture_color(test_context.backbuffer, values[i].x ? 0xff00ff00 : 0xffffffff, 1);
+    }
+
+    ID3D11Buffer_Release(cb);
+    ID3D11PixelShader_Release(ps_discard_nz);
+    ID3D11PixelShader_Release(ps_discard_z);
+    release_test_context(&test_context);
+}
+
 static void test_sm5_swapc_instruction(void)
 {
     struct input
@@ -22506,6 +22602,7 @@ START_TEST(d3d11)
     test_sm4_if_instruction();
     test_sm4_breakc_instruction();
     test_sm4_continuec_instruction();
+    test_sm4_discard_instruction();
     test_sm5_swapc_instruction();
     test_create_input_layout();
     test_input_assembler();
