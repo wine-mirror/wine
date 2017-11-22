@@ -23,6 +23,7 @@
 #define ERROR_BUFFER_TOO_SMALL                 (RASBASE+3)
 #define ERROR_BUFFER_INVALID                   (RASBASE+10)
 #define ERROR_INVALID_SIZE                     (RASBASE+32)
+#define ERROR_UNKNOWN                          (RASBASE+35)
 #define ERROR_STATE_MACHINES_NOT_STARTED       (RASBASE+95)
 #define ERROR_RASMAN_CANNOT_INITIALIZE         (RASBASE+111)
 

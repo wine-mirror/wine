@@ -5,7 +5,7 @@
 @ stdcall RasEnumEntriesW(wstr wstr ptr ptr ptr) rasapi32.RasEnumEntriesW
 @ stdcall RasGetAutodialAddressA(str ptr ptr ptr ptr) rasapi32.RasGetAutodialAddressA
 @ stdcall RasGetAutodialAddressW(wstr ptr ptr ptr ptr) rasapi32.RasGetAutodialAddressW
-@ stub RasGetConnectionStatistics
+@ stdcall RasGetConnectionStatistics(ptr ptr) rasapi32.RasGetConnectionStatistics
 @ stdcall RasGetConnectStatusW(ptr ptr) rasapi32.RasGetConnectStatusW
 @ stub RasGetCredentialsW
 @ stdcall RasGetEntryDialParamsW(wstr ptr ptr) rasapi32.RasGetEntryDialParamsW
