@@ -1336,8 +1336,6 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->parent)
-            nsIWebBrowserChrome_Release(&This->parent->nsIWebBrowserChrome_iface);
         if(This->weak_reference) {
             This->weak_reference->nscontainer = NULL;
             nsIWeakReference_Release(&This->weak_reference->nsIWeakReference_iface);

@@ -697,7 +697,6 @@ struct NSContainer {
 
     nsWeakReference *weak_reference;
 
-    NSContainer *parent;
     HTMLDocumentObj *doc;
 
     nsIURIContentListener *content_listener;
