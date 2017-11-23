@@ -209,6 +209,7 @@ BOOL ProcessCmdLine(WCHAR *cmdline)
             break;
         case 'C':
         case 'L':
+        case 'M':
         case 'R':
             /* unhandled */;
             break;
