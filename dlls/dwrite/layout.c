@@ -4263,7 +4263,7 @@ static HRESULT WINAPI dwritetextformat_layout_SetIncrementalTabStop(IDWriteTextF
 {
     struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
     FIXME("(%p)->(%f): stub\n", This, tabstop);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_layout_SetTrimming(IDWriteTextFormat1 *iface, DWRITE_TRIMMING const *trimming,
@@ -5272,7 +5272,7 @@ static HRESULT WINAPI dwritetextformat_SetIncrementalTabStop(IDWriteTextFormat2 
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat2(iface);
     FIXME("(%p)->(%f): stub\n", This, tabstop);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_SetTrimming(IDWriteTextFormat2 *iface, DWRITE_TRIMMING const *trimming,
