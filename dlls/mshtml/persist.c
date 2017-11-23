@@ -424,7 +424,7 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
 
             task = heap_alloc(sizeof(docobj_task_t));
             task->doc = doc_obj;
-            hres = push_task(&task->header, set_progress_proc, NULL, doc_obj->basedoc.task_magic);
+            hres = push_task(&task->header, set_progress_proc, NULL, doc_obj->task_magic);
             if(FAILED(hres)) {
                 CoTaskMemFree(url);
                 return hres;
@@ -435,7 +435,7 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
         download_task->doc = doc_obj;
         download_task->set_download = set_download;
         download_task->url = url;
-        return push_task(&download_task->header, set_downloading_proc, set_downloading_task_destr, doc_obj->basedoc.task_magic);
+        return push_task(&download_task->header, set_downloading_proc, set_downloading_task_destr, doc_obj->task_magic);
     }
 
     return S_OK;

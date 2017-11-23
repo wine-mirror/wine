@@ -1291,7 +1291,7 @@ HRESULT setup_edit_mode(HTMLDocumentObj *doc)
 
     if(doc->basedoc.window->mon) {
         /* FIXME: We should find nicer way to do this */
-        remove_target_tasks(doc->basedoc.task_magic);
+        remove_target_tasks(doc->task_magic);
 
         mon = doc->basedoc.window->mon;
         IMoniker_AddRef(mon);

@@ -602,8 +602,6 @@ struct HTMLDocument {
 
     HTMLOuterWindow *window;
 
-    LONG task_magic;
-
     ConnectionPointContainer cp_container;
 };
 
@@ -672,6 +670,7 @@ struct HTMLDocumentObj {
     LPWSTR mime;
 
     DWORD update;
+    LONG task_magic;
 };
 
 typedef struct nsWeakReference nsWeakReference;
