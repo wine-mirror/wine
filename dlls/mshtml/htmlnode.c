@@ -1341,8 +1341,25 @@ static HRESULT WINAPI HTMLDOMNode3_isSameNode(IHTMLDOMNode3 *iface, IHTMLDOMNode
 static HRESULT WINAPI HTMLDOMNode3_compareDocumentPosition(IHTMLDOMNode3 *iface, IHTMLDOMNode *otherNode, USHORT *flags)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode3(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    HTMLDOMNode *other;
+    UINT16 position;
+    nsresult nsres;
+
+    TRACE("(%p)->()\n", This);
+
+    other = get_node_obj(otherNode);
+    if(!other)
+        return E_INVALIDARG;
+
+    nsres = nsIDOMNode_CompareDocumentPosition(This->nsnode, other->nsnode, &position);
+    IHTMLDOMNode_Release(&other->IHTMLDOMNode_iface);
+    if(NS_FAILED(nsres)) {
+        ERR("failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *flags = position;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode3_isSupported(IHTMLDOMNode3 *iface, BSTR feature, VARIANT version, VARIANT_BOOL *pfisSupported)

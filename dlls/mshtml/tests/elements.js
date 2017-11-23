@@ -148,11 +148,36 @@ function test_query_selector() {
     next_test();
 }
 
+function test_compare_position() {
+    document.body.innerHTML = '<div><div></div><div></div></div>';
+
+    var parent = document.body.firstChild;
+    var child1 = parent.firstChild;
+    var child2 = child1.nextSibling;
+    var elem = document.createElement("div");
+
+    function compare_position(node1, node2, expected_result, ignore_mask) {
+        var cmp = node1.compareDocumentPosition(node2);
+        ok((cmp & ~ignore_mask) == expected_result,
+           "compareDocumentPosition returned " + cmp + " expected " + expected_result);
+    }
+
+    compare_position(child1, child2, 4);
+    compare_position(child2, child1, 2);
+    compare_position(parent, child1, 0x14);
+    compare_position(parent, child2, 0x14);
+    compare_position(parent, elem, 0x21, 6);
+    compare_position(elem, parent, 0x21, 6);
+
+    next_test();
+}
+
 var tests = [
     test_input_selection,
     test_textContent,
     test_ElementTraversal,
     test_getElementsByClassName,
     test_head,
-    test_query_selector
+    test_query_selector,
+    test_compare_position
 ];
