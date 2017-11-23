@@ -102,25 +102,6 @@ static void release_task_timer(HWND thread_hwnd, task_timer_t *timer)
     heap_free(timer);
 }
 
-void flush_pending_tasks(LONG target)
-{
-    thread_data_t *thread_data = get_thread_data(FALSE);
-    struct list *liter, *ltmp;
-    task_t *task;
-
-    if(!thread_data)
-        return;
-
-    LIST_FOR_EACH_SAFE(liter, ltmp, &thread_data->task_list) {
-        task = LIST_ENTRY(liter, task_t, entry);
-        if(task->target_magic == target) {
-            list_remove(&task->entry);
-            task->proc(task);
-            task->destr(task);
-        }
-    }
-}
-
 void remove_target_tasks(LONG target)
 {
     thread_data_t *thread_data = get_thread_data(FALSE);

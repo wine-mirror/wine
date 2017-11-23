@@ -270,8 +270,6 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         DOMEvent *load_event;
         HRESULT hres;
 
-        flush_pending_tasks(doc->basedoc.task_magic);
-
         hres = create_document_event(doc, EVENTID_LOAD, &load_event);
         if(SUCCEEDED(hres)) {
             dispatch_event(&doc->node.event_target, load_event);
