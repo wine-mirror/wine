@@ -3274,6 +3274,7 @@ static void test_create_shader_resource_view(void)
 
 #define FMT_UNKNOWN  DXGI_FORMAT_UNKNOWN
 #define RGBA8_UNORM  DXGI_FORMAT_R8G8B8A8_UNORM
+#define RGBA8_UINT   DXGI_FORMAT_R8G8B8A8_UINT
 #define RGBA8_TL     DXGI_FORMAT_R8G8B8A8_TYPELESS
 #define DIM_UNKNOWN  D3D11_SRV_DIMENSION_UNKNOWN
 #define TEX_1D       D3D11_SRV_DIMENSION_TEXTURE1D
@@ -3344,6 +3345,8 @@ static void test_create_shader_resource_view(void)
         {{ 1, 13, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 2}},
         {{ 1, 14, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 2}},
         {{ 1, 18, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 3}},
+        {{ 1,  1, RGBA8_UINT},  {0},                                         {RGBA8_UINT,  TEX_2D,       0,  1, 0, 1}},
+        {{ 1,  1, RGBA8_TL},    {RGBA8_UINT,  TEX_2D,       0, ~0u},         {RGBA8_UINT,  TEX_2D,       0,  1, 0, 1}},
     };
     static const struct
     {
@@ -3394,6 +3397,8 @@ static void test_create_shader_resource_view(void)
         {{TEX_2D, 1, 7, RGBA8_UNORM}, {RGBA8_UNORM, CUBE_ARRAY,    0,  1, 2, ~0u}},
         {{TEX_2D, 1, 7, RGBA8_UNORM}, {RGBA8_UNORM, CUBE_ARRAY,    0,  1, 0,  2}},
         {{TEX_2D, 1, 9, RGBA8_UNORM}, {RGBA8_UNORM, CUBE_ARRAY,    0,  1, 0,  2}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UINT,  TEX_2D,        0,  1}},
+        {{TEX_2D, 1, 1, RGBA8_UINT},  {RGBA8_UNORM, TEX_2D,        0,  1}},
         {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D,        0,  1}},
         {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D_ARRAY,  0,  1, 0,  1}},
         {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D,        0,  1}},
