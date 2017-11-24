@@ -18433,6 +18433,21 @@ static void test_buffer_srv(void)
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(cb_size), NULL);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
 
+    buffer_desc.ByteWidth = 256;
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    srv_desc.Format = DXGI_FORMAT_R8_UNORM;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    U(srv_desc).Buffer.FirstElement = 0;
+    U(srv_desc).Buffer.NumElements = 0;
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &srv);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ID3D11Buffer_Release(buffer);
+
     ps = NULL;
     srv = NULL;
     buffer = NULL;

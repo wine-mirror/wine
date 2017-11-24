@@ -616,6 +616,11 @@ static HRESULT normalize_srv_desc(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, ID3D11R
                 WARN("Incompatible dimensions %#x, %#x.\n", dimension, desc->ViewDimension);
                 return E_INVALIDARG;
             }
+            if (!desc->u.Buffer.u2.NumElements)
+            {
+                WARN("Zero sized buffer view.\n");
+                return E_INVALIDARG;
+            }
             return S_OK;
         }
 
