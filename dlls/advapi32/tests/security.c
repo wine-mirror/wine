@@ -2731,12 +2731,12 @@ static void test_LookupAccountName(void)
 
 static void test_security_descriptor(void)
 {
-    SECURITY_DESCRIPTOR sd;
+    SECURITY_DESCRIPTOR sd, *sd_rel, *sd_rel2, *sd_abs;
     char buf[8192];
-    DWORD size;
+    DWORD size, size_dacl, size_sacl, size_owner, size_group;
     BOOL isDefault, isPresent, ret;
-    PACL pacl;
-    PSID psid;
+    PACL pacl, dacl, sacl;
+    PSID psid, owner, group;
 
     SetLastError(0xdeadbeef);
     ret = InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
@@ -2774,6 +2774,46 @@ static void test_security_descriptor(void)
         expect_eq(psid, NULL, PSID, "%p");
         expect_eq(isDefault, FALSE, BOOL, "%d");
     }
+
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+        "O:SYG:S-1-5-21-93476-23408-4576D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)"
+        "(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)"
+        "(AU;NPSA;0x12019f;;;SU)", SDDL_REVISION_1, (void **)&sd_rel, NULL);
+    ok(ret, "got %u\n", GetLastError());
+
+    size = 0;
+    ret = MakeSelfRelativeSD(sd_rel, NULL, &size);
+    todo_wine ok(!ret && GetLastError() == ERROR_BAD_DESCRIPTOR_FORMAT, "got %u\n", GetLastError());
+
+    /* convert to absolute form */
+    size = size_dacl = size_sacl = size_owner = size_group = 0;
+    ret = MakeAbsoluteSD(sd_rel, NULL, &size, NULL, &size_dacl, NULL, &size_sacl, NULL, &size_owner, NULL,
+                         &size_group);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+
+    sd_abs = HeapAlloc(GetProcessHeap(), 0, size + size_dacl + size_sacl + size_owner + size_group);
+    dacl = (PACL)(sd_abs + 1);
+    sacl = (PACL)((char *)dacl + size_dacl);
+    owner = (PSID)((char *)sacl + size_sacl);
+    group = (PSID)((char *)owner + size_owner);
+    ret = MakeAbsoluteSD(sd_rel, sd_abs, &size, dacl, &size_dacl, sacl, &size_sacl, owner, &size_owner,
+                         group, &size_group);
+    ok(ret, "got %u\n", GetLastError());
+
+    size = 0;
+    ret = MakeSelfRelativeSD(sd_abs, NULL, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+    ok(size == 184, "got %u\n", size);
+
+    size += 4;
+    sd_rel2 = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = MakeSelfRelativeSD(sd_abs, sd_rel2, &size);
+    ok(ret, "got %u\n", GetLastError());
+    ok(size == 188, "got %u\n", size);
+
+    HeapFree(GetProcessHeap(), 0, sd_abs);
+    HeapFree(GetProcessHeap(), 0, sd_rel2);
+    LocalFree(sd_rel);
 }
 
 #define TEST_GRANTED_ACCESS(a,b) test_granted_access(a,b,0,__LINE__)
