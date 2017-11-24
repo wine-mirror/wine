@@ -2051,6 +2051,11 @@ static inline EventTarget *impl_from_IEventTarget(IEventTarget *iface)
     return CONTAINING_RECORD(iface, EventTarget, IEventTarget_iface);
 }
 
+static inline EventTarget *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, EventTarget, dispex);
+}
+
 static HRESULT WINAPI EventTarget_QueryInterface(IEventTarget *iface, REFIID riid, void **ppv)
 {
     EventTarget *This = impl_from_IEventTarget(iface);
@@ -2162,6 +2167,27 @@ static HRESULT WINAPI EventTarget_dispatchEvent(IEventTarget *iface, IDOMEvent *
     return E_NOTIMPL;
 }
 
+HRESULT IEventTarget_addEventListener_hook(DispatchEx *dispex, LCID lcid, WORD flags,
+        DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    /* If only two arguments were given, implicitly set capture to false */
+    if((flags & DISPATCH_METHOD) && dp->cArgs == 2 && !dp->cNamedArgs) {
+        VARIANT args[3];
+        DISPPARAMS new_dp = {args, NULL, 3, 0};
+        V_VT(args) = VT_BOOL;
+        V_BOOL(args) = VARIANT_FALSE;
+        args[1] = dp->rgvarg[0];
+        args[2] = dp->rgvarg[1];
+
+        TRACE("implicit capture\n");
+
+        return IDispatchEx_InvokeEx(&dispex->IDispatchEx_iface, DISPID_IEVENTTARGET_ADDEVENTLISTENER,
+                                    lcid, flags, &new_dp, res, ei, caller);
+    }
+
+    return S_FALSE; /* fallback to default */
+}
+
 static const IEventTargetVtbl EventTargetVtbl = {
     EventTarget_QueryInterface,
     EventTarget_AddRef,
@@ -2210,8 +2236,13 @@ HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
 
 void EventTarget_init_dispex_info(dispex_data_t *dispex_info, compat_mode_t compat_mode)
 {
+    static const dispex_hook_t IEventTarget_hooks[] = {
+        {DISPID_IEVENTTARGET_ADDEVENTLISTENER, IEventTarget_addEventListener_hook},
+        {DISPID_UNKNOWN}
+    };
+
     if(compat_mode >= COMPAT_MODE_IE9)
-        dispex_info_add_interface(dispex_info, IEventTarget_tid, NULL);
+        dispex_info_add_interface(dispex_info, IEventTarget_tid, IEventTarget_hooks);
 }
 
 static int event_id_cmp(const void *key, const struct wine_rb_entry *entry)

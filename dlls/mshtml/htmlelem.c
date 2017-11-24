@@ -5398,11 +5398,14 @@ static IHTMLEventObj *HTMLElement_set_current_event(DispatchEx *dispex, IHTMLEve
 
 void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
-    static const DISPID elem2_ie11_blacklist[] = {DISPID_IHTMLELEMENT2_DOSCROLL, DISPID_UNKNOWN};
+    static const dispex_hook_t elem2_ie11_hooks[] = {
+        {DISPID_IHTMLELEMENT2_DOSCROLL, NULL},
+        {DISPID_UNKNOWN}
+    };
 
     HTMLDOMNode_init_dispex_info(info, mode);
 
-    dispex_info_add_interface(info, IHTMLElement2_tid, mode >= COMPAT_MODE_IE11 ? elem2_ie11_blacklist : NULL);
+    dispex_info_add_interface(info, IHTMLElement2_tid, mode >= COMPAT_MODE_IE11 ? elem2_ie11_hooks : NULL);
 
     if(mode >= COMPAT_MODE_IE8)
         dispex_info_add_interface(info, IElementSelector_tid, NULL);

@@ -283,6 +283,14 @@ typedef struct {
     dispex_data_t *delayed_init_info;
 } dispex_static_data_t;
 
+typedef HRESULT (*dispex_hook_invoke_t)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,
+                                        EXCEPINFO*,IServiceProvider*);
+
+typedef struct {
+    DISPID dispid;
+    dispex_hook_invoke_t invoke;
+} dispex_hook_t;
+
 struct DispatchEx {
     IDispatchEx IDispatchEx_iface;
 
@@ -331,7 +339,7 @@ void dispex_unlink(DispatchEx*) DECLSPEC_HIDDEN;
 void release_typelib(void) DECLSPEC_HIDDEN;
 HRESULT get_class_typeinfo(const CLSID*,ITypeInfo**) DECLSPEC_HIDDEN;
 const void *dispex_get_vtbl(DispatchEx*) DECLSPEC_HIDDEN;
-void dispex_info_add_interface(dispex_data_t*,tid_t,const DISPID*) DECLSPEC_HIDDEN;
+void dispex_info_add_interface(dispex_data_t*,tid_t,const dispex_hook_t*) DECLSPEC_HIDDEN;
 compat_mode_t dispex_compat_mode(DispatchEx*) DECLSPEC_HIDDEN;
 
 static inline void init_dispex(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *desc)

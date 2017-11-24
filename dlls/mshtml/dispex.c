@@ -52,6 +52,7 @@ typedef struct {
     DISPID id;
     BSTR name;
     tid_t tid;
+    dispex_hook_invoke_t hook;
     SHORT call_vtbl_off;
     SHORT put_vtbl_off;
     SHORT get_vtbl_off;
@@ -230,7 +231,8 @@ static BOOL is_arg_type_supported(VARTYPE vt)
     return FALSE;
 }
 
-static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, ITypeInfo *dti)
+static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, ITypeInfo *dti,
+                          dispex_hook_invoke_t hook)
 {
     func_info_t *info;
     BSTR name;
@@ -262,6 +264,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
         info->tid = tid;
         info->func_disp_idx = -1;
         info->prop_vt = VT_EMPTY;
+        info->hook = hook;
     }else {
         SysFreeString(name);
     }
@@ -326,10 +329,9 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
     }
 }
 
-static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp_typeinfo, const DISPID *blacklist_dispids)
+static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp_typeinfo, const dispex_hook_t *hooks)
 {
     unsigned i = 7; /* skip IDispatch functions */
-    const DISPID *blacklist_iter;
     ITypeInfo *typeinfo;
     FUNCDESC *funcdesc;
     HRESULT hres;
@@ -339,20 +341,25 @@ static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp
         return hres;
 
     while(1) {
+        const dispex_hook_t *hook = NULL;
+
         hres = ITypeInfo_GetFuncDesc(typeinfo, i++, &funcdesc);
         if(FAILED(hres))
             break;
 
-        if(blacklist_dispids) {
-            for(blacklist_iter = blacklist_dispids; *blacklist_iter != DISPID_UNKNOWN; blacklist_iter++) {
-                if(*blacklist_iter == funcdesc->memid)
+        if(hooks) {
+            for(hook = hooks; hook->dispid != DISPID_UNKNOWN; hook++) {
+                if(hook->dispid == funcdesc->memid)
                     break;
             }
+            if(hook->dispid == DISPID_UNKNOWN)
+                hook = NULL;
         }
 
-        if(!blacklist_dispids || *blacklist_iter == DISPID_UNKNOWN) {
+        if(!hook || hook->invoke) {
             TRACE("adding...\n");
-            add_func_info(data, tid, funcdesc, disp_typeinfo ? disp_typeinfo : typeinfo);
+            add_func_info(data, tid, funcdesc, disp_typeinfo ? disp_typeinfo : typeinfo,
+                          hook ? hook->invoke : NULL);
         }
 
         ITypeInfo_ReleaseFuncDesc(typeinfo, funcdesc);
@@ -361,11 +368,11 @@ static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp
     return S_OK;
 }
 
-void dispex_info_add_interface(dispex_data_t *info, tid_t tid, const DISPID *blacklist_dispids)
+void dispex_info_add_interface(dispex_data_t *info, tid_t tid, const dispex_hook_t *hooks)
 {
     HRESULT hres;
 
-    hres = process_interface(info, tid, NULL, blacklist_dispids);
+    hres = process_interface(info, tid, NULL, hooks);
     if(FAILED(hres))
         ERR("process_interface failed: %08x\n", hres);
 }
@@ -1238,6 +1245,12 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
         return dispex_value(This, lcid, flags, dp, res, ei, caller);
     if(FAILED(hres))
         return hres;
+
+    if(func->hook) {
+        hres = func->hook(This, lcid, flags, dp, res, ei, caller);
+        if(hres != S_FALSE)
+            return hres;
+    }
 
     if(func->func_disp_idx != -1)
         return function_invoke(This, func, flags, dp, res, ei, caller);

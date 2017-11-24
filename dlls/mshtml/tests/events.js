@@ -62,6 +62,7 @@ function test_listener_order() {
     document.body.onclick = record_call("body.onclick");
     document.body.addEventListener("click", record_call("body.click(capture)"), true);
     document.body.addEventListener("click", record_call("body.click(bubble)"), false);
+    document.body.addEventListener("click", record_call("body.click(bubble2)"));
     document.body.attachEvent("onclick", record_call("body.click(attached)"));
 
     div.attachEvent("onclick", record_call("div.click(attached)"));
@@ -74,9 +75,9 @@ function test_listener_order() {
     div.click();
     ok(calls === "window.click(capture),document.click(capture),body.click(capture),"
        + "div.click(attached),div.click(bubble),div.onclick,div.click(capture1),"
-       + "div.click(capture2),body.onclick,body.click(bubble),body.click(attached),"
-       + "document.click(attached),document.click(bubble),document.onclick,"
-       + "window.click(bubble),", "calls = " + calls);
+       + "div.click(capture2),body.onclick,body.click(bubble),body.click(bubble2),"
+       + "body.click(attached),document.click(attached),document.click(bubble),"
+       + "document.onclick,window.click(bubble),", "calls = " + calls);
 
     div.onclick = record_call("new div.onclick");
 
@@ -84,9 +85,9 @@ function test_listener_order() {
     div.click();
     ok(calls === "window.click(capture),document.click(capture),body.click(capture),"
        + "div.click(attached),div.click(bubble),new div.onclick,div.click(capture1),"
-       + "div.click(capture2),body.onclick,body.click(bubble),body.click(attached),"
-       + "document.click(attached),document.click(bubble),document.onclick,"
-       + "window.click(bubble),", "calls = " + calls);
+       + "div.click(capture2),body.onclick,body.click(bubble),body.click(bubble2),"
+       + "body.click(attached),document.click(attached),document.click(bubble),"
+       + "document.onclick,window.click(bubble),", "calls = " + calls);
 
     next_test();
 }
