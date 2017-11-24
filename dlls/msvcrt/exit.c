@@ -440,6 +440,15 @@ MSVCRT_purecall_handler CDECL _set_purecall_handler(MSVCRT_purecall_handler func
 }
 
 /*********************************************************************
+ *		_get_purecall_handler
+ */
+MSVCRT_purecall_handler CDECL _get_purecall_handler(void)
+{
+    TRACE("\n");
+    return purecall_handler;
+}
+
+/*********************************************************************
  *		_purecall (MSVCRT.@)
  */
 void CDECL _purecall(void)

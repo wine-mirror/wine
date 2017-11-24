@@ -1158,7 +1158,7 @@
 @ cdecl _get_output_format() msvcr120._get_output_format
 @ cdecl _get_pgmptr(ptr) msvcr120._get_pgmptr
 @ cdecl _get_printf_count_output() msvcr120._get_printf_count_output
-@ stub _get_purecall_handler
+@ cdecl _get_purecall_handler() msvcr120._get_purecall_handler
 @ cdecl _get_terminate() msvcr120._get_terminate
 @ cdecl _get_timezone(ptr) msvcr120._get_timezone
 @ cdecl _get_tzname(ptr str long long) msvcr120._get_tzname
