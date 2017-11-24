@@ -4652,7 +4652,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
     LPBYTE lpNext = NULL;
     DWORD len;
 
-    *cBytes = sizeof(SECURITY_DESCRIPTOR);
+    *cBytes = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
 
     tok = heap_alloc( (lstrlenW(StringSecurityDescriptor) + 1) * sizeof(WCHAR));
 
