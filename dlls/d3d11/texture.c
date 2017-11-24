@@ -472,6 +472,14 @@ static BOOL validate_texture2d_desc(const D3D11_TEXTURE2D_DESC *desc)
         return FALSE;
     }
 
+    if (desc->MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS
+            && (~desc->BindFlags & (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE)))
+    {
+        WARN("D3D11_RESOURCE_MISC_GENERATE_MIPS used without D3D11_BIND_RENDER_TARGET and "
+                "D3D11_BIND_SHADER_RESOURCE.\n");
+        return FALSE;
+    }
+
     return TRUE;
 }
 
