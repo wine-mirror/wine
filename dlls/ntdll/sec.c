@@ -860,6 +860,7 @@ NTSTATUS WINAPI RtlMakeSelfRelativeSD(
         return STATUS_INVALID_PARAMETER;
 
     length = RtlLengthSecurityDescriptor(pAbs);
+    if (!(pAbs->Control & SE_SELF_RELATIVE)) length -= (sizeof(*pAbs) - sizeof(*pRel));
     if (*lpdwBufferLength < length)
     {
         *lpdwBufferLength = length;

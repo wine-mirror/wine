@@ -99,6 +99,8 @@ static BOOL      (WINAPI *pRtlIsCriticalSectionLocked)(CRITICAL_SECTION *);
 static BOOL      (WINAPI *pRtlIsCriticalSectionLockedByThread)(CRITICAL_SECTION *);
 static NTSTATUS  (WINAPI *pRtlInitializeCriticalSectionEx)(CRITICAL_SECTION *, ULONG, ULONG);
 static NTSTATUS  (WINAPI *pLdrEnumerateLoadedModules)(void *, void *, void *);
+static NTSTATUS  (WINAPI *pRtlMakeSelfRelativeSD)(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDWORD);
+static NTSTATUS  (WINAPI *pRtlAbsoluteToSelfRelativeSD)(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,PULONG);
 
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -153,6 +155,8 @@ static void InitFunctionPtrs(void)
         pRtlIsCriticalSectionLockedByThread = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLockedByThread");
         pRtlInitializeCriticalSectionEx = (void *)GetProcAddress(hntdll, "RtlInitializeCriticalSectionEx");
         pLdrEnumerateLoadedModules = (void *)GetProcAddress(hntdll, "LdrEnumerateLoadedModules");
+        pRtlMakeSelfRelativeSD = (void *)GetProcAddress(hntdll, "RtlMakeSelfRelativeSD");
+        pRtlAbsoluteToSelfRelativeSD = (void *)GetProcAddress(hntdll, "RtlAbsoluteToSelfRelativeSD");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -2209,6 +2213,52 @@ static void test_LdrEnumerateLoadedModules(void)
     ok(status == STATUS_INVALID_PARAMETER, "expected STATUS_INVALID_PARAMETER, got 0x%08x\n", status);
 }
 
+static void test_RtlMakeSelfRelativeSD(void)
+{
+    char buf[sizeof(SECURITY_DESCRIPTOR_RELATIVE) + 4];
+    SECURITY_DESCRIPTOR_RELATIVE *sd_rel = (SECURITY_DESCRIPTOR_RELATIVE *)buf;
+    SECURITY_DESCRIPTOR sd;
+    NTSTATUS status;
+    DWORD len;
+
+    if (!pRtlMakeSelfRelativeSD || !pRtlAbsoluteToSelfRelativeSD)
+    {
+        win_skip( "RtlMakeSelfRelativeSD/RtlAbsoluteToSelfRelativeSD not available\n" );
+        return;
+    }
+
+    memset( &sd, 0, sizeof(sd) );
+    sd.Revision = SECURITY_DESCRIPTOR_REVISION;
+
+    len = 0;
+    status = pRtlMakeSelfRelativeSD( &sd, NULL, &len );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "got %08x\n", status );
+    ok( len == sizeof(*sd_rel), "got %u\n", len );
+
+    len += 4;
+    status = pRtlMakeSelfRelativeSD( &sd, sd_rel, &len );
+    ok( status == STATUS_SUCCESS, "got %08x\n", status );
+    ok( len == sizeof(*sd_rel) + 4, "got %u\n", len );
+
+    len = 0;
+    status = pRtlAbsoluteToSelfRelativeSD( &sd, NULL, &len );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "got %08x\n", status );
+    ok( len == sizeof(*sd_rel), "got %u\n", len );
+
+    len += 4;
+    status = pRtlAbsoluteToSelfRelativeSD( &sd, sd_rel, &len );
+    ok( status == STATUS_SUCCESS, "got %08x\n", status );
+    ok( len == sizeof(*sd_rel) + 4, "got %u\n", len );
+
+    sd.Control = SE_SELF_RELATIVE;
+    status = pRtlMakeSelfRelativeSD( &sd, sd_rel, &len );
+    ok( status == STATUS_SUCCESS, "got %08x\n", status );
+    ok( len == sizeof(*sd_rel) + 4, "got %u\n", len );
+
+    status = pRtlAbsoluteToSelfRelativeSD( &sd, sd_rel, &len );
+    ok( status == STATUS_BAD_DESCRIPTOR_FORMAT, "got %08x\n", status );
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -2242,4 +2292,5 @@ START_TEST(rtl)
     test_RtlInitializeCriticalSectionEx();
     test_RtlLeaveCriticalSection();
     test_LdrEnumerateLoadedModules();
+    test_RtlMakeSelfRelativeSD();
 }
