@@ -57,7 +57,7 @@
 @ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr) ucrtbase._except_handler2
 @ cdecl -arch=i386 _except_handler3(ptr ptr ptr ptr) ucrtbase._except_handler3
 @ cdecl -arch=i386 _except_handler4_common(ptr ptr ptr ptr ptr ptr) ucrtbase._except_handler4_common
-@ stub _get_purecall_handler
+@ cdecl _get_purecall_handler() ucrtbase._get_purecall_handler
 @ cdecl _get_unexpected() ucrtbase._get_unexpected
 @ cdecl -arch=i386 _global_unwind2(ptr) ucrtbase._global_unwind2
 @ stub _is_exception_typeof
