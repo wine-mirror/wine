@@ -384,6 +384,15 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         texture->flags |= WINED3D_TEXTURE_GET_DC;
     if (flags & WINED3D_TEXTURE_CREATE_DISCARD)
         texture->flags |= WINED3D_TEXTURE_DISCARD;
+    if (flags & WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS)
+    {
+        if (~format->flags[WINED3D_GL_RES_TYPE_TEX_2D]
+                & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FILTERING))
+            WARN("Format doesn't support mipmaps generation, "
+                    "ignoring WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS flag.\n");
+        else
+            texture->flags |= WINED3D_TEXTURE_GENERATE_MIPMAPS;
+    }
 
     return WINED3D_OK;
 }
@@ -1573,8 +1582,13 @@ BOOL wined3d_texture_prepare_location(struct wined3d_texture *texture, unsigned 
 
 void CDECL wined3d_texture_generate_mipmaps(struct wined3d_texture *texture)
 {
-    /* TODO: Implement filters using GL_SGI_generate_mipmaps. */
     FIXME("texture %p stub!\n", texture);
+
+    if (!(texture->flags & WINED3D_TEXTURE_GENERATE_MIPMAPS))
+    {
+        WARN("Texture without the WINED3D_TEXTURE_GENERATE_MIPMAPS flag, ignoring.\n");
+        return;
+    }
 }
 
 static struct wined3d_texture_sub_resource *wined3d_texture_get_sub_resource(struct wined3d_texture *texture,
