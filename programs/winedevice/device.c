@@ -263,15 +263,13 @@ static NTSTATUS WINAPI init_driver( DRIVER_OBJECT *driver_object, UNICODE_STRING
     if (!nt->OptionalHeader.AddressOfEntryPoint) return STATUS_SUCCESS;
     driver_object->DriverInit = (PDRIVER_INITIALIZE)((char *)module + nt->OptionalHeader.AddressOfEntryPoint);
 
-    if (WINE_TRACE_ON(relay))
-        WINE_DPRINTF( "%04x:Call driver init %p (obj=%p,str=%s)\n", GetCurrentThreadId(),
-                      driver_object->DriverInit, driver_object, wine_dbgstr_w(keyname->Buffer) );
+    TRACE_(relay)( "\1Call driver init %p (obj=%p,str=%s)\n",
+                   driver_object->DriverInit, driver_object, wine_dbgstr_w(keyname->Buffer) );
 
     status = driver_object->DriverInit( driver_object, keyname );
 
-    if (WINE_TRACE_ON(relay))
-        WINE_DPRINTF( "%04x:Ret  driver init %p (obj=%p,str=%s) retval=%08x\n", GetCurrentThreadId(),
-                      driver_object->DriverInit, driver_object, wine_dbgstr_w(keyname->Buffer), status );
+    TRACE_(relay)( "\1Ret  driver init %p (obj=%p,str=%s) retval=%08x\n",
+                   driver_object->DriverInit, driver_object, wine_dbgstr_w(keyname->Buffer), status );
 
     WINE_TRACE( "init done for %s obj %p\n", wine_dbgstr_w(driver_name), driver_object );
     WINE_TRACE( "- DriverInit = %p\n", driver_object->DriverInit );
@@ -303,15 +301,11 @@ static void WINAPI async_unload_driver( PTP_CALLBACK_INSTANCE instance, void *co
     DRIVER_OBJECT *driver_obj = driver->driver_obj;
     LDR_MODULE *ldr;
 
-    if (WINE_TRACE_ON(relay))
-        WINE_DPRINTF( "%04x:Call driver unload %p (obj=%p)\n", GetCurrentThreadId(),
-                      driver_obj->DriverUnload, driver_obj );
+    TRACE_(relay)( "\1Call driver unload %p (obj=%p)\n", driver_obj->DriverUnload, driver_obj );
 
     driver_obj->DriverUnload( driver_obj );
 
-    if (WINE_TRACE_ON(relay))
-        WINE_DPRINTF( "%04x:Ret  driver unload %p (obj=%p)\n", GetCurrentThreadId(),
-                      driver_obj->DriverUnload, driver_obj );
+    TRACE_(relay)( "\1Ret  driver unload %p (obj=%p)\n", driver_obj->DriverUnload, driver_obj );
 
     ldr = driver_obj->DriverSection;
     FreeLibrary( ldr->BaseAddress );
