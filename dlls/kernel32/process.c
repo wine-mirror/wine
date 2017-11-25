@@ -1112,9 +1112,8 @@ static DWORD WINAPI start_process( LPTHREAD_START_ROUTINE entry )
         ExitThread( 1 );
     }
 
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
-                 debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
+    TRACE_(relay)( "\1Starting process %s (entryproc=%p)\n",
+                   debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
 
     if (!CheckRemoteDebuggerPresent( GetCurrentProcess(), &being_debugged ))
         being_debugged = FALSE;
