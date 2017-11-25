@@ -2708,15 +2708,11 @@ static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UIN
 {
     if (!callback) return;
 
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Call message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
-                 GetCurrentThreadId(), callback, hwnd, SPY_GetMsgName( msg, hwnd ),
-                 data, result );
+    TRACE_(relay)( "\1Call message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
+                   callback, hwnd, SPY_GetMsgName( msg, hwnd ), data, result );
     callback( hwnd, msg, data, result );
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Ret  message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
-                 GetCurrentThreadId(), callback, hwnd, SPY_GetMsgName( msg, hwnd ),
-                 data, result );
+    TRACE_(relay)( "\1Ret  message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
+                   callback, hwnd, SPY_GetMsgName( msg, hwnd ), data, result );
 }
 
 
@@ -2832,21 +2828,17 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                     }
                 }
 
-                if (TRACE_ON(relay))
-                    DPRINTF( "%04x:Call winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
-                             GetCurrentThreadId(), hook_proc,
-                             msg_data->winevent.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
-                             info.msg.lParam, msg_data->winevent.tid, info.msg.time);
+                TRACE_(relay)( "\1Call winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
+                               hook_proc, msg_data->winevent.hook, info.msg.message, info.msg.hwnd,
+                               info.msg.wParam, info.msg.lParam, msg_data->winevent.tid, info.msg.time);
 
                 hook_proc( wine_server_ptr_handle( msg_data->winevent.hook ), info.msg.message,
                            info.msg.hwnd, info.msg.wParam, info.msg.lParam,
                            msg_data->winevent.tid, info.msg.time );
 
-                if (TRACE_ON(relay))
-                    DPRINTF( "%04x:Ret  winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
-                             GetCurrentThreadId(), hook_proc,
-                             msg_data->winevent.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
-                             info.msg.lParam, msg_data->winevent.tid, info.msg.time);
+                TRACE_(relay)( "\1Ret  winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
+                               hook_proc, msg_data->winevent.hook, info.msg.message, info.msg.hwnd,
+                               info.msg.wParam, info.msg.lParam, msg_data->winevent.tid, info.msg.time);
 
                 if (free_module) FreeLibrary(free_module);
             }

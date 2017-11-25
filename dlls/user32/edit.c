@@ -342,9 +342,10 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
 	    {
 		EDITWORDBREAKPROCW wbpW = (EDITWORDBREAKPROCW)es->word_break_proc;
 
-		TRACE_(relay)("(UNICODE wordbrk=%p,str=%s,idx=%d,cnt=%d,act=%d)\n",
+		TRACE_(relay)("\1Call wordbreakW %p (str=%s,idx=%d,cnt=%d,act=%d)\n",
 			es->word_break_proc, debugstr_wn(es->text + start, count), index, count, action);
 		ret = wbpW(es->text + start, index, count, action);
+		TRACE_(relay)("\1Ret wordbreakW %p retval=%d\n", es->word_break_proc, ret );
 	    }
 	    else
 	    {
@@ -355,10 +356,11 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
 		countA = WideCharToMultiByte(CP_ACP, 0, es->text + start, count, NULL, 0, NULL, NULL);
 		textA = HeapAlloc(GetProcessHeap(), 0, countA);
 		WideCharToMultiByte(CP_ACP, 0, es->text + start, count, textA, countA, NULL, NULL);
-		TRACE_(relay)("(ANSI wordbrk=%p,str=%s,idx=%d,cnt=%d,act=%d)\n",
+		TRACE_(relay)("\1Call wordbreakA %p(str=%s,idx=%d,cnt=%d,act=%d)\n",
 			es->word_break_proc, debugstr_an(textA, countA), index, countA, action);
 		ret = wbpA(textA, index, countA, action);
 		HeapFree(GetProcessHeap(), 0, textA);
+		TRACE_(relay)("\1Ret wordbreakA %p retval=%d\n", es->word_break_proc, ret );
 	    }
         }
 	else

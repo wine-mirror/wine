@@ -338,17 +338,15 @@ static LRESULT call_hook_proc( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
 {
     LRESULT ret;
 
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Call hook proc %p (id=%s,code=%x,wp=%08lx,lp=%08lx)\n",
-                 GetCurrentThreadId(), proc, hook_names[id-WH_MINHOOK], code, wparam, lparam );
+    TRACE_(relay)( "\1Call hook proc %p (id=%s,code=%x,wp=%08lx,lp=%08lx)\n",
+                   proc, hook_names[id-WH_MINHOOK], code, wparam, lparam );
 
     if (!prev_unicode == !next_unicode) ret = proc( code, wparam, lparam );
     else if (prev_unicode) ret = call_hook_WtoA( proc, id, code, wparam, lparam );
     else ret = call_hook_AtoW( proc, id, code, wparam, lparam );
 
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Ret  hook proc %p (id=%s,code=%x,wp=%08lx,lp=%08lx) retval=%08lx\n",
-                 GetCurrentThreadId(), proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, ret );
+    TRACE_(relay)( "\1Ret  hook proc %p (id=%s,code=%x,wp=%08lx,lp=%08lx) retval=%08lx\n",
+                   proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, ret );
 
     return ret;
 }
@@ -921,17 +919,15 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
 
             if (!info.module[0] || (proc = get_hook_proc( proc, info.module, &free_module )) != NULL)
             {
-                if (TRACE_ON(relay))
-                    DPRINTF( "%04x:Call winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
-                             GetCurrentThreadId(), proc, info.handle, event, hwnd, object_id,
-                             child_id, GetCurrentThreadId(), GetCurrentTime());
+                TRACE_(relay)( "\1Call winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
+                               proc, info.handle, event, hwnd, object_id,
+                               child_id, GetCurrentThreadId(), GetCurrentTime());
 
                 proc( info.handle, event, hwnd, object_id, child_id,
                       GetCurrentThreadId(), GetCurrentTime());
 
-                if (TRACE_ON(relay))
-                    DPRINTF( "%04x:Ret  winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
-                             GetCurrentThreadId(), proc, info.handle, event, hwnd, object_id,
+                TRACE_(relay)( "\1Ret  winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
+                             proc, info.handle, event, hwnd, object_id,
                              child_id, GetCurrentThreadId(), GetCurrentTime());
 
                 if (free_module) FreeLibrary(free_module);
