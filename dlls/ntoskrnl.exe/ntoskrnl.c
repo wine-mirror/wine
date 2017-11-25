@@ -1295,15 +1295,12 @@ NTSTATUS WINAPI IoCallDriver( DEVICE_OBJECT *device, IRP *irp )
     irpsp = --irp->Tail.Overlay.s.u2.CurrentStackLocation;
     dispatch = device->DriverObject->MajorFunction[irpsp->MajorFunction];
 
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Call driver dispatch %p (device=%p,irp=%p)\n",
-                 GetCurrentThreadId(), dispatch, device, irp );
+    TRACE_(relay)( "\1Call driver dispatch %p (device=%p,irp=%p)\n", dispatch, device, irp );
 
     status = dispatch( device, irp );
 
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Ret  driver dispatch %p (device=%p,irp=%p) retval=%08x\n",
-                 GetCurrentThreadId(), dispatch, device, irp, status );
+    TRACE_(relay)( "\1Ret  driver dispatch %p (device=%p,irp=%p) retval=%08x\n",
+                   dispatch, device, irp, status );
 
     return status;
 }
