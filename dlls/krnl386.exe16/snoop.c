@@ -289,20 +289,20 @@ static void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT *context) {
 	context->SegCs = HIWORD(fun->origfun);
 
 
-	DPRINTF("%04x:CALL %s.%d: %s(",GetCurrentThreadId(), dll->name,ordinal,fun->name);
+	TRACE("\1CALL %s.%d: %s(", dll->name, ordinal, fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs;
 		if (max>16) max=16;
 		for (i=max;i--;)
-			DPRINTF("%04x%s",*(WORD*)((char *) MapSL( MAKESEGPTR(context->SegSs,LOWORD(context->Esp)) )+8+sizeof(WORD)*i),i?",":"");
+			TRACE("%04x%s",*(WORD*)((char *) MapSL( MAKESEGPTR(context->SegSs,LOWORD(context->Esp)) )+8+sizeof(WORD)*i),i?",":"");
 		if (max!=fun->nrofargs)
-			DPRINTF(" ...");
+			TRACE(" ...");
 	} else if (fun->nrofargs<0) {
-		DPRINTF("<unknown, check return>");
+		TRACE("<unknown, check return>");
 		ret->args = HeapAlloc(GetProcessHeap(),0,16*sizeof(WORD));
 		memcpy(ret->args,(LPBYTE)((char *) MapSL( MAKESEGPTR(context->SegSs,LOWORD(context->Esp)) )+8),sizeof(WORD)*16);
 	}
-	DPRINTF(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
+	TRACE(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 }
 
 static void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT *context) {
@@ -318,9 +318,7 @@ static void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT *context) {
 	}
 	context->Eip = LOWORD(ret->origreturn);
 	context->SegCs  = HIWORD(ret->origreturn);
-        DPRINTF("%04x:RET  %s.%d: %s(",
-                GetCurrentThreadId(),ret->dll->name,ret->ordinal,
-                ret->dll->funs[ret->ordinal].name);
+        TRACE("\1RET  %s.%d: %s(", ret->dll->name, ret->ordinal, ret->dll->funs[ret->ordinal].name);
 	if (ret->args) {
 		int	i,max;
 
@@ -331,14 +329,14 @@ static void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT *context) {
 			max=0;
 
 		for (i=max;i--;)
-			DPRINTF("%04x%s",ret->args[i],i?",":"");
+			TRACE("%04x%s",ret->args[i],i?",":"");
 		if (max!=ret->dll->funs[ret->ordinal].nrofargs)
-			DPRINTF(" ...");
+			TRACE(" ...");
 		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	}
-        DPRINTF(") retval = %04x:%04x ret=%04x:%04x\n",
-                (WORD)context->Edx,(WORD)context->Eax,
-                HIWORD(ret->origreturn),LOWORD(ret->origreturn));
+        TRACE(") retval = %04x:%04x ret=%04x:%04x\n",
+              (WORD)context->Edx,(WORD)context->Eax,
+              HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 	ret->origreturn = NULL; /* mark as empty */
 }

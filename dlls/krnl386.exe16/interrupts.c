@@ -261,7 +261,7 @@ static void DOSVM_PushFlags( CONTEXT *context, BOOL islong, BOOL isstub )
  */
 BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
 {
-    TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%08x\n"
+    TRACE_(relay)("\1Call DOS int 0x%02x ret=%04x:%08x\n"
                   "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"
                   "  esi=%08x edi=%08x ebp=%08x esp=%08x\n"
                   "  ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
@@ -450,7 +450,7 @@ void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
  */
 BOOL DOSVM_EmulateInterruptRM( CONTEXT *context, BYTE intnum )
 {
-    TRACE_(relay)("Call DOS int 0x%02x ret=%04x:%08x\n"
+    TRACE_(relay)("\1Call DOS int 0x%02x ret=%04x:%08x\n"
                   "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"
                   "  esi=%08x edi=%08x ebp=%08x esp=%08x\n"
                   "  ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
