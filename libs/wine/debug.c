@@ -34,7 +34,6 @@
 #include "wine/library.h"
 
 #if defined(__MINGW32__) || defined(_MSC_VER)
-WINE_DECLARE_DEBUG_CHANNEL(tid);
 WINE_DECLARE_DEBUG_CHANNEL(pid);
 #endif
 
@@ -410,8 +409,7 @@ static int default_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_ch
 #if defined(__MINGW32__) || defined(_MSC_VER)
     if (TRACE_ON(pid))
         ret += wine_dbg_printf( "%04x:", GetCurrentProcessId() );
-    if (TRACE_ON(tid))
-        ret += wine_dbg_printf( "%04x:", GetCurrentThreadId() );
+    ret += wine_dbg_printf( "%04x:", GetCurrentThreadId() );
 #endif
     if (cls < sizeof(debug_classes)/sizeof(debug_classes[0]))
         ret += wine_dbg_printf( "%s:%s:%s ", debug_classes[cls], channel->name, func );
