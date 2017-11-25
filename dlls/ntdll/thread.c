@@ -479,8 +479,7 @@ static void thread_startup( void *param )
 
     attach_dlls( (void *)1 );
 
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Starting thread proc %p (arg=%p)\n", GetCurrentThreadId(), func, arg );
+    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", func, arg );
 
     call_thread_entry_point( (LPTHREAD_START_ROUTINE)func, arg );
 }

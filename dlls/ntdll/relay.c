@@ -40,9 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(relay);
 
 #if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 
-WINE_DECLARE_DEBUG_CHANNEL(timestamp);
-WINE_DECLARE_DEBUG_CHANNEL(pid);
-
 struct relay_descr  /* descriptor for a module */
 {
     void               *magic;               /* signature */
@@ -308,21 +305,15 @@ static inline void RELAY_PrintArgs( const INT_PTR *args, int nb_args, unsigned i
         if ((typemask & 3) && !IS_INTARG(*args))
         {
 	    if (typemask & 2)
-                DPRINTF( "%08lx %s", *args, debugstr_w((LPCWSTR)*args) );
+                TRACE( "%08lx %s", *args, debugstr_w((LPCWSTR)*args) );
             else
-                DPRINTF( "%08lx %s", *args, debugstr_a((LPCSTR)*args) );
+                TRACE( "%08lx %s", *args, debugstr_a((LPCSTR)*args) );
 	}
-        else DPRINTF( "%08lx", *args );
-        if (nb_args) DPRINTF( "," );
+        else TRACE( "%08lx", *args );
+        if (nb_args) TRACE( "," );
         args++;
         typemask >>= 2;
     }
-}
-
-static void print_timestamp(void)
-{
-    ULONG ticks = NtGetTickCount();
-    DPRINTF( "%3u.%03u:", ticks / 1000, ticks % 1000 );
 }
 
 /***********************************************************************
@@ -340,17 +331,12 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr,
 
     if (TRACE_ON(relay))
     {
-        if (TRACE_ON(timestamp)) print_timestamp();
-
-        if (TRACE_ON(pid))
-            DPRINTF( "%04x:", GetCurrentProcessId() );
-
         if (entry_point->name)
-            DPRINTF( "%04x:Call %s.%s(", GetCurrentThreadId(), data->dllname, entry_point->name );
+            TRACE( "\1Call %s.%s(", data->dllname, entry_point->name );
         else
-            DPRINTF( "%04x:Call %s.%u(", GetCurrentThreadId(), data->dllname, data->base + ordinal );
+            TRACE( "\1Call %s.%u(", data->dllname, data->base + ordinal );
         RELAY_PrintArgs( stack + 1, nb_args, descr->arg_types[ordinal] );
-        DPRINTF( ") ret=%08lx\n", stack[0] );
+        TRACE( ") ret=%08lx\n", stack[0] );
     }
     return entry_point->orig_func;
 }
@@ -366,23 +352,16 @@ DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigne
     struct relay_private_data *data = descr->private;
     struct relay_entry_point *entry_point = data->entry_points + ordinal;
 
-    if (!TRACE_ON(relay)) return;
-
-    if (TRACE_ON(timestamp)) print_timestamp();
-
-    if (TRACE_ON(pid))
-        DPRINTF( "%04x:", GetCurrentProcessId() );
-
     if (entry_point->name)
-        DPRINTF( "%04x:Ret  %s.%s()", GetCurrentThreadId(), data->dllname, entry_point->name );
+        TRACE( "\1Ret  %s.%s()", data->dllname, entry_point->name );
     else
-        DPRINTF( "%04x:Ret  %s.%u()", GetCurrentThreadId(), data->dllname, data->base + ordinal );
+        TRACE( "\1Ret  %s.%u()", data->dllname, data->base + ordinal );
 
     if (flags & 1)  /* 64-bit return value */
-        DPRINTF( " retval=%08x%08x ret=%08lx\n",
+        TRACE( " retval=%08x%08x ret=%08lx\n",
                  (UINT)(retval >> 32), (UINT)retval, stack[0] );
     else
-        DPRINTF( " retval=%08lx ret=%08lx\n", (UINT_PTR)retval, stack[0] );
+        TRACE( " retval=%08lx ret=%08lx\n", (UINT_PTR)retval, stack[0] );
 }
 
 #ifdef __i386__
@@ -952,7 +931,7 @@ static void SNOOP_PrintArg(DWORD x)
 {
     int i,nostring;
 
-    DPRINTF("%08x",x);
+    TRACE_(snoop)("%08x",x);
     if (IS_INTARG(x) || TRACE_ON(seh)) return; /* trivial reject to avoid faults */
     __TRY
     {
@@ -965,7 +944,7 @@ static void SNOOP_PrintArg(DWORD x)
             i++;
         }
         if (!nostring && i > 5)
-            DPRINTF(" %s",debugstr_an((LPSTR)x,i));
+            TRACE_(snoop)(" %s",debugstr_an((LPSTR)x,i));
         else  /* try unicode */
         {
             LPWSTR s=(LPWSTR)x;
@@ -976,7 +955,7 @@ static void SNOOP_PrintArg(DWORD x)
                 if (s[i]>0x100) {nostring=1;break;}
                 i++;
             }
-            if (!nostring && i > 5) DPRINTF(" %s",debugstr_wn((LPWSTR)x,i));
+            if (!nostring && i > 5) TRACE_(snoop)(" %s",debugstr_wn((LPWSTR)x,i));
         }
     }
     __EXCEPT_PAGE_FAULT
@@ -1049,26 +1028,24 @@ void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Entry( void **stack )
 
         if (!TRACE_ON(snoop)) return;
 
-	if (TRACE_ON(timestamp))
-		print_timestamp();
-	if (fun->name) DPRINTF("%04x:CALL %s.%s(",GetCurrentThreadId(),dll->name,fun->name);
-	else DPRINTF("%04x:CALL %s.%d(",GetCurrentThreadId(),dll->name,dll->ordbase+ret->ordinal);
+	if (fun->name) TRACE_(snoop)("\1CALL %s.%s(", dll->name, fun->name);
+	else TRACE_(snoop)("\1CALL %s.%d(", dll->name, dll->ordbase+ret->ordinal);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
 		for (i=0;i<max;i++)
                 {
                     SNOOP_PrintArg( (DWORD)stack[i + 2] );
-                    if (i<fun->nrofargs-1) DPRINTF(",");
+                    if (i<fun->nrofargs-1) TRACE_(snoop)(",");
                 }
 		if (max!=fun->nrofargs)
-			DPRINTF(" ...");
+			TRACE_(snoop)(" ...");
 	} else if (fun->nrofargs<0) {
-		DPRINTF("<unknown, check return>");
+		TRACE_(snoop)("<unknown, check return>");
 		ret->args = RtlAllocateHeap(GetProcessHeap(),
                                             0,16*sizeof(DWORD));
 		memcpy(ret->args, stack + 2, sizeof(DWORD)*16);
 	}
-	DPRINTF(") ret=%08x\n",(DWORD)ret->origreturn);
+	TRACE_(snoop)(") ret=%08x\n",(DWORD)ret->origreturn);
 }
 
 void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Return( void **stack )
@@ -1091,16 +1068,13 @@ void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Return( void **stack )
             return;
         }
 
-	if (TRACE_ON(timestamp))
-		print_timestamp();
 	if (ret->args) {
 		int	i,max;
 
                 if (fun->name)
-                    DPRINTF("%04x:RET  %s.%s(", GetCurrentThreadId(), ret->dll->name, fun->name);
+                    TRACE_(snoop)("\1RET  %s.%s(", ret->dll->name, fun->name);
                 else
-                    DPRINTF("%04x:RET  %s.%d(", GetCurrentThreadId(),
-                            ret->dll->name,ret->dll->ordbase+ret->ordinal);
+                    TRACE_(snoop)("\1RET  %s.%d(", ret->dll->name, ret->dll->ordbase+ret->ordinal);
 
 		max = fun->nrofargs;
 		if (max>16) max=16;
@@ -1108,21 +1082,19 @@ void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Return( void **stack )
 		for (i=0;i<max;i++)
                 {
                     SNOOP_PrintArg(ret->args[i]);
-                    if (i<max-1) DPRINTF(",");
+                    if (i<max-1) TRACE_(snoop)(",");
                 }
-		DPRINTF(") retval=%08x ret=%08x\n", retval, (DWORD)ret->origreturn );
+		TRACE_(snoop)(") retval=%08x ret=%08x\n", retval, (DWORD)ret->origreturn );
 		RtlFreeHeap(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	}
         else
         {
             if (fun->name)
-		DPRINTF("%04x:RET  %s.%s() retval=%08x ret=%08x\n",
-			GetCurrentThreadId(),
-			ret->dll->name, fun->name, retval, (DWORD)ret->origreturn);
+		TRACE_(snoop)("\1RET  %s.%s() retval=%08x ret=%08x\n",
+                        ret->dll->name, fun->name, retval, (DWORD)ret->origreturn);
             else
-		DPRINTF("%04x:RET  %s.%d() retval=%08x ret=%08x\n",
-			GetCurrentThreadId(),
+		TRACE_(snoop)("\1RET  %s.%d() retval=%08x ret=%08x\n",
 			ret->dll->name,ret->dll->ordbase+ret->ordinal,
 			retval, (DWORD)ret->origreturn);
         }
