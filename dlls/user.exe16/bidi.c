@@ -28,7 +28,7 @@
 #include "winerror.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(relay);
+WINE_DEFAULT_DEBUG_CHANNEL(user);
 
 /***********************************************************************
  *		ChangeDialogTemplate   (USER.905)
