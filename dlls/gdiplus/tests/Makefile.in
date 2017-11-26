@@ -14,3 +14,8 @@ C_SRCS = \
 	pen.c \
 	region.c \
 	stringformat.c
+
+RC_SRCS = resource.rc
+
+FONT_SRCS = \
+	wine_longname.sfd
