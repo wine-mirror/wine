@@ -6679,6 +6679,59 @@ static void test_GetCharWidthI(void)
     ReleaseDC(0, hdc);
 }
 
+static INT CALLBACK long_enum_proc(const LOGFONTA *lf, const TEXTMETRICA *tm, DWORD type, LPARAM lparam)
+{
+    BOOL *found_font = (BOOL *)lparam;
+    *found_font = TRUE;
+    return 1;
+}
+
+static void test_long_names(void)
+{
+    char ttf_name[MAX_PATH];
+    LOGFONTA font = {0};
+    HFONT handle_font;
+    BOOL found_font;
+    int ret;
+    HDC dc;
+
+    if (!write_ttf_file("wine_longname.ttf", ttf_name))
+    {
+        skip("Failed to create ttf file for testing\n");
+        return;
+    }
+
+    dc = GetDC(NULL);
+
+    ret = AddFontResourceExA(ttf_name, FR_PRIVATE, 0);
+    ok(ret, "AddFontResourceEx() failed\n");
+
+    strcpy(font.lfFaceName, "wine_3_this_is_a_very_long_name");
+    found_font = FALSE;
+    EnumFontFamiliesExA(dc, &font, long_enum_proc, (LPARAM)&found_font, 0);
+    ok(found_font == TRUE, "EnumFontFamiliesExA didn't find font.\n");
+
+    strcpy(font.lfFaceName, "wine_2_this_is_a_very_long_name");
+    found_font = FALSE;
+    EnumFontFamiliesExA(dc, &font, long_enum_proc, (LPARAM)&found_font, 0);
+    ok(found_font == TRUE, "EnumFontFamiliesExA didn't find font.\n");
+
+    strcpy(font.lfFaceName, "wine_1_this_is_a_very_long_name");
+    found_font = FALSE;
+    EnumFontFamiliesExA(dc, &font, long_enum_proc, (LPARAM)&found_font, 0);
+    ok(found_font == FALSE, "EnumFontFamiliesExA must not find font.\n");
+
+    handle_font = CreateFontIndirectA(&font);
+    ok(handle_font != NULL, "CreateFontIndirectA failed\n");
+    DeleteObject(handle_font);
+
+    ret = RemoveFontResourceExA(ttf_name, FR_PRIVATE, 0);
+    ok(ret, "RemoveFontResourceEx() failed\n");
+
+    DeleteFileA(ttf_name);
+    ReleaseDC(NULL, dc);
+}
+
 START_TEST(font)
 {
     init();
@@ -6742,6 +6795,7 @@ START_TEST(font)
     test_fake_bold_font();
     test_bitmap_font_glyph_index();
     test_GetCharWidthI();
+    test_long_names();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.
