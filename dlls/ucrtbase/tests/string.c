@@ -36,7 +36,7 @@
 
 #define CHECK_EXPECT2(func) \
     do { \
-        ok(expect_ ##func, "unexpected call &quot; #func &quot;\n"); \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
         called_ ## func = TRUE; \
     }while(0)
 
@@ -48,7 +48,7 @@
 
 #define CHECK_CALLED(func) \
     do { \
-        ok(called_ ## func, "expected &quot; #func &quot;\n"); \
+        ok(called_ ## func, "expected " #func "\n"); \
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
