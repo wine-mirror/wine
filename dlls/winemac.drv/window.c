@@ -402,7 +402,8 @@ static void sync_window_region(struct macdrv_win_data *data, HRGN win_region)
            window, it's the same as there being no region.  It's potentially
            hard/slow to test this for arbitrary regions, so we just check for
            very simple regions. */
-        if (count == 1 && CGRectContainsRect(rects[0], cgrect_from_rect(data->whole_rect)))
+        if (count == 1 && CGRectContainsRect(rects[0],
+            CGRectOffset(cgrect_from_rect(data->whole_rect), -data->whole_rect.left, -data->whole_rect.top)))
         {
             TRACE("optimizing for simple region that contains Cocoa content rect\n");
             rects = NULL;
