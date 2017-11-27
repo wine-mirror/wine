@@ -2411,6 +2411,101 @@ static void test_GetCodePageInfo(IMultiLanguage2 *iML2)
     }
 }
 
+static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
+{
+    HFONT old_font = NULL;
+    HFONT new_font = NULL;
+    HFONT last_font = NULL;
+    HFONT font1 = NULL;
+    HFONT font2 = NULL;
+    DWORD codepages;
+    DWORD font_codepages;
+    HRESULT ret;
+    HDC hdc;
+    WCHAR ch;
+
+    hdc = GetDC(NULL);
+    codepages = FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC | FS_GREEK | FS_TURKISH |
+                FS_HEBREW | FS_ARABIC | FS_BALTIC | FS_VIETNAMESE | FS_THAI |
+                FS_JISJAPAN | FS_CHINESESIMP | FS_WANSUNG | FS_CHINESETRAD;
+    old_font = GetCurrentObject(hdc, OBJ_FONT);
+    ch = 0xfeed;
+
+    /* Tests for IMLangFontLink */
+
+    ret = IMLangFontLink_ResetFontMapping(font_link);
+    ok(ret == S_OK, "IMLangFontLink_ResetFontMapping: expected S_OK, got %08x\n", ret);
+
+    ret = IMLangFontLink_MapFont(font_link, NULL, 0, NULL, NULL);
+    ok(ret == E_FAIL, "IMLangFontLink_MapFont: expected E_FAIL, got %08x\n", ret);
+    ret = IMLangFontLink_MapFont(font_link, NULL, codepages, old_font, &new_font);
+    ok(ret == E_FAIL, "IMLangFontLink_MapFont: expected E_FAIL, got %08x\n", ret);
+    ret = IMLangFontLink_MapFont(font_link, hdc, codepages, NULL, &new_font);
+    ok(ret == E_FAIL, "IMLangFontLink_MapFont: expected E_FAIL, got %08x\n", ret);
+
+    ret = IMLangFontLink_MapFont(font_link, hdc, codepages, old_font, NULL);
+    ok(ret == S_OK, "IMLangFontLink_MapFont: expected S_OK, got %08x\n", ret);
+    ret = IMLangFontLink_MapFont(font_link, hdc, codepages, old_font, &new_font);
+    ok(ret == S_OK && new_font != NULL, "IMLangFontLink_MapFont: expected S_OK/!NULL, got %08x/%p\n", ret, new_font);
+    last_font = new_font;
+    ret = IMLangFontLink_MapFont(font_link, hdc, codepages, old_font, &new_font);
+    ok(ret == S_OK && new_font == last_font, "IMLangFontLink_MapFont: expected S_OK/%p, got %08x/%p\n", last_font, ret, new_font);
+
+    ret = IMLangFontLink_ReleaseFont(font_link, NULL);
+    ok(ret == E_FAIL, "IMLangFontLink_ReleaseFont: expected E_FAIL, got %08x\n", ret);
+    ret = IMLangFontLink_ReleaseFont(font_link, new_font);
+    ok(ret == S_OK, "IMLangFontLink_ReleaseFont: expected S_OK, got %08x\n", ret);
+    ret = IMLangFontLink_ResetFontMapping(font_link);
+    ok(ret == S_OK, "IMLangFontLink_ResetFontMapping: expected S_OK, got %08x\n", ret);
+
+    /* Tests for IMLangFontLink2 */
+
+    ret = IMLangFontLink2_ResetFontMapping(font_link2);
+    ok(ret == S_OK, "IMLangFontLink2_ResetFontMapping: expected S_OK, got %08x\n", ret);
+
+    ret = IMLangFontLink2_MapFont(font_link2, NULL, 0, 0, NULL);
+    ok(ret == E_FAIL, "IMLangFontLink2_MapFont: expected E_FAIL, got %08x\n", ret);
+    ret = IMLangFontLink2_MapFont(font_link2, NULL, codepages, ch, &new_font);
+    ok(ret == E_FAIL, "IMLangFontLink2_MapFont: expected E_FAIL, got %08x\n", ret);
+    ret = IMLangFontLink2_MapFont(font_link2, hdc, 0, 0, NULL);
+    ok(ret == E_INVALIDARG, "IMLangFontLink2_MapFont: expected E_INVALIDARG, got %08x\n", ret);
+    ret = IMLangFontLink2_MapFont(font_link2, hdc, 0, ch, NULL);
+    ok(ret == E_INVALIDARG, "IMLangFontLink2_MapFont: expected E_INVALIDARG, got %08x\n", ret);
+
+    ret = IMLangFontLink2_MapFont(font_link2, hdc, 0, ch, &new_font);
+    todo_wine
+    ok(ret == S_OK || broken(ret == E_FAIL), /* got E_FAIL on winxp and win2k */
+       "IMLangFontLink2_MapFont: expected S_OK || E_FAIL, got %08x\n", ret);
+    ret = IMLangFontLink2_MapFont(font_link2, hdc, codepages, 0, NULL);
+    ok(ret == S_OK, "IMLangFontLink2_MapFont: expected S_OK, got %08x\n", ret);
+    ret = IMLangFontLink2_MapFont(font_link2, hdc, codepages, 0, &new_font);
+    ok(ret == S_OK && new_font != NULL, "IMLangFontLink2_MapFont: expected S_OK/!NULL, got %08x/%p\n", ret, new_font);
+    last_font = new_font;
+    ret = IMLangFontLink2_MapFont(font_link2, hdc, codepages, 0, &new_font);
+    ok(ret == S_OK && new_font == last_font, "IMLangFontLink2_MapFont: expected S_OK/%p, got %08x/%p\n", last_font, ret, new_font);
+
+    ret = IMLangFontLink2_ReleaseFont(font_link2, NULL);
+    ok(ret == E_FAIL, "IMLangFontLink2_ReleaseFont: expected E_FAIL, got %08x\n", ret);
+    ret = IMLangFontLink2_ReleaseFont(font_link2, new_font);
+    ok(ret == S_OK, "IMLangFontLink2_ReleaseFont: expected S_OK, got %08x\n", ret);
+    ret = IMLangFontLink2_ResetFontMapping(font_link2);
+    ok(ret == S_OK, "IMLangFontLink2_ResetFontMapping: expected S_OK, got %08x\n", ret);
+
+    /* Show that the font cache is global */
+    IMLangFontLink_MapFont(font_link, hdc, codepages, old_font, &font1);
+    IMLangFontLink2_MapFont(font_link2, hdc, codepages, 0, &font2);
+    ok(font1 != NULL && font2 != NULL, "expected !NULL/!NULL, got %p/%p", font1, font2);
+    ok(font1 == font2, "expected equal, got not equal");
+
+    IMLangFontLink_GetFontCodePages(font_link, hdc, font1, &font_codepages);
+    ok((codepages & (~font_codepages)) != 0 && (codepages & font_codepages) != 0,
+       "code pages of font is incorrect");
+
+    IMLangFontLink_ResetFontMapping(font_link);
+    IMLangFontLink2_ResetFontMapping(font_link2);
+    ReleaseDC(NULL, hdc);
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage  *iML = NULL;
@@ -2487,7 +2582,6 @@ START_TEST(mlang)
     if (ret != S_OK || !iMLFL) return;
 
     IMLangFontLink_Test(iMLFL);
-    IMLangFontLink_Release(iMLFL);
 
     /* IMLangFontLink2 */
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
@@ -2497,6 +2591,9 @@ START_TEST(mlang)
     test_GetScriptFontInfo(iMLFL2);
     test_GetFontUnicodeRanges(iMLFL2);
     test_CodePageToScriptID(iMLFL2);
+    test_MapFont(iMLFL, iMLFL2);
+
+    IMLangFontLink_Release(iMLFL);
     IMLangFontLink2_Release(iMLFL2);
 
     trace("IMultiLanguage3\n");
