@@ -181,7 +181,7 @@ static HRESULT WINAPI regtask_get_Enabled(IRegisteredTask *iface, VARIANT_BOOL *
 static HRESULT WINAPI regtask_put_Enabled(IRegisteredTask *iface, VARIANT_BOOL enabled)
 {
     FIXME("%p,%d: stub\n", iface, enabled);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI regtask_Run(IRegisteredTask *iface, VARIANT params, IRunningTask **task)

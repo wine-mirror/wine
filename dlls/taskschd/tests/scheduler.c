@@ -890,7 +890,6 @@ todo_wine
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
 
     hr = IRegisteredTask_put_Enabled(task1, VARIANT_TRUE);
-todo_wine
     ok(hr == S_OK, "put_Enabled error %#x\n", hr);
     hr = IRegisteredTask_get_State(task1, &state);
     ok(hr == S_OK, "get_State error %#x\n", hr);

@@ -184,7 +184,7 @@ static HRESULT WINAPI DailyTrigger_put_StartBoundary(IDailyTrigger *iface, BSTR 
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(start));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI DailyTrigger_get_EndBoundary(IDailyTrigger *iface, BSTR *end)
@@ -212,7 +212,7 @@ static HRESULT WINAPI DailyTrigger_put_Enabled(IDailyTrigger *iface, VARIANT_BOO
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
     FIXME("(%p)->(%x)\n", This, enabled);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI DailyTrigger_get_DaysInterval(IDailyTrigger *iface, short *days)
@@ -711,7 +711,7 @@ static HRESULT WINAPI RegistrationInfo_get_SecurityDescriptor(IRegistrationInfo 
 static HRESULT WINAPI RegistrationInfo_put_SecurityDescriptor(IRegistrationInfo *iface, VARIANT sddl)
 {
     FIXME("%p,%s: stub\n", iface, debugstr_variant(&sddl));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_get_Source(IRegistrationInfo *iface, BSTR *source)
