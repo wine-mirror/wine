@@ -3815,6 +3815,20 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
     return slice_pitch * depth;
 }
 
+BOOL wined3d_formats_are_srgb_variants(enum wined3d_format_id format1, enum wined3d_format_id format2)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(format_srgb_info); ++i)
+    {
+        if (format1 == format_srgb_info[i].srgb_format_id)
+            return format2 == format_srgb_info[i].base_format_id;
+        if (format1 == format_srgb_info[i].base_format_id)
+            return format2 == format_srgb_info[i].srgb_format_id;
+    }
+    return FALSE;
+}
+
 /*****************************************************************************
  * Trace formatting of useful values
  */

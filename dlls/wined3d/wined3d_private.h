@@ -4251,6 +4251,8 @@ BOOL wined3d_format_is_depth_view(enum wined3d_format_id resource_format_id,
         enum wined3d_format_id view_format_id) DECLSPEC_HIDDEN;
 const struct wined3d_color_key_conversion * wined3d_format_get_color_key_conversion(
         const struct wined3d_texture *texture, BOOL need_alpha_ck) DECLSPEC_HIDDEN;
+BOOL wined3d_formats_are_srgb_variants(enum wined3d_format_id format1,
+        enum wined3d_format_id format2) DECLSPEC_HIDDEN;
 
 BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size) DECLSPEC_HIDDEN;
 

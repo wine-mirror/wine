@@ -128,6 +128,14 @@ static const struct wined3d_format *validate_resource_view(const struct wined3d_
         struct wined3d_texture *texture = texture_from_resource(resource);
         unsigned int depth_or_layer_count;
 
+        if (resource->format->id != format->id && !wined3d_format_is_typeless(resource->format)
+                && !wined3d_formats_are_srgb_variants(resource->format->id, format->id))
+        {
+            WARN("Trying to create incompatible view for non typeless format %s.\n",
+                    debug_d3dformat(format->id));
+            return NULL;
+        }
+
         if (mip_slice && resource->type == WINED3D_RTYPE_TEXTURE_3D)
             depth_or_layer_count = wined3d_texture_get_level_depth(texture, desc->u.texture.level_idx);
         else
