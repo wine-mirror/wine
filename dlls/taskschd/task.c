@@ -951,8 +951,13 @@ static HRESULT WINAPI TaskSettings_get_RestartCount(ITaskSettings *iface, INT *c
 
 static HRESULT WINAPI TaskSettings_put_RestartCount(ITaskSettings *iface, INT count)
 {
-    FIXME("%p,%d: stub\n", iface, count);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, count);
+
+    taskset->restart_count = count;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_MultipleInstances(ITaskSettings *iface, TASK_INSTANCES_POLICY *policy)

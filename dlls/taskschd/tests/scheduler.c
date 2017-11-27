@@ -1105,6 +1105,9 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_RestartCount(set, test->restart_count);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_MultipleInstances(set, test->policy);
 todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     /* FIXME: Remove once implemented */
@@ -1113,9 +1116,6 @@ todo_wine
         ITaskSettings_Release(set);
         return;
     }
-
-    hr = ITaskSettings_put_MultipleInstances(set, test->policy);
-    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_StopIfGoingOnBatteries(set, test->stop_if_going_on_batteries);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
