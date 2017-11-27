@@ -999,8 +999,13 @@ static HRESULT WINAPI TaskSettings_get_StopIfGoingOnBatteries(ITaskSettings *ifa
 
 static HRESULT WINAPI TaskSettings_put_StopIfGoingOnBatteries(ITaskSettings *iface, VARIANT_BOOL stop)
 {
-    FIXME("%p,%d: stub\n", iface, stop);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, stop);
+
+    taskset->stop_if_going_on_batteries = stop ? TRUE : FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_DisallowStartIfOnBatteries(ITaskSettings *iface, VARIANT_BOOL *disallow)
