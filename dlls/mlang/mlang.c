@@ -40,6 +40,7 @@
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mlang);
 
@@ -524,6 +525,24 @@ static const struct mlang_data
     { "Unicode",CP_UNICODE,sizeof(unicode_cp)/sizeof(unicode_cp[0]),unicode_cp,
       "Courier","Arial" } /* FIXME */
 };
+
+struct font_list
+{
+    struct list list_entry;
+    HFONT base_font;
+    HFONT font;
+    UINT charset;
+};
+
+static struct list font_cache = LIST_INIT(font_cache);
+static CRITICAL_SECTION font_cache_critical;
+static CRITICAL_SECTION_DEBUG font_cache_critical_debug =
+{
+    0, 0, &font_cache_critical,
+    { &font_cache_critical_debug.ProcessLocksList, &font_cache_critical_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": font_cache_critical") }
+};
+static CRITICAL_SECTION font_cache_critical = { &font_cache_critical_debug, -1, 0, 0, 0, 0 };
 
 static void fill_cp_info(const struct mlang_data *ml_data, UINT index, MIMECPINFO *mime_cp_info);
 
@@ -1310,6 +1329,119 @@ HRESULT WINAPI Rfc1766ToLcidA(LCID *lcid, LPCSTR rfc1766A)
     rfc1766W[MAX_RFC1766_NAME] = 0;
 
     return Rfc1766ToLcidW(lcid, rfc1766W);
+}
+
+static HRESULT map_font(HDC hdc, DWORD codepages, HFONT src_font, HFONT *dst_font)
+{
+    struct font_list *font_list_entry;
+    CHARSETINFO charset_info;
+    HFONT new_font, old_font;
+    LOGFONTW font_attr;
+    DWORD mask, Csb[2];
+    BOOL found_cached;
+    UINT charset;
+    BOOL ret;
+    UINT i;
+
+    if (hdc == NULL || src_font == NULL) return E_FAIL;
+
+    for (i = 0; i < 32; i++)
+    {
+        mask = (DWORD)(1 << i);
+        if (codepages & mask)
+        {
+            Csb[0] = mask;
+            Csb[1] = 0x0;
+            ret = TranslateCharsetInfo(Csb, &charset_info, TCI_SRCFONTSIG);
+            if (!ret) continue;
+
+            /* use cached font if possible */
+            found_cached = FALSE;
+            EnterCriticalSection(&font_cache_critical);
+            LIST_FOR_EACH_ENTRY(font_list_entry, &font_cache, struct font_list, list_entry)
+            {
+                if (font_list_entry->charset == charset_info.ciCharset &&
+                    font_list_entry->base_font == src_font)
+                {
+                    if (dst_font != NULL)
+                        *dst_font = font_list_entry->font;
+                    found_cached = TRUE;
+                }
+            }
+            LeaveCriticalSection(&font_cache_critical);
+            if (found_cached) return S_OK;
+
+            GetObjectW(src_font, sizeof(font_attr), &font_attr);
+            font_attr.lfCharSet = (BYTE)charset_info.ciCharset;
+            font_attr.lfWidth = 0;
+            font_attr.lfFaceName[0] = 0;
+            new_font = CreateFontIndirectW(&font_attr);
+            if (new_font == NULL) continue;
+
+            old_font = SelectObject(hdc, new_font);
+            charset = GetTextCharset(hdc);
+            SelectObject(hdc, old_font);
+            if (charset == charset_info.ciCharset)
+            {
+                font_list_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_list_entry));
+                if (font_list_entry == NULL) return E_OUTOFMEMORY;
+
+                font_list_entry->base_font = src_font;
+                font_list_entry->font = new_font;
+                font_list_entry->charset = charset;
+
+                EnterCriticalSection(&font_cache_critical);
+                list_add_tail(&font_cache, &font_list_entry->list_entry);
+                LeaveCriticalSection(&font_cache_critical);
+
+                if (dst_font != NULL)
+                    *dst_font = new_font;
+                return S_OK;
+            }
+        }
+    }
+
+    return E_FAIL;
+}
+
+static HRESULT release_font(HFONT font)
+{
+    struct font_list *font_list_entry;
+    HRESULT hr;
+
+    hr = E_FAIL;
+    EnterCriticalSection(&font_cache_critical);
+    LIST_FOR_EACH_ENTRY(font_list_entry, &font_cache, struct font_list, list_entry)
+    {
+        if (font_list_entry->font == font)
+        {
+            list_remove(&font_list_entry->list_entry);
+            DeleteObject(font);
+            HeapFree(GetProcessHeap(), 0, font_list_entry);
+            hr = S_OK;
+            break;
+        }
+    }
+    LeaveCriticalSection(&font_cache_critical);
+
+    return hr;
+}
+
+static HRESULT clear_font_cache(void)
+{
+    struct font_list *font_list_entry;
+    struct font_list *font_list_entry2;
+
+    EnterCriticalSection(&font_cache_critical);
+    LIST_FOR_EACH_ENTRY_SAFE(font_list_entry, font_list_entry2, &font_cache, struct font_list, list_entry)
+    {
+        list_remove(&font_list_entry->list_entry);
+        DeleteObject(font_list_entry->font);
+        HeapFree(GetProcessHeap(), 0, font_list_entry);
+    }
+    LeaveCriticalSection(&font_cache_critical);
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -2499,7 +2631,7 @@ static ULONG WINAPI fnIMultiLanguage3_Release( IMultiLanguage3* iface )
     TRACE("(%p)->(%d)\n", This, ref);
     if (ref == 0)
     {
-	HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, This);
         UnlockModule();
     }
 
@@ -3351,21 +3483,38 @@ static HRESULT WINAPI fnIMLangFontLink2_GetFontCodePages(IMLangFontLink2 *iface,
 static HRESULT WINAPI fnIMLangFontLink2_ReleaseFont(IMLangFontLink2* This,
         HFONT hFont)
 {
-    FIXME("(%p)->%p\n",This, hFont);
-    return E_NOTIMPL;
+    TRACE("(%p)->%p\n",This, hFont);
+
+    return release_font(hFont);
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_ResetFontMapping(IMLangFontLink2* This)
 {
-    FIXME("(%p)->\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n",This);
+
+    return clear_font_cache();
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_MapFont(IMLangFontLink2* This,
         HDC hDC, DWORD dwCodePages, WCHAR chSrc, HFONT *pFont)
 {
-    FIXME("(%p)->%p %i %s %p\n",This, hDC, dwCodePages, debugstr_wn(&chSrc,1), pFont);
-    return E_NOTIMPL;
+    HFONT old_font;
+
+    TRACE("(%p)->%p %08x %04x %p\n",This, hDC, dwCodePages, chSrc, pFont);
+
+    if (!hDC) return E_FAIL;
+
+    if (dwCodePages != 0)
+    {
+        old_font = GetCurrentObject(hDC, OBJ_FONT);
+        return map_font(hDC, dwCodePages, old_font, pFont);
+    }
+    else
+    {
+        if (pFont == NULL) return E_INVALIDARG;
+        FIXME("the situation where dwCodepages is set to zero is not implemented\n");
+        return E_FAIL;
+    }
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_GetFontUnicodeRanges(IMLangFontLink2* This,
