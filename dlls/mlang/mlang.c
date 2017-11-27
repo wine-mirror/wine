@@ -2055,23 +2055,26 @@ static HRESULT WINAPI fnIMLangFontLink_MapFont(
         HFONT hSrcFont,
         HFONT* phDestFont)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->%p %08x %p %p\n",iface, hDC, dwCodePages, hSrcFont, phDestFont);
+
+    return map_font(hDC, dwCodePages, hSrcFont, phDestFont);
 }
 
 static HRESULT WINAPI fnIMLangFontLink_ReleaseFont(
         IMLangFontLink* iface,
         HFONT hFont)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->%p\n",iface, hFont);
+
+    return release_font(hFont);
 }
 
 static HRESULT WINAPI fnIMLangFontLink_ResetFontMapping(
         IMLangFontLink* iface)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("(%p)\n",iface);
+
+    return clear_font_cache();
 }
 
 
