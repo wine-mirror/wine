@@ -924,8 +924,16 @@ static HRESULT WINAPI TaskSettings_get_RestartInterval(ITaskSettings *iface, BST
 
 static HRESULT WINAPI TaskSettings_put_RestartInterval(ITaskSettings *iface, BSTR interval)
 {
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+    BSTR str = NULL;
+
     TRACE("%p,%s\n", iface, debugstr_w(interval));
-    return E_NOTIMPL;
+
+    if (interval && !(str = SysAllocString(interval))) return E_OUTOFMEMORY;
+    SysFreeString(taskset->restart_interval);
+    taskset->restart_interval = str;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_RestartCount(ITaskSettings *iface, INT *count)
