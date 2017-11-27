@@ -975,8 +975,13 @@ static HRESULT WINAPI TaskSettings_get_MultipleInstances(ITaskSettings *iface, T
 
 static HRESULT WINAPI TaskSettings_put_MultipleInstances(ITaskSettings *iface, TASK_INSTANCES_POLICY policy)
 {
-    FIXME("%p,%d: stub\n", iface, policy);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, policy);
+
+    taskset->policy = policy;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_StopIfGoingOnBatteries(ITaskSettings *iface, VARIANT_BOOL *stop)
