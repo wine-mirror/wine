@@ -86,6 +86,12 @@ EVT_HANDLE WINAPI EvtOpenChannelEnum(EVT_HANDLE session, DWORD flags)
     return NULL;
 }
 
+BOOL WINAPI EvtNextChannelPath(EVT_HANDLE channel_enum, DWORD buffer_len, WCHAR *buffer, DWORD *used)
+{
+    FIXME("(%p %u %p %p) stub\n", channel_enum, buffer_len, buffer, used);
+    return FALSE;
+}
+
 EVT_HANDLE WINAPI EvtOpenChannelConfig(EVT_HANDLE Session, LPCWSTR ChannelPath, DWORD Flags)
 {
     FIXME("(%p %s %u) stub\n", Session, debugstr_w(ChannelPath), Flags);
