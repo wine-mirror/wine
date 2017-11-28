@@ -1132,6 +1132,12 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_Enabled(set, test->enabled);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    if (!test->delete_expired_task_after[0])
+        hr = ITaskSettings_put_DeleteExpiredTaskAfter(set, NULL);
+    else
+        hr = ITaskSettings_put_DeleteExpiredTaskAfter(set, test->delete_expired_task_after);
 todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     /* FIXME: Remove once implemented */
@@ -1140,12 +1146,6 @@ todo_wine
         ITaskSettings_Release(set);
         return;
     }
-
-    if (!test->delete_expired_task_after[0])
-        hr = ITaskSettings_put_DeleteExpiredTaskAfter(set, NULL);
-    else
-        hr = ITaskSettings_put_DeleteExpiredTaskAfter(set, test->delete_expired_task_after);
-    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_Priority(set, test->priority);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);

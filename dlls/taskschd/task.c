@@ -1165,8 +1165,13 @@ static HRESULT WINAPI TaskSettings_get_Enabled(ITaskSettings *iface, VARIANT_BOO
 
 static HRESULT WINAPI TaskSettings_put_Enabled(ITaskSettings *iface, VARIANT_BOOL enabled)
 {
-    FIXME("%p,%d: stub\n", iface, enabled);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, enabled);
+
+    taskset->enabled = enabled ? TRUE : FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_DeleteExpiredTaskAfter(ITaskSettings *iface, BSTR *delay)
