@@ -1071,8 +1071,13 @@ static HRESULT WINAPI TaskSettings_get_StartWhenAvailable(ITaskSettings *iface, 
 
 static HRESULT WINAPI TaskSettings_put_StartWhenAvailable(ITaskSettings *iface, VARIANT_BOOL start)
 {
-    FIXME("%p,%d: stub\n", iface, start);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, start);
+
+    taskset->start_when_available = start ? TRUE : FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_XmlText(ITaskSettings *iface, BSTR *xml)

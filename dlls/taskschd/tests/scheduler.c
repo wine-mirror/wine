@@ -1120,6 +1120,9 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_StartWhenAvailable(set, test->start_when_available);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_RunOnlyIfNetworkAvailable(set, test->run_only_if_network_available);
 todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     /* FIXME: Remove once implemented */
@@ -1128,9 +1131,6 @@ todo_wine
         ITaskSettings_Release(set);
         return;
     }
-
-    hr = ITaskSettings_put_RunOnlyIfNetworkAvailable(set, test->run_only_if_network_available);
-    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     if (!test->execution_time_limit[0])
         hr = ITaskSettings_put_ExecutionTimeLimit(set, NULL);
