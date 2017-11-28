@@ -3256,7 +3256,7 @@ static HRESULT WINAPI HTMLStyle2_put_behavior(IHTMLStyle2 *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle2(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle2_get_behavior(IHTMLStyle2 *iface, BSTR *p)
