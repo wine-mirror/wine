@@ -1138,8 +1138,16 @@ static HRESULT WINAPI TaskSettings_get_ExecutionTimeLimit(ITaskSettings *iface, 
 
 static HRESULT WINAPI TaskSettings_put_ExecutionTimeLimit(ITaskSettings *iface, BSTR limit)
 {
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+    WCHAR *str = NULL;
+
     TRACE("%p,%s\n", iface, debugstr_w(limit));
-    return E_NOTIMPL;
+
+    if (limit && !(str = heap_strdupW(limit))) return E_OUTOFMEMORY;
+    heap_free(taskset->execution_time_limit);
+    taskset->execution_time_limit = str;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_Enabled(ITaskSettings *iface, VARIANT_BOOL *enabled)
