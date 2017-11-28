@@ -1047,8 +1047,13 @@ static HRESULT WINAPI TaskSettings_get_AllowHardTerminate(ITaskSettings *iface, 
 
 static HRESULT WINAPI TaskSettings_put_AllowHardTerminate(ITaskSettings *iface, VARIANT_BOOL allow)
 {
-    FIXME("%p,%d: stub\n", iface, allow);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, allow);
+
+    taskset->allow_hard_terminate = allow ? TRUE : FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_StartWhenAvailable(ITaskSettings *iface, VARIANT_BOOL *start)
