@@ -191,7 +191,6 @@ static const struct fd_ops pipe_server_fd_ops =
 
 /* client end functions */
 static void pipe_client_dump( struct object *obj, int verbose );
-static int pipe_client_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void pipe_client_destroy( struct object *obj );
 static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
@@ -202,7 +201,7 @@ static const struct object_ops pipe_client_ops =
     no_get_type,                  /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
-    pipe_client_signaled,         /* signaled */
+    default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_end_get_fd,              /* get_fd */
@@ -306,13 +305,6 @@ static void pipe_client_dump( struct object *obj, int verbose )
     fprintf( stderr, "Named pipe client server=%p\n", client->server );
 }
 
-static int pipe_client_signaled( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct pipe_client *client = (struct pipe_client *) obj;
-
-    return client->pipe_end.fd && is_fd_signaled(client->pipe_end.fd);
-}
-
 static void named_pipe_destroy( struct object *obj)
 {
     struct named_pipe *pipe = (struct named_pipe *) obj;
@@ -377,7 +369,7 @@ static void pipe_end_disconnect( struct pipe_end *pipe_end, unsigned int status 
 
     pipe_end->connection = NULL;
 
-    if (pipe_end->fd) fd_async_wake_up( pipe_end->fd, ASYNC_TYPE_WAIT, status );
+    fd_async_wake_up( pipe_end->fd, ASYNC_TYPE_WAIT, status );
     async_wake_up( &pipe_end->read_q, status );
     LIST_FOR_EACH_ENTRY_SAFE( message, next, &pipe_end->message_queue, struct pipe_message, entry )
     {
