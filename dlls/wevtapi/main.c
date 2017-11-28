@@ -50,6 +50,12 @@ EVT_HANDLE WINAPI EvtOpenSession(EVT_LOGIN_CLASS login_class, void *login, DWORD
     return NULL;
 }
 
+EVT_HANDLE WINAPI EvtOpenLog(EVT_HANDLE session, const WCHAR *path, DWORD flags)
+{
+    FIXME("(%p %s %u) stub\n", session, debugstr_w(path), flags);
+    return NULL;
+}
+
 BOOL WINAPI EvtGetChannelConfigProperty(EVT_HANDLE ChannelConfig,
                                         EVT_CHANNEL_CONFIG_PROPERTY_ID PropertyId,
                                         DWORD Flags,

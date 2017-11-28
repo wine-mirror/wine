@@ -32,7 +32,7 @@
 @ stdcall EvtOpenChannelConfig(ptr wstr long)
 @ stdcall EvtOpenChannelEnum(ptr long)
 @ stub EvtOpenEventMetadataEnum
-@ stub EvtOpenLog
+@ stdcall EvtOpenLog(ptr wstr long)
 @ stub EvtOpenPublisherEnum
 @ stub EvtOpenPublisherMetadata
 @ stdcall EvtOpenSession(long ptr long long)
