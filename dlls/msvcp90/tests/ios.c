@@ -496,10 +496,14 @@ static basic_ostream_wchar* (*__thiscall p_basic_ostream_short_print_ushort)(bas
 
 /* basic_ios */
 static locale*  (*__thiscall p_basic_ios_char_imbue)(basic_ios_char*, locale*, const locale*);
+static basic_ios_char* (*__thiscall p_basic_ios_char_ctor)(basic_ios_char*);
+static char (*__thiscall p_basic_ios_char_widen)(basic_ios_char*, char);
+static void (*__thiscall p_basic_ios_char_dtor)(basic_ios_char*);
 
 static locale*  (*__thiscall p_basic_ios_wchar_imbue)(basic_ios_wchar*, locale*, const locale*);
 
 /* ios_base */
+static void          (*__thiscall p_ios_base__Init)(ios_base*);
 static IOSB_iostate  (*__thiscall p_ios_base_rdstate)(const ios_base*);
 static IOSB_fmtflags (*__thiscall p_ios_base_setf_mask)(ios_base*, IOSB_fmtflags, IOSB_fmtflags);
 static void          (*__thiscall p_ios_base_unsetf)(ios_base*, IOSB_fmtflags);
@@ -737,6 +741,8 @@ static BOOL init(void)
         SET(p_basic_ostream_char_print_complex_ldouble,
             "??$?6ODU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@O@0@@Z");
 
+        SET(p_ios_base__Init,
+            "?_Init@ios_base@std@@IEAAXXZ");
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QEBAHXZ");
         SET(p_ios_base_setf_mask,
@@ -748,6 +754,12 @@ static BOOL init(void)
 
         SET(p_basic_ios_char_imbue,
             "?imbue@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z");
+        SET(p_basic_ios_char_ctor,
+            "??0?$basic_ios@DU?$char_traits@D@std@@@std@@IEAA@XZ");
+        SET(p_basic_ios_char_widen,
+            "?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADD@Z");
+        SET(p_basic_ios_char_dtor,
+            "??1?$basic_ios@DU?$char_traits@D@std@@@std@@UEAA@XZ");
 
         SET(p_basic_ios_wchar_imbue,
             "?imbue@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAA?AVlocale@2@AEBV32@@Z");
@@ -869,6 +881,8 @@ static BOOL init(void)
         SET(p_basic_ostream_char_print_complex_ldouble,
             "??$?6ODU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@O@0@@Z");
 
+        SET(p_ios_base__Init,
+            "?_Init@ios_base@std@@IAAXXZ");
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QBAHXZ");
         SET(p_ios_base_setf_mask,
@@ -880,6 +894,12 @@ static BOOL init(void)
 
         SET(p_basic_ios_char_imbue,
             "?imbue@?$basic_ios@DU?$char_traits@D@std@@@std@@QAA?AVlocale@2@ABV32@@Z");
+        SET(p_basic_ios_char_ctor,
+            "??0?$basic_ios@DU?$char_traits@D@std@@@std@@IAA@XZ");
+        SET(p_basic_ios_char_widen,
+            "?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QBADD@Z");
+        SET(p_basic_ios_char_dtor,
+            "??1?$basic_ios@DU?$char_traits@D@std@@@std@@UAA@XZ");
 
         SET(p_basic_ios_wchar_imbue,
             "?imbue@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAA?AVlocale@2@ABV32@@Z");
@@ -1000,6 +1020,8 @@ static BOOL init(void)
         SET(p_basic_ostream_char_print_complex_ldouble,
             "??$?6ODU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@O@0@@Z");
 
+        SET(p_ios_base__Init,
+            "?_Init@ios_base@std@@IAEXXZ");
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QBEHXZ");
         SET(p_ios_base_setf_mask,
@@ -1011,6 +1033,12 @@ static BOOL init(void)
 
         SET(p_basic_ios_char_imbue,
             "?imbue@?$basic_ios@DU?$char_traits@D@std@@@std@@QAE?AVlocale@2@ABV32@@Z");
+        SET(p_basic_ios_char_ctor,
+            "??0?$basic_ios@DU?$char_traits@D@std@@@std@@IAE@XZ");
+        SET(p_basic_ios_char_widen,
+            "?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDD@Z");
+        SET(p_basic_ios_char_dtor,
+            "??1?$basic_ios@DU?$char_traits@D@std@@@std@@UAE@XZ");
 
         SET(p_basic_ios_wchar_imbue,
             "?imbue@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAE?AVlocale@2@ABV32@@Z");
@@ -2344,6 +2372,20 @@ static void test_istream_read_complex_double(void)
     }
 }
 
+static void test_basic_ios(void)
+{
+    basic_ios_char bi;
+    char c;
+
+    call_func1(p_basic_ios_char_ctor, &bi);
+    call_func1(p_ios_base__Init, &bi.base);
+
+    c = (UINT_PTR)call_func2(p_basic_ios_char_widen, &bi, 'a');
+    ok(c == 'a', "basic_ios::widen('a') returned %x\n", c);
+
+    call_func1(p_basic_ios_char_dtor, &bi);
+}
+
 START_TEST(ios)
 {
     if(!init())
@@ -2369,6 +2411,7 @@ START_TEST(ios)
     test_ostream_print_complex_double();
     test_ostream_print_complex_ldouble();
     test_istream_read_complex_double();
+    test_basic_ios();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 
