@@ -36,7 +36,7 @@
 @ stub EvtOpenPublisherEnum
 @ stub EvtOpenPublisherMetadata
 @ stub EvtOpenSession
-@ stub EvtQuery
+@ stdcall EvtQuery(ptr wstr wstr long)
 @ stub EvtRender
 @ stub EvtSaveChannelConfig
 @ stub EvtSeek

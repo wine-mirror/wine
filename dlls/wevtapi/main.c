@@ -86,6 +86,12 @@ EVT_HANDLE WINAPI EvtOpenChannelConfig(EVT_HANDLE Session, LPCWSTR ChannelPath, 
     return NULL;
 }
 
+EVT_HANDLE WINAPI EvtQuery(EVT_HANDLE session, const WCHAR *path, const WCHAR *query, DWORD flags)
+{
+    FIXME("(%p %s %s %u) stub\n", session, debugstr_w(path), debugstr_w(query), flags);
+    return NULL;
+}
+
 BOOL WINAPI EvtClose(EVT_HANDLE handle)
 {
     FIXME("(%p) stub\n", handle);
