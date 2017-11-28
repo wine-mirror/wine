@@ -44,6 +44,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+EVT_HANDLE WINAPI EvtOpenSession(EVT_LOGIN_CLASS login_class, void *login, DWORD timeout, DWORD flags)
+{
+    FIXME("(%u %p %u %u) stub\n", login_class, login, timeout, flags);
+    return NULL;
+}
+
 BOOL WINAPI EvtGetChannelConfigProperty(EVT_HANDLE ChannelConfig,
                                         EVT_CHANNEL_CONFIG_PROPERTY_ID PropertyId,
                                         DWORD Flags,

@@ -53,6 +53,10 @@ typedef enum _EVT_CHANNEL_CONFIG_PROPERTY_ID {
     EvtChannelConfigPropertyIdEND
 } EVT_CHANNEL_CONFIG_PROPERTY_ID;
 
+typedef enum _EVT_LOGIN_CLASS {
+    EvtRpcLogin = 1
+} EVT_LOGIN_CLASS;
+
 typedef enum _EVT_SUBSCRIBE_NOTIFY_ACTION {
     EvtSubscribeActionError = 0,
     EvtSubscribeActionDeliver
