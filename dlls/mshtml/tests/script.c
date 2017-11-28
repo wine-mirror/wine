@@ -1259,6 +1259,7 @@ static void load_string(IHTMLDocument2 *doc, const char *str)
 {
     IPersistStreamInit *init;
     IStream *stream;
+    HRESULT hres;
     HGLOBAL mem;
     SIZE_T len;
 
@@ -1266,9 +1267,11 @@ static void load_string(IHTMLDocument2 *doc, const char *str)
     len = strlen(str);
     mem = GlobalAlloc(0, len);
     memcpy(mem, str, len);
-    CreateStreamOnHGlobal(mem, TRUE, &stream);
+    hres = CreateStreamOnHGlobal(mem, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream, hr %#x.\n", hres);
 
-    IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
+    ok(hres == S_OK, "Failed to get IPersistStreamInit, hr %#x.\n", hres);
 
     IPersistStreamInit_Load(init, stream);
     IPersistStreamInit_Release(init);
@@ -2325,7 +2328,8 @@ static void test_script_run(void)
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = NULL;
-    dispex_propput(document, id, 0, &var, NULL);
+    hres = dispex_propput(document, id, 0, &var, NULL);
+    ok(hres == S_OK, "dispex_propput failed: %08x\n", hres);
 
     VariantInit(&var);
     memset(&dp, 0, sizeof(dp));
@@ -2823,7 +2827,8 @@ static void report_data(ProtocolHandler *This)
     IServiceProvider_Release(service_provider);
     ok(hres == S_OK, "Could not get IHttpNegotiate interface: %08x\n", hres);
 
-    IUri_GetDisplayUri(This->uri, &url);
+    hres = IUri_GetDisplayUri(This->uri, &url);
+    ok(hres == S_OK, "Failed to get display uri: %08x\n", hres);
     hres = IHttpNegotiate_BeginningTransaction(http_negotiate, url, emptyW, 0, &addl_headers);
     ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
     SysFreeString(url);

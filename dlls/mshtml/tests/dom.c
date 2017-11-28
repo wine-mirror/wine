@@ -7742,7 +7742,8 @@ static void doc_write(IHTMLDocument2 *doc, BOOL ln, const char *text)
     dim.lLbound = 0;
     dim.cElements = 1;
     sa = SafeArrayCreate(VT_VARIANT, 1, &dim);
-    SafeArrayAccessData(sa, (void**)&var);
+    hres = SafeArrayAccessData(sa, (void**)&var);
+    ok(hres == S_OK, "Failed to access array data: %08x\n", hres);
     V_VT(var) = VT_BSTR;
     V_BSTR(var) = a2bstr(text);
     SafeArrayUnaccessData(sa);
@@ -7764,7 +7765,8 @@ static void doc_complex_write(IHTMLDocument2 *doc)
     HRESULT hres;
 
     sa = SafeArrayCreate(VT_VARIANT, 1, &dim);
-    SafeArrayAccessData(sa, (void**)&args);
+    hres = SafeArrayAccessData(sa, (void**)&args);
+    ok(hres == S_OK, "Failed to access array data: %08x\n", hres);
 
     V_VT(args) = VT_BSTR;
     V_BSTR(args) = a2bstr("<body i4val=\"");
