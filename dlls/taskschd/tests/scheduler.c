@@ -1114,6 +1114,9 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_DisallowStartIfOnBatteries(set, test->disallow_start_if_on_batteries);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_AllowHardTerminate(set, test->allow_hard_terminate);
 todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     /* FIXME: Remove once implemented */
@@ -1122,9 +1125,6 @@ todo_wine
         ITaskSettings_Release(set);
         return;
     }
-
-    hr = ITaskSettings_put_AllowHardTerminate(set, test->allow_hard_terminate);
-    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_StartWhenAvailable(set, test->start_when_available);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);

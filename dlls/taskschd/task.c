@@ -1023,8 +1023,13 @@ static HRESULT WINAPI TaskSettings_get_DisallowStartIfOnBatteries(ITaskSettings 
 
 static HRESULT WINAPI TaskSettings_put_DisallowStartIfOnBatteries(ITaskSettings *iface, VARIANT_BOOL disallow)
 {
-    FIXME("%p,%d: stub\n", iface, disallow);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, disallow);
+
+    taskset->disallow_start_if_on_batteries = disallow ? TRUE : FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_AllowHardTerminate(ITaskSettings *iface, VARIANT_BOOL *allow)
