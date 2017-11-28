@@ -2466,6 +2466,12 @@ static void test_close(void)
     ok(!GetHandleInformation(h, &flags), "GetHandleInformation succeeded\n");
     ok(close(fd2), "close(fd2) succeeded\n");
 
+    /* test close on already closed fd */
+    errno = 0xdeadbeef;
+    ret1 = close(fd1);
+    ok(ret1 == -1, "close(fd1) succeeded\n");
+    ok(errno == 9, "errno = %d\n", errno);
+
     /* test close on stdout and stderr that use the same handle */
     h = CreateFileA("fdopen.tst", GENERIC_READ|GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL);

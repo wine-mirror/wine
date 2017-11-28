@@ -1051,7 +1051,7 @@ int CDECL MSVCRT__close(int fd)
   if (fd == MSVCRT_NO_CONSOLE_FD) {
     *MSVCRT__errno() = MSVCRT_EBADF;
     ret = -1;
-  } else if (!(info->wxflag & WX_OPEN)) {
+  } else if (!MSVCRT_CHECK_PMT_ERR(info->wxflag & WX_OPEN, MSVCRT_EBADF)) {
     ret = -1;
   } else if (fd == MSVCRT_STDOUT_FILENO &&
           info->handle == get_ioinfo_nolock(MSVCRT_STDERR_FILENO)->handle) {
