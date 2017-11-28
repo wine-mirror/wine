@@ -30,7 +30,7 @@
 @ stub EvtNextEventMetadata
 @ stub EvtNextPublisherId
 @ stdcall EvtOpenChannelConfig(ptr wstr long)
-@ stub EvtOpenChannelEnum
+@ stdcall EvtOpenChannelEnum(ptr long)
 @ stub EvtOpenEventMetadataEnum
 @ stub EvtOpenLog
 @ stub EvtOpenPublisherEnum

@@ -74,6 +74,12 @@ EVT_HANDLE WINAPI EvtSubscribe(EVT_HANDLE Session, HANDLE SignalEvent, LPCWSTR C
     return NULL;
 }
 
+EVT_HANDLE WINAPI EvtOpenChannelEnum(EVT_HANDLE session, DWORD flags)
+{
+    FIXME("(%p %u) stub\n", session, flags);
+    return NULL;
+}
+
 EVT_HANDLE WINAPI EvtOpenChannelConfig(EVT_HANDLE Session, LPCWSTR ChannelPath, DWORD Flags)
 {
     FIXME("(%p %s %u) stub\n", Session, debugstr_w(ChannelPath), Flags);
