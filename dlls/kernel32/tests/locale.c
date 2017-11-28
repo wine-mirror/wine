@@ -4483,6 +4483,14 @@ static void test_GetLocaleInfoEx(void)
         ok(ret == lstrlenW(bufferW)+1, "got %d\n", ret);
         ok(!lstrcmpW(bufferW, enuW), "got %s\n", wine_dbgstr_w(bufferW));
 
+        ret = pGetLocaleInfoEx(enusW, LOCALE_SPARENT, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+        ok(ret == lstrlenW(bufferW)+1, "got %d\n", ret);
+        ok(!lstrcmpW(bufferW, enW), "got %s\n", wine_dbgstr_w(bufferW));
+
+        ret = pGetLocaleInfoEx(enW, LOCALE_SPARENT, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+        ok(ret == 1, "got %d\n", ret);
+        ok(!bufferW[0], "got %s\n", wine_dbgstr_w(bufferW));
+
         ret = pGetLocaleInfoEx(enW, LOCALE_SCOUNTRY, bufferW, sizeof(bufferW)/sizeof(WCHAR));
         ok(ret == lstrlenW(bufferW)+1, "got %d\n", ret);
         if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
