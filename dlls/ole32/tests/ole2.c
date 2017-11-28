@@ -229,6 +229,24 @@ static void create_bitmap( STGMEDIUM *med )
     med->pUnkForRelease = NULL;
 }
 
+static void create_mfpict(STGMEDIUM *med)
+{
+    METAFILEPICT *mf;
+    HDC hdc = CreateMetaFileW(NULL);
+
+    Rectangle(hdc, 0, 0, 100, 200);
+
+    med->tymed = TYMED_MFPICT;
+    U(med)->hMetaFilePict = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
+    mf = GlobalLock(U(med)->hMetaFilePict);
+    mf->mm = MM_ANISOTROPIC;
+    mf->xExt = 100;
+    mf->yExt = 200;
+    mf->hMF = CloseMetaFile(hdc);
+    GlobalUnlock(U(med)->hMetaFilePict);
+    med->pUnkForRelease = NULL;
+}
+
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppv)
 {
     CHECK_EXPECTED_METHOD("OleObject_QueryInterface");
@@ -3939,7 +3957,7 @@ static void check_storage_contents(IStorage *stg, const struct storage_def *stg_
         int clipformat = -1;
         PresentationDataHeader header;
         char name[32];
-        BYTE data[256];
+        BYTE data[1024];
 
         memset(&header, 0, sizeof(header));
 
@@ -4074,6 +4092,143 @@ static IStorage *create_storage_from_def(const struct storage_def *stg_def)
     return stg;
 }
 
+static const BYTE mf_rec[] =
+{
+    0xd7, 0xcd, 0xc6, 0x9a, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x16, 0x00, 0x2d, 0x00, 0x40, 0x02,
+    0x00, 0x00, 0x00, 0x00, 0x6a, 0x55
+};
+
+static void get_stgdef(struct storage_def *stg_def, CLIPFORMAT cf, STGMEDIUM *stg_med, int stm_idx)
+{
+    BYTE *data;
+    int data_size;
+    METAFILEPICT *mfpict;
+
+    switch (cf)
+    {
+    case CF_METAFILEPICT:
+        mfpict = GlobalLock(U(stg_med)->hMetaFilePict);
+        data_size = GetMetaFileBitsEx(mfpict->hMF, 0, NULL);
+        if (!strcmp(stg_def->stream[stm_idx].name, "CONTENTS"))
+        {
+            data = HeapAlloc(GetProcessHeap(), 0, data_size + sizeof(mf_rec));
+            memcpy(data, mf_rec, sizeof(mf_rec));
+            GetMetaFileBitsEx(mfpict->hMF, data_size, data + sizeof(mf_rec));
+            data_size += sizeof(mf_rec);
+        }
+        else
+        {
+            data = HeapAlloc(GetProcessHeap(), 0, data_size);
+            GetMetaFileBitsEx(mfpict->hMF, data_size, data);
+        }
+        GlobalUnlock(U(stg_med)->hMetaFilePict);
+        stg_def->stream[stm_idx].data_size = data_size;
+        stg_def->stream[stm_idx].data = data;
+        break;
+    }
+}
+
+static void get_stgmedium(CLIPFORMAT cfFormat, STGMEDIUM *stgmedium)
+{
+    switch (cfFormat)
+    {
+    case CF_METAFILEPICT:
+        create_mfpict(stgmedium);
+        break;
+    default:
+        ok(0, "cf %x not implemented\n", cfFormat);
+    }
+}
+
+#define MAX_FMTS 5
+static void test_data_cache_save_data(void)
+{
+    HRESULT hr;
+    STGMEDIUM stgmed;
+    ILockBytes *ilb;
+    IStorage *doc;
+    IOleCache2 *cache;
+    IPersistStorage *persist;
+    int enumerated_streams, matched_streams, i;
+    DWORD dummy;
+    struct tests_data_cache
+    {
+        FORMATETC fmts[MAX_FMTS];
+        int num_fmts, num_set;
+        const CLSID *clsid;
+        struct storage_def stg_def;
+    };
+
+    static struct tests_data_cache *pdata, data[] =
+    {
+        {
+            {
+                { CF_METAFILEPICT, 0, DVASPECT_CONTENT, -1, TYMED_MFPICT },
+            },
+            1, 1, &CLSID_WineTest,
+            {
+                &CLSID_WineTest, 1, { { "\2OlePres000", CF_METAFILEPICT, DVASPECT_CONTENT, 0, NULL, 0 } }
+            }
+        },
+        {
+            {
+                { 0 }
+            }
+        }
+    };
+
+    /* test _Save after caching directly through _Cache + _SetData */
+    for (pdata = data; pdata->clsid != NULL; pdata++)
+    {
+        hr = CreateDataCache(NULL, pdata->clsid, &IID_IOleCache2, (void **)&cache);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        for (i = 0; i < pdata->num_fmts; i++)
+        {
+            hr = IOleCache2_Cache(cache, &pdata->fmts[i], 0, &dummy);
+            ok(SUCCEEDED(hr), "unexpected %#x\n", hr);
+            if (i < pdata->num_set)
+            {
+                get_stgmedium(pdata->fmts[i].cfFormat, &stgmed);
+                get_stgdef(&pdata->stg_def, pdata->fmts[i].cfFormat, &stgmed, i);
+                hr = IOleCache2_SetData(cache, &pdata->fmts[i], &stgmed, TRUE);
+                ok(hr == S_OK, "unexpected %#x\n", hr);
+            }
+        }
+
+        /* create Storage in memory where we'll save cache */
+        hr = CreateILockBytesOnHGlobal(0, TRUE, &ilb);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+        hr = StgCreateDocfileOnILockBytes(ilb, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &doc);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+        ILockBytes_Release(ilb);
+        hr = IStorage_SetClass(doc, pdata->clsid);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        hr = IOleCache2_QueryInterface(cache, &IID_IPersistStorage, (void **)&persist);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        /* cache entries are dirty. test saving them to stg */
+        trace("IPersistStorage_Save:\n");
+        hr = IPersistStorage_Save(persist, doc, FALSE);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
+        check_storage_contents(doc, &pdata->stg_def, &enumerated_streams, &matched_streams);
+        ok(enumerated_streams == matched_streams, "enumerated %d != matched %d\n",
+           enumerated_streams, matched_streams);
+        ok(enumerated_streams == pdata->stg_def.stream_count, "created %d != def streams %d\n",
+           enumerated_streams, pdata->stg_def.stream_count);
+
+        for (i = 0; i < pdata->num_set; i++)
+            HeapFree(GetProcessHeap(), 0, (void *)pdata->stg_def.stream[i].data);
+
+        IPersistStorage_Release(persist);
+        IStorage_Release(doc);
+        IOleCache2_Release(cache);
+    }
+}
+
 static void test_data_cache_contents(void)
 {
     HRESULT hr;
@@ -4199,6 +4354,7 @@ START_TEST(ole2)
     test_OleDraw();
     test_OleDoAutoConvert();
     test_data_cache_save();
+    test_data_cache_save_data();
     test_data_cache_contents();
 
     CoUninitialize();
