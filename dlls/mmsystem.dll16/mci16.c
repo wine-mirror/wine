@@ -134,8 +134,7 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
     if (*lParam == 0)
 	return MMSYSTEM_MAP_OK;
     /* FIXME: to add also (with seg/linear modifications to do):
-     * MCI_LIST, MCI_LOAD, MCI_QUALITY, MCI_RESERVE, MCI_RESTORE, MCI_SAVE
-     * MCI_SETAUDIO, MCI_SETTUNER, MCI_SETVIDEO
+     * MCI_LOAD, MCI_QUALITY, MCI_RESERVE, MCI_RESTORE, MCI_SAVE, MCI_SETTUNER
      */
     switch (wMsg) {
 	/* case MCI_CAPTURE */
@@ -148,6 +147,7 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
     case MCI_DELETE:
     case MCI_GETDEVCAPS:
 	/* case MCI_INDEX: */
+    case MCI_LIST:
 	/* case MCI_MARK: */
 	/* case MCI_MONITOR: */
     case MCI_PASTE:
@@ -158,6 +158,8 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
     case MCI_RESUME:
     case MCI_SEEK:
     case MCI_SET:
+    case MCI_SETAUDIO:
+    case MCI_SETVIDEO:
 	/* case MCI_SETTIMECODE:*/
 	/* case MCI_SIGNAL:*/
     case MCI_SPIN:
