@@ -2188,6 +2188,27 @@ HRESULT IEventTarget_addEventListener_hook(DispatchEx *dispex, LCID lcid, WORD f
     return S_FALSE; /* fallback to default */
 }
 
+HRESULT IEventTarget_removeEventListener_hook(DispatchEx *dispex, LCID lcid, WORD flags,
+        DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    /* If only two arguments were given, implicitly set capture to false */
+    if((flags & DISPATCH_METHOD) && dp->cArgs == 2 && !dp->cNamedArgs) {
+        VARIANT args[3];
+        DISPPARAMS new_dp = {args, NULL, 3, 0};
+        V_VT(args) = VT_BOOL;
+        V_BOOL(args) = VARIANT_FALSE;
+        args[1] = dp->rgvarg[0];
+        args[2] = dp->rgvarg[1];
+
+        TRACE("implicit capture\n");
+
+        return IDispatchEx_InvokeEx(&dispex->IDispatchEx_iface, DISPID_IEVENTTARGET_REMOVEEVENTLISTENER,
+                                    lcid, flags, &new_dp, res, ei, caller);
+    }
+
+    return S_FALSE; /* fallback to default */
+}
+
 static const IEventTargetVtbl EventTargetVtbl = {
     EventTarget_QueryInterface,
     EventTarget_AddRef,
@@ -2238,6 +2259,7 @@ void EventTarget_init_dispex_info(dispex_data_t *dispex_info, compat_mode_t comp
 {
     static const dispex_hook_t IEventTarget_hooks[] = {
         {DISPID_IEVENTTARGET_ADDEVENTLISTENER, IEventTarget_addEventListener_hook},
+        {DISPID_IEVENTTARGET_REMOVEEVENTLISTENER, IEventTarget_removeEventListener_hook},
         {DISPID_UNKNOWN}
     };
 

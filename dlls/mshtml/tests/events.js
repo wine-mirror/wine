@@ -183,6 +183,14 @@ function test_add_remove_listener() {
 
     div.removeEventListener("click", listener, false);
 
+    /* test implicit capture removeEventListener argument */
+    div.addEventListener("click", listener, false);
+    div.removeEventListener("click", listener);
+
+    calls = "";
+    div.click();
+    ok(calls === "", "calls = " + calls);
+
     next_test();
 }
 
