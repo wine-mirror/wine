@@ -367,7 +367,8 @@ static void test_GdipImageGetFrameDimensionsCount(void)
 
     /* SelectActiveFrame has no effect on image data of memory bitmaps */
     color = 0xdeadbeef;
-    GdipBitmapGetPixel(bm, 0, 0, &color);
+    stat = GdipBitmapGetPixel(bm, 0, 0, &color);
+    expect(Ok, stat);
     expect(0xffffffff, color);
 
     GdipDisposeImage((GpImage*)bm);
@@ -2724,7 +2725,7 @@ static void test_multiframegif(void)
     expect(Ok, stat);
 
     color = 0xdeadbeef;
-    GdipBitmapGetPixel(bmp, 0, 0, &color);
+    stat = GdipBitmapGetPixel(bmp, 0, 0, &color);
     expect(Ok, stat);
     expect(0xffffffff, color);
 

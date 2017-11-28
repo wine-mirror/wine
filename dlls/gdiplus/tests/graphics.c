@@ -365,7 +365,8 @@ static void test_save_restore(void)
     log_state(state_a, &state_log);
 
     /* BeginContainer and SaveGraphics use the same stack. */
-    GdipCreateFromHDC(hdc, &graphics1);
+    stat = GdipCreateFromHDC(hdc, &graphics1);
+    expect(Ok, stat);
     GdipSetInterpolationMode(graphics1, InterpolationModeBilinear);
     stat = GdipBeginContainer2(graphics1, &state_a);
     expect(Ok, stat);
@@ -731,7 +732,8 @@ static void test_BeginContainer2(void)
     status = GdipCreateMatrix(&transform);
     expect(Ok, status);
     GdipGetWorldTransform(graphics, transform);
-    GdipGetMatrixElements(transform, elems);
+    status = GdipGetMatrixElements(transform, elems);
+    expect(Ok, status);
     ok(fabs(defTrans[0] - elems[0]) < 0.0001 &&
             fabs(defTrans[1] - elems[1]) < 0.0001 &&
             fabs(defTrans[2] - elems[2]) < 0.0001 &&
@@ -1600,10 +1602,12 @@ static void test_Get_Release_DC(void)
 
     status = GdipCreateMatrix(&m);
     expect(Ok, status);
-    GdipCreateRegion(&region);
+    status = GdipCreateRegion(&region);
+    expect(Ok, status);
     GdipCreateSolidFill((ARGB)0xdeadbeef, &brush);
     GdipCreatePath(FillModeAlternate, &path);
-    GdipCreateRegion(&clip);
+    status = GdipCreateRegion(&clip);
+    expect(Ok, status);
 
     status = GdipCreateFromHDC(hdc, &graphics);
     expect(Ok, status);

@@ -155,7 +155,8 @@ static void test_createfont(void)
     for (i = UnitWorld; i <=UnitMillimeter; i++)
     {
         if (i == UnitDisplay) continue; /* Crashes WindowsXP, wtf? */
-        GdipCreateFont(fontfamily, 24, FontStyleRegular, i, &font);
+        stat = GdipCreateFont(fontfamily, 24, FontStyleRegular, i, &font);
+        expect(Ok, stat);
         GdipGetFontSize (font, &size);
         ok (size == 24, "Expected 24, got %f (with unit: %d)\n", size, i);
         GdipGetFontUnit (font, &unit);
@@ -179,7 +180,8 @@ static void test_logfont(void)
     UINT16 em_height, line_spacing;
     Unit unit;
 
-    GdipCreateFromHDC(hdc, &graphics);
+    stat = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, stat);
 
     memset(&lfa, 0, sizeof(LOGFONTA));
     memset(&lfa2, 0xff, sizeof(LOGFONTA));
