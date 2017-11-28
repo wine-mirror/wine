@@ -838,6 +838,29 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *cache_entry, IStorage *storag
             }
             break;
         }
+        case CF_DIB:
+        {
+            header.dwSize = GlobalSize(cache_entry->stgmedium.u.hGlobal);
+            if (header.dwSize)
+            {
+                const BITMAPINFO *bmi = GlobalLock(cache_entry->stgmedium.u.hGlobal);
+                /* Size in units of 0.01mm (ie. MM_HIMETRIC) */
+                if (bmi->bmiHeader.biXPelsPerMeter != 0 && bmi->bmiHeader.biYPelsPerMeter != 0)
+                {
+                    header.dwObjectExtentX = MulDiv( bmi->bmiHeader.biWidth, 100000, bmi->bmiHeader.biXPelsPerMeter );
+                    header.dwObjectExtentY = MulDiv( bmi->bmiHeader.biHeight, 100000, bmi->bmiHeader.biYPelsPerMeter );
+                }
+                else
+                {
+                    HDC hdc = GetDC(0);
+                    header.dwObjectExtentX = MulDiv( bmi->bmiHeader.biWidth, 2540, GetDeviceCaps(hdc, LOGPIXELSX) );
+                    header.dwObjectExtentY = MulDiv( bmi->bmiHeader.biHeight, 2540, GetDeviceCaps(hdc, LOGPIXELSY) );
+                    ReleaseDC(0, hdc);
+                }
+                GlobalUnlock(cache_entry->stgmedium.u.hGlobal);
+            }
+            break;
+        }
         default:
             break;
     }
@@ -866,19 +889,31 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *cache_entry, IStorage *storag
                     IStream_Release(pres_stream);
                     return DV_E_STGMEDIUM;
                 }
-                data = HeapAlloc(GetProcessHeap(), 0, header.dwSize);
-                GetMetaFileBitsEx(mfpict->hMF, header.dwSize, data);
-                GlobalUnlock(cache_entry->stgmedium.u.hMetaFilePict);
+                if (header.dwSize)
+                {
+                    data = HeapAlloc(GetProcessHeap(), 0, header.dwSize);
+                    GetMetaFileBitsEx(mfpict->hMF, header.dwSize, data);
+                    GlobalUnlock(cache_entry->stgmedium.u.hMetaFilePict);
+                    if (data)
+                    {
+                        hr = IStream_Write(pres_stream, data, header.dwSize, NULL);
+                        HeapFree(GetProcessHeap(), 0, data);
+                    }
+                }
             }
+            break;
+        }
+        case CF_DIB:
+        {
+            data = GlobalLock(cache_entry->stgmedium.u.hGlobal);
+            if (header.dwSize)
+                hr = IStream_Write(pres_stream, data, header.dwSize, NULL);
+            GlobalUnlock(cache_entry->stgmedium.u.hGlobal);
             break;
         }
         default:
             break;
     }
-
-    if (data)
-        hr = IStream_Write(pres_stream, data, header.dwSize, NULL);
-    HeapFree(GetProcessHeap(), 0, data);
 
     IStream_Release(pres_stream);
     return hr;

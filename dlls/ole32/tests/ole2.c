@@ -4092,6 +4092,12 @@ static IStorage *create_storage_from_def(const struct storage_def *stg_def)
     return stg;
 }
 
+static const BYTE dib_inf[] =
+{
+    0x42, 0x4d, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x36, 0x00, 0x00, 0x00
+};
+
 static const BYTE mf_rec[] =
 {
     0xd7, 0xcd, 0xc6, 0x9a, 0x00, 0x00, 0x00, 0x00,
@@ -4107,6 +4113,23 @@ static void get_stgdef(struct storage_def *stg_def, CLIPFORMAT cf, STGMEDIUM *st
 
     switch (cf)
     {
+    case CF_DIB:
+        data_size = sizeof(dib);
+        if (!strcmp(stg_def->stream[stm_idx].name, "CONTENTS"))
+        {
+            data_size += sizeof(dib_inf);
+            data = HeapAlloc(GetProcessHeap(), 0, data_size);
+            memcpy(data, dib_inf, sizeof(dib_inf));
+            memcpy(data + sizeof(dib_inf), dib, sizeof(dib));
+        }
+        else
+        {
+            data = HeapAlloc(GetProcessHeap(), 0, data_size);
+            memcpy(data, dib, sizeof(dib));
+        }
+        stg_def->stream[stm_idx].data = data;
+        stg_def->stream[stm_idx].data_size = data_size;
+        break;
     case CF_METAFILEPICT:
         mfpict = GlobalLock(U(stg_med)->hMetaFilePict);
         data_size = GetMetaFileBitsEx(mfpict->hMF, 0, NULL);
@@ -4133,6 +4156,9 @@ static void get_stgmedium(CLIPFORMAT cfFormat, STGMEDIUM *stgmedium)
 {
     switch (cfFormat)
     {
+    case CF_DIB:
+        create_dib(stgmedium);
+        break;
     case CF_METAFILEPICT:
         create_mfpict(stgmedium);
         break;
@@ -4162,6 +4188,15 @@ static void test_data_cache_save_data(void)
 
     static struct tests_data_cache *pdata, data[] =
     {
+        {
+            {
+                { CF_DIB, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+            },
+            1, 1, &CLSID_WineTest,
+            {
+               &CLSID_WineTest, 1, { { "\2OlePres000", CF_DIB, DVASPECT_CONTENT, 0, NULL, 0 } }
+            }
+        },
         {
             {
                 { CF_METAFILEPICT, 0, DVASPECT_CONTENT, -1, TYMED_MFPICT },
