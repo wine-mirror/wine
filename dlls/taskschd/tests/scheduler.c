@@ -1138,6 +1138,9 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
         hr = ITaskSettings_put_DeleteExpiredTaskAfter(set, NULL);
     else
         hr = ITaskSettings_put_DeleteExpiredTaskAfter(set, test->delete_expired_task_after);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_Priority(set, test->priority);
 todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     /* FIXME: Remove once implemented */
@@ -1146,9 +1149,6 @@ todo_wine
         ITaskSettings_Release(set);
         return;
     }
-
-    hr = ITaskSettings_put_Priority(set, test->priority);
-    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_Compatibility(set, test->compatibility);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);

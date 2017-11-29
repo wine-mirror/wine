@@ -1196,8 +1196,16 @@ static HRESULT WINAPI TaskSettings_get_DeleteExpiredTaskAfter(ITaskSettings *ifa
 
 static HRESULT WINAPI TaskSettings_put_DeleteExpiredTaskAfter(ITaskSettings *iface, BSTR delay)
 {
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+    WCHAR *str = NULL;
+
     TRACE("%p,%s\n", iface, debugstr_w(delay));
-    return E_NOTIMPL;
+
+    if (delay && !(str = heap_strdupW(delay))) return E_OUTOFMEMORY;
+    heap_free(taskset->delete_expired_task_after);
+    taskset->delete_expired_task_after = str;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_Priority(ITaskSettings *iface, INT *priority)
