@@ -3144,7 +3144,7 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     RemoveEntryList( &wm->ldr.InMemoryOrderModuleList );
     InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
 
-    if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0 )) != STATUS_SUCCESS) goto error;
+    if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0, 0 )) != STATUS_SUCCESS) goto error;
     if ((status = server_init_process_done( &context )) != STATUS_SUCCESS) goto error;
 
     status = wine_call_on_stack( attach_dlls, (void *)1, (char *)NtCurrentTeb()->Tib.StackBase - page_size );

@@ -408,12 +408,18 @@ HANDLE thread_init(void)
  */
 static void free_thread_data( TEB *teb )
 {
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     SIZE_T size;
 
     if (teb->DeallocationStack)
     {
         size = 0;
         NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE );
+    }
+    if (thread_data->start_stack)
+    {
+        size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &thread_data->start_stack, &size, MEM_RELEASE );
     }
     signal_free_thread( teb );
 }
@@ -621,16 +627,19 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     info->entry_point = start;
     info->entry_arg   = param;
 
+    if ((status = virtual_alloc_thread_stack( teb, stack_reserve, stack_commit, PTHREAD_STACK_MIN )))
+        goto error;
+
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd  = request_pipe[1];
     thread_data->reply_fd    = -1;
     thread_data->wait_fd[0]  = -1;
     thread_data->wait_fd[1]  = -1;
-
-    if ((status = virtual_alloc_thread_stack( teb, stack_reserve, stack_commit ))) goto error;
+    thread_data->start_stack = (char *)teb->Tib.StackBase;
 
     pthread_attr_init( &attr );
-    pthread_attr_setstacksize( &attr, PTHREAD_STACK_MIN );
+    pthread_attr_setstack( &attr, teb->DeallocationStack,
+                         (char *)teb->Tib.StackBase + PTHREAD_STACK_MIN - (char *)teb->DeallocationStack );
     pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
     interlocked_xchg_add( &nb_threads, 1 );
     if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, info ))

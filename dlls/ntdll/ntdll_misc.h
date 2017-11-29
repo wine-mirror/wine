@@ -165,7 +165,8 @@ extern NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_S
 /* virtual memory */
 extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_create_builtin_view( void *base ) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commit_size ) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size,
+                                            SIZE_T commit_size, SIZE_T extra_size ) DECLSPEC_HIDDEN;
 extern void virtual_clear_thread_stack(void) DECLSPEC_HIDDEN;
 extern BOOL virtual_handle_stack_fault( void *addr ) DECLSPEC_HIDDEN;
 extern BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
@@ -224,6 +225,7 @@ struct ntdll_thread_data
     WINE_VM86_TEB_INFO __vm86;        /* FIXME: placeholder for vm86 data from struct x86_thread_data */
 #endif
     struct debug_info *debug_info;    /* info for debugstr functions */
+    void              *start_stack;   /* stack for thread startup */
     int                request_fd;    /* fd for sending server requests */
     int                reply_fd;      /* fd for receiving server replies */
     int                wait_fd[2];    /* fd for sleeping server requests */
