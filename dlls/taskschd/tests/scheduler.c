@@ -1156,7 +1156,6 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_AllowDemandStart(set, test->allow_on_demand_start);
-todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     /* FIXME: set IIdleSettings and INetworkSettings */

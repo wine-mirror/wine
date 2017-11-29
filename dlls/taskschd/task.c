@@ -898,8 +898,13 @@ static HRESULT WINAPI TaskSettings_get_AllowDemandStart(ITaskSettings *iface, VA
 
 static HRESULT WINAPI TaskSettings_put_AllowDemandStart(ITaskSettings *iface, VARIANT_BOOL allow)
 {
-    FIXME("%p,%d: stub\n", iface, allow);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, allow);
+
+    taskset->allow_on_demand_start = allow ? TRUE : FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_RestartInterval(ITaskSettings *iface, BSTR *interval)
