@@ -243,3 +243,12 @@ noicon:
     if (data != &data_buffer) HeapFree( GetProcessHeap(), 0, data );
     return ret;
 }
+
+/*************************************************************************
+ * Shell_NotifyIconGetRect		[SHELL32.@]
+ */
+HRESULT WINAPI Shell_NotifyIconGetRect(const NOTIFYICONIDENTIFIER* identifier, RECT* icon_location)
+{
+    FIXME("stub (%p) (%p)\n", identifier, icon_location);
+    return E_NOTIMPL;
+}

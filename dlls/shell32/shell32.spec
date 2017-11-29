@@ -452,6 +452,7 @@
 @ stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIconA
 @ stdcall Shell_NotifyIconA(long ptr)
 @ stdcall Shell_NotifyIconW(long ptr)
+@ stdcall Shell_NotifyIconGetRect(ptr ptr)
 @ stdcall StrChrA(str long) shlwapi.StrChrA
 @ stdcall StrChrIA(str long) shlwapi.StrChrIA
 @ stdcall StrChrIW(wstr long) shlwapi.StrChrIW
