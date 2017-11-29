@@ -97,10 +97,49 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
     return NULL;
 }
 
+/* Returned string must be freed by caller */
+static WCHAR *get_programs_path(WCHAR *name)
+{
+    static const WCHAR slashW[] = {'/',0};
+    WCHAR *programs, *path;
+    int len;
+
+    SHGetKnownFolderPath(&FOLDERID_Programs, 0, NULL, &programs);
+
+    len = lstrlenW(programs) + 1 + lstrlenW(name);
+    path = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(*path));
+    lstrcpyW(path, programs);
+    lstrcatW(path, slashW);
+    lstrcatW(path, name);
+
+    CoTaskMemFree(programs);
+
+    return path;
+}
+
 static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 {
-    FIXME("unhandled command %s\n", debugstr_w(command));
-    return DDE_FNOTPROCESSED;
+    static const WCHAR create_groupW[] = {'C','r','e','a','t','e','G','r','o','u','p',0};
+
+    if (!strcmpiW(command, create_groupW))
+    {
+        WCHAR *path;
+
+        if (argc < 1) return DDE_FNOTPROCESSED;
+
+        path = get_programs_path(argv[0]);
+
+        CreateDirectoryW(path, NULL);
+        ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
+
+        HeapFree(GetProcessHeap(), 0, path);
+    }
+    else
+    {
+        FIXME("unhandled command %s\n", debugstr_w(command));
+        return DDE_FNOTPROCESSED;
+    }
+    return DDE_FACK;
 }
 
 static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
