@@ -259,10 +259,32 @@ static void update_path_box(explorer_info *info)
 static HRESULT WINAPI IExplorerBrowserEventsImpl_fnOnNavigationComplete(IExplorerBrowserEvents *iface, PCIDLIST_ABSOLUTE pidl)
 {
     IExplorerBrowserEventsImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    IShellFolder *parent;
+    PCUITEMID_CHILD child_pidl;
+    HRESULT hres;
+    STRRET strret;
+    WCHAR *name;
+
     ILFree(This->info->pidl);
     This->info->pidl = ILClone(pidl);
     update_path_box(This->info);
-    return S_OK;
+
+    hres = SHBindToParent(pidl, &IID_IShellFolder, (void **)&parent, &child_pidl);
+    if (SUCCEEDED(hres))
+    {
+        hres = IShellFolder_GetDisplayNameOf(parent, child_pidl, SHGDN_FORADDRESSBAR, &strret);
+        if (SUCCEEDED(hres))
+            hres = StrRetToStrW(&strret, child_pidl, &name);
+        if (SUCCEEDED(hres))
+        {
+            SetWindowTextW(This->info->main_window, name);
+            CoTaskMemFree(name);
+        }
+
+        IShellFolder_Release(parent);
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI IExplorerBrowserEventsImpl_fnOnNavigationFailed(IExplorerBrowserEvents *iface, PCIDLIST_ABSOLUTE pidl)
