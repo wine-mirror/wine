@@ -404,6 +404,22 @@ HANDLE thread_init(void)
 
 
 /***********************************************************************
+ *           free_thread_data
+ */
+static void free_thread_data( TEB *teb )
+{
+    SIZE_T size;
+
+    if (teb->DeallocationStack)
+    {
+        size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE );
+    }
+    signal_free_thread( teb );
+}
+
+
+/***********************************************************************
  *           terminate_thread
  */
 void terminate_thread( int status )
@@ -456,7 +472,7 @@ void exit_thread( int status )
         if (thread_data->pthread_id)
         {
             pthread_join( thread_data->pthread_id, NULL );
-            signal_free_thread( teb );
+            free_thread_data( teb );
         }
     }
 
@@ -634,7 +650,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     return STATUS_SUCCESS;
 
 error:
-    if (teb) signal_free_thread( teb );
+    if (teb) free_thread_data( teb );
     if (handle) NtClose( handle );
     pthread_sigmask( SIG_SETMASK, &sigset, NULL );
     close( request_pipe[1] );
