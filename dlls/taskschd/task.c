@@ -1247,8 +1247,13 @@ static HRESULT WINAPI TaskSettings_get_Compatibility(ITaskSettings *iface, TASK_
 
 static HRESULT WINAPI TaskSettings_put_Compatibility(ITaskSettings *iface, TASK_COMPATIBILITY level)
 {
-    FIXME("%p,%d: stub\n", iface, level);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, level);
+
+    taskset->compatibility = level;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_Hidden(ITaskSettings *iface, VARIANT_BOOL *hidden)
