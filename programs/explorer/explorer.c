@@ -51,7 +51,7 @@ static int default_width;
 static int default_height;
 
 
-static const WCHAR EXPLORER_CLASS[] = {'W','I','N','E','_','E','X','P','L','O','R','E','R','\0'};
+static const WCHAR EXPLORER_CLASS[] = {'E','x','p','l','o','r','e','r','W','C','l','a','s','s',0};
 static const WCHAR PATH_BOX_NAME[] = {'\0'};
 
 HINSTANCE explorer_hInstance;
