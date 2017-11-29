@@ -273,7 +273,7 @@ server_t *get_server(substr_t name, INTERNET_PORT port, BOOL is_https, BOOL do_c
     EnterCriticalSection(&connection_pool_cs);
 
     LIST_FOR_EACH_ENTRY(iter, &connection_pool, server_t, entry) {
-        if(iter->port == port && name.len == strlenW(iter->name) && !strncmpW(iter->name, name.str, name.len)
+        if(iter->port == port && name.len == strlenW(iter->name) && !strncmpiW(iter->name, name.str, name.len)
                 && iter->is_https == is_https) {
             server = iter;
             server_addref(server);
