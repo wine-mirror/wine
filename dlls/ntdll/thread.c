@@ -47,7 +47,6 @@
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
-WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
 
@@ -491,29 +490,13 @@ void exit_thread( int status )
 
 
 /***********************************************************************
- *           thread_startup
- */
-static void thread_startup( void *param )
-{
-    struct startup_info *info = param;
-    PRTL_THREAD_START_ROUTINE func = info->entry_point;
-    void *arg = info->entry_arg;
-
-    attach_dlls( (void *)1 );
-
-    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", func, arg );
-
-    call_thread_entry_point( (LPTHREAD_START_ROUTINE)func, arg );
-}
-
-
-/***********************************************************************
  *           start_thread
  *
  * Startup routine for a newly created thread.
  */
 static void start_thread( struct startup_info *info )
 {
+    NTSTATUS status;
     TEB *teb = info->teb;
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     struct debug_info debug_info;
@@ -525,8 +508,8 @@ static void start_thread( struct startup_info *info )
 
     signal_init_thread( teb );
     server_init_thread( info->entry_point );
-
-    wine_switch_to_stack( thread_startup, info, teb->Tib.StackBase );
+    status = signal_start_thread( (LPTHREAD_START_ROUTINE)info->entry_point, info->entry_arg );
+    NtTerminateThread( GetCurrentThread(), status );
 }
 
 

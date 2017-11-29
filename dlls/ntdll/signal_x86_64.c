@@ -73,6 +73,7 @@
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 struct _DISPATCHER_CONTEXT;
 
@@ -3140,6 +3141,36 @@ void signal_init_process(void)
  error:
     perror("sigaction");
     exit(1);
+}
+
+
+struct startup_info
+{
+    LPTHREAD_START_ROUTINE entry;
+    void                  *arg;
+};
+
+static void thread_startup( void *param )
+{
+    struct startup_info *info = param;
+    call_thread_entry_point( info->entry, info->arg );
+}
+
+
+/***********************************************************************
+ *           signal_start_thread
+ */
+NTSTATUS signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg )
+{
+    NTSTATUS status;
+    struct startup_info info = { entry, arg };
+
+    if (!(status = wine_call_on_stack( attach_dlls, (void *)1, NtCurrentTeb()->Tib.StackBase )))
+    {
+        TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
+        wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
+    }
+    return status;
 }
 
 
