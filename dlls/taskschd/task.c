@@ -1331,8 +1331,13 @@ static HRESULT WINAPI TaskSettings_get_WakeToRun(ITaskSettings *iface, VARIANT_B
 
 static HRESULT WINAPI TaskSettings_put_WakeToRun(ITaskSettings *iface, VARIANT_BOOL wake)
 {
-    FIXME("%p,%d: stub\n", iface, wake);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, wake);
+
+    taskset->wake_to_run = wake ? TRUE : FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_NetworkSettings(ITaskSettings *iface, INetworkSettings **settings)
