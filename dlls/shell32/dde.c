@@ -120,6 +120,7 @@ static WCHAR *get_programs_path(WCHAR *name)
 static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 {
     static const WCHAR create_groupW[] = {'C','r','e','a','t','e','G','r','o','u','p',0};
+    static const WCHAR delete_groupW[] = {'D','e','l','e','t','e','G','r','o','u','p',0};
 
     if (!strcmpiW(command, create_groupW))
     {
@@ -133,6 +134,31 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
 
         HeapFree(GetProcessHeap(), 0, path);
+    }
+    else if (!strcmpiW(command, delete_groupW))
+    {
+        WCHAR *path, *path2;
+        SHFILEOPSTRUCTW shfos = {0};
+        int ret;
+
+        if (argc < 1) return DDE_FNOTPROCESSED;
+
+        path = get_programs_path(argv[0]);
+
+        path2 = HeapAlloc(GetProcessHeap(), 0, (strlenW(path) + 2) * sizeof(*path));
+        strcpyW(path2, path);
+        path2[strlenW(path) + 1] = 0;
+
+        shfos.wFunc = FO_DELETE;
+        shfos.pFrom = path2;
+        shfos.fFlags = FOF_NOCONFIRMATION;
+
+        ret = SHFileOperationW(&shfos);
+
+        HeapFree(GetProcessHeap(), 0, path2);
+        HeapFree(GetProcessHeap(), 0, path);
+
+        if (ret || shfos.fAnyOperationsAborted) return DDE_FNOTPROCESSED;
     }
     else
     {

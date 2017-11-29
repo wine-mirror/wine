@@ -347,10 +347,8 @@ static void test_progman_dde(DWORD instance, HCONV hConv)
 
     /* DeleteGroup Test */
     error = dde_execute(instance, hConv, "[DeleteGroup(Group1)]");
-    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(!check_exists("Group1"), "directory should not exist\n");
-    }
 
     /* Compound Execute String Command */
     sprintf(comptext, "[CreateGroup(Group3)][AddItem(%s,f1g3Name)][AddItem(%s,f2g3Name)]", f1g3, f2g3);
@@ -365,10 +363,8 @@ static void test_progman_dde(DWORD instance, HCONV hConv)
     }
 
     error = dde_execute(instance, hConv, "[DeleteGroup(Group3)]");
-    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(!check_exists("Group3"), "directory should not exist\n");
-    }
 
     /* Full Parameters of Add Item */
     /* AddItem(CmdLine[,Name[,IconPath[,IconIndex[,xPos,yPos[,DefDir[,HotKey[,fMinimize[fSeparateSpace]]]]]]]) */
@@ -392,10 +388,8 @@ static void test_progman_dde2(DWORD instance, HCONV hConv)
     ok(check_window_exists(Group2Title), "window not created\n");
 
     error = dde_execute(instance, hConv, "[DeleteGroup(Group2)]");
-    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(!check_exists("Group2"), "directory should not exist\n");
-    }
 }
 
 START_TEST(progman_dde)
