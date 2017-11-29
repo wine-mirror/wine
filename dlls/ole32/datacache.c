@@ -958,12 +958,12 @@ static HRESULT copy_stg_medium(CLIPFORMAT cf, STGMEDIUM *dest_stgm,
     return S_OK;
 }
 
-static HGLOBAL synthesize_dib( HBITMAP bm )
+static HRESULT synthesize_dib( HBITMAP bm, STGMEDIUM *med )
 {
     HDC hdc = GetDC( 0 );
     BITMAPINFOHEADER header;
     BITMAPINFO *bmi;
-    HGLOBAL ret = 0;
+    HRESULT hr = E_FAIL;
     DWORD header_size;
 
     memset( &header, 0, sizeof(header) );
@@ -971,55 +971,64 @@ static HGLOBAL synthesize_dib( HBITMAP bm )
     if (!GetDIBits( hdc, bm, 0, 0, NULL, (BITMAPINFO *)&header, DIB_RGB_COLORS )) goto done;
 
     header_size = bitmap_info_size( (BITMAPINFO *)&header, DIB_RGB_COLORS );
-    if (!(ret = GlobalAlloc( GMEM_MOVEABLE, header_size + header.biSizeImage ))) goto done;
-    bmi = GlobalLock( ret );
+    if (!(med->u.hGlobal = GlobalAlloc( GMEM_MOVEABLE, header_size + header.biSizeImage ))) goto done;
+    bmi = GlobalLock( med->u.hGlobal );
     memset( bmi, 0, header_size );
     memcpy( bmi, &header, header.biSize );
     GetDIBits( hdc, bm, 0, abs(header.biHeight), (char *)bmi + header_size, bmi, DIB_RGB_COLORS );
-    GlobalUnlock( ret );
+    GlobalUnlock( med->u.hGlobal );
+    med->tymed = TYMED_HGLOBAL;
+    med->pUnkForRelease = NULL;
+    hr = S_OK;
 
 done:
     ReleaseDC( 0, hdc );
-    return ret;
+    return hr;
 }
 
-static HBITMAP synthesize_bitmap( HGLOBAL dib )
+static HRESULT synthesize_bitmap( HGLOBAL dib, STGMEDIUM *med )
 {
-    HBITMAP ret = 0;
+    HRESULT hr = E_FAIL;
     BITMAPINFO *bmi;
     HDC hdc = GetDC( 0 );
 
     if ((bmi = GlobalLock( dib )))
     {
         /* FIXME: validate data size */
-        ret = CreateDIBitmap( hdc, &bmi->bmiHeader, CBM_INIT,
-                              (char *)bmi + bitmap_info_size( bmi, DIB_RGB_COLORS ),
-                              bmi, DIB_RGB_COLORS );
+        med->u.hBitmap = CreateDIBitmap( hdc, &bmi->bmiHeader, CBM_INIT,
+                                         (char *)bmi + bitmap_info_size( bmi, DIB_RGB_COLORS ),
+                                         bmi, DIB_RGB_COLORS );
         GlobalUnlock( dib );
+        med->tymed = TYMED_GDI;
+        med->pUnkForRelease = NULL;
+        hr = S_OK;
     }
     ReleaseDC( 0, hdc );
-    return ret;
+    return hr;
 }
 
-static HENHMETAFILE synthesize_emf( HMETAFILEPICT data )
+static HRESULT synthesize_emf( HMETAFILEPICT data, STGMEDIUM *med )
 {
     METAFILEPICT *pict;
-    HENHMETAFILE emf = 0;
+    HRESULT hr = E_FAIL;
     UINT size;
     void *bits;
 
-    if (!(pict = GlobalLock( data ))) return 0;
+    if (!(pict = GlobalLock( data ))) return hr;
 
     size = GetMetaFileBitsEx( pict->hMF, 0, NULL );
     if ((bits = HeapAlloc( GetProcessHeap(), 0, size )))
     {
         GetMetaFileBitsEx( pict->hMF, size, bits );
-        emf = SetWinMetaFileBits( size, bits, NULL, pict );
+        med->u.hEnhMetaFile = SetWinMetaFileBits( size, bits, NULL, pict );
         HeapFree( GetProcessHeap(), 0, bits );
+        med->tymed = TYMED_ENHMF;
+        med->pUnkForRelease = NULL;
+        hr = S_OK;
     }
 
     GlobalUnlock( data );
-    return emf;
+    return hr;
 }
 
 static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
@@ -1028,6 +1037,7 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
                                       BOOL fRelease)
 {
     STGMEDIUM copy;
+    HRESULT hr;
 
     if ((!cache_entry->fmtetc.cfFormat && !formatetc->cfFormat) ||
         (cache_entry->fmtetc.tymed == TYMED_NULL && formatetc->tymed == TYMED_NULL) ||
@@ -1042,17 +1052,16 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
 
     if (formatetc->cfFormat == CF_BITMAP)
     {
-        copy.tymed = TYMED_HGLOBAL;
-        copy.u.hGlobal = synthesize_dib( stgmedium->u.hBitmap );
-        copy.pUnkForRelease = NULL;
+        hr = synthesize_dib( stgmedium->u.hBitmap, &copy );
+        if (FAILED(hr)) return hr;
         if (fRelease) ReleaseStgMedium(stgmedium);
         stgmedium = &copy;
         fRelease = TRUE;
     }
     else if (formatetc->cfFormat == CF_METAFILEPICT && cache_entry->fmtetc.cfFormat == CF_ENHMETAFILE)
     {
-        copy.tymed = TYMED_ENHMF;
-        copy.u.hEnhMetaFile = synthesize_emf( stgmedium->u.hMetaFilePict );
+        hr = synthesize_emf( stgmedium->u.hMetaFilePict, &copy );
+        if (FAILED(hr)) return hr;
         if (fRelease) ReleaseStgMedium(stgmedium);
         stgmedium = &copy;
         fRelease = TRUE;
@@ -1079,12 +1088,8 @@ static HRESULT DataCacheEntry_GetData(DataCacheEntry *cache_entry, FORMATETC *fm
         return OLE_E_BLANK;
 
     if (fmt->cfFormat == CF_BITMAP)
-    {
-        stgmedium->tymed = TYMED_GDI;
-        stgmedium->u.hBitmap = synthesize_bitmap( cache_entry->stgmedium.u.hGlobal );
-        stgmedium->pUnkForRelease = NULL;
-        return S_OK;
-    }
+        return synthesize_bitmap( cache_entry->stgmedium.u.hGlobal, stgmedium );
+
     return copy_stg_medium(cache_entry->fmtetc.cfFormat, stgmedium, &cache_entry->stgmedium);
 }
 
