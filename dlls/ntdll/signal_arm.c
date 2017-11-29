@@ -975,7 +975,7 @@ void signal_init_thread( TEB *teb )
 /**********************************************************************
  *		signal_init_process
  */
-void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry )
+void signal_init_process(void)
 {
     struct sigaction sig_act;
 
@@ -1004,18 +1004,34 @@ void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry )
     sig_act.sa_sigaction = trap_handler;
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
 #endif
-
-    /* set the initial context */
-    context->ContextFlags = CONTEXT_FULL;
-    context->R0 = (DWORD)kernel32_start_process;
-    context->R1 = (DWORD)entry;
-    context->Sp = (DWORD)NtCurrentTeb()->Tib.StackBase;
-    context->Pc = (DWORD)call_thread_entry_point;
     return;
 
  error:
     perror("sigaction");
     exit(1);
+}
+
+
+/**********************************************************************
+ *		signal_start_process
+ */
+NTSTATUS signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
+{
+    CONTEXT context = { 0 };
+    NTSTATUS status;
+
+    /* build the initial context */
+    context.ContextFlags = CONTEXT_FULL;
+    context.R0 = (DWORD)kernel32_start_process;
+    context.R1 = (DWORD)entry;
+    context.Sp = (DWORD)NtCurrentTeb()->Tib.StackBase;
+    context.Pc = (DWORD)call_thread_entry_point;
+
+    if (suspend) wait_suspend( &context );
+
+    if (!(status = wine_call_on_stack( attach_dlls, (void *)1, (char *)NtCurrentTeb()->Tib.StackBase )))
+        set_cpu_context( &context );
+    return status;
 }
 
 

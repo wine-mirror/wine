@@ -3028,6 +3028,7 @@ NTSTATUS attach_dlls( void *reserved )
             goto done;
         }
         attach_implicitly_loaded_dlls( reserved );
+        virtual_release_address_space();
     }
     else
     {
@@ -3094,14 +3095,6 @@ static void load_global_options(void)
 }
 
 
-/***********************************************************************
- *           start_process
- */
-static void start_process( void *arg )
-{
-    call_thread_entry_point( kernel32_start_process, arg );
-}
-
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  *
@@ -3113,7 +3106,6 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     NTSTATUS status;
     WINE_MODREF *wm;
     PEB *peb = NtCurrentTeb()->Peb;
-    CONTEXT context = { 0 };
 
     kernel32_start_process = kernel_start;
     if (main_exe_file) NtClose( main_exe_file );  /* at this point the main module is created */
@@ -3145,15 +3137,7 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
 
     if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0, 0 )) != STATUS_SUCCESS) goto error;
-    if ((status = server_init_process_done( &context )) != STATUS_SUCCESS) goto error;
-
-    status = wine_call_on_stack( attach_dlls, (void *)1, (char *)NtCurrentTeb()->Tib.StackBase - page_size );
-    if (status != STATUS_SUCCESS) goto error;
-
-    virtual_release_address_space();
-    virtual_clear_thread_stack();
-    if (context.ContextFlags) NtSetContextThread( GetCurrentThread(), &context );
-    wine_switch_to_stack( start_process, wm->ldr.EntryPoint, NtCurrentTeb()->Tib.StackBase );
+    status = server_init_process_done();
 
 error:
     ERR( "Main exe initialization for %s failed, status %x\n",

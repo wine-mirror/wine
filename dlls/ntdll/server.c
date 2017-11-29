@@ -1430,7 +1430,7 @@ void server_init_process(void)
 /***********************************************************************
  *           server_init_process_done
  */
-NTSTATUS server_init_process_done( CONTEXT *context )
+NTSTATUS server_init_process_done(void)
 {
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
@@ -1444,7 +1444,7 @@ NTSTATUS server_init_process_done( CONTEXT *context )
      * We do need the handlers in place by the time the request is over, so
      * we set them up here. If we segfault between here and the server call
      * something is very wrong... */
-    signal_init_process( context, entry );
+    signal_init_process();
 
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
@@ -1460,7 +1460,7 @@ NTSTATUS server_init_process_done( CONTEXT *context )
     }
     SERVER_END_REQ;
 
-    if (suspend) wait_suspend( context );
+    if (!status) status = signal_start_process( entry, suspend );
     return status;
 }
 

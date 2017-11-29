@@ -3106,7 +3106,7 @@ void signal_init_thread( TEB *teb )
 /**********************************************************************
  *		signal_init_process
  */
-void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry )
+void signal_init_process(void)
 {
     struct sigaction sig_act;
 
@@ -3135,21 +3135,41 @@ void signal_init_process( CONTEXT *context, LPTHREAD_START_ROUTINE entry )
     sig_act.sa_sigaction = trap_handler;
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
 #endif
-
-    /* build the initial context */
-    context->ContextFlags = CONTEXT_FULL;
-    __asm__( "movw %%cs,%0" : "=m" (context->SegCs) );
-    __asm__( "movw %%ss,%0" : "=m" (context->SegSs) );
-    __asm__( "fxsave %0" : "=m" (context->u.FltSave) );
-    context->Rcx   = (ULONG_PTR)entry;
-    context->Rdx   = (ULONG_PTR)NtCurrentTeb()->Peb;
-    context->Rsp   = (ULONG_PTR)NtCurrentTeb()->Tib.StackBase - 0x28;
-    context->Rip   = (ULONG_PTR)start_process;
     return;
 
  error:
     perror("sigaction");
     exit(1);
+}
+
+
+/**********************************************************************
+ *		signal_start_process
+ */
+NTSTATUS signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
+{
+    CONTEXT context = { 0 };
+    NTSTATUS status;
+
+    /* build the initial context */
+    context.ContextFlags = CONTEXT_FULL;
+    __asm__( "movw %%cs,%0" : "=m" (context.SegCs) );
+    __asm__( "movw %%ss,%0" : "=m" (context.SegSs) );
+    __asm__( "fxsave %0" : "=m" (context.u.FltSave) );
+    context.Rcx   = (ULONG_PTR)entry;
+    context.Rdx   = (ULONG_PTR)NtCurrentTeb()->Peb;
+    context.Rsp   = (ULONG_PTR)NtCurrentTeb()->Tib.StackBase - 0x28;
+    context.Rip   = (ULONG_PTR)start_process;
+
+    if (suspend) wait_suspend( &context );
+
+    if (!(status = wine_call_on_stack( attach_dlls, (void *)1,
+                                       (char *)NtCurrentTeb()->Tib.StackBase - page_size )))
+    {
+        virtual_clear_thread_stack();
+        set_cpu_context( &context );
+    }
+    return status;
 }
 
 
