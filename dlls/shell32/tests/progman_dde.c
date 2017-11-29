@@ -332,18 +332,12 @@ static void test_progman_dde(DWORD instance, HCONV hConv)
     ok(!check_exists("Group1/f3g1Name.lnk"), "link should not exist\n");
 
     error = dde_execute(instance, hConv, "[ShowGroup(Startup, 0)]");
-    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
-    if (error == DMLERR_NO_ERROR)
-        ok(check_window_exists(StartupTitle), "window not created\n");
-    }
+    ok(check_window_exists(StartupTitle), "window not created\n");
 
     error = dde_execute(instance, hConv, "[ShowGroup(Group1, 0)]");
-    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
-    if (error == DMLERR_NO_ERROR)
-        ok(check_window_exists(Group1Title), "window not created\n");
-    }
+    ok(check_window_exists(Group1Title), "window not created\n");
 
     /* DeleteGroup Test */
     error = dde_execute(instance, hConv, "[DeleteGroup(Group1)]");

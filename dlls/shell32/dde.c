@@ -121,6 +121,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 {
     static const WCHAR create_groupW[] = {'C','r','e','a','t','e','G','r','o','u','p',0};
     static const WCHAR delete_groupW[] = {'D','e','l','e','t','e','G','r','o','u','p',0};
+    static const WCHAR show_groupW[] = {'S','h','o','w','G','r','o','u','p',0};
 
     if (!strcmpiW(command, create_groupW))
     {
@@ -159,6 +160,20 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         HeapFree(GetProcessHeap(), 0, path);
 
         if (ret || shfos.fAnyOperationsAborted) return DDE_FNOTPROCESSED;
+    }
+    else if (!strcmpiW(command, show_groupW))
+    {
+        WCHAR *path;
+
+        /* Win32 requires the second parameter to be present but seems to
+         * ignore its actual value. */
+        if (argc < 2) return DDE_FNOTPROCESSED;
+
+        path = get_programs_path(argv[0]);
+
+        ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
+
+        HeapFree(GetProcessHeap(), 0, path);
     }
     else
     {
