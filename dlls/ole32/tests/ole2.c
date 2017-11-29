@@ -4194,7 +4194,7 @@ static void test_data_cache_save_data(void)
             },
             1, 1, &CLSID_WineTest,
             {
-               &CLSID_WineTest, 1, { { "\2OlePres000", CF_DIB, DVASPECT_CONTENT, 0, NULL, 0 } }
+               &CLSID_WineTestOld, 1, { { "\2OlePres000", CF_DIB, DVASPECT_CONTENT, 0, NULL, 0 } }
             }
         },
         {
@@ -4203,7 +4203,7 @@ static void test_data_cache_save_data(void)
             },
             1, 1, &CLSID_WineTest,
             {
-                &CLSID_WineTest, 1, { { "\2OlePres000", CF_METAFILEPICT, DVASPECT_CONTENT, 0, NULL, 0 } }
+                &CLSID_WineTestOld, 1, { { "\2OlePres000", CF_METAFILEPICT, DVASPECT_CONTENT, 0, NULL, 0 } }
             }
         },
         {
@@ -4238,7 +4238,7 @@ static void test_data_cache_save_data(void)
         hr = StgCreateDocfileOnILockBytes(ilb, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &doc);
         ok(hr == S_OK, "unexpected %#x\n", hr);
         ILockBytes_Release(ilb);
-        hr = IStorage_SetClass(doc, pdata->clsid);
+        hr = IStorage_SetClass(doc, &CLSID_WineTestOld);
         ok(hr == S_OK, "unexpected %#x\n", hr);
 
         hr = IOleCache2_QueryInterface(cache, &IID_IPersistStorage, (void **)&persist);
