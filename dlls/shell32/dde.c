@@ -26,7 +26,10 @@
 #include "ddeml.h"
 #include "shellapi.h"
 
+#include "shell32_main.h"
+
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -94,19 +97,117 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
     return NULL;
 }
 
-static inline DWORD Dde_OnExecute(HCONV hconv, HSZ hszTopic, HDDEDATA hdata)
+static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 {
-    WCHAR * pszCommand;
-
-    pszCommand = (WCHAR *)DdeAccessData(hdata, NULL);
-    if (!pszCommand)
-        return DDE_FNOTPROCESSED;
-
-    FIXME("stub: %s %s\n", debugstr_hsz(hszTopic), debugstr_w(pszCommand));
-
-    DdeUnaccessData(hdata);
-
+    FIXME("unhandled command %s\n", debugstr_w(command));
     return DDE_FNOTPROCESSED;
+}
+
+static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
+{
+    static const WCHAR opcode_end[] = {' ',',','(',')','[',']','"',0};
+    static const WCHAR param_end[] = {',','(',')','[',']',0};
+
+    WCHAR *original = command;
+    WCHAR *opcode = NULL, **argv = NULL, *p;
+    int argc = 0, i;
+    DWORD ret = DDE_FACK;
+
+    while (*command == ' ') command++;
+
+    if (*command != '[') goto error;
+    while (*command == '[')
+    {
+        argc = 0;
+        argv = HeapAlloc(GetProcessHeap(), 0, sizeof(*argv));
+
+        command++;
+        while (*command == ' ') command++;
+        if (!(p = strpbrkW(command, opcode_end))) goto error;
+
+        opcode = strndupW(command, p - command);
+
+        command = p;
+        while (*command == ' ') command++;
+        if (*command == '(')
+        {
+            command++;
+
+            while (*command != ')')
+            {
+                while (*command == ' ') command++;
+                if (*command == '"')
+                {
+                    command++;
+                    if (!(p = strchrW(command, '"'))) goto error;
+                }
+                else
+                {
+                    if (!(p = strpbrkW(command, param_end))) goto error;
+                    while (p[-1] == ' ') p--;
+                }
+
+                argc++;
+                argv = HeapReAlloc(GetProcessHeap(), 0, argv, argc * sizeof(*argv));
+                argv[argc-1] = strndupW(command, p - command);
+
+                command = p;
+                if (*command == '"') command++;
+                while (*command == ' ') command++;
+                if (*command == ',') command++;
+                else if (*command != ')') goto error;
+            }
+            command++;
+
+            while (*command == ' ') command++;
+        }
+
+        if (*command != ']') goto error;
+        command++;
+        while (*command == ' ') command++;
+
+        if (hszTopic == hszProgmanTopic)
+            ret = PROGMAN_OnExecute(opcode, argc, argv);
+        else
+        {
+            FIXME("unhandled topic %s, command %s\n", debugstr_hsz(hszTopic), debugstr_w(opcode));
+            ret = DDE_FNOTPROCESSED;
+        }
+
+        HeapFree(GetProcessHeap(), 0, opcode);
+        for (i = 0; i < argc; i++) HeapFree(GetProcessHeap(), 0, argv[i]);
+        HeapFree(GetProcessHeap(), 0, argv);
+
+        if (ret == DDE_FNOTPROCESSED) break;
+    }
+
+    return ret;
+
+error:
+    ERR("failed to parse command %s\n", debugstr_w(original));
+    HeapFree(GetProcessHeap(), 0, opcode);
+    for (i = 0; i < argc; i++) HeapFree(GetProcessHeap(), 0, argv[i]);
+    HeapFree(GetProcessHeap(), 0, argv);
+    return DDE_FNOTPROCESSED;
+}
+
+static DWORD Dde_OnExecute(HCONV hconv, HSZ hszTopic, HDDEDATA hdata)
+{
+    WCHAR *command;
+    DWORD len;
+    DWORD ret;
+
+    len = DdeGetData(hdata, NULL, 0, 0);
+    if (!len) return DDE_FNOTPROCESSED;
+    command = HeapAlloc(GetProcessHeap(), 0, len);
+    DdeGetData(hdata, (BYTE *)command, len, 0);
+
+    TRACE("conv=%p topic=%s data=%s\n", hconv, debugstr_hsz(hszTopic), debugstr_w(command));
+
+    ret = parse_dde_command(hszTopic, command);
+
+    HeapFree(GetProcessHeap(), 0, command);
+    return ret;
 }
 
 static inline void Dde_OnDisconnect(HCONV hconv)

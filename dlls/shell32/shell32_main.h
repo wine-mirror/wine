@@ -238,6 +238,19 @@ static inline WCHAR *strdupW(const WCHAR *src)
     return dest;
 }
 
+static inline WCHAR *strndupW(const WCHAR *src, DWORD len)
+{
+    WCHAR *dest;
+    if (!src) return NULL;
+    dest = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(*dest));
+    if (dest)
+    {
+        memcpy(dest, src, len * sizeof(WCHAR));
+        dest[len] = '\0';
+    }
+    return dest;
+}
+
 static inline WCHAR *strdupAtoW(const char *str)
 {
     WCHAR *ret;
