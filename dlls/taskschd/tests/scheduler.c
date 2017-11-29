@@ -1150,6 +1150,9 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_RunOnlyIfIdle(set, test->run_only_if_idle);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_WakeToRun(set, test->wake_to_run);
 todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     /* FIXME: Remove once implemented */
@@ -1158,9 +1161,6 @@ todo_wine
         ITaskSettings_Release(set);
         return;
     }
-
-    hr = ITaskSettings_put_WakeToRun(set, test->wake_to_run);
-    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = ITaskSettings_put_AllowDemandStart(set, test->allow_on_demand_start);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
