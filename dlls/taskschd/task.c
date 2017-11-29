@@ -1223,8 +1223,13 @@ static HRESULT WINAPI TaskSettings_get_Priority(ITaskSettings *iface, INT *prior
 
 static HRESULT WINAPI TaskSettings_put_Priority(ITaskSettings *iface, INT priority)
 {
-    FIXME("%p,%d: stub\n", iface, priority);
-    return E_NOTIMPL;
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+
+    TRACE("%p,%d\n", iface, priority);
+
+    taskset->priority = priority;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskSettings_get_Compatibility(ITaskSettings *iface, TASK_COMPATIBILITY *level)
