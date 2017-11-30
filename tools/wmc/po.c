@@ -418,7 +418,7 @@ static po_file_t create_po_file(void)
     po_message_set_msgid( msg, "" );
     po_message_set_msgstr( msg,
                            "Project-Id-Version: Wine\n"
-                           "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
+                           "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
                            "POT-Creation-Date: N/A\n"
                            "PO-Revision-Date: N/A\n"
                            "Last-Translator: Automatically generated\n"
