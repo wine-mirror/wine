@@ -237,27 +237,29 @@ static eventid_t attr_to_eid(const WCHAR *str)
     return EVENTID_LAST;
 }
 
-static listener_container_t *get_listener_container(EventTarget *event_target, eventid_t eid, BOOL alloc)
+static listener_container_t *get_listener_container(EventTarget *event_target, const WCHAR *type, BOOL alloc)
 {
     const event_target_vtbl_t *vtbl;
     listener_container_t *container;
     struct wine_rb_entry *entry;
     size_t type_len;
+    eventid_t eid;
 
-    entry = wine_rb_get(&event_target->handler_map, event_info[eid].name);
+    entry = wine_rb_get(&event_target->handler_map, type);
     if(entry)
         return WINE_RB_ENTRY_VALUE(entry, listener_container_t, entry);
     if(!alloc)
         return NULL;
 
-    if(event_info[eid].flags & EVENT_FIXME)
+    eid = str_to_eid(type);
+    if(eid != EVENTID_LAST && (event_info[eid].flags & EVENT_FIXME))
         FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
 
-    type_len = strlenW(event_info[eid].name);
+    type_len = strlenW(type);
     container = heap_alloc(FIELD_OFFSET(listener_container_t, type[type_len+1]));
     if(!container)
         return NULL;
-    memcpy(container->type, event_info[eid].name, (type_len + 1) * sizeof(WCHAR));
+    memcpy(container->type, type, (type_len + 1) * sizeof(WCHAR));
     list_init(&container->listeners);
     vtbl = dispex_get_vtbl(&event_target->dispex);
     if(vtbl->bind_event)
@@ -274,7 +276,7 @@ static void remove_event_listener(EventTarget *event_target, eventid_t eid, list
     listener_container_t *container;
     event_listener_t *listener;
 
-    container = get_listener_container(event_target, eid, FALSE);
+    container = get_listener_container(event_target, event_info[eid].name, FALSE);
     if(!container)
         return;
 
@@ -1299,7 +1301,7 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
 static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
 {
     const eventid_t eid = event->event_id;
-    const listener_container_t *container = get_listener_container(event_target, eid, FALSE);
+    const listener_container_t *container = get_listener_container(event_target, event_info[eid].name, FALSE);
     const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
     const BOOL use_quirks = use_event_quirks(event_target);
     event_listener_t *listener, listeners_buf[8], *listeners = listeners_buf;
@@ -1739,7 +1741,7 @@ static event_listener_t *get_onevent_listener(EventTarget *event_target, eventid
     listener_container_t *container;
     event_listener_t *listener;
 
-    container = get_listener_container(event_target, eid, alloc);
+    container = get_listener_container(event_target, event_info[eid].name, alloc);
     if(!container)
         return NULL;
 
@@ -1887,7 +1889,7 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
         return S_OK;
     }
 
-    container = get_listener_container(event_target, eid, TRUE);
+    container = get_listener_container(event_target, event_info[eid].name, TRUE);
     if(!container)
         return E_OUTOFMEMORY;
 
@@ -2107,18 +2109,10 @@ static HRESULT WINAPI EventTarget_addEventListener(IEventTarget *iface, BSTR typ
     listener_type_t listener_type = capture ? LISTENER_TYPE_CAPTURE : LISTENER_TYPE_BUBBLE;
     listener_container_t *container;
     event_listener_t *listener;
-    eventid_t eid;
 
     TRACE("(%p)->(%s %p %x)\n", This, debugstr_w(type), function, capture);
 
-    eid = str_to_eid(type);
-    if(eid == EVENTID_LAST) {
-        FIXME("Unsupported on event %s\n", debugstr_w(type));
-        return E_NOTIMPL;
-    }
-
-
-    container = get_listener_container(This, eid, TRUE);
+    container = get_listener_container(This, type, TRUE);
     if(!container)
         return E_OUTOFMEMORY;
 
