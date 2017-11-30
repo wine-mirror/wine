@@ -1500,6 +1500,7 @@ enable_virtdisk
 enable_vssapi
 enable_wbemdisp
 enable_wbemprox
+enable_wdscore
 enable_webservices
 enable_wer
 enable_wevtapi
@@ -18978,6 +18979,7 @@ wine_fn_config_dll wbemdisp enable_wbemdisp clean
 wine_fn_config_test dlls/wbemdisp/tests wbemdisp_test
 wine_fn_config_dll wbemprox enable_wbemprox clean
 wine_fn_config_test dlls/wbemprox/tests wbemprox_test
+wine_fn_config_dll wdscore enable_wdscore
 wine_fn_config_dll webservices enable_webservices implib
 wine_fn_config_test dlls/webservices/tests webservices_test
 wine_fn_config_dll wer enable_wer implib
