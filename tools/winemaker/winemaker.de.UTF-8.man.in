@@ -240,7 +240,7 @@ die Anwendung enthält: Sie muss entweder im aktuellen Verzeichnis oder im
 \fBwinemaker\fR unterstützt noch keine Messagedateien und deren Compiler.
 .PP
 Fehler können im
-.UR http://bugs.winehq.org
+.UR https://bugs.winehq.org
 .B Wine Bugtracker
 .UE
 gemeldet werden.
@@ -253,12 +253,12 @@ André Hentschel
 .SH VERFÜGBARKEIT
 .B winemaker
 ist Teil der Wine-Distribution, verfügbar im WineHQ, dem
-.UR http://www.winehq.org/
+.UR https://www.winehq.org/
 .B Hauptquartier der Wine-Entwicklung
 .UE .
 .SH SIEHE AUCH
 .BR wine (1),
 .br
-.UR http://www.winehq.org/help
+.UR https://www.winehq.org/help
 .B Wine-Dokumentation und Support
 .UE .
