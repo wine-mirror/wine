@@ -6,17 +6,17 @@ What's new in this release (see below for details):
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/2.0/wine-2.0.3.tar.xz
+  https://dl.winehq.org/wine/source/2.0/wine-2.0.3.tar.xz
   http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0.3.tar.xz
 
 Binary packages for various distributions will be available from:
 
-  http://www.winehq.org/download
+  https://www.winehq.org/download
 
-You will find documentation on http://www.winehq.org/documentation
+You will find documentation on https://www.winehq.org/documentation
 
 You can also get the current source directly from the git
-repository. Check http://www.winehq.org/git for details.
+repository. Check https://www.winehq.org/git for details.
 
 Wine is available thanks to the work of many people. See the file
 AUTHORS in the distribution for the complete list.
