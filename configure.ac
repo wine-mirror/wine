@@ -6,7 +6,7 @@ m4_define(WINE_VERSION,regexp(m4_include(VERSION),[version \([-.0-9A-Za-z]+\)],[
 
 dnl autoconf versions before 2.62 don't handle source dir symlinks correctly
 AC_PREREQ(2.62)
-AC_INIT([Wine],[WINE_VERSION],[wine-devel@winehq.org],[wine],[http://www.winehq.org])
+AC_INIT([Wine],[WINE_VERSION],[wine-devel@winehq.org],[wine],[https://www.winehq.org])
 AC_CONFIG_SRCDIR(server/atom.c)
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
@@ -23,8 +23,8 @@ m4_ifdef([AS_VAR_IF],,[AC_DEFUN([AS_VAR_IF],
    AS_IF([test "x$as_val" = x""$2], [$3], [$4])])])])dnl
 dnl autoconf versions before 2.64 don't have AC_PACKAGE_URL
 m4_ifdef([AC_PACKAGE_URL],,
-  [AC_DEFINE([PACKAGE_URL], ["http://www.winehq.org"], [Define to the home page for this package.])
-   AC_SUBST([PACKAGE_URL], ["http://www.winehq.org"])])dnl
+  [AC_DEFINE([PACKAGE_URL], ["https://www.winehq.org"], [Define to the home page for this package.])
+   AC_SUBST([PACKAGE_URL], ["https://www.winehq.org"])])dnl
 
 dnl **** Command-line arguments ****
 

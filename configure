@@ -583,7 +583,7 @@ PACKAGE_TARNAME='wine'
 PACKAGE_VERSION='2.0.3'
 PACKAGE_STRING='Wine 2.0.3'
 PACKAGE_BUGREPORT='wine-devel@winehq.org'
-PACKAGE_URL='http://www.winehq.org'
+PACKAGE_URL='https://www.winehq.org'
 
 ac_unique_file="server/atom.c"
 # Factoring default headers for most tests.
@@ -2436,7 +2436,7 @@ Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
 
 Report bugs to <wine-devel@winehq.org>.
-Wine home page: <http://www.winehq.org>.
+Wine home page: <https://www.winehq.org>.
 _ACEOF
 ac_status=$?
 fi
@@ -19219,7 +19219,7 @@ Configuration commands:
 $config_commands
 
 Report bugs to <wine-devel@winehq.org>.
-Wine home page: <http://www.winehq.org>."
+Wine home page: <https://www.winehq.org>."
 
 _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
