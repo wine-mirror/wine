@@ -29,7 +29,7 @@ Or run Wine directly from the build directory:
 
 Run programs as "wine program".  For more information and problem
 resolution, read the rest of this file, the Wine man page, and
-especially the wealth of information found at http://www.winehq.org.
+especially the wealth of information found at https://www.winehq.org.
 
 
 3. REQUIREMENTS
@@ -48,7 +48,7 @@ support kernel threads may be supported in the future.
 
 FreeBSD info:
   Wine will generally not work properly on versions before FreeBSD 8.0.
-  See http://wiki.freebsd.org/Wine for more information.
+  See https://wiki.freebsd.org/Wine for more information.
 
 Solaris info:
   You will most likely need to build Wine with the GNU toolchain
@@ -81,7 +81,7 @@ Basic requirements:
 
 Optional support libraries:
   Configure will display notices when optional libraries are not found
-  on your system. See http://wiki.winehq.org/Recommended_Packages for
+  on your system. See https://wiki.winehq.org/Recommended_Packages for
   hints about the packages you should install. On 64-bit platforms,
   you have to make sure to install the 32-bit versions of these
   libraries.
@@ -115,7 +115,7 @@ first.  Try either "dpkg -r wine" or "rpm -e wine" or "make uninstall"
 before installing.
 
 Once installed, you can run the "winecfg" configuration tool. See the
-Support area at http://www.winehq.org/ for configuration hints.
+Support area at https://www.winehq.org/ for configuration hints.
 
 
 6. RUNNING PROGRAMS
@@ -142,25 +142,25 @@ a bug.
 7. GETTING MORE INFORMATION
 
 WWW:	A great deal of information about Wine is available from WineHQ at
-	http://www.winehq.org/ : various Wine Guides, application database,
+	https://www.winehq.org/ : various Wine Guides, application database,
 	bug tracking. This is probably the best starting point.
 
-FAQ:	The Wine FAQ is located at http://www.winehq.org/FAQ
+FAQ:	The Wine FAQ is located at https://www.winehq.org/FAQ
 
-Wiki:	The Wine Wiki is located at http://wiki.winehq.org
+Wiki:	The Wine Wiki is located at https://wiki.winehq.org
 
 Mailing lists:
 	There are several mailing lists for Wine users and developers;
-	see http://www.winehq.org/forums for more information.
+	see https://www.winehq.org/forums for more information.
 
-Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.org
+Bugs:	Report bugs to Wine Bugzilla at https://bugs.winehq.org
 	Please search the bugzilla database to check whether your
 	problem is already known or fixed before posting a bug report.
 
 IRC:	Online help is available at channel #WineHQ on irc.freenode.net.
 
 Git:	The current Wine development tree is available through Git.
-	Go to http://www.winehq.org/git for more information.
+	Go to https://www.winehq.org/git for more information.
 
 If you add something, or fix a bug, please send a patch (preferably
 using git-format-patch) to the wine-devel@winehq.org list for
