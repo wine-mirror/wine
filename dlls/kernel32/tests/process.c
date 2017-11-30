@@ -3036,6 +3036,7 @@ static void test_SuspendProcessNewThread(void)
     IMAGE_NT_HEADERS nt_header;
     HANDLE thread_handle = NULL;
     DWORD exit_code = 0;
+    CONTEXT ctx;
 
     exit_thread_ptr = GetProcAddress(hkernel32, "ExitThread");
     ok(exit_thread_ptr != NULL, "GetProcAddress ExitThread failed\n");
@@ -3052,9 +3053,50 @@ static void test_SuspendProcessNewThread(void)
 
     thread_handle = CreateRemoteThread(pi.hProcess, NULL, 0,
                                        (LPTHREAD_START_ROUTINE)exit_thread_ptr,
-                                       (PVOID)(ULONG_PTR)0x1234, 0, NULL);
+                                       (PVOID)(ULONG_PTR)0x1234, CREATE_SUSPENDED, NULL);
     ok(thread_handle != NULL, "Could not create remote thread (%d)\n", GetLastError());
 
+    ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
+    ok(!ret, "IAT entry resolved prematurely\n");
+
+    ctx.ContextFlags = CONTEXT_FULL;
+    ret = GetThreadContext( thread_handle, &ctx );
+    ok( ret, "Failed retrieving remote thread context (%d)\n", GetLastError() );
+#ifdef __x86_64__
+    ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
+    ok( !ctx.Rax, "rax is not zero %lx\n", ctx.Rax );
+    ok( !ctx.Rbx, "rbx is not zero %lx\n", ctx.Rbx );
+    ok( ctx.Rcx == (ULONG_PTR)exit_thread_ptr, "wrong rcx %lx/%p\n", ctx.Rcx, exit_thread_ptr );
+    ok( ctx.Rdx == 0x1234, "wrong rdx %lx\n", ctx.Rdx );
+    ok( !ctx.Rsi, "rsi is not zero %lx\n", ctx.Rsi );
+    ok( !ctx.Rdi, "rdi is not zero %lx\n", ctx.Rdi );
+    ok( !ctx.Rbp, "rbp is not zero %lx\n", ctx.Rbp );
+    ok( !ctx.R8, "r8 is not zero %lx\n", ctx.R8 );
+    ok( !ctx.R9, "r9 is not zero %lx\n", ctx.R9 );
+    ok( !ctx.R10, "r10 is not zero %lx\n", ctx.R10 );
+    ok( !ctx.R11, "r11 is not zero %lx\n", ctx.R11 );
+    ok( !ctx.R12, "r12 is not zero %lx\n", ctx.R12 );
+    ok( !ctx.R13, "r13 is not zero %lx\n", ctx.R13 );
+    ok( !ctx.R14, "r14 is not zero %lx\n", ctx.R14 );
+    ok( !ctx.R15, "r15 is not zero %lx\n", ctx.R15 );
+    ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %lx\n", ctx.Rsp );
+#else
+    ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
+    ok( !ctx.Ebp || broken(ctx.Ebp), /* winxp */ "ebp is not zero %08x\n", ctx.Ebp );
+    if (!ctx.Ebp)  /* winxp is completely different */
+    {
+        ok( !ctx.Ecx, "ecx is not zero %08x\n", ctx.Ecx );
+        ok( !ctx.Edx, "edx is not zero %08x\n", ctx.Edx );
+        ok( !ctx.Esi, "esi is not zero %08x\n", ctx.Esi );
+        ok( !ctx.Edi, "edi is not zero %08x\n", ctx.Edi );
+    }
+    ok( ctx.Eax == (ULONG_PTR)exit_thread_ptr, "wrong eax %08x/%p\n", ctx.Eax, exit_thread_ptr );
+    ok( ctx.Ebx == 0x1234, "wrong ebx %08x\n", ctx.Ebx );
+    ok( !((ctx.Esp + 0x10) & 0xfff) || broken( !((ctx.Esp + 4) & 0xfff) ), /* winxp, w2k3 */
+        "esp is not at top of stack page or properly aligned: %08x\n", ctx.Esp );
+#endif
+
+    ResumeThread( thread_handle );
     ok(WaitForSingleObject(thread_handle, 60000) == WAIT_OBJECT_0, "Waiting for remote thread failed (%d)\n", GetLastError());
     ok(GetExitCodeThread(thread_handle, &exit_code), "Failed to retrieve remote thread exit code (%d)\n", GetLastError());
     ok(exit_code == 0x1234, "Invalid remote thread exit code\n");
