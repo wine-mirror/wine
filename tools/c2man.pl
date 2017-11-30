@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 #
-# Generate API documentation. See http://www.winehq.org/docs/winedev-guide/api-docs for details.
+# Generate API documentation. See https://www.winehq.org/docs/winedev-guide/api-docs for details.
 #
 # Copyright (C) 2000 Mike McCormack
 # Copyright (C) 2003 Jon Griffiths
@@ -1367,7 +1367,7 @@ sub output_api_header($)
   if ($opt_output_format eq "h")
   {
       print OUTPUT "<!-- Generated file - DO NOT EDIT! -->\n";
-      print OUTPUT "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n";
+      print OUTPUT "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"https://www.w3.org/TR/html4/strict.dtd\">\n";
       print OUTPUT "<HTML>\n<HEAD>\n";
       print OUTPUT "<LINK REL=\"StyleSheet\" href=\"apidoc.css\" type=\"text/css\">\n";
       print OUTPUT "<META NAME=\"GENERATOR\" CONTENT=\"tools/c2man.pl\">\n";
@@ -1394,7 +1394,7 @@ sub output_api_footer($)
   {
       print OUTPUT "<hr><p><i class=\"copy\">Copyright &copy ".$year." The Wine Project.".
                    " All trademarks are the property of their respective owners.".
-                   " Visit <a href=\"http://www.winehq.org\">WineHQ</a> for license details.".
+                   " Visit <a href=\"https://www.winehq.org\">WineHQ</a> for license details.".
                    " Generated $date.</i></p>\n</body>\n</html>\n";
   }
   elsif ($opt_output_format eq "s" || $opt_output_format eq "x")
@@ -1620,9 +1620,9 @@ sub output_api_comment($)
     {
       if ($opt_output_format eq "h")
       {
-        # Link to the file in WineHQ cvs
-        s/^(Implemented in \")(.+?)(\"\.)/$1$2$3 http:\/\/source.winehq.org\/source\/$2/g;
-        s/^(Declared in \")(.+?)(\"\.)/$1$2$3 http:\/\/source.winehq.org\/source\/include\/$2/g;
+        # Link to the file in WineHQ git
+        s/^(Implemented in \")(.+?)(\"\.)/$1$2$3 https:\/\/source.winehq.org\/source\/$2/g;
+        s/^(Declared in \")(.+?)(\"\.)/$1$2$3 https:\/\/source.winehq.org\/source\/include\/$2/g;
       }
       # Highlight strings
       s/(\".+?\")/$fmt[2]$1$fmt[3]/g;
