@@ -3905,8 +3905,10 @@ else
     WINE_APPEND_RULE(
 [install install-lib::
 	\$(INSTALL_DATA) $srcdir/loader/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
-uninstall::
-	\$(RM) \$(DESTDIR)\$(datadir)/wine/l_intl.nls])
+.PHONY: l_intl.nls/uninstall
+l_intl.nls/uninstall::
+	\$(RM) \$(DESTDIR)\$(datadir)/wine/l_intl.nls
+__uninstall__: l_intl.nls/uninstall])
     case $host_os in
       cygwin*|mingw32*|darwin*|macosx*|linux-android*) ;;
       *) WINE_APPEND_RULE(
