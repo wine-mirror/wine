@@ -222,7 +222,7 @@ static void test_readmode( BOOL ascii_mode )
     static const char outbuffer[] = "0,1,2,3,4,5,6,7,8,9\r\n\r\nA,B,C,D,E\r\nX,Y,Z";
     static const char padbuffer[] = "ghjghjghjghj";
     static const char nlbuffer[] = "\r\n";
-    char buffer[2*BUFSIZ+256];
+    static char buffer[8192];
     const char *optr;
     int fd;
     FILE *file;
@@ -327,7 +327,7 @@ static void test_readmode( BOOL ascii_mode )
     ok(feof(file)==0,"feof failure in %s\n", IOMODE);
     ok(fread(buffer,2,1,file)==0,"fread failure in %s\n",IOMODE);
     ok(feof(file)!=0,"feof failure in %s\n", IOMODE);
-    
+
     /* test some additional functions */
     rewind(file);
     ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
@@ -350,6 +350,30 @@ static void test_readmode( BOOL ascii_mode )
 
     fclose (file);
     unlink ("fdopen.tst");
+
+    /* test INTERNAL_BUFSIZ read containing 0x1a character (^Z) */
+    fd = open("fdopen.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
+    ok(fd != -1, "open failed\n");
+    memset(buffer, 'a', sizeof(buffer));
+    buffer[1] = 0x1a;
+    ok(write(fd, buffer, sizeof(buffer)) == sizeof(buffer), "write failed\n");
+    ok(close(fd) != -1, "close failed\n");
+
+    fd = open("fdopen.tst", O_RDONLY);
+    ok(fd != -1, "open failed\n");
+    file = fdopen(fd, ascii_mode ? "r" : "rb");
+    ok(file != NULL, "fdopen failed\n");
+
+    memset(buffer, 0, sizeof(buffer));
+    i = fread(buffer, 4096, 1, file);
+    ok(!i, "fread succeeded\n");
+    ok(file->_bufsiz == 4096, "file->_bufsiz = %d\n", file->_bufsiz);
+    for(i=0; i<4096; i++)
+        if(buffer[i] != (i==1 ? 0x1a : 'a')) break;
+    ok(i==4096, "buffer[%d] = %d\n", i, buffer[i]);
+
+    fclose(file);
+    unlink("fdopen.tst");
 }
 
 static void test_asciimode(void)

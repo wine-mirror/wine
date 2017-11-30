@@ -4300,7 +4300,7 @@ MSVCRT_size_t CDECL MSVCRT__fread_nolock(void *ptr, MSVCRT_size_t size, MSVCRT_s
   while(rcnt>0)
   {
     int i;
-    if (!file->_cnt && rcnt<MSVCRT_BUFSIZ && (file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF))) {
+    if (!file->_cnt && rcnt<file->_bufsiz && (file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF))) {
       i = MSVCRT__read(file->_file, file->_base, file->_bufsiz);
       file->_ptr = file->_base;
       if (i != -1) {
@@ -4319,10 +4319,10 @@ MSVCRT_size_t CDECL MSVCRT__fread_nolock(void *ptr, MSVCRT_size_t size, MSVCRT_s
       }
     } else if (rcnt > INT_MAX) {
       i = MSVCRT__read(file->_file, ptr, INT_MAX);
-    } else if (rcnt < MSVCRT_BUFSIZ) {
+    } else if (rcnt < (file->_bufsiz ? file->_bufsiz : MSVCRT_INTERNAL_BUFSIZ)) {
       i = MSVCRT__read(file->_file, ptr, rcnt);
     } else {
-      i = MSVCRT__read(file->_file, ptr, rcnt - MSVCRT_BUFSIZ/2);
+      i = MSVCRT__read(file->_file, ptr, rcnt - rcnt % (file->_bufsiz ? file->_bufsiz : MSVCRT_INTERNAL_BUFSIZ));
     }
     pread += i;
     rcnt -= i;
