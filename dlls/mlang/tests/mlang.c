@@ -348,6 +348,199 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'M','i','n','g','L','i','u',0},
             {'N','e','w',' ','M','i','n','g','L','i','u',0}, 136
         },
+    },
+    /* 8. Arabic (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
+            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
+            MIMECONTF_MIME_LATEST,
+            1256, 1256, {'A','r','a','b','i','c',' ','(','W','i','n','d','o','w','s',')',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','6',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','6',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','6',0},
+            {'S','i','m','p','l','i','f','i','e','d',' ','A','r','a','b','i','c',' ','F','i','x','e','d',0},
+            {'S','i','m','p','l','i','f','i','e','d',' ','A','r','a','b','i','c',0}, 178
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+    },
+    /* 9. Baltic (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
+            MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
+            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
+            1257, 1257, {'B','a','l','t','i','c',' ','(','W','i','n','d','o','w','s',')',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','7',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','7',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','7',0},
+            {'C','o','u','r','i','e','r',' ','N','e','w',0},
+            {'A','r','i','a','l',0}, 186
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
+    },
+    /* 10. Central European (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
+            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
+            MIMECONTF_MIME_LATEST,
+            1250, 1250, {'C','e','n','t','r','a','l',' ','E','u','r','o','p','e','a','n',' ','(','W','i','n','d','o','w','s',')',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','0',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','0',0},
+            {'i','s','o','-','8','8','5','9','-','2',0},
+            {'C','o','u','r','i','e','r',' ','N','e','w',0},
+            {'A','r','i','a','l',0}, 238
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+    },
+    /* 11. Cyrillic (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
+            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
+            MIMECONTF_MIME_LATEST,
+            1251, 1251, {'C','y','r','i','l','l','i','c',' ','(','W','i','n','d','o','w','s',')',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','1',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','1',0},
+            {'k','o','i','8','-','r',0},
+            {'C','o','u','r','i','e','r',' ','N','e','w',0},
+            {'A','r','i','a','l',0}, 204
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+    },
+    /* 12. Greek (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
+            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
+            MIMECONTF_MIME_LATEST,
+            1253, 1253, {'G','r','e','e','k',' ','(','W','i','n','d','o','w','s',')',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','3',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','3',0},
+            {'i','s','o','-','8','8','5','9','-','7',0},
+            {'C','o','u','r','i','e','r',' ','N','e','w',0},
+            {'A','r','i','a','l',0}, 161
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+    },
+    /* 13. Hebrew (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
+            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
+            MIMECONTF_MIME_LATEST,
+            1255, 1255, {'H','e','b','r','e','w',' ','(','W','i','n','d','o','w','s',')',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','5',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','5',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','5',0},
+            {'M','i','r','i','a','m',' ','F','i','x','e','d',0},
+            {'D','a','v','i','d',0}, 177
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+    },
+    /* 14. Japanese (Shift-JIS) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
+            MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
+            MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
+            932, 932, {'J','a','p','a','n','e','s','e',' ','(','S','h','i','f','t','-','J','I','S',')',0},
+            {'s','h','i','f','t','_','j','i','s',0},
+            {'i','s','o','-','2','0','2','2','-','j','p',0},
+            {'i','s','o','-','2','0','2','2','-','j','p',0},
+            {'M','S',' ','G','o','t','h','i','c',0},
+            {'M','S',' ','P','G','o','t','h','i','c',0}, 128
+        }
+    },
+    /* 15. Korean */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
+            MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
+            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
+            949, 949, {'K','o','r','e','a','n',0},
+            {'k','s','_','c','_','5','6','0','1','-','1','9','8','7',0},
+            {'k','s','_','c','_','5','6','0','1','-','1','9','8','7',0},
+            {'k','s','_','c','_','5','6','0','1','-','1','9','8','7',0},
+            {'G','u','l','i','m','C','h','e',0},
+            {'G','u','l','i','m',0}, 129
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+    },
+    /* 16. Thai (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
+            MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
+            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
+            874, 874, {'T','h','a','i',' ','(','W','i','n','d','o','w','s',')',0},
+            {'w','i','n','d','o','w','s','-','8','7','4',0},
+            {'w','i','n','d','o','w','s','-','8','7','4',0},
+            {'w','i','n','d','o','w','s','-','8','7','4',0},
+            {'T','a','h','o','m','a',0},
+            {'T','a','h','o','m','a',0}, 222
+        },
+        FALSE, TRUE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE
+    },
+    /* 17. Turkish (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
+            MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
+            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
+            1254, 1254, {'T','u','r','k','i','s','h',' ','(','W','i','n','d','o','w','s',')',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','4',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','4',0},
+            {'i','s','o','-','8','8','5','9','-','9',0},
+            {'C','o','u','r','i','e','r',' ','N','e','w',0},
+            {'A','r','i','a','l',0}, 162
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+    },
+    /* 18. Vietnamese (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
+            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
+            MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
+            1258, 1258, {'V','i','e','t','n','a','m','e','s','e',' ','(','W','i','n','d','o','w','s',')',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','8',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','8',0},
+            {'w','i','n','d','o','w','s','-','1','2','5','8',0},
+            {'C','o','u','r','i','e','r',' ','N','e','w',0},
+            {'A','r','i','a','l',0}, 163
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
+    },
+    /* 19. Western European (Windows) */
+    {
+        {
+            MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
+            MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
+            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
+            1252, 1252, {'W','e','s','t','e','r','n',' ','E','u','r','o','p','e','a','n',' ','(','W','i','n','d','o','w','s',')',0},
+            {'W','i','n','d','o','w','s','-','1','2','5','2',0},
+            {'W','i','n','d','o','w','s','-','1','2','5','2',0},
+            {'i','s','o','-','8','8','5','9','-','1',0},
+            {'C','o','u','r','i','e','r',' ','N','e','w',0},
+            {'A','r','i','a','l',0}, 0
+        },
+        FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, TRUE
+    },
+    /* 20. Unicode */
+    {
+        {
+            MIMECONTF_MINIMAL | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT |
+            MIMECONTF_VALID | MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
+            1200, 1200, {'U','n','i','c','o','d','e',0},
+            {'u','n','i','c','o','d','e',0},
+            {'u','n','i','c','o','d','e',0},
+            {'u','n','i','c','o','d','e',0},
+            {'C','o','u','r','i','e','r',' ','N','e','w',0},
+            {'A','r','i','a','l',0}, 1
+        },
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
     }
 };
 
