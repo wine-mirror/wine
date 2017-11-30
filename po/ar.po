@@ -15025,11 +15025,11 @@ msgstr "حصلت مشكلة كبيرة في البرنامج %s ويجب إغل�
 #: winedbg.rc:58
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
-"may want to check the <a href=\"http://appdb.winehq.org\">Application "
+"may want to check the <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "يحدث هذا بسبب مشكلة في البرنامج أو بسبب عائق يحول دون تشغيله بواين ،يمكنك "
-"مراجعة قاعدة بيانات <a href=\"http://appdb.winehq.org\"> التطبيقات </a> للح "
+"مراجعة قاعدة بيانات <a href=\"https://appdb.winehq.org\"> التطبيقات </a> للح "
 "صول على النصائح اللازمة لتشغيل التطبيق."
 
 #: winedbg.rc:61
@@ -15044,12 +15044,12 @@ msgstr "تفاصيل خطأ البرنامج"
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
-"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
 "إذا كانت المشكلة غير موجودة عند تشغيل البرنامج في بيئة وندوز ، وفي حال لم "
 "يتم التبليغ عنها مسبقًا يمكنك حفظ التفاصيل بالضغط على زر \"الحفظ كـ\" ثمّ <a "
-"href=\"http://wiki.winehq.org/Bugs\">أبلغ عن العلّة</a> وأرفق الملف الذي "
+"href=\"https://wiki.winehq.org/Bugs\">أبلغ عن العلّة</a> وأرفق الملف الذي "
 "حفظته في إبلاغك."
 
 #: winedbg.rc:38

@@ -14410,7 +14410,7 @@ msgstr "程序 %s 遇到严重的问题需要关闭。我们对此造成的不�
 #: winedbg.rc:58
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
-"may want to check the <a href=\"http://appdb.winehq.org\">Application "
+"may want to check the <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "这可能是由程序的问题或者 Wine 的缺陷造成的。你可能需要查看 <a href=\"http://"
@@ -14428,11 +14428,11 @@ msgstr "程序错误详情"
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
-"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
 "若该问题在 Windows 不会出现并且未曾被报告过，您可以使用“另存为”按钮将详细信息"
-"保存为一个文件，然后<a href=\"http://wiki.winehq.org/Bugs\">新建一个错误报告"
+"保存为一个文件，然后<a href=\"https://wiki.winehq.org/Bugs\">新建一个错误报告"
 "</a>并且附带上该文件。"
 
 #: winedbg.rc:38

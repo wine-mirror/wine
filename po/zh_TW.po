@@ -14913,7 +14913,7 @@ msgstr "程式 %s 遇到了嚴重的問題而需要關閉。我們對於造成�
 #: winedbg.rc:58
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
-"may want to check the <a href=\"http://appdb.winehq.org\">Application "
+"may want to check the <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "這個可能是由 Wine 中的程式問題或缺失所造成。您可能要檢查<a href=\"http://"
@@ -14931,11 +14931,11 @@ msgstr "程式錯誤詳細資訊"
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
-"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
 "如果這個問題在 Windows 之下不會出現且未曾被報告，您可以使用「另存新檔」 按鈕"
-"將詳細的資訊儲存到檔案，然後<a href=\"http://wiki.winehq.org/Bugs\">發送錯誤"
+"將詳細的資訊儲存到檔案，然後<a href=\"https://wiki.winehq.org/Bugs\">發送錯誤"
 "報告</a>並附加該檔案到報告中。"
 
 #: winedbg.rc:38
