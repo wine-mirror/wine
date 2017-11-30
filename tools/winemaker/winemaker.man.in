@@ -225,7 +225,7 @@ executable: it must either be in the current directory or in the
 \fBwinemaker\fR does not support message files and the message compiler yet.
 .PP
 Bugs can be reported on the
-.UR http://bugs.winehq.org
+.UR https://bugs.winehq.org
 .B Wine bug tracker
 .UE .
 .SH AUTHORS
@@ -238,12 +238,12 @@ André Hentschel
 .B winemaker
 is part of the Wine distribution, which is available through WineHQ,
 the
-.UR http://www.winehq.org/
+.UR https://www.winehq.org/
 .B Wine development headquarters
 .UE .
 .SH SEE ALSO
 .BR wine (1),
 .br
-.UR http://www.winehq.org/help
+.UR https://www.winehq.org/help
 .B Wine documentation and support
 .UE .
