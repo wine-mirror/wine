@@ -13916,11 +13916,11 @@ msgstr ""
 #: winedbg.rc:58
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
-"may want to check the <a href=\"http://appdb.winehq.org\">Application "
+"may want to check the <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "Detta kan ha orsakats av ett fel i programmet eller en brist i Wine. Du kan "
-"söka på <a href=\"http://appdb.winehq.org\">Application Database</a> efter "
+"söka på <a href=\"https://appdb.winehq.org\">Application Database</a> efter "
 "tips om hur man kör detta program."
 
 #: winedbg.rc:61
@@ -13935,12 +13935,12 @@ msgstr "Detaljer om programfel"
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
-"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
 "Om denna problem inte presenterar sig i Windows och ännu inte har "
 "rapporterats, kan du spara detaljerna till ett fil med knappen \"Spara som\" "
-"och <a href=\"http://wiki.winehq.org/Bugs\">skicka en bugrapport</a> med "
+"och <a href=\"https://wiki.winehq.org/Bugs\">skicka en bugrapport</a> med "
 "filet som en bilaga."
 
 #: winedbg.rc:38

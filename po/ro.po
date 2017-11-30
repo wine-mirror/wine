@@ -14025,11 +14025,11 @@ msgstr ""
 #: winedbg.rc:58
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
-"may want to check the <a href=\"http://appdb.winehq.org\">Application "
+"may want to check the <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "Cauza poate fi o problemă în program sau o deficiență în Wine. Puteți "
-"consulta http://appdb.winehq.org pentru sugestii privind executarea acestei "
+"consulta https://appdb.winehq.org pentru sugestii privind executarea acestei "
 "aplicații."
 
 #: winedbg.rc:61
@@ -14044,7 +14044,7 @@ msgstr "Detalii eroare de program"
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
-"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
 

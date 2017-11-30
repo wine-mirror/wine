@@ -14074,11 +14074,11 @@ msgstr ""
 #: winedbg.rc:58
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
-"may want to check the <a href=\"http://appdb.winehq.org\">Application "
+"may want to check the <a href=\"https://appdb.winehq.org\">Application "
 "Database</a> for tips about running this application."
 msgstr ""
 "Bu, programdaki veya Wine'deki bir sorundan dolayı olabilir. Bu uygulamayı "
-"çalıştırma hakkında ipuçları için <a href=\"http://appdb.winehq.org"
+"çalıştırma hakkında ipuçları için <a href=\"https://appdb.winehq.org"
 "\">Uygulama Veritabanı</a> sayfasını kontrol etmek isteyebilirsiniz."
 
 #: winedbg.rc:61
@@ -14093,12 +14093,12 @@ msgstr "Program Hata Detayları"
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
-"button, then <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a> "
+"button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
 "Eğer bu problem Windows'ta yoksa ve henüz bildirilmemişse, \"Farklı Kaydet\" "
 "düğmesi kullanarak ayrıntılı bilgiyi bir dosyaya kaydedebilir; ardından bu "
-"dosyayı ekleyerek bir <a href=\"http://wiki.winehq.org/Bugs\">hata raporu</"
+"dosyayı ekleyerek bir <a href=\"https://wiki.winehq.org/Bugs\">hata raporu</"
 "a> gönderebilirsiniz."
 
 #: winedbg.rc:38
