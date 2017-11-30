@@ -1879,8 +1879,19 @@ static HRESULT WINAPI TaskDefinition_get_Principal(ITaskDefinition *iface, IPrin
 
 static HRESULT WINAPI TaskDefinition_put_Principal(ITaskDefinition *iface, IPrincipal *principal)
 {
-    FIXME("%p,%p: stub\n", iface, principal);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+
+    TRACE("%p,%p\n", iface, principal);
+
+    if (!principal) return E_POINTER;
+
+    if (taskdef->principal)
+        IPrincipal_Release(taskdef->principal);
+
+    IPrincipal_AddRef(principal);
+    taskdef->principal = principal;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_get_Actions(ITaskDefinition *iface, IActionCollection **actions)

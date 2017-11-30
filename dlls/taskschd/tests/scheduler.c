@@ -1173,6 +1173,9 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     hr = ITaskDefinition_get_Principal(taskdef, &principal);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     ok(principal != NULL, "principal not set\n");
+
+    hr = ITaskDefinition_put_Principal(taskdef, principal);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     if (principal) IPrincipal_Release(principal);
 
     /* FIXME: set IIdleSettings and INetworkSettings */
