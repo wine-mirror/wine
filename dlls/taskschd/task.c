@@ -1446,6 +1446,196 @@ static HRESULT TaskSettings_create(ITaskSettings **obj)
 
 typedef struct
 {
+    IPrincipal IPrincipal_iface;
+    LONG ref;
+} Principal;
+
+static inline Principal *impl_from_IPrincipal(IPrincipal *iface)
+{
+    return CONTAINING_RECORD(iface, Principal, IPrincipal_iface);
+}
+
+static ULONG WINAPI Principal_AddRef(IPrincipal *iface)
+{
+    Principal *principal = impl_from_IPrincipal(iface);
+    return InterlockedIncrement(&principal->ref);
+}
+
+static ULONG WINAPI Principal_Release(IPrincipal *iface)
+{
+    Principal *principal = impl_from_IPrincipal(iface);
+    LONG ref = InterlockedDecrement(&principal->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        heap_free(principal);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI Principal_QueryInterface(IPrincipal *iface, REFIID riid, void **obj)
+{
+    if (!riid || !obj) return E_INVALIDARG;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IPrincipal) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IPrincipal_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI Principal_GetTypeInfoCount(IPrincipal *iface, UINT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_GetTypeInfo(IPrincipal *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_GetIDsOfNames(IPrincipal *iface, REFIID riid, LPOLESTR *names,
+                                              UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_Invoke(IPrincipal *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                       DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_get_Id(IPrincipal *iface, BSTR *id)
+{
+    FIXME("%p,%p: stub\n", iface, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_put_Id(IPrincipal *iface, BSTR id)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(id));
+    return S_OK;
+}
+
+static HRESULT WINAPI Principal_get_DisplayName(IPrincipal *iface, BSTR *name)
+{
+    FIXME("%p,%p: stub\n", iface, name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_put_DisplayName(IPrincipal *iface, BSTR name)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_get_UserId(IPrincipal *iface, BSTR *user_id)
+{
+    FIXME("%p,%p: stub\n", iface, user_id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_put_UserId(IPrincipal *iface, BSTR user_id)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(user_id));
+    return S_OK;
+}
+
+static HRESULT WINAPI Principal_get_LogonType(IPrincipal *iface, TASK_LOGON_TYPE *logon_type)
+{
+    FIXME("%p,%p: stub\n", iface, logon_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_put_LogonType(IPrincipal *iface, TASK_LOGON_TYPE logon_type)
+{
+    FIXME("%p,%u: stub\n", iface, logon_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_get_GroupId(IPrincipal *iface, BSTR *group_id)
+{
+    FIXME("%p,%p: stub\n", iface, group_id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_put_GroupId(IPrincipal *iface, BSTR group_id)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(group_id));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_get_RunLevel(IPrincipal *iface, TASK_RUNLEVEL_TYPE *run_level)
+{
+    FIXME("%p,%p: stub\n", iface, run_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Principal_put_RunLevel(IPrincipal *iface, TASK_RUNLEVEL_TYPE run_level)
+{
+    FIXME("%p,%u: stub\n", iface, run_level);
+    return E_NOTIMPL;
+}
+
+static const IPrincipalVtbl Principal_vtbl =
+{
+    Principal_QueryInterface,
+    Principal_AddRef,
+    Principal_Release,
+    Principal_GetTypeInfoCount,
+    Principal_GetTypeInfo,
+    Principal_GetIDsOfNames,
+    Principal_Invoke,
+    Principal_get_Id,
+    Principal_put_Id,
+    Principal_get_DisplayName,
+    Principal_put_DisplayName,
+    Principal_get_UserId,
+    Principal_put_UserId,
+    Principal_get_LogonType,
+    Principal_put_LogonType,
+    Principal_get_GroupId,
+    Principal_put_GroupId,
+    Principal_get_RunLevel,
+    Principal_put_RunLevel
+};
+
+static HRESULT Principal_create(IPrincipal **obj)
+{
+    Principal *principal;
+
+    principal = heap_alloc(sizeof(*principal));
+    if (!principal) return E_OUTOFMEMORY;
+
+    principal->IPrincipal_iface.lpVtbl = &Principal_vtbl;
+    principal->ref = 1;
+
+    *obj = &principal->IPrincipal_iface;
+
+    TRACE("created %p\n", *obj);
+
+    return S_OK;
+}
+
+typedef struct
+{
     ITaskDefinition ITaskDefinition_iface;
     LONG ref;
     IRegistrationInfo *reginfo;
@@ -1668,8 +1858,23 @@ static HRESULT WINAPI TaskDefinition_put_Data(ITaskDefinition *iface, BSTR data)
 
 static HRESULT WINAPI TaskDefinition_get_Principal(ITaskDefinition *iface, IPrincipal **principal)
 {
-    FIXME("%p,%p: stub\n", iface, principal);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+    HRESULT hr;
+
+    TRACE("%p,%p\n", iface, principal);
+
+    if (!principal) return E_POINTER;
+
+    if (!taskdef->principal)
+    {
+        hr = Principal_create(&taskdef->principal);
+        if (hr != S_OK) return hr;
+    }
+
+    IPrincipal_AddRef(taskdef->principal);
+    *principal = taskdef->principal;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_put_Principal(ITaskDefinition *iface, IPrincipal *principal)
@@ -1710,7 +1915,7 @@ static const WCHAR SecurityDescriptor[] = {'S','e','c','u','r','i','t','y','D','
 static const WCHAR Settings[] = {'S','e','t','t','i','n','g','s',0};
 static const WCHAR Triggers[] = {'T','r','i','g','g','e','r','s',0};
 static const WCHAR Principals[] = {'P','r','i','n','c','i','p','a','l','s',0};
-static const WCHAR Principal[] = {'P','r','i','n','c','i','p','a','l',0};
+static const WCHAR principalW[] = {'P','r','i','n','c','i','p','a','l',0};
 static const WCHAR id[] = {'i','d',0};
 static const WCHAR UserId[] = {'U','s','e','r','I','d',0};
 static const WCHAR LogonType[] = {'L','o','g','o','n','T','y','p','e',0};
@@ -1964,7 +2169,7 @@ static HRESULT write_principal(IStream *stream, IPrincipal *principal)
     {
         write_indent(stream);
         write_stringW(stream, start_element);
-        write_stringW(stream, Principal);
+        write_stringW(stream, principalW);
         write_stringW(stream, spaceW);
         write_stringW(stream, id);
         write_stringW(stream, equalW);
@@ -1976,7 +2181,7 @@ static HRESULT write_principal(IStream *stream, IPrincipal *principal)
         SysFreeString(bstr);
     }
     else
-        write_element(stream, Principal);
+        write_element(stream, principalW);
 
     push_indent();
 
@@ -2054,7 +2259,7 @@ static HRESULT write_principal(IStream *stream, IPrincipal *principal)
     }
 
     pop_indent();
-    write_element_end(stream, Principal);
+    write_element_end(stream, principalW);
 
     pop_indent();
     return write_element_end(stream, Principals);
@@ -2275,7 +2480,7 @@ static HRESULT read_principal(IXmlReader *reader, IPrincipal *principal)
 
             TRACE("/%s\n", debugstr_w(name));
 
-            if (!lstrcmpW(name, Principal))
+            if (!lstrcmpW(name, principalW))
                 return S_OK;
 
             break;
@@ -2374,7 +2579,7 @@ static HRESULT read_principals(IXmlReader *reader, ITaskDefinition *taskdef)
 
             TRACE("Element: %s\n", debugstr_w(name));
 
-            if (!lstrcmpW(name, Principal))
+            if (!lstrcmpW(name, principalW))
             {
                 IPrincipal *principal;
 
