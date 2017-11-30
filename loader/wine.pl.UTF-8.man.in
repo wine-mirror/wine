@@ -282,35 +282,35 @@ w głównym katalogu dystrybucyjnym źródła.
 .SH BŁĘDY
 .PP
 Raporty stanu działania programów są dostępne na stronie
-.IR http://appdb.winehq.org .
+.IR https://appdb.winehq.org .
 Jeżeli brakuje na liście aplikacji, której używasz, to nie wahaj się
 dodać jej samodzielnie.
 .PP
 Raporty błędów mogą być wysyłane do Wine Bugzilla
-.I http://bugs.winehq.org
+.I https://bugs.winehq.org
 Jeżeli chcesz zgłosić błąd zapoznaj się z
-.I http://wiki.winehq.org/Bugs
+.I https://wiki.winehq.org/Bugs
 w źródle
 .B wine
 , aby dowiedzieć się jakie informacje są niezbędne
 .PP
 Sugestie i problemy dotyczące tej instrukcji również przesyłaj do
-.I http://bugs.winehq.org
+.I https://bugs.winehq.org
 .SH DOSTĘPNOŚĆ
 Najaktualniejszą publiczną wersję
 .B wine
 można pobrać ze strony
-.I http://www.winehq.org/download
+.I https://www.winehq.org/download
 .PP
 Najaktualnieszy zrzut kodu można pobrać przez GIT.  Aby dowiedzieć się
 jak to zrobić, odwiedź stronę
 .I
-http://www.winehq.org/site/git
+http://www.winehq.org/git
 .PP
 WineHQ, siedziba rozwoju
 .B wine
 , mieści się na stronie
-.IR http://www.winehq.org .
+.IR https://www.winehq.org .
 Strona ta zawiera wiele informacji o
 .BR wine .
 .PP
@@ -319,7 +319,7 @@ Po dalsze informacje na temat rozwoju
 zapisz się na listę mailingową
 .B wine
 na stronie
-.I http://www.winehq.org/forums
+.I https://www.winehq.org/forums
 
 .SH "ZOBACZ TAKŻE"
 .BR wineserver (1),

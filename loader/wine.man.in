@@ -287,27 +287,27 @@ in the top-level directory of the source distribution.
 .SH BUGS
 .PP
 A status report on many applications is available from the
-.UR http://appdb.winehq.org
+.UR https://appdb.winehq.org
 .B Wine Application Database
 .UE .
 Please add entries to this list for applications you currently run, if
 necessary.
 .PP
 Bugs can be reported on the
-.UR http://bugs.winehq.org
+.UR https://bugs.winehq.org
 .B Wine bug tracker
 .UE .
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
 is available through WineHQ, the
-.UR http://www.winehq.org/
+.UR https://www.winehq.org/
 .B Wine development headquarters
 .UE .
 .SH "SEE ALSO"
 .BR wineserver (1),
 .BR winedbg (1),
 .br
-.UR http://www.winehq.org/help
+.UR https://www.winehq.org/help
 .B Wine documentation and support
 .UE .
