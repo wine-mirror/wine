@@ -50,8 +50,8 @@ typedef struct {
 
 typedef struct {
     struct wine_rb_entry entry;
-    eventid_t event_id;
     struct list listeners;
+    WCHAR type[1];
 } listener_container_t;
 
 static const WCHAR abortW[] = {'a','b','o','r','t',0};
@@ -242,8 +242,9 @@ static listener_container_t *get_listener_container(EventTarget *event_target, e
     const event_target_vtbl_t *vtbl;
     listener_container_t *container;
     struct wine_rb_entry *entry;
+    size_t type_len;
 
-    entry = wine_rb_get(&event_target->handler_map, (const void*)eid);
+    entry = wine_rb_get(&event_target->handler_map, event_info[eid].name);
     if(entry)
         return WINE_RB_ENTRY_VALUE(entry, listener_container_t, entry);
     if(!alloc)
@@ -252,11 +253,11 @@ static listener_container_t *get_listener_container(EventTarget *event_target, e
     if(event_info[eid].flags & EVENT_FIXME)
         FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
 
-    container = heap_alloc(sizeof(*container));
+    type_len = strlenW(event_info[eid].name);
+    container = heap_alloc(FIELD_OFFSET(listener_container_t, type[type_len+1]));
     if(!container)
         return NULL;
-
-    container->event_id = eid;
+    memcpy(container->type, event_info[eid].name, (type_len + 1) * sizeof(WCHAR));
     list_init(&container->listeners);
     vtbl = dispex_get_vtbl(&event_target->dispex);
     if(vtbl->bind_event)
@@ -264,7 +265,7 @@ static listener_container_t *get_listener_container(EventTarget *event_target, e
     else
         FIXME("Unsupported event binding on target %p\n", event_target);
 
-    wine_rb_put(&event_target->handler_map, (const void*)eid, &container->entry);
+    wine_rb_put(&event_target->handler_map, container->type, &container->entry);
     return container;
 }
 
@@ -2264,7 +2265,7 @@ void EventTarget_init_dispex_info(dispex_data_t *dispex_info, compat_mode_t comp
 
 static int event_id_cmp(const void *key, const struct wine_rb_entry *entry)
 {
-    return (INT_PTR)key - WINE_RB_ENTRY_VALUE(entry, listener_container_t, entry)->event_id;
+    return strcmpW(key, WINE_RB_ENTRY_VALUE(entry, listener_container_t, entry)->type);
 }
 
 void EventTarget_Init(EventTarget *event_target, IUnknown *outer, dispex_static_data_t *dispex_data,
