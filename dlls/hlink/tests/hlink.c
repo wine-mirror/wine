@@ -73,6 +73,7 @@ DEFINE_EXPECT(HBC_QueryInterface_IUnknown);
 DEFINE_EXPECT(HBC_GetObject);
 DEFINE_EXPECT(HBC_UpdateHlink);
 
+DEFINE_EXPECT(HT_QueryInterface_IHlinkTarget);
 DEFINE_EXPECT(HT_SetBrowseContext);
 DEFINE_EXPECT(HT_GetBrowseContext);
 DEFINE_EXPECT(HT_Navigate);
@@ -868,6 +869,8 @@ static HRESULT WINAPI HlinkBrowseContext_Register(IHlinkBrowseContext *iface,
     return E_NOTIMPL;
 }
 
+static IUnknown *HBC_object;
+
 static IMoniker Moniker;
 static HRESULT WINAPI HlinkBrowseContext_GetObject(IHlinkBrowseContext *iface,
         IMoniker *pimk, BOOL fBindIfRootRegistered, IUnknown **ppiunk)
@@ -884,8 +887,9 @@ static HRESULT WINAPI HlinkBrowseContext_GetObject(IHlinkBrowseContext *iface,
     IBindCtx_Release(bctx);
 
     ok(fBindIfRootRegistered == 1, "fBindIfRootRegistered = %x\n", fBindIfRootRegistered);
-    *ppiunk = NULL;
-    return S_FALSE;
+
+    *ppiunk = HBC_object;
+    return HBC_object ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI HlinkBrowseContext_Revoke(IHlinkBrowseContext *iface, DWORD dwRegister)
@@ -995,6 +999,7 @@ static IHlinkBrowseContext HlinkBrowseContext = { &HlinkBrowseContextVtbl };
 static HRESULT WINAPI HlinkTarget_QueryInterface(IHlinkTarget *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IHlinkTarget, riid)) {
+        CHECK_EXPECT(HT_QueryInterface_IHlinkTarget);
         *ppv = iface;
         return S_OK;
     }
@@ -2188,6 +2193,8 @@ static void test_Hlink_Navigate(void)
     ok(hres == S_OK, "CreateBindCtx failed: %08x\n", hres);
     _bctx = pbc;
 
+    HBC_object = NULL;
+
     SET_EXPECT(Reduce);
     SET_EXPECT(Enum);
     SET_EXPECT(IsSystemMoniker);
@@ -2205,6 +2212,7 @@ static void test_Hlink_Navigate(void)
     SET_EXPECT(HBC_GetObject);
     SET_EXPECT(Reduce);
     SET_EXPECT(BindToObject);
+    SET_EXPECT(HT_QueryInterface_IHlinkTarget);
     SET_EXPECT(HT_GetBrowseContext);
     SET_EXPECT(HT_SetBrowseContext);
     SET_EXPECT(HBC_QueryInterface_IHlinkHistory);
@@ -2213,36 +2221,65 @@ static void test_Hlink_Navigate(void)
     hres = IHlink_Navigate(hlink, 0, pbc, NULL, &HlinkBrowseContext);
     ok(hres == S_OK, "Navigate failed: %08x\n", hres);
     CHECK_CALLED(IsSystemMoniker);
-    todo_wine CHECK_CALLED(GetDisplayName);
-    todo_wine CHECK_CALLED(HBC_GetObject);
+    CHECK_CALLED(GetDisplayName);
+    CHECK_CALLED(HBC_GetObject);
     todo_wine CHECK_CALLED(Reduce);
     CHECK_CALLED(BindToObject);
+    CHECK_CALLED(HT_QueryInterface_IHlinkTarget);
     todo_wine CHECK_CALLED(HT_GetBrowseContext);
     CHECK_CALLED(HT_SetBrowseContext);
     todo_wine CHECK_CALLED(HBC_QueryInterface_IHlinkHistory);
     CHECK_CALLED(HT_Navigate);
     todo_wine CHECK_CALLED(HT_GetFriendlyName);
 
+    /* Test with valid return from HlinkBrowseContext::GetObject */
+    HBC_object = (IUnknown *)&HlinkTarget;
+
+    SET_EXPECT(IsSystemMoniker);
+    SET_EXPECT(GetDisplayName);
+    SET_EXPECT(HBC_GetObject);
+    SET_EXPECT(HT_QueryInterface_IHlinkTarget);
+    SET_EXPECT(HT_Navigate);
+    SET_EXPECT(HT_GetFriendlyName);
+    hres = IHlink_Navigate(hlink, 0, pbc, NULL, &HlinkBrowseContext);
+    ok(hres == S_OK, "Navigate failed: %08x\n", hres);
+    CHECK_CALLED(IsSystemMoniker);
+    CHECK_CALLED(GetDisplayName);
+    CHECK_CALLED(HBC_GetObject);
+    CHECK_CALLED(HT_QueryInterface_IHlinkTarget);
+    CHECK_CALLED(HT_Navigate);
+    todo_wine CHECK_CALLED(HT_GetFriendlyName);
+
+    HBC_object = NULL;
+
 if (0) {    /* these currently open a browser window on wine */
     /* Test from string */
     SET_EXPECT(HBC_GetObject);
     hres = HlinkNavigateToStringReference(winehq_404W, NULL, NULL, 0, NULL, 0, pbc, NULL, &HlinkBrowseContext);
     todo_wine ok(hres == INET_E_OBJECT_NOT_FOUND, "Expected INET_E_OBJECT_NOT_FOUND, got %08x\n", hres);
-    todo_wine CHECK_CALLED(HBC_GetObject);
+    CHECK_CALLED(HBC_GetObject);
 
     /* MSDN claims browse context and bind context can't be null, but they can */
     SET_EXPECT(HBC_GetObject);
     hres = HlinkNavigateToStringReference(winehq_404W, NULL, NULL, 0, NULL, 0, NULL, NULL, &HlinkBrowseContext);
     todo_wine ok(hres == INET_E_OBJECT_NOT_FOUND, "Expected INET_E_OBJECT_NOT_FOUND, got %08x\n", hres);
-    todo_wine CHECK_CALLED(HBC_GetObject);
+    CHECK_CALLED(HBC_GetObject);
 }
 
     /* these open a browser window, so mark them interactive only */
     if (winetest_interactive)
     {
         /* both parameters null */
+        SET_EXPECT(IsSystemMoniker);
+        SET_EXPECT(GetDisplayName);
+        hres = IHlink_Navigate(hlink, 0, NULL, NULL, NULL);
+        ok(hres == DRAGDROP_S_DROP, "Expected DRAGDROP_S_DROP, got %08x\n", hres);
+        CHECK_CALLED(IsSystemMoniker);
+        CHECK_CALLED(GetDisplayName);
+
+        /* same, from string */
         hres = HlinkNavigateToStringReference(winehq_404W, NULL, NULL, 0, NULL, 0, NULL, NULL, NULL);
-        todo_wine ok(hres == DRAGDROP_S_DROP, "Expected DRAGDROP_S_DROP, got %08x\n", hres);
+        ok(hres == DRAGDROP_S_DROP, "Expected DRAGDROP_S_DROP, got %08x\n", hres);
 
         /* try basic test with valid URL */
         SET_EXPECT(HBC_GetObject);
@@ -2252,7 +2289,7 @@ if (0) {    /* these currently open a browser window on wine */
         SET_EXPECT(HBC_QueryInterface_IUnknown);
         hres = HlinkNavigateToStringReference(winehq_urlW, NULL, NULL, 0, NULL, 0, pbc, NULL, &HlinkBrowseContext);
         ok(hres == S_OK, "Expected S_OK, got %08x\n", hres);
-        todo_wine CHECK_CALLED(HBC_GetObject);
+        CHECK_CALLED(HBC_GetObject);
         todo_wine CHECK_CALLED(HBC_QueryInterface_IHlinkHistory);
         todo_wine CHECK_CALLED(HBC_QueryInterface_IMarshal);
         todo_wine CHECK_CALLED(HBC_QueryInterface_IdentityUnmarshal);
