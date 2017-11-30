@@ -841,6 +841,82 @@ static void test_submix(IXAudio2 *xa)
     IXAudio2MasteringVoice_DestroyVoice(master);
 }
 
+static void test_flush(IXAudio2 *xa)
+{
+    HRESULT hr;
+    IXAudio2MasteringVoice *master;
+    IXAudio2SourceVoice *src;
+    WAVEFORMATEX fmt;
+    XAUDIO2_BUFFER buf;
+    XAUDIO2_VOICE_STATE state;
+
+    XA2CALL_0V(StopEngine);
+
+    if(xaudio27)
+        hr = IXAudio27_CreateMasteringVoice((IXAudio27*)xa, &master, 2, 44100, 0, 0, NULL);
+    else
+        hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    ok(hr == S_OK, "CreateMasteringVoice failed: %08x\n", hr);
+
+    fmt.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+    fmt.nChannels = 2;
+    fmt.nSamplesPerSec = 44100;
+    fmt.wBitsPerSample = 32;
+    fmt.nBlockAlign = fmt.nChannels * fmt.wBitsPerSample / 8;
+    fmt.nAvgBytesPerSec = fmt.nSamplesPerSec * fmt.nBlockAlign;
+    fmt.cbSize = 0;
+
+    XA2CALL(CreateSourceVoice, &src, &fmt, 0, 1.f, NULL, NULL, NULL);
+    ok(hr == S_OK, "CreateSourceVoice failed: %08x\n", hr);
+
+    memset(&buf, 0, sizeof(buf));
+    buf.AudioBytes = 22050 * fmt.nBlockAlign;
+    buf.pAudioData = HeapAlloc(GetProcessHeap(), 0, buf.AudioBytes);
+    fill_buf((float*)buf.pAudioData, &fmt, 440, 22050);
+
+    hr = IXAudio2SourceVoice_SubmitSourceBuffer(src, &buf, NULL);
+    ok(hr == S_OK, "SubmitSourceBuffer failed: %08x\n", hr);
+
+    hr = IXAudio2SourceVoice_Start(src, 0, XAUDIO2_COMMIT_NOW);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    XA2CALL_0(StartEngine);
+    ok(hr == S_OK, "StartEngine failed: %08x\n", hr);
+
+    while(1){
+        if(xaudio27)
+            IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)src, &state);
+        else
+            IXAudio2SourceVoice_GetState(src, &state, 0);
+        if(state.SamplesPlayed >= 2205)
+            break;
+        Sleep(10);
+    }
+
+    hr = IXAudio2SourceVoice_Stop(src, 0, XAUDIO2_COMMIT_NOW);
+    ok(hr == S_OK, "Stop failed: %08x\n", hr);
+
+    hr = IXAudio2SourceVoice_FlushSourceBuffers(src);
+    ok(hr == S_OK, "FlushSourceBuffers failed: %08x\n", hr);
+
+    hr = IXAudio2SourceVoice_Start(src, 0, XAUDIO2_COMMIT_NOW);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    Sleep(100);
+
+    hr = IXAudio2SourceVoice_SubmitSourceBuffer(src, &buf, NULL);
+    ok(hr == S_OK, "SubmitSourceBuffer failed: %08x\n", hr);
+
+    if(xaudio27){
+        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src);
+    }else{
+        IXAudio2SourceVoice_DestroyVoice(src);
+    }
+    IXAudio2MasteringVoice_DestroyVoice(master);
+
+    HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
+}
+
 static UINT32 test_DeviceDetails(IXAudio27 *xa)
 {
     HRESULT hr;
@@ -1136,6 +1212,7 @@ START_TEST(xaudio2)
             test_buffer_callbacks((IXAudio2*)xa27);
             test_looping((IXAudio2*)xa27);
             test_submix((IXAudio2*)xa27);
+            test_flush((IXAudio2*)xa27);
         }else
             skip("No audio devices available\n");
 
@@ -1159,6 +1236,7 @@ START_TEST(xaudio2)
             test_buffer_callbacks(xa);
             test_looping(xa);
             test_submix(xa);
+            test_flush(xa);
         }else
             skip("No audio devices available\n");
 
