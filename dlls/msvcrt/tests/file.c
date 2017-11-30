@@ -1742,10 +1742,13 @@ static void test_fopen_fclose_fcloseall( void )
     ok(ret == 0, "The file '%s' was not closed\n", fname2);
     ret = fclose(stream3);
     ok(ret == 0, "The file '%s' was not closed\n", fname3);
+    errno = 0xdeadbeef;
     ret = fclose(stream2);
     ok(ret == EOF, "Closing file '%s' returned %d\n", fname2, ret);
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
     ret = fclose(stream3);
     ok(ret == EOF, "Closing file '%s' returned %d\n", fname3, ret);
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
     /* testing fcloseall() */
     numclosed = _fcloseall();

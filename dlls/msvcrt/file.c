@@ -3627,6 +3627,12 @@ int CDECL MSVCRT__fclose_nolock(MSVCRT_FILE* file)
 {
   int r, flag;
 
+  if(!(file->_flag & (MSVCRT__IOREAD | MSVCRT__IOWRT | MSVCRT__IORW)))
+  {
+      file->_flag = 0;
+      return MSVCRT_EOF;
+  }
+
   flag = file->_flag;
   MSVCRT_free(file->_tmpfname);
   file->_tmpfname = NULL;
