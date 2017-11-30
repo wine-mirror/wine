@@ -1430,7 +1430,7 @@ void server_init_process(void)
 /***********************************************************************
  *           server_init_process_done
  */
-NTSTATUS server_init_process_done(void)
+void server_init_process_done(void)
 {
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
@@ -1460,8 +1460,8 @@ NTSTATUS server_init_process_done(void)
     }
     SERVER_END_REQ;
 
-    if (!status) status = signal_start_process( entry, suspend );
-    return status;
+    assert( !status );
+    signal_start_process( entry, suspend );
 }
 
 

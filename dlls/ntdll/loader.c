@@ -3008,7 +3008,12 @@ NTSTATUS attach_dlls( void *reserved )
     if (!imports_fixup_done)
     {
         actctx_init();
-        if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS) goto done;
+        if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS)
+        {
+            ERR( "Importing dlls for %s failed, status %x\n",
+                 debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
+            NtTerminateProcess( GetCurrentProcess(), status );
+        }
         imports_fixup_done = TRUE;
     }
 
@@ -3016,29 +3021,35 @@ NTSTATUS attach_dlls( void *reserved )
     InsertHeadList( &tls_links, &NtCurrentTeb()->TlsLinks );
     RtlReleasePebLock();
 
-    if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto done;
-
     if (!(wm->ldr.Flags & LDR_PROCESS_ATTACHED))  /* first time around */
     {
+        if ((status = alloc_thread_tls()) != STATUS_SUCCESS)
+        {
+            ERR( "TLS init  failed when loading %s, status %x\n",
+                 debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
+            NtTerminateProcess( GetCurrentProcess(), status );
+        }
         if ((status = process_attach( wm, reserved )) != STATUS_SUCCESS)
         {
             if (last_failed_modref)
                 ERR( "%s failed to initialize, aborting\n",
                      debugstr_w(last_failed_modref->ldr.BaseDllName.Buffer) + 1 );
-            goto done;
+            ERR( "Initializing dlls for %s failed, status %x\n",
+                 debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
+            NtTerminateProcess( GetCurrentProcess(), status );
         }
         attach_implicitly_loaded_dlls( reserved );
         virtual_release_address_space();
     }
     else
     {
+        if ((status = alloc_thread_tls()) != STATUS_SUCCESS)
+            NtTerminateThread( GetCurrentThread(), status );
         thread_attach();
-        status = STATUS_SUCCESS;
     }
 
-done:
     RtlLeaveCriticalSection( &loader_section );
-    return status;
+    return STATUS_SUCCESS;
 }
 
 
@@ -3136,13 +3147,13 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     RemoveEntryList( &wm->ldr.InMemoryOrderModuleList );
     InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
 
-    if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0, 0 )) != STATUS_SUCCESS) goto error;
-    status = server_init_process_done();
-
-error:
-    ERR( "Main exe initialization for %s failed, status %x\n",
-         debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), status );
-    NtTerminateProcess( GetCurrentProcess(), status );
+    if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0, 0 )) != STATUS_SUCCESS)
+    {
+        ERR( "Main exe initialization for %s failed, status %x\n",
+             debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), status );
+        NtTerminateProcess( GetCurrentProcess(), status );
+    }
+    server_init_process_done();
 }
 
 

@@ -900,9 +900,8 @@ static void thread_startup( void *param )
 /***********************************************************************
  *           signal_start_thread
  */
-NTSTATUS signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
+void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
-    NTSTATUS status;
     CONTEXT context = { 0 };
     struct startup_info info = { entry, arg };
 
@@ -915,12 +914,9 @@ NTSTATUS signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL susp
 
     if (suspend) wait_suspend( &context );
 
-    if (!(status = wine_call_on_stack( attach_dlls, (void *)1, NtCurrentTeb()->Tib.StackBase )))
-    {
-        TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
-        wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
-    }
-    return status;
+    wine_call_on_stack( attach_dlls, (void *)1, NtCurrentTeb()->Tib.StackBase );
+    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
+    wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
 }
 
 
@@ -936,10 +932,9 @@ static void start_process( void *arg )
 /**********************************************************************
  *		signal_start_process
  */
-NTSTATUS signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
+void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
     CONTEXT context = { 0 };
-    NTSTATUS status;
 
     /* build the initial context */
     context.ContextFlags = CONTEXT_FULL;
@@ -950,9 +945,8 @@ NTSTATUS signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 
     if (suspend) wait_suspend( &context );
 
-    if (!(status = wine_call_on_stack( attach_dlls, (void *)1, (void *)context.Sp )))
-        wine_switch_to_stack( start_process, &context, (void *)context.Sp );
-    return status;
+    wine_call_on_stack( attach_dlls, (void *)1, (void *)context.Sp );
+    wine_switch_to_stack( start_process, &context, (void *)context.Sp );
 }
 
 

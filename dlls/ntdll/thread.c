@@ -498,7 +498,6 @@ void exit_thread( int status )
 static void start_thread( struct startup_info *info )
 {
     BOOL suspend;
-    NTSTATUS status;
     TEB *teb = info->teb;
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     struct debug_info debug_info;
@@ -510,8 +509,7 @@ static void start_thread( struct startup_info *info )
 
     signal_init_thread( teb );
     server_init_thread( info->entry_point, &suspend );
-    status = signal_start_thread( (LPTHREAD_START_ROUTINE)info->entry_point, info->entry_arg, suspend );
-    NtTerminateThread( GetCurrentThread(), status );
+    signal_start_thread( (LPTHREAD_START_ROUTINE)info->entry_point, info->entry_arg, suspend );
 }
 
 
