@@ -98,13 +98,13 @@ ist Alexandre Julliard. Viele andere Personen haben neue Funktionen hinzugefügt
 und Fehler behoben. Details finden Sie in der Datei Changelog.
 .SH FEHLER
 Wenn Sie einen Fehler finden, melden Sie ihn bitte im
-.UR http://bugs.winehq.org
+.UR https://bugs.winehq.org
 .B Wine Bugtracker
 .UE .
 .SH VERFÜGBARKEIT
 .B wineserver
 ist Teil der Wine-Distribution, verfügbar im WineHQ, dem
-.UR http://www.winehq.org/
+.UR https://www.winehq.org/
 .B  Hauptquartier der Wine-Entwicklung
 .UE .
 .SH "SIEHE AUCH"
