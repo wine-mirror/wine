@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
-"Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
+"Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
 "PO-Revision-Date: 2017-07-19 16:00+0100\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
