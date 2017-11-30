@@ -1638,6 +1638,7 @@ typedef struct
 {
     IExecAction IExecAction_iface;
     LONG ref;
+    WCHAR *path;
 } ExecAction;
 
 static inline ExecAction *impl_from_IExecAction(IExecAction *iface)
@@ -1659,6 +1660,7 @@ static ULONG WINAPI ExecAction_Release(IExecAction *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
+        heap_free(action->path);
         heap_free(action);
     }
 
@@ -1744,7 +1746,15 @@ static HRESULT WINAPI ExecAction_get_Path(IExecAction *iface, BSTR *path)
 
 static HRESULT WINAPI ExecAction_put_Path(IExecAction *iface, BSTR path)
 {
-    FIXME("%p,%s: stub\n", iface, debugstr_w(path));
+    ExecAction *action = impl_from_IExecAction(iface);
+    WCHAR *str = NULL;
+
+    TRACE("%p,%s\n", iface, debugstr_w(path));
+
+    if (path && !(str = heap_strdupW((path)))) return E_OUTOFMEMORY;
+    heap_free(action->path);
+    action->path = str;
+
     return S_OK;
 }
 
@@ -1801,6 +1811,7 @@ static HRESULT ExecAction_create(IExecAction **obj)
 
     action->IExecAction_iface.lpVtbl = &Action_vtbl;
     action->ref = 1;
+    action->path = NULL;
 
     *obj = &action->IExecAction_iface;
 
