@@ -279,36 +279,36 @@ im obersten Ordner der Quellcodedistribution.
 .SH FEHLER
 .PP
 Statusberichte für viele Anwendungen sind unter
-.I http://appdb.winehq.org
+.I https://appdb.winehq.org
  verfügbar. Bitte fügen Sie Anwendungen, die Sie mit Wine nutzen, der
  Liste hinzu, sofern noch kein Eintrag existiert.
 .PP
 Fehler können unter
-.I http://bugs.winehq.org
+.I https://bugs.winehq.org
 gemeldet werden. Wenn Sie einen Fehler melden möchten, lesen Sie
 bitte vorher
-.I http://wiki.winehq.org/Bugs
+.I https://wiki.winehq.org/Bugs
 im
 .B wine
 -Quellcode, um zu sehen, welche Informationen benötigt werden.
 .PP
 Probleme und Hinweise mit/zu dieser Manpage können auch auf
-.I http://bugs.winehq.org
+.I https://bugs.winehq.org
 gemeldet werden.
 .SH VERFÜGBARKEIT
 Die aktuellste öffentliche Wine-Version kann auf
-.I http://www.winehq.org/download
+.I https://www.winehq.org/download
 bezogen werden.
 .PP
 Ein Schnappschuss des Entwicklungscodes kann via GIT besorgt werden,
 siehe dazu
 .I
-http://www.winehq.org/site/git
+https://www.winehq.org/git
 .PP
 WineHQ, die Hauptseite der
 .B wine
 -Entwicklung, befindet sich auf
-.IR http://www.winehq.org .
+.IR https://www.winehq.org .
 Diese Website bietet viele Informationen und Ressourcen zu
 .BR wine .
 .PP
@@ -317,7 +317,7 @@ Für nähere Informationen zur Entwicklung von
 können Sie sich als Abonnement bei der
 .B wine
 -Mailingliste auf
-.I http://www.winehq.org/forums
+.I https://www.winehq.org/forums
 eintragen.
 .SH "SIEHE AUCH"
 .BR wineserver (1),\  winedbg (1)

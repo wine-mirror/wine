@@ -273,25 +273,25 @@ licence se trouve dans le fichier
 .SH BUGS
 .PP
 Un rapport sur la compatibilité de nombreuses applications est disponible sur la
-.UR http://appdb.winehq.org
+.UR https://appdb.winehq.org
 .B base de données d'applications de Wine
 .UE .
 N'hésitez pas à y ajouter des entrées pour les applications que vous
 exécutez actuellement, si nécessaire.
 .PP
 Les bugs peuvent être signalés (en anglais) sur le
-.UR http://bugs.winehq.org
+.UR https://bugs.winehq.org
 .B système de suivi des problèmes de Wine
 .UE .
 .SH DISPONIBILITÉ
 La version publique la plus récente de Wine est disponible sur WineHQ, le
-.UR http://www.winehq.org/
+.UR https://www.winehq.org/
 .B quartier général du développement de Wine
 .UE .
 .SH "VOIR AUSSI"
 .BR wineserver (1),
 .BR winedbg (1),
 .br
-.UR http://www.winehq.org/help
+.UR https://www.winehq.org/help
 .B Documentation et support de Wine
 .UE .
