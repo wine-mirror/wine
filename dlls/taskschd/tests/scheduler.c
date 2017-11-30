@@ -1236,6 +1236,7 @@ static void create_action(ITaskDefinition *taskdef)
     IAction *action;
     IExecAction *exec_action;
     TASK_ACTION_TYPE type;
+    BSTR path;
 
     hr = ITaskDefinition_get_Actions(taskdef, &actions);
     ok(hr == S_OK, "get_Actions error %#x\n", hr);
@@ -1251,8 +1252,20 @@ static void create_action(ITaskDefinition *taskdef)
     ok(hr == S_OK, "get_Type error %#x\n", hr);
     ok(type == TASK_ACTION_EXEC, "got %u\n", type );
 
+    path = (BSTR)0xdeadbeef;
+    hr = IExecAction_get_Path(exec_action, &path);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(path == NULL, "path not set\n");
+
     hr = IExecAction_put_Path(exec_action, task1_exe);
     ok(hr == S_OK, "put_Path error %#x\n", hr);
+
+    path = NULL;
+    hr = IExecAction_get_Path(exec_action, &path);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(path != NULL, "path not set\n");
+    ok(!lstrcmpW(path, task1_exe), "wrong path\n" );
+    SysFreeString(path);
 
     IExecAction_Release(exec_action);
     IAction_Release(action);

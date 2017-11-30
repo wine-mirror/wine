@@ -1740,8 +1740,20 @@ static HRESULT WINAPI ExecAction_get_Type(IExecAction *iface, TASK_ACTION_TYPE *
 
 static HRESULT WINAPI ExecAction_get_Path(IExecAction *iface, BSTR *path)
 {
-    FIXME("%p,%p: stub\n", iface, path);
-    return E_NOTIMPL;
+    ExecAction *action = impl_from_IExecAction(iface);
+
+    TRACE("%p,%p\n", iface, path);
+
+    if (!path) return E_POINTER;
+
+    if (!action->path)
+    {
+        *path = NULL;
+        return S_OK;
+    }
+
+    if (!(*path = SysAllocString(action->path))) return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI ExecAction_put_Path(IExecAction *iface, BSTR path)
