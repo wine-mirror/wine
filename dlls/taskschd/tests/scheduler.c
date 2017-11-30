@@ -1094,6 +1094,7 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
 {
     HRESULT hr;
     ITaskSettings *set;
+    ITriggerCollection *triggers;
 
     hr = ITaskDefinition_get_Settings(taskdef, &set);
     ok(hr == S_OK, "get_Settings error %#x\n", hr);
@@ -1157,6 +1158,15 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
 
     hr = ITaskSettings_put_AllowDemandStart(set, test->allow_on_demand_start);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    triggers = NULL;
+    hr = ITaskDefinition_get_Triggers(taskdef, &triggers);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(triggers != NULL, "triggers not set\n");
+
+    hr = ITaskDefinition_put_Triggers(taskdef, triggers);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    if (triggers) ITriggerCollection_Release(triggers);
 
     /* FIXME: set IIdleSettings and INetworkSettings */
 

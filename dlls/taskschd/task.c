@@ -1601,8 +1601,19 @@ static HRESULT WINAPI TaskDefinition_get_Triggers(ITaskDefinition *iface, ITrigg
 
 static HRESULT WINAPI TaskDefinition_put_Triggers(ITaskDefinition *iface, ITriggerCollection *triggers)
 {
-    FIXME("%p,%p: stub\n", iface, triggers);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+
+    TRACE("%p,%p\n", iface, triggers);
+
+    if (!triggers) return E_POINTER;
+
+    if (taskdef->triggers)
+        ITriggerCollection_Release(taskdef->triggers);
+
+    ITriggerCollection_AddRef(triggers);
+    taskdef->triggers = triggers;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_get_Settings(ITaskDefinition *iface, ITaskSettings **settings)
