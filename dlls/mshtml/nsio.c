@@ -1193,7 +1193,7 @@ static nsresult NSAPI nsChannel_AsyncOpen2(nsIHttpChannel *iface, nsIStreamListe
 static nsresult NSAPI nsChannel_GetContentDisposition(nsIHttpChannel *iface, UINT32 *aContentDisposition)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
-    FIXME("(%p)->(%p)\n", This, aContentDisposition);
+    TRACE("(%p)->(%p) unimplemented\n", This, aContentDisposition);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1221,7 +1221,7 @@ static nsresult NSAPI nsChannel_SetContentDispositionFilename(nsIHttpChannel *if
 static nsresult NSAPI nsChannel_GetContentDispositionHeader(nsIHttpChannel *iface, nsACString *aContentDispositionHeader)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
-    FIXME("(%p)->(%p)\n", This, aContentDispositionHeader);
+    TRACE("(%p)->(%p) unimplemented\n", This, aContentDispositionHeader);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1306,7 +1306,7 @@ static nsresult NSAPI nsChannel_SetReferrer(nsIHttpChannel *iface, nsIURI *aRefe
 static nsresult NSAPI nsChannel_GetReferrerPolicy(nsIHttpChannel *iface, UINT32 *aReferrerPolicy)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
-    FIXME("(%p)->(%p)\n", This, aReferrerPolicy);
+    TRACE("(%p)->(%p) unimplemented\n", This, aReferrerPolicy);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1835,7 +1835,7 @@ static nsresult NSAPI nsHttpChannelInternal_SetDocumentURI(nsIHttpChannelInterna
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
-    FIXME("(%p)->()\n", This);
+    TRACE("(%p)->() unimplemented\n", This);
 
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -1862,7 +1862,7 @@ static nsresult NSAPI nsHttpChannelInternal_TakeAllSecurityMessages(nsIHttpChann
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
-    FIXME("(%p)->()\n", This);
+    TRACE("(%p)->(%p) unimplemented\n", This, aMessages);
 
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -2125,7 +2125,7 @@ static nsresult NSAPI nsHttpChannelInternal_GetRedirectMode(nsIHttpChannelIntern
 static nsresult NSAPI nsHttpChannelInternal_SetRedirectMode(nsIHttpChannelInternal *iface, UINT32 aRedirectMode)
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
-    FIXME("(%p)->(%d)\n", This, aRedirectMode);
+    TRACE("(%p)->(%d) unimplemented\n", This, aRedirectMode);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
