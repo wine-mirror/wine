@@ -271,12 +271,12 @@ static listener_container_t *get_listener_container(EventTarget *event_target, c
     return container;
 }
 
-static void remove_event_listener(EventTarget *event_target, eventid_t eid, listener_type_t type, IDispatch *function)
+static void remove_event_listener(EventTarget *event_target, const WCHAR *type_name, listener_type_t type, IDispatch *function)
 {
     listener_container_t *container;
     event_listener_t *listener;
 
-    container = get_listener_container(event_target, event_info[eid].name, FALSE);
+    container = get_listener_container(event_target, type_name, FALSE);
     if(!container)
         return;
 
@@ -1918,7 +1918,7 @@ HRESULT detach_event(EventTarget *event_target, BSTR name, IDispatch *disp)
         return S_OK;
     }
 
-    remove_event_listener(event_target, eid, LISTENER_TYPE_ATTACHED, disp);
+    remove_event_listener(event_target, event_info[eid].name, LISTENER_TYPE_ATTACHED, disp);
     return S_OK;
 }
 
@@ -2136,17 +2136,10 @@ static HRESULT WINAPI EventTarget_removeEventListener(IEventTarget *iface, BSTR 
                                                       IDispatch *listener, VARIANT_BOOL capture)
 {
     EventTarget *This = impl_from_IEventTarget(iface);
-    eventid_t eid;
 
     TRACE("(%p)->(%s %p %x)\n", This, debugstr_w(type), listener, capture);
 
-    eid = str_to_eid(type);
-    if(eid == EVENTID_LAST) {
-        FIXME("Unsupported on event %s\n", debugstr_w(type));
-        return E_NOTIMPL;
-    }
-
-    remove_event_listener(This, eid, capture ? LISTENER_TYPE_CAPTURE : LISTENER_TYPE_BUBBLE, listener);
+    remove_event_listener(This, type, capture ? LISTENER_TYPE_CAPTURE : LISTENER_TYPE_BUBBLE, listener);
     return S_OK;
 }
 
