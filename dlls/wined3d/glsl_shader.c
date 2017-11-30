@@ -2715,8 +2715,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
 /*****************************************************************************
  * Functions to generate GLSL strings from DirectX Shader bytecode begin here.
- *
- * For more information, see http://wiki.winehq.org/DirectX-Shaders
  ****************************************************************************/
 
 /* Prototypes */
