@@ -414,6 +414,7 @@ static void WINAPI XA2SRC_DestroyVoice(IXAudio2SourceVoice *iface)
     This->nbufs = 0;
     This->first_buf = 0;
     This->cur_buf = 0;
+    This->abandoned_albufs = 0;
 
     LeaveCriticalSection(&This->lock);
 }
@@ -438,10 +439,17 @@ static HRESULT WINAPI XA2SRC_Stop(IXAudio2SourceVoice *iface, UINT32 Flags,
         UINT32 OperationSet)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+    ALint bufs;
 
     TRACE("%p, 0x%x, 0x%x\n", This, Flags, OperationSet);
 
+    palcSetThreadContext(This->xa2->al_ctx);
+
     EnterCriticalSection(&This->lock);
+
+    alGetSourcei(This->al_src, AL_BUFFERS_QUEUED, &bufs);
+
+    This->abandoned_albufs = bufs;
 
     This->running = FALSE;
 
@@ -2264,43 +2272,52 @@ static void update_source_state(XA2SourceImpl *src)
         ALuint al_buffers[XAUDIO2_MAX_QUEUED_BUFFERS];
 
         alSourceUnqueueBuffers(src->al_src, processed, al_buffers);
+
         src->first_al_buf += processed;
         src->first_al_buf %= XAUDIO2_MAX_QUEUED_BUFFERS;
         src->al_bufs_used -= processed;
 
-        for(i = 0; i < processed; ++i){
-            ALint bufsize;
+        if(processed > src->abandoned_albufs){
+            for(i = src->abandoned_albufs; i < processed; ++i){
+                ALint bufsize;
 
-            alGetBufferi(al_buffers[i], AL_SIZE, &bufsize);
+                alGetBufferi(al_buffers[i], AL_SIZE, &bufsize);
 
-            src->in_al_bytes -= bufsize;
-            src->played_frames += bufsize / src->submit_blocksize;
+                src->in_al_bytes -= bufsize;
+                src->played_frames += bufsize / src->submit_blocksize;
 
-            if(al_buffers[i] == src->buffers[src->first_buf].latest_al_buf){
-                DWORD old_buf = src->first_buf;
+                if(al_buffers[i] == src->buffers[src->first_buf].latest_al_buf){
+                    DWORD old_buf = src->first_buf;
 
-                src->first_buf++;
-                src->first_buf %= XAUDIO2_MAX_QUEUED_BUFFERS;
-                src->nbufs--;
+                    src->first_buf++;
+                    src->first_buf %= XAUDIO2_MAX_QUEUED_BUFFERS;
+                    src->nbufs--;
 
-                TRACE("%p: done with buffer %u\n", src, old_buf);
+                    TRACE("%p: done with buffer %u\n", src, old_buf);
 
-                if(src->buffers[old_buf].xa2buffer.Flags & XAUDIO2_END_OF_STREAM)
-                    src->played_frames = 0;
-
-                if(src->cb){
-                    IXAudio2VoiceCallback_OnBufferEnd(src->cb,
-                            src->buffers[old_buf].xa2buffer.pContext);
                     if(src->buffers[old_buf].xa2buffer.Flags & XAUDIO2_END_OF_STREAM)
-                        IXAudio2VoiceCallback_OnStreamEnd(src->cb);
+                        src->played_frames = 0;
 
-                    if(src->nbufs > 0)
-                        IXAudio2VoiceCallback_OnBufferStart(src->cb,
-                                src->buffers[src->first_buf].xa2buffer.pContext);
+                    if(src->cb){
+                        IXAudio2VoiceCallback_OnBufferEnd(src->cb,
+                                src->buffers[old_buf].xa2buffer.pContext);
+                        if(src->buffers[old_buf].xa2buffer.Flags & XAUDIO2_END_OF_STREAM)
+                            IXAudio2VoiceCallback_OnStreamEnd(src->cb);
+
+                        if(src->nbufs > 0)
+                            IXAudio2VoiceCallback_OnBufferStart(src->cb,
+                                    src->buffers[src->first_buf].xa2buffer.pContext);
+                    }
                 }
             }
-        }
+
+            src->abandoned_albufs = 0;
+        }else
+            src->abandoned_albufs -= processed;
     }
+
+    if(!src->running)
+        return;
 
     alGetSourcei(src->al_src, AL_BYTE_OFFSET, &bufpos);
 
@@ -2375,12 +2392,12 @@ static void do_engine_tick(IXAudio2Impl *This)
 
         EnterCriticalSection(&src->lock);
 
-        if(!src->in_use || !src->running){
+        if(!src->in_use){
             LeaveCriticalSection(&src->lock);
             continue;
         }
 
-        if(src->cb){
+        if(src->cb && This->running){
 #if XAUDIO2_VER == 0
             IXAudio20VoiceCallback_OnVoiceProcessingPassStart((IXAudio20VoiceCallback*)src->cb);
 #else
@@ -2394,12 +2411,14 @@ static void do_engine_tick(IXAudio2Impl *This)
 
         update_source_state(src);
 
-        alGetSourcei(src->al_src, AL_SOURCE_STATE, &st);
-        if(st != AL_PLAYING)
-            alSourcePlay(src->al_src);
+        if(This->running){
+            alGetSourcei(src->al_src, AL_SOURCE_STATE, &st);
+            if(st != AL_PLAYING)
+                alSourcePlay(src->al_src);
 
-        if(src->cb)
-            IXAudio2VoiceCallback_OnVoiceProcessingPassEnd(src->cb);
+            if(src->cb)
+                IXAudio2VoiceCallback_OnVoiceProcessingPassEnd(src->cb);
+        }
 
         LeaveCriticalSection(&src->lock);
     }
