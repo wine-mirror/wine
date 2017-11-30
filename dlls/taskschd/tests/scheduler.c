@@ -1096,6 +1096,7 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     ITaskSettings *set;
     ITriggerCollection *triggers;
     IPrincipal *principal;
+    IActionCollection *actions;
 
     hr = ITaskDefinition_get_Settings(taskdef, &set);
     ok(hr == S_OK, "get_Settings error %#x\n", hr);
@@ -1177,6 +1178,15 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     hr = ITaskDefinition_put_Principal(taskdef, principal);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     if (principal) IPrincipal_Release(principal);
+
+    actions = NULL;
+    hr = ITaskDefinition_get_Actions(taskdef, &actions);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(actions != NULL, "actions not set\n");
+
+    hr = ITaskDefinition_put_Actions(taskdef, actions);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    if (actions) IActionCollection_Release(actions);
 
     /* FIXME: set IIdleSettings and INetworkSettings */
 

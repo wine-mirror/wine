@@ -2093,8 +2093,19 @@ static HRESULT WINAPI TaskDefinition_get_Actions(ITaskDefinition *iface, IAction
 
 static HRESULT WINAPI TaskDefinition_put_Actions(ITaskDefinition *iface, IActionCollection *actions)
 {
-    FIXME("%p,%p: stub\n", iface, actions);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+
+    TRACE("%p,%p\n", iface, actions);
+
+    if (!actions) return E_POINTER;
+
+    if (taskdef->actions)
+        IActionCollection_Release(taskdef->actions);
+
+    IActionCollection_AddRef(actions);
+    taskdef->actions = actions;
+
+    return S_OK;
 }
 
 static const WCHAR Task[] = {'T','a','s','k',0};
