@@ -19,19 +19,19 @@ Call DllInstall passing it an optional \fIcmdline\fR. When used with \fB/u\fR ca
 Do not call DllRegisterServer; this option must be used with \fB/i\fR.
 .SH BUGS
 Bugs can be reported on the
-.UR http://bugs.winehq.org
+.UR https://bugs.winehq.org
 .B Wine bug tracker
 .UE .
 .SH AVAILABILITY
 .B regsvr32
 is part of the Wine distribution, which is available through WineHQ,
 the
-.UR http://www.winehq.org/
+.UR https://www.winehq.org/
 .B Wine development headquarters
 .UE .
 .SH "SEE ALSO"
 .BR wine (1),
 .br
-.UR http://www.winehq.org/help
+.UR https://www.winehq.org/help
 .B Wine documentation and support
 .UE .
