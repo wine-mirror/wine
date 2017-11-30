@@ -495,35 +495,35 @@ static const struct mlang_data
 } mlang_data[] =
 {
     { "Arabic",1256,sizeof(arabic_cp)/sizeof(arabic_cp[0]),arabic_cp,
-      "Courier","Arial", sidArabic }, /* FIXME */
+      "Simplified Arabic Fixed","Simplified Arabic", sidArabic },
     { "Baltic",1257,sizeof(baltic_cp)/sizeof(baltic_cp[0]),baltic_cp,
-      "Courier","Arial", sidAsciiLatin }, /* FIXME */
+      "Courier New","Arial", sidAsciiLatin },
     { "Chinese Simplified",936,sizeof(chinese_simplified_cp)/sizeof(chinese_simplified_cp[0]),chinese_simplified_cp,
       "Simsun","Simsun", sidHan },
     { "Chinese Traditional",950,sizeof(chinese_traditional_cp)/sizeof(chinese_traditional_cp[0]),chinese_traditional_cp,
       "MingLiu","New MingLiu", sidBopomofo },
     { "Central European",1250,sizeof(central_european_cp)/sizeof(central_european_cp[0]),central_european_cp,
-      "Courier","Arial", sidAsciiLatin }, /* FIXME */
+      "Courier New","Arial", sidAsciiLatin },
     { "Cyrillic",1251,sizeof(cyrillic_cp)/sizeof(cyrillic_cp[0]),cyrillic_cp,
-      "Courier","Arial", sidCyrillic }, /* FIXME */
+      "Courier New","Arial", sidCyrillic },
     { "Greek",1253,sizeof(greek_cp)/sizeof(greek_cp[0]),greek_cp,
-      "Courier","Arial", sidGreek }, /* FIXME */
+      "Courier New","Arial", sidGreek },
     { "Hebrew",1255,sizeof(hebrew_cp)/sizeof(hebrew_cp[0]),hebrew_cp,
-      "Courier","Arial", sidHebrew }, /* FIXME */
+      "Miriam Fixed","David", sidHebrew },
     { "Japanese",932,sizeof(japanese_cp)/sizeof(japanese_cp[0]),japanese_cp,
       "MS Gothic","MS PGothic", sidKana },
     { "Korean",949,sizeof(korean_cp)/sizeof(korean_cp[0]),korean_cp,
-      "Courier","Arial", sidHangul }, /* FIXME */
+      "GulimChe","Gulim", sidHangul },
     { "Thai",874,sizeof(thai_cp)/sizeof(thai_cp[0]),thai_cp,
-      "Courier","Arial", sidThai }, /* FIXME */
+      "Tahoma","Tahoma", sidThai },
     { "Turkish",1254,sizeof(turkish_cp)/sizeof(turkish_cp[0]),turkish_cp,
-      "Courier","Arial", sidAsciiLatin }, /* FIXME */
+      "Courier New","Arial", sidAsciiLatin },
     { "Vietnamese",1258,sizeof(vietnamese_cp)/sizeof(vietnamese_cp[0]),vietnamese_cp,
-      "Courier","Arial", sidAsciiLatin }, /* FIXME */
+      "Courier New","Arial", sidAsciiLatin },
     { "Western European",1252,sizeof(western_cp)/sizeof(western_cp[0]),western_cp,
-      "Courier","Arial", sidAsciiLatin }, /* FIXME */
+      "Courier New","Arial", sidAsciiLatin },
     { "Unicode",CP_UNICODE,sizeof(unicode_cp)/sizeof(unicode_cp[0]),unicode_cp,
-      "Courier","Arial" } /* FIXME */
+      "Courier New","Arial" }
 };
 
 struct font_list

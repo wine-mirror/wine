@@ -362,7 +362,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'S','i','m','p','l','i','f','i','e','d',' ','A','r','a','b','i','c',' ','F','i','x','e','d',0},
             {'S','i','m','p','l','i','f','i','e','d',' ','A','r','a','b','i','c',0}, 178
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
     },
     /* 9. Baltic (Windows) */
     {
@@ -377,7 +376,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'C','o','u','r','i','e','r',' ','N','e','w',0},
             {'A','r','i','a','l',0}, 186
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
     },
     /* 10. Central European (Windows) */
     {
@@ -392,7 +390,7 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'C','o','u','r','i','e','r',' ','N','e','w',0},
             {'A','r','i','a','l',0}, 238
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
     },
     /* 11. Cyrillic (Windows) */
     {
@@ -407,7 +405,7 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'C','o','u','r','i','e','r',' ','N','e','w',0},
             {'A','r','i','a','l',0}, 204
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
     },
     /* 12. Greek (Windows) */
     {
@@ -422,7 +420,7 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'C','o','u','r','i','e','r',' ','N','e','w',0},
             {'A','r','i','a','l',0}, 161
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
     },
     /* 13. Hebrew (Windows) */
     {
@@ -437,7 +435,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'M','i','r','i','a','m',' ','F','i','x','e','d',0},
             {'D','a','v','i','d',0}, 177
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
     },
     /* 14. Japanese (Shift-JIS) */
     {
@@ -466,7 +463,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'G','u','l','i','m','C','h','e',0},
             {'G','u','l','i','m',0}, 129
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
     },
     /* 16. Thai (Windows) */
     {
@@ -481,7 +477,7 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'T','a','h','o','m','a',0},
             {'T','a','h','o','m','a',0}, 222
         },
-        FALSE, TRUE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE
+        FALSE, TRUE, FALSE, FALSE, TRUE, TRUE, TRUE
     },
     /* 17. Turkish (Windows) */
     {
@@ -496,7 +492,7 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'C','o','u','r','i','e','r',' ','N','e','w',0},
             {'A','r','i','a','l',0}, 162
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
     },
     /* 18. Vietnamese (Windows) */
     {
@@ -511,7 +507,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'C','o','u','r','i','e','r',' ','N','e','w',0},
             {'A','r','i','a','l',0}, 163
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
     },
     /* 19. Western European (Windows) */
     {
@@ -526,7 +521,7 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'C','o','u','r','i','e','r',' ','N','e','w',0},
             {'A','r','i','a','l',0}, 0
         },
-        FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, TRUE
+        FALSE, FALSE, FALSE, FALSE, TRUE, TRUE
     },
     /* 20. Unicode */
     {
@@ -540,7 +535,6 @@ const static struct cpinfo_test_data iml2_cpinfo_data[] =
             {'C','o','u','r','i','e','r',' ','N','e','w',0},
             {'A','r','i','a','l',0}, 1
         },
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE
     }
 };
 
