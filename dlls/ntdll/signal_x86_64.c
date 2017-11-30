@@ -3160,10 +3160,23 @@ static void thread_startup( void *param )
 /***********************************************************************
  *           signal_start_thread
  */
-NTSTATUS signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg )
+NTSTATUS signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
     NTSTATUS status;
+    CONTEXT context = { 0 };
     struct startup_info info = { entry, arg };
+
+    /* build the initial context */
+    context.ContextFlags = CONTEXT_FULL;
+    __asm__( "movw %%cs,%0" : "=m" (context.SegCs) );
+    __asm__( "movw %%ss,%0" : "=m" (context.SegSs) );
+    __asm__( "fxsave %0" : "=m" (context.u.FltSave) );
+    context.Rcx   = (ULONG_PTR)entry;
+    context.Rdx   = (ULONG_PTR)arg;
+    context.Rsp   = (ULONG_PTR)NtCurrentTeb()->Tib.StackBase - 0x28;
+    context.Rip   = (ULONG_PTR)call_thread_entry_point;
+
+    if (suspend) wait_suspend( &context );
 
     if (!(status = wine_call_on_stack( attach_dlls, (void *)1, NtCurrentTeb()->Tib.StackBase )))
     {

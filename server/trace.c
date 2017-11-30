@@ -1306,6 +1306,7 @@ static void dump_init_thread_reply( const struct init_thread_reply *req )
     fprintf( stderr, ", info_size=%u", req->info_size );
     fprintf( stderr, ", version=%d", req->version );
     fprintf( stderr, ", all_cpus=%08x", req->all_cpus );
+    fprintf( stderr, ", suspend=%d", req->suspend );
 }
 
 static void dump_terminate_process_request( const struct terminate_process_request *req )

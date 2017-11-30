@@ -807,6 +807,7 @@ struct rawinput_device
     data_size_t  info_size;    /* total size of startup info */
     int          version;      /* protocol version */
     unsigned int all_cpus;     /* bitset of supported CPUs */
+    int          suspend;      /* is thread suspended? */
 @END
 
 

@@ -827,7 +827,7 @@ struct init_thread_reply
     data_size_t  info_size;
     int          version;
     unsigned int all_cpus;
-    char __pad_36[4];
+    int          suspend;
 };
 
 
@@ -6475,6 +6475,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 543
+#define SERVER_PROTOCOL_VERSION 544
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

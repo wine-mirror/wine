@@ -1470,7 +1470,7 @@ NTSTATUS server_init_process_done(void)
  *
  * Send an init thread request. Return 0 if OK.
  */
-size_t server_init_thread( void *entry_point )
+size_t server_init_thread( void *entry_point, BOOL *suspend )
 {
     static const char *cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
     static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
@@ -1511,6 +1511,7 @@ size_t server_init_thread( void *entry_point )
         info_size         = reply->info_size;
         server_start_time = reply->server_start;
         server_cpus       = reply->all_cpus;
+        *suspend          = reply->suspend;
     }
     SERVER_END_REQ;
 

@@ -2618,10 +2618,28 @@ static void thread_startup( void *param )
 /***********************************************************************
  *           signal_start_thread
  */
-NTSTATUS signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg )
+NTSTATUS signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
     NTSTATUS status;
+    CONTEXT context = { 0 };
     struct startup_info info = { entry, arg };
+
+    /* build the initial context */
+    context.ContextFlags = CONTEXT_FULL;
+    context.SegCs = wine_get_cs();
+    context.SegDs = wine_get_ds();
+    context.SegEs = wine_get_es();
+    context.SegFs = wine_get_fs();
+    context.SegGs = wine_get_gs();
+    context.SegSs = wine_get_ss();
+    context.Eax   = (DWORD)entry;
+    context.Ebx   = (DWORD)arg;
+    context.Esp   = (DWORD)NtCurrentTeb()->Tib.StackBase - 16;
+    context.Eip   = (DWORD)call_thread_entry_point;
+    ((void **)context.Esp)[1] = entry;
+    ((void **)context.Esp)[2] = arg;
+
+    if (suspend) wait_suspend( &context );
 
     if (!(status = wine_call_on_stack( attach_dlls, (void *)1, NtCurrentTeb()->Tib.StackBase )))
     {

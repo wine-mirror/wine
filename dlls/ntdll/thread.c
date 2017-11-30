@@ -272,6 +272,7 @@ HANDLE thread_init(void)
 {
     TEB *teb;
     void *addr;
+    BOOL suspend;
     SIZE_T size, info_size;
     HANDLE exe_file = 0;
     LARGE_INTEGER now;
@@ -359,7 +360,7 @@ HANDLE thread_init(void)
 
     /* setup the server connection */
     server_init_process();
-    info_size = server_init_thread( peb );
+    info_size = server_init_thread( peb, &suspend );
 
     /* create the process heap */
     if (!(peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
@@ -496,6 +497,7 @@ void exit_thread( int status )
  */
 static void start_thread( struct startup_info *info )
 {
+    BOOL suspend;
     NTSTATUS status;
     TEB *teb = info->teb;
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
@@ -507,8 +509,8 @@ static void start_thread( struct startup_info *info )
     thread_data->pthread_id = pthread_self();
 
     signal_init_thread( teb );
-    server_init_thread( info->entry_point );
-    status = signal_start_thread( (LPTHREAD_START_ROUTINE)info->entry_point, info->entry_arg );
+    server_init_thread( info->entry_point, &suspend );
+    status = signal_start_thread( (LPTHREAD_START_ROUTINE)info->entry_point, info->entry_arg, suspend );
     NtTerminateThread( GetCurrentThread(), status );
 }
 

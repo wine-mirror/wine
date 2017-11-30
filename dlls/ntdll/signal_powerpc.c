@@ -1102,10 +1102,20 @@ static void thread_startup( void *param )
 /***********************************************************************
  *           signal_start_thread
  */
-NTSTATUS signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg )
+NTSTATUS signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
     NTSTATUS status;
+    CONTEXT context = { 0 };
     struct startup_info info = { entry, arg };
+
+    /* build the initial context */
+    context.ContextFlags = CONTEXT_FULL;
+    context.Gpr1 = (DWORD)NtCurrentTeb()->Tib.StackBase;
+    context.Gpr3 = (DWORD)entry;
+    context.Gpr4 = (DWORD)arg;
+    context.Iar  = (DWORD)call_thread_entry_point;
+
+    if (suspend) wait_suspend( &context );
 
     if (!(status = wine_call_on_stack( attach_dlls, (void *)1, NtCurrentTeb()->Tib.StackBase )))
     {
