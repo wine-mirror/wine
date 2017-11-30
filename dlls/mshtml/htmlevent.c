@@ -2051,11 +2051,6 @@ static inline EventTarget *impl_from_IEventTarget(IEventTarget *iface)
     return CONTAINING_RECORD(iface, EventTarget, IEventTarget_iface);
 }
 
-static inline EventTarget *impl_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, EventTarget, dispex);
-}
-
 static HRESULT WINAPI EventTarget_QueryInterface(IEventTarget *iface, REFIID riid, void **ppv)
 {
     EventTarget *This = impl_from_IEventTarget(iface);
