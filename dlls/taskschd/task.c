@@ -1636,6 +1636,181 @@ static HRESULT Principal_create(IPrincipal **obj)
 
 typedef struct
 {
+    IExecAction IExecAction_iface;
+    LONG ref;
+} ExecAction;
+
+static inline ExecAction *impl_from_IExecAction(IExecAction *iface)
+{
+    return CONTAINING_RECORD(iface, ExecAction, IExecAction_iface);
+}
+
+static ULONG WINAPI ExecAction_AddRef(IExecAction *iface)
+{
+    ExecAction *action = impl_from_IExecAction(iface);
+    return InterlockedIncrement(&action->ref);
+}
+
+static ULONG WINAPI ExecAction_Release(IExecAction *iface)
+{
+    ExecAction *action = impl_from_IExecAction(iface);
+    LONG ref = InterlockedDecrement(&action->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        heap_free(action);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI ExecAction_QueryInterface(IExecAction *iface, REFIID riid, void **obj)
+{
+    if (!riid || !obj) return E_INVALIDARG;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IExecAction) ||
+        IsEqualGUID(riid, &IID_IAction) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IExecAction_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI ExecAction_GetTypeInfoCount(IExecAction *iface, UINT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ExecAction_GetTypeInfo(IExecAction *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ExecAction_GetIDsOfNames(IExecAction *iface, REFIID riid, LPOLESTR *names,
+                                               UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ExecAction_Invoke(IExecAction *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                        DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ExecAction_get_Id(IExecAction *iface, BSTR *id)
+{
+    FIXME("%p,%p: stub\n", iface, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ExecAction_put_Id(IExecAction *iface, BSTR id)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(id));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ExecAction_get_Type(IExecAction *iface, TASK_ACTION_TYPE *type)
+{
+    TRACE("%p,%p\n", iface, type);
+
+    if (!type) return E_POINTER;
+
+    *type = TASK_ACTION_EXEC;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ExecAction_get_Path(IExecAction *iface, BSTR *path)
+{
+    FIXME("%p,%p: stub\n", iface, path);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ExecAction_put_Path(IExecAction *iface, BSTR path)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(path));
+    return S_OK;
+}
+
+static HRESULT WINAPI ExecAction_get_Arguments(IExecAction *iface, BSTR *arguments)
+{
+    FIXME("%p,%p: stub\n", iface, arguments);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ExecAction_put_Arguments(IExecAction *iface, BSTR arguments)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(arguments));
+    return S_OK;
+}
+
+static HRESULT WINAPI ExecAction_get_WorkingDirectory(IExecAction *iface, BSTR *directory)
+{
+    FIXME("%p,%p: stub\n", iface, directory);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ExecAction_put_WorkingDirectory(IExecAction *iface, BSTR directory)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(directory));
+    return E_NOTIMPL;
+}
+
+static const IExecActionVtbl Action_vtbl =
+{
+    ExecAction_QueryInterface,
+    ExecAction_AddRef,
+    ExecAction_Release,
+    ExecAction_GetTypeInfoCount,
+    ExecAction_GetTypeInfo,
+    ExecAction_GetIDsOfNames,
+    ExecAction_Invoke,
+    ExecAction_get_Id,
+    ExecAction_put_Id,
+    ExecAction_get_Type,
+    ExecAction_get_Path,
+    ExecAction_put_Path,
+    ExecAction_get_Arguments,
+    ExecAction_put_Arguments,
+    ExecAction_get_WorkingDirectory,
+    ExecAction_put_WorkingDirectory
+};
+
+static HRESULT ExecAction_create(IExecAction **obj)
+{
+    ExecAction *action;
+
+    action = heap_alloc(sizeof(*action));
+    if (!action) return E_OUTOFMEMORY;
+
+    action->IExecAction_iface.lpVtbl = &Action_vtbl;
+    action->ref = 1;
+
+    *obj = &action->IExecAction_iface;
+
+    TRACE("created %p\n", *obj);
+
+    return S_OK;
+}
+
+typedef struct
+{
     IActionCollection IActionCollection_iface;
     LONG ref;
 } Actions;
@@ -1744,8 +1919,17 @@ static HRESULT WINAPI Actions_put_XmlText(IActionCollection *iface, BSTR xml)
 
 static HRESULT WINAPI Actions_Create(IActionCollection *iface, TASK_ACTION_TYPE type, IAction **action)
 {
-    FIXME("%p,%u,%p: stub\n", iface, type, action);
-    return E_NOTIMPL;
+    TRACE("%p,%u,%p\n", iface, type, action);
+
+    switch (type)
+    {
+    case TASK_ACTION_EXEC:
+        return ExecAction_create((IExecAction **)action);
+
+    default:
+        FIXME("unimplemented type %u\n", type);
+        return E_NOTIMPL;
+    }
 }
 
 static HRESULT WINAPI Actions_Remove(IActionCollection *iface, VARIANT index)

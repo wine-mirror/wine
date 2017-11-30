@@ -1235,22 +1235,21 @@ static void create_action(ITaskDefinition *taskdef)
     IActionCollection *actions;
     IAction *action;
     IExecAction *exec_action;
+    TASK_ACTION_TYPE type;
 
     hr = ITaskDefinition_get_Actions(taskdef, &actions);
     ok(hr == S_OK, "get_Actions error %#x\n", hr);
 
     hr = IActionCollection_Create(actions, TASK_ACTION_EXEC, &action);
-todo_wine
     ok(hr == S_OK, "Create action error %#x\n", hr);
-    /* FIXME: Remove once implemented */
-    if (hr != S_OK)
-    {
-        IActionCollection_Release(actions);
-        return;
-    }
 
     hr = IAction_QueryInterface(action, &IID_IExecAction, (void **)&exec_action);
     ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+    type = 0xdeadbeef;
+    hr = IExecAction_get_Type(exec_action, &type);
+    ok(hr == S_OK, "get_Type error %#x\n", hr);
+    ok(type == TASK_ACTION_EXEC, "got %u\n", type );
 
     hr = IExecAction_put_Path(exec_action, task1_exe);
     ok(hr == S_OK, "put_Path error %#x\n", hr);
