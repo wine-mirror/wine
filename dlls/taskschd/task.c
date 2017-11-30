@@ -1636,6 +1636,182 @@ static HRESULT Principal_create(IPrincipal **obj)
 
 typedef struct
 {
+    IActionCollection IActionCollection_iface;
+    LONG ref;
+} Actions;
+
+static inline Actions *impl_from_IActionCollection(IActionCollection *iface)
+{
+    return CONTAINING_RECORD(iface, Actions, IActionCollection_iface);
+}
+
+static ULONG WINAPI Actions_AddRef(IActionCollection *iface)
+{
+    Actions *actions = impl_from_IActionCollection(iface);
+    return InterlockedIncrement(&actions->ref);
+}
+
+static ULONG WINAPI Actions_Release(IActionCollection *iface)
+{
+    Actions *actions = impl_from_IActionCollection(iface);
+    LONG ref = InterlockedDecrement(&actions->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        heap_free(actions);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI Actions_QueryInterface(IActionCollection *iface, REFIID riid, void **obj)
+{
+    if (!riid || !obj) return E_INVALIDARG;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IActionCollection) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IActionCollection_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI Actions_GetTypeInfoCount(IActionCollection *iface, UINT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_GetTypeInfo(IActionCollection *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_GetIDsOfNames(IActionCollection *iface, REFIID riid, LPOLESTR *names,
+                                            UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_Invoke(IActionCollection *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                     DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_get_Count(IActionCollection *iface, LONG *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_get_Item(IActionCollection *iface, LONG index, IAction **action)
+{
+    FIXME("%p,%d,%p: stub\n", iface, index, action);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_get__NewEnum(IActionCollection *iface, IUnknown **penum)
+{
+    FIXME("%p,%p: stub\n", iface, penum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_get_XmlText(IActionCollection *iface, BSTR *xml)
+{
+    FIXME("%p,%p: stub\n", iface, xml);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_put_XmlText(IActionCollection *iface, BSTR xml)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(xml));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_Create(IActionCollection *iface, TASK_ACTION_TYPE type, IAction **action)
+{
+    FIXME("%p,%u,%p: stub\n", iface, type, action);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_Remove(IActionCollection *iface, VARIANT index)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_variant(&index));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_Clear(IActionCollection *iface)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_get_Context(IActionCollection *iface, BSTR *ctx)
+{
+    FIXME("%p,%p: stub\n", iface, ctx);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Actions_put_Context(IActionCollection *iface, BSTR ctx)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(ctx));
+    return S_OK;
+}
+
+static const IActionCollectionVtbl Actions_vtbl =
+{
+    Actions_QueryInterface,
+    Actions_AddRef,
+    Actions_Release,
+    Actions_GetTypeInfoCount,
+    Actions_GetTypeInfo,
+    Actions_GetIDsOfNames,
+    Actions_Invoke,
+    Actions_get_Count,
+    Actions_get_Item,
+    Actions_get__NewEnum,
+    Actions_get_XmlText,
+    Actions_put_XmlText,
+    Actions_Create,
+    Actions_Remove,
+    Actions_Clear,
+    Actions_get_Context,
+    Actions_put_Context
+};
+
+static HRESULT Actions_create(IActionCollection **obj)
+{
+    Actions *actions;
+
+    actions = heap_alloc(sizeof(*actions));
+    if (!actions) return E_OUTOFMEMORY;
+
+    actions->IActionCollection_iface.lpVtbl = &Actions_vtbl;
+    actions->ref = 1;
+
+    *obj = &actions->IActionCollection_iface;
+
+    TRACE("created %p\n", *obj);
+
+    return S_OK;
+}
+
+typedef struct
+{
     ITaskDefinition ITaskDefinition_iface;
     LONG ref;
     IRegistrationInfo *reginfo;
@@ -1896,8 +2072,23 @@ static HRESULT WINAPI TaskDefinition_put_Principal(ITaskDefinition *iface, IPrin
 
 static HRESULT WINAPI TaskDefinition_get_Actions(ITaskDefinition *iface, IActionCollection **actions)
 {
-    FIXME("%p,%p: stub\n", iface, actions);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+    HRESULT hr;
+
+    TRACE("%p,%p\n", iface, actions);
+
+    if (!actions) return E_POINTER;
+
+    if (!taskdef->actions)
+    {
+        hr = Actions_create(&taskdef->actions);
+        if (hr != S_OK) return hr;
+    }
+
+    IActionCollection_AddRef(taskdef->actions);
+    *actions = taskdef->actions;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_put_Actions(ITaskDefinition *iface, IActionCollection *actions)
@@ -1938,7 +2129,7 @@ static const WCHAR S4U[] = {'S','4','U',0};
 static const WCHAR InteractiveToken[] = {'I','n','t','e','r','a','c','t','i','v','e','T','o','k','e','n',0};
 static const WCHAR RunLevel[] = {'R','u','n','L','e','v','e','l',0};
 static const WCHAR LeastPrivilege[] = {'L','e','a','s','t','P','r','i','v','i','l','e','g','e',0};
-static const WCHAR Actions[] = {'A','c','t','i','o','n','s',0};
+static const WCHAR actionsW[] = {'A','c','t','i','o','n','s',0};
 static const WCHAR Exec[] = {'E','x','e','c',0};
 static const WCHAR MultipleInstancesPolicy[] = {'M','u','l','t','i','p','l','e','I','n','s','t','a','n','c','e','s','P','o','l','i','c','y',0};
 static const WCHAR IgnoreNew[] = {'I','g','n','o','r','e','N','e','w',0};
@@ -2298,11 +2489,11 @@ static HRESULT write_actions(IStream *stream, IActionCollection *actions)
 {
     if (!actions)
     {
-        write_element(stream, Actions);
+        write_element(stream, actionsW);
         push_indent();
         write_empty_element(stream, Exec);
         pop_indent();
-        return write_element_end(stream, Actions);
+        return write_element_end(stream, actionsW);
     }
 
     FIXME("stub\n");
@@ -2958,7 +3149,7 @@ static HRESULT read_task(IXmlReader *reader, ITaskDefinition *taskdef)
                 hr = read_triggers(reader, taskdef);
             else if (!lstrcmpW(name, Principals))
                 hr = read_principals(reader, taskdef);
-            else if (!lstrcmpW(name, Actions))
+            else if (!lstrcmpW(name, actionsW))
                 hr = read_actions(reader, taskdef);
             else
                 FIXME("unhandled Task element %s\n", debugstr_w(name));

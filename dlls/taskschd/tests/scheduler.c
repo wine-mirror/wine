@@ -1227,13 +1227,17 @@ static void create_action(ITaskDefinition *taskdef)
     IExecAction *exec_action;
 
     hr = ITaskDefinition_get_Actions(taskdef, &actions);
-todo_wine
     ok(hr == S_OK, "get_Actions error %#x\n", hr);
-    /* FIXME: Remove once implemented */
-    if (hr != S_OK) return;
 
     hr = IActionCollection_Create(actions, TASK_ACTION_EXEC, &action);
+todo_wine
     ok(hr == S_OK, "Create action error %#x\n", hr);
+    /* FIXME: Remove once implemented */
+    if (hr != S_OK)
+    {
+        IActionCollection_Release(actions);
+        return;
+    }
 
     hr = IAction_QueryInterface(action, &IID_IExecAction, (void **)&exec_action);
     ok(hr == S_OK, "QueryInterface error %#x\n", hr);
