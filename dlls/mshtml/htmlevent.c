@@ -996,8 +996,14 @@ static HRESULT WINAPI DOMEvent_get_cancelable(IDOMEvent *iface, VARIANT_BOOL *p)
 static HRESULT WINAPI DOMEvent_get_currentTarget(IDOMEvent *iface, IEventTarget **p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->current_target)
+        IEventTarget_AddRef(*p = &This->current_target->IEventTarget_iface);
+    else
+        *p = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_get_defaultPrevented(IDOMEvent *iface, VARIANT_BOOL *p)
@@ -1326,7 +1332,6 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
 
 static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
 {
-    const eventid_t eid = event->event_id;
     const listener_container_t *container = get_listener_container(event_target, event->type, FALSE);
     const BOOL use_quirks = use_event_quirks(event_target);
     event_listener_t *listener, listeners_buf[8], *listeners = listeners_buf;
@@ -1335,6 +1340,9 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
     const event_target_vtbl_t *vtbl = NULL;
     VARIANT v;
     HRESULT hres;
+
+    assert(!event->current_target);
+    event->current_target = event_target;
 
     if(use_quirks && container && !list_empty(&container->listeners)
        && event->phase != DEP_CAPTURING_PHASE) {
@@ -1477,10 +1485,9 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
         IDispatch_Release(listener->function);
     if(listeners != listeners_buf)
         heap_free(listeners);
-    if(event->phase == DEP_CAPTURING_PHASE)
-        return;
 
-    if(event_info[eid].dispid && (vtbl = dispex_get_vtbl(&event_target->dispex))
+    if(event->phase != DEP_CAPTURING_PHASE && event->event_id != EVENTID_LAST
+       && event_info[event->event_id].dispid && (vtbl = dispex_get_vtbl(&event_target->dispex))
        && vtbl->get_cp_container)
         cp_container = vtbl->get_cp_container(&event_target->dispex);
     if(cp_container) {
@@ -1490,7 +1497,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
 
             for(j=0; cp_container->cp_entries[j].riid; j++) {
                 cp = cp_container->cps + j;
-                if(!cp->sinks_size || !is_cp_event(cp->data, event_info[eid].dispid))
+                if(!cp->sinks_size || !is_cp_event(cp->data, event_info[event->event_id].dispid))
                     continue;
 
                 for(i=0; i < cp->sinks_size; i++) {
@@ -1500,7 +1507,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
                     V_VT(&v) = VT_EMPTY;
 
                     TRACE("cp %s [%u] >>>\n", debugstr_w(event->type), i);
-                    hres = call_cp_func(cp->sinks[i].disp, event_info[eid].dispid,
+                    hres = call_cp_func(cp->sinks[i].disp, event_info[event->event_id].dispid,
                             cp->data->pass_event_arg ? event->event_obj : NULL, &v);
                     if(hres == S_OK) {
                         TRACE("cp %s [%u] <<<\n", debugstr_w(event->type), i);
@@ -1522,6 +1529,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
         }
         IConnectionPointContainer_Release(&cp_container->IConnectionPointContainer_iface);
     }
+
+    event->current_target = NULL;
 }
 
 void dispatch_event(EventTarget *event_target, DOMEvent *event)
@@ -1534,12 +1543,17 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
     EventTarget *iter;
     HRESULT hres;
 
+    TRACE("(%p) %s\n", event_target, debugstr_w(event->type));
+
     if(event->event_id == EVENTID_LAST) {
         FIXME("Unsupported on unknown events\n");
         return;
     }
 
-    TRACE("(%p) %s\n", event_target, debugstr_w(event->type));
+    if(event->current_target) {
+        FIXME("event is being dispatched.\n");
+        return;
+    }
 
     iter = event_target;
     IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);

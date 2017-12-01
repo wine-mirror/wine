@@ -66,6 +66,7 @@ typedef struct {
     eventid_t event_id;
     WCHAR *type;
     EventTarget *target;
+    EventTarget *current_target;
     BOOL bubbles;
     BOOL cancelable;
     BOOL prevent_default;
