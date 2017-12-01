@@ -296,7 +296,6 @@ typedef struct {
 
     LONG ref;
 
-    const event_info_t *type;
     DOMEvent *event;
     VARIANT return_value;
 } HTMLEventObj;
@@ -613,13 +612,12 @@ static HRESULT WINAPI HTMLEventObj_get_type(IHTMLEventObj *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->type) {
+    if(!This->event) {
         *p = NULL;
         return S_OK;
     }
 
-    *p = SysAllocString(This->type->name);
-    return *p ? S_OK : E_OUTOFMEMORY;
+    return IDOMEvent_get_type(&This->event->IDOMEvent_iface, p);
 }
 
 static HRESULT WINAPI HTMLEventObj_get_qualifier(IHTMLEventObj *iface, BSTR *p)
@@ -1568,10 +1566,8 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
 
     if(!event->event_obj && !event->no_event_obj) {
         event_obj_ref = alloc_event_obj(event);
-        if(event_obj_ref) {
-            event_obj_ref->type = event_info + event->event_id;
+        if(event_obj_ref)
             event->event_obj = &event_obj_ref->IHTMLEventObj_iface;
-        }
     }
 
     target_vtbl = dispex_get_vtbl(&event_target->dispex);
@@ -1671,7 +1667,6 @@ HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_va
             return E_OUTOFMEMORY;
     }
 
-    event_obj->type = event_info + eid;
     if(!event_obj->event)
         hres = create_document_event(node->doc, eid, &event_obj->event);
 
