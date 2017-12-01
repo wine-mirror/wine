@@ -205,6 +205,43 @@ static void test_create_syslink(void)
     DestroyWindow(hWndSysLink);
 }
 
+static void test_LM_GETIDEALHEIGHT(void)
+{
+    HWND hwnd;
+    LONG ret;
+
+    hwnd = create_syslink(WS_CHILD | WS_TABSTOP | WS_VISIBLE, hWndParent);
+    ok(hwnd != NULL, "Failed to create SysLink window.\n");
+
+    ret = SendMessageA(hwnd, LM_GETIDEALHEIGHT, 0, 0);
+    ok(ret > 0, "Unexpected ideal height, %d.\n", ret);
+
+    DestroyWindow(hwnd);
+}
+
+static void test_LM_GETIDEALSIZE(void)
+{
+    HWND hwnd;
+    LONG ret;
+    SIZE sz;
+
+    hwnd = create_syslink(WS_CHILD | WS_TABSTOP | WS_VISIBLE, hWndParent);
+    ok(hwnd != NULL, "Failed to create SysLink window.\n");
+
+    memset(&sz, 0, sizeof(sz));
+    ret = SendMessageA(hwnd, LM_GETIDEALSIZE, 0, (LPARAM)&sz);
+    ok(ret > 0, "Unexpected return value, %d.\n", ret);
+    if (sz.cy == 0)
+        win_skip("LM_GETIDEALSIZE is not supported.\n");
+    else
+    {
+        ok(sz.cx > 5, "Unexpected ideal width, %d.\n", sz.cx);
+        ok(sz.cy == ret, "Unexpected ideal height, %d.\n", sz.cy);
+    }
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(syslink)
 {
     ULONG_PTR ctx_cookie;
@@ -231,6 +268,8 @@ START_TEST(syslink)
     flush_events();
 
     test_create_syslink();
+    test_LM_GETIDEALHEIGHT();
+    test_LM_GETIDEALSIZE();
 
     DestroyWindow(hWndParent);
     unload_v6_module(ctx_cookie, hCtx);
