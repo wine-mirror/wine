@@ -1063,8 +1063,10 @@ static HRESULT WINAPI DOMEvent_preventDefault(IDOMEvent *iface)
 
     TRACE("(%p)\n", This);
 
-    This->prevent_default = TRUE;
-    nsIDOMEvent_PreventDefault(This->nsevent);
+    if(This->current_target && This->cancelable) {
+        This->prevent_default = TRUE;
+        nsIDOMEvent_PreventDefault(This->nsevent);
+    }
     return S_OK;
 }
 
