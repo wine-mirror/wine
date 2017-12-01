@@ -2984,8 +2984,7 @@ void DECLSPEC_HIDDEN call_process_func( LPTHREAD_START_ROUTINE entry, void *arg 
  */
 void DECLSPEC_HIDDEN thread_startup( CONTEXT *context, BOOL suspend )
 {
-    if (suspend) wait_suspend( context );
-    attach_dlls( context );
+    attach_dlls( context, suspend );
     virtual_clear_thread_stack();
     set_cpu_context( context );
 }

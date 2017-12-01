@@ -4145,8 +4145,7 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
  */
 void DECLSPEC_HIDDEN thread_startup( CONTEXT *context, BOOL suspend )
 {
-    if (suspend) wait_suspend( context );
-    attach_dlls( context );
+    attach_dlls( context, suspend );
     virtual_clear_thread_stack();
     set_cpu_context( context );
 }

@@ -973,8 +973,7 @@ static void thread_startup( void *param )
     context.Sp = (DWORD_PTR)NtCurrentTeb()->Tib.StackBase;
     context.Pc = (DWORD_PTR)call_thread_entry_point;
 
-    if (info->suspend) wait_suspend( &context );
-    attach_dlls( &context );
+    attach_dlls( &context, info->suspend );
 
     call_thread_entry_point( (LPTHREAD_START_ROUTINE)context.X0, (void *)context.X1 );
 }

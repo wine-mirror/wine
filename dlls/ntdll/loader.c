@@ -2990,11 +2990,13 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
  * Attach to all the loaded dlls.
  * If this is the first time, perform the full process initialization.
  */
-NTSTATUS attach_dlls( void *reserved )
+NTSTATUS attach_dlls( CONTEXT *context, BOOL suspend )
 {
     NTSTATUS status;
     WINE_MODREF *wm;
     LPCWSTR load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
+
+    if (suspend) wait_suspend( context );
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
 
@@ -3029,7 +3031,7 @@ NTSTATUS attach_dlls( void *reserved )
                  debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
-        if ((status = process_attach( wm, reserved )) != STATUS_SUCCESS)
+        if ((status = process_attach( wm, context )) != STATUS_SUCCESS)
         {
             if (last_failed_modref)
                 ERR( "%s failed to initialize, aborting\n",
@@ -3038,7 +3040,7 @@ NTSTATUS attach_dlls( void *reserved )
                  debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
-        attach_implicitly_loaded_dlls( reserved );
+        attach_implicitly_loaded_dlls( context );
         virtual_release_address_space();
     }
     else
