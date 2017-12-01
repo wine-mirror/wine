@@ -57,7 +57,6 @@ extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC
 extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_thread_context( HANDLE handle, const CONTEXT *context, BOOL *self ) DECLSPEC_HIDDEN;
 extern NTSTATUS get_thread_context( HANDLE handle, CONTEXT *context, BOOL *self ) DECLSPEC_HIDDEN;
-extern void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg ) DECLSPEC_NORETURN DECLSPEC_HIDDEN;
 
 /* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str ) DECLSPEC_HIDDEN;
