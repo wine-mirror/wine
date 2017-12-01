@@ -976,8 +976,11 @@ static HRESULT WINAPI DOMEvent_Invoke(IDOMEvent *iface, DISPID dispIdMember,
 static HRESULT WINAPI DOMEvent_get_bubbles(IDOMEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = variant_bool(This->bubbles);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_get_cancelable(IDOMEvent *iface, VARIANT_BOOL *p)
@@ -1164,6 +1167,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
             IDOMEvent_Release(&event->IDOMEvent_iface);
             return NULL;
         }
+        event->bubbles = (event_info[event_id].flags & EVENT_BUBBLES) != 0;
     }
     nsIDOMEvent_AddRef(event->nsevent = nsevent);
     return event;
@@ -1523,7 +1527,6 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
     HTMLEventObj *event_obj_ref = NULL;
     IHTMLEventObj *prev_event = NULL;
     EventTarget *iter;
-    DWORD event_flags;
     HRESULT hres;
 
     if(event->event_id == EVENTID_LAST) {
@@ -1533,7 +1536,6 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
 
     TRACE("(%p) %s\n", event_target, debugstr_w(event->type));
 
-    event_flags = event_info[event->event_id].flags;
     iter = event_target;
     IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
 
@@ -1587,7 +1589,7 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
         call_event_handlers(target_chain[0], event);
     }
 
-    if(event_flags & EVENT_BUBBLES) {
+    if(event->bubbles) {
         event->phase = DEP_BUBBLING_PHASE;
         for(i = 1; !event->stop_propagation && i < chain_cnt; i++)
             call_event_handlers(target_chain[i], event);
@@ -1599,7 +1601,7 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
             IHTMLEventObj_Release(prev_event);
     }
 
-    if(event_flags & EVENT_HASDEFAULTHANDLERS) {
+    if(event->event_id != EVENTID_LAST && (event_info[event->event_id].flags & EVENT_HASDEFAULTHANDLERS)) {
         for(i = 0; !event->prevent_default && i < chain_cnt; i++) {
             BOOL prevent_default = FALSE;
             vtbl = dispex_get_vtbl(&target_chain[i]->dispex);

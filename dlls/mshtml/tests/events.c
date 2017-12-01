@@ -2668,6 +2668,7 @@ static void test_create_event(IHTMLDocument2 *doc)
 {
     IDocumentEvent *doc_event;
     IDOMEvent *event;
+    VARIANT_BOOL b;
     USHORT phase;
     BSTR str;
     HRESULT hres;
@@ -2697,6 +2698,11 @@ static void test_create_event(IHTMLDocument2 *doc)
     hres = IDOMEvent_get_type(event, &str);
     ok(hres == S_OK, "get_type failed: %08x\n", hres);
     ok(!str, "type = %s\n", wine_dbgstr_w(str));
+
+    b = 0xdead;
+    hres = IDOMEvent_get_bubbles(event, &b);
+    ok(hres == S_OK, "get_bubbles failed: %08x\n", hres);
+    ok(!b, "bubbles = %x\n", b);
 
     IDOMEvent_Release(event);
 

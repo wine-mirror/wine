@@ -66,6 +66,7 @@ typedef struct {
     eventid_t event_id;
     WCHAR *type;
     EventTarget *target;
+    BOOL bubbles;
     BOOL prevent_default;
     BOOL stop_propagation;
     DOM_EVENT_PHASE phase;
