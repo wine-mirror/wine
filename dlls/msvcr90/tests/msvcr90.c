@@ -133,6 +133,7 @@ static char* (__cdecl *p_setlocale)(int, const char*);
 static int (__cdecl *p__fpieee_flt)(ULONG, EXCEPTION_POINTERS*, int (__cdecl *handler)(_FPIEEE_RECORD*));
 static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
+static int (__cdecl *p__vsnwprintf)(wchar_t *buffer,size_t count, const wchar_t *format, __ms_va_list valist);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -401,6 +402,7 @@ static BOOL init(void)
     SET(p__fpieee_flt, "_fpieee_flt");
     SET(p__memicmp, "_memicmp");
     SET(p__memicmp_l, "_memicmp_l");
+    SET(p__vsnwprintf, "_vsnwprintf");
 
     if (sizeof(void *) == 8)
     {
@@ -1864,6 +1866,34 @@ static void test__memicmp_l(void)
     ok(ret == -1, "got %d\n", ret);
 }
 
+static int WINAPIV _vsnwprintf_wrapper(wchar_t *str, size_t len, const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p__vsnwprintf(str, len, format, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+void test__vsnwprintf(void)
+{
+    int ret;
+    WCHAR str[2] = {0};
+
+    _invalid_parameter_handler old_handler = p_set_invalid_parameter_handler(test_invalid_parameter_handler);
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    str[0] = 'x';
+    ret = _vsnwprintf_wrapper(str, 0, NULL);
+    ok(ret == -1, "got %d, expected -1\n", ret);
+    ok(str[0] == 'x', "Expected string to be unchanged.\n");
+    CHECK_CALLED(invalid_parameter_handler, EINVAL);
+
+    ok(p_set_invalid_parameter_handler(old_handler) == test_invalid_parameter_handler, "Cannot reset invalid parameter handler\n");
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1897,6 +1927,7 @@ START_TEST(msvcr90)
     test__mbstok_s();
     test__memicmp();
     test__memicmp_l();
+    test__vsnwprintf();
 #ifdef __i386__
     test__fpieee_flt();
 #endif
