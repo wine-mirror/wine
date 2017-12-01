@@ -1581,6 +1581,8 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
     if(target_vtbl && target_vtbl->set_current_event)
         prev_event = target_vtbl->set_current_event(&event_target->dispex, event->event_obj);
 
+    if(event->target)
+        IDispatchEx_Release(&event->target->dispex.IDispatchEx_iface);
     event->target = event_target;
     IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
 
