@@ -367,6 +367,9 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
     TRACE("Format is: %s\n", FUNC_NAME(debugstr)(fmt));
 
+    if (!MSVCRT_CHECK_PMT(fmt != NULL))
+        return -1;
+
     if(!locale)
         locinfo = get_locinfo();
     else
