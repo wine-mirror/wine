@@ -2602,79 +2602,6 @@ void signal_init_process(void)
 }
 
 
-struct startup_info
-{
-    LPTHREAD_START_ROUTINE entry;
-    void                  *arg;
-};
-
-static void thread_startup( void *param )
-{
-    struct startup_info *info = param;
-    call_thread_entry_point( info->entry, info->arg );
-}
-
-
-/***********************************************************************
- *           signal_start_thread
- */
-void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
-{
-    CONTEXT context = { 0 };
-    struct startup_info info = { entry, arg };
-
-    /* build the initial context */
-    context.ContextFlags = CONTEXT_FULL;
-    context.SegCs = wine_get_cs();
-    context.SegDs = wine_get_ds();
-    context.SegEs = wine_get_es();
-    context.SegFs = wine_get_fs();
-    context.SegGs = wine_get_gs();
-    context.SegSs = wine_get_ss();
-    context.Eax   = (DWORD)entry;
-    context.Ebx   = (DWORD)arg;
-    context.Esp   = (DWORD)NtCurrentTeb()->Tib.StackBase - 16;
-    context.Eip   = (DWORD)call_thread_entry_point;
-    ((void **)context.Esp)[1] = entry;
-    ((void **)context.Esp)[2] = arg;
-
-    if (suspend) wait_suspend( &context );
-
-    wine_call_on_stack( attach_dlls, (void *)1, NtCurrentTeb()->Tib.StackBase );
-    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
-    wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
-}
-
-
-/**********************************************************************
- *		signal_start_process
- */
-void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
-{
-    CONTEXT context = { 0 };
-
-    /* build the initial context */
-    context.ContextFlags = CONTEXT_FULL;
-    context.SegCs = wine_get_cs();
-    context.SegDs = wine_get_ds();
-    context.SegEs = wine_get_es();
-    context.SegFs = wine_get_fs();
-    context.SegGs = wine_get_gs();
-    context.SegSs = wine_get_ss();
-    context.Eax   = (DWORD)entry;
-    context.Ebx   = (DWORD)NtCurrentTeb()->Peb;
-    context.Esp   = (DWORD)NtCurrentTeb()->Tib.StackBase - 16;
-    context.Eip   = (DWORD)call_thread_entry_point;
-    ((void **)context.Esp)[1] = kernel32_start_process;
-    ((void **)context.Esp)[2] = entry;
-
-    if (suspend) wait_suspend( &context );
-
-    wine_call_on_stack( attach_dlls, (void *)1, (char *)NtCurrentTeb()->Tib.StackBase - page_size );
-    virtual_clear_thread_stack();
-    set_cpu_context( &context );
-}
-
 
 #ifdef __HAVE_VM86
 /**********************************************************************
@@ -2921,8 +2848,9 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 }
 
 
-extern void DECLSPEC_NORETURN call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg );
-__ASM_GLOBAL_FUNC( call_thread_entry_point,
+extern void DECLSPEC_NORETURN start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend,
+                                            void *relay, void **exit_frame );
+__ASM_GLOBAL_FUNC( start_thread,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
@@ -2934,10 +2862,33 @@ __ASM_GLOBAL_FUNC( call_thread_entry_point,
                    __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
                    "pushl %edi\n\t"
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
-                   "pushl %ebp\n\t"
-                   "pushl 12(%ebp)\n\t"
-                   "pushl 8(%ebp)\n\t"
-                   "call " __ASM_NAME("call_thread_func") );
+                   /* store exit frame */
+                   "movl 24(%ebp),%eax\n\t"
+                   "movl %ebp,(%eax)\n\t"
+                   /* build initial context on thread stack */
+                   "movl %fs:4,%eax\n\t"        /* NtCurrentTeb()->StackBase */
+                   "leal -0x2dc(%eax),%ecx\n\t" /* sizeof(context) + 16 */
+                   "movl $0x10007,(%ecx)\n\t"   /* context->ContextFlags = CONTEXT_FULL */
+                   "movw %cs,0xbc(%ecx)\n\t"    /* context->SegCs */
+                   "movw %ds,0x98(%ecx)\n\t"    /* context->SegDs */
+                   "movw %es,0x94(%ecx)\n\t"    /* context->SegEs */
+                   "movw %fs,0x90(%ecx)\n\t"    /* context->SegFs */
+                   "movw %gs,0x8c(%ecx)\n\t"    /* context->SegGs */
+                   "movw %ss,0xc8(%ecx)\n\t"    /* context->SegSs */
+                   "movl 8(%ebp),%eax\n\t"
+                   "movl %eax,0xb0(%ecx)\n\t"   /* context->Eax = entry */
+                   "movl 12(%ebp),%eax\n\t"
+                   "movl %eax,0xa4(%ecx)\n\t"   /* context->Ebx = arg */
+                   "movl 20(%ebp),%eax\n\t"
+                   "movl %eax,0xb8(%ecx)\n\t"   /* context->Eip = relay */
+                   "leal 0x2cc(%ecx),%eax\n\t"
+                   "movl %eax,0xc4(%ecx)\n\t"   /* context->Esp */
+                   /* switch to thread stack and call thread_startup() */
+                   "leal -12(%ecx),%esp\n\t"
+                   "pushl 16(%ebp)\n\t"         /* suspend */
+                   "pushl %ecx\n\t"             /* context */
+                   "xorl %ebp,%ebp\n\t"
+                   "call " __ASM_NAME("thread_startup") )
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), void *frame );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
@@ -2953,8 +2904,30 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    "pushl %eax\n\t"
                    "call *%ecx" );
 
+extern void call_thread_entry(void) DECLSPEC_HIDDEN;
+__ASM_GLOBAL_FUNC( call_thread_entry,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %ebx\n\t"  /* arg */
+                   "pushl %eax\n\t"  /* entry */
+                   "call " __ASM_NAME("call_thread_func") )
+
+extern void call_process_entry(void) DECLSPEC_HIDDEN;
+__ASM_GLOBAL_FUNC( call_process_entry,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %ebx\n\t"  /* arg */
+                   "pushl %eax\n\t"  /* entry */
+                   "call " __ASM_NAME("call_process_func") )
+
 /* wrapper for apps that don't declare the thread function correctly */
-extern void DECLSPEC_NORETURN call_thread_func_wrapper( LPTHREAD_START_ROUTINE entry, void *arg );
+extern DWORD call_thread_func_wrapper( LPTHREAD_START_ROUTINE entry, void *arg );
 __ASM_GLOBAL_FUNC(call_thread_func_wrapper,
                   "pushl %ebp\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -2964,20 +2937,20 @@ __ASM_GLOBAL_FUNC(call_thread_func_wrapper,
                   "subl $4,%esp\n\t"
                   "pushl 12(%ebp)\n\t"
                   "call *8(%ebp)\n\t"
-                  "leal -4(%ebp),%esp\n\t"
-                  "pushl %eax\n\t"
-                  "call " __ASM_NAME("exit_thread") "\n\t"
-                  "int $3" )
+                  "leave\n\t"
+                  __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                  __ASM_CFI(".cfi_same_value %ebp\n\t")
+                  "ret" )
 
 /***********************************************************************
  *           call_thread_func
  */
-void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
+void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg )
 {
-    x86_thread_data()->exit_frame = frame;
     __TRY
     {
-        call_thread_func_wrapper( entry, arg );
+        TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
+        RtlExitUserThread( call_thread_func_wrapper( entry, arg ));
     }
     __EXCEPT(unhandled_exception_filter)
     {
@@ -2986,6 +2959,69 @@ void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, 
     __ENDTRY
     abort();  /* should not be reached */
 }
+
+
+/***********************************************************************
+ *           call_process_func
+ */
+void DECLSPEC_HIDDEN call_process_func( LPTHREAD_START_ROUTINE entry, void *arg )
+{
+    __TRY
+    {
+        RtlExitUserThread( kernel32_start_process( entry ));
+    }
+    __EXCEPT(unhandled_exception_filter)
+    {
+        NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
+    abort();  /* should not be reached */
+}
+
+
+/***********************************************************************
+ *           thread_startup
+ */
+void DECLSPEC_HIDDEN thread_startup( CONTEXT *context, BOOL suspend )
+{
+    if (suspend) wait_suspend( context );
+    attach_dlls( context );
+    virtual_clear_thread_stack();
+    set_cpu_context( context );
+}
+
+/***********************************************************************
+ *           signal_start_thread
+ *
+ * Thread startup sequence:
+ * signal_start_thread()
+ *   -> start_thread()
+ *     -> thread_startup()
+ *       -> call_thread_entry()
+ *         -> call_thread_func()
+ */
+void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
+{
+    start_thread( entry, arg, suspend, call_thread_entry, &x86_thread_data()->exit_frame );
+}
+
+/**********************************************************************
+ *		signal_start_process
+ *
+ * Process startup sequence:
+ * signal_start_process()
+ *   -> start_thread()
+ *     -> thread_startup()
+ *       -> call_process_entry()
+ *         -> call_process_func()
+ *           -> kernel32_start_process()
+ */
+void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
+{
+    start_thread( entry, NtCurrentTeb()->Peb, suspend,
+                  call_process_entry, &x86_thread_data()->exit_frame );
+}
+
 
 /***********************************************************************
  *           RtlExitUserThread  (NTDLL.@)
