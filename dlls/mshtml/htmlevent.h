@@ -64,6 +64,7 @@ typedef struct {
 
     nsIDOMEvent *nsevent;
     eventid_t event_id;
+    WCHAR *type;
     EventTarget *target;
     BOOL prevent_default;
     BOOL stop_propagation;
