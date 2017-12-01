@@ -74,6 +74,7 @@ static const UINT max_entry_size = offsetof( FILE_BOTH_DIRECTORY_INFORMATION, Fi
 static BOOL oem_file_apis;
 
 static const WCHAR wildcardsW[] = { '*','?',0 };
+static const WCHAR krnl386W[] = {'k','r','n','l','3','8','6','.','e','x','e','1','6',0};
 
 /***********************************************************************
  *              create_file_OF
@@ -1587,7 +1588,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         if (vxd_name && vxd_name[0])
         {
             static HANDLE (*vxd_open)(LPCWSTR,DWORD,SECURITY_ATTRIBUTES*);
-            if (!vxd_open) vxd_open = (void *)GetProcAddress( GetModuleHandleA("krnl386.exe16"),
+            if (!vxd_open) vxd_open = (void *)GetProcAddress( GetModuleHandleW(krnl386W),
                                                               "__wine_vxd_open" );
             if (vxd_open && (ret = vxd_open( vxd_name, access, sa ))) goto done;
         }
@@ -2613,7 +2614,7 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
         static DeviceIoProc (*vxd_get_proc)(HANDLE);
         DeviceIoProc proc = NULL;
 
-        if (!vxd_get_proc) vxd_get_proc = (void *)GetProcAddress( GetModuleHandleA("krnl386.exe16"),
+        if (!vxd_get_proc) vxd_get_proc = (void *)GetProcAddress( GetModuleHandleW(krnl386W),
                                                                   "__wine_vxd_get_proc" );
         if (vxd_get_proc) proc = vxd_get_proc( hDevice );
         if (proc) return proc( dwIoControlCode, lpvInBuffer, cbInBuffer,
