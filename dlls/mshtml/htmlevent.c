@@ -1033,8 +1033,17 @@ static HRESULT WINAPI DOMEvent_get_timeStamp(IDOMEvent *iface, ULONGLONG *p)
 static HRESULT WINAPI DOMEvent_get_type(IDOMEvent *iface, BSTR *p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->type) {
+        *p = SysAllocString(This->type);
+        if(!*p)
+            return E_OUTOFMEMORY;
+    }else {
+        *p = NULL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_initEvent(IDOMEvent *iface, BSTR type, VARIANT_BOOL can_bubble, VARIANT_BOOL cancelable)

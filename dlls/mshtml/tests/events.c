@@ -2693,6 +2693,11 @@ static void test_create_event(IHTMLDocument2 *doc)
     hres = IDOMEvent_stopPropagation(event);
     ok(hres == S_OK, "stopPropagation failed: %08x\n", hres);
 
+    str = (void*)0xdeadbeef;
+    hres = IDOMEvent_get_type(event, &str);
+    ok(hres == S_OK, "get_type failed: %08x\n", hres);
+    ok(!str, "type = %s\n", wine_dbgstr_w(str));
+
     IDOMEvent_Release(event);
 
     IDocumentEvent_Release(doc_event);
