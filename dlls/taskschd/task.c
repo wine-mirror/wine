@@ -181,8 +181,15 @@ static HRESULT WINAPI DailyTrigger_put_ExecutionTimeLimit(IDailyTrigger *iface, 
 static HRESULT WINAPI DailyTrigger_get_StartBoundary(IDailyTrigger *iface, BSTR *start)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%p)\n", This, start);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, start);
+
+    if (!start) return E_POINTER;
+
+    if (!This->start_boundary) *start = NULL;
+    else if (!(*start = SysAllocString(This->start_boundary))) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DailyTrigger_put_StartBoundary(IDailyTrigger *iface, BSTR start)

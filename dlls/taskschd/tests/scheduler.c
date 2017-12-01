@@ -1253,12 +1253,29 @@ static void test_daily_trigger(ITrigger *trigger)
     ok(hr == S_OK, "get_DaysInterval failed: %08x\n", hr);
     ok(interval == 2, "interval = %d\n", interval);
 
+    hr = IDailyTrigger_get_StartBoundary(daily_trigger, NULL);
+    ok(hr == E_POINTER, "get_StartBoundary failed: %08x\n", hr);
+
+    start_boundary = (BSTR)0xdeadbeef;
+    hr = IDailyTrigger_get_StartBoundary(daily_trigger, &start_boundary);
+    ok(hr == S_OK, "get_StartBoundary failed: %08x\n", hr);
+    ok(start_boundary == NULL, "start_boundary not set\n");
+
     for (i = 0; i < sizeof(start_test)/sizeof(start_test[0]); i++)
     {
         start_boundary = SysAllocString(start_test[i].str);
         hr = IDailyTrigger_put_StartBoundary(daily_trigger, start_boundary);
         ok(hr == start_test[i].hr, "%u: got %08x expected %08x\n", i, hr, start_test[i].hr);
         SysFreeString(start_boundary);
+        if (hr == S_OK)
+        {
+            start_boundary = NULL;
+            hr = IDailyTrigger_get_StartBoundary(daily_trigger, &start_boundary);
+            ok(hr == S_OK, "%u: got %08x\n", i, hr);
+            ok(start_boundary != NULL, "start_boundary not set\n");
+            ok(!lstrcmpW(start_boundary, start_test[i].str), "%u: got %s\n", i, wine_dbgstr_w(start_boundary));
+            SysFreeString(start_boundary);
+        }
     }
 
     hr = IDailyTrigger_put_StartBoundary(daily_trigger, NULL);
