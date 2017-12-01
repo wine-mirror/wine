@@ -40,6 +40,7 @@ typedef struct {
     LONG ref;
     short interval;
     WCHAR *start_boundary;
+    BOOL enabled;
 } DailyTrigger;
 
 static inline DailyTrigger *impl_from_IDailyTrigger(IDailyTrigger *iface)
@@ -230,7 +231,10 @@ static HRESULT WINAPI DailyTrigger_get_Enabled(IDailyTrigger *iface, VARIANT_BOO
 static HRESULT WINAPI DailyTrigger_put_Enabled(IDailyTrigger *iface, VARIANT_BOOL enabled)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%x)\n", This, enabled);
+
+    TRACE("(%p)->(%x)\n", This, enabled);
+
+    This->enabled = enabled ? TRUE : FALSE;
     return S_OK;
 }
 
@@ -310,6 +314,7 @@ static HRESULT DailyTrigger_create(ITrigger **trigger)
     daily_trigger->ref = 1;
     daily_trigger->interval = 1;
     daily_trigger->start_boundary = NULL;
+    daily_trigger->enabled = FALSE;
 
     *trigger = (ITrigger*)&daily_trigger->IDailyTrigger_iface;
     return S_OK;
