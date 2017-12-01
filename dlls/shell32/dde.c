@@ -126,6 +126,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
     static const WCHAR delete_groupW[] = {'D','e','l','e','t','e','G','r','o','u','p',0};
     static const WCHAR show_groupW[] = {'S','h','o','w','G','r','o','u','p',0};
     static const WCHAR add_itemW[] = {'A','d','d','I','t','e','m',0};
+    static const WCHAR delete_itemW[] = {'D','e','l','e','t','e','I','t','e','m',0};
 
     static const WCHAR dotexeW[] = {'.','e','x','e',0};
     static const WCHAR dotlnkW[] = {'.','l','n','k',0};
@@ -253,6 +254,25 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         IShellLinkW_Release(link);
 
         if (FAILED(hres)) return DDE_FNOTPROCESSED;
+    }
+    else if (!strcmpiW(command, delete_itemW))
+    {
+        WCHAR *name;
+        BOOL ret;
+
+        if (argc < 1) return DDE_FNOTPROCESSED;
+
+        name = HeapAlloc(GetProcessHeap(), 0, (strlenW(last_group) + 1 + strlenW(argv[0]) + 5) * sizeof(*name));
+        lstrcpyW(name, last_group);
+        lstrcatW(name, slashW);
+        lstrcatW(name, argv[0]);
+        lstrcatW(name, dotlnkW);
+
+        ret = DeleteFileW(name);
+
+        HeapFree(GetProcessHeap(), 0, name);
+
+        if (!ret) return DDE_FNOTPROCESSED;
     }
     else
     {
