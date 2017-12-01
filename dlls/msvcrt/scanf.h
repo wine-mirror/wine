@@ -540,7 +540,7 @@ _FUNCTION_ {
                     char *str = suppress ? NULL : va_arg(ap, char*);
                     char *pstr = str;
 #ifdef SECURE
-                    unsigned size = suppress ? UINT_MAX : va_arg(ap, unsigned)/sizeof(char);
+                    unsigned size = suppress ? UINT_MAX : va_arg(ap, unsigned);
 #else
                     unsigned size = UINT_MAX;
 #endif
@@ -566,7 +566,7 @@ _FUNCTION_ {
                     MSVCRT_wchar_t *str = suppress ? NULL : va_arg(ap, MSVCRT_wchar_t*);
                     MSVCRT_wchar_t *pstr = str;
 #ifdef SECURE
-                    unsigned size = suppress ? UINT_MAX : va_arg(ap, unsigned)/sizeof(MSVCRT_wchar_t);
+                    unsigned size = suppress ? UINT_MAX : va_arg(ap, unsigned);
 #else
                     unsigned size = UINT_MAX;
 #endif
@@ -615,7 +615,7 @@ _FUNCTION_ {
                     ULONG *Mask;
 		    int invert = 0; /* Set if we are NOT to find the chars */
 #ifdef SECURE
-                    unsigned size = suppress ? UINT_MAX : va_arg(ap, unsigned)/sizeof(_CHAR_);
+                    unsigned size = suppress ? UINT_MAX : va_arg(ap, unsigned);
 #else
                     unsigned size = UINT_MAX;
 #endif
