@@ -287,29 +287,24 @@ static void test_progman_dde(DWORD instance, HCONV hConv)
 
     sprintf(itemtext, "[AddItem(%s,f1g1Name)]", f1g1);
     error = dde_execute(instance, hConv, itemtext);
-    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(check_exists("Group1/f1g1Name.lnk"), "link not created\n");
-    }
 
     sprintf(itemtext, "[AddItem(%s,f2g1Name)]", f2g1);
     error = dde_execute(instance, hConv, itemtext);
-    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(check_exists("Group1/f2g1Name.lnk"), "link not created\n");
-    }
 
     error = dde_execute(instance, hConv, "[DeleteItem(f2g1Name)]");
-    todo_wine
+    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(!check_exists("Group1/f2g1Name.lnk"), "link should not exist\n");
+    }
 
     sprintf(itemtext, "[AddItem(%s,f3g1Name)]", f3g1);
     error = dde_execute(instance, hConv, itemtext);
-    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(check_exists("Group1/f3g1Name.lnk"), "link not created\n");
-    }
 
     error = dde_execute(instance, hConv, "[CreateGroup(Group2)]");
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
@@ -327,9 +322,10 @@ static void test_progman_dde(DWORD instance, HCONV hConv)
     ok(error == DMLERR_NOTPROCESSED, "expected DMLERR_NOTPROCESSED, got %u\n", error);
 
     error = dde_execute(instance, hConv, "[DeleteItem(f3g1Name)]");
-    todo_wine
+    todo_wine {
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(!check_exists("Group1/f3g1Name.lnk"), "link should not exist\n");
+    }
 
     error = dde_execute(instance, hConv, "[ShowGroup(Startup, 0)]");
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
@@ -347,14 +343,11 @@ static void test_progman_dde(DWORD instance, HCONV hConv)
     /* Compound Execute String Command */
     sprintf(comptext, "[CreateGroup(Group3)][AddItem(%s,f1g3Name)][AddItem(%s,f2g3Name)]", f1g3, f2g3);
     error = dde_execute(instance, hConv, comptext);
-    todo_wine
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(check_exists("Group3"), "directory not created\n");
     ok(check_window_exists(Group3Title), "window not created\n");
-    todo_wine {
     ok(check_exists("Group3/f1g3Name.lnk"), "link not created\n");
     ok(check_exists("Group3/f2g3Name.lnk"), "link not created\n");
-    }
 
     error = dde_execute(instance, hConv, "[DeleteGroup(Group3)]");
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);

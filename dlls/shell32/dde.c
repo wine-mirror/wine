@@ -20,11 +20,14 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "ddeml.h"
 #include "shellapi.h"
+#include "shobjidl.h"
+#include "shlwapi.h"
 
 #include "shell32_main.h"
 
@@ -122,6 +125,13 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
     static const WCHAR create_groupW[] = {'C','r','e','a','t','e','G','r','o','u','p',0};
     static const WCHAR delete_groupW[] = {'D','e','l','e','t','e','G','r','o','u','p',0};
     static const WCHAR show_groupW[] = {'S','h','o','w','G','r','o','u','p',0};
+    static const WCHAR add_itemW[] = {'A','d','d','I','t','e','m',0};
+
+    static const WCHAR dotexeW[] = {'.','e','x','e',0};
+    static const WCHAR dotlnkW[] = {'.','l','n','k',0};
+    static const WCHAR slashW[] = {'/',0};
+
+    static WCHAR *last_group;
 
     if (!strcmpiW(command, create_groupW))
     {
@@ -134,7 +144,8 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         CreateDirectoryW(path, NULL);
         ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
 
-        HeapFree(GetProcessHeap(), 0, path);
+        if (last_group) HeapFree(GetProcessHeap(), 0, last_group);
+        last_group = path;
     }
     else if (!strcmpiW(command, delete_groupW))
     {
@@ -173,7 +184,75 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         ShellExecuteW(NULL, NULL, path, NULL, NULL, SW_SHOWNORMAL);
 
+        if (last_group) HeapFree(GetProcessHeap(), 0, last_group);
+        last_group = path;
+    }
+    else if (!strcmpiW(command, add_itemW))
+    {
+        WCHAR *path, *name;
+        DWORD len;
+        IShellLinkW *link;
+        IPersistFile *file;
+        HRESULT hres;
+
+        if (argc < 1) return DDE_FNOTPROCESSED;
+
+        hres = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                                &IID_IShellLinkW, (void **)&link);
+        if (FAILED(hres)) return DDE_FNOTPROCESSED;
+
+        len = SearchPathW(NULL, argv[0], dotexeW, 0, NULL, NULL);
+        if (len == 0)
+        {
+            IShellLinkW_Release(link);
+            return DDE_FNOTPROCESSED;
+        }
+        path = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        SearchPathW(NULL, argv[0], dotexeW, len, path, NULL);
+        IShellLinkW_SetPath(link, path);
         HeapFree(GetProcessHeap(), 0, path);
+
+        if (argc >= 2) IShellLinkW_SetDescription(link, argv[1]);
+        if (argc >= 4) IShellLinkW_SetIconLocation(link, argv[2], atoiW(argv[3]));
+        if (argc >= 7) IShellLinkW_SetWorkingDirectory(link, argv[6]);
+        if (argc >= 8) IShellLinkW_SetHotkey(link, atoiW(argv[7]));
+        if (argc >= 9)
+        {
+            if (atoiW(argv[8]) == 0) IShellLinkW_SetShowCmd(link, SW_SHOWMINNOACTIVE);
+            else if (atoiW(argv[8]) == 1) IShellLinkW_SetShowCmd(link, SW_SHOWNORMAL);
+        }
+
+        hres = IShellLinkW_QueryInterface(link, &IID_IPersistFile, (void **)&file);
+        if (FAILED(hres))
+        {
+            IShellLinkW_Release(link);
+            return DDE_FNOTPROCESSED;
+        }
+        if (argc >= 2)
+        {
+            name = HeapAlloc(GetProcessHeap(), 0, (strlenW(last_group) + 1 + strlenW(argv[1]) + 5) * sizeof(*name));
+            lstrcpyW(name, last_group);
+            lstrcatW(name, slashW);
+            lstrcatW(name, argv[1]);
+            lstrcatW(name, dotlnkW);
+        }
+        else
+        {
+            const WCHAR *filename = PathFindFileNameW(argv[0]);
+            int len = PathFindExtensionW(filename) - filename;
+            name = HeapAlloc(GetProcessHeap(), 0, (strlenW(last_group) + 1 + len + 5) * sizeof(*name));
+            lstrcpyW(name, last_group);
+            lstrcatW(name, slashW);
+            lstrcpynW(name+strlenW(name), filename, len + 1);
+            lstrcatW(name, dotlnkW);
+        }
+        hres = IPersistFile_Save(file, name, TRUE);
+
+        HeapFree(GetProcessHeap(), 0, name);
+        IPersistFile_Release(file);
+        IShellLinkW_Release(link);
+
+        if (FAILED(hres)) return DDE_FNOTPROCESSED;
     }
     else
     {
