@@ -39,6 +39,7 @@ typedef struct {
     IDailyTrigger IDailyTrigger_iface;
     LONG ref;
     short interval;
+    WCHAR *start_boundary;
 } DailyTrigger;
 
 static inline DailyTrigger *impl_from_IDailyTrigger(IDailyTrigger *iface)
@@ -88,7 +89,11 @@ static ULONG WINAPI DailyTrigger_Release(IDailyTrigger *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        heap_free(This->start_boundary);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -183,7 +188,14 @@ static HRESULT WINAPI DailyTrigger_get_StartBoundary(IDailyTrigger *iface, BSTR 
 static HRESULT WINAPI DailyTrigger_put_StartBoundary(IDailyTrigger *iface, BSTR start)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(start));
+    WCHAR *str = NULL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(start));
+
+    if (start && !(str = heap_strdupW(start))) return E_OUTOFMEMORY;
+    heap_free(This->start_boundary);
+    This->start_boundary = str;
+
     return S_OK;
 }
 
@@ -290,6 +302,7 @@ static HRESULT DailyTrigger_create(ITrigger **trigger)
     daily_trigger->IDailyTrigger_iface.lpVtbl = &DailyTrigger_vtbl;
     daily_trigger->ref = 1;
     daily_trigger->interval = 1;
+    daily_trigger->start_boundary = NULL;
 
     *trigger = (ITrigger*)&daily_trigger->IDailyTrigger_iface;
     return S_OK;

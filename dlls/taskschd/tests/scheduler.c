@@ -1195,9 +1195,37 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
 
 static void test_daily_trigger(ITrigger *trigger)
 {
+    static const WCHAR startW[] =
+        {'2','0','0','4','-','0','1','-','0','1','T','0','0',':','0','0',':','0','0',0};
+    static const WCHAR start2W[] =
+        {'2','0','0','4','-','0','1','-','0','1','T','0','0',':','0','0',':','0','0','Z',0};
+    static const WCHAR start3W[] =
+        {'2','0','0','4','-','0','1','-','0','1','T','0','0',':','0','0',':','0','0','+','0','1',':','0','0',0};
+    static const WCHAR start4W[] =
+        {'2','0','0','4','.','0','1','.','0','1','T','0','0','.','0','0','.','0','0',0};
+    static const WCHAR start5W[] =
+        {'9','9','9','9','-','9','9','-','9','9','T','9','9',':','9','9',':','9','9',0};
+    static const WCHAR start6W[] =
+        {'i','n','v','a','l','i','d',0};
+    static const struct
+    {
+        const WCHAR *str;
+        HRESULT      hr;
+    }
+    start_test[] =
+    {
+        {startW, S_OK},
+        {start2W, S_OK},
+        {start3W, S_OK},
+        {start4W, S_OK},
+        {start5W, S_OK},
+        {start6W, S_OK},
+    };
     IDailyTrigger *daily_trigger;
+    BSTR start_boundary;
     short interval;
     HRESULT hr;
+    ULONG i;
 
     hr = ITrigger_QueryInterface(trigger, &IID_IDailyTrigger, (void**)&daily_trigger);
     ok(hr == S_OK, "Could not get IDailyTrigger iface: %08x\n", hr);
@@ -1224,6 +1252,17 @@ static void test_daily_trigger(ITrigger *trigger)
     hr = IDailyTrigger_get_DaysInterval(daily_trigger, &interval);
     ok(hr == S_OK, "get_DaysInterval failed: %08x\n", hr);
     ok(interval == 2, "interval = %d\n", interval);
+
+    for (i = 0; i < sizeof(start_test)/sizeof(start_test[0]); i++)
+    {
+        start_boundary = SysAllocString(start_test[i].str);
+        hr = IDailyTrigger_put_StartBoundary(daily_trigger, start_boundary);
+        ok(hr == start_test[i].hr, "%u: got %08x expected %08x\n", i, hr, start_test[i].hr);
+        SysFreeString(start_boundary);
+    }
+
+    hr = IDailyTrigger_put_StartBoundary(daily_trigger, NULL);
+    ok(hr == S_OK, "put_StartBoundary failed: %08x\n", hr);
 
     IDailyTrigger_Release(daily_trigger);
 }
