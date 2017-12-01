@@ -67,6 +67,7 @@ typedef struct {
     WCHAR *type;
     EventTarget *target;
     BOOL bubbles;
+    BOOL cancelable;
     BOOL prevent_default;
     BOOL stop_propagation;
     DOM_EVENT_PHASE phase;

@@ -986,8 +986,11 @@ static HRESULT WINAPI DOMEvent_get_bubbles(IDOMEvent *iface, VARIANT_BOOL *p)
 static HRESULT WINAPI DOMEvent_get_cancelable(IDOMEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = variant_bool(This->cancelable);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_get_currentTarget(IDOMEvent *iface, IEventTarget **p)
@@ -1168,6 +1171,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
             return NULL;
         }
         event->bubbles = (event_info[event_id].flags & EVENT_BUBBLES) != 0;
+        event->cancelable = (event_info[event_id].flags & EVENT_CANCELABLE) != 0;
     }
     nsIDOMEvent_AddRef(event->nsevent = nsevent);
     return event;
@@ -1322,7 +1326,6 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
 {
     const eventid_t eid = event->event_id;
     const listener_container_t *container = get_listener_container(event_target, event->type, FALSE);
-    const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
     const BOOL use_quirks = use_event_quirks(event_target);
     event_listener_t *listener, listeners_buf[8], *listeners = listeners_buf;
     unsigned listeners_cnt, listeners_size;
@@ -1348,7 +1351,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
             if(hres == S_OK) {
                 TRACE("%s <<< %s\n", debugstr_w(event->type), debugstr_variant(&v));
 
-                if(cancelable) {
+                if(event->cancelable) {
                     if(V_VT(&v) == VT_BOOL) {
                         if(!V_BOOL(&v))
                             IDOMEvent_preventDefault(&event->IDOMEvent_iface);
@@ -1428,7 +1431,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
                 TRACE("%s <<< %s\n", debugstr_w(event->type),
                       debugstr_variant(&v));
 
-                if(cancelable) {
+                if(event->cancelable) {
                     if(V_VT(&v) == VT_BOOL) {
                         if(!V_BOOL(&v))
                             IDOMEvent_preventDefault(&event->IDOMEvent_iface);
@@ -1453,7 +1456,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
             if(hres == S_OK) {
                 TRACE("%s attached <<<\n", debugstr_w(event->type));
 
-                if(cancelable) {
+                if(event->cancelable) {
                     if(V_VT(&v) == VT_BOOL) {
                         if(!V_BOOL(&v))
                             IDOMEvent_preventDefault(&event->IDOMEvent_iface);
@@ -1500,7 +1503,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
                     if(hres == S_OK) {
                         TRACE("cp %s [%u] <<<\n", debugstr_w(event->type), i);
 
-                        if(cancelable) {
+                        if(event->cancelable) {
                             if(V_VT(&v) == VT_BOOL) {
                                 if(!V_BOOL(&v))
                                     IDOMEvent_preventDefault(&event->IDOMEvent_iface);

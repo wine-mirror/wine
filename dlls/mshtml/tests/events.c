@@ -2704,6 +2704,11 @@ static void test_create_event(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_bubbles failed: %08x\n", hres);
     ok(!b, "bubbles = %x\n", b);
 
+    b = 0xdead;
+    hres = IDOMEvent_get_cancelable(event, &b);
+    ok(hres == S_OK, "get_cancelable failed: %08x\n", hres);
+    ok(!b, "cancelable = %x\n", b);
+
     IDOMEvent_Release(event);
 
     IDocumentEvent_Release(doc_event);
