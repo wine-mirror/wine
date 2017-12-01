@@ -224,8 +224,13 @@ static HRESULT WINAPI DailyTrigger_put_EndBoundary(IDailyTrigger *iface, BSTR en
 static HRESULT WINAPI DailyTrigger_get_Enabled(IDailyTrigger *iface, VARIANT_BOOL *enabled)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%p)\n", This, enabled);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, enabled);
+
+    if (!enabled) return E_POINTER;
+
+    *enabled = This->enabled ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI DailyTrigger_put_Enabled(IDailyTrigger *iface, VARIANT_BOOL enabled)
@@ -314,7 +319,7 @@ static HRESULT DailyTrigger_create(ITrigger **trigger)
     daily_trigger->ref = 1;
     daily_trigger->interval = 1;
     daily_trigger->start_boundary = NULL;
-    daily_trigger->enabled = FALSE;
+    daily_trigger->enabled = TRUE;
 
     *trigger = (ITrigger*)&daily_trigger->IDailyTrigger_iface;
     return S_OK;

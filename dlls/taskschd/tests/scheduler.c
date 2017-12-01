@@ -1223,6 +1223,7 @@ static void test_daily_trigger(ITrigger *trigger)
     };
     IDailyTrigger *daily_trigger;
     BSTR start_boundary;
+    VARIANT_BOOL enabled;
     short interval;
     HRESULT hr;
     ULONG i;
@@ -1280,6 +1281,22 @@ static void test_daily_trigger(ITrigger *trigger)
 
     hr = IDailyTrigger_put_StartBoundary(daily_trigger, NULL);
     ok(hr == S_OK, "put_StartBoundary failed: %08x\n", hr);
+
+    hr = IDailyTrigger_get_Enabled(daily_trigger, NULL);
+    ok(hr == E_POINTER, "get_Enabled failed: %08x\n", hr);
+
+    enabled = VARIANT_FALSE;
+    hr = IDailyTrigger_get_Enabled(daily_trigger, &enabled);
+    ok(hr == S_OK, "get_Enabled failed: %08x\n", hr);
+    ok(enabled == VARIANT_TRUE, "got %d\n", enabled);
+
+    hr = IDailyTrigger_put_Enabled(daily_trigger, VARIANT_FALSE);
+    ok(hr == S_OK, "put_Enabled failed: %08x\n", hr);
+
+    enabled = VARIANT_TRUE;
+    hr = IDailyTrigger_get_Enabled(daily_trigger, &enabled);
+    ok(hr == S_OK, "get_Enabled failed: %08x\n", hr);
+    ok(enabled == VARIANT_FALSE, "got %d\n", enabled);
 
     IDailyTrigger_Release(daily_trigger);
 }
