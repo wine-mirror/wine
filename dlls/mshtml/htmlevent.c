@@ -1029,8 +1029,14 @@ static HRESULT WINAPI DOMEvent_get_eventPhase(IDOMEvent *iface, USHORT *p)
 static HRESULT WINAPI DOMEvent_get_target(IDOMEvent *iface, IEventTarget **p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->target)
+        IEventTarget_AddRef(*p = &This->target->IEventTarget_iface);
+    else
+        *p = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_get_timeStamp(IDOMEvent *iface, ULONGLONG *p)
