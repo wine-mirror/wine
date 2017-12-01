@@ -236,7 +236,11 @@ HRESULT TaskFolderCollection_create(const WCHAR *path, ITaskFolderCollection **o
 
     folders->ITaskFolderCollection_iface.lpVtbl = &TaskFolderCollection_vtbl;
     folders->ref = 1;
-    folders->path = heap_strdupW(path);
+    if (!(folders->path = heap_strdupW(path)))
+    {
+        heap_free(folders);
+        return E_OUTOFMEMORY;
+    }
     folders->count = count;
     folders->list = list;
     *obj = &folders->ITaskFolderCollection_iface;

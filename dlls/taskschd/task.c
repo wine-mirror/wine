@@ -542,7 +542,9 @@ static HRESULT WINAPI RegistrationInfo_get_Description(IRegistrationInfo *iface,
 
     if (!description) return E_POINTER;
 
-    *description = SysAllocString(reginfo->description);
+    if (!reginfo->description) *description = NULL;
+    else if (!(*description = SysAllocString(reginfo->description))) return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
@@ -568,7 +570,9 @@ static HRESULT WINAPI RegistrationInfo_get_Author(IRegistrationInfo *iface, BSTR
 
     if (!author) return E_POINTER;
 
-    *author = SysAllocString(reginfo->author);
+    if (!reginfo->author) *author = NULL;
+    else if (!(*author = SysAllocString(reginfo->author))) return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
@@ -594,7 +598,9 @@ static HRESULT WINAPI RegistrationInfo_get_Version(IRegistrationInfo *iface, BST
 
     if (!version) return E_POINTER;
 
-    *version = SysAllocString(reginfo->version);
+    if (!reginfo->version) *version = NULL;
+    else if (!(*version = SysAllocString(reginfo->version))) return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
@@ -620,7 +626,9 @@ static HRESULT WINAPI RegistrationInfo_get_Date(IRegistrationInfo *iface, BSTR *
 
     if (!date) return E_POINTER;
 
-    *date = SysAllocString(reginfo->date);
+    if (!reginfo->date) *date = NULL;
+    else if (!(*date = SysAllocString(reginfo->date))) return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
@@ -646,7 +654,9 @@ static HRESULT WINAPI RegistrationInfo_get_Documentation(IRegistrationInfo *ifac
 
     if (!doc) return E_POINTER;
 
-    *doc = SysAllocString(reginfo->documentation);
+    if (!reginfo->documentation) *doc = NULL;
+    else if (!(*doc = SysAllocString(reginfo->documentation))) return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
@@ -684,7 +694,9 @@ static HRESULT WINAPI RegistrationInfo_get_URI(IRegistrationInfo *iface, BSTR *u
 
     if (!uri) return E_POINTER;
 
-    *uri = SysAllocString(reginfo->uri);
+    if (!reginfo->uri) *uri = NULL;
+    else if (!(*uri = SysAllocString(reginfo->uri))) return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
@@ -722,7 +734,9 @@ static HRESULT WINAPI RegistrationInfo_get_Source(IRegistrationInfo *iface, BSTR
 
     if (!source) return E_POINTER;
 
-    *source = SysAllocString(reginfo->source);
+    if (!reginfo->source) *source = NULL;
+    else if (!(*source = SysAllocString(reginfo->source))) return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
@@ -921,8 +935,8 @@ static HRESULT WINAPI TaskSettings_get_RestartInterval(ITaskSettings *iface, BST
         return S_OK;
     }
 
-    *interval = SysAllocString(taskset->restart_interval);
-    if (!*interval) return E_OUTOFMEMORY;
+    if (!taskset->restart_interval) *interval = NULL;
+    else if (!(*interval = SysAllocString(taskset->restart_interval))) return E_OUTOFMEMORY;
 
     return S_OK;
 }
@@ -1135,8 +1149,8 @@ static HRESULT WINAPI TaskSettings_get_ExecutionTimeLimit(ITaskSettings *iface, 
         return S_OK;
     }
 
-    *limit = SysAllocString(taskset->execution_time_limit);
-    if (!*limit) return E_OUTOFMEMORY;
+    if (!taskset->execution_time_limit) *limit = NULL;
+    else if (!(*limit = SysAllocString(taskset->execution_time_limit))) return E_OUTOFMEMORY;
 
     return S_OK;
 }
@@ -1187,14 +1201,8 @@ static HRESULT WINAPI TaskSettings_get_DeleteExpiredTaskAfter(ITaskSettings *ifa
 
     if (!delay) return E_POINTER;
 
-    if (!taskset->delete_expired_task_after)
-    {
-        *delay = NULL;
-        return S_OK;
-    }
-
-    *delay = SysAllocString(taskset->delete_expired_task_after);
-    if (!*delay) return E_OUTOFMEMORY;
+    if (!taskset->delete_expired_task_after) *delay = NULL;
+    else if (!(*delay = SysAllocString(taskset->delete_expired_task_after))) return E_OUTOFMEMORY;
 
     return S_OK;
 }
@@ -1746,13 +1754,9 @@ static HRESULT WINAPI ExecAction_get_Path(IExecAction *iface, BSTR *path)
 
     if (!path) return E_POINTER;
 
-    if (!action->path)
-    {
-        *path = NULL;
-        return S_OK;
-    }
+    if (!action->path) *path = NULL;
+    else if (!(*path = SysAllocString(action->path))) return E_OUTOFMEMORY;
 
-    if (!(*path = SysAllocString(action->path))) return E_OUTOFMEMORY;
     return S_OK;
 }
 
