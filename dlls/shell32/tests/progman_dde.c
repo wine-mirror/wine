@@ -270,6 +270,12 @@ static void test_parser(DWORD instance, HCONV hConv)
     error = dde_execute(instance, hConv, "[DeleteGroup(test)]");
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(!check_exists("test"), "directory should not exist\n");
+
+    error = dde_execute(instance, hConv, "[ExitProgman()]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
+
+    error = dde_execute(instance, hConv, "[ExitProgman]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
 }
 
 /* 1st set of tests */
@@ -372,6 +378,13 @@ static void test_progman_dde(DWORD instance, HCONV hConv)
     error = dde_execute(instance, hConv, "[ShowGroup(Group2, 0)]");
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(check_window_exists("Group2"), "window not created\n");
+
+    error = dde_execute(instance, hConv, "[ExitProgman(1)]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
+
+    error = dde_execute(instance, hConv, "[AddItem(notepad,test4)]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
+    ok(check_exists("Group2/test4.lnk"), "link not created\n");
 }
 
 /* 2nd set of tests - 2nd connection */

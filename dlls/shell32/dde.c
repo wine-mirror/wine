@@ -128,6 +128,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
     static const WCHAR add_itemW[] = {'A','d','d','I','t','e','m',0};
     static const WCHAR delete_itemW[] = {'D','e','l','e','t','e','I','t','e','m',0};
     static const WCHAR replace_itemW[] = {'R','e','p','l','a','c','e','I','t','e','m',0};
+    static const WCHAR exit_progmanW[] = {'E','x','i','t','P','r','o','g','m','a','n',0};
 
     static const WCHAR dotexeW[] = {'.','e','x','e',0};
     static const WCHAR dotlnkW[] = {'.','l','n','k',0};
@@ -274,6 +275,10 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
         HeapFree(GetProcessHeap(), 0, name);
 
         if (!ret) return DDE_FNOTPROCESSED;
+    }
+    else if (!strcmpiW(command, exit_progmanW))
+    {
+        /* do nothing */
     }
     else
     {
