@@ -325,6 +325,18 @@ static void test_progman_dde(DWORD instance, HCONV hConv)
     ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
     ok(!check_exists("Group1/test1.lnk"), "link should not exist\n");
 
+    error = dde_execute(instance, hConv, "[AddItem(notepad,test1)]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
+    ok(check_exists("Group1/test1.lnk"), "link not created\n");
+
+    error = dde_execute(instance, hConv, "[ReplaceItem(test1)]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
+    ok(!check_exists("Group1/test1.lnk"), "link should not exist\n");
+
+    error = dde_execute(instance, hConv, "[AddItem(regedit)]");
+    ok(error == DMLERR_NO_ERROR, "expected DMLERR_NO_ERROR, got %u\n", error);
+    ok(check_exists("Group1/regedit.lnk"), "link not created\n");
+
     /* test ShowGroup() and test which group an item gets added to */
     error = dde_execute(instance, hConv, "[ShowGroup(Group1)]");
     ok(error == DMLERR_NOTPROCESSED, "expected DMLERR_NOTPROCESSED, got %u\n", error);

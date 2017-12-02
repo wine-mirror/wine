@@ -127,6 +127,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
     static const WCHAR show_groupW[] = {'S','h','o','w','G','r','o','u','p',0};
     static const WCHAR add_itemW[] = {'A','d','d','I','t','e','m',0};
     static const WCHAR delete_itemW[] = {'D','e','l','e','t','e','I','t','e','m',0};
+    static const WCHAR replace_itemW[] = {'R','e','p','l','a','c','e','I','t','e','m',0};
 
     static const WCHAR dotexeW[] = {'.','e','x','e',0};
     static const WCHAR dotlnkW[] = {'.','l','n','k',0};
@@ -255,7 +256,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 
         if (FAILED(hres)) return DDE_FNOTPROCESSED;
     }
-    else if (!strcmpiW(command, delete_itemW))
+    else if (!strcmpiW(command, delete_itemW) || !strcmpiW(command, replace_itemW))
     {
         WCHAR *name;
         BOOL ret;
