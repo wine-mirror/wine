@@ -11985,6 +11985,98 @@ todo_wine
     DestroyWindow(window);
 }
 
+static void test_clip_planes_limits(void)
+{
+    static const DWORD device_flags[] = {0, CREATE_DEVICE_SWVP_ONLY};
+    IDirect3DDevice9 *device;
+    struct device_desc desc;
+    unsigned int i, j;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    float plane[4];
+    D3DCAPS9 caps;
+    DWORD state;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    for (i = 0; i < ARRAY_SIZE(device_flags); ++i)
+    {
+        desc.device_window = window;
+        desc.width = 640;
+        desc.height = 480;
+        desc.flags = device_flags[i];
+        if (!(device = create_device(d3d, window, &desc)))
+        {
+            skip("Failed to create D3D device, flags %#x.\n", desc.flags);
+            continue;
+        }
+
+        memset(&caps, 0, sizeof(caps));
+        hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+        ok(hr == D3D_OK, "Failed to get caps, hr %#x.\n", hr);
+
+        trace("Max user clip planes: %u.\n", caps.MaxUserClipPlanes);
+
+        for (j = 0; j < 2 * D3DMAXUSERCLIPPLANES; ++j)
+        {
+            memset(plane, 0xff, sizeof(plane));
+            hr = IDirect3DDevice9_GetClipPlane(device, j, plane);
+            todo_wine_if(j >= caps.MaxUserClipPlanes)
+            {
+            ok(hr == D3D_OK, "Failed to get clip plane %u, hr %#x.\n", j, hr);
+            ok(!plane[0] && !plane[1] && !plane[2] && !plane[3],
+                    "Got unexpected plane %u: %.8e, %.8e, %.8e, %.8e.\n",
+                    j, plane[0], plane[1], plane[2], plane[3]);
+            }
+        }
+
+        plane[0] = 2.0f;
+        plane[1] = 8.0f;
+        plane[2] = 5.0f;
+        for (j = 0; j < 2 * D3DMAXUSERCLIPPLANES; ++j)
+        {
+            plane[3] = j;
+            hr = IDirect3DDevice9_SetClipPlane(device, j, plane);
+            todo_wine_if(j >= caps.MaxUserClipPlanes)
+            ok(hr == D3D_OK, "Failed to set clip plane %u, hr %#x.\n", j, hr);
+        }
+        for (j = 0; j < 2 * D3DMAXUSERCLIPPLANES; ++j)
+        {
+            float expected_d = j >= caps.MaxUserClipPlanes - 1 ? 2 * D3DMAXUSERCLIPPLANES - 1 : j;
+            memset(plane, 0xff, sizeof(plane));
+            hr = IDirect3DDevice9_GetClipPlane(device, j, plane);
+            todo_wine_if(j >= caps.MaxUserClipPlanes)
+            ok(hr == D3D_OK, "Failed to get clip plane %u, hr %#x.\n", j, hr);
+            todo_wine_if(j >= caps.MaxUserClipPlanes - 1)
+            ok(plane[0] == 2.0f && plane[1] == 8.0f && plane[2] == 5.0f && plane[3] == expected_d,
+                    "Got unexpected plane %u: %.8e, %.8e, %.8e, %.8e.\n",
+                    j, plane[0], plane[1], plane[2], plane[3]);
+        }
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPLANEENABLE, 0xffffffff);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetRenderState(device, D3DRS_CLIPPLANEENABLE, &state);
+        ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+        ok(state == 0xffffffff, "Got unexpected state %#x.\n", state);
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPLANEENABLE, 0x80000000);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_GetRenderState(device, D3DRS_CLIPPLANEENABLE, &state);
+        ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+        ok(state == 0x80000000, "Got unexpected state %#x.\n", state);
+
+        refcount = IDirect3DDevice9_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -12105,6 +12197,7 @@ START_TEST(device)
     test_format_unknown();
     test_destroyed_window();
     test_lockable_backbuffer();
+    test_clip_planes_limits();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
