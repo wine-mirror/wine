@@ -28,6 +28,8 @@
 #include <d3d8.h>
 #include "wine/test.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 struct vec3
 {
     float x, y, z;
@@ -8401,6 +8403,91 @@ static void test_destroyed_window(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_clip_planes_limits(void)
+{
+    static const DWORD device_flags[] = {0, CREATE_DEVICE_SWVP_ONLY};
+    IDirect3DDevice8 *device;
+    struct device_desc desc;
+    unsigned int i, j;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    float plane[4];
+    D3DCAPS8 caps;
+    DWORD state;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    for (i = 0; i < ARRAY_SIZE(device_flags); ++i)
+    {
+        desc.device_window = window;
+        desc.width = 640;
+        desc.height = 480;
+        desc.flags = device_flags[i];
+        if (!(device = create_device(d3d, window, &desc)))
+        {
+            skip("Failed to create D3D device, flags %#x.\n", desc.flags);
+            continue;
+        }
+
+        memset(&caps, 0, sizeof(caps));
+        hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+        ok(hr == D3D_OK, "Failed to get caps, hr %#x.\n", hr);
+
+        trace("Max user clip planes: %u.\n", caps.MaxUserClipPlanes);
+
+        for (j = 0; j < caps.MaxUserClipPlanes; ++j)
+        {
+            memset(plane, 0xff, sizeof(plane));
+            hr = IDirect3DDevice8_GetClipPlane(device, j, plane);
+            ok(hr == D3D_OK, "Failed to get clip plane %u, hr %#x.\n", j, hr);
+            ok(!plane[0] && !plane[1] && !plane[2] && !plane[3],
+                    "Got unexpected plane %u: %.8e, %.8e, %.8e, %.8e.\n",
+                    j, plane[0], plane[1], plane[2], plane[3]);
+        }
+
+        plane[0] = 2.0f;
+        plane[1] = 8.0f;
+        plane[2] = 5.0f;
+        for (j = 0; j < caps.MaxUserClipPlanes; ++j)
+        {
+            plane[3] = j;
+            hr = IDirect3DDevice8_SetClipPlane(device, j, plane);
+            ok(hr == D3D_OK, "Failed to set clip plane %u, hr %#x.\n", j, hr);
+        }
+        for (j = 0; j < caps.MaxUserClipPlanes; ++j)
+        {
+            memset(plane, 0xff, sizeof(plane));
+            hr = IDirect3DDevice8_GetClipPlane(device, j, plane);
+            ok(hr == D3D_OK, "Failed to get clip plane %u, hr %#x.\n", j, hr);
+            ok(plane[0] == 2.0f && plane[1] == 8.0f && plane[2] == 5.0f && plane[3] == j,
+                    "Got unexpected plane %u: %.8e, %.8e, %.8e, %.8e.\n",
+                    j, plane[0], plane[1], plane[2], plane[3]);
+        }
+
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPLANEENABLE, 0xffffffff);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice8_GetRenderState(device, D3DRS_CLIPPLANEENABLE, &state);
+        ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+        ok(state == 0xffffffff, "Got unexpected state %#x.\n", state);
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPLANEENABLE, 0x80000000);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice8_GetRenderState(device, D3DRS_CLIPPLANEENABLE, &state);
+        ok(SUCCEEDED(hr), "Failed to get render state, hr %#x.\n", hr);
+        ok(state == 0x80000000, "Got unexpected state %#x.\n", state);
+
+        refcount = IDirect3DDevice8_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -8508,6 +8595,7 @@ START_TEST(device)
     test_render_target_device_mismatch();
     test_format_unknown();
     test_destroyed_window();
+    test_clip_planes_limits();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
