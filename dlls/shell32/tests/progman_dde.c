@@ -171,6 +171,24 @@ static UINT dde_execute(DWORD instance, HCONV hconv, const char *command_str)
     return ret;
 }
 
+static char *dde_request(DWORD instance, HCONV hconv, const char *request_str)
+{
+    static char data[2000];
+    HDDEDATA hdata;
+    HSZ item;
+    DWORD result;
+
+    item = DdeCreateStringHandleA(instance, request_str, CP_WINANSI);
+    ok(item != NULL, "DdeCreateStringHandle() failed: %u\n", DdeGetLastError(instance));
+
+    hdata = DdeClientTransaction(NULL, -1, hconv, item, CF_TEXT, XTYP_REQUEST, 2000, &result);
+    if (hdata == NULL) return NULL;
+
+    DdeGetData(hdata, (BYTE *)data, 2000, 0);
+
+    return data;
+}
+
 static BOOL check_window_exists(const char *name)
 {
     char title[MAX_PATH];
@@ -402,6 +420,40 @@ static void test_progman_dde2(DWORD instance, HCONV hConv)
     ok(!check_exists("Group2"), "directory should not exist\n");
 }
 
+static BOOL check_in_programs_list(const char *list, const char *group)
+{
+    while (1)
+    {
+        if (!strncmp(list, group, strlen(group)) && list[strlen(group)] == '\r')
+            return TRUE;
+        if (!(list = strchr(list, '\r'))) break;
+        list += 2;
+    }
+    return FALSE;
+}
+
+static void test_request_groups(DWORD instance, HCONV hconv)
+{
+    char *list;
+    char programs[MAX_PATH];
+    WIN32_FIND_DATAA finddata;
+    HANDLE hfind;
+
+    list = dde_request(instance, hconv, "Groups");
+    ok(list != NULL, "request failed: %u\n", DdeGetLastError(instance));
+    strcpy(programs, ProgramsDir);
+    strcat(programs, "/*");
+    hfind = FindFirstFileA(programs, &finddata);
+    do
+    {
+        if ((finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && finddata.cFileName[0] != '.')
+        {
+            ok(check_in_programs_list(list, finddata.cFileName),
+               "directory '%s' missing from group list\n", finddata.cFileName);
+        }
+    } while (FindNextFileA(hfind, &finddata));
+}
+
 START_TEST(progman_dde)
 {
     DWORD instance = 0;
@@ -430,6 +482,7 @@ START_TEST(progman_dde)
 
     test_parser(instance, hConv);
     test_progman_dde(instance, hConv);
+    test_request_groups(instance, hConv);
 
     /* Cleanup & Exit */
     ok(DdeDisconnect(hConv), "DdeDisonnect() failed: %u\n", DdeGetLastError(instance));

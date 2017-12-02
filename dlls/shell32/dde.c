@@ -79,29 +79,8 @@ static inline BOOL Dde_OnWildConnect(HSZ hszTopic, HSZ hszService)
     return FALSE;
 }
 
-static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
-                                     HSZ hszItem)
-{
-    if (hszTopic == hszProgmanTopic && hszItem == hszGroups && uFmt == CF_TEXT)
-    {
-        static BYTE groups_data[] = "Accessories\r\nStartup\r\n";
-        FIXME( "returning fake program groups list\n" );
-        return DdeCreateDataHandle( dwDDEInst, groups_data, sizeof(groups_data), 0, hszGroups, uFmt, 0 );
-    }
-    else if (hszTopic == hszProgmanTopic && hszItem == hszProgmanService && uFmt == CF_TEXT)
-    {
-        static BYTE groups_data[] = "\r\n";
-        FIXME( "returning empty groups list\n" );
-	/* This is a workaround for an application which expects some data
-	 * and cannot handle NULL. */
-        return DdeCreateDataHandle( dwDDEInst, groups_data, sizeof(groups_data), 0, hszProgmanService, uFmt, 0 );
-    }
-    FIXME( "%u %p %s %s: stub\n", uFmt, hconv, debugstr_hsz(hszTopic), debugstr_hsz(hszItem) );
-    return NULL;
-}
-
 /* Returned string must be freed by caller */
-static WCHAR *get_programs_path(WCHAR *name)
+static WCHAR *get_programs_path(const WCHAR *name)
 {
     static const WCHAR slashW[] = {'/',0};
     WCHAR *programs, *path;
@@ -118,6 +97,64 @@ static WCHAR *get_programs_path(WCHAR *name)
     CoTaskMemFree(programs);
 
     return path;
+}
+
+static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
+                                     HSZ hszItem)
+{
+    if (hszTopic == hszProgmanTopic && hszItem == hszGroups && uFmt == CF_TEXT)
+    {
+        static const WCHAR asteriskW[] = {'*',0};
+        static const WCHAR newlineW[] = {'\r','\n',0};
+        static const WCHAR dotW[] = {'.',0};
+        static const WCHAR dotdotW[] = {'.','.',0};
+        WCHAR *programs;
+        WIN32_FIND_DATAW finddata;
+        HANDLE hfind;
+        int len = 1;
+        WCHAR *groups_data = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR));
+        char *groups_dataA;
+        HDDEDATA ret;
+
+        groups_data[0] = 0;
+        programs = get_programs_path(asteriskW);
+        hfind = FindFirstFileW(programs, &finddata);
+        if (hfind)
+        {
+            do
+            {
+                if ((finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+                    lstrcmpW(finddata.cFileName, dotW) && lstrcmpW(finddata.cFileName, dotdotW))
+                {
+                    len += lstrlenW(finddata.cFileName) + 2;
+                    groups_data = HeapReAlloc(GetProcessHeap(), 0, groups_data, len * sizeof(WCHAR));
+                    lstrcatW(groups_data, finddata.cFileName);
+                    lstrcatW(groups_data, newlineW);
+                }
+            } while (FindNextFileW(hfind, &finddata));
+            FindClose(hfind);
+        }
+
+        len = WideCharToMultiByte(CP_ACP, 0, groups_data, -1, NULL, 0, NULL, NULL);
+        groups_dataA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        WideCharToMultiByte(CP_ACP, 0, groups_data, -1, groups_dataA, len, NULL, NULL);
+        ret = DdeCreateDataHandle(dwDDEInst, (BYTE *)groups_dataA, len, 0, hszGroups, uFmt, 0);
+
+        HeapFree(GetProcessHeap(), 0, groups_dataA);
+        HeapFree(GetProcessHeap(), 0, groups_data);
+        HeapFree(GetProcessHeap(), 0, programs);
+        return ret;
+    }
+    else if (hszTopic == hszProgmanTopic && hszItem == hszProgmanService && uFmt == CF_TEXT)
+    {
+        static BYTE groups_data[] = "\r\n";
+        FIXME( "returning empty groups list\n" );
+	/* This is a workaround for an application which expects some data
+	 * and cannot handle NULL. */
+        return DdeCreateDataHandle( dwDDEInst, groups_data, sizeof(groups_data), 0, hszProgmanService, uFmt, 0 );
+    }
+    FIXME( "%u %p %s %s: stub\n", uFmt, hconv, debugstr_hsz(hszTopic), debugstr_hsz(hszItem) );
+    return NULL;
 }
 
 static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
