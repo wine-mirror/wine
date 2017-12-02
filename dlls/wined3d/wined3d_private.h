@@ -268,7 +268,7 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
 #define MAX_VERTEX_SAMPLERS         4
 #define MAX_COMBINED_SAMPLERS       (MAX_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS)
 #define MAX_ACTIVE_LIGHTS           8
-#define MAX_CLIP_DISTANCES          WINED3D_MAX_USER_CLIP_PLANES
+#define MAX_CLIP_DISTANCES          8
 #define MAX_CONSTANT_BUFFERS        15
 #define MAX_SAMPLER_OBJECTS         16
 #define MAX_SHADER_RESOURCE_VIEWS   128
@@ -2825,7 +2825,7 @@ struct wined3d_state
     DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
     struct wined3d_matrix transforms[HIGHEST_TRANSFORMSTATE + 1];
-    struct wined3d_vec4 clip_planes[MAX_CLIP_DISTANCES];
+    struct wined3d_vec4 clip_planes[WINED3D_MAX_USER_CLIP_PLANES];
     struct wined3d_material material;
     struct wined3d_viewport viewport;
     RECT scissor_rect;
