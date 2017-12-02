@@ -2530,12 +2530,9 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     context->last_was_rhw = TRUE;
     context_invalidate_state(context, STATE_VDECL); /* because of last_was_rhw = TRUE */
 
-    gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE0); checkGLcall("glDisable(clip plane 0)");
-    gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE1); checkGLcall("glDisable(clip plane 1)");
-    gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE2); checkGLcall("glDisable(clip plane 2)");
-    gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)");
-    gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)");
-    gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)");
+    for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
+        gl_info->gl_ops.gl.p_glDisable(GL_CLIP_DISTANCE0 + i);
+    checkGLcall("disable clip planes");
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_CLIPPING));
 
     /* FIXME: Make draw_textured_quad() able to work with a upper left origin. */
