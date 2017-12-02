@@ -1869,6 +1869,7 @@ struct wined3d_context
     /* Stores some information about the context state for optimization */
     DWORD render_offscreen : 1;
     DWORD last_was_rhw : 1;             /* true iff last draw_primitive was in xyzrhw mode */
+    DWORD last_swizzle_map : 16; /* MAX_ATTRIBS, 16 */
     DWORD last_was_pshader : 1;
     DWORD last_was_vshader : 1;
     DWORD last_was_normal : 1;
@@ -1899,9 +1900,8 @@ struct wined3d_context
     DWORD destroy_delayed : 1;
     DWORD transform_feedback_active : 1;
     DWORD transform_feedback_paused : 1;
-    DWORD padding : 7;
-    DWORD last_swizzle_map; /* MAX_ATTRIBS, 16 */
-    DWORD shader_update_mask;
+    DWORD shader_update_mask : 6; /* WINED3D_SHADER_TYPE_COUNT, 6 */
+    DWORD padding : 17;
     DWORD constant_update_mask;
     DWORD                   numbered_array_mask;
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
