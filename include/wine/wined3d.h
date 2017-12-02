@@ -928,7 +928,6 @@ enum wined3d_shader_byte_code_format
 #define WINED3DPRESENT_INTERVAL_FOUR                            0x00000008
 #define WINED3DPRESENT_INTERVAL_IMMEDIATE                       0x80000000
 
-#define WINED3DMAXUSERCLIPPLANES                                32
 #define WINED3DCLIPPLANE0                                       (1u << 0)
 #define WINED3DCLIPPLANE1                                       (1u << 1)
 #define WINED3DCLIPPLANE2                                       (1u << 2)

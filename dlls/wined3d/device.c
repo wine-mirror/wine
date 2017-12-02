@@ -1757,8 +1757,7 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device,
 {
     TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
 
-    /* Validate plane_idx. */
-    if (plane_idx >= device->adapter->gl_info.limits.user_clip_distances)
+    if (plane_idx >= WINED3D_MAX_USER_CLIP_PLANES)
     {
         TRACE("Application has requested clipplane this device doesn't support.\n");
         return WINED3DERR_INVALIDCALL;
@@ -1775,6 +1774,12 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device,
 
     device->update_state->clip_planes[plane_idx] = *plane;
 
+    if (plane_idx >= device->adapter->gl_info.limits.user_clip_distances)
+    {
+        WARN("Clip plane %u is not supported.\n", plane_idx);
+        return WINED3D_OK;
+    }
+
     if (!device->recording)
         wined3d_cs_emit_set_clip_plane(device->cs, plane_idx, plane);
 
@@ -1786,8 +1791,7 @@ HRESULT CDECL wined3d_device_get_clip_plane(const struct wined3d_device *device,
 {
     TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
 
-    /* Validate plane_idx. */
-    if (plane_idx >= device->adapter->gl_info.limits.user_clip_distances)
+    if (plane_idx >= WINED3D_MAX_USER_CLIP_PLANES)
     {
         TRACE("Application has requested clipplane this device doesn't support.\n");
         return WINED3DERR_INVALIDCALL;

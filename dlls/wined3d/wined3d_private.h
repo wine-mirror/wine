@@ -259,6 +259,8 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
     return complex_fixup;
 }
 
+#define WINED3D_MAX_USER_CLIP_PLANES 32
+
 /* Device caps */
 #define MAX_STREAMS                 16
 #define MAX_TEXTURES                8
@@ -266,7 +268,7 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
 #define MAX_VERTEX_SAMPLERS         4
 #define MAX_COMBINED_SAMPLERS       (MAX_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS)
 #define MAX_ACTIVE_LIGHTS           8
-#define MAX_CLIP_DISTANCES          WINED3DMAXUSERCLIPPLANES
+#define MAX_CLIP_DISTANCES          WINED3D_MAX_USER_CLIP_PLANES
 #define MAX_CONSTANT_BUFFERS        15
 #define MAX_SAMPLER_OBJECTS         16
 #define MAX_SHADER_RESOURCE_VIEWS   128
@@ -3352,7 +3354,7 @@ struct wined3d_saved_states
     DWORD renderState[(WINEHIGHEST_RENDER_STATE >> 5) + 1];
     DWORD textureState[MAX_TEXTURES];           /* WINED3D_HIGHEST_TEXTURE_STATE + 1, 18 */
     WORD samplerState[MAX_COMBINED_SAMPLERS];   /* WINED3D_HIGHEST_SAMPLER_STATE + 1, 14 */
-    DWORD clipplane;                            /* WINED3DMAXUSERCLIPPLANES, 32 */
+    DWORD clipplane;                            /* WINED3D_MAX_USER_CLIP_PLANES, 32 */
     WORD pixelShaderConstantsB;                 /* WINED3D_MAX_CONSTS_B, 16 */
     WORD pixelShaderConstantsI;                 /* WINED3D_MAX_CONSTS_I, 16 */
     BOOL ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
