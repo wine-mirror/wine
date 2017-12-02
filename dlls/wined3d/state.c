@@ -611,9 +611,7 @@ void state_alpha_test(struct wined3d_context *context, const struct wined3d_stat
 
 void state_clipping(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    unsigned int clipplane_count = gl_info->limits.user_clip_distances;
-    unsigned int i, enable_mask, disable_mask;
+    unsigned int enable_mask;
 
     if (use_vs(state) && !context->d3d_info->vs_clipping)
     {
@@ -626,7 +624,7 @@ void state_clipping(struct wined3d_context *context, const struct wined3d_state 
          * disables all clip planes because of that - don't do anything here
          * and keep them disabled. */
         if (state->render_states[WINED3D_RS_CLIPPLANEENABLE] && !warned++)
-            FIXME("Clipping not supported with vertex shaders\n");
+            FIXME("Clipping not supported with vertex shaders.\n");
         return;
     }
 
@@ -636,36 +634,12 @@ void state_clipping(struct wined3d_context *context, const struct wined3d_state 
      * need to update the clipping field from ffp_vertex_settings. */
     context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 
-    /* TODO: Keep track of previously enabled clipplanes to avoid unnecessary resetting
-     * of already set values
-     */
-
     /* If enabling / disabling all
      * TODO: Is this correct? Doesn't D3DRS_CLIPPING disable clipping on the viewport frustrum?
      */
-    if (state->render_states[WINED3D_RS_CLIPPING])
-    {
-        enable_mask = state->render_states[WINED3D_RS_CLIPPLANEENABLE];
-        disable_mask = ~state->render_states[WINED3D_RS_CLIPPLANEENABLE];
-    }
-    else
-    {
-        enable_mask = 0;
-        disable_mask = ~0u;
-    }
-
-    enable_mask &= (1u << clipplane_count) - 1;
-    disable_mask &= (1u << clipplane_count) - 1;
-
-    for (i = 0; enable_mask && i < clipplane_count; enable_mask >>= 1, ++i)
-        if (enable_mask & 1)
-            gl_info->gl_ops.gl.p_glEnable(GL_CLIP_DISTANCE0 + i);
-    checkGLcall("clip plane enable");
-
-    for (i = 0; disable_mask && i < clipplane_count; disable_mask >>= 1, ++i)
-        if (disable_mask & 1)
-            gl_info->gl_ops.gl.p_glDisable(GL_CLIP_DISTANCE0 + i);
-    checkGLcall("clip plane disable");
+    enable_mask = state->render_states[WINED3D_RS_CLIPPING] ?
+            state->render_states[WINED3D_RS_CLIPPLANEENABLE] : 0;
+    context_enable_clip_distances(context, enable_mask);
 }
 
 static void state_specularenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4532,22 +4506,19 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
     }
     else
     {
-        if(!context->last_was_vshader) {
+        if (!context->last_was_vshader)
+        {
             static BOOL warned = FALSE;
             if (!context->d3d_info->vs_clipping)
             {
                 /* Disable all clip planes to get defined results on all drivers. See comment in the
                  * state_clipping state handler
                  */
-                for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
-                {
-                    gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE0 + i);
-                    checkGLcall("glDisable(GL_CLIP_PLANE0 + i)");
-                }
+                context_enable_clip_distances(context, 0);
 
                 if (!warned && state->render_states[WINED3D_RS_CLIPPLANEENABLE])
                 {
-                    FIXME("Clipping not supported with vertex shaders\n");
+                    FIXME("Clipping not supported with vertex shaders.\n");
                     warned = TRUE;
                 }
             }

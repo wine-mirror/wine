@@ -2352,6 +2352,33 @@ static void context_get_rt_size(const struct wined3d_context *context, SIZE *siz
     size->cy = wined3d_texture_get_level_height(rt, level);
 }
 
+void context_enable_clip_distances(struct wined3d_context *context, unsigned int enable_mask)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    unsigned int clip_distance_count = gl_info->limits.user_clip_distances;
+    unsigned int i, disable_mask, current_mask;
+
+    disable_mask = ~enable_mask;
+    enable_mask &= (1u << clip_distance_count) - 1;
+    disable_mask &= (1u << clip_distance_count) - 1;
+    current_mask = context->clip_distance_mask;
+    context->clip_distance_mask = enable_mask;
+
+    enable_mask &= ~current_mask;
+    for (i = 0; enable_mask; enable_mask >>= 1, ++i)
+    {
+        if (enable_mask & 1)
+            gl_info->gl_ops.gl.p_glEnable(GL_CLIP_DISTANCE0 + i);
+    }
+    disable_mask &= current_mask;
+    for (i = 0; disable_mask; disable_mask >>= 1, ++i)
+    {
+        if (disable_mask & 1)
+            gl_info->gl_ops.gl.p_glDisable(GL_CLIP_DISTANCE0 + i);
+    }
+    checkGLcall("toggle clip distances");
+}
+
 /*****************************************************************************
  * SetupForBlit
  *
@@ -2530,9 +2557,7 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     context->last_was_rhw = TRUE;
     context_invalidate_state(context, STATE_VDECL); /* because of last_was_rhw = TRUE */
 
-    for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
-        gl_info->gl_ops.gl.p_glDisable(GL_CLIP_DISTANCE0 + i);
-    checkGLcall("disable clip planes");
+    context_enable_clip_distances(context, 0);
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_CLIPPING));
 
     /* FIXME: Make draw_textured_quad() able to work with a upper left origin. */
