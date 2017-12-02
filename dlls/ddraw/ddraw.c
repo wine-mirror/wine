@@ -1420,23 +1420,10 @@ HRESULT ddraw_get_d3dcaps(const struct ddraw *ddraw, D3DDEVICEDESC7 *caps)
     caps->dwMinTextureHeight = 1;
 
     /* Convert DWORDs safely to WORDs */
-    if (wined3d_caps.MaxTextureBlendStages > 0xffff)
-        caps->wMaxTextureBlendStages = 0xffff;
-    else
-        caps->wMaxTextureBlendStages = (WORD)wined3d_caps.MaxTextureBlendStages;
-    if (wined3d_caps.MaxSimultaneousTextures > 0xffff)
-        caps->wMaxSimultaneousTextures = 0xffff;
-    else
-        caps->wMaxSimultaneousTextures = (WORD)wined3d_caps.MaxSimultaneousTextures;
-
-    if (wined3d_caps.MaxUserClipPlanes > 0xffff)
-        caps->wMaxUserClipPlanes = 0xffff;
-    else
-        caps->wMaxUserClipPlanes = (WORD)wined3d_caps.MaxUserClipPlanes;
-    if (wined3d_caps.MaxVertexBlendMatrices > 0xffff)
-        caps->wMaxVertexBlendMatrices = 0xffff;
-    else
-        caps->wMaxVertexBlendMatrices = (WORD)wined3d_caps.MaxVertexBlendMatrices;
+    caps->wMaxTextureBlendStages = min(wined3d_caps.MaxTextureBlendStages, 0xffff);
+    caps->wMaxSimultaneousTextures = min(wined3d_caps.MaxSimultaneousTextures, 0xffff);
+    caps->wMaxUserClipPlanes = min(wined3d_caps.MaxUserClipPlanes, D3DMAXUSERCLIPPLANES);
+    caps->wMaxVertexBlendMatrices = min(wined3d_caps.MaxVertexBlendMatrices, 0xffff);
 
     caps->deviceGUID = IID_IDirect3DTnLHalDevice;
 
