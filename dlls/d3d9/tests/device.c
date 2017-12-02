@@ -12026,13 +12026,10 @@ static void test_clip_planes_limits(void)
         {
             memset(plane, 0xff, sizeof(plane));
             hr = IDirect3DDevice9_GetClipPlane(device, j, plane);
-            todo_wine_if(j >= caps.MaxUserClipPlanes)
-            {
             ok(hr == D3D_OK, "Failed to get clip plane %u, hr %#x.\n", j, hr);
             ok(!plane[0] && !plane[1] && !plane[2] && !plane[3],
                     "Got unexpected plane %u: %.8e, %.8e, %.8e, %.8e.\n",
                     j, plane[0], plane[1], plane[2], plane[3]);
-            }
         }
 
         plane[0] = 2.0f;
@@ -12042,7 +12039,6 @@ static void test_clip_planes_limits(void)
         {
             plane[3] = j;
             hr = IDirect3DDevice9_SetClipPlane(device, j, plane);
-            todo_wine_if(j >= caps.MaxUserClipPlanes)
             ok(hr == D3D_OK, "Failed to set clip plane %u, hr %#x.\n", j, hr);
         }
         for (j = 0; j < 2 * D3DMAXUSERCLIPPLANES; ++j)
@@ -12050,9 +12046,7 @@ static void test_clip_planes_limits(void)
             float expected_d = j >= caps.MaxUserClipPlanes - 1 ? 2 * D3DMAXUSERCLIPPLANES - 1 : j;
             memset(plane, 0xff, sizeof(plane));
             hr = IDirect3DDevice9_GetClipPlane(device, j, plane);
-            todo_wine_if(j >= caps.MaxUserClipPlanes)
             ok(hr == D3D_OK, "Failed to get clip plane %u, hr %#x.\n", j, hr);
-            todo_wine_if(j >= caps.MaxUserClipPlanes - 1)
             ok(plane[0] == 2.0f && plane[1] == 8.0f && plane[2] == 5.0f && plane[3] == expected_d,
                     "Got unexpected plane %u: %.8e, %.8e, %.8e, %.8e.\n",
                     j, plane[0], plane[1], plane[2], plane[3]);

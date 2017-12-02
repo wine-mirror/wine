@@ -97,6 +97,8 @@ struct d3d9_device
     BOOL in_scene;
     BOOL has_vertex_declaration;
 
+    unsigned int max_user_clip_planes;
+
     UINT implicit_swapchain_count;
     struct d3d9_swapchain **implicit_swapchains;
 };
