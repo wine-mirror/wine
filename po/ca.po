@@ -12237,7 +12237,7 @@ msgid ""
 "  REG [operation] [parameters]\n"
 "\n"
 "Supported operations:\n"
-"  ADD | DELETE | IMPORT | QUERY\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
 "\n"
 "For help on a specific operation, type:\n"
 "  REG [operation] /?\n"
@@ -12397,6 +12397,12 @@ msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
 #| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: Seqüència d'escapada no reconeguda [\\%1!c!]\n"
+
+#: reg.rc:70
+#, fuzzy
+#| msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgid "REG EXPORT key_name file.reg [/y]\n"
+msgstr "REG QUERY nom_de_clau [/v nom_de_valor | /ve] [/s]\n"
 
 #: regedit.rc:34
 msgid "&Registry"

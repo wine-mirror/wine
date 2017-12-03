@@ -4,6 +4,7 @@ IMPORTS   = advapi32
 DELAYIMPORTS = user32
 
 C_SRCS = \
+	export.c \
 	import.c \
 	reg.c
 

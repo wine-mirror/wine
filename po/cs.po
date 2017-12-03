@@ -12017,7 +12017,7 @@ msgid ""
 "  REG [operation] [parameters]\n"
 "\n"
 "Supported operations:\n"
-"  ADD | DELETE | IMPORT | QUERY\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
 "\n"
 "For help on a specific operation, type:\n"
 "  REG [operation] /?\n"
@@ -12181,6 +12181,12 @@ msgstr "Chyba: Nepodařilo se přidat klíče na vzdálený stroj\n"
 #: reg.rc:69
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
+
+#: reg.rc:70
+#, fuzzy
+#| msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+msgid "REG EXPORT key_name file.reg [/y]\n"
+msgstr "REG QUERY název_klíče [/v název_hodnoty | /ve] [/s]\n"
 
 #: regedit.rc:34
 msgid "&Registry"

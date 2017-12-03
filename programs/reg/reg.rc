@@ -29,7 +29,7 @@ STRINGTABLE
     STRING_USAGE, "Usage:\n\
 \  REG [operation] [parameters]\n\n\
 \Supported operations:\n\
-\  ADD | DELETE | IMPORT | QUERY\n\n\
+\  ADD | DELETE | IMPORT | EXPORT | QUERY\n\n\
 \For help on a specific operation, type:\n\
 \  REG [operation] /?\n\n"
     STRING_ADD_USAGE, "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
@@ -66,4 +66,5 @@ STRINGTABLE
     STRING_FILE_NOT_FOUND, "reg: The file '%1' was not found.\n"
     STRING_OPEN_KEY_FAILED, "reg: Unable to open the registry key '%1'.\n"
     STRING_ESCAPE_SEQUENCE, "reg: Unrecognized escape sequence [\\%1!c!]\n"
+    STRING_EXPORT_USAGE, "REG EXPORT key_name file.reg [/y]\n"
 }

@@ -16,24 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __REG_H__
-#define __REG_H__
+#include <windows.h>
 
-#include "resource.h"
+#include <wine/debug.h>
 
-#define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
+WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
-/* reg.c */
-void *heap_xalloc(size_t size);
-void *heap_xrealloc(void *buf, size_t size);
-BOOL heap_free(void *buf);
-void WINAPIV output_message(unsigned int id, ...);
-HKEY path_get_rootkey(const WCHAR *path);
-
-/* import.c */
-int reg_import(const WCHAR *filename);
-
-/* export.c */
-int reg_export(int argc, WCHAR *argv[]);
-
-#endif /* __REG_H__ */
+int reg_export(int argc, WCHAR *argv[])
+{
+    FIXME(": operation not yet implemented\n");
+    return 1;
+}
