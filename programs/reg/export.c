@@ -107,11 +107,44 @@ static size_t export_value_name(HANDLE hFile, WCHAR *name, size_t len)
     return line_len;
 }
 
+static void export_string_data(WCHAR **buf, WCHAR *data, size_t size)
+{
+    size_t len = 0, line_len;
+    WCHAR *str;
+    static const WCHAR fmt[] = {'"','%','s','"',0};
+
+    if (size)
+        len = size / sizeof(WCHAR) - 1;
+    str = escape_string(data, len, &line_len);
+    *buf = heap_xalloc((line_len + 3) * sizeof(WCHAR));
+    sprintfW(*buf, fmt, str);
+    heap_free(str);
+}
+
 static void export_newline(HANDLE hFile)
 {
     static const WCHAR newline[] = {'\r','\n',0};
 
     write_file(hFile, newline);
+}
+
+static void export_data(HANDLE hFile, WCHAR *value_name, DWORD value_len,
+                        DWORD type, void *data, size_t size)
+{
+    WCHAR *buf = NULL;
+
+    export_value_name(hFile, value_name, value_len);
+
+    if (type == REG_SZ)
+    {
+        export_string_data(&buf, data, size);
+        write_file(hFile, buf);
+        heap_free(buf);
+    }
+    else
+        FIXME(": export of data type [0x%x] not yet implemented\n", type);
+
+    export_newline(hFile);
 }
 
 static void export_key_name(HANDLE hFile, WCHAR *name)
@@ -129,34 +162,45 @@ static int export_registry_data(HANDLE hFile, HKEY key, WCHAR *path)
 {
     LONG rc;
     DWORD max_value_len = 256, value_len;
-    DWORD i;
+    DWORD max_data_bytes = 2048, data_size;
+    DWORD i, type;
     WCHAR *value_name;
+    BYTE *data;
 
     export_key_name(hFile, path);
 
     value_name = heap_xalloc(max_value_len * sizeof(WCHAR));
+    data = heap_xalloc(max_data_bytes);
 
     i = 0;
     for (;;)
     {
         value_len = max_value_len;
-        rc = RegEnumValueW(key, i, value_name, &value_len, NULL, NULL, NULL, NULL);
+        data_size = max_data_bytes;
+        rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, data, &data_size);
 
         if (rc == ERROR_SUCCESS)
         {
-            export_value_name(hFile, value_name, value_len);
-            FIXME(": export of data types not yet implemented\n");
-            export_newline(hFile);
+            export_data(hFile, value_name, value_len, type, data, data_size);
             i++;
         }
         else if (rc == ERROR_MORE_DATA)
         {
-            max_value_len *= 2;
-            value_name = heap_xrealloc(value_name, max_value_len * sizeof(WCHAR));
+            if (data_size > max_data_bytes)
+            {
+                max_data_bytes = data_size;
+                data = heap_xrealloc(data, max_data_bytes);
+            }
+            else
+            {
+                max_value_len *= 2;
+                value_name = heap_xrealloc(value_name, max_value_len * sizeof(WCHAR));
+            }
         }
         else break;
     }
 
+    heap_free(data);
     heap_free(value_name);
     return 0;
 }
