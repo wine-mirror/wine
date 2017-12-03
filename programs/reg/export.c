@@ -118,6 +118,14 @@ static void export_string_data(WCHAR **buf, WCHAR *data, size_t size)
     heap_free(str);
 }
 
+static void export_dword_data(WCHAR **buf, DWORD *data)
+{
+    static const WCHAR fmt[] = {'d','w','o','r','d',':','%','0','8','x',0};
+
+    *buf = heap_xalloc(15 * sizeof(WCHAR));
+    sprintfW(*buf, fmt, *data);
+}
+
 static size_t export_hex_data_type(HANDLE hFile, DWORD type)
 {
     static const WCHAR hex[] = {'h','e','x',':',0};
@@ -192,6 +200,13 @@ static void export_data(HANDLE hFile, WCHAR *value_name, DWORD value_len,
     case REG_SZ:
         export_string_data(&buf, data, size);
         break;
+    case REG_DWORD:
+        if (size)
+        {
+            export_dword_data(&buf, data);
+            break;
+        }
+        /* fall through */
     case REG_NONE:
     case REG_EXPAND_SZ:
     case REG_BINARY:
