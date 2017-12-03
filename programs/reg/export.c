@@ -18,12 +18,37 @@
 
 #include <windows.h>
 
+#include <wine/unicode.h>
 #include <wine/debug.h>
+
+#include "reg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
+static BOOL is_overwrite_switch(const WCHAR *s)
+{
+    if (strlenW(s) > 2)
+        return FALSE;
+
+    if ((s[0] == '/' || s[0] == '-') && (s[1] == 'y' || s[1] == 'Y'))
+        return TRUE;
+
+    return FALSE;
+}
+
 int reg_export(int argc, WCHAR *argv[])
 {
+    if (argc == 3 || argc > 5)
+        goto error;
+
+    if (argc == 5 && !is_overwrite_switch(argv[4]))
+        goto error;
+
     FIXME(": operation not yet implemented\n");
+    return 1;
+
+error:
+    output_message(STRING_INVALID_SYNTAX);
+    output_message(STRING_FUNC_HELP, struprW(argv[1]));
     return 1;
 }
