@@ -53,6 +53,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
+#define SHORT_TZ_NAME_MAX 8
+struct tz_name_map {
+    WCHAR key_name[128];
+    char short_name[SHORT_TZ_NAME_MAX];
+};
+
 static int init_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi);
 
 static RTL_CRITICAL_SECTION TIME_tz_section;
@@ -571,6 +577,42 @@ static BOOL match_tz_info(const RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const RT
     return FALSE;
 }
 
+static int compare_tz_key(const void *a, const void *b)
+{
+    const struct tz_name_map *map_a, *map_b;
+    map_a = (const struct tz_name_map *)a;
+    map_b = (const struct tz_name_map *)b;
+    return strcmpW(map_a->key_name, map_b->key_name);
+}
+
+static BOOL match_tz_name(const char* tz_name,
+                          const RTL_DYNAMIC_TIME_ZONE_INFORMATION *reg_tzi)
+{
+    static const struct tz_name_map mapping[] = {
+        { {'K','o','r','e','a',' ','S','t','a','n','d','a','r','d',' ','T','i',
+           'm','e',0 },
+          "KST" },
+        { {'T','o','k','y','o',' ','S','t','a','n','d','a','r','d',' ','T','i',
+           'm','e',0 },
+          "JST" },
+        { {'Y','a','k','u','t','s','k',' ','S','t','a','n','d','a','r','d',' ',
+           'T','i','m','e',0 },
+          "+09" }, /* YAKST was used until tzdata 2016f */
+    };
+    struct tz_name_map *match, key;
+
+    if (reg_tzi->DaylightDate.wMonth)
+        return TRUE;
+
+    strcpyW(key.key_name, reg_tzi->TimeZoneKeyName);
+    match = bsearch(&key, mapping, sizeof(mapping)/sizeof(mapping[0]),
+                    sizeof(mapping[0]), compare_tz_key);
+    if (!match)
+        return TRUE;
+
+    return !strcmp(match->short_name, tz_name);
+}
+
 static BOOL reg_query_value(HKEY hkey, LPCWSTR name, DWORD type, void *data, DWORD count)
 {
     UNICODE_STRING nameW;
@@ -592,7 +634,7 @@ static BOOL reg_query_value(HKEY hkey, LPCWSTR name, DWORD type, void *data, DWO
     return TRUE;
 }
 
-static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, int year)
+static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char* tz_name, int year)
 {
     static const WCHAR Time_ZonesW[] = { 'M','a','c','h','i','n','e','\\',
         'S','o','f','t','w','a','r','e','\\',
@@ -714,7 +756,8 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, int year)
 
         NtClose(hSubkey);
 
-        if (match_tz_info(tzi, &reg_tzi))
+        if (match_tz_info(tzi, &reg_tzi)
+            && match_tz_name(tz_name, &reg_tzi))
         {
             *tzi = reg_tzi;
             NtClose(hkey);
@@ -729,8 +772,8 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, int year)
     NtClose(hkey);
 
     FIXME("Can't find matching timezone information in the registry for "
-          "bias %d, std (d/m/y): %u/%02u/%04u, dlt (d/m/y): %u/%02u/%04u\n",
-          tzi->Bias,
+          "%s, bias %d, std (d/m/y): %u/%02u/%04u, dlt (d/m/y): %u/%02u/%04u\n",
+          tz_name, tzi->Bias,
           tzi->StandardDate.wDay, tzi->StandardDate.wMonth, tzi->StandardDate.wYear,
           tzi->DaylightDate.wDay, tzi->DaylightDate.wMonth, tzi->DaylightDate.wYear);
 }
@@ -763,6 +806,7 @@ static int init_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi)
     static RTL_DYNAMIC_TIME_ZONE_INFORMATION cached_tzi;
     static int current_year = -1, current_bias = 65535;
     struct tm *tm;
+    char tz_name[SHORT_TZ_NAME_MAX];
     time_t year_start, year_end, tmp, dlt = 0, std = 0;
     int is_dst, current_is_dst, bias;
 
@@ -782,6 +826,10 @@ static int init_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi)
     }
 
     memset(tzi, 0, sizeof(*tzi));
+    if (!strftime(tz_name, sizeof(tz_name), "%Z", tm)) {
+        /* not enough room or another error */
+        tz_name[0] = '\0';
+    }
 
     TRACE("tz data will be valid through year %d, bias %d\n", tm->tm_year + 1900, bias);
     current_year = tm->tm_year;
@@ -864,7 +912,7 @@ static int init_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi)
             tzi->StandardBias);
     }
 
-    find_reg_tz_info(tzi, current_year + 1900);
+    find_reg_tz_info(tzi, tz_name, current_year + 1900);
     cached_tzi = *tzi;
 
     RtlLeaveCriticalSection( &TIME_tz_section );
