@@ -4536,7 +4536,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    ok(compare_export("file.reg", empty_hex_test, TODO_REG_COMPARE), "compare_export() failed\n");
+    ok(compare_export("file.reg", empty_hex_test, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
@@ -4554,7 +4554,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    ok(compare_export("file.reg", empty_hex_test2, TODO_REG_COMPARE), "compare_export() failed\n");
+    ok(compare_export("file.reg", empty_hex_test2, 0), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 

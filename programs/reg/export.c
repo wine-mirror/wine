@@ -20,11 +20,8 @@
 #include <stdlib.h>
 
 #include <wine/unicode.h>
-#include <wine/debug.h>
 
 #include "reg.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 static void write_file(HANDLE hFile, const WCHAR *str)
 {
@@ -121,6 +118,62 @@ static void export_string_data(WCHAR **buf, WCHAR *data, size_t size)
     heap_free(str);
 }
 
+static size_t export_hex_data_type(HANDLE hFile, DWORD type)
+{
+    static const WCHAR hex[] = {'h','e','x',':',0};
+    static const WCHAR hexp_fmt[] = {'h','e','x','(','%','x',')',':',0};
+    size_t line_len;
+
+    if (type == REG_BINARY)
+    {
+        line_len = lstrlenW(hex);
+        write_file(hFile, hex);
+    }
+    else
+    {
+        WCHAR *buf = heap_xalloc(15 * sizeof(WCHAR));
+        line_len = sprintfW(buf, hexp_fmt, type);
+        write_file(hFile, buf);
+        heap_free(buf);
+    }
+
+    return line_len;
+}
+
+#define MAX_HEX_CHARS 77
+
+static void export_hex_data(HANDLE hFile, WCHAR **buf, DWORD type,
+                            DWORD line_len, void *data, DWORD size)
+{
+    static const WCHAR fmt[] = {'%','0','2','x',0};
+    static const WCHAR hex_concat[] = {'\\','\r','\n',' ',' ',0};
+    size_t num_commas, i, pos;
+
+    line_len += export_hex_data_type(hFile, type);
+
+    if (!size) return;
+
+    num_commas = size - 1;
+    *buf = heap_xalloc(size * 3 * sizeof(WCHAR));
+
+    for (i = 0, pos = 0; i < size; i++)
+    {
+        pos += sprintfW(*buf + pos, fmt, ((BYTE *)data)[i]);
+        if (i == num_commas) break;
+        (*buf)[pos++] = ',';
+        (*buf)[pos] = 0;
+        line_len += 3;
+
+        if (line_len >= MAX_HEX_CHARS)
+        {
+            write_file(hFile, *buf);
+            write_file(hFile, hex_concat);
+            line_len = 2;
+            pos = 0;
+        }
+    }
+}
+
 static void export_newline(HANDLE hFile)
 {
     static const WCHAR newline[] = {'\r','\n',0};
@@ -132,17 +185,27 @@ static void export_data(HANDLE hFile, WCHAR *value_name, DWORD value_len,
                         DWORD type, void *data, size_t size)
 {
     WCHAR *buf = NULL;
+    size_t line_len = export_value_name(hFile, value_name, value_len);
 
-    export_value_name(hFile, value_name, value_len);
-
-    if (type == REG_SZ)
+    switch (type)
     {
+    case REG_SZ:
         export_string_data(&buf, data, size);
+        break;
+    case REG_NONE:
+    case REG_EXPAND_SZ:
+    case REG_BINARY:
+    case REG_MULTI_SZ:
+    default:
+        export_hex_data(hFile, &buf, type, line_len, data, size);
+        break;
+    }
+
+    if (size || type == REG_SZ)
+    {
         write_file(hFile, buf);
         heap_free(buf);
     }
-    else
-        FIXME(": export of data type [0x%x] not yet implemented\n", type);
 
     export_newline(hFile);
 }
