@@ -637,7 +637,7 @@ static void output_value(const WCHAR *value_name, DWORD type, BYTE *data, DWORD 
     output_string(newlineW);
 }
 
-static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD subkey_len)
+WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD subkey_len)
 {
     WCHAR *subkey_path;
     static const WCHAR fmt[] = {'%','s','\\','%','s',0};

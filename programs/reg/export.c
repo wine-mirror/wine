@@ -236,14 +236,18 @@ static void export_key_name(HANDLE hFile, WCHAR *name)
     heap_free(buf);
 }
 
+#define MAX_SUBKEY_LEN   257
+
 static int export_registry_data(HANDLE hFile, HKEY key, WCHAR *path)
 {
     LONG rc;
     DWORD max_value_len = 256, value_len;
     DWORD max_data_bytes = 2048, data_size;
-    DWORD i, type;
-    WCHAR *value_name;
+    DWORD subkey_len;
+    DWORD i, type, path_len;
+    WCHAR *value_name, *subkey_name, *subkey_path;
     BYTE *data;
+    HKEY subkey;
 
     export_key_name(hFile, path);
 
@@ -280,6 +284,31 @@ static int export_registry_data(HANDLE hFile, HKEY key, WCHAR *path)
 
     heap_free(data);
     heap_free(value_name);
+
+    subkey_name = heap_xalloc(MAX_SUBKEY_LEN * sizeof(WCHAR));
+
+    path_len = lstrlenW(path);
+
+    i = 0;
+    for (;;)
+    {
+        subkey_len = MAX_SUBKEY_LEN;
+        rc = RegEnumKeyExW(key, i, subkey_name, &subkey_len, NULL, NULL, NULL, NULL);
+        if (rc == ERROR_SUCCESS)
+        {
+            subkey_path = build_subkey_path(path, path_len, subkey_name, subkey_len);
+            if (!RegOpenKeyExW(key, subkey_name, 0, KEY_READ, &subkey))
+            {
+                export_registry_data(hFile, subkey, subkey_path);
+                RegCloseKey(subkey);
+            }
+            heap_free(subkey_path);
+            i++;
+        }
+        else break;
+    }
+
+    heap_free(subkey_name);
     return 0;
 }
 
