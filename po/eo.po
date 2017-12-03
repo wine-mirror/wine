@@ -11775,6 +11775,12 @@ msgstr ""
 msgid "REG EXPORT key_name file.reg [/y]\n"
 msgstr ""
 
+#: reg.rc:71
+#, fuzzy
+#| msgid "Invalid share name.\n"
+msgid "reg: Invalid system key [%1]\n"
+msgstr "Nevalida nomo de kunuzata aparato.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registrejo"

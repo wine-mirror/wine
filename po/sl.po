@@ -12518,6 +12518,12 @@ msgstr ""
 msgid "REG EXPORT key_name file.reg [/y]\n"
 msgstr "REG QUERY ime_ključa [/v ime_vrednosti | /ve] [/s]\n"
 
+#: reg.rc:71
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid system key [%1]\n"
+msgstr "Napaka: neveljavno ime ključa\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

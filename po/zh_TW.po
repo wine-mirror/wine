@@ -12449,6 +12449,12 @@ msgstr ""
 msgid "REG EXPORT key_name file.reg [/y]\n"
 msgstr "REG QUERY 索引鍵名稱 [/v 值名稱 | /ve] [/s]\n"
 
+#: reg.rc:71
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid system key [%1]\n"
+msgstr "錯誤：無效的索引鍵名稱\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

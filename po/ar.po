@@ -12540,6 +12540,12 @@ msgstr ""
 msgid "REG EXPORT key_name file.reg [/y]\n"
 msgstr "REG QUERY اسم المفتاح [/v اسم القيمة | /ve] [/s]\n"
 
+#: reg.rc:71
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid system key [%1]\n"
+msgstr "خطأ : اسم المفتاح غير سليم\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "ال&سجل"

@@ -12191,6 +12191,12 @@ msgstr "reg: Neatpažinta kaitos seka [\\%1!c!]\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
 msgstr "REG IMPORT failas.reg\n"
 
+#: reg.rc:71
+#, fuzzy
+#| msgid "regedit: Invalid system key [%1]\n"
+msgid "reg: Invalid system key [%1]\n"
+msgstr "regedit: Netinkamas sisteminis raktas [%1]\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"

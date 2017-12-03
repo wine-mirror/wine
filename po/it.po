@@ -12575,6 +12575,12 @@ msgstr ""
 msgid "REG EXPORT key_name file.reg [/y]\n"
 msgstr "REG QUERY nome_della_chiave [/v nome_del_valore | /ve] [/s]\n"
 
+#: reg.rc:71
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid system key [%1]\n"
+msgstr "Errore: nome della chiave non valido\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

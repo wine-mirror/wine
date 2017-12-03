@@ -11938,6 +11938,12 @@ msgstr ""
 msgid "REG EXPORT key_name file.reg [/y]\n"
 msgstr ""
 
+#: reg.rc:71
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "reg: Invalid system key [%1]\n"
+msgstr "Nesprávny názov.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

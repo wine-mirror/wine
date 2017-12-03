@@ -12269,6 +12269,12 @@ msgstr "regedit: Nierozpoznana sekwencja wyjściowa [\\%1!c!]\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
 msgstr "REG QUERY nazwa_klucza [/v nazwa_wartości | /ve] [/s]\n"
 
+#: reg.rc:71
+#, fuzzy
+#| msgid "regedit: Invalid system key [%1]\n"
+msgid "reg: Invalid system key [%1]\n"
+msgstr "regedit: Nieprawidłowy klucz systemowy [%1]\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rejestr"

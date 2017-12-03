@@ -878,15 +878,16 @@ BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path, WCHAR **long
     if (!sane_path(key))
         return FALSE;
 
+    *path = strchrW(key, '\\');
+    if (*path) (*path)++;
+
     *root = path_get_rootkey(key);
     if (!*root)
     {
-        output_message(STRING_INVALID_KEY);
+        if (*path) *(*path - 1) = 0;
+        output_message(STRING_INVALID_SYSTEM_KEY, key);
         return FALSE;
     }
-
-    *path = strchrW(key, '\\');
-    if (*path) (*path)++;
 
     *long_key = get_long_key(*root, *path);
 

@@ -12479,6 +12479,11 @@ msgstr ""
 msgid "REG EXPORT key_name file.reg [/y]\n"
 msgstr ""
 
+#: reg.rc:71
+#, fuzzy
+msgid "reg: Invalid system key [%1]\n"
+msgstr "Neispravna sintaksa.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""
