@@ -26,6 +26,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
+static void write_file(HANDLE hFile, const WCHAR *str)
+{
+    DWORD written;
+
+    WriteFile(hFile, str, lstrlenW(str) * sizeof(WCHAR), &written, NULL);
+}
+
+static void export_file_header(HANDLE hFile)
+{
+    static const WCHAR header[] = { 0xfeff,'W','i','n','d','o','w','s',' ',
+                                   'R','e','g','i','s','t','r','y',' ','E','d','i','t','o','r',' ',
+                                   'V','e','r','s','i','o','n',' ','5','.','0','0','\r','\n'};
+
+    write_file(hFile, header);
+}
+
 static HANDLE create_file(const WCHAR *filename, DWORD action)
 {
     return CreateFileW(filename, GENERIC_WRITE, 0, NULL, action, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -98,6 +114,7 @@ int reg_export(int argc, WCHAR *argv[])
     }
 
     hFile = get_file_handle(argv[3], overwrite_file);
+    export_file_header(hFile);
     FIXME(": operation not yet implemented\n");
     CloseHandle(hFile);
 
