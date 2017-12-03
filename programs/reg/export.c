@@ -38,7 +38,7 @@ static BOOL is_overwrite_switch(const WCHAR *s)
 
 int reg_export(int argc, WCHAR *argv[])
 {
-    HKEY root;
+    HKEY root, hkey;
     WCHAR *path, *long_key;
 
     if (argc == 3 || argc > 5)
@@ -50,7 +50,16 @@ int reg_export(int argc, WCHAR *argv[])
     if (argc == 5 && !is_overwrite_switch(argv[4]))
         goto error;
 
+    if (RegOpenKeyExW(root, path, 0, KEY_READ, &hkey))
+    {
+        output_message(STRING_INVALID_KEY);
+        return 1;
+    }
+
     FIXME(": operation not yet implemented\n");
+
+    RegCloseKey(hkey);
+
     return 1;
 
 error:
