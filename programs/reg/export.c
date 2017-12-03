@@ -38,8 +38,14 @@ static BOOL is_overwrite_switch(const WCHAR *s)
 
 int reg_export(int argc, WCHAR *argv[])
 {
+    HKEY root;
+    WCHAR *path, *long_key;
+
     if (argc == 3 || argc > 5)
         goto error;
+
+    if (!parse_registry_key(argv[2], &root, &path, &long_key))
+        return 1;
 
     if (argc == 5 && !is_overwrite_switch(argv[4]))
         goto error;

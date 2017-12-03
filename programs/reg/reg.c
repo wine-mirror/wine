@@ -873,7 +873,7 @@ static WCHAR *get_long_key(HKEY root, WCHAR *path)
     return long_key;
 }
 
-static BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path, WCHAR **long_key)
+BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path, WCHAR **long_key)
 {
     if (!sane_path(key))
         return FALSE;

@@ -29,6 +29,7 @@ void *heap_xrealloc(void *buf, size_t size);
 BOOL heap_free(void *buf);
 void WINAPIV output_message(unsigned int id, ...);
 HKEY path_get_rootkey(const WCHAR *path);
+BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path, WCHAR **long_key);
 
 /* import.c */
 int reg_import(const WCHAR *filename);
