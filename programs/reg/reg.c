@@ -111,7 +111,7 @@ BOOL heap_free(void *buf)
     return HeapFree(GetProcessHeap(), 0, buf);
 }
 
-static void output_writeconsole(const WCHAR *str, DWORD wlen)
+void output_writeconsole(const WCHAR *str, DWORD wlen)
 {
     DWORD count, ret;
 
@@ -176,7 +176,7 @@ static void WINAPIV output_string(const WCHAR *fmt, ...)
 }
 
 /* ask_confirm() adapted from programs/cmd/builtins.c */
-static BOOL ask_confirm(unsigned int msgid, WCHAR *reg_info)
+BOOL ask_confirm(unsigned int msgid, WCHAR *reg_info)
 {
     HMODULE hmod;
     WCHAR Ybuffer[4];

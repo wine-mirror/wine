@@ -4289,7 +4289,7 @@ static BOOL compare_export_(unsigned line, const char *filename, const char *exp
         lok(!lstrcmpW(fbuf, wstr), "export data does not match expected data\n");
 
     ret = DeleteFileA(filename);
-    todo_wine lok(ret, "DeleteFile failed: %u\n", GetLastError());
+    lok(ret, "DeleteFile failed: %u\n", GetLastError());
 
 exit:
     HeapFree(GetProcessHeap(), 0, fbuf);
@@ -4442,7 +4442,7 @@ static void test_export(void)
     else /* Windows XP (32-bit) and older */
         win_skip("File overwrite flag [/y] not supported; skipping position tests\n");
 
-    todo_wine ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
+    ok(compare_export("file.reg", empty_key_test, TODO_REG_COMPARE), "compare_export() failed\n");
 
     /* Test registry export with a simple data structure */
     dword = 0x100;
@@ -4451,7 +4451,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", simple_test, 0), "compare_export() failed\n");
+    ok(compare_export("file.reg", simple_test, TODO_REG_COMPARE), "compare_export() failed\n");
 
     /* Test registry export with a complex data structure */
     add_key(hkey, "Subkey1", &subkey);
@@ -4489,7 +4489,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", complex_test, 0), "compare_export() failed\n");
+    ok(compare_export("file.reg", complex_test, TODO_REG_COMPARE), "compare_export() failed\n");
 
     err = delete_tree(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS, "delete_tree() failed: %d\n", err);
@@ -4503,7 +4503,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", key_order_test, 0), "compare_export() failed\n");
+    ok(compare_export("file.reg", key_order_test, TODO_REG_COMPARE), "compare_export() failed\n");
 
     delete_key(hkey, "Subkey1");
     delete_key(hkey, "Subkey2");
@@ -4518,7 +4518,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", value_order_test, 0), "compare_export() failed\n");
+    ok(compare_export("file.reg", value_order_test, TODO_REG_COMPARE), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
@@ -4536,7 +4536,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", empty_hex_test, 0), "compare_export() failed\n");
+    ok(compare_export("file.reg", empty_hex_test, TODO_REG_COMPARE), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
@@ -4554,7 +4554,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", empty_hex_test2, 0), "compare_export() failed\n");
+    ok(compare_export("file.reg", empty_hex_test2, TODO_REG_COMPARE), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
@@ -4573,7 +4573,7 @@ static void test_export(void)
 
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    todo_wine ok(compare_export("file.reg", hex_types_test, 0), "compare_export() failed\n");
+    ok(compare_export("file.reg", hex_types_test, TODO_REG_COMPARE), "compare_export() failed\n");
 
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }

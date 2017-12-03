@@ -12251,6 +12251,13 @@ msgstr "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgid "reg: Invalid system key [%1]\n"
 msgstr "Error: Invalid key name\n"
 
+#: reg.rc:72
+#, fuzzy
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr ""
+"הקובץ כבר קיים.\n"
+"האם ברצונך להחליף אותו?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&רישום המערכת"

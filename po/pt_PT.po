@@ -12372,6 +12372,12 @@ msgstr "REG QUERY nome_chave [/v nome_valor | /ve] [/s]\n"
 msgid "reg: Invalid system key [%1]\n"
 msgstr "Erro: Nome de chave inválido\n"
 
+#: reg.rc:72
+#, fuzzy
+#| msgid "The specified file already exists. Do you want to replace it?"
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr "O ficheiro especificado já existe. Deseja substituí-lo?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registo"

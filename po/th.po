@@ -11866,6 +11866,18 @@ msgstr ""
 msgid "reg: Invalid system key [%1]\n"
 msgstr ""
 
+#: reg.rc:72
+#, fuzzy
+#| msgid ""
+#| "File '%s' does not exist.\n"
+#| "\n"
+#| "Do you want to create a new file?"
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr ""
+"ไม่พบแฟ้ม '%s' ที่ต้องการเปิด\n"
+"\n"
+"คุณต้องการสร้างใหม่ไม่?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

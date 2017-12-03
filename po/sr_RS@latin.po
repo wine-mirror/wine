@@ -12484,6 +12484,13 @@ msgstr ""
 msgid "reg: Invalid system key [%1]\n"
 msgstr "Neispravna sintaksa.\n"
 
+#: reg.rc:72
+#, fuzzy
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr ""
+"Datoteka već postoji.\n"
+"Želite li da je zamenite?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

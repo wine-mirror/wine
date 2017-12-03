@@ -12252,6 +12252,12 @@ msgstr "REG QUERY anahtar_adı [/v değer_adı | /ve] [/s]\n"
 msgid "reg: Invalid system key [%1]\n"
 msgstr "reg: Geçersiz anahtar adı\n"
 
+#: reg.rc:72
+#, fuzzy
+#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr "Belirtilen '%1' kayıt defteri değeri zaten var. Üzerine yazılsın mı?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Kayıt Defteri"

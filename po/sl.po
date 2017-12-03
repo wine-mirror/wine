@@ -12524,6 +12524,12 @@ msgstr "REG QUERY ime_ključa [/v ime_vrednosti | /ve] [/s]\n"
 msgid "reg: Invalid system key [%1]\n"
 msgstr "Napaka: neveljavno ime ključa\n"
 
+#: reg.rc:72
+#, fuzzy
+#| msgid "The specified file already exists. Do you want to replace it?"
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr "Določena datoteka že obstaja. Ali jo želite zamenjati?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

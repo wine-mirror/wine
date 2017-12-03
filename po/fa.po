@@ -11819,6 +11819,14 @@ msgstr ""
 msgid "reg: Invalid system key [%1]\n"
 msgstr ""
 
+#: reg.rc:72
+#, fuzzy
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr ""
+"پرونده‌ای با نام '%s' وجود ندارد.\n"
+"\n"
+"آیا می‌خواهید یک پرونده‌ی جدید ایجاد کنید؟"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

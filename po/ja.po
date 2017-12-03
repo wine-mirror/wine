@@ -12210,6 +12210,12 @@ msgstr "REG IMPORT ファイル.reg\n"
 msgid "reg: Invalid system key [%1]\n"
 msgstr "regedit: システム キーが無効です [%1]\n"
 
+#: reg.rc:72
+#, fuzzy
+#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr "レジストリ値 '%1' はすでに存在します。上書きしますか?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "レジストリ(&R)"

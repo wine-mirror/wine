@@ -11944,6 +11944,16 @@ msgstr ""
 msgid "reg: Invalid system key [%1]\n"
 msgstr "Nesprávny názov.\n"
 
+#: reg.rc:72
+#, fuzzy
+#| msgid ""
+#| "File already exists.\n"
+#| "Do you want to replace it?"
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr ""
+"Súbor už existuje.\n"
+"Prajete si ho prepísať?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

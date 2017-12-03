@@ -17,6 +17,7 @@
  */
 
 #include <windows.h>
+#include <stdlib.h>
 
 #include <wine/unicode.h>
 #include <wine/debug.h>
@@ -24,6 +25,44 @@
 #include "reg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
+
+static HANDLE create_file(const WCHAR *filename, DWORD action)
+{
+    return CreateFileW(filename, GENERIC_WRITE, 0, NULL, action, FILE_ATTRIBUTE_NORMAL, NULL);
+}
+
+static HANDLE get_file_handle(WCHAR *filename, BOOL overwrite_file)
+{
+    HANDLE hFile = create_file(filename, overwrite_file ? CREATE_ALWAYS : CREATE_NEW);
+
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        DWORD error = GetLastError();
+
+        if (error == ERROR_FILE_EXISTS)
+        {
+            if (!ask_confirm(STRING_OVERWRITE_FILE, filename))
+            {
+                output_message(STRING_CANCELLED);
+                exit(0);
+            }
+
+            hFile = create_file(filename, CREATE_ALWAYS);
+        }
+        else
+        {
+            WCHAR *str;
+
+            FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                           FORMAT_MESSAGE_IGNORE_INSERTS, NULL, error, 0, (WCHAR *)&str, 0, NULL);
+            output_writeconsole(str, lstrlenW(str));
+            LocalFree(str);
+            exit(1);
+        }
+    }
+
+    return hFile;
+}
 
 static BOOL is_overwrite_switch(const WCHAR *s)
 {
@@ -40,6 +79,8 @@ int reg_export(int argc, WCHAR *argv[])
 {
     HKEY root, hkey;
     WCHAR *path, *long_key;
+    BOOL overwrite_file = FALSE;
+    HANDLE hFile;
 
     if (argc == 3 || argc > 5)
         goto error;
@@ -47,7 +88,7 @@ int reg_export(int argc, WCHAR *argv[])
     if (!parse_registry_key(argv[2], &root, &path, &long_key))
         return 1;
 
-    if (argc == 5 && !is_overwrite_switch(argv[4]))
+    if (argc == 5 && !(overwrite_file = is_overwrite_switch(argv[4])))
         goto error;
 
     if (RegOpenKeyExW(root, path, 0, KEY_READ, &hkey))
@@ -56,7 +97,9 @@ int reg_export(int argc, WCHAR *argv[])
         return 1;
     }
 
+    hFile = get_file_handle(argv[3], overwrite_file);
     FIXME(": operation not yet implemented\n");
+    CloseHandle(hFile);
 
     RegCloseKey(hkey);
 

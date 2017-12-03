@@ -12195,6 +12195,12 @@ msgstr "REG IMPORT file.reg\n"
 msgid "reg: Invalid system key [%1]\n"
 msgstr "regedit: неверный системный ключ [%1]\n"
 
+#: reg.rc:72
+#, fuzzy
+#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr "Значение «%1» уже существует. Вы хотите заменить его?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Реестр"

@@ -27,7 +27,9 @@
 void *heap_xalloc(size_t size);
 void *heap_xrealloc(void *buf, size_t size);
 BOOL heap_free(void *buf);
+void output_writeconsole(const WCHAR *str, DWORD wlen);
 void WINAPIV output_message(unsigned int id, ...);
+BOOL ask_confirm(unsigned int msgid, WCHAR *reg_info);
 HKEY path_get_rootkey(const WCHAR *path);
 BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path, WCHAR **long_key);
 

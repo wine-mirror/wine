@@ -11835,6 +11835,13 @@ msgstr ""
 msgid "reg: Invalid system key [%1]\n"
 msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
 
+#: reg.rc:72
+#, fuzzy
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr ""
+"Το αρχείο υπάρχει ήδη.\n"
+"Θέλετε να το αντικαταστήσετε;"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

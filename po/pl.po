@@ -12275,6 +12275,12 @@ msgstr "REG QUERY nazwa_klucza [/v nazwa_wartości | /ve] [/s]\n"
 msgid "reg: Invalid system key [%1]\n"
 msgstr "regedit: Nieprawidłowy klucz systemowy [%1]\n"
 
+#: reg.rc:72
+#, fuzzy
+#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr "Wartość rejestru '%1' już istnieje. Czy chesz ją zastąpić?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rejestr"
