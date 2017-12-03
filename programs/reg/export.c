@@ -33,6 +33,17 @@ static void write_file(HANDLE hFile, const WCHAR *str)
     WriteFile(hFile, str, lstrlenW(str) * sizeof(WCHAR), &written, NULL);
 }
 
+static void export_key_name(HANDLE hFile, WCHAR *name)
+{
+    static const WCHAR fmt[] = {'\r','\n','[','%','s',']','\r','\n',0};
+    WCHAR *buf;
+
+    buf = heap_xalloc((lstrlenW(name) + 7) * sizeof(WCHAR));
+    sprintfW(buf, fmt, name);
+    write_file(hFile, buf);
+    heap_free(buf);
+}
+
 static void export_file_header(HANDLE hFile)
 {
     static const WCHAR header[] = { 0xfeff,'W','i','n','d','o','w','s',' ',
@@ -115,6 +126,7 @@ int reg_export(int argc, WCHAR *argv[])
 
     hFile = get_file_handle(argv[3], overwrite_file);
     export_file_header(hFile);
+    export_key_name(hFile, long_key);
     FIXME(": operation not yet implemented\n");
     CloseHandle(hFile);
 
