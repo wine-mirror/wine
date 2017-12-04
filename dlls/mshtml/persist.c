@@ -892,10 +892,9 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, IStream 
 
     prepare_for_binding(This, mon, FALSE);
     hres = set_moniker(This->window, mon, NULL, NULL, NULL, TRUE);
-    if(FAILED(hres))
-        return hres;
+    if(SUCCEEDED(hres))
+        hres = channelbsc_load_stream(This->window->pending_window, mon, pStm);
 
-    hres = channelbsc_load_stream(This->window->pending_window, mon, pStm);
     IMoniker_Release(mon);
     return hres;
 }
@@ -950,10 +949,9 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
 
     prepare_for_binding(This, mon, FALSE);
     hres = set_moniker(This->window, mon, NULL, NULL, NULL, FALSE);
-    if(FAILED(hres))
-        return hres;
+    if(SUCCEEDED(hres))
+        hres = channelbsc_load_stream(This->window->pending_window, mon, NULL);
 
-    hres = channelbsc_load_stream(This->window->pending_window, mon, NULL);
     IMoniker_Release(mon);
     return hres;
 }
