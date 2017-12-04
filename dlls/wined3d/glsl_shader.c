@@ -1308,7 +1308,7 @@ static void swap_rows(float **a, float **b)
     *b = tmp;
 }
 
-static BOOL invert_matrix(struct wined3d_matrix *out, struct wined3d_matrix *m)
+static BOOL invert_matrix(struct wined3d_matrix *out, const struct wined3d_matrix *m)
 {
     float wtmp[4][8];
     float m0, m1, m2, m3, s;
@@ -1512,6 +1512,18 @@ static BOOL invert_matrix(struct wined3d_matrix *out, struct wined3d_matrix *m)
     return TRUE;
 }
 
+static void transpose_matrix(struct wined3d_matrix *out, const struct wined3d_matrix *m)
+{
+    struct wined3d_matrix temp;
+    unsigned int i, j;
+
+    for (i = 0; i < 4; ++i)
+        for (j = 0; j < 4; ++j)
+            (&temp._11)[4 * j + i] = (&m->_11)[4 * i + j];
+
+    *out = temp;
+}
+
 static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_context *context,
         const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
 {
@@ -1709,13 +1721,18 @@ static void shader_glsl_clip_plane_uniform(const struct wined3d_context *context
         const struct wined3d_state *state, unsigned int index, struct glsl_shader_prog_link *prog)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_matrix matrix;
     struct wined3d_vec4 plane;
+
+    plane = state->clip_planes[index];
 
     /* Clip planes are affected by the view transform in d3d for FFP draws. */
     if (!use_vs(state))
-        multiply_vector_matrix(&plane, &state->clip_planes[index], &state->transforms[WINED3D_TS_VIEW]);
-    else
-        plane = state->clip_planes[index];
+    {
+        invert_matrix(&matrix, &state->transforms[WINED3D_TS_VIEW]);
+        transpose_matrix(&matrix, &matrix);
+        multiply_vector_matrix(&plane, &plane, &matrix);
+    }
 
     GL_EXTCALL(glUniform4fv(prog->vs.clip_planes_location + index, 1, &plane.x));
 }
