@@ -218,7 +218,6 @@ static eventid_t str_to_eid(const WCHAR *str)
             return i;
     }
 
-    ERR("unknown type %s\n", debugstr_w(str));
     return EVENTID_LAST;
 }
 
@@ -1062,11 +1061,39 @@ static HRESULT WINAPI DOMEvent_get_type(IDOMEvent *iface, BSTR *p)
     return S_OK;
 }
 
+#ifdef __i386__
+#define nsIDOMEvent_InitEvent(_this,type,bubbles,cancelable) \
+    ((void (WINAPI*)(void*,nsIDOMEvent*,const nsAString*,cpp_bool,cpp_bool)) \
+     &call_thiscall_func)((_this)->lpVtbl->InitEvent,_this,type,bubbles,cancelable)
+
+#endif
+
 static HRESULT WINAPI DOMEvent_initEvent(IDOMEvent *iface, BSTR type, VARIANT_BOOL can_bubble, VARIANT_BOOL cancelable)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    nsAString nsstr;
+
+    TRACE("(%p)->(%s %x %x)\n", This, debugstr_w(type), can_bubble, cancelable);
+
+    if(This->target) {
+        TRACE("called on already dispatched event\n");
+        return S_OK;
+    }
+
+    heap_free(This->type);
+    This->type = heap_strdupW(type);
+    if(!This->type)
+        return E_OUTOFMEMORY;
+    This->event_id = str_to_eid(type);
+
+    This->bubbles = !!can_bubble;
+    This->cancelable = !!cancelable;
+
+    nsAString_InitDepend(&nsstr, type);
+    nsIDOMEvent_InitEvent(This->nsevent, &nsstr, This->bubbles, This->cancelable);
+    nsAString_Finish(&nsstr);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_preventDefault(IDOMEvent *iface)
