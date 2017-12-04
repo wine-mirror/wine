@@ -273,13 +273,7 @@ static D3DTEXTUREFILTERTYPE WINAPI d3d9_texture_2d_GetAutoGenFilterType(IDirect3
 
 static void WINAPI d3d9_texture_2d_GenerateMipSubLevels(IDirect3DTexture9 *iface)
 {
-    struct d3d9_texture *texture = impl_from_IDirect3DTexture9(iface);
-
     TRACE("iface %p.\n", iface);
-
-    wined3d_mutex_lock();
-    wined3d_texture_generate_mipmaps(texture->wined3d_texture);
-    wined3d_mutex_unlock();
 }
 
 static HRESULT WINAPI d3d9_texture_2d_GetLevelDesc(IDirect3DTexture9 *iface, UINT level, D3DSURFACE_DESC *desc)
@@ -658,13 +652,7 @@ static D3DTEXTUREFILTERTYPE WINAPI d3d9_texture_cube_GetAutoGenFilterType(IDirec
 
 static void WINAPI d3d9_texture_cube_GenerateMipSubLevels(IDirect3DCubeTexture9 *iface)
 {
-    struct d3d9_texture *texture = impl_from_IDirect3DCubeTexture9(iface);
-
     TRACE("iface %p.\n", iface);
-
-    wined3d_mutex_lock();
-    wined3d_texture_generate_mipmaps(texture->wined3d_texture);
-    wined3d_mutex_unlock();
 }
 
 static HRESULT WINAPI d3d9_texture_cube_GetLevelDesc(IDirect3DCubeTexture9 *iface, UINT level, D3DSURFACE_DESC *desc)
@@ -1055,13 +1043,7 @@ static D3DTEXTUREFILTERTYPE WINAPI d3d9_texture_3d_GetAutoGenFilterType(IDirect3
 
 static void WINAPI d3d9_texture_3d_GenerateMipSubLevels(IDirect3DVolumeTexture9 *iface)
 {
-    struct d3d9_texture *texture = impl_from_IDirect3DVolumeTexture9(iface);
-
     TRACE("iface %p.\n", iface);
-
-    wined3d_mutex_lock();
-    wined3d_texture_generate_mipmaps(texture->wined3d_texture);
-    wined3d_mutex_unlock();
 }
 
 static HRESULT WINAPI d3d9_texture_3d_GetLevelDesc(IDirect3DVolumeTexture9 *iface, UINT level, D3DVOLUME_DESC *desc)
