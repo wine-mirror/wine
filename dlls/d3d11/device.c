@@ -1135,7 +1135,13 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearDepthStencilView(ID3D
 static void STDMETHODCALLTYPE d3d11_immediate_context_GenerateMips(ID3D11DeviceContext *iface,
         ID3D11ShaderResourceView *view)
 {
-    FIXME("iface %p, view %p stub!\n", iface, view);
+    struct d3d_shader_resource_view *srv = unsafe_impl_from_ID3D11ShaderResourceView(view);
+
+    TRACE("iface %p, view %p.\n", iface, view);
+
+    wined3d_mutex_lock();
+    wined3d_shader_resource_view_generate_mipmaps(srv->wined3d_view);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_SetResourceMinLOD(ID3D11DeviceContext *iface,
@@ -4193,9 +4199,15 @@ static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device1 *
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GenerateMips(ID3D10Device1 *iface,
-        ID3D10ShaderResourceView *shader_resource_view)
+        ID3D10ShaderResourceView *view)
 {
-    FIXME("iface %p, shader_resource_view %p stub!\n", iface, shader_resource_view);
+    struct d3d_shader_resource_view *srv = unsafe_impl_from_ID3D10ShaderResourceView(view);
+
+    TRACE("iface %p, view %p.\n", iface, view);
+
+    wined3d_mutex_lock();
+    wined3d_shader_resource_view_generate_mipmaps(srv->wined3d_view);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ResolveSubresource(ID3D10Device1 *iface,
