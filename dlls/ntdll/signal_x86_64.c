@@ -4073,24 +4073,6 @@ static void WINAPI call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg )
 }
 
 
-/***********************************************************************
- *           call_process_func
- */
-static void WINAPI call_process_func( LPTHREAD_START_ROUTINE entry, void *arg )
-{
-    __TRY
-    {
-        RtlExitUserThread( kernel32_start_process( entry ));
-    }
-    __EXCEPT(unhandled_exception_filter)
-    {
-        NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
-    }
-    __ENDTRY
-    abort();  /* should not be reached */
-}
-
-
 extern void DECLSPEC_NORETURN start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend,
                                             void *relay, void *stack, void **exit_frame );
 __ASM_GLOBAL_FUNC( start_thread,
@@ -4174,12 +4156,11 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  * signal_start_process()
  *   -> start_thread()
  *     -> thread_startup()
- *       -> call_process_func()
- *         -> kernel32_start_process()
+ *       -> kernel32_start_process()
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
-    start_thread( entry, NtCurrentTeb()->Peb, suspend, call_process_func,
+    start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process,
                   NtCurrentTeb()->Tib.StackBase, &amd64_thread_data()->exit_frame );
 }
 

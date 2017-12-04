@@ -2915,17 +2915,6 @@ __ASM_GLOBAL_FUNC( call_thread_entry,
                    "pushl %eax\n\t"  /* entry */
                    "call " __ASM_NAME("call_thread_func") )
 
-extern void call_process_entry(void) DECLSPEC_HIDDEN;
-__ASM_GLOBAL_FUNC( call_process_entry,
-                   "pushl %ebp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
-                   "movl %esp,%ebp\n\t"
-                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                   "pushl %ebx\n\t"  /* arg */
-                   "pushl %eax\n\t"  /* entry */
-                   "call " __ASM_NAME("call_process_func") )
-
 /* wrapper for apps that don't declare the thread function correctly */
 extern DWORD call_thread_func_wrapper( LPTHREAD_START_ROUTINE entry, void *arg );
 __ASM_GLOBAL_FUNC(call_thread_func_wrapper,
@@ -2951,24 +2940,6 @@ void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg )
     {
         TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
         RtlExitUserThread( call_thread_func_wrapper( entry, arg ));
-    }
-    __EXCEPT(unhandled_exception_filter)
-    {
-        NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
-    }
-    __ENDTRY
-    abort();  /* should not be reached */
-}
-
-
-/***********************************************************************
- *           call_process_func
- */
-void DECLSPEC_HIDDEN call_process_func( LPTHREAD_START_ROUTINE entry, void *arg )
-{
-    __TRY
-    {
-        RtlExitUserThread( kernel32_start_process( entry ));
     }
     __EXCEPT(unhandled_exception_filter)
     {
@@ -3011,14 +2982,12 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  * signal_start_process()
  *   -> start_thread()
  *     -> thread_startup()
- *       -> call_process_entry()
- *         -> call_process_func()
- *           -> kernel32_start_process()
+ *       -> kernel32_start_process()
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
     start_thread( entry, NtCurrentTeb()->Peb, suspend,
-                  call_process_entry, &x86_thread_data()->exit_frame );
+                  kernel32_start_process, &x86_thread_data()->exit_frame );
 }
 
 

@@ -116,7 +116,7 @@ extern UNICODE_STRING system_dir DECLSPEC_HIDDEN;
 
 typedef LONG (WINAPI *PUNHANDLED_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
 extern PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter DECLSPEC_HIDDEN;
-extern LPTHREAD_START_ROUTINE kernel32_start_process DECLSPEC_HIDDEN;
+extern void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) DECLSPEC_HIDDEN;
 
 /* redefine these to make sure we don't reference kernel symbols */
 #define GetProcessHeap()       (NtCurrentTeb()->Peb->ProcessHeap)

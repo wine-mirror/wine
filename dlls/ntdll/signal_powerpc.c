@@ -1138,7 +1138,7 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 /***********************************************************************
  *           call_thread_entry_point
  */
-static void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
+static void WINAPI call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
 {
     __TRY
     {
@@ -1153,8 +1153,11 @@ static void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
     abort();  /* should not be reached */
 }
 
+typedef void (WINAPI *thread_start_func)(LPTHREAD_START_ROUTINE,void *);
+
 struct startup_info
 {
+    thread_start_func      start;
     LPTHREAD_START_ROUTINE entry;
     void                  *arg;
     BOOL                   suspend;
@@ -1173,11 +1176,11 @@ static void thread_startup( void *param )
     context.Gpr1 = (DWORD)NtCurrentTeb()->Tib.StackBase;
     context.Gpr3 = (DWORD)info->entry;
     context.Gpr4 = (DWORD)info->arg;
-    context.Iar  = (DWORD)call_thread_entry_point;
+    context.Iar  = (DWORD)info->start;
 
     attach_dlls( &context, info->suspend );
 
-    call_thread_entry_point( (LPTHREAD_START_ROUTINE)context.Gpr3, (void *)context.Gpr4 );
+    ((thread_start_func)context.Iar)( (LPTHREAD_START_ROUTINE)context.Gpr3, (void *)context.Gpr4 );
 }
 
 /***********************************************************************
@@ -1190,7 +1193,7 @@ static void thread_startup( void *param )
  */
 void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
-    struct startup_info info = { entry, arg, suspend };
+    struct startup_info info = { call_thread_entry_point, entry, arg, suspend };
     wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
 }
 
@@ -1200,12 +1203,11 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  * Process startup sequence:
  * signal_start_process()
  *   -> thread_startup()
- *     -> call_thread_entry_point()
- *       -> kernel32_start_process()
+ *     -> kernel32_start_process()
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
-    struct startup_info info = { kernel32_start_process, entry, suspend };
+    struct startup_info info = { kernel32_start_process, entry, NtCurrentTeb()->Peb, suspend };
     wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
 }
 

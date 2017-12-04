@@ -51,7 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
 
 PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter = NULL;
-LPTHREAD_START_ROUTINE kernel32_start_process = NULL;
+void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) = NULL;
 
 /* info passed to a starting thread */
 struct startup_info

@@ -57,6 +57,7 @@
 #include "winternl.h"
 #include "kernel_private.h"
 #include "psapi.h"
+#include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
@@ -1088,11 +1089,25 @@ __ASM_GLOBAL_FUNC( call_process_entry,
                     __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                     __ASM_CFI(".cfi_same_value %ebp\n\t")
                     "ret" )
+
+extern void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb ) DECLSPEC_HIDDEN;
+extern void WINAPI start_process_wrapper(void) DECLSPEC_HIDDEN;
+__ASM_GLOBAL_FUNC( start_process_wrapper,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %ebx\n\t"  /* arg */
+                   "pushl %eax\n\t"  /* entry */
+                   "call " __ASM_NAME("start_process") )
 #else
 static inline DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry )
 {
     return entry( peb );
 }
+static void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb );
+#define start_process_wrapper start_process
 #endif
 
 /***********************************************************************
@@ -1100,10 +1115,9 @@ static inline DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry )
  *
  * Startup routine of a new process. Runs on the new process stack.
  */
-static DWORD WINAPI start_process( LPTHREAD_START_ROUTINE entry )
+void WINAPI start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
 {
     BOOL being_debugged;
-    PEB *peb = NtCurrentTeb()->Peb;
 
     if (!entry)
     {
@@ -1115,12 +1129,21 @@ static DWORD WINAPI start_process( LPTHREAD_START_ROUTINE entry )
     TRACE_(relay)( "\1Starting process %s (entryproc=%p)\n",
                    debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
 
-    if (!CheckRemoteDebuggerPresent( GetCurrentProcess(), &being_debugged ))
-        being_debugged = FALSE;
+    __TRY
+    {
+        if (!CheckRemoteDebuggerPresent( GetCurrentProcess(), &being_debugged ))
+            being_debugged = FALSE;
 
-    SetLastError( 0 );  /* clear error code */
-    if (being_debugged) DbgBreakPoint();
-    return call_process_entry( peb, entry );
+        SetLastError( 0 );  /* clear error code */
+        if (being_debugged) DbgBreakPoint();
+        ExitThread( call_process_entry( peb, entry ));
+    }
+    __EXCEPT(UnhandledExceptionFilter)
+    {
+        TerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
+    abort();  /* should not be reached */
 }
 
 
@@ -1314,7 +1337,7 @@ void CDECL __wine_kernel_init(void)
 
     if (!params->CurrentDirectory.Handle) chdir("/"); /* avoid locking removable devices */
 
-    LdrInitializeThunk( start_process, 0, 0, 0 );
+    LdrInitializeThunk( start_process_wrapper, 0, 0, 0 );
 
  error:
     ExitProcess( GetLastError() );

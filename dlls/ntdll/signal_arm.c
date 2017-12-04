@@ -1208,8 +1208,11 @@ static void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
     abort();  /* should not be reached */
 }
 
+typedef void (WINAPI *thread_start_func)(LPTHREAD_START_ROUTINE,void *);
+
 struct startup_info
 {
+    thread_start_func      start;
     LPTHREAD_START_ROUTINE entry;
     void                  *arg;
     BOOL                   suspend;
@@ -1228,7 +1231,7 @@ static void thread_startup( void *param )
     context.R0 = (DWORD)info->entry;
     context.R1 = (DWORD)info->arg;
     context.Sp = (DWORD)NtCurrentTeb()->Tib.StackBase;
-    context.Pc = (DWORD)call_thread_entry_point;
+    context.Pc = (DWORD)info->start;
 
     attach_dlls( &context, info->suspend );
 
@@ -1245,7 +1248,7 @@ static void thread_startup( void *param )
  */
 void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
-    struct startup_info info = { entry, arg, suspend };
+    struct startup_info info = { call_thread_entry_point, entry, arg, suspend };
     wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
 }
 
@@ -1255,12 +1258,11 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  * Process startup sequence:
  * signal_start_process()
  *   -> thread_startup()
- *     -> call_thread_entry_point()
- *       -> kernel32_start_process()
+ *     -> kernel32_start_process()
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
-    struct startup_info info = { kernel32_start_process, entry, suspend };
+    struct startup_info info = { kernel32_start_process, entry, NtCurrentTeb()->Peb, suspend };
     wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
 }
 
