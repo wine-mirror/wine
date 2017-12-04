@@ -56,6 +56,7 @@ typedef struct {
 
 typedef enum {
     DISPATCH_BOTH,
+    DISPATCH_STANDARD,
     DISPATCH_LEGACY
 } dispatch_mode_t;
 
@@ -896,6 +897,13 @@ static inline DOMEvent *impl_from_IDOMEvent(IDOMEvent *iface)
     return CONTAINING_RECORD(iface, DOMEvent, IDOMEvent_iface);
 }
 
+static const IDOMEventVtbl DOMEventVtbl;
+
+static inline DOMEvent *unsafe_impl_from_IDOMEvent(IDOMEvent *iface)
+{
+    return iface && iface->lpVtbl == &DOMEventVtbl ? impl_from_IDOMEvent(iface) : NULL;
+}
+
 static HRESULT WINAPI DOMEvent_QueryInterface(IDOMEvent *iface, REFIID riid, void **ppv)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
@@ -1434,7 +1442,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
                     continue;
                 break;
             case LISTENER_TYPE_ATTACHED:
-                if(event->phase == DEP_CAPTURING_PHASE)
+                if(event->phase == DEP_CAPTURING_PHASE || dispatch_mode == DISPATCH_STANDARD)
                     continue;
                 break;
             }
@@ -1570,8 +1578,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
     event->current_target = NULL;
 }
 
-static void dispatch_event_object(EventTarget *event_target, DOMEvent *event,
-                                  dispatch_mode_t dispatch_mode)
+static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
+                                     dispatch_mode_t dispatch_mode, VARIANT_BOOL *r)
 {
     EventTarget *target_chain_buf[8], **target_chain = target_chain_buf;
     unsigned chain_cnt, chain_buf_size, i;
@@ -1583,14 +1591,14 @@ static void dispatch_event_object(EventTarget *event_target, DOMEvent *event,
 
     TRACE("(%p) %s\n", event_target, debugstr_w(event->type));
 
-    if(event->event_id == EVENTID_LAST) {
-        FIXME("Unsupported on unknown events\n");
-        return;
+    if(!event->type) {
+        FIXME("Uninitialized event.\n");
+        return E_FAIL;
     }
 
     if(event->current_target) {
         FIXME("event is being dispatched.\n");
-        return;
+        return E_FAIL;
     }
 
     iter = event_target;
@@ -1654,6 +1662,9 @@ static void dispatch_event_object(EventTarget *event_target, DOMEvent *event,
             call_event_handlers(target_chain[i], event, dispatch_mode);
     }
 
+    if(r)
+        *r = variant_bool(!event->prevent_default);
+
     if(target_vtbl && target_vtbl->set_current_event) {
         prev_event = target_vtbl->set_current_event(&event_target->dispex, prev_event);
         if(prev_event)
@@ -1675,6 +1686,7 @@ static void dispatch_event_object(EventTarget *event_target, DOMEvent *event,
         }
     }
 
+    event->prevent_default = FALSE;
     if(event_obj_ref) {
         event->event_obj = NULL;
         IHTMLEventObj_Release(&event_obj_ref->IHTMLEventObj_iface);
@@ -1684,11 +1696,13 @@ static void dispatch_event_object(EventTarget *event_target, DOMEvent *event,
         IDispatchEx_Release(&target_chain[i]->dispex.IDispatchEx_iface);
     if(target_chain != target_chain_buf)
         heap_free(target_chain);
+
+    return S_OK;
 }
 
 void dispatch_event(EventTarget *event_target, DOMEvent *event)
 {
-    dispatch_event_object(event_target, event, DISPATCH_BOTH);
+    dispatch_event_object(event_target, event, DISPATCH_BOTH, NULL);
 }
 
 HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_var, VARIANT_BOOL *cancelled)
@@ -1738,7 +1752,7 @@ HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_va
 
     if(SUCCEEDED(hres)) {
         event_obj->event->event_obj = &event_obj->IHTMLEventObj_iface;
-        dispatch_event_object(&node->event_target, event_obj->event, DISPATCH_LEGACY);
+        dispatch_event_object(&node->event_target, event_obj->event, DISPATCH_LEGACY, NULL);
         event_obj->event->event_obj = NULL;
     }
 
@@ -2220,11 +2234,19 @@ static HRESULT WINAPI EventTarget_removeEventListener(IEventTarget *iface, BSTR 
     return S_OK;
 }
 
-static HRESULT WINAPI EventTarget_dispatchEvent(IEventTarget *iface, IDOMEvent *event, VARIANT_BOOL *result)
+static HRESULT WINAPI EventTarget_dispatchEvent(IEventTarget *iface, IDOMEvent *event_iface, VARIANT_BOOL *result)
 {
     EventTarget *This = impl_from_IEventTarget(iface);
-    FIXME("(%p)->(%p %p)\n", This, event, result);
-    return E_NOTIMPL;
+    DOMEvent *event = unsafe_impl_from_IDOMEvent(event_iface);
+
+    TRACE("(%p)->(%p %p)\n", This, event, result);
+
+    if(!event) {
+        WARN("Invalid event\n");
+        return E_INVALIDARG;
+    }
+
+    return dispatch_event_object(This, event, DISPATCH_STANDARD, result);
 }
 
 HRESULT IEventTarget_addEventListener_hook(DispatchEx *dispex, LCID lcid, WORD flags,

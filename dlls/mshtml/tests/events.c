@@ -2667,6 +2667,8 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 static void test_create_event(IHTMLDocument2 *doc)
 {
     IDocumentEvent *doc_event;
+    IEventTarget *event_target;
+    IHTMLElement *elem;
     IDOMEvent *event;
     VARIANT_BOOL b;
     USHORT phase;
@@ -2708,6 +2710,15 @@ static void test_create_event(IHTMLDocument2 *doc)
     hres = IDOMEvent_get_cancelable(event, &b);
     ok(hres == S_OK, "get_cancelable failed: %08x\n", hres);
     ok(!b, "cancelable = %x\n", b);
+
+    elem = doc_get_body(doc);
+    hres = IHTMLElement_QueryInterface(elem, &IID_IEventTarget, (void**)&event_target);
+    IHTMLElement_Release(elem);
+
+    hres = IEventTarget_dispatchEvent(event_target, NULL, &b);
+    ok(hres == E_INVALIDARG, "dispatchEvent failed: %08x\n", hres);
+
+    IEventTarget_Release(event_target);
 
     IDOMEvent_Release(event);
 
