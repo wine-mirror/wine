@@ -2609,6 +2609,7 @@ HRESULT __cdecl wined3d_shader_resource_view_create(const struct wined3d_view_de
         struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_shader_resource_view **view);
 ULONG __cdecl wined3d_shader_resource_view_decref(struct wined3d_shader_resource_view *view);
+void __cdecl wined3d_shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *view);
 void * __cdecl wined3d_shader_resource_view_get_parent(const struct wined3d_shader_resource_view *view);
 ULONG __cdecl wined3d_shader_resource_view_incref(struct wined3d_shader_resource_view *view);
 
@@ -2661,7 +2662,6 @@ HRESULT __cdecl wined3d_texture_create(struct wined3d_device *device, const stru
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
 struct wined3d_texture * __cdecl wined3d_texture_from_resource(struct wined3d_resource *resource);
 ULONG __cdecl wined3d_texture_decref(struct wined3d_texture *texture);
-void __cdecl wined3d_texture_generate_mipmaps(struct wined3d_texture *texture);
 enum wined3d_texture_filter_type __cdecl wined3d_texture_get_autogen_filter_type(const struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC *dc);
 DWORD __cdecl wined3d_texture_get_level_count(const struct wined3d_texture *texture);

@@ -71,6 +71,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION,
     WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW,
     WINED3D_CS_OP_COPY_UAV_COUNTER,
+    WINED3D_CS_OP_GENERATE_MIPMAPS,
     WINED3D_CS_OP_STOP,
 };
 
@@ -419,6 +420,12 @@ struct wined3d_cs_copy_uav_counter
     struct wined3d_buffer *buffer;
     unsigned int offset;
     struct wined3d_unordered_access_view *view;
+};
+
+struct wined3d_cs_generate_mipmaps
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_shader_resource_view *view;
 };
 
 struct wined3d_cs_stop
@@ -2336,6 +2343,28 @@ void wined3d_cs_emit_copy_uav_counter(struct wined3d_cs *cs, struct wined3d_buff
     cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
 }
 
+static void wined3d_cs_exec_generate_mipmaps(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_generate_mipmaps *op = data;
+    struct wined3d_shader_resource_view *view = op->view;
+
+    shader_resource_view_generate_mipmaps(view);
+    wined3d_resource_release(view->resource);
+}
+
+void wined3d_cs_emit_generate_mipmaps(struct wined3d_cs *cs, struct wined3d_shader_resource_view *view)
+{
+    struct wined3d_cs_generate_mipmaps *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_GENERATE_MIPMAPS;
+    op->view = view;
+
+    wined3d_resource_acquire(view->resource);
+
+    cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
+}
+
 static void wined3d_cs_emit_stop(struct wined3d_cs *cs)
 {
     struct wined3d_cs_stop *op;
@@ -2394,6 +2423,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION    */ wined3d_cs_exec_add_dirty_texture_region,
     /* WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW */ wined3d_cs_exec_clear_unordered_access_view,
     /* WINED3D_CS_OP_COPY_UAV_COUNTER            */ wined3d_cs_exec_copy_uav_counter,
+    /* WINED3D_CS_OP_GENERATE_MIPMAPS            */ wined3d_cs_exec_generate_mipmaps,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size, enum wined3d_cs_queue_id queue_id)

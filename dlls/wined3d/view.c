@@ -803,6 +803,108 @@ void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view
     wined3d_sampler_bind(sampler, unit, texture, context);
 }
 
+/* Context activation is done by the caller. */
+static void shader_resource_view_bind_and_dirtify(struct wined3d_shader_resource_view *view,
+        struct wined3d_context *context)
+{
+    if (context->active_texture < ARRAY_SIZE(context->rev_tex_unit_map))
+    {
+        DWORD active_sampler = context->rev_tex_unit_map[context->active_texture];
+        if (active_sampler != WINED3D_UNMAPPED_STAGE)
+            context_invalidate_state(context, STATE_SAMPLER(active_sampler));
+    }
+    /* FIXME: Ideally we'd only do this when touching a binding that's used by
+     * a shader. */
+    context_invalidate_compute_state(context, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
+    context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
+
+    context_bind_texture(context, view->gl_view.target, view->gl_view.name);
+}
+
+void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *view)
+{
+    struct wined3d_texture *texture = texture_from_resource(view->resource);
+    unsigned int i, j, layer_count, level_count, base_level, max_level;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+    struct gl_texture *gl_tex;
+    DWORD location;
+    BOOL srgb;
+
+    TRACE("view %p.\n", view);
+
+    wined3d_from_cs(view->resource->device->cs);
+
+    context = context_acquire(view->resource->device, NULL, 0);
+    gl_info = context->gl_info;
+    layer_count = view->desc.u.texture.layer_count;
+    level_count = view->desc.u.texture.level_count;
+    base_level = view->desc.u.texture.level_idx;
+    max_level = base_level + level_count - 1;
+
+    srgb = !!(texture->flags & WINED3D_TEXTURE_IS_SRGB);
+    location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
+    for (i = 0; i < layer_count; ++i)
+        wined3d_texture_load_location(texture, i * level_count + base_level, context, location);
+    if (view->gl_view.name)
+        shader_resource_view_bind_and_dirtify(view, context);
+    else
+        wined3d_texture_bind_and_dirtify(texture, context, srgb);
+    if (gl_info->supported[ARB_SAMPLER_OBJECTS])
+        GL_EXTCALL(glBindSampler(context->active_texture, 0));
+    gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_BASE_LEVEL, base_level);
+    gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_MAX_LEVEL, max_level);
+    gl_tex = wined3d_texture_get_gl_texture(texture, srgb);
+    if (context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
+    {
+        gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_SRGB_DECODE_EXT,
+                GL_SKIP_DECODE_EXT);
+        gl_tex->sampler_desc.srgb_decode = FALSE;
+    }
+
+    gl_info->fbo_ops.glGenerateMipmap(texture->target);
+    checkGLcall("glGenerateMipMap()");
+
+    for (i = 0; i < layer_count; ++i)
+    {
+        for (j = base_level + 1; j <= max_level; ++j)
+        {
+            wined3d_texture_validate_location(texture, i * level_count + j, location);
+            wined3d_texture_invalidate_location(texture, i * level_count + j, ~location);
+        }
+    }
+
+    gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_MAX_LEVEL, level_count - 1);
+    if (srgb)
+        texture->texture_srgb.base_level = base_level;
+    else
+        texture->texture_rgb.base_level = base_level;
+
+    context_release(context);
+}
+
+void CDECL wined3d_shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *view)
+{
+    struct wined3d_texture *texture;
+
+    TRACE("view %p.\n", view);
+
+    if (view->resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        WARN("Called on buffer resource %p.\n", view->resource);
+        return;
+    }
+
+    texture = texture_from_resource(view->resource);
+    if (!(texture->flags & WINED3D_TEXTURE_GENERATE_MIPMAPS))
+    {
+        WARN("Texture without the WINED3D_TEXTURE_GENERATE_MIPMAPS flag, ignoring.\n");
+        return;
+    }
+
+    wined3d_cs_emit_generate_mipmaps(view->resource->device->cs, view);
+}
+
 ULONG CDECL wined3d_unordered_access_view_incref(struct wined3d_unordered_access_view *view)
 {
     ULONG refcount = InterlockedIncrement(&view->refcount);

@@ -1580,17 +1580,6 @@ BOOL wined3d_texture_prepare_location(struct wined3d_texture *texture, unsigned 
     }
 }
 
-void CDECL wined3d_texture_generate_mipmaps(struct wined3d_texture *texture)
-{
-    FIXME("texture %p stub!\n", texture);
-
-    if (!(texture->flags & WINED3D_TEXTURE_GENERATE_MIPMAPS))
-    {
-        WARN("Texture without the WINED3D_TEXTURE_GENERATE_MIPMAPS flag, ignoring.\n");
-        return;
-    }
-}
-
 static struct wined3d_texture_sub_resource *wined3d_texture_get_sub_resource(struct wined3d_texture *texture,
         unsigned int sub_resource_idx)
 {

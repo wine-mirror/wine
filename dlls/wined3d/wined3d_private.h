@@ -3508,6 +3508,7 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, unsigned
 void wined3d_cs_emit_draw_indirect(struct wined3d_cs *cs, GLenum primitive_type, unsigned int patch_vertex_count,
         struct wined3d_buffer *buffer, unsigned int offset, BOOL indexed) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_flush(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_generate_mipmaps(struct wined3d_cs *cs, struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_preload_resource(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override, DWORD flags) DECLSPEC_HIDDEN;
@@ -3705,6 +3706,7 @@ struct wined3d_shader_resource_view
     struct wined3d_view_desc desc;
 };
 
+void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
 void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view, unsigned int unit,
         struct wined3d_sampler *sampler, struct wined3d_context *context) DECLSPEC_HIDDEN;
 

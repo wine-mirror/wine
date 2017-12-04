@@ -254,6 +254,7 @@
 
 @ cdecl wined3d_shader_resource_view_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_resource_view_decref(ptr)
+@ cdecl wined3d_shader_resource_view_generate_mipmaps(ptr)
 @ cdecl wined3d_shader_resource_view_get_parent(ptr)
 @ cdecl wined3d_shader_resource_view_incref(ptr)
 
@@ -287,7 +288,6 @@
 @ cdecl wined3d_texture_create(ptr ptr long long long ptr ptr ptr ptr)
 @ cdecl wined3d_texture_decref(ptr)
 @ cdecl wined3d_texture_from_resource(ptr)
-@ cdecl wined3d_texture_generate_mipmaps(ptr)
 @ cdecl wined3d_texture_get_autogen_filter_type(ptr)
 @ cdecl wined3d_texture_get_dc(ptr long ptr)
 @ cdecl wined3d_texture_get_level_count(ptr)
