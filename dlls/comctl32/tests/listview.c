@@ -193,6 +193,12 @@ static const struct message empty_seq[] = {
     { 0 }
 };
 
+static const struct message parent_focus_change_ownerdata_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_GETDISPINFOA },
+    { 0 }
+};
+
 static const struct message forward_erasebkgnd_parent_seq[] = {
     { WM_ERASEBKGND, sent },
     { 0 }
@@ -5996,6 +6002,7 @@ static void test_oneclickactivate(void)
 
 static void test_callback_mask(void)
 {
+    LVITEMA item;
     DWORD mask;
     HWND hwnd;
     BOOL ret;
@@ -6010,6 +6017,121 @@ static void test_callback_mask(void)
 
     mask = SendMessageA(hwnd, LVM_GETCALLBACKMASK, 0, 0);
     ok(mask == ~0u, "got 0x%08x\n", mask);
+
+    DestroyWindow(hwnd);
+
+    /* LVS_OWNERDATA, mask LVIS_FOCUSED */
+    hwnd = create_listview_control(LVS_REPORT | LVS_OWNERDATA);
+
+    mask = SendMessageA(hwnd, LVM_GETCALLBACKMASK, 0, 0);
+    ok(mask == 0, "Unexpected callback mask %#x.\n", mask);
+
+    ret = SendMessageA(hwnd, LVM_SETCALLBACKMASK, LVIS_FOCUSED, 0);
+    ok(ret, "Failed to set callback mask, %d\n", ret);
+
+    mask = SendMessageA(hwnd, LVM_GETCALLBACKMASK, 0, 0);
+    ok(mask == LVIS_FOCUSED, "Unexpected callback mask %#x.\n", mask);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    ok(ret, "Failed to set item count.\n");
+
+    ret = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    ok(ret == -1, "Unexpected selection mark, %d\n", ret);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state = LVIS_FOCUSED;
+    ret = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    ok(ret, "Failed to set item state.\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+todo_wine
+    ok(ret == 0, "Unexpected focused item, ret %d\n", ret);
+
+    ret = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+todo_wine
+    ok(ret == 0, "Unexpected selection mark, %d\n", ret);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 0, 0);
+    ok(ret, "Failed to set item count.\n");
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+    ok(ret == -1, "Unexpected focused item, ret %d\n", ret);
+
+    ret = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    ok(ret == -1, "Unexpected selection mark, %d\n", ret);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    ok(ret, "Failed to set item count.\n");
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+    ok(ret == -1, "Unexpected focused item, ret %d\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent seq, owner data/focus 1", FALSE);
+
+    /* LVS_OWNDERDATA, empty mask */
+    ret = SendMessageA(hwnd, LVM_SETCALLBACKMASK, 0, 0);
+    ok(ret, "Failed to set callback mask, %d\n", ret);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    ok(ret, "Failed to set item count.\n");
+
+    ret = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    ok(ret == -1, "Unexpected selection mark, %d\n", ret);
+
+    item.stateMask = LVIS_FOCUSED;
+    item.state = LVIS_FOCUSED;
+    ret = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    ok(ret, "Failed to set item state.\n");
+
+    ret = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    ok(ret == 0, "Unexpected selection mark, %d\n", ret);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+    ok(ret == 0, "Unexpected focused item, ret %d\n", ret);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 0, 0);
+    ok(ret, "Failed to set item count.\n");
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+    ok(ret == -1, "Unexpected focused item, ret %d\n", ret);
+
+    ret = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+todo_wine
+    ok(ret == -1, "Unexpected selection mark, %d\n", ret);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    ok(ret, "Failed to set item count.\n");
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+todo_wine
+    ok(ret == -1, "Unexpected focused item, ret %d\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent seq, owner data/focus 2", TRUE);
+
+    /* 2 items, focus on index 0, reduce to 1 item. */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 2, 0);
+    ok(ret, "Failed to set item count.\n");
+
+    ret = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    ok(ret, "Failed to set item state.\n");
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+    ok(ret == 0, "Unexpected focused item, ret %d\n", ret);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    ok(ret, "Failed to set item count.\n");
+
+    ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+    ok(ret == 0, "Unexpected focused item, ret %d\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_focus_change_ownerdata_seq,
+        "parent seq, owner data/focus 3", TRUE);
 
     DestroyWindow(hwnd);
 }
