@@ -1117,7 +1117,6 @@ static HRESULT WINAPI DOMEvent_stopPropagation(IDOMEvent *iface)
 
     This->stop_propagation = TRUE;
     nsIDOMEvent_StopPropagation(This->nsevent);
-    IDOMEvent_preventDefault(&This->IDOMEvent_iface);
     return S_OK;
 }
 
