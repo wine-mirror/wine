@@ -942,6 +942,14 @@ static HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_devi
     unsigned int levels;
     HRESULT hr;
 
+    if (desc->MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS
+            && (~desc->BindFlags & (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE)))
+    {
+        WARN("D3D11_RESOURCE_MISC_GENERATE_MIPS used without D3D11_BIND_RENDER_TARGET "
+                "and D3D11_BIND_SHADER_RESOURCE.\n");
+        return E_INVALIDARG;
+    }
+
     texture->ID3D11Texture3D_iface.lpVtbl = &d3d11_texture3d_vtbl;
     texture->ID3D10Texture3D_iface.lpVtbl = &d3d10_texture3d_vtbl;
     texture->refcount = 1;
