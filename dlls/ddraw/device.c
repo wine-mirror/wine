@@ -6457,6 +6457,7 @@ static HRESULT WINAPI d3d_device7_GetLightEnable_FPUPreserve(IDirect3DDevice7 *i
 static HRESULT d3d_device7_SetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DVALUE *plane)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
+    const struct wined3d_vec4 *wined3d_plane;
     HRESULT hr;
 
     TRACE("iface %p, idx %u, plane %p.\n", iface, idx, plane);
@@ -6464,8 +6465,16 @@ static HRESULT d3d_device7_SetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DV
     if (!plane)
         return DDERR_INVALIDPARAMS;
 
+    wined3d_plane = (struct wined3d_vec4 *)plane;
+
     wined3d_mutex_lock();
-    hr = wined3d_device_set_clip_plane(device->wined3d_device, idx, (struct wined3d_vec4 *)plane);
+    hr = wined3d_device_set_clip_plane(device->wined3d_device, idx, wined3d_plane);
+    if (hr == WINED3DERR_INVALIDCALL && idx < ARRAY_SIZE(device->user_clip_planes))
+    {
+        WARN("Clip plane %u is not supported.\n", idx);
+        device->user_clip_planes[idx] = *wined3d_plane;
+        hr = D3D_OK;
+    }
     wined3d_mutex_unlock();
 
     return hr;
@@ -6505,6 +6514,7 @@ static HRESULT WINAPI d3d_device7_SetClipPlane_FPUPreserve(IDirect3DDevice7 *ifa
 static HRESULT d3d_device7_GetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DVALUE *plane)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
+    struct wined3d_vec4 *wined3d_plane;
     HRESULT hr;
 
     TRACE("iface %p, idx %u, plane %p.\n", iface, idx, plane);
@@ -6512,8 +6522,16 @@ static HRESULT d3d_device7_GetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DV
     if (!plane)
         return DDERR_INVALIDPARAMS;
 
+    wined3d_plane = (struct wined3d_vec4 *)plane;
+
     wined3d_mutex_lock();
-    hr = wined3d_device_get_clip_plane(device->wined3d_device, idx, (struct wined3d_vec4 *)plane);
+    hr = wined3d_device_get_clip_plane(device->wined3d_device, idx, wined3d_plane);
+    if (hr == WINED3DERR_INVALIDCALL && idx < ARRAY_SIZE(device->user_clip_planes))
+    {
+        WARN("Clip plane %u is not supported.\n", idx);
+        *wined3d_plane = device->user_clip_planes[idx];
+        hr = D3D_OK;
+    }
     wined3d_mutex_unlock();
 
     return hr;

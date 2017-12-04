@@ -38,6 +38,8 @@
 #include "wine/list.h"
 #include "wine/wined3d.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 extern DWORD force_refresh_rate DECLSPEC_HIDDEN;
 
@@ -341,6 +343,8 @@ struct d3d_device
     /* Handle management */
     struct ddraw_handle_table handle_table;
     D3DMATRIXHANDLE          world, proj, view;
+
+    struct wined3d_vec4 user_clip_planes[D3DMAXUSERCLIPPLANES];
 };
 
 HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUnknown *rt_iface,
