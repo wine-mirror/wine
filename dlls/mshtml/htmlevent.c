@@ -54,6 +54,11 @@ typedef struct {
     WCHAR type[1];
 } listener_container_t;
 
+typedef enum {
+    DISPATCH_BOTH,
+    DISPATCH_LEGACY
+} dispatch_mode_t;
+
 static const WCHAR abortW[] = {'a','b','o','r','t',0};
 static const WCHAR beforeactivateW[] = {'b','e','f','o','r','e','a','c','t','i','v','a','t','e',0};
 static const WCHAR beforeunloadW[] = {'b','e','f','o','r','e','u','n','l','o','a','d',0};
@@ -1362,7 +1367,7 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
     return FALSE;
 }
 
-static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
+static void call_event_handlers(EventTarget *event_target, DOMEvent *event, dispatch_mode_t dispatch_mode)
 {
     const listener_container_t *container = get_listener_container(event_target, event->type, FALSE);
     const BOOL use_quirks = use_event_quirks(event_target);
@@ -1421,13 +1426,13 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
                     continue;
                 break;
             case LISTENER_TYPE_CAPTURE:
-                if(event->phase == DEP_BUBBLING_PHASE || event->in_fire_event)
+                if(event->phase == DEP_BUBBLING_PHASE || dispatch_mode == DISPATCH_LEGACY)
                     continue;
                 break;
             case LISTENER_TYPE_BUBBLE:
-                if(event->in_fire_event)
+                if(event->phase == DEP_CAPTURING_PHASE || dispatch_mode == DISPATCH_LEGACY)
                     continue;
-                /* fallthrough */
+                break;
             case LISTENER_TYPE_ATTACHED:
                 if(event->phase == DEP_CAPTURING_PHASE)
                     continue;
@@ -1463,7 +1468,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
             V_VT(args) = VT_DISPATCH;
             V_DISPATCH(args) = (IDispatch*)&event_target->dispex.IDispatchEx_iface;
             V_VT(args+1) = VT_DISPATCH;
-            V_DISPATCH(args+1) = event->in_fire_event
+            V_DISPATCH(args+1) = dispatch_mode == DISPATCH_LEGACY
                 ? (IDispatch*)event->event_obj : (IDispatch*)&event->IDOMEvent_iface;
             V_VT(&v) = VT_EMPTY;
 
@@ -1565,7 +1570,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event)
     event->current_target = NULL;
 }
 
-void dispatch_event(EventTarget *event_target, DOMEvent *event)
+static void dispatch_event_object(EventTarget *event_target, DOMEvent *event,
+                                  dispatch_mode_t dispatch_mode)
 {
     EventTarget *target_chain_buf[8], **target_chain = target_chain_buf;
     unsigned chain_cnt, chain_buf_size, i;
@@ -1635,17 +1641,17 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
     event->phase = DEP_CAPTURING_PHASE;
     i = chain_cnt-1;
     while(!event->stop_propagation && i)
-        call_event_handlers(target_chain[i--], event);
+        call_event_handlers(target_chain[i--], event, dispatch_mode);
 
     if(!event->stop_propagation) {
         event->phase = DEP_AT_TARGET;
-        call_event_handlers(target_chain[0], event);
+        call_event_handlers(target_chain[0], event, dispatch_mode);
     }
 
     if(event->bubbles) {
         event->phase = DEP_BUBBLING_PHASE;
         for(i = 1; !event->stop_propagation && i < chain_cnt; i++)
-            call_event_handlers(target_chain[i], event);
+            call_event_handlers(target_chain[i], event, dispatch_mode);
     }
 
     if(target_vtbl && target_vtbl->set_current_event) {
@@ -1678,6 +1684,11 @@ void dispatch_event(EventTarget *event_target, DOMEvent *event)
         IDispatchEx_Release(&target_chain[i]->dispex.IDispatchEx_iface);
     if(target_chain != target_chain_buf)
         heap_free(target_chain);
+}
+
+void dispatch_event(EventTarget *event_target, DOMEvent *event)
+{
+    dispatch_event_object(event_target, event, DISPATCH_BOTH);
 }
 
 HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_var, VARIANT_BOOL *cancelled)
@@ -1727,9 +1738,7 @@ HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_va
 
     if(SUCCEEDED(hres)) {
         event_obj->event->event_obj = &event_obj->IHTMLEventObj_iface;
-        event_obj->event->in_fire_event++;
-        dispatch_event(&node->event_target, event_obj->event);
-        event_obj->event->in_fire_event--;
+        dispatch_event_object(&node->event_target, event_obj->event, DISPATCH_LEGACY);
         event_obj->event->event_obj = NULL;
     }
 
