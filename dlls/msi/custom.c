@@ -263,7 +263,7 @@ static MSIBINARY *create_temp_binary( MSIPACKAGE *package, LPCWSTR source, BOOL 
     /* keep a reference to prevent the dll from being unloaded */
     if (dll && !(binary->module = LoadLibraryW( tmpfile )))
     {
-        WARN( "failed to load dll %s (%u)\n", debugstr_w( tmpfile ), GetLastError() );
+        ERR( "failed to load dll %s (%u)\n", debugstr_w( tmpfile ), GetLastError() );
     }
     binary->source = strdupW( source );
     binary->tmpfile = tmpfile;
@@ -567,7 +567,7 @@ static DWORD ACTION_CallDllFunction( const GUID *guid )
     hModule = LoadLibraryW( dll );
     if (!hModule)
     {
-        WARN( "failed to load dll %s (%u)\n", debugstr_w( dll ), GetLastError() );
+        ERR( "failed to load dll %s (%u)\n", debugstr_w( dll ), GetLastError() );
         return ERROR_SUCCESS;
     }
 
@@ -700,7 +700,7 @@ static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir )
         }
         if (!len_exe)
         {
-            WARN("can't find executable %u\n", GetLastError());
+            ERR("can't find executable %u\n", GetLastError());
             msi_free( exe );
             return INVALID_HANDLE_VALUE;
         }
@@ -738,7 +738,7 @@ static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir )
     msi_free( exe );
     if (!ret)
     {
-        WARN("unable to execute command %u\n", GetLastError());
+        ERR("unable to execute command %u\n", GetLastError());
         return INVALID_HANDLE_VALUE;
     }
     CloseHandle( info.hThread );
