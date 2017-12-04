@@ -89,6 +89,16 @@ function test_listener_order() {
        + "body.click(attached),document.click(attached),document.click(bubble),"
        + "document.onclick,window.click(bubble),", "calls = " + calls);
 
+    var e = document.createEvent("Event");
+    e.initEvent("click", true, true);
+
+    calls = "";
+    div.dispatchEvent(e);
+    ok(calls === "window.click(capture),document.click(capture),body.click(capture),"
+       + "div.click(bubble),new div.onclick,div.click(capture1),div.click(capture2),"
+       + "body.onclick,body.click(bubble),body.click(bubble2),document.click(bubble),"
+       + "document.onclick,window.click(bubble),", "calls = " + calls);
+
     next_test();
 }
 
@@ -237,6 +247,8 @@ function test_stop_propagation() {
     function stop_propagation(e) {
         calls += "stop,";
         e.stopPropagation();
+        ok(e.bubbles === true, "bubbles = " + e.bubbles);
+        ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
     }
 
     div1.addEventListener("click", stop_propagation, true);
@@ -286,7 +298,7 @@ function test_prevent_default() {
         calls += "div,";
         ok(e.defaultPrevented === false, "e.defaultPrevented = " + e.defaultPrevented);
         e.preventDefault();
-        ok(e.defaultPrevented === true, "e.defaultPrevented = " + e.defaultPrevented);
+        ok(e.defaultPrevented === e.cancelable, "e.defaultPrevented = " + e.defaultPrevented);
     }, true);
 
     a.addEventListener("click", function(e) {
@@ -297,6 +309,244 @@ function test_prevent_default() {
     calls = "";
     a.click();
     ok(calls === "div,a,", "calls = " + calls);
+
+    var e = document.createEvent("Event");
+    e.initEvent("click", true, false);
+
+    calls = "";
+    div.dispatchEvent(e);
+    ok(calls === "div,", "calls = " + calls);
+
+    e = document.createEvent("Event");
+    e.initEvent("click", false, true);
+
+    calls = "";
+    div.dispatchEvent(e);
+    ok(calls === "div,", "calls = " + calls);
+
+    document.body.innerHTML = '<div></div>';
+    var elem = document.body.firstChild;
+    var e, r;
+
+    elem.onclick = function(event) {
+        event.preventDefault();
+    }
+    e = document.createEvent("Event");
+    e.initEvent("click", true, true);
+    r = elem.dispatchEvent(e);
+    ok(r === false, "dispatchEvent returned " + r);
+
+    elem.onclick = function(event) {
+        event.preventDefault();
+    }
+    e = document.createEvent("Event");
+    e.initEvent("click", true, false);
+    r = elem.dispatchEvent(e);
+    ok(r === true, "dispatchEvent returned " + r);
+
+    elem.onclick = function(event) {
+        event.stopPropagation();
+    }
+    e = document.createEvent("Event");
+    e.initEvent("click", true, true);
+    r = elem.dispatchEvent(e);
+    ok(r === true, "dispatchEvent returned " + r);
+
+    next_test();
+}
+
+function test_init_event() {
+    var e = document.createEvent("Event");
+    var calls;
+
+    ok(e.type === "", "type = " + e.type);
+    ok(e.cancelable === false, "cancelable = " + e.cancelable);
+    ok(e.bubbles === false, "bubbles = " + e.bubbles);
+
+    e.initEvent("test", true, false);
+    ok(e.type === "test", "type = " + e.type);
+    ok(e.cancelable === false, "cancelable = " + e.cancelable);
+    ok(e.bubbles === true, "bubbles = " + e.bubbles);
+    ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+
+    e.preventDefault();
+    ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+
+    e.initEvent("NewTest", false, true);
+    ok(e.type === "NewTest", "type = " + e.type);
+    ok(e.cancelable === true, "cancelable = " + e.cancelable);
+    ok(e.bubbles === false, "bubbles = " + e.bubbles);
+
+    document.body.innerHTML = '<div></div>';
+    var elem = document.body.firstChild;
+
+    elem.addEventListener("NewTest", function(event) {
+        ok(e === event, "e != event");
+
+        e.preventDefault();
+        ok(e.defaultPrevented === true, "defaultPrevented = " + e.defaultPrevented);
+
+        /* initEvent no longer has effect */
+        event.initEvent("test", true, false);
+        ok(event.type === "NewTest", "event.type = " + event.type);
+        ok(event.bubbles === false, "bubbles = " + event.bubbles);
+        ok(event.cancelable === true, "cancelable = " + event.cancelable);
+        ok(e.defaultPrevented === true, "defaultPrevented = " + e.defaultPrevented);
+
+        calls++;
+    }, true);
+
+    calls = 0;
+    elem.dispatchEvent(e);
+    ok(calls === 1, "calls = " + calls);
+    ok(e.type === "NewTest", "event.type = " + e.type);
+    ok(e.bubbles === false, "bubbles = " + e.bubbles);
+    ok(e.cancelable === true, "cancelable = " + e.cancelable);
+    ok(e.target === elem, "target != elem");
+    ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+
+    /* initEvent no longer has effect except reseting defaultPrevented */
+    e.initEvent("test", true, false);
+    ok(e.type === "NewTest", "type = " + e.type);
+    ok(e.bubbles === false, "bubbles = " + e.bubbles);
+    ok(e.cancelable === true, "cancelable = " + e.cancelable);
+    ok(e.target === elem, "target != elem");
+    ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+
+    calls = 0;
+    elem.dispatchEvent(e);
+    ok(calls === 1, "calls = " + calls);
+    ok(e.type === "NewTest", "event.type = " + e.type);
+    ok(e.bubbles === false, "bubbles = " + e.bubbles);
+    ok(e.cancelable === true, "cancelable = " + e.cancelable);
+    ok(e.target === elem, "target != elem");
+
+    document.body.dispatchEvent(e);
+    ok(e.target === document.body, "target != body");
+
+    next_test();
+}
+
+function test_current_target() {
+    document.body.innerHTML = '<div><div></div></div>';
+    var parent = document.body.firstChild;
+    var child = parent.firstChild;
+    var calls;
+    var e;
+
+    function expect_current_target(expected_target) {
+        return function(event) {
+            ok(event.currentTarget === expected_target, "unexpected currentTarget");
+            calls++;
+        }
+    }
+
+    parent.addEventListener("test", expect_current_target(parent), true);
+    parent.addEventListener("test", expect_current_target(parent), false);
+    child.addEventListener("test", expect_current_target(child), true);
+    child.addEventListener("test", expect_current_target(child), false);
+
+    e = document.createEvent("Event");
+    e.initEvent("test", true, true);
+    ok(e.currentTarget === null, "currentTarget != null");
+
+    calls = 0;
+    child.dispatchEvent(e);
+    ok(calls === 4, "calls = " + calls + " expected 4");
+    ok(e.currentTarget === null, "currentTarget != null");
+
+    next_test();
+}
+
+function test_dispatch_event() {
+    document.body.innerHTML = '<div><div></div></div>';
+    var parent = document.body.firstChild;
+    var child = parent.firstChild;
+    var calls;
+    var e;
+
+    function record_call(msg) {
+        return function(event) {
+            ok(event === e, "event != e");
+            ok(event.target === child, "target != child");
+            calls += msg + ",";
+        };
+    }
+
+    parent.addEventListener("click", record_call("parent.click(capture)"), true);
+    parent.addEventListener("click", record_call("parent.click(bubble)"), false);
+    child.addEventListener("click", record_call("child.click(capture)"), true);
+    child.addEventListener("click", record_call("child.click(bubble)"), false);
+    parent.addEventListener("testing", record_call("parent.testing(capture)"), true);
+    parent.addEventListener("testing", record_call("parent.testing(bubble)"), false);
+    child.addEventListener("testing", record_call("child.testing(capture)"), true);
+    child.addEventListener("testing", record_call("child.testing(bubble)"), false);
+
+    e = document.createEvent("Event");
+    e.initEvent("click", true, true);
+    ok(e.target === null, "e.target != null");
+
+    calls = "";
+    child.dispatchEvent(e);
+    ok(calls === "parent.click(capture),child.click(capture),child.click(bubble),"
+       + "parent.click(bubble),", "calls = " + calls);
+    ok(e.target === child, "e.target != child");
+    ok(e.currentTarget === null, "e.currentTarget != null");
+
+    e = document.createEvent("Event");
+    e.initEvent("click", false, true);
+
+    calls = "";
+    child.dispatchEvent(e);
+    ok(calls === "parent.click(capture),child.click(capture),child.click(bubble),",
+       "calls = " + calls);
+
+    /* again, without reinitialization */
+    calls = "";
+    child.dispatchEvent(e);
+    ok(calls === "parent.click(capture),child.click(capture),child.click(bubble),",
+       "calls = " + calls);
+
+    e = document.createEvent("Event");
+    e.initEvent("testing", true, true);
+
+    calls = "";
+    child.dispatchEvent(e);
+    ok(calls === "parent.testing(capture),child.testing(capture),"
+       + "child.testing(bubble),parent.testing(bubble),", "calls = " + calls);
+
+    next_test();
+}
+
+function test_recursive_dispatch() {
+    document.body.innerHTML = '<div></div><div></div>';
+    var elem1 = document.body.firstChild;
+    var elem2 = elem1.nextSibling;
+    var calls;
+
+    var e = document.createEvent("Event");
+    ok(e.eventPhase === 0, "eventPhase = " + e.eventPhase);
+
+    e.initEvent("test", true, true);
+    ok(e.eventPhase === 0, "eventPhase = " + e.eventPhase);
+
+    elem1.addEventListener("test", function(event_arg) {
+        calls += "elem1.test,";
+        ok(event_arg === e, "event_arg != e");
+        try {
+            elem2.dispatchEvent(e);
+            ok(false, "expected exception");
+        }catch(exception) {}
+    }, true);
+
+    elem2.addEventListener("test", function() {
+        ok(false, "unexpected recursive event call");
+    }, true);
+
+    calls = "";
+    elem1.dispatchEvent(e);
+    ok(calls === "elem1.test,", "calls = " + calls);
+    ok(e.eventPhase === 3, "eventPhase = " + e.eventPhase);
 
     next_test();
 }
@@ -309,5 +559,9 @@ var tests = [
     test_event_phase,
     test_stop_propagation,
     test_prevent_default,
+    test_init_event,
+    test_current_target,
+    test_dispatch_event,
+    test_recursive_dispatch,
     test_listener_order
 ];
