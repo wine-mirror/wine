@@ -1789,6 +1789,12 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     return hr;
                 reg_maps->clip_distance_mask |= mask;
             }
+            else if (e->sysval_semantic == WINED3D_SV_CULL_DISTANCE)
+            {
+                if (FAILED(hr = shader_calculate_clip_or_cull_distance_mask(e, &mask)))
+                    return hr;
+                reg_maps->cull_distance_mask |= mask;
+            }
         }
     }
     else if (reg_maps->output_registers)

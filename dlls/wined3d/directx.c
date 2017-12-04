@@ -119,6 +119,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_conservative_depth",           ARB_CONSERVATIVE_DEPTH        },
     {"GL_ARB_copy_buffer",                  ARB_COPY_BUFFER               },
     {"GL_ARB_copy_image",                   ARB_COPY_IMAGE                },
+    {"GL_ARB_cull_distance",                ARB_CULL_DISTANCE             },
     {"GL_ARB_debug_output",                 ARB_DEBUG_OUTPUT              },
     {"GL_ARB_depth_buffer_float",           ARB_DEPTH_BUFFER_FLOAT        },
     {"GL_ARB_depth_texture",                ARB_DEPTH_TEXTURE             },
@@ -3916,6 +3917,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_CLEAR_TEXTURE,                MAKEDWORD_VERSION(4, 4)},
 
         {ARB_CLIP_CONTROL,                 MAKEDWORD_VERSION(4, 5)},
+        {ARB_CULL_DISTANCE,                MAKEDWORD_VERSION(4, 5)},
         {ARB_DERIVATIVE_CONTROL,           MAKEDWORD_VERSION(4, 5)},
 
         {ARB_PIPELINE_STATISTICS_QUERY,    MAKEDWORD_VERSION(4, 6)},

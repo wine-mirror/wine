@@ -1010,6 +1010,7 @@ struct wined3d_shader_reg_maps
     DWORD uav_counter_mask : 8;                     /* MAX_UNORDERED_ACCESS_VIEWS, 8 */
 
     DWORD clip_distance_mask : 8;                   /* MAX_CLIP_DISTANCES, 8 */
+    DWORD cull_distance_mask : 8;                   /* MAX_CLIP_DISTANCES, 8 */
     DWORD usesnrm        : 1;
     DWORD vpos           : 1;
     DWORD usesdsx        : 1;
@@ -1025,7 +1026,7 @@ struct wined3d_shader_reg_maps
     DWORD usespow        : 1;
     DWORD point_size     : 1;
     DWORD vocp           : 1;
-    DWORD padding        : 25;
+    DWORD padding        : 17;
 
     DWORD rt_mask; /* Used render targets, 32 max. */
 

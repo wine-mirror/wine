@@ -6930,8 +6930,10 @@ static void shader_glsl_generate_clip_or_cull_distances(struct wined3d_string_bu
         const struct wined3d_shader_signature_element *element, DWORD clip_or_cull_distance_mask)
 {
     unsigned int i, clip_or_cull_index;
+    const char *name;
     char reg_mask[6];
 
+    name = element->sysval_semantic == WINED3D_SV_CLIP_DISTANCE ? "Clip" : "Cull";
     /* Assign consecutive indices starting from 0. */
     clip_or_cull_index = element->semantic_idx ? wined3d_popcount(clip_or_cull_distance_mask & 0xf) : 0;
     for (i = 0; i < 4; ++i)
@@ -6940,8 +6942,8 @@ static void shader_glsl_generate_clip_or_cull_distances(struct wined3d_string_bu
             continue;
 
         shader_glsl_write_mask_to_str(WINED3DSP_WRITEMASK_0 << i, reg_mask);
-        shader_addline(buffer, "gl_ClipDistance[%u] = outputs[%u]%s;\n",
-                clip_or_cull_index, element->register_idx, reg_mask);
+        shader_addline(buffer, "gl_%sDistance[%u] = outputs[%u]%s;\n",
+                name, clip_or_cull_index, element->register_idx, reg_mask);
         ++clip_or_cull_index;
     }
 }
@@ -6992,6 +6994,10 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
         else if (output->sysval_semantic == WINED3D_SV_CLIP_DISTANCE)
         {
             shader_glsl_generate_clip_or_cull_distances(buffer, output, reg_maps_out->clip_distance_mask);
+        }
+        else if (output->sysval_semantic == WINED3D_SV_CULL_DISTANCE)
+        {
+            shader_glsl_generate_clip_or_cull_distances(buffer, output, reg_maps_out->cull_distance_mask);
         }
         else if (output->sysval_semantic)
         {
@@ -7393,6 +7399,8 @@ static void shader_glsl_generate_alpha_test(struct wined3d_string_buffer *buffer
 static void shader_glsl_enable_extensions(struct wined3d_string_buffer *buffer,
         const struct wined3d_gl_info *gl_info)
 {
+    if (gl_info->supported[ARB_CULL_DISTANCE])
+        shader_addline(buffer, "#extension GL_ARB_cull_distance : enable\n");
     if (gl_info->supported[ARB_GPU_SHADER5])
         shader_addline(buffer, "#extension GL_ARB_gpu_shader5 : enable\n");
     if (gl_info->supported[ARB_SHADER_ATOMIC_COUNTERS])
@@ -10875,6 +10883,7 @@ static unsigned int shader_glsl_get_shader_model(const struct wined3d_gl_info *g
 
     if (shader_model_4
             && gl_info->supported[ARB_COMPUTE_SHADER]
+            && gl_info->supported[ARB_CULL_DISTANCE]
             && gl_info->supported[ARB_DERIVATIVE_CONTROL]
             && gl_info->supported[ARB_DRAW_INDIRECT]
             && gl_info->supported[ARB_GPU_SHADER5]
