@@ -526,6 +526,8 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
 
     if (desc->MiscFlags & D3D11_RESOURCE_MISC_GDI_COMPATIBLE)
         flags |= WINED3D_TEXTURE_CREATE_GET_DC;
+    if (desc->MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS)
+        flags |= WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS;
 
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
             desc->ArraySize, levels, flags, (struct wined3d_sub_resource_data *)data,
@@ -940,6 +942,7 @@ static HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_devi
 {
     struct wined3d_resource_desc wined3d_desc;
     unsigned int levels;
+    DWORD flags = 0;
     HRESULT hr;
 
     if (desc->MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS
@@ -970,8 +973,11 @@ static HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_devi
 
     levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(max(desc->Width, desc->Height), desc->Depth)) + 1;
 
+    if (desc->MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS)
+        flags |= WINED3D_TEXTURE_CREATE_GENERATE_MIPMAPS;
+
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
-            1, levels, 0, (struct wined3d_sub_resource_data *)data, texture,
+            1, levels, flags, (struct wined3d_sub_resource_data *)data, texture,
             &d3d_texture3d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
