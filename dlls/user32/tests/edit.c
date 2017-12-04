@@ -2722,6 +2722,7 @@ static void test_EM_GETHANDLE(void)
 {
     static const char str0[] = "untouched";
     static const char str1[] = "1111+1111+1111#";
+    static const char str1_1[] = "2111+1111+1111#";
     static const char str2[] = "2222-2222-2222-2222#";
     static const char str3[] = "3333*3333*3333*3333*3333#";
     CHAR    current[42];
@@ -2769,6 +2770,33 @@ static void test_EM_GETHANDLE(void)
     ok((len == lstrlenA(str1)) && !lstrcmpA(buffer, str1),
         "got %d and \"%s\" (expected %d and \"%s\")\n", len, buffer, lstrlenA(str1), str1);
     LocalUnlock(hmem);
+
+    /* See if WM_GETTEXTLENGTH/WM_GETTEXT still work. */
+    len = SendMessageA(hEdit, WM_GETTEXTLENGTH, 0, 0);
+todo_wine
+    ok(len == lstrlenA(str1), "Unexpected text length %d.\n", len);
+
+    lstrcpyA(current, str0);
+    r = SendMessageA(hEdit, WM_GETTEXT, sizeof(current), (LPARAM)current);
+todo_wine
+    ok((r == lstrlenA(str1)) && !lstrcmpA(current, str1),
+        "Unexpected retval %d and text \"%s\" (expected %d and \"%s\")\n", r, current, lstrlenA(str1), str1);
+
+    /* Application altered buffer contents, see if WM_GETTEXTLENGTH/WM_GETTEXT pick that up. */
+    buffer = LocalLock(hmem);
+    ok(buffer != NULL, "got %p (expected != NULL)\n", buffer);
+    buffer[0] = '2';
+    LocalUnlock(hmem);
+
+    len = SendMessageA(hEdit, WM_GETTEXTLENGTH, 0, 0);
+todo_wine
+    ok(len == lstrlenA(str1), "Unexpected text length %d.\n", len);
+
+    lstrcpyA(current, str0);
+    r = SendMessageA(hEdit, WM_GETTEXT, sizeof(current), (LPARAM)current);
+todo_wine
+    ok((r == lstrlenA(str1_1)) && !lstrcmpA(current, str1_1),
+        "Unexpected retval %d and text \"%s\" (expected %d and \"%s\")\n", r, current, lstrlenA(str1_1), str1_1);
 
     /* use LocalAlloc first to get a different handle */
     halloc = LocalAlloc(LMEM_MOVEABLE, 42);
