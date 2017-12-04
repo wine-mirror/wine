@@ -18560,7 +18560,8 @@ wine_fn_config_dll hlink enable_hlink clean,implib
 wine_fn_config_test dlls/hlink/tests hlink_test
 wine_fn_config_dll hnetcfg enable_hnetcfg clean
 wine_fn_config_test dlls/hnetcfg/tests hnetcfg_test
-wine_fn_config_dll httpapi enable_httpapi
+wine_fn_config_dll httpapi enable_httpapi implib
+wine_fn_config_test dlls/httpapi/tests httpapi_test
 wine_fn_config_dll iccvid enable_iccvid clean
 wine_fn_config_dll icmp enable_icmp
 wine_fn_config_dll ieframe enable_ieframe clean,implib
