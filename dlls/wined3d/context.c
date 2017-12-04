@@ -4013,6 +4013,16 @@ void context_apply_compute_state(struct wined3d_context *context,
         context->update_unordered_access_view_bindings = 1;
     }
 
+    /* Updates to currently bound render targets aren't necessarily coherent
+     * between the graphics and compute pipelines. Unbind any currently bound
+     * FBO here to ensure preceding updates to its attachments by the graphics
+     * pipeline are visible to the compute pipeline.
+     *
+     * Without this, the bloom effect in Nier:Automata is too bright on the
+     * Mesa radeonsi driver, and presumably on other Mesa based drivers. */
+    context_bind_fbo(context, GL_FRAMEBUFFER, 0);
+    context_invalidate_state(context, STATE_FRAMEBUFFER);
+
     context->last_was_blit = FALSE;
 }
 
