@@ -2713,10 +2713,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 }
 
-/*****************************************************************************
- * Functions to generate GLSL strings from DirectX Shader bytecode begin here.
- ****************************************************************************/
-
 /* Prototypes */
 static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *ins,
         const struct wined3d_shader_src_param *wined3d_src, DWORD mask, struct glsl_src_param *glsl_src);
