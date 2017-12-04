@@ -62,6 +62,7 @@ function test_doc_props() {
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
+    test_exposed("createEvent", v >= 9);
 
     test_exposed("parentWindow", true);
     if(v >= 9) ok(document.defaultView === document.parentWindow, "defaultView != parentWindow");
