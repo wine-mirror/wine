@@ -1006,31 +1006,32 @@ struct wined3d_shader_reg_maps
     BYTE bumpmat;                                   /* MAX_TEXTURES, 8 */
     BYTE luminanceparams;                           /* MAX_TEXTURES, 8 */
     struct wined3d_shader_resource_info uav_resource_info[MAX_UNORDERED_ACCESS_VIEWS];
-    DWORD uav_read_mask;                            /* MAX_UNORDERED_ACCESS_VIEWS, 8 */
-    DWORD uav_counter_mask;                         /* MAX_UNORDERED_ACCESS_VIEWS, 8 */
+    DWORD uav_read_mask : 8;                        /* MAX_UNORDERED_ACCESS_VIEWS, 8 */
+    DWORD uav_counter_mask : 8;                     /* MAX_UNORDERED_ACCESS_VIEWS, 8 */
 
-    WORD usesnrm        : 1;
-    WORD vpos           : 1;
-    WORD usesdsx        : 1;
-    WORD usesdsy        : 1;
-    WORD usestexldd     : 1;
-    WORD usesmova       : 1;
-    WORD usesfacing     : 1;
-    WORD usesrelconstF  : 1;
-    WORD fog            : 1;
-    WORD usestexldl     : 1;
-    WORD usesifc        : 1;
-    WORD usescall       : 1;
-    WORD usespow        : 1;
-    WORD point_size     : 1;
-    WORD vocp           : 1;
-    WORD padding        : 1;
+    DWORD clip_distance_mask : 8;                   /* MAX_CLIP_DISTANCES, 8 */
+    DWORD usesnrm        : 1;
+    DWORD vpos           : 1;
+    DWORD usesdsx        : 1;
+    DWORD usesdsy        : 1;
+    DWORD usestexldd     : 1;
+    DWORD usesmova       : 1;
+    DWORD usesfacing     : 1;
+    DWORD usesrelconstF  : 1;
+    DWORD fog            : 1;
+    DWORD usestexldl     : 1;
+    DWORD usesifc        : 1;
+    DWORD usescall       : 1;
+    DWORD usespow        : 1;
+    DWORD point_size     : 1;
+    DWORD vocp           : 1;
+    DWORD padding        : 25;
 
     DWORD rt_mask; /* Used render targets, 32 max. */
 
     /* Whether or not loops are used in this shader, and nesting depth */
-    unsigned loop_depth;
-    UINT min_rel_offset, max_rel_offset;
+    unsigned int loop_depth;
+    unsigned int min_rel_offset, max_rel_offset;
 
     struct wined3d_shader_tgsm *tgsm;
     SIZE_T tgsm_capacity;

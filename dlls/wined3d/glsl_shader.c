@@ -241,7 +241,10 @@ struct glsl_shader_prog_link
     struct glsl_cs_program cs;
     GLuint id;
     DWORD constant_update_mask;
-    UINT constant_version;
+    unsigned int constant_version;
+    DWORD shader_controlled_clip_distances : 1;
+    DWORD clip_distance_mask : 8; /* MAX_CLIP_DISTANCES, 8 */
+    DWORD padding : 23;
 };
 
 struct glsl_program_key
@@ -6923,6 +6926,26 @@ static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
     }
 }
 
+static void shader_glsl_generate_clip_or_cull_distances(struct wined3d_string_buffer *buffer,
+        const struct wined3d_shader_signature_element *element, DWORD clip_or_cull_distance_mask)
+{
+    unsigned int i, clip_or_cull_index;
+    char reg_mask[6];
+
+    /* Assign consecutive indices starting from 0. */
+    clip_or_cull_index = element->semantic_idx ? wined3d_popcount(clip_or_cull_distance_mask & 0xf) : 0;
+    for (i = 0; i < 4; ++i)
+    {
+        if (!(element->mask & (WINED3DSP_WRITEMASK_0 << i)))
+            continue;
+
+        shader_glsl_write_mask_to_str(WINED3DSP_WRITEMASK_0 << i, reg_mask);
+        shader_addline(buffer, "gl_ClipDistance[%u] = outputs[%u]%s;\n",
+                clip_or_cull_index, element->register_idx, reg_mask);
+        ++clip_or_cull_index;
+    }
+}
+
 static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv,
         const struct wined3d_gl_info *gl_info, const DWORD *map,
         const struct wined3d_shader_signature *input_signature,
@@ -6932,7 +6955,7 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
 {
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     const char *semantic_name;
-    UINT semantic_idx;
+    unsigned int semantic_idx;
     char reg_mask[6];
     unsigned int i;
 
@@ -6965,6 +6988,10 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
         {
             shader_addline(buffer, "gl_Layer = floatBitsToInt(outputs[%u])%s;\n",
                     output->register_idx, reg_mask);
+        }
+        else if (output->sysval_semantic == WINED3D_SV_CLIP_DISTANCE)
+        {
+            shader_glsl_generate_clip_or_cull_distances(buffer, output, reg_maps_out->clip_distance_mask);
         }
         else if (output->sysval_semantic)
         {
@@ -9852,6 +9879,7 @@ static HRESULT shader_glsl_compile_compute_shader(struct shader_glsl_priv *priv,
     entry->ps.id = 0;
     entry->cs.id = shader_id;
     entry->constant_version = 0;
+    entry->shader_controlled_clip_distances = 0;
     entry->ps.np2_fixup_info = NULL;
     add_glsl_program_entry(priv, entry);
 
@@ -9926,11 +9954,12 @@ static void set_glsl_compute_shader_program(const struct wined3d_context *contex
 static void set_glsl_shader_program(const struct wined3d_context *context, const struct wined3d_state *state,
         struct shader_glsl_priv *priv, struct glsl_context_data *ctx_data)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_shader *pre_rasterization_shader;
     const struct ps_np2fixup_info *np2fixup_info = NULL;
-    struct glsl_shader_prog_link *entry = NULL;
     struct wined3d_shader *hshader, *dshader, *gshader;
+    struct glsl_shader_prog_link *entry = NULL;
     struct wined3d_shader *vshader = NULL;
     struct wined3d_shader *pshader = NULL;
     GLuint reorder_shader_id = 0;
@@ -10068,6 +10097,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     entry->ps.id = ps_id;
     entry->cs.id = 0;
     entry->constant_version = 0;
+    entry->shader_controlled_clip_distances = 0;
     entry->ps.np2_fixup_info = np2fixup_info;
     /* Add the hash table entry */
     add_glsl_program_entry(priv, entry);
@@ -10194,7 +10224,15 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     shader_glsl_init_gs_uniform_locations(gl_info, priv, program_id, &entry->gs);
     shader_glsl_init_ps_uniform_locations(gl_info, priv, program_id, &entry->ps,
             pshader ? pshader->limits->constant_float : 0);
-    checkGLcall("Find glsl program uniform locations");
+    checkGLcall("find glsl program uniform locations");
+
+    pre_rasterization_shader = gshader ? gshader : dshader ? dshader : vshader;
+    if (pre_rasterization_shader && pre_rasterization_shader->reg_maps.shader_version.major >= 4)
+    {
+        unsigned int clip_distance_count = wined3d_popcount(pre_rasterization_shader->reg_maps.clip_distance_mask);
+        entry->shader_controlled_clip_distances = 1;
+        entry->clip_distance_mask = (1u << clip_distance_count) - 1;
+    }
 
     if (needs_legacy_glsl_syntax(gl_info))
     {
@@ -10350,6 +10388,7 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
     struct glsl_context_data *ctx_data = context->shader_backend_data;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = shader_priv;
+    struct glsl_shader_prog_link *glsl_program;
     GLenum current_vertex_color_clamp;
     GLuint program_id, prev_id;
 
@@ -10357,13 +10396,15 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
     priv->fragment_pipe->enable_extension(gl_info, !use_ps(state));
 
     prev_id = ctx_data->glsl_program ? ctx_data->glsl_program->id : 0;
-
     set_glsl_shader_program(context, state, priv, ctx_data);
+    glsl_program = ctx_data->glsl_program;
 
-    if (ctx_data->glsl_program)
+    if (glsl_program)
     {
-        program_id = ctx_data->glsl_program->id;
-        current_vertex_color_clamp = ctx_data->glsl_program->vs.vertex_color_clamp;
+        program_id = glsl_program->id;
+        current_vertex_color_clamp = glsl_program->vs.vertex_color_clamp;
+        if (glsl_program->shader_controlled_clip_distances)
+            context_enable_clip_distances(context, glsl_program->clip_distance_mask);
     }
     else
     {
@@ -10392,8 +10433,8 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
         GL_EXTCALL(glUseProgram(program_id));
         checkGLcall("glUseProgram");
 
-        if (program_id)
-            context->constant_update_mask |= ctx_data->glsl_program->constant_update_mask;
+        if (glsl_program)
+            context->constant_update_mask |= glsl_program->constant_update_mask;
     }
 
     context->shader_update_mask |= (1u << WINED3D_SHADER_TYPE_COMPUTE);
