@@ -259,8 +259,6 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
     return complex_fixup;
 }
 
-#define WINED3D_MAX_USER_CLIP_PLANES 32
-
 /* Device caps */
 #define MAX_STREAMS                 16
 #define MAX_TEXTURES                8
@@ -2829,7 +2827,7 @@ struct wined3d_state
     DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
     struct wined3d_matrix transforms[HIGHEST_TRANSFORMSTATE + 1];
-    struct wined3d_vec4 clip_planes[WINED3D_MAX_USER_CLIP_PLANES];
+    struct wined3d_vec4 clip_planes[MAX_CLIP_DISTANCES];
     struct wined3d_material material;
     struct wined3d_viewport viewport;
     RECT scissor_rect;
