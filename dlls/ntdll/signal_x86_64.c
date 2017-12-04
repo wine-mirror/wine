@@ -1889,7 +1889,7 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
  *
  * Set the new CPU context. Used by NtSetContextThread.
  */
-static void set_cpu_context( const CONTEXT *context )
+void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
 {
     DWORD flags = context->ContextFlags & ~CONTEXT_AMD64;
 
@@ -4103,11 +4103,18 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "movq %rax,0x98(%r10)\n\t"       /* context->Rsp */
                    "movq %rcx,0xf8(%r10)\n\t"       /* context->Rip = relay */
                    "fxsave 0x100(%r10)\n\t"         /* context->FtlSave */
-                   /* switch to thread stack and call thread_startup() */
+                   /* switch to thread stack */
                    "movq %r10,%rsp\n\t"
+                   /* attach dlls */
                    "movq %r10,%rdi\n\t"         /* context */
                    "movq %rdx,%rsi\n\t"         /* suspend */
-                   "call " __ASM_NAME("thread_startup") )
+                   "call " __ASM_NAME("attach_dlls") "\n\t"
+                   /* clear the stack */
+                   "leaq -0xb00(%rsp),%rdi\n\t"  /* round down to page size */
+                   "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
+                   /* switch to the initial context */
+                   "movq %rsp,%rdi\n\t"
+                   "call " __ASM_NAME("set_cpu_context") )
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), void *frame );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
@@ -4123,24 +4130,12 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
 
 
 /***********************************************************************
- *           thread_startup
- */
-void DECLSPEC_HIDDEN thread_startup( CONTEXT *context, BOOL suspend )
-{
-    attach_dlls( context, suspend );
-    virtual_clear_thread_stack();
-    set_cpu_context( context );
-}
-
-
-/***********************************************************************
  *           signal_start_thread
  *
  * Thread startup sequence:
  * signal_start_thread()
  *   -> start_thread()
- *     -> thread_startup()
- *       -> call_thread_func()
+ *     -> call_thread_func()
  */
 void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
@@ -4155,8 +4150,7 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  * Process startup sequence:
  * signal_start_process()
  *   -> start_thread()
- *     -> thread_startup()
- *       -> kernel32_start_process()
+ *     -> kernel32_start_process()
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {

@@ -1312,7 +1312,7 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
  *
  * Set the new CPU context. Used by NtSetContextThread.
  */
-static void set_cpu_context( const CONTEXT *context )
+void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
 {
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
 
@@ -2867,28 +2867,37 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "movl %ebp,(%eax)\n\t"
                    /* build initial context on thread stack */
                    "movl %fs:4,%eax\n\t"        /* NtCurrentTeb()->StackBase */
-                   "leal -0x2dc(%eax),%ecx\n\t" /* sizeof(context) + 16 */
-                   "movl $0x10007,(%ecx)\n\t"   /* context->ContextFlags = CONTEXT_FULL */
-                   "movw %cs,0xbc(%ecx)\n\t"    /* context->SegCs */
-                   "movw %ds,0x98(%ecx)\n\t"    /* context->SegDs */
-                   "movw %es,0x94(%ecx)\n\t"    /* context->SegEs */
-                   "movw %fs,0x90(%ecx)\n\t"    /* context->SegFs */
-                   "movw %gs,0x8c(%ecx)\n\t"    /* context->SegGs */
-                   "movw %ss,0xc8(%ecx)\n\t"    /* context->SegSs */
+                   "leal -0x2dc(%eax),%esi\n\t" /* sizeof(context) + 16 */
+                   "movl $0x10007,(%esi)\n\t"   /* context->ContextFlags = CONTEXT_FULL */
+                   "movw %cs,0xbc(%esi)\n\t"    /* context->SegCs */
+                   "movw %ds,0x98(%esi)\n\t"    /* context->SegDs */
+                   "movw %es,0x94(%esi)\n\t"    /* context->SegEs */
+                   "movw %fs,0x90(%esi)\n\t"    /* context->SegFs */
+                   "movw %gs,0x8c(%esi)\n\t"    /* context->SegGs */
+                   "movw %ss,0xc8(%esi)\n\t"    /* context->SegSs */
                    "movl 8(%ebp),%eax\n\t"
-                   "movl %eax,0xb0(%ecx)\n\t"   /* context->Eax = entry */
+                   "movl %eax,0xb0(%esi)\n\t"   /* context->Eax = entry */
                    "movl 12(%ebp),%eax\n\t"
-                   "movl %eax,0xa4(%ecx)\n\t"   /* context->Ebx = arg */
+                   "movl %eax,0xa4(%esi)\n\t"   /* context->Ebx = arg */
                    "movl 20(%ebp),%eax\n\t"
-                   "movl %eax,0xb8(%ecx)\n\t"   /* context->Eip = relay */
-                   "leal 0x2cc(%ecx),%eax\n\t"
-                   "movl %eax,0xc4(%ecx)\n\t"   /* context->Esp */
-                   /* switch to thread stack and call thread_startup() */
-                   "leal -12(%ecx),%esp\n\t"
+                   "movl %eax,0xb8(%esi)\n\t"   /* context->Eip = relay */
+                   "leal 0x2cc(%esi),%eax\n\t"
+                   "movl %eax,0xc4(%esi)\n\t"   /* context->Esp */
+                   /* switch to thread stack */
+                   "leal -12(%esi),%esp\n\t"
+                   /* attach dlls */
                    "pushl 16(%ebp)\n\t"         /* suspend */
-                   "pushl %ecx\n\t"             /* context */
+                   "pushl %esi\n\t"             /* context */
                    "xorl %ebp,%ebp\n\t"
-                   "call " __ASM_NAME("thread_startup") )
+                   "call " __ASM_NAME("attach_dlls") "\n\t"
+                   "addl $20,%esp\n\t"
+                   /* clear the stack */
+                   "leal -0xd24(%esi),%eax\n\t"  /* round down to page size */
+                   "pushl %eax\n\t"
+                   "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
+                   /* switch to the initial context */
+                   "movl %esi,(%esp)\n\t"
+                   "call " __ASM_NAME("set_cpu_context") )
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), void *frame );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
@@ -2951,24 +2960,13 @@ void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg )
 
 
 /***********************************************************************
- *           thread_startup
- */
-void DECLSPEC_HIDDEN thread_startup( CONTEXT *context, BOOL suspend )
-{
-    attach_dlls( context, suspend );
-    virtual_clear_thread_stack();
-    set_cpu_context( context );
-}
-
-/***********************************************************************
  *           signal_start_thread
  *
  * Thread startup sequence:
  * signal_start_thread()
  *   -> start_thread()
- *     -> thread_startup()
- *       -> call_thread_entry()
- *         -> call_thread_func()
+ *     -> call_thread_entry()
+ *       -> call_thread_func()
  */
 void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
@@ -2981,8 +2979,7 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  * Process startup sequence:
  * signal_start_process()
  *   -> start_thread()
- *     -> thread_startup()
- *       -> kernel32_start_process()
+ *     -> kernel32_start_process()
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {

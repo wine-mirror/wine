@@ -168,7 +168,7 @@ extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info ) DECLSPEC_H
 extern NTSTATUS virtual_create_builtin_view( void *base ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size,
                                             SIZE_T commit_size, SIZE_T extra_size ) DECLSPEC_HIDDEN;
-extern void virtual_clear_thread_stack(void) DECLSPEC_HIDDEN;
+extern void virtual_clear_thread_stack( void *stack_end ) DECLSPEC_HIDDEN;
 extern BOOL virtual_handle_stack_fault( void *addr ) DECLSPEC_HIDDEN;
 extern BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack ) DECLSPEC_HIDDEN;
