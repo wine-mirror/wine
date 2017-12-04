@@ -422,6 +422,12 @@ static BOOL validate_buffer_desc(D3D11_BUFFER_DESC *desc)
         desc->StructureByteStride = 0;
     }
 
+    if (desc->MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS)
+    {
+        WARN("Buffer with the D3D11_RESOURCE_MISC_GENERATE_MIPS flag.\n");
+        return FALSE;
+    }
+
     return TRUE;
 }
 
