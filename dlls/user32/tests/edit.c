@@ -2773,12 +2773,10 @@ static void test_EM_GETHANDLE(void)
 
     /* See if WM_GETTEXTLENGTH/WM_GETTEXT still work. */
     len = SendMessageA(hEdit, WM_GETTEXTLENGTH, 0, 0);
-todo_wine
     ok(len == lstrlenA(str1), "Unexpected text length %d.\n", len);
 
     lstrcpyA(current, str0);
     r = SendMessageA(hEdit, WM_GETTEXT, sizeof(current), (LPARAM)current);
-todo_wine
     ok((r == lstrlenA(str1)) && !lstrcmpA(current, str1),
         "Unexpected retval %d and text \"%s\" (expected %d and \"%s\")\n", r, current, lstrlenA(str1), str1);
 
@@ -2789,14 +2787,27 @@ todo_wine
     LocalUnlock(hmem);
 
     len = SendMessageA(hEdit, WM_GETTEXTLENGTH, 0, 0);
-todo_wine
-    ok(len == lstrlenA(str1), "Unexpected text length %d.\n", len);
+    ok(len == lstrlenA(str1_1), "Unexpected text length %d.\n", len);
 
     lstrcpyA(current, str0);
     r = SendMessageA(hEdit, WM_GETTEXT, sizeof(current), (LPARAM)current);
-todo_wine
     ok((r == lstrlenA(str1_1)) && !lstrcmpA(current, str1_1),
         "Unexpected retval %d and text \"%s\" (expected %d and \"%s\")\n", r, current, lstrlenA(str1_1), str1_1);
+
+    /* See if WM_SETTEXT/EM_REPLACESEL work. */
+    r = SendMessageA(hEdit, WM_SETTEXT, 0, (LPARAM)str1);
+    ok(r, "Failed to set text.\n");
+
+    buffer = LocalLock(hmem);
+    ok(buffer != NULL && buffer[0] == '1', "Unexpected buffer contents\n");
+    LocalUnlock(hmem);
+
+    r = SendMessageA(hEdit, EM_REPLACESEL, 0, (LPARAM)str1_1);
+    ok(r, "Failed to replace selection.\n");
+
+    buffer = LocalLock(hmem);
+    ok(buffer != NULL && buffer[0] == '2', "Unexpected buffer contents\n");
+    LocalUnlock(hmem);
 
     /* use LocalAlloc first to get a different handle */
     halloc = LocalAlloc(LMEM_MOVEABLE, 42);

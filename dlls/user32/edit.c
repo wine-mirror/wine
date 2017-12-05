@@ -1263,8 +1263,6 @@ static inline void text_buffer_changed(EDITSTATE *es)
  */
 static void EDIT_LockBuffer(EDITSTATE *es)
 {
-        if (es->hlocapp) return;
-
 	if (!es->text) {
 
 	    if(!es->hloc32W) return;
@@ -1305,8 +1303,6 @@ static void EDIT_LockBuffer(EDITSTATE *es)
  */
 static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 {
-        if (es->hlocapp) return;
-
 	/* Edit window might be already destroyed */
 	if(!IsWindow(es->hwndSelf))
 	{
@@ -1322,7 +1318,6 @@ static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 		ERR("es->text == 0 ... please report\n");
 		return;
 	}
-
 	if (force || (es->lock_count == 1)) {
 	    if (es->hloc32W) {
 		UINT countA = 0;
@@ -5202,7 +5197,8 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 		break;
 	}
 
-	if (IsWindow(hwnd) && es) EDIT_UnlockBuffer(es, FALSE);
+        if (IsWindow(hwnd) && es && msg != EM_GETHANDLE)
+            EDIT_UnlockBuffer(es, FALSE);
 
         TRACE("hwnd=%p msg=%x (%s) -- 0x%08lx\n", hwnd, msg, SPY_GetMsgName(msg, hwnd), result);
 
