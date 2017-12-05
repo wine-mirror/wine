@@ -691,37 +691,33 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         }
         if (ctx.flags & SERVER_CTX_INTEGER)
         {
-            dump_uint64( ",x0=",  &ctx.integer.arm64_regs.x[0] );
-            dump_uint64( ",x1=",  &ctx.integer.arm64_regs.x[1] );
-            dump_uint64( ",x2=",  &ctx.integer.arm64_regs.x[2] );
-            dump_uint64( ",x3=",  &ctx.integer.arm64_regs.x[3] );
-            dump_uint64( ",x4=",  &ctx.integer.arm64_regs.x[4] );
-            dump_uint64( ",x5=",  &ctx.integer.arm64_regs.x[5] );
-            dump_uint64( ",x6=",  &ctx.integer.arm64_regs.x[6] );
-            dump_uint64( ",x7=",  &ctx.integer.arm64_regs.x[7] );
-            dump_uint64( ",x8=",  &ctx.integer.arm64_regs.x[8] );
-            dump_uint64( ",x9=",  &ctx.integer.arm64_regs.x[9] );
-            dump_uint64( ",x10=", &ctx.integer.arm64_regs.x[10] );
-            dump_uint64( ",x11=", &ctx.integer.arm64_regs.x[11] );
-            dump_uint64( ",x12=", &ctx.integer.arm64_regs.x[12] );
-            dump_uint64( ",x13=", &ctx.integer.arm64_regs.x[13] );
-            dump_uint64( ",x14=", &ctx.integer.arm64_regs.x[14] );
-            dump_uint64( ",x15=", &ctx.integer.arm64_regs.x[15] );
-            dump_uint64( ",x16=", &ctx.integer.arm64_regs.x[16] );
-            dump_uint64( ",x17=", &ctx.integer.arm64_regs.x[17] );
-            dump_uint64( ",x18=", &ctx.integer.arm64_regs.x[18] );
-            dump_uint64( ",x19=", &ctx.integer.arm64_regs.x[19] );
-            dump_uint64( ",x20=", &ctx.integer.arm64_regs.x[20] );
-            dump_uint64( ",x21=", &ctx.integer.arm64_regs.x[21] );
-            dump_uint64( ",x22=", &ctx.integer.arm64_regs.x[22] );
-            dump_uint64( ",x23=", &ctx.integer.arm64_regs.x[23] );
-            dump_uint64( ",x24=", &ctx.integer.arm64_regs.x[24] );
-            dump_uint64( ",x25=", &ctx.integer.arm64_regs.x[25] );
-            dump_uint64( ",x26=", &ctx.integer.arm64_regs.x[26] );
-            dump_uint64( ",x27=", &ctx.integer.arm64_regs.x[27] );
-            dump_uint64( ",x28=", &ctx.integer.arm64_regs.x[28] );
-            dump_uint64( ",x29=", &ctx.integer.arm64_regs.x[29] );
-            dump_uint64( ",x30=", &ctx.integer.arm64_regs.x[30] );
+            for (i = 0; i < 31; i++)
+            {
+                fprintf( stderr, ",x%u=", i );
+                dump_uint64( "", &ctx.integer.arm64_regs.x[i] );
+            }
+        }
+        if (ctx.flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            for (i = 0; i < 8; i++)
+            {
+                fprintf( stderr, ",bcr%u=%08x,bvr%u=", i, ctx.debug.arm64_regs.bcr[i], i );
+                dump_uint64( "", &ctx.debug.arm64_regs.bvr[i] );
+            }
+            for (i = 0; i < 2; i++)
+            {
+                fprintf( stderr, ",wcr%u=%08x,wvr%u=", i, ctx.debug.arm64_regs.wcr[i], i );
+                dump_uint64( "", &ctx.debug.arm64_regs.wvr[i] );
+            }
+        }
+        if (ctx.flags & SERVER_CTX_FLOATING_POINT)
+        {
+            for (i = 0; i < 64; i++)
+            {
+                fprintf( stderr, ",d%u=", i );
+                dump_uint64( "", &ctx.fp.arm64_regs.d[i] );
+            }
+            fprintf( stderr, ",fpcr=%08x,fpsr=%08x", ctx.fp.arm64_regs.fpcr, ctx.fp.arm64_regs.fpsr );
         }
         break;
     }
