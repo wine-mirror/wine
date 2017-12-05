@@ -1054,8 +1054,11 @@ static HRESULT WINAPI DOMEvent_get_target(IDOMEvent *iface, IEventTarget **p)
 static HRESULT WINAPI DOMEvent_get_timeStamp(IDOMEvent *iface, ULONGLONG *p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = This->time_stamp;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_get_type(IDOMEvent *iface, BSTR *p)
@@ -1208,6 +1211,10 @@ static dispex_static_data_t DOMEvent_dispex = {
 static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
 {
     DOMEvent *event;
+    FILETIME time;
+
+    /* 1601 to 1970 is 369 years plus 89 leap days */
+    const ULONGLONG time_epoch = (ULONGLONG)(369 * 365 + 89) * 86400 * 1000;
 
     event = heap_alloc_zero(sizeof(*event));
     if(!event)
@@ -1227,6 +1234,11 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
         event->cancelable = (event_info[event_id].flags & EVENT_CANCELABLE) != 0;
     }
     nsIDOMEvent_AddRef(event->nsevent = nsevent);
+
+    GetSystemTimeAsFileTime(&time);
+    event->time_stamp = (((ULONGLONG)time.dwHighDateTime<<32) + time.dwLowDateTime) / 10000
+        - time_epoch;
+
     return event;
 }
 

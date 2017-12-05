@@ -67,6 +67,7 @@ typedef struct {
     WCHAR *type;
     EventTarget *target;
     EventTarget *current_target;
+    ULONGLONG time_stamp;
     BOOL bubbles;
     BOOL cancelable;
     BOOL prevent_default;

@@ -295,10 +295,10 @@ function test_prevent_default() {
     var calls;
 
     div.addEventListener("click", function(e) {
-        calls += "div,";
         ok(e.defaultPrevented === false, "e.defaultPrevented = " + e.defaultPrevented);
         e.preventDefault();
         ok(e.defaultPrevented === e.cancelable, "e.defaultPrevented = " + e.defaultPrevented);
+        calls += "div,";
     }, true);
 
     a.addEventListener("click", function(e) {
@@ -551,6 +551,44 @@ function test_recursive_dispatch() {
     next_test();
 }
 
+function test_time_stamp() {
+    document.body.innerHTML = '<div></div>';
+    var elem = document.body.firstChild;
+    var calls, last_time_stamp;
+
+    elem.onclick = function(event) {
+        ok(event.timeStamp === last_time_stamp, "timeStamp = " + event.timeStamp);
+        calls++;
+    }
+
+    var e = document.createEvent("Event");
+    ok(typeof(e.timeStamp) === "number", "typeof(timeStamp) = " + typeof(e.timeStamp));
+    ok(e.timeStamp > 0, "timeStamp = " + e.timeStamp);
+
+    var now = (new Date()).getTime();
+    last_time_stamp = e.timeStamp;
+    ok(Math.abs(now - last_time_stamp) < 3, "timeStamp " + last_time_stamp + " != now " + now);
+
+    e.initEvent("click", true, true);
+    ok(e.timeStamp === last_time_stamp, "timeStamp = " + e.timeStamp);
+    calls = 0;
+    elem.dispatchEvent(e);
+    ok(calls === 1, "calls = " + calls);
+    ok(e.timeStamp === last_time_stamp, "timeStamp = " + e.timeStamp);
+
+    elem.onclick = function(event) {
+        ok(event.timeStamp > 0, "timeStamp = " + event.timeStamp);
+        trace("timestamp " + event.timeStamp);
+        calls++;
+    }
+
+    calls = 0;
+    elem.click();
+    ok(calls === 1, "calls = " + calls);
+
+    next_test();
+}
+
 var tests = [
     test_content_loaded,
     test_add_remove_listener,
@@ -563,5 +601,6 @@ var tests = [
     test_current_target,
     test_dispatch_event,
     test_recursive_dispatch,
+    test_time_stamp,
     test_listener_order
 ];

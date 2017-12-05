@@ -219,7 +219,8 @@ HRESULT get_class_typeinfo(const CLSID *clsid, ITypeInfo **typeinfo)
     CASE_VT(VT_VARIANT, VARIANT, *);                    \
     CASE_VT(VT_PTR, void*, V_BYREF);                    \
     CASE_VT(VT_UNKNOWN, IUnknown*, V_UNKNOWN);          \
-    CASE_VT(VT_DISPATCH, IDispatch*, V_DISPATCH)
+    CASE_VT(VT_DISPATCH, IDispatch*, V_DISPATCH);       \
+    CASE_VT(VT_UI8, ULONGLONG, V_UI8)
 
 static BOOL is_arg_type_supported(VARTYPE vt)
 {
