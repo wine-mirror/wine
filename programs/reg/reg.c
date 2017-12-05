@@ -77,6 +77,8 @@ type_rels[] =
     {REG_MULTI_SZ, type_multi_sz},
 };
 
+static const WCHAR newlineW[] = {'\n',0};
+
 void *heap_xalloc(size_t size)
 {
     void *buf = HeapAlloc(GetProcessHeap(), 0, size);
@@ -610,7 +612,6 @@ static const WCHAR *reg_type_to_wchar(DWORD type)
 static void output_value(const WCHAR *value_name, DWORD type, BYTE *data, DWORD data_size)
 {
     static const WCHAR fmt[] = {' ',' ',' ',' ','%','1',0};
-    static const WCHAR newlineW[] = {'\n',0};
     WCHAR defval[32];
     WCHAR *reg_data;
 
@@ -660,7 +661,6 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
     DWORD type, path_len, i;
     BYTE *data;
     WCHAR fmt[] = {'%','1','\n',0};
-    WCHAR newlineW[] = {'\n',0};
     WCHAR *subkey_name, *subkey_path;
     HKEY subkey;
 
@@ -740,7 +740,6 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
     WCHAR fmt[] = {'%','1','\n',0};
     WCHAR fmt_path[] = {'%','1','\\','%','2','\n',0};
     WCHAR *value_name, *subkey_name, *subkey_path;
-    WCHAR newlineW[] = {'\n',0};
     BYTE *data;
     HKEY subkey;
 
@@ -821,7 +820,6 @@ static int reg_query(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name,
                      BOOL value_empty, BOOL recurse)
 {
     HKEY key;
-    WCHAR newlineW[] = {'\n',0};
     int ret;
 
     if (RegOpenKeyExW(root, path, 0, KEY_READ, &key) != ERROR_SUCCESS)
