@@ -48,6 +48,8 @@
 # include <sys/ucontext.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -118,12 +120,7 @@ static inline BOOL is_valid_frame( void *frame )
  */
 static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
 {
-#define C(n) context->X##n = REGn_sig(n,sigcontext)
-    /* Save normal registers */
-    C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
-    C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
-#undef C
+    DWORD i;
 
     context->ContextFlags = CONTEXT_FULL;
     context->Fp     = FP_sig(sigcontext);     /* Frame pointer */
@@ -131,6 +128,7 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     context->Sp     = SP_sig(sigcontext);     /* Stack pointer */
     context->Pc     = PC_sig(sigcontext);     /* Program Counter */
     context->Cpsr   = PSTATE_sig(sigcontext); /* Current State Register */
+    for (i = 0; i <= 28; i++) context->u.X[i] = REGn_sig( i, sigcontext );
 }
 
 
@@ -141,18 +139,14 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
  */
 static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 {
-#define C(n)  REGn_sig(n,sigcontext) = context->X##n
-    /* Restore normal registers */
-    C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
-    C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
-#undef C
+    DWORD i;
 
     FP_sig(sigcontext)     = context->Fp;     /* Frame pointer */
     LR_sig(sigcontext)     = context->Lr;     /* Link register */
     SP_sig(sigcontext)     = context->Sp;     /* Stack pointer */
     PC_sig(sigcontext)     = context->Pc;     /* Program Counter */
     PSTATE_sig(sigcontext) = context->Cpsr;   /* Current State Register */
+    for (i = 0; i <= 28; i++) REGn_sig( i, sigcontext ) = context->u.X[i];
 }
 
 
@@ -255,12 +249,7 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
     }
     if (flags & CONTEXT_INTEGER)
     {
-#define C(n)  to->X##n = from->X##n
-    /* Restore normal registers */
-    C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
-    C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
-#undef C
+        memcpy( to->u.X, from->u.X, sizeof(to->u.X) );
     }
 }
 
@@ -271,7 +260,7 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
  */
 NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
 {
-    DWORD flags = from->ContextFlags & ~CONTEXT_ARM64;  /* get rid of CPU id */
+    DWORD i, flags = from->ContextFlags & ~CONTEXT_ARM64;  /* get rid of CPU id */
 
     memset( to, 0, sizeof(*to) );
     to->cpu = CPU_ARM64;
@@ -288,12 +277,7 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
     if (flags & CONTEXT_INTEGER)
     {
         to->flags |= SERVER_CTX_INTEGER;
-#define C(n)  to->integer.arm64_regs.x[n] = from->X##n
-    /* Restore normal registers */
-    C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
-    C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
-#undef C
+        for (i = 0; i <= 28; i++) to->integer.arm64_regs.x[i] = from->u.X[i];
     }
     return STATUS_SUCCESS;
 }
@@ -306,6 +290,8 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
  */
 NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 {
+    DWORD i;
+
     if (from->cpu != CPU_ARM64) return STATUS_INVALID_PARAMETER;
 
     to->ContextFlags = CONTEXT_ARM64;
@@ -321,12 +307,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
     if (from->flags & SERVER_CTX_INTEGER)
     {
         to->ContextFlags |= CONTEXT_INTEGER;
-#define C(n)  to->X##n = from->integer.arm64_regs.x[n]
-    /* Restore normal registers */
-    C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
-    C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
-#undef C
+        for (i = 0; i <= 28; i++) to->u.X[i] = from->integer.arm64_regs.x[i];
      }
     return STATUS_SUCCESS;
 }
@@ -971,14 +952,14 @@ static void thread_startup( void *param )
 
     /* build the initial context */
     context.ContextFlags = CONTEXT_FULL;
-    context.X0 = (DWORD_PTR)info->entry;
-    context.X1 = (DWORD_PTR)info->arg;
+    context.u.s.X0 = (DWORD_PTR)info->entry;
+    context.u.s.X1 = (DWORD_PTR)info->arg;
     context.Sp = (DWORD_PTR)NtCurrentTeb()->Tib.StackBase;
     context.Pc = (DWORD_PTR)info->start;
 
     attach_dlls( &context, info->suspend );
 
-    ((thread_start_func)context.Pc)( (LPTHREAD_START_ROUTINE)context.X0, (void *)context.X1 );
+    ((thread_start_func)context.Pc)( (LPTHREAD_START_ROUTINE)context.u.s.X0, (void *)context.u.s.X1 );
 }
 
 /***********************************************************************

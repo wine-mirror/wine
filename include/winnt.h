@@ -1762,6 +1762,9 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry(ULONG_PTR,DWORD*,UNWIND_HISTORY_
 #define EXCEPTION_WRITE_FAULT   1
 #define EXCEPTION_EXECUTE_FAULT 8
 
+#define ARM64_MAX_BREAKPOINTS   8
+#define ARM64_MAX_WATCHPOINTS   2
+
 typedef struct _RUNTIME_FUNCTION
 {
     DWORD BeginAddress;
@@ -1801,50 +1804,74 @@ typedef struct _UNWIND_HISTORY_TABLE
     UNWIND_HISTORY_TABLE_ENTRY Entry[UNWIND_HISTORY_TABLE_SIZE];
 } UNWIND_HISTORY_TABLE, *PUNWIND_HISTORY_TABLE;
 
-typedef struct _CONTEXT {
-    ULONG ContextFlags;
-    ULONG Cpsr;
+typedef union _NEON128
+{
+    struct
+    {
+        ULONGLONG Low;
+        LONGLONG High;
+    } DUMMYSTRUCTNAME;
+    double D[2];
+    float S[4];
+    WORD  H[8];
+    BYTE  B[16];
+} NEON128, *PNEON128;
 
-    /* This section is specified/returned if the ContextFlags word contains
-       the flag CONTEXT_INTEGER. */
-    ULONGLONG X0;
-    ULONGLONG X1;
-    ULONGLONG X2;
-    ULONGLONG X3;
-    ULONGLONG X4;
-    ULONGLONG X5;
-    ULONGLONG X6;
-    ULONGLONG X7;
-    ULONGLONG X8;
-    ULONGLONG X9;
-    ULONGLONG X10;
-    ULONGLONG X11;
-    ULONGLONG X12;
-    ULONGLONG X13;
-    ULONGLONG X14;
-    ULONGLONG X15;
-    ULONGLONG X16;
-    ULONGLONG X17;
-    ULONGLONG X18;
-    ULONGLONG X19;
-    ULONGLONG X20;
-    ULONGLONG X21;
-    ULONGLONG X22;
-    ULONGLONG X23;
-    ULONGLONG X24;
-    ULONGLONG X25;
-    ULONGLONG X26;
-    ULONGLONG X27;
-    ULONGLONG X28;
-
-    /* These are selected by CONTEXT_CONTROL */
-    ULONGLONG Fp;
-    ULONGLONG Lr;
-    ULONGLONG Sp;
-    ULONGLONG Pc;
-
-    /* These are selected by CONTEXT_FLOATING_POINT */
-    /* FIXME */
+typedef struct _CONTEXT
+{
+    ULONG ContextFlags;                 /* 000 */
+    /* CONTEXT_INTEGER */
+    ULONG Cpsr;                         /* 004 */
+    union
+    {
+        struct
+        {
+            DWORD64 X0;                 /* 008 */
+            DWORD64 X1;                 /* 010 */
+            DWORD64 X2;                 /* 018 */
+            DWORD64 X3;                 /* 020 */
+            DWORD64 X4;                 /* 028 */
+            DWORD64 X5;                 /* 030 */
+            DWORD64 X6;                 /* 038 */
+            DWORD64 X7;                 /* 040 */
+            DWORD64 X8;                 /* 048 */
+            DWORD64 X9;                 /* 050 */
+            DWORD64 X10;                /* 058 */
+            DWORD64 X11;                /* 060 */
+            DWORD64 X12;                /* 068 */
+            DWORD64 X13;                /* 070 */
+            DWORD64 X14;                /* 078 */
+            DWORD64 X15;                /* 080 */
+            DWORD64 X16;                /* 088 */
+            DWORD64 X17;                /* 090 */
+            DWORD64 X18;                /* 098 */
+            DWORD64 X19;                /* 0a0 */
+            DWORD64 X20;                /* 0a8 */
+            DWORD64 X21;                /* 0b0 */
+            DWORD64 X22;                /* 0b8 */
+            DWORD64 X23;                /* 0c0 */
+            DWORD64 X24;                /* 0c8 */
+            DWORD64 X25;                /* 0d0 */
+            DWORD64 X26;                /* 0d8 */
+            DWORD64 X27;                /* 0e0 */
+            DWORD64 X28;                /* 0e8 */
+        } DUMMYSTRUCTNAME;
+        DWORD64 X[29];                  /* 008 */
+    } DUMMYUNIONNAME;
+    /* CONTEXT_CONTROL */
+    DWORD64 Fp;                         /* 0f0 */
+    DWORD64 Lr;                         /* 0f8 */
+    DWORD64 Sp;                         /* 100 */
+    DWORD64 Pc;                         /* 108 */
+    /* CONTEXT_FLOATING_POINT */
+    NEON128 V[32];                      /* 110 */
+    DWORD Fpcr;                         /* 310 */
+    DWORD Fpsr;                         /* 314 */
+    /* CONTEXT_DEBUG_REGISTERS */
+    DWORD Bcr[ARM64_MAX_BREAKPOINTS];   /* 318 */
+    DWORD64 Bvr[ARM64_MAX_BREAKPOINTS]; /* 338 */
+    DWORD Wcr[ARM64_MAX_WATCHPOINTS];   /* 378 */
+    DWORD64 Wvr[ARM64_MAX_WATCHPOINTS]; /* 380 */
 } CONTEXT;
 
 #endif /* __aarch64__ */
