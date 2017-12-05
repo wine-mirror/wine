@@ -231,7 +231,7 @@ static void test_add(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     run_reg_exe("reg add -H", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
@@ -618,7 +618,7 @@ static void test_delete(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     run_reg_exe("reg delete -H", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
     add_value(hkey, "foo", REG_DWORD, &deadbeef, sizeof(deadbeef));
@@ -676,7 +676,7 @@ static void test_query(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     run_reg_exe("reg query -H", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     /* Create a test key */
     add_key(HKEY_CURRENT_USER, KEY_BASE, &key);
@@ -870,7 +870,7 @@ static void test_import(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     run_reg_exe("reg import -H", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     run_reg_exe("reg import missing.reg", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
@@ -4419,7 +4419,7 @@ static void test_export(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     run_reg_exe("reg export -H", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     run_reg_exe("reg export \\\\remote-pc\\HKLM\\Wine file.reg", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);

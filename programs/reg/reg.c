@@ -890,12 +890,20 @@ BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path, WCHAR **long
     return TRUE;
 }
 
-static BOOL is_help_switch(const WCHAR *s)
+static BOOL is_switch(const WCHAR *s, const WCHAR c)
 {
     if (strlenW(s) > 2)
         return FALSE;
 
-    if ((s[0] == '/' || s[0] == '-') && (s[1] == 'h' || s[1] == '?'))
+    if ((s[0] == '/' || s[0] == '-') && (s[1] == c || s[1] == toupperW(c)))
+        return TRUE;
+
+    return FALSE;
+}
+
+static BOOL is_help_switch(const WCHAR *s)
+{
+    if (is_switch(s, '?') || is_switch(s, 'h'))
         return TRUE;
 
     return FALSE;
