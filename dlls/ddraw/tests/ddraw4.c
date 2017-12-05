@@ -2552,9 +2552,9 @@ static void test_redundant_mode_set(void)
 {
     DDSURFACEDESC2 surface_desc = {0};
     IDirectDraw4 *ddraw;
+    RECT q, r, s;
     HWND window;
     HRESULT hr;
-    RECT r, s;
     ULONG ref;
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
@@ -2573,7 +2573,8 @@ static void test_redundant_mode_set(void)
             U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount, 0, 0);
     ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
 
-    GetWindowRect(window, &r);
+    GetWindowRect(window, &q);
+    r = q;
     r.right /= 2;
     r.bottom /= 2;
     SetWindowPos(window, HWND_TOP, r.left, r.top, r.right, r.bottom, 0);
@@ -2585,7 +2586,8 @@ static void test_redundant_mode_set(void)
     ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &s);
-    ok(EqualRect(&r, &s), "Expected %s, got %s.\n", wine_dbgstr_rect(&r), wine_dbgstr_rect(&s));
+    ok(EqualRect(&r, &s) || broken(EqualRect(&q, &s) /* Windows 10 */),
+            "Expected %s, got %s.\n", wine_dbgstr_rect(&r), wine_dbgstr_rect(&s));
 
     ref = IDirectDraw4_Release(ddraw);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
