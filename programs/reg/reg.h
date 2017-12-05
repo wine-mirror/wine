@@ -22,6 +22,7 @@
 #include "resource.h"
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
+#define MAX_SUBKEY_LEN   257
 
 /* reg.c */
 void *heap_xalloc(size_t size);

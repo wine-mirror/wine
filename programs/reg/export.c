@@ -236,8 +236,6 @@ static void export_key_name(HANDLE hFile, WCHAR *name)
     heap_free(buf);
 }
 
-#define MAX_SUBKEY_LEN   257
-
 static int export_registry_data(HANDLE hFile, HKEY key, WCHAR *path)
 {
     LONG rc;

@@ -651,8 +651,6 @@ WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD 
 
 static unsigned int num_values_found = 0;
 
-#define MAX_SUBKEY_LEN   257
-
 static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
 {
     LONG rc;
