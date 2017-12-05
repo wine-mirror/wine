@@ -201,8 +201,8 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     context->Lr   = LR_sig(sigcontext);   /* Link register */
     context->Pc   = PC_sig(sigcontext);   /* Program Counter */
     context->Cpsr = CPSR_sig(sigcontext); /* Current State Register */
-    context->Ip   = IP_sig(sigcontext);   /* Intra-Procedure-call scratch register */
-    context->Fp   = FP_sig(sigcontext);   /* Frame pointer */
+    context->R11  = FP_sig(sigcontext);   /* Frame pointer */
+    context->R12  = IP_sig(sigcontext);   /* Intra-Procedure-call scratch register */
 }
 
 
@@ -222,8 +222,8 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
     LR_sig(sigcontext)   = context->Lr ;  /* Link register */
     PC_sig(sigcontext)   = context->Pc;   /* Program Counter */
     CPSR_sig(sigcontext) = context->Cpsr; /* Current State Register */
-    IP_sig(sigcontext)   = context->Ip;   /* Intra-Procedure-call scratch register */
-    FP_sig(sigcontext)   = context->Fp;   /* Frame pointer */
+    FP_sig(sigcontext)   = context->R11;  /* Frame pointer */
+    IP_sig(sigcontext)   = context->R12;  /* Intra-Procedure-call scratch register */
 }
 
 
@@ -278,8 +278,8 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     "str r8, [r0, #0x24]\n\t"  /* context->R8 */
                     "str r9, [r0, #0x28]\n\t"  /* context->R9 */
                     "str r10, [r0, #0x2c]\n\t" /* context->R10 */
-                    "str r11, [r0, #0x30]\n\t" /* context->Fp */
-                    "str IP, [r0, #0x34]\n\t"  /* context->Ip */
+                    "str r11, [r0, #0x30]\n\t" /* context->R11 */
+                    "str IP, [r0, #0x34]\n\t"  /* context->R12 */
                     "str SP, [r0, #0x38]\n\t"  /* context->Sp */
                     "str LR, [r0, #0x3c]\n\t"  /* context->Lr */
                     "str PC, [r0, #0x40]\n\t"  /* context->Pc */
@@ -309,8 +309,8 @@ __ASM_GLOBAL_FUNC( set_cpu_context,
                    "ldr r8,  [IP, #0x24]\n\t" /* context->R8 */
                    "ldr r9,  [IP, #0x28]\n\t" /* context->R9 */
                    "ldr r10, [IP, #0x2c]\n\t" /* context->R10 */
-                   "ldr r11, [IP, #0x30]\n\t" /* context->Fp */
-                   "ldr SP,  [IP, #0x38]\n\t" /* context->Sp */
+                   "ldr r11, [IP, #0x30]\n\t" /* context->R11 */
+                   "ldr SP,  [IP, #0x38]\n\t" /* context->R12 */
                    "ldr LR,  [IP, #0x3c]\n\t" /* context->Lr */
                    "ldr PC,  [IP, #0x40]\n\t" /* context->Pc */
                    )
@@ -344,8 +344,8 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
         to->R8  = from->R8;
         to->R9  = from->R9;
         to->R10 = from->R10;
-        to->Ip  = from->Ip;
-        to->Fp  = from->Fp;
+        to->R11 = from->R11;
+        to->R12 = from->R12;
     }
 }
 
@@ -384,8 +384,8 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
         to->integer.arm_regs.r[8]  = from->R8;
         to->integer.arm_regs.r[9]  = from->R9;
         to->integer.arm_regs.r[10] = from->R10;
-        to->integer.arm_regs.r[11] = from->Fp;
-        to->integer.arm_regs.r[12] = from->Ip;
+        to->integer.arm_regs.r[11] = from->R11;
+        to->integer.arm_regs.r[12] = from->R12;
     }
     return STATUS_SUCCESS;
 }
@@ -423,8 +423,8 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->R8  = from->integer.arm_regs.r[8];
         to->R9  = from->integer.arm_regs.r[9];
         to->R10 = from->integer.arm_regs.r[10];
-        to->Fp  = from->integer.arm_regs.r[11];
-        to->Ip  = from->integer.arm_regs.r[12];
+        to->R11 = from->integer.arm_regs.r[11];
+        to->R12 = from->integer.arm_regs.r[12];
      }
     return STATUS_SUCCESS;
 }
@@ -633,10 +633,10 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
         {
             TRACE( " r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x\n",
                    context->R0, context->R1, context->R2, context->R3, context->R4, context->R5 );
-            TRACE( " r6=%08x r7=%08x r8=%08x r9=%08x r10=%08x fp=%08x\n",
-                   context->R6, context->R7, context->R8, context->R9, context->R10, context->Fp );
-            TRACE( " ip=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
-                   context->Ip, context->Sp, context->Lr, context->Pc, context->Cpsr );
+            TRACE( " r6=%08x r7=%08x r8=%08x r9=%08x r10=%08x r11=%08x\n",
+                   context->R6, context->R7, context->R8, context->R9, context->R10, context->R11 );
+            TRACE( " r12=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
+                   context->R12, context->Sp, context->Lr, context->Pc, context->Cpsr );
         }
 
         status = send_debug_event( rec, TRUE, context );

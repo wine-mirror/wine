@@ -1668,7 +1668,7 @@ static BOOL be_arm_get_addr(HANDLE hThread, const CONTEXT* ctx,
     case be_cpu_addr_stack:
         return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Sp);
     case be_cpu_addr_frame:
-        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Fp);
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->R11);
     }
     return FALSE;
 }
@@ -1723,8 +1723,8 @@ static void be_arm_print_context(HANDLE hThread, const CONTEXT* ctx, int all_reg
                ctx->R0, ctx->R1, ctx->R2, ctx->R3);
     dbg_printf(" r4:%08x r5:%08x r6:%08x r7:%08x\n",
                ctx->R4, ctx->R5, ctx->R6, ctx->R7);
-    dbg_printf(" r8:%08x r9:%08x r10:%08x Fp:%08x Ip:%08x\n",
-               ctx->R8, ctx->R9, ctx->R10, ctx->Fp, ctx->Ip);
+    dbg_printf(" r8:%08x r9:%08x r10:%08x r11:%08x r12:%08x\n",
+               ctx->R8, ctx->R9, ctx->R10, ctx->R11, ctx->R12);
 
     if (all_regs) dbg_printf( "Floating point ARM dump not implemented\n" );
 }
@@ -1746,8 +1746,8 @@ static struct dbg_internal_var be_arm_ctx[] =
     {CV_ARM_R0 +  8,    "r8",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, R8),     dbg_itype_unsigned_int},
     {CV_ARM_R0 +  9,    "r9",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, R9),     dbg_itype_unsigned_int},
     {CV_ARM_R0 +  10,   "r10",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, R10),    dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  11,   "r11",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Fp),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  12,   "r12",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Ip),     dbg_itype_unsigned_int},
+    {CV_ARM_R0 +  11,   "r11",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, R11),    dbg_itype_unsigned_int},
+    {CV_ARM_R0 +  12,   "r12",          (DWORD_PTR*)FIELD_OFFSET(CONTEXT, R12),    dbg_itype_unsigned_int},
     {CV_ARM_SP,         "sp",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Sp),     dbg_itype_unsigned_int},
     {CV_ARM_LR,         "lr",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Lr),     dbg_itype_unsigned_int},
     {CV_ARM_PC,         "pc",           (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Pc),     dbg_itype_unsigned_int},

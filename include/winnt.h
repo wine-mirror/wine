@@ -1648,6 +1648,9 @@ typedef struct _CONTEXT
 #define EXCEPTION_WRITE_FAULT   1
 #define EXCEPTION_EXECUTE_FAULT 8
 
+#define ARM_MAX_BREAKPOINTS     8
+#define ARM_MAX_WATCHPOINTS     1
+
 typedef struct _RUNTIME_FUNCTION
 {
     DWORD BeginAddress;
@@ -1687,46 +1690,49 @@ typedef struct _UNWIND_HISTORY_TABLE
     UNWIND_HISTORY_TABLE_ENTRY Entry[UNWIND_HISTORY_TABLE_SIZE];
 } UNWIND_HISTORY_TABLE, *PUNWIND_HISTORY_TABLE;
 
-typedef struct _CONTEXT {
-	/* The flags values within this flag control the contents of
-	   a CONTEXT record.
+typedef struct _NEON128
+{
+    ULONGLONG Low;
+    LONGLONG High;
+} NEON128, *PNEON128;
 
-	   If the context record is used as an input parameter, then
-	   for each portion of the context record controlled by a flag
-	   whose value is set, it is assumed that that portion of the
-	   context record contains valid context. If the context record
-	   is being used to modify a thread's context, then only that
-	   portion of the threads context will be modified.
-
-	   If the context record is used as an IN OUT parameter to capture
-	   the context of a thread, then only those portions of the thread's
-	   context corresponding to set flags will be returned.
-
-	   The context record is never used as an OUT only parameter. */
-
-	ULONG ContextFlags;
-
-	/* This section is specified/returned if the ContextFlags word contains
-	   the flag CONTEXT_INTEGER. */
-	ULONG R0;
-	ULONG R1;
-	ULONG R2;
-	ULONG R3;
-	ULONG R4;
-	ULONG R5;
-	ULONG R6;
-	ULONG R7;
-	ULONG R8;
-	ULONG R9;
-	ULONG R10;
-	ULONG Fp;
-	ULONG Ip;
-
-	/* These are selected by CONTEXT_CONTROL */
-	ULONG Sp;
-	ULONG Lr;
-	ULONG Pc;
-	ULONG Cpsr;
+typedef struct _CONTEXT
+{
+    ULONG ContextFlags;             /* 000 */
+    /* CONTEXT_INTEGER */
+    ULONG R0;                       /* 004 */
+    ULONG R1;                       /* 008 */
+    ULONG R2;                       /* 00c */
+    ULONG R3;                       /* 010 */
+    ULONG R4;                       /* 014 */
+    ULONG R5;                       /* 018 */
+    ULONG R6;                       /* 01c */
+    ULONG R7;                       /* 020 */
+    ULONG R8;                       /* 024 */
+    ULONG R9;                       /* 028 */
+    ULONG R10;                      /* 02c */
+    ULONG R11;                      /* 030 */
+    ULONG R12;                      /* 034 */
+    /* CONTEXT_CONTROL */
+    ULONG Sp;                       /* 038 */
+    ULONG Lr;                       /* 03c */
+    ULONG Pc;                       /* 040 */
+    ULONG Cpsr;                     /* 044 */
+    /* CONTEXT_FLOATING_POINT */
+    ULONG Fpscr;                    /* 048 */
+    ULONG Padding;                  /* 04c */
+    union
+    {
+        NEON128 Q[16];
+        ULONGLONG D[32];
+        ULONG S[32];
+    } DUMMYUNIONNAME;               /* 050 */
+    /* CONTEXT_DEBUG_REGISTERS */
+    ULONG Bvr[ARM_MAX_BREAKPOINTS]; /* 150 */
+    ULONG Bcr[ARM_MAX_BREAKPOINTS]; /* 170 */
+    ULONG Wvr[ARM_MAX_WATCHPOINTS]; /* 190 */
+    ULONG Wcr[ARM_MAX_WATCHPOINTS]; /* 194 */
+    ULONG Padding2[2];              /* 198 */
 } CONTEXT;
 
 BOOLEAN CDECL            RtlAddFunctionTable(RUNTIME_FUNCTION*,DWORD,DWORD);
