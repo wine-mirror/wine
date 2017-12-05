@@ -1158,10 +1158,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     WaitForSingleObject(This->event, -1);
     gst_element_get_state(This->container, NULL, NULL, -1);
 
-    if (ret < 0) {
-        WARN("Ret: %i\n", ret);
-        hr = E_FAIL;
-    } else if (!This->cStreams) {
+    if (!This->cStreams) {
         FIXME("GStreamer could not find any streams\n");
         hr = E_FAIL;
     } else {
