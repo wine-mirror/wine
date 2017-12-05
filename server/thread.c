@@ -1147,7 +1147,7 @@ static unsigned int get_context_system_regs( enum cpu_type cpu )
     case CPU_x86:     return SERVER_CTX_DEBUG_REGISTERS;
     case CPU_x86_64:  return SERVER_CTX_DEBUG_REGISTERS;
     case CPU_POWERPC: return 0;
-    case CPU_ARM:     return 0;
+    case CPU_ARM:     return SERVER_CTX_DEBUG_REGISTERS;
     case CPU_ARM64:   return 0;
     }
     return 0;

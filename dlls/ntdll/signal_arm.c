@@ -347,6 +347,11 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
         to->R11 = from->R11;
         to->R12 = from->R12;
     }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->Fpscr = from->Fpscr;
+        memcpy( to->u.D, from->u.D, sizeof(to->u.D) );
+    }
 }
 
 
@@ -357,7 +362,7 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
  */
 NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
 {
-    DWORD flags = from->ContextFlags & ~CONTEXT_ARM;  /* get rid of CPU id */
+    DWORD i, flags = from->ContextFlags & ~CONTEXT_ARM;  /* get rid of CPU id */
 
     memset( to, 0, sizeof(*to) );
     to->cpu = CPU_ARM;
@@ -387,6 +392,20 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
         to->integer.arm_regs.r[11] = from->R11;
         to->integer.arm_regs.r[12] = from->R12;
     }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->flags |= SERVER_CTX_FLOATING_POINT;
+        for (i = 0; i < 32; i++) to->fp.arm_regs.d[i] = from->u.D[i];
+        to->fp.arm_regs.fpscr = from->Fpscr;
+    }
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+        for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->debug.arm_regs.bvr[i] = from->Bvr[i];
+        for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->debug.arm_regs.bcr[i] = from->Bcr[i];
+        for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->debug.arm_regs.wvr[i] = from->Wvr[i];
+        for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->debug.arm_regs.wcr[i] = from->Wcr[i];
+    }
     return STATUS_SUCCESS;
 }
 
@@ -398,6 +417,8 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
  */
 NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 {
+    DWORD i;
+
     if (from->cpu != CPU_ARM) return STATUS_INVALID_PARAMETER;
 
     to->ContextFlags = CONTEXT_ARM;
@@ -425,7 +446,21 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->R10 = from->integer.arm_regs.r[10];
         to->R11 = from->integer.arm_regs.r[11];
         to->R12 = from->integer.arm_regs.r[12];
-     }
+    }
+    if (from->flags & SERVER_CTX_FLOATING_POINT)
+    {
+        to->ContextFlags |= CONTEXT_FLOATING_POINT;
+        for (i = 0; i < 32; i++) to->u.D[i] = from->fp.arm_regs.d[i];
+        to->Fpscr = from->fp.arm_regs.fpscr;
+    }
+    if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+    {
+        to->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+        for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->Bvr[i] = from->debug.arm_regs.bvr[i];
+        for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->Bcr[i] = from->debug.arm_regs.bcr[i];
+        for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->Wvr[i] = from->debug.arm_regs.wvr[i];
+        for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->Wcr[i] = from->debug.arm_regs.wcr[i];
+    }
     return STATUS_SUCCESS;
 }
 

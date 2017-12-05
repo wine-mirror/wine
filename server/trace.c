@@ -664,6 +664,23 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
                      ctx.ctl.arm_regs.pc, ctx.ctl.arm_regs.cpsr );
         if (ctx.flags & SERVER_CTX_INTEGER)
             for (i = 0; i < 13; i++) fprintf( stderr, ",r%u=%08x", i, ctx.integer.arm_regs.r[i] );
+        if (ctx.flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            for (i = 0; i < 8; i++)
+                fprintf( stderr, ",bcr%u=%08x,bvr%u=%08x",
+                         i, ctx.debug.arm_regs.bcr[i], i, ctx.debug.arm_regs.bvr[i] );
+            fprintf( stderr, ",wcr0=%08x,wvr0=%08x",
+                     ctx.debug.arm_regs.wcr[0], ctx.debug.arm_regs.wvr[0] );
+        }
+        if (ctx.flags & SERVER_CTX_FLOATING_POINT)
+        {
+            for (i = 0; i < 32; i++)
+            {
+                fprintf( stderr, ",d%u=", i );
+                dump_uint64( "", &ctx.fp.arm_regs.d[i] );
+            }
+            fprintf( stderr, ",fpscr=%08x", ctx.fp.arm_regs.fpscr );
+        }
         break;
     case CPU_ARM64:
         if (ctx.flags & SERVER_CTX_CONTROL)
