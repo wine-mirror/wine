@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-11-18 12:12+0300\n"
+"PO-Revision-Date: 2017-12-05 09:18+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -12015,17 +12015,6 @@ msgid "Icons (*.ico)"
 msgstr "Значки (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | IMPORT | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -12041,7 +12030,7 @@ msgstr ""
 "  REG [операция] [параметры]\n"
 "\n"
 "Поддерживаемые операции:\n"
-"  ADD | DELETE | IMPORT | QUERY\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
 "\n"
 "Для получения справки по конкретной операции используйте:\n"
 "  REG [операция] /?\n"
@@ -12184,22 +12173,16 @@ msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "reg: неизвестная управляющая последовательность [\\%1!c!]\n"
 
 #: reg.rc:70
-#, fuzzy
-#| msgid "REG IMPORT file.reg\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG IMPORT file.reg\n"
+msgstr "REG EXPORT имя_ключа file.reg [/y]\n"
 
 #: reg.rc:71
-#, fuzzy
-#| msgid "regedit: Invalid system key [%1]\n"
 msgid "reg: Invalid system key [%1]\n"
-msgstr "regedit: неверный системный ключ [%1]\n"
+msgstr "reg: неверный системный ключ [%1]\n"
 
 #: reg.rc:72
-#, fuzzy
-#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "Значение «%1» уже существует. Вы хотите заменить его?"
+msgstr "Файл «%1» уже существует. Вы хотите заменить его?"
 
 #: regedit.rc:34
 msgid "&Registry"
