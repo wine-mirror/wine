@@ -4347,13 +4347,16 @@ static void test_SetFileValidData(void)
 static void test_WriteFileGather(void)
 {
     char temp_path[MAX_PATH], filename[MAX_PATH];
-    HANDLE hfile, hiocp1, hiocp2;
-    DWORD ret, size;
+    HANDLE hfile, hiocp1, hiocp2, evt;
+    DWORD ret, size, tx;
     ULONG_PTR key;
     FILE_SEGMENT_ELEMENT fse[2];
     OVERLAPPED ovl, *povl = NULL;
     SYSTEM_INFO si;
-    LPVOID buf = NULL;
+    LPVOID wbuf = NULL, rbuf1;
+    BOOL br;
+
+    evt = CreateEventW( NULL, TRUE, FALSE, NULL );
 
     ret = GetTempPathA( MAX_PATH, temp_path );
     ok( ret != 0, "GetTempPathA error %d\n", GetLastError() );
@@ -4371,12 +4374,18 @@ static void test_WriteFileGather(void)
     ok( hiocp2 != 0, "CreateIoCompletionPort failed err %u\n", GetLastError() );
 
     GetSystemInfo( &si );
-    buf = VirtualAlloc( NULL, si.dwPageSize, MEM_COMMIT, PAGE_READWRITE );
-    ok( buf != NULL, "VirtualAlloc failed err %u\n", GetLastError() );
+    wbuf = VirtualAlloc( NULL, si.dwPageSize, MEM_COMMIT, PAGE_READWRITE );
+    ok( wbuf != NULL, "VirtualAlloc failed err %u\n", GetLastError() );
+
+    rbuf1 = VirtualAlloc( NULL, si.dwPageSize, MEM_COMMIT, PAGE_READWRITE );
+    ok( rbuf1 != NULL, "VirtualAlloc failed err %u\n", GetLastError() );
 
     memset( &ovl, 0, sizeof(ovl) );
+    ovl.hEvent = evt;
     memset( fse, 0, sizeof(fse) );
-    fse[0].Buffer = buf;
+    fse[0].Buffer = wbuf;
+    memset( wbuf, 0x42, si.dwPageSize );
+    SetLastError( 0xdeadbeef );
     if (!WriteFileGather( hfile, fse, si.dwPageSize, NULL, &ovl ))
         ok( GetLastError() == ERROR_IO_PENDING, "WriteFileGather failed err %u\n", GetLastError() );
 
@@ -4384,20 +4393,95 @@ static void test_WriteFileGather(void)
     ok( ret, "GetQueuedCompletionStatus failed err %u\n", GetLastError());
     ok( povl == &ovl, "wrong ovl %p\n", povl );
 
+    tx = 0;
+    br = GetOverlappedResult( hfile, &ovl, &tx, TRUE );
+    ok( br == TRUE, "GetOverlappedResult failed: %u\n", GetLastError() );
+    ok( tx == si.dwPageSize, "got unexpected bytes transferred: %u\n", tx );
+
+    ResetEvent( evt );
+
+    /* read exact size */
     memset( &ovl, 0, sizeof(ovl) );
+    ovl.hEvent = evt;
     memset( fse, 0, sizeof(fse) );
-    fse[0].Buffer = buf;
-    if (!ReadFileScatter( hfile, fse, si.dwPageSize, NULL, &ovl ))
-        ok( GetLastError() == ERROR_IO_PENDING, "ReadFileScatter failed err %u\n", GetLastError() );
+    fse[0].Buffer = rbuf1;
+    memset( rbuf1, 0, si.dwPageSize );
+    SetLastError( 0xdeadbeef );
+    br = ReadFileScatter( hfile, fse, si.dwPageSize, NULL, &ovl );
+    ok( br == FALSE, "ReadFileScatter should be asynchronous\n" );
+    ok( GetLastError() == ERROR_IO_PENDING, "ReadFileScatter failed err %u\n", GetLastError() );
 
     ret = GetQueuedCompletionStatus( hiocp2, &size, &key, &povl, 1000 );
     ok( ret, "GetQueuedCompletionStatus failed err %u\n", GetLastError());
     ok( povl == &ovl, "wrong ovl %p\n", povl );
 
+    tx = 0;
+    br = GetOverlappedResult( hfile, &ovl, &tx, TRUE );
+    ok( br == TRUE, "GetOverlappedResult failed: %u\n", GetLastError() );
+    ok( tx == si.dwPageSize, "got unexpected bytes transferred: %u\n", tx );
+
+    ok( memcmp( rbuf1, wbuf, si.dwPageSize ) == 0,
+            "data was not read into buffer\n" );
+
+    ResetEvent( evt );
+
+    /* start read at EOF */
+    memset( &ovl, 0, sizeof(ovl) );
+    ovl.hEvent = evt;
+    S(U(ovl)).OffsetHigh = 0;
+    S(U(ovl)).Offset = si.dwPageSize;
+    memset( fse, 0, sizeof(fse) );
+    fse[0].Buffer = rbuf1;
+    SetLastError( 0xdeadbeef );
+    br = ReadFileScatter( hfile, fse, si.dwPageSize, NULL, &ovl );
+    ok( br == FALSE, "ReadFileScatter should have failed\n" );
+    ok( GetLastError() == ERROR_HANDLE_EOF ||
+            GetLastError() == ERROR_IO_PENDING, "ReadFileScatter gave wrong error %u\n", GetLastError() );
+    if (GetLastError() == ERROR_IO_PENDING)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = GetQueuedCompletionStatus( hiocp2, &size, &key, &povl, 1000 );
+        ok( !ret, "GetQueuedCompletionStatus should have returned failure\n" );
+        ok( GetLastError() == ERROR_HANDLE_EOF, "Got wrong error: %u\n", GetLastError() );
+        ok( povl == &ovl, "wrong ovl %p\n", povl );
+
+        SetLastError( 0xdeadbeef );
+        br = GetOverlappedResult( hfile, &ovl, &tx, TRUE );
+        ok( br == FALSE, "GetOverlappedResult should have failed\n" );
+        ok( GetLastError() == ERROR_HANDLE_EOF, "Got wrong error: %u\n", GetLastError() );
+    }
+    else
+    {
+        SetLastError( 0xdeadbeef );
+        ret = GetQueuedCompletionStatus( hiocp2, &size, &key, &povl, 100 );
+        ok( !ret, "GetQueuedCompletionStatus failed err %u\n", GetLastError() );
+        ok( GetLastError() == WAIT_TIMEOUT, "GetQueuedCompletionStatus gave wrong error %u\n", GetLastError() );
+        ok( povl == NULL, "wrong ovl %p\n", povl );
+    }
+
+    ResetEvent( evt );
+
     CloseHandle( hfile );
     CloseHandle( hiocp1 );
     CloseHandle( hiocp2 );
-    VirtualFree( buf, 0, MEM_RELEASE );
+
+    /* file handle must be overlapped */
+    hfile = CreateFileA( filename, GENERIC_READ, 0, 0, OPEN_EXISTING,
+                         FILE_FLAG_NO_BUFFERING | FILE_ATTRIBUTE_NORMAL, 0 );
+    ok( hfile != INVALID_HANDLE_VALUE, "CreateFile failed err %u\n", GetLastError() );
+
+    memset( &ovl, 0, sizeof(ovl) );
+    memset( fse, 0, sizeof(fse) );
+    fse[0].Buffer = rbuf1;
+    memset( rbuf1, 0, si.dwPageSize );
+    SetLastError( 0xdeadbeef );
+    br = ReadFileScatter( hfile, fse, si.dwPageSize, NULL, &ovl );
+    ok( br == FALSE, "ReadFileScatter should fail\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "ReadFileScatter failed err %u\n", GetLastError() );
+
+    VirtualFree( wbuf, 0, MEM_RELEASE );
+    VirtualFree( rbuf1, 0, MEM_RELEASE );
+    CloseHandle( evt );
     DeleteFileA( filename );
 }
 

@@ -1086,24 +1086,23 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
 
     send_completion = cvalue != 0;
 
- error:
     if (needs_close) close( unix_handle );
-    if (status == STATUS_SUCCESS)
-    {
-        io_status->u.Status = status;
-        io_status->Information = total;
-        TRACE("= SUCCESS (%u)\n", total);
-        if (event) NtSetEvent( event, NULL );
-        if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
-                                   (ULONG_PTR)apc_user, (ULONG_PTR)io_status, 0 );
-    }
-    else
-    {
-        TRACE("= 0x%08x\n", status);
-        if (status != STATUS_PENDING && event) NtResetEvent( event, NULL );
-    }
 
+    io_status->u.Status = status;
+    io_status->Information = total;
+    TRACE("= 0x%08x (%u)\n", status, total);
+    if (event) NtSetEvent( event, NULL );
+    if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
+                               (ULONG_PTR)apc_user, (ULONG_PTR)io_status, 0 );
     if (send_completion) NTDLL_AddCompletion( file, cvalue, status, total );
+
+    return STATUS_PENDING;
+
+error:
+    if (needs_close) close( unix_handle );
+
+    TRACE("= 0x%08x\n", status);
+    if (event) NtResetEvent( event, NULL );
 
     return status;
 }
