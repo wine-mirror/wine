@@ -939,8 +939,61 @@ static HRESULT save_mfpict(DataCacheEntry *entry, BOOL contents, IStream *stream
     return hr;
 }
 
-static const WCHAR CONTENTS[] = {'C','O','N','T','E','N','T','S',0};
+static HRESULT save_emf(DataCacheEntry *entry, BOOL contents, IStream *stream)
+{
+    HRESULT hr = S_OK;
+    int data_size = 0;
+    BYTE *data;
 
+    if (!contents)
+    {
+        PresentationDataHeader header;
+        METAFILEPICT *mfpict;
+        HDC hdc = GetDC(0);
+
+        init_stream_header(entry, &header);
+        hr = write_clipformat(stream, entry->fmtetc.cfFormat);
+        if (FAILED(hr))
+        {
+            ReleaseDC(0, hdc);
+            return hr;
+        }
+        data_size = GetWinMetaFileBits(entry->stgmedium.u.hEnhMetaFile, 0, NULL, MM_ANISOTROPIC, hdc);
+        header.dwSize = data_size;
+        data = HeapAlloc(GetProcessHeap(), 0, header.dwSize);
+        if (!data)
+        {
+            ReleaseDC(0, hdc);
+            return E_OUTOFMEMORY;
+        }
+        GetWinMetaFileBits(entry->stgmedium.u.hEnhMetaFile, header.dwSize, data, MM_ANISOTROPIC, hdc);
+        ReleaseDC(0, hdc);
+        mfpict = (METAFILEPICT *)data;
+        header.dwObjectExtentX = mfpict->xExt;
+        header.dwObjectExtentY = mfpict->yExt;
+        hr = IStream_Write(stream, &header, sizeof(PresentationDataHeader), NULL);
+        if (hr == S_OK && data_size)
+            hr = IStream_Write(stream, data, data_size, NULL);
+        HeapFree(GetProcessHeap(), 0, data);
+    }
+    else
+    {
+        data_size = GetEnhMetaFileBits(entry->stgmedium.u.hEnhMetaFile, 0, NULL);
+        data = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) + sizeof(ENHMETAHEADER) + data_size);
+        if (!data) return E_OUTOFMEMORY;
+        *((DWORD *)data) = sizeof(ENHMETAHEADER);
+        GetEnhMetaFileBits(entry->stgmedium.u.hEnhMetaFile, data_size, data + sizeof(DWORD) + sizeof(ENHMETAHEADER));
+        memcpy(data + sizeof(DWORD), data + sizeof(DWORD) + sizeof(ENHMETAHEADER), sizeof(ENHMETAHEADER));
+        data_size += sizeof(DWORD) + sizeof(ENHMETAHEADER);
+        if (hr == S_OK && data_size)
+            hr = IStream_Write(stream, data, data_size, NULL);
+        HeapFree(GetProcessHeap(), 0, data);
+    }
+
+    return hr;
+}
+
+static const WCHAR CONTENTS[] = {'C','O','N','T','E','N','T','S',0};
 static HRESULT create_stream(DataCacheEntry *cache_entry, IStorage *storage,
                              BOOL contents, IStream **stream)
 {
@@ -980,6 +1033,9 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *cache_entry, IStorage *storag
         break;
     case CF_METAFILEPICT:
         hr = save_mfpict(cache_entry, contents, stream);
+        break;
+    case CF_ENHMETAFILE:
+        hr = save_emf(cache_entry, contents, stream);
         break;
     default:
         FIXME("got unsupported clipboard format %x\n", cache_entry->fmtetc.cfFormat);
