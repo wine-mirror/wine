@@ -3721,7 +3721,7 @@
 @ stub _Temp_get
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr) _Thrd_create
-@ cdecl _Thrd_current() _Thrd_current
+@ cdecl -norelay _Thrd_current()
 @ cdecl _Thrd_detach(int64) _Thrd_detach
 @ cdecl _Thrd_equal(int64 int64) _Thrd_equal
 @ stub _Thrd_exit

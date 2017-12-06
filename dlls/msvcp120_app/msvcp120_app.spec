@@ -3804,7 +3804,7 @@
 @ stub _Strxfrm
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr) msvcp120._Thrd_create
-@ cdecl _Thrd_current() msvcp120._Thrd_current
+@ cdecl -norelay _Thrd_current() msvcp120._Thrd_current
 @ cdecl _Thrd_detach(int64) msvcp120._Thrd_detach
 @ cdecl _Thrd_equal(int64 int64) msvcp120._Thrd_equal
 @ stub _Thrd_exit
