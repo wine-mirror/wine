@@ -20102,6 +20102,74 @@ interface IDOMEvent : IDispatch
     HRESULT srcElement([out, retval] IHTMLElement **p);
 }
 
+/*****************************************************************************
+ *    IDOMKeyboardEvent interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305106d6-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDOMKeyboardEvent : IDispatch
+{
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_KEY)]
+    HRESULT key([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_LOCATION)]
+    HRESULT location([out, retval] ULONG *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_CTRLKEY)]
+    HRESULT ctrlKey([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_SHIFTKEY)]
+    HRESULT shiftKey([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_ALTKEY)]
+    HRESULT altKey([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_METAKEY)]
+    HRESULT metaKey([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_REPEAT)]
+    HRESULT repeat([out, retval] VARIANT_BOOL *p);
+
+    [id(DISPID_IDOMKEYBOARDEVENT_GETMODIFIERSTATE)]
+    HRESULT getModifierState(
+            [in] BSTR keyArg,
+            [out, retval] VARIANT_BOOL *state);
+
+    [id(DISPID_IDOMKEYBOARDEVENT_INITKEYBOARDEVENT)]
+    HRESULT initKeyboardEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] IHTMLWindow2 *viewArg,
+            [in] BSTR keyArg,
+            [in] ULONG locationArg,
+            [in] BSTR modifiersListArg,
+            [in] VARIANT_BOOL repeat,
+            [in] BSTR locale);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_KEYCODE)]
+    HRESULT keyCode([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_CHARCODE)]
+    HRESULT charCode([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_WHICH)]
+    HRESULT which([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_IE9_CHAR)]
+    HRESULT ie9_char([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_LOCALE)]
+    HRESULT locale([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IDOMMessageEvent interface
+ */
 [
     odl,
     oleautomation,
