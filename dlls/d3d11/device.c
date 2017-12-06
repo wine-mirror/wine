@@ -907,6 +907,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
     struct d3d_rasterizer_state *rasterizer_state_impl;
     const D3D11_RASTERIZER_DESC *desc;
+    union
+    {
+        DWORD d;
+        float f;
+    } scale_bias, const_bias;
 
     TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
 
@@ -916,6 +921,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
         wined3d_device_set_rasterizer_state(device->wined3d_device, NULL);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, WINED3D_FILL_SOLID);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, WINED3D_CULL_BACK);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SLOPESCALEDEPTHBIAS, 0);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DEPTHBIAS, 0);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, FALSE);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, FALSE);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ANTIALIASEDLINEENABLE, FALSE);
@@ -928,9 +935,10 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
     desc = &rasterizer_state_impl->desc;
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, desc->FillMode);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, desc->CullMode);
-    /* OpenGL style depth bias. */
-    if (desc->DepthBias || desc->SlopeScaledDepthBias)
-        FIXME("Ignoring depth bias.\n");
+    scale_bias.f = desc->SlopeScaledDepthBias;
+    const_bias.f = desc->DepthBias;
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SLOPESCALEDEPTHBIAS, scale_bias.d);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DEPTHBIAS, const_bias.d);
     /* GL_DEPTH_CLAMP */
     if (!desc->DepthClipEnable)
         FIXME("Ignoring DepthClipEnable %#x.\n", desc->DepthClipEnable);
