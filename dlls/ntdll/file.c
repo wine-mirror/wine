@@ -1070,11 +1070,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
             status = FILE_GetNtStatus();
             break;
         }
-        if (!result)
-        {
-            status = STATUS_END_OF_FILE;
-            break;
-        }
+        if (!result) break;
         total += result;
         length -= result;
         if ((pos += result) == page_size)
@@ -1083,6 +1079,8 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
             segments++;
         }
     }
+
+    if (total == 0) status = STATUS_END_OF_FILE;
 
     send_completion = cvalue != 0;
 
