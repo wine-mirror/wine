@@ -11788,10 +11788,61 @@ static void test_clear_buffer_unordered_access_view(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_initial_depth_stencil_state(void)
+{
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11DeviceContext *context;
+    ID3D11DepthStencilView *dsv;
+    ID3D11Texture2D *texture;
+    ID3D11Device *device;
+    unsigned int count;
+    D3D11_VIEWPORT vp;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
+    texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, dsv);
+
+    count = 1;
+    ID3D11DeviceContext_RSGetViewports(context, &count, &vp);
+
+    /* check if depth function is D3D11_COMPARISON_LESS */
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.5f, 0);
+    vp.MinDepth = vp.MaxDepth = 0.4f;
+    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    draw_color_quad(&test_context, &green);
+    draw_color_quad(&test_context, &red);
+    vp.MinDepth = vp.MaxDepth = 0.6f;
+    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    draw_color_quad(&test_context, &red);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
+    check_texture_float(texture, 0.4f, 1);
+
+    ID3D11DepthStencilView_Release(dsv);
+    ID3D11Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 static void test_draw_depth_only(void)
 {
-    ID3D11DepthStencilState *depth_stencil_state;
-    D3D11_DEPTH_STENCIL_DESC depth_stencil_desc;
     struct d3d11_test_context test_context;
     ID3D11PixelShader *ps_color, *ps_depth;
     D3D11_TEXTURE2D_DESC texture_desc;
@@ -11848,31 +11899,14 @@ static void test_draw_depth_only(void)
 
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(depth), NULL);
 
-    texture_desc.Width = 640;
-    texture_desc.Height = 480;
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
-    texture_desc.SampleDesc.Count = 1;
-    texture_desc.SampleDesc.Quality = 0;
-    texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
-
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
     ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
-
-    depth_stencil_desc.DepthEnable = TRUE;
-    depth_stencil_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-    depth_stencil_desc.DepthFunc = D3D11_COMPARISON_LESS;
-    depth_stencil_desc.StencilEnable = FALSE;
-
-    hr = ID3D11Device_CreateDepthStencilState(device, &depth_stencil_desc, &depth_stencil_state);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil state, hr %#x.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_color_code, sizeof(ps_color_code), NULL, &ps_color);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
@@ -11882,7 +11916,6 @@ static void test_draw_depth_only(void)
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext_PSSetShader(context, ps_color, NULL, 0);
     ID3D11DeviceContext_OMSetRenderTargets(context, 0, NULL, dsv);
-    ID3D11DeviceContext_OMSetDepthStencilState(context, depth_stencil_state, 0);
 
     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
     check_texture_float(texture, 1.0f, 1);
@@ -11947,7 +11980,6 @@ static void test_draw_depth_only(void)
     ID3D11PixelShader_Release(ps_color);
     ID3D11PixelShader_Release(ps_depth);
     ID3D11DepthStencilView_Release(dsv);
-    ID3D11DepthStencilState_Release(depth_stencil_state);
     ID3D11Texture2D_Release(texture);
     release_test_context(&test_context);
 }
@@ -23384,6 +23416,7 @@ START_TEST(d3d11)
     test_clear_render_target_view();
     test_clear_depth_stencil_view();
     test_clear_buffer_unordered_access_view();
+    test_initial_depth_stencil_state();
     test_draw_depth_only();
     test_draw_uav_only();
     test_cb_relative_addressing();
