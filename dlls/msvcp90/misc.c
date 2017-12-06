@@ -635,7 +635,7 @@ int __cdecl _Cnd_timedwait(_Cnd_arg_t cnd, _Mtx_arg_t mtx, const xtime *xt)
     InterlockedExchangeAdd( (LONG *)&cv->Ptr, 1 );
     _Mtx_unlock(mtx);
 
-    timeout.QuadPart = (ULONGLONG)_Xtime_diff_to_millis(xt) * -10000;
+    timeout.QuadPart = (ULONGLONG)(ULONG)_Xtime_diff_to_millis(xt) * -10000;
     status = NtWaitForKeyedEvent(keyed_event, &cv->Ptr, FALSE, &timeout);
     if (status)
     {
