@@ -1041,7 +1041,6 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     TRACE( "(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
            file, event, apc, apc_user, io_status, segments, length, offset, key);
 
-    if (length % page_size) return STATUS_INVALID_PARAMETER;
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
     status = server_get_unix_fd( file, FILE_READ_DATA, &unix_handle,
@@ -1060,9 +1059,9 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     {
         if (offset && offset->QuadPart != FILE_USE_FILE_POINTER_POSITION)
             result = pread( unix_handle, (char *)segments->Buffer + pos,
-                            page_size - pos, offset->QuadPart + total );
+                            min( length - pos, page_size - pos ), offset->QuadPart + total );
         else
-            result = read( unix_handle, (char *)segments->Buffer + pos, page_size - pos );
+            result = read( unix_handle, (char *)segments->Buffer + pos, min( length - pos, page_size - pos ) );
 
         if (result == -1)
         {

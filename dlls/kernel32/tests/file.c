@@ -4353,7 +4353,7 @@ static void test_WriteFileGather(void)
     FILE_SEGMENT_ELEMENT fse[2];
     OVERLAPPED ovl, *povl = NULL;
     SYSTEM_INFO si;
-    LPVOID wbuf = NULL, rbuf1, rbuf2;
+    char *wbuf = NULL, *rbuf1, *rbuf2;
     BOOL br;
 
     evt = CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -4491,6 +4491,34 @@ static void test_WriteFileGather(void)
     memset( rbuf1, 0x17, si.dwPageSize );
     ok( memcmp( rbuf2, rbuf1, si.dwPageSize ) == 0,
             "data should not have been read into buffer\n" );
+
+    ResetEvent( evt );
+
+    /* partial page read */
+    memset( &ovl, 0, sizeof(ovl) );
+    ovl.hEvent = evt;
+    memset( fse, 0, sizeof(fse) );
+    fse[0].Buffer = rbuf1;
+    memset( rbuf1, 0, si.dwPageSize );
+    SetLastError( 0xdeadbeef );
+    br = ReadFileScatter( hfile, fse, si.dwPageSize / 2, NULL, &ovl );
+    ok( br == FALSE, "ReadFileScatter should be asynchronous\n" );
+    ok( GetLastError() == ERROR_IO_PENDING, "ReadFileScatter failed err %u\n", GetLastError() );
+
+    ret = GetQueuedCompletionStatus( hiocp2, &size, &key, &povl, 1000 );
+    ok( ret, "GetQueuedCompletionStatus failed err %u\n", GetLastError() );
+    ok( povl == &ovl, "wrong ovl %p\n", povl );
+
+    tx = 0;
+    br = GetOverlappedResult( hfile, &ovl, &tx, TRUE );
+    ok( br == TRUE, "GetOverlappedResult failed: %u\n", GetLastError() );
+    ok( tx == si.dwPageSize / 2, "got unexpected bytes transferred: %u\n", tx );
+
+    ok( memcmp( rbuf1, wbuf, si.dwPageSize / 2 ) == 0,
+            "invalid data was read into buffer\n" );
+    memset( rbuf2, 0, si.dwPageSize );
+    ok( memcmp( rbuf1 + si.dwPageSize / 2, rbuf2, si.dwPageSize - si.dwPageSize / 2 ) == 0,
+            "invalid data was read into buffer\n" );
 
     CloseHandle( hfile );
     CloseHandle( hiocp1 );
