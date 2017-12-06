@@ -229,6 +229,16 @@ static void create_bitmap( STGMEDIUM *med )
     med->pUnkForRelease = NULL;
 }
 
+static void create_emf(STGMEDIUM *med)
+{
+    HDC hdc = CreateEnhMetaFileW(NULL, NULL, NULL, NULL);
+
+    Rectangle(hdc, 0, 0, 150, 300);
+    med->tymed = TYMED_ENHMF;
+    U(med)->hEnhMetaFile = CloseEnhMetaFile(hdc);
+    med->pUnkForRelease = NULL;
+}
+
 static void create_mfpict(STGMEDIUM *med)
 {
     METAFILEPICT *mf;
@@ -4110,6 +4120,7 @@ static void get_stgdef(struct storage_def *stg_def, CLIPFORMAT cf, STGMEDIUM *st
     BYTE *data;
     int data_size;
     METAFILEPICT *mfpict;
+    HDC hdc;
 
     switch (cf)
     {
@@ -4149,6 +4160,27 @@ static void get_stgdef(struct storage_def *stg_def, CLIPFORMAT cf, STGMEDIUM *st
         stg_def->stream[stm_idx].data_size = data_size;
         stg_def->stream[stm_idx].data = data;
         break;
+    case CF_ENHMETAFILE:
+        if (!strcmp(stg_def->stream[stm_idx].name, "CONTENTS"))
+        {
+            data_size = GetEnhMetaFileBits(U(stg_med)->hEnhMetaFile, 0, NULL);
+            data = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) + sizeof(ENHMETAHEADER) + data_size);
+            *((DWORD *)data) = sizeof(ENHMETAHEADER);
+            GetEnhMetaFileBits(U(stg_med)->hEnhMetaFile, data_size, data + sizeof(DWORD) + sizeof(ENHMETAHEADER));
+            memcpy(data + sizeof(DWORD), data + sizeof(DWORD) + sizeof(ENHMETAHEADER), sizeof(ENHMETAHEADER));
+            data_size += sizeof(DWORD) + sizeof(ENHMETAHEADER);
+        }
+        else
+        {
+            hdc = GetDC(NULL);
+            data_size = GetWinMetaFileBits(U(stg_med)->hEnhMetaFile, 0, NULL, MM_ANISOTROPIC, hdc);
+            data = HeapAlloc(GetProcessHeap(), 0, data_size);
+            GetWinMetaFileBits(U(stg_med)->hEnhMetaFile, data_size, data, MM_ANISOTROPIC, hdc);
+            ReleaseDC(NULL, hdc);
+        }
+        stg_def->stream[stm_idx].data_size = data_size;
+        stg_def->stream[stm_idx].data = data;
+        break;
     }
 }
 
@@ -4161,6 +4193,9 @@ static void get_stgmedium(CLIPFORMAT cfFormat, STGMEDIUM *stgmedium)
         break;
     case CF_METAFILEPICT:
         create_mfpict(stgmedium);
+        break;
+    case CF_ENHMETAFILE:
+        create_emf(stgmedium);
         break;
     default:
         ok(0, "cf %x not implemented\n", cfFormat);
@@ -4204,6 +4239,42 @@ static void test_data_cache_save_data(void)
             1, 1, &CLSID_WineTest,
             {
                 &CLSID_WineTestOld, 1, { { "\2OlePres000", CF_METAFILEPICT, DVASPECT_CONTENT, 0, NULL, 0 } }
+            }
+        },
+        {
+            {
+                { CF_ENHMETAFILE, 0, DVASPECT_CONTENT, -1, TYMED_ENHMF },
+            },
+            1, 1, &CLSID_WineTest,
+            {
+                &CLSID_WineTestOld, 1, { { "\2OlePres000", CF_ENHMETAFILE, DVASPECT_CONTENT, 0, NULL, 0 } }
+            }
+        },
+        {
+            {
+                { CF_DIB, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+            },
+            1, 1, &CLSID_Picture_Dib,
+            {
+                &CLSID_WineTestOld, 1, { { "CONTENTS", -1, 0, 0, NULL, 0 } }
+            }
+        },
+        {
+            {
+                { CF_METAFILEPICT, 0, DVASPECT_CONTENT, -1, TYMED_MFPICT },
+            },
+            1, 1, &CLSID_Picture_Metafile,
+            {
+                &CLSID_WineTestOld, 1, { { "CONTENTS", -1, 0, 0, NULL, 0 } }
+            }
+        },
+        {
+            {
+                { CF_ENHMETAFILE, 0, DVASPECT_CONTENT, -1, TYMED_ENHMF },
+            },
+            1, 1, &CLSID_Picture_EnhMetafile,
+            {
+                &CLSID_WineTestOld, 1, { { "CONTENTS", -1, 0, 0, NULL, 0 } }
             }
         },
         {
