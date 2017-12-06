@@ -58,6 +58,7 @@ IDL_SRCS = \
 	ddstream.idl \
 	devenum.idl \
 	devicetopology.idl \
+	dhtmled.idl \
 	dimm.idl \
 	dispex.idl \
 	docobj.idl \
@@ -342,6 +343,7 @@ HEADER_SRCS = \
 	devpkey.h \
 	devpropdef.h \
 	dhcpcsdk.h \
+	dhtmldid.h \
 	difxapi.h \
 	digitalv.h \
 	dinput.h \
