@@ -1716,10 +1716,7 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
         {
             if (depth)
             {
-                if (depth->format_flags & WINED3DFMT_FLAG_FLOAT)
-                    scale = gl_info->float_polyoffset_scale;
-                else
-                    scale = gl_info->fixed_polyoffset_scale;
+                scale = depth->format->depth_bias_scale;
 
                 TRACE("Depth format %s, using depthbias scale of %.8e.\n",
                       debug_d3dformat(depth->format->id), scale);

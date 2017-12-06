@@ -3565,33 +3565,6 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
     return TRUE;
 }
 
-/* Context activation is done by the caller. */
-BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, struct wined3d_caps_gl_ctx *ctx)
-{
-    struct wined3d_gl_info *gl_info = &adapter->gl_info;
-
-    if (!init_format_base_info(gl_info)) return FALSE;
-    if (!init_format_block_info(gl_info)) goto fail;
-
-    if (!ctx) /* WINED3D_NO3D */
-        return TRUE;
-
-    if (!init_format_texture_info(adapter, gl_info)) goto fail;
-    if (!init_format_vertex_info(gl_info)) goto fail;
-
-    apply_format_fixups(adapter, gl_info);
-    init_format_fbo_compat_info(ctx);
-    init_format_filter_info(gl_info, adapter->driver_info.vendor);
-    if (!init_typeless_formats(gl_info)) goto fail;
-
-    return TRUE;
-
-fail:
-    HeapFree(GetProcessHeap(), 0, gl_info->formats);
-    gl_info->formats = NULL;
-    return FALSE;
-}
-
 BOOL wined3d_caps_gl_ctx_test_viewport_subpixel_bits(struct wined3d_caps_gl_ctx *ctx)
 {
     static const struct wined3d_color red = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -3639,7 +3612,7 @@ BOOL wined3d_caps_gl_ctx_test_viewport_subpixel_bits(struct wined3d_caps_gl_ctx 
     return TRUE;
 }
 
-float wined3d_adapter_find_polyoffset_scale(struct wined3d_caps_gl_ctx *ctx, GLenum format)
+static float wined3d_adapter_find_polyoffset_scale(struct wined3d_caps_gl_ctx *ctx, GLenum format)
 {
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
     static const struct wined3d_color blue = {0.0f, 0.0f, 1.0f, 1.0f};
@@ -3717,7 +3690,7 @@ float wined3d_adapter_find_polyoffset_scale(struct wined3d_caps_gl_ctx *ctx, GLe
             low = cur;
         else
         {
-            TRACE("Found scale factor 2^%u for format %x\n", cur, format);
+            TRACE("Found scale factor 2^%u for format %x.\n", cur, format);
             break;
         }
     }
@@ -3731,6 +3704,51 @@ float wined3d_adapter_find_polyoffset_scale(struct wined3d_caps_gl_ctx *ctx, GLe
     gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
     gl_info->gl_ops.gl.p_glDisable(GL_POLYGON_OFFSET_FILL);
     return (float)(1u << cur);
+}
+
+static void init_format_depth_bias_scale(struct wined3d_caps_gl_ctx *ctx)
+{
+    const struct wined3d_gl_info *gl_info = ctx->gl_info;
+    unsigned int i;
+
+    for (i = 0; i < gl_info->format_count; ++i)
+    {
+        struct wined3d_format *format = &gl_info->formats[i];
+
+        if (format->flags[WINED3D_GL_RES_TYPE_RB] & WINED3DFMT_FLAG_DEPTH)
+        {
+            TRACE("Testing depth bias scale for format %s.\n", debug_d3dformat(format->id));
+            format->depth_bias_scale = wined3d_adapter_find_polyoffset_scale(ctx, format->glInternal);
+        }
+    }
+}
+
+/* Context activation is done by the caller. */
+BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, struct wined3d_caps_gl_ctx *ctx)
+{
+    struct wined3d_gl_info *gl_info = &adapter->gl_info;
+
+    if (!init_format_base_info(gl_info)) return FALSE;
+    if (!init_format_block_info(gl_info)) goto fail;
+
+    if (!ctx) /* WINED3D_NO3D */
+        return TRUE;
+
+    if (!init_format_texture_info(adapter, gl_info)) goto fail;
+    if (!init_format_vertex_info(gl_info)) goto fail;
+
+    apply_format_fixups(adapter, gl_info);
+    init_format_fbo_compat_info(ctx);
+    init_format_filter_info(gl_info, adapter->driver_info.vendor);
+    if (!init_typeless_formats(gl_info)) goto fail;
+    init_format_depth_bias_scale(ctx);
+
+    return TRUE;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, gl_info->formats);
+    gl_info->formats = NULL;
+    return FALSE;
 }
 
 const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl_info,
