@@ -111,22 +111,26 @@ const rtti_object_locator name ## _rtti = { \
     &name ## _hierarchy \
 };
 
-#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, dtor)  \
-\
+#define DEFINE_CXX_TYPE_INFO(type) \
 static const cxx_type_info type ## _cxx_type_info = { \
     0, \
     & type ##_type_info, \
     { 0, -1, 0 }, \
     sizeof(type), \
     (cxx_copy_ctor)THISCALL(MSVCP_ ## type ##_copy_ctor) \
-}; \
+};
+
+#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
+DEFINE_CXX_TYPE_INFO(type) \
 \
 static const cxx_type_info_table type ## _cxx_type_table = { \
     base_no+1, \
     { \
         & type ## _cxx_type_info, \
         cl1, \
-        cl2 \
+        cl2, \
+        cl3, \
+        cl4  \
     } \
 }; \
 \
@@ -203,8 +207,7 @@ static void init_ ## name ## _rtti(char *base) \
     name ## _rtti.object_locator = (char*)&name ## _rtti - base; \
 }
 
-#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, dtor)  \
-\
+#define DEFINE_CXX_TYPE_INFO(type) \
 static cxx_type_info type ## _cxx_type_info = { \
     0, \
     0xdeadbeef, \
@@ -213,9 +216,21 @@ static cxx_type_info type ## _cxx_type_info = { \
     0xdeadbeef \
 }; \
 \
+static void init_ ## type ## _cxx_type_info(char *base) \
+{ \
+    type ## _cxx_type_info.type_info  = (char *)&type ## _type_info - base; \
+    type ## _cxx_type_info.copy_ctor  = (char *)MSVCP_ ## type ## _copy_ctor - base; \
+}
+
+#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
+\
+DEFINE_CXX_TYPE_INFO(type) \
+\
 static cxx_type_info_table type ## _cxx_type_table = { \
     base_no+1, \
     { \
+        0xdeadbeef, \
+        0xdeadbeef, \
         0xdeadbeef, \
         0xdeadbeef, \
         0xdeadbeef  \
@@ -231,11 +246,12 @@ static cxx_exception_type type ##_cxx_type = { \
 \
 static void init_ ## type ## _cxx(char *base) \
 { \
-    type ## _cxx_type_info.type_info  = (char *)&type ## _type_info - base; \
-    type ## _cxx_type_info.copy_ctor  = (char *)MSVCP_ ## type ## _copy_ctor - base; \
+    init_ ## type ## _cxx_type_info(base); \
     type ## _cxx_type_table.info[0]   = (char *)&type ## _cxx_type_info - base; \
     type ## _cxx_type_table.info[1]   = (char *)cl1 - base; \
     type ## _cxx_type_table.info[2]   = (char *)cl2 - base; \
+    type ## _cxx_type_table.info[3]   = (char *)cl3 - base; \
+    type ## _cxx_type_table.info[4]   = (char *)cl4 - base; \
     type ## _cxx_type.destructor      = (char *)dtor - base; \
     type ## _cxx_type.type_info_table = (char *)&type ## _cxx_type_table - base; \
 }
@@ -258,11 +274,15 @@ static void init_ ## type ## _cxx(char *base) \
     DEFINE_RTTI_DATA(name, off, 9, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name)
 
 #define DEFINE_CXX_DATA0(name, dtor) \
-    DEFINE_CXX_DATA(name, 0, NULL, NULL, dtor)
+    DEFINE_CXX_DATA(name, 0, NULL, NULL, NULL, NULL, dtor)
 #define DEFINE_CXX_DATA1(name, cl1, dtor) \
-    DEFINE_CXX_DATA(name, 1, cl1, NULL, dtor)
+    DEFINE_CXX_DATA(name, 1, cl1, NULL, NULL, NULL, dtor)
 #define DEFINE_CXX_DATA2(name, cl1, cl2, dtor) \
-    DEFINE_CXX_DATA(name, 2, cl1, cl2, dtor)
+    DEFINE_CXX_DATA(name, 2, cl1, cl2, NULL, NULL, dtor)
+#define DEFINE_CXX_DATA3(name, cl1, cl2, cl3, dtor) \
+    DEFINE_CXX_DATA(name, 3, cl1, cl2, cl3, NULL, dtor)
+#define DEFINE_CXX_DATA4(name, cl1, cl2, cl3, cl4, dtor) \
+    DEFINE_CXX_DATA(name, 4, cl1, cl2, cl3, cl4, dtor)
 
 #ifdef __i386__
 
@@ -380,7 +400,7 @@ typedef struct
 typedef struct
 {
     UINT count;
-    const cxx_type_info *info[3];
+    const cxx_type_info *info[5];
 } cxx_type_info_table;
 
 typedef struct
@@ -436,7 +456,7 @@ typedef struct
 typedef struct
 {
     UINT count;
-    unsigned int info[3];
+    unsigned int info[5];
 } cxx_type_info_table;
 
 typedef struct
