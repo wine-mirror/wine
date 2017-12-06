@@ -1692,7 +1692,7 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
             || state->render_states[WINED3D_RS_DEPTHBIAS])
     {
         const struct wined3d_rendertarget_view *depth = state->fb->depth_stencil;
-        float scale;
+        float factor, units, scale;
 
         union
         {
@@ -1703,14 +1703,9 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
         scale_bias.d = state->render_states[WINED3D_RS_SLOPESCALEDEPTHBIAS];
         const_bias.d = state->render_states[WINED3D_RS_DEPTHBIAS];
 
-        gl_info->gl_ops.gl.p_glEnable(GL_POLYGON_OFFSET_FILL);
-        checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
-
         if (context->d3d_info->wined3d_creation_flags & WINED3D_LEGACY_DEPTH_BIAS)
         {
-            float bias = -(float)const_bias.d;
-            gl_info->gl_ops.gl.p_glPolygonOffset(bias, bias);
-            checkGLcall("glPolygonOffset");
+            factor = units = -(float)const_bias.d;
         }
         else
         {
@@ -1719,24 +1714,28 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
                 scale = depth->format->depth_bias_scale;
 
                 TRACE("Depth format %s, using depthbias scale of %.8e.\n",
-                      debug_d3dformat(depth->format->id), scale);
+                        debug_d3dformat(depth->format->id), scale);
             }
             else
             {
                 /* The context manager will reapply this state on a depth stencil change */
-                TRACE("No depth stencil, using depthbias scale of 0.0.\n");
+                TRACE("No depth stencil, using depth bias scale of 0.0.\n");
                 scale = 0.0f;
             }
 
-            gl_info->gl_ops.gl.p_glPolygonOffset(scale_bias.f, const_bias.f * scale);
-            checkGLcall("glPolygonOffset(...)");
+            factor = scale_bias.f;
+            units = const_bias.f * scale;
         }
+
+        gl_info->gl_ops.gl.p_glEnable(GL_POLYGON_OFFSET_FILL);
+        gl_info->gl_ops.gl.p_glPolygonOffset(factor, units);
     }
     else
     {
         gl_info->gl_ops.gl.p_glDisable(GL_POLYGON_OFFSET_FILL);
-        checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL)");
     }
+
+    checkGLcall("depth bias");
 }
 
 static void state_zvisible(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)

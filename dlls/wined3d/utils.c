@@ -3706,7 +3706,8 @@ static float wined3d_adapter_find_polyoffset_scale(struct wined3d_caps_gl_ctx *c
     return (float)(1u << cur);
 }
 
-static void init_format_depth_bias_scale(struct wined3d_caps_gl_ctx *ctx)
+static void init_format_depth_bias_scale(struct wined3d_caps_gl_ctx *ctx,
+        const struct wined3d_d3d_info *d3d_info)
 {
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
     unsigned int i;
@@ -3719,6 +3720,17 @@ static void init_format_depth_bias_scale(struct wined3d_caps_gl_ctx *ctx)
         {
             TRACE("Testing depth bias scale for format %s.\n", debug_d3dformat(format->id));
             format->depth_bias_scale = wined3d_adapter_find_polyoffset_scale(ctx, format->glInternal);
+
+            if (!(d3d_info->wined3d_creation_flags & WINED3D_NORMALIZED_DEPTH_BIAS))
+            {
+                /* The single-precision binary floating-point format has
+                 * a significand precision of 24 bits.
+                 */
+                if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
+                    format->depth_bias_scale /= 1u << 24;
+                else
+                    format->depth_bias_scale /= 1u << format->depth_size;
+            }
         }
     }
 }
@@ -3741,7 +3753,7 @@ BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, struct wi
     init_format_fbo_compat_info(ctx);
     init_format_filter_info(gl_info, adapter->driver_info.vendor);
     if (!init_typeless_formats(gl_info)) goto fail;
-    init_format_depth_bias_scale(ctx);
+    init_format_depth_bias_scale(ctx, &adapter->d3d_info);
 
     return TRUE;
 
