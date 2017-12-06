@@ -3805,11 +3805,11 @@
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr) msvcp120._Thrd_create
 @ cdecl _Thrd_current() msvcp120._Thrd_current
-@ cdecl _Thrd_detach(ptr) msvcp120._Thrd_detach
-@ cdecl _Thrd_equal(ptr ptr) msvcp120._Thrd_equal
+@ cdecl _Thrd_detach(int64) msvcp120._Thrd_detach
+@ cdecl _Thrd_equal(int64 int64) msvcp120._Thrd_equal
 @ stub _Thrd_exit
-@ cdecl _Thrd_join(ptr long) msvcp120._Thrd_join
-@ cdecl _Thrd_lt(ptr ptr) msvcp120._Thrd_lt
+@ cdecl _Thrd_join(int64 long) msvcp120._Thrd_join
+@ cdecl _Thrd_lt(int64 int64) msvcp120._Thrd_lt
 @ cdecl _Thrd_sleep(ptr) msvcp120._Thrd_sleep
 @ cdecl _Thrd_start(ptr ptr ptr) msvcp120._Thrd_start
 @ cdecl _Thrd_yield() msvcp120._Thrd_yield

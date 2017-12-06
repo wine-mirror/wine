@@ -3805,11 +3805,11 @@
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr)
 @ cdecl _Thrd_current()
-@ cdecl _Thrd_detach(ptr)
-@ cdecl _Thrd_equal(ptr ptr)
+@ cdecl _Thrd_detach(int64)
+@ cdecl _Thrd_equal(int64 int64)
 @ stub _Thrd_exit
-@ cdecl _Thrd_join(ptr long)
-@ cdecl _Thrd_lt(ptr ptr)
+@ cdecl _Thrd_join(int64 long)
+@ cdecl _Thrd_lt(int64 int64)
 @ cdecl _Thrd_sleep(ptr)
 @ cdecl _Thrd_start(ptr ptr ptr)
 @ cdecl _Thrd_yield()
