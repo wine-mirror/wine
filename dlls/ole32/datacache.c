@@ -842,6 +842,18 @@ end:
     return hr;
 }
 
+#include <pshpack2.h>
+struct meta_placeable
+{
+    DWORD key;
+    WORD hwmf;
+    WORD bounding_box[4];
+    WORD inch;
+    DWORD reserved;
+    WORD checksum;
+};
+#include <poppack.h>
+
 static HRESULT save_mfpict(DataCacheEntry *entry, BOOL contents, IStream *stream)
 {
     HRESULT hr = S_OK;
@@ -875,6 +887,50 @@ static HRESULT save_mfpict(DataCacheEntry *entry, BOOL contents, IStream *stream
             GlobalUnlock(entry->stgmedium.u.hMetaFilePict);
         }
         hr = IStream_Write(stream, &header, sizeof(PresentationDataHeader), NULL);
+        if (hr == S_OK && data_size)
+            hr = IStream_Write(stream, data, data_size, NULL);
+        HeapFree(GetProcessHeap(), 0, data);
+    }
+    else
+    {
+        struct meta_placeable meta_place_rec;
+        WORD *check;
+
+        if (entry->stgmedium.tymed != TYMED_NULL)
+        {
+            mfpict = GlobalLock(entry->stgmedium.u.hMetaFilePict);
+            if (!mfpict)
+                return DV_E_STGMEDIUM;
+            data_size = GetMetaFileBitsEx(mfpict->hMF, 0, NULL);
+            data = HeapAlloc(GetProcessHeap(), 0, data_size);
+            if (!data)
+            {
+                GlobalUnlock(entry->stgmedium.u.hMetaFilePict);
+                return E_OUTOFMEMORY;
+            }
+            GetMetaFileBitsEx(mfpict->hMF, data_size, data);
+        }
+
+        /* units are in 1/8th of a point (1 point is 1/72th of an inch) */
+        meta_place_rec.key = 0x9ac6cdd7;
+        meta_place_rec.hwmf = 0;
+        meta_place_rec.inch = 576;
+        meta_place_rec.bounding_box[0] = 0;
+        meta_place_rec.bounding_box[1] = 0;
+        meta_place_rec.bounding_box[2] = 0;
+        meta_place_rec.bounding_box[3] = 0;
+        meta_place_rec.checksum = 0;
+        meta_place_rec.reserved = 0;
+        if (mfpict)
+        {
+            /* These values are rounded down so MulDiv won't do the right thing */
+            meta_place_rec.bounding_box[2] = (LONGLONG)mfpict->xExt * meta_place_rec.inch / 2540;
+            meta_place_rec.bounding_box[3] = (LONGLONG)mfpict->yExt * meta_place_rec.inch / 2540;
+            GlobalUnlock(entry->stgmedium.u.hMetaFilePict);
+        }
+        for (check = (WORD *)&meta_place_rec; check != (WORD *)&meta_place_rec.checksum; check++)
+            meta_place_rec.checksum ^= *check;
+        hr = IStream_Write(stream, &meta_place_rec, sizeof(struct meta_placeable), NULL);
         if (hr == S_OK && data_size)
             hr = IStream_Write(stream, data, data_size, NULL);
         HeapFree(GetProcessHeap(), 0, data);
