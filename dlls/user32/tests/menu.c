@@ -41,7 +41,6 @@ static BOOL (WINAPI *pGetMenuInfo)(HMENU,LPCMENUINFO);
 static BOOL (WINAPI *pGetMenuBarInfo)(HWND,LONG,LONG,PMENUBARINFO);
 static UINT (WINAPI *pSendInput)(UINT, INPUT*, size_t);
 static BOOL (WINAPI *pSetMenuInfo)(HMENU,LPCMENUINFO);
-static BOOL (WINAPI *pEndMenu) (void);
 
 static void init_function_pointers(void)
 {
@@ -56,7 +55,6 @@ static void init_function_pointers(void)
     GET_PROC(GetMenuBarInfo)
     GET_PROC(SendInput)
     GET_PROC(SetMenuInfo)
-    GET_PROC(EndMenu)
 
 #undef GET_PROC
 }
@@ -3518,7 +3516,7 @@ static LRESULT WINAPI menu_cancelmode_wnd_proc(HWND hwnd, UINT msg,
                     PostMessageA( hwnd, WM_MOUSEMOVE, 0, 0);
                     return SendMessageA( g_hwndtosend, WM_CANCELMODE, 0, 0);
                 }
-                pEndMenu();
+                EndMenu();
                 return TRUE;
             }
     }
@@ -3531,10 +3529,7 @@ static void test_menu_cancelmode(void)
     HWND hwnd, hwndchild;
     HMENU menu, menubar;
     MSG msg;
-    if( !pEndMenu) { /* win95 */
-        win_skip( "EndMenu is not available\n");
-        return;
-    }
+
     hwnd = CreateWindowExA( 0, (LPCSTR)MAKEINTATOM(atomMenuCheckClass), NULL,
             WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
             NULL, NULL, NULL, NULL);
