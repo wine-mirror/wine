@@ -4092,8 +4092,7 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
         }
     }
 
-    hr = wined3d_device_init_3d(device->wined3d_device, swapchain_desc);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_device_init_3d(device->wined3d_device, swapchain_desc)))
     {
         WARN("Failed to initialize 3D, hr %#x.\n", hr);
         wined3d_device_release_focus_window(device->wined3d_device);
@@ -4102,6 +4101,9 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
         wined3d_mutex_unlock();
         return hr;
     }
+
+    wined3d_device_set_render_state(device->wined3d_device,
+            WINED3D_RS_ZENABLE, !!swapchain_desc->enable_auto_depth_stencil);
 
     if (FAILED(hr = d3d9_device_get_swapchains(device)))
     {
