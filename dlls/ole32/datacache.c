@@ -823,6 +823,19 @@ static HRESULT save_dib(DataCacheEntry *entry, BOOL contents, IStream *stream)
         if (hr == S_OK && data_size)
             hr = IStream_Write(stream, bmi, data_size, NULL);
     }
+    else
+    {
+        BITMAPFILEHEADER bmp_fhdr;
+
+        bmp_fhdr.bfType = 0x4d42;
+        bmp_fhdr.bfSize = data_size + sizeof(BITMAPFILEHEADER);
+        bmp_fhdr.bfReserved1 = bmp_fhdr.bfReserved2 = 0;
+        if (data_size)
+            bmp_fhdr.bfOffBits = bitmap_info_size(bmi, DIB_RGB_COLORS) + sizeof(BITMAPFILEHEADER);
+        hr = IStream_Write(stream, &bmp_fhdr, sizeof(BITMAPFILEHEADER), NULL);
+        if (hr == S_OK && data_size)
+            hr = IStream_Write(stream, bmi, data_size, NULL);
+    }
 
 end:
     if (bmi) GlobalUnlock(entry->stgmedium.u.hGlobal);
