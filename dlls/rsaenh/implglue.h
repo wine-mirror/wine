@@ -43,10 +43,10 @@ typedef union tagKEY_CONTEXT {
 } KEY_CONTEXT;
 
 BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext) DECLSPEC_HIDDEN;
-BOOL update_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, const BYTE *pbData,
+BOOL update_hash_impl(HASH_CONTEXT *pHashContext, const BYTE *pbData,
                       DWORD dwDataLen) DECLSPEC_HIDDEN;
-BOOL finalize_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, BYTE *pbHashValue) DECLSPEC_HIDDEN;
-BOOL duplicate_hash_impl(ALG_ID aiAlgid, const HASH_CONTEXT *pSrcHashContext,
+BOOL finalize_hash_impl(HASH_CONTEXT *pHashContext, BYTE *pbHashValue) DECLSPEC_HIDDEN;
+BOOL duplicate_hash_impl(const HASH_CONTEXT *pSrcHashContext,
                          HASH_CONTEXT *pDestHashContext) DECLSPEC_HIDDEN;
 
 BOOL new_key_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen) DECLSPEC_HIDDEN;

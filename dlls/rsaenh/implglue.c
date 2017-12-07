@@ -82,22 +82,20 @@ BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext)
     return !status;
 }
 
-BOOL update_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, const BYTE *pbData,
-                      DWORD dwDataLen) 
+BOOL update_hash_impl(HASH_CONTEXT *pHashContext, const BYTE *pbData, DWORD dwDataLen)
 {
     BCryptHashData(pHashContext->bcrypt_hash, (UCHAR*)pbData, dwDataLen, 0);
     return TRUE;
 }
 
-BOOL finalize_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, BYTE *pbHashValue) 
+BOOL finalize_hash_impl(HASH_CONTEXT *pHashContext, BYTE *pbHashValue)
 {
     BCryptFinishHash(pHashContext->bcrypt_hash, pbHashValue, RSAENH_MAX_HASH_SIZE, 0);
     BCryptDestroyHash(pHashContext->bcrypt_hash);
     return TRUE;
 }
 
-BOOL duplicate_hash_impl(ALG_ID aiAlgid, const HASH_CONTEXT *pSrcHashContext,
-                         HASH_CONTEXT *pDestHashContext) 
+BOOL duplicate_hash_impl(const HASH_CONTEXT *pSrcHashContext, HASH_CONTEXT *pDestHashContext)
 {
     return !BCryptDuplicateHash(pSrcHashContext->bcrypt_hash, &pDestHashContext->bcrypt_hash, NULL, 0, 0);
 }
