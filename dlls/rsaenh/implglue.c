@@ -33,10 +33,6 @@
 
 #include <stdio.h>
 
-/* Function prototypes copied from dlls/advapi32/crypt_md4.c */
-VOID WINAPI MD4Init( MD4_CTX *ctx );
-VOID WINAPI MD4Update( MD4_CTX *ctx, const unsigned char *buf, unsigned int len );
-VOID WINAPI MD4Final( MD4_CTX *ctx );
 /* Function prototypes copied from dlls/advapi32/crypt_md5.c */
 VOID WINAPI MD5Init( MD5_CTX *ctx );
 VOID WINAPI MD5Update( MD5_CTX *ctx, const unsigned char *buf, unsigned int len );
@@ -56,8 +52,8 @@ BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext)
             break;
         
         case CALG_MD4:
-            MD4Init(&pHashContext->md4);
-            return TRUE;
+            status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_MD4_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+            break;
         
         case CALG_MD5:
             MD5Init(&pHashContext->md5);
@@ -95,10 +91,6 @@ BOOL update_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, const BYTE *pb
 {
     switch (aiAlgid)
     {
-        case CALG_MD4:
-            MD4Update(&pHashContext->md4, pbData, dwDataLen);
-            break;
-    
         case CALG_MD5:
             MD5Update(&pHashContext->md5, pbData, dwDataLen);
             break;
@@ -114,11 +106,6 @@ BOOL finalize_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, BYTE *pbHash
 {
     switch (aiAlgid)
     {
-        case CALG_MD4:
-            MD4Final(&pHashContext->md4);
-            memcpy(pbHashValue, pHashContext->md4.digest, 16);
-            break;
-        
         case CALG_MD5:
             MD5Final(&pHashContext->md5);
             memcpy(pbHashValue, pHashContext->md5.digest, 16);
@@ -138,7 +125,6 @@ BOOL duplicate_hash_impl(ALG_ID aiAlgid, const HASH_CONTEXT *pSrcHashContext,
 {
     switch (aiAlgid)
     {
-        case CALG_MD4:
         case CALG_MD5:
             *pDestHashContext = *pSrcHashContext;
             return TRUE;

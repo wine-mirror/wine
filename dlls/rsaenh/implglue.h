@@ -29,14 +29,6 @@
 
 #define RSAENH_MAX_HASH_SIZE        104
 
-/* Next typedef copied from dlls/advapi32/crypt_md4.c */
-typedef struct tagMD4_CTX {
-    unsigned int buf[4];
-    unsigned int i[2];
-    unsigned char in[64];
-    unsigned char digest[16];
-} MD4_CTX;
-
 /* Next typedef copied from dlls/advapi32/crypt_md5.c */
 typedef struct tagMD5_CTX
 {
@@ -47,7 +39,6 @@ typedef struct tagMD5_CTX
 } MD5_CTX;
 
 typedef union tagHASH_CONTEXT {
-    MD4_CTX md4;
     MD5_CTX md5;
     BCRYPT_HASH_HANDLE bcrypt_hash;
 } HASH_CONTEXT;
