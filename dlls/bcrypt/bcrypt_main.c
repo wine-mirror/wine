@@ -145,6 +145,7 @@ struct object
 enum alg_id
 {
     ALG_ID_AES,
+    ALG_ID_MD2,
     ALG_ID_MD5,
     ALG_ID_RNG,
     ALG_ID_SHA1,
@@ -163,6 +164,7 @@ static const struct {
     const WCHAR *alg_name;
 } alg_props[] = {
     /* ALG_ID_AES    */ {  654,    0,    0, BCRYPT_AES_ALGORITHM },
+    /* ALG_ID_MD2    */ {  270,   16,  128, BCRYPT_MD2_ALGORITHM },
     /* ALG_ID_MD5    */ {  274,   16,  512, BCRYPT_MD5_ALGORITHM },
     /* ALG_ID_RNG    */ {    0,    0,    0, BCRYPT_RNG_ALGORITHM },
     /* ALG_ID_SHA1   */ {  278,   20,  512, BCRYPT_SHA1_ALGORITHM },
@@ -235,6 +237,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
     }
 
     if (!strcmpW( id, BCRYPT_AES_ALGORITHM )) alg_id = ALG_ID_AES;
+    else if (!strcmpW( id, BCRYPT_MD2_ALGORITHM )) alg_id = ALG_ID_MD2;
     else if (!strcmpW( id, BCRYPT_MD5_ALGORITHM )) alg_id = ALG_ID_MD5;
     else if (!strcmpW( id, BCRYPT_RNG_ALGORITHM )) alg_id = ALG_ID_RNG;
     else if (!strcmpW( id, BCRYPT_SHA1_ALGORITHM )) alg_id = ALG_ID_SHA1;
@@ -287,6 +290,7 @@ struct hash_impl
 {
     union
     {
+        MD2_CTX md2;
         MD5_CTX md5;
         SHA_CTX sha1;
         SHA256_CTX sha256;
@@ -298,6 +302,10 @@ static NTSTATUS hash_init( struct hash_impl *hash, enum alg_id alg_id )
 {
     switch (alg_id)
     {
+    case ALG_ID_MD2:
+        md2_init( &hash->u.md2 );
+        break;
+
     case ALG_ID_MD5:
         MD5Init( &hash->u.md5 );
         break;
@@ -330,6 +338,10 @@ static NTSTATUS hash_update( struct hash_impl *hash, enum alg_id alg_id,
 {
     switch (alg_id)
     {
+    case ALG_ID_MD2:
+        md2_update( &hash->u.md2, input, size );
+        break;
+
     case ALG_ID_MD5:
         MD5Update( &hash->u.md5, input, size );
         break;
@@ -362,6 +374,10 @@ static NTSTATUS hash_finish( struct hash_impl *hash, enum alg_id alg_id,
 {
     switch (alg_id)
     {
+    case ALG_ID_MD2:
+        md2_finalize( &hash->u.md2, output );
+        break;
+
     case ALG_ID_MD5:
         MD5Final( &hash->u.md5 );
         memcpy( output, hash->u.md5.digest, 16 );
