@@ -46,19 +46,9 @@ typedef struct tagMD5_CTX
     unsigned char digest[16];
 } MD5_CTX;
 
-/* Next typedef copied form dlls/advapi32/crypt_sha.c */
-typedef struct tagSHA_CTX
-{
-    ULONG Unknown[6];
-    ULONG State[5];
-    ULONG Count[2];
-    UCHAR Buffer[64];
-} SHA_CTX, *PSHA_CTX;
-
 typedef union tagHASH_CONTEXT {
     MD4_CTX md4;
     MD5_CTX md5;
-    SHA_CTX sha;
     BCRYPT_HASH_HANDLE bcrypt_hash;
 } HASH_CONTEXT;
 

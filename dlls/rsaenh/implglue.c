@@ -41,10 +41,6 @@ VOID WINAPI MD4Final( MD4_CTX *ctx );
 VOID WINAPI MD5Init( MD5_CTX *ctx );
 VOID WINAPI MD5Update( MD5_CTX *ctx, const unsigned char *buf, unsigned int len );
 VOID WINAPI MD5Final( MD5_CTX *ctx );
-/* Function prototypes copied from dlls/advapi32/crypt_sha.c */
-VOID WINAPI A_SHAInit(PSHA_CTX Context);
-VOID WINAPI A_SHAUpdate(PSHA_CTX Context, const unsigned char *Buffer, UINT BufferSize);
-VOID WINAPI A_SHAFinal(PSHA_CTX Context, PULONG Result);
 /* Function prototype copied from dlls/advapi32/crypt.c */
 BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen);
         
@@ -68,8 +64,8 @@ BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext)
             return TRUE;
         
         case CALG_SHA:
-            A_SHAInit(&pHashContext->sha);
-            return TRUE;
+            status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA1_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+            break;
 
         case CALG_SHA_256:
             status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_SHA256_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
@@ -107,10 +103,6 @@ BOOL update_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, const BYTE *pb
             MD5Update(&pHashContext->md5, pbData, dwDataLen);
             break;
         
-        case CALG_SHA:
-            A_SHAUpdate(&pHashContext->sha, pbData, dwDataLen);
-            break;
-        
         default:
             BCryptHashData(pHashContext->bcrypt_hash, (UCHAR*)pbData, dwDataLen, 0);
     }
@@ -132,10 +124,6 @@ BOOL finalize_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, BYTE *pbHash
             memcpy(pbHashValue, pHashContext->md5.digest, 16);
             break;
         
-        case CALG_SHA:
-            A_SHAFinal(&pHashContext->sha, (PULONG)pbHashValue);
-            break;
-        
         default:
             BCryptFinishHash(pHashContext->bcrypt_hash, pbHashValue, RSAENH_MAX_HASH_SIZE, 0);
             BCryptDestroyHash(pHashContext->bcrypt_hash);
@@ -152,7 +140,6 @@ BOOL duplicate_hash_impl(ALG_ID aiAlgid, const HASH_CONTEXT *pSrcHashContext,
     {
         case CALG_MD4:
         case CALG_MD5:
-        case CALG_SHA:
             *pDestHashContext = *pSrcHashContext;
             return TRUE;
         default:
