@@ -6489,6 +6489,168 @@ static void test_registerset_defaults(void)
     if (wnd) DestroyWindow(wnd);
 }
 
+static void test_shader_semantics(void)
+{
+    static const DWORD invalid_1[] =
+    {
+        0x00000200
+    },
+    invalid_2[] =
+    {
+        0xfffe0400
+    },
+    invalid_3[] =
+    {
+        0xfffe0000
+    },
+    vs_1_1[] =
+    {
+        0xfffe0101,                         /* vs_1_1 */
+        0x0000001f, 0x80000000, 0x900f0000, /* dcl_position v0 */
+        0x0000001f, 0x80000003, 0x900f0001, /* dcl_normal v1 */
+        0x0000001f, 0x8001000a, 0x900f0002, /* dcl_color1 v2 */
+        0x0000001f, 0x80000005, 0x900f0003, /* dcl_texcoord0 v3 */
+        0x00000001, 0xc00f0000, 0x90e40000, /* mov oPos, v0 */
+        0x00000001, 0xd00f0001, 0x90e40002, /* mov oD1, v2 */
+        0x00000001, 0xe0070000, 0x90e40001, /* mov oT0.xyz, v1 */
+        0x00000001, 0xc00f0001, 0x90ff0002, /* mov oFog, v2.w */
+        0x00000001, 0xc00f0002, 0x90ff0001, /* mov oPts, v1.w */
+        0x0000ffff
+    },
+    vs_2_0[] =
+    {
+        0xfffe0200,                         /* vs_2_0 */
+        0x0200001f, 0x80000000, 0x900f0000, /* dcl_position v0 */
+        0x0200001f, 0x80000003, 0x900f0001, /* dcl_normal v1 */
+        0x0200001f, 0x8001000a, 0x900f0002, /* dcl_color1 v2 */
+        0x0200001f, 0x80000005, 0x900f0003, /* dcl_texcoord0 v3 */
+        0x02000001, 0xc00f0000, 0x90e40000, /* mov oPos, v0 */
+        0x02000001, 0xd00f0001, 0x90e40002, /* mov oD1, v2 */
+        0x02000001, 0xe0070000, 0x90e40003, /* mov oT0.xyz, v3 */
+        0x02000001, 0xc00f0001, 0x90ff0002, /* mov oFog, v2.w */
+        0x02000001, 0xc00f0002, 0x90ff0001, /* mov oPts, v1.w */
+        0x0000ffff
+    },
+    vs_3_0[] =
+    {
+        0xfffe0300,                         /* vs_3_0 */
+        0x0200001f, 0x80000000, 0x900f0000, /* dcl_position v0 */
+        0x0200001f, 0x80000003, 0x900f0001, /* dcl_normal v1 */
+        0x0200001f, 0x8001000a, 0x900f0002, /* dcl_color1 v2 */
+        0x0200001f, 0x80000005, 0x900f0003, /* dcl_texcoord0 v3 */
+        0x0200001f, 0x80000000, 0xe00f0000, /* dcl_position o0 */
+        0x0200001f, 0x8001000a, 0xe00f0001, /* dcl_color1 o1 */
+        0x0200001f, 0x80000005, 0xe00f0002, /* dcl_texcoord0 o2 */
+        0x0200001f, 0x8000000b, 0xe00f0003, /* dcl_fog o3 */
+        0x0200001f, 0x80000004, 0xe00f0004, /* dcl_psize o4 */
+        0x02000001, 0xe00f0000, 0x90e40000, /* mov o0, v0 */
+        0x02000001, 0xe00f0001, 0x90e40002, /* mov o1, v2 */
+        0x02000001, 0xe0070002, 0x90e40003, /* mov o2.xyz, v3 */
+        0x02000001, 0xe00f0003, 0x90ff0002, /* mov o3, v2.w */
+        0x02000001, 0xe00f0004, 0x90ff0001, /* mov o4, v1.w */
+        0x0000ffff
+    },
+    ps_1_1[] =
+    {
+        0xffff0101,                                     /* ps_1_1 */
+        0x00000042, 0xb00f0000,                         /* tex t0 */
+        0x00000002, 0x800f0000, 0x90e40000, 0xb0e40000, /* add r0, v0, t0 */
+        0x0000ffff
+    },
+    ps_2_0[] =
+    {
+        0xffff0200,                         /* ps_2_0 */
+        0x0200001f, 0x80000000, 0x900f0000, /* dcl v0 */
+        0x0200001f, 0x80000000, 0xb00f0000, /* dcl t0 */
+        0x02000001, 0x800f0800, 0x90e40000, /* mov oC0, v0 */
+        0x0000ffff
+    },
+    ps_3_0[] =
+    {
+        0xffff0300,                                                             /* ps_3_0 */
+        0x0200001f, 0x8001000a, 0x900f0000,                                     /* dcl_color1 v0 */
+        0x0200001f, 0x80000003, 0x900f0001,                                     /* dcl_normal v1 */
+        0x0200001f, 0x80000005, 0x900f0002,                                     /* dcl_texcoord0 v2 */
+        0x0200001f, 0x8000000b, 0x900f0003,                                     /* dcl_fog v3 */
+        0x0200001f, 0x80000000, 0x90031000,                                     /* dcl vPos.xy */
+        0x0200001f, 0x80000000, 0x900f1001,                                     /* dcl vFace */
+        0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 0.0, 0.0, 0.0, 0.0 */
+        0x02000001, 0x800f0000, 0x90e40000,                                     /* mov r0, v0 */
+        0x03000002, 0x800f0800, 0x80e40000, 0x90e40003,                         /* add oC0, r0, v3 */
+        0x02000001, 0x800f0001, 0x90e40001,                                     /* mov r1, v1 */
+        0x03000005, 0x800f0801, 0x80e40001, 0x90e40002,                         /* mul oC1, r1, v2 */
+        0x02000001, 0x800f0802, 0x90441000,                                     /* mov oC2, vPos.xyxy */
+        0x04000058, 0x800f0803, 0x90e41001, 0x90e40000, 0xa0e40000,             /* cmp oC3, vFace, v0, c0 */
+        0x02000001, 0x900f0800, 0x90ff0001,                                     /* mov oDepth, v1.w */
+        0x0000ffff
+    };
+    static const struct
+    {
+        const DWORD *shader;
+        D3DXSEMANTIC expected_input[MAXD3DDECLLENGTH];
+        D3DXSEMANTIC expected_output[MAXD3DDECLLENGTH];
+    }
+    tests[] =
+    {
+        {vs_1_1, {{0, 0}, {3, 0}, {10, 1}, {5, 0}, {~0, ~0}}, {{5, 0}, {10, 1}, {0, 0}, {11, 0}, {4, 0}, {~0, ~0}}},
+        {vs_2_0, {{0, 0}, {3, 0}, {10, 1}, {5, 0}, {~0, ~0}}, {{5, 0}, {10, 1}, {0, 0}, {11, 0}, {4, 0}, {~0, ~0}}},
+        {vs_3_0, {{0, 0}, {3, 0}, {10, 1}, {5, 0}, {~0, ~0}}, {{0, 0}, {10, 1}, {5, 0}, {11, 0}, {4, 0}, {~0, ~0}}},
+        {ps_1_1, {{5, 0}, {10, 0}, {~0, ~0}}, {{10, 0}, {~0, ~0}}},
+        {ps_2_0, {{10, 0}, {5, 0}, {~0, ~0}}, {{10, 0}, {~0, ~0}}},
+        {ps_3_0, {{10, 1}, {3,0}, {5, 0}, {11, 0}, {~0, ~0}}, {{10, 0}, {10, 1}, {10, 2}, {10, 3}, {12, 0}, {~0, ~0}}},
+    };
+    D3DXSEMANTIC semantics[MAXD3DDECLLENGTH];
+    unsigned int count, count2;
+    unsigned int i, j;
+    HRESULT hr;
+
+    hr = D3DXGetShaderInputSemantics(invalid_1, NULL, NULL);
+    ok(hr == D3DXERR_INVALIDDATA, "Unexpected hr %#x.\n", hr);
+    hr = D3DXGetShaderInputSemantics(invalid_2, NULL, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    hr = D3DXGetShaderInputSemantics(invalid_3, NULL, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = D3DXGetShaderInputSemantics(vs_1_1, NULL, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    hr = D3DXGetShaderInputSemantics(vs_1_1, semantics, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        const DWORD *shader = tests[i].shader;
+
+        hr = D3DXGetShaderInputSemantics(shader, NULL, &count);
+        ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+        hr = D3DXGetShaderInputSemantics(shader, semantics, &count2);
+        ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+        ok(count == count2, "Semantics count %u differs from previous count %u.\n", count2, count);
+        for (j = 0; j < count; ++j)
+        {
+            ok(semantics[j].Usage == tests[i].expected_input[j].Usage
+                    && semantics[j].UsageIndex == tests[i].expected_input[j].UsageIndex,
+                    "Unexpected semantic %u, %u, test %u, idx %u.\n",
+                    semantics[j].Usage, semantics[j].UsageIndex, i, j);
+        }
+        ok(tests[i].expected_input[j].Usage == ~0 && tests[i].expected_input[j].UsageIndex == ~0,
+                "Unexpected semantics count %u.\n", count);
+        hr = D3DXGetShaderOutputSemantics(shader, NULL, &count);
+        ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+        hr = D3DXGetShaderOutputSemantics(shader, semantics, &count2);
+        ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+        ok(count == count2, "Semantics count %u differs from previous count %u.\n", count2, count);
+        for (j = 0; j < count; ++j)
+        {
+            ok(semantics[j].Usage == tests[i].expected_output[j].Usage
+                    && semantics[j].UsageIndex == tests[i].expected_output[j].UsageIndex,
+                    "Unexpected semantic %u, %u, test %u, idx %u.\n",
+                    semantics[j].Usage, semantics[j].UsageIndex, i, j);
+        }
+        ok(tests[i].expected_output[j].Usage == ~0 && tests[i].expected_output[j].UsageIndex == ~0,
+                "Unexpected semantics count %u.\n", count);
+    }
+}
+
 START_TEST(shader)
 {
     test_get_shader_size();
@@ -6502,4 +6664,5 @@ START_TEST(shader)
     test_get_shader_constant_variables();
     test_registerset();
     test_registerset_defaults();
+    test_shader_semantics();
 }
