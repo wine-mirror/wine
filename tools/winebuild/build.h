@@ -86,6 +86,7 @@ typedef struct
 typedef struct
 {
     int           nb_args;
+    int           args_str_offset;
     enum arg_type args[MAX_ARGUMENTS];
 } ORD_FUNCTION;
 

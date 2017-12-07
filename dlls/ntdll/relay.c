@@ -44,14 +44,13 @@ struct relay_descr  /* descriptor for a module */
 {
     void               *magic;               /* signature */
     void               *relay_call;          /* functions to call from relay thunks */
-    void               *relay_call_regs;     /* no longer used */
     void               *private;             /* reserved for the relay code private data */
     const char         *entry_point_base;    /* base address of entry point thunks */
     const unsigned int *entry_point_offsets; /* offsets of entry points thunks */
-    const unsigned int *arg_types;           /* table of argument types for all entry points */
+    const char         *args_string;         /* string describing the arguments */
 };
 
-#define RELAY_DESCR_MAGIC  ((void *)0xdeb90001)
+#define RELAY_DESCR_MAGIC  ((void *)0xdeb90002)
 #define IS_INTARG(x)       (((ULONG_PTR)(x) >> 16) == 0)
 
 /* private data built at dll load time */
@@ -295,49 +294,85 @@ static BOOL check_from_module( const WCHAR **includelist, const WCHAR **excludel
     return show;
 }
 
-/***********************************************************************
- *           RELAY_PrintArgs
- */
-static inline void RELAY_PrintArgs( const INT_PTR *args, int nb_args, unsigned int typemask )
+
+static BOOL is_ret_val( char type )
 {
-    while (nb_args--)
-    {
-        if ((typemask & 3) && !IS_INTARG(*args))
-        {
-	    if (typemask & 2)
-                TRACE( "%08lx %s", *args, debugstr_w((LPCWSTR)*args) );
-            else
-                TRACE( "%08lx %s", *args, debugstr_a((LPCSTR)*args) );
-	}
-        else TRACE( "%08lx", *args );
-        if (nb_args) TRACE( "," );
-        args++;
-        typemask >>= 2;
-    }
+    return type >= 'A' && type <= 'Z';
 }
+
+static const char *func_name( struct relay_private_data *data, unsigned int ordinal )
+{
+    struct relay_entry_point *entry_point = data->entry_points + ordinal;
+
+    if (entry_point->name)
+        return wine_dbg_sprintf( "%s.%s", data->dllname, entry_point->name );
+    else
+        return wine_dbg_sprintf( "%s.%u", data->dllname, data->base + ordinal );
+}
+
+static void trace_string_a( INT_PTR ptr )
+{
+    if (!IS_INTARG( ptr )) TRACE( "%08lx %s", ptr, debugstr_a( (char *)ptr ));
+    else TRACE( "%08lx", ptr );
+}
+
+static void trace_string_w( INT_PTR ptr )
+{
+    if (!IS_INTARG( ptr )) TRACE( "%08lx %s", ptr, debugstr_w( (WCHAR *)ptr ));
+    else TRACE( "%08lx", ptr );
+}
+
+#ifdef __i386__
 
 /***********************************************************************
  *           relay_trace_entry
- *
- * stack points to the return address, i.e. the first argument is stack[1].
  */
-DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr,
-                                                 unsigned int idx, const INT_PTR *stack )
+DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsigned int idx,
+                                                 const DWORD *stack, unsigned int *nb_args )
 {
     WORD ordinal = LOWORD(idx);
-    BYTE nb_args = LOBYTE(HIWORD(idx));
+    const char *arg_types = descr->args_string + HIWORD(idx);
     struct relay_private_data *data = descr->private;
     struct relay_entry_point *entry_point = data->entry_points + ordinal;
+    unsigned int i, pos;
 
-    if (TRACE_ON(relay))
+    TRACE( "\1Call %s(", func_name( data, ordinal ));
+
+    for (i = pos = 0; !is_ret_val( arg_types[i] ); i++)
     {
-        if (entry_point->name)
-            TRACE( "\1Call %s.%s(", data->dllname, entry_point->name );
-        else
-            TRACE( "\1Call %s.%u(", data->dllname, data->base + ordinal );
-        RELAY_PrintArgs( stack + 1, nb_args, descr->arg_types[ordinal] );
-        TRACE( ") ret=%08lx\n", stack[0] );
+        switch (arg_types[i])
+        {
+        case 'j': /* int64 */
+            TRACE( "%x%08x", stack[pos+1], stack[pos] );
+            pos += 2;
+            break;
+        case 'k': /* int128 */
+            TRACE( "{%08x,%08x,%08x,%08x}", stack[pos], stack[pos+1], stack[pos+2], stack[pos+3] );
+            pos += 4;
+            break;
+        case 's': /* str */
+            trace_string_a( stack[pos++] );
+            break;
+        case 'w': /* wstr */
+            trace_string_w( stack[pos++] );
+            break;
+        case 'f': /* float */
+            TRACE( "%g", *(const float *)&stack[pos++] );
+            break;
+        case 'd': /* double */
+            TRACE( "%g", *(const double *)&stack[pos] );
+            pos += 2;
+            break;
+        case 'i': /* long */
+        default:
+            TRACE( "%08x", stack[pos++] );
+            break;
+        }
+        if (!is_ret_val( arg_types[i+1] )) TRACE( "," );
     }
+    *nb_args = pos;
+    if (arg_types[0] == 't') *nb_args |= 0x80000000;  /* thiscall */
+    TRACE( ") ret=%08x\n", stack[-1] );
     return entry_point->orig_func;
 }
 
@@ -345,63 +380,21 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr,
  *           relay_trace_exit
  */
 DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
-                                              const INT_PTR *stack, LONGLONG retval )
+                                              void *retaddr, LONGLONG retval )
 {
-    WORD ordinal = LOWORD(idx);
-    BYTE flags   = HIBYTE(HIWORD(idx));
-    struct relay_private_data *data = descr->private;
-    struct relay_entry_point *entry_point = data->entry_points + ordinal;
+    const char *arg_types = descr->args_string + HIWORD(idx);
 
-    if (entry_point->name)
-        TRACE( "\1Ret  %s.%s()", data->dllname, entry_point->name );
-    else
-        TRACE( "\1Ret  %s.%u()", data->dllname, data->base + ordinal );
+    TRACE( "\1Ret  %s()", func_name( descr->private, LOWORD(idx) ));
 
-    if (flags & 1)  /* 64-bit return value */
-        TRACE( " retval=%08x%08x ret=%08lx\n",
-                 (UINT)(retval >> 32), (UINT)retval, stack[0] );
+    while (!is_ret_val( *arg_types )) arg_types++;
+    if (*arg_types == 'J')  /* int64 return value */
+        TRACE( " retval=%08x%08x ret=%08x\n",
+               (UINT)(retval >> 32), (UINT)retval, (UINT)retaddr );
     else
-        TRACE( " retval=%08lx ret=%08lx\n", (UINT_PTR)retval, stack[0] );
+        TRACE( " retval=%08x ret=%08x\n", (UINT)retval, (UINT)retaddr );
 }
 
-#ifdef __i386__
-
-extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args, int flags );
-__ASM_GLOBAL_FUNC( call_entry_point,
-                   "pushl %ebp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
-                   "movl %esp,%ebp\n\t"
-                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                   "pushl %esi\n\t"
-                  __ASM_CFI(".cfi_rel_offset %esi,-4\n\t")
-                   "pushl %edi\n\t"
-                  __ASM_CFI(".cfi_rel_offset %edi,-8\n\t")
-                   "movl 12(%ebp),%edx\n\t"
-                   "shll $2,%edx\n\t"
-                   "jz 1f\n\t"
-                   "subl %edx,%esp\n\t"
-                   "andl $~15,%esp\n\t"
-                   "movl 12(%ebp),%ecx\n\t"
-                   "movl 16(%ebp),%esi\n\t"
-                   "movl %esp,%edi\n\t"
-                   "cld\n\t"
-                   "rep; movsl\n"
-                   "testl $2,20(%ebp)\n\t"  /* (flags & 2) -> thiscall */
-                   "jz 1f\n\t"
-                   "popl %ecx\n\t"
-                   "1:\tcall *8(%ebp)\n\t"
-                   "leal -8(%ebp),%esp\n\t"
-                   "popl %edi\n\t"
-                   __ASM_CFI(".cfi_same_value %edi\n\t")
-                   "popl %esi\n\t"
-                   __ASM_CFI(".cfi_same_value %esi\n\t")
-                   "popl %ebp\n\t"
-                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
-                   __ASM_CFI(".cfi_same_value %ebp\n\t")
-                   "ret" )
-
-extern LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack );
+extern LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx );
 __ASM_GLOBAL_FUNC( relay_call,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -415,22 +408,24 @@ __ASM_GLOBAL_FUNC( relay_call,
                    "pushl %ecx\n\t"
                   __ASM_CFI(".cfi_rel_offset %ecx,-12\n\t")
                    /* trace the parameters */
-                   "pushl 16(%ebp)\n\t"
+                   "pushl %eax\n\t"
+                   "pushl %esp\n\t"  /* number of args return ptr */
+                   "leal 20(%ebp),%esi\n\t"  /* stack */
+                   "pushl %esi\n\t"
                    "pushl 12(%ebp)\n\t"
                    "pushl 8(%ebp)\n\t"
                    "call " __ASM_NAME("relay_trace_entry") "\n\t"
                    /* copy the arguments*/
-                   "movzbl 14(%ebp),%ecx\n\t"  /* number of args */
+                   "movl -16(%ebp),%ecx\n\t"  /* number of args */
                    "jecxz 1f\n\t"
+                   "andl $0x7fffffff,%ecx\n\t"
                    "leal 0(,%ecx,4),%edx\n\t"
                    "subl %edx,%esp\n\t"
                    "andl $~15,%esp\n\t"
-                   "movl 16(%ebp),%esi\n\t"
-                   "addl $4,%esi\n\t"
                    "movl %esp,%edi\n\t"
                    "cld\n\t"
                    "rep; movsl\n\t"
-                   "testb $2,15(%ebp)\n\t"  /* (flags & 2) -> thiscall */
+                   "testl $0x80000000,-16(%ebp)\n\t"  /* thiscall */
                    "jz 1f\n\t"
                    "popl %ecx\n"
                    /* call the entry point */
@@ -458,11 +453,73 @@ __ASM_GLOBAL_FUNC( relay_call,
                    "popl %ebp\n\t"
                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
-                   "ret $12" )
+                   "ret $8" )
 
 #elif defined(__arm__)
 
-extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args, int flags );
+/***********************************************************************
+ *           relay_trace_entry
+ */
+DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsigned int idx,
+                                                 const DWORD *stack, unsigned int *nb_args )
+{
+    WORD ordinal = LOWORD(idx);
+    const char *arg_types = descr->args_string + HIWORD(idx);
+    struct relay_private_data *data = descr->private;
+    struct relay_entry_point *entry_point = data->entry_points + ordinal;
+    unsigned int i, pos;
+
+    TRACE( "\1Call %s(", func_name( data, ordinal ));
+
+    for (i = pos = 0; !is_ret_val( arg_types[i] ); i++)
+    {
+        switch (arg_types[i])
+        {
+        case 'j': /* int64 */
+            TRACE( "%x%08x", stack[pos+1], stack[pos] );
+            pos += 2;
+            break;
+        case 'k': /* int128 */
+            TRACE( "{%08x,%08x,%08x,%08x}", stack[pos], stack[pos+1], stack[pos+2], stack[pos+3] );
+            pos += 4;
+            break;
+        case 's': /* str */
+            trace_string_a( stack[pos++] );
+            break;
+        case 'w': /* wstr */
+            trace_string_w( stack[pos++] );
+            break;
+        case 'i': /* long */
+        default:
+            TRACE( "%08x", stack[pos++] );
+            break;
+        }
+        if (!is_ret_val( arg_types[i+1] )) TRACE( "," );
+    }
+    *nb_args = pos;
+    TRACE( ") ret=%08x\n", stack[-1] );
+    return entry_point->orig_func;
+}
+
+/***********************************************************************
+ *           relay_trace_exit
+ */
+DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
+                                              DWORD retaddr, LONGLONG retval )
+{
+    const char *arg_types = descr->args_string + HIWORD(idx);
+
+    TRACE( "\1Ret  %s()", func_name( descr->private, LOWORD(idx) ));
+
+    while (!is_ret_val( *arg_types )) arg_types++;
+    if (*arg_types == 'J')  /* int64 return value */
+        TRACE( " retval=%08x%08x ret=%08x\n",
+               (UINT)(retval >> 32), (UINT)retval, retaddr );
+    else
+        TRACE( " retval=%08x ret=%08x\n", (UINT)retval, retaddr );
+}
+
+extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const DWORD *args );
 __ASM_GLOBAL_FUNC( call_entry_point,
                    ".arm\n\t"
                    "push {r4, r5, LR}\n\t"
@@ -487,19 +544,64 @@ __ASM_GLOBAL_FUNC( call_entry_point,
                    "mov SP, r5\n\t"
                    "pop {r4, r5, PC}" )
 
-static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
+static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const DWORD *stack )
 {
-    BYTE nb_args = LOBYTE(HIWORD(idx));
-    BYTE flags   = HIBYTE(HIWORD(idx));
-    void *func = relay_trace_entry( descr, idx, stack );
-    LONGLONG ret = call_entry_point( func, nb_args, stack + 1, flags );
-    relay_trace_exit( descr, idx, stack, ret );
+    unsigned int nb_args;
+    void *func = relay_trace_entry( descr, idx, stack, &nb_args );
+    LONGLONG ret = call_entry_point( func, nb_args, stack );
+    relay_trace_exit( descr, idx, stack[-1], ret );
     return ret;
 }
 
 #elif defined(__aarch64__)
 
-extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args, int flags );
+/***********************************************************************
+ *           relay_trace_entry
+ */
+DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsigned int idx,
+                                                 const INT_PTR *stack, unsigned int *nb_args )
+{
+    WORD ordinal = LOWORD(idx);
+    const char *arg_types = descr->args_string + HIWORD(idx);
+    struct relay_private_data *data = descr->private;
+    struct relay_entry_point *entry_point = data->entry_points + ordinal;
+    unsigned int i;
+
+    TRACE( "\1Call %s(", func_name( data, ordinal ));
+
+    for (i = 0; !is_ret_val( arg_types[i] ); i++)
+    {
+        switch (arg_types[i])
+        {
+        case 's': /* str */
+            trace_string_a( stack[i] );
+            break;
+        case 'w': /* wstr */
+            trace_string_w( stack[i] );
+            break;
+        case 'i': /* long */
+        default:
+            TRACE( "%08lx", stack[i] );
+            break;
+        }
+        if (!is_ret_val( arg_types[i + 1] )) TRACE( "," );
+    }
+    *nb_args = i;
+    TRACE( ") ret=%08lx\n", stack[-1] );
+    return entry_point->orig_func;
+}
+
+/***********************************************************************
+ *           relay_trace_exit
+ */
+DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
+                                              INT_PTR retaddr, INT_PTR retval )
+{
+    TRACE( "\1Ret  %s() retval=%08lx ret=%08lx\n",
+           func_name( descr->private, LOWORD(idx) ), retval, retaddr );
+}
+
+extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args );
 __ASM_GLOBAL_FUNC( call_entry_point,
                    "stp x29, x30, [SP,#-16]!\n\t"
                    "stp x19, x20, [SP,#-16]!\n\t"
@@ -544,43 +646,97 @@ __ASM_GLOBAL_FUNC( call_entry_point,
 
 static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
 {
-    BYTE nb_args = LOBYTE(HIWORD(idx));
-    BYTE flags   = HIBYTE(HIWORD(idx));
-    void *func = relay_trace_entry( descr, idx, stack + 3 );
-    LONGLONG ret = call_entry_point( func, nb_args, stack + 4, flags );
-    relay_trace_exit( descr, idx, stack + 3, ret );
+    unsigned int nb_args;
+    void *func = relay_trace_entry( descr, idx, stack, &nb_args );
+    LONGLONG ret = call_entry_point( func, nb_args, stack );
+    relay_trace_exit( descr, idx, stack[-1], ret );
     return ret;
 }
 
 #elif defined(__x86_64__)
 
-extern void * WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack );
+/***********************************************************************
+ *           relay_trace_entry
+ */
+DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsigned int idx,
+                                                 const INT_PTR *stack, unsigned int *nb_args )
+{
+    WORD ordinal = LOWORD(idx);
+    const char *arg_types = descr->args_string + HIWORD(idx);
+    struct relay_private_data *data = descr->private;
+    struct relay_entry_point *entry_point = data->entry_points + ordinal;
+    unsigned int i;
+
+    TRACE( "\1Call %s(", func_name( data, ordinal ));
+
+    for (i = 0; !is_ret_val( arg_types[i] ); i++)
+    {
+        switch (arg_types[i])
+        {
+        case 's': /* str */
+            trace_string_a( stack[i] );
+            break;
+        case 'w': /* wstr */
+            trace_string_w( stack[i] );
+            break;
+        case 'f': /* float */
+            TRACE( "%g", *(const float *)&stack[i] );
+            break;
+        case 'd': /* double */
+            TRACE( "%g", *(const double *)&stack[i] );
+            break;
+        case 'i': /* long */
+        default:
+            TRACE( "%08lx", stack[i] );
+            break;
+        }
+        if (!is_ret_val( arg_types[i] )) TRACE( "," );
+    }
+    *nb_args = i;
+    TRACE( ") ret=%08lx\n", stack[-1] );
+    return entry_point->orig_func;
+}
+
+/***********************************************************************
+ *           relay_trace_exit
+ */
+DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
+                                              INT_PTR retaddr, INT_PTR retval )
+{
+    TRACE( "\1Ret  %s() retval=%08lx ret=%08lx\n",
+           func_name( descr->private, LOWORD(idx) ), retval, retaddr );
+}
+
+extern INT_PTR WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack );
 __ASM_GLOBAL_FUNC( relay_call,
                    "pushq %rbp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
                    "movq %rsp,%rbp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
-                   "subq $0x30,%rsp\n\t"
-                   "movq %rsi,0x20(%rsp)\n\t"
+                   "leaq -0x48(%rbp),%rsp\n\t"
+                   "andq $~15,%rsp\n\t"
+                   "movq %rcx,-32(%rbp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rcx,-32\n\t")
+                   "movq %rdx,-24(%rbp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rdx,-24\n\t")
+                   "movq %rsi,-16(%rbp)\n\t"
                    __ASM_CFI(".cfi_rel_offset %rsi,-16\n\t")
-                   "movq %rdi,0x28(%rsp)\n\t"
+                   "movq %rdi,-8(%rbp)\n\t"
                    __ASM_CFI(".cfi_rel_offset %rdi,-8\n\t")
                    /* trace the parameters */
-                   "movq %rcx,0x10(%rbp)\n\t"
-                   "movq %rdx,0x18(%rbp)\n\t"
-                   "movq %r8,0x20(%rbp)\n\t"
+                   "leaq 24(%rbp),%r8\n\t"   /* stack */
+                   "leaq -40(%rbp),%r9\n\t"
                    "call " __ASM_NAME("relay_trace_entry") "\n\t"
                    /* copy the arguments */
-                   "movzbq 0x1a(%rbp),%rdx\n\t"  /* number of args */
+                   "movl -40(%rbp),%edx\n\t"  /* number of args */
                    "movq $4,%rcx\n\t"
                    "cmp %rcx,%rdx\n\t"
                    "cmovgq %rdx,%rcx\n\t"
                    "leaq -16(,%rcx,8),%rdx\n\t"
                    "andq $~15,%rdx\n\t"
                    "subq %rdx,%rsp\n\t"
-                   "movq 0x20(%rbp),%r8\n\t"  /* original stack */
-                   "leaq 8(%r8),%rsi\n\t"
+                   "leaq 24(%rbp),%rsi\n\t"  /* original stack */
                    "movq %rsp,%rdi\n\t"
                    "rep; movsq\n\t"
                    /* call the entry point */
@@ -594,20 +750,19 @@ __ASM_GLOBAL_FUNC( relay_call,
                    "movq 24(%rsp),%xmm3\n\t"
                    "callq *%rax\n\t"
                    /* trace the return value */
-                   "leaq -0x30(%rbp),%rsp\n\t"
-                   "movq 0x10(%rbp),%rcx\n\t"
-                   "movq 0x18(%rbp),%rdx\n\t"
-                   "movq 0x20(%rbp),%r8\n\t"
+                   "movq -32(%rbp),%rcx\n\t"
+                   "movq -24(%rbp),%rdx\n\t"
+                   "movq 16(%rbp),%r8\n\t"   /* retaddr */
                    "movq %rax,%rsi\n\t"
-                   "movaps %xmm0,0x10(%rbp)\n\t"
+                   "movaps %xmm0,32(%rsp)\n\t"
                    "movq %rax,%r9\n\t"
                    "call " __ASM_NAME("relay_trace_exit") "\n\t"
                    /* restore return value and return */
                    "movq %rsi,%rax\n\t"
-                   "movaps 0x10(%rbp),%xmm0\n\t"
-                   "movq 0x20(%rsp),%rsi\n\t"
+                   "movaps 32(%rsp),%xmm0\n\t"
+                   "movq -16(%rbp),%rsi\n\t"
                    __ASM_CFI(".cfi_same_value %rsi\n\t")
-                   "movq 0x28(%rsp),%rdi\n\t"
+                   "movq -8(%rbp),%rdi\n\t"
                    __ASM_CFI(".cfi_same_value %rdi\n\t")
                    "movq %rbp,%rsp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
