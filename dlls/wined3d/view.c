@@ -833,8 +833,6 @@ void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *
 
     TRACE("view %p.\n", view);
 
-    wined3d_from_cs(view->resource->device->cs);
-
     context = context_acquire(view->resource->device, NULL, 0);
     gl_info = context->gl_info;
     layer_count = view->desc.u.texture.layer_count;
