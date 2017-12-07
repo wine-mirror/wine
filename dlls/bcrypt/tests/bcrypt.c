@@ -205,25 +205,34 @@ static void _test_alg_name(unsigned line, void *handle, const char *exname)
     ok_(__FILE__,line)(!strcmp_wa(name, exname), "alg name = %s, expected %s\n", wine_dbgstr_w(name), exname);
 }
 
-static void test_sha1(void)
+struct hash_test
 {
-    static const char expected[] = "961fa64958818f767707072755d7018dcd278e94";
-    static const char expected_hmac[] = "2472cf65d0e090618d769d3e46f0d9446cf212da";
-    UCHAR buf[512], buf_hmac[1024], buf_hmac2[1024], sha1[20], sha1_hmac[20];
-    BCRYPT_HASH_HANDLE hash, hash2;
+    const char *alg;
+    unsigned hash_size;
+    const char *hash;
+    const char *hmac_hash;
+};
+
+static void test_hash(const struct hash_test *test)
+{
     BCRYPT_ALG_HANDLE alg;
-    char str[41];
+    BCRYPT_HASH_HANDLE hash;
+    UCHAR buf[512], buf_hmac[1024], hash_buf[128], hmac_hash[128];
+    WCHAR alg_name[64];
+    char str[512];
     NTSTATUS ret;
     ULONG len;
 
+    MultiByteToWideChar(CP_ACP, 0, test->alg, -1, alg_name, sizeof(alg_name)/sizeof(WCHAR));
+
     alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA1_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+    ret = pBCryptOpenAlgorithmProvider(&alg, alg_name, MS_PRIMITIVE_PROVIDER, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(alg != NULL, "alg not set\n");
 
     test_object_length(alg);
-    test_hash_length(alg, 20);
-    test_alg_name(alg, "SHA1");
+    test_hash_length(alg, test->hash_size);
+    test_alg_name(alg, test->alg);
 
     hash = NULL;
     len = sizeof(buf);
@@ -237,14 +246,14 @@ static void test_sha1(void)
     ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
-    test_hash_length(hash, 20);
-    test_alg_name(hash, "SHA1");
+    test_hash_length(hash, test->hash_size);
+    test_alg_name(hash, test->alg);
 
-    memset(sha1, 0, sizeof(sha1));
-    ret = pBCryptFinishHash(hash, sha1, sizeof(sha1), 0);
+    memset(hash_buf, 0, sizeof(hash_buf));
+    ret = pBCryptFinishHash(hash, hash_buf, test->hash_size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( sha1, sizeof(sha1), str );
-    ok(!strcmp(str, expected), "got %s\n", str);
+    format_hash( hash_buf, test->hash_size, str );
+    ok(!strcmp(str, test->hash), "got %s\n", str);
 
     ret = pBCryptDestroyHash(hash);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
@@ -253,7 +262,7 @@ static void test_sha1(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA1_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
+    ret = pBCryptOpenAlgorithmProvider(&alg, alg_name, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(alg != NULL, "alg not set\n");
 
@@ -266,37 +275,14 @@ static void test_sha1(void)
     ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
-    test_hash_length(hash, 20);
-    test_alg_name(hash, "SHA1");
+    test_hash_length(hash, test->hash_size);
+    test_alg_name(hash, test->alg);
 
-    len = sizeof(buf_hmac2);
-    ret = pBCryptDuplicateHash(NULL, &hash2, buf_hmac2, len, 0);
-    ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
-
-    len = sizeof(buf_hmac2);
-    ret = pBCryptDuplicateHash(hash, NULL, buf_hmac2, len, 0);
-    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
-
-    hash2 = NULL;
-    len = sizeof(buf_hmac2);
-    ret = pBCryptDuplicateHash(hash, &hash2, buf_hmac2, len, 0);
+    memset(hmac_hash, 0, sizeof(hmac_hash));
+    ret = pBCryptFinishHash(hash, hmac_hash, test->hash_size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(hash2 != NULL, "hash not set\n");
-
-    memset(sha1_hmac, 0, sizeof(sha1_hmac));
-    ret = pBCryptFinishHash(hash2, sha1_hmac, sizeof(sha1_hmac), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( sha1_hmac, sizeof(sha1_hmac), str );
-    ok(!strcmp(str, expected_hmac), "got %s\n", str);
-
-    ret = pBCryptDestroyHash(hash2);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    memset(sha1_hmac, 0, sizeof(sha1_hmac));
-    ret = pBCryptFinishHash(hash, sha1_hmac, sizeof(sha1_hmac), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( sha1_hmac, sizeof(sha1_hmac), str );
-    ok(!strcmp(str, expected_hmac), "got %s\n", str);
+    format_hash( hmac_hash, test->hash_size, str );
+    ok(!strcmp(str, test->hmac_hash), "got %s\n", str);
 
     ret = pBCryptDestroyHash(hash);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
@@ -305,323 +291,48 @@ static void test_sha1(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
 
-static void test_sha256(void)
+static void test_hashes(void)
 {
-    static const char expected[] =
-        "ceb73749c899693706ede1e30c9929b3fd5dd926163831c2fb8bd41e6efb1126";
-    static const char expected_hmac[] =
-        "34c1aa473a4468a91d06e7cdbc75bc4f93b830ccfc2a47ffd74e8e6ed29e4c72";
-    BCRYPT_ALG_HANDLE alg;
-    BCRYPT_HASH_HANDLE hash;
-    UCHAR buf[512], buf_hmac[1024], sha256[32], sha256_hmac[32];
-    char str[65];
-    NTSTATUS ret;
-    ULONG len;
-
-    alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set\n");
-
-    test_object_length(alg);
-    test_hash_length(alg, 32);
-    test_alg_name(alg, "SHA256");
-
-    hash = NULL;
-    len = sizeof(buf);
-    ret = pBCryptCreateHash(alg, &hash, buf, len, NULL, 0, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(hash != NULL, "hash not set\n");
-
-    ret = pBCryptHashData(hash, NULL, 0, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    test_hash_length(hash, 32);
-    test_alg_name(hash, "SHA256");
-
-    memset(sha256, 0, sizeof(sha256));
-    ret = pBCryptFinishHash(hash, sha256, sizeof(sha256), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( sha256, sizeof(sha256), str );
-    ok(!strcmp(str, expected), "got %s\n", str);
-
-    ret = pBCryptDestroyHash(hash);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptCloseAlgorithmProvider(alg, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set\n");
-
-    hash = NULL;
-    len = sizeof(buf_hmac);
-    ret = pBCryptCreateHash(alg, &hash, buf_hmac, len, (UCHAR *)"key", sizeof("key"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(hash != NULL, "hash not set\n");
-
-    ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    test_hash_length(hash, 32);
-    test_alg_name(hash, "SHA256");
-
-    memset(sha256_hmac, 0, sizeof(sha256_hmac));
-    ret = pBCryptFinishHash(hash, sha256_hmac, sizeof(sha256_hmac), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( sha256_hmac, sizeof(sha256_hmac), str );
-    ok(!strcmp(str, expected_hmac), "got %s\n", str);
-
-    ret = pBCryptDestroyHash(hash);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptCloseAlgorithmProvider(alg, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-}
-
-static void test_sha384(void)
-{
-    static const char expected[] =
-        "62b21e90c9022b101671ba1f808f8631a8149f0f12904055839a35c1ca78ae5363eed1e743a692d70e0504b0cfd12ef9";
-    static const char expected_hmac[] =
-        "4b3e6d6ff2da121790ab7e7b9247583e3a7eed2db5bd4dabc680303b1608f37dfdc836d96a704c03283bc05b4f6c5eb8";
-    BCRYPT_ALG_HANDLE alg;
-    BCRYPT_HASH_HANDLE hash;
-    UCHAR buf[512], buf_hmac[1024], sha384[48], sha384_hmac[48];
-    char str[97];
-    NTSTATUS ret;
-    ULONG len;
-
-    alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA384_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set\n");
-
-    test_object_length(alg);
-    test_hash_length(alg, 48);
-    test_alg_name(alg, "SHA384");
-
-    hash = NULL;
-    len = sizeof(buf);
-    ret = pBCryptCreateHash(alg, &hash, buf, len, NULL, 0, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(hash != NULL, "hash not set\n");
-
-    ret = pBCryptHashData(hash, NULL, 0, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    test_hash_length(hash, 48);
-    test_alg_name(hash, "SHA384");
-
-    memset(sha384, 0, sizeof(sha384));
-    ret = pBCryptFinishHash(hash, sha384, sizeof(sha384), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( sha384, sizeof(sha384), str );
-    ok(!strcmp(str, expected), "got %s\n", str);
-
-    ret = pBCryptDestroyHash(hash);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptCloseAlgorithmProvider(alg, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA384_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set\n");
-
-    hash = NULL;
-    len = sizeof(buf_hmac);
-    ret = pBCryptCreateHash(alg, &hash, buf_hmac, len, (UCHAR *)"key", sizeof("key"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(hash != NULL, "hash not set\n");
-
-    ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    test_hash_length(hash, 48);
-    test_alg_name(hash, "SHA384");
-
-    memset(sha384_hmac, 0, sizeof(sha384_hmac));
-    ret = pBCryptFinishHash(hash, sha384_hmac, sizeof(sha384_hmac), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( sha384_hmac, sizeof(sha384_hmac), str );
-    ok(!strcmp(str, expected_hmac), "got %s\n", str);
-
-    ret = pBCryptDestroyHash(hash);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptCloseAlgorithmProvider(alg, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-}
-
-static void test_sha512(void)
-{
-    static const char expected[] =
-        "d55ced17163bf5386f2cd9ff21d6fd7fe576a915065c24744d09cfae4ec84ee1e"
-        "f6ef11bfbc5acce3639bab725b50a1fe2c204f8c820d6d7db0df0ecbc49c5ca";
-    static const char expected_hmac[] =
-        "415fb6b10018ca03b38a1b1399c42ac0be5e8aceddb9a73103f5e543bf2d888f2"
-        "eecf91373941f9315dd730a77937fa92444450fbece86f409d9cb5ec48c6513";
-    BCRYPT_ALG_HANDLE alg;
-    BCRYPT_HASH_HANDLE hash;
-    UCHAR buf[512], buf_hmac[1024], sha512[64], sha512_hmac[64];
-    char str[129];
-    NTSTATUS ret;
-    ULONG len;
-
-    alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set\n");
-
-    test_object_length(alg);
-    test_hash_length(alg, 64);
-    test_alg_name(alg, "SHA512");
-
-    hash = NULL;
-    len = sizeof(buf);
-    ret = pBCryptCreateHash(alg, &hash, buf, len, NULL, 0, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(hash != NULL, "hash not set\n");
-
-    ret = pBCryptHashData(hash, NULL, 0, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    test_hash_length(hash, 64);
-    test_alg_name(hash, "SHA512");
-
-    memset(sha512, 0, sizeof(sha512));
-    ret = pBCryptFinishHash(hash, sha512, sizeof(sha512), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( sha512, sizeof(sha512), str );
-    ok(!strcmp(str, expected), "got %s\n", str);
-
-    ret = pBCryptDestroyHash(hash);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptCloseAlgorithmProvider(alg, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set\n");
-
-    hash = NULL;
-    len = sizeof(buf_hmac);
-    ret = pBCryptCreateHash(alg, &hash, buf_hmac, len, (UCHAR *)"key", sizeof("key"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(hash != NULL, "hash not set\n");
-
-    ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    test_hash_length(hash, 64);
-    test_alg_name(hash, "SHA512");
-
-    memset(sha512_hmac, 0, sizeof(sha512_hmac));
-    ret = pBCryptFinishHash(hash, sha512_hmac, sizeof(sha512_hmac), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( sha512_hmac, sizeof(sha512_hmac), str );
-    ok(!strcmp(str, expected_hmac), "got %s\n", str);
-
-    ret = pBCryptDestroyHash(hash);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptCloseAlgorithmProvider(alg, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-}
-
-static void test_md5(void)
-{
-    static const char expected[] =
-        "e2a3e68d23ce348b8f68b3079de3d4c9";
-    static const char expected_hmac[] =
-        "7bda029b93fa8d817fcc9e13d6bdf092";
-    BCRYPT_ALG_HANDLE alg;
-    BCRYPT_HASH_HANDLE hash;
-    UCHAR buf[512], buf_hmac[1024], md5[16], md5_hmac[16];
-    char str[65];
-    NTSTATUS ret;
-    ULONG len;
-
-    alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_MD5_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set\n");
-
-    test_object_length(alg);
-    test_hash_length(alg, 16);
-    test_alg_name(alg, "MD5");
-
-    hash = NULL;
-    len = sizeof(buf);
-    ret = pBCryptCreateHash(alg, &hash, buf, len, NULL, 0, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(hash != NULL, "hash not set\n");
-
-    ret = pBCryptHashData(hash, NULL, 0, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    test_hash_length(hash, 16);
-    test_alg_name(hash, "MD5");
-
-    memset(md5, 0, sizeof(md5));
-    ret = pBCryptFinishHash(hash, md5, sizeof(md5), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( md5, sizeof(md5), str );
-    ok(!strcmp(str, expected), "got %s\n", str);
-
-    ret = pBCryptDestroyHash(hash);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptCloseAlgorithmProvider(alg, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    alg = NULL;
-    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_MD5_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set\n");
-
-    hash = NULL;
-    len = sizeof(buf_hmac);
-    ret = pBCryptCreateHash(alg, &hash, buf_hmac, len, (UCHAR *)"key", sizeof("key"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(hash != NULL, "hash not set\n");
-
-    ret = pBCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    test_hash_length(hash, 16);
-    test_alg_name(hash, "MD5");
-
-    memset(md5_hmac, 0, sizeof(md5_hmac));
-    ret = pBCryptFinishHash(hash, md5_hmac, sizeof(md5_hmac), 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    format_hash( md5_hmac, sizeof(md5_hmac), str );
-    ok(!strcmp(str, expected_hmac), "got %s\n", str);
-
-    ret = pBCryptDestroyHash(hash);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-
-    ret = pBCryptCloseAlgorithmProvider(alg, 0);
-    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    static const struct hash_test tests[] = {
+        {
+            "SHA1",
+            20,
+            "961fa64958818f767707072755d7018dcd278e94",
+            "2472cf65d0e090618d769d3e46f0d9446cf212da"
+        },
+        {
+            "SHA256",
+            32,
+            "ceb73749c899693706ede1e30c9929b3fd5dd926163831c2fb8bd41e6efb1126",
+            "34c1aa473a4468a91d06e7cdbc75bc4f93b830ccfc2a47ffd74e8e6ed29e4c72"
+        },
+        {
+            "SHA384",
+            48,
+            "62b21e90c9022b101671ba1f808f8631a8149f0f12904055839a35c1ca78ae53"
+            "63eed1e743a692d70e0504b0cfd12ef9",
+            "4b3e6d6ff2da121790ab7e7b9247583e3a7eed2db5bd4dabc680303b1608f37d"
+            "fdc836d96a704c03283bc05b4f6c5eb8"
+        },
+        {
+            "SHA512",
+            64,
+            "d55ced17163bf5386f2cd9ff21d6fd7fe576a915065c24744d09cfae4ec84ee1"
+            "ef6ef11bfbc5acce3639bab725b50a1fe2c204f8c820d6d7db0df0ecbc49c5ca",
+            "415fb6b10018ca03b38a1b1399c42ac0be5e8aceddb9a73103f5e543bf2d888f"
+            "2eecf91373941f9315dd730a77937fa92444450fbece86f409d9cb5ec48c6513"
+        },
+        {
+            "MD5",
+            16,
+            "e2a3e68d23ce348b8f68b3079de3d4c9",
+            "7bda029b93fa8d817fcc9e13d6bdf092"
+        }
+    };
+    unsigned i;
+
+    for(i = 0; i < sizeof(tests)/sizeof(*tests); i++)
+        test_hash(tests+i);
 }
 
 static void test_BcryptHash(void)
@@ -1122,11 +833,7 @@ START_TEST(bcrypt)
 
     test_BCryptGenRandom();
     test_BCryptGetFipsAlgorithmMode();
-    test_sha1();
-    test_sha256();
-    test_sha384();
-    test_sha512();
-    test_md5();
+    test_hashes();
     test_rng();
     test_aes();
     test_BCryptGenerateSymmetricKey();
