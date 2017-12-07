@@ -28,7 +28,7 @@ Tai aja se käännöshakemistosta:
 
 Ohjelmat ajetaan komennolla "wine ohjelma". Lisätietoja sekä apua ongelmien
 ratkaisemiseen on jäljempänä tässä tiedostossa, Winen man-sivuilla sekä
-ennen kaikkea Internetissä osoitteessa http://www.winehq.org/.
+ennen kaikkea Internetissä osoitteessa https://www.winehq.org/.
 
 
 3. JÄRJESTELMÄVAATIMUKSET
@@ -47,7 +47,7 @@ muillekin käyttöjärjestelmille, joissa on tarvittava tuki säikeille.
 
 Tietoa FreeBSD:lle:
   Pääsääntöisesti Wine ei toimi vanhemmilla versioilla kuin FreeBSD 8.0.
-  Osoitteessa http://wiki.freebsd.org/Wine kerrotaan tästä lisää.
+  Osoitteessa https://wiki.freebsd.org/Wine kerrotaan tästä lisää.
 
 Tietoa Solarikselle:
   Wine täytyy luultavasti kääntää GNU-työkaluilla (gcc, gas jne.).
@@ -79,7 +79,7 @@ Perusvaatimukset:
 
 Valinnaisia tukikirjastoja:
   configure-skripti näyttää varoituksia, kun valinnaisia kirjastoja puuttuu.
-  Osoitteessa http://wiki.winehq.org/Recommended_Packages on tietoa, mitkä
+  Osoitteessa https://wiki.winehq.org/Recommended_Packages on tietoa, mitkä
   paketit ovat hyödyksi. 64-bittisissä järjestelmissä täytyy varmistaa, että
   kirjastoista on asennettu 32-bittiset versiot.
 
@@ -111,7 +111,7 @@ Ennen asennusta pitää muistaa poistaa aiemmat Winen versiot. Poistamista
 voi yrittää komennolla "dpkg -r wine", "rpm -e wine" tai "make uninstall".
 
 Kun Wine on asennettu, voidaan ajaa asetusohjelma "winecfg". Sivustolla
-http://www.winehq.org/ kohdassa Support on englanninkielisiä lisäohjeita.
+https://www.winehq.org/ kohdassa Support on englanninkielisiä lisäohjeita.
 
 
 6. OHJELMIEN AJAMINEN
@@ -136,28 +136,28 @@ mukaan, jos raportoi virheestä.
 
 7. LISÄTIETOJA
 
-WWW:	Winestä on paljon tietoa WineHQ:ssa, http://www.winehq.org/.
+WWW:	Winestä on paljon tietoa WineHQ:ssa, https://www.winehq.org/.
 	Oppaita, ohjelmatietokanta sekä Bugzilla vikojen listaamiseen.
 	Täältä kannattaa yleensä aloittaa.
 
 Kysymyksiä:
-	Sivulle http://www.winehq.org/FAQ on koottu kysymyksiä ja vastauksia.
+	Sivulle https://www.winehq.org/FAQ on koottu kysymyksiä ja vastauksia.
 
-Wiki:	Wine Wiki on osoitteessa http://wiki.winehq.org/.
+Wiki:	Wine Wiki on osoitteessa https://wiki.winehq.org/.
 
 Postituslistat:
 	Winen käyttäjille ja kehittäjille on joitakin postituslistoja,
-	sivulla http://www.winehq.org/forums kerrotaan niistä lisää.
+	sivulla https://www.winehq.org/forums kerrotaan niistä lisää.
 
 Virheet:
-	Ilmoita virheistä Winen Bugzillaan, http://bugs.winehq.org/.
+	Ilmoita virheistä Winen Bugzillaan, https://bugs.winehq.org/.
 	Katso kuitenkin ensin Bugzilla-tietokannasta, onko samasta asiasta
 	ilmoitettu jo aiemmin.
 
 IRC:	Online-apua voi saada kanavalta #WineHQ palvelimella irc.freenode.net.
 
 Git:	Winen tämänhetkinen kehitysversio on jaossa Git-järjestelmän kautta.
-	Sivulla http://www.winehq.org/git kerrotaan tästä lisää.
+	Sivulla https://www.winehq.org/git kerrotaan tästä lisää.
 
 
 Jos lisäät jotain tai korjaat jonkin virheen, lähetä toki muutoksesi

@@ -21,7 +21,7 @@ Wine 是自由软件，在 GNU LGPL 协议下发布；请查看 LICENSE 文件�
 
 运行程序时，请使用“wine [程序名]”的语法。如需了解更多信息或解决遇到的
 问题，您可以继续阅读本文件的剩余部分，或阅读 Wine 的手册页。
-需特别指出的是，您可以在网站：http://www.winehq.org 上找到十分丰富
+需特别指出的是，您可以在网站：https://www.winehq.org 上找到十分丰富
 的信息。
 
 
@@ -40,7 +40,7 @@ Wine 是自由软件，在 GNU LGPL 协议下发布；请查看 LICENSE 文件�
 
 FreeBSD 信息：
   Wine 通常不会在早于 FreeBSD 8.0 的系统上正常工作。
-  请查看 http://wiki.freebsd.org/Wine 以了解更多信息。
+  请查看 https://wiki.freebsd.org/Wine 以了解更多信息。
 
 Solaris 信息：
   您大部分情况下可能需要使用 GNU 工具链（gcc、gas 等）来构建 Wine。
@@ -73,13 +73,13 @@ Mac OS X 信息:
 
 可选的支持库：
   当可选的函数库无法在您的系统中找到时，configure 会显示对应的提示信息。
-  请查看 http://wiki.winehq.org/Recommended_Packages 以了解您应当安装的
+  请查看 https://wiki.winehq.org/Recommended_Packages 以了解您应当安装的
   软件包的信息。
 
   在 64 位平台上，如果以 32 位的方式编译 Wine（这是默认情况），您必须确保
-  对应函数库的 32 位版本已被安装；请查看 http://wiki.winehq.org/WineOn64bit
+  对应函数库的 32 位版本已被安装；请查看 https://wiki.winehq.org/WineOn64bit
   以了解详情。如果您想安装一个真正的 64 位 Wine（或者一个混合 32 位 Wine 和
-  64 位 Wine 的版本），请参阅 http://wiki.winehq.org/Wine64 以了解具体内容。
+  64 位 Wine 的版本），请参阅 https://wiki.winehq.org/Wine64 以了解具体内容。
 
 4. 编译
 
@@ -103,7 +103,7 @@ make
 不要忘记事先卸载先前任何安装过的、会引起冲突的 Wine 软件集。
 请在安装前尝试“dpkg -r wine”、“rpm -e wine”或“make uninstall”。
 
-一旦安装完成，您可以运行“winecfg”配置工具。请参考 http://www.winehq.org/
+一旦安装完成，您可以运行“winecfg”配置工具。请参考 https://www.winehq.org/
 网站中的支持页面以了解配置技巧。
 
 
@@ -129,26 +129,26 @@ Wine 不是十全十美的，所以某些程序可能会崩溃。如果这样的
 
 7. 获取更多信息
 
-WWW:	有关 Wine 的很多信息可以在 WineHQ 网站：http://www.winehq.org/
+WWW:	有关 Wine 的很多信息可以在 WineHQ 网站：https://www.winehq.org/
 	上面找到。包括：各类 Wine 相关的向导、应用程序数据库（AppDB）、
 	漏洞跟踪系统等等。这个网站可能是您最佳的起始之处。
 
-FAQ:	Wine 常见问题位于 http://www.winehq.org/FAQ
+FAQ:	Wine 常见问题位于 https://www.winehq.org/FAQ
 
-维基：	Wine 维基位于 http://wiki.winehq.org
+维基：	Wine 维基位于 https://wiki.winehq.org
 
 邮件列表：
 	存在数个服务于 Wine 用户和开发者的邮件列表；
-	请查看 http://www.winehq.org/forums 以了解更多信息。
+	请查看 https://www.winehq.org/forums 以了解更多信息。
 
-Bugs:	请向位于 http://bugs.winehq.org 的 Wine Bugzilla 提交 bug。
+Bugs:	请向位于 https://bugs.winehq.org 的 Wine Bugzilla 提交 bug。
 	请在提交漏洞报告前先在 bugzilla 数据库中进行搜索，检查
 	先前是否已有类似的已知问题以避免重复，并跟踪这些问题的修复情况。
 
 IRC:	您可以在 irc.freenode.net 的 #WineHQ 频道获取到在线帮助。
 
 Git:	当前 Wine 的开发树可经由 Git 获取。
-	请前往 http://www.winehq.org/git 以了解更多信息。
+	请前往 https://www.winehq.org/git 以了解更多信息。
 
 如果您在代码中添加了某些内容，或是修复了某个 bug，请向
 wine-devel@winehq.org 这个邮件列表发送对应的补丁（建议使用

@@ -23,7 +23,7 @@ könyvtárából (ami tartalmazza ezt a fájlt), futtassa:
 A programok futtatása "wine [opciók] program".  A további információkhoz
 és a probléma felvilágosításhoz olvassa el ennek a fájlnak a további részét,
 a Wine man oldalát, és különösen gazdag információ található itt:
-http://www.winehq.org.
+https://www.winehq.org.
 
 3. KÖVETELMÉNYEK
 
@@ -130,7 +130,7 @@ Elõször ne felejtse eltávolítani bármely elõzõ Wine telepítést.
 Próbálja ki a "dpkg -r wine", és az "rpm -e wine", vagy a "make uninstall"
 parancsot telepítés elõtt.
 
-Látogassa meg a támogatási oldalt itt: http://www.winehq.org/ a konfigurációs
+Látogassa meg a támogatási oldalt itt: https://www.winehq.org/ a konfigurációs
 tippekhez.
 
 Függvénykönyvtár betöltési hibák esetén
@@ -176,16 +176,16 @@ http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 7. TÖBB INFORMÁCIÓ BESZERZÉSE
 
 WWW:	A Wine-ról hatalmas mennyiségû információ érhetõ el a WineHQ-n ezen
-	a címen: http://www.winehq.org/ : különbözõ Wine útmutatók,
+	a címen: https://www.winehq.org/ : különbözõ Wine útmutatók,
 	alkalmazás adatbázis, és hibakövetés.
 	Ez talán a legjobb kiindulási pont.
 
-GYIK:	A Wine GYIK itt található: http://www.winehq.org/FAQ
+GYIK:	A Wine GYIK itt található: https://www.winehq.org/FAQ
 
 Usenet:	Társaloghat a Wine-hoz kapcsolódó témákban, és segítséget kérhet itt:
 	comp.emulators.ms-windows.wine.
 
-Hibák:	Wine hibabejelentés a Bugzilla-n keresztül itt: http://bugs.winehq.org
+Hibák:	Wine hibabejelentés a Bugzilla-n keresztül itt: https://bugs.winehq.org
 	Kérem hibabejelentés küldése elõtt ellenõrizze, hogy az ön problémája
 	már megtalálható-e az adatbázisban.  Küldhet hibabejelentéseket a
 	comp.emulators.ms-windows.wine címre is.
@@ -193,11 +193,11 @@ Hibák:	Wine hibabejelentés a Bugzilla-n keresztül itt: http://bugs.winehq.org
 IRC:	Azonnali segítség elérhetõ a #WineHQ csatornán a irc.freenode.net-en.
 
 Git:	A jelenlegi Wine fejlesztõi fa elérhetõ Git-en keresztül.
-	Látogasson el ide a további információhoz: http://www.winehq.org/git
+	Látogasson el ide a további információhoz: https://www.winehq.org/git
 
 Levelezõlisták:
 	Elérhetõ néhány levelezõlista a Wine fejlesztõk számára; nézze meg a
-	http://www.winehq.org/forums címet a további információhoz.
+	https://www.winehq.org/forums címet a további információhoz.
 
 Ha valamit hozzáad, vagy hibát javít, kérem küldjön javítófoltot ('diff -u'
 formátumban) a wine-devel@winehq.org levelezõlista címre, hogy beletehessük a
