@@ -2854,10 +2854,18 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
 
                 if (reg->idx[0].rel_addr)
-                    FIXME("VS3+ input registers relative addressing.\n");
+                    FIXME("VS3 input registers relative addressing.\n");
                 if (priv->cur_vs_args->swizzle_map & (1u << reg->idx[0].offset))
                     *is_color = TRUE;
-                sprintf(register_name, "%s_in%u", prefix, reg->idx[0].offset);
+                if (reg->idx[0].rel_addr)
+                {
+                    sprintf(register_name, "%s_in[%s + %u]",
+                            prefix, rel_param0.param_str, reg->idx[0].offset);
+                }
+                else
+                {
+                    sprintf(register_name, "%s_in%u", prefix, reg->idx[0].offset);
+                }
                 break;
             }
 
@@ -7850,7 +7858,17 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
 
     shader_addline(buffer, "void main()\n{\n");
 
-    /* Base Shader Body */
+    if (reg_maps->input_rel_addressing)
+    {
+        unsigned int highest_input_register = wined3d_log2i(reg_maps->input_registers);
+        shader_addline(buffer, "vec4 vs_in[%u];\n", highest_input_register + 1);
+        for (i = 0; i < shader->input_signature.element_count; ++i)
+        {
+            const struct wined3d_shader_signature_element *e = &shader->input_signature.elements[i];
+            shader_addline(buffer, "vs_in[%u] = vs_in%u;\n", e->register_idx, e->register_idx);
+        }
+    }
+
     if (FAILED(shader_generate_code(shader, buffer, reg_maps, &priv_ctx, NULL, NULL)))
         return 0;
 

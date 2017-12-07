@@ -12339,7 +12339,6 @@ static void test_vs_input_relative_addressing(void)
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, index, 0, 0);
         ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
         draw_quad(&test_context);
-        todo_wine_if(i > 0)
         check_texture_color(test_context.backbuffer, colors[i], 1);
     }
 

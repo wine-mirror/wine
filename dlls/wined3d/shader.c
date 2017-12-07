@@ -709,6 +709,8 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
             break;
 
         case WINED3DSPR_INPUT:
+            if (reg->idx[0].rel_addr)
+                reg_maps->input_rel_addressing = 1;
             if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
             {
                 /* If relative addressing is used, we must assume that all
@@ -721,7 +723,9 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
                     shader->u.ps.input_reg_used |= 1u << reg->idx[0].offset;
             }
             else
+            {
                 reg_maps->input_registers |= 1u << reg->idx[0].offset;
+            }
             break;
 
         case WINED3DSPR_RASTOUT:
