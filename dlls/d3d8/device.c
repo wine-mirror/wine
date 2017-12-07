@@ -747,6 +747,8 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
     {
         present_parameters->BackBufferCount = swapchain_desc.backbuffer_count;
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_POINTSIZE_MIN, 0);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZENABLE,
+                !!swapchain_desc.enable_auto_depth_stencil);
         device->device_state = D3D8_DEVICE_STATE_OK;
     }
     else
