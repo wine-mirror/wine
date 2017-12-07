@@ -71,7 +71,7 @@ static GLenum get_texture_view_target(const struct wined3d_gl_info *gl_info,
 }
 
 static const struct wined3d_format *validate_resource_view(const struct wined3d_view_desc *desc,
-        struct wined3d_resource *resource, BOOL mip_slice)
+        struct wined3d_resource *resource, BOOL mip_slice, BOOL allow_srgb_toggle)
 {
     const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
     const struct wined3d_format *format;
@@ -129,7 +129,7 @@ static const struct wined3d_format *validate_resource_view(const struct wined3d_
         unsigned int depth_or_layer_count;
 
         if (resource->format->id != format->id && !wined3d_format_is_typeless(resource->format)
-                && !wined3d_formats_are_srgb_variants(resource->format->id, format->id))
+                && (!allow_srgb_toggle || !wined3d_formats_are_srgb_variants(resource->format->id, format->id)))
         {
             WARN("Trying to create incompatible view for non typeless format %s.\n",
                     debug_d3dformat(format->id));
@@ -540,11 +540,20 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
+    BOOL allow_srgb_toggle = FALSE;
+
     view->refcount = 1;
     view->parent = parent;
     view->parent_ops = parent_ops;
 
-    if (!(view->format = validate_resource_view(desc, resource, TRUE)))
+    if (resource->type != WINED3D_RTYPE_BUFFER)
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
+
+        if (texture->swapchain)
+            allow_srgb_toggle = TRUE;
+    }
+    if (!(view->format = validate_resource_view(desc, resource, TRUE, allow_srgb_toggle)))
         return E_INVALIDARG;
     view->format_flags = view->format->flags[resource->gl_type];
     view->desc = *desc;
@@ -740,7 +749,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     view->parent = parent;
     view->parent_ops = parent_ops;
 
-    if (!(view->format = validate_resource_view(desc, resource, FALSE)))
+    if (!(view->format = validate_resource_view(desc, resource, FALSE, FALSE)))
         return E_INVALIDARG;
     view->desc = *desc;
 
@@ -1108,7 +1117,7 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
     view->parent = parent;
     view->parent_ops = parent_ops;
 
-    if (!(view->format = validate_resource_view(desc, resource, TRUE)))
+    if (!(view->format = validate_resource_view(desc, resource, TRUE, FALSE)))
         return E_INVALIDARG;
     view->desc = *desc;
 

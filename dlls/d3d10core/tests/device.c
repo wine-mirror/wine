@@ -8540,7 +8540,7 @@ static void test_swapchain_views(void)
     U(srv_desc).Texture2D.MostDetailedMip = 0;
     U(srv_desc).Texture2D.MipLevels = 1;
     hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)test_context.backbuffer, &srv_desc, &srv);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10ShaderResourceView_Release(srv);
 
