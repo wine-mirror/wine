@@ -844,14 +844,20 @@ void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *
     location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
     for (i = 0; i < layer_count; ++i)
         wined3d_texture_load_location(texture, i * level_count + base_level, context, location);
+
     if (view->gl_view.name)
+    {
         shader_resource_view_bind_and_dirtify(view, context);
+    }
     else
+    {
         wined3d_texture_bind_and_dirtify(texture, context, srgb);
+        gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_BASE_LEVEL, base_level);
+        gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_MAX_LEVEL, max_level);
+    }
+
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
         GL_EXTCALL(glBindSampler(context->active_texture, 0));
-    gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_BASE_LEVEL, base_level);
-    gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_MAX_LEVEL, max_level);
     gl_tex = wined3d_texture_get_gl_texture(texture, srgb);
     if (context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
     {
@@ -872,11 +878,11 @@ void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *
         }
     }
 
-    gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_MAX_LEVEL, level_count - 1);
-    if (srgb)
-        texture->texture_srgb.base_level = base_level;
-    else
-        texture->texture_rgb.base_level = base_level;
+    if (!view->gl_view.name)
+    {
+        gl_tex->base_level = base_level;
+        gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_MAX_LEVEL, texture->level_count - 1);
+    }
 
     context_release(context);
 }
