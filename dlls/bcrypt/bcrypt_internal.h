@@ -61,6 +61,17 @@ void md2_update(MD2_CTX *ctx, const unsigned char *buf, ULONG len) DECLSPEC_HIDD
 void md2_finalize(MD2_CTX *ctx, unsigned char *hash) DECLSPEC_HIDDEN;
 
 /* Definitions from advapi32 */
+typedef struct tagMD4_CTX {
+    unsigned int buf[4];
+    unsigned int i[2];
+    unsigned char in[64];
+    unsigned char digest[16];
+} MD4_CTX;
+
+VOID WINAPI MD4Init(MD4_CTX *ctx);
+VOID WINAPI MD4Update(MD4_CTX *ctx, const unsigned char *buf, unsigned int len);
+VOID WINAPI MD4Final(MD4_CTX *ctx);
+
 typedef struct
 {
     unsigned int i[2];

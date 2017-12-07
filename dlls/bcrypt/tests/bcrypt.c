@@ -329,6 +329,12 @@ static void test_hashes(void)
             "7f05b0638d77f4a27f3a9c4d353cd648"
         },
         {
+            "MD4",
+            16,
+            "74b5db93c0b41e36ca7074338fc0b637",
+            "bc2e8ac4d8248ed21b8d26227a30ea3a"
+        },
+        {
             "MD5",
             16,
             "e2a3e68d23ce348b8f68b3079de3d4c9",
