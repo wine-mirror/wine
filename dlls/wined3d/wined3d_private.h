@@ -382,6 +382,7 @@ static inline void wined3d_pause(void)
 struct wined3d_settings
 {
     unsigned int cs_multithreaded;
+    BOOL explicit_gl_version;
     DWORD max_gl_version;
     BOOL glslRequested;
     int offscreen_rendering_mode;
