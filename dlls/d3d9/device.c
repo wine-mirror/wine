@@ -812,11 +812,13 @@ static HRESULT d3d9_device_get_swapchains(struct d3d9_device *device)
 static HRESULT d3d9_device_reset(struct d3d9_device *device,
         D3DPRESENT_PARAMETERS *present_parameters, D3DDISPLAYMODEEX *mode)
 {
+    BOOL extended = device->d3d_parent->extended;
     struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_display_mode wined3d_mode;
     HRESULT hr;
 
-    if (!device->d3d_parent->extended && device->device_state == D3D9_DEVICE_STATE_LOST)
+
+    if (!extended && device->device_state == D3D9_DEVICE_STATE_LOST)
     {
         WARN("App not active, returning D3DERR_DEVICELOST.\n");
         return D3DERR_DEVICELOST;
@@ -831,8 +833,7 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
         wined3d_mode.scanline_ordering = mode->ScanLineOrdering;
     }
 
-    if (!wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters,
-            device->d3d_parent->extended))
+    if (!wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters, extended))
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
@@ -852,9 +853,15 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
     }
 
     if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
-            mode ? &wined3d_mode : NULL, reset_enum_callback, !device->d3d_parent->extended)))
+            mode ? &wined3d_mode : NULL, reset_enum_callback, !extended)))
     {
         HeapFree(GetProcessHeap(), 0, device->implicit_swapchains);
+
+        if (!extended)
+        {
+            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZENABLE,
+                    !!swapchain_desc.enable_auto_depth_stencil);
+        }
 
         if (FAILED(hr = d3d9_device_get_swapchains(device)))
         {
@@ -871,7 +878,7 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
             device->device_state = D3D9_DEVICE_STATE_OK;
         }
     }
-    else if (!device->d3d_parent->extended)
+    else if (!extended)
     {
         device->device_state = D3D9_DEVICE_STATE_NOT_RESET;
     }
