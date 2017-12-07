@@ -1190,6 +1190,39 @@ static void test_marshal_HBRUSH(void)
     DeleteObject(hBrush);
 }
 
+static void test_marshal_HBITMAP(void)
+{
+    static BYTE bmp_bits[1024];
+    MIDL_STUB_MESSAGE stub_msg;
+    HBITMAP hBitmap, hBitmap2;
+    USER_MARSHAL_CB umcb;
+    RPC_MESSAGE rpc_msg;
+    unsigned char *buffer, *buffer_end;
+    ULONG size;
+
+    hBitmap = CreateBitmap(16, 16, 1, 1, bmp_bits);
+    ok(hBitmap != 0, "CreateBitmap failed\n");
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
+    size = HBITMAP_UserSize(&umcb.Flags, 1, &hBitmap);
+    ok(size == 0xc, "Wrong size %d\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size + 4);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
+    buffer_end = HBITMAP_UserMarshal(&umcb.Flags, buffer + 1, &hBitmap);
+    ok(buffer_end == buffer + 0xc, "HBITMAP_UserMarshal() returned wrong size %d\n", (LONG)(buffer_end - buffer));
+    ok(*(ULONG *)(buffer + 0x4) == WDT_INPROC_CALL, "Context should be WDT_INPROC_CALL instead of 0x%08x\n", *(ULONG *)(buffer + 0x4));
+    ok(*(ULONG *)(buffer + 0x8) == (ULONG)(ULONG_PTR)hBitmap, "wirestgm + 0x4 should be bitmap handle instead of 0x%08x\n", *(ULONG *)(buffer + 0x8));
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
+    HBITMAP_UserUnmarshal(&umcb.Flags, buffer + 1, &hBitmap2);
+    ok(hBitmap2 != NULL, "Didn't unmarshal properly\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
+    HBITMAP_UserFree(&umcb.Flags, &hBitmap2);
+    DeleteObject(hBitmap);
+}
+
 struct obj
 {
     IDataObject IDataObject_iface;
@@ -1353,6 +1386,7 @@ START_TEST(usrmarshal)
     test_marshal_HDC();
     test_marshal_HICON();
     test_marshal_HBRUSH();
+    test_marshal_HBITMAP();
 
     test_GetDataHere_Proxy();
 

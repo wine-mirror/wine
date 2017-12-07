@@ -584,10 +584,17 @@ void __RPC_USER HGLOBAL_UserFree(ULONG *pFlags, HGLOBAL *phGlobal)
  *  the first parameter is a ULONG.
  *  This function is only intended to be called by the RPC runtime.
  */
-ULONG __RPC_USER HBITMAP_UserSize(ULONG *pFlags, ULONG StartingSize, HBITMAP *phBmp)
+ULONG __RPC_USER HBITMAP_UserSize(ULONG *flags, ULONG size, HBITMAP *bmp)
 {
-    FIXME(":stub\n");
-    return StartingSize;
+    TRACE("(%s, %d, %p)\n", debugstr_user_flags(flags), size, *bmp);
+
+    ALIGN_LENGTH(size, 3);
+
+    size += sizeof(ULONG);
+    if (LOWORD(*flags) == MSHCTX_INPROC)
+        size += sizeof(ULONG);
+
+    return size;
 }
 
 /******************************************************************************
@@ -609,10 +616,20 @@ ULONG __RPC_USER HBITMAP_UserSize(ULONG *pFlags, ULONG StartingSize, HBITMAP *ph
 *  the first parameter is a ULONG.
 *  This function is only intended to be called by the RPC runtime.
 */
-unsigned char * __RPC_USER HBITMAP_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HBITMAP *phBmp)
+unsigned char * __RPC_USER HBITMAP_UserMarshal(ULONG *flags, unsigned char *buffer, HBITMAP *bmp)
 {
-    FIXME(":stub\n");
-    return pBuffer;
+    TRACE("(%s, %p, %p)\n", debugstr_user_flags(flags), buffer, *bmp);
+
+    ALIGN_POINTER(buffer, 3);
+
+    if (LOWORD(*flags) == MSHCTX_INPROC)
+    {
+        *(ULONG *)buffer = WDT_INPROC_CALL;
+        buffer += sizeof(ULONG);
+        *(ULONG *)buffer = (ULONG)(ULONG_PTR)*bmp;
+        buffer += sizeof(ULONG);
+    }
+    return buffer;
 }
 
 /******************************************************************************
@@ -634,10 +651,26 @@ unsigned char * __RPC_USER HBITMAP_UserMarshal(ULONG *pFlags, unsigned char *pBu
  *  the first parameter is an ULONG.
  *  This function is only intended to be called by the RPC runtime.
  */
-unsigned char * __RPC_USER HBITMAP_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HBITMAP *phBmp)
+unsigned char * __RPC_USER HBITMAP_UserUnmarshal(ULONG *flags, unsigned char *buffer, HBITMAP *bmp)
 {
-    FIXME(":stub\n");
-    return pBuffer;
+    ULONG context;
+
+    TRACE("(%s, %p, %p)\n", debugstr_user_flags(flags), buffer, bmp);
+
+    ALIGN_POINTER(buffer, 3);
+
+    context = *(ULONG *)buffer;
+    buffer += sizeof(ULONG);
+
+    if (context == WDT_INPROC_CALL)
+    {
+        *bmp = *(HBITMAP *)buffer;
+        buffer += sizeof(*bmp);
+    }
+    else
+        RaiseException(RPC_S_INVALID_TAG, 0, 0, NULL);
+
+    return buffer;
 }
 
 /******************************************************************************
