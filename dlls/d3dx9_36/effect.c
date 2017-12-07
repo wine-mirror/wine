@@ -6455,6 +6455,11 @@ static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
     char *skip_constants_buffer = NULL;
     const char **skip_constants = NULL;
     unsigned int skip_constants_count = 0;
+#if D3DX_SDK_VERSION <= 36
+    UINT compile_flags = D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
+#else
+    UINT compile_flags = 0;
+#endif
     unsigned int i, j;
 
     TRACE("base %p, data %p, data_size %lu, effect %p, pool %p, skip_constants %s.\n",
@@ -6471,7 +6476,7 @@ static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
     {
         TRACE("HLSL ASCII effect, trying to compile it.\n");
         hr = D3DCompile(data, data_size, NULL, defines, include,
-                "main", "fx_2_0", 0, eflags, &bytecode, &temp_errors);
+                "main", "fx_2_0", compile_flags, eflags, &bytecode, &temp_errors);
         if (FAILED(hr))
         {
             WARN("Failed to compile ASCII effect.\n");
