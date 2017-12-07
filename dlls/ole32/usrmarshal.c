@@ -1722,9 +1722,7 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
     case TYMED_GDI:
         TRACE("TYMED_GDI\n");
         if (pStgMedium->u.hBitmap)
-        {
-            FIXME("not implemented for GDI object %p\n", pStgMedium->u.hBitmap);
-        }
+            size = HBITMAP_UserSize(pFlags, size, &pStgMedium->u.hBitmap);
         break;
     case TYMED_MFPICT:
         TRACE("TYMED_MFPICT\n");
@@ -1834,9 +1832,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
     case TYMED_GDI:
         TRACE("TYMED_GDI\n");
         if (pStgMedium->u.hBitmap)
-        {
-            FIXME("not implemented for GDI object %p\n", pStgMedium->u.hBitmap);
-        }
+            pBuffer = HBITMAP_UserMarshal(pFlags, pBuffer, &pStgMedium->u.hBitmap);
         break;
     case TYMED_MFPICT:
         TRACE("TYMED_MFPICT\n");
@@ -1972,9 +1968,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
     case TYMED_GDI:
         TRACE("TYMED_GDI\n");
         if (content)
-        {
-            FIXME("not implemented for GDI object\n");
-        }
+            pBuffer = HBITMAP_UserUnmarshal(pFlags, pBuffer, &pStgMedium->u.hBitmap);
         else
             pStgMedium->u.hBitmap = NULL;
         break;
