@@ -4880,8 +4880,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         device->update_state = &device->state;
 
         device_init_swapchain_state(device, swapchain);
-        wined3d_device_set_render_state(device,
-                WINED3D_RS_ZENABLE, !!swapchain->desc.enable_auto_depth_stencil);
         if (wined3d_settings.logo)
             device_load_logo(device, wined3d_settings.logo);
     }
