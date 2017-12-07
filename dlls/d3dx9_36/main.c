@@ -2,6 +2,7 @@
  * Direct3D X 9 main file
  *
  * Copyright (C) 2007 David Adam
+ * Copyright (C) 2008 Tony Wasserka
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,20 +22,13 @@
 
 #include "config.h"
 #include "wine/port.h"
+
 #include "initguid.h"
-#include <stdarg.h>
+#include "d3dx9_private.h"
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
+WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-#include "d3dx9.h"
-
-/***********************************************************************
- * DllMain.
- */
-BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
     switch(reason)
     {
@@ -47,14 +41,13 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
-/***********************************************************************
- * D3DXCheckVersion
- * Checks whether we are compiling against the correct d3d and d3dx library.
- */
-BOOL WINAPI D3DXCheckVersion(UINT d3dsdkvers, UINT d3dxsdkvers)
+BOOL WINAPI D3DXCheckVersion(UINT d3d_sdk_ver, UINT d3dx_sdk_ver)
 {
-    if(d3dsdkvers==D3D_SDK_VERSION && d3dxsdkvers==26)
-        return TRUE;
-    else
-        return FALSE;
+    return d3d_sdk_ver == D3D_SDK_VERSION && d3dx_sdk_ver == D3DX_SDK_VERSION;
+}
+
+DWORD WINAPI D3DXCpuOptimizations(BOOL enable)
+{
+    FIXME("%#x - stub\n", enable);
+    return 0;
 }

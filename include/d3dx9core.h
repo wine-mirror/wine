@@ -24,11 +24,9 @@
 /**********************************************
  ***************** Definitions ****************
  **********************************************/
-/* D3DX_VERSION will be completely ignored since we are
-    implementing all dlls from d3dx9_24 to d3dx9_36 */
 #define D3DX_VERSION 0x0902
 #ifndef D3DX_SDK_VERSION
-#define D3DX_SDK_VERSION 36
+#define D3DX_SDK_VERSION 43
 #endif
 #define D3DXSPRITE_DONOTSAVESTATE          0x00000001
 #define D3DXSPRITE_DONOTMODIFY_RENDERSTATE 0x00000002

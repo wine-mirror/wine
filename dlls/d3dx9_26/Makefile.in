@@ -1,3 +1,4 @@
+EXTRADEFS = -DD3DX_SDK_VERSION=26
 MODULE    = d3dx9_26.dll
 IMPORTS   = d3d9 d3dcompiler dxguid d3dxof ole32 gdi32 user32
 PARENTSRC = ../d3dx9_36
@@ -5,10 +6,10 @@ PARENTSRC = ../d3dx9_36
 C_SRCS = \
 	animation.c \
 	core.c \
-	d3dx9_26_main.c \
 	effect.c \
 	font.c \
 	line.c \
+	main.c \
 	math.c \
 	mesh.c \
 	preshader.c \
