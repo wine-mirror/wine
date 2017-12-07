@@ -6469,11 +6469,14 @@ static HRESULT d3d_device7_SetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DV
 
     wined3d_mutex_lock();
     hr = wined3d_device_set_clip_plane(device->wined3d_device, idx, wined3d_plane);
-    if (hr == WINED3DERR_INVALIDCALL && idx < ARRAY_SIZE(device->user_clip_planes))
+    if (idx < ARRAY_SIZE(device->user_clip_planes))
     {
-        WARN("Clip plane %u is not supported.\n", idx);
         device->user_clip_planes[idx] = *wined3d_plane;
-        hr = D3D_OK;
+        if (hr == WINED3DERR_INVALIDCALL)
+        {
+            WARN("Clip plane %u is not supported.\n", idx);
+            hr = D3D_OK;
+        }
     }
     wined3d_mutex_unlock();
 
