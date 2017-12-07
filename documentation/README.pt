@@ -21,7 +21,7 @@ do Wine source (que contém este ficheiro),corre:
 Corre os programas conforme as "wine [options] program". Para mais
 informações e resoçução de problemas. Lê o resto deste ficheiro, a Wine
 man page, e especialmente a abundância de informação  encontrada em
-http://www.winehq.org.
+https://www.winehq.org.
 
 3.REQUERIMENTOS
 
@@ -130,7 +130,7 @@ instalação do Wine.
 Tenta outro "dpkg -r wine" ou "rpm -e wine" ou "make uninstall" antes de
 installar.
 
-Ver http://www.winehq.org/support/ para informação sobre a
+Ver https://www.winehq.org/support/ para informação sobre a
 configuraçao.
 
 No caso da livraria carregar erros (e.g. "Error while loading shared
@@ -185,11 +185,11 @@ http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 7.ARRANJAR MAIS INFORMAÇÃO
 
 www:	Uma grande quantidade de informação acerca do Wine está disponivel
-        pelo WineHQ em http://www.winehq.org/ : varios guias Wine, base de
+        pelo WineHQ em https://www.winehq.org/ : varios guias Wine, base de
         dados de aplicações, localizaçao de erros. Isto é provavelmente o
         melhor ponto de começo.
 
-FAQ:	A Wine FAQ está localizada em http://www.winehq.org/FAQ
+FAQ:	A Wine FAQ está localizada em https://www.winehq.org/FAQ
 
 Usenet:	Tu podes discutor tópicos relacionados de Wine e obter ajuda em
 	comp.emulators.ms-windows.wine.
@@ -198,11 +198,11 @@ IRC:	Ajuda online está disponivel em #WineHQ on irc.freenode.net.
 
 
 Git:	O currente desenvolvimento do Wine está disponivel por Git.
-	Vai a http://www.winehq.org/git para mais informação.
+	Vai a https://www.winehq.org/git para mais informação.
 
 Mailing Lists:
 	Há algumas mailing list para responsaveis pelo desenvolvimento Wine; ver em
-	http://www.winehq.org/forums para mais informação.
+	https://www.winehq.org/forums para mais informação.
 
 Se tu acrescentaste algo,ou corrigiste um bug, por favor envia um patch
 (em 'diff -u' format) para wine-devel@winehq.org lista para inclusão

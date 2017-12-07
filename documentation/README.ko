@@ -20,7 +20,7 @@ LICENSE 파일을 참조하십시오.
 
 프로그램을 실행할 때는 "wine 프로그램명"처럼 합니다.  더 자세한 정보
 및 문제 해결 방법은 이 파일의 나머지 부분과 Wine 맨페이지를 참조하십시오.
-특히 http://www.winehq.org 사이트에 방대한 정보가 집약되어 있습니다.
+특히 https://www.winehq.org 사이트에 방대한 정보가 집약되어 있습니다.
 
 
 3. 빌드에 필요한 조건
@@ -126,7 +126,7 @@ Wine이 일단 정상적으로 빌드된 다음에는 "make install" 명령으�
 바랍니다.  "dpkg -r wine" 또는 "rpm -e wine" 또는 "make uninstall" 등의
 명령으로 이전 버전을 제거할 수 있습니다.
 
-설정 관련 도움말은 http://www.winehq.org/의 Support 페이지에 있습니다.
+설정 관련 도움말은 https://www.winehq.org/의 Support 페이지에 있습니다.
 
 라이브러리 로딩 에러("Error while loading shared libraries: libntdll.so")가
 발생하는 경우 라이브러리 경로가 /etc/ld.so.conf 파일 안에 지정되어 있는지
@@ -159,15 +159,15 @@ Wine은 아직 완성 단계에 도달하지 못했기 때문에 프로그램이
 7. 더 자세한 정보
 
 WWW:    여러 종류의 Wine 가이드, 애플리케이션 데이터베이스, 버그 추적 등
-        http://www.winehq.org/ 에 있는 WineHQ 사이트에 가면 많은 정보를 얻을
+        https://www.winehq.org/ 에 있는 WineHQ 사이트에 가면 많은 정보를 얻을
         수 있습니다.  정보를 찾을 때 대개 이 사이트가 출발점이 됩니다.
 
-FAQ:    Wine FAQ은 http://www.winehq.org/FAQ 에 있습니다.
+FAQ:    Wine FAQ은 https://www.winehq.org/FAQ 에 있습니다.
 
 Usenet: Wine 관련 주제를 논의하거나 도움을 받으려면 comp.emulators.ms-windows.wine
         그룹을 이용하기 바랍니다.
 
-Bugs:   http://bugs.winehq.org 의 Wine Bugzilla에 버그를 보고하십시오.
+Bugs:   https://bugs.winehq.org 의 Wine Bugzilla에 버그를 보고하십시오.
         버그 보고서를 제출하기 전 같은 문제가 이미 제출된 적이 있는지
         데이터베이스 검색을 통해 확인하기 바랍니다.
         comp.emulators.ms-windows.wine 그룹에 버그 보고서를 올려도 됩니다.
@@ -175,13 +175,13 @@ Bugs:   http://bugs.winehq.org 의 Wine Bugzilla에 버그를 보고하십시오
 IRC:	irc.freenode.net 의 #WineHQ 채널에서 도움을 받을 수 있습니다.
 
 GIT:    Wine 개발 트리는 현재 GIT로 관리되고 있습니다.  더 자세한 정보는
-	http://www.winehq.org/site/git 를 참조하기 바랍니다.
+	https://www.winehq.org/site/git 를 참조하기 바랍니다.
 
 메일링 리스트:
         Wine 사용자와 개발자를 위해 메일링 리스트가 운영되고 있습니다.
-        더 자세한 정보는 http://www.winehq.org/forums 를 참조하기 바랍니다.
+        더 자세한 정보는 https://www.winehq.org/forums 를 참조하기 바랍니다.
 
-위키:	Wine 위키는 http://wiki.winehq.org 에 있습니다.
+위키:	Wine 위키는 https://wiki.winehq.org 에 있습니다.
 
 추가할 내용이나 수정할 버그가 있다면 다음번 릴리스에 포함될 수 있도록
 wine-devel@winehq.org 메일링 리스트로 패치('diff -u' 형식으로 된)를 보내

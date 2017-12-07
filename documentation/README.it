@@ -23,7 +23,7 @@ Wine, eseguire:
 Eseguire i programmi com "wine programma". Per maggiori informazioni e
 risoluzioni di problemi, leggere il resto di questo file, la pagina man
 di Wine, ed in modo particolare la notevole quantità di informazioni che
-si trova all'indirizzo http://www.winehq.org.
+si trova all'indirizzo https://www.winehq.org.
 
 
 3. REQUISITI
@@ -43,7 +43,7 @@ che forniscono kernel threads potrebbero essere supportati in futuro.
 Informazioni per FreeBSD:
   In generale Wine non funzionerà correttamente con versioni precedenti
   a FreeBSD 8.0.
-  Leggere http://wiki.freebsd.org/Wine per maggiori informazioni.
+  Leggere https://wiki.freebsd.org/Wine per maggiori informazioni.
 
 Informazioni per Solaris:
   Sarà molto probabilmente necessario compilare Wine con i tool GNU
@@ -76,14 +76,14 @@ Requisiti basilari:
 
 Librerie opzionali di supporto:
   Configure notificherà a video quando le librerie opzionali non sono
-  trovate sul sistema. Leggere http://wiki.winehq.org/Recommended_Packages
+  trovate sul sistema. Leggere https://wiki.winehq.org/Recommended_Packages
   per suggerimenti sui pacchetti da installare.
 
   Su piattaforme a 64-bit, per compilare Wine a 32-bit (predefinito),
   assicurarsi di installare la versione a 32-bit di queste librerie;
-  leggere http://wiki.winehq.org/WineOn64bit per i dettagli. Per avere
+  leggere https://wiki.winehq.org/WineOn64bit per i dettagli. Per avere
   Wine solo 64-bit (o un setup di Wine misto tra 32-bit e 64-bit),
-  leggere http://wiki.winehq.org/Wine64 per maggiori informazioni.
+  leggere https://wiki.winehq.org/Wine64 per maggiori informazioni.
 
 
 4. COMPILAZIONE
@@ -114,7 +114,7 @@ di Wine in conflitto. Prova sia "dpkg -r wine" o "rpm -e wine" o
 "make uninstall" prima di installare.
 
 Una volta installato, esegui lo strumento di configurazione "winecfg".
-Leggi l'area Support su http://www.winehq.org/ per suggerimenti sulla
+Leggi l'area Support su https://www.winehq.org/ per suggerimenti sulla
 configurazione.
 
 
@@ -142,19 +142,19 @@ di segnalazione del problema.
 7. PER OTTENERE PIÙ INFORMAZIONI
 
 WWW:	Un gran quantitativo di informazioni su Wine è disponibile al
-	WineHQ, http://www.winehq.org/: varie guide su Wine, database
+	WineHQ, https://www.winehq.org/: varie guide su Wine, database
 	delle applicazioni, rintracciamento di bug. Questo è probabilmente
 	il miglior punto di partenza.
 
-FAQ:	Le FAQ di Wine si trovano all'indirizzo http://www.winehq.org/FAQ
+FAQ:	Le FAQ di Wine si trovano all'indirizzo https://www.winehq.org/FAQ
 
-Wiki:	Il Wiki di Wine si trova all'indirizzo http://wiki.winehq.org
+Wiki:	Il Wiki di Wine si trova all'indirizzo https://wiki.winehq.org
 
 Mailing list:
 	Esistono diverse mailing list per utenti e sviluppatori di Wine;
-	visitare http://www.winehq.org/forums per ulteriori informazioni.
+	visitare https://www.winehq.org/forums per ulteriori informazioni.
 
-Bugs:	Segnalare i bug su Wine Bugzilla all'indirizzo http://bugs.winehq.org
+Bugs:	Segnalare i bug su Wine Bugzilla all'indirizzo https://bugs.winehq.org
 	Si prega di controllare il database di Bugzilla per verificare che
 	il problema non sia già conosciuto o risolto prima di creare un
 	rapporto su di esso.
@@ -162,7 +162,7 @@ Bugs:	Segnalare i bug su Wine Bugzilla all'indirizzo http://bugs.winehq.org
 IRC:	Aiuto online disponibile nel canale #WineHQ su irc.freenode.net.
 
 Git:	L'albero attuale di sviluppo di Wine è disponibile attraverso Git.
-	Vedere http://www.winehq.org/git per maggiori informazioni.
+	Vedere https://www.winehq.org/git per maggiori informazioni.
 
 Se aggiungi qualcosa, o correggi un bug, si prega di mandare una patch
 (preferibilmente usando git-format-patch) alla mailing list

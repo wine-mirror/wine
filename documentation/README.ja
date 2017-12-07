@@ -21,7 +21,7 @@ make
 
 "wine program"のようにプログラムを実行してください。更なる情報や
 問題解決については、このファイルの残りの部分、Wineのmanページや、
-特にhttp://www.winehq.orgで見つかる豊富な情報を読んでください。
+特にhttps://www.winehq.orgで見つかる豊富な情報を読んでください。
 
 
 3. 要件
@@ -41,7 +41,7 @@ Wineをコンパイルし実行するには、以下のうち一つを持って�
 
 FreeBSD情報:
   Wineは一般的にFreeBSD 8.0より前のバージョン上で正しく動作しないでしょう。
-  詳細については http://wiki.freebsd.org/Wine を参照してください。
+  詳細については https://wiki.freebsd.org/Wine を参照してください。
 
 Solaris情報:
   GNUツールチェーン（gcc、gasなど）でWineをビルドする必要がある可能性が
@@ -77,7 +77,7 @@ Mac OS X情報:
 オプションのサポートライブラリ:
   configureはオプションのライブラリがシステム上に見つからなかったときに通知を
   表示します。インストールすべきパッケージについてのヒントについては
-  http://wiki.winehq.org/Recommended_Packagesを参照してください。64ビットプ
+  https://wiki.winehq.org/Recommended_Packagesを参照してください。64ビットプ
   ラットフォームでは、これらライブラリの32ビットバージョンをインストールした
   ことをよく確認してください。
 
@@ -110,7 +110,7 @@ make
 または"make uninstall"を試してください。
 
 いったんインストールされると、"winecfg"設定ツールを実行できます。
-設定のヒントについてはhttp://www.winehq.org/におけるサポート領域を
+設定のヒントについてはhttps://www.winehq.org/におけるサポート領域を
 参照してください。
 
 
@@ -137,26 +137,26 @@ Wineは完璧ではないので、いくつかのプログラムはクラッシ�
 
 7. 更なる情報の取得
 
-WWW:	Wineについてのたくさんの情報がhttp://www.winehq.org/にある
+WWW:	Wineについてのたくさんの情報がhttps://www.winehq.org/にある
         WineHQから入手できます。多様なWineガイド、アプリケーションデータベース、
 	バグ追跡。これはおそらく最良の出発点です。
 
-FAQ:	Wine FAQはhttp://www.winehq.org/FAQにあります
+FAQ:	Wine FAQはhttps://www.winehq.org/FAQにあります
 
-Wiki:	Wine Wikiはhttp://wiki.winehq.orgにあります
+Wiki:	Wine Wikiはhttps://wiki.winehq.orgにあります
 
 メーリングリスト:
 	Wineユーザと開発者のためのいくつかのメーリングリストがあります。
-	詳細についてはhttp://www.winehq.org/forumsを参照してください。
+	詳細についてはhttps://www.winehq.org/forumsを参照してください。
 
-バグ:	http://bugs.winehq.orgにあるWine Bugzillaでバグを報告してください。
+バグ:	https://bugs.winehq.orgにあるWine Bugzillaでバグを報告してください。
         バグ報告を投稿する前に問題が既知や修正済みかどうかを調べるために
 	bugzillaデータベースを検索してください。
 
 IRC:	irc.freenode.net上のチャンネル#WineHQでオンラインヘルプを利用できます。
 
 Git:	現在のWine開発ツリーはGitを通して入手できます。
-	詳細についてはhttp://www.winehq.org/gitに行ってください。
+	詳細についてはhttps://www.winehq.org/gitに行ってください。
 
 何かを追加するか、バグを修正するならば、次のリリースに含めるためにパッチ
 （git-format-patchをなるべく使用）をwine-devel@winehq.orgのリストに送って
