@@ -593,6 +593,17 @@ ULONG __RPC_USER HBITMAP_UserSize(ULONG *flags, ULONG size, HBITMAP *bmp)
     size += sizeof(ULONG);
     if (LOWORD(*flags) == MSHCTX_INPROC)
         size += sizeof(ULONG);
+    else
+    {
+        size += sizeof(ULONG);
+
+        if (*bmp)
+        {
+            size += sizeof(ULONG);
+            size += FIELD_OFFSET(userBITMAP, cbSize);
+            size += GetBitmapBits(*bmp, 0, NULL);
+        }
+    }
 
     return size;
 }
@@ -628,6 +639,31 @@ unsigned char * __RPC_USER HBITMAP_UserMarshal(ULONG *flags, unsigned char *buff
         buffer += sizeof(ULONG);
         *(ULONG *)buffer = (ULONG)(ULONG_PTR)*bmp;
         buffer += sizeof(ULONG);
+    }
+    else
+    {
+        *(ULONG *)buffer = WDT_REMOTE_CALL;
+        buffer += sizeof(ULONG);
+        *(ULONG *)buffer = (ULONG)(ULONG_PTR)*bmp;
+        buffer += sizeof(ULONG);
+
+        if (*bmp)
+        {
+            static const ULONG header_size = FIELD_OFFSET(userBITMAP, cbSize);
+            BITMAP bitmap;
+            ULONG bitmap_size;
+
+            bitmap_size = GetBitmapBits(*bmp, 0, NULL);
+            *(ULONG *)buffer = bitmap_size;
+            buffer += sizeof(ULONG);
+
+            GetObjectW(*bmp, sizeof(BITMAP), &bitmap);
+            memcpy(buffer, &bitmap, header_size);
+            buffer += header_size;
+
+            GetBitmapBits(*bmp, bitmap_size, buffer);
+            buffer += bitmap_size;
+        }
     }
     return buffer;
 }
@@ -667,6 +703,36 @@ unsigned char * __RPC_USER HBITMAP_UserUnmarshal(ULONG *flags, unsigned char *bu
         *bmp = *(HBITMAP *)buffer;
         buffer += sizeof(*bmp);
     }
+    else if (context == WDT_REMOTE_CALL)
+    {
+        ULONG handle = *(ULONG *)buffer;
+        buffer += sizeof(ULONG);
+
+        if (handle)
+        {
+            static const ULONG header_size = FIELD_OFFSET(userBITMAP, cbSize);
+            BITMAP bitmap;
+            ULONG bitmap_size;
+            unsigned char *bits;
+
+            bitmap_size = *(ULONG *)buffer;
+            buffer += sizeof(ULONG);
+            bits = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
+
+            memcpy(&bitmap, buffer, header_size);
+            buffer += header_size;
+
+            memcpy(bits, buffer, bitmap_size);
+            buffer += bitmap_size;
+
+            bitmap.bmBits = bits;
+            *bmp = CreateBitmapIndirect(&bitmap);
+
+            HeapFree(GetProcessHeap(), 0, bits);
+        }
+        else
+            *bmp = NULL;
+    }
     else
         RaiseException(RPC_S_INVALID_TAG, 0, 0, NULL);
 
@@ -691,9 +757,12 @@ unsigned char * __RPC_USER HBITMAP_UserUnmarshal(ULONG *flags, unsigned char *bu
  *  which the first parameter is a ULONG.
  *  This function is only intended to be called by the RPC runtime.
  */
-void __RPC_USER HBITMAP_UserFree(ULONG *pFlags, HBITMAP *phBmp)
+void __RPC_USER HBITMAP_UserFree(ULONG *flags, HBITMAP *bmp)
 {
-    FIXME(":stub\n");
+    TRACE("(%s, %p)\n", debugstr_user_flags(flags), *bmp);
+
+    if (LOWORD(*flags) != MSHCTX_INPROC)
+        DeleteObject(*bmp);
 }
 
 /******************************************************************************
