@@ -7,7 +7,6 @@ C_SRCS = \
 	des.c \
 	handle.c \
 	implglue.c \
-	md2.c \
 	mpi.c \
 	rc2.c \
 	rc4.c \

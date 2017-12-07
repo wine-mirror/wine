@@ -56,8 +56,8 @@ BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext)
     switch (aiAlgid) 
     {
         case CALG_MD2:
-            md2_init(&pHashContext->md2);
-            return TRUE;
+            status = BCryptOpenAlgorithmProvider(&provider, BCRYPT_MD2_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+            break;
         
         case CALG_MD4:
             MD4Init(&pHashContext->md4);
@@ -99,10 +99,6 @@ BOOL update_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, const BYTE *pb
 {
     switch (aiAlgid)
     {
-        case CALG_MD2:
-            md2_process(&pHashContext->md2, pbData, dwDataLen);
-            break;
-        
         case CALG_MD4:
             MD4Update(&pHashContext->md4, pbData, dwDataLen);
             break;
@@ -126,10 +122,6 @@ BOOL finalize_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext, BYTE *pbHash
 {
     switch (aiAlgid)
     {
-        case CALG_MD2:
-            md2_done(&pHashContext->md2, pbHashValue);
-            break;
-        
         case CALG_MD4:
             MD4Final(&pHashContext->md4);
             memcpy(pbHashValue, pHashContext->md4.digest, 16);
@@ -158,7 +150,6 @@ BOOL duplicate_hash_impl(ALG_ID aiAlgid, const HASH_CONTEXT *pSrcHashContext,
 {
     switch (aiAlgid)
     {
-        case CALG_MD2:
         case CALG_MD4:
         case CALG_MD5:
         case CALG_SHA:

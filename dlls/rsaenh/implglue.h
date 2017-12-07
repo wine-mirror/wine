@@ -56,7 +56,6 @@ typedef struct tagSHA_CTX
 } SHA_CTX, *PSHA_CTX;
 
 typedef union tagHASH_CONTEXT {
-    md2_state md2;
     MD4_CTX md4;
     MD5_CTX md5;
     SHA_CTX sha;
