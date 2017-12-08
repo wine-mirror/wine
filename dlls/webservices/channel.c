@@ -1847,7 +1847,7 @@ struct receive_message
     void                          *value;
     ULONG                          size;
     ULONG                         *index;
-    const WS_ASYNC_CONTEXT        *ctx;
+    WS_ASYNC_CONTEXT               ctx;
 };
 
 static void receive_message_proc( struct task *task )
@@ -1858,9 +1858,9 @@ static void receive_message_proc( struct task *task )
     hr = receive_message( r->channel, r->msg, r->desc, r->count, r->option, r->read_option, r->heap, r->value,
                           r->size, r->index );
 
-    TRACE( "calling %p(%08x)\n", r->ctx->callback, hr );
-    r->ctx->callback( hr, WS_LONG_CALLBACK, r->ctx->callbackState );
-    TRACE( "%p returned\n", r->ctx->callback );
+    TRACE( "calling %p(%08x)\n", r->ctx.callback, hr );
+    r->ctx.callback( hr, WS_LONG_CALLBACK, r->ctx.callbackState );
+    TRACE( "%p returned\n", r->ctx.callback );
 }
 
 static HRESULT queue_receive_message( struct channel *channel, WS_MESSAGE *msg, const WS_MESSAGE_DESCRIPTION **desc,
@@ -1882,7 +1882,7 @@ static HRESULT queue_receive_message( struct channel *channel, WS_MESSAGE *msg, 
     r->value       = value;
     r->size        = size;
     r->index       = index;
-    r->ctx         = ctx;
+    r->ctx         = *ctx;
     return queue_task( &channel->recv_q, &r->task );
 }
 
