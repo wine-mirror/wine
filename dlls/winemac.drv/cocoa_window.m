@@ -2427,6 +2427,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                     _lastDisplayTime = now;
                 }
             }
+            else
+                [self setAutodisplay:YES];
         }
         [super setViewsNeedDisplay:value];
     }
@@ -2435,14 +2437,16 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         _lastDisplayTime = [[NSProcessInfo processInfo] systemUptime];
         [super display];
-        [self setAutodisplay:NO];
+        if (_lastDisplayID)
+            [self setAutodisplay:NO];
     }
 
     - (void) displayIfNeeded
     {
         _lastDisplayTime = [[NSProcessInfo processInfo] systemUptime];
         [super displayIfNeeded];
-        [self setAutodisplay:NO];
+        if (_lastDisplayID)
+            [self setAutodisplay:NO];
     }
 
     - (void) windowDidDrawContent
