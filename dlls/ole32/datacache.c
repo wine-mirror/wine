@@ -1842,22 +1842,10 @@ static HRESULT WINAPI DataCache_Save(
 {
     DataCache *This = impl_from_IPersistStorage(iface);
     DataCacheEntry *cache_entry;
-    BOOL dirty = FALSE;
     HRESULT hr = S_OK;
     unsigned short stream_number = 0;
 
     TRACE("(%p, %p, %d)\n", iface, pStg, fSameAsLoad);
-
-    dirty = This->dirty;
-    if (!dirty)
-    {
-        LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
-        {
-            dirty = cache_entry->dirty;
-            if (dirty)
-                break;
-        }
-    }
 
     /* assign stream numbers to the cache entries */
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
