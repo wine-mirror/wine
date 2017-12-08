@@ -14233,6 +14233,8 @@ static void test_create_unordered_access_view(void)
 
 #define FMT_UNKNOWN  DXGI_FORMAT_UNKNOWN
 #define RGBA8_UNORM  DXGI_FORMAT_R8G8B8A8_UNORM
+#define RGBA8_SRGB   DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+#define RGBA8_UINT   DXGI_FORMAT_R8G8B8A8_UINT
 #define RGBA8_TL     DXGI_FORMAT_R8G8B8A8_TYPELESS
 #define DIM_UNKNOWN  D3D11_UAV_DIMENSION_UNKNOWN
 #define TEX_1D       D3D11_UAV_DIMENSION_TEXTURE1D
@@ -14260,6 +14262,8 @@ static void test_create_unordered_access_view(void)
         {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D,       9},         {RGBA8_UNORM, TEX_2D,       9}},
         {{ 1, 1, RGBA8_TL},    {RGBA8_UNORM, TEX_2D,       0},         {RGBA8_UNORM, TEX_2D,       0}},
         {{10, 1, RGBA8_TL},    {RGBA8_UNORM, TEX_2D,       0},         {RGBA8_UNORM, TEX_2D,       0}},
+        {{ 1, 1, RGBA8_UINT},  {0},                                    {RGBA8_UINT,  TEX_2D,       0, 0, 1}},
+        {{ 1, 1, RGBA8_TL},    {RGBA8_UINT,  TEX_2D,       0, 0, ~0u}, {RGBA8_UINT,  TEX_2D,       0, 0, 1}},
         {{ 1, 4, RGBA8_UNORM}, {0},                                    {RGBA8_UNORM, TEX_2D_ARRAY, 0, 0, 4}},
         {{10, 4, RGBA8_UNORM}, {0},                                    {RGBA8_UNORM, TEX_2D_ARRAY, 0, 0, 4}},
         {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 0, ~0u}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 0, 4}},
@@ -14314,6 +14318,10 @@ static void test_create_unordered_access_view(void)
         {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D_ARRAY,  1, 0,  1}},
         {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D_ARRAY,  0, 0,  2}},
         {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D_ARRAY,  0, 1,  1}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UINT,  TEX_2D,        0, 0,  1}},
+        {{TEX_2D, 1, 1, RGBA8_UINT},  {RGBA8_UNORM, TEX_2D,        0, 0,  1}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_SRGB,  TEX_2D,        0, 0,  1}},
+        {{TEX_2D, 1, 1, RGBA8_SRGB},  {RGBA8_UNORM, TEX_2D,        0, 0,  1}},
         {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D,        0}},
         {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D_ARRAY,  0, 0,  1}},
         {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D,        0}},
@@ -14337,6 +14345,8 @@ static void test_create_unordered_access_view(void)
     };
 #undef FMT_UNKNOWN
 #undef RGBA8_UNORM
+#undef RGBA8_SRGB
+#undef RGBA8_UINT
 #undef RGBA8_TL
 #undef DIM_UNKNOWN
 #undef TEX_1D
