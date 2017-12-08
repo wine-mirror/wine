@@ -829,6 +829,7 @@ with_coreaudio
 with_cups
 with_curses
 with_dbus
+with_float_abi
 with_fontconfig
 with_freetype
 with_gettext
@@ -2388,6 +2389,7 @@ Optional Packages:
   --without-cups          do not use CUPS
   --without-curses        do not use (n)curses
   --without-dbus          do not use DBus (dynamic device support)
+  --with-float-abi=abi    specify the ABI (soft|softfp|hard) for ARM platforms
   --without-fontconfig    do not use fontconfig
   --without-freetype      do not use the FreeType library
   --without-gettext       do not use gettext
@@ -3542,6 +3544,12 @@ fi
 # Check whether --with-dbus was given.
 if test "${with_dbus+set}" = set; then :
   withval=$with_dbus;
+fi
+
+
+# Check whether --with-float-abi was given.
+if test "${with_float_abi+set}" = set; then :
+  withval=$with_float_abi;
 fi
 
 
@@ -5263,12 +5271,20 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-    CFLAGS="$CFLAGS -marm"
-    TARGETFLAGS="-marm"
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports floating point" >&5
-$as_echo_n "checking whether $CC supports floating point... " >&6; }
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    case $with_float_abi in
+      soft|softfp|hard)
+        float_abi=$with_float_abi ;;
+      *)
+        case $host_os in
+          *eabihf)
+            float_abi=hard ;;
+          *)
+            float_abi=softfp
+            saved_CFLAGS=$CFLAGS
+            CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mfloat-abi=$float_abi" >&5
+$as_echo_n "checking whether $CC supports -mfloat-abi=$float_abi... " >&6; }
+            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -5285,10 +5301,18 @@ $as_echo "yes" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                       as_fn_error $? "You need a target with floating point support to build Wine for ARM." "$LINENO" 5
+                               float_abi=soft
+                               as_fn_append wine_warnings "|Floating point is not supported for this target. The resulting build won't be compatible with Windows ARM binaries."
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
+            CFLAGS=$saved_CFLAGS
+        esac
+        ;;
+    esac
+    CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
+    TARGETFLAGS="-marm -mfloat-abi=$float_abi"
+
     ;;
   i[3456789]86*)
     enable_win16=${enable_win16:-yes}

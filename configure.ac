@@ -43,6 +43,7 @@ AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]))
 AC_ARG_WITH(curses,    AS_HELP_STRING([--without-curses],[do not use (n)curses]),
             [if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi])
 AC_ARG_WITH(dbus,      AS_HELP_STRING([--without-dbus],[do not use DBus (dynamic device support)]))
+AC_ARG_WITH(float-abi, AS_HELP_STRING([--with-float-abi=abi],[specify the ABI (soft|softfp|hard) for ARM platforms]))
 AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]))
 AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
 AC_ARG_WITH(gettext,   AS_HELP_STRING([--without-gettext],[do not use gettext]))
@@ -177,13 +178,29 @@ case $host in
                       [AC_MSG_RESULT([yes])],
                       [AC_MSG_RESULT([no])
                        AC_MSG_ERROR([You need a target with Thumb support to build Wine for ARM.])])
-    CFLAGS="$CFLAGS -marm"
-    AC_SUBST(TARGETFLAGS,"-marm")
-    AC_MSG_CHECKING([whether $CC supports floating point])
-    WINE_TRY_ASM_LINK(["vmrs r2,fpscr"],,,
-                      [AC_MSG_RESULT([yes])],
-                      [AC_MSG_RESULT([no])
-                       AC_MSG_ERROR([You need a target with floating point support to build Wine for ARM.])])
+    case $with_float_abi in
+      soft|softfp|hard)
+        float_abi=$with_float_abi ;;
+      *)
+        case $host_os in
+          *eabihf)
+            float_abi=hard ;;
+          *)
+            float_abi=softfp
+            saved_CFLAGS=$CFLAGS
+            CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
+            AC_MSG_CHECKING([whether $CC supports -mfloat-abi=$float_abi])
+            WINE_TRY_ASM_LINK(["vmrs r2,fpscr"],,,
+                              [AC_MSG_RESULT([yes])],
+                              [AC_MSG_RESULT([no])
+                               float_abi=soft
+                               WINE_WARNING([Floating point is not supported for this target. The resulting build won't be compatible with Windows ARM binaries.])])
+            CFLAGS=$saved_CFLAGS
+        esac
+        ;;
+    esac
+    CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
+    AC_SUBST(TARGETFLAGS,"-marm -mfloat-abi=$float_abi")
     ;;
   i[[3456789]]86*)
     enable_win16=${enable_win16:-yes}
