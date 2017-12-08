@@ -3893,10 +3893,6 @@ HRESULT WINAPI WsWriteType( WS_XML_WRITER *handle, WS_TYPE_MAPPING mapping, WS_T
 
     case WS_ELEMENT_TYPE_MAPPING:
     case WS_ELEMENT_CONTENT_TYPE_MAPPING:
-        if (writer->state != WRITER_STATE_STARTELEMENT) hr = WS_E_INVALID_FORMAT;
-        else hr = write_type( writer, mapping, type, desc, option, value, size );
-        break;
-
     case WS_ANY_ELEMENT_TYPE_MAPPING:
         hr = write_type( writer, mapping, type, desc, option, value, size );
         break;
