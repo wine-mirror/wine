@@ -6910,7 +6910,7 @@ for ac_header in \
 	AudioUnit/AudioComponent.h \
 	CL/cl.h \
 	Carbon/Carbon.h \
-	CommonCrypto/CommonDigest.h \
+	CommonCrypto/CommonCryptor.h \
 	CoreAudio/CoreAudio.h \
 	CoreServices/CoreServices.h \
 	DiskArbitration/DiskArbitration.h \
