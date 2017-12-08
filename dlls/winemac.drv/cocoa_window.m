@@ -166,6 +166,8 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     NSTimeInterval _actualRefreshPeriod;
     NSTimeInterval _nominalRefreshPeriod;
+
+    NSTimeInterval _lastDisplayTime;
 }
 
     - (id) initWithDisplayID:(CGDirectDisplayID)displayID;
@@ -224,7 +226,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             [_windows addObject:window];
         }
         if (firstWindow || !CVDisplayLinkIsRunning(_link))
-            CVDisplayLinkStart(_link);
+            [self start];
     }
 
     - (void) removeWindow:(WineWindow*)window
@@ -256,7 +258,11 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                     anyDisplayed = YES;
                 }
             }
-            if (!anyDisplayed)
+
+            NSTimeInterval now = [[NSProcessInfo processInfo] systemUptime];
+            if (anyDisplayed)
+                _lastDisplayTime = now;
+            else if (_lastDisplayTime + 2.0 < now)
                 CVDisplayLinkStop(_link);
         });
         [windows release];
@@ -279,6 +285,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (void) start
     {
+        _lastDisplayTime = [[NSProcessInfo processInfo] systemUptime];
         CVDisplayLinkStart(_link);
     }
 
