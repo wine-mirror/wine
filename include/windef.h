@@ -69,7 +69,7 @@ extern "C" {
 #  else
 #   define __stdcall __attribute__((ms_abi))
 #  endif
-# elif defined(__arm__) && defined (__GNUC__)
+# elif defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__)
 #   define __stdcall __attribute__((pcs("aapcs-vfp")))
 # else  /* __i386__ */
 #  define __stdcall
@@ -89,7 +89,7 @@ extern "C" {
 #  else
 #   define __cdecl __attribute__((ms_abi))
 #  endif
-# elif defined(__arm__) && defined (__GNUC__)
+# elif defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__)
 #   define __cdecl __attribute__((pcs("aapcs-vfp")))
 # elif !defined(_MSC_VER)
 #  define __cdecl
@@ -114,7 +114,7 @@ extern "C" {
 # endif
 #endif
 
-#if defined(__arm__) && defined (__GNUC__)
+#if defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__)
 # define WINAPIV __attribute__((pcs("aapcs")))
 #else
 # define WINAPIV __cdecl
