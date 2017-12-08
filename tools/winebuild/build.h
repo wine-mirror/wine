@@ -362,6 +362,7 @@ extern struct strarray ld_command;
 extern struct strarray nm_command;
 extern char *cpu_option;
 extern char *arch_option;
+extern const char *float_abi_option;
 extern int thumb_mode;
 extern int needs_get_pc_thunk;
 
