@@ -286,18 +286,23 @@ static ULONG handle_UserSize(ULONG *pFlags, ULONG StartingSize, HANDLE *handle)
         RaiseException(RPC_S_INVALID_TAG, 0, 0, NULL);
         return StartingSize;
     }
+
+    ALIGN_LENGTH(StartingSize, 3);
     return StartingSize + sizeof(RemotableHandle);
 }
 
 static unsigned char * handle_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HANDLE *handle)
 {
-    RemotableHandle *remhandle = (RemotableHandle *)pBuffer;
+    RemotableHandle *remhandle;
     if (LOWORD(*pFlags) == MSHCTX_DIFFERENTMACHINE)
     {
         ERR("can't remote a local handle\n");
         RaiseException(RPC_S_INVALID_TAG, 0, 0, NULL);
         return pBuffer;
     }
+
+    ALIGN_POINTER(pBuffer, 3);
+    remhandle = (RemotableHandle *)pBuffer;
     remhandle->fContext = WDT_INPROC_CALL;
     remhandle->u.hInproc = (LONG_PTR)*handle;
     return pBuffer + sizeof(RemotableHandle);
@@ -305,7 +310,10 @@ static unsigned char * handle_UserMarshal(ULONG *pFlags, unsigned char *pBuffer,
 
 static unsigned char * handle_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HANDLE *handle)
 {
-    RemotableHandle *remhandle = (RemotableHandle *)pBuffer;
+    RemotableHandle *remhandle;
+
+    ALIGN_POINTER(pBuffer, 3);
+    remhandle = (RemotableHandle *)pBuffer;
     if (remhandle->fContext != WDT_INPROC_CALL)
         RaiseException(RPC_X_BAD_STUB_DATA, 0, 0, NULL);
     *handle = (HANDLE)(LONG_PTR)remhandle->u.hInproc;

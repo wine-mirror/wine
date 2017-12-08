@@ -225,25 +225,27 @@ static void test_marshal_HWND(void)
     USER_MARSHAL_CB umcb;
     MIDL_STUB_MESSAGE stub_msg;
     RPC_MESSAGE rpc_msg;
-    unsigned char *buffer;
+    unsigned char *buffer, *buffer_end;
     ULONG size;
     HWND hwnd = GetDesktopWindow();
     HWND hwnd2;
     wireHWND wirehwnd;
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
-    size = HWND_UserSize(&umcb.Flags, 0, &hwnd);
-    ok(size == sizeof(*wirehwnd), "Wrong size %d\n", size);
+    size = HWND_UserSize(&umcb.Flags, 1, &hwnd);
+    ok(size == 4 + sizeof(*wirehwnd), "Wrong size %d\n", size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HWND_UserMarshal(&umcb.Flags, buffer, &hwnd);
-    wirehwnd = (wireHWND)buffer;
+    buffer_end = HWND_UserMarshal(&umcb.Flags, buffer + 1, &hwnd);
+    ok(buffer_end == buffer + size, "got %p buffer %p\n", buffer_end, buffer);
+    wirehwnd = (wireHWND)(buffer + 4);
     ok(wirehwnd->fContext == WDT_INPROC_CALL, "Context should be WDT_INPROC_CALL instead of 0x%08x\n", wirehwnd->fContext);
     ok(wirehwnd->u.hInproc == (LONG_PTR)hwnd, "Marshaled value should be %p instead of %x\n", hwnd, wirehwnd->u.hRemote);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HWND_UserUnmarshal(&umcb.Flags, buffer, &hwnd2);
+    buffer_end = HWND_UserUnmarshal(&umcb.Flags, buffer + 1, &hwnd2);
+    ok(buffer_end == buffer + size, "got %p buffer %p\n", buffer_end, buffer);
     ok(hwnd == hwnd2, "Didn't unmarshal properly\n");
     HeapFree(GetProcessHeap(), 0, buffer);
 
@@ -1092,23 +1094,25 @@ static void test_marshal_HDC(void)
     HDC hdc = GetDC(0), hdc2;
     USER_MARSHAL_CB umcb;
     RPC_MESSAGE rpc_msg;
-    unsigned char *buffer;
+    unsigned char *buffer, *buffer_end;
     wireHDC wirehdc;
     ULONG size;
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
-    size = HDC_UserSize(&umcb.Flags, 0, &hdc);
-    ok(size == sizeof(*wirehdc), "Wrong size %d\n", size);
+    size = HDC_UserSize(&umcb.Flags, 1, &hdc);
+    ok(size == 4 + sizeof(*wirehdc), "Wrong size %d\n", size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HDC_UserMarshal(&umcb.Flags, buffer, &hdc);
-    wirehdc = (wireHDC)buffer;
+    buffer_end = HDC_UserMarshal(&umcb.Flags, buffer + 1, &hdc);
+    ok(buffer_end == buffer + 4 + sizeof(*wirehdc), "got %p buffer %p\n", buffer_end, buffer);
+    wirehdc = (wireHDC)(buffer + 4);
     ok(wirehdc->fContext == WDT_INPROC_CALL, "Context should be WDT_INPROC_CALL instead of 0x%08x\n", wirehdc->fContext);
     ok(wirehdc->u.hInproc == (LONG_PTR)hdc, "Marshaled value should be %p instead of %x\n", hdc, wirehdc->u.hRemote);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HDC_UserUnmarshal(&umcb.Flags, buffer, &hdc2);
+    buffer_end = HDC_UserUnmarshal(&umcb.Flags, buffer + 1, &hdc2);
+    ok(buffer_end == buffer + 4 + sizeof(*wirehdc), "got %p buffer %p\n", buffer_end, buffer);
     ok(hdc == hdc2, "Didn't unmarshal properly\n");
     HeapFree(GetProcessHeap(), 0, buffer);
 
@@ -1124,7 +1128,7 @@ static void test_marshal_HICON(void)
     HICON hIcon, hIcon2;
     USER_MARSHAL_CB umcb;
     RPC_MESSAGE rpc_msg;
-    unsigned char *buffer;
+    unsigned char *buffer, *buffer_end;
     wireHICON wirehicon;
     ULONG size;
 
@@ -1132,18 +1136,20 @@ static void test_marshal_HICON(void)
     ok(hIcon != 0, "CreateIcon failed\n");
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
-    size = HICON_UserSize(&umcb.Flags, 0, &hIcon);
-    ok(size == sizeof(*wirehicon), "Wrong size %d\n", size);
+    size = HICON_UserSize(&umcb.Flags, 1, &hIcon);
+    ok(size == 4 + sizeof(*wirehicon), "Wrong size %d\n", size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HICON_UserMarshal(&umcb.Flags, buffer, &hIcon);
-    wirehicon = (wireHICON)buffer;
+    buffer_end = HICON_UserMarshal(&umcb.Flags, buffer + 1, &hIcon);
+    ok(buffer_end == buffer + 4 + sizeof(*wirehicon), "got %p buffer %p\n", buffer_end, buffer);
+    wirehicon = (wireHICON)(buffer + 4);
     ok(wirehicon->fContext == WDT_INPROC_CALL, "Context should be WDT_INPROC_CALL instead of 0x%08x\n", wirehicon->fContext);
     ok(wirehicon->u.hInproc == (LONG_PTR)hIcon, "Marshaled value should be %p instead of %x\n", hIcon, wirehicon->u.hRemote);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HICON_UserUnmarshal(&umcb.Flags, buffer, &hIcon2);
+    buffer_end = HICON_UserUnmarshal(&umcb.Flags, buffer + 1, &hIcon2);
+    ok(buffer_end == buffer + 4 + sizeof(*wirehicon), "got %p buffer %p\n", buffer_end, buffer);
     ok(hIcon == hIcon2, "Didn't unmarshal properly\n");
     HeapFree(GetProcessHeap(), 0, buffer);
 
@@ -1158,7 +1164,7 @@ static void test_marshal_HBRUSH(void)
     HBRUSH hBrush, hBrush2;
     USER_MARSHAL_CB umcb;
     RPC_MESSAGE rpc_msg;
-    unsigned char *buffer;
+    unsigned char *buffer, *buffer_end;
     LOGBRUSH logbrush;
     wireHBRUSH wirehbrush;
     ULONG size;
@@ -1171,18 +1177,20 @@ static void test_marshal_HBRUSH(void)
     ok(hBrush != 0, "CreateBrushIndirect failed\n");
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
-    size = HBRUSH_UserSize(&umcb.Flags, 0, &hBrush);
-    ok(size == sizeof(*wirehbrush), "Wrong size %d\n", size);
+    size = HBRUSH_UserSize(&umcb.Flags, 1, &hBrush);
+    ok(size == 4 + sizeof(*wirehbrush), "Wrong size %d\n", size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HBRUSH_UserMarshal(&umcb.Flags, buffer, &hBrush);
-    wirehbrush = (wireHBRUSH)buffer;
+    buffer_end = HBRUSH_UserMarshal(&umcb.Flags, buffer + 1, &hBrush);
+    ok(buffer_end == buffer + 4 + sizeof(*wirehbrush), "got %p buffer %p\n", buffer_end, buffer);
+    wirehbrush = (wireHBRUSH)(buffer + 4);
     ok(wirehbrush->fContext == WDT_INPROC_CALL, "Context should be WDT_INPROC_CALL instead of 0x%08x\n", wirehbrush->fContext);
     ok(wirehbrush->u.hInproc == (LONG_PTR)hBrush, "Marshaled value should be %p instead of %x\n", hBrush, wirehbrush->u.hRemote);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HBRUSH_UserUnmarshal(&umcb.Flags, buffer, &hBrush2);
+    buffer_end = HBRUSH_UserUnmarshal(&umcb.Flags, buffer + 1, &hBrush2);
+    ok(buffer_end == buffer + 4 + sizeof(*wirehbrush), "got %p buffer %p\n", buffer_end, buffer);
     ok(hBrush == hBrush2, "Didn't unmarshal properly\n");
     HeapFree(GetProcessHeap(), 0, buffer);
 
