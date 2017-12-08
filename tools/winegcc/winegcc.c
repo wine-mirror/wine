@@ -1537,7 +1537,9 @@ int main(int argc, char **argv)
                         strarray_add(opts.winebuild_args, argv[i]);
 			raw_linker_arg = 1;
                     }
-                    else if (strncmp("-mcpu=", argv[i], 6) == 0 || strncmp("-march=", argv[i], 7) == 0)
+                    else if (!strncmp("-mcpu=", argv[i], 6) ||
+                             !strncmp("-march=", argv[i], 7) ||
+                             !strncmp("-mfloat-abi=", argv[i], 12))
                         strarray_add(opts.winebuild_args, argv[i]);
 		    break;
                 case 'n':
