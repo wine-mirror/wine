@@ -1233,9 +1233,8 @@ static HRESULT CALLBACK dict_cb( void *state, const WS_XML_STRING *str, BOOL *fo
 static HRESULT init_writer( struct channel *channel )
 {
     WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
-    WS_XML_WRITER_TEXT_ENCODING text = {{WS_XML_WRITER_ENCODING_TYPE_TEXT}};
+    WS_XML_WRITER_TEXT_ENCODING text = {{WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8};
     WS_XML_WRITER_BINARY_ENCODING bin = {{WS_XML_WRITER_ENCODING_TYPE_BINARY}};
-    WS_XML_WRITER_ENCODING *encoding;
     HRESULT hr;
 
     if (!channel->writer && (hr = WsCreateWriter( NULL, 0, &channel->writer, NULL )) != S_OK) return hr;
@@ -1243,29 +1242,23 @@ static HRESULT init_writer( struct channel *channel )
     switch (channel->encoding)
     {
     case WS_ENCODING_XML_UTF8:
-        text.charSet = WS_CHARSET_UTF8;
-        encoding = &text.encoding;
-        break;
+        return WsSetOutput( channel->writer, &text.encoding, &buf.output, NULL, 0, NULL );
 
     case WS_ENCODING_XML_BINARY_SESSION_1:
-        if ((hr = writer_enable_lookup( channel->writer )) != S_OK) return hr;
         clear_dict( &channel->dict_send );
         bin.staticDictionary           = (WS_XML_DICTIONARY *)&dict_builtin_static.dict;
         bin.dynamicStringCallback      = dict_cb;
         bin.dynamicStringCallbackState = &channel->dict_send;
-        encoding = &bin.encoding;
-        break;
+        if ((hr = WsSetOutput( channel->writer, &bin.encoding, &buf.output, NULL, 0, NULL )) != S_OK) return hr;
+        return writer_enable_lookup( channel->writer );
 
     case WS_ENCODING_XML_BINARY_1:
-        encoding = &bin.encoding;
-        break;
+        return WsSetOutput( channel->writer, &bin.encoding, &buf.output, NULL, 0, NULL );
 
     default:
         FIXME( "unhandled encoding %u\n", channel->encoding );
         return WS_E_NOT_SUPPORTED;
     }
-
-    return WsSetOutput( channel->writer, encoding, &buf.output, NULL, 0, NULL );
 }
 
 /**************************************************************************
