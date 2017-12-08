@@ -6867,7 +6867,8 @@ DispCallFunc(
     } regs;
     int rcount;     /* 32-bit register index count */
 #ifndef __SOFTFP__
-    int scount = 0; /* single-precision float register index count (will be incremented twice for doubles, plus alignment) */
+    int scount = 0; /* single-precision float register index count */
+    int dcount = 0; /* double-precision float register index count */
 #endif
 
     TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
@@ -6921,15 +6922,13 @@ DispCallFunc(
         case VT_R8:             /* these must be 8-byte aligned, and put in 'd' regs or stack, as they are double-floats */
         case VT_DATE:
 #ifndef __SOFTFP__
-            if (scount < 15)
+            dcount = max( (scount + 1) / 2, dcount );
+            if (dcount < 8)
             {
-                scount += (scount % 2); /* align scount to next whole double */
-                regs.sd.d[scount/2] = V_R8(arg);
-                scount += 2;
+                regs.sd.d[dcount++] = V_R8(arg);
             }
             else
             {
-                scount = 16;                /* Make sure we flag that all 's' regs are full */
                 argspos += (argspos % 2);   /* align argspos to 8-bytes */
                 memcpy( &args[argspos], &V_R8(arg), sizeof(V_R8(arg)) );
                 argspos += sizeof(V_R8(arg)) / sizeof(DWORD);
@@ -6981,6 +6980,7 @@ DispCallFunc(
             break;
         case VT_R4:             /* these must be 4-byte aligned, and put in 's' regs or stack, as they are single-floats */
 #ifndef __SOFTFP__
+            if (!(scount % 2)) scount = max( scount, dcount * 2 );
             if (scount < 16)
                 regs.sd.s[scount++] = V_R4(arg);
             else
