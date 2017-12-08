@@ -151,6 +151,7 @@ __ASM_GLOBAL_FUNC(MSVCRT__setjmpex,
                   "str r11, [r0, #0x20]\n\t"      /* jmp_buf->R11 */
                   "str sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
                   "str lr, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
+#ifndef __SOFTFP__
                   "vmrs r2, fpscr\n\t"
                   "str r2, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
                   "vstr d8,  [r0, #0x30]\n\t"     /* jmp_buf->D[0] */
@@ -161,6 +162,7 @@ __ASM_GLOBAL_FUNC(MSVCRT__setjmpex,
                   "vstr d13, [r0, #0x58]\n\t"     /* jmp_buf->D[5] */
                   "vstr d14, [r0, #0x60]\n\t"     /* jmp_buf->D[6] */
                   "vstr d15, [r0, #0x68]\n\t"     /* jmp_buf->D[7] */
+#endif
                   "mov r0, #0\n\t"
                   "bx lr");
 
@@ -177,6 +179,7 @@ __ASM_GLOBAL_FUNC(longjmp_set_regs,
                   "ldr r11, [r0, #0x20]\n\t"      /* jmp_buf->R11 */
                   "ldr sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
                   "ldr r2, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
+#ifndef __SOFTFP__
                   "ldr r3, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
                   "vmsr fpscr, r3\n\t"
                   "vldr d8,  [r0, #0x30]\n\t"     /* jmp_buf->D[0] */
@@ -187,6 +190,7 @@ __ASM_GLOBAL_FUNC(longjmp_set_regs,
                   "vldr d13, [r0, #0x58]\n\t"     /* jmp_buf->D[5] */
                   "vldr d14, [r0, #0x60]\n\t"     /* jmp_buf->D[6] */
                   "vldr d15, [r0, #0x68]\n\t"     /* jmp_buf->D[7] */
+#endif
                   "mov r0, r1\n\t"                /* retval */
                   "bx r2");
 
