@@ -347,7 +347,7 @@ static void test_marshal_HENHMETAFILE(void)
     USER_MARSHAL_CB umcb;
     MIDL_STUB_MESSAGE stub_msg;
     RPC_MESSAGE rpc_msg;
-    unsigned char *buffer;
+    unsigned char *buffer, *buffer_end;
     ULONG size;
     HENHMETAFILE hemf;
     HENHMETAFILE hemf2 = NULL;
@@ -356,26 +356,28 @@ static void test_marshal_HENHMETAFILE(void)
     hemf = create_emf();
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-    size = HENHMETAFILE_UserSize(&umcb.Flags, 0, &hemf);
-    ok(size > 20, "size should be at least 20 bytes, not %d\n", size);
+    size = HENHMETAFILE_UserSize(&umcb.Flags, 1, &hemf);
+    ok(size > 24, "size should be at least 24 bytes, not %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    HENHMETAFILE_UserMarshal(&umcb.Flags, buffer, &hemf);
-    wirehemf = buffer;
+    buffer_end = HENHMETAFILE_UserMarshal(&umcb.Flags, buffer + 1, &hemf);
+    ok(buffer_end == buffer + size, "got %p buffer %p\n", buffer_end, buffer);
+    wirehemf = buffer + 4;
     ok(*(DWORD *)wirehemf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
     ok(*(DWORD *)wirehemf == (DWORD)(DWORD_PTR)hemf, "wirestgm + 0x4 should be hemf instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
-    ok(*(DWORD *)wirehemf == (size - 0x10), "wirestgm + 0x8 should be size - 0x10 instead of 0x%08x\n", *(DWORD *)wirehemf);
+    ok(*(DWORD *)wirehemf == (size - 0x14), "wirestgm + 0x8 should be size - 0x14 instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
-    ok(*(DWORD *)wirehemf == (size - 0x10), "wirestgm + 0xc should be size - 0x10 instead of 0x%08x\n", *(DWORD *)wirehemf);
+    ok(*(DWORD *)wirehemf == (size - 0x14), "wirestgm + 0xc should be size - 0x14 instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
     ok(*(DWORD *)wirehemf == EMR_HEADER, "wirestgm + 0x10 should be EMR_HEADER instead of %d\n", *(DWORD *)wirehemf);
     /* ... rest of data not tested - refer to tests for GetEnhMetaFileBits
      * at this point */
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    HENHMETAFILE_UserUnmarshal(&umcb.Flags, buffer, &hemf2);
+    buffer_end = HENHMETAFILE_UserUnmarshal(&umcb.Flags, buffer + 1, &hemf2);
+    ok(buffer_end == buffer + size, "got %p buffer %p\n", buffer_end, buffer);
     ok(hemf2 != NULL, "HENHMETAFILE didn't unmarshal\n");
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
@@ -386,18 +388,20 @@ static void test_marshal_HENHMETAFILE(void)
     hemf = NULL;
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-    size = HENHMETAFILE_UserSize(&umcb.Flags, 0, &hemf);
-    ok(size == 8, "size should be 8 bytes, not %d\n", size);
+    size = HENHMETAFILE_UserSize(&umcb.Flags, 1, &hemf);
+    ok(size == 12, "size should be 12 bytes, not %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    HENHMETAFILE_UserMarshal(&umcb.Flags, buffer, &hemf);
-    wirehemf = buffer;
+    buffer_end = HENHMETAFILE_UserMarshal(&umcb.Flags, buffer + 1, &hemf);
+    ok(buffer_end == buffer + size, "got %p buffer %p\n", buffer_end, buffer);
+    wirehemf = buffer + 4;
     ok(*(DWORD *)wirehemf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
     ok(*(DWORD *)wirehemf == (DWORD)(DWORD_PTR)hemf, "wirestgm + 0x4 should be hemf instead of 0x%08x\n", *(DWORD *)wirehemf);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    HENHMETAFILE_UserUnmarshal(&umcb.Flags, buffer, &hemf2);
+    buffer_end = HENHMETAFILE_UserUnmarshal(&umcb.Flags, buffer + 1, &hemf2);
+    ok(buffer_end == buffer + size, "got %p buffer %p\n", buffer_end, buffer);
     ok(hemf2 == NULL, "NULL HENHMETAFILE didn't unmarshal\n");
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);

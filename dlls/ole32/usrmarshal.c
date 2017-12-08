@@ -1095,11 +1095,11 @@ void __RPC_USER HMETAFILE_UserFree(ULONG *pFlags, HMETAFILE *phmf)
 *  the first parameter is a ULONG.
 *  This function is only intended to be called by the RPC runtime.
 */
-ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HENHMETAFILE *phEmf)
+ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG size, HENHMETAFILE *phEmf)
 {
-    ULONG size = StartingSize;
+    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), size, *phEmf);
 
-    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, *phEmf);
+    ALIGN_LENGTH(size, 3);
 
     size += sizeof(ULONG);
     if (LOWORD(*pFlags) == MSHCTX_INPROC)
@@ -1143,6 +1143,8 @@ ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HENHME
 unsigned char * __RPC_USER HENHMETAFILE_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HENHMETAFILE *phEmf)
 {
     TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *phEmf);
+
+    ALIGN_POINTER(pBuffer, 3);
 
     if (LOWORD(*pFlags) == MSHCTX_INPROC)
     {
@@ -1201,6 +1203,8 @@ unsigned char * __RPC_USER HENHMETAFILE_UserUnmarshal(ULONG *pFlags, unsigned ch
     ULONG fContext;
 
     TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, phEmf);
+
+    ALIGN_POINTER(pBuffer, 3);
 
     fContext = *(ULONG *)pBuffer;
     pBuffer += sizeof(ULONG);
