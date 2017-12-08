@@ -110,6 +110,7 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
     static const WCHAR whql_colonW[] = {'w','h','q','l',':',0};
     static const WCHAR offW[] = {'o','f','f',0};
     static const WCHAR onW[] = {'o','n',0};
+    static const WCHAR dontskipW[] = {'d','o','n','t','s','k','i','p',0};
 
     info->whql_check = FALSE;
     info->output_type = OUTPUT_NONE;
@@ -163,6 +164,14 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
                 return FALSE;
 
             break;
+
+        case 'd':
+        case 'D':
+            if (strncmpiW(cmdline, dontskipW, 8))
+                return FALSE;
+            cmdline += 8;
+            break;
+
         default:
             return FALSE;
         }
