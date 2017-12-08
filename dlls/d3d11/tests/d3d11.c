@@ -92,7 +92,8 @@ struct device_desc
 struct swapchain_desc
 {
     BOOL windowed;
-    UINT buffer_count;
+    unsigned buffer_count;
+    unsigned int width, height;
     DXGI_SWAP_EFFECT swap_effect;
     DWORD flags;
 };
@@ -1101,7 +1102,8 @@ static BOOL check_compute_shaders_via_sm4_support(ID3D11Device *device)
     return options.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
 }
 
-static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window, const struct swapchain_desc *swapchain_desc)
+static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window,
+        const struct swapchain_desc *swapchain_desc)
 {
     DXGI_SWAP_CHAIN_DESC dxgi_desc;
     IDXGISwapChain *swapchain;
@@ -1140,6 +1142,10 @@ static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window, const
         dxgi_desc.Windowed = swapchain_desc->windowed;
         dxgi_desc.SwapEffect = swapchain_desc->swap_effect;
         dxgi_desc.BufferCount = swapchain_desc->buffer_count;
+        if (swapchain_desc->width)
+            dxgi_desc.BufferDesc.Width = swapchain_desc->width;
+        if (swapchain_desc->height)
+            dxgi_desc.BufferDesc.Height = swapchain_desc->height;
 
         if (swapchain_desc->flags & SWAPCHAIN_FLAG_SHADER_INPUT)
             dxgi_desc.BufferUsage |= DXGI_USAGE_SHADER_INPUT;
@@ -1170,10 +1176,12 @@ struct d3d11_test_context
     ID3D11Buffer *ps_cb;
 };
 
-#define init_test_context(c, l) init_test_context_(__LINE__, c, l)
+#define init_test_context(a, b) init_test_context_(__LINE__, a, b, NULL)
+#define init_test_context_ext(a, b, c) init_test_context_(__LINE__, a, b, c)
 static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *context,
-        const D3D_FEATURE_LEVEL *feature_level)
+        const D3D_FEATURE_LEVEL *feature_level, const struct swapchain_desc *swapchain_desc)
 {
+    unsigned int rt_width, rt_height;
     struct device_desc device_desc;
     D3D11_VIEWPORT vp;
     HRESULT hr;
@@ -1188,11 +1196,14 @@ static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *con
         skip_(__FILE__, line)("Failed to create device.\n");
         return FALSE;
     }
-    SetRect(&rect, 0, 0, 640, 480);
+
+    rt_width = swapchain_desc && swapchain_desc->width ? swapchain_desc->width : 640;
+    rt_height = swapchain_desc && swapchain_desc->height ? swapchain_desc->height : 480;
+    SetRect(&rect, 0, 0, rt_width, rt_height);
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
     context->window = CreateWindowA("static", "d3d11_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
-    context->swapchain = create_swapchain(context->device, context->window, NULL);
+    context->swapchain = create_swapchain(context->device, context->window, swapchain_desc);
     hr = IDXGISwapChain_GetBuffer(context->swapchain, 0, &IID_ID3D11Texture2D, (void **)&context->backbuffer);
     ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
 
@@ -1206,8 +1217,8 @@ static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *con
 
     vp.TopLeftX = 0.0f;
     vp.TopLeftY = 0.0f;
-    vp.Width = 640.0f;
-    vp.Height = 480.0f;
+    vp.Width = rt_width;
+    vp.Height = rt_height;
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
     ID3D11DeviceContext_RSSetViewports(context->immediate_context, 1, &vp);
@@ -11223,6 +11234,7 @@ static void test_swapchain_flip(void)
     window = CreateWindowA("static", "d3d11_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
     desc.buffer_count = 3;
+    desc.width = desc.height = 0;
     desc.swap_effect = DXGI_SWAP_EFFECT_SEQUENTIAL;
     desc.windowed = TRUE;
     desc.flags = SWAPCHAIN_FLAG_SHADER_INPUT;
@@ -22263,6 +22275,7 @@ static void test_depth_bias(void)
     };
     struct d3d11_test_context test_context;
     D3D11_RASTERIZER_DESC rasterizer_desc;
+    struct swapchain_desc swapchain_desc;
     D3D11_TEXTURE2D_DESC texture_desc;
     double m, r, bias, depth, data;
     ID3D11DeviceContext *context;
@@ -22271,11 +22284,11 @@ static void test_depth_bias(void)
     unsigned int expected_value;
     ID3D11RasterizerState *rs;
     ID3D11Texture2D *texture;
-    float depth_values[480];
     unsigned int format_idx;
     unsigned int x, y, i, j;
     unsigned int shift = 0;
     ID3D11Device *device;
+    float *depth_values;
     DXGI_FORMAT format;
     const UINT32 *u32;
     const UINT16 *u16;
@@ -22314,7 +22327,13 @@ static void test_depth_bias(void)
         DXGI_FORMAT_D16_UNORM,
     };
 
-    if (!init_test_context(&test_context, NULL))
+    swapchain_desc.windowed = TRUE;
+    swapchain_desc.buffer_count = 1;
+    swapchain_desc.width = 200;
+    swapchain_desc.height = 200;
+    swapchain_desc.swap_effect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.flags = 0;
+    if (!init_test_context_ext(&test_context, NULL, &swapchain_desc))
         return;
 
     device = test_context.device;
@@ -22328,6 +22347,9 @@ static void test_depth_bias(void)
     rasterizer_desc.DepthBiasClamp = 0.0f;
     rasterizer_desc.SlopeScaledDepthBias = 0.0f;
     rasterizer_desc.DepthClipEnable = TRUE;
+
+    depth_values = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*depth_values) * swapchain_desc.height);
+    ok(!!depth_values, "Failed to allocate memory.\n");
 
     for (format_idx = 0; format_idx < ARRAY_SIZE(formats); ++format_idx)
     {
@@ -22496,7 +22518,7 @@ static void test_depth_bias(void)
                     {
                         case DXGI_FORMAT_D32_FLOAT:
                             data = get_readback_float(&rb, 0, y);
-                            ok(compare_float(data, depth, 140),
+                            ok(compare_float(data, depth, 64),
                                     "Got depth %.8e, expected %.8e.\n", data, depth);
                             break;
                         case DXGI_FORMAT_D24_UNORM_S8_UINT:
@@ -22528,6 +22550,7 @@ static void test_depth_bias(void)
         ID3D11DepthStencilView_Release(dsv);
     }
 
+    HeapFree(GetProcessHeap(), 0, depth_values);
     release_test_context(&test_context);
 }
 
