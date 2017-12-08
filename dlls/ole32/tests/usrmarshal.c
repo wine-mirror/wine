@@ -502,12 +502,12 @@ static void test_marshal_HMETAFILEPICT(void)
     GlobalUnlock(hmfp);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-    size = HMETAFILEPICT_UserSize(&umcb.Flags, 0, &hmfp);
-    ok(size > 20, "size should be at least 20 bytes, not %d\n", size);
+    size = HMETAFILEPICT_UserSize(&umcb.Flags, 1, &hmfp);
+    ok(size > 24, "size should be at least 24 bytes, not %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    buffer_end = HMETAFILEPICT_UserMarshal(&umcb.Flags, buffer, &hmfp);
-    wirehmfp = buffer;
+    buffer_end = HMETAFILEPICT_UserMarshal(&umcb.Flags, buffer + 1, &hmfp);
+    wirehmfp = buffer + 4;
     ok(*(DWORD *)wirehmfp == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmfp);
     wirehmfp += sizeof(DWORD);
     ok(*(DWORD *)wirehmfp == (DWORD)(DWORD_PTR)hmfp, "wirestgm + 0x4 should be hmf instead of 0x%08x\n", *(DWORD *)wirehmfp);
@@ -528,16 +528,16 @@ static void test_marshal_HMETAFILEPICT(void)
     wirehmfp += sizeof(DWORD);
     /* Note use (buffer_end - buffer) instead of size here, because size is an
      * overestimate with native */
-    ok(*(DWORD *)wirehmfp == (buffer_end - buffer - 0x28), "wirestgm + 0x20 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    ok(*(DWORD *)wirehmfp == (buffer_end - buffer - 0x2c), "wirestgm + 0x20 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
     wirehmfp += sizeof(DWORD);
-    ok(*(DWORD *)wirehmfp == (buffer_end - buffer - 0x28), "wirestgm + 0x24 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    ok(*(DWORD *)wirehmfp == (buffer_end - buffer - 0x2c), "wirestgm + 0x24 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
     wirehmfp += sizeof(DWORD);
     ok(*(WORD *)wirehmfp == 1, "wirehmfp + 0x28 should be 1 instead of 0x%08x\n", *(DWORD *)wirehmfp);
     /* ... rest of data not tested - refer to tests for GetMetaFileBits
      * at this point */
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    HMETAFILEPICT_UserUnmarshal(&umcb.Flags, buffer, &hmfp2);
+    HMETAFILEPICT_UserUnmarshal(&umcb.Flags, buffer + 1, &hmfp2);
     ok(hmfp2 != NULL, "HMETAFILEPICT didn't unmarshal\n");
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
@@ -551,12 +551,13 @@ static void test_marshal_HMETAFILEPICT(void)
     hmfp = NULL;
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-    size = HMETAFILEPICT_UserSize(&umcb.Flags, 0, &hmfp);
-    ok(size == 8, "size should be 8 bytes, not %d\n", size);
+    size = HMETAFILEPICT_UserSize(&umcb.Flags, 1, &hmfp);
+    ok(size == 12, "size should be 12 bytes, not %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    HMETAFILEPICT_UserMarshal(&umcb.Flags, buffer, &hmfp);
-    wirehmfp = buffer;
+    buffer_end = HMETAFILEPICT_UserMarshal(&umcb.Flags, buffer + 1, &hmfp);
+    ok(buffer_end == buffer + size, "got %p buffer %p\n", buffer_end, buffer);
+    wirehmfp = buffer + 4;
     ok(*(DWORD *)wirehmfp == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmfp);
     wirehmfp += sizeof(DWORD);
     ok(*(DWORD *)wirehmfp == (DWORD)(DWORD_PTR)hmfp, "wirestgm + 0x4 should be hmf instead of 0x%08x\n", *(DWORD *)wirehmfp);
@@ -564,7 +565,8 @@ static void test_marshal_HMETAFILEPICT(void)
 
     hmfp2 = NULL;
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
-    HMETAFILEPICT_UserUnmarshal(&umcb.Flags, buffer, &hmfp2);
+    buffer_end = HMETAFILEPICT_UserUnmarshal(&umcb.Flags, buffer + 1, &hmfp2);
+    ok(buffer_end == buffer + size, "got %p buffer %p\n", buffer_end, buffer);
     ok(hmfp2 == NULL, "NULL HMETAFILE didn't unmarshal\n");
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
