@@ -667,6 +667,15 @@ static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text, BOOL
         if (text_utf8->value.length <= MAX_UINT16) return RECORD_CHARS16_TEXT;
         return RECORD_CHARS32_TEXT;
     }
+    case WS_XML_TEXT_TYPE_UTF16:
+    {
+        const WS_XML_UTF16_TEXT *text_utf16 = (const WS_XML_UTF16_TEXT *)text;
+        int len = text_utf16->byteCount / sizeof(WCHAR);
+        int len_utf8 = WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)text_utf16->bytes, len, NULL, 0, NULL, NULL );
+        if (len_utf8 <= MAX_UINT8) return RECORD_CHARS8_TEXT;
+        if (len_utf8 <= MAX_UINT16) return RECORD_CHARS16_TEXT;
+        return RECORD_CHARS32_TEXT;
+    }
     case WS_XML_TEXT_TYPE_BASE64:
     {
         const WS_XML_BASE64_TEXT *text_base64 = (const WS_XML_BASE64_TEXT *)text;
@@ -784,6 +793,390 @@ static BOOL get_string_id( struct writer *writer, const WS_XML_STRING *str, ULON
     return FALSE;
 }
 
+static ULONG format_bool( const BOOL *ptr, unsigned char *buf )
+{
+    static const unsigned char bool_true[] = {'t','r','u','e'}, bool_false[] = {'f','a','l','s','e'};
+    if (*ptr)
+    {
+        memcpy( buf, bool_true, sizeof(bool_true) );
+        return sizeof(bool_true);
+    }
+    memcpy( buf, bool_false, sizeof(bool_false) );
+    return sizeof(bool_false);
+}
+
+static ULONG format_int32( const INT32 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%d", *ptr );
+}
+
+static ULONG format_int64( const INT64 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%I64d", *ptr );
+}
+
+static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%I64u", *ptr );
+}
+
+static ULONG format_double( const double *ptr, unsigned char *buf )
+{
+#ifdef HAVE_POWL
+    static const long double precision = 0.0000000000000001;
+    unsigned char *p = buf;
+    long double val = *ptr;
+    int neg, mag, mag2, use_exp;
+
+    if (isnan( val ))
+    {
+        memcpy( buf, "NaN", 3 );
+        return 3;
+    }
+    if (isinf( val ))
+    {
+        if (val < 0)
+        {
+            memcpy( buf, "-INF", 4 );
+            return 4;
+        }
+        memcpy( buf, "INF", 3 );
+        return 3;
+    }
+    if (val == 0.0)
+    {
+        *p = '0';
+        return 1;
+    }
+
+    if ((neg = val < 0))
+    {
+        *p++ = '-';
+        val = -val;
+    }
+
+    mag = log10l( val );
+    use_exp = (mag >= 15 || (neg && mag >= 1) || mag <= -1);
+    if (use_exp)
+    {
+        if (mag < 0) mag -= 1;
+        val = val / powl( 10.0, mag );
+        mag2 = mag;
+        mag = 0;
+    }
+    else if (mag < 1) mag = 0;
+
+    while (val > precision || mag >= 0)
+    {
+        long double weight = powl( 10.0, mag );
+        if (weight > 0 && !isinf( weight ))
+        {
+            int digit = floorl( val / weight );
+            val -= digit * weight;
+            *(p++) = '0' + digit;
+        }
+        if (!mag && val > precision) *(p++) = '.';
+        mag--;
+    }
+
+    if (use_exp)
+    {
+        int i, j;
+        *(p++) = 'E';
+        if (mag2 > 0) *(p++) = '+';
+        else
+        {
+            *(p++) = '-';
+            mag2 = -mag2;
+        }
+        mag = 0;
+        while (mag2 > 0)
+        {
+            *(p++) = '0' + mag2 % 10;
+            mag2 /= 10;
+            mag++;
+        }
+        for (i = -mag, j = -1; i < j; i++, j--)
+        {
+            p[i] ^= p[j];
+            p[j] ^= p[i];
+            p[i] ^= p[j];
+        }
+    }
+
+    return p - buf;
+#else
+    FIXME( "powl not found at build time\n" );
+    return 0;
+#endif
+}
+
+static inline int year_size( int year )
+{
+    return leap_year( year ) ? 366 : 365;
+}
+
+#define TZ_OFFSET 8
+static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
+{
+    static const char fmt[] = "%04u-%02u-%02uT%02u:%02u:%02u";
+    int day, hour, min, sec, sec_frac, month = 0, year = 1, tz_hour;
+    unsigned __int64 ticks, day_ticks;
+    ULONG len;
+
+    if (ptr->format == WS_DATETIME_FORMAT_LOCAL &&
+        ptr->ticks >= TICKS_1601_01_01 + TZ_OFFSET * TICKS_PER_HOUR)
+    {
+        ticks = ptr->ticks - TZ_OFFSET * TICKS_PER_HOUR;
+        tz_hour = TZ_OFFSET;
+    }
+    else
+    {
+        ticks = ptr->ticks;
+        tz_hour = 0;
+    }
+    day = ticks / TICKS_PER_DAY;
+    day_ticks = ticks % TICKS_PER_DAY;
+    hour = day_ticks / TICKS_PER_HOUR;
+    min = (day_ticks % TICKS_PER_HOUR) / TICKS_PER_MIN;
+    sec = (day_ticks % TICKS_PER_MIN) / TICKS_PER_SEC;
+    sec_frac = day_ticks % TICKS_PER_SEC;
+
+    while (day >= year_size( year ))
+    {
+        day -= year_size( year );
+        year++;
+    }
+    while (day >= month_days[leap_year( year )][month])
+    {
+        day -= month_days[leap_year( year )][month];
+        month++;
+    }
+
+    len = sprintf( (char *)buf, fmt, year, month + 1, day + 1, hour, min, sec );
+    if (sec_frac)
+    {
+        static const char fmt_frac[] = ".%07u";
+        len += sprintf( (char *)buf + len, fmt_frac, sec_frac );
+        while (buf[len - 1] == '0') len--;
+    }
+    if (ptr->format == WS_DATETIME_FORMAT_UTC)
+    {
+        buf[len++] = 'Z';
+    }
+    else if (ptr->format == WS_DATETIME_FORMAT_LOCAL)
+    {
+        static const char fmt_tz[] = "%c%02u:00";
+        len += sprintf( (char *)buf + len, fmt_tz, tz_hour ? '-' : '+', tz_hour );
+    }
+
+    return len;
+}
+
+static ULONG format_guid( const GUID *ptr, unsigned char *buf )
+{
+    static const char fmt[] = "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
+    return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
+                    ptr->Data4[0], ptr->Data4[1], ptr->Data4[2], ptr->Data4[3],
+                    ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
+}
+
+static ULONG format_urn( const GUID *ptr, unsigned char *buf )
+{
+    static const char fmt[] = "urn:uuid:%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
+    return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
+                    ptr->Data4[0], ptr->Data4[1], ptr->Data4[2], ptr->Data4[3],
+                    ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
+}
+
+static ULONG format_qname( const WS_XML_STRING *prefix, const WS_XML_STRING *localname, unsigned char *buf )
+{
+    ULONG len = 0;
+    if (prefix && prefix->length)
+    {
+        memcpy( buf, prefix->bytes, prefix->length );
+        len += prefix->length;
+        buf[len++] = ':';
+    }
+    memcpy( buf + len, localname->bytes, localname->length );
+    return len + localname->length;
+}
+
+static ULONG encode_base64( const unsigned char *bin, ULONG len, unsigned char *buf )
+{
+    static const char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    ULONG i = 0, x;
+
+    while (len > 0)
+    {
+        buf[i++] = base64[(bin[0] & 0xfc) >> 2];
+        x = (bin[0] & 3) << 4;
+        if (len == 1)
+        {
+            buf[i++] = base64[x];
+            buf[i++] = '=';
+            buf[i++] = '=';
+            break;
+        }
+        buf[i++] = base64[x | ((bin[1] & 0xf0) >> 4)];
+        x = (bin[1] & 0x0f) << 2;
+        if (len == 2)
+        {
+            buf[i++] = base64[x];
+            buf[i++] = '=';
+            break;
+        }
+        buf[i++] = base64[x | ((bin[2] & 0xc0) >> 6)];
+        buf[i++] = base64[bin[2] & 0x3f];
+        bin += 3;
+        len -= 3;
+    }
+    return i;
+}
+
+static HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT *old, ULONG *offset,
+                                 WS_XML_UTF8_TEXT **ret )
+{
+    ULONG len_old = old ? old->value.length : 0;
+    if (offset) *offset = len_old;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *src = (const WS_XML_UTF8_TEXT *)text;
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + src->value.length ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        memcpy( (*ret)->value.bytes + len_old, src->value.bytes, src->value.length );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_UTF16:
+    {
+        const WS_XML_UTF16_TEXT *src = (const WS_XML_UTF16_TEXT *)text;
+        const WCHAR *str = (const WCHAR *)src->bytes;
+        ULONG len = src->byteCount / sizeof(WCHAR), len_utf8;
+
+        if (src->byteCount % sizeof(WCHAR)) return E_INVALIDARG;
+        len_utf8 = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
+        if (!(*ret = alloc_utf8_text( NULL, len_old + len_utf8 ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        WideCharToMultiByte( CP_UTF8, 0, str, len, (char *)(*ret)->value.bytes + len_old, len_utf8, NULL, NULL );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_BASE64:
+    {
+        const WS_XML_BASE64_TEXT *base64 = (const WS_XML_BASE64_TEXT *)text;
+        ULONG len = ((4 * base64->length / 3) + 3) & ~3;
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        (*ret)->value.length = encode_base64( base64->bytes, base64->length, (*ret)->value.bytes + len_old ) + len_old;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_BOOL:
+    {
+        const WS_XML_BOOL_TEXT *bool_text = (const WS_XML_BOOL_TEXT *)text;
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + 5 ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        (*ret)->value.length = format_bool( &bool_text->value, (*ret)->value.bytes + len_old ) + len_old;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_INT32:
+    {
+        const WS_XML_INT32_TEXT *int32_text = (const WS_XML_INT32_TEXT *)text;
+        unsigned char buf[12]; /* "-2147483648" */
+        ULONG len = format_int32( &int32_text->value, buf );
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        memcpy( (*ret)->value.bytes + len_old, buf, len );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_INT64:
+    {
+        const WS_XML_INT64_TEXT *int64_text = (const WS_XML_INT64_TEXT *)text;
+        unsigned char buf[21]; /* "-9223372036854775808" */
+        ULONG len = format_int64( &int64_text->value, buf );
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        memcpy( (*ret)->value.bytes + len_old, buf, len );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_UINT64:
+    {
+        const WS_XML_UINT64_TEXT *uint64_text = (const WS_XML_UINT64_TEXT *)text;
+        unsigned char buf[21]; /* "18446744073709551615" */
+        ULONG len = format_uint64( &uint64_text->value, buf );
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        memcpy( (*ret)->value.bytes + len_old, buf, len );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_DOUBLE:
+    {
+        const WS_XML_DOUBLE_TEXT *double_text = (const WS_XML_DOUBLE_TEXT *)text;
+        unsigned char buf[32]; /* "-1.1111111111111111E-308", oversized to address Valgrind limitations */
+        unsigned short fpword;
+        ULONG len;
+
+        if (!set_fpword( 0x37f, &fpword )) return E_NOTIMPL;
+        len = format_double( &double_text->value, buf );
+        restore_fpword( fpword );
+        if (!len) return E_NOTIMPL;
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        memcpy( (*ret)->value.bytes + len_old, buf, len );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_GUID:
+    {
+        const WS_XML_GUID_TEXT *id = (const WS_XML_GUID_TEXT *)text;
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + 37 ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        (*ret)->value.length = format_guid( &id->value, (*ret)->value.bytes + len_old ) + len_old;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_UNIQUE_ID:
+    {
+        const WS_XML_UNIQUE_ID_TEXT *id = (const WS_XML_UNIQUE_ID_TEXT *)text;
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + 46 ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        (*ret)->value.length = format_urn( &id->value, (*ret)->value.bytes + len_old ) + len_old;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_DATETIME:
+    {
+        const WS_XML_DATETIME_TEXT *dt = (const WS_XML_DATETIME_TEXT *)text;
+
+        if (!(*ret = alloc_utf8_text( NULL, len_old + 34 ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        (*ret)->value.length = format_datetime( &dt->value, (*ret)->value.bytes + len_old ) + len_old;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_QNAME:
+    {
+        const WS_XML_QNAME_TEXT *qn = (const WS_XML_QNAME_TEXT *)text;
+        ULONG len = qn->localName->length;
+
+        if (qn->prefix && qn->prefix->length) len += qn->prefix->length + 1;
+        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
+        (*ret)->value.length = format_qname( qn->prefix, qn->localName, (*ret)->value.bytes + len_old ) + len_old;
+        return S_OK;
+    }
+    default:
+        FIXME( "unhandled text type %u\n", text->textType );
+        return E_NOTIMPL;
+    }
+}
+
 static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TEXT *text )
 {
     enum record_type type;
@@ -805,25 +1198,54 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
     {
     case RECORD_CHARS8_TEXT:
     {
-        WS_XML_UTF8_TEXT *text_utf8 = (WS_XML_UTF8_TEXT *)text;
-        if (!text_utf8)
+        const WS_XML_UTF8_TEXT *text_utf8;
+        WS_XML_UTF8_TEXT *new = NULL;
+        UINT8 len;
+
+        if (!text)
         {
             if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
             write_char( writer, 0 );
             return S_OK;
         }
-        if ((hr = write_grow_buffer( writer, 1 + text_utf8->value.length )) != S_OK) return hr;
-        write_char( writer, text_utf8->value.length );
-        write_bytes( writer, text_utf8->value.bytes, text_utf8->value.length );
+        if (text->textType == WS_XML_TEXT_TYPE_UTF8) text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        else
+        {
+            if ((hr = text_to_utf8text( text, NULL, NULL, &new )) != S_OK) return hr;
+            text_utf8 = new;
+        }
+        len = text_utf8->value.length;
+        if ((hr = write_grow_buffer( writer, sizeof(len) + len )) != S_OK)
+        {
+            heap_free( new );
+            return hr;
+        }
+        write_char( writer, len );
+        write_bytes( writer, text_utf8->value.bytes, len );
+        heap_free( new );
         return S_OK;
     }
     case RECORD_CHARS16_TEXT:
     {
-        WS_XML_UTF8_TEXT *text_utf8 = (WS_XML_UTF8_TEXT *)text;
-        UINT16 len = text_utf8->value.length;
-        if ((hr = write_grow_buffer( writer, sizeof(len) + len )) != S_OK) return hr;
+        const WS_XML_UTF8_TEXT *text_utf8;
+        WS_XML_UTF8_TEXT *new = NULL;
+        UINT16 len;
+
+        if (text->textType == WS_XML_TEXT_TYPE_UTF8) text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        else
+        {
+            if ((hr = text_to_utf8text( text, NULL, NULL, &new )) != S_OK) return hr;
+            text_utf8 = new;
+        }
+        len = text_utf8->value.length;
+        if ((hr = write_grow_buffer( writer, sizeof(len) + len )) != S_OK)
+        {
+            heap_free( new );
+            return hr;
+        }
         write_bytes( writer, (const BYTE *)&len, sizeof(len) );
         write_bytes( writer, text_utf8->value.bytes, len );
+        heap_free( new );
         return S_OK;
     }
     case RECORD_BYTES8_TEXT:
@@ -1832,390 +2254,6 @@ HRESULT WINAPI WsWriteStartElement( WS_XML_WRITER *handle, const WS_XML_STRING *
     return hr;
 }
 
-static ULONG format_bool( const BOOL *ptr, unsigned char *buf )
-{
-    static const unsigned char bool_true[] = {'t','r','u','e'}, bool_false[] = {'f','a','l','s','e'};
-    if (*ptr)
-    {
-        memcpy( buf, bool_true, sizeof(bool_true) );
-        return sizeof(bool_true);
-    }
-    memcpy( buf, bool_false, sizeof(bool_false) );
-    return sizeof(bool_false);
-}
-
-static ULONG format_int32( const INT32 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%d", *ptr );
-}
-
-static ULONG format_int64( const INT64 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%I64d", *ptr );
-}
-
-static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%I64u", *ptr );
-}
-
-static ULONG format_double( const double *ptr, unsigned char *buf )
-{
-#ifdef HAVE_POWL
-    static const long double precision = 0.0000000000000001;
-    unsigned char *p = buf;
-    long double val = *ptr;
-    int neg, mag, mag2, use_exp;
-
-    if (isnan( val ))
-    {
-        memcpy( buf, "NaN", 3 );
-        return 3;
-    }
-    if (isinf( val ))
-    {
-        if (val < 0)
-        {
-            memcpy( buf, "-INF", 4 );
-            return 4;
-        }
-        memcpy( buf, "INF", 3 );
-        return 3;
-    }
-    if (val == 0.0)
-    {
-        *p = '0';
-        return 1;
-    }
-
-    if ((neg = val < 0))
-    {
-        *p++ = '-';
-        val = -val;
-    }
-
-    mag = log10l( val );
-    use_exp = (mag >= 15 || (neg && mag >= 1) || mag <= -1);
-    if (use_exp)
-    {
-        if (mag < 0) mag -= 1;
-        val = val / powl( 10.0, mag );
-        mag2 = mag;
-        mag = 0;
-    }
-    else if (mag < 1) mag = 0;
-
-    while (val > precision || mag >= 0)
-    {
-        long double weight = powl( 10.0, mag );
-        if (weight > 0 && !isinf( weight ))
-        {
-            int digit = floorl( val / weight );
-            val -= digit * weight;
-            *(p++) = '0' + digit;
-        }
-        if (!mag && val > precision) *(p++) = '.';
-        mag--;
-    }
-
-    if (use_exp)
-    {
-        int i, j;
-        *(p++) = 'E';
-        if (mag2 > 0) *(p++) = '+';
-        else
-        {
-            *(p++) = '-';
-            mag2 = -mag2;
-        }
-        mag = 0;
-        while (mag2 > 0)
-        {
-            *(p++) = '0' + mag2 % 10;
-            mag2 /= 10;
-            mag++;
-        }
-        for (i = -mag, j = -1; i < j; i++, j--)
-        {
-            p[i] ^= p[j];
-            p[j] ^= p[i];
-            p[i] ^= p[j];
-        }
-    }
-
-    return p - buf;
-#else
-    FIXME( "powl not found at build time\n" );
-    return 0;
-#endif
-}
-
-static inline int year_size( int year )
-{
-    return leap_year( year ) ? 366 : 365;
-}
-
-#define TZ_OFFSET 8
-static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
-{
-    static const char fmt[] = "%04u-%02u-%02uT%02u:%02u:%02u";
-    int day, hour, min, sec, sec_frac, month = 0, year = 1, tz_hour;
-    unsigned __int64 ticks, day_ticks;
-    ULONG len;
-
-    if (ptr->format == WS_DATETIME_FORMAT_LOCAL &&
-        ptr->ticks >= TICKS_1601_01_01 + TZ_OFFSET * TICKS_PER_HOUR)
-    {
-        ticks = ptr->ticks - TZ_OFFSET * TICKS_PER_HOUR;
-        tz_hour = TZ_OFFSET;
-    }
-    else
-    {
-        ticks = ptr->ticks;
-        tz_hour = 0;
-    }
-    day = ticks / TICKS_PER_DAY;
-    day_ticks = ticks % TICKS_PER_DAY;
-    hour = day_ticks / TICKS_PER_HOUR;
-    min = (day_ticks % TICKS_PER_HOUR) / TICKS_PER_MIN;
-    sec = (day_ticks % TICKS_PER_MIN) / TICKS_PER_SEC;
-    sec_frac = day_ticks % TICKS_PER_SEC;
-
-    while (day >= year_size( year ))
-    {
-        day -= year_size( year );
-        year++;
-    }
-    while (day >= month_days[leap_year( year )][month])
-    {
-        day -= month_days[leap_year( year )][month];
-        month++;
-    }
-
-    len = sprintf( (char *)buf, fmt, year, month + 1, day + 1, hour, min, sec );
-    if (sec_frac)
-    {
-        static const char fmt_frac[] = ".%07u";
-        len += sprintf( (char *)buf + len, fmt_frac, sec_frac );
-        while (buf[len - 1] == '0') len--;
-    }
-    if (ptr->format == WS_DATETIME_FORMAT_UTC)
-    {
-        buf[len++] = 'Z';
-    }
-    else if (ptr->format == WS_DATETIME_FORMAT_LOCAL)
-    {
-        static const char fmt_tz[] = "%c%02u:00";
-        len += sprintf( (char *)buf + len, fmt_tz, tz_hour ? '-' : '+', tz_hour );
-    }
-
-    return len;
-}
-
-static ULONG format_guid( const GUID *ptr, unsigned char *buf )
-{
-    static const char fmt[] = "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
-    return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
-                    ptr->Data4[0], ptr->Data4[1], ptr->Data4[2], ptr->Data4[3],
-                    ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
-}
-
-static ULONG format_urn( const GUID *ptr, unsigned char *buf )
-{
-    static const char fmt[] = "urn:uuid:%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
-    return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
-                    ptr->Data4[0], ptr->Data4[1], ptr->Data4[2], ptr->Data4[3],
-                    ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
-}
-
-static ULONG format_qname( const WS_XML_STRING *prefix, const WS_XML_STRING *localname, unsigned char *buf )
-{
-    ULONG len = 0;
-    if (prefix && prefix->length)
-    {
-        memcpy( buf, prefix->bytes, prefix->length );
-        len += prefix->length;
-        buf[len++] = ':';
-    }
-    memcpy( buf + len, localname->bytes, localname->length );
-    return len + localname->length;
-}
-
-static ULONG encode_base64( const unsigned char *bin, ULONG len, unsigned char *buf )
-{
-    static const char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    ULONG i = 0, x;
-
-    while (len > 0)
-    {
-        buf[i++] = base64[(bin[0] & 0xfc) >> 2];
-        x = (bin[0] & 3) << 4;
-        if (len == 1)
-        {
-            buf[i++] = base64[x];
-            buf[i++] = '=';
-            buf[i++] = '=';
-            break;
-        }
-        buf[i++] = base64[x | ((bin[1] & 0xf0) >> 4)];
-        x = (bin[1] & 0x0f) << 2;
-        if (len == 2)
-        {
-            buf[i++] = base64[x];
-            buf[i++] = '=';
-            break;
-        }
-        buf[i++] = base64[x | ((bin[2] & 0xc0) >> 6)];
-        buf[i++] = base64[bin[2] & 0x3f];
-        bin += 3;
-        len -= 3;
-    }
-    return i;
-}
-
-static HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT *old, ULONG *offset,
-                                 WS_XML_UTF8_TEXT **ret )
-{
-    ULONG len_old = old ? old->value.length : 0;
-    if (offset) *offset = len_old;
-
-    switch (text->textType)
-    {
-    case WS_XML_TEXT_TYPE_UTF8:
-    {
-        const WS_XML_UTF8_TEXT *src = (const WS_XML_UTF8_TEXT *)text;
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + src->value.length ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        memcpy( (*ret)->value.bytes + len_old, src->value.bytes, src->value.length );
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_UTF16:
-    {
-        const WS_XML_UTF16_TEXT *src = (const WS_XML_UTF16_TEXT *)text;
-        const WCHAR *str = (const WCHAR *)src->bytes;
-        ULONG len = src->byteCount / sizeof(WCHAR), len_utf8;
-
-        if (src->byteCount % sizeof(WCHAR)) return E_INVALIDARG;
-        len_utf8 = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
-        if (!(*ret = alloc_utf8_text( NULL, len_old + len_utf8 ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        WideCharToMultiByte( CP_UTF8, 0, str, len, (char *)(*ret)->value.bytes + len_old, len_utf8, NULL, NULL );
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_BASE64:
-    {
-        const WS_XML_BASE64_TEXT *base64 = (const WS_XML_BASE64_TEXT *)text;
-        ULONG len = ((4 * base64->length / 3) + 3) & ~3;
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        (*ret)->value.length = encode_base64( base64->bytes, base64->length, (*ret)->value.bytes + len_old ) + len_old;
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_BOOL:
-    {
-        const WS_XML_BOOL_TEXT *bool_text = (const WS_XML_BOOL_TEXT *)text;
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + 5 ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        (*ret)->value.length = format_bool( &bool_text->value, (*ret)->value.bytes + len_old ) + len_old;
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_INT32:
-    {
-        const WS_XML_INT32_TEXT *int32_text = (const WS_XML_INT32_TEXT *)text;
-        unsigned char buf[12]; /* "-2147483648" */
-        ULONG len = format_int32( &int32_text->value, buf );
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        memcpy( (*ret)->value.bytes + len_old, buf, len );
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_INT64:
-    {
-        const WS_XML_INT64_TEXT *int64_text = (const WS_XML_INT64_TEXT *)text;
-        unsigned char buf[21]; /* "-9223372036854775808" */
-        ULONG len = format_int64( &int64_text->value, buf );
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        memcpy( (*ret)->value.bytes + len_old, buf, len );
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_UINT64:
-    {
-        const WS_XML_UINT64_TEXT *uint64_text = (const WS_XML_UINT64_TEXT *)text;
-        unsigned char buf[21]; /* "18446744073709551615" */
-        ULONG len = format_uint64( &uint64_text->value, buf );
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        memcpy( (*ret)->value.bytes + len_old, buf, len );
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_DOUBLE:
-    {
-        const WS_XML_DOUBLE_TEXT *double_text = (const WS_XML_DOUBLE_TEXT *)text;
-        unsigned char buf[32]; /* "-1.1111111111111111E-308", oversized to address Valgrind limitations */
-        unsigned short fpword;
-        ULONG len;
-
-        if (!set_fpword( 0x37f, &fpword )) return E_NOTIMPL;
-        len = format_double( &double_text->value, buf );
-        restore_fpword( fpword );
-        if (!len) return E_NOTIMPL;
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        memcpy( (*ret)->value.bytes + len_old, buf, len );
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_GUID:
-    {
-        const WS_XML_GUID_TEXT *id = (const WS_XML_GUID_TEXT *)text;
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + 37 ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        (*ret)->value.length = format_guid( &id->value, (*ret)->value.bytes + len_old ) + len_old;
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_UNIQUE_ID:
-    {
-        const WS_XML_UNIQUE_ID_TEXT *id = (const WS_XML_UNIQUE_ID_TEXT *)text;
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + 46 ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        (*ret)->value.length = format_urn( &id->value, (*ret)->value.bytes + len_old ) + len_old;
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_DATETIME:
-    {
-        const WS_XML_DATETIME_TEXT *dt = (const WS_XML_DATETIME_TEXT *)text;
-
-        if (!(*ret = alloc_utf8_text( NULL, len_old + 34 ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        (*ret)->value.length = format_datetime( &dt->value, (*ret)->value.bytes + len_old ) + len_old;
-        return S_OK;
-    }
-    case WS_XML_TEXT_TYPE_QNAME:
-    {
-        const WS_XML_QNAME_TEXT *qn = (const WS_XML_QNAME_TEXT *)text;
-        ULONG len = qn->localName->length;
-
-        if (qn->prefix && qn->prefix->length) len += qn->prefix->length + 1;
-        if (!(*ret = alloc_utf8_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
-        if (old) memcpy( (*ret)->value.bytes, old->value.bytes, len_old );
-        (*ret)->value.length = format_qname( qn->prefix, qn->localName, (*ret)->value.bytes + len_old ) + len_old;
-        return S_OK;
-    }
-    default:
-        FIXME( "unhandled text type %u\n", text->textType );
-        return E_NOTIMPL;
-    }
-}
-
 static HRESULT text_to_text( const WS_XML_TEXT *text, const WS_XML_TEXT *old, ULONG *offset, WS_XML_TEXT **ret )
 {
     if (offset) *offset = 0;
@@ -2238,16 +2276,14 @@ static HRESULT text_to_text( const WS_XML_TEXT *text, const WS_XML_TEXT *old, UL
     case WS_XML_TEXT_TYPE_UTF16:
     {
         const WS_XML_UTF16_TEXT *utf16 = (const WS_XML_UTF16_TEXT *)text;
-        const WS_XML_UTF8_TEXT *utf8_old = (const WS_XML_UTF8_TEXT *)old;
-        WS_XML_UTF8_TEXT *new;
-        const WCHAR *str = (const WCHAR *)utf16->bytes;
-        ULONG len = utf16->byteCount / sizeof(WCHAR), len_utf8, len_old = utf8_old ? utf8_old->value.length : 0;
+        const WS_XML_UTF16_TEXT *utf16_old = (const WS_XML_UTF16_TEXT *)old;
+        WS_XML_UTF16_TEXT *new;
+        ULONG len = utf16->byteCount, len_old = utf16_old ? utf16_old->byteCount : 0;
 
         if (utf16->byteCount % sizeof(WCHAR)) return E_INVALIDARG;
-        len_utf8 = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
-        if (!(new = alloc_utf8_text( NULL, len_old + len_utf8 ))) return E_OUTOFMEMORY;
-        if (old) memcpy( new->value.bytes, utf8_old->value.bytes, len_old );
-        WideCharToMultiByte( CP_UTF8, 0, str, len, (char *)new->value.bytes + len_old, len_utf8, NULL, NULL );
+        if (!(new = alloc_utf16_text( NULL, len_old + len ))) return E_OUTOFMEMORY;
+        if (utf16_old) memcpy( new->bytes, utf16_old->bytes, len_old );
+        memcpy( new->bytes + len_old, utf16->bytes, len );
         if (offset) *offset = len_old;
         *ret = &new->text;
         return S_OK;
@@ -2477,6 +2513,15 @@ static enum record_type get_text_record_type( const WS_XML_TEXT *text, BOOL use_
         if (text_utf8->value.length <= MAX_UINT16) return RECORD_CHARS16_TEXT_WITH_ENDELEMENT;
         return RECORD_CHARS32_TEXT_WITH_ENDELEMENT;
     }
+    case WS_XML_TEXT_TYPE_UTF16:
+    {
+        const WS_XML_UTF16_TEXT *text_utf16 = (const WS_XML_UTF16_TEXT *)text;
+        int len = text_utf16->byteCount / sizeof(WCHAR);
+        int len_utf8 = WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)text_utf16->bytes, len, NULL, 0, NULL, NULL );
+        if (len_utf8 <= MAX_UINT8) return RECORD_CHARS8_TEXT_WITH_ENDELEMENT;
+        if (len_utf8 <= MAX_UINT16) return RECORD_CHARS16_TEXT_WITH_ENDELEMENT;
+        return RECORD_CHARS32_TEXT_WITH_ENDELEMENT;
+    }
     case WS_XML_TEXT_TYPE_BASE64:
     {
         const WS_XML_BASE64_TEXT *text_base64 = (const WS_XML_BASE64_TEXT *)text;
@@ -2570,24 +2615,50 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
     {
     case RECORD_CHARS8_TEXT_WITH_ENDELEMENT:
     {
-        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
-        UINT8 len = text_utf8->value.length;
+        const WS_XML_UTF8_TEXT *text_utf8;
+        WS_XML_UTF8_TEXT *new = NULL;
+        UINT8 len;
 
-        if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK) return hr;
+        if (text->textType == WS_XML_TEXT_TYPE_UTF8) text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        else
+        {
+            if ((hr = text_to_utf8text( text, NULL, NULL, &new )) != S_OK) return hr;
+            text_utf8 = new;
+        }
+        len = text_utf8->value.length;
+        if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK)
+        {
+            heap_free( new );
+            return hr;
+        }
         write_char( writer, type );
         write_char( writer, len );
         write_bytes( writer, text_utf8->value.bytes, len );
+        heap_free( new );
         return S_OK;
     }
     case RECORD_CHARS16_TEXT_WITH_ENDELEMENT:
     {
-        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
-        UINT16 len = text_utf8->value.length;
+        const WS_XML_UTF8_TEXT *text_utf8;
+        WS_XML_UTF8_TEXT *new = NULL;
+        UINT16 len;
 
-        if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK) return hr;
+        if (text->textType == WS_XML_TEXT_TYPE_UTF8) text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        else
+        {
+            if ((hr = text_to_utf8text( text, NULL, NULL, &new )) != S_OK) return hr;
+            text_utf8 = new;
+        }
+        len = text_utf8->value.length;
+        if ((hr = write_grow_buffer( writer, 1 + sizeof(len) + len )) != S_OK)
+        {
+            heap_free( new );
+            return hr;
+        }
         write_char( writer, type );
         write_bytes( writer, (const BYTE *)&len, sizeof(len) );
         write_bytes( writer, text_utf8->value.bytes, len );
+        heap_free( new );
         return S_OK;
     }
     case RECORD_BYTES8_TEXT:

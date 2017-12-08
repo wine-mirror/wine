@@ -788,6 +788,18 @@ WS_XML_UTF8_TEXT *alloc_utf8_text( const BYTE *data, ULONG len )
     return ret;
 }
 
+WS_XML_UTF16_TEXT *alloc_utf16_text( const BYTE *data, ULONG len )
+{
+    WS_XML_UTF16_TEXT *ret;
+
+    if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
+    ret->text.textType = WS_XML_TEXT_TYPE_UTF16;
+    ret->byteCount     = len;
+    ret->bytes         = len ? (BYTE *)(ret + 1) : NULL;
+    if (data) memcpy( ret->bytes, data, len );
+    return ret;
+}
+
 WS_XML_BASE64_TEXT *alloc_base64_text( const BYTE *data, ULONG len )
 {
     WS_XML_BASE64_TEXT *ret;
