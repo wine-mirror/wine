@@ -98,11 +98,11 @@ static const char* debugstr_user_flags(ULONG *pFlags)
  *  the first parameter is an unsigned long.
  *  This function is only intended to be called by the RPC runtime.
  */
-ULONG __RPC_USER CLIPFORMAT_UserSize(ULONG *pFlags, ULONG StartingSize, CLIPFORMAT *pCF)
+ULONG __RPC_USER CLIPFORMAT_UserSize(ULONG *pFlags, ULONG size, CLIPFORMAT *pCF)
 {
-    ULONG size = StartingSize;
+    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), size, pCF);
 
-    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, pCF);
+    ALIGN_LENGTH(size, 3);
 
     size += 8;
 
@@ -146,6 +146,8 @@ ULONG __RPC_USER CLIPFORMAT_UserSize(ULONG *pFlags, ULONG StartingSize, CLIPFORM
 unsigned char * __RPC_USER CLIPFORMAT_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, CLIPFORMAT *pCF)
 {
     TRACE("(%s, %p, &0x%04x\n", debugstr_user_flags(pFlags), pBuffer, *pCF);
+
+    ALIGN_POINTER(pBuffer, 3);
 
     /* only need to marshal the name if it is not a pre-defined type and
      * we are going remote */
@@ -208,6 +210,8 @@ unsigned char * __RPC_USER CLIPFORMAT_UserUnmarshal(ULONG *pFlags, unsigned char
     LONG fContext;
 
     TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, pCF);
+
+    ALIGN_POINTER(pBuffer, 3);
 
     fContext = *(DWORD *)pBuffer;
     pBuffer += 4;
