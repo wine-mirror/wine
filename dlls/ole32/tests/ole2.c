@@ -4320,6 +4320,9 @@ static void test_data_cache_save_data(void)
         hr = IPersistStorage_Save(persist, doc, FALSE);
         ok(hr == S_OK, "unexpected %#x\n", hr);
 
+        hr = IPersistStorage_IsDirty(persist);
+        ok(hr == S_OK, "unexpected %#x\n", hr);
+
         check_storage_contents(doc, &pdata->stg_def, &enumerated_streams, &matched_streams);
         ok(enumerated_streams == matched_streams, "enumerated %d != matched %d\n",
            enumerated_streams, matched_streams);

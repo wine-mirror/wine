@@ -1835,17 +1835,14 @@ static HRESULT WINAPI DataCache_Load( IPersistStorage *iface, IStorage *pStg )
  * our responsibility to copy the information when saving to a new
  * storage.
  */
-static HRESULT WINAPI DataCache_Save(
-            IPersistStorage* iface,
-	    IStorage*        pStg,
-	    BOOL             fSameAsLoad)
+static HRESULT WINAPI DataCache_Save(IPersistStorage* iface, IStorage *stg, BOOL same_as_load)
 {
     DataCache *This = impl_from_IPersistStorage(iface);
     DataCacheEntry *cache_entry;
     HRESULT hr = S_OK;
     unsigned short stream_number = 0;
 
-    TRACE("(%p, %p, %d)\n", iface, pStg, fSameAsLoad);
+    TRACE("(%p, %p, %d)\n", iface, stg, same_as_load);
 
     /* assign stream numbers to the cache entries */
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
@@ -1861,17 +1858,17 @@ static HRESULT WINAPI DataCache_Save(
     /* write out the cache entries */
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
     {
-        if (!fSameAsLoad || cache_entry->dirty)
+        if (!same_as_load || cache_entry->dirty)
         {
-            hr = DataCacheEntry_Save(cache_entry, pStg, fSameAsLoad);
+            hr = DataCacheEntry_Save(cache_entry, stg, same_as_load);
             if (FAILED(hr))
                 break;
 
-            cache_entry->dirty = FALSE;
+            if (same_as_load) cache_entry->dirty = FALSE;
         }
     }
 
-    This->dirty = FALSE;
+    if (same_as_load) This->dirty = FALSE;
     return hr;
 }
 
