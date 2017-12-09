@@ -639,7 +639,7 @@ msgstr "Bul"
 
 #: comdlg32.rc:319 comdlg32.rc:338
 msgid "Fi&nd What:"
-msgstr "Ara&nan:"
+msgstr "Şu&nu Bul:"
 
 #: comdlg32.rc:321 comdlg32.rc:342
 msgid "Match &Whole Word Only"
@@ -4215,7 +4215,7 @@ msgstr "Yanlış iş parçacığı kimlik adresi.\n"
 
 #: winerror.mc:666
 msgid "Bad arguments to DosExecPgm.\n"
-msgstr "DosExecPgm için hatalı argüman.\n"
+msgstr "DosExecPgm için hatalı değişken.\n"
 
 #: winerror.mc:671
 msgid "Path is invalid.\n"
@@ -6703,7 +6703,7 @@ msgstr "'%s' geçerli bir giriş adı değil"
 
 #: localui.rc:33
 msgid "Port %s already exists"
-msgstr "%s giriş zaten mevcut"
+msgstr "%s girişi zaten mevcut"
 
 #: localui.rc:34
 msgid "This port has no options to configure"
@@ -6874,15 +6874,15 @@ msgstr "%s öğesini içeren dizini girin"
 
 #: msi.rc:62
 msgid "install source for feature missing"
-msgstr "bulunmayan özellik için kurulum kaynağı"
+msgstr "özellik için kurulum kaynağı bulunamadı"
 
 #: msi.rc:63
 msgid "network drive for feature missing"
-msgstr "bulunmayan özellik için ağ sürücüsü"
+msgstr "özellik için ağ sürücüsü bulunamadı"
 
 #: msi.rc:64
 msgid "feature from:"
-msgstr "özellik buradan:"
+msgstr "buradan özellik:"
 
 #: msi.rc:65
 msgid "choose which folder contains %s"
@@ -7288,42 +7288,36 @@ msgid "{{Disk full: }}"
 msgstr "{{Disk dolu: }}"
 
 #: msi.rc:77
-#, fuzzy
-#| msgid "Action %s: [1]. [2]"
 msgid "Action [Time]: [1]. [2]"
-msgstr "%s eylemi: [1]. [2]"
+msgstr "Eylem [Time]: [1]. [2]"
 
 #: msi.rc:78
 msgid "Message type: [1], Argument: [2]{, [3]}"
 msgstr "İleti türü: [1], Değişken: [2]{, [3]}"
 
 #: msi.rc:81
-#, fuzzy
-#| msgid "=== Logging started: %s  %s ==="
 msgid "=== Logging started: [Date]  [Time] ==="
-msgstr "=== Günlük başlangıcı: %s  %s ==="
+msgstr "=== Günlük başlangıcı: [Date]  [Time] ==="
 
 #: msi.rc:79
-#, fuzzy
-#| msgid "Action start %s: [1]."
 msgid "Action start [Time]: [1]."
-msgstr "%s eylem başlangıcı: [1]."
+msgstr "Eylem başlangıcı [Time]: [1]."
 
 #: msi.rc:80
-#, fuzzy
-#| msgid "Action ended %s: [1]. Return value [2]."
 msgid "Action ended [Time]: [1]. Return value [2]."
-msgstr "%s eylem bitişi: [1]. Dönüş değeri [2]."
+msgstr "Eylem bitişi [Time]: [1]. Dönüş değeri [2]."
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"
-msgstr ""
+msgstr "Lütfen şu diski yerleştirin: [2]"
 
 #: msi.rc:84
 msgid ""
 "Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
 "that you can access it."
 msgstr ""
+"Kaynak dosyası bulunamadı{{{cabinet}}}: [2]. Dosyanın bulunduğundan ve "
+"dosyaya erişebildiğinizden emin olun."
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -7615,7 +7609,7 @@ msgstr "ızgara açılır düğmesi"
 
 #: oleacc.rc:90
 msgid "white space"
-msgstr "alfabe dışı"
+msgstr "boşluk"
 
 #: oleacc.rc:91
 msgid "page tab list"
@@ -7623,11 +7617,11 @@ msgstr "Sayfa sekme listesi"
 
 #: oleacc.rc:92
 msgid "clock"
-msgstr "Saat"
+msgstr "saat"
 
 #: oleacc.rc:93
 msgid "split button"
-msgstr "Ayır düğmesi"
+msgstr "ayır düğmesi"
 
 #: oleacc.rc:94
 msgid "IP address"
@@ -8476,7 +8470,7 @@ msgstr "%s Hakkında"
 
 #: shell32.rc:323
 msgid "Wine &license"
-msgstr "Wine &lisans"
+msgstr "Wine &lisansı"
 
 #: shell32.rc:328
 msgid "Running on %s"
@@ -8570,7 +8564,7 @@ msgstr "Yeniden Başlat"
 
 #: shell32.rc:190
 msgid "Do you want to simulate a Windows reboot?"
-msgstr "Windows'u yeniden başlatma taklit edilsin mi?"
+msgstr "Windows'u yeniden başlatma canlandırılsın mı?"
 
 #: shell32.rc:191
 msgid "Shutdown"
@@ -8926,10 +8920,8 @@ msgid " sec"
 msgstr " sn"
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "Select Folder"
 msgid "Select Source"
-msgstr "Dizin Seç"
+msgstr "Kaynak Seç"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -9250,8 +9242,8 @@ msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
-"Geçerli MIDI kurulumu zarar görmüş. Özgün MIDIMAP.CFG dosyasını Windows "
-"SYSTEM dizinine kopyalayın ve yeniden deneyin."
+"Geçerli MIDI kurulumu bozuk. Özgün MIDIMAP.CFG dosyasını Windows SYSTEM "
+"dizinine kopyalayın ve yeniden deneyin."
 
 #: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
@@ -9731,7 +9723,7 @@ msgstr "&Çıktı Dosyası:"
 
 #: winspool.rc:31
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "Çıktı dosyası zaten var. Üzerine yazmak için Tamam tıklayın."
+msgstr "Çıktı dosyası zaten var. Üzerine yazmak için Tamam'ı tıklatın."
 
 #: winspool.rc:32
 msgid "Unable to create the output file."
@@ -9859,7 +9851,7 @@ msgstr "Meşgul"
 
 #: wldap32.rc:84
 msgid "Unavailable"
-msgstr "Kullanılabilir Değil"
+msgstr "Kullanılamaz"
 
 #: wldap32.rc:85
 msgid "Unwilling To Perform"
@@ -9907,7 +9899,7 @@ msgstr "Sonuçlar Çok Büyük"
 
 #: wldap32.rc:103
 msgid "Affects Multiple DSAs"
-msgstr "Birden Fazla DSA Etkilenir"
+msgstr "Birden Fazla DSA'yı Etkiler"
 
 #: wldap32.rc:113
 msgid "Server Down"
@@ -10010,7 +10002,7 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
-"ATTRIB - Dosya niteliklerini görüntüler veya değiştirir.\n"
+"ATTRIB - Dosya özniteliklerini görüntüler veya değiştirir.\n"
 "\n"
 "Sözdizimi:\n"
 "ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [sürücü:][yol][dosyaadı]\n"
@@ -10018,14 +10010,14 @@ msgstr ""
 "\n"
 "Şöyle ki:\n"
 "\n"
-"  +   Bir nitelik ayarlar.\n"
-"  -   Bir niteliği temizler.\n"
+"  +   Bir öznitelik ayarlar.\n"
+"  -   Bir özniteliği temizler.\n"
 "  R   Salt okunur dosya niteliği.\n"
 "  A   Arşiv dosyası niteliği.\n"
 "  S   Sistem dosyası niteliği.\n"
 "  H   Gizli dosya niteliği.\n"
 "  [sürücü:][yol][dosyaadı]\n"
-"      Nitelikleme için işlenecek dosya veya dosyaları belirtir.\n"
+"      Öznitelikleme için işlenecek dosya veya dosyaları belirtir.\n"
 "  /S  Geçerli klasör ve alt klasörlerinde eşleşen dosyaları işler.\n"
 "  /D  Klasörleri de işler.\n"
 
@@ -10081,7 +10073,7 @@ msgstr ""
 "yordamlar için parametre verebilir.\n"
 "\n"
 "Çağrılan bir yordamda değiştirilen dizinler, çevre değişkenleri vb.\n"
-"kendisini çağıran tarafından miras alınır.\n"
+"kendisini çağıran tarafından alınır.\n"
 
 #: cmd.rc:44
 msgid ""
@@ -10109,15 +10101,15 @@ msgstr "CTTY girdi/çıktı aygıtını değiştirir.\n"
 
 #: cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
-msgstr "DATE  sistem tarihini gösterir ve değiştirir.\n"
+msgstr "DATE sistem tarihini gösterir ve değiştirir.\n"
 
 #: cmd.rc:62
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL <dosyaadı> bir veya birçok dosyayı siler.\n"
+msgstr "DEL <dosyaadı> bir veya daha fazla dosyayı siler.\n"
 
 #: cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
-msgstr "DIR bir dizinin içeriklerini listeler.\n"
+msgstr "DIR bir dizinin içindekileri listeler.\n"
 
 #: cmd.rc:75
 msgid ""
@@ -10141,7 +10133,7 @@ msgstr ""
 
 #: cmd.rc:78
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "ERASE <dosyaadı> bir veya birçok dosyayı siler.\n"
+msgstr "ERASE <dosyaadı> bir veya daha fazla dosyayı siler.\n"
 
 #: cmd.rc:85
 msgid ""
@@ -10188,7 +10180,7 @@ msgid ""
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
 "HELP <komut> bir konuda özet yardımı gösterir.\n"
-"Bir argüman kullanılmayan HELP, tüm dahili CMD komutlarını gösterir.\n"
+"Bir değişken kullanılmazsa HELP, tüm dahili CMD komutlarını gösterir.\n"
 
 #: cmd.rc:111
 msgid ""
@@ -10263,9 +10255,9 @@ msgid ""
 msgstr ""
 "PATH cmd arama yolunu gösterir veya değiştirir.\n"
 "\n"
-"Sadece PATH girmek geçerli PATH ayarını gösterecektir (başlangıçta bu\n"
-"wine.conf dosyanızda verilen değer olacaktır). Ayarı değiştirmek için PATH\n"
-"komutuna yeni değeri ekleyin.\n"
+"Sadece PATH girmek geçerli PATH ayarını gösterecektir (başlangıçta bu,\n"
+"kayıt defterinden alınan değer olacaktır). Ayarı değiştirmek için PATH\n"
+"komutuna yeni değeri ekleyiniz.\n"
 "\n"
 "Ayrıca PATH ayarını düzenlemek için PATH çevre değişkenini de\n"
 "kullanabilirsiniz, örneğin:\n"
@@ -10384,7 +10376,7 @@ msgstr ""
 "\n"
 "Wine altında, üzerinde çalışılan işletim sistemi çevresi Win32 çevresine\n"
 "dahil edilir. Dolayısıyla doğal bir Win32 gerçeklemesinden daha fazla değer\n"
-"bulunacaktır. cmd altında işletim sistemi çevresini değiştirmek mümkün\n"
+"bulunacaktır. Komut isteminde işletim sistemi çevresini değiştirmek mümkün\n"
 "değildir.\n"
 
 #: cmd.rc:234
@@ -10427,33 +10419,33 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"Normalde bu son eki kullanan dosyalar için program içerisinde bir program\n"
-"başlat veya belge aç.\n"
+"Bir uygulama başlatır, veya bir dosyayı, uzantısı için normalde kullanılan\n"
+"uygulamayla açar.\n"
 "Kullanım:\n"
 "start [seçenekler] program_dosyaadı [...]\n"
 "start [seçenekler] belge_dosyaadı\n"
 "\n"
 "Seçenekler:\n"
 "\"başlık\"        Alt pencerelerin başlığını belirtir.\n"
-"/d dizin        Programı belirtilen dizinde başlat.\n"
-"/b              Program için yeni bir konsol oluşturma.\n"
-"/i              Programı taze ortam değişkenleri ile başlat.\n"
-"/min            Programı simge durumunda başlat.\n"
-"/max            Programı ekran kaplanmış başlat.\n"
-"/low            Programı boşta öncelik sınıfı ile başlat.\n"
-"/normal         Programı normal öncelik sınıfı ile başlat.\n"
+"/d dizin        Programı belirtilen dizinde başlatır.\n"
+"/b              Program için yeni bir konsol oluşturmaz.\n"
+"/i              Programı taze ortam değişkenleri ile başlatır.\n"
+"/min            Programı simge durumunda başlatır.\n"
+"/max            Programı ekranı kaplamış olarak başlatır.\n"
+"/low            Programı boşta öncelik sınıfı ile başlatır.\n"
+"/normal         Programı normal öncelik sınıfı ile başlatır.\n"
 "/high           Programı yüksek öncelik sınıfı ile başlat.\n"
-"/realtime       Programı gerçek zaman öncelik sınıfı ile başlat.\n"
-"/abovenormal    Programı normal üstü öncelik sınıfı ile başlat.\n"
-"/belownormal    Programı normal altı öncelik sınıfı ile başlat.\n"
-"/node n         Programı belirtilen NUMA kipinde başlat.\n"
-"/affinity maske Programı belirtilen yakınlık maskesi ile başlat.\n"
-"/wait           Başlatılan programın bitmesini bekle ve ardından çıkış\n"
-"                koduyla çık.\n"
-"/unix           Bir Unix dosya adı kullan ve dosyayı windows gezgini\n"
-"                benzeri bir biçimde başlat.\n"
-"/ProgIDOpen     Belirtilen program kimliği kullanarak bir belge aç.\n"
-"/?              Bu yardımı görüntüle ve çık.\n"
+"/realtime       Programı gerçek zaman öncelik sınıfı ile başlatır.\n"
+"/abovenormal    Programı normal üstü öncelik sınıfı ile başlatır.\n"
+"/belownormal    Programı normal altı öncelik sınıfı ile başlatır.\n"
+"/node n         Programı belirtilen NUMA düğümünde başlatır.\n"
+"/affinity mask Programı belirtilen yakınlık maskesi ile başlatır.\n"
+"/wait           Başlatılan programın bitmesini bekler ve ardından çıkış\n"
+"                koduyla çıkar.\n"
+"/unix           Bir Unix dosya adı kullanır ve dosyayı Windows Gezgini\n"
+"                benzeri bir biçimde başlatır.\n"
+"/ProgIDOpen     Belirtilen program kimliğini kullanarak bir belge açar.\n"
+"/?              Bu yardımı görüntüler ve çıkar.\n"
 
 #: cmd.rc:237
 msgid "TIME sets or shows the current system time.\n"
@@ -10461,7 +10453,7 @@ msgstr "TIME şimdiki sistem tarihini görüntüler veya değiştirir.\n"
 
 #: cmd.rc:240
 msgid "TITLE <string> sets the window title for the cmd window.\n"
-msgstr "TITLE <dize> cmd penceresi için pencere başlığını ayarlar.\n"
+msgstr "TITLE <dize> komut penceresi için pencere başlığını ayarlar.\n"
 
 #: cmd.rc:244
 msgid ""
@@ -10485,7 +10477,7 @@ msgstr ""
 "\n"
 "VERIFY ON\tBayrağı aç.\n"
 "VERIFY OFF\tBayrağı kaldır.\n"
-"VERIFY\t\tBayrağın durumunu gösterir.\n"
+"VERIFY\t\tBayrağın durumunu göster.\n"
 "\n"
 "Doğrulama bayrağının Wine'de bir işlevi yoktur.\n"
 
@@ -10612,57 +10604,26 @@ msgid ""
 "link_name is the name of the new symbolic link.\n"
 "target is the path that link_name points to.\n"
 msgstr ""
+"Simgesel bir bağlantı oluşturur.\n"
+"\n"
+"Sözdizimi: MKLINK [seçenekler] bağlantı_adı hedef\n"
+"\n"
+"Seçenekler:\n"
+"/d             Bir dizin simgesel bağlantısı yaratır.\n"
+"/h             Bir sıkı bağlantı yaratır.\n"
+"/j              Bir dizin kavşak noktası yaratır.\n"
+"bağlantı_adı, yeni simgesel bağlantının adıdır.\n"
+"hedef, bağlantı_adı'nın işaret ettiği dosya yoludur.\n"
 
 #: cmd.rc:312
 msgid ""
 "EXIT terminates the current command session and returns to the operating\n"
 "system or shell from which you invoked cmd.\n"
 msgstr ""
-"EXIT geçerli komut oturumunu sonlandırır ve komut istemini çağırdığınız\n"
+"EXIT şimdiki komut oturumunu sonlandırır ve komut istemini çağırdığınız\n"
 "yerden işletim sistemine döner.\n"
 
 #: cmd.rc:364
-#, fuzzy
-#| msgid ""
-#| "CMD built-in commands are:\n"
-#| "ASSOC\t\tShow or modify file extension associations\n"
-#| "ATTRIB\t\tShow or change DOS file attributes\n"
-#| "CALL\t\tInvoke a batch file from inside another\n"
-#| "CD (CHDIR)\tChange current default directory\n"
-#| "CHOICE\t\tWait for an keypress from a selectable list\n"
-#| "CLS\t\tClear the console screen\n"
-#| "COPY\t\tCopy file\n"
-#| "CTTY\t\tChange input/output device\n"
-#| "DATE\t\tShow or change the system date\n"
-#| "DEL (ERASE)\tDelete a file or set of files\n"
-#| "DIR\t\tList the contents of a directory\n"
-#| "ECHO\t\tCopy text directly to the console output\n"
-#| "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
-#| "FTYPE\t\tShow or modify open commands associated with file types\n"
-#| "HELP\t\tShow brief help details on a topic\n"
-#| "MD (MKDIR)\tCreate a subdirectory\n"
-#| "MORE\t\tDisplay output in pages\n"
-#| "MOVE\t\tMove a file, set of files or directory tree\n"
-#| "PATH\t\tSet or show the search path\n"
-#| "PAUSE\t\tSuspend execution of a batch file\n"
-#| "POPD\t\tRestore the directory to the last one saved with PUSHD\n"
-#| "PROMPT\t\tChange the command prompt\n"
-#| "PUSHD\t\tChange to a new directory, saving the current one\n"
-#| "REN (RENAME)\tRename a file\n"
-#| "RD (RMDIR)\tDelete a subdirectory\n"
-#| "SET\t\tSet or show environment variables\n"
-#| "SETLOCAL\tStart localization of environment changes in a batch file\n"
-#| "START\t\tStart a program, or open a document in the associated program\n"
-#| "TIME\t\tSet or show the current system time\n"
-#| "TITLE\t\tSet the window title for the CMD session\n"
-#| "TYPE\t\tType the contents of a text file\n"
-#| "VER\t\tShow the current version of CMD\n"
-#| "VOL\t\tShow the volume label of a disk device\n"
-#| "XCOPY\t\tCopy source files or directory trees to a destination\n"
-#| "EXIT\t\tClose down CMD\n"
-#| "\n"
-#| "Enter HELP <command> for further information on any of the above "
-#| "commands.\n"
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10704,8 +10665,8 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
-"CMD dahili komutları:\n"
-"ASSOC\t\tDosya uzantı ilişkilerini göster veya düzenle\n"
+"CMD ile gelen komutlar:\n"
+"ASSOC\t\tDosya uzantısı ilişkilendirmelerini göster veya düzenle\n"
 "ATTRIB\t\tDOS dosya özelliklerini göster veya değiştir\n"
 "CALL\t\tToplu işlem dosyası içerisinden bir diğerini çalıştır\n"
 "CD (CHDIR)\tŞimdiki dizini değiştir\n"
@@ -10721,8 +10682,9 @@ msgstr ""
 "\t\tsonlandır\n"
 "FTYPE\t\tDosya türleri ile ilişkilendirilmiş aç komutlarını göster veya\n"
 "\t\tdüzenle\n"
-"HELP\t\tBir konu üzerinde özet yardım göster\n"
+"HELP\t\tBir konu üzerine özet yardım göster\n"
 "MD (MKDIR)\tAlt dizin oluştur\n"
+"MKLINK\t\tBir simgesel bağlantı oluştur\n"
 "MORE\t\tÇıktıyı sayfalar halinde görüntüle\n"
 "MOVE\t\tBir veya daha fazla dosyayı ya da dizin ağacını taşı\n"
 "PATH\t\tArama yolunu düzenle veya göster\n"
@@ -10738,12 +10700,12 @@ msgstr ""
 "TIME\t\tŞimdiki sistem saatini düzenle veya göster\n"
 "TITLE\t\tKomut istemi oturumu için pencere başlığını belirle\n"
 "TYPE\t\tMetin dosyasının içeriğini göster\n"
-"VER\t\tGeçerli komut istemi sürümünü göster\n"
-"VOL\t\tDisk aygıtının bölüm etiketini göster\n"
+"VER\t\tŞimdiki komut istemi sürümünü göster\n"
+"VOL\t\tDisk aygıtının birim etiketini göster\n"
 "XCOPY\t\tKaynak dosyaları veya dizin ağaçlarını bir hedefe kopyala\n"
 "EXIT\t\tKomut istemini kapat\n"
 "\n"
-"Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> yazın.\n"
+"Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> yazınız.\n"
 
 #: cmd.rc:365
 msgid "Are you sure?"
@@ -10769,7 +10731,7 @@ msgstr "'%1' dosya türü için ilişkilendirilmiş bir açma komutu yok\n"
 
 #: cmd.rc:370
 msgid "Overwrite %1?"
-msgstr "%1 Üzerine Yaz?"
+msgstr "%1 üzerine yazılsın mı?"
 
 #: cmd.rc:371
 msgid "More..."
@@ -10782,7 +10744,7 @@ msgstr ""
 
 #: cmd.rc:374
 msgid "Argument missing\n"
-msgstr "Eksik argüman\n"
+msgstr "Eksik değişken\n"
 
 #: cmd.rc:375
 msgid "Syntax error\n"
@@ -10806,11 +10768,11 @@ msgstr "Şimdiki Saat %1\n"
 
 #: cmd.rc:381
 msgid "Enter new date: "
-msgstr "Yeni tarih gir: "
+msgstr "Yeni tarih giriniz: "
 
 #: cmd.rc:382
 msgid "Enter new time: "
-msgstr "Yeni zaman gir: "
+msgstr "Yeni zaman giriniz: "
 
 #: cmd.rc:383
 msgid "Environment variable %1 not defined\n"
@@ -11049,7 +11011,7 @@ msgid ""
 msgstr ""
 "Bu komutun sözdizimi:\n"
 "\n"
-"NET komut [argümanlar]\n"
+"NET komut [değişkenler]\n"
 "    -veya-\n"
 "NET komut /HELP\n"
 "\n"
@@ -11269,7 +11231,7 @@ msgstr "Alınan Datagramlar"
 
 #: netstat.rc:55
 msgid "No Ports"
-msgstr "Port Yok"
+msgstr "Giriş Yok"
 
 #: netstat.rc:56
 msgid "Receive Errors"
@@ -11509,9 +11471,9 @@ msgid ""
 "Continue?"
 msgstr ""
 "%1\n"
-"Bu dosya, %2 kodlaması ile kaydettiğinizde kaybedilecek Unikode\n"
+"Bu dosya, %2 kodlaması ile kaydettiğinizde kaybedilecek Unicode\n"
 "karakterler içeriyor.\n"
-"Bu karakterleri korumak için İptal tıklayın ve ardından Kodlama açılır\n"
+"Bu karakterleri korumak için İptal'i tıklatın ve ardından Kodlama açılır\n"
 "listesinden Unicode seçeneklerinden birini seçin.\n"
 "Devam edilsin mi?"
 
@@ -11529,7 +11491,7 @@ msgstr "&Sistem Yapılandırma"
 
 #: oleview.rc:36
 msgid "&Run the Registry Editor"
-msgstr "&Kayıt Düzenleyicisini Çalıştır"
+msgstr "&Kayıt Defteri Düzenleyicisini Çalıştır"
 
 #: oleview.rc:42
 msgid "&CoCreateInstance Flag"
@@ -12061,17 +12023,6 @@ msgid "Icons (*.ico)"
 msgstr "Simgeler (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -12087,9 +12038,9 @@ msgstr ""
 "  REG [işlem] [parametreler]\n"
 "\n"
 "Desteklenen işlemler:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
 "\n"
-"Herhangi bir işlem hakkında yardım için, şunu yazın:\n"
+"Herhangi bir işlem hakkında yardım için, şunu yazınız:\n"
 "  REG [işlem] /?\n"
 "\n"
 
@@ -12176,7 +12127,7 @@ msgstr "'%1' kayıt defteri anahtarını silmek istediğinizden emin misiniz?"
 
 #: reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "uninstaller: [/d] seçeneğinden sonra geçerli bir dize girilmelidir\n"
+msgstr "reg: [/d] seçeneğinden sonra geçerli bir dize girilmelidir\n"
 
 #: reg.rc:58
 msgid ""
@@ -12218,45 +12169,31 @@ msgstr "(değer belirlenmemiş)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT dosya.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "reg: The file '%1' was not found.\n"
-msgstr "regedit: '%1' dosyası bulunamadı.\n"
+msgstr "reg: '%1' dosyası bulunamadı.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "reg: '%1' kayıt anahtarı açılamıyor.\n"
 
 #: reg.rc:69
-#, fuzzy
-#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
-"regedit: Bilinmeyen kaçış sırası [\\%1!c!]\n"
-"\n"
+msgstr "reg: Bilinmeyen kaçış sırası [\\%1!c!]\n"
 
 #: reg.rc:70
-#, fuzzy
-#| msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG QUERY anahtar_adı [/v değer_adı | /ve] [/s]\n"
+msgstr "REG EXPORT anahtar_adı dosya.reg [/y]\n"
 
 #: reg.rc:71
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid system key [%1]\n"
-msgstr "reg: Geçersiz anahtar adı\n"
+msgstr "reg: Geçersiz anahtar adı [%1]\n"
 
 #: reg.rc:72
-#, fuzzy
-#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "Belirtilen '%1' kayıt defteri değeri zaten var. Üzerine yazılsın mı?"
+msgstr "Belirtilen '%1' dosyası zaten var. Üzerine yazılsın mı?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12336,7 +12273,7 @@ msgstr "İkili &Değeri Değiştir..."
 
 #: regedit.rc:267
 msgid "Export registry"
-msgstr "Kayıt Defterini Ver"
+msgstr "Kayıt defterini ver"
 
 #: regedit.rc:269
 msgid "S&elected branch:"
@@ -12527,38 +12464,6 @@ msgstr ""
 "değil."
 
 #: regedit.rc:408
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  regedit [options] [filename] [reg_key]\n"
-#| "\n"
-#| "Options:\n"
-#| "  [no option]    Launch the graphical version of this program.\n"
-#| "  /L:system.dat  The location of the system.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /R:user.dat    The location of the user.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /C             Import the contents of a registry file.\n"
-#| "  /D             Delete a specified registry key.\n"
-#| "  /E             Export the contents of a specified registry key to a "
-#| "file.\n"
-#| "                 If no key is specified, the entire registry is "
-#| "exported.\n"
-#| "  /S             Silent mode. No messages will be displayed.\n"
-#| "  /V             Launch the GUI in advanced mode. Ignored.\n"
-#| "  /?             Display this information and exit.\n"
-#| "  [filename]     The location of the file containing registry information "
-#| "to\n"
-#| "                 be imported. When used with [/E], this option specifies "
-#| "the\n"
-#| "                 file location where registry information will be "
-#| "exported.\n"
-#| "  [reg_key]      The registry key to be modified.\n"
-#| "\n"
-#| "Usage examples:\n"
-#| "  regedit \"import.reg\"\n"
-#| "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-#| "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12615,14 +12520,12 @@ msgstr ""
 "\n"
 "Kullanım örnekleri:\n"
 "  regedit \"import.reg\"\n"
-"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Konsol\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Anahtar\\Yol\"\n"
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
-"regedit: Geçersiz veya bilinmeyen değişken [%1]\n"
-"\n"
+msgstr "regedit: Geçersiz veya bilinmeyen değişken [%1]\n"
 
 #: regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
@@ -12666,9 +12569,7 @@ msgstr ""
 
 #: regedit.rc:419
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
-"regedit: Bilinmeyen kaçış sırası [\\%1!c!]\n"
-"\n"
+msgstr "regedit: Bilinmeyen kaçış sırası [\\%1!c!]\n"
 
 #: regedit.rc:420
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
@@ -12691,22 +12592,19 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
-"regedit: Desteklenmeyen [%1] kayıt veri türüyle '%2''de karşılaşıldı.\n"
+"regedit: Desteklenmeyen [0x%1!x!] kayıt defteri veri türüyle '%2''de "
+"karşılaşıldı.\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: '%1' kayıt değeri ikili veri olarak dışa verilecek.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Geçersiz anahtar adı\n"
+msgstr "reg: Geçersiz sistem anahtarı [%1]\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12714,10 +12612,8 @@ msgid ""
 msgstr "regedit: '%1' verilemiyor. Belirtilen kayıt anahtarı bulunamadı.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit: '%1' kayıt sınıfı silinemiyor.\n"
+msgstr "regedit: '%1' kayıt anahtarı silinemiyor.\n"
 
 #: regedit.rc:431
 msgid "regedit: The line contains invalid syntax.\n"
@@ -12753,7 +12649,7 @@ msgstr "Seçimi siler"
 
 #: regedit.rc:194
 msgid "Renames the selection"
-msgstr "Seçimi yeniden adlandır"
+msgstr "Seçimi yeniden adlandırır"
 
 #: regedit.rc:195
 msgid "Copies the name of the selected key to the clipboard"
@@ -12864,19 +12760,15 @@ msgid "Confirm Key Delete"
 msgstr "Anahtar Silmeyi Onayla"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete the registry key '%1' and all of its "
-#| "subkeys?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
 msgstr ""
-"'%1' kayıt defteri anahtarını ve bütün alt anahtarlarını silmek "
+"'Bu kayıt defteri anahtarını ve bütün alt anahtarlarını silmek "
 "istediğinizden emin misiniz?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Seçili düğümü genişletir veya daraltır"
 
 #: regedit.rc:231
 msgid "Collapse"
@@ -12911,11 +12803,11 @@ msgstr ""
 "  regsvr32 [/u] [/s] [/n] [/i[:komutsatırı]] DllAdı\n"
 "\n"
 "Seçenekler:\n"
-"  [/u]  Bir sunucunun kaydını kaldır.\n"
+"  [/u]  Bir sunucunun kaydını kaldırır.\n"
 "  [/s]  Sessiz (hiçbir mesaj görüntülenmeyecek).\n"
-"  [/i]  DllInstall'ı, isteğe bağlı [komutsatırı] geçirerek çağır.\n"
+"  [/i]  DllInstall'ı, isteğe bağlı [komutsatırı] geçirerek çağırır.\n"
 "\t[/u] ile kullanıldığında DllInstall kaldırma kipinde çağrılır.\n"
-"  [/n]  DllRegisterServer'i çağırma. Bu seçenek [/i] ile kullanılır.\n"
+"  [/n]  DllRegisterServer'i çağırmaz. Bu seçenek [/i] ile kullanılır.\n"
 "\n"
 
 #: regsvr32.rc:41
@@ -13406,7 +13298,7 @@ msgstr "Sütunları Seç"
 #: taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "Görev Yöneticisinin İşlem sekmesinde görüntülenecek sütunları seçin."
+msgstr "Görev Yöneticisinin İşlem sekmesinde görüntülenecek sütunları seçiniz."
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -13631,7 +13523,7 @@ msgstr "Seçili sürece odaklanır"
 
 #: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
-msgstr "Görev Yöneticisini gizli konumundan geri yükler"
+msgstr "Görev Yöneticisini gizli konumundan geri getirir"
 
 #: taskmgr.rc:230
 msgid "Removes the process from the system"
@@ -13639,7 +13531,7 @@ msgstr "Sistemden işlemi kaldırır"
 
 #: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr "Bu işlemi ve onun alt dallarını sistemden siler"
+msgstr "Bu işlemi ve onun alt dallarını sistemden kaldırır"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
@@ -13814,7 +13706,7 @@ msgstr "Geçersiz Seçenek"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr "İşlem İlişkisine Erişme veya Ayarlama Başarısız"
+msgstr "İşlem İlişkisine Erişme veya İlişkiyi Ayarlama Başarısız"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
@@ -13842,8 +13734,7 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"'%s' kaldırma komutu çalıştırılabilir dosya var olmadığından "
-"çalıştırılamadı.\n"
+"'%s' kaldırma komutu büyük olasılıkla dosya olmadığından çalıştırılamadı.\n"
 "Kayıt defterinden bu kaldırma girişini silmek ister misiniz?"
 
 #: uninstaller.rc:31
@@ -13931,10 +13822,10 @@ msgid ""
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
-"Benzetilmiş bir oturumu veya bilgisayarı kapatma yapılıyor ancak bu program "
-"yanıt vermiyor.\n"
+"Bir oturumu veya bilgisayarı kapatma canlandırması yapılıyor ancak bu "
+"program yanıt vermiyor.\n"
 "\n"
-"Eğer işlemi sonlandırırsanız, tüm kaydedilmemiş verileri kaybedebilirsiniz."
+"Eğer işlemi sonlandırırsanız, kaydedilmemiş tüm verileri kaybedebilirsiniz."
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
@@ -13949,8 +13840,8 @@ msgid ""
 msgstr ""
 "Bu program ücretsiz bir yazılım olup; Free Software Foundation tarafından "
 "dağıtılan GNU Kısıtlı Genel Kamu Lisansı'nın 2.1 veya (seçimi size bağlı) "
-"herhangi sonraki sürümü altında şartlara bağlı kalarak tekrar dağıtabilir ve/"
-"veya düzenlenebilir."
+"herhangi sonraki sürümü altında şartlara bağlı kalarak tekrar dağıtılabilir "
+"ve/veya düzenlenebilir."
 
 #: winecfg.rc:143
 msgid "Windows registration information"
@@ -13958,11 +13849,11 @@ msgstr "Windows kayıt bilgisi"
 
 #: winecfg.rc:144
 msgid "&Owner:"
-msgstr "Sahip:"
+msgstr "Kullanıcı:"
 
 #: winecfg.rc:146
 msgid "Organi&zation:"
-msgstr "Şirket:"
+msgstr "Kuruluş:"
 
 #: winecfg.rc:154
 msgid "Application settings"
@@ -14024,7 +13915,7 @@ msgstr "Bu, 10 nokta Tahoma kullanan örnek bir metindir"
 
 #: winecfg.rc:191
 msgid "DLL overrides"
-msgstr "DLL Öncelikleri"
+msgstr "DLL öncelikleri"
 
 #: winecfg.rc:192
 msgid ""
@@ -14033,7 +13924,7 @@ msgid ""
 "application)."
 msgstr ""
 "Devingen Bağlı Kitaplıkların her biri yerleşik (Wine ile gelen) veya doğal "
-"(Windows'tan alınmış veya uygulama tarafından sağlanmış) olarak "
+"(Windows'tan alınmış ya da uygulama tarafından sağlanmış) olarak "
 "belirtilebilir."
 
 #: winecfg.rc:194
@@ -14058,7 +13949,7 @@ msgstr "Öncelik Düzenle"
 
 #: winecfg.rc:208
 msgid "Load order"
-msgstr "Yükleme Sırası"
+msgstr "Yükleme sırası"
 
 #: winecfg.rc:209
 msgid "&Builtin (Wine)"
@@ -14145,11 +14036,11 @@ msgstr "Ses çıkış aygıtı:"
 
 #: winecfg.rc:270
 msgid "Input device:"
-msgstr "Giriş aygıtı:"
+msgstr "Girdi aygıtı:"
 
 #: winecfg.rc:271
 msgid "Voice input device:"
-msgstr "Ses giriş aygıtı:"
+msgstr "Ses girdi aygıtı:"
 
 #: winecfg.rc:276
 msgid "&Test Sound"
@@ -14933,7 +14824,7 @@ msgstr "Tam &Yol:"
 
 #: winefile.rc:164
 msgid "Last Change:"
-msgstr "Son Değişme:"
+msgstr "Son Değişiklik:"
 
 #: winefile.rc:168
 msgid "Cop&yright:"
@@ -14961,7 +14852,7 @@ msgstr "S&ıkıştırılmış"
 
 #: winefile.rc:178
 msgid "Version information"
-msgstr "Sürüm Bilgisi"
+msgstr "Sürüm bilgisi"
 
 #: winefile.rc:194
 msgctxt "accelerator Fullscreen"
@@ -14986,7 +14877,7 @@ msgstr "kök ds"
 
 #: winefile.rc:99
 msgid "unixfs"
-msgstr "unixfs"
+msgstr "unixds"
 
 #: winefile.rc:101
 msgid "Shell"
@@ -15073,10 +14964,8 @@ msgid "Expert"
 msgstr "Uzman"
 
 #: winemine.rc:74 winemine.rc:33
-#, fuzzy
-#| msgid "Result"
 msgid "Reset Results"
-msgstr "Sonuç"
+msgstr "Sonuçları Sıfırla"
 
 #: winemine.rc:80
 msgid "Congratulations!"
@@ -15104,7 +14993,7 @@ msgstr "Mayınlar"
 
 #: winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr ""
+msgstr "Bütün sonuçlar silinecektir. Emin misiniz?"
 
 #: winemine.rc:30
 msgid "WineMine"
@@ -15356,7 +15245,7 @@ msgstr "Otomatik"
 
 #: wordpad.rc:210
 msgid "Date and time"
-msgstr "Tarih ve zaman"
+msgstr "Tarih ve saat"
 
 #: wordpad.rc:213
 msgid "Available formats"
@@ -15384,7 +15273,7 @@ msgstr "Sağ"
 
 #: wordpad.rc:240
 msgid "First line"
-msgstr "İlk Satır"
+msgstr "İlk satır"
 
 #: wordpad.rc:242
 msgid "Alignment"
@@ -15396,7 +15285,7 @@ msgstr "Sekmeler"
 
 #: wordpad.rc:253
 msgid "Tab stops"
-msgstr "Sekme durmaları"
+msgstr "Sekme durakları"
 
 #: wordpad.rc:255
 msgid "&Add"
@@ -15554,7 +15443,7 @@ msgstr "inç"
 #: wordpad.rc:186
 msgctxt "unit: point"
 msgid "pt"
-msgstr "pt"
+msgstr "nk"
 
 #: wordpad.rc:191
 msgid "Document"
@@ -15562,7 +15451,7 @@ msgstr "Belge"
 
 #: wordpad.rc:192
 msgid "Save changes to '%s'?"
-msgstr "'%s' değişiklikleri kaydedilsin mi?"
+msgstr "Değişiklikler '%s' dosyasına kaydedilsin mi?"
 
 #: wordpad.rc:193
 msgid "Finished searching the document."
@@ -15570,15 +15459,15 @@ msgstr "Belgeyi arama tamamlandı."
 
 #: wordpad.rc:194
 msgid "Failed to load the RichEdit library."
-msgstr "RichEdit kütüphanesi yüklenemedi."
+msgstr "RichEdit kitaplığı yüklenemedi."
 
 #: wordpad.rc:195
 msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
-"Tüm biçimlendirmenin kaybedileceği sade metin biçiminde kaydetmeyi seçtiniz. "
-"Bunu yapmak istediğinizden emin misiniz?"
+"Sade metin biçiminde kaydetmeyi seçtiniz, bu durumda tüm biçimlendirme "
+"kaybolacak. Bunu yapmak istediğinizden emin misiniz?"
 
 #: wordpad.rc:198
 msgid "Invalid number format."
@@ -15610,7 +15499,7 @@ msgstr "Yazdırma eklenmedi."
 
 #: wordpad.rc:205
 msgid "Cannot add more than 32 tab stops."
-msgstr "32'den fazla sekme duraklaması eklenemez."
+msgstr "32'den fazla sekme durağı eklenemez."
 
 #: write.rc:30
 msgid "Starting Wordpad failed"
@@ -15707,7 +15596,7 @@ msgid ""
 "\t\tthan source.\n"
 "\n"
 msgstr ""
-"XCOPY - Kaynak dosya ve klasörlerini hedefe kopyalar.\n"
+"XCOPY - Kaynak dosya ve dizinleri hedefe kopyalar.\n"
 "\n"
 "Sözdizimi:\n"
 "XCOPY kaynak [hedef] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
@@ -15715,27 +15604,27 @@ msgstr ""
 "\n"
 "Nerede:\n"
 "\n"
-"[/I]  Hedef dizini bulunmuyorsa oluşturup iki veya daha fazla dosyaları\n"
-"\tkopyalar.\n"
-"[/S]  Dizin ve alt dizinlerini kopyala.\n"
-"[/E]  Boş olanlar hariç dizin ve alt dizinleri kopyala.\n"
-"[/Q]  Kopyalama sırasında isimleri gösterme, sessiz yap.\n"
-"[/F]  Kopyalama sırasında tüm kaynak ve hedef isimlerini göster.\n"
-"[/L]  İşlemi simüle et, kopyalanacak isimleri göster.\n"
+"[/I]  Hedef dizin bulunmuyorsa oluşturup iki veya daha fazla dosyaları\n"
+"\tkopyala.\n"
+"[/S]  Dizin ve alt dizinlerini kopyalar.\n"
+"[/E]  Boş olanlar hariç dizin ve alt dizinleri kopyalar.\n"
+"[/Q]  Kopyalama sırasında isimleri göstermez, işi sessiz yapar.\n"
+"[/F]  Kopyalama sırasında tüm kaynak ve hedef isimlerini gösterir.\n"
+"[/L]  İşlemi canlandırır, kopyalanacak isimleri gösterir.\n"
 "[/W]  Kopyalama işlemi sırasında komut sorar.\n"
 "[/T]  Boş dizin yapısını oluşturur ancak dosyaları kopyalamaz.\n"
-"[/Y]  Dosyalar üzerine yazılsın mı sorgusunu atla.\n"
+"[/Y]  Dosyalar üzerine yazılsın mı sorgusunu atlar.\n"
 "[/-Y] Dosyalar yazılırken onay alır.\n"
 "[/P]  Kopyalamadan önce her kaynak dosya için onay alır.\n"
-"[/N]  Kısa isimler kullanarak kopyala.\n"
-"[/U]  Sadece hedefte bulunan dosyaları kopyala.\n"
-"[/R]  Tüm salt okunur dosyaların üzerine yaz.\n"
-"[/H]  Kopyalarken gizli ve sistem dosyalarını da dahil et.\n"
-"[/C]  Kopyalama sırasında bir hata oluşursa devam et.\n"
-"[/A]  Sadece arşiv nitelikli dosyaları kopyala.\n"
+"[/N]  Kısa isimler kullanarak kopyalar.\n"
+"[/U]  Sadece hedefte bulunan dosyaları kopyalar.\n"
+"[/R]  Tüm salt okunur dosyaların üzerine yazar.\n"
+"[/H]  Kopyalarken gizli ve sistem dosyalarını da dahil eder.\n"
+"[/C]  Kopyalama sırasında bir hata oluşursa devam eder.\n"
+"[/A]  Sadece arşiv nitelikli dosyaları kopyalar.\n"
 "[/M]  Sadece arşiv nitelikli dosyaları kopyala, arşiv niteliklerini\n"
-"\tkaldır.\n"
+"\tkaldırır.\n"
 "[/D | /D:a-g-y] Belirtilen tarihten sonra düzenlenmiş yeni dosya\n"
-"\t\tve klasörleri kopyala. Tarih belirtilmemişse, sadece hedef\n"
-"\t\tkaynaktan yeniyse kopyala.\n"
+"\t\tve klasörleri kopyalar. Tarih belirtilmemişse, sadece hedef\n"
+"\t\tkaynaktan yeniyse kopyalar.\n"
 "\n"
