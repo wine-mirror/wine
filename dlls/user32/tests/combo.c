@@ -718,25 +718,25 @@ static void test_listbox_size(DWORD style)
         int height_combo;
         BOOL todo;
     } info_height[] = {
-        {2, 24},
+        {2, 24, TRUE},
         {2, 41, TRUE},
-        {2, 42},
-        {2, 50},
+        {2, 42, TRUE},
+        {2, 50, TRUE},
         {2, 60},
         {2, 80},
         {2, 89},
         {2, 90},
         {2, 100},
 
-        {10, 24},
+        {10, 24, TRUE},
         {10, 41, TRUE},
-        {10, 42},
-        {10, 50},
-        {10, 60},
-        {10, 80},
+        {10, 42, TRUE},
+        {10, 50, TRUE},
+        {10, 60, TRUE},
+        {10, 80, TRUE},
         {10, 89, TRUE},
-        {10, 90},
-        {10, 100},
+        {10, 90, TRUE},
+        {10, 100, TRUE},
     };
 
     pGetComboBoxInfo = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
