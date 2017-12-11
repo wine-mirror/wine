@@ -11006,6 +11006,7 @@ static void check_format_support(const unsigned int *format_support,
             continue;
         }
 
+        todo_wine
         ok(supported, "Format %#x - %s supported, format support %#x.\n",
                 format, feature_name, format_support[format]);
     }
@@ -11015,6 +11016,7 @@ static void test_required_format_support(void)
 {
     unsigned int format_support[DXGI_FORMAT_B4G4R4A4_UNORM + 1];
     ID3D10Device *device;
+    unsigned int support;
     DXGI_FORMAT format;
     ULONG refcount;
     HRESULT hr;
@@ -11031,19 +11033,18 @@ static void test_required_format_support(void)
         return;
     }
 
+    support = 0xdeadbeef;
+    hr = ID3D10Device_CheckFormatSupport(device, ~0u, &support);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(!support, "Got unexpected format support %#x.\n", support);
+
     memset(format_support, 0, sizeof(format_support));
     for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
     {
         hr = ID3D10Device_CheckFormatSupport(device, format, &format_support[format]);
-        todo_wine ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
+        ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
                 "Got unexpected result for format %#x: hr %#x, format_support %#x.\n",
                 format, hr, format_support[format]);
-    }
-    if (hr == E_NOTIMPL)
-    {
-        skip("CheckFormatSupport not implemented.\n");
-        ID3D10Device_Release(device);
-        return;
     }
 
     check_format_support(format_support, index_buffers, ARRAY_SIZE(index_buffers),
