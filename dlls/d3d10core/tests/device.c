@@ -8419,6 +8419,124 @@ float4 main(const ps_in v) : SV_TARGET
     release_test_context(&test_context);
 }
 
+static void test_vs_input_relative_addressing(void)
+{
+    struct d3d10core_test_context test_context;
+    unsigned int offset, stride;
+    unsigned int index[4] = {0};
+    ID3D10PixelShader *ps;
+    ID3D10Buffer *vb, *cb;
+    ID3D10Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    static const DWORD vs_code[] =
+    {
+#if 0
+        struct vertex
+        {
+            float4 position : POSITION;
+            float4 colors[4] : COLOR;
+        };
+
+        uint index;
+
+        void main(vertex vin, out float4 position : SV_Position,
+                out float4 color : COLOR)
+        {
+            position = vin.position;
+            color = vin.colors[index];
+        }
+#endif
+        0x43425844, 0x8623dd89, 0xe37fecf5, 0xea3fdfe1, 0xdf36e4e4, 0x00000001, 0x000001f4, 0x00000003,
+        0x0000002c, 0x000000c4, 0x00000118, 0x4e475349, 0x00000090, 0x00000005, 0x00000008, 0x00000080,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000089, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x00000089, 0x00000001, 0x00000000, 0x00000003, 0x00000002,
+        0x00000f0f, 0x00000089, 0x00000002, 0x00000000, 0x00000003, 0x00000003, 0x00000f0f, 0x00000089,
+        0x00000003, 0x00000000, 0x00000003, 0x00000004, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0x4c4f4300,
+        0xab00524f, 0x4e47534f, 0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001,
+        0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001,
+        0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69, 0x4f4c4f43, 0xabab0052, 0x52444853, 0x000000d4,
+        0x00010040, 0x00000035, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0300005f, 0x001010f2,
+        0x00000000, 0x0300005f, 0x001010f2, 0x00000001, 0x0300005f, 0x001010f2, 0x00000002, 0x0300005f,
+        0x001010f2, 0x00000003, 0x0300005f, 0x001010f2, 0x00000004, 0x04000067, 0x001020f2, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x02000068, 0x00000001, 0x0400005b, 0x001010f2,
+        0x00000001, 0x00000004, 0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x06000036,
+        0x00100012, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x07000036, 0x001020f2, 0x00000001,
+        0x00d01e46, 0x00000001, 0x0010000a, 0x00000000, 0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        struct vs_out
+        {
+            float4 position : SV_POSITION;
+            float4 color : COLOR;
+        };
+
+        float4 main(struct vs_out i) : SV_TARGET
+        {
+            return i.color;
+        }
+#endif
+        0x43425844, 0xe2087fa6, 0xa35fbd95, 0x8e585b3f, 0x67890f54, 0x00000001, 0x000000f4, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000038, 0x00000040,
+        0x0000000e, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
+        0x001020f2, 0x00000000, 0x00101e46, 0x00000001, 0x0100003e,
+    };
+    static const D3D10_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 1,  0, D3D10_INPUT_PER_INSTANCE_DATA, 1},
+        {"COLOR",    1, DXGI_FORMAT_R8G8B8A8_UNORM, 1,  4, D3D10_INPUT_PER_INSTANCE_DATA, 1},
+        {"COLOR",    2, DXGI_FORMAT_R8G8B8A8_UNORM, 1,  8, D3D10_INPUT_PER_INSTANCE_DATA, 1},
+        {"COLOR",    3, DXGI_FORMAT_R8G8B8A8_UNORM, 1, 12, D3D10_INPUT_PER_INSTANCE_DATA, 1},
+    };
+    static const unsigned int colors[] = {0xff0000ff, 0xff00ff00, 0xffff0000, 0xff0f0f0f};
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &test_context.input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
+    ID3D10Device_VSSetConstantBuffers(device, 0, 1, &cb);
+
+    vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(colors), colors);
+    stride = sizeof(colors);
+    offset = 0;
+    ID3D10Device_IASetVertexBuffers(device, 1, 1, &vb, &stride, &offset);
+
+    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &test_context.vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D10Device_PSSetShader(device, ps);
+
+    for (i = 0; i < ARRAY_SIZE(colors); ++i)
+    {
+        *index = i;
+        ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, index, 0, 0);
+        ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
+        draw_quad(&test_context);
+        check_texture_color(test_context.backbuffer, colors[i], 1);
+    }
+
+    ID3D10Buffer_Release(cb);
+    ID3D10Buffer_Release(vb);
+    ID3D10PixelShader_Release(ps);
+    release_test_context(&test_context);
+}
+
 static void test_swapchain_formats(void)
 {
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
@@ -13531,6 +13649,7 @@ START_TEST(device)
     test_copy_subresource_region();
     test_check_multisample_quality_levels();
     test_cb_relative_addressing();
+    test_vs_input_relative_addressing();
     test_swapchain_formats();
     test_swapchain_views();
     test_swapchain_flip();
