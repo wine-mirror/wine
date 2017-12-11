@@ -10597,6 +10597,10 @@ static void test_document_mode(IHTMLDocument2 *doc2)
     HRESULT hres;
 
     hres = IHTMLDocument2_QueryInterface(doc2, &IID_IHTMLDocument6, (void**)&doc);
+    if(hres == E_NOINTERFACE) {
+        win_skip("IHTMLDocument6 not supported\n");
+        return;
+    }
     ok(hres == S_OK, "Could not get IHTMLDocument6 interface: %08x\n", hres);
 
     V_VT(&v) = VT_EMPTY;
