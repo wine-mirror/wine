@@ -6107,10 +6107,9 @@ todo_wine
     ok(ret, "Failed to set item count.\n");
 
     ret = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
-todo_wine
     ok(ret == -1, "Unexpected focused item, ret %d\n", ret);
 
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent seq, owner data/focus 2", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "parent seq, owner data/focus 2", FALSE);
 
     /* 2 items, focus on index 0, reduce to 1 item. */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);

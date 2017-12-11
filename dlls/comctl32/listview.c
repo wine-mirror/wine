@@ -8834,6 +8834,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
 	    if (infoPtr->nFocusedItem >= nItems)
 	    {
 		LISTVIEW_SetItemFocus(infoPtr, -1);
+                infoPtr->nFocusedItem = -1;
 		SetRectEmpty(&infoPtr->rcFocus);
 	    }
 	}
