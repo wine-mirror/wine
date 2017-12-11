@@ -1116,11 +1116,12 @@ static void draw_quad_(unsigned int line, struct d3d10core_test_context *context
                 default_vs_code, sizeof(default_vs_code), &context->input_layout);
         ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
-        context->vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quad), quad);
-
         hr = ID3D10Device_CreateVertexShader(device, default_vs_code, sizeof(default_vs_code), &context->vs);
         ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
     }
+
+    if (!context->vb)
+        context->vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
     ID3D10Device_IASetInputLayout(context->device, context->input_layout);
     ID3D10Device_IASetPrimitiveTopology(context->device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -8263,11 +8264,8 @@ done:
 static void test_cb_relative_addressing(void)
 {
     struct d3d10core_test_context test_context;
-    ID3D10Buffer *vb, *colors_cb, *index_cb;
-    ID3D10InputLayout *input_layout;
+    ID3D10Buffer *colors_cb, *index_cb;
     unsigned int i, index[4] = {0};
-    unsigned int stride, offset;
-    ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
     ID3D10Device *device;
     DWORD color;
@@ -8343,13 +8341,6 @@ float4 main(const ps_in v) : SV_TARGET
         0x0000000e, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
         0x001020f2, 0x00000000, 0x00101e46, 0x00000001, 0x0100003e,
     };
-    static const struct vec2 quad[] =
-    {
-        {-1.0f, -1.0f},
-        {-1.0f,  1.0f},
-        { 1.0f, -1.0f},
-        { 1.0f,  1.0f},
-    };
     static const struct
     {
         float color[4];
@@ -8394,24 +8385,17 @@ float4 main(const ps_in v) : SV_TARGET
     device = test_context.device;
 
     hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
-            vs_code, sizeof(vs_code), &input_layout);
+            vs_code, sizeof(vs_code), &test_context.input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
-    vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quad), quad);
     colors_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(colors), &colors);
     index_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
 
-    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
+    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &test_context.vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
     hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
 
-    ID3D10Device_IASetInputLayout(device, input_layout);
-    ID3D10Device_IASetPrimitiveTopology(device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-    stride = sizeof(*quad);
-    offset = 0;
-    ID3D10Device_IASetVertexBuffers(device, 0, 1, &vb, &stride, &offset);
-    ID3D10Device_VSSetShader(device, vs);
     ID3D10Device_VSSetConstantBuffers(device, 0, 1, &index_cb);
     ID3D10Device_VSSetConstantBuffers(device, 1, 1, &colors_cb);
     ID3D10Device_PSSetShader(device, ps);
@@ -8423,8 +8407,7 @@ float4 main(const ps_in v) : SV_TARGET
         index[0] = test_data[i].index;
         ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)index_cb, 0, NULL, index, 0, 0);
 
-        ID3D10Device_Draw(device, 4, 0);
-
+        draw_quad(&test_context);
         color = get_texture_color(test_context.backbuffer, 319, 239);
         ok(compare_color(color, test_data[i].expected, 1),
                 "Got unexpected color 0x%08x for index %d.\n", color, test_data[i].index);
@@ -8432,11 +8415,7 @@ float4 main(const ps_in v) : SV_TARGET
 
     ID3D10Buffer_Release(index_cb);
     ID3D10Buffer_Release(colors_cb);
-
     ID3D10PixelShader_Release(ps);
-    ID3D10VertexShader_Release(vs);
-    ID3D10Buffer_Release(vb);
-    ID3D10InputLayout_Release(input_layout);
     release_test_context(&test_context);
 }
 
@@ -13157,6 +13136,362 @@ static void test_format_compatibility(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void check_clip_distance(struct d3d10core_test_context *test_context, ID3D10Buffer *vb)
+{
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    struct vertex
+    {
+        float clip_distance0;
+        float clip_distance1;
+    };
+
+    ID3D10Device *device = test_context->device;
+    struct resource_readback rb;
+    struct vertex vertices[4];
+    unsigned int i;
+    RECT rect;
+
+    for (i = 0; i < ARRAY_SIZE(vertices); ++i)
+        vertices[i].clip_distance0 = 1.0f;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
+    ID3D10Device_ClearRenderTargetView(device, test_context->backbuffer_rtv, white);
+    ID3D10Device_Draw(device, 4, 0);
+    check_texture_color(test_context->backbuffer, 0xff00ff00, 1);
+
+    for (i = 0; i < ARRAY_SIZE(vertices); ++i)
+        vertices[i].clip_distance0 = 0.0f;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
+    ID3D10Device_ClearRenderTargetView(device, test_context->backbuffer_rtv, white);
+    ID3D10Device_Draw(device, 4, 0);
+    check_texture_color(test_context->backbuffer, 0xff00ff00, 1);
+
+    for (i = 0; i < ARRAY_SIZE(vertices); ++i)
+        vertices[i].clip_distance0 = -1.0f;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
+    ID3D10Device_ClearRenderTargetView(device, test_context->backbuffer_rtv, white);
+    ID3D10Device_Draw(device, 4, 0);
+    check_texture_color(test_context->backbuffer, 0xffffffff, 1);
+
+    for (i = 0; i < ARRAY_SIZE(vertices); ++i)
+        vertices[i].clip_distance0 = i < 2 ? 1.0f : -1.0f;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
+    ID3D10Device_ClearRenderTargetView(device, test_context->backbuffer_rtv, white);
+    ID3D10Device_Draw(device, 4, 0);
+    get_texture_readback(test_context->backbuffer, 0, &rb);
+    SetRect(&rect, 0, 0, 320, 480);
+    check_readback_data_color(&rb, &rect, 0xff00ff00, 1);
+    SetRect(&rect, 320, 0, 320, 480);
+    check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+    release_resource_readback(&rb);
+
+    for (i = 0; i < ARRAY_SIZE(vertices); ++i)
+        vertices[i].clip_distance0 = i % 2 ? 1.0f : -1.0f;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
+    ID3D10Device_ClearRenderTargetView(device, test_context->backbuffer_rtv, white);
+    ID3D10Device_Draw(device, 4, 0);
+    get_texture_readback(test_context->backbuffer, 0, &rb);
+    SetRect(&rect, 0, 0, 640, 240);
+    check_readback_data_color(&rb, &rect, 0xff00ff00, 1);
+    SetRect(&rect, 0, 240, 640, 240);
+    check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+    release_resource_readback(&rb);
+}
+
+static void test_clip_distance(void)
+{
+    struct d3d10core_test_context test_context;
+    struct resource_readback rb;
+    unsigned int offset, stride;
+    ID3D10Buffer *vs_cb, *gs_cb;
+    ID3D10GeometryShader *gs;
+    ID3D10Device *device;
+    ID3D10Buffer *vb;
+    unsigned int i;
+    HRESULT hr;
+    RECT rect;
+
+    static const DWORD vs_code[] =
+    {
+#if 0
+        bool use_constant;
+        float clip_distance;
+
+        struct input
+        {
+            float4 position : POSITION;
+            float distance0 : CLIP_DISTANCE0;
+            float distance1 : CLIP_DISTANCE1;
+        };
+
+        struct vertex
+        {
+            float4 position : SV_POSITION;
+            float user_clip : CLIP_DISTANCE;
+            float clip : SV_ClipDistance;
+        };
+
+        void main(input vin, out vertex vertex)
+        {
+            vertex.position = vin.position;
+            vertex.user_clip = vin.distance0;
+            vertex.clip = vin.distance0;
+            if (use_constant)
+                vertex.clip = clip_distance;
+        }
+#endif
+        0x43425844, 0x09dfef58, 0x88570f2e, 0x1ebcf953, 0x9f97e22a, 0x00000001, 0x000001dc, 0x00000003,
+        0x0000002c, 0x0000009c, 0x00000120, 0x4e475349, 0x00000068, 0x00000003, 0x00000008, 0x00000050,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000059, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000101, 0x00000059, 0x00000001, 0x00000000, 0x00000003, 0x00000002,
+        0x00000001, 0x49534f50, 0x4e4f4954, 0x494c4300, 0x49445f50, 0x4e415453, 0xab004543, 0x4e47534f,
+        0x0000007c, 0x00000003, 0x00000008, 0x00000050, 0x00000000, 0x00000001, 0x00000003, 0x00000000,
+        0x0000000f, 0x0000005c, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x00000e01, 0x0000006a,
+        0x00000000, 0x00000002, 0x00000003, 0x00000002, 0x00000e01, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x50494c43, 0x5349445f, 0x434e4154, 0x56530045, 0x696c435f, 0x73694470, 0x636e6174, 0xabab0065,
+        0x52444853, 0x000000b4, 0x00010040, 0x0000002d, 0x04000059, 0x00208e46, 0x00000000, 0x00000001,
+        0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x00101012, 0x00000001, 0x04000067, 0x001020f2,
+        0x00000000, 0x00000001, 0x03000065, 0x00102012, 0x00000001, 0x04000067, 0x00102012, 0x00000002,
+        0x00000002, 0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x05000036, 0x00102012,
+        0x00000001, 0x0010100a, 0x00000001, 0x0b000037, 0x00102012, 0x00000002, 0x0020800a, 0x00000000,
+        0x00000000, 0x0020801a, 0x00000000, 0x00000000, 0x0010100a, 0x00000001, 0x0100003e,
+    };
+    static const DWORD vs_multiple_code[] =
+    {
+#if 0
+        bool use_constant;
+        float clip_distance0;
+        float clip_distance1;
+
+        struct input
+        {
+            float4 position : POSITION;
+            float distance0 : CLIP_DISTANCE0;
+            float distance1 : CLIP_DISTANCE1;
+        };
+
+        struct vertex
+        {
+            float4 position : SV_POSITION;
+            float user_clip : CLIP_DISTANCE;
+            float2 clip : SV_ClipDistance;
+        };
+
+        void main(input vin, out vertex vertex)
+        {
+            vertex.position = vin.position;
+            vertex.user_clip = vin.distance0;
+            vertex.clip.x = vin.distance0;
+            if (use_constant)
+                vertex.clip.x = clip_distance0;
+            vertex.clip.y = vin.distance1;
+            if (use_constant)
+                vertex.clip.y = clip_distance1;
+        }
+#endif
+        0x43425844, 0xef5cc236, 0xe2fbfa69, 0x560b6591, 0x23037999, 0x00000001, 0x00000214, 0x00000003,
+        0x0000002c, 0x0000009c, 0x00000120, 0x4e475349, 0x00000068, 0x00000003, 0x00000008, 0x00000050,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000059, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000101, 0x00000059, 0x00000001, 0x00000000, 0x00000003, 0x00000002,
+        0x00000101, 0x49534f50, 0x4e4f4954, 0x494c4300, 0x49445f50, 0x4e415453, 0xab004543, 0x4e47534f,
+        0x0000007c, 0x00000003, 0x00000008, 0x00000050, 0x00000000, 0x00000001, 0x00000003, 0x00000000,
+        0x0000000f, 0x0000005c, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x00000e01, 0x0000006a,
+        0x00000000, 0x00000002, 0x00000003, 0x00000002, 0x00000c03, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x50494c43, 0x5349445f, 0x434e4154, 0x56530045, 0x696c435f, 0x73694470, 0x636e6174, 0xabab0065,
+        0x52444853, 0x000000ec, 0x00010040, 0x0000003b, 0x04000059, 0x00208e46, 0x00000000, 0x00000001,
+        0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x00101012, 0x00000001, 0x0300005f, 0x00101012,
+        0x00000002, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x00102012, 0x00000001,
+        0x04000067, 0x00102032, 0x00000002, 0x00000002, 0x05000036, 0x001020f2, 0x00000000, 0x00101e46,
+        0x00000000, 0x05000036, 0x00102012, 0x00000001, 0x0010100a, 0x00000001, 0x0b000037, 0x00102012,
+        0x00000002, 0x0020800a, 0x00000000, 0x00000000, 0x0020801a, 0x00000000, 0x00000000, 0x0010100a,
+        0x00000001, 0x0b000037, 0x00102022, 0x00000002, 0x0020800a, 0x00000000, 0x00000000, 0x0020802a,
+        0x00000000, 0x00000000, 0x0010100a, 0x00000002, 0x0100003e,
+    };
+    static const DWORD gs_code[] =
+    {
+#if 0
+        bool use_constant;
+        float clip_distance;
+
+        struct vertex
+        {
+            float4 position : SV_POSITION;
+            float user_clip : CLIP_DISTANCE;
+            float clip : SV_ClipDistance;
+        };
+
+        [maxvertexcount(3)]
+        void main(triangle vertex input[3], inout TriangleStream<vertex> output)
+        {
+            vertex o;
+            o = input[0];
+            o.clip = input[0].user_clip;
+            if (use_constant)
+                o.clip = clip_distance;
+            output.Append(o);
+            o = input[1];
+            o.clip = input[1].user_clip;
+            if (use_constant)
+                o.clip = clip_distance;
+            output.Append(o);
+            o = input[2];
+            o.clip = input[2].user_clip;
+            if (use_constant)
+                o.clip = clip_distance;
+            output.Append(o);
+        }
+#endif
+        0x43425844, 0x9b0823e9, 0xab3ed100, 0xba0ff618, 0x1bbd1cb8, 0x00000001, 0x00000338, 0x00000003,
+        0x0000002c, 0x000000b0, 0x00000134, 0x4e475349, 0x0000007c, 0x00000003, 0x00000008, 0x00000050,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x0000005c, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000101, 0x0000006a, 0x00000000, 0x00000002, 0x00000003, 0x00000002,
+        0x00000001, 0x505f5653, 0x5449534f, 0x004e4f49, 0x50494c43, 0x5349445f, 0x434e4154, 0x56530045,
+        0x696c435f, 0x73694470, 0x636e6174, 0xabab0065, 0x4e47534f, 0x0000007c, 0x00000003, 0x00000008,
+        0x00000050, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x0000005c, 0x00000000,
+        0x00000000, 0x00000003, 0x00000001, 0x00000e01, 0x0000006a, 0x00000000, 0x00000002, 0x00000003,
+        0x00000002, 0x00000e01, 0x505f5653, 0x5449534f, 0x004e4f49, 0x50494c43, 0x5349445f, 0x434e4154,
+        0x56530045, 0x696c435f, 0x73694470, 0x636e6174, 0xabab0065, 0x52444853, 0x000001fc, 0x00020040,
+        0x0000007f, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x05000061, 0x002010f2, 0x00000003,
+        0x00000000, 0x00000001, 0x0400005f, 0x00201012, 0x00000003, 0x00000001, 0x0400005f, 0x00201012,
+        0x00000003, 0x00000002, 0x02000068, 0x00000001, 0x0100185d, 0x0100285c, 0x04000067, 0x001020f2,
+        0x00000000, 0x00000001, 0x03000065, 0x00102012, 0x00000001, 0x04000067, 0x00102012, 0x00000002,
+        0x00000002, 0x0200005e, 0x00000003, 0x06000036, 0x001020f2, 0x00000000, 0x00201e46, 0x00000000,
+        0x00000000, 0x06000036, 0x00102012, 0x00000001, 0x0020100a, 0x00000000, 0x00000001, 0x0c000037,
+        0x00100012, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x0020801a, 0x00000000, 0x00000000,
+        0x0020100a, 0x00000000, 0x00000001, 0x05000036, 0x00102012, 0x00000002, 0x0010000a, 0x00000000,
+        0x01000013, 0x06000036, 0x001020f2, 0x00000000, 0x00201e46, 0x00000001, 0x00000000, 0x06000036,
+        0x00102012, 0x00000001, 0x0020100a, 0x00000001, 0x00000001, 0x0c000037, 0x00100012, 0x00000000,
+        0x0020800a, 0x00000000, 0x00000000, 0x0020801a, 0x00000000, 0x00000000, 0x0020100a, 0x00000001,
+        0x00000001, 0x05000036, 0x00102012, 0x00000002, 0x0010000a, 0x00000000, 0x01000013, 0x06000036,
+        0x001020f2, 0x00000000, 0x00201e46, 0x00000002, 0x00000000, 0x06000036, 0x00102012, 0x00000001,
+        0x0020100a, 0x00000002, 0x00000001, 0x0c000037, 0x00100012, 0x00000000, 0x0020800a, 0x00000000,
+        0x00000000, 0x0020801a, 0x00000000, 0x00000000, 0x0020100a, 0x00000002, 0x00000001, 0x05000036,
+        0x00102012, 0x00000002, 0x0010000a, 0x00000000, 0x01000013, 0x0100003e,
+    };
+    static const D3D10_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION",      0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"CLIP_DISTANCE", 0, DXGI_FORMAT_R32_FLOAT,    1, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"CLIP_DISTANCE", 1, DXGI_FORMAT_R32_FLOAT,    1, 4, D3D10_INPUT_PER_VERTEX_DATA, 0},
+    };
+    struct
+    {
+        float clip_distance0;
+        float clip_distance1;
+    }
+    vertices[] =
+    {
+        {1.0f, 1.0f},
+        {1.0f, 1.0f},
+        {1.0f, 1.0f},
+        {1.0f, 1.0f},
+    };
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    struct
+    {
+        BOOL use_constant;
+        float clip_distance0;
+        float clip_distance1;
+        float tessellation_factor;
+    } cb_data;
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &test_context.input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(vertices), vertices);
+    stride = sizeof(*vertices);
+    offset = 0;
+    ID3D10Device_IASetVertexBuffers(device, 1, 1, &vb, &stride, &offset);
+
+    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &test_context.vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+
+    memset(&cb_data, 0, sizeof(cb_data));
+    cb_data.tessellation_factor = 1.0f;
+    vs_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(cb_data), &cb_data);
+    ID3D10Device_VSSetConstantBuffers(device, 0, 1, &vs_cb);
+    gs_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(cb_data), &cb_data);
+    ID3D10Device_GSSetConstantBuffers(device, 0, 1, &gs_cb);
+
+    /* vertex shader */
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
+
+    check_clip_distance(&test_context, vb);
+
+    cb_data.use_constant = TRUE;
+    cb_data.clip_distance0 = -1.0f;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vs_cb, 0, NULL, &cb_data, 0, 0);
+
+    /* geometry shader */
+    hr = ID3D10Device_CreateGeometryShader(device, gs_code, sizeof(gs_code), &gs);
+    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+    ID3D10Device_GSSetShader(device, gs);
+
+    check_clip_distance(&test_context, vb);
+
+    cb_data.use_constant = TRUE;
+    cb_data.clip_distance0 = 1.0f;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)gs_cb, 0, NULL, &cb_data, 0, 0);
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
+    ID3D10Device_Draw(device, 4, 0);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
+
+    /* multiple clip distances */
+    ID3D10Device_GSSetShader(device, NULL);
+
+    ID3D10VertexShader_Release(test_context.vs);
+    hr = ID3D10Device_CreateVertexShader(device, vs_multiple_code, sizeof(vs_multiple_code), &test_context.vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+
+    cb_data.use_constant = FALSE;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vs_cb, 0, NULL, &cb_data, 0, 0);
+
+    for (i = 0; i < ARRAY_SIZE(vertices); ++i)
+        vertices[i].clip_distance0 = 1.0f;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
+
+    for (i = 0; i < ARRAY_SIZE(vertices); ++i)
+    {
+        vertices[i].clip_distance0 = i < 2 ? 1.0f : -1.0f;
+        vertices[i].clip_distance1 = i % 2 ? 1.0f : -1.0f;
+    }
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vb, 0, NULL, vertices, 0, 0);
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
+    draw_color_quad(&test_context, &green);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
+    SetRect(&rect, 0, 0, 320, 240);
+    check_readback_data_color(&rb, &rect, 0xff00ff00, 1);
+    SetRect(&rect, 0, 240, 320, 480);
+    check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+    SetRect(&rect, 320, 0, 640, 480);
+    check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+    release_resource_readback(&rb);
+
+    cb_data.use_constant = TRUE;
+    cb_data.clip_distance0 = 0.0f;
+    cb_data.clip_distance1 = 0.0f;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)vs_cb, 0, NULL, &cb_data, 0, 0);
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
+
+    ID3D10GeometryShader_Release(gs);
+    ID3D10Buffer_Release(vb);
+    ID3D10Buffer_Release(vs_cb);
+    ID3D10Buffer_Release(gs_cb);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -13231,4 +13566,5 @@ START_TEST(device)
     test_stream_output();
     test_stream_output_resume();
     test_format_compatibility();
+    test_clip_distance();
 }
