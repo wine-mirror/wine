@@ -5273,10 +5273,9 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 {
     const struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    const struct wined3d_format *adapter_format = wined3d_get_format(gl_info, adapter_format_id,
-            WINED3DUSAGE_RENDERTARGET);
-    const struct wined3d_format *format = wined3d_get_format(gl_info, check_format_id, usage);
+    const struct wined3d_format *adapter_format, *format;
     enum wined3d_gl_resource_type gl_type, gl_type_end;
+    BOOL mipmap_autogen_supported;
     DWORD format_flags = 0;
     DWORD allowed_usage;
 
@@ -5288,6 +5287,9 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
     if (adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
+
+    adapter_format = wined3d_get_format(gl_info, adapter_format_id, WINED3DUSAGE_RENDERTARGET);
+    format = wined3d_get_format(gl_info, check_format_id, usage);
 
     switch (resource_type)
     {
@@ -5387,14 +5389,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    if ((usage & WINED3DUSAGE_AUTOGENMIPMAP) && (!gl_info->supported[SGIS_GENERATE_MIPMAP]
-            || (format->flags[gl_type] & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FILTERING))
-            != (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FILTERING)))
-    {
-        TRACE("No WINED3DUSAGE_AUTOGENMIPMAP support, returning WINED3DOK_NOAUTOGEN.\n");
-        return WINED3DOK_NOAUTOGEN;
-    }
-
+    mipmap_autogen_supported = gl_info->supported[SGIS_GENERATE_MIPMAP];
     for (; gl_type <= gl_type_end; ++gl_type)
     {
         if ((format->flags[gl_type] & format_flags) != format_flags)
@@ -5423,6 +5418,18 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                     debug_d3dformat(check_format_id));
             return WINED3DERR_NOTAVAILABLE;
         }
+
+        if ((format->flags[gl_type] & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FILTERING))
+                != (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FILTERING))
+        {
+            mipmap_autogen_supported = FALSE;
+        }
+    }
+
+    if ((usage & WINED3DUSAGE_AUTOGENMIPMAP) && !mipmap_autogen_supported)
+    {
+        TRACE("No WINED3DUSAGE_AUTOGENMIPMAP support, returning WINED3DOK_NOAUTOGEN.\n");
+        return WINED3DOK_NOAUTOGEN;
     }
 
     return WINED3D_OK;
