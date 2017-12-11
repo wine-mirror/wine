@@ -5089,6 +5089,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_DSY                              */ shader_hw_dsy,
     /* WINED3DSIH_DSY_COARSE                       */ NULL,
     /* WINED3DSIH_DSY_FINE                         */ NULL,
+    /* WINED3DSIH_EVAL_SAMPLE_INDEX                */ NULL,
     /* WINED3DSIH_ELSE                             */ shader_hw_else,
     /* WINED3DSIH_EMIT                             */ NULL,
     /* WINED3DSIH_EMIT_STREAM                      */ NULL,

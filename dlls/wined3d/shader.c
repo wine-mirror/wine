@@ -125,6 +125,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DSY                              */ "dsy",
     /* WINED3DSIH_DSY_COARSE                       */ "deriv_rty_coarse",
     /* WINED3DSIH_DSY_FINE                         */ "deriv_rty_fine",
+    /* WINED3DSIH_EVAL_SAMPLE_INDEX                */ "eval_sample_index",
     /* WINED3DSIH_ELSE                             */ "else",
     /* WINED3DSIH_EMIT                             */ "emit",
     /* WINED3DSIH_EMIT_STREAM                      */ "emit_stream",
