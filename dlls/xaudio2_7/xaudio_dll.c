@@ -2277,13 +2277,14 @@ static void update_source_state(XA2SourceImpl *src)
         src->first_al_buf %= XAUDIO2_MAX_QUEUED_BUFFERS;
         src->al_bufs_used -= processed;
 
-        if(processed > src->abandoned_albufs){
-            for(i = src->abandoned_albufs; i < processed; ++i){
-                ALint bufsize;
+        for(i = 0; i < processed; ++i){
+            ALint bufsize;
 
-                alGetBufferi(al_buffers[i], AL_SIZE, &bufsize);
+            alGetBufferi(al_buffers[i], AL_SIZE, &bufsize);
 
-                src->in_al_bytes -= bufsize;
+            src->in_al_bytes -= bufsize;
+
+            if(src->abandoned_albufs == 0){
                 src->played_frames += bufsize / src->submit_blocksize;
 
                 if(al_buffers[i] == src->buffers[src->first_buf].latest_al_buf){
@@ -2309,11 +2310,10 @@ static void update_source_state(XA2SourceImpl *src)
                                     src->buffers[src->first_buf].xa2buffer.pContext);
                     }
                 }
+            }else{
+                src->abandoned_albufs--;
             }
-
-            src->abandoned_albufs = 0;
-        }else
-            src->abandoned_albufs -= processed;
+        }
     }
 
     if(!src->running)
