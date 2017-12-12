@@ -1146,7 +1146,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
 {
     void *ptr;
     int prot = VIRTUAL_GetUnixProt( vprot | VPROT_COMMITTED /* make sure it is accessible */ );
-    unsigned int flags = MAP_FIXED | ((vprot & VPROT_WRITECOPY) ? MAP_PRIVATE : MAP_SHARED);
+    unsigned int flags = MAP_FIXED | ((vprot & VPROT_WRITE) ? MAP_SHARED : MAP_PRIVATE);
 
     assert( start < view->size );
     assert( start + size <= view->size );
