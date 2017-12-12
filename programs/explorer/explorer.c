@@ -658,7 +658,7 @@ static IShellFolder* get_starting_shell_folder(parameters_struct* params)
     return folder;
 }
 
-static int copy_path_string(LPWSTR target, LPWSTR source)
+static WCHAR *copy_path_string(WCHAR *target, WCHAR *source)
 {
     INT i = 0;
 
@@ -667,10 +667,9 @@ static int copy_path_string(LPWSTR target, LPWSTR source)
     if (*source == '\"')
     {
         source ++;
-        while (*source != '\"') target[i++] = *source++;
+        while (*source && *source != '\"') target[i++] = *source++;
         target[i] = 0;
-        source ++;
-        i+=2;
+        if (*source) source++;
     }
     else
     {
@@ -678,7 +677,7 @@ static int copy_path_string(LPWSTR target, LPWSTR source)
         target[i] = 0;
     }
     PathRemoveBackslashW(target);
-    return i;
+    return source;
 }
 
 
@@ -741,12 +740,12 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
         else if (strncmpW(p, arg_root, sizeof(arg_root)/sizeof(WCHAR))==0)
         {
             p += sizeof(arg_root)/sizeof(WCHAR);
-            p+=copy_path_string(parameters->root,p);
+            p = copy_path_string(parameters->root,p);
         }
         else if (strncmpW(p, arg_select, sizeof(arg_select)/sizeof(WCHAR))==0)
         {
             p += sizeof(arg_select)/sizeof(WCHAR);
-            p+=copy_path_string(parameters->selection,p);
+            p = copy_path_string(parameters->selection,p);
             if (!parameters->root[0])
                 copy_path_root(parameters->root,
                                parameters->selection);
