@@ -104,6 +104,21 @@ function test_head() {
     next_test();
 }
 
+function test_iframe() {
+    document.body.innerHTML = '<iframe src="runscript.html?frame.js"></iframe>'
+    var iframe = document.body.firstChild;
+
+    iframe.onload = guard(function() {
+        var r = iframe.contentWindow.global_object.get_global_value();
+        ok(r === "global value", "get_global_value() returned " + r);
+
+        var f = iframe.contentWindow.global_object.get_global_value;
+        ok(f() === "global value", "f() returned " + f());
+
+        next_test();
+    });
+}
+
 function test_getElementsByClassName() {
     var elems;
 
@@ -178,6 +193,7 @@ var tests = [
     test_ElementTraversal,
     test_getElementsByClassName,
     test_head,
+    test_iframe,
     test_query_selector,
     test_compare_position
 ];

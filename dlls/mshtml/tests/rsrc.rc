@@ -34,6 +34,12 @@ vbtest.html HTML "vbtest.html"
 /* @makedep: events.html */
 events.html HTML "events.html"
 
+/* @makedep: runscript.html */
+runscript.html HTML "runscript.html"
+
+/* @makedep: frame.js */
+frame.js HTML "frame.js"
+
 /* @makedep: externscr.js */
 externscr.js HTML "externscr.js"
 
