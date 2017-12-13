@@ -26,6 +26,10 @@
 #include "dwrite.h"
 #include "wincodec.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
+
 struct resource_readback
 {
     ID3D10Resource *resource;
@@ -1618,7 +1622,7 @@ static void test_bitmap_brush(void)
     ID2D1RenderTarget_Clear(rt, &color);
 
     ID2D1BitmapBrush_SetOpacity(brush, 1.0f);
-    for (i = 0; i < sizeof(extend_mode_tests) / sizeof(*extend_mode_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(extend_mode_tests); ++i)
     {
         ID2D1BitmapBrush_SetExtendModeX(brush, extend_mode_tests[i].extend_mode_x);
         extend_mode = ID2D1BitmapBrush_GetExtendModeX(brush);
@@ -1776,7 +1780,7 @@ static void test_linear_brush(void)
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
 
-    hr = ID2D1RenderTarget_CreateGradientStopCollection(rt, stops, sizeof(stops) / sizeof(*stops),
+    hr = ID2D1RenderTarget_CreateGradientStopCollection(rt, stops, ARRAY_SIZE(stops),
             D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_CLAMP, &gradient);
     ok(SUCCEEDED(hr), "Failed to create stop collection, hr %#x.\n", hr);
 
@@ -1813,7 +1817,7 @@ static void test_linear_brush(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
     get_surface_readback(surface, &rb);
-    for (i = 0; i < sizeof(test1) / sizeof(*test1); ++i)
+    for (i = 0; i < ARRAY_SIZE(test1); ++i)
     {
         DWORD colour;
 
@@ -1886,7 +1890,7 @@ static void test_linear_brush(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
     get_surface_readback(surface, &rb);
-    for (i = 0; i < sizeof(test2) / sizeof(*test2); ++i)
+    for (i = 0; i < ARRAY_SIZE(test2); ++i)
     {
         DWORD colour;
 
@@ -1982,7 +1986,7 @@ static void test_radial_brush(void)
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
 
-    hr = ID2D1RenderTarget_CreateGradientStopCollection(rt, stops, sizeof(stops) / sizeof(*stops),
+    hr = ID2D1RenderTarget_CreateGradientStopCollection(rt, stops, ARRAY_SIZE(stops),
             D2D1_GAMMA_2_2, D2D1_EXTEND_MODE_CLAMP, &gradient);
     ok(SUCCEEDED(hr), "Failed to create stop collection, hr %#x.\n", hr);
 
@@ -2025,7 +2029,7 @@ static void test_radial_brush(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
     get_surface_readback(surface, &rb);
-    for (i = 0; i < sizeof(test1) / sizeof(*test1); ++i)
+    for (i = 0; i < ARRAY_SIZE(test1); ++i)
     {
         DWORD colour;
 
@@ -2100,7 +2104,7 @@ static void test_radial_brush(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
     get_surface_readback(surface, &rb);
-    for (i = 0; i < sizeof(test2) / sizeof(*test2); ++i)
+    for (i = 0; i < ARRAY_SIZE(test2); ++i)
     {
         DWORD colour;
 
@@ -3622,7 +3626,7 @@ static void test_bitmap_formats(void)
 
     bitmap_desc.dpiX = 96.0f;
     bitmap_desc.dpiY = 96.0f;
-    for (i = 0; i < sizeof(bitmap_formats) / sizeof(*bitmap_formats); ++i)
+    for (i = 0; i < ARRAY_SIZE(bitmap_formats); ++i)
     {
         for (j = 0; j < 4; ++j)
         {
@@ -4406,7 +4410,7 @@ static void test_create_target(void)
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(create_dpi_tests) / sizeof(*create_dpi_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(create_dpi_tests); ++i)
     {
         ID2D1GdiInteropRenderTarget *interop;
         D2D1_RENDER_TARGET_PROPERTIES desc;
@@ -4595,7 +4599,7 @@ todo_wine
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "EndDraw failure expected, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(antialias_mode_tests)/sizeof(*antialias_mode_tests); i++)
+    for (i = 0; i < ARRAY_SIZE(antialias_mode_tests); ++i)
     {
         IDWriteRenderingParams *rendering_params;
 
@@ -4691,7 +4695,7 @@ static void test_dc_target(void)
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(invalid_formats) / sizeof(*invalid_formats); ++i)
+    for (i = 0; i < ARRAY_SIZE(invalid_formats); ++i)
     {
         desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
         desc.pixelFormat = invalid_formats[i];
@@ -5219,7 +5223,7 @@ static void test_stroke_style(void)
     desc.miterLimit = 1.5f;
     desc.dashOffset = 0.0f;
 
-    for (i = 0; i < sizeof(dash_style_tests)/sizeof(dash_style_tests[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(dash_style_tests); ++i)
     {
         float dashes[10];
         UINT dash_count;
@@ -5232,7 +5236,7 @@ static void test_stroke_style(void)
         dash_count = ID2D1StrokeStyle_GetDashesCount(style);
         ok(dash_count == dash_style_tests[i].dash_count, "%u: unexpected dash count %u, expected %u.\n",
                 i, dash_count, dash_style_tests[i].dash_count);
-        ok(dash_count < sizeof(dashes)/sizeof(dashes[0]), "%u: unexpectedly large dash count %u.\n", i, dash_count);
+        ok(dash_count < ARRAY_SIZE(dashes), "%u: unexpectedly large dash count %u.\n", i, dash_count);
         if (dash_count == dash_style_tests[i].dash_count)
         {
             unsigned int j;
@@ -5243,11 +5247,11 @@ static void test_stroke_style(void)
 
             /* Ask for more dashes than style actually has. */
             memset(dashes, 0xcc, sizeof(dashes));
-            ID2D1StrokeStyle_GetDashes(style, dashes, sizeof(dashes)/sizeof(dashes[0]));
+            ID2D1StrokeStyle_GetDashes(style, dashes, ARRAY_SIZE(dashes));
             ok(!memcmp(dashes, dash_style_tests[i].dashes, sizeof(*dashes) * dash_count),
                     "%u: unexpected dash array.\n", i);
 
-            for (j = dash_count; j < sizeof(dashes)/sizeof(dashes[0]); j++)
+            for (j = dash_count; j < ARRAY_SIZE(dashes); ++j)
                 ok(dashes[j] == 0.0f, "%u: unexpected dash value at %u.\n", i, j);
         }
 
@@ -5308,9 +5312,9 @@ static void test_gradient(void)
     set_color(&stops[0].color, 1.0f, 0.5f, 0.4f, 1.0f);
     color = stops[0].color;
     stops[2] = stops[1] = stops[0];
-    ID2D1GradientStopCollection_GetGradientStops(gradient, stops, sizeof(stops)/sizeof(stops[0]));
+    ID2D1GradientStopCollection_GetGradientStops(gradient, stops, ARRAY_SIZE(stops));
     ok(!memcmp(stops, stops2, sizeof(*stops) * count), "Unexpected gradient stops array.\n");
-    for (i = count; i < sizeof(stops)/sizeof(stops[0]); i++)
+    for (i = count; i < ARRAY_SIZE(stops); ++i)
     {
         ok(stops[i].position == 123.4f, "%u: unexpected stop position %f.\n", i, stops[i].position);
         ok(!memcmp(&stops[i].color, &color, sizeof(color)), "%u: unexpected stop color.\n", i);
