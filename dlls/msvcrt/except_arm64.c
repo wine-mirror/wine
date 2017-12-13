@@ -150,7 +150,7 @@ __ASM_GLOBAL_FUNC(MSVCRT__setjmpex,
                   "str x24, [x0, #0x38]\n\t"      /* jmp_buf->X24 */
                   "str x25, [x0, #0x40]\n\t"      /* jmp_buf->X25 */
                   "str x26, [x0, #0x48]\n\t"      /* jmp_buf->X26 */
-                  "str x26, [x0, #0x50]\n\t"      /* jmp_buf->X27 */
+                  "str x27, [x0, #0x50]\n\t"      /* jmp_buf->X27 */
                   "str x28, [x0, #0x58]\n\t"      /* jmp_buf->X28 */
                   "str x29, [x0, #0x60]\n\t"      /* jmp_buf->Fp */
                   "str x30, [x0, #0x68]\n\t"      /* jmp_buf->Lr */
@@ -182,7 +182,7 @@ __ASM_GLOBAL_FUNC(longjmp_set_regs,
                   "ldr x24, [x0, #0x38]\n\t"      /* jmp_buf->X24 */
                   "ldr x25, [x0, #0x40]\n\t"      /* jmp_buf->X25 */
                   "ldr x26, [x0, #0x48]\n\t"      /* jmp_buf->X26 */
-                  "ldr x26, [x0, #0x50]\n\t"      /* jmp_buf->X27 */
+                  "ldr x27, [x0, #0x50]\n\t"      /* jmp_buf->X27 */
                   "ldr x28, [x0, #0x58]\n\t"      /* jmp_buf->X28 */
                   "ldr x29, [x0, #0x60]\n\t"      /* jmp_buf->Fp */
                   "ldr x30, [x0, #0x68]\n\t"      /* jmp_buf->Lr */
