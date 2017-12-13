@@ -510,6 +510,15 @@ static void free_clipboard_formats(void)
 }
 
 
+/***********************************************************************
+ *		OldExitWindows (USER.2)
+ */
+void WINAPI OldExitWindows16(void)
+{
+    ExitWindows16(0, 0);
+}
+
+
 /**********************************************************************
  *		InitApp (USER.5)
  */

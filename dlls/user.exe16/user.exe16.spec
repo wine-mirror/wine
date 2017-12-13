@@ -1,5 +1,5 @@
 1   pascal -ret16 MessageBox(word str str word) MessageBox16
-2   stub OldExitWindows
+2   pascal -ret16 OldExitWindows() OldExitWindows16
 3   stub EnableOEMLayer
 4   stub DisableOEMLayer
 5   pascal -ret16 InitApp(word) InitApp16
