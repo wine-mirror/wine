@@ -117,7 +117,7 @@ interface IWbemPathKeyList : IUnknown
         [in] long lFlags,
         [in,out] ULONG *puBuffLength,
         [in,out,string] LPWSTR pszText);
-};
+}
 
 cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
 cpp_quote("#undef GetClassName")
@@ -225,7 +225,7 @@ interface IWbemPath : IUnknown
 
     BOOL IsSameClassName(
         [in,string] LPCWSTR wszClass);
-};
+}
 
 [
     uuid(cf4cc405-e2c5-4ddd-b3ce-5e7582d8c9fa)
@@ -233,4 +233,4 @@ interface IWbemPath : IUnknown
 coclass WbemDefPath
 {
     interface IWbemPath;
-};
+}

@@ -275,7 +275,7 @@ interface IWbemLocator : IUnknown
         [in] const BSTR strAuthority,
         [in] IWbemContext *pCtx,
         [out] IWbemServices **ppNamespace);
-};
+}
 
 [
     object,
@@ -295,7 +295,7 @@ interface IWbemStatusCodeText : IUnknown
         [in] LCID LocaleId,
         [in] LONG lFlags,
         [out] BSTR *MessageText);
-};
+}
 
 [
     object,
@@ -313,7 +313,7 @@ interface IWbemObjectSink : IUnknown
         [in] HRESULT hResult,
         [in] BSTR strParam,
         [in] IWbemClassObject *pObjParam);
-};
+}
 
 typedef [v1_enum] enum tag_WBEM_GENERIC_FLAG_TYPE
 {
@@ -484,7 +484,7 @@ interface IWbemServices : IUnknown
         [in] IWbemContext *pCtx,
         [in] IWbemClassObject *pInParams,
         [in] IWbemObjectSink *pResponseHandler);
-};
+}
 
 [
     object,
@@ -511,7 +511,7 @@ interface IEnumWbemClassObject : IUnknown
     HRESULT Skip(
         [in] long lTimeout,
         [in] ULONG nCount);
-};
+}
 
 [
     object,
@@ -659,4 +659,4 @@ interface IWbemQualifierSet : IUnknown
         [out] long *plFlavor);
 
     HRESULT EndEnumeration();
-};
+}

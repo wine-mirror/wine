@@ -74,7 +74,7 @@ interface INetCfgComponent : IUnknown
     HRESULT GetDeviceStatus ([out] ULONG* pulStatus);
     HRESULT OpenParamKey ([out] HKEY* phkey);
     HRESULT RaisePropertyUi ([in] HWND hwndParent, [in] DWORD dwFlags, [in] IUnknown* punkContext);
-};
+}
 
 
 [
@@ -89,7 +89,7 @@ interface IEnumNetCfgComponent : IUnknown
     HRESULT Skip ([in] ULONG celt);
     HRESULT Reset ();
     HRESULT Clone ([out] IEnumNetCfgComponent** ppenum);
-};
+}
 
 [
     local,
@@ -103,7 +103,7 @@ interface INetCfgLock : IUnknown
                               [out] LPWSTR* ppszwClientDescription);
     HRESULT ReleaseWriteLock ();
     HRESULT IsWriteLocked ([out] LPWSTR* ppszwClientDescription);
-};
+}
 
 [
     local,
@@ -120,7 +120,7 @@ interface INetCfg : IUnknown
     HRESULT EnumComponents ([in] const GUID* pguidClass, [out] IEnumNetCfgComponent** ppenumComponent);
     HRESULT FindComponent ([in] LPCWSTR pszwInfId, [out] INetCfgComponent** pComponent);
     HRESULT QueryNetCfgClass ([in] const GUID* pguidClass, [in] REFIID riid,[out] void** ppvObject);
-};
+}
 
 [
     helpstring("Network Configuration Component Object"),

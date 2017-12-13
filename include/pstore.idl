@@ -273,4 +273,4 @@ interface IPStore : IUnknown
         [in] IEnumPStoreItems** ppenum );
 }
 
-};
+}

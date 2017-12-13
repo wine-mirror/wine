@@ -80,4 +80,4 @@ interface IAccessor : IUnknown
                                   [in, out, unique] DBREFCOUNT *pcRefCount,
                                   [out] IErrorInfo **ppErrorInfoRem);
 
-};
+}

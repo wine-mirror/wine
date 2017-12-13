@@ -98,7 +98,7 @@ interface IMFSourceReader : IUnknown
     HRESULT Flush([in] DWORD index);
     HRESULT GetServiceForStream([in] DWORD index, [in] REFGUID service, [in] REFIID riid, [out] void **object);
     HRESULT GetPresentationAttribute([in] DWORD index, [in] REFGUID guid, [out] PROPVARIANT *attr);
-};
+}
 
 [
     object,
@@ -118,7 +118,7 @@ interface IMFSinkWriter : IUnknown
     HRESULT Finalize(void);
     HRESULT GetServiceForStream([in] DWORD index, [in] REFGUID service, [in] REFIID riid, [out] void **object);
     HRESULT GetStatistics([in] DWORD index, [out] MF_SINK_WRITER_STATISTICS *stats);
-};
+}
 
 [
     object,

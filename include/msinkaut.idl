@@ -118,7 +118,7 @@ library MSINKAUTLib
         [id(0x00000001), propget] HRESULT Guid([out, retval] BSTR* Guid);
         [id(0x00000002), propget] HRESULT Data([out, retval] VARIANT* Data);
         [id(0x00000002), propput] HRESULT Data([in] VARIANT Data);
-    };
+    }
 
     [
         odl,
@@ -141,7 +141,7 @@ library MSINKAUTLib
         HRESULT DoesPropertyExist(
             [in] BSTR Guid,
             [out, retval] VARIANT_BOOL* DoesPropertyExist);
-    };
+    }
 
     [
         odl,
@@ -184,7 +184,7 @@ library MSINKAUTLib
             [out, retval] IInkExtendedProperties** Properties);
         [id(0x0000000a)]          HRESULT Clone(
             [out, retval] IInkDrawingAttributes** DrawingAttributes);
-    };
+    }
 
 cpp_quote("#ifndef _WINGDI_")
 /* already defined in wingdi.h but needed for WIDL */
@@ -257,7 +257,7 @@ cpp_quote("#endif /* _WINGDI_ */")
         [id(0x0000000f), propget, hidden] HRESULT Data(
             [out, retval] XFORM* XFORM);
         [id(0x0000000f), propput, hidden] HRESULT Data([in] XFORM XFORM);
-    };
+    }
 
     interface IInkDisp;
 
@@ -289,7 +289,7 @@ cpp_quote("#endif /* _WINGDI_ */")
             [in] long Left,
             [in] long Bottom,
             [in] long Right);
-    };
+    }
 
     interface IInkStrokes;
 
@@ -410,7 +410,7 @@ cpp_quote("#endif /* _WINGDI_ */")
         [id(0x00000021)]             HRESULT ScaleTransform(
             [in] single HorizontalMultiplier,
             [in] single VerticalMultiplier);
-    };
+    }
 
     interface IInkRecognitionResult;
 
@@ -468,7 +468,7 @@ cpp_quote("#endif /* _WINGDI_ */")
         HRESULT Clip(
             [in] IInkRectangle *Rectangle);
         HRESULT RemoveRecognitionResult();
-    };
+    }
 
     [
         odl,
@@ -490,7 +490,7 @@ cpp_quote("#endif /* _WINGDI_ */")
         HRESULT Remove(
             [in] VARIANT Identifier);
         HRESULT Clear();
-    };
+    }
 
     interface IInkRecognitionAlternate;
     interface IInkRecognitionAlternates;
@@ -518,7 +518,7 @@ cpp_quote("#endif /* _WINGDI_ */")
         HRESULT ModifyTopAlternate(
             [in] IInkRecognitionAlternate *Alternate);
         HRESULT SetResultOnStrokes();
-    };
+    }
 
     [
         odl,
@@ -564,7 +564,7 @@ cpp_quote("#endif /* _WINGDI_ */")
         HRESULT GetPropertyValue(
             [in] BSTR PropertyType,
             [out, retval] VARIANT *PropertyValue);
-    };
+    }
 
     [
         odl,
@@ -582,7 +582,7 @@ cpp_quote("#endif /* _WINGDI_ */")
     HRESULT Item(
         [in] long Index,
         [out, retval] IInkRecognitionAlternate **InkRecoAlternate);
-    };
+    }
 
     [
         odl,
@@ -674,7 +674,7 @@ cpp_quote("#endif /* _WINGDI_ */")
             [in] long y,
             [in, unique] IDataObject *DataObject,
             [out, retval] IInkStrokes **Strokes);
-    };
+    }
 
     [
         odl,
@@ -727,7 +727,7 @@ cpp_quote("#endif /* _WINGDI_ */")
             [in] single HorizontalMultiplier,
             [in] single VerticalMultiplier,
             [in, defaultvalue(-1)] VARIANT_BOOL ApplyOnPenWidth);
-    };
+    }
 
     typedef enum {
         ICM_InkOnly,
@@ -782,7 +782,7 @@ cpp_quote("#endif /* _WINGDI_ */")
             [out] long* Maximum,
             [out] TabletPropertyMetricUnit* Units,
             [out] single* Resolution);
-    };
+    }
 
     typedef enum {
         ICBS_Unavailable,
@@ -800,7 +800,7 @@ cpp_quote("#endif /* _WINGDI_ */")
         [propget] HRESULT Name([out, retval] BSTR* Name);
         [propget] HRESULT Id([out, retval] BSTR* Id);
         [propget] HRESULT State([out, retval] InkCursorButtonState* CurrentState);
-    };
+    }
 
     [
         odl,
@@ -814,7 +814,7 @@ cpp_quote("#endif /* _WINGDI_ */")
         HRESULT Item(
             [in] VARIANT Identifier,
             [out, retval] IInkCursorButton** Button);
-    };
+    }
 
     [
         odl,
@@ -835,7 +835,7 @@ cpp_quote("#endif /* _WINGDI_ */")
             [out, retval] IInkTablet** Tablet);
         [id(0x00000003), propget]    HRESULT Buttons(
             [out, retval] IInkCursorButtons** Buttons);
-    };
+    }
 
     [
         odl,
@@ -849,7 +849,7 @@ cpp_quote("#endif /* _WINGDI_ */")
         HRESULT Item(
             [in] long Index,
             [out, retval] IInkCursor** Cursor);
-    };
+    }
 
     typedef enum {
         IAG_AllGestures = 0,
@@ -1005,5 +1005,5 @@ cpp_quote("#endif /* _WINGDI_ */")
         [id(0x0000000a)]             HRESULT SetEventInterest(
             [in] InkCollectorEventInterest EventId,
             [in] VARIANT_BOOL Listen);
-    };
-};
+    }
+}

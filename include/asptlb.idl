@@ -38,7 +38,7 @@ interface IRequestDictionary : IDispatch
 
     [propget]
     HRESULT Key([in] VARIANT key, [retval, out] VARIANT *value);
-};
+}
 
 [
     object,

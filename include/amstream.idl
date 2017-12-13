@@ -79,7 +79,7 @@ interface IDirectShowStream : IDispatch
 	[propput, id(2), helpstring("property Video")] HRESULT Video([in] OUTPUT_STATE newVal);
 	[propget, id(3), helpstring("property Audio")] HRESULT Audio([out, retval] OUTPUT_STATE *pVal);
 	[propput, id(3), helpstring("property Audio")] HRESULT Audio([in] OUTPUT_STATE newVal);
-};
+}
 
 [
 object,

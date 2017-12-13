@@ -96,4 +96,4 @@ library COMSVCSLib
     {
         [default] interface IDispenserManager;
     };
-};
+}

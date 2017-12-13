@@ -233,7 +233,7 @@ interface IWMStatusCallback : IUnknown
         [in] WMT_ATTR_DATATYPE dwType,
         [in] BYTE *pValue,
         [in] void *pvContext);
-};
+}
 
 [
     object,
@@ -250,7 +250,7 @@ interface IWMReaderCallback : IWMStatusCallback
         [in] DWORD dwFlags,
         [in] INSSBuffer *pSample,
         [in] void *pvContext);
-};
+}
 
 [
     object,
@@ -298,7 +298,7 @@ interface IWMBandwidthSharing : IWMStreamList
     HRESULT SetBandwidth(
         [in] DWORD bitrate,
         [in] DWORD buffer);
-};
+}
 
 [
     object,
@@ -460,7 +460,7 @@ interface IWMProfile3 : IWMProfile2
     HRESULT GetExpectedPacketCount(
         [in] QWORD duration,
         [out] QWORD *packets);
-};
+}
 
 [
     object,
@@ -514,7 +514,7 @@ interface IWMMediaProps : IUnknown
 
     HRESULT SetMediaType(
         [in] WM_MEDIA_TYPE *pType);
-};
+}
 
 [
     object,
@@ -531,7 +531,7 @@ interface IWMOutputMediaProps : IWMMediaProps
     HRESULT GetConnectionName(
         [out, size_is(*pcchName)] WCHAR *pwszName,
         [in, out] WORD *pcchName);
-};
+}
 
 [
     object,
@@ -547,7 +547,7 @@ interface IWMMetadataEditor : IUnknown
     HRESULT Close();
 
     HRESULT Flush();
-};
+}
 
 [
     object,
@@ -595,7 +595,7 @@ interface IWMReader : IUnknown
     HRESULT Pause();
 
     HRESULT Resume();
-};
+}
 
 [
     object,
@@ -950,7 +950,7 @@ interface IWMSyncReader : IUnknown
 
     HRESULT OpenStream(
         [in] IStream *pStream);
-};
+}
 
 [
     object,
@@ -1203,7 +1203,7 @@ interface IWMHeaderInfo : IUnknown
 
     HRESULT RemoveScript(
         [in] WORD index );
-};
+}
 
 [
     object,
@@ -1225,7 +1225,7 @@ interface IWMHeaderInfo2 : IWMHeaderInfo
         [out] WMT_CODEC_INFO_TYPE *codec_type,
         [in, out] WORD *codec_info_cnt,
         [out, size_is( *codec_info_cnt )] BYTE *codec_info );
-};
+}
 
 [
     object,
@@ -1283,7 +1283,7 @@ interface IWMHeaderInfo3 : IWMHeaderInfo2
         [in] WMT_CODEC_INFO_TYPE codec_type,
         [in] WORD codec_info_cnt,
         [in, size_is( codec_info_cnt )] BYTE *codec_info );
-};
+}
 
 [
     object,
@@ -1442,7 +1442,7 @@ interface IWMPacketSize : IUnknown
 {
     HRESULT GetMaxPacketSize([out] DWORD *size);
     HRESULT SetMaxPacketSize([in] DWORD size);
-};
+}
 
 [
     object,
@@ -1454,7 +1454,7 @@ interface IWMPacketSize2 : IWMPacketSize
 {
     HRESULT GetMinPacketSize([out] DWORD *size);
     HRESULT SetMinPacketSize([in] DWORD size);
-};
+}
 
 [
     object,
@@ -1484,7 +1484,7 @@ interface IWMDRMReader : IUnknown
         [out] WMT_ATTR_DATATYPE *type,
         [out, size_is( *length )] BYTE *value,
         [in, out] WORD *length);
-};
+}
 
 [
     object,
@@ -1506,7 +1506,7 @@ interface IWMDRMReader2 : IWMDRMReader
         [out] DWORD *level);
 
     HRESULT TryNextLicense();
-};
+}
 
 [
     object,
@@ -1519,7 +1519,7 @@ interface IWMDRMReader3 : IWMDRMReader2
     HRESULT GetInclusionList(
         [out] GUID **guids,
         [out] DWORD *count);
-};
+}
 
 [
     object,
@@ -1537,7 +1537,7 @@ interface IWMReaderAccelerator : IUnknown
     HRESULT Notify(
         [in] DWORD output,
         [in] WM_MEDIA_TYPE *subtype);
-};
+}
 
 [
     object,
@@ -1556,7 +1556,7 @@ interface IWMReaderTimecode : IUnknown
         [in] WORD range,
         [out] DWORD *start_timecode,
         [out] DWORD *end_timecode);
-};
+}
 
 [
     object,
@@ -1569,7 +1569,7 @@ interface IWMReaderTypeNegotiation : IUnknown
     HRESULT TryOutputProps(
         [in] DWORD output,
         [in] IWMOutputMediaProps *props);
-};
+}
 
 [
     object,
@@ -1590,7 +1590,7 @@ interface IWMLanguageList : IUnknown
     HRESULT AddLanguageByRFC1766String(
         [in] LPCWSTR_WMSDK_TYPE_SAFE language,
         [out] WORD *index);
-};
+}
 
 [
     object,
@@ -1613,7 +1613,7 @@ interface IWMReaderPlaylistBurn : IUnknown
     HRESULT Cancel();
 
     HRESULT EndPlaylistBurn([in] HRESULT result);
-};
+}
 
 
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")

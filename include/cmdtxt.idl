@@ -45,4 +45,4 @@ interface ICommandText : ICommand
                                  [in, unique] LPCOLESTR pwszCommand,
                                  [out] IErrorInfo **ppErrorInfoRem);
 
-};
+}

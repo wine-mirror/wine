@@ -61,7 +61,7 @@ interface IDataConvert : IUnknown
                                       [in] DBLENGTH *pcbSrcLength,
                                       [out] DBLENGTH *pcbDstLength,
                                       [in, size_is(*pcbSrcLength)] void *pSrc);
-};
+}
 
 [
     object,
@@ -89,4 +89,4 @@ interface IDCInfo : IUnknown
 
     HRESULT SetInfo([in] ULONG cInfo,
                     [in, size_is(cInfo)] DCINFO prgInfo[]);
-};
+}

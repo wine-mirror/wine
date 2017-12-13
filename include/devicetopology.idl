@@ -604,7 +604,7 @@ interface IPart : IUnknown
     HRESULT UnregisterControlChangeCallback(
         [in] IControlChangeNotify *pNotify
     );
-};
+}
 
 [
     pointer_default(unique),

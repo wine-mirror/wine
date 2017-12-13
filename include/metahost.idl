@@ -104,7 +104,7 @@ interface ICLRRuntimeInfo : IUnknown
     HRESULT IsStarted(
         [out] BOOL *pbStarted,
         [out] DWORD *pdwStartupFlags);
-};
+}
 
 typedef HRESULT (__stdcall *CallbackThreadSetFnPtr)();
 typedef HRESULT (__stdcall *CallbackThreadUnsetFnPtr)();
@@ -150,7 +150,7 @@ interface ICLRMetaHost : IUnknown
 
     HRESULT ExitProcess(
         [in] INT32 iExitCode);
-};
+}
 
 [
     object,

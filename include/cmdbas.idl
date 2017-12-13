@@ -63,4 +63,4 @@ interface ICommand : IUnknown
     HRESULT RemoteGetDBSession([in] REFIID riid,
                                [out, iid_is(riid)] IUnknown **ppSession,
                                [out] IErrorInfo **ppErrorInfoRem);
-};
+}

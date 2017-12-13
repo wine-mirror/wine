@@ -620,7 +620,7 @@ interface IDWriteFontFileEnumerator : IUnknown
 {
     HRESULT MoveNext(BOOL *has_current_file);
     HRESULT GetCurrentFontFile(IDWriteFontFile **font_file);
-};
+}
 
 [
 local,

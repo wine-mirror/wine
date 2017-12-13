@@ -157,7 +157,7 @@ interface ITransaction : IUnknown {
                   [in] BOOL fRetaining,
                   [in] BOOL fAsync);
     HRESULT GetTransactionInfo([out] XACTTRANSINFO *pinfo);
-};
+}
 
 [
     object,
@@ -165,7 +165,7 @@ interface ITransaction : IUnknown {
 ]
 interface ITransactionCloner : ITransaction {
     HRESULT CloneWithCommitDisabled([out] ITransaction **ppITransaction);
-};
+}
 
 [
     object,
@@ -173,7 +173,7 @@ interface ITransactionCloner : ITransaction {
 ]
 interface ITransaction2 : ITransactionCloner {
     HRESULT GetTransactionInfo2([out] XACTTRANSINFO *pinfo);
-};
+}
 
 [
     object,
@@ -186,7 +186,7 @@ interface ITransactionDispenser : IUnknown {
                              [in] ULONG isoFlags,
                              [in, unique] ITransactionOptions *pOptions,
                              [out] ITransaction **ppTransaction);
-};
+}
 
 [
     object,
@@ -195,7 +195,7 @@ interface ITransactionDispenser : IUnknown {
 interface ITransactionOptions : IUnknown {
     HRESULT SetOptions([in] XACTOPT *pOptions);
     HRESULT GetOptions([in, out] XACTOPT *pOptions);
-};
+}
 
 [
     object,
@@ -213,7 +213,7 @@ interface ITransactionOutcomeEvents : IUnknown {
                               [in, unique] BOID *pboidReason,
                               [in] HRESULT hr);
     HRESULT Indoubt(void);
-};
+}
 
 [
     object,
@@ -223,4 +223,4 @@ interface ITmNodeName : IUnknown {
     HRESULT GetNodeNameSize([out] ULONG *pcbNodeNameSize);
     HRESULT GetNodeName([in] ULONG cbNodeNameBufferSize,
                         [in, out] LPWSTR pNodeNameBuffer);
-};
+}

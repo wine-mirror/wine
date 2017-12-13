@@ -119,21 +119,21 @@ cpp_quote("#endif")
 ]
 interface IXATransLookup : IUnknown {
     HRESULT Lookup([out]ITransaction **ppTransaction);
-};
+}
 [
     object,
     uuid(bf193c85-0d1a-4290-b88f-d2cb8873d1e7)
 ]
 interface IXATransLookup2 : IUnknown {
     HRESULT Lookup([in]XID *pXID,[out]ITransaction **ppTransaction);
-};
+}
 [
     object,
     uuid(0d563181-defb-11ce-aed1-00aa0051e2c4)
 ]
 interface IResourceManagerSink : IUnknown {
     HRESULT TMDown(void);
-};
+}
 [
     object,
     uuid(13741d21-87eb-11ce-8081-0080c758527e)
@@ -143,7 +143,7 @@ interface IResourceManager : IUnknown {
     HRESULT Reenlist([in]byte *pPrepInfo,[in]ULONG cbPrepInfo,[in]DWORD lTimeout,[out]XACTSTAT *pXactStat);
     HRESULT ReenlistmentComplete(void);
     HRESULT GetDistributedTransactionManager([in]REFIID iid,[out,iid_is(iid)]void **ppvObject);
-};
+}
 [
     object,
     uuid(4d964ad4-5b33-11d3-8a91-00c04f79eb6d)
@@ -151,7 +151,7 @@ interface IResourceManager : IUnknown {
 interface ILastResourceManager : IUnknown {
     HRESULT TransactionCommitted([in]byte *pPrepInfo,[in]ULONG cbPrepInfo);
     HRESULT RecoveryDone(void);
-};
+}
 [
     object,
     uuid(d136c69a-f749-11d1-8f47-00c04f8ee57d)
@@ -159,7 +159,7 @@ interface ILastResourceManager : IUnknown {
 interface IResourceManager2 : IResourceManager {
     HRESULT Enlist2([in]ITransaction *pTransaction,[in]ITransactionResourceAsync *pResAsync,[out]XACTUOW *pUOW,[out]LONG *pisoLevel,[out]XID *pXid,[out]ITransactionEnlistmentAsync **ppEnlist);
     HRESULT Reenlist2([in]XID *pXid,[in]DWORD dwTimeout,[out]XACTSTAT *pXactStat);
-};
+}
 [
     object,
     uuid(c8a6e3a1-9a8c-11cf-a308-00a0c905416e)
@@ -167,7 +167,7 @@ interface IResourceManager2 : IResourceManager {
 interface IXAConfig : IUnknown {
     HRESULT Initialize([in]GUID clsidHelperDll);
     HRESULT Terminate(void);
-};
+}
 /* commented out because idl doesn't accept xa_switch_t type
 [
     object,
@@ -176,28 +176,28 @@ interface IXAConfig : IUnknown {
 interface IRMHelper : IUnknown {
     HRESULT RMCount([in]DWORD dwcTotalNumberOfRMs);
     HRESULT RMInfo([in]xa_switch_t *pXa_Switch,[in]BOOL fCDeclCallingConv,[in]char *pszOpenString,[in]char *pszCloseString,[in]GUID guidRMRecovery);
-};
+}
 [
     object,
     uuid(E793F6D2-F53D-11cf-A60D-00A0C905416E)
 ]
 interface IXAObtainRMInfo : IUnknown {
     HRESULT ObtainRMInfo([in]IRMHelper *pIRMHelper);
-};*/
+}*/
 [
     object,
     uuid(13741d20-87eb-11ce-8081-0080c758527e)
 ]
 interface IResourceManagerFactory : IUnknown {
     HRESULT Create([in]GUID *pguidRM,[in]CHAR *pszRMName,[in]IResourceManagerSink *pIResMgrSink,[out]IResourceManager **ppResMgr);
-};
+}
 [
     object,
     uuid(6b369c21-fbd2-11d1-8f47-00c04f8ee57d)
 ]
 interface IResourceManagerFactory2 : IResourceManagerFactory {
     HRESULT CreateEx([in]GUID *pguidRM,[in]CHAR *pszRMName,[in]IResourceManagerSink *pIResMgrSink,[in]REFIID riidRequested,[out, iid_is(riidRequested)]void **ppvResMgr);
-};
+}
 
 [
     object,
@@ -206,7 +206,7 @@ interface IResourceManagerFactory2 : IResourceManagerFactory {
 interface IPrepareInfo : IUnknown {
     HRESULT GetPrepareInfoSize([out]ULONG *pcbPrepInfo);
     HRESULT GetPrepareInfo([out]byte *pPrepInfo);
-};
+}
 [
     object,
     uuid(5fab2547-9779-11d1-b886-00c04fb9618a)
@@ -214,35 +214,35 @@ interface IPrepareInfo : IUnknown {
 interface IPrepareInfo2 : IUnknown {
     HRESULT GetPrepareInfoSize([out]ULONG *pcbPrepInfo);
     HRESULT GetPrepareInfo([in]ULONG cbPrepareInfo,[out]byte *pPrepInfo);
-};
+}
 [
     object,
     uuid(c23cc370-87ef-11ce-8081-0080c758527e)
 ]
 interface IGetDispenser : IUnknown {
     HRESULT GetDispenser([in]REFIID iid,[out,iid_is(iid)]void **ppvObject);
-};
+}
 [
     object,
     uuid(5433376c-414d-11d3-b206-00c04fc2f3ef)
 ]
 interface ITransactionVoterBallotAsync2 : IUnknown {
     HRESULT VoteRequestDone([in]HRESULT hr,[in]BOID *pboidReason);
-};
+}
 [
     object,
     uuid(5433376b-414d-11d3-b206-00c04fc2f3ef)
 ]
 interface ITransactionVoterNotifyAsync2 : ITransactionOutcomeEvents {
     HRESULT VoteRequest(void);
-};
+}
 [
     object,
     uuid(5433376a-414d-11d3-b206-00c04fc2f3ef)
 ]
 interface ITransactionVoterFactory2 : IUnknown {
     HRESULT Create([in]ITransaction *pTransaction,[in]ITransactionVoterNotifyAsync2 *pVoterNotify,[out]ITransactionVoterBallotAsync2 **ppVoterBallot);
-};
+}
 [
     object,
     uuid(82dc88e1-a954-11d1-8f88-00600895e7d5)
@@ -253,7 +253,7 @@ interface ITransactionPhase0EnlistmentAsync : IUnknown {
     HRESULT Phase0Done(void);
     HRESULT Unenlist(void);
     HRESULT GetTransaction([out]ITransaction **ppITransaction);
-};
+}
 [
     object,
     uuid(ef081809-0c76-11d2-87a6-00c04f990f34)
@@ -261,14 +261,14 @@ interface ITransactionPhase0EnlistmentAsync : IUnknown {
 interface ITransactionPhase0NotifyAsync : IUnknown {
     HRESULT Phase0Request([in]BOOL fAbortingHint);
     HRESULT EnlistCompleted([in]HRESULT status);
-};
+}
 [
     object,
     uuid(82dc88e0-a954-11d1-8f88-00600895e7d5)
 ]
 interface ITransactionPhase0Factory : IUnknown {
     HRESULT Create([in]ITransactionPhase0NotifyAsync *pPhase0Notify,[out]ITransactionPhase0EnlistmentAsync **ppPhase0Enlistment);
-};
+}
 [
     object,
     uuid(59313e01-b36c-11cf-a539-00aa006887c3)
@@ -279,14 +279,14 @@ interface ITransactionTransmitter : IUnknown {
     HRESULT MarshalPropagationToken([in]ULONG cbToken,[out]byte *rgbToken,[out]ULONG *pcbUsed);
     HRESULT UnmarshalReturnToken([in]ULONG cbReturnToken,[in]byte *rgbReturnToken);
     HRESULT Reset(void);
-};
+}
 [
     object,
     uuid(59313e00-b36c-11cf-a539-00aa006887c3)
 ]
 interface ITransactionTransmitterFactory : IUnknown {
     HRESULT Create([out]ITransactionTransmitter **ppTransmitter);
-};
+}
 [
     object,
     uuid(59313e03-b36c-11cf-a539-00aa006887c3)
@@ -296,14 +296,14 @@ interface ITransactionReceiver : IUnknown {
     HRESULT GetReturnTokenSize([out]ULONG *pcbReturnToken);
     HRESULT MarshalReturnToken([in]ULONG cbReturnToken,[out]byte *rgbReturnToken,[out]ULONG *pcbUsed);
     HRESULT Reset(void);
-};
+}
 [
     object,
     uuid(59313e02-b36c-11cf-a539-00aa006887c3)
 ]
 interface ITransactionReceiverFactory : IUnknown {
     HRESULT Create([out]ITransactionReceiver **ppReceiver);
-};
+}
 
 typedef struct _ProxyConfigParams {
     WORD wcThreadsMax;
@@ -316,20 +316,20 @@ typedef struct _ProxyConfigParams {
 interface IDtcLuConfigure : IUnknown {
     HRESULT Add([in]byte *pucLuPair,[in]DWORD cbLuPair);
     HRESULT Delete([in]byte *pucLuPair,[in]DWORD cbLuPair);
-};
+}
 [
     object,
     uuid(ac2b8ad2-d6f0-11d0-b386-00a0c9083365)
 ]
 interface IDtcLuRecovery : IUnknown {
-};
+}
 [
     object,
     uuid(4131e762-1aea-11d0-944b-00a0c905416e)
 ]
 interface IDtcLuRecoveryFactory : IUnknown {
     HRESULT Create([in]byte *pucLuPair,[in]DWORD cbLuPair,[out]IDtcLuRecovery **ppRecovery);
-};
+}
 
 typedef enum _DtcLu_LocalRecovery_Work {
     DTCINITIATEDRECOVERYWORK_CHECKLUSTATUS = 1,
@@ -403,21 +403,21 @@ interface IDtcLuRecoveryInitiatedByDtcTransWork : IUnknown {
     HRESULT ConversationLost(void);
     HRESULT GetRecoverySeqNum([out]LONG *plRecoverySeqNum);
     HRESULT ObsoleteRecoverySeqNum([in]LONG lNewRecoverySeqNum);
-};
+}
 [
     object,
     uuid(4131e766-1aea-11d0-944b-00a0c905416e)
 ]
 interface IDtcLuRecoveryInitiatedByDtcStatusWork : IUnknown {
     HRESULT HandleCheckLuStatus([in]LONG lRecoverySeqNum);
-};
+}
 [
     object,
     uuid(4131e764-1aea-11d0-944b-00a0c905416e)
 ]
 [local] interface IDtcLuRecoveryInitiatedByDtc : IUnknown {
     HRESULT GetWork([in,out]DTCINITIATEDRECOVERYWORK *pWork,[in,out]void **ppv);
-};
+}
 [
     object,
     uuid(ac2b8ad1-d6f0-11d0-b386-00a0c9083365)
@@ -431,14 +431,14 @@ interface IDtcLuRecoveryInitiatedByLuWork : IUnknown {
     HRESULT HandleConfirmationOfOurCompareStates([in]DTCLUCOMPARESTATESCONFIRMATION Confirmation);
     HRESULT HandleErrorFromOurCompareStates([in]DTCLUCOMPARESTATESERROR Error);
     HRESULT ConversationLost(void);
-};
+}
 [
     object,
     uuid(4131e768-1aea-11d0-944b-00a0c905416e)
 ]
 interface IDtcLuRecoveryInitiatedByLu : IUnknown {
     HRESULT GetObjectToHandleWorkFromLu([out]IDtcLuRecoveryInitiatedByLuWork **ppWork);
-};
+}
 [
     object,
     uuid(4131e769-1aea-11d0-944b-00a0c905416e)
@@ -450,7 +450,7 @@ interface IDtcLuRmEnlistment : IUnknown {
     HRESULT Committed(void);
     HRESULT Forget(void);
     HRESULT RequestCommit(void);
-};
+}
 [
     object,
     uuid(4131e770-1aea-11d0-944b-00a0c905416e)
@@ -465,14 +465,14 @@ interface IDtcLuRmEnlistmentSink : IUnknown {
     HRESULT Forget(void);
     HRESULT Prepare(void);
     HRESULT RequestCommit(void);
-};
+}
 [
     object,
     uuid(4131e771-1aea-11d0-944b-00a0c905416e)
 ]
 interface IDtcLuRmEnlistmentFactory : IUnknown {
     HRESULT Create([in]unsigned char *pucLuPair,[in]DWORD cbLuPair,[in]ITransaction *pITransaction,[in]unsigned char *pTransId,[in]DWORD cbTransId,[in]IDtcLuRmEnlistmentSink *pRmEnlistmentSink,[in,out]IDtcLuRmEnlistment **ppRmEnlistment);
-};
+}
 [
     object,
     uuid(4131e773-1aea-11d0-944b-00a0c905416e)
@@ -485,7 +485,7 @@ interface IDtcLuSubordinateDtc : IUnknown {
     HRESULT Forget(void);
     HRESULT Prepare(void);
     HRESULT RequestCommit(void);
-};
+}
 [
     object,
     uuid(4131e774-1aea-11d0-944b-00a0c905416e)
@@ -499,14 +499,14 @@ interface IDtcLuSubordinateDtcSink : IUnknown {
     HRESULT Committed(void);
     HRESULT Forget(void);
     HRESULT RequestCommit(void);
-};
+}
 [
     object,
     uuid(4131e775-1aea-11d0-944b-00a0c905416e)
 ]
 interface IDtcLuSubordinateDtcFactory : IUnknown {
     HRESULT Create([in]unsigned char *pucLuPair,[in]DWORD cbLuPair,[in]IUnknown *punkTransactionOuter,[in]ISOLEVEL isoLevel,[in]ULONG isoFlags,[in]ITransactionOptions *pOptions,[out]ITransaction **ppTransaction,[in]unsigned char *pTransId,[in]DWORD cbTransId,[in]IDtcLuSubordinateDtcSink *pSubordinateDtcSink,[in,out]IDtcLuSubordinateDtc **ppSubordinateDtc);
-};
+}
 
 /* these GUIDs were found in mingw header, but without corresponding interface definitions
   DEFINE_GUID(IID_IXAResourceManager,0x4131e751,0x1aea,0x11d0,0x94,0x4b,0x00,0xa0,0xc9,0x05,0x41,0x6e);

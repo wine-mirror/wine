@@ -673,4 +673,4 @@ interface ID3D10InfoQueue : IUnknown
         [in] BOOL mute
     );
     BOOL GetMuteDebugOutput();
-};
+}

@@ -151,7 +151,7 @@ interface ISWbemEventSource : IDispatch
     [ id(2), propget ]
     HRESULT Security_(
         [out, retval] ISWbemSecurity **objWbemSecurity);
-};
+}
 
 [
     object,
@@ -178,7 +178,7 @@ interface ISWbemLocator : IDispatch
 
     [ id(2), propget ]
     HRESULT Security_([out, retval] ISWbemSecurity **objWbemSecurity);
-};
+}
 
 [
     object,
@@ -211,7 +211,7 @@ interface ISWbemMethod : IDispatch
     [ id(5), propget ]
     HRESULT Qualifiers_(
         [out, retval] ISWbemQualifierSet **objWbemQualifierSet);
-};
+}
 
 [
     object,
@@ -237,7 +237,7 @@ interface ISWbemMethodSet : IDispatch
     [ id(1), propget ]
     HRESULT Count(
         [out, retval] long *iCount);
-};
+}
 
 [
     object,
@@ -260,7 +260,7 @@ interface ISWbemNamedValue : IDispatch
     [ id(2), propget ]
     HRESULT Name(
         [out, retval] BSTR *strName);
-};
+}
 
 [
     object,
@@ -304,7 +304,7 @@ interface ISWbemNamedValueSet : IDispatch
 
     [ id(5) ]
     HRESULT DeleteAll();
-};
+}
 
 [
     object,
@@ -484,7 +484,7 @@ interface ISWbemObject : IDispatch
     [ id(25), propget ]
     HRESULT Security_(
         [out, retval] ISWbemSecurity **objWbemSecurity);
-};
+}
 
 [
     object,
@@ -586,7 +586,7 @@ interface ISWbemObjectPath : IDispatch
     [ id(14), propput ]
     HRESULT Authority(
         [in] BSTR strAuthority);
-};
+}
 
 [
     object,
@@ -621,7 +621,7 @@ interface ISWbemObjectSet : IDispatch
     HRESULT ItemIndex(
         [in] long lIndex,
         [out, retval] ISWbemObject **objWbemObject);
-};
+}
 
 typedef
 [
@@ -689,7 +689,7 @@ interface ISWbemPrivilege : IDispatch
     [ id(3), propget ]
     HRESULT Identifier(
         [out, retval] WbemPrivilegeEnum *iPrivilege);
-};
+}
 
 [
     object,
@@ -733,7 +733,7 @@ interface ISWbemPrivilegeSet : IDispatch
         [in] BSTR strPrivilege,
         [in, defaultvalue(TRUE)] VARIANT_BOOL bIsEnabled,
         [out, retval] ISWbemPrivilege **objWbemPrivilege);
-};
+}
 
 typedef
 [
@@ -802,7 +802,7 @@ interface ISWbemProperty : IDispatch
     [ id(6), propget ]
     HRESULT IsArray(
         [out, retval] VARIANT_BOOL *bIsArray);
-};
+}
 
 [
     object,
@@ -840,7 +840,7 @@ interface ISWbemPropertySet : IDispatch
     HRESULT Remove(
         [in] BSTR strName,
         [in, defaultvalue(0)] long iFlags);
-};
+}
 
 [
     object,
@@ -897,7 +897,7 @@ interface ISWbemQualifier : IDispatch
     [ id(6), propget ]
     HRESULT IsAmended(
         [out, retval] VARIANT_BOOL *bIsAmended);
-};
+}
 
 [
     object,
@@ -938,7 +938,7 @@ interface ISWbemQualifierSet : IDispatch
     HRESULT Remove(
         [in] BSTR strName,
         [in, defaultvalue(0)] long iFlags);
-};
+}
 
 typedef
 [
@@ -999,7 +999,7 @@ interface ISWbemSecurity : IDispatch
     [ id(3), propget ]
     HRESULT Privileges(
         [out, retval] ISWbemPrivilegeSet **objWbemPrivilegeSet);
-};
+}
 
 [
     object,
@@ -1183,7 +1183,7 @@ interface ISWbemServices : IDispatch
     [ id(19), propget ]
     HRESULT Security_(
         [out, retval] ISWbemSecurity **objWbemSecurity);
-};
+}
 
 [
     threading(apartment),
@@ -1194,6 +1194,6 @@ interface ISWbemServices : IDispatch
 coclass SWbemLocator
 {
     interface ISWbemLocator;
-};
+}
 
-}; /* WbemScripting */
+} /* WbemScripting */

@@ -50,7 +50,7 @@ cpp_quote("#define BG_JOB_DISABLE_BRANCH_CACHE      0x0004")
     HRESULT GetOwnerElevationState([out, ref] BOOL *elevated);
     HRESULT SetMaximumDownloadTime(ULONG timeout);
     HRESULT GetMaximumDownloadTime([out,ref] ULONG *timeout);
-};
+}
 
 [
     uuid(659cdea6-489e-11d9-a9cd-000d56965251),

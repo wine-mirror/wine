@@ -154,7 +154,7 @@ interface ITextStoreACPSink : IUnknown
     HRESULT OnStartEditTransaction();
 
     HRESULT OnEndEditTransaction();
-};
+}
 
 [
   object,
@@ -311,4 +311,4 @@ interface ITextStoreACP : IUnknown
     HRESULT GetWnd(
         [in] TsViewCookie vcView,
         [out] HWND *phwnd);
-};
+}

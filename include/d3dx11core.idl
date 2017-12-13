@@ -31,7 +31,7 @@ interface ID3DX11DataLoader
     HRESULT Load();
     HRESULT Decompress([out] void **data, [in] SIZE_T *bytes);
     HRESULT Destroy();
-};
+}
 
 [
     object,
@@ -43,7 +43,7 @@ interface ID3DX11DataProcessor
     HRESULT Process([in] void *data, [in] SIZE_T bytes);
     HRESULT CreateDeviceObject([out] void **data_object);
     HRESULT Destroy();
-};
+}
 
 [
     object,
@@ -62,4 +62,4 @@ interface ID3DX11ThreadPump : IUnknown
 
     HRESULT PurgeAllItems();
     HRESULT GetQueueStatus([in] UINT *io_queue, [in] UINT *process_queue, [in] UINT *device_queue);
-};
+}

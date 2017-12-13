@@ -380,7 +380,7 @@ interface ITaskScheduler : IUnknown
 coclass CTaskScheduler
 {
     [default] interface ITaskScheduler;
-};
+}
 
 
 [
@@ -390,4 +390,4 @@ coclass CTaskScheduler
 coclass CTask
 {
     [default] interface ITask;
-};
+}

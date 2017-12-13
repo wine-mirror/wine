@@ -183,7 +183,7 @@ interface ICorRuntimeHost : IUnknown
     HRESULT UnloadDomain([in] IUnknown* appDomain);
 
     HRESULT CurrentDomain([out] IUnknown** appDomain);
-};
+}
 
 cpp_quote("DEFINE_GUID(CLSID_CLRRuntimeHost, 0x90f1a06e,0x7712,0x4762,0x86,0xb5,0x7a,0x5e,0xba,0x6b,0xdb,0x02);")
 

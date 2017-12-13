@@ -38,6 +38,6 @@ interface IWSDXMLContext : IUnknown
     HRESULT SetNamespaces([in, size_is(wNamespacesCount)] const PCWSDXML_NAMESPACE* pNamespaces, [in] WORD wNamespacesCount, [in] BYTE bLayerNumber);
 
     HRESULT SetTypes([in, size_is(dwTypesCount)] const PCWSDXML_TYPE* pTypes, [in] DWORD dwTypesCount, [in] BYTE bLayerNumber);
-};
+}
 
 cpp_quote("HRESULT WINAPI WSDXMLCreateContext(IWSDXMLContext **ppContext);")

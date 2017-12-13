@@ -213,7 +213,7 @@ interface IMediaObject : IUnknown
     );
 
     HRESULT Lock(LONG bLock);
-};
+}
 
 /*****************************************************************************
  * IMediaObjectInPlace interface

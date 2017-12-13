@@ -78,7 +78,7 @@ interface ISampleGrabber: IUnknown
         ISampleGrabberCB * pCallback,
         LONG WhichMethodToCallback
     );
-};
+}
 
 [
     object,
@@ -157,7 +157,7 @@ interface IMediaDet : IUnknown
     HRESULT EnterBitmapGrabMode(
         double SeekTime
     );
-};
+}
 
 [
     uuid(65BD0711-24D2-4ff7-9324-ED2E5D3ABAFA),
@@ -165,7 +165,7 @@ interface IMediaDet : IUnknown
 coclass MediaDet
 {
     [default] interface IMediaDet;
-};
+}
 
 [
     object,
@@ -185,7 +185,7 @@ interface IMediaLocator : IUnknown
     HRESULT AddFoundLocation(
         BSTR dir
     );
-};
+}
 
 typedef struct
 {
@@ -258,7 +258,7 @@ interface IPropertySetter : IUnknown
         [in] IUnknown * target,
         [in] REFERENCE_TIME now
     );
-};
+}
 
 [
     object,
@@ -275,7 +275,7 @@ interface IAMErrorLog : IUnknown
         long hresult,
         [in] VARIANT * extra
     );
-};
+}
 
 [
     object,
@@ -292,7 +292,7 @@ interface IAMSetErrorLog : IUnknown
     [propput] HRESULT ErrorLog(
         [in] IAMErrorLog * log
     );
-};
+}
 
 interface IAMTimeline;
 interface IAMTimelineGroup;
@@ -439,7 +439,7 @@ interface IAMTimeline : IUnknown
     HRESULT GetDefaultEffectB(
         [out,retval] BSTR * guidb
     );
-};
+}
 
 [
     uuid(78530B75-61F9-11D2-8CAD-00A024580902)
@@ -449,7 +449,7 @@ coclass AMTimeline
     [default] interface IAMTimeline;
     interface IPersistStream;
     interface IAMSetErrorLog;
-};
+}
 
 [
     object,
@@ -536,7 +536,7 @@ interface IAMTimelineGroup : IUnknown
     HRESULT SetRecompFormatFromSource(
         IAMTimelineSrc * source
     );
-};
+}
 
 [
     object,
@@ -701,7 +701,7 @@ interface IAMTimelineObj : IUnknown
     HRESULT GetEmbedDepth(
         long * depth
     );
-};
+}
 
 [
     object,
@@ -804,7 +804,7 @@ interface IAMTimelineSrc : IUnknown
     HRESULT SetStretchMode(
         int mode
     );
-};
+}
 
 enum
 {

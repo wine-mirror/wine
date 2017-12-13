@@ -414,7 +414,7 @@ interface IADs : IDispatch
 
     [id(0x0000000e)]
     HRESULT GetInfoEx( [in] VARIANT vProperties, [in] long lnReserved);
-};
+}
 
 /*****************************************************************************
  *    IADsMembers interface
@@ -438,7 +438,7 @@ interface IADsMembers : IDispatch
 
     [id(0x00000003), propput]
     HRESULT Filter([in] VARIANT pvFilter);
-};
+}
 
 /*****************************************************************************
  *    IADsGroup interface
@@ -467,7 +467,7 @@ interface IADsGroup : IADs {
 
     [id(0x00000013)]
     HRESULT Remove([in] BSTR bstrItemToBeRemoved);
-};
+}
 
 /*****************************************************************************
  *    IADsUser interface
@@ -752,7 +752,7 @@ interface IADsUser : IADs
 
     [id(0x00000044)]
     HRESULT ChangePassword([in] BSTR bstrOldPassword, [in] BSTR bstrNewPassword);
-};
+}
 
 /*****************************************************************************
  *    IDirectorySearch interface
@@ -776,4 +776,4 @@ interface IDirectorySearch : IUnknown
                     [out] PADS_SEARCH_COLUMN pSearchColumn);
     HRESULT FreeColumn([in] PADS_SEARCH_COLUMN pSearchColumn);
     HRESULT CloseSearchHandle([in] ADS_SEARCH_HANDLE hSearchResult);
-};
+}

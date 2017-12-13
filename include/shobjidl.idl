@@ -1512,7 +1512,7 @@ interface IDockingWindow : IOleWindow
         [in] LPCRECT prcBorder,
         [in] IUnknown *punkToolbarSite,
         [in] BOOL fReserved);
-};
+}
 
 
 /*****************************************************************************

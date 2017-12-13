@@ -288,7 +288,7 @@ interface IDWriteColorGlyphRunEnumerator : IUnknown
 interface IDWriteRenderingParams2 : IDWriteRenderingParams1
 {
     DWRITE_GRID_FIT_MODE GetGridFitMode();
-};
+}
 
 [
     local,

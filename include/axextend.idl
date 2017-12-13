@@ -851,7 +851,7 @@ interface IAMCertifiedOutputProtection : IUnknown
     HRESULT ProtectionStatus(
         [in] const AMCOPPStatusInput* pStatusInput,
         [out] AMCOPPStatusOutput* pStatusOutput);
-};
+}
 
 enum _AM_RENSDEREXFLAGS
 {
@@ -1246,7 +1246,7 @@ enum _AM_FILTER_MISC_FLAGS
 interface IAMFilterMiscFlags : IUnknown
 {
     ULONG GetMiscFlags();
-};
+}
 
 [
     local,
@@ -1261,7 +1261,7 @@ interface IAMGraphBuilderCallback : IUnknown
 
     HRESULT CreatedFilter(
         [in] IBaseFilter *pFil);
-};
+}
 
 [
     local,
@@ -1281,4 +1281,4 @@ interface IAMVfwCaptureDialogs : IUnknown
             [in] int msg,
             [in] long data1,
             [in] long data2);
-};
+}

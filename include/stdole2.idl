@@ -268,7 +268,7 @@ library stdole
         HRESULT AddRefHfont([in] OLE_HANDLE hFont);
 
         HRESULT ReleaseHfont([in] OLE_HANDLE hFont);
-    };
+    }
 
 
     [
@@ -299,7 +299,7 @@ library stdole
            appear at the end of the typelib. */
 /*      [default, source] dispinterface FontEvents;*/
         interface IFont;
-    };
+    }
 
     [
      odl,
@@ -349,7 +349,7 @@ library stdole
         [propget] HRESULT Attributes([out, retval] long *pdwAttr);
 
         HRESULT SetHdc([in] OLE_HANDLE hdc);
-    };
+    }
 
     [
      uuid(7BF80981-BF32-101A-8BBB-00AA00300CAB)
@@ -373,7 +373,7 @@ library stdole
                               OLE_XSIZE_HIMETRIC cxSrc,
                               OLE_YSIZE_HIMETRIC cySrc,
                               void *prcWBounds);
-    };
+    }
     
     typedef [public] Picture IPictureDisp;
 
@@ -383,7 +383,7 @@ library stdole
     coclass StdPicture {
         [default] dispinterface Picture;
         interface IPicture;
-    };
+    }
 
     [
      uuid(E6C8FA08-BD9F-11D0-985E-00C04FC29993)
@@ -419,7 +419,7 @@ library stdole
         ]
         HRESULT SavePicture([in] IPictureDisp *Picture,
                             [in] BSTR filename);
-    };
+    }
 
 
     [
@@ -431,9 +431,9 @@ library stdole
     properties:
     methods:
         [id(DISPID_FONT_CHANGED)] void FontChanged([in] BSTR PropertyName);
-    };
+    }
 
     typedef [public] FontEvents IFontEventsDisp;
 
 
-};
+}

@@ -341,7 +341,7 @@ interface IDirect3DDeviceManager9 : IUnknown
         [in] HANDLE hDevice,
         [in] REFIID riid,
         [out] void** ppService);
-};
+}
 
 /*****************************************************************************
  * IDirectXVideoAccelerationService interface
@@ -363,7 +363,7 @@ interface IDirectXVideoAccelerationService : IUnknown
         [in] DWORD dxvaType,
         [out] IDirect3DSurface9 **ppSurface,
         [in, out] HANDLE *pSharedHandle);
-};
+}
 
 /*****************************************************************************
  * IDirectXVideoDecoderService interface
@@ -398,7 +398,7 @@ interface IDirectXVideoDecoderService : IDirectXVideoAccelerationService
         [in] IDirect3DSurface9 **ppDecoderRenderTargets,
         [in] UINT NumSurfaces,
         [out] IDirectXVideoDecoder **ppDecode);
-};
+}
 
 /*****************************************************************************
  * IDirectXVideoDecoder interface
@@ -437,7 +437,7 @@ interface IDirectXVideoDecoder : IUnknown
 
     HRESULT Execute(
         [in] const DXVA2_DecodeExecuteParams* pExecuteParams);
-};
+}
 
 /*****************************************************************************
  * IDirectXVideoProcessorService interface
@@ -496,7 +496,7 @@ interface IDirectXVideoProcessorService : IDirectXVideoAccelerationService
         [in] D3DFORMAT RenderTargetFormat,
         [in] UINT MaxNumSubStreams,
         [out] IDirectXVideoProcessor** ppVidProcess);
-};
+}
 
 /*****************************************************************************
  * IDirectXVideoProcessor interface
@@ -534,7 +534,7 @@ interface IDirectXVideoProcessor : IUnknown
         [in] const DXVA2_VideoSample* pSamples,
         [in] UINT NumSamples,
         [out] HANDLE* pHandleCompleteIDirect3DDeviceManager9);
-};
+}
 
 /*****************************************************************************
  * IDirectXVideoMemoryConfiguration interface

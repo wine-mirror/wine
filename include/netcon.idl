@@ -179,7 +179,7 @@ interface INetSharingPortMapping : IDispatch
 
     [id(4)]
     HRESULT Delete();
-};
+}
 [
     object,
     uuid(02e4a2de-da20-4e34-89c8-ac22275a010b),

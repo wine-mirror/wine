@@ -144,7 +144,7 @@ interface IAudioSessionControl2 : IAudioSessionControl
     HRESULT SetDuckingPreferences(
         [in] BOOL optOut
     );
-};
+}
 
 [
     local,
@@ -164,7 +164,7 @@ interface IAudioSessionManager : IUnknown
         [in] DWORD StreamFlags,
         [out] ISimpleAudioVolume **AudioVolume
     );
-};
+}
 
 [
     local,
@@ -181,7 +181,7 @@ interface IAudioVolumeDuckNotification : IUnknown
     HRESULT OnVolumeUnduckNotification(
         [in] LPCWSTR sessionID
     );
-};
+}
 
 [
     local,
@@ -194,7 +194,7 @@ interface IAudioSessionNotification : IUnknown
     HRESULT OnSessionCreated(
         [in] IAudioSessionControl *NewSession
     );
-};
+}
 
 [
     local,
@@ -211,7 +211,7 @@ interface IAudioSessionEnumerator : IUnknown
         [in] INT SessionCount,
         [out] IAudioSessionControl **Session
     );
-};
+}
 
 [
     local,
@@ -237,4 +237,4 @@ interface IAudioSessionManager2 : IAudioSessionManager
     HRESULT UnregisterDuckNotification(
         [in] IAudioVolumeDuckNotification *duckNotification
     );
-};
+}

@@ -51,7 +51,7 @@ interface ITravelEntry : IUnknown
 
     HRESULT GetPidl(
         [out] LPITEMIDLIST *ppidl);
-};
+}
 
 [
     hidden,
@@ -109,7 +109,7 @@ interface ITravelLog : IUnknown
         [in] IUnknown *punk);
 
     HRESULT Revert();
-};
+}
 
 typedef void *CIE4ConnectionPoint;
 
@@ -137,7 +137,7 @@ interface IExpDispSupport : IUnknown
         VARIANT *pVarResult,
         EXCEPINFO *pexcepinfo,
         UINT *puArgErr);
-};
+}
 
 typedef enum tagBNSTATE
 {
@@ -601,4 +601,4 @@ interface IBrowserService2 : IBrowserService
 
     HRESULT v_CheckZoneCrossing(
         [in, out] LPCITEMIDLIST pidl);
-};
+}

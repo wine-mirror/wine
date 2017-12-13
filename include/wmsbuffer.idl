@@ -40,4 +40,4 @@ interface INSSBuffer : IUnknown
     HRESULT GetBufferAndLength(
         [out] BYTE **ppdwBuffer,
         [out] DWORD *pdwLength);
-};
+}

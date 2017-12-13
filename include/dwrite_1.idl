@@ -584,7 +584,7 @@ interface IDWriteFactory1 : IDWriteFactory
                                         DWRITE_PIXEL_GEOMETRY geometry,
                                         DWRITE_RENDERING_MODE mode,
                                         IDWriteRenderingParams1** params);
-};
+}
 
 [
 local,
@@ -633,7 +633,7 @@ interface IDWriteFontFace1 : IDWriteFontFace
                                      const UINT16 *nominal_indices,
                                      UINT16 *vertical_indices);
     BOOL HasVerticalGlyphVariants();
-};
+}
 
 [
 local,
@@ -648,7 +648,7 @@ interface IDWriteFont1 : IDWriteFont
                              DWRITE_UNICODE_RANGE *ranges,
                              UINT32 *count);
     BOOL IsMonospacedFont();
-};
+}
 
 [
 local,
@@ -658,7 +658,7 @@ uuid(94413cf4-a6fc-4248-8b50-6674348fcad3)
 interface IDWriteRenderingParams1 : IDWriteRenderingParams
 {
     FLOAT GetGrayscaleEnhancedContrast();
-};
+}
 
 [
 local,
@@ -744,7 +744,7 @@ interface IDWriteTextAnalyzer1 : IDWriteTextAnalyzer
         UINT16 *modified_indices,
         FLOAT *modified_advances,
         DWRITE_GLYPH_OFFSET *modified_offsets);
-};
+}
 
 [
 local,
@@ -758,7 +758,7 @@ interface IDWriteTextAnalysisSource1 : IDWriteTextAnalysisSource
         UINT32 *length,
         DWRITE_VERTICAL_GLYPH_ORIENTATION *orientation,
         UINT8 *bidi_level);
-};
+}
 
 [
 local,
@@ -774,7 +774,7 @@ interface IDWriteTextAnalysisSink1 : IDWriteTextAnalysisSink
         UINT8 adjusted_bidilevel,
         BOOL is_sideways,
         BOOL is_rtl);
-};
+}
 
 [
 local,
@@ -804,7 +804,7 @@ interface IDWriteTextLayout1 : IDWriteTextLayout
         FLOAT* trailing_spacing,
         FLOAT* minimum_advance_width,
         [defaultvalue(NULL)] DWRITE_TEXT_RANGE *range);
-};
+}
 
 typedef enum DWRITE_TEXT_ANTIALIAS_MODE
 {
@@ -821,4 +821,4 @@ interface IDWriteBitmapRenderTarget1 : IDWriteBitmapRenderTarget
 {
     DWRITE_TEXT_ANTIALIAS_MODE GetTextAntialiasMode();
     HRESULT SetTextAntialiasMode(DWRITE_TEXT_ANTIALIAS_MODE mode);
-};
+}
