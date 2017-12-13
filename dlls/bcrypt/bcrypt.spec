@@ -1,5 +1,5 @@
-@ stub BCryptAddContextFunction
-@ stub BCryptAddContextFunctionProvider
+@ stdcall BCryptAddContextFunction(long wstr long wstr long)
+@ stdcall BCryptAddContextFunctionProvider(long wstr long wstr wstr long)
 @ stdcall BCryptCloseAlgorithmProvider(ptr long)
 @ stub BCryptConfigureContext
 @ stub BCryptConfigureContextFunction
@@ -39,9 +39,9 @@
 @ stub BCryptQueryContextFunctionProperty
 @ stub BCryptQueryProviderRegistration
 @ stub BCryptRegisterConfigChangeNotify
-@ stub BCryptRegisterProvider
-@ stub BCryptRemoveContextFunction
-@ stub BCryptRemoveContextFunctionProvider
+@ stdcall BCryptRegisterProvider(wstr long ptr)
+@ stdcall BCryptRemoveContextFunction(long wstr long wstr)
+@ stdcall BCryptRemoveContextFunctionProvider(long wstr long wstr wstr)
 @ stub BCryptResolveProviders
 @ stub BCryptSecretAgreement
 @ stub BCryptSetAuditingInterface
@@ -49,7 +49,7 @@
 @ stdcall BCryptSetProperty(ptr wstr ptr long long)
 @ stub BCryptSignHash
 @ stub BCryptUnregisterConfigChangeNotify
-@ stub BCryptUnregisterProvider
+@ stdcall BCryptUnregisterProvider(wstr)
 @ stub BCryptVerifySignature
 @ stub GetAsymmetricEncryptionInterface
 @ stub GetCipherInterface

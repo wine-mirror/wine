@@ -1,5 +1,5 @@
-@ stub BCryptAddContextFunction
-@ stub BCryptAddContextFunctionProvider
+@ stdcall BCryptAddContextFunction(long wstr long wstr long) bcrypt.BCryptAddContextFunction
+@ stdcall BCryptAddContextFunctionProvider(long wstr long wstr wstr long) bcrypt.BCryptAddContextFunctionProvider
 @ stdcall BCryptCloseAlgorithmProvider(ptr long) bcrypt.BCryptCloseAlgorithmProvider
 @ stub BCryptConfigureContext
 @ stub BCryptConfigureContextFunction
@@ -42,9 +42,9 @@
 @ stub BCryptQueryContextFunctionProperty
 @ stub BCryptQueryProviderRegistration
 @ stub BCryptRegisterConfigChangeNotify
-@ stub BCryptRegisterProvider
-@ stub BCryptRemoveContextFunction
-@ stub BCryptRemoveContextFunctionProvider
+@ stdcall BCryptRegisterProvider(wstr long ptr) bcrypt.BCryptRegisterProvider
+@ stdcall BCryptRemoveContextFunction(long wstr long wstr) bcrypt.BCryptRemoveContextFunction
+@ stdcall BCryptRemoveContextFunctionProvider(long wstr long wstr wstr) bcrypt.BCryptRemoveContextFunctionProvider
 @ stub BCryptResolveProviders
 @ stub BCryptSecretAgreement
 @ stub BCryptSetAuditingInterface
@@ -52,7 +52,7 @@
 @ stdcall BCryptSetProperty(ptr wstr ptr long long) bcrypt.BCryptSetProperty
 @ stub BCryptSignHash
 @ stub BCryptUnregisterConfigChangeNotify
-@ stub BCryptUnregisterProvider
+@ stdcall BCryptUnregisterProvider(wstr) bcrypt.BCryptUnregisterProvider
 @ stub BCryptVerifySignature
 @ stub GetIsolationServerInterface
 @ stub GetKeyStorageInterface

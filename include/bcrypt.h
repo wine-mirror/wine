@@ -94,6 +94,29 @@ typedef struct __BCRYPT_KEY_LENGTHS_STRUCT
     ULONG dwIncrement;
 } BCRYPT_KEY_LENGTHS_STRUCT;
 
+typedef struct _CRYPT_INTERFACE_REG
+{
+    ULONG dwInterface;
+    ULONG dwFlags;
+    ULONG cFunctions;
+    PWSTR *rgpszFunctions;
+} CRYPT_INTERFACE_REG, *PCRYPT_INTERFACE_REG;
+
+typedef struct _CRYPT_IMAGE_REG
+{
+    PWSTR pszImage;
+    ULONG cInterfaces;
+    PCRYPT_INTERFACE_REG *rgpInterfaces;
+} CRYPT_IMAGE_REG, *PCRYPT_IMAGE_REG;
+
+typedef struct _CRYPT_PROVIDER_REG
+{
+    ULONG cAliases;
+    PWSTR *rgpszAliases;
+    PCRYPT_IMAGE_REG pUM;
+    PCRYPT_IMAGE_REG pKM;
+} CRYPT_PROVIDER_REG, *PCRYPT_PROVIDER_REG;
+
 typedef PVOID BCRYPT_ALG_HANDLE;
 typedef PVOID BCRYPT_KEY_HANDLE;
 typedef PVOID BCRYPT_HANDLE;

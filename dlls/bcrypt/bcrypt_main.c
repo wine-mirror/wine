@@ -122,6 +122,42 @@ static void gnutls_uninitialize(void)
 }
 #endif /* HAVE_GNUTLS_CIPHER_INIT && !HAVE_COMMONCRYPTO_COMMONCRYPTOR_H */
 
+NTSTATUS WINAPI BCryptAddContextFunction(ULONG table, LPCWSTR context, ULONG iface, LPCWSTR function, ULONG pos)
+{
+    FIXME("%08x, %s, %08x, %s, %u: stub\n", table, debugstr_w(context), iface, debugstr_w(function), pos);
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI BCryptAddContextFunctionProvider(ULONG table, LPCWSTR context, ULONG iface, LPCWSTR function, LPCWSTR provider, ULONG pos)
+{
+    FIXME("%08x, %s, %08x, %s, %s, %u: stub\n", table, debugstr_w(context), iface, debugstr_w(function), debugstr_w(provider), pos);
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI BCryptRemoveContextFunction(ULONG table, LPCWSTR context, ULONG iface, LPCWSTR function)
+{
+    FIXME("%08x, %s, %08x, %s: stub\n", table, debugstr_w(context), iface, debugstr_w(function));
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS WINAPI BCryptRemoveContextFunctionProvider(ULONG table, LPCWSTR context, ULONG iface, LPCWSTR function, LPCWSTR provider)
+{
+    FIXME("%08x, %s, %08x, %s, %s: stub\n", table, debugstr_w(context), iface, debugstr_w(function), debugstr_w(provider));
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS WINAPI BCryptRegisterProvider(LPCWSTR provider, ULONG flags, PCRYPT_PROVIDER_REG reg)
+{
+    FIXME("%s, %08x, %p: stub\n", debugstr_w(provider), flags, reg);
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI BCryptUnregisterProvider(LPCWSTR provider)
+{
+    FIXME("%s: stub\n", debugstr_w(provider));
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS WINAPI BCryptEnumAlgorithms(ULONG dwAlgOperations, ULONG *pAlgCount,
                                      BCRYPT_ALGORITHM_IDENTIFIER **ppAlgList, ULONG dwFlags)
 {
