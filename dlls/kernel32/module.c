@@ -178,8 +178,8 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
 /* Check whether a file is an OS/2 or a very old Windows executable
  * by testing on import of KERNEL.
  *
- * FIXME: is reading the module imports the only way of discerning
- *        old Windows binaries from OS/2 ones ? At least it seems so...
+ * Reading the module imports is the only reasonable way of discerning
+ * old Windows binaries from OS/2 ones.
  */
 static DWORD MODULE_Decide_OS2_OldWin(HANDLE hfile, const IMAGE_DOS_HEADER *mz, const IMAGE_OS2_HEADER *ne)
 {
@@ -195,31 +195,28 @@ static DWORD MODULE_Decide_OS2_OldWin(HANDLE hfile, const IMAGE_DOS_HEADER *mz, 
       || (!(modtab = HeapAlloc( GetProcessHeap(), 0, ne->ne_cmod*sizeof(WORD))))
       || (!(ReadFile(hfile, modtab, ne->ne_cmod*sizeof(WORD), &len, NULL)))
       || (len != ne->ne_cmod*sizeof(WORD)) )
-	goto broken;
+	goto done;
 
     /* read imported names table */
     if ( (SetFilePointer( hfile, mz->e_lfanew + ne->ne_imptab, NULL, SEEK_SET ) == -1)
       || (!(nametab = HeapAlloc( GetProcessHeap(), 0, ne->ne_enttab - ne->ne_imptab)))
       || (!(ReadFile(hfile, nametab, ne->ne_enttab - ne->ne_imptab, &len, NULL)))
       || (len != ne->ne_enttab - ne->ne_imptab) )
-	goto broken;
+	goto done;
 
     for (i=0; i < ne->ne_cmod; i++)
     {
-	LPSTR module = &nametab[modtab[i]];
-	TRACE("modref: %.*s\n", module[0], &module[1]);
-	if (!(strncmp(&module[1], "KERNEL", module[0])))
-	{ /* very old Windows file */
-	    MESSAGE("This seems to be a very old (pre-3.0) Windows executable. Expect crashes, especially if this is a real-mode binary !\n");
+        LPSTR module = &nametab[modtab[i]];
+        TRACE("modref: %.*s\n", module[0], &module[1]);
+        if (!(strncmp(&module[1], "KERNEL", module[0])))
+        { /* very old Windows file */
+            MESSAGE("This seems to be a very old (pre-3.0) Windows executable. Expect crashes, especially if this is a real-mode binary !\n");
             ret = BINARY_WIN16;
-	    goto good;
-	}
+            break;
+        }
     }
 
-broken:
-    ERR("Hmm, an error occurred. Is this binary file broken?\n");
-
-good:
+done:
     HeapFree( GetProcessHeap(), 0, modtab);
     HeapFree( GetProcessHeap(), 0, nametab);
     SetFilePointer( hfile, currpos, NULL, SEEK_SET); /* restore filepos */
