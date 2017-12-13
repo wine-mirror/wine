@@ -80,6 +80,9 @@ typedef struct {
     LPCWSTR dialog_template;
 } addon_info_t;
 
+/* Download addon files over HTTP because Wine depends on an external library
+ * for TLS, so we can't be sure that HTTPS will work. The integrity of each file
+ * is checked with a hardcoded cryptographically secure hash. */
 static const addon_info_t addons_info[] = {
     {
         GECKO_VERSION,
