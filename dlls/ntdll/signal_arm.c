@@ -1225,8 +1225,10 @@ extern void DECLSPEC_NORETURN start_thread( LPTHREAD_START_ROUTINE entry, void *
 __ASM_GLOBAL_FUNC( start_thread,
                    ".arm\n\t"
                    "push {r4-r12,lr}\n\t"
-                   /* build initial context on thread stack */
+                   /* store exit frame */
                    "ldr r4, [sp, #40]\n\t"    /* teb */
+                   "str sp, [r4, #0x1d4]\n\t" /* teb->SystemReserved2 */
+                   /* build initial context on thread stack */
                    "ldr r4, [r4, #4]\n\t"     /* teb->Tib.StackBase */
                    "sub r5, r4, #0x1a0\n\t"   /* sizeof(CONTEXT) */
                    "mov ip, #0x0200000\n\t"   /* CONTEXT_ARM */
@@ -1245,6 +1247,16 @@ __ASM_GLOBAL_FUNC( start_thread,
                    /* switch to the initial context */
                    "mov r0, r5\n\t"
                    "b " __ASM_NAME("set_cpu_context") )
+
+extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
+__ASM_GLOBAL_FUNC( call_thread_exit_func,
+                   ".arm\n\t"
+                   "ldr r3, [r2, #0x1d4]\n\t"  /* teb->SystemReserved2 */
+                   "mov ip, #0\n\t"
+                   "str ip, [r2, #0x1d4]\n\t"
+                   "cmp r3, ip\n\t"
+                   "movne sp, r3\n\t"
+                   "blx r1" )
 
 /***********************************************************************
  *           signal_start_thread
@@ -1277,7 +1289,7 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
  */
 void signal_exit_thread( int status )
 {
-    exit_thread( status );
+    call_thread_exit_func( status, exit_thread, NtCurrentTeb() );
 }
 
 /***********************************************************************
@@ -1285,7 +1297,7 @@ void signal_exit_thread( int status )
  */
 void signal_exit_process( int status )
 {
-    exit( status );
+    call_thread_exit_func( status, exit, NtCurrentTeb() );
 }
 
 /**********************************************************************
