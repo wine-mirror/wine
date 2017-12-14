@@ -99,6 +99,7 @@ static void test_updates(int style, int flags)
         HDC hdc = GetDC( hStatic);
         COLORREF colour = GetPixel( hdc, 10, 10);
         ok ( colour != 0, "pixel should NOT be painted black!\n");
+        ReleaseDC(hStatic, hdc);
     }
     if (style != SS_ETCHEDHORZ && style != SS_ETCHEDVERT)
         exp = 4;

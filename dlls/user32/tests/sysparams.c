@@ -2918,7 +2918,8 @@ static void test_GetSystemMetrics( void)
         trace( "Captionfontchar width %d  MenuFont %d,%d CaptionWidth from registry: %d screen %d,%d\n",
                 avcwCaption, tmMenuFont.tmHeight, tmMenuFont.tmExternalLeading, CaptionWidthfromreg, screen.cx, screen.cy);
     }
-    ReleaseDC( 0, hdc);
+
+    DeleteDC(hdc);
 }
 
 static void test_EnumDisplaySettings(void)

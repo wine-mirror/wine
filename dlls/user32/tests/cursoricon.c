@@ -1070,6 +1070,8 @@ static void test_LoadImageBitmap(const char * test_desc, HBITMAP hbm)
     ok(ret == bm.bmHeight, "%s: %d lines were converted, not %d\n", test_desc, ret, bm.bmHeight);
 
     ok(color_match(pixel, 0x00ffffff), "%s: Pixel is 0x%08x\n", test_desc, pixel);
+
+    ReleaseDC(NULL, hdc);
 }
 
 static void test_LoadImageFile(const char * test_desc, const unsigned char * image_data,

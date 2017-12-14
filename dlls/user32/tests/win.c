@@ -5242,6 +5242,7 @@ static void test_scrolldc( HWND parent)
     if (winetest_debug > 0) dump_region(hrgn);
 
     /* clean up */
+    ReleaseDC(hwnd1, hdc);
     DeleteObject(hrgn);
     DeleteObject(exprgn);
     DeleteObject(tmprgn);
