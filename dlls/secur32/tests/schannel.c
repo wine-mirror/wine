@@ -686,6 +686,7 @@ static void test_communication(void)
     SecPkgContext_ConnectionInfo conn_info;
     SecPkgContext_KeyInfoA key_info;
     CERT_CONTEXT *cert;
+    SecPkgContext_NegotiationInfoA info;
 
     SecBufferDesc buffers[2];
     SecBuffer *buf;
@@ -938,6 +939,9 @@ todo_wine
 
     status = pQueryContextAttributesA(&context, SECPKG_ATTR_STREAM_SIZES, &sizes);
     ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_STREAM_SIZES) failed: %08x\n", status);
+
+    status = QueryContextAttributesA(&context, SECPKG_ATTR_NEGOTIATION_INFO, &info);
+    ok(status == SEC_E_UNSUPPORTED_FUNCTION, "QueryContextAttributesA returned %08x\n", status);
 
     reset_buffers(&buffers[0]);
 
