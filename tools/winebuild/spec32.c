@@ -255,16 +255,16 @@ static void output_relay_debug( DLLSPEC *spec )
         case CPU_ARM:
         {
             unsigned int mask, val, count = 0;
-            unsigned int stack_size = min( 16, (get_args_size( odp ) + 7) & ~7 );
+            int j, has_float = 0;
+
+            if (strcmp( float_abi_option, "soft" ))
+                for (j = 0; j < odp->u.func.nb_args && !has_float; j++)
+                    has_float = is_float_arg( odp, j );
 
             val = (odp->u.func.args_str_offset << 16) | (i - spec->base);
-            switch (stack_size)
-            {
-            case 16: output( "\tpush {r0-r3}\n" ); break;
-            case 8:  output( "\tpush {r0-r1}\n" ); break;
-            case 0:  break;
-            }
+            output( "\tpush {r0-r3}\n" );
             output( "\tmov r2, SP\n");
+            if (has_float) output( "\tvpush {s0-s15}\n" );
             output( "\tpush {LR}\n" );
             output( "\tsub SP, #4\n");
             for (mask = 0xff; mask; mask <<= 8)
@@ -275,7 +275,7 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tldr IP, [r0, #4]\n");
             output( "1:\tblx IP\n");
             output( "\tldr IP, [SP, #4]\n" );
-            output( "\tadd SP, #%u\n", stack_size + 8 );
+            output( "\tadd SP, #%u\n", 24 + (has_float ? 64 : 0) );
             output( "\tbx IP\n");
             output( "2:\t.long .L__wine_spec_relay_descr-1b\n" );
             break;

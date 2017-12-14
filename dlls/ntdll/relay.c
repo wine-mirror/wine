@@ -468,6 +468,10 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
     struct relay_private_data *data = descr->private;
     struct relay_entry_point *entry_point = data->entry_points + ordinal;
     unsigned int i, pos;
+#ifndef __SOFTFP__
+    unsigned int float_pos = 0, double_pos = 0;
+    const union fpregs { float s[16]; double d[8]; } *fpstack = (const union fpregs *)stack - 1;
+#endif
 
     TRACE( "\1Call %s(", func_name( data, ordinal ));
 
@@ -476,6 +480,7 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
         switch (arg_types[i])
         {
         case 'j': /* int64 */
+            pos = (pos + 1) & ~1;
             TRACE( "%x%08x", stack[pos+1], stack[pos] );
             pos += 2;
             break;
@@ -489,6 +494,30 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
         case 'w': /* wstr */
             trace_string_w( stack[pos++] );
             break;
+        case 'f': /* float */
+#ifndef __SOFTFP__
+            if (!(float_pos % 2)) float_pos = max( float_pos, double_pos * 2 );
+            if (float_pos < 16)
+            {
+                TRACE( "%g", fpstack->s[float_pos++] );
+                break;
+            }
+#endif
+            TRACE( "%g", *(const float *)&stack[pos++] );
+            break;
+        case 'd': /* double */
+#ifndef __SOFTFP__
+            double_pos = max( (float_pos + 1) / 2, double_pos );
+            if (double_pos < 8)
+            {
+                TRACE( "%g", fpstack->d[double_pos++] );
+                break;
+            }
+#endif
+            pos = (pos + 1) & ~1;
+            TRACE( "%g", *(const double *)&stack[pos] );
+            pos += 2;
+            break;
         case 'i': /* long */
         default:
             TRACE( "%08x", stack[pos++] );
@@ -496,6 +525,14 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
         }
         if (!is_ret_val( arg_types[i+1] )) TRACE( "," );
     }
+
+#ifndef __SOFTFP__
+    if (float_pos || double_pos)
+    {
+        pos |= 0x80000000;
+        stack = (const DWORD *)fpstack;  /* retaddr is below the fp regs */
+    }
+#endif
     *nb_args = pos;
     TRACE( ") ret=%08x\n", stack[-1] );
     return entry_point->orig_func;
@@ -519,39 +556,56 @@ DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigne
         TRACE( " retval=%08x ret=%08x\n", (UINT)retval, retaddr );
 }
 
-extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const DWORD *args );
-__ASM_GLOBAL_FUNC( call_entry_point,
+extern LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const DWORD *stack );
+__ASM_GLOBAL_FUNC( relay_call,
                    ".arm\n\t"
-                   "push {r4, r5, LR}\n\t"
-                   "mov r4, r0\n\t"
-                   "mov r5, SP\n\t"
+                   "push {r4-r8,lr}\n\t"
+                   "sub sp, #16\n\t"
+                   "mov r6, r2\n\t"
+                   "add r3, sp, #12\n\t"
+                   "mov r7, r0\n\t"
+                   "mov r8, r1\n\t"
+                   "bl " __ASM_NAME("relay_trace_entry") "\n\t"
+                   "mov ip, r0\n\t"  /* entry point */
+                   "mov r5, sp\n\t"
+                   "ldr r1, [sp, #12]\n\t"  /* number of args */
                    "lsl r3, r1, #2\n\t"
-                   "sub SP, SP, r3\n\t"
-                   "and SP, SP, #~7\n"
-                   "1:\tsub r3, r3, #4\n\t"
+                   "subs r3, #16\n\t"   /* first 4 args are in registers */
+                   "ble 2f\n\t"
+                   "sub sp, r3\n\t"
+                   "and sp, #~7\n"
+                   "add r2, r6, #16\n\t"   /* skip r0-r3 */
+                   "1:\tsubs r3, r3, #4\n\t"
                    "ldr r0, [r2, r3]\n\t"
-                   "str r0, [SP, r3]\n\t"
-                   "cmp r3, #0\n\t"
-                   "bgt 1b\n\t"
-                   "cmp r1, #0\n\t"
-                   "beq 3f\n\t"
-                   "cmp r1, #2\n\t"
-                   "bgt 2f\n\t"
-                   "pop {r0-r1}\n\t"
-                   "b 3f\n"
-                   "2:\tpop {r0-r3}\n"
-                   "3:\tblx r4\n\t"
-                   "mov SP, r5\n\t"
-                   "pop {r4, r5, PC}" )
-
-static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const DWORD *stack )
-{
-    unsigned int nb_args;
-    void *func = relay_trace_entry( descr, idx, stack, &nb_args );
-    LONGLONG ret = call_entry_point( func, nb_args, stack );
-    relay_trace_exit( descr, idx, stack[-1], ret );
-    return ret;
-}
+                   "str r0, [sp, r3]\n\t"
+                   "bgt 1b\n"
+                   "2:\t"
+#ifndef __SOFTFP__
+                   "tst r1, #0x80000000\n\t"
+                   "ldm r6, {r0-r3}\n\t"
+                   "vldmdbne r6!, {s0-s15}\n\t"
+#else
+                   "ldm r6, {r0-r3}\n\t"
+#endif
+                   "blx ip\n\t"
+                   "mov sp, r5\n\t"
+                   "ldr r2, [r6, #-4]\n\t"  /* retaddr */
+                   "mov r4, r0\n\t"
+                   "mov r5, r1\n\t"
+                   "mov r0, r7\n\t"
+                   "mov r1, r8\n\t"
+                   "strd r4, [sp]\n\t"
+#ifndef __SOFTFP__
+                   "vstr d0, [sp, #8]\n\t"  /* preserve floating point retval */
+                   "bl " __ASM_NAME("relay_trace_exit") "\n\t"
+                   "vldr d0, [sp, #8]\n\t"
+#else
+                   "bl " __ASM_NAME("relay_trace_exit") "\n\t"
+#endif
+                   "mov r0, r4\n\t"
+                   "mov r1, r5\n\t"
+                   "add sp, #16\n\t"
+                   "pop {r4-r8,pc}" )
 
 #elif defined(__aarch64__)
 
