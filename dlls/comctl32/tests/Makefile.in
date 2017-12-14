@@ -18,6 +18,7 @@ C_SRCS = \
 	progress.c \
 	propsheet.c \
 	rebar.c \
+	static.c \
 	status.c \
 	subclass.c \
 	syslink.c \
