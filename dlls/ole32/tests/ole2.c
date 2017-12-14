@@ -4226,30 +4226,31 @@ static void test_data_cache_save_data(void)
         {
             {
                 { CF_DIB, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-            },
-            1, 1, &CLSID_WineTest,
-            {
-               &CLSID_WineTestOld, 1, { { "\2OlePres000", CF_DIB, DVASPECT_CONTENT, 0, NULL, 0 } }
-            }
-        },
-        {
-            {
                 { CF_METAFILEPICT, 0, DVASPECT_CONTENT, -1, TYMED_MFPICT },
-            },
-            1, 1, &CLSID_WineTest,
-            {
-                &CLSID_WineTestOld, 1, { { "\2OlePres000", CF_METAFILEPICT, DVASPECT_CONTENT, 0, NULL, 0 } }
-            }
-        },
-        {
-            {
                 { CF_ENHMETAFILE, 0, DVASPECT_CONTENT, -1, TYMED_ENHMF },
             },
-            1, 1, &CLSID_WineTest,
+            3, 3, &CLSID_WineTest,
             {
-                &CLSID_WineTestOld, 1, { { "\2OlePres000", CF_ENHMETAFILE, DVASPECT_CONTENT, 0, NULL, 0 } }
+                &CLSID_WineTestOld, 3, { { "\2OlePres000", CF_DIB, DVASPECT_CONTENT, 0, NULL, 0 },
+                                         { "\2OlePres001", CF_METAFILEPICT, DVASPECT_CONTENT, 0, NULL, 0 },
+                                         { "\2OlePres002", CF_ENHMETAFILE, DVASPECT_CONTENT, 0, NULL, 0 } }
             }
         },
+        /* without setting data */
+        {
+            {
+                { CF_DIB, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+                { CF_METAFILEPICT, 0, DVASPECT_CONTENT, -1, TYMED_MFPICT },
+                { CF_ENHMETAFILE, 0, DVASPECT_CONTENT, -1, TYMED_ENHMF },
+            },
+            3, 0, &CLSID_WineTest,
+            {
+                &CLSID_WineTestOld, 3, { { "\2OlePres000", CF_DIB, DVASPECT_CONTENT, 0, NULL, 0 },
+                                         { "\2OlePres001", CF_METAFILEPICT, DVASPECT_CONTENT, 0, NULL, 0 },
+                                         { "\2OlePres002", CF_ENHMETAFILE, DVASPECT_CONTENT, 0, NULL, 0 } }
+            }
+        },
+        /* static picture clsids */
         {
             {
                 { CF_DIB, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
@@ -4273,6 +4274,34 @@ static void test_data_cache_save_data(void)
                 { CF_ENHMETAFILE, 0, DVASPECT_CONTENT, -1, TYMED_ENHMF },
             },
             1, 1, &CLSID_Picture_EnhMetafile,
+            {
+                &CLSID_WineTestOld, 1, { { "CONTENTS", -1, 0, 0, NULL, 0 } }
+            }
+        },
+        /* static picture clsids without setting any data */
+        {
+            {
+                { CF_DIB, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+            },
+            1, 0, &CLSID_Picture_Dib,
+            {
+                &CLSID_WineTestOld, 1, { { "CONTENTS", -1, 0, 0, NULL, 0 } }
+            }
+        },
+        {
+            {
+                { CF_METAFILEPICT, 0, DVASPECT_CONTENT, -1, TYMED_MFPICT },
+            },
+            1, 0, &CLSID_Picture_Metafile,
+            {
+                &CLSID_WineTestOld, 1, { { "CONTENTS", -1, 0, 0, NULL, 0 } }
+            }
+        },
+        {
+            {
+                { CF_ENHMETAFILE, 0, DVASPECT_CONTENT, -1, TYMED_ENHMF },
+            },
+            1, 0, &CLSID_Picture_EnhMetafile,
             {
                 &CLSID_WineTestOld, 1, { { "CONTENTS", -1, 0, 0, NULL, 0 } }
             }

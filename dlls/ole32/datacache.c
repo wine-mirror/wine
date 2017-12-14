@@ -829,17 +829,16 @@ static HRESULT save_dib(DataCacheEntry *entry, BOOL contents, IStream *stream)
         if (hr == S_OK && data_size)
             hr = IStream_Write(stream, bmi, data_size, NULL);
     }
-    else
+    else if(data_size)
     {
         BITMAPFILEHEADER bmp_fhdr;
 
         bmp_fhdr.bfType = 0x4d42;
         bmp_fhdr.bfSize = data_size + sizeof(BITMAPFILEHEADER);
         bmp_fhdr.bfReserved1 = bmp_fhdr.bfReserved2 = 0;
-        if (data_size)
-            bmp_fhdr.bfOffBits = bitmap_info_size(bmi, DIB_RGB_COLORS) + sizeof(BITMAPFILEHEADER);
+        bmp_fhdr.bfOffBits = bitmap_info_size(bmi, DIB_RGB_COLORS) + sizeof(BITMAPFILEHEADER);
         hr = IStream_Write(stream, &bmp_fhdr, sizeof(BITMAPFILEHEADER), NULL);
-        if (hr == S_OK && data_size)
+        if (hr == S_OK)
             hr = IStream_Write(stream, bmi, data_size, NULL);
     }
 
@@ -897,25 +896,22 @@ static HRESULT save_mfpict(DataCacheEntry *entry, BOOL contents, IStream *stream
             hr = IStream_Write(stream, data, data_size, NULL);
         HeapFree(GetProcessHeap(), 0, data);
     }
-    else
+    else if (entry->stgmedium.tymed != TYMED_NULL)
     {
         struct meta_placeable meta_place_rec;
         WORD *check;
 
-        if (entry->stgmedium.tymed != TYMED_NULL)
+        mfpict = GlobalLock(entry->stgmedium.u.hMetaFilePict);
+        if (!mfpict)
+            return DV_E_STGMEDIUM;
+        data_size = GetMetaFileBitsEx(mfpict->hMF, 0, NULL);
+        data = HeapAlloc(GetProcessHeap(), 0, data_size);
+        if (!data)
         {
-            mfpict = GlobalLock(entry->stgmedium.u.hMetaFilePict);
-            if (!mfpict)
-                return DV_E_STGMEDIUM;
-            data_size = GetMetaFileBitsEx(mfpict->hMF, 0, NULL);
-            data = HeapAlloc(GetProcessHeap(), 0, data_size);
-            if (!data)
-            {
-                GlobalUnlock(entry->stgmedium.u.hMetaFilePict);
-                return E_OUTOFMEMORY;
-            }
-            GetMetaFileBitsEx(mfpict->hMF, data_size, data);
+            GlobalUnlock(entry->stgmedium.u.hMetaFilePict);
+            return E_OUTOFMEMORY;
         }
+        GetMetaFileBitsEx(mfpict->hMF, data_size, data);
 
         /* units are in 1/8th of a point (1 point is 1/72th of an inch) */
         meta_place_rec.key = 0x9ac6cdd7;
@@ -927,13 +923,12 @@ static HRESULT save_mfpict(DataCacheEntry *entry, BOOL contents, IStream *stream
         meta_place_rec.bounding_box[3] = 0;
         meta_place_rec.checksum = 0;
         meta_place_rec.reserved = 0;
-        if (mfpict)
-        {
-            /* These values are rounded down so MulDiv won't do the right thing */
-            meta_place_rec.bounding_box[2] = (LONGLONG)mfpict->xExt * meta_place_rec.inch / 2540;
-            meta_place_rec.bounding_box[3] = (LONGLONG)mfpict->yExt * meta_place_rec.inch / 2540;
-            GlobalUnlock(entry->stgmedium.u.hMetaFilePict);
-        }
+
+        /* These values are rounded down so MulDiv won't do the right thing */
+        meta_place_rec.bounding_box[2] = (LONGLONG)mfpict->xExt * meta_place_rec.inch / 2540;
+        meta_place_rec.bounding_box[3] = (LONGLONG)mfpict->yExt * meta_place_rec.inch / 2540;
+        GlobalUnlock(entry->stgmedium.u.hMetaFilePict);
+
         for (check = (WORD *)&meta_place_rec; check != (WORD *)&meta_place_rec.checksum; check++)
             meta_place_rec.checksum ^= *check;
         hr = IStream_Write(stream, &meta_place_rec, sizeof(struct meta_placeable), NULL);
@@ -982,7 +977,7 @@ static HRESULT save_emf(DataCacheEntry *entry, BOOL contents, IStream *stream)
             hr = IStream_Write(stream, data, data_size, NULL);
         HeapFree(GetProcessHeap(), 0, data);
     }
-    else
+    else if (entry->stgmedium.tymed != TYMED_NULL)
     {
         data_size = GetEnhMetaFileBits(entry->stgmedium.u.hEnhMetaFile, 0, NULL);
         data = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) + sizeof(ENHMETAHEADER) + data_size);
@@ -991,8 +986,7 @@ static HRESULT save_emf(DataCacheEntry *entry, BOOL contents, IStream *stream)
         GetEnhMetaFileBits(entry->stgmedium.u.hEnhMetaFile, data_size, data + sizeof(DWORD) + sizeof(ENHMETAHEADER));
         memcpy(data + sizeof(DWORD), data + sizeof(DWORD) + sizeof(ENHMETAHEADER), sizeof(ENHMETAHEADER));
         data_size += sizeof(DWORD) + sizeof(ENHMETAHEADER);
-        if (hr == S_OK && data_size)
-            hr = IStream_Write(stream, data, data_size, NULL);
+        hr = IStream_Write(stream, data, data_size, NULL);
         HeapFree(GetProcessHeap(), 0, data);
     }
 
