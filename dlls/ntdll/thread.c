@@ -48,6 +48,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 
+#ifndef PTHREAD_STACK_MIN
+#define PTHREAD_STACK_MIN 16384
+#endif
+
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
 
 PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter = NULL;
