@@ -792,8 +792,14 @@ static void init_stream_header(DataCacheEntry *entry, PresentationDataHeader *he
 static HRESULT save_dib(DataCacheEntry *entry, BOOL contents, IStream *stream)
 {
     HRESULT hr = S_OK;
-    int data_size = GlobalSize(entry->stgmedium.u.hGlobal);
-    BITMAPINFO *bmi = GlobalLock(entry->stgmedium.u.hGlobal);
+    int data_size = 0;
+    BITMAPINFO *bmi = NULL;
+
+    if (entry->stgmedium.tymed != TYMED_NULL)
+    {
+        data_size = GlobalSize(entry->stgmedium.u.hGlobal);
+        bmi = GlobalLock(entry->stgmedium.u.hGlobal);
+    }
 
     if (!contents)
     {
