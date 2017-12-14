@@ -594,7 +594,7 @@ static void test_get_set_item(void)
     DestroyWindow(hComboEx);
 }
 
-START_TEST(comboex)
+START_TEST(combo)
 {
     if (!init())
         return;
