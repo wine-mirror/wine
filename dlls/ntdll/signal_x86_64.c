@@ -4160,21 +4160,21 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 
 
 /***********************************************************************
- *           RtlExitUserThread  (NTDLL.@)
+ *           signal_exit_thread
  */
-void WINAPI RtlExitUserThread( ULONG status )
+void signal_exit_thread( int status )
 {
     if (!amd64_thread_data()->exit_frame) exit_thread( status );
     call_thread_exit_func( status, exit_thread, amd64_thread_data()->exit_frame );
 }
 
 /***********************************************************************
- *           abort_thread
+ *           signal_exit_process
  */
-void abort_thread( int status )
+void signal_exit_process( int status )
 {
-    if (!amd64_thread_data()->exit_frame) terminate_thread( status );
-    call_thread_exit_func( status, terminate_thread, amd64_thread_data()->exit_frame );
+    if (!amd64_thread_data()->exit_frame) exit( status );
+    call_thread_exit_func( status, exit, amd64_thread_data()->exit_frame );
 }
 
 /**********************************************************************

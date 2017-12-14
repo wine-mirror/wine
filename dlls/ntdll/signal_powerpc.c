@@ -1143,7 +1143,7 @@ static void WINAPI call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *
     __TRY
     {
         TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
-        exit_thread( entry( arg ));
+        RtlExitUserThread( entry( arg ));
     }
     __EXCEPT(unhandled_exception_filter)
     {
@@ -1212,19 +1212,19 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 }
 
 /***********************************************************************
- *           RtlExitUserThread  (NTDLL.@)
+ *           signal_exit_thread
  */
-void WINAPI RtlExitUserThread( ULONG status )
+void signal_exit_thread( int status )
 {
     exit_thread( status );
 }
 
 /***********************************************************************
- *           abort_thread
+ *           signal_exit_process
  */
-void abort_thread( int status )
+void signal_exit_process( int status )
 {
-    terminate_thread( status );
+    exit( status );
 }
 
 /**********************************************************************
