@@ -61,10 +61,12 @@ extern "C" {
  * use GetExceptionInformation() and GetExceptionCode() to retrieve the
  * exception info.
  *
- * Warning: inside a __TRY or __EXCEPT block, 'break' or 'continue' statements
- *          break out of the current block. You cannot use 'return', 'goto'
- *          or 'longjmp' to leave a __TRY block, as this will surely crash.
- *          You can use them to leave a __EXCEPT block though.
+ * Warning: Inside a __TRY or __EXCEPT block, 'break' or 'continue' statements
+ *          break out of the current block, but avoid using them because they
+ *          won't work when compiling with native exceptions. You cannot use
+ *          'return', 'goto', or 'longjmp' to leave a __TRY block either, as
+ *          this will surely crash. You can use 'return', 'goto', or 'longjmp'
+ *          to leave an __EXCEPT block though.
  *
  * -- AJ
  */
