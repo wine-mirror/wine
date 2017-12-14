@@ -262,24 +262,10 @@ __ASM_GLOBAL_FUNC( __chkstk, "lsl r4, r4, #2\n\t"
 /* FIXME: Use the Stack instead of the actual register values */
 __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     ".arm\n\t"
-                    "stmfd SP!, {r1}\n\t"
-                    "mov r1, #0x0200000\n\t"/* CONTEXT_ARM */
-                    "add r1, r1, #0x3\n\t"  /* CONTEXT_FULL */
-                    "str r1, [r0]\n\t"      /* context->ContextFlags */
-                    "ldmfd SP!, {r1}\n\t"
-                    "str r0, [r0, #0x4]\n\t"   /* context->R0 */
-                    "str r1, [r0, #0x8]\n\t"   /* context->R1 */
-                    "str r2, [r0, #0xc]\n\t"   /* context->R2 */
-                    "str r3, [r0, #0x10]\n\t"  /* context->R3 */
-                    "str r4, [r0, #0x14]\n\t"  /* context->R4 */
-                    "str r5, [r0, #0x18]\n\t"  /* context->R5 */
-                    "str r6, [r0, #0x1c]\n\t"  /* context->R6 */
-                    "str r7, [r0, #0x20]\n\t"  /* context->R7 */
-                    "str r8, [r0, #0x24]\n\t"  /* context->R8 */
-                    "str r9, [r0, #0x28]\n\t"  /* context->R9 */
-                    "str r10, [r0, #0x2c]\n\t" /* context->R10 */
-                    "str r11, [r0, #0x30]\n\t" /* context->R11 */
-                    "str IP, [r0, #0x34]\n\t"  /* context->R12 */
+                    "stmib r0, {r0-r12}\n\t"   /* context->R0..R12 */
+                    "mov r1, #0x0200000\n\t"   /* CONTEXT_ARM */
+                    "add r1, r1, #0x3\n\t"     /* CONTEXT_FULL */
+                    "str r1, [r0]\n\t"         /* context->ContextFlags */
                     "str SP, [r0, #0x38]\n\t"  /* context->Sp */
                     "str LR, [r0, #0x3c]\n\t"  /* context->Lr */
                     "str PC, [r0, #0x40]\n\t"  /* context->Pc */
@@ -294,26 +280,17 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
  *
  * Set the new CPU context.
  */
-/* FIXME: What about the CPSR? */
-void set_cpu_context( const CONTEXT *context );
+void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context );
 __ASM_GLOBAL_FUNC( set_cpu_context,
-                   "mov IP, r0\n\t"
-                   "ldr r0,  [IP, #0x4]\n\t"  /* context->R0 */
-                   "ldr r1,  [IP, #0x8]\n\t"  /* context->R1 */
-                   "ldr r2,  [IP, #0xc]\n\t"  /* context->R2 */
-                   "ldr r3,  [IP, #0x10]\n\t" /* context->R3 */
-                   "ldr r4,  [IP, #0x14]\n\t" /* context->R4 */
-                   "ldr r5,  [IP, #0x18]\n\t" /* context->R5 */
-                   "ldr r6,  [IP, #0x1c]\n\t" /* context->R6 */
-                   "ldr r7,  [IP, #0x20]\n\t" /* context->R7 */
-                   "ldr r8,  [IP, #0x24]\n\t" /* context->R8 */
-                   "ldr r9,  [IP, #0x28]\n\t" /* context->R9 */
-                   "ldr r10, [IP, #0x2c]\n\t" /* context->R10 */
-                   "ldr r11, [IP, #0x30]\n\t" /* context->R11 */
-                   "ldr SP,  [IP, #0x38]\n\t" /* context->R12 */
-                   "ldr LR,  [IP, #0x3c]\n\t" /* context->Lr */
-                   "ldr PC,  [IP, #0x40]\n\t" /* context->Pc */
-                   )
+                   ".arm\n\t"
+                   "ldr r1, [r0, #0x44]\n\t"  /* context->Cpsr */
+                   "msr CPSR_f, r1\n\t"
+                   "ldr r1, [r0, #0x40]\n\t"  /* context->Pc */
+                   "ldr lr, [r0, #0x3c]\n\t"  /* context->Lr */
+                   "ldr sp, [r0, #0x38]\n\t"  /* context->Sp */
+                   "push {r1}\n\t"
+                   "ldmib r0, {r0-r12}\n\t"   /* context->R0..R12 */
+                   "pop {pc}" )
 
 
 /***********************************************************************
