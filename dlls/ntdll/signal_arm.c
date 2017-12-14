@@ -1220,35 +1220,31 @@ static void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
     abort();  /* should not be reached */
 }
 
-typedef void (WINAPI *thread_start_func)(LPTHREAD_START_ROUTINE,void *);
-
-struct startup_info
-{
-    thread_start_func      start;
-    LPTHREAD_START_ROUTINE entry;
-    void                  *arg;
-    BOOL                   suspend;
-};
-
-/***********************************************************************
- *           thread_startup
- */
-static void thread_startup( void *param )
-{
-    CONTEXT context = { 0 };
-    struct startup_info *info = param;
-
-    /* build the initial context */
-    context.ContextFlags = CONTEXT_FULL;
-    context.R0 = (DWORD)info->entry;
-    context.R1 = (DWORD)info->arg;
-    context.Sp = (DWORD)NtCurrentTeb()->Tib.StackBase;
-    context.Pc = (DWORD)info->start;
-
-    attach_dlls( &context, info->suspend );
-
-    set_cpu_context( &context );
-}
+extern void DECLSPEC_NORETURN start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend,
+                                            void *relay, TEB *teb );
+__ASM_GLOBAL_FUNC( start_thread,
+                   ".arm\n\t"
+                   "push {r4-r12,lr}\n\t"
+                   /* build initial context on thread stack */
+                   "ldr r4, [sp, #40]\n\t"    /* teb */
+                   "ldr r4, [r4, #4]\n\t"     /* teb->Tib.StackBase */
+                   "sub r5, r4, #0x1a0\n\t"   /* sizeof(CONTEXT) */
+                   "mov ip, #0x0200000\n\t"   /* CONTEXT_ARM */
+                   "add ip, #0x3\n\t"         /* CONTEXT_FULL */
+                   "str ip, [r5]\n\t"         /* context->ContextFlags */
+                   "str r0, [r5, #0x4]\n\t"   /* context->R0 = entry */
+                   "str r1, [r5, #0x8]\n\t"   /* context->R1 = arg */
+                   "str r4, [r5, #0x38]\n\t"  /* context->Sp = stack */
+                   "str r3, [r5, #0x40]\n\t"  /* context->Pc = relay */
+                   /* switch to thread stack */
+                   "mov sp, r5\n\t"
+                   /* attach dlls */
+                   "mov r0, r5\n\t"  /* context */
+                   "mov r1, r2\n\t"  /* suspend */
+                   "bl " __ASM_NAME("attach_dlls") "\n\t"
+                   /* switch to the initial context */
+                   "mov r0, r5\n\t"
+                   "b " __ASM_NAME("set_cpu_context") )
 
 /***********************************************************************
  *           signal_start_thread
@@ -1260,8 +1256,7 @@ static void thread_startup( void *param )
  */
 void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
-    struct startup_info info = { call_thread_entry_point, entry, arg, suspend };
-    wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
+    start_thread( entry, arg, suspend, call_thread_entry_point, NtCurrentTeb() );
 }
 
 /**********************************************************************
@@ -1274,8 +1269,7 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
-    struct startup_info info = { kernel32_start_process, entry, NtCurrentTeb()->Peb, suspend };
-    wine_switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
+    start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process, NtCurrentTeb() );
 }
 
 /***********************************************************************
