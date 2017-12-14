@@ -7460,16 +7460,12 @@ msgid "Property: [1], Signature: [2]"
 msgstr ""
 
 #: msi.rc:162
-#, fuzzy
-#| msgid "File:"
 msgid "File: [1]"
-msgstr "Датотека:"
+msgstr "Датотека: [1]"
 
 #: msi.rc:163 msi.rc:190
-#, fuzzy
-#| msgid "Folder:"
 msgid "Folder: [1]"
-msgstr "Фасцикла:"
+msgstr "Фасцикла: [1]"
 
 #: msi.rc:164 msi.rc:193
 msgid "Shortcut: [1]"
@@ -7536,10 +7532,8 @@ msgid "Extension: [1]"
 msgstr ""
 
 #: msi.rc:182 msi.rc:203
-#, fuzzy
-#| msgid "&Font:"
 msgid "Font: [1]"
-msgstr "&Фонт:"
+msgstr "Фонт: [1]"
 
 #: msi.rc:183 msi.rc:204
 msgid "MIME Content Type: [1], Extension: [2]"

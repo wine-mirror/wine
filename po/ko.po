@@ -7215,16 +7215,12 @@ msgid "Property: [1], Signature: [2]"
 msgstr ""
 
 #: msi.rc:162
-#, fuzzy
-#| msgid "File:"
 msgid "File: [1]"
-msgstr "파일:"
+msgstr "파일: [1]"
 
 #: msi.rc:163 msi.rc:190
-#, fuzzy
-#| msgid "Folder:"
 msgid "Folder: [1]"
-msgstr "폴더:"
+msgstr "폴더: [1]"
 
 #: msi.rc:164 msi.rc:193
 msgid "Shortcut: [1]"
@@ -7297,10 +7293,8 @@ msgid "Extension: [1]"
 msgstr "오직 확장만"
 
 #: msi.rc:182 msi.rc:203
-#, fuzzy
-#| msgid "&Font:"
 msgid "Font: [1]"
-msgstr "글꼴(&F):"
+msgstr "글꼴: [1]"
 
 #: msi.rc:183 msi.rc:204
 msgid "MIME Content Type: [1], Extension: [2]"
@@ -7370,10 +7364,8 @@ msgid ""
 msgstr ""
 
 #: msi.rc:76
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "{{Disk full: }}"
-msgstr "디스크가 꽉 찼습니다.\n"
+msgstr "{{디스크가 꽉 찼습니다: }}"
 
 #: msi.rc:77
 msgid "Action [Time]: [1]. [2]"
