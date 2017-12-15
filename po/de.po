@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-11-17 14:31+0100\n"
+"PO-Revision-Date: 2017-12-15 16:04+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -8939,10 +8939,8 @@ msgid " sec"
 msgstr " Sek"
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "Select Folder"
 msgid "Select Source"
-msgstr "Ordner auswählen"
+msgstr "Quelle auswählen"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -12092,17 +12090,6 @@ msgid "Icons (*.ico)"
 msgstr "Symbole (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | IMPORT | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -12118,7 +12105,7 @@ msgstr ""
 "  REG [Operation] [Parameter]\n"
 "\n"
 "Unterstützte Operationen:\n"
-"  ADD | DELETE | IMPORT | QUERY\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
 "\n"
 "Hilfe für eine spezifische Operation:\n"
 "  REG [Operation] /?\n"
@@ -12262,22 +12249,16 @@ msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "reg: Unbekannte Escape-Sequenz [\\%1!c!]\n"
 
 #: reg.rc:70
-#, fuzzy
-#| msgid "REG IMPORT file.reg\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG IMPORT datei.reg\n"
+msgstr "REG EXPORT Schlüssel datei.reg [/y]\n"
 
 #: reg.rc:71
-#, fuzzy
-#| msgid "regedit: Invalid system key [%1]\n"
 msgid "reg: Invalid system key [%1]\n"
-msgstr "regedit: Ungültiger Systemschlüssel [%1]\n"
+msgstr "reg: Ungültiger Systemschlüssel [%1]\n"
 
 #: reg.rc:72
-#, fuzzy
-#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "Der Wert '%1' existiert bereits. Möchten Sie ihn ersetzen?"
+msgstr "Die Datei '%1' existiert bereits. Möchten Sie sie ersetzen?"
 
 #: regedit.rc:34
 msgid "&Registry"
