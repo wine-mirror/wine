@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-07-05 17:28+0200\n"
+"PO-Revision-Date: 2017-12-15 16:20+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -7299,19 +7299,19 @@ msgstr "Ключ: [1], Ім'я: [2], Значення: [3]"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Критична помилка: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Помилка [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Попередження [1]."
 
 #: msi.rc:74
 msgid "Info [1]."
-msgstr "Info [1]."
+msgstr "Інфо [1]."
 
 #: msi.rc:75
 msgid ""
@@ -7319,6 +7319,9 @@ msgid ""
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
+"Встановлювач виявив несподівану помилку під час встановлення цього пакета. "
+"Це може свідчити про проблему з цим пакетом. Код помилки [1]. {{Аргументи: "
+"[2], [3], [4]}}"
 
 #: msi.rc:76
 msgid "{{Disk full: }}"
@@ -7346,13 +7349,15 @@ msgstr "Дія завершилася [Time]: [1]. Повернене значе
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"
-msgstr ""
+msgstr "Будь ласка, вставте диск: [2]"
 
 #: msi.rc:84
 msgid ""
 "Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
 "that you can access it."
 msgstr ""
+"Вихідний файл не знайдено{{(cabinet)}}: [2]. Переконайтеся, що файл існує "
+"і ви маєте до нього доступ."
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -8997,10 +9002,8 @@ msgid " sec"
 msgstr " сек"
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Source"
-msgstr "Нова Тека"
+msgstr "Виберіть джерело"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -10664,6 +10667,16 @@ msgid ""
 "link_name is the name of the new symbolic link.\n"
 "target is the path that link_name points to.\n"
 msgstr ""
+"Створити символьне посилання.\n"
+"\n"
+"Синтаксис: MKLINK [опції] ім'я_посилання ціль\n"
+"\n"
+"Опції:\n"
+"/d             Створити символьне посилання каталогу.\n"
+"/h             Створити жорстке посилання.\n"
+"/j             Створити каталог з'єднання.\n"
+"ім'я_посилання - це назва нового символьного посилання.\n"
+"ім'я_посилання вказує на шлях цілі.\n"
 
 #: cmd.rc:312
 msgid ""
@@ -10674,47 +10687,6 @@ msgstr ""
 "системи чи оболонки, з якої ви запустили cmd.\n"
 
 #: cmd.rc:364
-#, fuzzy
-#| msgid ""
-#| "CMD built-in commands are:\n"
-#| "ASSOC\t\tShow or modify file extension associations\n"
-#| "ATTRIB\t\tShow or change DOS file attributes\n"
-#| "CALL\t\tInvoke a batch file from inside another\n"
-#| "CD (CHDIR)\tChange current default directory\n"
-#| "CHOICE\t\tWait for an keypress from a selectable list\n"
-#| "CLS\t\tClear the console screen\n"
-#| "COPY\t\tCopy file\n"
-#| "CTTY\t\tChange input/output device\n"
-#| "DATE\t\tShow or change the system date\n"
-#| "DEL (ERASE)\tDelete a file or set of files\n"
-#| "DIR\t\tList the contents of a directory\n"
-#| "ECHO\t\tCopy text directly to the console output\n"
-#| "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
-#| "FTYPE\t\tShow or modify open commands associated with file types\n"
-#| "HELP\t\tShow brief help details on a topic\n"
-#| "MD (MKDIR)\tCreate a subdirectory\n"
-#| "MORE\t\tDisplay output in pages\n"
-#| "MOVE\t\tMove a file, set of files or directory tree\n"
-#| "PATH\t\tSet or show the search path\n"
-#| "PAUSE\t\tSuspend execution of a batch file\n"
-#| "POPD\t\tRestore the directory to the last one saved with PUSHD\n"
-#| "PROMPT\t\tChange the command prompt\n"
-#| "PUSHD\t\tChange to a new directory, saving the current one\n"
-#| "REN (RENAME)\tRename a file\n"
-#| "RD (RMDIR)\tDelete a subdirectory\n"
-#| "SET\t\tSet or show environment variables\n"
-#| "SETLOCAL\tStart localization of environment changes in a batch file\n"
-#| "START\t\tStart a program, or open a document in the associated program\n"
-#| "TIME\t\tSet or show the current system time\n"
-#| "TITLE\t\tSet the window title for the CMD session\n"
-#| "TYPE\t\tType the contents of a text file\n"
-#| "VER\t\tShow the current version of CMD\n"
-#| "VOL\t\tShow the volume label of a disk device\n"
-#| "XCOPY\t\tCopy source files or directory trees to a destination\n"
-#| "EXIT\t\tClose down CMD\n"
-#| "\n"
-#| "Enter HELP <command> for further information on any of the above "
-#| "commands.\n"
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10773,6 +10745,7 @@ msgstr ""
 "FTYPE\t\tПоказ та зміна команд відкриття, асоційованих з типами файлів\n"
 "HELP\t\tПоказ короткої довідкової інформації про команду\n"
 "MD (MKDIR)\tСтворення підтеки\n"
+"MKLINK\tСтворення символьного посилання\n"
 "MORE\t\tВідображення виводу сторінками\n"
 "MOVE\t\tПереміщення файлу, набору файлів чи дерева каталогів\n"
 "PATH\t\tЗадання чи відображення шляху пошуку\n"
@@ -12127,17 +12100,6 @@ msgid "Icons (*.ico)"
 msgstr "Значки (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -12153,7 +12115,7 @@ msgstr ""
 "  REG [операція] [параметри]\n"
 "\n"
 "Підтримувані операції:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
 "\n"
 "Для довідки по конкретній операції, введіть:\n"
 "  REG [операція] /?\n"
@@ -12283,43 +12245,31 @@ msgstr "(значення не задане)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT file.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "reg: The file '%1' was not found.\n"
-msgstr "regedit: Файл '%1' не знайдено.\n"
+msgstr "reg: Файл '%1' не знайдено.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "regedit: Неможливо відкрити ключ '%1'.\n"
+msgstr "reg: Неможливо відкрити ключ реєстру '%1'.\n"
 
 #: reg.rc:69
-#, fuzzy
-#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: Нерозпізнана послідовність [\\%1!c!]\n"
+msgstr "reg: Нерозпізнана керівна послідовність [\\%1!c!]\n"
 
 #: reg.rc:70
-#, fuzzy
-#| msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG QUERY <ключ> [/v <параметр> | /ve] [/s]\n"
+msgstr "REG EXPORT ім'я_ключа file.reg [/y]\n"
 
 #: reg.rc:71
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid system key [%1]\n"
-msgstr "reg: невірне ім'я ключа\n"
+msgstr "reg: Невірний системний ключ [%1]\n"
 
 #: reg.rc:72
-#, fuzzy
-#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "Значення реєстру '%1' вже існує. Ви хочете його замінити?"
+msgstr "Файл '%1' вже існує. Ви хочете його перезаписати?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12391,7 +12341,7 @@ msgstr "&Про Редактор реєстру"
 
 #: regedit.rc:89 regedit.rc:96 regedit.rc:230
 msgid "Expand"
-msgstr ""
+msgstr "Розгорнути"
 
 #: regedit.rc:134 regedit.rc:233
 msgid "Modify &Binary Data..."
@@ -12585,38 +12535,6 @@ msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr "Неможливо імпортувати '%1'. Вказаний файл не є файлом реєстру."
 
 #: regedit.rc:408
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  regedit [options] [filename] [reg_key]\n"
-#| "\n"
-#| "Options:\n"
-#| "  [no option]    Launch the graphical version of this program.\n"
-#| "  /L:system.dat  The location of the system.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /R:user.dat    The location of the user.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /C             Import the contents of a registry file.\n"
-#| "  /D             Delete a specified registry key.\n"
-#| "  /E             Export the contents of a specified registry key to a "
-#| "file.\n"
-#| "                 If no key is specified, the entire registry is "
-#| "exported.\n"
-#| "  /S             Silent mode. No messages will be displayed.\n"
-#| "  /V             Launch the GUI in advanced mode. Ignored.\n"
-#| "  /?             Display this information and exit.\n"
-#| "  [filename]     The location of the file containing registry information "
-#| "to\n"
-#| "                 be imported. When used with [/E], this option specifies "
-#| "the\n"
-#| "                 file location where registry information will be "
-#| "exported.\n"
-#| "  [reg_key]      The registry key to be modified.\n"
-#| "\n"
-#| "Usage examples:\n"
-#| "  regedit \"import.reg\"\n"
-#| "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-#| "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12671,7 +12589,7 @@ msgstr ""
 "Приклади використання:\n"
 "  regedit \"import.reg\"\n"
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
@@ -12742,11 +12660,9 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Неможливо відкрити ключ '%1'.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
-msgstr "regedit: '%2' містить непідтримуваний тип даних [%1].\n"
+msgstr "regedit: '%2' містить непідтримуваний тип даних [0x%1!x!].\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
@@ -12754,10 +12670,8 @@ msgstr ""
 "regedit: Значення реєстру '%1' буде експортоване у двійковому вигляді.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: невірне ім'я ключа\n"
+msgstr "regedit: Невірне ім'я ключа [%1]\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12766,10 +12680,8 @@ msgstr ""
 "regedit: Неможливо експортувати '%1'. Вказаний ключ не був знайдений.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit: Неможливо видалити клас реєстру '%1'.\n"
+msgstr "regedit: Неможливо видалити ключ реєстру '%1'.\n"
 
 #: regedit.rc:431
 msgid "regedit: The line contains invalid syntax.\n"
@@ -12916,24 +12828,18 @@ msgid "Confirm Key Delete"
 msgstr "Підтвердження видалення ключа"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete the registry key '%1' and all of its "
-#| "subkeys?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
 msgstr ""
-"Ви впевнені, що хочете видалити ключ реєстру '%1' та всі його підрозділи?"
+"Ви впевнені, що хочете видалити цей ключ реєстру та всі його підрозділи?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
 msgstr "Розгортає або згортає вибраний розділ"
 
 #: regedit.rc:231
-#, fuzzy
-#| msgid "C&ollate"
 msgid "Collapse"
-msgstr "&Розбити"
+msgstr "Згорнути"
 
 #: regsvr32.rc:32
 msgid ""
@@ -15157,7 +15063,7 @@ msgstr "Мін"
 
 #: winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr ""
+msgstr "Всі результати будуть втрачені. Ви впевнені?"
 
 #: winemine.rc:30
 msgid "WineMine"
