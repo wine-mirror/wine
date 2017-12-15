@@ -2050,6 +2050,7 @@ AC_CHECK_FUNCS(\
 	strdup \
 	strerror \
 	strncasecmp \
+	strnlen \
 	strtold \
 	strtoll \
 	strtoull \

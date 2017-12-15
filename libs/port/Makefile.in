@@ -102,6 +102,7 @@ C_SRCS = \
 	strcasecmp.c \
 	strerror.c \
 	strncasecmp.c \
+	strnlen.c \
 	symlink.c \
 	usleep.c \
 	utf8.c \

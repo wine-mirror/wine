@@ -15280,6 +15280,7 @@ for ac_func in \
 	strdup \
 	strerror \
 	strncasecmp \
+	strnlen \
 	strtold \
 	strtoll \
 	strtoull \
