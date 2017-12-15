@@ -921,6 +921,9 @@
 /* Define to 1 if you have the `strncasecmp' function. */
 #undef HAVE_STRNCASECMP
 
+/* Define to 1 if you have the `strnlen' function. */
+#undef HAVE_STRNLEN
+
 /* Define to 1 if you have the <stropts.h> header file. */
 #undef HAVE_STROPTS_H
 
