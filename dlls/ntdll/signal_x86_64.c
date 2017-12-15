@@ -321,6 +321,7 @@ struct amd64_thread_data
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((TEB *)0)->SystemReserved2) );
+C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct amd64_thread_data, exit_frame ) == 0x330 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
@@ -4074,7 +4075,7 @@ static void WINAPI call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg )
 
 
 extern void DECLSPEC_NORETURN start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend,
-                                            void *relay, void *stack, void **exit_frame );
+                                            void *relay );
 __ASM_GLOBAL_FUNC( start_thread,
                    "subq $56,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 56\n\t")
@@ -4091,8 +4092,10 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "movq %r15,8(%rsp)\n\t"
                    __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
                    /* store exit frame */
-                   "movq %rsp,(%r9)\n\t"
+                   "movq %gs:0x30,%rax\n\t"
+                   "movq %rsp,0x330(%rax)\n\t"      /* amd64_thread_data()->exit_frame */
                    /* build initial context on thread stack */
+                   "movq 8(%rax),%r8\n\t"           /* NtCurrentTeb()->Tib.StackBase */
                    "leaq -0x500(%r8),%r10\n\t"      /* sizeof(context) + 0x30 for function params */
                    "movq $0x001000b,0x30(%r10)\n\t" /* context->ContextFlags = CONTEXT_FULL */
                    "movw %cs,0x38(%r10)\n\t"        /* context->SegCs */
@@ -4116,8 +4119,16 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "movq %rsp,%rdi\n\t"
                    "call " __ASM_NAME("set_cpu_context") )
 
-extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), void *frame );
+extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int) );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
+                   /* fetch exit frame */
+                   "movq %gs:0x30,%rax\n\t"
+                   "movq 0x330(%rax),%rdx\n\t"      /* amd64_thread_data()->exit_frame */
+                   "testq %rdx,%rdx\n\t"
+                   "jnz 1f\n\t"
+                   "jmp *%rsi\n"
+                   /* switch to exit frame stack */
+                   "1:\tmovq $0,0x330(%rax)\n\t"
                    "movq %rdx,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 56\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,48\n\t")
@@ -4126,7 +4137,7 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    __ASM_CFI(".cfi_rel_offset %r13,24\n\t")
                    __ASM_CFI(".cfi_rel_offset %r14,16\n\t")
                    __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
-                   "call *%rsi" );
+                   "call *%rsi" )
 
 
 /***********************************************************************
@@ -4139,8 +4150,7 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
  */
 void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
-    start_thread( entry, arg, suspend, call_thread_func,
-                  NtCurrentTeb()->Tib.StackBase, &amd64_thread_data()->exit_frame );
+    start_thread( entry, arg, suspend, call_thread_func );
 }
 
 
@@ -4154,8 +4164,7 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
-    start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process,
-                  NtCurrentTeb()->Tib.StackBase, &amd64_thread_data()->exit_frame );
+    start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process );
 }
 
 
@@ -4164,8 +4173,7 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
  */
 void signal_exit_thread( int status )
 {
-    if (!amd64_thread_data()->exit_frame) exit_thread( status );
-    call_thread_exit_func( status, exit_thread, amd64_thread_data()->exit_frame );
+    call_thread_exit_func( status, exit_thread );
 }
 
 /***********************************************************************
@@ -4173,8 +4181,7 @@ void signal_exit_thread( int status )
  */
 void signal_exit_process( int status )
 {
-    if (!amd64_thread_data()->exit_frame) exit( status );
-    call_thread_exit_func( status, exit, amd64_thread_data()->exit_frame );
+    call_thread_exit_func( status, exit );
 }
 
 /**********************************************************************

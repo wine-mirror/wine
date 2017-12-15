@@ -547,6 +547,7 @@ struct x86_thread_data
 };
 
 C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
+C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, exit_frame ) == 0x1f4 );
 #ifdef __HAVE_VM86
 C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, vm86 ) ==
           offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, __vm86 ));
@@ -2849,7 +2850,7 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 
 
 extern void DECLSPEC_NORETURN start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend,
-                                            void *relay, void **exit_frame );
+                                            void *relay );
 __ASM_GLOBAL_FUNC( start_thread,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -2863,8 +2864,7 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "pushl %edi\n\t"
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
                    /* store exit frame */
-                   "movl 24(%ebp),%eax\n\t"
-                   "movl %ebp,(%eax)\n\t"
+                   "movl %ebp,%fs:0x1f4\n\t"    /* x86_thread_data()->exit_frame */
                    /* build initial context on thread stack */
                    "movl %fs:4,%eax\n\t"        /* NtCurrentTeb()->StackBase */
                    "leal -0x2dc(%eax),%esi\n\t" /* sizeof(context) + 16 */
@@ -2899,11 +2899,18 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "movl %esi,(%esp)\n\t"
                    "call " __ASM_NAME("set_cpu_context") )
 
-extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), void *frame );
+extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int) );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
-                   "movl 4(%esp),%eax\n\t"
+                   /* fetch exit frame */
+                   "movl %fs:0x1f4,%edx\n\t"    /* x86_thread_data()->exit_frame */
+                   "testl %edx,%edx\n\t"
+                   "jnz 1f\n\t"
+                   "jmp *%ecx\n\t"
+                   /* switch to exit frame stack */
+                   "1:\tmovl 4(%esp),%eax\n\t"
                    "movl 8(%esp),%ecx\n\t"
-                   "movl 12(%esp),%ebp\n\t"
+                   "movl $0,%fs:0x1f4\n\t"
+                   "movl %edx,%ebp\n\t"
                    __ASM_CFI(".cfi_def_cfa %ebp,4\n\t")
                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
                    __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
@@ -2911,7 +2918,7 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
                    "leal -20(%ebp),%esp\n\t"
                    "pushl %eax\n\t"
-                   "call *%ecx" );
+                   "call *%ecx" )
 
 extern void call_thread_entry(void) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( call_thread_entry,
@@ -2970,7 +2977,7 @@ void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg )
  */
 void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
 {
-    start_thread( entry, arg, suspend, call_thread_entry, &x86_thread_data()->exit_frame );
+    start_thread( entry, arg, suspend, call_thread_entry );
 }
 
 /**********************************************************************
@@ -2983,8 +2990,7 @@ void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend 
  */
 void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
 {
-    start_thread( entry, NtCurrentTeb()->Peb, suspend,
-                  kernel32_start_process, &x86_thread_data()->exit_frame );
+    start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process );
 }
 
 
@@ -2993,8 +2999,7 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
  */
 void signal_exit_thread( int status )
 {
-    if (!x86_thread_data()->exit_frame) exit_thread( status );
-    call_thread_exit_func( status, exit_thread, x86_thread_data()->exit_frame );
+    call_thread_exit_func( status, exit_thread );
 }
 
 /***********************************************************************
@@ -3002,8 +3007,7 @@ void signal_exit_thread( int status )
  */
 void signal_exit_process( int status )
 {
-    if (!x86_thread_data()->exit_frame) exit( status );
-    call_thread_exit_func( status, exit, x86_thread_data()->exit_frame );
+    call_thread_exit_func( status, exit );
 }
 
 /**********************************************************************
