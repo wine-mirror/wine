@@ -4813,7 +4813,7 @@ static void test_dc_target(void)
     ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
 
     clr = GetPixel(hdc, 0, 0);
-    ok(clr == RGB(255, 0, 0), "Got color %#x\n", clr);
+    ok(clr == RGB(255, 0, 0), "Unexpected color 0x%08x.\n", clr);
 
     hdc2 = CreateCompatibleDC(NULL);
     ok(hdc2 != NULL, "Failed to create an HDC.\n");
@@ -4824,7 +4824,7 @@ static void test_dc_target(void)
     ok(hr == S_OK, "BindDC() returned %#x.\n", hr);
 
     clr = GetPixel(hdc2, 0, 0);
-    ok(clr == 0, "Got color %#x\n", clr);
+    ok(clr == 0, "Unexpected color 0x%08x.\n", clr);
 
     set_color(&color, 0.0f, 1.0f, 0.0f, 1.0f);
     hr = ID2D1DCRenderTarget_CreateSolidColorBrush(rt, &color, NULL, &brush);
@@ -4843,10 +4843,42 @@ static void test_dc_target(void)
     ID2D1SolidColorBrush_Release(brush);
 
     clr = GetPixel(hdc2, 0, 0);
-    ok(clr == RGB(0, 255, 0), "Got color %#x\n", clr);
+    ok(clr == RGB(0, 255, 0), "Unexpected color 0x%08x.\n", clr);
 
     clr = GetPixel(hdc2, 10, 0);
-    ok(clr == 0, "Got color %#x\n", clr);
+    ok(clr == 0, "Unexpected color 0x%08x.\n", clr);
+
+    /* Invalid DC. */
+    hr = ID2D1DCRenderTarget_BindDC(rt, (HDC)0xdeadbeef, &rect);
+todo_wine
+    ok(hr == E_INVALIDARG, "BindDC() returned %#x.\n", hr);
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+
+    set_color(&color, 1.0f, 0.0f, 0.0f, 1.0f);
+    ID2D1DCRenderTarget_Clear(rt, &color);
+
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
+
+    clr = GetPixel(hdc2, 0, 0);
+todo_wine
+    ok(clr == RGB(255, 0, 0), "Unexpected color 0x%08x.\n", clr);
+
+    hr = ID2D1DCRenderTarget_BindDC(rt, NULL, &rect);
+    ok(hr == E_INVALIDARG, "BindDC() returned %#x.\n", hr);
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+
+    set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1DCRenderTarget_Clear(rt, &color);
+
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
+
+    clr = GetPixel(hdc2, 0, 0);
+todo_wine
+    ok(clr == RGB(0, 0, 255), "Unexpected color 0x%08x.\n", clr);
 
     DeleteDC(hdc);
     DeleteDC(hdc2);
