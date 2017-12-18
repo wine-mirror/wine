@@ -3906,7 +3906,11 @@ static void test_wndproc(void)
         hr = reset_device(device, &device_desc);
         ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
-        ShowWindow(device_window, SW_HIDE);
+        /* Remove the WS_VISIBLE flag to test hidden windows. This is enough to trigger d3d's hidden
+         * window codepath, but does not actually hide the window without a SetWindowPos(SWP_FRAMECHANGED)
+         * call. This way we avoid focus changes and random failures on focus follows mouse WMs. */
+        device_style = GetWindowLongA(device_window, GWL_STYLE);
+        SetWindowLongA(device_window, GWL_STYLE, device_style & ~WS_VISIBLE);
         flush_events();
 
         expect_messages = focus_loss_messages_hidden;
