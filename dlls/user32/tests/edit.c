@@ -38,15 +38,6 @@ struct edit_notify {
 
 static struct edit_notify notifications;
 
-static BOOL (WINAPI *pGetMenuBarInfo)(HWND,LONG,LONG,PMENUBARINFO);
-
-static void init_function_pointers(void)
-{
-    HMODULE hdll = GetModuleHandleA("user32");
-
-    pGetMenuBarInfo = (void*)GetProcAddress(hdll, "GetMenuBarInfo");
-}
-
 static INT_PTR CALLBACK multi_edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static int num_ok_commands = 0;
@@ -2310,9 +2301,8 @@ static LRESULT CALLBACK edit_proc_proxy(HWND hWnd, UINT msg, WPARAM wParam, LPAR
             memset(&mbi, 0, sizeof(mbi));
             mbi.cbSize = sizeof(mbi);
             SetLastError(0xdeadbeef);
-            ret = pGetMenuBarInfo(ctx_menu, OBJID_CLIENT, 0, &mbi);
-            ok(ret || broken(!ret && GetLastError()==ERROR_INVALID_WINDOW_HANDLE) /* NT */,
-                    "GetMenuBarInfo failed\n");
+            ret = GetMenuBarInfo(ctx_menu, OBJID_CLIENT, 0, &mbi);
+            ok(ret, "GetMenuBarInfo failed\n");
             if (ret)
             {
                 ok(mbi.hMenu != NULL, "mbi.hMenu = NULL\n");
@@ -2324,9 +2314,8 @@ static LRESULT CALLBACK edit_proc_proxy(HWND hWnd, UINT msg, WPARAM wParam, LPAR
             memset(&mbi, 0, sizeof(mbi));
             mbi.cbSize = sizeof(mbi);
             SetLastError(0xdeadbeef);
-            ret = pGetMenuBarInfo(ctx_menu, OBJID_CLIENT, 1, &mbi);
-            ok(ret || broken(!ret && GetLastError()==ERROR_INVALID_WINDOW_HANDLE) /* NT */,
-                    "GetMenuBarInfo failed\n");
+            ret = GetMenuBarInfo(ctx_menu, OBJID_CLIENT, 1, &mbi);
+            ok(ret, "GetMenuBarInfo failed\n");
             if (ret)
             {
                 ok(mbi.hMenu != NULL, "mbi.hMenu = NULL\n");
@@ -2356,7 +2345,7 @@ static LRESULT CALLBACK child_edit_menu_proc(HWND hwnd, UINT msg, WPARAM wParam,
         if (wParam == MSGF_MENU) {
             HWND hwndMenu = (HWND)lParam;
             MENUBARINFO mbi = { sizeof(MENUBARINFO) };
-            if (pGetMenuBarInfo(hwndMenu, OBJID_CLIENT, 0, &mbi)) {
+            if (GetMenuBarInfo(hwndMenu, OBJID_CLIENT, 0, &mbi)) {
                 MENUITEMINFOA mii = { sizeof(MENUITEMINFOA), MIIM_STATE };
                 if (GetMenuItemInfoA(mbi.hMenu, EM_SETSEL, FALSE, &mii)) {
                     if (mii.fState & MFS_HILITE) {
@@ -2402,11 +2391,8 @@ static void test_contextmenu(void)
     ok(got_en_setfocus, "edit box didn't get focused\n");
     ok(got_wm_capturechanged, "main window capture did not change\n");
 
-    if (pGetMenuBarInfo)
-    {
-        p_edit_proc = (void*)SetWindowLongPtrA(hwndEdit, GWLP_WNDPROC, (ULONG_PTR)edit_proc_proxy);
-        SendMessageA(hwndEdit, WM_CONTEXTMENU, (WPARAM)hwndEdit, MAKEWORD(10, 10));
-    }
+    p_edit_proc = (void*)SetWindowLongPtrA(hwndEdit, GWLP_WNDPROC, (ULONG_PTR)edit_proc_proxy);
+    SendMessageA(hwndEdit, WM_CONTEXTMENU, (WPARAM)hwndEdit, MAKEWORD(10, 10));
 
     DestroyWindow (hwndEdit);
 
@@ -2953,8 +2939,6 @@ static void test_paste(void)
 START_TEST(edit)
 {
     BOOL b;
-
-    init_function_pointers();
 
     hinst = GetModuleHandleA(NULL);
     b = RegisterWindowClasses();
