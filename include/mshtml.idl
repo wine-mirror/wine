@@ -20103,6 +20103,107 @@ interface IDOMEvent : IDispatch
 }
 
 /*****************************************************************************
+ *    IDOMMouseEvent interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305106ce-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDOMMouseEvent : IDispatch
+{
+    [propget, id(DISPID_IDOMMOUSEEVENT_SCREENX)]
+    HRESULT screenX([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_SCREENY)]
+    HRESULT screenY([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_CLIENTX)]
+    HRESULT clientX([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_CLIENTY)]
+    HRESULT clientY([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_CTRLKEY)]
+    HRESULT ctrlKey([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_SHIFTKEY)]
+    HRESULT shiftKey([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_ALTKEY)]
+    HRESULT altKey([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_METAKEY)]
+    HRESULT metaKey([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_BUTTON)]
+    HRESULT button([out, retval] USHORT *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_RELATEDTARGET)]
+    HRESULT relatedTarget([out, retval] IEventTarget **p);
+
+    [id(DISPID_IDOMMOUSEEVENT_INITMOUSEEVENT)]
+    HRESULT initMouseEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] IHTMLWindow2 *viewArg,
+            [in] long detailArg,
+            [in] long screenXArg,
+            [in] long screenYArg,
+            [in] long clientXArg,
+            [in] long clientYArg,
+            [in] VARIANT_BOOL ctrlKeyArg,
+            [in] VARIANT_BOOL altKeyArg,
+            [in] VARIANT_BOOL shiftKeyArg,
+            [in] VARIANT_BOOL metaKeyArg,
+            [in] USHORT buttonArg,
+            [in] IEventTarget *relatedTargetArg);
+
+    [id(DISPID_IDOMMOUSEEVENT_GETMODIFIERSTATE)]
+    HRESULT getModifierState(
+            [in] BSTR keyArg,
+            [out, retval] VARIANT_BOOL *activated);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_BUTTONS)]
+    HRESULT buttons([out, retval] USHORT *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_FROMELEMENT)]
+    HRESULT fromElement([out, retval] IHTMLElement **p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_TOELEMENT)]
+    HRESULT toElement([out, retval] IHTMLElement **p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_X)]
+    HRESULT x([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_Y)]
+    HRESULT y([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_OFFSETX)]
+    HRESULT offsetX([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_OFFSETY)]
+    HRESULT offsetY([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_PAGEX)]
+    HRESULT pageX([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_PAGEY)]
+    HRESULT pageY([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_LAYERX)]
+    HRESULT layerX([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_LAYERY)]
+    HRESULT layerY([out, retval] long *p);
+
+    [propget, id(DISPID_IDOMMOUSEEVENT_WHICH)]
+    HRESULT which([out, retval] USHORT *p);
+}
+
+/*****************************************************************************
  *    IDOMKeyboardEvent interface
  */
 [
