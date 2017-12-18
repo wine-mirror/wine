@@ -1472,7 +1472,8 @@ static void test_istream_ipfx(void)
     basic_string_char str;
     IOSB_iostate state;
     wchar_t wide[64];
-    int i, ret, next;
+    int i, next;
+    MSVCP_bool ret;
 
     /* makes tables narrower */
     const IOSB_iostate IOSTATE_faileof = IOSTATE_failbit|IOSTATE_eofbit;
@@ -1481,7 +1482,7 @@ static void test_istream_ipfx(void)
         const char  *str;
         int          unset_skipws;
         int          noskip;
-        int          ret;
+        MSVCP_bool   ret;
         IOSB_iostate state;
         int          next;
     } tests[] = {
@@ -1507,7 +1508,7 @@ static void test_istream_ipfx(void)
         if(tests[i].unset_skipws)
             call_func2(p_ios_base_unsetf, &ss.basic_ios.base, TRUE);
 
-        ret   = (int)call_func2(p_basic_istream_char_ipfx, &ss.base.base1, tests[i].noskip);
+        ret   = (MSVCP_bool)(INT_PTR)call_func2(p_basic_istream_char_ipfx, &ss.base.base1, tests[i].noskip);
         state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
         next  = (int)call_func1(p_basic_istream_char_get, &ss.base.base1);
 
@@ -1527,7 +1528,7 @@ static void test_istream_ipfx(void)
         if(tests[i].unset_skipws)
             call_func2(p_ios_base_unsetf, &wss.basic_ios.base, TRUE);
 
-        ret    = (int)call_func2(p_basic_istream_wchar_ipfx, &wss.base.base1, tests[i].noskip);
+        ret    = (MSVCP_bool)(INT_PTR)call_func2(p_basic_istream_wchar_ipfx, &wss.base.base1, tests[i].noskip);
         state  = (IOSB_iostate)call_func1(p_ios_base_rdstate, &wss.basic_ios.base);
         nextus = (unsigned short)(int)call_func1(p_basic_istream_wchar_get, &wss.base.base1);
 
