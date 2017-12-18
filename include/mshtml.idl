@@ -20103,6 +20103,99 @@ interface IDOMEvent : IDispatch
 }
 
 /*****************************************************************************
+ *    DispDOMEvent dispinterface
+ */
+[
+    hidden,
+    uuid(3050f5a2-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMEvent
+{
+properties:
+methods:
+#define WINE_IDOMEVENT_DISPINTERFACE_DECL                  \
+    [propget, id(DISPID_IDOMEVENT_BUBBLES)]                \
+    VARIANT_BOOL bubbles();                                \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_CANCELABLE)]             \
+    VARIANT_BOOL cancelable();                             \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_CURRENTTARGET)]          \
+    IEventTarget *currentTarget();                         \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_DEFAULTPREVENTED)]       \
+    VARIANT_BOOL defaultPrevented();                       \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_EVENTPHASE)]             \
+    USHORT eventPhase();                                   \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_TARGET)]                 \
+    IEventTarget *target();                                \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_TIMESTAMP)]              \
+    ULONGLONG timeStamp();                                 \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_TYPE)]                   \
+    BSTR type();                                           \
+                                                           \
+    [id(DISPID_IDOMEVENT_INITEVENT)]                       \
+    void initEvent(                                        \
+            [in] BSTR eventType,                           \
+            [in] VARIANT_BOOL canBubble,                   \
+            [in] VARIANT_BOOL cancelable);                 \
+                                                           \
+    [id(DISPID_IDOMEVENT_PREVENTDEFAULT)]                  \
+    void preventDefault();                                 \
+                                                           \
+    [id(DISPID_IDOMEVENT_STOPPROPAGATION)]                 \
+    void stopPropagation();                                \
+                                                           \
+    [id(DISPID_IDOMEVENT_STOPIMMEDIATEPROPAGATION)]        \
+    void stopImmediatePropagation();                       \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_ISTRUSTED)]              \
+    VARIANT_BOOL isTrusted();                              \
+                                                           \
+    [propput, id(DISPID_IDOMEVENT_CANCELBUBBLE)]           \
+    void cancelBubble(VARIANT_BOOL v);                     \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_CANCELBUBBLE)]           \
+    VARIANT_BOOL cancelBubble();                           \
+                                                           \
+    [propget, id(DISPID_IDOMEVENT_SRCELEMENT)]             \
+    IHTMLElement *srcElement()
+
+    WINE_IDOMEVENT_DISPINTERFACE_DECL;
+}
+
+[
+    hidden,
+    uuid(30590072-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMUIEvent
+{
+properties:
+methods:
+#define WINE_IDOMUIEVENT_DISPINTERFACE_DECL                \
+    [propget, id(DISPID_IDOMUIEVENT_VIEW)]                 \
+    IHTMLWindow2 *view();                                  \
+                                                           \
+    [propget, id(DISPID_IDOMUIEVENT_DETAIL)]               \
+    long detail();                                         \
+                                                           \
+    [id(DISPID_IDOMUIEVENT_INITUIEVENT)]                   \
+    void initUIEvent(                                      \
+            [in] BSTR eventType,                           \
+            [in] VARIANT_BOOL canBubble,                   \
+            [in] VARIANT_BOOL cancelable,                  \
+            [in] IHTMLWindow2 *view,                       \
+            [in] long detail)
+
+    WINE_IDOMEVENT_DISPINTERFACE_DECL;
+    WINE_IDOMUIEVENT_DISPINTERFACE_DECL;
+}
+
+/*****************************************************************************
  *    IDOMMouseEvent interface
  */
 [
@@ -20204,6 +20297,110 @@ interface IDOMMouseEvent : IDispatch
 }
 
 /*****************************************************************************
+ *    DispDOMMouseEvent dispinterface
+ */
+[
+    hidden,
+    uuid(30590073-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMMouseEvent
+{
+properties:
+methods:
+#define WINE_IDOMMOUSEEVENT_DISPINTERFACE_DECL             \
+    [propget, id(DISPID_IDOMMOUSEEVENT_SCREENX)]           \
+    long screenX();                                        \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_SCREENY)]           \
+    long screenY();                                        \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_CLIENTX)]           \
+    long clientX();                                        \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_CLIENTY)]           \
+    long clientY();                                        \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_CTRLKEY)]           \
+    VARIANT_BOOL ctrlKey();                                \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_SHIFTKEY)]          \
+    VARIANT_BOOL shiftKey();                               \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_ALTKEY)]            \
+    VARIANT_BOOL altKey();                                 \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_METAKEY)]           \
+    VARIANT_BOOL metaKey();                                \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_BUTTON)]            \
+    USHORT button();                                       \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_RELATEDTARGET)]     \
+    IEventTarget *relatedTarget();                         \
+                                                           \
+    [id(DISPID_IDOMMOUSEEVENT_INITMOUSEEVENT)]             \
+    void initMouseEvent(                                   \
+            [in] BSTR eventType,                           \
+            [in] VARIANT_BOOL canBubble,                   \
+            [in] VARIANT_BOOL cancelable,                  \
+            [in] IHTMLWindow2 *viewArg,                    \
+            [in] long detailArg,                           \
+            [in] long screenXArg,                          \
+            [in] long screenYArg,                          \
+            [in] long clientXArg,                          \
+            [in] long clientYArg,                          \
+            [in] VARIANT_BOOL ctrlKeyArg,                  \
+            [in] VARIANT_BOOL altKeyArg,                   \
+            [in] VARIANT_BOOL shiftKeyArg,                 \
+            [in] VARIANT_BOOL metaKeyArg,                  \
+            [in] USHORT buttonArg,                         \
+            [in] IEventTarget *relatedTargetArg);          \
+                                                           \
+    [id(DISPID_IDOMMOUSEEVENT_GETMODIFIERSTATE)]           \
+    VARIANT_BOOL getModifierState([in] BSTR keyArg);       \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_BUTTONS)]           \
+    USHORT buttons();                                      \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_FROMELEMENT)]       \
+    IHTMLElement *fromElement();                           \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_TOELEMENT)]         \
+    IHTMLElement *toElement();                             \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_X)]                 \
+    long x();                                              \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_Y)]                 \
+    long y();                                              \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_OFFSETX)]           \
+    long offsetX();                                        \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_OFFSETY)]           \
+    long offsetY();                                        \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_PAGEX)]             \
+    long pageX();                                          \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_PAGEY)]             \
+    long pageY();                                          \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_LAYERX)]            \
+    long layerX();                                         \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_LAYERY)]            \
+    long layerY();                                         \
+                                                           \
+    [propget, id(DISPID_IDOMMOUSEEVENT_WHICH)]             \
+    USHORT which()
+
+    WINE_IDOMEVENT_DISPINTERFACE_DECL;
+    WINE_IDOMUIEVENT_DISPINTERFACE_DECL;
+    WINE_IDOMMOUSEEVENT_DISPINTERFACE_DECL;
+}
+
+/*****************************************************************************
  *    IDOMKeyboardEvent interface
  */
 [
@@ -20266,6 +20463,72 @@ interface IDOMKeyboardEvent : IDispatch
 
     [propget, id(DISPID_IDOMKEYBOARDEVENT_LOCALE)]
     HRESULT locale([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    DispDOMKeyboardEvent dispinterface
+ */
+[
+    hidden,
+    uuid(30590077-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMKeyboardEvent
+{
+properties:
+methods:
+    WINE_IDOMEVENT_DISPINTERFACE_DECL;
+    WINE_IDOMUIEVENT_DISPINTERFACE_DECL;
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_KEY)]
+    BSTR key();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_LOCATION)]
+    ULONG location();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_CTRLKEY)]
+    VARIANT_BOOL ctrlKey();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_SHIFTKEY)]
+    VARIANT_BOOL shiftKey();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_ALTKEY)]
+    VARIANT_BOOL altKey();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_METAKEY)]
+    VARIANT_BOOL metaKey();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_REPEAT)]
+    VARIANT_BOOL repeat();
+
+    [id(DISPID_IDOMKEYBOARDEVENT_GETMODIFIERSTATE)]
+    VARIANT_BOOL getModifierState([in] BSTR keyArg);
+
+    [id(DISPID_IDOMKEYBOARDEVENT_INITKEYBOARDEVENT)]
+    void initKeyboardEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] IHTMLWindow2 *viewArg,
+            [in] BSTR keyArg,
+            [in] ULONG locationArg,
+            [in] BSTR modifiersListArg,
+            [in] VARIANT_BOOL repeat,
+            [in] BSTR locale);
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_KEYCODE)]
+    long keyCode();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_CHARCODE)]
+    long charCode();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_WHICH)]
+    long which();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_IE9_CHAR)]
+    VARIANT ie9_char();
+
+    [propget, id(DISPID_IDOMKEYBOARDEVENT_LOCALE)]
+    BSTR locale();
 }
 
 /*****************************************************************************
