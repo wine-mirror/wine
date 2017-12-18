@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-12-18 20:53-0700\n"
+"PO-Revision-Date: 2017-12-17 18:14-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.8.11\n"
+"X-Generator: Poedit 2.0.5\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -842,7 +842,7 @@ msgstr ""
 
 #: comdlg32.rc:36
 msgid "Invalid character(s) in path"
-msgstr "Hi ha caràcters invàlids en el camí"
+msgstr "Hi ha caràcters no vàlids en el camí"
 
 #: comdlg32.rc:37
 msgid ""
@@ -1854,7 +1854,7 @@ msgstr "Màscara="
 
 #: crypt32.rc:192
 msgid "Registered ID="
-msgstr "ID registrada="
+msgstr "ID registrat="
 
 #: crypt32.rc:193
 msgid "Unknown Key Usage"
@@ -2439,7 +2439,7 @@ msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
-"Aquest certificat té una signatura invàlida. Pot ser que el certificat "
+"Aquest certificat té una signatura no vàlida. Pot ser que el certificat "
 "s'hagués modificat o corromput."
 
 #: cryptui.rc:33
@@ -2485,7 +2485,7 @@ msgstr " a "
 
 #: cryptui.rc:42
 msgid "This certificate has an invalid signature."
-msgstr "Aquest certificat té una signatura invàlida."
+msgstr "Aquest certificat té una signatura no vàlida."
 
 #: cryptui.rc:43
 msgid "This certificate has expired or is not yet valid."
@@ -3559,7 +3559,7 @@ msgstr "Error en convertir l'objecte a tipus primitiu"
 
 #: jscript.rc:29
 msgid "Invalid procedure call or argument"
-msgstr "Trucada a procediment o argument invàlid"
+msgstr "Trucada a procediment o argument no vàlid"
 
 #: jscript.rc:30
 msgid "Subscript out of range"
@@ -3611,7 +3611,7 @@ msgstr "S'esperava '='"
 
 #: jscript.rc:42
 msgid "Invalid character"
-msgstr "Caràcter invàlid"
+msgstr "Caràcter no vàlid"
 
 #: jscript.rc:43
 msgid "Unterminated string constant"
@@ -3695,7 +3695,7 @@ msgstr "Error de sintaxi en l'expressió regular"
 
 #: jscript.rc:64
 msgid "URI to be encoded contains invalid characters"
-msgstr "L'URI a codificar conté caràcters invàlids"
+msgstr "L'URI a codificar conté caràcters no vàlids"
 
 #: jscript.rc:63
 msgid "URI to be decoded is incorrect"
@@ -3711,7 +3711,7 @@ msgstr "La precisió és fora d'interval"
 
 #: jscript.rc:67
 msgid "Array length must be a finite positive integer"
-msgstr "La longitud del vector ha de ser un enter positiu finit"
+msgstr "La longitud del vector ha de ser un nombre enter positiu finit"
 
 #: jscript.rc:68
 msgid "Array object expected"
@@ -3719,7 +3719,7 @@ msgstr "S'esperava un objecte Array"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "DLL de nucli del Wine"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
 msgid "Wine"
@@ -3731,7 +3731,7 @@ msgstr "Èxit.\n"
 
 #: winerror.mc:31
 msgid "Invalid function.\n"
-msgstr "La funció és invàlida.\n"
+msgstr "La funció no és vàlida.\n"
 
 #: winerror.mc:36
 msgid "File not found.\n"
@@ -3751,7 +3751,7 @@ msgstr "S'ha denegat l'accés.\n"
 
 #: winerror.mc:56
 msgid "Invalid handle.\n"
-msgstr "L'identificador és invàlid.\n"
+msgstr "L'identificador no és vàlid.\n"
 
 #: winerror.mc:61
 msgid "Memory trashed.\n"
@@ -3763,7 +3763,7 @@ msgstr "Manca memòria.\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
-msgstr "El bloc és invàlid.\n"
+msgstr "El bloc no és vàlid.\n"
 
 #: winerror.mc:76
 msgid "Bad environment.\n"
@@ -3775,11 +3775,11 @@ msgstr "El format és dolent.\n"
 
 #: winerror.mc:86
 msgid "Invalid access.\n"
-msgstr "L'accés és invàlid.\n"
+msgstr "L'accés no és vàlid.\n"
 
 #: winerror.mc:91
 msgid "Invalid data.\n"
-msgstr "Les dades són invàlides.\n"
+msgstr "Les dades no són vàlides.\n"
 
 #: winerror.mc:96
 msgid "Out of memory.\n"
@@ -3787,7 +3787,7 @@ msgstr "No queda memòria.\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
-msgstr "La unitat és invàlida.\n"
+msgstr "La unitat no és vàlida.\n"
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
@@ -3815,7 +3815,7 @@ msgstr "No està llest.\n"
 
 #: winerror.mc:136
 msgid "Bad command.\n"
-msgstr "L'ordre és dolent.\n"
+msgstr "L'ordre és dolenta.\n"
 
 #: winerror.mc:141
 msgid "CRC error.\n"
@@ -3991,11 +3991,11 @@ msgstr "Ja s'ha assignat.\n"
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password.\n"
-msgstr "La contrasenya és invàlida.\n"
+msgstr "La contrasenya no és vàlida.\n"
 
 #: winerror.mc:361
 msgid "Invalid parameter.\n"
-msgstr "El paràmetre és invàlid.\n"
+msgstr "El paràmetre no és vàlid.\n"
 
 #: winerror.mc:366
 msgid "Net write fault.\n"
@@ -4059,15 +4059,15 @@ msgstr "No queden identificadors de cerca.\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle.\n"
-msgstr "L'identificador destinatari és invàlid.\n"
+msgstr "L'identificador de destinació no és vàlid.\n"
 
 #: winerror.mc:451
 msgid "Invalid IOCTL.\n"
-msgstr "L'IOCTL és invàlid.\n"
+msgstr "L'IOCTL no és vàlid.\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch.\n"
-msgstr "L'indicador de verificació és invàlid.\n"
+msgstr "L'indicador de verificació no és vàlid.\n"
 
 #: winerror.mc:461
 msgid "Bad driver level.\n"
@@ -4087,11 +4087,11 @@ msgstr "La memòria intermèdia és insuficient.\n"
 
 #: winerror.mc:481
 msgid "Invalid name.\n"
-msgstr "El nom és invàlid.\n"
+msgstr "El nom no és vàlid.\n"
 
 #: winerror.mc:486
 msgid "Invalid level.\n"
-msgstr "El nivell és invàlid.\n"
+msgstr "El nivell no és vàlid.\n"
 
 #: winerror.mc:491
 msgid "No volume label.\n"
@@ -4115,7 +4115,7 @@ msgstr "El procés fill no s'ha acabat.\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
-msgstr "L'ús d'identificador d'accés directe és invàlid.\n"
+msgstr "L'ús d'identificador d'accés directe no és vàlid.\n"
 
 #: winerror.mc:521
 msgid "Negative seek.\n"
@@ -4123,7 +4123,7 @@ msgstr "La cerca és negativa.\n"
 
 #: winerror.mc:531
 msgid "Drive is a JOIN target.\n"
-msgstr "La unitat és un destinatari JOIN.\n"
+msgstr "La unitat és una destinació JOIN.\n"
 
 #: winerror.mc:536
 msgid "Drive is already JOINed.\n"
@@ -4187,7 +4187,7 @@ msgstr "El camí està ocupat.\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
-msgstr "Ja és un destinatari SUBST.\n"
+msgstr "Ja és una destinació SUBST.\n"
 
 #: winerror.mc:616
 msgid "System trace not specified or disallowed.\n"
@@ -4203,7 +4203,7 @@ msgstr "Hi ha massa esperançats per a DosMuxSemWait.\n"
 
 #: winerror.mc:631
 msgid "DosSemMuxWait list invalid.\n"
-msgstr "La llista de DosSemMuxWait és invàlida.\n"
+msgstr "La llista de DosSemMuxWait no és vàlida.\n"
 
 #: winerror.mc:636
 msgid "Volume label too long.\n"
@@ -4231,11 +4231,11 @@ msgstr "L'adreça d'ID de fil és dolent.\n"
 
 #: winerror.mc:666
 msgid "Bad arguments to DosExecPgm.\n"
-msgstr "Els paràmetres a DosExecPgm són dolents.\n"
+msgstr "Els arguments a DosExecPgm són dolents.\n"
 
 #: winerror.mc:671
 msgid "Path is invalid.\n"
-msgstr "El camí és invàlid.\n"
+msgstr "El camí no és vàlid.\n"
 
 #: winerror.mc:676
 msgid "Signal pending.\n"
@@ -4263,11 +4263,11 @@ msgstr "No s'accepten els bloqueigs atòmics.\n"
 
 #: winerror.mc:706
 msgid "Invalid segment number.\n"
-msgstr "El nombre de segment és invàlid.\n"
+msgstr "El número de segment no és vàlid.\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1.\n"
-msgstr "L'ordinal per a %1 és invàlid.\n"
+msgstr "L'ordinal per a %1 no és vàlid.\n"
 
 #: winerror.mc:716
 msgid "File already exists.\n"
@@ -4275,7 +4275,7 @@ msgstr "El fitxer ja existeix.\n"
 
 #: winerror.mc:721
 msgid "Invalid flag number.\n"
-msgstr "El nombre de bandera és invàlida.\n"
+msgstr "El número de bandera no és vàlid.\n"
 
 #: winerror.mc:726
 msgid "Semaphore name not found.\n"
@@ -4283,23 +4283,23 @@ msgstr "No s'ha trobat el nom de semàfor.\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
-msgstr "El segment de codi d'inici per a %1 és invàlid.\n"
+msgstr "El segment de codi d'inici per a %1 no és vàlid.\n"
 
 #: winerror.mc:736
 msgid "Invalid starting stack segment for %1.\n"
-msgstr "El segment de codi d'inici de pila per a %1 és invàlid.\n"
+msgstr "El segment de codi d'inici de pila per a %1 no és vàlid.\n"
 
 #: winerror.mc:741
 msgid "Invalid module type for %1.\n"
-msgstr "El tipus de mòdul per a %1 és invàlid.\n"
+msgstr "El tipus de mòdul per a %1 no és vàlid.\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1.\n"
-msgstr "La signatura EXE en %1 és invàlida.\n"
+msgstr "La signatura EXE en %1 no és vàlida.\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid.\n"
-msgstr "L'EXE %1 està marcat com a invàlid.\n"
+msgstr "L'EXE %1 està marcat com a no vàlid.\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1.\n"
@@ -4311,11 +4311,11 @@ msgstr "Les dades iterades superen 64k en %1.\n"
 
 #: winerror.mc:766
 msgid "Invalid MinAllocSize in %1.\n"
-msgstr "El MinAllocSize en %1 és invàlid.\n"
+msgstr "La MinAllocSize en %1 no és vàlida.\n"
 
 #: winerror.mc:771
 msgid "Dynlink from invalid ring.\n"
-msgstr "L'enllaç dinàmic d'anell és invàlid.\n"
+msgstr "L'enllaç dinàmic d'anell no és vàlid.\n"
 
 #: winerror.mc:776
 msgid "IOPL not enabled.\n"
@@ -4323,7 +4323,7 @@ msgstr "L'IOPL no està habilitat.\n"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1.\n"
-msgstr "L'SEGDPL en %1 és invàlid.\n"
+msgstr "L'SEGDPL en %1 no és vàlid.\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k.\n"
@@ -4363,7 +4363,7 @@ msgstr "Hi ha un error en l'ús de comodins de nom de fitxer.\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number.\n"
-msgstr "El nombre de senyal és invàlid.\n"
+msgstr "El número de senyal no és vàlid.\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler.\n"
@@ -4411,7 +4411,7 @@ msgstr "S'ha cancel·lat la sessió.\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
-msgstr "El nom d'atribut estès és invàlid.\n"
+msgstr "El nom d'atribut estès no és vàlid.\n"
 
 #: winerror.mc:896
 msgid "Extended attribute list inconsistent.\n"
@@ -4427,7 +4427,7 @@ msgstr "No es pot utilitzar la Copy API.\n"
 
 #: winerror.mc:911
 msgid "Directory name invalid.\n"
-msgstr "El nom de directori és invàlid.\n"
+msgstr "El nom de directori no és vàlid.\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
@@ -4443,7 +4443,7 @@ msgstr "La taula d'atributs estesos està ple.\n"
 
 #: winerror.mc:931
 msgid "Invalid extended attribute handle.\n"
-msgstr "L'identificador d'atribut estès és invàlid.\n"
+msgstr "L'identificador d'atribut estès no és vàlid.\n"
 
 #: winerror.mc:936
 msgid "Extended attributes not supported.\n"
@@ -4467,7 +4467,7 @@ msgstr "No s'ha concedit el bloqueig d'operació.\n"
 
 #: winerror.mc:961
 msgid "Invalid oplock message received.\n"
-msgstr "S'ha rebut un missatge invàlid de bloqueig d'operació.\n"
+msgstr "S'ha rebut un missatge no vàlid de bloqueig d'operació.\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2.\n"
@@ -4475,7 +4475,7 @@ msgstr "No s'ha trobat el missatge 0x%1 en el fitxer %2.\n"
 
 #: winerror.mc:971
 msgid "Invalid address.\n"
-msgstr "L'adreça és invàlida.\n"
+msgstr "L'adreça no és vàlida.\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow.\n"
@@ -4519,7 +4519,7 @@ msgstr "Hi ha hagut un desbordament de pila.\n"
 
 #: winerror.mc:1026
 msgid "Invalid message.\n"
-msgstr "El missatge és invàlid.\n"
+msgstr "El missatge no és vàlid.\n"
 
 #: winerror.mc:1031
 msgid "Cannot complete.\n"
@@ -4527,7 +4527,7 @@ msgstr "No es pot acabar.\n"
 
 #: winerror.mc:1036
 msgid "Invalid flags.\n"
-msgstr "Les banderes són invàlides.\n"
+msgstr "Les banderes no són vàlides.\n"
 
 #: winerror.mc:1041
 msgid "Unrecognized volume.\n"
@@ -4535,7 +4535,7 @@ msgstr "No s'ha reconegut el volum.\n"
 
 #: winerror.mc:1046
 msgid "File invalid.\n"
-msgstr "El fitxer és invàlid.\n"
+msgstr "El fitxer no és vàlid.\n"
 
 #: winerror.mc:1051
 msgid "Cannot run full-screen.\n"
@@ -4551,7 +4551,7 @@ msgstr "El registre és corrupte.\n"
 
 #: winerror.mc:1066
 msgid "Invalid key.\n"
-msgstr "La clau és invàlida.\n"
+msgstr "La clau no és vàlida.\n"
 
 #: winerror.mc:1071
 msgid "Can't open registry key.\n"
@@ -4607,7 +4607,7 @@ msgstr "Els serveis dependents s'estan executant.\n"
 
 #: winerror.mc:1136
 msgid "Invalid service control.\n"
-msgstr "El control de servei és invàlid.\n"
+msgstr "El control de servei no és vàlid.\n"
 
 #: winerror.mc:1141
 msgid "Service request timeout.\n"
@@ -4627,7 +4627,7 @@ msgstr "El servei ja està executant.\n"
 
 #: winerror.mc:1161
 msgid "Invalid service account.\n"
-msgstr "El compte de servei és invàlid.\n"
+msgstr "El compte de servei no és vàlid.\n"
 
 #: winerror.mc:1166
 msgid "Service is disabled.\n"
@@ -4683,7 +4683,7 @@ msgstr "L'inici de servei s'ha congelat.\n"
 
 #: winerror.mc:1231
 msgid "Invalid service lock.\n"
-msgstr "El bloqueig de servei és invàlid.\n"
+msgstr "El bloqueig de servei no és vàlid.\n"
 
 #: winerror.mc:1236
 msgid "Service marked for delete.\n"
@@ -4759,7 +4759,7 @@ msgstr "La partició ha fallat.\n"
 
 #: winerror.mc:1326
 msgid "Invalid block length.\n"
-msgstr "La longitud de bloc és invàlida.\n"
+msgstr "La longitud de bloc no és vàlida.\n"
 
 #: winerror.mc:1331
 msgid "Device not partitioned.\n"
@@ -4895,7 +4895,7 @@ msgstr "Aplicació de mode real.\n"
 
 #: winerror.mc:1496
 msgid "Invalid DLL.\n"
-msgstr "La DLL és invàlida.\n"
+msgstr "La DLL no és vàlida.\n"
 
 #: winerror.mc:1501
 msgid "No associated application.\n"
@@ -4923,11 +4923,11 @@ msgstr "L'element font està buit.\n"
 
 #: winerror.mc:1531
 msgid "The destination element is full.\n"
-msgstr "L'element destinatari està ple.\n"
+msgstr "L'element de destinació està ple.\n"
 
 #: winerror.mc:1536
 msgid "The element address is invalid.\n"
-msgstr "L'adreça d'element és invàlida.\n"
+msgstr "L'adreça d'element no és vàlida.\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present.\n"
@@ -5003,7 +5003,7 @@ msgstr "L'entrada de journal s'ha suprimit.\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
-msgstr "El nom de dispositiu és invàlid.\n"
+msgstr "El nom de dispositiu no és vàlid.\n"
 
 #: winerror.mc:1636
 msgid "Connection unavailable.\n"
@@ -5019,7 +5019,7 @@ msgstr "No hi ha cap xarxa o el camí és dolent.\n"
 
 #: winerror.mc:1651
 msgid "Invalid network provider name.\n"
-msgstr "El nom de proveïdor de xarxa és invàlid.\n"
+msgstr "El nom de proveïdor de xarxa no és vàlid.\n"
 
 #: winerror.mc:1656
 msgid "Cannot open network connection profile.\n"
@@ -5039,39 +5039,39 @@ msgstr "Hi ha hagut un error estès.\n"
 
 #: winerror.mc:1676
 msgid "Invalid group name.\n"
-msgstr "El nom de grup és invàlid.\n"
+msgstr "El nom de grup no és vàlid.\n"
 
 #: winerror.mc:1681
 msgid "Invalid computer name.\n"
-msgstr "El nom d'ordinador és invàlid.\n"
+msgstr "El nom d'ordinador no és vàlid.\n"
 
 #: winerror.mc:1686
 msgid "Invalid event name.\n"
-msgstr "El nom d'esdeveniment és invàlid.\n"
+msgstr "El nom d'esdeveniment no és vàlid.\n"
 
 #: winerror.mc:1691
 msgid "Invalid domain name.\n"
-msgstr "El nom de domini és invàlid.\n"
+msgstr "El nom de domini no és vàlid.\n"
 
 #: winerror.mc:1696
 msgid "Invalid service name.\n"
-msgstr "El nom de servei és invàlid.\n"
+msgstr "El nom de servei no és vàlid.\n"
 
 #: winerror.mc:1701
 msgid "Invalid network name.\n"
-msgstr "El nom de xarxa és invàlid.\n"
+msgstr "El nom de xarxa no és vàlid.\n"
 
 #: winerror.mc:1706
 msgid "Invalid share name.\n"
-msgstr "El nom de compartició és invàlid.\n"
+msgstr "El nom de compartició no és vàlid.\n"
 
 #: winerror.mc:1716
 msgid "Invalid message name.\n"
-msgstr "El nom de missatge és invàlid.\n"
+msgstr "El nom de missatge no és vàlid.\n"
 
 #: winerror.mc:1721
 msgid "Invalid message destination.\n"
-msgstr "La destinació de missatge és invàlida.\n"
+msgstr "La destinació de missatge no és vàlida.\n"
 
 #: winerror.mc:1726
 msgid "Session credential conflict.\n"
@@ -5115,7 +5115,7 @@ msgstr "L'adreça no està associada amb el punt final de transport.\n"
 
 #: winerror.mc:1776
 msgid "Connection invalid.\n"
-msgstr "La connexió és invàlida.\n"
+msgstr "La connexió no és vàlida.\n"
 
 #: winerror.mc:1781
 msgid "Connection is active.\n"
@@ -5211,7 +5211,7 @@ msgstr "Realitza l'operació encara que no hagi canviat res.\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid.\n"
-msgstr "El perfil d'usuari és invàlid.\n"
+msgstr "El perfil d'usuari no és vàlid.\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
@@ -5223,7 +5223,7 @@ msgstr "No tots els privilegis estan assignats.\n"
 
 #: winerror.mc:1911
 msgid "Some security IDs not mapped.\n"
-msgstr "Algunes ID de seguretat no estan assignades.\n"
+msgstr "Alguns ID de seguretat no estan assignats.\n"
 
 #: winerror.mc:1916
 msgid "No quotas for account.\n"
@@ -5247,11 +5247,11 @@ msgstr "Els nivells de revisió són incompatibles.\n"
 
 #: winerror.mc:1941
 msgid "Invalid owner.\n"
-msgstr "El propietari és invàlid.\n"
+msgstr "El propietari no és vàlid.\n"
 
 #: winerror.mc:1946
 msgid "Invalid primary group.\n"
-msgstr "El grup primari és invàlid.\n"
+msgstr "El grup principal no és vàlid.\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token.\n"
@@ -5279,7 +5279,7 @@ msgstr "No es té el privilegi.\n"
 
 #: winerror.mc:1981
 msgid "Invalid account name.\n"
-msgstr "El nom del compte és invàlid.\n"
+msgstr "El nom del compte no és vàlid.\n"
 
 #: winerror.mc:1986
 msgid "User already exists.\n"
@@ -5331,11 +5331,11 @@ msgstr "Hi ha una restricció de compte.\n"
 
 #: winerror.mc:2046
 msgid "Invalid logon hours.\n"
-msgstr "Les hores de sessió són invàlides.\n"
+msgstr "Les hores de sessió no són vàlides.\n"
 
 #: winerror.mc:2051
 msgid "Invalid workstation.\n"
-msgstr "L'estació de treball és invàlida.\n"
+msgstr "L'estació de treball no és vàlida.\n"
 
 #: winerror.mc:2056
 msgid "Password expired.\n"
@@ -5355,23 +5355,23 @@ msgstr "S'han sol·licitat massa LUID.\n"
 
 #: winerror.mc:2076
 msgid "LUIDs exhausted.\n"
-msgstr "S'han acabat les LUID.\n"
+msgstr "S'han acabat els LUID.\n"
 
 #: winerror.mc:2081
 msgid "Invalid sub authority.\n"
-msgstr "La subautoritat és invàlida.\n"
+msgstr "La subautoritat no és vàlida.\n"
 
 #: winerror.mc:2086
 msgid "Invalid ACL.\n"
-msgstr "L'ACL és invàlida.\n"
+msgstr "L'ACL no és vàlida.\n"
 
 #: winerror.mc:2091
 msgid "Invalid SID.\n"
-msgstr "L'SID és invàlid.\n"
+msgstr "L'SID no és vàlid.\n"
 
 #: winerror.mc:2096
 msgid "Invalid security descriptor.\n"
-msgstr "El descriptor de seguretat és invàlid.\n"
+msgstr "El descriptor de seguretat no és vàlid.\n"
 
 #: winerror.mc:2101
 msgid "Bad inherited ACL.\n"
@@ -5387,7 +5387,7 @@ msgstr "El servidor no està inhabilitat.\n"
 
 #: winerror.mc:2116
 msgid "Invalid ID authority.\n"
-msgstr "L'autoritat d'ID és invàlida.\n"
+msgstr "L'autoritat d'ID no és vàlida.\n"
 
 #: winerror.mc:2121
 msgid "Allotted space exceeded.\n"
@@ -5395,7 +5395,7 @@ msgstr "S'ha superat l'espai assignat.\n"
 
 #: winerror.mc:2126
 msgid "Invalid group attributes.\n"
-msgstr "Els atributs de grup són invàlids.\n"
+msgstr "Els atributs de grup no són vàlids.\n"
 
 #: winerror.mc:2131
 msgid "Bad impersonation level.\n"
@@ -5423,15 +5423,15 @@ msgstr "No es pot accedir a la informació de domini.\n"
 
 #: winerror.mc:2161
 msgid "Invalid server state.\n"
-msgstr "L'estat de servidor és invàlid.\n"
+msgstr "L'estat de servidor no és vàlid.\n"
 
 #: winerror.mc:2166
 msgid "Invalid domain state.\n"
-msgstr "L'estat de domini és invàlid.\n"
+msgstr "L'estat de domini no és vàlid.\n"
 
 #: winerror.mc:2171
 msgid "Invalid domain role.\n"
-msgstr "El paper de domini és invàlid.\n"
+msgstr "El rol de domini no és vàlid.\n"
 
 #: winerror.mc:2176
 msgid "No such domain.\n"
@@ -5483,7 +5483,7 @@ msgstr "Hi ha hagut una col·lisió d'ID de sessió d'inici.\n"
 
 #: winerror.mc:2236
 msgid "Invalid logon type.\n"
-msgstr "El tipus d'inici de sessió és invàlid.\n"
+msgstr "El tipus d'inici de sessió no és vàlid.\n"
 
 #: winerror.mc:2241
 msgid "Cannot impersonate.\n"
@@ -5491,7 +5491,7 @@ msgstr "No es pot suplantar.\n"
 
 #: winerror.mc:2246
 msgid "Invalid transaction state.\n"
-msgstr "L'estat de transacció és invàlid.\n"
+msgstr "L'estat de transacció no és vàlid.\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
@@ -5511,7 +5511,7 @@ msgstr "L'usuari és integrat.\n"
 
 #: winerror.mc:2271
 msgid "Group is primary for user.\n"
-msgstr "El grup és el primari per a l'usuari.\n"
+msgstr "El grup és el principal per a l'usuari.\n"
 
 #: winerror.mc:2276
 msgid "Token already in use.\n"
@@ -5563,7 +5563,7 @@ msgstr "No hi ha tal membre.\n"
 
 #: winerror.mc:2341
 msgid "Invalid member.\n"
-msgstr "El membre és invàlid.\n"
+msgstr "El membre no és vàlid.\n"
 
 #: winerror.mc:2346
 msgid "Too many SIDs.\n"
@@ -5595,7 +5595,7 @@ msgstr "S'ha superat la quota de llicència.\n"
 
 #: winerror.mc:2381
 msgid "Wrong target name.\n"
-msgstr "El nom del destinatari és incorrecte.\n"
+msgstr "El nom de la destinació és incorrecte.\n"
 
 #: winerror.mc:2386
 msgid "Mutual authentication failed.\n"
@@ -5607,27 +5607,27 @@ msgstr "Hi ha una asimetria de temps entre el client i el servidor.\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle.\n"
-msgstr "L'identificador de finestra és invàlid.\n"
+msgstr "L'identificador de finestra no és vàlid.\n"
 
 #: winerror.mc:2401
 msgid "Invalid menu handle.\n"
-msgstr "L'identificador de menú és invàlid.\n"
+msgstr "L'identificador de menú no és vàlid.\n"
 
 #: winerror.mc:2406
 msgid "Invalid cursor handle.\n"
-msgstr "L'identificador de cursor és invàlid.\n"
+msgstr "L'identificador de cursor no és vàlid.\n"
 
 #: winerror.mc:2411
 msgid "Invalid accelerator table handle.\n"
-msgstr "L'identificador de taula acceleradora és invàlid.\n"
+msgstr "L'identificador de taula acceleradora no és vàlid.\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle.\n"
-msgstr "L'identificador de ganxo és invàlid.\n"
+msgstr "L'identificador de ganxo no és vàlid.\n"
 
 #: winerror.mc:2421
 msgid "Invalid DWP handle.\n"
-msgstr "L'identificador DWP és invàlid.\n"
+msgstr "L'identificador DWP no és vàlid.\n"
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window.\n"
@@ -5659,11 +5659,11 @@ msgstr "La classe té finestres obertes.\n"
 
 #: winerror.mc:2461
 msgid "Invalid index.\n"
-msgstr "L'índex és invàlid.\n"
+msgstr "L'índex no és vàlid.\n"
 
 #: winerror.mc:2466
 msgid "Invalid icon handle.\n"
-msgstr "L'identificador d'icona és invàlid.\n"
+msgstr "L'identificador d'icona no és vàlid.\n"
 
 #: winerror.mc:2471
 msgid "Private dialog index.\n"
@@ -5671,7 +5671,7 @@ msgstr "L'índex de diàleg és privat.\n"
 
 #: winerror.mc:2476
 msgid "List box ID not found.\n"
-msgstr "No s'ha trobat l'ID de caixa de llista.\n"
+msgstr "No s'ha trobat l'ID de quadre de llista.\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters.\n"
@@ -5695,7 +5695,7 @@ msgstr "No s'ha trobat l'ID de control.\n"
 
 #: winerror.mc:2506
 msgid "Invalid combo box message.\n"
-msgstr "El missatge de quadre combinat és invàlid.\n"
+msgstr "El missatge de quadre combinat no és vàlid.\n"
 
 #: winerror.mc:2511
 msgid "Not a combo box window.\n"
@@ -5703,7 +5703,7 @@ msgstr "No és finestra de quadre combinat.\n"
 
 #: winerror.mc:2516
 msgid "Invalid edit height.\n"
-msgstr "L'altura d'edició és invàlida.\n"
+msgstr "L'altura d'edició no és vàlida.\n"
 
 #: winerror.mc:2521
 msgid "DC not found.\n"
@@ -5711,11 +5711,11 @@ msgstr "No s'ha trobat el DC.\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
-msgstr "El filtre de ganxo és invàlid.\n"
+msgstr "El filtre de ganxo no és vàlid.\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure.\n"
-msgstr "El procediment de filtre és invàlid.\n"
+msgstr "El procediment de filtre no és vàlid.\n"
 
 #: winerror.mc:2536
 msgid "Hook procedure needs module handle.\n"
@@ -5735,15 +5735,15 @@ msgstr "El procediment de ganxo no està instal·lat.\n"
 
 #: winerror.mc:2556
 msgid "Invalid list box message.\n"
-msgstr "El missatge de caixa de llista és invàlid.\n"
+msgstr "El missatge de quadre de llista no és vàlid.\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent.\n"
-msgstr "S'ha enviat un LB_SETCOUNT invàlid.\n"
+msgstr "S'ha enviat un LB_SETCOUNT no vàlid.\n"
 
 #: winerror.mc:2566
 msgid "No tab stops on this list box.\n"
-msgstr "No hi ha cap tabulador que s'aturi en aquesta caixa de llista.\n"
+msgstr "No hi ha cap tabulador que s'aturi en aquest quadre de llista.\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread.\n"
@@ -5759,11 +5759,11 @@ msgstr "La finestra no té menú de sistema.\n"
 
 #: winerror.mc:2586
 msgid "Invalid message box style.\n"
-msgstr "L'estil de quadre de missatge és invàlid.\n"
+msgstr "L'estil de quadre de missatge no és vàlid.\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter.\n"
-msgstr "El paràmetre SPI és invàlid.\n"
+msgstr "El paràmetre SPI no és vàlid.\n"
 
 #: winerror.mc:2596
 msgid "Screen already locked.\n"
@@ -5779,11 +5779,11 @@ msgstr "No és finestra filla.\n"
 
 #: winerror.mc:2611
 msgid "Invalid GW command.\n"
-msgstr "L'ordre GW és invàlid.\n"
+msgstr "L'ordre GW no és vàlida.\n"
 
 #: winerror.mc:2616
 msgid "Invalid thread ID.\n"
-msgstr "L'ID de fil és invàlid.\n"
+msgstr "L'ID de fil no és vàlid.\n"
 
 #: winerror.mc:2621
 msgid "Not an MDI child window.\n"
@@ -5799,11 +5799,11 @@ msgstr "No hi ha cap barra de desplaçament.\n"
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range.\n"
-msgstr "L'interval de desplaçament és invàlid.\n"
+msgstr "L'interval de desplaçament no és vàlid.\n"
 
 #: winerror.mc:2641
 msgid "Invalid ShowWin command.\n"
-msgstr "L'ordre ShowWin és invàlid.\n"
+msgstr "L'ordre ShowWin no és vàlida.\n"
 
 #: winerror.mc:2646
 msgid "No system resources.\n"
@@ -5835,7 +5835,7 @@ msgstr "No s'ha trobat l'element de menú.\n"
 
 #: winerror.mc:2681
 msgid "Invalid keyboard handle.\n"
-msgstr "L'identificador de teclat és invàlid.\n"
+msgstr "L'identificador de teclat no és vàlid.\n"
 
 #: winerror.mc:2686
 msgid "Hook type not allowed.\n"
@@ -5851,7 +5851,7 @@ msgstr "S'ha superat el temps d'espera.\n"
 
 #: winerror.mc:2701
 msgid "Invalid monitor handle.\n"
-msgstr "L'identificador de monitor és invàlid.\n"
+msgstr "L'identificador de monitor no és vàlid.\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt.\n"
@@ -5903,7 +5903,7 @@ msgstr "La propietat és desconeguda.\n"
 
 #: winerror.mc:2766
 msgid "Invalid handle state.\n"
-msgstr "L'estat d'identificador és invàlid.\n"
+msgstr "L'estat d'identificador no és vàlid.\n"
 
 #: winerror.mc:2771
 msgid "Bad configuration.\n"
@@ -5927,11 +5927,11 @@ msgstr "S'ha desinstal·lat el producte.\n"
 
 #: winerror.mc:2796
 msgid "Invalid query syntax.\n"
-msgstr "La sintaxi de consulta és invàlida.\n"
+msgstr "La sintaxi de consulta no és vàlida.\n"
 
 #: winerror.mc:2801
 msgid "Invalid field.\n"
-msgstr "El camp és invàlid.\n"
+msgstr "El camp no és vàlid.\n"
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
@@ -5947,7 +5947,7 @@ msgstr "El paquet d'instal·lació ha fallat en obrir.\n"
 
 #: winerror.mc:2821
 msgid "Installation package is invalid.\n"
-msgstr "El paquet d'instal·lació és invàlid.\n"
+msgstr "El paquet d'instal·lació no és vàlid.\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed.\n"
@@ -5979,7 +5979,7 @@ msgstr "La funció ha fallat.\n"
 
 #: winerror.mc:2861
 msgid "Invalid table.\n"
-msgstr "La taula és invàlida.\n"
+msgstr "La taula no és vàlida.\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
@@ -6011,7 +6011,7 @@ msgstr "S'ha fallat en obrir el paquet de pedaç.\n"
 
 #: winerror.mc:2901
 msgid "Invalid patch package.\n"
-msgstr "El paquet de pedaç és invàlid.\n"
+msgstr "El paquet de pedaç no és vàlid.\n"
 
 #: winerror.mc:2906
 msgid "Unsupported patch package.\n"
@@ -6023,7 +6023,7 @@ msgstr "Una altra versió està instal·lada.\n"
 
 #: winerror.mc:2916
 msgid "Invalid command line.\n"
-msgstr "La línia d'ordres és invàlida.\n"
+msgstr "La línia d'ordres no és vàlida.\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
@@ -6035,15 +6035,15 @@ msgstr "S'ha iniciat un reinici després d'instal·lació amb èxit.\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding.\n"
-msgstr "El lligament de cadena és invàlid.\n"
+msgstr "La vinculació de cadena no és vàlida.\n"
 
 #: winerror.mc:2936
 msgid "Wrong kind of binding.\n"
-msgstr "El tipus de lligament és incorrecte.\n"
+msgstr "El tipus de vinculació és incorrecte.\n"
 
 #: winerror.mc:2941
 msgid "Invalid binding.\n"
-msgstr "El lligament és invàlid.\n"
+msgstr "La vinculació no és vàlida.\n"
 
 #: winerror.mc:2946
 msgid "RPC protocol sequence not supported.\n"
@@ -6051,19 +6051,19 @@ msgstr "La seqüència de protocol RPC no és compatible.\n"
 
 #: winerror.mc:2951
 msgid "Invalid RPC protocol sequence.\n"
-msgstr "La seqüència de protocol RPC és invàlida.\n"
+msgstr "La seqüència de protocol RPC no és vàlida.\n"
 
 #: winerror.mc:2956
 msgid "Invalid string UUID.\n"
-msgstr "L'UUID de cadena és invàlida.\n"
+msgstr "L'UUID de cadena no és vàlid.\n"
 
 #: winerror.mc:2961
 msgid "Invalid endpoint format.\n"
-msgstr "El format de punt final és invàlid.\n"
+msgstr "El format de punt final no és vàlid.\n"
 
 #: winerror.mc:2966
 msgid "Invalid network address.\n"
-msgstr "L'adreça de xarxa és invàlida.\n"
+msgstr "L'adreça de xarxa no és vàlida.\n"
 
 #: winerror.mc:2971
 msgid "No endpoint found.\n"
@@ -6071,7 +6071,7 @@ msgstr "No s'ha trobat cap punt final.\n"
 
 #: winerror.mc:2976
 msgid "Invalid timeout value.\n"
-msgstr "El valor de temps d'espera és invàlid.\n"
+msgstr "El valor de temps d'espera no és vàlid.\n"
 
 #: winerror.mc:2981
 msgid "Object UUID not found.\n"
@@ -6107,7 +6107,7 @@ msgstr "La interfície és desconeguda.\n"
 
 #: winerror.mc:3021
 msgid "No bindings.\n"
-msgstr "No hi ha cap lligament.\n"
+msgstr "No hi ha cap vinculació.\n"
 
 #: winerror.mc:3026
 msgid "No protocol sequences.\n"
@@ -6131,7 +6131,7 @@ msgstr "El servidor RPC està massa ocupat.\n"
 
 #: winerror.mc:3051
 msgid "Invalid network options.\n"
-msgstr "Les opcions de xarxa són invàlides.\n"
+msgstr "Les opcions de xarxa no són vàlides.\n"
 
 #: winerror.mc:3056
 msgid "No RPC call active.\n"
@@ -6155,11 +6155,11 @@ msgstr "La sintaxi de transferència és incompatible.\n"
 
 #: winerror.mc:3086
 msgid "Invalid tag.\n"
-msgstr "L'etiqueta és invàlida.\n"
+msgstr "L'etiqueta no és vàlida.\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds.\n"
-msgstr "Els límits de vector són invàlids.\n"
+msgstr "Els límits de vector no són vàlids.\n"
 
 #: winerror.mc:3096
 msgid "No entry name.\n"
@@ -6167,7 +6167,7 @@ msgstr "No hi ha cap nom d'entrada.\n"
 
 #: winerror.mc:3101
 msgid "Invalid name syntax.\n"
-msgstr "La sintaxi de nom és invàlid.\n"
+msgstr "La sintaxi de nom no és vàlida.\n"
 
 #: winerror.mc:3106
 msgid "Unsupported name syntax.\n"
@@ -6199,11 +6199,11 @@ msgstr "No s'ha trobat la seqüència de protocol.\n"
 
 #: winerror.mc:3141
 msgid "Procedure number out of range.\n"
-msgstr "El nombre de procediment és fora d'interval.\n"
+msgstr "El número de procediment és fora d'interval.\n"
 
 #: winerror.mc:3146
 msgid "Binding has no authentication data.\n"
-msgstr "El lligament no té dades d'autenticació.\n"
+msgstr "La vinculació no té dades d'autenticació.\n"
 
 #: winerror.mc:3151
 msgid "Unknown authentication service.\n"
@@ -6215,7 +6215,7 @@ msgstr "El nivell d'autenticació és desconegut.\n"
 
 #: winerror.mc:3161
 msgid "Invalid authentication identity.\n"
-msgstr "La identitat d'autenticació és invàlid.\n"
+msgstr "La identitat d'autenticació no és vàlida.\n"
 
 #: winerror.mc:3166
 msgid "Unknown authorization service.\n"
@@ -6223,7 +6223,7 @@ msgstr "El servei d'autorització és desconegut.\n"
 
 #: winerror.mc:3171
 msgid "Invalid entry.\n"
-msgstr "L'entrada és invàlida.\n"
+msgstr "L'entrada no és vàlida.\n"
 
 #: winerror.mc:3176
 msgid "Can't perform operation.\n"
@@ -6243,7 +6243,7 @@ msgstr "El nom és incomplet.\n"
 
 #: winerror.mc:3196
 msgid "Invalid version option.\n"
-msgstr "L'opció de versió és invàlida.\n"
+msgstr "L'opció de versió no és vàlida.\n"
 
 #: winerror.mc:3201
 msgid "No more members.\n"
@@ -6271,7 +6271,7 @@ msgstr "El servei de noms no està disponible.\n"
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
-msgstr "La família d'adreces de xarxa és invàlida.\n"
+msgstr "La família d'adreces de xarxa no és vàlida.\n"
 
 #: winerror.mc:3236
 msgid "Operation not supported.\n"
@@ -6327,7 +6327,7 @@ msgstr "L'identificador de context és danyat.\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch.\n"
-msgstr "Els identificadors de lligament no es coincideixen.\n"
+msgstr "Els identificadors de vinculació no es coincideixen.\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle.\n"
@@ -6351,7 +6351,7 @@ msgstr "Les dades d'esbós (stub) són dolentes.\n"
 
 #: winerror.mc:3331
 msgid "Invalid user buffer.\n"
-msgstr "La memòria intermèdia d'usuari és invàlida.\n"
+msgstr "La memòria intermèdia d'usuari no és vàlida.\n"
 
 #: winerror.mc:3336
 msgid "Unrecognized media.\n"
@@ -6411,15 +6411,15 @@ msgstr "El processador d'impressió és desconegut.\n"
 
 #: winerror.mc:3406
 msgid "Invalid separator file.\n"
-msgstr "El fitxer separador és invàlid.\n"
+msgstr "El fitxer separador no és vàlid.\n"
 
 #: winerror.mc:3411
 msgid "Invalid priority.\n"
-msgstr "La prioritat és invàlida.\n"
+msgstr "La prioritat no és vàlida.\n"
 
 #: winerror.mc:3416
 msgid "Invalid printer name.\n"
-msgstr "El nom d'impressora és invàlid.\n"
+msgstr "El nom d'impressora no és vàlid.\n"
 
 #: winerror.mc:3421
 msgid "Printer already exists.\n"
@@ -6427,19 +6427,19 @@ msgstr "La impressora ja existeix.\n"
 
 #: winerror.mc:3426
 msgid "Invalid printer command.\n"
-msgstr "L'ordre d'impressora és invàlid.\n"
+msgstr "L'ordre d'impressora no és vàlida.\n"
 
 #: winerror.mc:3431
 msgid "Invalid data type.\n"
-msgstr "El tipus de dades és invàlid.\n"
+msgstr "El tipus de dades no és vàlid.\n"
 
 #: winerror.mc:3436
 msgid "Invalid environment.\n"
-msgstr "L'entorn és invàlid.\n"
+msgstr "L'entorn no és vàlid.\n"
 
 #: winerror.mc:3441
 msgid "No more bindings.\n"
-msgstr "No hi ha més lligaments.\n"
+msgstr "No hi ha més vinculacions.\n"
 
 #: winerror.mc:3446
 msgid "Can't log on with inter-domain trust account.\n"
@@ -6493,7 +6493,7 @@ msgstr "S'ha cancel·lat la trucada RPC.\n"
 
 #: winerror.mc:3506
 msgid "Binding incomplete.\n"
-msgstr "El lligament està incomplet.\n"
+msgstr "La vinculació està incompleta.\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
@@ -6525,7 +6525,7 @@ msgstr "No s'ha cancel·lat el fil.\n"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
-msgstr "L'operació d'identificador és invàlida.\n"
+msgstr "L'operació d'identificador no és vàlida.\n"
 
 #: winerror.mc:3551
 msgid "Wrong serializing package version.\n"
@@ -6537,11 +6537,11 @@ msgstr "La versió d'esbós (stub) és incorrecta.\n"
 
 #: winerror.mc:3561
 msgid "Invalid pipe object.\n"
-msgstr "L'objecte de canonada és invàlid.\n"
+msgstr "L'objecte de canonada no és vàlid.\n"
 
 #: winerror.mc:3566
 msgid "Wrong pipe order.\n"
-msgstr "L'ordre de canonada és incorrecte.\n"
+msgstr "L'ordre de canonada és incorrecta.\n"
 
 #: winerror.mc:3571
 msgid "Wrong pipe version.\n"
@@ -6557,19 +6557,19 @@ msgstr "No es pot crear la DB assignadora de punts finals.\n"
 
 #: winerror.mc:3586
 msgid "Invalid object.\n"
-msgstr "L'objecte és invàlid.\n"
+msgstr "L'objecte no és vàlid.\n"
 
 #: winerror.mc:3591
 msgid "Invalid time.\n"
-msgstr "L'hora és invàlida.\n"
+msgstr "L'hora no és vàlida.\n"
 
 #: winerror.mc:3596
 msgid "Invalid form name.\n"
-msgstr "El nom de forma és invàlid.\n"
+msgstr "El nom de forma no és vàlid.\n"
 
 #: winerror.mc:3601
 msgid "Invalid form size.\n"
-msgstr "La mida de forma és invàlida.\n"
+msgstr "La mida de forma no és vàlida.\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle.\n"
@@ -6581,7 +6581,7 @@ msgstr "S'ha suprimit la impressora.\n"
 
 #: winerror.mc:3616
 msgid "Invalid printer state.\n"
-msgstr "L'estat d'impressora és invàlid.\n"
+msgstr "L'estat d'impressora no és vàlid.\n"
 
 #: winerror.mc:3621
 msgid "User must change password.\n"
@@ -6597,15 +6597,15 @@ msgstr "El compte està bloquejat.\n"
 
 #: winerror.mc:3636
 msgid "Invalid pixel format.\n"
-msgstr "El format de píxels és invàlid.\n"
+msgstr "El format de píxels no és vàlid.\n"
 
 #: winerror.mc:3641
 msgid "Invalid driver.\n"
-msgstr "El controlador és invàlid.\n"
+msgstr "El controlador no és vàlid.\n"
 
 #: winerror.mc:3646
 msgid "Invalid object resolver set.\n"
-msgstr "El conjunt de resolució d'objectes és invàlid.\n"
+msgstr "El conjunt de resolució d'objectes no és vàlid.\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
@@ -6613,11 +6613,11 @@ msgstr "L'enviament RPC està incomplet.\n"
 
 #: winerror.mc:3656
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr "L'identificador RPC asíncron és invàlid.\n"
+msgstr "L'identificador RPC asíncron no és vàlid.\n"
 
 #: winerror.mc:3661
 msgid "Invalid asynchronous RPC call.\n"
-msgstr "La trucada RPC asíncrona és invàlida.\n"
+msgstr "La trucada RPC asíncrona no és vàlida.\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed.\n"
@@ -6908,320 +6908,258 @@ msgid "choose which folder contains %s"
 msgstr "trieu quina carpeta conté %s"
 
 #: msi.rc:90
-#, fuzzy
-#| msgid "No registry log space.\n"
 msgid "Allocating registry space"
-msgstr "No hi ha espai per al registre del registre.\n"
+msgstr "S'està assignant espai en el registre"
 
 #: msi.rc:91
-#, fuzzy
-#| msgid "Single-instance application.\n"
 msgid "Searching for installed applications"
-msgstr "Aplicació d'instància única.\n"
+msgstr "S'estan cercant aplicacions instalades"
 
 #: msi.rc:92
 msgid "Binding executables"
-msgstr ""
+msgstr "S'estan vinculant els executables"
 
 #: msi.rc:93 msi.rc:136
-#, fuzzy
-#| msgid "Searching for %s"
 msgid "Searching for qualifying products"
-msgstr "S'està cercant %s"
+msgstr "S'estan cercant productes qualificants"
 
 #: msi.rc:94 msi.rc:95 msi.rc:100
 msgid "Computing space requirements"
-msgstr ""
+msgstr "S'estan computant els requeriments d'espai"
 
 #: msi.rc:96
-#, fuzzy
-#| msgid "Target folder"
 msgid "Creating folders"
-msgstr "Carpeta de destinació"
+msgstr "S'estan creant carpetes"
 
 #: msi.rc:97
-#, fuzzy
-#| msgid "Create Shor&tcut"
 msgid "Creating shortcuts"
-msgstr "Crea &una drecera"
+msgstr "S'estan creant dreceres"
 
 #: msi.rc:98
-#, fuzzy
-#| msgid "Exception in service.\n"
 msgid "Deleting services"
-msgstr "Hi ha hagut una excepció en el servei.\n"
+msgstr "S'estan eliminant serveis"
 
 #: msi.rc:99
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creating duplicate files"
-msgstr "Data de creació"
+msgstr "S'estan creant fitxers duplicats"
 
 #: msi.rc:101
-#, fuzzy
-#| msgid "No associated application.\n"
 msgid "Searching for related applications"
-msgstr "Cap aplicació està associada.\n"
+msgstr "S'estan cercant aplicacions relacionades"
 
 #: msi.rc:102
 msgid "Copying network install files"
-msgstr ""
+msgstr "S'estan copiant els fitxers d'instal·lació de xarxa"
 
 #: msi.rc:103
-#, fuzzy
-#| msgid "Copying Files..."
 msgid "Copying new files"
-msgstr "S'estan copiant els fitxers..."
+msgstr "S'estan copiant els fitxers nous"
 
 #: msi.rc:104
-#, fuzzy
-#| msgid "Installation of component failed: %08x"
 msgid "Installing ODBC components"
-msgstr "La instal·lació del component ha fallat: %08x"
+msgstr "S'estan instal·lant components ODBC"
 
 #: msi.rc:105
-#, fuzzy
-#| msgid "Installer service failed.\n"
 msgid "Installing new services"
-msgstr "El servei d'instal·lació ha fallat.\n"
+msgstr "S'estan instal·lant els serveis nous"
 
 #: msi.rc:106
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Installing system catalog"
-msgstr "Instal·la/desinstal·la"
+msgstr "S'està instal·lant el catàleg de sistema"
 
 #: msi.rc:107
-#, fuzzy
-#| msgid "Wine Application Uninstaller"
 msgid "Validating install"
-msgstr "Desinstal·lador d'Aplicacions del Wine"
+msgstr "S'està validant l'instalació"
 
 #: msi.rc:108
 msgid "Evaluating launch conditions"
-msgstr ""
+msgstr "S'estan avaluant les condicions d'execució"
 
 #: msi.rc:109
 msgid "Migrating feature states from related applications"
 msgstr ""
+"S'estan migrant els estats de les característiques des de les aplicacions "
+"relacionades"
 
 #: msi.rc:110
-#, fuzzy
-#| msgid "Icon files"
 msgid "Moving files"
-msgstr "Fitxers d'icona"
+msgstr "S'estan movent fixters"
 
 #: msi.rc:111
-#, fuzzy
-#| msgid "Version information"
 msgid "Publishing assembly information"
-msgstr "Informació de versió"
+msgstr "S'està publicant informació de assemblatge"
 
 #: msi.rc:112
 msgid "Unpublishing assembly information"
-msgstr ""
+msgstr "S'està despublicant la informació d'assemblatge"
 
 #: msi.rc:113
-#, fuzzy
-#| msgid "Icon files"
 msgid "Patching files"
-msgstr "Fitxers d'icona"
+msgstr "S'estan apedaçant fitxers"
 
 #: msi.rc:114
 msgid "Updating component registration"
-msgstr ""
+msgstr "S'està actualitzant la registració de component"
 
 #: msi.rc:115
 msgid "Publishing Qualified Components"
-msgstr ""
+msgstr "S'estan publicant els components qualificats"
 
 #: msi.rc:116
 msgid "Publishing Product Features"
-msgstr ""
+msgstr "S'estan publicant les característiques de producte"
 
 #: msi.rc:117
-#, fuzzy
-#| msgid "Client Information"
 msgid "Publishing product information"
-msgstr "Informació de client"
+msgstr "S'està publicant la informació de producte"
 
 #: msi.rc:118
 msgid "Registering Class servers"
-msgstr ""
+msgstr "S'estan registrant els servidors de classe"
 
 #: msi.rc:119
 msgid "Registering COM+ Applications and Components"
-msgstr ""
+msgstr "S'estan registrant les aplicacions i els components COM+"
 
 #: msi.rc:120
 msgid "Registering extension servers"
-msgstr ""
+msgstr "S'estan registrant els servidors d'extensió"
 
 #: msi.rc:121
 msgid "Registering fonts"
-msgstr ""
+msgstr "S'estan registrant els tipus de lletra"
 
 #: msi.rc:122
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Registering MIME info"
-msgstr "Editor de Registre"
+msgstr "S'està registrant la informació MIME"
 
 #: msi.rc:123
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
 msgid "Registering product"
-msgstr "El registre està corrupte.\n"
+msgstr "S'està registrant el producte"
 
 #: msi.rc:124
 msgid "Registering program identifiers"
-msgstr ""
+msgstr "S'estan registrant els identificadors de programa"
 
 #: msi.rc:125
-#, fuzzy
-#| msgid "Type Libraries"
 msgid "Registering type libraries"
-msgstr "Biblioteques de tipus"
+msgstr "S'estan registrant les biblioteques de tipus"
 
 #: msi.rc:126
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Registering user"
-msgstr "El recurs està en ús.\n"
+msgstr "S'està registrant l'usuari"
 
 #: msi.rc:127
-#, fuzzy
-#| msgid "&Remove duplicates"
 msgid "Removing duplicated files"
-msgstr "&Elimina els duplicats"
+msgstr "S'estan eliminant els fitxers duplicats"
 
 #: msi.rc:128 msi.rc:152
-#, fuzzy
-#| msgid "Applying font settings"
 msgid "Updating environment strings"
-msgstr "S'està aplicant la configuració de lletra"
+msgstr "S'estan actualitzant les cadenes d'entorn"
 
 #: msi.rc:129
-#, fuzzy
-#| msgid "&Remove application"
 msgid "Removing applications"
-msgstr "&Elimina aplicació"
+msgstr "S'estan eliminant les aplicacions"
 
 #: msi.rc:130
-#, fuzzy
-#| msgid "Icon files"
 msgid "Removing files"
-msgstr "Fitxers d'icona"
+msgstr "S'estan eliminant els fitxers"
 
 #: msi.rc:131
 msgid "Removing folders"
-msgstr ""
+msgstr "S'estan eliminant les carpetes"
 
 #: msi.rc:132
 msgid "Removing INI files entries"
-msgstr ""
+msgstr "S'estan eliminant les entrades en els fitxers INI"
 
 #: msi.rc:133
-#, fuzzy
-#| msgid "Domain Component"
 msgid "Removing ODBC components"
-msgstr "Component de domini"
+msgstr "S'estan eliminant els components ODBC"
 
 #: msi.rc:134
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Removing system registry values"
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "S'estan eliminant els valors del registre de sistema"
 
 #: msi.rc:135
 msgid "Removing shortcuts"
-msgstr ""
+msgstr "S'estan eliminant les dreceres"
 
 #: msi.rc:137
 msgid "Registering modules"
-msgstr ""
+msgstr "S'estan registrant els mòduls"
 
 #: msi.rc:138
 msgid "Unregistering modules"
-msgstr ""
+msgstr "S'estan desregistrant els mòduls"
 
 #: msi.rc:139
-#, fuzzy
-#| msgid "Initializing; "
 msgid "Initializing ODBC directories"
-msgstr "S'està inicialitzant; "
+msgstr "S'estan inicialitzant els directoris ODBC"
 
 #: msi.rc:140
-#, fuzzy
-#| msgid "Starting Wordpad failed"
 msgid "Starting services"
-msgstr "L'inici del Wordpad ha fallat"
+msgstr "S'estan iniciant serveis"
 
 #: msi.rc:141
-#, fuzzy
-#| msgid "Stopping dependent service: %1\n"
 msgid "Stopping services"
-msgstr "S'està aturant el servei dependent: %1\n"
+msgstr "S'estan aturant els serveis"
 
 #: msi.rc:142
 msgid "Unpublishing Qualified Components"
-msgstr ""
+msgstr "S'estan desregistrant els components qualificats"
 
 #: msi.rc:143
 msgid "Unpublishing Product Features"
-msgstr ""
+msgstr "S'estan despublicant les característiques de producte"
 
 #: msi.rc:144
-#, fuzzy
-#| msgid "Client Information"
 msgid "Unpublishing product information"
-msgstr "Informació de client"
+msgstr "S'està despublicant la informació de producte"
 
 #: msi.rc:145
 msgid "Unregister Class servers"
-msgstr ""
+msgstr "S'estan desregistrant els servidors de classe"
 
 #: msi.rc:146
 msgid "Unregistering COM+ Applications and Components"
-msgstr ""
+msgstr "S'estan desregistrant les aplicacions i els components COM+"
 
 #: msi.rc:147
 msgid "Unregistering extension servers"
-msgstr ""
+msgstr "S'estan desregistrant els servidors d'extensió"
 
 #: msi.rc:148
 msgid "Unregistering fonts"
-msgstr ""
+msgstr "S'estan desregistrant els tipus de lletra"
 
 #: msi.rc:149
 msgid "Unregistering MIME info"
-msgstr ""
+msgstr "S'està desregistrant la informació MIME"
 
 #: msi.rc:150
 msgid "Unregistering program identifiers"
-msgstr ""
+msgstr "S'estan desregistrant els identificadors de programa"
 
 #: msi.rc:151
 msgid "Unregistering type libraries"
-msgstr ""
+msgstr "S'estan desregistrant les biblioteques de tipus"
 
 #: msi.rc:153
 msgid "Writing INI files values"
-msgstr ""
+msgstr "S'estan escrivint valors als fitxers INI"
 
 #: msi.rc:154
-#, fuzzy
-#| msgid "Warning: system library"
 msgid "Writing system registry values"
-msgstr "Advertència: biblioteca de sistema"
+msgstr "S'estan escrivint valors al registre del sistema"
 
 #: msi.rc:160
 msgid "Free space: [1]"
-msgstr ""
+msgstr "Espai lliure: [1]"
 
 #: msi.rc:161
 msgid "Property: [1], Signature: [2]"
-msgstr ""
+msgstr "Propietat: [1], Signatura: [2]"
 
 #: msi.rc:162
 msgid "File: [1]"
@@ -7233,73 +7171,63 @@ msgstr "Carpeta: [1]"
 
 #: msi.rc:164 msi.rc:193
 msgid "Shortcut: [1]"
-msgstr ""
+msgstr "Drecera: [1]"
 
 #: msi.rc:165 msi.rc:196 msi.rc:197
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [1]"
-msgstr "&Dispositiu:"
+msgstr "Servei: [1]"
 
 #: msi.rc:166 msi.rc:169 msi.rc:173
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr ""
+msgstr "Fitxer: [1]  Directori: [9],  Mida: [6]"
 
 #: msi.rc:167
-#, fuzzy
-#| msgid "application"
 msgid "Found application: [1]"
-msgstr "aplicació"
+msgstr "S'ha trobat una aplicació: [1]"
 
 #: msi.rc:168
 msgid "File: [1], Directory: [9], Size: [6]"
-msgstr ""
+msgstr "Fitxer: [1] Directori: [9], Mida: [6]"
 
 #: msi.rc:170
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [2]"
-msgstr "&Dispositiu:"
+msgstr "Servei: [2]"
 
 #: msi.rc:171
 msgid "File: [1],  Dependencies: [2]"
-msgstr ""
+msgstr "Fitxer: [1],  Dependències: [2]"
 
 #: msi.rc:172
-#, fuzzy
-#| msgid "Applications"
 msgid "Application: [1]"
-msgstr "Aplicacions"
+msgstr "Aplicació: [1]"
 
 #: msi.rc:174 msi.rc:175
 msgid "Application Context:[1], Assembly Name:[2]"
-msgstr ""
+msgstr "Context d'aplicació:[1], Nom d'assemblatge:[2]"
 
 #: msi.rc:176
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr ""
+msgstr "Fitxer: [1],  Directori: [2],  Mida: [3]"
 
 #: msi.rc:177 msi.rc:198
 msgid "Component ID: [1], Qualifier: [2]"
-msgstr ""
+msgstr "ID de component: [1], Qualificador: [2]"
 
 #: msi.rc:178 msi.rc:199
 msgid "Feature: [1]"
-msgstr ""
+msgstr "Característica: [1]"
 
 #: msi.rc:179 msi.rc:200
 msgid "Class Id: [1]"
-msgstr ""
+msgstr "Id de classe: [1]"
 
 #: msi.rc:180
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
-msgstr ""
+msgstr "AppId: [1]{{, AppType: [2], Usuaris: [3], RSN: [4]}}"
 
 #: msi.rc:181 msi.rc:202
-#, fuzzy
-#| msgid "Extensions Only"
 msgid "Extension: [1]"
-msgstr "Només extensions"
+msgstr "Extensió: [1]"
 
 #: msi.rc:182 msi.rc:203
 msgid "Font: [1]"
@@ -7307,63 +7235,63 @@ msgstr "Tipus de lletra: [1]"
 
 #: msi.rc:183 msi.rc:204
 msgid "MIME Content Type: [1], Extension: [2]"
-msgstr ""
+msgstr "Tipus de contingut MIME: [1], Extensió: [2]"
 
 #: msi.rc:184 msi.rc:205
 msgid "ProgId: [1]"
-msgstr ""
+msgstr "ProgId: [1]"
 
 #: msi.rc:185 msi.rc:206
 msgid "LibID: [1]"
-msgstr ""
+msgstr "LibID: [1]"
 
 #: msi.rc:186 msi.rc:189
 msgid "File: [1], Directory: [9]"
-msgstr ""
+msgstr "Fitxer: [1], Directori: [9]"
 
 #: msi.rc:187 msi.rc:207
 msgid "Name: [1], Value: [2], Action [3]"
-msgstr ""
+msgstr "Nom: [1], Valor: [2], Acció [3]"
 
 #: msi.rc:188
 msgid "Application: [1], Command line: [2]"
-msgstr ""
+msgstr "Aplicació: [1], Línia d'ordres: [2]"
 
 #: msi.rc:191 msi.rc:208
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr ""
+msgstr "Fitxer: [1],  Secció: [2],  Clau: [3],  Valor: [4]"
 
 #: msi.rc:192
 msgid "Key: [1], Name: [2]"
-msgstr ""
+msgstr "Clau: [1], Nom: [2]"
 
 #: msi.rc:194 msi.rc:195
 msgid "File: [1], Folder: [2]"
-msgstr ""
+msgstr "Fitxer: [1], Carpeta: [2]"
 
 #: msi.rc:201
 msgid "AppId: [1]{{, AppType: [2]}}"
-msgstr ""
+msgstr "AppId: [1]{{, AppType: [2]}}"
 
 #: msi.rc:209
 msgid "Key: [1], Name: [2], Value: [3]"
-msgstr ""
+msgstr "Clau: [1], Nom: [2], Valor: [3]"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Error fatal: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Error [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Advertència [1]."
 
 #: msi.rc:74
 msgid "Info [1]."
-msgstr ""
+msgstr "Informació [1]."
 
 #: msi.rc:75
 msgid ""
@@ -7371,40 +7299,45 @@ msgid ""
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
+"L'instal·lador s'ha topat amb un error inesperat en instal·lar aquest "
+"paquet. Això pot indicar un problema amb aquest paquet. El codi d'error és "
+"[1]. {{Els arguments són: [2], [3], [4]}}"
 
 #: msi.rc:76
 msgid "{{Disk full: }}"
-msgstr "{{El disc està ple: }}"
+msgstr "{{Disc ple: }}"
 
 #: msi.rc:77
 msgid "Action [Time]: [1]. [2]"
-msgstr ""
+msgstr "Acció [Time]: [1]. [2]"
 
 #: msi.rc:78
 msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr ""
+msgstr "Tipus de missatge: [1], Argument: [2]{, [3]}"
 
 #: msi.rc:81
 msgid "=== Logging started: [Date]  [Time] ==="
-msgstr ""
+msgstr "=== S'ha començat el registre: [Date]  [Time] ==="
 
 #: msi.rc:79
 msgid "Action start [Time]: [1]."
-msgstr ""
+msgstr "Inici d'acció [Time]: [1]."
 
 #: msi.rc:80
 msgid "Action ended [Time]: [1]. Return value [2]."
-msgstr ""
+msgstr "Fi d'acció [Time]: [1]. El valor retornat és [2]."
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"
-msgstr ""
+msgstr "Si us plau, inseriu el disc: [2]"
 
 #: msi.rc:84
 msgid ""
 "Source file not found{{(cabinet)}}: [2]. Verify that the file exists and "
 "that you can access it."
 msgstr ""
+"No s'ha trobat el fitxer font{{(cabinet)}}: [2]. Verifiqueu que el fitxer "
+"existeixi i que el podeu accedir."
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -7636,11 +7569,11 @@ msgstr "botó"
 
 #: oleacc.rc:75
 msgid "check button"
-msgstr "casella de verificació"
+msgstr "casella de selecció"
 
 #: oleacc.rc:76
 msgid "radio button"
-msgstr "botó de ràdio"
+msgstr "botó d'opció"
 
 #: oleacc.rc:77
 msgid "combo box"
@@ -7668,7 +7601,7 @@ msgstr "control lliscant"
 
 #: oleacc.rc:83
 msgid "spin box"
-msgstr "spinner"
+msgstr "quadre de nombre"
 
 #: oleacc.rc:84
 msgid "diagram"
@@ -7940,7 +7873,7 @@ msgstr "Enganxada amb opcions"
 
 #: oledlg.rc:85 setupapi.rc:43
 msgid "Source:"
-msgstr "Origen:"
+msgstr "Font:"
 
 #: oledlg.rc:86 shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:95 shdoclc.rc:135
 #: shdoclc.rc:162 shdoclc.rc:186 user32.rc:62 wineconsole.rc:33 wordpad.rc:114
@@ -8902,8 +8835,6 @@ msgid "Wine Control Panel"
 msgstr "Tauler de Control del Wine"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
 msgstr "No s'ha pogut mostrar el quadre de diàleg Executar (error intern)"
 
@@ -9023,10 +8954,8 @@ msgid " sec"
 msgstr " seg"
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "Select Folder"
 msgid "Select Source"
-msgstr "Selecciona una carpeta"
+msgstr "Seleccionar font"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -9208,7 +9137,7 @@ msgstr "Un publicador desconegut o no de confiança ha emès el certificat."
 
 #: wininet.rc:30
 msgid "The date on the certificate is invalid."
-msgstr "La data en el certificat és invàlida."
+msgstr "La data en el certificat no és vàlida."
 
 #: wininet.rc:31
 msgid "The name on the certificate does not match the site."
@@ -9222,7 +9151,7 @@ msgstr ""
 
 #: winmm.rc:32
 msgid "The specified command was carried out."
-msgstr "S'ha realitzat l'ordre especificat."
+msgstr "S'ha realitzat l'ordre especificada."
 
 #: winmm.rc:33
 msgid "Undefined external error."
@@ -9247,7 +9176,7 @@ msgstr ""
 
 #: winmm.rc:37
 msgid "The specified device handle is invalid."
-msgstr "L'identificador del dispositiu especificat és invàlid."
+msgstr "L'identificador del dispositiu especificat no és vàlid."
 
 #: winmm.rc:38
 msgid "There is no driver installed on your system!"
@@ -9276,11 +9205,11 @@ msgstr "Un número d'error s'ha especificat que no està definit en el sistema."
 
 #: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
-msgstr "S'ha passat una bandera invàlida a una funció de sistema."
+msgstr "S'ha passat una bandera no vàlida a una funció de sistema."
 
 #: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
-msgstr "S'ha passat un paràmetre invàlid a una funció de sistema."
+msgstr "S'ha passat un paràmetre no vàlid a una funció de sistema."
 
 #: winmm.rc:46
 msgid ""
@@ -9358,7 +9287,7 @@ msgstr ""
 #: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
-"L'ID del dispositiu MCI és invàlida. Utilitzeu l'ID retornada en obrir el "
+"L'ID del dispositiu MCI no és vàlid. Utilitzeu l'ID retornat en obrir el "
 "dispositiu MCI."
 
 #: winmm.rc:61
@@ -9367,7 +9296,7 @@ msgstr "El controlador no pot reconèixer el paràmetre d'ordre especificat."
 
 #: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
-msgstr "El controlador no pot reconèixer l'ordre especificat."
+msgstr "El controlador no pot reconèixer l'ordre especificada."
 
 #: winmm.rc:63
 msgid ""
@@ -9414,19 +9343,19 @@ msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
-"L'ordre especificat requereix un paràmetre de cadena de caràcters. Si us "
+"L'ordre especificada requereix un paràmetre de cadena de caràcters. Si us "
 "plau, proveïu un."
 
 #: winmm.rc:71
 msgid "The specified integer is invalid for this command."
-msgstr "El nombre enter especificat és invàlid per a aquest ordre."
+msgstr "El nombre enter especificat no és vàlid per a aquesta ordre."
 
 #: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"El controlador de dispositiu ha donat un tipus de retorn invàlid. Consulteu "
+"El controlador de dispositiu ha donat un tipus de retorn no vàlid. Consulteu "
 "amb el fabricant del dispositiu sobre com obtenir un controlador nou."
 
 #: winmm.rc:73
@@ -9439,11 +9368,11 @@ msgstr ""
 
 #: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "L'ordre especificat requereix un paràmetre. Si us plau, proveïu un."
+msgstr "L'ordre especificada requereix un paràmetre. Si us plau, proveïu un."
 
 #: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
-msgstr "El dispositiu MCI que utilitzeu no admet l'ordre especificat."
+msgstr "El dispositiu MCI que utilitzeu no admet l'ordre especificada."
 
 #: winmm.rc:76
 msgid ""
@@ -9472,7 +9401,7 @@ msgstr ""
 #: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr ""
-"No es pot utilitzar 'all' com al nom de dispositiu amb l'ordre especificat."
+"No es pot utilitzar 'all' com al nom de dispositiu amb l'ordre especificada."
 
 #: winmm.rc:81
 msgid ""
@@ -9491,7 +9420,8 @@ msgstr ""
 
 #: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
-msgstr "El paràmetre especificat és fora de l'interval de l'ordre especificat."
+msgstr ""
+"El paràmetre especificat és fora de l'interval de l'ordre especificada."
 
 #: winmm.rc:84
 msgid "The specified parameters cannot be used together."
@@ -9531,7 +9461,7 @@ msgstr ""
 
 #: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
-msgstr "El paràmetre especificat no és vàlid per a aquest ordre."
+msgstr "El paràmetre especificat no és vàlid per a aquesta ordre."
 
 #: winmm.rc:90
 msgid ""
@@ -9546,7 +9476,7 @@ msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
 msgstr ""
-"L'ordre especificat requereix un àlies, fitxer, controlador o nom de "
+"L'ordre especificada requereix un àlies, fitxer, controlador o nom de "
 "dispositiu. Si us plau, proveïu un."
 
 #: winmm.rc:92
@@ -9554,7 +9484,7 @@ msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"El valor especificat per al format d'hora és invàlid. Consulteu la "
+"El valor especificat per al format d'hora no és vàlid. Consulteu la "
 "documentació MCI pels formats vàlids."
 
 #: winmm.rc:93
@@ -9606,7 +9536,7 @@ msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
 msgstr ""
-"No es pot dur a terme els ordres en l'ordre especificat. Corregiu la "
+"No es pot dur a terme les ordres en l'ordre especificat. Corregiu la "
 "seqüència d'ordres i després torneu a intentar."
 
 #: winmm.rc:102
@@ -9614,7 +9544,7 @@ msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
-"No es pot dur a terme l'ordre especificat en un dispositiu obert "
+"No es pot dur a terme l'ordre especificada en un dispositiu obert "
 "automàticament. Espereu fins que es tanqui el dispositiu i després torneu a "
 "intentar."
 
@@ -9623,7 +9553,7 @@ msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"El nom de fitxer és invàlid. Assegureu-vos que el nom del fitxer no estigui "
+"El nom de fitxer no és vàlid. Assegureu-vos que el nom del fitxer no estigui "
 "més llarg de 8 caràcters, seguit d'un període i una extensió."
 
 #: winmm.rc:104
@@ -9681,7 +9611,7 @@ msgstr ""
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
-"L'ordre especificat requereix un paràmetre de nombre sencer. Si us plau, "
+"L'ordre especificada requereix un paràmetre de nombre enter. Si us plau, "
 "proveïu un."
 
 #: winmm.rc:112
@@ -9869,7 +9799,7 @@ msgstr ""
 
 #: winspool.rc:32
 msgid "Unable to create the output file."
-msgstr "No s'ha pogut crear el fitxer destinatari."
+msgstr "No s'ha pogut crear el fitxer de sortida."
 
 #: wldap32.rc:32
 msgid "Success"
@@ -9928,10 +9858,8 @@ msgid "Confidentiality Required"
 msgstr "Cal confidencialitat"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "L'aturada està en curs.\n"
+msgstr "Vinculació SASL en curs"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -9955,7 +9883,7 @@ msgstr "L'atribut o valor existeix"
 
 #: wldap32.rc:53
 msgid "Invalid Syntax"
-msgstr "Sintaxi invàlida"
+msgstr "Sintaxi no vàlida"
 
 #: wldap32.rc:64
 msgid "No Such Object"
@@ -9967,7 +9895,7 @@ msgstr "Problema d'àlies"
 
 #: wldap32.rc:66
 msgid "Invalid DN Syntax"
-msgstr "Sintaxi DN invàlida"
+msgstr "Sintaxi DN no vàlida"
 
 #: wldap32.rc:67
 msgid "Is Leaf"
@@ -9983,7 +9911,7 @@ msgstr "Autenticació no apropiada"
 
 #: wldap32.rc:81
 msgid "Invalid Credentials"
-msgstr "Credencials invàlides"
+msgstr "Credencials no vàlides"
 
 #: wldap32.rc:82
 msgid "Insufficient Rights"
@@ -10212,8 +10140,8 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <nom de fitxer batch> s'utilitza dins un fitxer batch per a executar\n"
-"ordres d'un altre fitxer batch. Quan se surt del fitxer batch, el control\n"
+"CALL <nom de fitxer BAT> s'utilitza dins un fitxer BAT per a executar\n"
+"ordres d'un altre fitxer BAT. Quan se surt del fitxer BAT, el control\n"
 "retorna al fitxer que l'ha trucat. L'ordre CALL pot proveir paràmetres al\n"
 "procediment trucat.\n"
 "\n"
@@ -10271,7 +10199,7 @@ msgstr ""
 "actual.\n"
 "ECHO <cadena> mostra <cadena> en el dispositiu de terminal actual.\n"
 "\n"
-"ECHO ON causa que tots els ordres següents en un fitxer batch es mostrin en\n"
+"ECHO ON causa que totes les ordres següents en un fitxer BAT es mostrin en\n"
 "el dispositiu de terminal abans d'executar-se.\n"
 "\n"
 "ECHO OFF desfà l'efecte d'un ECHO ON anterior (ECHO està OFF per defecte).\n"
@@ -10289,12 +10217,12 @@ msgid ""
 "\n"
 "The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
-"S'utilitza l'ordre FOR per a executar un ordre per cada un d'un conjunt de\n"
+"S'utilitza l'ordre FOR per a executar una ordre per cada un d'un conjunt de\n"
 "fitxers.\n"
 "\n"
 "Ús: FOR %variable IN (conjunt) DO ordre\n"
 "\n"
-"S'ha de doblar el signe % quan s'utilitza FOR en un fitxer batch.\n"
+"S'ha de doblar el signe % quan s'utilitza FOR en un fitxer BAT.\n"
 
 #: cmd.rc:97
 msgid ""
@@ -10310,13 +10238,13 @@ msgid ""
 "GOTO has no effect when used interactively.\n"
 msgstr ""
 "L'ordre GOTO transfereix l'execució a una altra declaració en un fitxer\n"
-"batch.\n"
+"BAT.\n"
 "\n"
 "L'etiqueta que és la destinació d'un GOTO pot ser de fins a 255 caràcters\n"
 "de longitud però no pot incloure espais (això és diferent d'altres sistemes\n"
-"operatius). Si dos o més etiquetes idèntiques existeixen en un fitxer\n"
-"batch, el primer sempre s'executarà. Intentar fer GOTO a una etiqueta no\n"
-"existent termina l'execució del fitxer batch.\n"
+"operatius). Si dos o més etiquetes idèntiques existeixen en un fitxer BAT,\n"
+"el primer sempre s'executarà. Intentar fer GOTO a una etiqueta no existent\n"
+"termina l'execució del fitxer BAT.\n"
 "\n"
 "GOTO no té cap efecte quan s'utilitza de forma interactiva.\n"
 
@@ -10339,11 +10267,11 @@ msgid ""
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
-"S'utilitza IF per a executar condicionalment un ordre.\n"
+"S'utilitza IF per a executar condicionalment una ordre.\n"
 "\n"
 "Sintaxi: IF [NOT] EXIST nom_de_fitxer ordre\n"
 "         IF [NOT] cadena1==cadena2 ordre\n"
-"         IF [NOT] ERRORLEVEL nombre ordre\n"
+"         IF [NOT] ERRORLEVEL número ordre\n"
 "\n"
 "En la segona forma de la comanda, cadena1 i cadena2 han de ser entre\n"
 "cometes dobles. La comparació no distingeix entre majúscules i minúscules.\n"
@@ -10417,11 +10345,11 @@ msgid ""
 "It is mainly useful in batch files to allow the user to read the output of\n"
 "a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE mostra un missatge en la pantalla demanant que l'usuari premi una "
+"PAUSE mostra un missatge en la pantalla demanant que l'usuari premi una\n"
 "tecla.\n"
 "\n"
-"És principalment útil en els fitxers batch per a permetre que l'usuari\n"
-"llegeixi la sortida d'un ordre anterior abans que es desplaci fora de la\n"
+"És principalment útil en els fitxers BAT per a permetre que l'usuari\n"
+"llegeixi la sortida d'una ordre anterior abans que es desplaci fora de la\n"
 "pantalla.\n"
 
 #: cmd.rc:169
@@ -10446,7 +10374,7 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
-"PROMPT defineix l'indicador de la línia d'ordre.\n"
+"PROMPT defineix l'indicador de la línia d'ordres.\n"
 "\n"
 "La cadena que segueix l'ordre PROMPT (i l'espai immediatament després)\n"
 "apareix al principi de la línia quan cmd està esperant l'entrada.\n"
@@ -10474,7 +10402,7 @@ msgid ""
 "and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "Una línia d'ordres que comença amb REM (seguit per un espai) no realitza\n"
-"cap acció, i per tant es pot utilitzar com a comentari en un fitxer batch.\n"
+"cap acció, i per tant es pot utilitzar com a comentari en un fitxer BAT.\n"
 
 #: cmd.rc:176
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
@@ -10535,9 +10463,9 @@ msgid ""
 "list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n"
 "called from the command line.\n"
 msgstr ""
-"S'utilitza SHIFT en un fitxer batch per a eliminar un paràmetre del cap de\n"
-"la llista, de manera que el paràmetre 2 es converteix en el paràmetre 1,\n"
-"etc. No té cap efecte si es truca des de la línia d'ordres.\n"
+"S'utilitza SHIFT en un fitxer BAT per a eliminar un paràmetre del cap de la\n"
+"llista, de manera que el paràmetre 2 es converteix en el paràmetre 1, etc.\n"
+"No té cap efecte si es truca des de la línia d'ordres.\n"
 
 #: cmd.rc:212 start.rc:56
 msgid ""
@@ -10596,7 +10524,7 @@ msgstr ""
 "                  el seu codi de sortida.\n"
 "/unix             Utilitza un nom de fitxer d'Unix i inicia el fitxer com\n"
 "                  el Windows Explorer.\n"
-"/ProgIDOpen       Obre un document utilitzant la progID especificada.\n"
+"/ProgIDOpen       Obre un document utilitzant el progID especificat.\n"
 "/?                Mostra aquesta ajuda i surt.\n"
 
 #: cmd.rc:237
@@ -10648,7 +10576,7 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file which\n"
 "were introduced by a preceding SETLOCAL.\n"
 msgstr ""
-"ENDLOCAL acaba la localització de canvis d'entorn en un fitxer batch, els\n"
+"ENDLOCAL acaba la localització de canvis d'entorn en un fitxer BAT, els\n"
 "quals un SETLOCAL anterior ha introduït.\n"
 
 #: cmd.rc:271
@@ -10660,12 +10588,12 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
-"SETLOCAL comença la localització de canvis en l'entorn en un fitxer batch.\n"
+"SETLOCAL comença la localització de canvis d'entorn en un fitxer BAT.\n"
 "\n"
-"Els canvis d'entorn fets després d'un SETLOCAL són locals al fitxer batch,\n"
-"i es conserven fins que es trobi la següent ENDLOCAL (o al final del\n"
-"fitxer, el que passi primer), al qual punt la configuració de l'entorn\n"
-"anterior es restaura.\n"
+"Els canvis d'entorn fets després d'un SETLOCAL són locals al fitxer BAT, i\n"
+"es conserven fins que es trobi la següent ENDLOCAL (o al final del fitxer,\n"
+"el que passi primer), al qual punt la configuració d'entorn anterior es\n"
+"restaura.\n"
 
 #: cmd.rc:275
 msgid ""
@@ -10712,7 +10640,7 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string\n"
 "associated to the specified file type.\n"
 msgstr ""
-"FTYPE mostra o modifica els ordres d'obertura associats amb els tipus de\n"
+"FTYPE mostra o modifica les ordres d'obertura associats amb els tipus de\n"
 "fitxers.\n"
 "\n"
 "Sintaxi: FTYPE [tipusDeFitxer[=[ordreDeObertura]]]\n"
@@ -10738,7 +10666,7 @@ msgstr ""
 "CHOICE mostra un text i espera fins que l'usuari premi una tecla permesa\n"
 "d'una llista seleccionable.\n"
 "CHOICE s'utilitza principalment per a construir un menú de selecció en un\n"
-"fitxer batch.\n"
+"fitxer BAT.\n"
 
 #: cmd.rc:324
 msgid ""
@@ -10753,6 +10681,14 @@ msgid ""
 "link_name is the name of the new symbolic link.\n"
 "target is the path that link_name points to.\n"
 msgstr ""
+"Sintaxi: MKLINK [opcions] nom_d'enllaç destinació\n"
+"\n"
+"Opcions:\n"
+"/d             Crea un enllaç simbòlic de directori\n"
+"/h             Crea un enllaç dur.\n"
+"/j             Crea una intersecció de directori.\n"
+"nom_d'enllaç és el nom de l'enllaç simbòlic nou.\n"
+"destinació és el camí al qual nom_d'enllaç assenyala.\n"
 
 #: cmd.rc:312
 msgid ""
@@ -10763,47 +10699,6 @@ msgstr ""
 "des del qual heu invocat cmd.\n"
 
 #: cmd.rc:364
-#, fuzzy
-#| msgid ""
-#| "CMD built-in commands are:\n"
-#| "ASSOC\t\tShow or modify file extension associations\n"
-#| "ATTRIB\t\tShow or change DOS file attributes\n"
-#| "CALL\t\tInvoke a batch file from inside another\n"
-#| "CD (CHDIR)\tChange current default directory\n"
-#| "CHOICE\t\tWait for an keypress from a selectable list\n"
-#| "CLS\t\tClear the console screen\n"
-#| "COPY\t\tCopy file\n"
-#| "CTTY\t\tChange input/output device\n"
-#| "DATE\t\tShow or change the system date\n"
-#| "DEL (ERASE)\tDelete a file or set of files\n"
-#| "DIR\t\tList the contents of a directory\n"
-#| "ECHO\t\tCopy text directly to the console output\n"
-#| "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
-#| "FTYPE\t\tShow or modify open commands associated with file types\n"
-#| "HELP\t\tShow brief help details on a topic\n"
-#| "MD (MKDIR)\tCreate a subdirectory\n"
-#| "MORE\t\tDisplay output in pages\n"
-#| "MOVE\t\tMove a file, set of files or directory tree\n"
-#| "PATH\t\tSet or show the search path\n"
-#| "PAUSE\t\tSuspend execution of a batch file\n"
-#| "POPD\t\tRestore the directory to the last one saved with PUSHD\n"
-#| "PROMPT\t\tChange the command prompt\n"
-#| "PUSHD\t\tChange to a new directory, saving the current one\n"
-#| "REN (RENAME)\tRename a file\n"
-#| "RD (RMDIR)\tDelete a subdirectory\n"
-#| "SET\t\tSet or show environment variables\n"
-#| "SETLOCAL\tStart localization of environment changes in a batch file\n"
-#| "START\t\tStart a program, or open a document in the associated program\n"
-#| "TIME\t\tSet or show the current system time\n"
-#| "TITLE\t\tSet the window title for the CMD session\n"
-#| "TYPE\t\tType the contents of a text file\n"
-#| "VER\t\tShow the current version of CMD\n"
-#| "VOL\t\tShow the volume label of a disk device\n"
-#| "XCOPY\t\tCopy source files or directory trees to a destination\n"
-#| "EXIT\t\tClose down CMD\n"
-#| "\n"
-#| "Enter HELP <command> for further information on any of the above "
-#| "commands.\n"
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10845,10 +10740,10 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
-"Els ordres integrats de CMD són:\n"
+"Les ordres integrades de CMD són:\n"
 "ASSOC\t\tMostra o modifica les associacions d'extensió de fitxer\n"
 "ATTRIB\t\tMostra o canvia els atributs de fitxer de DOS\n"
-"CALL\t\tInvoca un fitxer batch des de dins altre\n"
+"CALL\t\tInvoca un fitxer BAT des de dins altre\n"
 "CD (CHDIR)\tCanvia el directori per defecte actual\n"
 "CHOICE\t\tEspera una pulsació de tecla d'una llista seleccionable\n"
 "CLS\t\tEsborra la pantalla de consola\n"
@@ -10858,29 +10753,30 @@ msgstr ""
 "DEL (ERASE)\tSuprimeix un fitxer o conjunt de fitxers\n"
 "DIR\t\tMostra el contingut d'un directori\n"
 "ECHO\t\tCopia text directament a la sortida de la consola\n"
-"ENDLOCAL\tAcaba la localització de canvis en l'entorn en un fitxer batch\n"
+"ENDLOCAL\tAcaba la localització de canvis d'entorn en un fitxer BAT\n"
 "FTYPE\t\tMostra o modifica els ordres d'obertura associats amb els tipus\n"
 "\t\tde fitxer\n"
 "HELP\t\tMostra detalls breus sobre un tema\n"
 "MD (MKDIR)\tCrea un subdirectori\n"
+"MKLINK\tCrea un enllaç simbòlic\n"
 "MORE\t\tMostra la sortida en pàgines\n"
 "MOVE\t\tDesplaça un fitxer, conjunt de fitxers o arbre de directori\n"
 "PATH\t\tEstableix o mostra el camí de cerca\n"
-"PAUSE\t\tSuspèn l'execució d'un fitxer batch\n"
+"PAUSE\t\tSuspèn l'execució d'un fitxer BAT\n"
 "POPD\t\tRestaura el directori a l'últim desat amb la PUSHD\n"
 "PROMPT\t\tCanvia l'indicador d'ordres\n"
 "PUSHD\t\tCanvia a un directori nou, desant l'actual\n"
 "REN (RENAME)\tCanvia el nom d'un fitxer\n"
 "RD (RMDIR)\tSuprimeix un subdirectori\n"
 "SET\t\tEstableix o mostra les variables d'entorn\n"
-"SETLOCAL\tComença la localització de canvis en l'entorn en un fitxer batch\n"
+"SETLOCAL\tComença la localització de canvis d'entorn en un fitxer BAT\n"
 "START\t\tInicia un programa o obrir un document en el programa associat\n"
 "TIME\t\tEstableix o mostra l'hora de sistema actual\n"
 "TITLE\t\tEstableix el títol de finestra de la sessió CMD\n"
 "TYPE\t\tBolca el contingut d'un fitxer de text\n"
 "VER\t\tMostra la versió actual del CMD\n"
 "VOL\t\tMostra l'etiqueta de volum d'un dispositiu de disc\n"
-"XCOPY\t\tCopia fitxers fonts o arbres de directori a una destinació\n"
+"XCOPY\t\tCopia fitxers o arbres de directori a una destinació\n"
 "EXIT\t\tTanca el CMD\n"
 "\n"
 "Introduïu HELP <ordre> per més informació sobre qualsevulla de les ordres\n"
@@ -10888,7 +10784,7 @@ msgstr ""
 
 #: cmd.rc:365
 msgid "Are you sure?"
-msgstr "Esteu segur?"
+msgstr "N'esteu segur?"
 
 #: cmd.rc:366 reg.rc:50 xcopy.rc:43
 msgctxt "Yes key"
@@ -10906,7 +10802,7 @@ msgstr "Manca una associació de fitxer per a l'extensió %1\n"
 
 #: cmd.rc:369
 msgid "No open command associated with file type '%1'\n"
-msgstr "No hi ha cap ordre d'obertura associat amb el tipus de fitxer '%1'\n"
+msgstr "No hi ha cap ordre d'obertura associada amb el tipus de fitxer '%1'\n"
 
 #: cmd.rc:370
 msgid "Overwrite %1?"
@@ -10919,12 +10815,12 @@ msgstr "Més..."
 #: cmd.rc:372
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
-"Hi ha hagut una línia possiblement truncada en el processament batch.\n"
+"Hi ha hagut una línia possiblement truncada en el processament BAT.\n"
 "S'està utilitzant:\n"
 
 #: cmd.rc:374
 msgid "Argument missing\n"
-msgstr "Manca un paràmetre\n"
+msgstr "Manca un argument\n"
 
 #: cmd.rc:375
 msgid "Syntax error\n"
@@ -10964,7 +10860,7 @@ msgstr "S'ha fallat en obrir '%1'\n"
 
 #: cmd.rc:385
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "No es pot trucar a una etiqueta de batch fora d'un script batch\n"
+msgstr "No es pot trucar a una etiqueta BAT fora d'un script BAT\n"
 
 #: cmd.rc:386 xcopy.rc:45
 msgctxt "All key"
@@ -11047,7 +10943,7 @@ msgstr " (Sí|No|Tots)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
-"No es pot reconèixer '%1' com a ordre intern ni extern, ni script batch.\n"
+"No es pot reconèixer '%1' com a ordre interna ni externa, ni script BAT.\n"
 
 #: cmd.rc:405
 msgid "Division by zero error.\n"
@@ -11100,7 +10996,7 @@ msgstr "Ús: hostname\n"
 
 #: hostname.rc:31
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Error: L'opció '%c' és invàlida.\n"
+msgstr "Error: L'opció '%c' no és vàlida.\n"
 
 #: hostname.rc:32
 msgid ""
@@ -11117,8 +11013,8 @@ msgstr "Ús: ipconfig [ /? | /all ]\n"
 #: ipconfig.rc:31
 msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr ""
-"Error: S'han especificat paràmetres de línia d'ordres desconeguts o "
-"invàlids\n"
+"Error: S'han especificat paràmetres de línia d'ordres desconeguts o no "
+"vàlids\n"
 
 #: ipconfig.rc:32
 msgid "%1 adapter %2\n"
@@ -11194,9 +11090,9 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
-"La sintaxi d'aquest ordre és:\n"
+"La sintaxi d'aquesta ordre és:\n"
 "\n"
-"NET ordre [paràmetres]\n"
+"NET ordre [arguments]\n"
 "    -o-\n"
 "NET ordre /HELP\n"
 "\n"
@@ -11211,7 +11107,7 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
-"La sintaxi d'aquest ordre és:\n"
+"La sintaxi d'aquesta ordre és:\n"
 "\n"
 "NET START [servei]\n"
 "\n"
@@ -11226,7 +11122,7 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
-"La sintaxi d'aquest ordre és:\n"
+"La sintaxi d'aquesta ordre és:\n"
 "\n"
 "NET STOP servei\n"
 "\n"
@@ -11666,7 +11562,7 @@ msgstr ""
 
 #: oleview.rc:32
 msgid "&Bind to file..."
-msgstr "&Lligar a fitxer..."
+msgstr "&Vincula a fitxer..."
 
 #: oleview.rc:33
 msgid "&View TypeLib..."
@@ -11838,7 +11734,7 @@ msgstr "Fitxers TypeLib (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:105
 msgid "Bind to file via a File Moniker"
-msgstr "Lliga a fitxer a través d'un File Moniker"
+msgstr "Vincula a un fitxer a través d'un File Moniker"
 
 #: oleview.rc:106
 msgid "Open a TypeLib file and view the contents"
@@ -11870,7 +11766,7 @@ msgstr "Lliura la instància d'objecte actualment seleccionada"
 
 #: oleview.rc:113
 msgid "Copy the GUID of the currently selected item to the clipboard"
-msgstr "Copia la GUID de l'element actualment seleccionat al porta-retalls"
+msgstr "Copia el GUID de l'element actualment seleccionat al porta-retalls"
 
 #: oleview.rc:114
 msgid "Display the viewer for the selected item"
@@ -11901,7 +11797,7 @@ msgstr "Actualitza totes les llistes"
 
 #: oleview.rc:124
 msgid "Display program information, version number and copyright"
-msgstr "Mostra informació de programa, nombre de versió i drets d'autor"
+msgstr "Mostra informació de programa, número de versió i drets d'autor"
 
 #: oleview.rc:115
 msgid "Ask for an in-process server when calling CoGetClassObject"
@@ -12213,17 +12109,6 @@ msgid "Icons (*.ico)"
 msgstr "Icones (*.ico)"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -12239,7 +12124,7 @@ msgstr ""
 "  REG [operació] [paràmetres]\n"
 "\n"
 "Operacions admeses:\n"
-"  ADD | DELETE | QUERY\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
 "\n"
 "Per ajuda sobre una operació específica, teclegeu:\n"
 "  REG [operació] /?\n"
@@ -12267,11 +12152,11 @@ msgstr "L'operació s'ha acabat amb èxit\n"
 
 #: reg.rc:40
 msgid "reg: Invalid key name\n"
-msgstr "reg: Nom de clau invàlid\n"
+msgstr "reg: Nom de clau no vàlid\n"
 
 #: reg.rc:41
 msgid "reg: Invalid command line parameters\n"
-msgstr "reg: Paràmetres de línia d'ordres invàlids\n"
+msgstr "reg: Paràmetres de línia d'ordres no vàlids\n"
 
 #: reg.rc:42
 msgid "reg: Unable to access remote machine\n"
@@ -12350,11 +12235,11 @@ msgstr "S'ha completat la cerca. Nombre de coincidències trobades: %1!d!\n"
 
 #: reg.rc:61
 msgid "reg: Invalid syntax. "
-msgstr "reg: La sintaxi és invàlida. "
+msgstr "reg: La sintaxi no és vàlida. "
 
 #: reg.rc:62
 msgid "reg: Invalid option [%1]. "
-msgstr "reg: L'opció [%1] és invàlida. "
+msgstr "reg: L'opció [%1] no és vàlida. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
@@ -12370,43 +12255,31 @@ msgstr "(valor no definit)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT fitxer.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "reg: The file '%1' was not found.\n"
-msgstr "regedit: No s'ha trobat el fitxer '%1'.\n"
+msgstr "reg: No s'ha trobat el fitxer '%1'.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "reg: No s'ha pogut obrir la clau de registre '%1'.\n"
 
 #: reg.rc:69
-#, fuzzy
-#| msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: Seqüència d'escapada no reconeguda [\\%1!c!]\n"
+msgstr "reg: Seqüència d'escapada no reconeguda [\\%1!c!]\n"
 
 #: reg.rc:70
-#, fuzzy
-#| msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG QUERY nom_de_clau [/v nom_de_valor | /ve] [/s]\n"
+msgstr "REG EXPORT nom_de_clau fitxer.reg [/y]\n"
 
 #: reg.rc:71
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid system key [%1]\n"
-msgstr "reg: Nom de clau invàlid\n"
+msgstr "reg: Nom de clau de sistema no vàlid [%1]\n"
 
 #: reg.rc:72
-#, fuzzy
-#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "El valor de registre '%1' ja existeix. El voleu sobreescriure?"
+msgstr "El fitxer '%1' ja existeix. El voleu sobreescriure?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12477,17 +12350,12 @@ msgid "&About Registry Editor"
 msgstr "&Quant a l'Editor de Registre"
 
 #: regedit.rc:89 regedit.rc:96 regedit.rc:230
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "expanded"
 msgid "Expand"
-msgstr "expandit"
+msgstr "Expandeix"
 
 #: regedit.rc:134 regedit.rc:233
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "Modifica dades binàries..."
+msgstr "Modifica dades &binàries..."
 
 #: regedit.rc:267
 msgid "Export registry"
@@ -12586,14 +12454,10 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Conté ordres per a accedir a les claus freqüentment utilitzades"
 
 #: regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
-"Conté ordres per a mostrar ajuda i informació quant a l'editor de registre"
+"Conté ordres per a mostrar Ajuda i informació quant a l'Editor de Registre"
 
 #: regedit.rc:164
 msgid "Contains commands for creating new keys or values"
@@ -12632,101 +12496,58 @@ msgid "(unknown %d)"
 msgstr "(desconegut %d)"
 
 #: regedit.rc:247
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "No s'ha pogut modificar el valor de registre seleccionat."
 
 #: regedit.rc:248
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "No s'ha pogut crear una clau de registre nova."
 
 #: regedit.rc:249
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "No s'ha pogut crear un valor de registre nou."
 
 #: regedit.rc:250
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"No es pot canviar el nom de la clau '%1'.\n"
+"El nom de clau especificat ja existeix."
 
 #: regedit.rc:251
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"No s'ha pogut canviar el nom del valor '%1'.\n"
+"El nom de valor especificat ja existeix."
 
 #: regedit.rc:252
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "No s'ha pogut suprimir la clau de registre seleccionada."
 
 #: regedit.rc:253
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "No s'ha pogut canviar el nom de la clau de registre seleccionada."
 
 #: regedit.rc:254
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "No s'ha pogut canviar el nom del valor de registre seleccionat."
 
 #: regedit.rc:255
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
+"Les claus i els valors continguts en %1 s'han afegit al registre amb èxit."
 
 #: regedit.rc:256
-#, fuzzy
-#| msgid ""
-#| "regedit: Unable to export '%1'. The specified registry key was not "
-#| "found.\n"
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
-"regedit: No s'ha pogut exportar '%1'. No s'ha trobat la clau de registre "
-"especificada.\n"
+"No s'ha pogut importar %1. El fitxer especificat no és un fitxer de registre "
+"vàlid."
 
 #: regedit.rc:408
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  regedit [options] [filename] [reg_key]\n"
-#| "\n"
-#| "Options:\n"
-#| "  [no option]    Launch the graphical version of this program.\n"
-#| "  /L:system.dat  The location of the system.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /R:user.dat    The location of the user.dat file to be modified.\n"
-#| "                 Compatible with any other switch. Ignored.\n"
-#| "  /C             Import the contents of a registry file.\n"
-#| "  /D             Delete a specified registry key.\n"
-#| "  /E             Export the contents of a specified registry key to a "
-#| "file.\n"
-#| "                 If no key is specified, the entire registry is "
-#| "exported.\n"
-#| "  /S             Silent mode. No messages will be displayed.\n"
-#| "  /V             Launch the GUI in advanced mode. Ignored.\n"
-#| "  /?             Display this information and exit.\n"
-#| "  [filename]     The location of the file containing registry information "
-#| "to\n"
-#| "                 be imported. When used with [/E], this option specifies "
-#| "the\n"
-#| "                 file location where registry information will be "
-#| "exported.\n"
-#| "  [reg_key]      The registry key to be modified.\n"
-#| "\n"
-#| "Usage examples:\n"
-#| "  regedit \"import.reg\"\n"
-#| "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-#| "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12782,11 +12603,11 @@ msgstr ""
 "Exemples d'ús:\n"
 "  regedit \"import.reg\"\n"
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
-"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Camí\\de\\clau\"\n"
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr "regedit: Commutador invàlid o no reconegut [%1]\n"
+msgstr "regedit: Commutador no vàlid o no reconegut [%1]\n"
 
 #: regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
@@ -12818,7 +12639,7 @@ msgstr "regedit: No resta memòria! (%1!S!, línia %2!u!)\n"
 
 #: regedit.rc:417
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "regedit: El valor hexadecimal és invàlid.\n"
+msgstr "regedit: El valor hexadecimal no és vàlid.\n"
 
 #: regedit.rc:418
 msgid ""
@@ -12826,17 +12647,15 @@ msgid ""
 "encountered at '%1'.\n"
 msgstr ""
 "regedit: No s'ha pogut convertir les dades hexadecimals. S'ha trobat un "
-"valor invàlid a '%1'.\n"
+"valor no vàlid a '%1'.\n"
 
 #: regedit.rc:419
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: Seqüència d'escapada no reconeguda [\\%1!c!]\n"
 
 #: regedit.rc:420
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "regedit: Tipus de dades de registre incompatible [%1]\n"
+msgstr "regedit: Tipus de dades de registre incompatible [0x%1!x!]\n"
 
 #: regedit.rc:421
 msgid "regedit: Unexpected end of line in '%1'.\n"
@@ -12855,12 +12674,10 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
-"regedit: S'ha trobat un tipus de dades de registre incompatible [%1] en "
+"regedit: S'ha trobat un tipus de dades de registre incompatible [0x%1!x!] en "
 "'%2'.\n"
 
 #: regedit.rc:426
@@ -12868,10 +12685,8 @@ msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: El valor de registre '%1' s'exportarà com a dades binàries.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Nom de clau invàlid\n"
+msgstr "regedit: Clau de sistema no vàlida [%1]\n"
 
 #: regedit.rc:428
 msgid ""
@@ -12881,22 +12696,16 @@ msgstr ""
 "especificada.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "regedit: No s'ha pogut suprimir la classe de registre '%1'.\n"
+msgstr "regedit: No s'ha pogut suprimir la clau de registre '%1'.\n"
 
 #: regedit.rc:431
-#, fuzzy
-#| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: No s'ha reconegut la línia '%1'.\n"
+msgstr "regedit: La línia conté sintaxi no vàlida.\n"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
-msgstr "Tanca l'editor de registre"
+msgstr "Tanca l'Editor de Registre"
 
 #: regedit.rc:188
 msgid "Adds keys to the favorites list"
@@ -12911,8 +12720,6 @@ msgid "Shows or hides the status bar"
 msgstr "Mostra o amaga la barra d'estat"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
 msgstr "Canvia la posició de la divisió entre dos panells"
 
@@ -12957,10 +12764,8 @@ msgid "Adds a new binary value"
 msgstr "Afegeix un valor binari nou"
 
 #: regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "Afegeix un valor binari nou"
+msgstr "Afegeix un valor nou de 32 bits"
 
 #: regedit.rc:177
 msgid "Imports a text file into the registry"
@@ -12975,42 +12780,32 @@ msgid "Prints all or part of the registry"
 msgstr "Imprimeix tot o part del registre"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Editor de Registre"
+msgstr "Obre l'Ajuda de l'Editor de Registre"
 
 #: regedit.rc:182
 msgid "Displays program information, version number and copyright"
-msgstr "Mostra informació de programa, nombre de versió i drets d'autor"
+msgstr "Mostra informació de programa, número de versió i drets d'autor"
 
 #: regedit.rc:206
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "No s'ha pogut consultar el valor de registre '%1'."
 
 #: regedit.rc:207
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "No es pot editar les claus d'aquest tipus (%u)"
+msgstr "No es pot editar les claus d'aquest tipus (%1!u!)."
 
 #: regedit.rc:208
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "El valor és massa gran (%u)"
+msgstr "El valor és massa gran (%1!u!)."
 
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Confirmar eliminació de valor"
 
 #: regedit.rc:216
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Cadena de cerca '%s' no trobada"
+msgstr "S'ha acabat la cerca. No s'ha trobat la cadena '%1'."
 
 #: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
@@ -13025,56 +12820,43 @@ msgid "New Value #%d"
 msgstr "Valor nou #%d"
 
 #: regedit.rc:205
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
+msgstr "No s'ha pogut consultar la clau de registre '%1'."
 
 #: regedit.rc:170
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "Modifica les dades del valor"
+msgstr "Modifica les dades del valor en forma binària"
 
 #: regedit.rc:175
 msgid "Adds a new multi-string value"
 msgstr "Afegeix un valor de cadena múltiple nou"
 
 #: regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
 msgstr "Exporta la branca seleccionada del registre a un fitxer de text"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "Afegeix un valor de cadena nou"
+msgstr "Afegeix un valor nou de cadena expansible"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Confirmar eliminació de valor"
+msgstr "Confirmar eliminació de clau"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "Esteu segur que voleu suprimir la clau de registre '%1'?"
+msgstr ""
+"Esteu segur que voleu suprimir aquesta clau de registre i totes les seves "
+"subclaus?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Expandeix o col·lapsa el node seleccionat"
 
 #: regedit.rc:231
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "collapsed"
 msgid "Collapse"
-msgstr "col·lapsat"
+msgstr "Col·lapsa"
 
 #: regsvr32.rc:32
 msgid ""
@@ -13107,11 +12889,11 @@ msgstr ""
 "Options:\n"
 "  [/u]  Desregistra un servidor.\n"
 "  [/s]  Mode silent (no es mostrarà cap missatge).\n"
-"  [/i]  Truca DllInstall, passant una [línia d'ordres] opcional.\n"
-"\tQuan s'utilitza amb [/u], es truca DllInstall en el mode de "
-"desinstal·lació.\n"
-"  [/n]  No truquis DllRegisterServer. S'ha d'utilitzar aquesta opció amb [/"
-"i].\n"
+"  [/i]  Truca a DllInstall, passant una [línia d'ordres] opcional.\n"
+"\tQuan s'utilitza amb [/u], es truca a DllInstall en el mode de\n"
+"\tdesinstal·lació.\n"
+"  [/n]  No truquis a DllRegisterServer. S'ha d'utilitzar aquesta opció amb\n"
+"\t[/i].\n"
 "\n"
 
 #: regsvr32.rc:41
@@ -13119,7 +12901,7 @@ msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
-"regsvr32: Commutador invàlid o no reconegut [%1]\n"
+"regsvr32: Commutador no vàlid o no reconegut [%1]\n"
 "\n"
 
 #: regsvr32.rc:42
@@ -13185,11 +12967,12 @@ msgstr "Ús: taskkill [/?] [/f] [/im NomDeProcés | /pid IdDeProcés]\n"
 #: taskkill.rc:31
 msgid "Error: Unknown or invalid command line option specified.\n"
 msgstr ""
-"Error: S'ha especificat una opció de línia d'ordres invàlida o desconeguda.\n"
+"Error: S'ha especificat una opció de línia d'ordres no vàlida o "
+"desconeguda.\n"
 
 #: taskkill.rc:32
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "Error: S'ha especificat un paràmetre de línia d'ordres invàlid.\n"
+msgstr "Error: S'ha especificat un paràmetre de línia d'ordres no vàlid.\n"
 
 #: taskkill.rc:33
 msgid "Error: One of options /im or /pid must be specified.\n"
@@ -13799,7 +13582,7 @@ msgstr "Mostra temes d'ajuda de l'Administrador de Tasques"
 
 #: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
-msgstr "Mostra informació de programa, nombre de versió i drets d'autor"
+msgstr "Mostra informació de programa, número de versió i drets d'autor"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
@@ -14021,7 +13804,7 @@ msgstr "El procés ha de tenir afinitat amb almenys un processador"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
-msgstr "Opció invàlida"
+msgstr "Opció no vàlida"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
@@ -14054,22 +13837,21 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "L'execució de l'ordre de desinstal·lació '%s' ha fallat, potser perquè "
-"l'executable manqui.\n"
+"manqui l'executable.\n"
 "Voleu eliminar l'entrada de desinstal·lació del registre?"
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr "desinstal·lador: No s'ha trobat l'aplicació amb la GUID '%1'\n"
+msgstr "desinstal·lador: No s'ha trobat l'aplicació amb el GUID '%1'\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
-msgstr ""
-"desinstal·lador: Una GUID d'aplicació ha de seguir l'opció '--remove'\n"
+msgstr "desinstal·lador: Un GUID d'aplicació ha de seguir l'opció '--remove'\n"
 
 #: uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "desinstal·lador: Opció invàlida [%1]\n"
+msgstr "desinstal·lador: Opció no vàlida [%1]\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -14312,7 +14094,7 @@ msgstr "A&fegeix..."
 
 #: winecfg.rc:238
 msgid "Aut&odetect"
-msgstr "Autodetecta"
+msgstr "Aut&odetecta"
 
 #: winecfg.rc:241
 msgid "&Path:"
@@ -14902,7 +14684,7 @@ msgstr "wineconsole: No s'ha pogut processar l'id del esdeveniment\n"
 
 #: wineconsole.rc:45
 msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: Backend invàlid\n"
+msgstr "wineconsole: Rerefons no vàlid\n"
 
 #: wineconsole.rc:46
 msgid "wineconsole: Unrecognized command line option\n"
@@ -14918,7 +14700,7 @@ msgid ""
 "The command is invalid.\n"
 msgstr ""
 "wineconsole: L'inici del programa %s ha fallat.\n"
-"L'ordre és invàlid.\n"
+"L'ordre no és vàlida.\n"
 
 #: wineconsole.rc:50
 msgid ""
@@ -15014,7 +14796,7 @@ msgstr "Caiguda de programa del Wine"
 
 #: winedbg.rc:39
 msgid "Internal errors - invalid parameters received"
-msgstr "Errors interns - paràmetres invàlids rebuts"
+msgstr "Errors interns - paràmetres no vàlids rebuts"
 
 #: winedbg.rc:40
 msgid "(unidentified)"
@@ -15290,10 +15072,8 @@ msgid "Expert"
 msgstr "Expert"
 
 #: winemine.rc:74 winemine.rc:33
-#, fuzzy
-#| msgid "Result"
 msgid "Reset Results"
-msgstr "Resultat"
+msgstr "Reinicia els resultats"
 
 #: winemine.rc:80
 msgid "Congratulations!"
@@ -15321,7 +15101,7 @@ msgstr "Mines"
 
 #: winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr ""
+msgstr "Es perdran tots els resultats. N'esteu segur?"
 
 #: winemine.rc:30
 msgid "WineMine"
@@ -15437,11 +15217,11 @@ msgstr "Error: Àlies no trobat\n"
 
 #: wmic.rc:30
 msgid "Error: Invalid query\n"
-msgstr "Error: Cerca invàlida\n"
+msgstr "Error: Consulta no vàlida\n"
 
 #: wmic.rc:31
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "Error: Sintaxi invàlida per a PATH\n"
+msgstr "Error: Sintaxi no vàlida per a PATH\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -15633,7 +15413,7 @@ msgstr "&Cap ajust de línia"
 
 #: wordpad.rc:269
 msgid "Wrap text by the &window border"
-msgstr "Ajusta el text pela vora de la &finestra"
+msgstr "Ajusta el text per la vora de la &finestra"
 
 #: wordpad.rc:270
 msgid "Wrap text by the &margin"
@@ -15801,7 +15581,7 @@ msgstr ""
 
 #: wordpad.rc:198
 msgid "Invalid number format."
-msgstr "El format de nombre és invàlid."
+msgstr "El format de nombre no és vàlid."
 
 #: wordpad.rc:199
 msgid "OLE storage documents are not supported."
@@ -15837,11 +15617,11 @@ msgstr "L'inici del Wordpad ha fallat"
 
 #: xcopy.rc:30
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "Nombre de paràmetres invàlid - Utilitzeu xcopy /? per ajuda\n"
+msgstr "Nombre de paràmetres no vàlid - Utilitzeu xcopy /? per ajuda\n"
 
 #: xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "Paràmetre invàlid '%1' - Utilitzeu xcopy /? per ajuda\n"
+msgstr "Paràmetre no vàlid '%1' - Utilitzeu xcopy /? per ajuda\n"
 
 #: xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
@@ -15939,7 +15719,7 @@ msgstr ""
 "[/S]  Copia els directoris i subdirectoris.\n"
 "[/E]  Copia els directoris i subdirectoris, incloent-hi els buits.\n"
 "[/Q]  No mostris els noms durant la còpia, és a dir, sigues silent.\n"
-"[/F]  Mostra els noms complets de la font i el destinatari durant la còpia.\n"
+"[/F]  Mostra els noms complets de la font i la destinació durant la còpia.\n"
 "[/L]  Simula l'operació, mostrant els noms que es copiarien.\n"
 "[/W]  Pregunta abans de començar l'operació de còpia.\n"
 "[/T]  Crea una estructura de directoris buits però no copiïs els fitxers.\n"
