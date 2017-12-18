@@ -571,7 +571,7 @@ char **enumerate_values(HKEY root, char *path)
     WCHAR *wpath;
     WCHAR **wret;
     char **ret=NULL;
-    int i=0, len=0;
+    int i=0, len=0, size;
 
     wpath = HeapAlloc(GetProcessHeap(), 0, (strlen(path)+1)*sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, path, -1, wpath, strlen(path)+1);
@@ -586,11 +586,13 @@ char **enumerate_values(HKEY root, char *path)
         /* convert WCHAR ** to char ** and HeapFree each WCHAR * element on our way */
         for (i=0; i<len; i++)
         {
-            ret[i] = HeapAlloc(GetProcessHeap(), 0,
-                               (lstrlenW(wret[i]) + 1) * sizeof(char));
-            WideCharToMultiByte(CP_ACP, 0, wret[i], -1, ret[i],
-                                lstrlenW(wret[i]) + 1, NULL, NULL);
-            HeapFree(GetProcessHeap(), 0, wret[i]);
+            size = WideCharToMultiByte(CP_ACP, 0, wret[i], -1, NULL, 0, NULL, NULL);
+            if(size)
+            {
+                ret[i] = HeapAlloc(GetProcessHeap(), 0, size);
+                WideCharToMultiByte(CP_ACP, 0, wret[i], -1, ret[i], size, NULL, NULL);
+                HeapFree(GetProcessHeap(), 0, wret[i]);
+            }
         }
         ret[len] = NULL;
     }
