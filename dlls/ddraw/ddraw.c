@@ -1624,17 +1624,14 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
     struct wined3d_display_mode mode;
     HRESULT hr;
-    DWORD Size;
 
     TRACE("iface %p, surface_desc %p.\n", iface, DDSD);
 
-    wined3d_mutex_lock();
     /* This seems sane */
-    if (!DDSD)
-    {
-        wined3d_mutex_unlock();
+    if (!DDSD || (DDSD->dwSize != sizeof(DDSURFACEDESC) && DDSD->dwSize != sizeof(DDSURFACEDESC2)))
         return DDERR_INVALIDPARAMS;
-    }
+
+    wined3d_mutex_lock();
 
     if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
     {
@@ -1643,10 +1640,8 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
         return hr;
     }
 
-    Size = DDSD->dwSize;
-    memset(DDSD, 0, Size);
-
-    DDSD->dwSize = Size;
+    memset(DDSD, 0, DDSD->dwSize);
+    DDSD->dwSize = sizeof(*DDSD);
     DDSD->dwFlags |= DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_PITCH | DDSD_REFRESHRATE;
     DDSD->dwWidth = mode.width;
     DDSD->dwHeight = mode.height;
@@ -1679,21 +1674,25 @@ static HRESULT WINAPI ddraw4_GetDisplayMode(IDirectDraw4 *iface, DDSURFACEDESC2 
 static HRESULT WINAPI ddraw2_GetDisplayMode(IDirectDraw2 *iface, DDSURFACEDESC *surface_desc)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw2(iface);
+    HRESULT hr;
 
     TRACE("iface %p, surface_desc %p.\n", iface, surface_desc);
 
-    /* FIXME: Test sizes, properly convert surface_desc */
-    return ddraw7_GetDisplayMode(&ddraw->IDirectDraw7_iface, (DDSURFACEDESC2 *)surface_desc);
+    hr = ddraw7_GetDisplayMode(&ddraw->IDirectDraw7_iface, (DDSURFACEDESC2 *)surface_desc);
+    if (SUCCEEDED(hr)) surface_desc->dwSize = sizeof(*surface_desc);
+    return hr;
 }
 
 static HRESULT WINAPI ddraw1_GetDisplayMode(IDirectDraw *iface, DDSURFACEDESC *surface_desc)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw(iface);
+    HRESULT hr;
 
     TRACE("iface %p, surface_desc %p.\n", iface, surface_desc);
 
-    /* FIXME: Test sizes, properly convert surface_desc */
-    return ddraw7_GetDisplayMode(&ddraw->IDirectDraw7_iface, (DDSURFACEDESC2 *)surface_desc);
+    hr = ddraw7_GetDisplayMode(&ddraw->IDirectDraw7_iface, (DDSURFACEDESC2 *)surface_desc);
+    if (SUCCEEDED(hr)) surface_desc->dwSize = sizeof(*surface_desc);
+    return hr;
 }
 
 /*****************************************************************************

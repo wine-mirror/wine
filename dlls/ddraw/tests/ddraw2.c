@@ -11496,6 +11496,23 @@ static void test_surface_desc_size(void)
         IDirectDrawSurface_Release(surface);
     }
 
+    /* GetDisplayMode() */
+    for (j = 0; j < ARRAY_SIZE(desc_sizes); ++j)
+    {
+        memset(&desc, 0xcc, sizeof(desc));
+        desc.dwSize = desc_sizes[j];
+        expected_hr = (desc.dwSize == sizeof(DDSURFACEDESC) || desc.dwSize == sizeof(DDSURFACEDESC2))
+                ? DD_OK : DDERR_INVALIDPARAMS;
+        hr = IDirectDraw2_GetDisplayMode(ddraw, &desc.desc1);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, size %u.\n", hr, expected_hr, desc_sizes[j]);
+        if (SUCCEEDED(hr))
+        {
+            ok(desc.dwSize == sizeof(DDSURFACEDESC), "Wrong size %u for %u.\n", desc.dwSize, desc_sizes[j]);
+            ok(desc.blob[desc_sizes[j]] == 0xcc, "Overflow for size %u.\n", desc_sizes[j]);
+            ok(desc.blob[desc_sizes[j] - 1] != 0xcc, "Struct not cleared for size %u.\n", desc_sizes[j]);
+        }
+    }
+
     refcount = IDirectDraw2_Release(ddraw);
     ok(!refcount, "DirectDraw has %u references left.\n", refcount);
 }
