@@ -596,7 +596,7 @@ __ASM_GLOBAL_FUNC(MSVCRT__ftol,
         "subl    $12, %esp\n\t"     /* sizeof(LONGLONG) + 2*sizeof(WORD) */
         "fnstcw  (%esp)\n\t"
         "mov     (%esp), %ax\n\t"
-        "or      $0xc, %ax\n\t"
+        "or      $0xc00, %ax\n\t"
         "mov     %ax, 2(%esp)\n\t"
         "fldcw   2(%esp)\n\t"
         "fistpq  4(%esp)\n\t"
