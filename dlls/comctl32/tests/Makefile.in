@@ -11,6 +11,7 @@ C_SRCS = \
 	header.c \
 	imagelist.c \
 	ipaddress.c \
+	listbox.c \
 	listview.c \
 	misc.c \
 	monthcal.c \
