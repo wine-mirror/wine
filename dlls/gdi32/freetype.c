@@ -7930,7 +7930,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     font->potm->otmrcFontBox.bottom = SCALE_Y(ft_face->bbox.yMin);
     font->potm->otmMacAscent = TM.tmAscent;
     font->potm->otmMacDescent = -TM.tmDescent;
-    font->potm->otmMacLineGap = font->potm->otmLineGap;
+    font->potm->otmMacLineGap = SCALE_Y(pHori->Line_Gap);
     font->potm->otmusMinimumPPEM = 0; /* TT Header */
     font->potm->otmptSubscriptSize.x = SCALE_X(pOS2->ySubscriptXSize);
     font->potm->otmptSubscriptSize.y = SCALE_Y(pOS2->ySubscriptYSize);

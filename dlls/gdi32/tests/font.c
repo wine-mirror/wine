@@ -1790,17 +1790,17 @@ static void test_GetKerningPairs(void)
            kd[i].otmMacDescent, otm.otmMacDescent);
         ok(near_match(kd[i].otmMacAscent, otm.otmMacAscent), "expected %d, got %d\n",
            kd[i].otmMacAscent, otm.otmMacAscent);
-todo_wine {
+todo_wine
         ok(kd[i].otmsCapEmHeight == otm.otmsCapEmHeight, "expected %u, got %u\n",
            kd[i].otmsCapEmHeight, otm.otmsCapEmHeight);
+todo_wine
         ok(kd[i].otmsXHeight == otm.otmsXHeight, "expected %u, got %u\n",
            kd[i].otmsXHeight, otm.otmsXHeight);
-        /* FIXME: this one sometimes succeeds due to expected 0, enable it when removing todo */
-        if (0) ok(kd[i].otmMacLineGap == otm.otmMacLineGap, "expected %u, got %u\n",
+        ok(kd[i].otmMacLineGap == otm.otmMacLineGap, "expected %u, got %u\n",
            kd[i].otmMacLineGap, otm.otmMacLineGap);
+todo_wine
         ok(kd[i].otmusMinimumPPEM == otm.otmusMinimumPPEM, "expected %u, got %u\n",
            kd[i].otmusMinimumPPEM, otm.otmusMinimumPPEM);
-}
 
         total_kern_pairs = GetKerningPairsW(hdc, 0, NULL);
         trace("total_kern_pairs %u\n", total_kern_pairs);
