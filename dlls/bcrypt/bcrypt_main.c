@@ -22,6 +22,7 @@
 
 #include <stdarg.h>
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
+#include <AvailabilityMacros.h>
 #include <CommonCrypto/CommonCryptor.h>
 #elif defined(SONAME_LIBGNUTLS)
 #include <gnutls/gnutls.h>
@@ -766,7 +767,7 @@ NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE algorithm, UCHAR *secret, ULONG se
     return BCryptDestroyHash( handle );
 }
 
-#if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H)
+#if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
 static ULONG get_block_size( enum alg_id alg )
 {
     ULONG ret = 0, size = sizeof(ret);
@@ -895,7 +896,7 @@ static NTSTATUS key_destroy( struct key *key )
     HeapFree( GetProcessHeap(), 0, key );
     return STATUS_SUCCESS;
 }
-#elif defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H)
+#elif defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
 struct key
 {
     struct object  hdr;
