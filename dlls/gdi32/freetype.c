@@ -7576,8 +7576,9 @@ static void scale_outline_font_metrics(const GdiFont *font, OUTLINETEXTMETRICW *
 
     scale_font_metrics(font, &potm->otmTextMetrics);
 
-#define SCALE_X(x) (x) = GDI_ROUND((double)(x) * (scale_x))
-#define SCALE_Y(y) (y) = GDI_ROUND((double)(y) * (scale_y))
+/* Windows scales these values as signed integers even if they are unsigned */
+#define SCALE_X(x) (x) = GDI_ROUND((int)(x) * (scale_x))
+#define SCALE_Y(y) (y) = GDI_ROUND((int)(y) * (scale_y))
 
     SCALE_Y(potm->otmAscent);
     SCALE_Y(potm->otmDescent);
