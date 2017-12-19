@@ -1921,16 +1921,12 @@ TOOLTIPS_Destroy (TOOLTIPS_INFO *infoPtr)
 		}
 	    }
 
-	    /* remove subclassing */
-        if (toolPtr->uInternalFlags & TTF_SUBCLASS) {
-            if (toolPtr->uInternalFlags & TTF_IDISHWND) {
-                RemoveWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1);
-            }
-            else {
-                RemoveWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1);
-            }
+            /* Reset subclassing data. */
+            if (toolPtr->uInternalFlags & TTF_SUBCLASS)
+                SetWindowSubclass(toolPtr->uInternalFlags & TTF_IDISHWND ? (HWND)toolPtr->uId : toolPtr->hwnd,
+                    TOOLTIPS_SubclassProc, 1, 0);
         }
-    }
+
 	Free (infoPtr->tools);
     }
 
@@ -2151,12 +2147,13 @@ TOOLTIPS_WinIniChange (TOOLTIPS_INFO *infoPtr)
 
 
 static LRESULT CALLBACK
-TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uID, DWORD_PTR dwRef)
+TOOLTIPS_SubclassProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uID, DWORD_PTR dwRef)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr ((HWND)dwRef);
     MSG msg;
 
-    switch(uMsg) {
+    switch (message)
+    {
     case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:
@@ -2164,17 +2161,23 @@ TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_
     case WM_MBUTTONUP:
     case WM_RBUTTONDOWN:
     case WM_RBUTTONUP:
-        msg.hwnd = hwnd;
-	msg.message = uMsg;
-	msg.wParam = wParam;
-	msg.lParam = lParam;
-	TOOLTIPS_RelayEvent(infoPtr, &msg);
-	break;
-
+        if (infoPtr)
+        {
+            msg.hwnd = hwnd;
+            msg.message = message;
+            msg.wParam = wParam;
+            msg.lParam = lParam;
+            TOOLTIPS_RelayEvent(infoPtr, &msg);
+        }
+        break;
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, TOOLTIPS_SubclassProc, 1);
+        break;
     default:
         break;
     }
-    return DefSubclassProc(hwnd, uMsg, wParam, lParam);
+
+    return DefSubclassProc(hwnd, message, wParam, lParam);
 }
 
 
