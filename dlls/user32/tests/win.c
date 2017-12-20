@@ -4011,6 +4011,8 @@ done:
 
     if (child) DestroyWindow(child);
     DestroyWindow(popup);
+
+    SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
 }
 
 static void test_validatergn(HWND hwnd)
