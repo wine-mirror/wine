@@ -510,6 +510,8 @@ static DWORD CALLBACK push_data(LPVOID iface)
     DWORD_PTR user;
     HRESULT hr;
 
+    IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
+
     if (!This->stop)
         IAsyncReader_Length(This->pInputPin.pReader, &maxlen, &curlen);
     else
@@ -589,6 +591,9 @@ static DWORD CALLBACK push_data(LPVOID iface)
     } while (buf);
 
     TRACE("Stopping.. %08x\n", hr);
+
+    IBaseFilter_Release(&This->filter.IBaseFilter_iface);
+
     return 0;
 }
 
