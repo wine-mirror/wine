@@ -1142,6 +1142,13 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     return TRUE;
 }
 
+static void TOOLTIPS_ResetSubclass (const TTTOOL_INFO *toolPtr)
+{
+    /* Reset subclassing data. */
+    if (toolPtr->uInternalFlags & TTF_SUBCLASS)
+        SetWindowSubclass(toolPtr->uInternalFlags & TTF_IDISHWND ? (HWND)toolPtr->uId : toolPtr->hwnd,
+            TOOLTIPS_SubclassProc, 1, 0);
+}
 
 static LRESULT
 TOOLTIPS_DelToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
@@ -1174,15 +1181,7 @@ TOOLTIPS_DelToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 	    Free (toolPtr->lpszText);
     }
 
-    /* remove subclassing */
-    if (toolPtr->uInternalFlags & TTF_SUBCLASS) {
-	if (toolPtr->uInternalFlags & TTF_IDISHWND) {
-	    RemoveWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1);
-	}
-	else {
-	    RemoveWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1);
-	}
-    }
+    TOOLTIPS_ResetSubclass (toolPtr);
 
     /* delete tool from tool list */
     if (infoPtr->uNumTools == 1) {
@@ -1888,10 +1887,7 @@ TOOLTIPS_Destroy (TOOLTIPS_INFO *infoPtr)
 		}
 	    }
 
-            /* Reset subclassing data. */
-            if (toolPtr->uInternalFlags & TTF_SUBCLASS)
-                SetWindowSubclass(toolPtr->uInternalFlags & TTF_IDISHWND ? (HWND)toolPtr->uId : toolPtr->hwnd,
-                    TOOLTIPS_SubclassProc, 1, 0);
+            TOOLTIPS_ResetSubclass (toolPtr);
         }
 
 	Free (infoPtr->tools);
