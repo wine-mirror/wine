@@ -3152,7 +3152,7 @@ todo_wine
 
 static void test_SetActiveWindow(HWND hwnd)
 {
-    HWND hwnd2;
+    HWND hwnd2, ret;
 
     flush_events( TRUE );
     ShowWindow(hwnd, SW_HIDE);
@@ -3165,13 +3165,13 @@ static void test_SetActiveWindow(HWND hwnd)
     ShowWindow(hwnd, SW_SHOW);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
-    hwnd2 = SetActiveWindow(0);
-    ok(hwnd2 == hwnd, "SetActiveWindow returned %p instead of %p\n", hwnd2, hwnd);
+    ret = SetActiveWindow(0);
+    ok(ret == hwnd, "SetActiveWindow returned %p instead of %p\n", ret, hwnd);
     if (!GetActiveWindow())  /* doesn't always work on vista */
     {
         check_wnd_state(0, 0, 0, 0);
-        hwnd2 = SetActiveWindow(hwnd);
-        ok(hwnd2 == 0, "SetActiveWindow returned %p instead of 0\n", hwnd2);
+        ret = SetActiveWindow(hwnd);
+        ok(ret == 0, "SetActiveWindow returned %p instead of 0\n", ret);
     }
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
@@ -3194,6 +3194,9 @@ static void test_SetActiveWindow(HWND hwnd)
     hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
     check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
 
+    SetActiveWindow(hwnd);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
     DestroyWindow(hwnd2);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
@@ -3205,6 +3208,31 @@ static void test_SetActiveWindow(HWND hwnd)
 
     DestroyWindow(hwnd2);
     check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    /* try to activate the desktop */
+    SetLastError(0xdeadbeef);
+    ret = SetActiveWindow(GetDesktopWindow());
+    ok(ret == NULL, "expected NULL, got %p\n", ret);
+    todo_wine
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+
+    /* activating a child should activate the parent */
+    hwnd2 = CreateWindowExA(0, "MainWindowClass", "Child window", WS_CHILD, 0, 0, 0, 0, hwnd, 0, GetModuleHandleA(NULL), NULL);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+    ret = SetActiveWindow(hwnd2);
+    ok(ret == hwnd, "expected %p, got %p\n", hwnd, ret);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+    ret = SetActiveWindow(0);
+    ok(ret == hwnd, "expected %p, got %p\n", hwnd, ret);
+    if (!GetActiveWindow())
+    {
+        ret = SetActiveWindow(hwnd2);
+        ok(ret == NULL, "expected NULL, got %p\n", ret);
+        todo_wine
+        check_active_state(hwnd, hwnd, hwnd);
+    }
+    DestroyWindow(hwnd2);
 }
 
 struct create_window_thread_params
