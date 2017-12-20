@@ -9856,6 +9856,102 @@ static void test_LockWindowUpdate(HWND parent)
     DestroyWindow(child);
 }
 
+static void test_hide_window(void)
+{
+    HWND hwnd, hwnd2, hwnd3;
+
+    hwnd = CreateWindowExA(0, "MainWindowClass", "Main window", WS_POPUP | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, GetModuleHandleA(NULL), NULL);
+    hwnd2 = CreateWindowExA(0, "MainWindowClass", "Main window 2", WS_POPUP | WS_VISIBLE,
+                            100, 100, 200, 200, 0, 0, GetModuleHandleA(NULL), NULL);
+    trace("hwnd = %p, hwnd2 = %p\n", hwnd, hwnd2);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+    ok(GetWindow(hwnd2, GW_HWNDNEXT) == hwnd, "expected %p, got %p\n", hwnd, GetWindow(hwnd2, GW_HWNDNEXT));
+
+    /* test hiding two normal windows */
+    ShowWindow(hwnd2, SW_HIDE);
+    check_active_state(hwnd, hwnd, hwnd);
+    todo_wine
+    ok(GetWindow(hwnd, GW_HWNDNEXT) == hwnd2, "expected %p, got %p\n", hwnd2, GetWindow(hwnd, GW_HWNDNEXT));
+
+    ShowWindow(hwnd, SW_HIDE);
+    check_active_state(hwndMain, 0, hwndMain);
+    ok(GetWindow(hwnd, GW_HWNDNEXT) == hwnd2, "expected %p, got %p\n", hwnd2, GetWindow(hwnd, GW_HWNDNEXT));
+
+    ShowWindow(hwnd, SW_SHOW);
+    check_active_state(hwnd, hwnd, hwnd);
+
+    ShowWindow(hwnd2, SW_SHOW);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+    ok(GetWindow(hwnd2, GW_HWNDNEXT) == hwnd, "expected %p, got %p\n", hwnd, GetWindow(hwnd2, GW_HWNDNEXT));
+
+    /* hide a non-active window */
+    ShowWindow(hwnd, SW_HIDE);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+    todo_wine
+    ok(GetWindow(hwnd2, GW_HWNDNEXT) == hwnd, "expected %p, got %p\n", hwnd, GetWindow(hwnd2, GW_HWNDNEXT));
+
+    /* hide a window in the middle */
+    ShowWindow(hwnd, SW_SHOW);
+    ShowWindow(hwnd2, SW_SHOW);
+    hwnd3 = CreateWindowExA(0, "MainWindowClass", "Main window 3", WS_POPUP | WS_VISIBLE,
+                            100, 100, 200, 200, 0, 0, GetModuleHandleA(NULL), NULL);
+    SetActiveWindow(hwnd2);
+    ShowWindow(hwnd2, SW_HIDE);
+    check_active_state(hwnd3, hwnd3, hwnd3);
+    todo_wine {
+    ok(GetWindow(hwnd3, GW_HWNDNEXT) == hwnd2, "expected %p, got %p\n", hwnd2, GetWindow(hwnd3, GW_HWNDNEXT));
+    ok(GetWindow(hwnd2, GW_HWNDNEXT) == hwnd, "expected %p, got %p\n", hwnd, GetWindow(hwnd2, GW_HWNDNEXT));
+    }
+
+    DestroyWindow(hwnd3);
+
+    /* hide a normal window when there is a topmost window */
+    hwnd3 = CreateWindowExA(WS_EX_TOPMOST, "MainWindowClass", "Topmost window 3", WS_POPUP|WS_VISIBLE,
+                            100, 100, 200, 200, 0, 0, GetModuleHandleA(NULL), NULL);
+    ShowWindow(hwnd, SW_SHOW);
+    ShowWindow(hwnd2, SW_SHOW);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+    ShowWindow(hwnd2, SW_HIDE);
+    todo_wine
+    check_active_state(hwnd3, hwnd3, hwnd3);
+    ok(GetWindow(hwnd2, GW_HWNDNEXT) == hwnd, "expected %p, got %p\n", hwnd, GetWindow(hwnd2, GW_HWNDNEXT));
+
+    /* hide a topmost window */
+    ShowWindow(hwnd2, SW_SHOW);
+    ShowWindow(hwnd3, SW_SHOW);
+    ShowWindow(hwnd3, SW_HIDE);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+    ok(GetWindow(hwnd2, GW_HWNDNEXT) == hwnd, "expected %p, got %p\n", hwnd, GetWindow(hwnd2, GW_HWNDNEXT));
+
+    DestroyWindow(hwnd3);
+
+    /* hiding an owned window activates its owner */
+    ShowWindow(hwnd, SW_SHOW);
+    ShowWindow(hwnd2, SW_SHOW);
+    hwnd3 = CreateWindowExA(0, "MainWindowClass", "Owned window 3", WS_POPUP|WS_VISIBLE,
+                            100, 100, 200, 200, hwnd, 0, GetModuleHandleA(NULL), NULL);
+    ShowWindow(hwnd3, SW_HIDE);
+    check_active_state(hwnd, hwnd, hwnd);
+    todo_wine {
+    ok(GetWindow(hwnd3, GW_HWNDNEXT) == hwnd, "expected %p, got %p\n", hwnd, GetWindow(hwnd3, GW_HWNDNEXT));
+    ok(GetWindow(hwnd, GW_HWNDNEXT) == hwnd2, "expected %p, got %p\n", hwnd2, GetWindow(hwnd, GW_HWNDNEXT));
+    }
+
+    /* hide an owner window */
+    ShowWindow(hwnd, SW_SHOW);
+    ShowWindow(hwnd2, SW_SHOW);
+    ShowWindow(hwnd3, SW_SHOW);
+    ShowWindow(hwnd, SW_HIDE);
+    check_active_state(hwnd3, hwnd3, hwnd3);
+    ok(GetWindow(hwnd3, GW_HWNDNEXT) == hwnd, "expected %p, got %p\n", hwnd, GetWindow(hwnd3, GW_HWNDNEXT));
+    ok(GetWindow(hwnd, GW_HWNDNEXT) == hwnd2, "expected %p, got %p\n", hwnd2, GetWindow(hwnd, GW_HWNDNEXT));
+
+    DestroyWindow(hwnd3);
+    DestroyWindow(hwnd2);
+    DestroyWindow(hwnd);
+}
+
 static void test_desktop( void )
 {
     HWND desktop = GetDesktopWindow();
@@ -10433,6 +10529,7 @@ START_TEST(win)
     test_deferwindowpos();
     test_LockWindowUpdate(hwndMain);
     test_desktop();
+    test_hide_window();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
