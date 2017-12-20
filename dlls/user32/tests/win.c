@@ -9952,6 +9952,89 @@ static void test_hide_window(void)
     DestroyWindow(hwnd);
 }
 
+static void test_minimize_window(HWND hwndMain)
+{
+    HWND hwnd, hwnd2, hwnd3;
+
+    hwnd = CreateWindowExA(0, "MainWindowClass", "Main window", WS_POPUP | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, GetModuleHandleA(NULL), NULL);
+    hwnd2 = CreateWindowExA(0, "MainWindowClass", "Main window 2", WS_POPUP | WS_VISIBLE,
+                            100, 100, 200, 200, 0, 0, GetModuleHandleA(NULL), NULL);
+    trace("hwnd = %p, hwnd2 = %p\n", hwnd, hwnd2);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+
+    /* test hiding two normal windows */
+    ShowWindow(hwnd2, SW_MINIMIZE);
+    todo_wine
+    check_active_state(hwnd, hwnd, hwnd);
+
+    ShowWindow(hwnd, SW_MINIMIZE);
+    todo_wine
+    if (GetActiveWindow() == 0)
+        check_active_state(0, 0, 0);
+
+    ShowWindow(hwnd, SW_RESTORE);
+    check_active_state(hwnd, hwnd, hwnd);
+
+    ShowWindow(hwnd2, SW_RESTORE);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+
+    /* hide a non-active window */
+    ShowWindow(hwnd, SW_MINIMIZE);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+
+    /* hide a window in the middle */
+    ShowWindow(hwnd, SW_RESTORE);
+    ShowWindow(hwnd2, SW_RESTORE);
+    hwnd3 = CreateWindowExA(0, "MainWindowClass", "Main window 3", WS_POPUP | WS_VISIBLE,
+                            100, 100, 200, 200, 0, 0, GetModuleHandleA(NULL), NULL);
+    SetActiveWindow(hwnd2);
+    ShowWindow(hwnd2, SW_MINIMIZE);
+    todo_wine
+    check_active_state(hwnd3, hwnd3, hwnd3);
+
+    DestroyWindow(hwnd3);
+
+    /* hide a normal window when there is a topmost window */
+    hwnd3 = CreateWindowExA(WS_EX_TOPMOST, "MainWindowClass", "Topmost window 3", WS_POPUP|WS_VISIBLE,
+                            100, 100, 200, 200, 0, 0, GetModuleHandleA(NULL), NULL);
+    ShowWindow(hwnd, SW_RESTORE);
+    ShowWindow(hwnd2, SW_RESTORE);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+    ShowWindow(hwnd2, SW_MINIMIZE);
+    todo_wine
+    check_active_state(hwnd3, hwnd3, hwnd3);
+
+    /* hide a topmost window */
+    ShowWindow(hwnd2, SW_RESTORE);
+    ShowWindow(hwnd3, SW_RESTORE);
+    ShowWindow(hwnd3, SW_MINIMIZE);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+
+    DestroyWindow(hwnd3);
+
+    /* hide an owned window */
+    ShowWindow(hwnd, SW_RESTORE);
+    ShowWindow(hwnd2, SW_RESTORE);
+    hwnd3 = CreateWindowExA(0, "MainWindowClass", "Owned window 3", WS_POPUP|WS_VISIBLE,
+                            100, 100, 200, 200, hwnd, 0, GetModuleHandleA(NULL), NULL);
+    ShowWindow(hwnd3, SW_MINIMIZE);
+    todo_wine
+    check_active_state(hwnd2, hwnd2, hwnd2);
+
+    /* hide an owner window */
+    ShowWindow(hwnd, SW_RESTORE);
+    ShowWindow(hwnd2, SW_RESTORE);
+    ShowWindow(hwnd3, SW_RESTORE);
+    ShowWindow(hwnd, SW_MINIMIZE);
+    todo_wine
+    check_active_state(hwnd2, hwnd2, hwnd2);
+
+    DestroyWindow(hwnd3);
+    DestroyWindow(hwnd2);
+    DestroyWindow(hwnd);
+}
+
 static void test_desktop( void )
 {
     HWND desktop = GetDesktopWindow();
@@ -10530,6 +10613,7 @@ START_TEST(win)
     test_LockWindowUpdate(hwndMain);
     test_desktop();
     test_hide_window();
+    test_minimize_window(hwndMain);
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
