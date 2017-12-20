@@ -72,7 +72,7 @@
 @ stub MFCreateWMVEncoderActivate
 @ stub MFEnumDeviceSources
 @ stub MFGetMultipleServiceProviders
-@ stub MFGetService
+@ stdcall MFGetService(ptr ptr ptr ptr)
 @ stdcall MFGetSupportedMimeTypes(ptr)
 @ stub MFGetSupportedSchemes
 @ stub MFGetTopoNodeCurrentType

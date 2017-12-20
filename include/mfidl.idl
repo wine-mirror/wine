@@ -256,3 +256,4 @@ cpp_quote("HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD cMedi
 cpp_quote("     IMFMediaType **types, IMFStreamDescriptor **descriptor);")
 cpp_quote("HRESULT WINAPI MFCreateTopology(IMFTopology **topology);")
 cpp_quote("HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *array);")
+cpp_quote("HRESULT WINAPI MFGetService(IUnknown *object, REFGUID service, REFIID iid, void **obj);")
