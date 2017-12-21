@@ -6532,6 +6532,8 @@ static void test_ShowWindow(void)
     LPARAM ret;
 
     SetRect(&rcMain, 120, 120, 210, 210);
+    SetRect(&rcMinimized, -32000, -32000, -32000 + GetSystemMetrics(SM_CXMINIMIZED),
+                                          -32000 + GetSystemMetrics(SM_CYMINIMIZED));
 
     hwnd = CreateWindowExA(0, "MainWindowClass", NULL,
                           WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
@@ -6568,8 +6570,10 @@ static void test_ShowWindow(void)
     ok(style & WS_VISIBLE, "window should be visible\n");
     ok(style & WS_MINIMIZE, "window should be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
-    GetWindowRect(hwnd, &rcMinimized);
-    ok(!EqualRect(&rcMain, &rcMinimized), "rects shouldn't match\n");
+    GetWindowRect(hwnd, &rc);
+    todo_wine
+    ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     /* shouldn't be able to resize minimized windows */
     ret = SetWindowPos(hwnd, 0, 0, 0,
                        (rcMinimized.right - rcMinimized.left) * 2,
@@ -6577,7 +6581,9 @@ static void test_ShowWindow(void)
                        SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
     ok(ret, "not expected ret: %lu\n", ret);
     GetWindowRect(hwnd, &rc);
-    ok(EqualRect(&rc, &rcMinimized), "rects should match\n");
+    todo_wine
+    ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
 
     ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
@@ -6625,7 +6631,9 @@ static void test_ShowWindow(void)
     ok(style & WS_MINIMIZE, "window should be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rc);
-    ok(!EqualRect(&rcMain, &rc), "rects shouldn't match\n");
+    todo_wine
+    ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
 
     ret = DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
     ok(!ret, "not expected ret: %lu\n", ret);
@@ -6635,7 +6643,9 @@ static void test_ShowWindow(void)
     ok(style & WS_MINIMIZE, "window should be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rc);
-    ok(!EqualRect(&rcMain, &rc), "rects shouldn't match\n");
+    todo_wine
+    ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
 
     ret = ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
@@ -6670,9 +6680,8 @@ static void test_ShowWindow(void)
     ok(style & WS_MINIMIZE, "window should be minimized\n");
     GetWindowRect(hwnd, &rc);
     todo_wine
-    ok((rc.left == -32000 || rc.left == 3000) &&
-       (rc.top == -32000 || rc.top == 3000),
-       "expected (-32000,-32000), got (%d,%d)\n", rc.left, rc.top);
+    ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     DestroyWindow(hwnd);
 
     hwnd = CreateWindowExA(0, "MainWindowClass", NULL,
@@ -6685,9 +6694,9 @@ static void test_ShowWindow(void)
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ok(style & WS_MINIMIZE, "window should be minimized\n");
     GetWindowRect(hwnd, &rc);
-    ok((rc.left == -32000 || rc.left == 3000) &&
-       (rc.top == -32000 || rc.top == 3000),
-       "expected (-32000,-32000), got (%d,%d)\n", rc.left, rc.top);
+    todo_wine
+    ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
     DestroyWindow(hwnd);
 }
 
