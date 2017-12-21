@@ -6528,12 +6528,16 @@ static void test_ShowWindow(void)
 {
     HWND hwnd;
     DWORD style;
-    RECT rcMain, rc, rcMinimized;
+    RECT rcMain, rc, rcMinimized, rcClient, rcEmpty;
     LPARAM ret;
 
-    SetRect(&rcMain, 120, 120, 210, 210);
+    SetRect(&rcClient, 0, 0, 90, 90);
+    rcMain = rcClient;
+    OffsetRect(&rcMain, 120, 120);
+    AdjustWindowRect(&rcMain, WS_CAPTION, 0);
     SetRect(&rcMinimized, -32000, -32000, -32000 + GetSystemMetrics(SM_CXMINIMIZED),
                                           -32000 + GetSystemMetrics(SM_CYMINIMIZED));
+    SetRectEmpty(&rcEmpty);
 
     hwnd = CreateWindowExA(0, "MainWindowClass", NULL,
                           WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
@@ -6551,6 +6555,9 @@ static void test_ShowWindow(void)
     GetWindowRect(hwnd, &rc);
     ok(EqualRect(&rcMain, &rc), "expected %s, got %s\n", wine_dbgstr_rect(&rcMain),
        wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    ok(EqualRect(&rcClient, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcClient), wine_dbgstr_rect(&rc));
 
     ret = ShowWindow(hwnd, SW_SHOW);
     ok(!ret, "not expected ret: %lu\n", ret);
@@ -6562,6 +6569,9 @@ static void test_ShowWindow(void)
     GetWindowRect(hwnd, &rc);
     ok(EqualRect(&rcMain, &rc), "expected %s, got %s\n", wine_dbgstr_rect(&rcMain),
        wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    ok(EqualRect(&rcClient, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcClient), wine_dbgstr_rect(&rc));
 
     ret = ShowWindow(hwnd, SW_MINIMIZE);
     ok(ret, "not expected ret: %lu\n", ret);
@@ -6574,6 +6584,10 @@ static void test_ShowWindow(void)
     todo_wine
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    todo_wine
+    ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
     /* shouldn't be able to resize minimized windows */
     ret = SetWindowPos(hwnd, 0, 0, 0,
                        (rcMinimized.right - rcMinimized.left) * 2,
@@ -6584,6 +6598,10 @@ static void test_ShowWindow(void)
     todo_wine
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    todo_wine
+    ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
 
     ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
@@ -6595,6 +6613,9 @@ static void test_ShowWindow(void)
     GetWindowRect(hwnd, &rc);
     ok(EqualRect(&rcMain, &rc), "expected %s, got %s\n", wine_dbgstr_rect(&rcMain),
        wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    ok(EqualRect(&rcClient, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcClient), wine_dbgstr_rect(&rc));
 
     ret = EnableWindow(hwnd, FALSE);
     ok(!ret, "not expected ret: %lu\n", ret);
@@ -6611,6 +6632,9 @@ static void test_ShowWindow(void)
     GetWindowRect(hwnd, &rc);
     ok(EqualRect(&rcMain, &rc), "expected %s, got %s\n", wine_dbgstr_rect(&rcMain),
        wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    ok(EqualRect(&rcClient, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcClient), wine_dbgstr_rect(&rc));
 
     ret = DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
     ok(!ret, "not expected ret: %lu\n", ret);
@@ -6622,6 +6646,9 @@ static void test_ShowWindow(void)
     GetWindowRect(hwnd, &rc);
     ok(EqualRect(&rcMain, &rc), "expected %s, got %s\n", wine_dbgstr_rect(&rcMain),
        wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    ok(EqualRect(&rcClient, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcClient), wine_dbgstr_rect(&rc));
 
     ret = ShowWindow(hwnd, SW_MINIMIZE);
     ok(ret, "not expected ret: %lu\n", ret);
@@ -6634,6 +6661,10 @@ static void test_ShowWindow(void)
     todo_wine
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    todo_wine
+    ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
 
     ret = DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
     ok(!ret, "not expected ret: %lu\n", ret);
@@ -6646,6 +6677,10 @@ static void test_ShowWindow(void)
     todo_wine
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    todo_wine
+    ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
 
     ret = ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
@@ -6657,6 +6692,9 @@ static void test_ShowWindow(void)
     GetWindowRect(hwnd, &rc);
     ok(EqualRect(&rcMain, &rc), "expected %s, got %s\n", wine_dbgstr_rect(&rcMain),
        wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    ok(EqualRect(&rcClient, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcClient), wine_dbgstr_rect(&rc));
 
     ret = DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
     ok(!ret, "not expected ret: %lu\n", ret);
@@ -6682,6 +6720,10 @@ static void test_ShowWindow(void)
     todo_wine
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    todo_wine
+    ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
     DestroyWindow(hwnd);
 
     hwnd = CreateWindowExA(0, "MainWindowClass", NULL,
@@ -6697,6 +6739,10 @@ static void test_ShowWindow(void)
     todo_wine
     ok(EqualRect(&rcMinimized, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcMinimized), wine_dbgstr_rect(&rc));
+    GetClientRect(hwnd, &rc);
+    todo_wine
+    ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
+       wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
     DestroyWindow(hwnd);
 }
 
