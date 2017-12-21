@@ -800,6 +800,29 @@ static void test_UDS_SETBUDDYINT(void)
     DestroyWindow(updown);
 }
 
+static void test_CreateUpDownControl(void)
+{
+    HWND updown, buddy;
+    DWORD range, pos;
+    RECT rect;
+
+    GetClientRect(parent_wnd, &rect);
+    updown = CreateUpDownControl(WS_CHILD | WS_BORDER | WS_VISIBLE,
+        0, 0, rect.right, rect.bottom, parent_wnd, 1, GetModuleHandleA(NULL), g_edit, 100, 10, 50);
+    ok(updown != NULL, "Failed to create control.\n");
+
+    buddy = (HWND)SendMessageA(updown, UDM_GETBUDDY, 0, 0);
+    ok(buddy == g_edit, "Unexpected buddy window.\n");
+
+    range = SendMessageA(updown, UDM_GETRANGE, 0, 0);
+    ok(range == MAKELONG(100, 10), "Unexpected range.\n");
+
+    pos = SendMessageA(updown, UDM_GETPOS, 0, 0);
+    ok(pos == MAKELONG(50, 1), "Unexpected position.\n");
+
+    DestroyWindow(updown);
+}
+
 START_TEST(updown)
 {
     HMODULE mod = GetModuleHandleA("comctl32.dll");
@@ -821,6 +844,7 @@ START_TEST(updown)
     test_updown_base();
     test_updown_unicode();
     test_UDS_SETBUDDYINT();
+    test_CreateUpDownControl();
 
     DestroyWindow(g_edit);
     DestroyWindow(parent_wnd);
