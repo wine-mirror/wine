@@ -2198,6 +2198,22 @@ static NTSTATUS fill_name_info( const ANSI_STRING *unix_name, FILE_NAME_INFORMAT
     return status;
 }
 
+static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer,
+                                      ULONG length, FILE_INFORMATION_CLASS info_class )
+{
+    SERVER_START_REQ( get_file_info )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->info_class = info_class;
+        wine_server_set_reply( req, buffer, length );
+        io->u.Status = wine_server_call( req );
+        io->Information = wine_server_reply_size( reply );
+    }
+    SERVER_END_REQ;
+    return io->u.Status;
+
+}
+
 /******************************************************************************
  *  NtQueryInformationFile		[NTDLL.@]
  *  ZwQueryInformationFile		[NTDLL.@]
@@ -2307,7 +2323,10 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     if (class != FilePipeInformation && class != FilePipeLocalInformation)
     {
         if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, NULL )))
-            return io->u.Status;
+        {
+            if (io->u.Status != STATUS_BAD_DEVICE_TYPE) return io->u.Status;
+            return server_get_file_info( hFile, io, ptr, len, class );
+        }
     }
 
     switch (class)

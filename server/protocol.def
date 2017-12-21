@@ -1264,7 +1264,15 @@ enum server_fd_type
     obj_handle_t event;         /* event set when finished */
 @END
 
-/* Queries volume information */
+/* Query file information */
+@REQ(get_file_info)
+    obj_handle_t handle;        /* handle to the file */
+    unsigned int info_class;    /* queried information class */
+@REPLY
+    VARARG(data,bytes);         /* file info data */
+@END
+
+/* Query volume information */
 @REQ(get_volume_info)
     obj_handle_t handle;        /* handle to the file */
     unsigned int info_class;    /* queried information class */

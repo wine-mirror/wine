@@ -2175,6 +2175,12 @@ int no_fd_flush( struct fd *fd, struct async *async )
     return 0;
 }
 
+/* default get_file_info() routine */
+void no_fd_get_file_info( struct fd *fd, unsigned int info_class )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+}
+
 /* default get_volume_info() routine */
 void no_fd_get_volume_info( struct fd *fd, unsigned int info_class )
 {
@@ -2382,6 +2388,18 @@ DECL_HANDLER(flush)
         release_object( async );
     }
     release_object( fd );
+}
+
+/* query file info */
+DECL_HANDLER(get_file_info)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+
+    if (fd)
+    {
+        fd->fd_ops->get_file_info( fd, req->info_class );
+        release_object( fd );
+    }
 }
 
 /* query volume info */
