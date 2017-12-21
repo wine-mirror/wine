@@ -293,10 +293,15 @@ static HWND create_updown_control(DWORD style, HWND buddy)
     RECT rect;
 
     GetClientRect(parent_wnd, &rect);
-    updown = CreateUpDownControl(WS_CHILD | WS_BORDER | WS_VISIBLE | style,
-                                 0, 0, rect.right, rect.bottom, parent_wnd, 1, GetModuleHandleA(NULL), buddy,
-                                 100, 0, 50);
+    updown = CreateWindowExA(0, UPDOWN_CLASSA, NULL, WS_CHILD | WS_BORDER | WS_VISIBLE | style,
+                           0, 0, rect.right, rect.bottom,
+                           parent_wnd, (HMENU)1, GetModuleHandleA(NULL), NULL);
+    ok(updown != NULL, "Failed to create UpDown control.\n");
     if (!updown) return NULL;
+
+    SendMessageA(updown, UDM_SETBUDDY, (WPARAM)buddy, 0);
+    SendMessageA(updown, UDM_SETRANGE, 0, MAKELONG(100, 0));
+    SendMessageA(updown, UDM_SETPOS, 0, MAKELONG(50, 0));
 
     oldproc = (WNDPROC)SetWindowLongPtrA(updown, GWLP_WNDPROC,
                                          (LONG_PTR)updown_subclass_proc);
