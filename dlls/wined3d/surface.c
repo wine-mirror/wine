@@ -2698,13 +2698,15 @@ static BOOL ffp_blitter_use_cpu_clear(struct wined3d_rendertarget_view *view)
 {
     struct wined3d_resource *resource;
     struct wined3d_texture *texture;
+    DWORD locations;
 
     resource = view->resource;
     if (resource->type == WINED3D_RTYPE_BUFFER)
         return resource->pool == WINED3D_POOL_SYSTEM_MEM;
 
     texture = texture_from_resource(resource);
-    if (texture->sub_resources[view->sub_resource_idx].locations & resource->map_binding)
+    locations = texture->sub_resources[view->sub_resource_idx].locations;
+    if (locations & (resource->map_binding | WINED3D_LOCATION_DISCARDED))
         return resource->pool == WINED3D_POOL_SYSTEM_MEM || (texture->flags & WINED3D_TEXTURE_PIN_SYSMEM);
 
     return resource->pool == WINED3D_POOL_SYSTEM_MEM && !(texture->flags & WINED3D_TEXTURE_CONVERTED);

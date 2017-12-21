@@ -9911,11 +9911,10 @@ static void test_color_fill(void)
             hr = IDirectDrawSurface7_Lock(surface, NULL, &surface_desc, DDLOCK_READONLY, 0);
             ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, surface %s.\n", hr, tests[i].name);
             color = surface_desc.lpSurface;
-            todo_wine_if(tests[i].caps & DDSCAPS_VIDEOMEMORY && U3(z_fmt).dwZBitMask != 0xffff)
-                ok((*color & U3(z_fmt).dwZBitMask) == (tests[i].result & U3(z_fmt).dwZBitMask)
-                        || broken((*color & U3(z_fmt).dwZBitMask) == (expected_broken & U3(z_fmt).dwZBitMask)),
-                        "Got clear result 0x%08x, expected 0x%08x, surface %s.\n",
-                        *color & U3(z_fmt).dwZBitMask, tests[i].result & U3(z_fmt).dwZBitMask, tests[i].name);
+            ok((*color & U3(z_fmt).dwZBitMask) == (tests[i].result & U3(z_fmt).dwZBitMask)
+                    || broken((*color & U3(z_fmt).dwZBitMask) == (expected_broken & U3(z_fmt).dwZBitMask)),
+                    "Got clear result 0x%08x, expected 0x%08x, surface %s.\n",
+                    *color & U3(z_fmt).dwZBitMask, tests[i].result & U3(z_fmt).dwZBitMask, tests[i].name);
             hr = IDirectDrawSurface7_Unlock(surface, NULL);
             ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, surface %s.\n", hr, tests[i].name);
         }
