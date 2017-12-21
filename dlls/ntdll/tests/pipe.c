@@ -1142,6 +1142,76 @@ static void test_volume_info(void)
     CloseHandle( write );
 }
 
+#define test_file_name_fail(a,b) _test_file_name_fail(__LINE__,a,b)
+static void _test_file_name_fail(unsigned line, HANDLE pipe, NTSTATUS expected_status)
+{
+    char buffer[512];
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    status = NtQueryInformationFile( pipe, &iosb, buffer, sizeof(buffer), FileNameInformation );
+    ok_(__FILE__,line)( status == expected_status, "NtQueryInformationFile failed: %x, expected %x\n",
+                        status, expected_status );
+}
+
+#define test_file_name(a) _test_file_name(__LINE__,a)
+static void _test_file_name(unsigned line, HANDLE pipe)
+{
+    char buffer[512];
+    FILE_NAME_INFORMATION *name_info = (FILE_NAME_INFORMATION*)buffer;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    static const WCHAR nameW[] =
+        {'\\','n','t','d','l','l','_','t','e','s','t','s','_','p','i','p','e','.','c'};
+
+    memset( buffer, 0xaa, sizeof(buffer) );
+    memset( &iosb, 0xaa, sizeof(iosb) );
+    status = NtQueryInformationFile( pipe, &iosb, buffer, sizeof(buffer), FileNameInformation );
+    todo_wine
+    ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryInformationFile failed: %x\n", status );
+    if (status) return;
+    ok_(__FILE__,line)( iosb.Status == STATUS_SUCCESS, "Status = %x\n", iosb.Status );
+    ok_(__FILE__,line)( iosb.Information == sizeof(name_info->FileNameLength) + sizeof(nameW),
+        "Information = %lu\n", iosb.Information );
+    ok( name_info->FileNameLength == sizeof(nameW), "FileNameLength = %u\n", name_info->FileNameLength );
+    ok( !memcmp(name_info->FileName, nameW, sizeof(nameW)), "FileName = %s\n", wine_dbgstr_w(name_info->FileName) );
+
+    /* too small buffer */
+    memset( buffer, 0xaa, sizeof(buffer) );
+    memset( &iosb, 0xaa, sizeof(iosb) );
+    status = NtQueryInformationFile( pipe, &iosb, buffer, 20, FileNameInformation );
+    ok( status == STATUS_BUFFER_OVERFLOW, "NtQueryInformationFile failed: %x\n", status );
+    ok( iosb.Status == STATUS_BUFFER_OVERFLOW, "Status = %x\n", iosb.Status );
+    ok( iosb.Information == 20, "Information = %lu\n", iosb.Information );
+    ok( name_info->FileNameLength == sizeof(nameW), "FileNameLength = %u\n", name_info->FileNameLength );
+    ok( !memcmp(name_info->FileName, nameW, 16), "FileName = %s\n", wine_dbgstr_w(name_info->FileName) );
+
+    /* too small buffer */
+    memset( buffer, 0xaa, sizeof(buffer) );
+    memset( &iosb, 0xaa, sizeof(iosb) );
+    status = NtQueryInformationFile( pipe, &iosb, buffer, 4, FileNameInformation );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationFile failed: %x\n", status );
+}
+
+static void test_file_info(void)
+{
+    HANDLE server, client;
+
+    if (!create_pipe_pair( &server, &client, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_INBOUND,
+                           PIPE_TYPE_MESSAGE, 4096 )) return;
+
+    test_file_name( client );
+    test_file_name( server );
+
+    DisconnectNamedPipe( server );
+    todo_wine
+    test_file_name_fail( client, STATUS_PIPE_DISCONNECTED );
+
+    CloseHandle( server );
+    CloseHandle( client );
+}
+
 START_TEST(pipe)
 {
     if (!init_func_ptrs())
@@ -1185,4 +1255,5 @@ START_TEST(pipe)
     read_pipe_test(PIPE_ACCESS_OUTBOUND, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
 
     test_volume_info();
+    test_file_info();
 }
