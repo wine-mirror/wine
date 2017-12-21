@@ -152,6 +152,7 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 static void pipe_server_dump( struct object *obj, int verbose );
 static void pipe_server_destroy( struct object *obj);
 static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void pipe_server_get_file_info( struct fd *fd, unsigned int info_class );
 
 static const struct object_ops pipe_server_ops =
 {
@@ -183,7 +184,7 @@ static const struct fd_ops pipe_server_fd_ops =
     pipe_end_read,                /* read */
     pipe_end_write,               /* write */
     pipe_end_flush,               /* flush */
-    no_fd_get_file_info,          /* get_file_info */
+    pipe_server_get_file_info,    /* get_file_info */
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_server_ioctl,            /* ioctl */
     no_fd_queue_async,            /* queue_async */
@@ -194,6 +195,7 @@ static const struct fd_ops pipe_server_fd_ops =
 static void pipe_client_dump( struct object *obj, int verbose );
 static void pipe_client_destroy( struct object *obj );
 static int pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static void pipe_client_get_file_info( struct fd *fd, unsigned int info_class );
 
 static const struct object_ops pipe_client_ops =
 {
@@ -225,7 +227,7 @@ static const struct fd_ops pipe_client_fd_ops =
     pipe_end_read,                /* read */
     pipe_end_write,               /* write */
     pipe_end_flush,               /* flush */
-    no_fd_get_file_info,          /* get_file_info */
+    pipe_client_get_file_info,    /* get_file_info */
     pipe_end_get_volume_info,     /* get_volume_info */
     pipe_client_ioctl,            /* ioctl */
     no_fd_queue_async,            /* queue_async */
@@ -543,6 +545,55 @@ static int pipe_end_flush( struct fd *fd, struct async *async )
         set_error( STATUS_PENDING );
     }
     return 1;
+}
+
+static void pipe_end_get_file_info( struct fd *fd, struct named_pipe *pipe, unsigned int info_class )
+{
+    switch (info_class)
+    {
+    case FileNameInformation:
+        {
+            FILE_NAME_INFORMATION *name_info;
+            data_size_t name_len, reply_size;
+            const WCHAR *name;
+
+            if (get_reply_max_size() < sizeof(*name_info))
+            {
+                set_error( STATUS_INFO_LENGTH_MISMATCH );
+                return;
+            }
+
+            name = get_object_name( &pipe->obj, &name_len );
+            reply_size = offsetof( FILE_NAME_INFORMATION, FileName[name_len/sizeof(WCHAR) + 1] );
+            if (reply_size > get_reply_max_size())
+            {
+                reply_size = get_reply_max_size();
+                set_error( STATUS_BUFFER_OVERFLOW );
+            }
+
+            if (!(name_info = set_reply_data_size( reply_size ))) return;
+            name_info->FileNameLength = name_len + sizeof(WCHAR);
+            name_info->FileName[0] = '\\';
+            reply_size -= offsetof( FILE_NAME_INFORMATION, FileName[1] );
+            if (reply_size) memcpy( &name_info->FileName[1], name, reply_size );
+            break;
+        }
+    default:
+        no_fd_get_file_info( fd, info_class );
+    }
+}
+
+static void pipe_server_get_file_info( struct fd *fd, unsigned int info_class )
+{
+    struct pipe_server *server = get_fd_user( fd );
+    pipe_end_get_file_info( fd, server->pipe, info_class );
+}
+
+static void pipe_client_get_file_info( struct fd *fd, unsigned int info_class )
+{
+    struct pipe_client *client = get_fd_user( fd );
+    if (client->server) pipe_end_get_file_info( fd, client->server->pipe, info_class );
+    else set_error( STATUS_PIPE_DISCONNECTED );
 }
 
 static void pipe_end_get_volume_info( struct fd *fd, unsigned int info_class )

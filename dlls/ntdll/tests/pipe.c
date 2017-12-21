@@ -1168,9 +1168,7 @@ static void _test_file_name(unsigned line, HANDLE pipe)
     memset( buffer, 0xaa, sizeof(buffer) );
     memset( &iosb, 0xaa, sizeof(iosb) );
     status = NtQueryInformationFile( pipe, &iosb, buffer, sizeof(buffer), FileNameInformation );
-    todo_wine
     ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryInformationFile failed: %x\n", status );
-    if (status) return;
     ok_(__FILE__,line)( iosb.Status == STATUS_SUCCESS, "Status = %x\n", iosb.Status );
     ok_(__FILE__,line)( iosb.Information == sizeof(name_info->FileNameLength) + sizeof(nameW),
         "Information = %lu\n", iosb.Information );
@@ -1205,7 +1203,6 @@ static void test_file_info(void)
     test_file_name( server );
 
     DisconnectNamedPipe( server );
-    todo_wine
     test_file_name_fail( client, STATUS_PIPE_DISCONNECTED );
 
     CloseHandle( server );
