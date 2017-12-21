@@ -5934,6 +5934,7 @@ static void test_deferred_action(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+todo_wine
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
 error:

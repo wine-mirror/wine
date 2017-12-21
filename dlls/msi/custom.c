@@ -1132,6 +1132,23 @@ static UINT HANDLE_CustomType53_54( MSIPACKAGE *package, const WCHAR *source, co
     return wait_thread_handle( info );
 }
 
+static BOOL action_type_matches_script( UINT type, UINT script )
+{
+    switch (script)
+    {
+    case SCRIPT_NONE:
+    case SCRIPT_INSTALL:
+        return !(type & msidbCustomActionTypeCommit) && !(type & msidbCustomActionTypeRollback);
+    case SCRIPT_COMMIT:
+        return (type & msidbCustomActionTypeCommit);
+    case SCRIPT_ROLLBACK:
+        return (type & msidbCustomActionTypeRollback);
+    default:
+        ERR("unhandled script %u\n", script);
+    }
+    return FALSE;
+}
+
 static UINT defer_custom_action( MSIPACKAGE *package, const WCHAR *action, UINT type )
 {
     WCHAR *actiondata = msi_dup_property( package->db, action );
@@ -1209,7 +1226,7 @@ UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action )
         if (type & msidbCustomActionTypeNoImpersonate)
             WARN("msidbCustomActionTypeNoImpersonate not handled\n");
 
-        if (package->script == SCRIPT_NONE)
+        if (!action_type_matches_script( type, package->script ))
         {
             rc = defer_custom_action( package, action, type );
             goto end;
