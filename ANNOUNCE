@@ -1,12 +1,12 @@
-The Wine development release 3.0-rc2 is now available.
+The Wine development release 3.0-rc3 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/3.0/wine-3.0-rc2.tar.xz
-  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0-rc2.tar.xz
+  https://dl.winehq.org/wine/source/3.0/wine-3.0-rc3.tar.xz
+  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0-rc3.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,138 +22,132 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 3.0-rc2 (total 17):
+Bugs fixed in 3.0-rc3 (total 24):
 
-  22682  Multiple games need function d3dx9_36.dll.D3DXGetShaderInputSemantics (Far Cry 2/3, Avatar, Faery: Legends of Avalon, Civilization 4, Deathspank, Of Orcs and Men)
-  32202  ActiveX install attempts to run wrong inf section
-  39586  Fallout 4 - Steam Version - Crash on Start-up
-  40046  Multiple games require CheckFormatSupport() (Banished, Magic Duels, UE4 tech demos, BioShock 2, Chronicles of Mystara, STO, Lichdom)
-  40680  Rocket league needs bcrypt.dll.BCryptGenerateSymmetricKey
-  40692  Rocket League needs AES encryption/ decryption implemented in bcrypt.dll
-  40901  Factorio crashes with a stack overflow
-  41463  Undefined symbols: _DisableThreadLibraryCalls _RaiseException
-  43643  Combobox not longer has dropdown
-  43915  uTorrent 2.2.1 build 25302 crashes after deleting the last torrent and exiting
-  43953  Regression in Spellforce 2: message boxes about fatal dx9 errors appear on map loading
-  44010  Armel support
-  44130  Possible access to unintended variable in "dlls/comctl32/imagelist.c" line 299
-  44147  regression in ole2 datacache
-  44148  DX Library: Multiple PlaySoundMem() calls don't work when using XAudio2
-  44153  ShellExecute crash when opening explorer.exe
-  44171  PTHREAD_STACK_MIN breaks build on GNU hurd
+   9159  shell32/explorer: Add support for Progman DDE interface
+  10164  Pool of Radiance 1.4 intermittently shows garbage in surfaces
+  13548  Wine's setupapi does not know how to recursively delete registry keys
+  14937  Astroplanner 1.6.1 crashes when closing "preferences" window (TOOLTIPS_SubclassProc must be unsubclassed during WM_NCDESTROY)
+  21849  Sonic & Knuckles Collection: arrow buttons are very narrow
+  28652  SlingPlayer 2 has transparent view screen while loading
+  29871  drawing in photoshop cs5 is almost impossible
+  33268  SlingPlayer 2.0.4 screen flickers when pointer over screen
+  35562  Slingplayer 2 crashes when starting stream
+  36517  SlovoEB 2.1 (.NET 4.0 app) crashes on startup (unsupported WICPixelFormat32bppGrayFloat)
+  41220  Provide fallback implementation of strnlen for OS versions that don't have it in their Libc (Leopard, Snow Leopard, et al)
+  42924  Regression in Warframe - Crash when Updating user information (Usually when ending a mission). Last working version Wine 1.9.17.
+  43004  qedit/tests/mediadet.c intermittent crash
+  43217  Wine cannot execute position-independent (PIE) host executables via CreateProcess()
+  43627  regression in Age of Empires 2: ingame mostly black in recent wine version
+  44163  Far Cry crashes when opening the save game menu
+  44168  Wizardry 8 hangs when starting a new game or loading a saved game
+  44170  MSMoney data File password no more recognized
+  44173  error: use of undeclared identifier 'kCCAlgorithmAES'
+  44174  implicit declaration of function 'CCCryptorCreateWithMode'
+  44180  TMIDI Player: Crash on startup with a stack overflow
+  44194  Serious Sam Classic (First and Second Encounter) shifts the view and makes the game unplayable
+  44196  Autocad 2002 - Scrambled numbers in output
+  44201  SlingPlayer 2.0 crashes on unimplemented function mf.dll.MFGetService
 
 ----------------------------------------------------------------
 
-Changes since 3.0-rc1:
+Changes since 3.0-rc2:
 
-Akihiro Sagawa (2):
-      po: Update Japanese Translation.
-      ntdll/tests: Add tests for time zone names.
+Akihiro Sagawa (1):
+      include: Fix a typo in newly added edit control message.
 
-Alex Henrie (2):
-      appwiz.cpl: Add comment explaining why we use HTTP instead of HTTPS.
-      include: Discourage use of 'break' or 'continue' inside __TRY/__EXCEPT.
+Alex Henrie (4):
+      po: Update Catalan translation.
+      gdi32: Scale outline font metrics as signed integers.
+      mmdevapi/tests: Fix memory leaks (Coverity).
+      netapi32/tests: Print NetWkstaTransportEnum error code on test failure.
 
-Alexandre Julliard (12):
-      comctl32/imagelist: Use the correct allocation size for the image mask.
-      explorer: Fix parsing command line that contains spaces.
-      ntdll: Only require MAP_SHARED for writable mappings.
-      ntdll: Run the thread/process detach code on the thread stack.
-      ntdll: Fix handling of floating point arguments in relay debugging on ARM.
-      ntdll: Set all registers in set_cpu_context() on ARM.
-      ntdll: Reimplement thread initialization in assembler on ARM.
-      ntdll: Switch back to the initial stack for thread exit on ARM.
-      ntdll: Define PTHREAD_STACK_MIN if it's missing.
-      libport: Add a replacement implementation for strnlen.
-      ntdll: Reset the exit frame when switching back to it.
-      cabinet: Treat only -1 as an error from the FDICopy callback.
+Alexandre Julliard (5):
+      kernel32: Properly detect ELF binaries that are position independent executables.
+      msvcp90/tests: Use the correct return type for basic_istream::ipfx.
+      kernel32/tests: Improve tests for 32/64-bit image mappings.
+      ddraw: Validate the surface descriptor size in GetDisplayMode.
+      gdi32: Fix clipping to the DIB rectangle in GetPixel().
 
-Andrew Eikum (1):
-      xaudio2: Account for abandoned buffer bytes.
+Andrey Gusev (4):
+      comctl32/tests: Fix a typo in ok() message.
+      kernel32/tests: Fix a typo in ok() message.
+      msi/tests: Fix typos in ok() messages.
+      winhttp/tests: Fix typos in ok() messages.
 
-Andrey Gusev (2):
-      usp10: Fix a typo in an ERR() message.
-      po: Update Ukrainian translation.
-
-Can Taşan (1):
-      po: Update Turkish translation.
-
-Dmitry Timoshkov (5):
-      secur32/tests: Add a test for Negotiate behaviour with SECPKG_ATTR_NEGOTIATION_INFO query.
-      secur32/tests: Add a test for NTLM behaviour with SECPKG_ATTR_NEGOTIATION_INFO query.
-      secur32/tests: Add a test for Schannel behaviour with SECPKG_ATTR_NEGOTIATION_INFO query.
-      wine.inf: Add "Security Packages" key.
-      bcrypt: Add some crypto-provider related stubs.
-
-Hans Leidekker (2):
-      wsdapi/tests: Register an exception with the firewall to avoid a dialog.
-      dplayx/tests: Remove the firewall exception after running the tests.
-
-Henri Verbeet (2):
-      d2d1/tests: Introduce an ARRAY_SIZE macro.
-      include: Remove some superfluous semicolons.
+Hans Leidekker (6):
+      webservices/tests: Merge the listener tests into channel.c.
+      webservices/tests: Register an exception with the firewall to avoid a dialog.
+      bcrypt: Fix build on macOS 10.8 and older.
+      bcrypt: Require macOS version 10.7 or newer for encryption support.
+      bcrypt: Fix build error on systems with old GnuTLS.
+      winhttp/tests: Fix an intermittent test failure on Windows XP/Vista.
 
 Huw D. M. Davies (1):
-      ole32: Correctly save the remaining formats if their data has not been set.
+      gdi32: Set otmMacLineGap from the line gap in the hhea table.
 
-Jacek Caban (3):
-      mshtml/tests: Skip documentMode tests on IE7.
-      jscript: Do not pass DISPATCH_JSCRIPT_CALLEREXECSSOURCE flag for calls across different script contexts.
-      mshtml/tests: Added a test of calls to functions from different frame.
+Jacek Caban (6):
+      mshtml.idl: Added IDOMMouseEvent declaration.
+      mshtml.idl: Added events dispinterfaces declarations.
+      jscript: Use WARN for exception traces instead of separated debug channel.
+      ntdll/tests: Add NtQueryInformationFile(FileNameInformation) on named pipes tests.
+      server: Introduce get_file_info request for server-side NtQueryInformationFile implementation.
+      server: Add support for querying FileNameInformation on named pipes.
 
-Joel Holdsworth (1):
-      urlmon: Support [Add.Code] sections in ActiveX INF files.
+Józef Kucia (1):
+      wined3d: Consider CPU blitter when clearing discarded textures.
 
-Julian Rüger (1):
-      po: Update German translation.
-
-Józef Kucia (8):
-      wined3d: Fix device format support checks for multiple usages.
-      d3d9/tests: Add test for checking D3DUSAGE_AUTOGENMIPMAP support.
-      d3d11: Implement d3d10_device_CheckFormatSupport().
-      wined3d: Recognize SM5 eval_sample_index instruction.
-      d3d10core/tests: Add test for SV_ClipDistance.
-      d3d10core/tests: Add test for relative addressing of vertex shader inputs.
-      d3d10core/tests: Add test for initial depth stencil state.
-      d3d10core/tests: Add test for combined clip and cull distances.
-
-Kim Malmo (1):
+Kim Malmo (3):
       po: Update Norwegian translation.
+      po: Update Norwegian translation.
+      po: Update Simplified Chinese translation.
 
-Martin Payne (4):
-      kernel32: Don't report valid non-Win16 NE executables (e.g. OS/2) as broken.
-      krnl386.exe16: Shared libraries have a ".exe" rather than ".dll" extension on Windows < 3.0.
-      user.exe16: Implemented OldExitWindows() user.exe16 function.
-      user.exe16: Fix handling of 16-bit HBITMAPs in InsertMenu16.
+Louis Lenders (1):
+      kernelbase: Quiet a noisy fixme in QuirkIsEnabled3.
 
-Martin Storsjo (1):
-      msvcrt: Fix copy/paste typos in arm64 setjmp/longjmp.
+Mingcong Bai (1):
+      po: Update Simplified Chinese translation.
 
-Matteo Bruni (3):
-      d3d11/tests: Add a couple of testcases for UINT, sRGB UAVs.
-      d3d11/tests: Add tests for GenerateMips().
-      d3d11/tests: Add a couple of testcases for sRGB SRVs.
+Nikolay Sivov (13):
+      user32/tests: Remove runtime check for GetMenuBarInfo().
+      user32/tests: Class API tests for interaction with activation contexts.
+      comctl32/tests: Add Edit control tests.
+      comctl32/tests: Add ListBox tests.
+      comctl32/tests: Remove some workarounds that no longer apply.
+      comctl32/tooltips: Remove window subclass right before window is destroyed.
+      include: Add newer definitions for user controls.
+      mfplat: Implement MFGetService().
+      comctl32/tests: Use CreateWindowEx() to create UpDown controls.
+      comctl32/tests: Add separate test for CreateUpDownControl().
+      comctl32/updown: Reset control width conditionally on UDM_SETBUDDY with NULL buddy handle.
+      comctl32/tooltips: Reset window subclass data when removing tools.
+      comctl32/tests: Make sure v6 module is used when running tests, run more tests with v6 module.
 
-Nikolay Sivov (7):
-      wshom: Implement Popup() method.
-      comctl32/listview: Directly reset focused item on item count change.
-      user32/tests: Release window DCs consistently.
-      comctl32/tests: Rename test file.
-      comctl32/tests: Add ComboBox tests.
-      comctl32/tests: Add Static control tests.
-      d2d1/tests: A test to show that DC is validated on BindDC().
+Piotr Caban (2):
+      msvcr71: Don't raise exception in _invalid_parameter.
+      msvcrt: Correctly set rounding mode in _ftol implementation.
 
 Sebastian Lackner (1):
-      Revert "user32/combo: Set listbox popup height correctly and add tests.".
+      user32: Globally invalidate key state on changes in other threads.
 
-Sergio Gómez Del Real (1):
-      ole32: Correctly save the dib format if its data has not been set.
+Stefan Dösinger (2):
+      d3d9/tests: Work around focus-follows-mouse test failures.
+      d3d8/tests: Work around focus-follows-mouse test failures.
 
-Stefan Dösinger (1):
-      dxdiag: Recognise /dontskip.
+Zebediah Figura (10):
+      user32/tests: Don't leave hwndMain in a topmost state.
+      user32/tests: Add more tests for SetActiveWindow().
+      user32/tests: Add activation tests for hiding windows.
+      user32/tests: Add activation tests for minimizing windows.
+      winegstreamer: Hold a reference to the filter in push_data().
+      user32/tests: Explicitly test minimized window size.
+      user32/tests: Also test client rect size.
+      user32/tests: Add a basic test for maximizing windows.
+      Revert "msi: Don't execute a deferred custom action when not running the install script.".
+      regedit/tests: Skip tests if running as non-elevated admin.
 
-Zebediah Figura (1):
-      po: Fix some MSI translations.
+Zhiyi Zhang (1):
+      winecfg: Fix a crash when inputting non-ASCII dll override name.
 
 --
 Alexandre Julliard
