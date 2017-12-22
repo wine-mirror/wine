@@ -3635,6 +3635,12 @@ START_TEST(regedit)
         return;
     }
 
+    if (!run_regedit_exe("regedit.exe /s test.reg") && GetLastError() == ERROR_ELEVATION_REQUIRED)
+    {
+        win_skip("User is a non-elevated admin; skipping regedit tests.\n");
+        return;
+    }
+
     test_basic_import();
     test_basic_import_unicode();
     test_basic_import_31();
