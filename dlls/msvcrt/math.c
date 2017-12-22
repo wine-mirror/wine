@@ -130,7 +130,7 @@ int CDECL MSVCRT__set_SSE2_enable(int flag)
     return sse2_enabled;
 }
 
-#ifdef _WIN64
+#if defined(_WIN64) && _MSVCR_VER>=120
 /*********************************************************************
  *      _set_FMA3_enable (MSVCR120.@)
  */
@@ -813,13 +813,15 @@ MSVCRT_long CDECL MSVCRT_labs( MSVCRT_long n )
     return n >= 0 ? n : -n;
 }
 
+#if _MSVCR_VER>=100
 /*********************************************************************
- *		llabs (MSVCRT.@)
+ *		llabs (MSVCR100.@)
  */
 MSVCRT_longlong CDECL MSVCRT_llabs( MSVCRT_longlong n )
 {
     return n >= 0 ? n : -n;
 }
+#endif
 
 /*********************************************************************
  *		_abs64 (MSVCRT.@)
@@ -1227,6 +1229,7 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
     return 0;
 }
 
+#if _MSVCR_VER>=120
 /*********************************************************************
  *		fegetenv (MSVCR120.@)
  */
@@ -1237,7 +1240,9 @@ int CDECL MSVCRT_fegetenv(MSVCRT_fenv_t *env)
     env->status = _statusfp();
     return 0;
 }
+#endif
 
+#if _MSVCR_VER>=140
 /*********************************************************************
  *		__fpe_flt_rounds (UCRTBASE.@)
  */
@@ -1259,6 +1264,9 @@ int CDECL __fpe_flt_rounds(void)
 #endif
     }
 }
+#endif
+
+#if _MSVCR_VER>=120
 
 /*********************************************************************
  *		fegetround (MSVCR120.@)
@@ -1278,6 +1286,8 @@ int CDECL MSVCRT_fesetround(int round_mode)
     _controlfp(round_mode, MSVCRT__RC_CHOP);
     return 0;
 }
+
+#endif /* _MSVCR_VER>=120 */
 
 /*********************************************************************
  *		_copysign (MSVCRT.@)
@@ -1315,6 +1325,7 @@ void CDECL _fpreset(void)
 #endif
 }
 
+#if _MSVCR_VER>=120
 /*********************************************************************
  *              fesetenv (MSVCR120.@)
  */
@@ -1382,6 +1393,7 @@ int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
 #endif
     return 1;
 }
+#endif
 
 /*********************************************************************
  *		_isnan (MSVCRT.@)
@@ -1469,8 +1481,10 @@ double CDECL MSVCRT__yn(int order, double num)
   return retval;
 }
 
+#if _MSVCR_VER>=120
+
 /*********************************************************************
- *		_nearbyint (MSVCRT.@)
+ *		_nearbyint (MSVCR120.@)
  */
 double CDECL MSVCRT_nearbyint(double num)
 {
@@ -1482,7 +1496,7 @@ double CDECL MSVCRT_nearbyint(double num)
 }
 
 /*********************************************************************
- *		_nearbyintf (MSVCRT.@)
+ *		_nearbyintf (MSVCR120.@)
  */
 float CDECL MSVCRT_nearbyintf(float num)
 {
@@ -1492,6 +1506,8 @@ float CDECL MSVCRT_nearbyintf(float num)
     return MSVCRT_nearbyint(num);
 #endif
 }
+
+#endif /* _MSVCR_VER>=120 */
 
 /*********************************************************************
  *		_nextafter (MSVCRT.@)
@@ -1888,8 +1904,9 @@ MSVCRT_ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 }
 #endif /* ifdef __i386__ */
 
+#if _MSVCR_VER>=100
 /*********************************************************************
- *		lldiv (MSVCRT.@)
+ *		lldiv (MSVCR100.@)
  */
 MSVCRT_lldiv_t CDECL MSVCRT_lldiv(MSVCRT_longlong num, MSVCRT_longlong denom)
 {
@@ -1900,6 +1917,7 @@ MSVCRT_lldiv_t CDECL MSVCRT_lldiv(MSVCRT_longlong num, MSVCRT_longlong denom)
 
   return ret;
 }
+#endif
 
 #ifdef __i386__
 
@@ -2624,6 +2642,8 @@ MSVCRT_longlong CDECL MSVCR120_llrintl(LDOUBLE x)
     return MSVCR120_llrint(x);
 }
 
+#if _MSVCR_VER>=120
+
 /*********************************************************************
  *      round (MSVCR120.@)
  */
@@ -3126,6 +3146,8 @@ LDOUBLE CDECL MSVCR120_atanhl(LDOUBLE x)
     return MSVCR120_atanh(x);
 }
 
+#endif /* _MSVCR_VER>=120 */
+
 /*********************************************************************
  *      _scalb  (MSVCRT.@)
  *      scalbn  (MSVCR120.@)
@@ -3145,6 +3167,8 @@ float CDECL MSVCRT__scalbf(float num, MSVCRT_long power)
 {
   return MSVCRT_ldexp(num, power);
 }
+
+#if _MSVCR_VER>=120
 
 /*********************************************************************
  *      scalbnl  (MSVCR120.@)
@@ -3337,3 +3361,5 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
 
     return res;
 }
+
+#endif /* _MSVCR_VER>=120 */
