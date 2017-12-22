@@ -4777,7 +4777,7 @@ static void test_update(void)
     MsiCloseHandle(rec);
 
     r = MsiViewFetch(view, &rec);
-    ok(r == ERROR_NO_MORE_ITEMS, "Expectd ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
     MsiViewClose(view);
     MsiCloseHandle(view);
