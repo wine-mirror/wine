@@ -944,7 +944,7 @@ static void _read_request_data(struct test_request *req, struct info *info, cons
     WaitForSingleObject( info->wait, INFINITE );
 
     len = strlen(expected_data);
-    ok(!memcmp(buffer, expected_data, len), "unexpeceted data\n");
+    ok(!memcmp(buffer, expected_data, len), "unexpected data\n");
 }
 
 static void test_persistent_connection(int port)
