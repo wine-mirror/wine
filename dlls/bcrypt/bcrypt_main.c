@@ -24,7 +24,7 @@
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
 #include <AvailabilityMacros.h>
 #include <CommonCrypto/CommonCryptor.h>
-#elif defined(SONAME_LIBGNUTLS)
+#elif defined(HAVE_GNUTLS_CIPHER_INIT)
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
 #endif
