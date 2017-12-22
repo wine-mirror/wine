@@ -10402,7 +10402,7 @@ msgstr ""
 "/d             创建目录符号链接。\n"
 "/h             创建硬链接。\n"
 "/j             创建目录结。\n"
-"link_nam 为符号链接的名称。\n"
+"link_name 为符号链接的名称。\n"
 "target 为 link_name 指向的路径。\n"
 
 #: cmd.rc:312
