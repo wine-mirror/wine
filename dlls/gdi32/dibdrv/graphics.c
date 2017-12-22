@@ -1108,6 +1108,7 @@ COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
     POINT pt;
+    RECT rect;
     DWORD pixel;
 
     TRACE( "(%p, %d, %d)\n", dev, x, y );
@@ -1115,10 +1116,11 @@ COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
     pt.x = x;
     pt.y = y;
     lp_to_dp( dc, &pt, 1 );
-
-    if (pt.x < 0 || pt.x >= pdev->dib.rect.right - pdev->dib.rect.left ||
-        pt.y < 0 || pt.y >= pdev->dib.rect.bottom - pdev->dib.rect.top)
-        return CLR_INVALID;
+    rect.left = pt.x;
+    rect.top =  pt.y;
+    rect.right = rect.left + 1;
+    rect.bottom = rect.top + 1;
+    if (!clip_rect_to_dib( &pdev->dib, &rect )) return CLR_INVALID;
 
     pixel = pdev->dib.funcs->get_pixel( &pdev->dib, pt.x, pt.y );
     return pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pixel );
