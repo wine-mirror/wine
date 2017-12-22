@@ -5220,7 +5220,7 @@ typedef struct _tagEDITBALLOONTIP
     INT ttiIcon;
 } EDITBALLOONTIP, *PEDITBALLOONTIP;
 
-#define ECM_FIRSP                 0x1500
+#define ECM_FIRST                 0x1500
 #define EM_SETCUEBANNER           (ECM_FIRST + 1)
 #define EM_GETCUEBANNER           (ECM_FIRST + 2)
 #define EM_SHOWBALLOONTIP         (ECM_FIRST + 3)
