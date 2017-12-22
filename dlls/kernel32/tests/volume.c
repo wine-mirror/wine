@@ -260,7 +260,7 @@ static void test_GetVolumeNameForVolumeMountPointW(void)
     }
 
     ret = pGetVolumeNameForVolumeMountPointW(path, volume, 0);
-    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
+    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointW succeeded\n");
     ok(GetLastError() == ERROR_FILENAME_EXCED_RANGE ||
         GetLastError() == ERROR_INVALID_PARAMETER, /* Vista */
         "wrong error, last=%d\n", GetLastError());
