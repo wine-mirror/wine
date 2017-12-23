@@ -2679,8 +2679,10 @@ static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
     ok(ret == S_OK, "IMLangFontLink2_ResetFontMapping: expected S_OK, got %08x\n", ret);
 
     /* Show that the font cache is global */
-    IMLangFontLink_MapFont(font_link, hdc, codepages, old_font, &font1);
-    IMLangFontLink2_MapFont(font_link2, hdc, codepages, 0, &font2);
+    ret = IMLangFontLink_MapFont(font_link, hdc, codepages, old_font, &font1);
+    ok(ret == S_OK, "MapFont() failed, hr %#x.\n", ret);
+    ret = IMLangFontLink2_MapFont(font_link2, hdc, codepages, 0, &font2);
+    ok(ret == S_OK, "MapFont() failed, hr %#x.\n", ret);
     ok(font1 != NULL && font2 != NULL, "expected !NULL/!NULL, got %p/%p", font1, font2);
     ok(font1 == font2, "expected equal, got not equal");
 
