@@ -239,6 +239,7 @@ HRESULT TaskFolderCollection_create(const WCHAR *path, ITaskFolderCollection **o
     if (!(folders->path = heap_strdupW(path)))
     {
         heap_free(folders);
+        free_list(list, count);
         return E_OUTOFMEMORY;
     }
     folders->count = count;
