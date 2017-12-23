@@ -3150,6 +3150,7 @@ static void test_ScriptXtoX(void)
         WORD clust = 0;
         INT advance = 16;
         hr = ScriptXtoCP(iX, 1, 1, &clust, psva, &advance, &sa, &piCP, &piTrailing);
+        ok(hr == S_OK, "ScriptXtoCP() failed, hr %#x.\n", hr);
         ok(piCP==0 && piTrailing==1,"%i should return 0(%i) and 1(%i)\n",iX,piCP,piTrailing);
     }
     for (iX = 9; iX < 16; iX++)
@@ -3157,6 +3158,7 @@ static void test_ScriptXtoX(void)
         WORD clust = 0;
         INT advance = 16;
         hr = ScriptXtoCP(iX, 1, 1, &clust, psva, &advance, &sa, &piCP, &piTrailing);
+        ok(hr == S_OK, "ScriptXtoCP() failed, hr %#x.\n", hr);
         ok(piCP==0 && piTrailing==0,"%i should return 0(%i) and 0(%i)\n",iX,piCP,piTrailing);
     }
 
