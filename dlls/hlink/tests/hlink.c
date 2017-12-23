@@ -877,11 +877,13 @@ static HRESULT WINAPI HlinkBrowseContext_GetObject(IHlinkBrowseContext *iface,
 {
     IBindCtx *bctx;
     WCHAR *name;
+    HRESULT hr;
 
     CHECK_EXPECT(HBC_GetObject);
 
     CreateBindCtx(0, &bctx);
-    IMoniker_GetDisplayName(pimk, bctx, NULL, &name);
+    hr = IMoniker_GetDisplayName(pimk, bctx, NULL, &name);
+    ok(hr == S_OK, "Failed to get display name, hr %#x.\n", hr);
     ok(!lstrcmpW(winehq_urlW, name) || !lstrcmpW(winehq_404W, name), "got unexpected url\n");
     CoTaskMemFree(name);
     IBindCtx_Release(bctx);
