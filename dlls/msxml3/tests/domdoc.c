@@ -7467,6 +7467,7 @@ static void test_XSLPattern(void)
             ok(hr == S_OK, "query=%s, failed with 0x%08x\n", ptr->query, hr);
             len = 0;
             hr = IXMLDOMNodeList_get_length(list, &len);
+            ok(hr == S_OK, "Failed to get list length, hr %#x.\n", hr);
             if (*ptr->list)
             {
                 ok(len != 0, "query=%s, empty list\n", ptr->query);
