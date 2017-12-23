@@ -3935,7 +3935,8 @@ HRESULT WINAPI SHGetFolderPathAndSubDirA(
     HRESULT hr = S_OK;
     LPWSTR pszSubPathW = NULL;
     LPWSTR pszPathW = NULL;
-    TRACE("%08x,%08x,%s\n",nFolder, dwFlags, debugstr_w(pszSubPathW));
+
+    TRACE("%p,%#x,%p,%#x,%s,%p\n", hwndOwner, nFolder, hToken, dwFlags, debugstr_a(pszSubPath), pszPath);
 
     if(pszPath) {
         pszPathW = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
@@ -3988,7 +3989,7 @@ HRESULT WINAPI SHGetFolderPathAndSubDirW(
     CSIDL_Type type;
     int        ret;
     
-    TRACE("%p,%p,nFolder=0x%04x,%s\n", hwndOwner,pszPath,nFolder,debugstr_w(pszSubPath));
+    TRACE("%p,%#x,%p,%#x,%s,%p\n", hwndOwner, nFolder, hToken, dwFlags, debugstr_w(pszSubPath), pszPath);
 
     /* Windows always NULL-terminates the resulting path regardless of success
      * or failure, so do so first
