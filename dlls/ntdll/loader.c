@@ -3149,7 +3149,7 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     RemoveEntryList( &wm->ldr.InMemoryOrderModuleList );
     InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
 
-    if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0, 0 )) != STATUS_SUCCESS)
+    if ((status = virtual_alloc_thread_stack( NtCurrentTeb(), 0, 0, NULL )) != STATUS_SUCCESS)
     {
         ERR( "Main exe initialization for %s failed, status %x\n",
              debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), status );

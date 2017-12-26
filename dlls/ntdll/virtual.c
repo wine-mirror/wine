@@ -1758,12 +1758,12 @@ NTSTATUS virtual_create_builtin_view( void *module )
 /***********************************************************************
  *           virtual_alloc_thread_stack
  */
-NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T extra_size )
+NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size )
 {
     struct file_view *view;
     NTSTATUS status;
     sigset_t sigset;
-    SIZE_T size;
+    SIZE_T size, extra_size = 0;
 
     if (!reserve_size || !commit_size)
     {
@@ -1775,6 +1775,7 @@ NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commi
     size = max( reserve_size, commit_size );
     if (size < 1024 * 1024) size = 1024 * 1024;  /* Xlib needs a large stack */
     size = (size + 0xffff) & ~0xffff;  /* round to 64K boundary */
+    if (pthread_size) *pthread_size = extra_size = max( page_size, ROUND_SIZE( 0, *pthread_size ));
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
