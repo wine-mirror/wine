@@ -508,13 +508,13 @@
 @ cdecl _get_heap_handle()
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
 @ cdecl _get_osplatform(ptr) MSVCRT__get_osplatform
-# stub _get_osver(ptr)
+@ cdecl _get_osver(ptr) MSVCRT__get_osver
 @ cdecl _get_output_format() MSVCRT__get_output_format
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_sbh_threshold()
 # stub _get_wenviron(ptr)
-# stub _get_winmajor(ptr)
-# stub _get_winminor(ptr)
+@ cdecl _get_winmajor(ptr) MSVCRT__get_winmajor
+@ cdecl _get_winminor(ptr) MSVCRT__get_winminor
 # stub _get_winver(ptr)
 @ cdecl _get_wpgmptr(ptr)
 @ cdecl _get_terminate() MSVCRT__get_terminate

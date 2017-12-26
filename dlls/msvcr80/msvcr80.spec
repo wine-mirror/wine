@@ -548,7 +548,7 @@
 @ cdecl _get_invalid_parameter_handler()
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
 @ cdecl _get_osplatform(ptr) MSVCRT__get_osplatform
-@ stub _get_osver
+@ cdecl _get_osver(ptr) MSVCRT__get_osver
 @ cdecl _get_output_format() MSVCRT__get_output_format
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_printf_count_output() MSVCRT__get_printf_count_output
@@ -558,8 +558,8 @@
 @ cdecl _get_timezone(ptr)
 @ cdecl _get_tzname(ptr str long long) MSVCRT__get_tzname
 @ cdecl _get_unexpected() MSVCRT__get_unexpected
-@ stub _get_winmajor
-@ stub _get_winminor
+@ cdecl _get_winmajor(ptr) MSVCRT__get_winmajor
+@ cdecl _get_winminor(ptr) MSVCRT__get_winminor
 @ stub _get_winver
 @ cdecl _get_wpgmptr(ptr)
 @ cdecl _getc_nolock(ptr) MSVCRT__fgetc_nolock

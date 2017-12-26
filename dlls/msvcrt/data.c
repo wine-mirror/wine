@@ -746,3 +746,33 @@ MSVCRT_wchar_t* CDECL _get_wide_winmain_command_line(void)
 
   return wide_command_line = s;
 }
+
+/*********************************************************************
+ *    _get_winmajor (MSVCRT.@)
+ */
+int CDECL MSVCRT__get_winmajor(int* value)
+{
+    if (!MSVCRT_CHECK_PMT(value != NULL)) return MSVCRT_EINVAL;
+    *value = MSVCRT__winmajor;
+    return 0;
+}
+
+/*********************************************************************
+ *    _get_winminor (MSVCRT.@)
+ */
+int CDECL MSVCRT__get_winminor(int* value)
+{
+    if (!MSVCRT_CHECK_PMT(value != NULL)) return MSVCRT_EINVAL;
+    *value = MSVCRT__winminor;
+    return 0;
+}
+
+/*********************************************************************
+ *    _get_osver (MSVCRT.@)
+ */
+int CDECL MSVCRT__get_osver(int* value)
+{
+    if (!MSVCRT_CHECK_PMT(value != NULL)) return MSVCRT_EINVAL;
+    *value = MSVCRT__osver;
+    return 0;
+}
