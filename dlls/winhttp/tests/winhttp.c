@@ -996,7 +996,7 @@ static void test_secure_connection(void)
     protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
     ret = WinHttpSetOption(ses, WINHTTP_OPTION_SECURE_PROTOCOLS, &protocols, sizeof(protocols));
     err = GetLastError();
-    ok(ret || (!ret && err == ERROR_INVALID_PARAMETER) /* < win7 */, "failed to set protocols %u\n", err);
+    ok(ret || err == ERROR_INVALID_PARAMETER /* < win7 */, "failed to set protocols %u\n", err);
 
     con = WinHttpConnect(ses, test_winehq, 443, 0);
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
