@@ -235,7 +235,7 @@ static DWORD create_test_dll( const IMAGE_DOS_HEADER *dos_header, UINT dos_size,
     return size;
 }
 
-static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HEADERS *nt_header )
+static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HEADERS *nt_header )
 {
     SECTION_BASIC_INFORMATION info;
     SECTION_IMAGE_INFORMATION image;
@@ -261,7 +261,7 @@ static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     if (status)
     {
         CloseHandle( file );
-        return;
+        return FALSE;
     }
     status = pNtQuerySection( mapping, SectionImageInformation, &image, sizeof(image), &info_size );
     ok( !status, "%u: NtQuerySection failed err %x\n", id, status );
@@ -380,6 +380,7 @@ static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     CloseHandle( mapping );
 
     CloseHandle( file );
+    return image.ImageContainsCode;
 }
 
 /* helper to test image section mapping */
@@ -390,6 +391,8 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
     HANDLE file, map;
     NTSTATUS status;
     ULONG file_size;
+    BOOL has_code;
+    HMODULE mod;
 
     file_size = create_test_dll( &dos_header, sizeof(dos_header), nt_header, dll_name );
 
@@ -410,7 +413,24 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
         ok( info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", info.BaseAddress );
         ok( info.Size.QuadPart == file_size, "NtQuerySection wrong size %x%08x / %08x\n",
             info.Size.u.HighPart, info.Size.u.LowPart, file_size );
-        query_image_section( line, dll_name, nt_header );
+        has_code = query_image_section( line, dll_name, nt_header );
+        /* test loading dll of wrong 32/64 bitness */
+        if (nt_header->OptionalHeader.Magic == (sizeof(void *) > sizeof(int) ? IMAGE_NT_OPTIONAL_HDR32_MAGIC
+                                                                             : IMAGE_NT_OPTIONAL_HDR64_MAGIC))
+        {
+            SetLastError( 0xdeadbeef );
+            mod = LoadLibraryExA( dll_name, 0, DONT_RESOLVE_DLL_REFERENCES );
+            if (!has_code && nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+            {
+                ok( mod != NULL, "%u: loading failed err %u\n", line, GetLastError() );
+            }
+            else
+            {
+                ok( !mod, "%u: loading succeeded\n", line );
+                ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "%u: wrong error %u\n", line, GetLastError() );
+            }
+            if (mod) FreeLibrary( mod );
+        }
     }
     if (map) CloseHandle( map );
     CloseHandle( file );
