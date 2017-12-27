@@ -164,13 +164,18 @@ static const char filler[0x1000];
 static const char section_data[0x10] = "section data";
 
 static DWORD create_test_dll( const IMAGE_DOS_HEADER *dos_header, UINT dos_size,
-                              const IMAGE_NT_HEADERS *nt_header, const char *dll_name )
+                              const IMAGE_NT_HEADERS *nt_header, char dll_name[MAX_PATH] )
 {
+    char temp_path[MAX_PATH];
     DWORD dummy, size, file_align;
     HANDLE hfile;
     BOOL ret;
 
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "ldr", 0, dll_name);
+
     hfile = CreateFileA(dll_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
+    ok( hfile != INVALID_HANDLE_VALUE, "failed to create %s err %u\n", dll_name, GetLastError() );
     if (hfile == INVALID_HANDLE_VALUE) return 0;
 
     SetLastError(0xdeadbeef);
@@ -369,18 +374,13 @@ static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
 /* helper to test image section mapping */
 static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
 {
-    char temp_path[MAX_PATH];
     char dll_name[MAX_PATH];
     LARGE_INTEGER size;
     HANDLE file, map;
     NTSTATUS status;
     ULONG file_size;
 
-    GetTempPathA(MAX_PATH, temp_path);
-    GetTempFileNameA(temp_path, "ldr", 0, dll_name);
-
     file_size = create_test_dll( &dos_header, sizeof(dos_header), nt_header, dll_name );
-    ok( file_size, "could not create %s\n", dll_name);
 
     file = CreateFileA(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
@@ -549,7 +549,6 @@ static void test_Loader(void)
     DWORD file_size;
     HANDLE h;
     HMODULE hlib, hlib_as_data_file;
-    char temp_path[MAX_PATH];
     char dll_name[MAX_PATH];
     SIZE_T size;
     BOOL ret;
@@ -560,12 +559,8 @@ static void test_Loader(void)
     /* prevent displaying of the "Unable to load this DLL" message box */
     SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    GetTempPathA(MAX_PATH, temp_path);
-
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
-        GetTempFileNameA(temp_path, "ldr", 0, dll_name);
-
         nt_header = nt_header_template;
         nt_header.FileHeader.NumberOfSections = td[i].number_of_sections;
         nt_header.FileHeader.SizeOfOptionalHeader = td[i].size_of_optional_header;
@@ -576,11 +571,6 @@ static void test_Loader(void)
         nt_header.OptionalHeader.SizeOfHeaders = td[i].size_of_headers;
 
         file_size = create_test_dll( &dos_header, td[i].size_of_dos_header, &nt_header, dll_name );
-        if (!file_size)
-        {
-            ok(0, "could not create %s\n", dll_name);
-            break;
-        }
 
         SetLastError(0xdeadbeef);
         hlib = LoadLibraryA(dll_name);
