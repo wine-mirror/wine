@@ -108,46 +108,41 @@ static ULONG get_refcount(IUnknown *iface)
     return IUnknown_Release(iface);
 }
 
+static BOOL ddraw_get_identifier(IDirectDraw7 *ddraw, DDDEVICEIDENTIFIER2 *identifier)
+{
+    HRESULT hr;
+
+    hr = IDirectDraw7_GetDeviceIdentifier(ddraw, identifier, 0);
+    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
+
+    return SUCCEEDED(hr);
+}
+
 static BOOL ddraw_is_warp(IDirectDraw7 *ddraw)
 {
     DDDEVICEIDENTIFIER2 identifier;
-    HRESULT hr;
 
-    if (!strcmp(winetest_platform, "wine"))
-        return FALSE;
-
-    hr = IDirectDraw7_GetDeviceIdentifier(ddraw, &identifier, 0);
-    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
-
-    return !!strstr(identifier.szDriver, "warp");
+    return strcmp(winetest_platform, "wine")
+            && ddraw_get_identifier(ddraw, &identifier)
+            && strstr(identifier.szDriver, "warp");
 }
 
 static BOOL ddraw_is_nvidia(IDirectDraw7 *ddraw)
 {
     DDDEVICEIDENTIFIER2 identifier;
-    HRESULT hr;
 
-    if (!strcmp(winetest_platform, "wine"))
-        return FALSE;
-
-    hr = IDirectDraw7_GetDeviceIdentifier(ddraw, &identifier, 0);
-    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
-
-    return identifier.dwVendorId == 0x10de;
+    return strcmp(winetest_platform, "wine")
+            && ddraw_get_identifier(ddraw, &identifier)
+            && identifier.dwVendorId == 0x10de;
 }
 
 static BOOL ddraw_is_intel(IDirectDraw7 *ddraw)
 {
     DDDEVICEIDENTIFIER2 identifier;
-    HRESULT hr;
 
-    if (!strcmp(winetest_platform, "wine"))
-        return FALSE;
-
-    hr = IDirectDraw7_GetDeviceIdentifier(ddraw, &identifier, 0);
-    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
-
-    return identifier.dwVendorId == 0x8086;
+    return strcmp(winetest_platform, "wine")
+            && ddraw_get_identifier(ddraw, &identifier)
+            && identifier.dwVendorId == 0x8086;
 }
 
 static IDirectDrawSurface7 *create_overlay(IDirectDraw7 *ddraw,
@@ -13384,11 +13379,12 @@ static void test_clip_planes_limits(void)
 
 START_TEST(ddraw7)
 {
-    HMODULE module = GetModuleHandleA("ddraw.dll");
-    HMODULE dwmapi;
-    IDirectDraw7 *ddraw;
+    DDDEVICEIDENTIFIER2 identifier;
+    HMODULE module, dwmapi;
     DEVMODEW current_mode;
+    IDirectDraw7 *ddraw;
 
+    module = GetModuleHandleA("ddraw.dll");
     if (!(pDirectDrawCreateEx = (void *)GetProcAddress(module, "DirectDrawCreateEx")))
     {
         win_skip("DirectDrawCreateEx not available, skipping tests.\n");
@@ -13399,6 +13395,15 @@ START_TEST(ddraw7)
     {
         skip("Failed to create a ddraw object, skipping tests.\n");
         return;
+    }
+
+    if (ddraw_get_identifier(ddraw, &identifier))
+    {
+        trace("Driver string: \"%s\"\n", identifier.szDriver);
+        trace("Description string: \"%s\"\n", identifier.szDescription);
+        trace("Driver version %d.%d.%d.%d\n",
+                HIWORD(U(identifier.liDriverVersion).HighPart), LOWORD(U(identifier.liDriverVersion).HighPart),
+                HIWORD(U(identifier.liDriverVersion).LowPart), LOWORD(U(identifier.liDriverVersion).LowPart));
     }
     IDirectDraw7_Release(ddraw);
 
