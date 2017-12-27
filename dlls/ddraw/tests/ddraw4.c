@@ -131,6 +131,15 @@ static BOOL ddraw_is_intel(IDirectDraw4 *ddraw)
             && identifier.dwVendorId == 0x8086;
 }
 
+static BOOL ddraw_is_vmware(IDirectDraw4 *ddraw)
+{
+    DDDEVICEIDENTIFIER identifier;
+
+    return strcmp(winetest_platform, "wine")
+            && ddraw_get_identifier(ddraw, &identifier)
+            && identifier.dwVendorId == 0x15ad;
+}
+
 static IDirectDrawSurface4 *create_overlay(IDirectDraw4 *ddraw,
         unsigned int width, unsigned int height, DWORD format)
 {
@@ -11262,7 +11271,8 @@ static void test_offscreen_overlay(void)
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
 
     hr = IDirectDrawSurface4_UpdateOverlay(overlay, NULL, offscreen, NULL, DDOVER_SHOW, NULL);
-    ok(SUCCEEDED(hr) || broken(hr == DDERR_OUTOFCAPS && dwm_enabled()),
+    ok(SUCCEEDED(hr) || broken(hr == DDERR_OUTOFCAPS && dwm_enabled())
+            || broken(hr == E_NOTIMPL && ddraw_is_vmware(ddraw)),
             "Failed to update overlay, hr %#x.\n", hr);
 
     /* Try to overlay the primary with a non-overlay surface. */
