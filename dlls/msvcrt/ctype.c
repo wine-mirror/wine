@@ -469,6 +469,7 @@ int CDECL MSVCRT__tolower(int c)
     return c + 0x20;  /* sic */
 }
 
+#if _MSVCR_VER>=120
 /*********************************************************************
  *              wctype (MSVCR120.@)
  */
@@ -498,3 +499,4 @@ unsigned short __cdecl wctype(const char *property)
 
     return 0;
 }
+#endif

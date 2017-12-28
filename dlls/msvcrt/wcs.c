@@ -664,6 +664,8 @@ double CDECL MSVCRT__wtof_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
     return MSVCRT__wcstod_l(str, NULL, locale);
 }
 
+#if _MSVCR_VER>=120
+
 /*********************************************************************
  *              _wcstof_l  (MSVCR120.@)
  */
@@ -679,6 +681,8 @@ float CDECL MSVCRT_wcstof( const MSVCRT_wchar_t *str, MSVCRT_wchar_t **end )
 {
     return MSVCRT__wcstof_l(str, end, NULL);
 }
+
+#endif /* _MSVCR_VER>=120 */
 
 /*********************************************************************
  * arg_clbk_valist (INTERNAL)
@@ -728,6 +732,8 @@ int CDECL MSVCRT_vsnprintf( char *str, MSVCRT_size_t len,
     return ret;
 }
 
+#if _MSVCR_VER>=140
+
 static int puts_clbk_str_c99_a(void *ctx, int len, const char *str)
 {
     struct _str_ctx_a *out = ctx;
@@ -774,6 +780,8 @@ int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MS
     }
     return ret;
 }
+
+#endif /* _MSVCR_VER>=140 */
 
 /*********************************************************************
  *		_vsnprintf_l (MSVCRT.@)
@@ -919,6 +927,8 @@ int CDECL MSVCRT_vsnprintf_s( char *str, MSVCRT_size_t sizeOfBuffer,
     return MSVCRT_vsnprintf_s_l(str,sizeOfBuffer, count, format, NULL, valist);
 }
 
+#if _MSVCR_VER>=140
+
 /*********************************************************************
  *              __stdio_common_vsnprintf_s (UCRTBASE.@)
  */
@@ -964,6 +974,8 @@ int CDECL MSVCRT__stdio_common_vsprintf_s( unsigned __int64 options,
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     return MSVCRT_vsnprintf_s_l_opt(str, INT_MAX, count, format, options & UCRTBASE_PRINTF_MASK, locale, valist);
 }
+
+#endif /* _MSVCR_VER>=140 */
 
 /*********************************************************************
  *		vsprintf (MSVCRT.@)
@@ -1150,16 +1162,18 @@ int CDECL MSVCRT_vswprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
     return MSVCRT_vswprintf_p_l_opt(buffer, length, format, 0, locale, args);
 }
 
+#if _MSVCR_VER>=80
 /*********************************************************************
- * _vswprintf_p (MSVCR100.@)
+ * _vswprintf_p (MSVCR80.@)
  */
 int CDECL MSVCRT__vswprintf_p(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
         const MSVCRT_wchar_t *format, __ms_va_list args)
 {
     return MSVCRT_vswprintf_p_l_opt(buffer, length, format, 0, NULL, args);
 }
+#endif
 
-
+#if _MSVCR_VER>=140
 /*********************************************************************
  *              __stdio_common_vswprintf_p (UCRTBASE.@)
  */
@@ -1171,6 +1185,7 @@ int CDECL MSVCRT__stdio_common_vswprintf_p( unsigned __int64 options,
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     return MSVCRT_vswprintf_p_l_opt(str, count, format, options & UCRTBASE_PRINTF_MASK, locale, valist);
 }
+#endif
 
 /*********************************************************************
  *              _vsnwprintf_s_l (MSVCRT.@)
@@ -1247,6 +1262,8 @@ int WINAPIV MSVCRT__snwprintf_s_l( MSVCRT_wchar_t *str, unsigned int len, unsign
     return retval;
 }
 
+#if _MSVCR_VER>=140
+
 static int puts_clbk_str_c99_w(void *ctx, int len, const MSVCRT_wchar_t *str)
 {
     struct _str_ctx_w *out = ctx;
@@ -1294,6 +1311,8 @@ int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options,
     }
     return ret;
 }
+
+#endif /* _MSVCR_VER>=140 */
 
 /*********************************************************************
  *		sprintf (MSVCRT.@)
@@ -1424,13 +1443,15 @@ int CDECL MSVCRT__vscwprintf_p_l( const MSVCRT_wchar_t *format, MSVCRT__locale_t
     return MSVCRT_vswprintf_p_l_opt( NULL, INT_MAX, format, 0, locale, args );
 }
 
+#if _MSVCR_VER>=80
 /*********************************************************************
- * _vscwprintf_p (MSVCR100.@)
+ * _vscwprintf_p (MSVCR80.@)
  */
 int CDECL MSVCRT__vscwprintf_p(const MSVCRT_wchar_t *format, __ms_va_list args)
 {
     return MSVCRT_vswprintf_p_l_opt(NULL, INT_MAX, format, 0, NULL, args);
 }
+#endif
 
 /*********************************************************************
  *		vswprintf_s (MSVCRT.@)
@@ -1496,6 +1517,7 @@ int CDECL MSVCRT_vsprintf_p(char *buffer, MSVCRT_size_t length,
     return MSVCRT_vsprintf_p_l(buffer, length, format, NULL, args);
 }
 
+#if _MSVCR_VER>=140
 /*********************************************************************
  *              __stdio_common_vsprintf_p (UCRTBASE.@)
  */
@@ -1506,6 +1528,7 @@ int CDECL MSVCRT__stdio_common_vsprintf_p(unsigned __int64 options, char *buffer
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     return MSVCRT_vsprintf_p_l_opt(buffer, length, format, options & UCRTBASE_PRINTF_MASK, locale, args);
 }
+#endif
 
 /*********************************************************************
  *		_sprintf_p_l (MSVCRT.@)
@@ -1537,8 +1560,9 @@ int WINAPIV MSVCRT___swprintf_l( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *form
     return retval;
 }
 
+#if _MSVCR_VER>=80
 /*********************************************************************
- * _sprintf_p (MSVCR100.@)
+ * _sprintf_p (MSVCR80.@)
  */
 int WINAPIV MSVCRT__sprintf_p(char *buffer, MSVCRT_size_t length, const char *format, ...)
 {
@@ -1551,6 +1575,7 @@ int WINAPIV MSVCRT__sprintf_p(char *buffer, MSVCRT_size_t length, const char *fo
 
     return r;
 }
+#endif
 
 /*********************************************************************
  *		_swprintf_p_l (MSVCRT.@)
@@ -2234,6 +2259,8 @@ MSVCRT_long __cdecl MSVCRT__wtol(const MSVCRT_wchar_t *str)
     return MSVCRT__wtol_l(str, NULL);
 }
 
+#if _MSVCR_VER>=120
+
 /*********************************************************************
  *  _wtoll_l (MSVCR120.@)
  */
@@ -2249,6 +2276,8 @@ MSVCRT_longlong __cdecl MSVCRT__wtoll(const MSVCRT_wchar_t *str)
 {
     return MSVCRT__wtoll_l(str, NULL);
 }
+
+#endif /* _MSVCR_VER>=120 */
 
 /*********************************************************************
  *  _wcstoui64_l (MSVCRT.@)

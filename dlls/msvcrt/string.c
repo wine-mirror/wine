@@ -499,6 +499,8 @@ double CDECL MSVCRT_strtod( const char *str, char **end )
     return MSVCRT_strtod_l( str, end, NULL );
 }
 
+#if _MSVCR_VER>=120
+
 /*********************************************************************
  *		strtof_l  (MSVCR120.@)
  */
@@ -514,6 +516,8 @@ float CDECL MSVCRT_strtof( const char *str, char **end )
 {
     return MSVCRT__strtof_l(str, end, NULL);
 }
+
+#endif /* _MSVCR_VER>=120 */
 
 /*********************************************************************
  *		atof  (MSVCRT.@)
@@ -1046,6 +1050,8 @@ int CDECL MSVCRT_atoi(const char *str)
 }
 #endif
 
+#if _MSVCR_VER>=120
+
 /******************************************************************
  *      _atoll_l (MSVCR120.@)
  */
@@ -1061,6 +1067,8 @@ MSVCRT_longlong CDECL MSVCRT_atoll(const char* str)
 {
     return MSVCRT__atoll_l(str, NULL);
 }
+
+#endif /* if _MSVCR_VER>=120 */
 
 /******************************************************************
  *		_strtol_l (MSVCRT.@)
