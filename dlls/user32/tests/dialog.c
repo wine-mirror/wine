@@ -1236,8 +1236,195 @@ static INT_PTR CALLBACK TestControlStyleDlgProc(HWND hdlg, UINT msg,
     return FALSE;
 }
 
-static void test_DialogBoxParamA(void)
+static const WCHAR testtextW[] = {'W','n','d','T','e','x','t',0};
+static INT_PTR CALLBACK test_aw_conversion_dlgprocA(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    if (msg == WM_SETTEXT)
+    {
+        if (IsWindowUnicode(hdlg))
+        {
+            WCHAR *text = (WCHAR *)lparam;
+        todo_wine
+            ok(!lstrcmpW(text, testtextW), "Unexpected text %s.\n", wine_dbgstr_w(text));
+        }
+        else
+        {
+            char *textA = (char *)lparam;
+        todo_wine
+            ok(!strcmp(textA, "WndText"), "Unexpected text %s.\n", textA);
+        }
+    }
+
+    return DefWindowProcW(hdlg, msg, wparam, lparam);
+}
+
+static INT_PTR CALLBACK test_aw_conversion_dlgprocW(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_SETTEXT)
+    {
+        if (IsWindowUnicode(hdlg))
+        {
+            WCHAR *text = (WCHAR *)lparam;
+            ok(!lstrcmpW(text, testtextW), "Unexpected text %s.\n", wine_dbgstr_w(text));
+        }
+        else
+        {
+            char *textA = (char *)lparam;
+            ok(!strcmp(textA, "WndText"), "Unexpected text %s.\n", textA);
+        }
+    }
+
+    return DefWindowProcA(hdlg, msg, wparam, lparam);
+}
+
+static INT_PTR CALLBACK test_aw_conversion_dlgproc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    ULONG_PTR dlgproc, originalproc;
+    WCHAR buffW[64];
+    char buff[64];
+    BOOL ret;
+    INT len;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        ok(IsWindowUnicode(hdlg), "Expected unicode window.\n");
+
+        originalproc = GetWindowLongPtrW(hdlg, DWLP_DLGPROC);
+        ok(originalproc == (ULONG_PTR)test_aw_conversion_dlgproc, "Unexpected dlg proc %#lx.\n", originalproc);
+
+        dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
+        ok(dlgproc != (ULONG_PTR)test_aw_conversion_dlgproc, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        dlgproc = SetWindowLongPtrA(hdlg, DWLP_DLGPROC, (UINT_PTR)test_aw_conversion_dlgprocA);
+        ok(IsWindowUnicode(hdlg), "Expected unicode window.\n");
+
+        dlgproc = GetWindowLongPtrW(hdlg, DWLP_DLGPROC);
+        ok(dlgproc != (ULONG_PTR)test_aw_conversion_dlgprocA, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
+        ok(dlgproc == (ULONG_PTR)test_aw_conversion_dlgprocA, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        ret = SetWindowTextW(hdlg, testtextW);
+    todo_wine
+        ok(ret, "Failed to set window text.\n");
+
+        memset(buff, 'A', sizeof(buff));
+        len = GetWindowTextA(hdlg, buff, sizeof(buff));
+    todo_wine
+        ok(buff[0] == 0 && buff[1] == 'A' && len == 0, "Unexpected window text %#x, %#x, len %d\n",
+           (BYTE)buff[0], (BYTE)buff[1], len);
+
+        memset(buffW, 0xff, sizeof(buffW));
+        len = GetWindowTextW(hdlg, buffW, 64);
+    todo_wine
+        ok(!lstrcmpW(buffW, testtextW) && len == 0, "Unexpected window text %s, len %d\n", wine_dbgstr_w(buffW), len);
+
+        dlgproc = SetWindowLongPtrW(hdlg, DWLP_DLGPROC, (UINT_PTR)test_aw_conversion_dlgprocW);
+        ok(IsWindowUnicode(hdlg), "Expected unicode window.\n");
+
+        dlgproc = GetWindowLongPtrW(hdlg, DWLP_DLGPROC);
+        ok(dlgproc == (ULONG_PTR)test_aw_conversion_dlgprocW, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
+        ok(dlgproc != (ULONG_PTR)test_aw_conversion_dlgprocW, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        ret = SetWindowTextA(hdlg, "WndText");
+    todo_wine
+        ok(ret, "Failed to set window text.\n");
+
+        memset(buff, 'A', sizeof(buff));
+        len = GetWindowTextA(hdlg, buff, sizeof(buff));
+        ok(buff[0] == 0 && buff[1] == 'A' && len == 0, "Unexpected window text %#x, %#x, len %d\n",
+           (BYTE)buff[0], (BYTE)buff[1], len);
+
+        memset(buffW, 0xff, sizeof(buffW));
+        len = GetWindowTextW(hdlg, buffW, sizeof(buffW)/sizeof(buffW[0]));
+        ok(buffW[0] == 'W' && buffW[1] == 0xffff && len == 0, "Unexpected window text %#x, %#x, len %d\n",
+            buffW[0], buffW[1], len);
+
+        SetWindowLongPtrA(hdlg, DWLP_DLGPROC, originalproc);
+        EndDialog(hdlg, -123);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static INT_PTR CALLBACK test_aw_conversion_dlgproc2(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    ULONG_PTR dlgproc, originalproc;
+    WCHAR buffW[64];
+    char buff[64];
+    BOOL ret;
+    INT len;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        ok(!IsWindowUnicode(hdlg), "Unexpected unicode window.\n");
+
+        originalproc = GetWindowLongPtrW(hdlg, DWLP_DLGPROC);
+        ok(originalproc != (ULONG_PTR)test_aw_conversion_dlgproc2, "Unexpected dlg proc %#lx.\n", originalproc);
+
+        dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
+        ok(dlgproc == (ULONG_PTR)test_aw_conversion_dlgproc2, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        dlgproc = SetWindowLongPtrA(hdlg, DWLP_DLGPROC, (UINT_PTR)test_aw_conversion_dlgprocW);
+        ok(!IsWindowUnicode(hdlg), "Unexpected unicode window.\n");
+
+        dlgproc = GetWindowLongPtrW(hdlg, DWLP_DLGPROC);
+        ok(dlgproc != (ULONG_PTR)test_aw_conversion_dlgprocW, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
+        ok(dlgproc == (ULONG_PTR)test_aw_conversion_dlgprocW, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        ret = SetWindowTextA(hdlg, "WndText");
+    todo_wine
+        ok(ret, "Failed to set window text.\n");
+
+        memset(buff, 'A', sizeof(buff));
+        len = GetWindowTextA(hdlg, buff, sizeof(buff));
+        ok(!strcmp(buff, "WndText") && len == 0, "Unexpected window text %s, len %d\n", buff, len);
+
+        memset(buffW, 0xff, sizeof(buffW));
+        len = GetWindowTextW(hdlg, buffW, 64);
+        ok(buffW[0] == 0 && buffW[1] == 0xffff && len == 0, "Unexpected window text %s, len %d\n",
+            wine_dbgstr_w(buffW), len);
+
+        dlgproc = SetWindowLongPtrW(hdlg, DWLP_DLGPROC, (UINT_PTR)test_aw_conversion_dlgprocA);
+        ok(!IsWindowUnicode(hdlg), "Unexpected unicode window.\n");
+
+        dlgproc = GetWindowLongPtrW(hdlg, DWLP_DLGPROC);
+        ok(dlgproc == (ULONG_PTR)test_aw_conversion_dlgprocA, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
+        ok(dlgproc != (ULONG_PTR)test_aw_conversion_dlgprocA, "Unexpected dlg proc %#lx.\n", dlgproc);
+
+        ret = SetWindowTextW(hdlg, testtextW);
+    todo_wine
+        ok(ret, "Failed to set window text.\n");
+
+        memset(buff, 'A', sizeof(buff));
+        len = GetWindowTextA(hdlg, buff, sizeof(buff));
+    todo_wine
+        ok(!strcmp(buff, "WndText") && len == 0, "Unexpected window text %s, len %d\n", buff, len);
+
+        memset(buffW, 0xff, sizeof(buffW));
+        len = GetWindowTextW(hdlg, buffW, sizeof(buffW)/sizeof(buffW[0]));
+    todo_wine
+        ok(buffW[0] == 0 && buffW[1] == 0xffff && len == 0, "Unexpected window text %#x, %#x, len %d\n",
+            buffW[0], buffW[1], len);
+
+        SetWindowLongPtrA(hdlg, DWLP_DLGPROC, originalproc);
+        EndDialog(hdlg, -123);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static void test_DialogBoxParam(void)
+{
+    static const WCHAR nameW[] = {'T','E','S','T','_','E','M','P','T','Y','_','D','I','A','L','O','G',0};
     INT_PTR ret;
     HWND hwnd_invalid = (HWND)0x4444;
 
@@ -1290,6 +1477,13 @@ static void test_DialogBoxParamA(void)
     ok(ret == IDOK, "Expected IDOK\n");
 
     DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", 0, TestReturnKeyDlgProc, 0);
+
+    /* WM_SETTEXT handling in case of A/W dialog procedures vs A/W dialog window.  */
+    ret = DialogBoxParamW(GetModuleHandleA(NULL), nameW, 0, test_aw_conversion_dlgproc, 0);
+    ok(ret == -123, "Unexpected ret value %ld.\n", ret);
+
+    ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", 0, test_aw_conversion_dlgproc2, 0);
+    ok(ret == -123, "Unexpected ret value %ld.\n", ret);
 }
 
 static void test_DisabledDialogTest(void)
@@ -1580,7 +1774,7 @@ START_TEST(dialog)
     test_focus();
     test_GetDlgItem();
     test_GetDlgItemText();
-    test_DialogBoxParamA();
+    test_DialogBoxParam();
     test_DisabledDialogTest();
     test_MessageBoxFontTest();
     test_SaveRestoreFocus();
