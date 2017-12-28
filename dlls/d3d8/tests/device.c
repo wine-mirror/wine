@@ -1207,7 +1207,7 @@ static void test_display_formats(void)
     d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d8, "Failed to create a D3D object.\n");
 
-    for (display = 0; display < sizeof(formats) / sizeof(*formats); ++display)
+    for (display = 0; display < ARRAY_SIZE(formats); ++display)
     {
         for (i = 0, has_modes = FALSE; SUCCEEDED(IDirect3D8_EnumAdapterModes(d3d8, D3DADAPTER_DEFAULT, i, &mode)); ++i)
         {
@@ -1220,7 +1220,7 @@ static void test_display_formats(void)
 
         for (windowed = 0; windowed <= 1; ++windowed)
         {
-            for (backbuffer = 0; backbuffer < sizeof(formats) / sizeof(*formats); ++backbuffer)
+            for (backbuffer = 0; backbuffer < ARRAY_SIZE(formats); ++backbuffer)
             {
                 should_pass = FALSE;
 
@@ -4543,7 +4543,7 @@ static void test_vb_lock_flags(void)
     hr = IDirect3DDevice8_CreateVertexBuffer(device, 1024, D3DUSAGE_DYNAMIC, 0, D3DPOOL_DEFAULT, &buffer);
     ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
 
-    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hr = IDirect3DVertexBuffer8_Lock(buffer, 0, 0, &data, test_data[i].flags);
         ok(hr == test_data[i].result, "Got unexpected hr %#x for %s.\n",
@@ -4948,7 +4948,7 @@ static void test_lockrect_invalid(void)
         return;
     }
 
-    for (r = 0; r < sizeof(resources) / sizeof(*resources); ++r)
+    for (r = 0; r < ARRAY_SIZE(resources); ++r)
     {
         texture = NULL;
         cube_texture = NULL;
@@ -4988,7 +4988,7 @@ static void test_lockrect_invalid(void)
         hr = IDirect3DSurface8_UnlockRect(surface);
         ok(hr == expected_hr, "Got hr %#x, expected %#x, type %s.\n", hr, expected_hr, resources[r].name);
 
-        for (i = 0; i < (sizeof(valid) / sizeof(*valid)); ++i)
+        for (i = 0; i < ARRAY_SIZE(valid); ++i)
         {
             const RECT *rect = &valid[i];
 
@@ -5038,7 +5038,7 @@ static void test_lockrect_invalid(void)
             }
         }
 
-        for (i = 0; i < (sizeof(invalid) / sizeof(*invalid)); ++i)
+        for (i = 0; i < ARRAY_SIZE(invalid); ++i)
         {
             const RECT *rect = &invalid[i];
 
@@ -5509,7 +5509,7 @@ static void test_surface_double_unlock(void)
         return;
     }
 
-    for (i = 0; i < (sizeof(pools) / sizeof(*pools)); ++i)
+    for (i = 0; i < ARRAY_SIZE(pools); ++i)
     {
         switch (pools[i])
         {
@@ -5671,7 +5671,7 @@ static void test_surface_blocks(void)
         tex_pow2 = !(caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL);
     cube_pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP_POW2);
 
-    for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
         BOOL tex_support, cube_support, surface_support, format_known;
 
@@ -5707,7 +5707,7 @@ static void test_surface_blocks(void)
 
                 size_is_pow2 = !(w & (w - 1) || h & (h - 1));
 
-                for (j = 0; j < sizeof(create_tests) / sizeof(*create_tests); j++)
+                for (j = 0; j < ARRAY_SIZE(create_tests); j++)
                 {
                     BOOL support, pow2;
                     HRESULT expect_hr;
@@ -5802,7 +5802,7 @@ static void test_surface_blocks(void)
             continue;
         }
 
-        for (j = 0; j < (sizeof(pools) / sizeof(*pools)); ++j)
+        for (j = 0; j < ARRAY_SIZE(pools); ++j)
         {
             hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1,
                     pools[j].pool == D3DPOOL_DEFAULT ? D3DUSAGE_DYNAMIC : 0,
@@ -5866,7 +5866,7 @@ static void test_surface_blocks(void)
                 }
             }
 
-            for (k = 0; k < sizeof(invalid) / sizeof(*invalid); ++k)
+            for (k = 0; k < ARRAY_SIZE(invalid); ++k)
             {
                 hr = IDirect3DSurface8_LockRect(surface, &locked_rect, &invalid[k], 0);
                 ok(FAILED(hr) == !pools[j].success, "Invalid lock %s(%#x), expected %s, format %s, pool %s, case %u.\n",
@@ -5950,7 +5950,7 @@ static void test_set_palette(void)
         return;
     }
 
-    for (i = 0; i < sizeof(pal) / sizeof(*pal); i++)
+    for (i = 0; i < ARRAY_SIZE(pal); i++)
     {
         pal[i].peRed = i;
         pal[i].peGreen = i;
@@ -5962,7 +5962,7 @@ static void test_set_palette(void)
 
     hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
-    for (i = 0; i < sizeof(pal) / sizeof(*pal); i++)
+    for (i = 0; i < ARRAY_SIZE(pal); i++)
     {
         pal[i].peRed = i;
         pal[i].peGreen = i;
@@ -6194,7 +6194,7 @@ static void test_npot_textures(void)
     ok(cube_pow2 == tex_pow2, "Cube texture and 2d texture pow2 restrictions mismatch.\n");
     ok(vol_pow2 == tex_pow2, "Volume texture and 2d texture pow2 restrictions mismatch.\n");
 
-    for (i = 0; i < sizeof(pools) / sizeof(*pools); i++)
+    for (i = 0; i < ARRAY_SIZE(pools); i++)
     {
         for (levels = 0; levels <= 2; levels++)
         {
@@ -6317,7 +6317,7 @@ static void test_volume_locking(void)
         goto out;
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         hr = IDirect3DDevice8_CreateVolumeTexture(device, 4, 4, 4, 1, tests[i].usage,
                 D3DFMT_A8R8G8B8, tests[i].pool, &texture);
@@ -6424,7 +6424,7 @@ static void test_update_volumetexture(void)
         goto out;
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         DWORD src_usage = tests[i].src_pool == D3DPOOL_DEFAULT ? D3DUSAGE_DYNAMIC : 0;
         DWORD dst_usage = tests[i].dst_pool == D3DPOOL_DEFAULT ? D3DUSAGE_DYNAMIC : 0;
@@ -6465,7 +6465,7 @@ static void test_update_volumetexture(void)
         goto out;
     }
 
-    for (i = 0; i < sizeof(tests2) / sizeof(*tests2); i++)
+    for (i = 0; i < ARRAY_SIZE(tests2); i++)
     {
         hr = IDirect3DDevice8_CreateVolumeTexture(device,
                 tests2[i].src_size, tests2[i].src_size, tests2[i].src_size,
@@ -6636,7 +6636,7 @@ static void test_volume_blocks(void)
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
     pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2);
 
-    for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
+    for (i = 0; i < ARRAY_SIZE(formats); i++)
     {
         hr = IDirect3D8_CheckDeviceFormat(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
                 0, D3DRTYPE_VOLUMETEXTURE, formats[i].fmt);
@@ -6658,7 +6658,7 @@ static void test_volume_blocks(void)
 
                     size_is_pow2 = !((w & (w - 1)) || (h & (h - 1)) || (d & (d - 1)));
 
-                    for (j = 0; j < sizeof(create_tests) / sizeof(*create_tests); j++)
+                    for (j = 0; j < ARRAY_SIZE(create_tests); j++)
                     {
                         BOOL may_succeed = FALSE;
 
@@ -6706,7 +6706,7 @@ static void test_volume_blocks(void)
         ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
 
         /* Test lockrect offset */
-        for (j = 0; j < sizeof(offset_tests) / sizeof(*offset_tests); j++)
+        for (j = 0; j < ARRAY_SIZE(offset_tests); j++)
         {
             unsigned int bytes_per_pixel;
             bytes_per_pixel = formats[i].block_size / (formats[i].block_width * formats[i].block_height);
@@ -6954,7 +6954,7 @@ static void test_lockbox_invalid(void)
     hr = IDirect3DVolumeTexture8_UnlockBox(texture, 0);
     ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
 
-    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         unsigned int offset, expected_offset;
         const D3DBOX *box = &test_data[i].box;
@@ -7811,7 +7811,7 @@ static void test_resource_priority(void)
         return;
     }
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); i++)
+    for (i = 0; i < ARRAY_SIZE(test_data); i++)
     {
         hr = IDirect3DDevice8_CreateTexture(device, 16, 16, 0, 0, D3DFMT_X8R8G8B8,
                 test_data[i].pool, &texture);
@@ -7943,7 +7943,7 @@ static void test_swapchain_parameters(void)
     present_parameters_windowed.Windowed = TRUE;
     present_parameters_windowed.BackBufferCount = 1;
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         UINT bb_count = tests[i].backbuffer_count ? tests[i].backbuffer_count : 1;
 
@@ -8123,7 +8123,7 @@ static void test_miptree_layout(void)
         base_dimension = 256;
     }
 
-    for (format_idx = 0; format_idx < sizeof(formats) / sizeof(*formats); ++format_idx)
+    for (format_idx = 0; format_idx < ARRAY_SIZE(formats); ++format_idx)
     {
         if (FAILED(hr = IDirect3D8_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
                 D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, formats[format_idx].format)))
@@ -8132,7 +8132,7 @@ static void test_miptree_layout(void)
             continue;
         }
 
-        for (pool_idx = 0; pool_idx < sizeof(pools) / sizeof(*pools); ++pool_idx)
+        for (pool_idx = 0; pool_idx < ARRAY_SIZE(pools); ++pool_idx)
         {
             hr = IDirect3DDevice8_CreateTexture(device, base_dimension, base_dimension, 0, 0,
                     formats[format_idx].format, pools[pool_idx].pool, &texture_2d);
@@ -8169,7 +8169,7 @@ static void test_miptree_layout(void)
             continue;
         }
 
-        for (pool_idx = 0; pool_idx < sizeof(pools) / sizeof(*pools); ++pool_idx)
+        for (pool_idx = 0; pool_idx < ARRAY_SIZE(pools); ++pool_idx)
         {
             hr = IDirect3DDevice8_CreateCubeTexture(device, base_dimension, 0, 0,
                     formats[format_idx].format, pools[pool_idx].pool, &texture_cube);
