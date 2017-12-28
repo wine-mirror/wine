@@ -985,24 +985,28 @@ static void test_Loader(void)
         nt32.OptionalHeader.AddressOfEntryPoint = 0x1000;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        todo_wine
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0;
         nt32.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        todo_wine
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0x1000;
         nt32.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        todo_wine
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0;
         nt32.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        todo_wine
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
     }
 
