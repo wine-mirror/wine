@@ -836,8 +836,11 @@ static const IStreamVtbl Test_Stream_Vtbl =
 
 static void init_memstream(struct memstream *stream)
 {
+    HRESULT hr;
+
     stream->IStream_iface.lpVtbl = &Test_Stream_Vtbl;
-    CreateStreamOnHGlobal(NULL, TRUE, &stream->stream);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream->stream);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
 }
 
 static void cleanup_memstream(struct memstream *stream)
@@ -995,7 +998,8 @@ static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max, IN
     hr = GetHGlobalFromStream(stream.stream, &hglobal);
     ok(hr == S_OK, "%s: Failed to get hglobal, %#x\n", comment, hr);
 
-    IStream_Stat(stream.stream, &stat, STATFLAG_NONAME);
+    hr = IStream_Stat(stream.stream, &stat, STATFLAG_NONAME);
+    ok(hr == S_OK, "Stat() failed, hr %#x.\n", hr);
 
     data = GlobalLock(hglobal);
 
