@@ -3161,7 +3161,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
  *             ZwQuerySection   (NTDLL.@)
  */
 NTSTATUS WINAPI NtQuerySection( HANDLE handle, SECTION_INFORMATION_CLASS class, void *ptr,
-                                ULONG size, ULONG *ret_size )
+                                SIZE_T size, SIZE_T *ret_size )
 {
     NTSTATUS status;
     pe_image_info_t image_info;

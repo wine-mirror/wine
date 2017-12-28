@@ -52,7 +52,7 @@ static DWORD page_size;
 
 static NTSTATUS (WINAPI *pNtCreateSection)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *,
                                            const LARGE_INTEGER *, ULONG, ULONG, HANDLE );
-static NTSTATUS (WINAPI *pNtQuerySection)(HANDLE, SECTION_INFORMATION_CLASS, void *, ULONG, ULONG *);
+static NTSTATUS (WINAPI *pNtQuerySection)(HANDLE, SECTION_INFORMATION_CLASS, void *, SIZE_T, SIZE_T *);
 static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static NTSTATUS (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -239,7 +239,7 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
 {
     SECTION_BASIC_INFORMATION info;
     SECTION_IMAGE_INFORMATION image;
-    ULONG info_size = 0xdeadbeef;
+    SIZE_T info_size = (SIZE_T)0xdeadbeef << 16;
     NTSTATUS status;
     HANDLE file, mapping;
     ULONG file_size;
@@ -265,7 +265,7 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     }
     status = pNtQuerySection( mapping, SectionImageInformation, &image, sizeof(image), &info_size );
     ok( !status, "%u: NtQuerySection failed err %x\n", id, status );
-    ok( info_size == sizeof(image), "%u: NtQuerySection wrong size %u\n", id, info_size );
+    ok( info_size == sizeof(image), "%u: NtQuerySection wrong size %lu\n", id, info_size );
     if (nt_header->OptionalHeader.Magic == (sizeof(void *) > sizeof(int) ? IMAGE_NT_OPTIONAL_HDR64_MAGIC
                                                                          : IMAGE_NT_OPTIONAL_HDR32_MAGIC))
     {
@@ -405,10 +405,10 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
     if (!status)
     {
         SECTION_BASIC_INFORMATION info;
-        ULONG info_size = 0xdeadbeef;
+        SIZE_T info_size = 0xdeadbeef;
         NTSTATUS ret = pNtQuerySection( map, SectionBasicInformation, &info, sizeof(info), &info_size );
         ok( !ret, "NtQuerySection failed err %x\n", ret );
-        ok( info_size == sizeof(info), "NtQuerySection wrong size %u\n", info_size );
+        ok( info_size == sizeof(info), "NtQuerySection wrong size %lu\n", info_size );
         ok( info.Attributes == (SEC_IMAGE | SEC_FILE), "NtQuerySection wrong attr %x\n", info.Attributes );
         ok( info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", info.BaseAddress );
         ok( info.Size.QuadPart == file_size, "NtQuerySection wrong size %x%08x / %08x\n",
