@@ -1,12 +1,12 @@
-The Wine development release 3.0-rc3 is now available.
+The Wine development release 3.0-rc4 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/3.0/wine-3.0-rc3.tar.xz
-  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0-rc3.tar.xz
+  https://dl.winehq.org/wine/source/3.0/wine-3.0-rc4.tar.xz
+  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0-rc4.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,132 +22,68 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 3.0-rc3 (total 24):
+Bugs fixed in 3.0-rc4 (total 12):
 
-   9159  shell32/explorer: Add support for Progman DDE interface
-  10164  Pool of Radiance 1.4 intermittently shows garbage in surfaces
-  13548  Wine's setupapi does not know how to recursively delete registry keys
-  14937  Astroplanner 1.6.1 crashes when closing "preferences" window (TOOLTIPS_SubclassProc must be unsubclassed during WM_NCDESTROY)
-  21849  Sonic & Knuckles Collection: arrow buttons are very narrow
-  28652  SlingPlayer 2 has transparent view screen while loading
-  29871  drawing in photoshop cs5 is almost impossible
-  33268  SlingPlayer 2.0.4 screen flickers when pointer over screen
-  35562  Slingplayer 2 crashes when starting stream
-  36517  SlovoEB 2.1 (.NET 4.0 app) crashes on startup (unsupported WICPixelFormat32bppGrayFloat)
-  41220  Provide fallback implementation of strnlen for OS versions that don't have it in their Libc (Leopard, Snow Leopard, et al)
-  42924  Regression in Warframe - Crash when Updating user information (Usually when ending a mission). Last working version Wine 1.9.17.
-  43004  qedit/tests/mediadet.c intermittent crash
-  43217  Wine cannot execute position-independent (PIE) host executables via CreateProcess()
-  43627  regression in Age of Empires 2: ingame mostly black in recent wine version
-  44163  Far Cry crashes when opening the save game menu
-  44168  Wizardry 8 hangs when starting a new game or loading a saved game
-  44170  MSMoney data File password no more recognized
-  44173  error: use of undeclared identifier 'kCCAlgorithmAES'
-  44174  implicit declaration of function 'CCCryptorCreateWithMode'
-  44180  TMIDI Player: Crash on startup with a stack overflow
-  44194  Serious Sam Classic (First and Second Encounter) shifts the view and makes the game unplayable
-  44196  Autocad 2002 - Scrambled numbers in output
-  44201  SlingPlayer 2.0 crashes on unimplemented function mf.dll.MFGetService
+  13355  Richedit very slowly open big text files
+  16505  BBC iPlayer Desktop: .desktop file confuses comments with command line
+  26851  Zoo Tycoon 2: Marine Mania demo installer fails
+  33722  Stereo IMA ADPCM encoding in WINE produces loud static instead of sound
+  34255  WinPolis 3.x: "Buy CDs" editbox does not automatically select all
+  37336  U-blox U-Center 8.11 crashes when importing or exporting config file
+  41070  "Call of Duty 4" does not start: heap issues
+  41209  The Magic School Bus Explores the Solar System: Error message asking for the game to be reinstalled
+  43971  Wine 2.20 Bcrypt compilation fails under older linux systems while Wine 2.0.3 compiles fine
+  44142  steamwebhelper.exe crashes on wine-stagining 2.21 because NtQueryInformationFile fails
+  44161  Possible incorrect string message in "dlls/kernel32/tests/volume.c" line 263
+  44218  Black displaying of all Wine stuffs with FreeBSD
 
 ----------------------------------------------------------------
 
-Changes since 3.0-rc2:
-
-Akihiro Sagawa (1):
-      include: Fix a typo in newly added edit control message.
+Changes since 3.0-rc3:
 
 Alex Henrie (4):
-      po: Update Catalan translation.
-      gdi32: Scale outline font metrics as signed integers.
-      mmdevapi/tests: Fix memory leaks (Coverity).
-      netapi32/tests: Print NetWkstaTransportEnum error code on test failure.
+      msvcrt: Don't include MSVC 10.0+ math functions in SOs for older DLLs.
+      ddraw/tests: Recognise E_NOTIMPL returned from UpdateOverlay() on VMware as broken.
+      user32/tests: Fix OemKeyScan failures with input method editors.
+      user32/tests: Recognize undefined characters in OemKeyScan tests.
 
-Alexandre Julliard (5):
-      kernel32: Properly detect ELF binaries that are position independent executables.
-      msvcp90/tests: Use the correct return type for basic_istream::ipfx.
-      kernel32/tests: Improve tests for 32/64-bit image mappings.
-      ddraw: Validate the surface descriptor size in GetDisplayMode.
-      gdi32: Fix clipping to the DIB rectangle in GetPixel().
+Alexandre Julliard (7):
+      ntdll: Round the pthread stack size to a page boundary.
+      kernel32/tests: Build the dll path in the create_test_dll helper function.
+      kernel32/tests: Add tests for the ImageContainsCode flag.
+      kernel32/tests: Add tests for loading dlls of different 32/64 bitness.
+      kernel32/tests: Add missing todos for 64-bit.
+      ntdll: NtQuerySection takes SIZE_T parameters.
+      bcrypt: macOS version 10.8 is needed for encryption support.
 
-Andrey Gusev (4):
-      comctl32/tests: Fix a typo in ok() message.
-      kernel32/tests: Fix a typo in ok() message.
-      msi/tests: Fix typos in ok() messages.
-      winhttp/tests: Fix typos in ok() messages.
+Andrey Gusev (1):
+      quartz/tests: Fix resource leak.
 
-Hans Leidekker (6):
-      webservices/tests: Merge the listener tests into channel.c.
-      webservices/tests: Register an exception with the firewall to avoid a dialog.
-      bcrypt: Fix build on macOS 10.8 and older.
-      bcrypt: Require macOS version 10.7 or newer for encryption support.
-      bcrypt: Fix build error on systems with old GnuTLS.
-      winhttp/tests: Fix an intermittent test failure on Windows XP/Vista.
+Gijs Vermeulen (1):
+      msvcrt: Add _get_[winmajor|winminor|osver].
 
-Huw D. M. Davies (1):
-      gdi32: Set otmMacLineGap from the line gap in the hhea table.
+Henri Verbeet (2):
+      ddraw/tests: Introduce an ARRAY_SIZE macro to ddraw7 as well.
+      ddraw/tests: Print driver and device information before running the tests.
 
-Jacek Caban (6):
-      mshtml.idl: Added IDOMMouseEvent declaration.
-      mshtml.idl: Added events dispinterfaces declarations.
-      jscript: Use WARN for exception traces instead of separated debug channel.
-      ntdll/tests: Add NtQueryInformationFile(FileNameInformation) on named pipes tests.
-      server: Introduce get_file_info request for server-side NtQueryInformationFile implementation.
-      server: Add support for querying FileNameInformation on named pipes.
+Michael Stefaniuc (2):
+      shell32/tests: Use the available ARRAY_SIZE() macro.
+      d3dx9/tests: Use the available ARRAY_SIZE() macro.
 
-Józef Kucia (1):
-      wined3d: Consider CPU blitter when clearing discarded textures.
+Nikolay Sivov (10):
+      hlink/tests: Check return value (Coverity).
+      mlang/tests: Add some return value checks (Coverity).
+      taskschd: Fix a leak on error path (Coverity).
+      msxml3/tests: Add missing return value test (Coverity).
+      shell32: Fix SHGetFolderPathAndSubDir() trace message.
+      scrrun/tests: Add a helper to construct test file path.
+      usp10/tests: Add missing return value tests (Coverity).
+      comctl32/tests: Enable tests for version 6 imagelist serialization format.
+      comctl32/tests: Test some return values (Coverity).
+      user32/tests: Add some tests for A/W auto conversion in case of mismatching window vs dialog procedure types.
 
-Kim Malmo (3):
-      po: Update Norwegian translation.
-      po: Update Norwegian translation.
-      po: Update Simplified Chinese translation.
-
-Louis Lenders (1):
-      kernelbase: Quiet a noisy fixme in QuirkIsEnabled3.
-
-Mingcong Bai (1):
-      po: Update Simplified Chinese translation.
-
-Nikolay Sivov (13):
-      user32/tests: Remove runtime check for GetMenuBarInfo().
-      user32/tests: Class API tests for interaction with activation contexts.
-      comctl32/tests: Add Edit control tests.
-      comctl32/tests: Add ListBox tests.
-      comctl32/tests: Remove some workarounds that no longer apply.
-      comctl32/tooltips: Remove window subclass right before window is destroyed.
-      include: Add newer definitions for user controls.
-      mfplat: Implement MFGetService().
-      comctl32/tests: Use CreateWindowEx() to create UpDown controls.
-      comctl32/tests: Add separate test for CreateUpDownControl().
-      comctl32/updown: Reset control width conditionally on UDM_SETBUDDY with NULL buddy handle.
-      comctl32/tooltips: Reset window subclass data when removing tools.
-      comctl32/tests: Make sure v6 module is used when running tests, run more tests with v6 module.
-
-Piotr Caban (2):
-      msvcr71: Don't raise exception in _invalid_parameter.
-      msvcrt: Correctly set rounding mode in _ftol implementation.
-
-Sebastian Lackner (1):
-      user32: Globally invalidate key state on changes in other threads.
-
-Stefan Dösinger (2):
-      d3d9/tests: Work around focus-follows-mouse test failures.
-      d3d8/tests: Work around focus-follows-mouse test failures.
-
-Zebediah Figura (10):
-      user32/tests: Don't leave hwndMain in a topmost state.
-      user32/tests: Add more tests for SetActiveWindow().
-      user32/tests: Add activation tests for hiding windows.
-      user32/tests: Add activation tests for minimizing windows.
-      winegstreamer: Hold a reference to the filter in push_data().
-      user32/tests: Explicitly test minimized window size.
-      user32/tests: Also test client rect size.
-      user32/tests: Add a basic test for maximizing windows.
-      Revert "msi: Don't execute a deferred custom action when not running the install script.".
-      regedit/tests: Skip tests if running as non-elevated admin.
-
-Zhiyi Zhang (1):
-      winecfg: Fix a crash when inputting non-ASCII dll override name.
+Piotr Caban (1):
+      msvcrt: Remove unused variables.
 
 --
 Alexandre Julliard
