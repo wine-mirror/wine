@@ -486,6 +486,7 @@ static void test_render_with_multithread(void)
     IFilterGraph2_Release(filter_graph);
     IGraphBuilder_Release(graph_builder);
     IClassFactory_Release(classfactory);
+    CloseHandle(thread);
     CoUninitialize();
     return;
 }
