@@ -818,7 +818,7 @@ static void test_fvf_decl_conversion(void)
     };
     unsigned int i;
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         test_decl_to_fvf(test_data[i].decl, test_data[i].fvf, D3D_OK, __LINE__, i);
         test_fvf_to_decl(test_data[i].fvf, test_data[i].decl, D3D_OK, __LINE__, i);
@@ -1185,12 +1185,15 @@ static void D3DXCreateMeshTest(void)
     struct mesh mesh;
     struct test_context *test_context;
 
-    static const D3DVERTEXELEMENT9 decl1[3] = {
+    static const D3DVERTEXELEMENT9 decl1[] =
+    {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
-        D3DDECL_END(), };
+        D3DDECL_END(),
+    };
 
-    static const D3DVERTEXELEMENT9 decl2[] = {
+    static const D3DVERTEXELEMENT9 decl2[] =
+    {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
         {0, 24, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_PSIZE, 0},
@@ -1201,7 +1204,8 @@ static void D3DXCreateMeshTest(void)
         D3DDECL_END(),
     };
 
-    static const D3DVERTEXELEMENT9 decl3[] = {
+    static const D3DVERTEXELEMENT9 decl3[] =
+    {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {1, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
         D3DDECL_END(),
@@ -1268,7 +1272,7 @@ static void D3DXCreateMeshTest(void)
 
         if (hr == D3D_OK)
         {
-            size = sizeof(decl1) / sizeof(decl1[0]);
+            size = ARRAY_SIZE(decl1);
             for (i = 0; i < size - 1; i++)
             {
                 ok(test_decl[i].Stream == decl1[i].Stream, "Returned stream %d, expected %d\n", test_decl[i].Stream, decl1[i].Stream);
@@ -1329,7 +1333,7 @@ static void D3DXCreateMeshTest(void)
 
         if (hr == D3D_OK)
         {
-            size = sizeof(decl2) / sizeof(decl2[0]);
+            size = ARRAY_SIZE(decl2);
             for (i = 0; i < size - 1; i++)
             {
                 ok(test_decl[i].Stream == decl2[i].Stream, "Returned stream %d, expected %d\n", test_decl[i].Stream, decl2[i].Stream);
@@ -1387,10 +1391,12 @@ static void D3DXCreateMeshFVFTest(void)
     struct mesh mesh;
     struct test_context *test_context;
 
-    static const D3DVERTEXELEMENT9 decl[3] = {
+    static const D3DVERTEXELEMENT9 decl[] =
+    {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
-        D3DDECL_END(), };
+        D3DDECL_END(),
+    };
 
     hr = D3DXCreateMeshFVF(0, 0, 0, 0, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
@@ -1453,7 +1459,7 @@ static void D3DXCreateMeshFVFTest(void)
 
         if (hr == D3D_OK)
         {
-            size = sizeof(decl) / sizeof(decl[0]);
+            size = ARRAY_SIZE(decl);
             for (i = 0; i < size - 1; i++)
             {
                 ok(test_decl[i].Stream == decl[i].Stream, "Returned stream %d, expected %d\n", test_decl[i].Stream, decl[i].Stream);

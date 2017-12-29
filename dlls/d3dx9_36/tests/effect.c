@@ -1296,15 +1296,20 @@ static void test_effect_parameter_value_GetMatrix(const struct test_effect_param
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
     const char *res_full_name = res->full_name;
     HRESULT hr;
-    DWORD cmp = 0xabababab;
-    FLOAT fvalue[16];
+    union
+    {
+        DWORD d;
+        float f;
+    } cmp;
+    float fvalue[16];
     UINT l, k, err = 0;
 
+    cmp.d = 0xabababab;
     memset(fvalue, 0xab, sizeof(fvalue));
     hr = effect->lpVtbl->GetMatrix(effect, parameter, (D3DXMATRIX *)&fvalue);
     if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrix failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetMatrix failed, got %#x, expected %#x.\n", i, res_full_name, hr, D3D_OK);
 
         for (k = 0; k < 4; ++k)
         {
@@ -1322,12 +1327,14 @@ static void test_effect_parameter_value_GetMatrix(const struct test_effect_param
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrix failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrix failed, got %#x, expected %#x.\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
 
-        for (l = 0; l < sizeof(fvalue) / sizeof(*fvalue); ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+        for (l = 0; l < ARRAY_SIZE(fvalue); ++l)
+            if (fvalue[l] != cmp.f)
+                ++err;
     }
-    ok(!err, "%u - %s: GetMatrix failed with %u errors\n", i, res_full_name, err);
+    ok(!err, "%u - %s: GetMatrix failed with %u errors.\n", i, res_full_name, err);
 }
 
 static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_parameter_value_result *res,
@@ -1451,15 +1458,20 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
     const char *res_full_name = res->full_name;
     HRESULT hr;
-    DWORD cmp = 0xabababab;
-    FLOAT fvalue[16];
+    union
+    {
+        DWORD d;
+        float f;
+    } cmp;
+    float fvalue[16];
     UINT l, k, err = 0;
 
+    cmp.d = 0xabababab;
     memset(fvalue, 0xab, sizeof(fvalue));
     hr = effect->lpVtbl->GetMatrixTranspose(effect, parameter, (D3DXMATRIX *)&fvalue);
     if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x.\n", i, res_full_name, hr, D3D_OK);
 
         for (k = 0; k < 4; ++k)
         {
@@ -1477,7 +1489,7 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
     }
     else if (!res_desc->Elements && (res_desc->Class == D3DXPC_VECTOR || res_desc->Class == D3DXPC_SCALAR))
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x.\n", i, res_full_name, hr, D3D_OK);
 
         for (k = 0; k < 4; ++k)
         {
@@ -1495,12 +1507,14 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x.\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
 
-        for (l = 0; l < sizeof(fvalue) / sizeof(*fvalue); ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+        for (l = 0; l < ARRAY_SIZE(fvalue); ++l)
+            if (fvalue[l] != cmp.f)
+                ++err;
     }
-    ok(!err, "%u - %s: GetMatrixTranspose failed with %u errors\n", i, res_full_name, err);
+    ok(!err, "%u - %s: GetMatrixTranspose failed with %u errors.\n", i, res_full_name, err);
 }
 
 static void test_effect_parameter_value_GetMatrixTransposeArray(const struct test_effect_parameter_value_result *res,
@@ -1674,8 +1688,7 @@ static void test_effect_parameter_value_ResetValue(const struct test_effect_para
 
 static void test_effect_parameter_value(IDirect3DDevice9 *device)
 {
-    UINT i;
-    UINT effect_count = sizeof(test_effect_parameter_value_data) / sizeof(*test_effect_parameter_value_data);
+    unsigned int effect_count = ARRAY_SIZE(test_effect_parameter_value_data), i;
 
     for (i = 0; i < effect_count; ++i)
     {
