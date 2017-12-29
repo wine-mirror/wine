@@ -54,7 +54,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "imm.h"
 
 #include "wine/test.h"
 
@@ -2516,23 +2515,23 @@ static void test_OemKeyScan(void)
     DWORD ret, expect, vkey, scan;
     WCHAR oem, wchr;
     char oem_char;
-    BOOL ime = ImmIsIME(GetKeyboardLayout(0));
 
     for (oem = 0; oem < 0x200; oem++)
     {
         ret = OemKeyScan( oem );
 
         oem_char = LOBYTE( oem );
-        if (!OemToCharBuffW( &oem_char, &wchr, 1 ))
+        /* OemKeyScan returns -1 for any character that cannot be mapped,
+         * whereas OemToCharBuff changes unmappable characters to question
+         * marks. The ASCII characters 0-127, including the real question mark
+         * character, are all mappable and are the same in all OEM codepages. */
+        if (!OemToCharBuffW( &oem_char, &wchr, 1 ) || (wchr == '?' && oem_char < 0))
             expect = -1;
         else
         {
             vkey = VkKeyScanW( wchr );
             scan = MapVirtualKeyW( LOBYTE( vkey ), MAPVK_VK_TO_VSC );
-            /* OemKeyScan returns -1 for any character that has to go through
-             * the IME, whereas VkKeyScan returns the virtual key code for the
-             * question mark key */
-            if (!scan || (ime && wchr != '?' && vkey == VkKeyScanW( '?' )))
+            if (!scan)
                 expect = -1;
             else
             {
