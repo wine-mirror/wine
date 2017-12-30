@@ -3035,7 +3035,7 @@ static void test_SuspendProcessNewThread(void)
     PVOID exe_base, exit_thread_ptr;
     IMAGE_NT_HEADERS nt_header;
     HANDLE thread_handle = NULL;
-    DWORD exit_code = 0;
+    DWORD dret, exit_code = 0;
     CONTEXT ctx;
 
     exit_thread_ptr = GetProcAddress(hkernel32, "ExitThread");
@@ -3097,8 +3097,10 @@ static void test_SuspendProcessNewThread(void)
 #endif
 
     ResumeThread( thread_handle );
-    ok(WaitForSingleObject(thread_handle, 60000) == WAIT_OBJECT_0, "Waiting for remote thread failed (%d)\n", GetLastError());
-    ok(GetExitCodeThread(thread_handle, &exit_code), "Failed to retrieve remote thread exit code (%d)\n", GetLastError());
+    dret = WaitForSingleObject(thread_handle, 60000);
+    ok(dret == WAIT_OBJECT_0, "Waiting for remote thread failed (%d)\n", GetLastError());
+    ret = GetExitCodeThread(thread_handle, &exit_code);
+    ok(ret, "Failed to retrieve remote thread exit code (%d)\n", GetLastError());
     ok(exit_code == 0x1234, "Invalid remote thread exit code\n");
 
     ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
