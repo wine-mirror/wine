@@ -246,6 +246,7 @@ static void GetSetSockaddr_udp_tests(void)
     IWSDUdpAddress *udpAddress = NULL;
     LPCWSTR returnedAddress = NULL;
     char addressBuffer[MAX_PATH];
+    const char *cret;
     WSADATA wsaData;
     WORD port = 0;
     HRESULT rc;
@@ -294,7 +295,8 @@ static void GetSetSockaddr_udp_tests(void)
     /* Windows however doesn't set the port number */
     ok(sockAddr6Ptr->sin6_port == 0, "returnedStorage.sin6_port != 0 (%d)\n", sockAddr6Ptr->sin6_port);
 
-    ok(inet_ntop(returnedStorage.ss_family, &sockAddr6Ptr->sin6_addr, addressBuffer, MAX_PATH) != NULL, "inet_ntop failed (%d)\n", WSAGetLastError());
+    cret = inet_ntop(returnedStorage.ss_family, &sockAddr6Ptr->sin6_addr, addressBuffer, MAX_PATH);
+    ok(cret != NULL, "inet_ntop failed (%d)\n", WSAGetLastError());
     ok(strcmp(addressBuffer, ipv6Address) == 0, "returnedStorage.sin6_addr != '%s' ('%s')\n", ipv6Address, addressBuffer);
 
     /* Release the object and create a new one */
