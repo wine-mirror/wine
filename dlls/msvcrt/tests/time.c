@@ -878,9 +878,10 @@ static void test_clock(void)
     static const int THRESH = 100;
     FILETIME start, cur;
     int c, expect;
+    BOOL ret;
 
-    ok(GetProcessTimes(GetCurrentProcess(), &start, &cur, &cur, &cur),
-        "GetProcessTimes failed with error: %d\n", GetLastError());
+    ret = GetProcessTimes(GetCurrentProcess(), &start, &cur, &cur, &cur);
+    ok(ret, "GetProcessTimes failed with error: %d\n", GetLastError());
     GetSystemTimeAsFileTime(&cur);
     expect = (((LONGLONG)cur.dwHighDateTime<<32)+cur.dwLowDateTime -
             ((LONGLONG)start.dwHighDateTime<<32)-start.dwLowDateTime) / 10000;
