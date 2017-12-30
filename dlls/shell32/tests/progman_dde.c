@@ -460,6 +460,7 @@ START_TEST(progman_dde)
     UINT err;
     HSZ hszProgman;
     HCONV hConv;
+    BOOL ret;
 
     init_function_pointers();
     init_strings();
@@ -472,7 +473,8 @@ START_TEST(progman_dde)
     hszProgman = DdeCreateStringHandleA(instance, "PROGMAN", CP_WINANSI);
     ok(hszProgman != NULL, "DdeCreateStringHandle() failed: %u\n", DdeGetLastError(instance));
     hConv = DdeConnect(instance, hszProgman, hszProgman, NULL);
-    ok(DdeFreeStringHandle(instance, hszProgman), "DdeFreeStringHandle() failed: %u\n", DdeGetLastError(instance));
+    ret = DdeFreeStringHandle(instance, hszProgman);
+    ok(ret, "DdeFreeStringHandle() failed: %u\n", DdeGetLastError(instance));
     /* Seeing failures on early versions of Windows Connecting to progman, exit if connection fails */
     if (hConv == NULL)
     {
@@ -485,8 +487,10 @@ START_TEST(progman_dde)
     test_request_groups(instance, hConv);
 
     /* Cleanup & Exit */
-    ok(DdeDisconnect(hConv), "DdeDisonnect() failed: %u\n", DdeGetLastError(instance));
-    ok(DdeUninitialize(instance), "DdeUninitialize() failed: %u\n", DdeGetLastError(instance));
+    ret = DdeDisconnect(hConv);
+    ok(ret, "DdeDisonnect() failed: %u\n", DdeGetLastError(instance));
+    ret = DdeUninitialize(instance);
+    ok(ret, "DdeUninitialize() failed: %u\n", DdeGetLastError(instance));
 
     /* 2nd Instance (Followup Tests) */
     /* Initialize DDE Instance */
@@ -499,12 +503,15 @@ START_TEST(progman_dde)
     ok(hszProgman != NULL, "DdeCreateStringHandle() failed: %u\n", DdeGetLastError(instance));
     hConv = DdeConnect(instance, hszProgman, hszProgman, NULL);
     ok(hConv != NULL, "DdeConnect() failed: %u\n", DdeGetLastError(instance));
-    ok(DdeFreeStringHandle(instance, hszProgman), "DdeFreeStringHandle() failed: %u\n", DdeGetLastError(instance));
+    ret = DdeFreeStringHandle(instance, hszProgman);
+    ok(ret, "DdeFreeStringHandle() failed: %u\n", DdeGetLastError(instance));
 
     /* Run Tests */
     test_progman_dde2(instance, hConv);
 
     /* Cleanup & Exit */
-    ok(DdeDisconnect(hConv), "DdeDisonnect() failed: %u\n", DdeGetLastError(instance));
-    ok(DdeUninitialize(instance), "DdeUninitialize() failed: %u\n", DdeGetLastError(instance));
+    ret = DdeDisconnect(hConv);
+    ok(ret, "DdeDisonnect() failed: %u\n", DdeGetLastError(instance));
+    ret = DdeUninitialize(instance);
+    ok(ret, "DdeUninitialize() failed: %u\n", DdeGetLastError(instance));
 }
