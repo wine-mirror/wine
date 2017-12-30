@@ -42,4 +42,4 @@
 @ stdcall WSDXMLCleanupElement(ptr)
 @ stdcall WSDXMLCreateContext(ptr)
 @ stub WSDXMLGetNameFromBuiltinNamespace
-@ stdcall WSDXMLGetValueFromAny(wstr wstr ptr wstr)
+@ stdcall WSDXMLGetValueFromAny(wstr wstr ptr ptr)
