@@ -5,13 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-19 00:18+0300\n"
-"Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
+"PO-Revision-Date: 2017-12-31 16:12+0100\n"
+"Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.5\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -486,7 +487,7 @@ msgstr "&Till:"
 
 #: comdlg32.rc:215 wineps.rc:42
 msgid "Print &Quality:"
-msgstr "Utskriftskvalitet:"
+msgstr "Utskrifts&kvalitet:"
 
 #: comdlg32.rc:217
 msgid "Print to Fi&le"
@@ -594,7 +595,7 @@ msgstr "&Egendefinierade färger:"
 
 #: comdlg32.rc:287 comdlg32.rc:310
 msgid "Color |  Sol&id"
-msgstr "Färg |  Enfärgat"
+msgstr "Färg |  En&färgat"
 
 #: comdlg32.rc:288
 msgid "&Red:"
@@ -664,7 +665,7 @@ msgstr "&Sök efter nästa"
 
 #: comdlg32.rc:335
 msgid "Replace"
-msgstr "Sök/ersätt"
+msgstr "Ersätt"
 
 #: comdlg32.rc:340
 msgid "Re&place With:"
@@ -844,7 +845,7 @@ msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
 msgstr ""
-"Ett filnamn kan inte innehålla någon av följande tecken:\n"
+"Ett filnamn kan inte innehålla något av följande tecken:\n"
 "                                               / : < > |"
 
 #: comdlg32.rc:38
@@ -857,7 +858,7 @@ msgstr "Filen finns inte"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr "Du har valt en objekt som inte är en mapp"
+msgstr "Du har valt ett objekt som inte är en mapp"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -968,7 +969,7 @@ msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
-"Detta värdet ligger inte inom sidourvalet.\n"
+"Detta värde ligger inte inom sidurvalet.\n"
 "Var god skriv in ett värde mellan %1!d! och %2!d!."
 
 #: comdlg32.rc:60
@@ -1053,7 +1054,7 @@ msgstr "Välj mapp"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr "Typsnitts storlek måste vara ett tal."
+msgstr "Typsnittsstorlek måste vara ett tal."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -1318,7 +1319,7 @@ msgstr "Counter Sign"
 
 #: crypt32.rc:52
 msgid "Challenge Password"
-msgstr "Kravets lösenord"
+msgstr "Motsvarslösenord"
 
 #: crypt32.rc:53
 msgid "Unstructured Address"
@@ -1351,7 +1352,7 @@ msgstr "Certifikatauktoritetsutfärdare"
 
 #: crypt32.rc:60
 msgid "Certification Template Name"
-msgstr "Certificatmallens namn"
+msgstr "Certifikatmallens namn"
 
 #: crypt32.rc:61
 msgid "Certificate Type"
@@ -1855,7 +1856,7 @@ msgstr "Okänd nyckelanvändning"
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr ""
+msgstr "Ämnestyp="
 
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
@@ -2126,7 +2127,7 @@ msgstr "Ansvarsfriskrivning"
 
 #: cryptui.rc:231
 msgid "More &Info"
-msgstr "Mer &Info"
+msgstr "Mer &info"
 
 #: cryptui.rc:239
 msgid "&Friendly name:"
@@ -2146,7 +2147,7 @@ msgstr "&Aktivera alla syften för detta certifikat"
 
 #: cryptui.rc:246
 msgid "D&isable all purposes for this certificate"
-msgstr "A&vaktivera alla syften för detta certifikat"
+msgstr "Inakti&vera alla syften för detta certifikat"
 
 #: cryptui.rc:248
 msgid "Enable &only the following purposes for this certificate:"
@@ -2349,7 +2350,7 @@ msgid ""
 "to protect the private key on a later page."
 msgstr ""
 "Om du väljer att exportera den privata nyckeln så kommer du på en senare "
-"sida tillbes ange ett lösenord för att skydda den privata nyckeln."
+"sida ombes ange ett lösenord för att skydda den privata nyckeln."
 
 #: cryptui.rc:385
 msgid "Do you wish to export the private key?"
@@ -2562,7 +2563,7 @@ msgstr "Beskrivning"
 
 #: cryptui.rc:66
 msgid "Certificate Properties"
-msgstr "Certifikats-egenskaper"
+msgstr "Certifikatsegenskaper"
 
 #: cryptui.rc:67
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -2794,7 +2795,7 @@ msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Mjukvara signerad av denna utgivare kommer inte längre vara betrodd.\n"
+"Programvara signerad av denna utgivare kommer inte längre vara betrodd.\n"
 "Är du säker du vill ta bort detta certifikat?"
 
 #: cryptui.rc:119
@@ -2802,7 +2803,7 @@ msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Mjukvara signerad av dessa utgivare kommer inte längre vara betrodd.\n"
+"Programvara signerad av dessa utgivare kommer inte längre vara betrodd.\n"
 "Är du säker du vill ta bort dessa certifikat?"
 
 #: cryptui.rc:120
@@ -2826,8 +2827,8 @@ msgid ""
 "Ensures software came from software publisher\n"
 "Protects software from alteration after publication"
 msgstr ""
-"Säkerställer att mjukvara kommer från ursprunglig utgivare\n"
-"Skyddar mjukvara från ändring efter utgivning"
+"Säkerställer att programvara kommer från ursprunglig utgivare\n"
+"Skyddar programvara från ändring efter utgivning"
 
 #: cryptui.rc:127
 msgid "Protects e-mail messages"
@@ -2855,7 +2856,7 @@ msgstr "Arkivering av privat nyckel"
 
 #: cryptui.rc:151
 msgid "Export Format"
-msgstr "Exportera format"
+msgstr "Exportformat"
 
 #: cryptui.rc:152
 msgid "Choose the format in which the content will be saved."
@@ -2863,7 +2864,7 @@ msgstr "Välj format i vilket innehållet kommer sparas."
 
 #: cryptui.rc:153
 msgid "Export Filename"
-msgstr "Exportera filnamn"
+msgstr "Filnamn för export"
 
 #: cryptui.rc:154
 msgid "Specify the name of the file in which the content will be saved."
@@ -2979,7 +2980,7 @@ msgstr "Handlingar"
 
 #: dinput.rc:54
 msgid "Mapping"
-msgstr "Mapping"
+msgstr "Mappning"
 
 #: dinput.rc:56
 msgid "Show Assigned First"
@@ -3003,59 +3004,59 @@ msgstr "%1!u!MB använda, %2!u!MB tillgängliga"
 
 #: gdi32.rc:28
 msgid "Western"
-msgstr "Västerländska"
+msgstr "Västerländsk"
 
 #: gdi32.rc:29
 msgid "Central European"
-msgstr "Centraleuropeiska"
+msgstr "Centraleuropeisk"
 
 #: gdi32.rc:30
 msgid "Cyrillic"
-msgstr "Kyrilliska"
+msgstr "Kyrillisk"
 
 #: gdi32.rc:31
 msgid "Greek"
-msgstr "Grekiska"
+msgstr "Grekisk"
 
 #: gdi32.rc:32
 msgid "Turkish"
-msgstr "Turkiska"
+msgstr "Turkisk"
 
 #: gdi32.rc:33
 msgid "Hebrew"
-msgstr "Hebreiska"
+msgstr "Hebreisk"
 
 #: gdi32.rc:34
 msgid "Arabic"
-msgstr "Arabiska"
+msgstr "Arabisk"
 
 #: gdi32.rc:35
 msgid "Baltic"
-msgstr "Baltiska"
+msgstr "Baltisk"
 
 #: gdi32.rc:36
 msgid "Vietnamese"
-msgstr "Vietnamesiska"
+msgstr "Vietnamesisk"
 
 #: gdi32.rc:37
 msgid "Thai"
-msgstr "Thailändska"
+msgstr "Thailändsk"
 
 #: gdi32.rc:38
 msgid "Japanese"
-msgstr "Japanska"
+msgstr "Japansk"
 
 #: gdi32.rc:39
 msgid "CHINESE_GB2312"
-msgstr "Förenklad kinesiska GB 2312"
+msgstr "Förenklad kinesisk GB 2312"
 
 #: gdi32.rc:40
 msgid "Hangul"
-msgstr "Koreanska"
+msgstr "Koreansk"
 
 #: gdi32.rc:41
 msgid "CHINESE_BIG5"
-msgstr "Traditionell kinesiska Big5"
+msgstr "Traditionell kinesisk Big5"
 
 #: gdi32.rc:42
 msgid "Hangul(Johab)"
@@ -3434,7 +3435,7 @@ msgid ""
 "certificate authorities and publishers."
 msgstr ""
 "Certifikat används för din personliga identifikation samt för att "
-"identifiera certifikats-auktoriteter och -utgivare."
+"identifiera certifikatsauktoriteter och certifikatsutgivare."
 
 #: inetcpl.rc:114
 msgid "Certificates..."
@@ -3505,6 +3506,8 @@ msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
+"Efter att ha inaktiverat eller aktiverat en enhet kommer de anslutna "
+"styrspakarna inte att uppdateras här innan du startar om detta miniprogram."
 
 #: joy.rc:50
 msgid "Test Joystick"
@@ -3527,6 +3530,8 @@ msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
+"Tryck på en knapp i kontrollen för att aktivera vald effekt. "
+"Effektriktningen kan ändras med kontrollaxeln."
 
 #: joy.rc:31
 msgid "Game Controllers"
@@ -3582,7 +3587,7 @@ msgstr "')' förväntades"
 
 #: jscript.rc:40
 msgid "Expected identifier"
-msgstr ""
+msgstr "Identifierare förväntades"
 
 #: jscript.rc:41
 msgid "Expected '='"
@@ -3654,7 +3659,7 @@ msgstr "'|' är odefinierat"
 
 #: jscript.rc:58
 msgid "Boolean object expected"
-msgstr "Boolskt objekt förväntades"
+msgstr "Booleskt objekt förväntades"
 
 #: jscript.rc:59
 msgid "Cannot delete '|'"
@@ -3698,7 +3703,7 @@ msgstr "Array-objekt förväntades"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "Wine-kärn-DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
 msgid "Wine"
@@ -4002,7 +4007,7 @@ msgstr "För många semaforförfrågningar.\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
-msgstr "Ogiltigt begär vid avbrott.\n"
+msgstr "Ogiltig operation vid avbrott.\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
@@ -4022,7 +4027,7 @@ msgstr "Disken låst.\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
-msgstr "Trasig pipa.\n"
+msgstr "Trasigt rör.\n"
 
 #: winerror.mc:426
 msgid "Open failed.\n"
@@ -4362,23 +4367,23 @@ msgstr "Ej tillåtet att nästa LoadModule-anrop.\n"
 
 #: winerror.mc:856
 msgid "Machine type mismatch.\n"
-msgstr "Arkitekturerna misstämmer.\n"
+msgstr "Arkitekturerna överensstämmer inte.\n"
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
-msgstr "Felaktig pipa.\n"
+msgstr "Felaktigt rör.\n"
 
 #: winerror.mc:866
 msgid "Pipe busy.\n"
-msgstr "Pipa upptagen.\n"
+msgstr "Rör upptaget.\n"
 
 #: winerror.mc:871
 msgid "Pipe closed.\n"
-msgstr "Pipa stängd.\n"
+msgstr "Rör stängt.\n"
 
 #: winerror.mc:876
 msgid "Pipe not connected.\n"
-msgstr "Pipa ej ansluten.\n"
+msgstr "Rör ej anslutet.\n"
 
 #: winerror.mc:881
 msgid "More data available.\n"
@@ -4426,7 +4431,7 @@ msgstr "Ogiltig referens till utökade attribut.\n"
 
 #: winerror.mc:936
 msgid "Extended attributes not supported.\n"
-msgstr "Utökade attribut ej stödda.\n"
+msgstr "Utökade attribut stöds ej.\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller.\n"
@@ -4462,11 +4467,11 @@ msgstr "Aritmetiskt överspill.\n"
 
 #: winerror.mc:981
 msgid "Pipe connected.\n"
-msgstr "Pipa ansluten.\n"
+msgstr "Rör anslutet.\n"
 
 #: winerror.mc:986
 msgid "Pipe listening.\n"
-msgstr "Pipa lyssnar.\n"
+msgstr "Rör lyssnar.\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied.\n"
@@ -4518,7 +4523,7 @@ msgstr "Ogiltig fil.\n"
 
 #: winerror.mc:1051
 msgid "Cannot run full-screen.\n"
-msgstr "Kan inte köra fullskärm.\n"
+msgstr "Kan inte köra helskärm.\n"
 
 #: winerror.mc:1056
 msgid "Nonexistent token.\n"
@@ -4730,7 +4735,7 @@ msgstr "Setmarkör upptäckt.\n"
 
 #: winerror.mc:1316
 msgid "No data detected.\n"
-msgstr "Inget data upptäckt.\n"
+msgstr "Ingen data upptäckt.\n"
 
 #: winerror.mc:1321
 msgid "Partition failure.\n"
@@ -4770,7 +4775,7 @@ msgstr "Ingen Unicode-översättning.\n"
 
 #: winerror.mc:1366
 msgid "DLL initialization failed.\n"
-msgstr "DLL-initialisering misslyckades.\n"
+msgstr "DLL-initiering misslyckades.\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"
@@ -4914,7 +4919,7 @@ msgstr "Magasinet är inte tillgängligt.\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization.\n"
-msgstr "Enheten behöver återinitialiseras.\n"
+msgstr "Enheten behöver återinitieras.\n"
 
 #: winerror.mc:1551
 msgid "The device requires cleaning.\n"
@@ -5062,7 +5067,7 @@ msgstr "Antalet tillåtna fjärrsessioner överskridet.\n"
 
 #: winerror.mc:1736
 msgid "Duplicate domain or workgroup name.\n"
-msgstr "Upprepat domän- eller arbetsgrupps-namn.\n"
+msgstr "Upprepat domän- eller arbetsgruppsnamn.\n"
 
 #: winerror.mc:1741
 msgid "No network.\n"
@@ -5166,7 +5171,7 @@ msgstr "Fortsätt pågående arbete.\n"
 
 #: winerror.mc:1866
 msgid "Already initialized.\n"
-msgstr "Redan initialiserad.\n"
+msgstr "Redan initierad.\n"
 
 #: winerror.mc:1871
 msgid "No more local devices.\n"
@@ -5962,7 +5967,7 @@ msgstr "Ogiltig tabell.\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
-msgstr "Datatyperna misstämmer.\n"
+msgstr "Datatyperna överensstämmer inte.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type.\n"
@@ -6014,7 +6019,7 @@ msgstr "Omstart påbörjad efter lyckad installation.\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding.\n"
-msgstr "Ogiltig sträng-bindning.\n"
+msgstr "Ogiltig strängbindning.\n"
 
 #: winerror.mc:2936
 msgid "Wrong kind of binding.\n"
@@ -6026,7 +6031,7 @@ msgstr "Ogiltig bindning.\n"
 
 #: winerror.mc:2946
 msgid "RPC protocol sequence not supported.\n"
-msgstr "RPC-protokollsekvens ej stödd.\n"
+msgstr "RPC-protokollsekvens stöds ej.\n"
 
 #: winerror.mc:2951
 msgid "Invalid RPC protocol sequence.\n"
@@ -6278,11 +6283,11 @@ msgstr "Division med noll för flyttal.\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow.\n"
-msgstr "Flyttals-underspill.\n"
+msgstr "Flyttalsunderspill.\n"
 
 #: winerror.mc:3271
 msgid "Floating-point overflow.\n"
-msgstr "Flyttals-överspill.\n"
+msgstr "Flyttalsöverspill.\n"
 
 #: winerror.mc:3276
 msgid "No more entries.\n"
@@ -6306,7 +6311,7 @@ msgstr "Kontextreferens skadad.\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch.\n"
-msgstr "Bindningsreferensen misstämmer.\n"
+msgstr "Bindningsreferensen överensstämmer inte.\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle.\n"
@@ -6514,15 +6519,15 @@ msgstr "Fel stub-version.\n"
 
 #: winerror.mc:3561
 msgid "Invalid pipe object.\n"
-msgstr "Ogiltig pipa.\n"
+msgstr "Ogiltigt rör.\n"
 
 #: winerror.mc:3566
 msgid "Wrong pipe order.\n"
-msgstr "Fel ordning på pipan.\n"
+msgstr "Fel ordning på röret.\n"
 
 #: winerror.mc:3571
 msgid "Wrong pipe version.\n"
-msgstr "Fel version på pipan.\n"
+msgstr "Fel version på röret.\n"
 
 #: winerror.mc:3576
 msgid "Group member not found.\n"
@@ -6598,15 +6603,15 @@ msgstr "Ogiltigt asynkront RPC-anrop.\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed.\n"
-msgstr "RPC-pipa stängd.\n"
+msgstr "RPC-rör stängt.\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe.\n"
-msgstr ""
+msgstr "Disciplinfel på RPC-rör.\n"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe.\n"
-msgstr "Inget data på RPC-pipa.\n"
+msgstr "Ingen data på RPC-rör.\n"
 
 #: winerror.mc:3681
 msgid "No site name available.\n"
@@ -6622,7 +6627,7 @@ msgstr "Filnamnet kan inte hittas.\n"
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch.\n"
-msgstr "Posttyper för RPC misstämmer.\n"
+msgstr "Posttyper för RPC överensstämmer inte.\n"
 
 #: winerror.mc:3701
 msgid "Not all objects could be exported.\n"
@@ -6870,11 +6875,11 @@ msgstr "ange vilken mapp som innehåller %s"
 
 #: msi.rc:62
 msgid "install source for feature missing"
-msgstr "installationskälla för funktion saknar"
+msgstr "installationskälla för funktion saknas"
 
 #: msi.rc:63
 msgid "network drive for feature missing"
-msgstr "nätverksenhet för funktion saknar"
+msgstr "nätverksenhet för funktion saknas"
 
 #: msi.rc:64
 msgid "feature from:"
@@ -6885,94 +6890,68 @@ msgid "choose which folder contains %s"
 msgstr "välj den mapp som innehåller %s"
 
 #: msi.rc:90
-#, fuzzy
-#| msgid "No registry log space.\n"
 msgid "Allocating registry space"
-msgstr "Inget utrymme för registerlogg.\n"
+msgstr "Allokerar registerutrymme"
 
 #: msi.rc:91
-#, fuzzy
-#| msgid "Single-instance application.\n"
 msgid "Searching for installed applications"
-msgstr "Endast en instans kan köras av detta program.\n"
+msgstr "Söker efter installerade program"
 
 #: msi.rc:92
 msgid "Binding executables"
-msgstr ""
+msgstr "Binder körbara filer"
 
 #: msi.rc:93 msi.rc:136
-#, fuzzy
-#| msgid "Searching for %s"
 msgid "Searching for qualifying products"
-msgstr "Söker efter %s"
+msgstr "Söker efter produkter som passar"
 
 #: msi.rc:94 msi.rc:95 msi.rc:100
 msgid "Computing space requirements"
-msgstr ""
+msgstr "Beräknar utrymmeskrav"
 
 #: msi.rc:96
-#, fuzzy
-#| msgid "Target folder"
 msgid "Creating folders"
-msgstr "Målmapp"
+msgstr "Skapar mappar"
 
 #: msi.rc:97
-#, fuzzy
-#| msgid "Create Shor&tcut"
 msgid "Creating shortcuts"
-msgstr "Skapa genv&äg"
+msgstr "Skapar genvägar"
 
 #: msi.rc:98
-#, fuzzy
-#| msgid "Exception in service.\n"
 msgid "Deleting services"
-msgstr "Undantag i tjänst.\n"
+msgstr "Tar bort tjänster"
 
 #: msi.rc:99
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creating duplicate files"
-msgstr "Skapad"
+msgstr "Skapar dubblettfiler"
 
 #: msi.rc:101
-#, fuzzy
-#| msgid "No associated application.\n"
 msgid "Searching for related applications"
-msgstr "Inget associerat program.\n"
+msgstr "Söker efter relaterade program"
 
 #: msi.rc:102
 msgid "Copying network install files"
-msgstr ""
+msgstr "Kopierar nätverksinstallationsfiler"
 
 #: msi.rc:103
-#, fuzzy
-#| msgid "Copying Files..."
 msgid "Copying new files"
-msgstr "Kopierar filer..."
+msgstr "Kopierar nya filer"
 
 #: msi.rc:104
-#, fuzzy
-#| msgid "Installation of component failed: %08x"
 msgid "Installing ODBC components"
-msgstr "Installation av komponenten misslyckades: %08x"
+msgstr "Installerar ODBC-komponenter"
 
 #: msi.rc:105
-#, fuzzy
-#| msgid "Installer service failed.\n"
 msgid "Installing new services"
-msgstr "Installationstjänsten misslyckades.\n"
+msgstr "Installerar nya tjänster"
 
 #: msi.rc:106
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Installing system catalog"
-msgstr "Installera/Avinstallera"
+msgstr "Installerar systemkatalog"
 
 #: msi.rc:107
-#, fuzzy
-#| msgid "Wine Application Uninstaller"
 msgid "Validating install"
-msgstr "Avinstallera Wine-program"
+msgstr "Validerar installation"
 
 #: msi.rc:108
 msgid "Evaluating launch conditions"
@@ -6980,225 +6959,187 @@ msgstr ""
 
 #: msi.rc:109
 msgid "Migrating feature states from related applications"
-msgstr ""
+msgstr "Migrerar funktionstillstånd från relaterade program"
 
 #: msi.rc:110
-#, fuzzy
-#| msgid "Icon files"
 msgid "Moving files"
-msgstr "Ikonfiler"
+msgstr "Flyttar filer"
 
 #: msi.rc:111
-#, fuzzy
-#| msgid "Version information"
 msgid "Publishing assembly information"
-msgstr "Versionsinformation"
+msgstr "Publicerar assembleringsinformation"
 
 #: msi.rc:112
 msgid "Unpublishing assembly information"
-msgstr ""
+msgstr "Avpublicerar assembleringsinformation"
 
 #: msi.rc:113
-#, fuzzy
-#| msgid "Icon files"
 msgid "Patching files"
-msgstr "Ikonfiler"
+msgstr "Patchar filer"
 
 #: msi.rc:114
 msgid "Updating component registration"
-msgstr ""
+msgstr "Uppdaterar komponentregistrering"
 
 #: msi.rc:115
 msgid "Publishing Qualified Components"
-msgstr ""
+msgstr "Publicerar kvalificerade komponenter"
 
 #: msi.rc:116
 msgid "Publishing Product Features"
-msgstr ""
+msgstr "Publicerar produktfunktioner"
 
 #: msi.rc:117
-#, fuzzy
-#| msgid "Client Information"
 msgid "Publishing product information"
-msgstr "Klientinformation"
+msgstr "Publicerar produktinformation"
 
 #: msi.rc:118
 msgid "Registering Class servers"
-msgstr ""
+msgstr "Registrerar klasservrar"
 
 #: msi.rc:119
 msgid "Registering COM+ Applications and Components"
-msgstr ""
+msgstr "Registrerar COM+-program och komponenter"
 
 #: msi.rc:120
 msgid "Registering extension servers"
-msgstr ""
+msgstr "Registrerar tilläggsservrar"
 
 #: msi.rc:121
 msgid "Registering fonts"
-msgstr ""
+msgstr "Registrerar typsnitt"
 
 #: msi.rc:122
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Registering MIME info"
-msgstr "Registereditorn"
+msgstr "Registrerar MIME-information"
 
 #: msi.rc:123
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
 msgid "Registering product"
-msgstr "Registret är korrupt.\n"
+msgstr "Registrerar produkt"
 
 #: msi.rc:124
 msgid "Registering program identifiers"
-msgstr ""
+msgstr "Registrerar programidentifierare"
 
 #: msi.rc:125
-#, fuzzy
-#| msgid "Type Libraries"
 msgid "Registering type libraries"
-msgstr "Typbibliotek"
+msgstr "Registrerar typbibliotek"
 
 #: msi.rc:126
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Registering user"
-msgstr "Resursen används.\n"
+msgstr "Registrerar användare"
 
 #: msi.rc:127
-#, fuzzy
-#| msgid "&Remove duplicates"
 msgid "Removing duplicated files"
-msgstr "&Ta bort upprepade"
+msgstr "Tar bort upprepade filer"
 
 #: msi.rc:128 msi.rc:152
-#, fuzzy
-#| msgid "Applying font settings"
 msgid "Updating environment strings"
-msgstr "Verkställ teckensnittsinställningar"
+msgstr "Uppdaterar miljösträngar"
 
 #: msi.rc:129
-#, fuzzy
-#| msgid "&Remove application"
 msgid "Removing applications"
-msgstr "&Ta bort program"
+msgstr "Tar bort program"
 
 #: msi.rc:130
-#, fuzzy
-#| msgid "Icon files"
 msgid "Removing files"
-msgstr "Ikonfiler"
+msgstr "Tar bort filer"
 
 #: msi.rc:131
 msgid "Removing folders"
-msgstr ""
+msgstr "Tar bort mappar"
 
 #: msi.rc:132
 msgid "Removing INI files entries"
-msgstr ""
+msgstr "Tar bort INI-filposter"
 
 #: msi.rc:133
-#, fuzzy
-#| msgid "Domain Component"
 msgid "Removing ODBC components"
-msgstr "Domänkomponent"
+msgstr "Tar bort ODBC-komponenter"
 
 #: msi.rc:134
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "Removing system registry values"
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "Tar bort systemregistervärden"
 
 #: msi.rc:135
 msgid "Removing shortcuts"
-msgstr ""
+msgstr "Tar bort genvägar"
 
 #: msi.rc:137
 msgid "Registering modules"
-msgstr ""
+msgstr "Registrerar moduler"
 
 #: msi.rc:138
 msgid "Unregistering modules"
-msgstr ""
+msgstr "Avregistrerar moduler"
 
 #: msi.rc:139
-#, fuzzy
-#| msgid "Initializing; "
 msgid "Initializing ODBC directories"
-msgstr "Initierar; "
+msgstr "Initierar ODBC-kataloger"
 
 #: msi.rc:140
-#, fuzzy
-#| msgid "Starting Wordpad failed"
 msgid "Starting services"
-msgstr "Kunde inte starta Wordpad"
+msgstr "Startar tjänster"
 
 #: msi.rc:141
-#, fuzzy
-#| msgid "Stopping dependent service: %1\n"
 msgid "Stopping services"
-msgstr "Stoppar beroende tjänst: %1\n"
+msgstr "Stoppar tjänster"
 
 #: msi.rc:142
 msgid "Unpublishing Qualified Components"
-msgstr ""
+msgstr "Avpublicerar kvalificerade komponenter"
 
 #: msi.rc:143
 msgid "Unpublishing Product Features"
-msgstr ""
+msgstr "Avpublicerar produktfunktioner"
 
 #: msi.rc:144
-#, fuzzy
-#| msgid "Client Information"
 msgid "Unpublishing product information"
-msgstr "Klientinformation"
+msgstr "Avpublicerar produktinformation"
 
 #: msi.rc:145
 msgid "Unregister Class servers"
-msgstr ""
+msgstr "Avregistrera klasservrar"
 
 #: msi.rc:146
 msgid "Unregistering COM+ Applications and Components"
-msgstr ""
+msgstr "Avregistrerar COM+-program och komponenter"
 
 #: msi.rc:147
 msgid "Unregistering extension servers"
-msgstr ""
+msgstr "Avregistrerar tilläggsservrar"
 
 #: msi.rc:148
 msgid "Unregistering fonts"
-msgstr ""
+msgstr "Avregistrerar typsnitt"
 
 #: msi.rc:149
 msgid "Unregistering MIME info"
-msgstr ""
+msgstr "Avregistrerar MIME-information"
 
 #: msi.rc:150
 msgid "Unregistering program identifiers"
-msgstr ""
+msgstr "Avregistrerar programidentifierare"
 
 #: msi.rc:151
 msgid "Unregistering type libraries"
-msgstr ""
+msgstr "Avregistrerar typbibliotek"
 
 #: msi.rc:153
 msgid "Writing INI files values"
-msgstr ""
+msgstr "Skriver INI-filvärden"
 
 #: msi.rc:154
-#, fuzzy
-#| msgid "Warning: system library"
 msgid "Writing system registry values"
-msgstr "Varning: systembibliotek"
+msgstr "Skriver systemregistervärden"
 
 #: msi.rc:160
 msgid "Free space: [1]"
-msgstr ""
+msgstr "Ledigt utrymme: [1]"
 
 #: msi.rc:161
 msgid "Property: [1], Signature: [2]"
-msgstr ""
+msgstr "Egenskap: [1], Signatur: [2]"
 
 #: msi.rc:162
 msgid "File: [1]"
@@ -7210,73 +7151,63 @@ msgstr "Mapp: [1]"
 
 #: msi.rc:164 msi.rc:193
 msgid "Shortcut: [1]"
-msgstr ""
+msgstr "Genväg: [1]"
 
 #: msi.rc:165 msi.rc:196 msi.rc:197
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [1]"
-msgstr "&Enhet:"
+msgstr "Tjänst: [1]"
 
 #: msi.rc:166 msi.rc:169 msi.rc:173
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr ""
+msgstr "Fil: [1],  Katalog: [9],  Storlek: [6]"
 
 #: msi.rc:167
-#, fuzzy
-#| msgid "application"
 msgid "Found application: [1]"
-msgstr "program"
+msgstr "Hittat program: [1]"
 
 #: msi.rc:168
 msgid "File: [1], Directory: [9], Size: [6]"
-msgstr ""
+msgstr "Fil: [1], Katalog: [9], Storlek: [6]"
 
 #: msi.rc:170
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Service: [2]"
-msgstr "&Enhet:"
+msgstr "Tjänst: [2]"
 
 #: msi.rc:171
 msgid "File: [1],  Dependencies: [2]"
-msgstr ""
+msgstr "Fil: [1],  Beroenden: [2]"
 
 #: msi.rc:172
-#, fuzzy
-#| msgid "Applications"
 msgid "Application: [1]"
-msgstr "Program"
+msgstr "Program: [1]"
 
 #: msi.rc:174 msi.rc:175
 msgid "Application Context:[1], Assembly Name:[2]"
-msgstr ""
+msgstr "Programkontext:[1], Assembleringsnamn:[2]"
 
 #: msi.rc:176
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr ""
+msgstr "Fil: [1],  Katalog: [2],  Storlek: [3]"
 
 #: msi.rc:177 msi.rc:198
 msgid "Component ID: [1], Qualifier: [2]"
-msgstr ""
+msgstr "Komponent-ID: [1], Kvalificerare: [2]"
 
 #: msi.rc:178 msi.rc:199
 msgid "Feature: [1]"
-msgstr ""
+msgstr "Funktion: [1]"
 
 #: msi.rc:179 msi.rc:200
 msgid "Class Id: [1]"
-msgstr ""
+msgstr "Klass-ID: [1]"
 
 #: msi.rc:180
 msgid "AppId: [1]{{, AppType: [2], Users: [3], RSN: [4]}}"
-msgstr ""
+msgstr "AppId: [1]{{, AppType: [2], Användare: [3], RSN: [4]}}"
 
 #: msi.rc:181 msi.rc:202
-#, fuzzy
-#| msgid "Extensions Only"
 msgid "Extension: [1]"
-msgstr "Enbart tillägg"
+msgstr "Tillägg: [1]"
 
 #: msi.rc:182 msi.rc:203
 msgid "Font: [1]"
@@ -7296,27 +7227,27 @@ msgstr ""
 
 #: msi.rc:186 msi.rc:189
 msgid "File: [1], Directory: [9]"
-msgstr ""
+msgstr "Fil: [1], Katalog: [9]"
 
 #: msi.rc:187 msi.rc:207
 msgid "Name: [1], Value: [2], Action [3]"
-msgstr ""
+msgstr "Namn: [1], Värde: [2], Åtgärd [3]"
 
 #: msi.rc:188
 msgid "Application: [1], Command line: [2]"
-msgstr ""
+msgstr "Program: [1], Kommandorad: [2]"
 
 #: msi.rc:191 msi.rc:208
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr ""
+msgstr "Fil: [1],  Avsnitt: [2],  Nyckel: [3], Värde: [4]"
 
 #: msi.rc:192
 msgid "Key: [1], Name: [2]"
-msgstr ""
+msgstr "Nyckel: [1], Namn: [2]"
 
 #: msi.rc:194 msi.rc:195
 msgid "File: [1], Folder: [2]"
-msgstr ""
+msgstr "Fil: [1], Mapp: [2]"
 
 #: msi.rc:201
 msgid "AppId: [1]{{, AppType: [2]}}"
@@ -7324,23 +7255,23 @@ msgstr ""
 
 #: msi.rc:209
 msgid "Key: [1], Name: [2], Value: [3]"
-msgstr ""
+msgstr "Nyckel: [1], Namn: [2], Värde: [3]"
 
 #: msi.rc:71
 msgid "{{Fatal error: }}"
-msgstr ""
+msgstr "{{Ödesdigert fel: }}"
 
 #: msi.rc:72
 msgid "{{Error [1]. }}"
-msgstr ""
+msgstr "{{Fel [1]. }}"
 
 #: msi.rc:73
 msgid "Warning [1]."
-msgstr ""
+msgstr "Varning [1]."
 
 #: msi.rc:74
 msgid "Info [1]."
-msgstr ""
+msgstr "Info [1]."
 
 #: msi.rc:75
 msgid ""
@@ -7348,6 +7279,9 @@ msgid ""
 "This may indicate a problem with this package. The error code is [1]. {{The "
 "arguments are: [2], [3], [4]}}"
 msgstr ""
+"Installationsprogrammet stötte på ett oväntat fel då detta paket "
+"installerades. Detta kan tyda på ett problem med paketet. Felkoden är [1]. "
+"{{Argumenten är: [2], [3], [4]}}"
 
 #: msi.rc:76
 msgid "{{Disk full: }}"
@@ -7355,15 +7289,15 @@ msgstr "{{Disken är full: }}"
 
 #: msi.rc:77
 msgid "Action [Time]: [1]. [2]"
-msgstr ""
+msgstr "Åtgärd [Time]: [1]. [2]"
 
 #: msi.rc:78
 msgid "Message type: [1], Argument: [2]{, [3]}"
-msgstr ""
+msgstr "Meddelandetyp: [1], Argument: [2]{, [3]}"
 
 #: msi.rc:81
 msgid "=== Logging started: [Date]  [Time] ==="
-msgstr ""
+msgstr "=== Loggning startad: [Date]  [Time] ==="
 
 #: msi.rc:79
 msgid "Action start [Time]: [1]."
@@ -7375,7 +7309,7 @@ msgstr ""
 
 #: msi.rc:83
 msgid "Please insert the disk: [2]"
-msgstr ""
+msgstr "Mata in disken: [2]"
 
 #: msi.rc:84
 msgid ""
@@ -7441,7 +7375,7 @@ msgstr "okänt objekt"
 
 #: oleacc.rc:32
 msgid "title bar"
-msgstr "titelrad"
+msgstr "namnlist"
 
 #: oleacc.rc:33
 msgid "menu bar"
@@ -7489,7 +7423,7 @@ msgstr "menypost"
 
 #: oleacc.rc:44
 msgid "tool tip"
-msgstr "tooltip"
+msgstr "verktygstips"
 
 #: oleacc.rc:45
 msgid "application"
@@ -7525,7 +7459,7 @@ msgstr "avskiljare"
 
 #: oleacc.rc:53
 msgid "tool bar"
-msgstr "verktygsrad"
+msgstr "verktygsfält"
 
 #: oleacc.rc:54
 msgid "status bar"
@@ -7641,7 +7575,7 @@ msgstr "snabbknappsfält"
 
 #: oleacc.rc:82
 msgid "slider"
-msgstr "glidreglage"
+msgstr "skjutreglage"
 
 #: oleacc.rc:83
 msgid "spin box"
@@ -7748,22 +7682,22 @@ msgstr "standard"
 #: oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr ""
+msgstr "utfälld"
 
 #: oleacc.rc:108
 msgctxt "object state"
 msgid "collapsed"
-msgstr ""
+msgstr "infälld"
 
 #: oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr ""
+msgstr "upptagen"
 
 #: oleacc.rc:110
 msgctxt "object state"
 msgid "floating"
-msgstr ""
+msgstr "flytande"
 
 #: oleacc.rc:111
 msgctxt "object state"
@@ -7783,17 +7717,17 @@ msgstr "osynligt"
 #: oleacc.rc:114
 msgctxt "object state"
 msgid "offscreen"
-msgstr ""
+msgstr "utanför skärmen"
 
 #: oleacc.rc:115
 msgctxt "object state"
 msgid "sizeable"
-msgstr ""
+msgstr "storleksändringsbar"
 
 #: oleacc.rc:116
 msgctxt "object state"
 msgid "moveable"
-msgstr ""
+msgstr "flyttbar"
 
 #: oleacc.rc:117
 msgctxt "object state"
@@ -7803,47 +7737,47 @@ msgstr ""
 #: oleacc.rc:118
 msgctxt "object state"
 msgid "focusable"
-msgstr ""
+msgstr "fokusbar"
 
 #: oleacc.rc:119
 msgctxt "object state"
 msgid "selectable"
-msgstr ""
+msgstr "valbar"
 
 #: oleacc.rc:120
 msgctxt "object state"
 msgid "linked"
-msgstr ""
+msgstr "länkad"
 
 #: oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr ""
+msgstr "traverserad"
 
 #: oleacc.rc:122
 msgctxt "object state"
 msgid "multi selectable"
-msgstr ""
+msgstr "flerfaldigt valbar"
 
 #: oleacc.rc:123
 msgctxt "object state"
 msgid "extended selectable"
-msgstr ""
+msgstr "utökat valbar"
 
 #: oleacc.rc:124
 msgctxt "object state"
 msgid "alert low"
-msgstr ""
+msgstr "varning låg"
 
 #: oleacc.rc:125
 msgctxt "object state"
 msgid "alert medium"
-msgstr ""
+msgstr "varning medel"
 
 #: oleacc.rc:126
 msgctxt "object state"
 msgid "alert high"
-msgstr ""
+msgstr "varning hög"
 
 #: oleacc.rc:127
 msgctxt "object state"
@@ -7853,7 +7787,7 @@ msgstr "skyddat"
 #: oleacc.rc:128
 msgctxt "object state"
 msgid "has popup"
-msgstr ""
+msgstr "har popup"
 
 #: oleaut32.rc:30 oleview.rc:146
 msgid "True"
@@ -7949,6 +7883,8 @@ msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
+"Infogar innehållet i filen som ett objekt i ditt dokument så du kan aktivera "
+"det med programmet som skapade det."
 
 #: oledlg.rc:30 shell32.rc:197
 msgid "Browse"
@@ -7959,6 +7895,7 @@ msgid ""
 "File does not appear to be a valid OLE module. Unable to register OLE "
 "control."
 msgstr ""
+"Filen verkar inte vara en giltig OLE-modul. Kan inte registrera OLE-kontroll."
 
 #: oledlg.rc:32
 msgid "Add Control"
@@ -7966,7 +7903,7 @@ msgstr "Lägg till kontroll"
 
 #: oledlg.rc:35
 msgid "&Convert..."
-msgstr ""
+msgstr "&Konvertera..."
 
 #: oledlg.rc:36
 msgid "%1 %2 &Object"
@@ -7982,19 +7919,23 @@ msgstr "&Objekt"
 
 #: oledlg.rc:41
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr ""
+msgstr "Infogar innehållet i urklipp till ditt dokument som %s."
 
 #: oledlg.rc:42
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
+"Infogar innehållet i urklipp till ditt dokument så du kan aktivera det med "
+"%s."
 
 #: oledlg.rc:43
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
+"Infogar innehållet i urklipp till ditt dokument så du kan aktivera det med "
+"%s. Det kommer att visas som en ikon."
 
 #: oledlg.rc:44
 msgid ""
@@ -8002,6 +7943,8 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
+"Infogar innehållet i urklipp till ditt dokument som %s. Data är länkade till "
+"källfilen så att ändringar till filen kommer att återspeglas i ditt dokument."
 
 #: oledlg.rc:45
 msgid ""
@@ -8009,6 +7952,9 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
+"Infogar en bild av innehållet i urklipp till ditt dokument. Bilden är länkad "
+"till källfilen så att ändringar till filen kommer att återspeglas i ditt "
+"dokument."
 
 #: oledlg.rc:46
 msgid ""
@@ -8016,10 +7962,13 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
+"Infogar en genväg som pekar på platsen för innehållet i urklipp. Data är "
+"länkade till källfilen så att ändringar till filen kommer att återspeglas i "
+"ditt dokument."
 
 #: oledlg.rc:47
 msgid "Inserts the contents of the clipboard into your document."
-msgstr ""
+msgstr "Infogar innehållet i urklipp till ditt dokument."
 
 #: oledlg.rc:48 regedit.rc:430
 msgid "Unknown Type"
@@ -8260,7 +8209,7 @@ msgstr "Öppna i nytt &fönster"
 
 #: shdoclc.rc:132
 msgid "Cut"
-msgstr "&Klipp ut"
+msgstr "Klipp ut"
 
 #: shdoclc.rc:155
 msgid "&Save Video As..."
@@ -8328,11 +8277,11 @@ msgstr "Spara HTML"
 
 #: shdoclc.rc:213
 msgid "&Browse View"
-msgstr "&Bläddra vy"
+msgstr "&Bläddra-vy"
 
 #: shdoclc.rc:214
 msgid "&Edit View"
-msgstr "R&edigera vy"
+msgstr "R&edigera-vy"
 
 #: shdoclc.rc:219 shdoclc.rc:233
 msgid "Scroll Here"
@@ -8455,7 +8404,7 @@ msgstr "Ny &mapp"
 
 #: shell32.rc:70
 msgid "New &Link"
-msgstr "Ny &genväg"
+msgstr "Ny &länk"
 
 #: shell32.rc:74
 msgid "Properties"
@@ -8532,18 +8481,16 @@ msgid "Wine was brought to you by:"
 msgstr "Wine hade inte varit möjligt utan dessa personer:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "&Kör..."
+msgstr "Kör"
 
 #: shell32.rc:338
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"Skriv namnet på ett program, en mapp eller ett dokument och Wine kommer att "
-"öppna det åt dig."
+"Skriv namnet på ett program, en mapp, ett dokument eller en internetresurs "
+"så Wine kommer att öppna det åt dig."
 
 #: shell32.rc:339
 msgid "&Open:"
@@ -8825,7 +8772,7 @@ msgstr "Är du säker du vill sända '%1' till papperskorgen?"
 
 #: shell32.rc:178
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr "Är du säker du vill sända dessa %1 elementen till papperskorgen?"
+msgstr "Är du säker du vill sända dessa %1 element till papperskorgen?"
 
 #: shell32.rc:179
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
@@ -8856,8 +8803,6 @@ msgid "Wine Control Panel"
 msgstr "Wines kontrollpanel"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
 msgstr "Kunde inte visa Kör-fönstret (internt fel)"
 
@@ -8975,10 +8920,8 @@ msgid " sec"
 msgstr " s"
 
 #: twain.rc:29
-#, fuzzy
-#| msgid "Select Folder"
 msgid "Select Source"
-msgstr "Välj mapp"
+msgstr "Välj källa"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -9001,6 +8944,8 @@ msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
+"När den installerats har en ActiveX-komponent full åtkomst till din dator. "
+"Klicka inte installera om du inte litar fullständigt på källan ovan."
 
 #: urlmon.rc:51
 msgid "Installation of component failed: %08x"
@@ -9089,11 +9034,11 @@ msgstr "Visa alla"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Avsluta %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Avsluta"
 
 #: winemac.rc:40
 msgid "Window"
@@ -9109,7 +9054,7 @@ msgstr "Zooma"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Helskärmsläge"
 
 #: winemac.rc:44
 msgid "Bring All to Front"
@@ -9141,7 +9086,7 @@ msgstr "Server"
 
 #: wininet.rc:80
 msgid "There is a problem with the certificate for this site."
-msgstr "Ett problem upptäcktes med certifikatet för denna site."
+msgstr "Ett problem upptäcktes med certifikatet för denna plats."
 
 #: wininet.rc:82
 msgid "Do you want to continue anyway?"
@@ -9161,7 +9106,7 @@ msgstr "Certifikatets datum är ogiltigt."
 
 #: wininet.rc:31
 msgid "The name on the certificate does not match the site."
-msgstr "Namnet på certifikatet matchar inte sitens namn."
+msgstr "Namnet på certifikatet matchar inte platsens namn."
 
 #: wininet.rc:32
 msgid ""
@@ -9192,7 +9137,7 @@ msgstr "Angiven enhet används redan. Vänta tills den är ledig och försök ig
 
 #: winmm.rc:37
 msgid "The specified device handle is invalid."
-msgstr "Angiven handle för enheten är ogiltig."
+msgstr "Angiven referens för enheten är ogiltig."
 
 #: winmm.rc:38
 msgid "There is no driver installed on your system!"
@@ -9240,16 +9185,16 @@ msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"Kan inte uföra denna operation medan mediadata fortfarande spelas. Starta om "
-"enheten eller vänta tills data spelats klart."
+"Kan inte utföra denna operation medan mediadata fortfarande spelas. Starta "
+"om enheten eller vänta tills data spelats klart."
 
 #: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"Wave-headern var inte förberedd. Använd funktionen Prepare för att förbereda "
-"headern och försök sedan igen."
+"Wave-huvudet var inte förberett. Använd funktionen Prepare för att förbereda "
+"huvudet och försök sedan igen."
 
 #: winmm.rc:49
 msgid ""
@@ -9264,8 +9209,8 @@ msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"MIDI-headern var inte förberedd. Använd funktionen Prepare för att förbereda "
-"headern och försök sedan igen."
+"MIDI-huvudet var inte förberett. Använd funktionen Prepare för att förbereda "
+"huvudet och försök sedan igen."
 
 #: winmm.rc:54
 msgid ""
@@ -9280,7 +9225,7 @@ msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
 msgstr ""
-"Porten överför data till enheten. Vänta till allt data överförts och försök "
+"Porten överför data till enheten. Vänta till all data överförts och försök "
 "sedan igen."
 
 #: winmm.rc:56 winmm.rc:129
@@ -9349,8 +9294,8 @@ msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr ""
-"Utskriftssträngen var för stor för att rymmas i returbuffern. Utöka bufferns "
-"storlek."
+"Utskriftssträngen var för stor för att rymmas i returbufferten. Utöka "
+"buffertens storlek."
 
 #: winmm.rc:70
 msgid ""
@@ -9400,7 +9345,7 @@ msgstr "Enhetsdrivrutinen är inte redo."
 
 #: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "Ett problem uppstod då MCI initialiserades. Försök starta om Windows."
+msgstr "Ett problem uppstod då MCI initierades. Försök starta om Windows."
 
 #: winmm.rc:79
 msgid ""
@@ -9525,7 +9470,7 @@ msgstr "Du måste ange ett alias då du använder parametern 'new'."
 
 #: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr "Kan inte använda flaggan 'notify' med auto-öppnade enheter."
+msgstr "Kan inte använda flaggan 'notify' med automatiskt öppnade enheter."
 
 #: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
@@ -9544,8 +9489,8 @@ msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
-"Kan inte utföra det angivna kommandot på en auto-öppnad enhet. Vänta tills "
-"enheten är stängd och försök sedan igen."
+"Kan inte utföra det angivna kommandot på en automatiskt öppnad enhet. Vänta "
+"tills enheten är stängd och försök sedan igen."
 
 #: winmm.rc:103
 msgid ""
@@ -9567,7 +9512,7 @@ msgid ""
 "in Control Panel to install the device."
 msgstr ""
 "Angiven enhet är inte installerad på systemet. Använd valet Drivers i "
-"Control Panel för att installera enheten."
+"kontrollpanelen för att installera enheten."
 
 #: winmm.rc:106
 msgid ""
@@ -9697,7 +9642,7 @@ msgid ""
 "option from the Control Panel to install a MIDI device."
 msgstr ""
 "Den angivna MIDI-enheten är inte installerad på systemet. Använd valet "
-"Drivers från Control Panel för att installera en MIDI-enhet."
+"Drivers från kontrollpanelen för att installera en MIDI-enhet."
 
 #: winmm.rc:130
 msgid "An error occurred with the specified port."
@@ -9708,8 +9653,8 @@ msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
 msgstr ""
-"Alla multimediatimers används av andra program. Avsluta ett av dessa program "
-"och försök sedan igen."
+"Alla multimediatidtagare används av andra program. Avsluta ett av dessa "
+"program och försök sedan igen."
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -9721,7 +9666,7 @@ msgid ""
 "Control Panel to install a MIDI driver."
 msgstr ""
 "Systemet har inga installerade MIDI-enheter. Använd valet Drivers från "
-"Control Panel för att installera en MIDI-drivrutin."
+"kontrollpanelen för att installera en MIDI-drivrutin."
 
 #: winmm.rc:122
 msgid "There is no display window."
@@ -9757,7 +9702,7 @@ msgstr "Volym"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Huvudljudvolym"
 
 #: winmm.rc:139
 msgid "Mute"
@@ -9793,11 +9738,11 @@ msgstr "Protokollfel"
 
 #: wldap32.rc:35
 msgid "Time Limit Exceeded"
-msgstr ""
+msgstr "Tidsgräns överskreds"
 
 #: wldap32.rc:36
 msgid "Size Limit Exceeded"
-msgstr ""
+msgstr "Storleksgräns överskreds"
 
 #: wldap32.rc:37
 msgid "Compare False"
@@ -9809,11 +9754,11 @@ msgstr ""
 
 #: wldap32.rc:39
 msgid "Authentication Method Not Supported"
-msgstr ""
+msgstr "Autentiseringsmetoden stöds inte"
 
 #: wldap32.rc:40
 msgid "Strong Authentication Required"
-msgstr ""
+msgstr "Stark autentisering krävs"
 
 #: wldap32.rc:41
 msgid "Referral (v2)"
@@ -9836,10 +9781,8 @@ msgid "Confidentiality Required"
 msgstr ""
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Nedstängning pågår.\n"
+msgstr "SASL-bindning pågår"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -9851,11 +9794,11 @@ msgstr "Odefinierad typ"
 
 #: wldap32.rc:50
 msgid "Inappropriate Matching"
-msgstr ""
+msgstr "Olämplig matchning"
 
 #: wldap32.rc:51
 msgid "Constraint Violation"
-msgstr ""
+msgstr "Begränsningsöverträdelse"
 
 #: wldap32.rc:52
 msgid "Attribute Or Value Exists"
@@ -9871,11 +9814,11 @@ msgstr "Inget sådant objekt"
 
 #: wldap32.rc:65
 msgid "Alias Problem"
-msgstr "Alias Problem"
+msgstr "Aliasproblem"
 
 #: wldap32.rc:66
 msgid "Invalid DN Syntax"
-msgstr ""
+msgstr "Ogiltig DN-syntax"
 
 #: wldap32.rc:67
 msgid "Is Leaf"
@@ -9887,7 +9830,7 @@ msgstr ""
 
 #: wldap32.rc:80
 msgid "Inappropriate Authentication"
-msgstr ""
+msgstr "Olämplig autentisering"
 
 #: wldap32.rc:81
 msgid "Invalid Credentials"
@@ -9895,7 +9838,7 @@ msgstr ""
 
 #: wldap32.rc:82
 msgid "Insufficient Rights"
-msgstr ""
+msgstr "Otillräckliga rättigheter"
 
 #: wldap32.rc:83
 msgid "Busy"
@@ -9947,7 +9890,7 @@ msgstr ""
 
 #: wldap32.rc:102
 msgid "Results Too Large"
-msgstr ""
+msgstr "Resultatet är för stort"
 
 #: wldap32.rc:103
 msgid "Affects Multiple DSAs"
@@ -9955,7 +9898,7 @@ msgstr ""
 
 #: wldap32.rc:113
 msgid "Server Down"
-msgstr ""
+msgstr "Servern är nere"
 
 #: wldap32.rc:114
 msgid "Local Error"
@@ -9963,15 +9906,15 @@ msgstr "Lokalt fel"
 
 #: wldap32.rc:115
 msgid "Encoding Error"
-msgstr ""
+msgstr "Kodningsfel"
 
 #: wldap32.rc:116
 msgid "Decoding Error"
-msgstr ""
+msgstr "Avkodningsfel"
 
 #: wldap32.rc:117
 msgid "Timeout"
-msgstr "Tidsgräns överstigen"
+msgstr "Tidsgräns överskreds"
 
 #: wldap32.rc:118
 msgid "Auth Unknown"
@@ -9979,7 +9922,7 @@ msgstr ""
 
 #: wldap32.rc:119
 msgid "Filter Error"
-msgstr ""
+msgstr "Filterfel"
 
 #: wldap32.rc:120
 msgid "User Canceled"
@@ -9987,19 +9930,19 @@ msgstr ""
 
 #: wldap32.rc:121
 msgid "Parameter Error"
-msgstr ""
+msgstr "Parameterfel"
 
 #: wldap32.rc:122
 msgid "No Memory"
-msgstr ""
+msgstr "Inget minne"
 
 #: wldap32.rc:123
 msgid "Can't connect to the LDAP server"
-msgstr ""
+msgstr "Kan inte ansluta till LDAP-servern"
 
 #: wldap32.rc:124
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr ""
+msgstr "Operationen stöds inte av denna version av LDAP-protokollet"
 
 #: wldap32.rc:125
 msgid "Specified control was not found in message"
@@ -10011,7 +9954,7 @@ msgstr ""
 
 #: wldap32.rc:127
 msgid "More results returned"
-msgstr ""
+msgstr "Fler resultat returnerades"
 
 #: wldap32.rc:128
 msgid "Loop while handling referrals"
@@ -10054,6 +9997,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Visar eller ändrar filattribut.\n"
+"\n"
+"Syntax:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [enhet:][sökväg][filnamn]\n"
+"       [/S [/D]]\n"
+"\n"
+"Där:\n"
+"\n"
+"  +   Ställer in ett attribut.\n"
+"  -   Rensar ett attribut.\n"
+"  R   Skrivskyddat filattribut.\n"
+"  A   Arkivfilattribut.\n"
+"  S   Systemfilattribut.\n"
+"  H   Dolt filattribut.\n"
+"  [enhet:][sökväg][filnamn]\n"
+"      Anger en eller flera filer som attrib ska behandla.\n"
+"  /S  Behandlar matchande filer i aktuell mapp och alla undermappar.\n"
+"  /D  Behandlar även mappar.\n"
 
 #: clock.rc:32
 msgid "Ana&log"
@@ -10069,7 +10030,7 @@ msgstr "T&ypsnitt..."
 
 #: clock.rc:37
 msgid "&Without Titlebar"
-msgstr "&Utan titellist"
+msgstr "&Utan namnlist"
 
 #: clock.rc:39
 msgid "&Seconds"
@@ -10101,7 +10062,7 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <batchfilename> används inom en batchfil för att exekvera kommandon\n"
+"CALL <batchfilnamn> används inom en batchfil för att exekvera kommandon\n"
 "från en annan batchfil. När den anropade batchfilen stängs ner, så återfår\n"
 "den anropande batchfilen återigen kontrollen. Med CALL går det även att\n"
 "skicka med parametrar till den anropade metoden.\n"
@@ -10123,11 +10084,11 @@ msgstr "CHDIR <plats> ändrar standardsökväg.\n"
 
 #: cmd.rc:50
 msgid "CLS clears the console screen.\n"
-msgstr "CLS rensar konsollen från text.\n"
+msgstr "CLS rensar konsolen från text.\n"
 
 #: cmd.rc:53
 msgid "COPY <filename> copies a file.\n"
-msgstr "COPY <filename> kopierar en fil.\n"
+msgstr "COPY <filnamn> kopierar en fil.\n"
 
 #: cmd.rc:56
 msgid "CTTY changes the input/output device.\n"
@@ -10139,7 +10100,7 @@ msgstr "DATE visar eller ändrar systemets datum.\n"
 
 #: cmd.rc:62
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL <filename> tar bort en eller flera filer.\n"
+msgstr "DEL <filnamn> tar bort en eller flera filer.\n"
 
 #: cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
@@ -10211,7 +10172,7 @@ msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
-"HELP <command> skriver ut mer detaljerad information ang. ämnet.\n"
+"HELP <kommando> skriver ut mer detaljerad information ang. ämnet.\n"
 "HELP utan ett argument visar alla inbyggda CMD-kommandon.\n"
 
 #: cmd.rc:111
@@ -10251,7 +10212,7 @@ msgstr ""
 #: cmd.rc:121
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr ""
-"MD <name> är en synonym för MKDIR.\n"
+"MD <namn> är en synonym för MKDIR.\n"
 "Den skapar en ny mapp i mappen du befinner dig i.\n"
 
 #: cmd.rc:123
@@ -10271,7 +10232,7 @@ msgstr ""
 "\n"
 "Om du flyttar på en mapp, så flyttas allting under mappen med.\n"
 "\n"
-"MOVE misslyckas om den gamla och det den nya stället är på olika\n"
+"MOVE misslyckas om det gamla och det nya stället är på olika\n"
 "DOS-enhetsbokstäver.\n"
 
 #: cmd.rc:142
@@ -10362,11 +10323,11 @@ msgstr ""
 #: cmd.rc:176
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
-"REN <filnamn> är en synonym för kommandot RENAME. REN döper om en fil.\n"
+"REN <filnamn> är en synonym för kommandot RENAME. REN byter namn på en fil.\n"
 
 #: cmd.rc:178
 msgid "RENAME <filename> renames a file.\n"
-msgstr "RENAME <filnamn> döper om en fil.\n"
+msgstr "RENAME <filnamn> byter namn på en fil.\n"
 
 #: cmd.rc:181
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
@@ -10403,7 +10364,7 @@ msgstr ""
 "SET <variabel>=<värde>\n"
 "\n"
 "där <variabel> och <värde> är teckensträngar. Inga blanksteg är tillåtna\n"
-"varken innan lika med tecknet eller inom variabel namnet.\n"
+"varken innan lika med-tecknet eller inom variabelnamnet.\n"
 "\n"
 "I Wine inkluderas miljövariabler från det underliggande operativsystemet i\n"
 "Win32-miljön vilket resulterar i att det finns många fler värden än i en\n"
@@ -10450,6 +10411,34 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
+"Starta ett program, eller öppna ett dokument i programmet som vanligen\n"
+"används för filer med den filändelsen.\n"
+"Användning:\n"
+"start [flaggor] programmets_filnamn [...]\n"
+"start [flaggor] dokumentets_filnamn\n"
+"\n"
+"Flaggor:\n"
+"\"title\"        Anger titeln på underordnade fönster.\n"
+"/d directory   Starta programmet i angiven katalog.\n"
+"/b             Skapa inte en ny konsol för programmet.\n"
+"/i             Starta programmet med nya miljövariabler.\n"
+"/min           Starta programmet minimerat.\n"
+"/max           Starta programmet maximerat.\n"
+"/low           Starta programmet i prioritetsklassen idle.\n"
+"/normal        Starta programmet i prioritetsklassen normal.\n"
+"/high          Starta programmet i prioritetsklassen high.\n"
+"/realtime      Starta programmet i prioritetsklassen realtime.\n"
+"/abovenormal   Starta programmet i prioritetsklassen abovenormal.\n"
+"/belownormal   Starta programmet i prioritetsklassen belownormal.\n"
+"/node n        Starta programmet på den angivna NUMA-noden.\n"
+"/affinity mask Starta programmet med den angivna affinitetsmasken.\n"
+"/wait          Vänta på att det startade programmet ska avsluta, avsluta "
+"sedan\n"
+"med dess avslutningskod.\n"
+"/unix          Använd ett Unix-filnamn och starta filen som windows\n"
+"explorer.\n"
+"/ProgIDOpen    Öppna ett dokument med angivet progID.\n"
+"/?             Visa denna hjälp och avsluta.\n"
 
 #: cmd.rc:237
 msgid "TIME sets or shows the current system time.\n"
@@ -10464,7 +10453,7 @@ msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere if\n"
 "redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <filnamn> kopierar <filnamn> till konsollen (eller annanstans om\n"
+"TYPE <filnamn> kopierar <filnamn> till konsolen (eller annanstans om\n"
 "angivet). TYPE kollar inte vad filen i fråga är för typ av fil.\n"
 
 #: cmd.rc:253
@@ -10499,6 +10488,8 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file which\n"
 "were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL avslutar lokalisering av miljöändringar i en batchfil som\n"
+"introducerades av ett föregårende SETLOCAL.\n"
 
 #: cmd.rc:271
 msgid ""
@@ -10509,6 +10500,12 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL startar lokalisering av miljöändringar i en batchfil.\n"
+"\n"
+"Miljöändringar som görs efter SETLOCAL är lokala för batchfilen, och\n"
+"sparas till nästa ENDLOCAL påträffas (eller i slutet på filen,\n"
+"vilket som kommer först), då tidigare miljöinställningar\n"
+"återställs.\n"
 
 #: cmd.rc:275
 msgid ""
@@ -10533,6 +10530,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current\n"
 "association, if any.\n"
 msgstr ""
+"ASSOC visar eller ändrar associationer för filändelser.\n"
+"\n"
+"Syntax: ASSOC [.ext[=[filTyp]]]\n"
+"\n"
+"ASSOC utan parametrar visar aktuella filassociationer.\n"
+"Om det används endast med en filändelse visas aktuell association.\n"
+"Att inte ange någon filtyp efter lika med-tecknet tar bort aktuell\n"
+"association om sådan finns.\n"
 
 #: cmd.rc:300
 msgid ""
@@ -10547,6 +10552,16 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string\n"
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE visar eller ändrar öppna-kommandon som är associerade med filtyper.\n"
+"\n"
+"Syntax: FTYPE [filTyp[=[öppnaKommando]]]\n"
+"\n"
+"Utan parametrar visas filtyperna för vilka öppna-kommandosträngar finns\n"
+"definierade.\n"
+"Om det endast används med en filtyp, visas den associerade\n"
+"öppna-kommandosträngen, om sådan finns.\n"
+"Att inte ange något öppna-kommando efter lika med-tecknet tar bort aktuell\n"
+"kommandosträng associerad med den angivna filtypen.\n"
 
 #: cmd.rc:303
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -10575,6 +10590,16 @@ msgid ""
 "link_name is the name of the new symbolic link.\n"
 "target is the path that link_name points to.\n"
 msgstr ""
+"Skapa en symbolisk länk.\n"
+"\n"
+"Syntax: MKLINK [flaggor] länknamn mål\n"
+"\n"
+"Flaggor:\n"
+"/d             Skapa en symbolisk länk till katalog.\n"
+"/h             Skapa en hård länk.\n"
+"/j             Skapa en mjuk kataloglänk.\n"
+"länknamn är namnet på den nya symboliska länken.\n"
+"mål är sökvägen som länknamn pekar till.\n"
 
 #: cmd.rc:312
 msgid ""
@@ -10585,47 +10610,6 @@ msgstr ""
 "eller skalet som cmd startades ifrån.\n"
 
 #: cmd.rc:364
-#, fuzzy
-#| msgid ""
-#| "CMD built-in commands are:\n"
-#| "ASSOC\t\tShow or modify file extension associations\n"
-#| "ATTRIB\t\tShow or change DOS file attributes\n"
-#| "CALL\t\tInvoke a batch file from inside another\n"
-#| "CD (CHDIR)\tChange current default directory\n"
-#| "CHOICE\t\tWait for an keypress from a selectable list\n"
-#| "CLS\t\tClear the console screen\n"
-#| "COPY\t\tCopy file\n"
-#| "CTTY\t\tChange input/output device\n"
-#| "DATE\t\tShow or change the system date\n"
-#| "DEL (ERASE)\tDelete a file or set of files\n"
-#| "DIR\t\tList the contents of a directory\n"
-#| "ECHO\t\tCopy text directly to the console output\n"
-#| "ENDLOCAL\tEnd localization of environment changes in a batch file\n"
-#| "FTYPE\t\tShow or modify open commands associated with file types\n"
-#| "HELP\t\tShow brief help details on a topic\n"
-#| "MD (MKDIR)\tCreate a subdirectory\n"
-#| "MORE\t\tDisplay output in pages\n"
-#| "MOVE\t\tMove a file, set of files or directory tree\n"
-#| "PATH\t\tSet or show the search path\n"
-#| "PAUSE\t\tSuspend execution of a batch file\n"
-#| "POPD\t\tRestore the directory to the last one saved with PUSHD\n"
-#| "PROMPT\t\tChange the command prompt\n"
-#| "PUSHD\t\tChange to a new directory, saving the current one\n"
-#| "REN (RENAME)\tRename a file\n"
-#| "RD (RMDIR)\tDelete a subdirectory\n"
-#| "SET\t\tSet or show environment variables\n"
-#| "SETLOCAL\tStart localization of environment changes in a batch file\n"
-#| "START\t\tStart a program, or open a document in the associated program\n"
-#| "TIME\t\tSet or show the current system time\n"
-#| "TITLE\t\tSet the window title for the CMD session\n"
-#| "TYPE\t\tType the contents of a text file\n"
-#| "VER\t\tShow the current version of CMD\n"
-#| "VOL\t\tShow the volume label of a disk device\n"
-#| "XCOPY\t\tCopy source files or directory trees to a destination\n"
-#| "EXIT\t\tClose down CMD\n"
-#| "\n"
-#| "Enter HELP <command> for further information on any of the above "
-#| "commands.\n"
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10673,39 +10657,39 @@ msgstr ""
 "CALL\t\tAnropa en batchfil inifrån en annan\n"
 "CD (CHDIR)\tÄndra nuvarande standardsökväg\n"
 "CHOICE\t\tVänta på en tangenttryckning från en valbar lista\n"
-"CLS\t\tRensa konsollen\n"
+"CLS\t\tRensa konsolen\n"
 "COPY\t\tKopiera en fil\n"
-"CTTY\t\tÄndra input/output-enhet\n"
+"CTTY\t\tÄndra enhet för inmatning/utmatning\n"
 "DATE\t\tVisa eller ändra systemets tid\n"
 "DEL (ERASE)\tTa bort en eller flera filer\n"
 "DIR\t\tVisa innehållet av en mapp\n"
-"ECHO\t\tSkriva ut inmatad text\n"
+"ECHO\t\tSkriv ut inmatad text\n"
 "ENDLOCAL\tAvsluta lokalisering av miljöändringar i en kommandofil\n"
 "FTYPE\t\tVisa eller ändra kommandon associerade med filtyper\n"
 "HELP\t\tVisa hjälpavsnitt om specificerat område\n"
 "MD (MKDIR)\tSkapa en mapp i sökvägen\n"
 "MORE\t\tVisa resultatet i sidor\n"
 "MOVE\t\tFlytta en fil eller en mapp med alla dess filer/mappar under\n"
-"PATH\t\tVisa eller ställa in sökvägen\n"
+"PATH\t\tVisa eller ställ in sökvägen\n"
 "PAUSE\t\tPausa körning av en kommandofil\n"
-"POPD\t\tÅterställa mappen till sökvägen sist sparad med PUSHD\n"
+"POPD\t\tÅterställ mappen till sökvägen sist sparad med PUSHD\n"
 "PROMPT\t\tÄndra kommandoprompten\n"
 "PUSHD\t\tSpara den nuvarande sökvägen i en stack\n"
-"REN (RENAME)\tDöpa om en fil\n"
+"REN (RENAME)\tByt namn på en fil\n"
 "RD (RMDIR)\tTa bort en mapp\n"
-"SET\t\tVisa eller ställa in miljövariabler\n"
+"SET\t\tVisa eller ställ in miljövariabler\n"
 "SETLOCAL\tBörja lokalisering av miljöändringar i en kommandofil\n"
 "START\t\tStarta ett program, eller öppna ett dokument i programmet som\n"
 "\t\tnormalt används\n"
-"TIME\t\tVisa eller ställa in systemets tid\n"
-"TITLE\t\tStälla in titeln för CMD:s session\n"
-"TYPE\t\tSkriva ut innehållet av en fil\n"
+"TIME\t\tVisa eller ställ in systemets tid\n"
+"TITLE\t\tStäll in titeln för CMD:s session\n"
+"TYPE\t\tSkriv ut innehållet av en fil\n"
 "VER\t\tVisa CMD:s version\n"
 "VOL\t\tVisa namnet på specificerad enhet\n"
 "XCOPY\t\tKopiera källfiler eller katalogträd till ett mål\n"
-"EXIT\t\tStänga CMD\n"
+"EXIT\t\tStäng CMD\n"
 "\n"
-"Skriv HELP <command> för mer information om något av kommandona ovanför.\n"
+"Skriv HELP <kommando> för mer information om något av kommandona ovanför.\n"
 
 #: cmd.rc:365
 msgid "Are you sure?"
@@ -10824,7 +10808,7 @@ msgstr "Diskvolymens namn (11 tecken, tryck <Enter> för inget)?"
 
 #: cmd.rc:394
 msgid "PATH not found\n"
-msgstr "Sökväg ej funnen\n"
+msgstr "PATH ej funnen\n"
 
 #: cmd.rc:395
 msgid "Press any key to continue... "
@@ -10848,11 +10832,11 @@ msgstr "Inmatningen är för lång.\n"
 
 #: cmd.rc:400
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Volymen i enhet %1!c! är %2\n"
 
 #: cmd.rc:401
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Volymen i enhet %1!c! har ingen etikett.\n"
 
 #: cmd.rc:402 reg.rc:49
 msgid " (Yes|No)"
@@ -10866,14 +10850,16 @@ msgstr " (Ja|Nej|Alla)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
+"Känner inte igen '%1' som ett internt eller externt kommando, eller "
+"batchskript.\n"
 
 #: cmd.rc:405
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Division med noll-fel.\n"
 
 #: cmd.rc:406
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "En operand förväntades.\n"
 
 #: cmd.rc:407
 msgid "Expected an operator.\n"
@@ -10881,17 +10867,19 @@ msgstr "Operator förväntades.\n"
 
 #: cmd.rc:408
 msgid "Mismatch in parentheses.\n"
-msgstr ""
+msgstr "Omatchade parenteser.\n"
 
 #: cmd.rc:409
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
+"Felaktigt talformat - måste vara en av decimal (12),\n"
+" hexadecimal (0x34) eller oktal (056).\n"
 
 #: dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "DirectX-diagnostikverktyg"
 
 #: dxdiag.rc:31
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
@@ -10903,7 +10891,7 @@ msgstr "Wine Explorer"
 
 #: explorer.rc:33
 msgid "Start"
-msgstr ""
+msgstr "Start"
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
@@ -10922,6 +10910,8 @@ msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
+"Fel: Att ställa in systemets värdnamn är inte möjligt med hostname-"
+"verktyget.\n"
 
 #: ipconfig.rc:30
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -10992,10 +10982,8 @@ msgid "IPv6 address"
 msgstr "IPv6-adress"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "Systeminställning"
+msgstr "Systeminformation"
 
 #: net.rc:30
 msgid ""
@@ -11290,7 +11278,7 @@ msgstr "&Ta bort\tDel"
 
 #: notepad.rc:49
 msgid "Select &all\tCtrl+A"
-msgstr "Markera &all\tCtrl+A"
+msgstr "Markera &allt\tCtrl+A"
 
 #: notepad.rc:50
 msgid "&Time/Date\tF5"
@@ -11298,7 +11286,7 @@ msgstr "Tid/Dat&um\tF5"
 
 #: notepad.rc:52
 msgid "&Wrap long lines"
-msgstr "&Dela långa meningar"
+msgstr "&Dela långa rader"
 
 #: notepad.rc:56
 msgid "&Search...\tCtrl+F"
@@ -11417,7 +11405,7 @@ msgstr "FEL"
 
 #: notepad.rc:74
 msgid "Untitled"
-msgstr "(namnlös)"
+msgstr "Namnlös"
 
 #: notepad.rc:77 winedbg.rc:41
 msgid "Text files (*.txt)"
@@ -11533,7 +11521,7 @@ msgstr "Kopiera &CLSID till urklipp"
 
 #: oleview.rc:57
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "&Kopiera &HTML-objektstagg till urklipp"
+msgstr "Kopiera &HTML-objektstagg till urklipp"
 
 #: oleview.rc:63
 msgid "&Expert mode"
@@ -11699,7 +11687,7 @@ msgstr ""
 
 #: oleview.rc:121
 msgid "Show or hide the toolbar"
-msgstr "Slå av/på verktygslisten"
+msgstr "Visa eller dölj verktygsfältet"
 
 #: oleview.rc:122
 msgid "Show or hide the status bar"
@@ -11999,12 +11987,13 @@ msgstr "Ingen hjälp finns tillgänglig."
 
 #: progman.rc:78
 msgid "Unknown feature in %s"
-msgstr "Okänd egenskap i '%s'"
+msgstr "Okänd funktion i %s"
 
 #: progman.rc:79
 msgid "File `%s' exists. Not overwritten."
 msgstr "Filen '%s' fanns redan, och skrevs ej över."
 
+# TODO: closing quote missing?
 #: progman.rc:80
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Spara grupp som '%s' för att undvika att skriva över filer."
@@ -12033,6 +12022,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"Usage:\n"
+"  REG [operation] [parametrar]\n"
+"\n"
+"Operationer som stöds:\n"
+"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
+"\n"
+"För hjälp kring en specifik operation, skriv:\n"
+"  REG [operation] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -12078,15 +12076,15 @@ msgstr "reg: Ej stödd typ [%1] i registret\n"
 
 #: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr ""
+msgstr "reg: Flaggan [/d] måste följas av ett giltigt heltal\n"
 
 #: reg.rc:46
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr ""
+msgstr "reg: Flaggan [/d] måste följas av ett giltigt hexadecimalt värde\n"
 
 #: reg.rc:47
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr ""
+msgstr "reg: Ohanterad registerdatatyp [/t 0x%1!x!, /d %2]\n"
 
 #: reg.rc:48
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
@@ -12094,7 +12092,7 @@ msgstr "Värdet '%1' finns redan i registret. Vill du ersätta det?"
 
 #: reg.rc:52
 msgid "The registry operation was cancelled\n"
-msgstr ""
+msgstr "Registeroperationen avbröts\n"
 
 #: reg.rc:53 regedit.rc:239
 msgid "(Default)"
@@ -12114,43 +12112,42 @@ msgstr "Vill du verkligen ta bort registernyckeln '%1'?"
 
 #: reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr ""
+msgstr "reg: Flaggan [/d] måste följas av en giltig sträng\n"
 
 #: reg.rc:58
 msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg: Kan inte ta bort alla registervärden i '%1'. Ett oväntat fel "
+"inträffade.\n"
 
 #: reg.rc:59
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg: Kan inte slutföra den angivna operationen. Ett oväntat fel inträffade.\n"
 
 #: reg.rc:60
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr ""
+msgstr "Sökning slutförd. Antal hittade matchningar: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "reg: Ogiltigt nyckelnamn\n"
+msgstr "reg: Ogiltig syntax. "
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "uninstaller: Flaggan [%1] är ogiltig\n"
+msgstr "reg: Ogiltig flagga [%1]. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Skriv \"REG /?\" för hjälp.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Skriv \"REG %1 /?\" för hjälp.\n"
 
 #: reg.rc:65 regedit.rc:240
 msgid "(value not set)"
@@ -12158,41 +12155,31 @@ msgstr "(värde ej angivet)"
 
 #: reg.rc:66
 msgid "REG IMPORT file.reg\n"
-msgstr ""
+msgstr "REG IMPORT fil.reg\n"
 
 #: reg.rc:67
-#, fuzzy
-#| msgid "No command was specified."
 msgid "reg: The file '%1' was not found.\n"
-msgstr "Inget kommando angavs."
+msgstr "reg: Filen '%1' hittades inte.\n"
 
 #: reg.rc:68
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "reg: Kan inte öppna registernyckeln '%1'.\n"
 
 #: reg.rc:69
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "reg: Okänd kontrollsekvens [\\%1!c!]\n"
 
 #: reg.rc:70
-#, fuzzy
-#| msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG QUERY nyckelnamn [/v värdenamn | /ve] [/s]\n"
+msgstr "REG QUERY nyckelnamn fil.reg [/y]\n"
 
 #: reg.rc:71
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid system key [%1]\n"
-msgstr "reg: Ogiltigt nyckelnamn\n"
+msgstr "reg: Ogiltig systemnyckel [%1]\n"
 
 #: reg.rc:72
-#, fuzzy
-#| msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "Värdet '%1' finns redan i registret. Vill du ersätta det?"
+msgstr "Filen '%1' finns redan. Vill du skriva över den?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12216,7 +12203,7 @@ msgstr "&Strängvärde"
 
 #: regedit.rc:50 regedit.rc:102 regedit.rc:124
 msgid "&Binary Value"
-msgstr "&Binärt Värde"
+msgstr "&Binärt värde"
 
 #: regedit.rc:51 regedit.rc:103 regedit.rc:125
 msgid "&DWORD Value"
@@ -12236,7 +12223,7 @@ msgstr "&Byt namn\tF2"
 
 #: regedit.rc:59 regedit.rc:114
 msgid "&Copy Key Name"
-msgstr "&Kopiera Nyckelnamn"
+msgstr "&Kopiera nyckelnamn"
 
 #: regedit.rc:61 regedit.rc:107 wordpad.rc:53
 msgid "&Find...\tCtrl+F"
@@ -12244,7 +12231,7 @@ msgstr "&Sök...\tCtrl+F"
 
 #: regedit.rc:62
 msgid "Find Ne&xt\tF3"
-msgstr "Sök Näst&a\tF3"
+msgstr "Sök näst&a\tF3"
 
 #: regedit.rc:66
 msgid "Status &Bar"
@@ -12264,17 +12251,15 @@ msgstr "&Om Registereditorn"
 
 #: regedit.rc:89 regedit.rc:96 regedit.rc:230
 msgid "Expand"
-msgstr ""
+msgstr "Expandera"
 
 #: regedit.rc:134 regedit.rc:233
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "Ändra binärdata..."
+msgstr "Ändra &binärdata..."
 
 #: regedit.rc:267
 msgid "Export registry"
-msgstr "&Exportera register"
+msgstr "Exportera register"
 
 #: regedit.rc:269
 msgid "S&elected branch:"
@@ -12369,14 +12354,10 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Innehåller kommandon för att få tillgång till nycklar som används ofta"
 
 #: regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
-"Innehåller kommandon för att visa hjälp och information om Registerredigering"
+"Innehåller kommandon för att visa hjälp och information om Registereditorn"
 
 #: regedit.rc:164
 msgid "Contains commands for creating new keys or values"
@@ -12415,65 +12396,54 @@ msgid "(unknown %d)"
 msgstr "(okänt %d)"
 
 #: regedit.rc:247
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "Unable to modify the selected registry value."
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "Kan inte ändra det valda registervärdet."
 
 #: regedit.rc:248
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "Unable to create a new registry key."
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "Kan inte skapa en ny registernyckel."
 
 #: regedit.rc:249
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "Unable to create a new registry value."
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "Kan inte skapa ett nytt registervärde."
 
 #: regedit.rc:250
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"Kan inte byta namn på nyckeln '%1'.\n"
+"Det angivna nyckelnamnet finns redan."
 
 #: regedit.rc:251
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"Kan inte byta namn på värdet '%1'.\n"
+"Det angivna värdenamnet finns redan."
 
 #: regedit.rc:252
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "Unable to delete the selected registry key."
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "Kan inte ta bort den valda registernyckeln."
 
 #: regedit.rc:253
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "Unable to rename the selected registry key."
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "Kan inte byta namn på den valda registernyckeln."
 
 #: regedit.rc:254
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "Unable to rename the selected registry value."
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "Kan inte byta namn på det valda registervärdet."
 
 #: regedit.rc:255
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr ""
+msgstr "Nycklarna och värdena i %1 lades till i registret."
 
 #: regedit.rc:256
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
-"reg: Systemet kunde inte hitta angiven nyckel eller värde i registret\n"
+"Kan inte importera %1. Den angivna filen är inte en giltig registerfil."
 
 #: regedit.rc:408
 msgid ""
@@ -12505,132 +12475,130 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 msgstr ""
+"Användning:\n"
+"  regedit [flaggor] [filnamn] [regnyckel]\n"
+"\n"
+"Flaggor:\n"
+"  [ingen flagga]    Kör den grafiska versionen av detta program.\n"
+"  /L:system.dat  Platsen för system.dat-filen som ska ändras.\n"
+"                 Kompatibel med alla andra val. Ignoreras.\n"
+"  /R:user.dat    Platsen för user.dat-filen som ska ändras.\n"
+"                 Kompatibel med alla andra val. Ignoreras.\n"
+"  /C             Importerar innehållet från en registerfil.\n"
+"  /D             Ta bort en angiven registernyckel.\n"
+"  /E             Exporterar innehållet i angiven registernyckel till en "
+"fil.\n"
+"                 Om ingen nyckel anges exporteras hela registret.\n"
+"  /S             Tyst läge. Inga meddelanden kommer att visas.\n"
+"  /V             Kör GUI:t i avancerat läge. Ignoreras.\n"
+"  /?             Visa denna information och avsluta.\n"
+"  [filnamn]     Platsen för filen som innehåller registerinformation som\n"
+"                 ska importeras. Då den används med [/E] anger denna flagga\n"
+"                 filen dit registerinformation ska exporteras.\n"
+"  [regnyckel]      Registernyckeln som ska ändras.\n"
+"\n"
+"Användningsexempel:\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Key\\Path\"\n"
 
 #: regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
+msgstr "regedit: Ogiltigt eller okänt val [%1]\n"
 
 #: regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
-msgstr ""
+msgstr "Skriv \"regedit /?\" för hjälp.\n"
 
 #: regedit.rc:411
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "Inget kommando angavs."
+msgstr "regedit: Inget filnamn angavs.\n"
 
 #: regedit.rc:412
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: Ingen registernyckel angavs för borttagning.\n"
 
 #: regedit.rc:413
 msgid "regedit: The file '%1' was not found.\n"
-msgstr ""
+msgstr "regedit: Filen '%1' kunde inte hittas.\n"
 
 #: regedit.rc:414
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "regedit: Kan inte öppna filen '%1'.\n"
 
 #: regedit.rc:415
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "Ogiltig referensoperation.\n"
+msgstr "regedit: Ohanterad åtgärd.\n"
 
 #: regedit.rc:416
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "regedit: Slut på minne! (%1!S!, rad %2!u!)\n"
 
 #: regedit.rc:417
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "reg: Ogiltigt nyckelnamn\n"
+msgstr "regedit: Ogiltigt hexadecimalt värde.\n"
 
 #: regedit.rc:418
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
+"regedit: Kan inte konvertera hexadecimaldata. Ett ogiltigt värde påträffades "
+"vid '%1'.\n"
 
 #: regedit.rc:419
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
+msgstr "regedit: Okänd kontrollsekvens [\\%1!c!]\n"
 
 #: regedit.rc:420
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "reg: Ej stödd typ [%1] i registret\n"
+msgstr "regedit: Registerdatatyp [0x%1!x!] som ej stöds\n"
 
 #: regedit.rc:421
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "regedit: Oväntat radslut i '%1'.\n"
 
 #: regedit.rc:422
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "Inget kommando angavs."
+msgstr "regedit: Raden '%1' kändes inte igen.\n"
 
 #: regedit.rc:423
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "regedit: Kan inte lägga till registervärdet '%1' till '%2'.\n"
 
 #: regedit.rc:424
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "regedit: Kunde inte öppna registernyckeln '%1'.\n"
 
 #: regedit.rc:425
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
-msgstr "reg: Ej stödd typ [%1] i registret\n"
+msgstr "regedit: Registerdatatyp [0x%1!x!] som ej stöds påträffades i '%2'.\n"
 
 #: regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
-msgstr ""
+msgstr "regedit: registervärdet '%1' kommer exporteras som binärdata.\n"
 
 #: regedit.rc:427
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Ogiltigt nyckelnamn\n"
+msgstr "regedit: Ogiltig systemnyckel [%1]\n"
 
 #: regedit.rc:428
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
-"reg: Systemet kunde inte hitta angiven nyckel eller värde i registret\n"
+"regedit: Kunde inte exportera '%1'. Den angivna registernyckeln hittades "
+"inte.\n"
 
 #: regedit.rc:429
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "regedit: Kan inte ta bort registernyckeln '%1'.\n"
 
 #: regedit.rc:431
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "Inget kommando angavs."
+msgstr "regedit: Raden innehåller ogiltig syntax.\n"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
 msgstr "Avslutar Registereditorn"
 
@@ -12647,10 +12615,8 @@ msgid "Shows or hides the status bar"
 msgstr "Visar eller döljer statusraden"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
-msgstr "Ändrar position för avdelaren mellan de två rutorna"
+msgstr "Ändrar positionen för avdelaren mellan de två rutorna"
 
 #: regedit.rc:192
 msgid "Refreshes the window"
@@ -12693,10 +12659,8 @@ msgid "Adds a new binary value"
 msgstr "Lägger till ett nytt binärt värde"
 
 #: regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "Lägger till ett nytt binärt värde"
+msgstr "Lägger till ett nytt 32-bitarsvärde"
 
 #: regedit.rc:177
 msgid "Imports a text file into the registry"
@@ -12711,42 +12675,32 @@ msgid "Prints all or part of the registry"
 msgstr "Skriver ut hela eller delar av registret"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Registereditorn"
+msgstr "Öppnar hjälp för Registereditorn"
 
 #: regedit.rc:182
 msgid "Displays program information, version number and copyright"
 msgstr "Visar programinformation, versionsnummer samt copyright"
 
 #: regedit.rc:206
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "Kunde inte fråga efter registervärdet '%1'."
 
 #: regedit.rc:207
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Kan inte redigera nyckler av denna typ (%u)"
+msgstr "Kan inte redigera registernycklar av denna typ (%1!u!)."
 
 #: regedit.rc:208
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "Värdet är for stort (%u)"
+msgstr "Värdet är for stort (%1!u!)."
 
 #: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Bekräfta borttagning av värde"
 
 #: regedit.rc:216
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Hittade inte den sökta strängen '%s'"
+msgstr "Sökning klar. Hittade inte den sökta strängen '%1'."
 
 #: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
@@ -12761,55 +12715,42 @@ msgid "New Value #%d"
 msgstr "Nytt värde #%d"
 
 #: regedit.rc:205
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "Kunde inte fråga efter registernyckeln '%1'."
 
 #: regedit.rc:170
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "Ändrar värdets data"
+msgstr "Ändrar värdets data i binär form"
 
 #: regedit.rc:175
 msgid "Adds a new multi-string value"
 msgstr "Lägger till ett nytt flersträngsvärde"
 
 #: regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
-msgstr "Exporterar vald gren av registret till en textfil"
+msgstr "Exporterar den valda grenen av registret till en textfil"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "Lägger till ett nytt strängvärde"
+msgstr "Lägger till ett nytt expanderbart strängvärde"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Bekräfta borttagning av värde"
+msgstr "Bekräfta borttagning av nyckel"
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "Vill du verkligen ta bort registernyckeln '%1'?"
+msgstr ""
+"Vill du verkligen ta bort den här registernyckeln och alla dess undernycklar?"
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Fäller ut eller fäller ihop den valda noden"
 
 #: regedit.rc:231
-#, fuzzy
-#| msgid "C&ollate"
 msgid "Collapse"
-msgstr "&Sortera"
+msgstr "Fäll ihop"
 
 #: regsvr32.rc:32
 msgid ""
@@ -12818,6 +12759,10 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
+"Wines DLL-registreringsverktyg\n"
+"\n"
+"Tillhandahåller tjänster för DLL-registrering.\n"
+"\n"
 
 #: regsvr32.rc:40
 msgid ""
@@ -12832,52 +12777,65 @@ msgid ""
 "  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n"
 "\n"
 msgstr ""
+"Användning:\n"
+"  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] DllNamn\n"
+"\n"
+"Flaggor:\n"
+"  [/u]  Avregistrera en server.\n"
+"  [/s]  Tyst läge (inga meddelanden kommer att visas).\n"
+"  [/i]  Anropa DllInstall, skicka valfritt med en [cmdline].\n"
+"\tNär den används med [/u] anropas DllInstall i avinstallationsläge.\n"
+"  [/n]  Anropa inte DllRegisterServer. Denna flagga måste användas med [/"
+"i].\n"
+"\n"
 
 #: regsvr32.rc:41
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
+"regsvr32: Ogiltigt eller okänt val [%1]\n"
+"\n"
 
 #: regsvr32.rc:42
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Misslyckades med att läsa in DLL '%1'\n"
 
 #: regsvr32.rc:43
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
-msgstr ""
+msgstr "regsvr32: '%1!S!' inte implementerat i DLL '%2'\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Misslyckades med att registrera DLL '%1'\n"
 
 #: regsvr32.rc:45
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Registrerade DLL '%1'\n"
 
 #: regsvr32.rc:46
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Misslyckades med att avregistrera DLL '%1'\n"
 
 #: regsvr32.rc:47
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Avregistrerade DLL '%1'\n"
 
 #: regsvr32.rc:48
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Misslyckades med att installera DLL '%1'\n"
 
 #: regsvr32.rc:49
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Installerade DLL '%1'\n"
 
 #: regsvr32.rc:50
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Misslyckades med att avinstallera DLL '%1'\n"
 
 #: regsvr32.rc:51
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Avinstallerade DLL '%1'\n"
 
 #: start.rc:58
 msgid ""
@@ -13083,7 +13041,7 @@ msgstr "&Under normal"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr "Ställ in &släktskap..."
+msgstr "Ställ in &affinitet..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
@@ -13175,14 +13133,14 @@ msgstr "Felsökningskanaler"
 
 #: taskmgr.rc:439
 msgid "Processor Affinity"
-msgstr "Process-släktskap"
+msgstr "Processaffinitet"
 
 #: taskmgr.rc:444
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
 msgstr ""
-"Inställningen för process-släktskap bestämmer vilka processorer processen "
+"Inställningen för processaffinitet bestämmer vilka processorer processen "
 "tillåts köra på."
 
 #: taskmgr.rc:446
@@ -13384,11 +13342,11 @@ msgstr "&Virtuell minnesstorlek"
 
 #: taskmgr.rc:551
 msgid "Pa&ged Pool"
-msgstr "Pa&ged pool"
+msgstr "Väx&lat minne"
 
 #: taskmgr.rc:553
 msgid "N&on-paged Pool"
-msgstr "Väx&lat minne"
+msgstr "&Oväxlat minne"
 
 #: taskmgr.rc:555
 msgid "Base P&riority"
@@ -13557,7 +13515,7 @@ msgstr "Tar bort den här processen och alla ättlingar från systemet"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
-msgstr "Kopplar debuggern till denna process"
+msgstr "Kopplar felsökaren till denna process"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
@@ -13699,7 +13657,7 @@ msgid ""
 msgstr ""
 "VARNING: Att avbryta en process kan orsaka oönskade\n"
 "resultat som förlust av data och instabilitet i systemet.\n"
-"Processen kommer inte få tillfälle attspara sitt tillstånd\n"
+"Processen kommer inte få tillfälle att spara sitt tillstånd\n"
 "eller data innan det avbryts. Är du säker du vill\n"
 "avbryta processen?"
 
@@ -13721,7 +13679,7 @@ msgstr "Kunde inte felsöka process"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr "Processen måste ha släktskap med minst en processor"
+msgstr "Processen måste ha affinitet med minst en processor"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
@@ -13729,7 +13687,7 @@ msgstr "Ogiltigt val"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr "Kan inte komma åt eller sätta process-släktskap"
+msgstr "Kan inte komma åt eller sätta processaffinitet"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
@@ -13757,15 +13715,18 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
+"Körning av avinstallationskommandot '%s' misslyckades, kanske p.g.a. saknad "
+"körbar fil.\n"
+"Vill du ta bor avinstallationsposten från registret?"
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "uninstaller: Programmet med GUID '%1' hittades inte\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
-msgstr ""
+msgstr "uninstaller: Flaggan '--remove' måste följas av ett program-GUID\n"
 
 #: uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
@@ -13778,6 +13739,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Avinstallationsprogram för Wine-program\n"
+"\n"
+"Avinstallera program för aktuellt Wine-prefix.\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -13792,6 +13757,16 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
+"Användning:\n"
+"  uninstaller [flaggor]\n"
+"\n"
+"Flaggor:\n"
+"  --help\t    Visa denna information.\n"
+"  --list\t    Lista alla program som installerats i detta Wine-prefix.\n"
+"  --remove {GUID}   Avinstallera angivet program.\n"
+"\t\t    Använd '--list' för att avgöra program-GUID.\n"
+"  [ingen flagga]       Kör den grafiska versionen av detta program.\n"
+"\n"
 
 #: view.rc:36
 msgid "&Pan"
@@ -13811,7 +13786,7 @@ msgstr "&Höger"
 
 #: view.rc:49
 msgid "Regular Metafile Viewer"
-msgstr ""
+msgstr "Vanlig metafilvisare"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -13828,10 +13803,10 @@ msgid ""
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
-"En simulerad avloggning eller avstängning pågår, men det här programmet "
+"En simulerad utloggning eller avstängning pågår, men det här programmet "
 "svarar inte.\n"
 "\n"
-"Om du avslutar processen kan du förlora allt osparat data."
+"Om du avslutar processen kan du förlora all osparad data."
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
@@ -13855,11 +13830,11 @@ msgstr "Registreringsinformation för Windows"
 
 #: winecfg.rc:144
 msgid "&Owner:"
-msgstr "Ägare:"
+msgstr "Ä&gare:"
 
 #: winecfg.rc:146
 msgid "Organi&zation:"
-msgstr "Organisation:"
+msgstr "Organi&sation:"
 
 #: winecfg.rc:154
 msgid "Application settings"
@@ -13894,7 +13869,7 @@ msgstr "Fönsterinställningar"
 
 #: winecfg.rc:170
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Fånga &musen automatiskt i fullskärmsfönster"
+msgstr "Fånga &musen automatiskt i helskärmsfönster"
 
 #: winecfg.rc:171
 msgid "Allow the window manager to &decorate the windows"
@@ -13914,7 +13889,7 @@ msgstr "Storlek på &skrivbord:"
 
 #: winecfg.rc:180
 msgid "Screen resolution"
-msgstr "Skärm&upplösning"
+msgstr "Skärmupplösning"
 
 #: winecfg.rc:184
 msgid "This is a sample text using 10 point Tahoma"
@@ -14036,19 +14011,19 @@ msgstr "Standardvärden"
 
 #: winecfg.rc:268
 msgid "Output device:"
-msgstr ""
+msgstr "Utgångsenhet:"
 
 #: winecfg.rc:269
 msgid "Voice output device:"
-msgstr ""
+msgstr "Utgångsenhet för röster:"
 
 #: winecfg.rc:270
 msgid "Input device:"
-msgstr ""
+msgstr "Ingångsenhet:"
 
 #: winecfg.rc:271
 msgid "Voice input device:"
-msgstr ""
+msgstr "Ingångsenhet för röster:"
 
 #: winecfg.rc:276
 msgid "&Test Sound"
@@ -14341,7 +14316,7 @@ msgstr "Fönstertext"
 
 #: winecfg.rc:111
 msgid "Active Title Bar"
-msgstr "Aktiv titellist"
+msgstr "Aktiv namnlist"
 
 #: winecfg.rc:112
 msgid "Active Title Text"
@@ -14349,7 +14324,7 @@ msgstr "Aktiv titeltext"
 
 #: winecfg.rc:113
 msgid "Inactive Title Bar"
-msgstr "Inaktiv titellist"
+msgstr "Inaktiv namnlist"
 
 #: winecfg.rc:114
 msgid "Inactive Title Text"
@@ -14405,11 +14380,11 @@ msgstr "Hovrat föremål"
 
 #: winecfg.rc:127
 msgid "Active Title Bar Gradient"
-msgstr "Gradient för aktiv titellist"
+msgstr "Gradient för aktiv namnlist"
 
 #: winecfg.rc:128
 msgid "Inactive Title Bar Gradient"
-msgstr "Gradient för inaktiv titellist"
+msgstr "Gradient för inaktiv namnlist"
 
 #: winecfg.rc:129
 msgid "Menu Highlight"
@@ -14421,7 +14396,7 @@ msgstr "Menyrad"
 
 #: wineconsole.rc:63
 msgid "Cursor size"
-msgstr ""
+msgstr "Markörstorlek"
 
 #: wineconsole.rc:64
 msgid "&Small"
@@ -14441,7 +14416,7 @@ msgstr "Kommandohistorik"
 
 #: wineconsole.rc:69
 msgid "&Buffer size:"
-msgstr ""
+msgstr "&Buffertstorlek:"
 
 #: wineconsole.rc:72
 msgid "&Remove duplicates"
@@ -14449,7 +14424,7 @@ msgstr "&Ta bort upprepade"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
-msgstr ""
+msgstr "Popupmeny"
 
 #: wineconsole.rc:75
 msgid "&Control"
@@ -14461,7 +14436,7 @@ msgstr "S&hift"
 
 #: wineconsole.rc:78
 msgid "Console"
-msgstr "Konsoll"
+msgstr "Konsol"
 
 #: wineconsole.rc:79
 msgid "&Quick Edit mode"
@@ -14485,7 +14460,7 @@ msgstr "Konfiguration"
 
 #: wineconsole.rc:104
 msgid "Buffer zone"
-msgstr ""
+msgstr "Buffertzon"
 
 #: wineconsole.rc:105
 msgid "&Width:"
@@ -14509,11 +14484,11 @@ msgstr "H&öjd:"
 
 #: wineconsole.rc:120
 msgid "End of program"
-msgstr ""
+msgstr "Slut på program"
 
 #: wineconsole.rc:121
 msgid "&Close console"
-msgstr "&Stäng konsoll"
+msgstr "&Stäng konsol"
 
 #: wineconsole.rc:123
 msgid "Edition"
@@ -14521,7 +14496,7 @@ msgstr "Edition"
 
 #: wineconsole.rc:129
 msgid "Console parameters"
-msgstr "Konsollparametrar"
+msgstr "Konsolparametrar"
 
 #: wineconsole.rc:132
 msgid "Retain these settings for later sessions"
@@ -14568,6 +14543,8 @@ msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
 msgstr ""
+"Storleken på skärmbufferten måste vara större än eller lika med fönstrets "
+"storlek."
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -14579,7 +14556,7 @@ msgstr "Det här är ett test"
 
 #: wineconsole.rc:44
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr ""
+msgstr "wineconsole: Kunde inte tolka händelse-ID\n"
 
 #: wineconsole.rc:45
 msgid "wineconsole: Invalid backend\n"
@@ -14587,11 +14564,11 @@ msgstr ""
 
 #: wineconsole.rc:46
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr ""
+msgstr "wineconsole: Okänd kommandoradsflagga\n"
 
 #: wineconsole.rc:47
 msgid "Starts a program in a Wine console\n"
-msgstr "Startar ett program i en Wine-konsoll\n"
+msgstr "Startar ett program i en Wine-konsol\n"
 
 #: wineconsole.rc:48
 msgid ""
@@ -14625,11 +14602,11 @@ msgstr ""
 "  --backend={user|curses}  Välj user för att starta ett nytt fönster, "
 "curses\n"
 "                           för att ange aktuell terminal som en Wine-"
-"konsoll.\n"
+"konsol.\n"
 
 #: wineconsole.rc:53
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <kommando>               Wine-program att starta i konsollen.\n"
+msgstr "  <kommando>               Wine-program att starta i konsolen.\n"
 
 #: wineconsole.rc:54
 msgid ""
@@ -14642,7 +14619,7 @@ msgstr ""
 "\n"
 "Exempel:\n"
 "  wineconsole cmd\n"
-"Startar Wines kommandoprompt i en Wine-konsoll.\n"
+"Startar Wines kommandoprompt i en Wine-konsol.\n"
 "\n"
 
 #: winedbg.rc:49
@@ -14669,7 +14646,7 @@ msgstr ""
 
 #: winedbg.rc:61
 msgid "Show &Details"
-msgstr "Visa &Detaljer"
+msgstr "Visa &detaljer"
 
 #: winedbg.rc:66
 msgid "Program Error Details"
@@ -14682,10 +14659,10 @@ msgid ""
 "button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
-"Om denna problem inte presenterar sig i Windows och ännu inte har "
-"rapporterats, kan du spara detaljerna till ett fil med knappen \"Spara som\" "
-"och <a href=\"https://wiki.winehq.org/Bugs\">skicka en bugrapport</a> med "
-"filet som en bilaga."
+"Om detta problem inte visar sig i Windows och ännu inte har rapporterats, "
+"kan du spara detaljerna till en fil med knappen \"Spara som\" och <a href="
+"\"https://wiki.winehq.org/Bugs\">skicka en felrapport</a> med filen som en "
+"bilaga."
 
 #: winedbg.rc:38
 msgid "Wine program crash"
@@ -14759,9 +14736,10 @@ msgstr "Sortera efter st&orlek"
 msgid "Sort by &Date"
 msgstr "Sortera efter dat&um"
 
+# TODO: Is '.' a valid accelerator?
 #: winefile.rc:59
 msgid "Filter by&..."
-msgstr "&Filtrera efter..."
+msgstr "Filtrera efter&..."
 
 #: winefile.rc:66
 msgid "&Drive Bar"
@@ -14785,7 +14763,7 @@ msgstr "Ordna &vertikalt\tCtrl+F4"
 
 #: winefile.rc:84
 msgid "&About Wine File Manager"
-msgstr "&Om Wine Filhanteraren"
+msgstr "&Om Wine-filhanteraren"
 
 #: winefile.rc:122
 msgid "Select destination"
@@ -14866,15 +14844,15 @@ msgstr "S"
 
 #: winefile.rc:90
 msgid "Applying font settings"
-msgstr "Verkställ teckensnittsinställningar"
+msgstr "Verkställ typsnittsinställningar"
 
 #: winefile.rc:91
 msgid "Error while selecting new font."
-msgstr "Ett fel uppstod när ett nytt teckensnitt valdes."
+msgstr "Ett fel uppstod när ett nytt typsnitt valdes."
 
 #: winefile.rc:96
 msgid "Wine File Manager"
-msgstr "Wine Filhanteraren"
+msgstr "Wine-filhanteraren"
 
 #: winefile.rc:98
 msgid "root fs"
@@ -14969,10 +14947,8 @@ msgid "Expert"
 msgstr "Expert"
 
 #: winemine.rc:74 winemine.rc:33
-#, fuzzy
-#| msgid "Result"
 msgid "Reset Results"
-msgstr "Resultat"
+msgstr "Återställ resultat"
 
 #: winemine.rc:80
 msgid "Congratulations!"
@@ -15000,7 +14976,7 @@ msgstr "Minor"
 
 #: winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr ""
+msgstr "Alla resultat kommer att gå förlorade. Är du säker?"
 
 #: winemine.rc:30
 msgid "WineMine"
@@ -15119,10 +15095,8 @@ msgid "Error: Invalid query\n"
 msgstr "Fel: Ogiltig fråga\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "reg: Ogiltigt nyckelnamn\n"
+msgstr "Fel: Ogiltig syntax för PATH\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -15197,36 +15171,32 @@ msgid "F&ormat"
 msgstr "F&ormat"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
-msgstr "&Lista"
+msgstr "&Listor"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
 msgstr "&Punktuppställning"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "CRL-nummer"
+msgstr "Nummer"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "Bokstäver - gemener"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "Bokstäver - versaler"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "Romerska siffror - gemener"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "Romerska siffror - versaler"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
@@ -15326,7 +15296,7 @@ msgstr "Bryt text vid &marginalen"
 
 #: wordpad.rc:271
 msgid "Toolbars"
-msgstr "Verktygsrader"
+msgstr "Verktygsfält"
 
 #: wordpad.rc:284
 msgctxt "accelerator Align Left"
@@ -15472,7 +15442,7 @@ msgstr "Sökningen i dokumentet har slutförts."
 
 #: wordpad.rc:194
 msgid "Failed to load the RichEdit library."
-msgstr "Misslyckades att ladda RichEdit-biblioteket."
+msgstr "Misslyckades att läsa in RichEdit-biblioteket."
 
 #: wordpad.rc:195
 msgid ""
@@ -15488,7 +15458,7 @@ msgstr "Ogiltigt talformat."
 
 #: wordpad.rc:199
 msgid "OLE storage documents are not supported."
-msgstr "OLE lagringsdokument stöds ej."
+msgstr "OLE-lagringsdokument stöds ej."
 
 #: wordpad.rc:200
 msgid "Could not save the file."
@@ -15524,7 +15494,7 @@ msgstr "Ogiltigt antal parametrar - Använd xcopy /? för hjälp\n"
 
 #: xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "Ogiltig parameter '%1' -  Använd xcopy /? för hjälp\n"
+msgstr "Ogiltig parameter '%1' - Använd xcopy /? för hjälp\n"
 
 #: xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
@@ -15636,7 +15606,7 @@ msgstr ""
 "[/C]  Fortsätt även om ett fel uppstår under kopieringen.\n"
 "[/A]  Kopiera enbart filer markerade som arkiv.\n"
 "[/M]  Kopiera enbart filer markerade som arkiv, ta bort\n"
-"      markeringen.\n"
+"\tmarkeringen.\n"
 "[/D | /D:m-d-y] Kopiera nya filer eller de ändrade efter angivet datum.\n"
 "\t\tOm inget datum angivits utförs endast kopiering om målet är\n"
 "\t\täldre än källan.\n"
