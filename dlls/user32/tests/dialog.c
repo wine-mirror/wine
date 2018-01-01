@@ -1476,7 +1476,8 @@ static void test_DialogBoxParam(void)
     ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", 0, TestDefButtonDlgProc, 0);
     ok(ret == IDOK, "Expected IDOK\n");
 
-    DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", 0, TestReturnKeyDlgProc, 0);
+    ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", 0, TestReturnKeyDlgProc, 0);
+    ok(ret == 0, "Unexpected ret value %ld.\n", ret);
 
     /* WM_SETTEXT handling in case of A/W dialog procedures vs A/W dialog window.  */
     ret = DialogBoxParamW(GetModuleHandleA(NULL), nameW, 0, test_aw_conversion_dlgproc, 0);
