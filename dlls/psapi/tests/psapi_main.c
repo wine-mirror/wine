@@ -230,11 +230,11 @@ static void test_GetPerformanceInfo(void)
 
         /* TODO: info.SystemCache not checked yet - to which field(s) does this value correspond to? */
 
-        ok(check_with_margin(info.KernelTotal, sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage, 64),
+        ok(check_with_margin(info.KernelTotal, sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage, 256),
            "expected approximately %ld but got %d\n", info.KernelTotal,
            sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage);
 
-        ok(check_with_margin(info.KernelPaged,          sys_performance_info->PagedPoolUsage,       64),
+        ok(check_with_margin(info.KernelPaged,          sys_performance_info->PagedPoolUsage,       256),
            "expected approximately %ld but got %d\n", info.KernelPaged, sys_performance_info->PagedPoolUsage);
 
         ok(check_with_margin(info.KernelNonpaged,       sys_performance_info->NonPagedPoolUsage,    16),
