@@ -219,8 +219,7 @@ static void detect_locale(void)
                   PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_ENGLISH &&
                   PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH);
 
-    GetLocaleInfoA(pGetThreadUILanguage ? pGetThreadUILanguage() : GetUserDefaultUILanguage(),
-                   LOCALE_IFIRSTDAYOFWEEK | LOCALE_RETURN_NUMBER,
+    GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK | LOCALE_RETURN_NUMBER,
                    (void*)&first_day_of_week, sizeof(first_day_of_week));
     first_day_of_week = 1 + (first_day_of_week + 1) % 7;
 }
