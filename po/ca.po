@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-12-17 18:14-0700\n"
+"PO-Revision-Date: 2017-12-31 19:18-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -6913,7 +6913,7 @@ msgstr "S'està assignant espai en el registre"
 
 #: msi.rc:91
 msgid "Searching for installed applications"
-msgstr "S'estan cercant aplicacions instalades"
+msgstr "S'estan cercant aplicacions instal·lades"
 
 #: msi.rc:92
 msgid "Binding executables"
@@ -6969,7 +6969,7 @@ msgstr "S'està instal·lant el catàleg de sistema"
 
 #: msi.rc:107
 msgid "Validating install"
-msgstr "S'està validant l'instalació"
+msgstr "S'està validant l'instal·lació"
 
 #: msi.rc:108
 msgid "Evaluating launch conditions"
@@ -6987,7 +6987,7 @@ msgstr "S'estan movent fixters"
 
 #: msi.rc:111
 msgid "Publishing assembly information"
-msgstr "S'està publicant informació de assemblatge"
+msgstr "S'està publicant informació d'assemblatge"
 
 #: msi.rc:112
 msgid "Unpublishing assembly information"
@@ -10640,7 +10640,7 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string\n"
 "associated to the specified file type.\n"
 msgstr ""
-"FTYPE mostra o modifica les ordres d'obertura associats amb els tipus de\n"
+"FTYPE mostra o modifica les ordres d'obertura associades amb els tipus de\n"
 "fitxers.\n"
 "\n"
 "Sintaxi: FTYPE [tipusDeFitxer[=[ordreDeObertura]]]\n"
