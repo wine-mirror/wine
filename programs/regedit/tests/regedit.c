@@ -1647,7 +1647,7 @@ static void test_invalid_import_unicode(void)
 {
     LONG lr;
     HKEY hkey;
-    DWORD dword = 0x8, os_version, major_version, minor_version;
+    DWORD dword = 0x8;
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
@@ -1740,19 +1740,10 @@ static void test_invalid_import_unicode(void)
                      "\"Test10\"=\"Value\"\n");
     verify_reg_nonexist(hkey, "Test10");
 
-    os_version = GetVersion();
-    major_version = LOBYTE(LOWORD(os_version));
-    minor_version = HIBYTE(LOWORD(os_version));
-
-    if (major_version > 5 || (major_version == 5 && minor_version > 0))
-    {
-        exec_import_wstr("\xef\xbb\xbfWindows Registry Editor version 5.00\n\n"
-                         "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
-                         "\"Test11\"=\"Value\"\n");
-        verify_reg_nonexist(hkey, "Test11");
-    }
-    else /* Windows 2000 */
-        win_skip("Skipping a non-standard header test\n");
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Test11\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test11");
 
     /* Test multi-line import with incorrect comma placement */
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
