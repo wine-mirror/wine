@@ -4328,7 +4328,7 @@ error:
 static void test_export(void)
 {
     LONG err;
-    DWORD r, os_version, major_version, minor_version, dword;
+    DWORD r, dword;
     HKEY hkey, subkey;
     BYTE hex[4];
 
@@ -4454,23 +4454,15 @@ static void test_export(void)
     run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
-    os_version = GetVersion();
-    major_version = LOBYTE(LOWORD(os_version));
-    minor_version = HIBYTE(LOWORD(os_version));
+    run_reg_exe("reg export /y HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 
-    if (major_version > 5 || (major_version == 5 && minor_version == 2))
-    {
-        run_reg_exe("reg export /y HKEY_CURRENT_USER\\" KEY_BASE " file.reg", &r);
-        ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " /y file.reg", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 
-        run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " /y file.reg", &r);
-        ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
-
-        run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
-        ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    }
-    else /* Windows XP (32-bit) and older */
-        win_skip("File overwrite flag [/y] not supported; skipping position tests\n");
+    run_reg_exe("reg export HKEY_CURRENT_USER\\" KEY_BASE " file.reg /y", &r);
+    ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE), /* winxp */
+       "got exit code %d, expected 0\n", r);
 
     ok(compare_export("file.reg", empty_key_test, 0), "compare_export() failed\n");
 
