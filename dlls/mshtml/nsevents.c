@@ -234,7 +234,8 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     nsEventListener *This = impl_from_nsIDOMEventListener(iface);
     HTMLDocumentNode *doc = This->This->doc;
     HTMLDocumentObj *doc_obj = NULL;
-    nsresult nsres = NS_OK;
+    DOMEvent *load_event;
+    HRESULT hres;
 
     TRACE("(%p)\n", doc);
 
@@ -267,27 +268,27 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
                 &doc->basedoc.window->base.IHTMLWindow2_iface, 0);
 
     if(doc->nsdoc) {
-        DOMEvent *load_event;
-        HRESULT hres;
-
         hres = create_document_event(doc, EVENTID_LOAD, &load_event);
         if(SUCCEEDED(hres)) {
             dispatch_event(&doc->node.event_target, load_event);
             IDOMEvent_Release(&load_event->IDOMEvent_iface);
         }
+    }else {
+        WARN("no nsdoc\n");
+    }
 
+    if(doc->window) {
         hres = create_event_from_nsevent(event, &load_event);
         if(SUCCEEDED(hres)) {
             dispatch_event(&doc->window->event_target, load_event);
             IDOMEvent_Release(&load_event->IDOMEvent_iface);
         }
     }else {
-        ERR("NULL nsdoc\n");
-        nsres = NS_ERROR_FAILURE;
+        WARN("no window\n");
     }
 
     htmldoc_release(&doc->basedoc);
-    return nsres;
+    return NS_OK;
 }
 
 static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *nsevent)
