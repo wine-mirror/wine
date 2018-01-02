@@ -129,7 +129,7 @@ HRESULT SIC_get_location( int list_idx, WCHAR *file, DWORD *size, int *res_idx )
     dpa_idx = DPA_Search( sic_hdpa, &seek, 0, SIC_CompareEntries, SIC_COMPARE_LISTINDEX, 0 );
     if (dpa_idx != -1)
     {
-        found = (SIC_ENTRY *)DPA_GetPtr( sic_hdpa, dpa_idx );
+        found = DPA_GetPtr( sic_hdpa, dpa_idx );
         needed = (strlenW( found->sSourceFile ) + 1) * sizeof(WCHAR);
         if (needed <= *size)
         {
