@@ -87,7 +87,7 @@ static void test_GetProductInfo(void)
         res = pGetProductInfo(entry[0], entry[1], entry[2], entry[3], &product);
 
         if (entry[0] >= 6)
-            ok(res && (product > PRODUCT_UNDEFINED) && (product <= PRODUCT_PROFESSIONAL_WMC),
+            ok(res && (product > PRODUCT_UNDEFINED) && (product <= PRODUCT_ENTERPRISE_S_N_EVALUATION),
                "got %d and 0x%x (expected TRUE and a valid PRODUCT_* value)\n", res, product);
         else
             ok(!res && !product && (GetLastError() == 0xdeadbeef),
