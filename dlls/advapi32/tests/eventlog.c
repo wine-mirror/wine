@@ -1157,7 +1157,7 @@ static void test_start_trace(void)
     LONG ret;
 
     buffersize = sizeof(EVENT_TRACE_PROPERTIES) + sizeof(sessionname) + sizeof(filepath);
-    properties = (EVENT_TRACE_PROPERTIES *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buffersize);
+    properties = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buffersize);
     properties->Wnode.BufferSize = buffersize;
     properties->Wnode.Flags = WNODE_FLAG_TRACED_GUID;
     properties->LogFileMode = EVENT_TRACE_FILE_MODE_NONE;
