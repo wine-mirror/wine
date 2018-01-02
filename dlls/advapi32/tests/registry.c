@@ -2507,6 +2507,12 @@ static void test_redirection(void)
         }
     }
 
+    if (limited_user)
+    {
+        skip("not enough privileges to modify HKLM\n");
+        return;
+    }
+
     err = RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
                            KEY_WOW64_64KEY | KEY_ALL_ACCESS, NULL, &root64, NULL );
     ok( err == ERROR_SUCCESS, "RegCreateKeyExA failed: %u\n", err );
