@@ -4169,7 +4169,7 @@ static int gluBuild2DMipmapLevelsCore(GLenum target, GLint internalFormat,
 	  case GL_UNSIGNED_INT_8_8_8_8_REV:
 	  case GL_UNSIGNED_INT_10_10_10_2:
 	  case GL_UNSIGNED_INT_2_10_10_10_REV:
-	    dstImage = (GLuint *)HeapAlloc(GetProcessHeap(), 0, memreq);
+	    dstImage = HeapAlloc(GetProcessHeap(), 0, memreq);
 	    break;
 	  default:
 	    return GLU_INVALID_ENUM;
