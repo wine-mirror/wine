@@ -3357,6 +3357,25 @@ static void test_converttodbdate(void)
     ok(dst_len == sizeof(DBDATE), "got %ld\n", dst_len);
     ok(!memcmp(&ts, &dst, sizeof(DBDATE) ), "bytes differ\n");
 
+    V_VT(&var) = VT_R8;
+    V_R8(&var) = 41408.086250;
+    dst_len = 0;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_DBDATE, sizeof(var), &dst_len, &var, &dst, 2, 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(DBDATE), "got %ld\n", dst_len);
+    ok(!memcmp(&ts, &dst, sizeof(DBDATE) ), "bytes differ\n");
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(strW);
+    dst_len = 0;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_DBDATE, sizeof(var), &dst_len, &var, &dst, 2, 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == sizeof(DBDATE), "got %ld\n", dst_len);
+    ok(!memcmp(&ts, &dst, sizeof(DBDATE) ), "bytes differ\n");
+    VariantClear(&var);
+
     dst_len = 0;
     bstr = SysAllocString(strW);
     hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_DBDATE, 0, &dst_len, &bstr, &dst, 2, 0, &dst_status, 0, 0, 0);

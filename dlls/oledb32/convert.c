@@ -475,10 +475,13 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         break;
         case DBTYPE_VARIANT:
-            if( V_VT((VARIANT*)src) == VT_DATE)
+        {
+            VariantInit(&tmp);
+
+            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_DATE)) == S_OK)
             {
                 SYSTEMTIME st;
-                hr = (VariantTimeToSystemTime( V_DATE((VARIANT*)src), &st) ? S_OK : E_FAIL);
+                hr = (VariantTimeToSystemTime( V_DATE(&tmp), &st) ? S_OK : E_FAIL);
                 d->year = st.wYear;
                 d->month = st.wMonth;
                 d->day = st.wDay;
@@ -489,6 +492,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                 return E_NOTIMPL;
             }
             break;
+        }
         default: FIXME("Unimplemented conversion %04x -> DBDATE\n", src_type); return  E_NOTIMPL;
         }
         break;
