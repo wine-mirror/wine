@@ -2897,6 +2897,7 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
                    /* switch to the initial context */
                    "movl %esi,(%esp)\n\t"
+                   "movl $0x10007,(%esi)\n\t"   /* context->ContextFlags = CONTEXT_FULL */
                    "call " __ASM_NAME("set_cpu_context") )
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int) );
