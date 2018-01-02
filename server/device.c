@@ -516,7 +516,7 @@ static int device_file_flush( struct fd *fd, struct async *async )
     memset( &params, 0, sizeof(params) );
     params.flush.major = IRP_MJ_FLUSH_BUFFERS;
     params.flush.file  = file->user_ptr;
-    return queue_irp( file, &params, NULL );
+    return queue_irp( file, &params, async );
 }
 
 static int device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
