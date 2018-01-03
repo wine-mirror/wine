@@ -164,6 +164,9 @@ static HRESULT WINAPI d3d_vertex_buffer7_Lock(IDirect3DVertexBuffer7 *iface,
 
     TRACE("iface %p, flags %#x, data %p, data_size %p.\n", iface, flags, data, data_size);
 
+    if (buffer->version != 7)
+        flags &= ~(DDLOCK_NOOVERWRITE | DDLOCK_DISCARDCONTENTS);
+
     /* Writeonly: Pointless. Event: Unsupported by native according to the sdk
      * nosyslock: Not applicable
      */
