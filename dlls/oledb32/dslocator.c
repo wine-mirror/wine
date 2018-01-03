@@ -78,6 +78,21 @@ static HRESULT WINAPI dslocator_QueryInterface(IDataSourceLocator *iface, REFIID
       TRACE("IID_IRunnableObject returning NULL\n");
       return E_NOINTERFACE;
     }
+    else if (IsEqualIID(riid, &IID_IProvideClassInfo))
+    {
+      TRACE("IID_IProvideClassInfo returning NULL\n");
+      return E_NOINTERFACE;
+    }
+    else if (IsEqualIID(riid, &IID_IMarshal))
+    {
+      TRACE("IID_IMarshal returning NULL\n");
+      return E_NOINTERFACE;
+    }
+    else if (IsEqualIID(riid, &IID_IRpcOptions))
+    {
+      TRACE("IID_IRpcOptions returning NULL\n");
+      return E_NOINTERFACE;
+    }
 
     if(*ppvoid)
     {
