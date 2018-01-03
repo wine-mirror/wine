@@ -936,6 +936,7 @@ static void test_ExternalContextBase(void)
     thread = CreateThread(NULL, 0, external_context_thread, NULL, 0, NULL);
     ok(thread != NULL, "CreateThread failed: %d\n", GetLastError());
     WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
 }
 
 static void test_Scheduler(void)
