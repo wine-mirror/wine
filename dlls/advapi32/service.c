@@ -1607,7 +1607,11 @@ BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
     switch (dwLevel)
     {
     case SERVICE_CONFIG_DESCRIPTION:
-        if (!(bufptr = heap_alloc( size ))) return ERROR_OUTOFMEMORY;
+        if (!(bufptr = heap_alloc( size )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
         break;
 
     case SERVICE_CONFIG_PRESHUTDOWN_INFO:
