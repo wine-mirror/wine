@@ -2055,6 +2055,7 @@ static void test_Input_mouse(void)
     }
     SetEvent(thread_data.end_event);
     WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
     ok(hittest_no && hittest_no<50, "expected WM_NCHITTEST message\n");
     ok(!got_button_down, "unexpected WM_RBUTTONDOWN message\n");
     ok(!got_button_up, "unexpected WM_RBUTTONUP message\n");
