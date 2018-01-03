@@ -50,7 +50,7 @@
 @ cdecl _ultoa_s(long ptr long long) ucrtbase._ultoa_s
 @ cdecl _ultow(long ptr long) ucrtbase._ultow
 @ cdecl _ultow_s(long ptr long long) ucrtbase._ultow_s
-@ cdecl _wcstod_l(wstr ptr) ucrtbase._wcstod_l
+@ cdecl _wcstod_l(wstr ptr long) ucrtbase._wcstod_l
 @ cdecl _wcstof_l(wstr ptr ptr) ucrtbase._wcstof_l
 @ cdecl -ret64 _wcstoi64(wstr ptr long) ucrtbase._wcstoi64
 @ cdecl -ret64 _wcstoi64_l(wstr ptr long ptr) ucrtbase._wcstoi64_l

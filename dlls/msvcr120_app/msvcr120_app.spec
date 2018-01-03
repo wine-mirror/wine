@@ -1580,7 +1580,7 @@
 @ cdecl _wcsrev(wstr) msvcr120._wcsrev
 @ cdecl _wcsset(wstr long) msvcr120._wcsset
 @ cdecl _wcsset_s(wstr long long) msvcr120._wcsset_s
-@ cdecl _wcstod_l(wstr ptr) msvcr120._wcstod_l
+@ cdecl _wcstod_l(wstr ptr long) msvcr120._wcstod_l
 @ cdecl _wcstof_l(wstr ptr ptr) msvcr120._wcstof_l
 @ cdecl -ret64 _wcstoi64(wstr ptr long) msvcr120._wcstoi64
 @ cdecl -ret64 _wcstoi64_l(wstr ptr long ptr) msvcr120._wcstoi64_l
