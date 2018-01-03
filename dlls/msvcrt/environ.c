@@ -207,8 +207,10 @@ int CDECL _wputenv_s(const MSVCRT_wchar_t *name, const MSVCRT_wchar_t *value)
     return ret;
 }
 
+#if _MSVCR_VER>=80
+
 /******************************************************************
- *		_dupenv_s (MSVCRT.@)
+ *		_dupenv_s (MSVCR80.@)
  */
 int CDECL _dupenv_s(char **buffer, MSVCRT_size_t *numberOfElements, const char *varname)
 {
@@ -232,7 +234,7 @@ int CDECL _dupenv_s(char **buffer, MSVCRT_size_t *numberOfElements, const char *
 }
 
 /******************************************************************
- *		_wdupenv_s (MSVCRT.@)
+ *		_wdupenv_s (MSVCR80.@)
  */
 int CDECL _wdupenv_s(MSVCRT_wchar_t **buffer, MSVCRT_size_t *numberOfElements,
                      const MSVCRT_wchar_t *varname)
@@ -255,6 +257,8 @@ int CDECL _wdupenv_s(MSVCRT_wchar_t **buffer, MSVCRT_size_t *numberOfElements,
     if (numberOfElements) *numberOfElements = sz;
     return 0;
 }
+
+#endif /* _MSVCR_VER>=80 */
 
 /******************************************************************
  *		getenv_s (MSVCRT.@)

@@ -626,6 +626,8 @@ void CDECL MSVCRT___set_app_type(int app_type)
   MSVCRT_app_type = app_type;
 }
 
+#if _MSVCR_VER>=140
+
 /*********************************************************************
  *		_get_initial_narrow_environment (UCRTBASE.@)
  */
@@ -731,6 +733,8 @@ MSVCRT_wchar_t* CDECL _get_wide_winmain_command_line(void)
 
   return wide_command_line = s;
 }
+
+#endif /* _MSVCR_VER>=140 */
 
 /*********************************************************************
  *    _get_winmajor (MSVCRT.@)
