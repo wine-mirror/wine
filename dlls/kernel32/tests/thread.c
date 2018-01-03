@@ -1653,6 +1653,7 @@ static WORD get_thread_fpu_cw(void)
     res = CloseHandle(ctx.finished);
     ok(!!res, "Failed to close event handle, last error %#x.\n", GetLastError());
 
+    CloseHandle(thread);
     return ctx.cw;
 }
 
