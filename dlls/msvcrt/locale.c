@@ -1493,6 +1493,8 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         locinfo->lc_handle[MSVCRT_LC_TIME] = old_locinfo->lc_handle[MSVCRT_LC_TIME];
         locinfo->lc_id[MSVCRT_LC_TIME].wCodePage = old_locinfo->lc_id[MSVCRT_LC_TIME].wCodePage;
     } else {
+        DWORD flags = lcid[MSVCRT_LC_TIME] ? 0 : LOCALE_NOUSEROVERRIDE;
+
         if(lcid[MSVCRT_LC_TIME] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
             if(update_threadlocinfo_category(lcid[MSVCRT_LC_TIME],
                         cp[MSVCRT_LC_TIME], locinfo, MSVCRT_LC_TIME)) {
@@ -1515,16 +1517,14 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             }else if(time_data[i]==LOCALE_SLONGDATE && !lcid[MSVCRT_LC_TIME]) {
                 size += sizeof(cloc_long_date) + sizeof(cloc_long_dateW);
             }else {
-                ret = GetLocaleInfoA(lcid_tmp, time_data[i]
-                        |LOCALE_NOUSEROVERRIDE, NULL, 0);
+                ret = GetLocaleInfoA(lcid_tmp, time_data[i]|flags, NULL, 0);
                 if(!ret) {
                     free_locinfo(locinfo);
                     return NULL;
                 }
                 size += ret;
 
-                ret = GetLocaleInfoW(lcid_tmp, time_data[i]
-                        |LOCALE_NOUSEROVERRIDE, NULL, 0);
+                ret = GetLocaleInfoW(lcid_tmp, time_data[i]|flags, NULL, 0);
                 if(!ret) {
                     free_locinfo(locinfo);
                     return NULL;
@@ -1555,7 +1555,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
                 memcpy(&locinfo->lc_time_curr->data[ret], cloc_time, sizeof(cloc_time));
                 ret += sizeof(cloc_time);
             }else {
-                ret += GetLocaleInfoA(lcid_tmp, time_data[i]|LOCALE_NOUSEROVERRIDE,
+                ret += GetLocaleInfoA(lcid_tmp, time_data[i]|flags,
                     &locinfo->lc_time_curr->data[ret], size-ret);
             }
         }
@@ -1571,7 +1571,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
                 memcpy(&locinfo->lc_time_curr->data[ret], cloc_timeW, sizeof(cloc_timeW));
                 ret += sizeof(cloc_timeW);
             }else {
-                ret += GetLocaleInfoW(lcid_tmp, time_data[i]|LOCALE_NOUSEROVERRIDE,
+                ret += GetLocaleInfoW(lcid_tmp, time_data[i]|flags,
                         (MSVCRT_wchar_t*)&locinfo->lc_time_curr->data[ret], size-ret)*sizeof(MSVCRT_wchar_t);
             }
         }
