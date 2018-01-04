@@ -890,6 +890,7 @@ int * CDECL MSVCRT___p__dstbias(void)
     return &MSVCRT__dstbias;
 }
 
+#if _MSVCR_VER >= 80
 /*********************************************************************
  *              _get_dstbias (MSVCR80.@)
  */
@@ -899,6 +900,7 @@ int CDECL  MSVCRT__get_dstbias(int *seconds)
     *seconds = MSVCRT__dstbias;
     return 0;
 }
+#endif
 
 /*********************************************************************
  *		__p__timezone (MSVCRT.@)
@@ -1246,14 +1248,16 @@ einval_error:
     return 0;
 }
 
+#if _MSVCR_VER >= 80
 /********************************************************************
- *     _strftime_l (MSVCRT.@)
+ *     _strftime_l (MSVCR80.@)
  */
 MSVCRT_size_t CDECL MSVCRT__strftime_l( char *str, MSVCRT_size_t max, const char *format,
         const struct MSVCRT_tm *mstm, MSVCRT__locale_t loc )
 {
     return strftime_helper(str, max, format, mstm, NULL, loc);
 }
+#endif
 
 /*********************************************************************
  *		_Strftime (MSVCRT.@)
@@ -1316,8 +1320,9 @@ MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
     return wcsftime_helper(str, max, format, mstm, NULL, NULL);
 }
 
+#if _MSVCR_VER >= 110
 /*********************************************************************
- *		_Wcsftime (MSVCRT.@)
+ *		_Wcsftime (MSVCR110.@)
  */
 MSVCRT_size_t CDECL _Wcsftime(MSVCRT_wchar_t *str, MSVCRT_size_t max,
         const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm,
@@ -1325,6 +1330,7 @@ MSVCRT_size_t CDECL _Wcsftime(MSVCRT_wchar_t *str, MSVCRT_size_t max,
 {
     return wcsftime_helper(str, max, format, mstm, time_data, NULL);
 }
+#endif
 
 static char* asctime_buf(char *buf, const struct MSVCRT_tm *mstm)
 {
@@ -1582,8 +1588,10 @@ int CDECL MSVCRT__wctime32_s(MSVCRT_wchar_t *buf, MSVCRT_size_t size,
     return MSVCRT__wasctime_s(buf, size, &tm);
 }
 
+#if _MSVCR_VER >= 80
+
 /*********************************************************************
- * _get_timezone (MSVCR100.@)
+ * _get_timezone (MSVCR80.@)
  */
 int CDECL _get_timezone(LONG *timezone)
 {
@@ -1594,7 +1602,7 @@ int CDECL _get_timezone(LONG *timezone)
 }
 
 /*********************************************************************
- * _get_daylight (MSVCR100.@)
+ * _get_daylight (MSVCR80.@)
  */
 int CDECL _get_daylight(int *hours)
 {
@@ -1603,3 +1611,5 @@ int CDECL _get_daylight(int *hours)
     *hours = MSVCRT___daylight;
     return 0;
 }
+
+#endif /* _MSVCR_VER >= 80 */
