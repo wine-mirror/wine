@@ -1489,7 +1489,7 @@ interface ICommDlgBrowser3 : ICommDlgBrowser2
         [out, string, size_is(cchFileSpec)] LPWSTR pszFileSpec,
         [in] int cchFileSpec);
 
-    HRESULT OnPreviewCreated(
+    HRESULT OnPreViewCreated(
         [in] IShellView *ppshv);
 }
 
@@ -1900,7 +1900,7 @@ interface ISearchContext : IUnknown
     HRESULT GetSearchText(
                 [in] BSTR *pbstrSearchText);
     HRESULT GetSearchStyle(
-                [in] BSTR *pdwSearchStyle);
+                [in] DWORD *pdwSearchStyle);
 }
 
 
@@ -2695,6 +2695,7 @@ interface INameSpaceTreeControlCustomDraw : IUnknown
     HRESULT ItemPrePaint(
         [in] HDC hdc,
         [in] RECT *prc,
+        [in] NSTCCUSTOMDRAW *pnstccdItem,
         [in, out] COLORREF *pclrText,
         [in, out] COLORREF *pclrTextBk,
         [out] LRESULT *plres);
@@ -3239,7 +3240,7 @@ interface IFileDialogControlEvents : IUnknown
 
     HRESULT OnCheckButtonToggled(
         [in] IFileDialogCustomize *pfdc,
-        [in] BOOL dwIDCtl,
+        [in] DWORD dwIDCtl,
         [in] BOOL bChecked);
 
     HRESULT OnControlActivating(
@@ -3557,7 +3558,7 @@ interface ITransferAdviseSink : IUnknown
     HRESULT ConfirmOverwrite([in] IShellItem *source,
                              [in] IShellItem *dest_parent,
                              [in, string] LPCWSTR name);
-    HRESULT ConfirmEncryptLoss([in] IShellItem *source);
+    HRESULT ConfirmEncryptionLoss([in] IShellItem *source);
     HRESULT FileFailure([in] IShellItem *item,
                         [in, unique, string] LPCWSTR itemname,
                         [in] HRESULT hr,

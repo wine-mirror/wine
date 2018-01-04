@@ -1677,14 +1677,14 @@ static HRESULT WINAPI ICommDlgBrowser3_fnGetCurrentFilter(ICommDlgBrowser3 *ifac
     return S_OK;
 }
 
-static HRESULT WINAPI ICommDlgBrowser3_fnOnPreviewCreated(ICommDlgBrowser3 *iface,
+static HRESULT WINAPI ICommDlgBrowser3_fnOnPreViewCreated(ICommDlgBrowser3 *iface,
                                                           IShellView *pshv)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
     TRACE("%p (%p)\n", This, pshv);
 
     if(This->pcdb3_site)
-        return ICommDlgBrowser3_OnPreviewCreated(This->pcdb3_site, pshv);
+        return ICommDlgBrowser3_OnPreViewCreated(This->pcdb3_site, pshv);
 
     return S_OK;
 }
@@ -1701,7 +1701,7 @@ static const ICommDlgBrowser3Vtbl vt_ICommDlgBrowser3 = {
     ICommDlgBrowser3_fnGetViewFlags,
     ICommDlgBrowser3_fnOnColumnClicked,
     ICommDlgBrowser3_fnGetCurrentFilter,
-    ICommDlgBrowser3_fnOnPreviewCreated
+    ICommDlgBrowser3_fnOnPreViewCreated
 };
 
 /**************************************************************************
