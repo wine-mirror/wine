@@ -449,8 +449,9 @@ char* CDECL _Getdays(void)
     return out;
 }
 
+#if _MSVCR_VER >= 110
 /*********************************************************************
- *		_W_Getdays (MSVCRT.@)
+ *		_W_Getdays (MSVCR100.@)
  */
 MSVCRT_wchar_t* CDECL _W_Getdays(void)
 {
@@ -481,6 +482,7 @@ MSVCRT_wchar_t* CDECL _W_Getdays(void)
 
     return out;
 }
+#endif
 
 /*********************************************************************
  *		_Getmonths (MSVCRT.@)
@@ -515,8 +517,9 @@ char* CDECL _Getmonths(void)
     return out;
 }
 
+#if _MSVCR_VER >= 110
 /*********************************************************************
- *		_W_Getmonths (MSVCRT.@)
+ *		_W_Getmonths (MSVCR100.@)
  */
 MSVCRT_wchar_t* CDECL _W_Getmonths(void)
 {
@@ -547,6 +550,7 @@ MSVCRT_wchar_t* CDECL _W_Getmonths(void)
 
     return out;
 }
+#endif
 
 /*********************************************************************
  *		_Gettnames (MSVCRT.@)
@@ -575,6 +579,7 @@ void* CDECL _Gettnames(void)
     return ret;
 }
 
+#if _MSVCR_VER >= 110
 /*********************************************************************
  *              _W_Gettnames (MSVCR110.@)
  */
@@ -582,6 +587,7 @@ void* CDECL _W_Gettnames(void)
 {
     return _Gettnames();
 }
+#endif
 
 /*********************************************************************
  *		__crtLCMapStringA (MSVCRT.@)
@@ -644,6 +650,7 @@ int CDECL __crtGetLocaleInfoW( LCID lcid, LCTYPE type, MSVCRT_wchar_t *buffer, i
     return GetLocaleInfoW( lcid, type, buffer, len );
 }
 
+#if _MSVCR_VER >= 110
 /*********************************************************************
  *		__crtGetLocaleInfoEx (MSVC110.@)
  */
@@ -652,6 +659,7 @@ int CDECL __crtGetLocaleInfoEx( const WCHAR *locale, LCTYPE type, MSVCRT_wchar_t
     TRACE("(%s, %x, %p, %d)\n", debugstr_w(locale), type, buffer, len);
     return GetLocaleInfoEx(locale, type, buffer, len);
 }
+#endif
 
 /*********************************************************************
  *              btowc(MSVCRT.@)
@@ -709,10 +717,10 @@ LCID* CDECL ___lc_handle_func(void)
     return get_locinfo()->lc_handle;
 }
 
+#if _MSVCR_VER >= 110
 /*********************************************************************
  *      ___lc_locale_name_func (MSVCR110.@)
  */
-#if _MSVCR_VER >= 110
 MSVCRT_wchar_t** CDECL ___lc_locale_name_func(void)
 {
     return get_locinfo()->lc_name;
@@ -1890,6 +1898,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* wlo
     return ret ? current_lc_all : NULL;
 }
 
+#if _MSVCR_VER >= 80
 /*********************************************************************
  *		_configthreadlocale (MSVCR80.@)
  */
@@ -1937,6 +1946,7 @@ int CDECL _configthreadlocale(int type)
 
     return -1;
 }
+#endif
 
 BOOL msvcrt_init_locale(void)
 {
