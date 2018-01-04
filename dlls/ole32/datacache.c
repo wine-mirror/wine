@@ -2562,7 +2562,7 @@ static HRESULT WINAPI DataCache_IOleCache2_SetData(
     return OLE_E_BLANK;
 }
 
-static BOOL entry_updateable( DataCacheEntry *entry, DWORD mode )
+static BOOL entry_updatable( DataCacheEntry *entry, DWORD mode )
 {
     BOOL is_blank = entry->stgmedium.tymed == TYMED_NULL;
 
@@ -2595,7 +2595,7 @@ static HRESULT WINAPI DataCache_UpdateCache( IOleCache2 *iface, IDataObject *dat
     {
         slots++;
 
-        if (!entry_updateable( cache_entry, mode ))
+        if (!entry_updatable( cache_entry, mode ))
         {
             done_one = TRUE;
             continue;
