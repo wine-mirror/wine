@@ -405,7 +405,7 @@ function test_init_event() {
     ok(e.target === elem, "target != elem");
     ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
 
-    /* initEvent no longer has effect except reseting defaultPrevented */
+    /* initEvent no longer has any effect except resetting defaultPrevented */
     e.initEvent("test", true, false);
     ok(e.type === "NewTest", "type = " + e.type);
     ok(e.bubbles === false, "bubbles = " + e.bubbles);

@@ -266,7 +266,7 @@ function test_attach_in_attach() {
         calls += "div.onclick,";
         div.attachEvent("onclick", function() {
             calls += "div.click,";
-            /* listener attached inside an other attached listener will not ve invoked */
+            /* listener attached inside another attached listener will not be invoked */
             div.attachEvent("onclick", function () { ok(false, "unexpected call"); });
         });
     }
