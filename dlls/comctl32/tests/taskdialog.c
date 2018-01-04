@@ -134,7 +134,7 @@ static void init_test_message(UINT message, WPARAM wParam, LPARAM lParam, struct
         run_test_(info, expect_button, seq, context, \
                   sizeof(seq)/sizeof(seq[0]) - 1, __FILE__, __LINE__)
 
-void run_test_(TASKDIALOGCONFIG *info, int expect_button, const struct message_info *test_messages,
+static void run_test_(TASKDIALOGCONFIG *info, int expect_button, const struct message_info *test_messages,
     const char *context, int test_messages_len, const char *file, int line)
 {
     struct message *msg, *msg_start;
