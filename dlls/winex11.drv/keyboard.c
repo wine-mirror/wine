@@ -275,7 +275,7 @@ static const char main_key_US_dvorak[MAIN_LEN][4] =
 /*** British keyboard layout */
 static const char main_key_UK[MAIN_LEN][4] =
 {
- "`","1!","2\"","3£","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "`","1!","2\"","3\xa3","4$","5%","6^","7&","8*","9(","0)","-_","=+",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{","]}",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'@","#~",
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
@@ -285,20 +285,20 @@ static const char main_key_UK[MAIN_LEN][4] =
 /*** French keyboard layout (setxkbmap fr) */
 static const char main_key_FR[MAIN_LEN][4] =
 {
- "²","&1","é2","\"3","'4","(5","-6","è7","_8","ç9","à0",")°","=+",
- "aA","zZ","eE","rR","tT","yY","uU","iI","oO","pP","^¨","$£",
- "qQ","sS","dD","fF","gG","hH","jJ","kK","lL","mM","ù%","*µ",
- "wW","xX","cC","vV","bB","nN",",?",";.",":/","!§",
+ "\xb2","&1","\xe9""2","\"3","'4","(5","-6","\xe8""7","_8","\xe7""9","\xe0""0",")\xb0","=+",
+ "aA","zZ","eE","rR","tT","yY","uU","iI","oO","pP","^\xa8","$\xa3",
+ "qQ","sS","dD","fF","gG","hH","jJ","kK","lL","mM","\xf9%","*\xb5",
+ "wW","xX","cC","vV","bB","nN",",?",";.",":/","!\xa7",
  "<>"
 };
 
 /*** Icelandic keyboard layout (setxkbmap is) */
 static const char main_key_IS[MAIN_LEN][4] =
 {
- "°","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","öÖ","-_",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","ðÐ","'?",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","æÆ","´Ä","+*",
- "zZ","xX","cC","vV","bB","nN","mM",",;",".:","þÞ",
+ "\xb0","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","\xf6\xd6","-_",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xf0\xd0","'?",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xe6\xc6","\xb4\xc4","+*",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","\xfe\xde",
  "<>"
 };
 
@@ -319,9 +319,9 @@ static const char main_key_IS[MAIN_LEN][4] =
 /*** German keyboard layout (setxkbmap de [-variant nodeadkeys|deadacute etc.]) */
 static const char main_key_DE[MAIN_LEN][4] =
 {
- "^°","1!","2\"","3§","4$","5%","6&","7/","8(","9)","0=","ß?","",
- "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#'",
+ "^\xb0","1!","2\"","3\xa7","4$","5%","6&","7/","8(","9)","0=","\xdf?","",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xfc\xdc","+*",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf6\xd6","\xe4\xc4","#'",
  "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -329,9 +329,9 @@ static const char main_key_DE[MAIN_LEN][4] =
 /*** Swiss German keyboard layout (setxkbmap ch -variant de) */
 static const char main_key_SG[MAIN_LEN][4] =
 {
- "§°","1+","2\"","3*","4ç","5%","6&","7/","8(","9)","0=","'?","^`",
- "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üè","¨!",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öé","äà","$£",
+ "\xa7\xb0","1+","2\"","3*","4\xe7","5%","6&","7/","8(","9)","0=","'?","^`",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xfc\xe8","\xa8!",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf6\xe9","\xe4\xe0","$\xa3",
  "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -339,19 +339,19 @@ static const char main_key_SG[MAIN_LEN][4] =
 /*** Swiss French keyboard layout (setxkbmap ch -variant fr) */
 static const char main_key_SF[MAIN_LEN][4] =
 {
- "§°","1+","2\"","3*","4ç","5%","6&","7/","8(","9)","0=","'?","^`",
- "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","èü","¨!",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","éö","àä","$£",
+ "\xa7\xb0","1+","2\"","3*","4\xe7","5%","6&","7/","8(","9)","0=","'?","^`",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xe8\xfc","\xa8!",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xe9\xf6","\xe0\xe4","$\xa3",
  "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
 
-/*** Norwegian keyboard layout (contributed by Ove Kåven) */
+/*** Norwegian keyboard layout (contributed by Ove KÃ¥ven) */
 static const char main_key_NO[MAIN_LEN][4] =
 {
- "|§","1!","2\"@","3#£","4¤$","5%","6&","7/{","8([","9)]","0=}","+?","\\`´",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^~",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","øØ","æÆ","'*",
+ "|\xa7","1!","2\"@","3#\xa3","4\xa4$","5%","6&","7/{","8([","9)]","0=}","+?","\\`\xb4",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xe5\xc5","\xa8^~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf8\xd8","\xe6\xc6","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -359,9 +359,9 @@ static const char main_key_NO[MAIN_LEN][4] =
 /*** Danish keyboard layout (setxkbmap dk) */
 static const char main_key_DA[MAIN_LEN][4] =
 {
- "½§","1!","2\"","3#","4¤","5%","6&","7/","8(","9)","0=","+?","´`",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","æÆ","øØ","'*",
+ "\xbd\xa7","1!","2\"","3#","4\xa4","5%","6&","7/","8(","9)","0=","+?","\xb4`",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xe5\xc5","\xa8^",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xe6\xc6","\xf8\xd8","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -369,9 +369,9 @@ static const char main_key_DA[MAIN_LEN][4] =
 /*** Swedish keyboard layout (setxkbmap se) */
 static const char main_key_SE[MAIN_LEN][4] =
 {
- "§½","1!","2\"","3#","4¤","5%","6&","7/","8(","9)","0=","+?","´`",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","'*",
+ "\xa7\xbd","1!","2\"","3#","4\xa4","5%","6&","7/","8(","9)","0=","+?","\xb4`",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xe5\xc5","\xa8^",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf6\xd6","\xe4\xc4","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -379,9 +379,9 @@ static const char main_key_SE[MAIN_LEN][4] =
 /*** Estonian keyboard layout (setxkbmap ee) */
 static const char main_key_ET[MAIN_LEN][4] =
 {
- "·~","1!","2\"","3#","4¤","5%","6&","7/","8(","9)","0=","+?","´`",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","üÜ","õÕ",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","'*",
+ "\xb7~","1!","2\"","3#","4\xa4","5%","6&","7/","8(","9)","0=","+?","\xb4`",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xfc\xdc","\xf5\xd5",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf6\xd6","\xe4\xc4","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -389,39 +389,39 @@ static const char main_key_ET[MAIN_LEN][4] =
 /*** Canadian French keyboard layout (setxkbmap ca_enhanced) */
 static const char main_key_CF[MAIN_LEN][4] =
 {
- "#|\\","1!±","2\"@","3/£","4$¢","5%¤","6?¬","7&¦","8*²","9(³","0)¼","-_½","=+¾",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO§","pP¶","^^[","¸¨]",
+ "#|\\","1!\xb1","2\"@","3/\xa3","4$\xa2","5%\xa4","6?\xac","7&\xa6","8*\xb2","9(\xb3","0)\xbc","-_\xbd","=+\xbe",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO\xa7","pP\xb6","^^[","\xb8\xa8]",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:~","``{","<>}",
- "zZ","xX","cC","vV","bB","nN","mM",",'-",".","éÉ",
- "«»°"
+ "zZ","xX","cC","vV","bB","nN","mM",",'-",".","\xe9\xc9",
+ "\xab\xbb\xb0"
 };
 
 /*** Canadian French keyboard layout (setxkbmap ca -variant fr) */
 static const char main_key_CA_fr[MAIN_LEN][4] =
 {
  "#|","1!","2\"","3/","4$","5%","6?","7&","8*","9(","0)","-_","=+",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","^^","¸¨",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","^^","\xb8\xa8",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","``","<>",
- "zZ","xX","cC","vV","bB","nN","mM",",'",".","éÉ",
- "«»"
+ "zZ","xX","cC","vV","bB","nN","mM",",'",".","\xe9\xc9",
+ "\xab\xbb"
 };
 
 /*** Canadian keyboard layout (setxkbmap ca) */
 static const char main_key_CA[MAIN_LEN][4] =
 {
- "/\\","1!¹¡","2@²","3#³£","4$¼¤","5%½","6?¾","7&","8*","9(","0)","-_","=+",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oOøØ","pPþÞ","^¨¨","çÇ~",
- "aAæÆ","sSß§","dDðÐ","fF","gG","hH","jJ","kK","lL",";:´","èÈ","àÀ",
- "zZ","xX","cC¢©","vV","bB","nN","mMµº",",'",".\"·÷","éÉ",
- "ùÙ"
+ "/\\","1!\xb9\xa1","2@\xb2","3#\xb3\xa3","4$\xbc\xa4","5%\xbd","6?\xbe","7&","8*","9(","0)","-_","=+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO\xf8\xd8","pP\xfe\xde","^\xa8\xa8","\xe7\xc7~",
+ "aA\xe6\xc6","sS\xdf\xa7","dD\xf0\xd0","fF","gG","hH","jJ","kK","lL",";:\xb4","\xe8\xc8","\xe0\xc0",
+ "zZ","xX","cC\xa2\xa9","vV","bB","nN","mM\xb5\xba",",'",".\"\xb7\xf7","\xe9\xc9",
+ "\xf9\xd9"
 };
 
 /*** Portuguese keyboard layout (setxkbmap pt) */
 static const char main_key_PT[MAIN_LEN][4] =
 {
- "\\|","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","«»",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","+*","´`",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","çÇ","ºª","~^",
+ "\\|","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","\xab\xbb",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","+*","\xb4`",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xe7\xc7","\xba\xaa","~^",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -429,9 +429,9 @@ static const char main_key_PT[MAIN_LEN][4] =
 /*** Italian keyboard layout (setxkbmap it) */
 static const char main_key_IT[MAIN_LEN][4] =
 {
- "\\|","1!","2\"","3£","4$","5%","6&","7/","8(","9)","0=","'?","ì^",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","èé","+*",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","òç","à°","ù§",
+ "\\|","1!","2\"","3\xa3","4$","5%","6&","7/","8(","9)","0=","'?","\xec^",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xe8\xe9","+*",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf2\xe7","\xe0\xb0","\xf9\xa7",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -439,9 +439,9 @@ static const char main_key_IT[MAIN_LEN][4] =
 /*** Finnish keyboard layout (setxkbmap fi) */
 static const char main_key_FI[MAIN_LEN][4] =
 {
- "§½","1!","2\"","3#","4¤","5%","6&","7/","8(","9)","0=","+?","´`",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","'*",
+ "\xa7\xbd","1!","2\"","3#","4\xa4","5%","6&","7/","8(","9)","0=","+?","\xb4`",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xe5\xc5","\xa8^",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf6\xd6","\xe4\xc4","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -450,19 +450,19 @@ static const char main_key_FI[MAIN_LEN][4] =
 static const char main_key_BG_bds[MAIN_LEN][4] =
 {
  "`~()","1!","2@2?","3#3+","4$4\"","5%","6^6=","7&7:","8*8/","9(","0)","-_-I","=+.V",
- "qQ,û","wWóÓ","eEåÅ","rRèÈ","tTøØ","yYùÙ","uUêÊ","iIñÑ","oOäÄ","pPçÇ","[{öÖ","]};",
- "aAüÜ","sSÿß","dDàÀ","fFîÎ","gGæÆ","hHãÃ","jJòÒ","kKíÍ","lLâÂ",";:ìÌ","'\"÷×","\\|'Û",
- "zZþÞ","xXéÉ","cCúÚ","vVýÝ","bBôÔ","nNõÕ","mMïÏ",",<ðÐ",".>ëË","/?áÁ",
+ "qQ,\xfb","wW\xf3\xd3","eE\xe5\xc5","rR\xe8\xc8","tT\xf8\xd8","yY\xf9\xd9","uU\xea\xca","iI\xf1\xd1","oO\xe4\xc4","pP\xe7\xc7","[{\xf6\xd6","]};",
+ "aA\xfc\xdc","sS\xff\xdf","dD\xe0\xc0","fF\xee\xce","gG\xe6\xc6","hH\xe3\xc3","jJ\xf2\xd2","kK\xed\xcd","lL\xe2\xc2",";:\xec\xcc","'\"\xf7\xd7","\\|'\xdb",
+ "zZ\xfe\xde","xX\xe9\xc9","cC\xfa\xda","vV\xfd\xdd","bB\xf4\xd4","nN\xf5\xd5","mM\xef\xcf",",<\xf0\xd0",".>\xeb\xcb","/?\xe1\xc1",
  "<>" /* the phantom key */
 };
 
 /*** Bulgarian phonetic keyboard layout */
 static const char main_key_BG_phonetic[MAIN_LEN][4] =
 {
- "`~÷×","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQÿß","wWâÂ","eEåÅ","rRðÐ","tTòÒ","yYúÚ","uUóÓ","iIèÈ","oOîÎ","pPïÏ","[{øØ","]}ùÙ",
- "aAàÀ","sSñÑ","dDäÄ","fFôÔ","gGãÃ","hHõÕ","jJéÉ","kKêÊ","lLëË",";:","'\"","\\|þÞ",
- "zZçÇ","xXüÜ","cCöÖ","vVæÆ","bBáÁ","nNíÍ","mMìÌ",",<",".>","/?",
+ "`~\xf7\xd7","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ\xff\xdf","wW\xe2\xc2","eE\xe5\xc5","rR\xf0\xd0","tT\xf2\xd2","yY\xfa\xda","uU\xf3\xd3","iI\xe8\xc8","oO\xee\xce","pP\xef\xcf","[{\xf8\xd8","]}\xf9\xd9",
+ "aA\xe0\xc0","sS\xf1\xd1","dD\xe4\xc4","fF\xf4\xd4","gG\xe3\xc3","hH\xf5\xd5","jJ\xe9\xc9","kK\xea\xca","lL\xeb\xcb",";:","'\"","\\|\xfe\xde",
+ "zZ\xe7\xc7","xX\xfc\xdc","cC\xf6\xd6","vV\xe6\xc6","bB\xe1\xc1","nN\xed\xcd","mM\xec\xcc",",<",".>","/?",
  "<>" /* the phantom key */
 };
 
@@ -470,10 +470,10 @@ static const char main_key_BG_phonetic[MAIN_LEN][4] =
 /*** It matches Belarusian layout for XKB from Alexander Mikhailian    */
 static const char main_key_BY[MAIN_LEN][4] =
 {
- "`~£³","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQÊê","wWÃã","eEÕõ","rRËë","tTÅå","yYÎî","uUÇç","iIÛû","oO®¾","pPÚú","[{Èè","]}''",
- "aAÆæ","sSÙù","dD×÷","fFÁá","gGÐð","hHÒò","jJÏï","kKÌì","lLÄä",";:Öö","'\"Üü","\\|/|",
- "zZÑñ","xXÞþ","cCÓó","vVÍí","bB¦¶","nNÔô","mMØø",",<Ââ",".>Àà","/?.,", "<>|¦",
+ "`~\xa3\xb3","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ\xca\xea","wW\xc3\xe3","eE\xd5\xf5","rR\xcb\xeb","tT\xc5\xe5","yY\xce\xee","uU\xc7\xe7","iI\xdb\xfb","oO\xae\xbe","pP\xda\xfa","[{\xc8\xe8","]}''",
+ "aA\xc6\xe6","sS\xd9\xf9","dD\xd7\xf7","fF\xc1\xe1","gG\xd0\xf0","hH\xd2\xf2","jJ\xcf\xef","kK\xcc\xec","lL\xc4\xe4",";:\xd6\xf6","'\"\xdc\xfc","\\|/|",
+ "zZ\xd1\xf1","xX\xde\xfe","cC\xd3\xf3","vV\xcd\xed","bB\xa6\xb6","nN\xd4\xf4","mM\xd8\xf8",",<\xc2\xe2",".>\xc0\xe0","/?.,", "<>|\xa6",
 };
 
 
@@ -481,18 +481,18 @@ static const char main_key_BY[MAIN_LEN][4] =
 static const char main_key_RU[MAIN_LEN][4] =
 {
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQÊê","wWÃã","eEÕõ","rRËë","tTÅå","yYÎî","uUÇç","iIÛû","oOÝý","pPÚú","[{Èè","]}ßÿ",
- "aAÆæ","sSÙù","dD×÷","fFÁá","gGÐð","hHÒò","jJÏï","kKÌì","lLÄä",";:Öö","'\"Üü","\\|",
- "zZÑñ","xXÞþ","cCÓó","vVÍí","bBÉé","nNÔô","mMØø",",<Ââ",".>Àà","/?"
+ "qQ\xca\xea","wW\xc3\xe3","eE\xd5\xf5","rR\xcb\xeb","tT\xc5\xe5","yY\xce\xee","uU\xc7\xe7","iI\xdb\xfb","oO\xdd\xfd","pP\xda\xfa","[{\xc8\xe8","]}\xdf\xff",
+ "aA\xc6\xe6","sS\xd9\xf9","dD\xd7\xf7","fF\xc1\xe1","gG\xd0\xf0","hH\xd2\xf2","jJ\xcf\xef","kK\xcc\xec","lL\xc4\xe4",";:\xd6\xf6","'\"\xdc\xfc","\\|",
+ "zZ\xd1\xf1","xX\xde\xfe","cC\xd3\xf3","vV\xcd\xed","bB\xc9\xe9","nN\xd4\xf4","mM\xd8\xf8",",<\xc2\xe2",".>\xc0\xe0","/?"
 };
 
 /*** Russian keyboard layout (phantom key version) */
 static const char main_key_RU_phantom[MAIN_LEN][4] =
 {
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQÊê","wWÃã","eEÕõ","rRËë","tTÅå","yYÎî","uUÇç","iIÛû","oOÝý","pPÚú","[{Èè","]}ßÿ",
- "aAÆæ","sSÙù","dD×÷","fFÁá","gGÐð","hHÒò","jJÏï","kKÌì","lLÄä",";:Öö","'\"Üü","\\|",
- "zZÑñ","xXÞþ","cCÓó","vVÍí","bBÉé","nNÔô","mMØø",",<Ââ",".>Àà","/?",
+ "qQ\xca\xea","wW\xc3\xe3","eE\xd5\xf5","rR\xcb\xeb","tT\xc5\xe5","yY\xce\xee","uU\xc7\xe7","iI\xdb\xfb","oO\xdd\xfd","pP\xda\xfa","[{\xc8\xe8","]}\xdf\xff",
+ "aA\xc6\xe6","sS\xd9\xf9","dD\xd7\xf7","fF\xc1\xe1","gG\xd0\xf0","hH\xd2\xf2","jJ\xcf\xef","kK\xcc\xec","lL\xc4\xe4",";:\xd6\xf6","'\"\xdc\xfc","\\|",
+ "zZ\xd1\xf1","xX\xde\xfe","cC\xd3\xf3","vV\xcd\xed","bB\xc9\xe9","nN\xd4\xf4","mM\xd8\xf8",",<\xc2\xe2",".>\xc0\xe0","/?",
  "<>" /* the phantom key */
 };
 
@@ -500,9 +500,9 @@ static const char main_key_RU_phantom[MAIN_LEN][4] =
 static const char main_key_RU_koi8r[MAIN_LEN][4] =
 {
  "()","1!","2\"","3/","4$","5:","6,","7.","8;","9?","0%","-_","=+",
- "Êê","Ãã","Õõ","Ëë","Åå","Îî","Çç","Ûû","Ýý","Úú","Èè","ßÿ",
- "Ææ","Ùù","×÷","Áá","Ðð","Òò","Ïï","Ìì","Ää","Öö","Üü","\\|",
- "Ññ","Þþ","Óó","Íí","Éé","Ôô","Øø","Ââ","Àà","/?",
+ "\xca\xea","\xc3\xe3","\xd5\xf5","\xcb\xeb","\xc5\xe5","\xce\xee","\xc7\xe7","\xdb\xfb","\xdd\xfd","\xda\xfa","\xc8\xe8","\xdf\xff",
+ "\xc6\xe6","\xd9\xf9","\xd7\xf7","\xc1\xe1","\xd0\xf0","\xd2\xf2","\xcf\xef","\xcc\xec","\xc4\xe4","\xd6\xf6","\xdc\xfc","\\|",
+ "\xd1\xf1","\xde\xfe","\xd3\xf3","\xcd\xed","\xc9\xe9","\xd4\xf4","\xd8\xf8","\xc2\xe2","\xc0\xe0","/?",
  "<>" /* the phantom key */
 };
 
@@ -510,9 +510,9 @@ static const char main_key_RU_koi8r[MAIN_LEN][4] =
 static const char main_key_RU_cp1251[MAIN_LEN][4] =
 {
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQéÉ","wWöÖ","eEóÓ","rRêÊ","tTåÅ","yYíÍ","uUãÃ","iIøØ","oOùÙ","pPçÇ","[{õÕ","]}úÚ",
- "aAôÔ","sSûÛ","dDâÂ","fFàÀ","gGïÏ","hHðÐ","jJîÎ","kKëË","lLäÄ",";:æÆ","'\"ýÝ","\\|",
- "zZÿß","xX÷×","cCñÑ","vVìÌ","bBèÈ","nNòÒ","mMüÜ",",<áÁ",".>þÞ","/?",
+ "qQ\xe9\xc9","wW\xf6\xd6","eE\xf3\xd3","rR\xea\xca","tT\xe5\xc5","yY\xed\xcd","uU\xe3\xc3","iI\xf8\xd8","oO\xf9\xd9","pP\xe7\xc7","[{\xf5\xd5","]}\xfa\xda",
+ "aA\xf4\xd4","sS\xfb\xdb","dD\xe2\xc2","fF\xe0\xc0","gG\xef\xcf","hH\xf0\xd0","jJ\xee\xce","kK\xeb\xcb","lL\xe4\xc4",";:\xe6\xc6","'\"\xfd\xdd","\\|",
+ "zZ\xff\xdf","xX\xf7\xd7","cC\xf1\xd1","vV\xec\xcc","bB\xe8\xc8","nN\xf2\xd2","mM\xfc\xdc",",<\xe1\xc1",".>\xfe\xde","/?",
  "<>" /* the phantom key */
 };
 
@@ -520,19 +520,19 @@ static const char main_key_RU_cp1251[MAIN_LEN][4] =
 static const char main_key_RU_phonetic[MAIN_LEN][4] =
 {
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQÑñ","wW×÷","eEÅå","rRÒò","tTÔô","yYÙù","uUÕõ","iIÉé","oOÏï","pPÐð","[{Ûû","]}Ýý",
- "aAÁá","sSÓó","dDÄä","fFÆæ","gGÇç","hHÈè","jJÊê","kKËë","lLÌì",";:","'\"","\\|",
- "zZÚú","xXØø","cCÃã","vVÖö","bBÂâ","nNÎî","mMÍí",",<",".>","/?",
+ "qQ\xd1\xf1","wW\xd7\xf7","eE\xc5\xe5","rR\xd2\xf2","tT\xd4\xf4","yY\xd9\xf9","uU\xd5\xf5","iI\xc9\xe9","oO\xcf\xef","pP\xd0\xf0","[{\xdb\xfb","]}\xdd\xfd",
+ "aA\xc1\xe1","sS\xd3\xf3","dD\xc4\xe4","fF\xc6\xe6","gG\xc7\xe7","hH\xc8\xe8","jJ\xca\xea","kK\xcb\xeb","lL\xcc\xec",";:","'\"","\\|",
+ "zZ\xda\xfa","xX\xd8\xf8","cC\xc3\xe3","vV\xd6\xf6","bB\xc2\xe2","nN\xce\xee","mM\xcd\xed",",<",".>","/?",
  "<>" /* the phantom key */
 };
 
 /*** Ukrainian keyboard layout KOI8-U */
 static const char main_key_UA[MAIN_LEN][4] =
 {
- "`~­½","1!1!","2@2\"","3#3'","4$4*","5%5:","6^6,","7&7.","8*8;","9(9(","0)0)","-_-_","=+=+",
- "qQÊê","wWÃã","eEÕõ","rRËë","tTÅå","yYÎî","uUÇç","iIÛû","oOÝý","pPÚú","[{Èè","]}§·",
- "aAÆæ","sS¦¶","dD×÷","fFÁá","gGÐð","hHÒò","jJÏï","kKÌì","lLÄä",";:Öö","'\"¤´","\\|\\|",
- "zZÑñ","xXÞþ","cCÓó","vVÍí","bBÉé","nNÔô","mMØø",",<Ââ",".>Àà","/?/?",
+ "`~\xad\xbd","1!1!","2@2\"","3#3'","4$4*","5%5:","6^6,","7&7.","8*8;","9(9(","0)0)","-_-_","=+=+",
+ "qQ\xca\xea","wW\xc3\xe3","eE\xd5\xf5","rR\xcb\xeb","tT\xc5\xe5","yY\xce\xee","uU\xc7\xe7","iI\xdb\xfb","oO\xdd\xfd","pP\xda\xfa","[{\xc8\xe8","]}\xa7\xb7",
+ "aA\xc6\xe6","sS\xa6\xb6","dD\xd7\xf7","fF\xc1\xe1","gG\xd0\xf0","hH\xd2\xf2","jJ\xcf\xef","kK\xcc\xec","lL\xc4\xe4",";:\xd6\xf6","'\"\xa4\xb4","\\|\\|",
+ "zZ\xd1\xf1","xX\xde\xfe","cC\xd3\xf3","vV\xcd\xed","bB\xc9\xe9","nN\xd4\xf4","mM\xd8\xf8",",<\xc2\xe2",".>\xc0\xe0","/?/?",
  "<>" /* the phantom key */
 };
 
@@ -540,29 +540,29 @@ static const char main_key_UA[MAIN_LEN][4] =
 /***  (as it appears on most of keyboards sold today)   */
 static const char main_key_UA_std[MAIN_LEN][4] =
 {
- "­½","1!","2\"","3'","4;","5%","6:","7?","8*","9(","0)","-_","=+",
- "Êê","Ãã","Õõ","Ëë","Åå","Îî","Çç","Ûû","Ýý","Úú","Èè","§·",
- "Ææ","¦¶","×÷","Áá","Ðð","Òò","Ïï","Ìì","Ää","Öö","¤´","\\/",
- "Ññ","Þþ","Óó","Íí","Éé","Ôô","Øø","Ââ","Àà",".,",
+ "\xad\xbd","1!","2\"","3'","4;","5%","6:","7?","8*","9(","0)","-_","=+",
+ "\xca\xea","\xc3\xe3","\xd5\xf5","\xcb\xeb","\xc5\xe5","\xce\xee","\xc7\xe7","\xdb\xfb","\xdd\xfd","\xda\xfa","\xc8\xe8","\xa7\xb7",
+ "\xc6\xe6","\xa6\xb6","\xd7\xf7","\xc1\xe1","\xd0\xf0","\xd2\xf2","\xcf\xef","\xcc\xec","\xc4\xe4","\xd6\xf6","\xa4\xb4","\\/",
+ "\xd1\xf1","\xde\xfe","\xd3\xf3","\xcd\xed","\xc9\xe9","\xd4\xf4","\xd8\xf8","\xc2\xe2","\xc0\xe0",".,",
  "<>" /* the phantom key */
 };
 
 /*** Russian keyboard layout KOI8-R (pair to the previous) */
 static const char main_key_RU_std[MAIN_LEN][4] =
 {
- "£³","1!","2\"","3'","4;","5%","6:","7?","8*","9(","0)","-_","=+",
- "Êê","Ãã","Õõ","Ëë","Åå","Îî","Çç","Ûû","Ýý","Úú","Èè","ßÿ",
- "Ææ","Ùù","×÷","Áá","Ðð","Òò","Ïï","Ìì","Ää","Öö","Üü","\\/",
- "Ññ","Þþ","Óó","Íí","Éé","Ôô","Øø","Ââ","Àà",".,",
+ "\xa3\xb3","1!","2\"","3'","4;","5%","6:","7?","8*","9(","0)","-_","=+",
+ "\xca\xea","\xc3\xe3","\xd5\xf5","\xcb\xeb","\xc5\xe5","\xce\xee","\xc7\xe7","\xdb\xfb","\xdd\xfd","\xda\xfa","\xc8\xe8","\xdf\xff",
+ "\xc6\xe6","\xd9\xf9","\xd7\xf7","\xc1\xe1","\xd0\xf0","\xd2\xf2","\xcf\xef","\xcc\xec","\xc4\xe4","\xd6\xf6","\xdc\xfc","\\/",
+ "\xd1\xf1","\xde\xfe","\xd3\xf3","\xcd\xed","\xc9\xe9","\xd4\xf4","\xd8\xf8","\xc2\xe2","\xc0\xe0",".,",
  "<>" /* the phantom key */
 };
 
 /*** Spanish keyboard layout (setxkbmap es) */
 static const char main_key_ES[MAIN_LEN][4] =
 {
- "ºª","1!","2\"","3·","4$","5%","6&","7/","8(","9)","0=","'?","¡¿",
+ "\xba\xaa","1!","2\"","3\xb7","4$","5%","6&","7/","8(","9)","0=","'?","\xa1\xbf",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","`^","+*",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ñÑ","´¨","çÇ",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf1\xd1","\xb4\xa8","\xe7\xc7",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -570,9 +570,9 @@ static const char main_key_ES[MAIN_LEN][4] =
 /*** Belgian keyboard layout ***/
 static const char main_key_BE[MAIN_LEN][4] =
 {
- "","&1|","é2@","\"3#","'4","(5","§6^","è7","!8","ç9{","à0}",")°","-_",
- "aA","zZ","eE¤","rR","tT","yY","uU","iI","oO","pP","^¨[","$*]",
- "qQ","sSß","dD","fF","gG","hH","jJ","kK","lL","mM","ù%´","µ£`",
+ "","&1|","\xe9""2@","\"3#","'4","(5","\xa7""6^","\xe8""7","!8","\xe7""9{","\xe0""0}",")\xb0","-_",
+ "aA","zZ","eE\xa4","rR","tT","yY","uU","iI","oO","pP","^\xa8[","$*]",
+ "qQ","sS\xdf","dD","fF","gG","hH","jJ","kK","lL","mM","\xf9%\xb4","\xb5\xa3`",
  "wW","xX","cC","vV","bB","nN",",?",";.",":/","=+~",
  "<>\\"
 };
@@ -580,29 +580,29 @@ static const char main_key_BE[MAIN_LEN][4] =
 /*** Hungarian keyboard layout (setxkbmap hu) */
 static const char main_key_HU[MAIN_LEN][4] =
 {
- "0§","1'","2\"","3+","4!","5%","6/","7=","8(","9)","öÖ","üÜ","óÓ",
- "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","õÕ","úÚ",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","éÉ","áÁ","ûÛ",
+ "0\xa7","1'","2\"","3+","4!","5%","6/","7=","8(","9)","\xf6\xd6","\xfc\xdc","\xf3\xd3",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xf5\xd5","\xfa\xda",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xe9\xc9","\xe1\xc1","\xfb\xdb",
  "yY","xX","cC","vV","bB","nN","mM",",?",".:","-_",
- "íÍ"
+ "\xed\xcd"
 };
 
 /*** Polish (programmer's) keyboard layout ***/
 static const char main_key_PL[MAIN_LEN][4] =
 {
- "`~","1!","2@","3#","4$","5%","6^","7&§","8*","9(","0)","-_","=+",
- "qQ","wW","eEêÊ","rR","tT","yY","uU","iI","oOóÓ","pP","[{","]}",
- "aA±¡","sS¶¦","dD","fF","gG","hH","jJ","kK","lL³£",";:","'\"","\\|",
- "zZ¿¯","xX¼¬","cCæÆ","vV","bB","nNñÑ","mM",",<",".>","/?",
+ "`~","1!","2@","3#","4$","5%","6^","7&\xa7","8*","9(","0)","-_","=+",
+ "qQ","wW","eE\xea\xca","rR","tT","yY","uU","iI","oO\xf3\xd3","pP","[{","]}",
+ "aA\xb1\xa1","sS\xb6\xa6","dD","fF","gG","hH","jJ","kK","lL\xb3\xa3",";:","'\"","\\|",
+ "zZ\xbf\xaf","xX\xbc\xac","cC\xe6\xc6","vV","bB","nN\xf1\xd1","mM",",<",".>","/?",
  "<>|"
 };
 
 /*** Slovenian keyboard layout (setxkbmap si) ***/
 static const char main_key_SI[MAIN_LEN][4] =
 {
- "¸¨","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","+*",
- "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","¹©","ðÐ",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","èÈ","æÆ","¾®",
+ "\xb8\xa8","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","+*",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xb9\xa9","\xf0\xd0",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xe8\xc8","\xe6\xc6","\xbe\xae",
  "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -611,9 +611,9 @@ static const char main_key_SI[MAIN_LEN][4] =
 static const char main_key_SR[MAIN_LEN][4] =
 {
  "`~","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","+*",
- "©¹","ªº","Åå","Òò","Ôô","Úú","Õõ","Éé","Ïï","Ðð","Ûû","[]",
- "Áá","Óó","Ää","Ææ","Çç","Èè","¨¸","Ëë","Ìì","Þþ","«»","-_",
- "¡±","¯¿","Ãã","×÷","Ââ","Îî","Íí",",;",".:","Öö",
+ "\xa9\xb9","\xaa\xba","\xc5\xe5","\xd2\xf2","\xd4\xf4","\xda\xfa","\xd5\xf5","\xc9\xe9","\xcf\xef","\xd0\xf0","\xdb\xfb","[]",
+ "\xc1\xe1","\xd3\xf3","\xc4\xe4","\xc6\xe6","\xc7\xe7","\xc8\xe8","\xa8\xb8","\xcb\xeb","\xcc\xec","\xde\xfe","\xab\xbb","-_",
+ "\xa1\xb1","\xaf\xbf","\xc3\xe3","\xd7\xf7","\xc2\xe2","\xce\xee","\xcd\xed",",;",".:","\xd6\xf6",
  "<>" /* the phantom key */
 };
 
@@ -621,9 +621,9 @@ static const char main_key_SR[MAIN_LEN][4] =
 static const char main_key_US_SR[MAIN_LEN][4] =
 {
  "`~","1!","2@2\"","3#","4$","5%","6^6&","7&7/","8*8(","9(9)","0)0=","-_'?","=++*",
- "qQ©¹","wWªº","eEÅå","rRÒò","tTÔô","yYÚú","uUÕõ","iIÉé","oOÏï","pPÐð","[{Ûû","]}[]",
- "aAÁá","sSÓó","dDÄä","fFÆæ","gGÇç","hHÈè","jJ¨¸","kKËë","lLÌì",";:Þþ","'\"«»","\\|-_",
- "zZ¡±","xX¯¿","cCÃã","vV×÷","bBÂâ","nNÎî","mMÍí",",<,;",".>.:","/?Öö",
+ "qQ\xa9\xb9","wW\xaa\xba","eE\xc5\xe5","rR\xd2\xf2","tT\xd4\xf4","yY\xda\xfa","uU\xd5\xf5","iI\xc9\xe9","oO\xcf\xef","pP\xd0\xf0","[{\xdb\xfb","]}[]",
+ "aA\xc1\xe1","sS\xd3\xf3","dD\xc4\xe4","fF\xc6\xe6","gG\xc7\xe7","hH\xc8\xe8","jJ\xa8\xb8","kK\xcb\xeb","lL\xcc\xec",";:\xde\xfe","'\"\xab\xbb","\\|-_",
+ "zZ\xa1\xb1","xX\xaf\xbf","cC\xc3\xe3","vV\xd7\xf7","bB\xc2\xe2","nN\xce\xee","mM\xcd\xed",",<,;",".>.:","/?\xd6\xf6",
  "<>" /* the phantom key */
 };
 
@@ -631,8 +631,8 @@ static const char main_key_US_SR[MAIN_LEN][4] =
 static const char main_key_HR_jelly[MAIN_LEN][4] =
 {
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{¹©","]}ðÐ",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:èÈ","'\"æÆ","\\|¾®",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{\xb9\xa9","]}\xf0\xd0",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:\xe8\xc8","'\"\xe6\xc6","\\|\xbe\xae",
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
  "<>|"
 };
@@ -640,9 +640,9 @@ static const char main_key_HR_jelly[MAIN_LEN][4] =
 /*** Croatian keyboard layout (setxkbmap hr) ***/
 static const char main_key_HR[MAIN_LEN][4] =
 {
- "¸¨","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","+*",
- "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","¹©","ðÐ",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","èÈ","æÆ","¾®",
+ "\xb8\xa8","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","+*",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xb9\xa9","\xf0\xd0",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xe8\xc8","\xe6\xc6","\xbe\xae",
  "yY","xX","cC","vV","bB","nN","mM",",;",".:","/?",
  "<>"
 };
@@ -679,9 +679,9 @@ static const char main_key_JA_pc98x1[MAIN_LEN][4] =
 /*** Brazilian ABNT-2 keyboard layout (contributed by Raul Gomes Fernandes) */
 static const char main_key_PT_br[MAIN_LEN][4] =
 {
- "'\"","1!","2@","3#","4$","5%","6¨","7&","8*","9(","0)","-_","=+",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","´`","[{",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","çÇ","~^","]}",
+ "'\"","1!","2@","3#","4$","5%","6\xa8","7&","8*","9(","0)","-_","=+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xb4`","[{",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xe7\xc7","~^","]}",
  "\\|","zZ","xX","cC","vV","bB","nN","mM",",<",".>",";:","/?",
 };
 
@@ -708,9 +708,9 @@ static const char main_key_US_intl[MAIN_LEN][4] =
   - brokenbar replaced with bar					*/
 static const char main_key_SK[MAIN_LEN][4] =
 {
- ";0","+1","µ2","¹3","è4","»5","¾6","ý7","á8","í9","é0","=%","'v",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","ú/","ä(",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ô\"","§!","ò)",
+ ";0","+1","\xb5""2","\xb9""3","\xe8""4","\xbb""5","\xbe""6","\xfd""7","\xe1""8","\xed""9","\xe9""0","=%","'v",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xfa/","\xe4(",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf4\"","\xa7!","\xf2)",
  "zZ","xX","cC","vV","bB","nN","mM",",?",".:","-_",
  "<>"
 };
@@ -718,9 +718,9 @@ static const char main_key_SK[MAIN_LEN][4] =
 /*** Czech keyboard layout (setxkbmap cz) */
 static const char main_key_CZ[MAIN_LEN][4] =
 {
- ";","+1","ì2","¹3","è4","ø5","¾6","ý7","á8","í9","é0","=%","´·",
- "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","ú/",")(",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ù\"","§!","¨'",
+ ";","+1","\xec""2","\xb9""3","\xe8""4","\xf8""5","\xbe""6","\xfd""7","\xe1""8","\xed""9","\xe9""0","=%","\xb4\xb7",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xfa/",")(",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf9\"","\xa7!","\xa8'",
  "yY","xX","cC","vV","bB","nN","mM",",?",".:","-_",
  "\\"
 };
@@ -728,9 +728,9 @@ static const char main_key_CZ[MAIN_LEN][4] =
 /*** Czech keyboard layout (setxkbmap cz_qwerty) */
 static const char main_key_CZ_qwerty[MAIN_LEN][4] =
 {
- ";","+1","ì2","¹3","è4","ø5","¾6","ý7","á8","í9","é0","=%","´·",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","ú/",")(",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ù\"","§!","¨'",
+ ";","+1","\xec""2","\xb9""3","\xe8""4","\xf8""5","\xbe""6","\xfd""7","\xe1""8","\xed""9","\xe9""0","=%","\xb4\xb7",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xfa/",")(",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf9\"","\xa7!","\xa8'",
  "zZ","xX","cC","vV","bB","nN","mM",",?",".:","-_",
  "\\"
 };
@@ -739,18 +739,18 @@ static const char main_key_CZ_qwerty[MAIN_LEN][4] =
 static const char main_key_SK_prog[MAIN_LEN][4] =
 {
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQäÄ","wWìÌ","eEéÉ","rRøØ","tT»«","yYýÝ","uUùÙ","iIíÍ","oOóÓ","pPöÖ","[{","]}",
- "aAáÁ","sS¹©","dDïÏ","fFëË","gGàÀ","hHúÚ","jJüÜ","kKôÔ","lLµ¥",";:","'\"","\\|",
- "zZ¾®","xX¤","cCèÈ","vVçÇ","bB","nNòÒ","mMåÅ",",<",".>","/?",
+ "qQ\xe4\xc4","wW\xec\xcc","eE\xe9\xc9","rR\xf8\xd8","tT\xbb\xab","yY\xfd\xdd","uU\xf9\xd9","iI\xed\xcd","oO\xf3\xd3","pP\xf6\xd6","[{","]}",
+ "aA\xe1\xc1","sS\xb9\xa9","dD\xef\xcf","fF\xeb\xcb","gG\xe0\xc0","hH\xfa\xda","jJ\xfc\xdc","kK\xf4\xd4","lL\xb5\xa5",";:","'\"","\\|",
+ "zZ\xbe\xae","xX\xa4","cC\xe8\xc8","vV\xe7\xc7","bB","nN\xf2\xd2","mM\xe5\xc5",",<",".>","/?",
  "<>"
 };
 
 /*** Czech keyboard layout (see cssk_ibm(cs_qwerty) in xkbsel) */
 static const char main_key_CS[MAIN_LEN][4] =
 {
- ";","+1","ì2","¹3","è4","ø5","¾6","ý7","á8","í9","é0½)","=%","",
- "qQ\\","wW|","eE","rR","tT","yY","uU","iI","oO","pP","ú/[{",")(]}",
- "aA","sSð","dDÐ","fF[","gG]","hH","jJ","kK³","lL£","ù\"$","§!ß","¨'",
+ ";","+1","\xec""2","\xb9""3","\xe8""4","\xf8""5","\xbe""6","\xfd""7","\xe1""8","\xed""9","\xe9""0\xbd)","=%","",
+ "qQ\\","wW|","eE","rR","tT","yY","uU","iI","oO","pP","\xfa/[{",")(]}",
+ "aA","sS\xf0","dD\xd0","fF[","gG]","hH","jJ","kK\xb3","lL\xa3","\xf9\"$","\xa7!\xdf","\xa8'",
  "zZ>","xX#","cC&","vV@","bB{","nN}","mM",",?<",".:>","-_*",
  "<>\\|"
 };
@@ -758,9 +758,9 @@ static const char main_key_CS[MAIN_LEN][4] =
 /*** Latin American keyboard layout (contributed by Gabriel Orlando Garcia) */
 static const char main_key_LA[MAIN_LEN][4] =
 {
- "|°","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","¿¡",
- "qQ@","wW","eE","rR","tT","yY","uU","iI","oO","pP","´¨","+*",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ñÑ","{[^","}]",
+ "|\xb0","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","\xbf\xa1",
+ "qQ@","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xb4\xa8","+*",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf1\xd1","{[^","}]",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "<>"
 };
@@ -768,29 +768,29 @@ static const char main_key_LA[MAIN_LEN][4] =
 /*** Lithuanian keyboard layout (setxkbmap lt) */
 static const char main_key_LT_B[MAIN_LEN][4] =
 {
- "`~","àÀ","èÈ","æÆ","ëË","áÁ","ðÐ","øØ","ûÛ","¥(","´)","-_","þÞ",
+ "`~","\xe0\xc0","\xe8\xc8","\xe6\xc6","\xeb\xcb","\xe1\xc1","\xf0\xd0","\xf8\xd8","\xfb\xdb","\xa5(","\xb4)","-_","\xfe\xde",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{","]}",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'\"","\\|",
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
- "ª¬"
+ "\xaa\xac"
 };
 
 /*** Turkish keyboard Layout */
 static const char main_key_TK[MAIN_LEN][4] =
 {
-"\"é","1!","2'","3^#","4+$","5%","6&","7/{","8([","9)]","0=}","*?\\","-_",
-"qQ@","wW","eE","rR","tT","yY","uU","ýIî","oO","pP","ðÐ","üÜ~",
-"aAæ","sSß","dD","fF","gG","hH","jJ","kK","lL","þÞ","iÝ",",;`",
-"zZ","xX","cC","vV","bB","nN","mM","öÖ","çÇ",".:"
+"\"\xe9","1!","2'","3^#","4+$","5%","6&","7/{","8([","9)]","0=}","*?\\","-_",
+"qQ@","wW","eE","rR","tT","yY","uU","\xfdI\xee","oO","pP","\xf0\xd0","\xfc\xdc~",
+"aA\xe6","sS\xdf","dD","fF","gG","hH","jJ","kK","lL","\xfe\xde","i\xdd",",;`",
+"zZ","xX","cC","vV","bB","nN","mM","\xf6\xd6","\xe7\xc7",".:"
 };
 
 /*** Turkish keyboard layout (setxkbmap tr) */
 static const char main_key_TR[MAIN_LEN][4] =
 {
 "\"\\","1!","2'","3^","4+","5%","6&","7/","8(","9)","0=","*?","-_",
-"qQ","wW","eE","rR","tT","yY","uU","\xb9I","oO","pP","\xbb\xab","üÜ",
+"qQ","wW","eE","rR","tT","yY","uU","\xb9I","oO","pP","\xbb\xab","\xfc\xdc",
 "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xba\xaa","i\0",",;",
-"zZ","xX","cC","vV","bB","nN","mM","öÖ","çÇ",".:",
+"zZ","xX","cC","vV","bB","nN","mM","\xf6\xd6","\xe7\xc7",".:",
 "<>"
 };
 
@@ -799,8 +799,8 @@ static const char main_key_TR_F[MAIN_LEN][4] =
 {
 "+*","1!","2\"","3^#","4$","5%","6&","7'","8(","9)","0=","/?","-_",
 "fF","gG","\xbb\xab","\xb9I","oO","dD","rR","nN","hH","pP","qQ","wW",
-"uU","i\0","eE","aA","üÜ","tT","kK","mM","lL","yY","\xba\xaa","xX",
-"jJ","öÖ","vV","cC","çÇ","zZ","sS","bB",".:",",;",
+"uU","i\0","eE","aA","\xfc\xdc","tT","kK","mM","lL","yY","\xba\xaa","xX",
+"jJ","\xf6\xd6","vV","cC","\xe7\xc7","zZ","sS","bB",".:",",;",
 "<>"
 };
 
@@ -808,9 +808,9 @@ static const char main_key_TR_F[MAIN_LEN][4] =
 static const char main_key_IL[MAIN_LEN][4] =
 {
  "`~;","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQ/","wW'","eE÷","rRø","tTà","yYè","uUå","iIï","oOí","pPô","[{","]}",
- "aAù","sSã","dDâ","fFë","gGò","hHé","jJç","kKì","lLê",";:ó","\'\",","\\|",
- "zZæ","xXñ","cCá","vVä","bBð","nNî","mMö",",<ú",".>õ","/?.",
+ "qQ/","wW'","eE\xf7","rR\xf8","tT\xe0","yY\xe8","uU\xe5","iI\xef","oO\xed","pP\xf4","[{","]}",
+ "aA\xf9","sS\xe3","dD\xe2","fF\xeb","gG\xf2","hH\xe9","jJ\xe7","kK\xec","lL\xea",";:\xf3","\'\",","\\|",
+ "zZ\xe6","xX\xf1","cC\xe1","vV\xe4","bB\xf0","nN\xee","mM\xf6",",<\xfa",".>\xf5","/?.",
  "<>"
 };
 
@@ -818,9 +818,9 @@ static const char main_key_IL[MAIN_LEN][4] =
 static const char main_key_IL_phonetic[MAIN_LEN][4] =
 {
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQ÷","wWå","eEà","rRø","tTú","yYò","uUå","iIé","oOñ","pPô","[{","]}",
- "aAà","sSù","dDã","fFô","gGâ","hHä","jJé","kKë","lLì",";:","'\"","\\|",
- "zZæ","xXç","cCö","vVå","bBá","nNð","mMî",",<",".>","/?",
+ "qQ\xf7","wW\xe5","eE\xe0","rR\xf8","tT\xfa","yY\xf2","uU\xe5","iI\xe9","oO\xf1","pP\xf4","[{","]}",
+ "aA\xe0","sS\xf9","dD\xe3","fF\xf4","gG\xe2","hH\xe4","jJ\xe9","kK\xeb","lL\xec",";:","'\"","\\|",
+ "zZ\xe6","xX\xe7","cC\xf6","vV\xe5","bB\xe1","nN\xf0","mM\xee",",<",".>","/?",
  "<>"
 };
 
@@ -828,9 +828,9 @@ static const char main_key_IL_phonetic[MAIN_LEN][4] =
 static const char main_key_IL_saharon[MAIN_LEN][4] =
 {
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQ÷","wWñ","eE","rRø","tTè","yYã","uU","iI","oO","pPô","[{","]}",
- "aAà","sSå","dDì","fFú","gGâ","hHä","jJù","kKë","lLé",";:","'\"","\\|",
- "zZæ","xXç","cCö","vVò","bBá","nNð","mMî",",<",".>","/?",
+ "qQ\xf7","wW\xf1","eE","rR\xf8","tT\xe8","yY\xe3","uU","iI","oO","pP\xf4","[{","]}",
+ "aA\xe0","sS\xe5","dD\xec","fF\xfa","gG\xe2","hH\xe4","jJ\xf9","kK\xeb","lL\xe9",";:","'\"","\\|",
+ "zZ\xe6","xX\xe7","cC\xf6","vV\xf2","bB\xe1","nN\xf0","mM\xee",",<",".>","/?",
  "<>"
 };
 
@@ -840,19 +840,19 @@ static const char main_key_IL_saharon[MAIN_LEN][4] =
 static const char main_key_EL[MAIN_LEN][4] =
 {
  "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
- "qQ;:","wW","eEåÅ","rRñÑ","tTôÔ","yYõÕ","uUèÈ","iIéÉ","oOïÏ","pPðÐ","[{","]}",
- "aAáÁ","sS","dDäÄ","fFöÖ","gGãÃ","hHçÇ","jJîÎ","kKêÊ","lLëË",";:´¨","'\"","\\|",
- "zZæÆ","xX÷×","cCøØ","vVùÙ","bBâÂ","nNíÍ","mMìÌ",",<",".>","/?",
+ "qQ;:","wW","eE\xe5\xc5","rR\xf1\xd1","tT\xf4\xd4","yY\xf5\xd5","uU\xe8\xc8","iI\xe9\xc9","oO\xef\xcf","pP\xf0\xd0","[{","]}",
+ "aA\xe1\xc1","sS","dD\xe4\xc4","fF\xf6\xd6","gG\xe3\xc3","hH\xe7\xc7","jJ\xee\xce","kK\xea\xca","lL\xeb\xcb",";:\xb4\xa8","'\"","\\|",
+ "zZ\xe6\xc6","xX\xf7\xd7","cC\xf8\xd8","vV\xf9\xd9","bB\xe2\xc2","nN\xed\xcd","mM\xec\xcc",",<",".>","/?",
  "<>"
 };
 
 /*** Thai (Kedmanee) keyboard layout by Supphachoke Suntiwichaya <mrchoke@opentle.org> */
 static const char main_key_th[MAIN_LEN][4] =
 {
- "`~_%","1!å+","2@/ñ","3#-ò","4$Àó","5%¶ô","6^ØÙ","7&Öß","8*¤õ","9(µö","0)¨÷","-_¢ø","=+ªù",
- "qQæð","wWä\"","eEÓ®","rR¾±","tTÐ¸","yYÑí","uUÕê","iIÃ³","oO¹Ï","pPÂ­","[{º°","]}Å,",
- "aA¿Ä","sSË¦","dD¡¯","fF´â","gGà¬","hHéç","jJèë","kKÒÉ","lLÊÈ",";:Ç«","\'\"§.","\\|£¥",
- "zZ¼(","xX»)","cCá©","vVÍÎ","bBÚ","nN×ì","mM·?",",<Á²",".>ãÌ","/?½Æ"
+ "`~_%","1!\xe5+","2@/\xf1","3#-\xf2","4$\xc0\xf3","5%\xb6\xf4","6^\xd8\xd9","7&\xd6\xdf","8*\xa4\xf5","9(\xb5\xf6","0)\xa8\xf7","-_\xa2\xf8","=+\xaa\xf9",
+ "qQ\xe6\xf0","wW\xe4\"","eE\xd3\xae","rR\xbe\xb1","tT\xd0\xb8","yY\xd1\xed","uU\xd5\xea","iI\xc3\xb3","oO\xb9\xcf","pP\xc2\xad","[{\xba\xb0","]}\xc5,",
+ "aA\xbf\xc4","sS\xcb\xa6","dD\xa1\xaf","fF\xb4\xe2","gG\xe0\xac","hH\xe9\xe7","jJ\xe8\xeb","kK\xd2\xc9","lL\xca\xc8",";:\xc7\xab","\'\"\xa7.","\\|\xa3\xa5",
+ "zZ\xbc(","xX\xbb)","cC\xe1\xa9","vV\xcd\xce","bB\xda","nN\xd7\xec","mM\xb7?",",<\xc1\xb2",".>\xe3\xcc","/?\xbd\xc6"
 }; 
 
 /*** VNC keyboard layout */
@@ -879,9 +879,9 @@ static const char main_key_vnc[MAIN_LEN][4] =
 /*** Dutch keyboard layout (setxkbmap nl) ***/
 static const char main_key_NL[MAIN_LEN][4] =
 {
- "@§","1!","2\"","3#","4$","5%","6&","7_","8(","9)","0'","/?","°~",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","¨~","*|",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","+±","'`","<>",
+ "@\xa7","1!","2\"","3#","4$","5%","6&","7_","8(","9)","0'","/?","\xb0~",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","\xa8~","*|",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","+\xb1","'`","<>",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-=",
  "[]"
 };
