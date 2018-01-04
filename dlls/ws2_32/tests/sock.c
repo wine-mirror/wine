@@ -8539,6 +8539,7 @@ todo_wine
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
     ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
 
+    bytesReturned = 123456;
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
     ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
     ok(bytesReturned == 0, "bytesReturned isn't supposed to be %d\n", bytesReturned);
