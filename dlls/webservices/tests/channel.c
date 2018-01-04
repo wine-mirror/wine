@@ -976,6 +976,7 @@ START_TEST(channel)
     thread = start_listener( &info );
     test_message_read_write( &info );
     WaitForSingleObject( thread, 3000 );
+    CloseHandle(thread);
 
     info.type      = WS_CHANNEL_TYPE_DUPLEX_SESSION;
     info.binding   = WS_TCP_CHANNEL_BINDING;
@@ -984,6 +985,7 @@ START_TEST(channel)
     thread = start_listener( &info );
     test_duplex_session( &info );
     WaitForSingleObject( thread, 3000 );
+    CloseHandle(thread);
 
     info.type      = WS_CHANNEL_TYPE_DUPLEX;
     info.binding   = WS_UDP_CHANNEL_BINDING;
@@ -992,6 +994,7 @@ START_TEST(channel)
     thread = start_listener( &info );
     test_WsAcceptChannel( &info );
     WaitForSingleObject( thread, 3000 );
+    CloseHandle(thread);
 
     info.type    = WS_CHANNEL_TYPE_DUPLEX_SESSION;
     info.binding = WS_TCP_CHANNEL_BINDING;
@@ -999,6 +1002,7 @@ START_TEST(channel)
     thread = start_listener( &info );
     test_WsAcceptChannel( &info );
     WaitForSingleObject( thread, 3000 );
+    CloseHandle(thread);
 
     if (firewall_enabled) set_firewall( APP_REMOVE );
 }

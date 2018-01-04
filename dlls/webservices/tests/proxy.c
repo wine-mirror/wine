@@ -732,7 +732,11 @@ START_TEST(proxy)
 
     ret = WaitForSingleObject( info.event, 3000 );
     ok(ret == WAIT_OBJECT_0, "failed to start test server %u\n", GetLastError());
-    if (ret != WAIT_OBJECT_0) return;
+    if (ret != WAIT_OBJECT_0)
+    {
+        CloseHandle(thread);
+        return;
+    }
 
     test_WsSendMessage( info.port, &test1 );
     test_WsReceiveMessage( info.port );
@@ -741,4 +745,5 @@ START_TEST(proxy)
 
     test_WsSendMessage( info.port, &quit );
     WaitForSingleObject( thread, 3000 );
+    CloseHandle(thread);
 }
