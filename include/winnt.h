@@ -5501,7 +5501,7 @@ typedef enum _CM_ERROR_CONTROL_TYPE
   CriticalError = SERVICE_ERROR_CRITICAL
 } SERVICE_ERROR_TYPE;
 
-
+NTSYSAPI SIZE_T WINAPI RtlCompareMemory(const VOID*, const VOID*, SIZE_T);
 
 #define RtlEqualMemory(Destination, Source, Length) (!memcmp((Destination),(Source),(Length)))
 #define RtlMoveMemory(Destination, Source, Length) memmove((Destination),(Source),(Length))
