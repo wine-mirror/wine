@@ -2261,7 +2261,7 @@ static HRESULT WINAPI EventTarget_dispatchEvent(IEventTarget *iface, IDOMEvent *
     return dispatch_event_object(This, event, DISPATCH_STANDARD, result);
 }
 
-HRESULT IEventTarget_addEventListener_hook(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT IEventTarget_addEventListener_hook(DispatchEx *dispex, LCID lcid, WORD flags,
         DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     /* If only two arguments were given, implicitly set capture to false */
@@ -2282,7 +2282,7 @@ HRESULT IEventTarget_addEventListener_hook(DispatchEx *dispex, LCID lcid, WORD f
     return S_FALSE; /* fallback to default */
 }
 
-HRESULT IEventTarget_removeEventListener_hook(DispatchEx *dispex, LCID lcid, WORD flags,
+static HRESULT IEventTarget_removeEventListener_hook(DispatchEx *dispex, LCID lcid, WORD flags,
         DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     /* If only two arguments were given, implicitly set capture to false */
