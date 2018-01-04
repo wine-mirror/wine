@@ -51,8 +51,8 @@ GLdouble __gl_edgeEval( GLUvertex *u, GLUvertex *v, GLUvertex *w )
 {
   /* Given three vertices u,v,w such that VertLeq(u,v) && VertLeq(v,w),
    * evaluates the t-coord of the edge uw at the s-coord of the vertex v.
-   * Returns v->t - (uw)(v->s), ie. the signed distance from uw to v.
-   * If uw is vertical (and thus passes thru v), the result is zero.
+   * Returns v->t - (uw)(v->s), i.e. the signed distance from uw to v.
+   * If uw is vertical (and thus passes through v), the result is zero.
    *
    * The calculation is extremely accurate and stable, even when v
    * is very close to u or w.  In particular if we set v->t = 0 and
@@ -106,8 +106,8 @@ GLdouble __gl_transEval( GLUvertex *u, GLUvertex *v, GLUvertex *w )
 {
   /* Given three vertices u,v,w such that TransLeq(u,v) && TransLeq(v,w),
    * evaluates the t-coord of the edge uw at the s-coord of the vertex v.
-   * Returns v->s - (uw)(v->t), ie. the signed distance from uw to v.
-   * If uw is vertical (and thus passes thru v), the result is zero.
+   * Returns v->s - (uw)(v->t), i.e. the signed distance from uw to v.
+   * If uw is vertical (and thus passes through v), the result is zero.
    *
    * The calculation is extremely accurate and stable, even when v
    * is very close to u or w.  In particular if we set v->s = 0 and
