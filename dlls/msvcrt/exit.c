@@ -462,6 +462,7 @@ void CDECL _register_thread_local_exe_atexit_callback(_tls_callback_type callbac
     tls_atexit_callback = callback;
 }
 
+#if _MSVCR_VER>=71
 /*********************************************************************
  *		_set_purecall_handler (MSVCR71.@)
  */
@@ -473,15 +474,18 @@ MSVCRT_purecall_handler CDECL _set_purecall_handler(MSVCRT_purecall_handler func
     purecall_handler = function;
     return ret;
 }
+#endif
 
+#if _MSVCR_VER>=80
 /*********************************************************************
- *		_get_purecall_handler
+ *		_get_purecall_handler (MSVCR80.@)
  */
 MSVCRT_purecall_handler CDECL _get_purecall_handler(void)
 {
     TRACE("\n");
     return purecall_handler;
 }
+#endif
 
 /*********************************************************************
  *		_purecall (MSVCRT.@)
