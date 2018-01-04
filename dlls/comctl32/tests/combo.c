@@ -1125,7 +1125,7 @@ static void test_combo_listbox_styles(DWORD cb_style)
     DestroyWindow(combo);
 }
 
-void test_combo_WS_VSCROLL(void)
+static void test_combo_WS_VSCROLL(void)
 {
     HWND hCombo, hList;
     COMBOBOXINFO info;
