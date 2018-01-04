@@ -194,8 +194,8 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 
 static BOOL Control_CreateListView (CPanel *panel)
 {
+    static const WCHAR empty_string[] = {0};
     RECT ws, sb;
-    WCHAR empty_string[] = {0};
     WCHAR buf[MAX_STRING_LEN];
     LVCOLUMNW lvc;
 
@@ -431,8 +431,8 @@ static CPlItem* Control_GetCPlItem_From_ListView(CPanel *panel)
 
 static void Control_StartApplet(HWND hWnd, CPlItem *item)
 {
-    WCHAR verbOpen[] = {'c','p','l','o','p','e','n',0};
-    WCHAR format[] = {'@','%','d',0};
+    static const WCHAR verbOpen[] = {'c','p','l','o','p','e','n',0};
+    static const WCHAR format[] = {'@','%','d',0};
     WCHAR param[MAX_PATH];
 
     /* execute the applet if item is valid */
@@ -610,11 +610,11 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 
 static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 {
+    static const WCHAR className[] = {'S','h','e','l','l','_','C','o','n','t','r','o',
+        'l','_','W','n','d','C','l','a','s','s',0};
     WNDCLASSEXW wc;
     MSG		msg;
     WCHAR appName[MAX_STRING_LEN];
-    const WCHAR className[] = {'S','h','e','l','l','_','C','o','n','t','r','o',
-        'l','_','W','n','d','C','l','a','s','s',0};
 
     LoadStringW(shell32_hInstance, IDS_CPANEL_TITLE, appName, sizeof(appName) / sizeof(appName[0]));
 

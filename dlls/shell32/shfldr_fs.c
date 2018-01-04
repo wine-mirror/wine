@@ -1085,7 +1085,7 @@ ISFHelper_fnGetUniqueName (ISFHelper * iface, LPWSTR pwszName, UINT uLen)
     HRESULT hr;
     WCHAR wszText[MAX_PATH];
     WCHAR wszNewFolder[25];
-    const WCHAR wszFormat[] = {'%','s',' ','%','d',0 };
+    static const WCHAR wszFormat[] = {'%','s',' ','%','d',0 };
 
     TRACE ("(%p)(%p %u)\n", This, pwszName, uLen);
 

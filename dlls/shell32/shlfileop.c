@@ -1309,8 +1309,8 @@ static BOOL confirm_delete_list(HWND hWnd, DWORD fFlags, BOOL fTrash, const FILE
 {
     if (flFrom->dwNumFiles > 1)
     {
+        static const WCHAR format[] = {'%','d',0};
         WCHAR tmp[8];
-        const WCHAR format[] = {'%','d',0};
 
         wnsprintfW(tmp, sizeof(tmp)/sizeof(tmp[0]), format, flFrom->dwNumFiles);
         return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_MULTIPLE_ITEM:ASK_DELETE_MULTIPLE_ITEM), tmp, NULL);
