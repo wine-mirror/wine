@@ -721,6 +721,16 @@ HRESULT WINAPI SetWindowTheme(HWND hwnd, LPCWSTR pszSubAppName,
 }
 
 /***********************************************************************
+ *      SetWindowThemeAttribute                             (UXTHEME.@)
+ */
+HRESULT WINAPI SetWindowThemeAttribute(HWND hwnd, enum WINDOWTHEMEATTRIBUTETYPE type,
+                                       PVOID attribute, DWORD size)
+{
+   FIXME("(%p,%d,%p,%d): stub\n", hwnd, type, attribute, size);
+   return E_NOTIMPL;
+}
+
+/***********************************************************************
  *      GetCurrentThemeName                                 (UXTHEME.@)
  */
 HRESULT WINAPI GetCurrentThemeName(LPWSTR pszThemeFileName, int dwMaxNameChars,

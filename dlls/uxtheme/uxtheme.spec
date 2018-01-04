@@ -108,3 +108,4 @@
 @ stdcall OpenThemeData(ptr wstr)
 @ stdcall SetThemeAppProperties(long)
 @ stdcall SetWindowTheme(ptr wstr wstr)
+@ stdcall SetWindowThemeAttribute(ptr long ptr long)

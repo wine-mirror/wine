@@ -206,6 +206,8 @@ HTHEME WINAPI GetWindowTheme(HWND);
 #define OTD_NONCLIENT               0x0002
 #define OTD_VALIDBITS               (OTD_FORCE_RECT_SIZING | OTD_NONCLIENT)
 
+enum WINDOWTHEMEATTRIBUTETYPE { WTA_NONCLIENT = 1 };
+
 HRESULT WINAPI HitTestThemeBackground(HTHEME,HDC,int,int,DWORD,const RECT*,
                                       HRGN,POINT,WORD*);
 BOOL WINAPI IsAppThemed(void);
@@ -218,7 +220,7 @@ HTHEME WINAPI OpenThemeData(HWND,LPCWSTR);
 HTHEME WINAPI OpenThemeDataEx(HWND,LPCWSTR,DWORD);
 void WINAPI SetThemeAppProperties(DWORD);
 HRESULT WINAPI SetWindowTheme(HWND,LPCWSTR,LPCWSTR);
-
+HRESULT WINAPI SetWindowThemeAttribute(HWND,enum WINDOWTHEMEATTRIBUTETYPE,PVOID,DWORD);
 
 /* Double-buffered Drawing API */
 
