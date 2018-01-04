@@ -44,7 +44,7 @@ struct data_key
     BOOL read_only;
 };
 
-struct data_key *impl_from_ISpRegDataKey( ISpRegDataKey *iface )
+static struct data_key *impl_from_ISpRegDataKey( ISpRegDataKey *iface )
 {
     return CONTAINING_RECORD( iface, struct data_key, ISpRegDataKey_iface );
 }
@@ -235,7 +235,7 @@ struct token_category
     ISpRegDataKey *data_key;
 };
 
-struct token_category *impl_from_ISpObjectTokenCategory( ISpObjectTokenCategory *iface )
+static struct token_category *impl_from_ISpObjectTokenCategory( ISpObjectTokenCategory *iface )
 {
     return CONTAINING_RECORD( iface, struct token_category, ISpObjectTokenCategory_iface );
 }
@@ -545,7 +545,7 @@ struct token_enum
     ULONG count;
 };
 
-struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
+static struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
 {
     return CONTAINING_RECORD( iface, struct token_enum, ISpObjectTokenEnumBuilder_iface );
 }
