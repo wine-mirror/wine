@@ -1186,7 +1186,7 @@ static UINT defer_custom_action( MSIPACKAGE *package, const WCHAR *action, UINT 
     return ERROR_SUCCESS;
 }
 
-UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action )
+UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action, UINT script )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
@@ -1226,7 +1226,7 @@ UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action )
         if (type & msidbCustomActionTypeNoImpersonate)
             WARN("msidbCustomActionTypeNoImpersonate not handled\n");
 
-        if (!action_type_matches_script( type, package->script ))
+        if (!action_type_matches_script( type, script ))
         {
             rc = defer_custom_action( package, action, type );
             goto end;
@@ -1234,6 +1234,15 @@ UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action )
         else
         {
             LPWSTR actiondata = msi_dup_property( package->db, action );
+
+            if (type & msidbCustomActionTypeInScript)
+                package->scheduled_action_running = TRUE;
+
+            if (type & msidbCustomActionTypeCommit)
+                package->commit_action_running = TRUE;
+
+            if (type & msidbCustomActionTypeRollback)
+                package->rollback_action_running = TRUE;
 
             if (deferred_data)
                 set_deferred_action_props(package, deferred_data);
@@ -1316,6 +1325,9 @@ UINT ACTION_CustomAction( MSIPACKAGE *package, LPCWSTR action )
     }
 
 end:
+    package->scheduled_action_running = FALSE;
+    package->commit_action_running = FALSE;
+    package->rollback_action_running = FALSE;
     msiobj_release(&row->hdr);
     return rc;
 }

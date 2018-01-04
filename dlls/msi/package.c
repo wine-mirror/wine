@@ -1098,7 +1098,6 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
             msi_load_admin_properties( package );
 
         package->log_file = INVALID_HANDLE_VALUE;
-        package->script = SCRIPT_NONE;
     }
     return package;
 }

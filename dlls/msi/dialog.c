@@ -4366,7 +4366,7 @@ static UINT event_spawn_wait_dialog( msi_dialog *dialog, const WCHAR *argument )
 
 static UINT event_do_action( msi_dialog *dialog, const WCHAR *argument )
 {
-    ACTION_PerformAction( dialog->package, argument );
+    ACTION_PerformAction( dialog->package, argument, SCRIPT_NONE );
     return ERROR_SUCCESS;
 }
 

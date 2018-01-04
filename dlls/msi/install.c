@@ -105,7 +105,7 @@ UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
         return ERROR_SUCCESS;
     }
  
-    ret = ACTION_PerformAction( package, szAction );
+    ret = ACTION_PerformAction( package, szAction, SCRIPT_NONE );
     msiobj_release( &package->hdr );
 
     return ret;
@@ -736,15 +736,15 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
         break;
 
     case MSIRUNMODE_SCHEDULED:
-        r = (package->script == SCRIPT_INSTALL);
+        r = package->scheduled_action_running;
         break;
 
     case MSIRUNMODE_ROLLBACK:
-        r = (package->script == SCRIPT_ROLLBACK);
+        r = package->rollback_action_running;
         break;
 
     case MSIRUNMODE_COMMIT:
-        r = (package->script == SCRIPT_COMMIT);
+        r = package->commit_action_running;
         break;
 
     case MSIRUNMODE_MAINTENANCE:

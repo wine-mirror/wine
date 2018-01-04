@@ -412,7 +412,6 @@ typedef struct tagMSIPACKAGE
     struct list mimes;
     struct list appids;
 
-    enum script script;
     LPWSTR *script_actions[SCRIPT_MAX];
     int    script_actions_count[SCRIPT_MAX];
     LPWSTR *unique_actions;
@@ -442,6 +441,9 @@ typedef struct tagMSIPACKAGE
     struct list sourcelist_info;
     struct list sourcelist_media;
 
+    unsigned char scheduled_action_running : 1;
+    unsigned char commit_action_running : 1;
+    unsigned char rollback_action_running : 1;
     unsigned char need_reboot_at_end : 1;
     unsigned char need_reboot_now : 1;
     unsigned char need_rollback : 1;
@@ -973,9 +975,9 @@ extern WCHAR *gszLogFile DECLSPEC_HIDDEN;
 extern HINSTANCE msi_hInstance DECLSPEC_HIDDEN;
 
 /* action related functions */
-extern UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action) DECLSPEC_HIDDEN;
+extern UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script) DECLSPEC_HIDDEN;
 extern void ACTION_FinishCustomActions( const MSIPACKAGE* package) DECLSPEC_HIDDEN;
-extern UINT ACTION_CustomAction(MSIPACKAGE *, const WCHAR *) DECLSPEC_HIDDEN;
+extern UINT ACTION_CustomAction(MSIPACKAGE *, const WCHAR *, UINT) DECLSPEC_HIDDEN;
 
 /* actions in other modules */
 extern UINT ACTION_AppSearch(MSIPACKAGE *package) DECLSPEC_HIDDEN;
