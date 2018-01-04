@@ -2683,12 +2683,12 @@ static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
     ok(ret == S_OK, "MapFont() failed, hr %#x.\n", ret);
     ret = IMLangFontLink2_MapFont(font_link2, hdc, codepages, 0, &font2);
     ok(ret == S_OK, "MapFont() failed, hr %#x.\n", ret);
-    ok(font1 != NULL && font2 != NULL, "expected !NULL/!NULL, got %p/%p", font1, font2);
-    ok(font1 == font2, "expected equal, got not equal");
+    ok(font1 != NULL && font2 != NULL, "expected !NULL/!NULL, got %p/%p\n", font1, font2);
+    ok(font1 == font2, "expected equal, got not equal\n");
 
     IMLangFontLink_GetFontCodePages(font_link, hdc, font1, &font_codepages);
     ok((codepages & (~font_codepages)) != 0 && (codepages & font_codepages) != 0,
-       "code pages of font is incorrect");
+       "code pages of font is incorrect\n");
 
     IMLangFontLink_ResetFontMapping(font_link);
     IMLangFontLink2_ResetFontMapping(font_link2);
