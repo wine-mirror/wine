@@ -1876,7 +1876,7 @@ static int WINAPIV _vsnwprintf_wrapper(wchar_t *str, size_t len, const wchar_t *
     return ret;
 }
 
-void test__vsnwprintf(void)
+static void test__vsnwprintf(void)
 {
     int ret;
     WCHAR str[2] = {0};
