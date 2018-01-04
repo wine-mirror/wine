@@ -277,7 +277,7 @@ BOOL WINAPI WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
 }
 
 /************************************************************
- *                WTSRegisterSessionNotification (WTSAPI32.@)
+ *                WTSRegisterSessionNotificationEx (WTSAPI32.@)
  */
 BOOL WINAPI WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
 {
