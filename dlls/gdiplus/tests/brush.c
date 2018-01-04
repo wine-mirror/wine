@@ -52,13 +52,13 @@ static void test_createHatchBrush(void)
 
     status = GdipCreateHatchBrush(HatchStyleMin, 1, 2, &brush);
     expect(Ok, status);
-    ok(brush != NULL, "Expected the brush to be initialized.");
+    ok(brush != NULL, "Expected the brush to be initialized.\n");
 
     GdipDeleteBrush((GpBrush *)brush);
 
     status = GdipCreateHatchBrush(HatchStyleMax, 1, 2, &brush);
     expect(Ok, status);
-    ok(brush != NULL, "Expected the brush to be initialized.");
+    ok(brush != NULL, "Expected the brush to be initialized.\n");
 
     GdipDeleteBrush((GpBrush *)brush);
 
