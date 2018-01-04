@@ -179,6 +179,7 @@ static void test_NtAtom(void)
 
         testThread = CreateThread(NULL, 0, RtlAtomTestThread, &AtomTable, 0, NULL);
         WaitForSingleObject(testThread, INFINITE);
+        CloseHandle(testThread);
 
         Len = 64;
         res = pRtlQueryAtomInAtomTable(AtomTable, Atom2, &RefCount, &PinCount, Name, &Len);
