@@ -188,8 +188,10 @@ void msvcrt_set_errno(int err)
   }
 }
 
+#if _MSVCR_VER >= 80
+
 /*********************************************************************
- * __sys_nerr (MSVCR100.@)
+ * __sys_nerr (MSVCR80.@)
  */
 int* CDECL __sys_nerr(void)
 {
@@ -197,12 +199,14 @@ int* CDECL __sys_nerr(void)
 }
 
 /*********************************************************************
- *  __sys_errlist (MSVCR100.@)
+ *  __sys_errlist (MSVCR80.@)
  */
 char** CDECL __sys_errlist(void)
 {
     return MSVCRT__sys_errlist;
 }
+
+#endif /* _MSVCR_VER >= 80 */
 
 /*********************************************************************
  *		_errno (MSVCRT.@)
@@ -478,8 +482,10 @@ void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_
     }
 }
 
+#if _MSVCR_VER >= 80
+
 /*********************************************************************
- * _invalid_parameter_noinfo (MSVCR100.@)
+ * _invalid_parameter_noinfo (MSVCR80.@)
  */
 void CDECL _invalid_parameter_noinfo(void)
 {
@@ -487,7 +493,7 @@ void CDECL _invalid_parameter_noinfo(void)
 }
 
 /*********************************************************************
- * _invalid_parameter_noinfo_noreturn (MSVCR100.@)
+ * _invalid_parameter_noinfo_noreturn (MSVCR80.@)
  */
 void CDECL _invalid_parameter_noinfo_noreturn(void)
 {
@@ -518,7 +524,10 @@ MSVCRT_invalid_parameter_handler CDECL _set_invalid_parameter_handler(
     return old;
 }
 
+#endif /* _MSVCR_VER >= 80 */
+
 #if _MSVCR_VER >= 140
+
 /*********************************************************************
  * _get_thread_local_invalid_parameter_handler (UCRTBASE.@)
  */
@@ -542,4 +551,5 @@ MSVCRT_invalid_parameter_handler CDECL _set_thread_local_invalid_parameter_handl
     data->invalid_parameter_handler = handler;
     return old;
 }
-#endif
+
+#endif /* _MSVCR_VER >= 140 */
