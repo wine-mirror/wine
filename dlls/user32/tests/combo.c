@@ -806,7 +806,7 @@ static void test_listbox_size(DWORD style)
     }
 }
 
-void test_WS_VSCROLL(void)
+static void test_WS_VSCROLL(void)
 {
     BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
     HWND hCombo, hList;
