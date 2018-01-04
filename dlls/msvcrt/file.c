@@ -786,13 +786,15 @@ MSVCRT_FILE * CDECL MSVCRT___iob_func(void)
  return &MSVCRT__iob[0];
 }
 
+#if _MSVCR_VER >= 140
 /*********************************************************************
- *		__acrt_iob_func(MSVCRT.@)
+ *		__acrt_iob_func(UCRTBASE.@)
  */
 MSVCRT_FILE * CDECL MSVCRT___acrt_iob_func(unsigned idx)
 {
  return &MSVCRT__iob[idx];
 }
+#endif
 
 /*********************************************************************
  *		_access (MSVCRT.@)
@@ -3064,8 +3066,10 @@ int CDECL MSVCRT_stat(const char* path, struct MSVCRT__stat * buf)
   return ret;
 }
 
+#if _MSVCR_VER >= 80
+
 /*********************************************************************
- *  _stat32 (MSVCR100.@)
+ *  _stat32 (MSVCR80.@)
  */
 int CDECL MSVCRT__stat32(const char *path, struct MSVCRT__stat32 *buf)
 {
@@ -3079,7 +3083,7 @@ int CDECL MSVCRT__stat32(const char *path, struct MSVCRT__stat32 *buf)
 }
 
 /*********************************************************************
- *  _stat32i64 (MSVCR100.@)
+ *  _stat32i64 (MSVCR80.@)
  */
 int CDECL MSVCRT__stat32i64(const char *path, struct MSVCRT__stat32i64 *buf)
 {
@@ -3093,7 +3097,7 @@ int CDECL MSVCRT__stat32i64(const char *path, struct MSVCRT__stat32i64 *buf)
 }
 
 /*********************************************************************
- * _stat64i32 (MSVCR100.@)
+ * _stat64i32 (MSVCR80.@)
  */
 int CDECL MSVCRT__stat64i32(const char* path, struct MSVCRT__stat64i32 *buf)
 {
@@ -3105,6 +3109,8 @@ int CDECL MSVCRT__stat64i32(const char* path, struct MSVCRT__stat64i32 *buf)
         msvcrt_stat64_to_stat64i32(&buf64, buf);
     return ret;
 }
+
+#endif /* _MSVCR_VER >= 80 */
 
 /*********************************************************************
  *		_wstat64 (MSVCRT.@)
@@ -3203,8 +3209,10 @@ int CDECL MSVCRT__wstat(const MSVCRT_wchar_t* path, struct MSVCRT__stat * buf)
   return ret;
 }
 
+#if _MSVCR_VER >= 80
+
 /*********************************************************************
- *  _wstat32 (MSVCR100.@)
+ *  _wstat32 (MSVCR80.@)
  */
 int CDECL MSVCRT__wstat32(const MSVCRT_wchar_t *path, struct MSVCRT__stat32 *buf)
 {
@@ -3218,7 +3226,7 @@ int CDECL MSVCRT__wstat32(const MSVCRT_wchar_t *path, struct MSVCRT__stat32 *buf
 }
 
 /*********************************************************************
- *  _wstat32i64 (MSVCR100.@)
+ *  _wstat32i64 (MSVCR80.@)
  */
 int CDECL MSVCRT__wstat32i64(const MSVCRT_wchar_t *path, struct MSVCRT__stat32i64 *buf)
 {
@@ -3232,7 +3240,7 @@ int CDECL MSVCRT__wstat32i64(const MSVCRT_wchar_t *path, struct MSVCRT__stat32i6
 }
 
 /*********************************************************************
- * _wstat64i32 (MSVCR100.@)
+ * _wstat64i32 (MSVCR80.@)
  */
 int CDECL MSVCRT__wstat64i32(const MSVCRT_wchar_t *path, struct MSVCRT__stat64i32 *buf)
 {
@@ -3244,6 +3252,8 @@ int CDECL MSVCRT__wstat64i32(const MSVCRT_wchar_t *path, struct MSVCRT__stat64i3
         msvcrt_stat64_to_stat64i32(&buf64, buf);
     return ret;
 }
+
+#endif /* _MSVCR_VER >= 80 */
 
 /*********************************************************************
  *		_tell (MSVCRT.@)
@@ -4350,6 +4360,7 @@ MSVCRT_size_t CDECL MSVCRT__fread_nolock(void *ptr, MSVCRT_size_t size, MSVCRT_s
   return read / size;
 }
 
+#if _MSVCR_VER >= 80
 
 /*********************************************************************
  *		fread_s (MSVCR80.@)
@@ -4424,6 +4435,8 @@ MSVCRT_size_t CDECL MSVCRT__fread_nolock_s(void *buf, MSVCRT_size_t buf_size, MS
 
     return buf_pos/elem_size;
 }
+
+#endif /* _MSVCR_VER >= 80 */
 
 /*********************************************************************
  *		_wfreopen (MSVCRT.@)
@@ -4610,13 +4623,15 @@ LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
   return MSVCRT__ftelli64(file);
 }
 
+#if _MSVCR_VER >= 80
 /*********************************************************************
- *		_ftell_nolock (MSVCRT.@)
+ *		_ftell_nolock (MSVCR80.@)
  */
 LONG CDECL MSVCRT__ftell_nolock(MSVCRT_FILE* file)
 {
   return MSVCRT__ftelli64_nolock(file);
 }
+#endif
 
 /*********************************************************************
  *		fgetpos (MSVCRT.@)
@@ -5213,6 +5228,8 @@ int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __
     return MSVCRT__vfwprintf_s_l(file, format, NULL, valist);
 }
 
+#if _MSVCR_VER >= 140
+
 /*********************************************************************
  *              __stdio_common_vfprintf (UCRTBASE.@)
  */
@@ -5262,6 +5279,8 @@ int CDECL MSVCRT__stdio_common_vfwprintf_s(unsigned __int64 options, MSVCRT_FILE
     return vfwprintf_helper((options & UCRTBASE_PRINTF_MASK) | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
             file, format, locale, valist);
 }
+
+#endif /* _MSVCR_VER >= 140 */
 
 /*********************************************************************
  *    _vfprintf_l (MSVCRT.@)
@@ -5592,6 +5611,7 @@ int CDECL MSVCRT__setmaxstdio(int newmax)
     return MSVCRT_max_streams;
 }
 
+#if _MSVCR_VER >= 140
 /*********************************************************************
  *		_get_stream_buffer_pointers (UCRTBASE.@)
  */
@@ -5606,3 +5626,4 @@ int CDECL MSVCRT__get_stream_buffer_pointers(MSVCRT_FILE *file, char*** base,
         *count = &file->_cnt;
     return 0;
 }
+#endif
