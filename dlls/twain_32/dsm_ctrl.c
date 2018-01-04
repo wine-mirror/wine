@@ -351,7 +351,7 @@ typedef struct {
     pTW_IDENTITY result;
 } userselect_data;
 
-INT_PTR CALLBACK userselect_dlgproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static INT_PTR CALLBACK userselect_dlgproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
