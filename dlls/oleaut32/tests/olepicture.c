@@ -722,7 +722,8 @@ static void test_Render(void)
     HDC hdc = create_render_dc();
 
     /* test IPicture::Render return code on uninitialized picture */
-    OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (VOID**)&pic);
+    hres = OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void **)&pic);
+    ok(hres == S_OK, "Failed to create a picture, hr %#x.\n", hres);
     hres = IPicture_get_Type(pic, &type);
     ok(hres == S_OK, "IPicture_get_Type does not return S_OK, but 0x%08x\n", hres);
     ok(type == PICTYPE_UNINITIALIZED, "Expected type = PICTYPE_UNINITIALIZED, got = %d\n", type);
@@ -755,7 +756,8 @@ static void test_Render(void)
         return;
     }
 
-    OleCreatePictureIndirect(&desc, &IID_IPicture, TRUE, (VOID**)&pic);
+    hres = OleCreatePictureIndirect(&desc, &IID_IPicture, TRUE, (void **)&pic);
+    ok(hres == S_OK, "Failed to create a picture, hr %#x.\n", hres);
     /* zero dimensions, PICTYPE_ICON */
     hres = picture_render(pic, hdc, 0, 0, 0, 0, 0, 0, 0, 0, NULL);
     ole_expect(hres, CTL_E_INVALIDPROPERTYVALUE);
@@ -809,7 +811,8 @@ static void test_get_Attributes(void)
     short type;
     DWORD attr;
 
-    OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (VOID**)&pic);
+    hres = OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void **)&pic);
+    ok(hres == S_OK, "Failed to create a picture, hr %#x.\n", hres);
     hres = IPicture_get_Type(pic, &type);
     ok(hres == S_OK, "IPicture_get_Type does not return S_OK, but 0x%08x\n", hres);
     ok(type == PICTYPE_UNINITIALIZED, "Expected type = PICTYPE_UNINITIALIZED, got = %d\n", type);
@@ -830,8 +833,8 @@ static void test_get_Handle(void)
     IPicture *pic;
     HRESULT hres;
 
-    OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (VOID**)&pic);
-
+    hres = OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void **)&pic);
+    ok(hres == S_OK, "Failed to create a picture, hr %#x.\n", hres);
     hres = IPicture_get_Handle(pic, NULL);
     ole_expect(hres, E_POINTER);
 
@@ -843,7 +846,8 @@ static void test_get_Type(void)
     IPicture *pic;
     HRESULT hres;
 
-    OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (VOID**)&pic);
+    hres = OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void **)&pic);
+    ok(hres == S_OK, "Failed to create a picture, hr %#x.\n", hres);
 
     hres = IPicture_get_Type(pic, NULL);
     ole_expect(hres, E_POINTER);
