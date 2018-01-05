@@ -5459,7 +5459,10 @@ static void test_http_connection(void)
     r = WaitForSingleObject(si.hEvent, 10000);
     ok (r == WAIT_OBJECT_0, "failed to start wininet test server\n");
     if (r != WAIT_OBJECT_0)
+    {
+        CloseHandle(hThread);
         return;
+    }
 
     test_basic_request(si.port, "GET", "/test1");
     test_proxy_indirect(si.port);
