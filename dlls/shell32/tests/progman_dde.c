@@ -452,6 +452,7 @@ static void test_request_groups(DWORD instance, HCONV hconv)
                "directory '%s' missing from group list\n", finddata.cFileName);
         }
     } while (FindNextFileA(hfind, &finddata));
+    FindClose(hfind);
 }
 
 START_TEST(progman_dde)
