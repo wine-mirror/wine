@@ -13585,6 +13585,146 @@ done:
     DestroyWindow(window);
 }
 
+static void test_depth_readback(void)
+{
+    DWORD depth, expected_depth, max_diff;
+    IDirectDrawSurface7 *rt, *ds;
+    DDSURFACEDESC2 surface_desc;
+    IDirect3DDevice7 *device;
+    unsigned int i, x, y;
+    IDirectDraw7 *ddraw;
+    IDirect3D7 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    RECT r;
+
+    static struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0xff00ff00},
+        {{-1.0f,  1.0f, 0.0f}, 0xff00ff00},
+        {{ 1.0f, -1.0f, 1.0f}, 0xff00ff00},
+        {{ 1.0f,  1.0f, 0.9f}, 0xff00ff00},
+    };
+
+    static const struct
+    {
+        unsigned int z_depth, s_depth, z_mask, s_mask;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {16, 0, 0x0000ffff, 0x00000000},
+        {24, 0, 0x00ffffff, 0x00000000},
+        {32, 0, 0x00ffffff, 0x00000000},
+        {32, 8, 0x00ffffff, 0xff000000, TRUE},
+        {32, 0, 0xffffffff, 0x00000000},
+    };
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D7 interface, hr %#x.\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
+    ds = get_depth_stencil(device);
+    hr = IDirectDrawSurface7_DeleteAttachedSurface(rt, 0, ds);
+    ok(SUCCEEDED(hr), "Failed to detach depth buffer, hr %#x.\n", hr);
+    IDirectDrawSurface7_Release(ds);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER | DDSCAPS_VIDEOMEMORY;
+        U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+        U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+        if (tests[i].s_depth)
+            U4(surface_desc).ddpfPixelFormat.dwFlags |= DDPF_STENCILBUFFER;
+        U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth = tests[i].z_depth;
+        U2(U4(surface_desc).ddpfPixelFormat).dwStencilBitDepth = tests[i].s_depth;
+        U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask = tests[i].z_mask;
+        U4(U4(surface_desc).ddpfPixelFormat).dwStencilBitMask = tests[i].s_mask;
+        surface_desc.dwWidth = 640;
+        surface_desc.dwHeight = 480;
+        hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &ds, NULL);
+        if (FAILED(hr))
+        {
+            skip("Format %u not supported, skipping test.\n", i);
+            continue;
+        }
+
+        hr = IDirectDrawSurface_AddAttachedSurface(rt, ds);
+        ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderTarget(device, rt, 0);
+        ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad, 4, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        for (y = 60; y < 480; y += 120)
+        {
+            for (x = 80; x < 640; x += 160)
+            {
+                SetRect(&r, x, y, x + 1, y + 1);
+                memset(&surface_desc, 0, sizeof(surface_desc));
+                surface_desc.dwSize = sizeof(surface_desc);
+                hr = IDirectDrawSurface7_Lock(ds, &r, &surface_desc, DDLOCK_READONLY, NULL);
+                ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+
+                depth = *((DWORD *)surface_desc.lpSurface) & tests[i].z_mask;
+                expected_depth = (x * (0.9 / 640.0) + y * (0.1 / 480.0)) * tests[i].z_mask;
+                max_diff = ((0.5f * 0.9f) / 640.0f) * tests[i].z_mask;
+                todo_wine_if(tests[i].todo)
+                    ok(abs(expected_depth - depth) <= max_diff,
+                            "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
+                            i, depth, expected_depth - depth, expected_depth, max_diff, x, y);
+
+                hr = IDirectDrawSurface7_Unlock(ds, &r);
+                ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+            }
+        }
+
+        hr = IDirectDrawSurface7_DeleteAttachedSurface(rt, 0, ds);
+        ok(SUCCEEDED(hr), "Failed to detach depth buffer, hr %#x.\n", hr);
+        IDirectDrawSurface7_Release(ds);
+    }
+
+    IDirectDrawSurface7_Release(rt);
+    IDirectDraw7_Release(ddraw);
+    IDirect3D7_Release(d3d);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -13714,4 +13854,5 @@ START_TEST(ddraw7)
     test_compute_sphere_visibility();
     test_clip_planes_limits();
     test_map_synchronisation();
+    test_depth_readback();
 }

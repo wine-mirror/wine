@@ -12155,6 +12155,137 @@ done:
     DestroyWindow(window);
 }
 
+static void test_depth_readback(void)
+{
+    DWORD depth, expected_depth, max_diff;
+    IDirect3DMaterial2 *blue_background;
+    IDirectDrawSurface *rt, *ds;
+    IDirect3DViewport2 *viewport;
+    DDSURFACEDESC surface_desc;
+    IDirect3DDevice2 *device;
+    unsigned int i, x, y;
+    IDirectDraw2 *ddraw;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *ptr;
+
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    static D3DLVERTEX quad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.1f}, 0, {0xff00ff00}},
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0xff00ff00}},
+        {{ 1.0f}, {-1.0f}, {1.0f}, 0, {0xff00ff00}},
+        {{ 1.0f}, { 1.0f}, {0.9f}, 0, {0xff00ff00}},
+    };
+
+    static const struct
+    {
+        unsigned int z_depth, z_mask;
+    }
+    tests[] =
+    {
+        {16, 0x0000ffff},
+        {24, 0x00ffffff},
+        {32, 0xffffffff},
+    };
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    blue_background = create_diffuse_material(device, 0.0f, 0.0f, 1.0f, 1.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, blue_background);
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
+    ds = get_depth_stencil(device);
+    hr = IDirectDrawSurface_DeleteAttachedSurface(rt, 0, ds);
+    ok(SUCCEEDED(hr), "Failed to detach depth buffer, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(ds);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER | DDSCAPS_VIDEOMEMORY;
+        U2(surface_desc).dwZBufferBitDepth = tests[i].z_depth;
+        surface_desc.dwWidth = 640;
+        surface_desc.dwHeight = 480;
+        hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &ds, NULL);
+        if (FAILED(hr))
+        {
+            skip("Format %u not supported, skipping test.\n", i);
+            continue;
+        }
+
+        hr = IDirectDrawSurface_AddAttachedSurface(rt, ds);
+        ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_SetRenderTarget(device, rt, 0);
+        ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+        hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, 4, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        hr = IDirectDrawSurface_Lock(ds, NULL, &surface_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+
+        for (y = 60; y < 480; y += 120)
+        {
+            for (x = 80; x < 640; x += 160)
+            {
+                ptr = (BYTE *)surface_desc.lpSurface
+                        + y * U1(surface_desc).lPitch
+                        + x * (tests[i].z_depth == 16 ? 2 : 4);
+                depth = *((DWORD *)ptr) & tests[i].z_mask;
+                expected_depth = (x * (0.9 / 640.0) + y * (0.1 / 480.0)) * tests[i].z_mask;
+                max_diff = ((0.5f * 0.9f) / 640.0f) * tests[i].z_mask;
+                ok(abs(expected_depth - depth) <= max_diff,
+                        "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
+                        i, depth, expected_depth - depth, expected_depth, max_diff, x, y);
+            }
+        }
+
+        hr = IDirectDrawSurface_Unlock(ds, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+        hr = IDirectDrawSurface_DeleteAttachedSurface(rt, 0, ds);
+        ok(SUCCEEDED(hr), "Failed to detach depth buffer, hr %#x.\n", hr);
+        IDirectDrawSurface_Release(ds);
+    }
+
+    destroy_viewport(device, viewport);
+    destroy_material(blue_background);
+    IDirectDrawSurface_Release(rt);
+    refcount = IDirect3DDevice2_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirectDraw2_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -12261,4 +12392,5 @@ START_TEST(ddraw2)
     test_display_mode_surface_pixel_format();
     test_surface_desc_size();
     test_ck_operation();
+    test_depth_readback();
 }
