@@ -6625,6 +6625,14 @@ static const struct message SetCurSelComboSeq2[] =
     { 0 }
 };
 
+static const struct message SetCurSelComboSeq_edit[] =
+{
+    { CB_SETCURSEL, sent|wparam|lparam, 0, 0 },
+    { WM_SETTEXT, sent|wparam, 0 },
+    { EM_SETSEL, sent|wparam|lparam, 0, INT_MAX },
+    { 0 }
+};
+
 static const struct message WmKeyDownComboSeq[] =
 {
     { WM_KEYDOWN, sent|wparam|lparam, VK_DOWN, 0 },
@@ -6925,6 +6933,14 @@ static void test_combobox_messages(void)
     SetFocus(button);
     log_all_parent_messages--;
     ok_sequence(SetFocusButtonSeq2, "SetFocus on a Button (2)", TRUE);
+
+    SetFocus(combo);
+    SendMessageA(combo, WM_SETREDRAW, FALSE, 0);
+    flush_sequence();
+    log_all_parent_messages++;
+    SendMessageA(combo, CB_SETCURSEL, 0, 0);
+    log_all_parent_messages--;
+    ok_sequence(SetCurSelComboSeq_edit, "CB_SETCURSEL on a ComboBox with edit control", FALSE);
 
     DestroyWindow(button);
     DestroyWindow(combo);

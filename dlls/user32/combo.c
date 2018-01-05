@@ -726,7 +726,7 @@ static void CBPaintText(
         static const WCHAR empty_stringW[] = { 0 };
 	if( CB_HASSTRINGS(lphc) ) SetWindowTextW( lphc->hWndEdit, pText ? pText : empty_stringW );
 	if( lphc->wState & CBF_FOCUSED )
-           SendMessageW(lphc->hWndEdit, EM_SETSEL, 0, -1);
+           SendMessageW(lphc->hWndEdit, EM_SETSEL, 0, MAXLONG);
    }
    else if(!(lphc->wState & CBF_NOREDRAW) && IsWindowVisible( lphc->self ))
    {
