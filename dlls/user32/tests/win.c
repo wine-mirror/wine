@@ -9400,6 +9400,7 @@ static void test_smresult(void)
     CloseHandle(data.thread_got_wm_app);
     CloseHandle(data.main_in_wm_app_1);
     CloseHandle(data.thread_replied);
+    CloseHandle(hThread);
 }
 
 static void test_GetMessagePos(void)
