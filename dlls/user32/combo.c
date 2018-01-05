@@ -703,8 +703,6 @@ static void CBPaintText(
    INT	id, size = 0;
    LPWSTR pText = NULL;
 
-   if( lphc->wState & CBF_NOREDRAW ) return;
-
    TRACE("\n");
 
    /* follow Windows combobox that sends a bunch of text
@@ -733,8 +731,9 @@ static void CBPaintText(
 	if( lphc->wState & CBF_FOCUSED )
            SendMessageW(lphc->hWndEdit, EM_SETSEL, 0, -1);
    }
-   else if( IsWindowVisible( lphc->self )) /* paint text field ourselves */
+   else if(!(lphc->wState & CBF_NOREDRAW) && IsWindowVisible( lphc->self ))
    {
+     /* paint text field ourselves */
      HDC hdc = hdc_paint ? hdc_paint : GetDC(lphc->self);
      UINT itemState = ODS_COMBOBOXEDIT;
      HFONT hPrevFont = (lphc->hFont) ? SelectObject(hdc, lphc->hFont) : 0;
