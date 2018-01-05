@@ -1,12 +1,12 @@
-The Wine development release 3.0-rc4 is now available.
+The Wine development release 3.0-rc5 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/3.0/wine-3.0-rc4.tar.xz
-  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0-rc4.tar.xz
+  https://dl.winehq.org/wine/source/3.0/wine-3.0-rc5.tar.xz
+  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0-rc5.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,68 +22,148 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 3.0-rc4 (total 12):
+Bugs fixed in 3.0-rc5 (total 9):
 
-  13355  Richedit very slowly open big text files
-  16505  BBC iPlayer Desktop: .desktop file confuses comments with command line
-  26851  Zoo Tycoon 2: Marine Mania demo installer fails
-  33722  Stereo IMA ADPCM encoding in WINE produces loud static instead of sound
-  34255  WinPolis 3.x: "Buy CDs" editbox does not automatically select all
-  37336  U-blox U-Center 8.11 crashes when importing or exporting config file
-  41070  "Call of Duty 4" does not start: heap issues
-  41209  The Magic School Bus Explores the Solar System: Error message asking for the game to be reinstalled
-  43971  Wine 2.20 Bcrypt compilation fails under older linux systems while Wine 2.0.3 compiles fine
-  44142  steamwebhelper.exe crashes on wine-stagining 2.21 because NtQueryInformationFile fails
-  44161  Possible incorrect string message in "dlls/kernel32/tests/volume.c" line 263
-  44218  Black displaying of all Wine stuffs with FreeBSD
+  18557  Slingplayer 2.0 Setup Assistant fails and hangs app
+  19526  regedit does not give gui feedback on import of keys
+  43068  Armed and Dangerous: severe performance degradation
+  43897  CHM viewer navigation items are not longer shown
+  44036  Multiple installers fail (affects MS Office 2010/2013, Notation Composer 3)
+  44183  regedit/tests fail when run with limited user account
+  44215  Eclipse (Europa) crashes on start
+  44234  Alice: Madness Returns crashes upon launch
+  44241  Memory optimiser tool in ProtectionID crashes wineserver
 
 ----------------------------------------------------------------
 
-Changes since 3.0-rc3:
+Changes since 3.0-rc4:
 
-Alex Henrie (4):
-      msvcrt: Don't include MSVC 10.0+ math functions in SOs for older DLLs.
-      ddraw/tests: Recognise E_NOTIMPL returned from UpdateOverlay() on VMware as broken.
-      user32/tests: Fix OemKeyScan failures with input method editors.
-      user32/tests: Recognize undefined characters in OemKeyScan tests.
+Alex Henrie (21):
+      po: Fix Catalan spelling and grammar (Softcatalà quality check).
+      psapi/tests: Increase GetPerformanceInfo error margins for Windows 8.
+      msvcrt: Don't include MSVC 8.0+ heap functions in SOs for older DLLs.
+      msvcrt: Don't include MSVC 8.0+ string functions in SOs for older DLLs.
+      ddraw/tests: Mark GetDC() failures on VMware as broken.
+      msvcrt: Fix _wcstod_l specfile entries.
+      msvcrt: Don't include MSVC 14.0 console functions in SOs for older DLLs.
+      msvcrt: Don't include MSVC 8.0+ environment functions in SOs for older DLLs.
+      vbscript/tests: Fix first-day-of-week test on mixed locales.
+      d3dx9/tests: Use true spherical light values and relax expectations.
+      ws2_32/tests: Drop socket test workarounds for Windows <= 2000.
+      ws2_32/tests: Initialize bytesReturned to 123456 before a failing test.
+      winex11: Escape non-UTF-8 characters in string literals.
+      gameux/tests: Add a trailing '\n' to an ok() call.
+      mshtml/tests: Add a trailing '\n' to ok() calls.
+      msvcrt: Don't include MSVC 8.0+ C++ functions in SOs for older DLLs.
+      msvcrt: Don't include MSVC 8.0+ error functions in SOs for older DLLs.
+      msvcrt: Don't include MSVC 8.0+ file functions in SOs for older DLLs.
+      msvcrt: Don't include MSVC 8.0+ locale functions in SOs for older DLLs.
+      msvcrt: Don't include MSVC 8.0+ time functions in SOs for older DLLs.
+      msvcrt: Don't include MSVC 7.1+ purecall functions in SOs for older DLLs.
 
-Alexandre Julliard (7):
-      ntdll: Round the pthread stack size to a page boundary.
-      kernel32/tests: Build the dll path in the create_test_dll helper function.
-      kernel32/tests: Add tests for the ImageContainsCode flag.
-      kernel32/tests: Add tests for loading dlls of different 32/64 bitness.
-      kernel32/tests: Add missing todos for 64-bit.
-      ntdll: NtQuerySection takes SIZE_T parameters.
-      bcrypt: macOS version 10.8 is needed for encryption support.
+Alexandre Julliard (6):
+      Update copyright info for 2018.
+      ntdll: Don't set floating point registers from initial context.
+      reg/tests: Get rid of version check.
+      regedit/tests: Get rid of version check.
+      wineandroid: Add permission for accessing external storage.
+      ntdll: Fix source/destination confusion in vsscanf.
 
-Andrey Gusev (1):
-      quartz/tests: Fix resource leak.
+Alistair Leslie-Hughes (3):
+      oledb32: Coerce Variant to VT_DATE when converting data.
+      oledb32: Silence interfaces for IDataSourceLocator QI.
+      oledb32/tests: Add DataConvert DBTYPE_BSTR->DBTYPE_DBTIMESTAMP test.
 
-Gijs Vermeulen (1):
-      msvcrt: Add _get_[winmajor|winminor|osver].
+Anders Jonsson (1):
+      po: Update Swedish translation.
 
-Henri Verbeet (2):
-      ddraw/tests: Introduce an ARRAY_SIZE macro to ddraw7 as well.
-      ddraw/tests: Print driver and device information before running the tests.
+Andrew Eikum (1):
+      advapi: Fix return value for QueryServiceConfig2W.
 
-Michael Stefaniuc (2):
-      shell32/tests: Use the available ARRAY_SIZE() macro.
-      d3dx9/tests: Use the available ARRAY_SIZE() macro.
+Andrey Gusev (10):
+      winhttp/tests: Remove redundant comparison.
+      msvcr100/tests: Fix resource leak.
+      kernel32/tests: Fix resource leak.
+      user32/tests: Fix resource leak.
+      ntdll/tests: Fix resource leak.
+      webservices/tests: Fix resource leak.
+      user32/tests: Fix resource leak.
+      shell32/tests: Fix resource leak.
+      winhttp/tests: Fix resource leak.
+      wininet/tests: Fix resource leak.
 
-Nikolay Sivov (10):
-      hlink/tests: Check return value (Coverity).
-      mlang/tests: Add some return value checks (Coverity).
-      taskschd: Fix a leak on error path (Coverity).
-      msxml3/tests: Add missing return value test (Coverity).
-      shell32: Fix SHGetFolderPathAndSubDir() trace message.
-      scrrun/tests: Add a helper to construct test file path.
-      usp10/tests: Add missing return value tests (Coverity).
-      comctl32/tests: Enable tests for version 6 imagelist serialization format.
-      comctl32/tests: Test some return values (Coverity).
-      user32/tests: Add some tests for A/W auto conversion in case of mismatching window vs dialog procedure types.
+André Hentschel (10):
+      wsdapi: Fix WSDXMLGetValueFromAny spec file entry.
+      shell32/tests: Don't test functions directly when reporting DdeGetLastError().
+      shell32/tests: Don't test functions directly when reporting GetLastError().
+      kernel32/tests: Don't test functions directly when reporting GetLastError().
+      inetcomm/tests: Don't test function directly when reporting GetLastError().
+      msvcrt/tests: Don't test function directly when reporting GetLastError().
+      wsdapi/tests: Don't test function directly when reporting WSAGetLastError().
+      advapi32/tests: Don't cast return value from HeapAlloc.
+      shell32: Don't cast return value from DPA_GetPtr.
+      glu32: Don't cast return value from HeapAlloc.
 
-Piotr Caban (1):
-      msvcrt: Remove unused variables.
+Fernando Martins (1):
+      po: Portuguese translation update.
+
+François Gouget (12):
+      user32/tests: Make test_WS_VSCROLL() static.
+      comctl32/tests: Make run_test_() static.
+      comctl32/tests: Make test_combo_WS_VSCROLL() static.
+      mlang/tests: Add a trailing '\n' to ok() calls.
+      glu32: A couple of spelling fixes in comments.
+      gdiplus/tests: Add a trailing '\n' to ok() calls.
+      twain_32: Make userselect_dlgproc() static.
+      sapi: Make some impl_from_Xxx() functions static.
+      ole32: Rename entry_updatable() to its more common spelling.
+      mshtml/tests: Fix typos in a few comments.
+      mshtml: Make IEventTarget_{add,remove}EventListener_hook() static.
+      msvcr90/tests: Make test__vsnwprintf() static.
+
+Hans Leidekker (1):
+      Revert "msi: Store the current script in the package."
+
+Henri Verbeet (7):
+      wined3d: Ignore WINED3D_MAP_DISCARD when used together with WINED3D_MAP_NOOVERWRITE.
+      ddraw: Only respect DDLOCK_NOOVERWRITE and DDLOCK_DISCARDCONTENTS on version 7 vertex buffers.
+      ddraw/tests: Introduce a test for vertex buffer map synchronisation.
+      d3d8/tests: Introduce a test for vertex buffer map synchronisation.
+      d3d9/tests: Introduce a test for vertex buffer map synchronisation.
+      wined3d: Add a download function for WINED3DFMT_X8D24_UNORM.
+      ddraw/tests: Add a depth read-back test.
+
+Jacek Caban (2):
+      server: Pass proper async object to queue_irp in device_file_flush.
+      mshtml: Don't dispatch load event if document is already detached from its window.
+
+Louis Lenders (1):
+      wtsapi32: Fix copy/paste error in comment.
+
+Michael Stefaniuc (1):
+      d3d8/tests: Use the available ARRAY_SIZE() macro.
+
+Nikolay Sivov (6):
+      user32/tests: Add missing return value test (Coverity).
+      shell32: Make some strings static constants.
+      oleaut32/tests: Test more return values.
+      mshtml/tests: Test document stream creation failure (Coverity).
+      mshtml/tests: Remove null check after dereference (Coverity).
+      ddraw/tests: Add another invalid arguments test for surface QI.
+
+Piotr Caban (3):
+      user32: Let ComboBox edit control handle the redraw even if CBF_NOREDRAW is set.
+      user32: Redraw combo text field even if it's empty.
+      user32: Add more CB_SETCURSEL tests on ComboBox.
+
+Stefan Leichter (1):
+      include: Add RtlCompareMemory declaration to winnt.h.
+
+Zebediah Figura (4):
+      mpr/tests: Fix drive search loop.
+      kernel32/tests: Update product type test.
+      advapi32/tests: Skip tests modifying HKLM if limited.
+      msvcrt: _Gettnames() should respect user overrides.
 
 --
 Alexandre Julliard
