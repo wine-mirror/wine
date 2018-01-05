@@ -4240,8 +4240,12 @@ struct wined3d_format
     float depth_bias_scale;
     struct wined3d_rational height_scale;
     struct color_fixup_desc color_fixup;
-    void (*convert)(const BYTE *src, BYTE *dst, UINT src_row_pitch, UINT src_slice_pitch,
-            UINT dst_row_pitch, UINT dst_slice_pitch, UINT width, UINT height, UINT depth);
+    void (*upload)(const BYTE *src, BYTE *dst, unsigned int src_row_pitch, unsigned int src_slice_pitch,
+            unsigned int dst_row_pitch, unsigned dst_slice_pitch,
+            unsigned int width, unsigned int height, unsigned int depth);
+    void (*download)(const BYTE *src, BYTE *dst, unsigned int src_row_pitch, unsigned int src_slice_pitch,
+            unsigned int dst_row_pitch, unsigned dst_slice_pitch,
+            unsigned int width, unsigned int height, unsigned int depth);
 
     enum wined3d_format_id typeless_id;
     GLenum gl_view_class;

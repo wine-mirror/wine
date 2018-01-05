@@ -546,7 +546,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
     void *mem;
 
     /* Only support read back of converted P8 surfaces. */
-    if (texture->flags & WINED3D_TEXTURE_CONVERTED && format->id != WINED3DFMT_P8_UINT)
+    if (texture->flags & WINED3D_TEXTURE_CONVERTED && format->id != WINED3DFMT_P8_UINT && !format->download)
     {
         ERR("Trying to read back converted surface %p with format %s.\n", surface, debug_d3dformat(format->id));
         return;
@@ -556,6 +556,12 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
     if (surface->texture_target == GL_TEXTURE_2D_ARRAY)
     {
+        if (format->download)
+        {
+            FIXME("Reading back converted array texture %p is not supported.\n", texture);
+            return;
+        }
+
         /* NP2 emulation is not allowed on array textures. */
         if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
             ERR("Array texture %p uses NP2 emulation.\n", texture);
@@ -573,6 +579,12 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
     if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
     {
+        if (format->download)
+        {
+            FIXME("Reading back converted texture %p with NP2 emulation is not supported.\n", texture);
+            return;
+        }
+
         wined3d_texture_get_pitch(texture, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
         wined3d_format_calculate_pitch(format, texture->resource.device->surface_alignment,
                 wined3d_texture_get_level_pow2_width(texture, surface->texture_level),
@@ -588,6 +600,30 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
             ERR("NP2 emulated texture uses PBO unexpectedly.\n");
         if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
             ERR("Unexpected compressed format for NP2 emulated texture.\n");
+    }
+
+    if (format->download)
+    {
+        struct wined3d_format f;
+
+        if (data.buffer_object)
+            ERR("Converted texture %p uses PBO unexpectedly.\n", texture);
+
+        WARN_(d3d_perf)("Downloading converted surface %p with format %s.\n", surface, debug_d3dformat(format->id));
+
+        f = *format;
+        f.byte_count = format->conv_byte_count;
+        wined3d_texture_get_pitch(texture, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
+        wined3d_format_calculate_pitch(&f, texture->resource.device->surface_alignment,
+                wined3d_texture_get_level_width(texture, surface->texture_level),
+                wined3d_texture_get_level_height(texture, surface->texture_level),
+                &src_row_pitch, &src_slice_pitch);
+
+        if (!(temporary_mem = HeapAlloc(GetProcessHeap(), 0, src_slice_pitch)))
+        {
+            ERR("Failed to allocate memory.\n");
+            return;
+        }
     }
 
     if (temporary_mem)
@@ -623,7 +659,13 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         checkGLcall("glGetTexImage");
     }
 
-    if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
+    if (format->download)
+    {
+        format->download(mem, data.addr, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch,
+                wined3d_texture_get_level_width(texture, surface->texture_level),
+                wined3d_texture_get_level_height(texture, surface->texture_level), 1);
+    }
+    else if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
     {
         const BYTE *src_data;
         unsigned int h, y;
@@ -1261,8 +1303,8 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
     DWORD map_binding;
 
     if (!(conv = find_converter(src_format->id, dst_format->id)) && (!device->d3d_initialized
-            || !is_identity_fixup(src_format->color_fixup) || src_format->convert
-            || !is_identity_fixup(dst_format->color_fixup) || dst_format->convert
+            || !is_identity_fixup(src_format->color_fixup) || src_format->conv_byte_count
+            || !is_identity_fixup(dst_format->color_fixup) || dst_format->conv_byte_count
             || (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)))
     {
         FIXME("Cannot find a conversion function from format %s to %s.\n",
@@ -2258,7 +2300,7 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
     /* Don't use PBOs for converted surfaces. During PBO conversion we look at
      * WINED3D_TEXTURE_CONVERTED but it isn't set (yet) in all cases it is
      * getting called. */
-    if ((format.convert || conversion) && texture->sub_resources[sub_resource_idx].buffer_object)
+    if ((format.conv_byte_count || conversion) && texture->sub_resources[sub_resource_idx].buffer_object)
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
 
@@ -2267,7 +2309,7 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
     }
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, sub_resource->locations);
-    if (format.convert)
+    if (format.conv_byte_count)
     {
         /* This code is entered for texture formats which need a fixup. */
         format.byte_count = format.conv_byte_count;
@@ -2281,7 +2323,7 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
             context_release(context);
             return FALSE;
         }
-        format.convert(src_mem, dst_mem, src_row_pitch, src_slice_pitch,
+        format.upload(src_mem, dst_mem, src_row_pitch, src_slice_pitch,
                 dst_row_pitch, dst_slice_pitch, width, height, 1);
         src_row_pitch = dst_row_pitch;
         context_unmap_bo_address(context, &data, GL_PIXEL_UNPACK_BUFFER);
@@ -3871,7 +3913,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             TRACE("Not doing upload because of scaling.\n");
         else if (convert)
             TRACE("Not doing upload because of format conversion.\n");
-        else if (dst_texture->resource.format->convert)
+        else if (dst_texture->resource.format->conv_byte_count)
             TRACE("Not doing upload because the destination format needs conversion.\n");
         else
         {

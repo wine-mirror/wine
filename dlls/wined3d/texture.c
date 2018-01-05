@@ -35,7 +35,7 @@ static BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const
     return texture->resource.pool == WINED3D_POOL_DEFAULT
             && texture->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU
             && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
-            && !texture->resource.format->convert
+            && !texture->resource.format->conv_byte_count
             && !(texture->flags & (WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_COND_NP2_EMULATED));
 }
 
@@ -1668,7 +1668,7 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 
     TRACE("texture %p, context %p, format %s.\n", texture, context, debug_d3dformat(format->id));
 
-    if (format->convert)
+    if (format->conv_byte_count)
     {
         texture->flags |= WINED3D_TEXTURE_CONVERTED;
     }
@@ -2306,7 +2306,7 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
         update_d = box->back - box->front;
     }
 
-    if (format->convert)
+    if (format->conv_byte_count)
     {
         if (data->buffer_object)
             ERR("Loading a converted texture from a PBO.\n");
@@ -2317,7 +2317,7 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
         dst_slice_pitch = dst_row_pitch * update_h;
 
         converted_mem = wined3d_calloc(update_d, dst_slice_pitch);
-        format->convert(data->addr, converted_mem, row_pitch, slice_pitch,
+        format->upload(data->addr, converted_mem, row_pitch, slice_pitch,
                 dst_row_pitch, dst_slice_pitch, update_w, update_h, update_d);
         mem = converted_mem;
     }
@@ -2354,7 +2354,7 @@ static void texture3d_download_data(struct wined3d_texture *texture, unsigned in
     const struct wined3d_format *format = texture->resource.format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    if (format->convert)
+    if (format->conv_byte_count)
     {
         FIXME("Attempting to download a converted volume, format %s.\n",
                 debug_d3dformat(format->id));
