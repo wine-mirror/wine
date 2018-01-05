@@ -2578,7 +2578,7 @@ static IHTMLWindow2 *get_iframe_window(IHTMLIFrameElement *iframe)
     ok(hres == S_OK, "get_contentWindow failed: %08x\n", hres);
     ok(window != NULL, "window == NULL\n");
 
-    if(base) IHTMLFrameBase2_Release(base);
+    IHTMLFrameBase2_Release(base);
     return window;
 }
 
