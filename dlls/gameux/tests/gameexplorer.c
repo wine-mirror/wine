@@ -454,7 +454,7 @@ static void _findGameInstanceId(int line,
             ++dwMaxSubKeyLen; /* for string terminator */
             lpName = CoTaskMemAlloc(dwMaxSubKeyLen*sizeof(WCHAR));
             if(!lpName) hr = E_OUTOFMEMORY;
-            ok_(__FILE__, line)(SUCCEEDED(hr), "cannot allocate memory for key name");
+            ok_(__FILE__, line)(SUCCEEDED(hr), "cannot allocate memory for key name\n");
         }
 
         if(SUCCEEDED(hr))
