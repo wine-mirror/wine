@@ -720,9 +720,6 @@ static void CBPaintText(
 	    pText[size] = '\0';	/* just in case */
 	} else return;
    }
-   else
-       if( !CB_OWNERDRAWN(lphc) )
-	   return;
 
    if( lphc->wState & CBF_EDIT )
    {
