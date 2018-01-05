@@ -1033,7 +1033,10 @@ START_TEST (notification)
     ret = WaitForSingleObject( si.event, 10000 );
     ok(ret == WAIT_OBJECT_0, "failed to start winhttp test server %u\n", GetLastError());
     if (ret != WAIT_OBJECT_0)
+    {
+        CloseHandle(thread);
         return;
+    }
 
     test_persistent_connection( si.port );
 

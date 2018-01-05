@@ -4475,7 +4475,10 @@ START_TEST (winhttp)
     ret = WaitForSingleObject(si.event, 10000);
     ok(ret == WAIT_OBJECT_0, "failed to start winhttp test server %u\n", GetLastError());
     if (ret != WAIT_OBJECT_0)
+    {
+        CloseHandle(thread);
         return;
+    }
 
     test_IWinHttpRequest(si.port);
     test_connection_info(si.port);
@@ -4495,4 +4498,5 @@ START_TEST (winhttp)
     test_basic_request(si.port, NULL, quitW);
 
     WaitForSingleObject(thread, 3000);
+    CloseHandle(thread);
 }
