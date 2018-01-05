@@ -132,7 +132,7 @@ static void _test_event_args(unsigned line, const IID *dispiid, const IID *broke
                         pdp->rgdispidNamedArgs[0]);
     ok_(__FILE__,line) (V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(rgvarg) = %d\n", V_VT(pdp->rgvarg));
     ok_(__FILE__,line) (pvarRes != NULL, "pvarRes == NULL\n");
-    ok_(__FILE__,line) (pei != NULL, "pei == NULL");
+    ok_(__FILE__,line) (pei != NULL, "pei == NULL\n");
     ok_(__FILE__,line) (!pspCaller, "pspCaller != NULL\n");
 
     if(dispiid)
