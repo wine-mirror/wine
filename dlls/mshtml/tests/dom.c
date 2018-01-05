@@ -10518,6 +10518,7 @@ static IHTMLDocument2 *create_doc_with_string(const char *str)
     IHTMLDocument2 *doc;
     HGLOBAL mem;
     SIZE_T len;
+    HRESULT hr;
 
     notif_doc = doc = create_document();
     if(!doc)
@@ -10527,9 +10528,11 @@ static IHTMLDocument2 *create_doc_with_string(const char *str)
     len = strlen(str);
     mem = GlobalAlloc(0, len);
     memcpy(mem, str, len);
-    CreateStreamOnHGlobal(mem, TRUE, &stream);
+    hr = CreateStreamOnHGlobal(mem, TRUE, &stream);
+    ok(hr == S_OK, "Failed to create a stream, hr %#x.\n", hr);
 
-    IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
+    hr = IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
+    ok(hr == S_OK, "Failed to get IPersistStreamInit, hr %#x.\n", hr);
 
     IPersistStreamInit_Load(init, stream);
     IPersistStreamInit_Release(init);
