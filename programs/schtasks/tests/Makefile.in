@@ -1,0 +1,6 @@
+TESTDLL   = schtasks.exe
+IMPORTS   = ole32
+
+
+C_SRCS = \
+	schtasks.c

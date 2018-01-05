@@ -19154,6 +19154,7 @@ wine_fn_config_program rundll.exe16 enable_win16 install
 wine_fn_config_program rundll32 enable_rundll32 install
 wine_fn_config_program sc enable_sc install
 wine_fn_config_program schtasks enable_schtasks install
+wine_fn_config_test programs/schtasks/tests schtasks.exe_test
 wine_fn_config_program sdbinst enable_sdbinst install
 wine_fn_config_program secedit enable_secedit install
 wine_fn_config_program servicemodelreg enable_servicemodelreg install
