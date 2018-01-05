@@ -61,33 +61,6 @@ static void ReleaseDirectDraw(void)
     }
 }
 
-static void QueryInterface(void)
-{
-    IDirectDrawSurface *dsurface;
-    DDSURFACEDESC surface;
-    void *object;
-    HRESULT ret;
-
-    /* Create a surface */
-    ZeroMemory(&surface, sizeof(surface));
-    surface.dwSize = sizeof(surface);
-    surface.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
-    surface.dwHeight = 10;
-    surface.dwWidth = 10;
-    ret = IDirectDraw_CreateSurface(lpDD, &surface, &dsurface, NULL);
-    if(ret != DD_OK)
-    {
-        ok(FALSE, "IDirectDraw::CreateSurface failed with error %x\n", ret);
-        return;
-    }
-
-    /* Call IUnknown::QueryInterface */
-    ret = IDirectDrawSurface_QueryInterface(dsurface, 0, &object);
-    ok(ret == DDERR_INVALIDPARAMS, "IDirectDrawSurface::QueryInterface returned %x\n", ret);
-
-    IDirectDrawSurface_Release(dsurface);
-}
-
 /* The following tests test which interface is returned by IDirectDrawSurfaceX::GetDDInterface.
  * It uses refcounts to test that and compares the interface addresses. Partially fits here, and
  * partially in the refcount test
@@ -2632,7 +2605,6 @@ START_TEST(dsurface)
         return;
     }
 
-    QueryInterface();
     GetDDInterface_1();
     GetDDInterface_2();
     GetDDInterface_4();

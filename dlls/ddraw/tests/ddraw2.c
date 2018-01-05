@@ -2083,6 +2083,7 @@ static void test_surface_qi(void)
         {&IID_IDirectDrawPalette,       NULL,                           E_INVALIDARG },
         {&IID_IDirectDrawClipper,       NULL,                           E_INVALIDARG },
         {&IID_IUnknown,                 &IID_IDirectDrawSurface,        S_OK         },
+        {NULL,                          NULL,                           E_INVALIDARG },
     };
 
     IDirectDrawSurface *surface;
