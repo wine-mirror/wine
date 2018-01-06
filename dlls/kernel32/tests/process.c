@@ -3192,7 +3192,7 @@ static void test_SuspendProcessState(void)
                                         0, NULL);
     ok(server_pipe_handle != INVALID_HANDLE_VALUE, "Failed to create communication pipe (%d)\n", GetLastError());
 
-    /* Setup the remote process enviornment */
+    /* Set up the remote process environment */
     ctx.ContextFlags = CONTEXT_FULL;
     ret = GetThreadContext(pi.hThread, &ctx);
     ok(ret, "Failed retrieving remote thread context (%d)\n", GetLastError());
