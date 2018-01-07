@@ -720,7 +720,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     res = InternetQueryOptionA(hor,INTERNET_OPTION_URL,buffer,&length);
     ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed with error %d\n", GetLastError());
 
-    length = sizeof(buffer)-1;
+    length = sizeof(buffer)-2;
     memset(buffer, 0x77, sizeof(buffer));
     res = HttpQueryInfoA(hor,HTTP_QUERY_RAW_HEADERS,buffer,&length,0x0);
     ok(res, "HttpQueryInfoA(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
@@ -744,7 +744,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     ok(buffer[length2+1] == 0x77, "Expected 0x77, got %02X\n", buffer[length2+1]);
     ok(length2 == length, "Value should not have changed: %d != %d\n", length2, length);
 
-    length = sizeof(wbuffer)-sizeof(WCHAR);
+    length = sizeof(wbuffer)-2*sizeof(WCHAR);
     memset(wbuffer, 0x77, sizeof(wbuffer));
     res = HttpQueryInfoW(hor, HTTP_QUERY_RAW_HEADERS, wbuffer, &length, 0x0);
     ok(res, "HttpQueryInfoW(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
