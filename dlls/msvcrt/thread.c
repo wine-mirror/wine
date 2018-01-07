@@ -164,6 +164,7 @@ MSVCRT_uintptr_t CDECL _beginthreadex(
 				     initflag, thrdaddr);
 }
 
+#if _MSVCR_VER>=80
 /*********************************************************************
  *		_getptd (MSVCR80.@)
  */
@@ -172,3 +173,4 @@ thread_data_t* CDECL _getptd(void)
     FIXME("returns undocumented/not fully filled data\n");
     return msvcrt_get_thread_data();
 }
+#endif

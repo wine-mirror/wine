@@ -185,6 +185,7 @@ int CDECL MSVCRT____mb_cur_max_func(void)
   return get_locinfo()->mb_cur_max;
 }
 
+#if _MSVCR_VER>=80
 /*********************************************************************
  *		___mb_cur_max_l_func  (MSVCR80.@)
  */
@@ -199,6 +200,7 @@ int* CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
 
   return &locinfo->mb_cur_max;
 }
+#endif
 
 /*********************************************************************
  * INTERNAL: _setmbcp_l

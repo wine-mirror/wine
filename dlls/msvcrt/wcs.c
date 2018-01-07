@@ -40,6 +40,8 @@ static BOOL n_format_enabled = TRUE;
 #include "printf.h"
 #undef PRINTF_WIDE
 
+#if _MSVCR_VER>=80
+
 /*********************************************************************
  *		_get_printf_count_output (MSVCR80.@)
  */
@@ -57,6 +59,8 @@ int CDECL MSVCRT__set_printf_count_output( int enable )
     n_format_enabled = enable != 0;
     return old ? 1 : 0;
 }
+
+#endif /* _MSVCR_VER>=80 */
 
 /*********************************************************************
  *		_wcsdup (MSVCRT.@)

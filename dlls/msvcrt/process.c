@@ -1325,6 +1325,7 @@ int CDECL _getpid(void)
     return GetCurrentProcessId();
 }
 
+#if _MSVCR_VER>=110
 /*********************************************************************
  *  __crtTerminateProcess (MSVCR110.@)
  */
@@ -1332,3 +1333,4 @@ int CDECL MSVCR110__crtTerminateProcess(UINT exit_code)
 {
     return TerminateProcess(GetCurrentProcess(), exit_code);
 }
+#endif

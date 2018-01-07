@@ -321,6 +321,7 @@ void CDECL __security_error_handler(int code, void *data)
     MSVCRT__exit(3);
 }
 
+#if _MSVCR_VER>=110
 /*********************************************************************
  *  __crtSetUnhandledExceptionFilter (MSVCR110.@)
  */
@@ -328,6 +329,7 @@ LPTOP_LEVEL_EXCEPTION_FILTER CDECL MSVCR110__crtSetUnhandledExceptionFilter(LPTO
 {
     return SetUnhandledExceptionFilter(filter);
 }
+#endif
 
 /*********************************************************************
  * _CreateFrameInfo (MSVCR80.@)
