@@ -3268,7 +3268,8 @@ static void test_states(void)
     add_file_entry( hdb, "'psi_file', 'psi', 'psi.txt', 100, '', '1033', 8192, 1" );
     add_file_entry( hdb, "'upsilon_file', 'upsilon', 'upsilon.txt', 0, '', '1033', 16384, 1" );
 
-    MsiDatabaseCommit(hdb);
+    r = MsiDatabaseCommit(hdb);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
 
     /* these properties must not be in the saved msi file */
     add_property_entry( hdb, "'ADDLOCAL', 'one,four'");
@@ -7056,7 +7057,8 @@ static void test_shortlongsource(void)
     /* CostFinalize:long */
     add_directory_entry(hdb, "'SubDir7', 'TARGETDIR', 'eleven|twelve'");
 
-    MsiDatabaseCommit(hdb);
+    r = MsiDatabaseCommit(hdb);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
 
     r = package_from_db(hdb, &hpkg);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -8553,7 +8555,8 @@ static void test_MsiEnumComponentCosts(void)
     add_install_execute_sequence_entry( hdb, "'CostFinalize', '', '1000'" );
     add_install_execute_sequence_entry( hdb, "'InstallValidate', '', '1100'" );
 
-    MsiDatabaseCommit( hdb );
+    r = MsiDatabaseCommit( hdb );
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
 
     sprintf( package, "#%u", hdb );
     r = MsiOpenPackageA( package, &hpkg );
@@ -9116,8 +9119,9 @@ static INT CALLBACK externalui_message_callback(void *context, UINT message, MSI
 {
     INT retval = context ? *((INT *)context) : 0;
     struct externalui_message msg;
-    char buffer[100];
-    DWORD length = 100;
+    char buffer[256];
+    DWORD length;
+    UINT r;
     int i;
 
     msg.message = message;
@@ -9131,8 +9135,9 @@ static INT CALLBACK externalui_message_callback(void *context, UINT message, MSI
     msg.field_count = MsiRecordGetFieldCount(hrecord);
     for (i = 0; i <= msg.field_count; i++)
     {
-        length = 100;
-        MsiRecordGetStringA(hrecord, i, buffer, &length);
+        length = sizeof(buffer);
+        r = MsiRecordGetStringA(hrecord, i, buffer, &length);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
         memcpy(msg.field[i], buffer, min(100, length+1));
     }
 
