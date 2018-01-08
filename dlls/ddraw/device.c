@@ -1170,7 +1170,7 @@ static HRESULT WINAPI d3d_device3_EnumTextureFormats(IDirect3DDevice3 *iface,
  * IDirect3DDevice2::EnumTextureformats
  *
  * EnumTextureFormats for Version 1 and 2, see
- * IDirect3DDevice7::EnumTexureFormats for a more detailed description.
+ * IDirect3DDevice7::EnumTextureFormats for a more detailed description.
  *
  * This version has a different callback and does not enumerate FourCC
  * formats
