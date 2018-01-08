@@ -2480,7 +2480,7 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret2, ret);
 
     /* test LCMAP_FULLWIDTH | LCMAP_HIRAGANA
-       (half-width katakana is converted into full-wdith hiragana) */
+       (half-width katakana is converted into full-width hiragana) */
     ret = func_ptr(LCMAP_FULLWIDTH | LCMAP_HIRAGANA,
                    halfwidth_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(ret == lstrlenW(hiragana_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
