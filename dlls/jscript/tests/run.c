@@ -2147,6 +2147,8 @@ static HRESULT parse_script_expr(const char *expr, VARIANT *res, IActiveScript *
     HRESULT hres;
 
     engine = create_script();
+    if(!engine)
+        return E_FAIL;
 
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
@@ -2191,6 +2193,8 @@ static void test_retval(void)
     HRESULT hres;
 
     engine = create_script();
+    if(!engine)
+        return;
 
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
