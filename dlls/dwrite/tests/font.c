@@ -650,7 +650,8 @@ static HRESULT WINAPI resourcecollectionloader_CreateEnumeratorFromKey(IDWriteFo
     IDWriteFontFile *font_file;
     HRESULT hr;
 
-    IDWriteFactory_CreateCustomFontFileReference(factory, collectionKey, collectionKeySize, This->loader, &font_file);
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, collectionKey, collectionKeySize, This->loader, &font_file);
+    ok(hr == S_OK, "Failed to create custom file reference, hr %#x.\n", hr);
 
     hr = create_enumerator(font_file, fontFileEnumerator);
     ok(hr == S_OK, "got 0x%08x\n", hr);
