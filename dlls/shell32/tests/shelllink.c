@@ -169,8 +169,9 @@ static void test_get_set(void)
     ok(finddata.dwFileAttributes == 0, "unexpected attributes %x\n", finddata.dwFileAttributes);
     ok(finddata.cFileName[0] == 0, "unexpected filename '%s'\n", finddata.cFileName);
 
-    CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-                     &IID_IShellLinkW, (LPVOID*)&slW);
+    r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                         &IID_IShellLinkW, (LPVOID*)&slW);
+    ok(r == S_OK, "CoCreateInstance failed (0x%08x)\n", r);
     if (!slW /* Win9x */ || !pGetLongPathNameA /* NT4 */)
         skip("SetPath with NULL parameter crashes on Win9x and some NT4\n");
     else
