@@ -6683,7 +6683,12 @@ static void test_xmlhttprequest(IHTMLWindow5 *window)
 
     hres = IHTMLWindow5_get_XMLHttpRequest(window, &var);
     ok(hres == S_OK, "get_XMLHttpRequest failed: %08x\n", hres);
-    ok(V_VT(&var) == VT_DISPATCH, "expect VT_DISPATCH, got %s\n", debugstr_variant(&var));
+    ok(V_VT(&var) == VT_DISPATCH || broken(V_VT(&var) == VT_EMPTY), "expect VT_DISPATCH, got %s\n", debugstr_variant(&var));
+
+    if (V_VT(&var) == VT_EMPTY) {
+        win_skip("Native XMLHTTP support is missing or disabled.\n");
+        return;
+    }
 
     factory = NULL;
     hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLXMLHttpRequestFactory, (void**)&factory);

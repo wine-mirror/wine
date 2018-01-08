@@ -1,10 +1,9 @@
 <html>
 <head>
+<script src="winetest.js" type="text/javascript"></script>
+</head>
+<head>
 <script>
-function ok(b,m) {
-    return external.ok(b, m);
-}
-
 function broken(expr) {
     return external.broken(expr);
 }
@@ -356,7 +355,11 @@ function test_text_node() {
 
 function test_xhr() {
     ok("XMLHttpRequest" in window, "XMLHttpRequest not found in window object\n");
-    ok(typeof(XMLHttpRequest) === "object", "typeof(XMLHttpRequest) = " + typeof(XMLHttpRequest));
+
+    if (typeof(XMLHttpRequest) != "object") {
+        win_skip("XMLHTTPRequest is not available or disabled");
+        return;
+    }
 
     var xhr = new XMLHttpRequest();
     ok(typeof(xhr) === "object", "typeof(xhr) = " + typeof(xhr));
