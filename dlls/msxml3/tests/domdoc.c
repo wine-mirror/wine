@@ -11993,7 +11993,7 @@ static void test_get_namespaces(void)
     free_bstrs();
 }
 
-static DOMNodeType put_data_types[] = {
+static const DOMNodeType put_data_types[] = {
     NODE_TEXT,
     NODE_CDATA_SECTION,
     NODE_PROCESSING_INSTRUCTION,
@@ -12006,7 +12006,7 @@ static void test_put_data(void)
     static const WCHAR test_data[] = {'t','e','s','t',' ','n','o','d','e',' ','d','a','t','a',0};
     WCHAR buff[100], *data;
     IXMLDOMDocument *doc;
-    DOMNodeType *type;
+    const DOMNodeType *type;
     IXMLDOMText *text;
     IXMLDOMNode *node;
     VARIANT v;
