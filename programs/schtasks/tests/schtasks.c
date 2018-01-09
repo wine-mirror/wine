@@ -175,12 +175,12 @@ START_TEST(schtasks)
 
     register_task("wine\\test\\winetest");
 
-    r = run_command("schtasks /change /tn wine\\test\\winetest /enable");
+    r = run_command("schtasks /CHANGE /tn wine\\test\\winetest /enable");
     ok(r == 0, "r = %u\n", r);
 
     unregister_task("wine\\test\\winetest");
 
-    r = run_command("schtasks /change /tn wine\\test\\winetest /enable");
+    r = run_command("schtasks /Change /tn wine\\test\\winetest /enable");
     ok(r == 1, "r = %u\n", r);
 
     ITaskFolder_Release(root);

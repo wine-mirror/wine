@@ -130,7 +130,7 @@ int wmain(int argc, WCHAR *argv[])
 
     if (argc < 2)
         FIXME("Print current tasks state\n");
-    else if (!strcmpW(argv[1], change_optW))
+    else if (!strcmpiW(argv[1], change_optW))
         ret = change_command(argc - 2, argv + 2);
     else
         FIXME("Unsupported command %s\n", debugstr_w(argv[1]));
