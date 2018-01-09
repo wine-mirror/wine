@@ -1666,7 +1666,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
         option = *cmdline;
         if (option) cmdline++;
-        while (*cmdline && *cmdline == ' ') cmdline++;
+        while (*cmdline == ' ') cmdline++;
         switch (option)
 	{
 	case 'i':
