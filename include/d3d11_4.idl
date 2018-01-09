@@ -53,7 +53,7 @@ interface ID3D11Device4 : ID3D11Device3
 interface ID3D11Device5 : ID3D11Device4
 {
     HRESULT OpenSharedFence(
-        [in] HANDLE fence,
+        [in] HANDLE handle,
         [in] REFIID iid,
         [out] void **fence
     );
