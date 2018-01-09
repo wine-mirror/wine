@@ -5593,6 +5593,18 @@ static void _test_security_info(unsigned line, const char *urlc, DWORD error, DW
         ok_(__FILE__,line)(chain != NULL, "chain = NULL\n");
         ok_(__FILE__,line)(flags == ex_flags, "flags = %x\n", flags);
         CertFreeCertificateChain(chain);
+
+        SetLastError(0xdeadbeef);
+        res = pInternetGetSecurityInfoByURLA(url, NULL, NULL);
+        ok_(__FILE__,line)(!res && GetLastError() == ERROR_INVALID_PARAMETER,
+                           "InternetGetSecurityInfoByURLA returned: %x(%u)\n", res, GetLastError());
+
+        res = pInternetGetSecurityInfoByURLA(url, &chain, NULL);
+        ok_(__FILE__,line)(res, "InternetGetSecurityInfoByURLA failed: %u\n", GetLastError());
+        CertFreeCertificateChain(chain);
+
+        res = pInternetGetSecurityInfoByURLA(url, NULL, &flags);
+        ok_(__FILE__,line)(res, "InternetGetSecurityInfoByURLA failed: %u\n", GetLastError());
     }else {
         ok_(__FILE__,line)(!res && GetLastError() == error,
                            "InternetGetSecurityInfoByURLA returned: %x(%u), expected %u\n", res, GetLastError(), error);

@@ -4462,6 +4462,11 @@ BOOL WINAPI InternetGetSecurityInfoByURLW(LPCWSTR lpszURL, PCCERT_CHAIN_CONTEXT 
 
     TRACE("(%s %p %p)\n", debugstr_w(lpszURL), ppCertChain, pdwSecureFlags);
 
+    if (!ppCertChain && !pdwSecureFlags) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     url.dwHostNameLength = 1;
     res = InternetCrackUrlW(lpszURL, 0, 0, &url);
     if(!res || url.nScheme != INTERNET_SCHEME_HTTPS) {
@@ -4476,15 +4481,11 @@ BOOL WINAPI InternetGetSecurityInfoByURLW(LPCWSTR lpszURL, PCCERT_CHAIN_CONTEXT 
     }
 
     if(server->cert_chain) {
-        const CERT_CHAIN_CONTEXT *chain_dup;
-
-        chain_dup = CertDuplicateCertificateChain(server->cert_chain);
-        if(chain_dup) {
-            *ppCertChain = chain_dup;
+        if(pdwSecureFlags)
             *pdwSecureFlags = server->security_flags & _SECURITY_ERROR_FLAGS_MASK;
-        }else {
+
+        if(ppCertChain && !(*ppCertChain = CertDuplicateCertificateChain(server->cert_chain)))
             res = FALSE;
-        }
     }else {
         SetLastError(ERROR_INTERNET_ITEM_NOT_FOUND);
         res = FALSE;
