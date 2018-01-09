@@ -560,7 +560,7 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
                 ++format;
               }
               /* Only numeric day form matters */
-              if (*format && *format == 'd')
+              if (*format == 'd')
               {
                 INT dcount = 1;
                 while (*++format == 'd') dcount++;
