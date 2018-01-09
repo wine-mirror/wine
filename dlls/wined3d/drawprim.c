@@ -407,7 +407,6 @@ static void draw_indirect(struct wined3d_context *context, const struct wined3d_
         return;
     }
 
-    wined3d_buffer_load(buffer, context, state);
     GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer->buffer_object));
 
     if (idx_size)
@@ -571,6 +570,9 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         else
             wined3d_rendertarget_view_prepare_location(dsv, context, location);
     }
+
+    if (parameters->indirect)
+        wined3d_buffer_load(parameters->u.indirect.buffer, context, state);
 
     if (!context_apply_draw_state(context, device, state))
     {
