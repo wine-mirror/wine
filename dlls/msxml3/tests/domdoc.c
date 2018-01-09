@@ -6460,7 +6460,8 @@ static void test_save(void)
     hr = IXMLDOMDocument_loadXML(doc, _bstr_(win1252xml), &b);
     EXPECT_HR(hr, S_OK);
 
-    CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     V_VT(&dest) = VT_UNKNOWN;
     V_UNKNOWN(&dest) = (IUnknown*)stream;
     hr = IXMLDOMDocument_save(doc, dest);
@@ -10950,7 +10951,8 @@ static void test_dispex(void)
     /* IXMLDOMNodeList */
     hr = IXMLDOMDocument_getElementsByTagName(doc, _bstr_("*"), &node_list);
     EXPECT_HR(hr, S_OK);
-    IXMLDOMNodeList_QueryInterface(node_list, &IID_IUnknown, (void**)&unk);
+    hr = IXMLDOMNodeList_QueryInterface(node_list, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     test_domobj_dispex(unk);
     IUnknown_Release(unk);
     IXMLDOMNodeList_Release(node_list);
