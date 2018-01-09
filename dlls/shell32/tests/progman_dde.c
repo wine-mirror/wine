@@ -35,8 +35,6 @@
 #include "shlobj.h"
 
 static HRESULT (WINAPI *pSHGetLocalizedName)(LPCWSTR, LPWSTR, UINT, int *);
-static BOOL (WINAPI *pSHGetSpecialFolderPathA)(HWND, LPSTR, int, BOOL);
-static BOOL (WINAPI *pReadCabinetState)(CABINETSTATE *, int);
 
 static void init_function_pointers(void)
 {
@@ -44,10 +42,6 @@ static void init_function_pointers(void)
 
     hmod = GetModuleHandleA("shell32.dll");
     pSHGetLocalizedName = (void*)GetProcAddress(hmod, "SHGetLocalizedName");
-    pSHGetSpecialFolderPathA = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathA");
-    pReadCabinetState = (void*)GetProcAddress(hmod, "ReadCabinetState");
-    if (!pReadCabinetState)
-        pReadCabinetState = (void*)GetProcAddress(hmod, (LPSTR)651);
 }
 
 static BOOL use_common(void)
@@ -88,21 +82,7 @@ static BOOL full_title(void)
     CABINETSTATE cs;
 
     memset(&cs, 0, sizeof(cs));
-    if (pReadCabinetState)
-    {
-        pReadCabinetState(&cs, sizeof(cs));
-    }
-    else
-    {
-        HKEY key;
-        DWORD size;
-
-        win_skip("ReadCabinetState is not available, reading registry directly\n");
-        RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState", &key);
-        size = sizeof(cs);
-        RegQueryValueExA(key, "Settings", NULL, NULL, (LPBYTE)&cs, &size);
-        RegCloseKey(key);
-    }
+    ReadCabinetState(&cs, sizeof(cs));
 
     return (cs.fFullPathTitle == -1);
 }
@@ -114,28 +94,8 @@ static void init_strings(void)
     char commonprograms[MAX_PATH];
     char programs[MAX_PATH];
 
-    if (pSHGetSpecialFolderPathA)
-    {
-        pSHGetSpecialFolderPathA(NULL, programs, CSIDL_PROGRAMS, FALSE);
-        pSHGetSpecialFolderPathA(NULL, commonprograms, CSIDL_COMMON_PROGRAMS, FALSE);
-    }
-    else
-    {
-        HKEY key;
-        DWORD size;
-
-        /* Older Win9x and NT4 */
-
-        RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
-        size = sizeof(programs);
-        RegQueryValueExA(key, "Programs", NULL, NULL, (LPBYTE)&programs, &size);
-        RegCloseKey(key);
-
-        RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders", &key);
-        size = sizeof(commonprograms);
-        RegQueryValueExA(key, "Common Programs", NULL, NULL, (LPBYTE)&commonprograms, &size);
-        RegCloseKey(key);
-    }
+    SHGetSpecialFolderPathA(NULL, programs, CSIDL_PROGRAMS, FALSE);
+    SHGetSpecialFolderPathA(NULL, commonprograms, CSIDL_COMMON_PROGRAMS, FALSE);
 
     /* ProgramsDir on Vista+ is always the users one (CSIDL_PROGRAMS). Before Vista
      * it depends on whether the user is an administrator (CSIDL_COMMON_PROGRAMS) or
