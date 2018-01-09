@@ -2173,7 +2173,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   }
 
   /* Ensure line continues with variable */
-  if (!*thisArg || *thisArg != '%') {
+  if (*thisArg != '%') {
       WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
