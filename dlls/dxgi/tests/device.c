@@ -1494,7 +1494,13 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
     ok(SUCCEEDED(hr), "GetContainingOutput failed, hr %#x.\n", hr);
 
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-    ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+    ok(hr == S_OK || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Could not change fullscreen state.\n");
+        IDXGIOutput_Release(expected_state.target);
+        return;
+    }
     check_swapchain_fullscreen_state(swapchain, &expected_state);
 
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
