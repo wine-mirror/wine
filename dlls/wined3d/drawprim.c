@@ -750,6 +750,9 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
         return;
     }
 
+    if (parameters->indirect)
+        wined3d_buffer_load(parameters->u.indirect.buffer, context, state);
+
     context_apply_compute_state(context, device, state);
 
     if (!state->shader[WINED3D_SHADER_TYPE_COMPUTE])
@@ -764,7 +767,6 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
         const struct wined3d_indirect_dispatch_parameters *indirect = &parameters->u.indirect;
         struct wined3d_buffer *buffer = indirect->buffer;
 
-        wined3d_buffer_load(buffer, context, state);
         GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer->buffer_object));
         GL_EXTCALL(glDispatchComputeIndirect((GLintptr)indirect->offset));
         GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0));
