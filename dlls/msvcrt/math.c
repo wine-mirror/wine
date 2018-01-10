@@ -1040,7 +1040,7 @@ double CDECL MSVCRT__chgsign(double num)
 }
 
 /*********************************************************************
- *		__control87_2 (MSVCRT.@)
+ *		__control87_2 (MSVCR80.@)
  *
  * Not exported by native msvcrt, added in msvcr80.
  */
