@@ -14556,6 +14556,81 @@ static void test_clear(void)
     DestroyWindow(window);
 }
 
+struct enum_surfaces_param
+{
+    IDirectDrawSurface4 *surfaces[8];
+    unsigned int count;
+};
+
+static HRESULT WINAPI enum_surfaces_cb(IDirectDrawSurface4 *surface, DDSURFACEDESC2 *desc, void *context)
+{
+    struct enum_surfaces_param *param = context;
+    BOOL found = FALSE;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(param->surfaces); ++i)
+    {
+        if (param->surfaces[i] == surface)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+
+    ok(found, "Unexpected surface %p enumerated.\n", surface);
+    IDirectDrawSurface4_Release(surface);
+    ++param->count;
+
+    return DDENUMRET_OK;
+}
+
+static void test_enum_surfaces(void)
+{
+    struct enum_surfaces_param param = {{0}};
+    DDSURFACEDESC2 desc;
+    IDirectDraw4 *ddraw;
+    HRESULT hr;
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_MIPMAPCOUNT;
+    desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    U2(desc).dwMipMapCount = 3;
+    desc.dwWidth = 32;
+    desc.dwHeight = 32;
+    hr = IDirectDraw4_CreateSurface(ddraw, &desc, &param.surfaces[0], NULL);
+    ok(SUCCEEDED(hr), "Failed to create a surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_GetAttachedSurface(param.surfaces[0], &desc.ddsCaps, &param.surfaces[1]);
+    ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_GetAttachedSurface(param.surfaces[1], &desc.ddsCaps, &param.surfaces[2]);
+    ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_GetAttachedSurface(param.surfaces[2], &desc.ddsCaps, &param.surfaces[3]);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    ok(!param.surfaces[3], "Got unexpected pointer %p.\n", param.surfaces[3]);
+
+    hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL,
+            &desc, &param, enum_surfaces_cb);
+    ok(SUCCEEDED(hr), "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(param.count == 3, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+
+    param.count = 0;
+    hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL,
+            NULL, &param, enum_surfaces_cb);
+    ok(SUCCEEDED(hr), "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(param.count == 3, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+
+    IDirectDrawSurface4_Release(param.surfaces[2]);
+    IDirectDrawSurface4_Release(param.surfaces[1]);
+    IDirectDrawSurface4_Release(param.surfaces[0]);
+    IDirectDraw4_Release(ddraw);
+}
+
 START_TEST(ddraw4)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -14677,4 +14752,5 @@ START_TEST(ddraw4)
     test_map_synchronisation();
     test_depth_readback();
     test_clear();
+    test_enum_surfaces();
 }

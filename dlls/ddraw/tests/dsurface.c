@@ -368,47 +368,6 @@ static HRESULT WINAPI enumCB(IDirectDrawSurface *surf, DDSURFACEDESC *desc, void
     return DDENUMRET_OK;
 }
 
-static void EnumTest(void)
-{
-    HRESULT rc;
-    DDSURFACEDESC ddsd;
-    IDirectDrawSurface *surface;
-    struct enumstruct ctx;
-
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_MIPMAPCOUNT;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
-    U2(ddsd).dwMipMapCount = 3;
-    ddsd.dwWidth = 32;
-    ddsd.dwHeight = 32;
-    rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
-    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
-
-    memset(&ctx, 0, sizeof(ctx));
-    ctx.expected[0] = surface;
-    rc = IDirectDrawSurface_GetAttachedSurface(ctx.expected[0], &ddsd.ddsCaps, &ctx.expected[1]);
-    ok(rc == DD_OK, "GetAttachedSurface returned %08x\n", rc);
-    rc = IDirectDrawSurface_GetAttachedSurface(ctx.expected[1], &ddsd.ddsCaps, &ctx.expected[2]);
-    ok(rc == DD_OK, "GetAttachedSurface returned %08x\n", rc);
-    rc = IDirectDrawSurface_GetAttachedSurface(ctx.expected[2], &ddsd.ddsCaps, &ctx.expected[3]);
-    ok(rc == DDERR_NOTFOUND, "GetAttachedSurface returned %08x\n", rc);
-    ok(!ctx.expected[3], "expected NULL pointer\n");
-    ctx.count = 0;
-
-    rc = IDirectDraw_EnumSurfaces(lpDD, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL, &ddsd, &ctx, enumCB);
-    ok(rc == DD_OK, "IDirectDraw_EnumSurfaces returned %08x\n", rc);
-    ok(ctx.count == 3, "%d surfaces enumerated, expected 3\n", ctx.count);
-
-    ctx.count = 0;
-    rc = IDirectDraw_EnumSurfaces(lpDD, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL, NULL, &ctx, enumCB);
-    ok(rc == DD_OK, "IDirectDraw_EnumSurfaces returned %08x\n", rc);
-    ok(ctx.count == 3, "%d surfaces enumerated, expected 3\n", ctx.count);
-
-    IDirectDrawSurface_Release(ctx.expected[2]);
-    IDirectDrawSurface_Release(ctx.expected[1]);
-    IDirectDrawSurface_Release(surface);
-}
-
 struct compare
 {
     DWORD width, height;
@@ -2609,7 +2568,6 @@ START_TEST(dsurface)
     GetDDInterface_2();
     GetDDInterface_4();
     GetDDInterface_7();
-    EnumTest();
     CubeMapTest();
     CompressedTest();
     SizeTest();
