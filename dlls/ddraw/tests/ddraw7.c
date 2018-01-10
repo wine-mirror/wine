@@ -127,31 +127,28 @@ static BOOL ddraw_is_warp(IDirectDraw7 *ddraw)
             && strstr(identifier.szDriver, "warp");
 }
 
-static BOOL ddraw_is_nvidia(IDirectDraw7 *ddraw)
+static BOOL ddraw_is_vendor(IDirectDraw7 *ddraw, DWORD vendor)
 {
     DDDEVICEIDENTIFIER2 identifier;
 
     return strcmp(winetest_platform, "wine")
             && ddraw_get_identifier(ddraw, &identifier)
-            && identifier.dwVendorId == 0x10de;
+            && identifier.dwVendorId == vendor;
 }
 
 static BOOL ddraw_is_intel(IDirectDraw7 *ddraw)
 {
-    DDDEVICEIDENTIFIER2 identifier;
+    return ddraw_is_vendor(ddraw, 0x8086);
+}
 
-    return strcmp(winetest_platform, "wine")
-            && ddraw_get_identifier(ddraw, &identifier)
-            && identifier.dwVendorId == 0x8086;
+static BOOL ddraw_is_nvidia(IDirectDraw7 *ddraw)
+{
+    return ddraw_is_vendor(ddraw, 0x10de);
 }
 
 static BOOL ddraw_is_vmware(IDirectDraw7 *ddraw)
 {
-    DDDEVICEIDENTIFIER2 identifier;
-
-    return strcmp(winetest_platform, "wine")
-            && ddraw_get_identifier(ddraw, &identifier)
-            && identifier.dwVendorId == 0x15ad;
+    return ddraw_is_vendor(ddraw, 0x15ad);
 }
 
 static IDirectDrawSurface7 *create_overlay(IDirectDraw7 *ddraw,
@@ -13726,6 +13723,140 @@ static void test_depth_readback(void)
     DestroyWindow(window);
 }
 
+static void test_clear(void)
+{
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+    D3DVIEWPORT7 vp, old_vp;
+    D3DRECT rect_negneg;
+    D3DRECT rect[2];
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create 3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    /* Positive x, negative y. */
+    U1(rect[0]).x1 = 0;
+    U2(rect[0]).y1 = 480;
+    U3(rect[0]).x2 = 320;
+    U4(rect[0]).y2 = 240;
+
+    /* Positive x, positive y. */
+    U1(rect[1]).x1 = 0;
+    U2(rect[1]).y1 = 0;
+    U3(rect[1]).x2 = 320;
+    U4(rect[1]).y2 = 240;
+
+    /* Clear 2 rectangles with one call. Unlike d3d8/9, the refrast does not
+     * refuse negative rectangles, but it will not clear them either. */
+    hr = IDirect3DDevice7_Clear(device, 2, rect, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    /* negative x, negative y.
+     *
+     * FIXME: WARP seems to clear the entire screen here. */
+    rect_negneg.x1 = 640;
+    rect_negneg.y1 = 240;
+    rect_negneg.x2 = 320;
+    rect_negneg.y2 = 0;
+    hr = IDirect3DDevice7_Clear(device, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 160, 360);
+    ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 3 (pos, neg) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 160, 120);
+    ok(compare_color(color, 0x00ff0000, 0), "Clear rectangle 1 (pos, pos) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 480, 360);
+    ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 4 (NULL) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 480, 120);
+    ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 4 (neg, neg) has color 0x%08x.\n", color);
+
+    /* Test how the viewport affects clears. */
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_GetViewport(device, &old_vp);
+    ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
+
+    vp.dwX = 160;
+    vp.dwY = 120;
+    vp.dwWidth = 160;
+    vp.dwHeight = 120;
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 1.0f;
+    hr = IDirect3DDevice7_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    vp.dwX = 320;
+    vp.dwY = 240;
+    vp.dwWidth = 320;
+    vp.dwHeight = 240;
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 1.0f;
+    hr = IDirect3DDevice7_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+
+    U1(rect[0]).x1 = 160;
+    U2(rect[0]).y1 = 120;
+    U3(rect[0]).x2 = 480;
+    U4(rect[0]).y2 = 360;
+    hr = IDirect3DDevice7_Clear(device, 1, &rect[0], D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetViewport(device, &old_vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 158, 118);
+    ok(compare_color(color, 0x00ffffff, 0), "(158, 118) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 162, 118);
+    ok(compare_color(color, 0x00ffffff, 0), "(162, 118) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 158, 122);
+    ok(compare_color(color, 0x00ffffff, 0), "(158, 122) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 162, 122);
+    ok(compare_color(color, 0x000000ff, 0), "(162, 122) has color 0x%08x.\n", color);
+
+    color = get_surface_color(rt, 318, 238);
+    ok(compare_color(color, 0x000000ff, 0), "(318, 238) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 322, 238);
+    ok(compare_color(color, 0x00ffffff, 0), "(322, 328) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 318, 242);
+    ok(compare_color(color, 0x00ffffff, 0), "(318, 242) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 322, 242);
+    ok(compare_color(color, 0x0000ff00, 0), "(322, 242) has color 0x%08x.\n", color);
+
+    color = get_surface_color(rt, 478, 358);
+    ok(compare_color(color, 0x0000ff00, 0), "(478, 358) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 482, 358);
+    ok(compare_color(color, 0x00ffffff, 0), "(482, 358) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 478, 362);
+    ok(compare_color(color, 0x00ffffff, 0), "(478, 362) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 482, 362);
+    ok(compare_color(color, 0x00ffffff, 0), "(482, 362) has color 0x%08x.\n", color);
+
+    /* COLORWRITEENABLE, SRGBWRITEENABLE and scissor rectangles do not exist
+     * in d3d7. */
+
+    IDirectDrawSurface7_Release(rt);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -13856,4 +13987,5 @@ START_TEST(ddraw7)
     test_clip_planes_limits();
     test_map_synchronisation();
     test_depth_readback();
+    test_clear();
 }
