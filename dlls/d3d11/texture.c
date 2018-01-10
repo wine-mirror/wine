@@ -924,6 +924,14 @@ static const struct ID3D10Texture3DVtbl d3d10_texture3d_vtbl =
     d3d10_texture3d_GetDesc,
 };
 
+struct d3d_texture3d *unsafe_impl_from_ID3D10Texture3D(ID3D10Texture3D *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_texture3d_vtbl);
+    return CONTAINING_RECORD(iface, struct d3d_texture3d, ID3D10Texture3D_iface);
+}
+
 struct d3d_texture3d *unsafe_impl_from_ID3D11Texture3D(ID3D11Texture3D *iface)
 {
     if (!iface)
