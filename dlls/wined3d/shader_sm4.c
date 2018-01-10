@@ -341,7 +341,7 @@ enum wined3d_sm4_register_type
 enum wined3d_sm4_output_primitive_type
 {
     WINED3D_SM4_OUTPUT_PT_POINTLIST     = 0x1,
-    WINED3D_SM4_OUTPUT_PT_LINELIST      = 0x3,
+    WINED3D_SM4_OUTPUT_PT_LINESTRIP     = 0x3,
     WINED3D_SM4_OUTPUT_PT_TRIANGLESTRIP = 0x5,
 };
 
@@ -470,7 +470,7 @@ static const enum wined3d_primitive_type output_primitive_type_table[] =
     /* UNKNOWN */                               WINED3D_PT_UNDEFINED,
     /* WINED3D_SM4_OUTPUT_PT_POINTLIST */       WINED3D_PT_POINTLIST,
     /* UNKNOWN */                               WINED3D_PT_UNDEFINED,
-    /* WINED3D_SM4_OUTPUT_PT_LINELIST */        WINED3D_PT_LINELIST,
+    /* WINED3D_SM4_OUTPUT_PT_LINESTRIP */       WINED3D_PT_LINESTRIP,
     /* UNKNOWN */                               WINED3D_PT_UNDEFINED,
     /* WINED3D_SM4_OUTPUT_PT_TRIANGLESTRIP */   WINED3D_PT_TRIANGLESTRIP,
 };
