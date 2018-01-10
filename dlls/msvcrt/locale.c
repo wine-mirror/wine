@@ -1641,8 +1641,9 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     return loc;
 }
 
+#if _MSVCR_VER >= 110
 /*********************************************************************
- *      _wcreate_locale (MSVCRT.@)
+ *      _wcreate_locale (MSVCR110.@)
  */
 MSVCRT__locale_t CDECL MSVCRT__wcreate_locale(int category, const MSVCRT_wchar_t *locale)
 {
@@ -1665,6 +1666,7 @@ MSVCRT__locale_t CDECL MSVCRT__wcreate_locale(int category, const MSVCRT_wchar_t
     MSVCRT_free(str);
     return loc;
 }
+#endif
 
 /*********************************************************************
  *             setlocale (MSVCRT.@)
