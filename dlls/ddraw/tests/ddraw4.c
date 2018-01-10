@@ -14358,6 +14358,8 @@ static void test_clear(void)
     IDirect3DViewport3 *viewport, *viewport2, *viewport3;
     IDirect3DDevice3 *device;
     IDirectDrawSurface4 *rt;
+    IDirectDraw4 *ddraw;
+    IDirect3D3 *d3d;
     D3DRECT rect[2];
     D3DCOLOR color;
     ULONG refcount;
@@ -14371,6 +14373,11 @@ static void test_clear(void)
         DestroyWindow(window);
         return;
     }
+
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D3 interface, hr %#x.\n", hr);
+    hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
@@ -14399,16 +14406,6 @@ static void test_clear(void)
     hr = IDirect3DViewport3_Clear2(viewport, 2, rect, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
-    /* negative x, negative y.
-     *
-     * FIXME: WARP seems to clear the entire screen here. */
-    rect_negneg.x1 = 640;
-    rect_negneg.y1 = 240;
-    rect_negneg.x2 = 320;
-    rect_negneg.y2 = 0;
-    hr = IDirect3DViewport3_Clear2(viewport, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
-    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
-
     color = get_surface_color(rt, 160, 360);
     ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 3 (pos, neg) has color 0x%08x.\n", color);
     color = get_surface_color(rt, 160, 120);
@@ -14417,6 +14414,34 @@ static void test_clear(void)
     ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 4 (NULL) has color 0x%08x.\n", color);
     color = get_surface_color(rt, 480, 120);
     ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 4 (neg, neg) has color 0x%08x.\n", color);
+
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &rect_full, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    /* negative x, negative y.
+     * Also ignored, except on WARP, which clears the entire screen. */
+    rect_negneg.x1 = 640;
+    rect_negneg.y1 = 240;
+    rect_negneg.x2 = 320;
+    rect_negneg.y2 = 0;
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 160, 360);
+    ok(compare_color(color, 0x00ffffff, 0)
+            || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
+            "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 160, 120);
+    ok(compare_color(color, 0x00ffffff, 0)
+            || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
+            "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 480, 360);
+    ok(compare_color(color, 0x00ffffff, 0)
+            || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
+            "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 480, 120);
+    ok(compare_color(color, 0x00ffffff, 0)
+            || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
+            "Got unexpected color 0x%08x.\n", color);
 
     /* Test how the viewport affects clears. */
     hr = IDirect3DViewport3_Clear2(viewport, 1, &rect_full, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
@@ -14524,6 +14549,8 @@ static void test_clear(void)
     IDirect3DViewport3_Release(viewport2);
     IDirect3DViewport3_Release(viewport);
     IDirectDrawSurface4_Release(rt);
+    IDirectDraw4_Release(ddraw);
+    IDirect3D3_Release(d3d);
     refcount = IDirect3DDevice3_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(window);

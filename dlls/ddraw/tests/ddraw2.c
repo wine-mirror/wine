@@ -12342,9 +12342,21 @@ static void test_clear(void)
     hr = IDirect3DViewport2_Clear(viewport, 2, rect, D3DCLEAR_TARGET);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
+    color = get_surface_color(rt, 160, 360);
+    ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 3 (pos, neg) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 160, 120);
+    ok(compare_color(color, 0x00ff0000, 0), "Clear rectangle 1 (pos, pos) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 480, 360);
+    ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 4 (NULL) has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 480, 120);
+    ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 4 (neg, neg) has color 0x%08x.\n", color);
+
+    viewport_set_background(device, viewport, white);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &rect_full, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
     /* negative x, negative y.
-     *
-     * FIXME: WARP seems to clear the entire screen here. */
+     * Also ignored, except on WARP, which clears the entire screen. */
     rect_negneg.x1 = 640;
     rect_negneg.y1 = 240;
     rect_negneg.x2 = 320;
@@ -12354,13 +12366,21 @@ static void test_clear(void)
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
     color = get_surface_color(rt, 160, 360);
-    ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 3 (pos, neg) has color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ffffff, 0)
+            || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
+            "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 160, 120);
-    ok(compare_color(color, 0x00ff0000, 0), "Clear rectangle 1 (pos, pos) has color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ffffff, 0)
+            || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
+            "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 480, 360);
-    ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 4 (NULL) has color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ffffff, 0)
+            || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
+            "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 480, 120);
-    ok(compare_color(color, 0x00ffffff, 0), "Clear rectangle 4 (neg, neg) has color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ffffff, 0)
+            || broken(ddraw_is_warp(ddraw) && compare_color(color, 0x0000ff00, 0)),
+            "Got unexpected color 0x%08x.\n", color);
 
     /* Test how the viewport affects clears. */
     viewport_set_background(device, viewport, white);
