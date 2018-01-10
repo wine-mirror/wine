@@ -3559,7 +3559,7 @@ static void test_CreateDirectoryA(void)
     sa.bInheritHandle = TRUE;
     InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
     pCreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &sid_size);
-    pDacl = HeapAlloc(GetProcessHeap(), 0, 100);
+    pDacl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 100);
     bret = InitializeAcl(pDacl, 100, ACL_REVISION);
     ok(bret, "Failed to initialize ACL.\n");
     bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, OBJECT_INHERIT_ACE|CONTAINER_INHERIT_ACE,
@@ -6306,6 +6306,7 @@ static void test_AddMandatoryAce(void)
     HeapFree(GetProcessHeap(), 0, sd2);
     CloseHandle(handle);
 
+    memset(buffer_acl, 0, sizeof(buffer_acl));
     ret = InitializeAcl(acl, 256, ACL_REVISION);
     ok(ret, "InitializeAcl failed with %u\n", GetLastError());
 
@@ -6792,6 +6793,7 @@ static void test_maximum_allowed(void)
 
     ret = InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
     ok(ret, "InitializeSecurityDescriptor failed with %u\n", GetLastError());
+    memset(buffer_acl, 0, sizeof(buffer_acl));
     ret = InitializeAcl(acl, 256, ACL_REVISION);
     ok(ret, "InitializeAcl failed with %u\n", GetLastError());
     ret = SetSecurityDescriptorDacl(sd, TRUE, acl, FALSE);
@@ -6921,6 +6923,7 @@ static void test_token_security_descriptor(void)
     ret = InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
     ok(ret, "InitializeSecurityDescriptor failed with error %u\n", GetLastError());
 
+    memset(buffer_acl, 0, sizeof(buffer_acl));
     ret = InitializeAcl(acl, 256, ACL_REVISION);
     ok(ret, "InitializeAcl failed with error %u\n", GetLastError());
 
