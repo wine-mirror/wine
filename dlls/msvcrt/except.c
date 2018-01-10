@@ -41,7 +41,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+#if _MSVCR_VER>=70 && _MSVCR_VER<=71
 static MSVCRT_security_error_handler security_error_handler;
+#endif
 
 static MSVCRT___sighandler_t sighandlers[MSVCRT_NSIG] = { MSVCRT_SIG_DFL };
 
@@ -294,6 +296,8 @@ BOOL CDECL MSVCRT___uncaught_exception(void)
     return FALSE;
 }
 
+#if _MSVCR_VER>=70 && _MSVCR_VER<=71
+
 /*********************************************************************
  *		_set_security_error_handler (MSVCR70.@)
  */
@@ -320,6 +324,8 @@ void CDECL __security_error_handler(int code, void *data)
 
     MSVCRT__exit(3);
 }
+
+#endif /* _MSVCR_VER>=70 && _MSVCR_VER<=71 */
 
 #if _MSVCR_VER>=110
 /*********************************************************************
@@ -470,8 +476,10 @@ struct __std_exception_data {
     MSVCRT_bool dofree;
 };
 
+#if _MSVCR_VER>=140
+
 /*********************************************************************
- *  __std_exception_copy (MSVCRT.@)
+ *  __std_exception_copy (UCRTBASE.@)
  */
 void CDECL MSVCRT___std_exception_copy(const struct __std_exception_data *src,
                                        struct __std_exception_data *dst)
@@ -488,7 +496,7 @@ void CDECL MSVCRT___std_exception_copy(const struct __std_exception_data *src,
 }
 
 /*********************************************************************
- *  __std_exception_destroy (MSVCRT.@)
+ *  __std_exception_destroy (UCRTBASE.@)
  */
 void CDECL MSVCRT___std_exception_destroy(struct __std_exception_data *data)
 {
@@ -499,3 +507,5 @@ void CDECL MSVCRT___std_exception_destroy(struct __std_exception_data *data)
     data->what   = NULL;
     data->dofree = 0;
 }
+
+#endif /* _MSVCR_VER>=140 */
