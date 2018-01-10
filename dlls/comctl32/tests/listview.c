@@ -6135,6 +6135,95 @@ todo_wine
     DestroyWindow(hwnd);
 }
 
+static void test_state_image(void)
+{
+    static const DWORD styles[] =
+    {
+        LVS_ICON,
+        LVS_REPORT,
+        LVS_SMALLICON,
+        LVS_LIST,
+    };
+    int i;
+
+    for (i = 0; i < sizeof(styles)/sizeof(styles[0]); i++)
+    {
+        static char text[] = "Item";
+        static char subtext[] = "Subitem";
+        char buff[16];
+        LVITEMA item;
+        HWND hwnd;
+        int r;
+
+        hwnd = create_listview_control(styles[i]);
+
+        insert_column(hwnd, 0);
+        insert_column(hwnd, 1);
+
+        item.mask = LVIF_TEXT;
+        item.iItem = 0;
+        item.iSubItem = 0;
+        item.pszText = text;
+        r = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+        ok(r == 0, "Failed to insert an item.\n");
+
+        item.mask = LVIF_STATE;
+        item.state = INDEXTOSTATEIMAGEMASK(1) | LVIS_SELECTED;
+        item.stateMask = LVIS_STATEIMAGEMASK | LVIS_SELECTED;
+        item.iItem = 0;
+        item.iSubItem = 0;
+        r = SendMessageA(hwnd, LVM_SETITEMA, 0, (LPARAM)&item);
+        ok(r, "Failed to set item state.\n");
+
+        item.mask = LVIF_TEXT;
+        item.iItem = 0;
+        item.iSubItem = 1;
+        item.pszText = subtext;
+        r = SendMessageA(hwnd, LVM_SETITEMA, 0, (LPARAM)&item);
+        ok(r, "Failed to set subitem text.\n");
+
+        item.mask = LVIF_STATE;
+        item.stateMask = LVIS_STATEIMAGEMASK | LVIS_SELECTED;
+        item.state = 0;
+        item.iItem = 0;
+        item.iSubItem = 0;
+        r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+        ok(r, "Failed to get item state.\n");
+        ok(item.state == (INDEXTOSTATEIMAGEMASK(1) | LVIS_SELECTED), "Unexpected item state %#x.\n", item.state);
+
+        item.mask = LVIF_STATE;
+        item.stateMask = LVIS_STATEIMAGEMASK | LVIS_SELECTED;
+        item.state = INDEXTOSTATEIMAGEMASK(2);
+        item.iItem = 0;
+        item.iSubItem = 1;
+        r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+        ok(r, "Failed to get subitem state.\n");
+    todo_wine
+        ok(item.state == 0, "Unexpected state %#x.\n", item.state);
+
+        item.mask = LVIF_STATE;
+        item.stateMask = LVIS_STATEIMAGEMASK | LVIS_SELECTED;
+        item.state = INDEXTOSTATEIMAGEMASK(2);
+        item.iItem = 0;
+        item.iSubItem = 2;
+        r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+        ok(r, "Failed to get subitem state.\n");
+    todo_wine
+        ok(item.state == 0, "Unexpected state %#x.\n", item.state);
+
+        item.mask = LVIF_TEXT;
+        item.iItem = 0;
+        item.iSubItem = 1;
+        item.pszText = buff;
+        item.cchTextMax = sizeof(buff);
+        r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+        ok(r, "Failed to get subitem text %d.\n", r);
+        ok(!strcmp(buff, subtext), "Unexpected subitem text %s.\n", buff);
+
+        DestroyWindow(hwnd);
+    }
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -6207,6 +6296,7 @@ START_TEST(listview)
     test_header_proc();
     test_oneclickactivate();
     test_callback_mask();
+    test_state_image();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -6244,6 +6334,7 @@ START_TEST(listview)
     test_LVM_SETITEMTEXT();
     test_LVM_REDRAWITEMS();
     test_oneclickactivate();
+    test_state_image();
 
     unload_v6_module(ctx_cookie, hCtx);
 
