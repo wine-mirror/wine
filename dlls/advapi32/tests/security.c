@@ -6571,6 +6571,8 @@ static void test_system_security_access(void)
     /* privilege is checked on access */
     err = GetSecurityInfo( hkey, SE_REGISTRY_KEY, SACL_SECURITY_INFORMATION, NULL, NULL, NULL, &sacl, &sd );
     todo_wine ok( err == ERROR_PRIVILEGE_NOT_HELD, "got %u\n", err );
+    if (err == ERROR_SUCCESS)
+        LocalFree( sd );
 
     priv.PrivilegeCount = 1;
     priv.Privileges[0].Luid = luid;
@@ -7085,6 +7087,7 @@ static void test_token_security_descriptor(void)
     CloseHandle(info.hThread);
 
     LocalFree(acl_child);
+    HeapFree(GetProcessHeap(), 0, sd2);
     LocalFree(psid);
 
     CloseHandle(token3);
