@@ -6225,6 +6225,25 @@ START_TEST(listview)
     test_multiselect();
     test_insertitem();
     test_header_proc();
+    test_images();
+    test_checkboxes();
+    test_items();
+    test_color();
+    test_columns();
+    test_sorting();
+    test_ownerdata();
+    test_norecompute();
+    test_nosortheader();
+    test_columnscreation();
+    test_indentation();
+    test_finditem();
+    test_hover();
+    test_destroynotify();
+    test_createdragimage();
+    test_dispinfo();
+    test_LVM_SETITEMTEXT();
+    test_LVM_REDRAWITEMS();
+    test_oneclickactivate();
 
     unload_v6_module(ctx_cookie, hCtx);
 
