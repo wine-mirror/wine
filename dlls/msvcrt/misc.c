@@ -457,7 +457,6 @@ void * CDECL _encoded_null(void)
 #endif /* _MSVCR_VER>=80 */
 
 #if _MSVCR_VER>=70
-
 /*********************************************************************
  * _CRT_RTC_INIT (MSVCR70.@)
  */
@@ -466,19 +465,18 @@ void* CDECL _CRT_RTC_INIT(void *unk1, void *unk2, int unk3, int unk4, int unk5)
     TRACE("%p %p %x %x %x\n", unk1, unk2, unk3, unk4, unk5);
     return NULL;
 }
+#endif
+
+#if _MSVCR_VER>=80
 
 /*********************************************************************
- * _CRT_RTC_INITW (MSVCR70.@)
+ * _CRT_RTC_INITW (MSVCR80.@)
  */
 void* CDECL _CRT_RTC_INITW(void *unk1, void *unk2, int unk3, int unk4, int unk5)
 {
     TRACE("%p %p %x %x %x\n", unk1, unk2, unk3, unk4, unk5);
     return NULL;
 }
-
-#endif /* _MSVCR_VER>=70 */
-
-#if _MSVCR_VER>=80
 
 /*********************************************************************
  * _byteswap_ushort (MSVCR80.@)
