@@ -235,6 +235,11 @@ function test_attach_event() {
 }
 
 function test_listener_order() {
+    if(!("documentMode" in document)) {
+        win_skip("Skipping test_listener_order on too old IE");
+        return;
+    }
+
     var div = document.createElement("div");
     document.body.appendChild(div);
 
