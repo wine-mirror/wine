@@ -12166,6 +12166,49 @@ done:
     DestroyWindow(window);
 }
 
+static void test_set_render_state(void)
+{
+    IDirect3DDevice2 *device;
+    IDirectDraw2 *ddraw;
+    ULONG refcount;
+    HWND window;
+    DWORD state;
+    HRESULT hr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create 3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZVISIBLE, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZVISIBLE, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    state = 0xdeadbeef;
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, &state);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!state, "Got unexpected render state %#x.\n", state);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_TEXTUREMAPBLEND, &state);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(state == D3DTBLEND_MODULATE, "Got unexpected render state %#x.\n", state);
+
+    refcount = IDirect3DDevice2_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDirectDraw2_Release(ddraw);
+    ok(!refcount, "DirectDraw has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_depth_readback(void)
 {
     DWORD depth, expected_depth, max_diff;
@@ -12697,6 +12740,7 @@ START_TEST(ddraw2)
     test_display_mode_surface_pixel_format();
     test_surface_desc_size();
     test_ck_operation();
+    test_set_render_state();
     test_depth_readback();
     test_clear();
     test_enum_surfaces();

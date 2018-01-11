@@ -13449,6 +13449,46 @@ static void test_texture_stages_limits(void)
     DestroyWindow(window);
 }
 
+static void test_set_render_state(void)
+{
+    IDirect3DDevice7 *device;
+    ULONG refcount;
+    HWND window;
+    DWORD state;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create 3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZVISIBLE, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZVISIBLE, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* States deprecated in D3D7 */
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    state = 0xdeadbeef;
+    hr = IDirect3DDevice7_GetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, &state);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    ok(state == 0xdeadbeef, "Got unexpected render state %#x.\n", state);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    state = 0xdeadbeef;
+    hr = IDirect3DDevice7_GetRenderState(device, D3DRENDERSTATE_TEXTUREMAPBLEND, &state);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    ok(state == 0xdeadbeef, "Got unexpected render state %#x.\n", state);
+
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_map_synchronisation(void)
 {
     LARGE_INTEGER frequency, diff, ts[3];
@@ -14157,6 +14197,7 @@ START_TEST(ddraw7)
     test_compute_sphere_visibility();
     test_clip_planes_limits();
     test_texture_stages_limits();
+    test_set_render_state();
     test_map_synchronisation();
     test_depth_readback();
     test_clear();

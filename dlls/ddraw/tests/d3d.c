@@ -411,18 +411,6 @@ static void LightTest(void)
     }
 }
 
-static void StateTest( void )
-{
-    HRESULT rc;
-
-    /* The msdn says it's undocumented, does it return an error too? */
-    rc = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_ZVISIBLE, TRUE);
-    ok(rc == D3D_OK, "IDirect3DDevice7_SetRenderState(D3DRENDERSTATE_ZVISIBLE, TRUE) returned %08x\n", rc);
-    rc = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_ZVISIBLE, FALSE);
-    ok(rc == D3D_OK, "IDirect3DDevice7_SetRenderState(D3DRENDERSTATE_ZVISIBLE, FALSE) returned %08x\n", rc);
-}
-
-
 static void SceneTest(void)
 {
     HRESULT                      hr;
@@ -1414,22 +1402,6 @@ static void VertexBufferDescTest(void)
 
 out:
     IDirect3DVertexBuffer7_Release(lpVBufSrc);
-}
-
-static void D3D7_OldRenderStateTest(void)
-{
-    HRESULT hr;
-    DWORD val;
-
-    /* Test reaction to some deprecated states in D3D7. */
-    hr = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_TEXTUREHANDLE, 0);
-    ok(hr == DDERR_INVALIDPARAMS, "IDirect3DDevice7_SetRenderState returned %#x.\n", hr);
-    hr = IDirect3DDevice7_GetRenderState(lpD3DDevice, D3DRENDERSTATE_TEXTUREHANDLE, &val);
-    ok(hr == DDERR_INVALIDPARAMS, "IDirect3DDevice7_GetRenderState returned %#x.\n", hr);
-    hr = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
-    ok(hr == DDERR_INVALIDPARAMS, "IDirect3DDevice7_SetRenderState returned %#x.\n", hr);
-    hr = IDirect3DDevice7_GetRenderState(lpD3DDevice, D3DRENDERSTATE_TEXTUREMAPBLEND, &val);
-    ok(hr == DDERR_INVALIDPARAMS, "IDirect3DDevice7_GetRenderState returned %#x.\n", hr);
 }
 
 #define IS_VALUE_NEAR(a, b)    ( ((a) == (b)) || ((a) == (b) - 1) || ((a) == (b) + 1) )
@@ -3444,14 +3416,12 @@ START_TEST(d3d)
         skip("Skipping d3d7 tests\n");
     } else {
         LightTest();
-        StateTest();
         SceneTest();
         D3D7EnumTest();
         D3D7EnumLifetimeTest();
         SetMaterialTest();
         CapsTest();
         VertexBufferDescTest();
-        D3D7_OldRenderStateTest();
         DeviceLoadTest();
         SetRenderTargetTest();
         VertexBufferLockRest();
