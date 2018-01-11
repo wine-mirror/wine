@@ -640,14 +640,6 @@ static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     LRESULT ret;
     struct message msg;
 
-    /* some debug output for style changing */
-    if ((message == WM_STYLECHANGING ||
-         message == WM_STYLECHANGED) && lParam)
-    {
-        STYLESTRUCT *style = (STYLESTRUCT*)lParam;
-        trace("\told style: 0x%08x, new style: 0x%08x\n", style->styleOld, style->styleNew);
-    }
-
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
