@@ -846,6 +846,17 @@ static void test_Loader(void)
 
     switch (orig_machine)
     {
+    case IMAGE_FILE_MACHINE_I386: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT; break;
+    case IMAGE_FILE_MACHINE_AMD64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARM64; break;
+    case IMAGE_FILE_MACHINE_ARMNT: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_I386; break;
+    case IMAGE_FILE_MACHINE_ARM64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64; break;
+    }
+    status = map_image_section( &nt_header, __LINE__ );
+    ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
+        "NtCreateSection error %08x\n", status );
+
+    switch (orig_machine)
+    {
     case IMAGE_FILE_MACHINE_I386: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64; break;
     case IMAGE_FILE_MACHINE_AMD64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_I386; break;
     case IMAGE_FILE_MACHINE_ARMNT: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARM64; break;
