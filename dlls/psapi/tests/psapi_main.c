@@ -110,7 +110,7 @@ static void test_EnumProcesses(void)
 
 static void test_EnumProcessModules(void)
 {
-    HMODULE hMod = GetModuleHandleA(NULL);
+    HMODULE hMod;
     DWORD ret, cbNeeded = 0xdeadbeef;
 
     SetLastError(0xdeadbeef);
@@ -122,14 +122,18 @@ static void test_EnumProcessModules(void)
     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    hMod = (void *)0xdeadbeef;
     ret = pEnumProcessModules(hpQI, &hMod, sizeof(HMODULE), NULL);
     ok(!ret, "succeeded\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    hMod = (void *)0xdeadbeef;
     ret = pEnumProcessModules(hpQV, &hMod, sizeof(HMODULE), NULL);
     ok(!ret, "succeeded\n");
     ok(GetLastError() == ERROR_NOACCESS, "expected error=ERROR_NOACCESS but got %d\n", GetLastError());
+    todo_wine ok(hMod == GetModuleHandleA(NULL),
+       "hMod=%p GetModuleHandleA(NULL)=%p\n", hMod, GetModuleHandleA(NULL));
 
     SetLastError(0xdeadbeef);
     ret = pEnumProcessModules(hpQV, NULL, 0, &cbNeeded);
@@ -141,9 +145,9 @@ static void test_EnumProcessModules(void)
     ok(GetLastError() == ERROR_NOACCESS, "expected error=ERROR_NOACCESS but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    hMod = (void *)0xdeadbeef;
     ret = pEnumProcessModules(hpQV, &hMod, sizeof(HMODULE), &cbNeeded);
-    if(ret != 1)
-        return;
+    ok(ret == 1, "got %d, failed with %d\n", ret, GetLastError());
     ok(hMod == GetModuleHandleA(NULL),
        "hMod=%p GetModuleHandleA(NULL)=%p\n", hMod, GetModuleHandleA(NULL));
     ok(cbNeeded % sizeof(hMod) == 0, "not a multiple of sizeof(HMODULE) cbNeeded=%d\n", cbNeeded);
