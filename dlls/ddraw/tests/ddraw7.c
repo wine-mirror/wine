@@ -13353,7 +13353,7 @@ static void test_clip_planes_limits(void)
 
     trace("Max user clip planes: %u.\n", caps.wMaxUserClipPlanes);
 
-    for (i = 0; i < D3DMAXUSERCLIPPLANES; ++i)
+    for (i = 0; i < caps.wMaxUserClipPlanes; ++i)
     {
         memset(plane, 0xff, sizeof(plane));
         hr = IDirect3DDevice7_GetClipPlane(device, i, plane);
@@ -13366,13 +13366,13 @@ static void test_clip_planes_limits(void)
     plane[0] = 2.0f;
     plane[1] = 8.0f;
     plane[2] = 5.0f;
-    for (i = 0; i < D3DMAXUSERCLIPPLANES; ++i)
+    for (i = 0; i < caps.wMaxUserClipPlanes; ++i)
     {
         plane[3] = i;
         hr = IDirect3DDevice7_SetClipPlane(device, i, plane);
         ok(hr == D3D_OK, "Failed to set clip plane %u, hr %#x.\n", i, hr);
     }
-    for (i = 0; i < D3DMAXUSERCLIPPLANES; ++i)
+    for (i = 0; i < caps.wMaxUserClipPlanes; ++i)
     {
         memset(plane, 0xff, sizeof(plane));
         hr = IDirect3DDevice7_GetClipPlane(device, i, plane);
