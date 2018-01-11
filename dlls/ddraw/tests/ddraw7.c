@@ -13398,6 +13398,57 @@ static void test_clip_planes_limits(void)
     DestroyWindow(window);
 }
 
+static void test_texture_stages_limits(void)
+{
+    IDirectDrawSurface7 *texture;
+    DDSURFACEDESC2 surface_desc;
+    IDirect3DDevice7 *device;
+    IDirectDraw7 *ddraw;
+    IDirect3D7 *d3d;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create 3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D interface, hr %#x.\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get DirectDraw interface, hr %#x.\n", hr);
+    IDirect3D7_Release(d3d);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    surface_desc.dwWidth = 16;
+    surface_desc.dwHeight = 16;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &texture, NULL);
+    ok(hr == DD_OK, "Failed to create surface, hr %#x.\n", hr);
+
+    for (i = 0; i < 8; ++i)
+    {
+        hr = IDirect3DDevice7_SetTexture(device, i, texture);
+        ok(hr == D3D_OK, "Failed to set texture %u, hr %#x.\n", i, hr);
+        hr = IDirect3DDevice7_SetTexture(device, i, NULL);
+        ok(hr == D3D_OK, "Failed to set texture %u, hr %#x.\n", i, hr);
+        hr = IDirect3DDevice7_SetTextureStageState(device, i, D3DTSS_COLOROP, D3DTOP_ADD);
+        ok(hr == D3D_OK, "Failed to set texture stage state %u, hr %#x.\n", i, hr);
+    }
+
+    IDirectDrawSurface7_Release(texture);
+    IDirectDraw7_Release(ddraw);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_map_synchronisation(void)
 {
     LARGE_INTEGER frequency, diff, ts[3];
@@ -14105,6 +14156,7 @@ START_TEST(ddraw7)
     test_vb_refcount();
     test_compute_sphere_visibility();
     test_clip_planes_limits();
+    test_texture_stages_limits();
     test_map_synchronisation();
     test_depth_readback();
     test_clear();

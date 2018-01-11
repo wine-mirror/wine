@@ -14022,6 +14022,61 @@ static void test_compute_sphere_visibility(void)
     DestroyWindow(window);
 }
 
+static void test_texture_stages_limits(void)
+{
+    IDirectDrawSurface4 *surface;
+    DDSURFACEDESC2 surface_desc;
+    IDirect3DTexture2 *texture;
+    IDirect3DDevice3 *device;
+    IDirectDraw4 *ddraw;
+    IDirect3D3 *d3d;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create 3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D interface, hr %#x.\n", hr);
+    hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get DirectDraw interface, hr %#x.\n", hr);
+    IDirect3D3_Release(d3d);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    surface_desc.dwWidth = 16;
+    surface_desc.dwHeight = 16;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DD_OK, "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_QueryInterface(surface, &IID_IDirect3DTexture2, (void **)&texture);
+    ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+    IDirectDrawSurface4_Release(surface);
+
+    for (i = 0; i < 8; ++i)
+    {
+        hr = IDirect3DDevice3_SetTexture(device, i, texture);
+        ok(hr == D3D_OK, "Failed to set texture %u, hr %#x.\n", i, hr);
+        hr = IDirect3DDevice3_SetTexture(device, i, NULL);
+        ok(hr == D3D_OK, "Failed to set texture %u, hr %#x.\n", i, hr);
+        hr = IDirect3DDevice3_SetTextureStageState(device, i, D3DTSS_COLOROP, D3DTOP_ADD);
+        ok(hr == D3D_OK, "Failed to set texture stage state %u, hr %#x.\n", i, hr);
+    }
+
+    IDirectDraw4_Release(ddraw);
+    IDirect3DTexture2_Release(texture);
+    refcount = IDirect3DDevice3_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_map_synchronisation(void)
 {
     LARGE_INTEGER frequency, diff, ts[3];
@@ -14763,6 +14818,7 @@ START_TEST(ddraw4)
     test_ck_operation();
     test_vb_refcount();
     test_compute_sphere_visibility();
+    test_texture_stages_limits();
     test_map_synchronisation();
     test_depth_readback();
     test_clear();
