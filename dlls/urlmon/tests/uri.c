@@ -7389,6 +7389,9 @@ static const uri_parse_test uri_parse_tests[] = {
     {"file:///c:/te%XX t/",0,PARSE_PATH_FROM_URL,0,"c:\\te%XX t\\",S_OK,FALSE},
     {"file://server/test",0,PARSE_PATH_FROM_URL,0,"\\\\server\\test",S_OK,FALSE},
     {"http://google.com/",0,PARSE_PATH_FROM_URL,0,"",E_INVALIDARG,FALSE},
+    {"file:/c:/dir/test.mp3",0,PARSE_PATH_FROM_URL,0,"c:\\dir\\test.mp3",S_OK},
+    {"file:/c:/test.mp3",0,PARSE_PATH_FROM_URL,0,"c:\\test.mp3",S_OK},
+    {"file://c:\\test.mp3",0,PARSE_PATH_FROM_URL,0,"c:\\test.mp3",S_OK},
 
     /* PARSE_URL_FROM_PATH tests. */
     /* This function almost seems to useless (just returns the absolute uri). */
@@ -10566,11 +10569,11 @@ static void test_CoInternetParseIUri(void) {
             if(SUCCEEDED(hr)) {
                 DWORD len = lstrlenA(test.property);
                 ok(!strcmp_aw(test.property, result) || (test.property2 && !strcmp_aw(test.property2, result)),
-                    "Error: Expected %s but got %s instead on uri_parse_tests[%d].\n",
-                    test.property, wine_dbgstr_w(result), i);
+                    "Error: Expected %s but got %s instead on uri_parse_tests[%d] - %s.\n",
+                    test.property, wine_dbgstr_w(result), i, wine_dbgstr_w(uriW));
                 ok(len == result_len || (test.property2 && lstrlenA(test.property2) == result_len),
-                    "Error: Expected %d, but got %d instead on uri_parse_tests[%d].\n",
-                    len, result_len, i);
+                    "Error: Expected %d, but got %d instead on uri_parse_tests[%d] - %s.\n",
+                    len, result_len, i, wine_dbgstr_w(uriW));
             } else {
                 ok(!result_len,
                     "Error: Expected 'result_len' to be 0, but was %d on uri_parse_tests[%d].\n",
