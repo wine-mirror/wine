@@ -558,6 +558,17 @@ static HWND create_editcontrol (DWORD style, DWORD exstyle)
     return handle;
 }
 
+static HWND create_editcontrolW(DWORD style, DWORD exstyle)
+{
+    static const WCHAR testtextW[] = {'T','e','s','t',' ','t','e','x','t',0};
+    HWND handle;
+
+    handle = CreateWindowExW(exstyle, WC_EDITW, testtextW, style, 10, 10, 300, 300,
+        NULL, NULL, hinst, NULL);
+    ok(handle != NULL, "Failed to create Edit control.\n");
+    return handle;
+}
+
 static HWND create_child_editcontrol (DWORD style, DWORD exstyle)
 {
     HWND parentWnd;
@@ -2922,6 +2933,55 @@ static void test_paste(void)
     DestroyWindow(hMultilineEdit);
 }
 
+static void test_EM_GETLINE(void)
+{
+    HWND hwnd[2];
+    int i;
+
+    hwnd[0] = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
+    hwnd[1] = create_editcontrolW(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
+
+    for (i = 0; i < sizeof(hwnd)/sizeof(hwnd[0]); i++)
+    {
+        static const WCHAR strW[] = {'t','e','x','t',0};
+        static const char *str = "text";
+        WCHAR buffW[16];
+        char buff[16];
+        int r;
+
+    todo_wine_if(i == 0)
+        ok(IsWindowUnicode(hwnd[i]), "Expected unicode window.\n");
+
+        SendMessageA(hwnd[i], WM_SETTEXT, 0, (LPARAM)str);
+
+        memset(buff, 0, sizeof(buff));
+        *(WORD *)buff = sizeof(buff);
+        r = SendMessageA(hwnd[i], EM_GETLINE, 0, (LPARAM)buff);
+        ok(r == strlen(str), "Failed to get a line %d.\n", r);
+        ok(!strcmp(buff, str), "Unexpected line data %s.\n", buff);
+
+        memset(buff, 0, sizeof(buff));
+        *(WORD *)buff = sizeof(buff);
+        r = SendMessageA(hwnd[i], EM_GETLINE, 1, (LPARAM)buff);
+        ok(r == strlen(str), "Failed to get a line %d.\n", r);
+        ok(!strcmp(buff, str), "Unexpected line data %s.\n", buff);
+
+        memset(buffW, 0, sizeof(buffW));
+        *(WORD *)buffW = sizeof(buffW)/sizeof(buffW[0]);
+        r = SendMessageW(hwnd[i], EM_GETLINE, 0, (LPARAM)buffW);
+        ok(r == lstrlenW(strW), "Failed to get a line %d.\n", r);
+        ok(!lstrcmpW(buffW, strW), "Unexpected line data %s.\n", wine_dbgstr_w(buffW));
+
+        memset(buffW, 0, sizeof(buffW));
+        *(WORD *)buffW = sizeof(buffW)/sizeof(buffW[0]);
+        r = SendMessageW(hwnd[i], EM_GETLINE, 1, (LPARAM)buffW);
+        ok(r == lstrlenW(strW), "Failed to get a line %d.\n", r);
+        ok(!lstrcmpW(buffW, strW), "Unexpected line data %s.\n", wine_dbgstr_w(buffW));
+
+        DestroyWindow(hwnd[i]);
+    }
+}
+
 START_TEST(edit)
 {
     ULONG_PTR ctx_cookie;
@@ -2961,6 +3021,7 @@ START_TEST(edit)
     test_contextmenu();
     test_EM_GETHANDLE();
     test_paste();
+    test_EM_GETLINE();
 
     UnregisterWindowClasses();
 
