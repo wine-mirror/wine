@@ -233,6 +233,17 @@ static const WCHAR CSu[] =   {'%','u',0};
 static const WCHAR CSd[] =   {'%','d',0};
 static const WCHAR CSrgb[] = {'%','u',' ','%','u',' ','%','u',0};
 
+static HDC display_dc;
+static CRITICAL_SECTION display_dc_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &display_dc_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": display_dc_section") }
+};
+static CRITICAL_SECTION display_dc_section = { &critsect_debug, -1 ,0, 0, 0, 0 };
+
+
 /* Indicators whether system parameter value is loaded */
 static char spi_loaded[SPI_INDEX_COUNT];
 
@@ -604,7 +615,7 @@ static BOOL init_entry_string( struct sysparam_entry *entry, const WCHAR *str )
 static inline HDC get_display_dc(void)
 {
     static const WCHAR DISPLAY[] = {'D','I','S','P','L','A','Y',0};
-    static HDC display_dc;
+    EnterCriticalSection( &display_dc_section );
     if (!display_dc)
     {
         display_dc = CreateICW( DISPLAY, NULL, NULL, NULL );
@@ -613,10 +624,21 @@ static inline HDC get_display_dc(void)
     return display_dc;
 }
 
+static inline void release_display_dc( HDC hdc )
+{
+    LeaveCriticalSection( &display_dc_section );
+}
+
 static inline int get_display_dpi(void)
 {
     static int display_dpi;
-    if (!display_dpi) display_dpi = GetDeviceCaps( get_display_dc(), LOGPIXELSY );
+    HDC hdc;
+    if (!display_dpi)
+    {
+        hdc = get_display_dc();
+        display_dpi = GetDeviceCaps( hdc, LOGPIXELSY );
+        release_display_dc( hdc );
+    }
     return display_dpi;
 }
 
@@ -629,33 +651,36 @@ static INT CALLBACK real_fontname_proc(const LOGFONTW *lf, const TEXTMETRICW *nt
     return 0;
 }
 
-static void get_real_fontname(LOGFONTW *lf)
+static void get_real_fontname( HDC hdc, LOGFONTW *lf )
 {
-    EnumFontFamiliesExW(get_display_dc(), lf, real_fontname_proc, (LPARAM)lf, 0);
+    EnumFontFamiliesExW(hdc, lf, real_fontname_proc, (LPARAM)lf, 0);
 }
 
 /* adjust some of the raw values found in the registry */
 static void normalize_nonclientmetrics( NONCLIENTMETRICSW *pncm)
 {
     TEXTMETRICW tm;
+    HDC hdc = get_display_dc();
+
     if( pncm->iBorderWidth < 1) pncm->iBorderWidth = 1;
     if( pncm->iCaptionWidth < 8) pncm->iCaptionWidth = 8;
     if( pncm->iScrollWidth < 8) pncm->iScrollWidth = 8;
     if( pncm->iScrollHeight < 8) pncm->iScrollHeight = 8;
 
     /* adjust some heights to the corresponding font */
-    get_text_metr_size( get_display_dc(), &pncm->lfMenuFont, &tm, NULL);
+    get_text_metr_size( hdc, &pncm->lfMenuFont, &tm, NULL);
     pncm->iMenuHeight = max( pncm->iMenuHeight, 2 + tm.tmHeight + tm.tmExternalLeading );
-    get_real_fontname( &pncm->lfMenuFont );
-    get_text_metr_size( get_display_dc(), &pncm->lfCaptionFont, &tm, NULL);
+    get_real_fontname( hdc, &pncm->lfMenuFont );
+    get_text_metr_size( hdc, &pncm->lfCaptionFont, &tm, NULL);
     pncm->iCaptionHeight = max( pncm->iCaptionHeight, 2 + tm.tmHeight);
-    get_real_fontname( &pncm->lfCaptionFont );
-    get_text_metr_size( get_display_dc(), &pncm->lfSmCaptionFont, &tm, NULL);
+    get_real_fontname( hdc, &pncm->lfCaptionFont );
+    get_text_metr_size( hdc, &pncm->lfSmCaptionFont, &tm, NULL);
     pncm->iSmCaptionHeight = max( pncm->iSmCaptionHeight, 2 + tm.tmHeight);
-    get_real_fontname( &pncm->lfSmCaptionFont );
+    get_real_fontname( hdc, &pncm->lfSmCaptionFont );
 
-    get_real_fontname( &pncm->lfStatusFont );
-    get_real_fontname( &pncm->lfMessageFont );
+    get_real_fontname( hdc, &pncm->lfStatusFont );
+    get_real_fontname( hdc, &pncm->lfMessageFont );
+    release_display_dc( hdc );
 }
 
 static BOOL CALLBACK enum_monitors( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
@@ -2378,14 +2403,21 @@ INT WINAPI GetSystemMetrics( INT index )
 {
     NONCLIENTMETRICSW ncm;
     UINT ret;
+    HDC hdc;
 
     /* some metrics are dynamic */
     switch (index)
     {
     case SM_CXSCREEN:
-        return GetDeviceCaps( get_display_dc(), HORZRES );
+        hdc = get_display_dc();
+        ret = GetDeviceCaps( hdc, HORZRES );
+        release_display_dc( hdc );
+        return ret;
     case SM_CYSCREEN:
-        return GetDeviceCaps( get_display_dc(), VERTRES );
+        hdc = get_display_dc();
+        ret = GetDeviceCaps( hdc, VERTRES );
+        release_display_dc( hdc );
+        return ret;
     case SM_CXVSCROLL:
     case SM_CYHSCROLL:
         get_entry( &entry_SCROLLWIDTH, 0, &ret );
@@ -2447,7 +2479,9 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_CXMIN:
         ncm.cbSize = sizeof(ncm);
         SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
-        get_text_metr_size( get_display_dc(), &ncm.lfCaptionFont, NULL, &ret );
+        hdc = get_display_dc();
+        get_text_metr_size( hdc, &ncm.lfCaptionFont, NULL, &ret );
+        release_display_dc( hdc );
         return 3 * ncm.iCaptionWidth + ncm.iCaptionHeight + 4 * ret + 2 * GetSystemMetrics(SM_CXFRAME) + 4;
     case SM_CYMIN:
         return GetSystemMetrics( SM_CYCAPTION) + 2 * GetSystemMetrics( SM_CYFRAME);
@@ -2564,7 +2598,9 @@ INT WINAPI GetSystemMetrics( INT index )
         TEXTMETRICW tm;
         ncm.cbSize = sizeof(ncm);
         SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
-        get_text_metr_size( get_display_dc(), &ncm.lfMenuFont, &tm, NULL);
+        hdc = get_display_dc();
+        get_text_metr_size( hdc, &ncm.lfMenuFont, &tm, NULL);
+        release_display_dc( hdc );
         return tm.tmHeight <= 0 ? 13 : ((tm.tmHeight + tm.tmExternalLeading + 1) / 2) * 2 - 1;
     }
     case SM_SLOWMACHINE:
