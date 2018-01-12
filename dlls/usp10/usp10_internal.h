@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  */
+
+#include "wine/list.h"
+
 #define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
           ( ( (ULONG)_x4 << 24 ) |     \
             ( (ULONG)_x3 << 16 ) |     \
@@ -174,6 +177,8 @@ typedef struct {
 } CacheGlyphPage;
 
 typedef struct {
+    struct list entry;
+    DWORD refcount;
     LOGFONTW lf;
     TEXTMETRICW tm;
     OUTLINETEXTMETRICW *otm;
