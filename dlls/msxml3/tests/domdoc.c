@@ -10155,16 +10155,20 @@ static void write_to_file(const char *name, const char *data)
 static void test_load(void)
 {
     IXMLDOMDocument *doc, *doc2;
+    BSTR pathW, bstr1, bstr2;
     IXMLDOMNodeList *list;
     IXMLDOMElement *elem;
+    char path[MAX_PATH];
     VARIANT_BOOL b;
     VARIANT src;
     HRESULT hr;
-    BSTR path, bstr1, bstr2;
     void* ptr;
 
+    GetTempPathA(MAX_PATH, path);
+    strcat(path, "winetest.xml");
+
     /* prepare a file */
-    write_to_file("test.xml", win1252xml);
+    write_to_file(path, win1252xml);
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -10175,11 +10179,11 @@ static void test_load(void)
     EXPECT_HR(hr, E_INVALIDARG);
     ok(b == VARIANT_FALSE, "got %d\n", b);
 
-    path = _bstr_("test.xml");
+    pathW = _bstr_(path);
 
     /* load from path: VT_BSTR */
     V_VT(&src) = VT_BSTR;
-    V_BSTR(&src) = path;
+    V_BSTR(&src) = pathW;
     hr = IXMLDOMDocument_load(doc, src, &b);
     EXPECT_HR(hr, S_OK);
     ok(b == VARIANT_TRUE, "got %d\n", b);
@@ -10191,7 +10195,7 @@ static void test_load(void)
 
     /* load from a path: VT_BSTR|VT_BYREF */
     V_VT(&src) = VT_BSTR | VT_BYREF;
-    V_BSTRREF(&src) = &path;
+    V_BSTRREF(&src) = &pathW;
     hr = IXMLDOMDocument_load(doc, src, &b);
     EXPECT_HR(hr, S_OK);
     ok(b == VARIANT_TRUE, "got %d\n", b);
@@ -10229,13 +10233,13 @@ static void test_load(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     SysFreeString(bstr1);
 
-    DeleteFileA("test.xml");
+    DeleteFileA(path);
 
     /* load from existing path, no xml content */
-    write_to_file("test.xml", nocontent);
+    write_to_file(path, nocontent);
 
     V_VT(&src) = VT_BSTR;
-    V_BSTR(&src) = path;
+    V_BSTR(&src) = pathW;
     b = VARIANT_TRUE;
     hr = IXMLDOMDocument_load(doc, src, &b);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
@@ -10246,7 +10250,7 @@ static void test_load(void)
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
     ok(bstr1 == NULL, "got %p\n", bstr1);
 
-    DeleteFileA("test.xml");
+    DeleteFileA(path);
     IXMLDOMDocument_Release(doc);
 
     doc = create_document(&IID_IXMLDOMDocument);
