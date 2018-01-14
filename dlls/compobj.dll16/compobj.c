@@ -434,6 +434,7 @@ _xmalloc16(DWORD size, SEGPTR *ptr) {
 
 /******************************************************************************
  *		StringFromCLSID	[COMPOBJ.19]
+ *              StringFromIID   [COMPOBJ.14]
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
  *
