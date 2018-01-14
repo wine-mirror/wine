@@ -560,3 +560,32 @@ BOOL WINAPI DoFileDownload(LPWSTR filename)
     FIXME("(%s) stub\n", debugstr_w(filename));
     return FALSE;
 }
+
+/******************************************************************
+ * DoOrganizeFavDlgW (SHDOCVW.@)
+ */
+BOOL WINAPI DoOrganizeFavDlgW(HWND hwnd, LPCWSTR initDir)
+{
+    FIXME("(%p %s) stub\n", hwnd, debugstr_w(initDir));
+    return FALSE;
+}
+
+/******************************************************************
+ * DoOrganizeFavDlg (SHDOCVW.@)
+ */
+BOOL WINAPI DoOrganizeFavDlg(HWND hwnd, LPCSTR initDir)
+{
+    LPWSTR initDirW = NULL;
+    BOOL res;
+
+    TRACE("(%p %s)\n", hwnd, debugstr_a(initDir));
+
+    if (initDir) {
+        DWORD len = MultiByteToWideChar(CP_ACP, 0, initDir, -1, NULL, 0);
+        initDirW = heap_alloc(len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, initDir, -1, initDirW, len);
+    }
+    res = DoOrganizeFavDlgW(hwnd, initDirW);
+    heap_free(initDirW);
+    return res;
+}
