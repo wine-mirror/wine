@@ -113,8 +113,8 @@
 @ stub DoAddToFavDlgW
 @ stdcall DoFileDownload(wstr)
 @ stub DoFileDownloadEx
-@ stub DoOrganizeFavDlg
-@ stub DoOrganizeFavDlgW
+@ stdcall DoOrganizeFavDlg(long str)
+@ stdcall DoOrganizeFavDlgW(long wstr)
 @ stub DoPrivacyDlg
 @ stub HlinkFrameNavigate
 @ stub HlinkFrameNavigateNHL
