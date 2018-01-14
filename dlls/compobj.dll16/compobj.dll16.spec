@@ -11,7 +11,7 @@
 11 stub COFREELIBRARY
 12 stub COFREEALLLIBRARIES
 13 pascal CoCreateInstance(ptr ptr long ptr ptr) CoCreateInstance16
-14 stub STRINGFROMIID
+14 pascal StringFromIID(ptr ptr) StringFromCLSID16
 15 pascal CoDisconnectObject(ptr long) CoDisconnectObject16
 16 stub CORELEASEMARSHALDATA
 17 pascal -ret16 CoFreeUnusedLibraries() CoFreeUnusedLibraries16
