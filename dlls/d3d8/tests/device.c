@@ -8494,7 +8494,7 @@ static void test_clip_planes_limits(void)
 
 START_TEST(device)
 {
-    HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
+    HMODULE d3d8_handle = GetModuleHandleA( "d3d8.dll" );
     WNDCLASSA wc = {0};
     IDirect3D8 *d3d8;
     DEVMODEW current_mode;
