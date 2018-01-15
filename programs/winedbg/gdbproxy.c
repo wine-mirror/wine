@@ -1499,6 +1499,28 @@ static enum packet_return packet_thread(struct gdb_context* gdbctx)
     }
 }
 
+static BOOL read_memory(struct gdb_context *gdbctx, char *addr, char *buffer, SIZE_T blk_len, SIZE_T *r)
+{
+    /* Wrapper around process_io->read() that replaces values displaced by breakpoints. */
+
+    BOOL ret;
+
+    ret = gdbctx->process->process_io->read(gdbctx->process->handle, addr, buffer, blk_len, r);
+    if (ret)
+    {
+        struct gdb_ctx_Xpoint *xpt;
+
+        for (xpt = &gdbctx->Xpoints[NUM_XPOINT - 1]; xpt >= gdbctx->Xpoints; xpt--)
+        {
+            char *xpt_addr = xpt->addr;
+
+            if (xpt->type != -1 && xpt_addr >= addr && xpt_addr < addr + blk_len)
+                buffer[xpt_addr - addr] = xpt->val;
+        }
+    }
+    return ret;
+}
+
 static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
 {
     char               *addr;
@@ -1515,8 +1537,7 @@ static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
     for (nread = 0; nread < len; nread += r, addr += r)
     {
         blk_len = min(sizeof(buffer), len - nread);
-        if (!gdbctx->process->process_io->read(gdbctx->process->handle, addr, buffer, blk_len, &r) ||
-            r == 0)
+        if (!read_memory(gdbctx, addr, buffer, blk_len, &r) || r == 0)
         {
             /* fail at first address, return error */
             if (nread == 0) return packet_reply_error(gdbctx, EFAULT);
