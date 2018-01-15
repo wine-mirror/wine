@@ -214,6 +214,30 @@ struct cpu_register
 #define REG(r,gs,m)  {FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs, m}
 
 #ifdef __i386__
+typedef struct DECLSPEC_ALIGN(16) _M128A {
+    ULONGLONG Low;
+    LONGLONG High;
+} M128A, *PM128A;
+
+typedef struct _XMM_SAVE_AREA32 {
+    WORD ControlWord;        /* 000 */
+    WORD StatusWord;         /* 002 */
+    BYTE TagWord;            /* 004 */
+    BYTE Reserved1;          /* 005 */
+    WORD ErrorOpcode;        /* 006 */
+    DWORD ErrorOffset;       /* 008 */
+    WORD ErrorSelector;      /* 00c */
+    WORD Reserved2;          /* 00e */
+    DWORD DataOffset;        /* 010 */
+    WORD DataSelector;       /* 014 */
+    WORD Reserved3;          /* 016 */
+    DWORD MxCsr;             /* 018 */
+    DWORD MxCsr_Mask;        /* 01c */
+    M128A FloatRegisters[8]; /* 020 */
+    M128A XmmRegisters[16];  /* 0a0 */
+    BYTE Reserved4[96];      /* 1a0 */
+} XMM_SAVE_AREA32, *PXMM_SAVE_AREA32;
+
 static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
     REG(Eax, 4, CONTEXT_INTEGER),
@@ -248,6 +272,15 @@ static struct cpu_register cpu_register_map[] = {
     { FIELD_OFFSET(CONTEXT, FloatSave.DataSelector), 2, 4, CONTEXT_FLOATING_POINT },
     REG(FloatSave.DataOffset, 4, CONTEXT_FLOATING_POINT ),
     { FIELD_OFFSET(CONTEXT, FloatSave.ErrorSelector)+2, 2, 4, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[0]), 16, 16, CONTEXT_EXTENDED_REGISTERS },
+    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[1]), 16, 16, CONTEXT_EXTENDED_REGISTERS },
+    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[2]), 16, 16, CONTEXT_EXTENDED_REGISTERS },
+    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[3]), 16, 16, CONTEXT_EXTENDED_REGISTERS },
+    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[4]), 16, 16, CONTEXT_EXTENDED_REGISTERS },
+    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[5]), 16, 16, CONTEXT_EXTENDED_REGISTERS },
+    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[6]), 16, 16, CONTEXT_EXTENDED_REGISTERS },
+    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[7]), 16, 16, CONTEXT_EXTENDED_REGISTERS },
+    { FIELD_OFFSET(CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, MxCsr), 4, 4, CONTEXT_EXTENDED_REGISTERS },
 };
 #elif defined(__powerpc__)
 static const char target_xml[] = "";
@@ -353,6 +386,39 @@ static struct cpu_register cpu_register_map[] = {
     REG(SegEs, 4, CONTEXT_SEGMENTS),
     REG(SegFs, 4, CONTEXT_SEGMENTS),
     REG(SegGs, 4, CONTEXT_SEGMENTS),
+    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 0]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 1]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 2]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 3]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 4]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 5]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 6]), 10, 10, CONTEXT_FLOATING_POINT },
+    { FIELD_OFFSET(CONTEXT, u.FltSave.FloatRegisters[ 7]), 10, 10, CONTEXT_FLOATING_POINT },
+    REG(u.FltSave.ControlWord, 4, CONTEXT_FLOATING_POINT),
+    REG(u.FltSave.StatusWord, 4, CONTEXT_FLOATING_POINT),
+    REG(u.FltSave.TagWord, 4, CONTEXT_FLOATING_POINT),
+    REG(u.FltSave.ErrorSelector, 4, CONTEXT_FLOATING_POINT),
+    REG(u.FltSave.ErrorOffset, 4, CONTEXT_FLOATING_POINT),
+    REG(u.FltSave.DataSelector, 4, CONTEXT_FLOATING_POINT),
+    REG(u.FltSave.DataOffset, 4, CONTEXT_FLOATING_POINT),
+    REG(u.FltSave.ErrorOpcode, 4, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm0, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm1, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm2, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm3, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm4, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm5, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm6, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm7, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm8, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm9, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm10, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm11, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm12, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm13, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm14, 16, CONTEXT_FLOATING_POINT),
+    REG(u.s.Xmm15, 16, CONTEXT_FLOATING_POINT),
+    REG(u.FltSave.MxCsr, 4, CONTEXT_FLOATING_POINT),
 };
 #elif defined(__arm__)
 static const char target_xml[] =
@@ -496,7 +562,7 @@ static BOOL fetch_context(struct gdb_context* gdbctx, HANDLE h, CONTEXT* ctx)
 {
     ctx->ContextFlags =  CONTEXT_CONTROL
                        | CONTEXT_INTEGER
-#if defined(__powerpc__) || defined(__i386__)
+#if defined(__powerpc__) || defined(__i386__) || defined(__x86_64__)
                        | CONTEXT_FLOATING_POINT
 #endif
 #ifdef CONTEXT_SEGMENTS
@@ -504,6 +570,9 @@ static BOOL fetch_context(struct gdb_context* gdbctx, HANDLE h, CONTEXT* ctx)
 #endif
 #ifdef CONTEXT_DEBUG_REGISTERS
 	               | CONTEXT_DEBUG_REGISTERS
+#endif
+#ifdef CONTEXT_EXTENDED_REGISTERS
+                       | CONTEXT_EXTENDED_REGISTERS
 #endif
 		       ;
     if (!GetThreadContext(h, ctx))
