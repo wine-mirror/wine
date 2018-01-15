@@ -420,7 +420,7 @@ typedef BOOL (*PFN_PROVUI_CALL)(HWND hWndSecurityDialog,
 
 typedef struct _CRYPT_PROVUI_FUNCS {
     DWORD cbStruct;
-    CRYPT_PROVUI_DATA psUIData;
+    CRYPT_PROVUI_DATA *psUIData;
     PFN_PROVUI_CALL pfnOnMoreInfoClick;
     PFN_PROVUI_CALL pfnOnMoreInfoClickDefault;
     PFN_PROVUI_CALL pfnOnAdvancedClick;
