@@ -213,6 +213,11 @@ static void testGetInfo(void)
     pTables = getNextSecPkgTable(pTables, Version);
     if (!pTables)
         return;
+    if (!pTables->GetInfo)
+    {
+        win_skip("GetInfo function missing\n");
+        return;
+    }
     status = pTables->GetInfo(&PackageInfo);
     ok(status == STATUS_SUCCESS ||
        status == SEC_E_UNSUPPORTED_FUNCTION, /* win2k3 */
