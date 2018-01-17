@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-12-15 16:04+0100\n"
+"PO-Revision-Date: 2018-01-17 16:21+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -7112,7 +7112,7 @@ msgstr "Deregistrierung von Klassenservern"
 
 #: msi.rc:146
 msgid "Unregistering COM+ Applications and Components"
-msgstr "Deregistrieung von COM+ Anwendungen und Komponenten"
+msgstr "Deregistrierung von COM+ Anwendungen und Komponenten"
 
 #: msi.rc:147
 msgid "Unregistering extension servers"
