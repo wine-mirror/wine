@@ -594,7 +594,8 @@ __ASM_GLOBAL_FUNC( relay_call,
                    "mov r5, r1\n\t"
                    "mov r0, r7\n\t"
                    "mov r1, r8\n\t"
-                   "strd r4, [sp]\n\t"
+                   "str r4, [sp]\n\t"
+                   "str r5, [sp, #4]\n\t"
 #ifndef __SOFTFP__
                    "vstr d0, [sp, #8]\n\t"  /* preserve floating point retval */
                    "bl " __ASM_NAME("relay_trace_exit") "\n\t"
