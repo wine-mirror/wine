@@ -117,6 +117,42 @@ USHORT WINAPI SafeArrayGetElemsize16(SAFEARRAY16 *sa)
 }
 
 /******************************************************************************
+ *    SafeArrayGetUBound [OLE2DISP.19]
+ */
+HRESULT WINAPI SafeArrayGetUBound16(SAFEARRAY16 *sa, UINT16 dim, LONG *ubound)
+{
+    TRACE("(%p, %u, %p)\n", sa, dim, ubound);
+
+    if (!sa)
+        return E_INVALIDARG16;
+
+    if (!dim || dim > sa->cDims)
+        return DISP_E_BADINDEX;
+
+    *ubound = sa->rgsabound[sa->cDims - dim].lLbound + sa->rgsabound[sa->cDims - dim].cElements - 1;
+
+    return S_OK;
+}
+
+/******************************************************************************
+ *    SafeArrayGetLBound [OLE2DISP.20]
+ */
+HRESULT WINAPI SafeArrayGetLBound16(SAFEARRAY16 *sa, UINT16 dim, LONG *lbound)
+{
+    TRACE("(%p, %u, %p)\n", sa, dim, lbound);
+
+    if (!sa)
+        return E_INVALIDARG16;
+
+    if (!dim || dim > sa->cDims)
+        return DISP_E_BADINDEX;
+
+    *lbound = sa->rgsabound[sa->cDims - dim].lLbound;
+
+    return S_OK;
+}
+
+/******************************************************************************
  *    SafeArrayLock [OLE2DISP.21]
  */
 HRESULT WINAPI SafeArrayLock16(SAFEARRAY16 *sa)
