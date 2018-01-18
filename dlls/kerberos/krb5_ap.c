@@ -565,6 +565,26 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
 #endif
 }
 
+static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
+{
+#ifdef SONAME_LIBGSSAPI_KRB5
+    OM_uint32 ret, minor_status;
+    gss_ctx_id_t ctxt_handle;
+
+    TRACE( "(%lx)\n", context );
+    if (!context) return SEC_E_INVALID_HANDLE;
+    if (!(ctxt_handle = ctxthandle_sspi_to_gss( context ))) return SEC_E_OK;
+
+    ret = pgss_delete_sec_context( &minor_status, &ctxt_handle, GSS_C_NO_BUFFER );
+    TRACE( "gss_delete_sec_context returned %08x minor status %08x\n", ret, minor_status );
+
+    return status_gss_to_sspi( ret );
+#else
+    FIXME( "(%lx)\n", context );
+    return SEC_E_UNSUPPORTED_FUNCTION;
+#endif
+}
+
 static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMETERS *params,
     LSA_SECPKG_FUNCTION_TABLE *lsa_function_table)
 {
@@ -610,7 +630,7 @@ static SECPKG_FUNCTION_TABLE kerberos_table =
     NULL, /* DeleteCredentials */
     kerberos_SpInitLsaModeContext,
     kerberos_SpAcceptLsaModeContext,
-    NULL, /* DeleteContext */
+    kerberos_SpDeleteContext,
     NULL, /* ApplyControlToken */
     NULL, /* GetUserInfo */
     NULL, /* GetExtendedInformation */
