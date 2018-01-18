@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2004 Juan Lang
  * Copyright (C) 2007 Kai Blin
- * Copyright (C) 2017 Dmitry Timoshkov
+ * Copyright (C) 2017, 2018 Dmitry Timoshkov
  *
  * Local Security Authority functions, as far as secur32 has them.
  *
@@ -31,10 +31,12 @@
 #include "ntsecapi.h"
 #include "ntsecpkg.h"
 #include "winternl.h"
+#include "rpc.h"
+#include "secur32_priv.h"
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(lsa);
+WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 #define LSA_MAGIC ('L' << 24 | 'S' << 16 | 'A' << 8 | ' ')
 
@@ -42,10 +44,10 @@ struct lsa_package
 {
     ULONG package_id;
     HMODULE mod;
-    ULONG version;
     LSA_STRING *name;
-    SECPKG_FUNCTION_TABLE *api;
-    ULONG table_count;
+    ULONG lsa_api_version, lsa_table_count, user_api_version, user_table_count;
+    SECPKG_FUNCTION_TABLE *lsa_api;
+    SECPKG_USER_FUNCTION_TABLE *user_api;
 };
 
 static struct lsa_package *loaded_packages;
@@ -69,8 +71,8 @@ NTSTATUS WINAPI LsaCallAuthenticationPackage(HANDLE lsa_handle, ULONG package_id
     {
         if (loaded_packages[i].package_id == package_id)
         {
-            if (loaded_packages[i].api->CallPackageUntrusted)
-                return loaded_packages[i].api->CallPackageUntrusted(NULL /* FIXME*/,
+            if (loaded_packages[i].lsa_api->CallPackageUntrusted)
+                return loaded_packages[i].lsa_api->CallPackageUntrusted(NULL /* FIXME*/,
                     in_buffer, NULL, in_buffer_length, out_buffer, out_buffer_length, status);
 
             return SEC_E_UNSUPPORTED_FUNCTION;
@@ -228,6 +230,83 @@ static LSA_DISPATCH_TABLE lsa_dispatch =
     lsa_CopyFromClientBuffer
 };
 
+static NTSTATUS NTAPI lsa_RegisterCallback(ULONG callback_id, PLSA_CALLBACK_FUNCTION callback)
+{
+    FIXME("%u,%p: stub\n", callback_id, callback);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static SECPKG_DLL_FUNCTIONS lsa_dll_dispatch =
+{
+    lsa_AllocateLsaHeap,
+    lsa_FreeLsaHeap,
+    lsa_RegisterCallback
+};
+
+static const SecurityFunctionTableW lsa_sspi_tableW =
+{
+    1,
+    NULL, /* EnumerateSecurityPackagesW */
+    NULL, /* QueryCredentialsAttributesW */
+    NULL, /* AcquireCredentialsHandleW */
+    NULL, /* FreeCredentialsHandle */
+    NULL, /* Reserved2 */
+    NULL, /* InitializeSecurityContextW */
+    NULL, /* AcceptSecurityContext */
+    NULL, /* CompleteAuthToken */
+    NULL, /* DeleteSecurityContext */
+    NULL, /* ApplyControlToken */
+    NULL, /* QueryContextAttributesW */
+    NULL, /* ImpersonateSecurityContext */
+    NULL, /* RevertSecurityContext */
+    NULL, /* MakeSignature */
+    NULL, /* VerifySignature */
+    NULL, /* FreeContextBuffer */
+    NULL, /* QuerySecurityPackageInfoW */
+    NULL, /* Reserved3 */
+    NULL, /* Reserved4 */
+    NULL, /* ExportSecurityContext */
+    NULL, /* ImportSecurityContextW */
+    NULL, /* AddCredentialsW */
+    NULL, /* Reserved8 */
+    NULL, /* QuerySecurityContextToken */
+    NULL, /* EncryptMessage */
+    NULL, /* DecryptMessage */
+    NULL, /* SetContextAttributesW */
+};
+
+static const SecurityFunctionTableA lsa_sspi_tableA =
+{
+    1,
+    NULL, /* EnumerateSecurityPackagesA */
+    NULL, /* QueryCredentialsAttributesA */
+    NULL, /* AcquireCredentialsHandleA */
+    NULL, /* FreeCredentialsHandle */
+    NULL, /* Reserved2 */
+    NULL, /* InitializeSecurityContextA */
+    NULL, /* AcceptSecurityContext */
+    NULL, /* CompleteAuthToken */
+    NULL, /* DeleteSecurityContext */
+    NULL, /* ApplyControlToken */
+    NULL, /* QueryContextAttributesA */
+    NULL, /* ImpersonateSecurityContext */
+    NULL, /* RevertSecurityContext */
+    NULL, /* MakeSignature */
+    NULL, /* VerifySignature */
+    NULL, /* FreeContextBuffer */
+    NULL, /* QuerySecurityPackageInfoA */
+    NULL, /* Reserved3 */
+    NULL, /* Reserved4 */
+    NULL, /* ExportSecurityContext */
+    NULL, /* ImportSecurityContextA */
+    NULL, /* AddCredentialsA */
+    NULL, /* Reserved8 */
+    NULL, /* QuerySecurityContextToken */
+    NULL, /* EncryptMessage */
+    NULL, /* DecryptMessage */
+    NULL, /* SetContextAttributesA */
+};
+
 static void add_package(struct lsa_package *package)
 {
     struct lsa_package *new_loaded_packages;
@@ -247,26 +326,41 @@ static void add_package(struct lsa_package *package)
 
 static BOOL load_package(const WCHAR *name, struct lsa_package *package, ULONG package_id)
 {
-    NTSTATUS (NTAPI *lsa_mode_init)(ULONG,PULONG,PSECPKG_FUNCTION_TABLE *, PULONG);
+    NTSTATUS (NTAPI *pSpLsaModeInitialize)(ULONG, PULONG, PSECPKG_FUNCTION_TABLE *, PULONG);
+    NTSTATUS (NTAPI *pSpUserModeInitialize)(ULONG, PULONG, PSECPKG_USER_FUNCTION_TABLE *, PULONG);
+
+    memset(package, 0, sizeof(*package));
 
     package->mod = LoadLibraryW(name);
     if (!package->mod) return FALSE;
 
-    lsa_mode_init = (void *)GetProcAddress(package->mod, "SpLsaModeInitialize");
-    if (lsa_mode_init)
+    pSpLsaModeInitialize = (void *)GetProcAddress(package->mod, "SpLsaModeInitialize");
+    if (pSpLsaModeInitialize)
     {
         NTSTATUS status;
 
-        status = lsa_mode_init(SECPKG_INTERFACE_VERSION, &package->version, &package->api, &package->table_count);
+        status = pSpLsaModeInitialize(SECPKG_INTERFACE_VERSION, &package->lsa_api_version, &package->lsa_api, &package->lsa_table_count);
         if (status == STATUS_SUCCESS)
         {
-            status = package->api->InitializePackage(package_id, &lsa_dispatch, NULL, NULL, &package->name);
+            status = package->lsa_api->InitializePackage(package_id, &lsa_dispatch, NULL, NULL, &package->name);
             if (status == STATUS_SUCCESS)
             {
                 TRACE("%s => %p, name %s, version %#x, api table %p, table count %u\n",
                     debugstr_w(name), package->mod, debugstr_an(package->name->Buffer, package->name->Length),
-                    package->version, package->api, package->table_count);
+                    package->lsa_api_version, package->lsa_api, package->lsa_table_count);
                 package->package_id = package_id;
+
+                status = package->lsa_api->Initialize(package_id, NULL /* FIXME: params */, NULL);
+                if (status == STATUS_SUCCESS)
+                {
+                    pSpUserModeInitialize = (void *)GetProcAddress(package->mod, "SpUserModeInitialize");
+                    if (pSpUserModeInitialize)
+                    {
+                        status = pSpUserModeInitialize(SECPKG_INTERFACE_VERSION, &package->user_api_version, &package->user_api, &package->user_table_count);
+                        if (status == STATUS_SUCCESS)
+                            package->user_api->InstanceInit(SECPKG_INTERFACE_VERSION, &lsa_dll_dispatch, NULL);
+                    }
+                }
                 return TRUE;
             }
         }
@@ -278,16 +372,17 @@ static BOOL load_package(const WCHAR *name, struct lsa_package *package, ULONG p
 
 #define MAX_SERVICE_NAME 260
 
-static BOOL WINAPI load_auth_packages(INIT_ONCE *init_once, void *param, void **context)
+void load_auth_packages(void)
 {
     static const WCHAR LSA_KEY[] = { 'S','y','s','t','e','m','\\',
         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
         'C','o','n','t','r','o','l','\\','L','s','a',0 };
     DWORD err, i;
     HKEY root;
+    SecureProvider *provider;
 
     err = RegOpenKeyExW(HKEY_LOCAL_MACHINE, LSA_KEY, 0, KEY_READ, &root);
-    if (err != ERROR_SUCCESS) return FALSE;
+    if (err != ERROR_SUCCESS) return;
 
     i = 0;
     for (;;)
@@ -310,18 +405,39 @@ static BOOL WINAPI load_auth_packages(INIT_ONCE *init_once, void *param, void **
 
     RegCloseKey(root);
 
-    return TRUE;
+    if (!loaded_packages_count) return;
+
+    provider = SECUR32_addProvider(&lsa_sspi_tableA, &lsa_sspi_tableW, NULL);
+    if (!provider)
+    {
+        ERR("Failed to add SSP/AP provider\n");
+        return;
+    }
+
+    for (i = 0; i < loaded_packages_count; i++)
+    {
+        SecPkgInfoW *info;
+
+        info = HeapAlloc(GetProcessHeap(), 0, loaded_packages[i].lsa_table_count * sizeof(*info));
+        if (info)
+        {
+            NTSTATUS status;
+
+            status = loaded_packages[i].lsa_api->GetInfo(info);
+            if (status == STATUS_SUCCESS)
+                SECUR32_addPackages(provider, loaded_packages[i].lsa_table_count, NULL, info);
+
+            HeapFree(GetProcessHeap(), 0, info);
+        }
+    }
 }
 
 NTSTATUS WINAPI LsaLookupAuthenticationPackage(HANDLE lsa_handle,
         PLSA_STRING package_name, PULONG package_id)
 {
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
     ULONG i;
 
     TRACE("%p %p %p\n", lsa_handle, package_name, package_id);
-
-    InitOnceExecuteOnce(&init_once, load_auth_packages, NULL, NULL);
 
     for (i = 0; i < loaded_packages_count; i++)
     {
