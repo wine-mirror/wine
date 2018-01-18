@@ -144,6 +144,21 @@ static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST req
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMETERS *params,
+    LSA_SECPKG_FUNCTION_TABLE *lsa_function_table)
+{
+    FIXME("%lu,%p,%p: stub\n", package_id, params, lsa_function_table);
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS NTAPI kerberos_SpShutdown(void)
+{
+    TRACE("\n");
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS NTAPI kerberos_SpGetInfo(SecPkgInfoW *info)
 {
     static WCHAR kerberos_name_W[] = {'K','e','r','b','e','r','o','s',0};
@@ -178,8 +193,8 @@ static SECPKG_FUNCTION_TABLE kerberos_table =
     NULL, /* CallPackagePassthrough */
     NULL, /* LogonUserEx */
     NULL, /* LogonUserEx2 */
-    NULL, /* Initialize */
-    NULL, /* Shutdown */
+    kerberos_SpInitialize,
+    kerberos_SpShutdown,
     kerberos_SpGetInfo,
     NULL, /* AcceptCredentials */
     NULL, /* SpAcquireCredentialsHandle */
