@@ -1,5 +1,7 @@
 /*
  * Copyright 2017 Dmitry Timoshkov
+ * Copyright 2008 Robert Shearman for CodeWeavers
+ * Copyright 2017 Hans Leidekker for CodeWeavers
  *
  * Kerberos5 Authentication Package
  *
@@ -24,6 +26,10 @@
 #include <stdarg.h>
 #ifdef HAVE_KRB5_KRB5_H
 #include <krb5/krb5.h>
+#endif
+#ifdef SONAME_LIBGSSAPI_KRB5
+# include <gssapi/gssapi.h>
+# include <gssapi/gssapi_ext.h>
 #endif
 
 #include "ntstatus.h"
@@ -106,6 +112,12 @@ static void load_krb5(void)
 
 #endif /* SONAME_LIBKRB5 */
 
+static const char *debugstr_us( const UNICODE_STRING *us )
+{
+    if (!us) return "<null>";
+    return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
+}
+
 static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DISPATCH_TABLE dispatch,
     PLSA_STRING database, PLSA_STRING confidentiality, PLSA_STRING *package_name)
 {
@@ -144,21 +156,6 @@ static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST req
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMETERS *params,
-    LSA_SECPKG_FUNCTION_TABLE *lsa_function_table)
-{
-    FIXME("%lu,%p,%p: stub\n", package_id, params, lsa_function_table);
-
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS NTAPI kerberos_SpShutdown(void)
-{
-    TRACE("\n");
-
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS NTAPI kerberos_SpGetInfo(SecPkgInfoW *info)
 {
     static WCHAR kerberos_name_W[] = {'K','e','r','b','e','r','o','s',0};
@@ -183,6 +180,193 @@ static NTSTATUS NTAPI kerberos_SpGetInfo(SecPkgInfoW *info)
     return STATUS_SUCCESS;
 }
 
+#ifdef SONAME_LIBGSSAPI_KRB5
+
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
+static void *libgssapi_krb5_handle;
+
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(gss_acquire_cred);
+MAKE_FUNCPTR(gss_import_name);
+MAKE_FUNCPTR(gss_release_name);
+#undef MAKE_FUNCPTR
+
+static BOOL load_gssapi_krb5(void)
+{
+    if (!(libgssapi_krb5_handle = wine_dlopen( SONAME_LIBGSSAPI_KRB5, RTLD_NOW, NULL, 0 )))
+    {
+        ERR_(winediag)( "Failed to load libgssapi_krb5, Kerberos SSP support will not be available.\n" );
+        return FALSE;
+    }
+
+#define LOAD_FUNCPTR(f) \
+    if (!(p##f = wine_dlsym( libgssapi_krb5_handle, #f, NULL, 0 ))) \
+    { \
+        ERR( "Failed to load %s\n", #f ); \
+        goto fail; \
+    }
+
+    LOAD_FUNCPTR(gss_acquire_cred)
+    LOAD_FUNCPTR(gss_import_name)
+    LOAD_FUNCPTR(gss_release_name)
+#undef LOAD_FUNCPTR
+
+    return TRUE;
+
+fail:
+    wine_dlclose( libgssapi_krb5_handle, NULL, 0 );
+    libgssapi_krb5_handle = NULL;
+    return FALSE;
+}
+
+static void unload_gssapi_krb5(void)
+{
+    wine_dlclose( libgssapi_krb5_handle, NULL, 0 );
+    libgssapi_krb5_handle = NULL;
+}
+
+static inline void credhandle_gss_to_sspi( gss_cred_id_t handle, LSA_SEC_HANDLE *cred )
+{
+    *cred = (LSA_SEC_HANDLE)handle;
+}
+
+static SECURITY_STATUS status_gss_to_sspi( OM_uint32 status )
+{
+    switch (status)
+    {
+    case GSS_S_COMPLETE:             return SEC_E_OK;
+    case GSS_S_BAD_MECH:             return SEC_E_SECPKG_NOT_FOUND;
+    case GSS_S_BAD_SIG:              return SEC_E_MESSAGE_ALTERED;
+    case GSS_S_NO_CRED:              return SEC_E_NO_CREDENTIALS;
+    case GSS_S_NO_CONTEXT:           return SEC_E_INVALID_HANDLE;
+    case GSS_S_DEFECTIVE_TOKEN:      return SEC_E_INVALID_TOKEN;
+    case GSS_S_DEFECTIVE_CREDENTIAL: return SEC_E_NO_CREDENTIALS;
+    case GSS_S_CREDENTIALS_EXPIRED:  return SEC_E_CONTEXT_EXPIRED;
+    case GSS_S_CONTEXT_EXPIRED:      return SEC_E_CONTEXT_EXPIRED;
+    case GSS_S_BAD_QOP:              return SEC_E_QOP_NOT_SUPPORTED;
+    case GSS_S_CONTINUE_NEEDED:      return SEC_I_CONTINUE_NEEDED;
+    case GSS_S_DUPLICATE_TOKEN:      return SEC_E_INVALID_TOKEN;
+    case GSS_S_OLD_TOKEN:            return SEC_E_INVALID_TOKEN;
+    case GSS_S_UNSEQ_TOKEN:          return SEC_E_OUT_OF_SEQUENCE;
+    case GSS_S_GAP_TOKEN:            return SEC_E_OUT_OF_SEQUENCE;
+
+    default:
+        FIXME( "couldn't convert status 0x%08x to SECURITY_STATUS\n", status );
+        return SEC_E_INTERNAL_ERROR;
+    }
+}
+
+static void expirytime_gss_to_sspi( OM_uint32 expirytime, TimeStamp *timestamp )
+{
+    SYSTEMTIME time;
+    FILETIME filetime;
+    ULARGE_INTEGER tmp;
+
+    GetLocalTime( &time );
+    SystemTimeToFileTime( &time, &filetime );
+    tmp.QuadPart = ((ULONGLONG)filetime.dwLowDateTime | (ULONGLONG)filetime.dwHighDateTime << 32) + expirytime;
+    timestamp->LowPart  = tmp.QuadPart;
+    timestamp->HighPart = tmp.QuadPart >> 32;
+}
+
+static SECURITY_STATUS name_sspi_to_gss( const UNICODE_STRING *name_str, gss_name_t *name )
+{
+    OM_uint32 ret, minor_status;
+    gss_OID type = GSS_C_NO_OID; /* FIXME: detect the appropriate value for this ourselves? */
+    gss_buffer_desc buf;
+
+    buf.length = WideCharToMultiByte( CP_UNIXCP, 0, name_str->Buffer, name_str->Length / sizeof(WCHAR), NULL, 0, NULL, NULL ) + 1;
+    if (!(buf.value = HeapAlloc( GetProcessHeap(), 0, buf.length ))) return SEC_E_INSUFFICIENT_MEMORY;
+    WideCharToMultiByte( CP_UNIXCP, 0, name_str->Buffer, name_str->Length / sizeof(WCHAR), buf.value, buf.length, NULL, NULL );
+    buf.length--;
+
+    ret = pgss_import_name( &minor_status, &buf, type, name );
+    TRACE( "gss_import_name returned %08x minor status %08x\n", ret, minor_status );
+
+    HeapFree( GetProcessHeap(), 0, buf.value );
+    return status_gss_to_sspi( ret );
+}
+#endif /* SONAME_LIBGSSAPI_KRB5 */
+
+static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
+    UNICODE_STRING *principal_us, ULONG credential_use, LUID *logon_id, void *auth_data,
+    void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *ts_expiry )
+{
+#ifdef SONAME_LIBGSSAPI_KRB5
+    OM_uint32 ret, minor_status, expiry_time;
+    gss_name_t principal = GSS_C_NO_NAME;
+    gss_cred_usage_t cred_usage;
+    gss_cred_id_t cred_handle;
+
+    TRACE( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
+           logon_id, auth_data, get_key_fn, get_key_arg, credential, ts_expiry );
+
+    if (auth_data)
+    {
+        FIXME( "specific credentials not supported\n" );
+        return SEC_E_UNKNOWN_CREDENTIALS;
+    }
+
+    switch (credential_use)
+    {
+        case SECPKG_CRED_INBOUND:
+            cred_usage = GSS_C_ACCEPT;
+            break;
+        case SECPKG_CRED_OUTBOUND:
+            cred_usage = GSS_C_INITIATE;
+            break;
+        case SECPKG_CRED_BOTH:
+            cred_usage = GSS_C_BOTH;
+            break;
+        default:
+            return SEC_E_UNKNOWN_CREDENTIALS;
+    }
+
+    if (principal_us && ((ret = name_sspi_to_gss( principal_us, &principal )) != SEC_E_OK)) return ret;
+
+    ret = pgss_acquire_cred( &minor_status, principal, GSS_C_INDEFINITE, GSS_C_NULL_OID_SET, cred_usage,
+                              &cred_handle, NULL, &expiry_time );
+    TRACE( "gss_acquire_cred returned %08x minor status %08x\n", ret, minor_status );
+    if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
+    {
+        credhandle_gss_to_sspi( cred_handle, credential );
+        expirytime_gss_to_sspi( expiry_time, ts_expiry );
+    }
+
+    if (principal != GSS_C_NO_NAME) pgss_release_name( &minor_status, &principal );
+
+    return status_gss_to_sspi( ret );
+#else
+    FIXME( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
+           logon_id, auth_data, get_key_fn, get_key_arg, credential, ts_expiry );
+    FIXME( "Wine was built without Kerberos support.\n" );
+    return SEC_E_UNSUPPORTED_FUNCTION;
+#endif
+}
+
+static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMETERS *params,
+    LSA_SECPKG_FUNCTION_TABLE *lsa_function_table)
+{
+    TRACE("%lu,%p,%p\n", package_id, params, lsa_function_table);
+
+#ifdef SONAME_LIBGSSAPI_KRB5
+    if (load_gssapi_krb5()) return STATUS_SUCCESS;
+#endif
+
+    return STATUS_UNSUCCESSFUL;
+}
+
+static NTSTATUS NTAPI kerberos_SpShutdown(void)
+{
+    TRACE("\n");
+
+#ifdef SONAME_LIBGSSAPI_KRB5
+    unload_gssapi_krb5();
+#endif
+
+    return STATUS_SUCCESS;
+}
+
 static SECPKG_FUNCTION_TABLE kerberos_table =
 {
     kerberos_LsaApInitializePackage, /* InitializePackage */
@@ -197,7 +381,7 @@ static SECPKG_FUNCTION_TABLE kerberos_table =
     kerberos_SpShutdown,
     kerberos_SpGetInfo,
     NULL, /* AcceptCredentials */
-    NULL, /* SpAcquireCredentialsHandle */
+    kerberos_SpAcquireCredentialsHandle,
     NULL, /* SpQueryCredentialsAttributes */
     NULL, /* FreeCredentialsHandle */
     NULL, /* SaveCredentials */

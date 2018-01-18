@@ -54,6 +54,7 @@ AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU librar
 AC_ARG_WITH(gnutls,    AS_HELP_STRING([--without-gnutls],[do not use GnuTLS (schannel support)]))
 AC_ARG_WITH(gsm,       AS_HELP_STRING([--without-gsm],[do not use libgsm (GSM 06.10 codec support)]),
             [if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi])
+AC_ARG_WITH(gssapi,    AS_HELP_STRING([--without-gssapi],[do not use GSSAPI (Kerberos SSP support)]))
 AC_ARG_WITH(gstreamer, AS_HELP_STRING([--without-gstreamer],[do not use GStreamer (codecs support)]))
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
 AC_ARG_WITH(jpeg,      AS_HELP_STRING([--without-jpeg],[do not use JPEG]))
@@ -1664,6 +1665,23 @@ then
 fi
 WINE_NOTICE_WITH(krb5,[test "x$ac_cv_lib_soname_krb5" = "x"],
                  [libkrb5 ${notice_platform}development files not found, Kerberos won't be supported.])
+
+dnl **** Check for gssapi ****
+if test "x$with_gssapi" != "xno"
+then
+    WINE_PACKAGE_FLAGS(GSSAPI,[krb5-gssapi],,
+                       [`${KRB5_CONFIG:-krb5-config} --cflags gssapi 2>/dev/null`],
+                       [`${KRB5_CONFIG:-krb5-config} --libs gssapi 2>/dev/null`],
+        [AC_CHECK_HEADERS([gssapi/gssapi.h gssapi/gssapi_ext.h])
+        if test "$ac_cv_header_gssapi_gssapi_h" = "yes" -a "$ac_cv_header_gssapi_gssapi_ext_h" = "yes"
+        then
+            WINE_CHECK_SONAME(gssapi_krb5, gss_init_sec_context,,[GSSAPI_CFLAGS=""],[$GSSAPI_LIBS])
+        else
+            GSSAPI_CFLAGS=""
+        fi])
+fi
+WINE_NOTICE_WITH(gssapi,[test "x$ac_cv_lib_soname_gssapi_krb5" = "x"],
+                 [libgssapi_krb5 ${notice_platform}development files not found (or too old), no Kerberos SSP support.])
 
 dnl **** Check for libjpeg ****
 if test "x$with_jpeg" != "xno"

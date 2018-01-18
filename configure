@@ -648,6 +648,8 @@ PNG_LIBS
 PNG_CFLAGS
 JPEG_LIBS
 JPEG_CFLAGS
+GSSAPI_LIBS
+GSSAPI_CFLAGS
 KRB5_LIBS
 KRB5_CFLAGS
 FONTCONFIG_LIBS
@@ -838,6 +840,7 @@ with_gphoto
 with_glu
 with_gnutls
 with_gsm
+with_gssapi
 with_gstreamer
 with_hal
 with_jpeg
@@ -1732,6 +1735,8 @@ FONTCONFIG_CFLAGS
 FONTCONFIG_LIBS
 KRB5_CFLAGS
 KRB5_LIBS
+GSSAPI_CFLAGS
+GSSAPI_LIBS
 JPEG_CFLAGS
 JPEG_LIBS
 PNG_CFLAGS
@@ -2399,6 +2404,7 @@ Optional Packages:
   --without-glu           do not use the GLU library
   --without-gnutls        do not use GnuTLS (schannel support)
   --without-gsm           do not use libgsm (GSM 06.10 codec support)
+  --without-gssapi        do not use GSSAPI (Kerberos SSP support)
   --without-gstreamer     do not use GStreamer (codecs support)
   --without-hal           do not use HAL (dynamic device support)
   --without-jpeg          do not use JPEG
@@ -2499,6 +2505,9 @@ Some influential environment variables:
               Linker flags for fontconfig, overriding pkg-config
   KRB5_CFLAGS C compiler flags for krb5, overriding pkg-config
   KRB5_LIBS   Linker flags for krb5, overriding pkg-config
+  GSSAPI_CFLAGS
+              C compiler flags for krb5-gssapi, overriding pkg-config
+  GSSAPI_LIBS Linker flags for krb5-gssapi, overriding pkg-config
   JPEG_CFLAGS C compiler flags for libjpeg, overriding pkg-config
   JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
   PNG_CFLAGS  C compiler flags for libpng, overriding pkg-config
@@ -3599,6 +3608,12 @@ fi
 # Check whether --with-gsm was given.
 if test "${with_gsm+set}" = set; then :
   withval=$with_gsm; if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi
+fi
+
+
+# Check whether --with-gssapi was given.
+if test "${with_gssapi+set}" = set; then :
+  withval=$with_gssapi;
 fi
 
 
@@ -13867,6 +13882,111 @@ esac
 
 fi
 
+if test "x$with_gssapi" != "xno"
+then
+    if ${GSSAPI_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  GSSAPI_CFLAGS=`$PKG_CONFIG --cflags krb5-gssapi 2>/dev/null`
+fi
+fi
+test "$cross_compiling" = yes || GSSAPI_CFLAGS=${GSSAPI_CFLAGS:-`${KRB5_CONFIG:-krb5-config} --cflags gssapi 2>/dev/null`}
+if ${GSSAPI_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  GSSAPI_LIBS=`$PKG_CONFIG --libs krb5-gssapi 2>/dev/null`
+fi
+fi
+test "$cross_compiling" = yes || GSSAPI_LIBS=${GSSAPI_LIBS:-`${KRB5_CONFIG:-krb5-config} --libs gssapi 2>/dev/null`}
+
+$as_echo "$as_me:${as_lineno-$LINENO}: krb5-gssapi cflags: $GSSAPI_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: krb5-gssapi libs: $GSSAPI_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $GSSAPI_CFLAGS"
+for ac_header in gssapi/gssapi.h gssapi/gssapi_ext.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_gssapi_gssapi_h" = "yes" -a "$ac_cv_header_gssapi_gssapi_ext_h" = "yes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lgssapi_krb5" >&5
+$as_echo_n "checking for -lgssapi_krb5... " >&6; }
+if ${ac_cv_lib_soname_gssapi_krb5+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lgssapi_krb5 $GSSAPI_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gss_init_sec_context ();
+int
+main ()
+{
+return gss_init_sec_context ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_gssapi_krb5=`$ac_cv_path_LDD conftest.exe | grep "gssapi_krb5" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_gssapi_krb5=`$OTOOL -L conftest$ac_exeext | grep "libgssapi_krb5\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libgssapi_krb5\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_gssapi_krb5=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libgssapi_krb5\\.$LIBEXT" | sed -e "s/^.*\\[\\(libgssapi_krb5\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_gssapi_krb5:+false} :; then :
+  ac_cv_lib_soname_gssapi_krb5=`$LDD conftest$ac_exeext | grep "libgssapi_krb5\\.$LIBEXT" | sed -e "s/^.*\(libgssapi_krb5\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_gssapi_krb5:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+       GSSAPI_CFLAGS=""
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_gssapi_krb5" >&5
+$as_echo "$ac_cv_lib_soname_gssapi_krb5" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBGSSAPI_KRB5 "$ac_cv_lib_soname_gssapi_krb5"
+_ACEOF
+
+
+fi
+        else
+            GSSAPI_CFLAGS=""
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$GSSAPI_CFLAGS" || GSSAPI_CFLAGS=`echo " $GSSAPI_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$GSSAPI_LIBS" || GSSAPI_LIBS=`echo " $GSSAPI_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
+fi
+if test "x$ac_cv_lib_soname_gssapi_krb5" = "x"; then :
+  case "x$with_gssapi" in
+  x)   as_fn_append wine_notices "|libgssapi_krb5 ${notice_platform}development files not found (or too old), no Kerberos SSP support." ;;
+  xno) ;;
+  *)   as_fn_error $? "libgssapi_krb5 ${notice_platform}development files not found (or too old), no Kerberos SSP support.
+This is an error since --with-gssapi was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
 if test "x$with_jpeg" != "xno"
 then
     if ${JPEG_CFLAGS:+false} :; then :
@@ -18127,6 +18247,8 @@ FONTCONFIG_CFLAGS = $FONTCONFIG_CFLAGS
 FONTCONFIG_LIBS = $FONTCONFIG_LIBS
 KRB5_CFLAGS = $KRB5_CFLAGS
 KRB5_LIBS = $KRB5_LIBS
+GSSAPI_CFLAGS = $GSSAPI_CFLAGS
+GSSAPI_LIBS = $GSSAPI_LIBS
 JPEG_CFLAGS = $JPEG_CFLAGS
 JPEG_LIBS = $JPEG_LIBS
 PNG_CFLAGS = $PNG_CFLAGS
