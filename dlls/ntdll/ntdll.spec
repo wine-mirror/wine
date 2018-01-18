@@ -1431,6 +1431,7 @@
 @ cdecl -private strncat(str str long) NTDLL_strncat
 @ cdecl -private strncmp(str str long) NTDLL_strncmp
 @ cdecl -private strncpy(ptr str long) NTDLL_strncpy
+@ cdecl -private strnlen(ptr long) NTDLL_strnlen
 @ cdecl -private strpbrk(str str) NTDLL_strpbrk
 @ cdecl -private strrchr(str long) NTDLL_strrchr
 @ cdecl -private strspn(str str) NTDLL_strspn

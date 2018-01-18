@@ -164,6 +164,15 @@ char * __cdecl NTDLL_strncpy( char *dst, const char *src, size_t len )
 
 
 /*********************************************************************
+ *                  strnlen   (NTDLL.@)
+ */
+size_t __cdecl NTDLL_strnlen( const char *str, size_t len )
+{
+    return strnlen( str, len );
+}
+
+
+/*********************************************************************
  *                  strpbrk   (NTDLL.@)
  */
 char * __cdecl NTDLL_strpbrk( const char *str, const char *accept )
