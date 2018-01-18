@@ -1,12 +1,24 @@
-The Wine development release 3.0-rc6 is now available.
+The Wine team is proud to announce that the stable release Wine 3.0
+is now available.
 
-What's new in this release (see below for details):
-  - Bug fixes only, we are in code freeze.
+This release represents a year of development effort and over 6,000
+individual changes. It contains a large number of improvements that
+are listed in the release notes below. The main highlights are:
+
+  - Direct3D 10 and 11 support.
+  - The Direct3D command stream.
+  - The Android graphics driver.
+  - Improved DirectWrite and Direct2D support.
+
+Once again, because of the annual release schedule, a number of
+features that are being worked on have been deferred to the next
+development cycle. This includes in particular Direct3D 12 and Vulkan
+support, as well as OpenGL ES support to enable Direct3D on Android.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/3.0/wine-3.0-rc6.tar.xz
-  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0-rc6.tar.xz
+  https://dl.winehq.org/wine/source/3.0/wine-3.0.tar.xz
+  http://mirrors.ibiblio.org/wine/source/3.0/wine-3.0.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,123 +34,336 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 3.0-rc6 (total 14):
+What's new in Wine 3.0
+======================
 
-   3864  RedMon v1.7/1.9 (Redirection Port Monitor) fails to install/run
-  36441  joy.cpl crashes when PS4 Gamepad connected via Bluetooth
-  38671  valgrind shows an uninitialized write in dlls/advapi32/tests/security.c (test_CreateDirectoryA)
-  38799  RaidCall 7.x crashes when joining a group/trying to test sound
-  40254  mshtml:script test regression (timeout)
-  40653  Castle of Illusion start on black screen and crash
-  42588  Vietcong - graphics glitches since Wine 2.1
-  43308  valgrind shows an uninitialized write in dlls/advapi32/tests/security.c (test_AddMandatoryAce)
-  43309  valgrind shows an uninitialized write in dlls/advapi32/tests/security.c (test_token_security_descriptor)
-  43310  valgrind shows several definite leaks in dlls/advapi32/tests/security.c
-  43654  Arx Fatalis: Candlelight / Porch light leaks through the walls
-  44175  stack corruption and crash with OpenSSH port
-  44286  Regression: Default value in dropdown list is no longer select
-  44332  Powerpoint 2007/2010 slideshow encounters an "unexpected error" trying to move past first slide
 
-----------------------------------------------------------------
+*** Direct3D
 
-Changes since 3.0-rc5:
+- A significant number of Direct3D 10 and 11 features are implemented in
+  this release, including:
+  - Compute shaders.
+  - Hull and domain (tessellation) shaders.
+  - Stream output.
+  - Format capability queries.
+  - A large number of shader model 4 and 5 shader instructions.
+  - Shader model 4 and 5 interpolation modifiers.
+  - Shader model 4 and 5 clip and cull distances.
+  - Indirect draws and indirect compute dispatch.
+  - Structured buffers.
+  - Byte addressable buffers.
+  - Append and consume buffers.
+  - Unordered access view counters.
+  - Cube-map arrays.
+  - Layered rendering to 3-dimensional textures and texture arrays.
+  - Mip-map generation.
+  - Conservative depth output.
+  - Type-less (sub)resource copies.
+  - Depth bias.
 
-Akihiro Sagawa (1):
-      psapi/tests: Add more EnumProcessModules tests.
+- The multi-threaded command stream feature serializes Direct3D rendering
+  commands from different threads into a single rendering thread. Its main
+  purpose in this release is rendering correctness, but the feature also
+  provides opportunities for future performance improvements. This feature
+  is disabled by default.
 
-Alex Henrie (17):
-      msi/tests: Add missing return value checks to package tests (Coverity).
-      shell32/tests: Add missing return value check to shelllink tests (Coverity).
-      kernel32/tests: Add missing return value check to module tests (Coverity).
-      wininet/tests: Fix off-by-one errors in HTTP tests (Coverity).
-      shlwapi/tests: Add missing return value checks to istream tests (Coverity).
-      msvcrt: Don't include MSVC 7.0+ miscellaneous functions in SOs for older DLLs.
-      shell32/tests: Drop progman DDE test workarounds for Windows <= 2000.
-      kernel32/tests: Drop module test workarounds for Windows <= 2000.
-      msxml3/tests: Add missing return value checks to domdoc tests (Coverity).
-      msxml3/tests: Make put_data_types const.
-      msvcrt: Don't include MSVC 7.0+ exception functions in SOs for older DLLs.
-      msvcrt: Don't include MSVC 8.0+ exit functions in SOs for older DLLs.
-      msvcrt: Don't include MSVC 11.0+ function _wcreate_locale in SOs for older DLLs.
-      msvcrt: Don't include MSVC 8.0+ function _CRT_RTC_INITW in SOs for older DLLs.
-      msvcrt: Fix mistakes in comments.
-      shell32/tests: Drop shell folder test dynamic imports for Windows <= 2000.
-      shell32/tests: Drop shell folder test workarounds for Windows <= 2000.
+- Support for OpenGL core contexts in Direct3D is improved, to the point
+  that core contexts are used by default for Direct3D 10 and 11
+  applications on AMD and Intel graphics cards. As a result, users of those
+  graphics cards in combination with Mesa OpenGL drivers should no longer
+  need to set the "MaxVersionGL" registry key to enable Direct3D 10 and 11
+  support.
 
-Alexandre Julliard (1):
-      kernel32/tests: Also test wrong architecture with matching 32/64 bitness.
+- The Direct3D graphics card database recognizes more graphics cards.
 
-Andrew Eikum (1):
-      hid: Pass a buffer to DeviceIoControl in HidD_SetNumInputBuffers.
+- New HKCU\Software\Wine\Direct3D registry key:
+  - "csmt" (REG_DWORD)
+    Enable (0x1) or disable (0x0, default) the multi-threaded command
+    stream feature described above.
 
-Andrey Gusev (9):
-      comctl32: Fix a typo in comment.
-      kernel32/tests: Fix a typo in comment.
-      msctf/tests: Fix a typo in sink_check_ok().
-      ddraw: Fix typos in comments.
-      msi: Remove redundant comparison.
-      cmd: Remove redundant comparison.
-      kernel32: Remove redundant comparison.
-      winhlp32: Remove redundant comparison.
-      services/tests: Fix resource leak.
+- Deprecated HKCU\Software\Wine\Direct3D registry keys:
+  - "StrictDrawOrdering"
+    This has been superseded by the multi-threaded command stream feature.
+  - "OffscreenRenderingMode"
+    The "fbo" setting is the only remaining supported value. The
+    "backbuffer" setting, while still available, is no longer supported.
 
-Bob Ziuchkovski (1):
-      dinput: Ignore vendor-specific usage pages for joystick elements on Mac.
+- Removed HKCU\Software\Wine\Direct3D registry keys:
+  - "AlwaysOffscreen"
+    This is always enabled in this release.
+  - "MultiSampling"
+    Use the "SampleCount" (REG_DWORD) setting to force a specific
+    multi-sample anti-aliasing sample count for swapchain render targets
+    instead.
 
-François Gouget (1):
-      kernel32/tests: A couple spelling fixes in a comment.
 
-Jacek Caban (4):
-      schtasks: Added partial /change command implementation.
-      schtasks/tests: Added /change command tests.
-      schtasks: Make /change argument case insensitive.
-      mshtml/tests: Skip test_listener_order tests on IE7.
+*** Graphics
 
-Józef Kucia (11):
-      dxgi/tests: Skip tests if DXGI_ERROR_NOT_CURRENTLY_AVAILABLE is returned.
-      include/d3d11: Fix ID3D11Device5_OpenSharedFence() declaration.
-      wined3d: Load buffer before applying state for indirect draws.
-      wined3d: Load buffer before applying state for indirect dispatches.
-      include: Add EnableMouseInPointer() declaration.
-      d3d11: Handle 3D textures in wined3d_resource_from_d3d10_resource().
-      wined3d: Fix linestrips output for geometry shaders.
-      ddraw/tests: Avoid touching unsupported clip planes.
-      ddraw/tests: Fully initialize surface desc in surface enumeration tests.
-      ddraw/tests: Rewrite LimitTest().
-      ddraw/tests: Rewrite SetRenderState() tests.
+- Drawing outlines of Direct2D geometry objects is implemented.
 
-Matteo Bruni (2):
-      advapi32/tests: Fully initialize ACLs (Valgrind).
-      advapi32/tests: Fix a couple of leaks (Valgrind).
+- Direct2D linear and radial gradient brushes are implemented.
 
-Nikolay Sivov (13):
-      user32/tests: Add some more tests for message data conversion in dialog procedures.
-      dwrite/tests: Add missing return value test (Coverity).
-      msxml3/tests: Simplify test error path.
-      mshtml/tests: Skip some tests if native XMLHTTP support is missing or disabled.
-      jscript/tests: Test for script object creation failure (Coverity).
-      comctl32/tests: Enable more ListView tests on Comctl32 v6.
-      comctl32/tests: Add some state image tests for ListView.
-      ddraw/tests: Move the surface enumeration test.
-      comctl32/tests: Remove noisy trace.
-      ddraw/tests: Move CreateSurface() invalid arguments test.
-      msxml3/tests: Use temporary user directory for test files.
-      user32/tests: Add EM_GETLINE test.
-      comctl32/tests: Add EM_GETLINE test.
+- Direct2D compatibility with GDI is implemented.
 
-Piotr Caban (1):
-      concrt140: Fix Concurrency::is_current_task_group_canceling spec entry.
+- Bounds computation of Direct2D geometry objects is implemented.
 
-Stefan Dösinger (2):
-      ddraw/tests: Sync test_clear() with d3d8/9.
-      ddraw/tests: Mark WARP negative rectangle handling broken.
+- Simplification of Direct2D geometry objects is implemented.
 
-Wei Xie (1):
-      wininet/tests: Check null pointer in InternetGetSecurityInfoByURLW.
+- The OpenGL extension list is updated to OpenGL version 4.6.
 
-Zebediah Figura (2):
-      schtasks/tests: Clean up the tasks directory.
-      hlink: Implement IHlinkBrowseContext_GetObject().
+- The system GLU library is only needed when the Nurbs renderer is used,
+  all other GLU functions are implemented internally.
+
+- Metafile playback in GdiPlus supports most of the GdiPlus-specific
+  metafile record types, in addition to the standard metafile records.
+
+- GdiPlus graphics operations take the GDI transform into account.
+
+- Encoding image formats with a palette is supported in WindowsCodecs.
+
+
+*** Android
+
+- Wine can be built as an APK package and behaves like a proper Android
+  application.
+
+- A full graphics driver is implemented. Because of restrictions of the
+  Android window management API, only full screen desktop mode is
+  supported.
+
+- A full audio driver is implemented.
+
+- OpenGL is supported, but it's limited to the OpenGL ES API that is
+  available on Android.
+
+- Direct3D is not supported yet, because it cannot run on top of OpenGL ES
+  at this point. This will be addressed during the next development cycle.
+
+
+*** Kernel
+
+- The default Windows version is set to Windows 7.
+
+- The full semantics of named pipes are implemented, including message-mode
+  pipes.
+
+- Position Independent Executables are supported, both for the Wine binary
+  itself and also when starting external binaries.
+
+- Serial and parallel port devices are created automatically, with the
+  corresponding symlinks in the dosdevices directory. The detected ports
+  can be overridden through the HKLM\Software\Wine\Ports key.
+
+- Safe DLL search mode is implemented. It is enabled by default, and can be
+  disabled by setting the "SafeDllSearchMode" value to 0 under
+  HKLM\System\CurrentControlSet\Control\Session Manager.
+
+- Safe process search mode is implemented. It is disabled by default but
+  can be requested by the application, and it can be forced by setting the
+  "SafeProcessSearchMode" value to 1 under
+  HKLM\System\CurrentControlSet\Control\Session Manager.
+
+- Asynchronous I/O performance is improved by reducing the number of server
+  calls.
+
+- Memory write watches work correctly when used concurrently with file I/O
+  on the same buffers.
+
+- Virtual memory allocations can be arbitrarily large on 64-bit platforms.
+
+
+*** User interface
+
+- The built-in mouse cursors are redesigned, and available in higher
+  resolution for high DPI screens.
+
+- The Shell Explorer, the common dialogs, and the RichEdit control properly
+  scale on high DPI screens.
+
+- The screen DPI value can be overridden by setting the "LogPixels" value
+  under HKEY_CURRENT_USER\Control Panel\Desktop.
+
+- In desktop mode, higher display resolutions with various aspect ratios
+  are supported.
+
+- The Task Dialog common control is implemented.
+
+- The Internal User Interface is supported in MSI.
+
+- Double-buffered theme painting is implemented.
+
+- The TWAIN library supports a user dialog for selecting the scanner
+  source.
+
+- Device-independent bitmaps and metafiles can be stored into the OLE Data
+  Cache.
+
+
+*** Desktop integration
+
+- The StartupWMClass field is set in generated desktop files so that they
+  can be matched to their respective Windows binary.
+
+- Clipboard changes from other X11 applications are detected through the
+  Xfixes library instead of polling.
+
+- The RichEdit control supports pasting metafiles.
+
+- The Program Manager DDE protocol for manipulating program entries and
+  groups is implemented.
+
+- The HID service for detecting Plug & Play devices is active by default.
+
+- Version 4 of the system tray notification protocol is supported on macOS.
+
+
+*** Text and fonts
+
+- Contextual glyph substitution is supported in UniScribe.
+
+- Character tables are based on version 10.0.0 of the Unicode Standard.
+
+- The Nepali and Bangla (India) locales are supported.
+
+- Font support is compatible with the new behaviors introduced in FreeType
+  version 2.8.1.
+
+
+*** DirectWrite
+
+- Trailing line trimming signs in both character and word modes is
+  supported.
+
+- Cluster wrapping mode is supported.
+
+- Uniform and proportional line spacing methods are implemented.
+
+- Oblique and bold simulation is also supported in bitmap rendering mode.
+
+- Per-factory cache is thread safe.
+
+- Overhang metrics evaluation for layouts are implemented.
+
+- In-memory font file loader is implemented and is available to
+  applications.
+
+
+*** D3DX
+
+- Support for D3DX 9 preshaders is improved.
+
+- Support for D3DX 9 application defined effect state managers
+  (ID3DXEffectStateManager) is implemented.
+
+- Using effect pools to share effect parameters between D3DX 9 effects is
+  implemented.
+
+
+*** Internet and networking
+
+- UDP/TCP listeners are implemented in Web Services.
+
+- Web Services supports the .NET Binary Format, including the string table
+  extension.
+
+- Web Services supports the .NET Message Framing Protocol.
+
+- Asynchronous support is enabled for receiving messages in Web Services.
+
+- HTML event handling is rewritten to support standard-compliant mode.
+
+- Multiple new standard-compliant HTML APIs are supported. HTML document
+  mode support is improved to preserve compatibility with documents
+  expecting legacy behavior.
+
+- The WebBrowser control supports MHTML files.
+
+- Embedding HTML documents in .NET applications is better supported.
+
+- WinHTTP correctly parses cookie attributes.
+
+
+*** Cryptography
+
+- Cryptographic hashes are implemented internally instead of relying on
+  GnuTLS.
+
+- AES encryption is supported.
+
+- The Microsoft Root Certificate 2011 is added to the list of known
+  Microsoft certificates.
+
+- The Mono and Gecko add-on packages are verified with SHA256 checksums.
+
+
+*** ARM platforms
+
+- On ARM, the floating point ABI defaults to 'softfp' for compatibility
+  with Windows binaries.  It can be changed by passing the --with-float-abi
+  flag to configure.
+
+- The Wine preloader is also used on ARM64 platforms.
+
+- Relay debugging is supported on ARM64 platforms.
+
+
+*** Built-in applications
+
+- Registry importing and exporting in RegEdit is reimplemented for better
+  compatibility. Windows 3.1 registry files can also be imported. Registry
+  files are exported to Unicode format by default.
+
+- RegEdit always shows the 64-bit view of the registry on 64-bit prefixes.
+
+- The Reg.exe registry manipulation tool supports importing and exporting
+  registry files.
+
+- The command interpreter implements the MKLINK command.
+
+- The command interpreter supports escape characters in the prompt string.
+
+- WineMine shows a confirmation dialog before resetting the best scores.
+
+
+*** Tools
+
+- The IDL compiler (widl) handles C++ aggregate returns in an
+  MSVC-compatible way.
+
+- The resource compiler (wrc) supports translating version resources
+  through the po files.
+
+- The Wine debugger (winedbg) supports printing floating point and SSE
+  register state.
+
+- All Perl scripts that parse XML use the standard XML::LibXML module.
+
+- The obsolete wineinstall tool is removed.
+
+
+*** Miscellaneous
+
+- XAudio supports float audio formats with more than 2 channels.
+
+- The Scheduler and related classes are supported in the C++ runtime.
+
+- SQL driver installation is supported in ODBC.
+
+- The ProgramData well known directory is supported.
+
+- The Mono engine is updated with upstream Mono fixes, and supports the
+  Mono profiler API version 2.
+
+- The thread id is always displayed in debug traces.
+
+
+*** New external dependencies
+
+- The krb5 library is used to implement the Kerberos Authentication
+  Package.
+
+- The XFixes library is used to receive clipboard change notifications.
+
 
 --
 Alexandre Julliard
