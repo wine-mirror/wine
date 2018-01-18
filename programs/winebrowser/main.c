@@ -54,7 +54,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winebrowser);
 
-typedef LPSTR (*wine_get_unix_file_name_t)(LPCWSTR unixname);
+typedef LPSTR (*CDECL wine_get_unix_file_name_t)(LPCWSTR unixname);
 
 static const WCHAR browser_key[] =
     {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
