@@ -30,6 +30,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "rpc.h"
 #include "sspi.h"
 #include "ntsecapi.h"
 #include "ntsecpkg.h"
@@ -38,6 +39,27 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kerberos);
+
+#define KERBEROS_MAX_BUF 12000
+
+#define KERBEROS_CAPS \
+    ( SECPKG_FLAG_INTEGRITY \
+    | SECPKG_FLAG_PRIVACY \
+    | SECPKG_FLAG_TOKEN_ONLY \
+    | SECPKG_FLAG_DATAGRAM \
+    | SECPKG_FLAG_CONNECTION \
+    | SECPKG_FLAG_MULTI_REQUIRED \
+    | SECPKG_FLAG_EXTENDED_ERROR \
+    | SECPKG_FLAG_IMPERSONATION \
+    | SECPKG_FLAG_ACCEPT_WIN32_NAME \
+    | SECPKG_FLAG_NEGOTIABLE \
+    | SECPKG_FLAG_GSS_COMPATIBLE \
+    | SECPKG_FLAG_LOGON \
+    | SECPKG_FLAG_MUTUAL_AUTH \
+    | SECPKG_FLAG_DELEGATION \
+    | SECPKG_FLAG_READONLY_WITH_CHECKSUM \
+    | SECPKG_FLAG_RESTRICTED_TOKENS \
+    | SECPKG_FLAG_APPCONTAINER_CHECKS)
 
 static ULONG kerberos_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
@@ -122,6 +144,30 @@ static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST req
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS NTAPI kerberos_SpGetInfo(SecPkgInfoW *info)
+{
+    static WCHAR kerberos_name_W[] = {'K','e','r','b','e','r','o','s',0};
+    static WCHAR kerberos_comment_W[] = {'M','i','c','r','o','s','o','f','t',' ','K','e','r','b','e','r','o','s',' ','V','1','.','0',0};
+    static const SecPkgInfoW infoW =
+    {
+        KERBEROS_CAPS,
+        1,
+        RPC_C_AUTHN_GSS_KERBEROS,
+        KERBEROS_MAX_BUF,
+        kerberos_name_W,
+        kerberos_comment_W
+    };
+
+    TRACE("%p\n", info);
+
+    /* LSA will make a copy before forwarding the structure, so
+     * it's safe to put pointers to dynamic or constant data there.
+     */
+    *info = infoW;
+
+    return STATUS_SUCCESS;
+}
+
 static SECPKG_FUNCTION_TABLE kerberos_table =
 {
     kerberos_LsaApInitializePackage, /* InitializePackage */
@@ -134,7 +180,7 @@ static SECPKG_FUNCTION_TABLE kerberos_table =
     NULL, /* LogonUserEx2 */
     NULL, /* Initialize */
     NULL, /* Shutdown */
-    NULL, /* SpGetInfoUnified */
+    kerberos_SpGetInfo,
     NULL, /* AcceptCredentials */
     NULL, /* SpAcquireCredentialsHandle */
     NULL, /* SpQueryCredentialsAttributes */
