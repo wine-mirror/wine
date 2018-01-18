@@ -23,6 +23,12 @@ import "mshtml.idl";
 
 #include "dhtmldid.h"
 
+#ifndef __WIDL__
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 [
     uuid(683364a1-b37d-11d1-adc5-006008a5848c),
     version(1.0)
@@ -557,7 +563,10 @@ library DHTMLEDLib
     };
 
     [
-        uuid(2d360201-fff5-11d1-8d03-00a0c959bc0a)
+        uuid(2d360201-fff5-11d1-8d03-00a0c959bc0a),
+        threading(apartment),
+        progid("DHTMLSafe.DHTMLSafe.1"),
+        vi_progid("DHTMLSafe.DHTMLSafe")
     ]
     coclass DHTMLSafe
     {
@@ -706,7 +715,10 @@ library DHTMLEDLib
     };
 
     [
-        uuid(2d360200-fff5-11d1-8d03-00a0c959bc0a)
+        uuid(2d360200-fff5-11d1-8d03-00a0c959bc0a),
+        threading(apartment),
+        progid("DHTMLEdit.DHTMLEdit.1"),
+        vi_progid("DHTMLEdit.DHTMLEdit")
     ]
     coclass DHTMLEdit
     {
