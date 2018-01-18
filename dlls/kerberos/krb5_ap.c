@@ -192,6 +192,7 @@ MAKE_FUNCPTR(gss_delete_sec_context);
 MAKE_FUNCPTR(gss_import_name);
 MAKE_FUNCPTR(gss_init_sec_context);
 MAKE_FUNCPTR(gss_release_buffer);
+MAKE_FUNCPTR(gss_release_cred);
 MAKE_FUNCPTR(gss_release_name);
 #undef MAKE_FUNCPTR
 
@@ -216,6 +217,7 @@ static BOOL load_gssapi_krb5(void)
     LOAD_FUNCPTR(gss_import_name)
     LOAD_FUNCPTR(gss_init_sec_context)
     LOAD_FUNCPTR(gss_release_buffer)
+    LOAD_FUNCPTR(gss_release_cred)
     LOAD_FUNCPTR(gss_release_name)
 #undef LOAD_FUNCPTR
 
@@ -415,6 +417,27 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     FIXME( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
            logon_id, auth_data, get_key_fn, get_key_arg, credential, ts_expiry );
     FIXME( "Wine was built without Kerberos support.\n" );
+    return SEC_E_UNSUPPORTED_FUNCTION;
+#endif
+}
+
+static NTSTATUS NTAPI kerberos_SpFreeCredentialsHandle( LSA_SEC_HANDLE credential )
+{
+#ifdef SONAME_LIBGSSAPI_KRB5
+    OM_uint32 ret, minor_status;
+    gss_cred_id_t cred_handle;
+
+    TRACE( "(%lx)\n", credential );
+
+    if (!credential) return SEC_E_INVALID_HANDLE;
+    if (!(cred_handle = credhandle_sspi_to_gss( credential ))) return SEC_E_OK;
+
+    ret = pgss_release_cred( &minor_status, &cred_handle );
+    TRACE( "gss_release_cred returned %08x minor status %08x\n", ret, minor_status );
+
+    return status_gss_to_sspi( ret );
+#else
+    FIXME( "(%lx)\n", credential );
     return SEC_E_UNSUPPORTED_FUNCTION;
 #endif
 }
@@ -624,7 +647,7 @@ static SECPKG_FUNCTION_TABLE kerberos_table =
     NULL, /* AcceptCredentials */
     kerberos_SpAcquireCredentialsHandle,
     NULL, /* SpQueryCredentialsAttributes */
-    NULL, /* FreeCredentialsHandle */
+    kerberos_SpFreeCredentialsHandle,
     NULL, /* SaveCredentials */
     NULL, /* GetCredentials */
     NULL, /* DeleteCredentials */
