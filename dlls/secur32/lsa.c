@@ -377,13 +377,32 @@ done:
     return status;
 }
 
+static SECURITY_STATUS WINAPI lsa_FreeCredentialsHandle(CredHandle *credential)
+{
+    struct lsa_package *lsa_package;
+    LSA_SEC_HANDLE lsa_credential;
+
+    TRACE("%p\n", credential);
+    if (!credential) return SEC_E_INVALID_HANDLE;
+
+    lsa_package = (struct lsa_package *)credential->dwUpper;
+    lsa_credential = (LSA_SEC_HANDLE)credential->dwLower;
+
+    if (!lsa_package) return SEC_E_INVALID_HANDLE;
+
+    if (!lsa_package->lsa_api || !lsa_package->lsa_api->FreeCredentialsHandle)
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    return lsa_package->lsa_api->FreeCredentialsHandle(lsa_credential);
+}
+
 static const SecurityFunctionTableW lsa_sspi_tableW =
 {
     1,
     NULL, /* EnumerateSecurityPackagesW */
     NULL, /* QueryCredentialsAttributesW */
     lsa_AcquireCredentialsHandleW,
-    NULL, /* FreeCredentialsHandle */
+    lsa_FreeCredentialsHandle,
     NULL, /* Reserved2 */
     NULL, /* InitializeSecurityContextW */
     NULL, /* AcceptSecurityContext */
@@ -415,7 +434,7 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     NULL, /* EnumerateSecurityPackagesA */
     NULL, /* QueryCredentialsAttributesA */
     lsa_AcquireCredentialsHandleA,
-    NULL, /* FreeCredentialsHandle */
+    lsa_FreeCredentialsHandle,
     NULL, /* Reserved2 */
     NULL, /* InitializeSecurityContextA */
     NULL, /* AcceptSecurityContext */
