@@ -37,9 +37,9 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(krb5);
+WINE_DEFAULT_DEBUG_CHANNEL(kerberos);
 
-static ULONG krb5_package_id;
+static ULONG kerberos_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
 
 #ifdef SONAME_LIBKRB5
@@ -84,34 +84,34 @@ static void load_krb5(void)
 
 #endif /* SONAME_LIBKRB5 */
 
-static NTSTATUS NTAPI krb5_LsaApInitializePackage(ULONG package_id, PLSA_DISPATCH_TABLE dispatch,
+static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DISPATCH_TABLE dispatch,
     PLSA_STRING database, PLSA_STRING confidentiality, PLSA_STRING *package_name)
 {
-    char *krb5_name;
+    char *kerberos_name;
 
     load_krb5();
 
-    krb5_package_id = package_id;
+    kerberos_package_id = package_id;
     lsa_dispatch = *dispatch;
 
-    krb5_name = lsa_dispatch.AllocateLsaHeap(sizeof(MICROSOFT_KERBEROS_NAME_A));
-    if (!krb5_name) return STATUS_NO_MEMORY;
+    kerberos_name = lsa_dispatch.AllocateLsaHeap(sizeof(MICROSOFT_KERBEROS_NAME_A));
+    if (!kerberos_name) return STATUS_NO_MEMORY;
 
-    memcpy(krb5_name, MICROSOFT_KERBEROS_NAME_A, sizeof(MICROSOFT_KERBEROS_NAME_A));
+    memcpy(kerberos_name, MICROSOFT_KERBEROS_NAME_A, sizeof(MICROSOFT_KERBEROS_NAME_A));
 
     *package_name = lsa_dispatch.AllocateLsaHeap(sizeof(**package_name));
     if (!*package_name)
     {
-        lsa_dispatch.FreeLsaHeap(krb5_name);
+        lsa_dispatch.FreeLsaHeap(kerberos_name);
         return STATUS_NO_MEMORY;
     }
 
-    RtlInitString(*package_name, krb5_name);
+    RtlInitString(*package_name, kerberos_name);
 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS NTAPI krb5_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST request,
+static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST request,
     PVOID in_buffer, PVOID client_buffer_base, ULONG in_buffer_length,
     PVOID *out_buffer, PULONG out_buffer_length, PNTSTATUS status)
 {
@@ -122,13 +122,13 @@ static NTSTATUS NTAPI krb5_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST request
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static SECPKG_FUNCTION_TABLE krb5_table =
+static SECPKG_FUNCTION_TABLE kerberos_table =
 {
-    krb5_LsaApInitializePackage, /* InitializePackage */
+    kerberos_LsaApInitializePackage, /* InitializePackage */
     NULL, /* LsaLogonUser */
     NULL, /* CallPackage */
     NULL, /* LogonTerminated */
-    krb5_LsaApCallPackageUntrusted, /* CallPackageUntrusted */
+    kerberos_LsaApCallPackageUntrusted, /* CallPackageUntrusted */
     NULL, /* CallPackagePassthrough */
     NULL, /* LogonUserEx */
     NULL, /* LogonUserEx2 */
@@ -168,7 +168,7 @@ NTSTATUS NTAPI SpLsaModeInitialize(ULONG lsa_version, PULONG package_version,
     TRACE("%#x,%p,%p,%p\n", lsa_version, package_version, table, table_count);
 
     *package_version = SECPKG_INTERFACE_VERSION;
-    *table = &krb5_table;
+    *table = &kerberos_table;
     *table_count = 1;
 
     return STATUS_SUCCESS;
