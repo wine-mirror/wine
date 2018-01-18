@@ -187,7 +187,10 @@ static void *libgssapi_krb5_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gss_acquire_cred);
+MAKE_FUNCPTR(gss_delete_sec_context);
 MAKE_FUNCPTR(gss_import_name);
+MAKE_FUNCPTR(gss_init_sec_context);
+MAKE_FUNCPTR(gss_release_buffer);
 MAKE_FUNCPTR(gss_release_name);
 #undef MAKE_FUNCPTR
 
@@ -207,7 +210,10 @@ static BOOL load_gssapi_krb5(void)
     }
 
     LOAD_FUNCPTR(gss_acquire_cred)
+    LOAD_FUNCPTR(gss_delete_sec_context)
     LOAD_FUNCPTR(gss_import_name)
+    LOAD_FUNCPTR(gss_init_sec_context)
+    LOAD_FUNCPTR(gss_release_buffer)
     LOAD_FUNCPTR(gss_release_name)
 #undef LOAD_FUNCPTR
 
@@ -225,9 +231,26 @@ static void unload_gssapi_krb5(void)
     libgssapi_krb5_handle = NULL;
 }
 
+static inline gss_cred_id_t credhandle_sspi_to_gss( LSA_SEC_HANDLE cred )
+{
+    if (!cred) return GSS_C_NO_CREDENTIAL;
+    return (gss_cred_id_t)cred;
+}
+
 static inline void credhandle_gss_to_sspi( gss_cred_id_t handle, LSA_SEC_HANDLE *cred )
 {
     *cred = (LSA_SEC_HANDLE)handle;
+}
+
+static inline gss_ctx_id_t ctxthandle_sspi_to_gss( LSA_SEC_HANDLE ctxt )
+{
+    if (!ctxt) return GSS_C_NO_CONTEXT;
+    return (gss_ctx_id_t)ctxt;
+}
+
+static inline void ctxthandle_gss_to_sspi( gss_ctx_id_t handle, LSA_SEC_HANDLE *ctxt )
+{
+    *ctxt = (LSA_SEC_HANDLE)handle;
 }
 
 static SECURITY_STATUS status_gss_to_sspi( OM_uint32 status )
@@ -285,6 +308,43 @@ static SECURITY_STATUS name_sspi_to_gss( const UNICODE_STRING *name_str, gss_nam
 
     HeapFree( GetProcessHeap(), 0, buf.value );
     return status_gss_to_sspi( ret );
+}
+
+static ULONG flags_isc_req_to_gss( ULONG flags )
+{
+    ULONG ret = GSS_C_DCE_STYLE;
+    if (flags & ISC_REQ_DELEGATE)        ret |= GSS_C_DELEG_FLAG;
+    if (flags & ISC_REQ_MUTUAL_AUTH)     ret |= GSS_C_MUTUAL_FLAG;
+    if (flags & ISC_REQ_REPLAY_DETECT)   ret |= GSS_C_REPLAY_FLAG;
+    if (flags & ISC_REQ_SEQUENCE_DETECT) ret |= GSS_C_SEQUENCE_FLAG;
+    if (flags & ISC_REQ_CONFIDENTIALITY) ret |= GSS_C_CONF_FLAG;
+    if (flags & ISC_REQ_INTEGRITY)       ret |= GSS_C_INTEG_FLAG;
+    if (flags & ISC_REQ_NULL_SESSION)    ret |= GSS_C_ANON_FLAG;
+    return ret;
+}
+
+static ULONG flags_gss_to_isc_ret( ULONG flags )
+{
+    ULONG ret = 0;
+    if (flags & GSS_C_DELEG_FLAG)    ret |= ISC_RET_DELEGATE;
+    if (flags & GSS_C_MUTUAL_FLAG)   ret |= ISC_RET_MUTUAL_AUTH;
+    if (flags & GSS_C_REPLAY_FLAG)   ret |= ISC_RET_REPLAY_DETECT;
+    if (flags & GSS_C_SEQUENCE_FLAG) ret |= ISC_RET_SEQUENCE_DETECT;
+    if (flags & GSS_C_CONF_FLAG)     ret |= ISC_RET_CONFIDENTIALITY;
+    if (flags & GSS_C_INTEG_FLAG)    ret |= ISC_RET_INTEGRITY;
+    if (flags & GSS_C_ANON_FLAG)     ret |= ISC_RET_NULL_SESSION;
+    return ret;
+}
+
+static int get_buffer_index( SecBufferDesc *desc, DWORD type )
+{
+    UINT i;
+    if (!desc) return -1;
+    for (i = 0; i < desc->cBuffers; i++)
+    {
+        if (desc->pBuffers[i].BufferType == type) return i;
+    }
+    return -1;
 }
 #endif /* SONAME_LIBGSSAPI_KRB5 */
 
@@ -344,6 +404,85 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
 #endif
 }
 
+static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context,
+    UNICODE_STRING *target_name, ULONG context_req, ULONG target_data_rep, SecBufferDesc *input,
+    LSA_SEC_HANDLE *new_context, SecBufferDesc *output, ULONG *context_attr, TimeStamp *ts_expiry,
+    BOOLEAN *mapped_context, SecBuffer *context_data )
+{
+#ifdef SONAME_LIBGSSAPI_KRB5
+    static const ULONG supported = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_SEQUENCE_DETECT |
+                                   ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH;
+    OM_uint32 ret, minor_status, ret_flags, expiry_time, req_flags = flags_isc_req_to_gss( context_req );
+    gss_cred_id_t cred_handle;
+    gss_ctx_id_t ctxt_handle;
+    gss_buffer_desc input_token, output_token;
+    gss_name_t target = GSS_C_NO_NAME;
+    int idx;
+
+    TRACE( "(%lx %lx %s 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, debugstr_us(target_name),
+           context_req, target_data_rep, input, new_context, output, context_attr, ts_expiry,
+           mapped_context, context_data );
+    if (context_req & ~supported)
+    {
+        FIXME( "flags 0x%08x not supported\n", context_req & ~supported );
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    if (!context && !input && !credential) return SEC_E_INVALID_HANDLE;
+    cred_handle = credhandle_sspi_to_gss( credential );
+    ctxt_handle = ctxthandle_sspi_to_gss( context );
+
+    if (!input) input_token.length = 0;
+    else
+    {
+        if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+        input_token.length = input->pBuffers[idx].cbBuffer;
+        input_token.value  = input->pBuffers[idx].pvBuffer;
+    }
+
+    if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    output_token.length = 0;
+    output_token.value  = NULL;
+
+    if (target_name && ((ret = name_sspi_to_gss( target_name, &target )) != SEC_E_OK)) return ret;
+
+    ret = pgss_init_sec_context( &minor_status, cred_handle, &ctxt_handle, target, GSS_C_NO_OID, req_flags, 0,
+                                 GSS_C_NO_CHANNEL_BINDINGS, &input_token, NULL, &output_token, &ret_flags,
+                                 &expiry_time );
+    TRACE( "gss_init_sec_context returned %08x minor status %08x ret_flags %08x\n", ret, minor_status, ret_flags );
+    if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
+    {
+        if (output_token.length > output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
+        {
+            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, output->pBuffers[idx].cbBuffer );
+            pgss_release_buffer( &minor_status, &output_token );
+            pgss_delete_sec_context( &minor_status, &ctxt_handle, GSS_C_NO_BUFFER );
+            return SEC_E_INCOMPLETE_MESSAGE;
+        }
+        output->pBuffers[idx].cbBuffer = output_token.length;
+        memcpy( output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
+        pgss_release_buffer( &minor_status, &output_token );
+
+        ctxthandle_gss_to_sspi( ctxt_handle, new_context );
+        if (context_attr) *context_attr = flags_gss_to_isc_ret( ret_flags );
+        expirytime_gss_to_sspi( expiry_time, ts_expiry );
+    }
+
+    if (target != GSS_C_NO_NAME) pgss_release_name( &minor_status, &target );
+
+    /* we do support user mode SSP/AP functions */
+    *mapped_context = TRUE;
+    /* FIXME: initialize context_data */
+
+    return status_gss_to_sspi( ret );
+#else
+    FIXME( "(%lx %lx %s 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, debugstr_us(target_name),
+           context_req, target_data_rep, input, new_context, output, context_attr, ts_expiry,
+           mapped_context, context_data );
+    return SEC_E_UNSUPPORTED_FUNCTION;
+#endif
+}
+
 static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMETERS *params,
     LSA_SECPKG_FUNCTION_TABLE *lsa_function_table)
 {
@@ -387,7 +526,7 @@ static SECPKG_FUNCTION_TABLE kerberos_table =
     NULL, /* SaveCredentials */
     NULL, /* GetCredentials */
     NULL, /* DeleteCredentials */
-    NULL, /* InitLsaModeContext */
+    kerberos_SpInitLsaModeContext,
     NULL, /* AcceptLsaModeContext */
     NULL, /* DeleteContext */
     NULL, /* ApplyControlToken */
