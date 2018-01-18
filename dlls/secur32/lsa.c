@@ -243,12 +243,146 @@ static SECPKG_DLL_FUNCTIONS lsa_dll_dispatch =
     lsa_RegisterCallback
 };
 
+static SECURITY_STATUS lsa_lookup_package(SEC_WCHAR *nameW, struct lsa_package **lsa_package)
+{
+    ULONG i;
+    UNICODE_STRING package_name, name;
+
+    for (i = 0; i < loaded_packages_count; i++)
+    {
+        if (RtlAnsiStringToUnicodeString(&package_name, loaded_packages[i].name, TRUE))
+            return SEC_E_INSUFFICIENT_MEMORY;
+
+        RtlInitUnicodeString(&name, nameW);
+
+        if (RtlEqualUnicodeString(&package_name, &name, TRUE))
+        {
+            RtlFreeUnicodeString(&package_name);
+            *lsa_package = &loaded_packages[i];
+            return SEC_E_OK;
+        }
+
+        RtlFreeUnicodeString(&package_name);
+    }
+
+    return SEC_E_SECPKG_NOT_FOUND;
+}
+
+static SECURITY_STATUS WINAPI lsa_AcquireCredentialsHandleW(
+    SEC_WCHAR *principal, SEC_WCHAR *package, ULONG credentials_use,
+    LUID *logon_id, void *auth_data, SEC_GET_KEY_FN get_key_fn,
+    void *get_key_arg, CredHandle *credential, TimeStamp *ts_expiry)
+{
+    SECURITY_STATUS status;
+    struct lsa_package *lsa_package;
+    UNICODE_STRING principal_us;
+    LSA_SEC_HANDLE lsa_credential;
+
+    TRACE("%s %s %#x %p %p %p %p %p\n", debugstr_w(principal), debugstr_w(package),
+        credentials_use, auth_data, get_key_fn, get_key_arg, credential, ts_expiry);
+
+    if (!credential) return SEC_E_INVALID_HANDLE;
+    if (!package) return SEC_E_SECPKG_NOT_FOUND;
+
+    status = lsa_lookup_package(package, &lsa_package);
+    if (status != SEC_E_OK) return status;
+
+    if (!lsa_package->lsa_api || !lsa_package->lsa_api->SpAcquireCredentialsHandle)
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    if (principal)
+        RtlInitUnicodeString(&principal_us, principal);
+
+    status = lsa_package->lsa_api->SpAcquireCredentialsHandle(principal ? &principal_us : NULL,
+        credentials_use, logon_id, auth_data, get_key_fn, get_key_arg, &lsa_credential, ts_expiry);
+    if (status == SEC_E_OK)
+    {
+        credential->dwLower = (ULONG_PTR)lsa_credential;
+        credential->dwUpper = (ULONG_PTR)lsa_package;
+    }
+    return status;
+}
+
+static SECURITY_STATUS WINAPI lsa_AcquireCredentialsHandleA(
+    SEC_CHAR *principal, SEC_CHAR *package, ULONG credentials_use,
+    LUID *logon_id, void *auth_data, SEC_GET_KEY_FN get_key_fn,
+    void *get_key_arg, CredHandle *credential, TimeStamp *ts_expiry)
+{
+    SECURITY_STATUS status = SEC_E_INSUFFICIENT_MEMORY;
+    int len_user = 0, len_domain = 0, len_passwd = 0;
+    SEC_WCHAR *principalW = NULL, *packageW = NULL, *user = NULL, *domain = NULL, *passwd = NULL;
+    SEC_WINNT_AUTH_IDENTITY_W *auth_dataW = NULL;
+    SEC_WINNT_AUTH_IDENTITY_A *id = NULL;
+
+    TRACE("%s %s %#x %p %p %p %p %p\n", debugstr_a(principal), debugstr_a(package),
+        credentials_use, auth_data, get_key_fn, get_key_arg, credential, ts_expiry);
+
+    if (principal)
+    {
+        int len = MultiByteToWideChar( CP_ACP, 0, principal, -1, NULL, 0 );
+        if (!(principalW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(SEC_WCHAR) ))) goto done;
+        MultiByteToWideChar( CP_ACP, 0, principal, -1, principalW, len );
+    }
+    if (package)
+    {
+        int len = MultiByteToWideChar( CP_ACP, 0, package, -1, NULL, 0 );
+        if (!(packageW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(SEC_WCHAR) ))) goto done;
+        MultiByteToWideChar( CP_ACP, 0, package, -1, packageW, len );
+    }
+    if (auth_data)
+    {
+        id = (PSEC_WINNT_AUTH_IDENTITY_A)auth_data;
+
+        if (id->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
+        {
+            if (!(auth_dataW = HeapAlloc( GetProcessHeap(), 0, sizeof(SEC_WINNT_AUTH_IDENTITY_W) ))) goto done;
+            if (id->UserLength)
+            {
+                len_user = MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, NULL, 0 );
+                if (!(user = HeapAlloc( GetProcessHeap(), 0, len_user * sizeof(SEC_WCHAR) ))) goto done;
+                MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, user, len_user );
+            }
+            if (id->DomainLength)
+            {
+                len_domain = MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, NULL, 0 );
+                if (!(domain = HeapAlloc( GetProcessHeap(), 0, len_domain * sizeof(SEC_WCHAR) ))) goto done;
+                MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, domain, len_domain );
+            }
+            if (id->PasswordLength)
+            {
+                len_passwd = MultiByteToWideChar( CP_ACP, 0, (char *)id->Password, id->PasswordLength, NULL, 0 );
+                if (!(passwd = HeapAlloc( GetProcessHeap(), 0, len_passwd * sizeof(SEC_WCHAR) ))) goto done;
+                MultiByteToWideChar( CP_ACP, 0, (char *)id->Password, id->PasswordLength, passwd, len_passwd );
+            }
+            auth_dataW->Flags          = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+            auth_dataW->User           = user;
+            auth_dataW->UserLength     = len_user;
+            auth_dataW->Domain         = domain;
+            auth_dataW->DomainLength   = len_domain;
+            auth_dataW->Password       = passwd;
+            auth_dataW->PasswordLength = len_passwd;
+        }
+        else auth_dataW = (PSEC_WINNT_AUTH_IDENTITY_W)auth_data;
+    }
+
+    status = lsa_AcquireCredentialsHandleW( principalW, packageW, credentials_use, logon_id, auth_dataW, get_key_fn,
+                                            get_key_arg, credential, ts_expiry );
+done:
+    if (auth_dataW != (SEC_WINNT_AUTH_IDENTITY_W *)id) HeapFree( GetProcessHeap(), 0, auth_dataW );
+    HeapFree( GetProcessHeap(), 0, packageW );
+    HeapFree( GetProcessHeap(), 0, principalW );
+    HeapFree( GetProcessHeap(), 0, user );
+    HeapFree( GetProcessHeap(), 0, domain );
+    HeapFree( GetProcessHeap(), 0, passwd );
+    return status;
+}
+
 static const SecurityFunctionTableW lsa_sspi_tableW =
 {
     1,
     NULL, /* EnumerateSecurityPackagesW */
     NULL, /* QueryCredentialsAttributesW */
-    NULL, /* AcquireCredentialsHandleW */
+    lsa_AcquireCredentialsHandleW,
     NULL, /* FreeCredentialsHandle */
     NULL, /* Reserved2 */
     NULL, /* InitializeSecurityContextW */
@@ -280,7 +414,7 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     1,
     NULL, /* EnumerateSecurityPackagesA */
     NULL, /* QueryCredentialsAttributesA */
-    NULL, /* AcquireCredentialsHandleA */
+    lsa_AcquireCredentialsHandleA,
     NULL, /* FreeCredentialsHandle */
     NULL, /* Reserved2 */
     NULL, /* InitializeSecurityContextA */
