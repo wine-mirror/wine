@@ -159,6 +159,7 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     DWORD chunk_count;
     DWORD total_size;
     unsigned int i;
+    DWORD version;
     DWORD tag;
 
     if (!data)
@@ -179,7 +180,13 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     /* checksum? */
     skip_dword_unknown("DXBC header", &ptr, 4);
 
-    skip_dword_unknown("DXBC header", &ptr, 1);
+    read_dword(&ptr, &version);
+    TRACE("version: %#x.\n", version);
+    if (version != 0x00000001)
+    {
+        WARN("Got unexpected DXBC version %#x.\n", version);
+        return E_FAIL;
+    }
 
     read_dword(&ptr, &total_size);
     TRACE("total size: %#x\n", total_size);
