@@ -1489,18 +1489,17 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
                                   DWORD cb, DWORD *needed)
 {
     MODULE_ITERATOR iter;
+    DWORD size = 0;
     INT ret;
 
     if (!init_module_iterator(&iter, process))
         return FALSE;
 
-    if ((cb && !lphModule) || !needed)
+    if (cb && !lphModule)
     {
         SetLastError(ERROR_NOACCESS);
         return FALSE;
     }
-
-    *needed = 0;
 
     while ((ret = module_iterator_next(&iter)) > 0)
     {
@@ -1509,8 +1508,15 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
             *lphModule++ = iter.ldr_module.BaseAddress;
             cb -= sizeof(HMODULE);
         }
-        *needed += sizeof(HMODULE);
+        size += sizeof(HMODULE);
     }
+
+    if (!needed)
+    {
+        SetLastError(ERROR_NOACCESS);
+        return FALSE;
+    }
+    *needed = size;
 
     return ret == 0;
 }

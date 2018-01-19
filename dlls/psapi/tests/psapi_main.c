@@ -132,7 +132,7 @@ static void test_EnumProcessModules(void)
     ret = pEnumProcessModules(hpQV, &hMod, sizeof(HMODULE), NULL);
     ok(!ret, "succeeded\n");
     ok(GetLastError() == ERROR_NOACCESS, "expected error=ERROR_NOACCESS but got %d\n", GetLastError());
-    todo_wine ok(hMod == GetModuleHandleA(NULL),
+    ok(hMod == GetModuleHandleA(NULL),
        "hMod=%p GetModuleHandleA(NULL)=%p\n", hMod, GetModuleHandleA(NULL));
 
     SetLastError(0xdeadbeef);
