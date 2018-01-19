@@ -2337,7 +2337,6 @@ static void test_create_factory(void)
 
     iface = NULL;
     hr = CreateDXGIFactory(&IID_IDXGIFactory2, (void **)&iface);
-    todo_wine
     ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
@@ -2378,7 +2377,6 @@ static void test_create_factory(void)
 
     iface = NULL;
     hr = pCreateDXGIFactory1(&IID_IDXGIFactory2, (void **)&iface);
-    todo_wine
     ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))

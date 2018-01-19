@@ -374,7 +374,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     void *layer_base;
     HRESULT hr;
 
-    if (!(dxgi_factory = unsafe_impl_from_IDXGIFactory1((IDXGIFactory1 *)factory)))
+    if (!(dxgi_factory = unsafe_impl_from_IDXGIFactory2((IDXGIFactory2 *)factory)))
     {
         WARN("This is not the factory we're looking for.\n");
         return E_FAIL;

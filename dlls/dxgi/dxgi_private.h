@@ -34,6 +34,7 @@
 #ifdef DXGI_INIT_GUID
 #include "initguid.h"
 #endif
+#include "dxgi1_6.h"
 #include "wine/wined3d.h"
 #include "wine/winedxgi.h"
 
@@ -103,7 +104,7 @@ HRESULT dxgi_set_private_data_interface(struct wined3d_private_store *store,
 /* IDXGIFactory */
 struct dxgi_factory
 {
-    IDXGIFactory1 IDXGIFactory1_iface;
+    IDXGIFactory2 IDXGIFactory2_iface;
     LONG refcount;
     struct wined3d_private_store private_store;
     struct wined3d *wined3d;
@@ -113,7 +114,7 @@ struct dxgi_factory
 
 HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended) DECLSPEC_HIDDEN;
 HWND dxgi_factory_get_device_window(struct dxgi_factory *factory) DECLSPEC_HIDDEN;
-struct dxgi_factory *unsafe_impl_from_IDXGIFactory1(IDXGIFactory1 *iface) DECLSPEC_HIDDEN;
+struct dxgi_factory *unsafe_impl_from_IDXGIFactory2(IDXGIFactory2 *iface) DECLSPEC_HIDDEN;
 
 /* IDXGIDevice */
 struct dxgi_device

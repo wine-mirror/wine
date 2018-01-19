@@ -69,7 +69,7 @@ static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IDXGIAdapter1 *iface)
     if (!refcount)
     {
         wined3d_private_store_cleanup(&adapter->private_store);
-        IDXGIFactory1_Release(&adapter->factory->IDXGIFactory1_iface);
+        IDXGIFactory2_Release(&adapter->factory->IDXGIFactory2_iface);
         HeapFree(GetProcessHeap(), 0, adapter);
     }
 
@@ -112,7 +112,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IDXGIAdapter1 *iface, RE
 
     TRACE("iface %p, iid %s, parent %p.\n", iface, debugstr_guid(iid), parent);
 
-    return IDXGIFactory1_QueryInterface(&adapter->factory->IDXGIFactory1_iface, iid, parent);
+    return IDXGIFactory2_QueryInterface(&adapter->factory->IDXGIFactory2_iface, iid, parent);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IDXGIAdapter1 *iface,
@@ -273,7 +273,7 @@ static void dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory 
     wined3d_private_store_init(&adapter->private_store);
     adapter->ordinal = ordinal;
     adapter->factory = factory;
-    IDXGIFactory1_AddRef(&adapter->factory->IDXGIFactory1_iface);
+    IDXGIFactory2_AddRef(&adapter->factory->IDXGIFactory2_iface);
 }
 
 HRESULT dxgi_adapter_create(struct dxgi_factory *factory, UINT ordinal, struct dxgi_adapter **adapter)
