@@ -68,6 +68,31 @@ static ID3D10Device1 *create_device(const struct device_desc *desc)
     return NULL;
 }
 
+#define check_interface(a, b, c, d) check_interface_(__LINE__, a, b, c, d)
+static HRESULT check_interface_(unsigned int line, void *iface, REFIID iid, BOOL supported, BOOL is_broken)
+{
+    HRESULT hr, expected_hr, broken_hr;
+    IUnknown *unknown = iface, *out;
+
+    if (supported)
+    {
+        expected_hr = S_OK;
+        broken_hr = E_NOINTERFACE;
+    }
+    else
+    {
+        expected_hr = E_NOINTERFACE;
+        broken_hr = S_OK;
+    }
+
+    hr = IUnknown_QueryInterface(unknown, iid, (void **)&out);
+    ok_(__FILE__, line)(hr == expected_hr || broken(is_broken && hr == broken_hr),
+            "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(out);
+    return hr;
+}
+
 static void test_create_device(void)
 {
     D3D10_FEATURE_LEVEL1 feature_level, supported_feature_level;
@@ -265,13 +290,14 @@ static void test_device_interfaces(void)
             continue;
         }
 
-        hr = ID3D10Device1_QueryInterface(device, &IID_IUnknown, (void **)&iface);
-        ok(SUCCEEDED(hr), "Device should implement IUnknown interface, hr %#x.\n", hr);
-        IUnknown_Release(iface);
-
-        hr = ID3D10Device1_QueryInterface(device, &IID_IDXGIObject, (void **)&iface);
-        ok(SUCCEEDED(hr), "Device should implement IDXGIObject interface, hr %#x.\n", hr);
-        IUnknown_Release(iface);
+        check_interface(device, &IID_IUnknown, TRUE, FALSE);
+        check_interface(device, &IID_IDXGIObject, TRUE, FALSE);
+        check_interface(device, &IID_IDXGIDevice, TRUE, FALSE);
+        check_interface(device, &IID_IDXGIDevice1, TRUE, FALSE);
+        check_interface(device, &IID_ID3D10Multithread, TRUE, TRUE); /* Not available on all Windows versions. */
+        check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
+        check_interface(device, &IID_ID3D10InfoQueue, FALSE, FALSE); /* Non-debug mode. */
+        check_interface(device, &IID_ID3D11Device, TRUE, TRUE); /* Not available on all Windows versions. */
 
         hr = ID3D10Device1_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
         ok(SUCCEEDED(hr), "Device should implement IDXGIDevice.\n");
@@ -287,27 +313,6 @@ static void test_device_interfaces(void)
         ok(hr == E_NOINTERFACE, "Adapter parent should not implement IDXGIFactory1.\n");
         IDXGIAdapter_Release(dxgi_adapter);
         IDXGIDevice_Release(dxgi_device);
-
-        hr = ID3D10Device1_QueryInterface(device, &IID_IDXGIDevice1, (void **)&iface);
-        ok(SUCCEEDED(hr), "Device should implement IDXGIDevice1.\n");
-        IUnknown_Release(iface);
-
-        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D10Multithread, (void **)&iface);
-        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-                "Device should implement ID3D10Multithread interface, hr %#x.\n", hr);
-        if (SUCCEEDED(hr)) IUnknown_Release(iface);
-
-        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D10InfoQueue, (void **)&iface);
-        ok(hr == E_NOINTERFACE, "Found ID3D10InfoQueue interface in non-debug mode, hr %#x.\n", hr);
-
-        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D10Device, (void **)&iface);
-        ok(SUCCEEDED(hr), "Device should implement ID3D10Device interface, hr %#x.\n", hr);
-        IUnknown_Release(iface);
-
-        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D11Device, (void **)&iface);
-        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-                "Device should implement ID3D11Device interface, hr %#x.\n", hr);
-        if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
         refcount = ID3D10Device1_Release(device);
         ok(!refcount, "Device has %u references left.\n", refcount);
@@ -325,9 +330,8 @@ static void test_device_interfaces(void)
             continue;
         }
 
-        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D10InfoQueue, (void **)&iface);
-        todo_wine ok(hr == S_OK, "Device should implement ID3D10InfoQueue interface, hr %#x.\n", hr);
-        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+        todo_wine
+        check_interface(device, &IID_ID3D10InfoQueue, TRUE, FALSE);
 
         refcount = ID3D10Device1_Release(device);
         ok(!refcount, "Device has %u references left.\n", refcount);
@@ -345,7 +349,6 @@ static void test_create_shader_resource_view(void)
     ID3D10Device *tmp_device;
     ID3D10Device1 *device;
     ID3D10Buffer *buffer;
-    IUnknown *iface;
     HRESULT hr;
 
     if (!(device = create_device(NULL)))
@@ -387,13 +390,9 @@ static void test_create_shader_resource_view(void)
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp_device);
 
-    hr = ID3D10ShaderResourceView1_QueryInterface(srview, &IID_ID3D10ShaderResourceView, (void **)&iface);
-    ok(SUCCEEDED(hr), "Shader resource view should implement ID3D10ShaderResourceView.\n");
-    IUnknown_Release(iface);
-    hr = ID3D10ShaderResourceView1_QueryInterface(srview, &IID_ID3D11ShaderResourceView, (void **)&iface);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Shader resource view should implement ID3D11ShaderResourceView.\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+    check_interface(srview, &IID_ID3D10ShaderResourceView, TRUE, FALSE);
+    /* Not available on all Windows versions. */
+    check_interface(srview, &IID_ID3D11ShaderResourceView, TRUE, TRUE);
 
     ID3D10ShaderResourceView1_Release(srview);
     ID3D10Buffer_Release(buffer);
@@ -424,13 +423,9 @@ static void test_create_shader_resource_view(void)
             U(srv_desc).Texture2D.MostDetailedMip);
     ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n", U(srv_desc).Texture2D.MipLevels);
 
-    hr = ID3D10ShaderResourceView1_QueryInterface(srview, &IID_ID3D10ShaderResourceView, (void **)&iface);
-    ok(SUCCEEDED(hr), "Shader resource view should implement ID3D10ShaderResourceView.\n");
-    IUnknown_Release(iface);
-    hr = ID3D10ShaderResourceView1_QueryInterface(srview, &IID_ID3D11ShaderResourceView, (void **)&iface);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Shader resource view should implement ID3D11ShaderResourceView.\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+    check_interface(srview, &IID_ID3D10ShaderResourceView, TRUE, FALSE);
+    /* Not available on all Windows versions. */
+    check_interface(srview, &IID_ID3D11ShaderResourceView, TRUE, TRUE);
 
     ID3D10ShaderResourceView1_Release(srview);
     ID3D10Texture2D_Release(texture);
@@ -536,7 +531,6 @@ static void test_create_blend_state(void)
     ID3D10Device1 *device;
     ID3D10Device *tmp;
     unsigned int i, j;
-    IUnknown *iface;
     HRESULT hr;
 
     if (!(device = create_device(NULL)))
@@ -609,13 +603,9 @@ static void test_create_blend_state(void)
                 obtained_desc.RenderTarget[0].RenderTargetWriteMask, i);
     }
 
-    hr = ID3D10BlendState1_QueryInterface(blend_state1, &IID_ID3D10BlendState, (void **)&iface);
-    ok(SUCCEEDED(hr), "Blend state should implement ID3D10BlendState.\n");
-    IUnknown_Release(iface);
-    hr = ID3D10BlendState1_QueryInterface(blend_state1, &IID_ID3D11BlendState, (void **)&iface);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Blend state should implement ID3D11BlendState.\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+    check_interface(blend_state1, &IID_ID3D10BlendState, TRUE, FALSE);
+    /* Not available on all Windows versions. */
+    check_interface(blend_state1, &IID_ID3D11BlendState, TRUE, TRUE);
 
     refcount = ID3D10BlendState1_Release(blend_state1);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
