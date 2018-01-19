@@ -1523,6 +1523,8 @@ static void test_create_device(void)
             &swapchain_desc, &swapchain, &device, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
+    check_interface(swapchain, &IID_IDXGISwapChain1, TRUE, FALSE);
+
     memset(&obtained_desc, 0, sizeof(obtained_desc));
     hr = IDXGISwapChain_GetDesc(swapchain, &obtained_desc);
     ok(SUCCEEDED(hr), "GetDesc failed %#x.\n", hr);

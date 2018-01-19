@@ -871,6 +871,7 @@ static void test_create_swapchain(void)
     IDXGIDevice *device, *bgra_device;
     ULONG refcount, expected_refcount;
     IUnknown *obj, *obj2, *parent;
+    IDXGISwapChain1 *swapchain1;
     RECT *expected_client_rect;
     IDXGISwapChain *swapchain;
     IDXGISurface1 *surface;
@@ -878,6 +879,7 @@ static void test_create_swapchain(void)
     IDXGIFactory *factory;
     IDXGIOutput *target;
     BOOL fullscreen;
+    HWND window;
     HRESULT hr;
 
     const struct refresh_rates refresh_list[] =
@@ -955,7 +957,19 @@ static void test_create_swapchain(void)
     refcount = IUnknown_Release(parent);
     todo_wine ok(refcount == 4, "Got unexpected refcount %u.\n", refcount);
 
-    IDXGISwapChain_Release(swapchain);
+    hr = IDXGISwapChain_QueryInterface(swapchain, &IID_IDXGISwapChain1, (void **)&swapchain1);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Failed to query IDXGISwapChain1 interface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDXGISwapChain1_GetHwnd(swapchain1, &window);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(window == creation_desc.OutputWindow, "Got unexpected window %p.\n", window);
+        IDXGISwapChain1_Release(swapchain1);
+    }
+
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "Swapchain has %u references left.\n", refcount);
 
     refcount = get_refcount((IUnknown *)factory);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);

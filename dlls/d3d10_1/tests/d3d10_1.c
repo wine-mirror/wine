@@ -19,7 +19,7 @@
 
 #define COBJMACROS
 #include "initguid.h"
-#include "d3d11.h"
+#include "d3d11_1.h"
 #include "wine/test.h"
 
 static const D3D10_FEATURE_LEVEL1 d3d10_feature_levels[] =
@@ -163,6 +163,8 @@ static void test_create_device(void)
     hr = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0,
             supported_feature_level, D3D10_1_SDK_VERSION, &swapchain_desc, &swapchain, &device);
     ok(SUCCEEDED(hr), "D3D10CreateDeviceAndSwapChain1 failed %#x.\n", hr);
+
+    check_interface(swapchain, &IID_IDXGISwapChain1, TRUE, FALSE);
 
     memset(&obtained_desc, 0, sizeof(obtained_desc));
     hr = IDXGISwapChain_GetDesc(swapchain, &obtained_desc);
