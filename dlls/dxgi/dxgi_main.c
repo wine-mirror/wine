@@ -56,18 +56,28 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
     return TRUE;
 }
 
-HRESULT WINAPI CreateDXGIFactory1(REFIID riid, void **factory)
+HRESULT WINAPI CreateDXGIFactory2(UINT flags, REFIID iid, void **factory)
 {
-    TRACE("riid %s, factory %p\n", debugstr_guid(riid), factory);
+    TRACE("flags %#x, iid %s, factory %p.\n", flags, debugstr_guid(iid), factory);
 
-    return dxgi_factory_create(riid, factory, TRUE);
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    return dxgi_factory_create(iid, factory, TRUE);
 }
 
-HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
+HRESULT WINAPI CreateDXGIFactory1(REFIID iid, void **factory)
 {
-    TRACE("riid %s, factory %p\n", debugstr_guid(riid), factory);
+    TRACE("iid %s, factory %p.\n", debugstr_guid(iid), factory);
 
-    return dxgi_factory_create(riid, factory, FALSE);
+    return dxgi_factory_create(iid, factory, TRUE);
+}
+
+HRESULT WINAPI CreateDXGIFactory(REFIID iid, void **factory)
+{
+    TRACE("iid %s, factory %p.\n", debugstr_guid(iid), factory);
+
+    return dxgi_factory_create(iid, factory, FALSE);
 }
 
 static BOOL get_layer(enum dxgi_device_layer_id id, struct dxgi_device_layer *layer)
