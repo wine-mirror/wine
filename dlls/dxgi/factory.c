@@ -24,18 +24,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
-static inline struct dxgi_factory *impl_from_IDXGIFactory2(IDXGIFactory2 *iface)
+static inline struct dxgi_factory *impl_from_IDXGIFactory4(IDXGIFactory4 *iface)
 {
-    return CONTAINING_RECORD(iface, struct dxgi_factory, IDXGIFactory2_iface);
+    return CONTAINING_RECORD(iface, struct dxgi_factory, IDXGIFactory4_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IDXGIFactory2 *iface, REFIID iid, void **out)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IDXGIFactory4 *iface, REFIID iid, void **out)
 {
-    struct dxgi_factory *factory = impl_from_IDXGIFactory2(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory4(iface);
 
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualGUID(iid, &IID_IDXGIFactory2)
+    if (IsEqualGUID(iid, &IID_IDXGIFactory4)
+            || IsEqualGUID(iid, &IID_IDXGIFactory3)
+            || IsEqualGUID(iid, &IID_IDXGIFactory2)
             || (factory->extended && IsEqualGUID(iid, &IID_IDXGIFactory1))
             || IsEqualGUID(iid, &IID_IDXGIFactory)
             || IsEqualGUID(iid, &IID_IDXGIObject)
@@ -52,9 +54,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IDXGIFactory2 *ifac
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IDXGIFactory2 *iface)
+static ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IDXGIFactory4 *iface)
 {
-    struct dxgi_factory *factory = impl_from_IDXGIFactory2(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory4(iface);
     ULONG refcount = InterlockedIncrement(&factory->refcount);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
@@ -62,9 +64,9 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IDXGIFactory2 *iface)
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory2 *iface)
+static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory4 *iface)
 {
-    struct dxgi_factory *factory = impl_from_IDXGIFactory2(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory4(iface);
     ULONG refcount = InterlockedDecrement(&factory->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
@@ -84,37 +86,37 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory2 *iface)
     return refcount;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IDXGIFactory4 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct dxgi_factory *factory = impl_from_IDXGIFactory2(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory4(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
     return dxgi_set_private_data(&factory->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IDXGIFactory4 *iface,
         REFGUID guid, const IUnknown *object)
 {
-    struct dxgi_factory *factory = impl_from_IDXGIFactory2(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory4(iface);
 
     TRACE("iface %p, guid %s, object %p.\n", iface, debugstr_guid(guid), object);
 
     return dxgi_set_private_data_interface(&factory->private_store, guid, object);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IDXGIFactory4 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct dxgi_factory *factory = impl_from_IDXGIFactory2(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory4(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
     return dxgi_get_private_data(&factory->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IDXGIFactory2 *iface, REFIID iid, void **parent)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IDXGIFactory4 *iface, REFIID iid, void **parent)
 {
     WARN("iface %p, iid %s, parent %p.\n", iface, debugstr_guid(iid), parent);
 
@@ -123,10 +125,10 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IDXGIFactory2 *iface, RE
     return E_NOINTERFACE;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters1(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters1(IDXGIFactory4 *iface,
         UINT adapter_idx, IDXGIAdapter1 **adapter)
 {
-    struct dxgi_factory *factory = impl_from_IDXGIFactory2(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory4(iface);
     struct dxgi_adapter *adapter_object;
     UINT adapter_count;
     HRESULT hr;
@@ -159,7 +161,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters1(IDXGIFactory2 *iface
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IDXGIFactory4 *iface,
         UINT adapter_idx, IDXGIAdapter **adapter)
 {
     TRACE("iface %p, adapter_idx %u, adapter %p.\n", iface, adapter_idx, adapter);
@@ -167,24 +169,24 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IDXGIFactory2 *iface,
     return dxgi_factory_EnumAdapters1(iface, adapter_idx, (IDXGIAdapter1 **)adapter);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IDXGIFactory2 *iface, HWND window, UINT flags)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IDXGIFactory4 *iface, HWND window, UINT flags)
 {
     FIXME("iface %p, window %p, flags %#x stub!\n", iface, window, flags);
 
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IDXGIFactory2 *iface, HWND *window)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IDXGIFactory4 *iface, HWND *window)
 {
     FIXME("iface %p, window %p stub!\n", iface, window);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory4 *iface,
         IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {
-    struct dxgi_factory *factory = impl_from_IDXGIFactory2(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory4(iface);
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreen_desc;
     DXGI_SWAP_CHAIN_DESC1 swapchain_desc;
 
@@ -213,12 +215,12 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory2 *ifa
     fullscreen_desc.Scaling = desc->BufferDesc.Scaling;
     fullscreen_desc.Windowed = desc->Windowed;
 
-    return IDXGIFactory2_CreateSwapChainForHwnd(&factory->IDXGIFactory2_iface,
+    return IDXGIFactory4_CreateSwapChainForHwnd(&factory->IDXGIFactory4_iface,
             device, desc->OutputWindow, &swapchain_desc, &fullscreen_desc, NULL,
             (IDXGISwapChain1 **)swapchain);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IDXGIFactory4 *iface,
         HMODULE swrast, IDXGIAdapter **adapter)
 {
     FIXME("iface %p, swrast %p, adapter %p stub!\n", iface, swrast, adapter);
@@ -226,21 +228,21 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IDXGIFactory
     return E_NOTIMPL;
 }
 
-static BOOL STDMETHODCALLTYPE dxgi_factory_IsCurrent(IDXGIFactory2 *iface)
+static BOOL STDMETHODCALLTYPE dxgi_factory_IsCurrent(IDXGIFactory4 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
     return TRUE;
 }
 
-static BOOL STDMETHODCALLTYPE dxgi_factory_IsWindowedStereoEnabled(IDXGIFactory2 *iface)
+static BOOL STDMETHODCALLTYPE dxgi_factory_IsWindowedStereoEnabled(IDXGIFactory4 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
     return FALSE;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IDXGIFactory4 *iface,
         IUnknown *device, HWND window, const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc,
         const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc,
         IDXGIOutput *output, IDXGISwapChain1 **swapchain)
@@ -338,7 +340,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IDXGIFactor
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForCoreWindow(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForCoreWindow(IDXGIFactory4 *iface,
         IUnknown *device, IUnknown *window, const DXGI_SWAP_CHAIN_DESC1 *desc,
         IDXGIOutput *output, IDXGISwapChain1 **swapchain)
 {
@@ -348,7 +350,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForCoreWindow(IDXGI
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_GetSharedResourceAdapterLuid(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetSharedResourceAdapterLuid(IDXGIFactory4 *iface,
         HANDLE resource, LUID *luid)
 {
     FIXME("iface %p, resource %p, luid %p stub!\n", iface, resource, luid);
@@ -356,7 +358,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetSharedResourceAdapterLuid(IDXGI
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterOcclusionStatusWindow(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterOcclusionStatusWindow(IDXGIFactory4 *iface,
         HWND window, UINT message, DWORD *cookie)
 {
     FIXME("iface %p, window %p, message %#x, cookie %p stub!\n",
@@ -365,7 +367,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterOcclusionStatusWindow(IDXG
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterStereoStatusEvent(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterStereoStatusEvent(IDXGIFactory4 *iface,
         HANDLE event, DWORD *cookie)
 {
     FIXME("iface %p, event %p, cookie %p stub!\n", iface, event, cookie);
@@ -373,12 +375,12 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterStereoStatusEvent(IDXGIFac
     return E_NOTIMPL;
 }
 
-static void STDMETHODCALLTYPE dxgi_factory_UnregisterStereoStatus(IDXGIFactory2 *iface, DWORD cookie)
+static void STDMETHODCALLTYPE dxgi_factory_UnregisterStereoStatus(IDXGIFactory4 *iface, DWORD cookie)
 {
     FIXME("iface %p, cookie %#x stub!n", iface, cookie);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterStereoStatusWindow(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterStereoStatusWindow(IDXGIFactory4 *iface,
         HWND window, UINT message, DWORD *cookie)
 {
     FIXME("iface %p, window %p, message %#x, cookie %p stub!\n",
@@ -387,7 +389,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterStereoStatusWindow(IDXGIFa
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterOcclusionStatusEvent(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterOcclusionStatusEvent(IDXGIFactory4 *iface,
         HANDLE event, DWORD *cookie)
 {
     FIXME("iface %p, event %p, cookie %p stub!\n", iface, event, cookie);
@@ -395,12 +397,12 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterOcclusionStatusEvent(IDXGI
     return E_NOTIMPL;
 }
 
-static void STDMETHODCALLTYPE dxgi_factory_UnregisterOcclusionStatus(IDXGIFactory2 *iface, DWORD cookie)
+static void STDMETHODCALLTYPE dxgi_factory_UnregisterOcclusionStatus(IDXGIFactory4 *iface, DWORD cookie)
 {
     FIXME("iface %p, cookie %#x stub!\n", iface, cookie);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForComposition(IDXGIFactory2 *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForComposition(IDXGIFactory4 *iface,
         IUnknown *device, const DXGI_SWAP_CHAIN_DESC1 *desc, IDXGIOutput *output, IDXGISwapChain1 **swapchain)
 {
     FIXME("iface %p, device %p, desc %p, output %p, swapchain %p stub!\n",
@@ -409,7 +411,31 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForComposition(IDXG
     return E_NOTIMPL;
 }
 
-static const struct IDXGIFactory2Vtbl dxgi_factory_vtbl =
+static UINT STDMETHODCALLTYPE dxgi_factory_GetCreationFlags(IDXGIFactory4 *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapterByLuid(IDXGIFactory4 *iface,
+        LUID luid, REFIID iid, void **adapter)
+{
+    FIXME("iface %p, luid %08x:%08x, iid %s, adapter %p stub!\n",
+            iface, luid.HighPart, luid.LowPart, debugstr_guid(iid), adapter);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumWarpAdapter(IDXGIFactory4 *iface,
+        REFIID iid, void **adapter)
+{
+    FIXME("iface %p, iid %s, adapter %p stub!\n", iface, debugstr_guid(iid), adapter);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDXGIFactory4Vtbl dxgi_factory_vtbl =
 {
     dxgi_factory_QueryInterface,
     dxgi_factory_AddRef,
@@ -438,19 +464,24 @@ static const struct IDXGIFactory2Vtbl dxgi_factory_vtbl =
     dxgi_factory_RegisterOcclusionStatusEvent,
     dxgi_factory_UnregisterOcclusionStatus,
     dxgi_factory_CreateSwapChainForComposition,
+    /* IDXGIFactory3 methods */
+    dxgi_factory_GetCreationFlags,
+    /* IDXGIFactory4 methods */
+    dxgi_factory_EnumAdapterByLuid,
+    dxgi_factory_EnumWarpAdapter,
 };
 
-struct dxgi_factory *unsafe_impl_from_IDXGIFactory2(IDXGIFactory2 *iface)
+struct dxgi_factory *unsafe_impl_from_IDXGIFactory4(IDXGIFactory4 *iface)
 {
     if (!iface)
         return NULL;
     assert(iface->lpVtbl == &dxgi_factory_vtbl);
-    return CONTAINING_RECORD(iface, struct dxgi_factory, IDXGIFactory2_iface);
+    return CONTAINING_RECORD(iface, struct dxgi_factory, IDXGIFactory4_iface);
 }
 
 static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
 {
-    factory->IDXGIFactory2_iface.lpVtbl = &dxgi_factory_vtbl;
+    factory->IDXGIFactory4_iface.lpVtbl = &dxgi_factory_vtbl;
     factory->refcount = 1;
     wined3d_private_store_init(&factory->private_store);
 
@@ -485,8 +516,8 @@ HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended)
 
     TRACE("Created factory %p.\n", object);
 
-    hr = IDXGIFactory2_QueryInterface(&object->IDXGIFactory2_iface, riid, factory);
-    IDXGIFactory2_Release(&object->IDXGIFactory2_iface);
+    hr = IDXGIFactory4_QueryInterface(&object->IDXGIFactory4_iface, riid, factory);
+    IDXGIFactory4_Release(&object->IDXGIFactory4_iface);
     return hr;
 }
 
