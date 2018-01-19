@@ -923,6 +923,16 @@ static void test_hotitem(void)
     ok(ret == 1, "TB_GETHOTITEM returned %ld, expected 1\n", ret);
     ok(g_fReceivedHotItemChange == FALSE, "Unexpected TBN_HOTITEMCHANGE\n");
 
+    /* deleting a button unsets the hot item */
+    ret = SendMessageA(hToolbar, TB_SETHOTITEM, 0, 0);
+    ok(ret == 1, "TB_SETHOTITEM returned %ld, expected 1\n", ret);
+    g_fReceivedHotItemChange = FALSE;
+    ret = SendMessageA(hToolbar, TB_DELETEBUTTON, 1, 0);
+    ok(ret == TRUE, "TB_DELETEBUTTON returned %ld, expected TRUE\n", ret);
+    ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == -1, "TB_GETHOTITEM returned %ld, expected -1\n", ret);
+    ok(g_fReceivedHotItemChange == FALSE, "Unexpected TBN_HOTITEMCHANGE\n");
+
     DestroyWindow(hToolbar);
 }
 
