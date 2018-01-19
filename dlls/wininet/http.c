@@ -5043,7 +5043,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
             res = set_content_length(request);
             if(res != ERROR_SUCCESS)
                 goto lend;
-            if(!request->contentLength)
+            if(!request->contentLength && !secure_proxy_connect)
                 http_release_netconn(request, TRUE);
 
             if (!(request->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && responseLen)
