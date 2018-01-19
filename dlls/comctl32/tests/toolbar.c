@@ -871,7 +871,7 @@ static void test_hotitem(void)
     ok(ret == 3, "Hot item: %lx, expected 3\n", ret);
     g_fBlockHotItemChange = TRUE;
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 2, 0);
-    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 2\n", ret);
+    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
     ok(ret == 3, "Hot item: %lx, expected 3\n", ret);
     g_fBlockHotItemChange = FALSE;
@@ -902,7 +902,7 @@ static void test_hotitem(void)
     /* enabling the button won't change that */
     SendMessageA(hToolbar, TB_ENABLEBUTTON, 9, TRUE);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == -1, "TB_SETHOTITEM returned %ld, expected -1\n", ret);
+    ok(ret == -1, "TB_GETHOTITEM returned %ld, expected -1\n", ret);
 
     /* disabling a hot button works */
     ret = SendMessageA(hToolbar, TB_SETHOTITEM, 3, 0);
@@ -910,7 +910,7 @@ static void test_hotitem(void)
     g_fReceivedHotItemChange = FALSE;
     SendMessageA(hToolbar, TB_ENABLEBUTTON, 7, FALSE);
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(ret == 3, "TB_GETHOTITEM returned %ld, expected 3\n", ret);
     ok(g_fReceivedHotItemChange == FALSE, "Unexpected TBN_HOTITEMCHANGE\n");
 
     SendMessageA(hToolbar, TB_SETHOTITEM, 1, 0);
@@ -920,7 +920,7 @@ static void test_hotitem(void)
     g_fReceivedHotItemChange = FALSE;
     ok(SendMessageA(hToolbar, TB_SETBUTTONINFOA, 1, (LPARAM)&tbinfo) == TRUE, "TB_SETBUTTONINFOA failed\n");
     ret = SendMessageA(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == 1, "TB_SETHOTITEM returned %ld, expected 1\n", ret);
+    ok(ret == 1, "TB_GETHOTITEM returned %ld, expected 1\n", ret);
     ok(g_fReceivedHotItemChange == FALSE, "Unexpected TBN_HOTITEMCHANGE\n");
 
     DestroyWindow(hToolbar);
