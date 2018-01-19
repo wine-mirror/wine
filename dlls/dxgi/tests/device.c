@@ -932,8 +932,14 @@ static void test_create_swapchain(void)
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
+    hr = IDXGIFactory_CreateSwapChain(factory, NULL, &creation_desc, &swapchain);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, NULL, &swapchain);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, NULL);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
-    ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create swapchain, hr %#x.\n", hr);
 
     refcount = get_refcount((IUnknown *)adapter);
     ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
