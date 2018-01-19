@@ -180,7 +180,8 @@ START_TEST(schtasks)
     r = run_command("schtasks /CHANGE /tn wine\\test\\winetest /enable");
     ok(r == 0, "r = %u\n", r);
 
-    unregister_task("wine\\test\\winetest");
+    r = run_command("schtasks /delete /f /tn wine\\test\\winetest");
+    ok(r == 0, "r = %u\n", r);
 
     r = run_command("schtasks /Change /tn wine\\test\\winetest /enable");
     ok(r == 1, "r = %u\n", r);

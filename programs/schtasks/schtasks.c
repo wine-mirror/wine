@@ -26,17 +26,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(schtasks);
 
-const WCHAR change_optW[] = {'/','c','h','a','n','g','e',0};
-const WCHAR enable_optW[] = {'/','e','n','a','b','l','e',0};
-const WCHAR tn_optW[] = {'/','t','n',0};
+static const WCHAR change_optW[] = {'/','c','h','a','n','g','e',0};
+static const WCHAR delete_optW[] = {'/','d','e','l','e','t','e',0};
+static const WCHAR enable_optW[] = {'/','e','n','a','b','l','e',0};
+static const WCHAR f_optW[] = {'/','f',0};
+static const WCHAR tn_optW[] = {'/','t','n',0};
 
-static IRegisteredTask *get_registered_task(const WCHAR *name)
+static ITaskFolder *get_tasks_root_folder(void)
 {
-    IRegisteredTask *registered_task;
     ITaskService *service;
-    ITaskFolder *folder;
+    ITaskFolder *root;
     VARIANT empty;
-    BSTR str;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
@@ -51,17 +51,31 @@ static IRegisteredTask *get_registered_task(const WCHAR *name)
         return NULL;
     }
 
-    hres = ITaskService_GetFolder(service, NULL, &folder);
+    hres = ITaskService_GetFolder(service, NULL, &root);
     ITaskService_Release(service);
     if (FAILED(hres)) {
         FIXME("GetFolder failed: %08x\n", hres);
         return NULL;
     }
 
+    return root;
+}
+
+static IRegisteredTask *get_registered_task(const WCHAR *name)
+{
+    IRegisteredTask *registered_task;
+    ITaskFolder *root;
+    BSTR str;
+    HRESULT hres;
+
+    root = get_tasks_root_folder();
+    if (!root)
+        return NULL;
+
     str = SysAllocString(name);
-    hres = ITaskFolder_GetTask(folder, str, &registered_task);
+    hres = ITaskFolder_GetTask(root, str, &registered_task);
     SysFreeString(str);
-    ITaskFolder_Release(folder);
+    ITaskFolder_Release(root);
     if (FAILED(hres)) {
         FIXME("GetTask failed: %08x\n", hres);
         return NULL;
@@ -118,6 +132,57 @@ static int change_command(int argc, WCHAR *argv[])
     return 0;
 }
 
+static int delete_command(int argc, WCHAR *argv[])
+{
+    const WCHAR *task_name = NULL;
+    ITaskFolder *root = NULL;
+    BSTR str;
+    HRESULT hres;
+
+    while (argc) {
+        if (!strcmpiW(argv[0], f_optW)) {
+            TRACE("force opt\n");
+            argc--;
+            argv++;
+        }else if(!strcmpiW(argv[0], tn_optW)) {
+            if (argc < 2) {
+                FIXME("Missing /tn value\n");
+                return 1;
+            }
+
+            if (task_name) {
+                FIXME("Duplicated /tn argument\n");
+                return 1;
+            }
+
+            task_name = argv[1];
+            argc -= 2;
+            argv += 2;
+        }else {
+            FIXME("Unsupported argument %s\n", debugstr_w(argv[0]));
+            return 1;
+        }
+    }
+
+    if (!task_name) {
+        FIXME("Missing /tn argument\n");
+        return 1;
+    }
+
+    root = get_tasks_root_folder();
+    if (!root)
+        return 1;
+
+    str = SysAllocString(task_name);
+    hres = ITaskFolder_DeleteTask(root, str, 0);
+    SysFreeString(str);
+    ITaskFolder_Release(root);
+    if (FAILED(hres))
+        return 1;
+
+    return 0;
+}
+
 int wmain(int argc, WCHAR *argv[])
 {
     int i, ret = 0;
@@ -132,6 +197,8 @@ int wmain(int argc, WCHAR *argv[])
         FIXME("Print current tasks state\n");
     else if (!strcmpiW(argv[1], change_optW))
         ret = change_command(argc - 2, argv + 2);
+    else if (!strcmpiW(argv[1], delete_optW))
+        ret = delete_command(argc - 2, argv + 2);
     else
         FIXME("Unsupported command %s\n", debugstr_w(argv[1]));
 
