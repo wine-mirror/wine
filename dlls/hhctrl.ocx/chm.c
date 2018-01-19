@@ -308,13 +308,29 @@ void MergeChmProperties(HH_WINTYPEW *src, HHInfo *info, BOOL override)
 #endif
 }
 
-static inline WCHAR *ConvertChmString(HHInfo *info, const WCHAR **str)
+static inline WCHAR *ConvertChmString(HHInfo *info, DWORD id)
 {
     WCHAR *ret = NULL;
 
-    if(*str)
-        *str = ret = strdupAtoW(GetChmString(info->pCHMInfo, (DWORD_PTR)*str));
+    if(id)
+        ret = strdupAtoW(GetChmString(info->pCHMInfo, id));
     return ret;
+}
+
+static inline void wintype_free(HH_WINTYPEW *wintype)
+{
+    heap_free((void *)wintype->pszType);
+    heap_free((void *)wintype->pszCaption);
+    heap_free(wintype->paInfoTypes);
+    heap_free((void *)wintype->pszToc);
+    heap_free((void *)wintype->pszIndex);
+    heap_free((void *)wintype->pszFile);
+    heap_free((void *)wintype->pszHome);
+    heap_free((void *)wintype->pszJump1);
+    heap_free((void *)wintype->pszJump2);
+    heap_free((void *)wintype->pszUrlJump1);
+    heap_free((void *)wintype->pszUrlJump2);
+    heap_free((void *)wintype->pszCustomTabs);
 }
 
 /* Loads the HH_WINTYPE data from the CHM file
@@ -325,8 +341,6 @@ static inline WCHAR *ConvertChmString(HHInfo *info, const WCHAR **str)
 BOOL LoadWinTypeFromCHM(HHInfo *info)
 {
     LARGE_INTEGER liOffset;
-    WCHAR *pszType = NULL, *pszFile = NULL, *pszToc = NULL, *pszIndex = NULL, *pszCaption = NULL;
-    WCHAR *pszHome = NULL, *pszJump1 = NULL, *pszJump2 = NULL, *pszUrlJump1 = NULL, *pszUrlJump2 = NULL;
     IStorage *pStorage = info->pCHMInfo->pStorage;
     IStream *pStream = NULL;
     HH_WINTYPEW wintype;
@@ -334,7 +348,7 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     DWORD cbRead;
     BOOL ret = FALSE;
 
-    static const WCHAR null[] = {0};
+    static const WCHAR empty[] = {0};
     static const WCHAR toc_extW[] = {'h','h','c',0};
     static const WCHAR index_extW[] = {'h','h','k',0};
     static const WCHAR windowsW[] = {'#','W','I','N','D','O','W','S',0};
@@ -353,16 +367,16 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
         if (FAILED(hr)) goto done;
 
         /* convert the #STRINGS offsets to actual strings */
-        pszType     = ConvertChmString(info, &wintype.pszType);
-        pszFile     = ConvertChmString(info, &wintype.pszFile);
-        pszToc      = ConvertChmString(info, &wintype.pszToc);
-        pszIndex    = ConvertChmString(info, &wintype.pszIndex);
-        pszCaption  = ConvertChmString(info, &wintype.pszCaption);
-        pszHome     = ConvertChmString(info, &wintype.pszHome);
-        pszJump1    = ConvertChmString(info, &wintype.pszJump1);
-        pszJump2    = ConvertChmString(info, &wintype.pszJump2);
-        pszUrlJump1 = ConvertChmString(info, &wintype.pszUrlJump1);
-        pszUrlJump2 = ConvertChmString(info, &wintype.pszUrlJump2);
+        wintype.pszType     = ConvertChmString(info, (DWORD)wintype.pszType);
+        wintype.pszFile     = ConvertChmString(info, (DWORD)wintype.pszFile);
+        wintype.pszToc      = ConvertChmString(info, (DWORD)wintype.pszToc);
+        wintype.pszIndex    = ConvertChmString(info, (DWORD)wintype.pszIndex);
+        wintype.pszCaption  = ConvertChmString(info, (DWORD)wintype.pszCaption);
+        wintype.pszHome     = ConvertChmString(info, (DWORD)wintype.pszHome);
+        wintype.pszJump1    = ConvertChmString(info, (DWORD)wintype.pszJump1);
+        wintype.pszJump2    = ConvertChmString(info, (DWORD)wintype.pszJump2);
+        wintype.pszUrlJump1 = ConvertChmString(info, (DWORD)wintype.pszUrlJump1);
+        wintype.pszUrlJump2 = ConvertChmString(info, (DWORD)wintype.pszUrlJump2);
     }
     else
     {
@@ -371,9 +385,9 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
         memset(&wintype, 0, sizeof(wintype));
         wintype.cbStruct = sizeof(wintype);
         wintype.fUniCodeStrings = TRUE;
-        wintype.pszType    = pszType     = strdupW(info->pCHMInfo->defWindow ? info->pCHMInfo->defWindow : defaultwinW);
-        wintype.pszToc     = pszToc      = strdupW(info->pCHMInfo->defToc ? info->pCHMInfo->defToc : null);
-        wintype.pszIndex   = pszIndex    = strdupW(null);
+        wintype.pszType    = strdupW(info->pCHMInfo->defWindow ? info->pCHMInfo->defWindow : defaultwinW);
+        wintype.pszToc     = strdupW(info->pCHMInfo->defToc ? info->pCHMInfo->defToc : empty);
+        wintype.pszIndex   = strdupW(empty);
         wintype.fsValidMembers = 0;
         wintype.fsWinProperties = HHWIN_PROP_TRI_PANE;
         wintype.dwStyles = WS_POPUP;
@@ -385,24 +399,15 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     /* merge the new data with any pre-existing HH_WINTYPE structure */
     MergeChmProperties(&wintype, info, FALSE);
     if (!info->WinType.pszCaption)
-        info->WinType.pszCaption = info->stringsW.pszCaption = strdupW(info->pCHMInfo->defTitle ? info->pCHMInfo->defTitle : null);
+        info->WinType.pszCaption = info->stringsW.pszCaption = strdupW(info->pCHMInfo->defTitle ? info->pCHMInfo->defTitle : empty);
     if (!info->WinType.pszFile)
-        info->WinType.pszFile    = info->stringsW.pszFile    = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
+        info->WinType.pszFile    = info->stringsW.pszFile    = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : empty);
     if (!info->WinType.pszToc)
         info->WinType.pszToc     = info->stringsW.pszToc     = FindHTMLHelpSetting(info, toc_extW);
     if (!info->WinType.pszIndex)
         info->WinType.pszIndex   = info->stringsW.pszIndex   = FindHTMLHelpSetting(info, index_extW);
 
-    heap_free(pszType);
-    heap_free(pszFile);
-    heap_free(pszToc);
-    heap_free(pszIndex);
-    heap_free(pszCaption);
-    heap_free(pszHome);
-    heap_free(pszJump1);
-    heap_free(pszJump2);
-    heap_free(pszUrlJump1);
-    heap_free(pszUrlJump2);
+    wintype_free(&wintype);
     ret = TRUE;
 
 done:
