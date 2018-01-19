@@ -4547,6 +4547,12 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                     }
                 }
 
+                if (!apt->win)
+                {
+                    /* If window is NULL on apartment, peek at messages so that it will not trigger
+                     * MsgWaitForMultipleObjects next time. */
+                    PeekMessageW(NULL, NULL, 0, 0, PM_QS_POSTMESSAGE | PM_NOREMOVE | PM_NOYIELD);
+                }
                 /* some apps (e.g. Visio 2010) don't handle WM_PAINT properly and loop forever,
                  * so after processing 100 messages we go back to checking the wait handles */
                 while (count++ < 100 && COM_PeekMessage(apt, &msg))
