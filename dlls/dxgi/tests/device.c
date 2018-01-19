@@ -19,6 +19,7 @@
 #include <assert.h>
 #define COBJMACROS
 #include "initguid.h"
+#include "dxgi1_6.h"
 #include "d3d11.h"
 #include "wine/test.h"
 
@@ -2305,6 +2306,7 @@ static void test_create_factory(void)
 {
     IDXGIFactory1 *factory;
     IUnknown *iface;
+    ULONG refcount;
     HRESULT hr;
 
     iface = (void *)0xdeadbeef;
@@ -2332,6 +2334,17 @@ static void test_create_factory(void)
     hr = CreateDXGIFactory(&IID_IDXGIFactory1, (void **)&iface);
     ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
     ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    iface = NULL;
+    hr = CreateDXGIFactory(&IID_IDXGIFactory2, (void **)&iface);
+    todo_wine
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Got unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        refcount = IUnknown_Release(iface);
+        ok(!refcount, "Factory has %u references left.\n", refcount);
+    }
 
     if (!pCreateDXGIFactory1)
     {
@@ -2362,6 +2375,17 @@ static void test_create_factory(void)
     hr = pCreateDXGIFactory1(&IID_IDXGIFactory1, (void **)&iface);
     ok(SUCCEEDED(hr), "Failed to create factory with IID_IDXGIFactory1, hr %#x.\n", hr);
     IUnknown_Release(iface);
+
+    iface = NULL;
+    hr = pCreateDXGIFactory1(&IID_IDXGIFactory2, (void **)&iface);
+    todo_wine
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Got unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        refcount = IUnknown_Release(iface);
+        ok(!refcount, "Factory has %u references left.\n", refcount);
+    }
 }
 
 static void test_private_data(void)
