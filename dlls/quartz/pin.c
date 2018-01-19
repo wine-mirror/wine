@@ -541,11 +541,7 @@ static void  PullPin_Thread_Stop(PullPin *This)
     TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
-    {
-        CloseHandle(This->hThread);
-        This->hThread = NULL;
-        SetEvent(This->hEventStateChanged);
-    }
+    SetEvent(This->hEventStateChanged);
     LeaveCriticalSection(This->pin.pCritSec);
 
     IBaseFilter_Release(This->pin.pinInfo.pFilter);
@@ -830,6 +826,10 @@ HRESULT WINAPI PullPin_Disconnect(IPin *iface)
             hr = S_FALSE;
     }
     LeaveCriticalSection(This->pin.pCritSec);
+
+    WaitForSingleObject(This->hThread, INFINITE);
+    CloseHandle(This->hThread);
+    This->hThread = NULL;
 
     return hr;
 }
