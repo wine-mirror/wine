@@ -977,7 +977,10 @@ static void wave_out_test_device(UINT_PTR device)
        "waveOutGetDevCapsA(%s): MMSYSERR_NOERROR expected, got %s\n",
        dev_name(device),wave_out_error(rc));
     if (rc!=MMSYSERR_NOERROR)
+    {
+        HeapFree(GetProcessHeap(), 0, nameA);
         return;
+    }
 
     trace("  %s: \"%s\" (%s) %d.%d (%d:%d)\n",dev_name(device),capsA.szPname,
           (nameA?nameA:"failed"),capsA.vDriverVersion >> 8,
