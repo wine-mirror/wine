@@ -789,6 +789,7 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     DWORD chunk_count;
     DWORD total_size;
     unsigned int i;
+    DWORD version;
     DWORD tag;
 
     read_dword(&ptr, &tag);
@@ -803,7 +804,13 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     WARN("Ignoring DXBC checksum.\n");
     skip_dword_unknown(&ptr, 4);
 
-    skip_dword_unknown(&ptr, 1); /* It seems to always be 0x00000001. */
+    read_dword(&ptr, &version);
+    TRACE("version: %#x.\n", version);
+    if (version != 0x00000001)
+    {
+        WARN("Got unexpected DXBC version %#x.\n", version);
+        return E_INVALIDARG;
+    }
 
     read_dword(&ptr, &total_size);
     TRACE("total size: %#x\n", total_size);
