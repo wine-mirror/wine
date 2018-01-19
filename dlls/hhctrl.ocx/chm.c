@@ -353,6 +353,52 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     static const WCHAR index_extW[] = {'h','h','k',0};
     static const WCHAR windowsW[] = {'#','W','I','N','D','O','W','S',0};
 
+    /* HH_WINTYPE as stored on disk.  It's identical to HH_WINTYPE except that the pointer fields
+       have been changed to DWORDs, so that the layout on 64-bit remains unchanged. */
+    struct file_wintype
+    {
+        int          cbStruct;
+        BOOL         fUniCodeStrings;
+        DWORD        pszType;
+        DWORD        fsValidMembers;
+        DWORD        fsWinProperties;
+        DWORD        pszCaption;
+        DWORD        dwStyles;
+        DWORD        dwExStyles;
+        RECT         rcWindowPos;
+        int          nShowState;
+        DWORD        hwndHelp;
+        DWORD        hwndCaller;
+        DWORD        paInfoTypes;
+        DWORD        hwndToolBar;
+        DWORD        hwndNavigation;
+        DWORD        hwndHTML;
+        int          iNavWidth;
+        RECT         rcHTML;
+        DWORD        pszToc;
+        DWORD        pszIndex;
+        DWORD        pszFile;
+        DWORD        pszHome;
+        DWORD        fsToolBarFlags;
+        BOOL         fNotExpanded;
+        int          curNavType;
+        int          tabpos;
+        int          idNotify;
+        BYTE         tabOrder[HH_MAX_TABS+1];
+        int          cHistory;
+        DWORD        pszJump1;
+        DWORD        pszJump2;
+        DWORD        pszUrlJump1;
+        DWORD        pszUrlJump2;
+        RECT         rcMinSize;
+        int          cbInfoTypes;
+        DWORD        pszCustomTabs;
+    } file_wintype;
+
+    memset(&wintype, 0, sizeof(wintype));
+    wintype.cbStruct = sizeof(wintype);
+    wintype.fUniCodeStrings = TRUE;
+
     hr = IStorage_OpenStream(pStorage, windowsW, NULL, STGM_READ, 0, &pStream);
     if (SUCCEEDED(hr))
     {
@@ -363,28 +409,42 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
         if (FAILED(hr)) goto done;
 
         /* read the HH_WINTYPE struct data */
-        hr = IStream_Read(pStream, &wintype, sizeof(wintype), &cbRead);
+        hr = IStream_Read(pStream, &file_wintype, sizeof(file_wintype), &cbRead);
         if (FAILED(hr)) goto done;
 
         /* convert the #STRINGS offsets to actual strings */
-        wintype.pszType     = ConvertChmString(info, (DWORD)wintype.pszType);
-        wintype.pszFile     = ConvertChmString(info, (DWORD)wintype.pszFile);
-        wintype.pszToc      = ConvertChmString(info, (DWORD)wintype.pszToc);
-        wintype.pszIndex    = ConvertChmString(info, (DWORD)wintype.pszIndex);
-        wintype.pszCaption  = ConvertChmString(info, (DWORD)wintype.pszCaption);
-        wintype.pszHome     = ConvertChmString(info, (DWORD)wintype.pszHome);
-        wintype.pszJump1    = ConvertChmString(info, (DWORD)wintype.pszJump1);
-        wintype.pszJump2    = ConvertChmString(info, (DWORD)wintype.pszJump2);
-        wintype.pszUrlJump1 = ConvertChmString(info, (DWORD)wintype.pszUrlJump1);
-        wintype.pszUrlJump2 = ConvertChmString(info, (DWORD)wintype.pszUrlJump2);
+        wintype.pszType         = ConvertChmString(info, file_wintype.pszType);
+        wintype.fsValidMembers  = file_wintype.fsValidMembers;
+        wintype.fsWinProperties = file_wintype.fsWinProperties;
+        wintype.pszCaption      = ConvertChmString(info, file_wintype.pszCaption);
+        wintype.dwStyles        = file_wintype.dwStyles;
+        wintype.dwExStyles      = file_wintype.dwExStyles;
+        wintype.rcWindowPos     = file_wintype.rcWindowPos;
+        wintype.nShowState      = file_wintype.nShowState;
+        wintype.iNavWidth       = file_wintype.iNavWidth;
+        wintype.rcHTML          = file_wintype.rcHTML;
+        wintype.pszToc          = ConvertChmString(info, file_wintype.pszToc);
+        wintype.pszIndex        = ConvertChmString(info, file_wintype.pszIndex);
+        wintype.pszFile         = ConvertChmString(info, file_wintype.pszFile);
+        wintype.pszHome         = ConvertChmString(info, file_wintype.pszHome);
+        wintype.fsToolBarFlags  = file_wintype.fsToolBarFlags;
+        wintype.fNotExpanded    = file_wintype.fNotExpanded;
+        wintype.curNavType      = file_wintype.curNavType;
+        wintype.tabpos          = file_wintype.tabpos;
+        wintype.idNotify        = file_wintype.idNotify;
+        memcpy(&wintype.tabOrder, file_wintype.tabOrder, sizeof(wintype.tabOrder));
+        wintype.cHistory        = file_wintype.cHistory;
+        wintype.pszJump1        = ConvertChmString(info, file_wintype.pszJump1);
+        wintype.pszJump2        = ConvertChmString(info, file_wintype.pszJump2);
+        wintype.pszUrlJump1     = ConvertChmString(info, file_wintype.pszUrlJump1);
+        wintype.pszUrlJump2     = ConvertChmString(info, file_wintype.pszUrlJump2);
+        wintype.rcMinSize       = file_wintype.rcMinSize;
+        wintype.cbInfoTypes     = file_wintype.cbInfoTypes;
     }
     else
     {
         /* no defined window types so use (hopefully) sane defaults */
         static const WCHAR defaultwinW[] = {'d','e','f','a','u','l','t','w','i','n','\0'};
-        memset(&wintype, 0, sizeof(wintype));
-        wintype.cbStruct = sizeof(wintype);
-        wintype.fUniCodeStrings = TRUE;
         wintype.pszType    = strdupW(info->pCHMInfo->defWindow ? info->pCHMInfo->defWindow : defaultwinW);
         wintype.pszToc     = strdupW(info->pCHMInfo->defToc ? info->pCHMInfo->defToc : empty);
         wintype.pszIndex   = strdupW(empty);
