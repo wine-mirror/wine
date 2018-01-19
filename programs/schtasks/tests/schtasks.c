@@ -26,6 +26,23 @@
 static ITaskService *service;
 static ITaskFolder *root;
 
+static const char xml_a[] =
+    "<?xml version=\"1.0\"?>\n"
+    "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+    "  <RegistrationInfo>\n"
+    "    <Description>\"Task1\"</Description>\n"
+    "  </RegistrationInfo>\n"
+    "  <Settings>\n"
+    "    <Enabled>false</Enabled>\n"
+    "    <Hidden>false</Hidden>\n"
+    "  </Settings>\n"
+    "  <Actions>\n"
+    "    <Exec>\n"
+    "      <Command>\"task1.exe\"</Command>\n"
+    "    </Exec>\n"
+    "  </Actions>\n"
+    "</Task>\n";
+
 static WCHAR *a2w(const char *str)
 {
     WCHAR *ret;
@@ -81,23 +98,6 @@ static void _register_task(unsigned line, const char *task_name_a)
     WCHAR *task_name, *xml;
     HRESULT hres;
 
-    static const char xml_a[] =
-        "<?xml version=\"1.0\"?>\n"
-        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
-        "  <RegistrationInfo>\n"
-        "    <Description>\"Task1\"</Description>\n"
-        "  </RegistrationInfo>\n"
-        "  <Settings>\n"
-        "    <Enabled>false</Enabled>\n"
-        "    <Hidden>false</Hidden>\n"
-        "  </Settings>\n"
-        "  <Actions>\n"
-        "    <Exec>\n"
-        "      <Command>\"task1.exe\"</Command>\n"
-        "    </Exec>\n"
-        "  </Actions>\n"
-        "</Task>\n";
-
     V_VT(&empty) = VT_EMPTY;
     task_name = a2w(task_name_a);
     xml = a2w(xml_a);
@@ -126,6 +126,23 @@ static void _unregister_task(unsigned line, const char *task_name_a)
     ok_(__FILE__,line)(hres == S_OK, "DeleteTask failed: %08x\n", hres);
 
     HeapFree(GetProcessHeap(), 0, task_name);
+}
+
+static void create_file(const char *file_name, const char *data)
+{
+    HANDLE file;
+    DWORD size;
+    BOOL r;
+
+    file = CreateFileA(file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+    if(file == INVALID_HANDLE_VALUE)
+        return;
+
+    r = WriteFile(file, data, strlen(data), &size, NULL);
+    ok(r, "WriteFile failed: %u\n", GetLastError());
+    CloseHandle(file);
 }
 
 static BOOL initialize_task_service(void)
@@ -186,8 +203,29 @@ START_TEST(schtasks)
     r = run_command("schtasks /Change /tn wine\\test\\winetest /enable");
     ok(r == 1, "r = %u\n", r);
 
+    create_file("test.xml", xml_a);
+
+    r = run_command("schtasks /create /xml test.xml /tn wine\\winetest");
+    ok(r == 0, "r = %u\n", r);
+
+    r = run_command("schtasks /change /tn wine\\winetest /enable");
+    ok(r == 0, "r = %u\n", r);
+
+    r = run_command("schtasks /create /xml test.xml /tn wine\\winetest");
+    ok(r == 1, "r = %u\n", r); /* task already exists */
+
+    r = run_command("schtasks /create /tn wine\\winetest");
+    ok(r == E_FAIL, "r = %x\n", r); /* missing arguments */
+
+    r = run_command("schtasks /Delete /f /tn wine\\winetest");
+    ok(r == 0, "r = %u\n", r);
+
+    r = DeleteFileA("test.xml");
+    ok(r, "DeleteFileA failed: %u\n", GetLastError());
+
     ITaskFolder_DeleteFolder(root, wine_testW, 0);
     ITaskFolder_DeleteFolder(root, wineW, 0);
+
     ITaskFolder_Release(root);
     ITaskService_Release(service);
     CoUninitialize();

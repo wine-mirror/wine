@@ -27,10 +27,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(schtasks);
 
 static const WCHAR change_optW[] = {'/','c','h','a','n','g','e',0};
+static const WCHAR create_optW[] = {'/','c','r','e','a','t','e',0};
 static const WCHAR delete_optW[] = {'/','d','e','l','e','t','e',0};
 static const WCHAR enable_optW[] = {'/','e','n','a','b','l','e',0};
 static const WCHAR f_optW[] = {'/','f',0};
 static const WCHAR tn_optW[] = {'/','t','n',0};
+static const WCHAR xml_optW[] = {'/','x','m','l',0};
 
 static ITaskFolder *get_tasks_root_folder(void)
 {
@@ -84,6 +86,51 @@ static IRegisteredTask *get_registered_task(const WCHAR *name)
     return registered_task;
 }
 
+static BSTR read_file_to_bstr(const WCHAR *file_name)
+{
+    LARGE_INTEGER file_size;
+    DWORD read_size, size;
+    unsigned char *data;
+    HANDLE file;
+    BOOL r = FALSE;
+    BSTR ret;
+
+    file = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL,
+                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) {
+        FIXME("Could not open file\n");
+        return NULL;
+    }
+
+    if (!GetFileSizeEx(file, &file_size) || !file_size.QuadPart) {
+        FIXME("Empty file\n");
+        CloseHandle(file);
+        return NULL;
+    }
+
+    data = HeapAlloc(GetProcessHeap(), 0, file_size.QuadPart);
+    if (data)
+        r = ReadFile(file, data, file_size.QuadPart, &read_size, NULL);
+    CloseHandle(file);
+    if (!r) {
+        FIXME("Read filed\n");
+        HeapFree(GetProcessHeap(), 0, data);
+        return NULL;
+    }
+
+    if (read_size > 2 && data[0] == 0xff && data[1] == 0xfe) { /* UTF-16 BOM */
+        ret = SysAllocStringLen((const WCHAR *)(data + 2), (read_size - 2) / sizeof(WCHAR));
+    }else {
+        size = MultiByteToWideChar(CP_ACP, 0, (const char *)data, read_size, NULL, 0);
+        ret = SysAllocStringLen(NULL, size);
+        if (ret)
+            MultiByteToWideChar(CP_ACP, 0, (const char *)data, read_size, ret, size);
+    }
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return ret;
+}
+
 static int change_command(int argc, WCHAR *argv[])
 {
     const WCHAR *task_name;
@@ -129,6 +176,84 @@ static int change_command(int argc, WCHAR *argv[])
         return 1;
     }
 
+    return 0;
+}
+
+static int create_command(int argc, WCHAR *argv[])
+{
+    const WCHAR *task_name = NULL, *xml_file = NULL;
+    ITaskFolder *root = NULL;
+    IRegisteredTask *task;
+    VARIANT empty;
+    BSTR str, xml;
+    HRESULT hres;
+
+    while (argc) {
+        if (!strcmpiW(argv[0], xml_optW)) {
+            if (argc < 2) {
+                FIXME("Missing /xml value\n");
+                return 1;
+            }
+
+            if (xml_file) {
+                FIXME("Duplicated /xml argument\n");
+                return 1;
+            }
+
+            xml_file = argv[1];
+            argc -= 2;
+            argv += 2;
+        }else if(!strcmpiW(argv[0], tn_optW)) {
+            if (argc < 2) {
+                FIXME("Missing /tn value\n");
+                return 1;
+            }
+
+            if (task_name) {
+                FIXME("Duplicated /tn argument\n");
+                return 1;
+            }
+
+            task_name = argv[1];
+            argc -= 2;
+            argv += 2;
+        }else {
+            FIXME("Unsupported argument %s\n", debugstr_w(argv[0]));
+            return 1;
+        }
+    }
+
+    if (!task_name) {
+        FIXME("Missing /tn argument\n");
+        return 1;
+    }
+
+    if (!xml_file) {
+        FIXME("Missing /xml argument\n");
+        return E_FAIL;
+    }
+
+    xml = read_file_to_bstr(xml_file);
+    if (!xml)
+        return 1;
+
+    root = get_tasks_root_folder();
+    if (!root) {
+        SysFreeString(xml);
+        return 1;
+    }
+
+    V_VT(&empty) = VT_EMPTY;
+    str = SysAllocString(task_name);
+    hres = ITaskFolder_RegisterTask(root, str, xml, TASK_CREATE, empty, empty,
+                                    TASK_LOGON_NONE, empty, &task);
+    SysFreeString(str);
+    SysFreeString(xml);
+    ITaskFolder_Release(root);
+    if (FAILED(hres))
+        return 1;
+
+    IRegisteredTask_Release(task);
     return 0;
 }
 
@@ -197,6 +322,8 @@ int wmain(int argc, WCHAR *argv[])
         FIXME("Print current tasks state\n");
     else if (!strcmpiW(argv[1], change_optW))
         ret = change_command(argc - 2, argv + 2);
+    else if (!strcmpiW(argv[1], create_optW))
+        ret = create_command(argc - 2, argv + 2);
     else if (!strcmpiW(argv[1], delete_optW))
         ret = delete_command(argc - 2, argv + 2);
     else
