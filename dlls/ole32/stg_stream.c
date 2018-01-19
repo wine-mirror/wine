@@ -23,7 +23,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -604,7 +603,6 @@ static HRESULT WINAPI StgStreamImpl_Clone(
 				   IStream**    ppstm) /* [out] */
 {
   StgStreamImpl* This = impl_from_IStream(iface);
-  HRESULT hres;
   StgStreamImpl* new_stream;
   LARGE_INTEGER seek_pos;
 
@@ -630,11 +628,7 @@ static HRESULT WINAPI StgStreamImpl_Clone(
 
   seek_pos.QuadPart = This->currentPosition.QuadPart;
 
-  hres = IStream_Seek(*ppstm, seek_pos, STREAM_SEEK_SET, NULL);
-
-  assert (SUCCEEDED(hres));
-
-  return S_OK;
+  return IStream_Seek(*ppstm, seek_pos, STREAM_SEEK_SET, NULL);
 }
 
 /*
