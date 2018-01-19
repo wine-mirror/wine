@@ -2648,7 +2648,9 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
     DWORD index;
     HRESULT hr;
     HWND hWnd;
+    UINT uMSG = 0xc065;
     MSG msg;
+    int ret;
 
     hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
@@ -2670,6 +2672,23 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
     ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
     ok(index==0 || index==0xdeadbeef/* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_USER, WM_USER, PM_REMOVE);
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    /* Even if CoWaitForMultipleHandles does not pump a message it peeks
+     * at ALL of them */
+    index = 0xdeadbeef;
+    PostMessageA(NULL, uMSG, 0, 0);
+
+    hr = CoWaitForMultipleHandles(COWAIT_ALERTABLE, 50, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+
+    /* Make sure message was peeked at */
+    ret = MsgWaitForMultipleObjectsEx(0, NULL, 2, QS_ALLPOSTMESSAGE, MWMO_ALERTABLE);
+    ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %x\n", ret);
+
+    /* But not pumped */
+    success = PeekMessageA(&msg, NULL, uMSG, uMSG, PM_REMOVE);
     ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
 
     DestroyWindow(hWnd);
