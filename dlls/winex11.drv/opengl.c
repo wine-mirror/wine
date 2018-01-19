@@ -2143,7 +2143,7 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
         if ((err = X11DRV_check_error()) || !ret->ctx)
         {
             /* In the future we should convert the GLX error to a win32 one here if needed */
-            ERR("Context creation failed (error %x)\n", err);
+            WARN("Context creation failed (error %#x).\n", err);
             HeapFree( GetProcessHeap(), 0, ret );
             ret = NULL;
         }
