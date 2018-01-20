@@ -337,7 +337,35 @@ static HRESULT WINAPI XA2SRC_SetChannelVolumes(IXAudio2SourceVoice *iface,
         UINT32 Channels, const float *pVolumes, UINT32 OperationSet)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+    ALfloat al_gain;
+    UINT32 i;
+    BOOL same_volumes_given = TRUE;
+
     TRACE("%p, %u, %p, 0x%x\n", This, Channels, pVolumes, OperationSet);
+
+#if XAUDIO2_VER > 7
+    if(Channels != This->fmt->nChannels || !pVolumes)
+        return COMPAT_E_INVALID_CALL;
+#endif
+
+    al_gain = *pVolumes;
+
+    /* check whether all volumes are the same */
+    for(i = 1; i < Channels; ++i){
+        if(al_gain != *(pVolumes + i)){
+            same_volumes_given = FALSE;
+            break;
+        }
+    }
+    if(!same_volumes_given){
+        WARN("Different volumes for channels unsupported, setting the highest volume.\n");
+        for(; i < Channels; ++i)
+            al_gain = max(al_gain, *(pVolumes + i));
+    }
+
+    palcSetThreadContext(This->xa2->al_ctx);
+    alSourcef(This->al_src, AL_GAIN, al_gain);
+
     return S_OK;
 }
 

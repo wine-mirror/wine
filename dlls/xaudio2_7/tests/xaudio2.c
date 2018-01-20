@@ -1165,6 +1165,76 @@ static void test_xapo_creation(void)
     test_xapo_creation_modern("xaudio2_8.dll");
 }
 
+static void test_setchannelvolumes(IXAudio2 *xa)
+{
+    HRESULT hr;
+    IXAudio2MasteringVoice *master;
+    IXAudio2SourceVoice *src_2ch, *src_8ch;
+    WAVEFORMATEX fmt_2ch, fmt_8ch;
+    float volumes[] = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f};
+
+    if(xaudio27)
+        hr = IXAudio27_CreateMasteringVoice((IXAudio27*)xa, &master, 8, 44100, 0, 0, NULL);
+    else
+        hr = IXAudio2_CreateMasteringVoice(xa, &master, 8, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    ok(hr == S_OK, "CreateMasteringVoice failed: %08x\n", hr);
+
+    fmt_2ch.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+    fmt_2ch.nChannels = 2;
+    fmt_2ch.nSamplesPerSec = 44100;
+    fmt_2ch.wBitsPerSample = 32;
+    fmt_2ch.nBlockAlign = fmt_2ch.nChannels * fmt_2ch.wBitsPerSample / 8;
+    fmt_2ch.nAvgBytesPerSec = fmt_2ch.nSamplesPerSec * fmt_2ch.nBlockAlign;
+    fmt_2ch.cbSize = 0;
+
+    fmt_8ch.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+    fmt_8ch.nChannels = 8;
+    fmt_8ch.nSamplesPerSec = 44100;
+    fmt_8ch.wBitsPerSample = 32;
+    fmt_8ch.nBlockAlign = fmt_8ch.nChannels * fmt_8ch.wBitsPerSample / 8;
+    fmt_8ch.nAvgBytesPerSec = fmt_8ch.nSamplesPerSec * fmt_8ch.nBlockAlign;
+    fmt_8ch.cbSize = 0;
+
+    XA2CALL(CreateSourceVoice, &src_2ch, &fmt_2ch, 0, 1.f, NULL, NULL, NULL);
+    ok(hr == S_OK, "CreateSourceVoice failed: %08x\n", hr);
+
+    XA2CALL(CreateSourceVoice, &src_8ch, &fmt_8ch, 0, 1.f, NULL, NULL, NULL);
+    ok(hr == S_OK, "CreateSourceVoice failed: %08x\n", hr);
+
+    hr = IXAudio2SourceVoice_SetChannelVolumes(src_2ch, 2, volumes, XAUDIO2_COMMIT_NOW);
+    ok(hr == S_OK, "SetChannelVolumes failed: %08x\n", hr);
+
+    hr = IXAudio2SourceVoice_SetChannelVolumes(src_8ch, 8, volumes, XAUDIO2_COMMIT_NOW);
+    ok(hr == S_OK, "SetChannelVolumes failed: %08x\n", hr);
+
+    if(xaudio27){
+        /* XAudio 2.7 doesn't check the number of channels */
+        hr = IXAudio2SourceVoice_SetChannelVolumes(src_8ch, 2, volumes, XAUDIO2_COMMIT_NOW);
+        ok(hr == S_OK, "SetChannelVolumes failed: %08x\n", hr);
+    }else{
+        /* the number of channels must be the same as the number of channels on the source voice */
+        hr = IXAudio2SourceVoice_SetChannelVolumes(src_8ch, 2, volumes, XAUDIO2_COMMIT_NOW);
+        ok(hr == XAUDIO2_E_INVALID_CALL, "SetChannelVolumes should have failed: %08x\n", hr);
+
+        hr = IXAudio2SourceVoice_SetChannelVolumes(src_2ch, 8, volumes, XAUDIO2_COMMIT_NOW);
+        ok(hr == XAUDIO2_E_INVALID_CALL, "SetChannelVolumes should have failed: %08x\n", hr);
+
+        /* volumes must not be NULL, XAudio 2.7 doesn't check this */
+        hr = IXAudio2SourceVoice_SetChannelVolumes(src_2ch, 2, NULL, XAUDIO2_COMMIT_NOW);
+        ok(hr == XAUDIO2_E_INVALID_CALL, "SetChannelVolumes should have failed: %08x\n", hr);
+    }
+
+    if(xaudio27){
+        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src_2ch);
+        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src_8ch);
+    }else{
+        IXAudio2SourceVoice_DestroyVoice(src_2ch);
+        IXAudio2SourceVoice_DestroyVoice(src_8ch);
+    }
+
+    IXAudio2MasteringVoice_DestroyVoice(master);
+}
+
 static UINT32 check_has_devices(IXAudio2 *xa)
 {
     HRESULT hr;
@@ -1213,6 +1283,7 @@ START_TEST(xaudio2)
             test_looping((IXAudio2*)xa27);
             test_submix((IXAudio2*)xa27);
             test_flush((IXAudio2*)xa27);
+            test_setchannelvolumes((IXAudio2*)xa27);
         }else
             skip("No audio devices available\n");
 
@@ -1237,6 +1308,7 @@ START_TEST(xaudio2)
             test_looping(xa);
             test_submix(xa);
             test_flush(xa);
+            test_setchannelvolumes(xa);
         }else
             skip("No audio devices available\n");
 
