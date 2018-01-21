@@ -1842,6 +1842,7 @@ then
   WINE_TRY_CFLAGS([-Wempty-body])
   WINE_TRY_CFLAGS([-Wignored-qualifiers])
   WINE_TRY_CFLAGS([-Wno-packed-not-aligned])
+  WINE_TRY_CFLAGS([-Wno-pragma-pack])
   WINE_TRY_CFLAGS([-Wshift-overflow=2])
   WINE_TRY_CFLAGS([-Wstrict-prototypes])
   WINE_TRY_CFLAGS([-Wtype-limits])
