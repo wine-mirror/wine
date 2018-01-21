@@ -6679,16 +6679,19 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     /* make a local copy */
     isubitem = lpLVItem->iSubItem;
 
+    if (isubitem && (lpLVItem->mask & LVIF_STATE))
+        lpLVItem->state = 0;
+
     /* a quick optimization if all we're asked is the focus state
      * these queries are worth optimising since they are common,
      * and can be answered in constant time, without the heavy accesses */
     if ( (lpLVItem->mask == LVIF_STATE) && (lpLVItem->stateMask == LVIS_FOCUSED) &&
 	 !(infoPtr->uCallbackMask & LVIS_FOCUSED) )
     {
-	lpLVItem->state = 0;
-	if (infoPtr->nFocusedItem == lpLVItem->iItem)
-	    lpLVItem->state |= LVIS_FOCUSED;
-	return TRUE;
+        lpLVItem->state = 0;
+        if (infoPtr->nFocusedItem == lpLVItem->iItem && isubitem == 0)
+            lpLVItem->state |= LVIS_FOCUSED;
+        return TRUE;
     }
 
     ZeroMemory(&dispInfo, sizeof(dispInfo));

@@ -6152,16 +6152,17 @@ static void test_state_image(void)
         insert_column(hwnd, 0);
         insert_column(hwnd, 1);
 
-        item.mask = LVIF_TEXT;
+        item.mask = LVIF_TEXT | LVIF_PARAM;
         item.iItem = 0;
         item.iSubItem = 0;
         item.pszText = text;
+        item.lParam = 123456;
         r = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
         ok(r == 0, "Failed to insert an item.\n");
 
         item.mask = LVIF_STATE;
-        item.state = INDEXTOSTATEIMAGEMASK(1) | LVIS_SELECTED;
-        item.stateMask = LVIS_STATEIMAGEMASK | LVIS_SELECTED;
+        item.state = INDEXTOSTATEIMAGEMASK(1) | LVIS_SELECTED | LVIS_FOCUSED;
+        item.stateMask = LVIS_STATEIMAGEMASK | LVIS_SELECTED | LVIS_FOCUSED;
         item.iItem = 0;
         item.iSubItem = 0;
         r = SendMessageA(hwnd, LVM_SETITEMA, 0, (LPARAM)&item);
@@ -6174,27 +6175,49 @@ static void test_state_image(void)
         r = SendMessageA(hwnd, LVM_SETITEMA, 0, (LPARAM)&item);
         ok(r, "Failed to set subitem text.\n");
 
-        item.mask = LVIF_STATE;
-        item.stateMask = LVIS_STATEIMAGEMASK | LVIS_SELECTED;
+        item.mask = LVIF_STATE | LVIF_PARAM;
+        item.stateMask = ~0u;
         item.state = 0;
         item.iItem = 0;
         item.iSubItem = 0;
+        item.lParam = 0;
         r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
         ok(r, "Failed to get item state.\n");
-        ok(item.state == (INDEXTOSTATEIMAGEMASK(1) | LVIS_SELECTED), "Unexpected item state %#x.\n", item.state);
+        ok(item.state == (INDEXTOSTATEIMAGEMASK(1) | LVIS_SELECTED | LVIS_FOCUSED),
+            "Unexpected item state %#x.\n", item.state);
+        ok(item.lParam == 123456, "Unexpected lParam %ld.\n", item.lParam);
 
-        item.mask = LVIF_STATE;
-        item.stateMask = LVIS_STATEIMAGEMASK | LVIS_SELECTED;
+        item.mask = 0;
+        item.stateMask = ~0u;
         item.state = INDEXTOSTATEIMAGEMASK(2);
         item.iItem = 0;
         item.iSubItem = 1;
         r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
         ok(r, "Failed to get subitem state.\n");
-    todo_wine
+        ok(item.state == INDEXTOSTATEIMAGEMASK(2), "Unexpected state %#x.\n", item.state);
+
+        item.mask = LVIF_STATE | LVIF_PARAM;
+        item.stateMask = ~0u;
+        item.state = INDEXTOSTATEIMAGEMASK(2);
+        item.iItem = 0;
+        item.iSubItem = 1;
+        item.lParam = 0;
+        r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+        ok(r, "Failed to get subitem state.\n");
+        ok(item.state == 0, "Unexpected state %#x.\n", item.state);
+        ok(item.lParam == 123456, "Unexpected lParam %ld.\n", item.lParam);
+
+        item.mask = LVIF_STATE;
+        item.stateMask = LVIS_FOCUSED;
+        item.state = 0;
+        item.iItem = 0;
+        item.iSubItem = 1;
+        r = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+        ok(r, "Failed to get subitem state.\n");
         ok(item.state == 0, "Unexpected state %#x.\n", item.state);
 
         item.mask = LVIF_STATE;
-        item.stateMask = LVIS_STATEIMAGEMASK | LVIS_SELECTED;
+        item.stateMask = ~0u;
         item.state = INDEXTOSTATEIMAGEMASK(2);
         item.iItem = 0;
         item.iSubItem = 2;
