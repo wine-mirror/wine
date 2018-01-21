@@ -270,6 +270,25 @@ HRESULT WINAPI SafeArrayDestroyDescriptor16(SEGPTR s)
     return S_OK;
 }
 
+/******************************************************************************
+ *    SafeArrayDestroyData [OLE2DISP.41]
+ */
+HRESULT WINAPI SafeArrayDestroyData16(SAFEARRAY16 *sa)
+{
+    TRACE("%p\n", sa);
+
+    if (!sa)
+        return S_OK;
+
+    if (sa->cLocks)
+        return DISP_E_ARRAYISLOCKED;
+
+    if (!(sa->fFeatures & FADF_STATIC))
+        safearray_free(sa->pvData);
+
+    return S_OK;
+}
+
 /* This implementation of the BSTR API is 16-bit only. It
    represents BSTR as a 16:16 far pointer, and the strings
    as ISO-8859 */
