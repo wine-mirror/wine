@@ -568,6 +568,23 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
     return STATUS_SUCCESS;
 }
 
+static inline DWORD is_write_fault( ucontext_t *context )
+{
+    DWORD inst = *(DWORD *)PC_sig(context);
+    if ((inst & 0xbfff0000) == 0x0c000000   /* C3.3.1 */ ||
+        (inst & 0xbfe00000) == 0x0c800000   /* C3.3.2 */ ||
+        (inst & 0xbfdf0000) == 0x0d000000   /* C3.3.3 */ ||
+        (inst & 0xbfc00000) == 0x0d800000   /* C3.3.4 */ ||
+        (inst & 0x3f400000) == 0x08000000   /* C3.3.6 */ ||
+        (inst & 0x3bc00000) == 0x38000000   /* C3.3.8-12 */ ||
+        (inst & 0x3fe00000) == 0x3c800000   /* C3.3.8-12 128bit */ ||
+        (inst & 0x3bc00000) == 0x39000000   /* C3.3.13 */ ||
+        (inst & 0x3fc00000) == 0x3d800000   /* C3.3.13 128bit */ ||
+        (inst & 0x3a400000) == 0x28000000)  /* C3.3.7,14-16 */
+        return EXCEPTION_WRITE_FAULT;
+    return EXCEPTION_READ_FAULT;
+}
+
 /**********************************************************************
  *		segv_handler
  *
@@ -604,8 +621,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     case SIGSEGV:  /* Segmentation fault */
         rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         rec->NumberParameters = 2;
-        /* FIXME: Currently the kernel provides no way to determine if it's read or write */
-        rec->ExceptionInformation[0] = 0;
+        rec->ExceptionInformation[0] = is_write_fault(context);
         rec->ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
         break;
     case SIGBUS:  /* Alignment check exception */
