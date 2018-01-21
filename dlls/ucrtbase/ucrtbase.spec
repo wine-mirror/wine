@@ -94,7 +94,7 @@
 @ cdecl __initialize_lconv_for_unsigned_char() __lconv_init
 @ stub __intrinsic_abnormal_termination
 @ cdecl -arch=i386,x86_64,arm,arm64 -norelay __intrinsic_setjmp(ptr) MSVCRT__setjmp
-@ stub __intrinsic_setjmpex
+@ cdecl -arch=x86_64,arm64 -norelay __intrinsic_setjmpex(ptr ptr) MSVCRT__setjmpex
 @ cdecl __isascii(long) MSVCRT___isascii
 @ cdecl __iscsym(long) MSVCRT___iscsym
 @ cdecl __iscsymf(long) MSVCRT___iscsymf
