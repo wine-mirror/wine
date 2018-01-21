@@ -568,7 +568,7 @@ static void test_HeapCreate(void)
       ok(HeapFree(heap,0,mem3),"HeapFree didn't pass successfully\n");
     }
 
-    /* Check that HeapRealloc works */
+    /* Check that HeapReAlloc works */
     mem2a=HeapReAlloc(heap,HEAP_ZERO_MEMORY,mem2,memchunk+5*sysInfo.dwPageSize);
     ok(mem2a!=NULL,"HeapReAlloc failed\n");
     if(mem2a) {
@@ -582,7 +582,7 @@ static void test_HeapCreate(void)
       ok(!error,"HeapReAlloc should have zeroed out its allocated memory\n");
     }
 
-    /* Check that HeapRealloc honours HEAP_REALLOC_IN_PLACE_ONLY */
+    /* Check that HeapReAlloc honours HEAP_REALLOC_IN_PLACE_ONLY */
     error=FALSE;
     mem1a=HeapReAlloc(heap,HEAP_REALLOC_IN_PLACE_ONLY,mem1,memchunk+sysInfo.dwPageSize);
     if(mem1a!=NULL) {
