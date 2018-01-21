@@ -141,65 +141,45 @@ __ASM_GLOBAL_FUNC(MSVCRT__setjmp,
  *		_setjmpex (MSVCRT.@)
  */
 __ASM_GLOBAL_FUNC(MSVCRT__setjmpex,
-                  "str x1,  [x0]\n\t"             /* jmp_buf->Frame */
-                  "str x19, [x0, #0x10]\n\t"      /* jmp_buf->X19 */
-                  "str x20, [x0, #0x18]\n\t"      /* jmp_buf->X20 */
-                  "str x21, [x0, #0x20]\n\t"      /* jmp_buf->X21 */
-                  "str x22, [x0, #0x28]\n\t"      /* jmp_buf->X22 */
-                  "str x23, [x0, #0x30]\n\t"      /* jmp_buf->X23 */
-                  "str x24, [x0, #0x38]\n\t"      /* jmp_buf->X24 */
-                  "str x25, [x0, #0x40]\n\t"      /* jmp_buf->X25 */
-                  "str x26, [x0, #0x48]\n\t"      /* jmp_buf->X26 */
-                  "str x27, [x0, #0x50]\n\t"      /* jmp_buf->X27 */
-                  "str x28, [x0, #0x58]\n\t"      /* jmp_buf->X28 */
-                  "str x29, [x0, #0x60]\n\t"      /* jmp_buf->Fp */
-                  "str x30, [x0, #0x68]\n\t"      /* jmp_buf->Lr */
+                  "str x1,       [x0]\n\t"        /* jmp_buf->Frame */
+                  "stp x19, x20, [x0, #0x10]\n\t" /* jmp_buf->X19, X20 */
+                  "stp x21, x22, [x0, #0x20]\n\t" /* jmp_buf->X21, X22 */
+                  "stp x23, x24, [x0, #0x30]\n\t" /* jmp_buf->X23, X24 */
+                  "stp x25, x26, [x0, #0x40]\n\t" /* jmp_buf->X25, X26 */
+                  "stp x27, x28, [x0, #0x50]\n\t" /* jmp_buf->X27, X28 */
+                  "stp x29, x30, [x0, #0x60]\n\t" /* jmp_buf->Fp,  Lr  */
                   "mov x2,  sp\n\t"
-                  "str x2,  [x0, #0x70]\n\t"      /* jmp_buf->Sp */
+                  "str x2,       [x0, #0x70]\n\t" /* jmp_buf->Sp */
                   "mrs x2,  fpcr\n\t"
-                  "str w2,  [x0, #0x78]\n\t"      /* jmp_buf->Fpcr */
+                  "str w2,       [x0, #0x78]\n\t" /* jmp_buf->Fpcr */
                   "mrs x2,  fpsr\n\t"
-                  "str w2,  [x0, #0x7c]\n\t"      /* jmp_buf->Fpsr */
-                  "str d8,  [x0, #0x80]\n\t"      /* jmp_buf->D[0] */
-                  "str d9,  [x0, #0x88]\n\t"      /* jmp_buf->D[1] */
-                  "str d10, [x0, #0x90]\n\t"      /* jmp_buf->D[2] */
-                  "str d11, [x0, #0x98]\n\t"      /* jmp_buf->D[3] */
-                  "str d12, [x0, #0xa0]\n\t"      /* jmp_buf->D[4] */
-                  "str d13, [x0, #0xa8]\n\t"      /* jmp_buf->D[5] */
-                  "str d14, [x0, #0xb0]\n\t"      /* jmp_buf->D[6] */
-                  "str d15, [x0, #0xb8]\n\t"      /* jmp_buf->D[7] */
+                  "str w2,       [x0, #0x7c]\n\t" /* jmp_buf->Fpsr */
+                  "stp d8,  d9,  [x0, #0x80]\n\t" /* jmp_buf->D[0-1] */
+                  "stp d10, d11, [x0, #0x90]\n\t" /* jmp_buf->D[2-3] */
+                  "stp d12, d13, [x0, #0xa0]\n\t" /* jmp_buf->D[4-5] */
+                  "stp d14, d15, [x0, #0xb0]\n\t" /* jmp_buf->D[6-7] */
                   "mov x0, #0\n\t"
                   "ret");
 
 
 extern void DECLSPEC_NORETURN CDECL longjmp_set_regs(struct MSVCRT___JUMP_BUFFER *jmp, int retval);
 __ASM_GLOBAL_FUNC(longjmp_set_regs,
-                  "ldr x19, [x0, #0x10]\n\t"      /* jmp_buf->X19 */
-                  "ldr x20, [x0, #0x18]\n\t"      /* jmp_buf->X20 */
-                  "ldr x21, [x0, #0x20]\n\t"      /* jmp_buf->X21 */
-                  "ldr x22, [x0, #0x28]\n\t"      /* jmp_buf->X22 */
-                  "ldr x23, [x0, #0x30]\n\t"      /* jmp_buf->X23 */
-                  "ldr x24, [x0, #0x38]\n\t"      /* jmp_buf->X24 */
-                  "ldr x25, [x0, #0x40]\n\t"      /* jmp_buf->X25 */
-                  "ldr x26, [x0, #0x48]\n\t"      /* jmp_buf->X26 */
-                  "ldr x27, [x0, #0x50]\n\t"      /* jmp_buf->X27 */
-                  "ldr x28, [x0, #0x58]\n\t"      /* jmp_buf->X28 */
-                  "ldr x29, [x0, #0x60]\n\t"      /* jmp_buf->Fp */
-                  "ldr x30, [x0, #0x68]\n\t"      /* jmp_buf->Lr */
-                  "ldr x2,  [x0, #0x70]\n\t"      /* jmp_buf->Sp */
+                  "ldp x19, x20, [x0, #0x10]\n\t" /* jmp_buf->X19, X20 */
+                  "ldp x21, x22, [x0, #0x20]\n\t" /* jmp_buf->X21, X22 */
+                  "ldp x23, x24, [x0, #0x30]\n\t" /* jmp_buf->X23, X24 */
+                  "ldp x25, x26, [x0, #0x40]\n\t" /* jmp_buf->X25, X26 */
+                  "ldp x27, x28, [x0, #0x50]\n\t" /* jmp_buf->X27, X28 */
+                  "ldp x29, x30, [x0, #0x60]\n\t" /* jmp_buf->Fp,  Lr  */
+                  "ldr x2,       [x0, #0x70]\n\t" /* jmp_buf->Sp */
                   "mov sp,  x2\n\t"
-                  "ldr w2,  [x0, #0x78]\n\t"      /* jmp_buf->Fpcr */
+                  "ldr w2,       [x0, #0x78]\n\t" /* jmp_buf->Fpcr */
                   "msr fpcr, x2\n\t"
-                  "ldr w2,  [x0, #0x7c]\n\t"      /* jmp_buf->Fpsr */
+                  "ldr w2,       [x0, #0x7c]\n\t" /* jmp_buf->Fpsr */
                   "msr fpsr, x2\n\t"
-                  "ldr d8,  [x0, #0x80]\n\t"      /* jmp_buf->D[0] */
-                  "ldr d9,  [x0, #0x88]\n\t"      /* jmp_buf->D[1] */
-                  "ldr d10, [x0, #0x90]\n\t"      /* jmp_buf->D[2] */
-                  "ldr d11, [x0, #0x98]\n\t"      /* jmp_buf->D[3] */
-                  "ldr d12, [x0, #0xa0]\n\t"      /* jmp_buf->D[4] */
-                  "ldr d13, [x0, #0xa8]\n\t"      /* jmp_buf->D[5] */
-                  "ldr d14, [x0, #0xb0]\n\t"      /* jmp_buf->D[6] */
-                  "ldr d15, [x0, #0xb8]\n\t"      /* jmp_buf->D[7] */
+                  "ldp d8,  d9,  [x0, #0x80]\n\t" /* jmp_buf->D[0-1] */
+                  "ldp d10, d11, [x0, #0x90]\n\t" /* jmp_buf->D[2-3] */
+                  "ldp d12, d13, [x0, #0xa0]\n\t" /* jmp_buf->D[4-5] */
+                  "ldp d14, d15, [x0, #0xb0]\n\t" /* jmp_buf->D[6-7] */
                   "mov x0, x1\n\t"                /* retval */
                   "ret");
 
