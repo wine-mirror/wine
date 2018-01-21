@@ -1768,8 +1768,8 @@ todo_wine
         ok(!csinfoA.cs.LocalAddr.iSockaddrLength, "Expected 0, got %d\n", csinfoA.cs.LocalAddr.iSockaddrLength);
         ok(csinfoA.cs.LocalAddr.lpSockaddr == NULL, "Expected NULL, got %p\n", csinfoA.cs.LocalAddr.lpSockaddr);
         /* Socket is not connected, no information provided */
-        ok(!csinfoA.cs.RemoteAddr.iSockaddrLength, "Expected 0, got %d\n", csinfoA.cs.LocalAddr.iSockaddrLength);
-        ok(csinfoA.cs.RemoteAddr.lpSockaddr == NULL, "Expected NULL, got %p\n", csinfoA.cs.LocalAddr.lpSockaddr);
+        ok(!csinfoA.cs.RemoteAddr.iSockaddrLength, "Expected 0, got %d\n", csinfoA.cs.RemoteAddr.iSockaddrLength);
+        ok(csinfoA.cs.RemoteAddr.lpSockaddr == NULL, "Expected NULL, got %p\n", csinfoA.cs.RemoteAddr.lpSockaddr);
 
         err = bind(s, (struct sockaddr*)&saddr, sizeof(saddr));
         ok(!err, "Expected 0, got %d\n", err);
@@ -1781,8 +1781,8 @@ todo_wine
         ok(csinfoA.cs.LocalAddr.iSockaddrLength, "Expected non-zero\n");
         ok(csinfoA.cs.LocalAddr.lpSockaddr != NULL, "Expected non-null\n");
         /* Socket is not connected, no information provided */
-        ok(!csinfoA.cs.RemoteAddr.iSockaddrLength, "Expected 0, got %d\n", csinfoA.cs.LocalAddr.iSockaddrLength);
-        ok(csinfoA.cs.RemoteAddr.lpSockaddr == NULL, "Expected NULL, got %p\n", csinfoA.cs.LocalAddr.lpSockaddr);
+        ok(!csinfoA.cs.RemoteAddr.iSockaddrLength, "Expected 0, got %d\n", csinfoA.cs.RemoteAddr.iSockaddrLength);
+        ok(csinfoA.cs.RemoteAddr.lpSockaddr == NULL, "Expected NULL, got %p\n", csinfoA.cs.RemoteAddr.lpSockaddr);
 
         err = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
         ok(!err, "Expected 0, got %d\n", err);
