@@ -471,111 +471,80 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
     return S_OK;
 }
 
-static HRESULT WINAPI ItemMenu_GetCommandString(
-	IContextMenu3 *iface,
-	UINT_PTR idCommand,
-	UINT uFlags,
-	UINT* lpReserved,
-	LPSTR lpszName,
-	UINT uMaxNameLen)
+static HRESULT WINAPI ItemMenu_GetCommandString(IContextMenu3 *iface, UINT_PTR cmdid, UINT flags,
+    UINT *reserved, LPSTR name, UINT maxlen)
 {
-	ContextMenu *This = impl_from_IContextMenu3(iface);
-	HRESULT hr = E_INVALIDARG;
+    static const WCHAR openW[] = {'o','p','e','n',0};
+    static const WCHAR exploreW[] = {'e','x','p','l','o','r','e',0};
+    static const WCHAR cutW[] = {'c','u','t',0};
+    static const WCHAR copyW[] = {'c','o','p','y',0};
+    static const WCHAR linkW[] = {'l','i','n','k',0};
+    static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
+    static const WCHAR propertiesW[] = {'p','r','o','p','e','r','t','i','e','s',0};
+    static const WCHAR renameW[] = {'r','e','n','a','m','e',0};
+    ContextMenu *This = impl_from_IContextMenu3(iface);
+    const WCHAR *cmdW = NULL;
+    HRESULT hr = S_OK;
 
-	TRACE("(%p)->(%lx flags=%x %p name=%p len=%x)\n", This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
+    TRACE("(%p)->(%lx, %#x, %p, %p, %u)\n", This, cmdid, flags, reserved, name, maxlen);
 
-	switch(uFlags)
-	{
-	  case GCS_HELPTEXTA:
-	  case GCS_HELPTEXTW:
-	    hr = E_NOTIMPL;
-	    break;
+    switch (flags)
+    {
+    case GCS_HELPTEXTA:
+    case GCS_HELPTEXTW:
+        hr = E_NOTIMPL;
+        break;
 
-	  case GCS_VERBA:
-	    switch(idCommand)
-	    {
-            case FCIDM_SHVIEW_OPEN:
-                strcpy(lpszName, "open");
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_EXPLORE:
-                strcpy(lpszName, "explore");
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_CUT:
-                strcpy(lpszName, "cut");
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_COPY:
-                strcpy(lpszName, "copy");
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_CREATELINK:
-                strcpy(lpszName, "link");
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_DELETE:
-                strcpy(lpszName, "delete");
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_PROPERTIES:
-                strcpy(lpszName, "properties");
-                hr = S_OK;
-                break;
-	    case FCIDM_SHVIEW_RENAME:
-	        strcpy(lpszName, "rename");
-	        hr = S_OK;
-	        break;
-	    }
-	    break;
+    case GCS_VERBA:
+    case GCS_VERBW:
+        switch (cmdid)
+        {
+        case FCIDM_SHVIEW_OPEN:
+            cmdW = openW;
+            break;
+        case FCIDM_SHVIEW_EXPLORE:
+            cmdW = exploreW;
+            break;
+        case FCIDM_SHVIEW_CUT:
+            cmdW = cutW;
+            break;
+        case FCIDM_SHVIEW_COPY:
+            cmdW = copyW;
+            break;
+        case FCIDM_SHVIEW_CREATELINK:
+            cmdW = linkW;
+            break;
+        case FCIDM_SHVIEW_DELETE:
+            cmdW = deleteW;
+            break;
+        case FCIDM_SHVIEW_PROPERTIES:
+            cmdW = propertiesW;
+            break;
+        case FCIDM_SHVIEW_RENAME:
+            cmdW = renameW;
+            break;
+        }
 
-	     /* NT 4.0 with IE 3.0x or no IE will always call This with GCS_VERBW. In This
-	     case, you need to do the lstrcpyW to the pointer passed.*/
-	  case GCS_VERBW:
-	    switch(idCommand)
-	    {
-            case FCIDM_SHVIEW_OPEN:
-                MultiByteToWideChar(CP_ACP, 0, "open", -1, (LPWSTR)lpszName, uMaxNameLen);
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_EXPLORE:
-                MultiByteToWideChar(CP_ACP, 0, "explore", -1, (LPWSTR)lpszName, uMaxNameLen);
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_CUT:
-                MultiByteToWideChar(CP_ACP, 0, "cut", -1, (LPWSTR)lpszName, uMaxNameLen);
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_COPY:
-                MultiByteToWideChar(CP_ACP, 0, "copy", -1, (LPWSTR)lpszName, uMaxNameLen);
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_CREATELINK:
-                MultiByteToWideChar(CP_ACP, 0, "link", -1, (LPWSTR)lpszName, uMaxNameLen);
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_DELETE:
-                MultiByteToWideChar(CP_ACP, 0, "delete", -1, (LPWSTR)lpszName, uMaxNameLen);
-                hr = S_OK;
-                break;
-            case FCIDM_SHVIEW_PROPERTIES:
-                MultiByteToWideChar(CP_ACP, 0, "properties", -1, (LPWSTR)lpszName, uMaxNameLen);
-                hr = S_OK;
-                break;
-	    case FCIDM_SHVIEW_RENAME:
-                MultiByteToWideChar( CP_ACP, 0, "rename", -1, (LPWSTR)lpszName, uMaxNameLen );
-	        hr = S_OK;
-	        break;
-	    }
-	    break;
+        if (!cmdW)
+        {
+            hr = E_INVALIDARG;
+            break;
+        }
 
-	  case GCS_VALIDATEA:
-	  case GCS_VALIDATEW:
-	    hr = S_OK;
-	    break;
-	}
-	TRACE("-- (%p)->(name=%s)\n", This, lpszName);
-	return hr;
+        if (flags == GCS_VERBA)
+            WideCharToMultiByte(CP_ACP, 0, cmdW, -1, name, maxlen, NULL, NULL);
+        else
+            lstrcpynW((WCHAR *)name, cmdW, maxlen);
+
+        TRACE("name %s\n", flags == GCS_VERBA ? debugstr_a(name) : debugstr_w((WCHAR *)name));
+        break;
+
+    case GCS_VALIDATEA:
+    case GCS_VALIDATEW:
+        break;
+    }
+
+    return hr;
 }
 
 /**************************************************************************
