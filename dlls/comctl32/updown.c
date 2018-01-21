@@ -592,19 +592,32 @@ UPDOWN_Buddy_SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     switch(uMsg)
     {
     case WM_KEYDOWN:
-	UPDOWN_KeyPressed(infoPtr, (int)wParam);
-	if ((wParam == VK_UP) || (wParam == VK_DOWN)) return 0;
-	break;
+        if (infoPtr)
+        {
+            UPDOWN_KeyPressed(infoPtr, (int)wParam);
+            if (wParam == VK_UP || wParam == VK_DOWN)
+                return 0;
+        }
+        break;
 
     case WM_MOUSEWHEEL:
-	UPDOWN_MouseWheel(infoPtr, (int)wParam);
-	break;
+        if (infoPtr)
+            UPDOWN_MouseWheel(infoPtr, (int)wParam);
+        break;
 
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, UPDOWN_Buddy_SubclassProc, BUDDY_SUBCLASSID);
+        break;
     default:
 	break;
     }
 
     return DefSubclassProc(hwnd, uMsg, wParam, lParam);
+}
+
+static void UPDOWN_ResetSubclass (UPDOWN_INFO *infoPtr)
+{
+    SetWindowSubclass(infoPtr->Buddy, UPDOWN_Buddy_SubclassProc, BUDDY_SUBCLASSID, 0);
 }
 
 /***********************************************************************
@@ -628,9 +641,8 @@ static HWND UPDOWN_SetBuddy (UPDOWN_INFO* infoPtr, HWND bud)
 
     old_buddy = infoPtr->Buddy;
 
-    /* there is already a buddy assigned */
-    if (infoPtr->Buddy) RemoveWindowSubclass(infoPtr->Buddy, UPDOWN_Buddy_SubclassProc,
-                                             BUDDY_SUBCLASSID);
+    UPDOWN_ResetSubclass (infoPtr);
+
     if (!IsWindow(bud)) bud = NULL;
 
     /* Store buddy window handle */
@@ -942,10 +954,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 
 	case WM_DESTROY:
 	    Free (infoPtr->AccelVect);
-
-	    if (infoPtr->Buddy)
-	       RemoveWindowSubclass(infoPtr->Buddy, UPDOWN_Buddy_SubclassProc,
-	                            BUDDY_SUBCLASSID);
+            UPDOWN_ResetSubclass (infoPtr);
 	    Free (infoPtr);
 	    SetWindowLongPtrW (hwnd, 0, 0);
             theme = GetWindowTheme (hwnd);
