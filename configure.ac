@@ -2706,6 +2706,14 @@ then
     AC_DEFINE(HAVE___BUILTIN_POPCOUNT, 1, [Define to 1 if you have the `__builtin_popcount' built-in function.])
 fi
 
+AC_CACHE_CHECK([for __clear_cache], ac_cv_have___clear_cache,
+               AC_LINK_IFELSE([AC_LANG_PROGRAM(,[[__clear_cache((void*)0, (void*)0); return 0;]])],
+               [ac_cv_have___clear_cache="yes"], [ac_cv_have___clear_cache="no"]))
+if test "$ac_cv_have___clear_cache" = "yes"
+then
+    AC_DEFINE(HAVE___CLEAR_CACHE, 1, [Define to 1 if you have the `__clear_cache' (potentially built-in) function.])
+fi
+
 dnl *** check for the need to define platform-specific symbols
 
 case $host_cpu in

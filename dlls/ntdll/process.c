@@ -653,20 +653,24 @@ NTSTATUS WINAPI NtSetInformationProcess(
  * NtFlushInstructionCache [NTDLL.@]
  * ZwFlushInstructionCache [NTDLL.@]
  */
-NTSTATUS WINAPI NtFlushInstructionCache(
-        IN HANDLE ProcessHandle,
-        IN LPCVOID BaseAddress,
-        IN SIZE_T Size)
+NTSTATUS WINAPI NtFlushInstructionCache( HANDLE handle, const void *addr, SIZE_T size )
 {
-    static int once;
-    if (!once++)
-    {
 #if defined(__x86_64__) || defined(__i386__)
-        TRACE("%p %p %ld - no-op on x86 and x86_64\n", ProcessHandle, BaseAddress, Size );
-#else
-        FIXME("%p %p %ld\n", ProcessHandle, BaseAddress, Size );
-#endif
+    /* no-op */
+#elif defined(HAVE___CLEAR_CACHE)
+    if (handle == GetCurrentProcess())
+    {
+        __clear_cache( (char *)addr, (char *)addr + size );
     }
+    else
+    {
+        static int once;
+        if (!once++) FIXME( "%p %p %ld other process not supported\n", handle, addr, size );
+    }
+#else
+    static int once;
+    if (!once++) FIXME( "%p %p %ld\n", handle, addr, size );
+#endif
     return STATUS_SUCCESS;
 }
 

@@ -1407,6 +1407,10 @@
 /* Define to 1 if you have the `__builtin_popcount' built-in function. */
 #undef HAVE___BUILTIN_POPCOUNT
 
+/* Define to 1 if you have the `__clear_cache' (potentially built-in)
+   function. */
+#undef HAVE___CLEAR_CACHE
+
 /* Define to 1 if you have the `__res_getservers' function. */
 #undef HAVE___RES_GETSERVERS
 

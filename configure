@@ -17759,6 +17759,39 @@ $as_echo "#define HAVE___BUILTIN_POPCOUNT 1" >>confdefs.h
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __clear_cache" >&5
+$as_echo_n "checking for __clear_cache... " >&6; }
+if ${ac_cv_have___clear_cache+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+__clear_cache((void*)0, (void*)0); return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_have___clear_cache="yes"
+else
+  ac_cv_have___clear_cache="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have___clear_cache" >&5
+$as_echo "$ac_cv_have___clear_cache" >&6; }
+if test "$ac_cv_have___clear_cache" = "yes"
+then
+
+$as_echo "#define HAVE___CLEAR_CACHE 1" >>confdefs.h
+
+fi
+
 
 case $host_cpu in
   *i[3456789]86*) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we need to define __i386__" >&5
