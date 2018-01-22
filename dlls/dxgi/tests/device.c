@@ -2604,6 +2604,7 @@ static void test_swapchain_resize(void)
     ok(EqualRect(&r, &client_rect), "Got unexpected rect %s, expected %s.\n",
             wine_dbgstr_rect(&r), wine_dbgstr_rect(&client_rect));
 
+    memset(&swapchain_desc, 0, sizeof(swapchain_desc));
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok(SUCCEEDED(hr), "Failed to get swapchain desc, hr %#x.\n", hr);
     ok(swapchain_desc.BufferDesc.Width == 640,
@@ -2668,6 +2669,7 @@ static void test_swapchain_resize(void)
     ok(EqualRect(&r, &client_rect), "Got unexpected rect %s, expected %s.\n",
             wine_dbgstr_rect(&r), wine_dbgstr_rect(&client_rect));
 
+    memset(&swapchain_desc, 0, sizeof(swapchain_desc));
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok(SUCCEEDED(hr), "Failed to get swapchain desc, hr %#x.\n", hr);
     ok(swapchain_desc.BufferDesc.Width == 640,
@@ -2738,6 +2740,7 @@ static void test_swapchain_resize(void)
     ok(EqualRect(&r, &client_rect), "Got unexpected rect %s, expected %s.\n",
             wine_dbgstr_rect(&r), wine_dbgstr_rect(&client_rect));
 
+    memset(&swapchain_desc, 0, sizeof(swapchain_desc));
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok(SUCCEEDED(hr), "Failed to get swapchain desc, hr %#x.\n", hr);
     ok(swapchain_desc.BufferDesc.Width == 320,
@@ -2800,6 +2803,7 @@ static void test_swapchain_resize(void)
     hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
     ok(SUCCEEDED(hr), "Failed to resize buffers, hr %#x.\n", hr);
 
+    memset(&swapchain_desc, 0, sizeof(swapchain_desc));
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok(SUCCEEDED(hr), "Failed to get swapchain desc, hr %#x.\n", hr);
     ok(swapchain_desc.BufferDesc.Width == client_rect.right - client_rect.left,
