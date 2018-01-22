@@ -22,7 +22,13 @@
 #define D2D1_INIT_GUID
 #include "d2d1_private.h"
 
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
+
+struct d2d_settings d2d_settings =
+{
+    ~0u,    /* No ID2D1Factory version limit by default. */
+};
 
 struct d2d_factory
 {
@@ -62,7 +68,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_QueryInterface(ID2D1Factory1 *iface
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualGUID(iid, &IID_ID2D1Factory1)
+    if ((IsEqualGUID(iid, &IID_ID2D1Factory1) && d2d_settings.max_version_factory >= 1)
             || IsEqualGUID(iid, &IID_ID2D1Factory)
             || IsEqualGUID(iid, &IID_IUnknown))
     {
@@ -536,4 +542,72 @@ void WINAPI D2D1MakeRotateMatrix(float angle, D2D1_POINT_2F center, D2D1_MATRIX_
     matrix->_22 = cos_theta;
     matrix->_31 = center.x - center.x * cos_theta + center.y * sin_theta;
     matrix->_32 = center.y - center.x * sin_theta - center.y * cos_theta;
+}
+
+static BOOL get_config_key_dword(HKEY default_key, HKEY application_key, const char *name, DWORD *value)
+{
+    DWORD type, data, size;
+
+    size = sizeof(data);
+    if (application_key && !RegQueryValueExA(application_key,
+            name, 0, &type, (BYTE *)&data, &size) && type == REG_DWORD)
+        goto success;
+
+    size = sizeof(data);
+    if (default_key && !RegQueryValueExA(default_key,
+            name, 0, &type, (BYTE *)&data, &size) && type == REG_DWORD)
+        goto success;
+
+    return FALSE;
+
+success:
+    *value = data;
+    return TRUE;
+}
+
+static void d2d_settings_init(void)
+{
+    HKEY default_key, tmp_key, application_key = NULL;
+    char buffer[MAX_PATH + 10];
+    DWORD len;
+
+    if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Direct2D", &default_key))
+        default_key = NULL;
+
+    len = GetModuleFileNameA(0, buffer, MAX_PATH);
+    if (len && len < MAX_PATH)
+    {
+        char *p, *appname = buffer;
+
+        if ((p = strrchr(appname, '/')))
+            appname = p + 1;
+        if ((p = strrchr(appname, '\\')))
+            appname = p + 1;
+        strcat(appname, "\\Direct2D");
+
+        if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmp_key))
+        {
+            if (RegOpenKeyA(tmp_key, appname, &application_key))
+                application_key = NULL;
+            RegCloseKey(tmp_key);
+        }
+    }
+
+    if (!default_key && !application_key)
+        return;
+
+    if (get_config_key_dword(default_key, application_key, "max_version_factory", &d2d_settings.max_version_factory))
+        ERR_(winediag)("Limiting maximum Direct2D factory version to %#x.\n", d2d_settings.max_version_factory);
+
+    if (application_key)
+        RegCloseKey(application_key);
+    if (default_key)
+        RegCloseKey(default_key);
+}
+
+BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
+{
+    if (reason == DLL_PROCESS_ATTACH)
+        d2d_settings_init();
+    return TRUE;
 }

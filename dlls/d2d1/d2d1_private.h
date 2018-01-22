@@ -52,6 +52,12 @@ enum d2d_shape_type
     D2D_SHAPE_TYPE_COUNT,
 };
 
+struct d2d_settings
+{
+    unsigned int max_version_factory;
+};
+extern struct d2d_settings d2d_settings DECLSPEC_HIDDEN;
+
 struct d2d_clip_stack
 {
     D2D1_RECT_F *stack;
