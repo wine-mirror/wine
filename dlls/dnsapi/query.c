@@ -547,6 +547,7 @@ static DNS_STATUS dns_set_serverlist( const IP4_ARRAY *addrs )
 {
     int i;
 
+    if (!addrs || !addrs->AddrCount) return ERROR_SUCCESS;
     if (addrs->AddrCount > MAXNS) 
     {
         WARN( "too many servers: %d only using the first: %d\n",
@@ -716,8 +717,7 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
     initialise_resolver();
     _res.options |= dns_map_options( options );
 
-    if (servers && (ret = dns_set_serverlist( servers )))
-        return ret;
+    if ((ret = dns_set_serverlist( servers ))) return ret;
 
     ret = dns_do_query( name, type, options, result );
 
