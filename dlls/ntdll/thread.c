@@ -804,6 +804,34 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
 }
 
 
+/******************************************************************************
+ *              RtlPushFrame  (NTDLL.@)
+ */
+void WINAPI RtlPushFrame( TEB_ACTIVE_FRAME *frame )
+{
+    frame->Previous = NtCurrentTeb()->ActiveFrame;
+    NtCurrentTeb()->ActiveFrame = frame;
+}
+
+
+/******************************************************************************
+ *              RtlPopFrame  (NTDLL.@)
+ */
+void WINAPI RtlPopFrame( TEB_ACTIVE_FRAME *frame )
+{
+    NtCurrentTeb()->ActiveFrame = frame->Previous;
+}
+
+
+/******************************************************************************
+ *              RtlGetFrame  (NTDLL.@)
+ */
+TEB_ACTIVE_FRAME * WINAPI RtlGetFrame(void)
+{
+    return NtCurrentTeb()->ActiveFrame;
+}
+
+
 /***********************************************************************
  *              set_thread_context
  */

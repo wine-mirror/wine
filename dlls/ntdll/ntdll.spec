@@ -649,7 +649,7 @@
 @ stub RtlGetElementGenericTable
 # @ stub RtlGetElementGenericTableAvl
 # @ stub RtlGetFirstRange
-# @ stub RtlGetFrame
+@ stdcall RtlGetFrame()
 @ stdcall RtlGetFullPathName_U(wstr long ptr ptr)
 @ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr)
 @ stdcall RtlGetLastNtStatus()
@@ -796,12 +796,12 @@
 @ stdcall RtlOpenCurrentUser(long ptr)
 @ stdcall RtlPcToFileHeader(ptr ptr)
 @ stdcall RtlPinAtomInAtomTable(ptr long)
-# @ stub RtlPopFrame
+@ stdcall RtlPopFrame(ptr)
 @ stdcall RtlPrefixString(ptr ptr long)
 @ stdcall RtlPrefixUnicodeString(ptr ptr long)
 @ stub RtlPropertySetNameToGuid
 @ stub RtlProtectHeap
-# @ stub RtlPushFrame
+@ stdcall RtlPushFrame(ptr)
 @ stdcall RtlQueryAtomInAtomTable(ptr long ptr ptr ptr ptr)
 @ stdcall RtlQueryDepthSList(ptr)
 @ stdcall RtlQueryDynamicTimeZoneInformation(ptr)
