@@ -4559,17 +4559,20 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                  * so after processing 100 messages we go back to checking the wait handles */
                 while (count++ < 100 && COM_PeekMessage(apt, &msg))
                 {
-                    TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
-                    TranslateMessage(&msg);
-                    DispatchMessageW(&msg);
                     if (msg.message == WM_QUIT)
                     {
-                        TRACE("resending WM_QUIT to outer message loop\n");
+                        TRACE("received WM_QUIT message\n");
                         post_quit = TRUE;
                         exit_code = msg.wParam;
                         /* no longer need to process messages */
                         message_loop = FALSE;
                         break;
+                    }
+                    else
+                    {
+                        TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
+                        TranslateMessage(&msg);
+                        DispatchMessageW(&msg);
                     }
                 }
                 continue;
