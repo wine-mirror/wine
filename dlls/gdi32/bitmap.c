@@ -489,7 +489,8 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
 
     if (!bmp) return FALSE;
     HeapFree( GetProcessHeap(), 0, bmp->dib.dsBm.bmBits );
-    return HeapFree( GetProcessHeap(), 0, bmp );
+    HeapFree( GetProcessHeap(), 0, bmp );
+    return TRUE;
 }
 
 

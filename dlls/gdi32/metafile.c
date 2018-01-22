@@ -135,8 +135,10 @@ static POINT *convert_points( UINT count, const POINTS *pts )
 BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
 {
     METAHEADER *mh = free_gdi_handle( hmf );
+
     if (!mh) return FALSE;
-    return HeapFree( GetProcessHeap(), 0, mh );
+    HeapFree( GetProcessHeap(), 0, mh );
+    return TRUE;
 }
 
 /******************************************************************

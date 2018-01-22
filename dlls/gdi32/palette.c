@@ -610,7 +610,8 @@ static BOOL PALETTE_DeleteObject( HGDIOBJ handle )
     PALETTE_UnrealizeObject( handle );
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
     HeapFree( GetProcessHeap(), 0, obj->entries );
-    return HeapFree( GetProcessHeap(), 0, obj );
+    HeapFree( GetProcessHeap(), 0, obj );
+    return TRUE;
 }
 
 

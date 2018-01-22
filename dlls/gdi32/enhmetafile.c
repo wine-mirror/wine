@@ -287,7 +287,8 @@ static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
         UnmapViewOfFile( metaObj->emh );
     else
         HeapFree( GetProcessHeap(), 0, metaObj->emh );
-    return HeapFree( GetProcessHeap(), 0, metaObj );
+    HeapFree( GetProcessHeap(), 0, metaObj );
+    return TRUE;
 }
 
 /******************************************************************

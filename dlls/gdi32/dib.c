@@ -1831,5 +1831,6 @@ static BOOL DIB_DeleteObject( HGDIOBJ handle )
     else VirtualFree( bmp->dib.dsBm.bmBits, 0, MEM_RELEASE );
 
     HeapFree(GetProcessHeap(), 0, bmp->color_table);
-    return HeapFree( GetProcessHeap(), 0, bmp );
+    HeapFree( GetProcessHeap(), 0, bmp );
+    return TRUE;
 }

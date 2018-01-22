@@ -811,7 +811,8 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
     FONTOBJ *obj;
 
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
-    return HeapFree( GetProcessHeap(), 0, obj );
+    HeapFree( GetProcessHeap(), 0, obj );
+    return TRUE;
 }
 
 

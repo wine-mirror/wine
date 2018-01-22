@@ -467,7 +467,8 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 
     if (!brush) return FALSE;
     free_brush_pattern( &brush->pattern );
-    return HeapFree( GetProcessHeap(), 0, brush );
+    HeapFree( GetProcessHeap(), 0, brush );
+    return TRUE;
 }
 
 
