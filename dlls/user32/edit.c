@@ -4839,6 +4839,7 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 
 	case EM_SETWORDBREAKPROC:
 		EDIT_EM_SetWordBreakProc(es, (void *)lParam);
+		result = 1;
 		break;
 
 	case EM_GETWORDBREAKPROC:

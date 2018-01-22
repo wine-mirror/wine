@@ -2999,6 +2999,37 @@ static void test_EM_GETLINE(void)
     }
 }
 
+static int CALLBACK test_wordbreak_procA(char *text, int current, int length, int code)
+{
+    return -1;
+}
+
+static void test_wordbreak_proc(void)
+{
+    EDITWORDBREAKPROCA proc;
+    LRESULT ret;
+    HWND hwnd;
+
+    hwnd = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
+
+    proc = (void *)SendMessageA(hwnd, EM_GETWORDBREAKPROC, 0, 0);
+    ok(proc == NULL, "Unexpected wordbreak proc %p.\n", proc);
+
+    ret = SendMessageA(hwnd, EM_SETWORDBREAKPROC, 0, (LPARAM)test_wordbreak_procA);
+    ok(ret == 1, "Unexpected return value %ld.\n", ret);
+
+    proc = (void *)SendMessageA(hwnd, EM_GETWORDBREAKPROC, 0, 0);
+    ok(proc == test_wordbreak_procA, "Unexpected wordbreak proc %p.\n", proc);
+
+    ret = SendMessageA(hwnd, EM_SETWORDBREAKPROC, 0, 0);
+    ok(ret == 1, "Unexpected return value %ld.\n", ret);
+
+    proc = (void *)SendMessageA(hwnd, EM_GETWORDBREAKPROC, 0, 0);
+    ok(proc == NULL, "Unexpected wordbreak proc %p.\n", proc);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(edit)
 {
     BOOL b;
@@ -3034,6 +3065,7 @@ START_TEST(edit)
     test_EM_GETHANDLE();
     test_paste();
     test_EM_GETLINE();
+    test_wordbreak_proc();
 
     UnregisterWindowClasses();
 }
