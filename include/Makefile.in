@@ -36,6 +36,7 @@ IDL_SRCS = \
 	ctfutb.idl \
 	ctxtcall.idl \
 	d2d1.idl \
+	d2d1_1.idl \
 	d3d10.idl \
 	d3d10_1.idl \
 	d3d10sdklayers.idl \

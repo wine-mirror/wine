@@ -1,0 +1,136 @@
+/*
+ * Copyright 2017 Lucian Poston
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "d2d1.idl";
+
+interface ID2D1Device;
+interface ID2D1StrokeStyle1;
+interface ID2D1PathGeometry1;
+interface ID2D1DrawingStateBlock1;
+interface ID2D1GdiMetafile;
+interface ID2D1Properties;
+
+typedef enum D2D1_STROKE_TRANSFORM_TYPE
+{
+    D2D1_STROKE_TRANSFORM_TYPE_NORMAL = 0x0,
+    D2D1_STROKE_TRANSFORM_TYPE_FIXED = 0x1,
+    D2D1_STROKE_TRANSFORM_TYPE_HAIRLINE = 0x2,
+    D2D1_STROKE_TRANSFORM_TYPE_FORCE_DWORD = 0xffffffff,
+} D2D1_STROKE_TRANSFORM_TYPE;
+
+typedef enum D2D1_PRIMITIVE_BLEND
+{
+    D2D1_PRIMITIVE_BLEND_SOURCE_OVER = 0x0,
+    D2D1_PRIMITIVE_BLEND_COPY = 0x1,
+    D2D1_PRIMITIVE_BLEND_MIN = 0x2,
+    D2D1_PRIMITIVE_BLEND_ADD = 0x3,
+    D2D1_PRIMITIVE_BLEND_MAX = 0x4,
+    D2D1_PRIMITIVE_BLEND_FORCE_DWORD = 0xffffffff,
+} D2D1_PRIMITIVE_BLEND;
+
+typedef enum D2D1_UNIT_MODE
+{
+    D2D1_UNIT_MODE_DIPS = 0x0,
+    D2D1_UNIT_MODE_PIXELS = 0x1,
+    D2D1_UNIT_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_UNIT_MODE;
+
+typedef struct D2D1_PROPERTY_BINDING D2D1_PROPERTY_BINDING;
+
+typedef struct D2D1_STROKE_STYLE_PROPERTIES1
+{
+    D2D1_CAP_STYLE startCap;
+    D2D1_CAP_STYLE endCap;
+    D2D1_CAP_STYLE dashCap;
+    D2D1_LINE_JOIN lineJoin;
+    float miterLimit;
+    D2D1_DASH_STYLE dashStyle;
+    float dashOffset;
+    D2D1_STROKE_TRANSFORM_TYPE transformType;
+} D2D1_STROKE_STYLE_PROPERTIES1;
+
+typedef struct D2D1_DRAWING_STATE_DESCRIPTION1
+{
+    D2D1_ANTIALIAS_MODE antialiasMode;
+    D2D1_TEXT_ANTIALIAS_MODE textAntialiasMode;
+    D2D1_TAG tag1;
+    D2D1_TAG tag2;
+    D2D1_MATRIX_3X2_F transform;
+    D2D1_PRIMITIVE_BLEND primitiveBlend;
+    D2D1_UNIT_MODE unitMode;
+} D2D1_DRAWING_STATE_DESCRIPTION1;
+
+typedef HRESULT (__stdcall *PD2D1_EFFECT_FACTORY)(IUnknown **effect);
+
+[
+    object,
+    uuid(bb12d362-daee-4b9a-aa1d-14ba401cfa1f),
+    local,
+]
+interface ID2D1Factory1 : ID2D1Factory
+{
+    HRESULT CreateDevice(
+        [in] IDXGIDevice *dxgi_device,
+        [out] ID2D1Device **device
+    );
+    HRESULT CreateStrokeStyle(
+        [in] const D2D1_STROKE_STYLE_PROPERTIES1 *desc,
+        [in, size_is(dash_count)] const float *dashes,
+        [in] UINT32 dash_count,
+        [out] ID2D1StrokeStyle1 **stroke_style
+    );
+    HRESULT CreatePathGeometry(
+        [out] ID2D1PathGeometry1 **geometry
+    );
+    HRESULT CreateDrawingStateBlock(
+        [in] const D2D1_DRAWING_STATE_DESCRIPTION1 *desc,
+        [in] IDWriteRenderingParams *text_rendering_params,
+        [out] ID2D1DrawingStateBlock1 **state_block
+    );
+    HRESULT CreateGdiMetafile(
+        [in] IStream *stream,
+        [out] ID2D1GdiMetafile **metafile
+    );
+    HRESULT RegisterEffectFromStream(
+        [in] REFCLSID effect_id,
+        [in] IStream *property_xml,
+        [in, size_is(binding_count)] const D2D1_PROPERTY_BINDING *bindings,
+        [in] UINT32 binding_count,
+        [in] PD2D1_EFFECT_FACTORY effect_factory
+    );
+    HRESULT RegisterEffectFromString(
+        [in] REFCLSID effect_id,
+        [in] const WCHAR *property_xml,
+        [in, size_is(binding_count)] const D2D1_PROPERTY_BINDING *bindings,
+        [in] UINT32 binding_count,
+        [in] PD2D1_EFFECT_FACTORY effect_factory
+    );
+    HRESULT UnregisterEffect(
+        [in] REFCLSID effect_id
+    );
+    HRESULT GetRegisteredEffects(
+        [out, size_is(effect_count)] CLSID *effects,
+        [in] UINT32 effect_count,
+        [out] UINT32 *returned,
+        [out] UINT32 *registered
+    );
+    HRESULT GetEffectProperties(
+        [in] REFCLSID effect_id,
+        [out] ID2D1Properties **props
+    );
+}
