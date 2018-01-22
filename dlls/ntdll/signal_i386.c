@@ -2865,39 +2865,24 @@ __ASM_GLOBAL_FUNC( start_thread,
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
                    /* store exit frame */
                    "movl %ebp,%fs:0x1f4\n\t"    /* x86_thread_data()->exit_frame */
-                   /* build initial context on thread stack */
-                   "movl %fs:4,%eax\n\t"        /* NtCurrentTeb()->StackBase */
-                   "leal -0x2dc(%eax),%esi\n\t" /* sizeof(context) + 16 */
-                   "movl $0x10007,(%esi)\n\t"   /* context->ContextFlags = CONTEXT_FULL */
-                   "movw %cs,0xbc(%esi)\n\t"    /* context->SegCs */
-                   "movw %ds,0x98(%esi)\n\t"    /* context->SegDs */
-                   "movw %es,0x94(%esi)\n\t"    /* context->SegEs */
-                   "movw %fs,0x90(%esi)\n\t"    /* context->SegFs */
-                   "movw %gs,0x8c(%esi)\n\t"    /* context->SegGs */
-                   "movw %ss,0xc8(%esi)\n\t"    /* context->SegSs */
-                   "movl 8(%ebp),%eax\n\t"
-                   "movl %eax,0xb0(%esi)\n\t"   /* context->Eax = entry */
-                   "movl 12(%ebp),%eax\n\t"
-                   "movl %eax,0xa4(%esi)\n\t"   /* context->Ebx = arg */
-                   "movl 20(%ebp),%eax\n\t"
-                   "movl %eax,0xb8(%esi)\n\t"   /* context->Eip = relay */
-                   "leal 0x2cc(%esi),%eax\n\t"
-                   "movl %eax,0xc4(%esi)\n\t"   /* context->Esp */
                    /* switch to thread stack */
-                   "leal -12(%esi),%esp\n\t"
+                   "movl %fs:4,%eax\n\t"        /* NtCurrentTeb()->StackBase */
+                   "leal -0x1000(%eax),%esp\n\t"
                    /* attach dlls */
+                   "pushl 20(%ebp)\n\t"         /* relay */
                    "pushl 16(%ebp)\n\t"         /* suspend */
-                   "pushl %esi\n\t"             /* context */
+                   "pushl 12(%ebp)\n\t"         /* arg */
+                   "pushl 8(%ebp)\n\t"          /* entry */
                    "xorl %ebp,%ebp\n\t"
-                   "call " __ASM_NAME("attach_dlls") "\n\t"
-                   "addl $20,%esp\n\t"
+                   "call " __ASM_NAME("attach_thread") "\n\t"
+                   "movl %eax,%esi\n\t"
+                   "leal -12(%eax),%esp\n\t"
                    /* clear the stack */
-                   "leal -0xd24(%esi),%eax\n\t"  /* round down to page size */
-                   "pushl %eax\n\t"
+                   "andl $~0xfff,%eax\n\t"  /* round down to page size */
+                   "movl %eax,(%esp)\n\t"
                    "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
                    /* switch to the initial context */
                    "movl %esi,(%esp)\n\t"
-                   "movl $0x10007,(%esi)\n\t"   /* context->ContextFlags = CONTEXT_FULL */
                    "call " __ASM_NAME("set_cpu_context") )
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int) );
@@ -2964,6 +2949,55 @@ void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg )
     }
     __ENDTRY
     abort();  /* should not be reached */
+}
+
+
+/***********************************************************************
+ *           init_thread_context
+ */
+static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, void *relay )
+{
+    context->SegCs  = wine_get_cs();
+    context->SegDs  = wine_get_ds();
+    context->SegEs  = wine_get_es();
+    context->SegFs  = wine_get_fs();
+    context->SegGs  = wine_get_gs();
+    context->SegSs  = wine_get_ss();
+    context->EFlags = 0x202;
+    context->Eax    = (DWORD)entry;
+    context->Ebx    = (DWORD)arg;
+    context->Esp    = (DWORD)NtCurrentTeb()->Tib.StackBase - 16;
+    context->Eip    = (DWORD)relay;
+    context->FloatSave.ControlWord = 0x27f;
+    ((XMM_SAVE_AREA32 *)context->ExtendedRegisters)->ControlWord = 0x27f;
+}
+
+
+/***********************************************************************
+ *           attach_thread
+ */
+PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
+                                        BOOL suspend, void *relay )
+{
+    CONTEXT *ctx;
+
+    if (suspend)
+    {
+        CONTEXT context = { CONTEXT_ALL };
+
+        init_thread_context( &context, entry, arg, relay );
+        wait_suspend( &context );
+        ctx = (CONTEXT *)((ULONG_PTR)context.Esp & ~15) - 1;
+        *ctx = context;
+    }
+    else
+    {
+        ctx = (CONTEXT *)((char *)NtCurrentTeb()->Tib.StackBase - 16) - 1;
+        init_thread_context( ctx, entry, arg, relay );
+    }
+    ctx->ContextFlags = CONTEXT_FULL;
+    attach_dlls( ctx, FALSE );
+    return ctx;
 }
 
 

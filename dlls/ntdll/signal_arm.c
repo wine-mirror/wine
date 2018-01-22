@@ -1228,24 +1228,17 @@ __ASM_GLOBAL_FUNC( start_thread,
                    /* store exit frame */
                    "ldr r4, [sp, #40]\n\t"    /* teb */
                    "str sp, [r4, #0x1d4]\n\t" /* teb->SystemReserved2 */
-                   /* build initial context on thread stack */
-                   "ldr r4, [r4, #4]\n\t"     /* teb->Tib.StackBase */
-                   "sub r5, r4, #0x1a0\n\t"   /* sizeof(CONTEXT) */
-                   "mov ip, #0x0200000\n\t"   /* CONTEXT_ARM */
-                   "add ip, #0x3\n\t"         /* CONTEXT_FULL */
-                   "str ip, [r5]\n\t"         /* context->ContextFlags */
-                   "str r0, [r5, #0x4]\n\t"   /* context->R0 = entry */
-                   "str r1, [r5, #0x8]\n\t"   /* context->R1 = arg */
-                   "str r4, [r5, #0x38]\n\t"  /* context->Sp = stack */
-                   "str r3, [r5, #0x40]\n\t"  /* context->Pc = relay */
                    /* switch to thread stack */
-                   "mov sp, r5\n\t"
+                   "ldr r4, [r4, #4]\n\t"     /* teb->Tib.StackBase */
+                   "sub sp, r4, #0x1000\n\t"
                    /* attach dlls */
-                   "mov r0, r5\n\t"  /* context */
-                   "mov r1, r2\n\t"  /* suspend */
-                   "bl " __ASM_NAME("attach_dlls") "\n\t"
+                   "bl " __ASM_NAME("attach_thread") "\n\t"
+                   "mov sp, r0\n\t"
+                   /* clear the stack */
+                   "and r0, #~0xff0\n\t"  /* round down to page size */
+                   "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
                    /* switch to the initial context */
-                   "mov r0, r5\n\t"
+                   "mov r0, sp\n\t"
                    "b " __ASM_NAME("set_cpu_context") )
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
@@ -1257,6 +1250,46 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    "cmp r3, ip\n\t"
                    "movne sp, r3\n\t"
                    "blx r1" )
+
+/***********************************************************************
+ *           init_thread_context
+ */
+static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, void *relay )
+{
+    context->R0 = (DWORD)entry;
+    context->R1 = (DWORD)arg;
+    context->Sp = (DWORD)NtCurrentTeb()->Tib.StackBase;
+    context->Pc = (DWORD)relay;
+}
+
+
+/***********************************************************************
+ *           attach_thread
+ */
+PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
+                                        BOOL suspend, void *relay )
+{
+    CONTEXT *ctx;
+
+    if (suspend)
+    {
+        CONTEXT context = { CONTEXT_ALL };
+
+        init_thread_context( &context, entry, arg, relay );
+        wait_suspend( &context );
+        ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
+        *ctx = context;
+    }
+    else
+    {
+        ctx = (CONTEXT *)NtCurrentTeb()->Tib.StackBase - 1;
+        init_thread_context( ctx, entry, arg, relay );
+    }
+    ctx->ContextFlags = CONTEXT_FULL;
+    attach_dlls( ctx, FALSE );
+    return ctx;
+}
+
 
 /***********************************************************************
  *           signal_start_thread

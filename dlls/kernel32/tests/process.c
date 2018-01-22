@@ -3059,11 +3059,11 @@ static void test_SuspendProcessNewThread(void)
     ret = are_imports_resolved(pi.hProcess, exe_base, &nt_header);
     ok(!ret, "IAT entry resolved prematurely\n");
 
-    ctx.ContextFlags = CONTEXT_FULL;
+    ctx.ContextFlags = CONTEXT_ALL;
     ret = GetThreadContext( thread_handle, &ctx );
     ok( ret, "Failed retrieving remote thread context (%d)\n", GetLastError() );
+    ok( ctx.ContextFlags == CONTEXT_ALL, "wrong flags %x\n", ctx.ContextFlags );
 #ifdef __x86_64__
-    ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
     ok( !ctx.Rax, "rax is not zero %lx\n", ctx.Rax );
     ok( !ctx.Rbx, "rbx is not zero %lx\n", ctx.Rbx );
     ok( ctx.Rcx == (ULONG_PTR)exit_thread_ptr, "wrong rcx %lx/%p\n", ctx.Rcx, exit_thread_ptr );
@@ -3080,8 +3080,10 @@ static void test_SuspendProcessNewThread(void)
     ok( !ctx.R14, "r14 is not zero %lx\n", ctx.R14 );
     ok( !ctx.R15, "r15 is not zero %lx\n", ctx.R15 );
     ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %lx\n", ctx.Rsp );
+    ok( ctx.EFlags == 0x200, "wrong flags %08x\n", ctx.EFlags );
+    ok( ctx.MxCsr == 0x1f80, "wrong mxcsr %08x\n", ctx.MxCsr );
+    ok( ctx.FltSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FltSave.ControlWord );
 #else
-    ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
     ok( !ctx.Ebp || broken(ctx.Ebp), /* winxp */ "ebp is not zero %08x\n", ctx.Ebp );
     if (!ctx.Ebp)  /* winxp is completely different */
     {
@@ -3094,6 +3096,9 @@ static void test_SuspendProcessNewThread(void)
     ok( ctx.Ebx == 0x1234, "wrong ebx %08x\n", ctx.Ebx );
     ok( !((ctx.Esp + 0x10) & 0xfff) || broken( !((ctx.Esp + 4) & 0xfff) ), /* winxp, w2k3 */
         "esp is not at top of stack page or properly aligned: %08x\n", ctx.Esp );
+    ok( (ctx.EFlags & ~2) == 0x200, "wrong flags %08x\n", ctx.EFlags );
+    ok( (WORD)ctx.FloatSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FloatSave.ControlWord );
+    ok( *(WORD *)ctx.ExtendedRegisters == 0x27f, "wrong control %08x\n", *(WORD *)ctx.ExtendedRegisters );
 #endif
 
     ResumeThread( thread_handle );
@@ -3193,9 +3198,10 @@ static void test_SuspendProcessState(void)
     ok(server_pipe_handle != INVALID_HANDLE_VALUE, "Failed to create communication pipe (%d)\n", GetLastError());
 
     /* Set up the remote process environment */
-    ctx.ContextFlags = CONTEXT_FULL;
+    ctx.ContextFlags = CONTEXT_ALL;
     ret = GetThreadContext(pi.hThread, &ctx);
     ok(ret, "Failed retrieving remote thread context (%d)\n", GetLastError());
+    ok( ctx.ContextFlags == CONTEXT_ALL, "wrong flags %x\n", ctx.ContextFlags );
 
     remote_pipe_params = VirtualAllocEx(pi.hProcess, NULL, sizeof(pipe_params), MEM_COMMIT, PAGE_READWRITE);
     ok(remote_pipe_params != NULL, "Failed allocating memory in remote process (%d)\n", GetLastError());
@@ -3210,7 +3216,6 @@ static void test_SuspendProcessState(void)
     ok(ret, "Failed to write to remote process memory (%d)\n", GetLastError());
 
 #ifdef __x86_64__
-    ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
     ok( !ctx.Rax, "rax is not zero %lx\n", ctx.Rax );
     ok( !ctx.Rbx, "rbx is not zero %lx\n", ctx.Rbx );
     ok( !ctx.Rsi, "rsi is not zero %lx\n", ctx.Rsi );
@@ -3225,6 +3230,9 @@ static void test_SuspendProcessState(void)
     ok( !ctx.R14, "r14 is not zero %lx\n", ctx.R14 );
     ok( !ctx.R15, "r15 is not zero %lx\n", ctx.R15 );
     ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %lx\n", ctx.Rsp );
+    ok( ctx.EFlags == 0x200, "wrong flags %08x\n", ctx.EFlags );
+    ok( ctx.MxCsr == 0x1f80, "wrong mxcsr %08x\n", ctx.MxCsr );
+    ok( ctx.FltSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FltSave.ControlWord );
     entry_ptr = (void *)ctx.Rcx;
     peb_ptr = (void *)ctx.Rdx;
 
@@ -3242,7 +3250,6 @@ static void test_SuspendProcessState(void)
     ret = WriteProcessMemory(pi.hProcess, (void *)ctx.Rsp, &rop_chain, sizeof(rop_chain), NULL);
     ok(ret, "Failed to write to remote process thread stack (%d)\n", GetLastError());
 #else
-    ok( ctx.ContextFlags == CONTEXT_FULL, "wrong flags %x\n", ctx.ContextFlags );
     ok( !ctx.Ebp || broken(ctx.Ebp), /* winxp */ "ebp is not zero %08x\n", ctx.Ebp );
     if (!ctx.Ebp)  /* winxp is completely different */
     {
@@ -3253,6 +3260,9 @@ static void test_SuspendProcessState(void)
     }
     ok( !((ctx.Esp + 0x10) & 0xfff) || broken( !((ctx.Esp + 4) & 0xfff) ), /* winxp, w2k3 */
         "esp is not at top of stack page or properly aligned: %08x\n", ctx.Esp );
+    ok( (ctx.EFlags & ~2) == 0x200, "wrong flags %08x\n", ctx.EFlags );
+    ok( (WORD)ctx.FloatSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FloatSave.ControlWord );
+    ok( *(WORD *)ctx.ExtendedRegisters == 0x27f, "wrong control %08x\n", *(WORD *)ctx.ExtendedRegisters );
     entry_ptr = (void *)ctx.Eax;
     peb_ptr = (void *)ctx.Ebx;
 

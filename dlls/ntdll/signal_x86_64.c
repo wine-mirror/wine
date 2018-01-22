@@ -4094,26 +4094,15 @@ __ASM_GLOBAL_FUNC( start_thread,
                    /* store exit frame */
                    "movq %gs:0x30,%rax\n\t"
                    "movq %rsp,0x330(%rax)\n\t"      /* amd64_thread_data()->exit_frame */
-                   /* build initial context on thread stack */
-                   "movq 8(%rax),%r8\n\t"           /* NtCurrentTeb()->Tib.StackBase */
-                   "leaq -0x500(%r8),%r10\n\t"      /* sizeof(context) + 0x30 for function params */
-                   "movq $0x001000b,0x30(%r10)\n\t" /* context->ContextFlags = CONTEXT_FULL */
-                   "movw %cs,0x38(%r10)\n\t"        /* context->SegCs */
-                   "movw %ss,0x42(%r10)\n\t"        /* context->SegSs */
-                   "movq %rdi,0x80(%r10)\n\t"       /* context->Rcx = entry */
-                   "movq %rsi,0x88(%r10)\n\t"       /* context->Rdx = arg */
-                   "leaq -0x28(%r8),%rax\n\t"
-                   "movq %rax,0x98(%r10)\n\t"       /* context->Rsp */
-                   "movq %rcx,0xf8(%r10)\n\t"       /* context->Rip = relay */
-                   "fxsave 0x100(%r10)\n\t"         /* context->FtlSave */
                    /* switch to thread stack */
-                   "movq %r10,%rsp\n\t"
+                   "movq 8(%rax),%rax\n\t"          /* NtCurrentTeb()->Tib.StackBase */
+                   "leaq -0x1000(%rax),%rsp\n\t"
                    /* attach dlls */
-                   "movq %r10,%rdi\n\t"         /* context */
-                   "movq %rdx,%rsi\n\t"         /* suspend */
-                   "call " __ASM_NAME("attach_dlls") "\n\t"
+                   "call " __ASM_NAME("attach_thread") "\n\t"
+                   "movq %rax,%rsp\n\t"
                    /* clear the stack */
-                   "leaq -0xb00(%rsp),%rdi\n\t"  /* round down to page size */
+                   "andq $~0xfff,%rax\n\t"  /* round down to page size */
+                   "movq %rax,%rdi\n\t"
                    "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
                    /* switch to the initial context */
                    "movq %rsp,%rdi\n\t"
@@ -4138,6 +4127,51 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    __ASM_CFI(".cfi_rel_offset %r14,16\n\t")
                    __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
                    "call *%rsi" )
+
+
+/***********************************************************************
+ *           init_thread_context
+ */
+static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, void *relay )
+{
+    __asm__( "movw %%cs,%0" : "=m" (context->SegCs) );
+    __asm__( "movw %%ss,%0" : "=m" (context->SegSs) );
+    __asm__( "fxsave %0" : "=m" (context->u.FltSave) );
+    context->Rcx    = (ULONG_PTR)entry;
+    context->Rdx    = (ULONG_PTR)arg;
+    context->Rsp    = (ULONG_PTR)NtCurrentTeb()->Tib.StackBase - 0x28;
+    context->Rip    = (ULONG_PTR)relay;
+    context->EFlags = 0x200;
+}
+
+
+/***********************************************************************
+ *           attach_thread
+ */
+PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
+                                        BOOL suspend, void *relay )
+{
+    CONTEXT *ctx;
+
+    if (suspend)
+    {
+        CONTEXT context = { 0 };
+
+        context.ContextFlags = CONTEXT_ALL;
+        init_thread_context( &context, entry, arg, relay );
+        wait_suspend( &context );
+        ctx = (CONTEXT *)((ULONG_PTR)context.Rsp & ~15) - 1;
+        *ctx = context;
+    }
+    else
+    {
+        ctx = (CONTEXT *)((char *)NtCurrentTeb()->Tib.StackBase - 0x30) - 1;
+        init_thread_context( ctx, entry, arg, relay );
+    }
+    ctx->ContextFlags = CONTEXT_FULL;
+    attach_dlls( ctx, FALSE );
+    return ctx;
+}
 
 
 /***********************************************************************
