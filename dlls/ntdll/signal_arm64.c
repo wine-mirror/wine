@@ -1016,7 +1016,8 @@ static void thread_startup( void *param )
     context.Sp = (DWORD_PTR)NtCurrentTeb()->Tib.StackBase;
     context.Pc = (DWORD_PTR)info->start;
 
-    attach_dlls( &context, info->suspend );
+    if (info->suspend) wait_suspend( &context );
+    attach_dlls( &context );
 
     ((thread_start_func)context.Pc)( (LPTHREAD_START_ROUTINE)context.u.s.X0, (void *)context.u.s.X1 );
 }

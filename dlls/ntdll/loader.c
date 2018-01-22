@@ -2963,13 +2963,11 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
  * Attach to all the loaded dlls.
  * If this is the first time, perform the full process initialization.
  */
-NTSTATUS attach_dlls( CONTEXT *context, BOOL suspend )
+NTSTATUS attach_dlls( CONTEXT *context )
 {
     NTSTATUS status;
     WINE_MODREF *wm;
     LPCWSTR load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
-
-    if (suspend) wait_suspend( context );
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
 
