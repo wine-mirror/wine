@@ -429,9 +429,37 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetLastPresentCount(IDXGISwapCha
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc1(IDXGISwapChain1 *iface, DXGI_SWAP_CHAIN_DESC1 *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain1(iface);
+    struct wined3d_swapchain_desc wined3d_desc;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc)
+    {
+        WARN("Invalid pointer.\n");
+        return E_INVALIDARG;
+    }
+
+    wined3d_mutex_lock();
+    wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
+    wined3d_mutex_unlock();
+
+    FIXME("Ignoring Stereo, BufferUsage, Scaling, SwapEffect and AlphaMode.\n");
+
+    desc->Width = wined3d_desc.backbuffer_width;
+    desc->Height = wined3d_desc.backbuffer_height;
+    desc->Format = dxgi_format_from_wined3dformat(wined3d_desc.backbuffer_format);
+    desc->Stereo = FALSE;
+    dxgi_sample_desc_from_wined3d(&desc->SampleDesc,
+            wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
+    desc->BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    desc->BufferCount = wined3d_desc.backbuffer_count;
+    desc->Scaling = DXGI_SCALING_STRETCH;
+    desc->SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    desc->AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+    desc->Flags = dxgi_swapchain_flags_from_wined3d(wined3d_desc.flags);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetFullscreenDesc(IDXGISwapChain1 *iface,
