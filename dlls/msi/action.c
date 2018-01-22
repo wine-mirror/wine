@@ -2872,7 +2872,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
         return ERROR_SUCCESS;
 
     comp->Action = msi_get_component_action( package, comp );
-    if (comp->Action != INSTALLSTATE_LOCAL)
+    if (comp->Action != INSTALLSTATE_LOCAL && comp->Action != INSTALLSTATE_SOURCE)
     {
         TRACE("component not scheduled for installation %s\n", debugstr_w(component));
         return ERROR_SUCCESS;
