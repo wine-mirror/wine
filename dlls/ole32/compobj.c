@@ -4564,9 +4564,6 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                         TRACE("received WM_QUIT message\n");
                         post_quit = TRUE;
                         exit_code = msg.wParam;
-                        /* no longer need to process messages */
-                        message_loop = FALSE;
-                        break;
                     }
                     else
                     {

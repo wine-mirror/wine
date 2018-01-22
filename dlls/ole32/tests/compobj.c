@@ -2971,10 +2971,8 @@ static void test_CoWaitForMultipleHandles(void)
         success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
         ok(success, "PeekMessageA failed, error %u\n", GetLastError());
         success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
-        todo_wine
         ok(!success, "PeekMessageA succeeded\n");
         success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
-        todo_wine
         ok(!success, "CoWaitForMultipleHandles didn't remove WM_QUIT messages\n");
         index = WaitForSingleObject(thread, 200);
         ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
@@ -2991,7 +2989,6 @@ static void test_CoWaitForMultipleHandles(void)
         success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
         ok(success, "PeekMessageA failed, error %u\n", GetLastError());
         success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
-        todo_wine
         ok(!success, "PeekMessageA succeeded\n");
         success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
         ok(!success, "CoWaitForMultipleHandles didn't remove WM_QUIT messages\n");
