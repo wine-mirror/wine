@@ -1028,17 +1028,15 @@ static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_r
 }
 
 
-static inline RECT get_surface_rect( const RECT *visible_rect )
+static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
-    RECT rect;
-
-    IntersectRect( &rect, visible_rect, &virtual_screen_rect );
-    OffsetRect( &rect, -visible_rect->left, -visible_rect->top );
-    rect.left &= ~31;
-    rect.top  &= ~31;
-    rect.right  = max( rect.left + 32, (rect.right + 31) & ~31 );
-    rect.bottom = max( rect.top + 32, (rect.bottom + 31) & ~31 );
-    return rect;
+    if (!IntersectRect( surface_rect, visible_rect, &virtual_screen_rect )) return FALSE;
+    OffsetRect( surface_rect, -visible_rect->left, -visible_rect->top );
+    surface_rect->left &= ~31;
+    surface_rect->top  &= ~31;
+    surface_rect->right  = max( surface_rect->left + 32, (surface_rect->right + 31) & ~31 );
+    surface_rect->bottom = max( surface_rect->top + 32, (surface_rect->bottom + 31) & ~31 );
+    return TRUE;
 }
 
 
@@ -1069,8 +1067,8 @@ void CDECL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_fla
     if (data->parent) goto done;
     if (swp_flags & SWP_HIDEWINDOW) goto done;
     if (is_argb_surface( data->surface )) goto done;
+    if (!get_surface_rect( visible_rect, &surface_rect )) goto done;
 
-    surface_rect = get_surface_rect( visible_rect );
     if (data->surface)
     {
         if (!memcmp( &data->surface->rect, &surface_rect, sizeof(surface_rect) ))
