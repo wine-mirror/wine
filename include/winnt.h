@@ -914,42 +914,42 @@ typedef struct _FLOATING_SAVE_AREA
 
 typedef struct _CONTEXT
 {
-    DWORD   ContextFlags;
+    DWORD   ContextFlags;  /* 000 */
 
     /* These are selected by CONTEXT_DEBUG_REGISTERS */
-    DWORD   Dr0;
-    DWORD   Dr1;
-    DWORD   Dr2;
-    DWORD   Dr3;
-    DWORD   Dr6;
-    DWORD   Dr7;
+    DWORD   Dr0;           /* 004 */
+    DWORD   Dr1;           /* 008 */
+    DWORD   Dr2;           /* 00c */
+    DWORD   Dr3;           /* 010 */
+    DWORD   Dr6;           /* 014 */
+    DWORD   Dr7;           /* 018 */
 
     /* These are selected by CONTEXT_FLOATING_POINT */
-    FLOATING_SAVE_AREA FloatSave;
+    FLOATING_SAVE_AREA FloatSave; /* 01c */
 
     /* These are selected by CONTEXT_SEGMENTS */
-    DWORD   SegGs;
-    DWORD   SegFs;
-    DWORD   SegEs;
-    DWORD   SegDs;
+    DWORD   SegGs;         /* 08c */
+    DWORD   SegFs;         /* 090 */
+    DWORD   SegEs;         /* 094 */
+    DWORD   SegDs;         /* 098 */
 
     /* These are selected by CONTEXT_INTEGER */
-    DWORD   Edi;
-    DWORD   Esi;
-    DWORD   Ebx;
-    DWORD   Edx;
-    DWORD   Ecx;
-    DWORD   Eax;
+    DWORD   Edi;           /* 09c */
+    DWORD   Esi;           /* 0a0 */
+    DWORD   Ebx;           /* 0a4 */
+    DWORD   Edx;           /* 0a8 */
+    DWORD   Ecx;           /* 0ac */
+    DWORD   Eax;           /* 0b0 */
 
     /* These are selected by CONTEXT_CONTROL */
-    DWORD   Ebp;
-    DWORD   Eip;
-    DWORD   SegCs;
-    DWORD   EFlags;
-    DWORD   Esp;
-    DWORD   SegSs;
+    DWORD   Ebp;           /* 0b4 */
+    DWORD   Eip;           /* 0b8 */
+    DWORD   SegCs;         /* 0bc */
+    DWORD   EFlags;        /* 0c0 */
+    DWORD   Esp;           /* 0c4 */
+    DWORD   SegSs;         /* 0c8 */
 
-    BYTE    ExtendedRegisters[MAXIMUM_SUPPORTED_EXTENSION];
+    BYTE    ExtendedRegisters[MAXIMUM_SUPPORTED_EXTENSION];  /* 0xcc */
 } CONTEXT;
 
 #define CONTEXT_X86       0x00010000
@@ -1643,6 +1643,7 @@ typedef struct _CONTEXT
 #define CONTEXT_DEBUG_REGISTERS (CONTEXT_ARM | 0x00000008)
 
 #define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_INTEGER)
+#define CONTEXT_ALL  (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT | CONTEXT_DEBUG_REGISTERS)
 
 #define EXCEPTION_READ_FAULT    0
 #define EXCEPTION_WRITE_FAULT   1
@@ -1742,13 +1743,6 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry(ULONG_PTR,DWORD*,UNWIND_HISTORY_
 #endif /* __arm__ */
 
 #ifdef __aarch64__
-/*
- * FIXME:
- *
- * There is not yet an official CONTEXT structure defined for the AArch64
- * architecture, so I just made one up.
- *
- */
 
 #define CONTEXT_ARM64           0x400000
 #define CONTEXT_CONTROL         (CONTEXT_ARM64 | 0x00000001)
@@ -1757,6 +1751,7 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry(ULONG_PTR,DWORD*,UNWIND_HISTORY_
 #define CONTEXT_DEBUG_REGISTERS (CONTEXT_ARM64 | 0x00000008)
 
 #define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_INTEGER)
+#define CONTEXT_ALL  (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT | CONTEXT_DEBUG_REGISTERS)
 
 #define EXCEPTION_READ_FAULT    0
 #define EXCEPTION_WRITE_FAULT   1
