@@ -4467,6 +4467,8 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
     APARTMENT *apt = COM_CurrentApt();
     BOOL message_loop = apt && !apt->multi_threaded;
     BOOL check_apc = (dwFlags & COWAIT_ALERTABLE) != 0;
+    BOOL post_quit = FALSE;
+    UINT exit_code;
 
     TRACE("(0x%08x, 0x%08x, %d, %p, %p)\n", dwFlags, dwTimeout, cHandles,
         pHandles, lpdwindex);
@@ -4563,7 +4565,8 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                     if (msg.message == WM_QUIT)
                     {
                         TRACE("resending WM_QUIT to outer message loop\n");
-                        PostQuitMessage(msg.wParam);
+                        post_quit = TRUE;
+                        exit_code = msg.wParam;
                         /* no longer need to process messages */
                         message_loop = FALSE;
                         break;
@@ -4595,6 +4598,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
         }
         break;
     }
+    if (post_quit) PostQuitMessage(exit_code);
     TRACE("-- 0x%08x\n", hr);
     return hr;
 }
