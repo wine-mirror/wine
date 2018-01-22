@@ -27,11 +27,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
 /* ID3D11Texture2D methods */
 
-static inline struct d3d_texture2d *impl_from_ID3D11Texture2D(ID3D11Texture2D *iface)
-{
-    return CONTAINING_RECORD(iface, struct d3d_texture2d, ID3D11Texture2D_iface);
-}
-
 static HRESULT STDMETHODCALLTYPE d3d11_texture2d_QueryInterface(ID3D11Texture2D *iface, REFIID riid, void **object)
 {
     struct d3d_texture2d *texture = impl_from_ID3D11Texture2D(iface);
@@ -250,6 +245,11 @@ struct d3d_texture2d *unsafe_impl_from_ID3D11Texture2D(ID3D11Texture2D *iface)
 }
 
 /* IUnknown methods */
+
+static inline struct d3d_texture2d *impl_from_ID3D10Texture2D(ID3D10Texture2D *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_texture2d, ID3D10Texture2D_iface);
+}
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture2d_QueryInterface(ID3D10Texture2D *iface, REFIID riid, void **object)
 {

@@ -5767,8 +5767,8 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
 {
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
     struct d3d_texture2d *texture;
-    ID3D10Texture2D *texture_iface;
-    D3D10_TEXTURE2D_DESC desc;
+    ID3D11Texture2D *texture_iface;
+    D3D11_TEXTURE2D_DESC desc;
     HRESULT hr;
 
     FIXME("device_parent %p, container_parent %p, wined3d_desc %p, texture flags %#x, "
@@ -5784,32 +5784,32 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     desc.Format = dxgi_format_from_wined3dformat(wined3d_desc->format);
     desc.SampleDesc.Count = wined3d_desc->multisample_type ? wined3d_desc->multisample_type : 1;
     desc.SampleDesc.Quality = wined3d_desc->multisample_quality;
-    desc.Usage = D3D10_USAGE_DEFAULT;
-    desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_RENDER_TARGET;
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 
     if (texture_flags & WINED3D_TEXTURE_CREATE_GET_DC)
     {
-        desc.MiscFlags |= D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
+        desc.MiscFlags |= D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
         texture_flags &= ~WINED3D_TEXTURE_CREATE_GET_DC;
     }
 
     if (texture_flags)
         FIXME("Unhandled flags %#x.\n", texture_flags);
 
-    if (FAILED(hr = d3d10_device_CreateTexture2D(&device->ID3D10Device1_iface,
+    if (FAILED(hr = d3d11_device_CreateTexture2D(&device->ID3D11Device_iface,
             &desc, NULL, &texture_iface)))
     {
-        WARN("CreateTexture2D failed, returning %#x.\n", hr);
+        WARN("Failed to create 2D texture, hr %#x.\n", hr);
         return hr;
     }
 
-    texture = impl_from_ID3D10Texture2D(texture_iface);
+    texture = impl_from_ID3D11Texture2D(texture_iface);
 
     *wined3d_texture = texture->wined3d_texture;
     wined3d_texture_incref(*wined3d_texture);
-    ID3D10Texture2D_Release(&texture->ID3D10Texture2D_iface);
+    ID3D11Texture2D_Release(&texture->ID3D11Texture2D_iface);
 
     return S_OK;
 }
@@ -5823,7 +5823,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
 
     TRACE("device_parent %p, desc %p, swapchain %p.\n", device_parent, desc, swapchain);
 
-    if (FAILED(hr = d3d10_device_QueryInterface(&device->ID3D10Device1_iface,
+    if (FAILED(hr = d3d11_device_QueryInterface(&device->ID3D11Device_iface,
             &IID_IWineDXGIDevice, (void **)&wine_device)))
     {
         ERR("Device should implement IWineDXGIDevice.\n");

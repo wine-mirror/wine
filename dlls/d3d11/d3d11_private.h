@@ -126,9 +126,9 @@ struct d3d_texture2d
     ID3D11Device *device;
 };
 
-static inline struct d3d_texture2d *impl_from_ID3D10Texture2D(ID3D10Texture2D *iface)
+static inline struct d3d_texture2d *impl_from_ID3D11Texture2D(ID3D11Texture2D *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d_texture2d, ID3D10Texture2D_iface);
+    return CONTAINING_RECORD(iface, struct d3d_texture2d, ID3D11Texture2D_iface);
 }
 
 HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DESC *desc,
