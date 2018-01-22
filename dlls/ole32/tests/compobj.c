@@ -938,6 +938,7 @@ static DWORD WINAPI MessageFilter_MessagePending(
   DWORD dwPendingType)
 {
     trace("MessagePending\n");
+    todo_wine ok(0, "unexpected call\n");
     return PENDINGMSG_WAITNOPROCESS;
 }
 
@@ -2632,6 +2633,15 @@ static DWORD CALLBACK send_message_thread(LPVOID arg)
     return 0;
 }
 
+static DWORD CALLBACK send_and_post_user_message_thread(void *arg)
+{
+    HWND hwnd = arg;
+    Sleep(30);
+    SendMessageA(hwnd, WM_USER, 0, 0);
+    PostMessageA(hwnd, WM_USER, 0, 0);
+    return 0;
+}
+
 static DWORD CALLBACK post_message_thread(LPVOID arg)
 {
     HWND hWnd = arg;
@@ -2641,11 +2651,98 @@ static DWORD CALLBACK post_message_thread(LPVOID arg)
 }
 
 static const char cls_name[] = "cowait_test_class";
+
+static UINT cowait_msgs[100], cowait_msgs_first, cowait_msgs_last;
+
+static void cowait_msgs_reset(void)
+{
+    cowait_msgs_first = cowait_msgs_last = 0;
+}
+
+#define cowait_msgs_expect_empty() _cowait_msgs_expect_empty(__LINE__)
+static void _cowait_msgs_expect_empty(unsigned line)
+{
+    while(cowait_msgs_first < cowait_msgs_last) {
+        ok_(__FILE__,line)(0, "unexpected message %u\n", cowait_msgs[cowait_msgs_first]);
+        cowait_msgs_first++;
+    }
+    cowait_msgs_reset();
+}
+
+#define cowait_msgs_expect_notified(a) _cowait_msgs_expect_notified(__LINE__,a)
+static void _cowait_msgs_expect_notified(unsigned line, UINT expected_msg)
+{
+    if(cowait_msgs_first == cowait_msgs_last) {
+        ok_(__FILE__,line)(0, "expected message %u, received none\n", expected_msg);
+    }else {
+        ok_(__FILE__,line)(cowait_msgs[cowait_msgs_first] == expected_msg,
+                           "expected message %u, received %u \n",
+                           expected_msg, cowait_msgs[cowait_msgs_first]);
+        cowait_msgs_first++;
+    }
+}
+
+#define cowait_msgs_expect_queued(a,b) _cowait_msgs_expect_queued(__LINE__,a,b)
+static void _cowait_msgs_expect_queued(unsigned line, HWND hwnd, UINT expected_msg)
+{
+    MSG msg;
+    BOOL success;
+
+    success = PeekMessageA(&msg, hwnd, expected_msg, expected_msg, PM_REMOVE);
+    ok_(__FILE__,line)(success, "PeekMessageA failed: %u\n", GetLastError());
+    if(success)
+        ok_(__FILE__,line)(msg.message == expected_msg, "unexpected message %u, expected %u\n",
+                           msg.message, expected_msg);
+}
+
+static void flush_messages(void)
+{
+    MSG msg;
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ));
+}
+
+static LRESULT CALLBACK cowait_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if(cowait_msgs_last < sizeof(cowait_msgs)/sizeof(*cowait_msgs))
+        cowait_msgs[cowait_msgs_last++] = msg;
+    if(msg == WM_DDE_FIRST)
+        return 6;
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static DWORD CALLBACK cowait_unmarshal_thread(void *arg)
+{
+    IStream *stream = arg;
+    IEnumOLEVERB *enum_verb;
+    LARGE_INTEGER zero;
+    IUnknown *unk;
+    HRESULT hr;
+
+    CoInitialize(NULL);
+
+    zero.QuadPart = 0;
+    hr = IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Seek failed: %08x\n", hr);
+
+    hr = CoUnmarshalInterface(stream, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "CoUnmarshalInterface failed: %08x\n", hr);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IEnumOLEVERB, (void**)&enum_verb);
+    ok(hr == S_OK, "QueryInterface failed: %08x\n", hr);
+
+    IEnumOLEVERB_Release(enum_verb);
+    IUnknown_Release(unk);
+
+    CoUninitialize();
+    return 0;
+}
+
 static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
 {
-    HANDLE *handles = arg;
+    HANDLE *handles = arg, event, thread;
+    IStream *stream;
     BOOL success;
-    DWORD index;
+    DWORD index, tid;
     HRESULT hr;
     HWND hWnd;
     UINT uMSG = 0xc065;
@@ -2693,6 +2790,39 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
 
     DestroyWindow(hWnd);
     CoUninitialize();
+
+    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "CreateStreamOnHGlobal failed: %08x", hr);
+
+    hr = CoMarshalInterface(stream, &IID_IUnknown, &Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == S_OK, "CoMarshalInterface should have returned S_OK instead of 0x%08x\n", hr);
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    PostQuitMessage(66);
+    PostThreadMessageW(GetCurrentThreadId(), WM_QUIT, 0, 0);
+
+    hr = CoRegisterMessageFilter(&MessageFilter, NULL);
+    ok(hr == S_OK, "CoRegisterMessageFilter failed: %08x", hr);
+
+    thread = CreateThread(NULL, 0, cowait_unmarshal_thread, stream, 0, &tid);
+    ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+    hr = CoWaitForMultipleHandles(0, 50, 1, &event, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    index = WaitForSingleObject(thread, 200);
+    ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread);
+
+    hr = CoRegisterMessageFilter(NULL, NULL);
+    ok(hr == S_OK, "CoRegisterMessageFilter failed: %08x", hr);
+
+    IStream_Release(stream);
+
+    CloseHandle(event);
+    CoUninitialize();
     return 0;
 }
 
@@ -2716,7 +2846,7 @@ static void test_CoWaitForMultipleHandles(void)
     wc.hCursor       = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
     wc.hbrBackground = NULL;
     wc.lpszClassName = cls_name;
-    wc.lpfnWndProc   = DefWindowProcA;
+    wc.lpfnWndProc   = cowait_window_proc;
     success = RegisterClassExA(&wc) != 0;
     ok(success, "RegisterClassExA failed %u\n", GetLastError());
 
@@ -2891,6 +3021,29 @@ static void test_CoWaitForMultipleHandles(void)
     ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(thread);
 
+    cowait_msgs_reset();
+    PostMessageA(hWnd, 0, 0, 0);
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    PostMessageA(hWnd, WM_USER+1, 0, 0);
+    PostMessageA(hWnd, WM_DDE_FIRST+1, 0, 0);
+    thread = CreateThread(NULL, 0, send_and_post_user_message_thread, hWnd, 0, &tid);
+    ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+
+    hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+
+    cowait_msgs_expect_notified(WM_DDE_FIRST);
+    cowait_msgs_expect_notified(WM_DDE_FIRST+1);
+    cowait_msgs_expect_notified(WM_USER);
+    cowait_msgs_expect_empty();
+    cowait_msgs_expect_queued(hWnd, WM_USER);
+    cowait_msgs_expect_queued(hWnd, WM_USER+1);
+    flush_messages();
+
+    index = WaitForSingleObject(thread, 200);
+    ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread);
+
     /* test behaviour of WM_QUIT (semaphores are still locked) */
 
     PostMessageA(hWnd, WM_QUIT, 40, 0);
@@ -2901,6 +3054,29 @@ static void test_CoWaitForMultipleHandles(void)
     ok(msg.wParam == 40, "expected msg.wParam = 40, got %lu\n", msg.wParam);
     success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
     ok(!success, "PeekMessageA succeeded\n");
+
+    cowait_msgs_reset();
+    PostMessageA(hWnd, WM_QUIT, 40, 0);
+    PostMessageA(hWnd, 0, 0, 0);
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    PostMessageA(hWnd, WM_USER+1, 0, 0);
+    PostMessageA(hWnd, WM_DDE_FIRST+1, 0, 0);
+    thread = CreateThread(NULL, 0, send_and_post_user_message_thread, hWnd, 0, &tid);
+    ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+
+    hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+
+    cowait_msgs_expect_notified(WM_DDE_FIRST);
+    cowait_msgs_expect_notified(WM_DDE_FIRST+1);
+    cowait_msgs_expect_notified(WM_USER);
+    cowait_msgs_expect_empty();
+    cowait_msgs_expect_queued(hWnd, WM_USER);
+    flush_messages();
+
+    index = WaitForSingleObject(thread, 200);
+    ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread);
 
     index = 0xdeadbeef;
     PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
