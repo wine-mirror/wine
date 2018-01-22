@@ -211,6 +211,9 @@ START_TEST(schtasks)
     r = run_command("schtasks /change /tn wine\\winetest /enable");
     ok(r == 0, "r = %u\n", r);
 
+    r = run_command("schtasks /create /xml test.xml /f /tn wine\\winetest");
+    ok(r == 0, "r = %u\n", r); /* task already exists, but /f argument provided */
+
     r = run_command("schtasks /create /xml test.xml /tn wine\\winetest");
     ok(r == 1, "r = %u\n", r); /* task already exists */
 

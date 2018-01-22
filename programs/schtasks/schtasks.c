@@ -183,6 +183,7 @@ static int create_command(int argc, WCHAR *argv[])
 {
     const WCHAR *task_name = NULL, *xml_file = NULL;
     ITaskFolder *root = NULL;
+    LONG flags = TASK_CREATE;
     IRegisteredTask *task;
     VARIANT empty;
     BSTR str, xml;
@@ -217,6 +218,10 @@ static int create_command(int argc, WCHAR *argv[])
             task_name = argv[1];
             argc -= 2;
             argv += 2;
+        }else if(!strcmpiW(argv[0], f_optW)) {
+            flags = TASK_CREATE_OR_UPDATE;
+            argc--;
+            argv++;
         }else {
             FIXME("Unsupported argument %s\n", debugstr_w(argv[0]));
             return 1;
@@ -245,7 +250,7 @@ static int create_command(int argc, WCHAR *argv[])
 
     V_VT(&empty) = VT_EMPTY;
     str = SysAllocString(task_name);
-    hres = ITaskFolder_RegisterTask(root, str, xml, TASK_CREATE, empty, empty,
+    hres = ITaskFolder_RegisterTask(root, str, xml, flags, empty, empty,
                                     TASK_LOGON_NONE, empty, &task);
     SysFreeString(str);
     SysFreeString(xml);
