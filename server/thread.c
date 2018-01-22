@@ -1715,7 +1715,10 @@ DECL_HANDLER(get_suspend_context)
 
     if (current->suspend_context)
     {
-        set_reply_data_ptr( current->suspend_context, sizeof(context_t) );
+        if (current->suspend_context->flags)
+            set_reply_data_ptr( current->suspend_context, sizeof(context_t) );
+        else
+            free( current->suspend_context );
         if (current->context == current->suspend_context)
         {
             current->context = NULL;
@@ -1745,6 +1748,7 @@ DECL_HANDLER(set_suspend_context)
     else if ((current->suspend_context = mem_alloc( sizeof(context_t) )))
     {
         memcpy( current->suspend_context, get_req_data(), sizeof(context_t) );
+        current->suspend_context->flags = 0;  /* to keep track of what is modified */
         current->context = current->suspend_context;
         if (current->debug_break) break_thread( current );
     }

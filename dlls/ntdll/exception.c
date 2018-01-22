@@ -110,6 +110,7 @@ void wait_suspend( CONTEXT *context )
     LARGE_INTEGER timeout;
     int saved_errno = errno;
     context_t server_context;
+    DWORD flags = context->ContextFlags;
 
     context_to_server( &server_context, context );
 
@@ -130,10 +131,14 @@ void wait_suspend( CONTEXT *context )
     {
         wine_server_set_reply( req, &server_context, sizeof(server_context) );
         wine_server_call( req );
+        if (wine_server_reply_size( reply ))
+        {
+            context_from_server( context, &server_context );
+            context->ContextFlags |= flags;  /* unchanged registers are still available */
+        }
     }
     SERVER_END_REQ;
 
-    context_from_server( context, &server_context );
     errno = saved_errno;
 }
 
