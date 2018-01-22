@@ -10840,6 +10840,18 @@ static void test_depth_readback(void)
     ok(!!window, "Failed to create a window.\n");
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (ddraw_is_nvidia(ddraw))
+    {
+        /* ddraw1 only has access to D16 Z buffers (and D24 ones, which are even more
+         * broken on Nvidia), so don't even attempt to run this test on Nvidia cards
+         * because some of them have broken D16 readback. See the ddraw7 version of
+         * this test for a more detailed comment. */
+        skip("Some Nvidia GPUs have broken D16 readback, skipping.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");

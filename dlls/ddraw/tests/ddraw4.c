@@ -14313,7 +14313,7 @@ static void test_map_synchronisation(void)
 
 static void test_depth_readback(void)
 {
-    DWORD depth, expected_depth, max_diff;
+    DWORD depth, expected_depth, max_diff, passed_fmts = 0;
     IDirectDrawSurface4 *rt, *ds;
     IDirect3DViewport3 *viewport;
     DDSURFACEDESC2 surface_desc;
@@ -14325,6 +14325,7 @@ static void test_depth_readback(void)
     HWND window;
     HRESULT hr;
     RECT r;
+    BOOL all_pass;
 
     static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
     static struct
@@ -14421,6 +14422,7 @@ static void test_depth_readback(void)
         hr = IDirect3DDevice3_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
+        all_pass = TRUE;
         for (y = 60; y < 480; y += 120)
         {
             for (x = 80; x < 640; x += 160)
@@ -14434,20 +14436,31 @@ static void test_depth_readback(void)
                 depth = *((DWORD *)surface_desc.lpSurface) & tests[i].z_mask;
                 expected_depth = (x * (0.9 / 640.0) + y * (0.1 / 480.0)) * tests[i].z_mask;
                 max_diff = ((0.5f * 0.9f) / 640.0f) * tests[i].z_mask;
+                /* The ddraw4 version of this test behaves similarly to the ddraw7 version on Nvidia GPUs,
+                 * except that Geforce 7 also returns garbage data in D24S8, whereas the ddraw7 version
+                 * returns 0 for that format. Give up on pre-filtering formats, accept Nvidia as generally
+                 * broken here, but still expect at least one format (D16 or D24X8 in practise) to pass. */
                 todo_wine_if(tests[i].todo)
-                    ok(abs(expected_depth - depth) <= max_diff,
-                            "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
-                            i, depth, expected_depth - depth, expected_depth, max_diff, x, y);
+                    ok(abs(expected_depth - depth) <= max_diff || ddraw_is_nvidia(ddraw),
+                             "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
+                             i, depth, expected_depth - depth, expected_depth, max_diff, x, y);
+                if (abs(expected_depth - depth) > max_diff)
+                    all_pass = FALSE;
 
                 hr = IDirectDrawSurface4_Unlock(ds, &r);
                 ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
             }
         }
 
+        if (all_pass)
+            passed_fmts++;
+
         hr = IDirectDrawSurface4_DeleteAttachedSurface(rt, 0, ds);
         ok(SUCCEEDED(hr), "Failed to detach depth buffer, hr %#x.\n", hr);
         IDirectDrawSurface4_Release(ds);
     }
+
+    ok(passed_fmts, "Not a single format passed the tests, this is bad even by Nvidia's standards.\n");
 
     destroy_viewport(device, viewport);
     IDirectDrawSurface4_Release(rt);

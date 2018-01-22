@@ -13689,7 +13689,7 @@ done:
 
 static void test_depth_readback(void)
 {
-    DWORD depth, expected_depth, max_diff;
+    DWORD depth, expected_depth, max_diff, raw_value, passed_fmts = 0;
     IDirectDrawSurface7 *rt, *ds;
     DDSURFACEDESC2 surface_desc;
     IDirect3DDevice7 *device;
@@ -13700,6 +13700,7 @@ static void test_depth_readback(void)
     HWND window;
     HRESULT hr;
     RECT r;
+    BOOL all_zero, all_one, all_pass;
 
     static struct
     {
@@ -13791,6 +13792,7 @@ static void test_depth_readback(void)
         hr = IDirect3DDevice7_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
+        all_zero = all_one = all_pass = TRUE;
         for (y = 60; y < 480; y += 120)
         {
             for (x = 80; x < 640; x += 160)
@@ -13801,23 +13803,48 @@ static void test_depth_readback(void)
                 hr = IDirectDrawSurface7_Lock(ds, &r, &surface_desc, DDLOCK_READONLY, NULL);
                 ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
 
-                depth = *((DWORD *)surface_desc.lpSurface) & tests[i].z_mask;
+                raw_value = *((DWORD *)surface_desc.lpSurface);
+                if (raw_value)
+                    all_zero = FALSE;
+                if (raw_value != 0x00ffffff)
+                    all_one = FALSE;
+
+                depth = raw_value & tests[i].z_mask;
                 expected_depth = (x * (0.9 / 640.0) + y * (0.1 / 480.0)) * tests[i].z_mask;
                 max_diff = ((0.5f * 0.9f) / 640.0f) * tests[i].z_mask;
+                /* This test is very reliably on AMD, but fails in a number of interesting ways on Nvidia GPUs:
+                 *
+                 * Geforce 7 GPUs work only with D16. D24 and D24S8 return 0, D24X8 broken data.
+                 *
+                 * Geforce 9 GPUs return return broken data for D16 that resembles the expected data in
+                 * the lower 8 bits and has 0xff in the upper 8 bits. D24X8 works, D24 and D24S8 return
+                 * 0x00ffffff.
+                 *
+                 * Geforce GTX 650 has working D16 and D24, but D24S8 returns 0.
+                 *
+                 * Arx Fatalis is broken on the Geforce 9 in the same way it was broken in Wine (bug 43654).
+                 * The !tests[i].s_depth is supposed to rule out D16 on GF9 and D24X8 on GF7. */
                 todo_wine_if(tests[i].todo)
-                    ok(abs(expected_depth - depth) <= max_diff,
+                    ok(abs(expected_depth - depth) <= max_diff
+                            || (ddraw_is_nvidia(ddraw) && (all_zero || all_one || !tests[i].s_depth)),
                             "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
                             i, depth, expected_depth - depth, expected_depth, max_diff, x, y);
+                if (abs(expected_depth - depth) > max_diff)
+                    all_pass = FALSE;
 
                 hr = IDirectDrawSurface7_Unlock(ds, &r);
                 ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
             }
         }
+        if (all_pass)
+            passed_fmts++;
 
         hr = IDirectDrawSurface7_DeleteAttachedSurface(rt, 0, ds);
         ok(SUCCEEDED(hr), "Failed to detach depth buffer, hr %#x.\n", hr);
         IDirectDrawSurface7_Release(ds);
     }
+
+    ok(passed_fmts, "Not a single format passed the tests, this is bad even by Nvidia's standards.\n");
 
     IDirectDrawSurface7_Release(rt);
     IDirectDraw7_Release(ddraw);
