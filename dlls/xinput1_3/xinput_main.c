@@ -73,34 +73,28 @@ DWORD WINAPI XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
 {
-    union
-    {
-        XINPUT_STATE state;
-        XINPUT_STATE_EX state_ex;
-    } xinput;
     DWORD ret;
     static int warn_once;
 
     if (!warn_once++)
         FIXME("(index %u, state %p) Stub!\n", index, state);
 
-    ret = XInputGetStateEx(index, &xinput.state_ex);
+    ret = XInputGetStateEx(index, state);
     if (ret != ERROR_SUCCESS)
         return ret;
 
     /* The main difference between this and the Ex version is the media guide button */
-    xinput.state.Gamepad.wButtons &= ~XINPUT_GAMEPAD_GUIDE;
-    *state = xinput.state;
+    state->Gamepad.wButtons &= ~XINPUT_GAMEPAD_GUIDE;
 
     return ERROR_SUCCESS;
 }
 
-DWORD WINAPI DECLSPEC_HOTPATCH XInputGetStateEx(DWORD index, XINPUT_STATE_EX* state_ex)
+DWORD WINAPI DECLSPEC_HOTPATCH XInputGetStateEx(DWORD index, XINPUT_STATE* state)
 {
     static int warn_once;
 
     if (!warn_once++)
-        FIXME("(index %u, state %p) Stub!\n", index, state_ex);
+        FIXME("(index %u, state %p) Stub!\n", index, state);
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;

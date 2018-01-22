@@ -170,26 +170,10 @@ typedef struct _XINPUT_GAMEPAD {
     SHORT sThumbRY;
 } XINPUT_GAMEPAD, *PXINPUT_GAMEPAD;
 
-typedef struct _XINPUT_GAMEPAD_EX {
-    WORD wButtons;
-    BYTE bLeftTrigger;
-    BYTE bRightTrigger;
-    SHORT sThumbLX;
-    SHORT sThumbLY;
-    SHORT sThumbRX;
-    SHORT sThumbRY;
-    DWORD dwPaddingReserved;
-} XINPUT_GAMEPAD_EX, *PXINPUT_GAMEPAD_EX;
-
 typedef struct _XINPUT_STATE {
     DWORD dwPacketNumber;
     XINPUT_GAMEPAD Gamepad;
 } XINPUT_STATE, *PXINPUT_STATE;
-
-typedef struct _XINPUT_STATE_EX {
-    DWORD dwPacketNumber;
-    XINPUT_GAMEPAD_EX Gamepad;
-} XINPUT_STATE_EX, *PXINPUT_STATE_EX;
 
 /*
  * Defines the structure of how much vibration is set on both the
@@ -248,7 +232,7 @@ DWORD WINAPI XInputGetCapabilities(DWORD, DWORD, XINPUT_CAPABILITIES*);
 DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD, GUID*, GUID*);
 DWORD WINAPI XInputGetBatteryInformation(DWORD, BYTE, XINPUT_BATTERY_INFORMATION*);
 
-DWORD WINAPI XInputGetStateEx(DWORD, XINPUT_STATE_EX*);
+DWORD WINAPI XInputGetStateEx(DWORD, XINPUT_STATE*);
 
 #ifdef __cplusplus
 }
