@@ -285,7 +285,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain1 *iface, 
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     wined3d_mutex_unlock();
 
-    FIXME("Ignoring ScanlineOrdering, Scaling and SwapEffect.\n");
+    FIXME("Ignoring ScanlineOrdering, Scaling, BufferUsage and SwapEffect.\n");
 
     desc->BufferDesc.Width = wined3d_desc.backbuffer_width;
     desc->BufferDesc.Height = wined3d_desc.backbuffer_height;
@@ -295,6 +295,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain1 *iface, 
     desc->BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
     desc->BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
     dxgi_sample_desc_from_wined3d(&desc->SampleDesc, wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
+    desc->BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     desc->BufferCount = wined3d_desc.backbuffer_count;
     desc->OutputWindow = wined3d_desc.device_window;
     desc->Windowed = wined3d_desc.windowed;

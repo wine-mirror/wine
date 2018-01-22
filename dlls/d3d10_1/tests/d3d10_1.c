@@ -189,7 +189,7 @@ static void test_create_device(void)
             "Got unexpected SampleDesc.Count %u.\n", obtained_desc.SampleDesc.Count);
     ok(obtained_desc.SampleDesc.Quality == swapchain_desc.SampleDesc.Quality,
             "Got unexpected SampleDesc.Quality %u.\n", obtained_desc.SampleDesc.Quality);
-    todo_wine ok(obtained_desc.BufferUsage == swapchain_desc.BufferUsage,
+    ok(obtained_desc.BufferUsage == swapchain_desc.BufferUsage,
             "Got unexpected BufferUsage %#x.\n", obtained_desc.BufferUsage);
     ok(obtained_desc.BufferCount == swapchain_desc.BufferCount,
             "Got unexpected BufferCount %u.\n", obtained_desc.BufferCount);
