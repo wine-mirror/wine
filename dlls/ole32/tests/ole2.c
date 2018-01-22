@@ -3986,13 +3986,18 @@ static void check_storage_contents(IStorage *stg, const struct storage_def *stg_
         hr = IStorage_OpenStream(stg, stat.pwcsName, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
         ok(hr == S_OK, "unexpected %#x\n", hr);
 
-        if (!memcmp(name, "\2OlePres", 7))
+        if (!memcmp(name, "\2OlePres", 8))
         {
+            ULONG header_size = sizeof(header);
+
             clipformat = read_clipformat(stream);
 
-            hr = IStream_Read(stream, &header, sizeof(header), &bytes);
+            if (clipformat == 0) /* view cache */
+                header_size = FIELD_OFFSET(PresentationDataHeader, unknown7);
+
+            hr = IStream_Read(stream, &header, header_size, &bytes);
             ok(hr == S_OK, "unexpected %#x\n", hr);
-            ok(bytes >= 24, "read %u bytes\n", bytes);
+            ok(bytes == header_size, "read %u bytes, expected %u\n", bytes, header_size);
 
             if (winetest_debug > 1)
                 trace("header: tdSize %#x, dvAspect %#x, lindex %#x, advf %#x, unknown7 %#x, dwObjectExtentX %#x, dwObjectExtentY %#x, dwSize %#x\n",
@@ -4228,12 +4233,14 @@ static void test_data_cache_save_data(void)
                 { CF_DIB, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
                 { CF_METAFILEPICT, 0, DVASPECT_CONTENT, -1, TYMED_MFPICT },
                 { CF_ENHMETAFILE, 0, DVASPECT_CONTENT, -1, TYMED_ENHMF },
+                { 0, 0, DVASPECT_DOCPRINT, -1, TYMED_HGLOBAL },
             },
-            3, 3, &CLSID_WineTest,
+            4, 3, &CLSID_WineTest,
             {
-                &CLSID_WineTestOld, 3, { { "\2OlePres000", CF_DIB, DVASPECT_CONTENT, 0, NULL, 0 },
+                &CLSID_WineTestOld, 4, { { "\2OlePres000", CF_DIB, DVASPECT_CONTENT, 0, NULL, 0 },
                                          { "\2OlePres001", CF_METAFILEPICT, DVASPECT_CONTENT, 0, NULL, 0 },
-                                         { "\2OlePres002", CF_ENHMETAFILE, DVASPECT_CONTENT, 0, NULL, 0 } }
+                                         { "\2OlePres002", CF_ENHMETAFILE, DVASPECT_CONTENT, 0, NULL, 0 },
+                                         { "\2OlePres003", 0, DVASPECT_DOCPRINT, 0, NULL, 0 } }
             }
         },
         /* without setting data */

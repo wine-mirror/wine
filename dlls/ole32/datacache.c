@@ -506,7 +506,9 @@ static HRESULT write_clipformat(IStream *stream, CLIPFORMAT clipformat)
     HRESULT hr;
     char format_name[256];
 
-    if (clipformat < 0xc000)
+    if (clipformat == 0)
+        length = 0;
+    else if (clipformat < 0xc000)
         length = -1;
     else
     {
@@ -515,8 +517,9 @@ static HRESULT write_clipformat(IStream *stream, CLIPFORMAT clipformat)
         if (length) length++;
     }
     hr = IStream_Write(stream, &length, sizeof(length), NULL);
-    if (FAILED(hr))
+    if (FAILED(hr) || clipformat == 0)
         return hr;
+
     if (clipformat < 0xc000)
     {
         DWORD cf = clipformat;
@@ -993,6 +996,19 @@ static HRESULT save_emf(DataCacheEntry *entry, BOOL contents, IStream *stream)
     return hr;
 }
 
+static HRESULT save_view_cache(DataCacheEntry *entry, IStream *stream)
+{
+    HRESULT hr;
+    PresentationDataHeader header;
+
+    init_stream_header(entry, &header);
+    hr = write_clipformat(stream, entry->fmtetc.cfFormat);
+    if (SUCCEEDED(hr))
+        hr = IStream_Write(stream, &header, FIELD_OFFSET(PresentationDataHeader, unknown7), NULL);
+
+    return hr;
+}
+
 static const WCHAR CONTENTS[] = {'C','O','N','T','E','N','T','S',0};
 static HRESULT create_stream(DataCacheEntry *cache_entry, IStorage *storage,
                              BOOL contents, IStream **stream)
@@ -1036,6 +1052,9 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *cache_entry, IStorage *storag
         break;
     case CF_ENHMETAFILE:
         hr = save_emf(cache_entry, contents, stream);
+        break;
+    case 0:
+        hr = save_view_cache(cache_entry, stream);
         break;
     default:
         FIXME("got unsupported clipboard format %x\n", cache_entry->fmtetc.cfFormat);
