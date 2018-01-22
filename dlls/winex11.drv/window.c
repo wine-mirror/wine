@@ -2186,17 +2186,17 @@ done:
 }
 
 
-static inline RECT get_surface_rect( const RECT *visible_rect )
+static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
-    RECT rect = get_virtual_screen_rect();
+    *surface_rect = get_virtual_screen_rect();
 
-    IntersectRect( &rect, &rect, visible_rect );
-    OffsetRect( &rect, -visible_rect->left, -visible_rect->top );
-    rect.left &= ~31;
-    rect.top  &= ~31;
-    rect.right  = max( rect.left + 32, (rect.right + 31) & ~31 );
-    rect.bottom = max( rect.top + 32, (rect.bottom + 31) & ~31 );
-    return rect;
+    if (!IntersectRect( surface_rect, surface_rect, visible_rect )) return FALSE;
+    OffsetRect( surface_rect, -visible_rect->left, -visible_rect->top );
+    surface_rect->left &= ~31;
+    surface_rect->top  &= ~31;
+    surface_rect->right  = max( surface_rect->left + 32, (surface_rect->right + 31) & ~31 );
+    surface_rect->bottom = max( surface_rect->top + 32, (surface_rect->bottom + 31) & ~31 );
+    return TRUE;
 }
 
 
@@ -2233,6 +2233,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     if (!data->whole_window && !data->embedded) goto done;
     if (swp_flags & SWP_HIDEWINDOW) goto done;
     if (data->vis.visualid != default_visual.visualid) goto done;
+    if (!get_surface_rect( visible_rect, &surface_rect )) goto done;
 
     if (*surface) window_surface_release( *surface );
     *surface = NULL;  /* indicate that we want to draw directly to the window */
@@ -2242,7 +2243,6 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     if (data->client_window) goto done;
     if (!client_side_graphics && !layered) goto done;
 
-    surface_rect = get_surface_rect( visible_rect );
     if (data->surface)
     {
         if (EqualRect( &data->surface->rect, &surface_rect ))
