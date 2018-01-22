@@ -868,6 +868,7 @@ static void test_create_swapchain(void)
     struct swapchain_fullscreen_state initial_state, expected_state;
     unsigned int  i, expected_width, expected_height;
     DXGI_SWAP_CHAIN_DESC creation_desc, result_desc;
+    DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreen_desc;
     DXGI_SWAP_CHAIN_DESC1 swapchain_desc;
     IDXGIDevice *device, *bgra_device;
     ULONG refcount, expected_refcount;
@@ -978,6 +979,12 @@ static void test_create_swapchain(void)
                 "Got unexpected scaling %#x.\n", swapchain_desc.Scaling);
         ok(swapchain_desc.AlphaMode == DXGI_ALPHA_MODE_IGNORE,
                 "Got unexpected alpha mode %#x.\n", swapchain_desc.AlphaMode);
+        hr = IDXGISwapChain1_GetFullscreenDesc(swapchain1, NULL);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        hr = IDXGISwapChain1_GetFullscreenDesc(swapchain1, &fullscreen_desc);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(fullscreen_desc.Windowed == creation_desc.Windowed,
+                "Got unexpected windowed %#x.\n", fullscreen_desc.Windowed);
         hr = IDXGISwapChain1_GetHwnd(swapchain1, &window);
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         ok(window == creation_desc.OutputWindow, "Got unexpected window %p.\n", window);

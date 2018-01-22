@@ -465,9 +465,30 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc1(IDXGISwapChain1 *iface,
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetFullscreenDesc(IDXGISwapChain1 *iface,
         DXGI_SWAP_CHAIN_FULLSCREEN_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain1(iface);
+    struct wined3d_swapchain_desc wined3d_desc;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc)
+    {
+        WARN("Invalid pointer.\n");
+        return E_INVALIDARG;
+    }
+
+    wined3d_mutex_lock();
+    wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
+    wined3d_mutex_unlock();
+
+    FIXME("Ignoring ScanlineOrdering and Scaling.\n");
+
+    desc->RefreshRate.Numerator = wined3d_desc.refresh_rate;
+    desc->RefreshRate.Denominator = 1;
+    desc->ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    desc->Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    desc->Windowed = wined3d_desc.windowed;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetHwnd(IDXGISwapChain1 *iface, HWND *hwnd)
