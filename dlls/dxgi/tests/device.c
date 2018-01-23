@@ -32,6 +32,7 @@ enum frame_latency
 static DEVMODEW registry_mode;
 
 static HRESULT (WINAPI *pCreateDXGIFactory1)(REFIID iid, void **factory);
+static HRESULT (WINAPI *pCreateDXGIFactory2)(UINT flags, REFIID iid, void **factory);
 
 static ULONG get_refcount(IUnknown *iface)
 {
@@ -113,6 +114,45 @@ static void check_mode_desc_(unsigned int line, const DXGI_MODE_DESC *desc,
                 "Got scaling %#x, expected %#x.\n",
                 desc->Scaling, expected_desc->Scaling);
     }
+}
+
+static BOOL equal_luid(LUID a, LUID b)
+{
+    return a.LowPart == b.LowPart && a.HighPart == b.HighPart;
+}
+
+#define check_adapter_desc(a, b) check_adapter_desc_(__LINE__, a, b)
+static void check_adapter_desc_(unsigned int line, const DXGI_ADAPTER_DESC *desc,
+        const struct DXGI_ADAPTER_DESC *expected_desc)
+{
+    ok_(__FILE__, line)(!lstrcmpW(desc->Description, expected_desc->Description),
+            "Got description %s, expected %s.\n",
+            wine_dbgstr_w(desc->Description), wine_dbgstr_w(expected_desc->Description));
+    ok_(__FILE__, line)(desc->VendorId == expected_desc->VendorId,
+            "Got vendor id %04x, expected %04x.\n",
+            desc->VendorId, expected_desc->VendorId);
+    ok_(__FILE__, line)(desc->DeviceId == expected_desc->DeviceId,
+            "Got device id %04x, expected %04x.\n",
+            desc->DeviceId, expected_desc->DeviceId);
+    ok_(__FILE__, line)(desc->SubSysId == expected_desc->SubSysId,
+            "Got subsys id %04x, expected %04x.\n",
+            desc->SubSysId, expected_desc->SubSysId);
+    ok_(__FILE__, line)(desc->Revision == expected_desc->Revision,
+            "Got revision %02x, expected %02x.\n",
+            desc->Revision, expected_desc->Revision);
+    ok_(__FILE__, line)(desc->DedicatedVideoMemory == expected_desc->DedicatedVideoMemory,
+            "Got dedicated video memory %lu, expected %lu.\n",
+            desc->DedicatedVideoMemory, expected_desc->DedicatedVideoMemory);
+    ok_(__FILE__, line)(desc->DedicatedSystemMemory == expected_desc->DedicatedSystemMemory,
+            "Got dedicated system memory %lu, expected %lu.\n",
+            desc->DedicatedSystemMemory, expected_desc->DedicatedSystemMemory);
+    ok_(__FILE__, line)(desc->SharedSystemMemory == expected_desc->SharedSystemMemory,
+            "Got shared system memory %lu, expected %lu.\n",
+            desc->SharedSystemMemory, expected_desc->SharedSystemMemory);
+    ok_(__FILE__, line)(equal_luid(desc->AdapterLuid, expected_desc->AdapterLuid),
+            "Got LUID %08x:%08x, expected %08x:%08x.\n",
+            desc->AdapterLuid.HighPart, desc->AdapterLuid.LowPart,
+            expected_desc->AdapterLuid.HighPart, expected_desc->AdapterLuid.LowPart);
 }
 
 #define check_output_desc(a, b) check_output_desc_(__LINE__, a, b)
@@ -416,7 +456,7 @@ static void test_adapter_desc(void)
             "Got unexpected dedicated system memory %lu.\n", desc1.DedicatedSystemMemory);
     ok(desc1.SharedSystemMemory == desc.SharedSystemMemory,
             "Got unexpected shared system memory %lu.\n", desc1.SharedSystemMemory);
-    ok(!memcmp(&desc.AdapterLuid, &desc1.AdapterLuid, sizeof(desc.AdapterLuid)),
+    ok(equal_luid(desc1.AdapterLuid, desc.AdapterLuid),
             "Got unexpected adapter LUID %08x:%08x.\n", desc1.AdapterLuid.HighPart, desc1.AdapterLuid.LowPart);
     trace("Flags: %08x.\n", desc1.Flags);
 
@@ -426,6 +466,125 @@ done:
     IDXGIAdapter_Release(adapter);
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+static void test_adapter_luid(void)
+{
+    DXGI_ADAPTER_DESC device_adapter_desc, desc, desc2;
+    static const LUID luid = {0xdeadbeef, 0xdeadbeef};
+    IDXGIAdapter *adapter, *adapter2;
+    unsigned int found_adapter_count;
+    unsigned int adapter_index;
+    BOOL is_null_luid_adapter;
+    IDXGIFactory4 *factory4;
+    IDXGIFactory *factory;
+    BOOL have_unique_luid;
+    IDXGIDevice *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device(0)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(hr == S_OK, "Failed to get adapter, hr %#x.\n", hr);
+    hr = IDXGIAdapter_GetDesc(adapter, &device_adapter_desc);
+    ok(hr == S_OK, "Failed to get adapter desc, hr %#x.\n", hr);
+    IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    is_null_luid_adapter = !device_adapter_desc.AdapterLuid.HighPart
+            && !device_adapter_desc.AdapterLuid.LowPart;
+
+    hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory);
+    ok(hr == S_OK, "Failed to create DXGI factory, hr %#x.\n", hr);
+
+    hr = IDXGIFactory_QueryInterface(factory, &IID_IDXGIFactory4, (void **)&factory4);
+    ok(hr == S_OK || hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+
+    have_unique_luid = TRUE;
+    found_adapter_count = 0;
+    adapter_index = 0;
+    while ((hr = IDXGIFactory_EnumAdapters(factory, adapter_index, &adapter)) == S_OK)
+    {
+        hr = IDXGIAdapter_GetDesc(adapter, &desc);
+        ok(hr == S_OK, "Failed to get adapter desc, hr %#x.\n", hr);
+
+        if (equal_luid(desc.AdapterLuid, device_adapter_desc.AdapterLuid))
+        {
+            check_adapter_desc(&desc, &device_adapter_desc);
+            ++found_adapter_count;
+        }
+
+        if (equal_luid(desc.AdapterLuid, luid))
+            have_unique_luid = FALSE;
+
+        if (factory4)
+        {
+            hr = IDXGIFactory4_EnumAdapterByLuid(factory4, desc.AdapterLuid,
+                    &IID_IDXGIAdapter, (void **)&adapter2);
+            ok(hr == S_OK, "Failed to enum adapter by LUID, hr %#x.\n", hr);
+            hr = IDXGIAdapter_GetDesc(adapter2, &desc2);
+            ok(hr == S_OK, "Failed to get adapter desc, hr %#x.\n", hr);
+            check_adapter_desc(&desc2, &desc);
+            ok(adapter2 != adapter, "Expected to get new instance of IDXGIAdapter.\n");
+            refcount = IDXGIAdapter_Release(adapter2);
+            ok(!refcount, "Adapter has %u references left.\n", refcount);
+        }
+
+        refcount = IDXGIAdapter_Release(adapter);
+        ok(!refcount, "Adapter has %u references left.\n", refcount);
+
+        ++adapter_index;
+    }
+    ok(hr == DXGI_ERROR_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+
+    /* Older versions of WARP aren't enumerated by IDXGIFactory_EnumAdapters(). */
+    todo_wine ok(found_adapter_count == 1 || broken(is_null_luid_adapter),
+            "Found %u adapters for LUID %08x:%08x.\n",
+            found_adapter_count, device_adapter_desc.AdapterLuid.HighPart,
+            device_adapter_desc.AdapterLuid.LowPart);
+
+    if (factory4)
+        IDXGIFactory4_Release(factory4);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+
+    if (!pCreateDXGIFactory2
+            || FAILED(hr = pCreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory4)))
+    {
+        skip("DXGI 1.4 is not available.\n");
+        return;
+    }
+
+    hr = IDXGIFactory4_EnumAdapterByLuid(factory4, device_adapter_desc.AdapterLuid,
+            &IID_IDXGIAdapter, (void **)&adapter);
+    todo_wine ok(hr == S_OK, "Failed to enum adapter by LUID, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDXGIAdapter_GetDesc(adapter, &desc);
+        ok(hr == S_OK, "Failed to get adapter desc, hr %#x.\n", hr);
+        check_adapter_desc(&desc, &device_adapter_desc);
+        refcount = IDXGIAdapter_Release(adapter);
+        ok(!refcount, "Adapter has %u references left.\n", refcount);
+    }
+
+    if (have_unique_luid)
+    {
+        hr = IDXGIFactory4_EnumAdapterByLuid(factory4, luid, &IID_IDXGIAdapter, (void **)&adapter);
+        ok(hr == DXGI_ERROR_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+    }
+    else
+    {
+        skip("Our LUID is not unique.\n");
+    }
+
+    refcount = IDXGIFactory4_Release(factory4);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
 static void test_check_interface_support(void)
@@ -3215,12 +3374,15 @@ static void test_output_desc(void)
 
 START_TEST(device)
 {
-    pCreateDXGIFactory1 = (void *)GetProcAddress(GetModuleHandleA("dxgi.dll"), "CreateDXGIFactory1");
+    HMODULE dxgi_module = GetModuleHandleA("dxgi.dll");
+    pCreateDXGIFactory1 = (void *)GetProcAddress(dxgi_module, "CreateDXGIFactory1");
+    pCreateDXGIFactory2 = (void *)GetProcAddress(dxgi_module, "CreateDXGIFactory2");
 
     registry_mode.dmSize = sizeof(registry_mode);
     ok(EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &registry_mode), "Failed to get display mode.\n");
 
     test_adapter_desc();
+    test_adapter_luid();
     test_check_interface_support();
     test_create_surface();
     test_parents();
