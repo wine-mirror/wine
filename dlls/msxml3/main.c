@@ -39,6 +39,7 @@
 #  include <libxslt/xsltutils.h>
 #  include <libxslt/variables.h>
 #  include <libxslt/xsltInternals.h>
+#  include <libxslt/documents.h>
 # endif
 #endif
 
@@ -176,6 +177,7 @@ DECL_FUNCPTR(xsltNextImport);
 DECL_FUNCPTR(xsltParseStylesheetDoc);
 DECL_FUNCPTR(xsltQuoteUserParams);
 DECL_FUNCPTR(xsltSaveResultTo);
+DECL_FUNCPTR(xsltSetLoaderFunc);
 # undef DECL_FUNCPTR
 #endif
 
@@ -202,10 +204,14 @@ static void init_libxslt(void)
     LOAD_FUNCPTR(xsltParseStylesheetDoc, 1);
     LOAD_FUNCPTR(xsltQuoteUserParams, 1);
     LOAD_FUNCPTR(xsltSaveResultTo, 1);
+    LOAD_FUNCPTR(xsltSetLoaderFunc, 1);
 #undef LOAD_FUNCPTR
 
     if (pxsltInit)
         pxsltInit();
+
+    pxsltSetLoaderFunc(xslt_doc_default_loader);
+
     return;
 
  sym_not_found:

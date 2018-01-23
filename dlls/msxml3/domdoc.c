@@ -2308,6 +2308,7 @@ static HRESULT WINAPI domdoc_load(
             This->error = E_FAIL;
         else
         {
+            get_doc(This)->name = (char *)xmlchar_from_wcharn(filename, -1, TRUE);
             This->properties->uri = uri;
             hr = This->error = S_OK;
             *isSuccessful = VARIANT_TRUE;
