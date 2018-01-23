@@ -54,20 +54,14 @@ struct wndclass_redirect_data
 /* returned pointer is valid as long as activation context is alive */
 static WCHAR* get_versioned_classname(const WCHAR *name)
 {
-    BOOL (WINAPI *pFindActCtxSectionStringW)(DWORD,const GUID *,ULONG,LPCWSTR,PACTCTX_SECTION_KEYED_DATA);
     struct wndclass_redirect_data *wnddata;
     ACTCTX_SECTION_KEYED_DATA data;
     BOOL ret;
 
-    pFindActCtxSectionStringW = (void*)GetProcAddress(GetModuleHandleA("kernel32"), "FindActCtxSectionStringW");
-
     memset(&data, 0, sizeof(data));
     data.cbSize = sizeof(data);
-
-    ret = pFindActCtxSectionStringW(0, NULL,
-                                    ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
-                                    name, &data);
-    ok(ret, "got %d, error %u\n", ret, GetLastError());
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, name, &data);
+    ok(ret, "Failed to find class redirection section, error %u\n", GetLastError());
     wnddata = (struct wndclass_redirect_data*)data.lpData;
     return (WCHAR*)((BYTE*)wnddata + wnddata->name_offset);
 }
