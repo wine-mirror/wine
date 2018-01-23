@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 struct __Container_proxy;
@@ -1397,6 +1398,12 @@ static MSVCP_size_t InterlockedIncrementSizeT(MSVCP_size_t volatile *dest)
 #define InterlockedIncrementSizeT(dest) InterlockedIncrement((LONG*)dest)
 #endif
 
+static void CALLBACK queue_push_finally(BOOL normal, void *ctx)
+{
+    threadsafe_queue *queue = ctx;
+    InterlockedIncrementSizeT(&queue->tail_pos);
+}
+
 static void threadsafe_queue_push(threadsafe_queue *queue, MSVCP_size_t id,
         void *e, _Concurrent_queue_base_v4 *parent, BOOL copy)
 {
@@ -1430,21 +1437,24 @@ static void threadsafe_queue_push(threadsafe_queue *queue, MSVCP_size_t id,
         p = queue->tail;
     }
 
-    /* TODO: Add exception handling */
-    if(copy)
-        call__Concurrent_queue_base_v4__Copy_item(parent, p, id-page_id, e);
-    else
-        call__Concurrent_queue_base_v4__Move_item(parent, p, id-page_id, e);
-    p->_Mask |= 1 << (id - page_id);
-    InterlockedIncrementSizeT(&queue->tail_pos);
+    __TRY
+    {
+        if(copy)
+            call__Concurrent_queue_base_v4__Copy_item(parent, p, id-page_id, e);
+        else
+            call__Concurrent_queue_base_v4__Move_item(parent, p, id-page_id, e);
+        p->_Mask |= 1 << (id - page_id);
+    }
+    __FINALLY_CTX(queue_push_finally, queue);
 }
 
-static void threadsafe_queue_pop(threadsafe_queue *queue, MSVCP_size_t id,
+static BOOL threadsafe_queue_pop(threadsafe_queue *queue, MSVCP_size_t id,
         void *e, _Concurrent_queue_base_v4 *parent)
 {
     MSVCP_size_t page_id = id & ~(parent->alloc_count-1);
     int spin;
     _Page *p;
+    BOOL ret = FALSE;
 
     spin = 0;
     while(queue->tail_pos <= id)
@@ -1455,8 +1465,12 @@ static void threadsafe_queue_pop(threadsafe_queue *queue, MSVCP_size_t id,
         spin_wait(&spin);
 
     p = queue->head;
-    /* TODO: Add exception handling */
-    call__Concurrent_queue_base_v4__Assign_and_destroy_item(parent, e, p, id-page_id);
+    if(p->_Mask & (1 << (id-page_id)))
+    {
+        /* TODO: Add exception handling */
+        call__Concurrent_queue_base_v4__Assign_and_destroy_item(parent, e, p, id-page_id);
+        ret = TRUE;
+    }
 
     if(id == page_id+parent->alloc_count-1)
     {
@@ -1471,7 +1485,9 @@ static void threadsafe_queue_pop(threadsafe_queue *queue, MSVCP_size_t id,
         /* TODO: Add exception handling */
         call__Concurrent_queue_base_v4__Deallocate_page(parent, p);
     }
+
     InterlockedIncrementSizeT(&queue->head_pos);
+    return ret;
 }
 
 /* ?_Internal_push@_Concurrent_queue_base_v4@details@Concurrency@@IAEXPBX@Z */
@@ -1516,11 +1532,14 @@ MSVCP_bool __thiscall _Concurrent_queue_base_v4__Internal_pop_if_present(
 
     do
     {
-        id = this->data->head_pos;
-        if(id == this->data->tail_pos) return FALSE;
-    } while(InterlockedCompareExchangePointer((void**)&this->data->head_pos,
-                (void*)(id+1), (void*)id) != (void*)id);
-    threadsafe_queue_pop(this->data->queues + id % QUEUES_NO, id / QUEUES_NO, e, this);
+        do
+        {
+            id = this->data->head_pos;
+            if(id == this->data->tail_pos) return FALSE;
+        } while(InterlockedCompareExchangePointer((void**)&this->data->head_pos,
+                    (void*)(id+1), (void*)id) != (void*)id);
+    } while(!threadsafe_queue_pop(this->data->queues + id % QUEUES_NO,
+                id / QUEUES_NO, e, this));
     return TRUE;
 }
 
