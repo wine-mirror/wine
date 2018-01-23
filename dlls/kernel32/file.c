@@ -453,8 +453,8 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         status = io_status->u.Status;
     }
 
-    if (status != STATUS_PENDING && bytesRead)
-        *bytesRead = io_status->Information;
+    if (bytesRead)
+        *bytesRead = overlapped && status ? 0 : io_status->Information;
 
     if (status == STATUS_END_OF_FILE)
     {

@@ -715,6 +715,53 @@ static void test_CreateNamedPipe_instances_must_match(void)
     ok(CloseHandle(hnp2), "CloseHandle\n");
 }
 
+static void test_ReadFile(void)
+{
+    HANDLE server, client;
+    OVERLAPPED overlapped;
+    DWORD size;
+    BOOL res;
+
+    static char buf[512];
+
+    server = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX,
+                              PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                              1, 1024, 1024, NMPWAIT_WAIT_FOREVER, NULL);
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed with %u\n", GetLastError());
+
+    client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                         OPEN_EXISTING, 0, 0);
+    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed with %u\n", GetLastError());
+
+    ok(WriteFile(client, buf, sizeof(buf), &size, NULL), "WriteFile\n");
+
+    res = ReadFile(server, buf, 1, &size, NULL);
+    ok(!res && GetLastError() == ERROR_MORE_DATA, "ReadFile returned %x(%u)\n", res, GetLastError());
+    ok(size == 1, "size = %u\n", size);
+
+    /* pass both overlapped and ret read */
+    memset(&overlapped, 0, sizeof(overlapped));
+    res = ReadFile(server, buf, 1, &size, &overlapped);
+    ok(!res && GetLastError() == ERROR_MORE_DATA, "ReadFile returned %x(%u)\n", res, GetLastError());
+    ok(size == 0, "size = %u\n", size);
+    ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_OVERFLOW, "Internal = %lx\n", overlapped.Internal);
+    ok(overlapped.InternalHigh == 1, "InternalHigh = %lx\n", overlapped.InternalHigh);
+
+    DisconnectNamedPipe(server);
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.InternalHigh = 0xdeadbeef;
+    res = ReadFile(server, buf, 1, &size, &overlapped);
+    ok(!res && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "ReadFile returned %x(%u)\n", res, GetLastError());
+    ok(size == 0, "size = %u\n", size);
+    ok(overlapped.Internal == STATUS_PENDING, "Internal = %lx\n", overlapped.Internal);
+    todo_wine
+    ok(overlapped.InternalHigh == 0xdeadbeef, "InternalHigh = %lx\n", overlapped.InternalHigh);
+
+    CloseHandle(server);
+    CloseHandle(client);
+}
+
 /** implementation of alarm() */
 static DWORD CALLBACK alarmThreadMain(LPVOID arg)
 {
@@ -2661,7 +2708,7 @@ static void _overlapped_read_sync(unsigned line, HANDLE reader, void *buf, DWORD
     else
         ok_(__FILE__,line)(res, "ReadFile failed: %u\n", GetLastError());
     if(partial_read)
-        todo_wine ok_(__FILE__,line)(!read_bytes, "read_bytes %u expected 0\n", read_bytes);
+        ok_(__FILE__,line)(!read_bytes, "read_bytes %u expected 0\n", read_bytes);
     else
         ok_(__FILE__,line)(read_bytes == expected_result, "read_bytes %u expected %u\n", read_bytes, expected_result);
 
@@ -3122,6 +3169,7 @@ START_TEST(pipe)
     test_CreateNamedPipe(PIPE_TYPE_BYTE);
     test_CreateNamedPipe(PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
     test_CreatePipe();
+    test_ReadFile();
     test_CloseHandle();
     test_impersonation();
     test_overlapped();
