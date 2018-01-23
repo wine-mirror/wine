@@ -757,6 +757,14 @@ static void test_ReadFile(void)
     ok(overlapped.Internal == STATUS_PENDING, "Internal = %lx\n", overlapped.Internal);
     ok(overlapped.InternalHigh == 0xdeadbeef, "InternalHigh = %lx\n", overlapped.InternalHigh);
 
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.InternalHigh = 0xdeadbeef;
+    res = WriteFile(server, buf, 1, &size, &overlapped);
+    ok(!res && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "ReadFile returned %x(%u)\n", res, GetLastError());
+    ok(size == 0, "size = %u\n", size);
+    ok(overlapped.Internal == STATUS_PENDING, "Internal = %lx\n", overlapped.Internal);
+    ok(overlapped.InternalHigh == 0xdeadbeef, "InternalHigh = %lx\n", overlapped.InternalHigh);
+
     CloseHandle(server);
     CloseHandle(client);
 }

@@ -565,8 +565,8 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         piosb = (PIO_STATUS_BLOCK)overlapped;
         if (((ULONG_PTR)hEvent & 1) == 0) cvalue = overlapped;
     }
+    else piosb->Information = 0;
     piosb->u.Status = STATUS_PENDING;
-    piosb->Information = 0;
 
     status = NtWriteFile(hFile, hEvent, NULL, cvalue, piosb,
                          buffer, bytesToWrite, poffset, NULL);
