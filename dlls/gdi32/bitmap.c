@@ -145,6 +145,8 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     BITMAP bm;
     BITMAPOBJ *bmpobj;
     HBITMAP hbitmap;
+    INT dib_stride;
+    SIZE_T size;
 
     if (!bmp || bmp->bmType)
     {
@@ -194,10 +196,13 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
 
     /* Windows ignores the provided bm.bmWidthBytes */
     bm.bmWidthBytes = get_bitmap_stride( bm.bmWidth, bm.bmBitsPixel );
-    /* XP doesn't allow creating bitmaps larger than 128 MB */
-    if (bm.bmHeight > 128 * 1024 * 1024 / bm.bmWidthBytes)
+
+    dib_stride = get_dib_stride( bm.bmWidth, bm.bmBitsPixel );
+    size = dib_stride * bm.bmHeight;
+    /* Check for overflow (dib_stride itself must be ok because of the constraint on bm.bmWidth above). */
+    if (dib_stride != size / bm.bmHeight)
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
 
@@ -209,10 +214,17 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     }
 
     bmpobj->dib.dsBm = bm;
-    bmpobj->dib.dsBm.bmBits = NULL;
+    bmpobj->dib.dsBm.bmBits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+    if (!bmpobj->dib.dsBm.bmBits)
+    {
+        HeapFree( GetProcessHeap(), 0, bmpobj );
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return 0;
+    }
 
     if (!(hbitmap = alloc_gdi_handle( bmpobj, OBJ_BITMAP, &bitmap_funcs )))
     {
+        HeapFree( GetProcessHeap(), 0, bmpobj->dib.dsBm.bmBits );
         HeapFree( GetProcessHeap(), 0, bmpobj );
         return 0;
     }

@@ -168,13 +168,6 @@ BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp)
         BITMAPINFO info;
 
         get_ddb_bitmapinfo( bmp, &info );
-        if (!bmp->dib.dsBm.bmBits)
-        {
-            int width_bytes = get_dib_stride( bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmBitsPixel );
-            bmp->dib.dsBm.bmBits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                              bmp->dib.dsBm.bmHeight * width_bytes );
-            if (!bmp->dib.dsBm.bmBits) return FALSE;
-        }
         init_dib_info_from_bitmapinfo( dib, &info, bmp->dib.dsBm.bmBits );
     }
     else init_dib_info( dib, &bmp->dib.dsBmih, bmp->dib.dsBm.bmWidthBytes,
