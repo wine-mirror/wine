@@ -174,5 +174,7 @@ void WINAPI FreeMibTable(void*);
 DWORD WINAPI GetIfEntry2(MIB_IF_ROW2*);
 DWORD WINAPI GetIfTable2(MIB_IF_TABLE2**);
 DWORD WINAPI GetUnicastIpAddressEntry(MIB_UNICASTIPADDRESS_ROW*);
+PCHAR WINAPI if_indextoname(NET_IFINDEX,PCHAR);
+NET_IFINDEX WINAPI if_nametoindex(PCSTR);
 
 #endif /* __WINE_NETIOAPI_H */

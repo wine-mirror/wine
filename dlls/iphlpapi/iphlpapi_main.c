@@ -3235,3 +3235,13 @@ IF_INDEX WINAPI IPHLP_if_nametoindex(const char *name)
 
     return 0;
 }
+
+/******************************************************************
+ *    if_indextoname (IPHLPAPI.@)
+ */
+PCHAR WINAPI IPHLP_if_indextoname(NET_IFINDEX index, PCHAR name)
+{
+    TRACE("(%u, %p)\n", index, name);
+
+    return getInterfaceNameByIndex(index, name);
+}

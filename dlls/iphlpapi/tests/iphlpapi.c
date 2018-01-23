@@ -97,6 +97,7 @@ static DWORD (WINAPI *pConvertInterfaceLuidToNameA)(const NET_LUID*,char*,SIZE_T
 static DWORD (WINAPI *pConvertInterfaceNameToLuidA)(const char*,NET_LUID*);
 static DWORD (WINAPI *pConvertInterfaceNameToLuidW)(const WCHAR*,NET_LUID*);
 
+static PCHAR (WINAPI *pif_indextoname)(NET_IFINDEX,PCHAR);
 static NET_IFINDEX (WINAPI *pif_nametoindex)(const char*);
 
 static void loadIPHlpApi(void)
@@ -148,6 +149,7 @@ static void loadIPHlpApi(void)
     pConvertInterfaceLuidToNameW = (void *)GetProcAddress(hLibrary, "ConvertInterfaceLuidToNameW");
     pConvertInterfaceNameToLuidA = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidA");
     pConvertInterfaceNameToLuidW = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidW");
+    pif_indextoname = (void *)GetProcAddress(hLibrary, "if_indextoname");
     pif_nametoindex = (void *)GetProcAddress(hLibrary, "if_nametoindex");
   }
 }
@@ -1786,7 +1788,7 @@ static void test_interface_identifier_conversion(void)
     GUID guid;
     SIZE_T len;
     WCHAR nameW[IF_MAX_STRING_SIZE + 1];
-    char nameA[IF_MAX_STRING_SIZE + 1];
+    char nameA[IF_MAX_STRING_SIZE + 1], *name;
     NET_IFINDEX index, index2;
 
     if (!pConvertInterfaceIndexToLuid)
@@ -1947,22 +1949,37 @@ static void test_interface_identifier_conversion(void)
     ok( luid.Info.NetLuidIndex != 0xdead, "index not set\n" );
     ok( luid.Info.IfType == IF_TYPE_ETHERNET_CSMACD, "got %u\n", luid.Info.IfType );
 
-    /* if_nametoindex */
-    if (pif_nametoindex)
+    if (!pif_nametoindex || !pif_indextoname)
     {
-        index2 = pif_nametoindex( NULL );
-        ok( !index2, "Got unexpected index %u\n", index2 );
-        index2 = pif_nametoindex( nameA );
-        ok( index2 == index, "Got index %u for %s, expected %u\n", index2, nameA, index );
-        /* Wargaming.net Game Center passes a GUID-like string. */
-        index2 = pif_nametoindex( "{00000001-0000-0000-0000-000000000000}" );
-        ok( !index2, "Got unexpected index %u\n", index2 );
-        index2 = pif_nametoindex( wine_dbgstr_guid( &guid ) );
-        ok( !index2, "Got unexpected index %u for input %s\n", index2, wine_dbgstr_guid( &guid ) );
+        skip("if_nametoindex/if_indextoname not supported\n");
+        return;
     }
-    else
+
+    index2 = pif_nametoindex( NULL );
+    ok( !index2, "Got unexpected index %u\n", index2 );
+    index2 = pif_nametoindex( nameA );
+    ok( index2 == index, "Got index %u for %s, expected %u\n", index2, nameA, index );
+    /* Wargaming.net Game Center passes a GUID-like string. */
+    index2 = pif_nametoindex( "{00000001-0000-0000-0000-000000000000}" );
+    ok( !index2, "Got unexpected index %u\n", index2 );
+    index2 = pif_nametoindex( wine_dbgstr_guid( &guid ) );
+    ok( !index2, "Got unexpected index %u for input %s\n", index2, wine_dbgstr_guid( &guid ) );
+
+    name = pif_indextoname( 0, NULL );
+    ok( name == NULL, "got %s\n", name );
+
+    name = pif_indextoname( 0, nameA );
+    ok( name == NULL, "got %p\n", name );
+
+    name = pif_indextoname( ~0u, nameA );
+    ok( name == NULL, "got %p\n", name );
+
+    nameA[0] = 0;
+    name = pif_indextoname( 1, nameA );
+    if (name != NULL)
     {
-        skip("if_nametoindex not supported\n");
+        ok( name[0], "empty name\n" );
+        ok( name == nameA, "got %p\n", name );
     }
 }
 
