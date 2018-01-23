@@ -31,7 +31,9 @@ static const WCHAR create_optW[] = {'/','c','r','e','a','t','e',0};
 static const WCHAR delete_optW[] = {'/','d','e','l','e','t','e',0};
 static const WCHAR enable_optW[] = {'/','e','n','a','b','l','e',0};
 static const WCHAR f_optW[] = {'/','f',0};
+static const WCHAR ru_optW[] = {'/','r','u',0};
 static const WCHAR tn_optW[] = {'/','t','n',0};
+static const WCHAR tr_optW[] = {'/','t','r',0};
 static const WCHAR xml_optW[] = {'/','x','m','l',0};
 
 static ITaskFolder *get_tasks_root_folder(void)
@@ -133,49 +135,71 @@ static BSTR read_file_to_bstr(const WCHAR *file_name)
 
 static int change_command(int argc, WCHAR *argv[])
 {
-    const WCHAR *task_name;
+    BOOL have_option = FALSE, enable = FALSE;
+    const WCHAR *task_name = NULL;
     IRegisteredTask *task;
     HRESULT hres;
 
-    if (!argc) {
+    while (argc) {
+        if(!strcmpiW(argv[0], tn_optW)) {
+            if (argc < 2) {
+                FIXME("Missing /tn value\n");
+                return 1;
+            }
+
+            if (task_name) {
+                FIXME("Duplicated /tn argument\n");
+                return 1;
+            }
+
+            task_name = argv[1];
+            argc -= 2;
+            argv += 2;
+        }else if (!strcmpiW(argv[0], enable_optW)) {
+            enable = TRUE;
+            have_option = TRUE;
+            argc--;
+            argv++;
+        }else if (!strcmpiW(argv[0], tr_optW)) {
+            if (argc < 2) {
+                FIXME("Missing /tr value\n");
+                return 1;
+            }
+
+            FIXME("Unsupported /tr option %s\n", debugstr_w(argv[1]));
+            have_option = TRUE;
+            argc -= 2;
+            argv += 2;
+        }else {
+            FIXME("Unsupported arguments %s\n", debugstr_w(argv[0]));
+            return 1;
+        }
+    }
+
+    if (!task_name) {
         FIXME("Missing /tn option\n");
         return 1;
     }
 
-    if (strcmpiW(argv[0], tn_optW)) {
-        FIXME("Unsupported %s option\n", debugstr_w(argv[0]));
-        return 0;
-    }
-
-    if (argc < 2) {
-        FIXME("Missing /tn value\n");
-        return 1;
-    }
-
-    task_name = argv[1];
-    argc -= 2;
-    argv += 2;
-    if (!argc) {
+    if (!have_option) {
         FIXME("Missing change options\n");
         return 1;
-    }
-
-    if (strcmpiW(argv[0], enable_optW) || argc > 1) {
-        FIXME("Unsupported arguments %s\n", debugstr_w(argv[0]));
-        return 0;
     }
 
     task = get_registered_task(task_name);
     if (!task)
         return 1;
 
-    hres = IRegisteredTask_put_Enabled(task, VARIANT_TRUE);
-    IRegisteredTask_Release(task);
-    if (FAILED(hres)) {
-        FIXME("put_Enabled failed: %08x\n", hres);
-        return 1;
+    if (enable) {
+        hres = IRegisteredTask_put_Enabled(task, VARIANT_TRUE);
+        if (FAILED(hres)) {
+            IRegisteredTask_Release(task);
+            FIXME("put_Enabled failed: %08x\n", hres);
+            return 1;
+        }
     }
 
+    IRegisteredTask_Release(task);
     return 0;
 }
 
@@ -222,6 +246,15 @@ static int create_command(int argc, WCHAR *argv[])
             flags = TASK_CREATE_OR_UPDATE;
             argc--;
             argv++;
+        }else if (!strcmpiW(argv[0], ru_optW)) {
+            if (argc < 2) {
+                FIXME("Missing /ru value\n");
+                return 1;
+            }
+
+            FIXME("Unsupported /ru option %s\n", debugstr_w(argv[1]));
+            argc -= 2;
+            argv += 2;
         }else {
             FIXME("Unsupported argument %s\n", debugstr_w(argv[0]));
             return 1;
