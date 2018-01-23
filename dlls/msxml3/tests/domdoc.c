@@ -10152,13 +10152,68 @@ static void write_to_file(const char *name, const char *data)
     CloseHandle(hfile);
 }
 
+static void test_doc_load_from_path(IXMLDOMDocument *doc, const char *path)
+{
+    IXMLDOMDocument *doc2;
+    IXMLDOMElement *elem;
+    BSTR url, url2;
+    VARIANT_BOOL b;
+    VARIANT src;
+    HRESULT hr;
+
+    url = _bstr_(path);
+
+    V_VT(&src) = VT_BSTR;
+    V_BSTR(&src) = url;
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    ok(hr == S_OK, "Failed to load document, %#x.\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    V_VT(&src) = VT_BSTR | VT_BYREF;
+    V_BSTRREF(&src) = &url;
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    ok(hr == S_OK, "Failed to load document, %#x.\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    url = NULL;
+    hr = IXMLDOMDocument_get_url(doc, &url);
+    ok(hr == S_OK, "Failed to get document url, hr %#x.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* Create another instance for the same document, check url */
+    hr = IXMLDOMElement_get_ownerDocument(elem, &doc2);
+    ok(hr == S_OK, "Failed to get owner document, hr %#x.\n", hr);
+
+    hr = IXMLDOMDocument_get_url(doc2, &url2);
+    ok(hr == S_OK, "Failed to get document url, hr %#x.\n", hr);
+    ok(!lstrcmpW(url, url2), "Unexpected url %s.\n", wine_dbgstr_w(url2));
+
+    IXMLDOMDocument_Release(doc2);
+    IXMLDOMElement_Release(elem);
+    SysFreeString(url2);
+    SysFreeString(url);
+}
+
+static void url_forward_slash(char *url)
+{
+    char *p = url;
+
+    while (*p)
+    {
+        if (*p == '\\')
+            *p = '/';
+        p++;
+    }
+}
+
 static void test_load(void)
 {
-    IXMLDOMDocument *doc, *doc2;
-    BSTR pathW, bstr1, bstr2;
+    char path[MAX_PATH], path2[MAX_PATH];
     IXMLDOMNodeList *list;
-    IXMLDOMElement *elem;
-    char path[MAX_PATH];
+    IXMLDOMDocument *doc;
+    BSTR bstr1, bstr2;
     VARIANT_BOOL b;
     VARIANT src;
     HRESULT hr;
@@ -10179,47 +10234,26 @@ static void test_load(void)
     EXPECT_HR(hr, E_INVALIDARG);
     ok(b == VARIANT_FALSE, "got %d\n", b);
 
-    pathW = _bstr_(path);
+    /* "file://" url */
+    strcpy(path2, "file://");
+    strcat(path2, path);
+    test_doc_load_from_path(doc, path2);
 
-    /* load from path: VT_BSTR */
-    V_VT(&src) = VT_BSTR;
-    V_BSTR(&src) = pathW;
-    hr = IXMLDOMDocument_load(doc, src, &b);
-    EXPECT_HR(hr, S_OK);
-    ok(b == VARIANT_TRUE, "got %d\n", b);
+    /* file:// url, forward slashes */
+    url_forward_slash(path2);
+    test_doc_load_from_path(doc, path2);
 
-    bstr1 = NULL;
-    hr = IXMLDOMDocument_get_url(doc, &bstr1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    SysFreeString(bstr1);
+    /* "file:/" url */
+    strcpy(path2, "file:/");
+    strcat(path2, path);
+    test_doc_load_from_path(doc, path);
 
-    /* load from a path: VT_BSTR|VT_BYREF */
-    V_VT(&src) = VT_BSTR | VT_BYREF;
-    V_BSTRREF(&src) = &pathW;
-    hr = IXMLDOMDocument_load(doc, src, &b);
-    EXPECT_HR(hr, S_OK);
-    ok(b == VARIANT_TRUE, "got %d\n", b);
+    /* file:/ with forward slashes. */
+    url_forward_slash(path2);
+    test_doc_load_from_path(doc, path2);
 
-    bstr1 = NULL;
-    hr = IXMLDOMDocument_get_url(doc, &bstr1);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    /* create another instance for the same document, check url */
-    hr = IXMLDOMElement_get_ownerDocument(elem, &doc2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IXMLDOMDocument_get_url(doc, &bstr2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(bstr1, bstr2), "got %s\n", wine_dbgstr_w(bstr2));
-
-    IXMLDOMDocument_Release(doc2);
-    IXMLDOMElement_Release(elem);
-
-    SysFreeString(bstr1);
-    SysFreeString(bstr2);
+    /* Regular local path. */
+    test_doc_load_from_path(doc, path);
 
     /* load from a path: VT_BSTR|VT_BYREF, null ptr */
     V_VT(&src) = VT_BSTR | VT_BYREF;
@@ -10239,7 +10273,7 @@ static void test_load(void)
     write_to_file(path, nocontent);
 
     V_VT(&src) = VT_BSTR;
-    V_BSTR(&src) = pathW;
+    V_BSTR(&src) = _bstr_(path);
     b = VARIANT_TRUE;
     hr = IXMLDOMDocument_load(doc, src, &b);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
