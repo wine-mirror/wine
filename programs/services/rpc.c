@@ -59,7 +59,8 @@ typedef enum
 {
     SC_HTYPE_DONT_CARE = 0,
     SC_HTYPE_MANAGER,
-    SC_HTYPE_SERVICE
+    SC_HTYPE_SERVICE,
+    SC_HTYPE_NOTIFY
 } SC_HANDLE_TYPE;
 
 struct sc_handle
@@ -79,6 +80,32 @@ struct sc_service_handle       /* service handle */
     struct sc_handle hdr;
     struct service_entry *service_entry;
 };
+
+struct sc_notify_handle
+{
+    struct sc_handle hdr;
+    struct sc_service_handle *service;
+    HANDLE event;
+    DWORD notify_mask;
+    LONG ref;
+    SC_RPC_NOTIFY_PARAMS_LIST *params_list;
+};
+
+static void sc_notify_retain(struct sc_notify_handle *notify)
+{
+    InterlockedIncrement(&notify->ref);
+}
+
+static void sc_notify_release(struct sc_notify_handle *notify)
+{
+    ULONG r = InterlockedDecrement(&notify->ref);
+    if (r == 0)
+    {
+        CloseHandle(notify->event);
+        HeapFree(GetProcessHeap(), 0, notify->params_list);
+        HeapFree(GetProcessHeap(), 0, notify);
+    }
+}
 
 struct sc_lock
 {
@@ -227,6 +254,15 @@ static DWORD validate_service_handle(SC_RPC_HANDLE handle, DWORD needed_access, 
     return err;
 }
 
+static DWORD validate_notify_handle(SC_RPC_HANDLE handle, DWORD needed_access, struct sc_notify_handle **notify)
+{
+    struct sc_handle *hdr;
+    DWORD err = validate_context_handle(handle, SC_HTYPE_NOTIFY, needed_access, &hdr);
+    if (err == ERROR_SUCCESS)
+        *notify = (struct sc_notify_handle *)hdr;
+    return err;
+}
+
 DWORD __cdecl svcctl_OpenSCManagerW(
     MACHINE_HANDLEW MachineName, /* Note: this parameter is ignored */
     LPCWSTR DatabaseName,
@@ -274,6 +310,15 @@ static void SC_RPC_HANDLE_destroy(SC_RPC_HANDLE handle)
         case SC_HTYPE_SERVICE:
         {
             struct sc_service_handle *service = (struct sc_service_handle *)hdr;
+            service_lock(service->service_entry);
+            if (service->service_entry->notify &&
+                    service->service_entry->notify->service == service)
+            {
+                SetEvent(service->service_entry->notify->event);
+                sc_notify_release(service->service_entry->notify);
+                service->service_entry->notify = NULL;
+            }
+            service_unlock(service->service_entry);
             release_service(service->service_entry);
             HeapFree(GetProcessHeap(), 0, service);
             break;
@@ -776,13 +821,42 @@ DWORD __cdecl svcctl_ChangeServiceConfigW(
     return err;
 }
 
+static void fill_notify(struct sc_notify_handle *notify)
+{
+    SC_RPC_NOTIFY_PARAMS_LIST *list;
+    SERVICE_NOTIFY_STATUS_CHANGE_PARAMS_2 *cparams;
+
+    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            sizeof(SC_RPC_NOTIFY_PARAMS_LIST) + sizeof(SERVICE_NOTIFY_STATUS_CHANGE_PARAMS_2));
+    if (!list)
+        return;
+
+    cparams = (SERVICE_NOTIFY_STATUS_CHANGE_PARAMS_2 *)(list + 1);
+
+    cparams->dwNotifyMask = notify->notify_mask;
+    memcpy(&cparams->ServiceStatus, &notify->service->service_entry->status,
+            sizeof(SERVICE_STATUS_PROCESS));
+    cparams->dwNotificationStatus = ERROR_SUCCESS;
+    cparams->dwNotificationTriggered = 1 << (cparams->ServiceStatus.dwCurrentState - SERVICE_STOPPED);
+    cparams->pszServiceNames = NULL;
+
+    list->cElements = 1;
+
+    list->NotifyParamsArray[0].dwInfoLevel = 2;
+    list->NotifyParamsArray[0].u.params = cparams;
+
+    InterlockedExchangePointer((void**)&notify->params_list, list);
+
+    SetEvent(notify->event);
+}
+
 DWORD __cdecl svcctl_SetServiceStatus(
     SC_RPC_HANDLE hServiceStatus,
     LPSERVICE_STATUS lpServiceStatus)
 {
     struct sc_service_handle *service;
     struct process_entry *process;
-    DWORD err;
+    DWORD err, mask;
 
     WINE_TRACE("(%p, %p)\n", hServiceStatus, lpServiceStatus);
 
@@ -806,6 +880,19 @@ DWORD __cdecl svcctl_SetServiceStatus(
             shutdown_shared_process(process);
         release_process(process);
     }
+
+    mask = 1 << (service->service_entry->status.dwCurrentState - SERVICE_STOPPED);
+    if (service->service_entry->notify &&
+            (service->service_entry->notify->notify_mask & mask))
+    {
+        struct sc_notify_handle *notify = service->service_entry->notify;
+        fill_notify(notify);
+        service->service_entry->notify = NULL;
+        sc_notify_release(notify);
+        service->service_entry->status_notified = TRUE;
+    }
+    else
+        service->service_entry->status_notified = FALSE;
 
     service_unlock(service->service_entry);
 
@@ -1598,31 +1685,142 @@ DWORD __cdecl svcctl_unknown46(void)
 }
 
 DWORD __cdecl svcctl_NotifyServiceStatusChange(
-    SC_RPC_HANDLE service,
+    SC_RPC_HANDLE handle,
     SC_RPC_NOTIFY_PARAMS params,
     GUID *clientprocessguid,
     GUID *scmprocessguid,
     BOOL *createremotequeue,
-    SC_NOTIFY_RPC_HANDLE *notify)
+    SC_NOTIFY_RPC_HANDLE *hNotify)
 {
-    WINE_FIXME("\n");
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD err, mask;
+    struct sc_manager_handle *manager = NULL;
+    struct sc_service_handle *service = NULL;
+    struct sc_notify_handle *notify;
+    struct sc_handle *hdr = handle;
+
+    WINE_TRACE("(%p, NotifyMask: 0x%x, %p, %p, %p, %p)\n", handle,
+            params.u.params->dwNotifyMask, clientprocessguid, scmprocessguid,
+            createremotequeue, hNotify);
+
+    switch (hdr->type)
+    {
+    case SC_HTYPE_SERVICE:
+        err = validate_service_handle(handle, SERVICE_QUERY_STATUS, &service);
+        break;
+    case SC_HTYPE_MANAGER:
+        err = validate_scm_handle(handle, SC_MANAGER_ENUMERATE_SERVICE, &manager);
+        break;
+    default:
+        err = ERROR_INVALID_HANDLE;
+        break;
+    }
+
+    if (err != ERROR_SUCCESS)
+        return err;
+
+    if (manager)
+    {
+        WARN("Need support for service creation/deletion notifications\n");
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+
+    notify = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*notify));
+    if (!notify)
+        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+
+    notify->hdr.type = SC_HTYPE_NOTIFY;
+    notify->hdr.access = 0;
+
+    notify->service = service;
+
+    notify->event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    notify->notify_mask = params.u.params->dwNotifyMask;
+
+    service_lock(service->service_entry);
+
+    if (service->service_entry->notify)
+    {
+        service_unlock(service->service_entry);
+        HeapFree(GetProcessHeap(), 0, notify);
+        return ERROR_ALREADY_REGISTERED;
+    }
+
+    mask = 1 << (service->service_entry->status.dwCurrentState - SERVICE_STOPPED);
+    if (!service->service_entry->status_notified &&
+            (notify->notify_mask & mask))
+    {
+        fill_notify(notify);
+        service->service_entry->status_notified = TRUE;
+    }
+    else
+    {
+        sc_notify_retain(notify);
+        service->service_entry->notify = notify;
+    }
+
+    sc_notify_retain(notify);
+    *hNotify = &notify->hdr;
+
+    service_unlock(service->service_entry);
+
+    return ERROR_SUCCESS;
 }
 
 DWORD __cdecl svcctl_GetNotifyResults(
-    SC_NOTIFY_RPC_HANDLE notify,
-    SC_RPC_NOTIFY_PARAMS_LIST **params)
+    SC_NOTIFY_RPC_HANDLE hNotify,
+    SC_RPC_NOTIFY_PARAMS_LIST **pList)
 {
-    WINE_FIXME("\n");
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD err;
+    struct sc_notify_handle *notify;
+
+    WINE_TRACE("(%p, %p)\n", hNotify, pList);
+
+    if (!pList)
+        return ERROR_INVALID_PARAMETER;
+
+    *pList = NULL;
+
+    if ((err = validate_notify_handle(hNotify, 0, &notify)) != 0)
+        return err;
+
+    sc_notify_retain(notify);
+    /* block until there is a result */
+    err = WaitForSingleObject(notify->event, INFINITE);
+
+    if (err != WAIT_OBJECT_0)
+    {
+        sc_notify_release(notify);
+        return err;
+    }
+
+    *pList = InterlockedExchangePointer((void**)&notify->params_list, NULL);
+    if (!*pList)
+    {
+        sc_notify_release(notify);
+        return ERROR_REQUEST_ABORTED;
+    }
+
+    sc_notify_release(notify);
+
+    return ERROR_SUCCESS;
 }
 
 DWORD __cdecl svcctl_CloseNotifyHandle(
-    SC_NOTIFY_RPC_HANDLE *notify,
+    SC_NOTIFY_RPC_HANDLE *hNotify,
     BOOL *apc_fired)
 {
-    WINE_FIXME("\n");
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct sc_notify_handle *notify;
+    DWORD err;
+
+    WINE_TRACE("(%p, %p)\n", hNotify, apc_fired);
+
+    if ((err = validate_notify_handle(*hNotify, 0, &notify)) != 0)
+        return err;
+
+    sc_notify_release(notify);
+
+    return ERROR_SUCCESS;
 }
 
 DWORD __cdecl svcctl_ControlServiceExA(
