@@ -1235,6 +1235,13 @@ typedef struct
 } _Concurrent_queue_base_v4;
 
 extern const vtable_ptr MSVCP__Concurrent_queue_base_v4_vtable;
+#if _MSVCP_VER == 100
+#define call__Concurrent_queue_base_v4__Deallocate_page(this, page) CALL_VTBL_FUNC(this, \
+        16, void, (_Concurrent_queue_base_v4*,_Page*), (this,page))
+#else
+#define call__Concurrent_queue_base_v4__Deallocate_page(this, page) CALL_VTBL_FUNC(this, \
+        20, void, (_Concurrent_queue_base_v4*,_Page*), (this,page))
+#endif
 
 /* ?_Internal_throw_exception@_Concurrent_queue_base_v4@details@Concurrency@@IBEXXZ */
 /* ?_Internal_throw_exception@_Concurrent_queue_base_v4@details@Concurrency@@IEBAXXZ */
@@ -1306,7 +1313,15 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_finish_clear, 4)
 void __thiscall _Concurrent_queue_base_v4__Internal_finish_clear(
         _Concurrent_queue_base_v4 *this)
 {
-    FIXME("(%p) stub\n", this);
+    int i;
+
+    TRACE("(%p)\n", this);
+
+    for(i=0; i<QUEUES_NO; i++)
+    {
+        if(this->data->queues[i].tail)
+            call__Concurrent_queue_base_v4__Deallocate_page(this, this->data->queues[i].tail);
+    }
 }
 
 /* ?_Internal_empty@_Concurrent_queue_base_v4@details@Concurrency@@IBE_NXZ */
