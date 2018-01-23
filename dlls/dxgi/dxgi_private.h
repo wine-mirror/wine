@@ -31,10 +31,10 @@
 #include "winnls.h"
 
 #include "d3d10_1.h"
+#include "dxgi1_6.h"
 #ifdef DXGI_INIT_GUID
 #include "initguid.h"
 #endif
-#include "dxgi1_6.h"
 #include "wine/wined3d.h"
 #include "wine/winedxgi.h"
 
