@@ -577,8 +577,8 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         status = piosb->u.Status;
     }
 
-    if (status != STATUS_PENDING && bytesWritten)
-        *bytesWritten = piosb->Information;
+    if (bytesWritten)
+        *bytesWritten = overlapped && status ? 0 : piosb->Information;
 
     if (status && status != STATUS_TIMEOUT)
     {

@@ -2767,7 +2767,7 @@ static void _overlapped_write_async(unsigned line, HANDLE writer, void *buf, DWO
     overlapped->hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     res = WriteFile(writer, buf, size, &written_bytes, overlapped);
     ok_(__FILE__,line)(!res && GetLastError() == ERROR_IO_PENDING, "WriteFile returned %x(%u)\n", res, GetLastError());
-    todo_wine ok_(__FILE__,line)(!written_bytes, "written_bytes = %u\n", written_bytes);
+    ok_(__FILE__,line)(!written_bytes, "written_bytes = %u\n", written_bytes);
 
     _test_not_signaled(line, overlapped->hEvent);
 }
