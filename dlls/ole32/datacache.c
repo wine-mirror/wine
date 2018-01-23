@@ -2453,6 +2453,8 @@ static HRESULT WINAPI DataCache_Cache(
         return CACHE_S_SAMECACHE;
     }
 
+    if (This->clsid_static) return DV_E_FORMATETC;
+
     hr = DataCache_CreateEntry(This, &fmt_cpy, advf, FALSE, &cache_entry);
 
     if (SUCCEEDED(hr))

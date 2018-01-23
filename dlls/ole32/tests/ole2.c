@@ -2426,6 +2426,29 @@ static void test_data_cache_cache(void)
 
     IDataObject_Release( data );
     IOleCache2_Release( cache );
+
+    /* tests for a static class cache */
+    hr = CreateDataCache( NULL, &CLSID_Picture_Dib, &IID_IOleCache2, (void **)&cache );
+
+    fmt.cfFormat = CF_DIB;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.tymed = TYMED_HGLOBAL;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == CACHE_S_SAMECACHE, "got %08x\n", hr );
+
+    /* aspect other than DVASPECT_CONTENT should fail */
+    fmt.dwAspect = DVASPECT_THUMBNAIL;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( FAILED(hr), "got %08x\n", hr );
+
+    /* try caching another clip format */
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.cfFormat = CF_METAFILEPICT;
+    fmt.tymed = TYMED_MFPICT;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( FAILED(hr), "got %08x\n", hr );
+
+    IOleCache2_Release( cache );
 }
 
 /* The CLSID_Picture_ classes automatically create appropriate cache entries */
