@@ -39,6 +39,35 @@ static ULONG get_refcount(IUnknown *iface)
     return IUnknown_Release(iface);
 }
 
+#define check_interface(a, b, c, d) check_interface_(__LINE__, a, b, c, d)
+static HRESULT check_interface_(unsigned int line, void *iface, REFIID iid,
+        BOOL supported, BOOL is_broken)
+{
+    HRESULT hr, expected_hr, broken_hr;
+    IUnknown *unknown = iface, *out;
+
+    if (supported)
+    {
+        expected_hr = S_OK;
+        broken_hr = E_NOINTERFACE;
+    }
+    else
+    {
+        expected_hr = E_NOINTERFACE;
+        broken_hr = S_OK;
+    }
+
+    out = (IUnknown *)0xdeadbeef;
+    hr = IUnknown_QueryInterface(unknown, iid, (void **)&out);
+    ok_(__FILE__, line)(hr == expected_hr || broken(is_broken && hr == broken_hr),
+            "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(out);
+    else
+        ok_(__FILE__, line)(!out, "Got unexpected pointer %p.\n", out);
+    return hr;
+}
+
 #define MODE_DESC_IGNORE_RESOLUTION        0x00000001u
 #define MODE_DESC_IGNORE_REFRESH_RATE      0x00000002u
 #define MODE_DESC_IGNORE_FORMAT            0x00000004u
@@ -458,8 +487,6 @@ static void test_create_surface(void)
     DXGI_SURFACE_DESC desc;
     IDXGISurface *surface;
     IDXGIDevice *device;
-    IUnknown *surface1;
-    IUnknown *texture;
     ULONG refcount;
     HRESULT hr;
 
@@ -478,19 +505,11 @@ static void test_create_surface(void)
     hr = IDXGIDevice_CreateSurface(device, &desc, 1, DXGI_USAGE_RENDER_TARGET_OUTPUT, NULL, &surface);
     ok(SUCCEEDED(hr), "Failed to create a dxgi surface, hr %#x\n", hr);
 
-    hr = IDXGISurface_QueryInterface(surface, &IID_ID3D10Texture2D, (void **)&texture);
-    ok(SUCCEEDED(hr), "Surface should implement ID3D10Texture2D\n");
-    IUnknown_Release(texture);
-
-    hr = IDXGISurface_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Surface should implement ID3D11Texture2D.\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(texture);
-
-    hr = IDXGISurface_QueryInterface(surface, &IID_IDXGISurface1, (void **)&surface1);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Surface should implement IDXGISurface1.\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(surface1);
+    check_interface(surface, &IID_ID3D10Texture2D, TRUE, FALSE);
+    /* Not available on all Windows versions. */
+    check_interface(surface, &IID_ID3D11Texture2D, TRUE, TRUE);
+    /* Not available on all Windows versions. */
+    check_interface(surface, &IID_IDXGISurface1, TRUE, TRUE);
 
     IDXGISurface_Release(surface);
     refcount = IDXGIDevice_Release(device);
@@ -2341,7 +2360,6 @@ done:
 
 static void test_create_factory(void)
 {
-    IDXGIFactory1 *factory;
     IUnknown *iface;
     ULONG refcount;
     HRESULT hr;
@@ -2359,12 +2377,9 @@ static void test_create_factory(void)
     ok(SUCCEEDED(hr), "Failed to create factory with IID_IDXGIObject, hr %#x.\n", hr);
     IUnknown_Release(iface);
 
-    factory = (void *)0xdeadbeef;
     hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&iface);
     ok(SUCCEEDED(hr), "Failed to create factory with IID_IDXGIFactory, hr %#x.\n", hr);
-    hr = IUnknown_QueryInterface(iface, &IID_IDXGIFactory1, (void **)&factory);
-    ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
-    ok(!factory, "Got unexpected factory %p.\n", factory);
+    check_interface(iface, &IID_IDXGIFactory1, FALSE, FALSE);
     IUnknown_Release(iface);
 
     iface = (void *)0xdeadbeef;
@@ -2403,10 +2418,9 @@ static void test_create_factory(void)
 
     hr = pCreateDXGIFactory1(&IID_IDXGIFactory, (void **)&iface);
     ok(SUCCEEDED(hr), "Failed to create factory with IID_IDXGIFactory, hr %#x.\n", hr);
-    hr = IUnknown_QueryInterface(iface, &IID_IDXGIFactory1, (void **)&factory);
-    ok(SUCCEEDED(hr), "Failed to query IDXGIFactory1 interface, hr %#x.\n", hr);
-    IDXGIFactory1_Release(factory);
-    IUnknown_Release(iface);
+    check_interface(iface, &IID_IDXGIFactory1, TRUE, FALSE);
+    refcount = IUnknown_Release(iface);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
 
     hr = pCreateDXGIFactory1(&IID_IDXGIFactory1, (void **)&iface);
     ok(SUCCEEDED(hr), "Failed to create factory with IID_IDXGIFactory1, hr %#x.\n", hr);
