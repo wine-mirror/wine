@@ -20,8 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
-
 #ifdef __i386__
 #define ARCH "x86"
 #elif defined __x86_64__
@@ -106,7 +104,7 @@ static BOOL load_v6_module(ULONG_PTR *pcookie, HANDLE *hCtx)
     ok(*hCtx != 0, "Expected context handle\n");
 
     ret = ActivateActCtx(*hCtx, pcookie);
-    expect(TRUE, ret);
+    ok(ret, "Failed to activate context, error %d.\n", GetLastError());
 
     if (!ret)
     {
@@ -124,5 +122,4 @@ static BOOL load_v6_module(ULONG_PTR *pcookie, HANDLE *hCtx)
     return ret;
 }
 
-#undef expect
 #undef ARCH
