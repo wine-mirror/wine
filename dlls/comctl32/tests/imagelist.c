@@ -1029,12 +1029,22 @@ static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max, IN
     cleanup_memstream(&stream);
 }
 
+static void image_list_add_bitmap(HIMAGELIST himl, BYTE grey, int i)
+{
+    char comment[16];
+    HBITMAP hbm;
+    int ret;
+
+    sprintf(comment, "%d", i);
+    hbm = create_bitmap(BMP_CX, BMP_CX, RGB(grey, grey, grey), comment);
+    ret = pImageList_Add(himl, hbm, NULL);
+    ok(ret != -1, "Failed to add image to imagelist.\n");
+    DeleteObject(hbm);
+}
+
 static void image_list_init(HIMAGELIST himl)
 {
-    HBITMAP hbm;
-    char comment[16];
-    INT n = 1;
-    DWORD i;
+    unsigned int i;
     static const struct test_data
     {
         BYTE grey;
@@ -1070,18 +1080,11 @@ static void image_list_init(HIMAGELIST himl)
 
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 2, 4, ILC_COLOR24, "total 0");
 
-#define add_bitmap(grey) \
-    sprintf(comment, "%d", n++); \
-    hbm = create_bitmap(BMP_CX, BMP_CX, RGB((grey),(grey),(grey)), comment); \
-    ImageList_Add(himl, hbm, NULL); \
-    DeleteObject(hbm);
-
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
-        add_bitmap(td[i].grey);
+        image_list_add_bitmap(himl, td[i].grey, i + 1);
         check_iml_data(himl, td[i].cx, td[i].cy, td[i].cur, td[i].max, td[i].grow, td[i].bpp, td[i].comment);
     }
-#undef add_bitmap
 }
 
 static void test_imagelist_storage(void)
