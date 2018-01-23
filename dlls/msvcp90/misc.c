@@ -1240,7 +1240,8 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_throw_exception, 4)
 void __thiscall _Concurrent_queue_base_v4__Internal_throw_exception(
         const _Concurrent_queue_base_v4 *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    throw_exception(EXCEPTION_BAD_ALLOC, NULL);
 }
 
 /* ??0_Concurrent_queue_base_v4@details@Concurrency@@IAE@I@Z */
