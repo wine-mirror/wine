@@ -1201,6 +1201,162 @@ void __thiscall _Pad__Release(_Pad *this)
 }
 #endif
 
+#if _MSVCP_VER >= 100
+typedef struct _Page
+{
+    struct _Page *_Next;
+    MSVCP_size_t _Mask;
+    char data[1];
+} _Page;
+
+typedef struct
+{
+    LONG lock;
+    _Page *head;
+    _Page *tail;
+    MSVCP_size_t head_pos;
+    MSVCP_size_t tail_pos;
+} threadsafe_queue;
+
+#define QUEUES_NO 8
+typedef struct
+{
+    MSVCP_size_t tail_pos;
+    MSVCP_size_t head_pos;
+    threadsafe_queue queues[QUEUES_NO];
+} queue_data;
+
+typedef struct
+{
+    const vtable_ptr *vtable;
+    queue_data *data; /* queue_data structure is not binary compatible */
+    MSVCP_size_t alloc_count;
+    MSVCP_size_t item_size;
+} _Concurrent_queue_base_v4;
+
+/* ?_Internal_throw_exception@_Concurrent_queue_base_v4@details@Concurrency@@IBEXXZ */
+/* ?_Internal_throw_exception@_Concurrent_queue_base_v4@details@Concurrency@@IEBAXXZ */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_throw_exception, 4)
+void __thiscall _Concurrent_queue_base_v4__Internal_throw_exception(
+        const _Concurrent_queue_base_v4 *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ??0_Concurrent_queue_base_v4@details@Concurrency@@IAE@I@Z */
+/* ??0_Concurrent_queue_base_v4@details@Concurrency@@IEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_ctor, 8)
+_Concurrent_queue_base_v4* __thiscall _Concurrent_queue_base_v4_ctor(
+        _Concurrent_queue_base_v4 *this, MSVCP_size_t size)
+{
+    FIXME("(%p %ld) stub\n", this, size);
+    return NULL;
+}
+
+/* ??1_Concurrent_queue_base_v4@details@Concurrency@@MAE@XZ */
+/* ??1_Concurrent_queue_base_v4@details@Concurrency@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_dtor, 4)
+void __thiscall _Concurrent_queue_base_v4_dtor(_Concurrent_queue_base_v4 *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_vector_dtor, 8)
+_Concurrent_queue_base_v4* __thiscall _Concurrent_queue_base_v4_vector_dtor(
+        _Concurrent_queue_base_v4 *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            _Concurrent_queue_base_v4_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        if(flags & 1)
+            _Concurrent_queue_base_v4_dtor(this);
+        MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Internal_finish_clear@_Concurrent_queue_base_v4@details@Concurrency@@IAEXXZ */
+/* ?_Internal_finish_clear@_Concurrent_queue_base_v4@details@Concurrency@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_finish_clear, 4)
+void __thiscall _Concurrent_queue_base_v4__Internal_finish_clear(
+        _Concurrent_queue_base_v4 *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?_Internal_empty@_Concurrent_queue_base_v4@details@Concurrency@@IBE_NXZ */
+/* ?_Internal_empty@_Concurrent_queue_base_v4@details@Concurrency@@IEBA_NXZ */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_empty, 4)
+MSVCP_bool __thiscall _Concurrent_queue_base_v4__Internal_empty(
+        const _Concurrent_queue_base_v4 *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?_Internal_size@_Concurrent_queue_base_v4@details@Concurrency@@IBEIXZ */
+/* ?_Internal_size@_Concurrent_queue_base_v4@details@Concurrency@@IEBA_KXZ */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_size, 4)
+MSVCP_size_t __thiscall _Concurrent_queue_base_v4__Internal_size(
+        const _Concurrent_queue_base_v4 *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?_Internal_push@_Concurrent_queue_base_v4@details@Concurrency@@IAEXPBX@Z */
+/* ?_Internal_push@_Concurrent_queue_base_v4@details@Concurrency@@IEAAXPEBX@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_push, 8)
+void __thiscall _Concurrent_queue_base_v4__Internal_push(
+        _Concurrent_queue_base_v4 *this, const void *e)
+{
+    FIXME("(%p %p) stub\n", this, e);
+}
+
+/* ?_Internal_move_push@_Concurrent_queue_base_v4@details@Concurrency@@IAEXPAX@Z */
+/* ?_Internal_move_push@_Concurrent_queue_base_v4@details@Concurrency@@IEAAXPEAX@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_move_push, 8)
+void __thiscall _Concurrent_queue_base_v4__Internal_move_push(
+        _Concurrent_queue_base_v4 *this, void *e)
+{
+    FIXME("(%p %p) stub\n", this, e);
+}
+
+/* ?_Internal_pop_if_present@_Concurrent_queue_base_v4@details@Concurrency@@IAE_NPAX@Z */
+/* ?_Internal_pop_if_present@_Concurrent_queue_base_v4@details@Concurrency@@IEAA_NPEAX@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_pop_if_present, 8)
+MSVCP_bool __thiscall _Concurrent_queue_base_v4__Internal_pop_if_present(
+        _Concurrent_queue_base_v4 *this, void *e)
+{
+    FIXME("(%p %p) stub\n", this, e);
+    return 0;
+}
+
+/* ?_Internal_swap@_Concurrent_queue_base_v4@details@Concurrency@@IAEXAAV123@@Z */
+/* ?_Internal_swap@_Concurrent_queue_base_v4@details@Concurrency@@IEAAXAEAV123@@Z */
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_swap, 8)
+void __thiscall _Concurrent_queue_base_v4__Internal_swap(
+        _Concurrent_queue_base_v4 *this, _Concurrent_queue_base_v4 *r)
+{
+    FIXME("(%p %p) stub\n", this, r);
+}
+
+DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_dummy, 4)
+void __thiscall _Concurrent_queue_base_v4_dummy(_Concurrent_queue_base_v4 *this)
+{
+    ERR("unexpected call\n");
+}
+
+DEFINE_RTTI_DATA0(_Concurrent_queue_base_v4, 0, ".?AV_Concurrent_queue_base_v4@details@Concurrency@@")
+#endif
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
@@ -1226,6 +1382,17 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(custom_category_default_error_condition)
             VTABLE_ADD_FUNC(custom_category_equivalent)
             VTABLE_ADD_FUNC(custom_category_equivalent_code));
+#endif
+#if _MSVCP_VER >= 100
+    __ASM_VTABLE(_Concurrent_queue_base_v4,
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy)
+#endif
+            VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy)
+            VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy)
+            VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_vector_dtor)
+            VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy)
+            VTABLE_ADD_FUNC(_Concurrent_queue_base_v4_dummy));
 #endif
 #if _MSVCP_VER >= 110
     __ASM_VTABLE(_Pad,
@@ -1382,6 +1549,9 @@ void init_misc(void *base)
     init_iostream_category_rtti(base);
     init_system_category_rtti(base);
     init_generic_category_rtti(base);
+#endif
+#if _MSVCP_VER >= 100
+    init__Concurrent_queue_base_v4_rtti(base);
 #endif
 #if _MSVCP_VER >= 110
     init__Pad_rtti(base);
