@@ -4090,6 +4090,9 @@ BOOL WINAPI CertEnumPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
 BOOL WINAPI CertRegisterPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
  LPCWSTR pwszStoreName, PCERT_PHYSICAL_STORE_INFO pStoreInfo, void *pvReserved);
 
+BOOL WINAPI CertUnregisterPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
+ LPCWSTR pwszStoreName);
+
 BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
              DWORD dwSaveAs, DWORD dwSaveTo, void* pvSaveToPara, DWORD dwFlags);
 

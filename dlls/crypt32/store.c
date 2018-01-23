@@ -1384,6 +1384,13 @@ BOOL WINAPI CertRegisterPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
     return FALSE;
 }
 
+BOOL WINAPI CertUnregisterPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
+ LPCWSTR pwszStoreName)
+{
+    FIXME("(%p, %08x, %s): stub\n", pvSystemStore, dwFlags, debugstr_w(pwszStoreName));
+    return TRUE;
+}
+
 BOOL WINAPI CertRegisterSystemStore(const void *pvSystemStore, DWORD dwFlags,
   PCERT_SYSTEM_STORE_INFO pStoreInfo, void *pvReserved)
 {
