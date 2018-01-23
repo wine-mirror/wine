@@ -617,6 +617,7 @@ HEADER_SRCS = \
 	sfc.h \
 	shdispid.h \
 	shellapi.h \
+	shellscalingapi.h \
 	shlguid.h \
 	shlobj.h \
 	shlwapi.h \
