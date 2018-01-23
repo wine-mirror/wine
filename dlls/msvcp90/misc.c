@@ -1275,7 +1275,8 @@ _Concurrent_queue_base_v4* __thiscall _Concurrent_queue_base_v4_ctor(
 DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_dtor, 4)
 void __thiscall _Concurrent_queue_base_v4_dtor(_Concurrent_queue_base_v4 *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    MSVCRT_operator_delete(this->data);
 }
 
 DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_vector_dtor, 8)
