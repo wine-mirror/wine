@@ -1234,6 +1234,8 @@ typedef struct
     MSVCP_size_t item_size;
 } _Concurrent_queue_base_v4;
 
+extern const vtable_ptr MSVCP__Concurrent_queue_base_v4_vtable;
+
 /* ?_Internal_throw_exception@_Concurrent_queue_base_v4@details@Concurrency@@IBEXXZ */
 /* ?_Internal_throw_exception@_Concurrent_queue_base_v4@details@Concurrency@@IEBAXXZ */
 DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_throw_exception, 4)
@@ -1250,8 +1252,22 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_ctor, 8)
 _Concurrent_queue_base_v4* __thiscall _Concurrent_queue_base_v4_ctor(
         _Concurrent_queue_base_v4 *this, MSVCP_size_t size)
 {
-    FIXME("(%p %ld) stub\n", this, size);
-    return NULL;
+    TRACE("(%p %ld)\n", this, size);
+
+    this->data = MSVCRT_operator_new(sizeof(*this->data));
+    memset(this->data, 0, sizeof(*this->data));
+
+    this->vtable = &MSVCP__Concurrent_queue_base_v4_vtable;
+    this->item_size = size;
+
+    /* alloc_count needs to be power of 2 */
+    this->alloc_count =
+        size <= 8 ? 32 :
+        size <= 16 ? 16 :
+        size <= 32 ? 8 :
+        size <= 64 ? 4 :
+        size <= 128 ? 2 : 1;
+    return this;
 }
 
 /* ??1_Concurrent_queue_base_v4@details@Concurrency@@MAE@XZ */
