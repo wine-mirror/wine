@@ -92,15 +92,20 @@ struct animated_cursoricon_object
     HICON                    frames[1];  /* list of animated cursor frames */
 };
 
-static HDC get_screen_dc(void)
+static HBITMAP create_color_bitmap( int width, int height )
 {
-    static const WCHAR DISPLAYW[] = {'D','I','S','P','L','A','Y',0};
-    static HDC screen_dc;
+    HDC hdc = get_display_dc();
+    HBITMAP ret = CreateCompatibleBitmap( hdc, width, height );
+    release_display_dc( hdc );
+    return ret;
+}
 
-    if (!screen_dc)
-        screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
-
-    return screen_dc;
+static int get_display_bpp(void)
+{
+    HDC hdc = get_display_dc();
+    int ret = GetDeviceCaps( hdc, BITSPIXEL );
+    release_display_dc( hdc );
+    return ret;
 }
 
 static HICON alloc_icon_handle( BOOL is_ani, UINT num_steps )
@@ -811,7 +816,6 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     BOOL ret = FALSE;
     BOOL do_stretch;
     HICON hObj = 0;
-    HDC screen_dc;
     HDC hdc = 0;
     LONG bmi_width, bmi_height;
     WORD bpp;
@@ -875,8 +879,6 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
         hotspot.y = (hotspot.y * height) / (bmi_height / 2);
     }
 
-    if (!(screen_dc = get_screen_dc())) return 0;
-
     if (!(bmi_copy = HeapAlloc( GetProcessHeap(), 0, max( size, FIELD_OFFSET( BITMAPINFO, bmiColors[2] )))))
         return 0;
     if (!(hdc = CreateCompatibleDC( 0 ))) goto done;
@@ -906,8 +908,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     else
     {
         if (!(mask = CreateBitmap( width, height, 1, 1, NULL ))) goto done;
-        if (!(color = CreateBitmap( width, height, GetDeviceCaps( screen_dc, PLANES ),
-                                     GetDeviceCaps( screen_dc, BITSPIXEL ), NULL )))
+        if (!(color = create_color_bitmap( width, height )))
         {
             DeleteObject( mask );
             goto done;
@@ -1830,11 +1831,7 @@ INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE xdir, BOOL bIcon,
     if( dir && !dir->idReserved && (dir->idType & 3) )
     {
         const CURSORICONDIRENTRY* entry;
-
-        const HDC hdc = GetDC(0);
-        const int depth = (cFlag & LR_MONOCHROME) ?
-            1 : GetDeviceCaps(hdc, BITSPIXEL);
-        ReleaseDC(0, hdc);
+        int depth = (cFlag & LR_MONOCHROME) ? 1 : get_display_bpp();
 
         if( bIcon )
             entry = CURSORICON_FindBestIconRes( dir, ~0u, width, height, depth, LR_DEFAULTSIZE );
@@ -2168,7 +2165,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         height = bmpXor.bmHeight;
         if (bmpXor.bmPlanes * bmpXor.bmBitsPixel != 1 || bmpAnd.bmPlanes * bmpAnd.bmBitsPixel != 1)
         {
-            color = CreateCompatibleBitmap( get_screen_dc(), width, height );
+            color = create_color_bitmap( width, height );
             mask = CreateBitmap( width, height, 1, 1, NULL );
         }
         else mask = CreateBitmap( width, height * 2, 1, 1, NULL );
@@ -2498,7 +2495,6 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     DWORD compr_dummy, offbits = 0;
     INT bm_type;
     HDC screen_mem_dc = NULL;
-    HDC screen_dc;
 
     if (!(loadflags & LR_LOADFROMFILE))
     {
@@ -2578,22 +2574,21 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
 
     if (new_height < 0) new_height = -new_height;
 
-    screen_dc = get_screen_dc();
-    if (!(screen_mem_dc = CreateCompatibleDC( screen_dc ))) goto end;
+    if (!(screen_mem_dc = CreateCompatibleDC( 0 ))) goto end;
 
     bits = (char *)info + (offbits ? offbits : size);
 
     if (loadflags & LR_CREATEDIBSECTION)
     {
         scaled_info->bmiHeader.biCompression = 0; /* DIBSection can't be compressed */
-        hbitmap = CreateDIBSection(screen_dc, scaled_info, DIB_RGB_COLORS, NULL, 0, 0);
+        hbitmap = CreateDIBSection(0, scaled_info, DIB_RGB_COLORS, NULL, 0, 0);
     }
     else
     {
         if (is_dib_monochrome(fix_info))
             hbitmap = CreateBitmap(new_width, new_height, 1, 1, NULL);
         else
-            hbitmap = CreateCompatibleBitmap(screen_dc, new_width, new_height);        
+            hbitmap = create_color_bitmap(new_width, new_height);
     }
 
     orig_bm = SelectObject(screen_mem_dc, hbitmap);
@@ -2672,13 +2667,7 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
     case IMAGE_ICON:
     case IMAGE_CURSOR:
         depth = 1;
-        if (!(loadflags & LR_MONOCHROME))
-        {
-            HDC screen_dc;
-
-            if ((screen_dc = get_screen_dc()))
-                depth = GetDeviceCaps( screen_dc, BITSPIXEL );
-        }
+        if (!(loadflags & LR_MONOCHROME)) depth = get_display_bpp();
         return CURSORICON_Load(hinst, name, desiredx, desiredy, depth, (type == IMAGE_CURSOR), loadflags);
     }
     return 0;
@@ -2818,37 +2807,18 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                 }
 
                 if (monochrome)
-                {
                     res = CreateBitmap(desiredx, desiredy, 1, 1, NULL);
-                }
                 else
-                {
-                    HDC screenDC = GetDC(NULL);
-                    res = CreateCompatibleBitmap(screenDC, desiredx, desiredy);
-                    ReleaseDC(NULL, screenDC);
-                }
+                    res = create_color_bitmap(desiredx, desiredy);
             }
 
             if (res)
             {
                 /* Only copy the bitmap if it's a DIB section or if it's
                    compatible to the screen */
-                BOOL copyContents;
-
-                if (objSize == sizeof(DIBSECTION))
-                {
-                    copyContents = TRUE;
-                }
-                else
-                {
-                    HDC screenDC = GetDC(NULL);
-                    int screen_depth = GetDeviceCaps(screenDC, BITSPIXEL);
-                    ReleaseDC(NULL, screenDC);
-
-                    copyContents = (ds.dsBm.bmBitsPixel == 1 || ds.dsBm.bmBitsPixel == screen_depth);
-                }
-
-                if (copyContents)
+                if (objSize == sizeof(DIBSECTION) ||
+                    ds.dsBm.bmBitsPixel == 1 ||
+                    ds.dsBm.bmBitsPixel == get_display_bpp())
                 {
                     /* The source bitmap may already be selected in a device context,
                        use GetDIBits/StretchDIBits and not StretchBlt  */
@@ -2901,7 +2871,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
         {
             struct cursoricon_object *icon;
             HICON res = 0;
-            int depth = (flags & LR_MONOCHROME) ? 1 : GetDeviceCaps( get_screen_dc(), BITSPIXEL );
+            int depth = (flags & LR_MONOCHROME) ? 1 : get_display_bpp();
 
             if (flags & LR_DEFAULTSIZE)
             {

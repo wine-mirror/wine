@@ -612,19 +612,15 @@ static BOOL init_entry_string( struct sysparam_entry *entry, const WCHAR *str )
     return init_entry( entry, str, (strlenW(str) + 1) * sizeof(WCHAR), REG_SZ );
 }
 
-static inline HDC get_display_dc(void)
+HDC get_display_dc(void)
 {
     static const WCHAR DISPLAY[] = {'D','I','S','P','L','A','Y',0};
     EnterCriticalSection( &display_dc_section );
-    if (!display_dc)
-    {
-        display_dc = CreateICW( DISPLAY, NULL, NULL, NULL );
-        __wine_make_gdi_object_system( display_dc, TRUE );
-    }
+    if (!display_dc) display_dc = CreateDCW( DISPLAY, NULL, NULL, NULL );
     return display_dc;
 }
 
-static inline void release_display_dc( HDC hdc )
+void release_display_dc( HDC hdc )
 {
     LeaveCriticalSection( &display_dc_section );
 }
