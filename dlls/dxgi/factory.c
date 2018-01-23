@@ -421,10 +421,40 @@ static UINT STDMETHODCALLTYPE dxgi_factory_GetCreationFlags(IDXGIFactory4 *iface
 static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapterByLuid(IDXGIFactory4 *iface,
         LUID luid, REFIID iid, void **adapter)
 {
-    FIXME("iface %p, luid %08x:%08x, iid %s, adapter %p stub!\n",
+    unsigned int adapter_index;
+    DXGI_ADAPTER_DESC1 desc;
+    IDXGIAdapter1 *adapter1;
+    HRESULT hr;
+
+    TRACE("iface %p, luid %08x:%08x, iid %s, adapter %p.\n",
             iface, luid.HighPart, luid.LowPart, debugstr_guid(iid), adapter);
 
-    return E_NOTIMPL;
+    adapter_index = 0;
+    while ((hr = dxgi_factory_EnumAdapters1(iface, adapter_index, &adapter1)) == S_OK)
+    {
+        if (FAILED(hr = IDXGIAdapter1_GetDesc1(adapter1, &desc)))
+        {
+            WARN("Failed to get adapter %u desc, hr %#x.\n", adapter_index, hr);
+            ++adapter_index;
+            continue;
+        }
+
+        if (desc.AdapterLuid.LowPart == luid.LowPart
+                && desc.AdapterLuid.HighPart == luid.HighPart)
+        {
+            hr = IDXGIAdapter1_QueryInterface(adapter1, iid, adapter);
+            IDXGIAdapter1_Release(adapter1);
+            return hr;
+        }
+
+        IDXGIAdapter1_Release(adapter1);
+        ++adapter_index;
+    }
+    if (hr != DXGI_ERROR_NOT_FOUND)
+        WARN("Failed to enumerate adapters, hr %#x.\n", hr);
+
+    WARN("Adapter could not be found.\n");
+    return DXGI_ERROR_NOT_FOUND;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumWarpAdapter(IDXGIFactory4 *iface,
