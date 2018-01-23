@@ -162,6 +162,9 @@ struct DataCache
   IAdviseSink *sinkInterface;
 
   CLSID clsid;
+  /* Is the clsid one of the CLSID_Picture classes */
+  BOOL clsid_static;
+
   IStorage *presentationStorage;
 
   /* list of cache entries */
@@ -1307,9 +1310,13 @@ static HRESULT create_automatic_entry(DataCache *cache, const CLSID *clsid)
     while (ptr->clsid)
     {
         if (IsEqualCLSID( clsid, ptr->clsid ))
+        {
+            cache->clsid_static = TRUE;
             return DataCache_CreateEntry( cache, &ptr->fmt, 0, TRUE, NULL );
+        }
         ptr++;
     }
+    cache->clsid_static = FALSE;
     return S_OK;
 }
 
@@ -1776,24 +1783,33 @@ static HRESULT parse_pres_streams( DataCache *This, IStorage *stg )
 
 static const FORMATETC static_dib_fmt = { CF_DIB, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 
-static HRESULT parse_contents_stream( DataCache *This, IStorage *stg, IStream *stm )
+static HRESULT parse_contents_stream( DataCache *This, IStorage *stg )
 {
     HRESULT hr;
     STATSTG stat;
     const FORMATETC *fmt;
+    IStream *stm;
+
+    hr = IStorage_OpenStream( stg, CONTENTS, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm );
+    if (FAILED( hr )) return hr;
 
     hr = IStorage_Stat( stg, &stat, STATFLAG_NONAME );
-    if (FAILED( hr )) return hr;
+    if (FAILED( hr )) goto done;
 
     if (IsEqualCLSID( &stat.clsid, &CLSID_Picture_Dib ))
         fmt = &static_dib_fmt;
     else
     {
         FIXME("unsupported format %s\n", debugstr_guid( &stat.clsid ));
-        return E_FAIL;
+        hr = E_FAIL;
+        goto done;
     }
 
-    return add_cache_entry( This, fmt, 0, stm, contents_stream );
+    hr = add_cache_entry( This, fmt, 0, stm, contents_stream );
+
+done:
+    IStream_Release( stm );
+    return hr;
 }
 
 /************************************************************************
@@ -1804,42 +1820,38 @@ static HRESULT parse_contents_stream( DataCache *This, IStorage *stg, IStream *s
  * and it will load the presentation information when the
  * IDataObject_GetData or IViewObject2_Draw methods are called.
  */
-static HRESULT WINAPI DataCache_Load( IPersistStorage *iface, IStorage *pStg )
+static HRESULT WINAPI DataCache_Load( IPersistStorage *iface, IStorage *stg )
 {
     DataCache *This = impl_from_IPersistStorage(iface);
     HRESULT hr;
-    IStream *stm;
     CLSID clsid;
     DataCacheEntry *entry, *cursor2;
 
-    TRACE("(%p, %p)\n", iface, pStg);
+    TRACE("(%p, %p)\n", iface, stg);
 
     IPersistStorage_HandsOffStorage( iface );
 
     LIST_FOR_EACH_ENTRY_SAFE( entry, cursor2, &This->cache_list, DataCacheEntry, entry )
         DataCacheEntry_Destroy( This, entry );
 
-    ReadClassStg( pStg, &clsid );
+    ReadClassStg( stg, &clsid );
     hr = create_automatic_entry( This, &clsid );
     if (FAILED( hr )) return hr;
 
     This->clsid = clsid;
 
-    hr = IStorage_OpenStream( pStg, CONTENTS, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE,
-                              0, &stm );
-    if (SUCCEEDED( hr ))
+    if (This->clsid_static)
     {
-        hr = parse_contents_stream( This, pStg, stm );
-        IStream_Release( stm );
+        hr = parse_contents_stream( This, stg );
+        if (FAILED(hr)) hr = parse_pres_streams( This, stg );
     }
-
-    if (FAILED(hr))
-        hr = parse_pres_streams( This, pStg );
+    else
+        hr = parse_pres_streams( This, stg );
 
     if (SUCCEEDED( hr ))
     {
         This->dirty = FALSE;
-        This->presentationStorage = pStg;
+        This->presentationStorage = stg;
         IStorage_AddRef( This->presentationStorage );
     }
 
@@ -2978,6 +2990,7 @@ static DataCache* DataCache_Construct(
   newObject->sinkAdviseFlag = 0;
   newObject->sinkInterface = 0;
   newObject->clsid = CLSID_NULL;
+  newObject->clsid_static = FALSE;
   newObject->presentationStorage = NULL;
   list_init(&newObject->cache_list);
   newObject->last_cache_id = 2;
