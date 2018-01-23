@@ -1330,8 +1330,8 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_empty, 4)
 MSVCP_bool __thiscall _Concurrent_queue_base_v4__Internal_empty(
         const _Concurrent_queue_base_v4 *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->data->head_pos == this->data->tail_pos;
 }
 
 /* ?_Internal_size@_Concurrent_queue_base_v4@details@Concurrency@@IBEIXZ */
@@ -1340,8 +1340,8 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_size, 4)
 MSVCP_size_t __thiscall _Concurrent_queue_base_v4__Internal_size(
         const _Concurrent_queue_base_v4 *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->data->tail_pos - this->data->head_pos;
 }
 
 /* ?_Internal_push@_Concurrent_queue_base_v4@details@Concurrency@@IAEXPBX@Z */
