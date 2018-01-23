@@ -159,7 +159,7 @@
 @ stdcall IcmpSendEcho2Ex(ptr ptr ptr ptr long long ptr long ptr ptr long long)
 @ stdcall IcmpSendEcho2(ptr ptr ptr ptr long ptr long ptr ptr long long)
 @ stdcall IcmpSendEcho(ptr long ptr long ptr ptr long long)
-#@ stub if_indextoname
+@ stdcall if_indextoname(long ptr) IPHLP_if_indextoname
 @ stdcall if_nametoindex(str) IPHLP_if_nametoindex
 #@ stub InitializeIpForwardEntry
 #@ stub InitializeIpInterfaceEntry
