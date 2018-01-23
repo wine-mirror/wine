@@ -3343,8 +3343,6 @@ static void test_output_desc(void)
             refcount = get_refcount((IUnknown *)output);
             ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
 
-            hr = IDXGIOutput_GetDesc(output, NULL);
-            ok(hr == E_INVALIDARG, "Got unexpected hr %#x for output %u on adapter %u.\n", hr, j, i);
             hr = IDXGIOutput_GetDesc(output, &desc);
             ok(SUCCEEDED(hr), "Failed to get desc for output %u on adapter %u, hr %#x.\n", j, i, hr);
 
