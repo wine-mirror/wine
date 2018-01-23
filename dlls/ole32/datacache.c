@@ -446,23 +446,6 @@ static void DataCache_FireOnViewChange(
   }
 }
 
-/* Helper for DataCacheEntry_OpenPresStream */
-static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
-{
-    /* The presentation streams have names of the form "\002OlePresXXX",
-     * where XXX goes from 000 to 999. */
-    static const WCHAR OlePres[] = { 2,'O','l','e','P','r','e','s' };
-
-    LPCWSTR name = elem->pwcsName;
-
-    return (elem->type == STGTY_STREAM)
-	&& (strlenW(name) == 11)
-	&& (strncmpW(name, OlePres, 8) == 0)
-	&& (name[8] >= '0') && (name[8] <= '9')
-	&& (name[9] >= '0') && (name[9] <= '9')
-	&& (name[10] >= '0') && (name[10] <= '9');
-}
-
 static HRESULT read_clipformat(IStream *stream, CLIPFORMAT *clipformat)
 {
     DWORD length;
@@ -583,6 +566,15 @@ static HRESULT DataCacheEntry_OpenPresStream(DataCacheEntry *cache_entry, IStrea
     return hr;
 }
 
+static HRESULT open_pres_stream( IStorage *stg, int stream_number, IStream **stm )
+{
+    WCHAR name[] = {2,'O','l','e','P','r','e','s',
+                    '0' + (stream_number / 100) % 10,
+                    '0' + (stream_number / 10) % 10,
+                    '0' + stream_number % 10, 0};
+
+    return IStorage_OpenStream( stg, name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm );
+}
 
 static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
 {
@@ -1734,49 +1726,38 @@ static HRESULT add_cache_entry( DataCache *This, const FORMATETC *fmt, DWORD adv
     return hr;
 }
 
-static HRESULT parse_pres_streams( DataCache *This, IStorage *stg )
+static HRESULT parse_pres_streams( DataCache *cache, IStorage *stg )
 {
     HRESULT hr;
-    IEnumSTATSTG *stat_enum;
-    STATSTG stat;
     IStream *stm;
     PresentationDataHeader header;
     ULONG actual_read;
     CLIPFORMAT clipformat;
     FORMATETC fmtetc;
+    int stream_number = 0;
 
-    hr = IStorage_EnumElements( stg, 0, NULL, 0, &stat_enum );
-    if (FAILED( hr )) return hr;
-
-    while ((hr = IEnumSTATSTG_Next( stat_enum, 1, &stat, NULL )) == S_OK)
+    do
     {
-        if (DataCache_IsPresentationStream( &stat ))
+        hr = open_pres_stream( stg, stream_number, &stm );
+        if (FAILED(hr)) break;
+
+        hr = read_clipformat( stm, &clipformat );
+
+        if (hr == S_OK) hr = IStream_Read( stm, &header, sizeof(header), &actual_read );
+
+        if (hr == S_OK && actual_read == sizeof(header))
         {
-            hr = IStorage_OpenStream( stg, stat.pwcsName, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE,
-                                      0, &stm );
-            if (SUCCEEDED( hr ))
-            {
-                hr = read_clipformat( stm, &clipformat );
+            fmtetc.cfFormat = clipformat;
+            fmtetc.ptd = NULL; /* FIXME */
+            fmtetc.dwAspect = header.dvAspect;
+            fmtetc.lindex = header.lindex;
+            fmtetc.tymed = tymed_from_cf( clipformat );
 
-                if (hr == S_OK)
-                    hr = IStream_Read( stm, &header, sizeof(header), &actual_read );
-
-                if (hr == S_OK && actual_read == sizeof(header))
-                {
-                    fmtetc.cfFormat = clipformat;
-                    fmtetc.ptd = NULL; /* FIXME */
-                    fmtetc.dwAspect = header.dvAspect;
-                    fmtetc.lindex = header.lindex;
-                    fmtetc.tymed = tymed_from_cf( clipformat );
-
-                    add_cache_entry( This, &fmtetc, header.advf, stm, pres_stream );
-                }
-                IStream_Release( stm );
-            }
+            add_cache_entry( cache, &fmtetc, header.advf, stm, pres_stream );
         }
-        CoTaskMemFree( stat.pwcsName );
-    }
-    IEnumSTATSTG_Release( stat_enum );
+        IStream_Release( stm );
+        stream_number++;
+    } while (hr == S_OK);
 
     return S_OK;
 }
