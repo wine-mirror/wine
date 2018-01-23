@@ -1,0 +1,8 @@
+MODULE    = dhtmled.ocx
+IMPORTS   = uuid
+
+C_SRCS = \
+	edit.c \
+	main.c
+
+IDL_SRCS = dhtmled_tlb.idl

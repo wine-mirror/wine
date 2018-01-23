@@ -1180,6 +1180,7 @@ enable_ddraw
 enable_ddrawex
 enable_devenum
 enable_dhcpcsvc
+enable_dhtmled_ocx
 enable_difxapi
 enable_dinput
 enable_dinput8
@@ -18528,6 +18529,7 @@ wine_fn_config_test dlls/ddrawex/tests ddrawex_test
 wine_fn_config_dll devenum enable_devenum clean
 wine_fn_config_test dlls/devenum/tests devenum_test
 wine_fn_config_dll dhcpcsvc enable_dhcpcsvc
+wine_fn_config_dll dhtmled.ocx enable_dhtmled_ocx clean
 wine_fn_config_dll difxapi enable_difxapi
 wine_fn_config_dll dinput enable_dinput clean,implib,staticimplib
 wine_fn_config_test dlls/dinput/tests dinput_test
