@@ -442,8 +442,8 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         io_status = (PIO_STATUS_BLOCK)overlapped;
         if (((ULONG_PTR)hEvent & 1) == 0) cvalue = overlapped;
     }
+    else io_status->Information = 0;
     io_status->u.Status = STATUS_PENDING;
-    io_status->Information = 0;
 
     status = NtReadFile(hFile, hEvent, NULL, cvalue, io_status, buffer, bytesToRead, poffset, NULL);
 

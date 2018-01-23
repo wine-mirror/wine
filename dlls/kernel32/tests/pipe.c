@@ -755,7 +755,6 @@ static void test_ReadFile(void)
     ok(!res && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "ReadFile returned %x(%u)\n", res, GetLastError());
     ok(size == 0, "size = %u\n", size);
     ok(overlapped.Internal == STATUS_PENDING, "Internal = %lx\n", overlapped.Internal);
-    todo_wine
     ok(overlapped.InternalHigh == 0xdeadbeef, "InternalHigh = %lx\n", overlapped.InternalHigh);
 
     CloseHandle(server);
@@ -2628,7 +2627,6 @@ static void test_readfileex_pending(void)
     ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
     ok(num_bytes == 0, "bytes %u\n", num_bytes);
     ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "expected STATUS_PENDING, got %#lx\n", overlapped.Internal);
-todo_wine
     ok(overlapped.InternalHigh == -1, "expected -1, got %lu\n", overlapped.InternalHigh);
 
     wait = WaitForSingleObject(event, 100);
