@@ -51,6 +51,12 @@ HRESULT WINAPI GetProcessDpiAwareness(HANDLE process, PROCESS_DPI_AWARENESS *val
     return S_OK;
 }
 
+HRESULT WINAPI SetProcessDpiAwareness(PROCESS_DPI_AWARENESS value)
+{
+    FIXME("(%u): stub\n", value);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI GetDpiForMonitor(HMONITOR monitor, MONITOR_DPI_TYPE type, UINT *x, UINT *y)
 {
     HDC hDC;

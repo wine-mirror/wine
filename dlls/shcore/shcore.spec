@@ -78,7 +78,7 @@
 @ stdcall SHUnicodeToAnsi(wstr ptr ptr) shlwapi.SHUnicodeToAnsi
 @ stdcall SHUnicodeToUnicode(wstr ptr long) shlwapi.SHUnicodeToUnicode
 @ stdcall SetCurrentProcessExplicitAppUserModelID(wstr) shell32.SetCurrentProcessExplicitAppUserModelID
-@ stub SetProcessDpiAwareness
+@ stdcall SetProcessDpiAwareness(long)
 @ stub SetProcessReference
 @ stub UnregisterScaleChangeEvent
 

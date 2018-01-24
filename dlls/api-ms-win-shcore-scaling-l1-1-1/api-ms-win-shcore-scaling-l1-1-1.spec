@@ -5,5 +5,5 @@
 @ stub RegisterScaleChangeEvent
 @ stub RegisterScaleChangeNotifications
 @ stub RevokeScaleChangeNotifications
-@ stub SetProcessDpiAwareness
+@ stdcall SetProcessDpiAwareness(long) shcore.SetProcessDpiAwareness
 @ stub UnregisterScaleChangeEvent
