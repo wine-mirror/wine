@@ -5612,6 +5612,10 @@ static void test_dictionary(void)
         {0x40,0x01,'t',0x0a,0x0a,0x01};
     static const char test8[] =
         {0x40,0x01,'t',0x0b,0x01,'p',0x0a,0x01};
+    static const char test9[] =
+        {0x42,0x0c,0x01};
+    static const char test10[] =
+        {0x42,0x04,0xab,0x0c,0x01};
     const WS_XML_NODE *node;
     const WS_XML_ELEMENT_NODE *elem;
     const WS_XML_ATTRIBUTE *attr;
@@ -5939,6 +5943,23 @@ static void test_dictionary(void)
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    /* element name string id out of range */
+    hr = set_input_bin( reader, test9, sizeof(test9), &dict );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadNode( reader, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    /* text string id out of range */
+    hr = set_input_bin( reader, test10, sizeof(test10), &dict );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+    hr = WsReadNode( reader, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     hr = WsGetDictionary( 0, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
