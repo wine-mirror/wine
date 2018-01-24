@@ -4450,7 +4450,6 @@ static void test_data_cache_contents(void)
         ok(hr == S_OK, "unexpected %#x\n", hr);
 
         hr = IPersistStorage_IsDirty(stg);
-todo_wine_if(test_data[i].in == &stg_def_4 || test_data[i].in == &stg_def_8 || test_data[i].in == &stg_def_9)
         ok(hr == S_FALSE, "%d: unexpected %#x\n", i, hr);
 
         hr = IPersistStorage_Save(stg, doc2, FALSE);
@@ -4463,7 +4462,8 @@ todo_wine_if(test_data[i].in == &stg_def_4 || test_data[i].in == &stg_def_8 || t
 todo_wine_if(!(test_data[i].in == &stg_def_0 || test_data[i].in == &stg_def_1 || test_data[i].in == &stg_def_2))
         ok(enumerated_streams == matched_streams, "%d out: enumerated %d != matched %d\n", i,
            enumerated_streams, matched_streams);
-todo_wine_if(!(test_data[i].in == &stg_def_0 || test_data[i].in == &stg_def_5))
+todo_wine_if(!(test_data[i].in == &stg_def_0 || test_data[i].in == &stg_def_4 || test_data[i].in == &stg_def_5
+                 || test_data[i].in == &stg_def_6))
         ok(enumerated_streams == test_data[i].out->stream_count, "%d: saved streams %d != def streams %d\n", i,
             enumerated_streams, test_data[i].out->stream_count);
 

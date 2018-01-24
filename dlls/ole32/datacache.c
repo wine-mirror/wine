@@ -312,6 +312,29 @@ static DataCacheEntry *DataCache_GetEntryForFormatEtc(DataCache *This, const FOR
     return NULL;
 }
 
+/* Returns the cache entry associated with a static CLSID.
+   This will be first in the list with connection id == 1 */
+static HRESULT get_static_entry( DataCache *cache, DataCacheEntry **cache_entry )
+{
+    DataCacheEntry *entry;
+    struct list *head = list_head( &cache->cache_list );
+    HRESULT hr = E_FAIL;
+
+    *cache_entry = NULL;
+
+    if (head)
+    {
+        entry = LIST_ENTRY( head, DataCacheEntry, entry );
+        if (entry->id == 1)
+        {
+            *cache_entry = entry;
+            hr = S_OK;
+        }
+    }
+
+    return hr;
+}
+
 /* checks that the clipformat and tymed are valid and returns an error if they
 * aren't and CACHE_S_NOTSUPPORTED if they are valid, but can't be rendered by
 * DataCache_Draw */
@@ -1698,33 +1721,23 @@ static HRESULT parse_pres_streams( DataCache *cache, IStorage *stg )
     return S_OK;
 }
 
-static const FORMATETC static_dib_fmt = { CF_DIB, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-
-static HRESULT parse_contents_stream( DataCache *This, IStorage *stg )
+static HRESULT parse_contents_stream( DataCache *cache, IStorage *stg )
 {
     HRESULT hr;
-    STATSTG stat;
-    const FORMATETC *fmt;
     IStream *stm;
+    DataCacheEntry *cache_entry;
 
     hr = open_pres_stream( stg, STREAM_NUMBER_CONTENTS, &stm );
     if (FAILED( hr )) return hr;
 
-    hr = IStorage_Stat( stg, &stat, STATFLAG_NONAME );
-    if (FAILED( hr )) goto done;
-
-    if (IsEqualCLSID( &stat.clsid, &CLSID_Picture_Dib ))
-        fmt = &static_dib_fmt;
-    else
+    hr = get_static_entry( cache, &cache_entry );
+    if (hr == S_OK)
     {
-        FIXME("unsupported format %s\n", debugstr_guid( &stat.clsid ));
-        hr = E_FAIL;
-        goto done;
+        cache_entry->load_stream_num = STREAM_NUMBER_CONTENTS;
+        cache_entry->save_stream_num = STREAM_NUMBER_CONTENTS;
+        cache_entry->dirty = FALSE;
     }
 
-    hr = add_cache_entry( This, fmt, 0, STREAM_NUMBER_CONTENTS );
-
-done:
     IStream_Release( stm );
     return hr;
 }
