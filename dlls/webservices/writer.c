@@ -1482,11 +1482,11 @@ static HRESULT write_namespace_attribute_text( struct writer *writer, const WS_X
     /* ' xmlns:prefix="namespace"' */
 
     size = attr->ns->length + 9 /* ' xmlns=""' */;
-    if (attr->prefix) size += attr->prefix->length + 1 /* ':' */;
+    if (attr->prefix && attr->prefix->length) size += attr->prefix->length + 1 /* ':' */;
     if ((hr = write_grow_buffer( writer, size )) != S_OK) return hr;
 
     write_bytes( writer, (const BYTE *)" xmlns", 6 );
-    if (attr->prefix)
+    if (attr->prefix && attr->prefix->length)
     {
         write_char( writer, ':' );
         write_bytes( writer, attr->prefix->bytes, attr->prefix->length );
