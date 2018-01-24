@@ -6458,6 +6458,27 @@ static HRESULT end_mapping( struct reader *reader, WS_TYPE_MAPPING mapping )
     }
 }
 
+static BOOL is_true_text( const WS_XML_TEXT *text )
+{
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
+        if (text_utf8->value.length == 4 && !memcmp( text_utf8->value.bytes, "true", 4 )) return TRUE;
+        return FALSE;
+    }
+    case WS_XML_TEXT_TYPE_BOOL:
+    {
+        const WS_XML_BOOL_TEXT *text_bool = (const WS_XML_BOOL_TEXT *)text;
+        return text_bool->value;
+    }
+    default:
+        ERR( "unhandled text type %u\n", text->textType );
+        return FALSE;
+    }
+}
+
 static HRESULT is_nil_element( const WS_XML_ELEMENT_NODE *elem )
 {
     static const WS_XML_STRING localname = {3, (BYTE *)"nil"};
@@ -6466,12 +6487,10 @@ static HRESULT is_nil_element( const WS_XML_ELEMENT_NODE *elem )
 
     for (i = 0; i < elem->attributeCount; i++)
     {
-        const WS_XML_UTF8_TEXT *text = (WS_XML_UTF8_TEXT *)elem->attributes[i]->value;
-
         if (elem->attributes[i]->isXmlNs) continue;
         if (WsXmlStringEquals( elem->attributes[i]->localName, &localname, NULL ) == S_OK &&
             WsXmlStringEquals( elem->attributes[i]->ns, &ns, NULL ) == S_OK &&
-            text->value.length == 4 && !memcmp( text->value.bytes, "true", 4 )) return TRUE;
+            is_true_text( elem->attributes[i]->value )) return TRUE;
     }
     return FALSE;
 }
