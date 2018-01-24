@@ -1706,8 +1706,15 @@ static inline BOOL is_attribute_type( unsigned char type )
     return (type >= RECORD_SHORT_ATTRIBUTE && type <= RECORD_PREFIX_ATTRIBUTE_Z);
 }
 
+static WS_XML_STRING *get_xmlns_localname( struct reader *reader, const WS_XML_STRING *prefix )
+{
+    if (!get_namespace( reader, prefix )) return alloc_xml_string( NULL, 0 );
+    return alloc_xml_string( prefix->bytes, prefix->length );
+}
+
 static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret )
 {
+    WS_XML_UTF8_TEXT *utf8;
     WS_XML_ATTRIBUTE *attr;
     unsigned char type = 0;
     HRESULT hr;
@@ -1780,6 +1787,11 @@ static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret
                 hr = E_OUTOFMEMORY;
                 goto error;
             }
+            if (!(attr->localName = get_xmlns_localname( reader, attr->prefix )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
             if ((hr = read_string( reader, &attr->ns )) != S_OK) goto error;
             if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
             attr->isXmlNs = 1;
@@ -1787,6 +1799,11 @@ static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret
 
         case RECORD_XMLNS_ATTRIBUTE:
             if ((hr = read_string( reader, &attr->prefix )) != S_OK) goto error;
+            if (!(attr->localName = get_xmlns_localname( reader, attr->prefix )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
             if ((hr = read_string( reader, &attr->ns )) != S_OK) goto error;
             if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
             attr->isXmlNs = 1;
@@ -1798,14 +1815,36 @@ static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret
                 hr = E_OUTOFMEMORY;
                 goto error;
             }
+            if (!(attr->localName = get_xmlns_localname( reader, attr->prefix )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
             if ((hr = read_dict_string( reader, &attr->ns )) != S_OK) goto error;
+            if (!(utf8 = alloc_utf8_text( NULL, 0 )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
+            attr->value = &utf8->text;
             if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
             attr->isXmlNs = 1;
             break;
 
         case RECORD_DICTIONARY_XMLNS_ATTRIBUTE:
             if ((hr = read_string( reader, &attr->prefix )) != S_OK) goto error;
+            if (!(attr->localName = get_xmlns_localname( reader, attr->prefix )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
             if ((hr = read_dict_string( reader, &attr->ns )) != S_OK) goto error;
+            if (!(utf8 = alloc_utf8_text( NULL, 0 )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
+            attr->value = &utf8->text;
             if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
             attr->isXmlNs = 1;
             break;
