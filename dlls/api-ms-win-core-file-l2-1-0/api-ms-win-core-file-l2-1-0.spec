@@ -6,6 +6,6 @@
 @ stdcall GetFileInformationByHandleEx(long long ptr long) kernel32.GetFileInformationByHandleEx
 @ stdcall MoveFileExW(wstr wstr long) kernel32.MoveFileExW
 @ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long) kernel32.MoveFileWithProgressW
-@ stub ReOpenFile
+@ stdcall ReOpenFile(ptr long long long) kernel32.ReOpenFile
 @ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr) kernel32.ReadDirectoryChangesW
 @ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr) kernel32.ReplaceFileW

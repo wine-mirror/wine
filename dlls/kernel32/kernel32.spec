@@ -1267,7 +1267,7 @@
 # @ stub RemoveLocalAlternateComputerNameW
 @ stdcall RemoveVectoredContinueHandler(ptr) ntdll.RtlRemoveVectoredContinueHandler
 @ stdcall RemoveVectoredExceptionHandler(ptr) ntdll.RtlRemoveVectoredExceptionHandler
-# @ stub ReOpenFile
+@ stdcall ReOpenFile(ptr long long long) ReOpenFile
 @ stdcall ReplaceFile(wstr wstr wstr long ptr ptr) ReplaceFileW
 @ stdcall ReplaceFileA(str str str long ptr ptr)
 @ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr)

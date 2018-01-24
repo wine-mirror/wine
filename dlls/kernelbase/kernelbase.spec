@@ -1233,7 +1233,7 @@
 # @ stub QuirkIsEnabledForProcess
 @ stdcall RaiseException(long long long ptr) kernel32.RaiseException
 # @ stub RaiseFailFastException
-# @ stub ReOpenFile
+@ stdcall ReOpenFile(ptr long long long) kernel32.ReOpenFile
 @ stdcall ReadConsoleA(long ptr long ptr ptr) kernel32.ReadConsoleA
 @ stdcall ReadConsoleInputA(long ptr long ptr) kernel32.ReadConsoleInputA
 @ stub ReadConsoleInputExA

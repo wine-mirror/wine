@@ -2820,6 +2820,16 @@ HANDLE WINAPI OpenFileById( HANDLE handle, LPFILE_ID_DESCRIPTOR id, DWORD access
     return result;
 }
 
+/***********************************************************************
+ *             ReOpenFile (KERNEL32.@)
+ */
+HANDLE WINAPI ReOpenFile(HANDLE handle_original, DWORD access, DWORD sharing, DWORD flags)
+{
+    FIXME("(%p, %d, %d, %d): stub\n", handle_original, access, sharing, flags);
+
+    return INVALID_HANDLE_VALUE;
+}
+
 
 /***********************************************************************
  *           K32EnumDeviceDrivers (KERNEL32.@)

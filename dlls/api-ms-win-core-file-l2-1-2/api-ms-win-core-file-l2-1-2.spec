@@ -10,5 +10,5 @@
 @ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long) kernel32.MoveFileWithProgressW
 @ stdcall OpenFileById(long ptr long long ptr long) kernel32.OpenFileById
 @ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr) kernel32.ReadDirectoryChangesW
-@ stub ReOpenFile
+@ stdcall ReOpenFile(ptr long long long) kernel32.ReOpenFile
 @ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr) kernel32.ReplaceFileW
