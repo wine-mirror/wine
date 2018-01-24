@@ -61,32 +61,7 @@ static void test_get_set_text(void)
     DestroyWindow(hwnd);
 }
 
-static BOOL init(void)
-{
-    HMODULE hComctl32;
-    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
-    INITCOMMONCONTROLSEX iccex;
-
-    hComctl32 = GetModuleHandleA("comctl32.dll");
-    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
-    if (!pInitCommonControlsEx)
-    {
-        win_skip("InitCommonControlsEx() is missing.\n");
-        return FALSE;
-    }
-
-    iccex.dwSize = sizeof(iccex);
-    /* W2K and below need ICC_INTERNET_CLASSES for the IP Address Control */
-    iccex.dwICC  = ICC_INTERNET_CLASSES;
-    pInitCommonControlsEx(&iccex);
-
-    return TRUE;
-}
-
 START_TEST(ipaddress)
 {
-    if (!init())
-        return;
-
     test_get_set_text();
 }

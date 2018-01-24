@@ -1057,7 +1057,7 @@ static void test_margin(void)
 
 START_TEST(tooltips)
 {
-    InitCommonControls();
+    LoadLibraryA("comctl32.dll");
 
     test_create_tooltip();
     test_customdraw();

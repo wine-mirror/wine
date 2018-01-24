@@ -30,6 +30,7 @@
 
 static HWND hProgressParentWnd, hProgressWnd;
 static const char progressTestClass[] = "ProgressBarTestClass";
+static BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
 
 static HWND create_progress(DWORD style)
 {
@@ -94,24 +95,10 @@ static void update_window(HWND hWnd)
 
 static void init(void)
 {
-    HMODULE hComctl32;
-    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     WNDCLASSA wc;
     RECT rect;
     BOOL ret;
 
-    hComctl32 = GetModuleHandleA("comctl32.dll");
-    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
-    if (pInitCommonControlsEx)
-    {
-        INITCOMMONCONTROLSEX iccex;
-        iccex.dwSize = sizeof(iccex);
-        iccex.dwICC  = ICC_PROGRESS_CLASS;
-        pInitCommonControlsEx(&iccex);
-    }
-    else
-        InitCommonControls();
-  
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
@@ -135,7 +122,7 @@ static void init(void)
     GetClientRect(hProgressParentWnd, &rect);
     hProgressWnd = CreateWindowExA(0, PROGRESS_CLASSA, "", WS_CHILD | WS_VISIBLE,
       0, 0, rect.right, rect.bottom, hProgressParentWnd, NULL, GetModuleHandleA(NULL), 0);
-    ok(hProgressWnd != NULL, "failed to create parent wnd\n");
+    ok(hProgressWnd != NULL, "Failed to create progress bar.\n");
     progress_wndproc = (WNDPROC)SetWindowLongPtrA(hProgressWnd, GWLP_WNDPROC, (LPARAM)progress_subclass_proc);
     
     ShowWindow(hProgressParentWnd, SW_SHOWNORMAL);
@@ -250,8 +237,25 @@ static void test_setcolors(void)
     DestroyWindow(progress);
 }
 
+static void init_functions(void)
+{
+    HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(hComCtl32, #f);
+    X(InitCommonControlsEx);
+#undef X
+}
+
 START_TEST(progress)
 {
+    INITCOMMONCONTROLSEX iccex;
+
+    init_functions();
+
+    iccex.dwSize = sizeof(iccex);
+    iccex.dwICC  = ICC_PROGRESS_CLASS;
+    pInitCommonControlsEx(&iccex);
+
     init();
     
     test_redraw();

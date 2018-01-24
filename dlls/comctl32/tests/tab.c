@@ -40,6 +40,11 @@
 
 #define TabWidthPadded(padd_x, num) (DEFAULT_MIN_TAB_WIDTH - (TAB_PADDING_X - (padd_x)) * num)
 
+static HIMAGELIST (WINAPI *pImageList_Create)(INT,INT,UINT,INT,INT);
+static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
+static INT (WINAPI *pImageList_GetImageCount)(HIMAGELIST);
+static INT (WINAPI *pImageList_ReplaceIcon)(HIMAGELIST,INT,HICON);
+
 static void CheckSize(HWND hwnd, INT width, INT height, const char *msg, int line)
 {
     RECT r;
@@ -470,7 +475,7 @@ static void test_tab(INT nMinTabWidth)
 {
     HWND hwTab;
     RECT rTab;
-    HIMAGELIST himl = ImageList_Create(21, 21, ILC_COLOR, 3, 4);
+    HIMAGELIST himl = pImageList_Create(21, 21, ILC_COLOR, 3, 4);
     SIZE size;
     HDC hdc;
     HFONT hOldFont;
@@ -608,7 +613,7 @@ static void test_tab(INT nMinTabWidth)
 
     DestroyWindow (hwTab);
 
-    ImageList_Destroy(himl);
+    pImageList_Destroy(himl);
 }
 
 static void test_width(void)
@@ -1165,12 +1170,12 @@ static void test_removeimage(void)
     INT i;
     TCITEMA item;
     HICON hicon;
-    HIMAGELIST himl = ImageList_Create(16, 16, ILC_COLOR, 3, 4);
+    HIMAGELIST himl = pImageList_Create(16, 16, ILC_COLOR, 3, 4);
 
     hicon = CreateIcon(NULL, 16, 16, 1, 1, bits, bits);
-    ImageList_AddIcon(himl, hicon);
-    ImageList_AddIcon(himl, hicon);
-    ImageList_AddIcon(himl, hicon);
+    pImageList_ReplaceIcon(himl, -1, hicon);
+    pImageList_ReplaceIcon(himl, -1, hicon);
+    pImageList_ReplaceIcon(himl, -1, hicon);
 
     hwTab = create_tabcontrol(TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE);
     SendMessageA(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
@@ -1185,7 +1190,8 @@ static void test_removeimage(void)
 
     /* remove image middle image */
     SendMessageA(hwTab, TCM_REMOVEIMAGE, 1, 0);
-    expect(2, ImageList_GetImageCount(himl));
+    i = pImageList_GetImageCount(himl);
+    ok(i == 2, "Unexpected image count %d.\n", i);
     item.iImage = -1;
     SendMessageA(hwTab, TCM_GETITEMA, 0, (LPARAM)&item);
     expect(0, item.iImage);
@@ -1197,7 +1203,8 @@ static void test_removeimage(void)
     expect(1, item.iImage);
     /* remove first image */
     SendMessageA(hwTab, TCM_REMOVEIMAGE, 0, 0);
-    expect(1, ImageList_GetImageCount(himl));
+    i = pImageList_GetImageCount(himl);
+    ok(i == 1, "Unexpected image count %d.\n", i);
     item.iImage = 0;
     SendMessageA(hwTab, TCM_GETITEMA, 0, (LPARAM)&item);
     expect(-1, item.iImage);
@@ -1209,7 +1216,8 @@ static void test_removeimage(void)
     expect(0, item.iImage);
     /* remove the last one */
     SendMessageA(hwTab, TCM_REMOVEIMAGE, 0, 0);
-    expect(0, ImageList_GetImageCount(himl));
+    i = pImageList_GetImageCount(himl);
+    ok(i == 0, "Unexpected image count %d.\n", i);
     for(i = 0; i < 3; i++) {
         item.iImage = 0;
         SendMessageA(hwTab, TCM_GETITEMA, i, (LPARAM)&item);
@@ -1217,7 +1225,7 @@ static void test_removeimage(void)
     }
 
     DestroyWindow(hwTab);
-    ImageList_Destroy(himl);
+    pImageList_Destroy(himl);
     DestroyIcon(hicon);
 }
 
@@ -1423,6 +1431,18 @@ static void test_create(void)
     }
 }
 
+static void init_functions(void)
+{
+    HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(hComCtl32, #f);
+    X(ImageList_Create);
+    X(ImageList_Destroy);
+    X(ImageList_GetImageCount);
+    X(ImageList_ReplaceIcon);
+#undef X
+}
+
 START_TEST(tab)
 {
     LOGFONTA logfont;
@@ -1434,7 +1454,7 @@ START_TEST(tab)
     logfont.lfCharSet = ANSI_CHARSET;
     hFont = CreateFontIndirectA(&logfont);
 
-    InitCommonControls();
+    init_functions();
 
     test_width();
 

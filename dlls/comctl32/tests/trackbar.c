@@ -1296,8 +1296,9 @@ static void test_create(void)
 
 START_TEST(trackbar)
 {
+    LoadLibraryA("comctl32.dll");
+
     init_msg_sequences(sequences, NUM_MSG_SEQUENCE);
-    InitCommonControls();
 
     /* create parent window */
     hWndParent = create_parent_window();

@@ -76,18 +76,22 @@ static INT    (WINAPI *pFindMRUData)(HANDLE, LPCVOID, DWORD, LPINT);
 static INT    (WINAPI *pAddMRUData)(HANDLE, LPCVOID, DWORD);
 static HANDLE (WINAPI *pCreateMRUListW)(MRUINFOW*);
 
-static void InitPointers(void)
+static void init_functions(void)
 {
-    pCreateMRUListA = (void*)GetProcAddress(hComctl32,(LPCSTR)151);
-    pFreeMRUList    = (void*)GetProcAddress(hComctl32,(LPCSTR)152);
-    pAddMRUStringA  = (void*)GetProcAddress(hComctl32,(LPCSTR)153);
-    pEnumMRUListA   = (void*)GetProcAddress(hComctl32,(LPCSTR)154);
-    pCreateMRUListLazyA = (void*)GetProcAddress(hComctl32,(LPCSTR)157);
-    pAddMRUData     = (void*)GetProcAddress(hComctl32,(LPCSTR)167);
-    pFindMRUData    = (void*)GetProcAddress(hComctl32,(LPCSTR)169);
-    pCreateMRUListW = (void*)GetProcAddress(hComctl32,(LPCSTR)400);
-    pEnumMRUListW   = (void*)GetProcAddress(hComctl32,(LPCSTR)403);
-    pCreateMRUListLazyW = (void*)GetProcAddress(hComctl32,(LPCSTR)404);
+    hComctl32 = LoadLibraryA("comctl32.dll");
+
+#define X2(f, ord) p##f = (void*)GetProcAddress(hComctl32, (const char *)ord);
+    X2(CreateMRUListA, 151);
+    X2(FreeMRUList, 152);
+    X2(AddMRUStringA, 153);
+    X2(EnumMRUListA, 154);
+    X2(CreateMRUListLazyA, 157);
+    X2(AddMRUData, 167);
+    X2(FindMRUData, 169);
+    X2(CreateMRUListW, 400);
+    X2(EnumMRUListW, 403);
+    X2(CreateMRUListLazyW, 404);
+#undef X2
 }
 
 /* Based on RegDeleteTreeW from dlls/advapi32/registry.c */
@@ -705,13 +709,11 @@ static void test_CreateMRUListLazyW(void)
 
 START_TEST(mru)
 {
-    hComctl32 = GetModuleHandleA("comctl32.dll");
-
     delete_reg_entries();
     if (!create_reg_entries())
         return;
 
-    InitPointers();
+    init_functions();
 
     test_MRUListA();
     test_CreateMRUListLazyA();

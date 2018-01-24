@@ -85,6 +85,7 @@ static BOOL (WINAPI *pImageList_Write)(HIMAGELIST, IStream *);
 static HIMAGELIST (WINAPI *pImageList_Read)(IStream *);
 static BOOL (WINAPI *pImageList_Copy)(HIMAGELIST, int, HIMAGELIST, int, UINT);
 static HIMAGELIST (WINAPI *pImageList_LoadImageW)(HINSTANCE, LPCWSTR, int, int, COLORREF, UINT, UINT);
+static BOOL (WINAPI *pImageList_Draw)(HIMAGELIST,INT,HDC,INT,INT,UINT);
 
 static HINSTANCE hinst;
 
@@ -205,7 +206,7 @@ static HDC show_image(HWND hwnd, HIMAGELIST himl, int idx, int size,
 
     SetWindowTextA(hwnd, loc);
     hdc = GetDC(hwnd);
-    ImageList_Draw(himl, idx, hdc, 0, 0, ILD_TRANSPARENT);
+    pImageList_Draw(himl, idx, hdc, 0, 0, ILD_TRANSPARENT);
 
     force_redraw(hwnd);
 
@@ -504,8 +505,8 @@ static void test_DrawIndirect(void)
     ok(hbm3 != 0, "no bitmap 3\n");
 
     /* add three */
-    ok(0 == ImageList_Add(himl, hbm1, 0),"failed to add bitmap 1\n");
-    ok(1 == ImageList_Add(himl, hbm2, 0),"failed to add bitmap 2\n");
+    ok(0 == pImageList_Add(himl, hbm1, 0),"failed to add bitmap 1\n");
+    ok(1 == pImageList_Add(himl, hbm2, 0),"failed to add bitmap 2\n");
 
     if (pImageList_SetImageCount)
     {
@@ -1576,7 +1577,7 @@ cleanup:
 
     if(himl)
     {
-        ret = ImageList_Destroy(himl);
+        ret = pImageList_Destroy(himl);
         ok(ret, "ImageList_Destroy failed\n");
     }
 }
@@ -1599,21 +1600,21 @@ static void test_iimagelist(void)
     imgl = (IImageList*)createImageList(32, 32);
     ret = IImageList_AddRef(imgl);
     ok(ret == 2, "Expected 2, got %d\n", ret);
-    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ret = pImageList_Destroy((HIMAGELIST)imgl);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ret = pImageList_Destroy((HIMAGELIST)imgl);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ret = pImageList_Destroy((HIMAGELIST)imgl);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
 
     imgl = (IImageList*)createImageList(32, 32);
     ret = IImageList_AddRef(imgl);
     ok(ret == 2, "Expected 2, got %d\n", ret);
-    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ret = pImageList_Destroy((HIMAGELIST)imgl);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     ret = IImageList_Release(imgl);
     ok(ret == 0, "Expected 0, got %d\n", ret);
-    ret = ImageList_Destroy((HIMAGELIST)imgl);
+    ret = pImageList_Destroy((HIMAGELIST)imgl);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
 
     /* ref counting, HIMAGELIST_QueryInterface adds a reference */
@@ -1674,7 +1675,7 @@ static void test_IImageList_Add_Remove(void)
     int ret;
 
     /* create an imagelist to play with */
-    himl = ImageList_Create(84, 84, ILC_COLOR16, 0, 3);
+    himl = pImageList_Create(84, 84, ILC_COLOR16, 0, 3);
     ok(himl != 0,"failed to create imagelist\n");
 
     imgl = (IImageList *) himl;
@@ -1728,7 +1729,7 @@ static void test_IImageList_Get_SetImageCount(void)
     INT ret;
 
     /* create an imagelist to play with */
-    himl = ImageList_Create(84, 84, ILC_COLOR16, 0, 3);
+    himl = pImageList_Create(84, 84, ILC_COLOR16, 0, 3);
     ok(himl != 0,"failed to create imagelist\n");
 
     imgl = (IImageList *) himl;
@@ -1773,7 +1774,7 @@ static void test_IImageList_Draw(void)
     ok(hdc!=NULL, "couldn't get DC\n");
 
     /* create an imagelist to play with */
-    himl = ImageList_Create(48, 48, ILC_COLOR16, 0, 3);
+    himl = pImageList_Create(48, 48, ILC_COLOR16, 0, 3);
     ok(himl!=0,"failed to create imagelist\n");
 
     imgl = (IImageList *) himl;
@@ -1850,10 +1851,10 @@ static void test_IImageList_Merge(void)
     HRESULT hr;
     int ret;
 
-    himl1 = ImageList_Create(32,32,0,0,3);
+    himl1 = pImageList_Create(32,32,0,0,3);
     ok(himl1 != NULL,"failed to create himl1\n");
 
-    himl2 = ImageList_Create(32,32,0,0,3);
+    himl2 = pImageList_Create(32,32,0,0,3);
     ok(himl2 != NULL,"failed to create himl2\n");
 
     hicon1 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
@@ -1887,7 +1888,7 @@ if (0)
 
     /* Same happens if himl2 is empty */
     IImageList_Release(imgl2);
-    himl2 = ImageList_Create(32,32,0,0,3);
+    himl2 = pImageList_Create(32,32,0,0,3);
     ok(himl2 != NULL,"failed to recreate himl2\n");
 
     imgl2 = (IImageList *) himl2;
@@ -2385,7 +2386,7 @@ static void test_IImageList_GetIconSize(void)
 
 static void init_functions(void)
 {
-    HMODULE hComCtl32 = GetModuleHandleA("comctl32.dll");
+    HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
 
 #define X(f) p##f = (void*)GetProcAddress(hComCtl32, #f);
 #define X2(f, ord) p##f = (void*)GetProcAddress(hComCtl32, (const char *)ord);
@@ -2414,6 +2415,7 @@ static void init_functions(void)
     X(ImageList_LoadImageW);
     X(ImageList_CoCreateInstance);
     X(HIMAGELIST_QueryInterface);
+    X(ImageList_Draw);
 #undef X
 #undef X2
 }
@@ -2426,8 +2428,6 @@ START_TEST(imagelist)
     init_functions();
 
     hinst = GetModuleHandleA(NULL);
-
-    InitCommonControls();
 
     test_create_destroy();
     test_begindrag();

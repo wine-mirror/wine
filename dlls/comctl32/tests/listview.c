@@ -28,6 +28,11 @@
 #include "v6util.h"
 #include "msg.h"
 
+static HIMAGELIST (WINAPI *pImageList_Create)(int, int, UINT, int, int);
+static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
+static int (WINAPI *pImageList_Add)(HIMAGELIST, HBITMAP, HBITMAP);
+static BOOL (WINAPI *p_TrackMouseEvent)(TRACKMOUSEEVENT *);
+
 enum seq_index {
     PARENT_SEQ_INDEX,
     PARENT_FULL_SEQ_INDEX,
@@ -72,6 +77,18 @@ static NMLVDISPINFOA g_editbox_disp_info;
 static BOOL g_focus_test_LVN_DELETEITEM;
 
 static HWND subclass_editbox(HWND hwndListview);
+
+static void init_functions(void)
+{
+    HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(hComCtl32, #f);
+    X(ImageList_Create);
+    X(ImageList_Destroy);
+    X(ImageList_Add);
+    X(_TrackMouseEvent);
+#undef X
+}
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
@@ -848,13 +865,13 @@ static void test_images(void)
     RECT r1, r2;
     static CHAR hello[] = "hello";
 
-    himl = ImageList_Create(40, 40, 0, 4, 4);
+    himl = pImageList_Create(40, 40, 0, 4, 4);
     ok(himl != NULL, "failed to create imagelist\n");
 
     hbmp = CreateBitmap(40, 40, 1, 1, NULL);
     ok(hbmp != NULL, "failed to create bitmap\n");
 
-    r = ImageList_Add(himl, hbmp, 0);
+    r = pImageList_Add(himl, hbmp, 0);
     ok(r == 0, "should be zero\n");
 
     hwnd = CreateWindowExA(0, "SysListView32", "foo", LVS_OWNERDRAWFIXED,
@@ -1539,7 +1556,7 @@ static void test_create(void)
     cls.lpszClassName = "MyListView32";
     ok(RegisterClassExA(&cls), "RegisterClassEx failed\n");
 
-    test_create_imagelist = ImageList_Create(16, 16, 0, 5, 10);
+    test_create_imagelist = pImageList_Create(16, 16, 0, 5, 10);
     hList = CreateWindowA("MyListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, GetModuleHandleA(NULL), 0);
     ok((HIMAGELIST)SendMessageA(hList, LVM_GETIMAGELIST, 0, 0) == test_create_imagelist, "Image list not obtained\n");
     hHeader = (HWND)SendMessageA(hList, LVM_GETHEADER, 0, 0);
@@ -3732,15 +3749,15 @@ static void test_hittest(void)
     test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, 0, FALSE, TRUE);
     test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, FALSE);
     /* try with icons, state icons index is 1 based so at least 2 bitmaps needed */
-    himl = ImageList_Create(16, 16, 0, 4, 4);
+    himl = pImageList_Create(16, 16, 0, 4, 4);
     ok(himl != NULL, "failed to create imagelist\n");
     hbmp = CreateBitmap(16, 16, 1, 1, NULL);
     ok(hbmp != NULL, "failed to create bitmap\n");
-    r = ImageList_Add(himl, hbmp, 0);
+    r = pImageList_Add(himl, hbmp, 0);
     ok(r == 0, "should be zero\n");
     hbmp = CreateBitmap(16, 16, 1, 1, NULL);
     ok(hbmp != NULL, "failed to create bitmap\n");
-    r = ImageList_Add(himl, hbmp, 0);
+    r = pImageList_Add(himl, hbmp, 0);
     ok(r == 1, "should be one\n");
 
     r = SendMessageA(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)himl);
@@ -4022,15 +4039,15 @@ todo_wine
     expect(TRUE, r);
 
     /* state icons */
-    himl = ImageList_Create(16, 16, 0, 2, 2);
+    himl = pImageList_Create(16, 16, 0, 2, 2);
     ok(himl != NULL, "failed to create imagelist\n");
     hbm = CreateBitmap(16, 16, 1, 1, NULL);
     ok(hbm != NULL, "failed to create bitmap\n");
-    r = ImageList_Add(himl, hbm, 0);
+    r = pImageList_Add(himl, hbm, 0);
     expect(0, r);
     hbm = CreateBitmap(16, 16, 1, 1, NULL);
     ok(hbm != NULL, "failed to create bitmap\n");
-    r = ImageList_Add(himl, hbm, 0);
+    r = pImageList_Add(himl, hbm, 0);
     expect(1, r);
 
     r = SendMessageA(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)himl);
@@ -4702,9 +4719,9 @@ static void test_getitemspacing(void)
     expect(cy, HIWORD(ret));
 
     /* now try with icons */
-    himl40 = ImageList_Create(40, 40, 0, 4, 4);
+    himl40 = pImageList_Create(40, 40, 0, 4, 4);
     ok(himl40 != NULL, "failed to create imagelist\n");
-    himl80 = ImageList_Create(80, 80, 0, 4, 4);
+    himl80 = pImageList_Create(80, 80, 0, 4, 4);
     ok(himl80 != NULL, "failed to create imagelist\n");
     ret = SendMessageA(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)himl40);
     expect(0, ret);
@@ -4772,7 +4789,7 @@ static void test_getitemspacing(void)
     expect(cy + 40, HIWORD(ret));
 
     SendMessageA(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, 0);
-    ImageList_Destroy(himl80);
+    pImageList_Destroy(himl80);
     DestroyWindow(hwnd);
     /* LVS_SMALLICON */
     hwnd = create_listview_control(LVS_SMALLICON);
@@ -4790,7 +4807,7 @@ static void test_getitemspacing(void)
     expect(cy + 40, HIWORD(ret));
 
     SendMessageA(hwnd, LVM_SETIMAGELIST, LVSIL_NORMAL, 0);
-    ImageList_Destroy(himl40);
+    pImageList_Destroy(himl40);
     DestroyWindow(hwnd);
     /* LVS_REPORT */
     hwnd = create_listview_control(LVS_REPORT);
@@ -4973,11 +4990,11 @@ static void test_approximate_viewrect(void)
 
     /* LVS_ICON */
     hwnd = create_listview_control(LVS_ICON);
-    himl = ImageList_Create(40, 40, 0, 4, 4);
+    himl = pImageList_Create(40, 40, 0, 4, 4);
     ok(himl != NULL, "failed to create imagelist\n");
     hbmp = CreateBitmap(40, 40, 1, 1, NULL);
     ok(hbmp != NULL, "failed to create bitmap\n");
-    ret = ImageList_Add(himl, hbmp, 0);
+    ret = pImageList_Add(himl, hbmp, 0);
     expect(0, ret);
     ret = SendMessageA(hwnd, LVM_SETIMAGELIST, 0, (LPARAM)himl);
     expect(0, ret);
@@ -5594,7 +5611,7 @@ static void test_createdragimage(void)
 
     himl = (HIMAGELIST)SendMessageA(list, LVM_CREATEDRAGIMAGE, 0, (LPARAM)&pt);
     ok(himl != NULL, "got %p\n", himl);
-    ImageList_Destroy(himl);
+    pImageList_Destroy(himl);
 
     DestroyWindow(list);
 }
@@ -5709,9 +5726,9 @@ static void test_imagelists(void)
     HIMAGELIST himl1, himl2, himl3;
     LRESULT ret;
 
-    himl1 = ImageList_Create(40, 40, 0, 4, 4);
-    himl2 = ImageList_Create(40, 40, 0, 4, 4);
-    himl3 = ImageList_Create(40, 40, 0, 4, 4);
+    himl1 = pImageList_Create(40, 40, 0, 4, 4);
+    himl2 = pImageList_Create(40, 40, 0, 4, 4);
+    himl3 = pImageList_Create(40, 40, 0, 4, 4);
     ok(himl1 != NULL, "Failed to create imagelist\n");
     ok(himl2 != NULL, "Failed to create imagelist\n");
     ok(himl3 != NULL, "Failed to create imagelist\n");
@@ -5977,7 +5994,7 @@ static void test_oneclickactivate(void)
 
     track.cbSize = sizeof(track);
     track.dwFlags = TME_QUERY;
-    _TrackMouseEvent(&track);
+    p_TrackMouseEvent(&track);
     ok(track.hwndTrack == hwnd, "hwndTrack != hwnd\n");
     ok(track.dwFlags == TME_LEAVE, "dwFlags = %x\n", track.dwFlags);
 
@@ -6241,23 +6258,10 @@ static void test_state_image(void)
 
 START_TEST(listview)
 {
-    HMODULE hComctl32;
-    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
-
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
 
-    hComctl32 = GetModuleHandleA("comctl32.dll");
-    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
-    if (pInitCommonControlsEx)
-    {
-        INITCOMMONCONTROLSEX iccex;
-        iccex.dwSize = sizeof(iccex);
-        iccex.dwICC  = ICC_LISTVIEW_CLASSES;
-        pInitCommonControlsEx(&iccex);
-    }
-    else
-        InitCommonControls();
+    init_functions();
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -6318,6 +6322,8 @@ START_TEST(listview)
         DestroyWindow(hwndparent);
         return;
     }
+
+    init_functions();
 
     /* comctl32 version 6 tests start here */
     test_get_set_view();

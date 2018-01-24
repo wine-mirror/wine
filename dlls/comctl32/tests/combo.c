@@ -480,25 +480,20 @@ static LRESULT CALLBACK ComboExTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, L
     return 0L;
 }
 
+static void init_functions(void)
+{
+    HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(hComCtl32, #f);
+#define X2(f, ord) p##f = (void*)GetProcAddress(hComCtl32, (const char *)ord);
+    X2(SetWindowSubclass, 410);
+#undef X
+#undef X2
+}
+
 static BOOL init(void)
 {
-    HMODULE hComctl32;
-    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     WNDCLASSA wc;
-    INITCOMMONCONTROLSEX iccex;
-
-    hComctl32 = GetModuleHandleA("comctl32.dll");
-    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
-    if (!pInitCommonControlsEx)
-    {
-        win_skip("InitCommonControlsEx() is missing. Skipping the tests\n");
-        return FALSE;
-    }
-    iccex.dwSize = sizeof(iccex);
-    iccex.dwICC  = ICC_USEREX_CLASSES;
-    pInitCommonControlsEx(&iccex);
-
-    pSetWindowSubclass = (void*)GetProcAddress(hComctl32, (LPSTR)410);
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
@@ -1160,6 +1155,8 @@ START_TEST(combo)
 {
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
+
+    init_functions();
 
     if (!init())
         return;

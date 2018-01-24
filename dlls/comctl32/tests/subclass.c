@@ -286,7 +286,7 @@ static BOOL init_function_pointers(void)
     HMODULE hmod;
     void *ptr;
 
-    hmod = GetModuleHandleA("comctl32.dll");
+    hmod = LoadLibraryA("comctl32.dll");
     ok(hmod != NULL, "got %p\n", hmod);
 
     /* Functions have to be loaded by ordinal. Only XP and W2K3 export

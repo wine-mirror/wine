@@ -30,6 +30,9 @@
 
 #include "wine/test.h"
 
+static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
+static HIMAGELIST (WINAPI *pImageList_LoadImageA)(HINSTANCE, LPCSTR, int, int, COLORREF, UINT, UINT);
+
 static RECT height_change_notify_rect;
 static HWND hMainWnd;
 static int system_font_height;
@@ -577,7 +580,7 @@ static void test_layout(void)
     check_sizes();
 
     /* an image will increase the band height */
-    himl = ImageList_LoadImageA(GetModuleHandleA("comctl32"), MAKEINTRESOURCEA(121), 24, 2,
+    himl = pImageList_LoadImageA(GetModuleHandleA("comctl32"), MAKEINTRESOURCEA(121), 24, 2,
             CLR_NONE, IMAGE_BITMAP, LR_DEFAULTCOLOR);
     ri.cbSize = sizeof(ri);
     ri.fMask = RBIM_IMAGELIST;
@@ -658,7 +661,7 @@ static void test_layout(void)
 
     rbsize_results_free();
     DestroyWindow(hRebar);
-    ImageList_Destroy(himl);
+    pImageList_Destroy(himl);
 }
 
 #if 0       /* use this to generate more tests */
@@ -1125,26 +1128,22 @@ static void test_notification(void)
     DestroyWindow(rebar);
 }
 
+static void init_functions(void)
+{
+    HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(hComCtl32, #f);
+    X(ImageList_Destroy);
+    X(ImageList_LoadImageA);
+#undef X
+}
+
 START_TEST(rebar)
 {
-    HMODULE hComctl32;
-    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
-    INITCOMMONCONTROLSEX iccex;
     MSG msg;
 
     init_system_font_height();
-
-    /* LoadLibrary is needed. This file has no reference to functions in comctl32 */
-    hComctl32 = LoadLibraryA("comctl32.dll");
-    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
-    if (!pInitCommonControlsEx)
-    {
-        win_skip("InitCommonControlsEx() is missing. Skipping the tests\n");
-        return;
-    }
-    iccex.dwSize = sizeof(iccex);
-    iccex.dwICC = ICC_COOL_CLASSES;
-    pInitCommonControlsEx(&iccex);
+    init_functions();
 
     hMainWnd = create_parent_window();
 
@@ -1169,6 +1168,4 @@ out:
         DispatchMessageA(&msg);
     }
     DestroyWindow(hMainWnd);
-
-    FreeLibrary(hComctl32);
 }

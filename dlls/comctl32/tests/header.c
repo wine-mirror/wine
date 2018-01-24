@@ -26,6 +26,9 @@
 #include "v6util.h"
 #include "msg.h"
 
+static HIMAGELIST (WINAPI *pImageList_Create)(int, int, UINT, int, int);
+static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
+
 typedef struct tagEXPECTEDNOTIFY
 {
     INT iCode;
@@ -953,7 +956,7 @@ static void test_hdm_sethotdivider(HWND hParent)
 
 static void test_hdm_imageMessages(HWND hParent)
 {
-    HIMAGELIST hImageList = ImageList_Create (4, 4, 0, 1, 0);
+    HIMAGELIST hImageList = pImageList_Create (4, 4, 0, 1, 0);
     HIMAGELIST hIml;
     BOOL wasValid;
     HWND hChild;
@@ -973,13 +976,13 @@ static void test_hdm_imageMessages(HWND hParent)
 
     hIml = (HIMAGELIST) SendMessageA(hChild, HDM_CREATEDRAGIMAGE, 0, 0);
     ok(hIml != NULL, "Expected non-NULL handle, got %p\n", hIml);
-    ImageList_Destroy(hIml);
+    pImageList_Destroy(hIml);
 
     ok_sequence(sequences, HEADER_SEQ_INDEX, imageMessages_seq, "imageMessages sequence testing", FALSE);
 
     DestroyWindow(hChild);
 
-    wasValid = ImageList_Destroy(hImageList);
+    wasValid = pImageList_Destroy(hImageList);
     ok(wasValid, "Header must not free image list at destruction!\n");
 }
 
@@ -1644,27 +1647,22 @@ static LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
     return 0L;
 }
 
+static void init_functions(void)
+{
+    HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(hComCtl32, #f);
+    X(ImageList_Create);
+    X(ImageList_Destroy);
+#undef X
+}
+
 static BOOL init(void)
 {
-    HMODULE hComctl32;
-    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     WNDCLASSA wc;
-    INITCOMMONCONTROLSEX iccex;
     TEXTMETRICA tm;
     HFONT hOldFont;
     HDC hdc;
-
-    hComctl32 = GetModuleHandleA("comctl32.dll");
-    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
-    if (!pInitCommonControlsEx)
-    {
-        win_skip("InitCommonControlsEx() is missing. Skipping the tests\n");
-        return FALSE;
-    }
-
-    iccex.dwSize = sizeof(iccex);
-    iccex.dwICC  = ICC_USEREX_CLASSES;
-    pInitCommonControlsEx(&iccex);
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
@@ -1821,6 +1819,8 @@ START_TEST(header)
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
 
+    init_functions();
+
     if (!init())
         return;
 
@@ -1851,6 +1851,8 @@ START_TEST(header)
         DestroyWindow(parent_hwnd);
         return;
     }
+
+    init_functions();
 
     /* comctl32 version 6 tests start here */
     test_hdf_fixedwidth(parent_hwnd);

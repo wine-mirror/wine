@@ -339,7 +339,6 @@ START_TEST(pager)
 
     pSetWindowSubclass = (void*)GetProcAddress(mod, (LPSTR)410);
 
-    InitCommonControls();
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     parent_wnd = create_parent_window();

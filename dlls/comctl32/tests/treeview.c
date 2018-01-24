@@ -33,6 +33,7 @@
 #include "v6util.h"
 #include "msg.h"
 
+static BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
 static const char *TEST_CALLBACK_TEXT = "callback_text";
 
 static TVITEMA g_item_expanding, g_item_expanded;
@@ -2666,27 +2667,28 @@ static void test_right_click(void)
     DestroyWindow(hTree);
 }
 
+static void init_functions(void)
+{
+    HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(hComCtl32, #f);
+    X(InitCommonControlsEx);
+#undef X
+}
+
 START_TEST(treeview)
 {
-    HMODULE hComctl32;
-    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
+    INITCOMMONCONTROLSEX iccex;
+    ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
     WNDCLASSA wc;
     MSG msg;
 
-    ULONG_PTR ctx_cookie;
-    HANDLE hCtx;
-  
-    hComctl32 = GetModuleHandleA("comctl32.dll");
-    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
-    if (pInitCommonControlsEx)
-    {
-        INITCOMMONCONTROLSEX iccex;
-        iccex.dwSize = sizeof(iccex);
-        iccex.dwICC  = ICC_TREEVIEW_CLASSES;
-        pInitCommonControlsEx(&iccex);
-    }
-    else
-        InitCommonControls();
+    init_functions();
+
+    iccex.dwSize = sizeof(iccex);
+    iccex.dwICC  = ICC_TREEVIEW_CLASSES;
+    pInitCommonControlsEx(&iccex);
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
     init_msg_sequences(item_sequence, 1);
