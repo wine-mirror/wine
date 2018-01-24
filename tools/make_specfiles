@@ -322,8 +322,13 @@ my @dll_groups =
   "api-ms-win-core-shlwapi-legacy-l1-1-0",
   "api-ms-win-core-shlwapi-obsolete-l1-1-0",
   "api-ms-win-core-shlwapi-obsolete-l1-2-0",
-  "api-ms-win-shcore-scaling-l1-1-1",
   "api-ms-win-core-url-l1-1-0",
+ ],
+ [
+  "shell32",
+  "shlwapi",
+  "shcore",
+  "api-ms-win-shcore-scaling-l1-1-1",
  ],
  [
   "user32",

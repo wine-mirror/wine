@@ -1456,6 +1456,7 @@ enable_serialui
 enable_setupapi
 enable_sfc
 enable_sfc_os
+enable_shcore
 enable_shdoclc
 enable_shdocvw
 enable_shell32
@@ -19063,6 +19064,7 @@ wine_fn_config_test dlls/setupapi/tests setupapi_test
 wine_fn_config_dll setupx.dll16 enable_win16
 wine_fn_config_dll sfc enable_sfc implib
 wine_fn_config_dll sfc_os enable_sfc_os implib
+wine_fn_config_dll shcore enable_shcore
 wine_fn_config_dll shdoclc enable_shdoclc clean
 wine_fn_config_dll shdocvw enable_shdocvw clean,implib
 wine_fn_config_test dlls/shdocvw/tests shdocvw_test

@@ -1,0 +1,4 @@
+MODULE    = shcore.dll
+
+C_SRCS = \
+	main.c
