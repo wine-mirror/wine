@@ -7,7 +7,7 @@
 #define WINE_GLAPI
 #endif
 
-#define WINE_WGL_DRIVER_VERSION 17
+#define WINE_WGL_DRIVER_VERSION 18
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -1166,7 +1166,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glGetPerfMonitorCountersAMD)( GLuint group, GLint *numCounters, GLint *maxActiveCounters, GLsizei counterSize, GLuint *counters );
         void       (WINE_GLAPI *p_glGetPerfMonitorGroupStringAMD)( GLuint group, GLsizei bufSize, GLsizei *length, GLchar *groupString );
         void       (WINE_GLAPI *p_glGetPerfMonitorGroupsAMD)( GLint *numGroups, GLsizei groupsSize, GLuint *groups );
-        void       (WINE_GLAPI *p_glGetPerfQueryDataINTEL)( GLuint queryHandle, GLuint flags, GLsizei dataSize, GLvoid *data, GLuint *bytesWritten );
+        void       (WINE_GLAPI *p_glGetPerfQueryDataINTEL)( GLuint queryHandle, GLuint flags, GLsizei dataSize, void *data, GLuint *bytesWritten );
         void       (WINE_GLAPI *p_glGetPerfQueryIdByNameINTEL)( GLchar *queryName, GLuint *queryId );
         void       (WINE_GLAPI *p_glGetPerfQueryInfoINTEL)( GLuint queryId, GLuint queryNameLength, GLchar *queryName, GLuint *dataSize, GLuint *noCounters, GLuint *noInstances, GLuint *capsMask );
         void       (WINE_GLAPI *p_glGetPixelMapxv)( GLenum map, GLint size, GLfixed *values );
@@ -1754,7 +1754,7 @@ struct opengl_funcs
         void       (WINE_GLAPI *p_glMultiTexSubImage3DEXT)( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels );
         void       (WINE_GLAPI *p_glMulticastBarrierNV)(void);
         void       (WINE_GLAPI *p_glMulticastBlitFramebufferNV)( GLuint srcGpu, GLuint dstGpu, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter );
-        void       (WINE_GLAPI *p_glMulticastBufferSubDataNV)( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const GLvoid *data );
+        void       (WINE_GLAPI *p_glMulticastBufferSubDataNV)( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data );
         void       (WINE_GLAPI *p_glMulticastCopyBufferSubDataNV)( GLuint readGpu, GLbitfield writeGpuMask, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size );
         void       (WINE_GLAPI *p_glMulticastCopyImageSubDataNV)( GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth );
         void       (WINE_GLAPI *p_glMulticastFramebufferSampleLocationsfvNV)( GLuint gpu, GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v );

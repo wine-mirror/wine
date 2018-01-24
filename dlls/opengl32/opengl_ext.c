@@ -5582,7 +5582,7 @@ static void WINAPI glGetPerfMonitorGroupsAMD( GLint *numGroups, GLsizei groupsSi
   funcs->ext.p_glGetPerfMonitorGroupsAMD( numGroups, groupsSize, groups );
 }
 
-static void WINAPI glGetPerfQueryDataINTEL( GLuint queryHandle, GLuint flags, GLsizei dataSize, GLvoid *data, GLuint *bytesWritten )
+static void WINAPI glGetPerfQueryDataINTEL( GLuint queryHandle, GLuint flags, GLsizei dataSize, void *data, GLuint *bytesWritten )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %p, %p)\n", queryHandle, flags, dataSize, data, bytesWritten );
@@ -9691,7 +9691,7 @@ static void WINAPI glMulticastBlitFramebufferNV( GLuint srcGpu, GLuint dstGpu, G
   funcs->ext.p_glMulticastBlitFramebufferNV( srcGpu, dstGpu, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter );
 }
 
-static void WINAPI glMulticastBufferSubDataNV( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const GLvoid *data )
+static void WINAPI glMulticastBufferSubDataNV( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data )
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %ld, %ld, %p)\n", gpuMask, buffer, offset, size, data );
@@ -19694,35 +19694,35 @@ const OpenGL_extension extension_registry[2655] = {
   { "glMapVertexAttrib2fAPPLE", "GL_APPLE_vertex_program_evaluators", glMapVertexAttrib2fAPPLE },
   { "glMaterialxOES", "GL_OES_fixed_point", glMaterialxOES },
   { "glMaterialxvOES", "GL_OES_fixed_point", glMaterialxvOES },
-  { "glMatrixFrustumEXT", "GL_EXT_direct_state_access", glMatrixFrustumEXT },
+  { "glMatrixFrustumEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixFrustumEXT },
   { "glMatrixIndexPointerARB", "GL_ARB_matrix_palette", glMatrixIndexPointerARB },
   { "glMatrixIndexubvARB", "GL_ARB_matrix_palette", glMatrixIndexubvARB },
   { "glMatrixIndexuivARB", "GL_ARB_matrix_palette", glMatrixIndexuivARB },
   { "glMatrixIndexusvARB", "GL_ARB_matrix_palette", glMatrixIndexusvARB },
   { "glMatrixLoad3x2fNV", "GL_NV_path_rendering", glMatrixLoad3x2fNV },
   { "glMatrixLoad3x3fNV", "GL_NV_path_rendering", glMatrixLoad3x3fNV },
-  { "glMatrixLoadIdentityEXT", "GL_EXT_direct_state_access", glMatrixLoadIdentityEXT },
+  { "glMatrixLoadIdentityEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixLoadIdentityEXT },
   { "glMatrixLoadTranspose3x3fNV", "GL_NV_path_rendering", glMatrixLoadTranspose3x3fNV },
-  { "glMatrixLoadTransposedEXT", "GL_EXT_direct_state_access", glMatrixLoadTransposedEXT },
-  { "glMatrixLoadTransposefEXT", "GL_EXT_direct_state_access", glMatrixLoadTransposefEXT },
-  { "glMatrixLoaddEXT", "GL_EXT_direct_state_access", glMatrixLoaddEXT },
-  { "glMatrixLoadfEXT", "GL_EXT_direct_state_access", glMatrixLoadfEXT },
+  { "glMatrixLoadTransposedEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixLoadTransposedEXT },
+  { "glMatrixLoadTransposefEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixLoadTransposefEXT },
+  { "glMatrixLoaddEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixLoaddEXT },
+  { "glMatrixLoadfEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixLoadfEXT },
   { "glMatrixMult3x2fNV", "GL_NV_path_rendering", glMatrixMult3x2fNV },
   { "glMatrixMult3x3fNV", "GL_NV_path_rendering", glMatrixMult3x3fNV },
   { "glMatrixMultTranspose3x3fNV", "GL_NV_path_rendering", glMatrixMultTranspose3x3fNV },
-  { "glMatrixMultTransposedEXT", "GL_EXT_direct_state_access", glMatrixMultTransposedEXT },
-  { "glMatrixMultTransposefEXT", "GL_EXT_direct_state_access", glMatrixMultTransposefEXT },
-  { "glMatrixMultdEXT", "GL_EXT_direct_state_access", glMatrixMultdEXT },
-  { "glMatrixMultfEXT", "GL_EXT_direct_state_access", glMatrixMultfEXT },
-  { "glMatrixOrthoEXT", "GL_EXT_direct_state_access", glMatrixOrthoEXT },
-  { "glMatrixPopEXT", "GL_EXT_direct_state_access", glMatrixPopEXT },
-  { "glMatrixPushEXT", "GL_EXT_direct_state_access", glMatrixPushEXT },
-  { "glMatrixRotatedEXT", "GL_EXT_direct_state_access", glMatrixRotatedEXT },
-  { "glMatrixRotatefEXT", "GL_EXT_direct_state_access", glMatrixRotatefEXT },
-  { "glMatrixScaledEXT", "GL_EXT_direct_state_access", glMatrixScaledEXT },
-  { "glMatrixScalefEXT", "GL_EXT_direct_state_access", glMatrixScalefEXT },
-  { "glMatrixTranslatedEXT", "GL_EXT_direct_state_access", glMatrixTranslatedEXT },
-  { "glMatrixTranslatefEXT", "GL_EXT_direct_state_access", glMatrixTranslatefEXT },
+  { "glMatrixMultTransposedEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixMultTransposedEXT },
+  { "glMatrixMultTransposefEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixMultTransposefEXT },
+  { "glMatrixMultdEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixMultdEXT },
+  { "glMatrixMultfEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixMultfEXT },
+  { "glMatrixOrthoEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixOrthoEXT },
+  { "glMatrixPopEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixPopEXT },
+  { "glMatrixPushEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixPushEXT },
+  { "glMatrixRotatedEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixRotatedEXT },
+  { "glMatrixRotatefEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixRotatefEXT },
+  { "glMatrixScaledEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixScaledEXT },
+  { "glMatrixScalefEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixScalefEXT },
+  { "glMatrixTranslatedEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixTranslatedEXT },
+  { "glMatrixTranslatefEXT", "GL_EXT_direct_state_access GL_NV_path_rendering", glMatrixTranslatefEXT },
   { "glMaxShaderCompilerThreadsARB", "GL_ARB_parallel_shader_compile", glMaxShaderCompilerThreadsARB },
   { "glMaxShaderCompilerThreadsKHR", "GL_KHR_parallel_shader_compile", glMaxShaderCompilerThreadsKHR },
   { "glMemoryBarrier", "GL_ARB_shader_image_load_store GL_VERSION_4_2", glMemoryBarrier },
@@ -20273,7 +20273,7 @@ const OpenGL_extension extension_registry[2655] = {
   { "glRasterPos3xvOES", "GL_OES_fixed_point", glRasterPos3xvOES },
   { "glRasterPos4xOES", "GL_OES_fixed_point", glRasterPos4xOES },
   { "glRasterPos4xvOES", "GL_OES_fixed_point", glRasterPos4xvOES },
-  { "glRasterSamplesEXT", "GL_EXT_raster_multisample GL_EXT_texture_filter_minmax GL_NV_framebuffer_mixed_samples", glRasterSamplesEXT },
+  { "glRasterSamplesEXT", "GL_EXT_raster_multisample GL_NV_framebuffer_mixed_samples", glRasterSamplesEXT },
   { "glReadBufferRegion", "GL_KTX_buffer_region", glReadBufferRegion },
   { "glReadInstrumentsSGIX", "GL_SGIX_instruments", glReadInstrumentsSGIX },
   { "glReadnPixels", "GL_KHR_robustness GL_VERSION_4_5", glReadnPixels },

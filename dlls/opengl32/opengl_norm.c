@@ -3488,7 +3488,7 @@ static void null_glGetPerfMonitorCounterStringAMD( GLuint group, GLuint counter,
 static void null_glGetPerfMonitorCountersAMD( GLuint group, GLint *numCounters, GLint *maxActiveCounters, GLsizei counterSize, GLuint *counters ) { }
 static void null_glGetPerfMonitorGroupStringAMD( GLuint group, GLsizei bufSize, GLsizei *length, GLchar *groupString ) { }
 static void null_glGetPerfMonitorGroupsAMD( GLint *numGroups, GLsizei groupsSize, GLuint *groups ) { }
-static void null_glGetPerfQueryDataINTEL( GLuint queryHandle, GLuint flags, GLsizei dataSize, GLvoid *data, GLuint *bytesWritten ) { }
+static void null_glGetPerfQueryDataINTEL( GLuint queryHandle, GLuint flags, GLsizei dataSize, void *data, GLuint *bytesWritten ) { }
 static void null_glGetPerfQueryIdByNameINTEL( GLchar *queryName, GLuint *queryId ) { }
 static void null_glGetPerfQueryInfoINTEL( GLuint queryId, GLuint queryNameLength, GLchar *queryName, GLuint *dataSize, GLuint *noCounters, GLuint *noInstances, GLuint *capsMask ) { }
 static void null_glGetPixelMapxv( GLenum map, GLint size, GLfixed *values ) { }
@@ -4076,7 +4076,7 @@ static void null_glMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint l
 static void null_glMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels ) { }
 static void null_glMulticastBarrierNV(void) { }
 static void null_glMulticastBlitFramebufferNV( GLuint srcGpu, GLuint dstGpu, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter ) { }
-static void null_glMulticastBufferSubDataNV( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const GLvoid *data ) { }
+static void null_glMulticastBufferSubDataNV( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data ) { }
 static void null_glMulticastCopyBufferSubDataNV( GLuint readGpu, GLbitfield writeGpuMask, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size ) { }
 static void null_glMulticastCopyImageSubDataNV( GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth ) { }
 static void null_glMulticastFramebufferSampleLocationsfvNV( GLuint gpu, GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v ) { }

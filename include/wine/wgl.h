@@ -706,6 +706,7 @@ typedef unsigned int GLhandleARB;
 #define GL_CONSERVATIVE_RASTER_DILATE_RANGE_NV                        0x937A
 #define GL_CONSERVATIVE_RASTER_MODE_NV                                0x954D
 #define GL_CONSERVATIVE_RASTER_MODE_POST_SNAP_NV                      0x954E
+#define GL_CONSERVATIVE_RASTER_MODE_PRE_SNAP_NV                       0x9550
 #define GL_CONSERVATIVE_RASTER_MODE_PRE_SNAP_TRIANGLES_NV             0x954F
 #define GL_CONSERVE_MEMORY_HINT_PGI                                   0x1A1FD
 #define GL_CONSTANT                                                   0x8576
@@ -1914,6 +1915,8 @@ typedef unsigned int GLhandleARB;
 #define GL_LAYER_PROVOKING_VERTEX                                     0x825E
 #define GL_LAYOUT_COLOR_ATTACHMENT_EXT                                0x958E
 #define GL_LAYOUT_DEFAULT_INTEL                                       0
+#define GL_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_EXT              0x9531
+#define GL_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_EXT              0x9530
 #define GL_LAYOUT_DEPTH_STENCIL_ATTACHMENT_EXT                        0x958F
 #define GL_LAYOUT_DEPTH_STENCIL_READ_ONLY_EXT                         0x9590
 #define GL_LAYOUT_GENERAL_EXT                                         0x958D
@@ -3190,6 +3193,7 @@ typedef unsigned int GLhandleARB;
 #define GL_PROGRAM_ATTRIBS_ARB                                        0x88AC
 #define GL_PROGRAM_ATTRIB_COMPONENTS_NV                               0x8906
 #define GL_PROGRAM_BINARY_FORMATS                                     0x87FF
+#define GL_PROGRAM_BINARY_FORMAT_MESA                                 0x875F
 #define GL_PROGRAM_BINARY_LENGTH                                      0x8741
 #define GL_PROGRAM_BINARY_RETRIEVABLE_HINT                            0x8257
 #define GL_PROGRAM_BINDING_ARB                                        0x8677
@@ -4379,6 +4383,7 @@ typedef unsigned int GLhandleARB;
 #define GL_TEXTURE_RECTANGLE_ARB                                      0x84F5
 #define GL_TEXTURE_RECTANGLE_NV                                       0x84F5
 #define GL_TEXTURE_REDUCTION_MODE_ARB                                 0x9366
+#define GL_TEXTURE_REDUCTION_MODE_EXT                                 0x9366
 #define GL_TEXTURE_RED_SIZE                                           0x805C
 #define GL_TEXTURE_RED_SIZE_EXT                                       0x805C
 #define GL_TEXTURE_RED_TYPE                                           0x8C10
@@ -4427,6 +4432,9 @@ typedef unsigned int GLhandleARB;
 #define GL_TEXTURE_WRAP_S                                             0x2802
 #define GL_TEXTURE_WRAP_T                                             0x2803
 #define GL_TEXT_FRAGMENT_SHADER_ATI                                   0x8200
+#define GL_TILE_RASTER_ORDER_FIXED_MESA                               0x8BB8
+#define GL_TILE_RASTER_ORDER_INCREASING_X_MESA                        0x8BB9
+#define GL_TILE_RASTER_ORDER_INCREASING_Y_MESA                        0x8BBA
 #define GL_TILING_TYPES_EXT                                           0x9583
 #define GL_TIMEOUT_EXPIRED                                            0x911B
 #define GL_TIMEOUT_IGNORED                                            0xFFFFFFFFFFFFFFFF
@@ -4922,6 +4930,7 @@ typedef unsigned int GLhandleARB;
 #define GL_WARPS_PER_SM_NV                                            0x933A
 #define GL_WARP_SIZE_NV                                               0x9339
 #define GL_WEIGHTED_AVERAGE_ARB                                       0x9367
+#define GL_WEIGHTED_AVERAGE_EXT                                       0x9367
 #define GL_WEIGHT_ARRAY_ARB                                           0x86AD
 #define GL_WEIGHT_ARRAY_BUFFER_BINDING                                0x889E
 #define GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB                            0x889E
