@@ -648,10 +648,8 @@ static HRESULT write_string( struct writer *writer, const BYTE *bytes, ULONG len
 
 static HRESULT write_dict_string( struct writer *writer, ULONG id )
 {
-    HRESULT hr;
     if (id > 0x7fffffff) return E_INVALIDARG;
-    if ((hr = write_int31( writer, id )) != S_OK) return hr;
-    return S_OK;
+    return write_int31( writer, id );
 }
 
 static enum record_type get_attr_text_record_type( const WS_XML_TEXT *text, BOOL use_dict )
