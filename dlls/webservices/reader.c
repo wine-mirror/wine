@@ -143,29 +143,36 @@ void destroy_nodes( struct node *node )
     free_node( node );
 }
 
-static WS_XML_ATTRIBUTE *dup_attribute( const WS_XML_ATTRIBUTE *src )
+static WS_XML_ATTRIBUTE *dup_attribute( const WS_XML_ATTRIBUTE *src, WS_XML_WRITER_ENCODING_TYPE enc )
 {
     WS_XML_ATTRIBUTE *dst;
-    const WS_XML_STRING *prefix = src->prefix;
-    const WS_XML_STRING *localname = src->localName;
-    const WS_XML_STRING *ns = src->localName;
-    const WS_XML_TEXT *text = src->value;
+    HRESULT hr;
 
-    if (!(dst = heap_alloc( sizeof(*dst) ))) return NULL;
+    if (!(dst = heap_alloc_zero( sizeof(*dst) ))) return NULL;
     dst->singleQuote = src->singleQuote;
     dst->isXmlNs     = src->isXmlNs;
 
-    if (!prefix) dst->prefix = NULL;
-    else if (!(dst->prefix = dup_xml_string( prefix, FALSE ))) goto error;
-    if (!(dst->localName = dup_xml_string( localname, FALSE ))) goto error;
-    if (!(dst->ns = dup_xml_string( ns, FALSE ))) goto error;
+    if (src->prefix && !(dst->prefix = dup_xml_string( src->prefix, FALSE ))) goto error;
+    if (src->localName && !(dst->localName = dup_xml_string( src->localName, FALSE ))) goto error;
+    if (src->ns && !(dst->ns = dup_xml_string( src->ns, FALSE ))) goto error;
 
-    if (text)
+    if (src->value)
     {
-        WS_XML_UTF8_TEXT *utf8;
-        const WS_XML_UTF8_TEXT *utf8_src = (const WS_XML_UTF8_TEXT *)text;
-        if (!(utf8 = alloc_utf8_text( utf8_src->value.bytes, utf8_src->value.length ))) goto error;
-        dst->value = &utf8->text;
+        switch (enc)
+        {
+        case WS_XML_WRITER_ENCODING_TYPE_BINARY:
+            if ((hr = text_to_text( src->value, NULL, NULL, &dst->value )) != S_OK) goto error;
+            break;
+
+        case WS_XML_WRITER_ENCODING_TYPE_TEXT:
+            if ((hr = text_to_utf8text( src->value, NULL, NULL, (WS_XML_UTF8_TEXT **)&dst->value )) != S_OK)
+                goto error;
+            break;
+
+        default:
+            ERR( "unhandled encoding %u\n", enc );
+            goto error;
+        }
     }
 
     return dst;
@@ -175,7 +182,8 @@ error:
     return NULL;
 }
 
-static WS_XML_ATTRIBUTE **dup_attributes( WS_XML_ATTRIBUTE * const *src, ULONG count )
+static WS_XML_ATTRIBUTE **dup_attributes( WS_XML_ATTRIBUTE * const *src, ULONG count,
+                                          WS_XML_WRITER_ENCODING_TYPE enc )
 {
     WS_XML_ATTRIBUTE **dst;
     ULONG i;
@@ -183,7 +191,7 @@ static WS_XML_ATTRIBUTE **dup_attributes( WS_XML_ATTRIBUTE * const *src, ULONG c
     if (!(dst = heap_alloc( sizeof(*dst) * count ))) return NULL;
     for (i = 0; i < count; i++)
     {
-        if (!(dst[i] = dup_attribute( src[i] )))
+        if (!(dst[i] = dup_attribute( src[i], enc )))
         {
             for (; i > 0; i--) free_attribute( dst[i - 1] );
             heap_free( dst );
@@ -193,7 +201,7 @@ static WS_XML_ATTRIBUTE **dup_attributes( WS_XML_ATTRIBUTE * const *src, ULONG c
     return dst;
 }
 
-static struct node *dup_element_node( const WS_XML_ELEMENT_NODE *src )
+static struct node *dup_element_node( const WS_XML_ELEMENT_NODE *src, WS_XML_WRITER_ENCODING_TYPE enc )
 {
     struct node *node;
     WS_XML_ELEMENT_NODE *dst;
@@ -206,7 +214,7 @@ static struct node *dup_element_node( const WS_XML_ELEMENT_NODE *src )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) return NULL;
     dst = &node->hdr;
 
-    if (count && !(dst->attributes = dup_attributes( attrs, count ))) goto error;
+    if (count && !(dst->attributes = dup_attributes( attrs, count, enc ))) goto error;
     dst->attributeCount = count;
 
     if (prefix && !(dst->prefix = dup_xml_string( prefix, FALSE ))) goto error;
@@ -219,25 +227,38 @@ error:
     return NULL;
 }
 
-static struct node *dup_text_node( const WS_XML_TEXT_NODE *src )
+static struct node *dup_text_node( const WS_XML_TEXT_NODE *src, WS_XML_WRITER_ENCODING_TYPE enc )
 {
     struct node *node;
     WS_XML_TEXT_NODE *dst;
+    HRESULT hr;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
     dst = (WS_XML_TEXT_NODE *)node;
+    if (!src->text) return node;
 
-    if (src->text)
+    switch (enc)
     {
-        WS_XML_UTF8_TEXT *utf8;
-        const WS_XML_UTF8_TEXT *utf8_src = (const WS_XML_UTF8_TEXT *)src->text;
-        if (!(utf8 = alloc_utf8_text( utf8_src->value.bytes, utf8_src->value.length )))
-        {
-            free_node( node );
-            return NULL;
-        }
-        dst->text = &utf8->text;
+    case WS_XML_WRITER_ENCODING_TYPE_BINARY:
+        hr = text_to_text( src->text, NULL, NULL, &dst->text );
+        break;
+
+    case WS_XML_WRITER_ENCODING_TYPE_TEXT:
+        hr = text_to_utf8text( src->text, NULL, NULL, (WS_XML_UTF8_TEXT **)&dst->text );
+        break;
+
+    default:
+        ERR( "unhandled encoding %u\n", enc );
+        free_node( node );
+        return NULL;
     }
+
+    if (hr != S_OK)
+    {
+        free_node( node );
+        return NULL;
+    }
+
     return node;
 }
 
@@ -259,15 +280,15 @@ static struct node *dup_comment_node( const WS_XML_COMMENT_NODE *src )
     return node;
 }
 
-static struct node *dup_node( const struct node *src )
+static struct node *dup_node( const struct node *src, WS_XML_WRITER_ENCODING_TYPE enc )
 {
     switch (node_type( src ))
     {
     case WS_XML_NODE_TYPE_ELEMENT:
-        return dup_element_node( &src->hdr );
+        return dup_element_node( &src->hdr, enc );
 
     case WS_XML_NODE_TYPE_TEXT:
-        return dup_text_node( (const WS_XML_TEXT_NODE *)src );
+        return dup_text_node( (const WS_XML_TEXT_NODE *)src, enc );
 
     case WS_XML_NODE_TYPE_COMMENT:
         return dup_comment_node( (const WS_XML_COMMENT_NODE *)src );
@@ -286,12 +307,12 @@ static struct node *dup_node( const struct node *src )
     return NULL;
 }
 
-static HRESULT dup_tree( struct node **dst, const struct node *src )
+static HRESULT dup_tree( const struct node *src, WS_XML_WRITER_ENCODING_TYPE enc, struct node **dst )
 {
     struct node *parent;
     const struct node *child;
 
-    if (!*dst && !(*dst = dup_node( src ))) return E_OUTOFMEMORY;
+    if (!*dst && !(*dst = dup_node( src, enc ))) return E_OUTOFMEMORY;
     parent = *dst;
 
     LIST_FOR_EACH_ENTRY( child, &src->children, struct node, entry )
@@ -299,7 +320,7 @@ static HRESULT dup_tree( struct node **dst, const struct node *src )
         HRESULT hr = E_OUTOFMEMORY;
         struct node *new_child;
 
-        if (!(new_child = dup_node( child )) || (hr = dup_tree( &new_child, child )) != S_OK)
+        if (!(new_child = dup_node( child, enc )) || (hr = dup_tree( child, enc, &new_child )) != S_OK)
         {
             destroy_nodes( *dst );
             return hr;
@@ -2970,7 +2991,7 @@ static HRESULT read_node( struct reader *reader )
     }
 }
 
-HRESULT copy_node( WS_XML_READER *handle, struct node **node )
+HRESULT copy_node( WS_XML_READER *handle, WS_XML_WRITER_ENCODING_TYPE enc, struct node **node )
 {
     struct reader *reader = (struct reader *)handle;
     const struct list *ptr;
@@ -3001,7 +3022,7 @@ HRESULT copy_node( WS_XML_READER *handle, struct node **node )
 
     start = LIST_ENTRY( ptr, struct node, entry );
     if (node_type( start ) == WS_XML_NODE_TYPE_EOF) hr = WS_E_INVALID_OPERATION;
-    else hr = dup_tree( node, start );
+    else hr = dup_tree( start, enc, node );
 
 done:
     LeaveCriticalSection( &reader->cs );

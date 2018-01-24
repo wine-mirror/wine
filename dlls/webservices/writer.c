@@ -1034,8 +1034,8 @@ static ULONG encode_base64( const unsigned char *bin, ULONG len, unsigned char *
     return i;
 }
 
-static HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT *old, ULONG *offset,
-                                 WS_XML_UTF8_TEXT **ret )
+HRESULT text_to_utf8text( const WS_XML_TEXT *text, const WS_XML_UTF8_TEXT *old, ULONG *offset,
+                          WS_XML_UTF8_TEXT **ret )
 {
     ULONG len_old = old ? old->value.length : 0;
     if (offset) *offset = len_old;
@@ -2254,7 +2254,7 @@ HRESULT WINAPI WsWriteStartElement( WS_XML_WRITER *handle, const WS_XML_STRING *
     return hr;
 }
 
-static HRESULT text_to_text( const WS_XML_TEXT *text, const WS_XML_TEXT *old, ULONG *offset, WS_XML_TEXT **ret )
+HRESULT text_to_text( const WS_XML_TEXT *text, const WS_XML_TEXT *old, ULONG *offset, WS_XML_TEXT **ret )
 {
     if (offset) *offset = 0;
     switch (text->textType)
@@ -4758,7 +4758,7 @@ HRESULT WINAPI WsCopyNode( WS_XML_WRITER *handle, WS_XML_READER *reader, WS_ERRO
         return WS_E_INVALID_FORMAT;
     }
 
-    if ((hr = copy_node( reader, &node )) != S_OK) goto done;
+    if ((hr = copy_node( reader, writer->output_enc, &node )) != S_OK) goto done;
     current = writer->current;
     write_insert_node( writer, parent, node );
 
