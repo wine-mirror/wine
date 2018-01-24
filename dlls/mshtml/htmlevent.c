@@ -396,10 +396,12 @@ static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLEle
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = NULL;
-    if(This->event && This->event->target)
-        IDispatchEx_QueryInterface(&This->event->target->dispex.IDispatchEx_iface, &IID_IHTMLElement, (void**)p);
-    return S_OK;
+    if(!This->event) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    return IDOMEvent_get_srcElement(&This->event->IDOMEvent_iface, p);
 }
 
 static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
@@ -1167,8 +1169,14 @@ static HRESULT WINAPI DOMEvent_get_cancelBubble(IDOMEvent *iface, VARIANT_BOOL *
 static HRESULT WINAPI DOMEvent_get_srcElement(IDOMEvent *iface, IHTMLElement **p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->target)
+        IDispatchEx_QueryInterface(&This->target->dispex.IDispatchEx_iface, &IID_IHTMLElement, (void**)p);
+    else
+        *p = NULL;
+    return S_OK;
 }
 
 static const IDOMEventVtbl DOMEventVtbl = {

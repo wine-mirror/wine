@@ -469,6 +469,7 @@ function test_dispatch_event() {
         return function(event) {
             ok(event === e, "event != e");
             ok(event.target === child, "target != child");
+            ok(event.srcElement === child, "srcElement != child");
             calls += msg + ",";
         };
     }
@@ -485,12 +486,14 @@ function test_dispatch_event() {
     e = document.createEvent("Event");
     e.initEvent("click", true, true);
     ok(e.target === null, "e.target != null");
+    ok(e.srcElement === null, "e.srcElement != null");
 
     calls = "";
     child.dispatchEvent(e);
     ok(calls === "parent.click(capture),child.click(capture),child.click(bubble),"
        + "parent.click(bubble),", "calls = " + calls);
     ok(e.target === child, "e.target != child");
+    ok(e.srcElement === child, "e.srcElement != child");
     ok(e.currentTarget === null, "e.currentTarget != null");
 
     e = document.createEvent("Event");
