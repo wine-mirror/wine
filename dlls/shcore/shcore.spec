@@ -7,7 +7,7 @@
 @ stub DllGetActivationFactory
 @ stdcall -private DllGetClassObject(ptr ptr ptr) shell32.DllGetClassObject
 @ stdcall GetCurrentProcessExplicitAppUserModelID(ptr) shell32.GetCurrentProcessExplicitAppUserModelID
-@ stub GetDpiForMonitor
+@ stdcall GetDpiForMonitor(long long ptr ptr)
 @ stub GetDpiForShellUIComponent
 @ stdcall GetProcessDpiAwareness(long ptr)
 @ stub GetProcessReference

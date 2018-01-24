@@ -21,6 +21,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shellscalingapi.h"
 #include "wine/debug.h"
 
@@ -46,5 +48,19 @@ HRESULT WINAPI GetProcessDpiAwareness(HANDLE process, PROCESS_DPI_AWARENESS *val
 {
     FIXME("(%p, %p): stub\n", process, value);
     if (value) *value = PROCESS_DPI_UNAWARE;
+    return S_OK;
+}
+
+HRESULT WINAPI GetDpiForMonitor(HMONITOR monitor, MONITOR_DPI_TYPE type, UINT *x, UINT *y)
+{
+    HDC hDC;
+
+    FIXME("(%p, %u, %p, %p): semi-stub\n", monitor, type, x, y);
+
+    hDC = GetDC(0);
+    if (x) *x = GetDeviceCaps(hDC, LOGPIXELSX);
+    if (y) *y = GetDeviceCaps(hDC, LOGPIXELSY);
+    ReleaseDC(0, hDC);
+
     return S_OK;
 }
