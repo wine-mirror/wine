@@ -369,6 +369,7 @@ my %remapped_wgl_functions =
 my %supported_wgl_extensions =
    (
     "WGL_ARB_create_context" => 1,
+    "WGL_ARB_create_context_no_error" => 1,
     "WGL_ARB_create_context_profile" => 1,
     "WGL_ARB_extensions_string" => 1,
     "WGL_ARB_make_current_read" => 1,

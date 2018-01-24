@@ -163,6 +163,8 @@ typedef XID GLXPbuffer;
 #define GLX_CONTEXT_MAJOR_VERSION_ARB     0x2091
 #define GLX_CONTEXT_MINOR_VERSION_ARB     0x2092
 #define GLX_CONTEXT_FLAGS_ARB             0x2094
+/** GLX_ARB_create_context_no_error */
+#define GLX_CONTEXT_OPENGL_NO_ERROR_ARB   0x31B3
 /** GLX_ARB_create_context_profile */
 #define GLX_CONTEXT_PROFILE_MASK_ARB      0x9126
 /** GLX_ATI_pixel_format_float */
@@ -2118,6 +2120,12 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
                     pContextAttribList += 2;
                     ret->numAttribs++;
                     break;
+                case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:
+                    pContextAttribList[0] = GLX_CONTEXT_OPENGL_NO_ERROR_ARB;
+                    pContextAttribList[1] = attribList[1];
+                    pContextAttribList += 2;
+                    ret->numAttribs++;
+                    break;
                 case WGL_CONTEXT_PROFILE_MASK_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_PROFILE_MASK_ARB;
                     pContextAttribList[1] = attribList[1];
@@ -3179,6 +3187,8 @@ static void X11DRV_WineGL_LoadExtensions(void)
         register_extension( "WGL_ARB_create_context" );
         opengl_funcs.ext.p_wglCreateContextAttribsARB = X11DRV_wglCreateContextAttribsARB;
 
+        if (has_extension( WineGLInfo.glxExtensions, "GLX_ARB_create_context_no_error" ))
+            register_extension( "WGL_ARB_create_context_no_error" );
         if (has_extension( WineGLInfo.glxExtensions, "GLX_ARB_create_context_profile"))
             register_extension("WGL_ARB_create_context_profile");
     }

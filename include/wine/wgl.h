@@ -5016,6 +5016,7 @@ typedef unsigned int GLhandleARB;
 #define WGL_CONTEXT_LAYER_PLANE_ARB                                   0x2093
 #define WGL_CONTEXT_MAJOR_VERSION_ARB                                 0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB                                 0x2092
+#define WGL_CONTEXT_OPENGL_NO_ERROR_ARB                               0x31B3
 #define WGL_CONTEXT_PROFILE_MASK_ARB                                  0x9126
 #define WGL_CUBE_MAP_FACE_ARB                                         0x207C
 #define WGL_DEPTH_BITS_ARB                                            0x2022
