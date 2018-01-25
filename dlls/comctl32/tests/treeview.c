@@ -1342,9 +1342,6 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
         break;
     }
 
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
     }
 
     defwndproc_counter++;
@@ -2682,7 +2679,6 @@ START_TEST(treeview)
     ULONG_PTR ctx_cookie;
     HANDLE hCtx;
     WNDCLASSA wc;
-    MSG msg;
 
     init_functions();
 
@@ -2760,11 +2756,4 @@ START_TEST(treeview)
     test_WM_GETDLGCODE();
 
     unload_v6_module(ctx_cookie, hCtx);
-
-    PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
-    while(GetMessageA(&msg, 0, 0, 0))
-    {
-        TranslateMessage(&msg);
-        DispatchMessageA(&msg);
-    }
 }

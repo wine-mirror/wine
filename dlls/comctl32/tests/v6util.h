@@ -70,6 +70,7 @@ static BOOL load_v6_module(ULONG_PTR *pcookie, HANDLE *hCtx)
 {
     ACTCTX_SECTION_KEYED_DATA data;
     DWORD written;
+    HMODULE hmod;
     ACTCTXA ctx;
     HANDLE file;
     BOOL ret;
@@ -103,6 +104,8 @@ static BOOL load_v6_module(ULONG_PTR *pcookie, HANDLE *hCtx)
     *hCtx = CreateActCtxA(&ctx);
     ok(*hCtx != 0, "Expected context handle\n");
 
+    hmod = GetModuleHandleA("comctl32.dll");
+
     ret = ActivateActCtx(*hCtx, pcookie);
     ok(ret, "Failed to activate context, error %d.\n", GetLastError());
 
@@ -117,7 +120,10 @@ static BOOL load_v6_module(ULONG_PTR *pcookie, HANDLE *hCtx)
         "comctl32.dll", &data);
     ok(ret, "failed to find comctl32.dll in active context, %u\n", GetLastError());
     if (ret)
+    {
+        FreeLibrary(hmod);
         LoadLibraryA("comctl32.dll");
+    }
 
     return ret;
 }
