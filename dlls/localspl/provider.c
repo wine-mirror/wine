@@ -31,8 +31,9 @@
 #include "ddk/winddiui.h"
 #include "ddk/winsplp.h"
 
-#include "wine/list.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
+#include "wine/list.h"
 #include "wine/unicode.h"
 #include "localspl_private.h"
 
