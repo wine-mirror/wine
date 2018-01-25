@@ -453,6 +453,36 @@ void wined3d_display_mode_from_dxgi(struct wined3d_display_mode *wined3d_mode,
     wined3d_mode->scanline_ordering = wined3d_scanline_ordering_from_dxgi(mode->ScanlineOrdering);
 }
 
+DXGI_USAGE dxgi_usage_from_wined3d_usage(DWORD wined3d_usage)
+{
+    DXGI_USAGE dxgi_usage = 0;
+
+    if (wined3d_usage & WINED3DUSAGE_TEXTURE)
+        dxgi_usage |= DXGI_USAGE_SHADER_INPUT;
+    if (wined3d_usage & WINED3DUSAGE_RENDERTARGET)
+        dxgi_usage |= DXGI_USAGE_RENDER_TARGET_OUTPUT;
+
+    wined3d_usage &= ~(WINED3DUSAGE_TEXTURE | WINED3DUSAGE_RENDERTARGET);
+    if (wined3d_usage)
+        FIXME("Unhandled wined3d usage %#x.\n", wined3d_usage);
+    return dxgi_usage;
+}
+
+DWORD wined3d_usage_from_dxgi_usage(DXGI_USAGE dxgi_usage)
+{
+    DWORD wined3d_usage = 0;
+
+    if (dxgi_usage & DXGI_USAGE_SHADER_INPUT)
+        wined3d_usage |= WINED3DUSAGE_TEXTURE;
+    if (dxgi_usage & DXGI_USAGE_RENDER_TARGET_OUTPUT)
+        wined3d_usage |= WINED3DUSAGE_RENDERTARGET;
+
+    dxgi_usage &= ~(DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_RENDER_TARGET_OUTPUT);
+    if (dxgi_usage)
+        FIXME("Unhandled DXGI usage %#x.\n", dxgi_usage);
+    return wined3d_usage;
+}
+
 #define DXGI_WINED3D_SWAPCHAIN_FLAGS \
         (WINED3D_SWAPCHAIN_USE_CLOSEST_MATCHING_MODE | WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT)
 

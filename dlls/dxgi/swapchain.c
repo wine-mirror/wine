@@ -273,7 +273,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain1 *iface, 
     struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain1(iface);
     struct wined3d_swapchain_desc wined3d_desc;
 
-    FIXME("iface %p, desc %p partial stub!\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
     if (!desc)
     {
@@ -285,7 +285,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain1 *iface, 
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     wined3d_mutex_unlock();
 
-    FIXME("Ignoring ScanlineOrdering, Scaling, BufferUsage and SwapEffect.\n");
+    FIXME("Ignoring ScanlineOrdering, Scaling and SwapEffect.\n");
 
     desc->BufferDesc.Width = wined3d_desc.backbuffer_width;
     desc->BufferDesc.Height = wined3d_desc.backbuffer_height;
@@ -294,8 +294,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain1 *iface, 
     desc->BufferDesc.Format = dxgi_format_from_wined3dformat(wined3d_desc.backbuffer_format);
     desc->BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
     desc->BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-    dxgi_sample_desc_from_wined3d(&desc->SampleDesc, wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
-    desc->BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    dxgi_sample_desc_from_wined3d(&desc->SampleDesc,
+            wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
+    desc->BufferUsage = dxgi_usage_from_wined3d_usage(wined3d_desc.backbuffer_usage);
     desc->BufferCount = wined3d_desc.backbuffer_count;
     desc->OutputWindow = wined3d_desc.device_window;
     desc->Windowed = wined3d_desc.windowed;
@@ -444,7 +445,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc1(IDXGISwapChain1 *iface,
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     wined3d_mutex_unlock();
 
-    FIXME("Ignoring Stereo, BufferUsage, Scaling, SwapEffect and AlphaMode.\n");
+    FIXME("Ignoring Stereo, Scaling, SwapEffect and AlphaMode.\n");
 
     desc->Width = wined3d_desc.backbuffer_width;
     desc->Height = wined3d_desc.backbuffer_height;
@@ -452,7 +453,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc1(IDXGISwapChain1 *iface,
     desc->Stereo = FALSE;
     dxgi_sample_desc_from_wined3d(&desc->SampleDesc,
             wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
-    desc->BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    desc->BufferUsage = dxgi_usage_from_wined3d_usage(wined3d_desc.backbuffer_usage);
     desc->BufferCount = wined3d_desc.backbuffer_count;
     desc->Scaling = DXGI_SCALING_STRETCH;
     desc->SwapEffect = DXGI_SWAP_EFFECT_DISCARD;

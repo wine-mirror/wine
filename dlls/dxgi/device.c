@@ -169,24 +169,23 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
     UINT i;
     UINT j;
 
-    TRACE("iface %p, desc %p, surface_count %u, usage %#x, shared_resource %p, surface %p\n",
+    TRACE("iface %p, desc %p, surface_count %u, usage %#x, shared_resource %p, surface %p.\n",
             iface, desc, surface_count, usage, shared_resource, surface);
 
     hr = IWineDXGIDevice_QueryInterface(iface, &IID_IWineDXGIDeviceParent, (void **)&dxgi_device_parent);
     if (FAILED(hr))
     {
-        ERR("Device should implement IWineDXGIDeviceParent\n");
+        ERR("Device should implement IWineDXGIDeviceParent.\n");
         return E_FAIL;
     }
 
     device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
 
-    FIXME("Implement DXGI<->wined3d usage conversion\n");
     surface_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     surface_desc.format = wined3dformat_from_dxgi_format(desc->Format);
     wined3d_sample_desc_from_dxgi(&surface_desc.multisample_type,
             &surface_desc.multisample_quality, &desc->SampleDesc);
-    surface_desc.usage = usage;
+    surface_desc.usage = wined3d_usage_from_dxgi_usage(usage);
     surface_desc.pool = WINED3D_POOL_DEFAULT;
     surface_desc.width = desc->Width;
     surface_desc.height = desc->Height;
@@ -212,11 +211,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         wined3d_texture_decref(wined3d_texture);
         if (FAILED(hr))
         {
-            ERR("Surface should implement IDXGISurface\n");
+            ERR("Surface should implement IDXGISurface.\n");
             goto fail;
         }
 
-        TRACE("Created IDXGISurface %p (%u/%u)\n", surface[i], i + 1, surface_count);
+        TRACE("Created IDXGISurface %p (%u/%u).\n", surface[i], i + 1, surface_count);
     }
     wined3d_mutex_unlock();
     IWineDXGIDeviceParent_Release(dxgi_device_parent);
