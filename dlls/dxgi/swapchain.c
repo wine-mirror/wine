@@ -532,10 +532,16 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_Present1(IDXGISwapChain1 *iface,
     TRACE("iface %p, sync_interval %u, flags %#x, present_parameters %p.\n",
             iface, sync_interval, flags, present_parameters);
 
+    if (flags & ~DXGI_PRESENT_TEST)
+        FIXME("Unimplemented flags %#x.\n", flags);
+    if (flags & DXGI_PRESENT_TEST)
+    {
+        WARN("Returning S_OK for DXGI_PRESENT_TEST.\n");
+        return S_OK;
+    }
+
     if (sync_interval)
         FIXME("Unimplemented sync interval %u.\n", sync_interval);
-    if (flags)
-        FIXME("Unimplemented flags %#x.\n", flags);
     if (present_parameters)
         FIXME("Ignored present parameters %p.\n", present_parameters);
 
