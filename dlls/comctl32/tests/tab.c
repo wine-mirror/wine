@@ -83,78 +83,12 @@ static LRESULT tcn_selchanging_result;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
-static const struct message add_tab_to_parent[] = {
-    { TCM_INSERTITEMA, sent },
-    { TCM_INSERTITEMA, sent|optional },
-    { WM_NOTIFYFORMAT, sent|defwinproc },
-    { WM_QUERYUISTATE, sent|wparam|lparam|defwinproc|optional, 0, 0 },
-    { WM_PARENTNOTIFY, sent|defwinproc },
-    { TCM_INSERTITEMA, sent },
-    { TCM_INSERTITEMA, sent },
-    { TCM_INSERTITEMA, sent },
-    { TCM_INSERTITEMA, sent|optional },
-    { 0 }
-};
-
-static const struct message add_tab_to_parent_interactive[] = {
-    { TCM_INSERTITEMA, sent },
-    { TCM_INSERTITEMA, sent },
-    { WM_NOTIFYFORMAT, sent|defwinproc },
-    { WM_QUERYUISTATE, sent|wparam|lparam|defwinproc, 0, 0 },
-    { WM_PARENTNOTIFY, sent|defwinproc },
-    { TCM_INSERTITEMA, sent },
-    { TCM_INSERTITEMA, sent },
-    { TCM_INSERTITEMA, sent },
-    { WM_SHOWWINDOW, sent},
-    { WM_WINDOWPOSCHANGING, sent},
-    { WM_WINDOWPOSCHANGING, sent},
-    { WM_NCACTIVATE, sent},
-    { WM_ACTIVATE, sent},
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional},
-    { WM_IME_NOTIFY, sent|defwinproc|optional},
-    { WM_SETFOCUS, sent|defwinproc},
-    { WM_WINDOWPOSCHANGED, sent},
-    { WM_SIZE, sent},
-    { WM_MOVE, sent},
-    { 0 }
-};
-
-static const struct message add_tab_control_parent_seq[] = {
-    { WM_NOTIFYFORMAT, sent },
-    { WM_QUERYUISTATE, sent|wparam|lparam|optional, 0, 0 },
-    { 0 }
-};
-
-static const struct message add_tab_control_parent_seq_interactive[] = {
-    { WM_NOTIFYFORMAT, sent },
-    { WM_QUERYUISTATE, sent|wparam|lparam, 0, 0 },
-    { WM_WINDOWPOSCHANGING, sent|optional},
-    { WM_NCACTIVATE, sent},
-    { WM_ACTIVATE, sent},
-    { WM_WINDOWPOSCHANGING, sent|optional},
-    { WM_KILLFOCUS, sent},
-    { WM_IME_SETCONTEXT, sent|optional},
-    { WM_IME_NOTIFY, sent|optional},
-    { 0 }
-};
-
 static const struct message empty_sequence[] = {
-    { 0 }
-};
-
-static const struct message get_item_count_seq[] = {
-    { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
 
 static const struct message get_row_count_seq[] = {
     { TCM_GETROWCOUNT, sent|wparam|lparam, 0, 0 },
-    { 0 }
-};
-
-static const struct message get_item_rect_seq[] = {
-    { TCM_GETITEMRECT, sent },
-    { TCM_GETITEMRECT, sent },
     { 0 }
 };
 
@@ -1002,68 +936,6 @@ static void test_getset_tooltips(void)
     DestroyWindow(toolTip);
 }
 
-static void test_misc(void)
-{
-    const INT nTabs = 5;
-    HWND hTab;
-    RECT rTab;
-    INT nTabsRetrieved;
-    INT rowCount;
-    INT dpi;
-    HDC hdc;
-
-    ok(parent_wnd != NULL, "no parent window!\n");
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-
-    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
-    ok(hTab != NULL, "Failed to create tab control\n");
-
-    if(!winetest_interactive)
-        ok_sequence(sequences, TAB_SEQ_INDEX, add_tab_to_parent,
-                    "Tab sequence, after adding tab control to parent", TRUE);
-    else
-        ok_sequence(sequences, TAB_SEQ_INDEX, add_tab_to_parent_interactive,
-                    "Tab sequence, after adding tab control to parent", TRUE);
-
-    if(!winetest_interactive)
-        ok_sequence(sequences, PARENT_SEQ_INDEX, add_tab_control_parent_seq,
-                    "Parent after sequence, adding tab control to parent", TRUE);
-    else
-        ok_sequence(sequences, PARENT_SEQ_INDEX, add_tab_control_parent_seq_interactive,
-                    "Parent after sequence, adding tab control to parent", TRUE);
-
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    ok(SendMessageA(hTab, TCM_SETMINTABWIDTH, 0, -1) > 0, "TCM_SETMINTABWIDTH returned < 0\n");
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Set minTabWidth test parent sequence", FALSE);
-
-    /* Testing GetItemCount */
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    nTabsRetrieved = SendMessageA(hTab, TCM_GETITEMCOUNT, 0, 0);
-    expect(nTabs, nTabsRetrieved);
-    ok_sequence(sequences, TAB_SEQ_INDEX, get_item_count_seq, "Get itemCount test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Getset itemCount test parent sequence", FALSE);
-
-    /* Testing GetRowCount */
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    rowCount = SendMessageA(hTab, TCM_GETROWCOUNT, 0, 0);
-    expect(1, rowCount);
-    ok_sequence(sequences, TAB_SEQ_INDEX, get_row_count_seq, "Get rowCount test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Get rowCount test parent sequence", FALSE);
-
-    /* Testing GetItemRect */
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    ok(SendMessageA(hTab, TCM_GETITEMRECT, 0, (LPARAM)&rTab), "GetItemRect failed.\n");
-
-    hdc = GetDC(hTab);
-    dpi = GetDeviceCaps(hdc, LOGPIXELSX);
-    ReleaseDC(hTab, hdc);
-    CHECKSIZE(hTab, dpi, -1 , "Default Width");
-    ok_sequence(sequences, TAB_SEQ_INDEX, get_item_rect_seq, "Get itemRect test sequence", FALSE);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Get itemRect test parent sequence", FALSE);
-
-    DestroyWindow(hTab);
-}
-
 static void test_adjustrect(void)
 {
     HWND hTab;
@@ -1543,6 +1415,28 @@ todo_wine
     DestroyWindow(hTab);
 }
 
+static void test_TCM_GETROWCOUNT(void)
+{
+    const INT nTabs = 5;
+    HWND hTab;
+    INT count;
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    count = SendMessageA(hTab, TCM_GETROWCOUNT, 0, 0);
+    ok(count == 1, "Unexpected row count %d.\n", count);
+
+    ok_sequence(sequences, TAB_SEQ_INDEX, get_row_count_seq, "Get rowCount test sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Get rowCount test parent sequence", FALSE);
+
+    DestroyWindow(hTab);
+}
+
 START_TEST(tab)
 {
     LOGFONTA logfont;
@@ -1556,23 +1450,19 @@ START_TEST(tab)
 
     init_functions();
 
-    test_width();
-
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     parent_wnd = createParentWindow();
     ok(parent_wnd != NULL, "Failed to create parent window!\n");
 
+    test_width();
     test_curfocus();
     test_cursel();
     test_extendedstyle();
     test_unicodeformat();
     test_getset_item();
     test_getset_tooltips();
-    test_misc();
-
     test_adjustrect();
-
     test_insert_focus();
     test_delete_focus();
     test_delete_selection();
@@ -1582,6 +1472,7 @@ START_TEST(tab)
     test_WM_CONTEXTMENU();
     test_create();
     test_TCN_SELCHANGING();
+    test_TCM_GETROWCOUNT();
 
     DestroyWindow(parent_wnd);
 }
