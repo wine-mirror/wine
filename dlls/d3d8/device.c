@@ -207,6 +207,7 @@ static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapch
     swapchain_desc->backbuffer_height = present_parameters->BackBufferHeight;
     swapchain_desc->backbuffer_format = wined3dformat_from_d3dformat(present_parameters->BackBufferFormat);
     swapchain_desc->backbuffer_count = max(1, present_parameters->BackBufferCount);
+    swapchain_desc->backbuffer_usage = WINED3DUSAGE_RENDERTARGET;
     swapchain_desc->multisample_type = present_parameters->MultiSampleType;
     swapchain_desc->multisample_quality = 0; /* d3d9 only */
     swapchain_desc->swap_effect = present_parameters->SwapEffect;

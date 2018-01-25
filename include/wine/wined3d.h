@@ -1712,6 +1712,7 @@ struct wined3d_swapchain_desc
     UINT backbuffer_height;
     enum wined3d_format_id backbuffer_format;
     UINT backbuffer_count;
+    DWORD backbuffer_usage;
     enum wined3d_multisample_type multisample_type;
     DWORD multisample_quality;
     enum wined3d_swap_effect swap_effect;

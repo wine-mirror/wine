@@ -920,7 +920,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
             goto err;
         }
 
-        texture_desc.usage |= WINED3DUSAGE_RENDERTARGET;
+        texture_desc.usage = swapchain->desc.backbuffer_usage;
         for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
         {
             TRACE("Creating back buffer %u.\n", i);

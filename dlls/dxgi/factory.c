@@ -313,6 +313,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IDXGIFactor
     wined3d_desc.backbuffer_height = swapchain_desc->Height;
     wined3d_desc.backbuffer_format = wined3dformat_from_dxgi_format(swapchain_desc->Format);
     wined3d_desc.backbuffer_count = swapchain_desc->BufferCount;
+    wined3d_desc.backbuffer_usage = WINED3DUSAGE_RENDERTARGET;
     wined3d_sample_desc_from_dxgi(&wined3d_desc.multisample_type,
             &wined3d_desc.multisample_quality, &swapchain_desc->SampleDesc);
     wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;

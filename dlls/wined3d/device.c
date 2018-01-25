@@ -4732,6 +4732,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     TRACE("swap_interval %u\n", swapchain_desc->swap_interval);
     TRACE("auto_restore_display_mode %#x\n", swapchain_desc->auto_restore_display_mode);
 
+    if (swapchain_desc->backbuffer_usage != WINED3DUSAGE_RENDERTARGET)
+        FIXME("Got unexpected backbuffer usage %#x.\n", swapchain_desc->backbuffer_usage);
+
     /* No special treatment of these parameters. Just store them */
     swapchain->desc.swap_effect = swapchain_desc->swap_effect;
     swapchain->desc.enable_auto_depth_stencil = swapchain_desc->enable_auto_depth_stencil;
