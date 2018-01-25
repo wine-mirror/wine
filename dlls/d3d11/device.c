@@ -5771,11 +5771,8 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     D3D11_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("device_parent %p, container_parent %p, wined3d_desc %p, texture flags %#x, "
-            "wined3d_texture %p partial stub!\n", device_parent, container_parent,
-            wined3d_desc, texture_flags, wined3d_texture);
-
-    FIXME("Implement DXGI<->wined3d usage conversion.\n");
+    TRACE("device_parent %p, container_parent %p, wined3d_desc %p, texture_flags %#x, wined3d_texture %p.\n",
+            device_parent, container_parent, wined3d_desc, texture_flags, wined3d_texture);
 
     desc.Width = wined3d_desc->width;
     desc.Height = wined3d_desc->height;
@@ -5785,7 +5782,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     desc.SampleDesc.Count = wined3d_desc->multisample_type ? wined3d_desc->multisample_type : 1;
     desc.SampleDesc.Quality = wined3d_desc->multisample_quality;
     desc.Usage = D3D11_USAGE_DEFAULT;
-    desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    desc.BindFlags = d3d11_bind_flags_from_wined3d_usage(wined3d_desc->usage);
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 
