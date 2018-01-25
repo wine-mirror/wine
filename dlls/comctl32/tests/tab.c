@@ -974,8 +974,9 @@ static void test_getset_item(void)
 static void test_getset_tooltips(void)
 {
     char toolTipText[32] = "ToolTip Text Test";
+    HWND hTab, toolTip, hwnd;
     const INT nTabs = 5;
-    HWND hTab, toolTip;
+    int ret;
 
     hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
     ok(hTab != NULL, "Failed to create tab control\n");
@@ -983,16 +984,22 @@ static void test_getset_tooltips(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     toolTip = create_tooltip(hTab, toolTipText);
-    SendMessageA(hTab, TCM_SETTOOLTIPS, (LPARAM)toolTip, 0);
-    ok(toolTip == (HWND)SendMessageA(hTab, TCM_GETTOOLTIPS, 0,0), "ToolTip was set incorrectly.\n");
+    ret = SendMessageA(hTab, TCM_SETTOOLTIPS, (WPARAM)toolTip, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+    hwnd = (HWND)SendMessageA(hTab, TCM_GETTOOLTIPS, 0, 0);
+    ok(toolTip == hwnd, "Unexpected tooltip window.\n");
 
-    SendMessageA(hTab, TCM_SETTOOLTIPS, 0, 0);
-    ok(!SendMessageA(hTab, TCM_GETTOOLTIPS, 0,0), "ToolTip was set incorrectly.\n");
+    ret = SendMessageA(hTab, TCM_SETTOOLTIPS, 0, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+    hwnd = (HWND)SendMessageA(hTab, TCM_GETTOOLTIPS, 0, 0);
+    ok(hwnd == NULL, "Unexpected tooltip window.\n");
+    ok(IsWindow(toolTip), "Expected tooltip window to be alive.\n");
 
     ok_sequence(sequences, TAB_SEQ_INDEX, getset_tooltip_seq, "Getset tooltip test sequence", TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, getset_tooltip_parent_seq, "Getset tooltip test parent sequence", TRUE);
 
     DestroyWindow(hTab);
+    DestroyWindow(toolTip);
 }
 
 static void test_misc(void)
