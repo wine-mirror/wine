@@ -728,3 +728,33 @@ NTSTATUS NTAPI SpLsaModeInitialize(ULONG lsa_version, PULONG package_version,
 
     return STATUS_SUCCESS;
 }
+
+static SECPKG_USER_FUNCTION_TABLE kerberos_user_table =
+{
+    NULL, /* SpInstanceInit */
+    NULL, /* SpInitUserModeContext */
+    NULL, /* SpMakeSignature */
+    NULL, /* SpVerifySignature */
+    NULL, /* SpSealMessage */
+    NULL, /* SpUnsealMessage */
+    NULL, /* SpGetContextToken */
+    NULL, /* SpQueryContextAttributes */
+    NULL, /* SpCompleteAuthToken */
+    NULL, /* SpDeleteContext */
+    NULL, /* SpFormatCredentialsFn */
+    NULL, /* SpMarshallSupplementalCreds */
+    NULL, /* SpExportSecurityContext */
+    NULL  /* SpImportSecurityContext */
+};
+
+NTSTATUS NTAPI SpUserModeInitialize(ULONG lsa_version, PULONG package_version,
+    PSECPKG_USER_FUNCTION_TABLE *table, PULONG table_count)
+{
+    TRACE("%#x,%p,%p,%p\n", lsa_version, package_version, table, table_count);
+
+    *package_version = SECPKG_INTERFACE_VERSION;
+    *table = &kerberos_user_table;
+    *table_count = 1;
+
+    return STATUS_SUCCESS;
+}
