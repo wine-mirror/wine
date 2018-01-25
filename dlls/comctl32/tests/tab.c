@@ -319,7 +319,7 @@ create_tabcontrol (DWORD style, DWORD mask)
     return handle;
 }
 
-static LRESULT WINAPI parentWindowProcess(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
     struct message msg = { 0 };
@@ -367,7 +367,7 @@ static BOOL registerParentWindowClass(void)
     WNDCLASSA cls;
 
     cls.style = 0;
-    cls.lpfnWndProc = parentWindowProcess;
+    cls.lpfnWndProc = parent_wnd_proc;
     cls.cbClsExtra = 0;
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(NULL);
@@ -389,7 +389,7 @@ static HWND createParentWindow(void)
             GetDesktopWindow(), NULL, GetModuleHandleA(NULL), NULL);
 }
 
-static LRESULT WINAPI tabSubclassProcess(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI tab_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
@@ -435,7 +435,7 @@ static HWND createFilledTabControl(HWND parent_wnd, DWORD style, DWORD mask, INT
             rect.bottom, parent_wnd, NULL, NULL, 0);
     ok(tabHandle != NULL, "failed to create tab wnd\n");
 
-    oldproc = (WNDPROC)SetWindowLongPtrA(tabHandle, GWLP_WNDPROC, (LONG_PTR)tabSubclassProcess);
+    oldproc = (WNDPROC)SetWindowLongPtrA(tabHandle, GWLP_WNDPROC, (LONG_PTR)tab_subclass_proc);
     SetWindowLongPtrA(tabHandle, GWLP_USERDATA, (LONG_PTR)oldproc);
 
     tcNewTab.mask = mask;
