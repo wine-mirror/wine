@@ -471,10 +471,7 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
            context_req, target_data_rep, input, new_context, output, context_attr, ts_expiry,
            mapped_context, context_data );
     if (context_req & ~supported)
-    {
         FIXME( "flags 0x%08x not supported\n", context_req & ~supported );
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
 
     if (!context && !input && !credential) return SEC_E_INVALID_HANDLE;
     cred_handle = credhandle_sspi_to_gss( credential );
