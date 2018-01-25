@@ -67,6 +67,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(kerberos);
     | SECPKG_FLAG_RESTRICTED_TOKENS \
     | SECPKG_FLAG_APPCONTAINER_CHECKS)
 
+static WCHAR kerberos_name_W[] = {'K','e','r','b','e','r','o','s',0};
+static WCHAR kerberos_comment_W[] = {'M','i','c','r','o','s','o','f','t',' ','K','e','r','b','e','r','o','s',' ','V','1','.','0',0};
+static const SecPkgInfoW infoW =
+{
+    KERBEROS_CAPS,
+    1,
+    RPC_C_AUTHN_GSS_KERBEROS,
+    KERBEROS_MAX_BUF,
+    kerberos_name_W,
+    kerberos_comment_W
+};
+
 static ULONG kerberos_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
 
@@ -158,18 +170,6 @@ static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST req
 
 static NTSTATUS NTAPI kerberos_SpGetInfo(SecPkgInfoW *info)
 {
-    static WCHAR kerberos_name_W[] = {'K','e','r','b','e','r','o','s',0};
-    static WCHAR kerberos_comment_W[] = {'M','i','c','r','o','s','o','f','t',' ','K','e','r','b','e','r','o','s',' ','V','1','.','0',0};
-    static const SecPkgInfoW infoW =
-    {
-        KERBEROS_CAPS,
-        1,
-        RPC_C_AUTHN_GSS_KERBEROS,
-        KERBEROS_MAX_BUF,
-        kerberos_name_W,
-        kerberos_comment_W
-    };
-
     TRACE("%p\n", info);
 
     /* LSA will make a copy before forwarding the structure, so
@@ -608,6 +608,52 @@ static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
 #endif
 }
 
+static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context, ULONG attribute, void *buffer )
+{
+    TRACE( "(%lx %u %p)\n", context, attribute, buffer );
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    switch (attribute)
+    {
+#define X(x) case (x) : FIXME(#x" stub\n"); break
+    X(SECPKG_ATTR_ACCESS_TOKEN);
+    X(SECPKG_ATTR_AUTHORITY);
+    X(SECPKG_ATTR_DCE_INFO);
+    X(SECPKG_ATTR_KEY_INFO);
+    X(SECPKG_ATTR_LIFESPAN);
+    X(SECPKG_ATTR_NAMES);
+    X(SECPKG_ATTR_NATIVE_NAMES);
+    X(SECPKG_ATTR_PACKAGE_INFO);
+    X(SECPKG_ATTR_PASSWORD_EXPIRY);
+    X(SECPKG_ATTR_SESSION_KEY);
+    X(SECPKG_ATTR_STREAM_SIZES);
+    X(SECPKG_ATTR_TARGET_INFORMATION);
+    case SECPKG_ATTR_SIZES:
+    {
+        SecPkgContext_Sizes *sizes = (SecPkgContext_Sizes *)buffer;
+        sizes->cbMaxToken        = KERBEROS_MAX_BUF;
+        sizes->cbMaxSignature    = 37;
+        sizes->cbBlockSize       = 1;
+        sizes->cbSecurityTrailer = 49;
+        return SEC_E_OK;
+    }
+    case SECPKG_ATTR_NEGOTIATION_INFO:
+    {
+        SecPkgContext_NegotiationInfoW *info = (SecPkgContext_NegotiationInfoW *)buffer;
+        info->PackageInfo      = (SecPkgInfoW *)&infoW;
+        info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
+        return SEC_E_OK;
+    }
+#undef X
+    default:
+        FIXME( "unknown attribute %u\n", attribute );
+        break;
+    }
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMETERS *params,
     LSA_SECPKG_FUNCTION_TABLE *lsa_function_table)
 {
@@ -657,7 +703,7 @@ static SECPKG_FUNCTION_TABLE kerberos_table =
     NULL, /* ApplyControlToken */
     NULL, /* GetUserInfo */
     NULL, /* GetExtendedInformation */
-    NULL, /* SpQueryContextAttributes */
+    kerberos_SpQueryContextAttributes,
     NULL, /* SpAddCredentials */
     NULL, /* SetExtendedInformation */
     NULL, /* SetContextAttributes */
