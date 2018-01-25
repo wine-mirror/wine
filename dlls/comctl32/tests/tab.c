@@ -79,6 +79,7 @@ static void TabCheckSetSize(HWND hwnd, INT set_width, INT set_height, INT exp_wi
 static HFONT hFont;
 static DRAWITEMSTRUCT g_drawitem;
 static HWND parent_wnd;
+static LRESULT tcn_selchanging_result;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
@@ -264,6 +265,22 @@ static const struct message rbuttonup_seq[] = {
     { 0 }
 };
 
+static const struct message full_selchange_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, TCN_SELCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, TCN_SELCHANGE },
+    { 0 }
+};
+
+static const struct message selchanging_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, TCN_SELCHANGING },
+    { 0 }
+};
+
+static const struct message selchange_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, TCN_SELCHANGE },
+    { 0 }
+};
+
 static HWND
 create_tabcontrol (DWORD style, DWORD mask)
 {
@@ -322,12 +339,21 @@ static LRESULT WINAPI parentWindowProcess(HWND hwnd, UINT message, WPARAM wParam
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
+        if (message == WM_NOTIFY && lParam)
+            msg.id = ((NMHDR*)lParam)->code;
         add_message(sequences, PARENT_SEQ_INDEX, &msg);
     }
 
     /* dump sent structure data */
     if (message == WM_DRAWITEM)
         g_drawitem = *(DRAWITEMSTRUCT*)lParam;
+
+    if (message == WM_NOTIFY)
+    {
+        NMHDR *nmhdr = (NMHDR *)lParam;
+        if (nmhdr && nmhdr->code == TCN_SELCHANGING)
+            return tcn_selchanging_result;
+    }
 
     defwndproc_counter++;
     ret = DefWindowProcA(hwnd, message, wParam, lParam);
@@ -1443,6 +1469,73 @@ static void init_functions(void)
 #undef X
 }
 
+static void test_TCN_SELCHANGING(void)
+{
+    const INT nTabs = 5;
+    HWND hTab;
+    INT ret;
+
+    hTab = createFilledTabControl(parent_wnd, WS_CHILD|TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    /* Initially first tab is focused. */
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(ret == 0, "Unexpected tab focus %d.\n", ret);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    /* Setting focus to currently focused item should do nothing. */
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, 0, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Set focus to focused tab sequence", FALSE);
+
+    /* Allow selection change. */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    tcn_selchanging_result = 0;
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, nTabs - 1, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, full_selchange_parent_seq, "Focus change allowed sequence", FALSE);
+
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(ret == nTabs - 1, "Unexpected focused tab %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURSEL, 0, 0);
+    ok(ret == nTabs - 1, "Unexpected selected tab %d.\n", ret);
+
+    /* Forbid selection change. */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    tcn_selchanging_result = 1;
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, 0, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, selchanging_parent_seq, "Focus change disallowed sequence", FALSE);
+
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+todo_wine
+    ok(ret == nTabs - 1, "Unexpected focused tab %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURSEL, 0, 0);
+todo_wine
+    ok(ret == nTabs - 1, "Unexpected selected tab %d.\n", ret);
+
+    /* Removing focus sends only TCN_SELCHANGE */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, -1, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, selchange_parent_seq, "Remove focus sequence", FALSE);
+
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(ret == -1, "Unexpected focused tab %d.\n", ret);
+
+    tcn_selchanging_result = 0;
+
+    DestroyWindow(hTab);
+}
+
 START_TEST(tab)
 {
     LOGFONTA logfont;
@@ -1481,6 +1574,7 @@ START_TEST(tab)
     test_TCS_OWNERDRAWFIXED();
     test_WM_CONTEXTMENU();
     test_create();
+    test_TCN_SELCHANGING();
 
     DestroyWindow(parent_wnd);
 }
