@@ -729,9 +729,16 @@ NTSTATUS NTAPI SpLsaModeInitialize(ULONG lsa_version, PULONG package_version,
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS NTAPI kerberos_SpInstanceInit(ULONG version, SECPKG_DLL_FUNCTIONS *dll_function_table, void **user_functions)
+{
+    FIXME("%u,%p,%p: stub\n", version, dll_function_table, user_functions);
+
+    return STATUS_SUCCESS;
+}
+
 static SECPKG_USER_FUNCTION_TABLE kerberos_user_table =
 {
-    NULL, /* SpInstanceInit */
+    kerberos_SpInstanceInit,
     NULL, /* SpInitUserModeContext */
     NULL, /* SpMakeSignature */
     NULL, /* SpVerifySignature */
