@@ -3039,18 +3039,24 @@ static void test_swapchain_resize(void)
 
 static void test_swapchain_parameters(void)
 {
+    DXGI_USAGE usage, expected_usage, broken_usage;
+    D3D10_TEXTURE2D_DESC d3d10_texture_desc;
+    D3D11_TEXTURE2D_DESC d3d11_texture_desc;
+    unsigned int expected_bind_flags;
+    ID3D10Texture2D *d3d10_texture;
+    ID3D11Texture2D *d3d11_texture;
+    DXGI_SWAP_CHAIN_DESC desc;
     IDXGISwapChain *swapchain;
-    IUnknown *obj;
+    IDXGIResource *resource;
     IDXGIAdapter *adapter;
     IDXGIFactory *factory;
     IDXGIDevice *device;
-    IDXGIResource *resource;
-    DXGI_SWAP_CHAIN_DESC desc;
-    HRESULT hr;
     unsigned int i, j;
     ULONG refcount;
-    DXGI_USAGE usage, expected_usage, broken_usage;
+    IUnknown *obj;
     HWND window;
+    HRESULT hr;
+
     static const struct
     {
         BOOL windowed;
@@ -3122,6 +3128,19 @@ static void test_swapchain_parameters(void)
         {FALSE, 17, DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, DXGI_ERROR_INVALID_CALL, DXGI_ERROR_INVALID_CALL,  0},
         {FALSE, 17, DXGI_SWAP_EFFECT_FLIP_DISCARD,    DXGI_ERROR_INVALID_CALL, DXGI_ERROR_INVALID_CALL,  0},
     };
+    static const DXGI_USAGE usage_tests[] =
+    {
+        0,
+        DXGI_USAGE_BACK_BUFFER,
+        DXGI_USAGE_SHADER_INPUT,
+        DXGI_USAGE_RENDER_TARGET_OUTPUT,
+        DXGI_USAGE_DISCARD_ON_PRESENT,
+        DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER,
+        DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_DISCARD_ON_PRESENT,
+        DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER | DXGI_USAGE_DISCARD_ON_PRESENT,
+        DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_RENDER_TARGET_OUTPUT,
+        DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_DISCARD_ON_PRESENT,
+    };
 
     if (!(device = create_device(0)))
     {
@@ -3132,7 +3151,7 @@ static void test_swapchain_parameters(void)
             0, 0, 640, 480, 0, 0, 0, 0);
 
     hr = IDXGIDevice_QueryInterface(device, &IID_IUnknown, (void **)&obj);
-    ok(SUCCEEDED(hr), "IDXGIDevice does not implement IUnknown\n");
+    ok(SUCCEEDED(hr), "IDXGIDevice does not implement IUnknown.\n");
 
     hr = IDXGIDevice_GetAdapter(device, &adapter);
     ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
@@ -3224,6 +3243,69 @@ static void test_swapchain_parameters(void)
 
         hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
         ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+
+        IDXGISwapChain_Release(swapchain);
+    }
+
+    for (i = 0; i < sizeof(usage_tests) / sizeof(*usage_tests); ++i)
+    {
+        usage = usage_tests[i];
+
+        memset(&desc, 0, sizeof(desc));
+        desc.BufferDesc.Width = registry_mode.dmPelsWidth;
+        desc.BufferDesc.Height = registry_mode.dmPelsHeight;
+        desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.SampleDesc.Count = 1;
+        desc.BufferUsage = usage;
+        desc.BufferCount = 1;
+        desc.OutputWindow = window;
+        desc.Windowed = TRUE;
+        desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+        hr = IDXGIFactory_CreateSwapChain(factory, obj, &desc, &swapchain);
+        ok(hr == S_OK, "Got unexpected hr %#x, test %u.\n", hr, i);
+
+        hr = IDXGISwapChain_GetDesc(swapchain, &desc);
+        ok(hr == S_OK, "Failed to get swapchain desc, hr %#x, test %u.\n", hr, i);
+        todo_wine_if(usage & ~(DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT))
+        ok(desc.BufferUsage == usage, "Got usage %#x, expected %#x, test %u.\n", desc.BufferUsage, usage, i);
+
+        expected_bind_flags = 0;
+        if (usage & DXGI_USAGE_RENDER_TARGET_OUTPUT)
+            expected_bind_flags |= D3D11_BIND_RENDER_TARGET;
+        if (usage & DXGI_USAGE_SHADER_INPUT)
+            expected_bind_flags |= D3D11_BIND_SHADER_RESOURCE;
+
+        hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D10Texture2D, (void **)&d3d10_texture);
+        ok(hr == S_OK, "Failed to get d3d10 texture, hr %#x, test %u.\n", hr, i);
+        ID3D10Texture2D_GetDesc(d3d10_texture, &d3d10_texture_desc);
+        ok(d3d10_texture_desc.BindFlags == expected_bind_flags,
+                "Got d3d10 bind flags %#x, expected %#x, test %u.\n",
+                d3d10_texture_desc.BindFlags, expected_bind_flags, i);
+        ID3D10Texture2D_Release(d3d10_texture);
+
+        hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D11Texture2D, (void **)&d3d11_texture);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Failed to get d3d11 texture, hr %#x, test %u.\n", hr, i);
+        if (SUCCEEDED(hr))
+        {
+            ID3D11Texture2D_GetDesc(d3d11_texture, &d3d11_texture_desc);
+            ok(d3d11_texture_desc.BindFlags == expected_bind_flags,
+                    "Got d3d11 bind flags %#x, expected %#x, test %u.\n",
+                    d3d11_texture_desc.BindFlags, expected_bind_flags, i);
+            ID3D11Texture2D_Release(d3d11_texture);
+        }
+
+        hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGIResource, (void **)&resource);
+        todo_wine ok(hr == S_OK, "Failed to get buffer, hr %#x, test %u.\n", hr, i);
+        if (FAILED(hr))
+        {
+            IDXGISwapChain_Release(swapchain);
+            continue;
+        }
+        expected_usage = usage | DXGI_USAGE_BACK_BUFFER | DXGI_USAGE_DISCARD_ON_PRESENT;
+        hr = IDXGIResource_GetUsage(resource, &usage);
+        ok(hr == S_OK, "Failed to get resource usage, hr %#x, test %u.\n", hr, i);
+        ok(usage == expected_usage, "Got usage %x, expected %x, test %u.\n", usage, expected_usage, i);
+        IDXGIResource_Release(resource);
 
         IDXGISwapChain_Release(swapchain);
     }
