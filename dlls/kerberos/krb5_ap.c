@@ -196,6 +196,7 @@ MAKE_FUNCPTR(gss_release_buffer);
 MAKE_FUNCPTR(gss_release_cred);
 MAKE_FUNCPTR(gss_release_iov_buffer);
 MAKE_FUNCPTR(gss_release_name);
+MAKE_FUNCPTR(gss_unwrap_iov);
 MAKE_FUNCPTR(gss_verify_mic);
 MAKE_FUNCPTR(gss_wrap_iov);
 #undef MAKE_FUNCPTR
@@ -225,6 +226,7 @@ static BOOL load_gssapi_krb5(void)
     LOAD_FUNCPTR(gss_release_cred)
     LOAD_FUNCPTR(gss_release_iov_buffer)
     LOAD_FUNCPTR(gss_release_name)
+    LOAD_FUNCPTR(gss_unwrap_iov)
     LOAD_FUNCPTR(gss_verify_mic)
     LOAD_FUNCPTR(gss_wrap_iov)
 #undef LOAD_FUNCPTR
@@ -875,6 +877,52 @@ static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG qual
 #endif
 }
 
+static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBufferDesc *message,
+    ULONG message_seq_no, ULONG *quality_of_protection )
+{
+#ifdef SONAME_LIBGSSAPI_KRB5
+    gss_ctx_id_t ctxt_handle;
+    gss_iov_buffer_desc iov[4];
+    OM_uint32 ret, minor_status;
+    int token_idx, data_idx, conf_state;
+
+    TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %0x08x\n", message_seq_no );
+
+    if (context) return SEC_E_INVALID_HANDLE;
+    ctxt_handle = ctxthandle_sspi_to_gss( context );
+
+    if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+    if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+
+    iov[0].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+    iov[0].buffer.length = 0;
+    iov[0].buffer.value  = NULL;
+
+    iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
+    iov[1].buffer.length = message->pBuffers[data_idx].cbBuffer;
+    iov[1].buffer.value  = message->pBuffers[data_idx].pvBuffer;
+
+    iov[2].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+    iov[2].buffer.length = 0;
+    iov[2].buffer.value  = NULL;
+
+    iov[3].type          = GSS_IOV_BUFFER_TYPE_HEADER;
+    iov[3].buffer.length = message->pBuffers[token_idx].cbBuffer;
+    iov[3].buffer.value  = message->pBuffers[token_idx].pvBuffer;
+
+    ret = pgss_unwrap_iov( &minor_status, ctxt_handle, &conf_state, NULL, iov, 4 );
+    TRACE( "gss_unwrap_iov returned %08x minor status %08x\n", ret, minor_status );
+    if (ret == GSS_S_COMPLETE && quality_of_protection) *quality_of_protection = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
+
+    return status_gss_to_sspi( ret );
+
+#else
+    FIXME( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
+    return SEC_E_UNSUPPORTED_FUNCTION;
+#endif
+}
+
 static SECPKG_USER_FUNCTION_TABLE kerberos_user_table =
 {
     kerberos_SpInstanceInit,
@@ -882,7 +930,7 @@ static SECPKG_USER_FUNCTION_TABLE kerberos_user_table =
     kerberos_SpMakeSignature,
     kerberos_SpVerifySignature,
     kerberos_SpSealMessage,
-    NULL, /* SpUnsealMessage */
+    kerberos_SpUnsealMessage,
     NULL, /* SpGetContextToken */
     NULL, /* SpQueryContextAttributes */
     NULL, /* SpCompleteAuthToken */
