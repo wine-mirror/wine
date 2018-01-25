@@ -2398,7 +2398,7 @@ static HRESULT WINAPI DataCache_Cache(
         return CACHE_S_SAMECACHE;
     }
 
-    if (This->clsid_static) return DV_E_FORMATETC;
+    if (This->clsid_static && fmt_cpy.dwAspect != DVASPECT_ICON) return DV_E_FORMATETC;
 
     hr = DataCache_CreateEntry(This, &fmt_cpy, advf, FALSE, &cache_entry);
 

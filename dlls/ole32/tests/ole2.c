@@ -2441,12 +2441,23 @@ static void test_data_cache_cache(void)
     hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
     ok( FAILED(hr), "got %08x\n", hr );
 
+    fmt.dwAspect = DVASPECT_DOCPRINT;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( FAILED(hr), "got %08x\n", hr );
+
     /* try caching another clip format */
-    fmt.dwAspect = DVASPECT_CONTENT;
     fmt.cfFormat = CF_METAFILEPICT;
+    fmt.dwAspect = DVASPECT_CONTENT;
     fmt.tymed = TYMED_MFPICT;
     hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
     ok( FAILED(hr), "got %08x\n", hr );
+
+    /* As an exception, it's possible to add an icon aspect */
+    fmt.cfFormat = CF_METAFILEPICT;
+    fmt.dwAspect = DVASPECT_ICON;
+    fmt.tymed = TYMED_MFPICT;
+    hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     IOleCache2_Release( cache );
 }
