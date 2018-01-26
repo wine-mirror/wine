@@ -1368,10 +1368,13 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
         XSetWindowAttributes attrib;
 
         attrib.override_redirect = True;
+        attrib.border_pixel = 0;
         if (!dummy_parent)
         {
+            attrib.colormap = default_colormap;
             dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, default_visual.depth,
-                                         InputOutput, default_visual.visual, CWOverrideRedirect, &attrib );
+                                          InputOutput, default_visual.visual,
+                                          CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
             XMapWindow( gdi_display, dummy_parent );
         }
         gl->colormap = XCreateColormap(gdi_display, dummy_parent, gl->visual->visual,
@@ -1386,7 +1389,7 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
         gl->window = XCreateWindow( gdi_display, dummy_parent, 0, 0,
                                       gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
                                       0, gl->visual->depth, InputOutput, gl->visual->visual,
-                                      CWColormap | CWOverrideRedirect, &attrib );
+                                      CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
         if (gl->window)
         {
             gl->drawable = pglXCreateWindow( gdi_display, gl->format->fbconfig, gl->window, NULL );
