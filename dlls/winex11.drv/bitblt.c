@@ -1067,8 +1067,8 @@ static inline BOOL image_needs_byteswap( XImage *image, BOOL is_r8g8b8, int bit_
 
 /* copy image bits with byte swapping and/or pixel mapping */
 static void copy_image_byteswap( BITMAPINFO *info, const unsigned char *src, unsigned char *dst,
-                                 int src_stride, int dst_stride, int height,
-                                 BOOL byteswap, const int *mapping, unsigned int zeropad_mask )
+                                 int src_stride, int dst_stride, int height, BOOL byteswap,
+                                 const int *mapping, unsigned int zeropad_mask, unsigned int alpha_bits )
 {
     int x, y, padding_pos = abs(dst_stride) / sizeof(unsigned int) - 1;
 
@@ -1148,7 +1148,7 @@ static void copy_image_byteswap( BITMAPINFO *info, const unsigned char *src, uns
     case 32:
         for (y = 0; y < height; y++, src += src_stride, dst += dst_stride)
             for (x = 0; x < info->bmiHeader.biWidth; x++)
-                ((ULONG *)dst)[x] = RtlUlongByteSwap( ((const ULONG *)src)[x] );
+                ((ULONG *)dst)[x] = RtlUlongByteSwap( ((const ULONG *)src)[x] | alpha_bits );
         break;
     }
 }
@@ -1200,7 +1200,7 @@ DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
     }
 
     copy_image_byteswap( info, src, dst, image->bytes_per_line, width_bytes, height,
-                         need_byteswap, mapping, zeropad_mask );
+                         need_byteswap, mapping, zeropad_mask, 0 );
     return ERROR_SUCCESS;
 }
 
@@ -1565,6 +1565,7 @@ struct x11drv_window_surface
     RECT                  bounds;
     BOOL                  byteswap;
     BOOL                  is_argb;
+    DWORD                 alpha_bits;
     COLORREF              color_key;
     HRGN                  region;
     void                 *bits;
@@ -1918,7 +1919,16 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
             dst += coords.visrect.top * width_bytes;
             copy_image_byteswap( &surface->info, src, dst, width_bytes, width_bytes,
                                  coords.visrect.bottom - coords.visrect.top,
-                                 surface->byteswap, mapping, ~0u );
+                                 surface->byteswap, mapping, ~0u, surface->alpha_bits );
+        }
+        else if (surface->alpha_bits)
+        {
+            int x, y, stride = surface->image->bytes_per_line / sizeof(ULONG);
+            ULONG *ptr = (ULONG *)dst + coords.visrect.top * stride;
+
+            for (y = coords.visrect.top; y < coords.visrect.bottom; y++, ptr += stride)
+                for (x = coords.visrect.left; x < coords.visrect.right; x++)
+                    ptr[x] |= surface->alpha_bits;
         }
 
 #ifdef HAVE_LIBXXSHM
@@ -2032,6 +2042,9 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
     XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
     surface->byteswap = image_needs_byteswap( surface->image, is_r8g8b8(vis), format->bits_per_pixel );
+
+    if (vis->depth == 32 && !surface->is_argb)
+        surface->alpha_bits = ~(vis->red_mask | vis->green_mask | vis->blue_mask);
 
     if (surface->byteswap || format->bits_per_pixel == 4 || format->bits_per_pixel == 8)
     {
