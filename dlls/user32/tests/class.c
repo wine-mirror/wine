@@ -1243,7 +1243,6 @@ static void test_actctx_classes(void)
     ok(ret, "Failed to get class info.\n");
 
     ret = GetClassInfoA(hinst, "4.3.2.1!MyTestClass", &wc);
-todo_wine
     ok(ret, "Failed to get class info.\n");
 
     ret = UnregisterClassA("MyTestClass", hinst);
@@ -1262,7 +1261,6 @@ todo_wine
 
     wc.lpszClassName = "MyTestClass";
     class = RegisterClassA(&wc);
-todo_wine
     ok(class == 0, "Expected failure.\n");
 
     ret = DeactivateActCtx(0, cookie);
@@ -1277,28 +1275,23 @@ todo_wine
 
     wc.lpszClassName = "MyTestClass";
     class = RegisterClassA(&wc);
-todo_wine
     ok(class != 0, "Failed to register class\n");
 
     ret = DeactivateActCtx(0, cookie);
     ok(ret, "Failed to deactivate context.\n");
 
     ret = GetClassInfoA(hinst, "MyTestClass", &wc);
-todo_wine
     ok(!ret, "Expected failure.\n");
 
     ret = GetClassInfoA(hinst, "4.3.2.1!MyTestClass", &wc);
-todo_wine
     ok(ret, "Failed to get class info.\n");
 
     ret = UnregisterClassA("4.3.2.1!MyTestClass", hinst);
-todo_wine
     ok(ret, "Failed to unregister class.\n");
 
     /* Register regular name first, it's not considered when versioned name is registered. */
     wc.lpszClassName = "MyTestClass";
     class = RegisterClassA(&wc);
-todo_wine
     ok(class != 0, "Failed to register class.\n");
 
     ret = ActivateActCtx(context, &cookie);
@@ -1306,14 +1299,12 @@ todo_wine
 
     wc.lpszClassName = "MyTestClass";
     class = RegisterClassA(&wc);
-todo_wine
     ok(class != 0, "Failed to register class.\n");
 
     ret = DeactivateActCtx(0, cookie);
     ok(ret, "Failed to deactivate context.\n");
 
     ret = UnregisterClassA("4.3.2.1!MyTestClass", hinst);
-todo_wine
     ok(ret, "Failed to unregister class.\n");
 
     ret = UnregisterClassA("MyTestClass", hinst);
