@@ -68,6 +68,7 @@ enum wxr_format
   WXR_FORMAT_B8G8R8A8,
   WXR_FORMAT_X8R8G8B8,
   WXR_FORMAT_B8G8R8X8,
+  WXR_FORMAT_ROOT,  /* placeholder for the format to use on the root window */
   WXR_NB_FORMATS,
   WXR_INVALID_FORMAT = WXR_NB_FORMATS
 };
@@ -273,6 +274,13 @@ static int load_xrender_formats(void)
     {
         XRenderPictFormat templ;
 
+        if (i == WXR_FORMAT_ROOT)
+        {
+            pict_formats[i] = pXRenderFindVisualFormat(gdi_display,
+                                                DefaultVisual( gdi_display, DefaultScreen(gdi_display) ));
+            TRACE( "Loaded root pict_format with id=%#lx\n", pict_formats[i]->id );
+            continue;
+        }
         if(is_wxrformat_compatible_with_default_visual(&wxr_formats_template[i]))
         {
             pict_formats[i] = pXRenderFindVisualFormat(gdi_display, default_visual.visual);
@@ -875,6 +883,16 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     return ret;
 }
 
+static void set_physdev_format( struct xrender_physdev *physdev, enum wxr_format format )
+{
+    if (physdev->x11dev->drawable == DefaultRootWindow( gdi_display ))
+        physdev->format = WXR_FORMAT_ROOT;
+    else
+        physdev->format = format;
+
+    physdev->pict_format = pict_formats[physdev->format];
+}
+
 static BOOL create_xrender_dc( PHYSDEV *pdev, enum wxr_format format )
 {
     X11DRV_PDEVICE *x11dev = get_x11drv_dev( *pdev );
@@ -883,8 +901,7 @@ static BOOL create_xrender_dc( PHYSDEV *pdev, enum wxr_format format )
     if (!physdev) return FALSE;
     physdev->x11dev = x11dev;
     physdev->cache_index = -1;
-    physdev->format = format;
-    physdev->pict_format = pict_formats[format];
+    set_physdev_format( physdev, format );
     push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
     return TRUE;
 }
@@ -974,7 +991,11 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
         if (*(const enum x11drv_escape_codes *)in_data == X11DRV_SET_DRAWABLE)
         {
             BOOL ret = dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
-            if (ret) free_xrender_picture( physdev );  /* pict format doesn't change, only drawable */
+            if (ret)
+            {
+                free_xrender_picture( physdev );
+                set_physdev_format( physdev, default_format );
+            }
             return ret;
         }
     }
