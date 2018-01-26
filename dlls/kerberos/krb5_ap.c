@@ -754,7 +754,7 @@ static NTSTATUS SEC_ENTRY kerberos_SpMakeSignature( LSA_SEC_HANDLE context, ULON
 
     TRACE( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
     if (quality_of_protection) FIXME( "ignoring quality_of_protection 0x%08x\n", quality_of_protection );
-    if (message_seq_no) FIXME( "ignoring message_seq_no %0x08x\n", message_seq_no );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
     if (!context) return SEC_E_INVALID_HANDLE;
     ctxt_handle = ctxthandle_sspi_to_gss( context );
@@ -794,7 +794,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SpVerifySignature( LSA_SEC_HANDLE cont
     int data_idx, token_idx;
 
     TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
-    if (message_seq_no) FIXME( "ignoring message_seq_no %0x08x\n", message_seq_no );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
     if (!context) return SEC_E_INVALID_HANDLE;
     ctxt_handle = ctxthandle_sspi_to_gss( context );
@@ -833,7 +833,7 @@ static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG qual
         FIXME( "flags %08x not supported\n", quality_of_protection );
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
-    if (message_seq_no) FIXME( "ignoring message_seq_no %0x08x\n", message_seq_no );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
     if (!context) return SEC_E_INVALID_HANDLE;
     ctxt_handle = ctxthandle_sspi_to_gss( context );
@@ -884,7 +884,7 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
     int token_idx, data_idx, conf_state;
 
     TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
-    if (message_seq_no) FIXME( "ignoring message_seq_no %0x08x\n", message_seq_no );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
     if (context) return SEC_E_INVALID_HANDLE;
     ctxt_handle = ctxthandle_sspi_to_gss( context );
