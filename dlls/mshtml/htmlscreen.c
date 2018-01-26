@@ -123,10 +123,12 @@ static HRESULT WINAPI HTMLScreen_Invoke(IHTMLScreen *iface, DISPID dispIdMember,
 static HRESULT WINAPI HTMLScreen_get_colorDepth(IHTMLScreen *iface, LONG *p)
 {
     HTMLScreen *This = impl_from_IHTMLScreen(iface);
+    HDC hdc = GetDC(0);
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = GetDeviceCaps(get_display_dc(), BITSPIXEL);
+    *p = GetDeviceCaps(hdc, BITSPIXEL);
+    ReleaseDC(0, hdc);
     return S_OK;
 }
 
@@ -150,7 +152,7 @@ static HRESULT WINAPI HTMLScreen_get_width(IHTMLScreen *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = GetDeviceCaps(get_display_dc(), HORZRES);
+    *p = GetSystemMetrics(SM_CXSCREEN);
     return S_OK;
 }
 
@@ -160,7 +162,7 @@ static HRESULT WINAPI HTMLScreen_get_height(IHTMLScreen *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = GetDeviceCaps(get_display_dc(), VERTRES);
+    *p = GetSystemMetrics(SM_CYSCREEN);
     return S_OK;
 }
 
