@@ -563,6 +563,7 @@ struct x11drv_win_data
     BOOL        embedded : 1;   /* is window an XEMBED client? */
     BOOL        shaped : 1;     /* is window using a custom region shape? */
     BOOL        layered : 1;    /* is window layered and with valid attributes? */
+    BOOL        use_alpha : 1;  /* does window use an alpha channel? */
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     Window      embedder;       /* window id of embedder */
@@ -590,7 +591,7 @@ extern void read_net_wm_states( Display *display, struct x11drv_win_data *data )
 extern void update_net_wm_states( struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
 extern void make_window_embedded( struct x11drv_win_data *data ) DECLSPEC_HIDDEN;
 extern Window create_client_window( struct x11drv_win_data *data, const XVisualInfo *visual ) DECLSPEC_HIDDEN;
-extern void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis ) DECLSPEC_HIDDEN;
+extern void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis, BOOL use_alpha ) DECLSPEC_HIDDEN;
 extern void change_systray_owner( Display *display, Window systray_window ) DECLSPEC_HIDDEN;
 extern void update_systray_balloon_position(void) DECLSPEC_HIDDEN;
 extern HWND create_foreign_window( Display *display, Window window ) DECLSPEC_HIDDEN;

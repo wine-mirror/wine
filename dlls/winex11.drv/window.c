@@ -1593,16 +1593,19 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
  *
  * Change the visual by destroying and recreating the X window if needed.
  */
-void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis )
+void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis, BOOL use_alpha )
 {
     Window client_window = data->client_window;
     Window whole_window = data->whole_window;
 
+    if (!data->use_alpha == !use_alpha) return;
+    if (data->surface) window_surface_release( data->surface );
+    data->surface = NULL;
+    data->use_alpha = use_alpha;
+
     if (data->vis.visualid == vis->visualid) return;
     data->client_window = 0;
     destroy_whole_window( data, client_window != 0 /* don't destroy whole_window until reparented */ );
-    if (data->surface) window_surface_release( data->surface );
-    data->surface = NULL;
     data->vis = *vis;
     create_whole_window( data );
     if (!client_window) return;
@@ -1649,7 +1652,7 @@ void CDECL X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
     if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED)) /* changing WS_EX_LAYERED resets attributes */
     {
         data->layered = FALSE;
-        set_window_visual( data, &default_visual );
+        set_window_visual( data, &default_visual, FALSE );
         sync_window_opacity( data->display, data->whole_window, 0, 0, 0 );
         if (data->surface) set_surface_color_key( data->surface, CLR_INVALID );
     }
@@ -2232,7 +2235,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
 
     if (!data->whole_window && !data->embedded) goto done;
     if (swp_flags & SWP_HIDEWINDOW) goto done;
-    if (data->vis.visualid != default_visual.visualid) goto done;
+    if (data->use_alpha) goto done;
     if (!get_surface_rect( visible_rect, &surface_rect )) goto done;
 
     if (*surface) window_surface_release( *surface );
@@ -2542,7 +2545,7 @@ void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
 
     if (data)
     {
-        set_window_visual( data, &default_visual );
+        set_window_visual( data, &default_visual, FALSE );
 
         if (data->whole_window)
             sync_window_opacity( data->display, data->whole_window, key, alpha, flags );
@@ -2598,7 +2601,7 @@ BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO 
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
     data->layered = TRUE;
-    if (!data->embedded && argb_visual.visualid) set_window_visual( data, &argb_visual );
+    if (!data->embedded && argb_visual.visualid) set_window_visual( data, &argb_visual, TRUE );
 
     rect = *window_rect;
     OffsetRect( &rect, -window_rect->left, -window_rect->top );

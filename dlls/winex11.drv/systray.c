@@ -644,14 +644,14 @@ static void dock_systray_icon( Display *display, struct tray_icon *icon, Window 
 
     get_systray_visual_info( display, systray_window, &visual );
 
-    icon->layered = (visual.visualid != default_visual.visualid);
+    icon->layered = (visual.depth == 32);
     icon->window = CreateWindowExW( icon->layered ? WS_EX_LAYERED : 0,
                                     icon_classname, NULL, WS_CLIPSIBLINGS | WS_POPUP,
                                     CW_USEDEFAULT, CW_USEDEFAULT, icon_cx, icon_cy,
                                     NULL, NULL, NULL, icon );
 
     if (!(data = get_win_data( icon->window ))) return;
-    if (icon->layered) set_window_visual( data, &visual );
+    if (icon->layered) set_window_visual( data, &visual, TRUE );
     make_window_embedded( data );
     window = data->whole_window;
     release_win_data( data );
