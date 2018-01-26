@@ -35,7 +35,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IDXGIFactory4 *ifac
 
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualGUID(iid, &IID_IDXGIFactory4)
+    if (IsEqualGUID(iid, &IID_IWineDXGIFactory)
+            || IsEqualGUID(iid, &IID_IDXGIFactory4)
             || IsEqualGUID(iid, &IID_IDXGIFactory3)
             || IsEqualGUID(iid, &IID_IDXGIFactory2)
             || (factory->extended && IsEqualGUID(iid, &IID_IDXGIFactory1))
@@ -504,10 +505,21 @@ static const struct IDXGIFactory4Vtbl dxgi_factory_vtbl =
 
 struct dxgi_factory *unsafe_impl_from_IDXGIFactory4(IDXGIFactory4 *iface)
 {
+    IWineDXGIFactory *wine_factory;
+    struct dxgi_factory *factory;
+    HRESULT hr;
+
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == &dxgi_factory_vtbl);
-    return CONTAINING_RECORD(iface, struct dxgi_factory, IDXGIFactory4_iface);
+    if (FAILED(hr = IDXGIFactory4_QueryInterface(iface, &IID_IWineDXGIFactory, (void **)&wine_factory)))
+    {
+        ERR("Failed to get IWineDXGIFactory interface, hr %#x.\n", hr);
+        return NULL;
+    }
+    assert(wine_factory->lpVtbl == (void *)&dxgi_factory_vtbl);
+    factory = CONTAINING_RECORD(wine_factory, struct dxgi_factory, IDXGIFactory4_iface);
+    IWineDXGIFactory_Release(wine_factory);
+    return factory;
 }
 
 static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
