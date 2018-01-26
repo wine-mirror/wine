@@ -189,6 +189,7 @@ static void *libgssapi_krb5_handle;
 MAKE_FUNCPTR(gss_accept_sec_context);
 MAKE_FUNCPTR(gss_acquire_cred);
 MAKE_FUNCPTR(gss_delete_sec_context);
+MAKE_FUNCPTR(gss_display_status);
 MAKE_FUNCPTR(gss_get_mic);
 MAKE_FUNCPTR(gss_import_name);
 MAKE_FUNCPTR(gss_init_sec_context);
@@ -219,6 +220,7 @@ static BOOL load_gssapi_krb5(void)
     LOAD_FUNCPTR(gss_accept_sec_context)
     LOAD_FUNCPTR(gss_acquire_cred)
     LOAD_FUNCPTR(gss_delete_sec_context)
+    LOAD_FUNCPTR(gss_display_status)
     LOAD_FUNCPTR(gss_get_mic)
     LOAD_FUNCPTR(gss_import_name)
     LOAD_FUNCPTR(gss_init_sec_context)
@@ -293,6 +295,37 @@ static SECURITY_STATUS status_gss_to_sspi( OM_uint32 status )
     }
 }
 
+static void trace_gss_status_ex( OM_uint32 code, int type )
+{
+    OM_uint32 ret, minor_status;
+    gss_buffer_desc buf;
+    OM_uint32 message_context = 0;
+
+    for (;;)
+    {
+        ret = pgss_display_status( &minor_status, code, type, GSS_C_NULL_OID, &message_context, &buf );
+        if (GSS_ERROR(ret))
+        {
+            TRACE( "gss_display_status(0x%08x,%d) returned %08x minor status %08x\n",
+                   code, type, ret, minor_status );
+            return;
+        }
+        TRACE( "GSS-API error: 0x%08x: %s\n", code, debugstr_an(buf.value, buf.length) );
+        pgss_release_buffer( &minor_status, &buf );
+
+        if (!message_context) return;
+    }
+}
+
+static void trace_gss_status( OM_uint32 major_status, OM_uint32 minor_status )
+{
+    if (TRACE_ON(kerberos))
+    {
+        trace_gss_status_ex( major_status, GSS_C_GSS_CODE );
+        trace_gss_status_ex( minor_status, GSS_C_MECH_CODE );
+    }
+}
+
 static void expirytime_gss_to_sspi( OM_uint32 expirytime, TimeStamp *timestamp )
 {
     SYSTEMTIME time;
@@ -319,6 +352,7 @@ static SECURITY_STATUS name_sspi_to_gss( const UNICODE_STRING *name_str, gss_nam
 
     ret = pgss_import_name( &minor_status, &buf, type, name );
     TRACE( "gss_import_name returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
 
     HeapFree( GetProcessHeap(), 0, buf.value );
     return status_gss_to_sspi( ret );
@@ -414,6 +448,7 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     ret = pgss_acquire_cred( &minor_status, principal, GSS_C_INDEFINITE, GSS_C_NULL_OID_SET, cred_usage,
                               &cred_handle, NULL, &expiry_time );
     TRACE( "gss_acquire_cred returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
         credhandle_gss_to_sspi( cred_handle, credential );
@@ -444,6 +479,7 @@ static NTSTATUS NTAPI kerberos_SpFreeCredentialsHandle( LSA_SEC_HANDLE credentia
 
     ret = pgss_release_cred( &minor_status, &cred_handle );
     TRACE( "gss_release_cred returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
 
     return status_gss_to_sspi( ret );
 #else
@@ -495,6 +531,7 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
                                  GSS_C_NO_CHANNEL_BINDINGS, &input_token, NULL, &output_token, &ret_flags,
                                  &expiry_time );
     TRACE( "gss_init_sec_context returned %08x minor status %08x ret_flags %08x\n", ret, minor_status, ret_flags );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
         if (output_token.length > output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
@@ -564,6 +601,7 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
     ret = pgss_accept_sec_context( &minor_status, &ctxt_handle, cred_handle, &input_token, GSS_C_NO_CHANNEL_BINDINGS,
                                    &target, NULL, &output_token, &ret_flags, &expiry_time, NULL );
     TRACE( "gss_accept_sec_context returned %08x minor status %08x ctxt_handle %p\n", ret, minor_status, ctxt_handle );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
         if (output_token.length > output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
@@ -607,6 +645,7 @@ static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
 
     ret = pgss_delete_sec_context( &minor_status, &ctxt_handle, GSS_C_NO_BUFFER );
     TRACE( "gss_delete_sec_context returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
 
     return status_gss_to_sspi( ret );
 #else
@@ -770,6 +809,7 @@ static NTSTATUS SEC_ENTRY kerberos_SpMakeSignature( LSA_SEC_HANDLE context, ULON
 
     ret = pgss_get_mic( &minor_status, ctxt_handle, GSS_C_QOP_DEFAULT, &data_buffer, &token_buffer );
     TRACE( "gss_get_mic returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
         memcpy( message->pBuffers[token_idx].pvBuffer, token_buffer.value, token_buffer.length );
@@ -809,6 +849,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SpVerifySignature( LSA_SEC_HANDLE cont
 
     ret = pgss_verify_mic( &minor_status, ctxt_handle, &data_buffer, &token_buffer, NULL );
     TRACE( "gss_verify_mic returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE && quality_of_protection) *quality_of_protection = 0;
 
     return status_gss_to_sspi( ret );
@@ -860,6 +901,7 @@ static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG qual
 
     ret = pgss_wrap_iov( &minor_status, ctxt_handle, 1, GSS_C_QOP_DEFAULT, &conf_state, iov, 4 );
     TRACE( "gss_wrap_iov returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
         memcpy( message->pBuffers[token_idx].pvBuffer, iov[3].buffer.value, iov[3].buffer.length );
@@ -910,6 +952,7 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
 
     ret = pgss_unwrap_iov( &minor_status, ctxt_handle, &conf_state, NULL, iov, 4 );
     TRACE( "gss_unwrap_iov returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE && quality_of_protection) *quality_of_protection = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
 
     return status_gss_to_sspi( ret );
