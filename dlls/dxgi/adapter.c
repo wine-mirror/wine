@@ -33,7 +33,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IDXGIAdapter1 *ifac
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualGUID(iid, &IID_IDXGIAdapter1)
+    if (IsEqualGUID(iid, &IID_IWineDXGIAdapter)
+            || IsEqualGUID(iid, &IID_IDXGIAdapter1)
             || IsEqualGUID(iid, &IID_IDXGIAdapter)
             || IsEqualGUID(iid, &IID_IDXGIObject)
             || IsEqualGUID(iid, &IID_IUnknown))
@@ -260,10 +261,21 @@ static const struct IDXGIAdapter1Vtbl dxgi_adapter_vtbl =
 
 struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter1(IDXGIAdapter1 *iface)
 {
+    IWineDXGIAdapter *wine_adapter;
+    struct dxgi_adapter *adapter;
+    HRESULT hr;
+
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == &dxgi_adapter_vtbl);
-    return CONTAINING_RECORD(iface, struct dxgi_adapter, IDXGIAdapter1_iface);
+    if (FAILED(hr = IDXGIAdapter1_QueryInterface(iface, &IID_IWineDXGIAdapter, (void **)&wine_adapter)))
+    {
+        ERR("Failed to get IWineDXGIAdapter interface, hr %#x.\n", hr);
+        return NULL;
+    }
+    assert(wine_adapter->lpVtbl == (void *)&dxgi_adapter_vtbl);
+    adapter = CONTAINING_RECORD(wine_adapter, struct dxgi_adapter, IDXGIAdapter1_iface);
+    IWineDXGIAdapter_Release(wine_adapter);
+    return adapter;
 }
 
 static void dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *factory, UINT ordinal)

@@ -50,3 +50,12 @@ interface IWineDXGIDeviceParent : IUnknown
 {
     struct wined3d_device_parent *get_wined3d_device_parent();
 }
+
+[
+    object,
+    local,
+    uuid(17399d75-964e-4c03-99f8-9d4fd196dd62)
+]
+interface IWineDXGIAdapter : IDXGIAdapter1
+{
+}
