@@ -1391,7 +1391,7 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
             SetLastError(ERROR_FILE_NOT_FOUND);
         } else {
             ret = PROFILE_SetString( section, entry, string, FALSE);
-            PROFILE_FlushFile();
+            if (ret) ret = PROFILE_FlushFile();
         }
     }
 
@@ -1447,11 +1447,10 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
     else if (PROFILE_Open( filename, TRUE )) {
         if (!string) {/* delete the named section*/
 	    ret = PROFILE_SetString(section,NULL,NULL, FALSE);
-	    PROFILE_FlushFile();
         } else {
 	    PROFILE_DeleteAllKeys(section);
 	    ret = TRUE;
-	    while(*string) {
+	    while(*string && ret) {
                 LPWSTR buf = HeapAlloc( GetProcessHeap(), 0, (strlenW(string)+1) * sizeof(WCHAR) );
                 strcpyW( buf, string );
                 if((p = strchrW( buf, '='))) {
@@ -1461,8 +1460,8 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
                 HeapFree( GetProcessHeap(), 0, buf );
                 string += strlenW(string)+1;
             }
-            PROFILE_FlushFile();
         }
+        if (ret) ret = PROFILE_FlushFile();
     }
 
     RtlLeaveCriticalSection( &PROFILE_CritSect );
@@ -1744,7 +1743,7 @@ BOOL WINAPI WritePrivateProfileStructW (LPCWSTR section, LPCWSTR key,
 
     if (PROFILE_Open( filename, TRUE )) {
         ret = PROFILE_SetString( section, key, outstring, FALSE);
-        PROFILE_FlushFile();
+        if (ret) ret = PROFILE_FlushFile();
     }
 
     RtlLeaveCriticalSection( &PROFILE_CritSect );
