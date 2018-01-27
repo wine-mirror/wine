@@ -493,7 +493,7 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink* iface, DWORD grfHLNF, LPBC pbc,
         if (phbc)
         {
             r = IHlinkBrowseContext_GetObject(phbc, mon, TRUE, &unk);
-            if (r == S_FALSE)
+            if (r != S_OK)
             {
                 CreateBindCtx(0, &bcxt);
                 RegisterBindStatusCallback(bcxt, pbsc, NULL, 0);
