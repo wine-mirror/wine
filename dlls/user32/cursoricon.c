@@ -673,6 +673,7 @@ static BOOL CURSORICON_GetFileEntry( LPCVOID dir, DWORD size, int n,
     if ((const char *)&filedir->idEntries[n + 1] - (const char *)dir > size)
         return FALSE;
     entry = &filedir->idEntries[n];
+    if (entry->dwDIBOffset > size - sizeof(info->biSize)) return FALSE;
     info = (const BITMAPINFOHEADER *)((const char *)dir + entry->dwDIBOffset);
     if (info->biSize != sizeof(BITMAPCOREHEADER))
     {
