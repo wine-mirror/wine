@@ -1031,6 +1031,12 @@ static const unsigned char gif4pixel[42] = {
 0x02,0x00,0x00,0x02,0x03,0x14,0x16,0x05,0x00,0x3b
 };
 
+/* An invalid cursor with an invalid dwDIBOffset */
+static const unsigned char invalid_dwDIBOffset[] = {
+  0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00
+};
+
 static const DWORD biSize_tests[] = {
     0,
     sizeof(BITMAPCOREHEADER) - 1,
@@ -1320,6 +1326,8 @@ static void test_LoadImage(void)
         test_LoadImageFile("BMP (broken biSize)", bmpimage, sizeof(bmpimage), "bmp", 0);
     }
     bitmap_header->biSize = sizeof(BITMAPINFOHEADER);
+
+    test_LoadImageFile("Cursor (invalid dwDIBOffset)", invalid_dwDIBOffset, sizeof(invalid_dwDIBOffset), "cur", 0);
 }
 
 #undef ARRAY_SIZE
