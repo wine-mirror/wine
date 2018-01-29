@@ -21,21 +21,13 @@
 #ifndef __ADVPACK_PRIVATE_H
 #define __ADVPACK_PRIVATE_H
 
+#include "wine/heap.h"
+
 HRESULT do_ocx_reg(HMODULE hocx, BOOL do_reg, const WCHAR *flags, const WCHAR *param) DECLSPEC_HIDDEN;
 LPWSTR get_parameter(LPWSTR *params, WCHAR separator, BOOL quoted) DECLSPEC_HIDDEN;
 void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir) DECLSPEC_HIDDEN;
 
 HRESULT launch_exe(LPCWSTR cmd, LPCWSTR dir, HANDLE *phEXE) DECLSPEC_HIDDEN;
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
 
 static inline char *heap_strdupWtoA(const WCHAR *str)
 {
