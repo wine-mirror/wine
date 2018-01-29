@@ -215,6 +215,11 @@ static const struct message selchange_parent_seq[] = {
     { 0 }
 };
 
+static const struct message setfocus_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, TCN_FOCUSCHANGE },
+    { 0 }
+};
+
 static HWND
 create_tabcontrol (DWORD style, DWORD mask)
 {
@@ -593,7 +598,7 @@ static void test_width(void)
 static void test_curfocus(void)
 {
     const INT nTabs = 5;
-    INT focusIndex;
+    INT ret;
     HWND hTab;
 
     hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
@@ -602,24 +607,63 @@ static void test_curfocus(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Testing CurFocus with largest appropriate value */
-    SendMessageA(hTab, TCM_SETCURFOCUS, nTabs - 1, 0);
-    focusIndex = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
-    expect(nTabs-1, focusIndex);
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, nTabs - 1, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(ret == nTabs - 1, "Unexpected focus index %d.\n", ret);
 
     /* Testing CurFocus with negative value */
-    SendMessageA(hTab, TCM_SETCURFOCUS, -10, 0);
-    focusIndex = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
-    expect(-1, focusIndex);
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, -10, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(ret == -1, "Unexpected focus index %d.\n", ret);
 
     /* Testing CurFocus with value larger than number of tabs */
-    focusIndex = SendMessageA(hTab, TCM_SETCURSEL, 1, 0);
-    expect(-1, focusIndex);
+    ret = SendMessageA(hTab, TCM_SETCURSEL, 1, 0);
+    ok(ret == -1, "Unexpected focus index %d.\n", ret);
 
-    SendMessageA(hTab, TCM_SETCURFOCUS, nTabs + 1, 0);
-    focusIndex = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
-    expect(1, focusIndex);
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, nTabs + 1, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(ret == 1, "Unexpected focus index %d.\n", ret);
 
-    ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_seq, "Getset curFoc test sequence", FALSE);
+    ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_seq, "Set focused tab sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Set focused tab parent sequence", TRUE);
+
+    DestroyWindow(hTab);
+
+    /* TCS_BUTTONS */
+    hTab = createFilledTabControl(parent_wnd, TCS_BUTTONS, TCIF_TEXT|TCIF_IMAGE, nTabs);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    /* Testing CurFocus with largest appropriate value */
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, nTabs - 1, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(ret == nTabs - 1, "Unexpected focus index %d.\n", ret);
+
+    /* Testing CurFocus with negative value */
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, -10, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+todo_wine
+    ok(ret == nTabs - 1, "Unexpected focus index %d.\n", ret);
+
+    /* Testing CurFocus with value larger than number of tabs */
+    ret = SendMessageA(hTab, TCM_SETCURSEL, 1, 0);
+todo_wine
+    ok(ret == 0, "Unexpected focus index %d.\n", ret);
+
+    ret = SendMessageA(hTab, TCM_SETCURFOCUS, nTabs + 1, 0);
+    ok(ret == 0, "Unexpected ret value %d.\n", ret);
+    ret = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+todo_wine
+    ok(ret == nTabs - 1, "Unexpected focus index %d.\n", ret);
+
+    ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_focus_seq, "TCS_BUTTONS: set focused tab sequence", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, setfocus_parent_seq, "TCS_BUTTONS: set focused tab parent sequence", TRUE);
 
     DestroyWindow(hTab);
 }
