@@ -889,7 +889,7 @@ static void test_images(void)
     r = pImageList_Add(himl, hbmp, 0);
     ok(r == 0, "should be zero\n");
 
-    hwnd = CreateWindowExA(0, "SysListView32", "foo", LVS_OWNERDRAWFIXED,
+    hwnd = CreateWindowExA(0, WC_LISTVIEWA, "foo", LVS_OWNERDRAWFIXED,
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
     ok(hwnd != NULL, "failed to create listview window\n");
 
@@ -952,7 +952,7 @@ static void test_checkboxes(void)
                 text2[] = "Text2",
                 text3[] = "Text3";
 
-    hwnd = CreateWindowExA(0, "SysListView32", "foo", LVS_REPORT,
+    hwnd = CreateWindowExA(0, WC_LISTVIEWA, "foo", LVS_REPORT,
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
     ok(hwnd != NULL, "failed to create listview window\n");
 
@@ -1179,7 +1179,7 @@ static void test_items(void)
     LVITEMA item;
     DWORD r;
 
-    hwnd = CreateWindowExA(0, "SysListView32", "foo", LVS_REPORT,
+    hwnd = CreateWindowExA(0, WC_LISTVIEWA, "foo", LVS_REPORT,
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
     ok(hwnd != NULL, "failed to create listview window\n");
 
@@ -1436,7 +1436,7 @@ static void test_columns(void)
     CHAR buff[5];
     DWORD rc;
 
-    hwnd = CreateWindowExA(0, "SysListView32", "foo", LVS_LIST,
+    hwnd = CreateWindowExA(0, WC_LISTVIEWA, "foo", LVS_LIST,
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
     ok(hwnd != NULL, "failed to create listview window\n");
 
@@ -1451,7 +1451,7 @@ static void test_columns(void)
 
     DestroyWindow(hwnd);
 
-    hwnd = CreateWindowExA(0, "SysListView32", "foo", LVS_REPORT,
+    hwnd = CreateWindowExA(0, WC_LISTVIEWA, "foo", LVS_REPORT,
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
     ok(hwnd != NULL, "failed to create listview window\n");
 
@@ -1610,7 +1610,7 @@ static void test_create(BOOL is_version_6)
     DestroyWindow(hList);
 
     /* header isn't created on LVS_ICON and LVS_LIST styles */
-    hList = CreateWindowA("SysListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, GetModuleHandleA(NULL), 0);
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, GetModuleHandleA(NULL), 0);
     TEST_NO_HEADER(hList);
 
     /* insert column */
@@ -1625,7 +1625,7 @@ static void test_create(BOOL is_version_6)
     ok(!(style & HDS_HIDDEN), "Not expected HDS_HIDDEN\n");
     DestroyWindow(hList);
 
-    hList = CreateWindowA("SysListView32", "Test", WS_VISIBLE|LVS_LIST, 0, 0, 100, 100, NULL, NULL,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", WS_VISIBLE|LVS_LIST, 0, 0, 100, 100, NULL, NULL,
                            GetModuleHandleA(NULL), 0);
     TEST_NO_HEADER(hList);
     /* insert column */
@@ -1638,7 +1638,7 @@ static void test_create(BOOL is_version_6)
     DestroyWindow(hList);
 
     /* try to switch LVS_ICON -> LVS_REPORT and back LVS_ICON -> LVS_REPORT */
-    hList = CreateWindowA("SysListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL,
                            GetModuleHandleA(NULL), 0);
     ret = SetWindowLongPtrA(hList, GWL_STYLE, GetWindowLongPtrA(hList, GWL_STYLE) | LVS_REPORT);
     ok(ret & WS_VISIBLE, "Style wrong, should have WS_VISIBLE\n");
@@ -1649,7 +1649,7 @@ static void test_create(BOOL is_version_6)
     DestroyWindow(hList);
 
     /* try to switch LVS_LIST -> LVS_REPORT and back LVS_LIST -> LVS_REPORT */
-    hList = CreateWindowA("SysListView32", "Test", WS_VISIBLE|LVS_LIST, 0, 0, 100, 100, NULL, NULL,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", WS_VISIBLE|LVS_LIST, 0, 0, 100, 100, NULL, NULL,
                            GetModuleHandleA(NULL), 0);
     ret = SetWindowLongPtrA(hList, GWL_STYLE,
                            (GetWindowLongPtrA(hList, GWL_STYLE) & ~LVS_LIST) | LVS_REPORT);
@@ -1661,7 +1661,7 @@ static void test_create(BOOL is_version_6)
     DestroyWindow(hList);
 
     /* LVS_REPORT without WS_VISIBLE */
-    hList = CreateWindowA("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
     hHeader = (HWND)SendMessageA(hList, LVM_GETHEADER, 0, 0);
 todo_wine_if(is_version_6)
@@ -1677,7 +1677,7 @@ todo_wine_if(is_version_6)
     DestroyWindow(hList);
 
     /* LVS_REPORT without WS_VISIBLE, try to show it */
-    hList = CreateWindowA("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
 todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
@@ -1687,7 +1687,7 @@ todo_wine_if(is_version_6)
     DestroyWindow(hList);
 
     /* LVS_REPORT with LVS_NOCOLUMNHEADER */
-    hList = CreateWindowA("SysListView32", "Test", LVS_REPORT|LVS_NOCOLUMNHEADER|WS_VISIBLE,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT|LVS_NOCOLUMNHEADER|WS_VISIBLE,
                           0, 0, 100, 100, NULL, NULL, GetModuleHandleA(NULL), 0);
     TEST_HEADER_EXPECTED(hList);
     hHeader = (HWND)SendMessageA(hList, LVM_GETHEADER, 0, 0);
@@ -1696,7 +1696,7 @@ todo_wine_if(is_version_6)
     DestroyWindow(hList);
 
     /* setting LVS_EX_HEADERDRAGDROP creates header */
-    hList = CreateWindowA("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
 todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
@@ -1706,7 +1706,7 @@ todo_wine_if(is_version_6)
     DestroyWindow(hList);
 
     /* setting LVS_EX_GRIDLINES creates header */
-    hList = CreateWindowA("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
 todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
@@ -1716,7 +1716,7 @@ todo_wine_if(is_version_6)
     DestroyWindow(hList);
 
     /* setting LVS_EX_FULLROWSELECT creates header */
-    hList = CreateWindowA("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
 todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
@@ -1732,7 +1732,7 @@ todo_wine_if(is_version_6)
     DestroyWindow(hList);
 
     /* requesting header info with LVM_GETSUBITEMRECT doesn't create it */
-    hList = CreateWindowA("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+    hList = CreateWindowA(WC_LISTVIEWA, "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandleA(NULL), 0);
 todo_wine_if(is_version_6)
     TEST_NO_HEADER2(hList, is_version_6);
@@ -2834,7 +2834,7 @@ static void test_subitem_rect(void)
     DestroyWindow(hwnd);
 
     /* try it for non LVS_REPORT style */
-    hwnd = CreateWindowA("SysListView32", "Test", LVS_ICON, 0, 0, 100, 100, NULL, NULL,
+    hwnd = CreateWindowA(WC_LISTVIEWA, "Test", LVS_ICON, 0, 0, 100, 100, NULL, NULL,
                          GetModuleHandleA(NULL), 0);
     SetRect(&rect, LVIR_BOUNDS, 1, -10, -10);
     r = SendMessageA(hwnd, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
@@ -4201,7 +4201,7 @@ static void test_editbox(void)
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                 "edit box WM_COMMAND (EN_SETFOCUS), no edit created", FALSE);
     /* same thing but with valid window */
-    hwndedit = CreateWindowA("Edit", "Test edit", WS_VISIBLE | WS_CHILD, 0, 0, 20,
+    hwndedit = CreateWindowA(WC_EDITA, "Test edit", WS_VISIBLE | WS_CHILD, 0, 0, 20,
                 10, hwnd, (HMENU)1, (HINSTANCE)GetWindowLongPtrA(hwnd, GWLP_HINSTANCE), 0);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     r = SendMessageA(hwnd, WM_COMMAND, MAKEWPARAM(0, EN_SETFOCUS), (LPARAM)hwndedit);
@@ -5975,7 +5975,7 @@ static void test_oneclickactivate(void)
     INT r;
     POINT orig_pos;
 
-    hwnd = CreateWindowExA(0, "SysListView32", "foo", WS_VISIBLE|WS_CHILD|LVS_LIST,
+    hwnd = CreateWindowExA(0, WC_LISTVIEWA, "foo", WS_VISIBLE|WS_CHILD|LVS_LIST,
             10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
     ok(hwnd != NULL, "failed to create listview window\n");
     r = SendMessageA(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_ONECLICKACTIVATE);
