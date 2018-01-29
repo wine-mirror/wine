@@ -484,25 +484,28 @@ static void surface_blt_fbo(const struct wined3d_device *device,
         context_restore(context, restore_rt);
 }
 
-static BOOL fbo_blitter_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
-        DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format, DWORD src_location,
-        DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format, DWORD dst_location)
+static BOOL fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_resource *src_resource, DWORD src_location,
+        const struct wined3d_resource *dst_resource, DWORD dst_location)
 {
+    const struct wined3d_format *src_format = src_resource->format;
+    const struct wined3d_format *dst_format = dst_resource->format;
+
     if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
         return FALSE;
 
     /* Source and/or destination need to be on the GL side */
-    if (src_pool == WINED3D_POOL_SYSTEM_MEM || dst_pool == WINED3D_POOL_SYSTEM_MEM)
+    if (!(src_resource->access & dst_resource->access & WINED3D_RESOURCE_ACCESS_GPU))
         return FALSE;
 
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT:
             if (!((src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FBO_ATTACHABLE)
-                    || (src_usage & WINED3DUSAGE_RENDERTARGET)))
+                    || (src_resource->usage & WINED3DUSAGE_RENDERTARGET)))
                 return FALSE;
             if (!((dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FBO_ATTACHABLE)
-                    || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
+                    || (dst_resource->usage & WINED3DUSAGE_RENDERTARGET)))
                 return FALSE;
             if ((src_format->id != dst_format->id || dst_location == WINED3D_LOCATION_DRAWABLE)
                     && (!is_identity_fixup(src_format->color_fixup) || !is_identity_fixup(dst_format->color_fixup)))
@@ -2229,11 +2232,9 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
 
     if (!depth && sub_resource->locations & (WINED3D_LOCATION_TEXTURE_SRGB | WINED3D_LOCATION_TEXTURE_RGB)
             && (texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)
-            && fbo_blitter_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                    texture->resource.usage, texture->resource.pool,
-                    texture->resource.format, WINED3D_LOCATION_TEXTURE_RGB,
-                    texture->resource.usage, texture->resource.pool,
-                    texture->resource.format, WINED3D_LOCATION_TEXTURE_SRGB))
+            && fbo_blitter_supported(WINED3D_BLIT_OP_COLOR_BLIT, gl_info,
+                    &texture->resource, WINED3D_LOCATION_TEXTURE_RGB,
+                    &texture->resource, WINED3D_LOCATION_TEXTURE_SRGB))
     {
         if (srgb)
             surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_RGB,
@@ -2252,9 +2253,8 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
                 WINED3D_LOCATION_RB_RESOLVED : WINED3D_LOCATION_RB_MULTISAMPLE;
         DWORD dst_location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
 
-        if (fbo_blitter_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                texture->resource.usage, texture->resource.pool, texture->resource.format, src_location,
-                texture->resource.usage, texture->resource.pool, texture->resource.format, dst_location))
+        if (fbo_blitter_supported(WINED3D_BLIT_OP_COLOR_BLIT, gl_info,
+                &texture->resource, src_location, &texture->resource, dst_location))
             surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, src_location,
                     &src_rect, surface, dst_location, &src_rect);
 
@@ -2470,9 +2470,8 @@ static DWORD fbo_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
             blit_op = WINED3D_BLIT_OP_COLOR_BLIT;
     }
 
-    if (!fbo_blitter_supported(&device->adapter->gl_info, blit_op,
-            src_resource->usage, src_resource->pool, src_resource->format, src_location,
-            src_resource->usage, dst_resource->pool, dst_resource->format, dst_location))
+    if (!fbo_blitter_supported(blit_op, context->gl_info,
+            src_resource, src_location, dst_resource, dst_location))
     {
         if ((next = blitter->next))
             return next->ops->blitter_blit(next, op, context, src_surface, src_location,
