@@ -7695,15 +7695,16 @@ static void arbfp_blit_unset(const struct wined3d_gl_info *gl_info)
     checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
 }
 
-static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
-        enum wined3d_pool src_pool, const struct wined3d_format *src_format, DWORD src_location,
-        enum wined3d_pool dst_pool, const struct wined3d_format *dst_format, DWORD dst_location)
+static BOOL arbfp_blit_supported(enum wined3d_blit_op blit_op, const struct wined3d_context *context,
+        const struct wined3d_resource *src_resource, DWORD src_location,
+        const struct wined3d_resource *dst_resource, DWORD dst_location)
 {
+    const struct wined3d_format *src_format = src_resource->format;
+    const struct wined3d_format *dst_format = dst_resource->format;
     enum complex_fixup src_fixup;
     BOOL decompress;
 
-    if (!gl_info->supported[ARB_FRAGMENT_PROGRAM])
+    if (!context->gl_info->supported[ARB_FRAGMENT_PROGRAM])
         return FALSE;
 
     if (blit_op == WINED3D_BLIT_OP_RAW_BLIT && dst_format->id == src_format->id)
@@ -7717,7 +7718,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT_CKEY:
-            if (!d3d_info->shader_color_key)
+            if (!context->d3d_info->shader_color_key)
             {
                 /* The conversion modifies the alpha channel so the color key might no longer match. */
                 TRACE("Color keying not supported with converted textures.\n");
@@ -7734,7 +7735,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
 
     decompress = src_format && (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
             && !(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED);
-    if (!decompress && (dst_pool == WINED3D_POOL_SYSTEM_MEM || src_pool == WINED3D_POOL_SYSTEM_MEM))
+    if (!decompress && !(src_resource->access & dst_resource->access & WINED3D_RESOURCE_ACCESS_GPU))
         return FALSE;
 
     src_fixup = get_complex_fixup(src_format->color_fixup);
@@ -7800,9 +7801,8 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
     struct wined3d_blitter *next;
     RECT s, d;
 
-    if (!arbfp_blit_supported(&device->adapter->gl_info, &device->adapter->d3d_info, op,
-            src_texture->resource.pool, src_texture->resource.format, src_location,
-            dst_texture->resource.pool, dst_texture->resource.format, dst_location))
+    if (!arbfp_blit_supported(op, context, &src_texture->resource, src_location,
+            &dst_texture->resource, dst_location))
     {
         if ((next = blitter->next))
             return next->ops->blitter_blit(next, op, context, src_surface, src_location,
