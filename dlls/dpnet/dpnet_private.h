@@ -25,6 +25,7 @@
 # error You must include config.h to use this header
 #endif
 
+#include "wine/heap.h"
 #include <wine/list.h>
 #include "winsock2.h"
 #include "wine/unicode.h"
@@ -153,21 +154,6 @@ typedef struct {
 
 #define FE(x) { x, #x }	
 #define GE(x) { &x, #x }
-
-static inline void __WINE_ALLOC_SIZE(1) *heap_alloc( size_t len )
-{
-    return HeapAlloc( GetProcessHeap(), 0, len );
-}
-
-static inline void __WINE_ALLOC_SIZE(2) *heap_realloc(void *mem, size_t len)
-{
-    return HeapReAlloc( GetProcessHeap(), 0, mem, len);
-}
-
-static inline BOOL heap_free( void *mem )
-{
-    return HeapFree( GetProcessHeap(), 0, mem );
-}
 
 static inline WCHAR *heap_strdupW( const WCHAR *src )
 {
