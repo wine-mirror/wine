@@ -36,6 +36,7 @@
 #include "shlguid.h"
 #include "shlobj.h"
 
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 #include "browseui.h"

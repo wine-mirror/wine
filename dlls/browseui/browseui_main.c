@@ -34,6 +34,7 @@
 #include "shlguid.h"
 #include "rpcproxy.h"
 
+#include "wine/heap.h"
 #include "browseui.h"
 
 #include "initguid.h"
