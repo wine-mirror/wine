@@ -33,7 +33,7 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 static BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const struct wined3d_gl_info *gl_info)
 {
     return texture->resource.pool == WINED3D_POOL_DEFAULT
-            && texture->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU
+            && texture->resource.access & WINED3D_RESOURCE_ACCESS_MAP
             && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
             && !texture->resource.format->conv_byte_count
             && !(texture->flags & (WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_COND_NP2_EMULATED));
@@ -243,9 +243,9 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
     if (WARN_ON(d3d))
     {
         DWORD required_access = wined3d_resource_access_from_location(location);
-        if ((texture->resource.access_flags & required_access) != required_access)
+        if ((texture->resource.access & required_access) != required_access)
             WARN("Operation requires %#x access, but texture only has %#x.\n",
-                    required_access, texture->resource.access_flags);
+                    required_access, texture->resource.access);
     }
 
     if (current & WINED3D_LOCATION_DISCARDED)
@@ -369,7 +369,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     }
     wined3d_resource_update_draw_binding(&texture->resource);
     if ((flags & WINED3D_TEXTURE_CREATE_MAPPABLE) || desc->format == WINED3DFMT_D16_LOCKABLE)
-        texture->resource.access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
+        texture->resource.access |= WINED3D_RESOURCE_ACCESS_MAP;
 
     texture->texture_ops = texture_ops;
 
@@ -1874,7 +1874,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
             return WINED3DERR_INVALIDCALL;
     }
 
-    if (!(resource->access_flags & WINED3D_RESOURCE_ACCESS_CPU))
+    if (!(resource->access & WINED3D_RESOURCE_ACCESS_MAP))
     {
         WARN("Trying to map unmappable texture.\n");
         if (resource->type != WINED3D_RTYPE_TEXTURE_2D)

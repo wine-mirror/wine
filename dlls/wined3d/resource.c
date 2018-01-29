@@ -36,11 +36,11 @@ static DWORD resource_access_from_pool(enum wined3d_pool pool)
             return WINED3D_RESOURCE_ACCESS_GPU;
 
         case WINED3D_POOL_MANAGED:
-            return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU;
+            return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
 
         case WINED3D_POOL_SCRATCH:
         case WINED3D_POOL_SYSTEM_MEM:
-            return WINED3D_RESOURCE_ACCESS_CPU;
+            return WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
 
         default:
             FIXME("Unhandled pool %#x.\n", pool);
@@ -191,9 +191,9 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->multisample_quality = multisample_quality;
     resource->usage = usage;
     resource->pool = pool;
-    resource->access_flags = resource_access_from_pool(pool);
+    resource->access = resource_access_from_pool(pool);
     if (usage & WINED3DUSAGE_DYNAMIC)
-        resource->access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
+        resource->access |= WINED3D_RESOURCE_ACCESS_MAP;
     resource->width = width;
     resource->height = height;
     resource->depth = depth;

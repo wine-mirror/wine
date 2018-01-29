@@ -2961,8 +2961,9 @@ static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD sta
     return context->isStateDirty[idx] & (1u << shift);
 }
 
-#define WINED3D_RESOURCE_ACCESS_GPU     0x1
-#define WINED3D_RESOURCE_ACCESS_CPU     0x2
+#define WINED3D_RESOURCE_ACCESS_GPU     0x1u
+#define WINED3D_RESOURCE_ACCESS_CPU     0x2u
+#define WINED3D_RESOURCE_ACCESS_MAP     0x4u
 
 struct wined3d_resource_ops
 {
@@ -2990,7 +2991,7 @@ struct wined3d_resource
     UINT multisample_quality;
     DWORD usage;
     enum wined3d_pool pool;
-    DWORD access_flags;
+    unsigned int access;
     WORD draw_binding;
     WORD map_binding;
     UINT width;
