@@ -895,6 +895,7 @@ static UINT wm_renderformat;
 static UINT nb_formats;
 static BOOL cross_thread;
 static BOOL do_render_format;
+static HANDLE update_event;
 
 static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -953,6 +954,7 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
         ok( msg_flags == ISMEX_NOSEND, "WM_CLIPBOARDUPDATE wrong flags %x\n", msg_flags );
         EnterCriticalSection(&clipboard_cs);
         wm_clipboardupdate++;
+        SetEvent(update_event);
         LeaveCriticalSection(&clipboard_cs);
         break;
     case WM_USER:
@@ -1010,6 +1012,9 @@ static void check_messages_(int line, HWND win, UINT seq_diff, UINT draw, UINT u
     {
         while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
     }
+
+    if (update && !broken(!pAddClipboardFormatListener))
+        ok(WaitForSingleObject(update_event, 1000) == WAIT_OBJECT_0, "wait failed\n");
 
     count = SendMessageA( win, WM_USER + 1, 0, 0 );
     ok_(__FILE__, line)(count == draw, "WM_DRAWCLIPBOARD %sreceived\n", draw ? "not " : "");
@@ -1274,6 +1279,7 @@ static void test_messages(void)
     DWORD tid;
 
     InitializeCriticalSection(&clipboard_cs);
+    update_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     memset(&cls, 0, sizeof(cls));
     cls.lpfnWndProc = clipboard_wnd_proc;
