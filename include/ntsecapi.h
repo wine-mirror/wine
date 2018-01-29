@@ -169,6 +169,15 @@ typedef struct _OBJECT_ATTRIBUTES {
 } OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
 #endif
 
+#ifndef __SECHANDLE_DEFINED__
+#define __SECHANDLE_DEFINED__
+typedef struct _SecHandle
+{
+    ULONG_PTR dwLower;
+    ULONG_PTR dwUpper;
+} SecHandle, *PSecHandle;
+#endif
+
 typedef UNICODE_STRING LSA_UNICODE_STRING, *PLSA_UNICODE_STRING;
 typedef STRING LSA_STRING, *PLSA_STRING;
 typedef OBJECT_ATTRIBUTES LSA_OBJECT_ATTRIBUTES, *PLSA_OBJECT_ATTRIBUTES;
@@ -348,6 +357,102 @@ typedef enum _POLICY_NOTIFICATION_INFORMATION_CLASS
 #else /* _MSC_VER/__GNUC__ */
 static const WCHAR MICROSOFT_KERBEROS_NAME_W[] = { 'K','e','r','b','e','r','o','s',0 };
 #endif
+
+#define KERB_TICKET_FLAGS_reserved          0x80000000
+#define KERB_TICKET_FLAGS_forwardable       0x40000000
+#define KERB_TICKET_FLAGS_forwarded         0x20000000
+#define KERB_TICKET_FLAGS_proxiable         0x10000000
+#define KERB_TICKET_FLAGS_proxy             0x08000000
+#define KERB_TICKET_FLAGS_may_postdate      0x04000000
+#define KERB_TICKET_FLAGS_postdated         0x02000000
+#define KERB_TICKET_FLAGS_invalid           0x01000000
+#define KERB_TICKET_FLAGS_renewable         0x00800000
+#define KERB_TICKET_FLAGS_initial           0x00400000
+#define KERB_TICKET_FLAGS_pre_authent       0x00200000
+#define KERB_TICKET_FLAGS_hw_authent        0x00100000
+#define KERB_TICKET_FLAGS_ok_as_delegate    0x00040000
+#define KERB_TICKET_FLAGS_name_canonicalize 0x00010000
+#define KERB_TICKET_FLAGS_cname_in_pa_data  0x00040000
+#define KERB_TICKET_FLAGS_reserved1         0x00000001
+
+typedef enum _KERB_PROTOCOL_MESSAGE_TYPE
+{
+    KerbDebugRequestMessage = 0,
+    KerbQueryTicketCacheMessage,
+    KerbChangeMachinePasswordMessage,
+    KerbVerifyPacMessage,
+    KerbRetrieveTicketMessage,
+    KerbUpdateAddressesMessage,
+    KerbPurgeTicketCacheMessage,
+    KerbChangePasswordMessage,
+    KerbRetrieveEncodedTicketMessage,
+    KerbDecryptDataMessage,
+    KerbAddBindingCacheEntryMessage,
+    KerbSetPasswordMessage,
+    KerbSetPasswordExMessage,
+    KerbVerifyCredentialsMessage,
+    KerbQueryTicketCacheExMessage,
+    KerbPurgeTicketCacheExMessage,
+    KerbRefreshSmartcardCredentialsMessage,
+    KerbAddExtraCredentialsMessage,
+    KerbQuerySupplementalCredentialsMessage,
+    KerbTransferCredentialsMessage,
+    KerbQueryTicketCacheEx2Message,
+    KerbSubmitTicketMessage,
+    KerbAddExtraCredentialsExMessage,
+    KerbQueryKdcProxyCacheMessage,
+    KerbPurgeKdcProxyCacheMessage,
+    KerbQueryTicketCacheEx3Message,
+    KerbCleanupMachinePkinitCredsMessage,
+    KerbAddBindingCacheEntryExMessage,
+    KerbQueryBindingCacheMessage,
+    KerbPurgeBindingCacheMessage,
+    KerbQueryDomainExtendedPoliciesMessage,
+    KerbQueryS4U2ProxyCacheMessage
+} KERB_PROTOCOL_MESSAGE_TYPE, *PKERB_PROTOCOL_MESSAGE_TYPE;
+
+typedef struct _KERB_TICKET_CACHE_INFO
+{
+    UNICODE_STRING ServerName;
+    UNICODE_STRING RealmName;
+    LARGE_INTEGER StartTime;
+    LARGE_INTEGER EndTime;
+    LARGE_INTEGER RenewTime;
+    LONG EncryptionType;
+    ULONG TicketFlags;
+} KERB_TICKET_CACHE_INFO, *PKERB_TICKET_CACHE_INFO;
+
+typedef struct _KERB_QUERY_TKT_CACHE_REQUEST
+{
+    KERB_PROTOCOL_MESSAGE_TYPE MessageType;
+    LUID LogonId;
+} KERB_QUERY_TKT_CACHE_REQUEST, *PKERB_QUERY_TKT_CACHE_REQUEST;
+
+typedef struct _KERB_QUERY_TKT_CACHE_RESPONSE
+{
+    KERB_PROTOCOL_MESSAGE_TYPE MessageType;
+    ULONG CountOfTickets;
+    KERB_TICKET_CACHE_INFO Tickets[ANYSIZE_ARRAY];
+} KERB_QUERY_TKT_CACHE_RESPONSE, *PKERB_QUERY_TKT_CACHE_RESPONSE;
+
+typedef struct _KERB_RETRIEVE_TKT_REQUEST
+{
+    KERB_PROTOCOL_MESSAGE_TYPE MessageType;
+    LUID LogonId;
+    UNICODE_STRING TargetName;
+    ULONG TicketFlags;
+    ULONG CacheOptions;
+    LONG EncryptionType;
+    SecHandle CredentialsHandle;
+} KERB_RETRIEVE_TKT_REQUEST, *PKERB_RETRIEVE_TKT_REQUEST;
+
+typedef struct _KERB_PURGE_TKT_CACHE_REQUEST
+{
+    KERB_PROTOCOL_MESSAGE_TYPE MessageType;
+    LUID LogonId;
+    UNICODE_STRING ServerName;
+    UNICODE_STRING RealmName;
+} KERB_PURGE_TKT_CACHE_REQUEST, *PKERB_PURGE_TKT_CACHE_REQUEST;
 
 #define RtlGenRandom                    SystemFunction036
 #define RtlEncryptMemory                SystemFunction040
