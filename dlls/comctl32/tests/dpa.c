@@ -30,6 +30,7 @@
 #include "objidl.h"
 
 #include "wine/test.h"
+#include "v6util.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
 
@@ -737,6 +738,9 @@ if (0) {
 
 START_TEST(dpa)
 {
+    ULONG_PTR cookie;
+    HANDLE ctxt;
+
     init_functions();
 
     test_dpa();
@@ -745,4 +749,18 @@ START_TEST(dpa)
     test_DPA_DestroyCallback();
     test_DPA_LoadStream();
     test_DPA_SaveStream();
+
+    if (!load_v6_module(&cookie, &ctxt))
+        return;
+
+    init_functions();
+
+    test_dpa();
+    test_DPA_Merge();
+    test_DPA_EnumCallback();
+    test_DPA_DestroyCallback();
+    test_DPA_LoadStream();
+    test_DPA_SaveStream();
+
+    unload_v6_module(cookie, ctxt);
 }
