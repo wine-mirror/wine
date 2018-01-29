@@ -23,6 +23,7 @@
 #include "atlcom.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
@@ -32,16 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(atl);
 HINSTANCE atl_instance;
 
 typedef unsigned char cpp_bool;
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
 
 static ICatRegister *catreg;
 
