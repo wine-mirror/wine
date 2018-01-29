@@ -1027,6 +1027,12 @@ static HRESULT d3d8_device_create_surface(struct d3d8_device *device, UINT width
     desc.depth = 1;
     desc.size = 0;
 
+    if (pool == D3DPOOL_SCRATCH)
+    {
+        desc.pool = WINED3D_POOL_SYSTEM_MEM;
+        desc.usage |= WINED3DUSAGE_SCRATCH;
+    }
+
     wined3d_mutex_lock();
 
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &desc,

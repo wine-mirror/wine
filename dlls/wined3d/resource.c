@@ -38,7 +38,6 @@ static DWORD resource_access_from_pool(enum wined3d_pool pool)
         case WINED3D_POOL_MANAGED:
             return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
 
-        case WINED3D_POOL_SCRATCH:
         case WINED3D_POOL_SYSTEM_MEM:
             return WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
 
@@ -57,6 +56,7 @@ static void resource_check_usage(DWORD usage)
             | WINED3DUSAGE_AUTOGENMIPMAP
             | WINED3DUSAGE_STATICDECL
             | WINED3DUSAGE_OVERLAY
+            | WINED3DUSAGE_SCRATCH
             | WINED3DUSAGE_PRIVATE
             | WINED3DUSAGE_LEGACY_CUBEMAP
             | WINED3DUSAGE_TEXTURE;
@@ -103,6 +103,12 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     };
 
     resource_check_usage(usage);
+
+    if (usage & WINED3DUSAGE_SCRATCH && pool != WINED3D_POOL_SYSTEM_MEM)
+    {
+        ERR("WINED3DUSAGE_SCRATCH used with pool %s.\n", debug_d3dpool(pool));
+        return WINED3DERR_INVALIDCALL;
+    }
 
     for (i = 0; i < ARRAY_SIZE(resource_types); ++i)
     {
@@ -157,7 +163,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
              * Use 2D textures, the texture code will pad to a power of 2 size. */
             gl_type = WINED3D_GL_RES_TYPE_TEX_2D;
         }
-        else if (pool == WINED3D_POOL_SCRATCH)
+        else if (usage & WINED3DUSAGE_SCRATCH)
         {
             /* Needed for proper format information. */
             gl_type = base_type;

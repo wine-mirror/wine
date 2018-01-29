@@ -227,12 +227,12 @@ static HRESULT WINAPI d3d8_vertexbuffer_GetDesc(IDirect3DVertexBuffer8 *iface,
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     wined3d_mutex_unlock();
 
+    desc->Format = D3DFMT_VERTEXDATA;
     desc->Type = D3DRTYPE_VERTEXBUFFER;
-    desc->Usage = wined3d_desc.usage & WINED3DUSAGE_MASK;
-    desc->Pool = wined3d_desc.pool;
+    desc->Usage = d3dusage_from_wined3dusage(wined3d_desc.usage);
+    desc->Pool = d3dpool_from_wined3dpool(wined3d_desc.pool, wined3d_desc.usage);
     desc->Size = wined3d_desc.size;
     desc->FVF = buffer->fvf;
-    desc->Format = D3DFMT_VERTEXDATA;
 
     return D3D_OK;
 }
@@ -273,15 +273,25 @@ static const struct wined3d_parent_ops d3d8_vertexbuffer_wined3d_parent_ops =
 HRESULT vertexbuffer_init(struct d3d8_vertexbuffer *buffer, struct d3d8_device *device,
         UINT size, DWORD usage, DWORD fvf, D3DPOOL pool)
 {
+    enum wined3d_pool wined3d_pool;
+    DWORD wined3d_usage;
     HRESULT hr;
+
+    wined3d_pool = pool;
+    wined3d_usage = usage & WINED3DUSAGE_MASK;
+    if (pool == D3DPOOL_SCRATCH)
+    {
+        wined3d_pool = WINED3D_POOL_SYSTEM_MEM;
+        wined3d_usage |= WINED3DUSAGE_SCRATCH;
+    }
 
     buffer->IDirect3DVertexBuffer8_iface.lpVtbl = &Direct3DVertexBuffer8_Vtbl;
     d3d8_resource_init(&buffer->resource);
     buffer->fvf = fvf;
 
     wined3d_mutex_lock();
-    hr = wined3d_buffer_create_vb(device->wined3d_device, size, usage & WINED3DUSAGE_MASK,
-            (enum wined3d_pool)pool, buffer, &d3d8_vertexbuffer_wined3d_parent_ops, &buffer->wined3d_buffer);
+    hr = wined3d_buffer_create_vb(device->wined3d_device, size, wined3d_usage, wined3d_pool,
+            buffer, &d3d8_vertexbuffer_wined3d_parent_ops, &buffer->wined3d_buffer);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -512,8 +522,8 @@ static HRESULT WINAPI d3d8_indexbuffer_GetDesc(IDirect3DIndexBuffer8 *iface,
 
     desc->Format = d3dformat_from_wined3dformat(buffer->format);
     desc->Type = D3DRTYPE_INDEXBUFFER;
-    desc->Usage = wined3d_desc.usage & WINED3DUSAGE_MASK;
-    desc->Pool = wined3d_desc.pool;
+    desc->Usage = d3dusage_from_wined3dusage(wined3d_desc.usage);
+    desc->Pool = d3dpool_from_wined3dpool(wined3d_desc.pool, wined3d_desc.usage);
     desc->Size = wined3d_desc.size;
 
     return D3D_OK;
@@ -555,15 +565,25 @@ static const struct wined3d_parent_ops d3d8_indexbuffer_wined3d_parent_ops =
 HRESULT indexbuffer_init(struct d3d8_indexbuffer *buffer, struct d3d8_device *device,
         UINT size, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
+    enum wined3d_pool wined3d_pool;
+    DWORD wined3d_usage;
     HRESULT hr;
+
+    wined3d_pool = pool;
+    wined3d_usage = usage & WINED3DUSAGE_MASK;
+    if (pool == D3DPOOL_SCRATCH)
+    {
+        wined3d_pool = WINED3D_POOL_SYSTEM_MEM;
+        wined3d_usage |= WINED3DUSAGE_SCRATCH;
+    }
 
     buffer->IDirect3DIndexBuffer8_iface.lpVtbl = &d3d8_indexbuffer_vtbl;
     d3d8_resource_init(&buffer->resource);
     buffer->format = wined3dformat_from_d3dformat(format);
 
     wined3d_mutex_lock();
-    hr = wined3d_buffer_create_ib(device->wined3d_device, size, usage & WINED3DUSAGE_MASK,
-            (enum wined3d_pool)pool, buffer, &d3d8_indexbuffer_wined3d_parent_ops, &buffer->wined3d_buffer);
+    hr = wined3d_buffer_create_ib(device->wined3d_device, size, wined3d_usage, wined3d_pool,
+            buffer, &d3d8_indexbuffer_wined3d_parent_ops, &buffer->wined3d_buffer);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

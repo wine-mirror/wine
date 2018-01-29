@@ -2078,7 +2078,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         /* level_count == 0 returns an error as well. */
         if (level_count != 1 || layer_count != 1)
         {
-            if (desc->pool != WINED3D_POOL_SCRATCH)
+            if (!(desc->usage & WINED3DUSAGE_SCRATCH))
             {
                 WARN("Attempted to create a mipmapped/cube/array NPOT texture without unconditional NPOT support.\n");
                 return WINED3DERR_INVALIDCALL;
@@ -2595,7 +2595,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     }
 
     if (desc->usage & WINED3DUSAGE_DYNAMIC && (desc->pool == WINED3D_POOL_MANAGED
-            || desc->pool == WINED3D_POOL_SCRATCH))
+            || desc->usage & WINED3DUSAGE_SCRATCH))
     {
         WARN("Attempted to create a DYNAMIC texture in pool %s.\n", debug_d3dpool(desc->pool));
         return WINED3DERR_INVALIDCALL;
@@ -2616,7 +2616,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
 
         if (pow2_w != desc->width || pow2_h != desc->height || pow2_d != desc->depth)
         {
-            if (desc->pool == WINED3D_POOL_SCRATCH)
+            if (desc->usage & WINED3DUSAGE_SCRATCH)
             {
                 WARN("Creating a scratch NPOT volume texture despite lack of HW support.\n");
             }

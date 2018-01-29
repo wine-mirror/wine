@@ -278,4 +278,16 @@ static inline struct d3d9_device *impl_from_IDirect3DDevice9Ex(IDirect3DDevice9E
     return CONTAINING_RECORD(iface, struct d3d9_device, IDirect3DDevice9Ex_iface);
 }
 
+static inline DWORD d3dusage_from_wined3dusage(unsigned int usage)
+{
+    return usage & WINED3DUSAGE_MASK;
+}
+
+static inline D3DPOOL d3dpool_from_wined3dpool(enum wined3d_pool pool, unsigned int usage)
+{
+    if (pool == WINED3D_POOL_SYSTEM_MEM && usage & WINED3DUSAGE_SCRATCH)
+        return D3DPOOL_SCRATCH;
+    return pool;
+}
+
 #endif /* __WINE_D3D9_PRIVATE_H */

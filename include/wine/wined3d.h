@@ -681,7 +681,6 @@ enum wined3d_pool
     WINED3D_POOL_DEFAULT                    = 0,
     WINED3D_POOL_MANAGED                    = 1,
     WINED3D_POOL_SYSTEM_MEM                 = 2,
-    WINED3D_POOL_SCRATCH                    = 3,
 };
 
 enum wined3d_query_type
@@ -896,6 +895,7 @@ enum wined3d_shader_byte_code_format
 #define WINED3DUSAGE_TEXTAPI                                    0x10000000
 #define WINED3DUSAGE_MASK                                       0x10007fff
 
+#define WINED3DUSAGE_SCRATCH                                    0x00200000
 #define WINED3DUSAGE_PRIVATE                                    0x00400000
 #define WINED3DUSAGE_LEGACY_CUBEMAP                             0x00800000
 #define WINED3DUSAGE_TEXTURE                                    0x01000000

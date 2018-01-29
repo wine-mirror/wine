@@ -1453,11 +1453,11 @@ HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size,
     TRACE("device %p, size %u, usage %#x, pool %#x, parent %p, parent_ops %p, buffer %p.\n",
             device, size, usage, pool, parent, parent_ops, buffer);
 
-    if (pool == WINED3D_POOL_SCRATCH)
+    if (usage & WINED3DUSAGE_SCRATCH)
     {
         /* The d3d9 tests shows that this is not allowed. It doesn't make much
          * sense anyway, SCRATCH buffers wouldn't be usable anywhere. */
-        WARN("Vertex buffer in WINED3D_POOL_SCRATCH requested, returning WINED3DERR_INVALIDCALL.\n");
+        WARN("Vertex buffer with WINED3DUSAGE_SCRATCH requested, returning WINED3DERR_INVALIDCALL.\n");
         *buffer = NULL;
         return WINED3DERR_INVALIDCALL;
     }

@@ -1283,6 +1283,12 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, UINT width
     desc.depth = 1;
     desc.size = 0;
 
+    if (pool == D3DPOOL_SCRATCH)
+    {
+        desc.pool = WINED3D_POOL_SYSTEM_MEM;
+        desc.usage |= WINED3DUSAGE_SCRATCH;
+    }
+
     if (is_gdi_compat_wined3dformat(desc.format))
         flags |= WINED3D_TEXTURE_CREATE_GET_DC;
 

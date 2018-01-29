@@ -275,4 +275,16 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_H
 void load_local_constants(const DWORD *d3d8_elements, struct wined3d_shader *wined3d_vertex_shader) DECLSPEC_HIDDEN;
 size_t parse_token(const DWORD *pToken) DECLSPEC_HIDDEN;
 
+static inline DWORD d3dusage_from_wined3dusage(unsigned int usage)
+{
+    return usage & WINED3DUSAGE_MASK;
+}
+
+static inline D3DPOOL d3dpool_from_wined3dpool(enum wined3d_pool pool, unsigned int usage)
+{
+    if (pool == WINED3D_POOL_SYSTEM_MEM && usage & WINED3DUSAGE_SCRATCH)
+        return D3DPOOL_SCRATCH;
+    return pool;
+}
+
 #endif /* __WINE_D3DX8_PRIVATE_H */

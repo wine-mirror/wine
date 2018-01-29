@@ -4654,7 +4654,6 @@ const char *debug_d3dpool(enum wined3d_pool pool)
         POOL_TO_STR(WINED3D_POOL_DEFAULT);
         POOL_TO_STR(WINED3D_POOL_MANAGED);
         POOL_TO_STR(WINED3D_POOL_SYSTEM_MEM);
-        POOL_TO_STR(WINED3D_POOL_SCRATCH);
 #undef  POOL_TO_STR
         default:
             FIXME("Unrecognized pool %#x.\n", pool);
