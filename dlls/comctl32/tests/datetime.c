@@ -22,6 +22,7 @@
 
 #include "wine/test.h"
 #include "msg.h"
+#include "v6util.h"
 
 #define expect(EXPECTED, GOT) ok((GOT)==(EXPECTED), "Expected %d, got %ld\n", (EXPECTED), (GOT))
 
@@ -791,6 +792,8 @@ static void init_functions(void)
 START_TEST(datetime)
 {
     INITCOMMONCONTROLSEX iccex;
+    ULONG_PTR cookie;
+    HANDLE ctxt;
 
     init_functions();
 
@@ -810,4 +813,16 @@ START_TEST(datetime)
     test_dtm_set_and_get_systemtime_with_limits();
     test_wm_set_get_text();
     test_dts_shownone();
+
+    if (!load_v6_module(&cookie, &ctxt))
+        return;
+
+    test_dtm_set_format();
+    test_dtm_set_and_get_mccolor();
+    test_dtm_set_and_get_mcfont();
+    test_dtm_get_monthcal();
+    test_wm_set_get_text();
+    test_dts_shownone();
+
+    unload_v6_module(cookie, ctxt);
 }
