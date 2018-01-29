@@ -36,6 +36,7 @@ struct OIDToAlgID
     LPCSTR oid;
     LPCSTR altOid;
     DWORD algID;
+    DWORD altAlgID;
 };
 
 static const struct OIDToAlgID oidToAlgID[] = {
@@ -72,6 +73,9 @@ static const struct OIDToAlgID oidToAlgID[] = {
  { szOID_OIWDIR_md2RSA, NULL, CALG_MD2 },
  { szOID_INFOSEC_mosaicUpdatedSig, NULL, CALG_SHA },
  { szOID_INFOSEC_mosaicKMandUpdSig, NULL, CALG_DSS_SIGN },
+ { szOID_NIST_sha256, NULL, CALG_SHA_256, -1 },
+ { szOID_NIST_sha384, NULL, CALG_SHA_384, -1 },
+ { szOID_NIST_sha512, NULL, CALG_SHA_512, -1 }
 };
 
 static const struct OIDToAlgID algIDToOID[] = {
@@ -104,10 +108,7 @@ static void testOIDToAlgID(void)
     for (i = 0; i < sizeof(oidToAlgID) / sizeof(oidToAlgID[0]); i++)
     {
         alg = CertOIDToAlgId(oidToAlgID[i].oid);
-        /* Not all Windows installations support all these, so make sure it's
-         * at least not the wrong one.
-         */
-        ok(alg == 0 || alg == oidToAlgID[i].algID,
+        ok(alg == oidToAlgID[i].algID || (oidToAlgID[i].altAlgID && alg == oidToAlgID[i].altAlgID),
          "Expected %d, got %d\n", oidToAlgID[i].algID, alg);
     }
 }
@@ -126,6 +127,7 @@ static void testAlgIDToOID(void)
     {
         oid = CertAlgIdToOID(algIDToOID[i].algID);
         /* Allow failure, not every version of Windows supports every algo */
+        ok(oid != NULL || broken(!oid), "CertAlgIdToOID failed, expected %s\n", algIDToOID[i].oid);
         if (oid)
         {
             if (strcmp(oid, algIDToOID[i].oid))
@@ -542,10 +544,12 @@ static void test_enumOIDInfo(void)
 static void test_findOIDInfo(void)
 {
     static WCHAR sha1[] = { 's','h','a','1',0 };
-    static CHAR oid_rsa_md5[] = szOID_RSA_MD5;
+    static CHAR oid_rsa_md5[] = szOID_RSA_MD5, oid_sha256[] = szOID_NIST_sha256;
     ALG_ID alg = CALG_SHA1;
     ALG_ID algs[2] = { CALG_MD5, CALG_RSA_SIGN };
     PCCRYPT_OID_INFO info;
+
+    static const WCHAR sha256W[] = {'s','h','a','2','5','6',0};
 
     info = CryptFindOIDInfo(0, NULL, 0);
     ok(info == NULL, "Expected NULL\n");
@@ -584,6 +588,17 @@ static void test_findOIDInfo(void)
          szOID_RSA_MD5RSA, info->pszOID);
         ok(U(*info).Algid == CALG_MD5, "Expected CALG_MD5, got %d\n",
            U(*info).Algid);
+    }
+
+    info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, oid_sha256, 0);
+    ok(info != NULL, "Expected to find szOID_RSA_MD5\n");
+    if (info)
+    {
+        ok(!strcmp(info->pszOID, szOID_NIST_sha256), "Expected %s, got %s\n",
+         szOID_NIST_sha256, info->pszOID);
+        ok(!lstrcmpW(info->pwszName, sha256W), "pwszName = %s\n", wine_dbgstr_w(info->pwszName));
+        ok(U(*info).Algid == CALG_SHA_256 || U(*info).Algid == -1,
+           "Expected CALG_MD5 or -1, got %d\n", U(*info).Algid);
     }
 }
 
