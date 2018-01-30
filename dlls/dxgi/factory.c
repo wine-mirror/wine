@@ -254,8 +254,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IDXGIFactor
     IWineDXGIDevice *dxgi_device;
     HRESULT hr;
 
-    FIXME("iface %p, device %p, window %p, swapchain_desc %p, fullscreen_desc %p, "
-            "output %p, swapchain %p partial stub!\n",
+    TRACE("iface %p, device %p, window %p, swapchain_desc %p, fullscreen_desc %p, "
+            "output %p, swapchain %p.\n",
             iface, device, window, swapchain_desc, fullscreen_desc, output, swapchain);
 
     if (!device || !swapchain_desc || !swapchain)
@@ -309,6 +309,10 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IDXGIFactor
         FIXME("Ignoring swap effect %#x.\n", swapchain_desc->SwapEffect);
     if (swapchain_desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
         FIXME("Ignoring alpha mode %#x.\n", swapchain_desc->AlphaMode);
+    if (fullscreen_desc && fullscreen_desc->ScanlineOrdering)
+        FIXME("Unhandled scanline ordering %#x.\n", fullscreen_desc->ScanlineOrdering);
+    if (fullscreen_desc && fullscreen_desc->Scaling)
+        FIXME("Unhandled mode scaling %#x.\n", fullscreen_desc->Scaling);
 
     wined3d_desc.backbuffer_width = swapchain_desc->Width;
     wined3d_desc.backbuffer_height = swapchain_desc->Height;
