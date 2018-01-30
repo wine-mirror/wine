@@ -290,15 +290,12 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         entry_point = (char *)(ULONG_PTR)nt32->OptionalHeader.ImageBase + nt32->OptionalHeader.AddressOfEntryPoint;
         truncated = nt_header->FileHeader.SizeOfOptionalHeader < sizeof(IMAGE_OPTIONAL_HEADER32);
     }
-    todo_wine_if (entry_point == (void *)0x81231234 )
     ok( (char *)image.TransferAddress == (char *)entry_point,
         "%u: TransferAddress wrong %p / %p (%08x)\n", id,
         image.TransferAddress, entry_point, nt_header->OptionalHeader.AddressOfEntryPoint );
     ok( image.ZeroBits == 0, "%u: ZeroBits wrong %08x\n", id, image.ZeroBits );
-    todo_wine_if (entry_point == (void *)0x81231234 )
     ok( image.MaximumStackSize == max_stack || broken(truncated),
         "%u: MaximumStackSize wrong %lx / %lx\n", id, image.MaximumStackSize, max_stack );
-    todo_wine_if (entry_point == (void *)0x81231234 )
     ok( image.CommittedStackSize == commit_stack || broken(truncated),
         "%u: CommittedStackSize wrong %lx / %lx\n", id, image.CommittedStackSize, commit_stack );
     if (truncated)

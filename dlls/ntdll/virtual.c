@@ -3215,6 +3215,15 @@ NTSTATUS WINAPI NtQuerySection( HANDLE handle, SECTION_INFORMATION_CLASS class, 
                 info->ImageFileSize        = image_info.file_size;
                 info->CheckSum             = image_info.checksum;
                 if (ret_size) *ret_size = sizeof(*info);
+#ifndef _WIN64 /* don't return 64-bit values to 32-bit processes */
+                if (image_info.machine == IMAGE_FILE_MACHINE_AMD64 ||
+                    image_info.machine == IMAGE_FILE_MACHINE_ARM64)
+                {
+                    info->TransferAddress = (void *)0x81231234;  /* sic */
+                    info->MaximumStackSize = 0x100000;
+                    info->CommittedStackSize = 0x10000;
+                }
+#endif
             }
             else status = STATUS_SECTION_NOT_IMAGE;
         }
