@@ -1126,7 +1126,7 @@ static void test_create_swapchain(void)
     ok(SUCCEEDED(hr), "Failed to create swapchain, hr %#x.\n", hr);
 
     refcount = get_refcount((IUnknown *)adapter);
-    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got refcount %u, expected >= %u.\n", refcount, expected_refcount);
     refcount = get_refcount((IUnknown *)factory);
     todo_wine ok(refcount == 4, "Got unexpected refcount %u.\n", refcount);
     refcount = get_refcount((IUnknown *)device);
