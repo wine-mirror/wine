@@ -3456,6 +3456,147 @@ static void test_output_desc(void)
     ok(!refcount, "IDXGIFactory has %u references left.\n", refcount);
 }
 
+struct dxgi_adapter
+{
+    IDXGIAdapter IDXGIAdapter_iface;
+    IDXGIAdapter *wrapped_iface;
+};
+
+static inline struct dxgi_adapter *impl_from_IDXGIAdapter(IDXGIAdapter *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxgi_adapter, IDXGIAdapter_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IDXGIAdapter *iface, REFIID iid, void **out)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+
+    if (IsEqualGUID(iid, &IID_IDXGIAdapter)
+            || IsEqualGUID(iid, &IID_IDXGIObject)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        IDXGIAdapter_AddRef(adapter->wrapped_iface);
+        *out = iface;
+        return S_OK;
+    }
+    return IDXGIAdapter_QueryInterface(adapter->wrapped_iface, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE dxgi_adapter_AddRef(IDXGIAdapter *iface)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+    return IDXGIAdapter_AddRef(adapter->wrapped_iface);
+}
+
+static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IDXGIAdapter *iface)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+    return IDXGIAdapter_Release(adapter->wrapped_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetPrivateData(IDXGIAdapter *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+    return IDXGIAdapter_SetPrivateData(adapter->wrapped_iface, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetPrivateDataInterface(IDXGIAdapter *iface,
+        REFGUID guid, const IUnknown *object)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+    return IDXGIAdapter_SetPrivateDataInterface(adapter->wrapped_iface, guid, object);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetPrivateData(IDXGIAdapter *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+    return IDXGIAdapter_GetPrivateData(adapter->wrapped_iface, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IDXGIAdapter *iface, REFIID iid, void **parent)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+    return IDXGIAdapter_GetParent(adapter->wrapped_iface, iid, parent);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IDXGIAdapter *iface,
+        UINT output_idx, IDXGIOutput **output)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+    return IDXGIAdapter_EnumOutputs(adapter->wrapped_iface, output_idx, output);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IDXGIAdapter *iface, DXGI_ADAPTER_DESC *desc)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+    return IDXGIAdapter_GetDesc(adapter->wrapped_iface, desc);
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IDXGIAdapter *iface,
+        REFGUID guid, LARGE_INTEGER *umd_version)
+{
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter(iface);
+    return IDXGIAdapter_CheckInterfaceSupport(adapter->wrapped_iface, guid, umd_version);
+}
+
+static const struct IDXGIAdapterVtbl dxgi_adapter_vtbl =
+{
+    dxgi_adapter_QueryInterface,
+    dxgi_adapter_AddRef,
+    dxgi_adapter_Release,
+    dxgi_adapter_SetPrivateData,
+    dxgi_adapter_SetPrivateDataInterface,
+    dxgi_adapter_GetPrivateData,
+    dxgi_adapter_GetParent,
+    dxgi_adapter_EnumOutputs,
+    dxgi_adapter_GetDesc,
+    dxgi_adapter_CheckInterfaceSupport,
+};
+
+static void test_object_wrapping(void)
+{
+    struct dxgi_adapter wrapper;
+    DXGI_ADAPTER_DESC desc;
+    IDXGIAdapter *adapter;
+    IDXGIFactory *factory;
+    ID3D10Device1 *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory);
+    ok(hr == S_OK, "Failed to create DXGI factory, hr %#x.\n", hr);
+
+    hr = IDXGIFactory_EnumAdapters(factory, 0, &adapter);
+    if (hr == DXGI_ERROR_NOT_FOUND)
+    {
+        skip("Could not enumerate adapters.\n");
+        IDXGIFactory_Release(factory);
+        return;
+    }
+    ok(hr == S_OK, "Failed to enumerate adapter, hr %#x.\n", hr);
+
+    wrapper.IDXGIAdapter_iface.lpVtbl = &dxgi_adapter_vtbl;
+    wrapper.wrapped_iface = adapter;
+
+    hr = D3D10CreateDevice1(&wrapper.IDXGIAdapter_iface, D3D10_DRIVER_TYPE_HARDWARE, NULL,
+            0, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device);
+    if (SUCCEEDED(hr))
+    {
+        refcount = ID3D10Device1_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+
+    hr = IDXGIAdapter_GetDesc(&wrapper.IDXGIAdapter_iface, &desc);
+    ok(hr == S_OK, "Failed to get adapter desc, hr %#x.\n", hr);
+
+    refcount = IDXGIAdapter_Release(&wrapper.IDXGIAdapter_iface);
+    ok(!refcount, "Adapter has %u references left.\n", refcount);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     HMODULE dxgi_module = GetModuleHandleA("dxgi.dll");
@@ -3484,4 +3625,5 @@ START_TEST(device)
     test_swapchain_parameters();
     test_maximum_frame_latency();
     test_output_desc();
+    test_object_wrapping();
 }
