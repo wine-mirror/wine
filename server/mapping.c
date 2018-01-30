@@ -539,7 +539,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     } nt;
     off_t pos;
     int size;
-    unsigned int cpu_mask = get_supported_cpu_mask();
+    unsigned int i, cpu_mask = get_supported_cpu_mask();
 
     /* load the headers */
 
@@ -587,6 +587,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.subsystem_low  = nt.opt.hdr32.MinorSubsystemVersion;
         mapping->image.subsystem_high = nt.opt.hdr32.MajorSubsystemVersion;
         mapping->image.dll_charact    = nt.opt.hdr32.DllCharacteristics;
+        mapping->image.contains_code  = (nt.opt.hdr32.SizeOfCode ||
+                                         nt.opt.hdr32.AddressOfEntryPoint ||
+                                         nt.opt.hdr32.SectionAlignment & page_mask);
         mapping->image.loader_flags   = nt.opt.hdr32.LoaderFlags;
         mapping->image.header_size    = nt.opt.hdr32.SizeOfHeaders;
         mapping->image.checksum       = nt.opt.hdr32.CheckSum;
@@ -614,6 +617,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.subsystem_low  = nt.opt.hdr64.MinorSubsystemVersion;
         mapping->image.subsystem_high = nt.opt.hdr64.MajorSubsystemVersion;
         mapping->image.dll_charact    = nt.opt.hdr64.DllCharacteristics;
+        mapping->image.contains_code  = (nt.opt.hdr64.SizeOfCode ||
+                                         nt.opt.hdr64.AddressOfEntryPoint ||
+                                         nt.opt.hdr64.SectionAlignment & page_mask);
         mapping->image.loader_flags   = nt.opt.hdr64.LoaderFlags;
         mapping->image.header_size    = nt.opt.hdr64.SizeOfHeaders;
         mapping->image.checksum       = nt.opt.hdr64.CheckSum;
@@ -627,7 +633,6 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     mapping->image.machine       = nt.FileHeader.Machine;
     mapping->image.zerobits      = 0; /* FIXME */
     mapping->image.gp            = 0; /* FIXME */
-    mapping->image.contains_code = 0; /* FIXME */
     mapping->image.image_flags   = 0; /* FIXME */
     mapping->image.file_size     = file_size;
 
@@ -641,6 +646,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     if (pos + size > mapping->image.header_size) mapping->image.header_size = pos + size;
     if (!(sec = malloc( size ))) goto error;
     if (pread( unix_fd, sec, size, pos ) != size) goto error;
+
+    for (i = 0; i < nt.FileHeader.NumberOfSections && !mapping->image.contains_code; i++)
+        if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) mapping->image.contains_code = 1;
 
     if (!build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections )) goto error;
 

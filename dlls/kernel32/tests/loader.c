@@ -49,6 +49,7 @@ struct PROCESS_BASIC_INFORMATION_PRIVATE
 static LONG *child_failures;
 static WORD cb_count;
 static DWORD page_size;
+static BOOL is_win64 = sizeof(void *) > sizeof(int);
 static BOOL is_wow64;
 
 static NTSTATUS (WINAPI *pNtCreateSection)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *,
@@ -267,8 +268,8 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     status = pNtQuerySection( mapping, SectionImageInformation, &image, sizeof(image), &info_size );
     ok( !status, "%u: NtQuerySection failed err %x\n", id, status );
     ok( info_size == sizeof(image), "%u: NtQuerySection wrong size %lu\n", id, info_size );
-    if (nt_header->OptionalHeader.Magic == (sizeof(void *) > sizeof(int) ? IMAGE_NT_OPTIONAL_HDR64_MAGIC
-                                                                         : IMAGE_NT_OPTIONAL_HDR32_MAGIC))
+    if (nt_header->OptionalHeader.Magic == (is_win64 ? IMAGE_NT_OPTIONAL_HDR64_MAGIC
+                                                     : IMAGE_NT_OPTIONAL_HDR32_MAGIC))
     {
         max_stack = nt_header->OptionalHeader.SizeOfStackReserve;
         commit_stack = nt_header->OptionalHeader.SizeOfStackCommit;
@@ -327,13 +328,11 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     ok( image.CheckSum == nt_header->OptionalHeader.CheckSum, "%u: CheckSum wrong %08x / %08x\n", id,
         image.CheckSum, nt_header->OptionalHeader.CheckSum );
     if (nt_header->OptionalHeader.SizeOfCode || nt_header->OptionalHeader.AddressOfEntryPoint)
-        todo_wine
         ok( image.ImageContainsCode == TRUE, "%u: ImageContainsCode wrong %u\n", id,
             image.ImageContainsCode );
     else if ((nt_header->OptionalHeader.SectionAlignment % page_size) ||
              (nt_header->FileHeader.NumberOfSections == 1 &&
               (section.Characteristics & IMAGE_SCN_MEM_EXECUTE)))
-        todo_wine
         ok( image.ImageContainsCode == TRUE || broken(!image.ImageContainsCode), /* <= win8 */
             "%u: ImageContainsCode wrong %u\n", id, image.ImageContainsCode );
     else
@@ -416,8 +415,8 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
             info.Size.u.HighPart, info.Size.u.LowPart, file_size );
         has_code = query_image_section( line, dll_name, nt_header );
         /* test loading dll of wrong 32/64 bitness */
-        if (nt_header->OptionalHeader.Magic == (sizeof(void *) > sizeof(int) ? IMAGE_NT_OPTIONAL_HDR32_MAGIC
-                                                                             : IMAGE_NT_OPTIONAL_HDR64_MAGIC))
+        if (nt_header->OptionalHeader.Magic == (is_win64 ? IMAGE_NT_OPTIONAL_HDR32_MAGIC
+                                                         : IMAGE_NT_OPTIONAL_HDR64_MAGIC))
         {
             SetLastError( 0xdeadbeef );
             mod = LoadLibraryExA( dll_name, 0, DONT_RESOLVE_DLL_REFERENCES );
@@ -425,7 +424,7 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
             {
                 ok( mod != NULL, "%u: loading failed err %u\n", line, GetLastError() );
             }
-            else todo_wine_if (is_wow64)
+            else todo_wine_if (is_win64 || is_wow64)
             {
                 ok( !mod, "%u: loading succeeded\n", line );
                 ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "%u: wrong error %u\n", line, GetLastError() );
