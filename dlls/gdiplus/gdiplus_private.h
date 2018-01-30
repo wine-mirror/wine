@@ -30,6 +30,7 @@
 #include "objbase.h"
 #include "ocidl.h"
 #include "wincodecsdk.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 
 #include "gdiplus.h"
@@ -49,25 +50,6 @@
 #define GIF_DISPOSE_RESTORE_TO_BKGND 2
 #define GIF_DISPOSE_RESTORE_TO_PREV 3
 
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-}
-
-static inline void* __WINE_ALLOC_SIZE(2) heap_realloc(void *mem, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, mem, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
 
 COLORREF ARGB2COLORREF(ARGB color) DECLSPEC_HIDDEN;
 HBITMAP ARGB2BMP(ARGB color) DECLSPEC_HIDDEN;
