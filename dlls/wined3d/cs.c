@@ -2170,31 +2170,31 @@ void wined3d_cs_emit_blt_sub_resource(struct wined3d_cs *cs, struct wined3d_reso
 static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_update_sub_resource *op = data;
+    struct wined3d_resource *resource = op->resource;
     const struct wined3d_box *box = &op->box;
     unsigned int width, height, depth, level;
     struct wined3d_const_bo_address addr;
     struct wined3d_context *context;
     struct wined3d_texture *texture;
 
-    if (op->resource->type == WINED3D_RTYPE_BUFFER)
-    {
-        struct wined3d_buffer *buffer = buffer_from_resource(op->resource);
+    context = context_acquire(cs->device, NULL, 0);
 
-        context = context_acquire(op->resource->device, NULL, 0);
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        struct wined3d_buffer *buffer = buffer_from_resource(resource);
+
         if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER))
         {
             ERR("Failed to load buffer location.\n");
-            context_release(context);
             goto done;
         }
 
         wined3d_buffer_upload_data(buffer, context, box, op->data.data);
         wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
-        context_release(context);
         goto done;
     }
 
-    texture = wined3d_texture_from_resource(op->resource);
+    texture = wined3d_texture_from_resource(resource);
 
     level = op->sub_resource_idx % texture->level_count;
     width = wined3d_texture_get_level_width(texture, level);
@@ -2203,8 +2203,6 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
 
     addr.buffer_object = 0;
     addr.addr = op->data.data;
-
-    context = context_acquire(op->resource->device, NULL, 0);
 
     /* Only load the sub-resource for partial updates. */
     if (!box->left && !box->top && !box->front
@@ -2217,13 +2215,13 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
     wined3d_texture_upload_data(texture, op->sub_resource_idx, context,
             box, &addr, op->data.row_pitch, op->data.slice_pitch);
 
-    context_release(context);
-
     wined3d_texture_validate_location(texture, op->sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_invalidate_location(texture, op->sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
 
 done:
-    wined3d_resource_release(op->resource);
+    context_release(context);
+
+    wined3d_resource_release(resource);
 }
 
 void wined3d_cs_emit_update_sub_resource(struct wined3d_cs *cs, struct wined3d_resource *resource,
