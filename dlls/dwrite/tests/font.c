@@ -30,6 +30,7 @@
 #include "initguid.h"
 #include "d2d1.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 #define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
@@ -119,16 +120,6 @@ static void _expect_ref_broken(IUnknown* obj, ULONG ref, ULONG brokenref, int li
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
     ok_(__FILE__,line)(rc == ref || broken(rc == brokenref), "expected refcount %d, got %d\n", ref, rc);
-}
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static const WCHAR test_fontfile[] = {'w','i','n','e','_','t','e','s','t','_','f','o','n','t','.','t','t','f',0};
