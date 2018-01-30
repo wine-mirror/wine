@@ -22,7 +22,7 @@
 #ifndef __WINE_WINE_HEAP_H
 #define __WINE_WINE_HEAP_H
 
-#include <windef.h>
+#include <winbase.h>
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(SIZE_T len)
 {

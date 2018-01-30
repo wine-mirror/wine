@@ -69,7 +69,7 @@ static ULONG STDMETHODCALLTYPE d2d_state_block_Release(ID2D1DrawingStateBlock *i
         if (state_block->text_rendering_params)
             IDWriteRenderingParams_Release(state_block->text_rendering_params);
         ID2D1Factory_Release(state_block->factory);
-        HeapFree(GetProcessHeap(), 0, state_block);
+        heap_free(state_block);
     }
 
     return refcount;

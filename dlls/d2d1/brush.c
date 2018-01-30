@@ -67,10 +67,10 @@ static ULONG STDMETHODCALLTYPE d2d_gradient_Release(ID2D1GradientStopCollection 
 
     if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, gradient->stops);
+        heap_free(gradient->stops);
         ID3D10ShaderResourceView_Release(gradient->view);
         ID2D1Factory_Release(gradient->factory);
-        HeapFree(GetProcessHeap(), 0, gradient);
+        heap_free(gradient);
     }
 
     return refcount;
@@ -142,7 +142,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     unsigned int i;
     HRESULT hr;
 
-    if (!(data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 2 * stop_count * sizeof(*data))))
+    if (!(data = heap_alloc_zero(2 * stop_count * sizeof(*data))))
     {
         ERR("Failed to allocate data.\n");
         return E_OUTOFMEMORY;
@@ -168,7 +168,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     buffer_data.SysMemSlicePitch = 0;
 
     hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &buffer_data, &buffer);
-    HeapFree(GetProcessHeap(), 0, data);
+    heap_free(data);
     if (FAILED(hr))
     {
         ERR("Failed to create buffer, hr %#x.\n", hr);
@@ -188,7 +188,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
         return hr;
     }
 
-    if (!(*gradient = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**gradient))))
+    if (!(*gradient = heap_alloc_zero(sizeof(**gradient))))
     {
         ID3D10ShaderResourceView_Release(view);
         return E_OUTOFMEMORY;
@@ -205,10 +205,10 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     (*gradient)->view = view;
 
     (*gradient)->stop_count = stop_count;
-    if (!((*gradient)->stops = HeapAlloc(GetProcessHeap(), 0, stop_count * sizeof(*stops))))
+    if (!((*gradient)->stops = heap_alloc(stop_count * sizeof(*stops))))
     {
         ID3D10ShaderResourceView_Release(view);
-        HeapFree(GetProcessHeap(), 0, *gradient);
+        heap_free(*gradient);
         return E_OUTOFMEMORY;
     }
     memcpy((*gradient)->stops, stops, stop_count * sizeof(*stops));
@@ -233,7 +233,7 @@ static void d2d_gradient_bind(struct d2d_gradient *gradient, ID3D10Device *devic
 static void d2d_brush_destroy(struct d2d_brush *brush)
 {
     ID2D1Factory_Release(brush->factory);
-    HeapFree(GetProcessHeap(), 0, brush);
+    heap_free(brush);
 }
 
 static void d2d_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
@@ -386,7 +386,7 @@ static const struct ID2D1SolidColorBrushVtbl d2d_solid_color_brush_vtbl =
 HRESULT d2d_solid_color_brush_create(ID2D1Factory *factory, const D2D1_COLOR_F *color,
         const D2D1_BRUSH_PROPERTIES *desc, struct d2d_brush **brush)
 {
-    if (!(*brush = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**brush))))
+    if (!(*brush = heap_alloc_zero(sizeof(**brush))))
         return E_OUTOFMEMORY;
 
     d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_SOLID, desc,
@@ -566,10 +566,11 @@ static const struct ID2D1LinearGradientBrushVtbl d2d_linear_gradient_brush_vtbl 
     d2d_linear_gradient_brush_GetGradientStopCollection,
 };
 
-HRESULT d2d_linear_gradient_brush_create(ID2D1Factory *factory, const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc,
-        const D2D1_BRUSH_PROPERTIES *brush_desc, ID2D1GradientStopCollection *gradient, struct d2d_brush **brush)
+HRESULT d2d_linear_gradient_brush_create(ID2D1Factory *factory,
+        const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
+        ID2D1GradientStopCollection *gradient, struct d2d_brush **brush)
 {
-    if (!(*brush = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**brush))))
+    if (!(*brush = heap_alloc_zero(sizeof(**brush))))
         return E_OUTOFMEMORY;
 
     d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_LINEAR, brush_desc,
@@ -798,7 +799,7 @@ HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory,
 {
     struct d2d_brush *b;
 
-    if (!(b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*b))))
+    if (!(b = heap_alloc_zero(sizeof(*b))))
         return E_OUTOFMEMORY;
 
     d2d_brush_init(b, factory, D2D_BRUSH_TYPE_RADIAL, brush_desc, (ID2D1BrushVtbl *)&d2d_radial_gradient_brush_vtbl);
@@ -1034,7 +1035,7 @@ static const struct ID2D1BitmapBrushVtbl d2d_bitmap_brush_vtbl =
 HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
         const D2D1_BRUSH_PROPERTIES *brush_desc, struct d2d_brush **brush)
 {
-    if (!(*brush = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**brush))))
+    if (!(*brush = heap_alloc_zero(sizeof(**brush))))
         return E_OUTOFMEMORY;
 
     d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_BITMAP,

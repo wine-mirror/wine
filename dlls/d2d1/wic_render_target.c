@@ -144,7 +144,7 @@ static ULONG STDMETHODCALLTYPE d2d_wic_render_target_Release(ID2D1RenderTarget *
         ID3D10Texture2D_Release(render_target->readback_texture);
         ID2D1RenderTarget_Release(render_target->dxgi_target);
         IDXGISurface_Release(render_target->dxgi_surface);
-        HeapFree(GetProcessHeap(), 0, render_target);
+        heap_free(render_target);
     }
 
     return refcount;

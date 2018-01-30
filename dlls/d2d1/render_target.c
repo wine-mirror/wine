@@ -77,7 +77,7 @@ static void d2d_size_set(D2D1_SIZE_U *dst, float width, float height)
 
 static BOOL d2d_clip_stack_init(struct d2d_clip_stack *stack)
 {
-    if (!(stack->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_CLIP_STACK_SIZE * sizeof(*stack->stack))))
+    if (!(stack->stack = heap_alloc(INITIAL_CLIP_STACK_SIZE * sizeof(*stack->stack))))
         return FALSE;
 
     stack->size = INITIAL_CLIP_STACK_SIZE;
@@ -88,7 +88,7 @@ static BOOL d2d_clip_stack_init(struct d2d_clip_stack *stack)
 
 static void d2d_clip_stack_cleanup(struct d2d_clip_stack *stack)
 {
-    HeapFree(GetProcessHeap(), 0, stack->stack);
+    heap_free(stack->stack);
 }
 
 static BOOL d2d_clip_stack_push(struct d2d_clip_stack *stack, const D2D1_RECT_F *rect)
@@ -104,7 +104,7 @@ static BOOL d2d_clip_stack_push(struct d2d_clip_stack *stack, const D2D1_RECT_F 
             return FALSE;
 
         new_size = stack->size * 2;
-        if (!(new_stack = HeapReAlloc(GetProcessHeap(), 0, stack->stack, new_size * sizeof(*stack->stack))))
+        if (!(new_stack = heap_realloc(stack->stack, new_size * sizeof(*stack->stack))))
             return FALSE;
 
         stack->stack = new_stack;
@@ -272,7 +272,7 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
         ID3D10RenderTargetView_Release(render_target->view);
         ID3D10Device_Release(render_target->device);
         ID2D1Factory_Release(render_target->factory);
-        HeapFree(GetProcessHeap(), 0, render_target);
+        heap_free(render_target);
     }
 
     return refcount;
@@ -434,14 +434,14 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateCompatibleRenderTar
     TRACE("iface %p, size %p, pixel_size %p, format %p, options %#x, render_target %p.\n",
             iface, size, pixel_size, format, options, rt);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_bitmap_render_target_init(object, render_target, size, pixel_size,
             format, options)))
     {
         WARN("Failed to initialize render target, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -1176,7 +1176,7 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
     if (texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         bitmap_size.width *= 3;
     opacity_values_size = bitmap_size.width * bitmap_size.height;
-    if (!(opacity_values = HeapAlloc(GetProcessHeap(), 0, opacity_values_size)))
+    if (!(opacity_values = heap_alloc(opacity_values_size)))
     {
         ERR("Failed to allocate opacity values.\n");
         goto done;
@@ -1237,7 +1237,7 @@ done:
         ID2D1BitmapBrush_Release(opacity_brush);
     if (opacity_bitmap)
         ID2D1Bitmap_Release(opacity_bitmap);
-    HeapFree(GetProcessHeap(), 0, opacity_values);
+    heap_free(opacity_values);
     IDWriteGlyphRunAnalysis_Release(analysis);
 }
 
@@ -3243,13 +3243,13 @@ HRESULT d2d_d3d_create_render_target(ID2D1Factory *factory, IDXGISurface *surfac
     struct d2d_d3d_render_target *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_d3d_render_target_init(object, factory, surface, outer_unknown, desc)))
     {
         WARN("Failed to initialize render target, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 

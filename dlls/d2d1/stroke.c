@@ -68,8 +68,8 @@ static ULONG STDMETHODCALLTYPE d2d_stroke_style_Release(ID2D1StrokeStyle *iface)
     {
         ID2D1Factory_Release(style->factory);
         if (style->desc.dashStyle == D2D1_DASH_STYLE_CUSTOM)
-            HeapFree(GetProcessHeap(), 0, style->dashes);
-        HeapFree(GetProcessHeap(), 0, style);
+            heap_free(style->dashes);
+        heap_free(style);
     }
 
     return refcount;
@@ -212,7 +212,7 @@ HRESULT d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *fact
         if (!dashes || !dash_count)
             return E_INVALIDARG;
 
-        if (!(style->dashes = HeapAlloc(GetProcessHeap(), 0, dash_count * sizeof(*style->dashes))))
+        if (!(style->dashes = heap_alloc(dash_count * sizeof(*style->dashes))))
             return E_OUTOFMEMORY;
         memcpy(style->dashes, dashes, dash_count * sizeof(*style->dashes));
         style->dash_count = dash_count;

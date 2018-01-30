@@ -75,7 +75,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_render_target_Release(ID2D1BitmapRende
     {
         ID2D1RenderTarget_Release(render_target->dxgi_target);
         ID2D1Bitmap_Release(render_target->bitmap);
-        HeapFree(GetProcessHeap(), 0, render_target);
+        heap_free(render_target);
     }
 
     return refcount;

@@ -20,6 +20,7 @@
 #define __WINE_D2D1_PRIVATE_H
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include <assert.h>
 #include <limits.h>

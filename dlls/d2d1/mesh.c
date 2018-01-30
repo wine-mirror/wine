@@ -67,7 +67,7 @@ static ULONG STDMETHODCALLTYPE d2d_mesh_Release(ID2D1Mesh *iface)
     if (!refcount)
     {
         ID2D1Factory_Release(mesh->factory);
-        HeapFree(GetProcessHeap(), 0, mesh);
+        heap_free(mesh);
     }
 
     return refcount;
@@ -100,7 +100,7 @@ static const struct ID2D1MeshVtbl d2d_mesh_vtbl =
 
 HRESULT d2d_mesh_create(ID2D1Factory *factory, struct d2d_mesh **mesh)
 {
-    if (!(*mesh = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**mesh))))
+    if (!(*mesh = heap_alloc_zero(sizeof(**mesh))))
         return E_OUTOFMEMORY;
 
     (*mesh)->ID2D1Mesh_iface.lpVtbl = &d2d_mesh_vtbl;
