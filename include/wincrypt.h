@@ -4087,6 +4087,11 @@ BOOL WINAPI CertEnumSystemStoreLocation(DWORD dwFlags, void *pvArg,
 BOOL WINAPI CertEnumSystemStore(DWORD dwFlags, void *pvSystemStoreLocationPara,
  void *pvArg, PFN_CERT_ENUM_SYSTEM_STORE pfnEnum);
 
+BOOL WINAPI CertRegisterSystemStore(const void *store, DWORD flags,
+ CERT_SYSTEM_STORE_INFO *info, void *reserved);
+
+BOOL WINAPI CertUnregisterSystemStore(const void *store, DWORD flags);
+
 BOOL WINAPI CertEnumPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
  void *pvArg, PFN_CERT_ENUM_PHYSICAL_STORE pfnEnum);
 

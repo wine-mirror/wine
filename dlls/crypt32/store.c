@@ -1414,7 +1414,7 @@ BOOL WINAPI CertRegisterSystemStore(const void *pvSystemStore, DWORD dwFlags,
     return FALSE;
 }
 
-BOOL WINAPI CertUnregisterSystemStore(void *pvSystemStore, DWORD dwFlags)
+BOOL WINAPI CertUnregisterSystemStore(const void *pvSystemStore, DWORD dwFlags)
 {
     HCERTSTORE hstore;
 
