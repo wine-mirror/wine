@@ -1206,7 +1206,7 @@
 @ stdcall QueryPerformanceCounter(ptr) kernel32.QueryPerformanceCounter
 @ stdcall QueryPerformanceFrequency(ptr) kernel32.QueryPerformanceFrequency
 @ stub QueryProcessAffinityUpdateMode
-# @ stub QueryProcessCycleTime
+@ stdcall QueryProcessCycleTime(long ptr) kernel32.QueryProcessCycleTime
 # @ stub QueryProtectedPolicy
 @ stub QuerySecurityAccessMask
 # @ stub QueryStateAtomValueInfo

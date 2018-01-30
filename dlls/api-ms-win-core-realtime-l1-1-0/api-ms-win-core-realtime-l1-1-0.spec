@@ -1,5 +1,5 @@
 @ stub QueryIdleProcessorCycleTime
 @ stub QueryIdleProcessorCycleTimeEx
-@ stub QueryProcessCycleTime
+@ stdcall QueryProcessCycleTime(long ptr) kernel32.QueryProcessCycleTime
 @ stdcall QueryThreadCycleTime(long ptr) kernel32.QueryThreadCycleTime
 @ stdcall QueryUnbiasedInterruptTime(ptr) kernel32.QueryUnbiasedInterruptTime

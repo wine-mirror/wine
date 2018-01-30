@@ -1171,7 +1171,7 @@
 @ stdcall QueryPerformanceCounter(ptr)
 @ stdcall QueryPerformanceFrequency(ptr)
 # @ stub QueryProcessAffinityUpdateMode
-# @ stub QueryProcessCycleTime
+@ stdcall QueryProcessCycleTime(long ptr)
 @ stdcall QueryThreadCycleTime(long ptr)
 # @ stub QueryThreadProfiling
 # @ stub QueryThreadpoolStackInformation
