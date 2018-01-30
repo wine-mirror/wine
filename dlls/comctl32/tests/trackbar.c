@@ -23,6 +23,7 @@
 
 #include "wine/test.h"
 #include "msg.h"
+#include "v6util.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
 #define NUM_MSG_SEQUENCE 2
@@ -1296,6 +1297,9 @@ static void test_create(void)
 
 START_TEST(trackbar)
 {
+    ULONG_PTR cookie;
+    HANDLE ctxt;
+
     LoadLibraryA("comctl32.dll");
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCE);
@@ -1324,6 +1328,26 @@ START_TEST(trackbar)
     test_TBS_AUTOTICKS();
     test_ignore_selection();
     test_initial_state();
+
+    if (!load_v6_module(&cookie, &ctxt))
+        return;
+
+    test_trackbar_buddy();
+    test_line_size();
+    test_page_size();
+    test_position();
+    test_range();
+    test_selection();
+    test_thumb_length();
+    test_tic_settings();
+    test_tic_placement();
+    test_tool_tips();
+    test_unicode();
+    test_TBS_AUTOTICKS();
+    test_ignore_selection();
+    test_initial_state();
+
+    unload_v6_module(cookie, ctxt);
 
     DestroyWindow(hWndParent);
 }
