@@ -51,6 +51,7 @@
 #include "iccvid_private.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iccvid);
 
@@ -80,16 +81,6 @@ typedef struct _ICCVID_Info
     int           bits_per_pixel;
     cinepak_info *cvinfo;
 } ICCVID_Info;
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
 
 
 /* ------------------------------------------------------------------------ */
