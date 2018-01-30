@@ -919,6 +919,12 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
     return sz != 0 && i == sz;
 }
 
+static void dbghelp_str_WtoA(const WCHAR *src, char *dst, int dst_len)
+{
+    WideCharToMultiByte(CP_ACP, 0, src, -1, dst, dst_len - 1, NULL, NULL);
+    dst[dst_len - 1] = 0;
+}
+
 /******************************************************************
  *		SymGetModuleInfo (DBGHELP.@)
  *
@@ -941,12 +947,9 @@ BOOL  WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr,
     mi.CheckSum      = miw64.CheckSum;
     mi.NumSyms       = miw64.NumSyms;
     mi.SymType       = miw64.SymType;
-    WideCharToMultiByte(CP_ACP, 0, miw64.ModuleName, -1,
-                        mi.ModuleName, sizeof(mi.ModuleName), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, miw64.ImageName, -1,
-                        mi.ImageName, sizeof(mi.ImageName), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, miw64.LoadedImageName, -1,
-                        mi.LoadedImageName, sizeof(mi.LoadedImageName), NULL, NULL);
+    dbghelp_str_WtoA(miw64.ModuleName, mi.ModuleName, sizeof(mi.ModuleName));
+    dbghelp_str_WtoA(miw64.ImageName, mi.ImageName, sizeof(mi.ImageName));
+    dbghelp_str_WtoA(miw64.LoadedImageName, mi.LoadedImageName, sizeof(mi.LoadedImageName));
 
     memcpy(ModuleInfo, &mi, ModuleInfo->SizeOfStruct);
 
@@ -1010,18 +1013,13 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
     mi64.CheckSum      = miw64.CheckSum;
     mi64.NumSyms       = miw64.NumSyms;
     mi64.SymType       = miw64.SymType;
-    WideCharToMultiByte(CP_ACP, 0, miw64.ModuleName, -1,
-                        mi64.ModuleName, sizeof(mi64.ModuleName), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, miw64.ImageName, -1,
-                        mi64.ImageName, sizeof(mi64.ImageName), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, miw64.LoadedImageName, -1,
-                        mi64.LoadedImageName, sizeof(mi64.LoadedImageName), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, miw64.LoadedPdbName, -1,
-                        mi64.LoadedPdbName, sizeof(mi64.LoadedPdbName), NULL, NULL);
+    dbghelp_str_WtoA(miw64.ModuleName, mi64.ModuleName, sizeof(mi64.ModuleName));
+    dbghelp_str_WtoA(miw64.ImageName, mi64.ImageName, sizeof(mi64.ImageName));
+    dbghelp_str_WtoA(miw64.LoadedImageName, mi64.LoadedImageName, sizeof(mi64.LoadedImageName));
+    dbghelp_str_WtoA(miw64.LoadedPdbName, mi64.LoadedPdbName, sizeof(mi64.LoadedPdbName));
 
     mi64.CVSig         = miw64.CVSig;
-    WideCharToMultiByte(CP_ACP, 0, miw64.CVData, -1,
-                        mi64.CVData, sizeof(mi64.CVData), NULL, NULL);
+    dbghelp_str_WtoA(miw64.CVData, mi64.CVData, sizeof(mi64.CVData));
     mi64.PdbSig        = miw64.PdbSig;
     mi64.PdbSig70      = miw64.PdbSig70;
     mi64.PdbAge        = miw64.PdbAge;
