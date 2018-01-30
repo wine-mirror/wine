@@ -1,5 +1,6 @@
 IDL_SRCS = \
 	access.idl \
+	activation.idl \
 	activaut.idl \
 	activdbg.idl \
 	activscp.idl \
