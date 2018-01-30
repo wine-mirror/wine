@@ -934,7 +934,7 @@ BOOL  WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr,
     miw64.SizeOfStruct = sizeof(miw64);
     if (!SymGetModuleInfoW64(hProcess, dwAddr, &miw64)) return FALSE;
 
-    mi.SizeOfStruct  = miw64.SizeOfStruct;
+    mi.SizeOfStruct  = ModuleInfo->SizeOfStruct;
     mi.BaseOfImage   = miw64.BaseOfImage;
     mi.ImageSize     = miw64.ImageSize;
     mi.TimeDateStamp = miw64.TimeDateStamp;
@@ -968,7 +968,7 @@ BOOL  WINAPI SymGetModuleInfoW(HANDLE hProcess, DWORD dwAddr,
     miw64.SizeOfStruct = sizeof(miw64);
     if (!SymGetModuleInfoW64(hProcess, dwAddr, &miw64)) return FALSE;
 
-    miw.SizeOfStruct  = miw64.SizeOfStruct;
+    miw.SizeOfStruct  = ModuleInfo->SizeOfStruct;
     miw.BaseOfImage   = miw64.BaseOfImage;
     miw.ImageSize     = miw64.ImageSize;
     miw.TimeDateStamp = miw64.TimeDateStamp;
@@ -1003,7 +1003,7 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
     miw64.SizeOfStruct = sizeof(miw64);
     if (!SymGetModuleInfoW64(hProcess, dwAddr, &miw64)) return FALSE;
 
-    mi64.SizeOfStruct  = miw64.SizeOfStruct;
+    mi64.SizeOfStruct  = ModuleInfo->SizeOfStruct;
     mi64.BaseOfImage   = miw64.BaseOfImage;
     mi64.ImageSize     = miw64.ImageSize;
     mi64.TimeDateStamp = miw64.TimeDateStamp;
