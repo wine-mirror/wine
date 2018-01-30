@@ -100,7 +100,8 @@ static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
 
 void module_set_module(struct module* module, const WCHAR* name)
 {
-    module_fill_module(name, module->module.ModuleName, sizeof(module->module.ModuleName));
+    module_fill_module(name, module->module.ModuleName,
+            sizeof(module->module.ModuleName) / sizeof(module->module.ModuleName[0]));
 }
 
 const WCHAR *get_wine_loader_name(void)
@@ -910,7 +911,7 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
         if (!GetModuleInformation(hProcess, hMods[i], &mi, sizeof(mi)) ||
             !GetModuleBaseNameW(hProcess, hMods[i], baseW, sizeof(baseW) / sizeof(WCHAR)))
             continue;
-        module_fill_module(baseW, modW, sizeof(modW) / sizeof(CHAR));
+        module_fill_module(baseW, modW, sizeof(modW) / sizeof(modW[0]));
         EnumLoadedModulesCallback(modW, (DWORD_PTR)mi.lpBaseOfDll, mi.SizeOfImage,
                                   UserContext);
     }
