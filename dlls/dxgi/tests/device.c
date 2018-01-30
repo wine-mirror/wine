@@ -1077,7 +1077,6 @@ static void test_create_swapchain(void)
         return;
     }
 
-    creation_desc.OutputWindow = 0;
     creation_desc.BufferDesc.Width = 800;
     creation_desc.BufferDesc.Height = 600;
     creation_desc.BufferDesc.RefreshRate.Numerator = 60;
@@ -1089,13 +1088,10 @@ static void test_create_swapchain(void)
     creation_desc.SampleDesc.Quality = 0;
     creation_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     creation_desc.BufferCount = 1;
-    creation_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    creation_desc.OutputWindow = NULL;
     creation_desc.Windowed = TRUE;
     creation_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     creation_desc.Flags = 0;
-
-    memset(&initial_state, 0, sizeof(initial_state));
-    capture_fullscreen_state(&initial_state.fullscreen_state, creation_desc.OutputWindow);
 
     hr = IDXGIDevice_QueryInterface(device, &IID_IUnknown, (void **)&obj);
     ok(SUCCEEDED(hr), "IDXGIDevice does not implement IUnknown.\n");
@@ -1111,6 +1107,14 @@ static void test_create_swapchain(void)
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+
+    creation_desc.OutputWindow = NULL;
+    hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    creation_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    memset(&initial_state, 0, sizeof(initial_state));
+    capture_fullscreen_state(&initial_state.fullscreen_state, creation_desc.OutputWindow);
 
     hr = IDXGIFactory_CreateSwapChain(factory, NULL, &creation_desc, &swapchain);
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);

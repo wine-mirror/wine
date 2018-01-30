@@ -258,7 +258,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IDXGIFactor
             "output %p, swapchain %p.\n",
             iface, device, window, swapchain_desc, fullscreen_desc, output, swapchain);
 
-    if (!device || !swapchain_desc || !swapchain)
+    if (!device || !window || !swapchain_desc || !swapchain)
     {
         WARN("Invalid pointer.\n");
         return DXGI_ERROR_INVALID_CALL;
@@ -291,10 +291,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IDXGIFactor
     {
         WARN("BufferCount is %u.\n", swapchain_desc->BufferCount);
         return DXGI_ERROR_INVALID_CALL;
-    }
-    if (!window)
-    {
-        FIXME("No output window, should use factory output window.\n");
     }
 
     if (FAILED(hr = IUnknown_QueryInterface(device, &IID_IWineDXGIDevice, (void **)&dxgi_device)))
