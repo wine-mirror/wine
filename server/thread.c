@@ -1234,6 +1234,12 @@ int is_cpu_supported( enum cpu_type cpu )
     return 0;
 }
 
+/* return the cpu mask for supported cpus */
+unsigned int get_supported_cpu_mask(void)
+{
+    return supported_cpus & get_prefix_cpu_mask();
+}
+
 /* create a new thread */
 DECL_HANDLER(new_thread)
 {

@@ -49,6 +49,7 @@ struct PROCESS_BASIC_INFORMATION_PRIVATE
 static LONG *child_failures;
 static WORD cb_count;
 static DWORD page_size;
+static BOOL is_wow64;
 
 static NTSTATUS (WINAPI *pNtCreateSection)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *,
                                            const LARGE_INTEGER *, ULONG, ULONG, HANDLE );
@@ -289,12 +290,15 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         entry_point = (char *)(ULONG_PTR)nt32->OptionalHeader.ImageBase + nt32->OptionalHeader.AddressOfEntryPoint;
         truncated = nt_header->FileHeader.SizeOfOptionalHeader < sizeof(IMAGE_OPTIONAL_HEADER32);
     }
+    todo_wine_if (entry_point == (void *)0x81231234 )
     ok( (char *)image.TransferAddress == (char *)entry_point,
         "%u: TransferAddress wrong %p / %p (%08x)\n", id,
         image.TransferAddress, entry_point, nt_header->OptionalHeader.AddressOfEntryPoint );
     ok( image.ZeroBits == 0, "%u: ZeroBits wrong %08x\n", id, image.ZeroBits );
+    todo_wine_if (entry_point == (void *)0x81231234 )
     ok( image.MaximumStackSize == max_stack || broken(truncated),
         "%u: MaximumStackSize wrong %lx / %lx\n", id, image.MaximumStackSize, max_stack );
+    todo_wine_if (entry_point == (void *)0x81231234 )
     ok( image.CommittedStackSize == commit_stack || broken(truncated),
         "%u: CommittedStackSize wrong %lx / %lx\n", id, image.CommittedStackSize, commit_stack );
     if (truncated)
@@ -424,7 +428,7 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
             {
                 ok( mod != NULL, "%u: loading failed err %u\n", line, GetLastError() );
             }
-            else
+            else todo_wine_if (is_wow64)
             {
                 ok( !mod, "%u: loading succeeded\n", line );
                 ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "%u: wrong error %u\n", line, GetLastError() );
@@ -869,9 +873,7 @@ static void test_Loader(void)
     if (nt_header.OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
     {
         IMAGE_NT_HEADERS64 nt64;
-        BOOL is_wow64 = FALSE;
 
-        if (pIsWow64Process) pIsWow64Process( GetCurrentProcess(), &is_wow64 );
         memset( &nt64, 0, sizeof(nt64) );
         nt64.Signature = IMAGE_NT_SIGNATURE;
         nt64.FileHeader.Machine = orig_machine;
@@ -896,7 +898,6 @@ static void test_Loader(void)
         section.Characteristics = IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_EXECUTE;
 
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
-        todo_wine_if(!is_wow64)
         ok( status == (is_wow64 ? STATUS_INVALID_IMAGE_FORMAT : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
@@ -906,13 +907,11 @@ static void test_Loader(void)
         case IMAGE_FILE_MACHINE_ARMNT: nt64.FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64; break;
         }
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
-        todo_wine_if(!is_wow64)
         ok( status == (is_wow64 ? STATUS_INVALID_IMAGE_FORMAT : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
         nt64.FileHeader.Machine = nt_header.FileHeader.Machine;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
-        todo_wine
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
@@ -920,7 +919,6 @@ static void test_Loader(void)
         nt64.OptionalHeader.AddressOfEntryPoint = 0x1000;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
-        todo_wine
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
@@ -928,7 +926,6 @@ static void test_Loader(void)
         nt64.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
-        todo_wine
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
@@ -936,7 +933,6 @@ static void test_Loader(void)
         nt64.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
-        todo_wine
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
@@ -944,7 +940,6 @@ static void test_Loader(void)
         nt64.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
-        todo_wine
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
     }
@@ -989,35 +984,30 @@ static void test_Loader(void)
 
         nt32.FileHeader.Machine = nt_header.FileHeader.Machine;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
-        todo_wine
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0;
         nt32.OptionalHeader.AddressOfEntryPoint = 0x1000;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
-        todo_wine
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0;
         nt32.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
-        todo_wine
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0x1000;
         nt32.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
-        todo_wine
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0;
         nt32.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
-        todo_wine
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
     }
 
@@ -3236,6 +3226,7 @@ START_TEST(loader)
     pIsWow64Process = (void *)GetProcAddress(kernel32, "IsWow64Process");
     pResolveDelayLoadedAPI = (void *)GetProcAddress(kernel32, "ResolveDelayLoadedAPI");
 
+    if (pIsWow64Process) pIsWow64Process( GetCurrentProcess(), &is_wow64 );
     GetSystemInfo( &si );
     page_size = si.dwPageSize;
     dos_header.e_magic = IMAGE_DOS_SIGNATURE;

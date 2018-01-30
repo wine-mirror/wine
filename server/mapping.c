@@ -136,7 +136,6 @@ struct mapping
     mem_size_t      size;            /* mapping size */
     unsigned int    flags;           /* SEC_* flags */
     struct fd      *fd;              /* fd for mapped file */
-    enum cpu_type   cpu;             /* client CPU (for PE image mapping) */
     pe_image_info_t image;           /* image info (for PE image mapping) */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     struct shared_map *shared;       /* temp file for shared PE mapping */
@@ -540,6 +539,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     } nt;
     off_t pos;
     int size;
+    unsigned int cpu_mask = get_supported_cpu_mask();
 
     /* load the headers */
 
@@ -559,38 +559,25 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         return STATUS_INVALID_IMAGE_PROTECT;
     }
 
-    mapping->cpu = current->process->cpu;
-    switch (mapping->cpu)
-    {
-    case CPU_x86:
-        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_I386) return STATUS_INVALID_IMAGE_FORMAT;
-        if (nt.opt.hdr32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
-        break;
-    case CPU_x86_64:
-        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_AMD64) return STATUS_INVALID_IMAGE_FORMAT;
-        if (nt.opt.hdr64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
-        break;
-    case CPU_POWERPC:
-        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_POWERPC) return STATUS_INVALID_IMAGE_FORMAT;
-        if (nt.opt.hdr32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
-        break;
-    case CPU_ARM:
-        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_ARM &&
-            nt.FileHeader.Machine != IMAGE_FILE_MACHINE_THUMB &&
-            nt.FileHeader.Machine != IMAGE_FILE_MACHINE_ARMNT) return STATUS_INVALID_IMAGE_FORMAT;
-        if (nt.opt.hdr32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
-        break;
-    case CPU_ARM64:
-        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_ARM64) return STATUS_INVALID_IMAGE_FORMAT;
-        if (nt.opt.hdr64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
-        break;
-    default:
-        return STATUS_INVALID_IMAGE_FORMAT;
-    }
-
     switch (nt.opt.hdr32.Magic)
     {
     case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+        switch (nt.FileHeader.Machine)
+        {
+        case IMAGE_FILE_MACHINE_I386:
+            if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        case IMAGE_FILE_MACHINE_ARM:
+        case IMAGE_FILE_MACHINE_THUMB:
+        case IMAGE_FILE_MACHINE_ARMNT:
+            if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        case IMAGE_FILE_MACHINE_POWERPC:
+            if (cpu_mask & CPU_FLAG(CPU_POWERPC)) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        default:
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
         mapping->image.base           = nt.opt.hdr32.ImageBase;
         mapping->image.entry_point    = nt.opt.hdr32.ImageBase + nt.opt.hdr32.AddressOfEntryPoint;
         mapping->image.map_size       = ROUND_SIZE( nt.opt.hdr32.SizeOfImage );
@@ -604,7 +591,20 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.header_size    = nt.opt.hdr32.SizeOfHeaders;
         mapping->image.checksum       = nt.opt.hdr32.CheckSum;
         break;
+
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+        if (!(cpu_mask & CPU_64BIT_MASK)) return STATUS_INVALID_IMAGE_WIN_64;
+        switch (nt.FileHeader.Machine)
+        {
+        case IMAGE_FILE_MACHINE_AMD64:
+            if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        case IMAGE_FILE_MACHINE_ARM64:
+            if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
+            return STATUS_INVALID_IMAGE_FORMAT;
+        default:
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
         mapping->image.base           = nt.opt.hdr64.ImageBase;
         mapping->image.entry_point    = nt.opt.hdr64.ImageBase + nt.opt.hdr64.AddressOfEntryPoint;
         mapping->image.map_size       = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
@@ -618,7 +618,11 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.header_size    = nt.opt.hdr64.SizeOfHeaders;
         mapping->image.checksum       = nt.opt.hdr64.CheckSum;
         break;
+
+    default:
+        return STATUS_INVALID_IMAGE_FORMAT;
     }
+
     mapping->image.image_charact = nt.FileHeader.Characteristics;
     mapping->image.machine       = nt.FileHeader.Machine;
     mapping->image.zerobits      = 0; /* FIXME */
@@ -897,13 +901,6 @@ DECL_HANDLER(get_mapping_info)
 
     if (!(req->access & (SECTION_MAP_READ | SECTION_MAP_WRITE)))  /* query only */
     {
-        release_object( mapping );
-        return;
-    }
-
-    if ((mapping->flags & SEC_IMAGE) && mapping->cpu != current->process->cpu)
-    {
-        set_error( STATUS_INVALID_IMAGE_FORMAT );
         release_object( mapping );
         return;
     }

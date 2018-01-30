@@ -128,6 +128,7 @@ extern struct thread_snapshot *thread_snap( int *count );
 extern struct token *thread_get_impersonation_token( struct thread *thread );
 extern int set_thread_affinity( struct thread *thread, affinity_t affinity );
 extern int is_cpu_supported( enum cpu_type cpu );
+extern unsigned int get_supported_cpu_mask(void);
 
 /* ptrace functions */
 
