@@ -22,6 +22,7 @@
 #include <commctrl.h>
 
 #include "wine/test.h"
+#include "v6util.h"
 
 #define expect(expected, got) ok(expected == got, "expected %d, got %d\n", expected,got)
 
@@ -63,5 +64,15 @@ static void test_get_set_text(void)
 
 START_TEST(ipaddress)
 {
+    ULONG_PTR cookie;
+    HANDLE ctxt;
+
     test_get_set_text();
+
+    if (!load_v6_module(&cookie, &ctxt))
+        return;
+
+    test_get_set_text();
+
+    unload_v6_module(cookie, ctxt);
 }
