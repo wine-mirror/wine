@@ -2460,6 +2460,17 @@ interface IDummyHICONIncluder : IUnknown
     HRESULT Dummy([in] HICON hIcon, [in] HDC hdc);
 }
 
+[
+    object,
+    local,
+    pointer_default(unique),
+    uuid(a2f05a09-27a2-42b5-bc0e-ac163ef49d9b)
+]
+interface IApartmentShutdown : IUnknown
+{
+    void OnUninitialize([in] UINT64 identifier);
+}
+
 cpp_quote("#ifdef USE_COM_CONTEXT_DEF")
 
 typedef DWORD CPFLAGS;
