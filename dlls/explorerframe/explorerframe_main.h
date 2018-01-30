@@ -34,14 +34,4 @@ static inline void EFRAME_UnlockModule(void) { InterlockedDecrement( &EFRAME_ref
 HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 HRESULT TaskbarList_Constructor(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
-
 #endif /* __WINE_EXPLORERFRAME_H */
