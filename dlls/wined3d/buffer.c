@@ -1365,7 +1365,8 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
             buffer, buffer->resource.size, buffer->resource.usage,
             debug_d3dformat(buffer->resource.format->id), buffer->resource.heap_memory);
 
-    if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING || pool == WINED3D_POOL_MANAGED)
+    if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING
+            || wined3d_resource_access_is_managed(buffer->resource.access))
     {
         /* SWvp and managed buffers always return the same pointer in buffer
          * maps and retain data in DISCARD maps. Keep a system memory copy of
@@ -1383,9 +1384,9 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
     {
         TRACE("Not creating a BO because GL_ARB_vertex_buffer is not supported.\n");
     }
-    else if (buffer->resource.pool == WINED3D_POOL_SYSTEM_MEM)
+    else if (!(buffer->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
     {
-        TRACE("Not creating a BO because the buffer is in system memory.\n");
+        TRACE("Not creating a BO because the buffer is not GPU accessible.\n");
     }
     else if (!dynamic_buffer_ok && (buffer->resource.usage & WINED3DUSAGE_DYNAMIC))
     {

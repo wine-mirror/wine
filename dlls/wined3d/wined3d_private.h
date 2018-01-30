@@ -2965,6 +2965,11 @@ static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD sta
 #define WINED3D_RESOURCE_ACCESS_CPU     0x2u
 #define WINED3D_RESOURCE_ACCESS_MAP     0x4u
 
+static inline BOOL wined3d_resource_access_is_managed(unsigned int access)
+{
+    return !(~access & (WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU));
+}
+
 struct wined3d_resource_ops
 {
     ULONG (*resource_incref)(struct wined3d_resource *resource);
