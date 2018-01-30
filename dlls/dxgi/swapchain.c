@@ -665,7 +665,7 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
      */
     if (!implicit)
     {
-        if (FAILED(hr = IDXGIAdapter1_GetParent(device->adapter, &IID_IDXGIFactory,
+        if (FAILED(hr = IWineDXGIAdapter_GetParent(device->adapter, &IID_IDXGIFactory,
                 (void **)&swapchain->factory)))
         {
             WARN("Failed to get adapter parent, hr %#x.\n", hr);

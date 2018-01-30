@@ -155,7 +155,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters1(IDXGIFactory4 *iface
         return hr;
     }
 
-    *adapter = &adapter_object->IDXGIAdapter1_iface;
+    *adapter = (IDXGIAdapter1 *)&adapter_object->IWineDXGIAdapter_iface;
 
     TRACE("Returning adapter %p.\n", *adapter);
 

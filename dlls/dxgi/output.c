@@ -80,7 +80,7 @@ static ULONG STDMETHODCALLTYPE dxgi_output_Release(IDXGIOutput *iface)
     if (!refcount)
     {
         wined3d_private_store_cleanup(&output->private_store);
-        IDXGIAdapter1_Release(&output->adapter->IDXGIAdapter1_iface);
+        IWineDXGIAdapter_Release(&output->adapter->IWineDXGIAdapter_iface);
         HeapFree(GetProcessHeap(), 0, output);
     }
 
@@ -126,7 +126,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetParent(IDXGIOutput *iface,
 
     TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
 
-    return IDXGIAdapter1_QueryInterface(&output->adapter->IDXGIAdapter1_iface, riid, parent);
+    return IWineDXGIAdapter_QueryInterface(&output->adapter->IWineDXGIAdapter_iface, riid, parent);
 }
 
 /* IDXGIOutput methods */
@@ -365,7 +365,7 @@ static void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *ad
     output->refcount = 1;
     wined3d_private_store_init(&output->private_store);
     output->adapter = adapter;
-    IDXGIAdapter1_AddRef(&output->adapter->IDXGIAdapter1_iface);
+    IWineDXGIAdapter_AddRef(&output->adapter->IWineDXGIAdapter_iface);
 }
 
 HRESULT dxgi_output_create(struct dxgi_adapter *adapter, struct dxgi_output **output)

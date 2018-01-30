@@ -85,7 +85,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
         wined3d_device_uninit_3d(device->wined3d_device);
         wined3d_device_decref(device->wined3d_device);
         wined3d_mutex_unlock();
-        IDXGIAdapter1_Release(device->adapter);
+        IWineDXGIAdapter_Release(device->adapter);
         wined3d_private_store_cleanup(&device->private_store);
         HeapFree(GetProcessHeap(), 0, device);
     }
@@ -379,7 +379,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         return E_FAIL;
     }
 
-    if (!(dxgi_adapter = unsafe_impl_from_IDXGIAdapter1((IDXGIAdapter1 *)adapter)))
+    if (!(dxgi_adapter = unsafe_impl_from_IDXGIAdapter(adapter)))
     {
         WARN("This is not the adapter we're looking for.\n");
         return E_FAIL;
@@ -452,8 +452,8 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     }
     wined3d_mutex_unlock();
 
-    device->adapter = &dxgi_adapter->IDXGIAdapter1_iface;
-    IDXGIAdapter1_AddRef(device->adapter);
+    device->adapter = &dxgi_adapter->IWineDXGIAdapter_iface;
+    IWineDXGIAdapter_AddRef(device->adapter);
 
     return S_OK;
 }
