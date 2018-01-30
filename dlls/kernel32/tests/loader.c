@@ -424,7 +424,7 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
             {
                 ok( mod != NULL, "%u: loading failed err %u\n", line, GetLastError() );
             }
-            else todo_wine_if (is_win64 || is_wow64)
+            else
             {
                 ok( !mod, "%u: loading succeeded\n", line );
                 ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "%u: wrong error %u\n", line, GetLastError() );

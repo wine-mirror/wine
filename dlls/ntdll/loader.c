@@ -1761,6 +1761,27 @@ static NTSTATUS perform_relocations( void *module, SIZE_T len )
     return STATUS_SUCCESS;
 }
 
+
+/* On WoW64 setups, an image mapping can also be created for the other 32/64 CPU */
+/* but it cannot necessarily be loaded as a dll, so we need some additional checks */
+static BOOL is_valid_binary( const pe_image_info_t *info )
+{
+#ifdef __i386__
+    return info->machine == IMAGE_FILE_MACHINE_I386;
+#elif defined(__x86_64__)
+    return info->machine == IMAGE_FILE_MACHINE_AMD64 || !info->contains_code;
+#elif defined(__arm__)
+    return info->machine == IMAGE_FILE_MACHINE_ARM ||
+           info->machine == IMAGE_FILE_MACHINE_THUMB ||
+           info->machine == IMAGE_FILE_MACHINE_ARMNT;
+#elif defined(__aarch64__)
+    return info->machine == IMAGE_FILE_MACHINE_ARM64 || !info->contains_code;
+#else
+    return FALSE;  /* no wow64 support on other platforms */
+#endif
+}
+
+
 /******************************************************************************
  *	load_native_dll  (internal)
  */
@@ -1774,6 +1795,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     SIZE_T len = 0;
     WINE_MODREF *wm;
     NTSTATUS status;
+    pe_image_info_t image_info;
 
     TRACE("Trying native dll %s\n", debugstr_w(name));
 
@@ -1784,8 +1806,15 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     if (status != STATUS_SUCCESS) return status;
 
     module = NULL;
-    status = NtMapViewOfSection( mapping, NtCurrentProcess(),
-                                 &module, 0, 0, &size, &len, ViewShare, 0, PAGE_EXECUTE_READ );
+    status = virtual_map_section( mapping, &module, 0, 0, NULL, &len, PAGE_EXECUTE_READ, &image_info );
+    NtClose( mapping );
+
+    if ((status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE) &&
+        !is_valid_binary( &image_info ))
+    {
+        NtUnmapViewOfSection( NtCurrentProcess(), module );
+        return STATUS_INVALID_IMAGE_FORMAT;
+    }
 
     /* perform base relocation, if necessary */
 
@@ -1795,15 +1824,15 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     if (status != STATUS_SUCCESS)
     {
         if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
-        goto done;
+        return status;
     }
 
     /* create the MODREF */
 
     if (!(wm = alloc_module( module, name )))
     {
-        status = STATUS_NO_MEMORY;
-        goto done;
+        if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
+        return STATUS_NO_MEMORY;
     }
 
     set_security_cookie( module, len );
@@ -1829,7 +1858,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
              * around with no problems, so we don't care.
              * As these might reference our wm, we don't free it.
              */
-            goto done;
+            return status;
         }
     }
 
@@ -1852,10 +1881,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     wm->ldr.LoadCount = 1;
     *pwm = wm;
-    status = STATUS_SUCCESS;
-done:
-    NtClose( mapping );
-    return status;
+    return STATUS_SUCCESS;
 }
 
 
