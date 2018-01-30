@@ -3768,14 +3768,15 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (src_texture->resource.pool != WINED3D_POOL_SYSTEM_MEM || src_texture->resource.usage & WINED3DUSAGE_SCRATCH)
+    if (src_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU
+            || src_texture->resource.usage & WINED3DUSAGE_SCRATCH)
     {
-        WARN("Source texture not in WINED3D_POOL_SYSTEM_MEM, returning WINED3DERR_INVALIDCALL.\n");
+        WARN("Source resource is GPU accessible or a scratch resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
-    if (dst_texture->resource.pool != WINED3D_POOL_DEFAULT)
+    if (dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_CPU)
     {
-        WARN("Destination texture not in WINED3D_POOL_DEFAULT, returning WINED3DERR_INVALIDCALL.\n");
+        WARN("Destination resource is CPU accessible.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
