@@ -218,7 +218,7 @@ void info_win32_module(DWORD64 base)
      * enumeration
      */
     SymSetOptions((opt = SymGetOptions()) | 0x40000000);
-    SymEnumerateModules64(dbg_curr_process->handle, info_mod_cb, (void*)&im);
+    SymEnumerateModules64(dbg_curr_process->handle, info_mod_cb, &im);
     SymSetOptions(opt);
 
     qsort(im.mi, im.num_used, sizeof(im.mi[0]), module_compare);

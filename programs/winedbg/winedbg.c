@@ -425,7 +425,7 @@ BOOL dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE64* imh_mod)
      * enumeration
      */
     SymSetOptions((opt = SymGetOptions()) | 0x40000000);
-    SymEnumerateModules64(hProcess, mod_loader_cb, (void*)&mli);
+    SymEnumerateModules64(hProcess, mod_loader_cb, &mli);
     SymSetOptions(opt);
 
     return imh_mod->BaseOfImage != 0;
