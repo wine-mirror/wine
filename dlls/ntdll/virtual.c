@@ -1593,6 +1593,175 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
 }
 
 
+/***********************************************************************
+ *             virtual_map_section
+ *
+ * Map a file section into memory.
+ */
+NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, SIZE_T commit_size,
+                              const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG protect,
+                              pe_image_info_t *image_info )
+{
+    NTSTATUS res;
+    mem_size_t full_size;
+    ACCESS_MASK access;
+    SIZE_T size, mask = get_mask( zero_bits );
+    int unix_handle = -1, needs_close;
+    unsigned int vprot, sec_flags;
+    struct file_view *view;
+    HANDLE shared_file;
+    LARGE_INTEGER offset;
+    sigset_t sigset;
+
+    offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
+
+    switch(protect)
+    {
+    case PAGE_NOACCESS:
+    case PAGE_READONLY:
+    case PAGE_WRITECOPY:
+        access = SECTION_MAP_READ;
+        break;
+    case PAGE_READWRITE:
+        access = SECTION_MAP_WRITE;
+        break;
+    case PAGE_EXECUTE:
+    case PAGE_EXECUTE_READ:
+    case PAGE_EXECUTE_WRITECOPY:
+        access = SECTION_MAP_READ | SECTION_MAP_EXECUTE;
+        break;
+    case PAGE_EXECUTE_READWRITE:
+        access = SECTION_MAP_WRITE | SECTION_MAP_EXECUTE;
+        break;
+    default:
+        return STATUS_INVALID_PAGE_PROTECTION;
+    }
+
+    SERVER_START_REQ( get_mapping_info )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->access = access;
+        wine_server_set_reply( req, image_info, sizeof(*image_info) );
+        res = wine_server_call( req );
+        sec_flags   = reply->flags;
+        full_size   = reply->size;
+        shared_file = wine_server_ptr_handle( reply->shared_file );
+    }
+    SERVER_END_REQ;
+    if (res) return res;
+
+    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
+
+    if (sec_flags & SEC_IMAGE)
+    {
+        void *base = wine_server_get_ptr( image_info->base );
+
+        if ((ULONG_PTR)base != image_info->base) base = NULL;
+        size = image_info->map_size;
+        if (size != image_info->map_size)  /* truncated */
+        {
+            WARN( "Modules larger than 4Gb (%s) not supported\n",
+                  wine_dbgstr_longlong(image_info->map_size) );
+            res = STATUS_INVALID_PARAMETER;
+            goto done;
+        }
+        if (shared_file)
+        {
+            int shared_fd, shared_needs_close;
+
+            if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
+                                           &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
+            res = map_image( handle, access, unix_handle, base, size, mask, image_info->header_size,
+                             shared_fd, needs_close, addr_ptr );
+            if (shared_needs_close) close( shared_fd );
+            close_handle( shared_file );
+        }
+        else
+        {
+            res = map_image( handle, access, unix_handle, base, size, mask, image_info->header_size,
+                             -1, needs_close, addr_ptr );
+        }
+        if (needs_close) close( unix_handle );
+        if (res >= 0) *size_ptr = size;
+        return res;
+    }
+
+    res = STATUS_INVALID_PARAMETER;
+    if (offset.QuadPart >= full_size) goto done;
+    if (*size_ptr)
+    {
+        size = *size_ptr;
+        if (size > full_size - offset.QuadPart)
+        {
+            res = STATUS_INVALID_VIEW_SIZE;
+            goto done;
+        }
+    }
+    else
+    {
+        size = full_size - offset.QuadPart;
+        if (size != full_size - offset.QuadPart)  /* truncated */
+        {
+            WARN( "Files larger than 4Gb (%s) not supported on this platform\n",
+                  wine_dbgstr_longlong(full_size) );
+            goto done;
+        }
+    }
+    if (!(size = ROUND_SIZE( 0, size ))) goto done;  /* wrap-around */
+
+    /* Reserve a properly aligned area */
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+
+    get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE );
+    vprot |= sec_flags;
+    if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
+    res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot );
+    if (res)
+    {
+        server_leave_uninterrupted_section( &csVirtual, &sigset );
+        goto done;
+    }
+
+    /* Map the file */
+
+    TRACE( "handle=%p size=%lx offset=%x%08x\n", handle, size, offset.u.HighPart, offset.u.LowPart );
+
+    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, needs_close );
+    if (res == STATUS_SUCCESS)
+    {
+        SERVER_START_REQ( map_view )
+        {
+            req->mapping = wine_server_obj_handle( handle );
+            req->access  = access;
+            req->base    = wine_server_client_ptr( view->base );
+            req->size    = size;
+            req->start   = offset.QuadPart;
+            res = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
+
+    if (res == STATUS_SUCCESS)
+    {
+        *addr_ptr = view->base;
+        *size_ptr = size;
+        VIRTUAL_DEBUG_DUMP_VIEW( view );
+    }
+    else
+    {
+        ERR( "mapping %p %lx %x%08x failed\n", view->base, size, offset.u.HighPart, offset.u.LowPart );
+        delete_view( view );
+    }
+
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+
+done:
+    if (needs_close) close( unix_handle );
+    return res;
+}
+
+
 struct alloc_virtual_heap
 {
     void  *base;
@@ -2904,16 +3073,9 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
     NTSTATUS res;
-    mem_size_t full_size;
-    ACCESS_MASK access;
-    SIZE_T size, mask = get_mask( zero_bits );
-    int unix_handle = -1, needs_close;
-    unsigned int vprot, sec_flags;
-    struct file_view *view;
+    SIZE_T mask = get_mask( zero_bits );
     pe_image_info_t image_info;
-    HANDLE shared_file;
     LARGE_INTEGER offset;
-    sigset_t sigset;
 
     offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
 
@@ -2935,28 +3097,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     if ((offset.u.LowPart & mask) || (*addr_ptr && ((UINT_PTR)*addr_ptr & mask)))
         return STATUS_MAPPED_ALIGNMENT;
-
-    switch(protect)
-    {
-    case PAGE_NOACCESS:
-    case PAGE_READONLY:
-    case PAGE_WRITECOPY:
-        access = SECTION_MAP_READ;
-        break;
-    case PAGE_READWRITE:
-        access = SECTION_MAP_WRITE;
-        break;
-    case PAGE_EXECUTE:
-    case PAGE_EXECUTE_READ:
-    case PAGE_EXECUTE_WRITECOPY:
-        access = SECTION_MAP_READ | SECTION_MAP_EXECUTE;
-        break;
-    case PAGE_EXECUTE_READWRITE:
-        access = SECTION_MAP_WRITE | SECTION_MAP_EXECUTE;
-        break;
-    default:
-        return STATUS_INVALID_PAGE_PROTECTION;
-    }
 
     if (process != NtCurrentProcess())
     {
@@ -2984,130 +3124,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         return result.map_view.status;
     }
 
-    SERVER_START_REQ( get_mapping_info )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        req->access = access;
-        wine_server_set_reply( req, &image_info, sizeof(image_info) );
-        res = wine_server_call( req );
-        sec_flags   = reply->flags;
-        full_size   = reply->size;
-        shared_file = wine_server_ptr_handle( reply->shared_file );
-    }
-    SERVER_END_REQ;
-    if (res) return res;
-
-    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
-
-    if (sec_flags & SEC_IMAGE)
-    {
-        void *base = wine_server_get_ptr( image_info.base );
-
-        if ((ULONG_PTR)base != image_info.base) base = NULL;
-        size = image_info.map_size;
-        if (size != image_info.map_size)  /* truncated */
-        {
-            WARN( "Modules larger than 4Gb (%s) not supported\n",
-                  wine_dbgstr_longlong(image_info.map_size) );
-            res = STATUS_INVALID_PARAMETER;
-            goto done;
-        }
-        if (shared_file)
-        {
-            int shared_fd, shared_needs_close;
-
-            if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
-                                           &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
-            res = map_image( handle, access, unix_handle, base, size, mask, image_info.header_size,
-                             shared_fd, needs_close, addr_ptr );
-            if (shared_needs_close) close( shared_fd );
-            close_handle( shared_file );
-        }
-        else
-        {
-            res = map_image( handle, access, unix_handle, base, size, mask, image_info.header_size,
-                             -1, needs_close, addr_ptr );
-        }
-        if (needs_close) close( unix_handle );
-        if (res >= 0) *size_ptr = size;
-        return res;
-    }
-
-    res = STATUS_INVALID_PARAMETER;
-    if (offset.QuadPart >= full_size) goto done;
-    if (*size_ptr)
-    {
-        size = *size_ptr;
-        if (size > full_size - offset.QuadPart)
-        {
-            res = STATUS_INVALID_VIEW_SIZE;
-            goto done;
-        }
-    }
-    else
-    {
-        size = full_size - offset.QuadPart;
-        if (size != full_size - offset.QuadPart)  /* truncated */
-        {
-            WARN( "Files larger than 4Gb (%s) not supported on this platform\n",
-                  wine_dbgstr_longlong(full_size) );
-            goto done;
-        }
-    }
-    if (!(size = ROUND_SIZE( 0, size ))) goto done;  /* wrap-around */
-
-    /* Reserve a properly aligned area */
-
-    server_enter_uninterrupted_section( &csVirtual, &sigset );
-
-    get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE );
-    vprot |= sec_flags;
-    if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
-    res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot );
-    if (res)
-    {
-        server_leave_uninterrupted_section( &csVirtual, &sigset );
-        goto done;
-    }
-
-    /* Map the file */
-
-    TRACE("handle=%p size=%lx offset=%x%08x\n",
-          handle, size, offset.u.HighPart, offset.u.LowPart );
-
-    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, needs_close );
-    if (res == STATUS_SUCCESS)
-    {
-        SERVER_START_REQ( map_view )
-        {
-            req->mapping = wine_server_obj_handle( handle );
-            req->access  = access;
-            req->base    = wine_server_client_ptr( view->base );
-            req->size    = size;
-            req->start   = offset.QuadPart;
-            res = wine_server_call( req );
-        }
-        SERVER_END_REQ;
-    }
-
-    if (res == STATUS_SUCCESS)
-    {
-        *addr_ptr = view->base;
-        *size_ptr = size;
-        VIRTUAL_DEBUG_DUMP_VIEW( view );
-    }
-    else
-    {
-        ERR( "map_file_into_view %p %lx %x%08x failed\n",
-             view->base, size, offset.u.HighPart, offset.u.LowPart );
-        delete_view( view );
-    }
-
-    server_leave_uninterrupted_section( &csVirtual, &sigset );
-
-done:
-    if (needs_close) close( unix_handle );
-    return res;
+    return virtual_map_section( handle, addr_ptr, zero_bits, commit_size,
+                                offset_ptr, size_ptr, protect, &image_info );
 }
 
 
