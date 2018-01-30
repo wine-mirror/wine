@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "winnls.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 static inline BOOL match_off_by_n(int a, int b, unsigned int n)
@@ -107,22 +108,6 @@ static void init(void)
     pGetFontFileData = (void *)GetProcAddress(hgdi32, "GetFontFileData");
 
     system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
-}
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline void* __WINE_ALLOC_SIZE(2) heap_realloc(void *mem, size_t size)
-{
-    if (!mem) return heap_alloc(size);
-    return HeapReAlloc(GetProcessHeap(), 0, mem, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static INT CALLBACK is_truetype_font_installed_proc(const LOGFONTA *elf, const TEXTMETRICA *ntm, DWORD type, LPARAM lParam)
