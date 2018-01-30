@@ -784,8 +784,8 @@ HGLOBAL WINAPI GlobalFree(HGLOBAL hmem)
     }
     __EXCEPT_PAGE_FAULT
     {
-        ERR("(%p): Page fault occurred ! Caused by bug ?\n", hmem);
-        SetLastError( ERROR_INVALID_PARAMETER );
+        ERR("invalid handle %p\n", hmem);
+        SetLastError(ERROR_INVALID_HANDLE);
         hreturned = hmem;
     }
     __ENDTRY
