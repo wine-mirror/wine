@@ -1990,10 +1990,10 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
             flags, fx, debug_d3dtexturefiltertype(filter));
 
-    /* Get the swapchain. One of the surfaces has to be a primary surface */
-    if (dst_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
+    /* Get the swapchain. One of the surfaces has to be a primary surface. */
+    if (!(dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
     {
-        WARN("Destination is in sysmem, rejecting gl blt\n");
+        WARN("Destination resource is not GPU accessible, rejecting GL blit.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -2002,9 +2002,9 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     if (src_surface)
     {
         src_texture = src_surface->container;
-        if (src_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
+        if (!(src_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
         {
-            WARN("Src is in sysmem, rejecting gl blt\n");
+            WARN("Source resource is not GPU accessible, rejecting GL blit.\n");
             return WINED3DERR_INVALIDCALL;
         }
 
