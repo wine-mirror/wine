@@ -95,21 +95,8 @@ static BOOL d2d_clip_stack_push(struct d2d_clip_stack *stack, const D2D1_RECT_F 
 {
     D2D1_RECT_F r;
 
-    if (stack->count == stack->size)
-    {
-        D2D1_RECT_F *new_stack;
-        unsigned int new_size;
-
-        if (stack->size > UINT_MAX / 2)
-            return FALSE;
-
-        new_size = stack->size * 2;
-        if (!(new_stack = heap_realloc(stack->stack, new_size * sizeof(*stack->stack))))
-            return FALSE;
-
-        stack->stack = new_stack;
-        stack->size = new_size;
-    }
+    if (!d2d_array_reserve((void **)&stack->stack, &stack->size, stack->count + 1, sizeof(*stack->stack)))
+        return FALSE;
 
     r = *rect;
     if (stack->count)

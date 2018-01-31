@@ -62,8 +62,8 @@ extern struct d2d_settings d2d_settings DECLSPEC_HIDDEN;
 struct d2d_clip_stack
 {
     D2D1_RECT_F *stack;
-    unsigned int size;
-    unsigned int count;
+    size_t size;
+    size_t count;
 };
 
 struct d2d_error_state
@@ -484,6 +484,32 @@ static inline void *d2d_calloc(size_t count, size_t size)
     if (size && s / size != count)
         return NULL;
     return heap_alloc(s);
+}
+
+static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+{
+    size_t new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return TRUE;
 }
 
 static inline void d2d_matrix_multiply(D2D_MATRIX_3X2_F *a, const D2D_MATRIX_3X2_F *b)

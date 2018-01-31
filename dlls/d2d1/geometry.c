@@ -562,33 +562,6 @@ static void d2d_rect_get_bezier_segment_bounds(D2D_RECT_F *bounds, const D2D1_PO
     d2d_rect_get_bezier_bounds(bounds, &q[0], &q[1], &q[2]);
 }
 
-static BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t element_count, size_t element_size)
-{
-    size_t new_capacity, max_capacity;
-    void *new_elements;
-
-    if (element_count <= *capacity)
-        return TRUE;
-
-    max_capacity = ~(size_t)0 / element_size;
-    if (max_capacity < element_count)
-        return FALSE;
-
-    new_capacity = max(*capacity, 4);
-    while (new_capacity < element_count && new_capacity <= max_capacity / 2)
-        new_capacity *= 2;
-
-    if (new_capacity < element_count)
-        new_capacity = max_capacity;
-
-    if (!(new_elements = heap_realloc(*elements, new_capacity * element_size)))
-        return FALSE;
-
-    *elements = new_elements;
-    *capacity = new_capacity;
-    return TRUE;
-}
-
 static BOOL d2d_figure_insert_vertex(struct d2d_figure *figure, size_t idx, D2D1_POINT_2F vertex)
 {
     if (!d2d_array_reserve((void **)&figure->vertices, &figure->vertices_size,
