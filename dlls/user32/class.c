@@ -325,7 +325,7 @@ static void CLASS_FreeClass( CLASS *classPtr )
     USER_Unlock();
 }
 
-static const WCHAR *CLASS_GetVersionedName( const WCHAR *name )
+const WCHAR *CLASS_GetVersionedName( const WCHAR *name )
 {
     ACTCTX_SECTION_KEYED_DATA data;
     struct wndclass_redirect_data
