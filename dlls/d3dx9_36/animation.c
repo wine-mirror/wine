@@ -469,3 +469,15 @@ HRESULT WINAPI D3DXCreateAnimationController(UINT max_outputs, UINT max_sets,
 
     return D3D_OK;
 }
+
+HRESULT WINAPI D3DXCreateKeyframedAnimationSet(const char *name, double ticks_per_second,
+        D3DXPLAYBACK_TYPE playback_type, UINT animation_count, UINT callback_key_count,
+        const D3DXKEY_CALLBACK *callback_keys, ID3DXKeyframedAnimationSet **animation_set)
+{
+    FIXME("name %s, ticks_per_second %.16e, playback_type %u, animation_count %u, "
+            "callback_key_count %u, callback_keys %p, animation_set %p stub.\n",
+            debugstr_a(name), ticks_per_second, playback_type, animation_count,
+            callback_key_count, callback_keys, animation_set);
+
+    return E_NOTIMPL;
+}
