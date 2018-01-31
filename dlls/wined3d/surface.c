@@ -2744,14 +2744,16 @@ static BOOL ffp_blitter_use_cpu_clear(struct wined3d_rendertarget_view *view)
 
     resource = view->resource;
     if (resource->type == WINED3D_RTYPE_BUFFER)
-        return resource->pool == WINED3D_POOL_SYSTEM_MEM;
+        return !(resource->access & WINED3D_RESOURCE_ACCESS_GPU);
 
     texture = texture_from_resource(resource);
     locations = texture->sub_resources[view->sub_resource_idx].locations;
     if (locations & (resource->map_binding | WINED3D_LOCATION_DISCARDED))
-        return resource->pool == WINED3D_POOL_SYSTEM_MEM || (texture->flags & WINED3D_TEXTURE_PIN_SYSMEM);
+        return !(resource->access & WINED3D_RESOURCE_ACCESS_GPU)
+                || (texture->flags & WINED3D_TEXTURE_PIN_SYSMEM);
 
-    return resource->pool == WINED3D_POOL_SYSTEM_MEM && !(texture->flags & WINED3D_TEXTURE_CONVERTED);
+    return !(resource->access & WINED3D_RESOURCE_ACCESS_GPU)
+            && !(texture->flags & WINED3D_TEXTURE_CONVERTED);
 }
 
 static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
