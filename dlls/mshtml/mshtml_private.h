@@ -30,6 +30,7 @@
 #include "tlogstg.h"
 #include "shdeprecated.h"
 
+#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
 #include "wine/unicode.h"
@@ -1176,29 +1177,9 @@ DEFINE_GUID(IID_IDispatchJS,0x719c3050,0xf9d3,0x11cf,0xa4,0x93,0x00,0x40,0x05,0x
 
 /* memory allocation functions */
 
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), 0, len);
-}
-
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-}
-
-static inline void * __WINE_ALLOC_SIZE(2) heap_realloc(void *mem, size_t len)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
-}
-
 static inline void * __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t len)
 {
     return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static inline LPWSTR heap_strdupW(LPCWSTR str)
