@@ -477,6 +477,15 @@ void d2d_transformed_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *
         ID2D1Geometry *src_geometry, const D2D_MATRIX_3X2_F *transform) DECLSPEC_HIDDEN;
 struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface) DECLSPEC_HIDDEN;
 
+static inline void *d2d_calloc(size_t count, size_t size)
+{
+    SIZE_T s = count * size;
+
+    if (size && s / size != count)
+        return NULL;
+    return heap_alloc(s);
+}
+
 static inline void d2d_matrix_multiply(D2D_MATRIX_3X2_F *a, const D2D_MATRIX_3X2_F *b)
 {
     D2D_MATRIX_3X2_F tmp = *a;

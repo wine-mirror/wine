@@ -1175,12 +1175,12 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
 
     if (texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         bitmap_size.width *= 3;
-    opacity_values_size = bitmap_size.width * bitmap_size.height;
-    if (!(opacity_values = heap_alloc(opacity_values_size)))
+    if (!(opacity_values = d2d_calloc(bitmap_size.height, bitmap_size.width)))
     {
         ERR("Failed to allocate opacity values.\n");
         goto done;
     }
+    opacity_values_size = bitmap_size.height * bitmap_size.width;
 
     if (FAILED(hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis,
             texture_type, &bounds, opacity_values, opacity_values_size)))

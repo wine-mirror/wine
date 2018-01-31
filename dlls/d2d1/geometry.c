@@ -2052,7 +2052,7 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
         return S_OK;
     }
 
-    if (!(vertices = heap_alloc(vertex_count * sizeof(*vertices))))
+    if (!(vertices = d2d_calloc(vertex_count, sizeof(*vertices))))
         return E_OUTOFMEMORY;
 
     for (i = 0, j = 0; i < geometry->u.path.figure_count; ++i)
@@ -2819,8 +2819,8 @@ static HRESULT d2d_geometry_resolve_beziers(struct d2d_geometry *geometry)
         geometry->fill.bezier_vertex_count += 3 * geometry->u.path.figures[i].bezier_control_count;
     }
 
-    if (!(geometry->fill.bezier_vertices = heap_alloc(geometry->fill.bezier_vertex_count
-            * sizeof(*geometry->fill.bezier_vertices))))
+    if (!(geometry->fill.bezier_vertices = d2d_calloc(geometry->fill.bezier_vertex_count,
+            sizeof(*geometry->fill.bezier_vertices))))
     {
         ERR("Failed to allocate bezier vertices array.\n");
         geometry->fill.bezier_vertex_count = 0;
