@@ -2795,7 +2795,7 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
     ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "CreateStreamOnHGlobal failed: %08x", hr);
+    ok(hr == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hr);
 
     hr = CoMarshalInterface(stream, &IID_IUnknown, &Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok(hr == S_OK, "CoMarshalInterface should have returned S_OK instead of 0x%08x\n", hr);
@@ -2806,7 +2806,7 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
     PostThreadMessageW(GetCurrentThreadId(), WM_QUIT, 0, 0);
 
     hr = CoRegisterMessageFilter(&MessageFilter, NULL);
-    ok(hr == S_OK, "CoRegisterMessageFilter failed: %08x", hr);
+    ok(hr == S_OK, "CoRegisterMessageFilter failed: %08x\n", hr);
 
     thread = CreateThread(NULL, 0, cowait_unmarshal_thread, stream, 0, &tid);
     ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
@@ -2817,7 +2817,7 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
     CloseHandle(thread);
 
     hr = CoRegisterMessageFilter(NULL, NULL);
-    ok(hr == S_OK, "CoRegisterMessageFilter failed: %08x", hr);
+    ok(hr == S_OK, "CoRegisterMessageFilter failed: %08x\n", hr);
 
     IStream_Release(stream);
 
