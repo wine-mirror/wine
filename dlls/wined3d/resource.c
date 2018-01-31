@@ -284,7 +284,7 @@ DWORD CDECL wined3d_resource_set_priority(struct wined3d_resource *resource, DWO
 {
     DWORD prev;
 
-    if (resource->pool != WINED3D_POOL_MANAGED)
+    if (!wined3d_resource_access_is_managed(resource->access))
     {
         WARN("Called on non-managed resource %p, ignoring.\n", resource);
         return 0;
