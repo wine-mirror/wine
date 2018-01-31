@@ -66,7 +66,7 @@
 @ stdcall D3DXCreateFontIndirectA(ptr ptr ptr)
 @ stdcall D3DXCreateFontIndirectW(ptr ptr ptr)
 @ stdcall D3DXCreateFontW(ptr long long long long long long long long long wstr ptr)
-@ stub D3DXCreateKeyframedAnimationSet(ptr long long long long ptr ptr)
+@ stdcall D3DXCreateKeyframedAnimationSet(str double long long long ptr ptr)
 @ stdcall D3DXCreateLine(ptr ptr)
 @ stdcall D3DXCreateMatrixStack(long ptr)
 @ stdcall D3DXCreateMesh(long long long ptr ptr ptr)
