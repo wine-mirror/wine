@@ -35,8 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winevdm);
 
-extern void __wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline );
-
 
 /*** PIF file structures ***/
 #include "pshpack1.h"
@@ -213,24 +211,8 @@ static void start_dosbox( const char *appname, const char *args )
  */
 static void start_dos_exe( LPCSTR filename, LPCSTR cmdline )
 {
-    MEMORY_BASIC_INFORMATION mem_info;
-    const char *reason;
-
     start_dosbox( filename, cmdline );
-
-    if (VirtualQuery( NULL, &mem_info, sizeof(mem_info) ) && mem_info.State != MEM_FREE)
-    {
-        __wine_load_dos_exe( filename, cmdline );
-        if (GetLastError() == ERROR_NOT_SUPPORTED)
-            reason = "because vm86 mode is not supported on this platform";
-        else
-            reason = wine_dbg_sprintf( "It failed with error code %u", GetLastError() );
-    }
-    else reason = "because the DOS memory range is unavailable";
-
-    WINE_MESSAGE( "winevdm: Cannot start DOS application %s\n", filename );
-    WINE_MESSAGE( "         %s.\n", reason );
-    WINE_MESSAGE( "         You should install DOSBox.\n" );
+    WINE_MESSAGE( "winevdm: %s is a DOS application, you need to install DOSBox.\n", filename );
     ExitProcess(1);
 }
 
