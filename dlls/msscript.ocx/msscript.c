@@ -28,6 +28,7 @@
 #include "msscript.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msscript);
@@ -102,16 +103,6 @@ struct ScriptControl {
 };
 
 static HINSTANCE msscript_instance;
-
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), 0, len);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
 
 typedef enum tid_t {
     IScriptControl_tid,
