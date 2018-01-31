@@ -285,7 +285,7 @@ static BOOL fx10_copy_string(const char *data, size_t data_size, DWORD offset, c
         return TRUE;
     }
 
-    if (!(*s = HeapAlloc(GetProcessHeap(), 0, len)))
+    if (!(*s = heap_alloc(len)))
     {
         ERR("Failed to allocate string memory.\n");
         return FALSE;
@@ -308,8 +308,7 @@ static BOOL copy_name(const char *ptr, char **name)
         return TRUE;
     }
 
-    *name = HeapAlloc(GetProcessHeap(), 0, name_len);
-    if (!*name)
+    if (!(*name = heap_alloc(name_len)))
     {
         ERR("Failed to allocate name memory.\n");
         return FALSE;
@@ -355,7 +354,7 @@ static HRESULT shader_parse_signature(const char *data, DWORD data_size, struct 
         return E_INVALIDARG;
     }
 
-    if (!(e = d3d10_calloc(count, sizeof(*e))))
+    if (!(e = heap_calloc(count, sizeof(*e))))
     {
         ERR("Failed to allocate signature memory.\n");
         return E_OUTOFMEMORY;
@@ -370,7 +369,7 @@ static HRESULT shader_parse_signature(const char *data, DWORD data_size, struct 
         if (!(e[i].SemanticName = shader_get_string(data, data_size, name_offset)))
         {
             WARN("Invalid name offset %#x (data size %#x).\n", name_offset, data_size);
-            HeapFree(GetProcessHeap(), 0, e);
+            heap_free(e);
             return E_INVALIDARG;
         }
         read_dword(&ptr, &e[i].SemanticIndex);
@@ -396,8 +395,8 @@ static HRESULT shader_parse_signature(const char *data, DWORD data_size, struct 
 
 static void shader_free_signature(struct d3d10_effect_shader_signature *s)
 {
-    HeapFree(GetProcessHeap(), 0, s->signature);
-    HeapFree(GetProcessHeap(), 0, s->elements);
+    heap_free(s->signature);
+    heap_free(s->elements);
 }
 
 static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
@@ -422,8 +421,7 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
             if (tag == TAG_ISGN) sig = &s->input_signature;
             else sig = &s->output_signature;
 
-            sig->signature = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-            if (!sig->signature)
+            if (!(sig->signature = heap_alloc_zero(size)))
             {
                 ERR("Failed to allocate input signature data\n");
                 return E_OUTOFMEMORY;
@@ -698,7 +696,7 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset,
             t->basetype = 0;
             t->type_class = D3D10_SVC_STRUCT;
 
-            if (!(t->members = d3d10_calloc(t->member_count, sizeof(*t->members))))
+            if (!(t->members = heap_calloc(t->member_count, sizeof(*t->members))))
             {
                 ERR("Failed to allocate members memory.\n");
                 return E_OUTOFMEMORY;
@@ -759,8 +757,7 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset,
         TRACE("Elementtype for type at offset: %#x\n", t->id);
 
         /* allocate elementtype - we need only one, because all elements have the same type */
-        t->elementtype = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*t->elementtype));
-        if (!t->elementtype)
+        if (!(t->elementtype = heap_alloc_zero(sizeof(*t->elementtype))))
         {
             ERR("Failed to allocate members memory.\n");
             return E_OUTOFMEMORY;
@@ -828,8 +825,7 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect,
         return WINE_RB_ENTRY_VALUE(entry, struct d3d10_effect_type, entry);
     }
 
-    type = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*type));
-    if (!type)
+    if (!(type = heap_alloc_zero(sizeof(*type))))
     {
         ERR("Failed to allocate type memory.\n");
         return NULL;
@@ -841,14 +837,14 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect,
     if (FAILED(hr = parse_fx10_type(data, data_size, offset, type)))
     {
         ERR("Failed to parse type info, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, type);
+        heap_free(type);
         return NULL;
     }
 
     if (wine_rb_put(&effect->types, &offset, &type->entry) == -1)
     {
         ERR("Failed to insert type entry.\n");
-        HeapFree(GetProcessHeap(), 0, type);
+        heap_free(type);
         return NULL;
     }
 
@@ -948,7 +944,7 @@ static HRESULT copy_variableinfo_from_type(struct d3d10_effect_variable *v)
 
     if (v->type->member_count)
     {
-        if (!(v->members = d3d10_calloc(v->type->member_count, sizeof(*v->members))))
+        if (!(v->members = heap_calloc(v->type->member_count, sizeof(*v->members))))
         {
             ERR("Failed to allocate members memory.\n");
             return E_OUTOFMEMORY;
@@ -990,7 +986,7 @@ static HRESULT copy_variableinfo_from_type(struct d3d10_effect_variable *v)
     {
         unsigned int bufferoffset = v->buffer_offset;
 
-        if (!(v->elements = d3d10_calloc(v->type->element_count, sizeof(*v->elements))))
+        if (!(v->elements = heap_calloc(v->type->element_count, sizeof(*v->elements))))
         {
             ERR("Failed to allocate elements memory.\n");
             return E_OUTOFMEMORY;
@@ -1592,7 +1588,7 @@ static HRESULT parse_fx10_pass(const char *data, size_t data_size,
     read_dword(ptr, &p->annotation_count);
     TRACE("Pass has %u annotations.\n", p->annotation_count);
 
-    if (!(p->annotations = d3d10_calloc(p->annotation_count, sizeof(*p->annotations))))
+    if (!(p->annotations = heap_calloc(p->annotation_count, sizeof(*p->annotations))))
     {
         ERR("Failed to allocate pass annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -1609,7 +1605,7 @@ static HRESULT parse_fx10_pass(const char *data, size_t data_size,
             return hr;
     }
 
-    if (!(p->objects = d3d10_calloc(p->object_count, sizeof(*p->objects))))
+    if (!(p->objects = heap_calloc(p->object_count, sizeof(*p->objects))))
     {
         ERR("Failed to allocate effect objects memory.\n");
         return E_OUTOFMEMORY;
@@ -1655,7 +1651,7 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
     read_dword(ptr, &t->annotation_count);
     TRACE("Technique has %u annotations.\n", t->annotation_count);
 
-    if (!(t->annotations = d3d10_calloc(t->annotation_count, sizeof(*t->annotations))))
+    if (!(t->annotations = heap_calloc(t->annotation_count, sizeof(*t->annotations))))
     {
         ERR("Failed to allocate technique annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -1672,7 +1668,7 @@ static HRESULT parse_fx10_technique(const char *data, size_t data_size,
             return hr;
     }
 
-    if (!(t->passes = d3d10_calloc(t->pass_count, sizeof(*t->passes))))
+    if (!(t->passes = heap_calloc(t->pass_count, sizeof(*t->passes))))
     {
         ERR("Failed to allocate passes memory\n");
         return E_OUTOFMEMORY;
@@ -1723,7 +1719,7 @@ static HRESULT parse_fx10_variable(const char *data, size_t data_size,
     read_dword(ptr, &v->annotation_count);
     TRACE("Variable has %u annotations.\n", v->annotation_count);
 
-    if (!(v->annotations = d3d10_calloc(v->annotation_count, sizeof(*v->annotations))))
+    if (!(v->annotations = heap_calloc(v->annotation_count, sizeof(*v->annotations))))
     {
         ERR("Failed to allocate variable annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -1897,7 +1893,7 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
     read_dword(ptr, &v->annotation_count);
     TRACE("Variable has %u annotations.\n", v->annotation_count);
 
-    if (!(v->annotations = d3d10_calloc(v->annotation_count, sizeof(*v->annotations))))
+    if (!(v->annotations = heap_calloc(v->annotation_count, sizeof(*v->annotations))))
     {
         ERR("Failed to allocate variable annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -1927,8 +1923,7 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     unsigned int stride = 0;
 
     /* Generate our own type, it isn't in the fx blob. */
-    l->type = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*l->type));
-    if (!l->type)
+    if (!(l->type = heap_alloc_zero(sizeof(*l->type))))
     {
         ERR("Failed to allocate local buffer type memory.\n");
         return E_OUTOFMEMORY;
@@ -1986,7 +1981,7 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     read_dword(ptr, &l->annotation_count);
     TRACE("Local buffer has %u annotations.\n", l->annotation_count);
 
-    if (!(l->annotations = d3d10_calloc(l->annotation_count, sizeof(*l->annotations))))
+    if (!(l->annotations = heap_calloc(l->annotation_count, sizeof(*l->annotations))))
     {
         ERR("Failed to allocate local buffer annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -2003,13 +1998,13 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
             return hr;
     }
 
-    if (!(l->members = d3d10_calloc(l->type->member_count, sizeof(*l->members))))
+    if (!(l->members = heap_calloc(l->type->member_count, sizeof(*l->members))))
     {
         ERR("Failed to allocate members memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(l->type->members = d3d10_calloc(l->type->member_count, sizeof(*l->type->members))))
+    if (!(l->type->members = heap_calloc(l->type->member_count, sizeof(*l->type->members))))
     {
         ERR("Failed to allocate type members memory.\n");
         return E_OUTOFMEMORY;
@@ -2112,8 +2107,8 @@ static void d3d10_effect_type_member_destroy(struct d3d10_effect_type_member *ty
     TRACE("effect type member %p.\n", typem);
 
     /* Do not release typem->type, it will be covered by d3d10_effect_type_destroy(). */
-    HeapFree(GetProcessHeap(), 0, typem->semantic);
-    HeapFree(GetProcessHeap(), 0, typem->name);
+    heap_free(typem->semantic);
+    heap_free(typem->name);
 }
 
 static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context)
@@ -2124,8 +2119,8 @@ static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context
 
     if (t->elementtype)
     {
-        HeapFree(GetProcessHeap(), 0, t->elementtype->name);
-        HeapFree(GetProcessHeap(), 0, t->elementtype);
+        heap_free(t->elementtype->name);
+        heap_free(t->elementtype);
     }
 
     if (t->members)
@@ -2136,11 +2131,11 @@ static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context
         {
             d3d10_effect_type_member_destroy(&t->members[i]);
         }
-        HeapFree(GetProcessHeap(), 0, t->members);
+        heap_free(t->members);
     }
 
-    HeapFree(GetProcessHeap(), 0, t->name);
-    HeapFree(GetProcessHeap(), 0, t);
+    heap_free(t->name);
+    heap_free(t);
 }
 
 static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD data_size)
@@ -2156,31 +2151,31 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
     }
     ptr = data + e->index_offset;
 
-    if (!(e->local_buffers = d3d10_calloc(e->local_buffer_count, sizeof(*e->local_buffers))))
+    if (!(e->local_buffers = heap_calloc(e->local_buffer_count, sizeof(*e->local_buffers))))
     {
         ERR("Failed to allocate local buffer memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->local_variables = d3d10_calloc(e->local_variable_count, sizeof(*e->local_variables))))
+    if (!(e->local_variables = heap_calloc(e->local_variable_count, sizeof(*e->local_variables))))
     {
         ERR("Failed to allocate local variable memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->anonymous_shaders = d3d10_calloc(e->anonymous_shader_count, sizeof(*e->anonymous_shaders))))
+    if (!(e->anonymous_shaders = heap_calloc(e->anonymous_shader_count, sizeof(*e->anonymous_shaders))))
     {
         ERR("Failed to allocate anonymous shaders memory\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->used_shaders = d3d10_calloc(e->used_shader_count, sizeof(*e->used_shaders))))
+    if (!(e->used_shaders = heap_calloc(e->used_shader_count, sizeof(*e->used_shaders))))
     {
         ERR("Failed to allocate used shaders memory\n");
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->techniques = d3d10_calloc(e->technique_count, sizeof(*e->techniques))))
+    if (!(e->techniques = heap_calloc(e->technique_count, sizeof(*e->techniques))))
     {
         ERR("Failed to allocate techniques memory\n");
         return E_OUTOFMEMORY;
@@ -2398,15 +2393,15 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
 
     TRACE("variable %p.\n", v);
 
-    HeapFree(GetProcessHeap(), 0, v->name);
-    HeapFree(GetProcessHeap(), 0, v->semantic);
+    heap_free(v->name);
+    heap_free(v->semantic);
     if (v->annotations)
     {
         for (i = 0; i < v->annotation_count; ++i)
         {
             d3d10_effect_variable_destroy(&v->annotations[i]);
         }
-        HeapFree(GetProcessHeap(), 0, v->annotations);
+        heap_free(v->annotations);
     }
 
     if (v->members)
@@ -2415,7 +2410,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
         {
             d3d10_effect_variable_destroy(&v->members[i]);
         }
-        HeapFree(GetProcessHeap(), 0, v->members);
+        heap_free(v->members);
     }
 
     if (v->elements)
@@ -2424,7 +2419,7 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
         {
             d3d10_effect_variable_destroy(&v->elements[i]);
         }
-        HeapFree(GetProcessHeap(), 0, v->elements);
+        heap_free(v->elements);
     }
 
     if (v->type)
@@ -2508,7 +2503,7 @@ static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
 
     TRACE("pass %p\n", p);
 
-    HeapFree(GetProcessHeap(), 0, p->name);
+    heap_free(p->name);
 
     if (p->objects)
     {
@@ -2516,7 +2511,7 @@ static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
         {
             d3d10_effect_object_destroy(&p->objects[i]);
         }
-        HeapFree(GetProcessHeap(), 0, p->objects);
+        heap_free(p->objects);
     }
 
     if (p->annotations)
@@ -2525,7 +2520,7 @@ static void d3d10_effect_pass_destroy(struct d3d10_effect_pass *p)
         {
             d3d10_effect_variable_destroy(&p->annotations[i]);
         }
-        HeapFree(GetProcessHeap(), 0, p->annotations);
+        heap_free(p->annotations);
     }
 }
 
@@ -2535,14 +2530,14 @@ static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
 
     TRACE("technique %p\n", t);
 
-    HeapFree(GetProcessHeap(), 0, t->name);
+    heap_free(t->name);
     if (t->passes)
     {
         for (i = 0; i < t->pass_count; ++i)
         {
             d3d10_effect_pass_destroy(&t->passes[i]);
         }
-        HeapFree(GetProcessHeap(), 0, t->passes);
+        heap_free(t->passes);
     }
 
     if (t->annotations)
@@ -2551,7 +2546,7 @@ static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
         {
             d3d10_effect_variable_destroy(&t->annotations[i]);
         }
-        HeapFree(GetProcessHeap(), 0, t->annotations);
+        heap_free(t->annotations);
     }
 }
 
@@ -2561,14 +2556,14 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
 
     TRACE("local buffer %p.\n", l);
 
-    HeapFree(GetProcessHeap(), 0, l->name);
+    heap_free(l->name);
     if (l->members)
     {
         for (i = 0; i < l->type->member_count; ++i)
         {
             d3d10_effect_variable_destroy(&l->members[i]);
         }
-        HeapFree(GetProcessHeap(), 0, l->members);
+        heap_free(l->members);
     }
 
     if (l->type)
@@ -2580,7 +2575,7 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
         {
             d3d10_effect_variable_destroy(&l->annotations[i]);
         }
-        HeapFree(GetProcessHeap(), 0, l->annotations);
+        heap_free(l->annotations);
     }
 }
 
@@ -2636,7 +2631,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             {
                 d3d10_effect_technique_destroy(&This->techniques[i]);
             }
-            HeapFree(GetProcessHeap(), 0, This->techniques);
+            heap_free(This->techniques);
         }
 
         if (This->local_variables)
@@ -2645,7 +2640,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             {
                 d3d10_effect_variable_destroy(&This->local_variables[i]);
             }
-            HeapFree(GetProcessHeap(), 0, This->local_variables);
+            heap_free(This->local_variables);
         }
 
         if (This->local_buffers)
@@ -2654,7 +2649,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             {
                 d3d10_effect_local_buffer_destroy(&This->local_buffers[i]);
             }
-            HeapFree(GetProcessHeap(), 0, This->local_buffers);
+            heap_free(This->local_buffers);
         }
 
         if (This->anonymous_shaders)
@@ -2662,17 +2657,17 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             for (i = 0; i < This->anonymous_shader_count; ++i)
             {
                 d3d10_effect_variable_destroy(&This->anonymous_shaders[i].shader);
-                HeapFree(GetProcessHeap(), 0, This->anonymous_shaders[i].type.name);
+                heap_free(This->anonymous_shaders[i].type.name);
             }
-            HeapFree(GetProcessHeap(), 0, This->anonymous_shaders);
+            heap_free(This->anonymous_shaders);
         }
 
-        HeapFree(GetProcessHeap(), 0, This->used_shaders);
+        heap_free(This->used_shaders);
 
         wine_rb_destroy(&This->types, d3d10_effect_type_destroy, NULL);
 
         ID3D10Device_Release(This->device);
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
     }
 
     return refcount;

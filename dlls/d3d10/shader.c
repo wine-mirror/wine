@@ -68,9 +68,7 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_reflection_Release(ID3D10ShaderRefle
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
     if (!refcount)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+        heap_free(This);
 
     return refcount;
 }
