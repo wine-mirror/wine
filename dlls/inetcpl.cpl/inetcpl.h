@@ -31,25 +31,6 @@ INT_PTR CALLBACK content_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
 INT_PTR CALLBACK general_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
 INT_PTR CALLBACK security_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
 
-/* ## Memory allocation functions ## */
-
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc( size_t len )
-{
-    return HeapAlloc( GetProcessHeap(), 0, len );
-}
-
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero( size_t len )
-{
-    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
-}
-
-static inline BOOL heap_free( void *mem )
-{
-    return HeapFree( GetProcessHeap(), 0, mem );
-}
-
-/* ######### */
-
 #define NUM_PROPERTY_PAGES 8
 
 /* icons */
