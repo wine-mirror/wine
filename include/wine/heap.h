@@ -46,4 +46,13 @@ static inline void heap_free(void *mem)
     HeapFree(GetProcessHeap(), 0, mem);
 }
 
+static inline void *heap_calloc(SIZE_T count, SIZE_T size)
+{
+    SIZE_T len = count * size;
+
+    if (size && len / size != count)
+        return NULL;
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
 #endif  /* __WINE_WINE_HEAP_H */

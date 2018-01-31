@@ -1162,7 +1162,7 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
 
     if (texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         bitmap_size.width *= 3;
-    if (!(opacity_values = d2d_calloc(bitmap_size.height, bitmap_size.width)))
+    if (!(opacity_values = heap_calloc(bitmap_size.height, bitmap_size.width)))
     {
         ERR("Failed to allocate opacity values.\n");
         goto done;

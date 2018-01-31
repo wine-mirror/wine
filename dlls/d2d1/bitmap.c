@@ -511,7 +511,7 @@ HRESULT d2d_bitmap_create_from_wic_bitmap(ID2D1Factory *factory, ID3D10Device *d
     pitch = ((bpp * size.width) + 15) & ~15;
     if (pitch / bpp < size.width)
         return E_OUTOFMEMORY;
-    if (!(data = d2d_calloc(size.height, pitch)))
+    if (!(data = heap_calloc(size.height, pitch)))
         return E_OUTOFMEMORY;
     data_size = size.height * pitch;
 

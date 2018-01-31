@@ -142,7 +142,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     unsigned int i;
     HRESULT hr;
 
-    if (!(data = d2d_calloc(stop_count, 2 * sizeof(*data))))
+    if (!(data = heap_calloc(stop_count, 2 * sizeof(*data))))
     {
         ERR("Failed to allocate data.\n");
         return E_OUTOFMEMORY;
@@ -205,7 +205,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     (*gradient)->view = view;
 
     (*gradient)->stop_count = stop_count;
-    if (!((*gradient)->stops = d2d_calloc(stop_count, sizeof(*stops))))
+    if (!((*gradient)->stops = heap_calloc(stop_count, sizeof(*stops))))
     {
         ID3D10ShaderResourceView_Release(view);
         heap_free(*gradient);
