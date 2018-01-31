@@ -379,7 +379,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterStereoStatusEvent(IDXGIFac
 
 static void STDMETHODCALLTYPE dxgi_factory_UnregisterStereoStatus(IDXGIFactory4 *iface, DWORD cookie)
 {
-    FIXME("iface %p, cookie %#x stub!n", iface, cookie);
+    FIXME("iface %p, cookie %#x stub!\n", iface, cookie);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterStereoStatusWindow(IDXGIFactory4 *iface,
