@@ -25,6 +25,7 @@
 #include "inetcomm_private.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcomm);

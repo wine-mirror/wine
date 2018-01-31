@@ -83,13 +83,3 @@ HRESULT MimeInternational_Construct(IMimeInternational **internat) DECLSPEC_HIDD
 HRESULT SMTPTransportCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 HRESULT IMAPTransportCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 HRESULT POP3TransportCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
-
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), 0, len);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}

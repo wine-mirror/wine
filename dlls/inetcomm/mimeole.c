@@ -33,6 +33,7 @@
 #include "mimeole.h"
 #include "propvarutil.h"
 
+#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
