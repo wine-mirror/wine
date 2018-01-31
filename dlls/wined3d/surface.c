@@ -3854,10 +3854,10 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     {
         TRACE("Depth/stencil blit.\n");
 
-        if (dst_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
-            dst_location = dst_texture->resource.map_binding;
-        else
+        if (dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU)
             dst_location = dst_texture->resource.draw_binding;
+        else
+            dst_location = dst_texture->resource.map_binding;
 
         context = context_acquire(device, dst_texture, dst_sub_resource_idx);
         valid_locations = device->blitter->ops->blitter_blit(device->blitter,
@@ -3959,10 +3959,10 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         blit_op = WINED3D_BLIT_OP_RAW_BLIT;
     }
 
-    if (dst_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
-        dst_location = dst_texture->resource.map_binding;
-    else
+    if (dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU)
         dst_location = dst_texture->resource.draw_binding;
+    else
+        dst_location = dst_texture->resource.map_binding;
 
     context = context_acquire(device, dst_texture, dst_sub_resource_idx);
     valid_locations = device->blitter->ops->blitter_blit(device->blitter, blit_op, context,
