@@ -353,6 +353,7 @@ struct module
 {
     struct process*             process;
     IMAGEHLP_MODULEW64          module;
+    WCHAR                       modulename[64]; /* used for enumeration */
     struct module*              next;
     enum module_type		type : 16;
     unsigned short              is_virtual : 1;

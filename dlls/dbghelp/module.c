@@ -102,6 +102,7 @@ void module_set_module(struct module* module, const WCHAR* name)
 {
     module_fill_module(name, module->module.ModuleName,
             sizeof(module->module.ModuleName) / sizeof(module->module.ModuleName[0]));
+    module_fill_module(name, module->modulename, sizeof(module->modulename) / sizeof(module->modulename[0]));
 }
 
 const WCHAR *get_wine_loader_name(void)
@@ -812,7 +813,7 @@ BOOL  WINAPI SymEnumerateModulesW64(HANDLE hProcess,
         if (!(dbghelp_options & SYMOPT_WINE_WITH_NATIVE_MODULES) &&
             (module->type == DMT_ELF || module->type == DMT_MACHO))
             continue;
-        if (!EnumModulesCallback(module->module.ModuleName,
+        if (!EnumModulesCallback(module->modulename,
                                  module->module.BaseOfImage, UserContext))
             break;
     }
