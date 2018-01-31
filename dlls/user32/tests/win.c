@@ -3113,7 +3113,6 @@ todo_wine
     ShowWindow(hwnd, SW_SHOWMINIMIZED);
     ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
     ok( GetFocus() != child, "Focus should not be on child %p\n", child );
-todo_wine
     ok( GetFocus() != hwnd, "Focus should not be on parent %p\n", hwnd );
     old_wnd_proc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)set_focus_on_activate_proc);
     ShowWindow(hwnd, SW_RESTORE);
@@ -10072,6 +10071,13 @@ static void test_minimize_window(HWND hwndMain)
     ShowWindow(hwnd2, SW_RESTORE);
     check_active_state(hwnd2, hwnd2, hwnd2);
 
+    /* try SW_SHOWMINIMIZED */
+    ShowWindow(hwnd2, SW_SHOWMINIMIZED);
+    check_active_state(hwnd2, hwnd2, 0);
+
+    ShowWindow(hwnd2, SW_RESTORE);
+    check_active_state(hwnd2, hwnd2, hwnd2);
+
     /* hide a non-active window */
     ShowWindow(hwnd, SW_MINIMIZE);
     check_active_state(hwnd2, hwnd2, hwnd2);
@@ -10115,6 +10121,11 @@ static void test_minimize_window(HWND hwndMain)
     todo_wine
     check_active_state(hwnd2, hwnd2, hwnd2);
 
+    /* with SW_SHOWMINIMIZED */
+    ShowWindow(hwnd3, SW_RESTORE);
+    ShowWindow(hwnd3, SW_SHOWMINIMIZED);
+    check_active_state(hwnd3, hwnd3, 0);
+
     /* hide an owner window */
     ShowWindow(hwnd, SW_RESTORE);
     ShowWindow(hwnd2, SW_RESTORE);
@@ -10122,6 +10133,24 @@ static void test_minimize_window(HWND hwndMain)
     ShowWindow(hwnd, SW_MINIMIZE);
     todo_wine
     check_active_state(hwnd2, hwnd2, hwnd2);
+
+    DestroyWindow(hwnd3);
+
+    /* test a child window - focus should be yielded back to the parent */
+    ShowWindow(hwnd, SW_RESTORE);
+    hwnd3 = CreateWindowExA(0, "MainWindowClass", "Child window 3", WS_CHILD|WS_VISIBLE,
+                            100, 100, 200, 200, hwnd, 0, GetModuleHandleA(NULL), NULL);
+    SetFocus(hwnd3);
+    check_active_state(hwnd, hwnd, hwnd3);
+    ShowWindow(hwnd3, SW_MINIMIZE);
+    check_active_state(hwnd, hwnd, hwnd);
+
+    /* with SW_SHOWMINIMIZED */
+    ShowWindow(hwnd3, SW_RESTORE);
+    SetFocus(hwnd3);
+    check_active_state(hwnd, hwnd, hwnd3);
+    ShowWindow(hwnd3, SW_SHOWMINIMIZED);
+    check_active_state(hwnd, hwnd, hwnd);
 
     DestroyWindow(hwnd3);
     DestroyWindow(hwnd2);

@@ -983,6 +983,14 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         if (IsZoomed( hwnd )) win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
         else win_set_flags( hwnd, 0, WIN_RESTORE_MAX );
 
+        if (GetFocus() == hwnd)
+        {
+            if (GetWindowLongW(hwnd, GWL_STYLE) & WS_CHILD)
+                SetFocus(GetAncestor(hwnd, GA_PARENT));
+            else
+                SetFocus(0);
+        }
+
         old_style = WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
 
         wpl.ptMinPosition = WINPOS_FindIconPos( hwnd, wpl.ptMinPosition );
