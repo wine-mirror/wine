@@ -168,7 +168,6 @@ static BOOL is_builtin_class( const WCHAR *name )
         {'B','u','t','t','o','n',0},
         {'C','o','m','b','o','B','o','x',0},
         {'C','o','m','b','o','L','B','o','x',0},
-        {'E','d','i','t',0},
         {'I','M','E',0},
         {'L','i','s','t','B','o','x',0},
         {'M','D','I','C','l','i','e','n','t',0},

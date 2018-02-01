@@ -179,6 +179,7 @@ extern void COMBOEX_Register(void) DECLSPEC_HIDDEN;
 extern void COMBOEX_Unregister(void) DECLSPEC_HIDDEN;
 extern void DATETIME_Register(void) DECLSPEC_HIDDEN;
 extern void DATETIME_Unregister(void) DECLSPEC_HIDDEN;
+extern void EDIT_Register(void) DECLSPEC_HIDDEN;
 extern void FLATSB_Register(void) DECLSPEC_HIDDEN;
 extern void FLATSB_Unregister(void) DECLSPEC_HIDDEN;
 extern void HEADER_Register(void) DECLSPEC_HIDDEN;
