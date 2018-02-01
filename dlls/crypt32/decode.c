@@ -479,6 +479,7 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
             {
                 dataLen = cbEncoded;
                 indefinite = TRUE;
+                lenBytes += 2;
             }
             else if (cbEncoded < dataLen)
             {
