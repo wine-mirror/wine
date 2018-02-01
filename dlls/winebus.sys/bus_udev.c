@@ -862,7 +862,27 @@ static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, 
 
 static NTSTATUS lnxev_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
 {
-    return STATUS_NOT_IMPLEMENTED;
+    struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
+    char str[255];
+
+    str[0] = 0;
+    switch (index)
+    {
+        case HID_STRING_ID_IPRODUCT:
+            ioctl(ext->base.device_fd, EVIOCGNAME(sizeof(str)), str);
+            break;
+        case HID_STRING_ID_IMANUFACTURER:
+            strcpy(str,"evdev");
+            break;
+        case HID_STRING_ID_ISERIALNUMBER:
+            ioctl(ext->base.device_fd, EVIOCGUNIQ(sizeof(str)), str);
+            break;
+        default:
+            ERR("Unhandled string index %i\n", index);
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, str, -1, buffer, length);
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS lnxev_begin_report_processing(DEVICE_OBJECT *device)
