@@ -254,6 +254,11 @@ struct wine_input_absinfo {
 struct wine_input_private {
     struct platform_private base;
 
+    int buffer_length;
+    BYTE *last_report_buffer;
+    BYTE *current_report_buffer;
+    enum { FIRST, NORMAL, DROPPED } report_state;
+
     int report_descriptor_size;
     BYTE *report_descriptor;
 
@@ -359,7 +364,82 @@ static const BYTE* what_am_I(struct udev_device *dev)
     return Unknown;
 }
 
-static VOID build_report_descriptor(struct wine_input_private *ext, struct udev_device *dev)
+static void set_button_value(struct wine_input_private *ext, int code, int value)
+{
+    int index = ext->button_map[code];
+    int bindex = index / 8;
+    int b = index % 8;
+    BYTE mask;
+
+    mask = 1<<b;
+    if (value)
+        ext->current_report_buffer[bindex] = ext->current_report_buffer[bindex] | mask;
+    else
+    {
+        mask = ~mask;
+        ext->current_report_buffer[bindex] = ext->current_report_buffer[bindex] & mask;
+    }
+}
+
+static void set_abs_axis_value(struct wine_input_private *ext, int code, int value)
+{
+    int index;
+    /* check for hatswitches */
+    if (code <= ABS_HAT3Y && code >= ABS_HAT0X)
+    {
+        index = code - ABS_HAT0X;
+        ext->hat_values[index] = value;
+        if ((code - ABS_HAT0X) % 2)
+            index--;
+        if (ext->hat_values[index] == 0)
+        {
+            if (ext->hat_values[index+1] == 0)
+                value = 8;
+            else if (ext->hat_values[index+1] < 0)
+                value = 0;
+            else
+                value = 4;
+        }
+        else if (ext->hat_values[index] > 0)
+        {
+            if (ext->hat_values[index+1] == 0)
+                value = 2;
+            else if (ext->hat_values[index+1] < 0)
+                value = 1;
+            else
+                value = 3;
+        }
+        else
+        {
+            if (ext->hat_values[index+1] == 0)
+                value = 6;
+            else if (ext->hat_values[index+1] < 0)
+                value = 7;
+            else
+                value = 5;
+        }
+        ext->current_report_buffer[ext->hat_map[index]] = value;
+    }
+    else if (code < HID_ABS_MAX && ABS_TO_HID_MAP[code][0] != 0)
+    {
+        index = ext->abs_map[code].report_index;
+        *((DWORD*)&ext->current_report_buffer[index]) = LE_DWORD(value);
+    }
+}
+
+static void set_rel_axis_value(struct wine_input_private *ext, int code, int value)
+{
+    int index;
+    if (code < HID_REL_MAX && REL_TO_HID_MAP[code][0] != 0)
+    {
+        index = ext->rel_map[code];
+        if (value > 127) value = 127;
+        if (value < -127) value = -127;
+        ext->current_report_buffer[index] = value;
+    }
+}
+
+static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_device *dev)
 {
     int abs_pages[TOP_ABS_PAGE][HID_ABS_MAX+1];
     int rel_pages[TOP_REL_PAGE][HID_REL_MAX+1];
@@ -375,17 +455,17 @@ static VOID build_report_descriptor(struct wine_input_private *ext, struct udev_
     if (ioctl(ext->base.device_fd, EVIOCGBIT(EV_REL, sizeof(relbits)), relbits) == -1)
     {
         WARN("ioctl(EVIOCGBIT, EV_REL) failed: %d %s\n", errno, strerror(errno));
-        return;
+        return FALSE;
     }
     if (ioctl(ext->base.device_fd, EVIOCGBIT(EV_ABS, sizeof(absbits)), absbits) == -1)
     {
         WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
-        return;
+        return FALSE;
     }
     if (ioctl(ext->base.device_fd, EVIOCGBIT(EV_KEY, sizeof(keybits)), keybits) == -1)
     {
         WARN("ioctl(EVIOCGBIT, EV_KEY) failed: %d %s\n", errno, strerror(errno));
-        return;
+        return FALSE;
     }
 
     descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
@@ -480,6 +560,11 @@ static VOID build_report_descriptor(struct wine_input_private *ext, struct udev_
     TRACE("Report will be %i bytes\n", report_size);
 
     ext->report_descriptor = HeapAlloc(GetProcessHeap(), 0, descript_size);
+    if (!ext->report_descriptor)
+    {
+        ERR("Failed to alloc report descriptor\n");
+        return FALSE;
+    }
     report_ptr = ext->report_descriptor;
 
     memcpy(report_ptr, REPORT_HEADER, sizeof(REPORT_HEADER));
@@ -529,6 +614,76 @@ static VOID build_report_descriptor(struct wine_input_private *ext, struct udev_
     memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
 
     ext->report_descriptor_size = descript_size;
+    ext->buffer_length = report_size;
+    ext->current_report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size);
+    if (ext->current_report_buffer == NULL)
+    {
+        ERR("Failed to alloc report buffer\n");
+        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
+        return FALSE;
+    }
+    ext->last_report_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, report_size);
+    if (ext->last_report_buffer == NULL)
+    {
+        ERR("Failed to alloc report buffer\n");
+        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
+        HeapFree(GetProcessHeap(), 0, ext->current_report_buffer);
+        return FALSE;
+    }
+    ext->report_state = FIRST;
+
+    /* Initialize axis in the report */
+    for (i = 0; i < HID_ABS_MAX; i++)
+        if (test_bit(absbits, i))
+            set_abs_axis_value(ext, i, ext->abs_map[i].info.value);
+
+    return TRUE;
+}
+
+static BOOL set_report_from_event(struct wine_input_private *ext, struct input_event *ie)
+{
+    switch(ie->type)
+    {
+#ifdef EV_SYN
+        case EV_SYN:
+            switch (ie->code)
+            {
+                case SYN_REPORT:
+                    if (ext->report_state == NORMAL)
+                    {
+                        memcpy(ext->last_report_buffer, ext->current_report_buffer, ext->buffer_length);
+                        return TRUE;
+                    }
+                    else
+                    {
+                        if (ext->report_state == DROPPED)
+                            memcpy(ext->current_report_buffer, ext->last_report_buffer, ext->buffer_length);
+                        ext->report_state = NORMAL;
+                    }
+                    break;
+                case SYN_DROPPED:
+                    TRACE_(hid_report)("received SY_DROPPED\n");
+                    ext->report_state = DROPPED;
+            }
+            return FALSE;
+#endif
+#ifdef EV_MSC
+        case EV_MSC:
+            return FALSE;
+#endif
+        case EV_KEY:
+            set_button_value(ext, ie->code, ie->value);
+            return FALSE;
+        case EV_ABS:
+            set_abs_axis_value(ext, ie->code, ie->value);
+            return FALSE;
+        case EV_REL:
+            set_rel_axis_value(ext, ie->code, ie->value);
+            return FALSE;
+        default:
+            ERR("TODO: Process Report (%i, %i)\n",ie->type, ie->code);
+            return FALSE;
+    }
 }
 #endif
 
@@ -885,9 +1040,60 @@ static NTSTATUS lnxev_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buff
     return STATUS_SUCCESS;
 }
 
+static DWORD CALLBACK lnxev_device_report_thread(void *args)
+{
+    DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
+    struct wine_input_private *private = input_impl_from_DEVICE_OBJECT(device);
+    struct pollfd plfds[2];
+
+    plfds[0].fd = private->base.device_fd;
+    plfds[0].events = POLLIN;
+    plfds[0].revents = 0;
+    plfds[1].fd = private->base.control_pipe[0];
+    plfds[1].events = POLLIN;
+    plfds[1].revents = 0;
+
+    while (1)
+    {
+        int size;
+        struct input_event ie;
+
+        if (poll(plfds, 2, -1) <= 0) continue;
+        if (plfds[1].revents || !private->current_report_buffer || private->buffer_length == 0)
+            break;
+        size = read(plfds[0].fd, &ie, sizeof(ie));
+        if (size == -1)
+            TRACE_(hid_report)("Read failed. Likely an unplugged device\n");
+        else if (size == 0)
+            TRACE_(hid_report)("Failed to read report\n");
+        else if (set_report_from_event(private, &ie))
+            process_hid_report(device, private->current_report_buffer, private->buffer_length);
+    }
+    return 0;
+}
+
 static NTSTATUS lnxev_begin_report_processing(DEVICE_OBJECT *device)
 {
-    return STATUS_NOT_IMPLEMENTED;
+    struct wine_input_private *private = input_impl_from_DEVICE_OBJECT(device);
+
+    if (private->base.report_thread)
+        return STATUS_SUCCESS;
+
+    if (pipe(private->base.control_pipe) != 0)
+    {
+        ERR("Control pipe creation failed\n");
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    private->base.report_thread = CreateThread(NULL, 0, lnxev_device_report_thread, device, 0, NULL);
+    if (!private->base.report_thread)
+    {
+        ERR("Unable to create device report thread\n");
+        close(private->base.control_pipe[0]);
+        close(private->base.control_pipe[1]);
+        return STATUS_UNSUCCESSFUL;
+    }
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS lnxev_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
@@ -1015,7 +1221,15 @@ static void try_add_device(struct udev_device *dev)
         private->device_fd = fd;
 #ifdef HAS_PROPER_INPUT_HEADER
         if (strcmp(subsystem, "input") == 0)
-            build_report_descriptor((struct wine_input_private*)private, dev);
+            if (!build_report_descriptor((struct wine_input_private*)private, dev))
+            {
+                ERR("Building report descriptor failed, removing device\n");
+                close(fd);
+                udev_device_unref(dev);
+                bus_remove_hid_device(device);
+                HeapFree(GetProcessHeap(), 0, serial);
+                return;
+            }
 #endif
         IoInvalidateDeviceRelations(device, BusRelations);
     }
@@ -1057,6 +1271,13 @@ static void try_remove_device(struct udev_device *dev)
         close(private->control_pipe[0]);
         close(private->control_pipe[1]);
         CloseHandle(private->report_thread);
+#ifdef HAS_PROPER_INPUT_HEADER
+        if (strcmp(udev_device_get_subsystem(dev), "input") == 0)
+        {
+            HeapFree(GetProcessHeap(), 0, ((struct wine_input_private*)private)->current_report_buffer);
+            HeapFree(GetProcessHeap(), 0, ((struct wine_input_private*)private)->last_report_buffer);
+        }
+#endif
     }
 
 #ifdef HAS_PROPER_INPUT_HEADER
