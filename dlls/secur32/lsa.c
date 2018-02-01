@@ -466,6 +466,46 @@ static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextA(
     return status;
 }
 
+static SECURITY_STATUS WINAPI lsa_AcceptSecurityContext(
+    CredHandle *credential, CtxtHandle *context, SecBufferDesc *input,
+    ULONG context_req, ULONG target_data_rep, CtxtHandle *new_context,
+    SecBufferDesc *output, ULONG *context_attr, TimeStamp *ts_expiry)
+{
+    SECURITY_STATUS status;
+    struct lsa_package *lsa_package = NULL;
+    LSA_SEC_HANDLE lsa_credential = 0, lsa_context = 0, new_lsa_context;
+    BOOLEAN mapped_context;
+
+    TRACE("%p %p %p %#x %#x %p %p %p %p\n", credential, context, input,
+        context_req, target_data_rep, new_context, output, context_attr, ts_expiry);
+
+    if (context)
+    {
+        lsa_package = (struct lsa_package *)context->dwUpper;
+        lsa_context = (LSA_SEC_HANDLE)context->dwLower;
+    }
+    else if (credential)
+    {
+        lsa_package = (struct lsa_package *)credential->dwUpper;
+        lsa_credential = (LSA_SEC_HANDLE)credential->dwLower;
+    }
+
+    if (!lsa_package || !new_context) return SEC_E_INVALID_HANDLE;
+
+    if (!lsa_package->lsa_api || !lsa_package->lsa_api->AcceptLsaModeContext)
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    status = lsa_package->lsa_api->AcceptLsaModeContext(lsa_credential, lsa_context,
+        input, context_req, target_data_rep, &new_lsa_context, output, context_attr,
+        ts_expiry, &mapped_context, NULL /* FIXME */);
+    if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
+    {
+        new_context->dwLower = (ULONG_PTR)new_lsa_context;
+        new_context->dwUpper = (ULONG_PTR)lsa_package;
+    }
+    return status;
+}
+
 static SECURITY_STATUS WINAPI lsa_DeleteSecurityContext(CtxtHandle *context)
 {
     struct lsa_package *lsa_package;
@@ -495,7 +535,7 @@ static const SecurityFunctionTableW lsa_sspi_tableW =
     lsa_FreeCredentialsHandle,
     NULL, /* Reserved2 */
     lsa_InitializeSecurityContextW,
-    NULL, /* AcceptSecurityContext */
+    lsa_AcceptSecurityContext,
     NULL, /* CompleteAuthToken */
     lsa_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
@@ -527,7 +567,7 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     lsa_FreeCredentialsHandle,
     NULL, /* Reserved2 */
     lsa_InitializeSecurityContextA,
-    NULL, /* AcceptSecurityContext */
+    lsa_AcceptSecurityContext,
     NULL, /* CompleteAuthToken */
     lsa_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
