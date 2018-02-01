@@ -8186,6 +8186,335 @@ static void test_copy_subresource_region(void)
     release_test_context(&test_context);
 }
 
+#define check_buffer_cpu_access(a, b, c, d) check_buffer_cpu_access_(__LINE__, a, b, c, d)
+static void check_buffer_cpu_access_(unsigned int line, ID3D10Buffer *buffer,
+        D3D10_USAGE usage, UINT bind_flags, UINT cpu_access)
+{
+    BOOL cpu_write = cpu_access & D3D10_CPU_ACCESS_WRITE;
+    BOOL cpu_read = cpu_access & D3D10_CPU_ACCESS_READ;
+    BOOL dynamic = usage == D3D10_USAGE_DYNAMIC;
+    HRESULT hr, expected_hr;
+    ID3D10Device *device;
+    void *data;
+
+    expected_hr = cpu_read ? S_OK : E_INVALIDARG;
+    hr = ID3D10Buffer_Map(buffer, D3D10_MAP_READ, 0, &data);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Buffer_Unmap(buffer);
+
+    expected_hr = !dynamic && cpu_write ? S_OK : E_INVALIDARG;
+    hr = ID3D10Buffer_Map(buffer, D3D10_MAP_WRITE, 0, &data);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Buffer_Unmap(buffer);
+
+    expected_hr = cpu_read && cpu_write ? S_OK : E_INVALIDARG;
+    hr = ID3D10Buffer_Map(buffer, D3D10_MAP_READ_WRITE, 0, &data);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ_WRITE.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Buffer_Unmap(buffer);
+
+    expected_hr = dynamic ? S_OK : E_INVALIDARG;
+    hr = ID3D10Buffer_Map(buffer, D3D10_MAP_WRITE_DISCARD, 0, &data);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE_DISCARD.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Buffer_Unmap(buffer);
+
+    if (!dynamic)
+        return;
+
+    ID3D10Buffer_GetDevice(buffer, &device);
+
+    expected_hr = S_OK;
+    hr = ID3D10Buffer_Map(buffer, D3D10_MAP_WRITE_NO_OVERWRITE, 0, &data);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr
+            || broken(bind_flags & (D3D10_BIND_CONSTANT_BUFFER | D3D10_BIND_SHADER_RESOURCE)),
+            "Got hr %#x for WRITE_NO_OVERWRITE.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Buffer_Unmap(buffer);
+
+    ID3D10Device_Release(device);
+}
+
+#define check_texture_cpu_access(a, b, c, d) check_texture_cpu_access_(__LINE__, a, b, c, d)
+static void check_texture_cpu_access_(unsigned int line, ID3D10Texture2D *texture,
+        D3D10_USAGE usage, UINT bind_flags, UINT cpu_access)
+{
+    BOOL cpu_write = cpu_access & D3D10_CPU_ACCESS_WRITE;
+    BOOL cpu_read = cpu_access & D3D10_CPU_ACCESS_READ;
+    BOOL dynamic = usage == D3D10_USAGE_DYNAMIC;
+    D3D10_MAPPED_TEXTURE2D map_desc;
+    HRESULT hr, expected_hr;
+
+    expected_hr = cpu_read ? S_OK : E_INVALIDARG;
+    hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_READ, 0, &map_desc);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Texture2D_Unmap(texture, 0);
+
+    expected_hr = !dynamic && cpu_write ? S_OK : E_INVALIDARG;
+    hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_WRITE, 0, &map_desc);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Texture2D_Unmap(texture, 0);
+
+    expected_hr = cpu_read && cpu_write ? S_OK : E_INVALIDARG;
+    hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_READ_WRITE, 0, &map_desc);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ_WRITE.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Texture2D_Unmap(texture, 0);
+
+    expected_hr = dynamic ? S_OK : E_INVALIDARG;
+    hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_WRITE_DISCARD, 0, &map_desc);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE_DISCARD.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Texture2D_Unmap(texture, 0);
+
+    if (!dynamic)
+        return;
+
+    hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
+    todo_wine
+    ok_(__FILE__, line)(hr == E_INVALIDARG, "Got hr %#x for WRITE_NO_OVERWRITE.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Texture2D_Unmap(texture, 0);
+}
+
+static void test_resource_access(void)
+{
+    D3D10_TEXTURE2D_DESC texture_desc;
+    D3D10_BUFFER_DESC buffer_desc;
+    D3D10_SUBRESOURCE_DATA data;
+    BOOL cpu_write, cpu_read;
+    BOOL required_cpu_access;
+    ID3D10Texture2D *texture;
+    HRESULT hr, expected_hr;
+    BOOL broken_validation;
+    ID3D10Device *device;
+    ID3D10Buffer *buffer;
+    unsigned int i;
+    ULONG refcount;
+
+    static const struct
+    {
+        D3D10_USAGE usage;
+        UINT bind_flags;
+        BOOL is_valid;
+        UINT allowed_cpu_access;
+    }
+    tests[] =
+    {
+        /* Default resources cannot be written by CPU. */
+        {D3D10_USAGE_DEFAULT, D3D10_BIND_VERTEX_BUFFER,   TRUE, 0},
+        {D3D10_USAGE_DEFAULT, D3D10_BIND_INDEX_BUFFER,    TRUE, 0},
+        {D3D10_USAGE_DEFAULT, D3D10_BIND_CONSTANT_BUFFER, TRUE, 0},
+        {D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE, TRUE, 0},
+        {D3D10_USAGE_DEFAULT, D3D10_BIND_STREAM_OUTPUT,   TRUE, 0},
+        {D3D10_USAGE_DEFAULT, D3D10_BIND_RENDER_TARGET,   TRUE, 0},
+        {D3D10_USAGE_DEFAULT, D3D10_BIND_DEPTH_STENCIL,   TRUE, 0},
+
+        /* Immutable resources cannot be written by CPU and GPU. */
+        {D3D10_USAGE_IMMUTABLE, 0,                          FALSE, 0},
+        {D3D10_USAGE_IMMUTABLE, D3D10_BIND_VERTEX_BUFFER,   TRUE,  0},
+        {D3D10_USAGE_IMMUTABLE, D3D10_BIND_INDEX_BUFFER,    TRUE,  0},
+        {D3D10_USAGE_IMMUTABLE, D3D10_BIND_CONSTANT_BUFFER, TRUE,  0},
+        {D3D10_USAGE_IMMUTABLE, D3D10_BIND_SHADER_RESOURCE, TRUE,  0},
+        {D3D10_USAGE_IMMUTABLE, D3D10_BIND_STREAM_OUTPUT,   FALSE, 0},
+        {D3D10_USAGE_IMMUTABLE, D3D10_BIND_RENDER_TARGET,   FALSE, 0},
+        {D3D10_USAGE_IMMUTABLE, D3D10_BIND_DEPTH_STENCIL,   FALSE, 0},
+
+        /* Dynamic resources cannot be written by GPU. */
+        {D3D10_USAGE_DYNAMIC, 0,                          FALSE, D3D10_CPU_ACCESS_WRITE},
+        {D3D10_USAGE_DYNAMIC, D3D10_BIND_VERTEX_BUFFER,   TRUE,  D3D10_CPU_ACCESS_WRITE},
+        {D3D10_USAGE_DYNAMIC, D3D10_BIND_INDEX_BUFFER,    TRUE,  D3D10_CPU_ACCESS_WRITE},
+        {D3D10_USAGE_DYNAMIC, D3D10_BIND_CONSTANT_BUFFER, TRUE,  D3D10_CPU_ACCESS_WRITE},
+        {D3D10_USAGE_DYNAMIC, D3D10_BIND_SHADER_RESOURCE, TRUE,  D3D10_CPU_ACCESS_WRITE},
+        {D3D10_USAGE_DYNAMIC, D3D10_BIND_STREAM_OUTPUT,   FALSE, D3D10_CPU_ACCESS_WRITE},
+        {D3D10_USAGE_DYNAMIC, D3D10_BIND_RENDER_TARGET,   FALSE, D3D10_CPU_ACCESS_WRITE},
+        {D3D10_USAGE_DYNAMIC, D3D10_BIND_DEPTH_STENCIL,   FALSE, D3D10_CPU_ACCESS_WRITE},
+
+        /* Staging resources support only data transfer. */
+        {D3D10_USAGE_STAGING, 0,                          TRUE,  D3D10_CPU_ACCESS_WRITE | D3D10_CPU_ACCESS_READ},
+        {D3D10_USAGE_STAGING, D3D10_BIND_VERTEX_BUFFER,   FALSE, 0},
+        {D3D10_USAGE_STAGING, D3D10_BIND_INDEX_BUFFER,    FALSE, 0},
+        {D3D10_USAGE_STAGING, D3D10_BIND_CONSTANT_BUFFER, FALSE, 0},
+        {D3D10_USAGE_STAGING, D3D10_BIND_SHADER_RESOURCE, FALSE, 0},
+        {D3D10_USAGE_STAGING, D3D10_BIND_STREAM_OUTPUT,   FALSE, 0},
+        {D3D10_USAGE_STAGING, D3D10_BIND_RENDER_TARGET,   FALSE, 0},
+        {D3D10_USAGE_STAGING, D3D10_BIND_DEPTH_STENCIL,   FALSE, 0},
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    data.SysMemPitch = 0;
+    data.SysMemSlicePitch = 0;
+    data.pSysMem = HeapAlloc(GetProcessHeap(), 0, 10240);
+    ok(!!data.pSysMem, "Failed to allocate memory.\n");
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        if (tests[i].bind_flags == D3D10_BIND_DEPTH_STENCIL)
+            continue;
+
+        required_cpu_access = tests[i].usage == D3D10_USAGE_DYNAMIC || tests[i].usage == D3D10_USAGE_STAGING;
+        cpu_write = tests[i].allowed_cpu_access & D3D10_CPU_ACCESS_WRITE;
+        cpu_read = tests[i].allowed_cpu_access & D3D10_CPU_ACCESS_READ;
+
+        buffer_desc.ByteWidth = 1024;
+        buffer_desc.Usage = tests[i].usage;
+        buffer_desc.BindFlags = tests[i].bind_flags;
+        buffer_desc.MiscFlags = 0;
+
+        buffer_desc.CPUAccessFlags = 0;
+        expected_hr = tests[i].is_valid && !required_cpu_access ? S_OK : E_INVALIDARG;
+        hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &data, &buffer);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_buffer_cpu_access(buffer, buffer_desc.Usage,
+                    buffer_desc.BindFlags, buffer_desc.CPUAccessFlags);
+            ID3D10Buffer_Release(buffer);
+        }
+
+        buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+        expected_hr = tests[i].is_valid && cpu_write ? S_OK : E_INVALIDARG;
+        hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &data, &buffer);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_buffer_cpu_access(buffer, buffer_desc.Usage,
+                    buffer_desc.BindFlags, buffer_desc.CPUAccessFlags);
+            ID3D10Buffer_Release(buffer);
+        }
+
+        buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+        expected_hr = tests[i].is_valid && cpu_read ? S_OK : E_INVALIDARG;
+        hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &data, &buffer);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_buffer_cpu_access(buffer, buffer_desc.Usage,
+                    buffer_desc.BindFlags, buffer_desc.CPUAccessFlags);
+            ID3D10Buffer_Release(buffer);
+        }
+
+        buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE | D3D10_CPU_ACCESS_READ;
+        expected_hr = tests[i].is_valid && cpu_write && cpu_read ? S_OK : E_INVALIDARG;
+        hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &data, &buffer);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_buffer_cpu_access(buffer, buffer_desc.Usage,
+                    buffer_desc.BindFlags, buffer_desc.CPUAccessFlags);
+            ID3D10Buffer_Release(buffer);
+        }
+    }
+
+    data.SysMemPitch = 16;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        if (tests[i].bind_flags == D3D10_BIND_VERTEX_BUFFER
+                || tests[i].bind_flags == D3D10_BIND_INDEX_BUFFER
+                || tests[i].bind_flags == D3D10_BIND_CONSTANT_BUFFER
+                || tests[i].bind_flags == D3D10_BIND_STREAM_OUTPUT)
+            continue;
+
+        broken_validation = tests[i].usage == D3D10_USAGE_DEFAULT
+                && (tests[i].bind_flags == D3D10_BIND_SHADER_RESOURCE
+                || tests[i].bind_flags == D3D10_BIND_RENDER_TARGET);
+
+        required_cpu_access = tests[i].usage == D3D10_USAGE_DYNAMIC || tests[i].usage == D3D10_USAGE_STAGING;
+        cpu_write = tests[i].allowed_cpu_access & D3D10_CPU_ACCESS_WRITE;
+        cpu_read = tests[i].allowed_cpu_access & D3D10_CPU_ACCESS_READ;
+
+        texture_desc.Width = 4;
+        texture_desc.Height = 4;
+        texture_desc.MipLevels = 1;
+        texture_desc.ArraySize = 1;
+        texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        texture_desc.SampleDesc.Count = 1;
+        texture_desc.SampleDesc.Quality = 0;
+        texture_desc.Usage = tests[i].usage;
+        texture_desc.BindFlags = tests[i].bind_flags;
+        texture_desc.MiscFlags = 0;
+        if (tests[i].bind_flags == D3D10_BIND_DEPTH_STENCIL)
+            texture_desc.Format = DXGI_FORMAT_D16_UNORM;
+
+        texture_desc.CPUAccessFlags = 0;
+        expected_hr = tests[i].is_valid && !required_cpu_access ? S_OK : E_INVALIDARG;
+        hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &data, &texture);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_texture_cpu_access(texture, texture_desc.Usage,
+                    texture_desc.BindFlags, texture_desc.CPUAccessFlags);
+            ID3D10Texture2D_Release(texture);
+        }
+
+        texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+        expected_hr = tests[i].is_valid && cpu_write ? S_OK : E_INVALIDARG;
+        hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &data, &texture);
+        ok(hr == expected_hr || (hr == S_OK && broken_validation),
+                "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            if (broken_validation)
+                texture_desc.CPUAccessFlags = 0;
+            check_texture_cpu_access(texture, texture_desc.Usage,
+                    texture_desc.BindFlags, texture_desc.CPUAccessFlags);
+            ID3D10Texture2D_Release(texture);
+        }
+
+        texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+        expected_hr = tests[i].is_valid && cpu_read ? S_OK : E_INVALIDARG;
+        hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &data, &texture);
+        ok(hr == expected_hr || (hr == S_OK && broken_validation),
+                "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            if (broken_validation)
+                texture_desc.CPUAccessFlags = 0;
+            check_texture_cpu_access(texture, texture_desc.Usage,
+                    texture_desc.BindFlags, texture_desc.CPUAccessFlags);
+            ID3D10Texture2D_Release(texture);
+        }
+
+        texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE | D3D10_CPU_ACCESS_READ;
+        expected_hr = tests[i].is_valid && cpu_write && cpu_read ? S_OK : E_INVALIDARG;
+        hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &data, &texture);
+        ok(hr == expected_hr || (hr == S_OK && broken_validation),
+                "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            if (broken_validation)
+                texture_desc.CPUAccessFlags = 0;
+            check_texture_cpu_access(texture, texture_desc.Usage,
+                    texture_desc.BindFlags, texture_desc.CPUAccessFlags);
+            ID3D10Texture2D_Release(texture);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, (void *)data.pSysMem);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_check_multisample_quality_levels(void)
 {
     ID3D10Device *device;
@@ -13882,6 +14211,7 @@ START_TEST(device)
     test_fragment_coords();
     test_update_subresource();
     test_copy_subresource_region();
+    test_resource_access();
     test_check_multisample_quality_levels();
     test_cb_relative_addressing();
     test_vs_input_relative_addressing();
