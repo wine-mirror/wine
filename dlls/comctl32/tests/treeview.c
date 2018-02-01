@@ -2846,10 +2846,31 @@ START_TEST(treeview)
 
     /* comctl32 version 6 tests start here */
     g_v6 = TRUE;
+
+    test_fillroot();
+    test_getitemtext();
+    test_get_set_insertmark();
+    test_get_set_item();
+    test_get_set_scrolltime();
+    test_get_set_textcolor();
+    test_get_linecolor();
+    test_get_insertmarkcolor();
     test_expandedimage();
-    test_htreeitem_layout();
-    test_WM_GETDLGCODE();
     test_get_set_tooltips();
+    test_get_set_unicodeformat();
+    test_expandinvisible();
+    test_itemedit();
+    test_treeview_classinfo();
+    test_delete_items();
+    test_cchildren();
+    test_htreeitem_layout();
+    test_TVM_GETNEXTITEM();
+    test_TVM_HITTEST();
+    test_WM_GETDLGCODE();
+    test_customdraw();
+    test_WM_KEYDOWN();
+    test_TVS_FULLROWSELECT();
+    test_TVM_SORTCHILDREN();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
