@@ -63,6 +63,18 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
+#ifdef HAS_PROPER_INPUT_HEADER
+# include "hidusage.h"
+#endif
+
+#ifdef WORDS_BIGENDIAN
+#define LE_WORD(x) RtlUshortByteSwap(x)
+#define LE_DWORD(x) RtlUlongByteSwap(x)
+#else
+#define LE_WORD(x) (x)
+#define LE_DWORD(x) (x)
+#endif
+
 #include "bus.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
@@ -96,6 +108,429 @@ static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *de
 {
     return (struct platform_private *)get_platform_private(device);
 }
+
+#ifdef HAS_PROPER_INPUT_HEADER
+static const BYTE REPORT_HEADER[] = {
+    0x05, 0x01, /* USAGE_PAGE (Generic Desktop) */
+    0x09, 0x00, /* USAGE (??) */
+    0xa1, 0x01, /* COLLECTION (Application) */
+    0x09, 0x01, /*   USAGE () */
+    0xa1, 0x00, /*   COLLECTION (Physical) */
+};
+
+#define IDX_HEADER_PAGE 1
+#define IDX_HEADER_USAGE 3
+
+static const BYTE REPORT_BUTTONS[] = {
+    0x05, 0x09, /* USAGE_PAGE (Button) */
+    0x19, 0x01, /* USAGE_MINIMUM (Button 1) */
+    0x29, 0x03, /* USAGE_MAXIMUM (Button 3) */
+    0x15, 0x00, /* LOGICAL_MINIMUM (0) */
+    0x25, 0x01, /* LOGICAL_MAXIMUM (1) */
+    0x35, 0x00, /* LOGICAL_MINIMUM (0) */
+    0x45, 0x01, /* LOGICAL_MAXIMUM (1) */
+    0x95, 0x03, /* REPORT_COUNT (3) */
+    0x75, 0x01, /* REPORT_SIZE (1) */
+    0x81, 0x02, /* INPUT (Data,Var,Abs) */
+};
+#define IDX_BUTTON_MIN_USAGE 3
+#define IDX_BUTTON_MAX_USAGE 5
+#define IDX_BUTTON_COUNT 11
+
+static const BYTE REPORT_PADDING[] = {
+    0x95, 0x03, /* REPORT_COUNT (3) */
+    0x75, 0x01, /* REPORT_SIZE (1) */
+    0x81, 0x03, /* INPUT (Cnst,Var,Abs) */
+};
+#define IDX_PADDING_BIT_COUNT 1
+
+static const BYTE REPORT_AXIS_HEADER[] = {
+    0x05, 0x01,  /* USAGE_PAGE (Generic Desktop) */
+};
+#define IDX_AXIS_PAGE 1
+
+
+static const BYTE REPORT_AXIS_USAGE[] = {
+    0x09, 0x30,  /* USAGE (X) */
+};
+#define IDX_AXIS_USAGE 1
+
+static const BYTE REPORT_ABS_AXIS_TAIL[] = {
+    0x17, 0x00, 0x00, 0x00, 0x00,  /* LOGICAL_MINIMUM (0) */
+    0x27, 0xff, 0x00, 0x00, 0x00,  /* LOGICAL_MAXIMUM (0xff) */
+    0x37, 0x00, 0x00, 0x00, 0x00,  /* PHYSICAL_MINIMUM (0) */
+    0x47, 0xff, 0x00, 0x00, 0x00,  /* PHYSICAL_MAXIMUM (256) */
+    0x75, 0x20,                    /* REPORT_SIZE (32) */
+    0x95, 0x00,                    /* REPORT_COUNT (2) */
+    0x81, 0x02,                    /* INPUT (Data,Var,Abs) */
+};
+#define IDX_ABS_LOG_MINIMUM 1
+#define IDX_ABS_LOG_MAXIMUM 6
+#define IDX_ABS_PHY_MINIMUM 11
+#define IDX_ABS_PHY_MAXIMUM 16
+#define IDX_ABS_AXIS_COUNT 23
+
+static const BYTE REPORT_REL_AXIS_TAIL[] = {
+    0x15, 0x81,    /* LOGICAL_MINIMUM (0) */
+    0x25, 0x7f,    /* LOGICAL_MAXIMUM (0xffff) */
+    0x75, 0x08,    /* REPORT_SIZE (16) */
+    0x95, 0x02,    /* REPORT_COUNT (2) */
+    0x81, 0x06,    /* INPUT (Data,Var,Rel) */
+};
+#define IDX_REL_AXIS_COUNT 7
+
+static const BYTE REPORT_HATSWITCH[] = {
+    0x05, 0x01,  /* USAGE_PAGE (Generic Desktop) */
+    0x09, 0x39,  /* USAGE (Hatswitch) */
+    0x15, 0x00,  /* LOGICAL_MINIMUM (0) */
+    0x25, 0x08,  /* LOGICAL_MAXIMUM (0x08) */
+    0x35, 0x00,  /* PHYSICAL_MINIMUM (0) */
+    0x45, 0x08,  /* PHYSICAL_MAXIMUM (8) */
+    0x75, 0x08,  /* REPORT_SIZE (8) */
+    0x95, 0x01,  /* REPORT_COUNT (1) */
+    0x81, 0x02,  /* INPUT (Data,Var,Abs) */
+};
+#define IDX_HATSWITCH_COUNT 15
+
+static const BYTE REPORT_TAIL[] = {
+    0xc0, /*   END_COLLECTION */
+    0xc0  /* END_COLLECTION */
+};
+
+static const BYTE ABS_TO_HID_MAP[][2] = {
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_X},              /*ABS_X*/
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_Y},              /*ABS_Y*/
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_Z},              /*ABS_Z*/
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RX},             /*ABS_RX*/
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RY},             /*ABS_RY*/
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RZ},             /*ABS_RZ*/
+    {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_THROTTLE}, /*ABS_THROTTLE*/
+    {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_RUDDER},   /*ABS_RUDDER*/
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_WHEEL},          /*ABS_WHEEL*/
+    {HID_USAGE_PAGE_SIMULATION, 0xC4},                          /*ABS_GAS*/
+    {HID_USAGE_PAGE_SIMULATION, 0xC5},                          /*ABS_BRAKE*/
+    {0,0},                                                      /*ABS_HAT0X*/
+    {0,0},                                                      /*ABS_HAT0Y*/
+    {0,0},                                                      /*ABS_HAT1X*/
+    {0,0},                                                      /*ABS_HAT1Y*/
+    {0,0},                                                      /*ABS_HAT2X*/
+    {0,0},                                                      /*ABS_HAT2Y*/
+    {0,0},                                                      /*ABS_HAT3X*/
+    {0,0},                                                      /*ABS_HAT3Y*/
+    {HID_USAGE_PAGE_DIGITIZER, 0x30},                           /*ABS_PRESSURE*/
+    {0, 0},                                                     /*ABS_DISTANCE*/
+    {HID_USAGE_PAGE_DIGITIZER, 0x3D},                           /*ABS_TILT_X*/
+    {HID_USAGE_PAGE_DIGITIZER, 0x3F},                           /*ABS_TILT_Y*/
+    {0, 0},                                                     /*ABS_TOOL_WIDTH*/
+    {0, 0},
+    {0, 0},
+    {0, 0},
+    {HID_USAGE_PAGE_CONSUMER, 0xE0}                             /*ABS_VOLUME*/
+};
+#define HID_ABS_MAX (ABS_VOLUME+1)
+#define TOP_ABS_PAGE (HID_USAGE_PAGE_DIGITIZER+1)
+
+static const BYTE REL_TO_HID_MAP[][2] = {
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_X},     /* REL_X */
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_Y},     /* REL_Y */
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_Z},     /* REL_Z */
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RX},    /* REL_RX */
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RY},    /* REL_RY */
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_RZ},    /* REL_RZ */
+    {0, 0},                                            /* REL_HWHEEL */
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_DIAL},  /* REL_DIAL */
+    {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_WHEEL}, /* REL_WHEEL */
+    {0, 0}                                             /* REL_MISC */
+};
+
+#define HID_REL_MAX (REL_MISC+1)
+#define TOP_REL_PAGE (HID_USAGE_PAGE_CONSUMER+1)
+
+struct wine_input_absinfo {
+    struct input_absinfo info;
+    BYTE report_index;
+};
+
+struct wine_input_private {
+    struct platform_private base;
+
+    int report_descriptor_size;
+    BYTE *report_descriptor;
+
+    BYTE button_map[KEY_MAX];
+    BYTE rel_map[HID_REL_MAX];
+    BYTE hat_map[8];
+    int hat_values[8];
+    struct wine_input_absinfo abs_map[HID_ABS_MAX];
+};
+
+#define test_bit(arr,bit) (((BYTE*)(arr))[(bit)>>3]&(1<<((bit)&7)))
+
+static BYTE *add_button_block(BYTE* report_ptr, BYTE usage_min, BYTE usage_max)
+{
+    memcpy(report_ptr, REPORT_BUTTONS, sizeof(REPORT_BUTTONS));
+    report_ptr[IDX_BUTTON_MIN_USAGE] = usage_min;
+    report_ptr[IDX_BUTTON_MAX_USAGE] = usage_max;
+    report_ptr[IDX_BUTTON_COUNT] = (usage_max - usage_min) + 1;
+    return report_ptr + sizeof(REPORT_BUTTONS);
+}
+
+static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, BYTE *usages, BOOL absolute, const struct wine_input_absinfo *absinfo)
+{
+    int i;
+    memcpy(report_ptr, REPORT_AXIS_HEADER, sizeof(REPORT_AXIS_HEADER));
+    report_ptr[IDX_AXIS_PAGE] = page;
+    report_ptr += sizeof(REPORT_AXIS_HEADER);
+    for (i = 0; i < count; i++)
+    {
+        memcpy(report_ptr, REPORT_AXIS_USAGE, sizeof(REPORT_AXIS_USAGE));
+        report_ptr[IDX_AXIS_USAGE] = usages[i];
+        report_ptr += sizeof(REPORT_AXIS_USAGE);
+    }
+    if (absolute)
+    {
+        memcpy(report_ptr, REPORT_ABS_AXIS_TAIL, sizeof(REPORT_ABS_AXIS_TAIL));
+        if (absinfo)
+        {
+            *((int*)&report_ptr[IDX_ABS_LOG_MINIMUM]) = LE_DWORD(absinfo->info.minimum);
+            *((int*)&report_ptr[IDX_ABS_LOG_MAXIMUM]) = LE_DWORD(absinfo->info.maximum);
+            *((int*)&report_ptr[IDX_ABS_PHY_MINIMUM]) = LE_DWORD(absinfo->info.minimum);
+            *((int*)&report_ptr[IDX_ABS_PHY_MAXIMUM]) = LE_DWORD(absinfo->info.maximum);
+        }
+        report_ptr[IDX_ABS_AXIS_COUNT] = count;
+        report_ptr += sizeof(REPORT_ABS_AXIS_TAIL);
+    }
+    else
+    {
+        memcpy(report_ptr, REPORT_REL_AXIS_TAIL, sizeof(REPORT_REL_AXIS_TAIL));
+        report_ptr[IDX_REL_AXIS_COUNT] = count;
+        report_ptr += sizeof(REPORT_REL_AXIS_TAIL);
+    }
+    return report_ptr;
+}
+
+static BYTE *add_padding_block(BYTE *report_ptr, BYTE bitcount)
+{
+    memcpy(report_ptr, REPORT_PADDING, sizeof(REPORT_PADDING));
+    report_ptr[IDX_PADDING_BIT_COUNT] = bitcount;
+    return report_ptr + sizeof(REPORT_PADDING);
+}
+
+static BYTE *add_hatswitch(BYTE *report_ptr, INT count)
+{
+    memcpy(report_ptr, REPORT_HATSWITCH, sizeof(REPORT_HATSWITCH));
+    report_ptr[IDX_HATSWITCH_COUNT] = count;
+    return report_ptr + sizeof(REPORT_HATSWITCH);
+}
+
+static const BYTE* what_am_I(struct udev_device *dev)
+{
+    static const BYTE Unknown[2]     = {HID_USAGE_PAGE_GENERIC, 0};
+    static const BYTE Mouse[2]       = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE};
+    static const BYTE Keyboard[2]    = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD};
+    static const BYTE Gamepad[2]     = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD};
+    static const BYTE Keypad[2]      = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYPAD};
+    static const BYTE Tablet[2]      = {HID_USAGE_PAGE_DIGITIZER, 0x2};
+    static const BYTE Touchscreen[2] = {HID_USAGE_PAGE_DIGITIZER, 0x4};
+    static const BYTE Touchpad[2]    = {HID_USAGE_PAGE_DIGITIZER, 0x5};
+
+    struct udev_device *parent = dev;
+
+    /* Look to the parents until we get a clue */
+    while (parent)
+    {
+        if (udev_device_get_property_value(parent, "ID_INPUT_MOUSE"))
+            return Mouse;
+        else if (udev_device_get_property_value(parent, "ID_INPUT_KEYBOARD"))
+            return Keyboard;
+        else if (udev_device_get_property_value(parent, "ID_INPUT_JOYSTICK"))
+            return Gamepad;
+        else if (udev_device_get_property_value(parent, "ID_INPUT_KEY"))
+            return Keypad;
+        else if (udev_device_get_property_value(parent, "ID_INPUT_TOUCHPAD"))
+            return Touchpad;
+        else if (udev_device_get_property_value(parent, "ID_INPUT_TOUCHSCREEN"))
+            return Touchscreen;
+        else if (udev_device_get_property_value(parent, "ID_INPUT_TABLET"))
+            return Tablet;
+
+        parent = udev_device_get_parent_with_subsystem_devtype(parent, "input", NULL);
+    }
+    return Unknown;
+}
+
+static VOID build_report_descriptor(struct wine_input_private *ext, struct udev_device *dev)
+{
+    int abs_pages[TOP_ABS_PAGE][HID_ABS_MAX+1];
+    int rel_pages[TOP_REL_PAGE][HID_REL_MAX+1];
+    BYTE absbits[(ABS_MAX+7)/8];
+    BYTE relbits[(REL_MAX+7)/8];
+    BYTE keybits[(KEY_MAX+7)/8];
+    BYTE *report_ptr;
+    INT i, descript_size;
+    INT report_size;
+    INT button_count, abs_count, rel_count, hat_count;
+    const BYTE *device_usage = what_am_I(dev);
+
+    if (ioctl(ext->base.device_fd, EVIOCGBIT(EV_REL, sizeof(relbits)), relbits) == -1)
+    {
+        WARN("ioctl(EVIOCGBIT, EV_REL) failed: %d %s\n", errno, strerror(errno));
+        return;
+    }
+    if (ioctl(ext->base.device_fd, EVIOCGBIT(EV_ABS, sizeof(absbits)), absbits) == -1)
+    {
+        WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
+        return;
+    }
+    if (ioctl(ext->base.device_fd, EVIOCGBIT(EV_KEY, sizeof(keybits)), keybits) == -1)
+    {
+        WARN("ioctl(EVIOCGBIT, EV_KEY) failed: %d %s\n", errno, strerror(errno));
+        return;
+    }
+
+    descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
+    report_size = 0;
+
+    /* For now lump all buttons just into incremental usages, Ignore Keys */
+    button_count = 0;
+    for (i = BTN_MISC; i < KEY_MAX; i++)
+    {
+        if (test_bit(keybits, i))
+        {
+            ext->button_map[i] = button_count;
+            button_count++;
+        }
+    }
+    if (button_count)
+    {
+        descript_size += sizeof(REPORT_BUTTONS);
+        if (button_count % 8)
+            descript_size += sizeof(REPORT_PADDING);
+        report_size = (button_count + 7) / 8;
+    }
+
+    abs_count = 0;
+    memset(abs_pages, 0, sizeof(abs_pages));
+    for (i = 0; i < HID_ABS_MAX; i++)
+        if (test_bit(absbits, i))
+        {
+            abs_pages[ABS_TO_HID_MAP[i][0]][0]++;
+            abs_pages[ABS_TO_HID_MAP[i][0]][abs_pages[ABS_TO_HID_MAP[i][0]][0]] = i;
+
+            ioctl(ext->base.device_fd, EVIOCGABS(i), &(ext->abs_map[i]));
+            if (abs_pages[ABS_TO_HID_MAP[i][0]][0] == 1)
+            {
+                descript_size += sizeof(REPORT_AXIS_HEADER);
+                descript_size += sizeof(REPORT_ABS_AXIS_TAIL);
+            }
+        }
+    /* Skip page 0, aka HID_USAGE_PAGE_UNDEFINED */
+    for (i = 1; i < TOP_ABS_PAGE; i++)
+        if (abs_pages[i][0] > 0)
+        {
+            int j;
+            descript_size += sizeof(REPORT_AXIS_USAGE) * abs_pages[i][0];
+            for (j = 1; j <= abs_pages[i][0]; j++)
+            {
+                ext->abs_map[abs_pages[i][j]].report_index = report_size;
+                report_size+=4;
+            }
+            abs_count++;
+        }
+
+    rel_count = 0;
+    memset(rel_pages, 0, sizeof(rel_pages));
+    for (i = 0; i < HID_REL_MAX; i++)
+        if (test_bit(relbits, i))
+        {
+            rel_pages[REL_TO_HID_MAP[i][0]][0]++;
+            rel_pages[REL_TO_HID_MAP[i][0]][rel_pages[REL_TO_HID_MAP[i][0]][0]] = i;
+            if (rel_pages[REL_TO_HID_MAP[i][0]][0] == 1)
+            {
+                descript_size += sizeof(REPORT_AXIS_HEADER);
+                descript_size += sizeof(REPORT_REL_AXIS_TAIL);
+            }
+        }
+    /* Skip page 0, aka HID_USAGE_PAGE_UNDEFINED */
+    for (i = 1; i < TOP_REL_PAGE; i++)
+        if (rel_pages[i][0] > 0)
+        {
+            int j;
+            descript_size += sizeof(REPORT_AXIS_USAGE) * rel_pages[i][0];
+            for (j = 1; j <= rel_pages[i][0]; j++)
+            {
+                ext->rel_map[rel_pages[i][j]] = report_size;
+                report_size++;
+            }
+            rel_count++;
+        }
+
+    hat_count = 0;
+    for (i = ABS_HAT0X; i <=ABS_HAT3X; i+=2)
+        if (test_bit(absbits, i))
+        {
+            ext->hat_map[i - ABS_HAT0X] = report_size;
+            ext->hat_values[i - ABS_HAT0X] = 0;
+            ext->hat_values[i - ABS_HAT0X + 1] = 0;
+            report_size++;
+            hat_count++;
+        }
+
+    TRACE("Report Descriptor will be %i bytes\n", descript_size);
+    TRACE("Report will be %i bytes\n", report_size);
+
+    ext->report_descriptor = HeapAlloc(GetProcessHeap(), 0, descript_size);
+    report_ptr = ext->report_descriptor;
+
+    memcpy(report_ptr, REPORT_HEADER, sizeof(REPORT_HEADER));
+    report_ptr[IDX_HEADER_PAGE] = device_usage[0];
+    report_ptr[IDX_HEADER_USAGE] = device_usage[1];
+    report_ptr += sizeof(REPORT_HEADER);
+    if (button_count)
+    {
+        report_ptr = add_button_block(report_ptr, 1, button_count);
+        if (button_count % 8)
+        {
+            BYTE padding = 8 - (button_count % 8);
+            report_ptr = add_padding_block(report_ptr, padding);
+        }
+    }
+    if (abs_count)
+    {
+        for (i = 1; i < TOP_ABS_PAGE; i++)
+        {
+            if (abs_pages[i][0])
+            {
+                BYTE usages[HID_ABS_MAX];
+                int j;
+                for (j = 0; j < abs_pages[i][0]; j++)
+                    usages[j] = ABS_TO_HID_MAP[abs_pages[i][j+1]][1];
+                report_ptr = add_axis_block(report_ptr, abs_pages[i][0], i, usages, TRUE, &ext->abs_map[abs_pages[i][1]]);
+            }
+        }
+    }
+    if (rel_count)
+    {
+        for (i = 1; i < TOP_REL_PAGE; i++)
+        {
+            if (rel_pages[i][0])
+            {
+                BYTE usages[HID_REL_MAX];
+                int j;
+                for (j = 0; j < rel_pages[i][0]; j++)
+                    usages[j] = REL_TO_HID_MAP[rel_pages[i][j+1]][1];
+                report_ptr = add_axis_block(report_ptr, rel_pages[i][0], i, usages, FALSE, NULL);
+            }
+        }
+    }
+    if (hat_count)
+        report_ptr = add_hatswitch(report_ptr, hat_count);
+
+    memcpy(report_ptr, REPORT_TAIL, sizeof(REPORT_TAIL));
+
+    ext->report_descriptor_size = descript_size;
+}
+#endif
 
 static inline WCHAR *strdupAtoW(const char *src)
 {
@@ -406,9 +841,23 @@ static const platform_vtbl hidraw_vtbl =
 
 #ifdef HAS_PROPER_INPUT_HEADER
 
+static inline struct wine_input_private *input_impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
+{
+    return (struct wine_input_private*)get_platform_private(device);
+}
+
 static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
 {
-    return STATUS_NOT_IMPLEMENTED;
+    struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
+
+    *out_length = ext->report_descriptor_size;
+
+    if (length < ext->report_descriptor_size)
+        return STATUS_BUFFER_TOO_SMALL;
+
+    memcpy(buffer, ext->report_descriptor, ext->report_descriptor_size);
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS lnxev_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
@@ -535,7 +984,7 @@ static void try_add_device(struct udev_device *dev)
     else if (strcmp(subsystem, "input") == 0)
     {
         device = bus_create_hid_device(udev_driver_obj, lnxev_busidW, vid, pid, version, 0, serial, (gamepad != NULL),
-                                       &GUID_DEVCLASS_LINUXEVENT, &lnxev_vtbl, sizeof(struct platform_private));
+                                       &GUID_DEVCLASS_LINUXEVENT, &lnxev_vtbl, sizeof(struct wine_input_private));
     }
 #endif
 
@@ -544,6 +993,10 @@ static void try_add_device(struct udev_device *dev)
         struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->udev_device = udev_device_ref(dev);
         private->device_fd = fd;
+#ifdef HAS_PROPER_INPUT_HEADER
+        if (strcmp(subsystem, "input") == 0)
+            build_report_descriptor((struct wine_input_private*)private, dev);
+#endif
         IoInvalidateDeviceRelations(device, BusRelations);
     }
     else
@@ -559,11 +1012,17 @@ static void try_remove_device(struct udev_device *dev)
 {
     DEVICE_OBJECT *device = NULL;
     struct platform_private* private;
+#ifdef HAS_PROPER_INPUT_HEADER
+    BOOL is_input = FALSE;
+#endif
 
     device = bus_find_hid_device(&hidraw_vtbl, dev);
 #ifdef HAS_PROPER_INPUT_HEADER
     if (device == NULL)
+    {
         device = bus_find_hid_device(&lnxev_vtbl, dev);
+        is_input = TRUE;
+    }
 #endif
     if (!device) return;
 
@@ -579,6 +1038,14 @@ static void try_remove_device(struct udev_device *dev)
         close(private->control_pipe[1]);
         CloseHandle(private->report_thread);
     }
+
+#ifdef HAS_PROPER_INPUT_HEADER
+    if (is_input)
+    {
+        struct wine_input_private *ext = (struct wine_input_private*)private;
+        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
+    }
+#endif
 
     dev = private->udev_device;
     close(private->device_fd);
