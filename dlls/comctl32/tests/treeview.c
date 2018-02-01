@@ -1068,9 +1068,101 @@ static void test_get_set_textcolor(void)
 
 static void test_get_set_tooltips(void)
 {
-    HWND hwndLastToolTip = NULL;
-    HWND hPopupTreeView;
-    HWND hTree;
+    HWND hTree, tooltips, hwnd;
+    DWORD style;
+    int i;
+
+    /* TVS_NOTOOLTIPS */
+    hTree = create_treeview_control(TVS_NOTOOLTIPS);
+
+    tooltips = (HWND)SendMessageA(hTree, TVM_GETTOOLTIPS, 0, 0);
+    ok(tooltips == NULL, "Unexpected tooltip window %p.\n", tooltips);
+
+    tooltips = (HWND)SendMessageA(hTree, TVM_SETTOOLTIPS, 0, 0);
+    ok(tooltips == NULL, "Unexpected ret value %p.\n", tooltips);
+
+    /* Toggle style */
+    style = GetWindowLongA(hTree, GWL_STYLE);
+    SetWindowLongA(hTree, GWL_STYLE, style & ~TVS_NOTOOLTIPS);
+
+    tooltips = (HWND)SendMessageA(hTree, TVM_GETTOOLTIPS, 0, 0);
+    ok(IsWindow(tooltips), "Unexpected tooltip window %p.\n", tooltips);
+
+    style = GetWindowLongA(hTree, GWL_STYLE);
+    SetWindowLongA(hTree, GWL_STYLE, style | TVS_NOTOOLTIPS);
+
+    tooltips = (HWND)SendMessageA(hTree, TVM_GETTOOLTIPS, 0, 0);
+    ok(tooltips == NULL, "Unexpected tooltip window %p.\n", tooltips);
+
+    DestroyWindow(hTree);
+
+    /* Set some valid window, does not have to be tooltips class. */
+    hTree = create_treeview_control(TVS_NOTOOLTIPS);
+
+    hwnd = CreateWindowA(WC_STATICA, "Test", WS_VISIBLE|WS_CHILD, 5, 5, 100, 100, hMainWnd, NULL, NULL, 0);
+    ok(hwnd != NULL, "Failed to create child window.\n");
+
+    tooltips = (HWND)SendMessageA(hTree, TVM_SETTOOLTIPS, (WPARAM)hwnd, 0);
+    ok(tooltips == NULL, "Unexpected ret value %p.\n", tooltips);
+
+    tooltips = (HWND)SendMessageA(hTree, TVM_GETTOOLTIPS, 0, 0);
+    ok(tooltips == hwnd, "Unexpected tooltip window %p.\n", tooltips);
+
+    /* Externally set tooltips window, disable style. */
+    style = GetWindowLongA(hTree, GWL_STYLE);
+    SetWindowLongA(hTree, GWL_STYLE, style & ~TVS_NOTOOLTIPS);
+
+    tooltips = (HWND)SendMessageA(hTree, TVM_GETTOOLTIPS, 0, 0);
+    ok(IsWindow(tooltips) && tooltips != hwnd, "Unexpected tooltip window %p.\n", tooltips);
+    ok(IsWindow(hwnd), "Expected valid window.\n");
+
+    style = GetWindowLongA(hTree, GWL_STYLE);
+    SetWindowLongA(hTree, GWL_STYLE, style | TVS_NOTOOLTIPS);
+    ok(!IsWindow(tooltips), "Unexpected tooltip window %p.\n", tooltips);
+
+    tooltips = (HWND)SendMessageA(hTree, TVM_GETTOOLTIPS, 0, 0);
+    ok(tooltips == NULL, "Unexpected tooltip window %p.\n", tooltips);
+    ok(IsWindow(hwnd), "Expected valid window.\n");
+
+    DestroyWindow(hTree);
+    ok(IsWindow(hwnd), "Expected valid window.\n");
+
+    /* Set window, disable tooltips. */
+    hTree = create_treeview_control(0);
+
+    tooltips = (HWND)SendMessageA(hTree, TVM_SETTOOLTIPS, (WPARAM)hwnd, 0);
+    ok(IsWindow(tooltips), "Unexpected ret value %p.\n", tooltips);
+
+    style = GetWindowLongA(hTree, GWL_STYLE);
+    SetWindowLongA(hTree, GWL_STYLE, style | TVS_NOTOOLTIPS);
+    ok(!IsWindow(hwnd), "Unexpected tooltip window %p.\n", tooltips);
+    ok(IsWindow(tooltips), "Expected valid window %p.\n", tooltips);
+
+    DestroyWindow(hTree);
+    ok(IsWindow(tooltips), "Expected valid window %p.\n", tooltips);
+    DestroyWindow(tooltips);
+    DestroyWindow(hwnd);
+
+    for (i = 0; i < 2; i++)
+    {
+        DWORD style = i == 0 ? 0 : TVS_NOTOOLTIPS;
+
+        hwnd = CreateWindowA(WC_STATICA, "Test", WS_VISIBLE|WS_CHILD, 5, 5, 100, 100, hMainWnd, NULL, NULL, 0);
+        ok(hwnd != NULL, "Failed to create child window.\n");
+
+        hTree = create_treeview_control(style);
+
+        tooltips = (HWND)SendMessageA(hTree, TVM_SETTOOLTIPS, (WPARAM)hwnd, 0);
+        ok(style & TVS_NOTOOLTIPS ? tooltips == NULL : IsWindow(tooltips), "Unexpected ret value %p.\n", tooltips);
+        DestroyWindow(tooltips);
+
+        tooltips = (HWND)SendMessageA(hTree, TVM_GETTOOLTIPS, 0, 0);
+        ok(tooltips == hwnd, "Unexpected tooltip window %p.\n", tooltips);
+
+        /* TreeView is destroyed, check if set window is still around. */
+        DestroyWindow(hTree);
+        ok(!IsWindow(hwnd), "Unexpected window.\n");
+    }
 
     hTree = create_treeview_control(0);
     fill_tree(hTree);
@@ -1078,20 +1170,23 @@ static void test_get_set_tooltips(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* show even WS_POPUP treeview don't send NM_TOOLTIPSCREATED */
-    hPopupTreeView = CreateWindowA(WC_TREEVIEWA, NULL, WS_POPUP|WS_VISIBLE, 0, 0, 100, 100,
+    hwnd = CreateWindowA(WC_TREEVIEWA, NULL, WS_POPUP|WS_VISIBLE, 0, 0, 100, 100,
             hMainWnd, NULL, NULL, NULL);
-    DestroyWindow(hPopupTreeView);
+    DestroyWindow(hwnd);
 
     /* Testing setting a NULL ToolTip */
-    SendMessageA(hTree, TVM_SETTOOLTIPS, 0, 0);
-    hwndLastToolTip = (HWND)SendMessageA(hTree, TVM_GETTOOLTIPS, 0, 0);
-    ok(hwndLastToolTip == NULL, "NULL tool tip, reported as 0x%p, expected 0.\n", hwndLastToolTip);
+    tooltips = (HWND)SendMessageA(hTree, TVM_SETTOOLTIPS, 0, 0);
+    ok(IsWindow(tooltips), "Unexpected ret value %p.\n", tooltips);
+
+    hwnd = (HWND)SendMessageA(hTree, TVM_GETTOOLTIPS, 0, 0);
+    ok(hwnd == NULL, "Unexpected tooltip window %p.\n", hwnd);
 
     ok_sequence(sequences, TREEVIEW_SEQ_INDEX, test_get_set_tooltips_seq,
         "test get set tooltips", TRUE);
 
-    /* TODO: Add a test of an actual tooltip */
     DestroyWindow(hTree);
+    ok(IsWindow(tooltips), "Expected valid window.\n");
+    DestroyWindow(tooltips);
 }
 
 static void test_get_set_unicodeformat(void)
@@ -2756,6 +2851,7 @@ START_TEST(treeview)
     test_expandedimage();
     test_htreeitem_layout();
     test_WM_GETDLGCODE();
+    test_get_set_tooltips();
 
     unload_v6_module(ctx_cookie, hCtx);
 
