@@ -387,8 +387,12 @@ static const struct wined3d_parent_ops d3d_buffer_wined3d_parent_ops =
     d3d_buffer_wined3d_object_released,
 };
 
-static BOOL validate_buffer_desc(D3D11_BUFFER_DESC *desc)
+static BOOL validate_buffer_desc(D3D11_BUFFER_DESC *desc, D3D_FEATURE_LEVEL feature_level)
 {
+    if (!validate_d3d11_resource_access_flags(D3D11_RESOURCE_DIMENSION_BUFFER,
+            desc->Usage, desc->BindFlags, desc->CPUAccessFlags, feature_level))
+        return FALSE;
+
     if (desc->MiscFlags & D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS)
     {
         if (desc->MiscFlags & D3D11_RESOURCE_MISC_BUFFER_STRUCTURED)
@@ -442,7 +446,7 @@ static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *dev
     buffer->refcount = 1;
     buffer->desc = *desc;
 
-    if (!validate_buffer_desc(&buffer->desc))
+    if (!validate_buffer_desc(&buffer->desc, device->feature_level))
         return E_INVALIDARG;
 
     wined3d_desc.byte_width = buffer->desc.ByteWidth;

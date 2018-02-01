@@ -610,6 +610,94 @@ UINT d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(UINT resource_misc
     return d3d10_resource_misc_flags;
 }
 
+static BOOL d3d11_bind_flags_are_gpu_read_only(UINT bind_flags)
+{
+    static const BOOL read_only_bind_flags = D3D11_BIND_VERTEX_BUFFER
+            | D3D11_BIND_INDEX_BUFFER | D3D11_BIND_CONSTANT_BUFFER
+            | D3D11_BIND_SHADER_RESOURCE;
+
+    return !(bind_flags & ~read_only_bind_flags);
+}
+
+BOOL validate_d3d11_resource_access_flags(D3D11_RESOURCE_DIMENSION resource_dimension,
+        D3D11_USAGE usage, UINT bind_flags, UINT cpu_access_flags, D3D_FEATURE_LEVEL feature_level)
+{
+    const BOOL is_texture = resource_dimension != D3D11_RESOURCE_DIMENSION_BUFFER;
+
+    switch (usage)
+    {
+        case D3D11_USAGE_DEFAULT:
+            if ((bind_flags == D3D11_BIND_SHADER_RESOURCE && feature_level >= D3D_FEATURE_LEVEL_11_0)
+                    || (is_texture && bind_flags == D3D11_BIND_RENDER_TARGET)
+                    || bind_flags == D3D11_BIND_UNORDERED_ACCESS)
+                break;
+            if (cpu_access_flags)
+            {
+                WARN("Default resources are not CPU accessible.\n");
+                return FALSE;
+            }
+            break;
+
+        case D3D11_USAGE_IMMUTABLE:
+            if (!bind_flags)
+            {
+                WARN("Bind flags must be non-zero for immutable resources.\n");
+                return FALSE;
+            }
+            if (!d3d11_bind_flags_are_gpu_read_only(bind_flags))
+            {
+                WARN("Immutable resources cannot be writable by GPU.\n");
+                return FALSE;
+            }
+
+            if (cpu_access_flags)
+            {
+                WARN("Immutable resources are not CPU accessible.\n");
+                return FALSE;
+            }
+            break;
+
+        case D3D11_USAGE_DYNAMIC:
+            if (!bind_flags)
+            {
+                WARN("Bind flags must be non-zero for dynamic resources.\n");
+                return FALSE;
+            }
+            if (!d3d11_bind_flags_are_gpu_read_only(bind_flags))
+            {
+                WARN("Dynamic resources cannot be writable by GPU.\n");
+                return FALSE;
+            }
+
+            if (cpu_access_flags != D3D11_CPU_ACCESS_WRITE)
+            {
+                WARN("CPU access must be D3D11_CPU_ACCESS_WRITE for dynamic resources.\n");
+                return FALSE;
+            }
+            break;
+
+        case D3D11_USAGE_STAGING:
+            if (bind_flags)
+            {
+                WARN("Invalid bind flags %#x for staging resources.\n", bind_flags);
+                return FALSE;
+            }
+
+            if (!cpu_access_flags)
+            {
+                WARN("CPU access must be non-zero for staging resources.\n");
+                return FALSE;
+            }
+            break;
+
+        default:
+            WARN("Invalid usage %#x.\n", usage);
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 struct wined3d_resource *wined3d_resource_from_d3d11_resource(ID3D11Resource *resource)
 {
     D3D11_RESOURCE_DIMENSION dimension;

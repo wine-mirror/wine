@@ -456,8 +456,12 @@ static BOOL is_gdi_compatible_texture(const D3D11_TEXTURE2D_DESC *desc)
     return TRUE;
 }
 
-static BOOL validate_texture2d_desc(const D3D11_TEXTURE2D_DESC *desc)
+static BOOL validate_texture2d_desc(const D3D11_TEXTURE2D_DESC *desc, D3D_FEATURE_LEVEL feature_level)
 {
+    if (!validate_d3d11_resource_access_flags(D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            desc->Usage, desc->BindFlags, desc->CPUAccessFlags, feature_level))
+        return FALSE;
+
     if (desc->MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE
             && desc->ArraySize < 6)
     {
@@ -492,7 +496,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     DWORD flags = 0;
     HRESULT hr;
 
-    if (!validate_texture2d_desc(desc))
+    if (!validate_texture2d_desc(desc, device->feature_level))
     {
         WARN("Failed to validate texture desc.\n");
         return E_INVALIDARG;
