@@ -2857,7 +2857,7 @@ static void test_decode_msg_get_param(void)
     HCRYPTPROV hCryptProv;
     HCRYPTKEY key = 0;
     BOOL ret;
-    DWORD size = 0, value;
+    DWORD size = 0, value, req_size;
     LPBYTE buf;
     CMSG_CTRL_DECRYPT_PARA decryptPara = { sizeof(decryptPara), 0 };
 
@@ -2947,7 +2947,10 @@ static void test_decode_msg_get_param(void)
         signer.SerialNumber.cbData = sizeof(serialNum);
         signer.SerialNumber.pbData = serialNum;
         signer.HashAlgorithm.pszObjId = oid_rsa_md5;
+        req_size = size;
+        size += 10;
         CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, buf, &size);
+        ok(size == req_size, "size = %u, expected %u\n", size, req_size);
         compare_signer_info((CMSG_SIGNER_INFO *)buf, &signer);
         CryptMemFree(buf);
     }

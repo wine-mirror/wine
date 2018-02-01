@@ -2727,12 +2727,10 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
     size += CRYPT_SizeOfAttributes(&in->UnauthAttrs);
     if (!pvData)
     {
-        *pcbData = size;
         ret = TRUE;
     }
     else if (*pcbData < size)
     {
-        *pcbData = size;
         SetLastError(ERROR_MORE_DATA);
         ret = FALSE;
     }
@@ -2765,6 +2763,7 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
             CRYPT_CopyAttributes(&out->UnauthAttrs, &in->UnauthAttrs, &nextData);
         }
     }
+    *pcbData = size;
     TRACE("returning %d\n", ret);
     return ret;
 }
