@@ -287,6 +287,28 @@ DEVICE_OBJECT *bus_find_hid_device(const platform_vtbl *vtbl, void *platform_dev
     return ret;
 }
 
+DEVICE_OBJECT* bus_enumerate_hid_devices(const platform_vtbl *vtbl, enum_func function, void* context)
+{
+    struct pnp_device *dev;
+    DEVICE_OBJECT *ret = NULL;
+
+    TRACE("(%p)\n", vtbl);
+
+    EnterCriticalSection(&device_list_cs);
+    LIST_FOR_EACH_ENTRY(dev, &pnp_devset, struct pnp_device, entry)
+    {
+        struct device_extension *ext = (struct device_extension *)dev->device->DeviceExtension;
+        if (ext->vtbl != vtbl) continue;
+        if (function(dev->device, context) == 0)
+        {
+            ret = dev->device;
+            break;
+        }
+    }
+    LeaveCriticalSection(&device_list_cs);
+    return ret;
+}
+
 void bus_remove_hid_device(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
@@ -623,6 +645,32 @@ void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
         IoCompleteRequest(irp, IO_NO_INCREMENT);
     }
     LeaveCriticalSection(&ext->report_cs);
+}
+
+DWORD check_bus_option(UNICODE_STRING *registry_path, const UNICODE_STRING *option, DWORD default_value)
+{
+    OBJECT_ATTRIBUTES attr;
+    HANDLE key;
+    DWORD output = default_value;
+
+    InitializeObjectAttributes(&attr, registry_path, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+    if (NtOpenKey(&key, KEY_ALL_ACCESS, &attr) == STATUS_SUCCESS)
+    {
+        DWORD size;
+        char buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
+
+        KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION*)buffer;
+
+        if (NtQueryValueKey(key, option, KeyValuePartialInformation, info, sizeof(buffer), &size) == STATUS_SUCCESS)
+        {
+            if (info->Type == REG_DWORD)
+                output = *(DWORD*)info->Data;
+        }
+
+        NtClose(key);
+    }
+
+    return output;
 }
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )

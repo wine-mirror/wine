@@ -42,6 +42,14 @@
 # include <sys/ioctl.h>
 #endif
 
+#ifdef HAVE_LINUX_INPUT_H
+# include <linux/input.h>
+# undef SW_MAX
+# if defined(EVIOCGBIT) && defined(EV_ABS) && defined(BTN_PINKIE)
+#  define HAS_PROPER_INPUT_HEADER
+# endif
+#endif
+
 #define NONAMELESSUNION
 
 #include "ntstatus.h"
@@ -65,11 +73,15 @@ WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static struct udev *udev_context = NULL;
 static DRIVER_OBJECT *udev_driver_obj = NULL;
+static DWORD disable_hidraw = 0;
+static DWORD disable_input = 0;
 
 static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
+static const WCHAR lnxev_busidW[] = {'L','N','X','E','V',0};
 
 #include "initguid.h"
 DEFINE_GUID(GUID_DEVCLASS_HIDRAW, 0x3def44ad,0x242e,0x46e5,0x82,0x6d,0x70,0x72,0x13,0xf3,0xaa,0x81);
+DEFINE_GUID(GUID_DEVCLASS_LINUXEVENT, 0x1b932c0d,0xfea7,0x42cd,0x8e,0xaa,0x0e,0x48,0x79,0xb6,0x9e,0xaa);
 
 struct platform_private
 {
@@ -392,14 +404,66 @@ static const platform_vtbl hidraw_vtbl =
     hidraw_set_feature_report,
 };
 
+#ifdef HAS_PROPER_INPUT_HEADER
+
+static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS lnxev_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS lnxev_begin_report_processing(DEVICE_OBJECT *device)
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS lnxev_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+{
+    *written = 0;
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS lnxev_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
+{
+    *read = 0;
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS lnxev_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+{
+    *written = 0;
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static const platform_vtbl lnxev_vtbl = {
+    compare_platform_device,
+    lnxev_get_reportdescriptor,
+    lnxev_get_string,
+    lnxev_begin_report_processing,
+    lnxev_set_output_report,
+    lnxev_get_feature_report,
+    lnxev_set_feature_report,
+};
+#endif
+
+static int check_same_device(DEVICE_OBJECT *device, void* context)
+{
+    return !compare_platform_device(device, context);
+}
+
 static void try_add_device(struct udev_device *dev)
 {
     DWORD vid = 0, pid = 0, version = 0;
-    struct udev_device *usbdev;
+    struct udev_device *usbdev = NULL;
     DEVICE_OBJECT *device = NULL;
     const char *subsystem;
     const char *devnode;
     WCHAR *serial = NULL;
+    const char* gamepad = NULL;
     int fd;
 
     if (!(devnode = udev_device_get_devnode(dev)))
@@ -411,24 +475,69 @@ static void try_add_device(struct udev_device *dev)
         return;
     }
 
+    subsystem = udev_device_get_subsystem(dev);
     usbdev = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device");
     if (usbdev)
     {
+#ifdef HAS_PROPER_INPUT_HEADER
+        const platform_vtbl *other_vtbl = NULL;
+        DEVICE_OBJECT *dup = NULL;
+        if (strcmp(subsystem, "hidraw") == 0)
+            other_vtbl = &lnxev_vtbl;
+        else if (strcmp(subsystem, "input") == 0)
+            other_vtbl = &hidraw_vtbl;
+
+        if (other_vtbl)
+            dup = bus_enumerate_hid_devices(other_vtbl, check_same_device, dev);
+        if (dup)
+        {
+            TRACE("Duplicate cross bus device (%p) found, not adding the new one\n", dup);
+            close(fd);
+            return;
+        }
+#endif
         vid     = get_sysattr_dword(usbdev, "idVendor", 16);
         pid     = get_sysattr_dword(usbdev, "idProduct", 16);
         version = get_sysattr_dword(usbdev, "version", 10);
         serial  = get_sysattr_string(usbdev, "serial");
     }
+#ifdef HAS_PROPER_INPUT_HEADER
+    else
+    {
+        struct input_id device_id = {0};
+        char device_uid[255];
+
+        if (ioctl(fd, EVIOCGID, &device_id) < 0)
+            WARN("ioctl(EVIOCGID) failed: %d %s\n", errno, strerror(errno));
+        device_uid[0] = 0;
+        if (ioctl(fd, EVIOCGUNIQ(254), device_uid) >= 0 && device_uid[0])
+            serial = strdupAtoW(device_uid);
+
+        gamepad = udev_device_get_property_value(dev, "ID_INPUT_JOYSTICK");
+        vid = device_id.vendor;
+        pid = device_id.product;
+        version = device_id.version;
+    }
+#else
+    else
+        WARN("Could not get device to query VID, PID, Version and Serial\n");
+#endif
 
     TRACE("Found udev device %s (vid %04x, pid %04x, version %u, serial %s)\n",
           debugstr_a(devnode), vid, pid, version, debugstr_w(serial));
 
-    subsystem = udev_device_get_subsystem(dev);
     if (strcmp(subsystem, "hidraw") == 0)
     {
         device = bus_create_hid_device(udev_driver_obj, hidraw_busidW, vid, pid, version, 0, serial, FALSE,
                                        &GUID_DEVCLASS_HIDRAW, &hidraw_vtbl, sizeof(struct platform_private));
     }
+#ifdef HAS_PROPER_INPUT_HEADER
+    else if (strcmp(subsystem, "input") == 0)
+    {
+        device = bus_create_hid_device(udev_driver_obj, lnxev_busidW, vid, pid, version, 0, serial, (gamepad != NULL),
+                                       &GUID_DEVCLASS_LINUXEVENT, &lnxev_vtbl, sizeof(struct platform_private));
+    }
+#endif
 
     if (device)
     {
@@ -448,8 +557,14 @@ static void try_add_device(struct udev_device *dev)
 
 static void try_remove_device(struct udev_device *dev)
 {
-    DEVICE_OBJECT *device = bus_find_hid_device(&hidraw_vtbl, dev);
-    struct platform_private *private;
+    DEVICE_OBJECT *device = NULL;
+    struct platform_private* private;
+
+    device = bus_find_hid_device(&hidraw_vtbl, dev);
+#ifdef HAS_PROPER_INPUT_HEADER
+    if (device == NULL)
+        device = bus_find_hid_device(&lnxev_vtbl, dev);
+#endif
     if (!device) return;
 
     IoInvalidateDeviceRelations(device, RemovalRelations);
@@ -483,8 +598,16 @@ static void build_initial_deviceset(void)
         return;
     }
 
-    if (udev_enumerate_add_match_subsystem(enumerate, "hidraw") < 0)
-        WARN("Failed to add subsystem 'hidraw' to enumeration\n");
+    if (!disable_hidraw)
+        if (udev_enumerate_add_match_subsystem(enumerate, "hidraw") < 0)
+            WARN("Failed to add subsystem 'hidraw' to enumeration\n");
+#ifdef HAS_PROPER_INPUT_HEADER
+    if (!disable_input)
+    {
+        if (udev_enumerate_add_match_subsystem(enumerate, "input") < 0)
+            WARN("Failed to add subsystem 'input' to enumeration\n");
+    }
+#endif
 
     if (udev_enumerate_scan_devices(enumerate) < 0)
         WARN("Enumeration scan failed\n");
@@ -509,6 +632,7 @@ static void build_initial_deviceset(void)
 static struct udev_monitor *create_monitor(struct pollfd *pfd)
 {
     struct udev_monitor *monitor;
+    int systems = 0;
 
     monitor = udev_monitor_new_from_netlink(udev_context, "udev");
     if (!monitor)
@@ -517,8 +641,27 @@ static struct udev_monitor *create_monitor(struct pollfd *pfd)
         return NULL;
     }
 
-    if (udev_monitor_filter_add_match_subsystem_devtype(monitor, "hidraw", NULL) < 0)
-        WARN("Failed to add subsystem 'hidraw' to monitor\n");
+    if (!disable_hidraw)
+    {
+        if (udev_monitor_filter_add_match_subsystem_devtype(monitor, "hidraw", NULL) < 0)
+            WARN("Failed to add 'hidraw' subsystem to monitor\n");
+        else
+            systems++;
+    }
+#ifdef HAS_PROPER_INPUT_HEADER
+    if (!disable_input)
+    {
+        if (udev_monitor_filter_add_match_subsystem_devtype(monitor, "input", NULL) < 0)
+            WARN("Failed to add 'input' subsystem to monitor\n");
+        else
+            systems++;
+    }
+#endif
+    if (systems == 0)
+    {
+        WARN("No subsystems added to monitor\n");
+        goto error;
+    }
 
     if (udev_monitor_enable_receiving(monitor) < 0)
         goto error;
@@ -589,6 +732,10 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
 {
     HANDLE events[2];
     DWORD result;
+    static const WCHAR hidraw_disabledW[] = {'D','i','s','a','b','l','e','H','i','d','r','a','w',0};
+    static const UNICODE_STRING hidraw_disabled = {sizeof(hidraw_disabledW) - sizeof(WCHAR), sizeof(hidraw_disabledW), (WCHAR*)hidraw_disabledW};
+    static const WCHAR input_disabledW[] = {'D','i','s','a','b','l','e','I','n','p','u','t',0};
+    static const UNICODE_STRING input_disabled = {sizeof(input_disabledW) - sizeof(WCHAR), sizeof(input_disabledW), (WCHAR*)input_disabledW};
 
     TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
 
@@ -601,6 +748,16 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
     udev_driver_obj = driver;
     driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
     driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
+
+    disable_hidraw = check_bus_option(registry_path, &hidraw_disabled, 0);
+    if (disable_hidraw)
+        TRACE("UDEV hidraw devices disabled in registry\n");
+
+#ifdef HAS_PROPER_INPUT_HEADER
+    disable_input = check_bus_option(registry_path, &input_disabled, 0);
+    if (disable_input)
+        TRACE("UDEV input devices disabled in registry\n");
+#endif
 
     if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
         goto error;
