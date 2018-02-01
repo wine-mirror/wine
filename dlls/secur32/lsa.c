@@ -643,6 +643,27 @@ static SECURITY_STATUS WINAPI lsa_EncryptMessage(CtxtHandle *context, ULONG qual
     return lsa_package->user_api->SealMessage(lsa_context, quality_of_protection, message, message_seq_no);
 }
 
+static SECURITY_STATUS WINAPI lsa_DecryptMessage(CtxtHandle *context, SecBufferDesc *message,
+    ULONG message_seq_no, ULONG *quality_of_protection)
+{
+    struct lsa_package *lsa_package;
+    LSA_SEC_HANDLE lsa_context;
+
+    TRACE("%p %p %u %p)\n", context, message, message_seq_no, quality_of_protection);
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    lsa_package = (struct lsa_package *)context->dwUpper;
+    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
+
+    if (!lsa_package) return SEC_E_INVALID_HANDLE;
+
+    if (!lsa_package->user_api || !lsa_package->user_api->UnsealMessage)
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    return lsa_package->user_api->UnsealMessage(lsa_context, message, message_seq_no, quality_of_protection);
+}
+
 static const SecurityFunctionTableW lsa_sspi_tableW =
 {
     1,
@@ -671,7 +692,7 @@ static const SecurityFunctionTableW lsa_sspi_tableW =
     NULL, /* Reserved8 */
     NULL, /* QuerySecurityContextToken */
     lsa_EncryptMessage,
-    NULL, /* DecryptMessage */
+    lsa_DecryptMessage,
     NULL, /* SetContextAttributesW */
 };
 
@@ -703,7 +724,7 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     NULL, /* Reserved8 */
     NULL, /* QuerySecurityContextToken */
     lsa_EncryptMessage,
-    NULL, /* DecryptMessage */
+    lsa_DecryptMessage,
     NULL, /* SetContextAttributesA */
 };
 
