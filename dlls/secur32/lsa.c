@@ -396,6 +396,76 @@ static SECURITY_STATUS WINAPI lsa_FreeCredentialsHandle(CredHandle *credential)
     return lsa_package->lsa_api->FreeCredentialsHandle(lsa_credential);
 }
 
+static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextW(
+    CredHandle *credential, CtxtHandle *context, SEC_WCHAR *target_name, ULONG context_req,
+    ULONG reserved1, ULONG target_data_rep, SecBufferDesc *input, ULONG reserved2,
+    CtxtHandle *new_context, SecBufferDesc *output, ULONG *context_attr, TimeStamp *ts_expiry)
+{
+    SECURITY_STATUS status;
+    struct lsa_package *lsa_package = NULL;
+    LSA_SEC_HANDLE lsa_credential = 0, lsa_context = 0, new_lsa_context;
+    UNICODE_STRING target_name_us;
+    BOOLEAN mapped_context;
+
+    TRACE("%p %p %s %#x %d %d %p %d %p %p %p %p\n", credential, context,
+        debugstr_w(target_name), context_req, reserved1, target_data_rep, input,
+        reserved2, new_context, output, context_attr, ts_expiry);
+
+    if (context)
+    {
+        lsa_package = (struct lsa_package *)context->dwUpper;
+        lsa_context = (LSA_SEC_HANDLE)context->dwLower;
+    }
+    else if (credential)
+    {
+        lsa_package = (struct lsa_package *)credential->dwUpper;
+        lsa_credential = (LSA_SEC_HANDLE)credential->dwLower;
+    }
+
+    if (!lsa_package || !new_context) return SEC_E_INVALID_HANDLE;
+
+    if (!lsa_package->lsa_api || !lsa_package->lsa_api->InitLsaModeContext)
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    if (target_name)
+        RtlInitUnicodeString(&target_name_us, target_name);
+
+    status = lsa_package->lsa_api->InitLsaModeContext(lsa_credential, lsa_context,
+        target_name ? &target_name_us : NULL, context_req, target_data_rep, input,
+        &new_lsa_context, output, context_attr, ts_expiry, &mapped_context, NULL /* FIXME */);
+    if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
+    {
+        new_context->dwLower = (ULONG_PTR)new_lsa_context;
+        new_context->dwUpper = (ULONG_PTR)lsa_package;
+    }
+    return status;
+}
+
+static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextA(
+    CredHandle *credential, CtxtHandle *context, SEC_CHAR *target_name, ULONG context_req,
+    ULONG reserved1, ULONG target_data_rep, SecBufferDesc *input, ULONG reserved2,
+    CtxtHandle *new_context, SecBufferDesc *output, ULONG *context_attr, TimeStamp *ts_expiry)
+{
+    SECURITY_STATUS status;
+    SEC_WCHAR *targetW = NULL;
+
+    TRACE("%p %p %s %#x %d %d %p %d %p %p %p %p\n", credential, context,
+        debugstr_a(target_name), context_req, reserved1, target_data_rep, input,
+        reserved2, new_context, output, context_attr, ts_expiry);
+
+    if (target_name)
+    {
+        int len = MultiByteToWideChar( CP_ACP, 0, target_name, -1, NULL, 0 );
+        if (!(targetW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(SEC_WCHAR) ))) return SEC_E_INSUFFICIENT_MEMORY;
+        MultiByteToWideChar( CP_ACP, 0, target_name, -1, targetW, len );
+    }
+
+    status = lsa_InitializeSecurityContextW( credential, context, targetW, context_req, reserved1, target_data_rep,
+                                             input, reserved2, new_context, output, context_attr, ts_expiry );
+    HeapFree( GetProcessHeap(), 0, targetW );
+    return status;
+}
+
 static const SecurityFunctionTableW lsa_sspi_tableW =
 {
     1,
@@ -404,7 +474,7 @@ static const SecurityFunctionTableW lsa_sspi_tableW =
     lsa_AcquireCredentialsHandleW,
     lsa_FreeCredentialsHandle,
     NULL, /* Reserved2 */
-    NULL, /* InitializeSecurityContextW */
+    lsa_InitializeSecurityContextW,
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
     NULL, /* DeleteSecurityContext */
@@ -436,7 +506,7 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     lsa_AcquireCredentialsHandleA,
     lsa_FreeCredentialsHandle,
     NULL, /* Reserved2 */
-    NULL, /* InitializeSecurityContextA */
+    lsa_InitializeSecurityContextA,
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
     NULL, /* DeleteSecurityContext */
