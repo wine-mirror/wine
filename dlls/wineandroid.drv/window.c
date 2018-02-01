@@ -293,6 +293,9 @@ jboolean motion_event( JNIEnv *env, jobject obj, jint win, jint action, jint x, 
            mask == AMOTION_EVENT_ACTION_BUTTON_RELEASE ))
         return JNI_FALSE;
 
+    /* make sure a subsequent AMOTION_EVENT_ACTION_UP is not treated as a touch event */
+    if (mask == AMOTION_EVENT_ACTION_BUTTON_RELEASE) state |= 0x80000000;
+
     prev_state = InterlockedExchange( &button_state, state );
 
     data.type = MOTION_EVENT;
