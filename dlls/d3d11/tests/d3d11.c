@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #define COBJMACROS
 #include "initguid.h"
-#include "d3d11_1.h"
+#include "d3d11_4.h"
 #include "wine/test.h"
 
 #ifndef ARRAY_SIZE
@@ -1092,6 +1092,21 @@ static BOOL is_nvidia_device(ID3D11Device *device)
     return is_vendor_device(device, 0x10de);
 }
 
+static BOOL is_d3d11_2_runtime(ID3D11Device *device)
+{
+    ID3D11Device2 *device2;
+    HRESULT hr;
+
+    /* FIXME: Wine doesn't implement required interfaces yet, but we want to test new behavior. */
+    if (!strcmp(winetest_platform, "wine"))
+        return TRUE;
+
+    hr = ID3D11Device_QueryInterface(device, &IID_ID3D11Device2, (void **)&device2);
+    if (SUCCEEDED(hr))
+        ID3D11Device2_Release(device2);
+    return hr == S_OK;
+}
+
 static BOOL check_compute_shaders_via_sm4_support(ID3D11Device *device)
 {
     D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS options;
@@ -1100,6 +1115,13 @@ static BOOL check_compute_shaders_via_sm4_support(ID3D11Device *device)
             D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &options, sizeof(options))))
         return FALSE;
     return options.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
+}
+
+static BOOL is_buffer(ID3D11Resource *resource)
+{
+    D3D11_RESOURCE_DIMENSION dimension;
+    ID3D11Resource_GetType(resource, &dimension);
+    return dimension == D3D11_RESOURCE_DIMENSION_BUFFER;
 }
 
 static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window,
@@ -10924,6 +10946,338 @@ static void test_resource_map(void)
 
     ID3D11DeviceContext_Release(context);
 
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+#define check_resource_cpu_access(a, b, c, d, e) check_resource_cpu_access_(__LINE__, a, b, c, d, e)
+static void check_resource_cpu_access_(unsigned int line, ID3D11DeviceContext *context,
+        ID3D11Resource *resource, D3D11_USAGE usage, UINT bind_flags, UINT cpu_access)
+{
+    BOOL cpu_write = cpu_access & D3D11_CPU_ACCESS_WRITE;
+    BOOL cpu_read = cpu_access & D3D11_CPU_ACCESS_READ;
+    BOOL dynamic = usage == D3D11_USAGE_DYNAMIC;
+    D3D11_MAPPED_SUBRESOURCE map_desc;
+    HRESULT hr, expected_hr;
+    ID3D11Device *device;
+
+    expected_hr = cpu_read ? S_OK : E_INVALIDARG;
+    hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_READ, 0, &map_desc);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11DeviceContext_Unmap(context, resource, 0);
+
+    /* WRITE_DISCARD and WRITE_NO_OVERWRITE are the only allowed options for dynamic resources. */
+    expected_hr = !dynamic && cpu_write ? S_OK : E_INVALIDARG;
+    hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_WRITE, 0, &map_desc);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11DeviceContext_Unmap(context, resource, 0);
+
+    expected_hr = cpu_read && cpu_write ? S_OK : E_INVALIDARG;
+    hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_READ_WRITE, 0, &map_desc);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ_WRITE.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11DeviceContext_Unmap(context, resource, 0);
+
+    expected_hr = dynamic ? S_OK : E_INVALIDARG;
+    hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE_DISCARD.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11DeviceContext_Unmap(context, resource, 0);
+
+    if (!dynamic)
+        return;
+
+    ID3D11DeviceContext_GetDevice(context, &device);
+
+    /* WRITE_NO_OVERWRITE is supported only for buffers. */
+    expected_hr = is_buffer(resource) ? S_OK : E_INVALIDARG;
+    hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
+    /* D3D11.1 is required for constant and shader buffers. */
+    todo_wine_if(expected_hr != S_OK)
+    ok_(__FILE__, line)(hr == expected_hr
+            || broken(bind_flags & (D3D11_BIND_CONSTANT_BUFFER | D3D11_BIND_SHADER_RESOURCE)),
+            "Got hr %#x for WRITE_NO_OVERWRITE.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11DeviceContext_Unmap(context, resource, 0);
+
+    ID3D11Device_Release(device);
+}
+
+static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
+{
+    D3D11_TEXTURE2D_DESC texture_desc;
+    struct device_desc device_desc;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    D3D11_SUBRESOURCE_DATA data;
+    ID3D11Resource *resource;
+    BOOL required_cpu_access;
+    BOOL cpu_write, cpu_read;
+    HRESULT hr, expected_hr;
+    UINT allowed_cpu_access;
+    BOOL broken_validation;
+    ID3D11Device *device;
+    unsigned int i;
+    ULONG refcount;
+
+    static const struct
+    {
+        D3D11_USAGE usage;
+        UINT bind_flags;
+        BOOL is_valid;
+        UINT allowed_cpu_access;
+    }
+    tests[] =
+    {
+        /* Default resources cannot be written by CPU. */
+        {D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER,    TRUE, 0},
+        {D3D11_USAGE_DEFAULT, D3D11_BIND_INDEX_BUFFER,     TRUE, 0},
+        {D3D11_USAGE_DEFAULT, D3D11_BIND_CONSTANT_BUFFER,  TRUE, 0},
+        {D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE,  TRUE, 0},
+        {D3D11_USAGE_DEFAULT, D3D11_BIND_STREAM_OUTPUT,    TRUE, 0},
+        {D3D11_USAGE_DEFAULT, D3D11_BIND_RENDER_TARGET,    TRUE, 0},
+        {D3D11_USAGE_DEFAULT, D3D11_BIND_DEPTH_STENCIL,    TRUE, 0},
+        {D3D11_USAGE_DEFAULT, D3D11_BIND_UNORDERED_ACCESS, TRUE, 0},
+
+        /* Immutable resources cannot be written by CPU and GPU. */
+        {D3D11_USAGE_IMMUTABLE, 0,                           FALSE, 0},
+        {D3D11_USAGE_IMMUTABLE, D3D11_BIND_VERTEX_BUFFER,    TRUE,  0},
+        {D3D11_USAGE_IMMUTABLE, D3D11_BIND_INDEX_BUFFER,     TRUE,  0},
+        {D3D11_USAGE_IMMUTABLE, D3D11_BIND_CONSTANT_BUFFER,  TRUE,  0},
+        {D3D11_USAGE_IMMUTABLE, D3D11_BIND_SHADER_RESOURCE,  TRUE,  0},
+        {D3D11_USAGE_IMMUTABLE, D3D11_BIND_STREAM_OUTPUT,    FALSE, 0},
+        {D3D11_USAGE_IMMUTABLE, D3D11_BIND_RENDER_TARGET,    FALSE, 0},
+        {D3D11_USAGE_IMMUTABLE, D3D11_BIND_DEPTH_STENCIL,    FALSE, 0},
+        {D3D11_USAGE_IMMUTABLE, D3D11_BIND_UNORDERED_ACCESS, FALSE, 0},
+
+        /* Dynamic resources cannot be written by GPU. */
+        {D3D11_USAGE_DYNAMIC, 0,                           FALSE, D3D11_CPU_ACCESS_WRITE},
+        {D3D11_USAGE_DYNAMIC, D3D11_BIND_VERTEX_BUFFER,    TRUE,  D3D11_CPU_ACCESS_WRITE},
+        {D3D11_USAGE_DYNAMIC, D3D11_BIND_INDEX_BUFFER,     TRUE,  D3D11_CPU_ACCESS_WRITE},
+        {D3D11_USAGE_DYNAMIC, D3D11_BIND_CONSTANT_BUFFER,  TRUE,  D3D11_CPU_ACCESS_WRITE},
+        {D3D11_USAGE_DYNAMIC, D3D11_BIND_SHADER_RESOURCE,  TRUE,  D3D11_CPU_ACCESS_WRITE},
+        {D3D11_USAGE_DYNAMIC, D3D11_BIND_STREAM_OUTPUT,    FALSE, D3D11_CPU_ACCESS_WRITE},
+        {D3D11_USAGE_DYNAMIC, D3D11_BIND_RENDER_TARGET,    FALSE, D3D11_CPU_ACCESS_WRITE},
+        {D3D11_USAGE_DYNAMIC, D3D11_BIND_DEPTH_STENCIL,    FALSE, D3D11_CPU_ACCESS_WRITE},
+        {D3D11_USAGE_DYNAMIC, D3D11_BIND_UNORDERED_ACCESS, FALSE, D3D11_CPU_ACCESS_WRITE},
+
+        /* Staging resources support only data transfer. */
+        {D3D11_USAGE_STAGING, 0,                           TRUE,  D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ},
+        {D3D11_USAGE_STAGING, D3D11_BIND_VERTEX_BUFFER,    FALSE, 0},
+        {D3D11_USAGE_STAGING, D3D11_BIND_INDEX_BUFFER,     FALSE, 0},
+        {D3D11_USAGE_STAGING, D3D11_BIND_CONSTANT_BUFFER,  FALSE, 0},
+        {D3D11_USAGE_STAGING, D3D11_BIND_SHADER_RESOURCE,  FALSE, 0},
+        {D3D11_USAGE_STAGING, D3D11_BIND_STREAM_OUTPUT,    FALSE, 0},
+        {D3D11_USAGE_STAGING, D3D11_BIND_RENDER_TARGET,    FALSE, 0},
+        {D3D11_USAGE_STAGING, D3D11_BIND_DEPTH_STENCIL,    FALSE, 0},
+        {D3D11_USAGE_STAGING, D3D11_BIND_UNORDERED_ACCESS, FALSE, 0},
+    };
+
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = 0;
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create device for feature level %#x.\n", feature_level);
+        return;
+    }
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    data.SysMemPitch = 0;
+    data.SysMemSlicePitch = 0;
+    data.pSysMem = HeapAlloc(GetProcessHeap(), 0, 10240);
+    ok(!!data.pSysMem, "Failed to allocate memory.\n");
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        switch (tests[i].bind_flags)
+        {
+            case D3D11_BIND_DEPTH_STENCIL:
+                continue;
+
+            case D3D11_BIND_SHADER_RESOURCE:
+            case D3D11_BIND_STREAM_OUTPUT:
+            case D3D11_BIND_RENDER_TARGET:
+                if (feature_level < D3D_FEATURE_LEVEL_10_0)
+                    continue;
+                break;
+
+            case D3D11_BIND_UNORDERED_ACCESS:
+                if (feature_level < D3D_FEATURE_LEVEL_11_0)
+                    continue;
+                break;
+
+            default:
+                break;
+        }
+
+        allowed_cpu_access = tests[i].allowed_cpu_access;
+        if (feature_level >= D3D_FEATURE_LEVEL_11_0 && is_d3d11_2_runtime(device)
+                && tests[i].usage == D3D11_USAGE_DEFAULT
+                && (tests[i].bind_flags == D3D11_BIND_SHADER_RESOURCE
+                || tests[i].bind_flags == D3D11_BIND_UNORDERED_ACCESS))
+            allowed_cpu_access |= D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
+
+        required_cpu_access = tests[i].usage == D3D11_USAGE_DYNAMIC || tests[i].usage == D3D11_USAGE_STAGING;
+        cpu_write = allowed_cpu_access & D3D11_CPU_ACCESS_WRITE;
+        cpu_read = allowed_cpu_access & D3D11_CPU_ACCESS_READ;
+
+        buffer_desc.ByteWidth = 1024;
+        buffer_desc.Usage = tests[i].usage;
+        buffer_desc.BindFlags = tests[i].bind_flags;
+        buffer_desc.MiscFlags = 0;
+        buffer_desc.StructureByteStride = 0;
+
+        buffer_desc.CPUAccessFlags = 0;
+        expected_hr = tests[i].is_valid && !required_cpu_access ? S_OK : E_INVALIDARG;
+        hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, (ID3D11Buffer **)&resource);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_resource_cpu_access(context, resource,
+                    buffer_desc.Usage, buffer_desc.BindFlags, buffer_desc.CPUAccessFlags);
+            ID3D11Resource_Release(resource);
+        }
+
+        buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        expected_hr = tests[i].is_valid && cpu_write ? S_OK : E_INVALIDARG;
+        hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, (ID3D11Buffer **)&resource);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_resource_cpu_access(context, resource,
+                    buffer_desc.Usage, buffer_desc.BindFlags, buffer_desc.CPUAccessFlags);
+            ID3D11Resource_Release(resource);
+        }
+
+        buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        expected_hr = tests[i].is_valid && cpu_read ? S_OK : E_INVALIDARG;
+        hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, (ID3D11Buffer **)&resource);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_resource_cpu_access(context, resource,
+                    buffer_desc.Usage, buffer_desc.BindFlags, buffer_desc.CPUAccessFlags);
+            ID3D11Resource_Release(resource);
+        }
+
+        buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
+        expected_hr = tests[i].is_valid && cpu_write && cpu_read ? S_OK : E_INVALIDARG;
+        hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, (ID3D11Buffer **)&resource);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_resource_cpu_access(context, resource,
+                    buffer_desc.Usage, buffer_desc.BindFlags, buffer_desc.CPUAccessFlags);
+            ID3D11Resource_Release(resource);
+        }
+    }
+
+    data.SysMemPitch = 16;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        switch (tests[i].bind_flags)
+        {
+            case D3D11_BIND_VERTEX_BUFFER:
+            case D3D11_BIND_INDEX_BUFFER:
+            case D3D11_BIND_CONSTANT_BUFFER:
+            case D3D11_BIND_STREAM_OUTPUT:
+                continue;
+
+            case D3D11_BIND_UNORDERED_ACCESS:
+                if (feature_level < D3D_FEATURE_LEVEL_11_0)
+                    continue;
+                break;
+
+            default:
+                break;
+        }
+
+        broken_validation = tests[i].usage == D3D11_USAGE_DEFAULT
+                && (tests[i].bind_flags == D3D11_BIND_SHADER_RESOURCE
+                || tests[i].bind_flags == D3D11_BIND_RENDER_TARGET
+                || tests[i].bind_flags == D3D11_BIND_UNORDERED_ACCESS);
+
+        required_cpu_access = tests[i].usage == D3D11_USAGE_DYNAMIC || tests[i].usage == D3D11_USAGE_STAGING;
+        cpu_write = tests[i].allowed_cpu_access & D3D11_CPU_ACCESS_WRITE;
+        cpu_read = tests[i].allowed_cpu_access & D3D11_CPU_ACCESS_READ;
+
+        texture_desc.Width = 4;
+        texture_desc.Height = 4;
+        texture_desc.MipLevels = 1;
+        texture_desc.ArraySize = 1;
+        texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        texture_desc.SampleDesc.Count = 1;
+        texture_desc.SampleDesc.Quality = 0;
+        texture_desc.Usage = tests[i].usage;
+        texture_desc.BindFlags = tests[i].bind_flags;
+        texture_desc.MiscFlags = 0;
+        if (tests[i].bind_flags == D3D11_BIND_DEPTH_STENCIL)
+            texture_desc.Format = DXGI_FORMAT_D16_UNORM;
+
+        texture_desc.CPUAccessFlags = 0;
+        expected_hr = tests[i].is_valid && !required_cpu_access ? S_OK : E_INVALIDARG;
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &data, (ID3D11Texture2D **)&resource);
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            check_resource_cpu_access(context, resource,
+                    texture_desc.Usage, texture_desc.BindFlags, texture_desc.CPUAccessFlags);
+            ID3D11Resource_Release(resource);
+        }
+
+        texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        expected_hr = tests[i].is_valid && cpu_write ? S_OK : E_INVALIDARG;
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &data, (ID3D11Texture2D **)&resource);
+        ok(hr == expected_hr || (hr == S_OK && broken_validation),
+                "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            if (broken_validation)
+                texture_desc.CPUAccessFlags = 0;
+            check_resource_cpu_access(context, resource,
+                    texture_desc.Usage, texture_desc.BindFlags, texture_desc.CPUAccessFlags);
+            ID3D11Resource_Release(resource);
+        }
+
+        texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        expected_hr = tests[i].is_valid && cpu_read ? S_OK : E_INVALIDARG;
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &data, (ID3D11Texture2D **)&resource);
+        ok(hr == expected_hr || (hr == S_OK && broken_validation),
+                "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            if (broken_validation)
+                texture_desc.CPUAccessFlags = 0;
+            check_resource_cpu_access(context, resource,
+                    texture_desc.Usage, texture_desc.BindFlags, texture_desc.CPUAccessFlags);
+            ID3D11Resource_Release(resource);
+        }
+
+        texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
+        expected_hr = tests[i].is_valid && cpu_write && cpu_read ? S_OK : E_INVALIDARG;
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &data, (ID3D11Texture2D **)&resource);
+        ok(hr == expected_hr || (hr == S_OK && broken_validation),
+                "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        if (SUCCEEDED(hr))
+        {
+            if (broken_validation)
+                texture_desc.CPUAccessFlags = 0;
+            check_resource_cpu_access(context, resource,
+                    texture_desc.Usage, texture_desc.BindFlags, texture_desc.CPUAccessFlags);
+            ID3D11Resource_Release(resource);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, (void *)data.pSysMem);
+
+    ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
@@ -24425,6 +24779,7 @@ START_TEST(d3d11)
     test_update_subresource();
     test_copy_subresource_region();
     test_resource_map();
+    run_for_each_feature_level(test_resource_access);
     test_check_multisample_quality_levels();
     run_for_each_feature_level(test_swapchain_formats);
     test_swapchain_views();
