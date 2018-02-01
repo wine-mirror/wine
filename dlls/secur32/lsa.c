@@ -466,6 +466,26 @@ static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextA(
     return status;
 }
 
+static SECURITY_STATUS WINAPI lsa_DeleteSecurityContext(CtxtHandle *context)
+{
+    struct lsa_package *lsa_package;
+    LSA_SEC_HANDLE lsa_context;
+
+    TRACE("%p\n", context);
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    lsa_package = (struct lsa_package *)context->dwUpper;
+    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
+
+    if (!lsa_package) return SEC_E_INVALID_HANDLE;
+
+    if (!lsa_package->lsa_api || !lsa_package->lsa_api->DeleteContext)
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    return lsa_package->lsa_api->DeleteContext(lsa_context);
+}
+
 static const SecurityFunctionTableW lsa_sspi_tableW =
 {
     1,
@@ -477,7 +497,7 @@ static const SecurityFunctionTableW lsa_sspi_tableW =
     lsa_InitializeSecurityContextW,
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
-    NULL, /* DeleteSecurityContext */
+    lsa_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
     NULL, /* QueryContextAttributesW */
     NULL, /* ImpersonateSecurityContext */
@@ -509,7 +529,7 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     lsa_InitializeSecurityContextA,
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
-    NULL, /* DeleteSecurityContext */
+    lsa_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
     NULL, /* QueryContextAttributesA */
     NULL, /* ImpersonateSecurityContext */
