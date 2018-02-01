@@ -601,6 +601,27 @@ static SECURITY_STATUS WINAPI lsa_MakeSignature(CtxtHandle *context, ULONG quali
     return lsa_package->user_api->MakeSignature(lsa_context, quality_of_protection, message, message_seq_no);
 }
 
+static SECURITY_STATUS WINAPI lsa_VerifySignature(CtxtHandle *context, SecBufferDesc *message,
+    ULONG message_seq_no, ULONG *quality_of_protection)
+{
+    struct lsa_package *lsa_package;
+    LSA_SEC_HANDLE lsa_context;
+
+    TRACE("%p %p %u %p)\n", context, message, message_seq_no, quality_of_protection);
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    lsa_package = (struct lsa_package *)context->dwUpper;
+    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
+
+    if (!lsa_package) return SEC_E_INVALID_HANDLE;
+
+    if (!lsa_package->user_api || !lsa_package->user_api->VerifySignature)
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    return lsa_package->user_api->VerifySignature(lsa_context, message, message_seq_no, quality_of_protection);
+}
+
 static const SecurityFunctionTableW lsa_sspi_tableW =
 {
     1,
@@ -618,7 +639,7 @@ static const SecurityFunctionTableW lsa_sspi_tableW =
     NULL, /* ImpersonateSecurityContext */
     NULL, /* RevertSecurityContext */
     lsa_MakeSignature,
-    NULL, /* VerifySignature */
+    lsa_VerifySignature,
     NULL, /* FreeContextBuffer */
     NULL, /* QuerySecurityPackageInfoW */
     NULL, /* Reserved3 */
@@ -650,7 +671,7 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     NULL, /* ImpersonateSecurityContext */
     NULL, /* RevertSecurityContext */
     lsa_MakeSignature,
-    NULL, /* VerifySignature */
+    lsa_VerifySignature,
     NULL, /* FreeContextBuffer */
     NULL, /* QuerySecurityPackageInfoA */
     NULL, /* Reserved3 */
