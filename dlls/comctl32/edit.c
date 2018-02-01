@@ -100,7 +100,6 @@ typedef struct tagLINEDEF {
 
 typedef struct
 {
-	BOOL is_unicode;		/* how the control was created */
 	LPWSTR text;			/* the actual contents of the control */
         UINT text_length;               /* cached length of text buffer (in WCHARs) - use get_text_length() to retrieve */
 	UINT buffer_size;		/* the size of the buffer in characters */
@@ -126,7 +125,7 @@ typedef struct
 					   and just line width for single line controls	*/
 	INT region_posx;		/* Position of cursor relative to region: */
 	INT region_posy;		/* -1: to left, 0: within, 1: to right */
-	void *word_break_proc;		/* 32-bit word break proc: ANSI or Unicode */
+	EDITWORDBREAKPROCW word_break_proc;
 	INT line_count;			/* number of lines */
 	INT y_offset;			/* scroll offset in number of lines */
 	BOOL bCaptureState; 		/* flag indicating whether mouse was captured */
@@ -145,8 +144,6 @@ typedef struct
 	LPINT tabs;
 	LINEDEF *first_line_def;	/* linked list of (soft) linebreaks */
 	HLOCAL hloc32W;			/* our unicode local memory block */
-	HLOCAL hloc32A;			/* alias for ANSI control receiving EM_GETHANDLE
-					   or EM_SETHANDLE */
         HLOCAL hlocapp;                 /* The text buffer handle belongs to the app */
 	/*
 	 * IME Data
@@ -296,32 +293,14 @@ static INT EDIT_WordBreakProc(EDITSTATE *es, LPWSTR s, INT index, INT count, INT
  */
 static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count, INT action)
 {
-	INT ret;
+    INT ret;
 
-        if (es->word_break_proc)
-        {
-	    if(es->is_unicode)
-	    {
-		EDITWORDBREAKPROCW wbpW = (EDITWORDBREAKPROCW)es->word_break_proc;
-		ret = wbpW(es->text + start, index, count, action);
-	    }
-	    else
-	    {
-		EDITWORDBREAKPROCA wbpA = (EDITWORDBREAKPROCA)es->word_break_proc;
-		INT countA;
-		CHAR *textA;
+    if (es->word_break_proc)
+        ret = es->word_break_proc(es->text + start, index, count, action);
+    else
+        ret = EDIT_WordBreakProc(es, es->text, index + start, count + start, action) - start;
 
-		countA = WideCharToMultiByte(CP_ACP, 0, es->text + start, count, NULL, 0, NULL, NULL);
-		textA = HeapAlloc(GetProcessHeap(), 0, countA);
-		WideCharToMultiByte(CP_ACP, 0, es->text + start, count, textA, countA, NULL, NULL);
-		ret = wbpA(textA, index, countA, action);
-		HeapFree(GetProcessHeap(), 0, textA);
-	    }
-        }
-	else
-            ret = EDIT_WordBreakProc(es, es->text, index+start, count+start, action) - start;
-
-	return ret;
+    return ret;
 }
 
 static inline void EDIT_InvalidateUniscribeData_linedef(LINEDEF *line_def)
@@ -1219,36 +1198,15 @@ static inline void text_buffer_changed(EDITSTATE *es)
  */
 static void EDIT_LockBuffer(EDITSTATE *es)
 {
-	if (!es->text) {
+    if (!es->text)
+    {
+        if (!es->hloc32W)
+            return;
 
-	    if(!es->hloc32W) return;
+        es->text = LocalLock(es->hloc32W);
+    }
 
-            if(es->hloc32A)
-            {
-                CHAR *textA = LocalLock(es->hloc32A);
-		HLOCAL hloc32W_new;
-		UINT countW_new = MultiByteToWideChar(CP_ACP, 0, textA, -1, NULL, 0);
-		if(countW_new > es->buffer_size + 1)
-		{
-		    UINT alloc_size = ROUND_TO_GROW(countW_new * sizeof(WCHAR));
-		    TRACE("Resizing 32-bit UNICODE buffer from %d+1 to %d WCHARs\n", es->buffer_size, countW_new);
-		    hloc32W_new = LocalReAlloc(es->hloc32W, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
-		    if(hloc32W_new)
-		    {
-			es->hloc32W = hloc32W_new;
-			es->buffer_size = LocalSize(hloc32W_new)/sizeof(WCHAR) - 1;
-			TRACE("Real new size %d+1 WCHARs\n", es->buffer_size);
-		    }
-		    else
-			WARN("FAILED! Will synchronize partially\n");
-		}
-                es->text = LocalLock(es->hloc32W);
-		MultiByteToWideChar(CP_ACP, 0, textA, -1, es->text, es->buffer_size + 1);
-                LocalUnlock(es->hloc32A);
-	    }
-	    else es->text = LocalLock(es->hloc32W);
-	}
-	es->lock_count++;
+    es->lock_count++;
 }
 
 
@@ -1259,61 +1217,41 @@ static void EDIT_LockBuffer(EDITSTATE *es)
  */
 static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 {
-	/* Edit window might be already destroyed */
-	if(!IsWindow(es->hwndSelf))
-	{
-	    WARN("edit hwnd %p already destroyed\n", es->hwndSelf);
-	    return;
-	}
+    /* Edit window might be already destroyed */
+    if (!IsWindow(es->hwndSelf))
+    {
+        WARN("edit hwnd %p already destroyed\n", es->hwndSelf);
+        return;
+    }
 
-	if (!es->lock_count) {
-		ERR("lock_count == 0 ... please report\n");
-		return;
-	}
-	if (!es->text) {
-		ERR("es->text == 0 ... please report\n");
-		return;
-	}
-	if (force || (es->lock_count == 1)) {
-	    if (es->hloc32W) {
-		UINT countA = 0;
-		UINT countW = get_text_length(es) + 1;
+    if (!es->lock_count)
+    {
+        ERR("lock_count == 0 ... please report\n");
+        return;
+    }
 
-		if(es->hloc32A)
-		{
-		    UINT countA_new = WideCharToMultiByte(CP_ACP, 0, es->text, countW, NULL, 0, NULL, NULL);
-		    TRACE("Synchronizing with 32-bit ANSI buffer\n");
-		    TRACE("%d WCHARs translated to %d bytes\n", countW, countA_new);
-		    countA = LocalSize(es->hloc32A);
-		    if(countA_new > countA)
-		    {
-			HLOCAL hloc32A_new;
-			UINT alloc_size = ROUND_TO_GROW(countA_new);
-			TRACE("Resizing 32-bit ANSI buffer from %d to %d bytes\n", countA, alloc_size);
-			hloc32A_new = LocalReAlloc(es->hloc32A, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
-			if(hloc32A_new)
-			{
-			    es->hloc32A = hloc32A_new;
-			    countA = LocalSize(hloc32A_new);
-			    TRACE("Real new size %d bytes\n", countA);
-			}
-			else
-			    WARN("FAILED! Will synchronize partially\n");
-		    }
-		    WideCharToMultiByte(CP_ACP, 0, es->text, countW,
-                                        LocalLock(es->hloc32A), countA, NULL, NULL);
-                    LocalUnlock(es->hloc32A);
-		}
+    if (!es->text)
+    {
+        ERR("es->text == 0 ... please report\n");
+        return;
+    }
 
-		LocalUnlock(es->hloc32W);
-		es->text = NULL;
-	    }
-	    else {
-		ERR("no buffer ... please report\n");
-		return;
-	    }
-	}
-	es->lock_count--;
+    if (force || (es->lock_count == 1))
+    {
+        if (es->hloc32W)
+        {
+            LocalUnlock(es->hloc32W);
+            es->text = NULL;
+        }
+        else
+        {
+            ERR("no buffer ... please report\n");
+            return;
+        }
+
+    }
+
+    es->lock_count--;
 }
 
 
@@ -2401,41 +2339,16 @@ static BOOL EDIT_EM_FmtLines(EDITSTATE *es, BOOL add_eol)
  */
 static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 {
-	HLOCAL hLocal;
+    if (!(es->style & ES_MULTILINE))
+        return 0;
 
-	if (!(es->style & ES_MULTILINE))
-		return 0;
+    EDIT_UnlockBuffer(es, TRUE);
 
-	if(es->is_unicode)
-	    hLocal = es->hloc32W;
-	else
-	{
-	    if(!es->hloc32A)
-	    {
-		CHAR *textA;
-		UINT countA, alloc_size;
-		TRACE("Allocating 32-bit ANSI alias buffer\n");
-		countA = WideCharToMultiByte(CP_ACP, 0, es->text, -1, NULL, 0, NULL, NULL);
-		alloc_size = ROUND_TO_GROW(countA);
-		if(!(es->hloc32A = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size)))
-		{
-		    ERR("Could not allocate %d bytes for 32-bit ANSI alias buffer\n", alloc_size);
-		    return 0;
-		}
-		textA = LocalLock(es->hloc32A);
-		WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, countA, NULL, NULL);
-		LocalUnlock(es->hloc32A);
-	    }
-	    hLocal = es->hloc32A;
-	}
+    /* The text buffer handle belongs to the app */
+    es->hlocapp = es->hloc32W;
 
-        EDIT_UnlockBuffer(es, TRUE);
-
-        /* The text buffer handle belongs to the app */
-        es->hlocapp = hLocal;
-
-	TRACE("Returning %p, LocalSize() = %ld\n", hLocal, LocalSize(hLocal));
-	return hLocal;
+    TRACE("Returning %p, LocalSize() = %ld\n", es->hlocapp, LocalSize(es->hlocapp));
+    return es->hlocapp;
 }
 
 
@@ -2725,60 +2638,25 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 
     EDIT_UnlockBuffer(es, TRUE);
 
-	if(es->is_unicode)
-	{
-	    if(es->hloc32A)
-	    {
-		LocalFree(es->hloc32A);
-		es->hloc32A = NULL;
-	    }
-	    es->hloc32W = hloc;
-	}
-	else
-	{
-	    INT countW, countA;
-	    HLOCAL hloc32W_new;
-	    WCHAR *textW;
-	    CHAR *textA;
+    es->hloc32W = hloc;
+    es->buffer_size = LocalSize(es->hloc32W)/sizeof(WCHAR) - 1;
 
-	    countA = LocalSize(hloc);
-	    textA = LocalLock(hloc);
-	    countW = MultiByteToWideChar(CP_ACP, 0, textA, countA, NULL, 0);
-	    if(!(hloc32W_new = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, countW * sizeof(WCHAR))))
-	    {
-		ERR("Could not allocate new unicode buffer\n");
-		return;
-	    }
-	    textW = LocalLock(hloc32W_new);
-	    MultiByteToWideChar(CP_ACP, 0, textA, countA, textW, countW);
-	    LocalUnlock(hloc32W_new);
-	    LocalUnlock(hloc);
+    /* The text buffer handle belongs to the control */
+    es->hlocapp = NULL;
 
-	    if(es->hloc32W)
-		LocalFree(es->hloc32W);
+    EDIT_LockBuffer(es);
+    text_buffer_changed(es);
 
-	    es->hloc32W = hloc32W_new;
-	    es->hloc32A = hloc;
-	}
-
-	es->buffer_size = LocalSize(es->hloc32W)/sizeof(WCHAR) - 1;
-
-        /* The text buffer handle belongs to the control */
-        es->hlocapp = NULL;
-
-	EDIT_LockBuffer(es);
-        text_buffer_changed(es);
-
-	es->x_offset = es->y_offset = 0;
-	es->selection_start = es->selection_end = 0;
-	EDIT_EM_EmptyUndoBuffer(es);
-	es->flags &= ~EF_MODIFIED;
-	es->flags &= ~EF_UPDATE;
-	EDIT_BuildLineDefs_ML(es, 0, get_text_length(es), 0, NULL);
-	EDIT_UpdateText(es, NULL, TRUE);
-	EDIT_EM_ScrollCaret(es);
-	/* force scroll info update */
-	EDIT_UpdateScrollInfo(es);
+    es->x_offset = es->y_offset = 0;
+    es->selection_start = es->selection_end = 0;
+    EDIT_EM_EmptyUndoBuffer(es);
+    es->flags &= ~EF_MODIFIED;
+    es->flags &= ~EF_UPDATE;
+    EDIT_BuildLineDefs_ML(es, 0, get_text_length(es), 0, NULL);
+    EDIT_UpdateText(es, NULL, TRUE);
+    EDIT_EM_ScrollCaret(es);
+    /* force scroll info update */
+    EDIT_UpdateScrollInfo(es);
 }
 
 
@@ -2944,7 +2822,7 @@ static BOOL EDIT_EM_SetTabStops(EDITSTATE *es, INT count, const INT *tabs)
  *	EM_SETWORDBREAKPROC
  *
  */
-static void EDIT_EM_SetWordBreakProc(EDITSTATE *es, void *wbp)
+static void EDIT_EM_SetWordBreakProc(EDITSTATE *es, EDITWORDBREAKPROCW wbp)
 {
 	if (es->word_break_proc == wbp)
 		return;
@@ -4382,7 +4260,6 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs)
         *            WM_XXX messages before WM_NCCREATE is completed.
         */
 
-    es->is_unicode = TRUE;
     es->style = lpcs->style;
 
         es->bEnableState = !(es->style & WS_DISABLED);
@@ -4531,17 +4408,15 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
  */
 static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 {
-	LINEDEF *pc, *pp;
+    LINEDEF *pc, *pp;
 
-        /* The app can own the text buffer handle */
-        if (es->hloc32W && (es->hloc32W != es->hlocapp)) {
-		LocalFree(es->hloc32W);
-	}
-        if (es->hloc32A && (es->hloc32A != es->hlocapp)) {
-		LocalFree(es->hloc32A);
-	}
-	EDIT_InvalidateUniscribeData(es);
-	pc = es->first_line_def;
+    /* The app can own the text buffer handle */
+    if (es->hloc32W && (es->hloc32W != es->hlocapp))
+        LocalFree(es->hloc32W);
+
+    EDIT_InvalidateUniscribeData(es);
+
+    pc = es->first_line_def;
 	while (pc)
 	{
 		pp = pc->next;
