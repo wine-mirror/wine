@@ -5188,8 +5188,6 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
     TREEVIEW_FreeItem(infoPtr, infoPtr->root);
     DPA_Destroy(infoPtr->items);
 
-    /* tool tip is automatically destroyed: we are its owner */
-
     /* Restore original wndproc */
     if (infoPtr->hwndEdit)
 	SetWindowLongPtrW(infoPtr->hwndEdit, GWLP_WNDPROC,
@@ -5204,6 +5202,7 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
     DeleteObject(infoPtr->hBoldFont);
     DeleteObject(infoPtr->hUnderlineFont);
     DeleteObject(infoPtr->hBoldUnderlineFont);
+    DestroyWindow(infoPtr->hwndToolTip);
     Free(infoPtr);
 
     return 0;
