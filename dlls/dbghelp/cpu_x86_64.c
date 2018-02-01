@@ -712,6 +712,7 @@ static void*    x86_64_find_runtime_function(struct module* module, DWORD64 addr
             while (rtf->UnwindData & 1)  /* follow chained entry */
             {
                 FIXME("RunTime_Function outside IMAGE_DIRECTORY_ENTRY_EXCEPTION unimplemented yet!\n");
+                return NULL;
                 /* we need to read into the other process */
                 /* rtf = (RUNTIME_FUNCTION*)(module->module.BaseOfImage + (rtf->UnwindData & ~1)); */
             }
