@@ -1471,9 +1471,6 @@
 # All functions must be prefixed with '__wine_' (for internal functions)
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
-# Relays
-@ cdecl -i386 __wine_enter_vm86(ptr)
-
 # Server interface
 @ cdecl -norelay wine_server_call(ptr)
 @ cdecl wine_server_fd_to_handle(long long long ptr)

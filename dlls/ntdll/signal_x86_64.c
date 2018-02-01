@@ -4219,14 +4219,6 @@ void signal_exit_process( int status )
 }
 
 /**********************************************************************
- *              __wine_enter_vm86   (NTDLL.@)
- */
-void __wine_enter_vm86( CONTEXT *context )
-{
-    MESSAGE("vm86 mode not supported on this platform\n");
-}
-
-/**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
  */
 __ASM_STDCALL_FUNC( DbgBreakPoint, 0, "int $3; ret")

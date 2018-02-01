@@ -42,9 +42,6 @@
 #  include <sys/syscall.h>
 # endif
 #endif
-#ifdef HAVE_SYS_VM86_H
-# include <sys/vm86.h>
-#endif
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
 #endif
@@ -179,55 +176,6 @@ typedef struct ucontext
 
 #define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpregs))
 #define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpregs->status >> 16) ? (XMM_SAVE_AREA32 *)(FPU_sig(context) + 1) : NULL)
-
-#define VIF_FLAG 0x00080000
-#define VIP_FLAG 0x00100000
-
-int vm86_enter( void **vm86_ptr );
-void vm86_return(void);
-void vm86_return_end(void);
-__ASM_GLOBAL_FUNC(vm86_enter,
-                  "pushl %ebp\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
-                  "movl %esp,%ebp\n\t"
-                  __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                  "pushl %ebx\n\t"
-                  __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
-                  "movl $166,%eax\n\t"  /*SYS_vm86*/
-                  "movl 8(%ebp),%ecx\n\t" /* vm86_ptr */
-                  "movl (%ecx),%ecx\n\t"
-                  "movl $1,%ebx\n\t"    /*VM86_ENTER*/
-                  "pushl %ecx\n\t"      /* put vm86plus_struct ptr somewhere we can find it */
-                  "pushl %fs\n\t"
-                  "pushl %gs\n\t"
-                  "int $0x80\n"
-                  ".globl " __ASM_NAME("vm86_return") "\n\t"
-                  __ASM_FUNC("vm86_return") "\n"
-                  __ASM_NAME("vm86_return") ":\n\t"
-                  "popl %gs\n\t"
-                  "popl %fs\n\t"
-                  "popl %ecx\n\t"
-                  "popl %ebx\n\t"
-                  __ASM_CFI(".cfi_same_value %ebx\n\t")
-                  "popl %ebp\n\t"
-                  __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
-                  __ASM_CFI(".cfi_same_value %ebp\n\t")
-                  "testl %eax,%eax\n\t"
-                  "jl 0f\n\t"
-                  "cmpb $0,%al\n\t" /* VM86_SIGNAL */
-                  "je " __ASM_NAME("vm86_enter") "\n\t"
-                  "0:\n\t"
-                  "movl 4(%esp),%ecx\n\t"  /* vm86_ptr */
-                  "movl $0,(%ecx)\n\t"
-                  ".globl " __ASM_NAME("vm86_return_end") "\n\t"
-                  __ASM_FUNC("vm86_return_end") "\n"
-                  __ASM_NAME("vm86_return_end") ":\n\t"
-                  "ret" )
-
-#ifdef HAVE_SYS_VM86_H
-# define __HAVE_VM86
-#endif
 
 #ifdef __ANDROID__
 /* custom signal restorer since we may have unmapped the one in vdso, and bionic doesn't check for that */
@@ -539,19 +487,11 @@ struct x86_thread_data
     DWORD              dr6;           /* 1ec */
     DWORD              dr7;           /* 1f0 */
     void              *exit_frame;    /* 1f4 exit frame pointer */
-#ifdef __HAVE_VM86
-    void              *vm86_ptr;      /* 1f8 data for vm86 mode */
-    WINE_VM86_TEB_INFO vm86;          /* 1fc vm86 private data */
-#endif
     /* the ntdll_thread_data structure follows here */
 };
 
 C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
 C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, exit_frame ) == 0x1f4 );
-#ifdef __HAVE_VM86
-C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, vm86 ) ==
-          offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, __vm86 ));
-#endif
 
 static inline struct x86_thread_data *x86_thread_data(void)
 {
@@ -795,126 +735,6 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
     }
     return STATUS_SUCCESS;
 }
-
-
-#ifdef __HAVE_VM86
-/***********************************************************************
- *           save_vm86_context
- *
- * Set the register values from a vm86 structure.
- */
-static void save_vm86_context( CONTEXT *context, const struct vm86plus_struct *vm86 )
-{
-    context->ContextFlags = CONTEXT_FULL;
-    context->Eax    = vm86->regs.eax;
-    context->Ebx    = vm86->regs.ebx;
-    context->Ecx    = vm86->regs.ecx;
-    context->Edx    = vm86->regs.edx;
-    context->Esi    = vm86->regs.esi;
-    context->Edi    = vm86->regs.edi;
-    context->Esp    = vm86->regs.esp;
-    context->Ebp    = vm86->regs.ebp;
-    context->Eip    = vm86->regs.eip;
-    context->SegCs  = vm86->regs.cs;
-    context->SegDs  = vm86->regs.ds;
-    context->SegEs  = vm86->regs.es;
-    context->SegFs  = vm86->regs.fs;
-    context->SegGs  = vm86->regs.gs;
-    context->SegSs  = vm86->regs.ss;
-    context->EFlags = vm86->regs.eflags;
-}
-
-
-/***********************************************************************
- *           restore_vm86_context
- *
- * Build a vm86 structure from the register values.
- */
-static void restore_vm86_context( const CONTEXT *context, struct vm86plus_struct *vm86 )
-{
-    vm86->regs.eax    = context->Eax;
-    vm86->regs.ebx    = context->Ebx;
-    vm86->regs.ecx    = context->Ecx;
-    vm86->regs.edx    = context->Edx;
-    vm86->regs.esi    = context->Esi;
-    vm86->regs.edi    = context->Edi;
-    vm86->regs.esp    = context->Esp;
-    vm86->regs.ebp    = context->Ebp;
-    vm86->regs.eip    = context->Eip;
-    vm86->regs.cs     = context->SegCs;
-    vm86->regs.ds     = context->SegDs;
-    vm86->regs.es     = context->SegEs;
-    vm86->regs.fs     = context->SegFs;
-    vm86->regs.gs     = context->SegGs;
-    vm86->regs.ss     = context->SegSs;
-    vm86->regs.eflags = context->EFlags;
-}
-
-
-/**********************************************************************
- *		merge_vm86_pending_flags
- *
- * Merges TEB.vm86_ptr and TEB.vm86_pending VIP flags and
- * raises exception if there are pending events and VIF flag
- * has been turned on.
- *
- * Called from __wine_enter_vm86 because vm86_enter
- * doesn't check for pending events. 
- *
- * Called from raise_vm86_sti_exception to check for
- * pending events in a signal safe way.
- */
-static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
-{
-    BOOL check_pending = TRUE;
-    struct vm86plus_struct *vm86 =
-        (struct vm86plus_struct*)x86_thread_data()->vm86_ptr;
-
-    /*
-     * In order to prevent a race when SIGUSR2 occurs while
-     * we are returning from exception handler, pending events
-     * will be rechecked after each raised exception.
-     */
-    while (check_pending && get_vm86_teb_info()->vm86_pending)
-    {
-        check_pending = FALSE;
-        x86_thread_data()->vm86_ptr = NULL;
-
-        /*
-         * If VIF is set, throw exception.
-         * Note that SIGUSR2 may turn VIF flag off so
-         * VIF check must occur only when TEB.vm86_ptr is NULL.
-         */
-        if (vm86->regs.eflags & VIF_FLAG)
-        {
-            CONTEXT vcontext;
-            save_vm86_context( &vcontext, vm86 );
-            
-            rec->ExceptionCode    = EXCEPTION_VM86_STI;
-            rec->ExceptionFlags   = EXCEPTION_CONTINUABLE;
-            rec->ExceptionRecord  = NULL;
-            rec->NumberParameters = 0;
-            rec->ExceptionAddress = (LPVOID)vcontext.Eip;
-
-            vcontext.EFlags &= ~VIP_FLAG;
-            get_vm86_teb_info()->vm86_pending = 0;
-            raise_exception( rec, &vcontext, TRUE );
-
-            restore_vm86_context( &vcontext, vm86 );
-            check_pending = TRUE;
-        }
-
-        x86_thread_data()->vm86_ptr = vm86;
-    }
-
-    /*
-     * Merge VIP flags in a signal safe way. This requires
-     * that the following operation compiles into atomic
-     * instruction.
-     */
-    vm86->regs.eflags |= get_vm86_teb_info()->vm86_pending;
-}
-#endif /* __HAVE_VM86 */
 
 
 #ifdef __sun
@@ -2135,54 +1955,6 @@ static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *cont
 }
 
 
-#ifdef __HAVE_VM86
-/**********************************************************************
- *		raise_vm86_sti_exception
- */
-static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    /* merge_vm86_pending_flags merges the vm86_pending flag in safely */
-    get_vm86_teb_info()->vm86_pending |= VIP_FLAG;
-
-    if (x86_thread_data()->vm86_ptr)
-    {
-        if (((char*)context->Eip >= (char*)vm86_return) &&
-            ((char*)context->Eip <= (char*)vm86_return_end) &&
-            (VM86_TYPE(context->Eax) != VM86_SIGNAL)) {
-            /* exiting from VM86, can't throw */
-            goto done;
-        }
-        merge_vm86_pending_flags( rec );
-    }
-    else if (get_vm86_teb_info()->dpmi_vif &&
-             !wine_ldt_is_system(context->SegCs) &&
-             !wine_ldt_is_system(context->SegSs))
-    {
-        /* Executing DPMI code and virtual interrupts are enabled. */
-        get_vm86_teb_info()->vm86_pending = 0;
-        NtRaiseException( rec, context, TRUE );
-    }
-done:
-    set_cpu_context( context );
-}
-
-
-/**********************************************************************
- *		usr2_handler
- *
- * Handler for SIGUSR2.
- * We use it to signal that the running __wine_enter_vm86() should
- * immediately set VIP_FLAG, causing pending events to be handled
- * as early as possible.
- */
-static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
-{
-    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_vm86_sti_exception );
-    rec->ExceptionCode = EXCEPTION_VM86_STI;
-}
-#endif /* __HAVE_VM86 */
-
-
 /**********************************************************************
  *		segv_handler
  *
@@ -2589,11 +2361,6 @@ void signal_init_process(void)
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
 #endif
 
-#ifdef __HAVE_VM86
-    sig_act.sa_sigaction = usr2_handler;
-    if (sigaction( SIGUSR2, &sig_act, NULL ) == -1) goto error;
-#endif
-
     wine_ldt_init_locking( ldt_lock, ldt_unlock );
     return;
 
@@ -2601,94 +2368,6 @@ void signal_init_process(void)
     perror("sigaction");
     exit(1);
 }
-
-
-
-#ifdef __HAVE_VM86
-/**********************************************************************
- *		__wine_enter_vm86   (NTDLL.@)
- *
- * Enter vm86 mode with the specified register context.
- */
-void __wine_enter_vm86( CONTEXT *context )
-{
-    EXCEPTION_RECORD rec;
-    int res;
-    struct vm86plus_struct vm86;
-
-    memset( &vm86, 0, sizeof(vm86) );
-    for (;;)
-    {
-        restore_vm86_context( context, &vm86 );
-
-        x86_thread_data()->vm86_ptr = &vm86;
-        merge_vm86_pending_flags( &rec );
-
-        res = vm86_enter( &x86_thread_data()->vm86_ptr ); /* uses and clears teb->vm86_ptr */
-        if (res < 0)
-        {
-            errno = -res;
-            return;
-        }
-
-        save_vm86_context( context, &vm86 );
-
-        rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-        rec.ExceptionRecord  = NULL;
-        rec.ExceptionAddress = (LPVOID)context->Eip;
-        rec.NumberParameters = 0;
-
-        switch(VM86_TYPE(res))
-        {
-        case VM86_UNKNOWN: /* unhandled GP fault - IO-instruction or similar */
-            rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
-            break;
-        case VM86_TRAP: /* return due to DOS-debugger request */
-            switch(VM86_ARG(res))
-            {
-            case TRAP_x86_TRCTRAP:  /* Single-step exception */
-                rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
-                break;
-            case TRAP_x86_BPTFLT:   /* Breakpoint exception */
-                rec.ExceptionAddress = (char *)rec.ExceptionAddress - 1;  /* back up over the int3 instruction */
-                /* fall through */
-            default:
-                rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-                break;
-            }
-            break;
-        case VM86_INTx: /* int3/int x instruction (ARG = x) */
-            rec.ExceptionCode = EXCEPTION_VM86_INTx;
-            rec.NumberParameters = 1;
-            rec.ExceptionInformation[0] = VM86_ARG(res);
-            break;
-        case VM86_STI: /* sti/popf/iret instruction enabled virtual interrupts */
-            context->EFlags |= VIF_FLAG;
-            context->EFlags &= ~VIP_FLAG;
-            get_vm86_teb_info()->vm86_pending = 0;
-            rec.ExceptionCode = EXCEPTION_VM86_STI;
-            break;
-        case VM86_PICRETURN: /* return due to pending PIC request */
-            rec.ExceptionCode = EXCEPTION_VM86_PICRETURN;
-            break;
-        case VM86_SIGNAL: /* cannot happen because vm86_enter handles this case */
-        default:
-            WINE_ERR( "unhandled result from vm86 mode %x\n", res );
-            continue;
-        }
-        raise_exception( &rec, context, TRUE );
-    }
-}
-
-#else /* __HAVE_VM86 */
-/**********************************************************************
- *		__wine_enter_vm86   (NTDLL.@)
- */
-void __wine_enter_vm86( CONTEXT *context )
-{
-    MESSAGE("vm86 mode not supported on this platform\n");
-}
-#endif /* __HAVE_VM86 */
 
 
 /*******************************************************************

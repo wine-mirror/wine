@@ -1086,14 +1086,6 @@ void signal_init_process(void)
 }
 
 
-/**********************************************************************
- *              __wine_enter_vm86   (NTDLL.@)
- */
-void __wine_enter_vm86( CONTEXT *context )
-{
-    MESSAGE("vm86 mode not supported on this platform\n");
-}
-
 /***********************************************************************
  *            RtlUnwind  (NTDLL.@)
  */
