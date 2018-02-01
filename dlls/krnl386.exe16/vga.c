@@ -764,7 +764,7 @@ static void VGA_SyncWindow( BOOL target_is_fb )
 }
 
 
-static void WINAPI VGA_DoExit(ULONG_PTR arg)
+static void VGA_DoExit(ULONG_PTR arg)
 {
     VGA_DeinstallTimer();
     IDirectDrawSurface_SetPalette(lpddsurf,NULL);
@@ -776,10 +776,9 @@ static void WINAPI VGA_DoExit(ULONG_PTR arg)
     lpddraw=NULL;
 }
 
-static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
+static void VGA_DoSetMode( ModeSet *par )
 {
     HRESULT	res;
-    ModeSet *par = (ModeSet *)arg;
     par->ret = FALSE;
 
     if (lpddraw) VGA_DoExit(0);
@@ -950,7 +949,7 @@ static BOOL VGA_SetGraphicMode(WORD mode)
 
     par.Depth = (vga_fb_depth < 8) ? 8 : vga_fb_depth;
 
-    MZ_RunInThread(VGA_DoSetMode, (ULONG_PTR)&par);
+    VGA_DoSetMode( &par );
     return par.ret;
 }
 
@@ -995,7 +994,7 @@ BOOL VGA_GetMode(unsigned *Height, unsigned *Width, unsigned *Depth)
 
 static void VGA_Exit(void)
 {
-    if (lpddraw) MZ_RunInThread(VGA_DoExit, 0);
+    if (lpddraw) VGA_DoExit(0);
 }
 
 void VGA_SetPalette(PALETTEENTRY*pal,int start,int len)
@@ -1109,7 +1108,7 @@ int VGA_GetWindowStart(void)
  *
  * Callback for VGA_ShowMouse.
  */
-static void WINAPI VGA_DoShowMouse( ULONG_PTR show )
+static void VGA_DoShowMouse( BOOL show )
 {
     INT rv;
 
@@ -1130,8 +1129,7 @@ static void WINAPI VGA_DoShowMouse( ULONG_PTR show )
  */
 void VGA_ShowMouse( BOOL show )
 {
-    if (lpddraw)
-        MZ_RunInThread( VGA_DoShowMouse, (ULONG_PTR)show );
+    if (lpddraw) VGA_DoShowMouse( show );
 }
 
 

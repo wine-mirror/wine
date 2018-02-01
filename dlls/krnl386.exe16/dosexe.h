@@ -33,15 +33,6 @@
 
 #define MAX_DOS_DRIVES  26
 
-struct _DOSEVENT;
-
-typedef struct {
-  PAPCFUNC proc;
-  ULONG_PTR arg;
-} DOS_SPC;
-
-extern pid_t dosvm_pid DECLSPEC_HIDDEN;
-
 /* amount of space reserved for relay stack */
 #define DOSVM_RELAY_DATA_SIZE 4096
 
@@ -77,10 +68,6 @@ typedef void (WINAPI *INTPROC)(CONTEXT*);
 extern WORD DOSVM_psp DECLSPEC_HIDDEN;     /* psp of current DOS task */
 extern WORD DOSVM_retval DECLSPEC_HIDDEN;  /* return value of previous DOS task */
 extern struct DPMI_segments *DOSVM_dpmi_segments DECLSPEC_HIDDEN;
-
-#if defined(linux) && defined(__i386__) && defined(HAVE_SYS_VM86_H)
-# define MZ_SUPPORTED
-#endif /* linux-i386 */
 
 /*
  * Declare some CONTEXT.EFlags bits.
@@ -333,19 +320,11 @@ typedef struct
     RMCBPROC interrupt;
 } WINEDEV;
 
-/* dosexe.c */
-extern BOOL MZ_Exec( CONTEXT *context, LPCSTR filename, BYTE func, LPVOID paramblk ) DECLSPEC_HIDDEN;
-extern void MZ_Exit( CONTEXT *context, BOOL cs_psp, WORD retval ) DECLSPEC_HIDDEN;
-extern BOOL MZ_Current( void ) DECLSPEC_HIDDEN;
-extern void MZ_AllocDPMITask( void ) DECLSPEC_HIDDEN;
-extern void MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg ) DECLSPEC_HIDDEN;
-extern BOOL DOSVM_IsWin16(void) DECLSPEC_HIDDEN;
-extern void DOSVM_Exit( WORD retval ) DECLSPEC_HIDDEN;
-
 /* dosvm.c */
 extern void DOSVM_SendQueuedEvents( CONTEXT * ) DECLSPEC_HIDDEN;
 extern void WINAPI DOSVM_AcknowledgeIRQ( CONTEXT * ) DECLSPEC_HIDDEN;
 extern INT DOSVM_Enter( CONTEXT *context ) DECLSPEC_HIDDEN;
+extern void DOSVM_Exit( WORD retval ) DECLSPEC_HIDDEN;
 extern void DOSVM_Wait( CONTEXT * ) DECLSPEC_HIDDEN;
 extern DWORD DOSVM_Loop( HANDLE hThread ) DECLSPEC_HIDDEN;
 extern void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data ) DECLSPEC_HIDDEN;
@@ -442,7 +421,6 @@ extern void EMS_Ioctl_Handler(CONTEXT*) DECLSPEC_HIDDEN;
 extern void        __wine_call_int_handler( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
 extern void        DOSVM_CallBuiltinHandler( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
 extern BOOL        DOSVM_EmulateInterruptPM( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
-extern BOOL        DOSVM_EmulateInterruptRM( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
 extern FARPROC16   DOSVM_GetPMHandler16( BYTE ) DECLSPEC_HIDDEN;
 extern FARPROC48   DOSVM_GetPMHandler48( BYTE ) DECLSPEC_HIDDEN;
 extern FARPROC16   DOSVM_GetRMHandler( BYTE ) DECLSPEC_HIDDEN;

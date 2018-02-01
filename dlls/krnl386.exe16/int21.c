@@ -583,7 +583,7 @@ static WORD INT21_GetHeapSelector( CONTEXT *context )
 {
     INT21_HEAP *heap = INT21_GetHeapPointer();
 
-    if (!ISV86(context) && DOSVM_IsWin16())
+    if (!ISV86(context))
         return heap->misc_selector;
     else
         return heap->misc_segment;
@@ -2377,7 +2377,7 @@ static void INT21_GetPSP( CONTEXT *context )
      * FIXME: should we return the original DOS PSP upon
      *        Windows startup ? 
      */
-    if (!ISV86(context) && DOSVM_IsWin16())
+    if (!ISV86(context))
         SET_BX( context, LOWORD(GetCurrentPDB16()) );
     else
         SET_BX( context, DOSVM_psp );
@@ -4170,12 +4170,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
     {
     case 0x00: /* TERMINATE PROGRAM */
         TRACE("TERMINATE PROGRAM\n");
-        if (DOSVM_IsWin16())
-            DOSVM_Exit( 0 );
-        else if(ISV86(context))
-            MZ_Exit( context, FALSE, 0 );
-        else
-            ERR( "Called from DOS protected mode\n" );
+        DOSVM_Exit( 0 );
         break;
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
@@ -4266,13 +4261,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
              */
             while (*p != '$') p++;
 
-            if (DOSVM_IsWin16())
-                WriteFile( DosFileHandleToWin32Handle(1), 
-                           data, p - data, &w, NULL );
-            else
-                for(; data != p; data++)
-                    DOSVM_PutChar( *data );
-
+            WriteFile( DosFileHandleToWin32Handle(1), data, p - data, &w, NULL );
             SET_AL( context, '$' ); /* yes, '$' (0x24) gets returned in AL */
         }
         break;
@@ -4458,7 +4447,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         TRACE("SET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
         {
             FARPROC16 ptr = (FARPROC16)MAKESEGPTR( context->SegDs, DX_reg(context) );
-            if (!ISV86(context) && DOSVM_IsWin16())
+            if (!ISV86(context))
                 DOSVM_SetPMHandler16(  AL_reg(context), ptr );
             else
                 DOSVM_SetRMHandler( AL_reg(context), ptr );
@@ -4655,7 +4644,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         TRACE("GET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
         {
             FARPROC16 addr;
-            if (!ISV86(context) && DOSVM_IsWin16())
+            if (!ISV86(context))
                 addr = DOSVM_GetPMHandler16( AL_reg(context) );
             else
                 addr = DOSVM_GetRMHandler( AL_reg(context) );
@@ -4784,13 +4773,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
                                                context->Edx );
 
             /* Some programs pass a count larger than the allocated buffer */
-            if (DOSVM_IsWin16())
-            {
-                DWORD maxcount = GetSelectorLimit16( context->SegDs )
-                    - DX_reg(context) + 1;
-                if (count > maxcount)
-                    count = maxcount;
-            }
+            DWORD maxcount = GetSelectorLimit16( context->SegDs ) - DX_reg(context) + 1;
+            if (count > maxcount) count = maxcount;
 
             /*
              * FIXME: Reading from console (BX=1) in DOS mode
@@ -4798,13 +4782,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
              */
 
             RESET_CFLAG(context); /* set if error */
-            if (!DOSVM_IsWin16() && BX_reg(context) == 0)
-            {
-                result = INT21_BufferedInput( context, buffer, count );
-                SET_AX( context, (WORD)result );
-            }
-            else if (ReadFile( DosFileHandleToWin32Handle(BX_reg(context)),
-                               buffer, count, &result, NULL ))
+            if (ReadFile( DosFileHandleToWin32Handle(BX_reg(context)), buffer, count, &result, NULL ))
                 SET_AX( context, (WORD)result );
             else
                 bSetDOSExtendedError = TRUE;
@@ -4817,27 +4795,14 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
                BX_reg(context), CX_reg(context) );
         {
             char *ptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
-
-            if (!DOSVM_IsWin16() && 
-                (BX_reg(context) == 1 || BX_reg(context) == 2))
-            {
-                int i;
-                for(i=0; i<CX_reg(context); i++)
-                    DOSVM_PutChar(ptr[i]);
-                SET_AX(context, CX_reg(context));
-                RESET_CFLAG(context);
-            }
+            HFILE handle = (HFILE)DosFileHandleToWin32Handle(BX_reg(context));
+            LONG result = _hwrite( handle, ptr, CX_reg(context) );
+            if (result == HFILE_ERROR)
+                bSetDOSExtendedError = TRUE;
             else
             {
-                HFILE handle = (HFILE)DosFileHandleToWin32Handle(BX_reg(context));
-                LONG result = _hwrite( handle, ptr, CX_reg(context) );
-                if (result == HFILE_ERROR)
-                    bSetDOSExtendedError = TRUE;
-                else
-                {
-                    SET_AX( context, (WORD)result );
-                    RESET_CFLAG(context);
-                }
+                SET_AX( context, (WORD)result );
+                RESET_CFLAG(context);
             }
         }
         break;
@@ -4938,7 +4903,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
             WORD  selector = 0;
             DWORD bytes = (DWORD)BX_reg(context) << 4;
 
-            if (!ISV86(context) && DOSVM_IsWin16())
+            if (!ISV86(context))
             {
                 DWORD rv = GlobalDOSAlloc16( bytes );
                 selector = LOWORD( rv );
@@ -4965,7 +4930,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         {
             BOOL ok;
             
-            if (!ISV86(context) && DOSVM_IsWin16())
+            if (!ISV86(context))
             {
                 ok = !GlobalDOSFree16( context->SegEs );
 
@@ -4991,7 +4956,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         {
             DWORD newsize = (DWORD)BX_reg(context) << 4;
             
-            if (!ISV86(context) && DOSVM_IsWin16())
+            if (!ISV86(context))
             {
                 FIXME( "Resize memory block - unsupported under Win16\n" );
                 SET_CFLAG(context);
@@ -5020,42 +4985,23 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
     case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
         {
             char *program = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
-            BYTE *paramblk = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
+            HINSTANCE16 instance;
 
             TRACE( "EXEC %s\n", program );
 
             RESET_CFLAG(context);
-            if (DOSVM_IsWin16())
+            instance = WinExec16( program, SW_NORMAL );
+            if (instance < 32)
             {
-                HINSTANCE16 instance = WinExec16( program, SW_NORMAL );
-                if (instance < 32)
-                {
-                    SET_CFLAG( context );
-                    SET_AX( context, instance );
-                }
-            }
-            else
-            {
-                if (!MZ_Exec( context, program, AL_reg(context), paramblk))
-                    bSetDOSExtendedError = TRUE;
+                SET_CFLAG( context );
+                SET_AX( context, instance );
             }
         }
         break;
 
     case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
         TRACE( "EXIT with return code %d\n", AL_reg(context) );
-        if (DOSVM_IsWin16())
-            DOSVM_Exit( AL_reg(context) );
-        else if(ISV86(context))
-            MZ_Exit( context, FALSE, AL_reg(context) );
-        else
-        {
-            /*
-             * Exit from DPMI.
-             */            
-            ULONG_PTR rv = AL_reg(context);
-            RaiseException( EXCEPTION_VM86_INTx, 0, 1, &rv );
-        }
+        DOSVM_Exit( AL_reg(context) );
         break;
 
     case 0x4d: /* GET RETURN CODE */
@@ -5092,7 +5038,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
 
     case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
         {
-            SEGPTR ptr = DOSDEV_GetLOL( ISV86(context) || !DOSVM_IsWin16() );
+            SEGPTR ptr = DOSDEV_GetLOL( ISV86(context) );
             context->SegEs = SELECTOROF(ptr);
             SET_BX( context, OFFSETOF(ptr) );
         }

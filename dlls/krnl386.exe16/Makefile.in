@@ -9,7 +9,6 @@ C_SRCS = \
 	dma.c \
 	dosaspi.c \
 	dosdev.c \
-	dosexe.c \
 	dosmem.c \
 	dosvm.c \
 	error.c \

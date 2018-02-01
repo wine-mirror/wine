@@ -739,7 +739,6 @@
 
 # DOS support
 @ cdecl -arch=win32 __wine_call_int_handler(ptr long)
-@ cdecl -arch=win32 __wine_load_dos_exe(str str)
 
 # VxDs
 @ cdecl -arch=win32 -private __wine_vxd_open(wstr long ptr)

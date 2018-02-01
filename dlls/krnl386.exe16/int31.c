@@ -482,11 +482,10 @@ callrmproc_again:
     while (CurrRMCB && (HIWORD(CurrRMCB->address) != context->SegCs))
         CurrRMCB = CurrRMCB->next;
 
-    if (!CurrRMCB && !MZ_Current())
+    if (!CurrRMCB)
     {
         FIXME("DPMI real-mode call using DOS VM task system, not fully tested!\n");
-        TRACE("creating VM86 task\n");
-        MZ_AllocDPMITask();
+        return 0;
     }
     if (!already) {
         if (!context->SegSs) {
@@ -1069,8 +1068,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
             TRACE( "set selector base address (0x%04x,0x%08x)\n", sel, base );
 
             /* check if Win16 app wants to access lower 64K of DOS memory */
-            if (base < 0x10000 && DOSVM_IsWin16())
-                DOSMEM_MapDosLayout();
+            if (base < 0x10000) DOSMEM_MapDosLayout();
 
             SetSelectorBase( sel, base );
         }

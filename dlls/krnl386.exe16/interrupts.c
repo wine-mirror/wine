@@ -437,70 +437,6 @@ void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
 
 
 /**********************************************************************
- *         DOSVM_EmulateInterruptRM
- *
- * Emulate software interrupt in real mode.
- * Called from VM86 emulation when intXX opcode is executed. 
- *
- * Either calls directly builtin handler or pushes interrupt frame to 
- * stack and changes instruction pointer to interrupt handler.
- *
- * Returns FALSE if this interrupt was caused by return 
- * from real mode wrapper.
- */
-BOOL DOSVM_EmulateInterruptRM( CONTEXT *context, BYTE intnum )
-{
-    TRACE_(relay)("\1Call DOS int 0x%02x ret=%04x:%08x\n"
-                  "  eax=%08x ebx=%08x ecx=%08x edx=%08x\n"
-                  "  esi=%08x edi=%08x ebp=%08x esp=%08x\n"
-                  "  ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x\n",
-                  intnum, context->SegCs, context->Eip,
-                  context->Eax, context->Ebx, context->Ecx, context->Edx,
-                  context->Esi, context->Edi, context->Ebp, context->Esp,
-                  context->SegDs, context->SegEs, context->SegFs, context->SegGs,
-                  context->SegSs, context->EFlags );
-
-    /* check for our real-mode hooks */
-    if (intnum == 0x31)
-    {
-        /* is this exit from real-mode wrapper */
-        if (context->SegCs == DOSVM_dpmi_segments->wrap_seg)
-            return FALSE;
-
-        if (DOSVM_CheckWrappers( context ))
-            return TRUE;
-    }
-
-    /* check if the call is from our fake BIOS interrupt stubs */
-    if (context->SegCs==0xf000)
-    {
-        /* Restore original flags stored into the stack by the caller. */
-        WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
-                                         context->SegSs, context->Esp);
-        context->EFlags = (DWORD)MAKELONG( stack[2], HIWORD(context->EFlags) );
-
-        if (intnum != context->Eip / DOSVM_STUB_RM)
-            WARN( "interrupt stub has been modified "
-                  "(interrupt is %02x, interrupt stub is %02x)\n",
-                  intnum, context->Eip/DOSVM_STUB_RM );
-
-        TRACE( "builtin interrupt %02x has been branched to\n", intnum );
-        
-        DOSVM_CallBuiltinHandler( context, intnum );
-
-        /* Real mode stubs use IRET so we must put flags back into stack. */
-        stack[2] = LOWORD(context->EFlags);
-    }
-    else
-    {
-        DOSVM_HardwareInterruptRM( context, intnum );
-    }
-
-    return TRUE;
-}
-
-
-/**********************************************************************
  *         DOSVM_HardwareInterruptRM
  *
  * Emulate call to interrupt handler in real mode.
@@ -963,12 +899,7 @@ static void WINAPI DOSVM_Int1aHandler( CONTEXT *context )
  */
 static void WINAPI DOSVM_Int20Handler( CONTEXT *context )
 {
-    if (DOSVM_IsWin16())
-        DOSVM_Exit( 0 );
-    else if(ISV86(context))
-        MZ_Exit( context, TRUE, 0 );
-    else
-        ERR( "Called from DOS protected mode\n" );
+    DOSVM_Exit( 0 );
 }
 
 

@@ -275,27 +275,6 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
 }
 
 
-/*************************************************************
- *            vm86_handler
- *
- * Handler for exceptions occurring in vm86 code.
- */
-static DWORD vm86_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
-                           CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **pdispatcher )
-{
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
-        return ExceptionContinueSearch;
-
-    if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
-        record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION)
-    {
-        return __wine_emulate_instruction( record, context );
-    }
-
-    return ExceptionContinueSearch;
-}
-
-
 /*
  *  32-bit WOW routines (in WOW32, but actually forwarded to KERNEL32)
  */
@@ -549,59 +528,40 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             SYSLEVEL_CheckNotLevel( 2 );
         }
 
-        if (context->EFlags & 0x00020000)  /* v86 mode */
+        assert( !(context->EFlags & 0x00020000) ); /* vm86 mode no longer supported */
+
+        /* push return address */
+        if (dwFlags & WCB16_REGS_LONG)
         {
-            EXCEPTION_REGISTRATION_RECORD frame;
-            frame.Handler = vm86_handler;
-            errno = 0;
-            __wine_push_frame( &frame );
-            __wine_enter_vm86( context );
-            __wine_pop_frame( &frame );
-            if (errno != 0)  /* enter_vm86 will fail with ENOSYS on x64 kernels */
-            {
-                WARN("__wine_enter_vm86 failed (errno=%d)\n", errno);
-                if (errno == ENOSYS)
-                    SetLastError(ERROR_NOT_SUPPORTED);
-                else
-                    SetLastError(ERROR_GEN_FAILURE);
-                return FALSE;
-            }
+            stack -= sizeof(DWORD);
+            *((DWORD *)stack) = HIWORD(call16_ret_addr);
+            stack -= sizeof(DWORD);
+            *((DWORD *)stack) = LOWORD(call16_ret_addr);
+            cbArgs += 2 * sizeof(DWORD);
         }
         else
         {
-            /* push return address */
-            if (dwFlags & WCB16_REGS_LONG)
-            {
-                stack -= sizeof(DWORD);
-                *((DWORD *)stack) = HIWORD(call16_ret_addr);
-                stack -= sizeof(DWORD);
-                *((DWORD *)stack) = LOWORD(call16_ret_addr);
-                cbArgs += 2 * sizeof(DWORD);
-            }
-            else
-            {
-                stack -= sizeof(SEGPTR);
-                *((SEGPTR *)stack) = call16_ret_addr;
-                cbArgs += sizeof(SEGPTR);
-            }
-
-            /*
-             * Start call by checking for pending events.
-             * Note that wine_call_to_16_regs overwrites context stack
-             * pointer so we may modify it here without a problem.
-             */
-            if (get_vm86_teb_info()->dpmi_vif)
-            {
-                context->SegSs = wine_get_ds();
-                context->Esp   = (DWORD)stack;
-                insert_event_check( context );
-                cbArgs += (DWORD)stack - context->Esp;
-            }
-
-            _EnterWin16Lock();
-            wine_call_to_16_regs( context, cbArgs, call16_handler );
-            _LeaveWin16Lock();
+            stack -= sizeof(SEGPTR);
+            *((SEGPTR *)stack) = call16_ret_addr;
+            cbArgs += sizeof(SEGPTR);
         }
+
+        /*
+         * Start call by checking for pending events.
+         * Note that wine_call_to_16_regs overwrites context stack
+         * pointer so we may modify it here without a problem.
+         */
+        if (get_vm86_teb_info()->dpmi_vif)
+        {
+            context->SegSs = wine_get_ds();
+            context->Esp   = (DWORD)stack;
+            insert_event_check( context );
+            cbArgs += (DWORD)stack - context->Esp;
+        }
+
+        _EnterWin16Lock();
+        wine_call_to_16_regs( context, cbArgs, call16_handler );
+        _LeaveWin16Lock();
 
         if (TRACE_ON(relay))
         {
