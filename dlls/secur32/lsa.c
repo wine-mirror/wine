@@ -113,9 +113,10 @@ NTSTATUS WINAPI LsaEnumerateLogonSessions(PULONG LogonSessionCount,
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI LsaFreeReturnBuffer(PVOID Buffer)
+NTSTATUS WINAPI LsaFreeReturnBuffer(PVOID buffer)
 {
-    FIXME("%p stub\n", Buffer);
+    TRACE("%p\n", buffer);
+    HeapFree(GetProcessHeap(), 0, buffer);
     return STATUS_SUCCESS;
 }
 
