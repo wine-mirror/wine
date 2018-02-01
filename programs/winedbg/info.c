@@ -147,50 +147,61 @@ static const char* get_symtype_str(const IMAGEHLP_MODULE64* mi)
 
 struct info_module
 {
-    IMAGEHLP_MODULE64*  mi;
+    IMAGEHLP_MODULE64 mi;
+    char              name[64];
+};
+
+struct info_modules
+{
+    struct info_module *modules;
     unsigned            num_alloc;
     unsigned            num_used;
 };
 
-static void module_print_info(const IMAGEHLP_MODULE64* mi, BOOL is_embedded)
+static void module_print_info(const struct info_module *module, BOOL is_embedded)
 {
     dbg_printf("%*.*s-%*.*s\t%-16s%s\n",
-               ADDRWIDTH, ADDRWIDTH, wine_dbgstr_longlong(mi->BaseOfImage),
-               ADDRWIDTH, ADDRWIDTH, wine_dbgstr_longlong(mi->BaseOfImage + mi->ImageSize),
-               is_embedded ? "\\" : get_symtype_str(mi), mi->ModuleName);
+               ADDRWIDTH, ADDRWIDTH, wine_dbgstr_longlong(module->mi.BaseOfImage),
+               ADDRWIDTH, ADDRWIDTH, wine_dbgstr_longlong(module->mi.BaseOfImage + module->mi.ImageSize),
+               is_embedded ? "\\" : get_symtype_str(&module->mi), module->name);
 }
 
 static int      module_compare(const void* p1, const void* p2)
 {
-    LONGLONG val = ((const IMAGEHLP_MODULE64*)p1)->BaseOfImage -
-        ((const IMAGEHLP_MODULE64*)p2)->BaseOfImage;
+    struct info_module *left = (struct info_module *)p1;
+    struct info_module *right = (struct info_module *)p2;
+    LONGLONG val = left->mi.BaseOfImage - right->mi.BaseOfImage;
+
     if (val < 0) return -1;
     else if (val > 0) return 1;
     else return 0;
 }
 
-static inline BOOL module_is_container(const IMAGEHLP_MODULE64* wmod_cntnr,
-                                       const IMAGEHLP_MODULE64* wmod_child)
+static inline BOOL module_is_container(const struct info_module *wmod_cntnr,
+        const struct info_module *wmod_child)
 {
-    return wmod_cntnr->BaseOfImage <= wmod_child->BaseOfImage &&
-        wmod_cntnr->BaseOfImage + wmod_cntnr->ImageSize >=
-        wmod_child->BaseOfImage + wmod_child->ImageSize;
+    return wmod_cntnr->mi.BaseOfImage <= wmod_child->mi.BaseOfImage &&
+        wmod_cntnr->mi.BaseOfImage + wmod_cntnr->mi.ImageSize >=
+        wmod_child->mi.BaseOfImage + wmod_child->mi.ImageSize;
 }
 
 static BOOL CALLBACK info_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
 {
-    struct info_module* im = ctx;
+    struct info_modules *im = ctx;
 
     if (im->num_used + 1 > im->num_alloc)
     {
         im->num_alloc += 16;
-        im->mi = dbg_heap_realloc(im->mi, im->num_alloc * sizeof(*im->mi));
+        im->modules = dbg_heap_realloc(im->modules, im->num_alloc * sizeof(*im->modules));
     }
-    im->mi[im->num_used].SizeOfStruct = sizeof(im->mi[im->num_used]);
-    if (SymGetModuleInfo64(dbg_curr_process->handle, base, &im->mi[im->num_used]))
+    im->modules[im->num_used].mi.SizeOfStruct = sizeof(im->modules[im->num_used].mi);
+    if (SymGetModuleInfo64(dbg_curr_process->handle, base, &im->modules[im->num_used].mi))
     {
+        const int dst_len = sizeof(im->modules[im->num_used].name);
+        lstrcpynA(im->modules[im->num_used].name, mod_name, dst_len - 1);
+        im->modules[im->num_used].name[dst_len - 1] = 0;
         im->num_used++;
-    }   
+    }
     return TRUE;
 }
 
@@ -201,7 +212,7 @@ static BOOL CALLBACK info_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
  */
 void info_win32_module(DWORD64 base)
 {
-    struct info_module  im;
+    struct info_modules im;
     UINT                i, j, num_printed = 0;
     DWORD               opt;
 
@@ -211,7 +222,7 @@ void info_win32_module(DWORD64 base)
         return;
     }
 
-    im.mi = NULL;
+    im.modules = NULL;
     im.num_alloc = im.num_used = 0;
 
     /* this is a wine specific options to return also ELF modules in the
@@ -221,7 +232,7 @@ void info_win32_module(DWORD64 base)
     SymEnumerateModules64(dbg_curr_process->handle, info_mod_cb, &im);
     SymSetOptions(opt);
 
-    qsort(im.mi, im.num_used, sizeof(im.mi[0]), module_compare);
+    qsort(im.modules, im.num_used, sizeof(im.modules[0]), module_compare);
 
     dbg_printf("Module\tAddress\t\t\t%sDebug info\tName (%d modules)\n",
 	       ADDRWIDTH == 16 ? "\t\t" : "", im.num_used);
@@ -229,19 +240,19 @@ void info_win32_module(DWORD64 base)
     for (i = 0; i < im.num_used; i++)
     {
         if (base && 
-            (base < im.mi[i].BaseOfImage || base >= im.mi[i].BaseOfImage + im.mi[i].ImageSize))
+            (base < im.modules[i].mi.BaseOfImage || base >= im.modules[i].mi.BaseOfImage + im.modules[i].mi.ImageSize))
             continue;
-        if (strstr(im.mi[i].ModuleName, "<elf>"))
+        if (strstr(im.modules[i].name, "<elf>"))
         {
             dbg_printf("ELF\t");
-            module_print_info(&im.mi[i], FALSE);
+            module_print_info(&im.modules[i], FALSE);
             /* print all modules embedded in this one */
             for (j = 0; j < im.num_used; j++)
             {
-                if (!strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[i], &im.mi[j]))
+                if (!strstr(im.modules[j].name, "<elf>") && module_is_container(&im.modules[i], &im.modules[j]))
                 {
                     dbg_printf("  \\-PE\t");
-                    module_print_info(&im.mi[j], TRUE);
+                    module_print_info(&im.modules[j], TRUE);
                 }
             }
         }
@@ -250,19 +261,19 @@ void info_win32_module(DWORD64 base)
             /* check module is not embedded in another module */
             for (j = 0; j < im.num_used; j++) 
             {
-                if (strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[j], &im.mi[i]))
+                if (strstr(im.modules[j].name, "<elf>") && module_is_container(&im.modules[j], &im.modules[i]))
                     break;
             }
             if (j < im.num_used) continue;
-            if (strstr(im.mi[i].ModuleName, ".so") || strchr(im.mi[i].ModuleName, '<'))
+            if (strstr(im.modules[i].name, ".so") || strchr(im.modules[i].name, '<'))
                 dbg_printf("ELF\t");
             else
                 dbg_printf("PE\t");
-            module_print_info(&im.mi[i], FALSE);
+            module_print_info(&im.modules[i], FALSE);
         }
         num_printed++;
     }
-    HeapFree(GetProcessHeap(), 0, im.mi);
+    HeapFree(GetProcessHeap(), 0, im.modules);
 
     if (base && !num_printed)
         dbg_printf("'0x%x%08x' is not a valid module address\n", (DWORD)(base >> 32), (DWORD)base);
