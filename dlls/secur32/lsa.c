@@ -526,6 +526,60 @@ static SECURITY_STATUS WINAPI lsa_DeleteSecurityContext(CtxtHandle *context)
     return lsa_package->lsa_api->DeleteContext(lsa_context);
 }
 
+static SECURITY_STATUS WINAPI lsa_QueryContextAttributesW(CtxtHandle *context, ULONG attribute, void *buffer)
+{
+    struct lsa_package *lsa_package;
+    LSA_SEC_HANDLE lsa_context;
+
+    TRACE("%p %d %p\n", context, attribute, buffer);
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    lsa_package = (struct lsa_package *)context->dwUpper;
+    lsa_context = (LSA_SEC_HANDLE)context->dwLower;
+
+    if (!lsa_package) return SEC_E_INVALID_HANDLE;
+
+    if (!lsa_package->lsa_api || !lsa_package->lsa_api->SpQueryContextAttributes)
+        return SEC_E_UNSUPPORTED_FUNCTION;
+
+    return lsa_package->lsa_api->SpQueryContextAttributes(lsa_context, attribute, buffer);
+}
+
+static SECURITY_STATUS WINAPI lsa_QueryContextAttributesA(CtxtHandle *context, ULONG attribute, void *buffer)
+{
+    TRACE("%p %d %p\n", context, attribute, buffer);
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+
+    switch (attribute)
+    {
+    case SECPKG_ATTR_SIZES:
+        return lsa_QueryContextAttributesW( context, attribute, buffer );
+
+#define X(x) case (x) : FIXME(#x" stub\n"); break
+    X(SECPKG_ATTR_ACCESS_TOKEN);
+    X(SECPKG_ATTR_AUTHORITY);
+    X(SECPKG_ATTR_DCE_INFO);
+    X(SECPKG_ATTR_KEY_INFO);
+    X(SECPKG_ATTR_LIFESPAN);
+    X(SECPKG_ATTR_NAMES);
+    X(SECPKG_ATTR_NATIVE_NAMES);
+    X(SECPKG_ATTR_PACKAGE_INFO);
+    X(SECPKG_ATTR_PASSWORD_EXPIRY);
+    X(SECPKG_ATTR_SESSION_KEY);
+    X(SECPKG_ATTR_STREAM_SIZES);
+    X(SECPKG_ATTR_TARGET_INFORMATION);
+    X(SECPKG_ATTR_NEGOTIATION_INFO);
+#undef X
+    default:
+        FIXME( "unknown attribute %u\n", attribute );
+        break;
+    }
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 static const SecurityFunctionTableW lsa_sspi_tableW =
 {
     1,
@@ -539,7 +593,7 @@ static const SecurityFunctionTableW lsa_sspi_tableW =
     NULL, /* CompleteAuthToken */
     lsa_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
-    NULL, /* QueryContextAttributesW */
+    lsa_QueryContextAttributesW,
     NULL, /* ImpersonateSecurityContext */
     NULL, /* RevertSecurityContext */
     NULL, /* MakeSignature */
@@ -571,7 +625,7 @@ static const SecurityFunctionTableA lsa_sspi_tableA =
     NULL, /* CompleteAuthToken */
     lsa_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
-    NULL, /* QueryContextAttributesA */
+    lsa_QueryContextAttributesA,
     NULL, /* ImpersonateSecurityContext */
     NULL, /* RevertSecurityContext */
     NULL, /* MakeSignature */
