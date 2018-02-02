@@ -573,6 +573,58 @@ void __thiscall _NonReentrantPPLLock__Release(_NonReentrantPPLLock *this)
     critical_section_unlock(&this->cs);
 }
 
+typedef struct
+{
+    critical_section cs;
+    LONG count;
+    LONG owner;
+} _ReentrantPPLLock;
+
+/* ??0_ReentrantPPLLock@details@Concurrency@@QAE@XZ */
+/* ??0_ReentrantPPLLock@details@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_ReentrantPPLLock_ctor, 4)
+_ReentrantPPLLock* __thiscall _ReentrantPPLLock_ctor(_ReentrantPPLLock *this)
+{
+    TRACE("(%p)\n", this);
+
+    critical_section_ctor(&this->cs);
+    this->count = 0;
+    this->owner = -1;
+    return this;
+}
+
+/* ?_Acquire@_ReentrantPPLLock@details@Concurrency@@QAEXPAX@Z */
+/* ?_Acquire@_ReentrantPPLLock@details@Concurrency@@QEAAXPEAX@Z */
+DEFINE_THISCALL_WRAPPER(_ReentrantPPLLock__Acquire, 8)
+void __thiscall _ReentrantPPLLock__Acquire(_ReentrantPPLLock *this, cs_queue *q)
+{
+    TRACE("(%p %p)\n", this, q);
+
+    if(this->owner == GetCurrentThreadId()) {
+        this->count++;
+        return;
+    }
+
+    cs_lock(&this->cs, q);
+    this->count++;
+    this->owner = GetCurrentThreadId();
+}
+
+/* ?_Release@_ReentrantPPLLock@details@Concurrency@@QAEXXZ */
+/* ?_Release@_ReentrantPPLLock@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_ReentrantPPLLock__Release, 4)
+void __thiscall _ReentrantPPLLock__Release(_ReentrantPPLLock *this)
+{
+    TRACE("(%p)\n", this);
+
+    this->count--;
+    if(this->count)
+        return;
+
+    this->owner = -1;
+    critical_section_unlock(&this->cs);
+}
+
 /* ?_GetConcurrency@details@Concurrency@@YAIXZ */
 unsigned int __cdecl _GetConcurrency(void)
 {
