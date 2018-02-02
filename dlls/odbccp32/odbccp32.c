@@ -31,6 +31,7 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include "odbcinst.h"
 
@@ -82,16 +83,6 @@ static void push_error(int code, LPCWSTR msg)
 static void clear_errors(void)
 {
     num_errors = 0;
-}
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static inline WCHAR *heap_strdupAtoW(const char *str)
