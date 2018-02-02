@@ -1095,9 +1095,10 @@ DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
 
     /* The d3d9:texture test shows that SetLOD is ignored on non-managed
      * textures. The call always returns 0, and GetLOD always returns 0. */
-    if (texture->resource.pool != WINED3D_POOL_MANAGED)
+    if (!wined3d_resource_access_is_managed(texture->resource.access))
     {
-        TRACE("Ignoring SetLOD on %s texture, returning 0.\n", debug_d3dpool(texture->resource.pool));
+        TRACE("Ignoring LOD on texture with resource access %s.\n",
+                wined3d_debug_resource_access(texture->resource.access));
         return 0;
     }
 
