@@ -40,7 +40,6 @@ static void WINAPI DOSVM_Int17Handler(CONTEXT*);
 static void WINAPI DOSVM_Int19Handler(CONTEXT*);
 static void WINAPI DOSVM_Int1aHandler(CONTEXT*);
 static void WINAPI DOSVM_Int20Handler(CONTEXT*);
-static void WINAPI DOSVM_Int29Handler(CONTEXT*);
 static void WINAPI DOSVM_Int2aHandler(CONTEXT*);
 static void WINAPI DOSVM_Int41Handler(CONTEXT*);
 static void WINAPI DOSVM_Int4bHandler(CONTEXT*);
@@ -55,13 +54,13 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
   /* 04 */ 0,                  0,                  0,                  0,
   /* 08 */ 0,                  0,                  0,                  0,
   /* 0C */ 0,                  0,                  0,                  0,
-  /* 10 */ DOSVM_Int10Handler, DOSVM_Int11Handler, DOSVM_Int12Handler, DOSVM_Int13Handler,
+  /* 10 */ 0,                  DOSVM_Int11Handler, DOSVM_Int12Handler, DOSVM_Int13Handler,
   /* 14 */ 0,                  DOSVM_Int15Handler, 0,                  DOSVM_Int17Handler,
   /* 18 */ 0,                  DOSVM_Int19Handler, DOSVM_Int1aHandler, 0,
   /* 1C */ 0,                  0,                  0,                  0,
   /* 20 */ DOSVM_Int20Handler, DOSVM_Int21Handler, 0,                  0,
   /* 24 */ 0,                  DOSVM_Int25Handler, DOSVM_Int26Handler, 0,
-  /* 28 */ 0,                  DOSVM_Int29Handler, DOSVM_Int2aHandler, 0,
+  /* 28 */ 0,                  0,                  DOSVM_Int2aHandler, 0,
   /* 2C */ 0,                  0,                  0,                  DOSVM_Int2fHandler,
   /* 30 */ 0,                  DOSVM_Int31Handler, 0,                  0,
   /* 34 */ DOSVM_Int34Handler, DOSVM_Int35Handler, DOSVM_Int36Handler, DOSVM_Int37Handler,
@@ -794,18 +793,6 @@ static void WINAPI DOSVM_Int1aHandler( CONTEXT *context )
 static void WINAPI DOSVM_Int20Handler( CONTEXT *context )
 {
     DOSVM_Exit( 0 );
-}
-
-
-/**********************************************************************
- *	    DOSVM_Int29Handler
- *
- * Handler for int 29h (fast console output)
- */
-static void WINAPI DOSVM_Int29Handler( CONTEXT *context )
-{
-   /* Yes, it seems that this is really all this interrupt does. */
-   DOSVM_PutChar(AL_reg(context));
 }
 
 

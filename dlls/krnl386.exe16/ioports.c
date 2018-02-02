@@ -54,7 +54,6 @@
 #include "winternl.h"
 #include "kernel16_private.h"
 #include "dosexe.h"
-#include "vga.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -843,46 +842,6 @@ DWORD DOSVM_inport( int port, int size )
     case 0x22e:
         res = (DWORD)SB_ioport_in( port );
 	break;
-    /* VGA read registers */
-    case 0x3b4:  /* CRT Controller Register - Index (MDA) */
-    case 0x3b5:  /* CRT Controller Register - Other (MDA) */
-    case 0x3ba:  /* General Register - Input status 1 (MDA) */
-    case 0x3c0:  /* Attribute Controller - Address */
-    case 0x3c1:  /* Attribute Controller - Other */
-    case 0x3c2:  /* General Register - Input status 0 */
-    case 0x3c3:  /* General Register - Video subsystem enable */
-    case 0x3c4:  /* Sequencer Register - Address */
-    case 0x3c5:  /* Sequencer Register - Other */
-    case 0x3c6:
-    case 0x3c7:  /* General Register -  DAC State */
-    case 0x3c8:
-    case 0x3c9:
-    case 0x3ca:  /* General Register - Feature control */
-    case 0x3cb:
-    case 0x3cc:  /* General Register - Misc output */
-    case 0x3cd:
-    case 0x3ce:  /* Graphics Controller Register - Address */
-    case 0x3cf:  /* Graphics Controller Register - Other */
-    case 0x3d0:
-    case 0x3d1:
-    case 0x3d2:
-    case 0x3d3:
-    case 0x3d4:  /* CRT Controller Register - Index (CGA) */
-    case 0x3d5:  /* CRT Controller Register - Other (CGA) */
-    case 0x3d6:
-    case 0x3d7:
-    case 0x3d8:
-    case 0x3d9:
-    case 0x3da:
-    case 0x3db:
-    case 0x3dc:
-    case 0x3dd:
-    case 0x3de:
-    case 0x3df:
-        if (size > 1)
-            FIXME("Trying to read more than one byte from VGA!\n");
-        res = (DWORD)VGA_ioport_in( port );
-        break;
     case 0x00:
     case 0x01:
     case 0x02:
@@ -1079,51 +1038,6 @@ void DOSVM_outport( int port, int size, DWORD value )
     case 0x226:
     case 0x22c:
         SB_ioport_out( port, (BYTE)value );
-        break;
-    /* VGA Write registers */
-    case 0x3b4:  /* CRT Controller Register - Index (MDA) */
-    case 0x3b5:  /* CRT Controller Register - Other (MDA) */
-    case 0x3ba:  /* General Register - Feature Control */
-    case 0x3c0:  /* Attribute Controller - Address/Other */
-    case 0x3c1:
-    case 0x3c2:  /* General Register - Misc output */
-    case 0x3c3:  /* General Register - Video subsystem enable */
-    case 0x3c4:  /* Sequencer Register - Address */
-    case 0x3c5:  /* Sequencer Register - Other */
-    case 0x3c6:
-    case 0x3c7:
-    case 0x3c8:
-    case 0x3c9:
-    case 0x3ca:
-    case 0x3cb:
-    case 0x3cc:
-    case 0x3cd:
-    case 0x3ce:  /* Graphics Controller Register - Address */
-    case 0x3cf:  /* Graphics Controller Register - Other */
-    case 0x3d0:
-    case 0x3d1:
-    case 0x3d2:
-    case 0x3d3:
-    case 0x3d4:  /* CRT Controller Register - Index (CGA) */
-    case 0x3d5:  /* CRT Controller Register - Other (CGA) */
-    case 0x3d6:
-    case 0x3d7:
-    case 0x3d8:
-    case 0x3d9:
-    case 0x3da:
-    case 0x3db:
-    case 0x3dc:
-    case 0x3dd:
-    case 0x3de:
-    case 0x3df:
-        VGA_ioport_out( port, LOBYTE(value) );
-        if(size > 1) {
-            VGA_ioport_out( port+1, HIBYTE(value) );
-            if(size > 2) {
-                VGA_ioport_out( port+2, LOBYTE(HIWORD(value)) );
-                VGA_ioport_out( port+3, HIBYTE(HIWORD(value)) );
-            }
-        }
         break;
     case 0x00:
     case 0x01:

@@ -1,7 +1,7 @@
 MODULE    = krnl386.exe16
 IMPORTLIB = kernel
 IMPORTS   = winecrt0 kernel32 ntdll
-DELAYIMPORTS = ddraw dsound user32
+DELAYIMPORTS = dsound user32
 EXTRADLLFLAGS = -m16 -nodefaultlibs -Wb,--dll-name,kernel
 
 C_SRCS = \
@@ -15,7 +15,6 @@ C_SRCS = \
 	fpu.c \
 	global.c \
 	instr.c \
-	int10.c \
 	int13.c \
 	int15.c \
 	int21.c \
@@ -40,7 +39,6 @@ C_SRCS = \
 	task.c \
 	thunk.c \
 	utthunk.c \
-	vga.c \
 	vxd.c \
 	wowthunk.c
 
