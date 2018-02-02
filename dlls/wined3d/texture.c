@@ -1803,7 +1803,7 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
     {
         struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[i];
 
-        if (resource->pool != WINED3D_POOL_DEFAULT
+        if (resource->access & WINED3D_RESOURCE_ACCESS_CPU
                 && wined3d_texture_load_location(texture, i, context, resource->map_binding))
         {
             wined3d_texture_invalidate_location(texture, i, ~resource->map_binding);
@@ -1812,9 +1812,11 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
         {
             /* We should only get here on device reset/teardown for implicit
              * resources. */
-            if (resource->pool != WINED3D_POOL_DEFAULT || resource->type != WINED3D_RTYPE_TEXTURE_2D)
-                ERR("Discarding %s %p sub-resource %u in the %s pool.\n", debug_d3dresourcetype(resource->type),
-                        resource, i, debug_d3dpool(resource->pool));
+            if (resource->access & WINED3D_RESOURCE_ACCESS_CPU
+                    || resource->type != WINED3D_RTYPE_TEXTURE_2D)
+                ERR("Discarding %s %p sub-resource %u with resource access %s.\n",
+                        debug_d3dresourcetype(resource->type), resource, i,
+                        wined3d_debug_resource_access(resource->access));
             wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_DISCARDED);
             wined3d_texture_invalidate_location(texture, i, ~WINED3D_LOCATION_DISCARDED);
         }
