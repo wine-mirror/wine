@@ -6780,6 +6780,8 @@ static void test_ShowWindow(void)
     ok(EqualRect(&rcEmpty, &rc), "expected %s, got %s\n",
        wine_dbgstr_rect(&rcEmpty), wine_dbgstr_rect(&rc));
     DestroyWindow(hwnd);
+
+    flush_events(TRUE);
 }
 
 static DWORD CALLBACK enablewindow_thread(LPVOID arg)
@@ -6834,8 +6836,7 @@ static void test_EnableWindow(void)
     }
 
     ok(!IsWindowEnabled(hwnd), "window should not be enabled\n");
-    todo_wine
-        check_active_state(hwnd, hwnd, hwnd);
+    check_active_state(hwnd, hwnd, hwnd);
     ok(0 == GetCapture(), "GetCapture() = %p\n", GetCapture());
 
     CloseHandle(hthread);
