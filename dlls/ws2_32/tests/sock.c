@@ -1181,7 +1181,7 @@ static void test_WithWSAStartup(void)
     struct
     {
         SOCKET src, dst, dup_src, dup_dst;
-    } pairs[128];
+    } pairs[32];
     DWORD error;
 
     res = WSAStartup( version, &data );
