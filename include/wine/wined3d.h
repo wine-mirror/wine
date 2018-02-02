@@ -50,6 +50,10 @@
 #define WINEDDERR_INVALIDRECT                                   MAKE_WINED3DHRESULT(150)
 #define WINEDDERR_OVERLAYNOTVISIBLE                             MAKE_WINED3DHRESULT(577)
 
+#define WINED3D_RESOURCE_ACCESS_GPU                             0x1u
+#define WINED3D_RESOURCE_ACCESS_CPU                             0x2u
+#define WINED3D_RESOURCE_ACCESS_MAP                             0x4u
+
 enum wined3d_light_type
 {
     WINED3D_LIGHT_POINT                     = 1,
@@ -1744,13 +1748,13 @@ struct wined3d_sub_resource_desc
 {
     enum wined3d_format_id format;
     enum wined3d_multisample_type multisample_type;
-    UINT multisample_quality;
-    DWORD usage;
-    enum wined3d_pool pool;
-    UINT width;
-    UINT height;
-    UINT depth;
-    UINT size;
+    unsigned int multisample_quality;
+    unsigned int usage;
+    unsigned int access;
+    unsigned int width;
+    unsigned int height;
+    unsigned int depth;
+    unsigned int size;
 };
 
 struct wined3d_clip_status

@@ -2961,10 +2961,6 @@ static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD sta
     return context->isStateDirty[idx] & (1u << shift);
 }
 
-#define WINED3D_RESOURCE_ACCESS_GPU     0x1u
-#define WINED3D_RESOURCE_ACCESS_CPU     0x2u
-#define WINED3D_RESOURCE_ACCESS_MAP     0x4u
-
 const char *wined3d_debug_resource_access(DWORD access) DECLSPEC_HIDDEN;
 
 static inline BOOL wined3d_resource_access_is_managed(unsigned int access)

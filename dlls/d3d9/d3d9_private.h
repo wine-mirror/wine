@@ -283,6 +283,22 @@ static inline DWORD d3dusage_from_wined3dusage(unsigned int usage)
     return usage & WINED3DUSAGE_MASK;
 }
 
+static inline D3DPOOL d3dpool_from_wined3daccess(unsigned int access, unsigned int usage)
+{
+    switch (access & (WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU))
+    {
+        default:
+        case WINED3D_RESOURCE_ACCESS_GPU:
+            return D3DPOOL_DEFAULT;
+        case WINED3D_RESOURCE_ACCESS_CPU:
+            if (usage & WINED3DUSAGE_SCRATCH)
+                return D3DPOOL_SCRATCH;
+            return D3DPOOL_SYSTEMMEM;
+        case WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU:
+            return D3DPOOL_MANAGED;
+    }
+}
+
 static inline D3DPOOL d3dpool_from_wined3dpool(enum wined3d_pool pool, unsigned int usage)
 {
     if (pool == WINED3D_POOL_SYSTEM_MEM && usage & WINED3DUSAGE_SCRATCH)

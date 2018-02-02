@@ -2901,7 +2901,7 @@ HRESULT CDECL wined3d_texture_get_sub_resource_desc(const struct wined3d_texture
     desc->multisample_type = resource->multisample_type;
     desc->multisample_quality = resource->multisample_quality;
     desc->usage = resource->usage;
-    desc->pool = resource->pool;
+    desc->access = resource->access;
 
     level_idx = sub_resource_idx % texture->level_count;
     desc->width = wined3d_texture_get_level_width(texture, level_idx);
