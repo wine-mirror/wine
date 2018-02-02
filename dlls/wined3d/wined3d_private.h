@@ -2993,7 +2993,6 @@ struct wined3d_resource
     enum wined3d_multisample_type multisample_type;
     UINT multisample_quality;
     DWORD usage;
-    enum wined3d_pool pool;
     unsigned int access;
     WORD draw_binding;
     WORD map_binding;
@@ -3034,9 +3033,9 @@ static inline void wined3d_resource_release(struct wined3d_resource *resource)
 void resource_cleanup(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
         enum wined3d_resource_type type, const struct wined3d_format *format,
-        enum wined3d_multisample_type multisample_type, UINT multisample_quality,
-        DWORD usage, enum wined3d_pool pool, UINT width, UINT height, UINT depth, UINT size,
-        void *parent, const struct wined3d_parent_ops *parent_ops,
+        enum wined3d_multisample_type multisample_type, unsigned int multisample_quality,
+        unsigned int usage, unsigned int access, unsigned int width, unsigned int height, unsigned int depth,
+        unsigned int size, void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops) DECLSPEC_HIDDEN;
 void resource_unload(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
@@ -3809,7 +3808,6 @@ const char *debug_d3dtexturefiltertype(enum wined3d_texture_filter_type filter_t
 const char *debug_d3dtexturestate(enum wined3d_texture_stage_state state) DECLSPEC_HIDDEN;
 const char *debug_d3dtop(enum wined3d_texture_op d3dtop) DECLSPEC_HIDDEN;
 const char *debug_d3dtstype(enum wined3d_transform_state tstype) DECLSPEC_HIDDEN;
-const char *debug_d3dpool(enum wined3d_pool pool) DECLSPEC_HIDDEN;
 const char *debug_fboattachment(GLenum attachment) DECLSPEC_HIDDEN;
 const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
 const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;

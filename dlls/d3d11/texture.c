@@ -520,7 +520,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     wined3d_desc.multisample_type = desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = desc->SampleDesc.Quality;
     wined3d_desc.usage = wined3d_usage_from_d3d11(desc->BindFlags, desc->Usage);
-    wined3d_desc.pool = WINED3D_POOL_DEFAULT;
+    wined3d_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
     wined3d_desc.width = desc->Width;
     wined3d_desc.height = desc->Height;
     wined3d_desc.depth = 1;
@@ -977,7 +977,9 @@ static HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_devi
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.usage = wined3d_usage_from_d3d11(desc->BindFlags, desc->Usage);
-    wined3d_desc.pool = desc->Usage == D3D11_USAGE_STAGING ? WINED3D_POOL_MANAGED : WINED3D_POOL_DEFAULT;
+    wined3d_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+    if (desc->Usage == D3D11_USAGE_STAGING)
+        wined3d_desc.access |= WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
     wined3d_desc.width = desc->Width;
     wined3d_desc.height = desc->Height;
     wined3d_desc.depth = desc->Depth;

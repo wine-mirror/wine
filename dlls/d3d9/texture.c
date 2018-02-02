@@ -1220,17 +1220,13 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
     desc.multisample_quality = 0;
     desc.usage = usage & WINED3DUSAGE_MASK;
     desc.usage |= WINED3DUSAGE_TEXTURE;
-    desc.pool = pool;
+    if (pool == D3DPOOL_SCRATCH)
+        desc.usage |= WINED3DUSAGE_SCRATCH;
+    desc.access = wined3daccess_from_d3dpool(pool);
     desc.width = width;
     desc.height = height;
     desc.depth = 1;
     desc.size = 0;
-
-    if (pool == D3DPOOL_SCRATCH)
-    {
-        desc.pool = WINED3D_POOL_SYSTEM_MEM;
-        desc.usage |= WINED3DUSAGE_SCRATCH;
-    }
 
     if (pool != D3DPOOL_DEFAULT || (usage & D3DUSAGE_DYNAMIC))
         flags |= WINED3D_TEXTURE_CREATE_MAPPABLE;
@@ -1279,17 +1275,13 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
     desc.multisample_quality = 0;
     desc.usage = usage & WINED3DUSAGE_MASK;
     desc.usage |= WINED3DUSAGE_LEGACY_CUBEMAP | WINED3DUSAGE_TEXTURE;
-    desc.pool = pool;
+    if (pool == D3DPOOL_SCRATCH)
+        desc.usage |= WINED3DUSAGE_SCRATCH;
+    desc.access = wined3daccess_from_d3dpool(pool);
     desc.width = edge_length;
     desc.height = edge_length;
     desc.depth = 1;
     desc.size = 0;
-
-    if (pool == D3DPOOL_SCRATCH)
-    {
-        desc.pool = WINED3D_POOL_SYSTEM_MEM;
-        desc.usage |= WINED3DUSAGE_SCRATCH;
-    }
 
     if (pool != D3DPOOL_DEFAULT || (usage & D3DUSAGE_DYNAMIC))
         flags |= WINED3D_TEXTURE_CREATE_MAPPABLE;
@@ -1337,17 +1329,13 @@ HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *dev
     desc.multisample_quality = 0;
     desc.usage = usage & WINED3DUSAGE_MASK;
     desc.usage |= WINED3DUSAGE_TEXTURE;
-    desc.pool = pool;
+    if (pool == D3DPOOL_SCRATCH)
+        desc.usage |= WINED3DUSAGE_SCRATCH;
+    desc.access = wined3daccess_from_d3dpool(pool);
     desc.width = width;
     desc.height = height;
     desc.depth = depth;
     desc.size = 0;
-
-    if (pool == D3DPOOL_SCRATCH)
-    {
-        desc.pool = WINED3D_POOL_SYSTEM_MEM;
-        desc.usage |= WINED3DUSAGE_SCRATCH;
-    }
 
     if (!levels)
     {

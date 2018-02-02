@@ -299,11 +299,20 @@ static inline D3DPOOL d3dpool_from_wined3daccess(unsigned int access, unsigned i
     }
 }
 
-static inline D3DPOOL d3dpool_from_wined3dpool(enum wined3d_pool pool, unsigned int usage)
+static inline unsigned int wined3daccess_from_d3dpool(D3DPOOL pool)
 {
-    if (pool == WINED3D_POOL_SYSTEM_MEM && usage & WINED3DUSAGE_SCRATCH)
-        return D3DPOOL_SCRATCH;
-    return pool;
+    switch (pool)
+    {
+        case D3DPOOL_DEFAULT:
+            return WINED3D_RESOURCE_ACCESS_GPU;
+        case D3DPOOL_MANAGED:
+            return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
+        case D3DPOOL_SYSTEMMEM:
+        case D3DPOOL_SCRATCH:
+            return WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
+        default:
+            return 0;
+    }
 }
 
 #endif /* __WINE_D3D9_PRIVATE_H */

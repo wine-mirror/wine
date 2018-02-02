@@ -28,25 +28,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-static DWORD resource_access_from_pool(enum wined3d_pool pool)
-{
-    switch (pool)
-    {
-        case WINED3D_POOL_DEFAULT:
-            return WINED3D_RESOURCE_ACCESS_GPU;
-
-        case WINED3D_POOL_MANAGED:
-            return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
-
-        case WINED3D_POOL_SYSTEM_MEM:
-            return WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
-
-        default:
-            FIXME("Unhandled pool %#x.\n", pool);
-            return 0;
-    }
-}
-
 static void resource_check_usage(DWORD usage)
 {
     static const DWORD handled = WINED3DUSAGE_RENDERTARGET
@@ -75,15 +56,14 @@ static void resource_check_usage(DWORD usage)
 
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
         enum wined3d_resource_type type, const struct wined3d_format *format,
-        enum wined3d_multisample_type multisample_type, UINT multisample_quality,
-        DWORD usage, enum wined3d_pool pool, UINT width, UINT height, UINT depth, UINT size,
-        void *parent, const struct wined3d_parent_ops *parent_ops,
+        enum wined3d_multisample_type multisample_type, unsigned int multisample_quality,
+        unsigned int usage, unsigned int access, unsigned int width, unsigned int height, unsigned int depth,
+        unsigned int size, void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops)
 {
     enum wined3d_gl_resource_type base_type = WINED3D_GL_RES_TYPE_COUNT;
     enum wined3d_gl_resource_type gl_type = WINED3D_GL_RES_TYPE_COUNT;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    DWORD access = resource_access_from_pool(pool);
     BOOL tex_2d_ok = FALSE;
     unsigned int i;
 
@@ -198,7 +178,6 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->multisample_type = multisample_type;
     resource->multisample_quality = multisample_quality;
     resource->usage = usage;
-    resource->pool = pool;
     if (usage & WINED3DUSAGE_DYNAMIC)
         access |= WINED3D_RESOURCE_ACCESS_MAP;
     resource->access = access;
@@ -319,7 +298,7 @@ void CDECL wined3d_resource_get_desc(const struct wined3d_resource *resource, st
     desc->multisample_type = resource->multisample_type;
     desc->multisample_quality = resource->multisample_quality;
     desc->usage = resource->usage;
-    desc->pool = resource->pool;
+    desc->access = resource->access;
     desc->width = resource->width;
     desc->height = resource->height;
     desc->depth = resource->depth;

@@ -4662,21 +4662,6 @@ const char *debug_d3dstate(DWORD state)
     return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
 }
 
-const char *debug_d3dpool(enum wined3d_pool pool)
-{
-    switch (pool)
-    {
-#define POOL_TO_STR(p) case p: return #p
-        POOL_TO_STR(WINED3D_POOL_DEFAULT);
-        POOL_TO_STR(WINED3D_POOL_MANAGED);
-        POOL_TO_STR(WINED3D_POOL_SYSTEM_MEM);
-#undef  POOL_TO_STR
-        default:
-            FIXME("Unrecognized pool %#x.\n", pool);
-            return "unrecognized";
-    }
-}
-
 const char *debug_fboattachment(GLenum attachment)
 {
     switch(attachment)

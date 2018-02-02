@@ -186,7 +186,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
     wined3d_sample_desc_from_dxgi(&surface_desc.multisample_type,
             &surface_desc.multisample_quality, &desc->SampleDesc);
     surface_desc.usage = wined3d_usage_from_dxgi_usage(usage);
-    surface_desc.pool = WINED3D_POOL_DEFAULT;
+    surface_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
     surface_desc.width = desc->Width;
     surface_desc.height = desc->Height;
     surface_desc.depth = 1;

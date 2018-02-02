@@ -321,12 +321,12 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     HRESULT hr;
 
     TRACE("texture %p, texture_ops %p, layer_count %u, level_count %u, resource_type %s, format %s, "
-            "multisample_type %#x, multisample_quality %#x, usage %s, pool %s, width %u, height %u, depth %u, "
+            "multisample_type %#x, multisample_quality %#x, usage %s, access %s, width %u, height %u, depth %u, "
             "flags %#x, device %p, parent %p, parent_ops %p, resource_ops %p.\n",
             texture, texture_ops, layer_count, level_count, debug_d3dresourcetype(desc->resource_type),
             debug_d3dformat(desc->format), desc->multisample_type, desc->multisample_quality,
-            debug_d3dusage(desc->usage), debug_d3dpool(desc->pool), desc->width, desc->height, desc->depth,
-            flags, device, parent, parent_ops, resource_ops);
+            debug_d3dusage(desc->usage), wined3d_debug_resource_access(desc->access),
+            desc->width, desc->height, desc->depth, flags, device, parent, parent_ops, resource_ops);
 
     if (!desc->width || !desc->height || !desc->depth)
         return WINED3DERR_INVALIDCALL;
@@ -352,7 +352,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         return WINED3DERR_INVALIDCALL;
 
     if (FAILED(hr = resource_init(&texture->resource, device, desc->resource_type, format,
-            desc->multisample_type, desc->multisample_quality, desc->usage, desc->pool,
+            desc->multisample_type, desc->multisample_quality, desc->usage, desc->access,
             desc->width, desc->height, desc->depth, offset, parent, parent_ops, resource_ops)))
     {
         static unsigned int once;
@@ -2065,13 +2065,13 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (desc->usage & WINED3DUSAGE_DYNAMIC && desc->pool == WINED3D_POOL_MANAGED)
+    if (desc->usage & WINED3DUSAGE_DYNAMIC && wined3d_resource_access_is_managed(desc->access))
         FIXME("Trying to create a managed texture with dynamic usage.\n");
     if (!(desc->usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL))
             && (flags & WINED3D_TEXTURE_CREATE_MAPPABLE))
-        WARN("Creating a mappable texture in the default pool that doesn't specify dynamic usage.\n");
-    if (desc->usage & WINED3DUSAGE_RENDERTARGET && desc->pool != WINED3D_POOL_DEFAULT)
-        FIXME("Trying to create a render target that isn't in the default pool.\n");
+        WARN("Creating a mappable texture that doesn't specify dynamic usage.\n");
+    if (desc->usage & WINED3DUSAGE_RENDERTARGET && desc->access & WINED3D_RESOURCE_ACCESS_CPU)
+        FIXME("Trying to create a CPU accessible render target.\n");
 
     pow2_width = desc->width;
     pow2_height = desc->height;
@@ -2129,7 +2129,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
          *    Blts. Some apps (e.g. Swat 3) create textures with a height of
          *    16 and a width > 3000 and blt 16x16 letter areas from them to
          *    the render target. */
-        if (desc->pool == WINED3D_POOL_DEFAULT || desc->pool == WINED3D_POOL_MANAGED)
+        if (desc->access & WINED3D_RESOURCE_ACCESS_GPU)
         {
             WARN("Dimensions (%ux%u) exceed the maximum texture size.\n", pow2_width, pow2_height);
             return WINED3DERR_NOTAVAILABLE;
@@ -2597,10 +2597,11 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         }
     }
 
-    if (desc->usage & WINED3DUSAGE_DYNAMIC && (desc->pool == WINED3D_POOL_MANAGED
+    if (desc->usage & WINED3DUSAGE_DYNAMIC && (wined3d_resource_access_is_managed(desc->access)
             || desc->usage & WINED3DUSAGE_SCRATCH))
     {
-        WARN("Attempted to create a DYNAMIC texture in pool %s.\n", debug_d3dpool(desc->pool));
+        WARN("Attempted to create a DYNAMIC texture with access %s.\n",
+                wined3d_debug_resource_access(desc->access));
         return WINED3DERR_INVALIDCALL;
     }
 

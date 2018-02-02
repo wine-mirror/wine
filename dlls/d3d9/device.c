@@ -766,7 +766,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
     IUnknown *parent;
 
     wined3d_resource_get_desc(resource, &desc);
-    if (desc.pool != WINED3D_POOL_DEFAULT)
+    if (desc.access & WINED3D_RESOURCE_ACCESS_CPU)
         return D3D_OK;
 
     if (desc.resource_type != WINED3D_RTYPE_TEXTURE_2D)
@@ -1277,17 +1277,13 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, UINT width
     desc.multisample_type = multisample_type;
     desc.multisample_quality = multisample_quality;
     desc.usage = usage & WINED3DUSAGE_MASK;
-    desc.pool = pool;
+    if (pool == D3DPOOL_SCRATCH)
+        desc.usage |= WINED3DUSAGE_SCRATCH;
+    desc.access = wined3daccess_from_d3dpool(pool);
     desc.width = width;
     desc.height = height;
     desc.depth = 1;
     desc.size = 0;
-
-    if (pool == D3DPOOL_SCRATCH)
-    {
-        desc.pool = WINED3D_POOL_SYSTEM_MEM;
-        desc.usage |= WINED3DUSAGE_SCRATCH;
-    }
 
     if (is_gdi_compat_wined3dformat(desc.format))
         flags |= WINED3D_TEXTURE_CREATE_GET_DC;

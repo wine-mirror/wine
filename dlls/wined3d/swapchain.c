@@ -839,7 +839,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     texture_desc.multisample_type = swapchain->desc.multisample_type;
     texture_desc.multisample_quality = swapchain->desc.multisample_quality;
     texture_desc.usage = 0;
-    texture_desc.pool = WINED3D_POOL_DEFAULT;
+    texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
     texture_desc.width = swapchain->desc.backbuffer_width;
     texture_desc.height = swapchain->desc.backbuffer_height;
     texture_desc.depth = 1;
