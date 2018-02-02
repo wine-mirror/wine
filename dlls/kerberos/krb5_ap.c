@@ -43,6 +43,7 @@
 #include "ntsecapi.h"
 #include "ntsecpkg.h"
 #include "winternl.h"
+#include "wine/heap.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -105,21 +106,6 @@ MAKE_FUNCPTR(krb5_unparse_name_flags);
 MAKE_FUNCPTR(krb5_free_unparsed_name);
 MAKE_FUNCPTR(krb5_free_cred_contents);
 #undef MAKE_FUNCPTR
-
-static inline void *heap_alloc(SIZE_T size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline void *heap_realloc(void *p, SIZE_T size)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, p, size);
-}
-
-static inline void heap_free(void *p)
-{
-    HeapFree(GetProcessHeap(), 0, p);
-}
 
 static void load_krb5(void)
 {
@@ -757,7 +743,7 @@ static SECURITY_STATUS name_sspi_to_gss( const UNICODE_STRING *name_str, gss_nam
     gss_buffer_desc buf;
 
     buf.length = WideCharToMultiByte( CP_UNIXCP, 0, name_str->Buffer, name_str->Length / sizeof(WCHAR), NULL, 0, NULL, NULL ) + 1;
-    if (!(buf.value = HeapAlloc( GetProcessHeap(), 0, buf.length ))) return SEC_E_INSUFFICIENT_MEMORY;
+    if (!(buf.value = heap_alloc( buf.length ))) return SEC_E_INSUFFICIENT_MEMORY;
     WideCharToMultiByte( CP_UNIXCP, 0, name_str->Buffer, name_str->Length / sizeof(WCHAR), buf.value, buf.length, NULL, NULL );
     buf.length--;
 
@@ -765,7 +751,7 @@ static SECURITY_STATUS name_sspi_to_gss( const UNICODE_STRING *name_str, gss_nam
     TRACE( "gss_import_name returned %08x minor status %08x\n", ret, minor_status );
     if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
 
-    HeapFree( GetProcessHeap(), 0, buf.value );
+    heap_free( buf.value );
     return status_gss_to_sspi( ret );
 }
 
