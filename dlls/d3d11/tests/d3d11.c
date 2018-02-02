@@ -23010,8 +23010,8 @@ static void test_fractional_viewports(void)
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
     static const float viewport_offsets[] =
     {
-        0.0f, 0.5f, 0.25f, 0.125f, 0.0625f, 0.03125f, 0.015625f, 0.0078125f, 0.00390625f,
-        1.0f / 128.0f, 63.0f / 128.0f,
+        0.0f, 1.0f / 2.0f, 1.0f / 4.0f, 1.0f / 8.0f, 1.0f / 16.0f, 1.0f / 32.0f,
+        1.0f / 64.0f, 1.0f / 128.0f, 1.0f / 256.0f, 63.0f / 128.0f,
     };
 
     if (!init_test_context(&test_context, &feature_level))
