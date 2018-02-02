@@ -1429,20 +1429,5 @@ typedef struct {
     _FPIEEE_VALUE Result;
 } _FPIEEE_RECORD, *_PFPIEEE_RECORD;
 
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), 0, len);
-}
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
-
 #define INHERIT_THREAD_PRIORITY 0xF000
 #endif /* __WINE_MSVCRT_H */

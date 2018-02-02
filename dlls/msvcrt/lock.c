@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "wine/heap.h"
 #include "msvcrt.h"
 #include "cppexcept.h"
 #include "mtdll.h"
