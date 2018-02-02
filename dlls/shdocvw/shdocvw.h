@@ -35,6 +35,7 @@
 #include "exdisp.h"
 
 #include "wine/unicode.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 
 /**********************************************************************
@@ -49,18 +50,5 @@ extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid,
 extern LONG SHDOCVW_refCount DECLSPEC_HIDDEN;
 static inline void SHDOCVW_LockModule(void) { InterlockedIncrement( &SHDOCVW_refCount ); }
 static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_refCount ); }
-
-
-/* memory allocation functions */
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), 0, len);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
 
 #endif /* __WINE_SHDOCVW_H */
