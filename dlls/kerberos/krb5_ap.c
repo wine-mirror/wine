@@ -1339,7 +1339,7 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
     TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
-    if (context) return SEC_E_INVALID_HANDLE;
+    if (!context) return SEC_E_INVALID_HANDLE;
     ctxt_handle = ctxthandle_sspi_to_gss( context );
 
     if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
