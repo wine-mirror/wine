@@ -23,13 +23,3 @@ HRESULT create_window_object(HWND, const IID*, void**) DECLSPEC_HIDDEN;
 HRESULT get_accpropservices_factory(REFIID, void**) DECLSPEC_HIDDEN;
 
 int convert_child_id(VARIANT *v) DECLSPEC_HIDDEN;
-
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
