@@ -42,6 +42,7 @@
 #include "comctl32.h"
 #include "uxtheme.h"
 #include "vssym32.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -920,7 +921,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    {
 	    CREATESTRUCTW *pcs = (CREATESTRUCTW*)lParam;
 
-            infoPtr = Alloc (sizeof(UPDOWN_INFO));
+            infoPtr = heap_alloc_zero(sizeof(*infoPtr));
 	    SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
 	    /* initialize the info struct */
@@ -953,9 +954,9 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    break;
 
 	case WM_DESTROY:
-	    Free (infoPtr->AccelVect);
+	    heap_free (infoPtr->AccelVect);
             UPDOWN_ResetSubclass (infoPtr);
-	    Free (infoPtr);
+	    heap_free (infoPtr);
 	    SetWindowLongPtrW (hwnd, 0, 0);
             theme = GetWindowTheme (hwnd);
             CloseThemeData (theme);
@@ -1080,13 +1081,13 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    TRACE("UDM_SETACCEL\n");
 
 	    if(infoPtr->AccelVect) {
-		Free (infoPtr->AccelVect);
+		heap_free (infoPtr->AccelVect);
 		infoPtr->AccelCount = 0;
 		infoPtr->AccelVect  = 0;
       	    }
 	    if(wParam==0) return TRUE;
-	    infoPtr->AccelVect = Alloc (wParam*sizeof(UDACCEL));
-	    if(infoPtr->AccelVect == 0) return FALSE;
+	    infoPtr->AccelVect = heap_alloc(wParam*sizeof(UDACCEL));
+	    if(!infoPtr->AccelVect) return FALSE;
 	    memcpy(infoPtr->AccelVect, (void*)lParam, wParam*sizeof(UDACCEL));
             infoPtr->AccelCount = wParam;
 
