@@ -20,8 +20,8 @@
 @ stub -arch=win64 ??0_Context@details@Concurrency@@QEAA@PEAVContext@2@@Z
 @ thiscall -arch=i386 ??0_NonReentrantBlockingLock@details@Concurrency@@QAE@XZ(ptr) msvcr120.??0_NonReentrantBlockingLock@details@Concurrency@@QAE@XZ
 @ cdecl -arch=win64 ??0_NonReentrantBlockingLock@details@Concurrency@@QEAA@XZ(ptr) msvcr120.??0_NonReentrantBlockingLock@details@Concurrency@@QEAA@XZ
-@ stub -arch=i386 ??0_NonReentrantPPLLock@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ
+@ thiscall -arch=i386 ??0_NonReentrantPPLLock@details@Concurrency@@QAE@XZ(ptr) msvcr120.??0_NonReentrantPPLLock@details@Concurrency@@QAE@XZ
+@ cdecl -arch=win64 ??0_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ(ptr) msvcr120.??0_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ
 @ stub -arch=i386 ??0_ReaderWriterLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0_ReaderWriterLock@details@Concurrency@@QEAA@XZ
 @ thiscall -arch=i386 ??0_ReentrantBlockingLock@details@Concurrency@@QAE@XZ(ptr) msvcr120.??0_ReentrantBlockingLock@details@Concurrency@@QAE@XZ
@@ -296,8 +296,8 @@
 @ stub -arch=win64 ?_Abort@_StructuredTaskCollection@details@Concurrency@@AEAAXXZ
 @ thiscall -arch=i386 ?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) msvcr120.?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ(ptr) msvcr120.?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ
-@ stub -arch=i386 ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QAEXPAX@Z
-@ stub -arch=win64 ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QEAAXPEAX@Z
+@ thiscall -arch=i386 ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QAEXPAX@Z(ptr ptr) msvcr120.?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QAEXPAX@Z
+@ cdecl -arch=win64 ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QEAAXPEAX@Z(ptr ptr) msvcr120.?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QEAAXPEAX@Z
 @ thiscall -arch=i386 ?_Acquire@_ReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) msvcr120.?_Acquire@_ReentrantBlockingLock@details@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?_Acquire@_ReentrantBlockingLock@details@Concurrency@@QEAAXXZ(ptr) msvcr120.?_Acquire@_ReentrantBlockingLock@details@Concurrency@@QEAAXXZ
 @ stub -arch=i386 ?_Acquire@_ReentrantLock@details@Concurrency@@QAEXXZ
@@ -404,8 +404,8 @@
 @ cdecl -arch=win64 ?_Reference@_Scheduler@details@Concurrency@@QEAAIXZ(ptr) msvcr120.?_Reference@_Scheduler@details@Concurrency@@QEAAIXZ
 @ thiscall -arch=i386 ?_Release@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) msvcr120.?_Release@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?_Release@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ(ptr) msvcr120.?_Release@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ
-@ stub -arch=i386 ?_Release@_NonReentrantPPLLock@details@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?_Release@_NonReentrantPPLLock@details@Concurrency@@QEAAXXZ
+@ thiscall -arch=i386 ?_Release@_NonReentrantPPLLock@details@Concurrency@@QAEXXZ(ptr) msvcr120.?_Release@_NonReentrantPPLLock@details@Concurrency@@QAEXXZ
+@ cdecl -arch=win64 ?_Release@_NonReentrantPPLLock@details@Concurrency@@QEAAXXZ(ptr) msvcr120.?_Release@_NonReentrantPPLLock@details@Concurrency@@QEAAXXZ
 @ thiscall -arch=i386 ?_Release@_ReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) msvcr120.?_Release@_ReentrantBlockingLock@details@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?_Release@_ReentrantBlockingLock@details@Concurrency@@QEAAXXZ(ptr) msvcr120.?_Release@_ReentrantBlockingLock@details@Concurrency@@QEAAXXZ
 @ stub -arch=i386 ?_Release@_ReentrantLock@details@Concurrency@@QAEXXZ

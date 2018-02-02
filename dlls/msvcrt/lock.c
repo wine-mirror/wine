@@ -527,6 +527,36 @@ void __thiscall critical_section_scoped_lock_dtor(critical_section_scoped_lock *
     critical_section_unlock(this->cs);
 }
 
+typedef struct
+{
+    critical_section cs;
+} _NonReentrantPPLLock;
+
+/* ??0_NonReentrantPPLLock@details@Concurrency@@QAE@XZ */
+/* ??0_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_NonReentrantPPLLock_ctor, 4)
+_NonReentrantPPLLock* __thiscall _NonReentrantPPLLock_ctor(_NonReentrantPPLLock *this)
+{
+    FIXME("(%p) stub\n", this);
+    return this;
+}
+
+/* ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QAEXPAX@Z */
+/* ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QEAAXPEAX@Z */
+DEFINE_THISCALL_WRAPPER(_NonReentrantPPLLock__Acquire, 8)
+void __thiscall _NonReentrantPPLLock__Acquire(_NonReentrantPPLLock *this, cs_queue *q)
+{
+    FIXME("(%p %p) stub\n", this, q);
+}
+
+/* ?_Release@_NonReentrantPPLLock@details@Concurrency@@QAEXXZ */
+/* ?_Release@_NonReentrantPPLLock@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_NonReentrantPPLLock__Release, 4)
+void __thiscall _NonReentrantPPLLock__Release(_NonReentrantPPLLock *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
 /* ?_GetConcurrency@details@Concurrency@@YAIXZ */
 unsigned int __cdecl _GetConcurrency(void)
 {

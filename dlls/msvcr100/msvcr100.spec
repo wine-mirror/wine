@@ -12,8 +12,8 @@
 @ cdecl -arch=win64 ??0SchedulerPolicy@Concurrency@@QEAA@XZ(ptr) SchedulerPolicy_ctor
 @ thiscall -arch=win32 ??0_NonReentrantBlockingLock@details@Concurrency@@QAE@XZ(ptr) _ReentrantBlockingLock_ctor
 @ cdecl -arch=win64 ??0_NonReentrantBlockingLock@details@Concurrency@@QEAA@XZ(ptr) _ReentrantBlockingLock_ctor
-@ stub -arch=win32 ??0_NonReentrantPPLLock@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ
+@ thiscall -arch=win32 ??0_NonReentrantPPLLock@details@Concurrency@@QAE@XZ(ptr) _NonReentrantPPLLock_ctor
+@ cdecl -arch=win64 ??0_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ(ptr) _NonReentrantPPLLock_ctor
 @ stub -arch=win32 ??0_ReaderWriterLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0_ReaderWriterLock@details@Concurrency@@QEAA@XZ
 @ thiscall -arch=win32 ??0_ReentrantBlockingLock@details@Concurrency@@QAE@XZ(ptr) _ReentrantBlockingLock_ctor
@@ -297,8 +297,8 @@
 @ stub -arch=win64 ?_Abort@_StructuredTaskCollection@details@Concurrency@@AEAAXXZ
 @ thiscall -arch=win32 ?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) _ReentrantBlockingLock__Acquire
 @ cdecl -arch=win64 ?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ(ptr) _ReentrantBlockingLock__Acquire
-@ stub -arch=win32 ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QAEXPAX@Z
-@ stub -arch=win64 ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QEAAXPEAX@Z
+@ thiscall -arch=win32 ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QAEXPAX@Z(ptr ptr) _NonReentrantPPLLock__Acquire
+@ cdecl -arch=win64 ?_Acquire@_NonReentrantPPLLock@details@Concurrency@@QEAAXPEAX@Z(ptr ptr) _NonReentrantPPLLock__Acquire
 @ thiscall -arch=win32 ?_Acquire@_ReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) _ReentrantBlockingLock__Acquire
 @ cdecl -arch=win64 ?_Acquire@_ReentrantBlockingLock@details@Concurrency@@QEAAXXZ(ptr) _ReentrantBlockingLock__Acquire
 @ stub -arch=win32 ?_Acquire@_ReentrantLock@details@Concurrency@@QAEXXZ
@@ -343,8 +343,8 @@
 @ cdecl -arch=win64 ?_NumberOfSpins@?$_SpinWait@$0A@@details@Concurrency@@IEAAKXZ(ptr) SpinWait__NumberOfSpins
 @ thiscall -arch=win32 ?_Release@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) _ReentrantBlockingLock__Release
 @ cdecl -arch=win64 ?_Release@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ(ptr) _ReentrantBlockingLock__Release
-@ stub -arch=win32 ?_Release@_NonReentrantPPLLock@details@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?_Release@_NonReentrantPPLLock@details@Concurrency@@QEAAXXZ
+@ thiscall -arch=win32 ?_Release@_NonReentrantPPLLock@details@Concurrency@@QAEXXZ(ptr) _NonReentrantPPLLock__Release
+@ cdecl -arch=win64 ?_Release@_NonReentrantPPLLock@details@Concurrency@@QEAAXXZ(ptr) _NonReentrantPPLLock__Release
 @ thiscall -arch=win32 ?_Release@_ReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) _ReentrantBlockingLock__Release
 @ cdecl -arch=win64 ?_Release@_ReentrantBlockingLock@details@Concurrency@@QEAAXXZ(ptr) _ReentrantBlockingLock__Release
 @ stub -arch=win32 ?_Release@_ReentrantLock@details@Concurrency@@QAEXXZ
