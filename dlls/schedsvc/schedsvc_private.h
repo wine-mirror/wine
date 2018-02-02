@@ -19,29 +19,10 @@
 #ifndef __WINE_SCHEDSVC_PRIVATE_H__
 #define __WINE_SCHEDSVC_PRIVATE_H__
 
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 void schedsvc_auto_start(void) DECLSPEC_HIDDEN;
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-}
-
-static inline void* __WINE_ALLOC_SIZE(2) heap_realloc(void *mem, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, mem, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
 
 static inline WCHAR *heap_strdupW(const WCHAR *src)
 {
