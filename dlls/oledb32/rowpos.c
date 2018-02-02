@@ -28,6 +28,7 @@
 
 #include "oledb_private.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
