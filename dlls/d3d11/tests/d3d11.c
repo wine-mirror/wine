@@ -1004,6 +1004,48 @@ static void check_texture_uvec4_(unsigned int line, ID3D11Texture2D *texture,
         check_texture_sub_resource_uvec4_(line, texture, sub_resource_idx, NULL, expected_value);
 }
 
+static BOOL use_warp_adapter;
+static unsigned int use_adapter_idx;
+
+static IDXGIAdapter *create_adapter(void)
+{
+    IDXGIFactory4 *factory4;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    HRESULT hr;
+
+    if (!use_warp_adapter && !use_adapter_idx)
+        return NULL;
+
+    if (FAILED(hr = CreateDXGIFactory1(&IID_IDXGIFactory, (void **)&factory)))
+    {
+        trace("Failed to create IDXGIFactory, hr %#x.\n", hr);
+        return NULL;
+    }
+
+    adapter = NULL;
+    if (use_warp_adapter)
+    {
+        if (SUCCEEDED(hr = IDXGIFactory_QueryInterface(factory, &IID_IDXGIFactory4, (void **)&factory4)))
+        {
+            hr = IDXGIFactory4_EnumWarpAdapter(factory4, &IID_IDXGIAdapter, (void **)&adapter);
+            IDXGIFactory4_Release(factory4);
+        }
+        else
+        {
+            trace("Failed to get IDXGIFactory4, hr %#x.\n", hr);
+        }
+    }
+    else
+    {
+        hr = IDXGIFactory_EnumAdapters(factory, use_adapter_idx, &adapter);
+    }
+    IDXGIFactory_Release(factory);
+    if (FAILED(hr))
+        trace("Failed to get adapter, hr %#x.\n", hr);
+    return adapter;
+}
+
 static ID3D11Device *create_device(const struct device_desc *desc)
 {
     static const D3D_FEATURE_LEVEL default_feature_level[] =
@@ -1015,7 +1057,9 @@ static ID3D11Device *create_device(const struct device_desc *desc)
     const D3D_FEATURE_LEVEL *feature_level;
     UINT flags = desc ? desc->flags : 0;
     unsigned int feature_level_count;
+    IDXGIAdapter *adapter;
     ID3D11Device *device;
+    HRESULT hr;
 
     if (desc && desc->feature_level)
     {
@@ -1028,14 +1072,22 @@ static ID3D11Device *create_device(const struct device_desc *desc)
         feature_level_count = ARRAY_SIZE(default_feature_level);
     }
 
-    if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, flags, feature_level, feature_level_count,
-            D3D11_SDK_VERSION, &device, NULL, NULL)))
+    if ((adapter = create_adapter()))
+    {
+        hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, flags,
+                feature_level, feature_level_count, D3D11_SDK_VERSION, &device, NULL, NULL);
+        IDXGIAdapter_Release(adapter);
+        return SUCCEEDED(hr) ? device : NULL;
+    }
+
+    if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, flags,
+            feature_level, feature_level_count, D3D11_SDK_VERSION, &device, NULL, NULL)))
         return device;
-    if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_WARP, NULL, flags, feature_level, feature_level_count,
-            D3D11_SDK_VERSION, &device, NULL, NULL)))
+    if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_WARP, NULL, flags,
+            feature_level, feature_level_count, D3D11_SDK_VERSION, &device, NULL, NULL)))
         return device;
-    if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_REFERENCE, NULL, flags, feature_level, feature_level_count,
-            D3D11_SDK_VERSION, &device, NULL, NULL)))
+    if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_REFERENCE, NULL, flags,
+            feature_level, feature_level_count, D3D11_SDK_VERSION, &device, NULL, NULL)))
         return device;
 
     return NULL;
@@ -24738,6 +24790,18 @@ static void test_generate_mips(void)
 
 START_TEST(d3d11)
 {
+    unsigned int argc, i;
+    char **argv;
+
+    argc = winetest_get_mainargs(&argv);
+    for (i = 2; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "--warp"))
+            use_warp_adapter = TRUE;
+        else if (!strcmp(argv[i], "--adapter") && i + 1 < argc)
+            use_adapter_idx = atoi(argv[++i]);
+    }
+
     test_create_device();
     run_for_each_feature_level(test_device_interfaces);
     test_get_immediate_context();
