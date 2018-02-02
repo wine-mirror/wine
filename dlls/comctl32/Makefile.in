@@ -35,7 +35,6 @@ C_SRCS = \
 	theme_button.c \
 	theme_combo.c \
 	theme_dialog.c \
-	theme_edit.c \
 	theme_listbox.c \
 	theme_scrollbar.c \
 	theming.c \

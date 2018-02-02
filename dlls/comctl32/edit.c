@@ -4,6 +4,7 @@
  *	Copyright  David W. Metcalfe, 1994
  *	Copyright  William Magro, 1995, 1996
  *	Copyright  Frans van Dorsselaer, 1996, 1997
+ *	Copyright  Frank Richter, 2005
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -54,6 +55,8 @@
 #include "imm.h"
 #include "usp10.h"
 #include "commctrl.h"
+#include "uxtheme.h"
+#include "vsstyle.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -3596,6 +3599,50 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
             EndPaint(es->hwndSelf, &ps);
 }
 
+static void EDIT_WM_NCPaint(HWND hwnd, HRGN region)
+{
+    DWORD exStyle = GetWindowLongW(hwnd, GWL_EXSTYLE);
+    HTHEME theme = GetWindowTheme(hwnd);
+    HRGN cliprgn = region;
+
+    if (theme && exStyle & WS_EX_CLIENTEDGE)
+    {
+        HDC dc;
+        RECT r;
+        int cxEdge = GetSystemMetrics(SM_CXEDGE),
+            cyEdge = GetSystemMetrics(SM_CYEDGE);
+        const int part = EP_EDITTEXT;
+        int state = ETS_NORMAL;
+        DWORD dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
+
+        if (!IsWindowEnabled(hwnd))
+            state = ETS_DISABLED;
+        else if (dwStyle & ES_READONLY)
+            state = ETS_READONLY;
+        else if (GetFocus() == hwnd)
+            state = ETS_FOCUSED;
+
+        GetWindowRect(hwnd, &r);
+
+        /* New clipping region passed to default proc to exclude border */
+        cliprgn = CreateRectRgn(r.left + cxEdge, r.top + cyEdge,
+            r.right - cxEdge, r.bottom - cyEdge);
+        if (region != (HRGN)1)
+            CombineRgn(cliprgn, cliprgn, region, RGN_AND);
+        OffsetRect(&r, -r.left, -r.top);
+
+        dc = GetDCEx(hwnd, region, DCX_WINDOW|DCX_INTERSECTRGN);
+        OffsetRect(&r, -r.left, -r.top);
+
+        if (IsThemeBackgroundPartiallyTransparent(theme, part, state))
+            DrawThemeParentBackground(hwnd, dc, &r);
+        DrawThemeBackground(theme, dc, part, state, &r, 0);
+        ReleaseDC(hwnd, dc);
+    }
+
+    /* Call default proc to get the scrollbars etc. also painted */
+    DefWindowProcW (hwnd, WM_NCPAINT, (WPARAM)cliprgn, 0);
+}
 
 /*********************************************************************
  *
@@ -4356,48 +4403,53 @@ cleanup:
  *	WM_CREATE
  *
  */
-static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
+static LRESULT EDIT_WM_Create(EDITSTATE *es, const WCHAR *name)
 {
-        RECT clientRect;
+    RECT clientRect;
 
-	TRACE("%s\n", debugstr_w(name));
-       /*
-        *	To initialize some final structure members, we call some helper
-        *	functions.  However, since the EDITSTATE is not consistent (i.e.
-        *	not fully initialized), we should be very careful which
-        *	functions can be called, and in what order.
-        */
-        EDIT_WM_SetFont(es, 0, FALSE);
-        EDIT_EM_EmptyUndoBuffer(es);
+    TRACE("%s\n", debugstr_w(name));
 
-        /* We need to calculate the format rect
-           (applications may send EM_SETMARGINS before the control gets visible) */
-        GetClientRect(es->hwndSelf, &clientRect);
-        EDIT_SetRectNP(es, &clientRect);
+    /*
+     * To initialize some final structure members, we call some helper
+     * functions.  However, since the EDITSTATE is not consistent (i.e.
+     * not fully initialized), we should be very careful which
+     * functions can be called, and in what order.
+     */
+    EDIT_WM_SetFont(es, 0, FALSE);
+    EDIT_EM_EmptyUndoBuffer(es);
 
-       if (name && *name) {
-	   EDIT_EM_ReplaceSel(es, FALSE, name, strlenW(name), FALSE, FALSE);
-	   /* if we insert text to the editline, the text scrolls out
-            * of the window, as the caret is placed after the insert
-            * pos normally; thus we reset es->selection... to 0 and
-            * update caret
-            */
-	   es->selection_start = es->selection_end = 0;
-           /* Adobe Photoshop does NOT like this. and MSDN says that EN_CHANGE
-            * Messages are only to be sent when the USER does something to
-            * change the contents. So I am removing this EN_CHANGE
-            *
-            * EDIT_NOTIFY_PARENT(es, EN_CHANGE);
-            */
-	   EDIT_EM_ScrollCaret(es);
-       }
-       /* force scroll info update */
-       EDIT_UpdateScrollInfo(es);
-       /* The rule seems to return 1 here for success */
-       /* Power Builder masked edit controls will crash  */
-       /* if not. */
-       /* FIXME: is that in all cases so ? */
-       return 1;
+    /* We need to calculate the format rect
+       (applications may send EM_SETMARGINS before the control gets visible) */
+    GetClientRect(es->hwndSelf, &clientRect);
+    EDIT_SetRectNP(es, &clientRect);
+
+    if (name && *name)
+    {
+        EDIT_EM_ReplaceSel(es, FALSE, name, strlenW(name), FALSE, FALSE);
+        /* if we insert text to the editline, the text scrolls out
+         * of the window, as the caret is placed after the insert
+         * pos normally; thus we reset es->selection... to 0 and
+         * update caret
+         */
+        es->selection_start = es->selection_end = 0;
+        /* Adobe Photoshop does NOT like this. and MSDN says that EN_CHANGE
+         * Messages are only to be sent when the USER does something to
+         * change the contents. So I am removing this EN_CHANGE
+         *
+         * EDIT_NOTIFY_PARENT(es, EN_CHANGE);
+         */
+        EDIT_EM_ScrollCaret(es);
+    }
+
+    /* force scroll info update */
+    EDIT_UpdateScrollInfo(es);
+    OpenThemeData(es->hwndSelf, WC_EDITW);
+
+    /* The rule seems to return 1 here for success */
+    /* Power Builder masked edit controls will crash  */
+    /* if not. */
+    /* FIXME: is that in all cases so ? */
+    return 1;
 }
 
 
@@ -4409,6 +4461,10 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
 static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 {
     LINEDEF *pc, *pp;
+    HTHEME theme;
+
+    theme = GetWindowTheme(es->hwndSelf);
+    CloseThemeData(theme);
 
     /* The app can own the text buffer handle */
     if (es->hloc32W && (es->hloc32W != es->hlocapp))
@@ -4417,23 +4473,24 @@ static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
     EDIT_InvalidateUniscribeData(es);
 
     pc = es->first_line_def;
-	while (pc)
-	{
-		pp = pc->next;
-		HeapFree(GetProcessHeap(), 0, pc);
-		pc = pp;
-	}
+    while (pc)
+    {
+        pp = pc->next;
+        HeapFree(GetProcessHeap(), 0, pc);
+        pc = pp;
+    }
 
-	SetWindowLongPtrW( es->hwndSelf, 0, 0 );
-	HeapFree(GetProcessHeap(), 0, es->undo_text);
-	HeapFree(GetProcessHeap(), 0, es);
+    SetWindowLongPtrW( es->hwndSelf, 0, 0 );
+    HeapFree(GetProcessHeap(), 0, es->undo_text);
+    HeapFree(GetProcessHeap(), 0, es);
 
-	return 0;
+    return 0;
 }
 
 static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     EDITSTATE *es = (EDITSTATE *)GetWindowLongPtrW(hwnd, 0);
+    HTHEME theme = GetWindowTheme(hwnd);
     LRESULT result = 0;
     RECT *rect;
 
@@ -4733,6 +4790,8 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     case WM_ENABLE:
         es->bEnableState = (BOOL) wParam;
         EDIT_UpdateText(es, NULL, TRUE);
+        if (theme)
+            RedrawWindow(hwnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
         break;
 
     case WM_ERASEBKGND:
@@ -4762,6 +4821,8 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
     case WM_KILLFOCUS:
         result = EDIT_WM_KillFocus(es);
+        if (theme)
+            RedrawWindow(hwnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
         break;
 
     case WM_LBUTTONDBLCLK:
@@ -4789,12 +4850,18 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         EDIT_WM_Paint(es, (HDC)wParam);
         break;
 
+    case WM_NCPAINT:
+        EDIT_WM_NCPaint(hwnd, (HRGN)wParam);
+        break;
+
     case WM_PASTE:
         EDIT_WM_Paste(es);
         break;
 
     case WM_SETFOCUS:
         EDIT_WM_SetFocus(es);
+        if (theme)
+            RedrawWindow(hwnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
         break;
 
     case WM_SETFONT:
@@ -4915,6 +4982,11 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
                 break;
             }
         }
+        break;
+
+    case WM_THEMECHANGED:
+        CloseThemeData (theme);
+        OpenThemeData(hwnd, WC_EDITW);
         break;
 
     default:

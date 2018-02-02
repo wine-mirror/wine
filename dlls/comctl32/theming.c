@@ -60,7 +60,6 @@ static const struct ThemingSubclass
     {WC_BUTTONW,           THEMING_ButtonSubclassProc},
     {WC_COMBOBOXW,         THEMING_ComboSubclassProc},
     {comboLboxClass,       THEMING_ListBoxSubclassProc},
-    {WC_EDITW,             THEMING_EditSubclassProc},
     {WC_LISTBOXW,          THEMING_ListBoxSubclassProc},
     {WC_SCROLLBARW,        THEMING_ScrollbarSubclassProc}
 };
@@ -98,7 +97,6 @@ MAKE_SUBCLASS_PROC(2)
 MAKE_SUBCLASS_PROC(3)
 MAKE_SUBCLASS_PROC(4)
 MAKE_SUBCLASS_PROC(5)
-MAKE_SUBCLASS_PROC(6)
 
 static const WNDPROC subclassProcs[NUM_SUBCLASSES] = {
     subclass_proc0,
@@ -107,7 +105,6 @@ static const WNDPROC subclassProcs[NUM_SUBCLASSES] = {
     subclass_proc3,
     subclass_proc4,
     subclass_proc5,
-    subclass_proc6
 };
 
 /***********************************************************************
