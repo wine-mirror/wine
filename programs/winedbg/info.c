@@ -930,15 +930,6 @@ void info_win32_exception(void)
     case EXCEPTION_WINE_ASSERTION:
         dbg_printf("assertion failed");
         break;
-    case EXCEPTION_VM86_INTx:
-        dbg_printf("interrupt %02lx in vm86 mode", rec->ExceptionInformation[0]);
-        break;
-    case EXCEPTION_VM86_STI:
-        dbg_printf("sti in vm86 mode");
-        break;
-    case EXCEPTION_VM86_PICRETURN:
-        dbg_printf("PIC return in vm86 mode");
-        break;
     case EXCEPTION_FLT_DENORMAL_OPERAND:
         dbg_printf("denormal float operand");
         break;
