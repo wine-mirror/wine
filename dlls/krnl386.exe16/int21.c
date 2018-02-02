@@ -369,40 +369,6 @@ static void INT21_SetCurrentDrive( BYTE drive )
 
 
 /***********************************************************************
- *           INT21_ReadChar
- *
- * Reads a character from the standard input.
- * Extended keycodes will be returned as two separate characters.
- */
-static BOOL INT21_ReadChar( BYTE *input, CONTEXT *waitctx )
-{
-    static BYTE pending_scan = 0;
-
-    if (pending_scan)
-    {
-        if (input)
-            *input = pending_scan;
-        if (waitctx)
-            pending_scan = 0;
-        return TRUE;
-    }
-    else
-    {
-        BYTE ascii;
-        BYTE scan;
-        if (!DOSVM_Int16ReadChar( &ascii, &scan, waitctx ))
-            return FALSE;
-
-        if (input)
-            *input = ascii;
-        if (waitctx && !ascii)
-            pending_scan = scan;
-        return TRUE;
-    }
-}
-
-
-/***********************************************************************
  *           INT21_GetSystemCountryCode
  *
  * Return DOS country code for default system locale.
@@ -1139,67 +1105,6 @@ static BOOL INT21_CreateFile( CONTEXT *context,
            AX_reg(context), dosStatus );
 
     return TRUE;
-}
-
-
-/***********************************************************************
- *           INT21_BufferedInput
- *
- * Handler for function 0x0a and reading from console using
- * function 0x3f.
- *
- * Reads a string of characters from standard input until
- * enter key is pressed. Returns either number of characters 
- * read from console including terminating CR or 
- * zero if capacity was zero.
- */
-static WORD INT21_BufferedInput( CONTEXT *context, BYTE *ptr, WORD capacity )
-{
-    BYTE length = 0;
-
-    /*
-     * Return immediately if capacity is zero.
-     */
-    if (capacity == 0)
-        return 0;
-
-    while(TRUE)
-    {
-        BYTE ascii;
-        BYTE scan;
-
-        DOSVM_Int16ReadChar( &ascii, &scan, context );
-
-        if (ascii == '\r' || ascii == '\n')
-        {
-            ptr[length] = '\r';
-            return length + 1;
-        }
-
-        /*
-         * DOS handles only backspace and KEY_LEFT
-         *        perhaps we should do more
-         */
-        if (ascii == '\b' || scan == KEY_LEFT)
-        {
-            if (length==0) continue;
-            DOSVM_PutChar( '\b' );
-            length--;
-            continue;
-        }
-
-        /*
-         * If the buffer becomes filled to within one byte of
-         * capacity, DOS rejects all further characters up to,
-         * but not including, the terminating carriage return.
-         */
-        if (ascii != 0 && length < capacity-1)
-        {
-            DOSVM_PutChar( ascii );
-            ptr[length] = ascii;
-            length++;
-        }
-    }
 }
 
 
@@ -2882,7 +2787,6 @@ static void INT21_Ioctl( CONTEXT *context )
         }
         else
         {
-            DOSDEV_SetSharingRetry( CX_reg(context), DX_reg(context) );
             RESET_CFLAG( context );
         }
         break;
@@ -4174,16 +4078,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
-        {
-            BYTE ascii;
-            TRACE("DIRECT CHARACTER INPUT WITH ECHO\n");
-            INT21_ReadChar( &ascii, context );
-            SET_AL( context, ascii );
-            /*
-             * FIXME: What to echo when extended keycodes are read?
-             */
-            DOSVM_PutChar(AL_reg(context));
-        }
+        TRACE("DIRECT CHARACTER INPUT WITH ECHO - not supported\n");
         break;
 
     case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
@@ -4202,19 +4097,9 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         {
             TRACE("Direct Console Input\n");
 
-            if (INT21_ReadChar( NULL, NULL ))
-            {
-                BYTE ascii;
-                INT21_ReadChar( &ascii, context );
-                SET_AL( context, ascii );
-                RESET_ZFLAG( context );
-            }
-            else
-            {
-                /* no character available */
-                SET_AL( context, 0 );
-                SET_ZFLAG( context );
-            }
+            /* no character available */
+            SET_AL( context, 0 );
+            SET_ZFLAG( context );
         } 
         else 
         {
@@ -4229,21 +4114,13 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
-        {
-            BYTE ascii;
-            TRACE("DIRECT CHARACTER INPUT WITHOUT ECHO\n");
-            INT21_ReadChar( &ascii, context );
-            SET_AL( context, ascii );
-        }
+        TRACE("DIRECT CHARACTER INPUT WITHOUT ECHO - not supported\n");
+        SET_AL( context, 0 );
         break;
 
     case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
-        {
-            BYTE ascii;
-            TRACE("CHARACTER INPUT WITHOUT ECHO\n");
-            INT21_ReadChar( &ascii, context );
-            SET_AL( context, ascii );
-        }
+        TRACE("CHARACTER INPUT WITHOUT ECHO - not supported\n");
+        SET_AL( context, 0 );
         break;
 
     case 0x09: /* WRITE STRING TO STANDARD OUTPUT */
@@ -4267,43 +4144,12 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x0a: /* BUFFERED INPUT */
-        {
-            BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
-                                           context->SegDs,
-                                           context->Edx);
-            WORD result;
-
-            TRACE( "BUFFERED INPUT (size=%d)\n", ptr[0] );
-
-            /*
-             * FIXME: Some documents state that
-             *        ptr[1] holds number of chars from last input which 
-             *        may be recalled on entry, other documents do not mention
-             *        this at all.
-             */
-            if (ptr[1])
-                TRACE( "Handle old chars in buffer!\n" );
-
-            /*
-             * ptr[0] - capacity (includes terminating CR)
-             * ptr[1] - characters read (excludes terminating CR)
-             */
-            result = INT21_BufferedInput( context, ptr + 2, ptr[0] );
-            if (result > 0)
-                ptr[1] = (BYTE)result - 1;
-            else
-                ptr[1] = 0;
-        }
+        TRACE( "BUFFERED INPUT - not supported\n" );
         break;
 
     case 0x0b: /* GET STDIN STATUS */
-        TRACE( "GET STDIN STATUS\n" );
-        {
-            if (INT21_ReadChar( NULL, NULL ))
-                SET_AL( context, 0xff ); /* character available */
-            else
-                SET_AL( context, 0 ); /* no character available */
-        }
+        TRACE( "GET STDIN STATUS - not supported\n" );
+        SET_AL( context, 0 ); /* no character available */
         break;
 
     case 0x0c: /* FLUSH BUFFER AND READ STANDARD INPUT */
@@ -5037,11 +4883,9 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         break;
 
     case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
-        {
-            SEGPTR ptr = DOSDEV_GetLOL( ISV86(context) );
-            context->SegEs = SELECTOROF(ptr);
-            SET_BX( context, OFFSETOF(ptr) );
-        }
+        TRACE("Get List of Lists - not supported\n");
+        context->SegEs = 0;
+        SET_BX( context, 0 );
         break;
 
     case 0x54: /* Get Verify Flag */

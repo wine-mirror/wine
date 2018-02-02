@@ -110,10 +110,7 @@ static DWORD CALLBACK SB_Poll( void *dummy )
 	    ERR("Unable to unlock sound buffer !\n");
 
         SamplesCount -= size;
-        if (!SamplesCount) {
-            DOSVM_QueueEvent(SB_IRQ,SB_IRQ_PRI,NULL,NULL);
-            dma_enable = FALSE;
-        }
+        if (!SamplesCount) dma_enable = FALSE;
     }
     return 0;
 }
@@ -300,7 +297,6 @@ void SB_ioport_out( WORD port, BYTE val )
                 break;
             case 0xF2: /* SB */
                 TRACE("IRQ Request (8-bit)\n");
-                DOSVM_QueueEvent(SB_IRQ,SB_IRQ_PRI,NULL,NULL);
                 break;
             default:
 	      if (((command&0xF0)==0xB0)||((DSP_InBuffer[0]&0xF0)==0xC0)) {

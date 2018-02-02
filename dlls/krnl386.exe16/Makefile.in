@@ -8,7 +8,6 @@ C_SRCS = \
 	atom.c \
 	dma.c \
 	dosaspi.c \
-	dosdev.c \
 	dosmem.c \
 	dosvm.c \
 	error.c \
@@ -16,17 +15,14 @@ C_SRCS = \
 	fpu.c \
 	global.c \
 	instr.c \
-	int09.c \
 	int10.c \
 	int13.c \
 	int15.c \
-	int16.c \
 	int21.c \
 	int25.c \
 	int26.c \
 	int2f.c \
 	int31.c \
-	int33.c \
 	int67.c \
 	interrupts.c \
 	ioports.c \
@@ -43,7 +39,6 @@ C_SRCS = \
 	syslevel.c \
 	task.c \
 	thunk.c \
-	timer.c \
 	utthunk.c \
 	vga.c \
 	vxd.c \

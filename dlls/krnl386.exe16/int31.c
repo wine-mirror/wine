@@ -119,36 +119,6 @@ static WORD alloc_pm_selector( WORD seg, unsigned char flags )
 
 
 /**********************************************************************
- *          dpmi_exception_handler
- *
- * Handle EXCEPTION_VM86_STI exceptions generated
- * when there are pending asynchronous events.
- */
-static LONG WINAPI dpmi_exception_handler(EXCEPTION_POINTERS *eptr)
-{
-    EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
-    CONTEXT *context = eptr->ContextRecord;
-
-    if (rec->ExceptionCode == EXCEPTION_VM86_STI)
-    {
-        if (ISV86(context))
-            ERR( "Real mode STI caught by protected mode handler!\n" );
-        DOSVM_SendQueuedEvents(context);
-        return EXCEPTION_CONTINUE_EXECUTION;
-    }
-    else if (rec->ExceptionCode == EXCEPTION_VM86_INTx)
-    {
-        if (ISV86(context))
-            ERR( "Real mode INTx caught by protected mode handler!\n" );
-        DPMI_retval = (BYTE)rec->ExceptionInformation[0];
-        return EXCEPTION_EXECUTE_HANDLER;
-    }
-
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
-
-/**********************************************************************
  *	    INT_GetRealModeContext
  */
 static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT *context )
@@ -386,7 +356,7 @@ static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
     if (wine_ldt_is_system( rmcb->proc_sel )) {
         /* Wine-internal RMCB, call directly */
         ((RMCBPROC)rmcb->proc_ofs)(context);
-    } else __TRY {
+    } else {
         UINT16 ss,es;
         DWORD esp,edi;
 
@@ -422,7 +392,7 @@ static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
         }
         wine_ldt_free_entries( ss, 1 );
         INT_GetRealModeContext( MapSL( MAKESEGPTR( es, edi )), context);
-    } __EXCEPT(dpmi_exception_handler) { } __ENDTRY
+    }
 
     /* Restore virtual interrupt flag. */
     get_vm86_teb_info()->dpmi_vif = old_vif;
@@ -516,20 +486,14 @@ callrmproc_again:
         already = TRUE;
     }
 
-    if (CurrRMCB) {
-        /* RMCB call, invoke protected-mode handler directly */
-        DPMI_CallRMCBProc(context, CurrRMCB, dpmi_flag);
-        /* check if we returned to where we thought we would */
-        if ((context->SegCs != DOSVM_dpmi_segments->wrap_seg) ||
-            (LOWORD(context->Eip) != 0)) {
-            /* we need to continue at different address in real-mode space,
-               so we need to set it all up for real mode again */
-            goto callrmproc_again;
-        }
-    } else {
-        TRACE("entering real mode...\n");
-        DOSVM_Enter( context );
-        TRACE("returned from real-mode call\n");
+    /* RMCB call, invoke protected-mode handler directly */
+    DPMI_CallRMCBProc(context, CurrRMCB, dpmi_flag);
+    /* check if we returned to where we thought we would */
+    if ((context->SegCs != DOSVM_dpmi_segments->wrap_seg) ||
+        (LOWORD(context->Eip) != 0)) {
+        /* we need to continue at different address in real-mode space,
+           so we need to set it all up for real mode again */
+        goto callrmproc_again;
     }
     if (alloc) DOSMEM_FreeBlock( addr );
     return 0;
@@ -634,14 +598,7 @@ static void StartPM( CONTEXT *context )
     TRACE("DOS program is now entering %d-bit protected mode\n", 
           DOSVM_IsDos32() ? 32 : 16);
 
-    __TRY 
-    {
-        WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&pm_ctx );
-    } 
-    __EXCEPT(dpmi_exception_handler) 
-    { 
-    } 
-    __ENDTRY
+    WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&pm_ctx );
 
     TRACE( "Protected mode DOS program is terminating\n" );
 
@@ -732,59 +689,7 @@ static BOOL DPMI_FreeRMCB( DWORD address )
  */
 void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT *context )
 {
-  CONTEXT rm_ctx;
-  int ret;
-
-  /* initialize real-mode context as per spec */
-  memset(&rm_ctx, 0, sizeof(rm_ctx));
-  rm_ctx.SegDs  = AX_reg(context);
-  rm_ctx.SegEs  = CX_reg(context);
-  rm_ctx.SegSs  = DX_reg(context);
-  rm_ctx.Esp    = context->Ebx;
-  rm_ctx.SegCs  = SI_reg(context);
-  rm_ctx.Eip    = context->Edi;
-  rm_ctx.Ebp    = context->Ebp;
-  rm_ctx.SegFs  = 0;
-  rm_ctx.SegGs  = 0;
-
-  /* Copy interrupt state. */
-  if (get_vm86_teb_info()->dpmi_vif)
-      rm_ctx.EFlags = V86_FLAG | VIF_MASK;
-  else
-      rm_ctx.EFlags = V86_FLAG;
-
-  /* enter real mode again */
-  TRACE("re-entering real mode at %04x:%04x\n",rm_ctx.SegCs,rm_ctx.Eip);
-  ret = DOSVM_Enter( &rm_ctx );
-  /* when the real-mode stuff call its mode switch address,
-     DOSVM_Enter will return and we will continue here */
-
-  if (ret<0) {
-    ERR("Sync lost!\n");
-    /* if the sync was lost, there's no way to recover */
-    ExitProcess(1);
-  }
-
-  /* alter protected-mode context as per spec */
-  context->SegDs   = LOWORD(rm_ctx.Eax);
-  context->SegEs   = LOWORD(rm_ctx.Ecx);
-  context->SegSs   = LOWORD(rm_ctx.Edx);
-  context->Esp     = rm_ctx.Ebx;
-  context->SegCs   = LOWORD(rm_ctx.Esi);
-  context->Eip     = rm_ctx.Edi;
-  context->Ebp     = rm_ctx.Ebp;
-  context->SegFs   = 0;
-  context->SegGs   = 0;
-
-  /* Copy interrupt state. */
-  if (rm_ctx.EFlags & VIF_MASK)
-      get_vm86_teb_info()->dpmi_vif = 1;
-  else
-      get_vm86_teb_info()->dpmi_vif = 0;
-
-  /* Return to new address and hope that we didn't mess up */
-  TRACE("re-entering protected mode at %04x:%08x\n",
-      context->SegCs, context->Eip);
+    FIXME( "no longer supported\n" );
 }
 
 

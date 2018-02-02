@@ -210,7 +210,6 @@ static void set_timer(unsigned timer)
 
     switch (timer) {
         case 0: /* System timer counter divisor */
-            DOSVM_SetTimer(val);
             break;
         case 1: /* RAM refresh */
             FIXME("RAM refresh counter handling not implemented !\n");
@@ -817,7 +816,6 @@ DWORD DOSVM_inport( int port, int size )
         }
         break;
     case 0x60:
-        res = DOSVM_Int09ReadScan(NULL);
         break;
     case 0x61:
         res = (DWORD)parport_8255[1];
@@ -968,7 +966,6 @@ void DOSVM_outport( int port, int size, DWORD value )
     switch (port)
     {
     case 0x20:
-        DOSVM_PIC_ioport_out( port, (BYTE)value );
         break;
     case 0x40:
     case 0x41:

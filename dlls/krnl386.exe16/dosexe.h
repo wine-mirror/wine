@@ -29,7 +29,6 @@
 #include "wine/windef16.h"
 #include "winbase.h"
 #include "winnt.h"     /* for PCONTEXT */
-#include "wincon.h"    /* for MOUSE_EVENT_RECORD */
 
 #define MAX_DOS_DRIVES  26
 
@@ -58,12 +57,6 @@ typedef struct {
 typedef void (*DOSRELAY)(CONTEXT*,void*);
 typedef void (WINAPI *RMCBPROC)(CONTEXT*);
 typedef void (WINAPI *INTPROC)(CONTEXT*);
-
-#define DOS_PRIORITY_REALTIME 0  /* IRQ0 */
-#define DOS_PRIORITY_KEYBOARD 1  /* IRQ1 */
-#define DOS_PRIORITY_VGA      2  /* IRQ9 */
-#define DOS_PRIORITY_MOUSE    5  /* IRQ12 */
-#define DOS_PRIORITY_SERIAL   10 /* IRQ4 */
 
 extern WORD DOSVM_psp DECLSPEC_HIDDEN;     /* psp of current DOS task */
 extern WORD DOSVM_retval DECLSPEC_HIDDEN;  /* return value of previous DOS task */
@@ -223,22 +216,6 @@ typedef struct
 
 /* Device driver header */
 
-#define NONEXT ((DWORD)-1)
-
-#define ATTR_STDIN     0x0001
-#define ATTR_STDOUT    0x0002
-#define ATTR_NUL       0x0004
-#define ATTR_CLOCK     0x0008
-#define ATTR_FASTCON   0x0010
-#define ATTR_RAW       0x0020
-#define ATTR_NOTEOF    0x0040
-#define ATTR_DEVICE    0x0080
-#define ATTR_REMOVABLE 0x0800
-#define ATTR_NONIBM    0x2000 /* block devices */
-#define ATTR_UNTILBUSY 0x2000 /* char devices */
-#define ATTR_IOCTL     0x4000
-#define ATTR_CHAR      0x8000
-
 #include <pshpack1.h>
 
 typedef struct
@@ -252,93 +229,10 @@ typedef struct
 
 #include <poppack.h>
 
-/* DOS Device requests */
-
-#define CMD_INIT       0
-#define CMD_MEDIACHECK 1 /* block devices */
-#define CMD_BUILDBPB   2 /* block devices */
-#define CMD_INIOCTL    3
-#define CMD_INPUT      4 /* read data */
-#define CMD_SAFEINPUT  5 /* "non-destructive input no wait", char devices */
-#define CMD_INSTATUS   6 /* char devices */
-#define CMD_INFLUSH    7 /* char devices */
-#define CMD_OUTPUT     8 /* write data */
-#define CMD_SAFEOUTPUT 9 /* write data with verify */
-#define CMD_OUTSTATUS 10 /* char devices */
-#define CMD_OUTFLUSH  11 /* char devices */
-#define CMD_OUTIOCTL  12
-#define CMD_DEVOPEN   13
-#define CMD_DEVCLOSE  14
-#define CMD_REMOVABLE 15 /* block devices */
-#define CMD_UNTILBUSY 16 /* output until busy */
-
-#define STAT_MASK  0x00FF
-#define STAT_DONE  0x0100
-#define STAT_BUSY  0x0200
-#define STAT_ERROR 0x8000
-
-#include <pshpack1.h>
-
-typedef struct {
-    BYTE size;          /* length of header + data */
-    BYTE unit;          /* unit (block devices only) */
-    BYTE command;
-    WORD status;
-    BYTE reserved[8];
-} REQUEST_HEADER;
-
-typedef struct {
-    REQUEST_HEADER hdr;
-    BYTE media;         /* media descriptor from BPB */
-    SEGPTR buffer;
-    WORD count;         /* byte/sector count */
-    WORD sector;        /* starting sector (block devices) */
-    DWORD volume;       /* volume ID (block devices) */
-} REQ_IO;
-
-typedef struct {
-    REQUEST_HEADER hdr;
-    BYTE data;
-} REQ_SAFEINPUT;
-
-/* WINE device driver thunk from RM */
-typedef struct {
-    BYTE ljmp1;
-    FARPROC16 strategy;
-    BYTE ljmp2;
-    FARPROC16 interrupt;
-} WINEDEV_THUNK;
-
-#include <poppack.h>
-
-/* Device driver info (used for initialization) */
-typedef struct
-{
-    char name[8];
-    WORD attr;
-    RMCBPROC strategy;
-    RMCBPROC interrupt;
-} WINEDEV;
-
 /* dosvm.c */
-extern void DOSVM_SendQueuedEvents( CONTEXT * ) DECLSPEC_HIDDEN;
-extern void WINAPI DOSVM_AcknowledgeIRQ( CONTEXT * ) DECLSPEC_HIDDEN;
-extern INT DOSVM_Enter( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern void DOSVM_Exit( WORD retval ) DECLSPEC_HIDDEN;
-extern void DOSVM_Wait( CONTEXT * ) DECLSPEC_HIDDEN;
-extern DWORD DOSVM_Loop( HANDLE hThread ) DECLSPEC_HIDDEN;
-extern void DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data ) DECLSPEC_HIDDEN;
-extern void DOSVM_PIC_ioport_out( WORD port, BYTE val ) DECLSPEC_HIDDEN;
-extern void DOSVM_SetTimer( UINT ticks ) DECLSPEC_HIDDEN;
 extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *, WORD *) DECLSPEC_HIDDEN;
 extern void DOSVM_InitSegments(void) DECLSPEC_HIDDEN;
-
-/* devices.c */
-extern void DOSDEV_InstallDOSDevices(void) DECLSPEC_HIDDEN;
-extern void DOSDEV_SetupDevice(const WINEDEV * devinfo,
-                               WORD seg, WORD off_dev, WORD off_thunk) DECLSPEC_HIDDEN;
-extern void DOSDEV_SetSharingRetry(WORD delay, WORD count) DECLSPEC_HIDDEN;
-extern SEGPTR DOSDEV_GetLOL(BOOL v86) DECLSPEC_HIDDEN;
 
 /* dma.c */
 extern int DMA_Transfer(int channel,int reqlength,void* buffer) DECLSPEC_HIDDEN;
@@ -365,11 +259,6 @@ extern void WINAPI DOSVM_Int3cHandler(CONTEXT*) DECLSPEC_HIDDEN;
 extern void WINAPI DOSVM_Int3dHandler(CONTEXT*) DECLSPEC_HIDDEN;
 extern void WINAPI DOSVM_Int3eHandler(CONTEXT*) DECLSPEC_HIDDEN;
 
-/* int09.c */
-extern void WINAPI DOSVM_Int09Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void DOSVM_Int09SendScan(BYTE scan,BYTE ascii) DECLSPEC_HIDDEN;
-extern BYTE DOSVM_Int09ReadScan(BYTE*ascii) DECLSPEC_HIDDEN;
-
 /* int10.c */
 extern void WINAPI DOSVM_Int10Handler(CONTEXT*) DECLSPEC_HIDDEN;
 extern void DOSVM_PutChar(BYTE ascii) DECLSPEC_HIDDEN;
@@ -379,11 +268,6 @@ extern void WINAPI DOSVM_Int13Handler(CONTEXT*) DECLSPEC_HIDDEN;
 
 /* int15.c */
 extern void WINAPI DOSVM_Int15Handler(CONTEXT*) DECLSPEC_HIDDEN;
-
-/* int16.c */
-extern void WINAPI DOSVM_Int16Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern BOOL DOSVM_Int16ReadChar( BYTE *, BYTE *, CONTEXT * ) DECLSPEC_HIDDEN;
-extern BOOL DOSVM_Int16AddChar(BYTE ascii, BYTE scan) DECLSPEC_HIDDEN;
 
 /* int21.c */
 extern void WINAPI DOSVM_Int21Handler(CONTEXT*) DECLSPEC_HIDDEN;
@@ -398,7 +282,6 @@ void WINAPI DOSVM_Int26Handler( CONTEXT * ) DECLSPEC_HIDDEN;
 
 /* int2f.c */
 extern void WINAPI DOSVM_Int2fHandler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void MSCDEX_InstallCDROM(void) DECLSPEC_HIDDEN;
 
 /* int31.c */
 extern void WINAPI DOSVM_Int31Handler(CONTEXT*) DECLSPEC_HIDDEN;
@@ -407,11 +290,6 @@ extern BOOL DOSVM_IsDos32(void) DECLSPEC_HIDDEN;
 extern FARPROC16 DPMI_AllocInternalRMCB(RMCBPROC) DECLSPEC_HIDDEN;
 extern int DPMI_CallRMProc(CONTEXT*,LPWORD,int,int) DECLSPEC_HIDDEN;
 extern BOOL DOSVM_CheckWrappers(CONTEXT*) DECLSPEC_HIDDEN;
-
-/* int33.c */
-extern void WINAPI DOSVM_Int33Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void DOSVM_Int33Message(UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
-extern void DOSVM_Int33Console(MOUSE_EVENT_RECORD*) DECLSPEC_HIDDEN;
 
 /* int67.c */
 extern void WINAPI DOSVM_Int67Handler(CONTEXT*) DECLSPEC_HIDDEN;
@@ -425,7 +303,6 @@ extern FARPROC16   DOSVM_GetPMHandler16( BYTE ) DECLSPEC_HIDDEN;
 extern FARPROC48   DOSVM_GetPMHandler48( BYTE ) DECLSPEC_HIDDEN;
 extern FARPROC16   DOSVM_GetRMHandler( BYTE ) DECLSPEC_HIDDEN;
 extern void        DOSVM_HardwareInterruptPM( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
-extern void        DOSVM_HardwareInterruptRM( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
 extern void        DOSVM_SetPMHandler16( BYTE, FARPROC16 ) DECLSPEC_HIDDEN;
 extern void        DOSVM_SetPMHandler48( BYTE, FARPROC48 ) DECLSPEC_HIDDEN;
 extern void        DOSVM_SetRMHandler( BYTE, FARPROC16 ) DECLSPEC_HIDDEN;
@@ -441,8 +318,5 @@ void DOSVM_BuildCallFrame( CONTEXT *, DOSRELAY, LPVOID ) DECLSPEC_HIDDEN;
 /* soundblaster.c */
 extern void SB_ioport_out( WORD port, BYTE val ) DECLSPEC_HIDDEN;
 extern BYTE SB_ioport_in( WORD port ) DECLSPEC_HIDDEN;
-
-/* timer.c */
-extern void WINAPI DOSVM_Int08Handler(CONTEXT*) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DOSEXE_H */

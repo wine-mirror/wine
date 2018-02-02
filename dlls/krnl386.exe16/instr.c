@@ -872,12 +872,6 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         case 0xfb: /* sti */
             get_vm86_teb_info()->dpmi_vif = 1;
             context->Eip += prefixlen + 1;
-            if (get_vm86_teb_info()->vm86_pending)
-            {
-                get_vm86_teb_info()->vm86_pending = 0;
-                rec->ExceptionCode = EXCEPTION_VM86_STI;
-                break; /* Handle the pending event. */
-            }
             return ExceptionContinueExecution;
     }
     return ExceptionContinueSearch;  /* Unable to emulate it */
