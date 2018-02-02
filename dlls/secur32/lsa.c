@@ -58,6 +58,12 @@ struct lsa_connection
     DWORD magic;
 };
 
+static const char *debugstr_as(const LSA_STRING *str)
+{
+    if (!str) return "<null>";
+    return debugstr_an(str->Buffer, str->Length);
+}
+
 NTSTATUS WINAPI LsaCallAuthenticationPackage(HANDLE lsa_handle, ULONG package_id,
         PVOID in_buffer, ULONG in_buffer_length,
         PVOID *out_buffer, PULONG out_buffer_length, PNTSTATUS status)
@@ -135,8 +141,8 @@ NTSTATUS WINAPI LsaLogonUser(HANDLE LsaHandle, PLSA_STRING OriginName,
         PVOID* ProfileBuffer, PULONG ProfileBufferLength, PLUID LogonId,
         PHANDLE Token, PQUOTA_LIMITS Quotas, PNTSTATUS SubStatus)
 {
-    FIXME("%p %p %d %d %p %d %p %p %p %p %p %p %p %p stub\n", LsaHandle,
-            OriginName, LogonType, AuthenticationPackage,
+    FIXME("%p %s %d %d %p %d %p %p %p %p %p %p %p %p stub\n", LsaHandle,
+            debugstr_as(OriginName), LogonType, AuthenticationPackage,
             AuthenticationInformation, AuthenticationInformationLength,
             LocalGroups, SourceContext, ProfileBuffer, ProfileBufferLength,
             LogonId, Token, Quotas, SubStatus);
@@ -158,7 +164,8 @@ static NTSTATUS NTAPI lsa_DeleteLogonSession(LUID *logon_id)
 static NTSTATUS NTAPI lsa_AddCredential(LUID *logon_id, ULONG package_id,
     LSA_STRING *primary_key, LSA_STRING *credentials)
 {
-    FIXME("%p,%u,%p,%p: stub\n", logon_id, package_id, primary_key, credentials);
+    FIXME("%p,%u,%s,%s: stub\n", logon_id, package_id,
+        debugstr_as(primary_key), debugstr_as(credentials));
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -172,7 +179,7 @@ static NTSTATUS NTAPI lsa_GetCredentials(LUID *logon_id, ULONG package_id, ULONG
 
 static NTSTATUS NTAPI lsa_DeleteCredential(LUID *logon_id, ULONG package_id, LSA_STRING *primary_key)
 {
-    FIXME("%p,%#x,%p: stub\n", logon_id, package_id, primary_key);
+    FIXME("%p,%#x,%s: stub\n", logon_id, package_id, debugstr_as(primary_key));
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -859,7 +866,7 @@ NTSTATUS WINAPI LsaLookupAuthenticationPackage(HANDLE lsa_handle,
 {
     ULONG i;
 
-    TRACE("%p %p %p\n", lsa_handle, package_name, package_id);
+    TRACE("%p %s %p\n", lsa_handle, debugstr_as(package_name), package_id);
 
     for (i = 0; i < loaded_packages_count; i++)
     {
