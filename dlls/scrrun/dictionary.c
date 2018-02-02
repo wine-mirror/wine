@@ -33,6 +33,7 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
