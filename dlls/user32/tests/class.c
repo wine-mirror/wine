@@ -1211,12 +1211,15 @@ static void test_actctx_classes(void)
             "<windowClass>MyTestClass</windowClass>"
           "</file>"
         "</assembly>";
+    static const char *testclass = "MyTestClass";
     WNDCLASSA wc;
     ULONG_PTR cookie;
     HANDLE context;
     BOOL ret;
     ATOM class;
     HINSTANCE hinst;
+    char buff[64];
+    HWND hwnd;
 
     create_manifest_file("main.manifest", main_manifest);
     context = create_test_actctx("main.manifest");
@@ -1228,28 +1231,55 @@ static void test_actctx_classes(void)
     memset(&wc, 0, sizeof(wc));
     wc.lpfnWndProc = ClassTest_WndProc;
     wc.hIcon = LoadIconW(0, (LPCWSTR)IDI_APPLICATION);
-    wc.lpszClassName = "MyTestClass";
+    wc.lpszClassName = testclass;
 
     hinst = GetModuleHandleW(0);
 
-    ret = GetClassInfoA(hinst, "MyTestClass", &wc);
+    ret = GetClassInfoA(hinst, testclass, &wc);
     ok(!ret, "Expected failure.\n");
 
     class = RegisterClassA(&wc);
     ok(class != 0, "Failed to register class.\n");
 
     /* Class info is available by versioned and regular names. */
-    ret = GetClassInfoA(hinst, "MyTestClass", &wc);
+    ret = GetClassInfoA(hinst, testclass, &wc);
     ok(ret, "Failed to get class info.\n");
+
+    hwnd = CreateWindowExA(0, testclass, "test", 0, 0, 0, 0, 0, 0, 0, hinst, 0);
+    ok(hwnd != NULL, "Failed to create a window.\n");
+
+    ret = GetClassNameA(hwnd, buff, sizeof(buff));
+    ok(ret, "Failed to get class name.\n");
+todo_wine
+    ok(!strcmp(buff, testclass), "Unexpected class name.\n");
 
     ret = GetClassInfoA(hinst, "4.3.2.1!MyTestClass", &wc);
     ok(ret, "Failed to get class info.\n");
 
-    ret = UnregisterClassA("MyTestClass", hinst);
-    ok(ret, "Failed to unregister class.\n");
+    ret = UnregisterClassA(testclass, hinst);
+    ok(!ret, "Failed to unregister class.\n");
 
     ret = DeactivateActCtx(0, cookie);
     ok(ret, "Failed to deactivate context.\n");
+
+    ret = GetClassInfoA(hinst, testclass, &wc);
+    ok(!ret, "Unexpected ret val %d.\n", ret);
+
+    ret = GetClassInfoA(hinst, "4.3.2.1!MyTestClass", &wc);
+    ok(ret, "Failed to get class info.\n");
+
+    ret = GetClassNameA(hwnd, buff, sizeof(buff));
+    ok(ret, "Failed to get class name.\n");
+todo_wine
+    ok(!strcmp(buff, testclass), "Unexpected class name.\n");
+
+    DestroyWindow(hwnd);
+
+    ret = UnregisterClassA("MyTestClass", hinst);
+    ok(!ret, "Unexpected ret value %d.\n", ret);
+
+    ret = UnregisterClassA("4.3.2.1!MyTestClass", hinst);
+    ok(ret, "Failed to unregister class.\n");
 
     /* Register versioned class without active context. */
     wc.lpszClassName = "4.3.2.1!MyTestClass";
