@@ -1067,6 +1067,7 @@ enable_api_ms_win_security_credentials_l1_1_0
 enable_api_ms_win_security_grouppolicy_l1_1_0
 enable_api_ms_win_security_lsalookup_l1_1_0
 enable_api_ms_win_security_lsalookup_l1_1_1
+enable_api_ms_win_security_lsalookup_l2_1_0
 enable_api_ms_win_security_lsalookup_l2_1_1
 enable_api_ms_win_security_lsapolicy_l1_1_0
 enable_api_ms_win_security_provider_l1_1_0
@@ -18497,6 +18498,7 @@ wine_fn_config_dll api-ms-win-security-credentials-l1-1-0 enable_api_ms_win_secu
 wine_fn_config_dll api-ms-win-security-grouppolicy-l1-1-0 enable_api_ms_win_security_grouppolicy_l1_1_0
 wine_fn_config_dll api-ms-win-security-lsalookup-l1-1-0 enable_api_ms_win_security_lsalookup_l1_1_0
 wine_fn_config_dll api-ms-win-security-lsalookup-l1-1-1 enable_api_ms_win_security_lsalookup_l1_1_1
+wine_fn_config_dll api-ms-win-security-lsalookup-l2-1-0 enable_api_ms_win_security_lsalookup_l2_1_0
 wine_fn_config_dll api-ms-win-security-lsalookup-l2-1-1 enable_api_ms_win_security_lsalookup_l2_1_1
 wine_fn_config_dll api-ms-win-security-lsapolicy-l1-1-0 enable_api_ms_win_security_lsapolicy_l1_1_0
 wine_fn_config_dll api-ms-win-security-provider-l1-1-0 enable_api_ms_win_security_provider_l1_1_0
