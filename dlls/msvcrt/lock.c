@@ -549,7 +549,9 @@ typedef struct
 DEFINE_THISCALL_WRAPPER(_NonReentrantPPLLock_ctor, 4)
 _NonReentrantPPLLock* __thiscall _NonReentrantPPLLock_ctor(_NonReentrantPPLLock *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    critical_section_ctor(&this->cs);
     return this;
 }
 
@@ -558,7 +560,8 @@ _NonReentrantPPLLock* __thiscall _NonReentrantPPLLock_ctor(_NonReentrantPPLLock 
 DEFINE_THISCALL_WRAPPER(_NonReentrantPPLLock__Acquire, 8)
 void __thiscall _NonReentrantPPLLock__Acquire(_NonReentrantPPLLock *this, cs_queue *q)
 {
-    FIXME("(%p %p) stub\n", this, q);
+    TRACE("(%p %p)\n", this, q);
+    cs_lock(&this->cs, q);
 }
 
 /* ?_Release@_NonReentrantPPLLock@details@Concurrency@@QAEXXZ */
@@ -566,7 +569,8 @@ void __thiscall _NonReentrantPPLLock__Acquire(_NonReentrantPPLLock *this, cs_que
 DEFINE_THISCALL_WRAPPER(_NonReentrantPPLLock__Release, 4)
 void __thiscall _NonReentrantPPLLock__Release(_NonReentrantPPLLock *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    critical_section_unlock(&this->cs);
 }
 
 /* ?_GetConcurrency@details@Concurrency@@YAIXZ */
