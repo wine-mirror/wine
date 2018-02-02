@@ -358,30 +358,36 @@ static inline void cs_set_head(critical_section *cs, cs_queue *q)
     cs->head = &cs->unk_active;
 }
 
+static inline void cs_lock(critical_section *cs, cs_queue *q)
+{
+    cs_queue *last;
+
+    if(cs->unk_thread_id == GetCurrentThreadId())
+        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked");
+
+    memset(q, 0, sizeof(*q));
+    last = InterlockedExchangePointer(&cs->tail, q);
+    if(last) {
+        last->next = q;
+        NtWaitForKeyedEvent(keyed_event, q, 0, NULL);
+    }
+
+    cs_set_head(cs, q);
+    if(InterlockedCompareExchangePointer(&cs->tail, &cs->unk_active, q) != q) {
+        spin_wait_for_next_cs(q);
+        cs->unk_active.next = q->next;
+    }
+}
+
 /* ?lock@critical_section@Concurrency@@QAEXXZ */
 /* ?lock@critical_section@Concurrency@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(critical_section_lock, 4)
 void __thiscall critical_section_lock(critical_section *this)
 {
-    cs_queue q, *last;
+    cs_queue q;
 
     TRACE("(%p)\n", this);
-
-    if(this->unk_thread_id == GetCurrentThreadId())
-        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked");
-
-    memset(&q, 0, sizeof(q));
-    last = InterlockedExchangePointer(&this->tail, &q);
-    if(last) {
-        last->next = &q;
-        NtWaitForKeyedEvent(keyed_event, &q, 0, NULL);
-    }
-
-    cs_set_head(this, &q);
-    if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, &q) != &q) {
-        spin_wait_for_next_cs(&q);
-        this->unk_active.next = q.next;
-    }
+    cs_lock(this, &q);
 }
 
 /* ?try_lock@critical_section@Concurrency@@QAE_NXZ */
@@ -503,8 +509,13 @@ MSVCRT_bool __thiscall critical_section_try_lock_for(
 typedef struct
 {
     critical_section *cs;
-    void *unknown[4];
-    int unknown2[2];
+    union {
+        cs_queue q;
+        struct {
+            void *unknown[4];
+            int unknown2[2];
+        } unknown;
+    } lock;
 } critical_section_scoped_lock;
 
 /* ??0scoped_lock@critical_section@Concurrency@@QAE@AAV12@@Z */
@@ -515,7 +526,7 @@ critical_section_scoped_lock* __thiscall critical_section_scoped_lock_ctor(
 {
     TRACE("(%p %p)\n", this, cs);
     this->cs = cs;
-    critical_section_lock(this->cs);
+    cs_lock(this->cs, &this->lock.q);
     return this;
 }
 
