@@ -303,13 +303,6 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_get_frame(void)
 #define EXCEPTION_WINE_STUB       0x80000100  /* stub entry point called */
 #define EXCEPTION_WINE_ASSERTION  0x80000101  /* assertion failed */
 
-/* unhandled return status from vm86 mode */
-#define EXCEPTION_VM86_INTx       0x80000110
-#define EXCEPTION_VM86_STI        0x80000111
-#define EXCEPTION_VM86_PICRETURN  0x80000112
-
-extern void __wine_enter_vm86( CONTEXT *context );
-
 #ifdef __cplusplus
 }
 #endif
