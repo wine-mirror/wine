@@ -74,7 +74,7 @@
 
 struct gdb_ctx_Xpoint
 {
-    enum be_xpoint_type         type;   /* -1 means free */
+    enum be_xpoint_type         type;   /* (-1) == be_xpoint_free means free */
     void*                       addr;
     unsigned long               val;
 };
@@ -1514,7 +1514,7 @@ static BOOL read_memory(struct gdb_context *gdbctx, char *addr, char *buffer, SI
         {
             char *xpt_addr = xpt->addr;
 
-            if (xpt->type != -1 && xpt_addr >= addr && xpt_addr < addr + blk_len)
+            if (xpt->type != be_xpoint_free && xpt_addr >= addr && xpt_addr < addr + blk_len)
                 buffer[xpt_addr - addr] = xpt->val;
         }
     }
@@ -2123,7 +2123,7 @@ static enum packet_return packet_remove_breakpoint(struct gdb_context* gdbctx)
                                       gdbctx->process->process_io, &gdbctx->context,
                                       t, xpt->addr, xpt->val, len))
             {
-                xpt->type = -1;
+                xpt->type = be_xpoint_free;
                 return packet_ok;
             }
             break;
@@ -2164,7 +2164,7 @@ static enum packet_return packet_set_breakpoint(struct gdb_context* gdbctx)
     /* really set the Xpoint */
     for (xpt = &gdbctx->Xpoints[NUM_XPOINT - 1]; xpt >= gdbctx->Xpoints; xpt--)
     {
-        if (xpt->type == -1)
+        if (xpt->type == be_xpoint_free)
         {
             if (be_cpu->insert_Xpoint(gdbctx->process->handle,
                                       gdbctx->process->process_io, &gdbctx->context, 

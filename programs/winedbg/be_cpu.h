@@ -20,7 +20,7 @@
 
 enum be_cpu_addr {be_cpu_addr_pc, be_cpu_addr_stack, be_cpu_addr_frame};
 enum be_xpoint_type {be_xpoint_break, be_xpoint_watch_exec, be_xpoint_watch_read,
-                     be_xpoint_watch_write};
+                     be_xpoint_watch_write, be_xpoint_free=-1};
 struct backend_cpu
 {
     const DWORD         machine;
