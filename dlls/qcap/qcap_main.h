@@ -59,19 +59,4 @@ enum YUV_Format {
 void YUV_Init(void) DECLSPEC_HIDDEN;
 void YUV_To_RGB24(enum YUV_Format format, unsigned char *target, const unsigned char *source, int width, int height) DECLSPEC_HIDDEN;
 
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), 0, len);
-}
-
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
-
 #endif /* _QCAP_MAIN_H_DEFINED */
