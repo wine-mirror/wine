@@ -860,7 +860,7 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
                               &cred_handle, NULL, &expiry_time );
     TRACE( "gss_acquire_cred returned %08x minor status %08x\n", ret, minor_status );
     if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
+    if (ret == GSS_S_COMPLETE)
     {
         credhandle_gss_to_sspi( cred_handle, credential );
         expirytime_gss_to_sspi( expiry_time, ts_expiry );
