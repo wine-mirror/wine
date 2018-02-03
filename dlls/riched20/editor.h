@@ -25,8 +25,6 @@ struct _RTF_Info;
 
 extern HANDLE me_heap DECLSPEC_HIDDEN;
 
-#define ALLOC_N_OBJ(type, count) heap_alloc((count)*sizeof(type))
-
 #define RUN_IS_HIDDEN(run) ((run)->style->fmt.dwMask & CFM_HIDDEN \
                              && (run)->style->fmt.dwEffects & CFE_HIDDEN)
 

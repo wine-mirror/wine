@@ -2136,7 +2136,7 @@ static int ME_GetTextRange(ME_TextEditor *editor, WCHAR *strText,
       return ME_GetTextW(editor, strText, INT_MAX, start, nLen, FALSE, FALSE);
     } else {
       int nChars;
-      WCHAR *p = ALLOC_N_OBJ(WCHAR, nLen+1);
+      WCHAR *p = heap_alloc((nLen+1) * sizeof(*p));
       if (!p) return 0;
       nChars = ME_GetTextW(editor, p, nLen, start, nLen, FALSE, FALSE);
       WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)strText,
@@ -3021,7 +3021,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
    * or paragraph selection.
    */
   ed->nCursors = 4;
-  ed->pCursors = ALLOC_N_OBJ(ME_Cursor, ed->nCursors);
+  ed->pCursors = heap_alloc(ed->nCursors * sizeof(*ed->pCursors));
   ME_SetCursorToStart(ed, &ed->pCursors[0]);
   ed->pCursors[1] = ed->pCursors[0];
   ed->pCursors[2] = ed->pCursors[0];
@@ -4295,7 +4295,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       int nChars = MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, NULL, 0);
       WCHAR *tmp;
 
-      if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
+      if ((tmp = heap_alloc(nChars * sizeof(*tmp))) != NULL)
         MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, tmp, nChars);
       r = ME_FindText(editor, wParam, &ft->chrg, tmp, NULL);
       heap_free(tmp);
@@ -4313,7 +4313,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       int nChars = MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, NULL, 0);
       WCHAR *tmp;
 
-      if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
+      if ((tmp = heap_alloc(nChars * sizeof(*tmp))) != NULL)
         MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, tmp, nChars);
       r = ME_FindText(editor, wParam, &ex->chrg, tmp, &ex->chrgText);
       heap_free(tmp);
