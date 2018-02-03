@@ -3989,14 +3989,16 @@ BOOL WINAPI RemoveMenu( HMENU hMenu, UINT nPos, UINT wFlags )
     }
     else
     {
+        MENUITEM *new_items;
 	while(nPos < menu->nItems)
 	{
 	    *item = *(item+1);
 	    item++;
 	    nPos++;
 	}
-        menu->items = HeapReAlloc( GetProcessHeap(), 0, menu->items,
-                                   menu->nItems * sizeof(MENUITEM) );
+        new_items = HeapReAlloc( GetProcessHeap(), 0, menu->items,
+                                 menu->nItems * sizeof(MENUITEM) );
+        if (new_items) menu->items = new_items;
     }
     return TRUE;
 }
