@@ -25,21 +25,6 @@ struct _RTF_Info;
 
 extern HANDLE me_heap DECLSPEC_HIDDEN;
 
-static inline void * __WINE_ALLOC_SIZE(1) heap_alloc( size_t len )
-{
-    return HeapAlloc( me_heap, 0, len );
-}
-
-static inline BOOL heap_free( void *ptr )
-{
-    return HeapFree( me_heap, 0, ptr );
-}
-
-static inline void * __WINE_ALLOC_SIZE(2) heap_realloc( void *ptr, size_t len )
-{
-    return HeapReAlloc( me_heap, 0, ptr, len );
-}
-
 #define ALLOC_OBJ(type) heap_alloc(sizeof(type))
 #define ALLOC_N_OBJ(type, count) heap_alloc((count)*sizeof(type))
 #define FREE_OBJ(ptr) heap_free(ptr)
