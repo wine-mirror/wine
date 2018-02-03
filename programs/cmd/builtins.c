@@ -1978,7 +1978,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
     anyduplicates |= thisduplicate;
 
     /* Extract the token number requested and set into the next variable context */
-    parm = WCMD_parameter_with_delims(buffer, (nexttoken-1), NULL, FALSE, FALSE, forf_delims);
+    parm = WCMD_parameter_with_delims(buffer, (nexttoken-1), NULL, TRUE, FALSE, forf_delims);
     WINE_TRACE("Parsed token %d(%d) as parameter %s\n", nexttoken,
                varidx + varoffset, wine_dbgstr_w(parm));
     if (varidx >=0) {
