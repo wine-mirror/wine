@@ -57,15 +57,11 @@ ME_StreamOutRTFText(ME_OutStream *pStream, const WCHAR *text, LONG nChars);
 static ME_OutStream*
 ME_StreamOutInit(ME_TextEditor *editor, EDITSTREAM *stream)
 {
-  ME_OutStream *pStream = ALLOC_OBJ(ME_OutStream);
+  ME_OutStream *pStream = heap_alloc_zero(sizeof(*pStream));
+
   pStream->stream = stream;
   pStream->stream->dwError = 0;
-  pStream->pos = 0;
-  pStream->written = 0;
-  pStream->nFontTblLen = 0;
   pStream->nColorTblLen = 1;
-  pStream->nNestingLevel = 0;
-  memset(&pStream->cur_fmt, 0, sizeof(pStream->cur_fmt));
   pStream->cur_fmt.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
   pStream->cur_fmt.bUnderlineType = CFU_UNDERLINE;
   return pStream;

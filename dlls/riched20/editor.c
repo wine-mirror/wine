@@ -261,9 +261,7 @@ static inline BOOL is_version_nt(void)
 }
 
 static ME_TextBuffer *ME_MakeText(void) {
-  
-  ME_TextBuffer *buf = ALLOC_OBJ(ME_TextBuffer);
-
+  ME_TextBuffer *buf = heap_alloc(sizeof(*buf));
   ME_DisplayItem *p1 = ME_MakeDI(diTextStart);
   ME_DisplayItem *p2 = ME_MakeDI(diTextEnd);
   
@@ -606,8 +604,7 @@ void ME_RTFParAttrHook(RTF_Info *info)
     if (!info->editor->bEmulateVersion10) /* v4.1 */
     {
       while (info->rtfParam > info->nestingLevel) {
-        RTFTable *tableDef = ALLOC_OBJ(RTFTable);
-        ZeroMemory(tableDef, sizeof(RTFTable));
+        RTFTable *tableDef = heap_alloc_zero(sizeof(*tableDef));
         tableDef->parent = info->tableDef;
         info->tableDef = tableDef;
 
@@ -641,10 +638,7 @@ void ME_RTFParAttrHook(RTF_Info *info)
       {
         RTFTable *tableDef;
         if (!info->tableDef)
-        {
-            info->tableDef = ALLOC_OBJ(RTFTable);
-            ZeroMemory(info->tableDef, sizeof(RTFTable));
-        }
+            info->tableDef = heap_alloc_zero(sizeof(*info->tableDef));
         tableDef = info->tableDef;
         RTFFlushOutputBuffer(info);
         if (tableDef->tableRowStart &&
@@ -2993,7 +2987,7 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
 
 ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 {
-  ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
+  ME_TextEditor *ed = heap_alloc(sizeof(*ed));
   int i;
   DWORD props;
   LONG selbarwidth;

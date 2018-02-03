@@ -113,7 +113,7 @@ void ME_CopyToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from)
 
 ME_Style *ME_MakeStyle(CHARFORMAT2W *style)
 {
-  ME_Style *s = ALLOC_OBJ(ME_Style);
+  ME_Style *s = heap_alloc(sizeof(*s));
 
   assert(style->cbSize == sizeof(CHARFORMAT2W));
   s->fmt = *style;
