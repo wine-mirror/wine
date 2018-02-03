@@ -27,7 +27,6 @@ extern HANDLE me_heap DECLSPEC_HIDDEN;
 
 #define ALLOC_OBJ(type) heap_alloc(sizeof(type))
 #define ALLOC_N_OBJ(type, count) heap_alloc((count)*sizeof(type))
-#define FREE_OBJ(ptr) heap_free(ptr)
 
 #define RUN_IS_HIDDEN(run) ((run)->style->fmt.dwMask & CFM_HIDDEN \
                              && (run)->style->fmt.dwEffects & CFE_HIDDEN)

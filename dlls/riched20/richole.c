@@ -5383,7 +5383,7 @@ void ME_DeleteReObject(REOBJECT* reo)
     if (reo->poleobj)   IOleObject_Release(reo->poleobj);
     if (reo->pstg)      IStorage_Release(reo->pstg);
     if (reo->polesite)  IOleClientSite_Release(reo->polesite);
-    FREE_OBJ(reo);
+    heap_free(reo);
 }
 
 void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src)

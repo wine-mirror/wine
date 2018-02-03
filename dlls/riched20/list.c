@@ -174,7 +174,7 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item)
     heap_free( item->member.run.clusters );
     ME_ReleaseStyle(item->member.run.style);
   }
-  FREE_OBJ(item);
+  heap_free(item);
 }
 
 ME_DisplayItem *ME_MakeDI(ME_DIType type)

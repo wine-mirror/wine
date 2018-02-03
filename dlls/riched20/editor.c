@@ -2147,7 +2147,7 @@ static int ME_GetTextRange(ME_TextEditor *editor, WCHAR *strText,
       nChars = ME_GetTextW(editor, p, nLen, start, nLen, FALSE, FALSE);
       WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)strText,
                           nLen+1, NULL, NULL);
-      FREE_OBJ(p);
+      heap_free(p);
       return nChars;
     }
 }
@@ -3160,10 +3160,9 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   }
   OleUninitialize();
 
-  FREE_OBJ(editor->pBuffer);
-  FREE_OBJ(editor->pCursors);
-
-  FREE_OBJ(editor);
+  heap_free(editor->pBuffer);
+  heap_free(editor->pCursors);
+  heap_free(editor);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -4305,7 +4304,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
         MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, tmp, nChars);
       r = ME_FindText(editor, wParam, &ft->chrg, tmp, NULL);
-      FREE_OBJ( tmp );
+      heap_free(tmp);
     }else{
       FINDTEXTW *ft = (FINDTEXTW *)lParam;
       r = ME_FindText(editor, wParam, &ft->chrg, ft->lpstrText, NULL);
@@ -4323,7 +4322,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
         MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, tmp, nChars);
       r = ME_FindText(editor, wParam, &ex->chrg, tmp, &ex->chrgText);
-      FREE_OBJ( tmp );
+      heap_free(tmp);
     }else{
       FINDTEXTEXW *ex = (FINDTEXTEXW *)lParam;
       r = ME_FindText(editor, wParam, &ex->chrg, ex->lpstrText, &ex->chrgText);

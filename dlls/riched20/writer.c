@@ -101,7 +101,7 @@ ME_StreamOutFree(ME_OutStream *pStream)
   LONG written = pStream->written;
   TRACE("total length = %u\n", written);
 
-  FREE_OBJ(pStream);
+  heap_free(pStream);
   return written;
 }
 
@@ -1148,8 +1148,7 @@ static BOOL ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream,
         nSize = WideCharToMultiByte(nCodePage, 0, get_text( &cursor.pRun->member.run, cursor.nOffset ),
                                     nLen, NULL, 0, NULL, NULL);
         if (nSize > nBufLen) {
-          FREE_OBJ(buffer);
-          buffer = ALLOC_N_OBJ(char, nSize);
+          buffer = heap_realloc(buffer, nSize);
           nBufLen = nSize;
         }
         WideCharToMultiByte(nCodePage, 0, get_text( &cursor.pRun->member.run, cursor.nOffset ),
@@ -1163,7 +1162,7 @@ static BOOL ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream,
     cursor.pRun = ME_FindItemFwd(cursor.pRun, diRun);
   }
 
-  FREE_OBJ(buffer);
+  heap_free(buffer);
   return success;
 }
 

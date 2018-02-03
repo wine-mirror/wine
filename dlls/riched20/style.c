@@ -425,7 +425,7 @@ void ME_DestroyStyle(ME_Style *s)
     s->font_cache = NULL;
   }
   ScriptFreeCache( &s->script_cache );
-  FREE_OBJ(s);
+  heap_free(s);
 }
 
 void ME_AddRefStyle(ME_Style *s)
