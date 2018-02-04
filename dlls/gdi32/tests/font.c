@@ -1340,6 +1340,56 @@ static void test_GetCharABCWidths(void)
        "got %d, expected %d (C)\n", abc[0].abcC, abcw[0].abcC);
 
     DeleteObject(SelectObject(hdc, hfont));
+
+    /* test abcA == gmptGlyphOrigin.x && abcB == gmBlackBoxX
+       in various widths. */
+    for (i = 1; i <= 2; i++)
+    {
+        UINT j;
+        UINT code;
+
+        memset(&lf, 0, sizeof(lf));
+        lf.lfHeight = 20;
+        switch(i)
+        {
+        case 1:
+            strcpy(lf.lfFaceName, "Tahoma");
+            code = 'a';
+            break;
+        case 2:
+            strcpy(lf.lfFaceName, "Times New Roman");
+            lf.lfItalic = TRUE;
+            code = 'f';
+            break;
+        }
+        if (!is_truetype_font_installed(lf.lfFaceName))
+        {
+            skip("%s is not installed\n", lf.lfFaceName);
+            continue;
+        }
+        for (j = 1; j <= 80; j++)
+        {
+            GLYPHMETRICS gm;
+
+            lf.lfWidth = j;
+            hfont = CreateFontIndirectA(&lf);
+            hfont = SelectObject(hdc, hfont);
+
+            nb = GetGlyphOutlineA(hdc, code, GGO_METRICS, &gm, 0, NULL, &mat);
+            ok(nb, "GetGlyphOutlineA should have succeeded at width %d\n", i);
+
+            ret = GetCharABCWidthsA(hdc, code, code, abc);
+            ok(ret, "GetCharABCWidthsA should have succeeded at width %d\n", i);
+
+            ok(abc[0].abcA == gm.gmptGlyphOrigin.x,
+               "abcA(%d) and gmptGlyphOrigin.x(%d) values are different at width %d\n",
+               abc[0].abcA, gm.gmptGlyphOrigin.x, i);
+            ok(abc[0].abcB == gm.gmBlackBoxX,
+               "abcB(%d) and gmBlackBoxX(%d) values are different at width %d\n",
+               abc[0].abcB, gm.gmBlackBoxX, i);
+            DeleteObject(SelectObject(hdc, hfont));
+        }
+    }
     ReleaseDC(NULL, hdc);
 
     trace("ABC sign test for a variety of transforms:\n");
