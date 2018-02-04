@@ -5959,9 +5959,9 @@ static void check_vertical_metrics(const char *face)
     ok(ret != GDI_ERROR, "GetGlyphOutlineW failed\n");
     ret = GetCharABCWidthsW(hdc, code, code, &vabc);
     ok(ret, "GetCharABCWidthsW failed\n");
-    todo_wine ok(vabc.abcA == vgm.gmptGlyphOrigin.x, "expected %d, got %d\n",
+    ok(vabc.abcA == vgm.gmptGlyphOrigin.x, "expected %d, got %d\n",
        vabc.abcA, vgm.gmptGlyphOrigin.x);
-    todo_wine ok(vabc.abcB == vgm.gmBlackBoxX, "expected %d, got %d\n",
+    ok(vabc.abcB == vgm.gmBlackBoxX, "expected %d, got %d\n",
        vabc.abcB, vgm.gmBlackBoxX);
     ok(vabc.abcA + vabc.abcB + vabc.abcC == vgm.gmCellIncX,
        "expected %d, got %d\n",
