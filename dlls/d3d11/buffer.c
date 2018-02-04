@@ -452,7 +452,9 @@ static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *dev
     wined3d_desc.byte_width = buffer->desc.ByteWidth;
     wined3d_desc.usage = wined3d_usage_from_d3d11(0, buffer->desc.Usage);
     wined3d_desc.bind_flags = buffer->desc.BindFlags;
-    wined3d_desc.cpu_access_flags = buffer->desc.CPUAccessFlags;
+    if (~buffer->desc.CPUAccessFlags & (D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ))
+        FIXME("Ignoring CPU access flags %#x.\n", buffer->desc.CPUAccessFlags);
+    wined3d_desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
     wined3d_desc.misc_flags = buffer->desc.MiscFlags;
     wined3d_desc.structure_byte_stride = buffer->desc.StructureByteStride;
 

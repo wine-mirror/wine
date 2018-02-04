@@ -1969,9 +1969,9 @@ struct wined3d_blt_fx
 struct wined3d_buffer_desc
 {
     unsigned int byte_width;
-    DWORD usage;
+    unsigned int usage;
     unsigned int bind_flags;
-    unsigned int cpu_access_flags;
+    unsigned int access;
     unsigned int misc_flags;
     unsigned int structure_byte_stride;
 };
