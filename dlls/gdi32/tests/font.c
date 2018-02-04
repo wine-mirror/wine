@@ -5929,7 +5929,7 @@ static void check_vertical_metrics(const char *face)
     GLYPHMETRICS rgm, vgm;
     const UINT code = 0x5EAD, height = 1000;
     WORD idx;
-    ABC abc;
+    ABC abc, vabc;
     OUTLINETEXTMETRICA otm;
     USHORT numOfLongVerMetrics;
 
@@ -5957,6 +5957,15 @@ static void check_vertical_metrics(const char *face)
     hfont_prev = SelectObject(hdc, hfont);
     ret = GetGlyphOutlineW(hdc, code, GGO_METRICS, &vgm, 0, NULL, &mat);
     ok(ret != GDI_ERROR, "GetGlyphOutlineW failed\n");
+    ret = GetCharABCWidthsW(hdc, code, code, &vabc);
+    ok(ret, "GetCharABCWidthsW failed\n");
+    todo_wine ok(vabc.abcA == vgm.gmptGlyphOrigin.x, "expected %d, got %d\n",
+       vabc.abcA, vgm.gmptGlyphOrigin.x);
+    todo_wine ok(vabc.abcB == vgm.gmBlackBoxX, "expected %d, got %d\n",
+       vabc.abcB, vgm.gmBlackBoxX);
+    ok(vabc.abcA + vabc.abcB + vabc.abcC == vgm.gmCellIncX,
+       "expected %d, got %d\n",
+       vabc.abcA + vabc.abcB + vabc.abcC, vgm.gmCellIncX);
 
     memset(&otm, 0, sizeof(otm));
     otm.otmSize = sizeof(otm);
