@@ -1250,7 +1250,6 @@ static void test_actctx_classes(void)
 
     ret = GetClassNameA(hwnd, buff, sizeof(buff));
     ok(ret, "Failed to get class name.\n");
-todo_wine
     ok(!strcmp(buff, testclass), "Unexpected class name.\n");
 
     ret = GetClassInfoA(hinst, "4.3.2.1!MyTestClass", &wc);
@@ -1270,7 +1269,6 @@ todo_wine
 
     ret = GetClassNameA(hwnd, buff, sizeof(buff));
     ok(ret, "Failed to get class name.\n");
-todo_wine
     ok(!strcmp(buff, testclass), "Unexpected class name.\n");
 
     DestroyWindow(hwnd);

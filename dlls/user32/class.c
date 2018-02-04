@@ -61,6 +61,7 @@ typedef struct tagCLASS
     HBRUSH           hbrBackground; /* Default background */
     ATOM             atomName;      /* Name of the class */
     WCHAR            name[MAX_ATOM_LEN + 1];
+    WCHAR           *basename;      /* Base name for redirected classes, pointer within 'name'. */
 } CLASS;
 
 static struct list class_list = LIST_INIT( class_list );
@@ -324,7 +325,7 @@ static void CLASS_FreeClass( CLASS *classPtr )
     USER_Unlock();
 }
 
-const WCHAR *CLASS_GetVersionedName( const WCHAR *name )
+const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset )
 {
     ACTCTX_SECTION_KEYED_DATA data;
     struct wndclass_redirect_data
@@ -337,6 +338,9 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name )
         ULONG module_offset;
     } *wndclass;
 
+    if (basename_offset)
+        *basename_offset = 0;
+
     if (IS_INTRESOURCE( name ))
         return name;
 
@@ -348,6 +352,9 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name )
         return name;
 
     wndclass = (struct wndclass_redirect_data *)data.lpData;
+    if (basename_offset)
+        *basename_offset = wndclass->name_len / sizeof(WCHAR) - strlenW(name);
+
     return (const WCHAR *)((BYTE *)wndclass + wndclass->name_offset);
 }
 
@@ -366,7 +373,7 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
 
     if (!name) return NULL;
 
-    name = CLASS_GetVersionedName( name );
+    name = CLASS_GetVersionedName( name, NULL );
 
     for (;;)
     {
@@ -408,7 +415,7 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
  *
  * The real RegisterClass() functionality.
  */
-static CLASS *CLASS_RegisterClass( LPCWSTR name, HINSTANCE hInstance, BOOL local,
+static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE hInstance, BOOL local,
                                    DWORD style, INT classExtra, INT winExtra )
 {
     CLASS *classPtr;
@@ -428,7 +435,12 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, HINSTANCE hInstance, BOOL local
     if (!classPtr) return NULL;
 
     classPtr->atomName = get_int_atom_value( name );
-    if (!classPtr->atomName && name) strcpyW( classPtr->name, name );
+    classPtr->basename = classPtr->name;
+    if (!classPtr->atomName && name)
+    {
+        strcpyW( classPtr->name, name );
+        classPtr->basename += basename_offset;
+    }
     else GlobalGetAtomNameW( classPtr->atomName, classPtr->name, sizeof(classPtr->name)/sizeof(WCHAR) );
 
     SERVER_START_REQ( create_class )
@@ -476,7 +488,7 @@ static void register_builtin( const struct builtin_class_descr *descr )
 {
     CLASS *classPtr;
 
-    if (!(classPtr = CLASS_RegisterClass( descr->name, user32_module, FALSE,
+    if (!(classPtr = CLASS_RegisterClass( descr->name, 0, user32_module, FALSE,
                                           descr->style, 0, descr->extra ))) return;
 
     if (descr->cursor) classPtr->hCursor = LoadCursorA( 0, (LPSTR)descr->cursor );
@@ -632,14 +644,15 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 
     if (!IS_INTRESOURCE(wc->lpszClassName))
     {
+        UINT basename_offset;
         if (!MultiByteToWideChar( CP_ACP, 0, wc->lpszClassName, -1, name, MAX_ATOM_LEN + 1 )) return 0;
-        classname = CLASS_GetVersionedName( name );
-        classPtr = CLASS_RegisterClass( classname, instance, !(wc->style & CS_GLOBALCLASS),
+        classname = CLASS_GetVersionedName( name, &basename_offset );
+        classPtr = CLASS_RegisterClass( classname, basename_offset, instance, !(wc->style & CS_GLOBALCLASS),
                                         wc->style, wc->cbClsExtra, wc->cbWndExtra );
     }
     else
     {
-        classPtr = CLASS_RegisterClass( (LPCWSTR)wc->lpszClassName, instance,
+        classPtr = CLASS_RegisterClass( (LPCWSTR)wc->lpszClassName, 0, instance,
                                         !(wc->style & CS_GLOBALCLASS), wc->style,
                                         wc->cbClsExtra, wc->cbWndExtra );
     }
@@ -672,6 +685,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
 ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
 {
     const WCHAR *classname;
+    UINT basename_offset;
     ATOM atom;
     CLASS *classPtr;
     HINSTANCE instance;
@@ -686,8 +700,8 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     }
     if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
-    classname = CLASS_GetVersionedName( wc->lpszClassName );
-    if (!(classPtr = CLASS_RegisterClass( classname, instance, !(wc->style & CS_GLOBALCLASS),
+    classname = CLASS_GetVersionedName( wc->lpszClassName, &basename_offset );
+    if (!(classPtr = CLASS_RegisterClass( classname, basename_offset, instance, !(wc->style & CS_GLOBALCLASS),
                                           wc->style, wc->cbClsExtra, wc->cbWndExtra )))
         return 0;
 
@@ -739,7 +753,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 
     GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
-    className = CLASS_GetVersionedName( className );
+    className = CLASS_GetVersionedName( className, NULL );
     SERVER_START_REQ( destroy_class )
     {
         req->instance = wine_server_client_ptr( hInstance );
@@ -1155,7 +1169,8 @@ INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
     }
     else
     {
-        lstrcpynW( buffer, class->name, count );
+        /* Return original name class was registered with. */
+        lstrcpynW( buffer, class->basename, count );
         release_class_ptr( class );
         ret = strlenW( buffer );
     }
