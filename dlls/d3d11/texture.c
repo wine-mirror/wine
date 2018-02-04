@@ -275,7 +275,7 @@ static void STDMETHODCALLTYPE d3d_texture2d_wined3d_object_released(void *parent
 
     if (texture->dxgi_surface) IUnknown_Release(texture->dxgi_surface);
     wined3d_private_store_cleanup(&texture->private_store);
-    HeapFree(GetProcessHeap(), 0, texture);
+    heap_free(texture);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
@@ -502,7 +502,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
         return E_INVALIDARG;
     }
 
-    if (!(texture = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*texture))))
+    if (!(texture = heap_alloc_zero(sizeof(*texture))))
         return E_OUTOFMEMORY;
 
     texture->ID3D11Texture2D_iface.lpVtbl = &d3d11_texture2d_vtbl;
@@ -539,7 +539,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&texture->private_store);
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         wined3d_mutex_unlock();
         if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DERR_INVALIDCALL)
             hr = E_INVALIDARG;
@@ -642,7 +642,7 @@ static void STDMETHODCALLTYPE d3d_texture3d_wined3d_object_released(void *parent
     struct d3d_texture3d *texture = parent;
 
     wined3d_private_store_cleanup(&texture->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static ULONG STDMETHODCALLTYPE d3d11_texture3d_Release(ID3D11Texture3D *iface)
@@ -1016,13 +1016,13 @@ HRESULT d3d_texture3d_create(struct d3d_device *device, const D3D11_TEXTURE3D_DE
     struct d3d_texture3d *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_texture3d_init(object, device, desc, data)))
     {
         WARN("Failed to initialize texture, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 

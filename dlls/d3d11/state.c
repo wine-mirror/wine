@@ -87,7 +87,7 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_Release(ID3D11BlendState *iface
         wine_rb_remove(&device->blend_states, &state->entry);
         d3d_blend_state_cleanup(state);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, state);
+        heap_free(state);
     }
 
     return refcount;
@@ -357,7 +357,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
         return S_OK;
     }
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -366,7 +366,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     if (FAILED(hr = d3d_blend_state_init(object, device, &tmp_desc)))
     {
         WARN("Failed to initialize blend state, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -375,7 +375,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     {
         ERR("Failed to insert blend state entry.\n");
         d3d_blend_state_cleanup(object);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         wined3d_mutex_unlock();
         return E_FAIL;
     }
@@ -467,7 +467,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_Release(ID3D11DepthStenc
         wine_rb_remove(&device->depthstencil_states, &state->entry);
         d3d_depthstencil_state_cleanup(state);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, state);
+        heap_free(state);
     }
 
     return refcount;
@@ -721,7 +721,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
         return S_OK;
     }
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -730,7 +730,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
     if (FAILED(hr = d3d_depthstencil_state_init(object, device, &tmp_desc)))
     {
         WARN("Failed to initialize depthstencil state, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -739,7 +739,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
     {
         ERR("Failed to insert depthstencil state entry.\n");
         d3d_depthstencil_state_cleanup(object);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         wined3d_mutex_unlock();
         return E_FAIL;
     }
@@ -1025,7 +1025,7 @@ static void STDMETHODCALLTYPE d3d_rasterizer_state_wined3d_object_destroyed(void
 
     wine_rb_remove(&device->rasterizer_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_rasterizer_state_wined3d_parent_ops =
@@ -1093,7 +1093,7 @@ HRESULT d3d_rasterizer_state_create(struct d3d_device *device, const D3D11_RASTE
         return S_OK;
     }
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -1104,7 +1104,7 @@ HRESULT d3d_rasterizer_state_create(struct d3d_device *device, const D3D11_RASTE
     if (FAILED(hr))
     {
         WARN("Failed to initialize rasterizer state, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -1388,7 +1388,7 @@ static void STDMETHODCALLTYPE d3d_sampler_wined3d_object_destroyed(void *parent)
 
     wine_rb_remove(&device->sampler_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_sampler_wined3d_parent_ops =
@@ -1518,7 +1518,7 @@ HRESULT d3d_sampler_state_create(struct d3d_device *device, const D3D11_SAMPLER_
         return S_OK;
     }
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -1529,7 +1529,7 @@ HRESULT d3d_sampler_state_create(struct d3d_device *device, const D3D11_SAMPLER_
     if (FAILED(hr))
     {
         WARN("Failed to initialize sampler state, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 

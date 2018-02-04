@@ -379,7 +379,7 @@ static void STDMETHODCALLTYPE d3d_buffer_wined3d_object_released(void *parent)
     struct d3d_buffer *buffer = parent;
 
     wined3d_private_store_cleanup(&buffer->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_buffer_wined3d_parent_ops =
@@ -484,13 +484,13 @@ HRESULT d3d_buffer_create(struct d3d_device *device, const D3D11_BUFFER_DESC *de
     struct d3d_buffer *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_buffer_init(object, device, desc, data)))
     {
         WARN("Failed to initialize buffer, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 

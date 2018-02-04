@@ -20,6 +20,7 @@
 #define __WINE_D3D11_PRIVATE_H
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include <assert.h>
 
@@ -93,13 +94,6 @@ HRESULT d3d_set_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT data_size, const void *data) DECLSPEC_HIDDEN;
 HRESULT d3d_set_private_data_interface(struct wined3d_private_store *store,
         REFGUID guid, const IUnknown *object) DECLSPEC_HIDDEN;
-
-static inline void *d3d11_calloc(SIZE_T count, SIZE_T size)
-{
-    if (count > ~(SIZE_T)0 / size)
-        return NULL;
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, count * size);
-}
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {

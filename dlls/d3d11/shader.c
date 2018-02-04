@@ -220,7 +220,7 @@ HRESULT shader_parse_signature(DWORD tag, const char *data, DWORD data_size,
         return E_INVALIDARG;
     }
 
-    if (!(e = d3d11_calloc(count, sizeof(*e))))
+    if (!(e = heap_calloc(count, sizeof(*e))))
     {
         ERR("Failed to allocate input signature memory.\n");
         return E_OUTOFMEMORY;
@@ -238,7 +238,7 @@ HRESULT shader_parse_signature(DWORD tag, const char *data, DWORD data_size,
         if (!(e[i].semantic_name = shader_get_string(data, data_size, name_offset)))
         {
             WARN("Invalid name offset %#x (data size %#x).\n", name_offset, data_size);
-            HeapFree(GetProcessHeap(), 0, e);
+            heap_free(e);
             return E_INVALIDARG;
         }
         read_dword(&ptr, &e[i].semantic_idx);
@@ -277,7 +277,7 @@ struct wined3d_shader_signature_element *shader_find_signature_element(const str
 
 void shader_free_signature(struct wined3d_shader_signature *s)
 {
-    HeapFree(GetProcessHeap(), 0, s->elements);
+    heap_free(s->elements);
 }
 
 /* ID3D11VertexShader methods */
@@ -509,7 +509,7 @@ static void STDMETHODCALLTYPE d3d_vertex_shader_wined3d_object_destroyed(void *p
     struct d3d_vertex_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_vertex_shader_wined3d_parent_ops =
@@ -583,13 +583,13 @@ HRESULT d3d_vertex_shader_create(struct d3d_device *device, const void *byte_cod
     struct d3d_vertex_shader *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_vertex_shader_init(object, device, byte_code, byte_code_length)))
     {
         WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -744,7 +744,7 @@ static void STDMETHODCALLTYPE d3d11_hull_shader_wined3d_object_destroyed(void *p
     struct d3d11_hull_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d11_hull_shader_wined3d_parent_ops =
@@ -796,12 +796,12 @@ HRESULT d3d11_hull_shader_create(struct d3d_device *device, const void *byte_cod
     struct d3d11_hull_shader *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d11_hull_shader_init(object, device, byte_code, byte_code_length)))
     {
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -947,7 +947,7 @@ static void STDMETHODCALLTYPE d3d11_domain_shader_wined3d_object_destroyed(void 
     struct d3d11_domain_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d11_domain_shader_wined3d_parent_ops =
@@ -999,12 +999,12 @@ HRESULT d3d11_domain_shader_create(struct d3d_device *device, const void *byte_c
     struct d3d11_domain_shader *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d11_domain_shader_init(object, device, byte_code, byte_code_length)))
     {
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -1253,7 +1253,7 @@ static void STDMETHODCALLTYPE d3d_geometry_shader_wined3d_object_destroyed(void 
     struct d3d_geometry_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_geometry_shader_wined3d_parent_ops =
@@ -1491,7 +1491,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
         so_desc.buffer_stride_count = buffer_stride_count;
         so_desc.rasterizer_stream_idx = rasterizer_stream;
 
-        if (!(so_desc.elements = d3d11_calloc(so_entry_count, sizeof(*so_desc.elements))))
+        if (!(so_desc.elements = heap_calloc(so_entry_count, sizeof(*so_desc.elements))))
         {
             ERR("Failed to allocate wined3d stream output element array memory.\n");
             free_shader_desc(&desc);
@@ -1501,7 +1501,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
                 so_entries, so_entry_count, buffer_strides, buffer_stride_count,
                 &desc.output_signature, device->feature_level)))
         {
-            HeapFree(GetProcessHeap(), 0, so_desc.elements);
+            heap_free(so_desc.elements);
             free_shader_desc(&desc);
             return hr;
         }
@@ -1515,7 +1515,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
 
     hr = wined3d_shader_create_gs(device->wined3d_device, &desc, so_entries ? &so_desc : NULL,
             shader, &d3d_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader);
-    HeapFree(GetProcessHeap(), 0, so_desc.elements);
+    heap_free(so_desc.elements);
     free_shader_desc(&desc);
     if (FAILED(hr))
     {
@@ -1540,14 +1540,14 @@ HRESULT d3d_geometry_shader_create(struct d3d_device *device, const void *byte_c
     struct d3d_geometry_shader *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_geometry_shader_init(object, device, byte_code, byte_code_length,
             so_entries, so_entry_count, buffer_strides, buffer_stride_count, rasterizer_stream)))
     {
         WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -1804,7 +1804,7 @@ static void STDMETHODCALLTYPE d3d_pixel_shader_wined3d_object_destroyed(void *pa
     struct d3d_pixel_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_pixel_shader_wined3d_parent_ops =
@@ -1857,13 +1857,13 @@ HRESULT d3d_pixel_shader_create(struct d3d_device *device, const void *byte_code
     struct d3d_pixel_shader *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_pixel_shader_init(object, device, byte_code, byte_code_length)))
     {
         WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -2016,7 +2016,7 @@ static void STDMETHODCALLTYPE d3d11_compute_shader_wined3d_object_destroyed(void
     struct d3d11_compute_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d11_compute_shader_wined3d_parent_ops =
@@ -2067,12 +2067,12 @@ HRESULT d3d11_compute_shader_create(struct d3d_device *device, const void *byte_
     struct d3d11_compute_shader *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d11_compute_shader_init(object, device, byte_code, byte_code_length)))
     {
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -2139,7 +2139,7 @@ static ULONG STDMETHODCALLTYPE d3d11_class_linkage_Release(ID3D11ClassLinkage *i
         ID3D11Device *device = class_linkage->device;
 
         wined3d_private_store_cleanup(&class_linkage->private_store);
-        HeapFree(GetProcessHeap(), 0, class_linkage);
+        heap_free(class_linkage);
 
         ID3D11Device_Release(device);
     }
@@ -2228,7 +2228,7 @@ HRESULT d3d11_class_linkage_create(struct d3d_device *device, struct d3d11_class
 {
     struct d3d11_class_linkage *object;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->ID3D11ClassLinkage_iface.lpVtbl = &d3d11_class_linkage_vtbl;

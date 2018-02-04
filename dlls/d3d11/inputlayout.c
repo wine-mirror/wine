@@ -54,7 +54,7 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
         return E_FAIL;
     }
 
-    if (!(*wined3d_elements = d3d11_calloc(element_count, sizeof(**wined3d_elements))))
+    if (!(*wined3d_elements = heap_calloc(element_count, sizeof(**wined3d_elements))))
     {
         ERR("Failed to allocate wined3d vertex element array memory.\n");
         shader_free_signature(&is);
@@ -315,7 +315,7 @@ static void STDMETHODCALLTYPE d3d_input_layout_wined3d_object_destroyed(void *pa
     struct d3d_input_layout *layout = parent;
 
     wined3d_private_store_cleanup(&layout->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d_input_layout_wined3d_parent_ops =
@@ -347,7 +347,7 @@ static HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d
 
     hr = wined3d_vertex_declaration_create(device->wined3d_device, wined3d_elements, element_count,
             layout, &d3d_input_layout_wined3d_parent_ops, &layout->wined3d_decl);
-    HeapFree(GetProcessHeap(), 0, wined3d_elements);
+    heap_free(wined3d_elements);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
@@ -370,15 +370,14 @@ HRESULT d3d_input_layout_create(struct d3d_device *device,
     struct d3d_input_layout *object;
     HRESULT hr;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d3d_input_layout_init(object, device, element_descs, element_count,
             shader_byte_code, shader_byte_code_length)))
     {
         WARN("Failed to initialize input layout, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 

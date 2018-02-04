@@ -5198,7 +5198,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
     }
 
     if (output_stream_decl_count
-            && !(so_entries = d3d11_calloc(output_stream_decl_count, sizeof(*so_entries))))
+            && !(so_entries = heap_calloc(output_stream_decl_count, sizeof(*so_entries))))
     {
         ERR("Failed to allocate D3D11 SO declaration array memory.\n");
         *shader = NULL;
@@ -5220,7 +5220,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
             if (output_stream_stride)
             {
                 WARN("Stride must be 0 when multiple output slots are used.\n");
-                HeapFree(GetProcessHeap(), 0, so_entries);
+                heap_free(so_entries);
                 *shader = NULL;
                 return E_INVALIDARG;
             }
@@ -5229,7 +5229,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
 
     hr = d3d_geometry_shader_create(device, byte_code, byte_code_length,
             so_entries, output_stream_decl_count, &output_stream_stride, stride_count, 0, &object);
-    HeapFree(GetProcessHeap(), 0, so_entries);
+    heap_free(so_entries);
     if (FAILED(hr))
     {
         *shader = NULL;
