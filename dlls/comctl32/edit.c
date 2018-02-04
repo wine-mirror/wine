@@ -5007,7 +5007,7 @@ void EDIT_Register(void)
     WNDCLASSW wndClass;
 
     memset(&wndClass, 0, sizeof(wndClass));
-    wndClass.style = CS_GLOBALCLASS | CS_DBLCLKS;
+    wndClass.style = CS_PARENTDC | CS_GLOBALCLASS | CS_DBLCLKS;
     wndClass.lpfnWndProc = EDIT_WindowProc;
     wndClass.cbClsExtra = 0;
 #ifdef __i386__
