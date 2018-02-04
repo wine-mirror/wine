@@ -1464,8 +1464,7 @@ static DWORD resource_access_from_pool(enum wined3d_pool pool)
 HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size, DWORD usage, enum wined3d_pool pool,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
 {
-    struct wined3d_buffer *object;
-    HRESULT hr;
+    struct wined3d_buffer_desc desc;
 
     TRACE("device %p, size %u, usage %#x, pool %#x, parent %p, parent_ops %p, buffer %p.\n",
             device, size, usage, pool, parent, parent_ops, buffer);
@@ -1479,25 +1478,14 @@ HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size,
         return WINED3DERR_INVALIDCALL;
     }
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        *buffer = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
-    }
+    desc.byte_width = size;
+    desc.usage = usage;
+    desc.bind_flags = WINED3D_BIND_VERTEX_BUFFER;
+    desc.access = resource_access_from_pool(pool);
+    desc.misc_flags = 0;
+    desc.structure_byte_stride = 0;
 
-    if (FAILED(hr = buffer_init(object, device, size, usage, WINED3DFMT_UNKNOWN,
-            resource_access_from_pool(pool), WINED3D_BIND_VERTEX_BUFFER, NULL, parent, parent_ops)))
-    {
-        WARN("Failed to initialize buffer, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created buffer %p.\n", object);
-    *buffer = object;
-
-    return WINED3D_OK;
+    return wined3d_buffer_create(device, &desc, NULL, parent, parent_ops, buffer);
 }
 
 HRESULT CDECL wined3d_buffer_create_ib(struct wined3d_device *device, UINT size, DWORD usage, enum wined3d_pool pool,
