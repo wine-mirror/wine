@@ -1477,11 +1477,14 @@ static void EDIT_InvalidateText(EDITSTATE *es, INT start, INT end)
  *		In other words: this handler is OK
  *
  */
-static void EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap)
+static BOOL EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap)
 {
 	UINT old_start = es->selection_start;
 	UINT old_end = es->selection_end;
 	UINT len = get_text_length(es);
+
+        if (start == old_start && end == old_end)
+            return FALSE;
 
 	if (start == (UINT)-1) {
 		start = es->selection_end;
@@ -1535,6 +1538,8 @@ static void EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap)
             }
 	}
         else EDIT_InvalidateText(es, start, old_end);
+
+        return TRUE;
 }
 
 
@@ -3364,6 +3369,16 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
         case VK_TAB:
             if ((es->style & ES_MULTILINE) && EDIT_IsInsideDialog(es))
                 SendMessageW(es->hwndParent, WM_NEXTDLGCTL, shift, 0);
+            break;
+        case 'A':
+            if (control)
+            {
+                if (EDIT_EM_SetSel(es, 0, get_text_length(es), FALSE))
+                {
+                    EDIT_NOTIFY_PARENT(es, EN_UPDATE);
+                    EDIT_NOTIFY_PARENT(es, EN_CHANGE);
+                }
+            }
             break;
 	}
         return TRUE;
