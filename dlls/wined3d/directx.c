@@ -184,6 +184,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_gather",               ARB_TEXTURE_GATHER            },
     {"GL_ARB_texture_mirrored_repeat",      ARB_TEXTURE_MIRRORED_REPEAT   },
     {"GL_ARB_texture_mirror_clamp_to_edge", ARB_TEXTURE_MIRROR_CLAMP_TO_EDGE},
+    {"GL_ARB_texture_multisample",          ARB_TEXTURE_MULTISAMPLE       },
     {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO  },
     {"GL_ARB_texture_query_levels",         ARB_TEXTURE_QUERY_LEVELS      },
     {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE         },
@@ -2888,6 +2889,11 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glCompressedTexSubImage2DARB)
     USE_GL_FUNC(glCompressedTexSubImage3DARB)
     USE_GL_FUNC(glGetCompressedTexImageARB)
+    /* GL_ARB_texture_multisample */
+    USE_GL_FUNC(glGetMultisamplefv);
+    USE_GL_FUNC(glSampleMaski);
+    USE_GL_FUNC(glTexImage2DMultisample);
+    USE_GL_FUNC(glTexImage3DMultisample);
     /* GL_ARB_texture_storage */
     USE_GL_FUNC(glTexStorage1D)
     USE_GL_FUNC(glTexStorage2D)
@@ -3868,6 +3874,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_PROVOKING_VERTEX,             MAKEDWORD_VERSION(3, 2)},
         {ARB_SEAMLESS_CUBE_MAP,            MAKEDWORD_VERSION(3, 2)},
         {ARB_SYNC,                         MAKEDWORD_VERSION(3, 2)},
+        {ARB_TEXTURE_MULTISAMPLE,          MAKEDWORD_VERSION(3, 2)},
         {ARB_VERTEX_ARRAY_BGRA,            MAKEDWORD_VERSION(3, 2)},
 
         {ARB_BLEND_FUNC_EXTENDED,          MAKEDWORD_VERSION(3, 3)},
