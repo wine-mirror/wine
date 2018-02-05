@@ -120,7 +120,7 @@ extern void reverse_bgr8(UINT bytesperpixel, LPBYTE bits, UINT width, UINT heigh
 
 extern HRESULT get_pixelformat_bpp(const GUID *pixelformat, UINT *bpp) DECLSPEC_HIDDEN;
 
-extern HRESULT CreatePropertyBag2(PROPBAG2 *options, UINT count,
+extern HRESULT CreatePropertyBag2(const PROPBAG2 *options, UINT count,
                                   IPropertyBag2 **property) DECLSPEC_HIDDEN;
 
 extern HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo) DECLSPEC_HIDDEN;
