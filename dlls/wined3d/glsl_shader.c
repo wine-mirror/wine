@@ -2591,6 +2591,14 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     sampler_type = "samplerCubeArray";
                 break;
 
+            case WINED3D_SHADER_RESOURCE_TEXTURE_2DMS:
+                sampler_type = "sampler2DMS";
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY:
+                sampler_type = "sampler2DMSArray";
+                break;
+
             default:
                 sampler_type = "unsupported_sampler";
                 FIXME("Unhandled resource type %#x.\n", reg_maps->resource_info[entry->resource_idx].type);
@@ -7446,6 +7454,8 @@ static void shader_glsl_enable_extensions(struct wined3d_string_buffer *buffer,
         shader_addline(buffer, "#extension GL_ARB_texture_cube_map_array : enable\n");
     if (gl_info->supported[ARB_TEXTURE_GATHER])
         shader_addline(buffer, "#extension GL_ARB_texture_gather : enable\n");
+    if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+        shader_addline(buffer, "#extension GL_ARB_texture_multisample : enable\n");
     if (gl_info->supported[ARB_TEXTURE_QUERY_LEVELS])
         shader_addline(buffer, "#extension GL_ARB_texture_query_levels : enable\n");
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
