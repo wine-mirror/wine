@@ -288,6 +288,8 @@ static void test_Win32_Bios( IWbemServices *services )
     static const WCHAR releasedateW[] = {'R','e','l','e','a','s','e','D','a','t','e',0};
     static const WCHAR serialnumberW[] = {'S','e','r','i','a','l','N','u','m','b','e','r',0};
     static const WCHAR smbiosbiosversionW[] = {'S','M','B','I','O','S','B','I','O','S','V','e','r','s','i','o','n',0};
+    static const WCHAR smbiosmajorversionW[] = {'S','M','B','I','O','S','M','a','j','o','r','V','e','r','s','i','o','n',0};
+    static const WCHAR smbiosminorversionW[] = {'S','M','B','I','O','S','M','i','n','o','r','V','e','r','s','i','o','n',0};
     static const WCHAR versionW[] = {'V','e','r','s','i','o','n',0};
     BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
     IEnumWbemClassObject *result;
@@ -364,6 +366,22 @@ static void test_Win32_Bios( IWbemServices *services )
     ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
     trace( "bios version: %s\n", wine_dbgstr_w(V_BSTR( &val )) );
     VariantClear( &val );
+
+    type = 0xdeadbeef;
+    VariantInit( &val );
+    hr = IWbemClassObject_Get( obj, smbiosmajorversionW, 0, &val, &type, NULL );
+    ok( hr == S_OK, "failed to get bios major version %08x\n", hr );
+    ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
+    ok( type == CIM_UINT16, "unexpected type 0x%x\n", type );
+    trace( "bios major version: %u\n", V_I4( &val ) );
+
+    type = 0xdeadbeef;
+    VariantInit( &val );
+    hr = IWbemClassObject_Get( obj, smbiosminorversionW, 0, &val, &type, NULL );
+    ok( hr == S_OK, "failed to get bios minor version %08x\n", hr );
+    ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
+    ok( type == CIM_UINT16, "unexpected type 0x%x\n", type );
+    trace( "bios minor version: %u\n", V_I4( &val ) );
 
     type = 0xdeadbeef;
     VariantInit( &val );

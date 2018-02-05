@@ -335,6 +335,10 @@ static const WCHAR prop_skunumberW[] =
     {'S','K','U','N','u','m','b','e','r',0};
 static const WCHAR prop_smbiosbiosversionW[] =
     {'S','M','B','I','O','S','B','I','O','S','V','e','r','s','i','o','n',0};
+static const WCHAR prop_smbiosmajorversionW[] =
+    {'S','M','B','I','O','S','M','a','j','o','r','V','e','r','s','i','o','n',0};
+static const WCHAR prop_smbiosminorversionW[] =
+    {'S','M','B','I','O','S','M','i','n','o','r','V','e','r','s','i','o','n',0};
 static const WCHAR prop_startmodeW[] =
     {'S','t','a','r','t','M','o','d','e',0};
 static const WCHAR prop_sidW[] =
@@ -418,6 +422,8 @@ static const struct column col_bios[] =
     { prop_releasedateW,        CIM_DATETIME },
     { prop_serialnumberW,       CIM_STRING },
     { prop_smbiosbiosversionW,  CIM_STRING },
+    { prop_smbiosmajorversionW, CIM_UINT16, VT_I4 },
+    { prop_smbiosminorversionW, CIM_UINT16, VT_I4 },
     { prop_versionW,            CIM_STRING|COL_FLAG_KEY }
 };
 static const struct column col_cdromdrive[] =
@@ -818,6 +824,8 @@ struct record_bios
     const WCHAR *releasedate;
     const WCHAR *serialnumber;
     const WCHAR *smbiosbiosversion;
+    UINT16       smbiosmajorversion;
+    UINT16       smbiosminorversion;
     const WCHAR *version;
 };
 struct record_cdromdrive
@@ -1113,7 +1121,7 @@ static const struct record_baseboard data_baseboard[] =
 static const struct record_bios data_bios[] =
 {
     { bios_descriptionW, NULL, bios_manufacturerW, bios_nameW, bios_releasedateW, bios_serialnumberW,
-      bios_smbiosbiosversionW, bios_versionW }
+      bios_smbiosbiosversionW, 1, 0, bios_versionW }
 };
 static const struct record_param data_param[] =
 {
