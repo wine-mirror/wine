@@ -175,17 +175,11 @@ static LPVOID DOSVM_AllocCodeUMB( DWORD size, WORD *selector )
  * Initializes real mode segment and 16-bit protected mode selector
  * for the allocated data block.
  */
-LPVOID DOSVM_AllocDataUMB( DWORD size, WORD *segment, WORD *selector )
+LPVOID DOSVM_AllocDataUMB( DWORD size, WORD *selector )
 {
-  LPVOID ptr = DOSVM_AllocUMB( size );
-
-  if (segment)
-    *segment = (DWORD)ptr >> 4;
-
-  if (selector)
+    LPVOID ptr = DOSVM_AllocUMB( size );
     *selector = alloc_selector( ptr, size, WINE_LDT_FLAGS_DATA );
-
-  return ptr;
+    return ptr;
 }
 
 
@@ -241,8 +235,7 @@ void DOSVM_InitSegments(void)
     /*
      * Space for 16-bit stack used by relay code.
      */
-    ptr = DOSVM_AllocDataUMB( DOSVM_RELAY_DATA_SIZE,
-                              0, &DOSVM_dpmi_segments->relay_data_sel);
+    ptr = DOSVM_AllocDataUMB( DOSVM_RELAY_DATA_SIZE, &DOSVM_dpmi_segments->relay_data_sel);
     memset( ptr, 0, DOSVM_RELAY_DATA_SIZE );
 
     /*

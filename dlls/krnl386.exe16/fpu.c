@@ -230,9 +230,6 @@ static void FPU_ModifyCode(CONTEXT *context, BYTE Opcode)
     code[-2] = 0x9b;          /* The fwait instruction */
     code[-1] = Opcode;        /* Insert the opcode     */
 
-    if ( ISV86(context) && LOWORD(context->Eip) < 2 )
-        FIXME("Backed up over a real mode segment boundary in FPU code.\n");
-
     context->Eip -= 2; /* back up the return address 2 bytes */
 
     TRACE("Modified code in FPU int call to 0x9b 0x%x\n",Opcode);

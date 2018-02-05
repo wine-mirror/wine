@@ -42,11 +42,10 @@ WINE_DECLARE_DEBUG_CHANNEL(io);
 #define SET_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD(val))
 #define SET_LOBYTE(dw,val)  ((dw) = ((dw) & 0xffffff00) | LOBYTE(val))
 #define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
-#define ISV86(context)      ((context)->EFlags & 0x00020000)
 
 static inline void add_stack( CONTEXT *context, int offset )
 {
-    if (ISV86(context) || !IS_SELECTOR_32BIT(context->SegSs))
+    if (!IS_SELECTOR_32BIT(context->SegSs))
         ADD_LOWORD( context->Esp, offset );
     else
         context->Esp += offset;
@@ -54,7 +53,6 @@ static inline void add_stack( CONTEXT *context, int offset )
 
 static inline void *make_ptr( CONTEXT *context, DWORD seg, DWORD off, int long_addr )
 {
-    if (ISV86(context)) return (void *)((seg << 4) + LOWORD(off));
     if (wine_ldt_is_system(seg)) return (void *)off;
     if (!long_addr) off = LOWORD(off);
     return (char *) MapSL( MAKESEGPTR( seg, 0 ) ) + off;
@@ -62,7 +60,6 @@ static inline void *make_ptr( CONTEXT *context, DWORD seg, DWORD off, int long_a
 
 static inline void *get_stack( CONTEXT *context )
 {
-    if (ISV86(context)) return (void *)((context->SegSs << 4) + LOWORD(context->Esp));
     return wine_ldt_get_ptr( context->SegSs, context->Esp );
 }
 
@@ -444,7 +441,7 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     BYTE *instr;
 
-    long_op = long_addr = (!ISV86(context) && IS_SELECTOR_32BIT(context->SegCs));
+    long_op = long_addr = IS_SELECTOR_32BIT(context->SegCs);
     instr = make_ptr( context, context->SegCs, context->Eip, TRUE );
     if (!instr) return ExceptionContinueSearch;
 

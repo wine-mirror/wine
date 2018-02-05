@@ -84,8 +84,7 @@ extern struct DPMI_segments *DOSVM_dpmi_segments DECLSPEC_HIDDEN;
  *       segmented mode is recognized by checking whether 'seg' is 32-bit
  *       selector which is neither system selector nor zero.
  */
-#define CTX_SEG_OFF_TO_LIN(context,seg,off) \
-    (ISV86(context) ? PTR_REAL_TO_LIN((seg),(off)) : wine_ldt_get_ptr((seg),(off)))
+#define CTX_SEG_OFF_TO_LIN(context,seg,off) (wine_ldt_get_ptr((seg),(off)))
 
 #define INT_BARF(context,num) \
     ERR( "int%x: unknown/not implemented parameters:\n" \
@@ -122,7 +121,6 @@ extern struct DPMI_segments *DOSVM_dpmi_segments DECLSPEC_HIDDEN;
 #define RESET_CFLAG(context) ((context)->EFlags &= ~0x0001)
 #define SET_ZFLAG(context)   ((context)->EFlags |= 0x0040)
 #define RESET_ZFLAG(context) ((context)->EFlags &= ~0x0040)
-#define ISV86(context)       ((context)->EFlags & 0x00020000)
 
 #define SET_AX(context,val)  ((void)((context)->Eax = ((context)->Eax & ~0xffff) | (WORD)(val)))
 #define SET_BX(context,val)  ((void)((context)->Ebx = ((context)->Ebx & ~0xffff) | (WORD)(val)))
@@ -220,7 +218,7 @@ typedef struct
 
 /* dosvm.c */
 extern void DOSVM_Exit( WORD retval ) DECLSPEC_HIDDEN;
-extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *, WORD *) DECLSPEC_HIDDEN;
+extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *) DECLSPEC_HIDDEN;
 extern void DOSVM_InitSegments(void) DECLSPEC_HIDDEN;
 
 /* dma.c */

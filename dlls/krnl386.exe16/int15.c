@@ -97,12 +97,6 @@ void WINAPI DOSVM_Int15Handler( CONTEXT *context )
         break;
 
     case 0xc0: /* GET CONFIGURATION */
-        if (ISV86(context))
-        {
-            /* real mode segment */
-            context->SegEs = 0xf000;
-        }
-        else
         {
             /* KERNEL.194: __F000H - protected mode selector */
             FARPROC16 proc = GetProcAddress16( GetModuleHandle16("KERNEL"),

@@ -673,40 +673,26 @@ static void WINAPI DOSVM_Int2aHandler( CONTEXT *context )
  */
 static void WINAPI DOSVM_Int41Handler( CONTEXT *context )
 {
-    if ( ISV86(context) )
+    switch ( AX_reg(context) )
     {
-        /* Real-mode debugger services */
-        switch ( AX_reg(context) )
-        {
-        default:
-            INT_BARF( context, 0x41 );
-            break;
-        }
-    }
-    else
-    {
-        /* Protected-mode debugger services */
-        switch ( AX_reg(context) )
-        {
-        case 0x4f:
-        case 0x50:
-        case 0x150:
-        case 0x51:
-        case 0x52:
-        case 0x152:
-        case 0x59:
-        case 0x5a:
-        case 0x5b:
-        case 0x5c:
-        case 0x5d:
-            /* Notifies the debugger of a lot of stuff. We simply ignore it
-               for now, but some of the info might actually be useful ... */
-            break;
+    case 0x4f:
+    case 0x50:
+    case 0x150:
+    case 0x51:
+    case 0x52:
+    case 0x152:
+    case 0x59:
+    case 0x5a:
+    case 0x5b:
+    case 0x5c:
+    case 0x5d:
+        /* Notifies the debugger of a lot of stuff. We simply ignore it
+           for now, but some of the info might actually be useful ... */
+        break;
 
-        default:
-            INT_BARF( context, 0x41 );
-            break;
-        }
+    default:
+        INT_BARF( context, 0x41 );
+        break;
     }
 }
 

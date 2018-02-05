@@ -137,7 +137,6 @@ typedef struct _INT21_HEAP {
     BYTE dbcs_table[16];             /* Start/end bytes for N ranges and 00/00 as terminator */
 
     BYTE      misc_indos;                    /* Interrupt 21 nesting flag */
-    WORD      misc_segment;                  /* Real mode segment for INT21_HEAP */
     WORD      misc_selector;                 /* Protected mode selector for INT21_HEAP */
     INT21_DPB misc_dpb_list[MAX_DOS_DRIVES]; /* Drive parameter blocks for all drives */
 
@@ -523,14 +522,9 @@ static INT21_HEAP *INT21_GetHeapPointer( void )
 
     if (!heap_pointer)
     {
-        WORD heap_segment;
         WORD heap_selector;
 
-        heap_pointer = DOSVM_AllocDataUMB( sizeof(INT21_HEAP), 
-                                           &heap_segment,
-                                           &heap_selector );
-
-        heap_pointer->misc_segment  = heap_segment;
+        heap_pointer = DOSVM_AllocDataUMB( sizeof(INT21_HEAP), &heap_selector );
         heap_pointer->misc_selector = heap_selector;
         INT21_FillHeap( heap_pointer );
     }
@@ -548,11 +542,7 @@ static INT21_HEAP *INT21_GetHeapPointer( void )
 static WORD INT21_GetHeapSelector( CONTEXT *context )
 {
     INT21_HEAP *heap = INT21_GetHeapPointer();
-
-    if (!ISV86(context))
-        return heap->misc_selector;
-    else
-        return heap->misc_segment;
+    return heap->misc_selector;
 }
 
 
@@ -2278,14 +2268,7 @@ static void INT21_GetPSP( CONTEXT *context )
 {
     TRACE( "GET CURRENT PSP ADDRESS (%02x)\n", AH_reg(context) );
 
-    /*
-     * FIXME: should we return the original DOS PSP upon
-     *        Windows startup ? 
-     */
-    if (!ISV86(context))
-        SET_BX( context, LOWORD(GetCurrentPDB16()) );
-    else
-        SET_BX( context, DOSVM_psp );
+    SET_BX( context, LOWORD(GetCurrentPDB16()) );
 }
 
 static inline void setword( BYTE *ptr, WORD w )
@@ -4734,16 +4717,9 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
     case 0x48: /* ALLOCATE MEMORY */
         TRACE( "ALLOCATE MEMORY for %d paragraphs\n", BX_reg(context) );
         {
-            WORD  selector = 0;
             DWORD bytes = (DWORD)BX_reg(context) << 4;
-
-            if (!ISV86(context))
-            {
-                DWORD rv = GlobalDOSAlloc16( bytes );
-                selector = LOWORD( rv );
-            }
-            else
-                DOSMEM_AllocBlock( bytes, &selector );
+            DWORD rv = GlobalDOSAlloc16( bytes );
+            WORD selector = LOWORD( rv );
 
             if (selector)
             {
@@ -4762,20 +4738,11 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
     case 0x49: /* FREE MEMORY */
         TRACE( "FREE MEMORY segment %04X\n", context->SegEs );
         {
-            BOOL ok;
-            
-            if (!ISV86(context))
-            {
-                ok = !GlobalDOSFree16( context->SegEs );
+            BOOL ok = !GlobalDOSFree16( context->SegEs );
 
-                /* If we don't reset ES_reg, we will fail in the relay code */
-                if (ok)
-                    context->SegEs = 0;
-            }
+            /* If we don't reset ES_reg, we will fail in the relay code */
+            if (ok) context->SegEs = 0;
             else
-                ok = DOSMEM_FreeBlock( PTR_REAL_TO_LIN(context->SegEs, 0) );
-
-            if (!ok)
             {
                 TRACE("FREE MEMORY failed\n");
                 SET_CFLAG(context);
@@ -4788,31 +4755,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         TRACE( "RESIZE MEMORY segment %04X to %d paragraphs\n",
                context->SegEs, BX_reg(context) );
         {
-            DWORD newsize = (DWORD)BX_reg(context) << 4;
-            
-            if (!ISV86(context))
-            {
-                FIXME( "Resize memory block - unsupported under Win16\n" );
-                SET_CFLAG(context);
-            }
-            else
-            {
-                LPVOID address = (void*)(context->SegEs << 4);
-                UINT blocksize = DOSMEM_ResizeBlock( address, newsize, FALSE );
-
-                RESET_CFLAG(context);
-                if (blocksize == (UINT)-1)
-                {
-                    SET_CFLAG( context );
-                    SET_AX( context, 0x0009 ); /* illegal address */
-                }
-                else if(blocksize != newsize)
-                {
-                    SET_CFLAG( context );
-                    SET_AX( context, 0x0008 );    /* insufficient memory */
-                    SET_BX( context, blocksize >> 4 ); /* new block size */
-                }
-            }
+            FIXME( "Resize memory block - unsupported under Win16\n" );
+            SET_CFLAG(context);
         }
         break;
 
