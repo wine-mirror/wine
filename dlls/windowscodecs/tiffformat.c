@@ -1957,7 +1957,7 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
         hr = E_FAIL;
     }
 
-    if (SUCCEEDED(hr))
+    if (ppIEncoderOptions && SUCCEEDED(hr))
     {
         hr = CreatePropertyBag2(opts, sizeof(opts)/sizeof(opts[0]), ppIEncoderOptions);
         if (SUCCEEDED(hr))
