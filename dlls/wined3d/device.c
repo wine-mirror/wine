@@ -1931,8 +1931,7 @@ static void resolve_depth_buffer(struct wined3d_state *state)
     struct wined3d_rendertarget_view *src_view;
     RECT src_rect, dst_rect;
 
-    if (!dst_texture || dst_texture->resource.type != WINED3D_RTYPE_TEXTURE_2D
-            || !(dst_texture->resource.format_flags & WINED3DFMT_FLAG_DEPTH))
+    if (!dst_texture || !(dst_texture->resource.format_flags & WINED3DFMT_FLAG_DEPTH))
         return;
 
     if (!(src_view = state->fb->depth_stencil))
