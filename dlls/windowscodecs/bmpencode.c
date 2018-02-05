@@ -508,8 +508,11 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
     if (!This->stream) return WINCODEC_ERR_NOTINITIALIZED;
 
-    hr = CreatePropertyBag2(NULL, 0, ppIEncoderOptions);
-    if (FAILED(hr)) return hr;
+    if (ppIEncoderOptions)
+    {
+        hr = CreatePropertyBag2(NULL, 0, ppIEncoderOptions);
+        if (FAILED(hr)) return hr;
+    }
 
     encode = HeapAlloc(GetProcessHeap(), 0, sizeof(BmpFrameEncode));
     if (!encode)

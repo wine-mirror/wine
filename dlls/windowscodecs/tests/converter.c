@@ -804,6 +804,24 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
     int i;
 
     hr = CoCreateInstance(clsid_encoder, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICBitmapEncoder, (void **)&encoder);
+    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(SUCCEEDED(hr), "CreateStreamOnHGlobal failed, hr=%x\n", hr);
+
+    hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
+    ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
+
+    /* Encoder options are optional. */
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frameencode, NULL);
+    ok(SUCCEEDED(hr), "Failed to create encode frame, hr %#x.\n", hr);
+
+    IStream_Release(stream);
+    IWICBitmapEncoder_Release(encoder);
+    IWICBitmapFrameEncode_Release(frameencode);
+
+    hr = CoCreateInstance(clsid_encoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapEncoder, (void**)&encoder);
     ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
     if (SUCCEEDED(hr))
