@@ -36,8 +36,6 @@
 /* fix this if the x86_thread_data structure is changed */
 #define GS_OFFSET  0x1d8  /* FIELD_OFFSET(TEB,SystemReserved2) + FIELD_OFFSET(struct x86_thread_data,gs) */
 
-#define DPMI_VIF_OFFSET      (0x1fc + 0) /* FIELD_OFFSET(TEB,GdiTebBatch) + FIELD_OFFSET(WINE_VM86_TEB_INFO,dpmi_vif) */
-#define VM86_PENDING_OFFSET  (0x1fc + 4) /* FIELD_OFFSET(TEB,GdiTebBatch) + FIELD_OFFSET(WINE_VM86_TEB_INFO,vm86_pending) */
 
 static void function_header( const char *name )
 {
@@ -749,53 +747,6 @@ static void BuildCallTo32CBClient( int isEx )
 
 
 /*******************************************************************
- *         BuildPendingEventCheck
- *
- * Build a function that checks whether there are any
- * pending DPMI events.
- *
- * Stack layout:
- *   
- * (sp+12) long   eflags
- * (sp+6)  long   cs
- * (sp+2)  long   ip
- * (sp)    word   fs
- *
- * On entry to function, fs register points to a valid TEB.
- * On exit from function, stack will be popped.
- */
-static void BuildPendingEventCheck(void)
-{
-    /* Function header */
-
-    function_header( "DPMI_PendingEventCheck" );
-
-    /* Check for pending events. */
-
-    output( "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n", VM86_PENDING_OFFSET );
-    output( "\tje %s\n", asm_name("DPMI_PendingEventCheck_Cleanup") );
-    output( "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n", DPMI_VIF_OFFSET );
-    output( "\tje %s\n", asm_name("DPMI_PendingEventCheck_Cleanup") );
-
-    /* Process pending events. */
-
-    output( "\tsti\n" );
-
-    /* Start cleanup. Restore fs register. */
-
-    output( "%s\n", asm_globl("DPMI_PendingEventCheck_Cleanup") );
-    output( "\tpopw %%fs\n" );
-
-    /* Return from function. */
-
-    output( "%s\n", asm_globl("DPMI_PendingEventCheck_Return") );
-    output( "\tiret\n" );
-
-    output_function_size( "DPMI_PendingEventCheck" );
-}
-
-
-/*******************************************************************
  *         output_asm_relays16
  *
  * Build all the 16-bit relay callbacks
@@ -832,9 +783,6 @@ void output_asm_relays16(void)
 
     /* CBClientThunkSLEx routine */
     BuildCallTo32CBClient( 1  );
-
-    /* Pending DPMI events check stub */
-    BuildPendingEventCheck();
 
     output( "%s\n", asm_globl("__wine_call16_end") );
     output_function_size( "__wine_spec_thunk_text_16" );
