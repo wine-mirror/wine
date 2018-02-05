@@ -213,7 +213,7 @@ static HRESULT WINAPI PropertyBag_CountProperties(IPropertyBag2 *iface, ULONG *p
     return S_OK;
 }
 
-static HRESULT copy_propbag2(PROPBAG2 *dest, PROPBAG2 *src)
+static HRESULT copy_propbag2(PROPBAG2 *dest, const PROPBAG2 *src)
 {
     dest->cfType = src->cfType;
     dest->clsid = src->clsid;
@@ -278,7 +278,7 @@ static const IPropertyBag2Vtbl PropertyBag_Vtbl = {
     PropertyBag_LoadObject
 };
 
-HRESULT CreatePropertyBag2(PROPBAG2 *options, UINT count,
+HRESULT CreatePropertyBag2(const PROPBAG2 *options, UINT count,
                            IPropertyBag2 **ppPropertyBag2)
 {
     UINT i;

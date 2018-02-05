@@ -1936,7 +1936,11 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 {
     TiffEncoder *This = impl_from_IWICBitmapEncoder(iface);
     TiffFrameEncode *result;
-
+    static const PROPBAG2 opts[2] =
+    {
+        { PROPBAG2_TYPE_DATA, VT_UI1, 0, 0, (LPOLESTR)wszTiffCompressionMethod },
+        { PROPBAG2_TYPE_DATA, VT_R4,  0, 0, (LPOLESTR)wszCompressionQuality },
+    };
     HRESULT hr=S_OK;
 
     TRACE("(%p,%p,%p)\n", iface, ppIFrameEncode, ppIEncoderOptions);
@@ -1955,24 +1959,14 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
     if (SUCCEEDED(hr))
     {
-        PROPBAG2 opts[2]= {{0}};
-        opts[0].pstrName = (LPOLESTR)wszTiffCompressionMethod;
-        opts[0].vt = VT_UI1;
-        opts[0].dwType = PROPBAG2_TYPE_DATA;
-
-        opts[1].pstrName = (LPOLESTR)wszCompressionQuality;
-        opts[1].vt = VT_R4;
-        opts[1].dwType = PROPBAG2_TYPE_DATA;
-
-        hr = CreatePropertyBag2(opts, 2, ppIEncoderOptions);
-
+        hr = CreatePropertyBag2(opts, sizeof(opts)/sizeof(opts[0]), ppIEncoderOptions);
         if (SUCCEEDED(hr))
         {
             VARIANT v;
             VariantInit(&v);
             V_VT(&v) = VT_UI1;
             V_UNION(&v, bVal) = WICTiffCompressionDontCare;
-            hr = IPropertyBag2_Write(*ppIEncoderOptions, 1, opts, &v);
+            hr = IPropertyBag2_Write(*ppIEncoderOptions, 1, (PROPBAG2 *)opts, &v);
             VariantClear(&v);
             if (FAILED(hr))
             {

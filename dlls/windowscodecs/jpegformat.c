@@ -1446,7 +1446,15 @@ static HRESULT WINAPI JpegEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 {
     JpegEncoder *This = impl_from_IWICBitmapEncoder(iface);
     HRESULT hr;
-    PROPBAG2 opts[6] = {{0}};
+    static const PROPBAG2 opts[6] =
+    {
+        { PROPBAG2_TYPE_DATA, VT_R4,            0, 0, (LPOLESTR)wszImageQuality },
+        { PROPBAG2_TYPE_DATA, VT_UI1,           0, 0, (LPOLESTR)wszBitmapTransform },
+        { PROPBAG2_TYPE_DATA, VT_I4 | VT_ARRAY, 0, 0, (LPOLESTR)wszLuminance },
+        { PROPBAG2_TYPE_DATA, VT_I4 | VT_ARRAY, 0, 0, (LPOLESTR)wszChrominance },
+        { PROPBAG2_TYPE_DATA, VT_UI1,           0, 0, (LPOLESTR)wszJpegYCrCbSubsampling },
+        { PROPBAG2_TYPE_DATA, VT_BOOL,          0, 0, (LPOLESTR)wszSuppressApp0 },
+    };
 
     TRACE("(%p,%p,%p)\n", iface, ppIFrameEncode, ppIEncoderOptions);
 
@@ -1464,26 +1472,7 @@ static HRESULT WINAPI JpegEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
         return WINCODEC_ERR_NOTINITIALIZED;
     }
 
-    opts[0].pstrName = (LPOLESTR)wszImageQuality;
-    opts[0].vt = VT_R4;
-    opts[0].dwType = PROPBAG2_TYPE_DATA;
-    opts[1].pstrName = (LPOLESTR)wszBitmapTransform;
-    opts[1].vt = VT_UI1;
-    opts[1].dwType = PROPBAG2_TYPE_DATA;
-    opts[2].pstrName = (LPOLESTR)wszLuminance;
-    opts[2].vt = VT_I4|VT_ARRAY;
-    opts[2].dwType = PROPBAG2_TYPE_DATA;
-    opts[3].pstrName = (LPOLESTR)wszChrominance;
-    opts[3].vt = VT_I4|VT_ARRAY;
-    opts[3].dwType = PROPBAG2_TYPE_DATA;
-    opts[4].pstrName = (LPOLESTR)wszJpegYCrCbSubsampling;
-    opts[4].vt = VT_UI1;
-    opts[4].dwType = PROPBAG2_TYPE_DATA;
-    opts[5].pstrName = (LPOLESTR)wszSuppressApp0;
-    opts[5].vt = VT_BOOL;
-    opts[5].dwType = PROPBAG2_TYPE_DATA;
-
-    hr = CreatePropertyBag2(opts, 6, ppIEncoderOptions);
+    hr = CreatePropertyBag2(opts, sizeof(opts)/sizeof(opts[0]), ppIEncoderOptions);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&This->lock);
