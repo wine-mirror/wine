@@ -861,6 +861,8 @@ static HRESULT WINAPI DOMEvent_QueryInterface(IDOMEvent *iface, REFIID riid, voi
         *ppv = &This->IDOMEvent_iface;
     else if(IsEqualGUID(&IID_IDOMEvent, riid))
         *ppv = &This->IDOMEvent_iface;
+    else if(This->ui_event && IsEqualGUID(&IID_IDOMUIEvent, riid))
+        *ppv = &This->IDOMUIEvent_iface;
     else if(This->mouse_event && IsEqualGUID(&IID_IDOMMouseEvent, riid))
         *ppv = &This->IDOMMouseEvent_iface;
     else if(dispex_query_interface(&This->dispex, riid, ppv))
@@ -893,6 +895,10 @@ static ULONG WINAPI DOMEvent_Release(IDOMEvent *iface)
     TRACE("(%p) ref=%u\n", This, ref);
 
     if(!ref) {
+        if(This->ui_event)
+            nsIDOMUIEvent_Release(This->ui_event);
+        if(This->mouse_event)
+            nsIDOMMouseEvent_Release(This->mouse_event);
         if(This->target)
             IDispatchEx_Release(&This->target->dispex.IDispatchEx_iface);
         nsIDOMEvent_Release(This->nsevent);
@@ -1150,6 +1156,94 @@ static const IDOMEventVtbl DOMEventVtbl = {
     DOMEvent_put_cancelBubble,
     DOMEvent_get_cancelBubble,
     DOMEvent_get_srcElement
+};
+
+static inline DOMEvent *impl_from_IDOMUIEvent(IDOMUIEvent *iface)
+{
+    return CONTAINING_RECORD(iface, DOMEvent, IDOMUIEvent_iface);
+}
+
+static HRESULT WINAPI DOMUIEvent_QueryInterface(IDOMUIEvent *iface, REFIID riid, void **ppv)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    return IDOMEvent_QueryInterface(&This->IDOMEvent_iface, riid, ppv);
+}
+
+static ULONG WINAPI DOMUIEvent_AddRef(IDOMUIEvent *iface)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    return IDOMEvent_AddRef(&This->IDOMEvent_iface);
+}
+
+static ULONG WINAPI DOMUIEvent_Release(IDOMUIEvent *iface)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    return IDOMEvent_Release(&This->IDOMEvent_iface);
+}
+
+static HRESULT WINAPI DOMUIEvent_GetTypeInfoCount(IDOMUIEvent *iface, UINT *pctinfo)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI DOMUIEvent_GetTypeInfo(IDOMUIEvent *iface, UINT iTInfo,
+                                                LCID lcid, ITypeInfo **ppTInfo)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DOMUIEvent_GetIDsOfNames(IDOMUIEvent *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI DOMUIEvent_Invoke(IDOMUIEvent *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DOMUIEvent_get_view(IDOMUIEvent *iface, IHTMLWindow2 **p)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMUIEvent_get_detail(IDOMUIEvent *iface, LONG *p)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMUIEvent_initUIEvent(IDOMUIEvent *iface, BSTR type, VARIANT_BOOL can_bubble,
+        VARIANT_BOOL cancelable, IHTMLWindow2 *view, LONG detail)
+{
+    DOMEvent *This = impl_from_IDOMUIEvent(iface);
+    FIXME("(%p)->(%s %x %x %p %x)\n", This, debugstr_w(type), can_bubble, cancelable, view, detail);
+    return E_NOTIMPL;
+}
+
+static const IDOMUIEventVtbl DOMUIEventVtbl = {
+    DOMUIEvent_QueryInterface,
+    DOMUIEvent_AddRef,
+    DOMUIEvent_Release,
+    DOMUIEvent_GetTypeInfoCount,
+    DOMUIEvent_GetTypeInfo,
+    DOMUIEvent_GetIDsOfNames,
+    DOMUIEvent_Invoke,
+    DOMUIEvent_get_view,
+    DOMUIEvent_get_detail,
+    DOMUIEvent_initUIEvent
 };
 
 static inline DOMEvent *impl_from_IDOMMouseEvent(IDOMMouseEvent *iface)
@@ -1558,6 +1652,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
         return NULL;
 
     event->IDOMEvent_iface.lpVtbl = &DOMEventVtbl;
+    event->IDOMUIEvent_iface.lpVtbl = &DOMUIEventVtbl;
     event->IDOMMouseEvent_iface.lpVtbl = &DOMMouseEventVtbl;
     event->ref = 1;
     event->event_id = event_id;
@@ -1575,6 +1670,10 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
     GetSystemTimeAsFileTime(&time);
     event->time_stamp = (((ULONGLONG)time.dwHighDateTime<<32) + time.dwLowDateTime) / 10000
         - time_epoch;
+
+    nsres = nsIDOMEvent_QueryInterface(nsevent, &IID_nsIDOMUIEvent, (void**)&event->ui_event);
+    if(NS_FAILED(nsres))
+        event->ui_event = NULL;
 
     nsres = nsIDOMEvent_QueryInterface(nsevent, &IID_nsIDOMMouseEvent, (void**)&event->mouse_event);
     if(NS_SUCCEEDED(nsres))
