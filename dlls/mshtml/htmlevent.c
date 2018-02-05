@@ -1647,8 +1647,21 @@ static dispex_static_data_t DOMEvent_dispex = {
     DOMEvent_iface_tids
 };
 
+static const tid_t DOMUIEvent_iface_tids[] = {
+    IDOMEvent_tid,
+    IDOMUIEvent_tid,
+    0
+};
+
+static dispex_static_data_t DOMUIEvent_dispex = {
+    NULL,
+    DispDOMUIEvent_tid,
+    DOMUIEvent_iface_tids
+};
+
 static const tid_t DOMMouseEvent_iface_tids[] = {
     IDOMEvent_tid,
+    IDOMUIEvent_tid,
     IDOMMouseEvent_tid,
     0
 };
@@ -1694,7 +1707,9 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
         - time_epoch;
 
     nsres = nsIDOMEvent_QueryInterface(nsevent, &IID_nsIDOMUIEvent, (void**)&event->ui_event);
-    if(NS_FAILED(nsres))
+    if(NS_SUCCEEDED(nsres))
+        dispex_data = &DOMUIEvent_dispex;
+    else
         event->ui_event = NULL;
 
     nsres = nsIDOMEvent_QueryInterface(nsevent, &IID_nsIDOMMouseEvent, (void**)&event->mouse_event);

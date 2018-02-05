@@ -610,6 +610,7 @@ function test_mouse_event() {
     ok(e.type === "test", "type = " + e.type);
     ok(e.cancelable === true, "cancelable = " + e.cancelable);
     ok(e.bubbles === true, "bubbles = " + e.bubbles);
+    ok(e.detail === 1, "detail = " + e.detail);
     ok(e.screenX === 2, "screenX = " + e.screenX);
     ok(e.screenY === 3, "screenY = " + e.screenY);
     ok(e.clientX === 4, "clientX = " + e.clientX);
@@ -624,6 +625,7 @@ function test_mouse_event() {
     ok(e.type === "test", "type = " + e.type);
     ok(e.cancelable === false, "cancelable = " + e.cancelable);
     ok(e.bubbles === false, "bubbles = " + e.bubbles);
+    ok(e.detail === 9, "detail = " + e.detail);
     ok(e.screenX === 8, "screenX = " + e.screenX);
     ok(e.screenY === 7, "screenY = " + e.screenY);
     ok(e.clientX === 6, "clientX = " + e.clientX);
@@ -638,6 +640,7 @@ function test_mouse_event() {
     ok(e.type === "testevent", "type = " + e.type);
     ok(e.cancelable === true, "cancelable = " + e.cancelable);
     ok(e.bubbles === true, "bubbles = " + e.bubbles);
+    ok(e.detail === 9, "detail = " + e.detail);
     ok(e.screenX === 8, "screenX = " + e.screenX);
     ok(e.screenY === 7, "screenY = " + e.screenY);
     ok(e.clientX === 6, "clientX = " + e.clientX);
@@ -647,6 +650,36 @@ function test_mouse_event() {
     ok(e.shiftKey === true, "shiftKey = " + e.shiftKey);
     ok(e.metaKey === true, "metaKey = " + e.metaKey);
     ok(e.button === 127, "button = " + e.button);
+
+    e.initUIEvent("testevent", true, true, window, 6);
+    ok(e.type === "testevent", "type = " + e.type);
+    ok(e.cancelable === true, "cancelable = " + e.cancelable);
+    ok(e.bubbles === true, "bubbles = " + e.bubbles);
+    ok(e.detail === 6, "detail = " + e.detail);
+    ok(e.screenX === 8, "screenX = " + e.screenX);
+    ok(e.screenY === 7, "screenY = " + e.screenY);
+    ok(e.clientX === 6, "clientX = " + e.clientX);
+    ok(e.clientY === 5, "clientY = " + e.clientY);
+    ok(e.ctrlKey === true, "ctrlKey = " + e.ctrlKey);
+    ok(e.altKey === true, "altKey = " + e.altKey);
+    ok(e.shiftKey === true, "shiftKey = " + e.shiftKey);
+    ok(e.metaKey === true, "metaKey = " + e.metaKey);
+    ok(e.button === 127, "button = " + e.button);
+
+    next_test();
+}
+
+function test_ui_event() {
+    var e;
+
+    e = document.createEvent("UIEvent");
+    ok(e.detail === 0, "detail = " + e.detail);
+
+    e.initUIEvent("test", true, true, window, 3);
+    ok(e.type === "test", "type = " + e.type);
+    ok(e.cancelable === true, "cancelable = " + e.cancelable);
+    ok(e.bubbles === true, "bubbles = " + e.bubbles);
+    ok(e.detail === 3, "detail = " + e.detail);
 
     next_test();
 }
@@ -663,7 +696,8 @@ var tests = [
     test_current_target,
     test_dispatch_event,
     test_recursive_dispatch,
+    test_ui_event,
+    test_mouse_event,
     test_time_stamp,
-    test_listener_order,
-    test_mouse_event
+    test_listener_order
 ];
