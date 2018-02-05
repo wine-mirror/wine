@@ -226,9 +226,6 @@ struct debug_info
 /* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
 struct ntdll_thread_data
 {
-#ifdef __i386__
-    WINE_VM86_TEB_INFO __vm86;        /* FIXME: placeholder for vm86 data from struct x86_thread_data */
-#endif
     struct debug_info *debug_info;    /* info for debugstr functions */
     void              *start_stack;   /* stack for thread startup */
     int                request_fd;    /* fd for sending server requests */
@@ -239,9 +236,6 @@ struct ntdll_thread_data
 };
 
 C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
-#ifdef __i386__
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, __vm86 ) == 0x1fc );
-#endif
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
 {

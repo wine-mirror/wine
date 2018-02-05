@@ -2913,18 +2913,6 @@ static inline PLIST_ENTRY RemoveTailList(PLIST_ENTRY le)
 
 #ifdef __WINESRC__
 
-/* FIXME: private structure for vm86 mode, stored in teb->GdiTebBatch */
-typedef struct
-{
-    DWORD        dpmi_vif;
-    DWORD        vm86_pending;
-} WINE_VM86_TEB_INFO;
-
-static inline WINE_VM86_TEB_INFO *get_vm86_teb_info(void)
-{
-    return (WINE_VM86_TEB_INFO *)&NtCurrentTeb()->GdiTebBatch;
-}
-
 /* The thread information for 16-bit threads */
 /* NtCurrentTeb()->SubSystemTib points to this */
 typedef struct
