@@ -81,6 +81,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispCPlugins) \
     XDIID(DispDOMChildrenCollection) \
     XDIID(DispDOMEvent) \
+    XDIID(DispDOMMouseEvent) \
     XDIID(DispHTMLAnchorElement) \
     XDIID(DispHTMLAreaElement) \
     XDIID(DispHTMLAttributeCollection) \
@@ -128,6 +129,7 @@ typedef struct EventTarget EventTarget;
     XDIID(HTMLDocumentEvents) \
     XDIID(HTMLElementEvents2) \
     XIID(IDOMEvent) \
+    XIID(IDOMMouseEvent) \
     XIID(IDocumentEvent) \
     XIID(IDocumentSelector) \
     XIID(IElementSelector) \
