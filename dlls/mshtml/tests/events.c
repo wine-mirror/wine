@@ -2666,6 +2666,7 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 
 static void test_create_event(IHTMLDocument2 *doc)
 {
+    IDOMMouseEvent *mouse_event;
     IDocumentEvent *doc_event;
     IEventTarget *event_target;
     IHTMLElement *elem;
@@ -2719,6 +2720,20 @@ static void test_create_event(IHTMLDocument2 *doc)
     ok(hres == E_INVALIDARG, "dispatchEvent failed: %08x\n", hres);
 
     IEventTarget_Release(event_target);
+
+    hres = IDOMEvent_QueryInterface(event, &IID_IDOMMouseEvent, (void**)&mouse_event);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IID_IDOMMouseEvent returned %08x\n", hres);
+
+    IDOMEvent_Release(event);
+
+    str = a2bstr("MouseEvent");
+    hres = IDocumentEvent_createEvent(doc_event, str, &event);
+    SysFreeString(str);
+    ok(hres == S_OK, "createEvent failed: %08x\n", hres);
+
+    hres = IDOMEvent_QueryInterface(event, &IID_IDOMMouseEvent, (void**)&mouse_event);
+    ok(hres == S_OK, "QueryInterface(IID_IDOMMouseEvent returned %08x\n", hres);
+    IDOMMouseEvent_Release(mouse_event);
 
     IDOMEvent_Release(event);
 

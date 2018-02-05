@@ -59,10 +59,13 @@ typedef enum {
 typedef struct {
     DispatchEx dispex;
     IDOMEvent IDOMEvent_iface;
+    IDOMMouseEvent IDOMMouseEvent_iface;
 
     LONG ref;
 
     nsIDOMEvent *nsevent;
+    nsIDOMMouseEvent *mouse_event;
+
     eventid_t event_id;
     WCHAR *type;
     EventTarget *target;
