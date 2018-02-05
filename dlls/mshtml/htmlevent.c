@@ -414,16 +414,8 @@ static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL
     if(This->event && This->event->mouse_event)
         return IDOMMouseEvent_get_altKey(&This->event->IDOMMouseEvent_iface, p);
 
-    if(This->event) {
-        nsIDOMKeyEvent *key_event;
-        nsresult nsres;
-
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMKeyEvent, (void**)&key_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIDOMKeyEvent_GetAltKey(key_event, &ret);
-            nsIDOMKeyEvent_Release(key_event);
-        }
-    }
+    if(This->event && This->event->keyboard_event)
+        return IDOMKeyboardEvent_get_altKey(&This->event->IDOMKeyboardEvent_iface, p);
 
     *p = variant_bool(ret);
     return S_OK;
@@ -439,16 +431,8 @@ static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOO
     if(This->event && This->event->mouse_event)
         return IDOMMouseEvent_get_ctrlKey(&This->event->IDOMMouseEvent_iface, p);
 
-    if(This->event) {
-        nsIDOMKeyEvent *key_event;
-        nsresult nsres;
-
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMKeyEvent, (void**)&key_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIDOMKeyEvent_GetCtrlKey(key_event, &ret);
-            nsIDOMKeyEvent_Release(key_event);
-        }
-    }
+    if(This->event && This->event->keyboard_event)
+        return IDOMKeyboardEvent_get_ctrlKey(&This->event->IDOMKeyboardEvent_iface, p);
 
     *p = variant_bool(ret);
     return S_OK;
@@ -464,16 +448,8 @@ static HRESULT WINAPI HTMLEventObj_get_shiftKey(IHTMLEventObj *iface, VARIANT_BO
     if(This->event && This->event->mouse_event)
         return IDOMMouseEvent_get_shiftKey(&This->event->IDOMMouseEvent_iface, p);
 
-    if(This->event) {
-        nsIDOMKeyEvent *key_event;
-        nsresult nsres;
-
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMKeyEvent, (void**)&key_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIDOMKeyEvent_GetShiftKey(key_event, &ret);
-            nsIDOMKeyEvent_Release(key_event);
-        }
-    }
+    if(This->event && This->event->keyboard_event)
+        return IDOMKeyboardEvent_get_shiftKey(&This->event->IDOMKeyboardEvent_iface, p);
 
     *p = variant_bool(ret);
     return S_OK;
@@ -557,22 +533,13 @@ static HRESULT WINAPI HTMLEventObj_put_keyCode(IHTMLEventObj *iface, LONG v)
 static HRESULT WINAPI HTMLEventObj_get_keyCode(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    UINT32 key_code = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->event) {
-        nsIDOMKeyEvent *key_event;
-        nsresult nsres;
+    if(This->event && This->event->keyboard_event)
+        return IDOMKeyboardEvent_get_keyCode(&This->event->IDOMKeyboardEvent_iface, p);
 
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMKeyEvent, (void**)&key_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIDOMKeyEvent_GetKeyCode(key_event, &key_code);
-            nsIDOMKeyEvent_Release(key_event);
-        }
-    }
-
-    *p = key_code;
+    *p = 0;
     return S_OK;
 }
 
