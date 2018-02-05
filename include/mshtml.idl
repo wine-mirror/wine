@@ -20168,6 +20168,35 @@ methods:
     WINE_IDOMEVENT_DISPINTERFACE_DECL;
 }
 
+/*****************************************************************************
+ *    IDOMUIEvent interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305106ca-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDOMUIEvent : IDispatch
+{
+    [propget, id(DISPID_IDOMUIEVENT_VIEW)]
+    HRESULT view([out, retval] IHTMLWindow2 **p);
+
+    [propget, id(DISPID_IDOMUIEVENT_DETAIL)]
+    HRESULT detail([out, retval] long *p);
+
+    [id(DISPID_IDOMUIEVENT_INITUIEVENT)]
+    HRESULT initUIEvent(
+        [in] BSTR eventType,
+        [in] VARIANT_BOOL canBubble,
+        [in] VARIANT_BOOL cancelable,
+        [in] IHTMLWindow2 *view,
+        [in] long detail);
+}
+
+/*****************************************************************************
+ *    DispDOMUIEvent dispinterface
+ */
 [
     hidden,
     uuid(30590072-98b5-11cf-bb82-00aa00bdce0b)
