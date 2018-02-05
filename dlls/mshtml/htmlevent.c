@@ -635,17 +635,12 @@ static HRESULT WINAPI HTMLEventObj_get_x(IHTMLEventObj *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->event) {
-        nsIDOMUIEvent *ui_event;
+    if(This->event && This->event->ui_event) {
         nsresult nsres;
 
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMUIEvent, (void**)&ui_event);
-        if(NS_SUCCEEDED(nsres)) {
-            /* NOTE: pageX is not exactly right here. */
-            nsres = nsIDOMUIEvent_GetPageX(ui_event, &x);
-            assert(nsres == NS_OK);
-            nsIDOMUIEvent_Release(ui_event);
-        }
+        /* NOTE: pageX is not exactly right here. */
+        nsres = nsIDOMUIEvent_GetPageX(This->event->ui_event, &x);
+        assert(nsres == NS_OK);
     }
 
     *p = x;
@@ -659,17 +654,12 @@ static HRESULT WINAPI HTMLEventObj_get_y(IHTMLEventObj *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->event) {
-        nsIDOMUIEvent *ui_event;
+    if(This->event && This->event->ui_event) {
         nsresult nsres;
 
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMUIEvent, (void**)&ui_event);
-        if(NS_SUCCEEDED(nsres)) {
-            /* NOTE: pageY is not exactly right here. */
-            nsres = nsIDOMUIEvent_GetPageY(ui_event, &y);
-            assert(nsres == NS_OK);
-            nsIDOMUIEvent_Release(ui_event);
-        }
+        /* NOTE: pageY is not exactly right here. */
+        nsres = nsIDOMUIEvent_GetPageY(This->event->ui_event, &y);
+        assert(nsres == NS_OK);
     }
 
     *p = y;
