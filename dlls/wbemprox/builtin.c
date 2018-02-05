@@ -331,6 +331,8 @@ static const WCHAR prop_servicetypeW[] =
     {'S','e','r','v','i','c','e','T','y','p','e',0};
 static const WCHAR prop_settingidW[] =
     {'S','e','t','t','i','n','g','I','D',0};
+static const WCHAR prop_skunumberW[] =
+    {'S','K','U','N','u','m','b','e','r',0};
 static const WCHAR prop_smbiosbiosversionW[] =
     {'S','M','B','I','O','S','B','I','O','S','V','e','r','s','i','o','n',0};
 static const WCHAR prop_startmodeW[] =
@@ -377,6 +379,8 @@ static const WCHAR prop_uuidW[] =
     {'U','U','I','D',0};
 static const WCHAR prop_varianttypeW[] =
     {'V','a','r','i','a','n','t','T','y','p','e',0};
+static const WCHAR prop_vendorW[] =
+    {'V','e','n','d','o','r',0};
 static const WCHAR prop_versionW[] =
     {'V','e','r','s','i','o','n',0};
 static const WCHAR prop_videoarchitectureW[] =
@@ -440,7 +444,11 @@ static const struct column col_compsys[] =
 static const struct column col_compsysproduct[] =
 {
     { prop_identifyingnumberW,  CIM_STRING|COL_FLAG_KEY },
-    { prop_uuidW,               CIM_STRING|COL_FLAG_DYNAMIC }
+    { prop_nameW,               CIM_STRING|COL_FLAG_KEY },
+    { prop_skunumberW,          CIM_STRING },
+    { prop_uuidW,               CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_vendorW,             CIM_STRING },
+    { prop_versionW,            CIM_STRING|COL_FLAG_KEY }
 };
 static const struct column col_datafile[] =
 {
@@ -738,9 +746,15 @@ static const WCHAR compsys_modelW[] =
     {'W','i','n','e',0};
 static const WCHAR compsysproduct_identifyingnumberW[] =
     {'0',0};
+static const WCHAR compsysproduct_nameW[] =
+    {'W','i','n','e',0};
 static const WCHAR compsysproduct_uuidW[] =
     {'d','e','a','d','d','e','a','d','-','d','e','a','d','-','d','e','a','d','-','d','e','a','d','-',
      'd','e','a','d','d','e','a','d','d','e','a','d',0};
+static const WCHAR compsysproduct_vendorW[] =
+    {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
+static const WCHAR compsysproduct_versionW[] =
+    {'1','.','0',0};
 static const WCHAR diskdrive_interfacetypeW[] =
     {'I','D','E',0};
 static const WCHAR diskdrive_manufacturerW[] =
@@ -830,7 +844,11 @@ struct record_computersystem
 struct record_computersystemproduct
 {
     const WCHAR *identifyingnumber;
+    const WCHAR *name;
+    const WCHAR *skunumber;
     const WCHAR *uuid;
+    const WCHAR *vendor;
+    const WCHAR *version;
 };
 struct record_datafile
 {
@@ -1417,7 +1435,11 @@ static enum fill_status fill_compsysproduct( struct table *table, const struct e
 
     rec = (struct record_computersystemproduct *)table->data;
     rec->identifyingnumber = compsysproduct_identifyingnumberW;
+    rec->name              = compsysproduct_nameW;
+    rec->skunumber         = NULL;
     rec->uuid              = get_compsysproduct_uuid();
+    rec->vendor            = compsysproduct_vendorW;
+    rec->version           = compsysproduct_versionW;
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 

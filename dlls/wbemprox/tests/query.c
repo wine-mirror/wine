@@ -1223,7 +1223,18 @@ static void test_OperatingSystem( IWbemServices *services )
 
 static void test_ComputerSystemProduct( IWbemServices *services )
 {
-    static const WCHAR uuidW[] = {'U','U','I','D',0};
+    static const WCHAR identifyingnumberW[] =
+        {'I','d','e','n','t','i','f','y','i','n','g','N','u','m','b','e','r',0};
+    static const WCHAR nameW[] =
+        {'N','a','m','e',0};
+    static const WCHAR skunumberW[] =
+        {'S','K','U','N','u','m','b','e','r',0};
+    static const WCHAR uuidW[] =
+        {'U','U','I','D',0};
+    static const WCHAR vendorW[] =
+        {'V','e','n','d','o','r',0};
+    static const WCHAR versionW[] =
+        {'V','e','r','s','i','o','n',0};
     static const WCHAR queryW[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
          'C','o','m','p','u','t','e','r','S','y','s','t','e','m','P','r','o','d','u','c','t',0};
@@ -1247,11 +1258,55 @@ static void test_ComputerSystemProduct( IWbemServices *services )
 
     type = 0xdeadbeef;
     VariantInit( &value );
+    hr = IWbemClassObject_Get( obj, identifyingnumberW, 0, &value, &type, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    trace( "identifyingnumber %s\n", wine_dbgstr_w(V_BSTR(&value)) );
+    VariantClear( &value );
+
+    type = 0xdeadbeef;
+    VariantInit( &value );
+    hr = IWbemClassObject_Get( obj, nameW, 0, &value, &type, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    trace( "name %s\n", wine_dbgstr_w(V_BSTR(&value)) );
+    VariantClear( &value );
+
+    type = 0xdeadbeef;
+    VariantInit( &value );
+    hr = IWbemClassObject_Get( obj, skunumberW, 0, &value, &type, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &value ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &value ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    VariantClear( &value );
+
+    type = 0xdeadbeef;
+    VariantInit( &value );
     hr = IWbemClassObject_Get( obj, uuidW, 0, &value, &type, NULL );
-    ok( hr == S_OK, "failed to get computer name %08x\n", hr );
+    ok( hr == S_OK, "got %08x\n", hr );
     ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
     ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
     trace( "uuid %s\n", wine_dbgstr_w(V_BSTR(&value)) );
+    VariantClear( &value );
+
+    type = 0xdeadbeef;
+    VariantInit( &value );
+    hr = IWbemClassObject_Get( obj, vendorW, 0, &value, &type, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    trace( "vendor %s\n", wine_dbgstr_w(V_BSTR(&value)) );
+    VariantClear( &value );
+
+    type = 0xdeadbeef;
+    VariantInit( &value );
+    hr = IWbemClassObject_Get( obj, versionW, 0, &value, &type, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    trace( "version %s\n", wine_dbgstr_w(V_BSTR(&value)) );
     VariantClear( &value );
 
     IWbemClassObject_Release( obj );
