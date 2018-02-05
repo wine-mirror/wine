@@ -1444,6 +1444,118 @@ static void test_IP4RouteTable( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_Win32_Processor( IWbemServices *services )
+{
+    static const WCHAR architectureW[] =
+        {'A','r','c','h','i','t','e','c','t','u','r','e',0};
+    static const WCHAR familyW[] =
+        {'F','a','m','i','l','y',0};
+    static const WCHAR levelW[] =
+        {'L','e','v','e','l',0};
+    static const WCHAR manufacturerW[] =
+        {'M','a','n','u','f','a','c','t','u','r','e','r',0};
+    static const WCHAR nameW[] =
+        {'N','a','m','e',0};
+    static const WCHAR processoridW[] =
+        {'P','r','o','c','e','s','s','o','r','I','d',0};
+    static const WCHAR revisionW[] =
+        {'R','e','v','i','s','i','o','n',0};
+    static const WCHAR versionW[] =
+        {'V','e','r','s','i','o','n',0};
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
+         'P','r','o','c','e','s','s','o','r',0};
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    VARIANT val;
+    CIMTYPE type;
+    HRESULT hr;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, architectureW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_UINT16, "unexpected type 0x%x\n", type );
+        trace( "architecture %u\n", V_I4( &val ) );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, familyW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_UINT16, "unexpected type 0x%x\n", type );
+        trace( "family %u\n", V_I4( &val ) );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, levelW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_UINT16, "unexpected type 0x%x\n", type );
+        trace( "level %u\n", V_I4( &val ) );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, manufacturerW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        trace( "manufacturer %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, nameW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        trace( "name %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, processoridW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        trace( "processorid %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, revisionW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_UINT16, "unexpected type 0x%x\n", type );
+        trace( "revision %u\n", V_I4( &val ) );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, versionW, 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        trace( "version %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+
+        IWbemClassObject_Release( obj );
+    }
+
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 START_TEST(query)
 {
     static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
@@ -1485,6 +1597,7 @@ START_TEST(query)
     test_ComputerSystemProduct( services );
     test_PhysicalMemory( services );
     test_IP4RouteTable( services );
+    test_Win32_Processor( services );
 
     SysFreeString( path );
     IWbemServices_Release( services );
