@@ -1715,36 +1715,81 @@ static HRESULT WINAPI DOMKeyboardEvent_get_location(IDOMKeyboardEvent *iface, UL
 static HRESULT WINAPI DOMKeyboardEvent_get_ctrlKey(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMKeyEvent_GetCtrlKey(This->keyboard_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = variant_bool(r);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_get_shiftKey(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMKeyEvent_GetShiftKey(This->keyboard_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = variant_bool(r);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_get_altKey(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMKeyEvent_GetAltKey(This->keyboard_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = variant_bool(r);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_get_metaKey(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMKeyEvent_GetMetaKey(This->keyboard_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = variant_bool(r);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_get_repeat(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMKeyEvent_GetRepeat(This->keyboard_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = variant_bool(r);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_getModifierState(IDOMKeyboardEvent *iface, BSTR key,
