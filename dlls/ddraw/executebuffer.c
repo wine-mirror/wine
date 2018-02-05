@@ -124,13 +124,19 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 
                 if (buffer->index_size < index_count)
                 {
-                    struct wined3d_buffer *new_buffer;
                     unsigned int new_size = max(buffer->index_size * 2, index_count);
+                    struct wined3d_buffer *new_buffer;
+                    struct wined3d_buffer_desc desc;
 
-                    hr = wined3d_buffer_create_ib(device->wined3d_device, new_size * sizeof(*indices),
-                            WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY, WINED3D_POOL_DEFAULT,
-                            NULL, &ddraw_null_wined3d_parent_ops, &new_buffer);
-                    if (FAILED(hr))
+                    desc.byte_width = new_size * sizeof(*indices);
+                    desc.usage = WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_STATICDECL;
+                    desc.bind_flags = WINED3D_BIND_INDEX_BUFFER;
+                    desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+                    desc.misc_flags = 0;
+                    desc.structure_byte_stride = 0;
+
+                    if (FAILED(hr = wined3d_buffer_create(device->wined3d_device, &desc,
+                            NULL, NULL, &ddraw_null_wined3d_parent_ops, &new_buffer)))
                         return hr;
 
                     buffer->index_size = new_size;
