@@ -913,9 +913,13 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
     if (!input) input_token.length = 0;
     else
     {
-        if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-        input_token.length = input->pBuffers[idx].cbBuffer;
-        input_token.value  = input->pBuffers[idx].pvBuffer;
+        if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1)
+            input_token.length = 0;
+        else
+        {
+            input_token.length = input->pBuffers[idx].cbBuffer;
+            input_token.value  = input->pBuffers[idx].pvBuffer;
+        }
     }
 
     if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
