@@ -1391,8 +1391,17 @@ static HRESULT WINAPI DOMMouseEvent_get_metaKey(IDOMMouseEvent *iface, VARIANT_B
 static HRESULT WINAPI DOMMouseEvent_get_button(IDOMMouseEvent *iface, USHORT *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    INT16 r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMMouseEvent_GetButton(This->mouse_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = r;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_relatedTarget(IDOMMouseEvent *iface, IEventTarget **p)
