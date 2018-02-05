@@ -684,6 +684,25 @@ function test_ui_event() {
     next_test();
 }
 
+function test_keyboard_event() {
+    var e;
+
+    e = document.createEvent("KeyboardEvent");
+
+    e.initEvent("test", true, true);
+    ok(e.key === "", "key = " + e.key);
+    ok(e.keyCode === 0, "keyCode = " + e.keyCode);
+    ok(e.charCode === 0, "charCode = " + e.charCode);
+    ok(e.repeat === false, "repeat = " + e.repeat);
+    ok(e.ctrlKey === false, "ctrlKey = " + e.ctrlKey);
+    ok(e.altKey === false, "altKey = " + e.altKey);
+    ok(e.shiftKey === false, "shiftKey = " + e.shiftKey);
+    ok(e.metaKey === false, "metaKey = " + e.metaKey);
+    ok(e.detail === 0, "detail = " + e.detail);
+
+    next_test();
+}
+
 var tests = [
     test_content_loaded,
     test_add_remove_listener,
@@ -698,6 +717,7 @@ var tests = [
     test_recursive_dispatch,
     test_ui_event,
     test_mouse_event,
+    test_keyboard_event,
     test_time_stamp,
     test_listener_order
 ];

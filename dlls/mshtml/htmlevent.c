@@ -1924,6 +1924,19 @@ static dispex_static_data_t DOMMouseEvent_dispex = {
     DOMMouseEvent_iface_tids
 };
 
+static const tid_t DOMKeyboardEvent_iface_tids[] = {
+    IDOMEvent_tid,
+    IDOMUIEvent_tid,
+    IDOMKeyboardEvent_tid,
+    0
+};
+
+static dispex_static_data_t DOMKeyboardEvent_dispex = {
+    NULL,
+    DispDOMKeyboardEvent_tid,
+    DOMKeyboardEvent_iface_tids
+};
+
 static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
 {
     dispex_static_data_t *dispex_data = &DOMEvent_dispex;
@@ -1972,7 +1985,9 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
         event->mouse_event = NULL;
 
     nsres = nsIDOMEvent_QueryInterface(nsevent, &IID_nsIDOMKeyEvent, (void**)&event->keyboard_event);
-    if(NS_FAILED(nsres))
+    if(NS_SUCCEEDED(nsres))
+        dispex_data = &DOMKeyboardEvent_dispex;
+    else
         event->keyboard_event = NULL;
 
     init_dispex(&event->dispex, (IUnknown*)&event->IDOMEvent_iface, dispex_data);
