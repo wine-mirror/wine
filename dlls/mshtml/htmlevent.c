@@ -1219,8 +1219,31 @@ static HRESULT WINAPI DOMUIEvent_initUIEvent(IDOMUIEvent *iface, BSTR type, VARI
         VARIANT_BOOL cancelable, IHTMLWindow2 *view, LONG detail)
 {
     DOMEvent *This = impl_from_IDOMUIEvent(iface);
-    FIXME("(%p)->(%s %x %x %p %x)\n", This, debugstr_w(type), can_bubble, cancelable, view, detail);
-    return E_NOTIMPL;
+    nsAString type_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x %x %p %x)\n", This, debugstr_w(type), can_bubble, cancelable, view, detail);
+
+    if(This->target) {
+        TRACE("called on already dispatched event\n");
+        return S_OK;
+    }
+
+    hres = IDOMEvent_initEvent(&This->IDOMEvent_iface, type, can_bubble, cancelable);
+    if(FAILED(hres))
+        return hres;
+
+    nsAString_InitDepend(&type_str, type);
+    nsres = nsIDOMUIEvent_InitUIEvent(This->ui_event, &type_str, can_bubble, cancelable,
+                                      NULL /* FIXME */, detail);
+    nsAString_Finish(&type_str);
+    if(NS_FAILED(nsres)) {
+        FIXME("InitUIEvent failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static const IDOMUIEventVtbl DOMUIEventVtbl = {
