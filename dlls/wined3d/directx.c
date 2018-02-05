@@ -191,6 +191,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_rg",                   ARB_TEXTURE_RG                },
     {"GL_ARB_texture_rgb10_a2ui",           ARB_TEXTURE_RGB10_A2UI        },
     {"GL_ARB_texture_storage",              ARB_TEXTURE_STORAGE           },
+    {"GL_ARB_texture_storage_multisample",  ARB_TEXTURE_STORAGE_MULTISAMPLE},
     {"GL_ARB_texture_swizzle",              ARB_TEXTURE_SWIZZLE           },
     {"GL_ARB_texture_view",                 ARB_TEXTURE_VIEW              },
     {"GL_ARB_timer_query",                  ARB_TIMER_QUERY               },
@@ -2898,6 +2899,9 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glTexStorage1D)
     USE_GL_FUNC(glTexStorage2D)
     USE_GL_FUNC(glTexStorage3D)
+    /* GL_ARB_texture_storage_multisample */
+    USE_GL_FUNC(glTexStorage2DMultisample);
+    USE_GL_FUNC(glTexStorage3DMultisample);
     /* GL_ARB_texture_view */
     USE_GL_FUNC(glTextureView)
     /* GL_ARB_timer_query */
@@ -3921,6 +3925,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_STENCIL_TEXTURING,            MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_BUFFER_RANGE,         MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_QUERY_LEVELS,         MAKEDWORD_VERSION(4, 3)},
+        {ARB_TEXTURE_STORAGE_MULTISAMPLE,  MAKEDWORD_VERSION(4, 2)},
         {ARB_TEXTURE_VIEW,                 MAKEDWORD_VERSION(4, 3)},
 
         {ARB_CLEAR_TEXTURE,                MAKEDWORD_VERSION(4, 4)},
