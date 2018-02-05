@@ -35,7 +35,7 @@ static struct dxgi_main dxgi_main;
 
 static void dxgi_main_cleanup(void)
 {
-    HeapFree(GetProcessHeap(), 0, dxgi_main.device_layers);
+    heap_free(dxgi_main.device_layers);
     FreeLibrary(dxgi_main.d3d10core);
 }
 
@@ -188,8 +188,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     device_size = d3d10_layer.get_size(d3d10_layer.id, &get_size_args, 0);
     device_size += sizeof(*dxgi_device);
 
-    dxgi_device = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, device_size);
-    if (!dxgi_device)
+    if (!(dxgi_device = heap_alloc_zero(device_size)))
     {
         ERR("Failed to allocate device memory.\n");
         return E_OUTOFMEMORY;
@@ -199,7 +198,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, dxgi_device);
+        heap_free(dxgi_device);
         *device = NULL;
         return hr;
     }
@@ -220,9 +219,9 @@ HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, U
     wined3d_mutex_lock();
 
     if (!dxgi_main.layer_count)
-        new_layers = HeapAlloc(GetProcessHeap(), 0, layer_count * sizeof(*new_layers));
+        new_layers = heap_alloc(layer_count * sizeof(*new_layers));
     else
-        new_layers = HeapReAlloc(GetProcessHeap(), 0, dxgi_main.device_layers,
+        new_layers = heap_realloc(dxgi_main.device_layers,
                 (dxgi_main.layer_count + layer_count) * sizeof(*new_layers));
 
     if (!new_layers)

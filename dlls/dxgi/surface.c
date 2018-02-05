@@ -74,7 +74,7 @@ static ULONG STDMETHODCALLTYPE dxgi_surface_inner_Release(IUnknown *iface)
     if (!refcount)
     {
         wined3d_private_store_cleanup(&surface->private_store);
-        HeapFree(GetProcessHeap(), 0, surface);
+        heap_free(surface);
     }
 
     return refcount;

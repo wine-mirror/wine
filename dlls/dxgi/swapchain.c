@@ -645,7 +645,7 @@ static void STDMETHODCALLTYPE dxgi_swapchain_wined3d_object_released(void *paren
     struct dxgi_swapchain *swapchain = parent;
 
     wined3d_private_store_cleanup(&swapchain->private_store);
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops dxgi_swapchain_wined3d_parent_ops =

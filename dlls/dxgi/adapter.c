@@ -73,7 +73,7 @@ static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IWineDXGIAdapter *iface)
     {
         wined3d_private_store_cleanup(&adapter->private_store);
         IDXGIFactory4_Release(&adapter->factory->IDXGIFactory4_iface);
-        HeapFree(GetProcessHeap(), 0, adapter);
+        heap_free(adapter);
     }
 
     return refcount;
@@ -356,7 +356,7 @@ static void dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory 
 
 HRESULT dxgi_adapter_create(struct dxgi_factory *factory, UINT ordinal, struct dxgi_adapter **adapter)
 {
-    if (!(*adapter = HeapAlloc(GetProcessHeap(), 0, sizeof(**adapter))))
+    if (!(*adapter = heap_alloc(sizeof(**adapter))))
         return E_OUTOFMEMORY;
 
     dxgi_adapter_init(*adapter, factory, ordinal);

@@ -81,7 +81,7 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory4 *iface)
         wined3d_decref(factory->wined3d);
         wined3d_mutex_unlock();
         wined3d_private_store_cleanup(&factory->private_store);
-        HeapFree(GetProcessHeap(), 0, factory);
+        heap_free(factory);
     }
 
     return refcount;
@@ -547,13 +547,13 @@ HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended)
     struct dxgi_factory *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = dxgi_factory_init(object, extended)))
     {
         WARN("Failed to initialize factory, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
