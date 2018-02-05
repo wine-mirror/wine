@@ -1476,7 +1476,7 @@ static const tid_t DOMEvent_iface_tids[] = {
 
 static dispex_static_data_t DOMEvent_dispex = {
     NULL,
-    IDOMEvent_tid,
+    DispDOMEvent_tid,
     DOMEvent_iface_tids
 };
 

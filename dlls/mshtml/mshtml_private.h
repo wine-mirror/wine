@@ -80,6 +80,7 @@ typedef struct EventTarget EventTarget;
     XDIID(DispCEventObj) \
     XDIID(DispCPlugins) \
     XDIID(DispDOMChildrenCollection) \
+    XDIID(DispDOMEvent) \
     XDIID(DispHTMLAnchorElement) \
     XDIID(DispHTMLAreaElement) \
     XDIID(DispHTMLAttributeCollection) \
