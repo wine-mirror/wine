@@ -1676,6 +1676,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                         WINED3D_SAMPLER_DEFAULT, reg_maps->sampler_map.count);
             }
             else if (ins.handler_idx == WINED3DSIH_LD
+                    || ins.handler_idx == WINED3DSIH_LD2DMS
                     || (ins.handler_idx == WINED3DSIH_LD_RAW && ins.src[1].reg.type == WINED3DSPR_RESOURCE)
                     || (ins.handler_idx == WINED3DSIH_RESINFO && ins.src[1].reg.type == WINED3DSPR_RESOURCE))
             {
