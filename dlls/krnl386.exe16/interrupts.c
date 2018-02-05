@@ -47,7 +47,6 @@ static void WINAPI DOSVM_Int5cHandler(CONTEXT*);
 static void WINAPI DOSVM_DefaultHandler(CONTEXT*);
 
 static FARPROC16     DOSVM_Vectors16[256];
-static FARPROC48     DOSVM_Vectors48[256];
 static const INTPROC DOSVM_VectorsBuiltin[] =
 {
   /* 00 */ 0,                  0,                  0,                  0,
@@ -83,30 +82,7 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
 /*
  * Sizes of real mode and protected mode interrupt stubs.
  */
-#define DOSVM_STUB_RM   4
 #define DOSVM_STUB_PM16 5
-#define DOSVM_STUB_PM48 6
-
-
-/**********************************************************************
- *         DOSVM_GetRMVector
- *
- * Return pointer to real mode interrupt vector. These are not at fixed 
- * location because those Win16 programs that do not use any real mode 
- * code have protected NULL pointer catching block at low linear memory 
- * and interrupt vectors have been moved to another location.
- */
-static FARPROC16* DOSVM_GetRMVector( BYTE intnum )
-{
-    LDT_ENTRY entry;
-    FARPROC16 proc;
-
-    proc = GetProcAddress16( GetModuleHandle16( "KERNEL" ), 
-                             (LPCSTR)(ULONG_PTR)183 );
-    wine_ldt_get_entry( LOWORD(proc), &entry );
-
-    return (FARPROC16*)wine_ldt_get_base( &entry ) + intnum;
-}
 
 
 /**********************************************************************
@@ -224,39 +200,12 @@ BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
 
     DOSMEM_InitDosMemory();
 
-    if (context->SegCs == DOSVM_dpmi_segments->dpmi_sel)
-    {
-        DOSVM_BuildCallFrame( context, 
-                              DOSVM_IntProcRelay,
-                              DOSVM_RawModeSwitchHandler );
-    }
-    else if (context->SegCs == DOSVM_dpmi_segments->relay_code_sel)
+    if (context->SegCs == DOSVM_dpmi_segments->relay_code_sel)
     {
         /*
          * This must not be called using DOSVM_BuildCallFrame.
          */
         DOSVM_RelayHandler( context );
-    }
-    else if (context->SegCs == DOSVM_dpmi_segments->int48_sel)
-    {
-        /* Restore original flags stored into the stack by the caller. */
-        DWORD *stack = CTX_SEG_OFF_TO_LIN(context, 
-                                          context->SegSs, context->Esp);
-        context->EFlags = stack[2];
-
-        if (intnum != context->Eip / DOSVM_STUB_PM48)
-            WARN( "interrupt stub has been modified "
-                  "(interrupt is %02x, interrupt stub is %02x)\n",
-                  intnum, context->Eip/DOSVM_STUB_PM48 );
-
-        TRACE( "builtin interrupt %02x has been branched to\n", intnum );
-
-        if (intnum == 0x25 || intnum == 0x26)
-            DOSVM_PushFlags( context, TRUE, TRUE );
-
-        DOSVM_BuildCallFrame( context, 
-                              DOSVM_IntProcRelay,
-                              DOSVM_GetBuiltinHandler(intnum) );
     }
     else if (context->SegCs == DOSVM_dpmi_segments->int16_sel)
     {
@@ -304,100 +253,36 @@ BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
  */
 void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
 {
-    if(DOSVM_IsDos32())
+    FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
+
+    if (SELECTOROF(addr) == DOSVM_dpmi_segments->int16_sel)
     {
-        FARPROC48 addr = DOSVM_GetPMHandler48( intnum );
-        
-        if (addr.selector == DOSVM_dpmi_segments->int48_sel)
-        {
-            TRACE( "builtin interrupt %02x has been invoked "
-                   "(through vector %02x)\n",
-                   addr.offset / DOSVM_STUB_PM48, intnum );
+        TRACE( "builtin interrupt %02x has been invoked "
+               "(through vector %02x)\n",
+               OFFSETOF(addr)/DOSVM_STUB_PM16, intnum );
 
-            if (intnum == 0x25 || intnum == 0x26)
-                DOSVM_PushFlags( context, TRUE, FALSE );
+        if (intnum == 0x25 || intnum == 0x26)
+            DOSVM_PushFlags( context, FALSE, FALSE );
 
-            DOSVM_BuildCallFrame( context,
-                                  DOSVM_IntProcRelay,
-                                  DOSVM_GetBuiltinHandler(
-                                      addr.offset/DOSVM_STUB_PM48 ) );
-        }
-        else
-        {
-            DWORD *stack;
-            
-            TRACE( "invoking hooked interrupt %02x at %04x:%08x\n",
-                   intnum, addr.selector, addr.offset );
-
-            /* Push the flags and return address on the stack */
-            stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
-            *(--stack) = context->EFlags;
-            *(--stack) = context->SegCs;
-            *(--stack) = context->Eip;
-            context->Esp += -12;
-
-            /* Jump to the interrupt handler */
-            context->SegCs  = addr.selector;
-            context->Eip = addr.offset;
-        }
+        DOSVM_BuildCallFrame( context,
+                              DOSVM_IntProcRelay,
+                              DOSVM_GetBuiltinHandler(
+                                  OFFSETOF(addr)/DOSVM_STUB_PM16 ) );
     }
     else
     {
-        FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
+        TRACE( "invoking hooked interrupt %02x at %04x:%04x\n",
+               intnum, SELECTOROF(addr), OFFSETOF(addr) );
 
-        if (SELECTOROF(addr) == DOSVM_dpmi_segments->int16_sel)
-        {
-            TRACE( "builtin interrupt %02x has been invoked "
-                   "(through vector %02x)\n", 
-                   OFFSETOF(addr)/DOSVM_STUB_PM16, intnum );
+        /* Push the flags and return address on the stack */
+        PUSH_WORD16( context, LOWORD(context->EFlags) );
+        PUSH_WORD16( context, context->SegCs );
+        PUSH_WORD16( context, LOWORD(context->Eip) );
 
-            if (intnum == 0x25 || intnum == 0x26)
-                DOSVM_PushFlags( context, FALSE, FALSE );
-
-            DOSVM_BuildCallFrame( context, 
-                                  DOSVM_IntProcRelay,
-                                  DOSVM_GetBuiltinHandler(
-                                      OFFSETOF(addr)/DOSVM_STUB_PM16 ) );
-        }
-        else
-        {
-            TRACE( "invoking hooked interrupt %02x at %04x:%04x\n", 
-                   intnum, SELECTOROF(addr), OFFSETOF(addr) );
-
-            /* Push the flags and return address on the stack */
-            PUSH_WORD16( context, LOWORD(context->EFlags) );
-            PUSH_WORD16( context, context->SegCs );
-            PUSH_WORD16( context, LOWORD(context->Eip) );
-
-            /* Jump to the interrupt handler */
-            context->SegCs =  HIWORD(addr);
-            context->Eip = LOWORD(addr);
-        }
+        /* Jump to the interrupt handler */
+        context->SegCs =  HIWORD(addr);
+        context->Eip = LOWORD(addr);
     }
-}
-
-
-/**********************************************************************
- *          DOSVM_GetRMHandler
- *
- * Return the real mode interrupt vector for a given interrupt.
- */
-FARPROC16 DOSVM_GetRMHandler( BYTE intnum )
-{
-  return *DOSVM_GetRMVector( intnum );
-}
-
-
-/**********************************************************************
- *          DOSVM_SetRMHandler
- *
- * Set the real mode interrupt handler for a given interrupt.
- */
-void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler )
-{
-  TRACE("Set real mode interrupt vector %02x <- %04x:%04x\n",
-       intnum, HIWORD(handler), LOWORD(handler) );
-  *DOSVM_GetRMVector( intnum ) = handler;
 }
 
 
@@ -493,37 +378,6 @@ void DOSVM_SetPMHandler16( BYTE intnum, FARPROC16 handler )
     DOSVM_Vectors16[intnum] = handler;
     break;
   }
-}
-
-
-/**********************************************************************
- *         DOSVM_GetPMHandler48
- *
- * Return the protected mode interrupt vector for a given interrupt.
- * Used to get 48-bit pointer for 32-bit interrupt handlers in DPMI32.
- */
-FARPROC48 DOSVM_GetPMHandler48( BYTE intnum )
-{
-  if (!DOSVM_Vectors48[intnum].selector)
-  {
-    DOSVM_Vectors48[intnum].selector = DOSVM_dpmi_segments->int48_sel;
-    DOSVM_Vectors48[intnum].offset = DOSVM_STUB_PM48 * intnum;
-  }
-  return DOSVM_Vectors48[intnum];
-}
-
-
-/**********************************************************************
- *         DOSVM_SetPMHandler48
- *
- * Set the protected mode interrupt handler for a given interrupt.
- * Used to set 48-bit pointer for 32-bit interrupt handlers in DPMI32.
- */
-void DOSVM_SetPMHandler48( BYTE intnum, FARPROC48 handler )
-{
-  TRACE("Set 32-bit protected mode interrupt vector %02x <- %04x:%08x\n",
-       intnum, handler.selector, handler.offset );
-  DOSVM_Vectors48[intnum] = handler;
 }
 
 

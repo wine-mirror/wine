@@ -865,12 +865,10 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             return ExceptionContinueExecution;
 
         case 0xfa: /* cli */
-            get_vm86_teb_info()->dpmi_vif = 0;
             context->Eip += prefixlen + 1;
             return ExceptionContinueExecution;
 
         case 0xfb: /* sti */
-            get_vm86_teb_info()->dpmi_vif = 1;
             context->Eip += prefixlen + 1;
             return ExceptionContinueExecution;
     }

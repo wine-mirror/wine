@@ -139,26 +139,8 @@ void WINAPI DOSVM_Int2fHandler( CONTEXT *context )
         break;
 
     case 0x43:
-#if 1
-       switch (LOBYTE(context->Eax))
-       {
-       case 0x00:   /* XMS v2+ installation check */
-           WARN("XMS is not fully implemented\n");
-           SET_AL( context, 0x80 );
-           break;
-       case 0x10:   /* XMS v2+ get driver address */
-       {
-            context->SegEs = DOSVM_dpmi_segments->xms_seg;
-            SET_BX( context, 0 );
-            break;
-       }
-       default:
-           INT_BARF( context, 0x2f );
-       }
-#else
        FIXME("check for XMS (not supported)\n");
        SET_AL( context, 0x42 ); /* != 0x80 */
-#endif
        break;
 
     case 0x45:
@@ -399,7 +381,7 @@ static void do_int2f_16( CONTEXT *context )
             SET_CL( context, si.wProcessorLevel );
             SET_DX( context, 0x005a ); /* DPMI major/minor 0.90 */
             SET_SI( context, 0 );      /* # of para. of DOS extended private data */
-            context->SegEs = DOSVM_dpmi_segments->dpmi_seg;
+            context->SegEs = 0;  /* no DPMI switch */
             SET_DI( context, 0 );      /* ES:DI is DPMI switch entry point */
             break;
         }

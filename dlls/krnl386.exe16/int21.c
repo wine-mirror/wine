@@ -2582,15 +2582,12 @@ static void INT21_IoctlScsiMgrHandler( CONTEXT *context )
         SET_DX( context, 0xc0c0 );
         break;
 
-    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
-        DOSVM_ASPIHandler(context);
-        break;
-
     case 0x0a: /* CHECK IF HANDLE IS REMOTE */
         SET_DX( context, 0 );
         break;
 
     case 0x01: /* SET DEVICE INFORMATION */
+    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
     case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
     case 0x06: /* GET INPUT STATUS */
     case 0x07: /* GET OUTPUT STATUS */
@@ -4291,10 +4288,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
         TRACE("SET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
         {
             FARPROC16 ptr = (FARPROC16)MAKESEGPTR( context->SegDs, DX_reg(context) );
-            if (!ISV86(context))
-                DOSVM_SetPMHandler16(  AL_reg(context), ptr );
-            else
-                DOSVM_SetRMHandler( AL_reg(context), ptr );
+            DOSVM_SetPMHandler16(  AL_reg(context), ptr );
         }
         break;
 
@@ -4487,11 +4481,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
     case 0x35: /* GET INTERRUPT VECTOR */
         TRACE("GET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
         {
-            FARPROC16 addr;
-            if (!ISV86(context))
-                addr = DOSVM_GetPMHandler16( AL_reg(context) );
-            else
-                addr = DOSVM_GetRMHandler( AL_reg(context) );
+            FARPROC16 addr = DOSVM_GetPMHandler16( AL_reg(context) );
             context->SegEs = SELECTOROF(addr);
             SET_BX( context, OFFSETOF(addr) );
         }

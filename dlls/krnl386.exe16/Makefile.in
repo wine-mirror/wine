@@ -7,7 +7,6 @@ EXTRADLLFLAGS = -m16 -nodefaultlibs -Wb,--dll-name,kernel
 C_SRCS = \
 	atom.c \
 	dma.c \
-	dosaspi.c \
 	dosmem.c \
 	dosvm.c \
 	error.c \
