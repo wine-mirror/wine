@@ -475,6 +475,7 @@ void WINAPI RtlExitUserThread( ULONG status )
     if (interlocked_xchg_add( &nb_threads, -1 ) <= 1)
     {
         LdrShutdownProcess();
+        pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
         signal_exit_process( status );
     }
 
