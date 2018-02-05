@@ -1327,29 +1327,65 @@ static HRESULT WINAPI DOMMouseEvent_get_clientY(IDOMMouseEvent *iface, LONG *p)
 static HRESULT WINAPI DOMMouseEvent_get_ctrlKey(IDOMMouseEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMMouseEvent_GetCtrlKey(This->mouse_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = variant_bool(r);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_shiftKey(IDOMMouseEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMMouseEvent_GetShiftKey(This->mouse_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = variant_bool(r);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_altKey(IDOMMouseEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMMouseEvent_GetAltKey(This->mouse_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = variant_bool(r);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_metaKey(IDOMMouseEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMMouseEvent_GetMetaKey(This->mouse_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = variant_bool(r);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_button(IDOMMouseEvent *iface, USHORT *p)
