@@ -1247,7 +1247,7 @@ enum defdlgproc_text
 
 static INT_PTR CALLBACK test_aw_conversion_dlgprocA(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    int mode = (int)GetPropA(hdlg, "test_mode");
+    int mode = HandleToULong(GetPropA(hdlg, "test_mode"));
     WCHAR *text = (WCHAR *)lparam;
     char *textA = (char *)lparam;
 
@@ -1290,7 +1290,7 @@ static INT_PTR CALLBACK test_aw_conversion_dlgprocA(HWND hdlg, UINT msg, WPARAM 
 
 static INT_PTR CALLBACK test_aw_conversion_dlgprocW(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    int mode = (int)GetPropA(hdlg, "test_mode");
+    int mode = HandleToULong(GetPropA(hdlg, "test_mode"));
     WCHAR *text = (WCHAR *)lparam;
     char *textA = (char *)lparam;
 
@@ -1329,18 +1329,18 @@ static void dlg_test_aw_message(HWND hdlg, UINT msg)
 {
     LRESULT ret;
 
-    SetPropA(hdlg, "test_mode", DLGPROCTEXT_CONTEXT);
+    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_CONTEXT));
     ret = SendMessageA(hdlg, msg, 0, (LPARAM)"WndText");
     ok(ret == 0, "Unexpected retval %ld.\n", ret);
 
     ret = SendMessageW(hdlg, msg, 0, (LPARAM)testtextW);
     ok(ret == 0, "Unexpected retval %ld.\n", ret);
 
-    SetPropA(hdlg, "test_mode", (void *)DLGPROCTEXT_A);
+    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_A));
     ret = DefDlgProcA(hdlg, msg, 0, (LPARAM)"WndText");
     ok(ret == 0, "Unexpected retval %ld.\n", ret);
 
-    SetPropA(hdlg, "test_mode", (void *)DLGPROCTEXT_W);
+    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_W));
     ret = DefDlgProcW(hdlg, msg, 0, (LPARAM)testtextW);
     ok(ret == 0, "Unexpected retval %ld.\n", ret);
 }
