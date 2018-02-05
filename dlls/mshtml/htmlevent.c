@@ -411,6 +411,9 @@ static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_altKey(&This->event->IDOMMouseEvent_iface, p);
+
     if(This->event) {
         nsIDOMKeyEvent *key_event;
         nsresult nsres;
@@ -419,14 +422,6 @@ static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL
         if(NS_SUCCEEDED(nsres)) {
             nsIDOMKeyEvent_GetAltKey(key_event, &ret);
             nsIDOMKeyEvent_Release(key_event);
-        }else {
-            nsIDOMMouseEvent *mouse_event;
-
-            nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
-            if(NS_SUCCEEDED(nsres)) {
-                nsIDOMMouseEvent_GetAltKey(mouse_event, &ret);
-                nsIDOMMouseEvent_Release(mouse_event);
-            }
         }
     }
 
@@ -441,6 +436,9 @@ static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOO
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_ctrlKey(&This->event->IDOMMouseEvent_iface, p);
+
     if(This->event) {
         nsIDOMKeyEvent *key_event;
         nsresult nsres;
@@ -449,14 +447,6 @@ static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOO
         if(NS_SUCCEEDED(nsres)) {
             nsIDOMKeyEvent_GetCtrlKey(key_event, &ret);
             nsIDOMKeyEvent_Release(key_event);
-        }else {
-            nsIDOMMouseEvent *mouse_event;
-
-            nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
-            if(NS_SUCCEEDED(nsres)) {
-                nsIDOMMouseEvent_GetCtrlKey(mouse_event, &ret);
-                nsIDOMMouseEvent_Release(mouse_event);
-            }
         }
     }
 
@@ -471,6 +461,9 @@ static HRESULT WINAPI HTMLEventObj_get_shiftKey(IHTMLEventObj *iface, VARIANT_BO
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_shiftKey(&This->event->IDOMMouseEvent_iface, p);
+
     if(This->event) {
         nsIDOMKeyEvent *key_event;
         nsresult nsres;
@@ -479,14 +472,6 @@ static HRESULT WINAPI HTMLEventObj_get_shiftKey(IHTMLEventObj *iface, VARIANT_BO
         if(NS_SUCCEEDED(nsres)) {
             nsIDOMKeyEvent_GetShiftKey(key_event, &ret);
             nsIDOMKeyEvent_Release(key_event);
-        }else {
-            nsIDOMMouseEvent *mouse_event;
-
-            nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
-            if(NS_SUCCEEDED(nsres)) {
-                nsIDOMMouseEvent_GetShiftKey(mouse_event, &ret);
-                nsIDOMMouseEvent_Release(mouse_event);
-            }
         }
     }
 
@@ -594,19 +579,15 @@ static HRESULT WINAPI HTMLEventObj_get_keyCode(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_button(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    INT16 button = 0;
+    USHORT button = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->event) {
-        nsIDOMMouseEvent *mouse_event;
-        nsresult nsres;
-
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIDOMMouseEvent_GetButton(mouse_event, &button);
-            nsIDOMMouseEvent_Release(mouse_event);
-        }
+    if(This->event && This->event->mouse_event) {
+        HRESULT hres;
+        hres = IDOMMouseEvent_get_button(&This->event->IDOMMouseEvent_iface, &button);
+        if(FAILED(hres))
+            return hres;
     }
 
     *p = button;
@@ -698,44 +679,26 @@ static HRESULT WINAPI HTMLEventObj_get_y(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_clientX(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    LONG x = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->event) {
-        nsIDOMMouseEvent *mouse_event;
-        nsresult nsres;
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_clientX(&This->event->IDOMMouseEvent_iface, p);
 
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIDOMMouseEvent_GetClientX(mouse_event, &x);
-            nsIDOMMouseEvent_Release(mouse_event);
-        }
-    }
-
-    *p = x;
+    *p = 0;
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_clientY(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    LONG y = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->event) {
-        nsIDOMMouseEvent *mouse_event;
-        nsresult nsres;
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_clientY(&This->event->IDOMMouseEvent_iface, p);
 
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIDOMMouseEvent_GetClientY(mouse_event, &y);
-            nsIDOMMouseEvent_Release(mouse_event);
-        }
-    }
-
-    *p = y;
+    *p = 0;
     return S_OK;
 }
 
@@ -762,44 +725,26 @@ static HRESULT WINAPI HTMLEventObj_get_offsetY(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_screenX(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    LONG x = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->event) {
-        nsIDOMMouseEvent *mouse_event;
-        nsresult nsres;
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_screenX(&This->event->IDOMMouseEvent_iface, p);
 
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIDOMMouseEvent_GetScreenX(mouse_event, &x);
-            nsIDOMMouseEvent_Release(mouse_event);
-        }
-    }
-
-    *p = x;
+    *p = 0;
     return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj_get_screenY(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    LONG y = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->event) {
-        nsIDOMMouseEvent *mouse_event;
-        nsresult nsres;
+    if(This->event && This->event->mouse_event)
+        return IDOMMouseEvent_get_screenY(&This->event->IDOMMouseEvent_iface, p);
 
-        nsres = nsIDOMEvent_QueryInterface(This->event->nsevent, &IID_nsIDOMMouseEvent, (void**)&mouse_event);
-        if(NS_SUCCEEDED(nsres)) {
-            nsIDOMMouseEvent_GetScreenY(mouse_event, &y);
-            nsIDOMMouseEvent_Release(mouse_event);
-        }
-    }
-
-    *p = y;
+    *p = 0;
     return S_OK;
 }
 
