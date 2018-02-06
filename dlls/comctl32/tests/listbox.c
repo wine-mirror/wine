@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "commctrl.h"
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -50,7 +51,7 @@ static HWND create_listbox(DWORD add_style, HWND parent)
     if (parent)
       ctl_id=1;
 
-    handle = CreateWindowA("LISTBOX", "TestList", (LBS_STANDARD & ~LBS_SORT) | add_style, 0, 0, 100, 100,
+    handle = CreateWindowA(WC_LISTBOXA, "TestList", (LBS_STANDARD & ~LBS_SORT) | add_style, 0, 0, 100, 100,
         parent, (HMENU)ctl_id, NULL, 0);
     ok(handle != NULL, "Failed to create listbox window.\n");
 
@@ -207,7 +208,7 @@ static void test_item_height(void)
 
     DestroyWindow (hLB);
 
-    hLB = CreateWindowA("LISTBOX", "TestList", LBS_OWNERDRAWVARIABLE,  0, 0, 100, 100, NULL, NULL, NULL, 0);
+    hLB = CreateWindowA(WC_LISTBOXA, "TestList", LBS_OWNERDRAWVARIABLE,  0, 0, 100, 100, NULL, NULL, NULL, 0);
 
     itemHeight = SendMessageA(hLB, LB_GETITEMHEIGHT, 0, 0);
     ok(itemHeight > 0 && itemHeight <= tm.tmHeight, "Unexpected item height %d, expected %d.\n",
@@ -430,7 +431,7 @@ static void test_listbox_height(void)
     HWND hList;
     int r, id;
 
-    hList = CreateWindowA( "ListBox", "list test", 0,
+    hList = CreateWindowA( WC_LISTBOXA, "list test", 0,
                           1, 1, 600, 100, NULL, NULL, NULL, NULL );
     ok( hList != NULL, "failed to create listbox\n");
 
@@ -470,21 +471,20 @@ static void test_itemfrompoint(void)
        without caption). LBS_NOINTEGRALHEIGHT is required in order to test
        behavior of partially-displayed item.
      */
-    HWND hList = CreateWindowA( "ListBox", "list test",
+    HWND hList = CreateWindowA( WC_LISTBOXA, "list test",
                                WS_VISIBLE|WS_POPUP|LBS_NOINTEGRALHEIGHT,
                                1, 1, 600, 100, NULL, NULL, NULL, NULL );
     ULONG r, id;
     RECT rc;
 
-    /* For an empty listbox win2k returns 0x1ffff, win98 returns 0x10000, nt4 returns 0xffffffff */
     r = SendMessageA(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 30 ));
-    ok( r == 0x1ffff || r == 0x10000 || r == 0xffffffff, "ret %x\n", r );
+    ok( r == MAKELPARAM(0xffff, 1), "Unexpected ret value %#x.\n", r );
 
     r = SendMessageA(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( 700, 30 ));
-    ok( r == 0x1ffff || r == 0x10000 || r == 0xffffffff, "ret %x\n", r );
+    ok( r == MAKELPARAM(0xffff, 1), "Unexpected ret value %#x.\n", r );
 
     r = SendMessageA(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( 30, 300 ));
-    ok( r == 0x1ffff || r == 0x10000 || r == 0xffffffff, "ret %x\n", r );
+    ok( r == MAKELPARAM(0xffff, 1), "Unexpected ret value %#x.\n", r );
 
     id = SendMessageA( hList, LB_ADDSTRING, 0, (LPARAM) "hi");
     ok( id == 0, "item id wrong\n");
@@ -495,7 +495,7 @@ static void test_itemfrompoint(void)
     ok( r == 0x1, "ret %x\n", r );
 
     r = SendMessageA(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 601 ));
-    ok( r == 0x10001, "ret %x\n", r );
+    ok( r == MAKELPARAM(1, 1), "Unexpected ret value %#x.\n", r );
 
     /* Resize control so that below assertions about sizes are valid */
     r = SendMessageA( hList, LB_GETITEMRECT, 0, (LPARAM)&rc);
@@ -551,7 +551,7 @@ static void test_listbox_item_data(void)
     HWND hList;
     int r, id;
 
-    hList = CreateWindowA( "ListBox", "list test", 0,
+    hList = CreateWindowA( WC_LISTBOXA, "list test", 0,
                           1, 1, 600, 100, NULL, NULL, NULL, NULL );
     ok( hList != NULL, "failed to create listbox\n");
 
@@ -591,7 +591,7 @@ static void test_listbox_LB_DIR(void)
        one file that fits the wildcard w*.c . Normally, the test
        directory itself satisfies both conditions.
      */
-    hList = CreateWindowA( "ListBox", "list test", WS_VISIBLE|WS_POPUP,
+    hList = CreateWindowA( WC_LISTBOXA, "list test", WS_VISIBLE|WS_POPUP,
                           1, 1, 600, 100, NULL, NULL, NULL, NULL );
     assert(hList);
 
@@ -902,7 +902,7 @@ static void test_listbox_LB_DIR(void)
     strcpy(pathBuffer, wildcard);
     SendMessageA(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessageA(hList, LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
-    ok (res != -1 || broken(res == -1), "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, *) failed err %u\n",
+    ok (res != -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, *) failed err %u\n",
         GetLastError());
 
     itemCount = SendMessageA(hList, LB_GETCOUNT, 0, 0);
@@ -1010,11 +1010,11 @@ static HWND g_label;
 
 static BOOL on_listbox_container_create(HWND hwnd, CREATESTRUCTA *lpcs)
 {
-    g_label = CreateWindowA("Static", "Contents of static control before DlgDirList.",
+    g_label = CreateWindowA(WC_STATICA, "Contents of static control before DlgDirList.",
         WS_CHILD | WS_VISIBLE, 10, 10, 512, 32, hwnd, (HMENU)ID_TEST_LABEL, NULL, 0);
     if (!g_label) return FALSE;
 
-    g_listBox = CreateWindowA("ListBox", "DlgDirList test",
+    g_listBox = CreateWindowA(WC_LISTBOXA, "DlgDirList test",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_VSCROLL, 10, 60, 256, 256,
         hwnd, (HMENU)ID_TEST_LISTBOX, NULL, 0);
     if (!g_listBox) return FALSE;
