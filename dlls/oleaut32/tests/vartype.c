@@ -6074,6 +6074,7 @@ static void test_recinfo(void)
     IRecordInfo_Release(recinfo);
 
     ITypeInfo_Release(typeinfo);
+    ITypeLib_Release(typelib2);
     ITypeLib_Release(typelib);
     DeleteFileW(filenameW);
     DeleteFileW(filename2W);
