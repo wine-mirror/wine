@@ -590,12 +590,15 @@ MAKE_FUNCPTR(gss_display_status);
 MAKE_FUNCPTR(gss_get_mic);
 MAKE_FUNCPTR(gss_import_name);
 MAKE_FUNCPTR(gss_init_sec_context);
+MAKE_FUNCPTR(gss_inquire_context);
 MAKE_FUNCPTR(gss_release_buffer);
 MAKE_FUNCPTR(gss_release_cred);
 MAKE_FUNCPTR(gss_release_iov_buffer);
 MAKE_FUNCPTR(gss_release_name);
+MAKE_FUNCPTR(gss_unwrap);
 MAKE_FUNCPTR(gss_unwrap_iov);
 MAKE_FUNCPTR(gss_verify_mic);
+MAKE_FUNCPTR(gss_wrap);
 MAKE_FUNCPTR(gss_wrap_iov);
 #undef MAKE_FUNCPTR
 
@@ -621,12 +624,15 @@ static BOOL load_gssapi_krb5(void)
     LOAD_FUNCPTR(gss_get_mic)
     LOAD_FUNCPTR(gss_import_name)
     LOAD_FUNCPTR(gss_init_sec_context)
+    LOAD_FUNCPTR(gss_inquire_context)
     LOAD_FUNCPTR(gss_release_buffer)
     LOAD_FUNCPTR(gss_release_cred)
     LOAD_FUNCPTR(gss_release_iov_buffer)
     LOAD_FUNCPTR(gss_release_name)
+    LOAD_FUNCPTR(gss_unwrap)
     LOAD_FUNCPTR(gss_unwrap_iov)
     LOAD_FUNCPTR(gss_verify_mic)
+    LOAD_FUNCPTR(gss_wrap)
     LOAD_FUNCPTR(gss_wrap_iov)
 #undef LOAD_FUNCPTR
 
@@ -757,7 +763,7 @@ static SECURITY_STATUS name_sspi_to_gss( const UNICODE_STRING *name_str, gss_nam
 
 static ULONG flags_isc_req_to_gss( ULONG flags )
 {
-    ULONG ret = GSS_C_DCE_STYLE;
+    ULONG ret = 0;
     if (flags & ISC_REQ_DELEGATE)        ret |= GSS_C_DELEG_FLAG;
     if (flags & ISC_REQ_MUTUAL_AUTH)     ret |= GSS_C_MUTUAL_FLAG;
     if (flags & ISC_REQ_REPLAY_DETECT)   ret |= GSS_C_REPLAY_FLAG;
@@ -765,6 +771,7 @@ static ULONG flags_isc_req_to_gss( ULONG flags )
     if (flags & ISC_REQ_CONFIDENTIALITY) ret |= GSS_C_CONF_FLAG;
     if (flags & ISC_REQ_INTEGRITY)       ret |= GSS_C_INTEG_FLAG;
     if (flags & ISC_REQ_NULL_SESSION)    ret |= GSS_C_ANON_FLAG;
+    if (flags & ISC_REQ_USE_DCE_STYLE)   ret |= GSS_C_DCE_STYLE;
     return ret;
 }
 
@@ -792,6 +799,13 @@ static ULONG flags_gss_to_asc_ret( ULONG flags )
     if (flags & GSS_C_INTEG_FLAG)    ret |= ASC_RET_INTEGRITY;
     if (flags & GSS_C_ANON_FLAG)     ret |= ASC_RET_NULL_SESSION;
     return ret;
+}
+
+static BOOL is_dce_style_context( gss_ctx_id_t ctxt_handle )
+{
+    OM_uint32 ret, minor_status, flags;
+    ret = pgss_inquire_context( &minor_status, ctxt_handle, NULL, NULL, NULL, NULL, &flags, NULL, NULL );
+    return (ret == GSS_S_COMPLETE && (flags & GSS_C_DCE_STYLE));
 }
 
 static int get_buffer_index( SecBufferDesc *desc, DWORD type )
@@ -1079,10 +1093,21 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
     case SECPKG_ATTR_SIZES:
     {
         SecPkgContext_Sizes *sizes = (SecPkgContext_Sizes *)buffer;
+        ULONG size_max_signature = 37, size_security_trailer = 49;
+#ifdef SONAME_LIBGSSAPI_KRB5
+        gss_ctx_id_t ctxt_handle;
+
+        if (!(ctxt_handle = ctxthandle_sspi_to_gss( context ))) return SEC_E_INVALID_HANDLE;
+        if (is_dce_style_context( ctxt_handle ))
+        {
+            size_max_signature = 28;
+            size_security_trailer = 76;
+        }
+#endif
         sizes->cbMaxToken        = KERBEROS_MAX_BUF;
-        sizes->cbMaxSignature    = 37;
+        sizes->cbMaxSignature    = size_max_signature;
         sizes->cbBlockSize       = 1;
-        sizes->cbSecurityTrailer = 49;
+        sizes->cbSecurityTrailer = size_security_trailer;
         return SEC_E_OK;
     }
     case SECPKG_ATTR_NEGOTIATION_INFO:
@@ -1260,25 +1285,12 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SpVerifySignature( LSA_SEC_HANDLE cont
 #endif
 }
 
-static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG quality_of_protection,
-    SecBufferDesc *message, ULONG message_seq_no )
-{
 #ifdef SONAME_LIBGSSAPI_KRB5
-    gss_ctx_id_t ctxt_handle;
+static NTSTATUS seal_message_iov( gss_ctx_id_t ctxt_handle, SecBufferDesc *message )
+{
     gss_iov_buffer_desc iov[4];
     OM_uint32 ret, minor_status;
     int token_idx, data_idx, conf_state;
-
-    TRACE( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
-    if (quality_of_protection)
-    {
-        FIXME( "flags %08x not supported\n", quality_of_protection );
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
-    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
-
-    if (!context) return SEC_E_INVALID_HANDLE;
-    ctxt_handle = ctxthandle_sspi_to_gss( context );
 
     /* FIXME: multiple data buffers, read-only buffers */
     if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
@@ -1311,26 +1323,74 @@ static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG qual
     }
 
     return status_gss_to_sspi( ret );
+}
+
+static NTSTATUS seal_message( gss_ctx_id_t ctxt_handle, SecBufferDesc *message )
+{
+    gss_buffer_desc input, output;
+    OM_uint32 ret, minor_status;
+    int token_idx, data_idx, conf_state;
+
+    /* FIXME: multiple data buffers, read-only buffers */
+    if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+    if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+
+    input.length = message->pBuffers[data_idx].cbBuffer;
+    input.value  = message->pBuffers[data_idx].pvBuffer;
+
+    ret = pgss_wrap( &minor_status, ctxt_handle, 1, GSS_C_QOP_DEFAULT, &input, &conf_state, &output );
+    TRACE( "gss_wrap returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
+    if (ret == GSS_S_COMPLETE)
+    {
+        DWORD len_data = message->pBuffers[data_idx].cbBuffer, len_token = message->pBuffers[token_idx].cbBuffer;
+        if (len_token < output.length - len_data)
+        {
+            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output.length - len_data, len_token );
+            pgss_release_buffer( &minor_status, &output );
+            return SEC_E_BUFFER_TOO_SMALL;
+        }
+        memcpy( message->pBuffers[data_idx].pvBuffer, output.value, len_data );
+        memcpy( message->pBuffers[token_idx].pvBuffer, (char *)output.value + len_data, output.length - len_data );
+        message->pBuffers[token_idx].cbBuffer = output.length - len_data;
+        pgss_release_buffer( &minor_status, &output );
+    }
+
+    return status_gss_to_sspi( ret );
+}
+#endif
+
+static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG quality_of_protection,
+    SecBufferDesc *message, ULONG message_seq_no )
+{
+#ifdef SONAME_LIBGSSAPI_KRB5
+    gss_ctx_id_t ctxt_handle;
+
+    TRACE( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
+    if (quality_of_protection)
+    {
+        FIXME( "flags %08x not supported\n", quality_of_protection );
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+    ctxt_handle = ctxthandle_sspi_to_gss( context );
+
+    if (is_dce_style_context( ctxt_handle )) return seal_message_iov( ctxt_handle, message );
+    return seal_message( ctxt_handle, message );
 #else
     FIXME( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
     return SEC_E_UNSUPPORTED_FUNCTION;
 #endif
 }
 
-static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBufferDesc *message,
-    ULONG message_seq_no, ULONG *quality_of_protection )
-{
 #ifdef SONAME_LIBGSSAPI_KRB5
-    gss_ctx_id_t ctxt_handle;
+static NTSTATUS unseal_message_iov( gss_ctx_id_t ctxt_handle, SecBufferDesc *message, ULONG *quality_of_protection )
+{
     gss_iov_buffer_desc iov[4];
     OM_uint32 ret, minor_status;
     int token_idx, data_idx, conf_state;
-
-    TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
-    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
-
-    if (!context) return SEC_E_INVALID_HANDLE;
-    ctxt_handle = ctxthandle_sspi_to_gss( context );
 
     if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
     if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
@@ -1354,10 +1414,60 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
     ret = pgss_unwrap_iov( &minor_status, ctxt_handle, &conf_state, NULL, iov, 4 );
     TRACE( "gss_unwrap_iov returned %08x minor status %08x\n", ret, minor_status );
     if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE && quality_of_protection) *quality_of_protection = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
+    if (ret == GSS_S_COMPLETE && quality_of_protection)
+    {
+        *quality_of_protection = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
+    }
+    return status_gss_to_sspi( ret );
+}
+
+static NTSTATUS unseal_message( gss_ctx_id_t ctxt_handle, SecBufferDesc *message, ULONG *quality_of_protection )
+{
+    gss_buffer_desc input, output;
+    OM_uint32 ret, minor_status;
+    int token_idx, data_idx, conf_state;
+    DWORD len_data, len_token;
+
+    if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+    if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+
+    len_data = message->pBuffers[data_idx].cbBuffer;
+    len_token = message->pBuffers[token_idx].cbBuffer;
+
+    input.length = len_data + len_token;
+    if (!(input.value = heap_alloc( input.length ))) return SEC_E_INSUFFICIENT_MEMORY;
+    memcpy( input.value, message->pBuffers[data_idx].pvBuffer, len_data );
+    memcpy( (char *)input.value + len_data, message->pBuffers[token_idx].pvBuffer, len_token );
+
+    ret = pgss_unwrap( &minor_status, ctxt_handle, &input, &output, &conf_state, NULL );
+    heap_free( input.value );
+    TRACE( "gss_unwrap returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
+    if (ret == GSS_S_COMPLETE)
+    {
+        if (quality_of_protection) *quality_of_protection = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
+        memcpy( message->pBuffers[data_idx].pvBuffer, output.value, len_data );
+        pgss_release_buffer( &minor_status, &output );
+    }
 
     return status_gss_to_sspi( ret );
+}
+#endif
 
+static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBufferDesc *message,
+    ULONG message_seq_no, ULONG *quality_of_protection )
+{
+#ifdef SONAME_LIBGSSAPI_KRB5
+    gss_ctx_id_t ctxt_handle;
+
+    TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
+    if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
+
+    if (!context) return SEC_E_INVALID_HANDLE;
+    ctxt_handle = ctxthandle_sspi_to_gss( context );
+
+    if (is_dce_style_context( ctxt_handle )) return unseal_message_iov( ctxt_handle, message, quality_of_protection );
+    return unseal_message( ctxt_handle, message, quality_of_protection );
 #else
     FIXME( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
     return SEC_E_UNSUPPORTED_FUNCTION;
