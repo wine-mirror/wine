@@ -1146,7 +1146,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
 {
     void *ptr;
     int prot = VIRTUAL_GetUnixProt( vprot | VPROT_COMMITTED /* make sure it is accessible */ );
-    unsigned int flags = MAP_FIXED | ((vprot & VPROT_WRITE) ? MAP_SHARED : MAP_PRIVATE);
+    unsigned int flags = MAP_FIXED | ((vprot & VPROT_WRITECOPY) ? MAP_PRIVATE : MAP_SHARED);
 
     assert( start < view->size );
     assert( start + size <= view->size );
@@ -1171,7 +1171,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
             break;
         case ENOEXEC:
         case ENODEV:  /* filesystem doesn't support mmap(), fall back to read() */
-            if (flags & MAP_SHARED)
+            if (vprot & VPROT_WRITE)
             {
                 ERR( "shared writable mmap not supported, broken filesystem?\n" );
                 return STATUS_NOT_SUPPORTED;
