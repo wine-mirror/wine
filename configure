@@ -1101,6 +1101,7 @@ enable_bthprops_cpl
 enable_cabinet
 enable_capi2032
 enable_cards
+enable_cdosys
 enable_cfgmgr32
 enable_clusapi
 enable_combase
@@ -18541,6 +18542,7 @@ wine_fn_config_dll cabinet enable_cabinet implib
 wine_fn_config_test dlls/cabinet/tests cabinet_test
 wine_fn_config_dll capi2032 enable_capi2032 implib
 wine_fn_config_dll cards enable_cards implib
+wine_fn_config_dll cdosys enable_cdosys
 wine_fn_config_dll cfgmgr32 enable_cfgmgr32 implib
 wine_fn_config_dll clusapi enable_clusapi implib
 wine_fn_config_dll combase enable_combase
