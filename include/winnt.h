@@ -5746,11 +5746,29 @@ typedef struct _ASSEMBLY_FILE_DETAILED_INFORMATION {
 
 typedef const ASSEMBLY_FILE_DETAILED_INFORMATION *PCASSEMBLY_FILE_DETAILED_INFORMATION;
 
+typedef enum {
+    ACTCX_COMPATIBILITY_ELEMENT_TYPE_UNKNOWN = 0,
+    ACTCX_COMPATIBILITY_ELEMENT_TYPE_OS
+} ACTCTX_COMPATIBILITY_ELEMENT_TYPE;
+
+typedef struct _COMPATIBILITY_CONTEXT_ELEMENT {
+    GUID Id;
+    ACTCTX_COMPATIBILITY_ELEMENT_TYPE Type;
+} COMPATIBILITY_CONTEXT_ELEMENT, *PCOMPATIBILITY_CONTEXT_ELEMENT;
+
+#if !defined(__WINESRC__) && (defined(_MSC_EXTENSIONS) || ((defined(__GNUC__) && __GNUC__ >= 3)))
+typedef struct _ACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION {
+    DWORD ElementCount;
+    COMPATIBILITY_CONTEXT_ELEMENT Elements[];
+} ACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION, *PACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION;
+#endif
+
 typedef enum _ACTIVATION_CONTEXT_INFO_CLASS {
     ActivationContextBasicInformation                       = 1,
     ActivationContextDetailedInformation                    = 2,
     AssemblyDetailedInformationInActivationContext          = 3,
     FileInformationInAssemblyOfAssemblyInActivationContext  = 4,
+    CompatibilityInformationInActivationContext             = 6,
     MaxActivationContextInfoClass,
 
     AssemblyDetailedInformationInActivationContxt          = 3,
