@@ -499,6 +499,8 @@ struct assembly
     unsigned int             num_dlls;
     unsigned int             allocated_dlls;
     struct entity_array      entities;
+    COMPATIBILITY_CONTEXT_ELEMENT* compat_contexts;
+    ULONG                    num_compat_contexts;
 };
 
 enum context_sections
@@ -621,6 +623,12 @@ static const WCHAR simpleframeW[] = {'s','i','m','p','l','e','f','r','a','m','e'
 static const WCHAR staticW[] = {'s','t','a','t','i','c',0};
 static const WCHAR supportsmultilevelundoW[] = {'s','u','p','p','o','r','t','s','m','u','l','t','i','l','e','v','e','l','u','n','d','o',0};
 static const WCHAR wantstomenumergeW[] = {'w','a','n','t','s','t','o','m','e','n','u','m','e','r','g','e',0};
+
+static const WCHAR compatibilityW[] = {'c','o','m','p','a','t','i','b','i','l','i','t','y',0};
+static const WCHAR compatibilityNSW[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','c','o','m','p','a','t','i','b','i','l','i','t','y','.','v','1',0};
+static const WCHAR applicationW[] = {'a','p','p','l','i','c','a','t','i','o','n',0};
+static const WCHAR supportedOSW[] = {'s','u','p','p','o','r','t','e','d','O','S',0};
+static const WCHAR IdW[] = {'I','d',0};
 
 struct olemisc_entry
 {
@@ -790,6 +798,25 @@ static struct dll_redirect* add_dll_redirect(struct assembly* assembly)
         assembly->allocated_dlls = new_count;
     }
     return &assembly->dlls[assembly->num_dlls++];
+}
+
+static PCOMPATIBILITY_CONTEXT_ELEMENT add_compat_context(struct assembly* assembly)
+{
+    void *ptr;
+    if (assembly->num_compat_contexts)
+    {
+        unsigned int new_count = assembly->num_compat_contexts + 1;
+        ptr = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                 assembly->compat_contexts,
+                                 new_count * sizeof(COMPATIBILITY_CONTEXT_ELEMENT) );
+    }
+    else
+    {
+        ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(COMPATIBILITY_CONTEXT_ELEMENT) );
+    }
+    if (!ptr) return NULL;
+    assembly->compat_contexts = ptr;
+    return &assembly->compat_contexts[assembly->num_compat_contexts++];
 }
 
 static void free_assembly_identity(struct assembly_identity *ai)
@@ -1075,6 +1102,7 @@ static void actctx_release( ACTIVATION_CONTEXT *actctx )
             RtlFreeHeap( GetProcessHeap(), 0, assembly->dlls );
             RtlFreeHeap( GetProcessHeap(), 0, assembly->manifest.info );
             RtlFreeHeap( GetProcessHeap(), 0, assembly->directory );
+            RtlFreeHeap( GetProcessHeap(), 0, assembly->compat_contexts );
             free_entity_array( &assembly->entities );
             free_assembly_identity(&assembly->id);
         }
@@ -2211,6 +2239,84 @@ static BOOL parse_file_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct 
     return ret;
 }
 
+static BOOL parse_compatibility_application_elem(xmlbuf_t* xmlbuf, struct assembly* assembly,
+                                                 struct actctx_loader* acl)
+{
+    xmlstr_t attr_name, attr_value, elem;
+    BOOL end = FALSE, ret = TRUE, error;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp_end(&elem, applicationW))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else if (xmlstr_cmp(&elem, supportedOSW))
+        {
+            while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+            {
+                if (xmlstr_cmp(&attr_name, IdW))
+                {
+                    UNICODE_STRING str;
+                    COMPATIBILITY_CONTEXT_ELEMENT* compat;
+                    GUID compat_id;
+                    str.Buffer = (PWSTR)attr_value.ptr;
+                    str.Length = str.MaximumLength = (USHORT)attr_value.len * sizeof(WCHAR);
+                    if (RtlGUIDFromString(&str, &compat_id) == STATUS_SUCCESS)
+                    {
+                        if (!(compat = add_compat_context(assembly))) return FALSE;
+                        compat->Type = ACTCX_COMPATIBILITY_ELEMENT_TYPE_OS;
+                        compat->Id = compat_id;
+                    }
+                    else
+                    {
+                        WARN("Invalid guid %s\n", debugstr_xmlstr(&attr_value));
+                    }
+                }
+                else
+                {
+                    WARN("unknown attr %s=%s\n", debugstr_xmlstr(&attr_name),
+                         debugstr_xmlstr(&attr_value));
+                }
+            }
+        }
+        else
+        {
+            WARN("unknown elem %s\n", debugstr_xmlstr(&elem));
+            ret = parse_unknown_elem(xmlbuf, &elem);
+        }
+    }
+
+    return ret;
+}
+
+static BOOL parse_compatibility_elem(xmlbuf_t* xmlbuf, struct assembly* assembly,
+                                     struct actctx_loader* acl)
+{
+    xmlstr_t elem;
+    BOOL ret = TRUE;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp_end(&elem, compatibilityW))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else if (xmlstr_cmp(&elem, applicationW))
+        {
+            ret = parse_compatibility_application_elem(xmlbuf, assembly, acl);
+        }
+        else
+        {
+            WARN("unknown elem %s\n", debugstr_xmlstr(&elem));
+            ret = parse_unknown_elem(xmlbuf, &elem);
+        }
+    }
+    return ret;
+}
+
 static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
                                 struct assembly* assembly,
                                 struct assembly_identity* expected_ai)
@@ -2327,6 +2433,10 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
                     ret = FALSE;
                 }
             }
+        }
+        else if (xml_elem_cmp(&elem, compatibilityW, compatibilityNSW))
+        {
+            ret = parse_compatibility_elem(xmlbuf, assembly, acl);
         }
         else
         {
@@ -4984,6 +5094,34 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
                 memcpy( ptr, dll->name, dll_len * sizeof(WCHAR) );
             } else afdi->lpFileName = NULL;
             afdi->lpFilePath = NULL; /* FIXME */
+        }
+        break;
+
+    case CompatibilityInformationInActivationContext:
+        {
+            /*ACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION*/DWORD *acci = buffer;
+            COMPATIBILITY_CONTEXT_ELEMENT *elements;
+            struct assembly *assembly = NULL;
+            ULONG num_compat_contexts = 0, n;
+            SIZE_T len;
+
+            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+
+            if (actctx->num_assemblies) assembly = actctx->assemblies;
+
+            if (assembly)
+                num_compat_contexts = assembly->num_compat_contexts;
+            len = sizeof(*acci) + num_compat_contexts * sizeof(COMPATIBILITY_CONTEXT_ELEMENT);
+
+            if (retlen) *retlen = len;
+            if (!buffer || bufsize < len) return STATUS_BUFFER_TOO_SMALL;
+
+            *acci = num_compat_contexts;
+            elements = (COMPATIBILITY_CONTEXT_ELEMENT*)(acci + 1);
+            for (n = 0; n < num_compat_contexts; ++n)
+            {
+                elements[n] = assembly->compat_contexts[n];
+            }
         }
         break;
 

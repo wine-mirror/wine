@@ -2555,10 +2555,8 @@ static void test_no_compat(HANDLE handle, int line)
                       CompatibilityInformationInActivationContext, &compat_info,
                       sizeof(compat_info), &size);
 
-todo_wine {
     ok_(__FILE__, line)(b, "CompatibilityInformationInActivationContext failed\n");
     ok_(__FILE__, line)(size == sizeof(DWORD), "size mismatch (got %lu, expected 4)\n", size);
-}
     ok_(__FILE__, line)(compat_info.ElementCount == 0, "unexpected ElementCount %u\n", compat_info.ElementCount);
 }
 
@@ -2575,7 +2573,6 @@ static void test_with_compat(HANDLE handle, DWORD num_compat, const GUID* expect
                       CompatibilityInformationInActivationContext, &compat_info,
                       sizeof(compat_info), &size);
 
-todo_wine {
     ok_(__FILE__, line)(b, "CompatibilityInformationInActivationContext failed\n");
     ok_(__FILE__, line)(size == expected, "size mismatch (got %lu, expected %lu)\n", size, expected);
     ok_(__FILE__, line)(compat_info.ElementCount == num_compat, "unexpected ElementCount %u\n", compat_info.ElementCount);
@@ -2590,7 +2587,6 @@ todo_wine {
         ok_(__FILE__, line)(compat_info.Elements[n].Type == ACTCX_COMPATIBILITY_ELEMENT_TYPE_OS,
                             "Wrong type, got %u for %u\n", (DWORD)compat_info.Elements[n].Type, n);
     }
-}
 }
 
 static void test_compatibility(void)
