@@ -27,6 +27,7 @@
 
 #include "main.h"
 #include "regproc.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 static INT Image_String;

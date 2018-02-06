@@ -29,6 +29,7 @@
 #include <windows.h>
 #include <wine/unicode.h>
 #include <wine/debug.h>
+#include <wine/heap.h>
 #include "regproc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(regedit);
@@ -46,7 +47,7 @@ static HKEY reg_class_keys[] = {
 
 void *heap_xalloc(size_t size)
 {
-    void *buf = HeapAlloc(GetProcessHeap(), 0, size);
+    void *buf = heap_alloc(size);
     if (!buf)
     {
         ERR("Out of memory!\n");
@@ -57,12 +58,7 @@ void *heap_xalloc(size_t size)
 
 void *heap_xrealloc(void *buf, size_t size)
 {
-    void *new_buf;
-
-    if (buf)
-        new_buf = HeapReAlloc(GetProcessHeap(), 0, buf, size);
-    else
-        new_buf = HeapAlloc(GetProcessHeap(), 0, size);
+    void *new_buf = heap_realloc(buf, size);
 
     if (!new_buf)
     {
@@ -71,11 +67,6 @@ void *heap_xrealloc(void *buf, size_t size)
     }
 
     return new_buf;
-}
-
-BOOL heap_free(void *buf)
-{
-    return HeapFree(GetProcessHeap(), 0, buf);
 }
 
 /******************************************************************************

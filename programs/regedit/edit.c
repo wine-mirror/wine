@@ -29,6 +29,7 @@
 #include <shellapi.h>
 #include <shlwapi.h>
 
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "main.h"
 #include "regproc.h"

@@ -30,7 +30,6 @@ void WINAPIV error_exit(unsigned int id, ...);
 char *GetMultiByteString(const WCHAR *strW);
 void *heap_xalloc(size_t size);
 void *heap_xrealloc(void *buf, size_t size);
-BOOL heap_free(void *buf);
 BOOL import_registry_file(FILE *reg_file);
 void delete_registry_key(WCHAR *reg_key_name);
 BOOL export_registry_key(WCHAR *file_name, WCHAR *path, DWORD format);

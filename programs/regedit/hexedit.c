@@ -35,6 +35,7 @@
 #include "winnls.h"
 #include "commctrl.h"
 
+#include "wine/heap.h"
 #include "main.h"
 #include "regproc.h"
 

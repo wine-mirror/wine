@@ -24,6 +24,7 @@
 #include <shellapi.h>
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "regproc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(regedit);
