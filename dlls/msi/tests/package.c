@@ -5652,6 +5652,11 @@ static void test_installprops(void)
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
     ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
 
+    buf[0] = 0;
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "MsiNetAssemblySupport", buf, &size);
+    if (r == ERROR_SUCCESS) trace( "MsiNetAssemblySupport \"%s\"\n", buf );
+
     if (pGetSystemInfo && pSHGetFolderPathA)
     {
         pGetSystemInfo(&si);
