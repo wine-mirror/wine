@@ -72,6 +72,8 @@ typedef struct BmpFrameEncode {
     BOOL committed;
 } BmpFrameEncode;
 
+static const WCHAR wszEnableV5Header32bppBGRA[] = {'E','n','a','b','l','e','V','5','H','e','a','d','e','r','3','2','b','p','p','B','G','R','A',0};
+
 static inline BmpFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
 {
     return CONTAINING_RECORD(iface, BmpFrameEncode, IWICBitmapFrameEncode_iface);
@@ -134,6 +136,9 @@ static HRESULT WINAPI BmpFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
     TRACE("(%p,%p)\n", iface, pIEncoderOptions);
 
     if (This->initialized) return WINCODEC_ERR_WRONGSTATE;
+
+    if (pIEncoderOptions)
+        WARN("ignoring encoder options.\n");
 
     This->initialized = TRUE;
 
@@ -501,6 +506,10 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     BmpEncoder *This = impl_from_IWICBitmapEncoder(iface);
     BmpFrameEncode *encode;
     HRESULT hr;
+    static const PROPBAG2 opts[1] =
+    {
+        { PROPBAG2_TYPE_DATA, VT_BOOL, 0, 0, (LPOLESTR)wszEnableV5Header32bppBGRA },
+    };
 
     TRACE("(%p,%p,%p)\n", iface, ppIFrameEncode, ppIEncoderOptions);
 
@@ -510,7 +519,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
     if (ppIEncoderOptions)
     {
-        hr = CreatePropertyBag2(NULL, 0, ppIEncoderOptions);
+        hr = CreatePropertyBag2(opts, sizeof(opts)/sizeof(opts[0]), ppIEncoderOptions);
         if (FAILED(hr)) return hr;
     }
 

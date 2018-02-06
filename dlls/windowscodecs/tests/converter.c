@@ -467,6 +467,7 @@ static const WCHAR wszLuminance[] = {'L','u','m','i','n','a','n','c','e',0};
 static const WCHAR wszChrominance[] = {'C','h','r','o','m','i','n','a','n','c','e',0};
 static const WCHAR wszJpegYCrCbSubsampling[] = {'J','p','e','g','Y','C','r','C','b','S','u','b','s','a','m','p','l','i','n','g',0};
 static const WCHAR wszSuppressApp0[] = {'S','u','p','p','r','e','s','s','A','p','p','0',0};
+static const WCHAR wszEnableV5Header32bppBGRA[] = {'E','n','a','b','l','e','V','5','H','e','a','d','e','r','3','2','b','p','p','B','G','R','A',0};
 
 static const struct property_opt_test_data testdata_tiff_props[] = {
     { wszTiffCompressionMethod, VT_UI1,         VT_UI1,  WICTiffCompressionDontCare },
@@ -487,6 +488,11 @@ static const struct property_opt_test_data testdata_jpeg_props[] = {
     { wszChrominance,          VT_I4|VT_ARRAY,  VT_EMPTY },
     { wszJpegYCrCbSubsampling, VT_UI1,          VT_UI1, WICJpegYCrCbSubsamplingDefault, 0.0f, TRUE }, /* not supported on XP/2k3 */
     { wszSuppressApp0,         VT_BOOL,         VT_BOOL, FALSE },
+    { NULL }
+};
+
+static const struct property_opt_test_data testdata_bmp_props[] = {
+    { wszEnableV5Header32bppBGRA, VT_BOOL, VT_BOOL, VARIANT_FALSE, 0.0f, TRUE }, /* Supported since Win7 */
     { NULL }
 };
 
@@ -616,6 +622,8 @@ static void test_encoder_properties(const CLSID* clsid_encoder, IPropertyBag2 *o
         test_specific_encoder_properties(options, testdata_png_props, all_props, cProperties2);
     else if (IsEqualCLSID(clsid_encoder, &CLSID_WICJpegEncoder))
         test_specific_encoder_properties(options, testdata_jpeg_props, all_props, cProperties2);
+    else if (IsEqualCLSID(clsid_encoder, &CLSID_WICBmpEncoder))
+        test_specific_encoder_properties(options, testdata_bmp_props, all_props, cProperties2);
 
     for (i=0; i < cProperties2; i++)
     {
