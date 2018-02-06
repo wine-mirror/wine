@@ -92,6 +92,13 @@ static const struct /* same fields as struct SID */
     SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
     DWORD SubAuthority[2];
 } builtin_users_sid = { SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS } };
+static const struct /* same fields as struct SID */
+{
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[SECURITY_LOGON_IDS_RID_COUNT];
+} builtin_logon_sid = { SID_REVISION, SECURITY_LOGON_IDS_RID_COUNT, {SECURITY_NT_AUTHORITY}, {SECURITY_LOGON_IDS_RID, 0, 0} };
 
 const PSID security_world_sid = (PSID)&world_sid;
 static const PSID security_local_sid = (PSID)&local_sid;
@@ -1436,6 +1443,9 @@ DECL_HANDLER(get_token_sid)
             }
             break;
         }
+        case TokenLogonSid:
+            sid = (const SID *)&builtin_logon_sid;
+            break;
         default:
             set_error( STATUS_INVALID_PARAMETER );
             break;

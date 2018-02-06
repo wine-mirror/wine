@@ -1843,11 +1843,11 @@ static void test_token_attr(void)
         todo_wine win_skip("TokenLogonSid not supported. Skipping tests\n");
     else
     {
-        todo_wine ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
+        ok(!ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
             "GetTokenInformation(TokenLogonSid) failed with error %d\n", GetLastError());
         Groups = HeapAlloc(GetProcessHeap(), 0, Size);
         ret = GetTokenInformation(Token, TokenLogonSid, Groups, Size, &Size);
-        todo_wine ok(ret,
+        ok(ret,
             "GetTokenInformation(TokenLogonSid) failed with error %d\n", GetLastError());
         if (ret)
         {

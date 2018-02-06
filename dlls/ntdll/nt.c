@@ -552,6 +552,27 @@ NTSTATUS WINAPI NtQueryInformationToken(
             *(DWORD*)tokeninfo = 0;
             break;
         }
+    case TokenLogonSid:
+        SERVER_START_REQ( get_token_sid )
+        {
+            TOKEN_GROUPS * groups = tokeninfo;
+            PSID sid = groups + 1;
+            DWORD sid_len = tokeninfolength < sizeof(TOKEN_GROUPS) ? 0 : tokeninfolength - sizeof(TOKEN_GROUPS);
+
+            req->handle = wine_server_obj_handle( token );
+            req->which_sid = tokeninfoclass;
+            wine_server_set_reply( req, sid, sid_len );
+            status = wine_server_call( req );
+            if (retlen) *retlen = reply->sid_len + sizeof(TOKEN_GROUPS);
+            if (status == STATUS_SUCCESS)
+            {
+                groups->GroupCount = 1;
+                groups->Groups[0].Sid = sid;
+                groups->Groups[0].Attributes = 0;
+            }
+        }
+        SERVER_END_REQ;
+        break;
     default:
         {
             ERR("Unhandled Token Information class %d!\n", tokeninfoclass);
