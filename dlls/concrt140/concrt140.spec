@@ -38,8 +38,8 @@
 @ cdecl -arch=win64 ??0_Scheduler@details@Concurrency@@QEAA@PEAVScheduler@2@@Z(ptr ptr) msvcr120.??0_Scheduler@details@Concurrency@@QEAA@PEAVScheduler@2@@Z
 @ stub -arch=i386 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z
 @ stub -arch=win64 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z
-@ stub -arch=i386 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z
-@ stub -arch=win64 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z
+@ thiscall -arch=i386 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z(ptr ptr) msvcr120.??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z
+@ cdecl -arch=win64 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z(ptr ptr) msvcr120.??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z
 @ stub -arch=i386 ??0_SpinLock@details@Concurrency@@QAE@ACJ@Z
 @ stub -arch=win64 ??0_SpinLock@details@Concurrency@@QEAA@AECJ@Z
 @ stub -arch=i386 ??0_StructuredTaskCollection@details@Concurrency@@QAE@PAV_CancellationTokenState@12@@Z
@@ -174,8 +174,8 @@
 @ cdecl -arch=win64 ??1_ReentrantBlockingLock@details@Concurrency@@QEAA@XZ(ptr) msvcr120.??1_ReentrantBlockingLock@details@Concurrency@@QEAA@XZ
 @ stub -arch=i386 ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ
-@ stub -arch=i386 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@XZ
+@ thiscall -arch=i386 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@XZ(ptr) msvcr120.??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@XZ
+@ cdecl -arch=win64 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@XZ(ptr) msvcr120.??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@XZ
 @ stub -arch=i386 ??1_SpinLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_SpinLock@details@Concurrency@@QEAA@XZ
 @ stub -arch=i386 ??1_StructuredTaskCollection@details@Concurrency@@QAE@XZ

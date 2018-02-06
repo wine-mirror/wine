@@ -53,9 +53,9 @@
 @ stub -arch=arm ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAA@AAV123@@Z
 @ stub -arch=i386 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z
 @ stub -arch=win64 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z
-@ stub -arch=arm ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAA@AAV123@@Z
-@ stub -arch=i386 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z
-@ stub -arch=win64 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z
+@ cdecl -arch=arm ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAA@AAV123@@Z(ptr ptr) _ReentrantPPLLock__Scoped_lock_ctor
+@ thiscall -arch=i386 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z(ptr ptr) _ReentrantPPLLock__Scoped_lock_ctor
+@ cdecl -arch=win64 ??0_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z(ptr ptr) _ReentrantPPLLock__Scoped_lock_ctor
 @ stub -arch=arm ??0_SpinLock@details@Concurrency@@QAA@ACJ@Z
 @ stub -arch=i386 ??0_SpinLock@details@Concurrency@@QAE@ACJ@Z
 @ stub -arch=win64 ??0_SpinLock@details@Concurrency@@QEAA@AECJ@Z
@@ -284,9 +284,9 @@
 @ stub -arch=arm ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAA@XZ(ptr) _ReentrantPPLLock__Scoped_lock_dtor
+@ thiscall -arch=i386 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QAE@XZ(ptr) _ReentrantPPLLock__Scoped_lock_dtor
+@ cdecl -arch=win64 ??1_Scoped_lock@_ReentrantPPLLock@details@Concurrency@@QEAA@XZ(ptr) _ReentrantPPLLock__Scoped_lock_dtor
 @ stub -arch=arm ??1_SpinLock@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1_SpinLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_SpinLock@details@Concurrency@@QEAA@XZ
