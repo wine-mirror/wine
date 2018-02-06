@@ -30,6 +30,7 @@
 #include "wbemdisp.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "wbemdisp_private.h"
 #include "wbemdisp_classes.h"
