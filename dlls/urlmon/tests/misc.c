@@ -2332,7 +2332,7 @@ static void test_bsc_marshaling(void)
 
     rem_bindinfo.stgmedData.tymed = TYMED_HGLOBAL;
 
-    buf = GlobalAlloc(0, sizeof(5));
+    buf = GlobalAlloc(0, 5);
     strcpy(buf, "test");
     rem_bindinfo.stgmedData.u.hGlobal = buf;
     rem_bindinfo.cbstgmedData = 5;
@@ -2549,7 +2549,7 @@ static void test_bsc_marshaling(void)
 
         rem_bindinfo.stgmedData.tymed = TYMED_HGLOBAL;
 
-        buf = GlobalAlloc(0, sizeof(5));
+        buf = GlobalAlloc(0, 5);
         strcpy(buf, "test");
         rem_bindinfo.stgmedData.u.hGlobal = buf;
         rem_bindinfo.cbstgmedData = 5;
