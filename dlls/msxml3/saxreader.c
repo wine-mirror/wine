@@ -561,7 +561,7 @@ static BOOL bstr_pool_insert(struct bstrpool *pool, BSTR pool_entry)
 {
     if (!pool->pool)
     {
-        pool->pool = HeapAlloc(GetProcessHeap(), 0, 16 * sizeof(*pool->pool));
+        pool->pool = heap_alloc(16 * sizeof(*pool->pool));
         if (!pool->pool)
             return FALSE;
 
@@ -570,7 +570,7 @@ static BOOL bstr_pool_insert(struct bstrpool *pool, BSTR pool_entry)
     }
     else if (pool->index == pool->len)
     {
-        BSTR *realloc = HeapReAlloc(GetProcessHeap(), 0, pool->pool, pool->len * 2 * sizeof(*realloc));
+        BSTR *realloc = heap_realloc(pool->pool, pool->len * 2 * sizeof(*realloc));
 
         if (!realloc)
             return FALSE;
@@ -590,7 +590,7 @@ static void free_bstr_pool(struct bstrpool *pool)
     for (i = 0; i < pool->index; i++)
         SysFreeString(pool->pool[i]);
 
-    HeapFree(GetProcessHeap(), 0, pool->pool);
+    heap_free(pool->pool);
 
     pool->pool = NULL;
     pool->index = pool->len = 0;

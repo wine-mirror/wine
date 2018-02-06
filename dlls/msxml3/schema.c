@@ -749,7 +749,7 @@ void schemasInit(void)
     /* Resource is loaded as raw data,
      * need a null-terminated string */
     while (buf[datatypes_len - 1] != '>') datatypes_len--;
-    datatypes_src = HeapAlloc(GetProcessHeap(), 0, datatypes_len + 1);
+    datatypes_src = heap_alloc(datatypes_len + 1);
     memcpy(datatypes_src, buf, datatypes_len);
     datatypes_src[datatypes_len] = 0;
 
@@ -763,7 +763,7 @@ void schemasInit(void)
 void schemasCleanup(void)
 {
     xmlSchemaFree(datatypes_schema);
-    HeapFree(GetProcessHeap(), 0, datatypes_src);
+    heap_free(datatypes_src);
     xmlSetExternalEntityLoader(_external_entity_loader);
 }
 
