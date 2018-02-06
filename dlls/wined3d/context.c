@@ -2368,16 +2368,16 @@ void context_enable_clip_distances(struct wined3d_context *context, unsigned int
     context->clip_distance_mask = enable_mask;
 
     enable_mask &= ~current_mask;
-    for (i = 0; enable_mask; enable_mask >>= 1, ++i)
+    while (enable_mask)
     {
-        if (enable_mask & 1)
-            gl_info->gl_ops.gl.p_glEnable(GL_CLIP_DISTANCE0 + i);
+        i = wined3d_bit_scan(&enable_mask);
+        gl_info->gl_ops.gl.p_glEnable(GL_CLIP_DISTANCE0 + i);
     }
     disable_mask &= current_mask;
-    for (i = 0; disable_mask; disable_mask >>= 1, ++i)
+    while (disable_mask)
     {
-        if (disable_mask & 1)
-            gl_info->gl_ops.gl.p_glDisable(GL_CLIP_DISTANCE0 + i);
+        i = wined3d_bit_scan(&disable_mask);
+        gl_info->gl_ops.gl.p_glDisable(GL_CLIP_DISTANCE0 + i);
     }
     checkGLcall("toggle clip distances");
 }
