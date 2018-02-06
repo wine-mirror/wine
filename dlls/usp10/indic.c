@@ -32,6 +32,7 @@
 #include "winternl.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "usp10_internal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);

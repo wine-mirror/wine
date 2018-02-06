@@ -52,6 +52,7 @@
 #include "usp10.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 
 #include "usp10_internal.h"
