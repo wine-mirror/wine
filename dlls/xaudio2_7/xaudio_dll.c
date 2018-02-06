@@ -2121,7 +2121,8 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
 
 static HRESULT WINAPI XAudio2CF_LockServer(IClassFactory *iface, BOOL dolock)
 {
-    FIXME("(static)->(%d): stub!\n", dolock);
+    struct xaudio2_cf *This = impl_from_IClassFactory(iface);
+    FIXME("(%p)->(%d): stub!\n", This, dolock);
     return S_OK;
 }
 
@@ -2134,18 +2135,20 @@ static const IClassFactoryVtbl XAudio2CF_Vtbl =
     XAudio2CF_LockServer
 };
 
-static IClassFactory *make_xaudio2_factory(void)
+static HRESULT make_xaudio2_factory(REFIID riid, void **ppv)
 {
+    HRESULT hr;
     struct xaudio2_cf *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct xaudio2_cf));
     ret->IClassFactory_iface.lpVtbl = &XAudio2CF_Vtbl;
     ret->ref = 0;
-    return &ret->IClassFactory_iface;
+    hr = IClassFactory_QueryInterface(&ret->IClassFactory_iface, riid, ppv);
+    if(FAILED(hr))
+        HeapFree(GetProcessHeap(), 0, ret);
+    return hr;
 }
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    IClassFactory *factory = NULL;
-
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
     if(IsEqualGUID(rclsid, &CLSID_XAudio20) ||
@@ -2155,33 +2158,30 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
             IsEqualGUID(rclsid, &CLSID_XAudio24) ||
             IsEqualGUID(rclsid, &CLSID_XAudio25) ||
             IsEqualGUID(rclsid, &CLSID_XAudio26) ||
-            IsEqualGUID(rclsid, &CLSID_XAudio27)){
-        factory = make_xaudio2_factory();
+            IsEqualGUID(rclsid, &CLSID_XAudio27))
+        return make_xaudio2_factory(riid, ppv);
 
-    }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter20) ||
+    if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter20) ||
                 IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter21) ||
                 IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter22) ||
                 IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter23) ||
                 IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter24) ||
                 IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter25) ||
                 IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter26) ||
-                IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter27)){
-        factory = make_xapo_factory(&CLSID_AudioVolumeMeter27);
+                IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter27))
+        return make_xapo_factory(&CLSID_AudioVolumeMeter27, riid, ppv);
 
-    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb20) ||
+    if(IsEqualGUID(rclsid, &CLSID_AudioReverb20) ||
                 IsEqualGUID(rclsid, &CLSID_AudioReverb21) ||
                 IsEqualGUID(rclsid, &CLSID_AudioReverb22) ||
                 IsEqualGUID(rclsid, &CLSID_AudioReverb23) ||
                 IsEqualGUID(rclsid, &CLSID_AudioReverb24) ||
                 IsEqualGUID(rclsid, &CLSID_AudioReverb25) ||
                 IsEqualGUID(rclsid, &CLSID_AudioReverb26) ||
-                IsEqualGUID(rclsid, &CLSID_AudioReverb27)){
-        factory = make_xapo_factory(&CLSID_FXReverb);
-    }
+                IsEqualGUID(rclsid, &CLSID_AudioReverb27))
+        return make_xapo_factory(&CLSID_FXReverb, riid, ppv);
 
-    if(!factory) return CLASS_E_CLASSNOTAVAILABLE;
-
-    return IClassFactory_QueryInterface(factory, riid, ppv);
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 HRESULT xaudio2_initialize(IXAudio2Impl *This, UINT32 flags, XAUDIO2_PROCESSOR proc)
@@ -2200,7 +2200,9 @@ HRESULT WINAPI XAudio2Create(IXAudio2 **ppxa2, UINT32 flags, XAUDIO2_PROCESSOR p
 
     TRACE("%p 0x%x 0x%x\n", ppxa2, flags, proc);
 
-    cf = make_xaudio2_factory();
+    hr = make_xaudio2_factory(&IID_IClassFactory, (void**)&cf);
+    if(FAILED(hr))
+        return hr;
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IXAudio2, (void**)&xa2);
     IClassFactory_Release(cf);

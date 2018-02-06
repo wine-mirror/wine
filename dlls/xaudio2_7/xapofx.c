@@ -764,7 +764,8 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
 
 static HRESULT WINAPI xapocf_LockServer(IClassFactory *iface, BOOL dolock)
 {
-    FIXME("(static)->(%d): stub!\n", dolock);
+    struct xapo_cf *This = xapo_impl_from_IClassFactory(iface);
+    FIXME("(%p)->(%d): stub!\n", This, dolock);
     return S_OK;
 }
 
@@ -777,13 +778,17 @@ static const IClassFactoryVtbl xapo_Vtbl =
     xapocf_LockServer
 };
 
-IClassFactory *make_xapo_factory(REFCLSID clsid)
+HRESULT make_xapo_factory(REFCLSID clsid, REFIID riid, void **ppv)
 {
+    HRESULT hr;
     struct xapo_cf *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct xapo_cf));
     ret->IClassFactory_iface.lpVtbl = &xapo_Vtbl;
     ret->class = clsid;
     ret->ref = 0;
-    return &ret->IClassFactory_iface;
+    hr = IClassFactory_QueryInterface(&ret->IClassFactory_iface, riid, ppv);
+    if(FAILED(hr))
+        HeapFree(GetProcessHeap(), 0, ret);
+    return hr;
 }
 
 #if XAUDIO2_VER >= 8
@@ -792,7 +797,9 @@ HRESULT WINAPI CreateAudioVolumeMeter(IUnknown **out)
     IClassFactory *cf;
     HRESULT hr;
 
-    cf = make_xapo_factory(&CLSID_AudioVolumeMeter27);
+    hr = make_xapo_factory(&CLSID_AudioVolumeMeter27, &IID_IClassFactory, (void**)&cf);
+    if(FAILED(hr))
+        return hr;
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
 
@@ -806,7 +813,9 @@ HRESULT WINAPI CreateAudioReverb(IUnknown **out)
     IClassFactory *cf;
     HRESULT hr;
 
-    cf = make_xapo_factory(&CLSID_FXReverb);
+    hr = make_xapo_factory(&CLSID_FXReverb, &IID_IClassFactory, (void**)&cf);
+    if(FAILED(hr))
+        return hr;
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
 
@@ -832,7 +841,9 @@ HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out, void *initdata, UINT32 in
         class = &CLSID_FXEQ;
 
     if(class){
-        cf = make_xapo_factory(class);
+        hr = make_xapo_factory(class, &IID_IClassFactory, (void**)&cf);
+        if(FAILED(hr))
+            return hr;
 
         hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
         IClassFactory_Release(cf);
@@ -890,7 +901,9 @@ HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out)
     /* TODO FXECHO, FXMasteringLimiter, */
 
     if(class){
-        cf = make_xapo_factory(class);
+        hr = make_xapo_factory(class, &IID_IClassFactory, (void**)&cf);
+        if(FAILED(hr))
+            return hr;
 
         hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
         IClassFactory_Release(cf);
