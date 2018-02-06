@@ -40,6 +40,7 @@
 #include "initguid.h"
 #include "asptlb.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 /* undef the #define in msxml2 so that we can access all versions */
@@ -172,7 +173,7 @@ static ULONG WINAPI dispevent_Release(IDispatch *iface)
     ULONG ref = InterlockedDecrement( &This->ref );
 
     if (ref == 0)
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
 
     return ref;
 }
@@ -232,7 +233,7 @@ static const IDispatchVtbl dispeventVtbl =
 
 static IDispatch* create_dispevent(void)
 {
-    dispevent *event = HeapAlloc(GetProcessHeap(), 0, sizeof(*event));
+    dispevent *event = heap_alloc(sizeof(*event));
 
     event->IDispatch_iface.lpVtbl = &dispeventVtbl;
     event->ref = 1;
