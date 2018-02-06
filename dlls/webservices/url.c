@@ -24,6 +24,7 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "webservices_private.h"
