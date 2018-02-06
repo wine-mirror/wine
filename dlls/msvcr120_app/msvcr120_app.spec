@@ -635,7 +635,7 @@
 @ stub -arch=arm ?_Tidy@exception@std@@AAAXXZ
 @ stub -arch=i386 ?_Tidy@exception@std@@AAEXXZ
 @ stub -arch=win64 ?_Tidy@exception@std@@AEAAXXZ
-@ stub ?_Trace_agents@Concurrency@@YAXW4Agents_EventType@1@_JZZ
+@ varargs ?_Trace_agents@Concurrency@@YAXW4Agents_EventType@1@_JZZ(long int64) msvcr120.?_Trace_agents@Concurrency@@YAXW4Agents_EventType@1@_JZZ
 @ cdecl -arch=win32 ?_Trace_ppl_function@Concurrency@@YAXABU_GUID@@EW4ConcRT_EventType@1@@Z(ptr long long) msvcr120.?_Trace_ppl_function@Concurrency@@YAXABU_GUID@@EW4ConcRT_EventType@1@@Z
 @ cdecl -arch=win64 ?_Trace_ppl_function@Concurrency@@YAXAEBU_GUID@@EW4ConcRT_EventType@1@@Z(ptr long long) msvcr120.?_Trace_ppl_function@Concurrency@@YAXAEBU_GUID@@EW4ConcRT_EventType@1@@Z
 @ cdecl -arch=arm ?_TryAcquire@_NonReentrantBlockingLock@details@Concurrency@@QAA_NXZ(ptr) msvcr120.?_TryAcquire@_NonReentrantBlockingLock@details@Concurrency@@QAA_NXZ
