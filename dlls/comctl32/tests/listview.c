@@ -6270,6 +6270,52 @@ static void test_state_image(void)
     }
 }
 
+static void test_LVSCW_AUTOSIZE(void)
+{
+    int width, width2;
+    HWND hwnd;
+    BOOL ret;
+
+    hwnd = create_listview_control(LVS_REPORT);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    insert_column(hwnd, 0);
+    insert_column(hwnd, 1);
+    insert_item(hwnd, 0);
+
+    ret = SendMessageA(hwnd, LVM_SETCOLUMNWIDTH, 0, LVSCW_AUTOSIZE);
+    ok(ret, "Failed to set column width.\n");
+
+    width = SendMessageA(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
+    ok(width > 0, "Unexpected column width %d.\n", width);
+
+    /* Turn on checkboxes. */
+    ret = SendMessageA(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
+    ok(ret == 0, "Unexpected previous extended style.\n");
+
+    ret = SendMessageA(hwnd, LVM_SETCOLUMNWIDTH, 0, LVSCW_AUTOSIZE);
+    ok(ret, "Failed to set column width.\n");
+
+    width2 = SendMessageA(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
+    ok(width2 > 0, "Unexpected column width %d.\n", width2);
+todo_wine
+    ok(width2 > width, "Expected increased column width.\n");
+
+    /* Turn off checkboxes. */
+    ret = SendMessageA(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, 0);
+    ok(ret == LVS_EX_CHECKBOXES, "Unexpected previous extended style.\n");
+
+    ret = SendMessageA(hwnd, LVM_SETCOLUMNWIDTH, 0, LVSCW_AUTOSIZE);
+    ok(ret, "Failed to set column width.\n");
+
+    width = SendMessageA(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
+    ok(width > 0, "Unexpected column width %d.\n", width2);
+todo_wine
+    ok(width2 > width, "Expected reduced column width.\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     ULONG_PTR ctx_cookie;
@@ -6330,6 +6376,7 @@ START_TEST(listview)
     test_oneclickactivate();
     test_callback_mask();
     test_state_image();
+    test_LVSCW_AUTOSIZE();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -6371,6 +6418,7 @@ START_TEST(listview)
     test_LVM_REDRAWITEMS();
     test_oneclickactivate();
     test_state_image();
+    test_LVSCW_AUTOSIZE();
 
     unload_v6_module(ctx_cookie, hCtx);
 
