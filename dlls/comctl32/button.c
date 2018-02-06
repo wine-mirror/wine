@@ -120,7 +120,11 @@ static const WORD maxCheckState[MAX_BTN_TYPE] =
     BST_UNCHECKED,      /* BS_USERBUTTON */
     BST_CHECKED,        /* BS_AUTORADIOBUTTON */
     BST_UNCHECKED,      /* BS_PUSHBOX */
-    BST_UNCHECKED       /* BS_OWNERDRAW */
+    BST_UNCHECKED,      /* BS_OWNERDRAW */
+    BST_UNCHECKED,      /* BS_SPLITBUTTON */
+    BST_UNCHECKED,      /* BS_DEFSPLITBUTTON */
+    BST_UNCHECKED,      /* BS_COMMANDLINK */
+    BST_UNCHECKED       /* BS_DEFCOMMANDLINK */
 };
 
 typedef void (*pfPaint)( HWND hwnd, HDC hdc, UINT action );
@@ -138,7 +142,11 @@ static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
     UB_Paint,    /* BS_USERBUTTON */
     CB_Paint,    /* BS_AUTORADIOBUTTON */
     NULL,        /* BS_PUSHBOX */
-    OB_Paint     /* BS_OWNERDRAW */
+    OB_Paint,    /* BS_OWNERDRAW */
+    PB_Paint,    /* BS_SPLITBUTTON */
+    PB_Paint,    /* BS_DEFSPLITBUTTON */
+    PB_Paint,    /* BS_COMMANDLINK */
+    PB_Paint     /* BS_DEFCOMMANDLINK */
 };
 
 /*********************************************************************
