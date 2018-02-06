@@ -3983,7 +3983,7 @@ void context_apply_compute_state(struct wined3d_context *context,
 {
     const struct StateEntry *state_table = context->state_table;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    unsigned int state_id, i, j;
+    unsigned int state_id, i;
 
     context_load_shader_resources(context, state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
     context_load_unordered_access_resources(context, state->shader[WINED3D_SHADER_TYPE_COMPUTE],
@@ -3991,11 +3991,13 @@ void context_apply_compute_state(struct wined3d_context *context,
 
     for (i = 0, state_id = STATE_COMPUTE_OFFSET; i < ARRAY_SIZE(context->dirty_compute_states); ++i)
     {
-        for (j = 0; j < sizeof(*context->dirty_compute_states) * CHAR_BIT; ++j, ++state_id)
+        unsigned int dirty_mask = context->dirty_compute_states[i];
+        while (dirty_mask)
         {
-            if (context->dirty_compute_states[i] & (1u << j))
-                state_table[state_id].apply(context, state, state_id);
+            unsigned int current_state_id = state_id + wined3d_bit_scan(&dirty_mask);
+            state_table[current_state_id].apply(context, state, current_state_id);
         }
+        state_id += sizeof(*context->dirty_compute_states) * CHAR_BIT;
     }
     memset(context->dirty_compute_states, 0, sizeof(*context->dirty_compute_states));
 
