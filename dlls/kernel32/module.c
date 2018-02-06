@@ -1363,7 +1363,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeLibrary(HINSTANCE hLibModule)
  *  Success: A pointer to the symbol in the process address space.
  *  Failure: NULL. Use GetLastError() to determine the cause.
  */
-FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
+FARPROC get_proc_address( HMODULE hModule, LPCSTR function )
 {
     NTSTATUS    nts;
     FARPROC     fp;
@@ -1385,6 +1385,54 @@ FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
         fp = NULL;
     }
     return fp;
+}
+
+#ifdef __x86_64__
+/*
+ * Work around a Delphi bug on x86_64.  When delay loading a symbol,
+ * Delphi saves rcx, rdx, r8 and r9 to the stack.  It then calls
+ * GetProcAddress(), pops the saved registers and calls the function.
+ * This works fine if all of the parameters are ints.  However, since
+ * it does not save xmm0 - 3, it relies on GetProcAddress() preserving
+ * these registers if the function takes floating point parameters.
+ * This wrapper saves xmm0 - 3 to the stack.
+ */
+extern FARPROC get_proc_address_wrapper( HMODULE module, LPCSTR function );
+
+__ASM_GLOBAL_FUNC( get_proc_address_wrapper,
+                   "pushq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
+                   "movq %rsp,%rbp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
+                   "subq $0x40,%rsp\n\t"
+                   "movaps %xmm0,-0x10(%rbp)\n\t"
+                   "movaps %xmm1,-0x20(%rbp)\n\t"
+                   "movaps %xmm2,-0x30(%rbp)\n\t"
+                   "movaps %xmm3,-0x40(%rbp)\n\t"
+                   "call " __ASM_NAME("get_proc_address") "\n\t"
+                   "movaps -0x40(%rbp), %xmm3\n\t"
+                   "movaps -0x30(%rbp), %xmm2\n\t"
+                   "movaps -0x20(%rbp), %xmm1\n\t"
+                   "movaps -0x10(%rbp), %xmm0\n\t"
+                   "movq %rbp,%rsp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
+                   "popq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI(".cfi_same_value %rbp\n\t")
+                   "ret" )
+#else /* __x86_64__ */
+
+static inline FARPROC get_proc_address_wrapper( HMODULE module, LPCSTR function )
+{
+    return get_proc_address( module, function );
+}
+
+#endif /* __x86_64__ */
+
+FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
+{
+    return get_proc_address_wrapper( hModule, function );
 }
 
 /***********************************************************************
