@@ -6298,7 +6298,6 @@ static void test_LVSCW_AUTOSIZE(void)
 
     width2 = SendMessageA(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
     ok(width2 > 0, "Unexpected column width %d.\n", width2);
-todo_wine
     ok(width2 > width, "Expected increased column width.\n");
 
     /* Turn off checkboxes. */
@@ -6310,7 +6309,6 @@ todo_wine
 
     width = SendMessageA(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
     ok(width > 0, "Unexpected column width %d.\n", width2);
-todo_wine
     ok(width2 > width, "Expected reduced column width.\n");
 
     DestroyWindow(hwnd);
