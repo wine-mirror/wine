@@ -1487,21 +1487,3 @@ HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size,
 
     return wined3d_buffer_create(device, &desc, NULL, parent, parent_ops, buffer);
 }
-
-HRESULT CDECL wined3d_buffer_create_ib(struct wined3d_device *device, UINT size, DWORD usage, enum wined3d_pool pool,
-        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
-{
-    struct wined3d_buffer_desc desc;
-
-    TRACE("device %p, size %u, usage %#x, pool %#x, parent %p, parent_ops %p, buffer %p.\n",
-            device, size, usage, pool, parent, parent_ops, buffer);
-
-    desc.byte_width = size;
-    desc.usage = usage | WINED3DUSAGE_STATICDECL;
-    desc.bind_flags = WINED3D_BIND_INDEX_BUFFER;
-    desc.access = resource_access_from_pool(pool);
-    desc.misc_flags = 0;
-    desc.structure_byte_stride = 0;
-
-    return wined3d_buffer_create(device, &desc, NULL, parent, parent_ops, buffer);
-}

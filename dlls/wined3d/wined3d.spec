@@ -23,7 +23,6 @@
 @ cdecl wined3d_set_adapter_display_mode(ptr long ptr)
 
 @ cdecl wined3d_buffer_create(ptr ptr ptr ptr ptr ptr)
-@ cdecl wined3d_buffer_create_ib(ptr long long long ptr ptr ptr)
 @ cdecl wined3d_buffer_create_vb(ptr long long long ptr ptr ptr)
 @ cdecl wined3d_buffer_decref(ptr)
 @ cdecl wined3d_buffer_get_parent(ptr)
