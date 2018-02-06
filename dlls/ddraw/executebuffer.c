@@ -617,17 +617,25 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
     {
         unsigned int new_size = max(data->dwVertexCount, buffer->vertex_size * 2);
         struct wined3d_buffer *src_buffer, *dst_buffer;
+        struct wined3d_buffer_desc desc;
 
-        hr = wined3d_buffer_create_vb(buffer->d3ddev->wined3d_device, new_size * sizeof(D3DVERTEX),
-                WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY, WINED3D_POOL_SYSTEM_MEM,
-                NULL, &ddraw_null_wined3d_parent_ops, &src_buffer);
-        if (FAILED(hr))
+        desc.byte_width = new_size * sizeof(D3DVERTEX);
+        desc.usage = WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY;
+        desc.bind_flags = WINED3D_BIND_VERTEX_BUFFER;
+        desc.access = WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
+        desc.misc_flags = 0;
+        desc.structure_byte_stride = 0;
+
+        if (FAILED(hr = wined3d_buffer_create(buffer->d3ddev->wined3d_device, &desc,
+                NULL, NULL, &ddraw_null_wined3d_parent_ops, &src_buffer)))
             return hr;
 
-        hr = wined3d_buffer_create_vb(buffer->d3ddev->wined3d_device, new_size * sizeof(D3DTLVERTEX),
-                WINED3DUSAGE_STATICDECL, WINED3D_POOL_DEFAULT,
-                NULL, &ddraw_null_wined3d_parent_ops, &dst_buffer);
-        if (FAILED(hr))
+        desc.byte_width = new_size * sizeof(D3DTLVERTEX);
+        desc.usage = WINED3DUSAGE_STATICDECL;
+        desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+
+        if (FAILED(hr = wined3d_buffer_create(buffer->d3ddev->wined3d_device, &desc,
+                NULL, NULL, &ddraw_null_wined3d_parent_ops, &dst_buffer)))
         {
             wined3d_buffer_decref(src_buffer);
             return hr;
