@@ -620,7 +620,7 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
         struct wined3d_buffer_desc desc;
 
         desc.byte_width = new_size * sizeof(D3DVERTEX);
-        desc.usage = WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY;
+        desc.usage = 0;
         desc.bind_flags = WINED3D_BIND_VERTEX_BUFFER;
         desc.access = WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
         desc.misc_flags = 0;
@@ -660,9 +660,8 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
     {
         box.left = buffer->src_vertex_pos * sizeof(D3DVERTEX);
         box.right = box.left + data->dwVertexCount * sizeof(D3DVERTEX);
-        hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->src_vertex_buffer), 0,
-                &map_desc, &box, buffer->src_vertex_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
-        if (FAILED(hr))
+        if (FAILED(hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->src_vertex_buffer),
+                0, &map_desc, &box, 0)))
             return hr;
 
         memcpy(map_desc.data, ((BYTE *)buffer->desc.lpData) + data->dwVertexOffset,
