@@ -2904,6 +2904,7 @@ __ASM_GLOBAL_FUNC( start_thread,
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int) );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
+                   "movl 8(%esp),%ecx\n\t"
                    /* fetch exit frame */
                    "movl %fs:0x1f4,%edx\n\t"    /* x86_thread_data()->exit_frame */
                    "testl %edx,%edx\n\t"
@@ -2911,7 +2912,6 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    "jmp *%ecx\n\t"
                    /* switch to exit frame stack */
                    "1:\tmovl 4(%esp),%eax\n\t"
-                   "movl 8(%esp),%ecx\n\t"
                    "movl $0,%fs:0x1f4\n\t"
                    "movl %edx,%ebp\n\t"
                    __ASM_CFI(".cfi_def_cfa %ebp,4\n\t")
