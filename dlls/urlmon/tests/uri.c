@@ -33,6 +33,7 @@
 #include "wininet.h"
 #include "strsafe.h"
 #include "initguid.h"
+#include <wine/heap.h>
 
 DEFINE_GUID(CLSID_CUri, 0xDF2FCE13, 0x25EC, 0x45BB, 0x9D,0x4C, 0xCE,0xCD,0x47,0xC2,0x43,0x0C);
 
@@ -7434,16 +7435,6 @@ static inline LPWSTR a2w(LPCSTR str) {
     }
 
     return ret;
-}
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static inline DWORD strcmp_aw(LPCSTR strA, LPCWSTR strB) {

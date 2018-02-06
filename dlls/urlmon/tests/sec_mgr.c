@@ -35,6 +35,7 @@
 #include "urlmon.h"
 
 #include "initguid.h"
+#include <wine/heap.h>
 
 #define URLZONE_CUSTOM  URLZONE_USER_MIN+1
 #define URLZONE_CUSTOM2 URLZONE_CUSTOM+1
@@ -174,11 +175,6 @@ static int strcmp_w(const WCHAR *str1, const WCHAR *str2)
 
     if(len1!=len2) return 1;
     return memcmp(str1, str2, len1*sizeof(WCHAR));
-}
-
-static inline void heap_free(void *mem)
-{
-    HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static inline LPWSTR a2w(LPCSTR str)

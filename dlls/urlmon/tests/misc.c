@@ -31,6 +31,7 @@
 #include "urlmon.h"
 
 #include "initguid.h"
+#include "wine/heap.h"
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 
@@ -86,11 +87,6 @@ static int strcmp_wa(const WCHAR *strw, const char *stra)
     WCHAR buf[512];
     MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
     return lstrcmpW(strw, buf);
-}
-
-static void heap_free(void *mem)
-{
-    HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static WCHAR *a2w(const char *str)
