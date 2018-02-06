@@ -335,7 +335,7 @@ static const struct IDirect3DSwapChain9ExVtbl d3d9_swapchain_vtbl =
 
 static void STDMETHODCALLTYPE d3d9_swapchain_wined3d_object_released(void *parent)
 {
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops d3d9_swapchain_wined3d_parent_ops =
@@ -374,13 +374,13 @@ HRESULT d3d9_swapchain_create(struct d3d9_device *device, struct wined3d_swapcha
     struct d3d9_swapchain *object;
     HRESULT hr;
 
-    if (!(object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = swapchain_init(object, device, desc)))
     {
         WARN("Failed to initialize swapchain, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 

@@ -72,7 +72,7 @@ static ULONG WINAPI d3d9_query_Release(IDirect3DQuery9 *iface)
         wined3d_mutex_unlock();
 
         IDirect3DDevice9Ex_Release(query->parent_device);
-        HeapFree(GetProcessHeap(), 0, query);
+        heap_free(query);
     }
     return refcount;
 }
