@@ -6,6 +6,7 @@ DELAYIMPORTS = winmm uxtheme
 
 C_SRCS = \
 	animate.c \
+	button.c \
 	comboex.c \
 	comctl32undoc.c \
 	commctrl.c \

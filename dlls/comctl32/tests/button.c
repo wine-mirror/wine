@@ -576,7 +576,8 @@ static void test_button_messages(void)
         SendMessageA(hwnd, BM_SETSTYLE, button[i].style | BS_BOTTOM, TRUE);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-        ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setstyle, "BM_SETSTYLE on a button", TRUE);
+        todo = button[i].style == BS_USERBUTTON || button[i].style == BS_OWNERDRAW;
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setstyle, "BM_SETSTYLE on a button", todo);
 
         style = GetWindowLongA(hwnd, GWL_STYLE);
         style &= ~(WS_VISIBLE | WS_CHILD | BS_NOTIFY);
@@ -623,17 +624,14 @@ static void test_button_messages(void)
             button[i].style == BS_AUTORADIOBUTTON)
         {
             seq = setcheck_radio_seq;
-            todo = TRUE;
         }
         else
-        {
             seq = setcheck_ignored_seq;
-            todo = FALSE;
-        }
+
         SendMessageA(hwnd, BM_SETCHECK, BST_UNCHECKED, 0);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-        ok_sequence(sequences, COMBINED_SEQ_INDEX, seq, "BM_SETCHECK on a button", todo);
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, seq, "BM_SETCHECK on a button", FALSE);
 
         state = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
         ok(state == BST_UNCHECKED, "expected BST_UNCHECKED, got %04x\n", state);
@@ -715,7 +713,6 @@ static void test_button_class(void)
 
     ret = GetClassInfoExA(NULL, WC_BUTTONA, &exA);
     ok(ret, "got %d\n", ret);
-todo_wine
     ok(IS_WNDPROC_HANDLE(exA.lpfnWndProc), "got %p\n", exA.lpfnWndProc);
 
     ret = GetClassInfoExW(NULL, WC_BUTTONW, &exW);
@@ -727,9 +724,7 @@ todo_wine
     ok(lstrcmpW(nameW, WC_BUTTONW), "got %s\n", wine_dbgstr_w(nameW));
 
     ret = GetClassInfoExW(NULL, nameW, &ex2W);
-todo_wine
     ok(ret, "got %d\n", ret);
-if (ret) /* TODO: remove once Wine is fixed */
     ok(ex2W.lpfnWndProc == exW.lpfnWndProc, "got %p, %p\n", exW.lpfnWndProc, ex2W.lpfnWndProc);
 
     /* Check reported class name */
@@ -745,10 +740,8 @@ if (ret) /* TODO: remove once Wine is fixed */
 
     /* explicitly create with versioned class name */
     hwnd = CreateWindowExW(0, nameW, testW, BS_CHECKBOX, 0, 0, 50, 14, NULL, 0, 0, NULL);
-todo_wine
     ok(hwnd != NULL, "failed to create a window %s\n", wine_dbgstr_w(nameW));
-if (hwnd)
-{
+
     len = GetClassNameA(hwnd, buffA, sizeof(buffA));
     ok(len == strlen(buffA), "got %d\n", len);
     ok(!strcmp(buffA, "Button"), "got %s\n", buffA);
@@ -758,7 +751,6 @@ if (hwnd)
     ok(!strcmp(buffA, "Button"), "got %s\n", buffA);
 
     DestroyWindow(hwnd);
-}
 }
 
 static void register_parent_class(void)

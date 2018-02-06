@@ -175,6 +175,7 @@ BOOL WINAPI MirrorIcon(HICON *phicon1, HICON *phicon2);
 
 extern void ANIMATE_Register(void) DECLSPEC_HIDDEN;
 extern void ANIMATE_Unregister(void) DECLSPEC_HIDDEN;
+extern void BUTTON_Register(void) DECLSPEC_HIDDEN;
 extern void COMBOEX_Register(void) DECLSPEC_HIDDEN;
 extern void COMBOEX_Unregister(void) DECLSPEC_HIDDEN;
 extern void DATETIME_Register(void) DECLSPEC_HIDDEN;

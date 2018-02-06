@@ -98,6 +98,7 @@ static void unregister_versioned_classes(void)
 #define VERSION "6.0.2600.2982!"
     static const char *classes[] =
     {
+        VERSION WC_BUTTONA,
         VERSION WC_EDITA,
     };
     int i;
@@ -167,6 +168,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             TREEVIEW_Register ();
             UPDOWN_Register ();
 
+            BUTTON_Register ();
             EDIT_Register ();
 
             /* subclass user32 controls */
