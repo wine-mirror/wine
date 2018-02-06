@@ -516,6 +516,63 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
     return 1;
 }
 
+/* wait for services which accept this type of message to become STOPPED */
+static void handle_shutdown_msg(DWORD msg, DWORD accept)
+{
+    SERVICE_STATUS st;
+    SERVICE_PRESHUTDOWN_INFO spi;
+    DWORD i, n = 0, sz, timeout = 2000;
+    ULONGLONG stop_time;
+    BOOL res, done = TRUE;
+    SC_HANDLE *wait_handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SC_HANDLE) * nb_services );
+
+    EnterCriticalSection( &service_cs );
+    for (i = 0; i < nb_services; i++)
+    {
+        res = QueryServiceStatus( services[i]->full_access_handle, &st );
+        if (!res || st.dwCurrentState == SERVICE_STOPPED || !(st.dwControlsAccepted & accept))
+            continue;
+
+        done = FALSE;
+
+        if (accept == SERVICE_ACCEPT_PRESHUTDOWN)
+        {
+            res = QueryServiceConfig2W( services[i]->full_access_handle, SERVICE_CONFIG_PRESHUTDOWN_INFO,
+                    (LPBYTE)&spi, sizeof(spi), &sz );
+            if (res)
+            {
+                FIXME( "service should be able to delay shutdown\n" );
+                timeout = max( spi.dwPreshutdownTimeout, timeout );
+            }
+        }
+
+        service_handle_control( services[i], msg, NULL, 0 );
+        wait_handles[n++] = services[i]->full_access_handle;
+    }
+    LeaveCriticalSection( &service_cs );
+
+    /* FIXME: these timeouts should be more generous, but we can't currently delay prefix shutdown */
+    timeout = min( timeout, 3000 );
+    stop_time = GetTickCount64() + timeout;
+
+    while (!done && GetTickCount64() < stop_time)
+    {
+        done = TRUE;
+        for (i = 0; i < n; i++)
+        {
+            res = QueryServiceStatus( wait_handles[i], &st );
+            if (!res || st.dwCurrentState == SERVICE_STOPPED)
+                continue;
+
+            done = FALSE;
+            Sleep( 100 );
+            break;
+        }
+    }
+
+    HeapFree( GetProcessHeap(), 0, wait_handles );
+}
+
 /******************************************************************************
  * service_run_main_thread
  */
@@ -570,41 +627,8 @@ static BOOL service_run_main_thread(void)
         ret = WaitForMultipleObjects( n, wait_handles, FALSE, INFINITE );
         if (!ret)  /* system process event */
         {
-            SERVICE_STATUS st;
-            SERVICE_PRESHUTDOWN_INFO spi;
-            DWORD timeout = 5000;
-            BOOL res;
-
-            EnterCriticalSection( &service_cs );
-            n = 0;
-            for (i = 0; i < nb_services && n < MAXIMUM_WAIT_OBJECTS; i++)
-            {
-                if (!services[i]->thread) continue;
-
-                res = QueryServiceStatus(services[i]->full_access_handle, &st);
-                ret = ERROR_SUCCESS;
-                if (res && (st.dwControlsAccepted & SERVICE_ACCEPT_PRESHUTDOWN))
-                {
-                    res = QueryServiceConfig2W( services[i]->full_access_handle, SERVICE_CONFIG_PRESHUTDOWN_INFO,
-                            (LPBYTE)&spi, sizeof(spi), &i );
-                    if (res)
-                    {
-                        FIXME("service should be able to delay shutdown\n");
-                        timeout += spi.dwPreshutdownTimeout;
-                        ret = service_handle_control( services[i], SERVICE_CONTROL_PRESHUTDOWN, NULL, 0 );
-                        wait_handles[n++] = services[i]->thread;
-                    }
-                }
-                else if (res && (st.dwControlsAccepted & SERVICE_ACCEPT_SHUTDOWN))
-                {
-                    ret = service_handle_control( services[i], SERVICE_CONTROL_SHUTDOWN, NULL, 0 );
-                    wait_handles[n++] = services[i]->thread;
-                }
-            }
-            LeaveCriticalSection( &service_cs );
-
-            TRACE("last user process exited, shutting down (timeout: %d)\n", timeout);
-            WaitForMultipleObjects( n, wait_handles, TRUE, timeout );
+            handle_shutdown_msg(SERVICE_CONTROL_PRESHUTDOWN, SERVICE_ACCEPT_PRESHUTDOWN);
+            handle_shutdown_msg(SERVICE_CONTROL_SHUTDOWN, SERVICE_ACCEPT_SHUTDOWN);
             ExitProcess(0);
         }
         else if (ret == 1)
