@@ -698,6 +698,7 @@ function test_keyboard_event() {
     ok(e.altKey === false, "altKey = " + e.altKey);
     ok(e.shiftKey === false, "shiftKey = " + e.shiftKey);
     ok(e.metaKey === false, "metaKey = " + e.metaKey);
+    ok(e.location === 0, "location = " + e.location);
     ok(e.detail === 0, "detail = " + e.detail);
 
     next_test();

@@ -209,6 +209,7 @@ HRESULT get_class_typeinfo(const CLSID *clsid, ITypeInfo **typeinfo)
     CASE_VT(VT_I2, INT16, V_I2);                        \
     CASE_VT(VT_UI2, UINT16, V_UI2);                     \
     CASE_VT(VT_I4, INT32, V_I4);                        \
+    CASE_VT(VT_UI4, UINT32, V_UI4);                     \
     CASE_VT(VT_R4, float, V_R4);                        \
     CASE_VT(VT_BSTR, BSTR, V_BSTR);                     \
     CASE_VT(VT_BOOL, VARIANT_BOOL, V_BOOL)

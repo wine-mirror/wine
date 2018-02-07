@@ -1675,8 +1675,17 @@ static HRESULT WINAPI DOMKeyboardEvent_get_key(IDOMKeyboardEvent *iface, BSTR *p
 static HRESULT WINAPI DOMKeyboardEvent_get_location(IDOMKeyboardEvent *iface, ULONG *p)
 {
     DOMEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    UINT32 r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMKeyEvent_GetLocation(This->keyboard_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = r;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMKeyboardEvent_get_ctrlKey(IDOMKeyboardEvent *iface, VARIANT_BOOL *p)
