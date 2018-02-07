@@ -517,6 +517,7 @@ static inline DWORD64   cpu_register(CONTEXT* ctx, unsigned idx)
 {
     switch (cpu_register_map[idx].ctx_length)
     {
+    case 1: return *(BYTE*)cpu_register_ptr(ctx, idx);
     case 2: return *(WORD*)cpu_register_ptr(ctx, idx);
     case 4: return *(DWORD*)cpu_register_ptr(ctx, idx);
     case 8: return *(DWORD64*)cpu_register_ptr(ctx, idx);
@@ -545,6 +546,7 @@ static inline   void    cpu_register_hex_from(CONTEXT* ctx, unsigned idx, const 
         }
         switch (cpu_register_map[idx].ctx_length)
         {
+        case 1: *(BYTE*)cpu_register_ptr(ctx, idx) = (BYTE)val; break;
         case 2: *(WORD*)cpu_register_ptr(ctx, idx) = (WORD)val; break;
         case 4: *(DWORD*)cpu_register_ptr(ctx, idx) = (DWORD)val; break;
         case 8: *(DWORD64*)cpu_register_ptr(ctx, idx) = val; break;
