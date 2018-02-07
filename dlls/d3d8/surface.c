@@ -306,7 +306,7 @@ static void STDMETHODCALLTYPE surface_wined3d_object_destroyed(void *parent)
 {
     struct d3d8_surface *surface = parent;
     d3d8_resource_cleanup(&surface->resource);
-    HeapFree(GetProcessHeap(), 0, surface);
+    heap_free(surface);
 }
 
 static const struct wined3d_parent_ops d3d8_surface_wined3d_parent_ops =

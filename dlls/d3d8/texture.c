@@ -1083,7 +1083,7 @@ static void STDMETHODCALLTYPE d3d8_texture_wined3d_object_destroyed(void *parent
 {
     struct d3d8_texture *texture = parent;
     d3d8_resource_cleanup(&texture->resource);
-    HeapFree(GetProcessHeap(), 0, texture);
+    heap_free(texture);
 }
 
 static const struct wined3d_parent_ops d3d8_texture_wined3d_parent_ops =

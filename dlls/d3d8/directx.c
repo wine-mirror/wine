@@ -81,7 +81,7 @@ static ULONG WINAPI d3d8_Release(IDirect3D8 *iface)
         wined3d_decref(d3d8->wined3d);
         wined3d_mutex_unlock();
 
-        HeapFree(GetProcessHeap(), 0, d3d8);
+        heap_free(d3d8);
     }
 
     return refcount;
@@ -373,15 +373,14 @@ static HRESULT WINAPI d3d8_CreateDevice(IDirect3D8 *iface, UINT adapter,
     TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#x, parameters %p, device %p.\n",
             iface, adapter, device_type, focus_window, flags, parameters, device);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = device_init(object, d3d8, d3d8->wined3d, adapter, device_type, focus_window, flags, parameters);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 

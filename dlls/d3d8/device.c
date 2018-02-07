@@ -324,9 +324,9 @@ static DWORD d3d8_allocate_handle(struct d3d8_handle_table *t, void *object, enu
     {
         /* Grow the table */
         UINT new_size = t->table_size + (t->table_size >> 1);
-        struct d3d8_handle_entry *new_entries = HeapReAlloc(GetProcessHeap(),
-                0, t->entries, new_size * sizeof(*t->entries));
-        if (!new_entries)
+        struct d3d8_handle_entry *new_entries;
+
+        if (!(new_entries = heap_realloc(t->entries, new_size * sizeof(*t->entries))))
         {
             ERR("Failed to grow the handle table.\n");
             return D3D8_INVALID_HANDLE;
@@ -444,7 +444,7 @@ static ULONG WINAPI d3d8_device_Release(IDirect3DDevice8 *iface)
         {
             d3d8_vertex_declaration_destroy(device->decls[i].declaration);
         }
-        HeapFree(GetProcessHeap(), 0, device->decls);
+        heap_free(device->decls);
 
         if (device->vertex_buffer)
             wined3d_buffer_decref(device->vertex_buffer);
@@ -454,8 +454,8 @@ static ULONG WINAPI d3d8_device_Release(IDirect3DDevice8 *iface)
         wined3d_device_uninit_3d(device->wined3d_device);
         wined3d_device_release_focus_window(device->wined3d_device);
         wined3d_device_decref(device->wined3d_device);
-        HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
-        HeapFree(GetProcessHeap(), 0, device);
+        heap_free(device->handle_table.entries);
+        heap_free(device);
 
         wined3d_mutex_unlock();
 
@@ -863,15 +863,14 @@ static HRESULT WINAPI d3d8_device_CreateTexture(IDirect3DDevice8 *iface,
         return D3DERR_INVALIDCALL;
 
     *texture = NULL;
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return D3DERR_OUTOFVIDEOMEMORY;
 
     hr = texture_init(object, device, width, height, levels, usage, format, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize texture, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -896,15 +895,14 @@ static HRESULT WINAPI d3d8_device_CreateVolumeTexture(IDirect3DDevice8 *iface,
         return D3DERR_INVALIDCALL;
 
     *texture = NULL;
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return D3DERR_OUTOFVIDEOMEMORY;
 
     hr = volumetexture_init(object, device, width, height, depth, levels, usage, format, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize volume texture, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -928,15 +926,14 @@ static HRESULT WINAPI d3d8_device_CreateCubeTexture(IDirect3DDevice8 *iface, UIN
         return D3DERR_INVALIDCALL;
 
     *texture = NULL;
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return D3DERR_OUTOFVIDEOMEMORY;
 
     hr = cubetexture_init(object, device, edge_length, levels, usage, format, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize cube texture, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -956,15 +953,14 @@ static HRESULT WINAPI d3d8_device_CreateVertexBuffer(IDirect3DDevice8 *iface, UI
     TRACE("iface %p, size %u, usage %#x, fvf %#x, pool %#x, buffer %p.\n",
             iface, size, usage, fvf, pool, buffer);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return D3DERR_OUTOFVIDEOMEMORY;
 
     hr = vertexbuffer_init(object, device, size, usage, fvf, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex buffer, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -984,15 +980,14 @@ static HRESULT WINAPI d3d8_device_CreateIndexBuffer(IDirect3DDevice8 *iface, UIN
     TRACE("iface %p, size %u, usage %#x, format %#x, pool %#x, buffer %p.\n",
             iface, size, usage, format, pool, buffer);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return D3DERR_OUTOFVIDEOMEMORY;
 
     hr = indexbuffer_init(object, device, size, usage, format, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize index buffer, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -2355,8 +2350,7 @@ static HRESULT WINAPI d3d8_device_CreateVertexShader(IDirect3DDevice8 *iface,
     TRACE("iface %p, declaration %p, byte_code %p, shader %p, usage %#x.\n",
             iface, declaration, byte_code, shader, usage);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         *shader = 0;
         return E_OUTOFMEMORY;
@@ -2368,7 +2362,7 @@ static HRESULT WINAPI d3d8_device_CreateVertexShader(IDirect3DDevice8 *iface,
     if (handle == D3D8_INVALID_HANDLE)
     {
         ERR("Failed to allocate vertex shader handle.\n");
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         *shader = 0;
         return E_OUTOFMEMORY;
     }
@@ -2382,7 +2376,7 @@ static HRESULT WINAPI d3d8_device_CreateVertexShader(IDirect3DDevice8 *iface,
         wined3d_mutex_lock();
         d3d8_free_handle(&device->handle_table, handle, D3D8_HANDLE_VS);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         *shader = 0;
         return hr;
     }
@@ -2422,13 +2416,13 @@ static struct d3d8_vertex_declaration *d3d8_device_get_fvf_declaration(struct d3
     }
     TRACE("not found. Creating and inserting at position %d.\n", low);
 
-    if (!(d3d8_declaration = HeapAlloc(GetProcessHeap(), 0, sizeof(*d3d8_declaration))))
+    if (!(d3d8_declaration = heap_alloc(sizeof(*d3d8_declaration))))
         return NULL;
 
     if (FAILED(hr = d3d8_vertex_declaration_init_fvf(d3d8_declaration, device, fvf)))
     {
         WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, d3d8_declaration);
+        heap_free(d3d8_declaration);
         return NULL;
     }
 
@@ -2436,9 +2430,8 @@ static struct d3d8_vertex_declaration *d3d8_device_get_fvf_declaration(struct d3
     {
         UINT grow = device->declArraySize / 2;
 
-        convertedDecls = HeapReAlloc(GetProcessHeap(), 0, convertedDecls,
-                sizeof(*convertedDecls) * (device->numConvertedDecls + grow));
-        if (!convertedDecls)
+        if (!(convertedDecls = heap_realloc(convertedDecls,
+                sizeof(*convertedDecls) * (device->numConvertedDecls + grow))))
         {
             d3d8_vertex_declaration_destroy(d3d8_declaration);
             return NULL;
@@ -2733,8 +2726,7 @@ static HRESULT WINAPI d3d8_device_CreatePixelShader(IDirect3DDevice8 *iface,
     if (!shader)
         return D3DERR_INVALIDCALL;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     wined3d_mutex_lock();
@@ -2743,7 +2735,7 @@ static HRESULT WINAPI d3d8_device_CreatePixelShader(IDirect3DDevice8 *iface,
     if (handle == D3D8_INVALID_HANDLE)
     {
         ERR("Failed to allocate pixel shader handle.\n");
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return E_OUTOFMEMORY;
     }
 
@@ -2756,7 +2748,7 @@ static HRESULT WINAPI d3d8_device_CreatePixelShader(IDirect3DDevice8 *iface,
         wined3d_mutex_lock();
         d3d8_free_handle(&device->handle_table, handle, D3D8_HANDLE_PS);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         *shader = 0;
         return hr;
     }
@@ -3119,7 +3111,7 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
     TRACE("device_parent %p, wined3d_texture %p, sub_resource_idx %u, parent %p, parent_ops %p.\n",
             device_parent, wined3d_texture, sub_resource_idx, parent, parent_ops);
 
-    if (!(d3d_surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_surface))))
+    if (!(d3d_surface = heap_alloc_zero(sizeof(*d3d_surface))))
         return E_OUTOFMEMORY;
 
     surface_init(d3d_surface, wined3d_texture, sub_resource_idx, parent_ops);
@@ -3138,7 +3130,7 @@ static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *
     TRACE("device_parent %p, texture %p, sub_resource_idx %u, parent %p, parent_ops %p.\n",
             device_parent, wined3d_texture, sub_resource_idx, parent, parent_ops);
 
-    if (!(d3d_volume = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_volume))))
+    if (!(d3d_volume = heap_alloc_zero(sizeof(*d3d_volume))))
         return E_OUTOFMEMORY;
 
     volume_init(d3d_volume, wined3d_texture, sub_resource_idx, parent_ops);
@@ -3234,9 +3226,8 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     device->IDirect3DDevice8_iface.lpVtbl = &d3d8_device_vtbl;
     device->device_parent.ops = &d3d8_wined3d_device_parent_ops;
     device->ref = 1;
-    device->handle_table.entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            D3D8_INITIAL_HANDLE_TABLE_SIZE * sizeof(*device->handle_table.entries));
-    if (!device->handle_table.entries)
+    if (!(device->handle_table.entries = heap_alloc_zero(D3D8_INITIAL_HANDLE_TABLE_SIZE
+            * sizeof(*device->handle_table.entries))))
     {
         ERR("Failed to allocate handle table memory.\n");
         return E_OUTOFMEMORY;
@@ -3252,7 +3243,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     {
         WARN("Failed to create wined3d device, hr %#x.\n", hr);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
+        heap_free(device->handle_table.entries);
         return hr;
     }
 
@@ -3267,7 +3258,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
             ERR("Failed to acquire focus window, hr %#x.\n", hr);
             wined3d_device_decref(device->wined3d_device);
             wined3d_mutex_unlock();
-            HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
+            heap_free(device->handle_table.entries);
             return hr;
         }
 
@@ -3286,7 +3277,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
         wined3d_device_release_focus_window(device->wined3d_device);
         wined3d_device_decref(device->wined3d_device);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
+        heap_free(device->handle_table.entries);
         return D3DERR_INVALIDCALL;
     }
 
@@ -3296,7 +3287,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
         wined3d_device_release_focus_window(device->wined3d_device);
         wined3d_device_decref(device->wined3d_device);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
+        heap_free(device->handle_table.entries);
         return hr;
     }
 
@@ -3308,8 +3299,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     present_parameters_from_wined3d_swapchain_desc(parameters, &swapchain_desc);
 
     device->declArraySize = 16;
-    device->decls = HeapAlloc(GetProcessHeap(), 0, device->declArraySize * sizeof(*device->decls));
-    if (!device->decls)
+    if (!(device->decls = heap_alloc(device->declArraySize * sizeof(*device->decls))))
     {
         ERR("Failed to allocate FVF vertex declaration map memory.\n");
         hr = E_OUTOFMEMORY;
@@ -3330,6 +3320,6 @@ err:
     wined3d_device_release_focus_window(device->wined3d_device);
     wined3d_device_decref(device->wined3d_device);
     wined3d_mutex_unlock();
-    HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
+    heap_free(device->handle_table.entries);
     return hr;
 }
