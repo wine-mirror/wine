@@ -2108,15 +2108,22 @@ static HRESULT d3d8_device_prepare_vertex_buffer(struct d3d8_device *device, UIN
     if (device->vertex_buffer_size < min_size || !device->vertex_buffer)
     {
         UINT size = max(device->vertex_buffer_size * 2, min_size);
+        struct wined3d_buffer_desc desc;
         struct wined3d_buffer *buffer;
 
         TRACE("Growing vertex buffer to %u bytes\n", size);
 
-        hr = wined3d_buffer_create_vb(device->wined3d_device, size, WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY,
-                WINED3D_POOL_DEFAULT, NULL, &d3d8_null_wined3d_parent_ops, &buffer);
-        if (FAILED(hr))
+        desc.byte_width = size;
+        desc.usage = WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY;
+        desc.bind_flags = WINED3D_BIND_VERTEX_BUFFER;
+        desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+        desc.misc_flags = 0;
+        desc.structure_byte_stride = 0;
+
+        if (FAILED(hr = wined3d_buffer_create(device->wined3d_device, &desc,
+                NULL, NULL, &d3d8_null_wined3d_parent_ops, &buffer)))
         {
-            ERR("(%p) wined3d_buffer_create_vb failed with hr = %08x\n", device, hr);
+            ERR("Failed to create vertex buffer, hr %#x.\n", hr);
             return hr;
         }
 
