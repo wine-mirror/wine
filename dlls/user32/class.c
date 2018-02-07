@@ -336,6 +336,7 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset )
         ULONG module_len;
         ULONG module_offset;
     } *wndclass;
+    const WCHAR *module;
 
     if (basename_offset)
         *basename_offset = 0;
@@ -353,6 +354,10 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset )
     wndclass = (struct wndclass_redirect_data *)data.lpData;
     if (basename_offset)
         *basename_offset = wndclass->name_len / sizeof(WCHAR) - strlenW(name);
+
+    module = (const WCHAR *)((BYTE *)data.lpSectionBase + wndclass->module_offset);
+    if (!GetModuleHandleW( module ))
+        LoadLibraryW( module );
 
     return (const WCHAR *)((BYTE *)wndclass + wndclass->name_offset);
 }
