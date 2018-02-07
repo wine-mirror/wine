@@ -511,6 +511,18 @@ static void test_button_messages(void)
         { BS_OWNERDRAW, DLGC_BUTTON,
           setfocus_ownerdraw_seq, killfocus_ownerdraw_seq, setstyle_ownerdraw_seq,
           setstate_ownerdraw_seq, clearstate_ownerdraw_seq, setcheck_ignored_seq },
+        { BS_SPLITBUTTON, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON | DLGC_WANTARROWS,
+          setfocus_seq, killfocus_seq, setstyle_seq,
+          setstate_seq, setstate_seq, setcheck_ignored_seq },
+        { BS_DEFSPLITBUTTON, DLGC_BUTTON | DLGC_DEFPUSHBUTTON | DLGC_WANTARROWS,
+          setfocus_seq, killfocus_seq, setstyle_seq,
+          setstate_seq, setstate_seq, setcheck_ignored_seq },
+        { BS_COMMANDLINK, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON,
+          setfocus_seq, killfocus_seq, setstyle_seq,
+          setstate_seq, setstate_seq, setcheck_ignored_seq },
+        { BS_DEFCOMMANDLINK, DLGC_BUTTON | DLGC_DEFPUSHBUTTON,
+          setfocus_seq, killfocus_seq, setstyle_seq,
+          setstate_seq, setstate_seq, setcheck_ignored_seq },
     };
     const struct message *seq;
     unsigned int i;
@@ -550,7 +562,15 @@ static void test_button_messages(void)
             ok(style == button[i].style, "expected style %x got %x\n", button[i].style, style);
 
         dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
-        ok(dlg_code == button[i].dlg_code, "%u: wrong dlg_code %08x\n", i, dlg_code);
+        if (button[i].style == BS_SPLITBUTTON ||
+                button[i].style == BS_DEFSPLITBUTTON ||
+                button[i].style == BS_COMMANDLINK ||
+                button[i].style == BS_DEFCOMMANDLINK)
+        {
+            ok(dlg_code == button[i].dlg_code || broken(dlg_code == DLGC_BUTTON) /* WinXP */, "%u: wrong dlg_code %08x\n", i, dlg_code);
+        }
+        else
+            ok(dlg_code == button[i].dlg_code, "%u: wrong dlg_code %08x\n", i, dlg_code);
 
         ShowWindow(hwnd, SW_SHOW);
         UpdateWindow(hwnd);
@@ -650,7 +670,11 @@ static void test_button_messages(void)
             button[i].style == BS_DEFPUSHBUTTON ||
             button[i].style == BS_GROUPBOX ||
             button[i].style == BS_USERBUTTON ||
-            button[i].style == BS_OWNERDRAW)
+            button[i].style == BS_OWNERDRAW ||
+            button[i].style == BS_SPLITBUTTON ||
+            button[i].style == BS_DEFSPLITBUTTON ||
+            button[i].style == BS_COMMANDLINK ||
+            button[i].style == BS_DEFCOMMANDLINK)
         {
             ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setcheck, "BM_SETCHECK on a button", FALSE);
             state = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
