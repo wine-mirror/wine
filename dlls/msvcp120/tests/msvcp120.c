@@ -2496,7 +2496,7 @@ static void test_queue_base_v4(void)
     ok(b, "pop returned false\n");
     ok(c == (char)('a'+i), "got '%c', expected '%c'\n", c, 'a'+i);
 
-    /* destructor does't clear the memory, _Internal_finish_clear needs to be called */
+    /* destructor doesn't clear the memory, _Internal_finish_clear needs to be called */
     SET_EXPECT(queue_char__Deallocate_page);
     call_func1(p_queue_base_v4__Internal_finish_clear, &queue);
     CHECK_CALLED(queue_char__Deallocate_page);
