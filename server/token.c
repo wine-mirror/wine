@@ -64,6 +64,14 @@ const LUID SeManageVolumePrivilege         = { 28, 0 };
 const LUID SeImpersonatePrivilege          = { 29, 0 };
 const LUID SeCreateGlobalPrivilege         = { 30, 0 };
 
+#define SID_N(n) struct /* same fields as struct SID */ \
+    { \
+        BYTE Revision; \
+        BYTE SubAuthorityCount; \
+        SID_IDENTIFIER_AUTHORITY IdentifierAuthority; \
+        DWORD SubAuthority[n]; \
+    }
+
 static const SID world_sid = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY }, { SECURITY_WORLD_RID } };
 static const SID local_sid = { SID_REVISION, 1, { SECURITY_LOCAL_SID_AUTHORITY }, { SECURITY_LOCAL_RID } };
 static const SID interactive_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_INTERACTIVE_RID } };
@@ -71,34 +79,10 @@ static const SID anonymous_logon_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORIT
 static const SID authenticated_user_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_AUTHENTICATED_USER_RID } };
 static const SID local_system_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_LOCAL_SYSTEM_RID } };
 static const SID high_label_sid = { SID_REVISION, 1, { SECURITY_MANDATORY_LABEL_AUTHORITY }, { SECURITY_MANDATORY_HIGH_RID } };
-static const struct /* same fields as struct SID */
-{
-    BYTE Revision;
-    BYTE SubAuthorityCount;
-    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
-    DWORD SubAuthority[5];
-} local_user_sid = { SID_REVISION, 5, { SECURITY_NT_AUTHORITY }, { SECURITY_NT_NON_UNIQUE, 0, 0, 0, 1000 } };
-static const struct /* same fields as struct SID */
-{
-    BYTE Revision;
-    BYTE SubAuthorityCount;
-    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
-    DWORD SubAuthority[2];
-} builtin_admins_sid = { SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS } };
-static const struct /* same fields as struct SID */
-{
-    BYTE Revision;
-    BYTE SubAuthorityCount;
-    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
-    DWORD SubAuthority[2];
-} builtin_users_sid = { SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS } };
-static const struct /* same fields as struct SID */
-{
-    BYTE Revision;
-    BYTE SubAuthorityCount;
-    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
-    DWORD SubAuthority[SECURITY_LOGON_IDS_RID_COUNT];
-} builtin_logon_sid = { SID_REVISION, SECURITY_LOGON_IDS_RID_COUNT, {SECURITY_NT_AUTHORITY}, {SECURITY_LOGON_IDS_RID, 0, 0} };
+static const SID_N(5) local_user_sid = { SID_REVISION, 5, { SECURITY_NT_AUTHORITY }, { SECURITY_NT_NON_UNIQUE, 0, 0, 0, 1000 } };
+static const SID_N(2) builtin_admins_sid = { SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS } };
+static const SID_N(2) builtin_users_sid = { SID_REVISION, 2, { SECURITY_NT_AUTHORITY }, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS } };
+static const SID_N(3) builtin_logon_sid = { SID_REVISION, 3, { SECURITY_NT_AUTHORITY }, { SECURITY_LOGON_IDS_RID, 0, 0 } };
 
 const PSID security_world_sid = (PSID)&world_sid;
 static const PSID security_local_sid = (PSID)&local_sid;
