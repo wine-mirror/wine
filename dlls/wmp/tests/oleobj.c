@@ -792,6 +792,7 @@ static void test_wmp_ifaces(IOleObject *oleobj)
 {
     IWMPSettings *settings, *settings_qi;
     IWMPPlayer4 *player4;
+    IWMPPlayer *player;
     HRESULT hres;
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IWMPPlayer4, (void**)&player4);
@@ -809,6 +810,22 @@ static void test_wmp_ifaces(IOleObject *oleobj)
 
     IWMPSettings_Release(settings);
     IWMPPlayer4_Release(player4);
+
+    hres = IOleObject_QueryInterface(oleobj, &IID_IWMPPlayer, (void**)&player);
+    ok(hres == S_OK, "Could not get IWMPPlayer iface: %08x\n", hres);
+
+    settings = NULL;
+    hres = IWMPPlayer_get_settings(player, &settings);
+    ok(hres == S_OK, "get_settings failed: %08x\n", hres);
+    ok(settings != NULL, "settings = NULL\n");
+
+    hres = IOleObject_QueryInterface(oleobj, &IID_IWMPSettings, (void**)&settings_qi);
+    ok(hres == S_OK, "Could not get IWMPSettings iface: %08x\n", hres);
+    ok(settings == settings_qi, "settings != settings_qi\n");
+    IWMPSettings_Release(settings_qi);
+
+    IWMPSettings_Release(settings);
+    IWMPPlayer_Release(player);
 }
 
 #define test_rect_size(a,b,c) _test_rect_size(__LINE__,a,b,c)

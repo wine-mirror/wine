@@ -1008,6 +1008,31 @@ library WMPLib {
     }
 
     [
+      odl,
+      uuid(6BF52A4F-394A-11D3-B153-00C04F79FAA6),
+      dual,
+      oleautomation
+    ]
+    interface IWMPPlayer : IWMPCore {
+        [id(0x00000013), propget]
+        HRESULT enabled([out, retval] VARIANT_BOOL* pbEnabled);
+        [id(0x00000013), propput]
+        HRESULT enabled([in] VARIANT_BOOL pbEnabled);
+        [id(0x00000015), propget]
+        HRESULT fullScreen([out, retval] VARIANT_BOOL* pbFullScreen);
+        [id(0x00000015), propput]
+        HRESULT fullScreen(VARIANT_BOOL pbFullScreen);
+        [id(0x00000016), propget]
+        HRESULT enableContextMenu([out, retval] VARIANT_BOOL* pbEnableContextMenu);
+        [id(0x00000016), propput]
+        HRESULT enableContextMenu(VARIANT_BOOL pbEnableContextMenu);
+        [id(0x00000017), propput]
+        HRESULT uiMode([in] BSTR pbstrMode);
+        [id(0x00000017), propget]
+        HRESULT uiMode([out, retval] BSTR* pbstrMode);
+    };
+
+    [
         odl,
         uuid(82a2986c-0293-4fd0-b279-b21b86c058be),
         oleautomation
@@ -1406,7 +1431,7 @@ library WMPLib {
         [default] interface IWMPPlayer4;
         /* interface IWMPPlayer3; */
         /* interface IWMPPlayer2; */
-        /* interface IWMPPlayer; */
+        interface IWMPPlayer;
         interface IWMPControls;
         interface IWMPSettings;
         interface IWMPPlaylist;

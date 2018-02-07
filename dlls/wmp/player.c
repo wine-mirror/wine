@@ -27,6 +27,11 @@ static inline WindowsMediaPlayer *impl_from_IWMPPlayer4(IWMPPlayer4 *iface)
     return CONTAINING_RECORD(iface, WindowsMediaPlayer, IWMPPlayer4_iface);
 }
 
+static inline WindowsMediaPlayer *impl_from_IWMPPlayer(IWMPPlayer *iface)
+{
+    return CONTAINING_RECORD(iface, WindowsMediaPlayer, IWMPPlayer_iface);
+}
+
 static HRESULT WINAPI WMPPlayer4_QueryInterface(IWMPPlayer4 *iface, REFIID riid, void **ppv)
 {
     WindowsMediaPlayer *This = impl_from_IWMPPlayer4(iface);
@@ -362,6 +367,271 @@ static HRESULT WINAPI WMPPlayer4_openPlayer(IWMPPlayer4 *iface, BSTR url)
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI WMPPlayer_QueryInterface(IWMPPlayer *iface, REFIID riid, void **ppv)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_QueryInterface(&This->IWMPPlayer4_iface, riid, ppv);
+}
+
+static ULONG WINAPI WMPPlayer_AddRef(IWMPPlayer *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_AddRef(&This->IWMPPlayer4_iface);
+}
+
+static ULONG WINAPI WMPPlayer_Release(IWMPPlayer *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_Release(&This->IWMPPlayer4_iface);
+}
+
+static HRESULT WINAPI WMPPlayer_GetTypeInfoCount(IWMPPlayer *iface, UINT *pctinfo)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_GetTypeInfoCount(&This->IWMPPlayer4_iface, pctinfo);
+}
+
+static HRESULT WINAPI WMPPlayer_GetTypeInfo(IWMPPlayer *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+
+    return WMPPlayer4_GetTypeInfo(&This->IWMPPlayer4_iface, iTInfo,
+        lcid, ppTInfo);
+}
+
+static HRESULT WINAPI WMPPlayer_GetIDsOfNames(IWMPPlayer *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_GetIDsOfNames(&This->IWMPPlayer4_iface, riid,
+        rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI WMPPlayer_Invoke(IWMPPlayer *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_Invoke(&This->IWMPPlayer4_iface, dispIdMember,
+        riid, lcid, wFlags, pDispParams, pVarResult,
+        pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI WMPPlayer_close(IWMPPlayer *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_close(&This->IWMPPlayer4_iface);
+}
+
+static HRESULT WINAPI WMPPlayer_get_URL(IWMPPlayer *iface, BSTR *pbstrURL)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_URL(&This->IWMPPlayer4_iface, pbstrURL);
+}
+
+static HRESULT WINAPI WMPPlayer_put_URL(IWMPPlayer *iface, BSTR url)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_put_URL(&This->IWMPPlayer4_iface, url);
+}
+
+static HRESULT WINAPI WMPPlayer_get_openState(IWMPPlayer *iface, WMPOpenState *pwmpos)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_openState(&This->IWMPPlayer4_iface, pwmpos);
+}
+
+static HRESULT WINAPI WMPPlayer_get_playState(IWMPPlayer *iface, WMPPlayState *pwmpps)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_playState(&This->IWMPPlayer4_iface, pwmpps);
+}
+
+static HRESULT WINAPI WMPPlayer_get_controls(IWMPPlayer *iface, IWMPControls **ppControl)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_controls(&This->IWMPPlayer4_iface, ppControl);
+}
+
+static HRESULT WINAPI WMPPlayer_get_settings(IWMPPlayer *iface, IWMPSettings **ppSettings)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_settings(&This->IWMPPlayer4_iface, ppSettings);
+}
+
+static HRESULT WINAPI WMPPlayer_get_currentMedia(IWMPPlayer *iface, IWMPMedia **ppMedia)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_currentMedia(&This->IWMPPlayer4_iface, ppMedia);
+}
+
+static HRESULT WINAPI WMPPlayer_put_currentMedia(IWMPPlayer *iface, IWMPMedia *pMedia)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_put_currentMedia(&This->IWMPPlayer4_iface, pMedia);
+}
+
+static HRESULT WINAPI WMPPlayer_get_mediaCollection(IWMPPlayer *iface, IWMPMediaCollection **ppMediaCollection)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_mediaCollection(&This->IWMPPlayer4_iface, ppMediaCollection);
+}
+
+static HRESULT WINAPI WMPPlayer_get_playlistCollection(IWMPPlayer *iface, IWMPPlaylistCollection **ppPlaylistCollection)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_playlistCollection(&This->IWMPPlayer4_iface, ppPlaylistCollection);
+}
+
+static HRESULT WINAPI WMPPlayer_get_versionInfo(IWMPPlayer *iface, BSTR *version)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_versionInfo(&This->IWMPPlayer4_iface, version);
+}
+
+static HRESULT WINAPI WMPPlayer_launchURL(IWMPPlayer *iface, BSTR url)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_launchURL(&This->IWMPPlayer4_iface, url);
+}
+
+static HRESULT WINAPI WMPPlayer_get_network(IWMPPlayer *iface, IWMPNetwork **ppQNI)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_network(&This->IWMPPlayer4_iface, ppQNI);
+}
+
+static HRESULT WINAPI WMPPlayer_get_currentPlaylist(IWMPPlayer *iface, IWMPPlaylist **ppPL)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_currentPlaylist(&This->IWMPPlayer4_iface, ppPL);
+}
+
+static HRESULT WINAPI WMPPlayer_put_currentPlaylist(IWMPPlayer *iface, IWMPPlaylist *pPL)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_put_currentPlaylist(&This->IWMPPlayer4_iface, pPL);
+}
+
+static HRESULT WINAPI WMPPlayer_get_cdromCollection(IWMPPlayer *iface, IWMPCdromCollection **ppCdromCollection)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_cdromCollection(&This->IWMPPlayer4_iface, ppCdromCollection);
+}
+
+static HRESULT WINAPI WMPPlayer_get_closedCaption(IWMPPlayer *iface, IWMPClosedCaption **ppClosedCaption)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_closedCaption(&This->IWMPPlayer4_iface, ppClosedCaption);
+}
+
+static HRESULT WINAPI WMPPlayer_get_isOnline(IWMPPlayer *iface, VARIANT_BOOL *pfOnline)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_isOnline(&This->IWMPPlayer4_iface, pfOnline);
+}
+
+static HRESULT WINAPI WMPPlayer_get_Error(IWMPPlayer *iface, IWMPError **ppError)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_Error(&This->IWMPPlayer4_iface, ppError);
+}
+
+static HRESULT WINAPI WMPPlayer_get_Status(IWMPPlayer *iface, BSTR *pbstrStatus)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_Status(&This->IWMPPlayer4_iface, pbstrStatus);
+}
+
+static HRESULT WINAPI WMPPlayer_get_enabled(IWMPPlayer *iface, VARIANT_BOOL *pbEnabled)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_enabled(&This->IWMPPlayer4_iface, pbEnabled);
+}
+
+static HRESULT WINAPI WMPPlayer_put_enabled(IWMPPlayer *iface, VARIANT_BOOL enabled)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_put_enabled(&This->IWMPPlayer4_iface, enabled);
+}
+
+static HRESULT WINAPI WMPPlayer_get_fullScreen(IWMPPlayer *iface, VARIANT_BOOL *pbFullScreen)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_fullScreen(&This->IWMPPlayer4_iface, pbFullScreen);
+}
+
+static HRESULT WINAPI WMPPlayer_put_fullScreen(IWMPPlayer *iface, VARIANT_BOOL fullscreen)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_put_fullScreen(&This->IWMPPlayer4_iface, fullscreen);
+}
+
+static HRESULT WINAPI WMPPlayer_get_enableContextMenu(IWMPPlayer *iface, VARIANT_BOOL *pbEnableContextMenu)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_enableContextMenu(&This->IWMPPlayer4_iface, pbEnableContextMenu);
+}
+
+static HRESULT WINAPI WMPPlayer_put_enableContextMenu(IWMPPlayer *iface, VARIANT_BOOL enable)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_put_enableContextMenu(&This->IWMPPlayer4_iface, enable);
+}
+
+static HRESULT WINAPI WMPPlayer_put_uiMode(IWMPPlayer *iface, BSTR mode)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_put_uiMode(&This->IWMPPlayer4_iface, mode);
+}
+
+static HRESULT WINAPI WMPPlayer_get_uiMode(IWMPPlayer *iface, BSTR *pbstrMode)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPPlayer(iface);
+    return WMPPlayer4_get_uiMode(&This->IWMPPlayer4_iface, pbstrMode);
+}
+
+static IWMPPlayerVtbl WMPPlayerVtbl = {
+    WMPPlayer_QueryInterface,
+    WMPPlayer_AddRef,
+    WMPPlayer_Release,
+    WMPPlayer_GetTypeInfoCount,
+    WMPPlayer_GetTypeInfo,
+    WMPPlayer_GetIDsOfNames,
+    WMPPlayer_Invoke,
+    WMPPlayer_close,
+    WMPPlayer_get_URL,
+    WMPPlayer_put_URL,
+    WMPPlayer_get_openState,
+    WMPPlayer_get_playState,
+    WMPPlayer_get_controls,
+    WMPPlayer_get_settings,
+    WMPPlayer_get_currentMedia,
+    WMPPlayer_put_currentMedia,
+    WMPPlayer_get_mediaCollection,
+    WMPPlayer_get_playlistCollection,
+    WMPPlayer_get_versionInfo,
+    WMPPlayer_launchURL,
+    WMPPlayer_get_network,
+    WMPPlayer_get_currentPlaylist,
+    WMPPlayer_put_currentPlaylist,
+    WMPPlayer_get_cdromCollection,
+    WMPPlayer_get_closedCaption,
+    WMPPlayer_get_isOnline,
+    WMPPlayer_get_Error,
+    WMPPlayer_get_Status,
+    WMPPlayer_get_enabled,
+    WMPPlayer_put_enabled,
+    WMPPlayer_get_fullScreen,
+    WMPPlayer_put_fullScreen,
+    WMPPlayer_get_enableContextMenu,
+    WMPPlayer_put_enableContextMenu,
+    WMPPlayer_put_uiMode,
+    WMPPlayer_get_uiMode,
+};
+
+
 static IWMPPlayer4Vtbl WMPPlayer4Vtbl = {
     WMPPlayer4_QueryInterface,
     WMPPlayer4_AddRef,
@@ -664,5 +934,6 @@ static const IWMPSettingsVtbl WMPSettingsVtbl = {
 void init_player_ifaces(WindowsMediaPlayer *wmp)
 {
     wmp->IWMPPlayer4_iface.lpVtbl = &WMPPlayer4Vtbl;
+    wmp->IWMPPlayer_iface.lpVtbl = &WMPPlayerVtbl;
     wmp->IWMPSettings_iface.lpVtbl = &WMPSettingsVtbl;
 }

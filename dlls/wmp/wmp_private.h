@@ -30,6 +30,7 @@ struct WindowsMediaPlayer {
     IConnectionPointContainer IConnectionPointContainer_iface;
     IOleControl IOleControl_iface;
     IWMPPlayer4 IWMPPlayer4_iface;
+    IWMPPlayer IWMPPlayer_iface;
     IWMPSettings IWMPSettings_iface;
 
     LONG ref;
