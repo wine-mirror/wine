@@ -115,22 +115,24 @@ static ULONG WINAPI d3d_vertex_buffer7_Release(IDirect3DVertexBuffer7 *iface)
 static HRESULT d3d_vertex_buffer_create_wined3d_buffer(struct d3d_vertex_buffer *buffer, BOOL dynamic,
         struct wined3d_buffer **wined3d_buffer)
 {
-    DWORD usage = WINED3DUSAGE_STATICDECL;
-    enum wined3d_pool pool;
+    struct wined3d_buffer_desc desc;
 
-    if (buffer->Caps & D3DVBCAPS_SYSTEMMEMORY)
-        pool = WINED3D_POOL_SYSTEM_MEM;
-    else
-        pool = WINED3D_POOL_DEFAULT;
-
+    desc.byte_width = buffer->size;
+    desc.usage = WINED3DUSAGE_STATICDECL;
     if (buffer->Caps & D3DVBCAPS_WRITEONLY)
-        usage |= WINED3DUSAGE_WRITEONLY;
+        desc.usage |= WINED3DUSAGE_WRITEONLY;
     if (dynamic)
-        usage |= WINED3DUSAGE_DYNAMIC;
+        desc.usage |= WINED3DUSAGE_DYNAMIC;
+    desc.bind_flags = WINED3D_BIND_VERTEX_BUFFER;
+    if (buffer->Caps & D3DVBCAPS_SYSTEMMEMORY)
+        desc.access = WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
+    else
+        desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+    desc.misc_flags = 0;
+    desc.structure_byte_stride = 0;
 
-    return wined3d_buffer_create_vb(buffer->ddraw->wined3d_device,
-        buffer->size, usage, pool, buffer, &ddraw_null_wined3d_parent_ops,
-        wined3d_buffer);
+    return wined3d_buffer_create(buffer->ddraw->wined3d_device, &desc,
+            NULL, buffer, &ddraw_null_wined3d_parent_ops, wined3d_buffer);
 }
 
 /*****************************************************************************
