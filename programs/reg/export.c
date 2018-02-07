@@ -20,6 +20,7 @@
 #include <stdlib.h>
 
 #include <wine/unicode.h>
+#include <wine/heap.h>
 
 #include "reg.h"
 

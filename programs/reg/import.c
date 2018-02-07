@@ -23,6 +23,7 @@
 
 #include <wine/unicode.h>
 #include <wine/debug.h>
+#include <wine/heap.h>
 
 #include "reg.h"
 
