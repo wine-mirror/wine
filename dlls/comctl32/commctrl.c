@@ -100,6 +100,7 @@ static void unregister_versioned_classes(void)
     {
         VERSION WC_BUTTONA,
         VERSION WC_EDITA,
+        VERSION WC_STATICA,
     };
     int i;
 
@@ -170,6 +171,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
             BUTTON_Register ();
             EDIT_Register ();
+            STATIC_Register ();
 
             /* subclass user32 controls */
             THEMING_Initialize ();

@@ -1236,6 +1236,7 @@ static void test_comctl32_classes(void)
         UPDOWN_CLASSA,
         "!Button",
         "!Edit",
+        "!Static",
     };
 
     winetest_get_mainargs( &argv );

@@ -198,7 +198,7 @@ static inline WCHAR *get_button_text( HWND hwnd )
     return buffer;
 }
 
-static HRGN set_control_clipping( HDC hdc, const RECT *rect )
+HRGN set_control_clipping( HDC hdc, const RECT *rect )
 {
     RECT rc = *rect;
     HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );

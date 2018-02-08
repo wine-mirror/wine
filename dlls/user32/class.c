@@ -172,7 +172,6 @@ static BOOL is_builtin_class( const WCHAR *name )
         {'L','i','s','t','B','o','x',0},
         {'M','D','I','C','l','i','e','n','t',0},
         {'S','c','r','o','l','l','b','a','r',0},
-        {'S','t','a','t','i','c',0},
     };
 
     int min = 0, max = (sizeof(classesW) / sizeof(classesW[0])) - 1;

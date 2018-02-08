@@ -346,7 +346,8 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
     if (GetClassInfoA( 0, name, &wc ))
     {
 todo_wine_if(strcmp(name, "Button") &&
-                strcmp(name, "Edit"))
+                strcmp(name, "Edit") &&
+                strcmp(name, "Static"))
         ok( !(~wc.style & style & ~ignore), "System class %s is missing bits %x (%08x/%08x)\n",
             name, ~wc.style & style, wc.style, style );
         ok( !(wc.style & ~style), "System class %s has extra bits %x (%08x/%08x)\n",
