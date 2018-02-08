@@ -6834,7 +6834,6 @@ static void test_combobox_messages(void)
 {
     HWND parent, combo, button, edit, lbox;
     LRESULT ret;
-    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
     COMBOBOXINFO cbInfo;
     BOOL res;
 
@@ -6879,13 +6878,6 @@ static void test_combobox_messages(void)
     DestroyWindow(parent);
 
     /* Start again. Test combobox text selection when getting and losing focus */
-    pGetComboBoxInfo = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
-    if (!pGetComboBoxInfo)
-    {
-        win_skip("GetComboBoxInfo is not available\n");
-        return;
-    }
-
     parent = CreateWindowExA(0, "TestParentClass", "Parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                              10, 10, 300, 300, NULL, NULL, NULL, NULL);
     ok(parent != 0, "Failed to create parent window\n");
@@ -6896,7 +6888,7 @@ static void test_combobox_messages(void)
 
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
-    res = pGetComboBoxInfo(combo, &cbInfo);
+    res = GetComboBoxInfo(combo, &cbInfo);
     ok(res, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
     edit = cbInfo.hwndItem;
 
@@ -6955,7 +6947,7 @@ static void test_combobox_messages(void)
 
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
-    res = pGetComboBoxInfo(combo, &cbInfo);
+    res = GetComboBoxInfo(combo, &cbInfo);
     ok(res, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
     lbox = cbInfo.hwndList;
     lbox_window_proc = (WNDPROC)SetWindowLongPtrA(lbox, GWLP_WNDPROC,

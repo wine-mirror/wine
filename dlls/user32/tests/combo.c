@@ -287,13 +287,6 @@ static void test_WM_LBUTTONDOWN(void)
     static const UINT choices[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
     static const CHAR stringFormat[] = "%2d";
     BOOL ret;
-    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
-
-    pGetComboBoxInfo = (void*)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
-    if (!pGetComboBoxInfo){
-        win_skip("GetComboBoxInfo is not available\n");
-        return;
-    }
 
     hCombo = CreateWindowA("ComboBox", "Combo", WS_VISIBLE|WS_CHILD|CBS_DROPDOWN,
             0, 0, 200, 150, hMainWnd, (HMENU)COMBO_ID, NULL, 0);
@@ -307,7 +300,7 @@ static void test_WM_LBUTTONDOWN(void)
 
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
-    ret = pGetComboBoxInfo(hCombo, &cbInfo);
+    ret = GetComboBoxInfo(hCombo, &cbInfo);
     ok(ret, "Failed to get combobox info structure. LastError=%d\n",
        GetLastError());
     hEdit = cbInfo.hwndItem;
@@ -448,20 +441,13 @@ static void test_editselection(void)
     COMBOBOXINFO cbInfo;
     BOOL ret;
     DWORD len;
-    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
     char edit[20];
-
-    pGetComboBoxInfo = (void*)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
-    if (!pGetComboBoxInfo){
-        win_skip("GetComboBoxInfo is not available\n");
-        return;
-    }
 
     /* Build a combo */
     hCombo = build_combo(CBS_SIMPLE);
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
-    ret = pGetComboBoxInfo(hCombo, &cbInfo);
+    ret = GetComboBoxInfo(hCombo, &cbInfo);
     ok(ret, "Failed to get combobox info structure. LastError=%d\n",
        GetLastError());
     hEdit = cbInfo.hwndItem;
@@ -515,7 +501,7 @@ static void test_editselection(void)
     hCombo = build_combo(CBS_SIMPLE);
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
-    ret = pGetComboBoxInfo(hCombo, &cbInfo);
+    ret = GetComboBoxInfo(hCombo, &cbInfo);
     ok(ret, "Failed to get combobox info structure. LastError=%d\n",
        GetLastError());
     hEdit = cbInfo.hwndItem;
@@ -584,7 +570,6 @@ static LRESULT CALLBACK test_window_proc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 
 static void test_editselection_focus(DWORD style)
 {
-    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
     HWND hCombo, hEdit, hButton;
     COMBOBOXINFO cbInfo;
     BOOL ret;
@@ -592,17 +577,10 @@ static void test_editselection_focus(DWORD style)
     char buffer[16] = {0};
     DWORD len;
 
-    pGetComboBoxInfo = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
-    if (!pGetComboBoxInfo)
-    {
-        win_skip("GetComboBoxInfo is not available\n");
-        return;
-    }
-
     hCombo = build_combo(style);
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
-    ret = pGetComboBoxInfo(hCombo, &cbInfo);
+    ret = GetComboBoxInfo(hCombo, &cbInfo);
     ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
     hEdit = cbInfo.hwndItem;
 
@@ -649,17 +627,10 @@ static void test_editselection_focus(DWORD style)
 
 static void test_listbox_styles(DWORD cb_style)
 {
-    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
     HWND combo;
     COMBOBOXINFO info;
     DWORD style, exstyle, expect_style, expect_exstyle;
     BOOL ret;
-
-    pGetComboBoxInfo = (void*)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
-    if (!pGetComboBoxInfo){
-        win_skip("GetComboBoxInfo is not available\n");
-        return;
-    }
 
     expect_style = WS_CHILD|WS_CLIPSIBLINGS|LBS_COMBOBOX|LBS_HASSTRINGS|LBS_NOTIFY;
     if (cb_style == CBS_SIMPLE)
@@ -676,7 +647,7 @@ static void test_listbox_styles(DWORD cb_style)
     combo = build_combo(cb_style);
     info.cbSize = sizeof(COMBOBOXINFO);
     SetLastError(0xdeadbeef);
-    ret = pGetComboBoxInfo(combo, &info);
+    ret = GetComboBoxInfo(combo, &info);
     ok(ret, "Failed to get combobox info structure.\n");
 
     style = GetWindowLongW( info.hwndList, GWL_STYLE );
@@ -704,7 +675,6 @@ static void test_listbox_styles(DWORD cb_style)
 
 static void test_listbox_size(DWORD style)
 {
-    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
     HWND hCombo, hList;
     COMBOBOXINFO cbInfo;
     UINT x, y;
@@ -739,13 +709,6 @@ static void test_listbox_size(DWORD style)
         {10, 100, TRUE},
     };
 
-    pGetComboBoxInfo = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
-    if (!pGetComboBoxInfo)
-    {
-        win_skip("GetComboBoxInfo is not available\n");
-        return;
-    }
-
     for(test = 0; test < sizeof(info_height) / sizeof(info_height[0]); test++)
     {
         const struct list_size_info *info_test = &info_height[test];
@@ -762,7 +725,7 @@ static void test_listbox_size(DWORD style)
 
         cbInfo.cbSize = sizeof(COMBOBOXINFO);
         SetLastError(0xdeadbeef);
-        ret = pGetComboBoxInfo(hCombo, &cbInfo);
+        ret = GetComboBoxInfo(hCombo, &cbInfo);
         ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
 
         hList = cbInfo.hwndList;
@@ -808,24 +771,17 @@ static void test_listbox_size(DWORD style)
 
 static void test_WS_VSCROLL(void)
 {
-    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
     HWND hCombo, hList;
     COMBOBOXINFO info;
     DWORD style;
     BOOL ret;
     int i;
 
-    pGetComboBoxInfo = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
-    if (!pGetComboBoxInfo)
-    {
-        win_skip("GetComboBoxInfo is not available\n");
-        return;
-    }
     info.cbSize = sizeof(info);
     hCombo = build_combo(CBS_DROPDOWNLIST);
 
     SetLastError(0xdeadbeef);
-    ret = pGetComboBoxInfo(hCombo, &info);
+    ret = GetComboBoxInfo(hCombo, &info);
     ok(ret, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
     hList = info.hwndList;
 
