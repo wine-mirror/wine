@@ -43,7 +43,24 @@ static LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
 
 static BOOL is_ie9plus;
 
-static const char doc_blank[] = "<html></html>";
+static enum {
+    COMPAT_NONE,
+    COMPAT_IE9
+} compat_mode = COMPAT_NONE;
+
+static const char doc_blank[] =
+    "<html></html>";
+
+static const char doc_blank_ie9[] =
+    "<!DOCTYPE html>\n"
+    "<html>"
+    " <head>"
+    "  <meta http-equiv=\"x-ua-compatible\" content=\"IE=9\" />"
+    " </head>"
+    " <body>"
+    " </body>"
+    "</html>";
+
 static const char doc_str1[] = "<html><body>test</body></html>";
 static const char range_test_str[] =
     "<html><body>test \na<font size=\"2\">bc\t123<br /> it's\r\n  \t</font>text<br /></body></html>";
@@ -757,7 +774,7 @@ static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID
     IID iid;
     HRESULT hres;
 
-    if(_test_get_dispid(line, unk, &iid))
+    if(_test_get_dispid(line, unk, &iid) && compat_mode < COMPAT_IE9)
         ok_(__FILE__,line) (IsEqualGUID(&iid, diid) || broken(diid2 && IsEqualGUID(&iid, diid2)),
                 "unexpected guid %s\n", wine_dbgstr_guid(&iid));
 
@@ -773,7 +790,7 @@ static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID
     ok_(__FILE__,line)(hres == E_NOINTERFACE, "Got IManagedObject iface\n");
     ok_(__FILE__,line)(!u, "u = %p\n", u);
 
-    if(val)
+    if(val && compat_mode < COMPAT_IE9) /* FIXME: Enable those tests in IE9+ mode */
         _test_disp_value(line, unk, val);
 
     if(clsid) {
@@ -9230,53 +9247,6 @@ static void test_elems2(IHTMLDocument2 *doc)
     test_elem_all((IUnknown*)div, outer_types, 1);
     IHTMLElement_Release(elem2);
 
-    test_elem_set_innerhtml((IUnknown*)div, "<textarea id=\"ta\"></textarea>");
-    elem = get_elem_by_id(doc, "ta", TRUE);
-    if(elem) {
-        IHTMLFormElement *form;
-
-        test_textarea_value((IUnknown*)elem, NULL);
-        test_textarea_put_value((IUnknown*)elem, "test");
-        test_textarea_defaultvalue((IUnknown*)elem, NULL);
-        test_textarea_put_defaultvalue((IUnknown*)elem, "defval text");
-        test_textarea_put_value((IUnknown*)elem, "test");
-        test_textarea_readonly((IUnknown*)elem, VARIANT_FALSE);
-        test_textarea_put_readonly((IUnknown*)elem, VARIANT_TRUE);
-        test_textarea_put_readonly((IUnknown*)elem, VARIANT_FALSE);
-        test_textarea_type((IUnknown*)elem);
-
-        form = get_textarea_form((IUnknown*)elem);
-        ok(!form, "form = %p\n", form);
-
-        test_elem_istextedit(elem, VARIANT_TRUE);
-
-        IHTMLElement_Release(elem);
-    }
-
-    test_elem_set_innerhtml((IUnknown*)div, "<textarea id=\"ta\">default text</textarea>");
-    elem = get_elem_by_id(doc, "ta", TRUE);
-    if(elem) {
-        test_textarea_defaultvalue((IUnknown*)elem, "default text");
-        IHTMLElement_Release(elem);
-    }
-
-    test_elem_set_innerhtml((IUnknown*)div, "<form id=\"fid\"><textarea id=\"ta\"></textarea></form>");
-    elem = get_elem_by_id(doc, "ta", TRUE);
-    if(elem) {
-        IHTMLFormElement *form;
-
-        elem2 = get_elem_by_id(doc, "fid", TRUE);
-        ok(elem2 != NULL, "elem2 == NULL\n");
-
-        form = get_textarea_form((IUnknown*)elem);
-        ok(form != NULL, "form = NULL\n");
-        ok(iface_cmp((IUnknown*)form, (IUnknown*)elem2), "form != elem2\n");
-
-        IHTMLFormElement_Release(form);
-        IHTMLElement_Release(elem2);
-        IHTMLElement_Release(elem);
-    }
-
     test_elem_set_innerhtml((IUnknown*)div,
             "<input value=\"val\" id =\"inputid\"  />");
     elem = get_elem_by_id(doc, "inputid", TRUE);
@@ -9373,6 +9343,67 @@ static void test_elems2(IHTMLDocument2 *doc)
     test_blocked(doc, div);
     test_elem_names(doc);
 
+    IHTMLElement_Release(div);
+}
+
+static void test_textarea_element(IHTMLDocument2 *doc, IHTMLElement *parent)
+{
+    IHTMLElement *form_elem, *elem;
+    IHTMLFormElement *form;
+
+    test_elem_set_innerhtml((IUnknown*)parent,
+                            "<form id=\"fid\"><textarea id=\"ta\"></textarea></form>");
+    elem = get_elem_by_id(doc, "ta", TRUE);
+    test_elem_type((IUnknown*)elem, ET_TEXTAREA);
+
+    form_elem = get_elem_by_id(doc, "fid", TRUE);
+    ok(form_elem != NULL, "form_elem == NULL\n");
+
+    form = get_textarea_form((IUnknown*)elem);
+    ok(form != NULL, "form = NULL\n");
+    ok(iface_cmp((IUnknown*)form, (IUnknown*)form_elem), "form != form_elem\n");
+
+    IHTMLFormElement_Release(form);
+    IHTMLElement_Release(form_elem);
+    IHTMLElement_Release(elem);
+
+    test_elem_set_innerhtml((IUnknown*)parent, "<textarea id=\"ta\"></textarea>");
+    elem = get_elem_by_id(doc, "ta", TRUE);
+
+    test_textarea_value((IUnknown*)elem, NULL);
+    test_textarea_put_value((IUnknown*)elem, "test");
+    test_textarea_defaultvalue((IUnknown*)elem, NULL);
+    test_textarea_put_defaultvalue((IUnknown*)elem, "defval text");
+    test_textarea_put_value((IUnknown*)elem, "test");
+    test_textarea_readonly((IUnknown*)elem, VARIANT_FALSE);
+    test_textarea_put_readonly((IUnknown*)elem, VARIANT_TRUE);
+    test_textarea_put_readonly((IUnknown*)elem, VARIANT_FALSE);
+    test_textarea_type((IUnknown*)elem);
+
+    form = get_textarea_form((IUnknown*)elem);
+    ok(!form, "form = %p\n", form);
+
+    test_elem_istextedit(elem, VARIANT_TRUE);
+
+    IHTMLElement_Release(elem);
+
+    test_elem_set_innerhtml((IUnknown*)parent, "<textarea id=\"ta\">default text</textarea>");
+    elem = get_elem_by_id(doc, "ta", TRUE);
+    test_textarea_defaultvalue((IUnknown*)elem, "default text");
+    IHTMLElement_Release(elem);
+}
+
+static void test_dom_elements(IHTMLDocument2 *doc)
+{
+    IHTMLElement *body, *div;
+
+    body = doc_get_body(doc);
+    test_elem_set_innerhtml((IUnknown*)body, "<div id=\"parentdiv\"></div>");
+    div = get_doc_elem_by_id(doc, "parentdiv");
+
+    test_textarea_element(doc, div);
+
+    IHTMLElement_Release(body);
     IHTMLElement_Release(div);
 }
 
@@ -10719,6 +10750,12 @@ START_TEST(dom)
     if (winetest_interactive || ! is_ie_hardened()) {
         run_domtest(elem_test_str, test_elems);
         run_domtest(elem_test2_str, test_elems2);
+        run_domtest(doc_blank, test_dom_elements);
+        if(is_ie9plus) {
+            compat_mode = COMPAT_IE9;
+            run_domtest(doc_blank_ie9, test_dom_elements);
+            compat_mode = COMPAT_NONE;
+        }
         run_domtest(noscript_str, test_noscript);
     }else {
         skip("IE running in Enhanced Security Configuration\n");
