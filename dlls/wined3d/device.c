@@ -288,16 +288,22 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
                 depth_stencil->texture_level);
     }
 
-    if (depth_stencil && render_offscreen)
-        wined3d_texture_prepare_location(depth_stencil->container,
-                dsv->sub_resource_idx, context, dsv->resource->draw_binding);
-
-    if (flags & WINED3DCLEAR_ZBUFFER)
+    if (depth_stencil)
     {
-        DWORD location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
+        DWORD ds_location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
+        struct wined3d_texture *ds = wined3d_texture_from_resource(dsv->resource);
 
-        wined3d_texture_load_location(depth_stencil->container,
-                dsv->sub_resource_idx, context, location);
+        if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)
+                && !is_full_clear(depth_stencil, draw_rect, rect_count ? clear_rect : NULL))
+            wined3d_texture_load_location(ds, dsv->sub_resource_idx, context, ds_location);
+        else
+            wined3d_texture_prepare_location(ds, dsv->sub_resource_idx, context, ds_location);
+
+        if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
+        {
+            wined3d_texture_validate_location(ds, dsv->sub_resource_idx, ds_location);
+            wined3d_texture_invalidate_location(ds, dsv->sub_resource_idx, ~ds_location);
+        }
     }
 
     if (!context_apply_clear_state(context, state, rt_count, fb))
@@ -324,11 +330,6 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
-
-        wined3d_texture_validate_location(depth_stencil->container, dsv->sub_resource_idx, location);
-        wined3d_texture_invalidate_location(depth_stencil->container, dsv->sub_resource_idx, ~location);
-
         gl_info->gl_ops.gl.p_glDepthMask(GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZWRITEENABLE));
         gl_info->gl_ops.gl.p_glClearDepth(depth);
