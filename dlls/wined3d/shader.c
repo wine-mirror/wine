@@ -958,27 +958,19 @@ static HRESULT shader_record_shader_phase(struct wined3d_shader *shader,
 }
 
 static HRESULT shader_calculate_clip_or_cull_distance_mask(
-        const struct wined3d_shader_signature_element *e, DWORD *mask)
+        const struct wined3d_shader_signature_element *e, unsigned int *mask)
 {
-    unsigned int i;
-
-    *mask = 0;
-
-    /* Cull and clip distances are packed in 4 component registers. 0 and 1 are
+    /* Clip and cull distances are packed in 4 component registers. 0 and 1 are
      * the only allowed semantic indices.
      */
     if (e->semantic_idx >= MAX_CLIP_DISTANCES / 4)
     {
+        *mask = 0;
         WARN("Invalid clip/cull distance index %u.\n", e->semantic_idx);
         return WINED3DERR_INVALIDCALL;
     }
 
-    for (i = 0; i < 4; ++i)
-    {
-        if (e->mask & (WINED3DSP_WRITEMASK_0 << i))
-            *mask |= 1u << (4 * e->semantic_idx + i);
-    }
-
+    *mask = (e->mask & WINED3DSP_WRITEMASK_ALL) << (4 * e->semantic_idx);
     return WINED3D_OK;
 }
 
@@ -1786,7 +1778,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         for (i = 0; i < output_signature->element_count; ++i)
         {
             const struct wined3d_shader_signature_element *e = &output_signature->elements[i];
-            DWORD mask;
+            unsigned int mask;
 
             reg_maps->output_registers |= 1u << e->register_idx;
             if (e->sysval_semantic == WINED3D_SV_CLIP_DISTANCE)
