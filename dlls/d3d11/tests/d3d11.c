@@ -24802,6 +24802,228 @@ static void test_generate_mips(void)
     release_test_context(&test_context);
 }
 
+static void test_alpha_to_coverage(void)
+{
+    struct ps_cb
+    {
+        struct vec2 top;
+        struct vec2 bottom;
+        float alpha[2];
+        float padding[2];
+    };
+
+    struct d3d11_test_context test_context;
+    ID3D11Texture2D *render_targets[3];
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11Texture2D *readback_texture;
+    ID3D11RenderTargetView *rtvs[3];
+    ID3D11BlendState *blend_state;
+    ID3D11DeviceContext *context;
+    D3D11_BLEND_DESC blend_desc;
+    struct resource_readback rb;
+    UINT quality_level_count;
+    ID3D11PixelShader *ps;
+    struct ps_cb cb_data;
+    ID3D11Device *device;
+    ID3D11Buffer *cb;
+    unsigned int i;
+    HRESULT hr;
+    RECT rect;
+
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const DWORD ps_code[] =
+    {
+#if 0
+        float2 top;
+        float2 bottom;
+        float alpha1;
+        float alpha2;
+
+        void main(float4 position : SV_Position,
+                out float4 target0 : SV_Target0,
+                out float4 target1 : SV_Target1,
+                out float4 target2 : SV_Target2)
+        {
+            float alpha = all(top <= position.xy) && all(position.xy <= bottom) ? 1.0f : 0.0f;
+            target0 = float4(0.0f, 1.0f, 0.0f, alpha);
+            target1 = float4(0.0f, 0.0f, 1.0f, alpha1);
+            target2 = float4(0.0f, 1.0f, 0.0f, alpha2);
+        }
+#endif
+        0x43425844, 0x771ff802, 0xca927279, 0x5bdd75ae, 0xf53cb31b, 0x00000001, 0x00000264, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000c4, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000005c, 0x00000003, 0x00000008, 0x00000050, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000050, 0x00000001, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x00000050, 0x00000002, 0x00000000, 0x00000003, 0x00000002, 0x0000000f, 0x545f5653, 0x65677261,
+        0xabab0074, 0x52444853, 0x00000198, 0x00000040, 0x00000066, 0x04000059, 0x00208e46, 0x00000000,
+        0x00000002, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x03000065, 0x001020f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000002, 0x02000068, 0x00000001,
+        0x0800001d, 0x00100032, 0x00000000, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000000,
+        0x07000001, 0x00100012, 0x00000000, 0x0010001a, 0x00000000, 0x0010000a, 0x00000000, 0x0800001d,
+        0x00100062, 0x00000000, 0x00208ba6, 0x00000000, 0x00000000, 0x00101106, 0x00000000, 0x07000001,
+        0x00100022, 0x00000000, 0x0010002a, 0x00000000, 0x0010001a, 0x00000000, 0x07000001, 0x00100012,
+        0x00000000, 0x0010001a, 0x00000000, 0x0010000a, 0x00000000, 0x07000001, 0x00102082, 0x00000000,
+        0x0010000a, 0x00000000, 0x00004001, 0x3f800000, 0x08000036, 0x00102072, 0x00000000, 0x00004002,
+        0x00000000, 0x3f800000, 0x00000000, 0x00000000, 0x08000036, 0x00102072, 0x00000001, 0x00004002,
+        0x00000000, 0x00000000, 0x3f800000, 0x00000000, 0x06000036, 0x00102082, 0x00000001, 0x0020800a,
+        0x00000000, 0x00000001, 0x08000036, 0x00102072, 0x00000002, 0x00004002, 0x00000000, 0x3f800000,
+        0x00000000, 0x00000000, 0x06000036, 0x00102082, 0x00000002, 0x0020801a, 0x00000000, 0x00000001,
+        0x0100003e,
+    };
+    static const DWORD colors[] = {0xff00ff00, 0xbfff0000, 0x8000ff00};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    memset(&blend_desc, 0, sizeof(blend_desc));
+    blend_desc.AlphaToCoverageEnable = TRUE;
+    blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ID3D11DeviceContext_OMSetBlendState(context, blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
+
+    render_targets[0] = test_context.backbuffer;
+    rtvs[0] = test_context.backbuffer_rtv;
+    for (i = 1; i < ARRAY_SIZE(render_targets); ++i)
+    {
+        ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_targets[i]);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+        hr = ID3D11Device_CreateRenderTargetView(device,
+                (ID3D11Resource *)render_targets[i], NULL, &rtvs[i]);
+        ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    }
+    ID3D11DeviceContext_OMSetRenderTargets(context, ARRAY_SIZE(rtvs), rtvs, NULL);
+
+    cb_data.top.x = cb_data.top.y = 0.0f;
+    cb_data.bottom.x = cb_data.bottom.y = 200.0f;
+    cb_data.alpha[0] = 0.75;
+    cb_data.alpha[1] = 0.5f;
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(cb_data), &cb_data);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+
+    for (i = 0; i < ARRAY_SIZE(rtvs); ++i)
+        ID3D11DeviceContext_ClearRenderTargetView(context, rtvs[i], white);
+    draw_quad(&test_context);
+    for (i = 0; i < ARRAY_SIZE(render_targets); ++i)
+    {
+        DWORD expected_color;
+
+        assert(i < ARRAY_SIZE(colors));
+        expected_color = colors[i];
+        get_texture_readback(render_targets[i], 0, &rb);
+        SetRect(&rect, 0, 0, 200, 200);
+        check_readback_data_color(&rb, &rect, expected_color, 1);
+        SetRect(&rect, 200, 0, 640, 200);
+        todo_wine
+        check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+        SetRect(&rect, 0, 200, 640, 480);
+        todo_wine
+        check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+        release_resource_readback(&rb);
+
+        if (i > 0)
+            ID3D11Texture2D_Release(render_targets[i]);
+        render_targets[i] = NULL;
+    }
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_R16G16_UNORM;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_targets[0]);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device,
+            (ID3D11Resource *)render_targets[0], NULL, &rtvs[0]);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ID3D11DeviceContext_OMSetRenderTargets(context, ARRAY_SIZE(rtvs), rtvs, NULL);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtvs[0], white);
+    draw_quad(&test_context);
+    get_texture_readback(render_targets[0], 0, &rb);
+    SetRect(&rect, 0, 0, 200, 200);
+    check_readback_data_color(&rb, &rect, 0xffff0000, 1);
+    SetRect(&rect, 200, 0, 640, 200);
+    todo_wine
+    check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+    SetRect(&rect, 0, 200, 640, 480);
+    todo_wine
+    check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+    release_resource_readback(&rb);
+
+    ID3D11Texture2D_Release(render_targets[0]);
+    for (i = 0; i < ARRAY_SIZE(rtvs); ++i)
+        ID3D11RenderTargetView_Release(rtvs[i]);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device,
+            texture_desc.Format, 4, &quality_level_count);
+    if (FAILED(hr))
+    {
+        skip("4xMSAA not supported.\n");
+        goto done;
+    }
+    texture_desc.SampleDesc.Count = 4;
+    texture_desc.SampleDesc.Quality = 0;
+
+    for (i = 0; i < ARRAY_SIZE(render_targets); ++i)
+    {
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_targets[i]);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+        hr = ID3D11Device_CreateRenderTargetView(device,
+                (ID3D11Resource *)render_targets[i], NULL, &rtvs[i]);
+        ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    }
+    ID3D11DeviceContext_OMSetRenderTargets(context, ARRAY_SIZE(rtvs), rtvs, NULL);
+
+    for (i = 0; i < ARRAY_SIZE(rtvs); ++i)
+        ID3D11DeviceContext_ClearRenderTargetView(context, rtvs[i], white);
+    draw_quad(&test_context);
+    texture_desc.SampleDesc.Count = 1;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &readback_texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(render_targets); ++i)
+    {
+        DWORD expected_color;
+
+        assert(i < ARRAY_SIZE(colors));
+        expected_color = colors[i];
+
+        ID3D11DeviceContext_ResolveSubresource(context, (ID3D11Resource *)readback_texture, 0,
+                (ID3D11Resource *)render_targets[i], 0, texture_desc.Format);
+
+        get_texture_readback(readback_texture, 0, &rb);
+        SetRect(&rect, 0, 0, 200, 200);
+        todo_wine
+        check_readback_data_color(&rb, &rect, expected_color, 1);
+        SetRect(&rect, 200, 0, 640, 200);
+        todo_wine
+        check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+        SetRect(&rect, 0, 200, 640, 480);
+        todo_wine
+        check_readback_data_color(&rb, &rect, 0xffffffff, 1);
+        release_resource_readback(&rb);
+    }
+    ID3D11Texture2D_Release(readback_texture);
+
+    for (i = 0; i < ARRAY_SIZE(render_targets); ++i)
+    {
+        ID3D11Texture2D_Release(render_targets[i]);
+        ID3D11RenderTargetView_Release(rtvs[i]);
+    }
+
+done:
+    ID3D11Buffer_Release(cb);
+    ID3D11PixelShader_Release(ps);
+    ID3D11BlendState_Release(blend_state);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -24930,4 +25152,5 @@ START_TEST(d3d11)
     test_clip_distance();
     test_combined_clip_and_cull_distances();
     test_generate_mips();
+    test_alpha_to_coverage();
 }
