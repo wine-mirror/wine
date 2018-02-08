@@ -275,11 +275,24 @@ static HRESULT WINAPI HTMLFormElement_get_method(IHTMLFormElement *iface, BSTR *
 static HRESULT WINAPI HTMLFormElement_get_elements(IHTMLFormElement *iface, IDispatch **p)
 {
     HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
+    nsIDOMHTMLCollection *elements;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = (IDispatch*)&This->IHTMLFormElement_iface;
-    IDispatch_AddRef(*p);
+    if(dispex_compat_mode(&This->element.node.event_target.dispex) < COMPAT_MODE_IE9) {
+        IDispatch_AddRef(*p = (IDispatch*)&This->IHTMLFormElement_iface);
+        return S_OK;
+    }
+
+    nsres = nsIDOMHTMLFormElement_GetElements(This->nsform, &elements);
+    if(NS_FAILED(nsres)) {
+        ERR("GetElements failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = (IDispatch*)create_collection_from_htmlcol(This->element.node.doc, elements);
+    nsIDOMHTMLCollection_Release(elements);
     return S_OK;
 }
 
