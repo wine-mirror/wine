@@ -748,10 +748,9 @@ static SECURITY_STATUS name_sspi_to_gss( const UNICODE_STRING *name_str, gss_nam
     gss_OID type = GSS_C_NO_OID; /* FIXME: detect the appropriate value for this ourselves? */
     gss_buffer_desc buf;
 
-    buf.length = WideCharToMultiByte( CP_UNIXCP, 0, name_str->Buffer, name_str->Length / sizeof(WCHAR), NULL, 0, NULL, NULL ) + 1;
+    buf.length = WideCharToMultiByte( CP_UNIXCP, 0, name_str->Buffer, name_str->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
     if (!(buf.value = heap_alloc( buf.length ))) return SEC_E_INSUFFICIENT_MEMORY;
     WideCharToMultiByte( CP_UNIXCP, 0, name_str->Buffer, name_str->Length / sizeof(WCHAR), buf.value, buf.length, NULL, NULL );
-    buf.length--;
 
     ret = pgss_import_name( &minor_status, &buf, type, name );
     TRACE( "gss_import_name returned %08x minor status %08x\n", ret, minor_status );
