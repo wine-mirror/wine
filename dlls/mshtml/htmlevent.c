@@ -213,8 +213,6 @@ static const event_info_t event_info[] = {
         EVENT_FIXME}
 };
 
-static BOOL use_event_quirks(EventTarget*);
-
 static eventid_t str_to_eid(const WCHAR *str)
 {
     int i;
@@ -859,7 +857,7 @@ static ULONG WINAPI DOMEvent_Release(IDOMEvent *iface)
         if(This->mouse_event)
             nsIDOMMouseEvent_Release(This->mouse_event);
         if(This->target)
-            IDispatchEx_Release(&This->target->dispex.IDispatchEx_iface);
+            IEventTarget_Release(&This->target->IEventTarget_iface);
         nsIDOMEvent_Release(This->nsevent);
         release_dispex(&This->dispex);
         heap_free(This->type);
@@ -2085,6 +2083,11 @@ static HRESULT call_cp_func(IDispatch *disp, DISPID dispid, IHTMLEventObj *event
     return IDispatch_Invoke(disp, dispid, &IID_NULL, 0, DISPATCH_METHOD, &dp, retv, &ei, &argerr);
 }
 
+static BOOL use_event_quirks(EventTarget *event_target)
+{
+    return dispex_compat_mode(&event_target->dispex) < COMPAT_MODE_IE9;
+}
+
 static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
 {
     int min, max, i;
@@ -2342,7 +2345,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
     }
 
     iter = event_target;
-    IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
+    IEventTarget_AddRef(&event_target->IEventTarget_iface);
 
     chain_cnt = 0;
     chain_buf_size = sizeof(target_chain_buf)/sizeof(*target_chain_buf);
@@ -2382,9 +2385,9 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
         prev_event = target_vtbl->set_current_event(&event_target->dispex, event->event_obj);
 
     if(event->target)
-        IDispatchEx_Release(&event->target->dispex.IDispatchEx_iface);
+        IEventTarget_Release(&event->target->IEventTarget_iface);
     event->target = event_target;
-    IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
+    IEventTarget_AddRef(&event_target->IEventTarget_iface);
 
     event->phase = DEP_CAPTURING_PHASE;
     i = chain_cnt-1;
@@ -2433,7 +2436,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
     }
 
     for(i = 0; i < chain_cnt; i++)
-        IDispatchEx_Release(&target_chain[i]->dispex.IDispatchEx_iface);
+        IEventTarget_Release(&target_chain[i]->IEventTarget_iface);
     if(target_chain != target_chain_buf)
         heap_free(target_chain);
 
@@ -3044,18 +3047,6 @@ static const IEventTargetVtbl EventTargetVtbl = {
     EventTarget_dispatchEvent
 };
 
-#define DELAY_INIT_VTBL ((const IEventTargetVtbl*)1)
-
-static BOOL use_event_quirks(EventTarget *event_target)
-{
-    if(event_target->IEventTarget_iface.lpVtbl == DELAY_INIT_VTBL) {
-        event_target->IEventTarget_iface.lpVtbl =
-            dispex_compat_mode(&event_target->dispex) >= COMPAT_MODE_IE9
-            ? &EventTargetVtbl : NULL;
-    }
-    return !event_target->IEventTarget_iface.lpVtbl;
-}
-
 HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IEventTarget)) {
@@ -3098,21 +3089,8 @@ void EventTarget_Init(EventTarget *event_target, IUnknown *outer, dispex_static_
                       compat_mode_t compat_mode)
 {
     init_dispex_with_compat_mode(&event_target->dispex, outer, dispex_data, compat_mode);
+    event_target->IEventTarget_iface.lpVtbl = &EventTargetVtbl;
     wine_rb_init(&event_target->handler_map, event_id_cmp);
-
-    /*
-     * IEventTarget is supported by the object or not depending on compatibility mode.
-     * We use NULL vtbl for objects in compatibility mode not supporting the interface.
-     * For targets that don't know compatibility mode at creation time, we set vtbl
-     * to special DELAY_INIT_VTBL value so that vtbl will be set to proper value
-     * when it's needed.
-     */
-    if(compat_mode == COMPAT_MODE_QUIRKS && dispex_data->vtbl && dispex_data->vtbl->get_compat_mode)
-        event_target->IEventTarget_iface.lpVtbl = DELAY_INIT_VTBL;
-    else if(compat_mode < COMPAT_MODE_IE9)
-        event_target->IEventTarget_iface.lpVtbl = NULL;
-    else
-        event_target->IEventTarget_iface.lpVtbl = &EventTargetVtbl;
 }
 
 void release_event_target(EventTarget *event_target)
