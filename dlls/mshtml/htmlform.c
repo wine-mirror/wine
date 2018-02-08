@@ -540,8 +540,11 @@ static HRESULT WINAPI HTMLFormElement_item(IHTMLFormElement *iface, VARIANT name
     *pdisp = NULL;
 
     if(V_VT(&name) == VT_I4) {
-        if(V_I4(&name) < 0)
-            return E_INVALIDARG;
+        if(V_I4(&name) < 0) {
+            *pdisp = NULL;
+            return dispex_compat_mode(&This->element.node.event_target.dispex) >= COMPAT_MODE_IE9
+                ? S_OK : E_INVALIDARG;
+        }
         return htmlform_item(This, V_I4(&name), pdisp);
     }
 
