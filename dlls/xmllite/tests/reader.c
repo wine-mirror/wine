@@ -30,20 +30,21 @@
 #include "ole2.h"
 #include "xmllite.h"
 #include "wine/test.h"
+#include "wine/heap.h"
 
 DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
 
 static WCHAR *a2w(const char *str)
 {
     int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    WCHAR *ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    WCHAR *ret = heap_alloc(len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
     return ret;
 }
 
 static void free_str(WCHAR *str)
 {
-    HeapFree(GetProcessHeap(), 0, str);
+    heap_free(str);
 }
 
 static int strcmp_wa(const WCHAR *str1, const char *stra)
@@ -408,9 +409,7 @@ static ULONG WINAPI testinput_Release(IUnknown *iface)
 
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+        heap_free(This);
 
     return ref;
 }
@@ -426,7 +425,7 @@ static HRESULT testinput_createinstance(void **ppObj)
 {
     testinput *input;
 
-    input = HeapAlloc(GetProcessHeap(), 0, sizeof (*input));
+    input = heap_alloc(sizeof(*input));
     if(!input) return E_OUTOFMEMORY;
 
     input->IUnknown_iface.lpVtbl = &testinput_vtbl;
