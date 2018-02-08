@@ -919,16 +919,11 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
     cred_handle = credhandle_sspi_to_gss( credential );
     ctxt_handle = ctxthandle_sspi_to_gss( context );
 
-    if (!input) input_token.length = 0;
+    if (!input || (idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) input_token.length = 0;
     else
     {
-        if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1)
-            input_token.length = 0;
-        else
-        {
-            input_token.length = input->pBuffers[idx].cbBuffer;
-            input_token.value  = input->pBuffers[idx].pvBuffer;
-        }
+        input_token.length = input->pBuffers[idx].cbBuffer;
+        input_token.value  = input->pBuffers[idx].pvBuffer;
     }
 
     if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
