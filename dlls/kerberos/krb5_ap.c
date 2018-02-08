@@ -832,11 +832,7 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     TRACE( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
            logon_id, auth_data, get_key_fn, get_key_arg, credential, ts_expiry );
 
-    if (auth_data)
-    {
-        FIXME( "specific credentials not supported\n" );
-        return SEC_E_UNKNOWN_CREDENTIALS;
-    }
+    if (auth_data) FIXME( "specific credentials not supported\n" );
 
     switch (credential_use)
     {
