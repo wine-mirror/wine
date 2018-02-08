@@ -5894,15 +5894,28 @@ static void shader_glsl_bufinfo(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, ", %u)%s);\n", resource_info->stride, dst_swizzle);
 }
 
+static BOOL is_multisampled(enum wined3d_shader_resource_type resource_type)
+{
+    return resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DMS
+            || resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY;
+}
+
+static BOOL is_mipmapped(enum wined3d_shader_resource_type resource_type)
+{
+    return resource_type != WINED3D_SHADER_RESOURCE_BUFFER && !is_multisampled(resource_type);
+}
+
 static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     enum wined3d_shader_resource_type resource_type;
     enum wined3d_shader_register_type reg_type;
     unsigned int resource_idx, bind_idx, i;
     enum wined3d_data_type dst_data_type;
     struct glsl_src_param lod_param;
+    BOOL supports_mipmaps;
     char dst_swizzle[6];
     DWORD write_mask;
 
@@ -5911,9 +5924,6 @@ static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
         dst_data_type = WINED3D_DATA_UINT;
     else if (ins->flags)
         FIXME("Unhandled flags %#x.\n", ins->flags);
-
-    write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], dst_data_type);
-    shader_glsl_get_swizzle(&ins->src[1], FALSE, write_mask, dst_swizzle);
 
     reg_type = ins->src[1].reg.type;
     resource_idx = ins->src[1].reg.idx[0].offset;
@@ -5933,46 +5943,55 @@ static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
     if (resource_type >= ARRAY_SIZE(resource_type_info))
     {
         ERR("Unexpected resource type %#x.\n", resource_type);
-        resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
+        return;
     }
 
+    write_mask = shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0], dst_data_type);
+    shader_glsl_get_swizzle(&ins->src[1], FALSE, write_mask, dst_swizzle);
+
     if (dst_data_type == WINED3D_DATA_UINT)
-        shader_addline(ins->ctx->buffer, "uvec4(");
+        shader_addline(buffer, "uvec4(");
     else
-        shader_addline(ins->ctx->buffer, "vec4(");
+        shader_addline(buffer, "vec4(");
 
     if (reg_type == WINED3DSPR_RESOURCE)
     {
-        shader_addline(ins->ctx->buffer, "textureSize(%s_sampler%u, %s), ",
-                shader_glsl_get_prefix(version->type), bind_idx, lod_param.param_str);
+        shader_addline(buffer, "textureSize(%s_sampler%u",
+                shader_glsl_get_prefix(version->type), bind_idx);
+    }
+    else
+    {
+        shader_addline(buffer, "imageSize(%s_image%u",
+                shader_glsl_get_prefix(version->type), bind_idx);
+    }
 
-        for (i = 0; i < 3 - resource_type_info[resource_type].resinfo_size; ++i)
-            shader_addline(ins->ctx->buffer, "0, ");
+    supports_mipmaps = is_mipmapped(resource_type) && reg_type != WINED3DSPR_UAV;
+    if (supports_mipmaps)
+        shader_addline(buffer, ", %s", lod_param.param_str);
+    shader_addline(buffer, "), ");
 
+    for (i = 0; i < 3 - resource_type_info[resource_type].resinfo_size; ++i)
+        shader_addline(buffer, "0, ");
+
+    if (supports_mipmaps)
+    {
         if (gl_info->supported[ARB_TEXTURE_QUERY_LEVELS])
         {
-            shader_addline(ins->ctx->buffer, "textureQueryLevels(%s_sampler%u)",
+            shader_addline(buffer, "textureQueryLevels(%s_sampler%u)",
                     shader_glsl_get_prefix(version->type), bind_idx);
         }
         else
         {
-            FIXME("textureQueryLevels is not supported, returning 1 mipmap level.\n");
-            shader_addline(ins->ctx->buffer, "1");
+            FIXME("textureQueryLevels is not supported, returning 1 level.\n");
+            shader_addline(buffer, "1");
         }
     }
     else
     {
-        shader_addline(ins->ctx->buffer, "imageSize(%s_image%u), ",
-                shader_glsl_get_prefix(version->type), bind_idx);
-
-        for (i = 0; i < 3 - resource_type_info[resource_type].resinfo_size; ++i)
-            shader_addline(ins->ctx->buffer, "0, ");
-
-        /* For UAVs the returned miplevel count is always 1. */
-        shader_addline(ins->ctx->buffer, "1");
+        shader_addline(buffer, "1");
     }
 
-    shader_addline(ins->ctx->buffer, ")%s);\n", dst_swizzle);
+    shader_addline(buffer, ")%s);\n", dst_swizzle);
 }
 
 static void shader_glsl_ld(const struct wined3d_shader_instruction *ins)
@@ -5982,7 +6001,7 @@ static void shader_glsl_ld(const struct wined3d_shader_instruction *ins)
     unsigned int resource_idx, sampler_idx, sampler_bind_idx;
     struct glsl_sample_function sample_function;
     DWORD flags = WINED3D_GLSL_SAMPLE_LOAD;
-    BOOL has_lod_param, multisample;
+    BOOL has_lod_param;
 
     if (wined3d_shader_instruction_has_texel_offset(ins))
         flags |= WINED3D_GLSL_SAMPLE_OFFSET;
@@ -5995,16 +6014,13 @@ static void shader_glsl_ld(const struct wined3d_shader_instruction *ins)
         ERR("Invalid resource index %u.\n", resource_idx);
         return;
     }
-    multisample = reg_maps->resource_info[resource_idx].type == WINED3D_SHADER_RESOURCE_TEXTURE_2DMS
-            || reg_maps->resource_info[resource_idx].type == WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY;
-    has_lod_param = reg_maps->resource_info[resource_idx].type != WINED3D_SHADER_RESOURCE_BUFFER
-            && !multisample;
+    has_lod_param = is_mipmapped(reg_maps->resource_info[resource_idx].type);
 
     shader_glsl_get_sample_function(ins->ctx, resource_idx, sampler_idx, flags, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &lod_param);
     sampler_bind_idx = shader_glsl_find_sampler(&reg_maps->sampler_map, resource_idx, sampler_idx);
-    if (multisample)
+    if (is_multisampled(reg_maps->resource_info[resource_idx].type))
     {
         shader_glsl_add_src_param(ins, &ins->src[2], WINED3DSP_WRITEMASK_0, &sample_param);
         shader_glsl_gen_sample_code(ins, sampler_bind_idx, &sample_function, ins->src[1].swizzle,
