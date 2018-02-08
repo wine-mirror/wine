@@ -46,6 +46,7 @@
 #include "wine/heap.h"
 #include "wine/library.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kerberos);
 
@@ -1059,6 +1060,24 @@ static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
 #endif
 }
 
+static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
+{
+    SecPkgInfoW *ret;
+    DWORD size_name = (strlenW(info->Name) + 1) * sizeof(WCHAR);
+    DWORD size_comment = (strlenW(info->Comment) + 1) * sizeof(WCHAR);
+
+    if (!(ret = heap_alloc( sizeof(*ret) + size_name + size_comment ))) return NULL;
+    ret->fCapabilities = info->fCapabilities;
+    ret->wVersion      = info->wVersion;
+    ret->wRPCID        = info->wRPCID;
+    ret->cbMaxToken    = info->cbMaxToken;
+    ret->Name          = (SEC_WCHAR *)(ret + 1);
+    memcpy( ret->Name, info->Name, size_name );
+    ret->Comment       = (SEC_WCHAR *)((char *)ret->Name + size_name);
+    memcpy( ret->Comment, info->Comment, size_comment );
+    return ret;
+}
+
 static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context, ULONG attribute, void *buffer )
 {
     TRACE( "(%lx %u %p)\n", context, attribute, buffer );
@@ -1103,7 +1122,7 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
     case SECPKG_ATTR_NEGOTIATION_INFO:
     {
         SecPkgContext_NegotiationInfoW *info = (SecPkgContext_NegotiationInfoW *)buffer;
-        info->PackageInfo      = (SecPkgInfoW *)&infoW;
+        if (!(info->PackageInfo = build_package_info( &infoW ))) return SEC_E_INSUFFICIENT_MEMORY;
         info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
         return SEC_E_OK;
     }
