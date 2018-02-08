@@ -1421,6 +1421,87 @@ SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
     return SEC_E_OK;
 }
 
+#define NTLM_COMMENT \
+   { 'N', 'T', 'L', 'M', ' ', \
+     'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ', \
+     'P', 'a', 'c', 'k', 'a', 'g', 'e', 0}
+
+static CHAR ntlm_comment_A[] = NTLM_COMMENT;
+static WCHAR ntlm_comment_W[] = NTLM_COMMENT;
+
+#define NTLM_NAME {'N', 'T', 'L', 'M', 0}
+
+static char ntlm_name_A[] = NTLM_NAME;
+static WCHAR ntlm_name_W[] = NTLM_NAME;
+
+#define NTLM_CAPS ( \
+    SECPKG_FLAG_INTEGRITY  | \
+    SECPKG_FLAG_PRIVACY    | \
+    SECPKG_FLAG_TOKEN_ONLY | \
+    SECPKG_FLAG_CONNECTION | \
+    SECPKG_FLAG_MULTI_REQUIRED    | \
+    SECPKG_FLAG_IMPERSONATION     | \
+    SECPKG_FLAG_ACCEPT_WIN32_NAME | \
+    SECPKG_FLAG_NEGOTIABLE        | \
+    SECPKG_FLAG_LOGON             | \
+    SECPKG_FLAG_RESTRICTED_TOKENS )
+
+static const SecPkgInfoW infoW = {
+    NTLM_CAPS,
+    1,
+    RPC_C_AUTHN_WINNT,
+    NTLM_MAX_BUF,
+    ntlm_name_W,
+    ntlm_comment_W
+};
+
+static const SecPkgInfoA infoA = {
+    NTLM_CAPS,
+    1,
+    RPC_C_AUTHN_WINNT,
+    NTLM_MAX_BUF,
+    ntlm_name_A,
+    ntlm_comment_A
+};
+
+SecPkgInfoA *ntlm_package_infoA = (SecPkgInfoA *)&infoA;
+SecPkgInfoW *ntlm_package_infoW = (SecPkgInfoW *)&infoW;
+
+static SecPkgInfoW *build_package_infoW( const SecPkgInfoW *info )
+{
+    SecPkgInfoW *ret;
+    DWORD size_name = (strlenW(info->Name) + 1) * sizeof(WCHAR);
+    DWORD size_comment = (strlenW(info->Comment) + 1) * sizeof(WCHAR);
+
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + size_name + size_comment ))) return NULL;
+    ret->fCapabilities = info->fCapabilities;
+    ret->wVersion      = info->wVersion;
+    ret->wRPCID        = info->wRPCID;
+    ret->cbMaxToken    = info->cbMaxToken;
+    ret->Name          = (SEC_WCHAR *)(ret + 1);
+    memcpy( ret->Name, info->Name, size_name );
+    ret->Comment       = (SEC_WCHAR *)((char *)ret->Name + size_name);
+    memcpy( ret->Comment, info->Comment, size_comment );
+    return ret;
+}
+
+static SecPkgInfoA *build_package_infoA( const SecPkgInfoA *info )
+{
+    SecPkgInfoA *ret;
+    DWORD size_name = strlen(info->Name) + 1, size_comment = strlen(info->Comment) + 1;
+
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + size_name + size_comment ))) return NULL;
+    ret->fCapabilities = info->fCapabilities;
+    ret->wVersion      = info->wVersion;
+    ret->wRPCID        = info->wRPCID;
+    ret->cbMaxToken    = info->cbMaxToken;
+    ret->Name          = (SEC_CHAR *)(ret + 1);
+    memcpy( ret->Name, info->Name, size_name );
+    ret->Comment       = ret->Name + size_name;
+    memcpy( ret->Comment, info->Comment, size_comment );
+    return ret;
+}
+
 /***********************************************************************
  *              QueryContextAttributesW
  */
@@ -1453,7 +1534,13 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
         _x(SECPKG_ATTR_LIFESPAN);
         _x(SECPKG_ATTR_NAMES);
         _x(SECPKG_ATTR_NATIVE_NAMES);
-        _x(SECPKG_ATTR_NEGOTIATION_INFO);
+        case SECPKG_ATTR_NEGOTIATION_INFO:
+        {
+            SecPkgContext_NegotiationInfoW *info = (SecPkgContext_NegotiationInfoW *)pBuffer;
+            if (!(info->PackageInfo = build_package_infoW( &infoW ))) return SEC_E_INSUFFICIENT_MEMORY;
+            info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
+            return SEC_E_OK;
+        }
         _x(SECPKG_ATTR_PACKAGE_INFO);
         _x(SECPKG_ATTR_PASSWORD_EXPIRY);
         _x(SECPKG_ATTR_SESSION_KEY);
@@ -1482,7 +1569,18 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
 SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext,
  ULONG ulAttribute, void *pBuffer)
 {
-    return ntlm_QueryContextAttributesW(phContext, ulAttribute, pBuffer);
+    switch(ulAttribute)
+    {
+    case SECPKG_ATTR_NEGOTIATION_INFO:
+    {
+        SecPkgContext_NegotiationInfoA *info = (SecPkgContext_NegotiationInfoA *)pBuffer;
+        if (!(info->PackageInfo = build_package_infoA( &infoA ))) return SEC_E_INSUFFICIENT_MEMORY;
+        info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
+        return SEC_E_OK;
+    }
+    default:
+        return ntlm_QueryContextAttributesW( phContext, ulAttribute, pBuffer );
+    }
 }
 
 /***********************************************************************
@@ -1975,53 +2073,6 @@ static const SecurityFunctionTableW ntlmTableW = {
     ntlm_DecryptMessage,                /* DecryptMessage */
     NULL,   /* SetContextAttributesW */
 };
-
-#define NTLM_COMMENT \
-   { 'N', 'T', 'L', 'M', ' ', \
-     'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ', \
-     'P', 'a', 'c', 'k', 'a', 'g', 'e', 0}
-
-static CHAR ntlm_comment_A[] = NTLM_COMMENT;
-static WCHAR ntlm_comment_W[] = NTLM_COMMENT;
-
-#define NTLM_NAME {'N', 'T', 'L', 'M', 0}
-
-static char ntlm_name_A[] = NTLM_NAME;
-static WCHAR ntlm_name_W[] = NTLM_NAME;
-
-/* According to Windows, NTLM has the following capabilities.  */
-#define CAPS ( \
-    SECPKG_FLAG_INTEGRITY  | \
-    SECPKG_FLAG_PRIVACY    | \
-    SECPKG_FLAG_TOKEN_ONLY | \
-    SECPKG_FLAG_CONNECTION | \
-    SECPKG_FLAG_MULTI_REQUIRED    | \
-    SECPKG_FLAG_IMPERSONATION     | \
-    SECPKG_FLAG_ACCEPT_WIN32_NAME | \
-    SECPKG_FLAG_NEGOTIABLE        | \
-    SECPKG_FLAG_LOGON             | \
-    SECPKG_FLAG_RESTRICTED_TOKENS )
-
-static const SecPkgInfoW infoW = {
-    CAPS,
-    1,
-    RPC_C_AUTHN_WINNT,
-    NTLM_MAX_BUF,
-    ntlm_name_W,
-    ntlm_comment_W
-};
-
-static const SecPkgInfoA infoA = {
-    CAPS,
-    1,
-    RPC_C_AUTHN_WINNT,
-    NTLM_MAX_BUF,
-    ntlm_name_A,
-    ntlm_comment_A
-};
-
-SecPkgInfoA *ntlm_package_infoA = (SecPkgInfoA *)&infoA;
-SecPkgInfoW *ntlm_package_infoW = (SecPkgInfoW *)&infoW;
 
 void SECUR32_initNTLMSP(void)
 {
