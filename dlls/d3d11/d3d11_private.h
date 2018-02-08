@@ -392,6 +392,7 @@ struct d3d_blend_state
     LONG refcount;
 
     struct wined3d_private_store private_store;
+    struct wined3d_blend_state *wined3d_state;
     D3D11_BLEND_DESC desc;
     struct wine_rb_entry entry;
     ID3D11Device *device;
@@ -522,7 +523,6 @@ struct d3d_device
     struct wine_rb_tree rasterizer_states;
     struct wine_rb_tree sampler_states;
 
-    struct d3d_blend_state *blend_state;
     float blend_factor[4];
     struct d3d_depthstencil_state *depth_stencil_state;
     UINT stencil_ref;
