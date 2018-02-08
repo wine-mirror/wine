@@ -5990,16 +5990,6 @@ int wined3d_ffp_vertex_program_key_compare(const void *key, const struct wine_rb
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-void wined3d_get_draw_rect(const struct wined3d_state *state, RECT *rect)
-{
-    const struct wined3d_viewport *vp = &state->viewport;
-
-    SetRect(rect, vp->x, vp->y, vp->x + vp->width, vp->y + vp->height);
-
-    if (state->render_states[WINED3D_RS_SCISSORTESTENABLE])
-        IntersectRect(rect, rect, &state->scissor_rect);
-}
-
 const char *wined3d_debug_location(DWORD location)
 {
     const char *prefix = "";

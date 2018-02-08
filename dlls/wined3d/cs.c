@@ -501,14 +501,11 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 
 static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_state *state = &cs->state;
     const struct wined3d_cs_clear *op = data;
     struct wined3d_device *device;
     unsigned int i;
-    RECT draw_rect;
 
     device = cs->device;
-    wined3d_get_draw_rect(state, &draw_rect);
     device->blitter->ops->blitter_clear(device->blitter, device, op->rt_count, op->fb,
             op->rect_count, op->rects, &op->draw_rect, op->flags, &op->color, op->depth, op->stencil);
 
@@ -529,6 +526,7 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
 {
     unsigned int rt_count = cs->device->adapter->gl_info.limits.buffers;
     const struct wined3d_state *state = &cs->device->state;
+    const struct wined3d_viewport *vp = &state->viewport;
     struct wined3d_cs_clear *op;
     unsigned int i;
 
@@ -538,7 +536,9 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     op->flags = flags;
     op->rt_count = rt_count;
     op->fb = &cs->fb;
-    wined3d_get_draw_rect(state, &op->draw_rect);
+    SetRect(&op->draw_rect, vp->x, vp->y, vp->x + vp->width, vp->y + vp->height);
+    if (state->render_states[WINED3D_RS_SCISSORTESTENABLE])
+        IntersectRect(&op->draw_rect, &op->draw_rect, &state->scissor_rect);
     op->color = *color;
     op->depth = depth;
     op->stencil = stencil;
