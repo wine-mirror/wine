@@ -554,6 +554,32 @@ static SECURITY_STATUS WINAPI lsa_QueryContextAttributesW(CtxtHandle *context, U
     return lsa_package->lsa_api->SpQueryContextAttributes(lsa_context, attribute, buffer);
 }
 
+static SecPkgInfoA *package_infoWtoA( const SecPkgInfoW *info )
+{
+    SecPkgInfoA *ret;
+    int size_name = WideCharToMultiByte( CP_ACP, 0, info->Name, -1, NULL, 0, NULL, NULL );
+    int size_comment = WideCharToMultiByte( CP_ACP, 0, info->Comment, -1, NULL, 0, NULL, NULL );
+
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + size_name + size_comment ))) return NULL;
+    ret->fCapabilities = info->fCapabilities;
+    ret->wVersion      = info->wVersion;
+    ret->wRPCID        = info->wRPCID;
+    ret->cbMaxToken    = info->cbMaxToken;
+    ret->Name          = (SEC_CHAR *)(ret + 1);
+    WideCharToMultiByte( CP_ACP, 0, info->Name, -1, ret->Name, size_name, NULL, NULL );
+    ret->Comment       = ret->Name + size_name;
+    WideCharToMultiByte( CP_ACP, 0, info->Comment, -1, ret->Comment, size_comment, NULL, NULL );
+    return ret;
+}
+
+static SECURITY_STATUS nego_info_WtoA( const SecPkgContext_NegotiationInfoW *infoW,
+                                       SecPkgContext_NegotiationInfoA *infoA )
+{
+    infoA->NegotiationState = infoW->NegotiationState;
+    if (!(infoA->PackageInfo = package_infoWtoA( infoW->PackageInfo ))) return SEC_E_INSUFFICIENT_MEMORY;
+    return SEC_E_OK;
+}
+
 static SECURITY_STATUS WINAPI lsa_QueryContextAttributesA(CtxtHandle *context, ULONG attribute, void *buffer)
 {
     TRACE("%p %d %p\n", context, attribute, buffer);
@@ -564,6 +590,18 @@ static SECURITY_STATUS WINAPI lsa_QueryContextAttributesA(CtxtHandle *context, U
     {
     case SECPKG_ATTR_SIZES:
         return lsa_QueryContextAttributesW( context, attribute, buffer );
+
+    case SECPKG_ATTR_NEGOTIATION_INFO:
+    {
+        SecPkgContext_NegotiationInfoW infoW;
+        SecPkgContext_NegotiationInfoA *infoA = (SecPkgContext_NegotiationInfoA *)buffer;
+        SECURITY_STATUS status = lsa_QueryContextAttributesW( context, SECPKG_ATTR_NEGOTIATION_INFO, &infoW );
+
+        if (status != SEC_E_OK) return status;
+        status = nego_info_WtoA( &infoW, infoA );
+        FreeContextBuffer( infoW.PackageInfo );
+        return status;
+    }
 
 #define X(x) case (x) : FIXME(#x" stub\n"); break
     X(SECPKG_ATTR_ACCESS_TOKEN);
@@ -578,7 +616,6 @@ static SECURITY_STATUS WINAPI lsa_QueryContextAttributesA(CtxtHandle *context, U
     X(SECPKG_ATTR_SESSION_KEY);
     X(SECPKG_ATTR_STREAM_SIZES);
     X(SECPKG_ATTR_TARGET_INFORMATION);
-    X(SECPKG_ATTR_NEGOTIATION_INFO);
 #undef X
     default:
         FIXME( "unknown attribute %u\n", attribute );
