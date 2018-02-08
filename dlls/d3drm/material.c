@@ -71,7 +71,7 @@ static ULONG WINAPI d3drm_material_Release(IDirect3DRMMaterial2 *iface)
     {
         d3drm_object_cleanup((IDirect3DRMObject *)iface, &material->obj);
         IDirect3DRM_Release(material->d3drm);
-        HeapFree(GetProcessHeap(), 0, material);
+        heap_free(material);
     }
 
     return refcount;
@@ -286,7 +286,7 @@ HRESULT d3drm_material_create(struct d3drm_material **material, IDirect3DRM *d3d
 
     TRACE("material %p, d3drm %p.\n", material, d3drm);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMMaterial2_iface.lpVtbl = &d3drm_material_vtbl;

@@ -30,6 +30,7 @@
 #include "d3drmwin.h"
 #include "rmxfguid.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/list.h"
 
 #ifndef ARRAY_SIZE
