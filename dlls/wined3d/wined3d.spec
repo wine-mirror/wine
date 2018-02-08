@@ -28,7 +28,6 @@
 @ cdecl wined3d_blend_state_incref(ptr)
 
 @ cdecl wined3d_buffer_create(ptr ptr ptr ptr ptr ptr)
-@ cdecl wined3d_buffer_create_vb(ptr long long long ptr ptr ptr)
 @ cdecl wined3d_buffer_decref(ptr)
 @ cdecl wined3d_buffer_get_parent(ptr)
 @ cdecl wined3d_buffer_get_resource(ptr)

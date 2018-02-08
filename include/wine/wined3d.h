@@ -680,13 +680,6 @@ enum wined3d_resource_type
     WINED3D_RTYPE_TEXTURE_3D                = 3,
 };
 
-enum wined3d_pool
-{
-    WINED3D_POOL_DEFAULT                    = 0,
-    WINED3D_POOL_MANAGED                    = 1,
-    WINED3D_POOL_SYSTEM_MEM                 = 2,
-};
-
 enum wined3d_query_type
 {
     WINED3D_QUERY_TYPE_VCACHE                = 4,
@@ -2194,9 +2187,6 @@ HRESULT __cdecl wined3d_set_adapter_display_mode(struct wined3d *wined3d,
 
 HRESULT __cdecl wined3d_buffer_create(struct wined3d_device *device, const struct wined3d_buffer_desc *desc,
         const struct wined3d_sub_resource_data *data, void *parent, const struct wined3d_parent_ops *parent_ops,
-        struct wined3d_buffer **buffer);
-HRESULT __cdecl wined3d_buffer_create_vb(struct wined3d_device *device, UINT length, DWORD usage,
-        enum wined3d_pool pool, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_buffer **buffer);
 ULONG __cdecl wined3d_buffer_decref(struct wined3d_buffer *buffer);
 void * __cdecl wined3d_buffer_get_parent(const struct wined3d_buffer *buffer);
