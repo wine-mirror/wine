@@ -38,6 +38,67 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 
+ULONG CDECL wined3d_blend_state_incref(struct wined3d_blend_state *state)
+{
+    ULONG refcount = InterlockedIncrement(&state->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", state, refcount);
+
+    return refcount;
+}
+
+static void wined3d_blend_state_destroy_object(void *object)
+{
+    HeapFree(GetProcessHeap(), 0, object);
+}
+
+ULONG CDECL wined3d_blend_state_decref(struct wined3d_blend_state *state)
+{
+    ULONG refcount = InterlockedDecrement(&state->refcount);
+    struct wined3d_device *device = state->device;
+
+    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+
+    if (!refcount)
+    {
+        state->parent_ops->wined3d_object_destroyed(state->parent);
+        wined3d_cs_destroy_object(device->cs, wined3d_blend_state_destroy_object, state);
+    }
+
+    return refcount;
+}
+
+void * CDECL wined3d_blend_state_get_parent(const struct wined3d_blend_state *state)
+{
+    TRACE("state %p.\n", state);
+
+    return state->parent;
+}
+
+HRESULT CDECL wined3d_blend_state_create(struct wined3d_device *device,
+        const struct wined3d_blend_state_desc *desc, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_blend_state **state)
+{
+    struct wined3d_blend_state *object;
+
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
+            device, desc, parent, parent_ops, state);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->refcount = 1;
+    object->desc = *desc;
+    object->parent = parent;
+    object->parent_ops = parent_ops;
+    object->device = device;
+
+    TRACE("Created blend state %p.\n", object);
+    *state = object;
+
+    return WINED3D_OK;
+}
+
 ULONG CDECL wined3d_rasterizer_state_incref(struct wined3d_rasterizer_state *state)
 {
     ULONG refcount = InterlockedIncrement(&state->refcount);
@@ -81,7 +142,8 @@ HRESULT CDECL wined3d_rasterizer_state_create(struct wined3d_device *device,
 {
     struct wined3d_rasterizer_state *object;
 
-    TRACE("device %p, desc %p, state %p.\n", device, desc, state);
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
+            device, desc, parent, parent_ops, state);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -551,6 +613,28 @@ static void state_blendfactor(struct wined3d_context *context, const struct wine
     wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_BLENDFACTOR]);
     GL_EXTCALL(glBlendColor(color.r, color.g, color.b, color.a));
     checkGLcall("glBlendColor");
+}
+
+static void state_blend_object(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    BOOL alpha_to_coverage = FALSE;
+
+    if (!gl_info->supported[ARB_MULTISAMPLE])
+        return;
+
+    if (state->blend_state)
+    {
+        struct wined3d_blend_state_desc *desc = &state->blend_state->desc;
+        alpha_to_coverage = desc->alpha_to_coverage;
+    }
+
+    if (alpha_to_coverage)
+        gl_info->gl_ops.gl.p_glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+    else
+        gl_info->gl_ops.gl.p_glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+
+    checkGLcall("blend state");
 }
 
 void state_alpha_test(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -5024,6 +5108,7 @@ const struct StateEntryTemplate misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_BLENDOPALPHA),              { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_BLEND,                                        { STATE_BLEND,                                        state_blend_object  }, WINED3D_GL_EXT_NONE             },
     { STATE_STREAMSRC,                                    { STATE_STREAMSRC,                                    streamsrc           }, WINED3D_GL_EXT_NONE             },
     { STATE_VDECL,                                        { STATE_VDECL,                                        vdecl_miscpart      }, WINED3D_GL_EXT_NONE             },
     { STATE_FRONTFACE,                                    { STATE_FRONTFACE,                                    frontface_cc        }, ARB_CLIP_CONTROL                },
@@ -5973,6 +6058,7 @@ static void validate_state_table(struct StateEntry *state_table)
         STATE_FRAMEBUFFER,
         STATE_POINT_ENABLE,
         STATE_COLOR_KEY,
+        STATE_BLEND,
     };
     unsigned int i, current;
 

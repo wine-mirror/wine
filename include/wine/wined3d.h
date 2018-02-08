@@ -1976,6 +1976,11 @@ struct wined3d_buffer_desc
     unsigned int structure_byte_stride;
 };
 
+struct wined3d_blend_state_desc
+{
+    BOOL alpha_to_coverage;
+};
+
 struct wined3d_rasterizer_state_desc
 {
     BOOL front_ccw;
@@ -2086,6 +2091,7 @@ struct wined3d_buffer;
 struct wined3d_device;
 struct wined3d_palette;
 struct wined3d_query;
+struct wined3d_blend_state;
 struct wined3d_rasterizer_state;
 struct wined3d_rendertarget_view;
 struct wined3d_resource;
@@ -2238,6 +2244,7 @@ HRESULT __cdecl wined3d_device_end_stateblock(struct wined3d_device *device, str
 void __cdecl wined3d_device_evict_managed_resources(struct wined3d_device *device);
 UINT __cdecl wined3d_device_get_available_texture_mem(const struct wined3d_device *device);
 INT __cdecl wined3d_device_get_base_vertex_index(const struct wined3d_device *device);
+struct wined3d_blend_state * __cdecl wined3d_device_get_blend_state(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *device,
         UINT plane_idx, struct wined3d_vec4 *plane);
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device,
@@ -2348,6 +2355,7 @@ HRESULT __cdecl wined3d_device_reset(struct wined3d_device *device,
 void __cdecl wined3d_device_restore_fullscreen_window(struct wined3d_device *device, HWND window,
         const RECT *window_rect);
 void __cdecl wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index);
+void __cdecl wined3d_device_set_blend_state(struct wined3d_device *device, struct wined3d_blend_state *blend_state);
 HRESULT __cdecl wined3d_device_set_clip_plane(struct wined3d_device *device,
         UINT plane_idx, const struct wined3d_vec4 *plane);
 HRESULT __cdecl wined3d_device_set_clip_status(struct wined3d_device *device,
@@ -2549,6 +2557,13 @@ static inline HRESULT wined3d_private_store_set_private_data(struct wined3d_priv
 
     return WINED3D_OK;
 }
+
+HRESULT __cdecl wined3d_blend_state_create(struct wined3d_device *device,
+        const struct wined3d_blend_state_desc *desc, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_blend_state **state);
+ULONG __cdecl wined3d_blend_state_decref(struct wined3d_blend_state *state);
+void * __cdecl wined3d_blend_state_get_parent(const struct wined3d_blend_state *state);
+ULONG __cdecl wined3d_blend_state_incref(struct wined3d_blend_state *state);
 
 HRESULT __cdecl wined3d_rasterizer_state_create(struct wined3d_device *device,
         const struct wined3d_rasterizer_state_desc *desc, void *parent,

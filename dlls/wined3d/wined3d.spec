@@ -22,6 +22,11 @@
 @ cdecl wined3d_register_software_device(ptr ptr)
 @ cdecl wined3d_set_adapter_display_mode(ptr long ptr)
 
+@ cdecl wined3d_blend_state_create(ptr ptr ptr ptr ptr)
+@ cdecl wined3d_blend_state_decref(ptr)
+@ cdecl wined3d_blend_state_get_parent(ptr)
+@ cdecl wined3d_blend_state_incref(ptr)
+
 @ cdecl wined3d_buffer_create(ptr ptr ptr ptr ptr ptr)
 @ cdecl wined3d_buffer_create_vb(ptr long long long ptr ptr ptr)
 @ cdecl wined3d_buffer_decref(ptr)
@@ -53,6 +58,7 @@
 @ cdecl wined3d_device_evict_managed_resources(ptr)
 @ cdecl wined3d_device_get_available_texture_mem(ptr)
 @ cdecl wined3d_device_get_base_vertex_index(ptr)
+@ cdecl wined3d_device_get_blend_state(ptr)
 @ cdecl wined3d_device_get_clip_plane(ptr long ptr)
 @ cdecl wined3d_device_get_clip_status(ptr ptr)
 @ cdecl wined3d_device_get_compute_shader(ptr)
@@ -126,6 +132,7 @@
 @ cdecl wined3d_device_reset(ptr ptr ptr ptr long)
 @ cdecl wined3d_device_restore_fullscreen_window(ptr ptr ptr)
 @ cdecl wined3d_device_set_base_vertex_index(ptr long)
+@ cdecl wined3d_device_set_blend_state(ptr ptr)
 @ cdecl wined3d_device_set_clip_plane(ptr long ptr)
 @ cdecl wined3d_device_set_clip_status(ptr ptr)
 @ cdecl wined3d_device_set_compute_shader(ptr ptr)

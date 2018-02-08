@@ -48,6 +48,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW,
     WINED3D_CS_OP_SET_SAMPLER,
     WINED3D_CS_OP_SET_SHADER,
+    WINED3D_CS_OP_SET_BLEND_STATE,
     WINED3D_CS_OP_SET_RASTERIZER_STATE,
     WINED3D_CS_OP_SET_RENDER_STATE,
     WINED3D_CS_OP_SET_TEXTURE_STATE,
@@ -254,6 +255,12 @@ struct wined3d_cs_set_shader
     enum wined3d_cs_op opcode;
     enum wined3d_shader_type type;
     struct wined3d_shader *shader;
+};
+
+struct wined3d_cs_set_blend_state
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_blend_state *state;
 };
 
 struct wined3d_cs_set_rasterizer_state
@@ -1432,6 +1439,25 @@ void wined3d_cs_emit_set_shader(struct wined3d_cs *cs, enum wined3d_shader_type 
     cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
 }
 
+static void wined3d_cs_exec_set_blend_state(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_blend_state *op = data;
+
+    cs->state.blend_state = op->state;
+    device_invalidate_state(cs->device, STATE_BLEND);
+}
+
+void wined3d_cs_emit_set_blend_state(struct wined3d_cs *cs, struct wined3d_blend_state *state)
+{
+    struct wined3d_cs_set_blend_state *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_SET_BLEND_STATE;
+    op->state = state;
+
+    cs->ops->submit(cs, WINED3D_CS_QUEUE_DEFAULT);
+}
+
 static void wined3d_cs_exec_set_rasterizer_state(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_rasterizer_state *op = data;
@@ -2397,6 +2423,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW   */ wined3d_cs_exec_set_unordered_access_view,
     /* WINED3D_CS_OP_SET_SAMPLER                 */ wined3d_cs_exec_set_sampler,
     /* WINED3D_CS_OP_SET_SHADER                  */ wined3d_cs_exec_set_shader,
+    /* WINED3D_CS_OP_SET_BLEND_STATE             */ wined3d_cs_exec_set_blend_state,
     /* WINED3D_CS_OP_SET_RASTERIZER_STATE        */ wined3d_cs_exec_set_rasterizer_state,
     /* WINED3D_CS_OP_SET_RENDER_STATE            */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE           */ wined3d_cs_exec_set_texture_state,

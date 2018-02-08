@@ -1948,6 +1948,31 @@ static void resolve_depth_buffer(struct wined3d_state *state)
             src_view->sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 
+void CDECL wined3d_device_set_blend_state(struct wined3d_device *device, struct wined3d_blend_state *blend_state)
+{
+    struct wined3d_blend_state *prev;
+
+    TRACE("device %p, blend_state %p.\n", device, blend_state);
+
+    prev = device->update_state->blend_state;
+    if (prev == blend_state)
+        return;
+
+    if (blend_state)
+        wined3d_blend_state_incref(blend_state);
+    device->update_state->blend_state = blend_state;
+    wined3d_cs_emit_set_blend_state(device->cs, blend_state);
+    if (prev)
+        wined3d_blend_state_decref(prev);
+}
+
+struct wined3d_blend_state * CDECL wined3d_device_get_blend_state(const struct wined3d_device *device)
+{
+    TRACE("device %p.\n", device);
+
+    return device->state.blend_state;
+}
+
 void CDECL wined3d_device_set_rasterizer_state(struct wined3d_device *device,
         struct wined3d_rasterizer_state *rasterizer_state)
 {
