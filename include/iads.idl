@@ -18,6 +18,12 @@
 
 import "oaidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 [
     helpstring("Active DS Type Library"),
     uuid(97d25db0-0363-11cf-abc4-02608c9e7553),
@@ -786,6 +792,57 @@ interface IDirectorySearch : IUnknown
                     [out] PADS_SEARCH_COLUMN pSearchColumn);
     HRESULT FreeColumn([in] PADS_SEARCH_COLUMN pSearchColumn);
     HRESULT CloseSearchHandle([in] ADS_SEARCH_HANDLE hSearchResult);
+}
+
+/*****************************************************************************
+ *    IADsADSystemInfo interface
+ */
+[
+    odl,
+    uuid(5bb11929-afd1-11d2-9cb9-0000f87a369e),
+    dual,
+    oleautomation
+]
+interface IADsADSystemInfo : IDispatch
+{
+    [id(0x00000002), propget]
+    HRESULT UserName([out, retval] BSTR *retval);
+    [id(0x00000003), propget]
+    HRESULT ComputerName([out, retval] BSTR *retval);
+    [id(0x00000004), propget]
+    HRESULT SiteName([out, retval] BSTR *retval);
+    [id(0x00000005), propget]
+    HRESULT DomainShortName([out, retval] BSTR *retval);
+    [id(0x00000006), propget]
+    HRESULT DomainDNSName([out, retval] BSTR *retval);
+    [id(0x00000007), propget]
+    HRESULT ForestDNSName([out, retval] BSTR *retval);
+    [id(0x00000008), propget]
+    HRESULT PDCRoleOwner([out, retval] BSTR *retval);
+    [id(0x00000009), propget]
+    HRESULT SchemaRoleOwner([out, retval] BSTR *retval);
+    [id(0x0000000a), propget]
+    HRESULT IsNativeMode([out, retval] VARIANT_BOOL *retval);
+    [id(0x0000000b)]
+    HRESULT GetAnyDCName([out, retval] BSTR *retval);
+    [id(0x0000000c)]
+    HRESULT GetDCSiteName([in] BSTR server, [out, retval] BSTR *retval);
+    [id(0x0000000d)]
+    HRESULT RefreshSchemaCache();
+    [id(0x0000000e)]
+    HRESULT GetTrees([out, retval] VARIANT *retval);
+}
+
+[
+    helpstring("AD System Info Object"),
+    uuid(50b6327f-afd1-11d2-9cb9-0000f87a369e),
+    progid("ADSystemInfo"),
+    version(1.0)
+]
+coclass ADSystemInfo
+{
+    [default] interface IADsADSystemInfo;
+    interface IDispatch;
 }
 
 } /* library */
