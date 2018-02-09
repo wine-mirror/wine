@@ -12122,6 +12122,65 @@ static void test_clip_planes_limits(void)
     DestroyWindow(window);
 }
 
+static void test_swapchain_multisample_reset(void)
+{
+    IDirect3DSwapChain9 *swapchain;
+    D3DPRESENT_PARAMETERS d3dpp;
+    IDirect3DDevice9 *device;
+    DWORD quality_levels;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    ok(!!window, "Failed to create a window.\n");
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (IDirect3D9_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES, &quality_levels) == D3DERR_NOTAVAILABLE)
+    {
+        skip("Multisampling not supported for D3DFMT_A8R8G8B8.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a 3D device.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
+    ok(hr == D3D_OK, "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+    ok(hr == D3D_OK, "Failed to get the implicit swapchain, hr %#x.\n", hr);
+    hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &d3dpp);
+    ok(hr == D3D_OK, "Failed to get present parameters, hr %#x.\n", hr);
+    ok(d3dpp.MultiSampleType == D3DMULTISAMPLE_NONE,
+            "Got unexpected multisample type %#x.\n", d3dpp.MultiSampleType);
+    IDirect3DSwapChain9_Release(swapchain);
+
+    d3dpp.MultiSampleType = D3DMULTISAMPLE_2_SAMPLES;
+    d3dpp.MultiSampleQuality = quality_levels - 1;
+    hr = IDirect3DDevice9_Reset(device, &d3dpp);
+    ok(hr == D3D_OK, "Failed to reset device, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
+    ok(hr == D3D_OK, "Failed to clear, hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -12243,6 +12302,7 @@ START_TEST(device)
     test_destroyed_window();
     test_lockable_backbuffer();
     test_clip_planes_limits();
+    test_swapchain_multisample_reset();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
