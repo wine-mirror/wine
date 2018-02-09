@@ -257,7 +257,7 @@ struct gl_drawable
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
     Colormap                       colormap;     /* colormap used for the drawable */
     const struct wgl_pixel_format *format;       /* pixel format for the drawable */
-    RECT                           rect;         /* drawable rect, relative to whole window drawable */
+    SIZE                           pixmap_size;  /* pixmap size for GLXPixmap drawables */
     int                            swap_interval;
     BOOL                           refresh_swap_interval;
 };
@@ -1346,6 +1346,12 @@ static void free_gl_drawable( struct gl_drawable *gl )
 static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
 {
     XVisualInfo *visual = gl->format->visual;
+    RECT rect;
+    int width, height;
+
+    GetClientRect( hwnd, &rect );
+    width  = min( max( 1, rect.right ), 65535 );
+    height = min( max( 1, rect.bottom ), 65535 );
 
     gl->drawable = 0;
 
@@ -1387,8 +1393,7 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
         XInstallColormap(gdi_display, attrib.colormap);
 
         gl->type = DC_GL_CHILD_WIN;
-        gl->window = XCreateWindow( gdi_display, dummy_parent, 0, 0,
-                                      gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
+        gl->window = XCreateWindow( gdi_display, dummy_parent, 0, 0, width, height,
                                       0, visual->depth, InputOutput, visual->visual,
                                       CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
         if (gl->window)
@@ -1408,13 +1413,13 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
         WARN("XComposite is not available, using GLXPixmap hack\n");
 
         gl->type = DC_GL_PIXMAP_WIN;
-        gl->pixmap = XCreatePixmap( gdi_display, root_window,
-                                    gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
-                                    visual->depth );
+        gl->pixmap = XCreatePixmap( gdi_display, root_window, width, height, visual->depth );
         if (gl->pixmap)
         {
             gl->drawable = pglXCreatePixmap( gdi_display, gl->format->fbconfig, gl->pixmap, NULL );
             if (!gl->drawable) XFreePixmap( gdi_display, gl->pixmap );
+            gl->pixmap_size.cx = width;
+            gl->pixmap_size.cy = height;
         }
     }
 
@@ -1440,9 +1445,6 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
     gl->swap_interval = 1;
     gl->refresh_swap_interval = TRUE;
     gl->format = format;
-    GetClientRect( hwnd, &gl->rect );
-    gl->rect.right  = min( max( 1, gl->rect.right ), 65535 );
-    gl->rect.bottom = min( max( 1, gl->rect.bottom ), 65535 );
 
     if (!create_gl_drawable( hwnd, gl ))
     {
@@ -1515,31 +1517,26 @@ static BOOL set_pixel_format(HDC hdc, int format, BOOL allow_change)
 /***********************************************************************
  *              sync_gl_drawable
  */
-void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_rect )
+void sync_gl_drawable( HWND hwnd, int width, int height )
 {
     struct gl_drawable *gl;
     GLXDrawable glxp;
     Pixmap pix;
-    int mask = 0;
     XWindowChanges changes;
 
-    changes.width  = min( max( 1, client_rect->right - client_rect->left ), 65535 );
-    changes.height = min( max( 1, client_rect->bottom - client_rect->top ), 65535 );
+    changes.width  = min( max( 1, width ), 65535 );
+    changes.height = min( max( 1, height ), 65535 );
 
     if (!(gl = get_gl_drawable( hwnd, 0 ))) return;
-
-    if (changes.width  != gl->rect.right - gl->rect.left) mask |= CWWidth;
-    if (changes.height != gl->rect.bottom - gl->rect.top) mask |= CWHeight;
 
     TRACE( "setting drawable %lx size %dx%d\n", gl->drawable, changes.width, changes.height );
 
     switch (gl->type)
     {
     case DC_GL_CHILD_WIN:
-        if (mask) XConfigureWindow( gdi_display, gl->window, mask, &changes );
+        XConfigureWindow( gdi_display, gl->window, CWWidth | CWHeight, &changes );
         break;
     case DC_GL_PIXMAP_WIN:
-        if (!mask) break;
         pix = XCreatePixmap(gdi_display, root_window, changes.width, changes.height,
                             gl->format->visual->depth);
         if (!pix) goto done;
@@ -1558,11 +1555,12 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
 
         gl->pixmap = pix;
         gl->drawable = glxp;
+        gl->pixmap_size.cx = width;
+        gl->pixmap_size.cy = height;
         break;
     default:
         break;
     }
-    SetRect( &gl->rect, 0, 0, changes.width, changes.height );
 done:
     release_gl_drawable( gl );
 }
@@ -3334,7 +3332,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
              * copying */
             pglFlush();
             pglXCopySubBufferMESA( gdi_display, gl->drawable, 0, 0,
-                                   gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top );
+                                   gl->pixmap_size.cx, gl->pixmap_size.cy );
             break;
         }
         if (pglXSwapBuffersMscOML)
@@ -3403,7 +3401,7 @@ struct opengl_funcs *get_glx_driver( UINT version )
     return NULL;
 }
 
-void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_rect )
+void sync_gl_drawable( HWND hwnd, int width, int height )
 {
 }
 

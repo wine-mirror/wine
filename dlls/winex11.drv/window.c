@@ -2304,8 +2304,13 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
 
     if (!data->whole_window)
     {
+        int width  = data->client_rect.right - data->client_rect.left;
+        int height = data->client_rect.bottom - data->client_rect.top;
+
         release_win_data( data );
-        sync_gl_drawable( hwnd, visible_rect, rectClient );
+        if (width != old_client_rect.right - old_client_rect.left ||
+            height != old_client_rect.bottom - old_client_rect.top)
+            sync_gl_drawable( hwnd, width, height );
         return;
     }
 
