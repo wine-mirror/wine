@@ -632,7 +632,7 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
 
         desc.byte_width = new_size * sizeof(D3DTLVERTEX);
         desc.usage = WINED3DUSAGE_STATICDECL;
-        desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+        desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP;
 
         if (FAILED(hr = wined3d_buffer_create(buffer->d3ddev->wined3d_device, &desc,
                 NULL, NULL, &ddraw_null_wined3d_parent_ops, &dst_buffer)))

@@ -127,7 +127,7 @@ static HRESULT d3d_vertex_buffer_create_wined3d_buffer(struct d3d_vertex_buffer 
     if (buffer->Caps & D3DVBCAPS_SYSTEMMEMORY)
         desc.access = WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
     else
-        desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+        desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP;
     desc.misc_flags = 0;
     desc.structure_byte_stride = 0;
 
