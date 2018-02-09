@@ -28,6 +28,7 @@ typedef struct
 {
     IDHTMLEdit IDHTMLEdit_iface;
     IOleObject IOleObject_iface;
+    IPersistStreamInit IPersistStreamInit_iface;
     IOleClientSite *client_site;
     LONG ref;
 } DHTMLEditImpl;
@@ -40,6 +41,11 @@ static inline DHTMLEditImpl *impl_from_IDHTMLEdit(IDHTMLEdit *iface)
 static inline DHTMLEditImpl *impl_from_IOleObject(IOleObject *iface)
 {
     return CONTAINING_RECORD(iface, DHTMLEditImpl, IOleObject_iface);
+}
+
+static inline DHTMLEditImpl *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
+{
+    return CONTAINING_RECORD(iface, DHTMLEditImpl, IPersistStreamInit_iface);
 }
 
 static ULONG dhtml_edit_addref(DHTMLEditImpl *This)
@@ -68,6 +74,12 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
     {
         dhtml_edit_addref(This);
         *out = &This->IOleObject_iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IPersistStreamInit))
+    {
+        dhtml_edit_addref(This);
+        *out = &This->IPersistStreamInit_iface;
         return S_OK;
     }
 
@@ -765,6 +777,76 @@ static const IOleObjectVtbl OleObjectVtbl = {
     OleObject_SetColorScheme
 };
 
+static HRESULT WINAPI PersistStreamInit_QueryInterface(IPersistStreamInit *iface, REFIID iid, void **out)
+{
+    return dhtml_edit_qi(impl_from_IPersistStreamInit(iface), iid, out);
+}
+
+static ULONG WINAPI PersistStreamInit_AddRef(IPersistStreamInit *iface)
+{
+    return dhtml_edit_addref(impl_from_IPersistStreamInit(iface));
+}
+
+static ULONG WINAPI PersistStreamInit_Release(IPersistStreamInit *iface)
+{
+    return dhtml_edit_release(impl_from_IPersistStreamInit(iface));
+}
+
+static HRESULT WINAPI PersistStreamInit_GetClassID(IPersistStreamInit *iface, CLSID *clsid)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)->(%p) stub\n", This, clsid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, IStream *stream)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)->(%p) stub\n", This, stream);
+    return S_OK;
+}
+
+static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, IStream *stream, BOOL clear_dirty)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)->(%p, %u) stub\n", This, stream, clear_dirty);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_GetSizeMax(IPersistStreamInit *iface, ULARGE_INTEGER *value)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)->(%p) stub\n", This, value);
+    value->QuadPart = 0;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
+    PersistStreamInit_QueryInterface,
+    PersistStreamInit_AddRef,
+    PersistStreamInit_Release,
+    PersistStreamInit_GetClassID,
+    PersistStreamInit_IsDirty,
+    PersistStreamInit_Load,
+    PersistStreamInit_Save,
+    PersistStreamInit_GetSizeMax,
+    PersistStreamInit_InitNew
+};
+
 HRESULT dhtml_edit_create(REFIID iid, void **out)
 {
     DHTMLEditImpl *This;
@@ -778,6 +860,7 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
 
     This->IDHTMLEdit_iface.lpVtbl = &DHTMLEditVtbl;
     This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
+    This->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     This->client_site = NULL;
     This->ref = 1;
 
