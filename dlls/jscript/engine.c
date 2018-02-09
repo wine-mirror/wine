@@ -1296,7 +1296,7 @@ static HRESULT interp_local(script_ctx_t *ctx)
     jsval_t copy;
     HRESULT hres;
 
-    TRACE("%d\n", arg);
+    TRACE("%d: %s\n", arg, debugstr_w(local_name(frame, arg)));
 
     if(!frame->base_scope || !frame->base_scope->frame)
         return identifier_value(ctx, local_name(frame, arg));
