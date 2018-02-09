@@ -4658,6 +4658,8 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_COLOR_KEY";
     if (STATE_IS_STREAM_OUTPUT(state))
         return "STATE_STREAM_OUTPUT";
+    if (STATE_IS_BLEND(state))
+        return "STATE_BLEND";
 
     return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
 }
