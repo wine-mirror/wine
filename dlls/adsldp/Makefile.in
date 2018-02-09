@@ -1,0 +1,7 @@
+MODULE    = adsldp.dll
+
+C_SRCS = \
+	adsldp.c
+
+IDL_SRCS = \
+	adsldp.idl
