@@ -357,6 +357,11 @@ static inline BOOL is_slash(WCHAR c)
     return c == '/' || c == '\\';
 }
 
+static inline BOOL is_ascii(WCHAR c)
+{
+    return c < 0x80;
+}
+
 static BOOL is_default_port(URL_SCHEME scheme, DWORD port) {
     DWORD i;
 
@@ -2164,7 +2169,7 @@ static BOOL canonicalize_username(const parse_data *data, Uri *uri, DWORD flags,
                     continue;
                 }
             }
-        } else if(!is_reserved(*ptr) && !is_unreserved(*ptr) && *ptr != '\\') {
+        } else if(is_ascii(*ptr) && !is_reserved(*ptr) && !is_unreserved(*ptr) && *ptr != '\\') {
             /* Only percent encode forbidden characters if the NO_ENCODE_FORBIDDEN_CHARACTERS flag
              * is NOT set.
              */
@@ -2222,7 +2227,7 @@ static BOOL canonicalize_password(const parse_data *data, Uri *uri, DWORD flags,
                     continue;
                 }
             }
-        } else if(!is_reserved(*ptr) && !is_unreserved(*ptr) && *ptr != '\\') {
+        } else if(is_ascii(*ptr) && !is_reserved(*ptr) && !is_unreserved(*ptr) && *ptr != '\\') {
             /* Only percent encode forbidden characters if the NO_ENCODE_FORBIDDEN_CHARACTERS flag
              * is NOT set.
              */
@@ -2357,7 +2362,7 @@ static BOOL canonicalize_reg_name(const parse_data *data, Uri *uri,
             if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = *ptr;
             ++uri->canon_len;
-        } else if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) &&
+        } else if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) && is_ascii(*ptr) &&
                   !is_unreserved(*ptr) && !is_reserved(*ptr) && known_scheme) {
             if(!computeOnly) {
                 pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
@@ -2927,7 +2932,7 @@ static DWORD canonicalize_path_hierarchical(const WCHAR *path, DWORD path_len, U
                 len++;
                 do_default_action = FALSE;
             }
-        } else if(known_scheme && !is_res && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
+        } else if(known_scheme && !is_res && is_ascii(*ptr) && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   (!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) || is_file)) {
             if(!is_file || !(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
                 /* Escape the forbidden character. */
@@ -3053,7 +3058,7 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
             }
         } else if(is_mk && *ptr == ':' && ptr + 1 < data->path + data->path_len && *(ptr + 1) == ':') {
             flags &= ~Uri_CREATE_FILE_USE_DOS_PATH;
-        } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
+        } else if(known_scheme && is_ascii(*ptr) && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   !(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
             if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH))) {
                 if(!computeOnly)
@@ -3207,7 +3212,7 @@ static BOOL canonicalize_query(const parse_data *data, Uri *uri, DWORD flags, BO
                     continue;
                 }
             }
-        } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr)) {
+        } else if(known_scheme && is_ascii(*ptr) && !is_unreserved(*ptr) && !is_reserved(*ptr)) {
             if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) &&
                !(flags & Uri_CREATE_NO_DECODE_EXTRA_INFO)) {
                 if(!computeOnly)
@@ -3257,7 +3262,7 @@ static BOOL canonicalize_fragment(const parse_data *data, Uri *uri, DWORD flags,
                     continue;
                 }
             }
-        } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr)) {
+        } else if(known_scheme && is_ascii(*ptr) && !is_unreserved(*ptr) && !is_reserved(*ptr)) {
             if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) &&
                !(flags & Uri_CREATE_NO_DECODE_EXTRA_INFO)) {
                 if(!computeOnly)
@@ -6890,7 +6895,7 @@ static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
                 len += 3;
                 do_default_action = FALSE;
             }
-        } else if(!is_reserved(*ptr) && !is_unreserved(*ptr)) {
+        } else if(is_ascii(*ptr) && !is_reserved(*ptr) && !is_unreserved(*ptr)) {
             if(flags & URL_ESCAPE_UNSAFE) {
                 if(len + 3 < output_len)
                     pct_encode_val(*ptr, output+len);

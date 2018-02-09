@@ -4798,6 +4798,266 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* Path with Unicode characters. Unicode characters should not be encoded */
+    {/* "http://127.0.0.1/测试/test.txt" with Chinese in UTF-8 encoding */
+        "http://127.0.0.1/\xE6\xB5\x8B\xE8\xAF\x95/test.txt", 0, S_OK, FALSE,
+        {
+            {"http://127.0.0.1/\xE6\xB5\x8B\xE8\xAF\x95/test.txt",S_OK,FALSE},
+            {"127.0.0.1",S_OK,FALSE},
+            {"http://127.0.0.1/\xE6\xB5\x8B\xE8\xAF\x95/test.txt",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".txt",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"127.0.0.1",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/\xE6\xB5\x8B\xE8\xAF\x95/test.txt",S_OK,FALSE},
+            {"/\xE6\xB5\x8B\xE8\xAF\x95/test.txt",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://127.0.0.1/\xE6\xB5\x8B\xE8\xAF\x95/test.txt",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "file:\xE6\xB5\x8B\xE8\xAF\x95.html", 0, S_OK, FALSE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:\xE6\xB5\x8B\xE8\xAF\x95.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"\xE6\xB5\x8B\xE8\xAF\x95.html",S_OK,FALSE},
+            {"\xE6\xB5\x8B\xE8\xAF\x95.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:\xE6\xB5\x8B\xE8\xAF\x95.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Username with Unicode characters. Unicode characters should not be encoded */
+    {   "ftp://\xE6\xB5\x8B\xE8\xAF\x95:wine@ftp.winehq.org:9999/dir/foobar.txt", 0, S_OK, FALSE,
+        {
+            {"ftp://\xE6\xB5\x8B\xE8\xAF\x95:wine@ftp.winehq.org:9999/dir/foobar.txt",S_OK,FALSE},
+            {"\xE6\xB5\x8B\xE8\xAF\x95:wine@ftp.winehq.org:9999",S_OK,FALSE},
+            {"ftp://ftp.winehq.org:9999/dir/foobar.txt",S_OK,FALSE},
+            {"winehq.org",S_OK,FALSE},
+            {".txt",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp.winehq.org",S_OK,FALSE},
+            {"wine",S_OK,FALSE},
+            {"/dir/foobar.txt",S_OK,FALSE},
+            {"/dir/foobar.txt",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp://\xE6\xB5\x8B\xE8\xAF\x95:wine@ftp.winehq.org:9999/dir/foobar.txt",S_OK,FALSE},
+            {"ftp",S_OK,FALSE},
+            {"\xE6\xB5\x8B\xE8\xAF\x95:wine",S_OK,FALSE},
+            {"\xE6\xB5\x8B\xE8\xAF\x95",S_OK,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {9999,S_OK,FALSE},
+            {URL_SCHEME_FTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Password with Unicode characters. Unicode characters should not be encoded */
+    {   "ftp://winepass:\xE6\xB5\x8B\xE8\xAF\x95@ftp.winehq.org:9999/dir/foobar.txt", 0, S_OK, FALSE,
+        {
+            {"ftp://winepass:\xE6\xB5\x8B\xE8\xAF\x95@ftp.winehq.org:9999/dir/foobar.txt",S_OK,FALSE},
+            {"winepass:\xE6\xB5\x8B\xE8\xAF\x95@ftp.winehq.org:9999",S_OK,FALSE},
+            {"ftp://ftp.winehq.org:9999/dir/foobar.txt",S_OK,FALSE},
+            {"winehq.org",S_OK,FALSE},
+            {".txt",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp.winehq.org",S_OK,FALSE},
+            {"\xE6\xB5\x8B\xE8\xAF\x95",S_OK,FALSE},
+            {"/dir/foobar.txt",S_OK,FALSE},
+            {"/dir/foobar.txt",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp://winepass:\xE6\xB5\x8B\xE8\xAF\x95@ftp.winehq.org:9999/dir/foobar.txt",S_OK,FALSE},
+            {"ftp",S_OK,FALSE},
+            {"winepass:\xE6\xB5\x8B\xE8\xAF\x95",S_OK,FALSE},
+            {"winepass",S_OK,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {9999,S_OK,FALSE},
+            {URL_SCHEME_FTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Query with Unicode characters. Unicode characters should not be encoded */
+    {   "http://www.winehq.org/tests/..?query=\xE6\xB5\x8B\xE8\xAF\x95&return=y", 0, S_OK, FALSE,
+        {
+            {"http://www.winehq.org/?query=\xE6\xB5\x8B\xE8\xAF\x95&return=y",S_OK,FALSE},
+            {"www.winehq.org",S_OK,FALSE},
+            {"http://www.winehq.org/?query=\xE6\xB5\x8B\xE8\xAF\x95&return=y",S_OK,FALSE},
+            {"winehq.org",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"www.winehq.org",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/?query=\xE6\xB5\x8B\xE8\xAF\x95&return=y",S_OK,FALSE},
+            {"?query=\xE6\xB5\x8B\xE8\xAF\x95&return=y",S_OK,FALSE},
+            {"http://www.winehq.org/tests/..?query=\xE6\xB5\x8B\xE8\xAF\x95&return=y",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE},
+        }
+    },
+    /* Fragment with Unicode characters. Unicode characters should not be encoded */
+    {   "http://www.winehq.org/tests/#\xE6\xB5\x8B\xE8\xAF\x95", 0, S_OK, FALSE,
+        {
+            {"http://www.winehq.org/tests/#\xE6\xB5\x8B\xE8\xAF\x95",S_OK,FALSE},
+            {"www.winehq.org",S_OK,FALSE},
+            {"http://www.winehq.org/tests/#\xE6\xB5\x8B\xE8\xAF\x95",S_OK,FALSE},
+            {"winehq.org",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"#\xE6\xB5\x8B\xE8\xAF\x95",S_OK,FALSE},
+            {"www.winehq.org",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/tests/",S_OK,FALSE},
+            {"/tests/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://www.winehq.org/tests/#\xE6\xB5\x8B\xE8\xAF\x95",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE},
+        }
+    },
+    /* ZERO WIDTH JOINER as non-printing Unicode characters should not be encoded if not preprocessed. */
+    {   "file:a\xE2\x80\x8D.html", Uri_CREATE_NO_PRE_PROCESS_HTML_URI, S_OK, FALSE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:a\xE2\x80\x8D.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"a\xE2\x80\x8D.html",S_OK,FALSE},
+            {"a\xE2\x80\x8D.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:a\xE2\x80\x8D.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* LEFT-TO-RIGHT MARK as non-printing Unicode characters should not be encoded if not preprocessed. */
+    {   "file:ab\xE2\x80\x8E.html", Uri_CREATE_NO_PRE_PROCESS_HTML_URI, S_OK, FALSE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:ab\xE2\x80\x8D.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ab\xE2\x80\x8D.html",S_OK,FALSE},
+            {"ab\xE2\x80\x8D.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:ab\xE2\x80\x8D.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Invalid Unicode characters should not be filtered */
+    {   "file:ab\xc3\x28.html", 0, S_OK, FALSE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:ab\xc3\x28.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ab\xc3\x28.html",S_OK,FALSE},
+            {"ab\xc3\x28.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:ab\xc3\x28.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Make sure % encoded unicode characters are not decoded. */
+    {   "ftp://%E6%B5%8B%E8%AF%95:%E6%B5%8B%E8%AF%95@ftp.google.com/", 0, S_OK, FALSE,
+        {
+            {"ftp://%E6%B5%8B%E8%AF%95:%E6%B5%8B%E8%AF%95@ftp.google.com/",S_OK,FALSE},
+            {"%E6%B5%8B%E8%AF%95:%E6%B5%8B%E8%AF%95@ftp.google.com",S_OK,FALSE},
+            {"ftp://ftp.google.com/",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp.google.com",S_OK,FALSE},
+            {"%E6%B5%8B%E8%AF%95",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp://%E6%B5%8B%E8%AF%95:%E6%B5%8B%E8%AF%95@ftp.google.com/",S_OK,FALSE},
+            {"ftp",S_OK,FALSE},
+            {"%E6%B5%8B%E8%AF%95:%E6%B5%8B%E8%AF%95",S_OK,FALSE},
+            {"%E6%B5%8B%E8%AF%95",S_OK,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {21,S_OK,FALSE},
+            {URL_SCHEME_FTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
@@ -7425,9 +7685,9 @@ static inline LPWSTR a2w(LPCSTR str) {
     LPWSTR ret = NULL;
 
     if(str) {
-        DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        DWORD len = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
         ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+        MultiByteToWideChar(CP_UTF8, 0, str, -1, ret, len);
     }
 
     return ret;
@@ -8106,8 +8366,12 @@ static void test_IUri_GetPropertyLength(void) {
             for(j = Uri_PROPERTY_STRING_START; j <= Uri_PROPERTY_STRING_LAST; ++j) {
                 DWORD expectedLen, receivedLen;
                 uri_str_property prop = test.str_props[j];
+                LPWSTR expectedValueW;
 
                 expectedLen = lstrlenA(prop.value);
+                /* Value may be unicode encoded */
+                expectedValueW = a2w(prop.value);
+                expectedLen = lstrlenW(expectedValueW);
 
                 /* This won't be necessary once GetPropertyLength is implemented. */
                 receivedLen = -1;
