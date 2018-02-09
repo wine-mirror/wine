@@ -238,9 +238,11 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
     }
     texture_type[] =
     {
-        {GL_TEXTURE_2D,            GL_TEXTURE_BINDING_2D,            "2d",        WINED3D_GL_EXT_NONE},
-        {GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_BINDING_RECTANGLE_ARB, "rectangle", ARB_TEXTURE_RECTANGLE},
-        {GL_TEXTURE_2D_ARRAY,      GL_TEXTURE_BINDING_2D_ARRAY,      "2d-array",  EXT_TEXTURE_ARRAY},
+        {GL_TEXTURE_2D,                   GL_TEXTURE_BINDING_2D,                   "2d",          WINED3D_GL_EXT_NONE},
+        {GL_TEXTURE_RECTANGLE_ARB,        GL_TEXTURE_BINDING_RECTANGLE_ARB,        "rectangle",   ARB_TEXTURE_RECTANGLE},
+        {GL_TEXTURE_2D_ARRAY,             GL_TEXTURE_BINDING_2D_ARRAY,             "2d-array" ,   EXT_TEXTURE_ARRAY},
+        {GL_TEXTURE_2D_MULTISAMPLE,       GL_TEXTURE_BINDING_2D_MULTISAMPLE,       "2d-ms",       ARB_TEXTURE_MULTISAMPLE},
+        {GL_TEXTURE_2D_MULTISAMPLE_ARRAY, GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY, "2d-array-ms", ARB_TEXTURE_MULTISAMPLE},
     };
 
     GLint type, name, samples, width, height, old_texture, level, face, fmt, tex_target;
@@ -307,6 +309,7 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
                 GL_EXTCALL(glGetTextureLevelParameteriv(name, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt));
                 GL_EXTCALL(glGetTextureLevelParameteriv(name, level, GL_TEXTURE_WIDTH, &width));
                 GL_EXTCALL(glGetTextureLevelParameteriv(name, level, GL_TEXTURE_HEIGHT, &height));
+                GL_EXTCALL(glGetTextureLevelParameteriv(name, level, GL_TEXTURE_SAMPLES, &samples));
             }
             else
             {
@@ -336,13 +339,17 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
                 gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
                 gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_WIDTH, &width);
                 gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_HEIGHT, &height);
+                if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+                    gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_SAMPLES, &samples);
+                else
+                    samples = 1;
 
                 gl_info->gl_ops.gl.p_glBindTexture(tex_target, old_texture);
             }
         }
 
-        FIXME("    %s: %s texture %d, %dx%d, format %#x.\n", debug_fboattachment(attachment),
-                tex_type_str, name, width, height, fmt);
+        FIXME("    %s: %s texture %d, %dx%d, %d samples, format %#x.\n",
+                debug_fboattachment(attachment), tex_type_str, name, width, height, samples, fmt);
 
         checkGLcall("guess texture type");
     }
