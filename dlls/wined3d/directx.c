@@ -3270,6 +3270,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetShaderiv)              /* OpenGL 2.0 */
     USE_GL_FUNC(glGetShaderSource)          /* OpenGL 2.0 */
     USE_GL_FUNC(glGetStringi)               /* OpenGL 3.0 */
+    USE_GL_FUNC(glGetTextureLevelParameteriv) /* OpenGL 4.5 */
+    USE_GL_FUNC(glGetTextureParameteriv)    /* OpenGL 4.5 */
     USE_GL_FUNC(glGetUniformfv)             /* OpenGL 2.0 */
     USE_GL_FUNC(glGetUniformiv)             /* OpenGL 2.0 */
     USE_GL_FUNC(glGetUniformLocation)       /* OpenGL 2.0 */

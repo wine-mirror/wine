@@ -289,39 +289,62 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
             unsigned int i;
 
             tex_type_str = NULL;
-            for (i = 0; i < ARRAY_SIZE(texture_type); ++i)
+            if (gl_info->gl_ops.ext.p_glGetTextureParameteriv)
             {
-                if (!gl_info->supported[texture_type[i].extension])
-                    continue;
+                GL_EXTCALL(glGetTextureParameteriv(name, GL_TEXTURE_TARGET, &tex_target));
 
-                gl_info->gl_ops.gl.p_glGetIntegerv(texture_type[i].binding, &old_texture);
-                while (gl_info->gl_ops.gl.p_glGetError());
-
-                gl_info->gl_ops.gl.p_glBindTexture(texture_type[i].target, name);
-                if (!gl_info->gl_ops.gl.p_glGetError())
+                for (i = 0; i < ARRAY_SIZE(texture_type); ++i)
                 {
-                    tex_target = texture_type[i].target;
-                    tex_type_str = texture_type[i].str;
-                    break;
+                    if (texture_type[i].target == tex_target)
+                    {
+                        tex_type_str = texture_type[i].str;
+                        break;
+                    }
                 }
-                gl_info->gl_ops.gl.p_glBindTexture(texture_type[i].target, old_texture);
-            }
-            if (!tex_type_str)
-            {
-                FIXME("Cannot find type of texture %d.\n", name);
-                return;
-            }
+                if (i == ARRAY_SIZE(texture_type))
+                    tex_type_str = wine_dbg_sprintf("%#x", tex_target);
 
-            gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
-            gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_WIDTH, &width);
-            gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_HEIGHT, &height);
+                GL_EXTCALL(glGetTextureLevelParameteriv(name, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt));
+                GL_EXTCALL(glGetTextureLevelParameteriv(name, level, GL_TEXTURE_WIDTH, &width));
+                GL_EXTCALL(glGetTextureLevelParameteriv(name, level, GL_TEXTURE_HEIGHT, &height));
+            }
+            else
+            {
+                for (i = 0; i < ARRAY_SIZE(texture_type); ++i)
+                {
+                    if (!gl_info->supported[texture_type[i].extension])
+                        continue;
+
+                    gl_info->gl_ops.gl.p_glGetIntegerv(texture_type[i].binding, &old_texture);
+                    while (gl_info->gl_ops.gl.p_glGetError());
+
+                    gl_info->gl_ops.gl.p_glBindTexture(texture_type[i].target, name);
+                    if (!gl_info->gl_ops.gl.p_glGetError())
+                    {
+                        tex_target = texture_type[i].target;
+                        tex_type_str = texture_type[i].str;
+                        break;
+                    }
+                    gl_info->gl_ops.gl.p_glBindTexture(texture_type[i].target, old_texture);
+                }
+                if (!tex_type_str)
+                {
+                    FIXME("Cannot find type of texture %d.\n", name);
+                    return;
+                }
+
+                gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
+                gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_WIDTH, &width);
+                gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_HEIGHT, &height);
+
+                gl_info->gl_ops.gl.p_glBindTexture(tex_target, old_texture);
+            }
         }
 
         FIXME("    %s: %s texture %d, %dx%d, format %#x.\n", debug_fboattachment(attachment),
                 tex_type_str, name, width, height, fmt);
 
-        gl_info->gl_ops.gl.p_glBindTexture(tex_target, old_texture);
-        checkGLcall("Guess texture type");
+        checkGLcall("guess texture type");
     }
     else if (type == GL_NONE)
     {
