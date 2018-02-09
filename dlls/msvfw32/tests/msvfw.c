@@ -303,18 +303,9 @@ static void test_ICInfo(void)
 
         found++;
         /* Test getting info with a different case - bug 41602 */
-        if (fcc[0] & 0x20)
-        {
-            fcc[0] &= ~0x20;
-            ok(ICInfo(info.fccType, info.fccHandler, &info2),
-               "ICInfo failed on fcc 0x%08x using lowercase fccHandler\n", info.fccHandler);
-        }
-        else
-        {
-            fcc[0] |= 0x20;
-            ok(ICInfo(info.fccType, info.fccHandler, &info2),
-               "ICInfo failed on fcc 0x%08x using uppercase fccHandler\n", info.fccHandler);
-        }
+        fcc[0] ^= 0x20;
+        ok(ICInfo(info.fccType, info.fccHandler, &info2),
+           "ICInfo failed on fcc 0x%08x\n", info.fccHandler);
     }
     ok(found != 0, "expected at least one codec\n");
 }
