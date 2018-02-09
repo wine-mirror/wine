@@ -6011,7 +6011,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.usage = 0;
-    wined3d_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+    wined3d_desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP;
     wined3d_desc.width = desc->dwWidth;
     wined3d_desc.height = desc->dwHeight;
     wined3d_desc.depth = 1;
