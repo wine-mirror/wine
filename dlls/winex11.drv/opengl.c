@@ -199,6 +199,7 @@ struct WineGLInfo {
 struct wgl_pixel_format
 {
     GLXFBConfig fbconfig;
+    XVisualInfo *visual;
     int         fmt_id;
     int         render_type;
     DWORD       dwFlags; /* We store some PFD_* flags in here for emulated bitmap formats */
@@ -210,7 +211,6 @@ struct wgl_context
     BOOL has_been_current;
     BOOL sharing;
     BOOL gl3_context;
-    XVisualInfo *vis;
     const struct wgl_pixel_format *fmt;
     int numAttribs; /* This is needed for delaying wglCreateContextAttribsARB */
     int attribList[16]; /* This is needed for delaying wglCreateContextAttribsARB */
@@ -257,7 +257,6 @@ struct gl_drawable
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
     Colormap                       colormap;     /* colormap used for the drawable */
     const struct wgl_pixel_format *format;       /* pixel format for the drawable */
-    XVisualInfo                   *visual;       /* information about the GL visual */
     RECT                           rect;         /* drawable rect, relative to whole window drawable */
     int                            swap_interval;
     BOOL                           refresh_swap_interval;
@@ -1127,6 +1126,7 @@ static void init_pixel_formats( Display *display )
 
                 TRACE("Found onscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
                 list[size].fbconfig = cfgs[i];
+                list[size].visual = visinfo;
                 list[size].fmt_id = fmt_id;
                 list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
                 list[size].dwFlags = 0;
@@ -1138,6 +1138,7 @@ static void init_pixel_formats( Display *display )
                 {
                     TRACE("Found bitmap capable format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
                     list[size].fbconfig = cfgs[i];
+                    list[size].visual = visinfo;
                     list[size].fmt_id = fmt_id;
                     list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
                     list[size].dwFlags = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI | PFD_GENERIC_FORMAT;
@@ -1167,8 +1168,7 @@ static void init_pixel_formats( Display *display )
                 list[size].dwFlags = 0;
                 size++;
             }
-
-            if (visinfo) XFree(visinfo);
+            else if (visinfo) XFree(visinfo);
         }
     }
 
@@ -1308,8 +1308,8 @@ static GLXContext create_glxcontext(Display *display, struct wgl_context *contex
         else
             ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, GL_TRUE, NULL);
     }
-    else if(context->vis)
-        ctx = pglXCreateContext(gdi_display, context->vis, shareList, GL_TRUE);
+    else if(context->fmt->visual)
+        ctx = pglXCreateContext(gdi_display, context->fmt->visual, shareList, GL_TRUE);
     else /* Create a GLX Context for a pbuffer */
         ctx = pglXCreateNewContext(gdi_display, context->fmt->fbconfig, context->fmt->render_type, shareList, TRUE);
 
@@ -1336,7 +1336,6 @@ static void free_gl_drawable( struct gl_drawable *gl )
     default:
         break;
     }
-    if (gl->visual) XFree( gl->visual );
     HeapFree( GetProcessHeap(), 0, gl );
 }
 
@@ -1346,6 +1345,8 @@ static void free_gl_drawable( struct gl_drawable *gl )
  */
 static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
 {
+    XVisualInfo *visual = gl->format->visual;
+
     gl->drawable = 0;
 
     if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
@@ -1355,7 +1356,7 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
         if (data)
         {
             gl->type = DC_GL_WINDOW;
-            gl->window = create_client_window( data, gl->visual );
+            gl->window = create_client_window( data, visual );
             if (gl->window)
                 gl->drawable = pglXCreateWindow( gdi_display, gl->format->fbconfig, gl->window, NULL );
             release_win_data( data );
@@ -1377,10 +1378,10 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
                                           CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
             XMapWindow( gdi_display, dummy_parent );
         }
-        gl->colormap = XCreateColormap(gdi_display, dummy_parent, gl->visual->visual,
-                                       (gl->visual->class == PseudoColor ||
-                                        gl->visual->class == GrayScale ||
-                                        gl->visual->class == DirectColor) ?
+        gl->colormap = XCreateColormap(gdi_display, dummy_parent, visual->visual,
+                                       (visual->class == PseudoColor ||
+                                        visual->class == GrayScale ||
+                                        visual->class == DirectColor) ?
                                        AllocAll : AllocNone);
         attrib.colormap = gl->colormap;
         XInstallColormap(gdi_display, attrib.colormap);
@@ -1388,7 +1389,7 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
         gl->type = DC_GL_CHILD_WIN;
         gl->window = XCreateWindow( gdi_display, dummy_parent, 0, 0,
                                       gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
-                                      0, gl->visual->depth, InputOutput, gl->visual->visual,
+                                      0, visual->depth, InputOutput, visual->visual,
                                       CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
         if (gl->window)
         {
@@ -1409,7 +1410,7 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
         gl->type = DC_GL_PIXMAP_WIN;
         gl->pixmap = XCreatePixmap( gdi_display, root_window,
                                     gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top,
-                                    gl->visual->depth );
+                                    visual->depth );
         if (gl->pixmap)
         {
             gl->drawable = pglXCreatePixmap( gdi_display, gl->format->fbconfig, gl->pixmap, NULL );
@@ -1430,6 +1431,8 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
 {
     struct gl_drawable *gl, *prev;
 
+    if (!format->visual) return FALSE;
+
     gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
     /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI
      * there is no way to query it, so we have to store it here.
@@ -1437,20 +1440,12 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
     gl->swap_interval = 1;
     gl->refresh_swap_interval = TRUE;
     gl->format = format;
-    gl->visual = pglXGetVisualFromFBConfig( gdi_display, format->fbconfig );
-    if (!gl->visual)
-    {
-        HeapFree( GetProcessHeap(), 0, gl );
-        return FALSE;
-    }
-
     GetClientRect( hwnd, &gl->rect );
     gl->rect.right  = min( max( 1, gl->rect.right ), 65535 );
     gl->rect.bottom = min( max( 1, gl->rect.bottom ), 65535 );
 
     if (!create_gl_drawable( hwnd, gl ))
     {
-        XFree( gl->visual );
         HeapFree( GetProcessHeap(), 0, gl );
         return FALSE;
     }
@@ -1545,7 +1540,8 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
         break;
     case DC_GL_PIXMAP_WIN:
         if (!mask) break;
-        pix = XCreatePixmap(gdi_display, root_window, changes.width, changes.height, gl->visual->depth);
+        pix = XCreatePixmap(gdi_display, root_window, changes.width, changes.height,
+                            gl->format->visual->depth);
         if (!pix) goto done;
         glxp = pglXCreatePixmap(gdi_display, gl->format->fbconfig, pix, NULL );
         if (!glxp)
@@ -1608,7 +1604,6 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
     {
         XDeleteContext( gdi_display, (XID)hwnd, gl_hwnd_context );
         release_gl_drawable( gl );
-        XFree( gl->visual );
         HeapFree( GetProcessHeap(), 0, gl );
         __wine_set_pixel_format( hwnd, 0 );
         return;
@@ -1831,7 +1826,6 @@ static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
     {
         ret->hdc = hdc;
         ret->fmt = gl->format;
-        ret->vis = pglXGetVisualFromFBConfig(gdi_display, gl->format->fbconfig);
         ret->ctx = create_glxcontext(gdi_display, ret, NULL);
         list_add_head( &context_list, &ret->entry );
     }
@@ -1861,7 +1855,6 @@ static BOOL glxdrv_wglDeleteContext(struct wgl_context *ctx)
     LeaveCriticalSection( &context_section );
 
     if (ctx->ctx) pglXDestroyContext( gdi_display, ctx->ctx );
-    if (ctx->vis) XFree( ctx->vis );
     return HeapFree( GetProcessHeap(), 0, ctx );
 }
 
@@ -2090,7 +2083,6 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
     {
         ret->hdc = hdc;
         ret->fmt = gl->format;
-        ret->vis = NULL; /* glXCreateContextAttribsARB requires a fbconfig instead of a visual */
         ret->gl3_context = TRUE;
         if (attribList)
         {
