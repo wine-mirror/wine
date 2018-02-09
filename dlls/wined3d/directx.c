@@ -4244,6 +4244,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         WARN("Disabling ARB_draw_indirect because ARB_base_instance is not supported.\n");
         gl_info->supported[ARB_DRAW_INDIRECT] = FALSE;
     }
+    if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE] && !wined3d_settings.multisample_textures)
+        gl_info->supported[ARB_TEXTURE_MULTISAMPLE] = FALSE;
 
     wined3d_adapter_init_limits(gl_info);
 
