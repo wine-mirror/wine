@@ -1347,9 +1347,9 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (texture->resource.type == WINED3D_RTYPE_TEXTURE_3D)
+    if (texture->resource.type != WINED3D_RTYPE_TEXTURE_2D)
     {
-        WARN("Not supported on 3D textures.\n");
+        WARN("Not supported on %s.\n", debug_d3dresourcetype(texture->resource.type));
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -1402,6 +1402,12 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     texture->resource.size = texture->slice_pitch;
     sub_resource->size = texture->slice_pitch;
     sub_resource->locations = WINED3D_LOCATION_DISCARDED;
+
+    if (multisample_type && gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+        texture->target = GL_TEXTURE_2D_MULTISAMPLE;
+    else
+        texture->target = GL_TEXTURE_2D;
+    texture->sub_resources[0].u.surface->texture_target = texture->target;
 
     if (((width & (width - 1)) || (height & (height - 1))) && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]
             && !gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
