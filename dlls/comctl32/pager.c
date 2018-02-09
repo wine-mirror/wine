@@ -62,6 +62,7 @@
 #include "commctrl.h"
 #include "comctl32.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pager);
 
@@ -556,7 +557,7 @@ PAGER_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     PAGER_INFO *infoPtr;
 
     /* allocate memory for info structure */
-    infoPtr = Alloc (sizeof(PAGER_INFO));
+    infoPtr = heap_alloc_zero (sizeof(*infoPtr));
     if (!infoPtr) return -1;
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
@@ -588,7 +589,7 @@ static LRESULT
 PAGER_Destroy (PAGER_INFO *infoPtr)
 {
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
-    Free (infoPtr);  /* free pager info data */
+    heap_free (infoPtr);
     return 0;
 }
 
