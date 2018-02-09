@@ -460,6 +460,13 @@ static unsigned int wined3d_texture_get_gl_sample_count(const struct wined3d_tex
 {
     const struct wined3d_format *format = texture->resource.format;
 
+    /* TODO: NVIDIA expose their Coverage Sample Anti-Aliasing (CSAA)
+     * feature through type == MULTISAMPLE_XX and quality != 0. This could
+     * be mapped to GL_NV_framebuffer_multisample_coverage.
+     *
+     * AMD have a similar feature called Enhanced Quality Anti-Aliasing
+     * (EQAA), but it does not have an equivalent OpenGL extension. */
+
     /* We advertise as many WINED3D_MULTISAMPLE_NON_MASKABLE quality
      * levels as the count of advertised multisample types for the texture
      * format. */
@@ -530,21 +537,31 @@ static void wined3d_texture_allocate_gl_mutable_storage(struct wined3d_texture *
 static void wined3d_texture_allocate_gl_immutable_storage(struct wined3d_texture *texture,
         GLenum gl_internal_format, const struct wined3d_gl_info *gl_info)
 {
-    GLsizei width = wined3d_texture_get_level_pow2_width(texture, 0);
+    unsigned int samples = wined3d_texture_get_gl_sample_count(texture);
     GLsizei height = wined3d_texture_get_level_pow2_height(texture, 0);
+    GLsizei width = wined3d_texture_get_level_pow2_width(texture, 0);
 
-    if (texture->target == GL_TEXTURE_2D_ARRAY)
+    switch (texture->target)
     {
-        GL_EXTCALL(glTexStorage3D(texture->target, texture->level_count, gl_internal_format,
-                width, height, texture->layer_count));
-        checkGLcall("glTexStorage3D");
+        case GL_TEXTURE_2D_ARRAY:
+            GL_EXTCALL(glTexStorage3D(texture->target, texture->level_count,
+                    gl_internal_format, width, height, texture->layer_count));
+            break;
+        case GL_TEXTURE_2D_MULTISAMPLE:
+            GL_EXTCALL(glTexStorage2DMultisample(texture->target, samples,
+                    gl_internal_format, width, height, GL_FALSE));
+            break;
+        case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+            GL_EXTCALL(glTexStorage3DMultisample(texture->target, samples,
+                    gl_internal_format, width, height, texture->layer_count, GL_FALSE));
+            break;
+        default:
+            GL_EXTCALL(glTexStorage2D(texture->target, texture->level_count,
+                    gl_internal_format, width, height));
+            break;
     }
-    else
-    {
-        GL_EXTCALL(glTexStorage2D(texture->target, texture->level_count, gl_internal_format,
-                width, height));
-        checkGLcall("glTexStorage2D");
-    }
+
+    checkGLcall("allocate immutable storage");
 }
 
 static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
@@ -1502,13 +1519,6 @@ static void wined3d_texture_prepare_rb(struct wined3d_texture *texture,
         if (texture->rb_multisample)
             return;
 
-        /* TODO: NVIDIA expose their Coverage Sample Anti-Aliasing (CSAA)
-         * feature through type == MULTISAMPLE_XX and quality != 0. This could
-         * be mapped to GL_NV_framebuffer_multisample_coverage.
-         *
-         * AMD have a similar feature called Enhanced Quality Anti-Aliasing
-         * (EQAA), but it does not have an equivalent OpenGL extension. */
-
         samples = wined3d_texture_get_gl_sample_count(texture);
 
         gl_info->fbo_ops.glGenRenderbuffers(1, &texture->rb_multisample);
@@ -2189,11 +2199,23 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
             texture->pow2_matrix[5] = 1.0f;
         }
         if (desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+        {
             texture->target = GL_TEXTURE_CUBE_MAP_ARB;
-        else if (layer_count > 1)
-            texture->target = GL_TEXTURE_2D_ARRAY;
+        }
+        else if (desc->multisample_type && gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+        {
+            if (layer_count > 1)
+                texture->target = GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
+            else
+                texture->target = GL_TEXTURE_2D_MULTISAMPLE;
+        }
         else
-            texture->target = GL_TEXTURE_2D;
+        {
+            if (layer_count > 1)
+                texture->target = GL_TEXTURE_2D_ARRAY;
+            else
+                texture->target = GL_TEXTURE_2D;
+        }
     }
     texture->pow2_matrix[10] = 1.0f;
     texture->pow2_matrix[15] = 1.0f;

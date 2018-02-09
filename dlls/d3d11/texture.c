@@ -512,9 +512,6 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     wined3d_private_store_init(&texture->private_store);
     texture->desc = *desc;
 
-    if (desc->SampleDesc.Count > 1)
-        FIXME("Multisampled textures not implemented.\n");
-
     wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     wined3d_desc.format = wined3dformat_from_dxgi_format(desc->Format);
     wined3d_desc.multisample_type = desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE;

@@ -4246,6 +4246,11 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
     }
     if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE] && !wined3d_settings.multisample_textures)
         gl_info->supported[ARB_TEXTURE_MULTISAMPLE] = FALSE;
+    if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE] && !gl_info->supported[ARB_TEXTURE_STORAGE_MULTISAMPLE])
+    {
+        WARN("Disabling ARB_texture_multisample because immutable storage is not supported.\n");
+        gl_info->supported[ARB_TEXTURE_MULTISAMPLE] = FALSE;
+    }
 
     wined3d_adapter_init_limits(gl_info);
 

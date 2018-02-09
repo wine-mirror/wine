@@ -442,11 +442,23 @@ BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource)
 void wined3d_resource_update_draw_binding(struct wined3d_resource *resource)
 {
     if (!wined3d_resource_is_offscreen(resource) || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+    {
         resource->draw_binding = WINED3D_LOCATION_DRAWABLE;
+    }
     else if (resource->multisample_type)
-        resource->draw_binding = WINED3D_LOCATION_RB_MULTISAMPLE;
+    {
+        const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
+        if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+            resource->draw_binding = WINED3D_LOCATION_TEXTURE_RGB;
+        else
+            resource->draw_binding = WINED3D_LOCATION_RB_MULTISAMPLE;
+    }
     else if (resource->gl_type == WINED3D_GL_RES_TYPE_RB)
+    {
         resource->draw_binding = WINED3D_LOCATION_RB_RESOLVED;
+    }
     else
+    {
         resource->draw_binding = WINED3D_LOCATION_TEXTURE_RGB;
+    }
 }
