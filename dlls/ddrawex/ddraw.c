@@ -166,7 +166,7 @@ static ULONG WINAPI ddrawex4_Release(IDirectDraw4 *iface)
     if (!refcount)
     {
         IDirectDraw4_Release(ddrawex->parent);
-        HeapFree(GetProcessHeap(), 0, ddrawex);
+        heap_free(ddrawex);
     }
 
     return refcount;
@@ -1426,7 +1426,7 @@ HRESULT WINAPI ddrawex_factory_CreateDirectDraw(IDirectDrawFactory *iface, GUID 
     if (outer_unknown)
         FIXME("Implement aggregation in ddrawex's IDirectDraw interface.\n");
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->ref = 1;
@@ -1447,9 +1447,11 @@ HRESULT WINAPI ddrawex_factory_CreateDirectDraw(IDirectDrawFactory *iface, GUID 
     return DD_OK;
 
 err:
-    if(object && object->parent) IDirectDraw4_Release(object->parent);
-    if(parent) IDirectDraw_Release(parent);
-    HeapFree(GetProcessHeap(), 0, object);
+    if (object && object->parent)
+        IDirectDraw4_Release(object->parent);
+    if (parent)
+        IDirectDraw_Release(parent);
+    heap_free(object);
     *ddraw = NULL;
     return hr;
 }

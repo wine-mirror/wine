@@ -84,7 +84,7 @@ static ULONG WINAPI ddrawex_class_factory_Release(IClassFactory *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
-        HeapFree(GetProcessHeap(), 0, factory);
+        heap_free(factory);
 
     return refcount;
 }
@@ -163,7 +163,7 @@ static ULONG WINAPI ddrawex_factory_Release(IDirectDrawFactory *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
-        HeapFree(GetProcessHeap(), 0, factory);
+        heap_free(factory);
 
     return refcount;
 }
@@ -195,13 +195,13 @@ static HRESULT ddrawex_factory_create(IUnknown *outer_unknown, REFIID riid, void
     if (outer_unknown)
         return CLASS_E_NOAGGREGATION;
 
-    if (!(factory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*factory))))
+    if (!(factory = heap_alloc_zero(sizeof(*factory))))
         return E_OUTOFMEMORY;
 
     factory->IDirectDrawFactory_iface.lpVtbl = &ddrawex_factory_vtbl;
 
     if (FAILED(hr = ddrawex_factory_QueryInterface(&factory->IDirectDrawFactory_iface, riid, out)))
-        HeapFree(GetProcessHeap(), 0, factory);
+        heap_free(factory);
 
     return hr;
 }
@@ -234,8 +234,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **out)
         return CLASS_E_CLASSNOTAVAILABLE;
     }
 
-    factory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*factory));
-    if (factory == NULL) return E_OUTOFMEMORY;
+    if (!(factory = heap_alloc_zero(sizeof(*factory))))
+        return E_OUTOFMEMORY;
 
     factory->IClassFactory_iface.lpVtbl = &ddrawex_class_factory_vtbl;
     factory->ref = 1;
