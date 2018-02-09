@@ -63,7 +63,6 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
 
     if (IsEqualGUID(iid, &IID_IUnknown) ||
         IsEqualGUID(iid, &IID_IDispatch) ||
-        IsEqualGUID(iid, &IID_IDHTMLSafe) ||
         IsEqualGUID(iid, &IID_IDHTMLEdit))
     {
         dhtml_edit_addref(This);
