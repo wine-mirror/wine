@@ -7481,8 +7481,6 @@ static void shader_glsl_enable_extensions(struct wined3d_string_buffer *buffer,
         shader_addline(buffer, "#extension GL_ARB_texture_cube_map_array : enable\n");
     if (gl_info->supported[ARB_TEXTURE_GATHER])
         shader_addline(buffer, "#extension GL_ARB_texture_gather : enable\n");
-    if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
-        shader_addline(buffer, "#extension GL_ARB_texture_multisample : enable\n");
     if (gl_info->supported[ARB_TEXTURE_QUERY_LEVELS])
         shader_addline(buffer, "#extension GL_ARB_texture_query_levels : enable\n");
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
