@@ -1018,7 +1018,7 @@ static HRESULT d3d8_device_create_surface(struct d3d8_device *device, UINT width
     desc.usage = usage & WINED3DUSAGE_MASK;
     if (pool == D3DPOOL_SCRATCH)
         desc.usage |= WINED3DUSAGE_SCRATCH;
-    desc.access = wined3daccess_from_d3dpool(pool);
+    desc.access = wined3daccess_from_d3dpool(pool) | WINED3D_RESOURCE_ACCESS_MAP;
     desc.width = width;
     desc.height = height;
     desc.depth = 1;
