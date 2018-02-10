@@ -517,13 +517,13 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
     }
     if (suspend_for_ptrace( thread ))
     {
-        unsigned char flags_buf[sizeof(long)];
-        long *addr = (long *)(unsigned long)thread->process->ldt_copy + entry;
-        if (read_thread_long( thread, addr, (long *)base ) == -1) goto done;
-        if (read_thread_long( thread, addr + 8192, (long *)limit ) == -1) goto done;
-        addr = (long *)(unsigned long)thread->process->ldt_copy + 2*8192 + (entry / sizeof(long));
-        if (read_thread_long( thread, addr, (long *)flags_buf ) == -1) goto done;
-        *flags = flags_buf[entry % sizeof(long)];
+        unsigned char flags_buf[4];
+        unsigned long addr = (unsigned long)thread->process->ldt_copy + (entry * 4);
+        if (read_thread_long( thread, (long *)addr, (long *)base ) == -1) goto done;
+        if (read_thread_long( thread, (long *)(addr + (8192 * 4)), (long *)limit ) == -1) goto done;
+        addr = (unsigned long)thread->process->ldt_copy + (2 * 8192 * 4) + (entry & ~3);
+        if (read_thread_long( thread, (long *)addr, (long *)flags_buf ) == -1) goto done;
+        *flags = flags_buf[entry % 4];
     done:
         resume_after_ptrace( thread );
     }
