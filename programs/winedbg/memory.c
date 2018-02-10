@@ -581,7 +581,7 @@ void print_bare_address(const ADDRESS64* addr)
                    memory_offset_to_string(hexbuf, addr->Offset, 32));
         break;
     default:
-        dbg_printf("Unknown mode %x\n", addr->Mode);
+        dbg_printf("Unknown mode %x", addr->Mode);
         break;
     }
 }
