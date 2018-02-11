@@ -2,6 +2,7 @@
  * Copyright (C) 1993 Johannes Ruscheinski
  * Copyright (C) 1993 David Metcalfe
  * Copyright (C) 1994 Alexandre Julliard
+ * Copyright (C) 2008 by Reece H. Dunn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -62,6 +63,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
+#include "uxtheme.h"
+#include "vssym32.h"
 #include "wine/debug.h"
 
 #include "comctl32.h"
@@ -118,6 +122,16 @@ static const WORD maxCheckState[MAX_BTN_TYPE] =
     BST_UNCHECKED       /* BS_DEFCOMMANDLINK */
 };
 
+/* These are indices into a states array to determine the theme state for a given theme part. */
+typedef enum
+{
+    STATE_NORMAL,
+    STATE_DISABLED,
+    STATE_HOT,
+    STATE_PRESSED,
+    STATE_DEFAULTED
+} ButtonState;
+
 typedef void (*pfPaint)( HWND hwnd, HDC hdc, UINT action );
 
 static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
@@ -138,6 +152,32 @@ static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
     PB_Paint,    /* BS_DEFSPLITBUTTON */
     PB_Paint,    /* BS_COMMANDLINK */
     PB_Paint     /* BS_DEFCOMMANDLINK */
+};
+
+typedef void (*pfThemedPaint)( HTHEME theme, HWND hwnd, HDC hdc, ButtonState drawState, UINT dtflags, BOOL focused);
+
+static void PB_ThemedPaint( HTHEME theme, HWND hwnd, HDC hdc, ButtonState drawState, UINT dtflags, BOOL focused);
+static void CB_ThemedPaint( HTHEME theme, HWND hwnd, HDC hdc, ButtonState drawState, UINT dtflags, BOOL focused);
+static void GB_ThemedPaint( HTHEME theme, HWND hwnd, HDC hdc, ButtonState drawState, UINT dtflags, BOOL focused);
+
+static const pfThemedPaint btnThemedPaintFunc[MAX_BTN_TYPE] =
+{
+    PB_ThemedPaint, /* BS_PUSHBUTTON */
+    PB_ThemedPaint, /* BS_DEFPUSHBUTTON */
+    CB_ThemedPaint, /* BS_CHECKBOX */
+    CB_ThemedPaint, /* BS_AUTOCHECKBOX */
+    CB_ThemedPaint, /* BS_RADIOBUTTON */
+    CB_ThemedPaint, /* BS_3STATE */
+    CB_ThemedPaint, /* BS_AUTO3STATE */
+    GB_ThemedPaint, /* BS_GROUPBOX */
+    NULL,           /* BS_USERBUTTON */
+    CB_ThemedPaint, /* BS_AUTORADIOBUTTON */
+    NULL,           /* BS_PUSHBOX */
+    NULL,           /* BS_OWNERDRAW */
+    NULL,           /* BS_SPLITBUTTON */
+    NULL,           /* BS_DEFSPLITBUTTON */
+    NULL,           /* BS_COMMANDLINK */
+    NULL,           /* BS_DEFCOMMANDLINK */
 };
 
 /*********************************************************************
@@ -209,6 +249,56 @@ HRGN set_control_clipping( HDC hdc, const RECT *rect )
     return hrgn;
 }
 
+/**********************************************************************
+ * Convert button styles to flags used by DrawText.
+ */
+static UINT BUTTON_BStoDT( DWORD style, DWORD ex_style )
+{
+    UINT dtStyle = DT_NOCLIP;  /* We use SelectClipRgn to limit output */
+
+    /* "Convert" pushlike buttons to pushbuttons */
+    if (style & BS_PUSHLIKE)
+        style &= ~BS_TYPEMASK;
+
+    if (!(style & BS_MULTILINE))
+        dtStyle |= DT_SINGLELINE;
+    else
+        dtStyle |= DT_WORDBREAK;
+
+    switch (style & BS_CENTER)
+    {
+        case BS_LEFT:   /* DT_LEFT is 0 */    break;
+        case BS_RIGHT:  dtStyle |= DT_RIGHT;  break;
+        case BS_CENTER: dtStyle |= DT_CENTER; break;
+        default:
+            /* Pushbutton's text is centered by default */
+            if (get_button_type(style) <= BS_DEFPUSHBUTTON) dtStyle |= DT_CENTER;
+            /* all other flavours have left aligned text */
+    }
+
+    if (ex_style & WS_EX_RIGHT) dtStyle = DT_RIGHT | (dtStyle & ~(DT_LEFT | DT_CENTER));
+
+    /* DrawText ignores vertical alignment for multiline text,
+     * but we use these flags to align label manually.
+     */
+    if (get_button_type(style) != BS_GROUPBOX)
+    {
+        switch (style & BS_VCENTER)
+        {
+            case BS_TOP:     /* DT_TOP is 0 */      break;
+            case BS_BOTTOM:  dtStyle |= DT_BOTTOM;  break;
+            case BS_VCENTER: /* fall through */
+            default:         dtStyle |= DT_VCENTER; break;
+        }
+    }
+    else
+        /* GroupBox's text is always single line and is top aligned. */
+        dtStyle |= DT_SINGLELINE;
+
+    return dtStyle;
+}
+
+
 static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     RECT rect;
@@ -217,6 +307,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
     UINT btn_type = get_button_type( style );
     LONG state;
     HANDLE oldHbitmap;
+    HTHEME theme;
 
     if (!IsWindow( hWnd )) return 0;
 
@@ -242,7 +333,11 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         }
 
     case WM_ENABLE:
-        paint_button( hWnd, btn_type, ODA_DRAWENTIRE );
+        theme = GetWindowTheme( hWnd );
+        if (theme)
+            RedrawWindow( hWnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW );
+        else
+            paint_button( hWnd, btn_type, ODA_DRAWENTIRE );
         break;
 
     case WM_CREATE:
@@ -256,7 +351,19 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
             SetWindowLongW( hWnd, GWL_STYLE, style );
         }
         set_button_state( hWnd, BST_UNCHECKED );
+        OpenThemeData( hWnd, WC_BUTTONW );
         return 0;
+
+    case WM_DESTROY:
+        theme = GetWindowTheme( hWnd );
+        CloseThemeData( theme );
+        break;
+
+    case WM_THEMECHANGED:
+        theme = GetWindowTheme( hWnd );
+        CloseThemeData( theme );
+        OpenThemeData( hWnd, WC_BUTTONW );
+        break;
 
     case WM_ERASEBKGND:
         if (btn_type == BS_OWNERDRAW)
@@ -279,13 +386,37 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
     case WM_PAINT:
     {
         PAINTSTRUCT ps;
-        HDC hdc = wParam ? (HDC)wParam : BeginPaint( hWnd, &ps );
-        if (btnPaintFunc[btn_type])
+        HDC hdc;
+
+        theme = GetWindowTheme( hWnd );
+        hdc = wParam ? (HDC)wParam : BeginPaint( hWnd, &ps );
+
+        if (theme && btnPaintFunc[btn_type])
+        {
+            ButtonState drawState;
+            UINT dtflags;
+
+            state = get_button_state( hWnd );
+            if (IsWindowEnabled( hWnd ))
+            {
+                if (state & BST_PUSHED) drawState = STATE_PRESSED;
+                else if (state & BST_HOT) drawState = STATE_HOT;
+                else if (state & BST_FOCUS) drawState = STATE_DEFAULTED;
+                else drawState = STATE_NORMAL;
+            }
+            else
+                drawState = STATE_DISABLED;
+
+            dtflags = BUTTON_BStoDT(style, GetWindowLongW(hWnd, GWL_EXSTYLE));
+            btnThemedPaintFunc[btn_type](theme, hWnd, hdc, drawState, dtflags, state & BST_FOCUS);
+        }
+        else if (btnPaintFunc[btn_type])
         {
             int nOldMode = SetBkMode( hdc, OPAQUE );
             (btnPaintFunc[btn_type])( hWnd, hdc, ODA_DRAWENTIRE );
             SetBkMode(hdc, nOldMode); /*  reset painting mode */
         }
+
         if ( !wParam ) EndPaint( hWnd, &ps );
         break;
     }
@@ -370,12 +501,40 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         break;
 
     case WM_MOUSEMOVE:
+    {
+        TRACKMOUSEEVENT mouse_event;
+
+        mouse_event.cbSize = sizeof(TRACKMOUSEEVENT);
+        mouse_event.dwFlags = TME_QUERY;
+        if (!TrackMouseEvent(&mouse_event) || !(mouse_event.dwFlags & (TME_HOVER | TME_LEAVE)))
+        {
+            mouse_event.dwFlags = TME_HOVER | TME_LEAVE;
+            mouse_event.hwndTrack = hWnd;
+            mouse_event.dwHoverTime = 1;
+            TrackMouseEvent(&mouse_event);
+        }
+
         if ((wParam & MK_LBUTTON) && GetCapture() == hWnd)
         {
             GetClientRect( hWnd, &rect );
             SendMessageW( hWnd, BM_SETSTATE, PtInRect(&rect, pt), 0 );
         }
         break;
+    }
+
+    case WM_MOUSEHOVER:
+    {
+        set_button_state( hWnd, get_button_state( hWnd ) | BST_HOT );
+        InvalidateRect( hWnd, NULL, FALSE );
+        break;
+    }
+
+    case WM_MOUSELEAVE:
+    {
+        set_button_state( hWnd, get_button_state( hWnd ) & ~BST_HOT );
+        InvalidateRect( hWnd, NULL, FALSE );
+        break;
+    }
 
     case WM_SETTEXT:
     {
@@ -530,55 +689,6 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }
     return 0;
-}
-
-/**********************************************************************
- * Convert button styles to flags used by DrawText.
- */
-static UINT BUTTON_BStoDT( DWORD style, DWORD ex_style )
-{
-   UINT dtStyle = DT_NOCLIP;  /* We use SelectClipRgn to limit output */
-
-   /* "Convert" pushlike buttons to pushbuttons */
-   if (style & BS_PUSHLIKE)
-      style &= ~BS_TYPEMASK;
-
-   if (!(style & BS_MULTILINE))
-      dtStyle |= DT_SINGLELINE;
-   else
-      dtStyle |= DT_WORDBREAK;
-
-   switch (style & BS_CENTER)
-   {
-      case BS_LEFT:   /* DT_LEFT is 0 */    break;
-      case BS_RIGHT:  dtStyle |= DT_RIGHT;  break;
-      case BS_CENTER: dtStyle |= DT_CENTER; break;
-      default:
-         /* Pushbutton's text is centered by default */
-         if (get_button_type(style) <= BS_DEFPUSHBUTTON) dtStyle |= DT_CENTER;
-         /* all other flavours have left aligned text */
-   }
-
-   if (ex_style & WS_EX_RIGHT) dtStyle = DT_RIGHT | (dtStyle & ~(DT_LEFT | DT_CENTER));
-
-   /* DrawText ignores vertical alignment for multiline text,
-    * but we use these flags to align label manually.
-    */
-   if (get_button_type(style) != BS_GROUPBOX)
-   {
-      switch (style & BS_VCENTER)
-      {
-         case BS_TOP:     /* DT_TOP is 0 */      break;
-         case BS_BOTTOM:  dtStyle |= DT_BOTTOM;  break;
-         case BS_VCENTER: /* fall through */
-         default:         dtStyle |= DT_VCENTER; break;
-      }
-   }
-   else
-      /* GroupBox's text is always single line and is top aligned. */
-      dtStyle |= DT_SINGLELINE;
-
-   return dtStyle;
 }
 
 /**********************************************************************
@@ -1138,6 +1248,192 @@ static void OB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (hPrevFont) SelectObject(hDC, hPrevFont);
     SelectClipRgn( hDC, hrgn );
     if (hrgn) DeleteObject( hrgn );
+}
+
+static void PB_ThemedPaint(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags, BOOL focused)
+{
+    static const int states[] = { PBS_NORMAL, PBS_DISABLED, PBS_HOT, PBS_PRESSED, PBS_DEFAULTED };
+
+    RECT bgRect, textRect;
+    HFONT font = get_button_font( hwnd );
+    HFONT hPrevFont = font ? SelectObject(hDC, font) : NULL;
+    int state = states[ drawState ];
+    WCHAR *text = get_button_text(hwnd);
+
+    GetClientRect(hwnd, &bgRect);
+    GetThemeBackgroundContentRect(theme, hDC, BP_PUSHBUTTON, state, &bgRect, &textRect);
+
+    if (IsThemeBackgroundPartiallyTransparent(theme, BP_PUSHBUTTON, state))
+        DrawThemeParentBackground(hwnd, hDC, NULL);
+    DrawThemeBackground(theme, hDC, BP_PUSHBUTTON, state, &bgRect, NULL);
+    if (text)
+    {
+        DrawThemeText(theme, hDC, BP_PUSHBUTTON, state, text, lstrlenW(text), dtFlags, 0, &textRect);
+        HeapFree(GetProcessHeap(), 0, text);
+    }
+
+    if (focused)
+    {
+        MARGINS margins;
+        RECT focusRect = bgRect;
+
+        GetThemeMargins(theme, hDC, BP_PUSHBUTTON, state, TMT_CONTENTMARGINS, NULL, &margins);
+
+        focusRect.left += margins.cxLeftWidth;
+        focusRect.top += margins.cyTopHeight;
+        focusRect.right -= margins.cxRightWidth;
+        focusRect.bottom -= margins.cyBottomHeight;
+
+        DrawFocusRect( hDC, &focusRect );
+    }
+
+    if (hPrevFont) SelectObject(hDC, hPrevFont);
+}
+
+static void CB_ThemedPaint(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags, BOOL focused)
+{
+    static const int cb_states[3][5] =
+    {
+        { CBS_UNCHECKEDNORMAL, CBS_UNCHECKEDDISABLED, CBS_UNCHECKEDHOT, CBS_UNCHECKEDPRESSED, CBS_UNCHECKEDNORMAL },
+        { CBS_CHECKEDNORMAL, CBS_CHECKEDDISABLED, CBS_CHECKEDHOT, CBS_CHECKEDPRESSED, CBS_CHECKEDNORMAL },
+        { CBS_MIXEDNORMAL, CBS_MIXEDDISABLED, CBS_MIXEDHOT, CBS_MIXEDPRESSED, CBS_MIXEDNORMAL }
+    };
+
+    static const int rb_states[2][5] =
+    {
+        { RBS_UNCHECKEDNORMAL, RBS_UNCHECKEDDISABLED, RBS_UNCHECKEDHOT, RBS_UNCHECKEDPRESSED, RBS_UNCHECKEDNORMAL },
+        { RBS_CHECKEDNORMAL, RBS_CHECKEDDISABLED, RBS_CHECKEDHOT, RBS_CHECKEDPRESSED, RBS_CHECKEDNORMAL }
+    };
+
+    SIZE sz;
+    RECT bgRect, textRect;
+    HFONT font, hPrevFont = NULL;
+    int checkState = get_button_state( hwnd ) & 3;
+    DWORD dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
+    UINT btn_type = get_button_type( dwStyle );
+    int part = (btn_type == BS_RADIOBUTTON) || (btn_type == BS_AUTORADIOBUTTON) ? BP_RADIOBUTTON : BP_CHECKBOX;
+    int state = (part == BP_CHECKBOX)
+              ? cb_states[ checkState ][ drawState ]
+              : rb_states[ checkState ][ drawState ];
+    WCHAR *text = get_button_text(hwnd);
+    LOGFONTW lf;
+    BOOL created_font = FALSE;
+
+    HRESULT hr = GetThemeFont(theme, hDC, part, state, TMT_FONT, &lf);
+    if (SUCCEEDED(hr)) {
+        font = CreateFontIndirectW(&lf);
+        if (!font)
+            TRACE("Failed to create font\n");
+        else {
+            TRACE("font = %s\n", debugstr_w(lf.lfFaceName));
+            hPrevFont = SelectObject(hDC, font);
+            created_font = TRUE;
+        }
+    } else {
+        font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
+        hPrevFont = SelectObject(hDC, font);
+    }
+
+    if (FAILED(GetThemePartSize(theme, hDC, part, state, NULL, TS_DRAW, &sz)))
+        sz.cx = sz.cy = 13;
+
+    GetClientRect(hwnd, &bgRect);
+    GetThemeBackgroundContentRect(theme, hDC, part, state, &bgRect, &textRect);
+
+    if (dtFlags & DT_SINGLELINE) /* Center the checkbox / radio button to the text. */
+        bgRect.top = bgRect.top + (textRect.bottom - textRect.top - sz.cy) / 2;
+
+    /* adjust for the check/radio marker */
+    bgRect.bottom = bgRect.top + sz.cy;
+    bgRect.right = bgRect.left + sz.cx;
+    textRect.left = bgRect.right + 6;
+
+    DrawThemeParentBackground(hwnd, hDC, NULL);
+
+    DrawThemeBackground(theme, hDC, part, state, &bgRect, NULL);
+    if (text)
+    {
+        DrawThemeText(theme, hDC, part, state, text, lstrlenW(text), dtFlags, 0, &textRect);
+
+        if (focused)
+        {
+            RECT focusRect;
+
+            focusRect = textRect;
+
+            DrawTextW(hDC, text, lstrlenW(text), &focusRect, dtFlags | DT_CALCRECT);
+
+            if (focusRect.right < textRect.right) focusRect.right++;
+            focusRect.bottom = textRect.bottom;
+
+            DrawFocusRect( hDC, &focusRect );
+        }
+
+        HeapFree(GetProcessHeap(), 0, text);
+    }
+
+    if (created_font) DeleteObject(font);
+    if (hPrevFont) SelectObject(hDC, hPrevFont);
+}
+
+static void GB_ThemedPaint(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags, BOOL focused)
+{
+    static const int states[] = { GBS_NORMAL, GBS_DISABLED, GBS_NORMAL, GBS_NORMAL, GBS_NORMAL };
+
+    RECT bgRect, textRect, contentRect;
+    int state = states[ drawState ];
+    WCHAR *text = get_button_text(hwnd);
+    LOGFONTW lf;
+    HFONT font, hPrevFont = NULL;
+    BOOL created_font = FALSE;
+
+    HRESULT hr = GetThemeFont(theme, hDC, BP_GROUPBOX, state, TMT_FONT, &lf);
+    if (SUCCEEDED(hr)) {
+        font = CreateFontIndirectW(&lf);
+        if (!font)
+            TRACE("Failed to create font\n");
+        else {
+            hPrevFont = SelectObject(hDC, font);
+            created_font = TRUE;
+        }
+    } else {
+        font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
+        hPrevFont = SelectObject(hDC, font);
+    }
+
+    GetClientRect(hwnd, &bgRect);
+    textRect = bgRect;
+
+    if (text)
+    {
+        SIZE textExtent;
+        GetTextExtentPoint32W(hDC, text, lstrlenW(text), &textExtent);
+        bgRect.top += (textExtent.cy / 2);
+        textRect.left += 10;
+        textRect.bottom = textRect.top + textExtent.cy;
+        textRect.right = textRect.left + textExtent.cx + 4;
+
+        ExcludeClipRect(hDC, textRect.left, textRect.top, textRect.right, textRect.bottom);
+    }
+
+    GetThemeBackgroundContentRect(theme, hDC, BP_GROUPBOX, state, &bgRect, &contentRect);
+    ExcludeClipRect(hDC, contentRect.left, contentRect.top, contentRect.right, contentRect.bottom);
+
+    if (IsThemeBackgroundPartiallyTransparent(theme, BP_GROUPBOX, state))
+        DrawThemeParentBackground(hwnd, hDC, NULL);
+    DrawThemeBackground(theme, hDC, BP_GROUPBOX, state, &bgRect, NULL);
+
+    SelectClipRgn(hDC, NULL);
+
+    if (text)
+    {
+        InflateRect(&textRect, -2, 0);
+        DrawThemeText(theme, hDC, BP_GROUPBOX, state, text, lstrlenW(text), 0, 0, &textRect);
+        HeapFree(GetProcessHeap(), 0, text);
+    }
+
+    if (created_font) DeleteObject(font);
+    if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
 
 void BUTTON_Register(void)

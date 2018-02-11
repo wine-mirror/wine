@@ -34,14 +34,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(theming);
 typedef LRESULT (CALLBACK* THEMING_SUBCLASSPROC)(HWND, UINT, WPARAM, LPARAM,
     ULONG_PTR);
 
-extern LRESULT CALLBACK THEMING_ButtonSubclassProc (HWND, UINT, WPARAM, LPARAM,
-                                                    ULONG_PTR) DECLSPEC_HIDDEN;
 extern LRESULT CALLBACK THEMING_ComboSubclassProc (HWND, UINT, WPARAM, LPARAM,
                                                    ULONG_PTR) DECLSPEC_HIDDEN;
 extern LRESULT CALLBACK THEMING_DialogSubclassProc (HWND, UINT, WPARAM, LPARAM,
                                                     ULONG_PTR) DECLSPEC_HIDDEN;
-extern LRESULT CALLBACK THEMING_EditSubclassProc (HWND, UINT, WPARAM, LPARAM,
-                                                  ULONG_PTR) DECLSPEC_HIDDEN;
 extern LRESULT CALLBACK THEMING_ListBoxSubclassProc (HWND, UINT, WPARAM, LPARAM,
                                                      ULONG_PTR) DECLSPEC_HIDDEN;
 extern LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND, UINT, WPARAM, LPARAM,
@@ -57,7 +53,6 @@ static const struct ThemingSubclass
 } subclasses[] = {
     /* Note: list must be sorted by class name */
     {dialogClass,          THEMING_DialogSubclassProc},
-    {WC_BUTTONW,           THEMING_ButtonSubclassProc},
     {WC_COMBOBOXW,         THEMING_ComboSubclassProc},
     {comboLboxClass,       THEMING_ListBoxSubclassProc},
     {WC_LISTBOXW,          THEMING_ListBoxSubclassProc},
@@ -96,7 +91,6 @@ MAKE_SUBCLASS_PROC(1)
 MAKE_SUBCLASS_PROC(2)
 MAKE_SUBCLASS_PROC(3)
 MAKE_SUBCLASS_PROC(4)
-MAKE_SUBCLASS_PROC(5)
 
 static const WNDPROC subclassProcs[NUM_SUBCLASSES] = {
     subclass_proc0,
@@ -104,7 +98,6 @@ static const WNDPROC subclassProcs[NUM_SUBCLASSES] = {
     subclass_proc2,
     subclass_proc3,
     subclass_proc4,
-    subclass_proc5,
 };
 
 /***********************************************************************
