@@ -350,8 +350,6 @@ static const struct message setstate_seq[] =
     { BM_SETSTATE, sent },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
-    { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
-    { WM_ERASEBKGND, sent|defwinproc|optional },
     { WM_PAINT, sent|optional },
     { 0 }
 };
@@ -372,8 +370,6 @@ static const struct message setstate_user_seq[] =
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_HILITE) },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
-    { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
-    { WM_ERASEBKGND, sent|defwinproc|optional },
     { 0 }
 };
 
@@ -596,7 +592,7 @@ static void test_button_messages(void)
         SendMessageA(hwnd, BM_SETSTYLE, button[i].style | BS_BOTTOM, TRUE);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-        todo = button[i].style == BS_USERBUTTON || button[i].style == BS_OWNERDRAW;
+        todo = button[i].style == BS_OWNERDRAW;
         ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setstyle, "BM_SETSTYLE on a button", todo);
 
         style = GetWindowLongA(hwnd, GWL_STYLE);
@@ -612,7 +608,7 @@ static void test_button_messages(void)
         SendMessageA(hwnd, BM_SETSTATE, TRUE, 0);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-        ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setstate, "BM_SETSTATE/TRUE on a button", TRUE);
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setstate, "BM_SETSTATE/TRUE on a button", FALSE);
 
         state = SendMessageA(hwnd, BM_GETSTATE, 0, 0);
         ok(state == BST_PUSHED, "expected state 0x0004, got %04x\n", state);
@@ -626,7 +622,7 @@ static void test_button_messages(void)
         SendMessageA(hwnd, BM_SETSTATE, FALSE, 0);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-        ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].clearstate, "BM_SETSTATE/FALSE on a button", TRUE);
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].clearstate, "BM_SETSTATE/FALSE on a button", FALSE);
 
         state = SendMessageA(hwnd, BM_GETSTATE, 0, 0);
         ok(state == 0, "expected state 0, got %04x\n", state);

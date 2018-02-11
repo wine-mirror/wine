@@ -305,7 +305,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
     POINT pt;
     LONG style = GetWindowLongW( hWnd, GWL_STYLE );
     UINT btn_type = get_button_type( style );
-    LONG state;
+    LONG state, new_state;
     HANDLE oldHbitmap;
     HTHEME theme;
 
@@ -674,12 +674,21 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 
     case BM_SETSTATE:
         state = get_button_state( hWnd );
-        if (wParam)
-            set_button_state( hWnd, state | BST_PUSHED );
-        else
-            set_button_state( hWnd, state & ~BST_PUSHED );
+        new_state = wParam ? BST_PUSHED : 0;
 
-        paint_button( hWnd, btn_type, ODA_SELECT );
+        if ((state ^ new_state) & BST_PUSHED)
+        {
+            if (wParam)
+                state |= BST_PUSHED;
+            else
+                state &= ~BST_PUSHED;
+
+            if (btn_type == BS_USERBUTTON)
+                BUTTON_NOTIFY_PARENT( hWnd, (state & BST_PUSHED) ? BN_HILITE : BN_UNHILITE );
+            set_button_state( hWnd, state );
+
+            InvalidateRect( hWnd, NULL, FALSE );
+        }
         break;
 
     case WM_NCHITTEST:
@@ -1206,7 +1215,6 @@ static void UB_Paint( HWND hwnd, HDC hDC, UINT action )
         break;
 
     default:
-        BUTTON_NOTIFY_PARENT( hwnd, BN_PAINT );
         break;
     }
 }
