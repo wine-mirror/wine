@@ -1237,12 +1237,26 @@ static INT_PTR CALLBACK TestControlStyleDlgProc(HWND hdlg, UINT msg,
 }
 
 static const WCHAR testtextW[] = {'W','n','d','T','e','x','t',0};
+static const char *testtext = "WndText";
 
 enum defdlgproc_text
 {
-    DLGPROCTEXT_CONTEXT = 0,
-    DLGPROCTEXT_A,
-    DLGPROCTEXT_W,
+    DLGPROCTEXT_SNDMSGA = 0,
+    DLGPROCTEXT_SNDMSGW,
+    DLGPROCTEXT_DLGPROCA,
+    DLGPROCTEXT_DLGPROCW,
+    DLGPROCTEXT_SETTEXTA,
+    DLGPROCTEXT_SETTEXTW,
+};
+
+static const char *testmodes[] =
+{
+    "SNDMSGA",
+    "SNDMSGW",
+    "DLGPROCA",
+    "DLGPROCW",
+    "SETTEXTA",
+    "SETTEXTW",
 };
 
 static INT_PTR CALLBACK test_aw_conversion_dlgprocA(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -1262,25 +1276,42 @@ static INT_PTR CALLBACK test_aw_conversion_dlgprocA(HWND hdlg, UINT msg, WPARAM 
     case EM_REPLACESEL:
         switch (mode)
         {
-        case DLGPROCTEXT_A:
+        case DLGPROCTEXT_DLGPROCA:
         todo_wine_if(!IsWindowUnicode(hdlg))
-            ok(!strcmp(textA, "WndText"), "Unexpected text %s.\n", textA);
+            ok(textA == testtext, "%s: %s, unexpected text %s.\n", IsWindowUnicode(hdlg) ? "U" : "A",
+                testmodes[mode], textA);
             break;
-        case DLGPROCTEXT_W:
-            if (msg == WM_SETTEXT && !IsWindowUnicode(hdlg))
-            todo_wine
-                ok(!strcmp(textA, "WndText"), "Unexpected text %s.\n", textA);
-            else
+        case DLGPROCTEXT_DLGPROCW:
         todo_wine_if(IsWindowUnicode(hdlg))
-                ok(!lstrcmpW(text, testtextW), "Unexpected text %s.\n", wine_dbgstr_w(text));
+            ok(text == testtextW, "%s: %s, unexpected text %s.\n", IsWindowUnicode(hdlg) ? "U" : "A", testmodes[mode],
+                wine_dbgstr_w(text));
             break;
-        default:
+        case DLGPROCTEXT_SNDMSGA:
+        case DLGPROCTEXT_SETTEXTA:
+            if (IsWindowUnicode(hdlg))
+            {
+            todo_wine
+                ok(text != testtextW && !lstrcmpW(text, testtextW),
+                    "U: %s, unexpected text %s.\n", testmodes[mode], wine_dbgstr_w(text));
+            }
+            else
+            {
+            todo_wine
+                ok(textA == testtext, "A: %s, unexpected text %s.\n", testmodes[mode], textA);
+            }
+            break;
+        case DLGPROCTEXT_SNDMSGW:
+        case DLGPROCTEXT_SETTEXTW:
             if (IsWindowUnicode(hdlg))
             todo_wine
-                ok(!lstrcmpW(text, testtextW), "Unexpected text %s.\n", wine_dbgstr_w(text));
+                ok(text == testtextW, "U: %s, unexpected text %s.\n", testmodes[mode], wine_dbgstr_w(text));
             else
+            {
             todo_wine
-                ok(!strcmp(textA, "WndText"), "Unexpected text %s.\n", textA);
+                ok(textA != testtext && !strcmp(textA, testtext), "A: %s, unexpected text %s.\n",
+                    testmodes[mode], textA);
+            }
+            break;
         }
         break;
     };
@@ -1305,19 +1336,32 @@ static INT_PTR CALLBACK test_aw_conversion_dlgprocW(HWND hdlg, UINT msg, WPARAM 
     case EM_REPLACESEL:
         switch (mode)
         {
-        case DLGPROCTEXT_A:
+        case DLGPROCTEXT_DLGPROCA:
         todo_wine_if(IsWindowUnicode(hdlg))
-            ok(!strcmp(textA, "WndText"), "Unexpected text %s.\n", textA);
+            ok(textA == testtext, "%s: %s, unexpected text %s.\n", IsWindowUnicode(hdlg) ? "U" : "A",
+                testmodes[mode], textA);
             break;
-        case DLGPROCTEXT_W:
+        case DLGPROCTEXT_DLGPROCW:
         todo_wine_if(!IsWindowUnicode(hdlg))
-            ok(!lstrcmpW(text, testtextW), "Unexpected text %s.\n", wine_dbgstr_w(text));
+            ok(text == testtextW, "%s: %s, unexpected text %s.\n", IsWindowUnicode(hdlg) ? "U" : "A", testmodes[mode],
+                wine_dbgstr_w(text));
             break;
-        default:
+        case DLGPROCTEXT_SNDMSGA:
+        case DLGPROCTEXT_SETTEXTA:
             if (IsWindowUnicode(hdlg))
-                ok(!lstrcmpW(text, testtextW), "Unexpected text %s.\n", wine_dbgstr_w(text));
+                ok(text != testtextW && !lstrcmpW(text, testtextW),
+                    "U: %s, unexpected text %s.\n", testmodes[mode], wine_dbgstr_w(text));
             else
-                ok(!strcmp(textA, "WndText"), "Unexpected text %s.\n", textA);
+                ok(textA == testtext, "A: %s, unexpected text %s.\n", testmodes[mode], textA);
+            break;
+        case DLGPROCTEXT_SNDMSGW:
+        case DLGPROCTEXT_SETTEXTW:
+            if (IsWindowUnicode(hdlg))
+                ok(text == testtextW, "U: %s, unexpected text %s.\n", testmodes[mode], wine_dbgstr_w(text));
+            else
+                ok(textA != testtext && !strcmp(textA, testtext), "A: %s, unexpected text %s.\n",
+                    testmodes[mode], textA);
+            break;
         }
         break;
     }
@@ -1327,22 +1371,17 @@ static INT_PTR CALLBACK test_aw_conversion_dlgprocW(HWND hdlg, UINT msg, WPARAM 
 
 static void dlg_test_aw_message(HWND hdlg, UINT msg)
 {
-    LRESULT ret;
+    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SNDMSGA));
+    SendMessageA(hdlg, msg, 0, (LPARAM)testtext);
 
-    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_CONTEXT));
-    ret = SendMessageA(hdlg, msg, 0, (LPARAM)"WndText");
-    ok(ret == 0, "Unexpected retval %ld.\n", ret);
+    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SNDMSGW));
+    SendMessageW(hdlg, msg, 0, (LPARAM)testtextW);
 
-    ret = SendMessageW(hdlg, msg, 0, (LPARAM)testtextW);
-    ok(ret == 0, "Unexpected retval %ld.\n", ret);
+    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_DLGPROCA));
+    DefDlgProcA(hdlg, msg, 0, (LPARAM)testtext);
 
-    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_A));
-    ret = DefDlgProcA(hdlg, msg, 0, (LPARAM)"WndText");
-    ok(ret == 0, "Unexpected retval %ld.\n", ret);
-
-    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_W));
-    ret = DefDlgProcW(hdlg, msg, 0, (LPARAM)testtextW);
-    ok(ret == 0, "Unexpected retval %ld.\n", ret);
+    SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_DLGPROCW));
+    DefDlgProcW(hdlg, msg, 0, (LPARAM)testtextW);
 }
 
 static INT_PTR CALLBACK test_aw_conversion_dlgproc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -1357,6 +1396,14 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc(HWND hdlg, UINT msg, WPARAM w
     {
     case WM_INITDIALOG:
         ok(IsWindowUnicode(hdlg), "Expected unicode window.\n");
+
+        dlg_test_aw_message(hdlg, WM_WININICHANGE);
+        dlg_test_aw_message(hdlg, WM_DEVMODECHANGE);
+        dlg_test_aw_message(hdlg, CB_DIR);
+        dlg_test_aw_message(hdlg, LB_DIR);
+        dlg_test_aw_message(hdlg, LB_ADDFILE);
+        dlg_test_aw_message(hdlg, EM_REPLACESEL);
+        dlg_test_aw_message(hdlg, WM_SETTEXT);
 
         /* WM_SETTEXT/WM_GETTEXT */
         originalproc = GetWindowLongPtrW(hdlg, DWLP_DLGPROC);
@@ -1374,6 +1421,12 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc(HWND hdlg, UINT msg, WPARAM w
         dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
         ok(dlgproc == (ULONG_PTR)test_aw_conversion_dlgprocA, "Unexpected dlg proc %#lx.\n", dlgproc);
 
+        SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SETTEXTA));
+        ret = SetWindowTextA(hdlg, testtext);
+    todo_wine
+        ok(ret, "Failed to set window text.\n");
+
+        SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SETTEXTW));
         ret = SetWindowTextW(hdlg, testtextW);
     todo_wine
         ok(ret, "Failed to set window text.\n");
@@ -1395,6 +1448,7 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc(HWND hdlg, UINT msg, WPARAM w
         dlg_test_aw_message(hdlg, LB_DIR);
         dlg_test_aw_message(hdlg, LB_ADDFILE);
         dlg_test_aw_message(hdlg, EM_REPLACESEL);
+        dlg_test_aw_message(hdlg, WM_SETTEXT);
 
         dlgproc = SetWindowLongPtrW(hdlg, DWLP_DLGPROC, (UINT_PTR)test_aw_conversion_dlgprocW);
         ok(IsWindowUnicode(hdlg), "Expected unicode window.\n");
@@ -1405,7 +1459,13 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc(HWND hdlg, UINT msg, WPARAM w
         dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
         ok(dlgproc != (ULONG_PTR)test_aw_conversion_dlgprocW, "Unexpected dlg proc %#lx.\n", dlgproc);
 
-        ret = SetWindowTextA(hdlg, "WndText");
+        SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SETTEXTA));
+        ret = SetWindowTextA(hdlg, testtext);
+    todo_wine
+        ok(ret, "Failed to set window text.\n");
+
+        SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SETTEXTW));
+        ret = SetWindowTextW(hdlg, testtextW);
     todo_wine
         ok(ret, "Failed to set window text.\n");
 
@@ -1425,6 +1485,7 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc(HWND hdlg, UINT msg, WPARAM w
         dlg_test_aw_message(hdlg, LB_DIR);
         dlg_test_aw_message(hdlg, LB_ADDFILE);
         dlg_test_aw_message(hdlg, EM_REPLACESEL);
+        dlg_test_aw_message(hdlg, WM_SETTEXT);
 
         SetWindowLongPtrA(hdlg, DWLP_DLGPROC, originalproc);
         EndDialog(hdlg, -123);
@@ -1446,6 +1507,14 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc2(HWND hdlg, UINT msg, WPARAM 
     case WM_INITDIALOG:
         ok(!IsWindowUnicode(hdlg), "Unexpected unicode window.\n");
 
+        dlg_test_aw_message(hdlg, WM_WININICHANGE);
+        dlg_test_aw_message(hdlg, WM_DEVMODECHANGE);
+        dlg_test_aw_message(hdlg, CB_DIR);
+        dlg_test_aw_message(hdlg, LB_DIR);
+        dlg_test_aw_message(hdlg, LB_ADDFILE);
+        dlg_test_aw_message(hdlg, EM_REPLACESEL);
+        dlg_test_aw_message(hdlg, WM_SETTEXT);
+
         originalproc = GetWindowLongPtrW(hdlg, DWLP_DLGPROC);
         ok(originalproc != (ULONG_PTR)test_aw_conversion_dlgproc2, "Unexpected dlg proc %#lx.\n", originalproc);
 
@@ -1461,7 +1530,13 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc2(HWND hdlg, UINT msg, WPARAM 
         dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
         ok(dlgproc == (ULONG_PTR)test_aw_conversion_dlgprocW, "Unexpected dlg proc %#lx.\n", dlgproc);
 
-        ret = SetWindowTextA(hdlg, "WndText");
+        SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SETTEXTA));
+        ret = SetWindowTextA(hdlg, testtext);
+    todo_wine
+        ok(ret, "Failed to set window text.\n");
+
+        SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SETTEXTW));
+        ret = SetWindowTextW(hdlg, testtextW);
     todo_wine
         ok(ret, "Failed to set window text.\n");
 
@@ -1480,6 +1555,7 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc2(HWND hdlg, UINT msg, WPARAM 
         dlg_test_aw_message(hdlg, LB_DIR);
         dlg_test_aw_message(hdlg, LB_ADDFILE);
         dlg_test_aw_message(hdlg, EM_REPLACESEL);
+        dlg_test_aw_message(hdlg, WM_SETTEXT);
 
         dlgproc = SetWindowLongPtrW(hdlg, DWLP_DLGPROC, (UINT_PTR)test_aw_conversion_dlgprocA);
         ok(!IsWindowUnicode(hdlg), "Unexpected unicode window.\n");
@@ -1490,6 +1566,12 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc2(HWND hdlg, UINT msg, WPARAM 
         dlgproc = GetWindowLongPtrA(hdlg, DWLP_DLGPROC);
         ok(dlgproc != (ULONG_PTR)test_aw_conversion_dlgprocA, "Unexpected dlg proc %#lx.\n", dlgproc);
 
+        SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SETTEXTA));
+        ret = SetWindowTextA(hdlg, testtext);
+    todo_wine
+        ok(ret, "Failed to set window text.\n");
+
+        SetPropA(hdlg, "test_mode", ULongToHandle(DLGPROCTEXT_SETTEXTW));
         ret = SetWindowTextW(hdlg, testtextW);
     todo_wine
         ok(ret, "Failed to set window text.\n");
@@ -1511,6 +1593,7 @@ static INT_PTR CALLBACK test_aw_conversion_dlgproc2(HWND hdlg, UINT msg, WPARAM 
         dlg_test_aw_message(hdlg, LB_DIR);
         dlg_test_aw_message(hdlg, LB_ADDFILE);
         dlg_test_aw_message(hdlg, EM_REPLACESEL);
+        dlg_test_aw_message(hdlg, WM_SETTEXT);
 
         SetWindowLongPtrA(hdlg, DWLP_DLGPROC, originalproc);
         EndDialog(hdlg, -123);
