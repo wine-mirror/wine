@@ -440,8 +440,7 @@ static const struct message setcheck_radio_redraw_seq[] =
     { WM_STYLECHANGED, sent|wparam|defwinproc, GWL_STYLE },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
-    { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
-    { WM_ERASEBKGND, sent|defwinproc|optional },
+    { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
     { 0 }
 };
 
@@ -661,7 +660,9 @@ static void test_button_messages(void)
         SendMessageA(hwnd, BM_SETCHECK, BST_CHECKED, 0);
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+        ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setcheck, "BM_SETCHECK on a button", FALSE);
 
+        state = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
         if (button[i].style == BS_PUSHBUTTON ||
             button[i].style == BS_DEFPUSHBUTTON ||
             button[i].style == BS_GROUPBOX ||
@@ -672,16 +673,10 @@ static void test_button_messages(void)
             button[i].style == BS_COMMANDLINK ||
             button[i].style == BS_DEFCOMMANDLINK)
         {
-            ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setcheck, "BM_SETCHECK on a button", FALSE);
-            state = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
             ok(state == BST_UNCHECKED, "expected check BST_UNCHECKED, got %04x\n", state);
         }
         else
-        {
-            ok_sequence(sequences, COMBINED_SEQ_INDEX, button[i].setcheck, "BM_SETCHECK on a button", TRUE);
-            state = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
             ok(state == BST_CHECKED, "expected check BST_CHECKED, got %04x\n", state);
-        }
 
         style = GetWindowLongA(hwnd, GWL_STYLE);
         style &= ~(WS_CHILD | BS_NOTIFY | WS_VISIBLE);

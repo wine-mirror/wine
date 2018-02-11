@@ -663,7 +663,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         if ((state & 3) != wParam)
         {
             set_button_state( hWnd, (state & ~3) | wParam );
-            paint_button( hWnd, btn_type, ODA_SELECT );
+            InvalidateRect( hWnd, NULL, FALSE );
         }
         if ((btn_type == BS_AUTORADIOBUTTON) && (wParam == BST_CHECKED) && (style & WS_CHILD))
             BUTTON_CheckAutoRadioButton( hWnd );
