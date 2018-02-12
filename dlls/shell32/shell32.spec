@@ -114,7 +114,7 @@
  119 stdcall -ordinal IsLFNDrive(ptr) IsLFNDriveAW
  120 stdcall -noname FileMenu_AbortInitMenu()
  121 stdcall -noname SHFlushClipboard()
- 122 stdcall -private @(long long ptr str long) shell.dll16.RunDLL_CallEntry16
+ 122 stdcall -noname RunDLL_CallEntry16(long long ptr str long)
  123 stdcall -noname SHFreeUnusedLibraries()
  124 stdcall -noname FileMenu_AppendFilesForPidl(long ptr long)
  125 stdcall -noname FileMenu_AddFilesForPidl(long long long ptr long long ptr)
