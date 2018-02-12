@@ -211,11 +211,10 @@ typedef struct _NPPluginFuncs {
     NPP_LostFocusPtr lostfocus;
 } NPPluginFuncs;
 
-static nsIDOMHTMLElement *get_dom_element(NPP instance)
+static nsIDOMElement *get_dom_element(NPP instance)
 {
     nsISupports *instance_unk = (nsISupports*)instance->ndata;
     nsIPluginInstance *plugin_instance;
-    nsIDOMHTMLElement *html_elem;
     nsIDOMElement *elem;
     nsresult nsres;
 
@@ -232,24 +231,17 @@ static nsIDOMHTMLElement *get_dom_element(NPP instance)
         return NULL;
     }
 
-    nsres = nsIDOMElement_QueryInterface(elem, &IID_nsIDOMHTMLElement, (void**)&html_elem);
-    nsIDOMElement_Release(elem);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLElement iface: %08x\n", nsres);
-        return NULL;
-    }
-
-    return html_elem;
+    return elem;
 }
 
-static HTMLInnerWindow *get_elem_window(nsIDOMHTMLElement *elem)
+static HTMLInnerWindow *get_elem_window(nsIDOMElement *elem)
 {
     mozIDOMWindowProxy *mozwindow;
     nsIDOMDocument *nsdoc;
     HTMLOuterWindow *window;
     nsresult nsres;
 
-    nsres = nsIDOMHTMLElement_GetOwnerDocument(elem, &nsdoc);
+    nsres = nsIDOMElement_GetOwnerDocument(elem, &nsdoc);
     if(NS_FAILED(nsres))
         return NULL;
 
@@ -268,7 +260,7 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
         char **argv, NPSavedData *saved)
 {
     HTMLPluginContainer *container;
-    nsIDOMHTMLElement *nselem;
+    nsIDOMElement *nselem;
     HTMLInnerWindow *window;
     HTMLDOMNode *node;
     NPError err = NPERR_NO_ERROR;
@@ -285,12 +277,12 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
     window = get_elem_window(nselem);
     if(!window) {
         ERR("Could not get element's window object\n");
-        nsIDOMHTMLElement_Release(nselem);
+        nsIDOMElement_Release(nselem);
         return NPERR_GENERIC_ERROR;
     }
 
     hres = get_node(window->doc, (nsIDOMNode*)nselem, TRUE, &node);
-    nsIDOMHTMLElement_Release(nselem);
+    nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return NPERR_GENERIC_ERROR;
 
