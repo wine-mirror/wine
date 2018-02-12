@@ -739,7 +739,7 @@ static dispex_static_data_t HTMLImgElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLImg *ret;
     nsresult nsres;
@@ -753,7 +753,7 @@ HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, 
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLImgElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLImageElement, (void**)&ret->nsimg);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLImageElement, (void**)&ret->nsimg);
     assert(nsres == NS_OK);
 
     *elem = &ret->element;

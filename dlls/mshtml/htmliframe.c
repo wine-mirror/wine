@@ -596,7 +596,7 @@ static dispex_static_data_t HTMLIFrame_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLIFrame *ret;
 

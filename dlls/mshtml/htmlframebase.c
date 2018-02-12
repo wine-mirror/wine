@@ -731,7 +731,7 @@ void HTMLFrameBase_destructor(HTMLFrameBase *This)
     HTMLElement_destructor(&This->element.node);
 }
 
-void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
+void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMElement *nselem,
         dispex_static_data_t *dispex_data)
 {
     nsresult nsres;
@@ -741,10 +741,10 @@ void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLEl
 
     HTMLElement_Init(&This->element, doc, nselem, dispex_data);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFrameElement, (void**)&This->nsframe);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLFrameElement, (void**)&This->nsframe);
     if(NS_FAILED(nsres)) {
         This->nsframe = NULL;
-        nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&This->nsiframe);
+        nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&This->nsiframe);
         assert(nsres == NS_OK);
     }else {
         This->nsiframe = NULL;

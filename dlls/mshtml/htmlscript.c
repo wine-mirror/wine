@@ -480,7 +480,7 @@ static dispex_static_data_t HTMLScriptElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLScriptElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLScriptElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLScriptElement *ret;
     nsresult nsres;
@@ -494,7 +494,7 @@ HRESULT HTMLScriptElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLScriptElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLScriptElement, (void**)&ret->nsscript);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLScriptElement, (void**)&ret->nsscript);
     assert(nsres == NS_OK);
 
     *elem = &ret->element;

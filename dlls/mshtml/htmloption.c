@@ -448,7 +448,7 @@ static dispex_static_data_t HTMLOptionElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLOptionElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLOptionElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLOptionElement *ret;
     nsresult nsres;
@@ -462,7 +462,7 @@ HRESULT HTMLOptionElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLOptionElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
     assert(nsres == NS_OK);
 
     *elem = &ret->element;

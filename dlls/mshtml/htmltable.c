@@ -675,7 +675,7 @@ static HRESULT WINAPI HTMLTable_insertRow(IHTMLTable *iface, LONG index, IDispat
         return E_FAIL;
     }
 
-    hres = HTMLTableRow_Create(This->element.node.doc, nselem, &elem);
+    hres = HTMLTableRow_Create(This->element.node.doc, (nsIDOMElement*)nselem, &elem);
     nsIDOMHTMLElement_Release(nselem);
     if (FAILED(hres)) {
         ERR("Create TableRow failed: %08x\n", hres);
@@ -1076,7 +1076,7 @@ static dispex_static_data_t HTMLTable_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLTable *ret;
     nsresult nsres;
@@ -1092,7 +1092,7 @@ HRESULT HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLE
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTable_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableElement, (void**)&ret->nstable);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableElement, (void**)&ret->nstable);
     assert(nsres == NS_OK);
 
     *elem = &ret->element;

@@ -70,7 +70,7 @@ static const WCHAR trW[]       = {'T','R',0};
 
 typedef struct {
     const WCHAR *name;
-    HRESULT (*constructor)(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**);
+    HRESULT (*constructor)(HTMLDocumentNode*,nsIDOMElement*,HTMLElement**);
 } tag_desc_t;
 
 static const tag_desc_t tag_descs[] = {
@@ -5443,7 +5443,7 @@ static dispex_static_data_t HTMLElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, dispex_static_data_t *dispex_data)
+void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMElement *nselem, dispex_static_data_t *dispex_data)
 {
     This->IHTMLElement_iface.lpVtbl = &HTMLElementVtbl;
     This->IHTMLElement2_iface.lpVtbl = &HTMLElement2Vtbl;
@@ -5459,12 +5459,22 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
         dispex_data->vtbl = &HTMLElement_event_target_vtbl.dispex_vtbl;
 
     if(nselem) {
+        nsIDOMHTMLElement *html_element;
+        nsresult nsres;
+
         HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem, dispex_data ? dispex_data : &HTMLElement_dispex);
 
         /* No AddRef, share reference with HTMLDOMNode */
         assert((nsIDOMNode*)nselem == This->node.nsnode);
-        This->dom_element = (nsIDOMElement*)nselem;
-        This->html_element = nselem;
+        This->dom_element = nselem;
+
+        nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLElement, (void**)&html_element);
+        if(NS_SUCCEEDED(nsres)) {
+            This->html_element = html_element;
+            /* share reference with HTMLDOMNode */
+            assert((nsIDOMNode*)html_element == This->node.nsnode);
+            nsIDOMHTMLElement_Release(html_element);
+        }
         This->nselem = This->html_element;
     }
 
@@ -5492,14 +5502,14 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
 
     tag = get_tag_desc(class_name);
     if(tag) {
-        hres = tag->constructor(doc, nselem, &elem);
+        hres = tag->constructor(doc, (nsIDOMElement*)nselem, &elem);
     }else if(use_generic) {
-        hres = HTMLGenericElement_Create(doc, nselem, &elem);
+        hres = HTMLGenericElement_Create(doc, (nsIDOMElement*)nselem, &elem);
     }else {
         elem = heap_alloc_zero(sizeof(HTMLElement));
         if(elem) {
             elem->node.vtbl = &HTMLElementImplVtbl;
-            HTMLElement_Init(elem, doc, nselem, &HTMLElement_dispex);
+            HTMLElement_Init(elem, doc, (nsIDOMElement*)nselem, &HTMLElement_dispex);
             hres = S_OK;
         }else {
             hres = E_OUTOFMEMORY;

@@ -174,7 +174,7 @@ static dispex_static_data_t HTMLGenericElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLGenericElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLGenericElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLGenericElement *ret;
 

@@ -175,7 +175,7 @@ static dispex_static_data_t HTMLTitleElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLTitleElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLTitleElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLTitleElement *ret;
 
@@ -358,7 +358,7 @@ static dispex_static_data_t HTMLHtmlElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLHtmlElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLHtmlElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLHtmlElement *ret;
 
@@ -519,7 +519,7 @@ static dispex_static_data_t HTMLHeadElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLHeadElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLHeadElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLHeadElement *ret;
 

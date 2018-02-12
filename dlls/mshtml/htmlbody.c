@@ -902,7 +902,7 @@ static dispex_static_data_t HTMLBodyElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLBodyElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLBodyElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLBodyElement *ret;
     nsresult nsres;
@@ -914,7 +914,7 @@ HRESULT HTMLBodyElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     ret->IHTMLBodyElement_iface.lpVtbl = &HTMLBodyElementVtbl;
     ret->textcont.element.node.vtbl = &HTMLBodyElementImplVtbl;
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLBodyElement, (void**)&ret->nsbody);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLBodyElement, (void**)&ret->nsbody);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsDOMHTMLBodyElement: %08x\n", nsres);
         heap_free(ret);

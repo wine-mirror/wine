@@ -453,7 +453,7 @@ static dispex_static_data_t HTMLLinkElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLLinkElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLLinkElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLLinkElement *ret;
     nsresult nsres;
@@ -467,7 +467,7 @@ HRESULT HTMLLinkElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLLinkElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLLinkElement, (void**)&ret->nslink);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLLinkElement, (void**)&ret->nslink);
     assert(nsres == NS_OK);
 
     *elem = &ret->element;

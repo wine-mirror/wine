@@ -493,7 +493,7 @@ static dispex_static_data_t HTMLTableCell_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLTableCell_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLTableCell_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLTableCell *ret;
     nsresult nsres;
@@ -507,7 +507,7 @@ HRESULT HTMLTableCell_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, H
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTableCell_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableCellElement, (void**)&ret->nscell);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableCellElement, (void**)&ret->nscell);
     assert(nsres == NS_OK);
 
     *elem = &ret->element;

@@ -255,7 +255,7 @@ static dispex_static_data_t HTMLMetaElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLMetaElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLMetaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLMetaElement *ret;
 

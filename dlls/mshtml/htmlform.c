@@ -814,7 +814,7 @@ static dispex_static_data_t HTMLFormElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLFormElement *ret;
     nsresult nsres;
@@ -828,7 +828,7 @@ HRESULT HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLFormElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFormElement, (void**)&ret->nsform);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLFormElement, (void**)&ret->nsform);
     assert(nsres == NS_OK);
 
     *elem = &ret->element;

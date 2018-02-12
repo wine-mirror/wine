@@ -456,7 +456,7 @@ static dispex_static_data_t HTMLAreaElement_dispex = {
     HTMLElement_init_dispex_info
 };
 
-HRESULT HTMLAreaElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
+HRESULT HTMLAreaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
 {
     HTMLAreaElement *ret;
     nsresult nsres;
@@ -470,7 +470,7 @@ HRESULT HTMLAreaElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLAreaElement_dispex);
 
-    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLAreaElement, (void**)&ret->nsarea);
+    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLAreaElement, (void**)&ret->nsarea);
     assert(nsres == NS_OK);
 
     *elem = &ret->element;

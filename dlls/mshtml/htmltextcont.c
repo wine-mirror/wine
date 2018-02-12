@@ -185,7 +185,7 @@ static const IHTMLTextContainerVtbl HTMLTextContainerVtbl = {
     HTMLTextContainer_get_onscroll
 };
 
-void HTMLTextContainer_Init(HTMLTextContainer *This, HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
+void HTMLTextContainer_Init(HTMLTextContainer *This, HTMLDocumentNode *doc, nsIDOMElement *nselem,
         dispex_static_data_t *dispex_data)
 {
     This->IHTMLTextContainer_iface.lpVtbl = &HTMLTextContainerVtbl;
