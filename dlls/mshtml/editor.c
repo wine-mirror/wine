@@ -262,7 +262,7 @@ static void remove_child_attr(nsIDOMElement *elem, LPCWSTR tag, nsAString *attr_
 static void get_font_size(HTMLDocument *This, WCHAR *ret)
 {
     nsISelection *nsselection = get_ns_selection(This);
-    nsIDOMHTMLElement *elem = NULL;
+    nsIDOMElement *elem = NULL;
     nsIDOMNode *node = NULL, *tmp_node;
     nsAString tag_str;
     LPCWSTR tag;
@@ -283,10 +283,10 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
             break;
 
         if(node_type == ELEMENT_NODE) {
-            nsIDOMNode_QueryInterface(node, &IID_nsIDOMHTMLElement, (void**)&elem);
+            nsIDOMNode_QueryInterface(node, &IID_nsIDOMElement, (void**)&elem);
 
             nsAString_Init(&tag_str, NULL);
-            nsIDOMHTMLElement_GetTagName(elem, &tag_str);
+            nsIDOMElement_GetTagName(elem, &tag_str);
             nsAString_GetData(&tag_str, &tag);
 
             if(!strcmpiW(tag, fontW)) {
@@ -305,7 +305,7 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
             }
 
             nsAString_Finish(&tag_str);
-            nsIDOMHTMLElement_Release(elem);
+            nsIDOMElement_Release(elem);
         }
 
         if(*ret)
