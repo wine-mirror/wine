@@ -5570,7 +5570,6 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMElement *n
             assert((nsIDOMNode*)html_element == This->node.nsnode);
             nsIDOMHTMLElement_Release(html_element);
         }
-        This->nselem = This->html_element;
     }
 
     ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)&This->IHTMLElement_iface, This->node.vtbl->cpc_entries);
@@ -5578,24 +5577,26 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMElement *n
 
 HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_generic, HTMLElement **ret)
 {
-    nsIDOMHTMLElement *nselem;
-    nsAString class_name_str;
-    const PRUnichar *class_name;
+    nsIDOMElement *nselem;
+    nsAString tag_name_str;
+    const PRUnichar *tag_name;
     const tag_desc_t *tag;
     HTMLElement *elem;
     nsresult nsres;
     HRESULT hres;
 
-    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLElement, (void**)&nselem);
-    if(NS_FAILED(nsres))
+    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("no nsIDOMElement iface\n");
         return E_FAIL;
+    }
 
-    nsAString_Init(&class_name_str, NULL);
-    nsIDOMHTMLElement_GetTagName(nselem, &class_name_str);
+    nsAString_Init(&tag_name_str, NULL);
+    nsIDOMElement_GetTagName(nselem, &tag_name_str);
 
-    nsAString_GetData(&class_name_str, &class_name);
+    nsAString_GetData(&tag_name_str, &tag_name);
 
-    tag = get_tag_desc(class_name);
+    tag = get_tag_desc(tag_name);
     if(tag) {
         hres = tag->constructor(doc, (nsIDOMElement*)nselem, &elem);
     }else if(use_generic) {
@@ -5611,10 +5612,10 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
         }
     }
 
-    TRACE("%s ret %p\n", debugstr_w(class_name), elem);
+    TRACE("%s ret %p\n", debugstr_w(tag_name), elem);
 
-    nsIDOMHTMLElement_Release(nselem);
-    nsAString_Finish(&class_name_str);
+    nsIDOMElement_Release(nselem);
+    nsAString_Finish(&tag_name_str);
     if(FAILED(hres))
         return hres;
 

@@ -779,9 +779,8 @@ typedef struct {
     IElementTraversal IElementTraversal_iface;
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
 
-    nsIDOMHTMLElement *nselem;
-    nsIDOMElement *dom_element;
-    nsIDOMHTMLElement *html_element;
+    nsIDOMElement *dom_element;       /* NULL for legacy comments represented as HTML elements */
+    nsIDOMHTMLElement *html_element;  /* NULL for non-HTML elements (like SVG elements) */
     HTMLStyle *style;
     HTMLStyle *runtime_style;
     HTMLAttributeCollection *attrs;
