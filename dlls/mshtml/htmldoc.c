@@ -261,7 +261,7 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
     nsIDOMHTMLElement *nsbody = NULL;
-    HTMLDOMNode *node;
+    HTMLElement *element;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -281,14 +281,13 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
         return S_OK;
     }
 
-    hres = get_node(This->doc_node, (nsIDOMNode*)nsbody, TRUE, &node);
+    hres = get_elem(This->doc_node, (nsIDOMElement*)nsbody, &element);
     nsIDOMHTMLElement_Release(nsbody);
     if(FAILED(hres))
         return hres;
 
-    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
-    node_release(node);
-    return hres;
+    *p = &element->IHTMLElement_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_get_activeElement(IHTMLDocument2 *iface, IHTMLElement **p)
