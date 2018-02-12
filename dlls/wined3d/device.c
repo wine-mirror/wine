@@ -1926,27 +1926,23 @@ void CDECL wined3d_device_get_viewport(const struct wined3d_device *device, stru
     *viewport = device->state.viewport;
 }
 
-static void resolve_depth_buffer(struct wined3d_state *state)
+static void resolve_depth_buffer(struct wined3d_device *device)
 {
-    struct wined3d_texture *dst_texture = state->textures[0];
+    const struct wined3d_state *state = &device->state;
     struct wined3d_rendertarget_view *src_view;
-    RECT src_rect, dst_rect;
+    struct wined3d_resource *dst_resource;
+    struct wined3d_texture *dst_texture;
 
-    if (!dst_texture || !(dst_texture->resource.format_flags & WINED3DFMT_FLAG_DEPTH))
+    if (!(dst_texture = state->textures[0]))
         return;
-
+    dst_resource = &dst_texture->resource;
+    if (!(dst_resource->format_flags & WINED3DFMT_FLAG_DEPTH))
+        return;
     if (!(src_view = state->fb->depth_stencil))
         return;
-    if (src_view->resource->type == WINED3D_RTYPE_BUFFER)
-    {
-        FIXME("Not supported on buffer resources.\n");
-        return;
-    }
 
-    SetRect(&dst_rect, 0, 0, dst_texture->resource.width, dst_texture->resource.height);
-    SetRect(&src_rect, 0, 0, src_view->width, src_view->height);
-    wined3d_texture_blt(dst_texture, 0, &dst_rect, texture_from_resource(src_view->resource),
-            src_view->sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
+    wined3d_device_resolve_sub_resource(device, dst_resource, 0,
+            src_view->resource, src_view->sub_resource_idx, dst_resource->format->id);
 }
 
 void CDECL wined3d_device_set_blend_state(struct wined3d_device *device, struct wined3d_blend_state *blend_state)
@@ -2033,7 +2029,7 @@ void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
     if (state == WINED3D_RS_POINTSIZE && value == WINED3D_RESZ_CODE)
     {
         TRACE("RESZ multisampled depth buffer resolve triggered.\n");
-        resolve_depth_buffer(&device->state);
+        resolve_depth_buffer(device);
     }
 }
 
@@ -4303,6 +4299,52 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     wined3d_resource_wait_idle(resource);
 
     wined3d_cs_emit_update_sub_resource(device->cs, resource, sub_resource_idx, box, data, row_pitch, depth_pitch);
+}
+
+void CDECL wined3d_device_resolve_sub_resource(struct wined3d_device *device,
+        struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx,
+        struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx,
+        enum wined3d_format_id format_id)
+{
+    struct wined3d_texture *dst_texture, *src_texture;
+    unsigned int dst_level, src_level;
+    RECT dst_rect, src_rect;
+
+    TRACE("device %p, dst_resource %p, dst_sub_resource_idx %u, "
+            "src_resource %p, src_sub_resource_idx %u, format %s.\n",
+            device, dst_resource, dst_sub_resource_idx,
+            src_resource, src_sub_resource_idx, debug_d3dformat(format_id));
+
+    if (wined3d_format_is_typeless(dst_resource->format)
+            || wined3d_format_is_typeless(src_resource->format))
+    {
+        FIXME("Unhandled multisample resolve, dst_format %s, src_format %s, format %s.\n",
+                debug_d3dformat(dst_resource->format->id), debug_d3dformat(src_resource->format->id),
+                debug_d3dformat(format_id));
+        return;
+    }
+    if (dst_resource->type != WINED3D_RTYPE_TEXTURE_2D)
+    {
+        WARN("Invalid destination resource type %s.\n", debug_d3dresourcetype(dst_resource->type));
+        return;
+    }
+    if (src_resource->type != WINED3D_RTYPE_TEXTURE_2D)
+    {
+        WARN("Invalid source resource type %s.\n", debug_d3dresourcetype(src_resource->type));
+        return;
+    }
+
+    dst_texture = texture_from_resource(dst_resource);
+    src_texture = texture_from_resource(src_resource);
+
+    dst_level = dst_sub_resource_idx % dst_texture->level_count;
+    SetRect(&dst_rect, 0, 0, wined3d_texture_get_level_width(dst_texture, dst_level),
+            wined3d_texture_get_level_height(dst_texture, dst_level));
+    src_level = src_sub_resource_idx % src_texture->level_count;
+    SetRect(&src_rect, 0, 0, wined3d_texture_get_level_width(src_texture, src_level),
+            wined3d_texture_get_level_height(src_texture, src_level));
+    wined3d_texture_blt(dst_texture, dst_sub_resource_idx, &dst_rect,
+            src_texture, src_sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 
 HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,

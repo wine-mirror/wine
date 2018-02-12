@@ -129,6 +129,7 @@
 @ cdecl wined3d_device_process_vertices(ptr long long long ptr ptr long long)
 @ cdecl wined3d_device_release_focus_window(ptr)
 @ cdecl wined3d_device_reset(ptr ptr ptr ptr long)
+@ cdecl wined3d_device_resolve_sub_resource(ptr ptr long ptr long long)
 @ cdecl wined3d_device_restore_fullscreen_window(ptr ptr ptr)
 @ cdecl wined3d_device_set_base_vertex_index(ptr long)
 @ cdecl wined3d_device_set_blend_state(ptr ptr)
