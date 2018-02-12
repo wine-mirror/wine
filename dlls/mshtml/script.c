@@ -1205,7 +1205,7 @@ static BOOL get_guid_from_language(LPCWSTR type, GUID *guid)
 
 static BOOL get_script_guid(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *nsscript, GUID *guid)
 {
-    nsIDOMHTMLElement *nselem;
+    nsIDOMElement *nselem;
     const PRUnichar *language;
     nsAString val_str;
     BOOL ret = FALSE;
@@ -1229,11 +1229,11 @@ static BOOL get_script_guid(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *ns
         ERR("GetType failed: %08x\n", nsres);
     }
 
-    nsres = nsIDOMHTMLScriptElement_QueryInterface(nsscript, &IID_nsIDOMHTMLElement, (void**)&nselem);
+    nsres = nsIDOMHTMLScriptElement_QueryInterface(nsscript, &IID_nsIDOMElement, (void**)&nselem);
     assert(nsres == NS_OK);
 
     nsres = get_elem_attr_value(nselem, languageW, &val_str, &language);
-    nsIDOMHTMLElement_Release(nselem);
+    nsIDOMElement_Release(nselem);
     if(NS_SUCCEEDED(nsres)) {
         if(*language) {
             ret = get_guid_from_language(language, guid);

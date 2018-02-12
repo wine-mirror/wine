@@ -295,7 +295,7 @@ static void get_font_size(HTMLDocument *This, WCHAR *ret)
 
                 TRACE("found font tag %p\n", elem);
 
-                get_elem_attr_value(elem, sizeW, &val_str, &val);
+                get_elem_attr_value((nsIDOMElement*)elem, sizeW, &val_str, &val);
                 if(*val) {
                     TRACE("found size %s\n", debugstr_w(val));
                     strcpyW(ret, val);

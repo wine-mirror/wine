@@ -166,14 +166,14 @@ HRESULT replace_node_by_html(nsIDOMHTMLDocument *nsdoc, nsIDOMNode *nsnode, cons
     return hres;
 }
 
-nsresult get_elem_attr_value(nsIDOMHTMLElement *nselem, const WCHAR *name, nsAString *val_str, const PRUnichar **val)
+nsresult get_elem_attr_value(nsIDOMElement *nselem, const WCHAR *name, nsAString *val_str, const PRUnichar **val)
 {
     nsAString name_str;
     nsresult nsres;
 
     nsAString_InitDepend(&name_str, name);
     nsAString_Init(val_str, NULL);
-    nsres = nsIDOMHTMLElement_GetAttribute(nselem, &name_str, val_str);
+    nsres = nsIDOMElement_GetAttribute(nselem, &name_str, val_str);
     nsAString_Finish(&name_str);
     if(NS_FAILED(nsres)) {
         ERR("GetAttribute(%s) failed: %08x\n", debugstr_w(name), nsres);
@@ -192,7 +192,7 @@ HRESULT elem_string_attr_getter(HTMLElement *elem, const WCHAR *name, BOOL use_n
     nsresult nsres;
     HRESULT hres = S_OK;
 
-    nsres = get_elem_attr_value(elem->nselem, name, &val_str, &val);
+    nsres = get_elem_attr_value(elem->dom_element, name, &val_str, &val);
     if(NS_FAILED(nsres))
         return E_FAIL;
 

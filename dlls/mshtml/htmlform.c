@@ -671,7 +671,7 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
     nsAString_Init(&nsstr, NULL);
     for(i = 0; i < len; ++i) {
         nsIDOMNode *nsitem;
-        nsIDOMHTMLElement *nshtml_elem;
+        nsIDOMElement *elem;
         const PRUnichar *str;
 
         nsres = nsIDOMHTMLCollection_Item(elements, i, &nsitem);
@@ -681,7 +681,7 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
             break;
         }
 
-        nsres = nsIDOMNode_QueryInterface(nsitem, &IID_nsIDOMHTMLElement, (void**)&nshtml_elem);
+        nsres = nsIDOMNode_QueryInterface(nsitem, &IID_nsIDOMElement, (void**)&elem);
         nsIDOMNode_Release(nsitem);
         if(NS_FAILED(nsres)) {
             FIXME("Failed to get nsIDOMHTMLNode interface: 0x%08x\n", nsres);
@@ -690,16 +690,16 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
         }
 
         /* compare by id attr */
-        nsres = nsIDOMHTMLElement_GetId(nshtml_elem, &nsstr);
+        nsres = nsIDOMElement_GetId(elem, &nsstr);
         if(NS_FAILED(nsres)) {
             FIXME("GetId failed: 0x%08x\n", nsres);
-            nsIDOMHTMLElement_Release(nshtml_elem);
+            nsIDOMElement_Release(elem);
             hres = E_FAIL;
             break;
         }
         nsAString_GetData(&nsstr, &str);
         if(!strcmpiW(str, name)) {
-            nsIDOMHTMLElement_Release(nshtml_elem);
+            nsIDOMElement_Release(elem);
             /* FIXME: using index for dispid */
             *pid = MSHTML_DISPID_CUSTOM_MIN + i;
             hres = S_OK;
@@ -707,8 +707,8 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
         }
 
         /* compare by name attr */
-        nsres = get_elem_attr_value(nshtml_elem, nameW, &name_str, &str);
-        nsIDOMHTMLElement_Release(nshtml_elem);
+        nsres = get_elem_attr_value(elem, nameW, &name_str, &str);
+        nsIDOMElement_Release(elem);
         if(NS_SUCCEEDED(nsres)) {
             if(!strcmpiW(str, name)) {
                 nsAString_Finish(&name_str);

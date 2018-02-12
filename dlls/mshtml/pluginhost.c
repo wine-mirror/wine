@@ -1669,7 +1669,7 @@ static BOOL get_elem_clsid(nsIDOMHTMLElement *elem, CLSID *clsid)
 
     static const PRUnichar classidW[] = {'c','l','a','s','s','i','d',0};
 
-    nsres = get_elem_attr_value(elem, classidW, &val_str, &val);
+    nsres = get_elem_attr_value((nsIDOMElement*)elem, classidW, &val_str, &val);
     if(NS_SUCCEEDED(nsres)) {
         if(*val)
             ret = parse_classid(val, clsid);
@@ -1907,7 +1907,7 @@ static void check_codebase(HTMLInnerWindow *window, nsIDOMHTMLElement *nselem)
 
     static const PRUnichar codebaseW[] = {'c','o','d','e','b','a','s','e',0};
 
-    nsres = get_elem_attr_value(nselem, codebaseW, &val_str, &val);
+    nsres = get_elem_attr_value((nsIDOMElement*)nselem, codebaseW, &val_str, &val);
     if(NS_SUCCEEDED(nsres)) {
         if(*val) {
             hres = CoInternetCombineUrlEx(window->base.outer_window->uri, val, 0, &uri, 0);

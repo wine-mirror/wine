@@ -273,7 +273,7 @@ static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
     const PRUnichar *name, *value;
     nsAString name_str, value_str;
     nsIDOMHTMLCollection *params;
-    nsIDOMHTMLElement *param_elem;
+    nsIDOMElement *param_elem;
     UINT32 length, i;
     nsIDOMNode *nsnode;
     nsresult nsres;
@@ -300,7 +300,7 @@ static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
             break;
         }
 
-        nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLElement, (void**)&param_elem);
+        nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&param_elem);
         nsIDOMNode_Release(nsnode);
         if(NS_FAILED(nsres)) {
             hres = E_FAIL;
@@ -318,7 +318,7 @@ static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
             nsAString_Finish(&name_str);
         }
 
-        nsIDOMHTMLElement_Release(param_elem);
+        nsIDOMElement_Release(param_elem);
         if(FAILED(hres))
             break;
         if(NS_FAILED(nsres)) {

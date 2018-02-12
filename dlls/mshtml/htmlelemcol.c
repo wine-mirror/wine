@@ -381,14 +381,14 @@ static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
         return FALSE;
 
     nsAString_Init(&nsstr, NULL);
-    nsIDOMHTMLElement_GetId(elem->nselem, &nsstr);
+    nsIDOMElement_GetId(elem->dom_element, &nsstr);
     nsAString_GetData(&nsstr, &str);
     if(!strcmpiW(str, name)) {
         nsAString_Finish(&nsstr);
         return TRUE;
     }
 
-    nsres = get_elem_attr_value(elem->nselem, nameW, &nsstr, &str);
+    nsres = get_elem_attr_value(elem->dom_element, nameW, &nsstr, &str);
     if(NS_SUCCEEDED(nsres)) {
         ret = !strcmpiW(str, name);
         nsAString_Finish(&nsstr);
