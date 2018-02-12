@@ -152,7 +152,9 @@ typedef enum {
     ET_LINK,
     ET_LABEL,
     ET_BUTTON,
-    ET_AREA
+    ET_AREA,
+    ET_SVG,
+    ET_CIRCLE
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -520,7 +522,9 @@ static const elem_type_info_t elem_type_infos[] = {
     {"LINK",      link_iids,        &DIID_DispHTMLLinkElement,      &CLSID_HTMLLinkElement},
     {"LABEL",     label_iids,       &DIID_DispHTMLLabelElement,     &CLSID_HTMLLabelElement},
     {"BUTTON",    button_iids,      &DIID_DispHTMLButtonElement,    &CLSID_HTMLButtonElement},
-    {"AREA",      area_iids,        &DIID_DispHTMLAreaElement,      &CLSID_HTMLAreaElement}
+    {"AREA",      area_iids,        &DIID_DispHTMLAreaElement,      &CLSID_HTMLAreaElement},
+    {"svg",       elem_iids,        NULL},
+    {"circle",    elem_iids,        NULL}
 };
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
@@ -9415,6 +9419,35 @@ static void test_form_element(IHTMLDocument2 *doc, IHTMLElement *parent)
     IHTMLElement_Release(elem);
 }
 
+static void test_svg_element(IHTMLDocument2 *doc, IHTMLElement *parent)
+{
+    IHTMLDOMNode *svg_node, *circle_node;
+
+    test_elem_set_innerhtml((IUnknown*)parent,
+            "<svg width=\"100\" height=\"100\" id=\"svgid\">"
+            "<circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"black\" />"
+            "</svg>");
+    svg_node = get_first_child((IUnknown*)parent);
+    if(compat_mode < COMPAT_IE9) {
+        todo_wine
+        ok(!svg_node, "svg_node != NULL\n");
+        if(svg_node)
+            IHTMLDOMNode_Release(svg_node);
+        return;
+    }
+    ok(svg_node != NULL, "svg_node = NULL\n");
+    test_elem_type((IUnknown*)svg_node, ET_SVG);
+
+    circle_node = get_first_child((IUnknown*)svg_node);
+    ok(circle_node != NULL, "circle_node = NULL\n");
+    if(!circle_node)
+        return;
+    test_elem_type((IUnknown*)circle_node, ET_CIRCLE);
+
+    IHTMLDOMNode_Release(circle_node);
+    IHTMLDOMNode_Release(svg_node);
+};
+
 static void test_dom_elements(IHTMLDocument2 *doc)
 {
     IHTMLElement *body, *div;
@@ -9425,6 +9458,7 @@ static void test_dom_elements(IHTMLDocument2 *doc)
 
     test_textarea_element(doc, div);
     test_form_element(doc, div);
+    test_svg_element(doc, div);
 
     IHTMLElement_Release(body);
     IHTMLElement_Release(div);
