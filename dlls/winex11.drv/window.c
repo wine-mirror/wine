@@ -1390,11 +1390,37 @@ static void move_window_bits( HWND hwnd, Window window, const RECT *old_rect, co
 }
 
 
+/***********************************************************************
+ *              get_dummy_parent
+ *
+ * Create a dummy parent window for child windows that don't have a true X11 parent.
+ */
+static Window get_dummy_parent(void)
+{
+    static Window dummy_parent;
+
+    if (!dummy_parent)
+    {
+        XSetWindowAttributes attrib;
+
+        attrib.override_redirect = True;
+        attrib.border_pixel = 0;
+        attrib.colormap = default_colormap;
+        dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, default_visual.depth,
+                                      InputOutput, default_visual.visual,
+                                      CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
+        XMapWindow( gdi_display, dummy_parent );
+    }
+    return dummy_parent;
+}
+
+
 /**********************************************************************
  *		create_client_window
  */
 Window create_client_window( struct x11drv_win_data *data, const XVisualInfo *visual )
 {
+    Window dummy_parent = get_dummy_parent();
     XSetWindowAttributes attr;
     int x = data->client_rect.left - data->whole_rect.left;
     int y = data->client_rect.top - data->whole_rect.top;
@@ -1404,11 +1430,12 @@ Window create_client_window( struct x11drv_win_data *data, const XVisualInfo *vi
     if (data->client_window)
     {
         XDeleteContext( data->display, data->client_window, winContext );
-        XDestroyWindow( data->display, data->client_window );
+        XReparentWindow( gdi_display, data->client_window, dummy_parent, 0, 0 );
+        TRACE( "%p reparent xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
     }
 
-    if (data->colormap) XFreeColormap( data->display, data->colormap );
-    data->colormap = XCreateColormap( data->display, root_window, visual->visual,
+    if (data->colormap) XFreeColormap( gdi_display, data->colormap );
+    data->colormap = XCreateColormap( gdi_display, dummy_parent, visual->visual,
                                       (visual->class == PseudoColor ||
                                        visual->class == GrayScale ||
                                        visual->class == DirectColor) ? AllocAll : AllocNone );
@@ -1416,18 +1443,19 @@ Window create_client_window( struct x11drv_win_data *data, const XVisualInfo *vi
     attr.bit_gravity = NorthWestGravity;
     attr.win_gravity = NorthWestGravity;
     attr.backing_store = NotUseful;
-    attr.event_mask = ExposureMask;
     attr.border_pixel = 0;
 
-    data->client_window = XCreateWindow( data->display, data->whole_window, x, y, cx, cy,
+    data->client_window = XCreateWindow( gdi_display, data->whole_window, x, y, cx, cy,
                                          0, default_visual.depth, InputOutput, visual->visual,
                                          CWBitGravity | CWWinGravity | CWBackingStore |
-                                         CWColormap | CWEventMask | CWBorderPixel, &attr );
+                                         CWColormap | CWBorderPixel, &attr );
     if (!data->client_window) return 0;
+    TRACE( "%p xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
 
     XSaveContext( data->display, data->client_window, winContext, (char *)data->hwnd );
-    XMapWindow( data->display, data->client_window );
-    XSync( data->display, False );
+    XMapWindow( gdi_display, data->client_window );
+    XSync( gdi_display, False );
+    XSelectInput( data->display, data->client_window, ExposureMask );
     return data->client_window;
 }
 
@@ -1528,9 +1556,17 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     }
 
 
-    TRACE( "win %p xwin %lx\n", data->hwnd, data->whole_window );
+    TRACE( "win %p xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
     XDeleteContext( data->display, data->whole_window, winContext );
-    if (data->client_window) XDeleteContext( data->display, data->client_window, winContext );
+    if (data->client_window)
+    {
+        XDeleteContext( data->display, data->client_window, winContext );
+        if (!already_destroyed)
+        {
+            XSelectInput( data->display, data->client_window, 0 );
+            XReparentWindow( data->display, data->client_window, get_dummy_parent(), 0, 0 );
+        }
+    }
     if (!already_destroyed) XDestroyWindow( data->display, data->whole_window );
     if (data->colormap) XFreeColormap( data->display, data->colormap );
     data->whole_window = data->client_window = 0;
@@ -1630,8 +1666,6 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     struct x11drv_win_data *data;
 
-    destroy_gl_drawable( hwnd );
-
     if (!(data = get_win_data( hwnd ))) return;
 
     destroy_whole_window( data, FALSE );
@@ -1643,6 +1677,7 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
     XDeleteContext( gdi_display, (XID)hwnd, win_data_context );
     release_win_data( data );
     HeapFree( GetProcessHeap(), 0, data );
+    destroy_gl_drawable( hwnd );
 }
 
 

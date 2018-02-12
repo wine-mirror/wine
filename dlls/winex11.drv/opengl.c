@@ -215,7 +215,8 @@ struct wgl_context
     int numAttribs; /* This is needed for delaying wglCreateContextAttribsARB */
     int attribList[16]; /* This is needed for delaying wglCreateContextAttribsARB */
     GLXContext ctx;
-    GLXDrawable drawables[2];
+    struct gl_drawable *drawables[2];
+    struct gl_drawable *new_drawables[2];
     BOOL refresh_drawables;
     struct list entry;
 };
@@ -1226,12 +1227,15 @@ static void release_gl_drawable( struct gl_drawable *gl )
     if (InterlockedDecrement( &gl->ref )) return;
     switch (gl->type)
     {
+    case DC_GL_WINDOW:
     case DC_GL_CHILD_WIN:
+        TRACE( "destroying %lx drawable %lx\n", gl->window, gl->drawable );
         pglXDestroyWindow( gdi_display, gl->drawable );
         XDestroyWindow( gdi_display, gl->window );
-        XFreeColormap( gdi_display, gl->colormap );
+        if (gl->colormap) XFreeColormap( gdi_display, gl->colormap );
         break;
     case DC_GL_PIXMAP_WIN:
+        TRACE( "destroying pixmap %lx drawable %lx\n", gl->pixmap, gl->drawable );
         pglXDestroyPixmap( gdi_display, gl->drawable );
         XFreePixmap( gdi_display, gl->pixmap );
         break;
@@ -1249,13 +1253,15 @@ static void mark_drawable_dirty( struct gl_drawable *old, struct gl_drawable *ne
     EnterCriticalSection( &context_section );
     LIST_FOR_EACH_ENTRY( ctx, &context_list, struct wgl_context, entry )
     {
-        if (old->drawable == ctx->drawables[0]) {
-            ctx->drawables[0] = new->drawable;
-            ctx->refresh_drawables = TRUE;
+        if (old == ctx->drawables[0] || old == ctx->new_drawables[0])
+        {
+            release_gl_drawable( ctx->new_drawables[0] );
+            ctx->new_drawables[0] = grab_gl_drawable( new );
         }
-        if (old->drawable == ctx->drawables[1]) {
-            ctx->drawables[1] = new->drawable;
-            ctx->refresh_drawables = TRUE;
+        if (old == ctx->drawables[1] || old == ctx->new_drawables[1])
+        {
+            release_gl_drawable( ctx->new_drawables[1] );
+            ctx->new_drawables[1] = grab_gl_drawable( new );
         }
     }
     LeaveCriticalSection( &context_section );
@@ -1264,14 +1270,30 @@ static void mark_drawable_dirty( struct gl_drawable *old, struct gl_drawable *ne
 /* Given the current context, make sure its drawable is sync'd */
 static inline void sync_context(struct wgl_context *context)
 {
+    BOOL refresh = FALSE;
+
     EnterCriticalSection( &context_section );
-    if (context->refresh_drawables) {
+    if (context->new_drawables[0])
+    {
+        release_gl_drawable( context->drawables[0] );
+        context->drawables[0] = context->new_drawables[0];
+        context->new_drawables[0] = NULL;
+        refresh = TRUE;
+    }
+    if (context->new_drawables[1])
+    {
+        release_gl_drawable( context->drawables[1] );
+        context->drawables[1] = context->new_drawables[1];
+        context->new_drawables[1] = NULL;
+        refresh = TRUE;
+    }
+    if (refresh)
+    {
         if (glxRequireVersion(3))
-            pglXMakeContextCurrent(gdi_display, context->drawables[0],
-                                   context->drawables[1], context->ctx);
+            pglXMakeContextCurrent(gdi_display, context->drawables[0]->drawable,
+                                   context->drawables[1]->drawable, context->ctx);
         else
-            pglXMakeCurrent(gdi_display, context->drawables[0], context->ctx);
-        context->refresh_drawables = FALSE;
+            pglXMakeCurrent(gdi_display, context->drawables[0]->drawable, context->ctx);
     }
     LeaveCriticalSection( &context_section );
 }
@@ -1383,6 +1405,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
             if (gl->window)
                 gl->drawable = pglXCreateWindow( gdi_display, gl->format->fbconfig, gl->window, NULL );
             release_win_data( data );
+            TRACE( "%p created client %lx drawable %lx\n", hwnd, gl->window, gl->drawable );
         }
     }
 #ifdef SONAME_LIBXCOMPOSITE
@@ -1423,6 +1446,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
             }
         }
         else XFreeColormap( gdi_display, gl->colormap );
+        TRACE( "%p created child %lx drawable %lx\n", hwnd, gl->window, gl->drawable );
     }
 #endif
     else
@@ -1835,6 +1859,10 @@ static BOOL glxdrv_wglDeleteContext(struct wgl_context *ctx)
     LeaveCriticalSection( &context_section );
 
     if (ctx->ctx) pglXDestroyContext( gdi_display, ctx->ctx );
+    release_gl_drawable( ctx->drawables[0] );
+    release_gl_drawable( ctx->drawables[1] );
+    release_gl_drawable( ctx->new_drawables[0] );
+    release_gl_drawable( ctx->new_drawables[1] );
     return HeapFree( GetProcessHeap(), 0, ctx );
 }
 
@@ -1845,6 +1873,22 @@ static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
 {
     if (!strncmp(lpszProc, "wgl", 3)) return NULL;
     return pglXGetProcAddressARB((const GLubyte*)lpszProc);
+}
+
+static void set_context_drawables( struct wgl_context *ctx, struct gl_drawable *draw,
+                                   struct gl_drawable *read )
+{
+    struct gl_drawable *prev[4];
+    int i;
+
+    prev[0] = ctx->drawables[0];
+    prev[1] = ctx->drawables[1];
+    prev[2] = ctx->new_drawables[0];
+    prev[3] = ctx->new_drawables[1];
+    ctx->drawables[0] = grab_gl_drawable( draw );
+    ctx->drawables[1] = read ? grab_gl_drawable( read ) : NULL;
+    ctx->new_drawables[0] = ctx->new_drawables[1] = NULL;
+    for (i = 0; i < 4; i++) release_gl_drawable( prev[i] );
 }
 
 /***********************************************************************
@@ -1883,8 +1927,7 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
             NtCurrentTeb()->glContext = ctx;
             ctx->has_been_current = TRUE;
             ctx->hdc = hdc;
-            ctx->drawables[0] = gl->drawable;
-            ctx->drawables[1] = gl->drawable;
+            set_context_drawables( ctx, gl, gl );
             ctx->refresh_drawables = FALSE;
             LeaveCriticalSection( &context_section );
             goto done;
@@ -1929,8 +1972,7 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         {
             ctx->has_been_current = TRUE;
             ctx->hdc = draw_hdc;
-            ctx->drawables[0] = draw_gl->drawable;
-            ctx->drawables[1] = read_gl ? read_gl->drawable : 0;
+            set_context_drawables( ctx, draw_gl, read_gl );
             ctx->refresh_drawables = FALSE;
             NtCurrentTeb()->glContext = ctx;
             LeaveCriticalSection( &context_section );
