@@ -2805,6 +2805,7 @@ static void query_internal_format(struct wined3d_adapter *adapter,
 {
     GLint count, multisample_types[MAX_MULTISAMPLE_TYPES];
     unsigned int i, max_log2;
+    GLenum target;
 
     if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
     {
@@ -2877,17 +2878,17 @@ static void query_internal_format(struct wined3d_adapter *adapter,
     {
         if (gl_info->supported[ARB_INTERNALFORMAT_QUERY])
         {
+            target = gl_info->supported[ARB_TEXTURE_MULTISAMPLE] ? GL_TEXTURE_2D_MULTISAMPLE : GL_RENDERBUFFER;
             count = 0;
-            GL_EXTCALL(glGetInternalformativ(GL_RENDERBUFFER, format->glInternal,
+            GL_EXTCALL(glGetInternalformativ(target, format->glInternal,
                     GL_NUM_SAMPLE_COUNTS, 1, &count));
-            checkGLcall("glGetInternalformativ(GL_NUM_SAMPLE_COUNTS)");
             count = min(count, MAX_MULTISAMPLE_TYPES);
-            GL_EXTCALL(glGetInternalformativ(GL_RENDERBUFFER, format->glInternal,
+            GL_EXTCALL(glGetInternalformativ(target, format->glInternal,
                     GL_SAMPLES, count, multisample_types));
-            checkGLcall("glGetInternalformativ(GL_SAMPLES)");
+            checkGLcall("query sample counts");
             for (i = 0; i < count; ++i)
             {
-                if (multisample_types[i] > sizeof(format->multisample_types) * 8)
+                if (multisample_types[i] > sizeof(format->multisample_types) * CHAR_BIT)
                     continue;
                 format->multisample_types |= 1u << (multisample_types[i] - 1);
             }
@@ -2895,7 +2896,7 @@ static void query_internal_format(struct wined3d_adapter *adapter,
         else
         {
             max_log2 = wined3d_log2i(min(gl_info->limits.samples,
-                    sizeof(format->multisample_types) * 8));
+                    sizeof(format->multisample_types) * CHAR_BIT));
             for (i = 1; i <= max_log2; ++i)
                 format->multisample_types |= 1u << ((1u << i) - 1);
         }
