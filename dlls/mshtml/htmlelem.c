@@ -1115,7 +1115,7 @@ static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->nselem) {
+    if(!This->html_element) {
         VARIANT *var;
         HRESULT hres;
 
@@ -1130,7 +1130,7 @@ static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
     }
 
     nsAString_InitDepend(&title_str, v);
-    nsres = nsIDOMHTMLElement_SetTitle(This->nselem, &title_str);
+    nsres = nsIDOMHTMLElement_SetTitle(This->html_element, &title_str);
     nsAString_Finish(&title_str);
     if(NS_FAILED(nsres))
         ERR("SetTitle failed: %08x\n", nsres);
@@ -1146,7 +1146,7 @@ static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nselem) {
+    if(!This->html_element) {
         VARIANT *var;
         HRESULT hres;
 
@@ -1164,7 +1164,7 @@ static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
     }
 
     nsAString_Init(&title_str, NULL);
-    nsres = nsIDOMHTMLElement_GetTitle(This->nselem, &title_str);
+    nsres = nsIDOMHTMLElement_GetTitle(This->html_element, &title_str);
     return return_nsstr(nsres, &title_str, p);
 }
 
@@ -1225,12 +1225,12 @@ static HRESULT WINAPI HTMLElement_scrollIntoView(IHTMLElement *iface, VARIANT va
 	FIXME("Unsupported argument %s\n", debugstr_variant(&varargStart));
     }
 
-    if(!This->nselem) {
-	FIXME("Unsupported for comments\n");
+    if(!This->html_element) {
+	FIXME("non-HTML elements\n");
 	return E_NOTIMPL;
     }
 
-    nsres = nsIDOMHTMLElement_ScrollIntoView(This->nselem, start, 1);
+    nsres = nsIDOMHTMLElement_ScrollIntoView(This->html_element, start, 1);
     assert(nsres == NS_OK);
 
     return S_OK;
@@ -1286,13 +1286,13 @@ static HRESULT WINAPI HTMLElement_put_lang(IHTMLElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
         return E_NOTIMPL;
     }
 
     nsAString_InitDepend(&nsstr, v);
-    nsres = nsIDOMHTMLElement_SetLang(This->nselem, &nsstr);
+    nsres = nsIDOMHTMLElement_SetLang(This->html_element, &nsstr);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
         ERR("SetLang failed: %08x\n", nsres);
@@ -1310,13 +1310,13 @@ static HRESULT WINAPI HTMLElement_get_lang(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
         return E_NOTIMPL;
     }
 
     nsAString_Init(&nsstr, NULL);
-    nsres = nsIDOMHTMLElement_GetLang(This->nselem, &nsstr);
+    nsres = nsIDOMHTMLElement_GetLang(This->html_element, &nsstr);
     return return_nsstr(nsres, &nsstr, p);
 }
 
@@ -1327,7 +1327,12 @@ static HRESULT WINAPI HTMLElement_get_offsetLeft(IHTMLElement *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetOffsetLeft(This->nselem, p);
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_GetOffsetLeft(This->html_element, p);
     if(NS_FAILED(nsres)) {
         ERR("GetOffsetLeft failed: %08x\n", nsres);
         return E_FAIL;
@@ -1343,7 +1348,12 @@ static HRESULT WINAPI HTMLElement_get_offsetTop(IHTMLElement *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetOffsetTop(This->nselem, p);
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_GetOffsetTop(This->html_element, p);
     if(NS_FAILED(nsres)) {
         ERR("GetOffsetTop failed: %08x\n", nsres);
         return E_FAIL;
@@ -1359,7 +1369,12 @@ static HRESULT WINAPI HTMLElement_get_offsetWidth(IHTMLElement *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetOffsetWidth(This->nselem, p);
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_GetOffsetWidth(This->html_element, p);
     if(NS_FAILED(nsres)) {
         ERR("GetOffsetWidth failed: %08x\n", nsres);
         return E_FAIL;
@@ -1375,7 +1390,12 @@ static HRESULT WINAPI HTMLElement_get_offsetHeight(IHTMLElement *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetOffsetHeight(This->nselem, p);
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_GetOffsetHeight(This->html_element, p);
     if(NS_FAILED(nsres)) {
         ERR("GetOffsetHeight failed: %08x\n", nsres);
         return E_FAIL;
@@ -1393,7 +1413,12 @@ static HRESULT WINAPI HTMLElement_get_offsetParent(IHTMLElement *iface, IHTMLEle
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetOffsetParent(This->nselem, &nsparent);
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_GetOffsetParent(This->html_element, &nsparent);
     if(NS_FAILED(nsres)) {
         ERR("GetOffsetParent failed: %08x\n", nsres);
         return E_FAIL;
@@ -1425,13 +1450,13 @@ static HRESULT WINAPI HTMLElement_put_innerHTML(IHTMLElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
         return E_NOTIMPL;
     }
 
     nsAString_InitDepend(&html_str, v);
-    nsres = nsIDOMHTMLElement_SetInnerHTML(This->nselem, &html_str);
+    nsres = nsIDOMHTMLElement_SetInnerHTML(This->html_element, &html_str);
     nsAString_Finish(&html_str);
     if(NS_FAILED(nsres)) {
         FIXME("SetInnerHtml failed %08x\n", nsres);
@@ -1449,13 +1474,13 @@ static HRESULT WINAPI HTMLElement_get_innerHTML(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
         return E_NOTIMPL;
     }
 
     nsAString_Init(&html_str, NULL);
-    nsres = nsIDOMHTMLElement_GetInnerHTML(This->nselem, &html_str);
+    nsres = nsIDOMHTMLElement_GetInnerHTML(This->html_element, &html_str);
     return return_nsstr(nsres, &html_str, p);
 }
 
@@ -1779,12 +1804,12 @@ static HRESULT WINAPI HTMLElement_click(IHTMLElement *iface)
 
     TRACE("(%p)\n", This);
 
-    if(!This->nselem) {
-        FIXME("not implemented for comments\n");
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
         return E_NOTIMPL;
     }
 
-    nsres = nsIDOMHTMLElement_Click(This->nselem);
+    nsres = nsIDOMHTMLElement_Click(This->html_element);
     if(NS_FAILED(nsres)) {
         ERR("Click failed: %08x\n", nsres);
         return E_FAIL;
@@ -2488,7 +2513,12 @@ static HRESULT WINAPI HTMLElement2_put_tabIndex(IHTMLElement2 *iface, short v)
 
     TRACE("(%p)->(%d)\n", This, v);
 
-    nsres = nsIDOMHTMLElement_SetTabIndex(This->nselem, v);
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_SetTabIndex(This->html_element, v);
     if(NS_FAILED(nsres))
         ERR("GetTabIndex failed: %08x\n", nsres);
 
@@ -2503,7 +2533,12 @@ static HRESULT WINAPI HTMLElement2_get_tabIndex(IHTMLElement2 *iface, short *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetTabIndex(This->nselem, &index);
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_GetTabIndex(This->html_element, &index);
     if(NS_FAILED(nsres)) {
         ERR("GetTabIndex failed: %08x\n", nsres);
         return E_FAIL;
@@ -2520,7 +2555,12 @@ static HRESULT WINAPI HTMLElement2_focus(IHTMLElement2 *iface)
 
     TRACE("(%p)\n", This);
 
-    nsres = nsIDOMHTMLElement_Focus(This->nselem);
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_Focus(This->html_element);
     if(NS_FAILED(nsres))
         ERR("Focus failed: %08x\n", nsres);
 
@@ -2609,7 +2649,12 @@ static HRESULT WINAPI HTMLElement2_blur(IHTMLElement2 *iface)
 
     TRACE("(%p)\n", This);
 
-    nsres = nsIDOMHTMLElement_Blur(This->nselem);
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_Blur(This->html_element);
     if(NS_FAILED(nsres)) {
         ERR("Blur failed: %08x\n", nsres);
         return E_FAIL;
@@ -2817,13 +2862,13 @@ static HRESULT WINAPI HTMLElement2_put_dir(IHTMLElement2 *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->nselem) {
-        FIXME("Unsupported for comment nodes.\n");
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
         return S_OK;
     }
 
     nsAString_InitDepend(&nsstr, v);
-    nsres = nsIDOMHTMLElement_SetDir(This->nselem, &nsstr);
+    nsres = nsIDOMHTMLElement_SetDir(This->html_element, &nsstr);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
         ERR("SetDir failed: %08x\n", nsres);
@@ -2841,13 +2886,15 @@ static HRESULT WINAPI HTMLElement2_get_dir(IHTMLElement2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nselem) {
+    if(!This->html_element) {
+        if(This->dom_element)
+            FIXME("non-HTML element\n");
         *p = NULL;
         return S_OK;
     }
 
     nsAString_Init(&dir_str, NULL);
-    nsres = nsIDOMHTMLElement_GetDir(This->nselem, &dir_str);
+    nsres = nsIDOMHTMLElement_GetDir(This->html_element, &dir_str);
     return return_nsstr(nsres, &dir_str, p);
 }
 
@@ -3413,8 +3460,13 @@ static HRESULT WINAPI HTMLElement3_put_contentEditable(IHTMLElement3 *iface, BST
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
     nsAString_InitDepend(&str, v);
-    nsres = nsIDOMHTMLElement_SetContentEditable(This->nselem, &str);
+    nsres = nsIDOMHTMLElement_SetContentEditable(This->html_element, &str);
     nsAString_Finish(&str);
 
     if (NS_FAILED(nsres)){
@@ -3433,8 +3485,13 @@ static HRESULT WINAPI HTMLElement3_get_contentEditable(IHTMLElement3 *iface, BST
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
     nsAString_Init(&str, NULL);
-    nsres = nsIDOMHTMLElement_GetContentEditable(This->nselem, &str);
+    nsres = nsIDOMHTMLElement_GetContentEditable(This->html_element, &str);
     return return_nsstr(nsres, &str, p);
 }
 
