@@ -268,7 +268,7 @@ static const IPropertyBag2Vtbl PropertyBag2Vtbl = {
     PropertyBag2_LoadObject
 };
 
-static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
+static HRESULT fill_props(nsIDOMElement *nselem, PropertyBag *prop_bag)
 {
     const PRUnichar *name, *value;
     nsAString name_str, value_str;
@@ -284,7 +284,7 @@ static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
     static const PRUnichar valueW[] = {'v','a','l','u','e',0};
 
     nsAString_InitDepend(&name_str, paramW);
-    nsres = nsIDOMHTMLElement_GetElementsByTagName(nselem, &name_str, &params);
+    nsres = nsIDOMElement_GetElementsByTagName(nselem, &name_str, &params);
     nsAString_Finish(&name_str);
     if(NS_FAILED(nsres))
         return E_FAIL;
@@ -331,7 +331,7 @@ static HRESULT fill_props(nsIDOMHTMLElement *nselem, PropertyBag *prop_bag)
     return hres;
 }
 
-HRESULT create_param_prop_bag(nsIDOMHTMLElement *nselem, IPropertyBag **ret)
+HRESULT create_param_prop_bag(nsIDOMElement *nselem, IPropertyBag **ret)
 {
     PropertyBag *prop_bag;
     HRESULT hres;
