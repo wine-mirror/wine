@@ -216,7 +216,7 @@ HRESULT elem_string_attr_setter(HTMLElement *elem, const WCHAR *name, const WCHA
 
     nsAString_InitDepend(&name_str, name);
     nsAString_InitDepend(&val_str, value);
-    nsres = nsIDOMHTMLElement_SetAttribute(elem->nselem, &name_str, &val_str);
+    nsres = nsIDOMElement_SetAttribute(elem->dom_element, &name_str, &val_str);
     nsAString_Finish(&name_str);
     nsAString_Finish(&val_str);
 
@@ -753,13 +753,13 @@ static HRESULT WINAPI HTMLElement_put_className(IHTMLElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
+    if(!This->dom_element) {
+        FIXME("comment element\n");
         return E_NOTIMPL;
     }
 
     nsAString_InitDepend(&classname_str, v);
-    nsres = nsIDOMHTMLElement_SetClassName(This->nselem, &classname_str);
+    nsres = nsIDOMElement_SetClassName(This->dom_element, &classname_str);
     nsAString_Finish(&classname_str);
     if(NS_FAILED(nsres))
         ERR("SetClassName failed: %08x\n", nsres);
@@ -775,13 +775,13 @@ static HRESULT WINAPI HTMLElement_get_className(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
+    if(!This->dom_element) {
+        FIXME("comment element\n");
         return E_NOTIMPL;
     }
 
     nsAString_Init(&class_str, NULL);
-    nsres = nsIDOMHTMLElement_GetClassName(This->nselem, &class_str);
+    nsres = nsIDOMElement_GetClassName(This->dom_element, &class_str);
     return return_nsstr(nsres, &class_str, p);
 }
 
@@ -793,13 +793,13 @@ static HRESULT WINAPI HTMLElement_put_id(IHTMLElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->nselem) {
-        FIXME("nselem == NULL\n");
+    if(!This->dom_element) {
+        FIXME("comment element\n");
         return S_OK;
     }
 
     nsAString_InitDepend(&id_str, v);
-    nsres = nsIDOMHTMLElement_SetId(This->nselem, &id_str);
+    nsres = nsIDOMElement_SetId(This->dom_element, &id_str);
     nsAString_Finish(&id_str);
     if(NS_FAILED(nsres))
         ERR("SetId failed: %08x\n", nsres);
@@ -815,13 +815,13 @@ static HRESULT WINAPI HTMLElement_get_id(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nselem) {
+    if(!This->dom_element) {
         *p = NULL;
         return S_OK;
     }
 
     nsAString_Init(&id_str, NULL);
-    nsres = nsIDOMHTMLElement_GetId(This->nselem, &id_str);
+    nsres = nsIDOMElement_GetId(This->dom_element, &id_str);
     return return_nsstr(nsres, &id_str, p);
 }
 
@@ -833,17 +833,16 @@ static HRESULT WINAPI HTMLElement_get_tagName(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nselem) {
+    if(!This->dom_element) {
         static const WCHAR comment_tagW[] = {'!',0};
 
-        WARN("NULL nselem, assuming comment\n");
-
+        TRACE("comment element\n");
         *p = SysAllocString(comment_tagW);
         return *p ? S_OK : E_OUTOFMEMORY;
     }
 
     nsAString_Init(&tag_str, NULL);
-    nsres = nsIDOMHTMLElement_GetTagName(This->nselem, &tag_str);
+    nsres = nsIDOMElement_GetTagName(This->dom_element, &tag_str);
     return return_nsstr(nsres, &tag_str, p);
 }
 
@@ -1471,7 +1470,7 @@ static HRESULT WINAPI HTMLElement_put_innerText(IHTMLElement *iface, BSTR v)
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     while(1) {
-        nsres = nsIDOMHTMLElement_GetLastChild(This->nselem, &nschild);
+        nsres = nsIDOMElement_GetLastChild(This->dom_element, &nschild);
         if(NS_FAILED(nsres)) {
             ERR("GetLastChild failed: %08x\n", nsres);
             return E_FAIL;
@@ -1479,7 +1478,7 @@ static HRESULT WINAPI HTMLElement_put_innerText(IHTMLElement *iface, BSTR v)
         if(!nschild)
             break;
 
-        nsres = nsIDOMHTMLElement_RemoveChild(This->nselem, nschild, &tmp);
+        nsres = nsIDOMElement_RemoveChild(This->dom_element, nschild, &tmp);
         nsIDOMNode_Release(nschild);
         if(NS_FAILED(nsres)) {
             ERR("RemoveChild failed: %08x\n", nsres);
@@ -1496,7 +1495,7 @@ static HRESULT WINAPI HTMLElement_put_innerText(IHTMLElement *iface, BSTR v)
         return E_FAIL;
     }
 
-    nsres = nsIDOMHTMLElement_AppendChild(This->nselem, (nsIDOMNode*)text_node, &tmp);
+    nsres = nsIDOMElement_AppendChild(This->dom_element, (nsIDOMNode*)text_node, &tmp);
     if(NS_FAILED(nsres)) {
         ERR("AppendChild failed: %08x\n", nsres);
         return E_FAIL;
@@ -2440,7 +2439,12 @@ static HRESULT WINAPI HTMLElement2_getBoundingClientRect(IHTMLElement2 *iface, I
 
     TRACE("(%p)->(%p)\n", This, pRect);
 
-    nsres = nsIDOMHTMLElement_GetBoundingClientRect(This->nselem, &nsrect);
+    if(!This->dom_element) {
+        FIXME("comment element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMElement_GetBoundingClientRect(This->dom_element, &nsrect);
     if(NS_FAILED(nsres) || !nsrect) {
         ERR("GetBoindingClientRect failed: %08x\n", nsres);
         return E_FAIL;
@@ -2635,7 +2639,12 @@ static HRESULT WINAPI HTMLElement2_get_clientHeight(IHTMLElement2 *iface, LONG *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetClientHeight(This->nselem, p);
+    if(!This->dom_element) {
+        FIXME("Unimplemented for comment element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMElement_GetClientHeight(This->dom_element, p);
     assert(nsres == NS_OK);
     return S_OK;
 }
@@ -2647,7 +2656,12 @@ static HRESULT WINAPI HTMLElement2_get_clientWidth(IHTMLElement2 *iface, LONG *p
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetClientWidth(This->nselem, p);
+    if(!This->dom_element) {
+        FIXME("comment element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMElement_GetClientWidth(This->dom_element, p);
     assert(nsres == NS_OK);
     return S_OK;
 }
@@ -2659,7 +2673,12 @@ static HRESULT WINAPI HTMLElement2_get_clientTop(IHTMLElement2 *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetClientTop(This->nselem, p);
+    if(!This->dom_element) {
+        FIXME("comment element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMElement_GetClientTop(This->dom_element, p);
     assert(nsres == NS_OK);
 
     TRACE("*p = %d\n", *p);
@@ -2673,7 +2692,12 @@ static HRESULT WINAPI HTMLElement2_get_clientLeft(IHTMLElement2 *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetClientLeft(This->nselem, p);
+    if(!This->dom_element) {
+        FIXME("comment element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMElement_GetClientLeft(This->dom_element, p);
     assert(nsres == NS_OK);
 
     TRACE("*p = %d\n", *p);
@@ -2841,9 +2865,13 @@ static HRESULT WINAPI HTMLElement2_get_scrollHeight(IHTMLElement2 *iface, LONG *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetScrollHeight(This->nselem, p);
-    assert(nsres == NS_OK);
+    if(!This->dom_element) {
+        FIXME("comment element\n");
+        return E_NOTIMPL;
+    }
 
+    nsres = nsIDOMElement_GetScrollHeight(This->dom_element, p);
+    assert(nsres == NS_OK);
     TRACE("*p = %d\n", *p);
     return S_OK;
 }
@@ -2855,7 +2883,12 @@ static HRESULT WINAPI HTMLElement2_get_scrollWidth(IHTMLElement2 *iface, LONG *p
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetScrollWidth(This->nselem, p);
+    if(!This->dom_element) {
+        FIXME("comment element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMElement_GetScrollWidth(This->dom_element, p);
     assert(nsres == NS_OK);
 
     TRACE("*p = %d\n", *p);
@@ -2868,12 +2901,12 @@ static HRESULT WINAPI HTMLElement2_put_scrollTop(IHTMLElement2 *iface, LONG v)
 
     TRACE("(%p)->(%d)\n", This, v);
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
+    if(!This->dom_element) {
+        FIXME("comment element\n");
         return E_NOTIMPL;
     }
 
-    nsIDOMHTMLElement_SetScrollTop(This->nselem, v);
+    nsIDOMElement_SetScrollTop(This->dom_element, v);
     return S_OK;
 }
 
@@ -2884,7 +2917,12 @@ static HRESULT WINAPI HTMLElement2_get_scrollTop(IHTMLElement2 *iface, LONG *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIDOMHTMLElement_GetScrollTop(This->nselem, p);
+    if(!This->dom_element) {
+        FIXME("comment element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMElement_GetScrollTop(This->dom_element, p);
     assert(nsres == NS_OK);
 
     TRACE("*p = %d\n", *p);
@@ -2897,12 +2935,12 @@ static HRESULT WINAPI HTMLElement2_put_scrollLeft(IHTMLElement2 *iface, LONG v)
 
     TRACE("(%p)->(%d)\n", This, v);
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
+    if(!This->dom_element) {
+        FIXME("comment element\n");
         return E_NOTIMPL;
     }
 
-    nsIDOMHTMLElement_SetScrollLeft(This->nselem, v);
+    nsIDOMElement_SetScrollLeft(This->dom_element, v);
     return S_OK;
 }
 
@@ -2916,15 +2954,13 @@ static HRESULT WINAPI HTMLElement2_get_scrollLeft(IHTMLElement2 *iface, LONG *p)
     if(!p)
         return E_INVALIDARG;
 
-    if(!This->nselem)
-    {
-        FIXME("NULL nselem\n");
+    if(!This->dom_element) {
+        FIXME("comment element\n");
         return E_NOTIMPL;
     }
 
-    nsres = nsIDOMHTMLElement_GetScrollLeft(This->nselem, p);
+    nsres = nsIDOMElement_GetScrollLeft(This->dom_element, p);
     assert(nsres == NS_OK);
-
     TRACE("*p = %d\n", *p);
     return S_OK;
 }
@@ -3104,13 +3140,13 @@ static HRESULT WINAPI HTMLElement2_getElementsByTagName(IHTMLElement2 *iface, BS
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pelColl);
 
-    if(!This->nselem) {
+    if(!This->dom_element) {
         *pelColl = create_collection_from_htmlcol(This->node.doc, NULL);
         return S_OK;
     }
 
     nsAString_InitDepend(&tag_str, v);
-    nsres = nsIDOMHTMLElement_GetElementsByTagName(This->nselem, &tag_str, &nscol);
+    nsres = nsIDOMElement_GetElementsByTagName(This->dom_element, &tag_str, &nscol);
     nsAString_Finish(&tag_str);
     if(NS_FAILED(nsres)) {
         ERR("GetElementByTagName failed: %08x\n", nsres);
@@ -4163,9 +4199,9 @@ static HRESULT WINAPI HTMLElement6_getElementsByClassName(IHTMLElement6 *iface, 
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pel);
 
-    if(This->nselem) {
+    if(This->dom_element) {
         nsAString_InitDepend(&nsstr, v);
-        nsres = nsIDOMHTMLElement_GetElementsByClassName(This->nselem, &nsstr, &nscol);
+        nsres = nsIDOMElement_GetElementsByClassName(This->dom_element, &nsstr, &nscol);
         nsAString_Finish(&nsstr);
         if(NS_FAILED(nsres)) {
             ERR("GetElementsByClassName failed: %08x\n", nsres);
@@ -4858,8 +4894,13 @@ static HRESULT WINAPI ElementSelector_querySelectorAll(IElementSelector *iface, 
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pel);
 
+    if(!This->dom_element) {
+        FIXME("comment element\n");
+        return E_NOTIMPL;
+    }
+
     nsAString_InitDepend(&nsstr, v);
-    nsres = nsIDOMHTMLElement_QuerySelectorAll(This->nselem, &nsstr, &node_list);
+    nsres = nsIDOMElement_QuerySelectorAll(This->dom_element, &nsstr, &node_list);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
         ERR("QuerySelectorAll failed: %08x\n", nsres);
@@ -5010,7 +5051,12 @@ static HRESULT WINAPI ElementTraversal_get_firstElementChild(IElementTraversal *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsIDOMHTMLElement_GetFirstElementChild(This->nselem, &nselem);
+    if(!This->dom_element) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    nsIDOMElement_GetFirstElementChild(This->dom_element, &nselem);
     if(!nselem) {
         *p = NULL;
         return S_OK;
@@ -5263,10 +5309,10 @@ static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
     nsresult nsres;
     HRESULT hres;
 
-    if(!This->nselem)
+    if(!This->dom_element)
         return S_FALSE;
 
-    nsres = nsIDOMHTMLElement_GetAttributes(This->nselem, &attrs);
+    nsres = nsIDOMElement_GetAttributes(This->dom_element, &attrs);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
