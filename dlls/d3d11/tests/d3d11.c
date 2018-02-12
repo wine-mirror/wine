@@ -24999,13 +24999,10 @@ static void test_alpha_to_coverage(void)
 
         get_texture_readback(readback_texture, 0, &rb);
         SetRect(&rect, 0, 0, 200, 200);
-        todo_wine
         check_readback_data_color(&rb, &rect, expected_color, 1);
         SetRect(&rect, 200, 0, 640, 200);
-        todo_wine
         check_readback_data_color(&rb, &rect, 0xffffffff, 1);
         SetRect(&rect, 0, 200, 640, 480);
-        todo_wine
         check_readback_data_color(&rb, &rect, 0xffffffff, 1);
         release_resource_readback(&rb);
     }
