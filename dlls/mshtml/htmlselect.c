@@ -425,6 +425,11 @@ static HRESULT WINAPI HTMLSelectElement_add(IHTMLSelectElement *iface, IHTMLElem
         return E_INVALIDARG;
     }
 
+    if(!element_obj->html_element) {
+        FIXME("Not HTML element\n");
+        return E_NOTIMPL;
+    }
+
     nsvariant = create_nsvariant();
     if(!nsvariant)
         return E_FAIL;
@@ -444,7 +449,7 @@ static HRESULT WINAPI HTMLSelectElement_add(IHTMLSelectElement *iface, IHTMLElem
     }
 
     if(NS_SUCCEEDED(nsres))
-        nsres = nsIDOMHTMLSelectElement_Add(This->nsselect, element_obj->nselem, (nsIVariant*)nsvariant);
+        nsres = nsIDOMHTMLSelectElement_Add(This->nsselect, element_obj->html_element, (nsIVariant*)nsvariant);
     nsIWritableVariant_Release(nsvariant);
     if(NS_FAILED(nsres)) {
         ERR("Add failed: %08x\n", nsres);
