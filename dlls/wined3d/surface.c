@@ -3778,7 +3778,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     DWORD src_ds_flags, dst_ds_flags;
     struct wined3d_context *context;
     enum wined3d_blit_op blit_op;
-    BOOL scale, convert;
+    BOOL scale, convert, resolve;
 
     static const DWORD simple_blit = WINED3D_BLT_SRC_CKEY
             | WINED3D_BLT_SRC_CKEY_OVERRIDE
@@ -3844,6 +3844,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     scale = src_rect->right - src_rect->left != dst_rect->right - dst_rect->left
             || src_rect->bottom - src_rect->top != dst_rect->bottom - dst_rect->top;
     convert = src_texture->resource.format->id != dst_texture->resource.format->id;
+    resolve = src_texture->resource.multisample_type != dst_texture->resource.multisample_type;
 
     dst_ds_flags = dst_texture->resource.format_flags
             & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
@@ -3954,7 +3955,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
         return WINED3D_OK;
     }
-    else if ((flags & WINED3D_BLT_RAW) || (!scale && !convert))
+    else if ((flags & WINED3D_BLT_RAW) || (!scale && !convert && !resolve))
     {
         blit_op = WINED3D_BLIT_OP_RAW_BLIT;
     }
