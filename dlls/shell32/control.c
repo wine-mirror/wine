@@ -883,3 +883,25 @@ DWORD WINAPI CallCPLEntry16(HMODULE hMod, FARPROC pFunc, DWORD dw3, DWORD dw4, D
     FIXME("(%p, %p, %08x, %08x, %08x, %08x): stub.\n", hMod, pFunc, dw3, dw4, dw5, dw6);
     return 0x0deadbee;
 }
+
+/*************************************************************************
+ * RunDLL_CallEntry16        [SHELL32.122]
+ * Manually relay this function to make Tages Protection v5 happy
+ */
+void WINAPI RunDLL_CallEntry16( DWORD proc, HWND hwnd, HINSTANCE inst,
+                                LPCSTR cmdline, INT cmdshow )
+{
+    static HMODULE shell16 = NULL;
+    static void (WINAPI *pRunDLL_CallEntry16)( DWORD proc, HWND hwnd, HINSTANCE inst,
+                                               LPCSTR cmdline, INT cmdshow ) = NULL;
+
+    if (!pRunDLL_CallEntry16)
+    {
+        if (!shell16 && !(shell16 = LoadLibraryA( "shell.dll16" )))
+            return;
+        if (!(pRunDLL_CallEntry16 = (void *)GetProcAddress( shell16, "RunDLL_CallEntry16" )))
+            return;
+    }
+
+    pRunDLL_CallEntry16( proc, hwnd, inst, cmdline, cmdshow );
+}
