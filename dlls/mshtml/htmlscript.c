@@ -200,7 +200,7 @@ static HRESULT WINAPI HTMLScriptElement_put_text(IHTMLScriptElement *iface, BSTR
         return E_FAIL;
     }
 
-    nsres = nsIDOMHTMLElement_GetParentNode(This->element.nselem, &parent);
+    nsres = nsIDOMElement_GetParentNode(This->element.dom_element, &parent);
     if(NS_FAILED(nsres) || !parent) {
         TRACE("No parent, not executing\n");
         This->parse_on_bind = TRUE;

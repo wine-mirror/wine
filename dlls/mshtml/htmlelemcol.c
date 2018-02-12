@@ -377,7 +377,7 @@ static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
 
     static const PRUnichar nameW[] = {'n','a','m','e',0};
 
-    if(!elem->nselem)
+    if(!elem->dom_element)
         return FALSE;
 
     nsAString_Init(&nsstr, NULL);
@@ -507,10 +507,10 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
     nsAString_Init(&tag_str, NULL);
 
     for(i=0; i<This->len; i++) {
-        if(!This->elems[i]->nselem)
+        if(!This->elems[i]->dom_element)
             continue;
 
-        nsIDOMHTMLElement_GetTagName(This->elems[i]->nselem, &tag_str);
+        nsIDOMElement_GetTagName(This->elems[i]->dom_element, &tag_str);
         nsAString_GetData(&tag_str, &tag);
 
         if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, tag, -1,

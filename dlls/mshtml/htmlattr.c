@@ -183,7 +183,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->elem || !This->elem->nselem) {
+    if(!This->elem || !This->elem->dom_element) {
         FIXME("NULL This->elem\n");
         return E_UNEXPECTED;
     }
@@ -199,7 +199,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
 
     /* FIXME: This is not exactly right, we have some attributes that don't map directly to Gecko attributes. */
     nsAString_InitDepend(&nsname, name);
-    nsres = nsIDOMHTMLElement_GetAttributeNode(This->elem->nselem, &nsname, &nsattr);
+    nsres = nsIDOMElement_GetAttributeNode(This->elem->dom_element, &nsname, &nsattr);
     nsAString_Finish(&nsname);
     SysFreeString(name);
     if(NS_FAILED(nsres))

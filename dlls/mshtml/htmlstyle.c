@@ -4701,12 +4701,12 @@ static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration 
     nsIDOMElementCSSInlineStyle *nselemstyle;
     nsresult nsres;
 
-    if(!elem->nselem) {
-        FIXME("NULL nselem\n");
+    if(!elem->dom_element) {
+        FIXME("comment element\n");
         return E_NOTIMPL;
     }
 
-    nsres = nsIDOMHTMLElement_QueryInterface(elem->nselem, &IID_nsIDOMElementCSSInlineStyle,
+    nsres = nsIDOMElement_QueryInterface(elem->dom_element, &IID_nsIDOMElementCSSInlineStyle,
             (void**)&nselemstyle);
     assert(nsres == NS_OK);
 

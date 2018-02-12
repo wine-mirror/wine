@@ -1345,7 +1345,7 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
     assert(nsres == NS_OK);
 
     nsAString_Init(&nsempty_str, NULL);
-    nsres = nsIDOMWindow_GetComputedStyle(nswindow, (nsIDOMElement*)elem->nselem, &nsempty_str, &nsstyle);
+    nsres = nsIDOMWindow_GetComputedStyle(nswindow, elem->dom_element, &nsempty_str, &nsstyle);
     nsAString_Finish(&nsempty_str);
     nsIDOMWindow_Release(nswindow);
     if(NS_FAILED(nsres)) {

@@ -905,7 +905,7 @@ static void script_file_available(ScriptBSC *bsc)
         return;
     }
 
-    nsres = nsIDOMHTMLElement_GetParentNode(script_elem->element.nselem, &parent);
+    nsres = nsIDOMElement_GetParentNode(script_elem->element.dom_element, &parent);
     if(NS_FAILED(nsres) || !parent) {
         TRACE("No parent, not executing\n");
         script_elem->parse_on_bind = TRUE;

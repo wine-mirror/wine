@@ -1590,7 +1590,7 @@ static HRESULT WINAPI HTMLLabelElement_put_htmlFor(IHTMLLabelElement *iface, BST
 
     nsAString_InitDepend(&for_str, forW);
     nsAString_InitDepend(&val_str, v);
-    nsres = nsIDOMHTMLElement_SetAttribute(This->element.nselem, &for_str, &val_str);
+    nsres = nsIDOMElement_SetAttribute(This->element.dom_element, &for_str, &val_str);
     nsAString_Finish(&for_str);
     nsAString_Finish(&val_str);
     if(NS_FAILED(nsres)) {

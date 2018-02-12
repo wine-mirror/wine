@@ -260,11 +260,11 @@ static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR
     while(1) {
         nsIDOMNode *child;
 
-        nsres = nsIDOMHTMLElement_GetFirstChild(This->element.nselem, &child);
+        nsres = nsIDOMElement_GetFirstChild(This->element.dom_element, &child);
         if(NS_FAILED(nsres) || !child)
             break;
 
-        nsres = nsIDOMHTMLElement_RemoveChild(This->element.nselem, child, &tmp);
+        nsres = nsIDOMElement_RemoveChild(This->element.dom_element, child, &tmp);
         nsIDOMNode_Release(child);
         if(NS_SUCCEEDED(nsres)) {
             nsIDOMNode_Release(tmp);
@@ -282,7 +282,7 @@ static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR
         return E_FAIL;
     }
 
-    nsres = nsIDOMHTMLElement_AppendChild(This->element.nselem, (nsIDOMNode*)text_node, &tmp);
+    nsres = nsIDOMElement_AppendChild(This->element.dom_element, (nsIDOMNode*)text_node, &tmp);
     if(NS_SUCCEEDED(nsres))
         nsIDOMNode_Release(tmp);
     else
