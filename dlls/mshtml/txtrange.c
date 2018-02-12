@@ -1661,7 +1661,7 @@ static HRESULT WINAPI RangeCommandTarget_QueryStatus(IOleCommandTarget *iface, c
 
 static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
 {
-    nsIDOMHTMLElement *blockquote_elem, *p_elem;
+    nsIDOMElement *blockquote_elem, *p_elem;
     nsIDOMDocumentFragment *fragment;
     nsIDOMNode *tmp;
 
@@ -1679,16 +1679,16 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
     create_nselem(This->doc, pW, &p_elem);
 
     nsIDOMRange_ExtractContents(This->nsrange, &fragment);
-    nsIDOMHTMLElement_AppendChild(p_elem, (nsIDOMNode*)fragment, &tmp);
+    nsIDOMElement_AppendChild(p_elem, (nsIDOMNode*)fragment, &tmp);
     nsIDOMDocumentFragment_Release(fragment);
     nsIDOMNode_Release(tmp);
 
-    nsIDOMHTMLElement_AppendChild(blockquote_elem, (nsIDOMNode*)p_elem, &tmp);
-    nsIDOMHTMLElement_Release(p_elem);
+    nsIDOMElement_AppendChild(blockquote_elem, (nsIDOMNode*)p_elem, &tmp);
+    nsIDOMElement_Release(p_elem);
     nsIDOMNode_Release(tmp);
 
     nsIDOMRange_InsertNode(This->nsrange, (nsIDOMNode*)blockquote_elem);
-    nsIDOMHTMLElement_Release(blockquote_elem);
+    nsIDOMElement_Release(blockquote_elem);
 
     return S_OK;
 }

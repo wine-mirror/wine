@@ -559,7 +559,7 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
         IHTMLOptionElement **optelem)
 {
     HTMLOptionElementFactory *This = impl_from_IHTMLOptionElementFactory(iface);
-    nsIDOMHTMLElement *nselem;
+    nsIDOMElement *nselem;
     HTMLDOMNode *node;
     HRESULT hres;
 
@@ -580,7 +580,7 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
         return hres;
 
     hres = get_node(This->window->doc, (nsIDOMNode*)nselem, TRUE, &node);
-    nsIDOMHTMLElement_Release(nselem);
+    nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
 

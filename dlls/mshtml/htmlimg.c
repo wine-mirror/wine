@@ -874,7 +874,7 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
     HTMLDocumentNode *doc;
     IHTMLImgElement *img;
     HTMLElement *elem;
-    nsIDOMHTMLElement *nselem;
+    nsIDOMElement *nselem;
     LONG l;
     HRESULT hres;
 
@@ -897,7 +897,7 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
         return hres;
 
     hres = HTMLElement_Create(doc, (nsIDOMNode*)nselem, FALSE, &elem);
-    nsIDOMHTMLElement_Release(nselem);
+    nsIDOMElement_Release(nselem);
     if(FAILED(hres)) {
         ERR("HTMLElement_Create failed\n");
         return hres;

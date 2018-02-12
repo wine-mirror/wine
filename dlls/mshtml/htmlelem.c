@@ -269,9 +269,8 @@ static inline HTMLElement *impl_from_IHTMLElement(IHTMLElement *iface)
     return CONTAINING_RECORD(iface, HTMLElement, IHTMLElement_iface);
 }
 
-HRESULT create_nselem(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMHTMLElement **ret)
+HRESULT create_nselem(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMElement **ret)
 {
-    nsIDOMElement *nselem;
     nsAString tag_str;
     nsresult nsres;
 
@@ -281,17 +280,10 @@ HRESULT create_nselem(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMHTMLElement
     }
 
     nsAString_InitDepend(&tag_str, tag);
-    nsres = nsIDOMHTMLDocument_CreateElement(doc->nsdoc, &tag_str, &nselem);
+    nsres = nsIDOMHTMLDocument_CreateElement(doc->nsdoc, &tag_str, ret);
     nsAString_Finish(&tag_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateElement failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLElement, (void**)ret);
-    nsIDOMElement_Release(nselem);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLElement iface: %08x\n", nsres);
         return E_FAIL;
     }
 
@@ -300,7 +292,7 @@ HRESULT create_nselem(HTMLDocumentNode *doc, const WCHAR *tag, nsIDOMHTMLElement
 
 HRESULT create_element(HTMLDocumentNode *doc, const WCHAR *tag, HTMLElement **ret)
 {
-    nsIDOMHTMLElement *nselem;
+    nsIDOMElement *nselem;
     HRESULT hres;
 
     /* Use owner doc if called on document fragment */
@@ -312,7 +304,7 @@ HRESULT create_element(HTMLDocumentNode *doc, const WCHAR *tag, HTMLElement **re
         return hres;
 
     hres = HTMLElement_Create(doc, (nsIDOMNode*)nselem, TRUE, ret);
-    nsIDOMHTMLElement_Release(nselem);
+    nsIDOMElement_Release(nselem);
     return hres;
 }
 
