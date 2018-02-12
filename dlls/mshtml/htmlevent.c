@@ -2781,7 +2781,7 @@ void update_doc_cp_events(HTMLDocumentNode *doc, cp_static_data_t *cp)
     }
 }
 
-void check_event_attr(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
+void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
 {
     nsIDOMMozNamedAttrMap *attr_map;
     const PRUnichar *name, *value;
@@ -2795,11 +2795,11 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
     nsresult nsres;
     HRESULT hres;
 
-    nsres = nsIDOMHTMLElement_HasAttributes(nselem, &has_attrs);
+    nsres = nsIDOMElement_HasAttributes(nselem, &has_attrs);
     if(NS_FAILED(nsres) || !has_attrs)
         return;
 
-    nsres = nsIDOMHTMLElement_GetAttributes(nselem, &attr_map);
+    nsres = nsIDOMElement_GetAttributes(nselem, &attr_map);
     if(NS_FAILED(nsres))
         return;
 
