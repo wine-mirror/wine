@@ -821,6 +821,14 @@ DWORD __cdecl svcctl_ChangeServiceConfigW(
     return err;
 }
 
+static void fill_status_process(SERVICE_STATUS_PROCESS *status, struct service_entry *service)
+{
+    struct process_entry *process = service->process;
+    memcpy(status, &service->status, sizeof(service->status));
+    status->dwProcessId     = process ? process->process_id : 0;
+    status->dwServiceFlags  = 0;
+}
+
 static void fill_notify(struct sc_notify_handle *notify)
 {
     SC_RPC_NOTIFY_PARAMS_LIST *list;
@@ -834,8 +842,7 @@ static void fill_notify(struct sc_notify_handle *notify)
     cparams = (SERVICE_NOTIFY_STATUS_CHANGE_PARAMS_2 *)(list + 1);
 
     cparams->dwNotifyMask = notify->notify_mask;
-    memcpy(&cparams->ServiceStatus, &notify->service->service_entry->status,
-            sizeof(SERVICE_STATUS_PROCESS));
+    fill_status_process(&cparams->ServiceStatus, notify->service->service_entry);
     cparams->dwNotificationStatus = ERROR_SUCCESS;
     cparams->dwNotificationTriggered = 1 << (cparams->ServiceStatus.dwCurrentState - SERVICE_STOPPED);
     cparams->pszServiceNames = NULL;
@@ -1011,14 +1018,6 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
         break;
     }
     return err;
-}
-
-static void fill_status_process(SERVICE_STATUS_PROCESS *status, struct service_entry *service)
-{
-    struct process_entry *process = service->process;
-    memcpy(status, &service->status, sizeof(service->status));
-    status->dwProcessId     = process ? process->process_id : 0;
-    status->dwServiceFlags  = 0;
 }
 
 DWORD __cdecl svcctl_QueryServiceStatusEx(
