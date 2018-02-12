@@ -251,6 +251,7 @@ enum dc_gl_type
 
 struct gl_drawable
 {
+    LONG                           ref;          /* reference count */
     enum dc_gl_type                type;         /* type of GL surface */
     GLXDrawable                    drawable;     /* drawable for rendering with GL */
     Window                         window;       /* window if drawable is a GLXWindow */
@@ -1213,27 +1214,57 @@ static const struct wgl_pixel_format *get_pixel_format(Display *display, int iPi
     return NULL;
 }
 
+static struct gl_drawable *grab_gl_drawable( struct gl_drawable *gl )
+{
+    InterlockedIncrement( &gl->ref );
+    return gl;
+}
+
+static void release_gl_drawable( struct gl_drawable *gl )
+{
+    if (!gl) return;
+    if (InterlockedDecrement( &gl->ref )) return;
+    switch (gl->type)
+    {
+    case DC_GL_CHILD_WIN:
+        pglXDestroyWindow( gdi_display, gl->drawable );
+        XDestroyWindow( gdi_display, gl->window );
+        XFreeColormap( gdi_display, gl->colormap );
+        break;
+    case DC_GL_PIXMAP_WIN:
+        pglXDestroyPixmap( gdi_display, gl->drawable );
+        XFreePixmap( gdi_display, gl->pixmap );
+        break;
+    default:
+        break;
+    }
+    HeapFree( GetProcessHeap(), 0, gl );
+}
+
 /* Mark any allocated context using the glx drawable 'old' to use 'new' */
-static void mark_drawable_dirty(GLXDrawable old, GLXDrawable new)
+static void mark_drawable_dirty( struct gl_drawable *old, struct gl_drawable *new )
 {
     struct wgl_context *ctx;
 
+    EnterCriticalSection( &context_section );
     LIST_FOR_EACH_ENTRY( ctx, &context_list, struct wgl_context, entry )
     {
-        if (old == ctx->drawables[0]) {
-            ctx->drawables[0] = new;
+        if (old->drawable == ctx->drawables[0]) {
+            ctx->drawables[0] = new->drawable;
             ctx->refresh_drawables = TRUE;
         }
-        if (old == ctx->drawables[1]) {
-            ctx->drawables[1] = new;
+        if (old->drawable == ctx->drawables[1]) {
+            ctx->drawables[1] = new->drawable;
             ctx->refresh_drawables = TRUE;
         }
     }
+    LeaveCriticalSection( &context_section );
 }
 
 /* Given the current context, make sure its drawable is sync'd */
 static inline void sync_context(struct wgl_context *context)
 {
+    EnterCriticalSection( &context_section );
     if (context->refresh_drawables) {
         if (glxRequireVersion(3))
             pglXMakeContextCurrent(gdi_display, context->drawables[0],
@@ -1242,6 +1273,7 @@ static inline void sync_context(struct wgl_context *context)
             pglXMakeCurrent(gdi_display, context->drawables[0], context->ctx);
         context->refresh_drawables = FALSE;
     }
+    LeaveCriticalSection( &context_section );
 }
 
 static BOOL set_swap_interval(GLXDrawable drawable, int interval)
@@ -1286,15 +1318,14 @@ static struct gl_drawable *get_gl_drawable( HWND hwnd, HDC hdc )
     struct gl_drawable *gl;
 
     EnterCriticalSection( &context_section );
-    if (hwnd && !XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl )) return gl;
-    if (hdc && !XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl )) return gl;
+    if (hwnd && !XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ))
+        gl = grab_gl_drawable( gl );
+    else if (hdc && !XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
+        gl = grab_gl_drawable( gl );
+    else
+        gl = NULL;
     LeaveCriticalSection( &context_section );
-    return NULL;
-}
-
-static void release_gl_drawable( struct gl_drawable *gl )
-{
-    if (gl) LeaveCriticalSection( &context_section );
+    return gl;
 }
 
 static GLXContext create_glxcontext(Display *display, struct wgl_context *context, GLXContext shareList)
@@ -1318,34 +1349,12 @@ static GLXContext create_glxcontext(Display *display, struct wgl_context *contex
 
 
 /***********************************************************************
- *              free_gl_drawable
- */
-static void free_gl_drawable( struct gl_drawable *gl )
-{
-    switch (gl->type)
-    {
-    case DC_GL_CHILD_WIN:
-        pglXDestroyWindow( gdi_display, gl->drawable );
-        XDestroyWindow( gdi_display, gl->window );
-        XFreeColormap( gdi_display, gl->colormap );
-        break;
-    case DC_GL_PIXMAP_WIN:
-        pglXDestroyPixmap( gdi_display, gl->drawable );
-        XFreePixmap( gdi_display, gl->pixmap );
-        break;
-    default:
-        break;
-    }
-    HeapFree( GetProcessHeap(), 0, gl );
-}
-
-
-/***********************************************************************
  *              create_gl_drawable
  */
-static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
+static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel_format *format )
 {
-    XVisualInfo *visual = gl->format->visual;
+    struct gl_drawable *gl, *prev;
+    XVisualInfo *visual = format->visual;
     RECT rect;
     int width, height;
 
@@ -1353,7 +1362,15 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
     width  = min( max( 1, rect.right ), 65535 );
     height = min( max( 1, rect.bottom ), 65535 );
 
-    gl->drawable = 0;
+    if (!(gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) ))) return NULL;
+
+    /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI
+     * there is no way to query it, so we have to store it here.
+     */
+    gl->swap_interval = 1;
+    gl->refresh_swap_interval = TRUE;
+    gl->format = format;
+    gl->ref = 1;
 
     if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
     {
@@ -1423,9 +1440,21 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
         }
     }
 
-    if (gl->drawable)
-        gl->refresh_swap_interval = TRUE;
-    return gl->drawable != 0;
+    if (!gl->drawable)
+    {
+        HeapFree( GetProcessHeap(), 0, gl );
+        return NULL;
+    }
+
+    EnterCriticalSection( &context_section );
+    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&prev ))
+    {
+        gl->swap_interval = prev->swap_interval;
+        release_gl_drawable( prev );
+    }
+    XSaveContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char *)grab_gl_drawable(gl) );
+    LeaveCriticalSection( &context_section );
+    return gl;
 }
 
 
@@ -1434,37 +1463,17 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
  */
 static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
 {
-    struct gl_drawable *gl, *prev;
+    struct gl_drawable *gl;
 
     if (!format->visual) return FALSE;
 
-    gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
-    /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI
-     * there is no way to query it, so we have to store it here.
-     */
-    gl->swap_interval = 1;
-    gl->refresh_swap_interval = TRUE;
-    gl->format = format;
-
-    if (!create_gl_drawable( hwnd, gl ))
-    {
-        HeapFree( GetProcessHeap(), 0, gl );
-        return FALSE;
-    }
+    if (!(gl = create_gl_drawable( hwnd, format ))) return FALSE;
 
     TRACE( "created GL drawable %lx for win %p %s\n",
            gl->drawable, hwnd, debugstr_fbconfig( format->fbconfig ));
 
     XFlush( gdi_display );
-
-    EnterCriticalSection( &context_section );
-    if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&prev ))
-    {
-        gl->swap_interval = prev->swap_interval;
-        free_gl_drawable( prev );
-    }
-    XSaveContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char *)gl );
-    LeaveCriticalSection( &context_section );
+    release_gl_drawable( gl );
 
     __wine_set_pixel_format( hwnd, pixel_format_index( format ));
     return TRUE;
@@ -1519,50 +1528,31 @@ static BOOL set_pixel_format(HDC hdc, int format, BOOL allow_change)
  */
 void sync_gl_drawable( HWND hwnd, int width, int height )
 {
-    struct gl_drawable *gl;
-    GLXDrawable glxp;
-    Pixmap pix;
+    struct gl_drawable *old, *new;
     XWindowChanges changes;
 
-    changes.width  = min( max( 1, width ), 65535 );
-    changes.height = min( max( 1, height ), 65535 );
+    if (!(old = get_gl_drawable( hwnd, 0 ))) return;
 
-    if (!(gl = get_gl_drawable( hwnd, 0 ))) return;
+    TRACE( "setting drawable %lx size %dx%d\n", old->drawable, width, height );
 
-    TRACE( "setting drawable %lx size %dx%d\n", gl->drawable, changes.width, changes.height );
-
-    switch (gl->type)
+    switch (old->type)
     {
     case DC_GL_CHILD_WIN:
-        XConfigureWindow( gdi_display, gl->window, CWWidth | CWHeight, &changes );
+        changes.width  = min( max( 1, width ), 65535 );
+        changes.height = min( max( 1, height ), 65535 );
+        XConfigureWindow( gdi_display, old->window, CWWidth | CWHeight, &changes );
         break;
     case DC_GL_PIXMAP_WIN:
-        pix = XCreatePixmap(gdi_display, root_window, changes.width, changes.height,
-                            gl->format->visual->depth);
-        if (!pix) goto done;
-        glxp = pglXCreatePixmap(gdi_display, gl->format->fbconfig, pix, NULL );
-        if (!glxp)
-        {
-            XFreePixmap(gdi_display, pix);
-            goto done;
-        }
-        mark_drawable_dirty(gl->drawable, glxp);
+        if (!(new = create_gl_drawable( hwnd, old->format ))) break;
+        mark_drawable_dirty( old, new );
         XFlush( gdi_display );
-
-        XFreePixmap(gdi_display, gl->pixmap);
-        pglXDestroyPixmap(gdi_display, gl->drawable);
-        TRACE( "Recreated GL drawable %lx to replace %lx\n", glxp, gl->drawable );
-
-        gl->pixmap = pix;
-        gl->drawable = glxp;
-        gl->pixmap_size.cx = width;
-        gl->pixmap_size.cy = height;
+        TRACE( "Recreated GL drawable %lx to replace %lx\n", new->drawable, old->drawable );
+        release_gl_drawable( new );
         break;
     default:
         break;
     }
-done:
-    release_gl_drawable( gl );
+    release_gl_drawable( old );
 }
 
 
@@ -1571,46 +1561,36 @@ done:
  */
 void set_gl_drawable_parent( HWND hwnd, HWND parent )
 {
-    struct gl_drawable *gl;
-    GLXDrawable old_drawable;
+    struct gl_drawable *old, *new;
 
-    if (!(gl = get_gl_drawable( hwnd, 0 ))) return;
+    if (!(old = get_gl_drawable( hwnd, 0 ))) return;
 
-    TRACE( "setting drawable %lx parent %p\n", gl->drawable, parent );
+    TRACE( "setting drawable %lx parent %p\n", old->drawable, parent );
 
-    old_drawable = gl->drawable;
-    switch (gl->type)
+    switch (old->type)
     {
     case DC_GL_WINDOW:
         break;
     case DC_GL_CHILD_WIN:
-        if (parent != GetDesktopWindow()) goto done;
-        pglXDestroyWindow( gdi_display, gl->drawable );
-        XDestroyWindow( gdi_display, gl->window );
-        XFreeColormap( gdi_display, gl->colormap );
-        break;
     case DC_GL_PIXMAP_WIN:
-        if (parent != GetDesktopWindow()) goto done;
-        pglXDestroyPixmap( gdi_display, gl->drawable );
-        XFreePixmap( gdi_display, gl->pixmap );
-        break;
+        if (parent == GetDesktopWindow()) break;
+        /* fall through */
     default:
-        goto done;
-    }
-
-    if (!create_gl_drawable( hwnd, gl ))
-    {
-        XDeleteContext( gdi_display, (XID)hwnd, gl_hwnd_context );
-        release_gl_drawable( gl );
-        HeapFree( GetProcessHeap(), 0, gl );
-        __wine_set_pixel_format( hwnd, 0 );
+        release_gl_drawable( old );
         return;
     }
-    mark_drawable_dirty( old_drawable, gl->drawable );
 
-done:
-    release_gl_drawable( gl );
-
+    if ((new = create_gl_drawable( hwnd, old->format )))
+    {
+        mark_drawable_dirty( old, new );
+        release_gl_drawable( new );
+    }
+    else
+    {
+        destroy_gl_drawable( hwnd );
+        __wine_set_pixel_format( hwnd, 0 );
+    }
+    release_gl_drawable( old );
 }
 
 
@@ -1625,7 +1605,7 @@ void destroy_gl_drawable( HWND hwnd )
     if (!XFindContext( gdi_display, (XID)hwnd, gl_hwnd_context, (char **)&gl ))
     {
         XDeleteContext( gdi_display, (XID)hwnd, gl_hwnd_context );
-        free_gl_drawable( gl );
+        release_gl_drawable( gl );
     }
     LeaveCriticalSection( &context_section );
 }
@@ -1825,7 +1805,9 @@ static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
         ret->hdc = hdc;
         ret->fmt = gl->format;
         ret->ctx = create_glxcontext(gdi_display, ret, NULL);
+        EnterCriticalSection( &context_section );
         list_add_head( &context_list, &ret->entry );
+        LeaveCriticalSection( &context_section );
     }
     release_gl_drawable( gl );
     TRACE( "%p -> %p\n", hdc, ret );
@@ -1894,6 +1876,7 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
         TRACE("hdc %p drawable %lx fmt %p ctx %p %s\n", hdc, gl->drawable, gl->format, ctx->ctx,
               debugstr_fbconfig( gl->format->fbconfig ));
 
+        EnterCriticalSection( &context_section );
         ret = pglXMakeCurrent(gdi_display, gl->drawable, ctx->ctx);
         if (ret)
         {
@@ -1903,8 +1886,10 @@ static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
             ctx->drawables[0] = gl->drawable;
             ctx->drawables[1] = gl->drawable;
             ctx->refresh_drawables = FALSE;
+            LeaveCriticalSection( &context_section );
             goto done;
         }
+        LeaveCriticalSection( &context_section );
     }
     SetLastError( ERROR_INVALID_HANDLE );
 
@@ -1936,6 +1921,8 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
     if ((draw_gl = get_gl_drawable( WindowFromDC( draw_hdc ), draw_hdc )))
     {
         read_gl = get_gl_drawable( WindowFromDC( read_hdc ), read_hdc );
+
+        EnterCriticalSection( &context_section );
         ret = pglXMakeContextCurrent(gdi_display, draw_gl->drawable,
                                      read_gl ? read_gl->drawable : 0, ctx->ctx);
         if (ret)
@@ -1946,8 +1933,10 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
             ctx->drawables[1] = read_gl ? read_gl->drawable : 0;
             ctx->refresh_drawables = FALSE;
             NtCurrentTeb()->glContext = ctx;
+            LeaveCriticalSection( &context_section );
             goto done;
         }
+        LeaveCriticalSection( &context_section );
     }
     SetLastError( ERROR_INVALID_HANDLE );
 done:
@@ -2140,7 +2129,12 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
             HeapFree( GetProcessHeap(), 0, ret );
             ret = NULL;
         }
-        else list_add_head( &context_list, &ret->entry );
+        else
+        {
+            EnterCriticalSection( &context_section );
+            list_add_head( &context_list, &ret->entry );
+            LeaveCriticalSection( &context_section );
+        }
     }
 
     release_gl_drawable( gl );
@@ -2386,10 +2380,11 @@ static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
     gl->type = DC_GL_PBUFFER;
     gl->drawable = object->drawable;
     gl->format = object->fmt;
+    gl->ref = 1;
 
     EnterCriticalSection( &context_section );
     if (!XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&prev ))
-        free_gl_drawable( prev );
+        release_gl_drawable( prev );
     XSaveContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char *)gl );
     LeaveCriticalSection( &context_section );
 
@@ -2508,7 +2503,7 @@ static int X11DRV_wglReleasePbufferDCARB( struct wgl_pbuffer *object, HDC hdc )
     if (!XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
     {
         XDeleteContext( gdi_display, (XID)hdc, gl_pbuffer_context );
-        free_gl_drawable( gl );
+        release_gl_drawable( gl );
     }
     else hdc = 0;
 
@@ -3092,6 +3087,7 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
         return FALSE;
     }
 
+    EnterCriticalSection( &context_section );
     ret = set_swap_interval(gl->drawable, interval);
     gl->refresh_swap_interval = FALSE;
     if (ret)
@@ -3099,6 +3095,7 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
     else
         SetLastError(ERROR_DC_NOT_FOUND);
 
+    LeaveCriticalSection( &context_section );
     release_gl_drawable(gl);
 
     return ret;
@@ -3315,11 +3312,13 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
         return FALSE;
     }
 
+    EnterCriticalSection( &context_section );
     if (gl->refresh_swap_interval)
     {
         set_swap_interval(gl->drawable, gl->swap_interval);
         gl->refresh_swap_interval = FALSE;
     }
+    LeaveCriticalSection( &context_section );
 
     switch (gl->type)
     {
