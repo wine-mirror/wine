@@ -5463,7 +5463,9 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
 
         /* No AddRef, share reference with HTMLDOMNode */
         assert((nsIDOMNode*)nselem == This->node.nsnode);
-        This->nselem = nselem;
+        This->dom_element = (nsIDOMElement*)nselem;
+        This->html_element = nselem;
+        This->nselem = This->html_element;
     }
 
     ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)&This->IHTMLElement_iface, This->node.vtbl->cpc_entries);

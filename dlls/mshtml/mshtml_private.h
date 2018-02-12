@@ -780,6 +780,8 @@ typedef struct {
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
 
     nsIDOMHTMLElement *nselem;
+    nsIDOMElement *dom_element;
+    nsIDOMHTMLElement *html_element;
     HTMLStyle *style;
     HTMLStyle *runtime_style;
     HTMLAttributeCollection *attrs;
