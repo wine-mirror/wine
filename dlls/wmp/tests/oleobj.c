@@ -495,6 +495,43 @@ static const IDispatchVtbl DispatchVtbl = {
 
 static IDispatch Dispatch = { &DispatchVtbl };
 
+static HRESULT WINAPI WMPOCXEvents_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID__WMPOCXEvents, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI WMPOCXEvents_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    switch(dispIdMember) {
+    default:
+        ok(0, "unexpected call Invoke(%d)\n", dispIdMember);
+    }
+
+    return E_NOTIMPL;
+}
+
+static IDispatchVtbl WMPOcxEventsVtbl = {
+    WMPOCXEvents_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    WMPOCXEvents_Invoke,
+};
+
+static IDispatch WMPOCXEvents = { &WMPOcxEventsVtbl };
+
 static HRESULT WINAPI InPlaceSiteWindowless_QueryInterface(IOleInPlaceSiteWindowless *iface, REFIID riid, void **ppv)
 {
     return cs_qi(riid, ppv);
@@ -788,6 +825,35 @@ static HRESULT cs_qi(REFIID riid, void **ppv)
     return S_OK;
 }
 
+static void test_ConnectionPoint(IOleObject *unk)
+{
+    IConnectionPointContainer *container;
+    IConnectionPoint *point;
+    HRESULT hres;
+
+    static DWORD dw = 100;
+
+    hres = IOleObject_QueryInterface(unk, &IID_IConnectionPointContainer, (void**)&container);
+    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IConnectionPointContainer_FindConnectionPoint(container, &IID__WMPOCXEvents, &point);
+    IConnectionPointContainer_Release(container);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IConnectionPoint_Advise(point, (IUnknown*)&WMPOCXEvents, &dw);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+    ok(dw == 1, "dw=%d, expected 1\n", dw);
+    hres = IConnectionPoint_Unadvise(point, dw);
+    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+
+    IConnectionPoint_Release(point);
+}
+
+
 static void test_wmp_ifaces(IOleObject *oleobj)
 {
     IWMPSettings *settings, *settings_qi;
@@ -913,7 +979,7 @@ static void test_IConnectionPointContainer(IOleObject *oleobj)
 
     point = NULL;
     hres = IConnectionPointContainer_FindConnectionPoint(container, &IID__WMPOCXEvents, &point);
-    todo_wine ok(hres == S_OK, "got: %08x\n", hres);
+    ok(hres == S_OK, "got: %08x\n", hres);
     if(point)
         IConnectionPoint_Release(point);
 
@@ -1112,6 +1178,8 @@ static void test_wmp(void)
     hres = IOleObject_GetClientSite(oleobj, &client_site);
     ok(hres == E_FAIL || broken(hres == S_OK), "GetClientSite failed: %08x\n", hres);
     ok(!client_site, "client_site = %p\n", client_site);
+
+    test_ConnectionPoint(oleobj);
 
     IPersistStreamInit_Release(psi);
     IOleInPlaceObject_Release(ipobj);

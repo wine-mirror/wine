@@ -19,8 +19,20 @@
 #define COBJMACROS
 
 #include "windows.h"
+#include "wine/heap.h"
 #include "ole2.h"
 #include "wmp.h"
+
+typedef struct {
+    IConnectionPoint IConnectionPoint_iface;
+
+    IConnectionPointContainer *container;
+
+    IDispatch **sinks;
+    DWORD sinks_size;
+
+    IID iid;
+} ConnectionPoint;
 
 struct WindowsMediaPlayer {
     IOleObject IOleObject_iface;
@@ -38,9 +50,13 @@ struct WindowsMediaPlayer {
     IOleClientSite *client_site;
     HWND hwnd;
     SIZEL extent;
+
+    ConnectionPoint *wmpocx;
 };
 
 void init_player_ifaces(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
+void ConnectionPointContainer_Init(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
+void ConnectionPointContainer_Destroy(WindowsMediaPlayer *wmp) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
