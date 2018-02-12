@@ -257,7 +257,6 @@ struct gl_drawable
     GLXDrawable                    drawable;     /* drawable for rendering with GL */
     Window                         window;       /* window if drawable is a GLXWindow */
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
-    Colormap                       colormap;     /* colormap used for the drawable */
     const struct wgl_pixel_format *format;       /* pixel format for the drawable */
     SIZE                           pixmap_size;  /* pixmap size for GLXPixmap drawables */
     int                            swap_interval;
@@ -1232,7 +1231,6 @@ static void release_gl_drawable( struct gl_drawable *gl )
         TRACE( "destroying %lx drawable %lx\n", gl->window, gl->drawable );
         pglXDestroyWindow( gdi_display, gl->drawable );
         XDestroyWindow( gdi_display, gl->window );
-        if (gl->colormap) XFreeColormap( gdi_display, gl->colormap );
         break;
     case DC_GL_PIXMAP_WIN:
         TRACE( "destroying pixmap %lx drawable %lx\n", gl->pixmap, gl->drawable );
@@ -1396,56 +1394,22 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
 
     if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
     {
-        struct x11drv_win_data *data = get_win_data( hwnd );
-
-        if (data)
-        {
-            gl->type = DC_GL_WINDOW;
-            gl->window = create_client_window( data, visual );
-            if (gl->window)
-                gl->drawable = pglXCreateWindow( gdi_display, gl->format->fbconfig, gl->window, NULL );
-            release_win_data( data );
-            TRACE( "%p created client %lx drawable %lx\n", hwnd, gl->window, gl->drawable );
-        }
+        gl->type = DC_GL_WINDOW;
+        gl->window = create_client_window( hwnd, visual );
+        if (gl->window)
+            gl->drawable = pglXCreateWindow( gdi_display, gl->format->fbconfig, gl->window, NULL );
+        TRACE( "%p created client %lx drawable %lx\n", hwnd, gl->window, gl->drawable );
     }
 #ifdef SONAME_LIBXCOMPOSITE
     else if(usexcomposite)
     {
-        static Window dummy_parent;
-        XSetWindowAttributes attrib;
-
-        attrib.override_redirect = True;
-        attrib.border_pixel = 0;
-        if (!dummy_parent)
-        {
-            attrib.colormap = default_colormap;
-            dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, default_visual.depth,
-                                          InputOutput, default_visual.visual,
-                                          CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
-            XMapWindow( gdi_display, dummy_parent );
-        }
-        gl->colormap = XCreateColormap(gdi_display, dummy_parent, visual->visual,
-                                       (visual->class == PseudoColor ||
-                                        visual->class == GrayScale ||
-                                        visual->class == DirectColor) ?
-                                       AllocAll : AllocNone);
-        attrib.colormap = gl->colormap;
-        XInstallColormap(gdi_display, attrib.colormap);
-
         gl->type = DC_GL_CHILD_WIN;
-        gl->window = XCreateWindow( gdi_display, dummy_parent, 0, 0, width, height,
-                                      0, visual->depth, InputOutput, visual->visual,
-                                      CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
+        gl->window = create_client_window( hwnd, visual );
         if (gl->window)
         {
             gl->drawable = pglXCreateWindow( gdi_display, gl->format->fbconfig, gl->window, NULL );
-            if (gl->drawable)
-            {
-                pXCompositeRedirectWindow(gdi_display, gl->window, CompositeRedirectManual);
-                XMapWindow(gdi_display, gl->window);
-            }
+            pXCompositeRedirectWindow( gdi_display, gl->window, CompositeRedirectManual );
         }
-        else XFreeColormap( gdi_display, gl->colormap );
         TRACE( "%p created child %lx drawable %lx\n", hwnd, gl->window, gl->drawable );
     }
 #endif
@@ -1550,22 +1514,14 @@ static BOOL set_pixel_format(HDC hdc, int format, BOOL allow_change)
 /***********************************************************************
  *              sync_gl_drawable
  */
-void sync_gl_drawable( HWND hwnd, int width, int height )
+void sync_gl_drawable( HWND hwnd )
 {
     struct gl_drawable *old, *new;
-    XWindowChanges changes;
 
     if (!(old = get_gl_drawable( hwnd, 0 ))) return;
 
-    TRACE( "setting drawable %lx size %dx%d\n", old->drawable, width, height );
-
     switch (old->type)
     {
-    case DC_GL_CHILD_WIN:
-        changes.width  = min( max( 1, width ), 65535 );
-        changes.height = min( max( 1, height ), 65535 );
-        XConfigureWindow( gdi_display, old->window, CWWidth | CWHeight, &changes );
-        break;
     case DC_GL_PIXMAP_WIN:
         if (!(new = create_gl_drawable( hwnd, old->format ))) break;
         mark_drawable_dirty( old, new );
@@ -3445,7 +3401,7 @@ struct opengl_funcs *get_glx_driver( UINT version )
     return NULL;
 }
 
-void sync_gl_drawable( HWND hwnd, int width, int height )
+void sync_gl_drawable( HWND hwnd )
 {
 }
 
