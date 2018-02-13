@@ -7065,12 +7065,12 @@ static void test_mipmap_gen(void)
     IDirect3DTexture9 *texture;
     IDirect3DSurface9 *surface;
     IDirect3DDevice9 *device;
+    unsigned int i, count;
     D3DSURFACE_DESC desc;
     D3DLOCKED_RECT lr;
     IDirect3D9 *d3d;
     BOOL renderable;
     ULONG refcount;
-    unsigned int i;
     DWORD levels;
     HWND window;
     HRESULT hr;
@@ -7170,7 +7170,73 @@ static void test_mipmap_gen(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     levels = IDirect3DTexture9_GetLevelCount(texture);
     ok(levels == 1, "Got unexpected levels %u.\n", levels);
+    hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(desc.Usage == D3DUSAGE_AUTOGENMIPMAP, "Got unexpected usage %#x.\n", desc.Usage);
     IDirect3DTexture9_Release(texture);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_AUTOGENMIPMAP,
+            D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &texture, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
+    {
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, formats[i]);
+        if (SUCCEEDED(hr))
+        {
+            /* i.e. there is no difference between the D3D_OK and the
+             * D3DOK_NOAUTOGEN cases. */
+            hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_AUTOGENMIPMAP,
+                    formats[i], D3DPOOL_DEFAULT, &texture, 0);
+            ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+            count = IDirect3DTexture9_GetLevelCount(texture);
+            ok(count == 1, "Unexpected level count %u.\n", count);
+            hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(desc.Usage == D3DUSAGE_AUTOGENMIPMAP, "Got unexpected usage %#x.\n", desc.Usage);
+            filter_type = IDirect3DTexture9_GetAutoGenFilterType(texture);
+            ok(filter_type == D3DTEXF_LINEAR, "Got unexpected filter_type %#x.\n", filter_type);
+            hr = IDirect3DTexture9_SetAutoGenFilterType(texture, D3DTEXF_ANISOTROPIC);
+            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            filter_type = IDirect3DTexture9_GetAutoGenFilterType(texture);
+            ok(filter_type == D3DTEXF_ANISOTROPIC, "Got unexpected filter_type %#x.\n", filter_type);
+            IDirect3DTexture9_Release(texture);
+        }
+    }
+
+    hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_WRAPANDMIP, D3DRTYPE_TEXTURE, D3DFMT_D16);
+    if (hr == D3D_OK)
+    {
+        hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, 0,
+                D3DFMT_D16, D3DPOOL_DEFAULT, &texture, 0);
+        ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+        count = IDirect3DTexture9_GetLevelCount(texture);
+        ok(count == 7, "Unexpected level count %u.\n", count);
+        IDirect3DTexture9_Release(texture);
+
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, D3DFMT_D16);
+        ok(hr == D3DOK_NOAUTOGEN, "Unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, D3DUSAGE_AUTOGENMIPMAP,
+                D3DFMT_D16, D3DPOOL_DEFAULT, &texture, 0);
+        ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+        count = IDirect3DTexture9_GetLevelCount(texture);
+        ok(count == 1, "Unexpected level count %u.\n", count);
+        hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(desc.Usage == D3DUSAGE_AUTOGENMIPMAP, "Got unexpected usage %#x.\n", desc.Usage);
+        IDirect3DTexture9_Release(texture);
+    }
+    else
+    {
+        skip("Mipmapping not supported for D3DFMT_D16, skipping test.\n");
+    }
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 64, 64, 64, 0, D3DUSAGE_AUTOGENMIPMAP,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DVolumeTexture9 **)&texture, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
