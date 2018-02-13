@@ -5296,7 +5296,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     const struct wined3d_format *adapter_format, *format;
     enum wined3d_gl_resource_type gl_type, gl_type_end;
-    BOOL mipmap_autogen_supported = TRUE;
+    BOOL mipmap_gen_supported = TRUE;
     DWORD format_flags = 0;
     DWORD allowed_usage;
 
@@ -5440,10 +5440,10 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
         }
 
         if (!(format->flags[gl_type] & WINED3DFMT_FLAG_GEN_MIPMAP))
-            mipmap_autogen_supported = FALSE;
+            mipmap_gen_supported = FALSE;
     }
 
-    if ((usage & WINED3DUSAGE_AUTOGENMIPMAP) && !mipmap_autogen_supported)
+    if ((usage & WINED3DUSAGE_AUTOGENMIPMAP) && !mipmap_gen_supported)
     {
         TRACE("No WINED3DUSAGE_AUTOGENMIPMAP support, returning WINED3DOK_NOAUTOGEN.\n");
         return WINED3DOK_NOAUTOGEN;
@@ -5618,7 +5618,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     caps->Caps2                    = WINED3DCAPS2_CANRENDERWINDOWED |
                                      WINED3DCAPS2_FULLSCREENGAMMA |
                                      WINED3DCAPS2_DYNAMICTEXTURES;
-    if (gl_info->supported[SGIS_GENERATE_MIPMAP])
+    if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT] || gl_info->supported[EXT_FRAMEBUFFER_OBJECT])
         caps->Caps2 |= WINED3DCAPS2_CANAUTOGENMIPMAP;
 
     caps->Caps3                    = WINED3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD |
