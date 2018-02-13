@@ -303,6 +303,7 @@ static BOOL ICInfo_enum_handler(const char *name, const char *driver, unsigned i
     if (lpicinfo->fccHandler != nr && compare_fourcc(lpicinfo->fccHandler, fccHandler))
         return FALSE;
 
+    lpicinfo->fccType = fccType;
     lpicinfo->fccHandler = fccHandler;
     lpicinfo->dwFlags = 0;
     lpicinfo->dwVersion = 0;
