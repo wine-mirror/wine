@@ -2,6 +2,7 @@
  * Combo controls
  *
  * Copyright 1997 Alex Korobka
+ * Copyright (c) 2005 by Frank Richter
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +33,8 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "uxtheme.h"
+#include "vssym32.h"
 #include "commctrl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -87,6 +90,7 @@ static UINT	CBitHeight, CBitWidth;
 #define CBF_NOTIFY              0x0100
 #define CBF_NOREDRAW            0x0200
 #define CBF_SELCHANGE           0x0400
+#define CBF_HOT                 0x0800
 #define CBF_NOEDITNOTIFY        0x1000
 #define CBF_NOLBSELECT          0x2000  /* do not change current selection */
 #define CBF_BEENFOCUSED         0x4000  /* has it ever had focus           */
@@ -472,6 +476,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
   static const WCHAR clbName[] = {'C','o','m','b','o','L','B','o','x',0};
   static const WCHAR editName[] = {'E','d','i','t',0};
 
+  OpenThemeData( hwnd, WC_COMBOBOXW );
   if( !CB_GETTYPE(lphc) ) lphc->dwStyle |= CBS_SIMPLE;
   if( CB_GETTYPE(lphc) != CBS_DROPDOWNLIST ) lphc->wState |= CBF_EDIT;
 
@@ -684,9 +689,7 @@ static HBRUSH COMBO_PrepareColors(
  *
  * Paint CBS_DROPDOWNLIST text field / update edit control contents.
  */
-static void CBPaintText(
-  LPHEADCOMBO lphc,
-  HDC         hdc_paint)
+static void CBPaintText(HEADCOMBO *lphc, HDC hdc_paint)
 {
    RECT rectEdit = lphc->textRect;
    INT	id, size = 0;
@@ -828,64 +831,86 @@ static void CBPaintBorder(
   DrawEdge(hdc, &clientRect, EDGE_SUNKEN, BF_RECT);
 }
 
+static LRESULT COMBO_ThemedPaint(HTHEME theme, HEADCOMBO *lphc, HDC hdc)
+{
+    int button_state;
+    RECT frame;
+
+    /* paint border */
+    if (CB_GETTYPE(lphc) != CBS_SIMPLE)
+        GetClientRect(lphc->self, &frame);
+    else
+    {
+        frame = lphc->textRect;
+        InflateRect(&frame, EDIT_CONTROL_PADDING(), EDIT_CONTROL_PADDING());
+        InflateRect(&frame, COMBO_XBORDERSIZE(), COMBO_YBORDERSIZE());
+    }
+
+    DrawThemeBackground(theme, hdc, 0, IsWindowEnabled(lphc->self) ? CBXS_NORMAL : CBXS_DISABLED, &frame, NULL);
+
+    /* Paint button */
+    if (!IsRectEmpty(&lphc->buttonRect))
+    {
+        if (!IsWindowEnabled(lphc->self))
+            button_state = CBXS_DISABLED;
+        else if (lphc->wState & CBF_BUTTONDOWN)
+            button_state = CBXS_PRESSED;
+        else if (lphc->wState & CBF_HOT)
+            button_state = CBXS_HOT;
+        else
+            button_state = CBXS_NORMAL;
+        DrawThemeBackground(theme, hdc, CP_DROPDOWNBUTTON, button_state, &lphc->buttonRect, NULL);
+    }
+
+    if ((lphc->dwStyle & CBS_DROPDOWNLIST) == CBS_DROPDOWNLIST)
+        CBPaintText(lphc, hdc);
+
+    return 0;
+}
+
 /***********************************************************************
  *           COMBO_Paint
  */
-static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
+static LRESULT COMBO_Paint(HEADCOMBO *lphc, HDC hdc)
 {
-  PAINTSTRUCT ps;
-  HDC 	hDC;
+    HBRUSH hPrevBrush, hBkgBrush;
 
-  hDC = (hParamDC) ? hParamDC
-		   : BeginPaint( lphc->self, &ps);
+    TRACE("hdc=%p\n", hdc);
 
-  TRACE("hdc=%p\n", hDC);
+    /*
+     * Retrieve the background brush and select it in the
+     * DC.
+     */
+    hBkgBrush = COMBO_PrepareColors(lphc, hdc);
+    hPrevBrush = SelectObject(hdc, hBkgBrush);
+    if (!(lphc->wState & CBF_EDIT))
+        FillRect(hdc, &lphc->textRect, hBkgBrush);
 
-  if( hDC && !(lphc->wState & CBF_NOREDRAW) )
-  {
-      HBRUSH	hPrevBrush, hBkgBrush;
+    /*
+     * In non 3.1 look, there is a sunken border on the combobox
+     */
+    CBPaintBorder(lphc->self, lphc, hdc);
 
-      /*
-       * Retrieve the background brush and select it in the
-       * DC.
-       */
-      hBkgBrush = COMBO_PrepareColors(lphc, hDC);
+    if (!IsRectEmpty(&lphc->buttonRect))
+        CBPaintButton(lphc, hdc, lphc->buttonRect);
 
-      hPrevBrush = SelectObject( hDC, hBkgBrush );
-      if (!(lphc->wState & CBF_EDIT))
-        FillRect(hDC, &lphc->textRect, hBkgBrush);
+    /* paint the edit control padding area */
+    if (CB_GETTYPE(lphc) != CBS_DROPDOWNLIST)
+    {
+        RECT rPadEdit = lphc->textRect;
 
-      /*
-       * In non 3.1 look, there is a sunken border on the combobox
-       */
-      CBPaintBorder(lphc->self, lphc, hDC);
+        InflateRect(&rPadEdit, EDIT_CONTROL_PADDING(), EDIT_CONTROL_PADDING());
 
-      if( !IsRectEmpty(&lphc->buttonRect) )
-      {
-	CBPaintButton(lphc, hDC, lphc->buttonRect);
-      }
+        FrameRect(hdc, &rPadEdit, GetSysColorBrush(COLOR_WINDOW));
+    }
 
-      /* paint the edit control padding area */
-      if (CB_GETTYPE(lphc) != CBS_DROPDOWNLIST)
-      {
-          RECT rPadEdit = lphc->textRect;
+    if (!(lphc->wState & CBF_EDIT))
+        CBPaintText( lphc, hdc );
 
-          InflateRect(&rPadEdit, EDIT_CONTROL_PADDING(), EDIT_CONTROL_PADDING());
+    if (hPrevBrush)
+        SelectObject( hdc, hPrevBrush );
 
-          FrameRect( hDC, &rPadEdit, GetSysColorBrush(COLOR_WINDOW) );
-      }
-
-      if( !(lphc->wState & CBF_EDIT) )
-	CBPaintText( lphc, hDC );
-
-      if( hPrevBrush )
-	SelectObject( hDC, hPrevBrush );
-  }
-
-  if( !hParamDC )
-    EndPaint(lphc->self, &ps);
-
-  return 0;
+    return 0;
 }
 
 /***********************************************************************
@@ -1727,6 +1752,7 @@ static LRESULT COMBO_GetComboBoxInfo(const HEADCOMBO *lphc, COMBOBOXINFO *pcbi)
 LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     HEADCOMBO *lphc = (HEADCOMBO *)GetWindowLongPtrW( hwnd, 0 );
+    HTHEME theme;
 
     TRACE("[%p]: msg %#x wp %08lx lp %08lx\n", hwnd, message, wParam, lParam );
 
@@ -1755,10 +1781,41 @@ LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
         return COMBO_Create(hwnd, lphc, hwndParent, style);
     }
 
+    case WM_DESTROY:
+        theme = GetWindowTheme( hwnd );
+        CloseThemeData( theme );
+        break;
+
+    case WM_THEMECHANGED:
+        theme = GetWindowTheme( hwnd );
+        CloseThemeData( theme );
+        OpenThemeData( hwnd, WC_COMBOBOXW );
+        break;
+
     case WM_PRINTCLIENT:
     case WM_PAINT:
-        return  COMBO_Paint(lphc, (HDC)wParam);
+    {
+        LRESULT ret = 0;
+        PAINTSTRUCT ps;
+        HDC hdc;
 
+        hdc = wParam ? (HDC)wParam : BeginPaint(hwnd, &ps);
+
+        if (hdc && !(lphc->wState & CBF_NOREDRAW))
+        {
+            HTHEME theme = GetWindowTheme(hwnd);
+
+            if (theme)
+                ret = COMBO_ThemedPaint(theme, lphc, hdc);
+            else
+                ret = COMBO_Paint(lphc, hdc);
+        }
+
+        if (!wParam)
+            EndPaint(hwnd, &ps);
+
+        return ret;
+    }
     case WM_ERASEBKGND:
         /* do all painting in WM_PAINT like Windows does */
         return 1;
@@ -1912,6 +1969,28 @@ LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
         return  TRUE;
 
     case WM_MOUSEMOVE:
+        if (!IsRectEmpty(&lphc->buttonRect))
+        {
+            POINT pt;
+
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
+
+            if (PtInRect(&lphc->buttonRect, pt))
+            {
+                if (!(lphc->wState & CBF_HOT))
+                {
+                    lphc->wState |= CBF_HOT;
+                    RedrawWindow(hwnd, &lphc->buttonRect, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+                }
+            }
+            else if (lphc->wState & CBF_HOT)
+            {
+                lphc->wState &= ~CBF_HOT;
+                RedrawWindow(hwnd, &lphc->buttonRect, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+            }
+        }
+
         if ( lphc->wState & CBF_CAPTURE )
             COMBO_MouseMove( lphc, wParam, lParam );
         return  TRUE;
