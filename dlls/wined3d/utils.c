@@ -3595,6 +3595,23 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
     return TRUE;
 }
 
+static void init_format_gen_mipmap_info(struct wined3d_gl_info *gl_info)
+{
+    unsigned int i, j;
+
+    if (!gl_info->supported[SGIS_GENERATE_MIPMAP] && !gl_info->fbo_ops.glGenerateMipmap)
+        return;
+
+    for (i = 0; i < gl_info->format_count; ++i)
+    {
+        struct wined3d_format *format = &gl_info->formats[i];
+
+        for (j = 0; j < ARRAY_SIZE(format->flags); ++j)
+            if (!(~format->flags[j] & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FILTERING)))
+                format->flags[j] |= WINED3DFMT_FLAG_GEN_MIPMAP;
+    }
+}
+
 BOOL wined3d_caps_gl_ctx_test_viewport_subpixel_bits(struct wined3d_caps_gl_ctx *ctx)
 {
     static const struct wined3d_color red = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -3783,6 +3800,7 @@ BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, struct wi
     init_format_fbo_compat_info(ctx);
     init_format_filter_info(gl_info, adapter->driver_info.vendor);
     if (!init_typeless_formats(gl_info)) goto fail;
+    init_format_gen_mipmap_info(gl_info);
     init_format_depth_bias_scale(ctx, &adapter->d3d_info);
 
     return TRUE;
