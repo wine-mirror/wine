@@ -67,6 +67,7 @@
 #include "uxtheme.h"
 #include "vssym32.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include "comctl32.h"
 
@@ -224,7 +225,7 @@ static inline void paint_button( HWND hwnd, LONG style, UINT action )
 static inline WCHAR *get_button_text( HWND hwnd )
 {
     INT len = GetWindowTextLengthW( hwnd );
-    WCHAR *buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
+    WCHAR *buffer = heap_alloc( (len + 1) * sizeof(WCHAR) );
     if (buffer)
         GetWindowTextW( hwnd, buffer, len + 1 );
     return buffer;
@@ -732,14 +733,14 @@ static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
           if (!(text = get_button_text( hwnd ))) goto empty_rect;
           if (!text[0])
           {
-              HeapFree( GetProcessHeap(), 0, text );
+              heap_free( text );
               goto empty_rect;
           }
 
           if ((hFont = get_button_font( hwnd ))) hPrevFont = SelectObject( hdc, hFont );
           DrawTextW(hdc, text, -1, &r, dtStyle | DT_CALCRECT);
           if (hPrevFont) SelectObject( hdc, hPrevFont );
-          HeapFree( GetProcessHeap(), 0, text );
+          heap_free( text );
           break;
       }
 
@@ -873,7 +874,7 @@ static void BUTTON_DrawLabel(HWND hwnd, HDC hdc, UINT dtFlags, const RECT *rc)
 
    DrawStateW(hdc, hbr, lpOutputProc, lp, wp, rc->left, rc->top,
               rc->right - rc->left, rc->bottom - rc->top, flags);
-   HeapFree( GetProcessHeap(), 0, text );
+   heap_free( text );
 }
 
 /**********************************************************************
@@ -1278,7 +1279,7 @@ static void PB_ThemedPaint(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawSta
     if (text)
     {
         DrawThemeText(theme, hDC, BP_PUSHBUTTON, state, text, lstrlenW(text), dtFlags, 0, &textRect);
-        HeapFree(GetProcessHeap(), 0, text);
+        heap_free(text);
     }
 
     if (focused)
@@ -1378,7 +1379,7 @@ static void CB_ThemedPaint(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawSta
             DrawFocusRect( hDC, &focusRect );
         }
 
-        HeapFree(GetProcessHeap(), 0, text);
+        heap_free(text);
     }
 
     if (created_font) DeleteObject(font);
@@ -1438,7 +1439,7 @@ static void GB_ThemedPaint(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawSta
     {
         InflateRect(&textRect, -2, 0);
         DrawThemeText(theme, hDC, BP_GROUPBOX, state, text, lstrlenW(text), 0, 0, &textRect);
-        HeapFree(GetProcessHeap(), 0, text);
+        heap_free(text);
     }
 
     if (created_font) DeleteObject(font);
