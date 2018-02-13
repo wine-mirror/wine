@@ -270,6 +270,8 @@ static HRESULT WINAPI d3d9_surface_UnlockRect(IDirect3DSurface9 *iface)
 
     wined3d_mutex_lock();
     hr = wined3d_resource_unmap(wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx);
+    if (SUCCEEDED(hr) && surface->texture)
+        d3d9_texture_flag_auto_gen_mipmap(surface->texture);
     wined3d_mutex_unlock();
 
     if (hr == WINEDDERR_NOTLOCKED)
@@ -307,6 +309,8 @@ static HRESULT WINAPI d3d9_surface_ReleaseDC(IDirect3DSurface9 *iface, HDC dc)
 
     wined3d_mutex_lock();
     hr = wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, dc);
+    if (SUCCEEDED(hr) && surface->texture)
+        d3d9_texture_flag_auto_gen_mipmap(surface->texture);
     wined3d_mutex_unlock();
 
     return hr;

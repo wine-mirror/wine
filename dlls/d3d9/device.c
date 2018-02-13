@@ -815,6 +815,8 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
     BOOL extended = device->d3d_parent->extended;
     struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_display_mode wined3d_mode;
+    struct wined3d_rendertarget_view *rtv;
+    unsigned int i;
     HRESULT hr;
 
     if (!extended && device->device_state == D3D9_DEVICE_STATE_LOST)
@@ -876,6 +878,15 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
 
             device->device_state = D3D9_DEVICE_STATE_OK;
         }
+
+        if (!device->d3d_parent->extended)
+            for (i = 0; i < ARRAY_SIZE(device->textures); ++i)
+                device->textures[i] = NULL;
+
+        rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0);
+        device->render_targets[0] = wined3d_rendertarget_view_get_sub_resource_parent(rtv);
+        for (i = 1; i < ARRAY_SIZE(device->render_targets); ++i)
+            device->render_targets[i] = NULL;
     }
     else if (!extended)
     {
@@ -1425,6 +1436,9 @@ static HRESULT WINAPI d3d9_device_UpdateSurface(IDirect3DDevice9Ex *iface,
             wined3d_texture_get_resource(dst->wined3d_texture), dst->sub_resource_idx, dst_point ? dst_point->x : 0,
             dst_point ? dst_point->y : 0, 0, wined3d_texture_get_resource(src->wined3d_texture),
             src->sub_resource_idx, &src_box);
+    if (SUCCEEDED(hr) && dst->texture)
+        d3d9_texture_flag_auto_gen_mipmap(dst->texture);
+
     wined3d_mutex_unlock();
 
     if (FAILED(hr))
@@ -1448,6 +1462,8 @@ static HRESULT WINAPI d3d9_device_UpdateTexture(IDirect3DDevice9Ex *iface,
     wined3d_mutex_lock();
     hr = wined3d_device_update_texture(device->wined3d_device,
             src_impl->wined3d_texture, dst_impl->wined3d_texture);
+    if (SUCCEEDED(hr))
+        d3d9_texture_flag_auto_gen_mipmap(dst_impl);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1566,6 +1582,8 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
             src->wined3d_texture, src->sub_resource_idx, src_rect, 0, NULL, filter);
     if (hr == WINEDDERR_INVALIDRECT)
         hr = D3DERR_INVALIDCALL;
+    if (SUCCEEDED(hr) && dst->texture)
+        d3d9_texture_flag_auto_gen_mipmap(dst->texture);
 
 done:
     wined3d_mutex_unlock();
@@ -1622,6 +1640,8 @@ static HRESULT WINAPI d3d9_device_ColorFill(IDirect3DDevice9Ex *iface,
     hr = wined3d_device_clear_rendertarget_view(device->wined3d_device,
             rtv, rect, WINED3DCLEAR_TARGET, &c, 0.0f, 0);
     d3d9_surface_release_rendertarget_view(surface_impl, rtv);
+    if (SUCCEEDED(hr) && surface_impl->texture)
+        d3d9_texture_flag_auto_gen_mipmap(surface_impl->texture);
 
     wined3d_mutex_unlock();
 
@@ -1704,6 +1724,8 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
     rtv = surface_impl ? d3d9_surface_acquire_rendertarget_view(surface_impl) : NULL;
     hr = wined3d_device_set_rendertarget_view(device->wined3d_device, idx, rtv, TRUE);
     d3d9_surface_release_rendertarget_view(surface_impl, rtv);
+    if (SUCCEEDED(hr))
+        device->render_targets[idx] = surface_impl;
     wined3d_mutex_unlock();
 
     return hr;
@@ -1824,6 +1846,19 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_EndScene(IDirect3DDevice9Ex 
     return hr;
 }
 
+static void d3d9_rts_flag_auto_gen_mipmap(struct d3d9_device *device)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(device->render_targets); ++i)
+    {
+        struct d3d9_surface *surface = device->render_targets[i];
+
+        if (surface && surface->texture)
+            d3d9_texture_flag_auto_gen_mipmap(surface->texture);
+    }
+}
+
 static HRESULT WINAPI d3d9_device_Clear(IDirect3DDevice9Ex *iface, DWORD rect_count,
         const D3DRECT *rects, DWORD flags, D3DCOLOR color, float z, DWORD stencil)
 {
@@ -1848,6 +1883,8 @@ static HRESULT WINAPI d3d9_device_Clear(IDirect3DDevice9Ex *iface, DWORD rect_co
 
     wined3d_mutex_lock();
     hr = wined3d_device_clear(device->wined3d_device, rect_count, (const RECT *)rects, flags, &c, z, stencil);
+    if (SUCCEEDED(hr))
+        d3d9_rts_flag_auto_gen_mipmap(device);
     wined3d_mutex_unlock();
 
     return hr;
@@ -2243,6 +2280,13 @@ static HRESULT WINAPI d3d9_device_SetTexture(IDirect3DDevice9Ex *iface, DWORD st
     wined3d_mutex_lock();
     hr = wined3d_device_set_texture(device->wined3d_device, stage,
             texture_impl ? texture_impl->wined3d_texture : NULL);
+    if (SUCCEEDED(hr))
+    {
+        unsigned int i = stage >= D3DVERTEXTEXTURESAMPLER0 ? stage - D3DVERTEXTEXTURESAMPLER0 + 16 : stage;
+
+        if (stage < ARRAY_SIZE(device->textures))
+            device->textures[i] = texture_impl;
+    }
     wined3d_mutex_unlock();
 
     return hr;
@@ -2483,6 +2527,16 @@ static float WINAPI d3d9_device_GetNPatchMode(IDirect3DDevice9Ex *iface)
     return ret;
 }
 
+/* wined3d critical section must be taken by the caller. */
+static void d3d9_generate_auto_mipmaps(struct d3d9_device *device)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(device->textures); ++i)
+        if (device->textures[i])
+            d3d9_texture_gen_auto_mipmap(device->textures[i]);
+}
+
 static HRESULT WINAPI d3d9_device_DrawPrimitive(IDirect3DDevice9Ex *iface,
         D3DPRIMITIVETYPE primitive_type, UINT start_vertex, UINT primitive_count)
 {
@@ -2499,9 +2553,12 @@ static HRESULT WINAPI d3d9_device_DrawPrimitive(IDirect3DDevice9Ex *iface,
         WARN("Called without a valid vertex declaration set.\n");
         return D3DERR_INVALIDCALL;
     }
+    d3d9_generate_auto_mipmaps(device);
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type, 0);
     hr = wined3d_device_draw_primitive(device->wined3d_device, start_vertex,
             vertex_count_from_primitive_count(primitive_type, primitive_count));
+    if (SUCCEEDED(hr))
+        d3d9_rts_flag_auto_gen_mipmap(device);
     wined3d_mutex_unlock();
 
     return hr;
@@ -2526,10 +2583,13 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitive(IDirect3DDevice9Ex *iface
         WARN("Called without a valid vertex declaration set.\n");
         return D3DERR_INVALIDCALL;
     }
+    d3d9_generate_auto_mipmaps(device);
     wined3d_device_set_base_vertex_index(device->wined3d_device, base_vertex_idx);
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type, 0);
     hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, start_idx,
             vertex_count_from_primitive_count(primitive_type, primitive_count));
+    if (SUCCEEDED(hr))
+        d3d9_rts_flag_auto_gen_mipmap(device);
     wined3d_mutex_unlock();
 
     return hr;
@@ -2628,9 +2688,12 @@ static HRESULT WINAPI d3d9_device_DrawPrimitiveUP(IDirect3DDevice9Ex *iface,
     if (FAILED(hr))
         goto done;
 
+    d3d9_generate_auto_mipmaps(device);
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type, 0);
     hr = wined3d_device_draw_primitive(device->wined3d_device, vb_pos / stride, vtx_count);
     wined3d_device_set_stream_source(device->wined3d_device, 0, NULL, 0, 0);
+    if (SUCCEEDED(hr))
+        d3d9_rts_flag_auto_gen_mipmap(device);
 
 done:
     wined3d_mutex_unlock();
@@ -2758,6 +2821,7 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitiveUP(IDirect3DDevice9Ex *ifa
     if (FAILED(hr))
         goto done;
 
+    d3d9_generate_auto_mipmaps(device);
     wined3d_device_set_index_buffer(device->wined3d_device, device->index_buffer,
             wined3dformat_from_d3dformat(index_format), 0);
     wined3d_device_set_base_vertex_index(device->wined3d_device, vb_pos / vertex_stride - min_vertex_idx);
@@ -2768,6 +2832,9 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitiveUP(IDirect3DDevice9Ex *ifa
     wined3d_device_set_stream_source(device->wined3d_device, 0, NULL, 0, 0);
     wined3d_device_set_index_buffer(device->wined3d_device, NULL, WINED3DFMT_UNKNOWN, 0);
     wined3d_device_set_base_vertex_index(device->wined3d_device, 0);
+
+    if (SUCCEEDED(hr))
+        d3d9_rts_flag_auto_gen_mipmap(device);
 
 done:
     wined3d_mutex_unlock();
@@ -4146,6 +4213,14 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
     }
+
+    /* We could also simply ignore the initial rendertarget since it's known
+     * not to be a texture (we currently use these only for automatic mipmap
+     * generation). */
+    wined3d_mutex_lock();
+    device->render_targets[0] = wined3d_rendertarget_view_get_sub_resource_parent(
+            wined3d_device_get_rendertarget_view(device->wined3d_device, 0));
+    wined3d_mutex_unlock();
 
     IDirect3D9Ex_AddRef(&parent->IDirect3D9Ex_iface);
     device->d3d_parent = parent;

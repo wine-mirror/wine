@@ -7124,10 +7124,9 @@ static void test_mipmap_gen(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     filter_type = IDirect3DTexture9_GetAutoGenFilterType(texture);
-    ok(filter_type == D3DTEXF_LINEAR /* || broken(filter_type == D3DTEXF_POINT)*/,
-            "Got unexpected filter_type %#x.\n", filter_type);
+    ok(filter_type == D3DTEXF_LINEAR, "Got unexpected filter_type %#x.\n", filter_type);
     hr = IDirect3DTexture9_SetAutoGenFilterType(texture, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DTexture9_SetAutoGenFilterType(texture, D3DTEXF_ANISOTROPIC);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     filter_type = IDirect3DTexture9_GetAutoGenFilterType(texture);
