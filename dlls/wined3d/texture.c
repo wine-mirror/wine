@@ -375,7 +375,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
 
     texture->layer_count = layer_count;
     texture->level_count = level_count;
-    texture->filter_type = (desc->usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3D_TEXF_LINEAR : WINED3D_TEXF_NONE;
     texture->lod = 0;
     texture->flags |= WINED3D_TEXTURE_POW2_MAT_IDENT | WINED3D_TEXTURE_NORMALIZED_COORDS;
     if (flags & WINED3D_TEXTURE_CREATE_GET_DC_LENIENT)
@@ -727,12 +726,6 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
     wined3d_texture_set_dirty(texture);
 
     context_bind_texture(context, target, gl_tex->name);
-
-    if (texture->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP)
-    {
-        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-        checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE)");
-    }
 
     /* For a new texture we have to set the texture levels after binding the
      * texture. Beware that texture rectangles do not support mipmapping, but
@@ -1175,29 +1168,6 @@ DWORD CDECL wined3d_texture_get_level_count(const struct wined3d_texture *textur
     TRACE("texture %p, returning %u.\n", texture, texture->level_count);
 
     return texture->level_count;
-}
-
-HRESULT CDECL wined3d_texture_set_autogen_filter_type(struct wined3d_texture *texture,
-        enum wined3d_texture_filter_type filter_type)
-{
-    FIXME("texture %p, filter_type %s stub!\n", texture, debug_d3dtexturefiltertype(filter_type));
-
-    if (!(texture->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP))
-    {
-        WARN("Texture doesn't have AUTOGENMIPMAP usage.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    texture->filter_type = filter_type;
-
-    return WINED3D_OK;
-}
-
-enum wined3d_texture_filter_type CDECL wined3d_texture_get_autogen_filter_type(const struct wined3d_texture *texture)
-{
-    TRACE("texture %p.\n", texture);
-
-    return texture->filter_type;
 }
 
 HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
@@ -2152,22 +2122,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         TRACE("Creating an oversized (%ux%u) surface.\n", pow2_width, pow2_height);
     }
 
-    /* Calculate levels for mip mapping. */
-    if (desc->usage & WINED3DUSAGE_AUTOGENMIPMAP)
-    {
-        if (!gl_info->supported[SGIS_GENERATE_MIPMAP])
-        {
-            WARN("No mipmap generation support, returning WINED3DERR_INVALIDCALL.\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        if (level_count != 1)
-        {
-            WARN("WINED3DUSAGE_AUTOGENMIPMAP is set, and level count != 1, returning WINED3DERR_INVALIDCALL.\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-    }
-
     if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, layer_count, level_count, desc,
             flags, device, parent, parent_ops, &texture_resource_ops)))
     {
@@ -2604,22 +2558,6 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     {
         WARN("(%p) : Texture cannot be created - no volume texture support.\n", texture);
         return WINED3DERR_INVALIDCALL;
-    }
-
-    /* Calculate levels for mip mapping. */
-    if (desc->usage & WINED3DUSAGE_AUTOGENMIPMAP)
-    {
-        if (!gl_info->supported[SGIS_GENERATE_MIPMAP])
-        {
-            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL.\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        if (level_count != 1)
-        {
-            WARN("WINED3DUSAGE_AUTOGENMIPMAP is set, and level count != 1, returning D3DERR_INVALIDCALL.\n");
-            return WINED3DERR_INVALIDCALL;
-        }
     }
 
     if (desc->usage & WINED3DUSAGE_DYNAMIC && (wined3d_resource_access_is_managed(desc->access)

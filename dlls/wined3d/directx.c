@@ -270,9 +270,6 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2            },
     {"GL_NV_vertex_program2_option",        NV_VERTEX_PROGRAM2_OPTION     },
     {"GL_NV_vertex_program3",               NV_VERTEX_PROGRAM3            },
-
-    /* SGI */
-    {"GL_SGIS_generate_mipmap",             SGIS_GENERATE_MIPMAP          },
 };
 
 static const struct wined3d_extension_map wgl_extension_map[] =
@@ -5338,12 +5335,12 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                 gl_type = gl_type_end = WINED3D_GL_RES_TYPE_RB;
                 break;
             }
-            allowed_usage |= WINED3DUSAGE_AUTOGENMIPMAP
-                    | WINED3DUSAGE_DYNAMIC
+            allowed_usage |= WINED3DUSAGE_DYNAMIC
                     | WINED3DUSAGE_LEGACY_CUBEMAP
                     | WINED3DUSAGE_SOFTWAREPROCESSING
                     | WINED3DUSAGE_TEXTURE
                     | WINED3DUSAGE_QUERY_FILTER
+                    | WINED3DUSAGE_QUERY_GENMIPMAP
                     | WINED3DUSAGE_QUERY_LEGACYBUMPMAP
                     | WINED3DUSAGE_QUERY_SRGBREAD
                     | WINED3DUSAGE_QUERY_SRGBWRITE
@@ -5443,10 +5440,10 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             mipmap_gen_supported = FALSE;
     }
 
-    if ((usage & WINED3DUSAGE_AUTOGENMIPMAP) && !mipmap_gen_supported)
+    if ((usage & WINED3DUSAGE_QUERY_GENMIPMAP) && !mipmap_gen_supported)
     {
         TRACE("No WINED3DUSAGE_AUTOGENMIPMAP support, returning WINED3DOK_NOAUTOGEN.\n");
-        return WINED3DOK_NOAUTOGEN;
+        return WINED3DOK_NOMIPGEN;
     }
 
     return WINED3D_OK;
@@ -5619,7 +5616,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                      WINED3DCAPS2_FULLSCREENGAMMA |
                                      WINED3DCAPS2_DYNAMICTEXTURES;
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT] || gl_info->supported[EXT_FRAMEBUFFER_OBJECT])
-        caps->Caps2 |= WINED3DCAPS2_CANAUTOGENMIPMAP;
+        caps->Caps2 |= WINED3DCAPS2_CANGENMIPMAP;
 
     caps->Caps3                    = WINED3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD |
                                      WINED3DCAPS3_COPY_TO_VIDMEM                   |

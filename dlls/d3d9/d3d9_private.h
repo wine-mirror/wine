@@ -334,7 +334,7 @@ static inline unsigned int wined3daccess_from_d3dpool(D3DPOOL pool, unsigned int
 
 static inline DWORD wined3dusage_from_d3dusage(unsigned int usage)
 {
-    return usage & WINED3DUSAGE_MASK & ~WINED3DUSAGE_AUTOGENMIPMAP;
+    return usage & WINED3DUSAGE_MASK;
 }
 
 #endif /* __WINE_D3D9_PRIVATE_H */

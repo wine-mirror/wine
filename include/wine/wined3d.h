@@ -36,7 +36,7 @@
 
 #define _FACWINED3D                                             0x876
 #define MAKE_WINED3DSTATUS(code)                                MAKE_HRESULT(0, _FACWINED3D, code)
-#define WINED3DOK_NOAUTOGEN                                     MAKE_WINED3DSTATUS(2159)
+#define WINED3DOK_NOMIPGEN                                      MAKE_WINED3DSTATUS(2159)
 
 #define MAKE_WINED3DHRESULT(code)                               MAKE_HRESULT(1, _FACWINED3D, code)
 #define WINED3DERR_CONFLICTINGRENDERSTATE                       MAKE_WINED3DHRESULT(2081)
@@ -884,13 +884,12 @@ enum wined3d_shader_byte_code_format
 #define WINED3DUSAGE_RTPATCHES                                  0x00000080
 #define WINED3DUSAGE_NPATCHES                                   0x00000100
 #define WINED3DUSAGE_DYNAMIC                                    0x00000200
-#define WINED3DUSAGE_AUTOGENMIPMAP                              0x00000400
 #define WINED3DUSAGE_RESTRICTED_CONTENT                         0x00000800
 #define WINED3DUSAGE_RESTRICT_SHARED_RESOURCE_DRIVER            0x00001000
 #define WINED3DUSAGE_RESTRICT_SHARED_RESOURCE                   0x00002000
 #define WINED3DUSAGE_DMAP                                       0x00004000
 #define WINED3DUSAGE_TEXTAPI                                    0x10000000
-#define WINED3DUSAGE_MASK                                       0x10007fff
+#define WINED3DUSAGE_MASK                                       0x10007bff
 
 #define WINED3DUSAGE_SCRATCH                                    0x00200000
 #define WINED3DUSAGE_PRIVATE                                    0x00400000
@@ -900,6 +899,7 @@ enum wined3d_shader_byte_code_format
 #define WINED3DUSAGE_STATICDECL                                 0x04000000
 #define WINED3DUSAGE_OVERLAY                                    0x08000000
 
+#define WINED3DUSAGE_QUERY_GENMIPMAP                            0x00000400
 #define WINED3DUSAGE_QUERY_LEGACYBUMPMAP                        0x00008000
 #define WINED3DUSAGE_QUERY_FILTER                               0x00020000
 #define WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING             0x00080000
@@ -907,7 +907,7 @@ enum wined3d_shader_byte_code_format
 #define WINED3DUSAGE_QUERY_SRGBWRITE                            0x00040000
 #define WINED3DUSAGE_QUERY_VERTEXTEXTURE                        0x00100000
 #define WINED3DUSAGE_QUERY_WRAPANDMIP                           0x00200000
-#define WINED3DUSAGE_QUERY_MASK                                 0x003f8000
+#define WINED3DUSAGE_QUERY_MASK                                 0x003f8400
 
 #define WINED3D_MAP_READONLY                                    0x0010
 #define WINED3D_MAP_NOSYSLOCK                                   0x0800
@@ -1163,7 +1163,7 @@ enum wined3d_shader_byte_code_format
 #define WINED3DCAPS2_RESERVED                                   0x02000000
 #define WINED3DCAPS2_CANMANAGERESOURCE                          0x10000000
 #define WINED3DCAPS2_DYNAMICTEXTURES                            0x20000000
-#define WINED3DCAPS2_CANAUTOGENMIPMAP                           0x40000000
+#define WINED3DCAPS2_CANGENMIPMAP                               0x40000000
 
 #define WINED3DPRASTERCAPS_DITHER                               0x00000001
 #define WINED3DPRASTERCAPS_ROP2                                 0x00000002
@@ -2674,7 +2674,6 @@ HRESULT __cdecl wined3d_texture_create(struct wined3d_device *device, const stru
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
 struct wined3d_texture * __cdecl wined3d_texture_from_resource(struct wined3d_resource *resource);
 ULONG __cdecl wined3d_texture_decref(struct wined3d_texture *texture);
-enum wined3d_texture_filter_type __cdecl wined3d_texture_get_autogen_filter_type(const struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC *dc);
 DWORD __cdecl wined3d_texture_get_level_count(const struct wined3d_texture *texture);
 DWORD __cdecl wined3d_texture_get_lod(const struct wined3d_texture *texture);
@@ -2689,8 +2688,6 @@ HRESULT __cdecl wined3d_texture_get_sub_resource_desc(const struct wined3d_textu
 void * __cdecl wined3d_texture_get_sub_resource_parent(struct wined3d_texture *texture, unsigned int sub_resource_idx);
 ULONG __cdecl wined3d_texture_incref(struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_release_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC dc);
-HRESULT __cdecl wined3d_texture_set_autogen_filter_type(struct wined3d_texture *texture,
-        enum wined3d_texture_filter_type filter_type);
 HRESULT __cdecl wined3d_texture_set_color_key(struct wined3d_texture *texture,
         DWORD flags, const struct wined3d_color_key *color_key);
 DWORD __cdecl wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod);

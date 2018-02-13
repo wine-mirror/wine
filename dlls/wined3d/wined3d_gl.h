@@ -199,8 +199,6 @@ enum wined3d_gl_extension
     NV_VERTEX_PROGRAM2,
     NV_VERTEX_PROGRAM2_OPTION,
     NV_VERTEX_PROGRAM3,
-    /* SGI */
-    SGIS_GENERATE_MIPMAP,
     /* WGL extensions */
     WGL_ARB_PIXEL_FORMAT,
     WGL_EXT_SWAP_CONTROL,

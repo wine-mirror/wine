@@ -34,7 +34,6 @@ static void resource_check_usage(DWORD usage)
             | WINED3DUSAGE_DEPTHSTENCIL
             | WINED3DUSAGE_WRITEONLY
             | WINED3DUSAGE_DYNAMIC
-            | WINED3DUSAGE_AUTOGENMIPMAP
             | WINED3DUSAGE_STATICDECL
             | WINED3DUSAGE_OVERLAY
             | WINED3DUSAGE_SCRATCH

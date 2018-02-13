@@ -3117,7 +3117,6 @@ struct wined3d_texture
     unsigned int sysmem_count;
     float pow2_matrix[16];
     UINT lod;
-    enum wined3d_texture_filter_type filter_type;
     DWORD sampler;
     DWORD flags;
     GLenum target;
