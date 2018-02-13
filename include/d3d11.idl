@@ -260,6 +260,16 @@ cpp_quote("struct CD3D11_DEFAULT {};")
 cpp_quote("extern const DECLSPEC_SELECTANY CD3D11_DEFAULT D3D11_DEFAULT;")
 cpp_quote("#endif")
 
+cpp_quote("#ifndef _D3D11_1_CONSTANTS")
+cpp_quote("#define _D3D11_1_CONSTANTS")
+const UINT D3D11_1_UAV_SLOT_COUNT = 64;
+cpp_quote("#endif")
+
+cpp_quote("#ifndef _D3D11_2_CONSTANTS")
+cpp_quote("#define _D3D11_2_CONSTANTS")
+const UINT D3D11_2_TILED_RESOURCE_TILE_SIZE_IN_BYTES = 0x10000;
+cpp_quote("#endif")
+
 typedef enum D3D11_BLEND
 {
     D3D11_BLEND_ZERO = 1,
