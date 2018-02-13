@@ -102,7 +102,7 @@ static ULONG WINAPI d3d_vertex_buffer7_Release(IDirect3DVertexBuffer7 *iface)
         if (buffer->version == 7)
             IDirectDraw7_Release(&buffer->ddraw->IDirectDraw7_iface);
 
-        HeapFree(GetProcessHeap(), 0, buffer);
+        heap_free(buffer);
     }
 
     return ref;
@@ -451,8 +451,7 @@ HRESULT d3d_vertex_buffer_create(struct d3d_vertex_buffer **vertex_buf,
     TRACE("    FVF %#x\n", desc->dwFVF);
     TRACE("    dwNumVertices %u\n", desc->dwNumVertices);
 
-    buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*buffer));
-    if (!buffer)
+    if (!(buffer = heap_alloc_zero(sizeof(*buffer))))
         return DDERR_OUTOFMEMORY;
 
     buffer->IDirect3DVertexBuffer7_iface.lpVtbl = &d3d_vertex_buffer7_vtbl;
@@ -489,7 +488,7 @@ end:
     if (hr == D3D_OK)
         *vertex_buf = buffer;
     else
-        HeapFree(GetProcessHeap(), 0, buffer);
+        heap_free(buffer);
 
     return hr;
 }

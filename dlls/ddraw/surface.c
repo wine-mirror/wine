@@ -1505,7 +1505,7 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
         return hr;
     }
 
-    if (!(clip_list = HeapAlloc(GetProcessHeap(), 0, clip_list_size)))
+    if (!(clip_list = heap_alloc(clip_list_size)))
     {
         WARN("Failed to allocate clip list.\n");
         return E_OUTOFMEMORY;
@@ -1515,7 +1515,7 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
             &dst_rect, clip_list, &clip_list_size)))
     {
         WARN("Failed to get clip list, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, clip_list);
+        heap_free(clip_list);
         return hr;
     }
 
@@ -1549,7 +1549,7 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, clip_list);
+    heap_free(clip_list);
     return hr;
 }
 
@@ -5750,7 +5750,7 @@ static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *paren
 
     wined3d_private_store_cleanup(&surface->private_store);
 
-    HeapFree(GetProcessHeap(), 0, surface);
+    heap_free(surface);
 }
 
 static const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops =
@@ -5762,7 +5762,7 @@ static void STDMETHODCALLTYPE ddraw_texture_wined3d_object_destroyed(void *paren
 {
     TRACE("parent %p.\n", parent);
 
-    HeapFree(GetProcessHeap(), 0, parent);
+    heap_free(parent);
 }
 
 static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops =
@@ -5804,7 +5804,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     if (!surface)
         return E_POINTER;
 
-    if (!(texture = HeapAlloc(GetProcessHeap(), 0, sizeof(*texture))))
+    if (!(texture = heap_alloc(sizeof(*texture))))
         return E_OUTOFMEMORY;
 
     texture->version = version;
@@ -5819,28 +5819,28 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         if (!(desc->dwFlags & DDSD_BACKBUFFERCOUNT) || !desc->u5.dwBackBufferCount)
         {
             WARN("Tried to create a flippable surface without any back buffers.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDCAPS;
         }
 
         if (!(desc->ddsCaps.dwCaps & DDSCAPS_COMPLEX))
         {
             WARN("Tried to create a flippable surface without DDSCAPS_COMPLEX.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDCAPS;
         }
 
         if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
         {
             WARN("Tried to create a flippable cubemap.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDPARAMS;
         }
 
         if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
         {
             FIXME("Flippable textures not implemented.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDCAPS;
         }
     }
@@ -5850,7 +5850,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         {
             WARN("Tried to specify a back buffer count for a non-flippable surface.\n");
             hr = desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP ? DDERR_INVALIDPARAMS : DDERR_INVALIDCAPS;
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return hr;
         }
     }
@@ -5860,21 +5860,21 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
         {
             WARN("Tried to create a primary surface with DDSCAPS_TEXTURE.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDCAPS;
         }
 
         if ((desc->ddsCaps.dwCaps & DDSCAPS_COMPLEX) && !(desc->ddsCaps.dwCaps & DDSCAPS_FLIP))
         {
             WARN("Tried to create a flippable primary surface without both DDSCAPS_FLIP and DDSCAPS_COMPLEX.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDCAPS;
         }
 
         if ((desc->ddsCaps.dwCaps & DDSCAPS_FLIP) && !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
         {
             WARN("Tried to create a flippable primary surface without DDSCL_EXCLUSIVE.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_NOEXCLUSIVEMODE;
         }
     }
@@ -5884,7 +5884,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             == (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
     {
         WARN("Tried to create a surface in both system and video memory.\n");
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return DDERR_INVALIDCAPS;
     }
 
@@ -5892,7 +5892,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             && !(desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE))
     {
         WARN("Caps %#x require DDSCAPS_TEXTURE.\n", desc->ddsCaps.dwCaps);
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return DDERR_INVALIDCAPS;
     }
 
@@ -5900,7 +5900,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             && !(desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
     {
         WARN("Cube map faces requested without cube map flag.\n");
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return DDERR_INVALIDCAPS;
     }
 
@@ -5908,7 +5908,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             && !(desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES))
     {
         WARN("Cube map without faces requested.\n");
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -5921,14 +5921,14 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         if (!(desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE))
         {
             WARN("DDSCAPS2_TEXTUREMANAGE used without DDSCAPS_TEXTURE, returning DDERR_INVALIDCAPS.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDCAPS;
         }
         if (desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
         {
             WARN("DDSCAPS2_TEXTUREMANAGE used width DDSCAPS_VIDEOMEMORY "
                     "or DDSCAPS_SYSTEMMEMORY, returning DDERR_INVALIDCAPS.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDCAPS;
         }
     }
@@ -5936,7 +5936,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
     {
         ERR("Failed to get display mode, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return hr_ddraw_from_wined3d(hr);
     }
 
@@ -5953,7 +5953,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     if (wined3d_desc.format == WINED3DFMT_UNKNOWN)
     {
         WARN("Unsupported / unknown pixelformat.\n");
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return DDERR_INVALIDPIXELFORMAT;
     }
 
@@ -5963,7 +5963,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         if (!(desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
         {
             WARN("No width / height specified.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDPARAMS;
         }
 
@@ -5974,7 +5974,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
     if (!desc->dwWidth || !desc->dwHeight)
     {
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -5999,7 +5999,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                     &swapchain_desc, NULL, ddraw_reset_enum_callback, TRUE)))
             {
                 ERR("Failed to reset device.\n");
-                HeapFree(GetProcessHeap(), 0, texture);
+                heap_free(texture);
                 return hr_ddraw_from_wined3d(hr);
             }
 
@@ -6033,7 +6033,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 /* Mipmap count is given, should not be 0. */
                 if (!desc->u2.dwMipMapCount)
                 {
-                    HeapFree(GetProcessHeap(), 0, texture);
+                    heap_free(texture);
                     return DDERR_INVALIDPARAMS;
                 }
             }
@@ -6094,7 +6094,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             == (DDSCAPS_OVERLAY | DDSCAPS_SYSTEMMEMORY))
     {
         WARN("System memory overlays are not allowed.\n");
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return DDERR_NOOVERLAYHW;
     }
 
@@ -6132,21 +6132,21 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         if (wined3d_desc.access & WINED3D_RESOURCE_ACCESS_GPU)
         {
             WARN("User memory surfaces should not be GPU accessible.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDCAPS;
         }
 
         if (version < 4)
         {
             WARN("User memory surfaces not supported before version 4.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDPARAMS;
         }
 
         if (!desc->lpSurface)
         {
             WARN("NULL surface memory pointer specified.\n");
-            HeapFree(GetProcessHeap(), 0, texture);
+            heap_free(texture);
             return DDERR_INVALIDPARAMS;
         }
 
@@ -6155,14 +6155,14 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             if (version != 4 && (desc->dwFlags & DDSD_PITCH))
             {
                 WARN("Pitch specified on a compressed user memory surface.\n");
-                HeapFree(GetProcessHeap(), 0, texture);
+                heap_free(texture);
                 return DDERR_INVALIDPARAMS;
             }
 
             if (!(desc->dwFlags & (DDSD_LINEARSIZE | DDSD_PITCH)))
             {
                 WARN("Compressed user memory surfaces should explicitly specify the linear size.\n");
-                HeapFree(GetProcessHeap(), 0, texture);
+                heap_free(texture);
                 return DDERR_INVALIDPARAMS;
             }
 
@@ -6171,7 +6171,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                             wined3d_desc.format, wined3d_desc.width) * ((desc->dwHeight + 3) / 4))
             {
                 WARN("Invalid linear size %u specified.\n", desc->u1.dwLinearSize);
-                HeapFree(GetProcessHeap(), 0, texture);
+                heap_free(texture);
                 return DDERR_INVALIDPARAMS;
             }
         }
@@ -6180,7 +6180,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             if (!(desc->dwFlags & DDSD_PITCH))
             {
                 WARN("User memory surfaces should explicitly specify the pitch.\n");
-                HeapFree(GetProcessHeap(), 0, texture);
+                heap_free(texture);
                 return DDERR_INVALIDPARAMS;
             }
 
@@ -6188,7 +6188,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                     wined3d_desc.format, wined3d_desc.width) || desc->u1.lPitch & 3)
             {
                 WARN("Invalid pitch %u specified.\n", desc->u1.lPitch);
-                HeapFree(GetProcessHeap(), 0, texture);
+                heap_free(texture);
                 return DDERR_INVALIDPARAMS;
             }
 
@@ -6206,7 +6206,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             && desc->ddckCKSrcBlt.dwColorSpaceLowValue != desc->ddckCKSrcBlt.dwColorSpaceHighValue))
     {
         WARN("Range color keys not supported, returning DDERR_NOCOLORKEYHW.\n");
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return DDERR_NOCOLORKEYHW;
     }
 
@@ -6233,7 +6233,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, texture);
+        heap_free(texture);
         return hr_ddraw_from_wined3d(hr);
     }
 
@@ -6330,7 +6330,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         attach = &last->complex_array[0];
         for (i = 0; i < count; ++i)
         {
-            if (!(texture = HeapAlloc(GetProcessHeap(), 0, sizeof(*texture))))
+            if (!(texture = heap_alloc(sizeof(*texture))))
             {
                 hr = E_OUTOFMEMORY;
                 goto fail;
@@ -6352,7 +6352,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                     WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL, texture,
                     &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
             {
-                HeapFree(GetProcessHeap(), 0, texture);
+                heap_free(texture);
                 hr = hr_ddraw_from_wined3d(hr);
                 goto fail;
             }

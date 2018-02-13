@@ -508,7 +508,7 @@ static ULONG WINAPI d3d_execute_buffer_Release(IDirect3DExecuteBuffer *iface)
     if (!ref)
     {
         if (buffer->need_free)
-            HeapFree(GetProcessHeap(), 0, buffer->desc.lpData);
+            heap_free(buffer->desc.lpData);
         if (buffer->index_buffer)
             wined3d_buffer_decref(buffer->index_buffer);
         if (buffer->dst_vertex_buffer)
@@ -516,7 +516,7 @@ static ULONG WINAPI d3d_execute_buffer_Release(IDirect3DExecuteBuffer *iface)
             wined3d_buffer_decref(buffer->src_vertex_buffer);
             wined3d_buffer_decref(buffer->dst_vertex_buffer);
         }
-        HeapFree(GetProcessHeap(), 0, buffer);
+        heap_free(buffer);
     }
 
     return ref;
@@ -791,8 +791,7 @@ HRESULT d3d_execute_buffer_init(struct d3d_execute_buffer *execute_buffer,
     if (!execute_buffer->desc.lpData && execute_buffer->desc.dwBufferSize)
     {
         execute_buffer->need_free = TRUE;
-        execute_buffer->desc.lpData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, execute_buffer->desc.dwBufferSize);
-        if (!execute_buffer->desc.lpData)
+        if (!(execute_buffer->desc.lpData = heap_alloc_zero(execute_buffer->desc.dwBufferSize)))
         {
             ERR("Failed to allocate execute buffer data.\n");
             return DDERR_OUTOFMEMORY;

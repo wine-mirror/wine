@@ -25,6 +25,7 @@
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include "winbase.h"
 #include "wingdi.h"

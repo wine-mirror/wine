@@ -221,7 +221,7 @@ static ULONG WINAPI d3d_viewport_Release(IDirect3DViewport3 *iface)
     TRACE("%p decreasing refcount to %u.\n", viewport, ref);
 
     if (!ref)
-        HeapFree(GetProcessHeap(), 0, viewport);
+        heap_free(viewport);
 
     return ref;
 }

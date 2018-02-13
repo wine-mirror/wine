@@ -72,7 +72,7 @@ static ULONG WINAPI ddraw_clipper_Release(IDirectDrawClipper *iface)
     {
         if (clipper->region)
             DeleteObject(clipper->region);
-        HeapFree(GetProcessHeap(), 0, clipper);
+        heap_free(clipper);
     }
 
     return refcount;

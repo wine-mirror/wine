@@ -322,7 +322,7 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
             This->ddraw->d3ddevice = NULL;
 
         /* Now free the structure */
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This);
         wined3d_mutex_unlock();
     }
 
@@ -663,8 +663,7 @@ static HRESULT WINAPI d3d_device1_CreateExecuteBuffer(IDirect3DDevice *iface,
         return CLASS_E_NOAGGREGATION;
 
     /* Allocate the new Execute Buffer */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if(!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         ERR("Failed to allocate execute buffer memory.\n");
         return DDERR_OUTOFMEMORY;
@@ -674,7 +673,7 @@ static HRESULT WINAPI d3d_device1_CreateExecuteBuffer(IDirect3DDevice *iface,
     if (FAILED(hr))
     {
         WARN("Failed to initialize execute buffer, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -1274,7 +1273,7 @@ static HRESULT WINAPI d3d_device1_EnumTextureFormats(IDirect3DDevice *iface,
 static HRESULT WINAPI d3d_device1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE *D3DMatHandle)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice(iface);
-    D3DMATRIX *Matrix;
+    D3DMATRIX *matrix;
     DWORD h;
 
     TRACE("iface %p, matrix_handle %p.\n", iface, D3DMatHandle);
@@ -1282,8 +1281,7 @@ static HRESULT WINAPI d3d_device1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIX
     if(!D3DMatHandle)
         return DDERR_INVALIDPARAMS;
 
-    Matrix = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(D3DMATRIX));
-    if(!Matrix)
+    if (!(matrix = heap_alloc_zero(sizeof(*matrix))))
     {
         ERR("Out of memory when allocating a D3DMATRIX\n");
         return DDERR_OUTOFMEMORY;
@@ -1291,11 +1289,11 @@ static HRESULT WINAPI d3d_device1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIX
 
     wined3d_mutex_lock();
 
-    h = ddraw_allocate_handle(&device->handle_table, Matrix, DDRAW_HANDLE_MATRIX);
+    h = ddraw_allocate_handle(&device->handle_table, matrix, DDRAW_HANDLE_MATRIX);
     if (h == DDRAW_INVALID_HANDLE)
     {
         ERR("Failed to allocate a matrix handle.\n");
-        HeapFree(GetProcessHeap(), 0, Matrix);
+        heap_free(matrix);
         wined3d_mutex_unlock();
         return DDERR_OUTOFMEMORY;
     }
@@ -1446,7 +1444,7 @@ static HRESULT WINAPI d3d_device1_DeleteMatrix(IDirect3DDevice *iface, D3DMATRIX
 
     wined3d_mutex_unlock();
 
-    HeapFree(GetProcessHeap(), 0, m);
+    heap_free(m);
 
     return D3D_OK;
 }
@@ -2218,11 +2216,11 @@ static HRESULT WINAPI d3d_device3_Vertex(IDirect3DDevice3 *iface, void *vertex)
 
         device->buffer_size = device->buffer_size ? device->buffer_size * 2 : device->vertex_size * 3;
         old_buffer = device->sysmem_vertex_buffer;
-        device->sysmem_vertex_buffer = HeapAlloc(GetProcessHeap(), 0, device->buffer_size);
+        device->sysmem_vertex_buffer = heap_alloc(device->buffer_size);
         if (old_buffer)
         {
             memcpy(device->sysmem_vertex_buffer, old_buffer, device->nb_vertices * device->vertex_size);
-            HeapFree(GetProcessHeap(), 0, old_buffer);
+            heap_free(old_buffer);
         }
     }
 
@@ -7020,8 +7018,7 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUn
         return DDERR_INVALIDPARAMS;
     }
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
     {
         ERR("Failed to allocate device memory.\n");
         return DDERR_OUTOFMEMORY;
@@ -7030,7 +7027,7 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUn
     if (FAILED(hr = d3d_device_init(object, ddraw, target, rt_iface, version, outer_unknown)))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
