@@ -701,6 +701,11 @@ typedef struct
     unsigned int   file_size;
     unsigned int   checksum;
 } pe_image_info_t;
+#define IMAGE_FLAGS_ComPlusNativeReady        0x01
+#define IMAGE_FLAGS_ComPlusILOnly             0x02
+#define IMAGE_FLAGS_ImageDynamicallyRelocated 0x04
+#define IMAGE_FLAGS_ImageMappedFlat           0x08
+#define IMAGE_FLAGS_BaseBelow4gb              0x10
 
 struct rawinput_device
 {

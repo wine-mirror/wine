@@ -3228,7 +3228,7 @@ NTSTATUS WINAPI NtQuerySection( HANDLE handle, SECTION_INFORMATION_CLASS class, 
                 info->DllCharacteristics   = image_info.dll_charact;
                 info->Machine              = image_info.machine;
                 info->ImageContainsCode    = image_info.contains_code;
-                info->ImageFlags           = image_info.image_flags;
+                info->u.ImageFlags         = image_info.image_flags;
                 info->LoaderFlags          = image_info.loader_flags;
                 info->ImageFileSize        = image_info.file_size;
                 info->CheckSum             = image_info.checksum;

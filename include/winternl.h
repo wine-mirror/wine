@@ -1965,7 +1965,19 @@ typedef struct _SECTION_IMAGE_INFORMATION {
   USHORT DllCharacteristics;
   USHORT Machine;
   BOOLEAN ImageContainsCode;
-  UCHAR ImageFlags;
+  union
+  {
+      UCHAR ImageFlags;
+      struct
+      {
+          UCHAR ComPlusNativeReady        : 1;
+          UCHAR ComPlusILOnly             : 1;
+          UCHAR ImageDynamicallyRelocated : 1;
+          UCHAR ImageMappedFlat           : 1;
+          UCHAR BaseBelow4gb              : 1;
+          UCHAR Reserved                  : 3;
+      } DUMMYSTRUCTNAME;
+  } DUMMYUNIONNAME;
   ULONG LoaderFlags;
   ULONG ImageFileSize;
   ULONG CheckSum;
