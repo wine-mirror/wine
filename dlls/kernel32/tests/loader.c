@@ -19,6 +19,7 @@
  */
 
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
@@ -237,10 +238,54 @@ static DWORD create_test_dll( const IMAGE_DOS_HEADER *dos_header, UINT dos_size,
     return size;
 }
 
-static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HEADERS *nt_header )
+static DWORD create_test_dll_sections( const IMAGE_DOS_HEADER *dos_header, const IMAGE_NT_HEADERS *nt_header,
+                                       const IMAGE_SECTION_HEADER *sections, const void *section_data,
+                                       char dll_name[MAX_PATH] )
 {
+    char temp_path[MAX_PATH];
+    DWORD dummy, i, size;
+    HANDLE hfile;
+    BOOL ret;
+
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "ldr", 0, dll_name);
+
+    hfile = CreateFileA(dll_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
+    ok( hfile != INVALID_HANDLE_VALUE, "failed to create %s err %u\n", dll_name, GetLastError() );
+    if (hfile == INVALID_HANDLE_VALUE) return 0;
+
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, dos_header, sizeof(*dos_header), &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, nt_header, offsetof(IMAGE_NT_HEADERS, OptionalHeader) + nt_header->FileHeader.SizeOfOptionalHeader, &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, sections, sizeof(*sections) * nt_header->FileHeader.NumberOfSections,
+                    &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++)
+    {
+        SetFilePointer(hfile, sections[i].PointerToRawData, NULL, FILE_BEGIN);
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, section_data, sections[i].SizeOfRawData, &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+    }
+    size = GetFileSize(hfile, NULL);
+    CloseHandle(hfile);
+    return size;
+}
+
+static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HEADERS *nt_header,
+                                 const void *section_data )
+{
+    static BOOL is_winxp;
     SECTION_BASIC_INFORMATION info;
     SECTION_IMAGE_INFORMATION image;
+    const IMAGE_COR20_HEADER *cor_header = NULL;
     SIZE_T info_size = (SIZE_T)0xdeadbeef << 16;
     NTSTATUS status;
     HANDLE file, mapping;
@@ -275,13 +320,22 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         commit_stack = nt_header->OptionalHeader.SizeOfStackCommit;
         entry_point = (char *)nt_header->OptionalHeader.ImageBase + nt_header->OptionalHeader.AddressOfEntryPoint;
         truncated = nt_header->FileHeader.SizeOfOptionalHeader < sizeof(IMAGE_OPTIONAL_HEADER);
+        if (!truncated &&
+            nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress &&
+            nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size)
+            cor_header = section_data;
     }
     else if (nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     {
+        const IMAGE_NT_HEADERS64 *nt64 = (const IMAGE_NT_HEADERS64 *)nt_header;
         max_stack = 0x100000;
         commit_stack = 0x10000;
         entry_point = (void *)0x81231234;
         truncated = nt_header->FileHeader.SizeOfOptionalHeader < sizeof(IMAGE_OPTIONAL_HEADER64);
+        if (!truncated &&
+            nt64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress &&
+            nt64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size)
+            cor_header = section_data;
     }
     else
     {
@@ -290,8 +344,13 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         commit_stack = nt32->OptionalHeader.SizeOfStackCommit;
         entry_point = (char *)(ULONG_PTR)nt32->OptionalHeader.ImageBase + nt32->OptionalHeader.AddressOfEntryPoint;
         truncated = nt_header->FileHeader.SizeOfOptionalHeader < sizeof(IMAGE_OPTIONAL_HEADER32);
+        if (!truncated &&
+            nt32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress &&
+            nt32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size)
+            cor_header = section_data;
     }
-    ok( (char *)image.TransferAddress == (char *)entry_point,
+    ok( (char *)image.TransferAddress == (char *)entry_point ||
+        (S(U(image)).ImageDynamicallyRelocated && LOWORD(image.TransferAddress) == LOWORD(entry_point)),
         "%u: TransferAddress wrong %p / %p (%08x)\n", id,
         image.TransferAddress, entry_point, nt_header->OptionalHeader.AddressOfEntryPoint );
     ok( image.ZeroBits == 0, "%u: ZeroBits wrong %08x\n", id, image.ZeroBits );
@@ -320,13 +379,13 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         image.DllCharacteristics, nt_header->OptionalHeader.DllCharacteristics );
     ok( image.Machine == nt_header->FileHeader.Machine, "%u: Machine wrong %04x / %04x\n", id,
         image.Machine, nt_header->FileHeader.Machine );
-    ok( image.LoaderFlags == nt_header->OptionalHeader.LoaderFlags,
-        "%u: LoaderFlags wrong %08x / %08x\n", id,
-        image.LoaderFlags, nt_header->OptionalHeader.LoaderFlags );
+    todo_wine_if (cor_header)
+    ok( image.LoaderFlags == (cor_header != NULL), "%u: LoaderFlags wrong %08x\n", id, image.LoaderFlags );
     ok( image.ImageFileSize == file_size || broken(!image.ImageFileSize), /* winxpsp1 */
         "%u: ImageFileSize wrong %08x / %08x\n", id, image.ImageFileSize, file_size );
     ok( image.CheckSum == nt_header->OptionalHeader.CheckSum, "%u: CheckSum wrong %08x / %08x\n", id,
         image.CheckSum, nt_header->OptionalHeader.CheckSum );
+
     if (nt_header->OptionalHeader.SizeOfCode || nt_header->OptionalHeader.AddressOfEntryPoint)
         ok( image.ImageContainsCode == TRUE, "%u: ImageContainsCode wrong %u\n", id,
             image.ImageContainsCode );
@@ -337,9 +396,52 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
             "%u: ImageContainsCode wrong %u\n", id, image.ImageContainsCode );
     else
         ok( !image.ImageContainsCode, "%u: ImageContainsCode wrong %u\n", id, image.ImageContainsCode );
+
+    if (cor_header &&
+        (cor_header->Flags & COMIMAGE_FLAGS_ILONLY) &&
+        (cor_header->MajorRuntimeVersion > 2 ||
+         (cor_header->MajorRuntimeVersion == 2 && cor_header->MinorRuntimeVersion >= 5)))
+    {
+        todo_wine
+        ok( S(U(image)).ComPlusILOnly || broken(is_winxp),
+            "%u: wrong ComPlusILOnly flags %02x\n", id, U(image).ImageFlags );
+        if (nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+            todo_wine
+            ok( S(U(image)).ComPlusNativeReady || broken(is_winxp),
+                "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
+        else
+            ok( !S(U(image)).ComPlusNativeReady,
+                "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
+    }
+    else
+    {
+        ok( !S(U(image)).ComPlusILOnly, "%u: wrong ComPlusILOnly flags %02x\n", id, U(image).ImageFlags );
+        ok( !S(U(image)).ComPlusNativeReady, "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
+    }
+    if (!(nt_header->OptionalHeader.SectionAlignment % page_size))
+        ok( !S(U(image)).ImageMappedFlat, "%u: wrong ImageMappedFlat flags %02x\n", id, U(image).ImageFlags );
+    else
+    {
+        /* winxp doesn't support any of the loader flags */
+        if (!S(U(image)).ImageMappedFlat) is_winxp = TRUE;
+        todo_wine
+        ok( S(U(image)).ImageMappedFlat || broken(is_winxp),
+        "%u: wrong ImageMappedFlat flags %02x\n", id, U(image).ImageFlags );
+    }
+    if (!(nt_header->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
+        ok( !S(U(image)).ImageDynamicallyRelocated || broken( S(U(image)).ComPlusILOnly ), /* <= win7 */
+            "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, U(image).ImageFlags );
+    else if (image.ImageContainsCode && !cor_header)
+        todo_wine
+        ok( S(U(image)).ImageDynamicallyRelocated || broken(is_winxp),
+            "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, U(image).ImageFlags );
+    else
+        ok( !S(U(image)).ImageDynamicallyRelocated || broken(TRUE), /* <= win8 */
+            "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, U(image).ImageFlags );
+    ok( !S(U(image)).BaseBelow4gb, "%u: wrong BaseBelow4gb flags %02x\n", id, U(image).ImageFlags );
+
     /* FIXME: needs more work: */
     /* image.GpValue */
-    /* image.ImageFlags */
 
     map_size.QuadPart = (nt_header->OptionalHeader.SizeOfImage + page_size - 1) & ~(page_size - 1);
     status = pNtQuerySection( mapping, SectionBasicInformation, &info, sizeof(info), NULL );
@@ -380,11 +482,12 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     CloseHandle( mapping );
 
     CloseHandle( file );
-    return image.ImageContainsCode;
+    return image.ImageContainsCode && (!cor_header || !(cor_header->Flags & COMIMAGE_FLAGS_ILONLY));
 }
 
 /* helper to test image section mapping */
-static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
+static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAGE_SECTION_HEADER *sections,
+                                   const void *section_data, int line )
 {
     char dll_name[MAX_PATH];
     LARGE_INTEGER size;
@@ -394,7 +497,7 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
     BOOL has_code;
     HMODULE mod;
 
-    file_size = create_test_dll( &dos_header, sizeof(dos_header), nt_header, dll_name );
+    file_size = create_test_dll_sections( &dos_header, nt_header, sections, section_data, dll_name );
 
     file = CreateFileA(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
@@ -413,7 +516,7 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
         ok( info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", info.BaseAddress );
         ok( info.Size.QuadPart == file_size, "NtQuerySection wrong size %x%08x / %08x\n",
             info.Size.u.HighPart, info.Size.u.LowPart, file_size );
-        has_code = query_image_section( line, dll_name, nt_header );
+        has_code = query_image_section( line, dll_name, nt_header, section_data );
         /* test loading dll of wrong 32/64 bitness */
         if (nt_header->OptionalHeader.Magic == (is_win64 ? IMAGE_NT_OPTIONAL_HDR32_MAGIC
                                                          : IMAGE_NT_OPTIONAL_HDR64_MAGIC))
@@ -422,7 +525,15 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, int line )
             mod = LoadLibraryExA( dll_name, 0, DONT_RESOLVE_DLL_REFERENCES );
             if (!has_code && nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
             {
-                ok( mod != NULL, "%u: loading failed err %u\n", line, GetLastError() );
+                BOOL il_only = FALSE;
+                if (((const IMAGE_NT_HEADERS32 *)nt_header)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress)
+                {
+                    const IMAGE_COR20_HEADER *cor_header = section_data;
+                    il_only = (cor_header->Flags & COMIMAGE_FLAGS_ILONLY) != 0;
+                }
+                todo_wine_if (il_only && nt_header->OptionalHeader.SizeOfCode)
+                ok( mod != NULL || broken(il_only), /* <= win7 */
+                    "%u: loading failed err %u\n", line, GetLastError() );
             }
             else
             {
@@ -584,8 +695,9 @@ static void test_Loader(void)
     SIZE_T size;
     BOOL ret;
     NTSTATUS status;
-    WORD orig_machine = nt_header_template.FileHeader.Machine;
+    WORD alt_machine, orig_machine = nt_header_template.FileHeader.Machine;
     IMAGE_NT_HEADERS nt_header;
+    IMAGE_COR20_HEADER cor_header;
 
     /* prevent displaying of the "Unable to load this DLL" message box */
     SetErrorMode(SEM_FAILCRITICALERRORS);
@@ -779,7 +891,7 @@ static void test_Loader(void)
                 ok(ret, "FreeLibrary error %d\n", GetLastError());
             }
 
-            query_image_section( i, dll_name, &nt_header );
+            query_image_section( i, dll_name, &nt_header, NULL );
         }
         else
         {
@@ -812,59 +924,109 @@ static void test_Loader(void)
     nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER);
     nt_header.OptionalHeader.SizeOfImage = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + page_size;
 
-    status = map_image_section( &nt_header, __LINE__ );
+    section.SizeOfRawData = sizeof(section_data);
+    section.PointerToRawData = page_size;
+    section.VirtualAddress = page_size;
+    section.Misc.VirtualSize = page_size;
+
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
+    nt_header.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+    nt_header.OptionalHeader.SizeOfCode = 0x1000;
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+    nt_header.OptionalHeader.SizeOfCode = 0;
+    nt_header.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
+
     dos_header.e_magic = 0;
-    status = map_image_section( &nt_header, __LINE__ );
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_NOT_MZ, "NtCreateSection error %08x\n", status );
 
     dos_header.e_magic = IMAGE_DOS_SIGNATURE;
     nt_header.Signature = IMAGE_OS2_SIGNATURE;
-    status = map_image_section( &nt_header, __LINE__ );
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_NE_FORMAT, "NtCreateSection error %08x\n", status );
 
     nt_header.Signature = 0xdeadbeef;
-    status = map_image_section( &nt_header, __LINE__ );
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_PROTECT, "NtCreateSection error %08x\n", status );
 
     nt_header.Signature = IMAGE_NT_SIGNATURE;
     nt_header.OptionalHeader.Magic = 0xdead;
-    status = map_image_section( &nt_header, __LINE__ );
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
 
     nt_header.OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
     nt_header.FileHeader.Machine = 0xdead;
-    status = map_image_section( &nt_header, __LINE__ );
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
         "NtCreateSection error %08x\n", status );
 
     nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_UNKNOWN;
-    status = map_image_section( &nt_header, __LINE__ );
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
         "NtCreateSection error %08x\n", status );
 
     switch (orig_machine)
     {
-    case IMAGE_FILE_MACHINE_I386: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT; break;
-    case IMAGE_FILE_MACHINE_AMD64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARM64; break;
-    case IMAGE_FILE_MACHINE_ARMNT: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_I386; break;
-    case IMAGE_FILE_MACHINE_ARM64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64; break;
+    case IMAGE_FILE_MACHINE_I386:  alt_machine = IMAGE_FILE_MACHINE_ARMNT; break;
+    case IMAGE_FILE_MACHINE_AMD64: alt_machine = IMAGE_FILE_MACHINE_ARM64; break;
+    case IMAGE_FILE_MACHINE_ARMNT: alt_machine = IMAGE_FILE_MACHINE_I386; break;
+    case IMAGE_FILE_MACHINE_ARM64: alt_machine = IMAGE_FILE_MACHINE_AMD64; break;
     }
-    status = map_image_section( &nt_header, __LINE__ );
+    nt_header.FileHeader.Machine = alt_machine;
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
         "NtCreateSection error %08x\n", status );
 
     switch (orig_machine)
     {
-    case IMAGE_FILE_MACHINE_I386: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64; break;
-    case IMAGE_FILE_MACHINE_AMD64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_I386; break;
-    case IMAGE_FILE_MACHINE_ARMNT: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARM64; break;
-    case IMAGE_FILE_MACHINE_ARM64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT; break;
+    case IMAGE_FILE_MACHINE_I386:  alt_machine = IMAGE_FILE_MACHINE_AMD64; break;
+    case IMAGE_FILE_MACHINE_AMD64: alt_machine = IMAGE_FILE_MACHINE_I386; break;
+    case IMAGE_FILE_MACHINE_ARMNT: alt_machine = IMAGE_FILE_MACHINE_ARM64; break;
+    case IMAGE_FILE_MACHINE_ARM64: alt_machine = IMAGE_FILE_MACHINE_ARMNT; break;
     }
-    status = map_image_section( &nt_header, __LINE__ );
+    nt_header.FileHeader.Machine = alt_machine;
+    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
     ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
                   "NtCreateSection error %08x\n", status );
+
+    nt_header.FileHeader.Machine = orig_machine;
+    nt_header.OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress = page_size;
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size = sizeof(cor_header);
+    section.SizeOfRawData = sizeof(cor_header);
+
+    memset( &cor_header, 0, sizeof(cor_header) );
+    cor_header.cb = sizeof(cor_header);
+    cor_header.MajorRuntimeVersion = 2;
+    cor_header.MinorRuntimeVersion = 4;
+    cor_header.Flags = COMIMAGE_FLAGS_ILONLY;
+    U(cor_header).EntryPointToken = 0xbeef;
+    status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+    cor_header.MinorRuntimeVersion = 5;
+    status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+    cor_header.MajorRuntimeVersion = 3;
+    cor_header.MinorRuntimeVersion = 0;
+    status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+    cor_header.Flags = 0;
+    status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress = 1;
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size = 1;
+    status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
     if (nt_header.OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
     {
@@ -893,7 +1055,7 @@ static void test_Loader(void)
         nt64.OptionalHeader.SizeOfStackCommit = 0x123000;
         section.Characteristics = IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_EXECUTE;
 
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, section_data, __LINE__ );
         ok( status == (is_wow64 ? STATUS_INVALID_IMAGE_FORMAT : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
@@ -902,40 +1064,72 @@ static void test_Loader(void)
         case IMAGE_FILE_MACHINE_I386: nt64.FileHeader.Machine = IMAGE_FILE_MACHINE_ARM64; break;
         case IMAGE_FILE_MACHINE_ARMNT: nt64.FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64; break;
         }
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, section_data, __LINE__ );
         ok( status == (is_wow64 ? STATUS_INVALID_IMAGE_FORMAT : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
-        nt64.FileHeader.Machine = nt_header.FileHeader.Machine;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
+        nt64.FileHeader.Machine = alt_machine;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, section_data, __LINE__ );
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
         nt64.OptionalHeader.SizeOfCode = 0;
         nt64.OptionalHeader.AddressOfEntryPoint = 0x1000;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, section_data, __LINE__ );
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
         nt64.OptionalHeader.SizeOfCode = 0;
         nt64.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, section_data, __LINE__ );
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
         nt64.OptionalHeader.SizeOfCode = 0x1000;
         nt64.OptionalHeader.AddressOfEntryPoint = 0;
+        nt64.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, section_data, __LINE__ );
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
         nt64.OptionalHeader.SizeOfCode = 0;
         nt64.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, section_data, __LINE__ );
+        ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
+            "NtCreateSection error %08x\n", status );
+
+        nt64.OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+        nt64.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress = page_size;
+        nt64.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size = sizeof(cor_header);
+        cor_header.MajorRuntimeVersion = 2;
+        cor_header.MinorRuntimeVersion = 4;
+        cor_header.Flags = COMIMAGE_FLAGS_ILONLY;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, &cor_header, __LINE__ );
+        ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
+            "NtCreateSection error %08x\n", status );
+
+        nt64.OptionalHeader.SizeOfCode = 0x1000;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, &cor_header, __LINE__ );
+        ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
+            "NtCreateSection error %08x\n", status );
+
+        cor_header.MinorRuntimeVersion = 5;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, &cor_header, __LINE__ );
+        ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
+            "NtCreateSection error %08x\n", status );
+
+        cor_header.Flags = 0;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, &cor_header, __LINE__ );
+        ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
+            "NtCreateSection error %08x\n", status );
+
+        nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress = 1;
+        nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size = 1;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, &cor_header, __LINE__ );
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
     }
@@ -966,7 +1160,7 @@ static void test_Loader(void)
         nt32.OptionalHeader.SizeOfStackCommit = 0x123000;
         section.Characteristics = IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_EXECUTE;
 
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
         ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
 
         switch (orig_machine)
@@ -974,40 +1168,66 @@ static void test_Loader(void)
         case IMAGE_FILE_MACHINE_AMD64: nt32.FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT; break;
         case IMAGE_FILE_MACHINE_ARM64: nt32.FileHeader.Machine = IMAGE_FILE_MACHINE_I386; break;
         }
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
         ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(!status) /* win8 */,
             "NtCreateSection error %08x\n", status );
 
-        nt32.FileHeader.Machine = nt_header.FileHeader.Machine;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        nt32.FileHeader.Machine = alt_machine;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0;
         nt32.OptionalHeader.AddressOfEntryPoint = 0x1000;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0;
         nt32.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0x1000;
         nt32.OptionalHeader.AddressOfEntryPoint = 0;
+        nt32.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         nt32.OptionalHeader.SizeOfCode = 0;
         nt32.OptionalHeader.AddressOfEntryPoint = 0;
         section.Characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, __LINE__ );
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
+        ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+        nt32.OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+        nt32.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress = page_size;
+        nt32.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size = sizeof(cor_header);
+        cor_header.MajorRuntimeVersion = 2;
+        cor_header.MinorRuntimeVersion = 4;
+        cor_header.Flags = COMIMAGE_FLAGS_ILONLY;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, &cor_header, __LINE__ );
+        ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+        nt32.OptionalHeader.SizeOfCode = 0x1000;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, &cor_header, __LINE__ );
+        ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+        cor_header.MinorRuntimeVersion = 5;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, &cor_header, __LINE__ );
+        ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+        cor_header.Flags = 0;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, &cor_header, __LINE__ );
+        ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+        nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress = 1;
+        nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size = 1;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, &cor_header, __LINE__ );
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
     }
 
-    nt_header.FileHeader.Machine = orig_machine;  /* restore it for the next tests */
     section.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
 }
 
@@ -1567,7 +1787,7 @@ static void test_import_resolution(void)
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress = DATA_RVA(&data.tls);
 
         memset( &data, 0, sizeof(data) );
-        data.descr[0].u.OriginalFirstThunk = DATA_RVA( data.original_thunks );
+        U(data.descr[0]).OriginalFirstThunk = DATA_RVA( data.original_thunks );
         data.descr[0].FirstThunk = DATA_RVA( data.thunks );
         data.descr[0].Name = DATA_RVA( data.module );
         strcpy( data.module, "kernel32.dll" );
