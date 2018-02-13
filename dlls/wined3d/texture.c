@@ -1901,8 +1901,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     if (!(resource->access & WINED3D_RESOURCE_ACCESS_MAP))
     {
         WARN("Trying to map unmappable texture.\n");
-        if (resource->type != WINED3D_RTYPE_TEXTURE_2D)
-            return WINED3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     if (texture->flags & WINED3D_TEXTURE_DC_IN_USE)
