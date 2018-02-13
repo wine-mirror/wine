@@ -294,6 +294,7 @@ static void test_ICInfo(void)
     for (i = found = 0; ICInfo(0, i, &info); i++)
     {
         trace("Codec name: %s, fccHandler: 0x%08x\n", wine_dbgstr_w(info.szName), info.fccHandler);
+        ok(info.fccType, "expected nonzero fccType\n");
 
         ok(ICInfo(info.fccType, info.fccHandler, &info2),
            "ICInfo failed on fcc 0x%08x\n", info.fccHandler);
@@ -317,6 +318,11 @@ static void test_ICInfo(void)
         }
     }
     ok(found != 0, "expected at least one codec\n");
+
+    memset(&info, 0, sizeof(info));
+    ok(!ICInfo(ICTYPE_VIDEO, mmioFOURCC('f','a','k','e'), &info), "expected failure\n");
+    ok(info.fccType == ICTYPE_VIDEO, "got 0x%08x\n", info.fccType);
+    ok(info.fccHandler == mmioFOURCC('f','a','k','e'), "got 0x%08x\n", info.fccHandler);
 }
 
 START_TEST(msvfw)
