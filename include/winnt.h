@@ -5763,16 +5763,33 @@ typedef struct _ACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION {
 } ACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION, *PACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION;
 #endif
 
+typedef enum {
+    ACTCTX_RUN_LEVEL_UNSPECIFIED = 0,
+    ACTCTX_RUN_LEVEL_AS_INVOKER,
+    ACTCTX_RUN_LEVEL_HIGHEST_AVAILABLE,
+    ACTCTX_RUN_LEVEL_REQUIRE_ADMIN,
+    ACTCTX_RUN_LEVEL_NUMBERS
+} ACTCTX_REQUESTED_RUN_LEVEL;
+
+typedef struct _ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION {
+    DWORD ulFlags;
+    ACTCTX_REQUESTED_RUN_LEVEL RunLevel;
+    DWORD UiAccess;
+} ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION, *PACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION;
+
+typedef const struct _ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION *PCACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION;
+
 typedef enum _ACTIVATION_CONTEXT_INFO_CLASS {
     ActivationContextBasicInformation                       = 1,
     ActivationContextDetailedInformation                    = 2,
     AssemblyDetailedInformationInActivationContext          = 3,
     FileInformationInAssemblyOfAssemblyInActivationContext  = 4,
+    RunlevelInformationInActivationContext                  = 5,
     CompatibilityInformationInActivationContext             = 6,
+    ActivationContextManifestResourceName                   = 7,
     MaxActivationContextInfoClass,
-
-    AssemblyDetailedInformationInActivationContxt          = 3,
-    FileInformationInAssemblyOfAssemblyInActivationContxt  = 4
+    AssemblyDetailedInformationInActivationContxt           = AssemblyDetailedInformationInActivationContext,
+    FileInformationInAssemblyOfAssemblyInActivationContxt   = FileInformationInAssemblyOfAssemblyInActivationContext
 } ACTIVATION_CONTEXT_INFO_CLASS;
 
 #define ACTIVATION_CONTEXT_PATH_TYPE_NONE         1
