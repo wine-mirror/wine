@@ -178,6 +178,7 @@ HRGN set_control_clipping(HDC hdc, const RECT *rect) DECLSPEC_HIDDEN;
 extern void ANIMATE_Register(void) DECLSPEC_HIDDEN;
 extern void ANIMATE_Unregister(void) DECLSPEC_HIDDEN;
 extern void BUTTON_Register(void) DECLSPEC_HIDDEN;
+extern void COMBO_Register(void) DECLSPEC_HIDDEN;
 extern void COMBOEX_Register(void) DECLSPEC_HIDDEN;
 extern void COMBOEX_Unregister(void) DECLSPEC_HIDDEN;
 extern void DATETIME_Register(void) DECLSPEC_HIDDEN;

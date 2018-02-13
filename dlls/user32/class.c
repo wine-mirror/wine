@@ -166,7 +166,6 @@ static BOOL is_builtin_class( const WCHAR *name )
 {
     static const WCHAR classesW[][20] =
     {
-        {'C','o','m','b','o','B','o','x',0},
         {'C','o','m','b','o','L','B','o','x',0},
         {'I','M','E',0},
         {'L','i','s','t','B','o','x',0},

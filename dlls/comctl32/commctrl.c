@@ -99,6 +99,7 @@ static void unregister_versioned_classes(void)
     static const char *classes[] =
     {
         VERSION WC_BUTTONA,
+        VERSION WC_COMBOBOXA,
         VERSION WC_EDITA,
         VERSION WC_STATICA,
     };
@@ -170,6 +171,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             UPDOWN_Register ();
 
             BUTTON_Register ();
+            COMBO_Register ();
             EDIT_Register ();
             STATIC_Register ();
 
