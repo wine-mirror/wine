@@ -346,6 +346,12 @@ HRESULT CDECL wined3d_resource_map(struct wined3d_resource *resource, unsigned i
     TRACE("resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
             resource, sub_resource_idx, map_desc, debug_box(box), flags);
 
+    if (!(resource->access & WINED3D_RESOURCE_ACCESS_MAP))
+    {
+        WARN("Resource is not mappable.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     flags = wined3d_resource_sanitise_map_flags(resource, flags);
     wined3d_resource_wait_idle(resource);
 
