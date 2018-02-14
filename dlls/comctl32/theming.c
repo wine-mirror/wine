@@ -36,13 +36,10 @@ typedef LRESULT (CALLBACK* THEMING_SUBCLASSPROC)(HWND, UINT, WPARAM, LPARAM,
 
 extern LRESULT CALLBACK THEMING_DialogSubclassProc (HWND, UINT, WPARAM, LPARAM,
                                                     ULONG_PTR) DECLSPEC_HIDDEN;
-extern LRESULT CALLBACK THEMING_ListBoxSubclassProc (HWND, UINT, WPARAM, LPARAM,
-                                                     ULONG_PTR) DECLSPEC_HIDDEN;
 extern LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND, UINT, WPARAM, LPARAM,
                                                        ULONG_PTR) DECLSPEC_HIDDEN;
 
 static const WCHAR dialogClass[] = {'#','3','2','7','7','0',0};
-static const WCHAR comboLboxClass[] = {'C','o','m','b','o','L','b','o','x',0};
 
 static const struct ThemingSubclass
 {
@@ -51,8 +48,6 @@ static const struct ThemingSubclass
 } subclasses[] = {
     /* Note: list must be sorted by class name */
     {dialogClass,          THEMING_DialogSubclassProc},
-    {comboLboxClass,       THEMING_ListBoxSubclassProc},
-    {WC_LISTBOXW,          THEMING_ListBoxSubclassProc},
     {WC_SCROLLBARW,        THEMING_ScrollbarSubclassProc}
 };
 
@@ -85,14 +80,10 @@ static LRESULT CALLBACK subclass_proc ## N (HWND wnd, UINT msg,             \
 
 MAKE_SUBCLASS_PROC(0)
 MAKE_SUBCLASS_PROC(1)
-MAKE_SUBCLASS_PROC(2)
-MAKE_SUBCLASS_PROC(3)
 
 static const WNDPROC subclassProcs[NUM_SUBCLASSES] = {
     subclass_proc0,
     subclass_proc1,
-    subclass_proc2,
-    subclass_proc3,
 };
 
 /***********************************************************************

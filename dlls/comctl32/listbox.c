@@ -2,6 +2,7 @@
  * Listbox controls
  *
  * Copyright 1996 Alexandre Julliard
+ * Copyright 2005 Frank Richter
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,6 +31,8 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "commctrl.h"
+#include "uxtheme.h"
+#include "vssym32.h"
 #include "wine/unicode.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
@@ -1072,6 +1075,38 @@ static LRESULT LISTBOX_Paint( LB_DESCR *descr, HDC hdc )
     return 0;
 }
 
+static void LISTBOX_NCPaint( LB_DESCR *descr, HRGN region )
+{
+    DWORD exstyle = GetWindowLongW( descr->self, GWL_EXSTYLE);
+    HTHEME theme = GetWindowTheme( descr->self );
+    HRGN cliprgn = region;
+    int cxEdge, cyEdge;
+    HDC hdc;
+    RECT r;
+
+    if (!theme || !(exstyle & WS_EX_CLIENTEDGE))
+        return;
+
+    cxEdge = GetSystemMetrics(SM_CXEDGE),
+    cyEdge = GetSystemMetrics(SM_CYEDGE);
+
+    GetWindowRect(descr->self, &r);
+
+    /* New clipping region passed to default proc to exclude border */
+    cliprgn = CreateRectRgn(r.left + cxEdge, r.top + cyEdge,
+        r.right - cxEdge, r.bottom - cyEdge);
+    if (region != (HRGN)1)
+        CombineRgn(cliprgn, cliprgn, region, RGN_AND);
+    OffsetRect(&r, -r.left, -r.top);
+
+    hdc = GetDCEx(descr->self, region, DCX_WINDOW|DCX_INTERSECTRGN);
+    OffsetRect(&r, -r.left, -r.top);
+
+    if (IsThemeBackgroundPartiallyTransparent (theme, 0, 0))
+        DrawThemeParentBackground(descr->self, hdc, &r);
+    DrawThemeBackground (theme, hdc, 0, 0, &r, 0);
+    ReleaseDC(descr->self, hdc);
+}
 
 /***********************************************************************
  *           LISTBOX_InvalidateItems
@@ -2500,6 +2535,8 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
 	}
     }
 
+    OpenThemeData( descr->self, WC_LISTBOXW );
+
     TRACE("owner: %p, style: %08x, width: %d, height: %d\n", descr->owner, descr->style, descr->width, descr->height);
     return TRUE;
 }
@@ -2510,6 +2547,8 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
  */
 static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 {
+    HTHEME theme = GetWindowTheme( descr->self );
+    CloseThemeData( theme );
     LISTBOX_ResetContent( descr );
     SetWindowLongPtrW( descr->self, 0, 0 );
     HeapFree( GetProcessHeap(), 0, descr );
@@ -2523,7 +2562,8 @@ static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     LB_DESCR *descr = (LB_DESCR *)GetWindowLongPtrW( hwnd, 0 );
-    LPHEADCOMBO lphc = 0;
+    HEADCOMBO *lphc = NULL;
+    HTHEME theme;
     LRESULT ret;
 
     if (!descr)
@@ -2833,6 +2873,11 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
             if( !wParam ) EndPaint( descr->self, &ps );
         }
         return ret;
+
+    case WM_NCPAINT:
+        LISTBOX_NCPaint( descr, (HRGN)wParam );
+        break;
+
     case WM_SIZE:
         LISTBOX_UpdateSize( descr );
         return 0;
@@ -2982,6 +3027,12 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
     case WM_NCACTIVATE:
         if (lphc) return 0;
 	break;
+
+    case WM_THEMECHANGED:
+        theme = GetWindowTheme( hwnd );
+        CloseThemeData( theme );
+        OpenThemeData( hwnd, WC_LISTBOXW );
+        break;
 
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
