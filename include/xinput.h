@@ -156,6 +156,8 @@
 #define XUSER_MAX_COUNT                 4
 #define XUSER_INDEX_ANY                 0x000000FF
 
+#define XINPUT_CAPS_FFB_SUPPORTED       0x0001
+
 /*
  * Defines the structure of an xbox 360 joystick.
  */

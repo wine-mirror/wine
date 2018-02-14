@@ -192,6 +192,11 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
 
     xinput_caps->Type = XINPUT_DEVTYPE_GAMEPAD;
     xinput_caps->SubType = XINPUT_DEVSUBTYPE_GAMEPAD;
+
+    value_caps_count = caps->NumberOutputValueCaps;
+    if (value_caps_count > 0)
+        xinput_caps->Flags |= XINPUT_CAPS_FFB_SUPPORTED;
+
     return TRUE;
 }
 
@@ -410,4 +415,41 @@ void HID_update_state(xinput_controller* device)
     HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->ppd, target_report, private->report_length);
     device->state.Gamepad.bLeftTrigger = SCALE_BYTE(value, private->LeftTriggerRange);
     LeaveCriticalSection(&private->crit);
+}
+
+DWORD HID_set_state(xinput_controller* device, XINPUT_VIBRATION* state)
+{
+    struct hid_platform_private *private = device->platform_private;
+
+    struct {
+        BYTE report;
+        BYTE pad1[2];
+        BYTE left;
+        BYTE right;
+        BYTE pad2[3];
+    } report;
+
+    if (device->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
+    {
+        BOOLEAN rc;
+
+        device->caps.Vibration.wLeftMotorSpeed = state->wLeftMotorSpeed;
+        device->caps.Vibration.wRightMotorSpeed = state->wRightMotorSpeed;
+
+        report.report = 0;
+        report.pad1[0] = 0x8;
+        report.pad1[1] = 0x0;
+        report.left = (BYTE)(state->wLeftMotorSpeed / 255);
+        report.right = (BYTE)(state->wRightMotorSpeed / 255);
+        memset(&report.pad2, 0, sizeof(report.pad2));
+
+        EnterCriticalSection(&private->crit);
+        rc = HidD_SetOutputReport(private->device, &report, sizeof(report));
+        LeaveCriticalSection(&private->crit);
+        if (rc)
+            return ERROR_SUCCESS;
+        return GetLastError();
+    }
+
+    return ERROR_NOT_SUPPORTED;
 }

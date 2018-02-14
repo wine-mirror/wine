@@ -63,14 +63,16 @@ void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
 
 DWORD WINAPI XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
 {
-    FIXME("(index %u, vibration %p) Stub!\n", index, vibration);
+    TRACE("(index %u, vibration %p)\n", index, vibration);
+
+    HID_find_gamepads(controllers);
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
     if (!controllers[index].connected)
         return ERROR_DEVICE_NOT_CONNECTED;
 
-    return ERROR_NOT_SUPPORTED;
+    return HID_set_state(&controllers[index], vibration);
 }
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
