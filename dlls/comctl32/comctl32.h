@@ -107,6 +107,48 @@ extern HBRUSH  COMCTL32_hPattern55AABrush DECLSPEC_HIDDEN;
 #define IDS_BUTTON_CANCEL 3004
 #define IDS_BUTTON_CLOSE  3005
 
+#define WM_SYSTIMER     0x0118
+
+enum combobox_state_flags
+{
+    CBF_DROPPED      = 0x0001,
+    CBF_BUTTONDOWN   = 0x0002,
+    CBF_NOROLLUP     = 0x0004,
+    CBF_MEASUREITEM  = 0x0008,
+    CBF_FOCUSED      = 0x0010,
+    CBF_CAPTURE      = 0x0020,
+    CBF_EDIT         = 0x0040,
+    CBF_NORESIZE     = 0x0080,
+    CBF_NOTIFY       = 0x0100,
+    CBF_NOREDRAW     = 0x0200,
+    CBF_SELCHANGE    = 0x0400,
+    CBF_HOT          = 0x0800,
+    CBF_NOEDITNOTIFY = 0x1000,
+    CBF_NOLBSELECT   = 0x2000, /* do not change current selection */
+    CBF_BEENFOCUSED  = 0x4000, /* has it ever had focus           */
+    CBF_EUI          = 0x8000,
+};
+
+typedef struct
+{
+   HWND           self;
+   HWND           owner;
+   UINT           dwStyle;
+   HWND           hWndEdit;
+   HWND           hWndLBox;
+   UINT           wState;
+   HFONT          hFont;
+   RECT           textRect;
+   RECT           buttonRect;
+   RECT           droppedRect;
+   INT            droppedIndex;
+   INT            fixedOwnerDrawHeight;
+   INT            droppedWidth;   /* last two are not used unless set */
+   INT            editHeight;     /* explicitly */
+} HEADCOMBO, *LPHEADCOMBO;
+
+extern BOOL COMBO_FlipListbox(HEADCOMBO *lphc, BOOL ok, BOOL bRedrawButton) DECLSPEC_HIDDEN;
+
 typedef struct
 {
     COLORREF clrBtnHighlight;       /* COLOR_BTNHIGHLIGHT                  */
@@ -181,6 +223,7 @@ extern void BUTTON_Register(void) DECLSPEC_HIDDEN;
 extern void COMBO_Register(void) DECLSPEC_HIDDEN;
 extern void COMBOEX_Register(void) DECLSPEC_HIDDEN;
 extern void COMBOEX_Unregister(void) DECLSPEC_HIDDEN;
+extern void COMBOLBOX_Register(void) DECLSPEC_HIDDEN;
 extern void DATETIME_Register(void) DECLSPEC_HIDDEN;
 extern void DATETIME_Unregister(void) DECLSPEC_HIDDEN;
 extern void EDIT_Register(void) DECLSPEC_HIDDEN;
@@ -192,6 +235,7 @@ extern void HOTKEY_Register(void) DECLSPEC_HIDDEN;
 extern void HOTKEY_Unregister(void) DECLSPEC_HIDDEN;
 extern void IPADDRESS_Register(void) DECLSPEC_HIDDEN;
 extern void IPADDRESS_Unregister(void) DECLSPEC_HIDDEN;
+extern void LISTBOX_Register(void) DECLSPEC_HIDDEN;
 extern void LISTVIEW_Register(void) DECLSPEC_HIDDEN;
 extern void LISTVIEW_Unregister(void) DECLSPEC_HIDDEN;
 extern void MONTHCAL_Register(void) DECLSPEC_HIDDEN;

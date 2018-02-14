@@ -21,6 +21,7 @@ C_SRCS = \
 	hotkey.c \
 	imagelist.c \
 	ipaddress.c \
+	listbox.c \
 	listview.c \
 	monthcal.c \
 	nativefont.c \

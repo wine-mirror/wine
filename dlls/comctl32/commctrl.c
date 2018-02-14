@@ -100,7 +100,9 @@ static void unregister_versioned_classes(void)
     {
         VERSION WC_BUTTONA,
         VERSION WC_COMBOBOXA,
+        VERSION "ComboLBox",
         VERSION WC_EDITA,
+        VERSION WC_LISTBOXA,
         VERSION WC_STATICA,
     };
     int i;
@@ -172,7 +174,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
             BUTTON_Register ();
             COMBO_Register ();
+            COMBOLBOX_Register ();
             EDIT_Register ();
+            LISTBOX_Register ();
             STATIC_Register ();
 
             /* subclass user32 controls */
