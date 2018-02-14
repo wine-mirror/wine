@@ -63,6 +63,7 @@ struct hid_platform_private {
     PHIDP_PREPARSED_DATA ppd;
     HANDLE device;
     WCHAR *device_path;
+    BOOL enabled;
 
     CRITICAL_SECTION crit;
 
@@ -212,6 +213,7 @@ static void build_private(struct hid_platform_private *private, PHIDP_PREPARSED_
     size = (strlenW(path) + 1) * sizeof(WCHAR);
     private->device_path = HeapAlloc(GetProcessHeap(), 0, size);
     memcpy(private->device_path, path, size);
+    private->enabled = TRUE;
 
     InitializeCriticalSection(&private->crit);
     private->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->generic.base.crit");
@@ -351,6 +353,9 @@ void HID_update_state(xinput_controller* device)
     ULONG button_length;
     ULONG value;
 
+    if (!private->enabled)
+        return;
+
     EnterCriticalSection(&private->crit);
     if (!HidD_GetInputReport(private->device, target_report, private->report_length))
     {
@@ -431,25 +436,53 @@ DWORD HID_set_state(xinput_controller* device, XINPUT_VIBRATION* state)
 
     if (device->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
     {
-        BOOLEAN rc;
-
         device->caps.Vibration.wLeftMotorSpeed = state->wLeftMotorSpeed;
         device->caps.Vibration.wRightMotorSpeed = state->wRightMotorSpeed;
 
-        report.report = 0;
-        report.pad1[0] = 0x8;
-        report.pad1[1] = 0x0;
-        report.left = (BYTE)(state->wLeftMotorSpeed / 255);
-        report.right = (BYTE)(state->wRightMotorSpeed / 255);
-        memset(&report.pad2, 0, sizeof(report.pad2));
+        if (private->enabled)
+        {
+            BOOLEAN rc;
 
-        EnterCriticalSection(&private->crit);
-        rc = HidD_SetOutputReport(private->device, &report, sizeof(report));
-        LeaveCriticalSection(&private->crit);
-        if (rc)
-            return ERROR_SUCCESS;
-        return GetLastError();
+            report.report = 0;
+            report.pad1[0] = 0x8;
+            report.pad1[1] = 0x0;
+            report.left = (BYTE)(state->wLeftMotorSpeed / 255);
+            report.right = (BYTE)(state->wRightMotorSpeed / 255);
+            memset(&report.pad2, 0, sizeof(report.pad2));
+
+            EnterCriticalSection(&private->crit);
+            rc = HidD_SetOutputReport(private->device, &report, sizeof(report));
+            LeaveCriticalSection(&private->crit);
+            if (rc)
+                return ERROR_SUCCESS;
+            return GetLastError();
+        }
+        return ERROR_SUCCESS;
     }
 
     return ERROR_NOT_SUPPORTED;
+}
+
+void HID_enable(xinput_controller* device, BOOL enable)
+{
+    struct hid_platform_private *private = device->platform_private;
+
+    if (device->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
+    {
+        EnterCriticalSection(&private->crit);
+        if (private->enabled && !enable)
+        {
+            XINPUT_VIBRATION state;
+            state.wLeftMotorSpeed = 0;
+            state.wRightMotorSpeed = 0;
+            HID_set_state(device, &state);
+        }
+        else if (!private->enabled && enable)
+        {
+            HID_set_state(device, &device->caps.Vibration);
+        }
+        LeaveCriticalSection(&private->crit);
+    }
+
+    private->enabled = enable;
 }

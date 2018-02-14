@@ -54,11 +54,21 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
 
 void WINAPI DECLSPEC_HOTPATCH XInputEnable(BOOL enable)
 {
+    int index;
+
+    TRACE("(enable %d)\n", enable);
+
     /* Setting to false will stop messages from XInputSetState being sent
     to the controllers. Setting to true will send the last vibration
     value (sent to XInputSetState) to the controller and allow messages to
     be sent */
-    FIXME("(enable %d) Stub!\n", enable);
+    HID_find_gamepads(controllers);
+
+    for (index = 0; index < XUSER_MAX_COUNT; index ++)
+    {
+        if (!controllers[index].connected) continue;
+        HID_enable(&controllers[index], enable);
+    }
 }
 
 DWORD WINAPI XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
