@@ -64,8 +64,6 @@ static HRESULT check_interface_(unsigned int line, void *iface, REFIID iid,
             "Got hr %#x, expected %#x.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(out);
-    else
-        ok_(__FILE__, line)(!out, "Got unexpected pointer %p.\n", out);
     return hr;
 }
 
@@ -2562,7 +2560,7 @@ static void test_create_factory(void)
 
     if (!pCreateDXGIFactory1)
     {
-        win_skip("CreateDXGIFactory1 not available, skipping tests.\n");
+        win_skip("CreateDXGIFactory1 not available.\n");
         return;
     }
 
@@ -2598,6 +2596,33 @@ static void test_create_factory(void)
         refcount = IUnknown_Release(iface);
         ok(!refcount, "Factory has %u references left.\n", refcount);
     }
+
+    if (!pCreateDXGIFactory2)
+    {
+        win_skip("CreateDXGIFactory2 not available.\n");
+        return;
+    }
+
+    hr = pCreateDXGIFactory2(0, &IID_IDXGIFactory3, (void **)&iface);
+    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+    check_interface(iface, &IID_IDXGIFactory, TRUE, FALSE);
+    check_interface(iface, &IID_IDXGIFactory1, TRUE, FALSE);
+    check_interface(iface, &IID_IDXGIFactory2, TRUE, FALSE);
+    check_interface(iface, &IID_IDXGIFactory3, TRUE, FALSE);
+    /* Not available on all Windows versions. */
+    check_interface(iface, &IID_IDXGIFactory4, TRUE, TRUE);
+    todo_wine check_interface(iface, &IID_IDXGIFactory5, TRUE, TRUE);
+    refcount = IUnknown_Release(iface);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+
+    hr = pCreateDXGIFactory2(0, &IID_IDXGIFactory, (void **)&iface);
+    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+    check_interface(iface, &IID_IDXGIFactory, TRUE, FALSE);
+    check_interface(iface, &IID_IDXGIFactory1, TRUE, FALSE);
+    check_interface(iface, &IID_IDXGIFactory2, TRUE, FALSE);
+    check_interface(iface, &IID_IDXGIFactory3, TRUE, FALSE);
+    refcount = IUnknown_Release(iface);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
 static void test_private_data(void)
