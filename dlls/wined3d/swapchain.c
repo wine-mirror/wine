@@ -469,14 +469,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     }
 
     if (swapchain->render_to_fbo)
-    {
-        static unsigned int once;
-
-        if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP && !once++)
-            FIXME("WINED3D_SWAP_EFFECT_FLIP not implemented.\n");
-
         swapchain_blit(swapchain, context, src_rect, dst_rect);
-    }
 
     if (swapchain->num_contexts > 1)
         gl_info->gl_ops.gl.p_glFinish();
