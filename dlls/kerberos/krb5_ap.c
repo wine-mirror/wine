@@ -902,8 +902,8 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
 {
 #ifdef SONAME_LIBGSSAPI_KRB5
     static const ULONG supported = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_SEQUENCE_DETECT |
-                                   ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH;
-    OM_uint32 ret, minor_status, ret_flags, expiry_time, req_flags = flags_isc_req_to_gss( context_req );
+                                   ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH | ISC_REQ_USE_DCE_STYLE;
+    OM_uint32 ret, minor_status, ret_flags = 0, expiry_time, req_flags = flags_isc_req_to_gss( context_req );
     gss_cred_id_t cred_handle;
     gss_ctx_id_t ctxt_handle;
     gss_buffer_desc input_token, output_token;
