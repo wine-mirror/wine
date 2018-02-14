@@ -107,7 +107,7 @@ HRESULT dxgi_set_private_data_interface(struct wined3d_private_store *store,
 /* IDXGIFactory */
 struct dxgi_factory
 {
-    IDXGIFactory4 IDXGIFactory4_iface;
+    IWineDXGIFactory IWineDXGIFactory_iface;
     LONG refcount;
     struct wined3d_private_store private_store;
     struct wined3d *wined3d;
@@ -117,7 +117,7 @@ struct dxgi_factory
 
 HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended) DECLSPEC_HIDDEN;
 HWND dxgi_factory_get_device_window(struct dxgi_factory *factory) DECLSPEC_HIDDEN;
-struct dxgi_factory *unsafe_impl_from_IDXGIFactory4(IDXGIFactory4 *iface) DECLSPEC_HIDDEN;
+struct dxgi_factory *unsafe_impl_from_IDXGIFactory(IDXGIFactory *iface) DECLSPEC_HIDDEN;
 
 /* IDXGIDevice */
 struct dxgi_device

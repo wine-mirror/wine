@@ -64,6 +64,8 @@ static HRESULT check_interface_(unsigned int line, void *iface, REFIID iid,
             "Got hr %#x, expected %#x.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(out);
+    else
+        ok_(__FILE__, line)(!out, "Got unexpected pointer %p.\n", out);
     return hr;
 }
 
@@ -2611,7 +2613,7 @@ static void test_create_factory(void)
     check_interface(iface, &IID_IDXGIFactory3, TRUE, FALSE);
     /* Not available on all Windows versions. */
     check_interface(iface, &IID_IDXGIFactory4, TRUE, TRUE);
-    todo_wine check_interface(iface, &IID_IDXGIFactory5, TRUE, TRUE);
+    check_interface(iface, &IID_IDXGIFactory5, TRUE, TRUE);
     refcount = IUnknown_Release(iface);
     ok(!refcount, "Factory has %u references left.\n", refcount);
 
