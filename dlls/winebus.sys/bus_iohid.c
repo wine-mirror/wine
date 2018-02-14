@@ -287,7 +287,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     DWORD vid, pid, version;
     CFStringRef str = NULL;
     WCHAR serial_string[256];
-    BOOL is_gamepad;
+    BOOL is_gamepad = FALSE;
 
     TRACE("OS/X IOHID Device Added %p\n", IOHIDDevice);
 
@@ -297,8 +297,50 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDSerialNumberKey));
     if (str) CFStringToWSTR(str, serial_string, sizeof(serial_string) / sizeof(WCHAR));
 
-    is_gamepad = (IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad) ||
-       IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick));
+    if (IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad) ||
+       IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick))
+    {
+        if (is_xbox_gamepad(vid, pid))
+            is_gamepad = TRUE;
+        else
+        {
+            int axes=0, buttons=0;
+            CFArrayRef element_array = IOHIDDeviceCopyMatchingElements(
+                IOHIDDevice, NULL, kIOHIDOptionsTypeNone);
+
+            if (element_array) {
+                CFIndex index;
+                CFIndex count = CFArrayGetCount(element_array);
+                for (index = 0; index < count; index++)
+                {
+                    IOHIDElementRef element = (IOHIDElementRef)CFArrayGetValueAtIndex(element_array, index);
+                    if (element)
+                    {
+                        int type = IOHIDElementGetType(element);
+                        if (type == kIOHIDElementTypeInput_Button) buttons++;
+                        if (type == kIOHIDElementTypeInput_Axis) axes++;
+                        if (type == kIOHIDElementTypeInput_Misc)
+                        {
+                            uint32_t usage = IOHIDElementGetUsage(element);
+                            switch (usage)
+                            {
+                                case kHIDUsage_GD_X:
+                                case kHIDUsage_GD_Y:
+                                case kHIDUsage_GD_Z:
+                                case kHIDUsage_GD_Rx:
+                                case kHIDUsage_GD_Ry:
+                                case kHIDUsage_GD_Rz:
+                                case kHIDUsage_GD_Slider:
+                                    axes ++;
+                            }
+                        }
+                    }
+                }
+                CFRelease(element_array);
+            }
+            is_gamepad = (axes == 6  && buttons >= 14);
+        }
+    }
 
     device = bus_create_hid_device(iohid_driver_obj, busidW, vid, pid, version, 0, str?serial_string:NULL, is_gamepad, &GUID_DEVCLASS_IOHID, &iohid_vtbl, sizeof(struct platform_private));
     if (!device)

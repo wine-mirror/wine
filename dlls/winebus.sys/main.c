@@ -43,6 +43,22 @@
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
+#define VID_MICROSOFT 0x045e
+
+static const WORD PID_XBOX_CONTROLLERS[] =  {
+    0x0202, /* Xbox Controller */
+    0x0285, /* Xbox Controller S */
+    0x0289, /* Xbox Controller S */
+    0x028e, /* Xbox360 Controller */
+    0x028f, /* Xbox360 Wireless Controller */
+    0x02d1, /* Xbox One Controller */
+    0x02dd, /* Xbox One Controller (Covert Forces/Firmware 2015) */
+    0x02e3, /* Xbox One Elite Controller */
+    0x02e6, /* Wireless XBox Controller Dongle */
+    0x02ea, /* Xbox One S Controller */
+    0x0719, /* Xbox 360 Wireless Adapter */
+};
+
 struct pnp_device
 {
     struct list entry;
@@ -671,6 +687,19 @@ DWORD check_bus_option(UNICODE_STRING *registry_path, const UNICODE_STRING *opti
     }
 
     return output;
+}
+
+BOOL is_xbox_gamepad(WORD vid, WORD pid)
+{
+    int i;
+
+    if (vid != VID_MICROSOFT)
+        return FALSE;
+
+    for (i = 0; i < sizeof(PID_XBOX_CONTROLLERS)/sizeof(*PID_XBOX_CONTROLLERS); i++)
+        if (pid == PID_XBOX_CONTROLLERS[i]) return TRUE;
+
+    return FALSE;
 }
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )

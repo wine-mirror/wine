@@ -49,3 +49,4 @@ DEVICE_OBJECT* bus_enumerate_hid_devices(const platform_vtbl *vtbl, enum_func fu
 
 /* General Bus Functions */
 DWORD check_bus_option(UNICODE_STRING *registry_path, const UNICODE_STRING *option, DWORD default_value) DECLSPEC_HIDDEN;
+BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;

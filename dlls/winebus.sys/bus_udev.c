@@ -439,13 +439,55 @@ static void set_rel_axis_value(struct wine_input_private *ext, int code, int val
     }
 }
 
+static INT count_buttons(int device_fd, BYTE *map)
+{
+    int i;
+    int button_count = 0;
+    BYTE keybits[(KEY_MAX+7)/8];
+
+    if (ioctl(device_fd, EVIOCGBIT(EV_KEY, sizeof(keybits)), keybits) == -1)
+    {
+        WARN("ioctl(EVIOCGBIT, EV_KEY) failed: %d %s\n", errno, strerror(errno));
+        return FALSE;
+    }
+
+    for (i = BTN_MISC; i < KEY_MAX; i++)
+    {
+        if (test_bit(keybits, i))
+        {
+            if (map) map[i] = button_count;
+            button_count++;
+        }
+    }
+    return button_count;
+}
+
+static INT count_abs_axis(int device_fd)
+{
+    BYTE absbits[(ABS_MAX+7)/8];
+    int abs_count = 0;
+    int i;
+
+    if (ioctl(device_fd, EVIOCGBIT(EV_ABS, sizeof(absbits)), absbits) == -1)
+    {
+        WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
+        return 0;
+    }
+
+    for (i = 0; i < HID_ABS_MAX; i++)
+        if (test_bit(absbits, i) &&
+            (ABS_TO_HID_MAP[i][1] >= HID_USAGE_GENERIC_X &&
+             ABS_TO_HID_MAP[i][1] <= HID_USAGE_GENERIC_WHEEL))
+                abs_count++;
+    return abs_count;
+}
+
 static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_device *dev)
 {
     int abs_pages[TOP_ABS_PAGE][HID_ABS_MAX+1];
     int rel_pages[TOP_REL_PAGE][HID_REL_MAX+1];
     BYTE absbits[(ABS_MAX+7)/8];
     BYTE relbits[(REL_MAX+7)/8];
-    BYTE keybits[(KEY_MAX+7)/8];
     BYTE *report_ptr;
     INT i, descript_size;
     INT report_size;
@@ -462,25 +504,12 @@ static BOOL build_report_descriptor(struct wine_input_private *ext, struct udev_
         WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
         return FALSE;
     }
-    if (ioctl(ext->base.device_fd, EVIOCGBIT(EV_KEY, sizeof(keybits)), keybits) == -1)
-    {
-        WARN("ioctl(EVIOCGBIT, EV_KEY) failed: %d %s\n", errno, strerror(errno));
-        return FALSE;
-    }
 
     descript_size = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
     report_size = 0;
 
     /* For now lump all buttons just into incremental usages, Ignore Keys */
-    button_count = 0;
-    for (i = BTN_MISC; i < KEY_MAX; i++)
-    {
-        if (test_bit(keybits, i))
-        {
-            ext->button_map[i] = button_count;
-            button_count++;
-        }
-    }
+    button_count = count_buttons(ext->base.device_fd, ext->button_map);
     if (button_count)
     {
         descript_size += sizeof(REPORT_BUTTONS);
@@ -1138,7 +1167,7 @@ static void try_add_device(struct udev_device *dev)
     const char *subsystem;
     const char *devnode;
     WCHAR *serial = NULL;
-    const char* gamepad = NULL;
+    BOOL is_gamepad = FALSE;
     int fd;
 
     if (!(devnode = udev_device_get_devnode(dev)))
@@ -1188,7 +1217,6 @@ static void try_add_device(struct udev_device *dev)
         if (ioctl(fd, EVIOCGUNIQ(254), device_uid) >= 0 && device_uid[0])
             serial = strdupAtoW(device_uid);
 
-        gamepad = udev_device_get_property_value(dev, "ID_INPUT_JOYSTICK");
         vid = device_id.vendor;
         pid = device_id.product;
         version = device_id.version;
@@ -1198,18 +1226,31 @@ static void try_add_device(struct udev_device *dev)
         WARN("Could not get device to query VID, PID, Version and Serial\n");
 #endif
 
+    if (is_xbox_gamepad(vid, pid))
+        is_gamepad = TRUE;
+#ifdef HAS_PROPER_INPUT_HEADER
+    else
+    {
+        int axes=0, buttons=0;
+        axes = count_abs_axis(fd);
+        buttons = count_buttons(fd, NULL);
+        is_gamepad = (axes == 6  && buttons >= 14);
+    }
+#endif
+
+
     TRACE("Found udev device %s (vid %04x, pid %04x, version %u, serial %s)\n",
           debugstr_a(devnode), vid, pid, version, debugstr_w(serial));
 
     if (strcmp(subsystem, "hidraw") == 0)
     {
-        device = bus_create_hid_device(udev_driver_obj, hidraw_busidW, vid, pid, version, 0, serial, FALSE,
+        device = bus_create_hid_device(udev_driver_obj, hidraw_busidW, vid, pid, version, 0, serial, is_gamepad,
                                        &GUID_DEVCLASS_HIDRAW, &hidraw_vtbl, sizeof(struct platform_private));
     }
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (strcmp(subsystem, "input") == 0)
     {
-        device = bus_create_hid_device(udev_driver_obj, lnxev_busidW, vid, pid, version, 0, serial, (gamepad != NULL),
+        device = bus_create_hid_device(udev_driver_obj, lnxev_busidW, vid, pid, version, 0, serial, is_gamepad,
                                        &GUID_DEVCLASS_LINUXEVENT, &lnxev_vtbl, sizeof(struct wine_input_private));
     }
 #endif
