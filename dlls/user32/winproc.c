@@ -869,10 +869,10 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                           LRESULT *result, BOOL unicode, enum wm_char_mapping mapping )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
+    BOOL unicode_win, is_dialog;
     WND *wndPtr;
     WNDPROC func;
     WINDOWPROC *proc;
-    BOOL unicode_win;
 
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
     if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
@@ -884,6 +884,7 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     func = wndPtr->winproc;
     proc = handle_to_proc( wndPtr->winproc );
     unicode_win = wndPtr->flags & WIN_ISUNICODE;
+    is_dialog = wndPtr->dlgInfo != NULL;
     WIN_ReleasePtr( wndPtr );
 
     if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return FALSE;
@@ -893,6 +894,23 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     {
         if (proc == WINPROC_PROC16)
             WINPROC_CallProcWtoA( wow_handlers.call_window_proc, hwnd, msg, wParam, lParam, result, func );
+        else if (is_dialog)
+        {
+            if (unicode_win)
+            {
+                if (proc && proc->procW)
+                    call_window_proc( hwnd, msg, wParam, lParam, result, proc->procW );
+                else
+                    call_window_proc( hwnd, msg, wParam, lParam, result, func );
+            }
+            else
+            {
+                if (proc && proc->procA)
+                    WINPROC_CallProcWtoA( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procA );
+                else
+                    WINPROC_CallProcWtoA( call_window_proc, hwnd, msg, wParam, lParam, result, func );
+            }
+        }
         else if (proc && proc->procW)
             call_window_proc( hwnd, msg, wParam, lParam, result, proc->procW );
         else if (proc)
@@ -906,6 +924,23 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     {
         if (proc == WINPROC_PROC16)
             wow_handlers.call_window_proc( hwnd, msg, wParam, lParam, result, func );
+        else if (is_dialog)
+        {
+            if (unicode_win)
+            {
+                if (proc && proc->procW)
+                    WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, result, proc->procW, mapping );
+                else
+                    WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, result, func, mapping );
+            }
+            else
+            {
+                if (proc && proc->procA)
+                    call_window_proc( hwnd, msg, wParam, lParam, result, proc->procA );
+                else
+                    call_window_proc( hwnd, msg, wParam, lParam, result, func );
+            }
+        }
         else if (proc && proc->procA)
             call_window_proc( hwnd, msg, wParam, lParam, result, proc->procA );
         else if (proc)
@@ -1012,14 +1047,9 @@ INT_PTR WINPROC_CallDlgProcA( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
         ret = wow_handlers.call_dialog_proc( hwnd, msg, wParam, lParam, &result, func );
         SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
     }
-    else if (proc->procW)
-    {
-        ret = WINPROC_CallProcAtoW( call_dialog_proc, hwnd, msg, wParam, lParam, &result,
-                                    proc->procW, WMCHAR_MAP_CALLWINDOWPROC );
-        SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
-    }
     else
-        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
+        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procW ? proc->procW : proc->procA );
+
     return ret;
 }
 
@@ -1042,13 +1072,9 @@ INT_PTR WINPROC_CallDlgProcW( DLGPROC func, HWND hwnd, UINT msg, WPARAM wParam, 
         ret = WINPROC_CallProcWtoA( wow_handlers.call_dialog_proc, hwnd, msg, wParam, lParam, &result, func );
         SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
     }
-    else if (proc->procA)
-    {
-        ret = WINPROC_CallProcWtoA( call_dialog_proc, hwnd, msg, wParam, lParam, &result, proc->procA );
-        SetWindowLongPtrW( hwnd, DWLP_MSGRESULT, result );
-    }
     else
-        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procW );
+        ret = call_dialog_proc( hwnd, msg, wParam, lParam, &result, proc->procW ? proc->procW : proc->procA );
+
     return ret;
 }
 
