@@ -1128,6 +1128,7 @@ enable_d3d10
 enable_d3d10_1
 enable_d3d10core
 enable_d3d11
+enable_d3d12
 enable_d3d8
 enable_d3d9
 enable_d3dcompiler_33
@@ -18588,6 +18589,7 @@ wine_fn_config_dll d3d10core enable_d3d10core implib
 wine_fn_config_test dlls/d3d10core/tests d3d10core_test
 wine_fn_config_dll d3d11 enable_d3d11 implib
 wine_fn_config_test dlls/d3d11/tests d3d11_test
+wine_fn_config_dll d3d12 enable_d3d12 implib
 wine_fn_config_dll d3d8 enable_d3d8 implib
 wine_fn_config_test dlls/d3d8/tests d3d8_test
 wine_fn_config_dll d3d9 enable_d3d9 implib
