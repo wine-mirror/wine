@@ -3145,3 +3145,12 @@ BOOL WINAPI ImmGetHotKey(DWORD hotkey, UINT *modifiers, UINT *key, HKL hkl)
     FIXME("%x, %p, %p, %p: stub\n", hotkey, modifiers, key, hkl);
     return FALSE;
 }
+
+/***********************************************************************
+ *              IMMDisableLegacyIME(IMM32.@)
+ */
+BOOL WINAPI ImmDisableLegacyIME(void)
+{
+    FIXME("stub\n");
+    return TRUE;
+}
