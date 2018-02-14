@@ -297,11 +297,13 @@ static inline D3DPOOL d3dpool_from_wined3daccess(unsigned int access, unsigned i
     }
 }
 
-static inline unsigned int wined3daccess_from_d3dpool(D3DPOOL pool)
+static inline unsigned int wined3daccess_from_d3dpool(D3DPOOL pool, unsigned int usage)
 {
     switch (pool)
     {
         case D3DPOOL_DEFAULT:
+            if (usage & D3DUSAGE_DYNAMIC)
+                return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP;
             return WINED3D_RESOURCE_ACCESS_GPU;
         case D3DPOOL_MANAGED:
             return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;

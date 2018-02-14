@@ -178,8 +178,6 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->multisample_type = multisample_type;
     resource->multisample_quality = multisample_quality;
     resource->usage = usage;
-    if (usage & WINED3DUSAGE_DYNAMIC)
-        access |= WINED3D_RESOURCE_ACCESS_MAP;
     resource->access = access;
     resource->width = width;
     resource->height = height;

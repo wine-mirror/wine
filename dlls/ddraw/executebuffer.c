@@ -131,7 +131,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     desc.byte_width = new_size * sizeof(*indices);
                     desc.usage = WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_STATICDECL;
                     desc.bind_flags = WINED3D_BIND_INDEX_BUFFER;
-                    desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+                    desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP;
                     desc.misc_flags = 0;
                     desc.structure_byte_stride = 0;
 
