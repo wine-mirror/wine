@@ -506,7 +506,7 @@ enum wined3d_patch_edge_style
 enum wined3d_swap_effect
 {
     WINED3D_SWAP_EFFECT_DISCARD             = 1,
-    WINED3D_SWAP_EFFECT_FLIP                = 2,
+    WINED3D_SWAP_EFFECT_SEQUENTIAL          = 2,
     WINED3D_SWAP_EFFECT_COPY                = 3,
     WINED3D_SWAP_EFFECT_COPY_VSYNC          = 4,
 };
