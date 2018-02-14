@@ -76,10 +76,8 @@ DWORD WINAPI XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
 {
     DWORD ret;
-    static int warn_once;
 
-    if (!warn_once++)
-        FIXME("(index %u, state %p) Stub!\n", index, state);
+    TRACE("(index %u, state %p)!\n", index, state);
 
     ret = XInputGetStateEx(index, state);
     if (ret != ERROR_SUCCESS)
@@ -93,17 +91,19 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetStateEx(DWORD index, XINPUT_STATE* state)
 {
-    static int warn_once;
+    TRACE("(index %u, state %p)!\n", index, state);
 
-    if (!warn_once++)
-        FIXME("(index %u, state %p) Stub!\n", index, state);
+    HID_find_gamepads(controllers);
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
     if (!controllers[index].connected)
         return ERROR_DEVICE_NOT_CONNECTED;
 
-    return ERROR_NOT_SUPPORTED;
+    HID_update_state(&controllers[index]);
+    memcpy(state, &controllers[index].state, sizeof(XINPUT_STATE));
+
+    return ERROR_SUCCESS;
 }
 
 DWORD WINAPI XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE keystroke)

@@ -28,3 +28,4 @@ typedef struct _xinput_controller
 
 void HID_find_gamepads(xinput_controller *devices) DECLSPEC_HIDDEN;
 void HID_destroy_gamepads(xinput_controller *devices) DECLSPEC_HIDDEN;
+void HID_update_state(xinput_controller* device) DECLSPEC_HIDDEN;

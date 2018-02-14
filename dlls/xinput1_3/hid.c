@@ -66,9 +66,9 @@ struct hid_platform_private {
 
     CRITICAL_SECTION crit;
 
-    CHAR *last_report;
-    CHAR *current_report;
     DWORD report_length;
+    BYTE current_report;
+    CHAR *reports[2];
 
     LONG ThumbLXRange[3];
     LONG ThumbLYRange[3];
@@ -201,8 +201,9 @@ static void build_private(struct hid_platform_private *private, PHIDP_PREPARSED_
     private->ppd = ppd;
     private->device = device;
     private->report_length = caps->InputReportByteLength + 1;
-    private->current_report = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, private->report_length);
-    private->last_report = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, private->report_length);
+    private->current_report = 0;
+    private->reports[0] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, private->report_length);
+    private->reports[1] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, private->report_length);
     size = (strlenW(path) + 1) * sizeof(WCHAR);
     private->device_path = HeapAlloc(GetProcessHeap(), 0, size);
     memcpy(private->device_path, path, size);
@@ -309,8 +310,8 @@ static void remove_gamepad(xinput_controller *device)
 
         EnterCriticalSection(&private->crit);
         CloseHandle(private->device);
-        HeapFree(GetProcessHeap(), 0, private->current_report);
-        HeapFree(GetProcessHeap(), 0, private->last_report);
+        HeapFree(GetProcessHeap(), 0, private->reports[0]);
+        HeapFree(GetProcessHeap(), 0, private->reports[1]);
         HeapFree(GetProcessHeap(), 0, private->device_path);
         HidD_FreePreparsedData(private->ppd);
         device->platform_private = NULL;
@@ -328,4 +329,85 @@ void HID_destroy_gamepads(xinput_controller *devices)
     for (i = 0; i < XUSER_MAX_COUNT; i++)
         remove_gamepad(&devices[i]);
     LeaveCriticalSection(&hid_xinput_crit);
+}
+
+#define SIGN(v,b) ((b==8)?(BYTE)v:(b==16)?(SHORT)v:(INT)v)
+#define SCALE_SHORT(v,r) (SHORT)((((0xffff)*(SIGN(v,r[1]) - r[0]))/r[2])-32767)
+#define SCALE_BYTE(v,r) (BYTE)((((0xff)*(SIGN(v,r[1]) - r[0]))/r[2]))
+
+void HID_update_state(xinput_controller* device)
+{
+    struct hid_platform_private *private = device->platform_private;
+    int i;
+    CHAR *report = private->reports[(private->current_report)%2];
+    CHAR *target_report = private->reports[(private->current_report+1)%2];
+
+    USAGE buttons[15];
+    ULONG button_length;
+    ULONG value;
+
+    EnterCriticalSection(&private->crit);
+    if (!HidD_GetInputReport(private->device, target_report, private->report_length))
+    {
+        if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE)
+            remove_gamepad(device);
+        else
+            ERR("Failed to get Input Report (%x)\n", GetLastError());
+        LeaveCriticalSection(&private->crit);
+        return;
+    }
+    if (memcmp(report, target_report, private->report_length) == 0)
+    {
+        LeaveCriticalSection(&private->crit);
+        return;
+    }
+
+    private->current_report = (private->current_report+1)%2;
+
+    device->state.dwPacketNumber++;
+    button_length = 15;
+    HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, private->ppd, target_report, private->report_length);
+
+    device->state.Gamepad.wButtons = 0;
+    for (i = 0; i < button_length; i++)
+    {
+        switch (buttons[i])
+        {
+            case 1: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_A; break;
+            case 2: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_B; break;
+            case 3: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_X; break;
+            case 4: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_Y; break;
+            case 5: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_SHOULDER; break;
+            case 6: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_SHOULDER; break;
+            case 7: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_LEFT_THUMB; break;
+            case 8: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_RIGHT_THUMB; break;
+
+            case 9: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_START; break;
+            case 10: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_BACK; break;
+            case 11: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_GUIDE; break;
+            case 12: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_UP; break;
+            case 13: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_DOWN; break;
+            case 14: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_LEFT; break;
+            case 15: device->state.Gamepad.wButtons |= XINPUT_GAMEPAD_DPAD_RIGHT; break;
+        }
+    }
+
+    HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, private->ppd, target_report, private->report_length);
+    device->state.Gamepad.sThumbLX = SCALE_SHORT(value, private->ThumbLXRange);
+
+    HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, private->ppd, target_report, private->report_length);
+    device->state.Gamepad.sThumbLY = -SCALE_SHORT(value, private->ThumbLYRange);
+
+    HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, private->ppd, target_report, private->report_length);
+    device->state.Gamepad.sThumbRX = SCALE_SHORT(value, private->ThumbRXRange);
+
+    HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, private->ppd, target_report, private->report_length);
+    device->state.Gamepad.sThumbRY = -SCALE_SHORT(value, private->ThumbRYRange);
+
+    HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, private->ppd, target_report, private->report_length);
+    device->state.Gamepad.bRightTrigger = SCALE_BYTE(value, private->RightTriggerRange);
+
+    HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->ppd, target_report, private->report_length);
+    device->state.Gamepad.bLeftTrigger = SCALE_BYTE(value, private->LeftTriggerRange);
+    LeaveCriticalSection(&private->crit);
 }
