@@ -404,7 +404,7 @@ static void stateblock_init_lights(struct wined3d_stateblock *stateblock, struct
 
         LIST_FOR_EACH_ENTRY(src_light, &light_map[i], struct wined3d_light_info, entry)
         {
-            struct wined3d_light_info *dst_light = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst_light));
+            struct wined3d_light_info *dst_light = heap_alloc(sizeof(*dst_light));
 
             *dst_light = *src_light;
             list_add_tail(&stateblock->state.light_map[i], &dst_light->entry);
@@ -539,7 +539,7 @@ void state_cleanup(struct wined3d_state *state)
         {
             struct wined3d_light_info *light = LIST_ENTRY(e1, struct wined3d_light_info, entry);
             list_remove(&light->entry);
-            HeapFree(GetProcessHeap(), 0, light);
+            heap_free(light);
         }
     }
 }
@@ -553,7 +553,7 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
     if (!refcount)
     {
         state_cleanup(&stateblock->state);
-        HeapFree(GetProcessHeap(), 0, stateblock);
+        heap_free(stateblock);
     }
 
     return refcount;
@@ -1372,15 +1372,14 @@ HRESULT CDECL wined3d_stateblock_create(struct wined3d_device *device,
     TRACE("device %p, type %#x, stateblock %p.\n",
             device, type, stateblock);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = stateblock_init(object, device, type);
     if (FAILED(hr))
     {
         WARN("Failed to initialize stateblock, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 

@@ -48,6 +48,7 @@
 #include "winternl.h"
 #include "ddk/d3dkmthk.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 #include "objbase.h"
@@ -4292,13 +4293,6 @@ BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE
 static inline BOOL wined3d_format_is_typeless(const struct wined3d_format *format)
 {
     return format->id == format->typeless_id && format->id != WINED3DFMT_UNKNOWN;
-}
-
-static inline void *wined3d_calloc(SIZE_T count, SIZE_T size)
-{
-    if (count > ~(SIZE_T)0 / size)
-        return NULL;
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, count * size);
 }
 
 static inline BOOL use_vs(const struct wined3d_state *state)

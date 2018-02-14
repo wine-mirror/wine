@@ -1828,7 +1828,7 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
     unsigned int i, j;
 
     gl_info->format_count = WINED3D_FORMAT_COUNT;
-    if (!(gl_info->formats = wined3d_calloc(gl_info->format_count
+    if (!(gl_info->formats = heap_calloc(gl_info->format_count
             + ARRAY_SIZE(typeless_depth_stencil_formats), sizeof(*gl_info->formats))))
     {
         ERR("Failed to allocate memory.\n");
@@ -1922,7 +1922,7 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
     return TRUE;
 
 fail:
-    HeapFree(GetProcessHeap(), 0, gl_info->formats);
+    heap_free(gl_info->formats);
     return FALSE;
 }
 
@@ -3806,7 +3806,7 @@ BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, struct wi
     return TRUE;
 
 fail:
-    HeapFree(GetProcessHeap(), 0, gl_info->formats);
+    heap_free(gl_info->formats);
     gl_info->formats = NULL;
     return FALSE;
 }
@@ -6159,7 +6159,7 @@ BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE
         new_capacity = count;
 
     if (!*elements)
-        new_elements = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, new_capacity * size);
+        new_elements = heap_alloc_zero(new_capacity * size);
     else
         new_elements = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *elements, new_capacity * size);
     if (!new_elements)

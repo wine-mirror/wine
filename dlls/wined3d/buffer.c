@@ -302,8 +302,8 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
              */
             TRACE("Reconverting because converted attributes occur, and the stride changed.\n");
             buffer->stride = *stride_this_run;
-            HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, buffer->conversion_map);
-            buffer->conversion_map = wined3d_calloc(buffer->stride, sizeof(*buffer->conversion_map));
+            heap_free(buffer->conversion_map);
+            buffer->conversion_map = heap_calloc(buffer->stride, sizeof(*buffer->conversion_map));
             ret = TRUE;
         }
     }
@@ -385,7 +385,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_s
         TRACE("No fixup required.\n");
         if(This->conversion_map)
         {
-            HeapFree(GetProcessHeap(), 0, This->conversion_map);
+            heap_free(This->conversion_map);
             This->conversion_map = NULL;
             This->stride = 0;
             return TRUE;
@@ -474,8 +474,9 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_s
     if (!stride_this_run && This->conversion_map)
     {
         /* Sanity test */
-        if (!ret) ERR("no converted attributes found, old conversion map exists, and no declaration change?\n");
-        HeapFree(GetProcessHeap(), 0, This->conversion_map);
+        if (!ret)
+            ERR("no converted attributes found, old conversion map exists, and no declaration change?\n");
+        heap_free(This->conversion_map);
         This->conversion_map = NULL;
         This->stride = 0;
     }
@@ -563,7 +564,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
     /* Now for each vertex in the buffer that needs conversion. */
     vertex_count = buffer->resource.size / buffer->stride;
 
-    if (!(data = HeapAlloc(GetProcessHeap(), 0, buffer->resource.size)))
+    if (!(data = heap_alloc(buffer->resource.size)))
     {
         ERR("Out of memory.\n");
         return;
@@ -601,7 +602,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
 
     wined3d_buffer_upload_ranges(buffer, context, data, 0, buffer->modified_areas, buffer->maps);
 
-    HeapFree(GetProcessHeap(), 0, data);
+    heap_free(data);
 }
 
 static BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
@@ -753,7 +754,7 @@ static void buffer_unload(struct wined3d_resource *resource)
 
         context_release(context);
 
-        HeapFree(GetProcessHeap(), 0, buffer->conversion_map);
+        heap_free(buffer->conversion_map);
         buffer->conversion_map = NULL;
         buffer->stride = 0;
         buffer->conversion_stride = 0;
@@ -780,11 +781,11 @@ static void wined3d_buffer_destroy_object(void *object)
         buffer_destroy_buffer_object(buffer, context);
         context_release(context);
 
-        HeapFree(GetProcessHeap(), 0, buffer->conversion_map);
+        heap_free(buffer->conversion_map);
     }
 
-    HeapFree(GetProcessHeap(), 0, buffer->maps);
-    HeapFree(GetProcessHeap(), 0, buffer);
+    heap_free(buffer->maps);
+    heap_free(buffer);
 }
 
 ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
@@ -1396,7 +1397,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         buffer->flags |= WINED3D_BUFFER_USE_BO;
     }
 
-    if (!(buffer->maps = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer->maps))))
+    if (!(buffer->maps = heap_alloc(sizeof(*buffer->maps))))
     {
         ERR("Out of memory.\n");
         buffer_unload(&buffer->resource);
@@ -1423,14 +1424,14 @@ HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, const struct 
     TRACE("device %p, desc %p, data %p, parent %p, parent_ops %p, buffer %p.\n",
             device, desc, data, parent, parent_ops, buffer);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = buffer_init(object, device, desc->byte_width, desc->usage, WINED3DFMT_UNKNOWN,
             desc->access, desc->bind_flags, data, parent, parent_ops)))
     {
         WARN("Failed to initialize buffer, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
     object->desc = *desc;

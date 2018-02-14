@@ -374,7 +374,7 @@ BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource)
     SIZE_T align = RESOURCE_ALIGNMENT - 1 + sizeof(*p);
     void *mem;
 
-    if (!(mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, resource->size + align)))
+    if (!(mem = heap_alloc_zero(resource->size + align)))
         return FALSE;
 
     p = (void **)(((ULONG_PTR)mem + align) & ~(RESOURCE_ALIGNMENT - 1)) - 1;
@@ -392,7 +392,7 @@ void wined3d_resource_free_sysmem(struct wined3d_resource *resource)
     if (!p)
         return;
 
-    HeapFree(GetProcessHeap(), 0, *(--p));
+    heap_free(*(--p));
     resource->heap_memory = NULL;
 }
 

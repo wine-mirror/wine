@@ -149,11 +149,7 @@ BOOL device_context_add(struct wined3d_device *device, struct wined3d_context *c
 
     TRACE("Adding context %p.\n", context);
 
-    if (!device->contexts) new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_array));
-    else new_array = HeapReAlloc(GetProcessHeap(), 0, device->contexts,
-            sizeof(*new_array) * (device->context_count + 1));
-
-    if (!new_array)
+    if (!(new_array = heap_realloc(device->contexts, sizeof(*new_array) * (device->context_count + 1))))
     {
         ERR("Failed to grow the context array.\n");
         return FALSE;
@@ -189,14 +185,13 @@ void device_context_remove(struct wined3d_device *device, struct wined3d_context
 
     if (!--device->context_count)
     {
-        HeapFree(GetProcessHeap(), 0, device->contexts);
+        heap_free(device->contexts);
         device->contexts = NULL;
         return;
     }
 
     memmove(&device->contexts[i], &device->contexts[i + 1], (device->context_count - i) * sizeof(*device->contexts));
-    new_array = HeapReAlloc(GetProcessHeap(), 0, device->contexts, device->context_count * sizeof(*device->contexts));
-    if (!new_array)
+    if (!(new_array = heap_realloc(device->contexts, device->context_count * sizeof(*device->contexts))))
     {
         ERR("Failed to shrink context array. Oh well.\n");
         return;
@@ -491,7 +486,7 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
 
         for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
         {
-            HeapFree(GetProcessHeap(), 0, device->multistate_funcs[i]);
+            heap_free(device->multistate_funcs[i]);
             device->multistate_funcs[i] = NULL;
         }
 
@@ -518,7 +513,7 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
 
         wined3d_decref(device->wined3d);
         device->wined3d = NULL;
-        HeapFree(GetProcessHeap(), 0, device);
+        heap_free(device);
         TRACE("Freed device %p.\n", device);
     }
 
@@ -1066,7 +1061,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     if (device->wined3d->flags & WINED3D_NO3D)
         return WINED3DERR_INVALIDCALL;
 
-    if (!(device->fb.render_targets = wined3d_calloc(gl_info->limits.buffers, sizeof(*device->fb.render_targets))))
+    if (!(device->fb.render_targets = heap_calloc(gl_info->limits.buffers, sizeof(*device->fb.render_targets))))
         return E_OUTOFMEMORY;
 
     /* Setup the implicit swapchain. This also initializes a context. */
@@ -1099,7 +1094,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     }
 
     device->swapchain_count = 1;
-    if (!(device->swapchains = wined3d_calloc(device->swapchain_count, sizeof(*device->swapchains))))
+    if (!(device->swapchains = heap_calloc(device->swapchain_count, sizeof(*device->swapchains))))
     {
         ERR("Out of memory!\n");
         goto err_out;
@@ -1129,13 +1124,13 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     return WINED3D_OK;
 
 err_out:
-    HeapFree(GetProcessHeap(), 0, device->swapchains);
+    heap_free(device->swapchains);
     device->swapchain_count = 0;
     if (device->back_buffer_view)
         wined3d_rendertarget_view_decref(device->back_buffer_view);
     if (swapchain)
         wined3d_swapchain_decref(swapchain);
-    HeapFree(GetProcessHeap(), 0, device->fb.render_targets);
+    heap_free(device->fb.render_targets);
 
     return hr;
 }
@@ -1159,7 +1154,7 @@ HRESULT CDECL wined3d_device_init_gdi(struct wined3d_device *device,
     }
 
     device->swapchain_count = 1;
-    if (!(device->swapchains = wined3d_calloc(device->swapchain_count, sizeof(*device->swapchains))))
+    if (!(device->swapchains = heap_calloc(device->swapchain_count, sizeof(*device->swapchains))))
     {
         ERR("Out of memory!\n");
         goto err_out;
@@ -1169,7 +1164,7 @@ HRESULT CDECL wined3d_device_init_gdi(struct wined3d_device *device,
     if (!(device->blitter = wined3d_cpu_blitter_create()))
     {
         ERR("Failed to create CPU blitter.\n");
-        HeapFree(GetProcessHeap(), 0, device->swapchains);
+        heap_free(device->swapchains);
         device->swapchain_count = 0;
         goto err_out;
     }
@@ -1246,11 +1241,11 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
             FIXME("Something's still holding the implicit swapchain.\n");
     }
 
-    HeapFree(GetProcessHeap(), 0, device->swapchains);
+    heap_free(device->swapchains);
     device->swapchains = NULL;
     device->swapchain_count = 0;
 
-    HeapFree(GetProcessHeap(), 0, device->fb.render_targets);
+    heap_free(device->fb.render_targets);
     device->fb.render_targets = NULL;
 
     device->d3d_initialized = FALSE;
@@ -1271,7 +1266,7 @@ HRESULT CDECL wined3d_device_uninit_gdi(struct wined3d_device *device)
             FIXME("Something's still holding the implicit swapchain.\n");
     }
 
-    HeapFree(GetProcessHeap(), 0, device->swapchains);
+    heap_free(device->swapchains);
     device->swapchains = NULL;
     device->swapchain_count = 0;
     return WINED3D_OK;
@@ -1589,8 +1584,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
     if (!(object = wined3d_state_get_light(device->update_state, light_idx)))
     {
         TRACE("Adding new light\n");
-        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-        if (!object)
+        if (!(object = heap_alloc_zero(sizeof(*object))))
             return E_OUTOFMEMORY;
 
         list_add_head(&device->update_state->light_map[hash_idx], &object->entry);
@@ -4608,7 +4602,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         /* 32-bit user32 cursors ignore the alpha channel if it's all
          * zeroes, and use the mask instead. Fill the mask with all ones
          * to ensure we still get a fully transparent cursor. */
-        if (!(mask_bits = HeapAlloc(GetProcessHeap(), 0, mask_size)))
+        if (!(mask_bits = heap_alloc(mask_size)))
             return E_OUTOFMEMORY;
         memset(mask_bits, 0xff, mask_size);
 
@@ -4633,7 +4627,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         if (device->bCursorVisible)
             SetCursor(cursor);
 
-        HeapFree(GetProcessHeap(), 0, mask_bits);
+        heap_free(mask_bits);
     }
 
     TRACE("New cursor dimensions are %ux%u.\n", cursor_width, cursor_height);
@@ -5208,7 +5202,7 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 err:
     for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
     {
-        HeapFree(GetProcessHeap(), 0, device->multistate_funcs[i]);
+        heap_free(device->multistate_funcs[i]);
     }
     wine_rb_destroy(&device->samplers, NULL, NULL);
     wined3d_decref(device->wined3d);

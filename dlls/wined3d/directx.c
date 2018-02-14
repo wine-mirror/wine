@@ -448,8 +448,8 @@ UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount)
 
 static void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
 {
-    HeapFree(GetProcessHeap(), 0, adapter->gl_info.formats);
-    HeapFree(GetProcessHeap(), 0, adapter->cfgs);
+    heap_free(adapter->gl_info.formats);
+    heap_free(adapter->cfgs);
 }
 
 ULONG CDECL wined3d_incref(struct wined3d *wined3d)
@@ -475,7 +475,7 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
         {
             wined3d_adapter_cleanup(&wined3d->adapters[i]);
         }
-        HeapFree(GetProcessHeap(), 0, wined3d);
+        heap_free(wined3d);
     }
 
     return refcount;
@@ -4638,11 +4638,11 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
         return E_FAIL;
     }
 
-    if (!(modes = wined3d_calloc(mode_count, sizeof(*modes))))
+    if (!(modes = heap_calloc(mode_count, sizeof(*modes))))
         return E_OUTOFMEMORY;
-    if (!(matching_modes = wined3d_calloc(mode_count, sizeof(*matching_modes))))
+    if (!(matching_modes = heap_calloc(mode_count, sizeof(*matching_modes))))
     {
-        HeapFree(GetProcessHeap(), 0, modes);
+        heap_free(modes);
         return E_OUTOFMEMORY;
     }
 
@@ -4651,8 +4651,8 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
         if (FAILED(hr = wined3d_enum_adapter_modes(wined3d, adapter_idx,
                 mode->format_id, WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i])))
         {
-            HeapFree(GetProcessHeap(), 0, matching_modes);
-            HeapFree(GetProcessHeap(), 0, modes);
+            heap_free(matching_modes);
+            heap_free(modes);
             return hr;
         }
         matching_modes[i] = &modes[i];
@@ -4688,8 +4688,8 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
         if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx,
                 &current_mode, NULL)))
         {
-            HeapFree(GetProcessHeap(), 0, matching_modes);
-            HeapFree(GetProcessHeap(), 0, modes);
+            heap_free(matching_modes);
+            heap_free(modes);
             return hr;
         }
         mode->width = current_mode.width;
@@ -4711,8 +4711,8 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
 
     *mode = *matching_modes[j];
 
-    HeapFree(GetProcessHeap(), 0, matching_modes);
-    HeapFree(GetProcessHeap(), 0, modes);
+    heap_free(matching_modes);
+    heap_free(modes);
 
     TRACE("Returning %ux%u@%u %s %#x.\n", mode->width, mode->height,
             mode->refresh_rate, debug_d3dformat(mode->format_id),
@@ -6191,8 +6191,7 @@ HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, e
     if (wined3d->adapter_count && adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = device_init(object, wined3d, adapter_idx, device_type,
@@ -6200,7 +6199,7 @@ HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, e
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -6440,7 +6439,7 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc
         attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
         GL_EXTCALL(wglGetPixelFormatAttribivARB(dc, 0, 0, 1, &attribute, &cfg_count));
 
-        adapter->cfgs = wined3d_calloc(cfg_count, sizeof(*adapter->cfgs));
+        adapter->cfgs = heap_calloc(cfg_count, sizeof(*adapter->cfgs));
         attribs[attrib_count++] = WGL_RED_BITS_ARB;
         attribs[attrib_count++] = WGL_GREEN_BITS_ARB;
         attribs[attrib_count++] = WGL_BLUE_BITS_ARB;
@@ -6505,7 +6504,7 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc
         int cfg_count;
 
         cfg_count = DescribePixelFormat(dc, 0, 0, 0);
-        adapter->cfgs = wined3d_calloc(cfg_count, sizeof(*adapter->cfgs));
+        adapter->cfgs = heap_calloc(cfg_count, sizeof(*adapter->cfgs));
 
         for (i = 0, adapter->cfg_count = 0; i < cfg_count; ++i)
         {
@@ -6666,7 +6665,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, 
     {
         WARN("No suitable pixel formats found.\n");
         wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
-        HeapFree(GetProcessHeap(), 0, adapter->cfgs);
+        heap_free(adapter->cfgs);
         return FALSE;
     }
 
@@ -6674,7 +6673,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, 
     {
         ERR("Failed to initialize GL format info.\n");
         wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
-        HeapFree(GetProcessHeap(), 0, adapter->cfgs);
+        heap_free(adapter->cfgs);
         return FALSE;
     }
 

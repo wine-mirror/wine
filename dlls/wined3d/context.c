@@ -523,8 +523,7 @@ static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *
     unsigned int object_count = gl_info->limits.buffers + 1;
     struct fbo_entry *entry;
 
-    entry = HeapAlloc(GetProcessHeap(), 0,
-            FIELD_OFFSET(struct fbo_entry, key.objects[object_count]));
+    entry = heap_alloc(FIELD_OFFSET(struct fbo_entry, key.objects[object_count]));
     memset(&entry->key, 0, FIELD_OFFSET(struct wined3d_fbo_entry_key, objects[object_count]));
     context_generate_fbo_key(context, &entry->key, render_targets, depth_stencil, color_location, ds_location);
     entry->flags = 0;
@@ -574,7 +573,7 @@ static void context_destroy_fbo_entry(struct wined3d_context *context, struct fb
     }
     --context->fbo_entry_count;
     list_remove(&entry->entry);
-    HeapFree(GetProcessHeap(), 0, entry);
+    heap_free(entry);
 }
 
 /* Context activation is done by the caller. */
@@ -1435,11 +1434,11 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         checkGLcall("context cleanup");
     }
 
-    HeapFree(GetProcessHeap(), 0, context->free_so_statistics_queries);
-    HeapFree(GetProcessHeap(), 0, context->free_pipeline_statistics_queries);
-    HeapFree(GetProcessHeap(), 0, context->free_timestamp_queries);
-    HeapFree(GetProcessHeap(), 0, context->free_occlusion_queries);
-    HeapFree(GetProcessHeap(), 0, context->free_fences);
+    heap_free(context->free_so_statistics_queries);
+    heap_free(context->free_pipeline_statistics_queries);
+    heap_free(context->free_timestamp_queries);
+    heap_free(context->free_occlusion_queries);
+    heap_free(context->free_fences);
 
     context_restore_pixel_format(context);
     if (restore_ctx)
@@ -1491,8 +1490,8 @@ BOOL context_set_current(struct wined3d_context *ctx)
         {
             TRACE("Switching away from destroyed context %p.\n", old);
             context_destroy_gl_resources(old);
-            HeapFree(GetProcessHeap(), 0, (void *)old->gl_info);
-            HeapFree(GetProcessHeap(), 0, old);
+            heap_free((void *)old->gl_info);
+            heap_free(old);
         }
         else
         {
@@ -1863,35 +1862,33 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
     wined3d_from_cs(device->cs);
 
-    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
-    if (!ret)
+    if (!(ret = heap_alloc_zero(sizeof(*ret))))
         return NULL;
 
-    if (!(ret->blit_targets = wined3d_calloc(gl_info->limits.buffers, sizeof(*ret->blit_targets))))
+    if (!(ret->blit_targets = heap_calloc(gl_info->limits.buffers, sizeof(*ret->blit_targets))))
         goto out;
 
-    if (!(ret->draw_buffers = wined3d_calloc(gl_info->limits.buffers, sizeof(*ret->draw_buffers))))
+    if (!(ret->draw_buffers = heap_calloc(gl_info->limits.buffers, sizeof(*ret->draw_buffers))))
         goto out;
 
-    ret->fbo_key = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            FIELD_OFFSET(struct wined3d_fbo_entry_key, objects[gl_info->limits.buffers + 1]));
-    if (!ret->fbo_key)
+    if (!(ret->fbo_key = heap_alloc_zero(FIELD_OFFSET(struct wined3d_fbo_entry_key,
+            objects[gl_info->limits.buffers + 1]))))
         goto out;
 
     ret->free_timestamp_query_size = 4;
-    if (!(ret->free_timestamp_queries = wined3d_calloc(ret->free_timestamp_query_size,
+    if (!(ret->free_timestamp_queries = heap_calloc(ret->free_timestamp_query_size,
             sizeof(*ret->free_timestamp_queries))))
         goto out;
     list_init(&ret->timestamp_queries);
 
     ret->free_occlusion_query_size = 4;
-    if (!(ret->free_occlusion_queries = wined3d_calloc(ret->free_occlusion_query_size,
+    if (!(ret->free_occlusion_queries = heap_calloc(ret->free_occlusion_query_size,
             sizeof(*ret->free_occlusion_queries))))
         goto out;
     list_init(&ret->occlusion_queries);
 
     ret->free_fence_size = 4;
-    if (!(ret->free_fences = wined3d_calloc(ret->free_fence_size, sizeof(*ret->free_fences))))
+    if (!(ret->free_fences = heap_calloc(ret->free_fence_size, sizeof(*ret->free_fences))))
         goto out;
     list_init(&ret->fences);
 
@@ -1947,7 +1944,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         }
     }
 
-    if (!(ret->texture_type = wined3d_calloc(gl_info->limits.combined_samplers,
+    if (!(ret->texture_type = heap_calloc(gl_info->limits.combined_samplers,
             sizeof(*ret->texture_type))))
         goto out;
 
@@ -2248,14 +2245,14 @@ out:
         wined3d_release_dc(swapchain->win_handle, ret->hdc);
     device->shader_backend->shader_free_context_data(ret);
     device->adapter->fragment_pipe->free_context_data(ret);
-    HeapFree(GetProcessHeap(), 0, ret->texture_type);
-    HeapFree(GetProcessHeap(), 0, ret->free_fences);
-    HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
-    HeapFree(GetProcessHeap(), 0, ret->free_timestamp_queries);
-    HeapFree(GetProcessHeap(), 0, ret->fbo_key);
-    HeapFree(GetProcessHeap(), 0, ret->draw_buffers);
-    HeapFree(GetProcessHeap(), 0, ret->blit_targets);
-    HeapFree(GetProcessHeap(), 0, ret);
+    heap_free(ret->texture_type);
+    heap_free(ret->free_fences);
+    heap_free(ret->free_occlusion_queries);
+    heap_free(ret->free_timestamp_queries);
+    heap_free(ret->fbo_key);
+    heap_free(ret->draw_buffers);
+    heap_free(ret->blit_targets);
+    heap_free(ret);
     return NULL;
 }
 
@@ -2288,7 +2285,7 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
     {
         /* Make a copy of gl_info for context_destroy_gl_resources use, the one
            in wined3d_adapter may go away in the meantime */
-        struct wined3d_gl_info *gl_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*gl_info));
+        struct wined3d_gl_info *gl_info = heap_alloc(sizeof(*gl_info));
         *gl_info = *context->gl_info;
         context->gl_info = gl_info;
         context->destroyed = 1;
@@ -2297,12 +2294,13 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
 
     device->shader_backend->shader_free_context_data(context);
     device->adapter->fragment_pipe->free_context_data(context);
-    HeapFree(GetProcessHeap(), 0, context->texture_type);
-    HeapFree(GetProcessHeap(), 0, context->fbo_key);
-    HeapFree(GetProcessHeap(), 0, context->draw_buffers);
-    HeapFree(GetProcessHeap(), 0, context->blit_targets);
+    heap_free(context->texture_type);
+    heap_free(context->fbo_key);
+    heap_free(context->draw_buffers);
+    heap_free(context->blit_targets);
     device_context_remove(device, context);
-    if (destroy) HeapFree(GetProcessHeap(), 0, context);
+    if (destroy)
+        heap_free(context);
 }
 
 const DWORD *context_get_tex_unit_mapping(const struct wined3d_context *context,

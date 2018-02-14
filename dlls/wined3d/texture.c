@@ -962,7 +962,7 @@ static void wined3d_texture_cleanup_sync(struct wined3d_texture *texture)
 static void wined3d_texture_destroy_object(void *object)
 {
     wined3d_texture_cleanup(object);
-    HeapFree(GetProcessHeap(), 0, object);
+    heap_free(object);
 }
 
 ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
@@ -1752,7 +1752,7 @@ static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
             TRACE("Deleting renderbuffer %u.\n", entry->id);
             context_gl_resource_released(device, entry->id, TRUE);
             gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
-            HeapFree(GetProcessHeap(), 0, entry);
+            heap_free(entry);
         }
 
         if (surface->dc)
@@ -1769,7 +1769,7 @@ static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
     }
     if (context)
         context_release(context);
-    HeapFree(GetProcessHeap(), 0, texture->sub_resources[0].u.surface);
+    heap_free(texture->sub_resources[0].u.surface);
 }
 
 static const struct wined3d_texture_ops texture2d_ops =
@@ -1854,7 +1854,7 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
                 context_gl_resource_released(device, entry->id, TRUE);
                 gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
                 list_remove(&entry->entry);
-                HeapFree(GetProcessHeap(), 0, entry);
+                heap_free(entry);
             }
             list_init(&surface->renderbuffers);
             surface->current_renderbuffer = NULL;
@@ -2223,7 +2223,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         texture->resource.map_binding = WINED3D_LOCATION_BUFFER;
 
     if (level_count > ~(SIZE_T)0 / layer_count
-            || !(surfaces = wined3d_calloc(level_count * layer_count, sizeof(*surfaces))))
+            || !(surfaces = heap_calloc(level_count * layer_count, sizeof(*surfaces))))
     {
         wined3d_texture_cleanup_sync(texture);
         return E_OUTOFMEMORY;
@@ -2344,7 +2344,7 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
         dst_row_pitch = update_w * format->conv_byte_count;
         dst_slice_pitch = dst_row_pitch * update_h;
 
-        converted_mem = wined3d_calloc(update_d, dst_slice_pitch);
+        converted_mem = heap_calloc(update_d, dst_slice_pitch);
         format->upload(data->addr, converted_mem, row_pitch, slice_pitch,
                 dst_row_pitch, dst_slice_pitch, update_w, update_h, update_d);
         mem = converted_mem;
@@ -2372,7 +2372,7 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
         checkGLcall("glBindBuffer");
     }
 
-    HeapFree(GetProcessHeap(), 0, converted_mem);
+    heap_free(converted_mem);
 }
 
 /* Context activation is done by the caller. */
@@ -2423,7 +2423,7 @@ static void texture3d_srgb_transfer(struct wined3d_texture *texture, unsigned in
      * for DEFAULT pool surfaces. */
     WARN_(d3d_perf)("Performing slow rgb/srgb volume transfer.\n");
     data.buffer_object = 0;
-    if (!(data.addr = HeapAlloc(GetProcessHeap(), 0, sub_resource->size)))
+    if (!(data.addr = heap_alloc(sub_resource->size)))
         return;
 
     wined3d_texture_get_pitch(texture, sub_resource_idx, &row_pitch, &slice_pitch);
@@ -2433,7 +2433,7 @@ static void texture3d_srgb_transfer(struct wined3d_texture *texture, unsigned in
     texture3d_upload_data(texture, sub_resource_idx, context,
             NULL, wined3d_const_bo_address(&data), row_pitch, slice_pitch);
 
-    HeapFree(GetProcessHeap(), 0, data.addr);
+    heap_free(data.addr);
 }
 
 /* Context activation is done by the caller. */
@@ -2988,8 +2988,8 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
         }
     }
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            FIELD_OFFSET(struct wined3d_texture, sub_resources[level_count * layer_count]))))
+    if (!(object = heap_alloc_zero(FIELD_OFFSET(struct wined3d_texture,
+            sub_resources[level_count * layer_count]))))
         return E_OUTOFMEMORY;
 
     switch (desc->resource_type)
@@ -3011,7 +3011,7 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
     if (FAILED(hr))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        heap_free(object);
         return hr;
     }
 
@@ -3028,7 +3028,7 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
             {
                 WARN("Invalid sub-resource data specified for sub-resource %u.\n", i);
                 wined3d_texture_cleanup_sync(object);
-                HeapFree(GetProcessHeap(), 0, object);
+                heap_free(object);
                 return E_INVALIDARG;
             }
         }

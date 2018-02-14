@@ -49,7 +49,7 @@ ULONG CDECL wined3d_blend_state_incref(struct wined3d_blend_state *state)
 
 static void wined3d_blend_state_destroy_object(void *object)
 {
-    HeapFree(GetProcessHeap(), 0, object);
+    heap_free(object);
 }
 
 ULONG CDECL wined3d_blend_state_decref(struct wined3d_blend_state *state)
@@ -84,7 +84,7 @@ HRESULT CDECL wined3d_blend_state_create(struct wined3d_device *device,
     TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
             device, desc, parent, parent_ops, state);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->refcount = 1;
@@ -110,7 +110,7 @@ ULONG CDECL wined3d_rasterizer_state_incref(struct wined3d_rasterizer_state *sta
 
 static void wined3d_rasterizer_state_destroy_object(void *object)
 {
-    HeapFree(GetProcessHeap(), 0, object);
+    heap_free(object);
 }
 
 ULONG CDECL wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *state)
@@ -145,7 +145,7 @@ HRESULT CDECL wined3d_rasterizer_state_create(struct wined3d_device *device,
     TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
             device, desc, parent, parent_ops, state);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->refcount = 1;
@@ -6170,7 +6170,7 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
                     break;
                 case 1:
                     StateTable[cur[i].state].apply = multistate_apply_2;
-                    if (!(dev_multistate_funcs[cur[i].state] = wined3d_calloc(2, sizeof(**dev_multistate_funcs))))
+                    if (!(dev_multistate_funcs[cur[i].state] = heap_calloc(2, sizeof(**dev_multistate_funcs))))
                         goto out_of_mem;
 
                     dev_multistate_funcs[cur[i].state][0] = multistate_funcs[cur[i].state][0];
@@ -6178,13 +6178,9 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
                     break;
                 case 2:
                     StateTable[cur[i].state].apply = multistate_apply_3;
-                    funcs_array = HeapReAlloc(GetProcessHeap(),
-                                              0,
-                                              dev_multistate_funcs[cur[i].state],
-                                              sizeof(**dev_multistate_funcs) * 3);
-                    if (!funcs_array) {
+                    if (!(funcs_array = heap_realloc(dev_multistate_funcs[cur[i].state],
+                            sizeof(**dev_multistate_funcs) * 3)))
                         goto out_of_mem;
-                    }
 
                     dev_multistate_funcs[cur[i].state] = funcs_array;
                     dev_multistate_funcs[cur[i].state][2] = multistate_funcs[cur[i].state][2];
@@ -6210,8 +6206,9 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
     return WINED3D_OK;
 
 out_of_mem:
-    for (i = 0; i <= STATE_HIGHEST; ++i) {
-        HeapFree(GetProcessHeap(), 0, dev_multistate_funcs[i]);
+    for (i = 0; i <= STATE_HIGHEST; ++i)
+    {
+        heap_free(dev_multistate_funcs[i]);
     }
 
     memset(dev_multistate_funcs, 0, (STATE_HIGHEST + 1)*sizeof(*dev_multistate_funcs));

@@ -1697,7 +1697,7 @@ static void wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
     if (!(light_info = wined3d_state_get_light(&cs->state, light_idx)))
     {
         TRACE("Adding new light.\n");
-        if (!(light_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*light_info))))
+        if (!(light_info = heap_alloc_zero(sizeof(*light_info))))
         {
             ERR("Failed to allocate light info.\n");
             return;
@@ -2459,9 +2459,9 @@ static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size, enu
 
         new_size = max(size, cs->data_size * 2);
         if (!cs->end)
-            new_data = HeapReAlloc(GetProcessHeap(), 0, cs->data, new_size);
+            new_data = heap_realloc(cs->data, new_size);
         else
-            new_data = HeapAlloc(GetProcessHeap(), 0, new_size);
+            new_data = heap_alloc(new_size);
         if (!new_data)
             return NULL;
 
@@ -2494,7 +2494,7 @@ static void wined3d_cs_st_submit(struct wined3d_cs *cs, enum wined3d_cs_queue_id
     if (cs->data == data)
         cs->start = cs->end = start;
     else if (!start)
-        HeapFree(GetProcessHeap(), 0, data);
+        heap_free(data);
 }
 
 static void wined3d_cs_st_finish(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id)
@@ -2728,15 +2728,15 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_cs *cs;
 
-    if (!(cs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cs))))
+    if (!(cs = heap_alloc_zero(sizeof(*cs))))
         return NULL;
 
     cs->ops = &wined3d_cs_st_ops;
     cs->device = device;
 
-    if (!(cs->fb.render_targets = wined3d_calloc(gl_info->limits.buffers, sizeof(*cs->fb.render_targets))))
+    if (!(cs->fb.render_targets = heap_calloc(gl_info->limits.buffers, sizeof(*cs->fb.render_targets))))
     {
-        HeapFree(GetProcessHeap(), 0, cs);
+        heap_free(cs);
         return NULL;
     }
 
@@ -2744,7 +2744,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
             WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
 
     cs->data_size = WINED3D_INITIAL_CS_SIZE;
-    if (!(cs->data = HeapAlloc(GetProcessHeap(), 0, cs->data_size)))
+    if (!(cs->data = heap_alloc(cs->data_size)))
         goto fail;
 
     if (wined3d_settings.cs_multithreaded
@@ -2755,7 +2755,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
         if (!(cs->event = CreateEventW(NULL, FALSE, FALSE, NULL)))
         {
             ERR("Failed to create command stream event.\n");
-            HeapFree(GetProcessHeap(), 0, cs->data);
+            heap_free(cs->data);
             goto fail;
         }
 
@@ -2764,7 +2764,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
         {
             ERR("Failed to get wined3d module handle.\n");
             CloseHandle(cs->event);
-            HeapFree(GetProcessHeap(), 0, cs->data);
+            heap_free(cs->data);
             goto fail;
         }
 
@@ -2773,7 +2773,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
             ERR("Failed to create wined3d command stream thread.\n");
             FreeLibrary(cs->wined3d_module);
             CloseHandle(cs->event);
-            HeapFree(GetProcessHeap(), 0, cs->data);
+            heap_free(cs->data);
             goto fail;
         }
     }
@@ -2782,8 +2782,8 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
 
 fail:
     state_cleanup(&cs->state);
-    HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
-    HeapFree(GetProcessHeap(), 0, cs);
+    heap_free(cs->fb.render_targets);
+    heap_free(cs);
     return NULL;
 }
 
@@ -2798,7 +2798,7 @@ void wined3d_cs_destroy(struct wined3d_cs *cs)
     }
 
     state_cleanup(&cs->state);
-    HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
-    HeapFree(GetProcessHeap(), 0, cs->data);
-    HeapFree(GetProcessHeap(), 0, cs);
+    heap_free(cs->fb.render_targets);
+    heap_free(cs->data);
+    heap_free(cs);
 }
