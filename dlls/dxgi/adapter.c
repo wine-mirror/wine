@@ -184,7 +184,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc1(IWineDXGIAdapter *iface, 
     desc->DedicatedVideoMemory = adapter_id.video_memory;
     desc->DedicatedSystemMemory = 0; /* FIXME */
     desc->SharedSystemMemory = 0; /* FIXME */
-    memcpy(&desc->AdapterLuid, &adapter_id.adapter_luid, sizeof(desc->AdapterLuid));
+    desc->AdapterLuid = adapter_id.adapter_luid;
     desc->Flags = 0;
 
     return hr;
