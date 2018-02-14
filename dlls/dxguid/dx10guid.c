@@ -34,6 +34,7 @@
 #include "dxgi1_6.h"
 #include "d3d10_1.h"
 #include "d3d11_4.h"
+#include "d3d12.h"
 #include "d3dx10.h"
 #include "d3d10_1shader.h"
 #include "d3d11shader.h"
