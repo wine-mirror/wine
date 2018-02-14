@@ -393,7 +393,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         theme = GetWindowTheme( hWnd );
         hdc = wParam ? (HDC)wParam : BeginPaint( hWnd, &ps );
 
-        if (theme && btnPaintFunc[btn_type])
+        if (theme && btnThemedPaintFunc[btn_type])
         {
             ButtonState drawState;
             UINT dtflags;
