@@ -80,8 +80,6 @@ static const char* szAWRClass = "Winsize";
 static HMENU hmenu;
 static DWORD our_pid;
 
-static BOOL is_win9x = FALSE;
-
 #define COUNTOF(arr) (sizeof(arr)/sizeof(arr[0]))
 
 static void dump_minmax_info( const MINMAXINFO *minmax )
@@ -233,9 +231,7 @@ static void test_parent_owner(void)
     test = CreateWindowExA(0, "ToolWindowClass", "Tool window 1",
                            WS_CHILD, 0, 0, 100, 100, 0, 0, 0, NULL );
     ok( !test, "WS_CHILD without parent created\n" );
-    ok( GetLastError() == ERROR_TLW_WITH_WSCHILD ||
-        broken(GetLastError() == 0xdeadbeef), /* win9x */
-        "CreateWindowExA error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_TLW_WITH_WSCHILD, "CreateWindowExA error %u\n", GetLastError() );
 
     /* desktop window */
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
@@ -415,15 +411,11 @@ static void test_parent_owner(void)
 
     /* desktop window */
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
-    if (0)
-    {
-    /* this test succeeds on NT but crashes on win9x systems */
     ret = (HWND)SetWindowLongPtrA( test, GWLP_HWNDPARENT, (LONG_PTR)hwndMain2 );
     ok( !ret, "Set GWL_HWNDPARENT succeeded on desktop\n" );
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
     ok( !SetParent( desktop, hwndMain ), "SetParent succeeded on desktop\n" );
     check_parents( desktop, 0, 0, 0, 0, 0, 0 );
-    }
     /* normal child window */
     test = create_tool_window( WS_CHILD, hwndMain );
     if (winetest_debug > 1) trace( "created child %p\n", test );
@@ -441,14 +433,9 @@ static void test_parent_owner(void)
     check_parents( test, desktop, 0, desktop, 0, test, desktop );
 
     /* window is now child of desktop so GWLP_HWNDPARENT changes owner from now on */
-    if (!is_win9x)
-    {
-        ret = (HWND)SetWindowLongPtrA( test, GWLP_HWNDPARENT, (LONG_PTR)test );
-        ok( ret == 0, "GWL_HWNDPARENT return value %p expected 0\n", ret );
-        check_parents( test, desktop, 0, desktop, 0, test, desktop );
-    }
-    else
-        win_skip("Test creates circular window tree under Win9x/WinMe\n" );
+    ret = (HWND)SetWindowLongPtrA( test, GWLP_HWNDPARENT, (LONG_PTR)test );
+    ok( ret == 0, "GWL_HWNDPARENT return value %p expected 0\n", ret );
+    check_parents( test, desktop, 0, desktop, 0, test, desktop );
 
     ret = (HWND)SetWindowLongPtrA( test, GWLP_HWNDPARENT, (LONG_PTR)child );
     ok( ret == 0, "GWL_HWNDPARENT return value %p expected 0\n", ret );
@@ -518,16 +505,11 @@ static void test_parent_owner(void)
     ok( ret == desktop, "SetParent return value %p expected %p\n", ret, desktop );
     check_parents( test, child, child, 0, 0, hwndMain, test );
 
-    if (!is_win9x)
-    {
-        ShowWindow( test, SW_SHOW );
-        ret = SetParent( test, test );
-        ok( ret == NULL, "SetParent return value %p expected %p\n", ret, NULL );
-        ok( GetWindowLongA( test, GWL_STYLE ) & WS_VISIBLE, "window is not visible after SetParent\n" );
-        check_parents( test, child, child, 0, 0, hwndMain, test );
-    }
-    else
-        win_skip( "Test crashes on Win9x/WinMe\n" );
+    ShowWindow( test, SW_SHOW );
+    ret = SetParent( test, test );
+    ok( ret == NULL, "SetParent return value %p expected %p\n", ret, NULL );
+    ok( GetWindowLongA( test, GWL_STYLE ) & WS_VISIBLE, "window is not visible after SetParent\n" );
+    check_parents( test, child, child, 0, 0, hwndMain, test );
     DestroyWindow( test );
 
     /* owned popup */
@@ -696,15 +678,12 @@ static DWORD CALLBACK enum_thread( void *arg )
         GUITHREADINFO info;
         info.cbSize = sizeof(info);
         ret = pGetGUIThreadInfo( GetCurrentThreadId(), &info );
-        ok( ret || broken(!ret), /* win9x */
-            "GetGUIThreadInfo failed without message queue\n" );
+        ok( ret, "GetGUIThreadInfo failed without message queue\n" );
         SetLastError( 0xdeadbeef );
         info.cbSize = sizeof(info) + 1;
         ret = pGetGUIThreadInfo( GetCurrentThreadId(), &info );
         ok( !ret, "GetGUIThreadInfo succeeded with wrong size\n" );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER ||
-            broken(GetLastError() == 0xdeadbeef), /* win9x */
-            "wrong error %u\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
     }
 
     PeekMessageA( &msg, 0, 0, 0, PM_NOREMOVE );  /* make sure we have a message queue */
@@ -774,8 +753,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 		ok(winpos->x >= -32768 && winpos->x <= 32767, "bad winpos->x %d\n", winpos->x);
 		ok(winpos->y >= -32768 && winpos->y <= 32767, "bad winpos->y %d\n", winpos->y);
 	    }
-	    /* Win9x does not fixup cx/xy for WM_WINDOWPOSCHANGING */
-	    if (!(winpos->flags & SWP_NOSIZE) && !is_win9x)
+	    if (!(winpos->flags & SWP_NOSIZE))
 	    {
 		ok((winpos->cx >= 0 && winpos->cx <= 32767) ||
                    winpos->cx == 32768, /* win7 doesn't truncate */
@@ -1122,10 +1100,6 @@ static void test_nonclient_area(HWND hwnd)
     ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, 0);
     ok(ret == 0, "NULL rectangle returned %ld instead of 0\n", ret);
 
-    /* Win9x doesn't like WM_NCCALCSIZE with synthetic data and crashes */;
-    if (is_win9x)
-	return;
-
     /* and now test AdjustWindowRectEx and WM_NCCALCSIZE on synthetic data */
     SetRect(&rc_client, 0, 0, 250, 150);
     rc_window = rc_client;
@@ -1297,12 +1271,6 @@ static void test_shell_window(void)
     HWND hwnd1, hwnd2, hwnd3, hwnd4, hwnd5;
     HWND shellWindow, nextWnd;
 
-    if (is_win9x)
-    {
-        win_skip("Skipping shell window test on Win9x\n");
-        return;
-    }
-
     if (restart && !set_autorestart(0))
     {
         skip("cannot disable automatic shell restart (needs admin rights\n");
@@ -1430,7 +1398,6 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
     INT_PTR id;
     static const WCHAR classW[] = {'M','D','I','_','c','h','i','l','d','_','C','l','a','s','s','_','1',0};
     static const WCHAR titleW[] = {'M','D','I',' ','c','h','i','l','d',0};
-    BOOL isWin9x = FALSE;
     HMENU frame_menu = GetMenu(parent);
 
     ok(frame_menu != NULL, "Frame window didn't have a menu\n");
@@ -1489,24 +1456,15 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
     mdi_cs.szTitle = (LPCSTR)titleW;
     SetLastError(0xdeadbeef);
     mdi_child = (HWND)SendMessageW(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
-    if (!mdi_child)
-    {
-        if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-            isWin9x = TRUE;
-        else
-            ok(mdi_child != 0, "MDI child creation failed\n");
-    }
-    else
-    {
-        id = GetWindowLongPtrA(mdi_child, GWLP_ID);
-        ok(id == first_id, "wrong child id %ld\n", id);
-        hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
-        exp_hwnd = (GetWindowLongW(mdi_child, GWL_STYLE) & WS_VISIBLE) ? mdi_child : 0;
-        ok(hwnd == exp_hwnd, "WM_MDIGETACTIVE should return %p, got %p\n", exp_hwnd, hwnd);
-        ok(GetMenuItemCount(frame_menu) == 0, "Got wrong frame menu item count: %u\n", GetMenuItemCount(frame_menu));
-        SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
-        ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
-    }
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    id = GetWindowLongPtrA(mdi_child, GWLP_ID);
+    ok(id == first_id, "wrong child id %ld\n", id);
+    hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
+    exp_hwnd = (GetWindowLongW(mdi_child, GWL_STYLE) & WS_VISIBLE) ? mdi_child : 0;
+    ok(hwnd == exp_hwnd, "WM_MDIGETACTIVE should return %p, got %p\n", exp_hwnd, hwnd);
+    ok(GetMenuItemCount(frame_menu) == 0, "Got wrong frame menu item count: %u\n", GetMenuItemCount(frame_menu));
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
 
     mdi_child = CreateMDIWindowA("MDI_child_Class_1", "MDI child",
                                  0,
@@ -1569,24 +1527,15 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                  CW_USEDEFAULT, CW_USEDEFAULT,
                                  mdi_client, GetModuleHandleA(NULL),
                                  (LPARAM)mdi_lParam_test_message);
-    if (!mdi_child)
-    {
-        if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-            isWin9x = TRUE;
-        else
-            ok(mdi_child != 0, "MDI child creation failed\n");
-    }
-    else
-    {
-        id = GetWindowLongPtrA(mdi_child, GWLP_ID);
-        ok(id == first_id, "wrong child id %ld\n", id);
-        hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
-        exp_hwnd = (GetWindowLongW(mdi_child, GWL_STYLE) & WS_VISIBLE) ? mdi_child : 0;
-        ok(hwnd == exp_hwnd, "WM_MDIGETACTIVE should return %p, got %p\n", exp_hwnd, hwnd);
-        ok(GetMenuItemCount(frame_menu) == 0, "Got wrong frame menu item count: %u\n", GetMenuItemCount(frame_menu));
-        SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
-        ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
-    }
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    id = GetWindowLongPtrA(mdi_child, GWLP_ID);
+    ok(id == first_id, "wrong child id %ld\n", id);
+    hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
+    exp_hwnd = (GetWindowLongW(mdi_child, GWL_STYLE) & WS_VISIBLE) ? mdi_child : 0;
+    ok(hwnd == exp_hwnd, "WM_MDIGETACTIVE should return %p, got %p\n", exp_hwnd, hwnd);
+    ok(GetMenuItemCount(frame_menu) == 0, "Got wrong frame menu item count: %u\n", GetMenuItemCount(frame_menu));
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
 
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_1", "MDI child",
                                 0,
@@ -1668,36 +1617,23 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandleA(NULL),
                                 mdi_lParam_test_message);
-    if (!mdi_child)
-    {
-        if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-            isWin9x = TRUE;
-        else
-            ok(mdi_child != 0, "MDI child creation failed\n");
-    }
-    else
-    {
-        id = GetWindowLongPtrA(mdi_child, GWLP_ID);
-        ok(id == first_id, "wrong child id %ld\n", id);
-        hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
-        exp_hwnd = (GetWindowLongW(mdi_child, GWL_STYLE) & WS_VISIBLE) ? mdi_child : 0;
-        ok(hwnd == exp_hwnd, "WM_MDIGETACTIVE should return %p, got %p\n", exp_hwnd, hwnd);
-        ok(GetMenuItemCount(frame_menu) == 0, "Got wrong frame menu item count: %u\n", GetMenuItemCount(frame_menu));
-        SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
-        ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
-    }
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    id = GetWindowLongPtrA(mdi_child, GWLP_ID);
+    ok(id == first_id, "wrong child id %ld\n", id);
+    hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
+    exp_hwnd = (GetWindowLongW(mdi_child, GWL_STYLE) & WS_VISIBLE) ? mdi_child : 0;
+    ok(hwnd == exp_hwnd, "WM_MDIGETACTIVE should return %p, got %p\n", exp_hwnd, hwnd);
+    ok(GetMenuItemCount(frame_menu) == 0, "Got wrong frame menu item count: %u\n", GetMenuItemCount(frame_menu));
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
 
-    /* This test fails on Win9x */
-    if (!isWin9x)
-    {
-        mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_2", "MDI child",
+    mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_2", "MDI child",
                                 WS_CHILD,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 parent, 0, GetModuleHandleA(NULL),
                                 mdi_lParam_test_message);
-        ok(!mdi_child, "WS_EX_MDICHILD with a not MDIClient parent should fail\n");
-    }
+    ok(!mdi_child, "WS_EX_MDICHILD with a not MDIClient parent should fail\n");
 
     mdi_child = CreateWindowExA(0, "MDI_child_Class_2", "MDI child",
                                 WS_CHILD, /* without WS_POPUP */
@@ -1998,15 +1934,11 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
             ok(!lstrcmpA(cs->lpszName, "MDI child"), "wrong title\n");
 
             /* CREATESTRUCT should have fixed values */
-            /* For some reason Win9x doesn't translate cs->x from CW_USEDEFAULT,
-               while NT does. */
-            /*ok(cs->x != CW_USEDEFAULT, "%d == CW_USEDEFAULT\n", cs->x);*/
+            ok(cs->x != CW_USEDEFAULT, "%d == CW_USEDEFAULT\n", cs->x);
             ok(cs->y != CW_USEDEFAULT, "%d == CW_USEDEFAULT\n", cs->y);
 
             /* cx/cy == CW_USEDEFAULT are translated to 0 */
-            /* For some reason Win98 doesn't translate cs->cx from CW_USEDEFAULT,
-               while Win95, Win2k, WinXP do. */
-            /*ok(cs->cx == 0, "%d != 0\n", cs->cx);*/
+            ok(cs->cx == 0, "%d != 0\n", cs->cx);
             ok(cs->cy == 0, "%d != 0\n", cs->cy);
             break;
         }
@@ -2549,19 +2481,15 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ok(ret, "Got %d\n", ret);
     SetWindowLongPtrA( hwnd, GWLP_WNDPROC, old_proc );
 
-    /* Win9x truncates coordinates to 16-bit irrespectively */
-    if (!is_win9x)
-    {
-        ret = SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOMOVE);
-        ok(ret, "Got %d\n", ret);
-        ret = SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOMOVE);
-        ok(ret, "Got %d\n", ret);
+    ret = SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOMOVE);
+    ok(ret, "Got %d\n", ret);
+    ret = SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOMOVE);
+    ok(ret, "Got %d\n", ret);
 
-        ret = SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOSIZE);
-        ok(ret, "Got %d\n", ret);
-        ret = SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOSIZE);
-        ok(ret, "Got %d\n", ret);
-    }
+    ret = SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOSIZE);
+    ok(ret, "Got %d\n", ret);
+    ret = SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOSIZE);
+    ok(ret, "Got %d\n", ret);
 
     ret = SetWindowPos(hwnd, 0, orig_win_rc.left, orig_win_rc.top,
                        orig_win_rc.right, orig_win_rc.bottom, 0);
@@ -2698,11 +2626,9 @@ static void test_SetMenu(HWND parent)
     retok = DestroyMenu(hMenu);
     ok( retok, "DestroyMenu error %d\n", GetLastError());
     retok = IsMenu(hMenu);
-    ok(!retok || broken(retok) /* nt4 */, "menu handle should be not valid after DestroyMenu\n");
+    ok(!retok, "menu handle should be not valid after DestroyMenu\n");
     ret = GetMenu(parent);
-    /* This test fails on Win9x */
-    if (!is_win9x)
-        ok(ret == hMenu, "unexpected menu id %p\n", ret);
+    ok(ret == hMenu, "unexpected menu id %p\n", ret);
     ok(SetMenu(parent, 0), "SetMenu(0) on a top level window should not fail\n");
     test_nonclient_area(parent);
 
@@ -2995,11 +2921,6 @@ static void test_vis_rgn( HWND hwnd )
     ok( GetRandomRgn( hdc, hrgn, SYSRGN ) != 0, "GetRandomRgn failed\n" );
     GetWindowRect( hwnd, &win_rect );
     GetRgnBox( hrgn, &rgn_rect );
-    if (is_win9x)
-    {
-        trace("win9x, mapping to screen coords\n");
-        MapWindowPoints( hwnd, 0, (POINT *)&rgn_rect, 2 );
-    }
     ok( win_rect.left <= rgn_rect.left &&
         win_rect.top <= rgn_rect.top &&
         win_rect.right >= rgn_rect.right &&
@@ -3278,8 +3199,7 @@ static void test_SetForegroundWindow(HWND hwnd)
     SetLastError(0xdeadbeef);
     ret = SetForegroundWindow(0);
     ok(!ret, "SetForegroundWindow returned TRUE instead of FALSE\n");
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
-       broken(GetLastError() == 0xdeadbeef),  /* win9x */
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
        "got error %d expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
@@ -3301,7 +3221,7 @@ static void test_SetForegroundWindow(HWND hwnd)
 
     /*trace("testing SetForegroundWindow on an invisible window %p\n", hwnd);*/
     ret = SetForegroundWindow(hwnd);
-    ok(ret || broken(!ret), /* win98 */ "SetForegroundWindow returned FALSE instead of TRUE\n");
+    ok(ret, "SetForegroundWindow returned FALSE instead of TRUE\n");
     check_wnd_state(hwnd, hwnd, hwnd, 0);
 
     ShowWindow(hwnd, SW_SHOW);
@@ -3550,8 +3470,7 @@ static LRESULT CALLBACK test_capture_4_proc(HWND hWnd, UINT msg, WPARAM wParam, 
 
             /* check that re-setting the capture for the menu fails */
             set_cap_wnd = SetCapture(cap_wnd);
-            ok(!set_cap_wnd || broken(set_cap_wnd == cap_wnd), /* nt4 */
-               "SetCapture should have failed!\n");
+            ok(!set_cap_wnd, "SetCapture should have failed!\n");
             if (set_cap_wnd)
             {
                 DestroyWindow(hWnd);
@@ -3630,16 +3549,9 @@ static void test_capture_4(void)
     /* set main window to have initial capture */
     SetCapture(hwnd);
 
-    if (is_win9x)
-    {
-        win_skip("TrackPopupMenu test crashes on Win9x/WinMe\n");
-    }
-    else
-    {
-        /* create popup (it will self-destruct) */
-        ret = TrackPopupMenu(hmenu, TPM_RETURNCMD, 100, 100, 0, hwnd, NULL);
-        ok( ret == 0, "TrackPopupMenu returned %d expected zero\n", ret);
-    }
+    /* create popup (it will self-destruct) */
+    ret = TrackPopupMenu(hmenu, TPM_RETURNCMD, 100, 100, 0, hwnd, NULL);
+    ok( ret == 0, "TrackPopupMenu returned %d expected zero\n", ret);
 
     /* clean up */
     DestroyMenu(hmenu);
@@ -4149,44 +4061,39 @@ static void test_SetParent(void)
     ok(!IsChild(child3, child4), "wrong parent/child %p/%p\n", child3, child4);
     ok(!IsChild(desktop, child4), "wrong parent/child %p/%p\n", desktop, child4);
 
-    if (!is_win9x) /* Win9x doesn't survive this test */
+    ok(!SetParent(parent, child1), "SetParent should fail\n");
+    ok(!SetParent(child2, child3), "SetParent should fail\n");
+    ok(SetParent(child1, parent) != 0, "SetParent should not fail\n");
+    ret = SetParent(parent, child2);
+    todo_wine ok( !ret || broken( ret != 0 ), "SetParent should fail\n");
+    if (ret)  /* nt4, win2k */
     {
-        ok(!SetParent(parent, child1), "SetParent should fail\n");
-        ok(!SetParent(child2, child3), "SetParent should fail\n");
-        ok(SetParent(child1, parent) != 0, "SetParent should not fail\n");
-        ret = SetParent(parent, child2);
-        todo_wine ok( !ret || broken( ret != 0 ), "SetParent should fail\n");
-        if (ret)  /* nt4, win2k */
-        {
-            ret = SetParent(parent, child3);
-            ok(ret != 0, "SetParent should not fail\n");
-            ret = SetParent(child2, parent);
-            ok(!ret, "SetParent should fail\n");
-            ret = SetParent(parent, child4);
-            ok(ret != 0, "SetParent should not fail\n");
-            check_parents(parent, child4, child4, 0, 0, child4, parent);
-            check_parents(child1, parent, parent, parent, 0, child4, parent);
-            check_parents(child2, desktop, parent, parent, parent, child2, parent);
-            check_parents(child3, child2, child2, child2, 0, child2, parent);
-            check_parents(child4, desktop, child2, child2, child2, child4, parent);
-        }
-        else
-        {
-            ret = SetParent(parent, child3);
-            ok(ret != 0, "SetParent should not fail\n");
-            ret = SetParent(child2, parent);
-            ok(!ret, "SetParent should fail\n");
-            ret = SetParent(parent, child4);
-            ok(!ret, "SetParent should fail\n");
-            check_parents(parent, child3, child3, 0, 0, child2, parent);
-            check_parents(child1, parent, parent, parent, 0, child2, parent);
-            check_parents(child2, desktop, parent, parent, parent, child2, parent);
-            check_parents(child3, child2, child2, child2, 0, child2, parent);
-            check_parents(child4, desktop, child2, child2, child2, child4, parent);
-        }
+        ret = SetParent(parent, child3);
+        ok(ret != 0, "SetParent should not fail\n");
+        ret = SetParent(child2, parent);
+        ok(!ret, "SetParent should fail\n");
+        ret = SetParent(parent, child4);
+        ok(ret != 0, "SetParent should not fail\n");
+        check_parents(parent, child4, child4, 0, 0, child4, parent);
+        check_parents(child1, parent, parent, parent, 0, child4, parent);
+        check_parents(child2, desktop, parent, parent, parent, child2, parent);
+        check_parents(child3, child2, child2, child2, 0, child2, parent);
+        check_parents(child4, desktop, child2, child2, child2, child4, parent);
     }
     else
-        skip("Win9x/WinMe crash\n");
+    {
+        ret = SetParent(parent, child3);
+        ok(ret != 0, "SetParent should not fail\n");
+        ret = SetParent(child2, parent);
+        ok(!ret, "SetParent should fail\n");
+        ret = SetParent(parent, child4);
+        ok(!ret, "SetParent should fail\n");
+        check_parents(parent, child3, child3, 0, 0, child2, parent);
+        check_parents(child1, parent, parent, parent, 0, child2, parent);
+        check_parents(child2, desktop, parent, parent, parent, child2, parent);
+        check_parents(child3, child2, child2, child2, 0, child2, parent);
+        check_parents(child4, desktop, child2, child2, child2, child4, parent);
+    }
 
     hMenu = CreateMenu();
     sibling = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW,
@@ -5156,12 +5063,7 @@ static void test_scroll(void)
         100, 100, 200, 200, 0, 0, 0, NULL);
     /* horizontal */
     ret = GetScrollRange( hwnd, SB_HORZ, &min, &max);
-    if (!ret)  /* win9x */
-    {
-        win_skip( "GetScrollRange doesn't work\n" );
-        DestroyWindow( hwnd);
-        return;
-    }
+    ok( ret, "GetScrollRange failed\n" );
     ok( min == 0, "minimum scroll pos is %d (should be zero)\n", min);
     ok( max == 0, "maximum scroll pos is %d (should be zero)\n", min);
     si.cbSize = sizeof( si);
@@ -5290,8 +5192,7 @@ static void test_params(void)
     ok(!hwnd || broken(hwnd != NULL), /* w2k3 sp2 */
        "CreateWindow with invalid menu handle should fail\n");
     if (!hwnd)
-        ok(GetLastError() == ERROR_INVALID_MENU_HANDLE || /* NT */
-           GetLastError() == 0xdeadbeef, /* Win9x */
+        ok(GetLastError() == ERROR_INVALID_MENU_HANDLE,
            "wrong last error value %d\n", GetLastError());
 }
 
@@ -5477,7 +5378,7 @@ static void test_redrawnow(void)
    ShowWindow(hwndMain, SW_SHOW);
    ok( WMPAINT_count == 0, "Multiple unexpected WM_PAINT calls %d\n", WMPAINT_count);
    RedrawWindow(hwndMain, NULL,NULL,RDW_UPDATENOW | RDW_ALLCHILDREN);
-   ok( WMPAINT_count == 1 || broken(WMPAINT_count == 0), /* sometimes on win9x */
+   ok( WMPAINT_count == 1,
        "Multiple unexpected WM_PAINT calls %d\n", WMPAINT_count);
    redrawComplete = TRUE;
    ok( WMPAINT_count < 10, "RedrawWindow (RDW_UPDATENOW) never completed (%d)\n", WMPAINT_count);
@@ -5745,7 +5646,7 @@ static void test_IsWindowUnicode(void)
     classW.hInstance = GetModuleHandleA(0);
     classW.lpfnWndProc = def_window_procW;
     classW.lpszClassName = unicode_class_nameW;
-    if (!RegisterClassW(&classW)) return; /* this catches Win9x as well */
+    RegisterClassW(&classW);
 
     memset(&classA, 0, sizeof(classA));
     classA.hInstance = GetModuleHandleA(0);
@@ -5946,11 +5847,6 @@ static void test_CreateWindow(void)
 #define expect_ex_style(window, ex_style)\
     ok((ULONG)GetWindowLongA(window, GWL_EXSTYLE) == (ex_style), "expected ex_style %x != %x\n", (LONG)(ex_style), GetWindowLongA(window, GWL_EXSTYLE))
 
-#define expect_gle_broken_9x(gle)\
-    ok(GetLastError() == gle ||\
-       broken(GetLastError() == 0xdeadbeef),\
-       "IsMenu set error %d\n", GetLastError())
-
     hmenu = CreateMenu();
     assert(hmenu != 0);
     parent = GetDesktopWindow();
@@ -6008,7 +5904,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -6022,7 +5918,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -6036,7 +5932,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -6050,14 +5946,14 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
 
     /* WS_CHILD | WS_POPUP */
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowExA(WS_EX_APPWINDOW, "static", NULL, WS_CHILD | WS_POPUP,
                            0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
-    ok(!hwnd || broken(hwnd != 0 /* Win9x */), "CreateWindowEx should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(!hwnd, "CreateWindowEx should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
     if (hwnd)
         DestroyWindow(hwnd);
 
@@ -6073,13 +5969,13 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowExA(WS_EX_APPWINDOW, "static", NULL, WS_CHILD | WS_POPUP | WS_CAPTION,
                            0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
-    ok(!hwnd || broken(hwnd != 0 /* Win9x */), "CreateWindowEx should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(!hwnd, "CreateWindowEx should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
     if (hwnd)
         DestroyWindow(hwnd);
 
@@ -6095,13 +5991,13 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD | WS_POPUP,
                            0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
-    ok(!hwnd || broken(hwnd != 0 /* Win9x */), "CreateWindowEx should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(!hwnd, "CreateWindowEx should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
     if (hwnd)
         DestroyWindow(hwnd);
 
@@ -6117,13 +6013,13 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD | WS_POPUP | WS_CAPTION,
                            0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
-    ok(!hwnd || broken(hwnd != 0 /* Win9x */), "CreateWindowEx should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(!hwnd, "CreateWindowEx should fail\n");
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
     if (hwnd)
         DestroyWindow(hwnd);
 
@@ -6139,7 +6035,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
 
     /* test child window sizing */
     cls.style = 0;
@@ -6352,7 +6248,6 @@ static void test_CreateWindow(void)
     UnregisterClassA("MinMax_WndClass", GetModuleHandleA(NULL));
     UnregisterClassA("Sizes_WndClass", GetModuleHandleA(NULL));
 
-#undef expect_gle_broken_9x
 #undef expect_menu
 #undef expect_style
 #undef expect_ex_style
@@ -6387,7 +6282,7 @@ static void test_SetWindowLong(void)
 
     SetLastError(0xdeadbeef);
     retval = SetWindowLongPtrA(hwndMain, GWLP_WNDPROC, 0);
-    ok((WNDPROC)retval == main_window_procA || broken(!retval), /* win9x */
+    ok((WNDPROC)retval == main_window_procA,
         "SetWindowLongPtr on invalid window proc should have returned address of main_window_procA instead of 0x%lx\n", retval);
     ok(GetLastError() == 0xdeadbeef, "SetWindowLongPtr shouldn't have set the last error, instead of setting it to %d\n", GetLastError());
     retval = GetWindowLongPtrA(hwndMain, GWLP_WNDPROC);
@@ -7336,7 +7231,7 @@ static void test_GetWindowModuleFileName(void)
     assert(hwnd);
 
     hinst = (HINSTANCE)GetWindowLongPtrA(hwnd, GWLP_HINSTANCE);
-    ok(hinst == 0 || broken(hinst == GetModuleHandleA(NULL)), /* win9x */ "expected 0, got %p\n", hinst);
+    ok(hinst == 0, "expected 0, got %p\n", hinst);
 
     buf1[0] = 0;
     SetLastError(0xdeadbeef);
@@ -7346,20 +7241,18 @@ static void test_GetWindowModuleFileName(void)
     buf2[0] = 0;
     SetLastError(0xdeadbeef);
     ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
-    ok(ret2 || broken(!ret2), /* nt4 sp 3 */
-       "GetWindowModuleFileNameA error %u\n", GetLastError());
+    ok(ret2, "GetWindowModuleFileNameA error %u\n", GetLastError());
 
     if (ret2)
     {
-        ok(ret1 == ret2 || broken(ret2 == ret1 + 1), /* win98 */ "%u != %u\n", ret1, ret2);
+        ok(ret1 == ret2, "%u != %u\n", ret1, ret2);
         ok(!strcmp(buf1, buf2), "%s != %s\n", buf1, buf2);
     }
     hinst = GetModuleHandleA(NULL);
 
     SetLastError(0xdeadbeef);
     ret2 = GetModuleFileNameA(hinst, buf2, ret1 - 2);
-    ok(ret2 == ret1 - 2 || broken(ret2 == ret1 - 3), /* win98 */
-       "expected %u, got %u\n", ret1 - 2, ret2);
+    ok(ret2 == ret1 - 2, "expected %u, got %u\n", ret1 - 2, ret2);
     ok(GetLastError() == 0xdeadbeef /* XP */ ||
        GetLastError() == ERROR_INSUFFICIENT_BUFFER, /* win2k3, vista */
        "expected 0xdeadbeef or ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
@@ -7373,8 +7266,7 @@ static void test_GetWindowModuleFileName(void)
 
     SetLastError(0xdeadbeef);
     ret2 = pGetWindowModuleFileNameA(hwnd, buf2, ret1 - 2);
-    ok(ret2 == ret1 - 2 || broken(ret2 == ret1 - 3) /* win98 */ || broken(!ret2), /* nt4 sp3 */
-       "expected %u, got %u\n", ret1 - 2, ret2);
+    ok(ret2 == ret1 - 2, "expected %u, got %u\n", ret1 - 2, ret2);
     ok(GetLastError() == 0xdeadbeef /* XP */ ||
        GetLastError() == ERROR_INSUFFICIENT_BUFFER, /* win2k3, vista */
        "expected 0xdeadbeef or ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
@@ -7393,27 +7285,22 @@ static void test_GetWindowModuleFileName(void)
     SetLastError(0xdeadbeef);
     ret1 = pGetWindowModuleFileNameA(hwnd, buf1, sizeof(buf1));
     ok(!ret1, "expected 0, got %u\n", ret1);
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE || broken(GetLastError() == 0xdeadbeef), /* win9x */
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
        "expected ERROR_INVALID_WINDOW_HANDLE, got %u\n", GetLastError());
 
     hwnd = FindWindowA("Shell_TrayWnd", NULL);
     ok(IsWindow(hwnd) || broken(!hwnd), "got invalid tray window %p\n", hwnd);
     SetLastError(0xdeadbeef);
     ret1 = pGetWindowModuleFileNameA(hwnd, buf1, sizeof(buf1));
-    ok(!ret1 || broken(ret1), /* win98 */ "expected 0, got %u\n", ret1);
-
-    if (!ret1)  /* inter-process GetWindowModuleFileName works on win9x, so don't test the desktop there */
-    {
-        ret1 = GetModuleFileNameA(0, buf1, sizeof(buf1));
-        hwnd = GetDesktopWindow();
-        ok(IsWindow(hwnd), "got invalid desktop window %p\n", hwnd);
-        SetLastError(0xdeadbeef);
-        ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
-        ok(!ret2 ||
-           ret1 == ret2 || /* vista */
-           broken(ret2),  /* some win98 return user.exe as file name */
-           "expected 0 or %u, got %u %s\n", ret1, ret2, buf2);
-    }
+    ok(!ret1, "expected 0, got %u\n", ret1);
+    ret1 = GetModuleFileNameA(0, buf1, sizeof(buf1));
+    hwnd = GetDesktopWindow();
+    ok(IsWindow(hwnd), "got invalid desktop window %p\n", hwnd);
+    SetLastError(0xdeadbeef);
+    ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
+    ok(!ret2 ||
+       ret1 == ret2, /* vista */
+       "expected 0 or %u, got %u %s\n", ret1, ret2, buf2);
 }
 
 static void test_hwnd_message(void)
@@ -7443,17 +7330,9 @@ static void test_hwnd_message(void)
     DWORD_PTR result;
     int i;
 
-    /* HWND_MESSAGE is not supported below w2k, but win9x return != 0
-       on CreateWindowExA and crash later in the test.
-       Use UNICODE here to fail on win9x */
     hwnd = CreateWindowExW(0, mainwindowclassW, message_windowW, WS_CAPTION | WS_VISIBLE,
                            100, 100, 200, 200, HWND_MESSAGE, 0, 0, NULL);
-    if (!hwnd)
-    {
-        win_skip("CreateWindowExW with parent HWND_MESSAGE failed\n");
-        return;
-    }
-
+    ok( hwnd != 0, "CreateWindowExW with parent HWND_MESSAGE failed\n" );
     ok( !GetParent(hwnd), "GetParent should return 0 for message only windows\n" );
     if (pGetAncestor)
     {
@@ -8650,8 +8529,6 @@ static void test_child_window_from_point(void)
 {
     static const int real_child_pos[] = { 14,15,16,17,18,19,20,21,24,25,26,27,42,43,
                                           44,45,46,47,48,49,52,53,54,55,51,50,23,22,-1 };
-    static const int real_child_pos_nt4[] = { 14,15,16,17,20,21,24,25,26,27,42,43,44,45,
-                                              48,49,52,53,54,55,51,50,47,46,23,22,19,18,-1 };
     WNDCLASSA cls;
     HWND hwnd, parent, window[100];
     POINT pt;
@@ -8700,7 +8577,7 @@ static void test_child_window_from_point(void)
         ret = window_to_index(hwnd, window, sizeof(window)/sizeof(window[0]));
         /* FIXME: remove once Wine is fixed */
         todo_wine_if (ret != real_child_pos[i])
-            ok(ret == real_child_pos[i] || broken(ret == real_child_pos_nt4[i]), "expected %d, got %d\n", real_child_pos[i], ret);
+            ok(ret == real_child_pos[i], "expected %d, got %d\n", real_child_pos[i], ret);
 
         get_window_attributes(hwnd, &attrs);
         if (!attrs.is_visible) found_invisible++;
@@ -10613,7 +10490,6 @@ START_TEST(win)
 
     SetLastError(0xdeafbeef);
     GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC);
-    is_win9x = (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED);
 
     hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
     if (!hhook) win_skip( "Cannot set CBT hook, skipping some tests\n" );
