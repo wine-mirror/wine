@@ -94,7 +94,7 @@ NTSTATUS WINAPI LsaConnectUntrusted(PHANDLE LsaHandle)
 
     TRACE("%p\n", LsaHandle);
 
-    lsa_conn = HeapAlloc(GetProcessHeap(), 0, sizeof(*lsa_conn));
+    lsa_conn = heap_alloc(sizeof(*lsa_conn));
     if (!lsa_conn) return STATUS_NO_MEMORY;
 
     lsa_conn->magic = LSA_MAGIC;
@@ -122,7 +122,7 @@ NTSTATUS WINAPI LsaEnumerateLogonSessions(PULONG LogonSessionCount,
 NTSTATUS WINAPI LsaFreeReturnBuffer(PVOID buffer)
 {
     TRACE("%p\n", buffer);
-    HeapFree(GetProcessHeap(), 0, buffer);
+    heap_free(buffer);
     return STATUS_SUCCESS;
 }
 
@@ -186,26 +186,26 @@ static NTSTATUS NTAPI lsa_DeleteCredential(LUID *logon_id, ULONG package_id, LSA
 static void * NTAPI lsa_AllocateLsaHeap(ULONG size)
 {
     TRACE("%u\n", size);
-    return HeapAlloc(GetProcessHeap(), 0, size);
+    return heap_alloc(size);
 }
 
 static void NTAPI lsa_FreeLsaHeap(void *p)
 {
     TRACE("%p\n", p);
-    HeapFree(GetProcessHeap(), 0, p);
+    heap_free(p);
 }
 
 static NTSTATUS NTAPI lsa_AllocateClientBuffer(PLSA_CLIENT_REQUEST req, ULONG size, void **p)
 {
     TRACE("%p,%u,%p\n", req, size, p);
-    *p = HeapAlloc(GetProcessHeap(), 0, size);
+    *p = heap_alloc(size);
     return *p ? STATUS_SUCCESS : STATUS_NO_MEMORY;
 }
 
 static NTSTATUS NTAPI lsa_FreeClientBuffer(PLSA_CLIENT_REQUEST req, void *p)
 {
     TRACE("%p,%p\n", req, p);
-    HeapFree(GetProcessHeap(), 0, p);
+    heap_free(p);
     return STATUS_SUCCESS;
 }
 
@@ -328,13 +328,13 @@ static SECURITY_STATUS WINAPI lsa_AcquireCredentialsHandleA(
     if (principal)
     {
         int len = MultiByteToWideChar( CP_ACP, 0, principal, -1, NULL, 0 );
-        if (!(principalW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(SEC_WCHAR) ))) goto done;
+        if (!(principalW = heap_alloc( len * sizeof(SEC_WCHAR) ))) goto done;
         MultiByteToWideChar( CP_ACP, 0, principal, -1, principalW, len );
     }
     if (package)
     {
         int len = MultiByteToWideChar( CP_ACP, 0, package, -1, NULL, 0 );
-        if (!(packageW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(SEC_WCHAR) ))) goto done;
+        if (!(packageW = heap_alloc( len * sizeof(SEC_WCHAR) ))) goto done;
         MultiByteToWideChar( CP_ACP, 0, package, -1, packageW, len );
     }
     if (auth_data)
@@ -343,23 +343,23 @@ static SECURITY_STATUS WINAPI lsa_AcquireCredentialsHandleA(
 
         if (id->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
         {
-            if (!(auth_dataW = HeapAlloc( GetProcessHeap(), 0, sizeof(SEC_WINNT_AUTH_IDENTITY_W) ))) goto done;
+            if (!(auth_dataW = heap_alloc( sizeof(SEC_WINNT_AUTH_IDENTITY_W) ))) goto done;
             if (id->UserLength)
             {
                 len_user = MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, NULL, 0 );
-                if (!(user = HeapAlloc( GetProcessHeap(), 0, len_user * sizeof(SEC_WCHAR) ))) goto done;
+                if (!(user = heap_alloc( len_user * sizeof(SEC_WCHAR) ))) goto done;
                 MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, user, len_user );
             }
             if (id->DomainLength)
             {
                 len_domain = MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, NULL, 0 );
-                if (!(domain = HeapAlloc( GetProcessHeap(), 0, len_domain * sizeof(SEC_WCHAR) ))) goto done;
+                if (!(domain = heap_alloc( len_domain * sizeof(SEC_WCHAR) ))) goto done;
                 MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, domain, len_domain );
             }
             if (id->PasswordLength)
             {
                 len_passwd = MultiByteToWideChar( CP_ACP, 0, (char *)id->Password, id->PasswordLength, NULL, 0 );
-                if (!(passwd = HeapAlloc( GetProcessHeap(), 0, len_passwd * sizeof(SEC_WCHAR) ))) goto done;
+                if (!(passwd = heap_alloc( len_passwd * sizeof(SEC_WCHAR) ))) goto done;
                 MultiByteToWideChar( CP_ACP, 0, (char *)id->Password, id->PasswordLength, passwd, len_passwd );
             }
             auth_dataW->Flags          = SEC_WINNT_AUTH_IDENTITY_UNICODE;
@@ -376,12 +376,12 @@ static SECURITY_STATUS WINAPI lsa_AcquireCredentialsHandleA(
     status = lsa_AcquireCredentialsHandleW( principalW, packageW, credentials_use, logon_id, auth_dataW, get_key_fn,
                                             get_key_arg, credential, ts_expiry );
 done:
-    if (auth_dataW != (SEC_WINNT_AUTH_IDENTITY_W *)id) HeapFree( GetProcessHeap(), 0, auth_dataW );
-    HeapFree( GetProcessHeap(), 0, packageW );
-    HeapFree( GetProcessHeap(), 0, principalW );
-    HeapFree( GetProcessHeap(), 0, user );
-    HeapFree( GetProcessHeap(), 0, domain );
-    HeapFree( GetProcessHeap(), 0, passwd );
+    if (auth_dataW != (SEC_WINNT_AUTH_IDENTITY_W *)id) heap_free( auth_dataW );
+    heap_free( packageW );
+    heap_free( principalW );
+    heap_free( user );
+    heap_free( domain );
+    heap_free( passwd );
     return status;
 }
 
@@ -464,13 +464,13 @@ static SECURITY_STATUS WINAPI lsa_InitializeSecurityContextA(
     if (target_name)
     {
         int len = MultiByteToWideChar( CP_ACP, 0, target_name, -1, NULL, 0 );
-        if (!(targetW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(SEC_WCHAR) ))) return SEC_E_INSUFFICIENT_MEMORY;
+        if (!(targetW = heap_alloc( len * sizeof(SEC_WCHAR) ))) return SEC_E_INSUFFICIENT_MEMORY;
         MultiByteToWideChar( CP_ACP, 0, target_name, -1, targetW, len );
     }
 
     status = lsa_InitializeSecurityContextW( credential, context, targetW, context_req, reserved1, target_data_rep,
                                              input, reserved2, new_context, output, context_attr, ts_expiry );
-    HeapFree( GetProcessHeap(), 0, targetW );
+    heap_free( targetW );
     return status;
 }
 
@@ -560,7 +560,7 @@ static SecPkgInfoA *package_infoWtoA( const SecPkgInfoW *info )
     int size_name = WideCharToMultiByte( CP_ACP, 0, info->Name, -1, NULL, 0, NULL, NULL );
     int size_comment = WideCharToMultiByte( CP_ACP, 0, info->Comment, -1, NULL, 0, NULL, NULL );
 
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + size_name + size_comment ))) return NULL;
+    if (!(ret = heap_alloc( sizeof(*ret) + size_name + size_comment ))) return NULL;
     ret->fCapabilities = info->fCapabilities;
     ret->wVersion      = info->wVersion;
     ret->wRPCID        = info->wRPCID;
@@ -778,9 +778,9 @@ static void add_package(struct lsa_package *package)
     struct lsa_package *new_loaded_packages;
 
     if (!loaded_packages)
-        new_loaded_packages = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_loaded_packages));
+        new_loaded_packages = heap_alloc(sizeof(*new_loaded_packages));
     else
-        new_loaded_packages = HeapReAlloc(GetProcessHeap(), 0, loaded_packages, sizeof(*new_loaded_packages) * (loaded_packages_count + 1));
+        new_loaded_packages = heap_realloc(loaded_packages, sizeof(*new_loaded_packages) * (loaded_packages_count + 1));
 
     if (new_loaded_packages)
     {
@@ -884,7 +884,7 @@ void load_auth_packages(void)
     {
         SecPkgInfoW *info;
 
-        info = HeapAlloc(GetProcessHeap(), 0, loaded_packages[i].lsa_table_count * sizeof(*info));
+        info = heap_alloc(loaded_packages[i].lsa_table_count * sizeof(*info));
         if (info)
         {
             NTSTATUS status;
@@ -893,7 +893,7 @@ void load_auth_packages(void)
             if (status == STATUS_SUCCESS)
                 SECUR32_addPackages(provider, loaded_packages[i].lsa_table_count, NULL, info);
 
-            HeapFree(GetProcessHeap(), 0, info);
+            heap_free(info);
         }
     }
 }

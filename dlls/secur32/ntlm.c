@@ -93,8 +93,7 @@ static char *ntlm_GetUsernameArg(LPCWSTR userW, INT userW_length)
 
     unixcp_size =  WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
         userW, userW_length, NULL, 0, NULL, NULL) + sizeof(username_arg);
-    user = HeapAlloc(GetProcessHeap(), 0, unixcp_size);
-    if (!user) return NULL;
+    if (!(user = heap_alloc(unixcp_size))) return NULL;
     memcpy(user, username_arg, sizeof(username_arg) - 1);
     WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, userW, userW_length,
         user + sizeof(username_arg) - 1,
@@ -111,8 +110,7 @@ static char *ntlm_GetDomainArg(LPCWSTR domainW, INT domainW_length)
 
     unixcp_size = WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
         domainW, domainW_length, NULL, 0,  NULL, NULL) + sizeof(domain_arg);
-    domain = HeapAlloc(GetProcessHeap(), 0, unixcp_size);
-    if (!domain) return NULL;
+    if (!(domain = heap_alloc(unixcp_size))) return NULL;
     memcpy(domain, domain_arg, sizeof(domain_arg) - 1);
     WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, domainW,
         domainW_length, domain + sizeof(domain_arg) - 1,
@@ -129,8 +127,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-    SECURITY_STATUS ret;
-    PNtlmCredentials ntlm_cred;
+    SECURITY_STATUS ret = SEC_E_INSUFFICIENT_MEMORY;
+    PNtlmCredentials ntlm_cred = NULL;
     LPWSTR domain = NULL, user = NULL, password = NULL;
     PSEC_WINNT_AUTH_IDENTITY_W auth_data = NULL;
 
@@ -138,149 +136,117 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
 
-    switch(fCredentialUse)
+    switch (fCredentialUse)
     {
-        case SECPKG_CRED_INBOUND:
-            ntlm_cred = HeapAlloc(GetProcessHeap(), 0, sizeof(*ntlm_cred));
-            if (!ntlm_cred)
-                ret = SEC_E_INSUFFICIENT_MEMORY;
+    case SECPKG_CRED_INBOUND:
+        if (!(ntlm_cred = heap_alloc(sizeof(*ntlm_cred)))) return SEC_E_INSUFFICIENT_MEMORY;
+        ntlm_cred->mode = NTLM_SERVER;
+        ntlm_cred->username_arg = NULL;
+        ntlm_cred->domain_arg = NULL;
+        ntlm_cred->password = NULL;
+        ntlm_cred->pwlen = 0;
+        ntlm_cred->no_cached_credentials = 0;
+
+        phCredential->dwUpper = fCredentialUse;
+        phCredential->dwLower = (ULONG_PTR)ntlm_cred;
+        ret = SEC_E_OK;
+        break;
+
+    case SECPKG_CRED_OUTBOUND:
+        auth_data = pAuthData;
+        if (!(ntlm_cred = heap_alloc(sizeof(*ntlm_cred)))) return SEC_E_INSUFFICIENT_MEMORY;
+
+        ntlm_cred->mode = NTLM_CLIENT;
+        ntlm_cred->username_arg = NULL;
+        ntlm_cred->domain_arg = NULL;
+        ntlm_cred->password = NULL;
+        ntlm_cred->pwlen = 0;
+        ntlm_cred->no_cached_credentials = 0;
+
+        if (pAuthData)
+        {
+            int domain_len = 0, user_len = 0, password_len = 0;
+
+            if (auth_data->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+            {
+                if (auth_data->DomainLength)
+                {
+                    domain_len = MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->Domain,
+                                                     auth_data->DomainLength, NULL, 0);
+                    if (!(domain = heap_alloc(sizeof(WCHAR) * domain_len))) goto done;
+                    MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->Domain, auth_data->DomainLength,
+                                        domain, domain_len);
+                }
+                if (auth_data->UserLength)
+                {
+                    user_len = MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->User,
+                                                   auth_data->UserLength, NULL, 0);
+                    if (!(user = heap_alloc(sizeof(WCHAR) * user_len))) goto done;
+                    MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->User, auth_data->UserLength,
+                                        user, user_len);
+                }
+                if (auth_data->PasswordLength)
+                {
+                    password_len = MultiByteToWideChar(CP_ACP, 0,(char *)auth_data->Password,
+                                                       auth_data->PasswordLength, NULL, 0);
+                    if (!(password = heap_alloc(sizeof(WCHAR) * password_len))) goto done;
+                    MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->Password, auth_data->PasswordLength,
+                                        password, password_len);
+                }
+            }
             else
             {
-                ntlm_cred->mode = NTLM_SERVER;
-                ntlm_cred->username_arg = NULL;
-                ntlm_cred->domain_arg = NULL;
-                ntlm_cred->password = NULL;
-                ntlm_cred->pwlen = 0;
-                ntlm_cred->no_cached_credentials = 0;
+                domain = auth_data->Domain;
+                domain_len = auth_data->DomainLength;
 
-                phCredential->dwUpper = fCredentialUse;
-                phCredential->dwLower = (ULONG_PTR)ntlm_cred;
-                ret = SEC_E_OK;
+                user = auth_data->User;
+                user_len = auth_data->UserLength;
+
+                password = auth_data->Password;
+                password_len = auth_data->PasswordLength;
             }
-            break;
-        case SECPKG_CRED_OUTBOUND:
+
+            TRACE("Username is %s\n", debugstr_wn(user, user_len));
+            TRACE("Domain name is %s\n", debugstr_wn(domain, domain_len));
+
+            ntlm_cred->username_arg = ntlm_GetUsernameArg(user, user_len);
+            ntlm_cred->domain_arg = ntlm_GetDomainArg(domain, domain_len);
+
+            if (password_len)
             {
-                auth_data = pAuthData;
-                ntlm_cred = HeapAlloc(GetProcessHeap(), 0, sizeof(*ntlm_cred));
-                if (!ntlm_cred)
-                {
-                    ret = SEC_E_INSUFFICIENT_MEMORY;
-                    break;
-                }
-                ntlm_cred->mode = NTLM_CLIENT;
-                ntlm_cred->username_arg = NULL;
-                ntlm_cred->domain_arg = NULL;
-                ntlm_cred->password = NULL;
-                ntlm_cred->pwlen = 0;
-                ntlm_cred->no_cached_credentials = 0;
-
-                if(pAuthData != NULL)
-                {
-                    int domain_len = 0, user_len = 0, password_len = 0;
-
-                    if (auth_data->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
-                    {
-                        if (auth_data->DomainLength)
-                        {
-                            domain_len = MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->Domain,
-                                                             auth_data->DomainLength, NULL, 0);
-                            domain = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * domain_len);
-                            if(!domain)
-                            {
-                                ret = SEC_E_INSUFFICIENT_MEMORY;
-                                break;
-                            }
-                            MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->Domain, auth_data->DomainLength,
-                                                domain, domain_len);
-                        }
-
-                        if (auth_data->UserLength)
-                        {
-                            user_len = MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->User,
-                                                           auth_data->UserLength, NULL, 0);
-                            user = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * user_len);
-                            if(!user)
-                            {
-                                ret = SEC_E_INSUFFICIENT_MEMORY;
-                                break;
-                            }
-                            MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->User, auth_data->UserLength,
-                                                user, user_len);
-                        }
-
-                        if (auth_data->PasswordLength)
-                        {
-                            password_len = MultiByteToWideChar(CP_ACP, 0,(char *)auth_data->Password,
-                                                               auth_data->PasswordLength, NULL, 0);
-                            password = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * password_len);
-                            if(!password)
-                            {
-                                ret = SEC_E_INSUFFICIENT_MEMORY;
-                                break;
-                            }
-                            MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->Password, auth_data->PasswordLength,
-                                                password, password_len);
-                        }
-                    }
-                    else
-                    {
-                        domain = auth_data->Domain;
-                        domain_len = auth_data->DomainLength;
-
-                        user = auth_data->User;
-                        user_len = auth_data->UserLength;
-
-                        password = auth_data->Password;
-                        password_len = auth_data->PasswordLength;
-                    }
-
-                    TRACE("Username is %s\n", debugstr_wn(user, user_len));
-                    TRACE("Domain name is %s\n", debugstr_wn(domain, domain_len));
-
-                    ntlm_cred->username_arg = ntlm_GetUsernameArg(user, user_len);
-                    ntlm_cred->domain_arg = ntlm_GetDomainArg(domain, domain_len);
-
-                    if(password_len != 0)
-                    {
-                        ntlm_cred->pwlen = WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, password,
-                                                               password_len, NULL, 0, NULL, NULL);
-
-                        ntlm_cred->password = HeapAlloc(GetProcessHeap(), 0,
-                                                        ntlm_cred->pwlen);
-                        if(!ntlm_cred->password)
-                        {
-                            ret = SEC_E_INSUFFICIENT_MEMORY;
-                            break;
-                        }
-
-                        WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, password, password_len,
-                                            ntlm_cred->password, ntlm_cred->pwlen, NULL, NULL);
-                    }
-                }
-
-                phCredential->dwUpper = fCredentialUse;
-                phCredential->dwLower = (ULONG_PTR)ntlm_cred;
-                TRACE("ACH phCredential->dwUpper: 0x%08lx, dwLower: 0x%08lx\n",
-                      phCredential->dwUpper, phCredential->dwLower);
-                ret = SEC_E_OK;
-                break;
+                ntlm_cred->pwlen = WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, password,
+                                                       password_len, NULL, 0, NULL, NULL);
+                if (!(ntlm_cred->password = heap_alloc(ntlm_cred->pwlen))) goto done;
+                WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, password, password_len,
+                                    ntlm_cred->password, ntlm_cred->pwlen, NULL, NULL);
             }
-        case SECPKG_CRED_BOTH:
-            FIXME("AcquireCredentialsHandle: SECPKG_CRED_BOTH stub\n");
-            ret = SEC_E_UNSUPPORTED_FUNCTION;
-            phCredential = NULL;
-            break;
-        default:
-            phCredential = NULL;
-            ret = SEC_E_UNKNOWN_CREDENTIALS;
+        }
+
+        phCredential->dwUpper = fCredentialUse;
+        phCredential->dwLower = (ULONG_PTR)ntlm_cred;
+        TRACE("ACH phCredential->dwUpper: 0x%08lx, dwLower: 0x%08lx\n", phCredential->dwUpper,
+              phCredential->dwLower);
+        ret = SEC_E_OK;
+        break;
+
+    case SECPKG_CRED_BOTH:
+        FIXME("AcquireCredentialsHandle: SECPKG_CRED_BOTH stub\n");
+        ret = SEC_E_UNSUPPORTED_FUNCTION;
+        break;
+
+    default:
+        ret = SEC_E_UNKNOWN_CREDENTIALS;
     }
 
-    if (auth_data && auth_data->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+done:
+    if (auth_data && (auth_data->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI))
     {
-        HeapFree(GetProcessHeap(), 0, domain);
-        HeapFree(GetProcessHeap(), 0, user);
-        HeapFree(GetProcessHeap(), 0, password);
+        heap_free(domain);
+        heap_free(user);
+        heap_free(password);
     }
+    if (ret != SEC_E_OK) heap_free( ntlm_cred );
+
     return ret;
 }
 
@@ -292,81 +258,54 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-    SECURITY_STATUS ret;
+    SECURITY_STATUS ret = SEC_E_INSUFFICIENT_MEMORY;
     int user_sizeW, domain_sizeW, passwd_sizeW;
-    
     SEC_WCHAR *user = NULL, *domain = NULL, *passwd = NULL, *package = NULL;
-    
     PSEC_WINNT_AUTH_IDENTITY_W pAuthDataW = NULL;
-    PSEC_WINNT_AUTH_IDENTITY_A identity  = NULL;
+    PSEC_WINNT_AUTH_IDENTITY_A id  = NULL;
 
     TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p)\n",
      debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-    
-    if(pszPackage != NULL)
-    {
-        int package_sizeW = MultiByteToWideChar(CP_ACP, 0, pszPackage, -1,
-                NULL, 0);
 
-        package = HeapAlloc(GetProcessHeap(), 0, package_sizeW * 
-                sizeof(SEC_WCHAR));
+    if (pszPackage)
+    {
+        int package_sizeW = MultiByteToWideChar(CP_ACP, 0, pszPackage, -1, NULL, 0);
+        if (!(package = heap_alloc(package_sizeW * sizeof(SEC_WCHAR)))) return SEC_E_INSUFFICIENT_MEMORY;
         MultiByteToWideChar(CP_ACP, 0, pszPackage, -1, package, package_sizeW);
     }
 
-    
-    if(pAuthData != NULL)
+    if (pAuthData)
     {
-        identity = pAuthData;
-
-        if(identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
+        id = pAuthData;
+        if (id->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
         {
-            pAuthDataW = HeapAlloc(GetProcessHeap(), 0, 
-                    sizeof(SEC_WINNT_AUTH_IDENTITY_W));
+            if (!(pAuthDataW = heap_alloc(sizeof(SEC_WINNT_AUTH_IDENTITY_W)))) goto done;
 
-            if(identity->UserLength != 0)
-            {
-                user_sizeW = MultiByteToWideChar(CP_ACP, 0, 
-                    (LPCSTR)identity->User, identity->UserLength, NULL, 0);
-                user = HeapAlloc(GetProcessHeap(), 0, user_sizeW * 
-                        sizeof(SEC_WCHAR));
-                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)identity->User, 
-                    identity->UserLength, user, user_sizeW);
-            }
+            if (!id->UserLength) user_sizeW = 0;
             else
             {
-                user_sizeW = 0;
-            }
-             
-            if(identity->DomainLength != 0)
-            {
-                domain_sizeW = MultiByteToWideChar(CP_ACP, 0, 
-                    (LPCSTR)identity->Domain, identity->DomainLength, NULL, 0);
-                domain = HeapAlloc(GetProcessHeap(), 0, domain_sizeW 
-                    * sizeof(SEC_WCHAR));
-                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)identity->Domain, 
-                    identity->DomainLength, domain, domain_sizeW);
-            }
-            else
-            {
-                domain_sizeW = 0;
+                user_sizeW = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)id->User, id->UserLength, NULL, 0);
+                if (!(user = heap_alloc(user_sizeW * sizeof(SEC_WCHAR)))) goto done;
+                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)id->User, id->UserLength, user, user_sizeW);
             }
 
-            if(identity->PasswordLength != 0)
-            {
-                passwd_sizeW = MultiByteToWideChar(CP_ACP, 0, 
-                    (LPCSTR)identity->Password, identity->PasswordLength,
-                    NULL, 0);
-                passwd = HeapAlloc(GetProcessHeap(), 0, passwd_sizeW
-                    * sizeof(SEC_WCHAR));
-                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)identity->Password,
-                    identity->PasswordLength, passwd, passwd_sizeW);
-            }
+            if (!id->DomainLength) domain_sizeW = 0;
             else
             {
-                passwd_sizeW = 0;
+                domain_sizeW = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)id->Domain, id->DomainLength, NULL, 0);
+                if (!(domain = heap_alloc(domain_sizeW * sizeof(SEC_WCHAR)))) goto done;
+                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)id->Domain, id->DomainLength, domain, domain_sizeW);
             }
-            
+
+            if (!id->PasswordLength) passwd_sizeW = 0;
+            else
+            {
+                passwd_sizeW = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)id->Password, id->PasswordLength, NULL, 0);
+                if (!(passwd = heap_alloc(passwd_sizeW * sizeof(SEC_WCHAR)))) goto done;
+                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)id->Password, id->PasswordLength, passwd, passwd_sizeW);
+            }
+
             pAuthDataW->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
             pAuthDataW->User = user;
             pAuthDataW->UserLength = user_sizeW;
@@ -375,23 +314,20 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
             pAuthDataW->Password = passwd;
             pAuthDataW->PasswordLength = passwd_sizeW;
         }
-        else
-        {
-            pAuthDataW = (PSEC_WINNT_AUTH_IDENTITY_W)identity;
-        }
-    }       
-    
+        else pAuthDataW = (PSEC_WINNT_AUTH_IDENTITY_W)id;
+    }
+
     ret = ntlm_AcquireCredentialsHandleW(NULL, package, fCredentialUse, 
             pLogonID, pAuthDataW, pGetKeyFn, pGetKeyArgument, phCredential,
             ptsExpiry);
-    
-    HeapFree(GetProcessHeap(), 0, package);
-    HeapFree(GetProcessHeap(), 0, user);
-    HeapFree(GetProcessHeap(), 0, domain);
-    HeapFree(GetProcessHeap(), 0, passwd);
-    if(pAuthDataW != (PSEC_WINNT_AUTH_IDENTITY_W)identity)
-        HeapFree(GetProcessHeap(), 0, pAuthDataW);
-    
+
+done:
+    heap_free(package);
+    heap_free(user);
+    heap_free(domain);
+    heap_free(passwd);
+    if (pAuthDataW != (PSEC_WINNT_AUTH_IDENTITY_W)id) heap_free(pAuthDataW);
+
     return ret;
 }
 
@@ -465,16 +401,13 @@ static BOOL ntlm_GetCachedCredential(const SEC_WCHAR *pszTargetName, PCREDENTIAL
         p = pszHost + strlenW(pszHost);
     }
 
-    pszHostOnly = HeapAlloc(GetProcessHeap(), 0, (p - pszHost + 1) * sizeof(WCHAR));
-    if (!pszHostOnly)
-        return FALSE;
-
+    if (!(pszHostOnly = heap_alloc((p - pszHost + 1) * sizeof(WCHAR)))) return FALSE;
     memcpy(pszHostOnly, pszHost, (p - pszHost) * sizeof(WCHAR));
     pszHostOnly[p - pszHost] = '\0';
 
     ret = CredReadW(pszHostOnly, CRED_TYPE_DOMAIN_PASSWORD, 0, cred);
 
-    HeapFree(GetProcessHeap(), 0, pszHostOnly);
+    heap_free(pszHostOnly);
     return ret;
 }
 
@@ -521,8 +454,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         TRACE("Setting SECURITY_NETWORK_DREP\n");
     }
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(char) * NTLM_MAX_BUF);
-    bin = HeapAlloc(GetProcessHeap(), 0, sizeof(BYTE) * NTLM_MAX_BUF);
+    buffer = heap_alloc(sizeof(char) * NTLM_MAX_BUF);
+    bin = heap_alloc(sizeof(BYTE) * NTLM_MAX_BUF);
 
     if((phContext == NULL) && (pInput == NULL))
     {
@@ -582,8 +515,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                         cred->CredentialBlobSize / sizeof(WCHAR), NULL, 0,
                         NULL, NULL);
 
-                    password = HeapAlloc(GetProcessHeap(), 0, pwlen);
-
+                    password = heap_alloc(pwlen);
                     WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
                                         (LPWSTR)cred->CredentialBlob,
                                         cred->CredentialBlobSize / sizeof(WCHAR),
@@ -625,7 +557,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             goto isc_end;
 
         helper->mode = NTLM_CLIENT;
-        helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
+        helper->session_key = heap_alloc(16);
         if (!helper->session_key)
         {
             cleanup_helper(helper);
@@ -644,15 +576,13 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                                               password ? password : ntlm_cred->password,
                                               password ? pwlen : ntlm_cred->pwlen,
                                               NULL, 0);
-            unicode_password = HeapAlloc(GetProcessHeap(), 0,
-                                         passwd_lenW * sizeof(SEC_WCHAR));
+            unicode_password = heap_alloc(passwd_lenW * sizeof(SEC_WCHAR));
             MultiByteToWideChar(CP_ACP, 0, password ? password : ntlm_cred->password,
                                 password ? pwlen : ntlm_cred->pwlen, unicode_password, passwd_lenW);
 
             SECUR32_CreateNTLM1SessionKey((PBYTE)unicode_password,
                                           passwd_lenW * sizeof(SEC_WCHAR), helper->session_key);
-
-            HeapFree(GetProcessHeap(), 0, unicode_password);
+            heap_free(unicode_password);
         }
         else
             memset(helper->session_key, 0, 16);
@@ -661,8 +591,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
          * "SF NTLMSSP_FEATURE_SIGN NTLMSSP_FEATURE_SEAL
          * NTLMSSP_FEATURE_SESSION_KEY"
          */
-        want_flags = HeapAlloc(GetProcessHeap(), 0, 73);
-        if(want_flags == NULL)
+        if (!(want_flags = heap_alloc(73)))
         {
             cleanup_helper(helper);
             ret = SEC_E_INSUFFICIENT_MEMORY;
@@ -889,7 +818,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
     if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
     {
-        pOutput->pBuffers[token_idx].pvBuffer = HeapAlloc(GetProcessHeap(), 0, bin_len);
+        pOutput->pBuffers[token_idx].pvBuffer = heap_alloc(bin_len);
         pOutput->pBuffers[token_idx].cbBuffer = bin_len;
     }
     else if (pOutput->pBuffers[token_idx].cbBuffer < bin_len)
@@ -955,9 +884,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 TRACE("Failed to decode session key\n");
             }
             TRACE("Session key is %s\n", debugstr_a(buffer+3));
-            HeapFree(GetProcessHeap(), 0, helper->session_key);
-            helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
-            if(!helper->session_key)
+            heap_free(helper->session_key);
+            if (!(helper->session_key = heap_alloc(bin_len)))
             {
                 ret = SEC_E_INSUFFICIENT_MEMORY;
                 goto isc_end;
@@ -980,12 +908,12 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     }
 
 isc_end:
-    HeapFree(GetProcessHeap(), 0, username);
-    HeapFree(GetProcessHeap(), 0, domain);
-    HeapFree(GetProcessHeap(), 0, password);
-    HeapFree(GetProcessHeap(), 0, want_flags);
-    HeapFree(GetProcessHeap(), 0, buffer);
-    HeapFree(GetProcessHeap(), 0, bin);
+    heap_free(username);
+    heap_free(domain);
+    heap_free(password);
+    heap_free(want_flags);
+    heap_free(buffer);
+    heap_free(bin);
     return ret;
 }
 
@@ -1005,21 +933,18 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-    if(pszTargetName != NULL)
+    if (pszTargetName)
     {
-        int target_size = MultiByteToWideChar(CP_ACP, 0, pszTargetName,
-            strlen(pszTargetName)+1, NULL, 0);
-        target = HeapAlloc(GetProcessHeap(), 0, target_size *
-                sizeof(SEC_WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, pszTargetName, strlen(pszTargetName)+1,
-            target, target_size);
+        int target_size = MultiByteToWideChar(CP_ACP, 0, pszTargetName, -1, NULL, 0);
+        if (!(target = heap_alloc(target_size * sizeof(SEC_WCHAR)))) return SEC_E_INSUFFICIENT_MEMORY;
+        MultiByteToWideChar(CP_ACP, 0, pszTargetName, -1, target, target_size);
     }
 
     ret = ntlm_InitializeSecurityContextW(phCredential, phContext, target,
             fContextReq, Reserved1, TargetDataRep, pInput, Reserved2,
             phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-    HeapFree(GetProcessHeap(), 0, target);
+    heap_free(target);
     return ret;
 }
 
@@ -1043,8 +968,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
      fContextReq, TargetDataRep, phNewContext, pOutput, pfContextAttr,
      ptsExpiry);
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(char) * NTLM_MAX_BUF);
-    bin    = HeapAlloc(GetProcessHeap(),0, sizeof(BYTE) * NTLM_MAX_BUF);
+    buffer = heap_alloc(sizeof(char) * NTLM_MAX_BUF);
+    bin    = heap_alloc(sizeof(BYTE) * NTLM_MAX_BUF);
 
     if(TargetDataRep == SECURITY_NETWORK_DREP){
         TRACE("Using SECURITY_NETWORK_DREP\n");
@@ -1101,8 +1026,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
         helper->mode = NTLM_SERVER;
 
         /* Handle all the flags */
-        want_flags = HeapAlloc(GetProcessHeap(), 0, 73);
-        if(want_flags == NULL)
+        if (!(want_flags = heap_alloc(73)))
         {
             TRACE("Failed to allocate memory for the want_flags!\n");
             ret = SEC_E_INSUFFICIENT_MEMORY;
@@ -1335,9 +1259,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             if(strncmp(buffer, "BH ", 3) == 0)
             {
                 TRACE("Helper sent %s\n", debugstr_a(buffer+3));
-                HeapFree(GetProcessHeap(), 0, helper->session_key);
-                helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
-                if (!helper->session_key)
+                heap_free(helper->session_key);
+                if (!(helper->session_key = heap_alloc(16)))
                 {
                     ret = SEC_E_INSUFFICIENT_MEMORY;
                     goto asc_end;
@@ -1353,9 +1276,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
                     TRACE("Failed to decode session key\n");
                 }
                 TRACE("Session key is %s\n", debugstr_a(buffer+3));
-                HeapFree(GetProcessHeap(), 0, helper->session_key);
-                helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
-                if(!helper->session_key)
+                heap_free(helper->session_key);
+                if (!(helper->session_key = heap_alloc(16)))
                 {
                     ret = SEC_E_INSUFFICIENT_MEMORY;
                     goto asc_end;
@@ -1372,9 +1294,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
     phNewContext->dwLower = (ULONG_PTR)helper;
 
 asc_end:
-    HeapFree(GetProcessHeap(), 0, want_flags);
-    HeapFree(GetProcessHeap(), 0, buffer);
-    HeapFree(GetProcessHeap(), 0, bin);
+    heap_free(want_flags);
+    heap_free(buffer);
+    heap_free(bin);
     return ret;
 }
 
@@ -1411,10 +1333,10 @@ SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
     SECUR32_arc4Cleanup(helper->crypt.ntlm.a4i);
     SECUR32_arc4Cleanup(helper->crypt.ntlm2.send_a4i);
     SECUR32_arc4Cleanup(helper->crypt.ntlm2.recv_a4i);
-    HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.send_sign_key);
-    HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.send_seal_key);
-    HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.recv_sign_key);
-    HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.recv_seal_key);
+    heap_free(helper->crypt.ntlm2.send_sign_key);
+    heap_free(helper->crypt.ntlm2.send_seal_key);
+    heap_free(helper->crypt.ntlm2.recv_sign_key);
+    heap_free(helper->crypt.ntlm2.recv_seal_key);
 
     cleanup_helper(helper);
 
@@ -1473,7 +1395,7 @@ static SecPkgInfoW *build_package_infoW( const SecPkgInfoW *info )
     DWORD size_name = (strlenW(info->Name) + 1) * sizeof(WCHAR);
     DWORD size_comment = (strlenW(info->Comment) + 1) * sizeof(WCHAR);
 
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + size_name + size_comment ))) return NULL;
+    if (!(ret = heap_alloc( sizeof(*ret) + size_name + size_comment ))) return NULL;
     ret->fCapabilities = info->fCapabilities;
     ret->wVersion      = info->wVersion;
     ret->wRPCID        = info->wRPCID;
@@ -1490,7 +1412,7 @@ static SecPkgInfoA *build_package_infoA( const SecPkgInfoA *info )
     SecPkgInfoA *ret;
     DWORD size_name = strlen(info->Name) + 1, size_comment = strlen(info->Comment) + 1;
 
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + size_name + size_comment ))) return NULL;
+    if (!(ret = heap_alloc( sizeof(*ret) + size_name + size_comment ))) return NULL;
     ret->fCapabilities = info->fCapabilities;
     ret->wVersion      = info->wVersion;
     ret->wRPCID        = info->wRPCID;
@@ -1822,7 +1744,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     helper = (PNegoHelper)phContext->dwLower;
     TRACE("Negotiated flags: 0x%08x\n", helper->neg_flags);
 
-    local_buff = HeapAlloc(GetProcessHeap(), 0, pMessage->cBuffers * sizeof(SecBuffer));
+    local_buff = heap_alloc(pMessage->cBuffers * sizeof(SecBuffer));
 
     local_desc.ulVersion = SECBUFFER_VERSION;
     local_desc.cBuffers = pMessage->cBuffers;
@@ -1853,8 +1775,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     else
         ret = SEC_E_OK;
 
-    HeapFree(GetProcessHeap(), 0, local_buff);
-
+    heap_free(local_buff);
     return ret;
 
 }
@@ -1864,24 +1785,19 @@ SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
  */
 SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCredential)
 {
-    SECURITY_STATUS ret;
-
-    if(phCredential){
+    if (phCredential)
+    {
         PNtlmCredentials ntlm_cred = (PNtlmCredentials) phCredential->dwLower;
         phCredential->dwUpper = 0;
         phCredential->dwLower = 0;
-        if (ntlm_cred->password)
-            memset(ntlm_cred->password, 0, ntlm_cred->pwlen);
-        HeapFree(GetProcessHeap(), 0, ntlm_cred->password);
-        HeapFree(GetProcessHeap(), 0, ntlm_cred->username_arg);
-        HeapFree(GetProcessHeap(), 0, ntlm_cred->domain_arg);
-        HeapFree(GetProcessHeap(), 0, ntlm_cred);
-        ret = SEC_E_OK;
+        if (ntlm_cred->password) memset(ntlm_cred->password, 0, ntlm_cred->pwlen);
+        heap_free(ntlm_cred->password);
+        heap_free(ntlm_cred->username_arg);
+        heap_free(ntlm_cred->domain_arg);
+        heap_free(ntlm_cred);
     }
-    else
-        ret = SEC_E_OK;
-    
-    return ret;
+
+    return SEC_E_OK;
 }
 
 /***********************************************************************

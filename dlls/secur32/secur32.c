@@ -178,7 +178,7 @@ static PWSTR SECUR32_strdupW(PCWSTR str)
 
     if (str)
     {
-        ret = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(str) + 1) * sizeof(WCHAR));
+        ret = heap_alloc((lstrlenW(str) + 1) * sizeof(WCHAR));
         if (ret)
             lstrcpyW(ret, str);
     }
@@ -197,7 +197,7 @@ PWSTR SECUR32_AllocWideFromMultiByte(PCSTR str)
 
         if (charsNeeded)
         {
-            ret = HeapAlloc(GetProcessHeap(), 0, charsNeeded * sizeof(WCHAR));
+            ret = heap_alloc(charsNeeded * sizeof(WCHAR));
             if (ret)
                 MultiByteToWideChar(CP_ACP, 0, str, -1, ret, charsNeeded);
         }
@@ -220,7 +220,7 @@ PSTR SECUR32_AllocMultiByteFromWide(PCWSTR str)
 
         if (charsNeeded)
         {
-            ret = HeapAlloc(GetProcessHeap(), 0, charsNeeded);
+            ret = heap_alloc(charsNeeded);
             if (ret)
                 WideCharToMultiByte(CP_ACP, 0, str, -1, ret, charsNeeded,
                  NULL, NULL);
@@ -406,7 +406,7 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
 
     if (!providerTable)
     {
-        providerTable = HeapAlloc(GetProcessHeap(), 0, sizeof(SecureProviderTable));
+        providerTable = heap_alloc(sizeof(SecureProviderTable));
         if (!providerTable)
         {
             LeaveCriticalSection(&cs);
@@ -416,7 +416,7 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
         list_init(&providerTable->table);
     }
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(SecureProvider));
+    ret = heap_alloc(sizeof(SecureProvider));
     if (!ret)
     {
         LeaveCriticalSection(&cs);
@@ -455,7 +455,7 @@ void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
 
     if (!packageTable)
     {
-        packageTable = HeapAlloc(GetProcessHeap(), 0, sizeof(SecurePackageTable));
+        packageTable = heap_alloc(sizeof(SecurePackageTable));
         if (!packageTable)
         {
             LeaveCriticalSection(&cs);
@@ -468,7 +468,7 @@ void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
         
     for (i = 0; i < toAdd; i++)
     {
-        SecurePackage *package = HeapAlloc(GetProcessHeap(), 0, sizeof(SecurePackage));
+        SecurePackage *package = heap_alloc(sizeof(SecurePackage));
         if (!package)
             continue;
 
@@ -685,12 +685,12 @@ static void SECUR32_freeProviders(void)
         LIST_FOR_EACH_ENTRY_SAFE(package, package_next, &packageTable->table,
                                  SecurePackage, entry)
         {
-            HeapFree(GetProcessHeap(), 0, package->infoW.Name);
-            HeapFree(GetProcessHeap(), 0, package->infoW.Comment);
-            HeapFree(GetProcessHeap(), 0, package);
+            heap_free(package->infoW.Name);
+            heap_free(package->infoW.Comment);
+            heap_free(package);
         }
 
-        HeapFree(GetProcessHeap(), 0, packageTable);
+        heap_free(packageTable);
         packageTable = NULL;
     }
 
@@ -700,13 +700,13 @@ static void SECUR32_freeProviders(void)
         LIST_FOR_EACH_ENTRY_SAFE(provider, provider_next, &providerTable->table,
                                  SecureProvider, entry)
         {
-            HeapFree(GetProcessHeap(), 0, provider->moduleName);
+            heap_free(provider->moduleName);
             if (provider->lib)
                 FreeLibrary(provider->lib);
-            HeapFree(GetProcessHeap(), 0, provider);
+            heap_free(provider);
         }
 
-        HeapFree(GetProcessHeap(), 0, providerTable);
+        heap_free(providerTable);
         providerTable = NULL;
     }
 
@@ -723,8 +723,7 @@ static void SECUR32_freeProviders(void)
  */
 SECURITY_STATUS WINAPI FreeContextBuffer(PVOID pv)
 {
-    HeapFree(GetProcessHeap(), 0, pv);
-
+    heap_free(pv);
     return SEC_E_OK;
 }
 
@@ -756,7 +755,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
         }
         if (bytesNeeded)
         {
-            *ppPackageInfo = HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
+            *ppPackageInfo = heap_alloc(bytesNeeded);
             if (*ppPackageInfo)
             {
                 ULONG i = 0;
@@ -821,7 +820,7 @@ static PSecPkgInfoA thunk_PSecPkgInfoWToA(ULONG cPackages,
                 bytesNeeded += WideCharToMultiByte(CP_ACP, 0, info[i].Comment,
                  -1, NULL, 0, NULL, NULL);
         }
-        ret = HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
+        ret = heap_alloc(bytesNeeded);
         if (ret)
         {
             PSTR nextString;
@@ -924,7 +923,7 @@ BOOLEAN WINAPI GetComputerObjectNameA(
     ULONG sizeW = *nSize;
     TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
     if (lpNameBuffer) {
-        bufferW = HeapAlloc(GetProcessHeap(), 0, sizeW * sizeof(WCHAR));
+        bufferW = heap_alloc(sizeW * sizeof(WCHAR));
         if (bufferW == NULL) {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return FALSE;
@@ -938,7 +937,7 @@ BOOLEAN WINAPI GetComputerObjectNameA(
     }
     else
         *nSize = sizeW;
-    HeapFree(GetProcessHeap(), 0, bufferW);
+    heap_free(bufferW);
     return rc;
 }
 
@@ -1081,7 +1080,7 @@ BOOLEAN WINAPI GetUserNameExA(
     ULONG sizeW = *nSize;
     TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
     if (lpNameBuffer) {
-        bufferW = HeapAlloc(GetProcessHeap(), 0, sizeW * sizeof(WCHAR));
+        bufferW = heap_alloc(sizeW * sizeof(WCHAR));
         if (bufferW == NULL) {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return FALSE;
@@ -1104,7 +1103,7 @@ BOOLEAN WINAPI GetUserNameExA(
     }
     else
         *nSize = sizeW;
-    HeapFree(GetProcessHeap(), 0, bufferW);
+    heap_free(bufferW);
     return rc;
 }
 

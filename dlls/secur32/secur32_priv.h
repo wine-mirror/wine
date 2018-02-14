@@ -23,6 +23,7 @@
 
 #include <sys/types.h>
 #include <limits.h>
+#include "wine/heap.h"
 #include "wine/list.h"
 #include "schannel.h"
 

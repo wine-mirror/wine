@@ -81,7 +81,7 @@ SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
         fcntl( pipe_out[1], F_SETFD, FD_CLOEXEC );
     }
 
-    if (!(helper = HeapAlloc(GetProcessHeap(),0, sizeof(NegoHelper))))
+    if (!(helper = heap_alloc( sizeof(NegoHelper) )))
     {
         close(pipe_in[0]);
         close(pipe_in[1]);
@@ -98,7 +98,7 @@ SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
         close(pipe_in[1]);
         close(pipe_out[0]);
         close(pipe_out[1]);
-        HeapFree( GetProcessHeap(), 0, helper );
+        heap_free( helper );
         return SEC_E_INTERNAL_ERROR;
     }
 
@@ -156,7 +156,7 @@ static SECURITY_STATUS read_line(PNegoHelper helper, int *offset_len)
     if(helper->com_buf == NULL)
     {
         TRACE("Creating a new buffer for the helper\n");
-        if((helper->com_buf = HeapAlloc(GetProcessHeap(), 0, INITIAL_BUFFER_SIZE)) == NULL)
+        if (!(helper->com_buf = heap_alloc(INITIAL_BUFFER_SIZE)))
             return SEC_E_INSUFFICIENT_MEMORY;
         
         /* Created a new buffer, size is INITIAL_BUFFER_SIZE, offset is 0 */
@@ -170,8 +170,7 @@ static SECURITY_STATUS read_line(PNegoHelper helper, int *offset_len)
         if(helper->com_buf_offset + INITIAL_BUFFER_SIZE > helper->com_buf_size)
         {
             /* increment buffer size in INITIAL_BUFFER_SIZE steps */
-            char *buf = HeapReAlloc(GetProcessHeap(), 0, helper->com_buf,
-                                    helper->com_buf_size + INITIAL_BUFFER_SIZE);
+            char *buf = heap_realloc(helper->com_buf, helper->com_buf_size + INITIAL_BUFFER_SIZE);
             TRACE("Resizing buffer!\n");
             if (!buf) return SEC_E_INSUFFICIENT_MEMORY;
             helper->com_buf_size += INITIAL_BUFFER_SIZE;
@@ -280,8 +279,8 @@ void cleanup_helper(PNegoHelper helper)
     if(helper == NULL)
         return;
 
-    HeapFree(GetProcessHeap(), 0, helper->com_buf);
-    HeapFree(GetProcessHeap(), 0, helper->session_key);
+    heap_free(helper->com_buf);
+    heap_free(helper->session_key);
 
     /* closing stdin will terminate ntlm_auth */
     close(helper->pipe_out);
@@ -297,7 +296,7 @@ void cleanup_helper(PNegoHelper helper)
     }
 #endif
 
-    HeapFree(GetProcessHeap(), 0, helper);
+    heap_free(helper);
 }
 
 void check_version(PNegoHelper helper)

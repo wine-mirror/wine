@@ -739,7 +739,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
 
     TRACE("(%p)\n", session);
 
-    s = HeapAlloc(GetProcessHeap(), 0, sizeof(*s));
+    s = heap_alloc(sizeof(*s));
     if (!s)
         return FALSE;
 
@@ -793,7 +793,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
     return TRUE;
 
 fail:
-    HeapFree(GetProcessHeap(), 0, s);
+    heap_free(s);
     return FALSE;
 }
 
@@ -808,7 +808,7 @@ void schan_imp_dispose_session(schan_imp_session session)
     if (status != noErr)
         ERR("Failed to dispose of session context: %d\n", status);
     DeleteCriticalSection(&s->cs);
-    HeapFree(GetProcessHeap(), 0, s);
+    heap_free(s);
 }
 
 void schan_imp_set_session_transport(schan_imp_session session,

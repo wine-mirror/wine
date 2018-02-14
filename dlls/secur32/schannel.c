@@ -97,7 +97,7 @@ static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
     {
         /* Grow the table */
         SIZE_T new_size = schan_handle_table_size + (schan_handle_table_size >> 1);
-        struct schan_handle *new_table = HeapReAlloc(GetProcessHeap(), 0, schan_handle_table, new_size * sizeof(*schan_handle_table));
+        struct schan_handle *new_table = heap_realloc(schan_handle_table, new_size * sizeof(*schan_handle_table));
         if (!new_table)
         {
             ERR("Failed to grow the handle table\n");
@@ -423,7 +423,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
     /* For now, the only thing I'm interested in is the direction of the
      * connection, so just store it.
      */
-    creds = HeapAlloc(GetProcessHeap(), 0, sizeof(*creds));
+    creds = heap_alloc(sizeof(*creds));
     if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
 
     handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
@@ -450,7 +450,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
     return st;
 
 fail:
-    HeapFree(GetProcessHeap(), 0, creds);
+    heap_free(creds);
     return SEC_E_INTERNAL_ERROR;
 }
 
@@ -469,14 +469,14 @@ static SECURITY_STATUS schan_AcquireServerCredentials(const SCHANNEL_CRED *schan
         ULONG_PTR handle;
         struct schan_credentials *creds;
 
-        creds = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*creds));
+        creds = heap_alloc_zero(sizeof(*creds));
         if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
         creds->credential_use = SECPKG_CRED_INBOUND;
 
         handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
         if (handle == SCHAN_INVALID_HANDLE)
         {
-            HeapFree(GetProcessHeap(), 0, creds);
+            heap_free(creds);
             return SEC_E_INTERNAL_ERROR;
         }
 
@@ -540,7 +540,7 @@ static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
 
     if (creds->credential_use == SECPKG_CRED_OUTBOUND)
         schan_imp_free_certificate_credentials(creds);
-    HeapFree(GetProcessHeap(), 0, creds);
+    heap_free(creds);
 
     return SEC_E_OK;
 }
@@ -581,9 +581,9 @@ static void schan_resize_current_buffer(const struct schan_buffers *s, SIZE_T mi
     while (new_size < min_size) new_size *= 2;
 
     if (b->pvBuffer)
-        new_data = HeapReAlloc(GetProcessHeap(), 0, b->pvBuffer, new_size);
+        new_data = heap_realloc(b->pvBuffer, new_size);
     else
-        new_data = HeapAlloc(GetProcessHeap(), 0, new_size);
+        new_data = heap_alloc(new_size);
 
     if (!new_data)
     {
@@ -815,21 +815,21 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             return SEC_E_INVALID_HANDLE;
         }
 
-        ctx = HeapAlloc(GetProcessHeap(), 0, sizeof(*ctx));
+        ctx = heap_alloc(sizeof(*ctx));
         if (!ctx) return SEC_E_INSUFFICIENT_MEMORY;
 
         ctx->cert = NULL;
         handle = schan_alloc_handle(ctx, SCHAN_HANDLE_CTX);
         if (handle == SCHAN_INVALID_HANDLE)
         {
-            HeapFree(GetProcessHeap(), 0, ctx);
+            heap_free(ctx);
             return SEC_E_INTERNAL_ERROR;
         }
 
         if (!schan_imp_create_session(&ctx->session, cred))
         {
             schan_free_handle(handle, SCHAN_HANDLE_CTX);
-            HeapFree(GetProcessHeap(), 0, ctx);
+            heap_free(ctx);
             return SEC_E_INTERNAL_ERROR;
         }
 
@@ -839,13 +839,13 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         if (pszTargetName && *pszTargetName)
         {
             UINT len = WideCharToMultiByte( CP_UNIXCP, 0, pszTargetName, -1, NULL, 0, NULL, NULL );
-            char *target = HeapAlloc( GetProcessHeap(), 0, len );
+            char *target = heap_alloc( len );
 
             if (target)
             {
                 WideCharToMultiByte( CP_UNIXCP, 0, pszTargetName, -1, target, len, NULL, NULL );
                 schan_imp_set_session_target( ctx->session, target );
-                HeapFree( GetProcessHeap(), 0, target );
+                heap_free( target );
             }
         }
         phNewContext->dwLower = handle;
@@ -950,7 +950,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
     if (pszTargetName)
     {
         INT len = MultiByteToWideChar(CP_ACP, 0, pszTargetName, -1, NULL, 0);
-        target_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*target_name));
+        if (!(target_name = heap_alloc(len * sizeof(*target_name)))) return SEC_E_INSUFFICIENT_MEMORY;
         MultiByteToWideChar(CP_ACP, 0, pszTargetName, -1, target_name, len);
     }
 
@@ -958,8 +958,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
             fContextReq, Reserved1, TargetDataRep, pInput, Reserved2,
             phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-    HeapFree(GetProcessHeap(), 0, target_name);
-
+    heap_free(target_name);
     return ret;
 }
 
@@ -1104,7 +1103,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
                 return GetLastError();
 
             bindings->BindingsLength = sizeof(*bindings->Bindings) + sizeof(prefix)-1 + hash_size;
-            bindings->Bindings = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bindings->BindingsLength);
+            bindings->Bindings = heap_alloc_zero(bindings->BindingsLength);
             if(!bindings->Bindings)
                 return SEC_E_INSUFFICIENT_MEMORY;
 
@@ -1232,7 +1231,7 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     buffer = &message->pBuffers[idx];
 
     data_size = buffer->cbBuffer;
-    data = HeapAlloc(GetProcessHeap(), 0, data_size);
+    data = heap_alloc(data_size);
     memcpy(data, buffer->pvBuffer, data_size);
 
     if (schan_find_sec_buffer_idx(message, 0, SECBUFFER_STREAM_HEADER) != -1)
@@ -1250,7 +1249,7 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
 
     b = &ctx->transport.out;
     b->desc->pBuffers[b->current_buffer_idx].cbBuffer = b->offset;
-    HeapFree(GetProcessHeap(), 0, data);
+    heap_free(data);
 
     TRACE("Returning %#x.\n", status);
 
@@ -1365,7 +1364,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     }
 
     data_size = expected_size - 5;
-    data = HeapAlloc(GetProcessHeap(), 0, data_size);
+    data = heap_alloc(data_size);
 
     init_schan_buffers(&ctx->transport.in, message, schan_decrypt_message_get_next_buffer);
     ctx->transport.in.limit = expected_size;
@@ -1380,7 +1379,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
 
         if (status != SEC_E_OK)
         {
-            HeapFree(GetProcessHeap(), 0, data);
+            heap_free(data);
             ERR("Returning %x\n", status);
             return status;
         }
@@ -1394,7 +1393,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     TRACE("Received %ld bytes\n", received);
 
     memcpy(buf_ptr + 5, data, received);
-    HeapFree(GetProcessHeap(), 0, data);
+    heap_free(data);
 
     schan_decrypt_fill_buffer(message, SECBUFFER_DATA,
         buf_ptr + 5, received);
@@ -1426,7 +1425,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
     if (ctx->cert)
         CertFreeCertificateContext(ctx->cert);
     schan_imp_dispose_session(ctx->session);
-    HeapFree(GetProcessHeap(), 0, ctx);
+    heap_free(ctx);
 
     return SEC_E_OK;
 }
@@ -1526,7 +1525,7 @@ void SECUR32_initSchannelSP(void)
     if (!schan_imp_init())
         return;
 
-    schan_handle_table = HeapAlloc(GetProcessHeap(), 0, 64 * sizeof(*schan_handle_table));
+    schan_handle_table = heap_alloc(64 * sizeof(*schan_handle_table));
     if (!schan_handle_table)
     {
         ERR("Failed to allocate schannel handle table.\n");
@@ -1546,7 +1545,7 @@ void SECUR32_initSchannelSP(void)
     return;
 
 fail:
-    HeapFree(GetProcessHeap(), 0, schan_handle_table);
+    heap_free(schan_handle_table);
     schan_handle_table = NULL;
     schan_imp_deinit();
     return;
@@ -1566,7 +1565,7 @@ void SECUR32_deinitSchannelSP(void)
         {
             struct schan_context *ctx = schan_free_handle(i, SCHAN_HANDLE_CTX);
             schan_imp_dispose_session(ctx->session);
-            HeapFree(GetProcessHeap(), 0, ctx);
+            heap_free(ctx);
         }
     }
     i = schan_handle_count;
@@ -1577,10 +1576,10 @@ void SECUR32_deinitSchannelSP(void)
             struct schan_credentials *cred;
             cred = schan_free_handle(i, SCHAN_HANDLE_CRED);
             schan_imp_free_certificate_credentials(cred);
-            HeapFree(GetProcessHeap(), 0, cred);
+            heap_free(cred);
         }
     }
-    HeapFree(GetProcessHeap(), 0, schan_handle_table);
+    heap_free(schan_handle_table);
     schan_imp_deinit();
 }
 

@@ -157,10 +157,10 @@ static void SECUR32_CalcNTLM2Subkey(const BYTE *session_key, const char *magic, 
 /* This assumes we do have a valid NTLM2 user session key */
 SECURITY_STATUS SECUR32_CreateNTLM2SubKeys(PNegoHelper helper)
 {
-    helper->crypt.ntlm2.send_sign_key = HeapAlloc(GetProcessHeap(), 0, 16);
-    helper->crypt.ntlm2.send_seal_key = HeapAlloc(GetProcessHeap(), 0, 16);
-    helper->crypt.ntlm2.recv_sign_key = HeapAlloc(GetProcessHeap(), 0, 16);
-    helper->crypt.ntlm2.recv_seal_key = HeapAlloc(GetProcessHeap(), 0, 16);
+    helper->crypt.ntlm2.send_sign_key = heap_alloc(16);
+    helper->crypt.ntlm2.send_seal_key = heap_alloc(16);
+    helper->crypt.ntlm2.recv_sign_key = heap_alloc(16);
+    helper->crypt.ntlm2.recv_seal_key = heap_alloc(16);
 
     if(helper->mode == NTLM_CLIENT)
     {
@@ -190,7 +190,7 @@ SECURITY_STATUS SECUR32_CreateNTLM2SubKeys(PNegoHelper helper)
 
 arc4_info *SECUR32_arc4Alloc(void)
 {
-    arc4_info *a4i = HeapAlloc(GetProcessHeap(), 0, sizeof(arc4_info));
+    arc4_info *a4i = heap_alloc(sizeof(arc4_info));
     return a4i;
 }
 
@@ -247,5 +247,5 @@ void SECUR32_arc4Process(arc4_info *a4i, BYTE *inoutString, unsigned int length)
 
 void SECUR32_arc4Cleanup(arc4_info *a4i)
 {
-    HeapFree(GetProcessHeap(), 0, a4i);
+    heap_free(a4i);
 }

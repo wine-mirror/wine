@@ -76,8 +76,8 @@ SECURITY_STATUS SEC_ENTRY thunk_AcquireCredentialsHandleW(
         ret = AcquireCredentialsHandleA(principal, package, fCredentialsUse,
          pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential,
          ptsExpiry);
-        HeapFree(GetProcessHeap(), 0, principal);
-        HeapFree(GetProcessHeap(), 0, package);
+        heap_free(principal);
+        heap_free(package);
     }
     else
         ret = SEC_E_SECPKG_NOT_FOUND;
@@ -259,7 +259,7 @@ SECURITY_STATUS SEC_ENTRY thunk_InitializeSecurityContextW(
                  phCredential, phContext, target, fContextReq, Reserved1,
                  TargetDataRep, pInput, Reserved2, phNewContext, pOutput,
                  pfContextAttr, ptsExpiry);
-                HeapFree(GetProcessHeap(), 0, target);
+                heap_free(target);
             }
             else
                 ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -337,8 +337,8 @@ SECURITY_STATUS SEC_ENTRY thunk_AddCredentialsW(PCredHandle hCredentials,
                 ret = package->provider->fnTableA.AddCredentialsA(
                  cred, szPrincipal, szPackage, fCredentialUse, pAuthData,
                  pGetKeyFn, pvGetKeyArgument, ptsExpiry);
-                HeapFree(GetProcessHeap(), 0, szPrincipal);
-                HeapFree(GetProcessHeap(), 0, szPackage);
+                heap_free(szPrincipal);
+                heap_free(szPackage);
             }
             else
                 ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -372,7 +372,7 @@ static PSecPkgInfoA _copyPackageInfoFlatWToA(const SecPkgInfoW *infoW)
              NULL, 0, NULL, NULL);
             bytesNeeded += commentLen;
         }
-        ret = HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
+        ret = heap_alloc(bytesNeeded);
         if (ret)
         {
             PSTR nextString = (PSTR)((PBYTE)ret + sizeof(SecPkgInfoA));
@@ -597,7 +597,7 @@ static PSecPkgInfoW _copyPackageInfoFlatAToW(const SecPkgInfoA *infoA)
              NULL, 0);
             bytesNeeded += commentLen * sizeof(WCHAR);
         }
-        ret = HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
+        ret = heap_alloc(bytesNeeded);
         if (ret)
         {
             PWSTR nextString = (PWSTR)((PBYTE)ret + sizeof(SecPkgInfoW));
@@ -894,6 +894,6 @@ SECURITY_STATUS SEC_ENTRY thunk_ImportSecurityContextW(
     TRACE("%s %p %p %p\n", debugstr_w(pszPackage), pPackedContext, Token,
      phContext);
     ret = ImportSecurityContextA(package, pPackedContext, Token, phContext);
-    HeapFree(GetProcessHeap(), 0, package);
+    heap_free(package);
     return ret;
 }
