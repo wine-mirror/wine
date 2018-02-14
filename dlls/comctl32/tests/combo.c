@@ -507,7 +507,7 @@ static BOOL init(void)
     wc.lpfnWndProc = ComboExTestWndProc;
     RegisterClassA(&wc);
 
-    hMainWnd = CreateWindowA("static", "Test", WS_OVERLAPPEDWINDOW, 10, 10, 300, 300, NULL, NULL, NULL, 0);
+    hMainWnd = CreateWindowA(WC_STATICA, "Test", WS_OVERLAPPEDWINDOW, 10, 10, 300, 300, NULL, NULL, NULL, 0);
     ShowWindow(hMainWnd, SW_SHOW);
 
     hComboExParentWnd = CreateWindowExA(0, ComboExTestClass, "ComboEx test", WS_OVERLAPPEDWINDOW|WS_VISIBLE,
@@ -606,7 +606,7 @@ static void test_comboex_get_set_item(void)
 
 static HWND create_combobox(DWORD style)
 {
-    return CreateWindowA("ComboBox", "Combo", WS_VISIBLE|WS_CHILD|style, 5, 5, 100, 100, hMainWnd, (HMENU)COMBO_ID, NULL, 0);
+    return CreateWindowA(WC_COMBOBOXA, "Combo", WS_VISIBLE|WS_CHILD|style, 5, 5, 100, 100, hMainWnd, (HMENU)COMBO_ID, NULL, 0);
 }
 
 static int font_height(HFONT hFont)
@@ -1035,7 +1035,7 @@ static void test_combo_editselection_focus(DWORD style)
     get_combobox_info(hCombo, &cbInfo);
     hEdit = cbInfo.hwndItem;
 
-    hButton = CreateWindowA("Button", "OK", WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
+    hButton = CreateWindowA(WC_BUTTONA, "OK", WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON,
                             5, 50, 100, 20, hMainWnd, NULL,
                             (HINSTANCE)GetWindowLongPtrA(hMainWnd, GWLP_HINSTANCE), NULL);
 

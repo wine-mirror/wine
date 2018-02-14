@@ -454,7 +454,7 @@ static HWND create_button(DWORD style, HWND parent)
         style |= WS_CHILD|BS_NOTIFY;
         menuid = (HMENU)ID_BUTTON;
     }
-    hwnd = CreateWindowExA(0, "Button", "test", style, 0, 0, 50, 14, parent, menuid, 0, NULL);
+    hwnd = CreateWindowExA(0, WC_BUTTONA, "test", style, 0, 0, 50, 14, parent, menuid, 0, NULL);
     ok(hwnd != NULL, "failed to create a button, 0x%08x, %p\n", style, parent);
     pSetWindowSubclass(hwnd, button_subclass_proc, 0, 0);
     return hwnd;

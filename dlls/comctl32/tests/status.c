@@ -607,7 +607,7 @@ START_TEST(status)
     iccex.dwICC  = ICC_BAR_CLASSES;
     pInitCommonControlsEx(&iccex);
 
-    g_hMainWnd = CreateWindowExA(0, "static", "", WS_OVERLAPPEDWINDOW,
+    g_hMainWnd = CreateWindowExA(0, WC_STATICA, "", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 672+2*GetSystemMetrics(SM_CXSIZEFRAME),
       226+GetSystemMetrics(SM_CYCAPTION)+2*GetSystemMetrics(SM_CYSIZEFRAME),
       NULL, NULL, GetModuleHandleA(NULL), 0);
