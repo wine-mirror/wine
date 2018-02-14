@@ -976,7 +976,7 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
     SecBufferDesc *output, ULONG *context_attr, TimeStamp *ts_expiry, BOOLEAN *mapped_context, SecBuffer *context_data )
 {
 #ifdef SONAME_LIBGSSAPI_KRB5
-    OM_uint32 ret, minor_status, ret_flags, expiry_time;
+    OM_uint32 ret, minor_status, ret_flags = 0, expiry_time;
     gss_cred_id_t cred_handle;
     gss_ctx_id_t ctxt_handle;
     gss_buffer_desc input_token, output_token;
@@ -1006,7 +1006,7 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
 
     ret = pgss_accept_sec_context( &minor_status, &ctxt_handle, cred_handle, &input_token, GSS_C_NO_CHANNEL_BINDINGS,
                                    &target, NULL, &output_token, &ret_flags, &expiry_time, NULL );
-    TRACE( "gss_accept_sec_context returned %08x minor status %08x ctxt_handle %p\n", ret, minor_status, ctxt_handle );
+    TRACE( "gss_accept_sec_context returned %08x minor status %08x ret_flags %08x\n", ret, minor_status, ret_flags );
     if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
