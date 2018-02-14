@@ -1636,7 +1636,7 @@ HRESULT WINAPI DrawThemeText(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
                              LPCWSTR pszText, int iCharCount, DWORD flags,
                              DWORD flags2, const RECT *pRect)
 {
-    DTTOPTS opts;
+    DTTOPTS opts = { 0 };
     RECT rt;
 
     TRACE("%d %d\n", iPartId, iStateId);
