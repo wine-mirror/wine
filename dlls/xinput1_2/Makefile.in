@@ -1,7 +1,9 @@
 MODULE    = xinput1_2.dll
 PARENTSRC = ../xinput1_3
+DELAYIMPORTS = hid setupapi
 
 C_SRCS = \
+	hid.c \
 	xinput_main.c
 
 RC_SRCS = version.rc

@@ -28,24 +28,26 @@
 #include "winerror.h"
 
 #include "xinput.h"
+#include "xinput_private.h"
 
 /* Not defined in the headers, used only by XInputGetStateEx */
 #define XINPUT_GAMEPAD_GUIDE 0x0400
 
 WINE_DEFAULT_DEBUG_CHANNEL(xinput);
 
-struct
-{
-    BOOL connected;
-} controllers[XUSER_MAX_COUNT];
+xinput_controller controllers[XUSER_MAX_COUNT];
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
 {
     switch(reason)
     {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(inst);
-        break;
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(inst);
+            break;
+        case DLL_PROCESS_DETACH:
+            if (reserved) break;
+            HID_destroy_gamepads(controllers);
+            break;
     }
     return TRUE;
 }
@@ -121,17 +123,20 @@ DWORD WINAPI XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE k
 
 DWORD WINAPI XInputGetCapabilities(DWORD index, DWORD flags, XINPUT_CAPABILITIES* capabilities)
 {
-    static int warn_once;
+    TRACE("(index %u, flags 0x%x, capabilities %p)\n", index, flags, capabilities);
 
-    if (!warn_once++)
-        FIXME("(index %u, flags 0x%x, capabilities %p) Stub!\n", index, flags, capabilities);
+    HID_find_gamepads(controllers);
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
     if (!controllers[index].connected)
         return ERROR_DEVICE_NOT_CONNECTED;
+    if (flags & XINPUT_FLAG_GAMEPAD && controllers[index].caps.SubType != XINPUT_DEVSUBTYPE_GAMEPAD)
+        return ERROR_DEVICE_NOT_CONNECTED;
 
-    return ERROR_NOT_SUPPORTED;
+    memcpy(capabilities, &controllers[index].caps, sizeof(*capabilities));
+
+    return ERROR_SUCCESS;
 }
 
 DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD index, GUID* render_guid, GUID* capture_guid)
