@@ -1423,12 +1423,13 @@ static void test_GetAdaptersAddresses(void)
         ok(aa->Description != NULL, "Description is not a valid pointer\n");
         ok(aa->FriendlyName != NULL, "FriendlyName is not a valid pointer\n");
 
-        trace("\n");
-        trace("Length:                %u\n", S(U(*aa)).Length);
-        trace("IfIndex:               %u\n", S(U(*aa)).IfIndex);
-        trace("Next:                  %p\n", aa->Next);
-        trace("AdapterName:           %s\n", aa->AdapterName);
-        trace("FirstUnicastAddress:   %p\n", aa->FirstUnicastAddress);
+        for (i = 0; i < aa->PhysicalAddressLength; i++)
+            sprintf(temp + i * 3, "%02X-", aa->PhysicalAddress[i]);
+        temp[i ? i * 3 - 1 : 0] = '\0';
+        trace("idx %u name %s %s dns %s descr %s phys %s mtu %u flags %08x type %u\n",
+              S(U(*aa)).IfIndex, aa->AdapterName,
+              wine_dbgstr_w(aa->FriendlyName), wine_dbgstr_w(aa->DnsSuffix),
+              wine_dbgstr_w(aa->Description), temp, aa->Mtu, aa->Flags, aa->IfType );
         ua = aa->FirstUnicastAddress;
         while (ua)
         {
@@ -1450,79 +1451,29 @@ static void test_GetAdaptersAddresses(void)
             /* Is the address ok in the network (not duplicated)? */
             ok(ua->DadState != IpDadStateInvalid && ua->DadState != IpDadStateDuplicate,
                "bad address duplication value %d\n", ua->DadState);
-            trace("\tLength:                  %u\n", S(U(*ua)).Length);
-            trace("\tFlags:                   0x%08x\n", S(U(*ua)).Flags);
-            trace("\tNext:                    %p\n", ua->Next);
-            trace("\tAddress.lpSockaddr:      %p\n", ua->Address.lpSockaddr);
-            trace("\tAddress.iSockaddrLength: %d\n", ua->Address.iSockaddrLength);
-            trace("\tPrefixOrigin:            %u\n", ua->PrefixOrigin);
-            trace("\tSuffixOrigin:            %u\n", ua->SuffixOrigin);
-            trace("\tDadState:                %u\n", ua->DadState);
-            trace("\tValidLifetime:           %u seconds\n", ua->ValidLifetime);
-            trace("\tPreferredLifetime:       %u seconds\n", ua->PreferredLifetime);
-            trace("\tLeaseLifetime:           %u seconds\n", ua->LeaseLifetime);
-            if (S(U(*ua)).Length < sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH))
-            {
-                trace("\n");
-                ua = ua->Next;
-                continue;
-            }
-            trace("\tOnLinkPrefixLength:      %u\n", ua->OnLinkPrefixLength);
-            trace("\n");
+            trace("  flags %08x origin %u/%u state %u lifetime %u/%u/%u prefix %u\n",
+                  S(U(*ua)).Flags, ua->PrefixOrigin, ua->SuffixOrigin, ua->DadState,
+                  ua->ValidLifetime, ua->PreferredLifetime, ua->LeaseLifetime,
+                  S(U(*ua)).Length < sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH) ? 0 : ua->OnLinkPrefixLength);
             ua = ua->Next;
         }
-        trace("FirstAnycastAddress:   %p\n", aa->FirstAnycastAddress);
-        trace("FirstMulticastAddress: %p\n", aa->FirstMulticastAddress);
-        trace("FirstDnsServerAddress: %p\n", aa->FirstDnsServerAddress);
-        trace("DnsSuffix:             %s %p\n", wine_dbgstr_w(aa->DnsSuffix), aa->DnsSuffix);
-        trace("Description:           %s %p\n", wine_dbgstr_w(aa->Description), aa->Description);
-        trace("FriendlyName:          %s %p\n", wine_dbgstr_w(aa->FriendlyName), aa->FriendlyName);
-        trace("PhysicalAddressLength: %u\n", aa->PhysicalAddressLength);
-        for (i = 0; i < aa->PhysicalAddressLength; i++)
-            sprintf(temp + i * 3, "%02X-", aa->PhysicalAddress[i]);
-        temp[i ? i * 3 - 1 : 0] = '\0';
-        trace("PhysicalAddress:       %s\n", temp);
-        trace("Flags:                 0x%08x\n", aa->Flags);
-        trace("Mtu:                   %u\n", aa->Mtu);
-        trace("IfType:                %u\n", aa->IfType);
-        trace("OperStatus:            %u\n", aa->OperStatus);
-        trace("Ipv6IfIndex:           %u\n", aa->Ipv6IfIndex);
         for (i = 0, temp[0] = '\0'; i < sizeof(aa->ZoneIndices) / sizeof(aa->ZoneIndices[0]); i++)
             sprintf(temp + strlen(temp), "%d ", aa->ZoneIndices[i]);
-        trace("ZoneIndices:           %s\n", temp);
-        trace("FirstPrefix:           %p\n", aa->FirstPrefix);
+        trace("status %u index %u zone %s\n", aa->OperStatus, aa->Ipv6IfIndex, temp );
         prefix = aa->FirstPrefix;
         while (prefix)
         {
-            trace("\tLength:                  %u\n", S(U(*prefix)).Length);
-            trace("\tFlags:                   0x%08x\n", S(U(*prefix)).Flags);
-            trace("\tNext:                    %p\n", prefix->Next);
-            trace("\tAddress.lpSockaddr:      %p\n", prefix->Address.lpSockaddr);
-            trace("\tAddress.iSockaddrLength: %d\n", prefix->Address.iSockaddrLength);
-            trace("\tPrefixLength:            %u\n", prefix->PrefixLength);
-            trace("\n");
+            trace( "  prefix %u/%u flags %08x\n", prefix->Address.iSockaddrLength,
+                   prefix->PrefixLength, S(U(*prefix)).Flags );
             prefix = prefix->Next;
         }
 
         if (S(U(*aa)).Length < sizeof(IP_ADAPTER_ADDRESSES_LH)) continue;
-        trace("TransmitLinkSpeed:     %s\n", wine_dbgstr_longlong(aa->TransmitLinkSpeed));
-        trace("ReceiveLinkSpeed:      %s\n", wine_dbgstr_longlong(aa->ReceiveLinkSpeed));
-        trace("FirstWinsServerAddress:%p\n", aa->FirstWinsServerAddress);
-        trace("FirstGatewayAddress:   %p\n", aa->FirstGatewayAddress);
-        trace("Ipv4Metric:            %u\n", aa->Ipv4Metric);
-        trace("Ipv6Metric:            %u\n", aa->Ipv6Metric);
-        trace("Luid:                  %p\n", &aa->Luid);
-        trace("Dhcpv4Server:          %p\n", &aa->Dhcpv4Server);
-        trace("CompartmentId:         %u\n", aa->CompartmentId);
-        trace("NetworkGuid:           %s\n", wine_dbgstr_guid((GUID*) &aa->NetworkGuid));
-        trace("ConnectionType:        %u\n", aa->ConnectionType);
-        trace("TunnelType:            %u\n", aa->TunnelType);
-        trace("Dhcpv6Server:          %p\n", &aa->Dhcpv6Server);
-        trace("Dhcpv6ClientDuidLength:%u\n", aa->Dhcpv6ClientDuidLength);
-        trace("Dhcpv6ClientDuid:      %p\n", aa->Dhcpv6ClientDuid);
-        trace("Dhcpv6Iaid:            %u\n", aa->Dhcpv6Iaid);
-        trace("FirstDnsSuffix:        %p\n", aa->FirstDnsSuffix);
-        trace("\n");
+        trace("speed %s/%s metrics %u/%u guid %s type %u/%u\n",
+              wine_dbgstr_longlong(aa->TransmitLinkSpeed),
+              wine_dbgstr_longlong(aa->ReceiveLinkSpeed),
+              aa->Ipv4Metric, aa->Ipv6Metric, wine_dbgstr_guid((GUID*) &aa->NetworkGuid),
+              aa->ConnectionType, aa->TunnelType);
 
         if (pConvertInterfaceLuidToGuid)
         {
