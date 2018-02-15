@@ -729,10 +729,14 @@ static void test_button_class(void)
     ret = GetClassInfoExA(NULL, WC_BUTTONA, &exA);
     ok(ret, "got %d\n", ret);
     ok(IS_WNDPROC_HANDLE(exA.lpfnWndProc), "got %p\n", exA.lpfnWndProc);
+    ok(exA.cbClsExtra == 0, "Unexpected class bytes %d.\n", exA.cbClsExtra);
+    ok(exA.cbWndExtra == sizeof(void *), "Unexpected window bytes %d.\n", exA.cbWndExtra);
 
     ret = GetClassInfoExW(NULL, WC_BUTTONW, &exW);
     ok(ret, "got %d\n", ret);
     ok(!IS_WNDPROC_HANDLE(exW.lpfnWndProc), "got %p\n", exW.lpfnWndProc);
+    ok(exW.cbClsExtra == 0, "Unexpected class bytes %d.\n", exW.cbClsExtra);
+    ok(exW.cbWndExtra == sizeof(void *), "Unexpected window bytes %d.\n", exW.cbWndExtra);
 
     /* check that versioned class is also accessible */
     nameW = get_versioned_classname(WC_BUTTONW);
