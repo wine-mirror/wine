@@ -642,6 +642,7 @@ function test_mouse_event() {
     ok(e.shiftKey === false, "shiftKey = " + e.shiftKey);
     ok(e.metaKey === false, "metaKey = " + e.metaKey);
     ok(e.button === 1, "button = " + e.button);
+    ok(e.buttons === 0, "buttons = " + e.buttons);
 
     e.initMouseEvent("test", false, false, window, 9, 8, 7, 6, 5, true, true, true, true, 127, document);
     ok(e.type === "test", "type = " + e.type);

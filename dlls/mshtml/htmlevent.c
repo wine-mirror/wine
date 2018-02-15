@@ -1515,8 +1515,17 @@ static HRESULT WINAPI DOMMouseEvent_getModifierState(IDOMMouseEvent *iface, BSTR
 static HRESULT WINAPI DOMMouseEvent_get_buttons(IDOMMouseEvent *iface, USHORT *p)
 {
     DOMEvent *This = impl_from_IDOMMouseEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    UINT16 r;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMMouseEvent_GetButtons(This->mouse_event, &r);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    *p = r;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMMouseEvent_get_fromElement(IDOMMouseEvent *iface, IHTMLElement **p)
