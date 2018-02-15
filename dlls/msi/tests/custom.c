@@ -56,6 +56,7 @@ static void ok_(MSIHANDLE hinst, int todo, const char *file, int line, int condi
  * or have undesired side effects should go here. */
 UINT WINAPI main_test(MSIHANDLE hinst)
 {
+    UINT res;
     IUnknown *unk = NULL;
     HRESULT hres;
 
@@ -64,6 +65,10 @@ UINT WINAPI main_test(MSIHANDLE hinst)
     todo_wine_ok(hinst, hres == S_OK, "CoCreateInstance failed with %08x\n", hres);
 
     if (unk) IUnknown_Release(unk);
+
+    /* Test MsiGetDatabaseState() */
+    res = MsiGetDatabaseState(hinst);
+    todo_wine_ok(hinst, res == MSIDBSTATE_ERROR, "expected MSIDBSTATE_ERROR, got %u\n", res);
 
     return ERROR_SUCCESS;
 }
