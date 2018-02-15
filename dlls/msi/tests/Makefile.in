@@ -1,9 +1,13 @@
 TESTDLL   = msi.dll
 IMPORTS   = cabinet msi shell32 ole32 oleaut32 user32 advapi32 version
 
-C_SRCS = \
+custom_IMPORTS = msi
+
+SOURCES = \
 	action.c \
 	automation.c \
+	custom.c \
+	custom.spec \
 	db.c \
 	format.c \
 	install.c \
