@@ -1357,8 +1357,8 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
  *
  * Map an executable (PE format) image into memory.
  */
-static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *base, SIZE_T total_size,
-                           SIZE_T mask, SIZE_T header_size, int shared_fd, BOOL removable, PVOID *addr_ptr )
+static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, SIZE_T mask,
+                           pe_image_info_t *image_info, int shared_fd, BOOL removable, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -1366,12 +1366,21 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
     IMAGE_SECTION_HEADER *sec;
     IMAGE_DATA_DIRECTORY *imports;
     NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
+    SIZE_T header_size, total_size = image_info->map_size;
     int i;
     off_t pos;
     sigset_t sigset;
     struct stat st;
     struct file_view *view = NULL;
     char *ptr, *header_end, *header_start;
+    char *base = wine_server_get_ptr( image_info->base );
+
+    if (total_size != image_info->map_size)  /* truncated */
+    {
+        WARN( "Modules larger than 4Gb (%s) not supported\n", wine_dbgstr_longlong(image_info->map_size) );
+        return STATUS_INVALID_PARAMETER;
+    }
+    if ((ULONG_PTR)base != image_info->base) base = NULL;
 
     /* zero-map the whole range */
 
@@ -1397,7 +1406,7 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
         status = FILE_GetNtStatus();
         goto error;
     }
-    header_size = min( header_size, st.st_size );
+    header_size = min( image_info->header_size, st.st_size );
     if ((status = map_pe_header( view->base, header_size, fd, &removable )) != STATUS_SUCCESS) goto error;
 
     status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
@@ -1419,7 +1428,7 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, char *ba
 
     /* check for non page-aligned binary */
 
-    if (nt->OptionalHeader.SectionAlignment <= page_mask)
+    if (image_info->image_flags & IMAGE_FLAGS_ImageMappedFlat)
     {
         /* unaligned sections, this happens for native subsystem binaries */
         /* in that case Windows simply maps in the whole file */
@@ -1654,35 +1663,23 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG zero_bits, S
 
     if (sec_flags & SEC_IMAGE)
     {
-        void *base = wine_server_get_ptr( image_info->base );
-
-        if ((ULONG_PTR)base != image_info->base) base = NULL;
-        size = image_info->map_size;
-        if (size != image_info->map_size)  /* truncated */
-        {
-            WARN( "Modules larger than 4Gb (%s) not supported\n",
-                  wine_dbgstr_longlong(image_info->map_size) );
-            res = STATUS_INVALID_PARAMETER;
-            goto done;
-        }
         if (shared_file)
         {
             int shared_fd, shared_needs_close;
 
             if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
                                            &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
-            res = map_image( handle, access, unix_handle, base, size, mask, image_info->header_size,
+            res = map_image( handle, access, unix_handle, mask, image_info,
                              shared_fd, needs_close, addr_ptr );
             if (shared_needs_close) close( shared_fd );
             close_handle( shared_file );
         }
         else
         {
-            res = map_image( handle, access, unix_handle, base, size, mask, image_info->header_size,
-                             -1, needs_close, addr_ptr );
+            res = map_image( handle, access, unix_handle, mask, image_info, -1, needs_close, addr_ptr );
         }
         if (needs_close) close( unix_handle );
-        if (res >= 0) *size_ptr = size;
+        if (res >= 0) *size_ptr = image_info->map_size;
         return res;
     }
 
