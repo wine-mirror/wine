@@ -2860,6 +2860,19 @@ struct wined3d_state
     struct wined3d_rasterizer_state *rasterizer_state;
 };
 
+struct wined3d_dummy_textures
+{
+    GLuint tex_2d;
+    GLuint tex_rect;
+    GLuint tex_3d;
+    GLuint tex_cube;
+    GLuint tex_cube_array;
+    GLuint tex_2d_array;
+    GLuint tex_buffer;
+    GLuint tex_2d_ms;
+    GLuint tex_2d_ms_array;
+};
+
 #define WINED3D_UNMAPPED_STAGE ~0u
 
 /* Multithreaded flag. Removed from the public header to signal that
@@ -2933,18 +2946,7 @@ struct wined3d_device
     struct wined3d_texture *logo_texture;
 
     /* Textures for when no other textures are mapped */
-    struct
-    {
-        GLuint tex_2d;
-        GLuint tex_rect;
-        GLuint tex_3d;
-        GLuint tex_cube;
-        GLuint tex_cube_array;
-        GLuint tex_2d_array;
-        GLuint tex_buffer;
-        GLuint tex_2d_ms;
-        GLuint tex_2d_ms_array;
-    } dummy_textures;
+    struct wined3d_dummy_textures dummy_textures;
 
     /* Default sampler used to emulate the direct resource access without using wined3d_sampler */
     struct wined3d_sampler *default_sampler;
