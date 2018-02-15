@@ -3175,7 +3175,7 @@ interface nsIDOMUIEvent : nsISupports
     nsresult GetView(mozIDOMWindowProxy **aView);
     nsresult GetDetail(int32_t *aDetail);
     nsresult InitUIEvent(const nsAString *typeArg, bool canBubbleArg, bool cancelableArg,
-            mozIDOMWindowProxy *viewArg, int32_t detailArg);
+            mozIDOMWindow *viewArg, int32_t detailArg);
     nsresult GetLayerX(int32_t *aLayerX);
     nsresult GetLayerY(int32_t *aLayerY);
     nsresult GetPageX(int32_t *aPageX);

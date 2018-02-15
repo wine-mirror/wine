@@ -631,6 +631,8 @@ function test_mouse_event() {
     ok(e.cancelable === true, "cancelable = " + e.cancelable);
     ok(e.bubbles === true, "bubbles = " + e.bubbles);
     ok(e.detail === 1, "detail = " + e.detail);
+    todo_wine.
+    ok(e.view === window, "view != window");
     ok(e.screenX === 2, "screenX = " + e.screenX);
     ok(e.screenY === 3, "screenY = " + e.screenY);
     ok(e.clientX === 4, "clientX = " + e.clientX);
@@ -700,6 +702,8 @@ function test_ui_event() {
     ok(e.cancelable === true, "cancelable = " + e.cancelable);
     ok(e.bubbles === true, "bubbles = " + e.bubbles);
     ok(e.detail === 3, "detail = " + e.detail);
+    todo_wine.
+    ok(e.view === window, "view != window");
 
     next_test();
 }

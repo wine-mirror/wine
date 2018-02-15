@@ -1175,8 +1175,25 @@ static HRESULT WINAPI DOMUIEvent_Invoke(IDOMUIEvent *iface, DISPID dispIdMember,
 static HRESULT WINAPI DOMUIEvent_get_view(IDOMUIEvent *iface, IHTMLWindow2 **p)
 {
     DOMEvent *This = impl_from_IDOMUIEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    mozIDOMWindowProxy *moz_window;
+    HTMLOuterWindow *view = NULL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMUIEvent_GetView(This->ui_event, &moz_window);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    if(moz_window) {
+        view = mozwindow_to_window(moz_window);
+        mozIDOMWindowProxy_Release(moz_window);
+    }
+    if(view)
+        IHTMLWindow2_AddRef((*p = &view->base.inner_window->base.IHTMLWindow2_iface));
+    else
+        *p = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMUIEvent_get_detail(IDOMUIEvent *iface, LONG *p)
@@ -1209,6 +1226,9 @@ static HRESULT WINAPI DOMUIEvent_initUIEvent(IDOMUIEvent *iface, BSTR type, VARI
         TRACE("called on already dispatched event\n");
         return S_OK;
     }
+
+    if(view)
+        FIXME("view argument is not supported\n");
 
     hres = IDOMEvent_initEvent(&This->IDOMEvent_iface, type, can_bubble, cancelable);
     if(FAILED(hres))
@@ -1462,6 +1482,9 @@ static HRESULT WINAPI DOMMouseEvent_initMouseEvent(IDOMMouseEvent *iface, BSTR t
         TRACE("called on already dispatched event\n");
         return S_OK;
     }
+
+    if(view)
+        FIXME("view argument is not supported\n");
 
     hres = IDOMEvent_initEvent(&This->IDOMEvent_iface, type, can_bubble, cancelable);
     if(FAILED(hres))
