@@ -167,6 +167,24 @@ static UINT vertex_count_from_primitive_count(D3DPRIMITIVETYPE primitive_type, U
     }
 }
 
+static D3DSWAPEFFECT d3dswapeffect_from_wined3dswapeffect(enum wined3d_swap_effect effect)
+{
+    switch (effect)
+    {
+        case WINED3D_SWAP_EFFECT_DISCARD:
+            return D3DSWAPEFFECT_DISCARD;
+        case WINED3D_SWAP_EFFECT_SEQUENTIAL:
+            return D3DSWAPEFFECT_FLIP;
+        case WINED3D_SWAP_EFFECT_COPY:
+            return D3DSWAPEFFECT_COPY;
+        case WINED3D_SWAP_EFFECT_COPY_VSYNC:
+            return D3DSWAPEFFECT_COPY_VSYNC;
+        default:
+            FIXME("Unhandled swap effect %#x.\n", effect);
+            return D3DSWAPEFFECT_FLIP;
+    }
+}
+
 static void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS *present_parameters,
         const struct wined3d_swapchain_desc *swapchain_desc)
 {
@@ -175,7 +193,7 @@ static void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS
     present_parameters->BackBufferFormat = d3dformat_from_wined3dformat(swapchain_desc->backbuffer_format);
     present_parameters->BackBufferCount = swapchain_desc->backbuffer_count;
     present_parameters->MultiSampleType = swapchain_desc->multisample_type;
-    present_parameters->SwapEffect = swapchain_desc->swap_effect;
+    present_parameters->SwapEffect = d3dswapeffect_from_wined3dswapeffect(swapchain_desc->swap_effect);
     present_parameters->hDeviceWindow = swapchain_desc->device_window;
     present_parameters->Windowed = swapchain_desc->windowed;
     present_parameters->EnableAutoDepthStencil = swapchain_desc->enable_auto_depth_stencil;
@@ -184,6 +202,24 @@ static void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS
     present_parameters->Flags = swapchain_desc->flags & D3DPRESENTFLAGS_MASK;
     present_parameters->FullScreen_RefreshRateInHz = swapchain_desc->refresh_rate;
     present_parameters->FullScreen_PresentationInterval = swapchain_desc->swap_interval;
+}
+
+static enum wined3d_swap_effect wined3dswapeffect_from_d3dswapeffect(D3DSWAPEFFECT effect)
+{
+    switch (effect)
+    {
+        case D3DSWAPEFFECT_DISCARD:
+            return WINED3D_SWAP_EFFECT_DISCARD;
+        case D3DSWAPEFFECT_FLIP:
+            return WINED3D_SWAP_EFFECT_SEQUENTIAL;
+        case D3DSWAPEFFECT_COPY:
+            return WINED3D_SWAP_EFFECT_COPY;
+        case D3DSWAPEFFECT_COPY_VSYNC:
+            return WINED3D_SWAP_EFFECT_COPY_VSYNC;
+        default:
+            FIXME("Unhandled swap effect %#x.\n", effect);
+            return WINED3D_SWAP_EFFECT_SEQUENTIAL;
+    }
 }
 
 static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapchain_desc *swapchain_desc,
@@ -210,7 +246,7 @@ static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapch
     swapchain_desc->backbuffer_usage = WINED3DUSAGE_RENDERTARGET;
     swapchain_desc->multisample_type = present_parameters->MultiSampleType;
     swapchain_desc->multisample_quality = 0; /* d3d9 only */
-    swapchain_desc->swap_effect = present_parameters->SwapEffect;
+    swapchain_desc->swap_effect = wined3dswapeffect_from_d3dswapeffect(present_parameters->SwapEffect);
     swapchain_desc->device_window = present_parameters->hDeviceWindow;
     swapchain_desc->windowed = present_parameters->Windowed;
     swapchain_desc->enable_auto_depth_stencil = present_parameters->EnableAutoDepthStencil;
