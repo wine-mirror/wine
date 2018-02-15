@@ -2942,6 +2942,8 @@ struct wined3d_device
         GLuint tex_cube_array;
         GLuint tex_2d_array;
         GLuint tex_buffer;
+        GLuint tex_2d_ms;
+        GLuint tex_2d_ms_array;
     } dummy_textures;
 
     /* Default sampler used to emulate the direct resource access without using wined3d_sampler */

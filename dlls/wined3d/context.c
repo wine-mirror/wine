@@ -1756,7 +1756,15 @@ void context_bind_dummy_textures(const struct wined3d_device *device, const stru
         if (gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_BUFFER, device->dummy_textures.tex_buffer);
 
-        checkGLcall("Bind dummy textures");
+        if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+        {
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,
+                    device->dummy_textures.tex_2d_ms);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_MULTISAMPLE_ARRAY,
+                    device->dummy_textures.tex_2d_ms_array);
+        }
+
+        checkGLcall("bind dummy textures");
     }
 }
 
@@ -2758,6 +2766,13 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
             case GL_TEXTURE_BUFFER:
                 gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_BUFFER, device->dummy_textures.tex_buffer);
                 checkGLcall("glBindTexture");
+                break;
+            case GL_TEXTURE_2D_MULTISAMPLE:
+                gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, device->dummy_textures.tex_2d_ms);
+                break;
+            case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+                gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_MULTISAMPLE_ARRAY,
+                        device->dummy_textures.tex_2d_ms_array);
                 break;
             default:
                 ERR("Unexpected texture target %#x.\n", old_texture_type);

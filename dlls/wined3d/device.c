@@ -727,6 +727,31 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
         checkGLcall("glDeleteBuffers");
     }
 
+    if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+    {
+        gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_textures.tex_2d_ms);
+        gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, device->dummy_textures.tex_2d_ms);
+        GL_EXTCALL(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 1, GL_RGBA8, 1, 1, GL_TRUE));
+
+        gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_textures.tex_2d_ms_array);
+        gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, device->dummy_textures.tex_2d_ms_array);
+        GL_EXTCALL(glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, 1, GL_RGBA8, 1, 1, 1, GL_TRUE));
+
+        if (gl_info->supported[ARB_CLEAR_TEXTURE])
+        {
+            GL_EXTCALL(glClearTexImage(device->dummy_textures.tex_2d_ms,
+                    0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color));
+            GL_EXTCALL(glClearTexImage(device->dummy_textures.tex_2d_ms_array,
+                    0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color));
+        }
+        else
+        {
+            WARN("ARB_clear_texture is currently required to clear dummy multisample textures.\n");
+        }
+
+        checkGLcall("create dummy multisample textures");
+    }
+
     context_bind_dummy_textures(device, context);
 }
 
@@ -734,6 +759,12 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
 static void destroy_dummy_textures(struct wined3d_device *device, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+    {
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->dummy_textures.tex_2d_ms);
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->dummy_textures.tex_2d_ms_array);
+    }
 
     if (gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->dummy_textures.tex_buffer);
