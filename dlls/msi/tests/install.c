@@ -695,11 +695,13 @@ static const CHAR wrv_component_dat[] = "Component\tComponentId\tDirectory_\tAtt
 static const CHAR ca1_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "s72\tS255\tI2\n"
                                                "InstallExecuteSequence\tAction\n"
-                                               "testretval\t\t710\n";
+                                               "maintest\tMAIN_TEST\t700\n"
+                                               "testretval\tTEST_RETVAL\t710\n";
 
 static const CHAR ca1_custom_action_dat[] = "Action\tType\tSource\tTarget\n"
                                              "s72\ti2\tS64\tS0\n"
                                              "CustomAction\tAction\n"
+                                             "maintest\t1\tcustom.dll\tmain_test\n"
                                              "testretval\t1\tcustom.dll\ttest_retval\n";
 
 static const CHAR ca51_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
@@ -4081,6 +4083,27 @@ static void add_custom_dll(void)
     MsiCloseHandle(hdb);
 }
 
+static INT CALLBACK ok_callback(void *context, UINT message_type, MSIHANDLE record)
+{
+    if (message_type == INSTALLMESSAGE_USER)
+    {
+        char file[200];
+        char msg[2000];
+        DWORD len;
+
+        len = sizeof(file);
+        MsiRecordGetStringA(record, 2, file, &len);
+        len = sizeof(msg);
+        MsiRecordGetStringA(record, 5, msg, &len);
+
+        todo_wine_if(MsiRecordGetInteger(record, 1))
+        ok_(file, MsiRecordGetInteger(record, 3)) (MsiRecordGetInteger(record, 4), "%s", msg);
+
+        return 1;
+    }
+    return 0;
+}
+
 static void test_customaction1(void)
 {
     UINT r;
@@ -4090,6 +4113,10 @@ static void test_customaction1(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
+    r = MsiInstallProductA(msifile, "MAIN_TEST=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    /* Test return values */
     r = MsiInstallProductA(msifile, "TEST_RETVAL=0");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
@@ -6083,6 +6110,7 @@ START_TEST(install)
     MsiEnableLogA(INSTALLLOGMODE_FATALEXIT, log_file, 0);
 
     customdll = load_resource("custom.dll");
+    MsiSetExternalUIRecord(ok_callback, INSTALLLOGMODE_USER, NULL, NULL);
 
     if (pSRSetRestorePointA) /* test has side-effects on win2k3 that cause failures in following tests */
         test_MsiInstallProduct();
