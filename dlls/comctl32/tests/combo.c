@@ -157,7 +157,7 @@ static void test_comboex(void)
                 *out_of_range_item = "Out of Range Item";
 
     /* Allocate space for result */
-    textBuffer = HeapAlloc(GetProcessHeap(), 0, MAX_CHARS);
+    textBuffer = heap_alloc(MAX_CHARS);
 
     /* Basic comboboxex test */
     myHwnd = createComboEx(WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN);
@@ -243,7 +243,7 @@ static void test_comboex(void)
 
 
     /* Cleanup */
-    HeapFree(GetProcessHeap(), 0, textBuffer);
+    heap_free(textBuffer);
     DestroyWindow(myHwnd);
 }
 

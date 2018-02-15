@@ -28,6 +28,7 @@
 #include <commctrl.h>
 #include <uxtheme.h>
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
@@ -220,9 +221,9 @@ static rbsize_result_t rbsize_init(int cleft, int ctop, int cright, int cbottom,
     SetRect(&ret.rcClient, cleft, ctop, cright, cbottom);
     ret.cyBarHeight = cyBarHeight;
     ret.nRows = 0;
-    ret.cyRowHeights = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nRows*sizeof(int));
+    ret.cyRowHeights = heap_alloc_zero(nRows * sizeof(int));
     ret.nBands = 0;
-    ret.bands = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nBands*sizeof(rbband_result_t));
+    ret.bands = heap_alloc_zero(nBands * sizeof(*ret.bands));
 
     return ret;
 }
@@ -246,7 +247,7 @@ static rbsize_result_t *rbsize_results;
 
 static void rbsize_results_init(void)
 {
-    rbsize_results = HeapAlloc(GetProcessHeap(), 0, rbsize_results_num*sizeof(rbsize_result_t));
+    rbsize_results = heap_alloc(rbsize_results_num * sizeof(*rbsize_results));
 
     rbsize_results[0] = rbsize_init(0, 0, 672, 0, 0, 0, 0);
 
@@ -433,10 +434,10 @@ static void rbsize_results_free(void)
     int i;
 
     for (i = 0; i < rbsize_results_num; i++) {
-        HeapFree(GetProcessHeap(), 0, rbsize_results[i].cyRowHeights);
-        HeapFree(GetProcessHeap(), 0, rbsize_results[i].bands);
+        heap_free(rbsize_results[i].cyRowHeights);
+        heap_free(rbsize_results[i].bands);
     }
-    HeapFree(GetProcessHeap(), 0, rbsize_results);
+    heap_free(rbsize_results);
     rbsize_results = NULL;
 }
 

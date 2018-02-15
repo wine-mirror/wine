@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "commctrl.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
@@ -119,12 +120,12 @@ static void add_message(const struct message *msg)
     if (!sequence)
     {
         sequence_size = 10;
-        sequence = HeapAlloc( GetProcessHeap(), 0, sequence_size * sizeof (struct message) );
+        sequence = heap_alloc( sequence_size * sizeof (struct message) );
     }
     if (sequence_cnt == sequence_size)
     {
         sequence_size *= 2;
-        sequence = HeapReAlloc( GetProcessHeap(), 0, sequence, sequence_size * sizeof (struct message) );
+        sequence = heap_realloc( sequence, sequence_size * sizeof (struct message) );
     }
     assert(sequence);
 
@@ -136,8 +137,8 @@ static void add_message(const struct message *msg)
 
 static void flush_sequence(void)
 {
-    HeapFree(GetProcessHeap(), 0, sequence);
-    sequence = 0;
+    heap_free(sequence);
+    sequence = NULL;
     sequence_cnt = sequence_size = 0;
 }
 

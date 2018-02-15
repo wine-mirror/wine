@@ -28,6 +28,7 @@
 #include "commctrl.h"
 #include "shlwapi.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 
 /* Keys for testing MRU functions */
@@ -120,7 +121,7 @@ static LSTATUS mru_RegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
     if (dwMaxLen > sizeof(szNameBuf)/sizeof(CHAR))
     {
         /* Name too big: alloc a buffer for it */
-        if (!(lpszName = HeapAlloc( GetProcessHeap(), 0, dwMaxLen*sizeof(CHAR))))
+        if (!(lpszName = heap_alloc(dwMaxLen * sizeof(CHAR))))
         {
             ret = ERROR_NOT_ENOUGH_MEMORY;
             goto cleanup;
@@ -155,7 +156,7 @@ static LSTATUS mru_RegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
 cleanup:
     /* Free buffer if allocated */
     if (lpszName != szNameBuf)
-        HeapFree( GetProcessHeap(), 0, lpszName);
+        heap_free(lpszName);
     if(lpszSubKey)
         RegCloseKey(hSubKey);
     return ret;

@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <windows.h>
+#include "wine/heap.h"
 #include "wine/test.h"
 
 /* undocumented SWP flags - from SDK 3.1 */
@@ -68,16 +69,13 @@ static void add_message(struct msg_sequence **seq, int sequence_index,
     if (!msg_seq->sequence)
     {
         msg_seq->size = 10;
-        msg_seq->sequence = HeapAlloc(GetProcessHeap(), 0,
-                                      msg_seq->size * sizeof (struct message));
+        msg_seq->sequence = heap_alloc(msg_seq->size * sizeof (*msg_seq->sequence));
     }
 
     if (msg_seq->count == msg_seq->size)
     {
         msg_seq->size *= 2;
-        msg_seq->sequence = HeapReAlloc(GetProcessHeap(), 0,
-                                        msg_seq->sequence,
-                                        msg_seq->size * sizeof (struct message));
+        msg_seq->sequence = heap_realloc(msg_seq->sequence, msg_seq->size * sizeof (*msg_seq->sequence));
     }
 
     assert(msg_seq->sequence);
@@ -89,7 +87,7 @@ static void add_message(struct msg_sequence **seq, int sequence_index,
 static inline void flush_sequence(struct msg_sequence **seg, int sequence_index)
 {
     struct msg_sequence *msg_seq = seg[sequence_index];
-    HeapFree(GetProcessHeap(), 0, msg_seq->sequence);
+    heap_free(msg_seq->sequence);
     msg_seq->sequence = NULL;
     msg_seq->count = msg_seq->size = 0;
 }
@@ -393,5 +391,5 @@ static void init_msg_sequences(struct msg_sequence **seq, int n)
     int i;
 
     for (i = 0; i < n; i++)
-        seq[i] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct msg_sequence));
+        seq[i] = heap_alloc_zero(sizeof(*seq[i]));
 }

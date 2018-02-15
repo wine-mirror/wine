@@ -28,6 +28,7 @@
 #include "winnls.h"
 #include "commctrl.h"
 
+#include "wine/heap.h"
 #include "wine/test.h"
 #include "v6util.h"
 
@@ -156,11 +157,11 @@ static void run_test(const struct listbox_test test)
         WCHAR *txtw;
         CHAR *txt;
 
-        txt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + 1);
+        txt = heap_alloc_zero(size + 1);
         resA = SendMessageA(hLB, LB_GETTEXT, i, (LPARAM)txt);
         ok(!strcmp(txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
 
-        txtw = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (size + 1) * sizeof(*txtw));
+        txtw = heap_alloc_zero((size + 1) * sizeof(*txtw));
         resW = SendMessageW(hLB, LB_GETTEXT, i, (LPARAM)txtw);
         if (resA != resW)
             trace("SendMessageW(LB_GETTEXT) not supported on this platform (resA=%d resW=%d), skipping...\n", resA, resW);
@@ -170,8 +171,8 @@ static void run_test(const struct listbox_test test)
             ok(!strcmp (txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
         }
 
-        HeapFree(GetProcessHeap(), 0, txtw);
-        HeapFree(GetProcessHeap(), 0, txt);
+        heap_free(txtw);
+        heap_free(txt);
     }
 
     /* Confirm the count of items, and that an invalid delete does not remove anything */
