@@ -5868,8 +5868,9 @@ static void test_mipmap_autogen(void)
 {
     IDirect3DSurface9 *surface, *surface2, *surface3, *backbuffer;
     IDirect3DTexture9 *texture, *texture2, *texture3;
+    IDirect3DCubeTexture9 *cube_texture;
     IDirect3DDevice9 *device;
-    unsigned int x, y;
+    unsigned int i, x, y;
     D3DLOCKED_RECT lr;
     IDirect3D9 *d3d;
     D3DCOLOR color;
@@ -6130,6 +6131,77 @@ static void test_mipmap_autogen(void)
     IDirect3DTexture9_Release(texture3);
     IDirect3DTexture9_Release(texture2);
     IDirect3DTexture9_Release(texture);
+
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP))
+    {
+        skip("No cube textures support.\n");
+        IDirect3DSurface9_Release(backbuffer);
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+    hr = IDirect3DDevice9_CreateCubeTexture(device, 1024, 0, D3DUSAGE_AUTOGENMIPMAP,
+            D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &cube_texture, 0);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    for (i = 0; i < 6; ++i)
+    {
+        hr = IDirect3DCubeTexture9_LockRect(cube_texture, i, 0, &lr, NULL, 0);
+        ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+
+        for (y = 0; y < 1024; ++y)
+        {
+            for (x = 0; x < 1024; ++x)
+            {
+                DWORD *dst = (DWORD *)((BYTE *)lr.pBits + y * lr.Pitch + x * 4);
+                POINT pt;
+
+                pt.x = x;
+                pt.y = y;
+                if (PtInRect(&r1, pt))
+                    *dst = 0xffff0000;
+                else if (PtInRect(&r2, pt))
+                    *dst = 0xff00ff00;
+                else if (PtInRect(&r3, pt))
+                    *dst = 0xff0000ff;
+                else if (PtInRect(&r4, pt))
+                    *dst = 0xff000000;
+                else
+                    *dst = 0xffffffff;
+            }
+        }
+        hr = IDirect3DCubeTexture9_UnlockRect(cube_texture, i, 0);
+        ok(SUCCEEDED(hr), "Failed to unmap texture, hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)cube_texture);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    IDirect3DCubeTexture9_Release(cube_texture);
+
+    color = getPixelColor(device, 200, 200);
+    ok(color == 0x00000000, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 280, 200);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 360, 200);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 440, 200);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 200, 270);
+    ok(color == 0x00000000, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 280, 270);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 360, 270);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 440, 270);
+    ok(color == 0x0000ff00, "Unexpected color 0x%08x.\n", color);
+
     IDirect3DSurface9_Release(backbuffer);
 
     refcount = IDirect3DDevice9_Release(device);
