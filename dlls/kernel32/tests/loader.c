@@ -405,7 +405,8 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         todo_wine
         ok( S(U(image)).ComPlusILOnly || broken(is_winxp),
             "%u: wrong ComPlusILOnly flags %02x\n", id, U(image).ImageFlags );
-        if (nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+        if (nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
+            !(cor_header->Flags & COMIMAGE_FLAGS_32BITREQUIRED))
             todo_wine
             ok( S(U(image)).ComPlusNativeReady || broken(is_winxp),
                 "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
@@ -1019,6 +1020,14 @@ static void test_Loader(void)
     status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
     ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
+    cor_header.Flags = COMIMAGE_FLAGS_ILONLY | COMIMAGE_FLAGS_32BITREQUIRED;
+    status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+    cor_header.Flags = COMIMAGE_FLAGS_ILONLY | COMIMAGE_FLAGS_32BITPREFERRED;
+    status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
     cor_header.Flags = 0;
     status = map_image_section( &nt_header, &section, &cor_header, __LINE__ );
     ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
@@ -1122,6 +1131,16 @@ static void test_Loader(void)
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
             "NtCreateSection error %08x\n", status );
 
+        cor_header.Flags = COMIMAGE_FLAGS_ILONLY | COMIMAGE_FLAGS_32BITREQUIRED;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, &cor_header, __LINE__ );
+        ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
+            "NtCreateSection error %08x\n", status );
+
+        cor_header.Flags = COMIMAGE_FLAGS_ILONLY | COMIMAGE_FLAGS_32BITPREFERRED;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, &cor_header, __LINE__ );
+        ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
+            "NtCreateSection error %08x\n", status );
+
         cor_header.Flags = 0;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64, &section, &cor_header, __LINE__ );
         ok( status == (is_wow64 ? STATUS_SUCCESS : STATUS_INVALID_IMAGE_WIN_64),
@@ -1215,6 +1234,14 @@ static void test_Loader(void)
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
         cor_header.MinorRuntimeVersion = 5;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, &cor_header, __LINE__ );
+        ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+        cor_header.Flags = COMIMAGE_FLAGS_ILONLY | COMIMAGE_FLAGS_32BITREQUIRED;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, &cor_header, __LINE__ );
+        ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+        cor_header.Flags = COMIMAGE_FLAGS_ILONLY | COMIMAGE_FLAGS_32BITPREFERRED;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, &cor_header, __LINE__ );
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
 
