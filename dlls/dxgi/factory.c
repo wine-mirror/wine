@@ -275,12 +275,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
     switch (swapchain_desc->SwapEffect)
     {
         case DXGI_SWAP_EFFECT_DISCARD:
+            wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
+            min_buffer_count = 1;
+            break;
+
         case DXGI_SWAP_EFFECT_SEQUENTIAL:
+            wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_SEQUENTIAL;
             min_buffer_count = 1;
             break;
 
         case DXGI_SWAP_EFFECT_FLIP_DISCARD:
+            wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_FLIP_DISCARD;
+            min_buffer_count = 2;
+            break;
+
         case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
+            wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_FLIP_SEQUENTIAL;
             min_buffer_count = 2;
             break;
 
@@ -303,8 +313,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
 
     if (swapchain_desc->Scaling != DXGI_SCALING_STRETCH)
         FIXME("Ignoring scaling %#x.\n", swapchain_desc->Scaling);
-    if (swapchain_desc->SwapEffect)
-        FIXME("Ignoring swap effect %#x.\n", swapchain_desc->SwapEffect);
     if (swapchain_desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
         FIXME("Ignoring alpha mode %#x.\n", swapchain_desc->AlphaMode);
     if (fullscreen_desc && fullscreen_desc->ScanlineOrdering)
@@ -319,7 +327,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChainForHwnd(IWineDXGIFa
     wined3d_desc.backbuffer_usage = wined3d_usage_from_dxgi_usage(swapchain_desc->BufferUsage);
     wined3d_sample_desc_from_dxgi(&wined3d_desc.multisample_type,
             &wined3d_desc.multisample_quality, &swapchain_desc->SampleDesc);
-    wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
     wined3d_desc.device_window = window;
     wined3d_desc.windowed = fullscreen_desc ? fullscreen_desc->Windowed : TRUE;
     wined3d_desc.enable_auto_depth_stencil = FALSE;
