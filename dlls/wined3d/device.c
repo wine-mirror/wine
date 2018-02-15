@@ -4797,6 +4797,11 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     if (swapchain_desc->backbuffer_usage != WINED3DUSAGE_RENDERTARGET)
         FIXME("Got unexpected backbuffer usage %#x.\n", swapchain_desc->backbuffer_usage);
 
+    if (swapchain_desc->swap_effect != WINED3D_SWAP_EFFECT_DISCARD
+            && swapchain_desc->swap_effect != WINED3D_SWAP_EFFECT_SEQUENTIAL
+            && swapchain_desc->swap_effect != WINED3D_SWAP_EFFECT_COPY)
+        FIXME("Unimplemented swap effect %#x.\n", swapchain_desc->swap_effect);
+
     /* No special treatment of these parameters. Just store them */
     swapchain->desc.swap_effect = swapchain_desc->swap_effect;
     swapchain->desc.enable_auto_depth_stencil = swapchain_desc->enable_auto_depth_stencil;

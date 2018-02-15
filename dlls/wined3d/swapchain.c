@@ -777,6 +777,11 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
                 "Please configure the application to use double buffering (1 back buffer) if possible.\n");
     }
 
+    if (desc->swap_effect != WINED3D_SWAP_EFFECT_DISCARD
+            && desc->swap_effect != WINED3D_SWAP_EFFECT_SEQUENTIAL
+            && desc->swap_effect != WINED3D_SWAP_EFFECT_COPY)
+        FIXME("Unimplemented swap effect %#x.\n", desc->swap_effect);
+
     if (device->wined3d->flags & WINED3D_NO3D)
         swapchain->swapchain_ops = &swapchain_gdi_ops;
     else
