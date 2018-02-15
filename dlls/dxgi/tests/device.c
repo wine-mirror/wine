@@ -23,6 +23,10 @@
 #include "d3d11.h"
 #include "wine/test.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
+
 enum frame_latency
 {
     DEFAULT_FRAME_LATENCY =  3,
@@ -1179,7 +1183,7 @@ static void test_create_swapchain(void)
     refcount = get_refcount((IUnknown *)factory);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
-    for (i = 0; i < sizeof(refresh_list) / sizeof(*refresh_list); ++i)
+    for (i = 0; i < ARRAY_SIZE(refresh_list); ++i)
     {
         creation_desc.BufferDesc.RefreshRate.Numerator = refresh_list[i].numerator;
         creation_desc.BufferDesc.RefreshRate.Denominator = refresh_list[i].denominator;
@@ -1275,7 +1279,7 @@ static void test_create_swapchain(void)
 
     creation_desc.Windowed = FALSE;
 
-    for (i = 0; i < sizeof(refresh_list) / sizeof(*refresh_list); ++i)
+    for (i = 0; i < ARRAY_SIZE(refresh_list); ++i)
     {
         creation_desc.BufferDesc.RefreshRate.Numerator = refresh_list[i].numerator;
         creation_desc.BufferDesc.RefreshRate.Denominator = refresh_list[i].denominator;
@@ -1637,16 +1641,16 @@ static void test_get_containing_output(void)
                     break;
             }
 
-            for (j = 0; j < sizeof(offsets) / sizeof(*offsets); ++j)
+            for (j = 0; j < ARRAY_SIZE(offsets); ++j)
             {
-                unsigned int idx = (sizeof(offsets) / sizeof(*offsets)) * i + j;
-                assert(idx < sizeof(points) / sizeof(*points));
+                unsigned int idx = ARRAY_SIZE(offsets) * i + j;
+                assert(idx < ARRAY_SIZE(points));
                 points[idx].x = x + offsets[j].x;
                 points[idx].y = y + offsets[j].y;
             }
         }
 
-        for (i = 0; i < sizeof(points) / sizeof(*points); ++i)
+        for (i = 0; i < ARRAY_SIZE(points); ++i)
         {
             ret = SetWindowPos(swapchain_desc.OutputWindow, 0, points[i].x, points[i].y,
                     0, 0, SWP_NOSIZE | SWP_NOZORDER);
@@ -2089,7 +2093,7 @@ static void test_windowed_resize_target(IDXGISwapChain *swapchain, HWND window,
     expected_state = *state;
     e = &expected_state.fullscreen_state;
 
-    for (i = 0; i < sizeof(sizes) / sizeof(*sizes); ++i)
+    for (i = 0; i < ARRAY_SIZE(sizes); ++i)
     {
         SetRect(&e->client_rect, 0, 0, sizes[i].width, sizes[i].height);
         e->window_rect = e->client_rect;
@@ -2260,7 +2264,7 @@ static void test_resize_target(void)
     swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         swapchain_desc.Flags = tests[i].flags;
         swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0,
@@ -2425,7 +2429,7 @@ static void test_inexact_modes(void)
 
     check_window_fullscreen_state(swapchain_desc.OutputWindow, &initial_state.fullscreen_state);
 
-    for (i = 0; i < sizeof(sizes) / sizeof(*sizes); ++i)
+    for (i = 0; i < ARRAY_SIZE(sizes); ++i)
     {
         /* Test CreateSwapChain(). */
         swapchain_desc.BufferDesc.Width = sizes[i].width;
@@ -3190,7 +3194,7 @@ static void test_swapchain_parameters(void)
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
     ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         memset(&desc, 0, sizeof(desc));
         desc.BufferDesc.Width = registry_mode.dmPelsWidth;
@@ -3278,7 +3282,7 @@ static void test_swapchain_parameters(void)
         IDXGISwapChain_Release(swapchain);
     }
 
-    for (i = 0; i < sizeof(usage_tests) / sizeof(*usage_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(usage_tests); ++i)
     {
         usage = usage_tests[i];
 
