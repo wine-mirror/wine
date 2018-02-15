@@ -1936,7 +1936,7 @@ static void test_create_depthstencil_view(void)
     };
 #undef FMT_UNKNOWN
 #undef D24S8
-#undef R24S8_TL
+#undef R24G8_TL
 #undef DIM_UNKNOWN
 #undef TEX_1D
 #undef TEX_1D_ARRAY
