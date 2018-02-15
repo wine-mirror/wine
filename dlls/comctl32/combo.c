@@ -38,6 +38,7 @@
 #include "commctrl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #include "comctl32.h"
 
@@ -124,9 +125,9 @@ static BOOL COMBO_Init(void)
  */
 static LRESULT COMBO_NCCreate(HWND hwnd, LONG style)
 {
-    LPHEADCOMBO lphc;
+    HEADCOMBO *lphc;
 
-    if (COMBO_Init() && (lphc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HEADCOMBO))) )
+    if (COMBO_Init() && (lphc = heap_alloc_zero(sizeof(*lphc))))
     {
         lphc->self = hwnd;
         SetWindowLongPtrW( hwnd, 0, (LONG_PTR)lphc );
@@ -157,20 +158,20 @@ static LRESULT COMBO_NCCreate(HWND hwnd, LONG style)
 /***********************************************************************
  *           COMBO_NCDestroy
  */
-static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
+static LRESULT COMBO_NCDestroy( HEADCOMBO *lphc )
 {
+    if (lphc)
+    {
+        TRACE("[%p]: freeing storage\n", lphc->self);
 
-   if( lphc )
-   {
-       TRACE("[%p]: freeing storage\n", lphc->self);
+        if ( (CB_GETTYPE(lphc) != CBS_SIMPLE) && lphc->hWndLBox )
+            DestroyWindow( lphc->hWndLBox );
 
-       if( (CB_GETTYPE(lphc) != CBS_SIMPLE) && lphc->hWndLBox )
-	   DestroyWindow( lphc->hWndLBox );
+        SetWindowLongPtrW( lphc->self, 0, 0 );
+        heap_free( lphc );
+    }
 
-       SetWindowLongPtrW( lphc->self, 0, 0 );
-       HeapFree( GetProcessHeap(), 0, lphc );
-   }
-   return 0;
+    return 0;
 }
 
 /***********************************************************************
@@ -670,7 +671,7 @@ static void CBPaintText(HEADCOMBO *lphc, HDC hdc_paint)
         size = SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, id, 0);
 	if (size == LB_ERR)
 	  FIXME("LB_ERR probably not handled yet\n");
-        if( (pText = HeapAlloc( GetProcessHeap(), 0, (size + 1) * sizeof(WCHAR))) )
+        if ((pText = heap_alloc((size + 1) * sizeof(WCHAR))))
 	{
             /* size from LB_GETTEXTLEN may be too large, from LB_GETTEXT is accurate */
            size=SendMessageW(lphc->hWndLBox, LB_GETTEXT, id, (LPARAM)pText);
@@ -768,7 +769,8 @@ static void CBPaintText(HEADCOMBO *lphc, HDC hdc_paint)
      if( !hdc_paint )
        ReleaseDC( lphc->self, hdc );
    }
-   HeapFree( GetProcessHeap(), 0, pText );
+
+    heap_free(pText);
 }
 
 /***********************************************************************
@@ -891,8 +893,8 @@ static INT CBUpdateLBox( LPHEADCOMBO lphc, BOOL bSelect )
    idx = LB_ERR;
    length = SendMessageW( lphc->hWndEdit, WM_GETTEXTLENGTH, 0, 0 );
 
-   if( length > 0 )
-       pText = HeapAlloc( GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR));
+    if (length > 0)
+        pText = heap_alloc((length + 1) * sizeof(WCHAR));
 
    TRACE("\t edit text length %i\n", length );
 
@@ -900,7 +902,7 @@ static INT CBUpdateLBox( LPHEADCOMBO lphc, BOOL bSelect )
    {
        GetWindowTextW( lphc->hWndEdit, pText, length + 1);
        idx = SendMessageW(lphc->hWndLBox, LB_FINDSTRING, -1, (LPARAM)pText);
-       HeapFree( GetProcessHeap(), 0, pText );
+       heap_free( pText );
    }
 
    SendMessageW(lphc->hWndLBox, LB_SETCURSEL, bSelect ? idx : -1, 0);
@@ -930,10 +932,8 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
        length = SendMessageW(lphc->hWndLBox, LB_GETTEXTLEN, index, 0);
        if( length != LB_ERR)
        {
-	   if( (pText = HeapAlloc( GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR))) )
-	   {
+           if ((pText = heap_alloc((length + 1) * sizeof(WCHAR))))
                SendMessageW(lphc->hWndLBox, LB_GETTEXT, index, (LPARAM)pText);
-	   }
        }
    }
 
@@ -947,7 +947,7 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
    if( lphc->wState & CBF_FOCUSED )
       SendMessageW(lphc->hWndEdit, EM_SETSEL, 0, -1);
 
-   HeapFree( GetProcessHeap(), 0, pText );
+    heap_free( pText );
 }
 
 /***********************************************************************
@@ -1367,7 +1367,7 @@ static LRESULT COMBO_GetText( HEADCOMBO *lphc, INT count, LPWSTR buf )
         /* 'length' is without the terminating character */
         if (length >= count)
         {
-            LPWSTR lpBuffer = HeapAlloc(GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR));
+            WCHAR *lpBuffer = heap_alloc((length + 1) * sizeof(WCHAR));
             if (!lpBuffer) goto error;
             length = SendMessageW(lphc->hWndLBox, LB_GETTEXT, idx, (LPARAM)lpBuffer);
 
@@ -1377,7 +1377,7 @@ static LRESULT COMBO_GetText( HEADCOMBO *lphc, INT count, LPWSTR buf )
                 lstrcpynW( buf, lpBuffer, count );
                 length = count;
             }
-            HeapFree( GetProcessHeap(), 0, lpBuffer );
+            heap_free( lpBuffer );
         }
         else length = SendMessageW(lphc->hWndLBox, LB_GETTEXT, idx, (LPARAM)buf);
 
