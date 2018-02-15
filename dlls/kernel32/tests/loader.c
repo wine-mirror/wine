@@ -379,7 +379,6 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         image.DllCharacteristics, nt_header->OptionalHeader.DllCharacteristics );
     ok( image.Machine == nt_header->FileHeader.Machine, "%u: Machine wrong %04x / %04x\n", id,
         image.Machine, nt_header->FileHeader.Machine );
-    todo_wine_if (cor_header)
     ok( image.LoaderFlags == (cor_header != NULL), "%u: LoaderFlags wrong %08x\n", id, image.LoaderFlags );
     ok( image.ImageFileSize == file_size || broken(!image.ImageFileSize), /* winxpsp1 */
         "%u: ImageFileSize wrong %08x / %08x\n", id, image.ImageFileSize, file_size );
@@ -402,12 +401,10 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         (cor_header->MajorRuntimeVersion > 2 ||
          (cor_header->MajorRuntimeVersion == 2 && cor_header->MinorRuntimeVersion >= 5)))
     {
-        todo_wine
         ok( S(U(image)).ComPlusILOnly || broken(is_winxp),
             "%u: wrong ComPlusILOnly flags %02x\n", id, U(image).ImageFlags );
         if (nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
             !(cor_header->Flags & COMIMAGE_FLAGS_32BITREQUIRED))
-            todo_wine
             ok( S(U(image)).ComPlusNativeReady || broken(is_winxp),
                 "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
         else
@@ -425,7 +422,6 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     {
         /* winxp doesn't support any of the loader flags */
         if (!S(U(image)).ImageMappedFlat) is_winxp = TRUE;
-        todo_wine
         ok( S(U(image)).ImageMappedFlat || broken(is_winxp),
         "%u: wrong ImageMappedFlat flags %02x\n", id, U(image).ImageFlags );
     }
@@ -433,7 +429,6 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         ok( !S(U(image)).ImageDynamicallyRelocated || broken( S(U(image)).ComPlusILOnly ), /* <= win7 */
             "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, U(image).ImageFlags );
     else if (image.ImageContainsCode && !cor_header)
-        todo_wine
         ok( S(U(image)).ImageDynamicallyRelocated || broken(is_winxp),
             "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, U(image).ImageFlags );
     else
@@ -532,7 +527,6 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
                     const IMAGE_COR20_HEADER *cor_header = section_data;
                     il_only = (cor_header->Flags & COMIMAGE_FLAGS_ILONLY) != 0;
                 }
-                todo_wine_if (il_only && nt_header->OptionalHeader.SizeOfCode)
                 ok( mod != NULL || broken(il_only), /* <= win7 */
                     "%u: loading failed err %u\n", line, GetLastError() );
             }
