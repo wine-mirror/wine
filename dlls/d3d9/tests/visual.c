@@ -5864,16 +5864,17 @@ done:
     DestroyWindow(window);
 }
 
-static void autogen_mipmap_test(void)
+static void test_mipmap_autogen(void)
 {
-    IDirect3DTexture9 *texture = NULL;
-    IDirect3DSurface9 *surface;
+    IDirect3DSurface9 *surface, *surface2, *surface3, *backbuffer;
+    IDirect3DTexture9 *texture, *texture2, *texture3;
     IDirect3DDevice9 *device;
     unsigned int x, y;
     D3DLOCKED_RECT lr;
     IDirect3D9 *d3d;
     D3DCOLOR color;
     ULONG refcount;
+    D3DCAPS9 caps;
     HWND window;
     HRESULT hr;
 
@@ -5899,18 +5900,20 @@ static void autogen_mipmap_test(void)
     }
 
     if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
-            D3DFMT_X8R8G8B8, D3DUSAGE_AUTOGENMIPMAP,  D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8) != D3D_OK)
+            D3DFMT_X8R8G8B8, D3DUSAGE_AUTOGENMIPMAP, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8) != D3D_OK)
     {
         skip("No autogenmipmap support.\n");
         IDirect3DDevice9_Release(device);
         goto done;
     }
 
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffff00, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
-    /* Make the mipmap big, so that a smaller mipmap is used
-     */
+    /* Make the texture big enough that a mipmap level > 0 is used. */
     hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 0, D3DUSAGE_AUTOGENMIPMAP,
                                         D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &texture, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %08x\n", hr);
@@ -5976,9 +5979,158 @@ static void autogen_mipmap_test(void)
     color = getPixelColor(device, 360, 270);
     ok(color == 0x0000ff00, "pixel 360/270 has color %08x, expected 0x0000ff00\n", color);
     color = getPixelColor(device, 440, 270);
-    ok(color == 0x00ffffff, "pixel 440/200 has color %08x, expected 0x00ffffff\n", color);
+    ok(color == 0x00ffffff, "pixel 440/270 has color %08x, expected 0x00ffffff\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES))
+    {
+        skip("Blitting from textures is not supported.\n");
+        IDirect3DSurface9_Release(backbuffer);
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+    hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 1, 0,
+            D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &texture, 0);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 0, D3DUSAGE_AUTOGENMIPMAP,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture2, 0);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 0, D3DUSAGE_AUTOGENMIPMAP | D3DUSAGE_RENDERTARGET,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture3, 0);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
+    memset(&lr, 0, sizeof(lr));
+    hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to map surface, hr %#x.\n", hr);
+    for (y = 0; y < 1024; ++y)
+    {
+        for (x = 0; x < 1024; ++x)
+        {
+            DWORD *dst = (DWORD *)((BYTE *)lr.pBits + y * lr.Pitch + x * 4);
+            POINT pt;
+
+            pt.x = x;
+            pt.y = y;
+            if (PtInRect(&r1, pt))
+                *dst = 0xffff0000;
+            else if (PtInRect(&r2, pt))
+                *dst = 0xff00ff00;
+            else if (PtInRect(&r3, pt))
+                *dst = 0xff0000ff;
+            else if (PtInRect(&r4, pt))
+                *dst = 0xff000000;
+            else
+                *dst = 0xffffffff;
+        }
+    }
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "Failed to unmap surface, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(surface);
+
+    hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)texture,
+            (IDirect3DBaseTexture9 *)texture2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture2);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 200, 200);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 280, 200);
+    ok(color == 0x000000ff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 360, 200);
+    ok(color == 0x00000000, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 440, 200);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 200, 270);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 280, 270);
+    ok(color == 0x00ff0000, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 360, 270);
+    ok(color == 0x0000ff00, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 440, 270);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture2, 0, &surface2);
+    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture3, 0, &surface3);
+    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_StretchRect(device, surface2, NULL, surface3, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "Failed to blit texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture3);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 200, 200);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 280, 200);
+    ok(color == 0x000000ff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 360, 200);
+    ok(color == 0x00000000, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 440, 200);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 200, 270);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 280, 270);
+    ok(color == 0x00ff0000, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 360, 270);
+    ok(color == 0x0000ff00, "Unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 440, 270);
+    ok(color == 0x00ffffff, "Unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, surface3);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 200, 200);
+    ok(color == 0x0000ffff, "Unexpected color 0x%08x.\n", color);
+
+    IDirect3DSurface9_Release(surface3);
+    IDirect3DSurface9_Release(surface2);
+    IDirect3DTexture9_Release(texture3);
+    IDirect3DTexture9_Release(texture2);
+    IDirect3DTexture9_Release(texture);
+    IDirect3DSurface9_Release(backbuffer);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -23309,7 +23461,7 @@ START_TEST(visual)
     g16r16_texture_test();
     pixelshader_blending_test();
     texture_transform_flags_test();
-    autogen_mipmap_test();
+    test_mipmap_autogen();
     fixed_function_decl_test();
     conditional_np2_repeat_test();
     fixed_function_bumpmap_test();
