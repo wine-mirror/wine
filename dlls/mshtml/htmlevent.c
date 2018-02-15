@@ -1051,8 +1051,12 @@ static HRESULT WINAPI DOMEvent_stopPropagation(IDOMEvent *iface)
 static HRESULT WINAPI DOMEvent_stopImmediatePropagation(IDOMEvent *iface)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    This->stop_immediate_propagation = This->stop_propagation = TRUE;
+    nsIDOMEvent_StopImmediatePropagation(This->nsevent);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_get_isTrusted(IDOMEvent *iface, VARIANT_BOOL *p)
@@ -2210,7 +2214,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
         }
     }
 
-    for(listener = listeners; listener < listeners + listeners_cnt; listener++) {
+    for(listener = listeners; !event->stop_immediate_propagation
+            && listener < listeners + listeners_cnt; listener++) {
         if(listener->type != LISTENER_TYPE_ATTACHED) {
             DISPID named_arg = DISPID_THIS;
             VARIANTARG args[2];

@@ -251,9 +251,19 @@ function test_stop_propagation() {
         ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
     }
 
+    function stop_immediate_propagation(e) {
+        calls += "immediateStop,";
+        e.stopImmediatePropagation();
+        ok(e.bubbles === true, "bubbles = " + e.bubbles);
+        ok(e.cancelable === true, "cancelable = " + e.cancelable);
+        ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+    }
+
+    div1.addEventListener("click", stop_immediate_propagation, true);
     div1.addEventListener("click", stop_propagation, true);
     div1.addEventListener("click", record_call("div1.click(capture)"), true);
 
+    div2.addEventListener("click", stop_immediate_propagation, true);
     div2.addEventListener("click", stop_propagation, true);
     div2.addEventListener("click", record_call("div2.click(capture)"), true);
 
@@ -265,9 +275,19 @@ function test_stop_propagation() {
 
     calls = "";
     div2.click();
+    ok(calls === "immediateStop,", "calls = " + calls);
+
+    div1.removeEventListener("click", stop_immediate_propagation, true);
+    calls = "";
+    div2.click();
     ok(calls === "stop,div1.click(capture),", "calls = " + calls);
 
     div1.removeEventListener("click", stop_propagation, true);
+    calls = "";
+    div2.click();
+    ok(calls === "div1.click(capture),immediateStop,", "calls = " + calls);
+
+    div2.removeEventListener("click", stop_immediate_propagation, true);
     calls = "";
     div2.click();
     ok(calls === "div1.click(capture),stop,div2.click(capture),stop,div2.click(bubble),",
