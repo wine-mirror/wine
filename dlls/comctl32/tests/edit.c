@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
 #include <windows.h>
 #include <commctrl.h>
 
@@ -545,14 +544,10 @@ static HWND create_editcontrol (DWORD style, DWORD exstyle)
 {
     HWND handle;
 
-    handle = CreateWindowExA(exstyle,
-			  "EDIT",
-			  "Test Text",
-			  style,
-			  10, 10, 300, 300,
-			  NULL, NULL, hinst, NULL);
+    handle = CreateWindowExA(exstyle, WC_EDITA, "Text Text", style, 10, 10, 300, 300,
+        NULL, NULL, hinst, NULL);
     ok (handle != NULL, "CreateWindow EDIT Control failed\n");
-    assert (handle);
+
     if (winetest_interactive)
 	ShowWindow (handle, SW_SHOW);
     return handle;
@@ -587,7 +582,6 @@ static HWND create_child_editcontrol (DWORD style, DWORD exstyle)
                             rect.right - rect.left, rect.bottom - rect.top,
                             NULL, NULL, hinst, NULL);
     ok (parentWnd != NULL, "CreateWindow EDIT Test failed\n");
-    assert(parentWnd);
 
     editWnd = CreateWindowExA(exstyle,
                             "EDIT",
@@ -596,7 +590,6 @@ static HWND create_child_editcontrol (DWORD style, DWORD exstyle)
                             0, 0, 300, 300,
                             parentWnd, NULL, hinst, NULL);
     ok (editWnd != NULL, "CreateWindow EDIT Test Text failed\n");
-    assert(editWnd);
     if (winetest_interactive)
         ShowWindow (parentWnd, SW_SHOW);
     return editWnd;
@@ -743,15 +736,14 @@ static void test_edit_control_2(void)
     /* Create main and edit windows. */
     hwndMain = CreateWindowA(szEditTest2Class, "ET2", WS_OVERLAPPEDWINDOW,
                             0, 0, 200, 200, NULL, NULL, hinst, NULL);
-    assert(hwndMain);
+    ok(hwndMain != NULL, "Failed to create control parent.\n");
     if (winetest_interactive)
         ShowWindow (hwndMain, SW_SHOW);
 
-    hwndET2 = CreateWindowA("EDIT", NULL,
-                           WS_CHILD|WS_BORDER|ES_LEFT|ES_AUTOHSCROLL,
-                           0, 0, w, h, /* important this not be 0 size. */
-                           hwndMain, (HMENU) ID_EDITTEST2, hinst, NULL);
-    assert(hwndET2);
+    hwndET2 = CreateWindowA(WC_EDITA, NULL, WS_CHILD|WS_BORDER|ES_LEFT|ES_AUTOHSCROLL,
+        0, 0, w, h, /* important this not be 0 size. */
+        hwndMain, (HMENU) ID_EDITTEST2, hinst, NULL);
+    ok(hwndET2 != NULL, "Failed to create Edit control.\n");
     if (winetest_interactive)
         ShowWindow (hwndET2, SW_SHOW);
 
@@ -896,16 +888,11 @@ static void test_edit_control_3(void)
               0,
               CW_USEDEFAULT, CW_USEDEFAULT, 10, 10,
               NULL, NULL, NULL, NULL);
-    assert(hParent);
+    ok(hParent != NULL, "Failed to create control parent.\n");
 
     trace("EDIT: Single line, no ES_AUTOHSCROLL\n");
-    hWnd = CreateWindowExA(0,
-              "EDIT",
-              NULL,
-              0,
-              10, 10, 50, 50,
-              hParent, NULL, NULL, NULL);
-    assert(hWnd);
+    hWnd = CreateWindowExA(0, WC_EDITA, NULL, 0, 10, 10, 50, 50, hParent, NULL, NULL, NULL);
+    ok(hWnd != NULL, "Failed to create Edit control.\n");
 
     zero_notify();
     SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str);
@@ -954,13 +941,8 @@ static void test_edit_control_3(void)
     DestroyWindow(hWnd);
 
     trace("EDIT: Single line, ES_AUTOHSCROLL\n");
-    hWnd = CreateWindowExA(0,
-              "EDIT",
-              NULL,
-              ES_AUTOHSCROLL,
-              10, 10, 50, 50,
-              hParent, NULL, NULL, NULL);
-    assert(hWnd);
+    hWnd = CreateWindowExA(0, WC_EDITA, NULL, ES_AUTOHSCROLL, 10, 10, 50, 50, hParent, NULL, NULL, NULL);
+    ok(hWnd != NULL, "Failed to create Edit control.\n");
 
     zero_notify();
     SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str);
@@ -1005,13 +987,10 @@ static void test_edit_control_3(void)
     DestroyWindow(hWnd);
 
     trace("EDIT: Multline, no ES_AUTOHSCROLL, no ES_AUTOVSCROLL\n");
-    hWnd = CreateWindowExA(0,
-              "EDIT",
-              NULL,
-              ES_MULTILINE,
+    hWnd = CreateWindowExA(0, WC_EDITA, NULL, ES_MULTILINE,
               10, 10, (50 * dpi) / 96, (50 * dpi) / 96,
               hParent, NULL, NULL, NULL);
-    assert(hWnd);
+    ok(hWnd != NULL, "Failed to create Edit control.\n");
 
     zero_notify();
     SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str);
@@ -1055,13 +1034,10 @@ static void test_edit_control_3(void)
     DestroyWindow(hWnd);
 
     trace("EDIT: Multline, ES_AUTOHSCROLL, no ES_AUTOVSCROLL\n");
-    hWnd = CreateWindowExA(0,
-              "EDIT",
-              NULL,
-              ES_MULTILINE | ES_AUTOHSCROLL,
+    hWnd = CreateWindowExA(0, WC_EDITA, NULL, ES_MULTILINE | ES_AUTOHSCROLL,
               10, 10, (50 * dpi) / 96, (50 * dpi) / 96,
               hParent, NULL, NULL, NULL);
-    assert(hWnd);
+    ok(hWnd != NULL, "Failed to create Edit control.\n");
 
     zero_notify();
     SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str2);
@@ -1100,13 +1076,9 @@ static void test_edit_control_3(void)
     DestroyWindow(hWnd);
 
     trace("EDIT: Multline, ES_AUTOHSCROLL and ES_AUTOVSCROLL\n");
-    hWnd = CreateWindowExA(0,
-              "EDIT",
-              NULL,
-              ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL,
-              10, 10, 50, 50,
-              hParent, NULL, NULL, NULL);
-    assert(hWnd);
+    hWnd = CreateWindowExA(0, WC_EDITA, NULL, ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL,
+              10, 10, 50, 50, hParent, NULL, NULL, NULL);
+    ok(hWnd != NULL, "Failed to create Edit control.\n");
 
     zero_notify();
     SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str2);
@@ -1289,13 +1261,9 @@ static void test_edit_control_5(void)
     RECT rc;
 
     /* first show that a non-child won't do for this test */
-    hWnd = CreateWindowExA(0,
-              "EDIT",
-              str,
-              0,
-              10, 10, 1, 1,
-              NULL, NULL, NULL, NULL);
-    assert(hWnd);
+    hWnd = CreateWindowExA(0, WC_EDITA, str, 0, 10, 10, 1, 1, NULL, NULL, NULL, NULL);
+    ok(hWnd != NULL, "Failed to create Edit control.\n");
+
     /* size of non-child edit control is (much) bigger than requested */
     GetWindowRect( hWnd, &rc);
     ok( rc.right - rc.left > 20, "size of the window (%d) is smaller than expected\n",
@@ -1309,16 +1277,13 @@ static void test_edit_control_5(void)
                             CW_USEDEFAULT, CW_USEDEFAULT,
                             250, 250,
                             NULL, NULL, hinst, NULL);
-    assert(parentWnd);
+    ok(parentWnd != NULL, "Failed to create control parent.\n");
     ShowWindow( parentWnd, SW_SHOW);
     /* single line */
-    hWnd = CreateWindowExA(0,
-              "EDIT",
-              str, WS_VISIBLE | WS_BORDER |
-              WS_CHILD,
+    hWnd = CreateWindowExA(0, WC_EDITA, str, WS_VISIBLE | WS_BORDER | WS_CHILD,
               rc1.left, rc1.top, rc1.right - rc1.left, rc1.bottom - rc1.top,
               parentWnd, NULL, NULL, NULL);
-    assert(hWnd);
+    ok(hWnd != NULL, "Failed to create Edit control.\n");
     GetClientRect( hWnd, &rc);
     ok( rc.right == rc1.right - rc1.left && rc.bottom == rc1.bottom - rc1.top,
             "Client rectangle not the expected size %s\n", wine_dbgstr_rect( &rc ));
@@ -1326,13 +1291,10 @@ static void test_edit_control_5(void)
     ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
     DestroyWindow(hWnd);
     /* multi line */
-    hWnd = CreateWindowExA(0,
-              "EDIT",
-              str,
-              WS_CHILD | ES_MULTILINE,
+    hWnd = CreateWindowExA(0, WC_EDITA, str, WS_CHILD | ES_MULTILINE,
               rc1.left, rc1.top, rc1.right - rc1.left, rc1.bottom - rc1.top,
               parentWnd, NULL, NULL, NULL);
-    assert(hWnd);
+    ok(hWnd != NULL, "Failed to create Edit control.\n");
     GetClientRect( hWnd, &rc);
     ok( rc.right == rc1.right - rc1.left && rc.bottom == rc1.bottom - rc1.top,
             "Client rectangle not the expected size %s\n", wine_dbgstr_rect( &rc ));
@@ -1417,14 +1379,9 @@ static void test_edit_control_scroll(void)
     /* Check the return value when EM_SCROLL doesn't scroll
      * anything. Should not return true unless any lines were actually
      * scrolled. */
-    hwEdit = CreateWindowA(
-              "EDIT",
-              single_line_str,
-              WS_VSCROLL | ES_MULTILINE,
-              1, 1, 100, 100,
-              NULL, NULL, hinst, NULL);
-
-    assert(hwEdit);
+    hwEdit = CreateWindowA(WC_EDITA, single_line_str, WS_VSCROLL | ES_MULTILINE,
+              1, 1, 100, 100, NULL, NULL, hinst, NULL);
+    ok(hwEdit != NULL, "Failed to create Edit control.\n");
 
     ret = SendMessageA(hwEdit, EM_SCROLL, SB_PAGEDOWN, 0);
     ok(!ret, "Returned %x, expected 0.\n", ret);
@@ -1443,13 +1400,9 @@ static void test_edit_control_scroll(void)
     /* SB_PAGEDOWN while at the beginning of a buffer with few lines
        should not cause EM_SCROLL to return a negative value of
        scrolled lines that would put us "before" the beginning. */
-    hwEdit = CreateWindowA(
-                "EDIT",
-                multiline_str,
-                WS_VSCROLL | ES_MULTILINE,
-                0, 0, 100, 100,
-                NULL, NULL, hinst, NULL);
-    assert(hwEdit);
+    hwEdit = CreateWindowA(WC_EDITA, multiline_str, WS_VSCROLL | ES_MULTILINE,
+                0, 0, 100, 100, NULL, NULL, hinst, NULL);
+    ok(hwEdit != NULL, "Failed to create Edit control.\n");
 
     ret = SendMessageA(hwEdit, EM_SCROLL, SB_PAGEDOWN, 0);
     ok(!ret, "Returned %x, expected 0.\n", ret);
@@ -2370,13 +2323,12 @@ static void test_contextmenu(void)
 
     hwndMain = CreateWindowA(szEditTest4Class, "ET4", WS_OVERLAPPEDWINDOW|WS_VISIBLE,
                             0, 0, 200, 200, NULL, NULL, hinst, NULL);
-    assert(hwndMain);
+    ok(hwndMain != NULL, "Failed to create control parent.\n");
 
-    hwndEdit = CreateWindowA("EDIT", NULL,
-                           WS_CHILD|WS_BORDER|WS_VISIBLE|ES_LEFT|ES_AUTOHSCROLL,
+    hwndEdit = CreateWindowA(WC_EDITA, NULL, WS_CHILD|WS_BORDER|WS_VISIBLE|ES_LEFT|ES_AUTOHSCROLL,
                            0, 0, 150, 50, /* important this not be 0 size. */
                            hwndMain, (HMENU) ID_EDITTEST2, hinst, NULL);
-    assert(hwndEdit);
+    ok(hwndEdit != NULL, "Failed to create Edit control.\n");
 
     SetFocus(NULL);
     SetCapture(hwndMain);
