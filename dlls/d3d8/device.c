@@ -141,6 +141,24 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format)
     }
 }
 
+unsigned int wined3dmapflags_from_d3dmapflags(unsigned int flags)
+{
+    static const unsigned int handled = D3DLOCK_READONLY
+            | D3DLOCK_NOSYSLOCK
+            | D3DLOCK_NOOVERWRITE
+            | D3DLOCK_DISCARD
+            | D3DLOCK_NO_DIRTY_UPDATE;
+    unsigned int wined3d_flags;
+
+    wined3d_flags = flags & handled;
+    flags &= ~handled;
+
+    if (flags)
+        FIXME("Unhandled flags %#x.\n", flags);
+
+    return wined3d_flags;
+}
+
 static UINT vertex_count_from_primitive_count(D3DPRIMITIVETYPE primitive_type, UINT primitive_count)
 {
     switch (primitive_type)
