@@ -148,6 +148,7 @@ const char *debug_dxgi_format(DXGI_FORMAT format)
         WINE_DXGI_TO_STR(DXGI_FORMAT_BC7_TYPELESS);
         WINE_DXGI_TO_STR(DXGI_FORMAT_BC7_UNORM);
         WINE_DXGI_TO_STR(DXGI_FORMAT_BC7_UNORM_SRGB);
+        WINE_DXGI_TO_STR(DXGI_FORMAT_B4G4R4A4_UNORM);
         default:
             FIXME("Unrecognized DXGI_FORMAT %#x.\n", format);
             return "unrecognized";
@@ -260,6 +261,7 @@ DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format)
         case WINED3DFMT_BC7_TYPELESS: return DXGI_FORMAT_BC7_TYPELESS;
         case WINED3DFMT_BC7_UNORM: return DXGI_FORMAT_BC7_UNORM;
         case WINED3DFMT_BC7_UNORM_SRGB: return DXGI_FORMAT_BC7_UNORM_SRGB;
+        case WINED3DFMT_B4G4R4A4_UNORM: return DXGI_FORMAT_B4G4R4A4_UNORM;
         default:
             FIXME("Unhandled wined3d format %#x.\n", format);
             return DXGI_FORMAT_UNKNOWN;
@@ -370,6 +372,7 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
         case DXGI_FORMAT_BC7_TYPELESS: return WINED3DFMT_BC7_TYPELESS;
         case DXGI_FORMAT_BC7_UNORM: return WINED3DFMT_BC7_UNORM;
         case DXGI_FORMAT_BC7_UNORM_SRGB: return WINED3DFMT_BC7_UNORM_SRGB;
+        case DXGI_FORMAT_B4G4R4A4_UNORM: return WINED3DFMT_B4G4R4A4_UNORM;
         default:
             FIXME("Unhandled DXGI_FORMAT %#x.\n", format);
             return WINED3DFMT_UNKNOWN;
