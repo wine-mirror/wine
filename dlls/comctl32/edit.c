@@ -3382,16 +3382,23 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
  *	WM_KILLFOCUS
  *
  */
-static LRESULT EDIT_WM_KillFocus(EDITSTATE *es)
+static LRESULT EDIT_WM_KillFocus(HTHEME theme, EDITSTATE *es)
 {
-	es->flags &= ~EF_FOCUSED;
-	DestroyCaret();
-	if(!(es->style & ES_NOHIDESEL))
-		EDIT_InvalidateText(es, es->selection_start, es->selection_end);
-	EDIT_NOTIFY_PARENT(es, EN_KILLFOCUS);
-	/* throw away left over scroll when we lose focus */
-	es->wheelDeltaRemainder = 0;
-	return 0;
+    UINT flags = RDW_INVALIDATE | RDW_UPDATENOW;
+
+    es->flags &= ~EF_FOCUSED;
+    DestroyCaret();
+    if (!(es->style & ES_NOHIDESEL))
+        EDIT_InvalidateText(es, es->selection_start, es->selection_end);
+    EDIT_NOTIFY_PARENT(es, EN_KILLFOCUS);
+    /* Throw away left over scroll when we lose focus */
+    es->wheelDeltaRemainder = 0;
+
+    if (theme)
+        flags |= RDW_FRAME;
+
+    RedrawWindow(es->hwndSelf, NULL, NULL, flags);
+    return 0;
 }
 
 
@@ -3656,26 +3663,24 @@ static void EDIT_WM_NCPaint(HWND hwnd, HRGN region)
  *	WM_SETFOCUS
  *
  */
-static void EDIT_WM_SetFocus(EDITSTATE *es)
+static void EDIT_WM_SetFocus(HTHEME theme, EDITSTATE *es)
 {
-	es->flags |= EF_FOCUSED;
+    UINT flags = RDW_INVALIDATE | RDW_UPDATENOW;
 
-        if (!(es->style & ES_NOHIDESEL))
-            EDIT_InvalidateText(es, es->selection_start, es->selection_end);
+    es->flags |= EF_FOCUSED;
 
-        /* single line edit updates itself */
-        if (IsWindowVisible(es->hwndSelf) && !(es->style & ES_MULTILINE))
-        {
-            HDC hdc = GetDC(es->hwndSelf);
-            EDIT_WM_Paint(es, hdc);
-            ReleaseDC(es->hwndSelf, hdc);
-        }
+    if (!(es->style & ES_NOHIDESEL))
+        EDIT_InvalidateText(es, es->selection_start, es->selection_end);
 
-	CreateCaret(es->hwndSelf, 0, 1, es->line_height);
-	EDIT_SetCaretPos(es, es->selection_end,
-			 es->flags & EF_AFTER_WRAP);
-	ShowCaret(es->hwndSelf);
-	EDIT_NOTIFY_PARENT(es, EN_SETFOCUS);
+    CreateCaret(es->hwndSelf, 0, 1, es->line_height);
+    EDIT_SetCaretPos(es, es->selection_end, es->flags & EF_AFTER_WRAP);
+    ShowCaret(es->hwndSelf);
+    EDIT_NOTIFY_PARENT(es, EN_SETFOCUS);
+
+    if (theme)
+        flags |= RDW_FRAME | RDW_ERASE;
+
+    RedrawWindow(es->hwndSelf, NULL, NULL, flags);
 }
 
 
@@ -4827,9 +4832,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         break;
 
     case WM_KILLFOCUS:
-        result = EDIT_WM_KillFocus(es);
-        if (theme)
-            RedrawWindow(hwnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
+        result = EDIT_WM_KillFocus(theme, es);
         break;
 
     case WM_LBUTTONDBLCLK:
@@ -4866,9 +4869,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         break;
 
     case WM_SETFOCUS:
-        EDIT_WM_SetFocus(es);
-        if (theme)
-            RedrawWindow(hwnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
+        EDIT_WM_SetFocus(theme, es);
         break;
 
     case WM_SETFONT:

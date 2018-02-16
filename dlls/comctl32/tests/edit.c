@@ -23,6 +23,7 @@
 
 #include "wine/test.h"
 #include "v6util.h"
+#include "msg.h"
 
 #ifndef ES_COMBO
 #define ES_COMBO 0x200
@@ -31,6 +32,20 @@
 #define ID_EDITTESTDBUTTON 0x123
 #define ID_EDITTEST2 99
 #define MAXLEN 200
+
+enum seq_index
+{
+    COMBINED_SEQ_INDEX = 0,
+    NUM_MSG_SEQUENCES,
+};
+
+enum msg_id
+{
+    PARENT_ID,
+    EDIT_ID,
+};
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
 struct edit_notify {
     int en_change, en_maxtext, en_update;
@@ -863,6 +878,66 @@ static LRESULT CALLBACK edit3_wnd_procA(HWND hWnd, UINT msg, WPARAM wParam, LPAR
             break;
     }
     return DefWindowProcA(hWnd, msg, wParam, lParam);
+}
+
+static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static LONG defwndproc_counter = 0;
+    struct message msg = { 0 };
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent|wparam|id;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.id = PARENT_ID;
+
+    if (message != WM_IME_SETCONTEXT &&
+        message != WM_IME_NOTIFY &&
+        message != WM_GETICON &&
+        message != WM_DWMNCRENDERINGCHANGED &&
+        message != WM_GETMINMAXINFO &&
+        message != WM_PAINT &&
+        message != WM_CTLCOLOREDIT &&
+        message < 0xc000)
+    {
+        add_message(sequences, COMBINED_SEQ_INDEX, &msg);
+    }
+
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static LRESULT CALLBACK edit_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    static LONG defwndproc_counter = 0;
+    struct message msg = { 0 };
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent|wparam|id;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.id = EDIT_ID;
+
+    if (message != WM_IME_SETCONTEXT &&
+        message != WM_IME_NOTIFY)
+    {
+        add_message(sequences, COMBINED_SEQ_INDEX, &msg);
+    }
+
+    defwndproc_counter++;
+    if (IsWindowUnicode(hwnd))
+        ret = CallWindowProcW(oldproc, hwnd, message, wParam, lParam);
+    else
+        ret = CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
 }
 
 /* Test behaviour of WM_SETTEXT, WM_REPLACESEL and notifications sent in response
@@ -2365,6 +2440,7 @@ static BOOL register_classes(void)
     WNDCLASSA test3;
     WNDCLASSA test4;
     WNDCLASSA text_position;
+    WNDCLASSA wc;
 
     test2.style = 0;
     test2.lpfnWndProc = ET2_WndProc;
@@ -2413,6 +2489,12 @@ static BOOL register_classes(void)
     text_position.lpszClassName = szEditTextPositionClass;
     text_position.lpfnWndProc = DefWindowProcA;
     if (!RegisterClassA(&text_position)) return FALSE;
+
+    memset(&wc, 0, sizeof(wc));
+    wc.lpfnWndProc = parent_wnd_proc;
+    wc.hInstance = GetModuleHandleA(NULL);
+    wc.lpszClassName = "ParentWnd";
+    if (!RegisterClassA(&wc)) return FALSE;
 
     return TRUE;
 }
@@ -2958,6 +3040,60 @@ static void test_wordbreak_proc(void)
     DestroyWindow(hwnd);
 }
 
+static const struct message setfocus_combined_seq[] =
+{
+    { WM_KILLFOCUS,    sent|id,            0, 0,                      PARENT_ID },
+    { WM_SETFOCUS,     sent|id,            0, 0,                      EDIT_ID   },
+    { WM_COMMAND,      sent|wparam|id, MAKEWPARAM(1, EN_SETFOCUS), 0, PARENT_ID },
+    { WM_PAINT,        sent|id,            0, 0,                      EDIT_ID   },
+    { WM_NCPAINT,      sent|id|defwinproc|optional, 0, 0,             EDIT_ID   },
+    { WM_ERASEBKGND,   sent|id|defwinproc|optional, 0, 0,             EDIT_ID   },
+    { 0 }
+};
+
+static const struct message killfocus_combined_seq[] =
+{
+    { WM_KILLFOCUS,    sent|id,            0, 0,                       EDIT_ID   },
+    { WM_COMMAND,      sent|wparam|id, MAKEWPARAM(1, EN_KILLFOCUS), 0, PARENT_ID },
+    { WM_SETFOCUS,     sent|id,            0, 0,                       PARENT_ID },
+    { WM_PAINT,        sent|id,            0, 0,                       EDIT_ID   },
+    { WM_NCPAINT,      sent|id|defwinproc|optional, 0, 0,              EDIT_ID   },
+    { 0 }
+};
+
+static void test_change_focus(void)
+{
+    HWND hwnd, parent_wnd;
+    WNDPROC oldproc;
+    MSG msg;
+
+    parent_wnd = CreateWindowA("ParentWnd", "", WS_OVERLAPPEDWINDOW,
+            0, 0, 200, 200, NULL, NULL, GetModuleHandleA(NULL), NULL);
+    ok(parent_wnd != NULL, "Failed to create control parent.\n");
+    SetWindowPos(parent_wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+    ShowWindow(parent_wnd, SW_SHOW);
+
+    hwnd = CreateWindowExA(0, WC_EDITA, "Test", WS_CHILD | WS_VISIBLE, 0, 0, 100, 100,
+            parent_wnd, (HMENU)1, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != NULL, "Failed to create Edit control.\n");
+
+    oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)edit_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
+
+    SetFocus(parent_wnd);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SetFocus(hwnd);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, setfocus_combined_seq, "Set focus", TRUE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SetFocus(parent_wnd);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, killfocus_combined_seq, "Kill focus", TRUE);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(edit)
 {
     ULONG_PTR ctx_cookie;
@@ -2966,6 +3102,8 @@ START_TEST(edit)
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
+
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     hinst = GetModuleHandleA(NULL);
     b = register_classes();
@@ -2999,6 +3137,7 @@ START_TEST(edit)
     test_paste();
     test_EM_GETLINE();
     test_wordbreak_proc();
+    test_change_focus();
 
     UnregisterWindowClasses();
 
