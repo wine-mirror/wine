@@ -837,9 +837,11 @@ static HRESULT WINAPI AudioMediaStreamImpl_IAMMediaStream_JoinFilter(IAMMediaStr
 {
     AudioMediaStreamImpl *This = impl_from_AudioMediaStream_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, media_stream_filter);
+    TRACE("(%p/%p)->(%p)\n", This, iface, media_stream_filter);
 
-    return S_FALSE;
+    This->input_pin->pin.pin.pinInfo.pFilter = (IBaseFilter *)media_stream_filter;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioMediaStreamImpl_IAMMediaStream_JoinFilterGraph(IAMMediaStream *iface, IFilterGraph *filtergraph)
