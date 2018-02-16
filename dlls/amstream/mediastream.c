@@ -237,9 +237,11 @@ static HRESULT WINAPI DirectDrawMediaStreamImpl_IAMMediaStream_JoinFilter(IAMMed
 {
     DirectDrawMediaStreamImpl *This = impl_from_DirectDrawMediaStream_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, media_stream_filter);
+    TRACE("(%p/%p)->(%p)\n", This, iface, media_stream_filter);
 
-    return S_FALSE;
+    This->input_pin->pin.pin.pinInfo.pFilter = (IBaseFilter *)media_stream_filter;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DirectDrawMediaStreamImpl_IAMMediaStream_JoinFilterGraph(IAMMediaStream *iface, IFilterGraph *filtergraph)
