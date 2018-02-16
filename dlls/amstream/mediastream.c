@@ -511,9 +511,24 @@ static HRESULT WINAPI DirectDrawMediaStreamInputPin_CheckMediaType(BasePin *base
 {
     DirectDrawMediaStreamInputPin *This = impl_from_DirectDrawMediaStreamInputPin_IPin(&base->IPin_iface);
 
-    FIXME("(%p)->(%p) stub!\n", This, media_type);
+    TRACE("(%p)->(%p)\n", This, media_type);
 
-    return E_NOTIMPL;
+    if (IsEqualGUID(&media_type->majortype, &MEDIATYPE_Video))
+    {
+        if (IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB1) ||
+            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB4) ||
+            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB8)  ||
+            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB565) ||
+            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB555) ||
+            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB24) ||
+            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB32))
+        {
+            TRACE("Video sub-type %s matches\n", debugstr_guid(&media_type->subtype));
+            return S_OK;
+        }
+    }
+
+    return S_FALSE;
 }
 
 static LONG WINAPI DirectDrawMediaStreamInputPin_GetMediaTypeVersion(BasePin *base)
