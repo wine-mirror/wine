@@ -258,6 +258,7 @@ static void test_media_streams(void)
     {
         IAMMediaStream* am_media_stream;
         IMultiMediaStream *multi_media_stream;
+        IPin *pin = NULL;
         IAudioMediaStream* audio_media_stream;
         IDirectDrawMediaStream *ddraw_stream = NULL;
         IDirectDrawStreamSample *ddraw_sample = NULL;
@@ -276,6 +277,11 @@ static void test_media_streams(void)
         IMultiMediaStream_Release(multi_media_stream);
 
         IAMMediaStream_Release(am_media_stream);
+
+        hr = IMediaStream_QueryInterface(video_stream, &IID_IPin, (void **)&pin);
+        ok(hr == S_OK, "IMediaStream_QueryInterface returned: %x\n", hr);
+
+        IPin_Release(pin);
 
         hr = IMediaStream_QueryInterface(video_stream, &IID_IAudioMediaStream, (LPVOID*)&audio_media_stream);
         ok(hr == E_NOINTERFACE, "IMediaStream_QueryInterface returned: %x\n", hr);
