@@ -1237,6 +1237,9 @@ static void test_comctl32_classes(void)
         "!Button",
         "!Edit",
         "!Static",
+        "!Listbox",
+        "!ComboBox",
+        "!ComboLBox",
     };
 
     winetest_get_mainargs( &argv );
