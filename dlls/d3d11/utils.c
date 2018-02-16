@@ -791,6 +791,21 @@ DWORD wined3d_clear_flags_from_d3d11_clear_flags(UINT clear_flags)
     return wined3d_clear_flags;
 }
 
+unsigned int wined3d_access_from_d3d11(D3D11_USAGE usage, UINT cpu_access)
+{
+    unsigned int access;
+
+    access = usage == D3D11_USAGE_STAGING ? WINED3D_RESOURCE_ACCESS_CPU : WINED3D_RESOURCE_ACCESS_GPU;
+    if (cpu_access)
+    {
+        if (~cpu_access & (D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ))
+            FIXME("Ignoring CPU access flags %#x.\n", cpu_access);
+        access |= WINED3D_RESOURCE_ACCESS_MAP;
+    }
+
+    return access;
+}
+
 HRESULT d3d_get_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT *data_size, void *data)
 {

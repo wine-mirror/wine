@@ -155,6 +155,8 @@ static HRESULT WINAPI d3d9_volume_LockBox(IDirect3DVolume9 *iface,
     locked_box->SlicePitch = map_desc.slice_pitch;
     locked_box->pBits = map_desc.data;
 
+    if (hr == E_INVALIDARG)
+        return D3DERR_INVALIDCALL;
     return hr;
 }
 

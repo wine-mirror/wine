@@ -346,7 +346,7 @@ HRESULT CDECL wined3d_resource_map(struct wined3d_resource *resource, unsigned i
     if (!(resource->access & WINED3D_RESOURCE_ACCESS_MAP))
     {
         WARN("Resource is not mappable.\n");
-        return WINED3DERR_INVALIDCALL;
+        return E_INVALIDARG;
     }
 
     flags = wined3d_resource_sanitise_map_flags(resource, flags);
