@@ -240,6 +240,7 @@ __msvcrt_long __cdecl _wtol(const wchar_t*);
 size_t        __cdecl mbstowcs(wchar_t*,const char*,size_t);
 errno_t       __cdecl mbstowcs_s(size_t*,wchar_t*,size_t,const char*,size_t);
 int           __cdecl mbtowc(wchar_t*,const char*,size_t);
+float         __cdecl wcstof(const wchar_t*,wchar_t**);
 double        __cdecl wcstod(const wchar_t*,wchar_t**);
 __msvcrt_long __cdecl wcstol(const wchar_t*,wchar_t**,int);
 size_t        __cdecl wcstombs(char*,const wchar_t*,size_t);
