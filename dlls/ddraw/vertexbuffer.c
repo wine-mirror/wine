@@ -162,26 +162,16 @@ static HRESULT WINAPI d3d_vertex_buffer7_Lock(IDirect3DVertexBuffer7 *iface,
     struct wined3d_resource *wined3d_resource;
     struct wined3d_map_desc wined3d_map_desc;
     HRESULT hr;
-    DWORD wined3d_flags = 0;
 
     TRACE("iface %p, flags %#x, data %p, data_size %p.\n", iface, flags, data, data_size);
 
     if (buffer->version != 7)
         flags &= ~(DDLOCK_NOOVERWRITE | DDLOCK_DISCARDCONTENTS);
 
-    /* Writeonly: Pointless. Event: Unsupported by native according to the sdk
-     * nosyslock: Not applicable
-     */
     if (!(flags & DDLOCK_WAIT))
-        wined3d_flags |= WINED3D_MAP_DONOTWAIT;
-    if (flags & DDLOCK_READONLY)
-        wined3d_flags |= WINED3D_MAP_READONLY;
-    if (flags & DDLOCK_NOOVERWRITE)
-        wined3d_flags |= WINED3D_MAP_NOOVERWRITE;
+        flags |= DDLOCK_DONOTWAIT;
     if (flags & DDLOCK_DISCARDCONTENTS)
     {
-        wined3d_flags |= WINED3D_MAP_DISCARD;
-
         if (!buffer->dynamic)
         {
             struct wined3d_buffer *new_buffer;
@@ -211,7 +201,7 @@ static HRESULT WINAPI d3d_vertex_buffer7_Lock(IDirect3DVertexBuffer7 *iface,
     }
 
     hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->wined3d_buffer),
-            0, &wined3d_map_desc, NULL, wined3d_flags);
+            0, &wined3d_map_desc, NULL, wined3dmapflags_from_ddrawmapflags(flags));
     *data = wined3d_map_desc.data;
 
     wined3d_mutex_unlock();

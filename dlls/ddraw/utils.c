@@ -561,6 +561,26 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
     return WINED3DFMT_UNKNOWN;
 }
 
+unsigned int wined3dmapflags_from_ddrawmapflags(unsigned int flags)
+{
+    static const unsigned int handled = DDLOCK_READONLY
+            | DDLOCK_NOSYSLOCK
+            | DDLOCK_NOOVERWRITE
+            | DDLOCK_DISCARDCONTENTS
+            | DDLOCK_DONOTWAIT;
+    unsigned int wined3d_flags;
+
+    wined3d_flags = flags & handled;
+    if (flags & DDLOCK_NODIRTYUPDATE)
+        wined3d_flags |= WINED3D_MAP_NO_DIRTY_UPDATE;
+    flags &= ~(handled | DDLOCK_WAIT | DDLOCK_NODIRTYUPDATE);
+
+    if (flags)
+        FIXME("Unhandled flags %#x.\n", flags);
+
+    return wined3d_flags;
+}
+
 static float colour_to_float(DWORD colour, DWORD mask)
 {
     if (!mask)

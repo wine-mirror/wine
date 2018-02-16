@@ -992,7 +992,8 @@ static HRESULT surface_lock(struct ddraw_surface *surface,
         hr = ddraw_surface_update_frontbuffer(surface, rect, TRUE);
     if (SUCCEEDED(hr))
         hr = wined3d_resource_map(wined3d_texture_get_resource(surface->wined3d_texture),
-                surface->sub_resource_idx, &map_desc, rect ? &box : NULL, flags);
+                surface->sub_resource_idx, &map_desc, rect ? &box : NULL,
+                wined3dmapflags_from_ddrawmapflags(flags));
     if (FAILED(hr))
     {
         wined3d_mutex_unlock();
