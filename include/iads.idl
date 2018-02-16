@@ -18,6 +18,16 @@
 
 import "oaidl.idl";
 
+[
+    helpstring("Active DS Type Library"),
+    uuid(97d25db0-0363-11cf-abc4-02608c9e7553),
+    version(1.0)
+]
+library ActiveDs
+{
+
+importlib("stdole2.tlb");
+
 typedef enum
 {
     ADS_RIGHT_DS_CREATE_CHILD         = 0x00000001,
@@ -777,3 +787,5 @@ interface IDirectorySearch : IUnknown
     HRESULT FreeColumn([in] PADS_SEARCH_COLUMN pSearchColumn);
     HRESULT CloseSearchHandle([in] ADS_SEARCH_HANDLE hSearchResult);
 }
+
+} /* library */
