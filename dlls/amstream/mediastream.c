@@ -1094,9 +1094,18 @@ static HRESULT WINAPI AudioMediaStreamInputPin_GetMediaType(BasePin *base, int i
 {
     AudioMediaStreamInputPin *This = impl_from_AudioMediaStreamInputPin_IPin(&base->IPin_iface);
 
-    FIXME("(%p)->(%d,%p) stub!\n", This, index, media_type);
+    TRACE("(%p)->(%d,%p)\n", This, index, media_type);
 
-    return E_NOTIMPL;
+    /* FIXME: Reset structure as we only fill majortype and minortype for now */
+    ZeroMemory(media_type, sizeof(*media_type));
+
+    if (index)
+        return S_FALSE;
+
+    media_type->majortype = MEDIATYPE_Audio;
+    media_type->subtype = MEDIASUBTYPE_PCM;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioMediaStreamInputPin_Receive(BaseInputPin *base, IMediaSample *sample)
