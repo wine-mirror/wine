@@ -64,7 +64,7 @@ static const IPinVtbl MediaStreamFilter_InputPin_Vtbl =
 typedef struct {
     BaseFilter filter;
     ULONG nb_streams;
-    IMediaStream** streams;
+    IAMMediaStream** streams;
     IPin** pins;
 } IMediaStreamFilterImpl;
 
@@ -89,7 +89,7 @@ static HRESULT WINAPI BasePinImpl_CheckMediaType(BasePin *This, const AM_MEDIA_T
     if (i == filter->nb_streams)
         return S_FALSE;
 
-    if (FAILED(IMediaStream_GetInformation(filter->streams[i], &purpose_id, NULL)))
+    if (FAILED(IAMMediaStream_GetInformation(filter->streams[i], &purpose_id, NULL)))
         return S_FALSE;
 
     TRACE("Checking stream with purpose id %s\n", debugstr_guid(&purpose_id));
@@ -142,7 +142,7 @@ static HRESULT WINAPI BasePinImp_GetMediaType(BasePin *This, int index, AM_MEDIA
     if (i == filter->nb_streams)
         return S_FALSE;
 
-    if (FAILED(IMediaStream_GetInformation(filter->streams[i], &purpose_id, NULL)))
+    if (FAILED(IAMMediaStream_GetInformation(filter->streams[i], &purpose_id, NULL)))
         return S_FALSE;
 
     TRACE("Processing stream with purpose id %s\n", debugstr_guid(&purpose_id));
@@ -246,7 +246,7 @@ static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
         ULONG i;
         for (i = 0; i < This->nb_streams; i++)
         {
-            IMediaStream_Release(This->streams[i]);
+            IAMMediaStream_Release(This->streams[i]);
             IPin_Release(This->pins[i]);
         }
         CoTaskMemFree(This->streams);
@@ -343,7 +343,7 @@ static HRESULT WINAPI MediaStreamFilterImpl_QueryVendorInfo(IMediaStreamFilter *
 static HRESULT WINAPI MediaStreamFilterImpl_AddMediaStream(IMediaStreamFilter* iface, IAMMediaStream *pAMMediaStream)
 {
     IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
-    IMediaStream** streams;
+    IAMMediaStream** streams;
     IPin** pins;
     MediaStreamFilter_InputPin* pin;
     HRESULT hr;
@@ -352,7 +352,7 @@ static HRESULT WINAPI MediaStreamFilterImpl_AddMediaStream(IMediaStreamFilter* i
 
     TRACE("(%p)->(%p)\n", iface, pAMMediaStream);
 
-    streams = CoTaskMemRealloc(This->streams, (This->nb_streams + 1) * sizeof(IMediaStream*));
+    streams = CoTaskMemRealloc(This->streams, (This->nb_streams + 1) * sizeof(IAMMediaStream*));
     if (!streams)
         return E_OUTOFMEMORY;
     This->streams = streams;
@@ -375,7 +375,7 @@ static HRESULT WINAPI MediaStreamFilterImpl_AddMediaStream(IMediaStreamFilter* i
 
     pin = (MediaStreamFilter_InputPin*)This->pins[This->nb_streams];
     pin->pin.pin.pinInfo.pFilter = &This->filter.IBaseFilter_iface;
-    This->streams[This->nb_streams] = (IMediaStream*)pAMMediaStream;
+    This->streams[This->nb_streams] = pAMMediaStream;
     This->nb_streams++;
 
     IAMMediaStream_AddRef(pAMMediaStream);
@@ -393,10 +393,10 @@ static HRESULT WINAPI MediaStreamFilterImpl_GetMediaStream(IMediaStreamFilter* i
 
     for (i = 0; i < This->nb_streams; i++)
     {
-        IMediaStream_GetInformation(This->streams[i], &purpose_id, NULL);
+        IAMMediaStream_GetInformation(This->streams[i], &purpose_id, NULL);
         if (IsEqualIID(&purpose_id, idPurpose))
         {
-            *ppMediaStream = This->streams[i];
+            *ppMediaStream = (IMediaStream *)This->streams[i];
             IMediaStream_AddRef(*ppMediaStream);
             return S_OK;
         }
