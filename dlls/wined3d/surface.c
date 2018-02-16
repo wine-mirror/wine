@@ -350,6 +350,15 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
     context_release(context);
 }
 
+static BOOL is_multisample_location(const struct wined3d_texture *texture, DWORD location)
+{
+    if (location == WINED3D_LOCATION_RB_MULTISAMPLE)
+        return TRUE;
+    if (location != WINED3D_LOCATION_TEXTURE_RGB && location != WINED3D_LOCATION_TEXTURE_SRGB)
+        return FALSE;
+    return texture->target == GL_TEXTURE_2D_MULTISAMPLE || texture->target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
+}
+
 /* Blit between surface locations. Onscreen on different swapchains is not supported.
  * Depth / stencil is not supported. Context activation is done by the caller. */
 static void surface_blt_fbo(const struct wined3d_device *device,
@@ -392,7 +401,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
     }
 
     /* Resolve the source surface first if needed. */
-    if (src_location == WINED3D_LOCATION_RB_MULTISAMPLE
+    if (is_multisample_location(src_texture, src_location)
             && (src_texture->resource.format->id != dst_texture->resource.format->id
                 || abs(src_rect.bottom - src_rect.top) != abs(dst_rect.bottom - dst_rect.top)
                 || abs(src_rect.right - src_rect.left) != abs(dst_rect.right - dst_rect.left)))
