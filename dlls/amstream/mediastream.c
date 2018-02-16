@@ -525,9 +525,41 @@ static HRESULT WINAPI DirectDrawMediaStreamInputPin_GetMediaType(BasePin *base, 
 {
     DirectDrawMediaStreamInputPin *This = impl_from_DirectDrawMediaStreamInputPin_IPin(&base->IPin_iface);
 
-    FIXME("(%p)->(%d,%p) stub!\n", This, index, media_type);
+    TRACE("(%p)->(%d,%p)\n", This, index, media_type);
 
-    return E_NOTIMPL;
+    /* FIXME: Reset structure as we only fill majortype and minortype for now */
+    ZeroMemory(media_type, sizeof(*media_type));
+
+    media_type->majortype = MEDIATYPE_Video;
+
+    switch (index)
+    {
+        case 0:
+            media_type->subtype = MEDIASUBTYPE_RGB1;
+            break;
+        case 1:
+            media_type->subtype = MEDIASUBTYPE_RGB4;
+            break;
+        case 2:
+            media_type->subtype = MEDIASUBTYPE_RGB8;
+            break;
+        case 3:
+            media_type->subtype = MEDIASUBTYPE_RGB565;
+            break;
+        case 4:
+            media_type->subtype = MEDIASUBTYPE_RGB555;
+            break;
+        case 5:
+            media_type->subtype = MEDIASUBTYPE_RGB24;
+            break;
+        case 6:
+            media_type->subtype = MEDIASUBTYPE_RGB32;
+            break;
+        default:
+            return S_FALSE;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DirectDrawMediaStreamInputPin_Receive(BaseInputPin *base, IMediaSample *sample)
