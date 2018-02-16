@@ -72,7 +72,7 @@ static CRITICAL_SECTION wined3d_wndproc_cs = {&wined3d_wndproc_cs_debug, -1, 0, 
  * where appropriate. */
 struct wined3d_settings wined3d_settings =
 {
-    FALSE,          /* No multithreaded CS by default. */
+    TRUE,           /* Multithreaded CS by default. */
     FALSE,          /* explicit_gl_version */
     MAKEDWORD_VERSION(1, 0), /* Default to legacy OpenGL */
     TRUE,           /* Use of GLSL enabled by default */
