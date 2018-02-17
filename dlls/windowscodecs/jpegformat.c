@@ -680,9 +680,15 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
         }
 
         if (This->cinfo.out_color_space == JCS_CMYK && This->cinfo.saw_Adobe_marker)
+        {
+            DWORD *pDwordData = (DWORD*) (This->image_data + stride * first_scanline);
+            DWORD *pDwordDataEnd = (DWORD*) (This->image_data + This->cinfo.output_scanline * stride);
+
             /* Adobe JPEG's have inverted CMYK data. */
-            for (i=0; i<data_size; i++)
-                This->image_data[i] ^= 0xff;
+            while(pDwordData < pDwordDataEnd)
+                *pDwordData++ ^= 0xffffffff;
+        }
+
     }
 
     LeaveCriticalSection(&This->lock);
