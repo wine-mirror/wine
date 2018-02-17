@@ -1094,6 +1094,106 @@ static void test_PropVariantToBoolean(void)
     ok(val == TRUE, "Unexpected value %d\n", val);
 }
 
+static void test_PropVariantToStringWithDefault(void)
+{
+    PROPVARIANT propvar;
+    static WCHAR default_value[] = {'t', 'e', 's', 't', 0};
+    static WCHAR wstr_test2[] =  {'t', 'e', 's', 't', '2', 0};
+    static WCHAR wstr_empty[] = {0};
+    static WCHAR wstr_space[] = {' ', 0};
+    static CHAR str_test2[] =  "test2";
+    static CHAR str_empty[] = "";
+    static CHAR str_space[] = " ";
+    LPCWSTR result;
+
+    propvar.vt = VT_EMPTY;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_NULL;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_BOOL;
+    propvar.u.boolVal = VARIANT_TRUE;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_I4;
+    propvar.u.lVal = 15;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    /* VT_LPWSTR */
+
+    propvar.vt = VT_LPWSTR;
+    propvar.u.pwszVal = NULL;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_LPWSTR;
+    propvar.u.pwszVal = wstr_empty;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == wstr_empty, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_LPWSTR;
+    propvar.u.pwszVal = wstr_space;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == wstr_space, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_LPWSTR;
+    propvar.u.pwszVal = wstr_test2;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == wstr_test2, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    /* VT_LPSTR */
+
+    propvar.vt = VT_LPSTR;
+    propvar.u.pszVal = NULL;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_LPSTR;
+    propvar.u.pszVal = str_empty;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_LPSTR;
+    propvar.u.pszVal = str_space;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_LPSTR;
+    propvar.u.pszVal = str_test2;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    /* VT_BSTR */
+
+    propvar.vt = VT_BSTR;
+    propvar.u.bstrVal = NULL;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(!lstrcmpW(result, wstr_empty), "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    propvar.vt = VT_BSTR;
+    propvar.u.bstrVal = SysAllocString(wstr_empty);
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(!lstrcmpW(result, wstr_empty), "Unexpected value %s\n", wine_dbgstr_w(result));
+    SysFreeString(propvar.u.bstrVal);
+
+    propvar.vt = VT_BSTR;
+    propvar.u.bstrVal = SysAllocString(wstr_space);
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(!lstrcmpW(result, wstr_space), "Unexpected value %s\n", wine_dbgstr_w(result));
+    SysFreeString(propvar.u.bstrVal);
+
+    propvar.vt = VT_BSTR;
+    propvar.u.bstrVal = SysAllocString(wstr_test2);
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(!lstrcmpW(result, wstr_test2), "Unexpected value %s\n", wine_dbgstr_w(result));
+    SysFreeString(propvar.u.bstrVal);
+}
+
 static void test_PropVariantChangeType_LPWSTR(void)
 {
     PROPVARIANT dest, src;
@@ -1143,4 +1243,5 @@ START_TEST(propsys)
     test_intconversions();
     test_PropVariantChangeType_LPWSTR();
     test_PropVariantToBoolean();
+    test_PropVariantToStringWithDefault();
 }
