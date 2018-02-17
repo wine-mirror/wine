@@ -490,17 +490,19 @@ enum assembly_type
 
 struct assembly
 {
-    enum assembly_type       type;
-    struct assembly_identity id;
-    struct file_info         manifest;
-    WCHAR                   *directory;
-    BOOL                     no_inherit;
-    struct dll_redirect     *dlls;
-    unsigned int             num_dlls;
-    unsigned int             allocated_dlls;
-    struct entity_array      entities;
-    COMPATIBILITY_CONTEXT_ELEMENT* compat_contexts;
-    ULONG                    num_compat_contexts;
+    enum assembly_type             type;
+    struct assembly_identity       id;
+    struct file_info               manifest;
+    WCHAR                         *directory;
+    BOOL                           no_inherit;
+    struct dll_redirect           *dlls;
+    unsigned int                   num_dlls;
+    unsigned int                   allocated_dlls;
+    struct entity_array            entities;
+    COMPATIBILITY_CONTEXT_ELEMENT *compat_contexts;
+    ULONG                          num_compat_contexts;
+    ACTCTX_REQUESTED_RUN_LEVEL     run_level;
+    ULONG                          ui_access;
 };
 
 enum context_sections
@@ -629,6 +631,10 @@ static const WCHAR compatibilityNSW[] = {'u','r','n',':','s','c','h','e','m','a'
 static const WCHAR applicationW[] = {'a','p','p','l','i','c','a','t','i','o','n',0};
 static const WCHAR supportedOSW[] = {'s','u','p','p','o','r','t','e','d','O','S',0};
 static const WCHAR IdW[] = {'I','d',0};
+static const WCHAR requestedExecutionLevelW[] = {'r','e','q','u','e','s','t','e','d','E','x','e','c','u','t','i','o','n','L','e','v','e','l',0};
+static const WCHAR requestedPrivilegesW[] = {'r','e','q','u','e','s','t','e','d','P','r','i','v','i','l','e','g','e','s',0};
+static const WCHAR securityW[] = {'s','e','c','u','r','i','t','y',0};
+static const WCHAR trustInfoW[] = {'t','r','u','s','t','I','n','f','o',0};
 
 struct olemisc_entry
 {
@@ -2317,6 +2323,141 @@ static BOOL parse_compatibility_elem(xmlbuf_t* xmlbuf, struct assembly* assembly
     return ret;
 }
 
+static BOOL parse_requested_execution_level_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
+{
+    static const WCHAR levelW[] = {'l','e','v','e','l',0};
+    static const WCHAR asInvokerW[] = {'a','s','I','n','v','o','k','e','r',0};
+    static const WCHAR requireAdministratorW[] = {'r','e','q','u','i','r','e','A','d','m','i','n','i','s','t','r','a','t','o','r',0};
+    static const WCHAR highestAvailableW[] = {'h','i','g','h','e','s','t','A','v','a','i','l','a','b','l','e',0};
+    static const WCHAR uiAccessW[] = {'u','i','A','c','c','e','s','s',0};
+    static const WCHAR falseW[] = {'f','a','l','s','e',0};
+    static const WCHAR trueW[] = {'t','r','u','e',0};
+
+    xmlstr_t attr_name, attr_value, elem;
+    BOOL end = FALSE, ret = TRUE, error;
+
+    /* Multiple requestedExecutionLevel elements are not supported. */
+    if (assembly->run_level != ACTCTX_RUN_LEVEL_UNSPECIFIED)
+        return FALSE;
+
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+    {
+        if (xmlstr_cmp(&attr_name, levelW))
+        {
+            if (xmlstr_cmpi(&attr_value, asInvokerW))
+                assembly->run_level = ACTCTX_RUN_LEVEL_AS_INVOKER;
+            else if (xmlstr_cmpi(&attr_value, highestAvailableW))
+                assembly->run_level = ACTCTX_RUN_LEVEL_HIGHEST_AVAILABLE;
+            else if (xmlstr_cmpi(&attr_value, requireAdministratorW))
+                assembly->run_level = ACTCTX_RUN_LEVEL_REQUIRE_ADMIN;
+            else
+                FIXME("unknown execution level: %s\n", debugstr_xmlstr(&attr_value));
+        }
+        else if (xmlstr_cmp(&attr_name, uiAccessW))
+        {
+            if (xmlstr_cmpi(&attr_value, falseW))
+                assembly->ui_access = FALSE;
+            else if (xmlstr_cmpi(&attr_value, trueW))
+                assembly->ui_access = TRUE;
+            else
+                FIXME("unknown uiAccess value: %s\n", debugstr_xmlstr(&attr_value));
+        }
+        else
+            FIXME("unknown attr %s=%s\n", debugstr_xmlstr(&attr_name), debugstr_xmlstr(&attr_value));
+    }
+
+    if (error) return FALSE;
+    if (end) return TRUE;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp_end(&elem, requestedExecutionLevelW))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else
+        {
+            FIXME("unknown element %s\n", debugstr_xmlstr(&elem));
+            ret = parse_unknown_elem(xmlbuf, &elem);
+        }
+    }
+
+    return ret;
+}
+
+static BOOL parse_requested_privileges_elem(xmlbuf_t* xmlbuf, struct assembly* assembly, struct actctx_loader *acl)
+{
+    xmlstr_t elem;
+    BOOL ret = TRUE;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp_end(&elem, requestedPrivilegesW))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else if (xmlstr_cmp(&elem, requestedExecutionLevelW))
+            ret = parse_requested_execution_level_elem(xmlbuf, assembly, acl);
+        else
+        {
+            WARN("unknown elem %s\n", debugstr_xmlstr(&elem));
+            ret = parse_unknown_elem(xmlbuf, &elem);
+        }
+    }
+
+    return ret;
+}
+
+static BOOL parse_security_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
+{
+    xmlstr_t elem;
+    BOOL ret = TRUE;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp_end(&elem, securityW))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else if (xmlstr_cmp(&elem, requestedPrivilegesW))
+            ret = parse_requested_privileges_elem(xmlbuf, assembly, acl);
+        else
+        {
+            WARN("unknown elem %s\n", debugstr_xmlstr(&elem));
+            ret = parse_unknown_elem(xmlbuf, &elem);
+        }
+    }
+
+    return ret;
+}
+
+static BOOL parse_trust_info_elem(xmlbuf_t *xmlbuf, struct assembly *assembly, struct actctx_loader *acl)
+{
+    xmlstr_t elem;
+    BOOL ret = TRUE;
+
+    while (ret && (ret = next_xml_elem(xmlbuf, &elem)))
+    {
+        if (xmlstr_cmp_end(&elem, trustInfoW))
+        {
+            ret = parse_end_element(xmlbuf);
+            break;
+        }
+        else if (xmlstr_cmp(&elem, securityW))
+            ret = parse_security_elem(xmlbuf, assembly, acl);
+        else
+        {
+            WARN("unknown elem %s\n", debugstr_xmlstr(&elem));
+            ret = parse_unknown_elem(xmlbuf, &elem);
+        }
+    }
+
+    return ret;
+}
+
 static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
                                 struct assembly* assembly,
                                 struct assembly_identity* expected_ai)
@@ -2404,6 +2545,11 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         else if (xml_elem_cmp(&elem, clrSurrogateW, asmv1W))
         {
             ret = parse_clr_surrogate_elem(xmlbuf, assembly, acl);
+        }
+        else if (xml_elem_cmp(&elem, trustInfoW, asmv2W) ||
+                 xml_elem_cmp(&elem, trustInfoW, asmv1W))
+        {
+            ret = parse_trust_info_elem(xmlbuf, assembly, acl);
         }
         else if (xml_elem_cmp(&elem, assemblyIdentityW, asmv1W))
         {
