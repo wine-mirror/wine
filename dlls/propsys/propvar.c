@@ -337,6 +337,24 @@ HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
     return hr;
 }
 
+PCWSTR WINAPI PropVariantToStringWithDefault(REFPROPVARIANT propvarIn, LPCWSTR pszDefault)
+{
+    static const WCHAR str_empty[] = {0};
+    if (propvarIn->vt == VT_BSTR)
+    {
+        if (propvarIn->u.bstrVal == NULL)
+            return str_empty;
+
+        return propvarIn->u.bstrVal;
+    }
+
+    if (propvarIn->vt == VT_LPWSTR && propvarIn->u.pwszVal != NULL)
+        return propvarIn->u.pwszVal;
+
+    return pszDefault;
+}
+
+
 /******************************************************************
  *  PropVariantChangeType   (PROPSYS.@)
  */
