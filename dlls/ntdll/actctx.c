@@ -5271,6 +5271,27 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
         }
         break;
 
+    case RunlevelInformationInActivationContext:
+        {
+            ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION *acrli = buffer;
+            struct assembly *assembly;
+            SIZE_T len;
+
+            if (!(actctx = check_actctx(handle))) return STATUS_INVALID_PARAMETER;
+
+            len = sizeof(*acrli);
+            if (retlen) *retlen = len;
+            if (!buffer || bufsize < len)
+                return STATUS_BUFFER_TOO_SMALL;
+
+            assembly = actctx->assemblies;
+
+            acrli->ulFlags  = 0;
+            acrli->RunLevel = assembly ? assembly->run_level : ACTCTX_RUN_LEVEL_UNSPECIFIED;
+            acrli->UiAccess = assembly ? assembly->ui_access : 0;
+        }
+        break;
+
     default:
         FIXME( "class %u not implemented\n", class );
         return STATUS_NOT_IMPLEMENTED;
