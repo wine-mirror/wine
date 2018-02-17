@@ -1,276 +1,103 @@
-IDL_SRCS = \
+SOURCES = \
+	accctrl.h \
 	access.idl \
+	aclapi.h \
+	aclui.h \
 	activation.idl \
 	activaut.idl \
 	activdbg.idl \
 	activscp.idl \
+	adshlp.h \
+	advpub.h \
+	af_irda.h \
+	amaudio.h \
 	amstream.idl \
 	amvideo.idl \
+	appcompatapi.h \
+	appmgmt.h \
+	appmodel.h \
 	asptlb.idl \
 	asynot.idl \
 	asysta.idl \
+	atlbase.h \
+	atlcom.h \
 	atliface.idl \
+	atlwin.h \
+	audevcod.h \
 	audioclient.idl \
 	audiopolicy.idl \
+	audiosessiontypes.h \
 	austream.idl \
+	authz.h \
+	aviriff.h \
+	avrt.h \
 	axcore.idl \
 	axextend.idl \
+	basetsd.h \
+	basetyps.h \
+	bcrypt.h \
 	bdaiface.idl \
+	bdaiface_enums.h \
+	bdatypes.h \
 	binres.idl \
 	bits.idl \
 	bits1_5.idl \
 	bits2_0.idl \
 	bits2_5.idl \
 	bits3_0.idl \
-	chprst.idl \
-	cmdbas.idl \
-	cmdtxt.idl \
-	cmnquery.idl \
-	colinf.idl \
-	comcat.idl \
-	commoncontrols.idl \
-	comsvcs.idl \
-	control.idl \
-	cor.idl \
-	cordebug.idl \
-	crtrow.idl \
-	ctfutb.idl \
-	ctxtcall.idl \
-	d2d1.idl \
-	d2d1_1.idl \
-	d3d10.idl \
-	d3d10_1.idl \
-	d3d10sdklayers.idl \
-	d3d11.idl \
-	d3d11_1.idl \
-	d3d11_2.idl \
-	d3d11_3.idl \
-	d3d11_4.idl \
-	d3d11sdklayers.idl \
-	d3d12.idl \
-	d3dcommon.idl \
-	d3dx10core.idl \
-	d3dx11core.idl \
-	dbccmd.idl \
-	dbcses.idl \
-	dbdsad.idl \
-	dbinit.idl \
-	dbprop.idl \
-	dbs.idl \
-	dcommon.idl \
-	ddstream.idl \
-	devenum.idl \
-	devicetopology.idl \
-	dhtmled.idl \
-	dimm.idl \
-	dispex.idl \
-	docobj.idl \
-	docobjectservice.idl \
-	downloadmgr.idl \
-	drmexternals.idl \
-	dwrite.idl \
-	dwrite_1.idl \
-	dwrite_2.idl \
-	dwrite_3.idl \
-	dxgi.idl \
-	dxgi1_2.idl \
-	dxgi1_3.idl \
-	dxgi1_4.idl \
-	dxgi1_5.idl \
-	dxgi1_6.idl \
-	dxgicommon.idl \
-	dxgiformat.idl \
-	dxgitype.idl \
-	dxva2api.idl \
-	dyngraph.idl \
-	endpointvolume.idl \
-	errrec.idl \
-	evr.idl \
-	exdisp.idl \
-	fusion.idl \
-	gameux.idl \
-	hlink.idl \
-	hstring.idl \
-	htiface.idl \
-	htiframe.idl \
-	httprequest.idl \
-	iads.idl \
-	icftypes.idl \
-	ieautomation.idl \
-	iextag.idl \
-	iimgctx.idl \
-	imnact.idl \
-	imnxport.idl \
-	indexsrv.idl \
-	inputscope.idl \
-	inseng.idl \
-	inspectable.idl \
-	mediaobj.idl \
-	metahost.idl \
-	mfidl.idl \
-	mfobjects.idl \
-	mfreadwrite.idl \
-	mftransform.idl \
-	mimeinfo.idl \
-	mimeole.idl \
-	mlang.idl \
-	mmc.idl \
-	mmdeviceapi.idl \
-	mmstream.idl \
-	mscoree.idl \
-	msctf.idl \
-	msdadc.idl \
-	msdasc.idl \
-	mshtmhst.idl \
-	mshtml.idl \
-	msident.idl \
-	msinkaut.idl \
-	mstask.idl \
-	msxml.idl \
-	msxml2.idl \
-	msxml6.idl \
-	netcfgx.idl \
-	netcon.idl \
-	netfw.idl \
-	netlistmgr.idl \
-	oaidl.idl \
-	objectarray.idl \
-	objidl.idl \
-	objsafe.idl \
-	ocidl.idl \
-	ocmm.idl \
-	oleacc.idl \
-	oledb.idl \
-	oleidl.idl \
-	opnrst.idl \
-	optary.idl \
-	perhist.idl \
-	propidl.idl \
-	propsys.idl \
-	pstore.idl \
-	qedit.idl \
-	richole.idl \
-	roparameterizediid.idl \
-	row.idl \
-	rowchg.idl \
-	rowpos.idl \
-	rowpsc.idl \
-	rstbas.idl \
-	rstinf.idl \
-	rstloc.idl \
-	rstnot.idl \
-	sapi.idl \
-	sapiddk.idl \
-	sensevts.idl \
-	servprov.idl \
-	sesprp.idl \
-	shdeprecated.idl \
-	shimgdata.idl \
-	shldisp.idl \
-	shobjidl.idl \
-	shtypes.idl \
-	srcrst.idl \
-	stdole2.idl \
-	strmif.idl \
-	structuredquerycondition.idl \
-	taskschd.idl \
-	textstor.idl \
-	tlogstg.idl \
-	tom.idl \
-	transact.idl \
-	txcoord.idl \
-	txdtc.idl \
-	uianimation.idl \
-	uiautomationclient.idl \
-	uiautomationcore.idl \
-	uiribbon.idl \
-	unknwn.idl \
-	urlhist.idl \
-	urlmon.idl \
-	vmr9.idl \
-	vmrender.idl \
-	vss.idl \
-	wbemcli.idl \
-	wbemdisp.idl \
-	wbemprov.idl \
-	wia_lh.idl \
-	wia_xp.idl \
-	wincodec.idl \
-	wincodecsdk.idl \
-	windows.foundation.idl \
-	wine/itss.idl \
-	wine/svcctl.idl \
-	wine/winedxgi.idl \
-	winsxs.idl \
-	wmdrmsdk.idl \
-	wmiutils.idl \
-	wmp.idl \
-	wmsbuffer.idl \
-	wmsdkidl.idl \
-	wpcapi.idl \
-	wsdbase.idl \
-	wsddisco.idl \
-	wsdxml.idl \
-	wtypes.idl \
-	wuapi.idl \
-	xapo.idl \
-	xaudio2.idl \
-	xaudio2fx.idl \
-	xmldom.idl \
-	xmldso.idl \
-	xmllite.idl
-
-HEADER_SRCS = \
-	accctrl.h \
-	aclapi.h \
-	aclui.h \
-	adshlp.h \
-	advpub.h \
-	af_irda.h \
-	amaudio.h \
-	appcompatapi.h \
-	appmgmt.h \
-	appmodel.h \
-	atlbase.h \
-	atlcom.h \
-	atlwin.h \
-	audevcod.h \
-	audiosessiontypes.h \
-	authz.h \
-	aviriff.h \
-	avrt.h \
-	basetsd.h \
-	basetyps.h \
-	bcrypt.h \
-	bdaiface_enums.h \
-	bdatypes.h \
 	bitsmsg.h \
 	bluetoothapis.h \
 	bthsdpdef.h \
 	cderr.h \
 	cfgmgr32.h \
 	cguid.h \
+	chprst.idl \
 	cierror.h \
 	clusapi.h \
+	cmdbas.idl \
+	cmdtxt.idl \
+	cmnquery.idl \
+	colinf.idl \
+	comcat.idl \
 	commctrl.h \
 	commctrl.rh \
 	commdlg.h \
+	commoncontrols.idl \
 	compobj.h \
+	comsvcs.idl \
+	control.idl \
+	cor.idl \
+	cordebug.idl \
 	corerror.h \
 	corhdr.h \
 	cpl.h \
+	crtrow.idl \
 	cryptdlg.h \
 	cryptuiapi.h \
+	ctfutb.idl \
+	ctxtcall.idl \
 	custcntl.h \
 	cvconst.h \
+	d2d1.idl \
+	d2d1_1.idl \
 	d2dbasetypes.h \
 	d2derr.h \
 	d3d.h \
+	d3d10.idl \
+	d3d10_1.idl \
 	d3d10_1shader.h \
 	d3d10effect.h \
 	d3d10misc.h \
+	d3d10sdklayers.idl \
 	d3d10shader.h \
+	d3d11.idl \
+	d3d11_1.idl \
+	d3d11_2.idl \
+	d3d11_3.idl \
+	d3d11_4.idl \
+	d3d11sdklayers.idl \
 	d3d11shader.h \
+	d3d12.idl \
 	d3d8.h \
 	d3d8caps.h \
 	d3d8types.h \
@@ -278,6 +105,7 @@ HEADER_SRCS = \
 	d3d9caps.h \
 	d3d9types.h \
 	d3dcaps.h \
+	d3dcommon.idl \
 	d3dcompiler.h \
 	d3dhal.h \
 	d3drm.h \
@@ -289,10 +117,12 @@ HEADER_SRCS = \
 	d3dvec.inl \
 	d3dx10.h \
 	d3dx10async.h \
+	d3dx10core.idl \
 	d3dx10math.h \
 	d3dx10tex.h \
 	d3dx11.h \
 	d3dx11async.h \
+	d3dx11core.idl \
 	d3dx11tex.h \
 	d3dx9.h \
 	d3dx9anim.h \
@@ -306,10 +136,17 @@ HEADER_SRCS = \
 	d3dx9tex.h \
 	d3dx9xof.h \
 	davclnt.h \
+	dbccmd.idl \
+	dbcses.idl \
+	dbdsad.idl \
 	dbghelp.h \
+	dbinit.idl \
+	dbprop.idl \
+	dbs.idl \
 	dbt.h \
 	dciddi.h \
 	dciman.h \
+	dcommon.idl \
 	dde.h \
 	dde.rh \
 	ddeml.h \
@@ -341,17 +178,23 @@ HEADER_SRCS = \
 	ddraw.h \
 	ddrawgdi.h \
 	ddrawi.h \
+	ddstream.idl \
 	delayloadhandler.h \
+	devenum.idl \
 	devguid.h \
+	devicetopology.idl \
 	devpkey.h \
 	devpropdef.h \
 	dhcpcsdk.h \
 	dhtmldid.h \
+	dhtmled.idl \
 	difxapi.h \
 	digitalv.h \
+	dimm.idl \
 	dinput.h \
 	dinputd.h \
 	dispdib.h \
+	dispex.idl \
 	dlgs.h \
 	dls1.h \
 	dls2.h \
@@ -367,12 +210,16 @@ HEADER_SRCS = \
 	dmusicf.h \
 	dmusici.h \
 	dmusics.h \
+	docobj.idl \
+	docobjectservice.idl \
+	downloadmgr.idl \
 	dpaddr.h \
 	dplay.h \
 	dplay8.h \
 	dplobby.h \
 	dplobby8.h \
 	dpnathlp.h \
+	drmexternals.idl \
 	dsconf.h \
 	dsgetdc.h \
 	dshow.h \
@@ -381,22 +228,43 @@ HEADER_SRCS = \
 	dvdmedia.h \
 	dvoice.h \
 	dwmapi.h \
+	dwrite.idl \
+	dwrite_1.idl \
+	dwrite_2.idl \
+	dwrite_3.idl \
 	dxdiag.h \
 	dxerr8.h \
 	dxerr9.h \
 	dxfile.h \
+	dxgi.idl \
+	dxgi1_2.idl \
+	dxgi1_3.idl \
+	dxgi1_4.idl \
+	dxgi1_5.idl \
+	dxgi1_6.idl \
+	dxgicommon.idl \
+	dxgiformat.idl \
+	dxgitype.idl \
+	dxva2api.idl \
+	dyngraph.idl \
+	endpointvolume.idl \
 	errorrep.h \
 	errors.h \
+	errrec.idl \
 	evcode.h \
 	evntprov.h \
 	evntrace.h \
+	evr.idl \
 	excpt.h \
+	exdisp.idl \
 	exdispid.h \
 	fci.h \
 	fdi.h \
 	fileapi.h \
 	fltdefs.h \
 	fontsub.h \
+	fusion.idl \
+	gameux.idl \
 	gdiplus.h \
 	gdipluscolor.h \
 	gdipluscolormatrix.h \
@@ -414,21 +282,37 @@ HEADER_SRCS = \
 	hidusage.h \
 	highlevelmonitorconfigurationapi.h \
 	hlguids.h \
+	hlink.idl \
+	hstring.idl \
+	htiface.idl \
+	htiframe.idl \
 	htmlhelp.h \
 	http.h \
+	httprequest.idl \
 	httprequestid.h \
 	i_cryptasn1tls.h \
+	iads.idl \
+	icftypes.idl \
 	icm.h \
 	icmpapi.h \
 	idispids.h \
+	ieautomation.idl \
+	iextag.idl \
 	ifdef.h \
 	ifmib.h \
+	iimgctx.idl \
 	imagehlp.h \
 	ime.h \
 	imm.h \
+	imnact.idl \
+	imnxport.idl \
 	in6addr.h \
 	inaddr.h \
+	indexsrv.idl \
 	initguid.h \
+	inputscope.idl \
+	inseng.idl \
+	inspectable.idl \
 	intshcut.h \
 	ipexport.h \
 	iphlpapi.h \
@@ -473,12 +357,24 @@ HEADER_SRCS = \
 	mciavi.h \
 	mcx.h \
 	mediaerr.h \
+	mediaobj.idl \
+	metahost.idl \
 	mfapi.h \
 	mferror.h \
+	mfidl.idl \
+	mfobjects.idl \
+	mfreadwrite.idl \
+	mftransform.idl \
 	midles.h \
+	mimeinfo.idl \
+	mimeole.idl \
 	minmax.h \
+	mlang.idl \
+	mmc.idl \
 	mmddk.h \
+	mmdeviceapi.idl \
 	mmreg.h \
+	mmstream.idl \
 	mmsystem.h \
 	mprapi.h \
 	mprerror.h \
@@ -487,14 +383,23 @@ HEADER_SRCS = \
 	msacmdrv.h \
 	msasn1.h \
 	mscat.h \
+	mscoree.idl \
+	msctf.idl \
+	msdadc.idl \
 	msdaguid.h \
+	msdasc.idl \
 	mshtmcid.h \
 	mshtmdid.h \
+	mshtmhst.idl \
+	mshtml.idl \
 	msi.h \
 	msidefs.h \
+	msident.idl \
+	msinkaut.idl \
 	msiquery.h \
 	mssip.h \
 	msstkppg.h \
+	mstask.idl \
 	mstcpip.h \
 	msvcrt/assert.h \
 	msvcrt/conio.h \
@@ -537,7 +442,10 @@ HEADER_SRCS = \
 	msvcrt/wchar.h \
 	msvcrt/wctype.h \
 	mswsock.h \
+	msxml.idl \
+	msxml2.idl \
 	msxml2did.h \
+	msxml6.idl \
 	msxml6did.h \
 	msxmldid.h \
 	mtxdm.h \
@@ -545,7 +453,11 @@ HEADER_SRCS = \
 	nb30.h \
 	ncrypt.h \
 	ndrtypes.h \
+	netcfgx.idl \
+	netcon.idl \
+	netfw.idl \
 	netioapi.h \
+	netlistmgr.idl \
 	nldef.h \
 	npapi.h \
 	nserror.h \
@@ -561,27 +473,41 @@ HEADER_SRCS = \
 	ntsecapi.h \
 	ntsecpkg.h \
 	ntstatus.h \
+	oaidl.idl \
 	objbase.h \
+	objectarray.idl \
+	objidl.idl \
+	objsafe.idl \
 	objsel.h \
+	ocidl.idl \
+	ocmm.idl \
 	odbcinst.h \
 	ole2.h \
 	ole2ver.h \
+	oleacc.idl \
 	oleauto.h \
 	olectl.h \
+	oledb.idl \
 	oledberr.h \
 	oledlg.h \
+	oleidl.idl \
+	opnrst.idl \
+	optary.idl \
 	patchapi.h \
 	pdh.h \
 	pdhmsg.h \
 	perflib.h \
+	perhist.idl \
 	physicalmonitorenumerationapi.h \
 	pktdef.h \
 	poppack.h \
 	powrprof.h \
 	prntvpt.h \
 	profinfo.h \
+	propidl.idl \
 	propkey.h \
 	propkeydef.h \
+	propsys.idl \
 	propvarutil.h \
 	prsht.h \
 	psapi.h \
@@ -589,6 +515,8 @@ HEADER_SRCS = \
 	pshpack2.h \
 	pshpack4.h \
 	pshpack8.h \
+	pstore.idl \
+	qedit.idl \
 	ras.h \
 	rasdlg.h \
 	raserror.h \
@@ -596,8 +524,15 @@ HEADER_SRCS = \
 	regstr.h \
 	restartmanager.h \
 	richedit.h \
+	richole.idl \
 	rmxfguid.h \
+	rmxftmpl.x \
 	roapi.h \
+	roparameterizediid.idl \
+	row.idl \
+	rowchg.idl \
+	rowpos.idl \
+	rowpsc.idl \
 	rpc.h \
 	rpcasync.h \
 	rpcdce.h \
@@ -606,7 +541,13 @@ HEADER_SRCS = \
 	rpcnterr.h \
 	rpcproxy.h \
 	rpcsal.h \
+	rstbas.idl \
+	rstinf.idl \
+	rstloc.idl \
+	rstnot.idl \
 	rtutils.h \
+	sapi.idl \
+	sapiddk.idl \
 	scarderr.h \
 	schannel.h \
 	schemadef.h \
@@ -615,14 +556,22 @@ HEADER_SRCS = \
 	secext.h \
 	security.h \
 	sensapi.h \
+	sensevts.idl \
+	servprov.idl \
+	sesprp.idl \
 	setupapi.h \
 	sfc.h \
+	shdeprecated.idl \
 	shdispid.h \
 	shellapi.h \
 	shellscalingapi.h \
+	shimgdata.idl \
+	shldisp.idl \
 	shlguid.h \
 	shlobj.h \
 	shlwapi.h \
+	shobjidl.idl \
+	shtypes.idl \
 	sipbase.h \
 	slerror.h \
 	slpublic.h \
@@ -633,26 +582,44 @@ HEADER_SRCS = \
 	sqlext.h \
 	sqltypes.h \
 	sqlucode.h \
+	srcrst.idl \
 	srrestoreptapi.h \
 	sspi.h \
+	stdole2.idl \
 	stgprop.h \
 	sti.h \
 	storage.h \
+	strmif.idl \
 	strsafe.h \
+	structuredquerycondition.idl \
 	svrapi.h \
 	t2embapi.h \
 	tapi.h \
+	taskschd.idl \
 	tchar.h \
 	tcpestats.h \
 	tcpmib.h \
 	textserv.h \
+	textstor.idl \
 	tlhelp32.h \
+	tlogstg.idl \
 	tmschema.h \
+	tom.idl \
 	traffic.h \
+	transact.idl \
 	twain.h \
+	txcoord.idl \
+	txdtc.idl \
 	udpmib.h \
+	uianimation.idl \
 	uiautomation.h \
+	uiautomationclient.idl \
+	uiautomationcore.idl \
 	uiautomationcoreapi.h \
+	uiribbon.idl \
+	unknwn.idl \
+	urlhist.idl \
+	urlmon.idl \
 	userenv.h \
 	usp10.h \
 	uuids.h \
@@ -662,28 +629,42 @@ HEADER_SRCS = \
 	verrsrc.h \
 	vfw.h \
 	vfwmsgs.h \
+	vmr9.idl \
+	vmrender.idl \
+	vss.idl \
 	vsstyle.h \
 	vssym32.h \
 	vswriter.h \
+	wbemcli.idl \
+	wbemdisp.idl \
+	wbemprov.idl \
 	wct.h \
 	webservices.h \
 	werapi.h \
 	wfext.h \
 	wia.h \
+	wia_lh.idl \
+	wia_xp.idl \
 	wiadef.h \
 	wimgapi.h \
 	winbase.h \
+	wincodec.idl \
+	wincodecsdk.idl \
 	wincon.h \
 	wincred.h \
 	wincrypt.h \
 	windef.h \
 	windns.h \
+	windows.foundation.idl \
 	windows.h \
 	windowsx.h \
 	wine/debug.h \
 	wine/exception.h \
+	wine/itss.idl \
 	wine/library.h \
+	wine/svcctl.idl \
 	wine/unicode.h \
+	wine/winedxgi.idl \
 	winerror.h \
 	winevt.h \
 	wingdi.h \
@@ -709,6 +690,7 @@ HEADER_SRCS = \
 	winspool.h \
 	winstring.h \
 	winsvc.h \
+	winsxs.idl \
 	wintab.h \
 	wintabx.h \
 	winternl.h \
@@ -717,31 +699,45 @@ HEADER_SRCS = \
 	winuser.rh \
 	winver.h \
 	wlanapi.h \
+	wmdrmsdk.idl \
 	wmistr.h \
 	wmium.h \
+	wmiutils.idl \
+	wmp.idl \
+	wmsbuffer.idl \
 	wmsdk.h \
+	wmsdkidl.idl \
 	wnaspi32.h \
 	wownt32.h \
+	wpcapi.idl \
 	ws2def.h \
 	ws2ipdef.h \
 	ws2spi.h \
 	ws2tcpip.h \
 	wsdapi.h \
+	wsdbase.idl \
+	wsddisco.idl \
 	wsdtypes.h \
 	wsdutil.h \
+	wsdxml.idl \
 	wsdxmldom.h \
 	wshisotp.h \
 	wsipx.h \
 	wsnwlink.h \
 	wtsapi32.h \
+	wtypes.idl \
+	wuapi.idl \
 	x3daudio.h \
+	xapo.idl \
 	xapofx.h \
+	xaudio2.idl \
+	xaudio2fx.idl \
 	xcmc.h \
 	xinput.h \
 	xmldom.h \
+	xmldom.idl \
 	xmldomdid.h \
+	xmldso.idl \
 	xmldsodid.h \
+	xmllite.idl \
 	zmouse.h
-
-XTEMPLATE_SRCS = \
-	rmxftmpl.x

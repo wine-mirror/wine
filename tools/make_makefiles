@@ -69,6 +69,7 @@ my @source_vars = (
     "OBJC_SRCS",
     "PO_SRCS",
     "RC_SRCS",
+    "SOURCES",
     "SVG_SRCS",
     "XTEMPLATE_SRCS"
 );
@@ -191,13 +192,18 @@ sub replace_makefile_variables($)
         }
         $new .= $_;
     }
-    foreach my $var (@source_vars)
+    # if we are using SOURCES, ignore the other variables
+    unless ($replaced{"SOURCES"})
     {
-        next if defined $replaced{$var};
-        next unless defined ${$make}{"=$var"};
-        my @values = @{${$make}{"=$var"}};
-        next unless @values;
-        $new .= "\n$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
+        foreach my $var (@source_vars)
+        {
+            next if defined $replaced{$var};
+            next if $var eq "SOURCES";
+            next unless defined ${$make}{"=$var"};
+            my @values = @{${$make}{"=$var"}};
+            next unless @values;
+            $new .= "\n$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
+        }
     }
     close OLD_FILE;
     update_file("$file.in", $new) if $old ne $new;
@@ -378,9 +384,6 @@ sub assign_sources_to_makefiles(@)
         if ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
         elsif ($name =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $name; }
         elsif ($name =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $name; }
-        elsif ($name =~ /\.x$/) { push @{${$make}{"=XTEMPLATE_SRCS"}}, $name; }
-        elsif ($name =~ /\.rh$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
-        elsif ($name =~ /\.inl$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
         elsif ($name =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $name; }
         elsif ($name =~ /\.sfd$/)
         {
@@ -393,10 +396,9 @@ sub assign_sources_to_makefiles(@)
             ${${$make}{"=flags"}}{"staticimplib"} = 1 if defined $flags{"implib"};
             push @{${$make}{"=C_SRCS"}}, $name;
         }
-        elsif ($name =~ /\.h$/)
+        elsif ($name =~ /\.h$/ || $name =~ /\.rh$/ || $name =~ /\.inl$/ || $name =~ /\.x$/)
         {
             next if $dir ne "include";
-            push @{${$make}{"=HEADER_SRCS"}}, $name;
             ${${$make}{"=flags"}}{"install-dev"} = 1;
         }
         elsif ($name =~ /\.rc$/)
@@ -429,6 +431,11 @@ sub assign_sources_to_makefiles(@)
         {
             push @{${$make}{"=IN_SRCS"}}, $name;
         }
+        else
+        {
+            next;
+        }
+        push @{${$make}{"=SOURCES"}}, $name;
     }
 
     # preserve shared source files from the parent makefile

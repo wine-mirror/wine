@@ -3589,6 +3589,7 @@ static void load_sources( struct makefile *make )
 {
     static const char *source_vars[] =
     {
+        "SOURCES",
         "C_SRCS",
         "OBJC_SRCS",
         "RC_SRCS",
