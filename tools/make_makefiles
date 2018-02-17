@@ -431,6 +431,10 @@ sub assign_sources_to_makefiles(@)
         {
             push @{${$make}{"=IN_SRCS"}}, $name;
         }
+        elsif ($name =~ /\.spec$/)
+        {
+            next unless defined ${$make}{"TESTDLL"};
+        }
         else
         {
             next;
