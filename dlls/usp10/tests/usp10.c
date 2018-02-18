@@ -1289,11 +1289,12 @@ static int _find_font_for_range(HDC hdc, const CHAR *recommended, BYTE range, co
             if (*hfont)
             {
                 winetest_trace("using font %s\n",lParam.lf.lfFaceName);
-                *origFont = SelectObject(hdc,*hfont);
                 if (fingerprint)
                 {
                     WORD output[10];
                     int i;
+
+                    *origFont = SelectObject(hdc,*hfont);
                     if (GetGlyphIndicesW(hdc, fingerprint->check, 10, output, 0) != GDI_ERROR)
                     {
                         for (i=0; i < 10; i++)
@@ -1307,6 +1308,7 @@ static int _find_font_for_range(HDC hdc, const CHAR *recommended, BYTE range, co
                             }
                         if (i == 10) rc = 1;
                     }
+                    SelectObject(hdc, *origFont);
                 }
                 else rc = 1;
             }
