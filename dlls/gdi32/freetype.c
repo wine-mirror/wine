@@ -7523,6 +7523,9 @@ static BOOL get_bitmap_text_metrics(GdiFont *font)
         TM.tmPitchAndFamily = FT_IS_FIXED_WIDTH(ft_face) ? 0 : TMPF_FIXED_PITCH;
         TM.tmCharSet = font->charset;
     }
+
+    if(font->fake_bold)
+        TM.tmWeight = FW_BOLD;
 #undef TM
 
     return TRUE;
@@ -7552,10 +7555,12 @@ static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
     SCALE_Y(ptm->tmDescent);
     SCALE_Y(ptm->tmInternalLeading);
     SCALE_Y(ptm->tmExternalLeading);
-    SCALE_Y(ptm->tmOverhang);
 
-    if(FT_IS_SCALABLE(font->ft_face) && font->fake_bold)
+    SCALE_X(ptm->tmOverhang);
+    if(font->fake_bold)
     {
+        if(!FT_IS_SCALABLE(font->ft_face))
+            ptm->tmOverhang++;
         ptm->tmAveCharWidth++;
         ptm->tmMaxCharWidth++;
     }
