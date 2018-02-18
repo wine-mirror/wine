@@ -6539,15 +6539,12 @@ static void test_fake_bold_font(void)
            "expected %d, got %d\n", data[i].tm.tmAscent, data[i+1].tm.tmAscent);
         ok(data[i].tm.tmDescent == data[i+1].tm.tmDescent,
            "expected %d, got %d\n", data[i].tm.tmDescent, data[i+1].tm.tmDescent);
-        todo_wine
         ok(data[i+1].tm.tmAveCharWidth - data[i].tm.tmAveCharWidth == diff,
            "expected %d, got %d\n", diff, data[i+1].tm.tmAveCharWidth - data[i].tm.tmAveCharWidth);
-        todo_wine
         ok(data[i+1].tm.tmMaxCharWidth - data[i].tm.tmMaxCharWidth == diff,
            "expected %d, got %d\n", diff, data[i+1].tm.tmMaxCharWidth - data[i].tm.tmMaxCharWidth);
         ok(data[i].tm.tmOverhang == 0,
            "expected 0, got %d\n", data[i].tm.tmOverhang);
-        todo_wine
         ok(data[i+1].tm.tmOverhang == 1,
            "expected 1, got %d\n", data[i+1].tm.tmOverhang);
         ok(data[i].w + 1 == data[i+1].w,
