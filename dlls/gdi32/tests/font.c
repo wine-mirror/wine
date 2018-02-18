@@ -6483,7 +6483,7 @@ static void test_fake_bold_font(void)
         ABC abc;
         INT w;
         GLYPHMETRICS gm;
-    } data[2];
+    } data[4];
     int i;
     DWORD r;
 
@@ -6540,6 +6540,63 @@ static void test_fake_bold_font(void)
        "expected %d, got %d\n", data[0].gm.gmCellIncX + 1, data[1].gm.gmCellIncX);
     ok(data[0].gm.gmCellIncY == data[1].gm.gmCellIncY,
        "expected %d, got %d\n", data[0].gm.gmCellIncY, data[1].gm.gmCellIncY);
+
+    /* Test bitmap font */
+    memset(&data, 0xaa, sizeof(data));
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Courier");
+    lf.lfCharSet = ANSI_CHARSET;
+
+    hdc = GetDC(NULL);
+
+    for (i = 0; i < 4; i++)
+    {
+        HFONT hfont, hfont_old;
+
+        lf.lfWeight = (i % 2) ? FW_BOLD : FW_NORMAL;
+        lf.lfHeight = (i > 1) ? data[0].tm.tmHeight * x2_mat.eM11.value : 0;
+        hfont = CreateFontIndirectA(&lf);
+        hfont_old = SelectObject(hdc, hfont);
+
+        ret = GetTextMetricsA(hdc, &data[i].tm);
+        ok(ret, "got %d\n", ret);
+        ret = pGetCharWidth32A(hdc, 0x76, 0x76, &data[i].w);
+        ok(ret, "got %d\n", ret);
+
+        SelectObject(hdc, hfont_old);
+        DeleteObject(hfont);
+    }
+    ReleaseDC(NULL, hdc);
+
+    /* compare results (bitmap) */
+    for (i = 0; i < 4; i+=2)
+    {
+        int diff = (i > 1) ? x2_mat.eM11.value : 1;
+        if (data[i].tm.tmPitchAndFamily & TMPF_TRUETYPE)
+        {
+            skip("TrueType font is selected (expected a bitmap one)\n");
+            continue;
+        }
+        ok(data[i].tm.tmHeight == data[i+1].tm.tmHeight,
+           "expected %d, got %d\n", data[i].tm.tmHeight, data[i+1].tm.tmHeight);
+        ok(data[i].tm.tmAscent == data[i+1].tm.tmAscent,
+           "expected %d, got %d\n", data[i].tm.tmAscent, data[i+1].tm.tmAscent);
+        ok(data[i].tm.tmDescent == data[i+1].tm.tmDescent,
+           "expected %d, got %d\n", data[i].tm.tmDescent, data[i+1].tm.tmDescent);
+        todo_wine
+        ok(data[i+1].tm.tmAveCharWidth - data[i].tm.tmAveCharWidth == diff,
+           "expected %d, got %d\n", diff, data[i+1].tm.tmAveCharWidth - data[i].tm.tmAveCharWidth);
+        todo_wine
+        ok(data[i+1].tm.tmMaxCharWidth - data[i].tm.tmMaxCharWidth == diff,
+           "expected %d, got %d\n", diff, data[i+1].tm.tmMaxCharWidth - data[i].tm.tmMaxCharWidth);
+        ok(data[i].tm.tmOverhang == 0,
+           "expected 0, got %d\n", data[i].tm.tmOverhang);
+        todo_wine
+        ok(data[i+1].tm.tmOverhang == 1,
+           "expected 1, got %d\n", data[i+1].tm.tmOverhang);
+        ok(data[i].w + 1 == data[i+1].w,
+           "expected %d, got %d\n", data[i].w + 1, data[i+1].w);
+    }
 }
 
 static void test_bitmap_font_glyph_index(void)
