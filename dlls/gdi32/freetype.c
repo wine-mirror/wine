@@ -7554,6 +7554,11 @@ static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
     SCALE_Y(ptm->tmExternalLeading);
     SCALE_Y(ptm->tmOverhang);
 
+    if(FT_IS_SCALABLE(font->ft_face) && font->fake_bold)
+    {
+        ptm->tmAveCharWidth++;
+        ptm->tmMaxCharWidth++;
+    }
     SCALE_X(ptm->tmAveCharWidth);
     SCALE_X(ptm->tmMaxCharWidth);
 
@@ -7778,11 +7783,8 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     }
     TM.tmMaxCharWidth = SCALE_X(ft_face->bbox.xMax - ft_face->bbox.xMin);
     TM.tmWeight = FW_REGULAR;
-    if (font->fake_bold) {
-        TM.tmAveCharWidth++;
-        TM.tmMaxCharWidth++;
+    if (font->fake_bold)
         TM.tmWeight = FW_BOLD;
-    }
     else
     {
         if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)
