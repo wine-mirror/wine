@@ -4343,23 +4343,34 @@ static void test_desktop_IPersist(void)
     IShellFolder_Release(desktop);
 }
 
+static void test_contextmenu_qi(IContextMenu *menu, BOOL todo)
+{
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = IContextMenu_QueryInterface(menu, &IID_IShellExtInit, (void **)&unk);
+todo_wine_if(todo)
+    ok(hr == S_OK, "Failed to get IShellExtInit, hr %#x.\n", hr);
+if (hr == S_OK)
+    IUnknown_Release(unk);
+
+    hr = IContextMenu_QueryInterface(menu, &IID_IObjectWithSite, (void **)&unk);
+todo_wine_if(todo)
+    ok(hr == S_OK, "Failed to get IShellExtInit, hr %#x.\n", hr);
+if (hr == S_OK)
+    IUnknown_Release(unk);
+}
+
 static void test_contextmenu(IContextMenu *menu, BOOL background)
 {
     HMENU hmenu = CreatePopupMenu();
     const int id_upper_limit = 32767;
     const int baseItem = 0x40;
     INT max_id, max_id_check;
-    IUnknown *unk;
     UINT count, i;
     HRESULT hr;
 
-    hr = IContextMenu_QueryInterface(menu, &IID_IShellExtInit, (void **)&unk);
-    ok(hr == S_OK, "Failed to get IShellExtInit, hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IContextMenu_QueryInterface(menu, &IID_IObjectWithSite, (void **)&unk);
-    ok(hr == S_OK, "Failed to get IShellExtInit, hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    test_contextmenu_qi(menu, FALSE);
 
     hr = IContextMenu_QueryContextMenu(menu, hmenu, 0, baseItem, id_upper_limit, CMF_NORMAL);
     ok(SUCCEEDED(hr), "Failed to query the menu, hr %#x.\n", hr);
@@ -5011,7 +5022,6 @@ static void test_SHCreateDefaultContextMenu(void)
         IPersistFolder2_Release(persist);
         if(SUCCEEDED(hr))
         {
-
             cminfo.hwnd=NULL;
             cminfo.pcmcb=NULL;
             cminfo.psf=folder;
@@ -5021,13 +5031,18 @@ static void test_SHCreateDefaultContextMenu(void)
             cminfo.aKeys=NULL;
             cminfo.cKeys=0;
             cminfo.punkAssociationInfo=NULL;
+
             hr = pSHCreateDefaultContextMenu(&cminfo,&IID_IContextMenu,(void**)&cmenu);
             ok(hr==S_OK,"Got 0x%08x\n", hr);
+            test_contextmenu_qi(cmenu, TRUE);
             IContextMenu_Release(cmenu);
+
             cminfo.pidlFolder=pidlFolder;
             hr = pSHCreateDefaultContextMenu(&cminfo,&IID_IContextMenu,(void**)&cmenu);
             ok(hr==S_OK,"Got 0x%08x\n", hr);
+            test_contextmenu_qi(cmenu, TRUE);
             IContextMenu_Release(cmenu);
+
             status = RegOpenKeyExA(HKEY_CLASSES_ROOT,"*",0,KEY_READ,keys);
             if(status==ERROR_SUCCESS){
                 for(i=1;i<16;i++)
