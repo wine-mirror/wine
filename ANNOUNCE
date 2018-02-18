@@ -1,14 +1,12 @@
-The Wine maintenance release 2.0.4 is now available.
+The Wine maintenance release 2.0.5 is now available.
 
 What's new in this release (see below for details):
   - Various bug fixes
-  - Updates to the National Language Support files
-  - Documentation updates
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/2.0/wine-2.0.4.tar.xz
-  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0.4.tar.xz
+  https://dl.winehq.org/wine/source/2.0/wine-2.0.5.tar.xz
+  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0.5.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -24,208 +22,187 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 2.0.4 (total 31):
+Bugs fixed in 2.0.5 (total 50):
 
-   7369  eISLP -help doesn't display, 'text controller' error message
-  14530  EM_PASTESPECIAL unimplemented in richedit
-  26046  comctl32/monthcal tests show some invalid reads under valgrind
-  28741  Odd coordinate in hit test causes uninitialized value references in MONTHCAL_CalculateDayOfWeek()?
-  37160  If D3D_DISABLE_9EX is defined, d3d9.h can't be compiled
-  37321  foobar2000 'Scheduler' plugin crashes on unimplemented function shell32.dll.ShellExec_RunDLLW
-  40025  Winrar installer fails to start
-  42256  PhotoFiltre 6 and 7 don't erase the mouse selection when dragging it
-  42715  Cxbx (Xbox emulator) doesn`t start (wine: Invalid address)
-  43044  League of Legends needs function msvcp140.dll.?__ExceptionPtrAssign@@YAXPAXPBX@Z
-  43046  Multiple apps need api-ms-win-crt-stdio-l1-1-0.dll.__stdio_common_vfprintf_s (Civilization VI, Mafia 3, SketchBook)
-  43163  Mixcraft 8 crashes when adding a video track ('IAMTimelineGroup', '{9eed4f00-b8a6-11d2-8023-00c0df10d434}' not implemented, 'qedit.dll')
-  43290  MyLifeOrganized crashes when mousing over tabs
-  43293  strange behavior- Eudora scrambles email addresses
-  43324  Beamng.drive requires msvcr120.dll.vsscanf
-  43453  Magic Online  (Magic The Gathering: Online) Crashes due to race condition in secur32
-  43475  XM6 TypeG crashes on startup.
-  43503  FUJITSU Software ATLAS: unimplemented function msvcr80.dll._ismbcl0 called in 32-bit code
-  43527  Magic Online  (Magic The Gathering: Online) Crashes due to LOCALE_SNAN returning empty string
-  43536  WIC can't encode to GUID_WICPixelFormat32bppPBGRA PNG
-  43603  clipboard PIXMAP regression after upgrading from 1.8.x to 2.x
-  43658  Text in Deletion Confirmation MsgBox has wrong background colour
-  43668  Terris Universal Remote UFB 234 - update database does not work
-  43707  [GdiPlus] HatchStyle is incorrectly named in Wine. Should be GpHatchStyle
-  43714  ImageMagick crashes with msvcr120.dll._vfprintf_l
-  43770  Fidibo installer crashes very early in win7 mode
-  43774  Chromium-based browser engine (CEFv3) used by several games randomly crashes on shutdown (World of Warships 0.6.x)
-  43779  In ole32/storage32.c , miss check for the result of HeapAlloc
-  43877  "Cannot allocate DOS memory" error with 16-bit Windows applications
-  43912  wine-2.0.3/programs/wineboot/wineboot.c:684]: (style) Suspicious condition
-  44085  winecfg: Use more secure HTTPS URL in about
+  13548  Wine's setupapi does not know how to recursively delete registry keys
+  14937  Astroplanner 1.6.1 crashes when closing "preferences" window (TOOLTIPS_SubclassProc must be unsubclassed during WM_NCDESTROY)
+  21849  Sonic & Knuckles Collection: arrow buttons are very narrow
+  22682  Multiple games need function d3dx9_36.dll.D3DXGetShaderInputSemantics (Far Cry 2/3, Avatar, Faery: Legends of Avalon, Civilization 4, Deathspank, Of Orcs and Men)
+  27106  IMSSA EuroDEEM (VB6 app) fails on startup, reporting "Type MisMatch" error (VARIANT_Coerce: treat VT_NULL like VT_EMPTY when converting to VT_BSTR)
+  29871  drawing in photoshop cs5 is almost impossible
+  29986  IE6 and IE4 have greenish toolbar icons
+  32202  ActiveX install attempts to run wrong inf section
+  33318  3DMark2001 SE: upgrading to Wine 1.5.27 reduces performance score by 20%
+  33722  Stereo IMA ADPCM encoding in WINE produces loud static instead of sound
+  36441  joy.cpl crashes when PS4 Gamepad connected via Bluetooth
+  36517  SlovoEB 2.1 (.NET 4.0 app) crashes on startup (unsupported WICPixelFormat32bppGrayFloat)
+  37336  U-blox U-Center 8.11 crashes when importing or exporting config file
+  38334  SpinTires crashes with unimplemented function d3dx9_36.dll.D3DXFrameFind
+  40832  MultiSpec 2.8.2016 32-Bit: Installs fine but crashes while opening any images
+  40866  DigitalMicrograph: crashes when a new script is added to the menu
+  40963  Upwards, lonely robot Demo crashes with Too many buffers queued
+  41209  The Magic School Bus Explores the Solar System: Error message asking for the game to be reinstalled
+  41220  Provide fallback implementation of strnlen for OS versions that don't have it in their Libc (Leopard, Snow Leopard, et al)
+  42307  Temple+: needs knownfolder_GetRedirectionCapabilities
+  42414  The Witcher 3 intro videos don't play
+  42570  dinput/tests/mouse intermittently fails in Acquire() and GetDeviceData()
+  43000  wine can't be compiled by gcc-2.95.4 (dsound/dsound_convert.c, C99 ~ lrintf)
+  43004  qedit/tests/mediadet.c intermittent crash
+  43068  Armed and Dangerous: severe performance degradation
+  43217  Wine cannot execute position-independent (PIE) host executables via CreateProcess()
+  43316  Process Hacker 2.x needs ADVAPI32.dll.LsaLookupPrivilegeName
+  43483  Medusa Demo crashes with unimplemented function d3dx10_43.dll.D3DX10PreprocessShaderFromMemory
+  43512  Hellblade: Senua's Sacrifice - the player character is severely distorted
+  43800  Winamp's associations setup window has broken check boxes appearance
+  43810  Playkey needs api-ms-win-crt-stdio-l1-1-0.dll.__stdio_common_vsprintf_p
+  43884  MSVC LINK.EXE version 14.11.25547.0 crashes due to unimplemented function _memicmp_l
+  43904  HeTeMuLu Creator: Can't input some kanji characters properly.
+  43905  pCon Planner crashes using builtin msvcp: access violation reading location 0x60 at basic_ios_char_widen in module msvcp140.
+  43914  64-bit RPCS3 emulator doesn't start, loader reports 'Invalid address' (non-relocatable PE wants to use lowest possible image base on NT: 0x10000 / 64 KB)
+  43939  comctl32 cannot load its assembly on arm
+  43940  Runtime error: Invalid floating point operation in Dys-Vocal2 installer
+  43956  GDI+ is unable to load some truetype fonts
+  44064  Sims 4: unimplemented function msvcr120.dll._get_purecall_handler
+  44075  Unable to set subsystem version with VC++ 2013 link.exe
+  44130  Possible access to unintended variable in "dlls/comctl32/imagelist.c" line 299
+  44148  DX Library: Multiple PlaySoundMem() calls don't work when using XAudio2
+  44153  ShellExecute crash when opening explorer.exe
+  44168  Wizardry 8 hangs when starting a new game or loading a saved game
+  44170  MSMoney data File password no more recognized
+  44175  stack corruption and crash with OpenSSH port
+  44180  TMIDI Player: Crash on startup with a stack overflow
+  44194  Serious Sam Classic (First and Second Encounter) shifts the view and makes the game unplayable
+  44196  Autocad 2002 - Scrambled numbers in output
+  44349  winedbg: stepping is broken using GDB proxy
 
 ----------------------------------------------------------------
 
-Changes since 2.0.3:
+Changes since 2.0.4:
 
-Akihiro Sagawa (5):
-      msvcrt/tests: Add tests for mbstowcs and wcstombs with empty strings.
-      msvcrt: Fix mbstowcs with empty strings.
-      readme: Update Japanese translation.
-      explorer: Use neutral language for the version resource.
-      regsvr32: Use neutral language for the version resource.
+Akihiro Sagawa (3):
+      imm32/tests: Add a skip message when composition string isn't available.
+      imm32/tests: Add more composition string tests.
+      winex11: Keep the result string in the IME UI window procedure.
 
 Alex Henrie (5):
-      msvcrt: Note that __stdio_common functions are for ucrtbase.
-      ucrtbase: Add __stdio_common_vfprintf_s.
-      shell32: Implement ShellExec_RunDLL.
-      include: Add D3D_DISABLE_9EX checks to d3d9.h.
-      user32: Implement IDI_SHIELD.
+      ucrtbase: Add __stdio_common_vsprintf_p.
+      advapi32: Add stub for LsaLookupPrivilegeName.
+      libport: Move rint fallback implementations from msvcrt to libport.
+      mmsystem.dll16: Pass through MCI_LIST, MCI_SETAUDIO, and MCI_SETVIDEO.
+      libport: Fix typo in rintf.
 
-Alexandre Julliard (10):
-      winex11: If importing an X11 clipboard format fails, try other candidate formats for the target.
-      ntdll: Support loading binaries that start inside the DOS area.
-      ntdll: Ignore the preload start address if it is zero.
-      README: Remove references to removed Wiki pages.
-      readme: Patches should now be sent to wine-devel.
-      configure: Replace AC_HEADER_MAJOR macro to handle glibc 2.25 sys/types.h breakage.
-      wineconsole: Avoid some fatal errors.
-      wineconsole: Remove duplicate line feeds.
-      wordpad: New high resolution cursor generated from SVG.
-      explorer: Don't forward the system tray to the display driver in desktop mode.
+Alexandre Julliard (9):
+      kernel32: Also set the preloader range for 64-bit binaries.
+      setupapi: Use correct architecture for fake dlls on ARM and ARM64.
+      comctl32/imagelist: Use the correct allocation size for the image mask.
+      explorer: Fix parsing command line that contains spaces.
+      libport: Add a replacement implementation for strnlen.
+      kernel32: Properly detect ELF binaries that are position independent executables.
+      ntdll: Fix source/destination confusion in vsscanf.
+      ddraw: Validate the surface descriptor size in GetDisplayMode.
+      configure: Check the positive form of the warning options.
 
-Alistair Leslie-Hughes (3):
-      ole32: Add pointer check.
-      qedit/tests: Add test for the IAMTimelineGroup interface.
-      qedit: Support IAMTimelineGroup interface in IAMTimelineObj.
+Alistair Leslie-Hughes (4):
+      oleaut32: Remove dead code.
+      oleaut32: Use VariantChangeTypeEx to convert to VT_BOOL.
+      oleaut32/tests: Add more VarCat tests.
+      oleaut32: Improve support for IDispatch in VarCat.
 
 Andrew Eikum (2):
-      kernel32: Use different default sublangs for Spanish and Chinese.
-      explorer: Don't leak PIDL.
+      xaudio2: Ignore buffers returned from OpenAL after Stop.
+      xaudio2: Account for abandoned buffer bytes.
 
-Andrey Semakin (4):
-      winemine: Mine random placing fix.
-      winemine: Added Shift+LClick hotkey to uncover multiple cells.
-      winemine: Add WM_RBUTTONUP to cases of TestMines().
-      winemine: Save board without need to correctly finish the app.
+Andrey Gusev (1):
+      d3dx10: Add D3DX10PreprocessShaderFromMemory stub.
 
-André Hentschel (1):
-      ntdll: Bump Win 10 version to 15063.
+Bob Ziuchkovski (1):
+      dinput: Ignore vendor-specific usage pages for joystick elements on Mac.
 
-Anton Romanov (3):
-      windowscodecs: PNGEncoder: Return 32bppRGBA pixel format by default.
-      secur32: Fix race between schan_(Encrypt|Decrypt)Message.
-      secur32: Protect SSLRead/Write with cs on OSX.
+Daniel Lehman (1):
+      wininet: Use case-insensitive comparison for server name.
 
-Austin English (30):
-      readme: Document that wine can be run from the build directory.
-      readme: Clarify the wording a bit.
-      announce: Move WineHQ URLs to https.
-      readme: Move WineHQ URLs to https.
-      configure: Move WineHQ URLs to https.
-      loader: Move WineHQ URLs to https.
-      server: Move WineHQ URLs to https.
-      widl: Move WineHQ URLs to https.
-      winegcc: Move WineHQ URLs to https.
-      wrc: Move WineHQ URLs to https.
-      winemaker: Move WineHQ URLs to https.
-      wmc: Move WineHQ URLs to https.
-      winebuild: Move WineHQ URLs to https.
-      winedump: Move WineHQ URLs to https.
-      c2man.pl: Move WineHQ URLs to https.
-      msiexec: Move WineHQ URLs to https.
-      notepad: Move WineHQ URLs to https.
-      regedit: Move WineHQ URLs to https.
-      winemine: Move WineHQ URLs to https.
-      winepath: Move WineHQ URLs to https.
-      wineconsole: Move WineHQ URLs to https.
-      regsvr32: Move WineHQ URLs to https.
-      wineboot: Move WineHQ URLs to https.
-      winecfg: Move WineHQ URLs to https.
-      winefile: Move WineHQ URLs to https.
-      winedbg: Move WineHQ URLs to https.
-      iexplore: Move WineHQ URLs to https.
-      appwiz.cpl: Move WineHQ URLs to https.
-      maintainers: Move WineHQ URLs to https.
-      loader/wine.pl.UTF-8.man.in: Move WineHQ URL to https.
+Fabian Maurer (2):
+      gdiplus: In GdipPrivateAddMemoryFont allow loading fonts with long names.
+      msvcrt: Don't crash if _vsnwprintf gets NULL as format string and add test.
 
-Bas Weelinck (1):
-      start: Ignore multiple quoted arguments as title.
+Gerald Pfeifer (1):
+      configure: Use the -Wno-packed-not-aligned compiler option if available.
 
-Daniel Lehman (2):
-      msvcrt: Add __ExceptionPtrAssign.
-      server: Fix copy & paste for number of subkeys.
+Henri Verbeet (3):
+      wined3d: Rename WINED3D_BUFFER_DOUBLEBUFFER to WINED3D_BUFFER_PIN_SYSMEM.
+      wined3d: Try to avoid stalling on dynamic buffer maps.
+      wined3d: Ignore WINED3D_MAP_DISCARD when used together with WINED3D_MAP_NOOVERWRITE.
 
-Dmitry Timoshkov (3):
-      user32/tests: Test DialogBoxParam using a dialog template with invalid control class.
-      user32: DialogBoxParam should return -1 when dialog control creation fails.
-      cmd: '$E' in the prompt should be interpreted as an escape code (0x1b).
+Hugh McMaster (1):
+      setupapi: Recursively remove any subkeys before calling NtDeleteKey().
 
-Fabian Maurer (5):
-      shell32: Draw text on message boxes without background.
-      gdiplus: Avoid division by zero in SOFTWARE_GdipDrawThinPath.
-      wineboot: In ProcessRunKeys use correct parentheses in condition.
-      ole32: Don't redefine htole32/htole16.
-      winecfg: Remove processorArchitecture from manifest.
+Huw D. M. Davies (2):
+      comctl32: Correctly set the colour table for ILC_COLOR4 and ILC_COLOR8 imagelists.
+      comctl32: Don't create a masked imagelist if CLR_NONE is specified.
 
-Gijs Vermeulen (1):
-      msvcrt: Add _vfprintf_l.
+Joel Holdsworth (1):
+      urlmon: Support [Add.Code] sections in ActiveX INF files.
 
-Henri Verbeet (1):
-      wordpad: Fall back to the default position if the saved position is off-screen.
+Józef Kucia (1):
+      wined3d: Use correct data type for immediate constants.
 
-Hugh Bellamy (1):
-      gdiplus: Define GpHatchStyle.
+Kimmo Myllyvirta (1):
+      xaudio2: Add support for float formats with more than 2 channels.
 
-Huw D. M. Davies (6):
-      gdi32: Add a helper to fill rectangles with a given pixel.
-      gdi32: Respect the rop mode in SetPixel.
-      ole32: In the non-aggregated case a request for IUnknown actually returns IOleCache2.
-      riched20: Add support for EM_PASTESPECIAL.
-      winefile: Initialize length before calling GetWindowPlacement().
-      winedbg: Return after raising an exception.
+Lucian Poston (1):
+      shell32: Stub GetRedirectionCapabilities with S_OK.
 
-Jacek Caban (1):
-      services: Call RpcMgmtWaitServerListen in RPC_Stop.
+Martin Payne (3):
+      kernel32: Don't report valid non-Win16 NE executables (e.g. OS/2) as broken.
+      krnl386.exe16: Shared libraries have a ".exe" rather than ".dll" extension on Windows < 3.0.
+      user.exe16: Implemented OldExitWindows() user.exe16 function.
 
-Lauri Kenttä (5):
-      readme: Fix word order.
-      readme: Update Finnish translation.
-      readme: Update Finnish translation.
-      readme: Use UTF-8 consistently in all translations.
-      readme: Move WineHQ URLs to https in translations.
+Martin Storsjo (1):
+      configure: Check for -Wno-pragma-pack.
 
-Li Keqing (1):
-      wined3d: Add Intel HD Graphics 5000 to the GPU list.
+Matteo Bruni (1):
+      d3dx9: Implement D3DXGetShader{Input|Output}Semantics().
 
-Nikolay Sivov (15):
-      msvcrt: Added _ismbcl0().
-      kernel32/nls: Added genitive month names for Polish.
-      kernel32/nls: Added genitive month names for Belarusian.
-      kernel32/nls: Added genitive month names for Armenian.
-      kernel32/nls: Added genitive month names for Croatian.
-      kernel32/nls: Added genitive month names for Czech.
-      kernel32/nls: Added Nepali locale data.
-      kernel32/nls: Added Bangla (India) locale data.
-      kernel32/nls: Added LOCALE_SNAN entries.
-      comctl32/monthcal: Make sure set today date is valid before using it (Valgrind).
-      comctl32/monthcal: Initialize day field before setting final hit test result (Valgrind).
-      msxml3/httpreq: Support HEAD request.
-      msvcr120: Added vsscanf() and vswscanf().
-      readme: Update Russian translation.
-      msi: Avoid uninitialized pointer access on error path (Coverity).
+Michael Stefaniuc (2):
+      comctl32/tests: Add an ImageList_Copy() test.
+      make_announce: Don't hardcode the 'stable' branch.
 
-Piotr Caban (5):
-      msvcrt: Fix strcpy implementation so it works on overlapping buffers.
-      msvcr120: Add wctype implementation.
-      wine.inf: Add Windows Messaging Subsystem MAPI registry key.
-      vbscript: Don't leak IEnumVARIANT in interp_enumnext.
-      msvcr120: Fix exception object refcounting in __ExceptionPtrAssign.
+Nikolay Sivov (9):
+      advapi32: Partially implement LsaLookupPrivilegeName().
+      d3dx9: Implement D3DXFrameFind().
+      msvcrt: Implement _memicmp_l().
+      msvcrt: Added _get_purecall_handler().
+      user32/tests: Added some tests for WM_GETTEXTLENGTH/WM_GETTEXT after EM_GETHANDLE was used.
+      user32/edit: Allow buffer access after EM_GETHANDLE.
+      comctl32/tooltips: Remove window subclass right before window is destroyed.
+      comctl32/updown: Reset control width conditionally on UDM_SETBUDDY with NULL buddy handle.
+      mshtml: Avoid potential moniker instance leak.
 
-Stefan Dösinger (2):
-      ntdll: Do not queue a completion status if pipe ops fail synchronously.
-      d3dx9/tests: Use float bit patterns in test_D3DXFloat_Array.
+Piotr Caban (4):
+      msvcrt: Fix buffer size checks in swscanf_s.
+      msvcrt: Call cdecl functions with empty FPU stack in _CI* functions.
+      msvcrt: Correctly set rounding mode in _ftol implementation.
+      msvcp90: Use correct locale in basic_ios::narrow and basic_ios::widen.
 
-Vincent Povirk (2):
-      loader/wine.inf: Put 32-bit .ds fakedlls in windows/twain_32.
-      wine.inf: Put 64-bit .ds fakedlls in windows/twain_64.
+Sebastian Lackner (2):
+      user32: Globally invalidate key state on changes in other threads.
+      configure: Support for recent versions of OSMesa.
 
-Zebediah Figura (1):
-      d3dcompiler: Fix a buffer size computation.
+Thomas Faber (1):
+      ntdll: Handle RtlReAllocateHeap failure in com_class_add_progid (Coverity).
+
+Vincent Povirk (1):
+      windowscodecs: Fix 32bppGrayFloat to 8bppGray conversion.
+
+Zebediah Figura (5):
+      dinput/tests: Don't pump messages in test_acquire().
+      winegstreamer: Hold a reference to the filter in push_data().
+      compobj.dll16: Implement CoGetClassObject16().
+      imaadp32.acm: Fix nibble ordering.
+      winedbg/gdbproxy: Replace memory read over a breakpoint with the real value.
+
+Zhiyi Zhang (1):
+      winecfg: Fix a crash when inputting non-ASCII dll override name.
 
 --
 Michael Stefaniuc
