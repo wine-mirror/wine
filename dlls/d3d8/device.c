@@ -143,15 +143,20 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format)
 
 unsigned int wined3dmapflags_from_d3dmapflags(unsigned int flags)
 {
-    static const unsigned int handled = D3DLOCK_READONLY
-            | D3DLOCK_NOSYSLOCK
+    static const unsigned int handled = D3DLOCK_NOSYSLOCK
             | D3DLOCK_NOOVERWRITE
             | D3DLOCK_DISCARD
             | D3DLOCK_NO_DIRTY_UPDATE;
     unsigned int wined3d_flags;
 
     wined3d_flags = flags & handled;
-    flags &= ~handled;
+    if (!(flags & (D3DLOCK_NOOVERWRITE | D3DLOCK_DISCARD)))
+        wined3d_flags |= WINED3D_MAP_READ;
+    if (!(flags & D3DLOCK_READONLY))
+        wined3d_flags |= WINED3D_MAP_WRITE;
+    if (!(wined3d_flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE)))
+        wined3d_flags |= WINED3D_MAP_READ | WINED3D_MAP_WRITE;
+    flags &= ~(handled | D3DLOCK_READONLY);
 
     if (flags)
         FIXME("Unhandled flags %#x.\n", flags);
@@ -2225,7 +2230,7 @@ static HRESULT WINAPI d3d8_device_DrawPrimitiveUP(IDirect3DDevice8 *iface,
     wined3d_box.right = vb_pos + size;
     vb = wined3d_buffer_get_resource(device->vertex_buffer);
     if (FAILED(wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
         goto done;
     memcpy(wined3d_map_desc.data, data, size);
     wined3d_resource_unmap(vb, 0);
@@ -2326,7 +2331,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
     wined3d_box.right = vb_pos + vtx_size;
     vb = wined3d_buffer_get_resource(device->vertex_buffer);
     if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
         goto done;
     memcpy(wined3d_map_desc.data, (char *)vertex_data + min_vertex_idx * vertex_stride, vtx_size);
     wined3d_resource_unmap(vb, 0);
@@ -2348,7 +2353,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
     wined3d_box.right = ib_pos + idx_size;
     ib = wined3d_buffer_get_resource(device->index_buffer);
     if (FAILED(hr = wined3d_resource_map(ib, 0, &wined3d_map_desc, &wined3d_box,
-            ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
         goto done;
     memcpy(wined3d_map_desc.data, index_data, idx_size);
     wined3d_resource_unmap(ib, 0);

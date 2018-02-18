@@ -3078,7 +3078,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     vertex_size = get_flexible_vertex_size(DestFVF);
     box.left = dwDestIndex * vertex_size;
     box.right = box.left + dwCount * vertex_size;
-    if (FAILED(hr = wined3d_resource_map(&dest->resource, 0, &map_desc, &box, 0)))
+    if (FAILED(hr = wined3d_resource_map(&dest->resource, 0, &map_desc, &box, WINED3D_MAP_WRITE)))
     {
         WARN("Failed to map buffer, hr %#x.\n", hr);
         return hr;
@@ -3342,7 +3342,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         resource = &state->streams[e->stream_idx].buffer->resource;
         box.left = src_start_idx * e->stride;
         box.right = box.left + vertex_count * e->stride;
-        if (FAILED(wined3d_resource_map(resource, 0, &map_desc, &box, WINED3D_MAP_READONLY)))
+        if (FAILED(wined3d_resource_map(resource, 0, &map_desc, &box, WINED3D_MAP_READ)))
             ERR("Failed to map resource.\n");
         e->data.buffer_object = 0;
         e->data.addr += (ULONG_PTR)map_desc.data;
@@ -4499,7 +4499,7 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
     struct wined3d_texture *texture;
     HRESULT hr;
 
-    if (FAILED(wined3d_resource_map(&cursor_image->resource, sub_resource_idx, &map_desc, NULL, WINED3D_MAP_READONLY)))
+    if (FAILED(wined3d_resource_map(&cursor_image->resource, sub_resource_idx, &map_desc, NULL, WINED3D_MAP_READ)))
     {
         ERR("Failed to map source texture.\n");
         return NULL;
@@ -4603,7 +4603,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         memset(mask_bits, 0xff, mask_size);
 
         wined3d_resource_map(&texture->resource, sub_resource_idx, &map_desc, NULL,
-                WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY);
+                WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READ);
         cursor_info.fIcon = FALSE;
         cursor_info.xHotspot = x_hotspot;
         cursor_info.yHotspot = y_hotspot;

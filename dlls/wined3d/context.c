@@ -2837,8 +2837,8 @@ void context_copy_bo_address(struct wined3d_context *context,
         }
         else
         {
-            src_ptr = context_map_bo_address(context, src, size, src_binding, WINED3D_MAP_READONLY);
-            dst_ptr = context_map_bo_address(context, dst, size, dst_binding, 0);
+            src_ptr = context_map_bo_address(context, src, size, src_binding, WINED3D_MAP_READ);
+            dst_ptr = context_map_bo_address(context, dst, size, dst_binding, WINED3D_MAP_WRITE);
 
             memcpy(dst_ptr, src_ptr, size);
 

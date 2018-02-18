@@ -306,17 +306,17 @@ static DWORD wined3d_resource_sanitise_map_flags(const struct wined3d_resource *
 {
     /* Not all flags make sense together, but Windows never returns an error.
      * Catch the cases that could cause issues. */
-    if (flags & WINED3D_MAP_READONLY)
+    if (flags & WINED3D_MAP_READ)
     {
         if (flags & WINED3D_MAP_DISCARD)
         {
-            WARN("WINED3D_MAP_READONLY combined with WINED3D_MAP_DISCARD, ignoring flags.\n");
-            return 0;
+            WARN("WINED3D_MAP_READ combined with WINED3D_MAP_DISCARD, ignoring flags.\n");
+            return flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE);
         }
         if (flags & WINED3D_MAP_NOOVERWRITE)
         {
-            WARN("WINED3D_MAP_READONLY combined with WINED3D_MAP_NOOVERWRITE, ignoring flags.\n");
-            return 0;
+            WARN("WINED3D_MAP_READ combined with WINED3D_MAP_NOOVERWRITE, ignoring flags.\n");
+            return flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE);
         }
     }
     else if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
@@ -324,7 +324,7 @@ static DWORD wined3d_resource_sanitise_map_flags(const struct wined3d_resource *
         if (!(resource->usage & WINED3DUSAGE_DYNAMIC))
         {
             WARN("DISCARD or NOOVERWRITE map on non-dynamic buffer, ignoring.\n");
-            return 0;
+            return flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE);
         }
         if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
                 == (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
@@ -342,6 +342,12 @@ HRESULT CDECL wined3d_resource_map(struct wined3d_resource *resource, unsigned i
 {
     TRACE("resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
             resource, sub_resource_idx, map_desc, debug_box(box), flags);
+
+    if (!(flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE)))
+    {
+        WARN("No read/write flags specified.\n");
+        return E_INVALIDARG;
+    }
 
     if (!(resource->access & WINED3D_RESOURCE_ACCESS_MAP))
     {
@@ -399,9 +405,9 @@ GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags)
 {
     GLbitfield ret = 0;
 
-    if (!(d3d_flags & WINED3D_MAP_READONLY))
+    if (d3d_flags & WINED3D_MAP_WRITE)
         ret |= GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
-    if (!(d3d_flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE)))
+    if (d3d_flags & WINED3D_MAP_READ)
         ret |= GL_MAP_READ_BIT;
 
     if (d3d_flags & WINED3D_MAP_DISCARD)
@@ -414,11 +420,17 @@ GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags)
 
 GLenum wined3d_resource_gl_legacy_map_flags(DWORD d3d_flags)
 {
-    if (d3d_flags & WINED3D_MAP_READONLY)
-        return GL_READ_ONLY_ARB;
-    if (d3d_flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
-        return GL_WRITE_ONLY_ARB;
-    return GL_READ_WRITE_ARB;
+    switch (d3d_flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE))
+    {
+        case WINED3D_MAP_READ:
+            return GL_READ_ONLY_ARB;
+
+        case WINED3D_MAP_WRITE:
+            return GL_WRITE_ONLY_ARB;
+
+        default:
+            return GL_READ_WRITE_ARB;
+    }
 }
 
 BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource)

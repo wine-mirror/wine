@@ -758,21 +758,23 @@ DWORD wined3d_map_flags_from_d3d11_map_type(D3D11_MAP map_type)
     switch (map_type)
     {
         case D3D11_MAP_WRITE:
+            return WINED3D_MAP_WRITE;
+
         case D3D11_MAP_READ_WRITE:
-            return 0;
+            return WINED3D_MAP_READ | WINED3D_MAP_WRITE;
 
         case D3D11_MAP_READ:
-            return WINED3D_MAP_READONLY;
+            return WINED3D_MAP_READ;
 
         case D3D11_MAP_WRITE_DISCARD:
-            return WINED3D_MAP_DISCARD;
+            return WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD;
 
         case D3D11_MAP_WRITE_NO_OVERWRITE:
-            return WINED3D_MAP_NOOVERWRITE;
+            return WINED3D_MAP_WRITE | WINED3D_MAP_NOOVERWRITE;
 
         default:
             FIXME("Unhandled map_type %#x.\n", map_type);
-            return 0;
+            return WINED3D_MAP_READ | WINED3D_MAP_WRITE;
     }
 }
 

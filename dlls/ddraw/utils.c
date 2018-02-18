@@ -563,17 +563,22 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
 
 unsigned int wined3dmapflags_from_ddrawmapflags(unsigned int flags)
 {
-    static const unsigned int handled = DDLOCK_READONLY
-            | DDLOCK_NOSYSLOCK
+    static const unsigned int handled = DDLOCK_NOSYSLOCK
             | DDLOCK_NOOVERWRITE
             | DDLOCK_DISCARDCONTENTS
             | DDLOCK_DONOTWAIT;
     unsigned int wined3d_flags;
 
     wined3d_flags = flags & handled;
+    if (!(flags & (DDLOCK_NOOVERWRITE | DDLOCK_DISCARDCONTENTS)))
+        wined3d_flags |= WINED3D_MAP_READ;
+    if (!(flags & DDLOCK_READONLY))
+        wined3d_flags |= WINED3D_MAP_WRITE;
+    if (!(wined3d_flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE)))
+        wined3d_flags |= WINED3D_MAP_READ | WINED3D_MAP_WRITE;
     if (flags & DDLOCK_NODIRTYUPDATE)
         wined3d_flags |= WINED3D_MAP_NO_DIRTY_UPDATE;
-    flags &= ~(handled | DDLOCK_WAIT | DDLOCK_NODIRTYUPDATE);
+    flags &= ~(handled | DDLOCK_WAIT | DDLOCK_READONLY | DDLOCK_NODIRTYUPDATE);
 
     if (flags)
         FIXME("Unhandled flags %#x.\n", flags);

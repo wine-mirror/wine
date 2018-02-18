@@ -912,12 +912,13 @@ enum wined3d_shader_byte_code_format
 #define WINED3DUSAGE_QUERY_WRAPANDMIP                           0x00200000
 #define WINED3DUSAGE_QUERY_MASK                                 0x003f8400
 
-#define WINED3D_MAP_READONLY                                    0x0010
-#define WINED3D_MAP_NOSYSLOCK                                   0x0800
-#define WINED3D_MAP_NOOVERWRITE                                 0x1000
-#define WINED3D_MAP_DISCARD                                     0x2000
-#define WINED3D_MAP_DONOTWAIT                                   0x4000
-#define WINED3D_MAP_NO_DIRTY_UPDATE                             0x8000
+#define WINED3D_MAP_NOSYSLOCK                                   0x00000800
+#define WINED3D_MAP_NOOVERWRITE                                 0x00001000
+#define WINED3D_MAP_DISCARD                                     0x00002000
+#define WINED3D_MAP_DONOTWAIT                                   0x00004000
+#define WINED3D_MAP_NO_DIRTY_UPDATE                             0x00008000
+#define WINED3D_MAP_WRITE                                       0x40000000
+#define WINED3D_MAP_READ                                        0x80000000
 
 #define WINED3DPRESENT_RATE_DEFAULT                             0x00000000
 

@@ -5281,7 +5281,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             }
 
             if (FAILED(hr = wined3d_resource_map(src_resource,
-                    src_surface->sub_resource_idx, &src_map_desc, NULL, 0)))
+                    src_surface->sub_resource_idx, &src_map_desc, NULL, WINED3D_MAP_READ)))
             {
                 ERR("Failed to lock source surface, hr %#x.\n", hr);
                 wined3d_mutex_unlock();
@@ -5289,7 +5289,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             }
 
             if (FAILED(hr = wined3d_resource_map(dst_resource,
-                    dst_surface->sub_resource_idx, &dst_map_desc, NULL, 0)))
+                    dst_surface->sub_resource_idx, &dst_map_desc, NULL, WINED3D_MAP_WRITE)))
             {
                 ERR("Failed to lock destination surface, hr %#x.\n", hr);
                 wined3d_resource_unmap(src_resource, src_surface->sub_resource_idx);

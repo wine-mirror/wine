@@ -1024,8 +1024,8 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
             dirty_size = 0;
         }
 
-        if (!(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD | WINED3D_MAP_READONLY))
-                || ((flags & WINED3D_MAP_READONLY) && (buffer->locations & WINED3D_LOCATION_SYSMEM))
+        if (((flags & WINED3D_MAP_WRITE) && !(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD)))
+                || (!(flags & WINED3D_MAP_WRITE) && (buffer->locations & WINED3D_LOCATION_SYSMEM))
                 || buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
         {
             if (!(buffer->locations & WINED3D_LOCATION_SYSMEM))
@@ -1035,7 +1035,7 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
                 context_release(context);
             }
 
-            if (!(flags & WINED3D_MAP_READONLY))
+            if (flags & WINED3D_MAP_WRITE)
                 wined3d_buffer_invalidate_range(buffer, WINED3D_LOCATION_BUFFER, dirty_offset, dirty_size);
         }
         else
@@ -1050,7 +1050,7 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
             else
                 wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
 
-            if (!(flags & WINED3D_MAP_READONLY))
+            if (flags & WINED3D_MAP_WRITE)
                 buffer_invalidate_bo_range(buffer, dirty_offset, dirty_size);
 
             if ((flags & WINED3D_MAP_DISCARD) && buffer->resource.heap_memory)

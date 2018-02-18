@@ -3533,7 +3533,7 @@ static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
     wined3d_box.right = vb_pos + size;
     vb = wined3d_buffer_get_resource(device->vertex_buffer);
     if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
         goto done;
     memcpy(wined3d_map_desc.data, vertices, size);
     wined3d_resource_unmap(vb, 0);
@@ -3725,7 +3725,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     wined3d_box.right = vb_pos + vtx_size;
     vb = wined3d_buffer_get_resource(device->vertex_buffer);
     if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
         goto done;
     memcpy(wined3d_map_desc.data, vertices, vtx_size);
     wined3d_resource_unmap(vb, 0);
@@ -3742,7 +3742,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     wined3d_box.right = ib_pos + idx_size;
     ib = wined3d_buffer_get_resource(device->index_buffer);
     if (FAILED(hr = wined3d_resource_map(ib, 0, &wined3d_map_desc, &wined3d_box,
-            ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
         goto done;
     memcpy(wined3d_map_desc.data, indices, idx_size);
     wined3d_resource_unmap(ib, 0);
@@ -4056,7 +4056,7 @@ static HRESULT d3d_device7_DrawPrimitiveStrided(IDirect3DDevice7 *iface, D3DPRIM
     wined3d_box.right = vb_pos + dst_size;
     vb = wined3d_buffer_get_resource(device->vertex_buffer);
     if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
         goto done;
     pack_strided_data(wined3d_map_desc.data, vertex_count, strided_data, fvf);
     wined3d_resource_unmap(vb, 0);
@@ -4172,7 +4172,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     wined3d_box.right = vb_pos + vtx_dst_size;
     vb = wined3d_buffer_get_resource(device->vertex_buffer);
     if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
-            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
         goto done;
     pack_strided_data(wined3d_map_desc.data, vertex_count, strided_data, fvf);
     wined3d_resource_unmap(vb, 0);
@@ -4189,7 +4189,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     wined3d_box.right = ib_pos + idx_size;
     ib = wined3d_buffer_get_resource(device->index_buffer);
     if (FAILED(hr = wined3d_resource_map(ib, 0, &wined3d_map_desc, &wined3d_box,
-            ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
         goto done;
     memcpy(wined3d_map_desc.data, indices, idx_size);
     wined3d_resource_unmap(ib, 0);
@@ -4409,7 +4409,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     wined3d_box.right = ib_pos + index_count * sizeof(WORD);
     ib = wined3d_buffer_get_resource(device->index_buffer);
     if (FAILED(hr = wined3d_resource_map(ib, 0, &wined3d_map_desc, &wined3d_box,
-            ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
+            WINED3D_MAP_WRITE | (ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD))))
     {
         ERR("Failed to map buffer, hr %#x.\n", hr);
         wined3d_mutex_unlock();
