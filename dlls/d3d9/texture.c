@@ -1314,7 +1314,8 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
     desc.usage |= WINED3DUSAGE_TEXTURE;
     if (pool == D3DPOOL_SCRATCH)
         desc.usage |= WINED3DUSAGE_SCRATCH;
-    desc.access = wined3daccess_from_d3dpool(pool, usage) | WINED3D_RESOURCE_ACCESS_MAP;
+    desc.access = wined3daccess_from_d3dpool(pool, usage)
+            | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     desc.width = width;
     desc.height = height;
     desc.depth = 1;
@@ -1385,7 +1386,8 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
     desc.usage |= WINED3DUSAGE_LEGACY_CUBEMAP | WINED3DUSAGE_TEXTURE;
     if (pool == D3DPOOL_SCRATCH)
         desc.usage |= WINED3DUSAGE_SCRATCH;
-    desc.access = wined3daccess_from_d3dpool(pool, usage) | WINED3D_RESOURCE_ACCESS_MAP;
+    desc.access = wined3daccess_from_d3dpool(pool, usage)
+            | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     desc.width = edge_length;
     desc.height = edge_length;
     desc.depth = 1;

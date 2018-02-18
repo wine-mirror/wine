@@ -801,12 +801,12 @@ unsigned int wined3d_access_from_d3d11(D3D11_USAGE usage, UINT cpu_access)
     unsigned int access;
 
     access = usage == D3D11_USAGE_STAGING ? WINED3D_RESOURCE_ACCESS_CPU : WINED3D_RESOURCE_ACCESS_GPU;
-    if (cpu_access)
-    {
-        if (~cpu_access & (D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ))
-            FIXME("Ignoring CPU access flags %#x.\n", cpu_access);
-        access |= WINED3D_RESOURCE_ACCESS_MAP;
-    }
+    if (cpu_access & D3D11_CPU_ACCESS_WRITE)
+        access |= WINED3D_RESOURCE_ACCESS_MAP_W;
+    if (cpu_access & D3D11_CPU_ACCESS_READ)
+        access |= WINED3D_RESOURCE_ACCESS_MAP_R;
+    if (cpu_access &= ~(D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ))
+        FIXME("Unhandled CPU access flags %#x.\n", cpu_access);
 
     return access;
 }

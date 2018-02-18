@@ -349,9 +349,15 @@ HRESULT CDECL wined3d_resource_map(struct wined3d_resource *resource, unsigned i
         return E_INVALIDARG;
     }
 
-    if (!(resource->access & WINED3D_RESOURCE_ACCESS_MAP))
+    if ((flags & WINED3D_MAP_READ) && !(resource->access & WINED3D_RESOURCE_ACCESS_MAP_R))
     {
-        WARN("Resource is not mappable.\n");
+        WARN("Resource does not have MAP_R access.\n");
+        return E_INVALIDARG;
+    }
+
+    if ((flags & WINED3D_MAP_WRITE) && !(resource->access & WINED3D_RESOURCE_ACCESS_MAP_W))
+    {
+        WARN("Resource does not have MAP_W access.\n");
         return E_INVALIDARG;
     }
 

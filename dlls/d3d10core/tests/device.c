@@ -8199,28 +8199,26 @@ static void check_buffer_cpu_access_(unsigned int line, ID3D10Buffer *buffer,
 
     expected_hr = cpu_read ? S_OK : E_INVALIDARG;
     hr = ID3D10Buffer_Map(buffer, D3D10_MAP_READ, 0, &data);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Buffer_Unmap(buffer);
 
     expected_hr = !dynamic && cpu_write ? S_OK : E_INVALIDARG;
     hr = ID3D10Buffer_Map(buffer, D3D10_MAP_WRITE, 0, &data);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
+    todo_wine_if(dynamic && cpu_write)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Buffer_Unmap(buffer);
 
     expected_hr = cpu_read && cpu_write ? S_OK : E_INVALIDARG;
     hr = ID3D10Buffer_Map(buffer, D3D10_MAP_READ_WRITE, 0, &data);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ_WRITE.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Buffer_Unmap(buffer);
 
     expected_hr = dynamic ? S_OK : E_INVALIDARG;
     hr = ID3D10Buffer_Map(buffer, D3D10_MAP_WRITE_DISCARD, 0, &data);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
+    todo_wine_if(!dynamic && cpu_write)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE_DISCARD.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Buffer_Unmap(buffer);
@@ -8254,28 +8252,26 @@ static void check_texture_cpu_access_(unsigned int line, ID3D10Texture2D *textur
 
     expected_hr = cpu_read ? S_OK : E_INVALIDARG;
     hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_READ, 0, &map_desc);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Texture2D_Unmap(texture, 0);
 
     expected_hr = !dynamic && cpu_write ? S_OK : E_INVALIDARG;
     hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_WRITE, 0, &map_desc);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
+    todo_wine_if(dynamic && cpu_write)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Texture2D_Unmap(texture, 0);
 
     expected_hr = cpu_read && cpu_write ? S_OK : E_INVALIDARG;
     hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_READ_WRITE, 0, &map_desc);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ_WRITE.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Texture2D_Unmap(texture, 0);
 
     expected_hr = dynamic ? S_OK : E_INVALIDARG;
     hr = ID3D10Texture2D_Map(texture, 0, D3D10_MAP_WRITE_DISCARD, 0, &map_desc);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
+    todo_wine_if(!dynamic && cpu_write)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE_DISCARD.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Texture2D_Unmap(texture, 0);

@@ -11029,7 +11029,6 @@ static void check_resource_cpu_access_(unsigned int line, ID3D11DeviceContext *c
 
     expected_hr = cpu_read ? S_OK : E_INVALIDARG;
     hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_READ, 0, &map_desc);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11DeviceContext_Unmap(context, resource, 0);
@@ -11037,21 +11036,20 @@ static void check_resource_cpu_access_(unsigned int line, ID3D11DeviceContext *c
     /* WRITE_DISCARD and WRITE_NO_OVERWRITE are the only allowed options for dynamic resources. */
     expected_hr = !dynamic && cpu_write ? S_OK : E_INVALIDARG;
     hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_WRITE, 0, &map_desc);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
+    todo_wine_if(dynamic && cpu_write)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11DeviceContext_Unmap(context, resource, 0);
 
     expected_hr = cpu_read && cpu_write ? S_OK : E_INVALIDARG;
     hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_READ_WRITE, 0, &map_desc);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ_WRITE.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11DeviceContext_Unmap(context, resource, 0);
 
     expected_hr = dynamic ? S_OK : E_INVALIDARG;
     hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    todo_wine_if(expected_hr != S_OK && cpu_access)
+    todo_wine_if(!dynamic && cpu_write)
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE_DISCARD.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11DeviceContext_Unmap(context, resource, 0);

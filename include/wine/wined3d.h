@@ -52,7 +52,8 @@
 
 #define WINED3D_RESOURCE_ACCESS_GPU                             0x1u
 #define WINED3D_RESOURCE_ACCESS_CPU                             0x2u
-#define WINED3D_RESOURCE_ACCESS_MAP                             0x4u
+#define WINED3D_RESOURCE_ACCESS_MAP_R                           0x4u
+#define WINED3D_RESOURCE_ACCESS_MAP_W                           0x8u
 
 enum wined3d_light_type
 {

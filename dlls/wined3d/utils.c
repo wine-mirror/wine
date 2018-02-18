@@ -4156,7 +4156,8 @@ const char *wined3d_debug_resource_access(DWORD access)
 #define ACCESS_TO_STR(x) if (access & x) { strcat(buf, " | "#x); access &= ~x; }
     ACCESS_TO_STR(WINED3D_RESOURCE_ACCESS_GPU);
     ACCESS_TO_STR(WINED3D_RESOURCE_ACCESS_CPU);
-    ACCESS_TO_STR(WINED3D_RESOURCE_ACCESS_MAP);
+    ACCESS_TO_STR(WINED3D_RESOURCE_ACCESS_MAP_R);
+    ACCESS_TO_STR(WINED3D_RESOURCE_ACCESS_MAP_W);
 #undef ACCESS_TO_STR
     if (access)
         FIXME("Unrecognised access flag(s) %#x.\n", access);

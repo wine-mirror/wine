@@ -6012,7 +6012,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.usage = 0;
-    wined3d_desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP;
+    wined3d_desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     wined3d_desc.width = desc->dwWidth;
     wined3d_desc.height = desc->dwHeight;
     wined3d_desc.depth = 1;
@@ -6101,7 +6101,8 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
     {
-        wined3d_desc.access = WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP;
+        wined3d_desc.access = WINED3D_RESOURCE_ACCESS_CPU
+                | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     }
     else
     {
@@ -6115,7 +6116,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         if (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
         {
             wined3d_desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU
-                    | WINED3D_RESOURCE_ACCESS_MAP;
+                    | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
             /* Managed textures have the system memory flag set. */
             desc->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
         }
