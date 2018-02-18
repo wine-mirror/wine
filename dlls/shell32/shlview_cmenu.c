@@ -46,6 +46,7 @@ typedef struct
 {
     IContextMenu3 IContextMenu3_iface;
     IShellExtInit IShellExtInit_iface;
+    IObjectWithSite IObjectWithSite_iface;
     LONG ref;
 
     IShellFolder* parent;
@@ -70,6 +71,11 @@ static inline ContextMenu *impl_from_IShellExtInit(IShellExtInit *iface)
     return CONTAINING_RECORD(iface, ContextMenu, IShellExtInit_iface);
 }
 
+static inline ContextMenu *impl_from_IObjectWithSite(IObjectWithSite *iface)
+{
+    return CONTAINING_RECORD(iface, ContextMenu, IObjectWithSite_iface);
+}
+
 static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu3 *iface, REFIID riid, LPVOID *ppvObj)
 {
     ContextMenu *This = impl_from_IContextMenu3(iface);
@@ -88,6 +94,10 @@ static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu3 *iface, REFIID ri
     else if (IsEqualIID(riid, &IID_IShellExtInit))
     {
         *ppvObj = &This->IShellExtInit_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IObjectWithSite))
+    {
+        *ppvObj = &This->IObjectWithSite_iface;
     }
 
     if(*ppvObj)
@@ -622,6 +632,51 @@ static const IShellExtInitVtbl ShellExtInitVtbl =
     ShellExtInit_Initialize
 };
 
+static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID riid, void **obj)
+{
+    ContextMenu *This = impl_from_IObjectWithSite(iface);
+    return IContextMenu3_QueryInterface(&This->IContextMenu3_iface, riid, obj);
+}
+
+static ULONG WINAPI ObjectWithSite_AddRef(IObjectWithSite *iface)
+{
+    ContextMenu *This = impl_from_IObjectWithSite(iface);
+    return IContextMenu3_AddRef(&This->IContextMenu3_iface);
+}
+
+static ULONG WINAPI ObjectWithSite_Release(IObjectWithSite *iface)
+{
+    ContextMenu *This = impl_from_IObjectWithSite(iface);
+    return IContextMenu3_Release(&This->IContextMenu3_iface);
+}
+
+static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *site)
+{
+    ContextMenu *This = impl_from_IObjectWithSite(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, site);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ObjectWithSite_GetSite(IObjectWithSite *iface, REFIID riid, void **site)
+{
+    ContextMenu *This = impl_from_IObjectWithSite(iface);
+
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), site);
+
+    return E_NOTIMPL;
+}
+
+static const IObjectWithSiteVtbl ObjectWithSiteVtbl =
+{
+    ObjectWithSite_QueryInterface,
+    ObjectWithSite_AddRef,
+    ObjectWithSite_Release,
+    ObjectWithSite_SetSite,
+    ObjectWithSite_GetSite,
+};
+
 HRESULT ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl,
     REFIID riid, void **pObj)
 {
@@ -634,6 +689,7 @@ HRESULT ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPC
 
     This->IContextMenu3_iface.lpVtbl = &ItemContextMenuVtbl;
     This->IShellExtInit_iface.lpVtbl = &ShellExtInitVtbl;
+    This->IObjectWithSite_iface.lpVtbl = &ObjectWithSiteVtbl;
     This->ref = 1;
     This->parent = parent;
     if (parent) IShellFolder_AddRef(parent);
@@ -943,6 +999,7 @@ HRESULT BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop, REFIID ri
 
     This->IContextMenu3_iface.lpVtbl = &BackgroundContextMenuVtbl;
     This->IShellExtInit_iface.lpVtbl = &ShellExtInitVtbl;
+    This->IObjectWithSite_iface.lpVtbl = &ObjectWithSiteVtbl;
     This->ref = 1;
     This->parent = parent;
 
