@@ -2069,7 +2069,7 @@ static HRESULT ddraw_surface_delete_attached_surface(struct ddraw_surface *surfa
      * particular, modify the QueryInterface() pointer in the surface vtbl
      * but don't cleanup properly after the relevant dll is unloaded. */
     if (attachment->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER
-            && wined3d_device_get_depth_stencil_view(surface->ddraw->wined3d_device) == surface->wined3d_rtv)
+            && wined3d_device_get_depth_stencil_view(surface->ddraw->wined3d_device) == attachment->wined3d_rtv)
         wined3d_device_set_depth_stencil_view(surface->ddraw->wined3d_device, NULL);
     wined3d_mutex_unlock();
 
