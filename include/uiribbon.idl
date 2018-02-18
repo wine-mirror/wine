@@ -64,6 +64,17 @@ typedef enum UI_COMMANDTYPE {
     UI_COMMANDTYPE_COLORCOLLECTION,
 } UI_COMMANDTYPE;
 
+typedef [v1_enum] enum UI_OWNERSHIP {
+    UI_OWNERSHIP_TRANSFER = 0,
+    UI_OWNERSHIP_COPY = 1,
+} UI_OWNERSHIP;
+
+typedef [v1_enum] enum UI_COLLECTIONCHANGE {
+    UI_COLLECTIONCHANGE_INSERT = 0,
+    UI_COLLECTIONCHANGE_REMOVE = 1,
+    UI_COLLECTIONCHANGE_REPLACE = 2,
+    UI_COLLECTIONCHANGE_RESET = 3
+} UI_COLLECTIONCHANGE;
 
 [
     object,
@@ -175,8 +186,125 @@ interface IUIFramework : IUnknown
 }
 
 [
+    object,
+    uuid(23c8c838-4de6-436b-ab01-5554bb7c30dd),
+    local,
+    pointer_default(unique)
+]
+interface IUIImage : IUnknown
+{
+    HRESULT GetBitmap(
+        [out] HBITMAP *bitmap
+    );
+}
+
+[
+    object,
+    uuid(803982ab-370a-4f7e-a9e7-8784036a6e26),
+    local,
+    pointer_default(unique)
+]
+interface IUIRibbon : IUnknown
+{
+    HRESULT GetHeight(
+        [out] UINT32 *cy
+    );
+    HRESULT LoadSettingsFromStream(
+        [in] IStream *pStream
+    );
+    HRESULT SaveSettingsToStream(
+        [in] IStream *pStream
+    );
+}
+
+[
+    object,
+    uuid(df4f45bf-6f9d-4dd7-9d68-d8f9cd18c4db),
+    local,
+    pointer_default(unique)
+]
+interface IUICollection : IUnknown
+{
+    HRESULT GetCount(
+        [out] UINT32 *count
+    );
+    HRESULT GetItem(
+        [in] UINT32 index,
+        [out] IUnknown **item
+    );
+    HRESULT Add(
+        [in] IUnknown *item
+    );
+    HRESULT Insert(
+        [in] UINT32 index,
+        [in] IUnknown *item
+    );
+    HRESULT RemoveAt(
+        [in] UINT32 index
+    );
+    HRESULT Replace(
+        [in] UINT32 indexReplaced,
+        [in] IUnknown *itemReplaceWith
+    );
+    HRESULT Clear();
+}
+
+[
+    object,
+    uuid(eea11f37-7c46-437c-8e55-b52122b29293),
+    local,
+    pointer_default(unique)
+]
+interface IUIContextualUI : IUnknown
+{
+    HRESULT ShowAtLocation(
+        [in] INT32 x,
+        [in] INT32 y
+    );
+}
+
+[
+    object,
+    uuid(6502ae91-a14d-44b5-bbd0-62aacc581d52),
+    local,
+    pointer_default(unique)
+]
+interface IUICollectionChangedEvent : IUnknown
+{
+    HRESULT OnChanged(
+        [in] UI_COLLECTIONCHANGE action,
+        [in] UINT32 oldIndex,
+        [in] IUnknown *oldItem,
+        [in] UINT32 newIndex,
+        [in] IUnknown *newItem
+    );
+}
+
+[
+    object,
+    uuid(18aba7f3-4c1c-4ba2-bf6c-f5c3326fa816),
+    local,
+    pointer_default(unique)
+]
+interface IUIImageFromBitmap : IUnknown
+{
+    HRESULT CreateImage(
+        [in] HBITMAP bitmap,
+        [in] UI_OWNERSHIP options,
+        [out] IUIImage **image
+    );
+}
+
+
+[
     helpstring("UIRibbonFramework Object"),
     threading(apartment),
     uuid(926749fa-2615-4987-8845-c33e65f2b957)
 ]
 coclass UIRibbonFramework { interface IUIFramework; }
+
+[
+    threading(apartment),
+    uuid(0f7434b6-59b6-4250-999e-d168d6ae4293)
+]
+coclass UIRibbonImageFromBitmapFactory { interface IUIImageFromBitmap; }
