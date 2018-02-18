@@ -4354,9 +4354,7 @@ static void test_contextmenu(IContextMenu *menu, BOOL background)
     HRESULT hr;
 
     hr = IContextMenu_QueryInterface(menu, &IID_IShellExtInit, (void **)&unk);
-todo_wine
     ok(hr == S_OK, "Failed to get IShellExtInit, hr %#x.\n", hr);
-if (hr == S_OK)
     IUnknown_Release(unk);
 
     hr = IContextMenu_QueryInterface(menu, &IID_IObjectWithSite, (void **)&unk);

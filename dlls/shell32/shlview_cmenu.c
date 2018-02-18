@@ -45,6 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 typedef struct
 {
     IContextMenu3 IContextMenu3_iface;
+    IShellExtInit IShellExtInit_iface;
     LONG ref;
 
     IShellFolder* parent;
@@ -64,6 +65,11 @@ static inline ContextMenu *impl_from_IContextMenu3(IContextMenu3 *iface)
     return CONTAINING_RECORD(iface, ContextMenu, IContextMenu3_iface);
 }
 
+static inline ContextMenu *impl_from_IShellExtInit(IShellExtInit *iface)
+{
+    return CONTAINING_RECORD(iface, ContextMenu, IShellExtInit_iface);
+}
+
 static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu3 *iface, REFIID riid, LPVOID *ppvObj)
 {
     ContextMenu *This = impl_from_IContextMenu3(iface);
@@ -79,9 +85,9 @@ static HRESULT WINAPI ContextMenu_QueryInterface(IContextMenu3 *iface, REFIID ri
     {
         *ppvObj = &This->IContextMenu3_iface;
     }
-    else if (IsEqualIID(riid, &IID_IShellExtInit))  /*IShellExtInit*/
+    else if (IsEqualIID(riid, &IID_IShellExtInit))
     {
-        FIXME("-- LPSHELLEXTINIT pointer requested\n");
+        *ppvObj = &This->IShellExtInit_iface;
     }
 
     if(*ppvObj)
@@ -580,6 +586,42 @@ static const IContextMenu3Vtbl ItemContextMenuVtbl =
     ContextMenu_HandleMenuMsg2
 };
 
+static HRESULT WINAPI ShellExtInit_QueryInterface(IShellExtInit *iface, REFIID riid, void **obj)
+{
+    ContextMenu *This = impl_from_IShellExtInit(iface);
+    return IContextMenu3_QueryInterface(&This->IContextMenu3_iface, riid, obj);
+}
+
+static ULONG WINAPI ShellExtInit_AddRef(IShellExtInit *iface)
+{
+    ContextMenu *This = impl_from_IShellExtInit(iface);
+    return IContextMenu3_AddRef(&This->IContextMenu3_iface);
+}
+
+static ULONG WINAPI ShellExtInit_Release(IShellExtInit *iface)
+{
+    ContextMenu *This = impl_from_IShellExtInit(iface);
+    return IContextMenu3_Release(&This->IContextMenu3_iface);
+}
+
+static HRESULT WINAPI ShellExtInit_Initialize(IShellExtInit *iface, LPCITEMIDLIST folder,
+    IDataObject *dataobj, HKEY progidkey)
+{
+    ContextMenu *This = impl_from_IShellExtInit(iface);
+
+    FIXME("(%p)->(%p %p %p): stub\n", This, folder, dataobj, progidkey);
+
+    return E_NOTIMPL;
+}
+
+static const IShellExtInitVtbl ShellExtInitVtbl =
+{
+    ShellExtInit_QueryInterface,
+    ShellExtInit_AddRef,
+    ShellExtInit_Release,
+    ShellExtInit_Initialize
+};
+
 HRESULT ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl,
     REFIID riid, void **pObj)
 {
@@ -591,6 +633,7 @@ HRESULT ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPC
     if (!This) return E_OUTOFMEMORY;
 
     This->IContextMenu3_iface.lpVtbl = &ItemContextMenuVtbl;
+    This->IShellExtInit_iface.lpVtbl = &ShellExtInitVtbl;
     This->ref = 1;
     This->parent = parent;
     if (parent) IShellFolder_AddRef(parent);
@@ -899,6 +942,7 @@ HRESULT BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop, REFIID ri
     if (!This) return E_OUTOFMEMORY;
 
     This->IContextMenu3_iface.lpVtbl = &BackgroundContextMenuVtbl;
+    This->IShellExtInit_iface.lpVtbl = &ShellExtInitVtbl;
     This->ref = 1;
     This->parent = parent;
 
