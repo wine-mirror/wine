@@ -4343,6 +4343,96 @@ static void test_desktop_IPersist(void)
     IShellFolder_Release(desktop);
 }
 
+static void test_contextmenu(IContextMenu *menu, BOOL background)
+{
+    HMENU hmenu = CreatePopupMenu();
+    const int id_upper_limit = 32767;
+    const int baseItem = 0x40;
+    INT max_id, max_id_check;
+    IUnknown *unk;
+    UINT count, i;
+    HRESULT hr;
+
+    hr = IContextMenu_QueryInterface(menu, &IID_IShellExtInit, (void **)&unk);
+todo_wine
+    ok(hr == S_OK, "Failed to get IShellExtInit, hr %#x.\n", hr);
+if (hr == S_OK)
+    IUnknown_Release(unk);
+
+    hr = IContextMenu_QueryInterface(menu, &IID_IObjectWithSite, (void **)&unk);
+todo_wine
+    ok(hr == S_OK, "Failed to get IShellExtInit, hr %#x.\n", hr);
+if (hr == S_OK)
+    IUnknown_Release(unk);
+
+    hr = IContextMenu_QueryContextMenu(menu, hmenu, 0, baseItem, id_upper_limit, CMF_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to query the menu, hr %#x.\n", hr);
+
+    max_id = HRESULT_CODE(hr) - 1; /* returns max_id + 1 */
+    ok(max_id <= id_upper_limit, "Got %d\n", max_id);
+    count = GetMenuItemCount(hmenu);
+    ok(count, "Got %d\n", count);
+
+    max_id_check = 0;
+    for (i = 0; i < count; i++)
+    {
+        MENUITEMINFOA mii;
+        INT res;
+        char buf[255], buf2[255];
+        ZeroMemory(&mii, sizeof(MENUITEMINFOA));
+        mii.cbSize = sizeof(MENUITEMINFOA);
+        mii.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STRING;
+        mii.dwTypeData = buf2;
+        mii.cch = sizeof(buf2);
+
+        res = GetMenuItemInfoA(hmenu, i, TRUE, &mii);
+        ok(res, "Failed to get menu item info, error %d.\n", GetLastError());
+
+        ok((mii.wID <= id_upper_limit) || (mii.fType & MFT_SEPARATOR),
+            "Got non-separator ID out of range: %d (type: %x)\n", mii.wID, mii.fType);
+        if (!(mii.fType & MFT_SEPARATOR))
+        {
+            max_id_check = (mii.wID > max_id_check) ? mii.wID : max_id_check;
+            hr = IContextMenu_GetCommandString(menu, mii.wID - baseItem, GCS_VERBA, 0, buf, sizeof(buf));
+        todo_wine_if(background)
+            ok(SUCCEEDED(hr) || hr == E_NOTIMPL, "for id 0x%x got 0x%08x (menustr: %s)\n", mii.wID - baseItem, hr, mii.dwTypeData);
+            if (SUCCEEDED(hr))
+                trace("for id 0x%x got string %s (menu string: %s)\n", mii.wID - baseItem, buf, mii.dwTypeData);
+            else if (hr == E_NOTIMPL)
+                trace("for id 0x%x got E_NOTIMPL (menu string: %s)\n", mii.wID - baseItem, mii.dwTypeData);
+        }
+    }
+    max_id_check -= baseItem;
+    ok((max_id_check == max_id) ||
+       (max_id_check == max_id-1) || /* Win 7 */
+       (max_id_check == max_id-2) || /* Win 8 */
+       (max_id_check == max_id-3),
+       "Not equal (or near equal), got %d and %d\n", max_id_check, max_id);
+
+    if (count)
+    {
+        CMINVOKECOMMANDINFO cmi;
+
+        memset(&cmi, 0, sizeof(CMINVOKECOMMANDINFO));
+        cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
+
+        /* Attempt to execute a nonexistent command */
+        cmi.lpVerb = MAKEINTRESOURCEA(9999);
+        hr = IContextMenu_InvokeCommand(menu, &cmi);
+    todo_wine_if(background)
+        ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+
+        cmi.lpVerb = "foobar_wine_test";
+        hr = IContextMenu_InvokeCommand(menu, &cmi);
+    todo_wine_if(background)
+        ok((hr == E_INVALIDARG) || (hr == E_FAIL /* Win7 */) ||
+           (hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /* Vista */),
+            "Unexpected hr %#x.\n", hr);
+    }
+
+    DestroyMenu(hmenu);
+}
+
 static void test_GetUIObject(void)
 {
     IShellFolder *psf_desktop;
@@ -4352,6 +4442,8 @@ static void test_GetUIObject(void)
     WCHAR path[MAX_PATH];
     const WCHAR filename[] =
         {'\\','t','e','s','t','d','i','r','\\','t','e','s','t','1','.','t','x','t',0};
+    LPCITEMIDLIST pidl_child;
+    IShellFolder *psf;
 
     GetCurrentDirectoryW(MAX_PATH, path);
     if (!path[0])
@@ -4366,91 +4458,24 @@ static void test_GetUIObject(void)
 
     hr = IShellFolder_ParseDisplayName(psf_desktop, NULL, NULL, path, NULL, &pidl, 0);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
-    if(SUCCEEDED(hr))
-    {
-        IShellFolder *psf;
-        LPCITEMIDLIST pidl_child;
-        hr = SHBindToParent(pidl, &IID_IShellFolder, (void**)&psf, &pidl_child);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
-        if(SUCCEEDED(hr))
-        {
-            hr = IShellFolder_GetUIObjectOf(psf, NULL, 1, &pidl_child, &IID_IContextMenu, NULL,
-                                            (void**)&pcm);
-            ok(hr == S_OK, "Got 0x%08x\n", hr);
-            if(SUCCEEDED(hr))
-            {
-                const int baseItem = 0x40;
-                HMENU hmenu = CreatePopupMenu();
-                INT max_id, max_id_check;
-                UINT count, i;
-                const int id_upper_limit = 32767;
-                hr = IContextMenu_QueryContextMenu(pcm, hmenu, 0, baseItem, id_upper_limit, CMF_NORMAL);
-                ok(SUCCEEDED(hr), "Got 0x%08x\n", hr);
-                max_id = HRESULT_CODE(hr) - 1; /* returns max_id + 1 */
-                ok(max_id <= id_upper_limit, "Got %d\n", max_id);
-                count = GetMenuItemCount(hmenu);
-                ok(count, "Got %d\n", count);
 
-                max_id_check = 0;
-                for(i = 0; i < count; i++)
-                {
-                    MENUITEMINFOA mii;
-                    INT res;
-                    char buf[255], buf2[255];
-                    ZeroMemory(&mii, sizeof(MENUITEMINFOA));
-                    mii.cbSize = sizeof(MENUITEMINFOA);
-                    mii.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STRING;
-                    mii.dwTypeData = buf2;
-                    mii.cch = sizeof(buf2);
+    hr = SHBindToParent(pidl, &IID_IShellFolder, (void **)&psf, &pidl_child);
+    ok(hr == S_OK, "Failed to bind to folder, hr %#x.\n", hr);
 
-                    SetLastError(0);
-                    res = GetMenuItemInfoA(hmenu, i, TRUE, &mii);
-                    ok(res, "Failed (last error: %d).\n", GetLastError());
+    /* Item menu */
+    hr = IShellFolder_GetUIObjectOf(psf, NULL, 1, &pidl_child, &IID_IContextMenu, NULL, (void **)&pcm);
+    ok(hr == S_OK, "GetUIObjectOf() failed, hr %#x.\n", hr);
+    test_contextmenu(pcm, FALSE);
+    IContextMenu_Release(pcm);
 
-                    ok( (mii.wID <= id_upper_limit) || (mii.fType & MFT_SEPARATOR),
-                        "Got non-separator ID out of range: %d (type: %x)\n", mii.wID, mii.fType);
-                    if(!(mii.fType & MFT_SEPARATOR))
-                    {
-                        max_id_check = (mii.wID>max_id_check)?mii.wID:max_id_check;
-                        hr = IContextMenu_GetCommandString(pcm, mii.wID - baseItem, GCS_VERBA, 0, buf, sizeof(buf));
-                        ok(SUCCEEDED(hr) || hr == E_NOTIMPL, "for id 0x%x got 0x%08x (menustr: %s)\n", mii.wID - baseItem, hr, mii.dwTypeData);
-                        if (SUCCEEDED(hr))
-                            trace("for id 0x%x got string %s (menu string: %s)\n", mii.wID - baseItem, buf, mii.dwTypeData);
-                        else if (hr == E_NOTIMPL)
-                            trace("for id 0x%x got E_NOTIMPL (menu string: %s)\n", mii.wID - baseItem, mii.dwTypeData);
-                    }
-                }
-                max_id_check -= baseItem;
-                ok((max_id_check == max_id) ||
-                   (max_id_check == max_id-1) || /* Win 7 */
-                   (max_id_check == max_id-2),   /* Win 8 */
-                   "Not equal (or near equal), got %d and %d\n", max_id_check, max_id);
+    /* Background menu */
+    hr = IShellFolder_GetUIObjectOf(psf_desktop, NULL, 0, NULL, &IID_IContextMenu, NULL, (void **)&pcm);
+    ok(hr == S_OK, "GetUIObjectOf() failed, hr %#x.\n", hr);
+    test_contextmenu(pcm, TRUE);
+    IContextMenu_Release(pcm);
 
-                if(count)
-                {
-                    CMINVOKECOMMANDINFO cmi;
-                    ZeroMemory(&cmi, sizeof(CMINVOKECOMMANDINFO));
-                    cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
-
-                    /* Attempt to execute a nonexistent command */
-                    cmi.lpVerb = MAKEINTRESOURCEA(9999);
-                    hr = IContextMenu_InvokeCommand(pcm, &cmi);
-                    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
-
-                    cmi.lpVerb = "foobar_wine_test";
-                    hr = IContextMenu_InvokeCommand(pcm, &cmi);
-                    ok( (hr == E_INVALIDARG) || (hr == E_FAIL /* Win7 */) ||
-                        (hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /* Vista */),
-                        "Got 0x%08x\n", hr);
-                }
-
-                DestroyMenu(hmenu);
-                IContextMenu_Release(pcm);
-            }
-            IShellFolder_Release(psf);
-        }
-        ILFree(pidl);
-    }
+    IShellFolder_Release(psf);
+    ILFree(pidl);
 
     IShellFolder_Release(psf_desktop);
     Cleanup();
