@@ -741,6 +741,10 @@ static BracketPair *computeBracketPairs(IsolatedRun *iso_run)
             }
         }
     }
+
+    heap_free(open_stack);
+    heap_free(stack_index);
+
     if (pair_count == 0)
     {
         heap_free(out);
@@ -749,8 +753,6 @@ static BracketPair *computeBracketPairs(IsolatedRun *iso_run)
     else if (pair_count > 1)
         qsort(out, pair_count, sizeof(BracketPair), compr);
 
-    heap_free(open_stack);
-    heap_free(stack_index);
     return out;
 }
 
