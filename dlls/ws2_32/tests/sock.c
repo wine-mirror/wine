@@ -2995,7 +2995,7 @@ static void test_WSAEnumNetworkEvents(void)
                 }
                 for (k = 0; k < FD_MAX_EVENTS; k++)
                 {
-                    if (i >= 1 && j == 0 && k == 1) /* first UDP and connected TCP test, FD_WRITE bit no error*/
+                    if (net_events.lNetworkEvents & (1 << k))
                     {
                         ok (net_events.iErrorCode[k] == 0x0, "Test[%d][%d]: expected 0x0, got 0x%x\n",
                             i, k, net_events.iErrorCode[k]);
@@ -3003,7 +3003,6 @@ static void test_WSAEnumNetworkEvents(void)
                     else
                     {
                         /* Bits that are not set in lNetworkEvents MUST not be changed */
-                        todo_wine
                         ok (net_events.iErrorCode[k] == 0xABABABAB, "Test[%d][%d]: expected 0xABABABAB, got 0x%x\n",
                             i, k, net_events.iErrorCode[k]);
                     }

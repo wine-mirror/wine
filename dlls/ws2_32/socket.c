@@ -7218,7 +7218,10 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
     if (!ret)
     {
         for (i = 0; i < FD_MAX_EVENTS; i++)
-            lpEvent->iErrorCode[i] = NtStatusToWSAError(errors[i]);
+        {
+            if (lpEvent->lNetworkEvents & (1 << i))
+                lpEvent->iErrorCode[i] = NtStatusToWSAError(errors[i]);
+        }
         return 0;
     }
     SetLastError(WSAEINVAL);
