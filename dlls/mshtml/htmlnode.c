@@ -44,9 +44,6 @@ typedef struct {
 
     LONG ref;
 
-    /* FIXME: implement weak reference */
-    HTMLDocumentNode *doc;
-
     nsIDOMNodeList *nslist;
 } HTMLDOMChildrenCollection;
 
@@ -244,7 +241,6 @@ static ULONG WINAPI HTMLDOMChildrenCollection_Release(IHTMLDOMChildrenCollection
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        htmldoc_release(&This->doc->basedoc);
         nsIDOMNodeList_Release(This->nslist);
         heap_free(This);
     }
@@ -440,7 +436,7 @@ static dispex_static_data_t HTMLDOMChildrenCollection_dispex = {
     HTMLDOMNode_init_dispex_info
 };
 
-IHTMLDOMChildrenCollection *create_child_collection(HTMLDocumentNode *doc, nsIDOMNodeList *nslist)
+IHTMLDOMChildrenCollection *create_child_collection(nsIDOMNodeList *nslist)
 {
     HTMLDOMChildrenCollection *ret;
 
@@ -453,9 +449,6 @@ IHTMLDOMChildrenCollection *create_child_collection(HTMLDocumentNode *doc, nsIDO
 
     nsIDOMNodeList_AddRef(nslist);
     ret->nslist = nslist;
-
-    htmldoc_addref(&doc->basedoc);
-    ret->doc = doc;
 
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLDOMChildrenCollection_iface,
             &HTMLDOMChildrenCollection_dispex);
@@ -628,7 +621,7 @@ static HRESULT WINAPI HTMLDOMNode_get_childNodes(IHTMLDOMNode *iface, IDispatch 
         return E_FAIL;
     }
 
-    *p = (IDispatch*)create_child_collection(This->doc, nslist);
+    *p = (IDispatch*)create_child_collection(nslist);
     nsIDOMNodeList_Release(nslist);
 
     return *p ? S_OK : E_OUTOFMEMORY;

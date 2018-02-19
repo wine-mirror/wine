@@ -4306,7 +4306,7 @@ static HRESULT WINAPI DocumentSelector_querySelectorAll(IDocumentSelector *iface
         return E_FAIL;
     }
 
-    *pel = create_child_collection(This->doc_node, node_list);
+    *pel = create_child_collection(node_list);
     nsIDOMNodeList_Release(node_list);
     return *pel ? S_OK : E_OUTOFMEMORY;
 }

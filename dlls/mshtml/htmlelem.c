@@ -4964,7 +4964,7 @@ static HRESULT WINAPI ElementSelector_querySelectorAll(IElementSelector *iface, 
         return E_FAIL;
     }
 
-    *pel = create_child_collection(This->node.doc, node_list);
+    *pel = create_child_collection(node_list);
     nsIDOMNodeList_Release(node_list);
     return *pel ? S_OK : E_OUTOFMEMORY;
 }
