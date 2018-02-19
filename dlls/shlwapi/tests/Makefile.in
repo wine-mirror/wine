@@ -1,5 +1,5 @@
 TESTDLL   = shlwapi.dll
-IMPORTS   = shell32 shlwapi mlang oleaut32 ole32 user32 advapi32
+IMPORTS   = shlwapi shell32 mlang oleaut32 ole32 user32 advapi32
 
 C_SRCS = \
 	assoc.c \
