@@ -626,7 +626,7 @@ static dispex_static_data_t HTMLElementCollection_dispex = {
     HTMLElementCollection_iface_tids
 };
 
-static void create_all_list(HTMLDocumentNode *doc, HTMLDOMNode *elem, elem_vector_t *buf)
+static void create_all_list(HTMLDOMNode *elem, elem_vector_t *buf)
 {
     nsIDOMNodeList *nsnode_list;
     nsIDOMNode *iter;
@@ -661,7 +661,7 @@ static void create_all_list(HTMLDocumentNode *doc, HTMLDOMNode *elem, elem_vecto
             }
 
             elem_vector_add(buf, elem_from_HTMLDOMNode(node));
-            create_all_list(doc, node, buf);
+            create_all_list(node, buf);
         }
     }
 }
@@ -676,7 +676,7 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_ro
         node_addref(node);
         elem_vector_add(&buf, elem_from_HTMLDOMNode(node));
     }
-    create_all_list(node->doc, node, &buf);
+    create_all_list(node, &buf);
     elem_vector_normalize(&buf);
 
     return HTMLElementCollection_Create(buf.buf, buf.len,
@@ -805,7 +805,7 @@ HRESULT get_elem_source_index(HTMLElement *elem, LONG *ret)
         return E_OUTOFMEMORY;
     }
 
-    create_all_list(elem->node.doc, node, &buf);
+    create_all_list(node, &buf);
 
     for(i=0; i < buf.len; i++) {
         if(buf.buf[i] == elem)
