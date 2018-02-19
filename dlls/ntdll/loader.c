@@ -63,6 +63,10 @@ WINE_DECLARE_DEBUG_CHANNEL(imports);
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 typedef void  (CALLBACK *LDRENUMPROC)(LDR_MODULE *, void *, BOOLEAN *);
 
+/* system directory with trailing backslash */
+const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
+                            's','y','s','t','e','m','3','2','\\',0};
+
 static BOOL imports_fixup_done = FALSE;  /* set once the imports have been fixed up, before attaching them */
 static BOOL process_detaching = FALSE;  /* set on process detach to avoid deadlocks with thread detach */
 static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
@@ -1521,12 +1525,10 @@ static WCHAR *get_builtin_fullname( const WCHAR *path, const char *filename )
     }
 
     if ((fullname = RtlAllocateHeap( GetProcessHeap(), 0,
-                                     system_dir.MaximumLength + (len + 1) * sizeof(WCHAR) )))
+                                     (strlenW(system_dir) + len + 1) * sizeof(WCHAR) )))
     {
-        memcpy( fullname, system_dir.Buffer, system_dir.Length );
-        p = fullname + system_dir.Length / sizeof(WCHAR);
-        if (p > fullname && p[-1] != '\\') *p++ = '\\';
-        ascii_to_unicode( p, filename, len + 1 );
+        strcpyW( fullname, system_dir );
+        ascii_to_unicode( fullname + strlenW(fullname), filename, len + 1 );
     }
     return fullname;
 }
@@ -3281,40 +3283,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
     if (reason == DLL_PROCESS_ATTACH) LdrDisableThreadCalloutsForDll( inst );
     return TRUE;
-}
-
-
-/******************************************************************
- *		__wine_init_windows_dir   (NTDLL.@)
- *
- * Windows and system dir initialization once kernel32 has been loaded.
- */
-void CDECL __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir )
-{
-    PLIST_ENTRY mark, entry;
-    LPWSTR buffer, p;
-
-    strcpyW( user_shared_data->NtSystemRoot, windir );
-    DIR_init_windows_dir( windir, sysdir );
-
-    /* prepend the system dir to the name of the already created modules */
-    mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
-    {
-        LDR_MODULE *mod = CONTAINING_RECORD( entry, LDR_MODULE, InLoadOrderModuleList );
-
-        assert( mod->Flags & LDR_WINE_INTERNAL );
-
-        buffer = RtlAllocateHeap( GetProcessHeap(), 0,
-                                  system_dir.Length + mod->FullDllName.Length + 2*sizeof(WCHAR) );
-        if (!buffer) continue;
-        strcpyW( buffer, system_dir.Buffer );
-        p = buffer + strlenW( buffer );
-        if (p > buffer && p[-1] != '\\') *p++ = '\\';
-        strcpyW( p, mod->FullDllName.Buffer );
-        RtlInitUnicodeString( &mod->FullDllName, buffer );
-        RtlInitUnicodeString( &mod->BaseDllName, p );
-    }
 }
 
 

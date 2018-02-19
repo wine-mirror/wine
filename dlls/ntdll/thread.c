@@ -53,6 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 #endif
 
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
+static const WCHAR default_windirW[] = {'C',':','\\','w','i','n','d','o','w','s',0};
 
 PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter = NULL;
 void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) = NULL;
@@ -298,6 +299,7 @@ HANDLE thread_init(void)
         exit(1);
     }
     user_shared_data = addr;
+    memcpy( user_shared_data->NtSystemRoot, default_windirW, sizeof(default_windirW) );
 
     /* allocate and initialize the PEB */
 

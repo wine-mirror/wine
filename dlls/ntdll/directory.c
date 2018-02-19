@@ -205,8 +205,6 @@ static RTL_RUN_ONCE init_once = RTL_RUN_ONCE_INIT;
 /* at some point we may want to allow Winelib apps to set this */
 static const BOOL is_case_sensitive = FALSE;
 
-UNICODE_STRING system_dir = { 0, 0, NULL };  /* system directory */
-
 static struct file_identity windir;
 
 static RTL_CRITICAL_SECTION dir_section;
@@ -2378,14 +2376,10 @@ static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int l
 #endif
 
 /***********************************************************************
- *           DIR_init_windows_dir
+ *           init_directories
  */
-void DIR_init_windows_dir( const WCHAR *win, const WCHAR *sys )
+void init_directories(void)
 {
-    /* FIXME: should probably store paths as NT file names */
-
-    RtlCreateUnicodeString( &system_dir, sys );
-
 #ifndef _WIN64
     if (is_wow64) init_redirects();
 #endif

@@ -958,8 +958,6 @@ done:
  */
 static void init_windows_dirs(void)
 {
-    extern void CDECL __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir );
-
     static const WCHAR windirW[] = {'w','i','n','d','i','r',0};
     static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
     static const WCHAR default_windirW[] = {'C',':','\\','w','i','n','d','o','w','s',0};
@@ -1013,9 +1011,6 @@ static void init_windows_dirs(void)
 
     TRACE_(file)( "WindowsDir = %s\n", debugstr_w(DIR_Windows) );
     TRACE_(file)( "SystemDir  = %s\n", debugstr_w(DIR_System) );
-
-    /* set the directories in ntdll too */
-    __wine_init_windows_dir( DIR_Windows, DIR_System );
 }
 
 
