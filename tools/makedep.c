@@ -2636,6 +2636,26 @@ static void output_source_svg( struct makefile *make, struct incl_file *source, 
 
 
 /*******************************************************************
+ *         output_source_nls
+ */
+static void output_source_nls( struct makefile *make, struct incl_file *source, const char *obj )
+{
+    add_install_rule( make, source->name, source->name,
+                      strmake( "D$(datadir)/wine/%s", source->name ));
+}
+
+
+/*******************************************************************
+ *         output_source_desktop
+ */
+static void output_source_desktop( struct makefile *make, struct incl_file *source, const char *obj )
+{
+    add_install_rule( make, source->name, source->name,
+                      strmake( "D$(datadir)/applications/%s", source->name ));
+}
+
+
+/*******************************************************************
  *         output_source_po
  */
 static void output_source_po( struct makefile *make, struct incl_file *source, const char *obj )
@@ -2843,6 +2863,8 @@ static const struct
     { "tlb", output_source_tlb },
     { "sfd", output_source_sfd },
     { "svg", output_source_svg },
+    { "nls", output_source_nls },
+    { "desktop", output_source_desktop },
     { "po", output_source_po },
     { "in", output_source_in },
     { "x", output_source_x },

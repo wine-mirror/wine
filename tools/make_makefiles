@@ -435,7 +435,7 @@ sub assign_sources_to_makefiles(@)
         {
             next unless defined ${$make}{"TESTDLL"};
         }
-        else
+        elsif ($dir ne "loader")  # loader dir contains misc files
         {
             next;
         }

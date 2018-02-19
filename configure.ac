@@ -3957,21 +3957,10 @@ $with_wine64/loader/wine-preloader:
 clean::
 	\$(RM) fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
-    AC_SUBST(WINELOADER_INSTALL,"wine.inf")
-    WINE_APPEND_RULE(
-[install install-lib::
-	\$(INSTALL_DATA) $srcdir/loader/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
-.PHONY: l_intl.nls/uninstall
-l_intl.nls/uninstall::
-	\$(RM) \$(DESTDIR)\$(datadir)/wine/l_intl.nls
-__uninstall__: l_intl.nls/uninstall])
+    AC_SUBST(WINELOADER_INSTALL,"wine.inf l_intl.nls")
     case $host_os in
       cygwin*|mingw32*|darwin*|macosx*|linux-android*) ;;
-      *) WINE_APPEND_RULE(
-[install install-lib::
-	\$(INSTALL_DATA) $srcdir/loader/wine.desktop \$(DESTDIR)\$(datadir)/applications/wine.desktop
-uninstall::
-	\$(RM) \$(DESTDIR)\$(datadir)/applications/wine.desktop]) ;;
+      *) WINELOADER_INSTALL="$WINELOADER_INSTALL wine.desktop" ;;
     esac
 fi
 

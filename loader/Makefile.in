@@ -1,15 +1,13 @@
-C_SRCS = \
+SOURCES = \
+	l_intl.nls \
 	main.c \
-	preloader.c
-
-MANPAGES = \
+	preloader.c \
 	wine.de.UTF-8.man.in \
+	wine.desktop \
 	wine.fr.UTF-8.man.in \
-	wine.man.in \
-	wine.pl.UTF-8.man.in
-
-IN_SRCS = \
 	wine.inf.in \
+	wine.man.in \
+	wine.pl.UTF-8.man.in \
 	wine_info.plist.in
 
 PROGRAMS = $(WINELOADER_PROGRAMS)
