@@ -447,7 +447,7 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     HTMLScriptElement_unlink
 };
 
-HRESULT script_elem_from_nsscript(HTMLDocumentNode *doc, nsIDOMHTMLScriptElement *nsscript, HTMLScriptElement **ret)
+HRESULT script_elem_from_nsscript(nsIDOMHTMLScriptElement *nsscript, HTMLScriptElement **ret)
 {
     nsIDOMNode *nsnode;
     HTMLDOMNode *node;

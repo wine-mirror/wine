@@ -1588,7 +1588,7 @@ void bind_event_scripts(HTMLDocumentNode *doc)
         assert(nsres == NS_OK);
         nsIDOMNode_Release(script_node);
 
-        hres = script_elem_from_nsscript(doc, nsscript, &script_elem);
+        hres = script_elem_from_nsscript(nsscript, &script_elem);
         if(FAILED(hres))
             continue;
 

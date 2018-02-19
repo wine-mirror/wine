@@ -334,7 +334,7 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
         }
     }
 
-    hres = script_elem_from_nsscript(doc, nsscript, &script_elem);
+    hres = script_elem_from_nsscript(nsscript, &script_elem);
     nsIDOMHTMLScriptElement_Release(nsscript);
     if(FAILED(hres))
         return NS_ERROR_FAILURE;

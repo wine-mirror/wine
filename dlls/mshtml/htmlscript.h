@@ -35,7 +35,7 @@ typedef struct {
     HTMLScriptElement *script;
 } script_queue_entry_t;
 
-HRESULT script_elem_from_nsscript(HTMLDocumentNode*,nsIDOMHTMLScriptElement*,HTMLScriptElement**) DECLSPEC_HIDDEN;
+HRESULT script_elem_from_nsscript(nsIDOMHTMLScriptElement*,HTMLScriptElement**) DECLSPEC_HIDDEN;
 void bind_event_scripts(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 HRESULT load_script(HTMLScriptElement*,const WCHAR*,BOOL) DECLSPEC_HIDDEN;
 
