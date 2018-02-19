@@ -498,6 +498,31 @@ static void output_filenames( struct strarray array )
 
 
 /*******************************************************************
+ *         output_rm_filenames
+ */
+static void output_rm_filenames( struct strarray array )
+{
+    static const unsigned int max_cmdline = 30000;  /* to be on the safe side */
+    unsigned int i, len;
+
+    if (!array.count) return;
+    output( "\trm -f" );
+    for (i = len = 0; i < array.count; i++)
+    {
+        if (len > max_cmdline)
+        {
+            output( "\n" );
+            output( "\trm -f" );
+            len = 0;
+        }
+        output_filename( array.str[i] );
+        len += strlen( array.str[i] ) + 1;
+    }
+    output( "\n" );
+}
+
+
+/*******************************************************************
  *         get_extension
  */
 static char *get_extension( char *filename )
@@ -3323,9 +3348,7 @@ static void output_subdirs( struct makefile *make )
     output_filenames( makefile_deps );
     output( ":\n" );
     output( "distclean::\n");
-    output( "\trm -f" );
-    output_filenames( distclean_files );
-    output( "\n" );
+    output_rm_filenames( distclean_files );
     strarray_add( &make->phony_targets, "distclean" );
 
     if (build_deps.count)
