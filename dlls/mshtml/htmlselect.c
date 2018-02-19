@@ -69,7 +69,7 @@ static HRESULT htmlselect_item(HTMLSelectElement *This, int i, IDispatch **ret)
     if(nsnode) {
         HTMLDOMNode *node;
 
-        hres = get_node(This->element.node.doc, nsnode, TRUE, &node);
+        hres = get_node(nsnode, TRUE, &node);
         nsIDOMNode_Release(nsnode);
         if(FAILED(hres))
             return hres;
@@ -398,7 +398,7 @@ static HRESULT WINAPI HTMLSelectElement_get_form(IHTMLSelectElement *iface, IHTM
     nsIDOMHTMLFormElement_Release(nsform);
     assert(nsres == NS_OK);
 
-    hres = get_node(This->element.node.doc, form_node, TRUE, &node);
+    hres = get_node(form_node, TRUE, &node);
     nsIDOMNode_Release(form_node);
     if (FAILED(hres))
         return hres;

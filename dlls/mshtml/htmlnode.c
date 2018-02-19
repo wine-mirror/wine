@@ -136,7 +136,7 @@ static HRESULT WINAPI HTMLDOMChildrenCollectionEnum_Next(IEnumVARIANT *iface, UL
         nsres = nsIDOMNodeList_Item(This->col->nslist, This->iter+fetched, &nsnode);
         assert(nsres == NS_OK);
 
-        hres = get_node(This->col->doc, nsnode, TRUE, &node);
+        hres = get_node(nsnode, TRUE, &node);
         nsIDOMNode_Release(nsnode);
         if(FAILED(hres)) {
             ERR("get_node failed: %08x\n", hres);
@@ -342,7 +342,7 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_item(IHTMLDOMChildrenCollection 
         return E_FAIL;
     }
 
-    hres = get_node(This->doc, nsnode, TRUE, &node);
+    hres = get_node(nsnode, TRUE, &node);
     if(FAILED(hres))
         return hres;
 
@@ -589,7 +589,7 @@ static HRESULT WINAPI HTMLDOMNode_get_parentNode(IHTMLDOMNode *iface, IHTMLDOMNo
         return S_OK;
     }
 
-    hres = get_node(This->doc, nsnode, TRUE, &node);
+    hres = get_node(nsnode, TRUE, &node);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
@@ -712,7 +712,7 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
     if(FAILED(hres))
         return hres;
 
-    hres = get_node(This->doc, nsnode, TRUE, &node_obj);
+    hres = get_node(nsnode, TRUE, &node_obj);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
@@ -743,7 +743,7 @@ static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode 
         return E_FAIL;
     }
 
-    hres = get_node(This->doc, nsnode, TRUE, &node_obj);
+    hres = get_node(nsnode, TRUE, &node_obj);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
@@ -780,7 +780,7 @@ static HRESULT WINAPI HTMLDOMNode_replaceChild(IHTMLDOMNode *iface, IHTMLDOMNode
     if(NS_FAILED(nsres))
         return E_FAIL;
 
-    hres = get_node(This->doc, nsnode, TRUE, &ret_node);
+    hres = get_node(nsnode, TRUE, &ret_node);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
@@ -860,7 +860,7 @@ static HRESULT WINAPI HTMLDOMNode_appendChild(IHTMLDOMNode *iface, IHTMLDOMNode 
         return E_FAIL;
     }
 
-    hres = get_node(This->doc, nsnode, TRUE, &node_obj);
+    hres = get_node(nsnode, TRUE, &node_obj);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
@@ -946,7 +946,7 @@ static HRESULT WINAPI HTMLDOMNode_get_firstChild(IHTMLDOMNode *iface, IHTMLDOMNo
         return S_OK;
     }
 
-    hres = get_node(This->doc, nschild, TRUE, &node);
+    hres = get_node(nschild, TRUE, &node);
     nsIDOMNode_Release(nschild);
     if(FAILED(hres))
         return hres;
@@ -970,7 +970,7 @@ static HRESULT WINAPI HTMLDOMNode_get_lastChild(IHTMLDOMNode *iface, IHTMLDOMNod
         return S_OK;
     }
 
-    hres = get_node(This->doc, nschild, TRUE, &node);
+    hres = get_node(nschild, TRUE, &node);
     nsIDOMNode_Release(nschild);
     if(FAILED(hres))
         return hres;
@@ -994,7 +994,7 @@ static HRESULT WINAPI HTMLDOMNode_get_previousSibling(IHTMLDOMNode *iface, IHTML
         return S_OK;
     }
 
-    hres = get_node(This->doc, nschild, TRUE, &node);
+    hres = get_node(nschild, TRUE, &node);
     nsIDOMNode_Release(nschild);
     if(FAILED(hres))
         return hres;
@@ -1018,7 +1018,7 @@ static HRESULT WINAPI HTMLDOMNode_get_nextSibling(IHTMLDOMNode *iface, IHTMLDOMN
         return S_OK;
     }
 
-    hres = get_node(This->doc, nssibling, TRUE, &node);
+    hres = get_node(nssibling, TRUE, &node);
     nsIDOMNode_Release(nssibling);
     if(FAILED(hres))
         return hres;
@@ -1614,7 +1614,7 @@ void init_node_cc(void)
     ccp_init(&node_ccp, &node_ccp_callback);
 }
 
-HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDOMNode **ret)
+HRESULT get_node(nsIDOMNode *nsnode, BOOL create, HTMLDOMNode **ret)
 {
     nsIDOMDocument *dom_document;
     HTMLDocumentNode *document;

@@ -2916,7 +2916,7 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
             continue;
 
         if(!node) {
-            hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
+            hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
             if(FAILED(hres)) {
                 IDispatch_Release(disp);
                 break;

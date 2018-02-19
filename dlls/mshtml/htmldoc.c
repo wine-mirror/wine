@@ -247,7 +247,7 @@ static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCo
         return S_OK;
     }
 
-    hres = get_node(This->doc_node, (nsIDOMNode*)nselem, TRUE, &node);
+    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
@@ -1615,7 +1615,7 @@ static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG 
         return S_OK;
     }
 
-    hres = get_node(This->doc_node, (nsIDOMNode*)nselem, TRUE, &node);
+    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
@@ -2021,7 +2021,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
         return S_OK;
     }
 
-    hres = get_node(This->doc_node, (nsIDOMNode *)nselem, TRUE, &node);
+    hres = get_node((nsIDOMNode *)nselem, TRUE, &node);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
@@ -5020,7 +5020,7 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     if(NS_FAILED(nsres) || !nsnode)
         return DISP_E_UNKNOWNNAME;
 
-    hres = get_node(This, nsnode, TRUE, &node);
+    hres = get_node(nsnode, TRUE, &node);
     if(FAILED(hres))
         return hres;
 
@@ -5210,7 +5210,7 @@ HRESULT get_document_node(nsIDOMDocument *dom_document, HTMLDocumentNode **ret)
     HTMLDOMNode *node;
     HRESULT hres;
 
-    hres = get_node(NULL, (nsIDOMNode*)dom_document, FALSE, &node);
+    hres = get_node((nsIDOMNode*)dom_document, FALSE, &node);
     if(FAILED(hres))
         return hres;
 

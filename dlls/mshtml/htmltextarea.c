@@ -216,7 +216,7 @@ static HRESULT WINAPI HTMLTextAreaElement_get_form(IHTMLTextAreaElement *iface, 
     nsIDOMHTMLFormElement_Release(nsform);
     assert(nsres == NS_OK);
 
-    hres = get_node(This->element.node.doc, nsnode, TRUE, &node);
+    hres = get_node(nsnode, TRUE, &node);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;

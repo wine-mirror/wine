@@ -62,7 +62,7 @@ static HRESULT return_nsform(HTMLElement *elem, nsIDOMHTMLFormElement *nsform, I
     nsIDOMHTMLFormElement_Release(nsform);
     assert(nsres == NS_OK);
 
-    hres = get_node(elem->node.doc, form_node, TRUE, &node);
+    hres = get_node(form_node, TRUE, &node);
     nsIDOMNode_Release(form_node);
     if (FAILED(hres))
         return hres;

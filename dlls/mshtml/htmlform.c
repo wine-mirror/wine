@@ -64,7 +64,7 @@ static HRESULT htmlform_item(HTMLFormElement *This, int i, IDispatch **ret)
     }
 
     if(item) {
-        hres = get_node(This->element.node.doc, item, TRUE, &node);
+        hres = get_node(item, TRUE, &node);
         if(FAILED(hres))
             return hres;
 

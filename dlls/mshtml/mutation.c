@@ -230,7 +230,7 @@ static nsresult run_bind_to_tree(HTMLDocumentNode *doc, nsISupports *nsiface, ns
     if(NS_FAILED(nsres))
         return nsres;
 
-    hres = get_node(doc, nsnode, TRUE, &node);
+    hres = get_node(nsnode, TRUE, &node);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres)) {
         ERR("Could not get node\n");

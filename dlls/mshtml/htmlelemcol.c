@@ -654,7 +654,7 @@ static void create_all_list(HTMLDocumentNode *doc, HTMLDOMNode *elem, elem_vecto
         if(is_elem_node(iter)) {
             HTMLDOMNode *node;
 
-            hres = get_node(doc, iter, TRUE, &node);
+            hres = get_node(iter, TRUE, &node);
             if(FAILED(hres)) {
                 FIXME("get_node failed: %08x\n", hres);
                 continue;
@@ -702,7 +702,7 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode *doc, n
         for(i=0; i<length; i++) {
             nsIDOMNodeList_Item(nslist, i, &nsnode);
             if(is_elem_node(nsnode)) {
-                hres = get_node(doc, nsnode, TRUE, &node);
+                hres = get_node(nsnode, TRUE, &node);
                 if(FAILED(hres))
                     continue;
                 buf.buf[buf.len++] = elem_from_HTMLDOMNode(node);
@@ -736,7 +736,7 @@ IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, ns
 
         for(i=0; i<length; i++) {
             nsIDOMHTMLCollection_Item(nscol, i, &nsnode);
-            hres = get_node(doc, nsnode, TRUE, &node);
+            hres = get_node(nsnode, TRUE, &node);
             nsIDOMNode_Release(nsnode);
             if(FAILED(hres))
                 break;
@@ -792,11 +792,10 @@ HRESULT get_elem_source_index(HTMLElement *elem, LONG *ret)
         return S_OK;
     }
 
-    hres = get_node(elem->node.doc, parent_node, TRUE, &node);
+    hres = get_node(parent_node, TRUE, &node);
     nsIDOMNode_Release(parent_node);
     if(FAILED(hres))
         return hres;
-
 
     /* Create all children collection and find the element in it.
      * This could be optimized if we ever find the reason. */

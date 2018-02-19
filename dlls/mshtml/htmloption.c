@@ -334,7 +334,7 @@ static HRESULT WINAPI HTMLOptionElement_get_form(IHTMLOptionElement *iface, IHTM
     nsIDOMHTMLFormElement_Release(nsform);
     assert(nsres == NS_OK);
 
-    hres = get_node(This->element.node.doc, form_node, TRUE, &node);
+    hres = get_node(form_node, TRUE, &node);
     nsIDOMNode_Release(form_node);
     if (FAILED(hres))
         return hres;
@@ -579,7 +579,7 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
     if(FAILED(hres))
         return hres;
 
-    hres = get_node(This->window->doc, (nsIDOMNode*)nselem, TRUE, &node);
+    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;

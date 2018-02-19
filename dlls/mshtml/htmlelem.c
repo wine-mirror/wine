@@ -1427,7 +1427,7 @@ static HRESULT WINAPI HTMLElement_get_offsetParent(IHTMLElement *iface, IHTMLEle
     if(nsparent) {
         HTMLDOMNode *node;
 
-        hres = get_node(This->node.doc, (nsIDOMNode*)nsparent, TRUE, &node);
+        hres = get_node((nsIDOMNode*)nsparent, TRUE, &node);
         nsIDOMElement_Release(nsparent);
         if(FAILED(hres))
             return hres;
@@ -1700,7 +1700,7 @@ static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDO
         return E_FAIL;
 
     if(ret_node)
-        hres = get_node(This->node.doc, ret_nsnode, TRUE, ret_node);
+        hres = get_node(ret_nsnode, TRUE, ret_node);
     nsIDOMNode_Release(ret_nsnode);
     return hres;
 }
@@ -5470,7 +5470,7 @@ static EventTarget *HTMLElement_get_parent_event_target(DispatchEx *dispex)
     if(!nsnode)
         return NULL;
 
-    hres = get_node(This->node.doc, nsnode, TRUE, &node);
+    hres = get_node(nsnode, TRUE, &node);
     nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return NULL;
@@ -5628,7 +5628,7 @@ HRESULT get_elem(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **ret
     HTMLDOMNode *node;
     HRESULT hres;
 
-    hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
+    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
     if(FAILED(hres))
         return hres;
 

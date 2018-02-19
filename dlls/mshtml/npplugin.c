@@ -281,7 +281,7 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
         return NPERR_GENERIC_ERROR;
     }
 
-    hres = get_node(window->doc, (nsIDOMNode*)nselem, TRUE, &node);
+    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return NPERR_GENERIC_ERROR;

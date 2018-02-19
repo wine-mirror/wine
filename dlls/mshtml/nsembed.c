@@ -1494,7 +1494,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
 
     TRACE("(%p)->(%08x %p %p)\n", This, aContextFlags, aEvent, aNode);
 
-    hres = get_node(This->doc->basedoc.doc_node, aNode, TRUE, &node);
+    hres = get_node(aNode, TRUE, &node);
     if(FAILED(hres))
         return NS_ERROR_FAILURE;
 

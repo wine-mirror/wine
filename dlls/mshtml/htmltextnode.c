@@ -170,7 +170,7 @@ static HRESULT WINAPI HTMLDOMTextNode_splitText(IHTMLDOMTextNode *iface, LONG of
         return S_OK;
     }
 
-    hres = get_node(This->node.doc, (nsIDOMNode*)text, TRUE, &node);
+    hres = get_node((nsIDOMNode*)text, TRUE, &node);
     nsIDOMText_Release(text);
     if(FAILED(hres))
         return hres;
