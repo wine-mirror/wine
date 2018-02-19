@@ -18267,6 +18267,7 @@ wine_fn_config_dll activeds enable_activeds implib
 wine_fn_config_dll actxprxy enable_actxprxy
 wine_fn_config_lib adsiid
 wine_fn_config_dll adsldp enable_adsldp
+wine_fn_config_test dlls/adsldp/tests adsldp_test
 wine_fn_config_dll adsldpc enable_adsldpc
 wine_fn_config_dll advapi32 enable_advapi32 implib
 wine_fn_config_test dlls/advapi32/tests advapi32_test
