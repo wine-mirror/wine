@@ -413,9 +413,9 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     hr = IAudioCaptureClient_GetBuffer(acc, &data, &frames, &flags, &pos, &qpc);
     ok(hr == S_OK, "Valid IAudioCaptureClient_GetBuffer returns %08x\n", hr);
     trace("Running position %d pad %u flags %x, amount of frames locked: %u\n",
-          hr==S_OK ? (UINT)pos : -1, pad, flags, frames);
+          SUCCEEDED(hr) ? (UINT)pos : -1, pad, flags, frames);
 
-    if(hr == S_OK){
+    if(SUCCEEDED(hr)){
         /* Some w7 machines signal DATA_DISCONTINUITY here following the
          * previous AUDCLNT_S_BUFFER_EMPTY, others not.  What logic? */
         ok(pos >= sum, "Position %u gap %d\n", (UINT)pos, (UINT)pos - sum);
