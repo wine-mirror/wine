@@ -87,10 +87,7 @@ static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
 /* callback for 16-bit gray string proc with string pointer */
 static BOOL CALLBACK gray_string_callback_ptr( HDC hdc, LPARAM param, INT len )
 {
-    const struct gray_string_info *info;
-    char *str = (char *)param;
-
-    info = (struct gray_string_info *)(str - offsetof( struct gray_string_info, str ));
+    const struct gray_string_info *info = CONTAINING_RECORD( (void *)param, struct gray_string_info, str );
     return gray_string_callback( hdc, (LPARAM)info, len );
 }
 
