@@ -5119,7 +5119,7 @@ static HRESULT WINAPI ElementTraversal_get_firstElementChild(IElementTraversal *
         return S_OK;
     }
 
-    hres = get_elem(This->node.doc, nselem, &elem);
+    hres = get_element(nselem, &elem);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
@@ -5623,7 +5623,7 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
     return S_OK;
 }
 
-HRESULT get_elem(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **ret)
+HRESULT get_element(nsIDOMElement *nselem, HTMLElement **ret)
 {
     HTMLDOMNode *node;
     HRESULT hres;

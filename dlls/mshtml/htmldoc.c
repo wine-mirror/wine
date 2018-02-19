@@ -112,7 +112,7 @@ HRESULT get_doc_elem_by_id(HTMLDocumentNode *doc, const WCHAR *id, HTMLElement *
         return S_OK;
     }
 
-    hres = get_elem(doc, nselem, ret);
+    hres = get_element(nselem, ret);
     nsIDOMElement_Release(nselem);
     return hres;
 }
@@ -281,7 +281,7 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
         return S_OK;
     }
 
-    hres = get_elem(This->doc_node, (nsIDOMElement*)nsbody, &element);
+    hres = get_element((nsIDOMElement*)nsbody, &element);
     nsIDOMHTMLElement_Release(nsbody);
     if(FAILED(hres))
         return hres;
@@ -320,7 +320,7 @@ static HRESULT WINAPI HTMLDocument_get_activeElement(IHTMLDocument2 *iface, IHTM
         return S_OK;
     }
 
-    hres = get_elem(This->doc_node, nselem, &elem);
+    hres = get_element(nselem, &elem);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
@@ -3161,7 +3161,7 @@ static HRESULT WINAPI HTMLDocument6_getElementById(IHTMLDocument6 *iface,
         return S_OK;
     }
 
-    hres = get_elem(This->doc_node, nselem, &elem);
+    hres = get_element(nselem, &elem);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
@@ -4083,7 +4083,7 @@ static HRESULT WINAPI HTMLDocument7_get_head(IHTMLDocument7 *iface, IHTMLElement
     nsIDOMHTMLHeadElement_Release(nshead);
     assert(nsres == NS_OK);
 
-    hres = get_elem(This->doc_node, nselem, &elem);
+    hres = get_element(nselem, &elem);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
         return hres;
@@ -4282,10 +4282,12 @@ static HRESULT WINAPI DocumentSelector_querySelector(IDocumentSelector *iface, B
         return S_OK;
     }
 
-    hres = get_elem(This->doc_node, nselem, &elem);
+    hres = get_element(nselem, &elem);
     nsIDOMElement_Release(nselem);
-    if(SUCCEEDED(hres))
-        *pel = &elem->IHTMLElement_iface;
+    if(FAILED(hres))
+        return hres;
+
+    *pel = &elem->IHTMLElement_iface;
     return S_OK;
 }
 
