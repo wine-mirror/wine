@@ -187,6 +187,27 @@ function test_compare_position() {
     next_test();
 }
 
+function test_document_owner() {
+    var node;
+
+    ok(document.ownerDocument === null, "ownerDocument = " + document.ownerDocument);
+    ok(document.body.ownerDocument === document,
+       "body.ownerDocument = " + document.body.ownerDocument);
+    ok(document.documentElement.ownerDocument === document,
+       "documentElement.ownerDocument = " + document.documentElement.ownerDocument);
+
+    node = document.createElement("test");
+    ok(node.ownerDocument === document, "element.ownerDocument = " + node.ownerDocument);
+
+    node = document.createDocumentFragment("test");
+    ok(node.ownerDocument === document, "fragment.ownerDocument = " + node.ownerDocument);
+
+    node = document.createTextNode("test");
+    ok(node.ownerDocument === document, "text.ownerDocument = " + node.ownerDocument);
+
+    next_test();
+}
+
 var tests = [
     test_input_selection,
     test_textContent,
@@ -195,5 +216,6 @@ var tests = [
     test_head,
     test_iframe,
     test_query_selector,
-    test_compare_position
+    test_compare_position,
+    test_document_owner
 ];
