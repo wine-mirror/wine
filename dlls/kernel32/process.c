@@ -64,7 +64,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
-WINE_DECLARE_DEBUG_CHANNEL(file);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #ifdef __APPLE__
@@ -90,8 +89,9 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 HMODULE kernel32_handle = 0;
 SYSTEM_BASIC_INFORMATION system_info = { 0 };
 
-const WCHAR *DIR_Windows = NULL;
-const WCHAR *DIR_System = NULL;
+const WCHAR DIR_Windows[] = {'C',':','\\','w','i','n','d','o','w','s',0};
+const WCHAR DIR_System[] = {'C',':','\\','w','i','n','d','o','w','s',
+                            '\\','s','y','s','t','e','m','3','2',0};
 const WCHAR *DIR_SysWow64 = NULL;
 
 /* Process flags */
@@ -954,41 +954,12 @@ done:
 /***********************************************************************
  *           init_windows_dirs
  *
- * Initialize the windows and system directories from the environment.
+ * Create the windows and system directories if necessary.
  */
 static void init_windows_dirs(void)
 {
-    static const WCHAR windirW[] = {'w','i','n','d','i','r',0};
-    static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
-    static const WCHAR default_windirW[] = {'C',':','\\','w','i','n','d','o','w','s',0};
-    static const WCHAR default_sysdirW[] = {'\\','s','y','s','t','e','m','3','2',0};
-    static const WCHAR default_syswow64W[] = {'\\','s','y','s','w','o','w','6','4',0};
-
-    DWORD len;
-    WCHAR *buffer;
-
-    if ((len = GetEnvironmentVariableW( windirW, NULL, 0 )))
-    {
-        buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        GetEnvironmentVariableW( windirW, buffer, len );
-        DIR_Windows = buffer;
-    }
-    else DIR_Windows = default_windirW;
-
-    if ((len = GetEnvironmentVariableW( winsysdirW, NULL, 0 )))
-    {
-        buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        GetEnvironmentVariableW( winsysdirW, buffer, len );
-        DIR_System = buffer;
-    }
-    else
-    {
-        len = strlenW( DIR_Windows );
-        buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) + sizeof(default_sysdirW) );
-        memcpy( buffer, DIR_Windows, len * sizeof(WCHAR) );
-        memcpy( buffer + len, default_sysdirW, sizeof(default_sysdirW) );
-        DIR_System = buffer;
-    }
+    static const WCHAR default_syswow64W[] = {'C',':','\\','w','i','n','d','o','w','s',
+                                              '\\','s','y','s','w','o','w','6','4',0};
 
     if (!CreateDirectoryW( DIR_Windows, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
         ERR( "directory %s could not be created, error %u\n",
@@ -999,18 +970,11 @@ static void init_windows_dirs(void)
 
     if (is_win64 || is_wow64)   /* SysWow64 is always defined on 64-bit */
     {
-        len = strlenW( DIR_Windows );
-        buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) + sizeof(default_syswow64W) );
-        memcpy( buffer, DIR_Windows, len * sizeof(WCHAR) );
-        memcpy( buffer + len, default_syswow64W, sizeof(default_syswow64W) );
-        DIR_SysWow64 = buffer;
+        DIR_SysWow64 = default_syswow64W;
         if (!CreateDirectoryW( DIR_SysWow64, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
             ERR( "directory %s could not be created, error %u\n",
                  debugstr_w(DIR_SysWow64), GetLastError() );
     }
-
-    TRACE_(file)( "WindowsDir = %s\n", debugstr_w(DIR_Windows) );
-    TRACE_(file)( "SystemDir  = %s\n", debugstr_w(DIR_System) );
 }
 
 
