@@ -1408,6 +1408,7 @@ static HRESULT WINAPI HTMLElement_get_offsetParent(IHTMLElement *iface, IHTMLEle
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
     nsIDOMElement *nsparent;
+    HTMLElement *parent;
     nsresult nsres;
     HRESULT hres;
 
@@ -1424,22 +1425,18 @@ static HRESULT WINAPI HTMLElement_get_offsetParent(IHTMLElement *iface, IHTMLEle
         return E_FAIL;
     }
 
-    if(nsparent) {
-        HTMLDOMNode *node;
-
-        hres = get_node((nsIDOMNode*)nsparent, TRUE, &node);
-        nsIDOMElement_Release(nsparent);
-        if(FAILED(hres))
-            return hres;
-
-        hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
-        node_release(node);
-    }else {
+    if(!nsparent) {
         *p = NULL;
         hres = S_OK;
     }
 
-    return hres;
+    hres = get_element(nsparent, &parent);
+    nsIDOMElement_Release(nsparent);
+    if(FAILED(hres))
+        return hres;
+
+    *p = &parent->IHTMLElement_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_put_innerHTML(IHTMLElement *iface, BSTR v)
