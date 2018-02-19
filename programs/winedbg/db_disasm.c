@@ -301,23 +301,23 @@ static const struct inst db_inst_0f4x[] = {
 };
 
 static const struct inst db_inst_0f5x[] = {
-/*50*/	{ "movmskps",TRUE, NONE, op2(E, XMM), 0 },
-/*51*/	{ "sqrtps",  TRUE, NONE, op2(XMM, EXMM), 0 },
-/*52*/	{ "rsqrtps", TRUE, NONE, op2(XMM, EXMM), 0 },
-/*53*/	{ "rcpps",   TRUE, NONE, op2(XMM, EXMM), 0 },
-/*54*/	{ "andps",   TRUE, NONE, op2(XMM, EXMM), 0 },
-/*55*/	{ "andnps",  TRUE, NONE, op2(XMM, EXMM), 0 },
-/*56*/	{ "orps",    TRUE, NONE, op2(XMM, EXMM), 0 },
-/*57*/	{ "xorps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*50*/	{ "movmskps",TRUE, NONE, op2(EXMM, R),   0 },
+/*51*/	{ "sqrtps",  TRUE, NONE, op2(EXMM, XMM), 0 },
+/*52*/	{ "rsqrtps", TRUE, NONE, op2(EXMM, XMM), 0 },
+/*53*/	{ "rcpps",   TRUE, NONE, op2(EXMM, XMM), 0 },
+/*54*/	{ "andps",   TRUE, NONE, op2(EXMM, XMM), 0 },
+/*55*/	{ "andnps",  TRUE, NONE, op2(EXMM, XMM), 0 },
+/*56*/	{ "orps",    TRUE, NONE, op2(EXMM, XMM), 0 },
+/*57*/	{ "xorps",   TRUE, NONE, op2(EXMM, XMM), 0 },
 
-/*58*/	{ "addps",   TRUE, NONE, op2(XMM, EXMM), 0 },
-/*59*/	{ "mulps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*58*/	{ "addps",   TRUE, NONE, op2(EXMM, XMM), 0 },
+/*59*/	{ "mulps",   TRUE, NONE, op2(EXMM, XMM), 0 },
 /*5a*/	{ "(bad)",   FALSE, NONE,  0,   0 },
 /*5b*/	{ "(bad)",   FALSE, NONE,  0,   0 },
-/*5c*/	{ "subps",   TRUE, NONE, op2(XMM, EXMM), 0 },
-/*5d*/	{ "minps",   TRUE, NONE, op2(XMM, EXMM), 0 },
-/*5e*/	{ "divps",   TRUE, NONE, op2(XMM, EXMM), 0 },
-/*5f*/	{ "maxps",   TRUE, NONE, op2(XMM, EXMM), 0 },
+/*5c*/	{ "subps",   TRUE, NONE, op2(EXMM, XMM), 0 },
+/*5d*/	{ "minps",   TRUE, NONE, op2(EXMM, XMM), 0 },
+/*5e*/	{ "divps",   TRUE, NONE, op2(EXMM, XMM), 0 },
+/*5f*/	{ "maxps",   TRUE, NONE, op2(EXMM, XMM), 0 },
 };
 
 static const struct inst db_inst_0f6x[] = {
