@@ -1616,8 +1616,11 @@ void init_node_cc(void)
 
 HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDOMNode **ret)
 {
+    nsIDOMDocument *dom_document;
+    HTMLDocumentNode *document;
     nsISupports *unk = NULL;
     nsresult nsres;
+    HRESULT hres;
 
     nsres = nsIDOMNode_GetMshtmlNode(nsnode, &unk);
     assert(nsres == NS_OK);
@@ -1633,5 +1636,18 @@ HRESULT get_node(HTMLDocumentNode *This, nsIDOMNode *nsnode, BOOL create, HTMLDO
         return S_OK;
     }
 
-    return create_node(This, nsnode, ret);
+    nsres = nsIDOMNode_GetOwnerDocument(nsnode, &dom_document);
+    if(NS_FAILED(nsres) || !dom_document) {
+        ERR("GetOwnerDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = get_document_node(dom_document, &document);
+    nsIDOMDocument_Release(dom_document);
+    if(!document)
+        return E_FAIL;
+
+    hres = create_node(document, nsnode, ret);
+    htmldoc_release(&document->basedoc);
+    return hres;
 }

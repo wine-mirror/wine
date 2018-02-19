@@ -1074,6 +1074,7 @@ void HTMLFrameBase_destructor(HTMLFrameBase*) DECLSPEC_HIDDEN;
 
 HRESULT get_node(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLDOMNode**) DECLSPEC_HIDDEN;
 HRESULT get_elem(HTMLDocumentNode*,nsIDOMElement*,HTMLElement**) DECLSPEC_HIDDEN;
+HRESULT get_document_node(nsIDOMDocument*,HTMLDocumentNode**) DECLSPEC_HIDDEN;
 
 HTMLElement *unsafe_impl_from_IHTMLElement(IHTMLElement*) DECLSPEC_HIDDEN;
 

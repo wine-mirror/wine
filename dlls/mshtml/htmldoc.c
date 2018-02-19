@@ -5205,6 +5205,25 @@ static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *do
     return S_OK;
 }
 
+HRESULT get_document_node(nsIDOMDocument *dom_document, HTMLDocumentNode **ret)
+{
+    HTMLDOMNode *node;
+    HRESULT hres;
+
+    hres = get_node(NULL, (nsIDOMNode*)dom_document, FALSE, &node);
+    if(FAILED(hres))
+        return hres;
+
+    if(!node) {
+        ERR("document not initialized\n");
+        return E_FAIL;
+    }
+
+    assert(node->vtbl == &HTMLDocumentNodeImplVtbl);
+    *ret = impl_from_HTMLDOMNode(node);
+    return S_OK;
+}
+
 static inline HTMLDocumentObj *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDocumentObj, IUnknown_outer);
