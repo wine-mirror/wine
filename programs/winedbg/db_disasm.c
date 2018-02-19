@@ -312,8 +312,8 @@ static const struct inst db_inst_0f5x[] = {
 
 /*58*/	{ "addps",   TRUE, NONE, op2(EXMM, XMM), 0 },
 /*59*/	{ "mulps",   TRUE, NONE, op2(EXMM, XMM), 0 },
-/*5a*/	{ "(bad)",   FALSE, NONE,  0,   0 },
-/*5b*/	{ "(bad)",   FALSE, NONE,  0,   0 },
+/*5a*/	{ "cvtps2pd",TRUE, NONE, op2(EXMM, XMM), 0 },
+/*5b*/	{ "cvtdq2ps",TRUE, NONE, op2(EXMM, XMM), 0 },
 /*5c*/	{ "subps",   TRUE, NONE, op2(EXMM, XMM), 0 },
 /*5d*/	{ "minps",   TRUE, NONE, op2(EXMM, XMM), 0 },
 /*5e*/	{ "divps",   TRUE, NONE, op2(EXMM, XMM), 0 },
