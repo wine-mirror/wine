@@ -306,7 +306,8 @@ ME_LogFontFromStyle(ME_Context* c, LOGFONTW *lf, const ME_Style *s)
     lf->lfWeight = s->fmt.wWeight;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_ITALIC)
     lf->lfItalic = 1;
-  if ((s->fmt.dwEffects & s->fmt.dwMask & (CFM_UNDERLINE | CFE_LINK)) &&
+  if ((s->fmt.dwEffects & s->fmt.dwMask & CFM_UNDERLINE) &&
+      !(s->fmt.dwEffects & CFE_LINK) &&
       s->fmt.bUnderlineType == CFU_CF1UNDERLINE)
     lf->lfUnderline = 1;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_STRIKEOUT)
