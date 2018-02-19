@@ -218,6 +218,9 @@ static COLORREF get_back_color( ME_Context *c, ME_Style *style, BOOL highlight )
 
 static HPEN get_underline_pen( ME_Style *style, COLORREF color )
 {
+    if (style->fmt.dwEffects & CFE_LINK)
+        return CreatePen( PS_SOLID, 1, color );
+
     /* Choose the pen type for underlining the text. */
     if (style->fmt.dwEffects & CFE_UNDERLINE)
     {
