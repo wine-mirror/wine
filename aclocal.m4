@@ -542,9 +542,7 @@ programs/winetest: $ac_dir
 check test: $ac_dir/test
 .PHONY: $ac_dir/test
 $ac_dir/test: dummy
-	@cd $ac_dir && \$(MAKE) test
-testclean::
-	\$(RM) $ac_dir/*.ok"
+	@cd $ac_dir && \$(MAKE) test"
 
         if test -n "$CROSSTARGET"
         then
